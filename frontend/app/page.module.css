@@ -1,0 +1,122 @@
+.main {
+  min-height: 100vh;
+  background: #f8f9fb;
+  font-family: 'Inter', Arial, sans-serif;
+  padding: 0;
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+  padding: 1.2rem 2rem 1.2rem 2rem;
+  border-bottom: 2px solid #f0a500;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+
+.logoTitle {
+  display: flex;
+  align-items: center;
+}
+
+.logo {
+  margin-right: 1.1rem;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(240,165,0,0.08);
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #232b36;
+  letter-spacing: 0.02em;
+}
+
+.nav {
+  display: flex;
+  gap: 1.5rem;
+}
+.navLink {
+  color: #232b36;
+  font-weight: 600;
+  font-size: 1.1rem;
+  text-decoration: none;
+  padding: 0.3rem 0.7rem;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+.navLink:hover {
+  background: #f0a50022;
+}
+.navLinkActive {
+  color: #f0a500;
+  font-weight: 700;
+  background: #232b3608;
+  border-bottom: 2px solid #f0a500;
+}
+
+.heroCard {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(240,165,0,0.07);
+  padding: 2.5rem 2rem 2rem 2rem;
+  margin: 2rem auto 2.5rem auto;
+  max-width: 600px;
+  text-align: center;
+}
+.heroTitle {
+  font-size: 2rem;
+  color: #232b36;
+  margin-bottom: 0.5rem;
+}
+.heroText {
+  color: #444;
+  margin-bottom: 1.5rem;
+}
+.primaryBtn {
+  background: #f0a500;
+  color: #232b36;
+  border: none;
+  border-radius: 8px;
+  padding: 0.7rem 1.6rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(240,165,0,0.08);
+  transition: background 0.15s, color 0.15s;
+}
+.primaryBtn:hover {
+  background: #232b36;
+  color: #fff;
+}
+
+.row {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 0 2rem;
+}
+.card {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(35,43,54,0.07);
+  padding: 1.5rem 1.2rem;
+  min-width: 260px;
+  max-width: 340px;
+  flex: 1 1 260px;
+}
+.actionList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.actionIcon {
+  margin-right: 0.5rem;
+  font-size: 1.1rem;
+}
