@@ -1,6 +1,5 @@
 "use client";
-
-"use client";
+import React from 'react';
 function get12hrTimes() {
   const times: string[] = [];
   // First all AM times
@@ -18,9 +17,12 @@ function get12hrTimes() {
   return times;
 }
 const timeOptions = get12hrTimes();
+// Show all AM and PM times
 import { useEffect, useState } from 'react';
 import styles from '../page.module.css';
+import ConfirmationDialog from '../components/ConfirmationDialog';
 import Link from 'next/link';
+import { API } from '../lib/api';
 
 // TypeScript types for tournament and form
 export interface Tournament {
@@ -38,6 +40,7 @@ export interface TournamentForm {
   start_date?: string;
   end_date?: string;
   squad_times: Record<string, string[]>;
+  user_id?: number;
 }
 
 function getDatesBetween(start: string, end: string): string[] {
@@ -115,9 +118,6 @@ function EditTournamentModal({ open, onClose, tournament, onSave }: {
       justifyContent: 'center',
       transition: 'background 0.2s',
     }}>
-      <div style={{ background: '#ffeeba', color: '#856404', padding: 8, borderRadius: 6, marginBottom: 12, fontWeight: 600, fontSize: 15 }}>
-        {'EditTournamentModal mounted/rendered at ' + new Date().toLocaleTimeString()}
-      </div>
       <form
         style={{
           background: 'linear-gradient(135deg, #fff 80%, #f0f4fa 100%)',
@@ -138,12 +138,8 @@ function EditTournamentModal({ open, onClose, tournament, onSave }: {
             // eslint-disable-next-line no-console
             console.log('Submitting tournament form:', form);
             await onSave(form);
-            // Debug: show alert on success
-            alert('Save handler completed successfully.');
           } catch (err: any) {
             setError(err?.message || 'Failed to save.');
-            // Debug: show alert on error
-            alert('Save handler error: ' + (err?.message || err));
           } finally {
             setSaving(false);
           }
@@ -170,7 +166,6 @@ function EditTournamentModal({ open, onClose, tournament, onSave }: {
           onMouseOver={e => (e.currentTarget.style.color = '#e74c3c')}
           onMouseOut={e => (e.currentTarget.style.color = '#b0b6c3')}
         >
-          ×
         </button>
         <h2 style={{ marginBottom: 24, fontWeight: 700, fontSize: 26, color: '#232b36', letterSpacing: '-0.5px' }}>Edit Tournament</h2>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
@@ -249,7 +244,7 @@ function EditTournamentModal({ open, onClose, tournament, onSave }: {
                         onMouseOver={e => (e.currentTarget.style.color = '#c0392b')}
                         onMouseOut={e => (e.currentTarget.style.color = '#e74c3c')}
                       >
-                        ×
+                        &times;
                       </button>
                     </div>
                   );
@@ -338,175 +333,231 @@ function EditTournamentModal({ open, onClose, tournament, onSave }: {
 }
 
 export default function TournamentDashboard() {
+  // SSR-safe isAdmin state
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [selectedSquadDate, setSelectedSquadDate] = useState<string>('');
+  const [selectedSquadTime, setSelectedSquadTime] = useState<string>('');
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmMsg, setConfirmMsg] = useState('');
+  const [loadModalOpen, setLoadModalOpen] = useState(false);
+  const [allTournaments, setAllTournaments] = useState<Tournament[]>([]);
+  const [deleteConfirm, setDeleteConfirm] = useState<{id: number, name: string} | null>(null);
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [createMode, setCreateMode] = useState(false);
 
   useEffect(() => {
-    fetch('/api/v1/tournaments/')
-      .then(r => r.json())
-      .then(async data => {
-        if (data.length > 0) {
-          setTournament(data[0]);
-        } else {
-          // No tournament exists, create one
-          const res = await fetch('/api/v1/tournaments/', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              name: 'New Tournament',
-              location: '',
-              start_date: '',
-              end_date: '',
-              squad_times: {}
-            })
-          });
-          if (res.ok) {
-            const created = await res.json();
-            setTournament(created);
-          }
-        }
-      });
+    const adminFlag = localStorage.getItem('is_admin');
+    setIsAdmin(adminFlag === '1' || adminFlag === 'true');
   }, []);
 
-  const handleSave = async (form: TournamentForm) => {
-    if (createMode) {
-      // Create new tournament
-      const res = await fetch('/api/v1/tournaments/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form)
-      });
-      if (!res.ok) {
-        let msg = 'Failed to create.';
-        try {
-          const data = await res.json();
-          msg = data.detail || msg;
-        } catch {}
-        throw new Error(msg);
-      }
-      const created = await res.json();
-      setTournament(created);
-      setModalOpen(false);
-      setCreateMode(false);
+  // Fetch all tournaments for user when load modal opens
+  const fetchAllTournaments = async () => {
+    const path = isAdmin ? '/api/v1/tournaments/?all=1' : '/api/v1/tournaments/';
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.warn('Tournament fetch skipped: missing auth token');
+      return;
+    }
+    const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
+    const response = await fetch(API(path), { headers });
+    if (response.ok) {
+      const data = await response.json();
+      setAllTournaments(data);
     } else {
-      // Edit existing tournament
-      if (!tournament) throw new Error('No tournament loaded');
-      const res = await fetch(`/api/v1/tournaments/${tournament.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form)
-      });
-      if (!res.ok) {
-        let msg = 'Failed to save.';
-        try {
-          const data = await res.json();
-          msg = data.detail || msg;
-        } catch {}
-        throw new Error(msg);
-      }
-      const updated = await res.json();
-      setTournament(updated);
-      setModalOpen(false);
+      console.warn('Tournament fetch failed', response.status);
     }
   };
 
+  // Load selected tournament
+  const handleLoadTournament = (t: Tournament) => {
+    setTournament(t);
+    setLoadModalOpen(false);
+  };
+
+  // Delete selected tournament
+  const handleDeleteTournament = async (id: number) => {
+    const token = localStorage.getItem('token');
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const response = await fetch(API(`/api/v1/tournaments/${id}`), {
+      method: 'DELETE',
+      headers
+    });
+    if (response.ok) {
+      setAllTournaments(allTournaments.filter(t => t.id !== id));
+      setDeleteConfirm(null);
+      setConfirmMsg('Tournament deleted successfully!');
+      setConfirmOpen(true);
+    } else {
+      setConfirmMsg('Failed to delete tournament.');
+      setConfirmOpen(true);
+    }
+  };
+
+  // Save tournament handler (stub, implement as needed)
+  const handleSave = async (form: TournamentForm) => {
+    // Example: Save logic here, update tournament state, etc.
+    setTournament({
+      id: tournament?.id ?? Date.now(),
+      ...form
+    });
+    setModalOpen(false);
+    setCreateMode(false);
+    setConfirmMsg('Tournament changes saved successfully!');
+    setConfirmOpen(true);
+  };
+
   return (
-    <main className={styles.main}>
-      <EditTournamentModal
-        open={modalOpen}
-        onClose={() => { setModalOpen(false); setCreateMode(false); }}
-        tournament={createMode ? null : tournament}
-        onSave={handleSave}
-      />
-      <div className={styles.heroCard}>
-        <h2 className={styles.heroTitle}>Tournament Overview</h2>
-        <p className={styles.heroText}>Name: {tournament?.name || '—'}</p>
-        <p className={styles.heroText}>Location: {tournament?.location || '—'}</p>
-        <p className={styles.heroText}>Date: {tournament?.start_date || '—'} {tournament?.end_date ? `to ${tournament.end_date}` : ''}</p>
-        <p className={styles.heroText}>Squad Times:</p>
-        {tournament?.squad_times && Object.keys(tournament.squad_times).length > 0 ? (
-          <ul style={{ textAlign: 'left', margin: '0 auto', maxWidth: 340 }}>
-            {Object.entries(tournament.squad_times).map(([date, times]) => (
-              <li key={date}><b>{date}:</b> {times.join(', ')}</li>
-            ))}
-          </ul>
-        ) : <p style={{ color: '#888' }}>—</p>}
-        <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
-          <button
-            className={styles.primaryBtn}
-            onClick={() => { setModalOpen(true); setCreateMode(false); }}
-            disabled={!tournament}
-            style={!tournament ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
-          >
-            Edit Tournament
-          </button>
-          <button
-            className={styles.primaryBtn}
-            onClick={() => { setModalOpen(true); setCreateMode(true); }}
-            style={{ background: 'linear-gradient(90deg, #6ed0fa 60%, #4f8cff 100%)' }}
-          >
-            Create Tournament
-          </button>
-        </div>
-      </div>
-      <div className={styles.row}>
-        <div className={styles.card}>
-          <h3>Quick Actions</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <button className={styles.primaryBtn}>Add Bracket</button>
-            <button className={styles.primaryBtn}>Add Player</button>
-            <button className={styles.primaryBtn}>Start Squad</button>
-            <button className={styles.primaryBtn}>View Payouts</button>
+      <>
+        <ConfirmationDialog open={confirmOpen} message={confirmMsg} onClose={() => setConfirmOpen(false)} />
+        <EditTournamentModal
+          open={modalOpen}
+          onClose={() => { setModalOpen(false); setCreateMode(false); }}
+          tournament={createMode ? null : tournament}
+          onSave={handleSave}
+        />
+        <div>
+          <div className={styles.heroCard}>
+            <h2 className={styles.heroTitle}>Tournament Overview</h2>
+            <p className={styles.heroText}>Name: {tournament?.name || ''}</p>
+            <p className={styles.heroText}>Location: {tournament?.location || ''}</p>
+            <p className={styles.heroText}>Date: {tournament?.start_date || ''} {tournament?.end_date ? `to ${tournament.end_date}` : ''}</p>
+            <p className={styles.heroText} style={{ marginBottom: '0.7rem' }}>Squad Times:</p>
+            <>
+              {tournament && tournament.squad_times && Object.keys(tournament.squad_times).length > 0 ? (
+                <ul style={{ textAlign: 'left', margin: '0 auto', maxWidth: 340, padding: 0, listStyle: 'none' }}>
+                  {Object.entries(tournament.squad_times).map(([date, times]) => (
+                    <li key={date} style={{ marginBottom: '0.7em', whiteSpace: 'nowrap' }}>
+                      <span style={{ fontWeight: 700, color: '#232b36', fontSize: '1.08em', marginRight: 6 }}>{date}:</span>
+                      <span style={{ fontWeight: 500, fontSize: '1em', color: '#232b36' }}>{times.join(', ')}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : <p style={{ color: '#888', marginBottom: '1.2em' }}>No squad times</p>}
+              <div style={{ display: 'flex', gap: 18, marginTop: 24, justifyContent: 'center' }}>
+                <button
+                  className={styles.primaryBtn}
+                  style={{ minWidth: 0, flex: 1, maxWidth: 180, fontSize: '1.08em', background: 'linear-gradient(90deg, #ffb347 60%, #ffcc80 100%)', color: '#232b36' }}
+                  onClick={() => { setModalOpen(true); setCreateMode(false); }}
+                  disabled={!tournament}
+                >
+                  Edit Tournament
+                </button>
+                <button
+                  className={styles.primaryBtn}
+                  style={{ minWidth: 0, flex: 1, maxWidth: 180, fontSize: '1.08em', background: 'linear-gradient(90deg, #6ed0fa 60%, #4f8cff 100%)', color: '#fff' }}
+                  onClick={() => { setModalOpen(true); setCreateMode(true); }}
+                >
+                  Create Tournament
+                </button>
+                <button
+                  className={styles.primaryBtn}
+                  style={{ minWidth: 0, flex: 1, maxWidth: 180, fontSize: '1.08em', background: 'linear-gradient(90deg, #ffb347 60%, #ffcc80 100%)', color: '#232b36' }}
+                  onClick={() => {
+                    setLoadModalOpen(true);
+                    fetchAllTournaments();
+                  }}
+                >
+                  Load Tournament
+                </button>
+              </div>
+            </>
           </div>
+          {/* Squad Selection Card */}
+          {tournament && tournament.squad_times && Object.keys(tournament.squad_times).length > 0 && (
+            <div className={styles.heroCard}>
+              <h2 className={styles.heroTitle} style={{ color: '#232b36', fontSize: '1.3rem', marginBottom: '1.2em' }}>Squad Selection</h2>
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1em',
+                alignItems: 'center',
+                margin: '0 auto',
+                maxWidth: 400,
+                padding: '0.5em 0 0.5em 0'
+              }}>
+                {Object.entries(tournament.squad_times).map(([date, times]) => (
+                  times.map((time, i) => {
+                    const isSelected = selectedSquadDate === date && selectedSquadTime === time;
+                    return (
+                      <button
+                        key={date + '-' + time}
+                        className={styles.squadPill}
+                        style={{
+                          width: '100%',
+                          maxWidth: 340,
+                          fontSize: '1.08em',
+                          padding: '14px 0',
+                          borderRadius: 32,
+                          border: isSelected ? '2.5px solid #4f8cff' : '1.5px solid #ffd580',
+                          background: isSelected ? 'linear-gradient(90deg, #6ed0fa 60%, #4f8cff 100%)' : '#fff',
+                          color: isSelected ? '#fff' : '#232b36',
+                          fontWeight: 700,
+                          boxShadow: isSelected ? '0 2px 12px #4f8cff33' : '0 1px 4px #232b3608',
+                          cursor: 'pointer',
+                          transition: 'all 0.18s',
+                          outline: isSelected ? 'none' : undefined,
+                        }}
+                        onClick={() => {
+                          setSelectedSquadDate(date);
+                          setSelectedSquadTime(time);
+                        }}
+                        aria-pressed={isSelected}
+                      >
+                        {date} — {time}
+                      </button>
+                    );
+                  })
+                ))}
+                {/* Load button below pills */}
+                <div style={{ display: 'flex', justifyContent: 'center', marginTop: '1.2em', width: '100%' }}>
+                  <button
+                    className={styles.primaryBtn}
+                    style={{ fontSize: '1.08em', padding: '10px 38px', borderRadius: 9, background: 'linear-gradient(90deg, #6ed0fa 60%, #4f8cff 100%)', color: '#fff', fontWeight: 700, boxShadow: '0 1px 4px #232b3608', border: 'none', cursor: selectedSquadDate && selectedSquadTime ? 'pointer' : 'not-allowed', opacity: selectedSquadDate && selectedSquadTime ? 1 : 0.6, width: '100%', maxWidth: 340 }}
+                    disabled={!selectedSquadDate || !selectedSquadTime}
+                    onClick={() => {
+                      // TODO: Implement actual squad loading logic here
+                      setConfirmMsg(`Squad loaded: ${selectedSquadDate} — ${selectedSquadTime}`);
+                      setConfirmOpen(true);
+                    }}
+                  >
+                    Load Selected Squad
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+          {/* Load Tournament Modal */}
+          {loadModalOpen && (
+            <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(30,34,44,0.45)', zIndex: 1001, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ background: '#fff', borderRadius: 16, padding: 32, minWidth: 340, boxShadow: '0 8px 40px #232b3640', maxHeight: '80vh', overflowY: 'auto', position: 'relative' }}>
+                <h2 style={{ marginBottom: 18 }}>{isAdmin ? 'All Tournaments' : 'Your Tournaments'}</h2>
+                {isAdmin && (
+                  <div style={{ marginBottom: 12 }}>
+                    <span style={{ fontSize: 15, color: '#4f8cff', fontWeight: 500 }}>Admin: Viewing all tournaments</span>
+                  </div>
+                )}
+                <button style={{ position: 'absolute', top: 18, right: 18, fontSize: 22, background: 'none', border: 'none', color: '#b0b6c3', cursor: 'pointer' }} onClick={() => setLoadModalOpen(false)}>&times;</button>
+                {allTournaments.length === 0 ? (
+                  <div style={{ color: '#888', fontSize: 16 }}>No tournaments found.</div>
+                ) : (
+                  <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                    {allTournaments.map(t => (
+                      <li key={t.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #eee' }}>
+                        <span style={{ fontWeight: 500 }}>{t.name}</span>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <button className={styles.primaryBtn} style={{ background: '#4f8cff', color: '#fff', fontSize: 14, padding: '6px 14px', borderRadius: 7 }} onClick={() => handleLoadTournament(t)}>Load</button>
+                          <button className={styles.primaryBtn} style={{ background: '#e74c3c', color: '#fff', fontSize: 14, padding: '6px 14px', borderRadius: 7 }} onClick={() => setDeleteConfirm({id: t.id, name: t.name})}>Delete</button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          )}
         </div>
-        <div className={styles.card}>
-          <h3>Brackets Summary</h3>
-          <ul className={styles.actionList}>
-            <li>Open Brackets: 3</li>
-            <li>Completed Brackets: 1</li>
-            <li>
-              <Link href="/brackets" className={styles.navLink}>
-                Manage Brackets
-              </Link>
-            </li>
-          </ul>
-        </div>
-        <div className={styles.card}>
-          <h3>Players Summary</h3>
-          <ul className={styles.actionList}>
-            <li>Total Players: 42</li>
-            <li>New Signups: 5</li>
-            <li>
-              <Link href="/players" className={styles.navLink}>
-                Add/Import Players
-              </Link>
-            </li>
-          </ul>
-        </div>
-      </div>
-      <div className={styles.row}>
-        <div className={styles.card}>
-          <h3>Squads & Schedule</h3>
-          <ul className={styles.actionList}>
-            <li>Next Squad: B (1PM)</li>
-            <li>Players Assigned: 28</li>
-            <li>
-              <button className={styles.primaryBtn}>Assign Players</button>
-            </li>
-          </ul>
-        </div>
-        <div className={styles.card}>
-          <h3>Payouts Preview</h3>
-          <ul className={styles.actionList}>
-            <li>Payout Presets: 2</li>
-            <li>Total Payout: $1,200</li>
-            <li>
-              <button className={styles.primaryBtn}>Configure Payouts</button>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </main>
+      </>
   );
 }

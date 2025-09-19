@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from sqlalchemy.orm import Session
 from ...core import models, schemas
 from ...api import deps
@@ -7,13 +7,18 @@ import json
 router = APIRouter()
 
 @router.post("/", response_model=schemas.Tournament)
-def create_tournament(tournament: schemas.TournamentCreate, db: Session = Depends(deps.get_db)):
+def create_tournament(
+    tournament: schemas.TournamentCreate,
+    db: Session = Depends(deps.get_db),
+    user = Depends(deps.get_current_user)
+):
     db_tournament = models.Tournament(
         name=tournament.name,
         location=tournament.location,
         start_date=tournament.start_date,
         end_date=tournament.end_date,
-        squad_times=json.dumps(tournament.squad_times)
+        squad_times=json.dumps(tournament.squad_times),
+        user_id=user.id
     )
     db.add(db_tournament)
     db.commit()
@@ -25,8 +30,16 @@ def create_tournament(tournament: schemas.TournamentCreate, db: Session = Depend
     return result
 
 @router.get("/", response_model=list[schemas.Tournament])
-def list_tournaments(db: Session = Depends(deps.get_db)):
-    tournaments = db.query(models.Tournament).all()
+def list_tournaments(
+    request: Request,
+    db: Session = Depends(deps.get_db),
+    user = Depends(deps.get_current_user)
+):
+    show_all = request.query_params.get('all') == '1'
+    if show_all and getattr(user, 'is_admin', False):
+        tournaments = db.query(models.Tournament).all()
+    else:
+        tournaments = db.query(models.Tournament).filter(models.Tournament.user_id == user.id).all()
     # Build response with squad_times parsed as dict
     result = []
     for t in tournaments:
@@ -39,7 +52,11 @@ def list_tournaments(db: Session = Depends(deps.get_db)):
     return result
 
 @router.get("/{tournament_id}", response_model=schemas.Tournament)
-def get_tournament(tournament_id: int, db: Session = Depends(deps.get_db)):
+def get_tournament(
+    tournament_id: int,
+    db: Session = Depends(deps.get_db),
+    user = Depends(deps.get_current_user)
+):
     t = db.query(models.Tournament).filter(models.Tournament.id == tournament_id).first()
     if not t:
         raise HTTPException(status_code=404, detail="Tournament not found")
@@ -51,7 +68,12 @@ def get_tournament(tournament_id: int, db: Session = Depends(deps.get_db)):
     return t_dict
 
 @router.put("/{tournament_id}", response_model=schemas.Tournament)
-def update_tournament(tournament_id: int, tournament: schemas.TournamentUpdate, db: Session = Depends(deps.get_db)):
+def update_tournament(
+    tournament_id: int,
+    tournament: schemas.TournamentUpdate,
+    db: Session = Depends(deps.get_db),
+    user = Depends(deps.get_current_user)
+):
     db_t = db.query(models.Tournament).filter(models.Tournament.id == tournament_id).first()
     if not db_t:
         raise HTTPException(status_code=404, detail="Tournament not found")
@@ -71,7 +93,11 @@ def update_tournament(tournament_id: int, tournament: schemas.TournamentUpdate, 
     return result
 
 @router.delete("/{tournament_id}")
-def delete_tournament(tournament_id: int, db: Session = Depends(deps.get_db)):
+def delete_tournament(
+    tournament_id: int,
+    db: Session = Depends(deps.get_db),
+    user = Depends(deps.get_current_user)
+):
     db_t = db.query(models.Tournament).filter(models.Tournament.id == tournament_id).first()
     if not db_t:
         raise HTTPException(status_code=404, detail="Tournament not found")

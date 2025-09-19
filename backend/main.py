@@ -1,6 +1,8 @@
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import os
+from app.api.v1.tournaments import router as tournaments_router
 
 app = FastAPI()
 
@@ -15,20 +17,11 @@ if _origins_raw == "*" or "*" in origins:
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_origin_regex=r"https?://(localhost|127\\.0\\.0\\.1)(:\\d+)?",
+    allow_origin_regex=r"https?://(localhost|127\\.0\\.1)(:\\d+)?",
     allow_credentials=allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-@app.get("/api/v1/tournaments/")
-async def read_tournaments():
-    return [{"id": 1, "name": "Tournament 1"}, {"id": 2, "name": "Tournament 2"}]
-
-@app.post("/api/v1/tournaments/")
-async def create_tournament(tournament: dict):
-    return {"id": 3, "name": tournament["name"]}
-
-@app.put("/api/v1/tournaments/{tournament_id}")
-async def update_tournament(tournament_id: int, tournament: dict):
-    return {"id": tournament_id, "name": tournament["name"]}
+# Include the tournaments router for all /api/v1/tournaments endpoints
+app.include_router(tournaments_router, prefix="/api/v1/tournaments")

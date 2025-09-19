@@ -1,8 +1,8 @@
 
 FROM node:20-alpine
 WORKDIR /app
-COPY package.json package-lock.json* yarn.lock* pnpm-lock.yaml* ./
-RUN npm ci || yarn install || pnpm install
+COPY package.json yarn.lock* ./
+RUN yarn install
 COPY . .
 EXPOSE 3000
-CMD ["npm", "run", "dev"]
+CMD ["yarn", "dev"]

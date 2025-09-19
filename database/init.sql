@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS bracket (
 -- Tournaments used by the dashboard
 CREATE TABLE IF NOT EXISTS tournament (
   id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id),
   name TEXT NOT NULL,
   location TEXT,
   start_date TEXT,
@@ -30,4 +31,16 @@ CREATE TABLE IF NOT EXISTS entry (
   bracket_id INTEGER REFERENCES bracket(id) ON DELETE CASCADE,
   bowler_id INTEGER REFERENCES bowler(id) ON DELETE CASCADE,
   paid BOOLEAN DEFAULT FALSE
+);
+
+-- Users table for authentication and admin
+CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  username TEXT NOT NULL UNIQUE,
+  email TEXT NOT NULL UNIQUE,
+  first_name TEXT NOT NULL,
+  last_name TEXT NOT NULL,
+  organization TEXT,
+  password TEXT NOT NULL,
+  is_admin BOOLEAN DEFAULT FALSE
 );
