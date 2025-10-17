@@ -550,7 +550,7 @@ export default function PayoutsPage() {
         Switch to {activeTab === 'payouts' ? 'Entries' : 'Payouts'}
       </EnhancedButton>
     </div>
-  ), [tournament, loading, activeTab, autoRefreshEnabled, getTimeSinceRefresh])
+  ), [activeTab, autoRefreshEnabled, getTimeSinceRefresh]) // tournament and loading removed as unnecessary
 
   usePageHeader({
     title: 'Payouts',
@@ -565,14 +565,14 @@ export default function PayoutsPage() {
   // Load current tournament on mount
   useEffect(() => {
     loadCurrentTournament()
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-load payout data when tournament or squad is available/changes
   useEffect(() => {
     if (tournament) {
       loadPayoutData()
     }
-  }, [tournament, selectedSquad])
+  }, [tournament, selectedSquad]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-refresh functionality
   useEffect(() => {
@@ -584,7 +584,7 @@ export default function PayoutsPage() {
     }, 30000) // Refresh every 30 seconds
 
     return () => clearInterval(interval)
-  }, [autoRefreshEnabled, tournament, selectedSquad])
+  }, [autoRefreshEnabled, tournament, selectedSquad]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadPayoutData = async () => {
     if (!tournament) return

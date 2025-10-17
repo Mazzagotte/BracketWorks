@@ -455,7 +455,7 @@ function EntriesPageContent() {
       })
       .catch(err => logger.error('Error fetching bracket settings', { error: err?.message }));
     }
-  }, []);
+  }, [token]);
 
   // Mobile detection
   useEffect(() => {

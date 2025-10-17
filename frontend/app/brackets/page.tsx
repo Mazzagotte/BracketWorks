@@ -811,7 +811,7 @@ export default function BracketsPage() {
     if (isHydrated) {
       loadTournament()
     }
-  }, [isHydrated, loadTournament])
+  }, [isHydrated]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Load players when squad changes
   useEffect(() => {
@@ -825,7 +825,7 @@ export default function BracketsPage() {
         localStorage.setItem(`selectedSquad_${tournament.id}`, selectedSquad.id.toString())
       }
     }
-  }, [tournament, selectedSquad, isHydrated, loadPlayers, loadExistingBrackets])
+  }, [tournament, selectedSquad, isHydrated]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-refresh bracket data every 30 seconds
   useEffect(() => {
@@ -1041,7 +1041,7 @@ export default function BracketsPage() {
                     Ready to Generate Brackets
                   </h3>
                   <p>
-                    Configure your bracket settings above and click &quot;Generate Bracket&quot; to create tournament brackets.
+                    Configure your bracket settings above and click "Generate Bracket" to create tournament brackets.
                   </p>
                   {players.length > 0 && (
                     <p style={{ marginTop: '0.5rem', color: '#059669', fontWeight: '600' }}>
