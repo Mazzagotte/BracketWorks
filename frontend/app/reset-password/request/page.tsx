@@ -417,7 +417,7 @@ export default function RequestResetPage() {
             color: '#1a1f2e',
             textAlign: 'center'
           }}>Reset Password</h2>
-          <div className="login-subtitle">Enter your email address and we'll send you a reset code.</div>
+          <div className="login-subtitle">Enter your email address and we&apos;ll send you a reset code.</div>
         </div>
 
         <form onSubmit={handleRequest} className="login-form">

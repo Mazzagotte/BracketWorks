@@ -440,7 +440,7 @@ export default function SignupPage() {
             </div>
             {fieldValidation.confirmPassword === true && <span className="validation-check">✓</span>}
             {fieldValidation.confirmPassword === false && confirmPassword && (
-              <span className="validation-error">Passwords don't match</span>
+              <span className="validation-error">Passwords don&apos;t match</span>
             )}
           </div>
 

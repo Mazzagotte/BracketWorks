@@ -13,6 +13,15 @@ import { HeaderProvider, useHeader } from './lib/header-context';
 import { logger } from './lib/logger';
 
 function ClientLayout({ children }: { children: React.ReactNode }) {
+  // All hooks must be called before any conditional returns
+  const headerContext = useHeader();
+  const [isLoginPage, setIsLoginPage] = useState(false);
+  const [firstName, setFirstName] = useState<string | undefined>(undefined);
+  const [isMobile, setIsMobile] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState('');
+  const [mounted, setMounted] = useState(false);
+
   let user, isAuthenticated;
   
   try {
@@ -28,14 +37,6 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
-
-  const headerContext = useHeader();
-  const [isLoginPage, setIsLoginPage] = useState(false);
-  const [firstName, setFirstName] = useState<string | undefined>(undefined);
-  const [isMobile, setIsMobile] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState('');
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);

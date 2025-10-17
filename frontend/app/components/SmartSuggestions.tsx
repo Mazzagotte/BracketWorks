@@ -390,7 +390,7 @@ export default function SmartSuggestions({
             color: '#6b7280',
             fontSize: '14px'
           }}>
-            Combining "{firstName} {lastName}" with existing player "{selectedDuplicate?.player.firstName} {selectedDuplicate?.player.lastName}"
+            Combining &quot;{firstName} {lastName}&quot; with existing player &quot;{selectedDuplicate?.player.firstName} {selectedDuplicate?.player.lastName}&quot;
           </p>
           
           {/* Confidence Score */}

@@ -100,16 +100,9 @@ function EntriesPageContent() {
   const [isMobile, setIsMobile] = useState(false);
   
   // Safe auth handling with proper error catching
-  let auth: any = null;
+  const auth = useAuth();
   let authError: string | null = null;
   
-  try {
-    auth = useAuth();
-  } catch (error) {
-    console.error('Auth context error:', error);
-    authError = 'Authentication context is not available. Please refresh the page.';
-  }
-
   // Check authentication status
   const isAuthenticated = auth && auth.isAuthenticated;
   const { token, user } = auth || {};
