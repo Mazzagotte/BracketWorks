@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import { API } from '../lib/api'
 import { usePageHeader } from '../lib/header-context'
@@ -837,7 +837,7 @@ function EntriesPageContent() {
     calculateFilterStats(filtered);
     
     return filtered;
-  }, [players, searchTerm, filterDivision, filterPayment, searchUSBC, avgMin, avgMax, sortBy, sortDirection]);
+  }, [players, searchTerm, filterDivision, filterPayment, searchUSBC, avgMin, avgMax, sortBy, sortDirection, calculateFilterStats]);
 
   // Apply pagination
   const paginationHook = usePagination({
@@ -896,7 +896,7 @@ function EntriesPageContent() {
   const [selectedSquad, setSelectedSquad] = useState<any | null>(null);
 
   // Function to fetch players based on current tournament and squad
-  const fetchPlayers = async () => {
+  const fetchPlayers = useCallback(async () => {
     const lastTournamentId = localStorage.getItem('lastTournamentId');
     const token = localStorage.getItem('token');
     
@@ -943,7 +943,7 @@ function EntriesPageContent() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [selectedSquad]);
 
   // Set up page header with player management actions
   const playerHeaderActions = useMemo(() => (
@@ -978,7 +978,7 @@ function EntriesPageContent() {
     if (squads.length > 0) {
       fetchPlayers();
     }
-  }, [selectedSquad, squads]);
+  }, [selectedSquad, squads, fetchPlayers]);
 
   useEffect(() => {
     const lastTournamentId = localStorage.getItem('lastTournamentId');
@@ -2751,8 +2751,23 @@ function EntriesPageContent() {
   )
 }
 
-// Export with error boundary wrapper
+// Export with error boundary wrapper and client-side only rendering
 export default function EntriesPage() {
+  // Ensure this only renders on the client side
+  const [isClient, setIsClient] = useState(false);
+  
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+  
+  if (!isClient) {
+    return (
+      <div style={{ padding: '2rem', textAlign: 'center' }}>
+        <div>Loading...</div>
+      </div>
+    );
+  }
+  
   return (
     <ErrorBoundary>
       <EntriesPageContent />

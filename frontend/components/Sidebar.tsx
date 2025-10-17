@@ -1,6 +1,7 @@
 "use client";
 "use client";
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '../app/lib/auth-context';
 import { logger } from '../app/lib/logger';
@@ -84,14 +85,18 @@ export default function Sidebar({ firstName, isMobile = false, isOpen = false, o
         <Link href="/" style={{ transition: 'transform 0.2s ease', display: 'inline-block' }} 
               onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
               onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}>
-          <img src="/logo.png" alt="BracketWorks Logo" style={{ 
-            width: '68px', 
-            height: '68px', 
-            marginBottom: '12px', 
-            borderRadius: '18px', 
-            boxShadow: '0 4px 16px rgba(0,0,0,0.25), 0 2px 8px rgba(240,165,0,0.1)',
-            border: '2px solid rgba(240,165,0,0.2)'
-          }} />
+          <Image 
+            src="/logo.png" 
+            alt="BracketWorks Logo" 
+            width={68}
+            height={68}
+            style={{ 
+              marginBottom: '12px', 
+              borderRadius: '18px', 
+              boxShadow: '0 4px 16px rgba(0,0,0,0.25), 0 2px 8px rgba(240,165,0,0.1)',
+              border: '2px solid rgba(240,165,0,0.2)'
+            }} 
+          />
         </Link>
         <span style={{ 
           color: '#fff', 

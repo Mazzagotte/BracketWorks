@@ -414,7 +414,7 @@ export const utils = {
   },
 } as const
 
-export default {
+const designSystem = {
   typography,
   colors,
   spacing,
@@ -426,3 +426,5 @@ export default {
   animations,
   utils,
 }
+
+export default designSystem

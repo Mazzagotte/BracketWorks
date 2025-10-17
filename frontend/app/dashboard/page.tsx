@@ -131,7 +131,12 @@ function EditTournamentModal({ open, onClose, tournament, onSave, isMobile }: {
   const [error, setError] = useState<string | null>(null);
   // Track which input to focus (date, index)
   const [focusTime, setFocusTime] = useState<{date: string, idx: number} | null>(null);
-  const timeInputs: Record<string, Array<HTMLInputElement | null>> = {};
+  
+  // Memoize timeInputs to prevent recreation on every render
+  const timeInputs = useMemo(() => {
+    const inputs: Record<string, Array<HTMLInputElement | null>> = {};
+    return inputs;
+  }, []);
 
   useEffect(() => {
     if (tournament) {

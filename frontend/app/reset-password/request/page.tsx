@@ -1,5 +1,6 @@
 ﻿"use client";
 import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import { API } from "../../lib/api";
 import { useToast } from "../../components/Toast";
 import "../../styles/login.css";
@@ -170,7 +171,7 @@ export default function RequestResetPage() {
       document.removeEventListener('keydown', handleKeyDown);
       clearInterval(qualityInterval);
     };
-  }, [retryQueue, loading, fieldErrors.email, email, addToast]);
+  }, [retryQueue, loading, fieldErrors.email, email, addToast, handleRequest]);
 
   // Validation function
   const validateField = (fieldName: string, value: string): string => {
@@ -387,12 +388,12 @@ export default function RequestResetPage() {
       <div className="enhanced-card">
         <div className="header-section">
           <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-            <img 
+            <Image 
               src="/logo.png" 
               alt="BracketWorks Logo" 
+              width={72}
+              height={72}
               style={{
-                width: '72px',
-                height: '72px',
                 borderRadius: '16px',
                 marginBottom: '16px'
               }}

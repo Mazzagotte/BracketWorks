@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import { API } from "../lib/api";
 import "../styles/bowling-animations.css";
 import { LoadingButton, Spinner } from "../components/LoadingComponents";
@@ -69,7 +70,7 @@ export default function LoginPage() {
         clearTimeout(passwordVisibilityTimer);
       }
     };
-  }, [showPassword, addToast]);
+  }, [showPassword, addToast, passwordVisibilityTimer]);
 
   // Caps lock detection
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -283,7 +284,7 @@ export default function LoginPage() {
             borderRadius: '20px',
             border: '1px solid rgba(240, 165, 0, 0.15)'
           }}>
-            <img 
+            <Image 
               src="/logo.png" 
               alt="BracketWorks Logo" 
               width={72} 

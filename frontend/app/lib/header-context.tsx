@@ -1,5 +1,5 @@
 "use client";
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 
 interface HeaderContextType {
   title?: string;
@@ -71,15 +71,17 @@ export function usePageHeader(props: {
 }) {
   const { setHeaderProps, clearHeaderProps } = useHeader();
 
+  // Memoize breadcrumbs serialization to avoid complex expressions in dependency array
+  const breadcrumbsString = useMemo(() => {
+    return JSON.stringify(props.breadcrumbs);
+  }, [props.breadcrumbs]);
+
   useEffect(() => {
     setHeaderProps(props);
     return () => clearHeaderProps();
   }, [
-    props.title, 
-    props.subtitle, 
-    props.centerContent, 
-    props.showBreadcrumbs, 
-    JSON.stringify(props.breadcrumbs)
-    // Intentionally excluding actions, setHeaderProps, clearHeaderProps to prevent infinite loops
+    props, 
+    setHeaderProps, 
+    clearHeaderProps
   ]);
 }

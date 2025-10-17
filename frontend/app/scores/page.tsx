@@ -104,7 +104,7 @@ export default function ScoresPage() {
       window.removeEventListener('online', handleOnline)
       window.removeEventListener('offline', handleOffline)
     }
-  }, [pendingSaves])
+  }, [pendingSaves, addToast, processPendingSaves])
 
   // Mobile detection
   useEffect(() => {
@@ -149,7 +149,7 @@ export default function ScoresPage() {
         </EnhancedButton>
       )}
     </div>
-  ), [pendingSaves.length, addToast])
+  ), [pendingSaves.length, addToast, processPendingSaves])
 
   usePageHeader({
     title: 'Scores',

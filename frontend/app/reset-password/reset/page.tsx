@@ -204,7 +204,7 @@ export default function ResetPasswordPage() {
       window.removeEventListener('offline', handleOffline);
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [retryQueue, loading, fieldErrors, email, code, newPassword, confirmPassword, addToast]);
+  }, [retryQueue, loading, fieldErrors, email, code, newPassword, confirmPassword, addToast, handleReset]);
 
   // Memoized validation function
   const validateField = useCallback((fieldName: string, value: string, confirmValue?: string): string => {
