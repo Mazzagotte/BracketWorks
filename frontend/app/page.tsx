@@ -21,13 +21,9 @@ export default function HomePage() {
     const token = localStorage.getItem('token');
     const userId = localStorage.getItem('user_id');
     
-    console.log('🏠 HomePage check:', { isAuthenticated, token: !!token, userId: !!userId });
-    
     if (!isAuthenticated && !token && !userId) {
-      console.log('🏠 Redirecting to login - no auth found');
       window.location.href = "/login";
     } else if (isAuthenticated || (token && userId)) {
-      console.log('🏠 Redirecting to dashboard - auth found');
       window.location.href = "/dashboard";
     }
   }, [isAuthenticated, mounted]);

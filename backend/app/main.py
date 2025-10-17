@@ -1,8 +1,7 @@
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .core.config import settings
-from .api.v1 import health, bowlers, brackets, tournaments, users, squads, bracket_settings, scores, payouts
+from backend.app.api.v1 import health, bowlers, brackets, tournaments, users, squads, bracket_settings, scores, payouts
 
 app = FastAPI(title="BracketWorks API", version="0.0.1")
 

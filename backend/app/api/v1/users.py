@@ -7,6 +7,7 @@ from ..deps import get_db
 from fastapi.responses import JSONResponse
 from passlib.hash import bcrypt
 from passlib.context import CryptContext
+import logging
 
 # Optimize bcrypt for faster verification (reduce rounds for development)
 pwd_context = CryptContext(
@@ -18,6 +19,8 @@ import secrets
 import time
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -112,14 +115,14 @@ def send_email(to_email: str, subject: str, body: str):
         if settings.SENDGRID_API_KEY:
             sg = SendGridAPIClient(api_key=settings.SENDGRID_API_KEY)
             response = sg.send(message)
-            print(f"Email sent successfully. Status code: {response.status_code}")
+            logger.info(f"Email sent successfully. Status code: {response.status_code}")
             return True
         else:
-            print("SendGrid API key not configured - email not sent")
+            logger.warning("SendGrid API key not configured - email not sent")
             return False
             
     except Exception as e:
-        print(f"Failed to send email: {e}")
+        logger.error(f"Failed to send email: {e}")
         return False
 
 @router.post("/request-password-reset")

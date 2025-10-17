@@ -4,7 +4,7 @@ Payout calculation and winner tracking service for tournament brackets.
 Handles prize distribution based on bracket results and tournament settings.
 """
 
-from typing import Dict, List, Optional, Any
+from typing import Dict, Any
 import logging
 from decimal import Decimal, ROUND_HALF_UP
 

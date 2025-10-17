@@ -4,7 +4,7 @@ Payout management API endpoints for tournament winner tracking and prize distrib
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from typing import List, Optional, Dict, Any
+from typing import Optional, Dict, Any
 import logging
 from datetime import datetime
 

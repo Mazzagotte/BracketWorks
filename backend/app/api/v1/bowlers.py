@@ -86,7 +86,6 @@ def update_bowler(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    print(f"PATCH request for bowler {bowler_id}: {bowler}")
     db_bowler = db.query(models.Bowler).filter(
         models.Bowler.id == bowler_id, 
         models.Bowler.user_id == current_user.id
@@ -102,7 +101,6 @@ def update_bowler(
     
     db.commit()
     db.refresh(db_bowler)
-    print(f"Updated bowler: {db_bowler.name}")
     return db_bowler
 
 @router.delete("/{bowler_id}")
