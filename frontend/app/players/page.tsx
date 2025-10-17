@@ -460,13 +460,17 @@ function EntriesPageContent() {
   // Mobile detection
   useEffect(() => {
     const checkMobile = () => {
-      const width = window.innerWidth;
-      setIsMobile(width <= 768);
+      if (typeof window !== 'undefined') {
+        const width = window.innerWidth;
+        setIsMobile(width <= 768);
+      }
     };
     
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    if (typeof window !== 'undefined') {
+      checkMobile();
+      window.addEventListener('resize', checkMobile);
+      return () => window.removeEventListener('resize', checkMobile);
+    }
   }, []);
 
   // Helper to cancel edit
@@ -855,6 +859,9 @@ function EntriesPageContent() {
   };
   
   useEffect(() => {
+    // Only run on client side
+    if (typeof document === 'undefined') return;
+    
     const style = document.createElement('style');
     style.textContent = `
       .hover-row {
@@ -869,7 +876,9 @@ function EntriesPageContent() {
     document.head.appendChild(style);
     
     return () => {
-      document.head.removeChild(style);
+      if (document.head.contains(style)) {
+        document.head.removeChild(style);
+      }
     };
   }, []);
   const [usbc, setUsbc] = useState('')
@@ -1114,13 +1123,13 @@ function EntriesPageContent() {
             <div className="text-red-500 mb-4">⚠️ Authentication Error</div>
             <p className="text-gray-600">{authError}</p>
             <button 
-              onClick={() => window.location.reload()}
+              onClick={() => typeof window !== 'undefined' && window.location.reload()}
               className="mt-4 mr-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
             >
               Refresh Page
             </button>
             <button 
-              onClick={() => window.location.href = '/login'}
+              onClick={() => typeof window !== 'undefined' && (window.location.href = '/login')}
               className="mt-4 px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600"
             >
               Go to Login
