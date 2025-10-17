@@ -37,6 +37,23 @@ export default function VerifyResetPage() {
     setMounted(true);
   }, []);
 
+  // Process retry queue when connection is restored
+  const processRetryQueue = async () => {
+    if (retryQueue.length > 0 && isOnline) {
+      const retries = [...retryQueue];
+      setRetryQueue([]);
+      
+      for (const retryFn of retries) {
+        try {
+          await retryFn();
+          break;
+        } catch (error) {
+          // Continue to next retry
+        }
+      }
+    }
+  };
+
   // Connection status monitoring
   useEffect(() => {
     const updateOnlineStatus = () => {
@@ -93,23 +110,6 @@ export default function VerifyResetPage() {
       clearInterval(qualityInterval);
     };
   }, [connectionQuality, processRetryQueue]);
-
-  // Process retry queue when connection is restored
-  const processRetryQueue = async () => {
-    if (retryQueue.length > 0 && isOnline) {
-      const retries = [...retryQueue];
-      setRetryQueue([]);
-      
-      for (const retryFn of retries) {
-        try {
-          await retryFn();
-          break;
-        } catch (error) {
-          // Continue to next retry
-        }
-      }
-    }
-  };
 
   // Enhanced fetch with retry logic
   const fetchWithRetry = async (url: string, options: RequestInit, maxRetries = 3): Promise<Response> => {

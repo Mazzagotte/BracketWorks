@@ -120,6 +120,59 @@ export default function ResetPasswordPage() {
     [newPassword, confirmPassword]
   );
 
+  const handleReset = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    setLoading(true);
+    setError('');
+    setMessage('');
+    
+    try {
+      const response = await fetchWithRetry(API('/api/v1/auth/reset-password'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email.trim(),
+          code: code.trim(),
+          new_password: newPassword,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Failed to reset password');
+      }
+
+      setSuccess('Password reset successfully!');
+      setMessage('Your password has been reset successfully. You can now log in with your new password.');
+      
+      addToast({
+        type: 'success',
+        message: 'Password reset successfully! Redirecting to login...',
+        duration: 3000
+      });
+
+      // Redirect to login after 3 seconds
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 3000);
+
+    } catch (err: any) {
+      console.error('Reset password error:', err);
+      setError(err.message || 'Failed to reset password. Please try again.');
+      
+      addToast({
+        type: 'error',
+        message: err.message || 'Failed to reset password',
+        duration: 5000
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [email, code, newPassword, addToast]);
+
   useEffect(() => {
     // Set mounted to prevent hydration mismatch
     setMounted(true);
@@ -327,69 +380,6 @@ export default function ResetPasswordPage() {
     }
   }, []);
 
-  const handleReset = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setMessage("");
-    
-    // Enhanced validation
-    if (!emailValid) {
-      setError("Please enter a valid email address");
-      return;
-    }
-    
-    if (!code.trim()) {
-      setError("Please enter your reset code");
-      return;
-    }
-    
-    if (newPassword !== confirmPassword) {
-      setError("Passwords do not match. Please check both password fields.");
-      return;
-    }
-    
-    if (newPassword.length < 8) {
-      setError("Password must be at least 8 characters long for security");
-      return;
-    }
-    
-    if (passwordStrength < 50) {
-      setError("Please choose a stronger password. Try adding uppercase letters, numbers, or symbols.");
-      return;
-    }
-    
-    setLoading(true);
-    
-    try {
-      // Use optimized fetch with retry
-      const res = await fetchWithRetry(API("/api/v1/users/reset-password"), {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-        },
-        body: JSON.stringify({ email, code, new_password: newPassword }),
-      });
-      
-      const data = await res.json();
-      
-      if (!res.ok) {
-        setError(getErrorMessage(res.status, data.detail));
-        return;
-      }
-      
-      setMessage("Password reset successful! Redirecting to login page...");
-      // Redirect to login after successful reset
-      setTimeout(() => {
-        window.location.href = '/login';
-      }, 3000);
-    } catch (err) {
-      console.error('Reset password error:', err);
-      setError("Network connection failed. Please check your internet and try again.");
-    } finally {
-      setLoading(false);
-    }
-  }, [emailValid, code, newPassword, confirmPassword, passwordStrength, email, getErrorMessage]);
 
   return (
     <div className="reset-password-container">

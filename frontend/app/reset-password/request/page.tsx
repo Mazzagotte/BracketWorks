@@ -171,7 +171,7 @@ export default function RequestResetPage() {
       document.removeEventListener('keydown', handleKeyDown);
       clearInterval(qualityInterval);
     };
-  }, [retryQueue, loading, fieldErrors.email, email, addToast, handleRequest]);
+  }, [retryQueue, loading, fieldErrors.email, email, addToast]);
 
   // Validation function
   const validateField = (fieldName: string, value: string): string => {

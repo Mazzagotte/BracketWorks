@@ -75,6 +75,40 @@ export default function ScoresPage() {
     delay: 2000
   })
 
+  const processPendingSaves = async () => {
+    const saves = [...pendingSaves]
+    setPendingSaves([])
+    
+    for (const saveData of saves) {
+      try {
+        const response = await fetch(API('/api/v1/scores/'), {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${saveData.token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(saveData.data)
+        })
+        
+        if (!response.ok) {
+          // Re-queue failed saves
+          setPendingSaves(prev => [...prev, saveData])
+        }
+      } catch (error) {
+        // Re-queue failed saves
+        setPendingSaves(prev => [...prev, saveData])
+      }
+    }
+    
+    if (pendingSaves.length === 0) {
+      addToast({
+        message: '✅ All offline scores have been synchronized!',
+        type: 'success',
+        duration: 3000
+      })
+    }
+  }
+
   // Online/offline detection
   useEffect(() => {
     const handleOnline = () => {
@@ -160,40 +194,6 @@ export default function ScoresPage() {
         : `${players.length} players`,
     actions: headerActions
   })
-
-  const processPendingSaves = async () => {
-    const saves = [...pendingSaves]
-    setPendingSaves([])
-    
-    for (const saveData of saves) {
-      try {
-        const response = await fetch(API('/api/v1/scores/'), {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${saveData.token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(saveData.data)
-        })
-        
-        if (!response.ok) {
-          // Re-queue failed saves
-          setPendingSaves(prev => [...prev, saveData])
-        }
-      } catch (error) {
-        // Re-queue failed saves
-        setPendingSaves(prev => [...prev, saveData])
-      }
-    }
-    
-    if (pendingSaves.length === 0) {
-      addToast({
-        message: '✅ All offline scores have been synchronized!',
-        type: 'success',
-        duration: 3000
-      })
-    }
-  }
 
   // Fetch tournament, squad, and players data
   useEffect(() => {
