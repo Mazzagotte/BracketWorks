@@ -811,7 +811,7 @@ export default function BracketsPage() {
     if (isHydrated) {
       loadTournament()
     }
-  }, [isHydrated])
+  }, [isHydrated, loadTournament])
 
   // Load players when squad changes
   useEffect(() => {
@@ -825,7 +825,7 @@ export default function BracketsPage() {
         localStorage.setItem(`selectedSquad_${tournament.id}`, selectedSquad.id.toString())
       }
     }
-  }, [tournament, selectedSquad, isHydrated])
+  }, [tournament, selectedSquad, isHydrated, loadPlayers, loadExistingBrackets])
 
   // Auto-refresh bracket data every 30 seconds
   useEffect(() => {

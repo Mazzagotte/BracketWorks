@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   DuplicateGroup, 
   DuplicateMatch, 
@@ -30,14 +30,7 @@ export default function DuplicateDetection({ players, onMergeComplete, onDuplica
   const [showMergeDialog, setShowMergeDialog] = useState(false);
   const [threshold, setThreshold] = useState(0.85);
 
-  // Scan for duplicates on component mount and when players change
-  useEffect(() => {
-    if (players.length > 0) {
-      performDuplicateScan();
-    }
-  }, [players, threshold]);
-
-  const performDuplicateScan = async () => {
+  const performDuplicateScan = useCallback(async () => {
     setIsScanning(true);
     try {
       // Simulate async operation for better UX
@@ -50,7 +43,14 @@ export default function DuplicateDetection({ players, onMergeComplete, onDuplica
     } finally {
       setIsScanning(false);
     }
-  };
+  }, [players, threshold]);
+
+  // Scan for duplicates on component mount and when players change
+  useEffect(() => {
+    if (players.length > 0) {
+      performDuplicateScan();
+    }
+  }, [players, threshold, performDuplicateScan]);
 
   const handleGroupSelect = (group: DuplicateGroup) => {
     setSelectedGroup(group);

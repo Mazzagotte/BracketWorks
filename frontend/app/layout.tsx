@@ -22,6 +22,41 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
   const [currentPage, setCurrentPage] = useState('');
   const [mounted, setMounted] = useState(false);
 
+  useEffect(() => {
+    setMounted(true);
+    const pathname = window.location.pathname;
+    setIsLoginPage(pathname === '/login' || pathname.startsWith('/reset-password'));
+    setCurrentPage(pathname.slice(1) || 'dashboard'); // Remove leading slash
+    setFirstName(localStorage.getItem('first_name') || undefined);
+    
+    // Enhanced mobile detection with better breakpoints
+    const checkMobile = () => {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      const isMobileWidth = width <= 768;
+      const isMobileHeight = height <= 800;
+      const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      setIsMobile(isMobileWidth || (isMobileHeight && isTouchDevice));
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Additional effect for sidebar management
+  useEffect(() => {
+    if (isMobile && sidebarOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMobile, sidebarOpen]);
+
   let user, isAuthenticated;
   
   try {
@@ -37,37 +72,6 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
-
-  useEffect(() => {
-    setMounted(true);
-    const pathname = window.location.pathname;
-    setIsLoginPage(pathname === '/login' || pathname.startsWith('/reset-password'));
-    setCurrentPage(pathname.slice(1) || 'dashboard'); // Remove leading slash
-    setFirstName(localStorage.getItem('first_name') || undefined);
-    
-    // Enhanced mobile detection with better breakpoints
-    const checkMobile = () => {
-      const width = window.innerWidth;
-      setIsMobile(width <= 768);
-      
-      // Auto-close sidebar on larger screens
-      if (width > 768 && sidebarOpen) {
-        setSidebarOpen(false);
-        logger.debug('Auto-closed mobile sidebar on desktop');
-      }
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    
-    // Log screen dimensions for debugging
-    logger.debug('Screen dimensions', { 
-      width: window.innerWidth, 
-      height: window.innerHeight, 
-      isMobile: window.innerWidth <= 768 
-    });
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
 
   return (
     <ToastProvider>
