@@ -1,0 +1,64 @@
+from fastapi import HTTPException, Depends
+from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session, sessionmaker
+
+from ..core import models, utils
+from ..core.config import settings
+
+# Use configuration from settings
+engine = create_engine(
+    settings.DATABASE_URL,
+    echo=settings.DEBUG,
+    pool_size=settings.DATABASE_POOL_SIZE,
+    max_overflow=settings.DATABASE_MAX_OVERFLOW,
+    pool_pre_ping=True,
+    pool_recycle=1800,
+    connect_args={
+        "connect_timeout": 10,
+        "application_name": "bracketworks_api"
+    } if "postgresql" in settings.DATABASE_URL else {}
+)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+def get_db():
+    db: Session = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+oauth2_scheme = OAuth2PasswordBearer(
+    tokenUrl="/api/v1/users/login",
+    auto_error=False,
+)
+
+def get_current_user(
+    token: str | None = Depends(oauth2_scheme),
+    db: Session = Depends(get_db),
+):
+    if not token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    try:
+        payload = utils.decode_access_token(token)
+    except Exception as e:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    
+    if not payload:
+        raise HTTPException(status_code=401, detail="Could not validate credentials")
+    
+    if "sub" not in payload:
+        raise HTTPException(status_code=401, detail="Missing user id in token")
+    
+    user_id = payload["sub"]
+    try:
+        user = db.query(models.User).filter(models.User.id == int(user_id)).first()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Database error")
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return user

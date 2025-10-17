@@ -1,0 +1,300 @@
+/* Modern Login Page Styles - Match Design Exactly */
+
+@keyframes fadeIn {
+  from { 
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Force dark background to match the image */
+body {
+  background: #434955 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Main page container - Match the dark background */
+.login-page-container {
+  min-height: 100vh !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 24px !important;
+  background: #434955 !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  z-index: 1000 !important;
+  overflow: auto !important;
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;
+}
+
+/* Modern login card - Match the white rounded card */
+.enhanced-card {
+  position: relative !important;
+  z-index: 1 !important;
+  width: 100% !important;
+  max-width: 400px !important;
+  padding: 48px 32px !important;
+  background: #ffffff !important;
+  border-radius: 24px !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15) !important;
+  animation: slideUp 0.6s ease-out !important;
+  text-align: center !important;
+}
+
+/* Header section */
+.header-section {
+  text-align: center !important;
+  margin-bottom: 32px !important;
+}
+
+/* Logo container - Keep it simple like the image */
+.logo-container {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 80px !important;
+  height: 80px !important;
+  margin: 0 auto 24px auto !important;
+  padding: 16px !important;
+  background: linear-gradient(135deg, rgba(240, 165, 0, 0.1) 0%, rgba(240, 165, 0, 0.05) 100%) !important;
+  border-radius: 20px !important;
+  border: 1px solid rgba(240, 165, 0, 0.15) !important;
+}
+
+/* Main title - Match the orange/brown color */
+.login-title {
+  font-size: 32px !important;
+  font-weight: 700 !important;
+  margin: 0 0 12px 0 !important;
+  color: #B8860B !important;
+  letter-spacing: -0.5px !important;
+  line-height: 1.2 !important;
+}
+
+/* Subtitle */
+.login-subtitle {
+  color: #6b7280 !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  margin: 0 0 32px 0 !important;
+  line-height: 1.5 !important;
+}
+
+/* Form styling */
+.login-form {
+  margin-top: 0 !important;
+  text-align: left !important;
+}
+
+/* Input containers */
+.input-container, .password-container {
+  margin-bottom: 24px !important;
+  position: relative !important;
+}
+
+/* Input labels */
+.login-form label {
+  display: block !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  color: #374151 !important;
+  margin-bottom: 8px !important;
+}
+
+/* Modern input styling - Match the clean design */
+.login-input, .password-input {
+  width: 100% !important;
+  height: 48px !important;
+  padding: 0 16px !important;
+  font-size: 16px !important;
+  font-weight: 400 !important;
+  border: 2px solid #d1d5db !important;
+  border-radius: 12px !important;
+  background: #ffffff !important;
+  transition: all 0.2s ease !important;
+  outline: none !important;
+  box-shadow: none !important;
+  letter-spacing: 0.3px !important;
+  box-sizing: border-box !important;
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;
+  color: #374151 !important;
+}
+
+.password-input {
+  padding-right: 48px !important;
+}
+
+/* Focus states */
+.login-input:focus, .password-input:focus {
+  border-color: #f0a500 !important;
+  box-shadow: 0 0 0 3px rgba(240, 165, 0, 0.1) !important;
+}
+
+/* Error states - Match the red border in image */
+.login-input.error, .password-input.error,
+.login-input[aria-invalid="true"], .password-input[aria-invalid="true"] {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+}
+
+.login-input::placeholder, .password-input::placeholder {
+  color: #9ca3af !important;
+  font-weight: 400 !important;
+}
+
+/* Password toggle */
+.password-toggle {
+  position: absolute !important;
+  right: 14px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 32px !important;
+  height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: none !important;
+  border: none !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  font-size: 16px !important;
+  color: #6b7280 !important;
+  transition: all 0.2s ease !important;
+}
+
+.password-toggle:hover {
+  background: #f3f4f6 !important;
+  color: #374151 !important;
+}
+
+/* Error message styling */
+.error-container {
+  margin-top: 20px !important;
+}
+
+/* Success message */
+.success-message {
+  margin-top: 20px !important;
+  padding: 16px 20px !important;
+  background: #10b981 !important;
+  color: white !important;
+  border-radius: 12px !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  text-align: center !important;
+}
+
+/* Login button - Match the orange button */
+.login-button {
+  width: 100% !important;
+  height: 48px !important;
+  margin-top: 24px !important;
+  padding: 0 24px !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.3px !important;
+  color: #ffffff !important;
+  background: #f0a500 !important;
+  border: none !important;
+  border-radius: 12px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  position: relative !important;
+  overflow: hidden !important;
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;
+}
+
+.login-button:hover {
+  background: #e6940a !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(240, 165, 0, 0.3) !important;
+}
+
+.login-button:active {
+  transform: translateY(0) !important;
+}
+
+/* Links container - Match the vertical stack */
+.links-container {
+  margin-top: 24px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  align-items: center !important;
+}
+
+/* Link styling - Match the design */
+.signup-link, .forgot-link {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 12px 24px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  text-decoration: none !important;
+  border-radius: 12px !important;
+  transition: all 0.2s ease !important;
+  width: 100% !important;
+  text-align: center !important;
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;
+}
+
+/* Back to Login button - Gray like in image */
+.signup-link {
+  color: #6b7280 !important;
+  background: #f9fafb !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+.signup-link:hover {
+  background: #f3f4f6 !important;
+  border-color: #d1d5db !important;
+}
+
+/* Have a Code button - Light orange like in image */
+.forgot-link {
+  color: #f0a500 !important;
+  background: rgba(240, 165, 0, 0.08) !important;
+  border: 1px solid rgba(240, 165, 0, 0.2) !important;
+}
+
+.forgot-link:hover {
+  background: rgba(240, 165, 0, 0.12) !important;
+  border-color: rgba(240, 165, 0, 0.3) !important;
+}
+
+/* Responsive design */
+@media (max-width: 640px) {
+  .login-page-container {
+    padding: 16px !important;
+  }
+  
+  .enhanced-card {
+    padding: 40px 24px !important;
+    max-width: 100% !important;
+  }
+  
+  .login-title {
+    font-size: 28px !important;
+  }
+}
