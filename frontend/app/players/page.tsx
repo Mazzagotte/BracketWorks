@@ -764,7 +764,7 @@ function EntriesPageContent() {
   // Update active filters when any filter changes
   useEffect(() => {
     updateActiveFilters();
-  }, [searchTerm, filterDivision, filterPayment, avgMin, avgMax]);
+  }, [searchTerm, filterDivision, filterPayment, avgMin, avgMax]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Filter and sort players array
   const filteredPlayers = useMemo(() => {
@@ -1009,7 +1009,7 @@ function EntriesPageContent() {
           });
       }
     }
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Add entry handler
   async function add() {

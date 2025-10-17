@@ -170,7 +170,7 @@ export default function BracketsPage() {
         </>
       )}
     </div>
-  ), [preview, players.length, loading, autoRefresh, loadingPlayers, tournament, selectedSquad?.id])
+  ), [preview, players.length, loading, autoRefresh, loadingPlayers, tournament, selectedSquad?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   usePageHeader({
     title: 'Brackets',
@@ -1041,7 +1041,7 @@ export default function BracketsPage() {
                     Ready to Generate Brackets
                   </h3>
                   <p>
-                    Configure your bracket settings above and click "Generate Bracket" to create tournament brackets.
+                    Configure your bracket settings above and click &quot;Generate Bracket&quot; to create tournament brackets.
                   </p>
                   {players.length > 0 && (
                     <p style={{ marginTop: '0.5rem', color: '#059669', fontWeight: '600' }}>

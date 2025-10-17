@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { API } from '../lib/api'
 import { logger } from '../lib/logger'
 import { usePageHeader } from '../lib/header-context'
@@ -115,12 +115,12 @@ export default function PayoutsPage() {
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date())
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true)
 
-  const getTimeSinceRefresh = () => {
+  const getTimeSinceRefresh = useCallback(() => {
     const diff = Math.floor((new Date().getTime() - lastRefresh.getTime()) / 1000)
     if (diff < 60) return `${diff}s ago`
     if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
     return `${Math.floor(diff / 3600)}h ago`
-  }
+  }, [lastRefresh])
 
   const renderPlayersTable = () => {
     if (!payoutData || !payoutData.winners_by_bracket.length) return null
