@@ -1,5 +1,5 @@
 ﻿"use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import { API } from "../../lib/api";
 import { useToast } from "../../components/Toast";
@@ -67,114 +67,8 @@ export default function RequestResetPage() {
   const emailRef = useRef<HTMLInputElement>(null);
   const { addToast } = useToast();
 
-  useEffect(() => {
-    // Auto-focus email field
-    if (emailRef.current) {
-      emailRef.current.focus();
-    }
-
-    // Connection monitoring
-    const handleOnline = () => {
-      setIsOnline(true);
-      setConnectionQuality(getConnectionQuality());
-      
-      // Process retry queue
-      if (retryQueue.length > 0) {
-        addToast({
-          type: 'info',
-          message: 'Connection restored. Processing pending requests...',
-          duration: 3000
-        });
-        
-        retryQueue.forEach(retryFn => retryFn());
-        setRetryQueue([]);
-      }
-    };
-    
-    const handleOffline = () => {
-      setIsOnline(false);
-      setShowConnectionStatus(true);
-      addToast({
-        type: 'warning',
-        message: 'Connection lost. Requests will be retried automatically.',
-        duration: 5000
-      });
-    };
-
-    const measureConnectionQuality = async () => {
-      if (!navigator.onLine) {
-        setConnectionQuality('poor');
-        setShowConnectionStatus(true);
-        return;
-      }
-
-      const startTime = Date.now();
-      try {
-        // Ping a small endpoint to measure response time
-        await fetch(API('/api/health'), { 
-          method: 'HEAD',
-          cache: 'no-cache',
-          signal: AbortSignal.timeout(5000)
-        });
-        const responseTime = Date.now() - startTime;
-        
-        if (responseTime < 500) {
-          setConnectionQuality('good');
-        } else if (responseTime < 2000) {
-          setConnectionQuality('slow');
-        } else {
-          setConnectionQuality('poor');
-        }
-        
-        setShowConnectionStatus(responseTime > 1000);
-      } catch (error) {
-        setConnectionQuality('poor');
-        setShowConnectionStatus(true);
-      }
-    };
-
-    // Initial checks
-    setIsOnline(navigator.onLine);
-    measureConnectionQuality();
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    
-    // Periodic connection quality checks
-    const qualityInterval = setInterval(measureConnectionQuality, 30000);
-
-    // Keyboard shortcuts
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey || e.metaKey) {
-        switch (e.key) {
-          case 'Enter':
-            e.preventDefault();
-            if (!loading && fieldErrors.email === '' && email.trim()) {
-              handleRequest(new Event('submit') as any);
-            }
-            break;
-          case 'Escape':
-            e.preventDefault();
-            setError('');
-            setSuccess('');
-            setFieldErrors({ email: '' });
-            break;
-        }
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-      document.removeEventListener('keydown', handleKeyDown);
-      clearInterval(qualityInterval);
-    };
-  }, [retryQueue, loading, fieldErrors.email, email, addToast]);
-
   // Validation function
-  const validateField = (fieldName: string, value: string): string => {
+  const validateField = useCallback((fieldName: string, value: string): string => {
     switch (fieldName) {
       case 'email':
         if (!value.trim()) return 'Email is required';
@@ -184,33 +78,9 @@ export default function RequestResetPage() {
       default:
         return '';
     }
-  };
-
-  // Real-time field validation
-  const handleFieldChange = (fieldName: string, value: string) => {
-    if (fieldName === 'email') {
-      setEmail(value);
-    }
-    
-    // Clear error when user starts typing
-    if (fieldErrors[fieldName as keyof typeof fieldErrors] && value.trim()) {
-      setFieldErrors(prev => ({ ...prev, [fieldName]: '' }));
-    }
-    
-    // Validate on blur or when field has been touched
-    if (fieldTouched[fieldName as keyof typeof fieldTouched]) {
-      const error = validateField(fieldName, value);
-      setFieldErrors(prev => ({ ...prev, [fieldName]: error }));
-    }
-  };
-
-  const handleFieldBlur = (fieldName: string, value: string) => {
-    setFieldTouched(prev => ({ ...prev, [fieldName]: true }));
-    const error = validateField(fieldName, value);
-    setFieldErrors(prev => ({ ...prev, [fieldName]: error }));
-  };
-
-  const handleRequest = async (e: React.FormEvent) => {
+  }, []);
+  
+  const handleRequest = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Clear previous messages
@@ -355,6 +225,136 @@ export default function RequestResetPage() {
     } finally {
       setLoading(false);
     }
+  }, [isOnline, email, validateField, addToast, connectionQuality]);
+
+  useEffect(() => {
+    // Auto-focus email field
+    if (emailRef.current) {
+      emailRef.current.focus();
+    }
+
+    // Connection monitoring
+    const handleOnline = () => {
+      setIsOnline(true);
+      setConnectionQuality(getConnectionQuality());
+      
+      // Process retry queue
+      if (retryQueue.length > 0) {
+        addToast({
+          type: 'info',
+          message: 'Connection restored. Processing pending requests...',
+          duration: 3000
+        });
+        
+        retryQueue.forEach(retryFn => retryFn());
+        setRetryQueue([]);
+      }
+    };
+    
+    const handleOffline = () => {
+      setIsOnline(false);
+      setShowConnectionStatus(true);
+      addToast({
+        type: 'warning',
+        message: 'Connection lost. Requests will be retried automatically.',
+        duration: 5000
+      });
+    };
+
+    const measureConnectionQuality = async () => {
+      if (!navigator.onLine) {
+        setConnectionQuality('poor');
+        setShowConnectionStatus(true);
+        return;
+      }
+
+      const startTime = Date.now();
+      try {
+        // Ping a small endpoint to measure response time
+        await fetch(API('/api/health'), { 
+          method: 'HEAD',
+          cache: 'no-cache',
+          signal: AbortSignal.timeout(5000)
+        });
+        const responseTime = Date.now() - startTime;
+        
+        if (responseTime < 500) {
+          setConnectionQuality('good');
+        } else if (responseTime < 2000) {
+          setConnectionQuality('slow');
+        } else {
+          setConnectionQuality('poor');
+        }
+        
+        setShowConnectionStatus(responseTime > 1000);
+      } catch (error) {
+        setConnectionQuality('poor');
+        setShowConnectionStatus(true);
+      }
+    };
+
+    // Initial checks
+    setIsOnline(navigator.onLine);
+    measureConnectionQuality();
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    // Periodic connection quality checks
+    const qualityInterval = setInterval(measureConnectionQuality, 30000);
+
+    // Keyboard shortcuts
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey) {
+        switch (e.key) {
+          case 'Enter':
+            e.preventDefault();
+            if (!loading && fieldErrors.email === '' && email.trim()) {
+              handleRequest(new Event('submit') as any);
+            }
+            break;
+          case 'Escape':
+            e.preventDefault();
+            setError('');
+            setSuccess('');
+            setFieldErrors({ email: '' });
+            break;
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+      document.removeEventListener('keydown', handleKeyDown);
+      clearInterval(qualityInterval);
+    };
+  }, [retryQueue, loading, fieldErrors.email, email, addToast, handleRequest]);
+
+  // Real-time field validation
+  const handleFieldChange = (fieldName: string, value: string) => {
+    if (fieldName === 'email') {
+      setEmail(value);
+    }
+    
+    // Clear error when user starts typing
+    if (fieldErrors[fieldName as keyof typeof fieldErrors] && value.trim()) {
+      setFieldErrors(prev => ({ ...prev, [fieldName]: '' }));
+    }
+    
+    // Validate on blur or when field has been touched
+    if (fieldTouched[fieldName as keyof typeof fieldTouched]) {
+      const error = validateField(fieldName, value);
+      setFieldErrors(prev => ({ ...prev, [fieldName]: error }));
+    }
+  };
+
+  const handleFieldBlur = (fieldName: string, value: string) => {
+    setFieldTouched(prev => ({ ...prev, [fieldName]: true }));
+    const error = validateField(fieldName, value);
+    setFieldErrors(prev => ({ ...prev, [fieldName]: error }));
   };
 
   return (

@@ -1,5 +1,5 @@
 ﻿"use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import { API } from "../../lib/api";
 import { useToast } from "../../components/Toast";
@@ -38,7 +38,7 @@ export default function VerifyResetPage() {
   }, []);
 
   // Process retry queue when connection is restored
-  const processRetryQueue = async () => {
+  const processRetryQueue = useCallback(async () => {
     if (retryQueue.length > 0 && isOnline) {
       const retries = [...retryQueue];
       setRetryQueue([]);
@@ -52,7 +52,7 @@ export default function VerifyResetPage() {
         }
       }
     }
-  };
+  }, [retryQueue, isOnline]);
 
   // Connection status monitoring
   useEffect(() => {

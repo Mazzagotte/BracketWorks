@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { getSmartSuggestions, validateUSBC, DuplicateMatch } from '../utils/duplicateDetection';
 import { generateMergePreview, validateMergeOperation, MergePreview } from '../utils/playerMerging';
 
@@ -37,23 +37,26 @@ export default function SmartSuggestions({
   const [mergePreview, setMergePreview] = useState<MergePreview | null>(null);
 
   // Debounced suggestion generation
-  const generateSuggestions = useCallback(
-    debounce(() => {
-      if (firstName.trim() && lastName.trim()) {
-        const result = getSmartSuggestions(firstName, lastName, usbc, players);
-        setSuggestions(result);
-        setShowSuggestions(result.warnings.length > 0 || result.potentialDuplicates.length > 0);
-      } else {
-        setSuggestions({ warnings: [], suggestions: [], potentialDuplicates: [] });
-        setShowSuggestions(false);
-      }
-    }, 300),
-    [firstName, lastName, usbc, players]
+  const generateSuggestions = useCallback(() => {
+    if (firstName.trim() && lastName.trim()) {
+      const result = getSmartSuggestions(firstName, lastName, usbc, players);
+      setSuggestions(result);
+      setShowSuggestions(result.warnings.length > 0 || result.potentialDuplicates.length > 0);
+    } else {
+      setSuggestions({ warnings: [], suggestions: [], potentialDuplicates: [] });
+      setShowSuggestions(false);
+    }
+  }, [firstName, lastName, usbc, players]);
+
+  // Debounced version
+  const debouncedGenerateSuggestions = useMemo(
+    () => debounce(generateSuggestions, 300),
+    [generateSuggestions]
   );
 
   useEffect(() => {
-    generateSuggestions();
-  }, [generateSuggestions]);
+    debouncedGenerateSuggestions();
+  }, [debouncedGenerateSuggestions]);
 
   const handleMergeClick = async (duplicate: DuplicateMatch) => {
     setSelectedDuplicate(duplicate);

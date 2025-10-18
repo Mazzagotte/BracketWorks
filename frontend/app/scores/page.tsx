@@ -1,6 +1,6 @@
 
 'use client'
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import { API } from '../lib/api'
 import { usePageHeader } from '../lib/header-context'
@@ -75,7 +75,7 @@ export default function ScoresPage() {
     delay: 2000
   })
 
-  const processPendingSaves = async () => {
+  const processPendingSaves = useCallback(async () => {
     const saves = [...pendingSaves]
     setPendingSaves([])
     
@@ -107,7 +107,7 @@ export default function ScoresPage() {
         duration: 3000
       })
     }
-  }
+  }, [pendingSaves, addToast])
 
   // Online/offline detection
   useEffect(() => {

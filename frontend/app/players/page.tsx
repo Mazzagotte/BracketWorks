@@ -1,6 +1,7 @@
 
 'use client'
 
+import dynamic from 'next/dynamic'
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import { API } from '../lib/api'
@@ -480,7 +481,7 @@ function EntriesPageContent() {
   }
 
   // Enhanced filter helper functions
-  const updateActiveFilters = () => {
+  const updateActiveFilters = useCallback(() => {
     const filters = [];
     if (searchTerm) filters.push({ key: 'search', value: searchTerm, label: `Search: "${searchTerm}"` });
     if (filterDivision) filters.push({ key: 'division', value: filterDivision, label: `Division: ${filterDivision}` });
@@ -488,7 +489,7 @@ function EntriesPageContent() {
     if (avgMin !== '') filters.push({ key: 'avgMin', value: String(avgMin), label: `Avg ≥ ${avgMin}` });
     if (avgMax !== '') filters.push({ key: 'avgMax', value: String(avgMax), label: `Avg ≤ ${avgMax}` });
     setActiveFilters(filters);
-  };
+  }, [searchTerm, filterDivision, filterPayment, avgMin, avgMax]);
 
   const highlightSearchResults = (text: string, highlight: string): JSX.Element => {
     if (!highlight || !text) return <>{text}</>;
@@ -514,18 +515,6 @@ function EntriesPageContent() {
         )}
       </>
     );
-  };
-
-  const calculateFilterStats = (filteredPlayers: any[]) => {
-    const stats = {
-      total: players.length,
-      filtered: filteredPlayers.length,
-      unpaid: filteredPlayers.filter(p => p.payment_status === 'Unpaid').length,
-      partiallyPaid: filteredPlayers.filter(p => p.payment_status === 'Partial').length,
-      fullyPaid: filteredPlayers.filter(p => p.payment_status === 'Paid').length
-    };
-    setFilterStats(stats);
-    return stats;
   };
 
   const removeFilter = (filterKey: string) => {
@@ -710,6 +699,19 @@ function EntriesPageContent() {
 
   const [players, setPlayers] = useState<Player[]>([])
 
+  // Filter stats calculation function
+  const calculateFilterStats = useCallback((filteredPlayers: any[]) => {
+    const stats = {
+      total: players.length,
+      filtered: filteredPlayers.length,
+      unpaid: filteredPlayers.filter(p => p.payment_status === 'Unpaid').length,
+      partiallyPaid: filteredPlayers.filter(p => p.payment_status === 'Partial').length,
+      fullyPaid: filteredPlayers.filter(p => p.payment_status === 'Paid').length
+    };
+    setFilterStats(stats);
+    return stats;
+  }, [players.length]);
+
   // Enhanced UX hooks
   const { addToast } = useToast()
   const { currentPage, totalPages, paginatedItems, goToPage, changePageSize } = usePagination({ 
@@ -768,7 +770,7 @@ function EntriesPageContent() {
   // Update active filters when any filter changes
   useEffect(() => {
     updateActiveFilters();
-  }, [searchTerm, filterDivision, filterPayment, avgMin, avgMax]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [updateActiveFilters]);
 
   // Filter and sort players array
   const filteredPlayers = useMemo(() => {
@@ -859,8 +861,8 @@ function EntriesPageContent() {
   };
   
   useEffect(() => {
-    // Only run on client side
-    if (typeof document === 'undefined') return;
+    // Only run on client side with additional safety check
+    if (typeof window === 'undefined' || typeof document === 'undefined') return;
     
     const style = document.createElement('style');
     style.textContent = `
@@ -876,7 +878,7 @@ function EntriesPageContent() {
     document.head.appendChild(style);
     
     return () => {
-      if (document.head.contains(style)) {
+      if (typeof document !== 'undefined' && document.head.contains(style)) {
         document.head.removeChild(style);
       }
     };
@@ -943,7 +945,7 @@ function EntriesPageContent() {
     } finally {
       setIsLoading(false);
     }
-  }, [selectedSquad]);
+  }, [selectedSquad, squads]);
 
   // Set up page header with player management actions
   const playerHeaderActions = useMemo(() => (
@@ -2752,7 +2754,7 @@ function EntriesPageContent() {
 }
 
 // Export with error boundary wrapper and client-side only rendering
-export default function EntriesPage() {
+function EntriesPage() {
   // Ensure this only renders on the client side
   const [isClient, setIsClient] = useState(false);
   
@@ -2774,3 +2776,15 @@ export default function EntriesPage() {
     </ErrorBoundary>
   );
 }
+
+// Force disable SSR completely for this page
+const PlayersPageWithoutSSR = dynamic(() => Promise.resolve(EntriesPage), {
+  ssr: false,
+  loading: () => (
+    <div style={{ padding: '2rem', textAlign: 'center' }}>
+      <div>Loading players...</div>
+    </div>
+  )
+});
+
+export default PlayersPageWithoutSSR;
