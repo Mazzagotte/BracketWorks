@@ -21,12 +21,8 @@ Write-Host "Starting frontend from: $FrontendPath"
 # Start Backend in new PowerShell window and keep it open with pause
 Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$BackendPath'; `$env:PYTHONPATH='$BackendPath'; py -m uvicorn app.main:app --host 127.0.0.1 --port 8000; pause"
 
-# Auto-install Yarn if not present, then start frontend
-if (-not (Get-Command yarn -ErrorAction SilentlyContinue)) {
-    Write-Host 'Yarn not found. Installing globally...'
-    npm install -g yarn
-}
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$FrontendPath'; yarn dev; pause"
+# Start frontend using npm
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$FrontendPath'; npm run dev; pause"
 
 # Open the dashboard in your default browser (no extra PowerShell window)
 Start-Process cmd -ArgumentList "/c start http://localhost:3000"

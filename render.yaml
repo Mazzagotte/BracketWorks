@@ -3,7 +3,9 @@ services:
   - type: web
     name: bracketworks-frontend
     env: node
-    buildCommand: cd frontend && npm install && npm run build
+    region: oregon
+    plan: free
+    buildCommand: cd frontend && npm ci && npm run build
     startCommand: cd frontend && npm start
     envVars:
       - key: NODE_ENV
