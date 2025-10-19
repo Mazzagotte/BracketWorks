@@ -11,6 +11,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { AuthProvider, useAuth, useIsAuthenticated } from './lib/auth-context';
 import { HeaderProvider, useHeader } from './lib/header-context';
 import { logger } from './lib/logger';
+import { ApiHealthCheck } from './components/ApiHealthCheck';
 
 function ClientLayout({ children }: { children: React.ReactNode }) {
   // All hooks must be called before any conditional returns
@@ -226,6 +227,10 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
         </>
       )}
       <ToastContainer />
+      {/* API Health Check - only show in development or when there are issues */}
+      {(process.env.NODE_ENV === 'development' || typeof window !== 'undefined') && (
+        <ApiHealthCheck />
+      )}
       </ErrorBoundary>
     </ToastProvider>
   );
