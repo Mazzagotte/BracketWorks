@@ -1,7 +1,11 @@
 
 'use client'
 
-import dynamic from 'next/dynamic'
+// Force dynamic rendering for this page
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
+import dynamicImport from 'next/dynamic'
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import { API } from '../lib/api'
@@ -2795,7 +2799,7 @@ function EntriesPage() {
 }
 
 // Force disable SSR completely for this page
-const PlayersPageWithoutSSR = dynamic(() => Promise.resolve(EntriesPage), {
+const PlayersPageWithoutSSR = dynamicImport(() => Promise.resolve(EntriesPage), {
   ssr: false,
   loading: () => (
     <div style={{ padding: '2rem', textAlign: 'center' }}>
