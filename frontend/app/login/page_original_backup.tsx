@@ -109,17 +109,18 @@ export default function LoginPage() {
     setLoading(true);
     setShowButtonBall(true);
     
-    // Performance optimized login request
-    const form = new URLSearchParams();
-    form.append("username", username.trim());
-    form.append("password", password.trim());
-    form.append("grant_type", "password");
+    // Clean JSON-based login request
+    const loginData = {
+      username: username.trim(),
+      password: password.trim(),
+      grant_type: "password"
+    };
     
     try {
       const res = await fetch(API("/api/v1/users/login"), {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: form.toString(),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(loginData),
       });
       
       const text = await res.text();

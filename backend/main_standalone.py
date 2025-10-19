@@ -3,8 +3,9 @@ Standalone FastAPI backend for BracketWorks - No app module dependencies
 This runs directly without needing the app module structure
 """
 
-from fastapi import FastAPI, HTTPException, Form
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 import os
 
 # Create the FastAPI app
@@ -24,6 +25,19 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"],
     allow_headers=["*"],
 )
+
+# Pydantic models for request/response validation
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+    grant_type: str = "password"
+
+class LoginResponse(BaseModel):
+    access_token: str
+    token_type: str
+    user_id: str
+    user: dict
+    first_name: str
 
 # Fake data for testing
 fake_users = {
@@ -61,24 +75,25 @@ def api_health():
 def api_health_status():
     return {"status": "ok", "message": "API is healthy"}
 
-@app.post("/api/v1/users/login")
-def login(username: str = Form(...), password: str = Form(...)):
-    # Handle form-encoded login data (matches frontend format)
-    email = username.lower().strip()
-    password = password.strip()
+@app.post("/api/v1/users/login", response_model=LoginResponse)
+def login(credentials: LoginRequest):
+    # Handle JSON login data (clean API design)
+    email = credentials.username.lower().strip()
+    password = credentials.password.strip()
     
     if email in fake_users and fake_users[email]["password"] == password:
-        return {
-            "access_token": "fake-jwt-token-12345",
-            "token_type": "bearer",
-            "user_id": str(fake_users[email]["id"]),
-            "user": {
-                "id": str(fake_users[email]["id"]),
-                "email": fake_users[email]["email"],
-                "name": fake_users[email]["name"]
+        user_data = fake_users[email]
+        return LoginResponse(
+            access_token="fake-jwt-token-12345",
+            token_type="bearer",
+            user_id=str(user_data["id"]),
+            user={
+                "id": str(user_data["id"]),
+                "email": user_data["email"],
+                "name": user_data["name"]
             },
-            "first_name": fake_users[email]["name"]
-        }
+            first_name=user_data["name"]
+        )
     
     raise HTTPException(status_code=401, detail="Invalid credentials")
 
