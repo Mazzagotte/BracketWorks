@@ -12,19 +12,27 @@ def main():
     # Get the directory where this script is located (project root)
     project_root = os.path.dirname(os.path.abspath(__file__))
     backend_dir = os.path.join(project_root, 'backend')
-    backend_script = os.path.join(backend_dir, 'main_standalone.py')
+    app_main_path = os.path.join(backend_dir, 'app', 'main.py')
     
-    # Verify the backend script exists
-    if not os.path.exists(backend_script):
-        print(f"ERROR: Backend script not found at {backend_script}")
+    # Verify the app main exists
+    if not os.path.exists(app_main_path):
+        print(f"ERROR: App main not found at {app_main_path}")
         sys.exit(1)
     
-    # Change to backend directory and run the standalone script
+    # Change to backend directory and run the full app via uvicorn
     os.chdir(backend_dir)
     
-    # Execute the backend script
+    # Get port from environment or default to 8000
+    port = os.environ.get('PORT', '8000')
+    
+    # Execute the full app using uvicorn
     try:
-        result = subprocess.run([sys.executable, 'main_standalone.py'], check=True)
+        result = subprocess.run([
+            sys.executable, '-m', 'uvicorn', 
+            'app.main:app', 
+            '--host', '0.0.0.0', 
+            '--port', port
+        ], check=True)
         sys.exit(result.returncode)
     except subprocess.CalledProcessError as e:
         print(f"ERROR: Backend failed to start: {e}")
