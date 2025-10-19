@@ -95,16 +95,23 @@ function PlayersPageInner({ getItem, setItem }: { getItem: (key: string) => stri
   const [division, setDivision] = useState('Open');
   const [usbc, setUsbc] = useState('');
   
+  // Track if we're in demo mode (API unavailable)
+  const [isDemoMode, setIsDemoMode] = useState(false);
+  
   const auth = useAuth();
   const isAuthenticated = auth && auth.isAuthenticated;
   const { token, user } = auth || {};
 
-  // Function to fetch players
+  // Function to fetch players with fallback to demo data
   const fetchPlayers = useCallback(async () => {
     const lastTournamentId = getItem('lastTournamentId');
     const authToken = getItem('token');
     
-    if (!lastTournamentId || !authToken) return;
+    if (!lastTournamentId || !authToken) {
+      // Load demo data if no auth
+      setPlayers(getDemoPlayers());
+      return;
+    }
     
     setIsLoading(true);
     
@@ -117,7 +124,17 @@ function PlayersPageInner({ getItem, setItem }: { getItem: (key: string) => stri
         headers: { Authorization: `Bearer ${authToken}` }
       });
       
-      const data = response.ok ? await response.json() : [];
+      if (!response.ok) {
+        // If API fails, load demo data
+        console.warn('API not available, loading demo data');
+        setIsDemoMode(true);
+        setPlayers(getDemoPlayers());
+        return;
+      } else {
+        setIsDemoMode(false);
+      }
+      
+      const data = await response.json();
       
       // Transform bowlers data to match our player structure
       const transformedData = (data || []).map((bowler: any) => {
@@ -142,11 +159,57 @@ function PlayersPageInner({ getItem, setItem }: { getItem: (key: string) => stri
       setPlayers(transformedData);
     } catch (err) {
       console.error('Error fetching bowlers:', err);
-      setPlayers([]);
+      // Load demo data as fallback
+      setPlayers(getDemoPlayers());
     } finally {
       setIsLoading(false);
     }
   }, [selectedSquad, squads, getItem]);
+
+  // Demo data function for when API is unavailable
+  const getDemoPlayers = (): Player[] => {
+    return [
+      {
+        id: 1,
+        firstName: 'John',
+        lastName: 'Doe',
+        average: 185,
+        handicap: 15,
+        scratch: 3,
+        usbc: '12345678',
+        lane: '1-2',
+        division: 'Open',
+        totalCost: 45.00,
+        amountPaid: 45.00
+      },
+      {
+        id: 2,
+        firstName: 'Jane',
+        lastName: 'Smith',
+        average: 170,
+        handicap: 20,
+        scratch: 2,
+        usbc: '87654321',
+        lane: '3-4',
+        division: 'Handicap',
+        totalCost: 35.00,
+        amountPaid: 35.00
+      },
+      {
+        id: 3,
+        firstName: 'Mike',
+        lastName: 'Johnson',
+        average: 195,
+        handicap: 8,
+        scratch: 4,
+        usbc: '11223344',
+        lane: '5-6',
+        division: 'Scratch',
+        totalCost: 60.00,
+        amountPaid: 30.00
+      }
+    ];
+  };
 
   // Add player function
   const addPlayer = async () => {

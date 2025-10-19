@@ -2,8 +2,17 @@
 import { logger } from './logger'
 import { ApiError, handleApiError, shouldRetry } from './errors';
 
-export const API = (path: string) =>
-  (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000') + path;
+export const API = (path: string) => {
+  const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+  const fullUrl = baseUrl + path;
+  
+  // Log API calls in development for debugging
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`API Call: ${fullUrl}`);
+  }
+  
+  return fullUrl;
+};
 
 // Request cache for GET requests
 const requestCache = new Map<string, { data: any; timestamp: number; ttl: number }>();

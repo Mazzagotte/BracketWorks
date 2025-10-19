@@ -1,5 +1,5 @@
 services:
-  # Backend (FastAPI) - Must be defined FIRST so frontend can reference it
+  # Backend (FastAPI)
   - type: web
     name: bracketworks-backend
     env: python
@@ -7,7 +7,7 @@ services:
     plan: free
     rootDir: backend
     buildCommand: pip install -r requirements.txt
-    startCommand: chmod +x start.sh && ./start.sh
+    startCommand: python -m uvicorn app.main_minimal:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
@@ -18,7 +18,7 @@ services:
       - key: CORS_ORIGINS
         value: https://bracketworks.onrender.com,https://www.bracketworks.onrender.com,http://localhost:3000,http://localhost:8000
       - key: SENDGRID_API_KEY
-        sync: false  # You'll set this manually in Render dashboard for security
+        sync: false
       - key: FROM_EMAIL
         value: support@bracketworks.app
       - key: FROM_NAME

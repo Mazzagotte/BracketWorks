@@ -32,6 +32,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Root endpoint for basic testing
+@app.get("/")
+async def root():
+    return {
+        "message": "BracketWorks API is running!",
+        "version": "0.0.1",
+        "status": "healthy"
+    }
+
+# Basic health endpoint
+@app.get("/health")
+async def health_check():
+    return {"status": "ok", "message": "API is running"}
 
 app.include_router(health.router, prefix="/api/v1/health", tags=["health"])
 app.include_router(bowlers.router, prefix="/api/v1/bowlers", tags=["bowlers"])
