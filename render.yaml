@@ -6,7 +6,7 @@ services:
     region: oregon
     plan: free
     buildCommand: pip install -r backend/requirements_simple.txt
-    startCommand: python backend/main_standalone.py
+    startCommand: python start_backend.py
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0

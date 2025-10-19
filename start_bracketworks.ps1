@@ -19,7 +19,7 @@ Write-Host "Starting backend from: $BackendPath"
 Write-Host "Starting frontend from: $FrontendPath"
 
 # Start Backend in new PowerShell window and keep it open with pause
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$BackendPath'; python main_standalone.py; pause"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$ProjectRoot'; python start_backend.py; pause"
 
 # Start frontend using yarn (after fixing .babelrc issue)
 Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$FrontendPath'; yarn dev; pause"
