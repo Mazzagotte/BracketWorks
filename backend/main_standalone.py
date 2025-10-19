@@ -3,7 +3,7 @@ Standalone FastAPI backend for BracketWorks - No app module dependencies
 This runs directly without needing the app module structure
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
 import os
 
@@ -62,19 +62,22 @@ def api_health_status():
     return {"status": "ok", "message": "API is healthy"}
 
 @app.post("/api/v1/users/login")
-def login(credentials: dict):
-    email = credentials.get("email", "").lower()
-    password = credentials.get("password", "")
+def login(username: str = Form(...), password: str = Form(...)):
+    # Handle form-encoded login data (matches frontend format)
+    email = username.lower().strip()
+    password = password.strip()
     
     if email in fake_users and fake_users[email]["password"] == password:
         return {
             "access_token": "fake-jwt-token-12345",
             "token_type": "bearer",
+            "user_id": str(fake_users[email]["id"]),
             "user": {
                 "id": str(fake_users[email]["id"]),
                 "email": fake_users[email]["email"],
                 "name": fake_users[email]["name"]
-            }
+            },
+            "first_name": fake_users[email]["name"]
         }
     
     raise HTTPException(status_code=401, detail="Invalid credentials")
