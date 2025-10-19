@@ -19,6 +19,7 @@ services:
       pip install python-jose[cryptography]==3.5.0 &&
       pip install alembic==1.16.5 &&
       pip install typing-extensions==4.15.0 &&
+      pip install sendgrid==6.11.0 &&
       echo "All packages installed successfully"
     startCommand: python start_backend.py
     envVars:
