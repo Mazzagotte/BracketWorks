@@ -1,11 +1,11 @@
 services:
   # Backend (FastAPI)
   - type: web
-    name: bracketworks-backend
+    name: bracketworks-backend-v2
     env: python
     region: oregon
     plan: free
-    buildCommand: pip install -r backend/requirements.txt
+    buildCommand: ls backend/requirements* && echo "Installing from requirements.txt" && pip install --no-cache-dir -r backend/requirements.txt
     startCommand: python start_backend.py
     envVars:
       - key: PYTHON_VERSION
@@ -36,5 +36,5 @@ services:
       - key: NODE_ENV
         value: production
       - key: NEXT_PUBLIC_BACKEND_URL
-        value: https://bracketworks-backend.onrender.com
+        value: https://bracketworks-backend-v2.onrender.com
 
