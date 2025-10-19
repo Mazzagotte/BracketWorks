@@ -1,0 +1,26 @@
+# Render configuration for BracketWorks Backend only
+# Deploy this as a separate service
+type: web
+name: bracketworks-backend
+env: python
+region: oregon
+plan: free
+rootDir: backend
+repo: https://github.com/Mazzagotte/BracketWorks.git
+buildCommand: pip install -r requirements.txt
+startCommand: python -m uvicorn app.main_minimal:app --host 0.0.0.0 --port $PORT
+envVars:
+  - key: PYTHON_VERSION
+    value: 3.11.0
+  - key: DATABASE_URL
+    value: postgresql://bracketworks_database_user:MW0r5GaFvgwfEQ7LLqArlUKOybMlkYLG@dpg-d34bbaripnbc73fqtcng-a.oregon-postgres.render.com/bracketworks_database
+  - key: SECRET_KEY
+    generateValue: true
+  - key: CORS_ORIGINS
+    value: https://bracketworks.onrender.com,https://www.bracketworks.onrender.com,http://localhost:3000,http://localhost:8000
+  - key: SENDGRID_API_KEY
+    sync: false
+  - key: FROM_EMAIL
+    value: support@bracketworks.app
+  - key: FROM_NAME
+    value: BracketWorks
