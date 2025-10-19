@@ -40,6 +40,13 @@ import SmartSuggestions, { USBCValidationIndicator } from '../components/SmartSu
 type Player = { id: number, usbc?: string, firstName: string, lastName: string, average: number, handicap: number, scratch: number, lane: string, division: string, totalCost: number, amountPaid: number, squad?: { id: number, date: string, time: string } }
 
 function EntriesPageContent() {
+  // Early return for SSR - must be before any hooks
+  const [isMounted, setIsMounted] = useState(false);
+  
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+  
   // ALL HOOKS MUST BE CALLED FIRST - BEFORE ANY CONDITIONAL LOGIC
   
   // Track which cell is being edited
@@ -864,24 +871,29 @@ function EntriesPageContent() {
     // Only run on client side with additional safety check
     if (typeof window === 'undefined' || typeof document === 'undefined') return;
     
-    const style = document.createElement('style');
-    style.textContent = `
-      .hover-row {
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      }
-      .hover-row:hover {
-        background: #f8fafd !important;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(35, 43, 54, 0.08);
-      }
-    `;
-    document.head.appendChild(style);
-    
-    return () => {
-      if (typeof document !== 'undefined' && document.head.contains(style)) {
-        document.head.removeChild(style);
-      }
-    };
+    try {
+      const style = document.createElement('style');
+      style.textContent = `
+        .hover-row {
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .hover-row:hover {
+          background: #f8fafd !important;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(35, 43, 54, 0.08);
+        }
+      `;
+      document.head.appendChild(style);
+      
+      return () => {
+        if (typeof document !== 'undefined' && document.head.contains(style)) {
+          document.head.removeChild(style);
+        }
+      };
+    } catch (error) {
+      // Silently fail during SSR
+      console.warn('Style injection failed during SSR:', error);
+    }
   }, []);
   const [usbc, setUsbc] = useState('')
   const [firstName, setFirstName] = useState('')
@@ -1115,6 +1127,11 @@ function EntriesPageContent() {
     centerContent: false,
     actions: playerHeaderActions
   });
+
+  // Early return for SSR - only render on client
+  if (!isMounted) {
+    return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading players...</div>;
+  }
 
   return (
     <>
