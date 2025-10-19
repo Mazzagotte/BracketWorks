@@ -1,11 +1,11 @@
 services:
-  # Backend (FastAPI)
+  # Backend (FastAPI)  
   - type: web
-    name: bracketworks-backend-v2
+    name: bracketworks-backend-full
     env: python
     region: oregon
     plan: free
-    buildCommand: ls backend/requirements* && echo "Installing from requirements.txt" && pip install --no-cache-dir -r backend/requirements.txt
+    buildCommand: pip install --no-cache-dir fastapi==0.115.2 uvicorn[standard]==0.30.6 pydantic==2.9.2 SQLAlchemy==2.0.35 psycopg2-binary==2.9.10 python-multipart==0.0.9 python-dotenv==1.0.1 email-validator==2.3.0 passlib[bcrypt]==1.7.4 bcrypt==3.2.2 python-jose[cryptography]==3.5.0 alembic==1.16.5 typing-extensions==4.15.0 sendgrid==6.11.0 pytest==7.4.4 pytest-asyncio==0.23.2 httpx==0.25.2
     startCommand: python start_backend.py
     envVars:
       - key: PYTHON_VERSION
@@ -36,5 +36,5 @@ services:
       - key: NODE_ENV
         value: production
       - key: NEXT_PUBLIC_BACKEND_URL
-        value: https://bracketworks-backend-v2.onrender.com
+        value: https://bracketworks-backend-full.onrender.com
 
