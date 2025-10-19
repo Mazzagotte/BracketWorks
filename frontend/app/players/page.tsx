@@ -3,7 +3,6 @@
 
 // Force dynamic rendering for this page
 export const dynamic = 'force-dynamic'
-export const revalidate = 0
 
 import dynamicImport from 'next/dynamic'
 import { useState, useEffect, useMemo, useCallback } from 'react'
