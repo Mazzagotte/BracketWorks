@@ -12,27 +12,20 @@ def main():
     # Get the directory where this script is located (project root)
     project_root = os.path.dirname(os.path.abspath(__file__))
     backend_dir = os.path.join(project_root, 'backend')
-    app_main_path = os.path.join(backend_dir, 'app', 'main.py')
     
-    # Verify the app main exists
-    if not os.path.exists(app_main_path):
-        print(f"ERROR: App main not found at {app_main_path}")
-        sys.exit(1)
-    
-    # Change to backend directory and run the full app via uvicorn
+    # Change to backend directory
     os.chdir(backend_dir)
     
-    # Get port from environment or default to 8000
-    port = os.environ.get('PORT', '8000')
-    
-    # Execute the full app using uvicorn
+    # Start the FastAPI app using uvicorn with the full app structure
     try:
-        result = subprocess.run([
+        cmd = [
             sys.executable, '-m', 'uvicorn', 
             'app.main:app', 
             '--host', '0.0.0.0', 
-            '--port', port
-        ], check=True)
+            '--port', str(os.environ.get('PORT', 8000))
+        ]
+        print(f"Starting uvicorn with command: {' '.join(cmd)}")
+        result = subprocess.run(cmd, check=True)
         sys.exit(result.returncode)
     except subprocess.CalledProcessError as e:
         print(f"ERROR: Backend failed to start: {e}")
