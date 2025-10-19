@@ -1,7 +1,32 @@
 services:
+  # Backend (FastAPI) - Must be defined FIRST so frontend can reference it
+  - type: web
+    name: bracketworks-backend
+    env: python
+    region: oregon
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: chmod +x start.sh && ./start.sh
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: DATABASE_URL
+        value: postgresql://bracketworks_database_user:MW0r5GaFvgwfEQ7LLqArlUKOybMlkYLG@dpg-d34bbaripnbc73fqtcng-a.oregon-postgres.render.com/bracketworks_database
+      - key: SECRET_KEY
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: https://bracketworks.onrender.com,https://www.bracketworks.onrender.com,http://localhost:3000,http://localhost:8000
+      - key: SENDGRID_API_KEY
+        sync: false  # You'll set this manually in Render dashboard for security
+      - key: FROM_EMAIL
+        value: support@bracketworks.app
+      - key: FROM_NAME
+        value: BracketWorks
+
   # Frontend (Next.js)
   - type: web
-    name: bracketworks-frontend
+    name: bracketworks
     env: node
     region: oregon
     plan: free
@@ -12,27 +37,5 @@ services:
       - key: NODE_ENV
         value: production
       - key: NEXT_PUBLIC_BACKEND_URL
-        value: https://api.bracketworks.app
-
-  # Backend (FastAPI)  
-  - type: web
-    name: bracketworks-backend
-    env: python
-    buildCommand: cd backend && pip install -r requirements.txt
-    startCommand: cd backend && chmod +x start.sh && ./start.sh
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.0
-      - key: DATABASE_URL
-        value: postgresql://bracketworks_database_user:MW0r5GaFvgwfEQ7LLqArlUKOybMlkYLG@dpg-d34bbaripnbc73fqtcng-a.oregon-postgres.render.com/bracketworks_database
-      - key: SECRET_KEY
-        generateValue: true
-      - key: CORS_ORIGINS
-        value: https://bracketworks.app,https://www.bracketworks.app
-      - key: SENDGRID_API_KEY
-        sync: false  # You'll set this manually in Render dashboard for security
-      - key: FROM_EMAIL
-        value: support@bracketworks.app
-      - key: FROM_NAME
-        value: BracketWorks
+        value: https://bracketworks-backend.onrender.com
 

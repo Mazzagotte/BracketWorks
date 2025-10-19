@@ -1,17 +1,27 @@
 
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1 import health, bowlers, brackets, tournaments, users, squads, bracket_settings, scores, payouts
 
 app = FastAPI(title="BracketWorks API", version="0.0.1")
 
-# CORS origins - includes both local dev and production
-origins = [
+# CORS origins - get from environment variable with fallback to local dev
+cors_origins_str = os.getenv("CORS_ORIGINS", "http://localhost:3000")
+origins = [origin.strip() for origin in cors_origins_str.split(",") if origin.strip()]
+
+# Add localhost patterns for development
+origins.extend([
     "http://localhost:3000",
-    "https://bracketworks.app",
-    "https://www.bracketworks.app",
-    "https://bracketworks-frontend.onrender.com"  # Add your Render frontend URL
-]
+    "http://localhost:8000",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:8000"
+])
+
+# Remove duplicates while preserving order
+origins = list(dict.fromkeys(origins))
+
+print(f"CORS Origins configured: {origins}")  # For debugging
 
 app.add_middleware(
     CORSMiddleware,
