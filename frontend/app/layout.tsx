@@ -245,6 +245,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="BracketWorks" />
+        
+        {/* Favicon configuration */}
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
+        <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+        <link rel="manifest" href="/manifest.json" />
+        
+        {/* Additional favicon sizes for better compatibility */}
+        <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-192.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/icons/icon-192.png" />
       </head>
       <body>
         <AuthProvider>
