@@ -533,6 +533,13 @@ export default function TournamentDashboard() {
     }
   }, []);
 
+  // Fetch tournaments when load modal opens
+  useEffect(() => {
+    if (loadModalOpen) {
+      fetchAllTournaments();
+    }
+  }, [loadModalOpen, isAdmin]);
+
   // Mobile detection
   useEffect(() => {
     const checkMobile = () => {
