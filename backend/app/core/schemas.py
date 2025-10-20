@@ -1,6 +1,11 @@
 from pydantic import BaseModel, EmailStr
 from typing import Dict, List, Optional
 
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+    grant_type: Optional[str] = "password"
+
 class SelectedSquadBase(BaseModel):
     user_id: int
     squad_id: int

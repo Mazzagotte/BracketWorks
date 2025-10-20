@@ -36,4 +36,4 @@ services:
       - key: NODE_ENV
         value: production
       - key: NEXT_PUBLIC_BACKEND_URL
-        value: https://bracketworks-backend-final.onrender.com
+        value: https://bracketworks-backend.onrender.com

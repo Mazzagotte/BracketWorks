@@ -117,7 +117,7 @@ export default function LoginPage() {
     };
     
     try {
-      const res = await fetch(API("/api/v1/users/login"), {
+      const res = await fetch(API("/api/v1/users/login-json"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(loginData),

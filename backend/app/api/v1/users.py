@@ -52,6 +52,34 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
         "first_name": user.first_name
     }
 
+@router.post("/login-json")
+def login_json(login_data: schemas.LoginRequest, db: Session = Depends(get_db)):
+    # Optimize query with explicit select for performance
+    user = (
+        db.query(models.User)
+        .filter(models.User.username == login_data.username.strip())
+        .first()
+    )
+    
+    if not user:
+        # Use timing-safe comparison to prevent username enumeration
+        pwd_context.verify("dummy_password", "$2b$10$dummy.hash.to.prevent.timing.attacks")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+    
+    if not pwd_context.verify(login_data.password, user.password):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+    
+    from ...core.utils import create_access_token
+    access_token = create_access_token({"sub": str(user.id)})
+    
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user_id": user.id,
+        "is_admin": user.is_admin,
+        "first_name": user.first_name
+    }
+
 # In-memory store for reset codes with expiration timestamps
 reset_codes = {}  # {email: {"code": code, "expires": timestamp}}
 
