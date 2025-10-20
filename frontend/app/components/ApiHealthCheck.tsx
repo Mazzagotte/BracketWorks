@@ -14,7 +14,7 @@ export function ApiHealthCheck() {
       setBackendUrl(url)
       
       try {
-        const response = await fetch(API('/api/v1/health/status'), {
+        const response = await fetch(API('/api/v1/health'), {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json'
