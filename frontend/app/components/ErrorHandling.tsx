@@ -1,16 +1,19 @@
 import React, { useState } from 'react';
+
 import { useToastHelpers } from './Toast';
+import { logger } from '../lib/logger';
+import { isError, getErrorMessage } from '../lib/error-utils';
 
 interface ErrorBoundaryState {
   hasError: boolean;
   error?: Error;
-  errorInfo?: any;
+  errorInfo?: React.ErrorInfo;
 }
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
   fallback?: React.ComponentType<{ error: Error; retry: () => void }>;
-  onError?: (error: Error, errorInfo: any) => void;
+  onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
 }
 
 // Enhanced Error Boundary
@@ -27,13 +30,13 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: any) {
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     this.setState({ errorInfo });
     this.props.onError?.(error, errorInfo);
     
     // Log to console in development
     if (process.env.NODE_ENV === 'development') {
-      console.error('Error Boundary caught an error:', error, errorInfo);
+      logger.error('Error Boundary caught an error', { error: error.message, errorInfo });
     }
   }
 
@@ -229,10 +232,10 @@ export function useAsyncOperation<T>(
       // Reset retry count on success
       setRetryCount(0);
       
-    } catch (err: any) {
-      const errorMessage = err?.message || 'An unexpected error occurred';
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err) || 'An unexpected error occurred';
       setError(errorMessage);
-      onError?.(err);
+      onError?.(isError(err) ? err : new Error(errorMessage));
       
       if (showToast) {
         showErrorToast(errorMessage, 'Operation Failed');

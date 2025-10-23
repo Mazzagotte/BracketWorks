@@ -1,14 +1,29 @@
 'use client'
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
+
 import Link from 'next/link'
+
+import { 
+
 import { API } from '../lib/api'
 import { usePageHeader } from '../lib/header-context'
 import { MobileTable } from '../../components/MobileTable'
 import { useAuth } from '../lib/auth-context'
 import { logger, devLog } from '../lib/logger'
 import { ErrorBoundary } from '../components/ErrorBoundary'
-import { 
+import { typography, colors, spacing, stylePresets } from '../lib/design-system'
+import styles from './entries.module.css'
+import { Spinner, LoadingButton, LoadingState } from '../components/LoadingComponents'
+import { useToast } from '../components/Toast'
+import { ErrorMessage } from '../components/ErrorHandling'
+import { usePagination, VirtualizedList, Pagination } from '../components/Performance'
+import { AccessibleInput } from '../components/Accessibility'
+import { useAutoSave } from '../components/DataManagement'
+import EnhancedButton from '../components/EnhancedButton'
+import SmartSuggestions, { USBCValidationIndicator } from '../components/SmartSuggestions'
+
+
   PageContainer, 
   ContentWrapper, 
   Card, 
@@ -24,16 +39,6 @@ import {
   Input,
   Select
 } from '../components/UI'
-import { typography, colors, spacing, stylePresets } from '../lib/design-system'
-import styles from './entries.module.css'
-import { Spinner, LoadingButton, LoadingState } from '../components/LoadingComponents'
-import { useToast } from '../components/Toast'
-import { ErrorMessage } from '../components/ErrorHandling'
-import { usePagination, VirtualizedList, Pagination } from '../components/Performance'
-import { AccessibleInput } from '../components/Accessibility'
-import { useAutoSave } from '../components/DataManagement'
-import EnhancedButton from '../components/EnhancedButton'
-import SmartSuggestions, { USBCValidationIndicator } from '../components/SmartSuggestions'
 
 type Player = { id: number, usbc?: string, firstName: string, lastName: string, average: number, handicap: number, scratch: number, lane: string, division: string, totalCost: number, amountPaid: number, squad?: { id: number, date: string, time: string } }
 

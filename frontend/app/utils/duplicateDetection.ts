@@ -1,18 +1,6 @@
 // Comprehensive duplicate detection and fuzzy matching utilities
 
-export interface Player {
-  id: number;
-  firstName: string;
-  lastName: string;
-  usbc?: string;
-  average?: number;
-  handicap?: number;
-  scratch?: number;
-  lane?: string;
-  division?: string;
-  totalCost?: number;
-  amountPaid?: number;
-}
+import { Player } from '../lib/types';
 
 export interface DuplicateMatch {
   player: Player;
@@ -360,7 +348,9 @@ export function getSmartSuggestions(
     id: -1, // Temporary ID
     firstName: firstName.trim(),
     lastName: lastName.trim(),
-    usbc
+    usbc,
+    average: 0, // Required field
+    handicap: 0 // Required field
   };
   
   // Find potential duplicates

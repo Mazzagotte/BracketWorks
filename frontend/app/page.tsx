@@ -1,9 +1,15 @@
-
-
-
 "use client";
+
 import { useEffect, useState } from "react";
+
 import { useAuth } from "./lib/auth-context";
+
+
+
+
+
+
+
 
 export default function HomePage() {
   const { isAuthenticated } = useAuth();

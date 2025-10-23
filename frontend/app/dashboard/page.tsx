@@ -1,11 +1,28 @@
 "use client";
-import { usePageHeader, useHeader } from '../lib/header-context';
+
 import { useMemo, useEffect, useState } from 'react';
+import { Tournament, Squad, Player, BracketData, ScoreData, WinnerData, BracketSettings, ToastMessage, TournamentForm } from '../lib/types';
+
+import Link from 'next/link';
+
+import { usePageHeader, useHeader } from '../lib/header-context';
+import { useAuth } from '../lib/auth-context';
+import { ErrorBoundary } from '../components/ErrorBoundary';
+import { getErrorMessage, getErrorContext } from '../lib/error-utils';
 import styles from '../page.module.css';
 import mobileStyles from './dashboard.module.css';
 import ConfirmationDialog from '../components/ConfirmationDialog';
 import Header from '../components/Header';
 import { MobileForm, MobileFormField } from '../../components/MobileForm';
+import { typography, colors, spacing, stylePresets } from '../lib/design-system';
+import { API, apiClient } from '../lib/api';
+import { logger } from '../lib/logger';
+import { Spinner, LoadingButton, Skeleton, LoadingState } from '../components/LoadingComponents';
+import EnhancedButton from '../components/EnhancedButton';
+import { useToast } from '../components/Toast';
+import { useAsyncOperation, ErrorMessage } from '../components/ErrorHandling';
+import { usePagination } from '../components/Performance';
+import { useAutoSave } from '../components/DataManagement';
 import { 
   PageContainer, 
   ContentWrapper, 
@@ -17,16 +34,6 @@ import {
   Input,
   Select
 } from '../components/UI';
-import { typography, colors, spacing, stylePresets } from '../lib/design-system';
-import Link from 'next/link';
-import { API, apiClient } from '../lib/api';
-import { logger } from '../lib/logger';
-import { Spinner, LoadingButton, Skeleton, LoadingState } from '../components/LoadingComponents';
-import EnhancedButton from '../components/EnhancedButton';
-import { useToast } from '../components/Toast';
-import { useAsyncOperation, ErrorMessage } from '../components/ErrorHandling';
-import { usePagination } from '../components/Performance';
-import { useAutoSave } from '../components/DataManagement';
 
 function get12hrTimes() {
   const times: string[] = [];
@@ -46,38 +53,6 @@ function get12hrTimes() {
 }
 const timeOptions = get12hrTimes();
 // Show all AM and PM times
-
-// TypeScript types for tournament and form
-export interface Tournament {
-  id: number;
-  name: string;
-  location?: string;
-  start_date?: string;
-  end_date?: string;
-  squad_times: Record<string, string[]>;
-}
-
-export interface TournamentForm {
-  name: string;
-  location?: string;
-  start_date?: string;
-  end_date?: string;
-  squad_times: Record<string, string[]>;
-  user_id?: number;
-}
-
-// Bracket settings interface
-export interface BracketSettings {
-  id?: number;
-  tournament_id: number;
-  bracket_size: number;
-  cost_per_bracket: number;
-  first_place: number;
-  second_place: number;
-  house_amount: number;
-  handicap_percentage: number;
-  handicap_base: number;
-}
 
 // Currency formatting utilities
 const formatCurrency = (value: number): string => {
@@ -134,7 +109,7 @@ function EditTournamentModal({ open, onClose, tournament, onSave, isMobile }: {
   
   // Memoize timeInputs to prevent recreation on every render
   const timeInputs = useMemo(() => {
-    const inputs: Record<string, Array<HTMLInputElement | null>> = {};
+    const inputs: Record<string, Array<HTMLSelectElement | null>> = {};
     return inputs;
   }, []);
 
@@ -180,8 +155,8 @@ function EditTournamentModal({ open, onClose, tournament, onSave, isMobile }: {
             // eslint-disable-next-line no-console
             logger.debug('Submitting tournament form', { form });
             await onSave(form);
-          } catch (err: any) {
-            setError(err?.message || 'Failed to save.');
+          } catch (err: unknown) {
+            setError(getErrorMessage(err) || 'Failed to save.');
           } finally {
             setSaving(false);
           }
@@ -211,8 +186,8 @@ function EditTournamentModal({ open, onClose, tournament, onSave, isMobile }: {
               setError(null);
               try {
                 await onSave(form);
-              } catch (err: any) {
-                setError(err?.message || 'Failed to save.');
+              } catch (err: unknown) {
+                setError(getErrorMessage(err) || 'Failed to save.');
               } finally {
                 setSaving(false);
               }
@@ -298,7 +273,7 @@ function EditTournamentModal({ open, onClose, tournament, onSave, isMobile }: {
                     <div key={i} className="squad-time-row">
                       <select
                         className="form-select"
-                        ref={el => { timeInputs[date][i] = el as any; }}
+                        ref={el => { timeInputs[date][i] = el as HTMLSelectElement | null; }}
                         value={time}
                         onChange={e => setForm(f => ({ ...f, squad_times: { ...f.squad_times, [date]: f.squad_times[date].map((t, j) => j === i ? e.target.value : t) } }))}
                       >
@@ -362,6 +337,52 @@ function EditTournamentModal({ open, onClose, tournament, onSave, isMobile }: {
 }
 
 export default function TournamentDashboard() {
+  // Authentication check - must be at the top
+  const { isAuthenticated } = useAuth();
+
+  // Check if we have tokens in localStorage even if auth context isn't ready
+  const hasStoredAuth = typeof window !== 'undefined' && 
+    localStorage.getItem('token') && 
+    localStorage.getItem('user_id');
+
+  // Authentication guard - redirect if not logged in
+  if (!isAuthenticated && !hasStoredAuth) {
+    return (
+      <div style={{ 
+        padding: '2rem', 
+        textAlign: 'center',
+        minHeight: '50vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div>
+          <div style={{ marginBottom: '1rem', fontSize: '2rem' }}>🔒</div>
+          <div>Please log in to access the tournament dashboard</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading if we have stored auth but context isn't ready yet
+  if (!isAuthenticated && hasStoredAuth) {
+    return (
+      <div style={{ 
+        padding: '2rem', 
+        textAlign: 'center',
+        minHeight: '50vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div>
+          <div style={{ marginBottom: '1rem', fontSize: '2rem' }}>🎳</div>
+          <div>Loading tournament dashboard...</div>
+        </div>
+      </div>
+    );
+  }
+
   // SSR-safe isAdmin state
   const [isAdmin, setIsAdmin] = useState(false);
   const [selectedSquadId, setSelectedSquadId] = useState<number | null>(null);
@@ -414,7 +435,7 @@ export default function TournamentDashboard() {
 
     setSavingBracketSettings(true);
     try {
-      const data = await apiClient.post<any>('/api/v1/bracket-settings/', {
+      const data = await apiClient.post<BracketSettings>('/api/v1/bracket-settings/', {
         ...bracketSettings,
         tournament_id: tournament.id
       });
@@ -434,7 +455,7 @@ export default function TournamentDashboard() {
       // Update local state with the returned data (includes ID for new records)
       setBracketSettings(data);
     } catch (error) {
-      console.error('Error saving bracket settings:', error);
+      logger.error('Failed to save bracket settings', { error });
       addToast({
         type: 'error',
         message: 'Network error occurred while saving. Please check your connection and try again.',
@@ -451,7 +472,7 @@ export default function TournamentDashboard() {
     if (!token) return;
 
     try {
-      const settings = await apiClient.get<any>(`/api/v1/bracket-settings/${tournamentId}`);
+      const settings = await apiClient.get<BracketSettings>(`/api/v1/bracket-settings/${tournamentId}`);
       if (settings) {
         setBracketSettings({
           ...settings,
@@ -466,8 +487,8 @@ export default function TournamentDashboard() {
           id: undefined // Clear any existing ID
         }));
       }
-    } catch (error: any) {
-      if (error.message?.includes('404')) {
+    } catch (error: unknown) {
+      if (getErrorMessage(error).includes('404')) {
         // Tournament not found or no bracket settings exist - use defaults
         logger.warn('No bracket settings found for tournament', { tournamentId });
         setBracketSettings(prev => ({
@@ -476,7 +497,7 @@ export default function TournamentDashboard() {
           id: undefined // Clear any existing ID
         }));
       } else {
-        console.error('Error loading bracket settings:', error);
+        logger.error('Error loading bracket settings', getErrorContext(error));
         // On network error, still set up defaults for the tournament
         setBracketSettings(prev => ({
           ...prev,
@@ -564,7 +585,7 @@ export default function TournamentDashboard() {
         duration: 3000
       });
     } catch (error) {
-      console.warn('Tournament fetch failed', error);
+      logger.warn('Tournament fetch failed', error);
       addToast({
         type: 'error',
         message: 'Failed to load tournaments. Please try again.',
@@ -596,11 +617,11 @@ export default function TournamentDashboard() {
         message: `Tournament "${deletedTournament?.name || id}" deleted successfully!`,
         duration: 4000
       });
-    } catch (error: any) {
-      console.error('Tournament delete failed:', error);
+    } catch (error: unknown) {
+      logger.error('Tournament delete failed', getErrorContext(error));
       addToast({
         type: 'error',
-        message: error.message || 'Failed to delete tournament. Please try again.',
+        message: getErrorMessage(error) || 'Failed to delete tournament. Please try again.',
         duration: 6000
       });
     }
@@ -696,12 +717,12 @@ export default function TournamentDashboard() {
               
               // Log detailed errors for debugging
               if (syncData.errors) {
-                console.warn('Squad sync errors:', syncData.errors);
+                logger.warn('Squad sync errors:', syncData.errors);
               }
             }
           } else {
             const errorData = await syncRes.json().catch(() => null);
-            console.warn('Squad sync failed:', syncRes.status, errorData);
+            logger.warn('Squad sync failed', { status: syncRes.status, errorData });
             addToast({
               type: 'warning',
               message: `Squad sync failed: ${errorData?.detail || 'Unknown error'}. Please refresh the page.`,
@@ -709,7 +730,7 @@ export default function TournamentDashboard() {
             });
           }
         } catch (syncError) {
-          console.error('Squad sync error:', syncError);
+          logger.error('Squad sync error:', syncError);
           addToast({
             type: 'warning',
             message: 'Tournament saved but squad sync encountered an error. Please refresh the page.',
@@ -730,17 +751,17 @@ export default function TournamentDashboard() {
             setSquads(squadData);
           }
         } catch (squadError) {
-          console.error('Failed to reload squads:', squadError);
+          logger.error('Failed to reload squads:', squadError);
         }
       }
 
       setModalOpen(false);
       setCreateMode(false);
-    } catch (error: any) {
-      console.error('Tournament save failed:', error);
+    } catch (error: unknown) {
+      logger.error('Tournament save failed', getErrorContext(error));
       addToast({
         type: 'error',
-        message: error.message || 'Failed to save tournament. Please try again.',
+        message: getErrorMessage(error) || 'Failed to save tournament. Please try again.',
         duration: 6000
       });
     }
@@ -793,6 +814,7 @@ export default function TournamentDashboard() {
   });
 
   return (
+    <ErrorBoundary>
       <>
         <ConfirmationDialog open={confirmOpen} message={confirmMsg} onClose={() => setConfirmOpen(false)} />
         <EditTournamentModal
@@ -1213,5 +1235,6 @@ export default function TournamentDashboard() {
           </div>
         )}
       </>
+    </ErrorBoundary>
   );
 }

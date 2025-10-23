@@ -1,8 +1,9 @@
 "use client";
-"use client";
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
+
 import { useAuth } from '../app/lib/auth-context';
 import { logger } from '../app/lib/logger';
 
@@ -48,6 +49,7 @@ export default function Sidebar({ firstName, isMobile = false, isOpen = false, o
       zIndex: 1000,
       transition: 'all 0.3s ease',
       display: 'flex',
+      pointerEvents: 'auto',
       flexDirection: 'column',
       alignItems: 'center'
     }}>
@@ -136,7 +138,7 @@ export default function Sidebar({ firstName, isMobile = false, isOpen = false, o
               <Link
                 href={link.href}
                 onClick={(e) => {
-                  logger.userAction(`Navigating to ${link.href}`);
+                  logger.userAction('Sidebar link clicked', { href: link.href });
                 }}
                 style={{
                   color: isActive ? '#f0a500' : 'rgba(255,255,255,0.85)',
@@ -154,7 +156,9 @@ export default function Sidebar({ firstName, isMobile = false, isOpen = false, o
                     ? '1px solid rgba(240,165,0,0.3)' 
                     : '1px solid rgba(255,255,255,0.05)',
                   borderLeft: isActive ? '4px solid #f0a500' : '4px solid transparent',
-                  transition: 'all 0.2s ease'
+                  transition: 'all 0.2s ease',
+                  cursor: 'pointer',
+                  pointerEvents: 'auto'
                 }}
               >
                 {link.label}

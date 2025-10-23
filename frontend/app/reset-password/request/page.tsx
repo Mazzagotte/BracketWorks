@@ -1,10 +1,20 @@
-﻿"use client";
+"use client";
+
 import { useState, useEffect, useRef, useCallback } from "react";
+
 import Image from "next/image";
-import { API } from "../../lib/api";
-import { useToast } from "../../components/Toast";
+
 import "../../styles/login.css";
 import "../../styles/login-validation.css";
+
+import { API } from "../../lib/api";
+import { useToast } from "../../components/Toast";
+import { logger } from '../lib/logger';
+
+
+
+
+
 
 // Connection monitoring utilities
 const getConnectionQuality = () => {
@@ -34,7 +44,7 @@ const fetchWithRetry = async (url: string, options: RequestInit, maxRetries = 3)
       
       clearTimeout(timeoutId);
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
       lastError = error;
       
       if (i === maxRetries) break;
@@ -174,11 +184,11 @@ export default function RequestResetPage() {
       setSuccess(successMessage);
       addToast({
         type: 'success',
-        message: "✉️ Reset code sent! Check your email inbox.",
+        message: "?? Reset code sent! Check your email inbox.",
         duration: 5000
       });
       
-    } catch (err: any) {
+    } catch (err: unknown) {
       const isNetworkError = err?.name === 'TypeError' || err?.message?.includes('Failed to fetch');
       const isTimeoutError = err?.name === 'AbortError' || err?.message?.includes('timeout');
       const isConnectionError = err?.message?.includes('No internet connection');
@@ -209,9 +219,9 @@ export default function RequestResetPage() {
       if (shouldRetry && !isOnline) {
         const retryRequest = async () => {
           try {
-            await handleRequest(new Event('submit') as any);
+            await handleRequest(new Event('submit') as React.FormEvent));
           } catch (retryError) {
-            console.log('Retry failed:', retryError);
+            logger.debug('Retry failed:', retryError);
           }
         };
         setRetryQueue(prev => [...prev, retryRequest]);
@@ -310,7 +320,7 @@ export default function RequestResetPage() {
           case 'Enter':
             e.preventDefault();
             if (!loading && fieldErrors.email === '' && email.trim()) {
-              handleRequest(new Event('submit') as any);
+              handleRequest(new Event('submit') as React.FormEvent));
             }
             break;
           case 'Escape':
@@ -364,7 +374,7 @@ export default function RequestResetPage() {
         <div className={`connection-status ${isOnline ? connectionQuality : 'offline'}`} role="alert" aria-live="polite">
           <div className="connection-content">
             <span className="connection-icon">
-              {!isOnline ? '📡' : connectionQuality === 'slow' ? '🐌' : '⚠️'}
+              {!isOnline ? '??' : connectionQuality === 'slow' ? '??' : '??'}
             </span>
             <span className="connection-text">
               {!isOnline ? 'No internet connection' : 
@@ -380,7 +390,7 @@ export default function RequestResetPage() {
             onClick={() => setShowConnectionStatus(false)}
             aria-label="Dismiss connection status"
           >
-            ×
+            �
           </button>
         </div>
       )}
@@ -450,21 +460,21 @@ export default function RequestResetPage() {
             )}
             {!fieldErrors.email && fieldTouched.email && email.trim() && (
               <div id="email-help" className="field-success">
-                ✓ Valid email format
+                ? Valid email format
               </div>
             )}
           </div>
 
           {error && (
             <div className="error-container" role="alert">
-              <span className="error-icon">⚠️</span>
+              <span className="error-icon">??</span>
               <span>{error}</span>
             </div>
           )}
 
           {success && (
             <div className="success-message" role="alert">
-              ✅ {success}
+              ? {success}
             </div>
           )}
 

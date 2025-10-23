@@ -1,10 +1,13 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+
 import { useAuth } from '../lib/auth-context';
 import { useToast } from '../components/Toast';
 import { logger } from '../lib/logger';
 import { API } from '../lib/api';
+
+
 
 export interface LoginFormState {
   username: string;
@@ -184,7 +187,7 @@ export const useLoginForm = (
         window.location.href = '/dashboard';
       }, 1500);
       
-    } catch (err: any) {
+    } catch (err: unknown) {
       const errorMsg = `Network error: ${err?.message || 'Please check your connection'}`;
       setError(errorMsg);
       addToast({

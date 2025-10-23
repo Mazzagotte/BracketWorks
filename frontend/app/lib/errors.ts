@@ -3,15 +3,15 @@ export interface AppError {
   message: string
   code?: string
   statusCode?: number
-  details?: any
+  details?: unknown
 }
 
 export class ApiError extends Error implements AppError {
   public code?: string
   public statusCode?: number
-  public details?: any
+  public details?: unknown
 
-  constructor(message: string, statusCode?: number, code?: string, details?: any) {
+  constructor(message: string, statusCode?: number, code?: string, details?: unknown) {
     super(message)
     this.name = 'ApiError'
     this.statusCode = statusCode
@@ -23,9 +23,9 @@ export class ApiError extends Error implements AppError {
 export class ValidationError extends Error implements AppError {
   public code: string = 'VALIDATION_ERROR'
   public statusCode: number = 400
-  public details?: any
+  public details?: unknown
 
-  constructor(message: string, details?: any) {
+  constructor(message: string, details?: unknown) {
     super(message)
     this.name = 'ValidationError'
     this.details = details

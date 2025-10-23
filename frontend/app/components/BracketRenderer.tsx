@@ -1,5 +1,6 @@
-// Pure bracket display component
 import React from 'react'
+
+// Pure bracket display component
 
 export interface Match { 
   seedA: number
@@ -17,8 +18,25 @@ export interface BracketRound {
   matches: Match[] 
 }
 
+
+
+interface BracketItem {
+  rounds?: BracketRound[];
+  title?: string;
+}
+
+interface BracketPreviewData {
+  rounds?: BracketRound[];
+  multiple_brackets?: {
+    scratch_brackets?: BracketItem[];
+    handicap_brackets?: BracketItem[];
+  };
+  scratch_brackets?: BracketItem[];
+  handicap_brackets?: BracketItem[];
+}
+
 interface BracketRendererProps {
-  preview: any
+  preview: BracketPreviewData | null
   selectedBracketType: 'scratch' | 'handicap'
   selectedBracket: {type: 'scratch' | 'handicap', index: number} | null
   selectedRound: number
@@ -140,7 +158,7 @@ function MultipleBracketsView({
   onMatchSelect,
   isMobile
 }: {
-  brackets: any[]
+  brackets: BracketItem[]
   selectedBracket: {type: 'scratch' | 'handicap', index: number} | null
   selectedRound: number
   onMatchSelect?: (bracketId: string, round: number, match: number) => void
@@ -283,14 +301,14 @@ function BracketCard({
   index, 
   onClick 
 }: { 
-  bracket: any
+  bracket: BracketItem
   index: number
   onClick: () => void
 }) {
-  const totalMatches = bracket.rounds?.reduce((total: number, round: any) => 
+  const totalMatches = bracket.rounds?.reduce((total: number, round: BracketRound) => 
     total + (round.matches?.length || 0), 0) || 0
-  const completedMatches = bracket.rounds?.reduce((total: number, round: any) => 
-    total + (round.matches?.filter((m: any) => m.winner || (m.scoreA && m.scoreB))?.length || 0), 0) || 0
+  const completedMatches = bracket.rounds?.reduce((total: number, round: BracketRound) => 
+    total + (round.matches?.filter((m: Match) => m.winner || (m.scoreA && m.scoreB))?.length || 0), 0) || 0
 
   return (
     <div 

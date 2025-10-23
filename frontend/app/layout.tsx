@@ -1,17 +1,22 @@
 "use client";
 
+import { useEffect, useState } from 'react';
+
 import './styles/globals.css';
 import './styles/login.css';
+
 import Sidebar from '../components/Sidebar';
 import ModernHeader from './components/ModernHeader';
 import { MobileNav } from '../components/MobileNav';
-import { useEffect, useState } from 'react';
 import { ToastProvider, ToastContainer, SkipNavigation } from './components';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { AuthProvider, useAuth, useIsAuthenticated } from './lib/auth-context';
 import { HeaderProvider, useHeader } from './lib/header-context';
 import { logger } from './lib/logger';
 import { ApiHealthCheck } from './components/ApiHealthCheck';
+import { DevAuthStatus } from './components/DevAuthStatus';
+
+
 
 function ClientLayout({ children }: { children: React.ReactNode }) {
   // All hooks must be called before any conditional returns
@@ -65,7 +70,7 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
     user = auth.user;
     isAuthenticated = auth.isAuthenticated;
   } catch (error) {
-    console.error('Auth context error in ClientLayout:', error);
+    logger.error('Auth context error in ClientLayout:', error);
     // Return minimal layout during auth initialization
     return (
       <div style={{ padding: '20px', textAlign: 'center' }}>
@@ -87,8 +92,8 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
           </div>
         ) : (
         <>
-          {/* Desktop Sidebar - Show for debugging auth issues */}
-          {!isMobile && (
+          {/* Desktop Sidebar - Only show when authenticated */}
+          {!isMobile && (isAuthenticated || (typeof window !== 'undefined' && localStorage.getItem('token') && localStorage.getItem('user_id'))) && (
             <Sidebar 
               firstName={firstName} 
               isMobile={false}
@@ -99,7 +104,7 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
           )}
 
           {/* Mobile Navigation */}
-          {isMobile && isAuthenticated && (
+          {isMobile && (isAuthenticated || (typeof window !== 'undefined' && localStorage.getItem('token') && localStorage.getItem('user_id'))) && (
             <MobileNav
               isOpen={sidebarOpen}
               onClose={() => setSidebarOpen(false)}
@@ -109,7 +114,7 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
           )}
           
           {/* Enhanced Mobile Header */}
-          {isMobile && isAuthenticated && (
+          {isMobile && (isAuthenticated || (typeof window !== 'undefined' && localStorage.getItem('token') && localStorage.getItem('user_id'))) && (
             <header 
               className="mobile-header"
               style={{
@@ -226,11 +231,11 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
           </main>
         </>
       )}
+      
+      {/* Development Authentication Status Indicator - Upper Right */}
+      <DevAuthStatus />
+      
       <ToastContainer />
-      {/* API Health Check - only show in development or when there are issues */}
-      {(process.env.NODE_ENV === 'development' || typeof window !== 'undefined') && (
-        <ApiHealthCheck />
-      )}
       </ErrorBoundary>
     </ToastProvider>
   );

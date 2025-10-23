@@ -29,21 +29,36 @@ app = FastAPI(
 # Add monitoring middleware
 setup_monitoring(app)
 
-# Configurable and safe CORS defaults
+# Secure CORS configuration
+ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
 _origins_raw = os.getenv("CORS_ORIGINS", "http://localhost:3000").strip()
-origins = [o.strip() for o in _origins_raw.split(",") if o.strip()]
-allow_credentials = True
-if _origins_raw == "*" or "*" in origins:
-    origins = ["*"]
-    allow_credentials = False
+
+if ENVIRONMENT == "production":
+    # Production: Only allow specific domains
+    origins = [o.strip() for o in _origins_raw.split(",") if o.strip() and not o.strip().startswith("http://localhost")]
+    allow_credentials = True
+    allowed_methods = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
+    logger.info(f"Production CORS origins: {origins}")
+else:
+    # Development: Allow localhost variations
+    base_origins = [o.strip() for o in _origins_raw.split(",") if o.strip()]
+    dev_origins = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000", 
+        "http://localhost:8000",
+        "http://127.0.0.1:8000"
+    ]
+    origins = list(set(base_origins + dev_origins))
+    allow_credentials = True
+    allowed_methods = ["*"]
+    logger.info(f"Development CORS origins: {origins}")
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_origin_regex=r"https?://(localhost|127\\.0\\.1)(:\\d+)?",
     allow_credentials=allow_credentials,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=allowed_methods,
+    allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
 )
 
 # Include all routers

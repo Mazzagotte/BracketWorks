@@ -1,4 +1,5 @@
 import React, { memo, useMemo, useCallback } from 'react';
+
 import { logger } from '../lib/logger';
 
 // Performance monitoring hook

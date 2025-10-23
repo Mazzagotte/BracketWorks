@@ -1,10 +1,12 @@
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
+type LogContext = Record<string, unknown>;
+
 interface LogEntry {
   level: LogLevel;
   message: string;
   timestamp: Date;
-  context?: any;
+  context?: LogContext;
 }
 
 class Logger {
@@ -12,7 +14,7 @@ class Logger {
   private logs: LogEntry[] = [];
   private maxLogSize = 1000; // Keep last 1000 logs in memory
 
-  private log(level: LogLevel, message: string, context?: any) {
+  private log(level: LogLevel, message: string, context?: LogContext) {
     const entry: LogEntry = {
       level,
       message,
@@ -33,16 +35,16 @@ class Logger {
       
       switch (level) {
         case 'debug':
-          console.debug(`[${timestamp}] DEBUG: ${message}${contextStr}`);
+          logger.debug(`[${timestamp}] DEBUG: ${message}${contextStr}`);
           break;
         case 'info':
           console.info(`[${timestamp}] INFO: ${message}${contextStr}`);
           break;
         case 'warn':
-          console.warn(`[${timestamp}] WARN: ${message}${contextStr}`);
+          logger.warn(`[${timestamp}] WARN: ${message}${contextStr}`);
           break;
         case 'error':
-          console.error(`[${timestamp}] ERROR: ${message}${contextStr}`);
+          logger.error(`[${timestamp}] ERROR: ${message}${contextStr}`);
           break;
       }
     }
@@ -71,19 +73,19 @@ class Logger {
     }
   }
 
-  debug(message: string, context?: any) {
+  debug(message: string, context?: LogContext) {
     this.log('debug', message, context);
   }
 
-  info(message: string, context?: any) {
+  info(message: string, context?: LogContext) {
     this.log('info', message, context);
   }
 
-  warn(message: string, context?: any) {
+  warn(message: string, context?: LogContext) {
     this.log('warn', message, context);
   }
 
-  error(message: string, context?: any) {
+  error(message: string, context?: LogContext) {
     this.log('error', message, context);
   }
 
@@ -92,7 +94,7 @@ class Logger {
     this.info(`API ${method} ${url}`, { status, duration });
   }
 
-  userAction(action: string, context?: any) {
+  userAction(action: string, context?: LogContext) {
     this.info(`User action: ${action}`, context);
   }
 
@@ -118,14 +120,14 @@ export const logger = new Logger();
 export type { LogLevel, LogEntry };
 
 // Convenience function for conditional logging
-export function logIf(condition: boolean, level: LogLevel, message: string, context?: any) {
+export function logIf(condition: boolean, level: LogLevel, message: string, context?: LogContext) {
   if (condition) {
     logger[level](message, context);
   }
 }
 
 // Development-only logging
-export function devLog(message: string, context?: any) {
+export function devLog(message: string, context?: LogContext) {
   if (process.env.NODE_ENV === 'development') {
     logger.debug(message, context);
   }
@@ -135,7 +137,7 @@ export function devLog(message: string, context?: any) {
 export async function loggedOperation<T>(
   operation: () => Promise<T>,
   operationName: string,
-  context?: any
+  context?: LogContext
 ): Promise<T> {
   const startTime = Date.now();
   logger.info(`Starting: ${operationName}`, context);
@@ -143,12 +145,12 @@ export async function loggedOperation<T>(
   try {
     const result = await operation();
     const duration = Date.now() - startTime;
-    logger.info(`Completed: ${operationName}`, { ...context, duration });
+    logger.info(`Completed: ${operationName}`, { ...context || {}, duration });
     return result;
   } catch (error) {
     const duration = Date.now() - startTime;
     logger.error(`Failed: ${operationName}`, { 
-      ...context, 
+      ...context || {}, 
       duration, 
       error: error instanceof Error ? error.message : String(error) 
     });

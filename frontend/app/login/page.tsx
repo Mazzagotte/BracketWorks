@@ -1,8 +1,13 @@
 "use client";
+
 import React, { useState, useEffect } from "react";
+
 import Image from "next/image";
-import { API } from "../lib/api";
+import { useRouter } from "next/navigation";
+
 import "../styles/bowling-animations.css";
+
+import { API } from "../lib/api";
 import { LoadingButton, Spinner } from "../components/LoadingComponents";
 import { useToast } from "../components/Toast";
 import { ErrorMessage } from "../components/ErrorHandling";
@@ -11,6 +16,7 @@ import { useAuth } from "../lib/auth-context";
 import { logger } from "../lib/logger";
 
 export default function LoginPage() {
+  const router = useRouter();
   const { login, clearAuth } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -218,13 +224,14 @@ export default function LoginPage() {
       
       setShowButtonBall(false);
       
-      // Smooth redirect with better UX
+      // Smooth redirect with better UX - use Next.js router to preserve state
       setTimeout(() => {
-        window.location.href = '/dashboard';
+        router.push('/dashboard');
       }, 1500);
       
-    } catch (err: any) {
-      const errorMsg = `Network error: ${err?.message || 'Please check your connection'}`;
+    } catch (err: unknown) {
+      const error = err as Error;
+      const errorMsg = `Network error: ${error?.message || 'Please check your connection'}`;
       setError(errorMsg);
       addToast({
         type: 'error',
@@ -232,7 +239,7 @@ export default function LoginPage() {
         duration: 6000
       });
       setShowButtonBall(false);
-      logger.error('Login failed', { error: err?.message, username });
+      logger.error('Login failed', { error: error?.message, username });
     } finally {
       setLoading(false);
     }

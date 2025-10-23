@@ -1,15 +1,28 @@
-// Bracket controls and actions component
 import React from 'react'
+
 import { Button, Select, Input } from './UI'
+
+// Bracket controls and actions component
+
+import { Tournament, Squad, Player, BracketData } from '../lib/types';
+
+interface MultipleBrackets {
+  scratch_brackets?: BracketData[];
+  handicap_brackets?: BracketData[];
+}
+
+interface BracketPreview extends BracketData {
+  multiple_brackets?: MultipleBrackets;
+}
 
 export interface BracketState {
   size: number
-  preview: any | null
+  preview: BracketPreview | null
   loading: boolean
-  tournament: any | null
-  squads: any[]
-  selectedSquad: any | null
-  players: any[]
+  tournament: Tournament | null
+  squads: Squad[]
+  selectedSquad: Squad | null
+  players: Player[]
   loadingPlayers: boolean
   selectedBracket: {type: 'scratch' | 'handicap', index: number} | null
   selectedRound: number
@@ -21,8 +34,8 @@ export interface BracketState {
 interface BracketControlsProps {
   state: BracketState
   onSizeChange: (size: number) => void
-  onTournamentSelect: (tournament: any) => void
-  onSquadSelect: (squad: any) => void
+  onTournamentSelect: (tournament: Tournament) => void
+  onSquadSelect: (squad: Squad) => void
   onBracketTypeChange: (type: 'scratch' | 'handicap') => void
   onPlayerSearch: (query: string) => void
   onGeneratePreview: () => void

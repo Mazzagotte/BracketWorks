@@ -2,6 +2,10 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
+import { logger } from './logger';
+
+
+
 interface User {
   id: string;
   email?: string;
@@ -12,6 +16,7 @@ interface AuthContextType {
   token: string | null;
   user: User | null;
   isAuthenticated: boolean;
+  isInitialized: boolean;
   login: (token: string, userId: string, userData?: Partial<User>) => void;
   logout: () => void;
   updateUser: (userData: Partial<User>) => void;
@@ -30,15 +35,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [isInitialized, setIsInitialized] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  // Prevent hydration issues
+  // Initialize auth state synchronously to prevent race conditions
   useEffect(() => {
+    // Set mounted immediately
     setMounted(true);
-  }, []);
-
-  // Initialize auth state from localStorage on mount
-  useEffect(() => {
-    if (!mounted) return; // Wait for client-side hydration
     
+    // Initialize from localStorage synchronously (no delays)
     try {
       const storedToken = localStorage.getItem('token');
       const storedUserId = localStorage.getItem('user_id');
@@ -52,10 +54,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         });
       }
     } catch (error) {
-      console.error('❌ Error initializing auth:', error);
+      logger.error('❌ Error initializing auth:', error);
     }
+    
+    // Mark as initialized immediately after sync initialization
     setIsInitialized(true);
-  }, [mounted]);
+  }, []); // Run once on mount, no dependencies
 
   // Save to localStorage when state changes
   useEffect(() => {
@@ -112,18 +116,34 @@ export function AuthProvider({ children }: AuthProviderProps) {
     token,
     user,
     isAuthenticated: !!(token && user),
+    isInitialized: mounted && isInitialized,
     login,
     logout,
     updateUser,
     clearAuth,
   };
 
-  // Don't render children until component is mounted to prevent hydration issues
-  if (!mounted) {
-    return null;
-  }
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  // Always provide the context, but show loading UI when not initialized
+  return (
+    <AuthContext.Provider value={value}>
+      {(!mounted || !isInitialized) ? (
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          minHeight: '100vh',
+          fontFamily: 'Inter, sans-serif'
+        }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ marginBottom: '1rem', fontSize: '1.2rem' }}>Loading...</div>
+            <div>Initializing BracketWorks...</div>
+          </div>
+        </div>
+      ) : (
+        children
+      )}
+    </AuthContext.Provider>
+  );
 }
 
 // Custom hooks for easier usage
@@ -131,7 +151,7 @@ export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
   if (context === undefined) {
     // More descriptive error message for debugging
-    console.error('🚨 useAuth called outside of AuthProvider context');
+    logger.error('🚨 useAuth called outside of AuthProvider context');
     throw new Error('Authentication context is not available. Please refresh the page.');
   }
   return context;
@@ -140,6 +160,26 @@ export function useAuth(): AuthContextType {
 export function useToken(): string | null {
   const { token } = useAuth();
   return token;
+}
+
+// Hook to check if auth is still initializing
+export function useAuthInitialized(): boolean {
+  const [mounted, setMounted] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    // Check if localStorage is accessible (client-side)
+    try {
+      localStorage.getItem('test');
+      setIsInitialized(true);
+    } catch {
+      // Still server-side or localStorage not available
+      setTimeout(() => setIsInitialized(true), 100);
+    }
+  }, []);
+
+  return mounted && isInitialized;
 }
 
 export function useUser(): User | null {

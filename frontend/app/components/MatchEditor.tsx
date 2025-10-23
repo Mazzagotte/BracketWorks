@@ -1,8 +1,10 @@
-// Score update and match editing component using standardized hooks
 import React, { useState } from 'react'
+
 import { useBrackets } from '../hooks/useBrackets'
 import { useToast } from './Toast'
 import { Button } from './UI'
+
+// Score update and match editing component using standardized hooks
 
 interface MatchEditorProps {
   selectedMatch: {

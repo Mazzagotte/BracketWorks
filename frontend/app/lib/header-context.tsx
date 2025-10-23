@@ -1,4 +1,5 @@
 "use client";
+
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 
 interface HeaderContextType {
@@ -76,11 +77,26 @@ export function usePageHeader(props: {
     return JSON.stringify(props.breadcrumbs);
   }, [props.breadcrumbs]);
 
+  // Memoize the actions to prevent re-renders
+  const memoizedActions = useMemo(() => props.actions, [props.actions]);
+
   useEffect(() => {
-    setHeaderProps(props);
+    setHeaderProps({
+      title: props.title,
+      subtitle: props.subtitle,
+      actions: memoizedActions,
+      centerContent: props.centerContent,
+      showBreadcrumbs: props.showBreadcrumbs,
+      breadcrumbs: props.breadcrumbs
+    });
     return () => clearHeaderProps();
   }, [
-    props, 
+    props.title,
+    props.subtitle,
+    memoizedActions,
+    props.centerContent,
+    props.showBreadcrumbs,
+    breadcrumbsString,
     setHeaderProps, 
     clearHeaderProps
   ]);

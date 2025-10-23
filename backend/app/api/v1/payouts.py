@@ -367,6 +367,17 @@ def _save_winners_and_payouts(
             bracket_type = bracket_data["bracket_type"]
             bracket_size = bracket_data["bracket_size"]
             prize_pool = float(bracket_data["prize_pool"])
+            
+            # Find the actual bracket_id from GeneratedBracket table
+            bracket_record = db.query(models.GeneratedBracket).filter(
+                models.GeneratedBracket.tournament_id == tournament_id,
+                models.GeneratedBracket.squad_id == squad_id if squad_id else models.GeneratedBracket.squad_id.is_(None),
+                models.GeneratedBracket.bracket_type == bracket_type,
+                models.GeneratedBracket.title == bracket_name
+            ).first()
+            
+            # Fall back to bracket_id=1 if not found (for backwards compatibility)
+            actual_bracket_id = bracket_record.id if bracket_record else 1
         
             for winner_data in bracket_data["winners"]:
                 total_winners += 1
@@ -375,7 +386,7 @@ def _save_winners_and_payouts(
                 winner = models.TournamentWinner(
                     tournament_id=tournament_id,
                     squad_id=squad_id,
-                    bracket_id=1,  # TODO: Link to actual bracket_id when available
+                    bracket_id=actual_bracket_id,
                     bowler_id=winner_data["player_id"] or 0,
                     bracket_type=bracket_type,
                     bracket_name=bracket_name,
@@ -392,7 +403,7 @@ def _save_winners_and_payouts(
                 payout = models.TournamentPayout(
                     tournament_id=tournament_id,
                     squad_id=squad_id,
-                    bracket_id=1,  # TODO: Link to actual bracket_id when available
+                    bracket_id=actual_bracket_id,
                     winner_id=winner.id,
                     bowler_id=winner_data["player_id"] or 0,
                     bracket_type=bracket_type,

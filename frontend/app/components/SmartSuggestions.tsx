@@ -1,17 +1,25 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+
 import { getSmartSuggestions, validateUSBC, DuplicateMatch } from '../utils/duplicateDetection';
-import { generateMergePreview, validateMergeOperation, MergePreview } from '../utils/playerMerging';
+import { generateMergePreview, validateMergeOperation, MergePreview, DataConflict } from '../utils/playerMerging';
+import { logger } from '../lib/logger';
+import { Player } from '../lib/types';
+
+
+
+
+
 
 interface SmartSuggestionsProps {
   firstName: string;
   lastName: string;
   usbc?: string;
-  players: any[];
+  players: Player[];
   onSuggestionSelect?: (suggestion: DuplicateMatch) => void;
   onWarningAcknowledge?: () => void;
-  onMergeComplete?: (mergedPlayer: any) => void;
+  onMergeComplete?: (mergedplayer: Player) => void;
   className?: string;
 }
 
@@ -81,7 +89,7 @@ export default function SmartSuggestions({
       setMergePreview(preview);
       setShowMergePreview(true);
     } catch (error) {
-      console.error('Error generating merge preview:', error);
+      logger.error('Error generating merge preview:', error);
     }
   };
 
@@ -90,7 +98,14 @@ export default function SmartSuggestions({
 
     try {
       // In a real implementation, this would call an API
-      const mergedPlayer = {
+      const mergedPlayer: Player = {
+        // Required fields with defaults
+        id: selectedDuplicate.player.id,
+        firstName: selectedDuplicate.player.firstName,
+        lastName: selectedDuplicate.player.lastName,
+        average: selectedDuplicate.player.average || 0,
+        handicap: selectedDuplicate.player.handicap || 0,
+        // Merge all fields
         ...selectedDuplicate.player,
         ...mergePreview.consolidatedData.finalPlayer
       };
@@ -101,7 +116,7 @@ export default function SmartSuggestions({
       setMergePreview(null);
       setShowSuggestions(false);
     } catch (error) {
-      console.error('Error merging players:', error);
+      logger.error('Error merging players:', error);
     }
   };
 
@@ -423,7 +438,7 @@ export default function SmartSuggestions({
               }}>
                 ⚠️ Data Conflicts ({mergePreview.consolidatedData.dataConflicts.length})
               </h4>
-              {mergePreview.consolidatedData.dataConflicts.map((conflict: any, index: number) => (
+              {mergePreview.consolidatedData.dataConflicts.map((conflict: DataConflict, index: number) => (
                 <div key={index} style={{
                   background: '#fef2f2',
                   border: '1px solid #fecaca',
@@ -668,7 +683,7 @@ export function USBCValidationIndicator({
   excludeId 
 }: {
   usbc: string;
-  players: any[];
+  players: Player[];
   excludeId?: number;
 }) {
   if (!usbc) return null;

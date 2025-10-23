@@ -1,9 +1,18 @@
 "use client";
+
+import { useState, useEffect } from "react";
+
+import Image from "next/image";
+
 import "../styles/signup.css";
 import "../styles/validation.css";
-import { useState, useEffect } from "react";
-import Image from "next/image";
+
 import { API } from "../lib/api";
+
+
+
+
+
 
 export default function SignupPage() {
   const [firstName, setFirstName] = useState("");
@@ -34,7 +43,7 @@ export default function SignupPage() {
 
   // Enhanced UX hooks
   // Simple toast replacement
-  const addToast = (toast: any) => {
+  const addToast = (toast: { message: string; type?: string }) => {
     // Could implement toast UI here if needed
   };
 
@@ -213,7 +222,7 @@ export default function SignupPage() {
         window.location.href = '/login';
       }, 2000);
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       const errorMsg = `Network error: ${err?.message || 'Please check your connection'}`;
       setError(errorMsg);
       addToast({

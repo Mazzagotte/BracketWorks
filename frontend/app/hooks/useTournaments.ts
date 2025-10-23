@@ -1,7 +1,10 @@
-// Standardized hooks for tournament data
 import { useState, useEffect } from 'react'
+
 import { apiClient } from '../lib/api'
 import { useToast } from '../components/Toast'
+import { Player } from '../lib/types'
+
+// Standardized hooks for tournament data
 
 export interface Tournament {
   id: number
@@ -16,17 +19,10 @@ export interface Squad {
   id: number
   name: string
   time: string
-  tournament_id: number
+  tournament_id?: number
 }
 
-export interface Player {
-  id: number
-  name: string
-  scratch_average?: number
-  handicap_average?: number
-  tournament_id: number
-  squad_id?: number
-}
+
 
 // Hook for managing tournaments
 export function useTournaments() {

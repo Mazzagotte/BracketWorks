@@ -1,6 +1,7 @@
-// API Configuration and enhanced fetch utilities
 import { logger } from './logger'
 import { ApiError, handleApiError, shouldRetry } from './errors';
+
+// API Configuration and enhanced fetch utilities
 
 export const API = (path: string) => {
   const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
@@ -8,7 +9,7 @@ export const API = (path: string) => {
   
   // Log API calls in development for debugging
   if (process.env.NODE_ENV === 'development') {
-    console.log(`API Call: ${fullUrl}`);
+    logger.debug(`API Call: ${fullUrl}`);
   }
   
   return fullUrl;
@@ -96,7 +97,7 @@ export class ApiClient {
       
       if (!response.ok) {
         let errorMessage = `HTTP ${response.status}`
-        let errorDetails: any = null
+        let errorDetails: unknown = null
         
         try {
           const errorData = await response.json()
@@ -157,21 +158,21 @@ export class ApiClient {
     return this.request<T>(endpoint, { method: 'GET' }, 3, useCache);
   }
 
-  async post<T>(endpoint: string, data?: any): Promise<T> {
+  async post<T>(endpoint: string, data?: unknown): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'POST',
       body: data ? JSON.stringify(data) : undefined,
     });
   }
 
-  async put<T>(endpoint: string, data?: any): Promise<T> {
+  async put<T>(endpoint: string, data?: unknown): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'PUT',
       body: data ? JSON.stringify(data) : undefined,
     });
   }
 
-  async patch<T>(endpoint: string, data?: any): Promise<T> {
+  async patch<T>(endpoint: string, data?: unknown): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'PATCH',
       body: data ? JSON.stringify(data) : undefined,

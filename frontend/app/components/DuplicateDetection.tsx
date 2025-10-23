@@ -1,14 +1,23 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+
 import { 
+import { 
+
+import { logger } from '../lib/logger';
+
+
+
+
+
+
   DuplicateGroup, 
   DuplicateMatch, 
   scanForDuplicateGroups, 
   findDuplicatesForPlayer,
   getSmartSuggestions 
 } from '../utils/duplicateDetection';
-import { 
   generateMergePreview, 
   validateMergeOperation, 
   calculateMergeConfidence,
@@ -39,7 +48,7 @@ export default function DuplicateDetection({ players, onMergeComplete, onDuplica
       const groups = scanForDuplicateGroups(players, threshold);
       setDuplicateGroups(groups);
     } catch (error) {
-      console.error('Error scanning for duplicates:', error);
+      logger.error('Error scanning for duplicates:', error);
     } finally {
       setIsScanning(false);
     }
@@ -649,7 +658,7 @@ function MergeConfirmationDialog({
       
       onConfirm(mergedId, removedIds);
     } catch (error) {
-      console.error('Merge failed:', error);
+      logger.error('Merge failed:', error);
     } finally {
       setIsConfirming(false);
     }

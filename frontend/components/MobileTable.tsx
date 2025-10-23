@@ -1,18 +1,19 @@
 import React, { useState } from 'react';
+
 import { logger } from '../app/lib/logger';
 
-interface MobileTableProps {
-  data: any[];
+interface MobileTableProps<T = Record<string, unknown>> {
+  data: T[];
   columns: {
     key: string;
     label: string;
-    render?: (value: any, row: any) => React.ReactNode;
+    render?: (value: unknown, row: T) => React.ReactNode;
     sortable?: boolean;
     width?: string;
     mobileHide?: boolean; // Hide on mobile
     mobilePriority?: number; // 1 = highest priority (always show)
   }[];
-  onRowClick?: (row: any) => void;
+  onRowClick?: (row: T) => void;
   isLoading?: boolean;
   emptyMessage?: string;
 }

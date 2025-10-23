@@ -1,10 +1,18 @@
 "use client";
+
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import { API } from "../../lib/api";
-import { useToast } from "../../components/Toast";
+
 import "../../styles/login.css";
 import "../../styles/login-validation.css";
 import "../../styles/reset-password.css";
+
+import { API } from "../../lib/api";
+import { useToast } from "../../components/Toast";
+import { logger } from '../lib/logger';
+
+
+
+
 
 // Password strength requirements
 const PASSWORD_REQUIREMENTS = [
@@ -52,7 +60,7 @@ const fetchWithRetry = async (url: string, options: RequestInit, maxRetries = 3)
       
       clearTimeout(timeoutId);
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
       lastError = error;
       
       if (i === maxRetries) break;
@@ -159,8 +167,8 @@ export default function ResetPasswordPage() {
         window.location.href = '/login';
       }, 3000);
 
-    } catch (err: any) {
-      console.error('Reset password error:', err);
+    } catch (err: unknown) {
+      logger.error('Reset password error:', err);
       setError(err.message || 'Failed to reset password. Please try again.');
       
       addToast({
@@ -237,7 +245,7 @@ export default function ResetPasswordPage() {
             e.preventDefault();
             if (!loading && Object.values(fieldErrors).every(error => error === '') && 
                 email.trim() && code.trim() && newPassword && confirmPassword) {
-              handleReset(new Event('submit') as any);
+              handleReset(new Event('submit') as React.FormEvent));
             }
             break;
           case 'Escape':

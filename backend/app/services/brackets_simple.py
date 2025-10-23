@@ -1,6 +1,7 @@
 """
 Simplified bracket generation service - cleaner and more readable
 """
+import random
 from typing import List, Dict, Any
 
 def generate_bracket_preview(size: int = 8) -> Dict[str, Any]:
@@ -150,21 +151,22 @@ def create_handicap_entries(players: List[Dict[str, Any]]) -> List[Dict[str, Any
 
 
 def create_brackets(entries: List[Dict[str, Any]], bracket_size: int, bracket_type: str) -> List[Dict[str, Any]]:
-    """Create multiple full brackets from entries"""
+    """Create multiple full brackets from entries with random assignment"""
     if not entries:
         return []
     
-    # Sort entries by total score (highest first)
-    sorted_entries = sorted(entries, key=lambda x: x['total_score'], reverse=True)
+    # Randomly shuffle entries instead of sorting by score
+    randomized_entries = entries.copy()  # Don't modify original list
+    random.shuffle(randomized_entries)
     
     brackets = []
     bracket_num = 1
     
     # Create brackets while we have enough players
-    while len(sorted_entries) >= bracket_size:
-        # Take next group of players
-        bracket_players = sorted_entries[:bracket_size]
-        sorted_entries = sorted_entries[bracket_size:]
+    while len(randomized_entries) >= bracket_size:
+        # Take next group of randomly ordered players
+        bracket_players = randomized_entries[:bracket_size]
+        randomized_entries = randomized_entries[bracket_size:]
         
         # Create the bracket
         bracket = create_single_bracket(bracket_players, f"{bracket_type} Bracket {bracket_num}")
@@ -175,13 +177,17 @@ def create_brackets(entries: List[Dict[str, Any]], bracket_size: int, bracket_ty
 
 
 def create_single_bracket(players: List[Dict[str, Any]], title: str) -> Dict[str, Any]:
-    """Create a single bracket from a list of players"""
+    """Create a single bracket from a list of players with random seeding"""
     size = len(players)
     
-    # Seed players (highest score gets seed 1)
-    seeded_players = [(i + 1, player) for i, player in enumerate(players)]
+    # Randomly shuffle players for random seeding
+    shuffled_players = players.copy()
+    random.shuffle(shuffled_players)
     
-    # Create initial matches
+    # Assign sequential seeds to randomly ordered players
+    seeded_players = [(i + 1, player) for i, player in enumerate(shuffled_players)]
+    
+    # Create initial matches with random pairings
     first_round_matches = []
     for i in range(0, size, 2):
         seed_a, player_a = seeded_players[i]
@@ -192,10 +198,10 @@ def create_single_bracket(players: List[Dict[str, Any]], title: str) -> Dict[str
             "seedB": seed_b,
             "playerA": player_a['name'],
             "playerB": player_b['name'],
-            "scoreA": player_a['total_score'],
-            "scoreB": player_b['total_score'],
-            "winner": "A" if player_a['total_score'] > player_b['total_score'] else "B",
-            "status": "completed"
+            "scoreA": player_a['total_score'],  # Show qualifying score for reference
+            "scoreB": player_b['total_score'],  # Show qualifying score for reference
+            "winner": None,     # No predetermined winner
+            "status": "pending" # All matches start as pending
         })
     
     # Build all rounds
@@ -213,22 +219,15 @@ def create_single_bracket(players: List[Dict[str, Any]], title: str) -> Dict[str
         if len(current_matches) == 1:
             break
             
-        # Create next round
+        # Create next round with TBD players (since first round is now pending)
         next_matches = []
         for i in range(0, len(current_matches), 2):
             if i + 1 < len(current_matches):
-                match_a = current_matches[i]
-                match_b = current_matches[i + 1]
-                
-                # Determine winners from previous round
-                winner_a = match_a['playerA'] if match_a['winner'] == 'A' else match_a['playerB']
-                winner_b = match_b['playerA'] if match_b['winner'] == 'A' else match_b['playerB']
-                
                 next_matches.append({
                     "seedA": None,
                     "seedB": None,
-                    "playerA": winner_a,
-                    "playerB": winner_b,
+                    "playerA": "TBD",
+                    "playerB": "TBD",
                     "scoreA": None,
                     "scoreB": None,
                     "winner": None,

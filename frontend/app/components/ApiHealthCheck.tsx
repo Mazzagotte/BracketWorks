@@ -1,7 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+
 import { API } from '../lib/api'
+import { getErrorMessage } from '../lib/error-utils'
+
+
 
 export function ApiHealthCheck() {
   const [status, setStatus] = useState<'checking' | 'connected' | 'failed'>('checking')
@@ -27,9 +31,9 @@ export function ApiHealthCheck() {
           setStatus('failed')
           setError(`HTTP ${response.status}: ${response.statusText}`)
         }
-      } catch (err: any) {
+            } catch (err: unknown) {
         setStatus('failed')
-        setError(err.message || 'Network error')
+        setError(getErrorMessage(err) || 'Network error')
       }
     }
     

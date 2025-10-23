@@ -1,11 +1,21 @@
-﻿"use client";
+"use client";
+
 import React, { useState, useEffect, useRef, useCallback } from "react";
+
 import Image from "next/image";
-import { API } from "../../lib/api";
-import { useToast } from "../../components/Toast";
+
 import "../../styles/login.css";
 import "../../styles/login-validation.css";
 import "../../styles/bowling-animations.css";
+
+import { API } from "../../lib/api";
+import { useToast } from "../../components/Toast";
+import { logger } from '../lib/logger';
+
+
+
+
+
 
 export default function VerifyResetPage() {
   const [email, setEmail] = useState("");
@@ -125,7 +135,7 @@ export default function VerifyResetPage() {
         });
         
         return response;
-      } catch (error: any) {
+      } catch (error: unknown) {
         const isLastAttempt = attempt === maxRetries;
         const isNetworkError = error.name === 'TypeError' || error.message.includes('Failed to fetch');
         const isTimeoutError = error.name === 'AbortError' || error.message.includes('timeout');
@@ -330,7 +340,7 @@ export default function VerifyResetPage() {
         window.location.href = `/reset-password/reset?email=${encodeURIComponent(email)}&code=${encodeURIComponent(code)}`;
       }, 2000);
       
-    } catch (err: any) {
+    } catch (err: unknown) {
       const isNetworkError = err?.name === 'TypeError' || err?.message?.includes('Failed to fetch');
       const isTimeoutError = err?.name === 'AbortError' || err?.message?.includes('timeout');
       const isConnectionError = err?.message?.includes('No internet connection');
@@ -361,9 +371,9 @@ export default function VerifyResetPage() {
       if (shouldRetry && !isOnline) {
         const retryVerify = async () => {
           try {
-            await handleVerify(new Event('submit') as any);
+            await handleVerify(new Event('submit') as React.FormEvent));
           } catch (retryError) {
-            console.log('Retry failed:', retryError);
+            logger.debug('Retry failed:', retryError);
           }
         };
         setRetryQueue(prev => [...prev, retryVerify]);
@@ -384,7 +394,7 @@ export default function VerifyResetPage() {
       {/* Connection Status Bar */}
       {!isOnline && (
         <div className="connection-status offline">
-          <span className="connection-icon">⚠️</span>
+          <span className="connection-icon">??</span>
           <span>No internet connection - requests will be retried automatically</span>
         </div>
       )}
@@ -392,7 +402,7 @@ export default function VerifyResetPage() {
       {isOnline && showConnectionStatus && connectionQuality !== 'good' && (
         <div className={`connection-status ${connectionQuality}`}>
           <span className="connection-icon">
-            {connectionQuality === 'slow' ? '🐌' : '📶'}
+            {connectionQuality === 'slow' ? '??' : '??'}
           </span>
           <span>
             {connectionQuality === 'slow' && 'Slow connection detected'}
@@ -466,7 +476,7 @@ export default function VerifyResetPage() {
             )}
             {!fieldErrors.email && fieldTouched.email && email.trim() && (
               <div id="email-help" className="field-success">
-                ✓ Valid email format
+                ? Valid email format
               </div>
             )}
           </div>
@@ -498,21 +508,21 @@ export default function VerifyResetPage() {
             )}
             {!fieldErrors.code && fieldTouched.code && code.trim() && (
               <div id="code-help" className="field-success">
-                ✓ Valid reset code format
+                ? Valid reset code format
               </div>
             )}
           </div>
 
           {error && (
             <div className="error-container" role="alert">
-              <span className="error-icon">⚠️</span>
+              <span className="error-icon">??</span>
               <span>{error}</span>
             </div>
           )}
 
           {success && (
             <div className="success-message" role="alert">
-              ✅ {success}
+              ? {success}
             </div>
           )}
 

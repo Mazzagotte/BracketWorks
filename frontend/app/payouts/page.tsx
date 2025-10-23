@@ -1,10 +1,15 @@
 'use client'
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
+import { Tournament, Squad, Player, BracketData, ScoreData, WinnerData, BracketSettings, ToastMessage } from '../lib/types'
+
+import { useAuth } from '../lib/auth-context'
+import { ErrorBoundary } from '../components/ErrorBoundary'
 import { API } from '../lib/api'
 import { logger } from '../lib/logger'
 import { usePageHeader } from '../lib/header-context'
 import EnhancedButton from '../components/EnhancedButton'
+import { typography, colors, spacing, stylePresets } from '../lib/design-system'
 import { 
   PageContainer, 
   ContentWrapper, 
@@ -13,7 +18,6 @@ import {
   StatCard,
   Button
 } from '../components/UI'
-import { typography, colors, spacing, stylePresets } from '../lib/design-system'
 
 interface Winner {
   place: number
@@ -100,7 +104,53 @@ interface EntryData {
 }
 
 export default function PayoutsPage() {
-  const [tournament, setTournament] = useState<any>(null)
+  // Authentication check - must be at the top
+  const { isAuthenticated } = useAuth();
+
+  // Check if we have tokens in localStorage even if auth context isn't ready
+  const hasStoredAuth = typeof window !== 'undefined' && 
+    localStorage.getItem('token') && 
+    localStorage.getItem('user_id');
+
+  // Authentication guard - redirect if not logged in
+  if (!isAuthenticated && !hasStoredAuth) {
+    return (
+      <div style={{ 
+        padding: '2rem', 
+        textAlign: 'center',
+        minHeight: '50vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div>
+          <div style={{ marginBottom: '1rem', fontSize: '2rem' }}>🔒</div>
+          <div>Please log in to access payout management</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading if we have stored auth but context isn't ready yet
+  if (!isAuthenticated && hasStoredAuth) {
+    return (
+      <div style={{ 
+        padding: '2rem', 
+        textAlign: 'center',
+        minHeight: '50vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div>
+          <div style={{ marginBottom: '1rem', fontSize: '2rem' }}>🎳</div>
+          <div>Loading payout management...</div>
+        </div>
+      </div>
+    );
+  }
+
+  const [tournament, setTournament] = useState<Tournament | null>(null)
   const [squads, setSquads] = useState<any[]>([])
   const [selectedSquad, setSelectedSquad] = useState<any | null>(null)
   const [payoutData, setPayoutData] = useState<PayoutSummary | null>(null)
@@ -626,7 +676,7 @@ export default function PayoutsPage() {
       }
     } catch (error) {
       setError('Network error while loading payout data')
-      console.error('Error loading payout data:', error)
+      logger.error('Error loading payout data:', error)
     } finally {
       setLoading(false)
     }
@@ -663,7 +713,7 @@ export default function PayoutsPage() {
           }
         }
       } catch (error) {
-        console.error('Error loading current tournament:', error);
+        logger.error('Error loading current tournament:', error);
       }
     }
   }
@@ -719,7 +769,7 @@ export default function PayoutsPage() {
       const entryMap = new Map<number, PlayerEntry>()
       
       // Initialize entries from bowler data
-      bowlersData.forEach((bowler: any) => {
+      bowlersData.forEach((bowler: Player) => {
         entryMap.set(bowler.id, {
           id: bowler.id,
           name: bowler.name,
@@ -738,9 +788,9 @@ export default function PayoutsPage() {
 
       // Count actual bracket entries from bracket data
       if (bracketsData && Array.isArray(bracketsData)) {
-        bracketsData.forEach((bracket: any) => {
+        bracketsData.forEach((bracket: BracketData) => {
           if (bracket.players && Array.isArray(bracket.players)) {
-            bracket.players.forEach((player: any) => {
+            bracket.players.forEach((player: Player) => {
               const playerId = player.bowler_id || player.player_id || player.id
               const entry = entryMap.get(playerId)
               if (entry) {
@@ -757,7 +807,7 @@ export default function PayoutsPage() {
         // Fallback: estimate entries from winners data
         if (winnersData.all_winners) {
           const bracketPlayerMap = new Map<string, Set<number>>()
-          winnersData.all_winners.forEach((winner: any) => {
+          winnersData.all_winners.forEach((winner: WinnerData) => {
             const bracketKey = `${winner.bracket_name}_${winner.bracket_type}`
             if (!bracketPlayerMap.has(bracketKey)) {
               bracketPlayerMap.set(bracketKey, new Set())
@@ -784,7 +834,7 @@ export default function PayoutsPage() {
 
       // Process winners data to populate winnings and win counts
       if (winnersData.all_winners) {
-        winnersData.all_winners.forEach((winner: any) => {
+        winnersData.all_winners.forEach((winner: WinnerData) => {
           const entry = entryMap.get(winner.player_id)
           if (entry) {            
             // Count wins and amounts for any paid position
@@ -801,7 +851,7 @@ export default function PayoutsPage() {
                 bracket_name: winner.bracket_name,
                 bracket_type: winner.bracket_type,
                 placement: winner.place,
-                placement_text: winner.position,
+                placement_text: String(winner.position),
                 amount_won: winner.payout_amount
               })
             }
@@ -839,7 +889,7 @@ export default function PayoutsPage() {
 
     } catch (error) {
       setError('Failed to load entry data')
-      console.error('Error loading entry data:', error)
+      logger.error('Error loading entry data:', error)
     } finally {
       setLoading(false)
     }
@@ -882,7 +932,7 @@ export default function PayoutsPage() {
       await navigator.clipboard.writeText(text)
       // Could add a toast notification here
     } catch (err) {
-      console.error('Failed to copy: ', err)
+      logger.error('Failed to copy: ', err)
     }
   }
 
@@ -896,7 +946,8 @@ export default function PayoutsPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: colors.background }}>
+    <ErrorBoundary>
+      <div style={{ minHeight: '100vh', backgroundColor: colors.background }}>
       
       <div style={{ 
         maxWidth: '1200px', 
@@ -1855,6 +1906,7 @@ export default function PayoutsPage() {
         )}
       </div>
     </div>
+    </ErrorBoundary>
   )
 }
 

@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
+
 import { useToastHelpers } from './Toast';
+import { logger } from '../lib/logger';
 
 // Auto-save hook
 interface UseAutoSaveOptions<T> {
@@ -44,7 +46,7 @@ export function useAutoSave<T>({
       setLastSaved(new Date());
       onSaveSuccess?.();
       info('Changes saved automatically', '', { duration: 2000 });
-    } catch (err: any) {
+    } catch (err: unknown) {
       onSaveError?.(err);
       showError('Failed to save changes automatically', 'Auto-save Error');
     } finally {
@@ -105,7 +107,7 @@ class OfflineStorageManager {
       };
       localStorage.setItem(this.storageKey, JSON.stringify(offlineData));
     } catch (error) {
-      console.error('Failed to store offline data:', error);
+      logger.error('Failed to store offline data:', error);
     }
   }
 
@@ -116,7 +118,7 @@ class OfflineStorageManager {
       const item = offlineData[key];
       return item ? item.data : null;
     } catch (error) {
-      console.error('Failed to retrieve offline data:', error);
+      logger.error('Failed to retrieve offline data:', error);
       return null;
     }
   }
@@ -133,7 +135,7 @@ class OfflineStorageManager {
           timestamp: item.timestamp,
         }));
     } catch (error) {
-      console.error('Failed to get unsynced items:', error);
+      logger.error('Failed to get unsynced items:', error);
       return [];
     }
   }
@@ -147,7 +149,7 @@ class OfflineStorageManager {
         localStorage.setItem(this.storageKey, JSON.stringify(offlineData));
       }
     } catch (error) {
-      console.error('Failed to mark item as synced:', error);
+      logger.error('Failed to mark item as synced:', error);
     }
   }
 
@@ -156,7 +158,7 @@ class OfflineStorageManager {
     try {
       localStorage.removeItem(this.storageKey);
     } catch (error) {
-      console.error('Failed to clear offline data:', error);
+      logger.error('Failed to clear offline data:', error);
     }
   }
 
@@ -166,7 +168,7 @@ class OfflineStorageManager {
       const data = localStorage.getItem(this.storageKey);
       return data ? JSON.parse(data) : {};
     } catch (error) {
-      console.error('Failed to parse offline data:', error);
+      logger.error('Failed to parse offline data:', error);
       return {};
     }
   }
@@ -223,9 +225,9 @@ export function useOfflineSync({
 
       success(`Synced ${syncedCount} pending changes`, 'Sync Complete');
       setPendingItems(0);
-    } catch (error: any) {
+    } catch (error: unknown) {
       showError('Failed to sync some changes', 'Sync Error');
-      console.error('Sync failed:', error);
+      logger.error('Sync failed:', error);
     } finally {
       setSyncing(false);
     }
@@ -362,7 +364,7 @@ export function usePersistentState<T extends unknown>(
       const item = storageObj.getItem(key);
       return item ? JSON.parse(item) : defaultValue;
     } catch (error) {
-      console.warn(`Failed to load ${key} from ${storage}:`, error);
+      logger.warn(`Failed to load ${key} from ${storage}:`, error);
       return defaultValue;
     }
   });
@@ -372,7 +374,7 @@ export function usePersistentState<T extends unknown>(
       const storageObj = storage === 'localStorage' ? localStorage : sessionStorage;
       storageObj.setItem(key, JSON.stringify(state));
     } catch (error) {
-      console.warn(`Failed to save ${key} to ${storage}:`, error);
+      logger.warn(`Failed to save ${key} to ${storage}:`, error);
     }
   }, [key, state, storage]);
 

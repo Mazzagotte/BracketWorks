@@ -1,6 +1,7 @@
+import { Player } from '../lib/types';
+
 // Player merging utilities and data consolidation logic
 
-import { Player } from './duplicateDetection';
 
 export interface MergeableData {
   scores?: {
@@ -50,9 +51,18 @@ export interface MergePreview {
   estimatedImpact: string;
 }
 
+type PlayerFieldValue = string | number | boolean | null | undefined;
+
+// Helper function to safely get player field values
+function getPlayerFieldValue(player: Player | ExtendedPlayer, field: string): PlayerFieldValue {
+  const playerRecord = player as unknown as Record<string, unknown>;
+  const value = playerRecord[field];
+  return value as PlayerFieldValue;
+}
+
 export interface DataConflict {
   field: string;
-  values: { playerId: number; playerName: string; value: any }[];
+  values: { playerId: number; playerName: string; value: PlayerFieldValue }[];
   suggestedResolution: 'keep_primary' | 'keep_latest' | 'keep_highest' | 'manual_review';
   reasoning: string;
 }
@@ -70,7 +80,7 @@ export interface MergeOperation {
   mergedPlayerIds: number[];
   consolidatedData: ExtendedPlayer;
   conflicts: DataConflict[];
-  resolutions: { field: string; chosenValue: any; reason: string }[];
+  resolutions: { field: string; chosenValue: PlayerFieldValue; reason: string }[];
   affectedTables: string[];
   canUndo: boolean;
   performedBy: string;
@@ -133,7 +143,7 @@ function detectDataConflicts(players: ExtendedPlayer[]): DataConflict[] {
   
   for (const field of fields) {
     const values = players
-      .map(p => ({ playerId: p.id, playerName: `${p.firstName} ${p.lastName}`, value: (p as any)[field] }))
+      .map(p => ({ playerId: p.id, playerName: `${p.firstName} ${p.lastName}`, value: getPlayerFieldValue(p, field) }))
       .filter(v => v.value !== undefined && v.value !== null && v.value !== '');
     
     const uniqueValues = [...new Set(values.map(v => v.value))];
@@ -198,16 +208,16 @@ function consolidatePlayerData(
     
     const field = rule.field as keyof Player;
     const values = allPlayers
-      .map(p => (p as any)[field])
+      .map(p => getPlayerFieldValue(p, field))
       .filter(v => v !== undefined && v !== null && v !== '');
     
     if (values.length === 0) continue;
     
-    let finalValue: any;
+    let finalValue: PlayerFieldValue;
     
     switch (activeRule.action) {
       case 'keep_primary':
-        finalValue = (primaryPlayer as any)[field];
+        finalValue = (primaryPlayer as unknown as Record<string, PlayerFieldValue>)[field];
         break;
       case 'keep_latest':
         // For now, assume primary is latest. In real implementation, use timestamps
@@ -224,12 +234,12 @@ function consolidatePlayerData(
         break;
       case 'manual':
         // Keep original value for manual review
-        finalValue = (primaryPlayer as any)[field];
+        finalValue = getPlayerFieldValue(primaryPlayer, field);
         break;
     }
     
     if (finalValue !== undefined) {
-      (consolidatedPlayer as any)[field] = finalValue;
+      (consolidatedPlayer as unknown as Record<string, PlayerFieldValue>)[field] = finalValue;
       appliedRules.push(activeRule);
     }
   }
@@ -430,7 +440,7 @@ export function generateMergeAuditTrail(
     primaryPlayer: ExtendedPlayer;
     mergedPlayers: ExtendedPlayer[];
     resultPlayer: ExtendedPlayer;
-    dataChanges: { field: string; before: any; after: any }[];
+    dataChanges: { field: string; before: PlayerFieldValue; after: PlayerFieldValue }[];
   };
   canUndo: boolean;
   undoInstructions?: string[];
@@ -438,13 +448,13 @@ export function generateMergeAuditTrail(
   const auditId = `merge-${operation.id}-${Date.now()}`;
   
   // Calculate data changes
-  const dataChanges: { field: string; before: any; after: any }[] = [];
+  const dataChanges: { field: string; before: PlayerFieldValue; after: PlayerFieldValue }[] = [];
   const primaryBefore = beforeState[0];
   
   const fields = ['firstName', 'lastName', 'usbc', 'average', 'handicap', 'scratch', 'amountPaid', 'totalCost'];
   for (const field of fields) {
-    const beforeValue = (primaryBefore as any)[field];
-    const afterValue = (afterState as any)[field];
+    const beforeValue = getPlayerFieldValue(primaryBefore, field);
+    const afterValue = getPlayerFieldValue(afterState, field);
     
     if (beforeValue !== afterValue) {
       dataChanges.push({ field, before: beforeValue, after: afterValue });
@@ -476,11 +486,11 @@ export function generateMergeAuditTrail(
 /**
  * Prepare merge operation for backend execution
  */
-export function prepareMergeRequest(preview: MergePreview, resolutions: { field: string; value: any }[]): {
+export function prepareMergeRequest(preview: MergePreview, resolutions: { field: string; value: PlayerFieldValue }[]): {
   primaryPlayerId: number;
   mergePlayerIds: number[];
-  consolidatedData: any;
-  conflictResolutions: { field: string; value: any; reason: string }[];
+  consolidatedData: ExtendedPlayer;
+  conflictResolutions: { field: string; value: PlayerFieldValue; reason: string }[];
   affectedTables: string[];
 } {
   return {

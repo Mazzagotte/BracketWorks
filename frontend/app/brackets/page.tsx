@@ -1,7 +1,11 @@
-// Main bracket container component - simplified version using standardized hooks
 'use client'
+
 import React, { useEffect, useState } from 'react'
+import { Tournament, Squad, Player, BracketData, ScoreData, WinnerData, BracketSettings, ToastMessage } from '../lib/types'
+
+import { useAuth } from '../lib/auth-context'
 import { usePageHeader } from '../lib/header-context'
+import { ErrorBoundary } from '../components/ErrorBoundary'
 import { useTournaments, useSquads, usePlayers } from '../hooks/useTournaments'
 import { useBrackets } from '../hooks/useBrackets'
 import { BracketRenderer } from '../components/BracketRenderer'
@@ -9,11 +13,60 @@ import { BracketControls, BracketState } from '../components/BracketControls'
 import { MatchEditor } from '../components/MatchEditor'
 import { PageContainer, ContentWrapper } from '../components/UI'
 import { useToast } from '../components/Toast'
+import { logger } from '../lib/logger';
+
+// Main bracket container component - simplified version using standardized hooks
 
 export default function BracketsPage() {
+  // Authentication check - must be at the top
+  const { isAuthenticated } = useAuth();
+
+  // Check if we have tokens in localStorage even if auth context isn't ready
+  const hasStoredAuth = typeof window !== 'undefined' && 
+    localStorage.getItem('token') && 
+    localStorage.getItem('user_id');
+
+  // Authentication guard - redirect if not logged in
+  if (!isAuthenticated && !hasStoredAuth) {
+    return (
+      <div style={{ 
+        padding: '2rem', 
+        textAlign: 'center',
+        minHeight: '50vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div>
+          <div style={{ marginBottom: '1rem', fontSize: '2rem' }}>🔒</div>
+          <div>Please log in to access bracket management</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading if we have stored auth but context isn't ready yet
+  if (!isAuthenticated && hasStoredAuth) {
+    return (
+      <div style={{ 
+        padding: '2rem', 
+        textAlign: 'center',
+        minHeight: '50vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div>
+          <div style={{ marginBottom: '1rem', fontSize: '2rem' }}>🎳</div>
+          <div>Loading bracket management...</div>
+        </div>
+      </div>
+    );
+  }
+
   // State for selected entities
-  const [selectedTournament, setSelectedTournament] = useState<any>(null)
-  const [selectedSquad, setSelectedSquad] = useState<any>(null)
+  const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null)
+  const [selectedSquad, setSelectedSquad] = useState<Squad | null>(null)
   const [bracketSize, setBracketSize] = useState(8)
   const [selectedBracketType, setSelectedBracketType] = useState<'scratch' | 'handicap'>('scratch')
   const [selectedBracket, setSelectedBracket] = useState<{type: 'scratch' | 'handicap', index: number} | null>(null)
@@ -72,12 +125,12 @@ export default function BracketsPage() {
         setSelectedTournament(tournament)
       }
     } catch (error) {
-      console.error('Error loading saved tournament:', error)
+      logger.error('Error loading saved tournament:', error)
     }
   }
 
   // Handle tournament selection
-  const handleTournamentSelect = (tournament: any) => {
+  const handleTournamentSelect = (tournament: Tournament) => {
     setSelectedTournament(tournament)
     if (tournament) {
       localStorage.setItem('selectedTournament', JSON.stringify(tournament))
@@ -87,7 +140,7 @@ export default function BracketsPage() {
   }
 
   // Handle squad selection
-  const handleSquadSelect = (squad: any) => {
+  const handleSquadSelect = (squad: Squad) => {
     setSelectedSquad(squad)
     if (selectedTournament?.id && squad?.id) {
       localStorage.setItem(`selectedSquad_${selectedTournament.id}`, squad.id.toString())
@@ -170,9 +223,14 @@ export default function BracketsPage() {
   }
 
   // Create simplified state object for controls
-  const controlsState = {
+  const controlsState: BracketState = {
     size: bracketSize,
-    preview,
+    preview: preview ? {
+      ...preview,
+      id: selectedTournament?.id || 0,
+      name: selectedTournament?.name || '',
+      players: players || []
+    } : null,
     loading,
     tournament: selectedTournament,
     squads,
@@ -187,7 +245,8 @@ export default function BracketsPage() {
   }
 
   return (
-    <PageContainer>
+    <ErrorBoundary>
+      <PageContainer>
       <ContentWrapper>
         {/* Main Controls */}
         <BracketControls
@@ -210,7 +269,7 @@ export default function BracketsPage() {
           minHeight: '400px'
         }}>
           <BracketRenderer
-            preview={preview}
+            preview={preview as any}
             selectedBracketType={selectedBracketType}
             selectedBracket={selectedBracket}
             selectedRound={selectedRound}
@@ -229,5 +288,6 @@ export default function BracketsPage() {
         />
       </ContentWrapper>
     </PageContainer>
+    </ErrorBoundary>
   )
 }

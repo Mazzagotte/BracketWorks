@@ -1,0 +1,1410 @@
+'use client'
+
+// Force dynamic rendering for this page
+export const dynamic = 'force-dynamic'
+
+import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useAuth } from '../lib/auth-context'
+import { usePageHeader } from '../lib/header-context'
+import { ErrorBoundary } from '../components/ErrorBoundary'
+import { API } from '../lib/api'
+
+type Player = { 
+  id: number, 
+  usbc?: string, 
+  firstName: string, 
+  lastName: string, 
+  average: number, 
+  handicap: number, 
+  scratch: number, 
+  lane: string, 
+  division: string, 
+  totalCost: number, 
+  amountPaid: number, 
+  squad?: { id: number, date: string, time: string } 
+}
+
+// Custom hook for client-side storage
+function useClientStorage() {
+  const [isClient, setIsClient] = useState(false);
+  
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+  
+  const getItem = useCallback((key: string) => {
+    if (!isClient) return null;
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  }, [isClient]);
+  
+  const setItem = useCallback((key: string, value: string) => {
+    if (!isClient) return;
+    try {
+      localStorage.setItem(key, value);
+    } catch {
+      // Silent fail
+    }
+  }, [isClient]);
+  
+  return { getItem, setItem, isClient };
+}
+
+function PlayersPageContent() {
+  const { getItem, setItem, isClient } = useClientStorage();
+  
+  // Early return for SSR - only render on client
+  if (!isClient) {
+    return (
+      <div style={{ 
+        padding: '2rem', 
+        textAlign: 'center',
+        minHeight: '50vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div>
+          <div style={{ marginBottom: '1rem', fontSize: '2rem' }}>Loading...</div>
+          <div>Loading player management...</div>
+        </div>
+      </div>
+    );
+  }
+
+  return <PlayersPageInner getItem={getItem} setItem={setItem} />;
+}
+
+function PlayersPageInner({ getItem, setItem }: { getItem: (key: string) => string | null, setItem: (key: string, value: string) => void }) {
+  const [players, setPlayers] = useState<Player[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [tournament, setTournament] = useState<any>(null);
+  const [squads, setSquads] = useState<any[]>([]);
+  const [selectedSquad, setSelectedSquad] = useState<any | null>(null);
+  
+  // Form state
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [average, setAverage] = useState<number | ''>('');
+  const [handicap, setHandicap] = useState<number | ''>('');
+  const [scratch, setScratch] = useState<number | ''>('');
+  const [lane, setLane] = useState('');
+  const [division, setDivision] = useState('Open');
+  const [usbc, setUsbc] = useState('');
+  
+  // Edit mode state - simplified to just track saving status
+  const [savingStatus, setSavingStatus] = useState<{[key: string]: 'saving' | 'saved' | 'error'}>({});
+  
+  // Debounced saves tracker
+  const debouncedSaves = new Map<string, NodeJS.Timeout>();
+  
+  // Track if we're in demo mode (API unavailable)
+  const [isDemoMode, setIsDemoMode] = useState(false);
+  
+  const auth = useAuth();
+  const isAuthenticated = auth && auth.isAuthenticated;
+  const { token, user } = auth || {};
+
+  // Debug authentication state
+  useEffect(() => {
+    console.log('Players page - Auth state:', {
+      isAuthenticated,
+      hasToken: !!token,
+      hasUser: !!user,
+      tokenFromStorage: localStorage.getItem('token'),
+      userIdFromStorage: localStorage.getItem('user_id')
+    });
+  }, [isAuthenticated, token, user]);
+
+  // Function to fetch players with fallback to demo data
+  const fetchPlayers = useCallback(async () => {
+    const lastTournamentId = getItem('lastTournamentId');
+    const authToken = getItem('token');
+    
+    if (!lastTournamentId || !authToken) {
+      // Load demo data if no auth
+      setPlayers(getDemoPlayers());
+      return;
+    }
+    
+    setIsLoading(true);
+    
+    try {
+      const bowlersUrl = selectedSquad 
+        ? `/api/v1/bowlers/?tournament_id=${lastTournamentId}&squad_id=${selectedSquad.id}`
+        : `/api/v1/bowlers/?tournament_id=${lastTournamentId}`;
+      
+      const response = await fetch(API(bowlersUrl), {
+        headers: { Authorization: `Bearer ${authToken}` }
+      });
+      
+      if (!response.ok) {
+        // If API fails, load demo data
+        console.warn('API not available, loading demo data');
+        setIsDemoMode(true);
+        setPlayers(getDemoPlayers());
+        return;
+      } else {
+        setIsDemoMode(false);
+      }
+      
+      const data = await response.json();
+      
+      // Transform bowlers data to match our player structure
+      const transformedData = (data || []).map((bowler: any) => {
+        const nameParts = bowler.name.split(' ');
+        const squad = bowler.squad_id ? squads.find(s => s.id === bowler.squad_id) : null;
+        return {
+          id: bowler.id,
+          firstName: nameParts[0] || '',
+          lastName: nameParts.slice(1).join(' ') || '',
+          average: bowler.average || 0,
+          handicap: bowler.handicap || 0,
+          scratch: bowler.scratch || 0,
+          usbc: bowler.usbc || '',
+          lane: bowler.lane || '',
+          division: bowler.division || 'Open',
+          totalCost: bowler.total_cost || 0,
+          amountPaid: bowler.amount_paid || 0,
+          squad: squad ? { id: squad.id, date: squad.date, time: squad.time } : undefined
+        };
+      });
+      
+      setPlayers(transformedData);
+    } catch (err) {
+      console.error('Error fetching bowlers:', err);
+      // Load demo data as fallback
+      setPlayers(getDemoPlayers());
+    } finally {
+      setIsLoading(false);
+    }
+  }, [selectedSquad, squads, getItem]);
+
+  // Demo data function for when API is unavailable
+  const getDemoPlayers = (): Player[] => {
+    return [
+      {
+        id: 1,
+        firstName: 'John',
+        lastName: 'Doe',
+        average: 185,
+        handicap: 15,
+        scratch: 3,
+        usbc: '12345678',
+        lane: '1-2',
+        division: 'Open',
+        totalCost: 45.00,
+        amountPaid: 45.00
+      },
+      {
+        id: 2,
+        firstName: 'Jane',
+        lastName: 'Smith',
+        average: 170,
+        handicap: 20,
+        scratch: 2,
+        usbc: '87654321',
+        lane: '3-4',
+        division: 'Handicap',
+        totalCost: 35.00,
+        amountPaid: 35.00
+      },
+      {
+        id: 3,
+        firstName: 'Mike',
+        lastName: 'Johnson',
+        average: 195,
+        handicap: 8,
+        scratch: 4,
+        usbc: '11223344',
+        lane: '5-6',
+        division: 'Scratch',
+        totalCost: 60.00,
+        amountPaid: 30.00
+      }
+    ];
+  };
+
+  // Add player function
+  const addPlayer = async () => {
+    if (!firstName.trim() || !lastName.trim() || average === '' || handicap === '' || scratch === '') {
+      alert('Please fill in all required fields.');
+      return;
+    }
+
+    const lastTournamentId = getItem('lastTournamentId');
+    const authToken = getItem('token');
+    
+    if (!lastTournamentId || !authToken) {
+      alert('No tournament selected or authentication token found.');
+      return;
+    }
+
+    const newBowler = {
+      tournament_id: parseInt(lastTournamentId),
+      squad_id: selectedSquad ? selectedSquad.id : null,
+      user_id: parseInt(user?.id || '0'),
+      name: `${firstName.trim()} ${lastName.trim()}`,
+      average: typeof average === 'number' ? average : Number(average),
+      handicap: typeof handicap === 'number' ? handicap : Number(handicap),
+      scratch: typeof scratch === 'number' ? scratch : Number(scratch),
+      usbc: usbc.trim() || null,
+      lane: lane.trim() || null,
+      division: division,
+      amount_paid: 0.0
+    };
+
+    try {
+      const response = await fetch(API('/api/v1/bowlers/'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken}`
+        },
+        body: JSON.stringify(newBowler)
+      });
+
+      if (response.ok) {
+        // Clear form
+        setFirstName('');
+        setLastName('');
+        setAverage('');
+        setHandicap('');
+        setScratch('');
+        setLane('');
+        setDivision('Open');
+        setUsbc('');
+        
+        // Refresh players list
+        fetchPlayers();
+        alert('Player added successfully!');
+      } else {
+        const error = await response.text();
+        alert(`Failed to add player: ${error}`);
+      }
+    } catch (err) {
+      console.error('Error adding player:', err);
+      alert('Failed to add player. Please try again.');
+    }
+  };
+
+  // Functions for editing players - using debounced save like scores table
+  const updatePlayerField = async (playerId: number, field: keyof Player, value: any) => {
+    const saveKey = `${playerId}-${field}`;
+    
+    // Update local state first for immediate UI feedback
+    setPlayers(prev => prev.map(player => {
+      if (player.id === playerId) {
+        return {
+          ...player,
+          [field]: value
+        };
+      }
+      return player;
+    }));
+
+    // Clear existing timeout for this field
+    const existingTimeout = debouncedSaves.get(saveKey);
+    if (existingTimeout) {
+      clearTimeout(existingTimeout);
+    }
+    
+    // Set saving status
+    setSavingStatus(prev => ({ ...prev, [saveKey]: 'saving' }));
+    
+    // Debounced save to backend (500ms delay)
+    const timeoutId = setTimeout(async () => {
+      try {
+        const authToken = getItem('token');
+        if (!authToken) {
+          setSavingStatus(prev => ({ ...prev, [saveKey]: 'error' }));
+          return;
+        }
+
+        // Get the updated player data
+        const updatedPlayer = players.find(p => p.id === playerId);
+        if (!updatedPlayer) {
+          setSavingStatus(prev => ({ ...prev, [saveKey]: 'error' }));
+          return;
+        }
+
+        const response = await fetch(API(`/api/v1/bowlers/${playerId}`), {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${authToken}`
+          },
+          body: JSON.stringify({
+            name: `${updatedPlayer.firstName} ${updatedPlayer.lastName}`,
+            average: updatedPlayer.average,
+            handicap: updatedPlayer.handicap,
+            lane: updatedPlayer.lane || null,
+            division: updatedPlayer.division,
+            usbc: updatedPlayer.usbc || null
+          })
+        });
+
+        if (response.ok) {
+          // Set saved status
+          setSavingStatus(prev => ({ ...prev, [saveKey]: 'saved' }));
+          
+          // Clear saved status after 2 seconds
+          setTimeout(() => {
+            setSavingStatus(prev => {
+              const newStatus = { ...prev };
+              delete newStatus[saveKey];
+              return newStatus;
+            });
+          }, 2000);
+        } else {
+          setSavingStatus(prev => ({ ...prev, [saveKey]: 'error' }));
+          
+          // Clear error status after 3 seconds
+          setTimeout(() => {
+            setSavingStatus(prev => {
+              const newStatus = { ...prev };
+              delete newStatus[saveKey];
+              return newStatus;
+            });
+          }, 3000);
+        }
+      } catch (err) {
+        console.error('Error updating player:', err);
+        setSavingStatus(prev => ({ ...prev, [saveKey]: 'error' }));
+        
+        // Clear error status after 3 seconds
+        setTimeout(() => {
+          setSavingStatus(prev => {
+            const newStatus = { ...prev };
+            delete newStatus[saveKey];
+            return newStatus;
+          });
+        }, 3000);
+      }
+    }, 500); // 500ms debounce delay
+    
+    debouncedSaves.set(saveKey, timeoutId);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent, playerId: number, field: keyof Player) => {
+    if (e.key === 'Enter') {
+      e.currentTarget.blur();
+    }
+  };
+
+  const deletePlayer = async (playerId: number) => {
+    if (!confirm('Are you sure you want to delete this player?')) {
+      return;
+    }
+
+    const authToken = getItem('token');
+    if (!authToken) {
+      alert('Authentication required');
+      return;
+    }
+
+    try {
+      const response = await fetch(API(`/api/v1/bowlers/${playerId}`), {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${authToken}`
+        }
+      });
+
+      if (response.ok) {
+        setPlayers(prevPlayers => prevPlayers.filter(p => p.id !== playerId));
+        alert('Player deleted successfully!');
+      } else {
+        const error = await response.text();
+        alert(`Failed to delete player: ${error}`);
+      }
+    } catch (err) {
+      console.error('Error deleting player:', err);
+      alert('Failed to delete player. Please try again.');
+    }
+  };
+
+  // Set up page header
+  const playerHeaderActions = useMemo(() => (
+    <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+      <button
+        onClick={() => fetchPlayers()}
+        style={{
+          padding: '8px 16px',
+          backgroundColor: '#f0a500',
+          color: 'white',
+          border: 'none',
+          borderRadius: '6px',
+          cursor: 'pointer',
+          fontSize: '14px'
+        }}
+      >
+        Refresh
+      </button>
+    </div>
+  ), [fetchPlayers]);
+
+  // Load tournament and squad data on mount
+  useEffect(() => {
+    const lastTournamentId = getItem('lastTournamentId');
+    if (lastTournamentId && token && user) {
+      setIsLoading(true);
+      
+      // Fetch tournament info
+      fetch(API(`/api/v1/tournaments/${lastTournamentId}`), {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data) setTournament(data);
+      });
+      
+      // Fetch squads
+      fetch(API(`/api/v1/squads/?tournament_id=${lastTournamentId}`), {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      .then(res => res.ok ? res.json() : [])
+      .then(data => {
+        setSquads(data);
+      });
+      
+      // Fetch selected squad
+      if (user?.id) {
+        fetch(API(`/api/v1/squads/selected/?user_id=${user.id}`), {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (data && data.squad_id) {
+            fetch(API(`/api/v1/squads/?tournament_id=${lastTournamentId}`), {
+              headers: { Authorization: `Bearer ${token}` }
+            })
+            .then(res => res.ok ? res.json() : [])
+            .then(squadsData => {
+              const foundSquad = squadsData.find((s: any) => s.id === data.squad_id);
+              if (foundSquad) setSelectedSquad(foundSquad);
+            });
+          }
+        });
+      }
+    }
+  }, [getItem, token, user]);
+
+  // Fetch players when squad changes
+  useEffect(() => {
+    if (squads.length > 0) {
+      fetchPlayers();
+    }
+  }, [selectedSquad, squads, fetchPlayers]);
+
+  // Set up page header
+  usePageHeader({
+    title: "Player Management",
+    subtitle: tournament 
+      ? `${tournament.name}${tournament.location ? ` • ${tournament.location}` : ''}${selectedSquad ? ` • Squad: ${selectedSquad.date} ${selectedSquad.time}` : squads.length > 0 ? ' • No squad selected' : ''}`
+      : "Manage players for your bowling tournament",
+    centerContent: false,
+    actions: playerHeaderActions
+  });
+
+  // Check if we have tokens in localStorage even if auth context isn't ready
+  const hasStoredAuth = typeof window !== 'undefined' && 
+    localStorage.getItem('token') && 
+    localStorage.getItem('user_id');
+
+  if (!isAuthenticated && !hasStoredAuth) {
+    return (
+      <div style={{ 
+        padding: '2rem', 
+        textAlign: 'center',
+        minHeight: '50vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div>
+          <div style={{ marginBottom: '1rem', fontSize: '2rem' }}>🔒</div>
+          <div>Please log in to access player management</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading if we have stored auth but context isn't ready yet
+  if (!isAuthenticated && hasStoredAuth) {
+    return (
+      <div style={{ 
+        padding: '2rem', 
+        textAlign: 'center',
+        minHeight: '50vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div>
+          <div style={{ marginBottom: '1rem', fontSize: '2rem' }}>🎳</div>
+          <div>Loading player management...</div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <main style={{ padding: '1rem', maxWidth: '1400px', margin: '0 auto' }}>
+      {/* Add Player Form */}
+      <div style={{
+        background: 'linear-gradient(145deg, #ffffff 0%, #f8fafb 100%)',
+        borderRadius: '16px',
+        padding: '24px',
+        marginBottom: '24px',
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+        border: '1px solid rgba(240, 165, 0, 0.12)'
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          marginBottom: '20px'
+        }}>
+          <div style={{
+            background: 'linear-gradient(135deg, #f0a500 0%, #e89700 100%)',
+            borderRadius: '12px',
+            padding: '12px',
+            marginRight: '16px',
+            boxShadow: '0 4px 12px rgba(240, 165, 0, 0.3)'
+          }}>
+            <span style={{ fontSize: '20px', color: 'white', fontWeight: 'bold' }}>P</span>
+          </div>
+          <div>
+            <h2 style={{ margin: 0, color: '#374151', fontSize: '20px', fontWeight: '700' }}>Add New Player</h2>
+            <p style={{ margin: 0, color: '#6b7280', fontSize: '14px' }}>Enter player information to add them to the tournament</p>
+          </div>
+        </div>
+        
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: '16px',
+          marginBottom: '20px'
+        }}>
+          <div>
+            <label style={{ display: 'block', marginBottom: '6px', fontWeight: '600', color: '#374151' }}>
+              First Name *
+            </label>
+            <input
+              type="text"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid #d1d5db',
+                borderRadius: '8px',
+                fontSize: '14px'
+              }}
+              required
+            />
+          </div>
+          
+          <div>
+            <label style={{ display: 'block', marginBottom: '6px', fontWeight: '600', color: '#374151' }}>
+              Last Name *
+            </label>
+            <input
+              type="text"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid #d1d5db',
+                borderRadius: '8px',
+                fontSize: '14px'
+              }}
+              required
+            />
+          </div>
+          
+          <div>
+            <label style={{ display: 'block', marginBottom: '6px', fontWeight: '600', color: '#374151' }}>
+              Average *
+            </label>
+            <input
+              type="number"
+              value={average}
+              onChange={(e) => setAverage(e.target.value === '' ? '' : Number(e.target.value))}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid #d1d5db',
+                borderRadius: '8px',
+                fontSize: '14px'
+              }}
+              min="0"
+              max="300"
+              required
+            />
+          </div>
+          
+          <div>
+            <label style={{ display: 'block', marginBottom: '6px', fontWeight: '600', color: '#374151' }}>
+              Handicap *
+            </label>
+            <input
+              type="number"
+              value={handicap}
+              onChange={(e) => setHandicap(e.target.value === '' ? '' : Number(e.target.value))}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid #d1d5db',
+                borderRadius: '8px',
+                fontSize: '14px'
+              }}
+              min="0"
+              max="120"
+              required
+            />
+          </div>
+          
+          <div>
+            <label style={{ display: 'block', marginBottom: '6px', fontWeight: '600', color: '#374151' }}>
+              Scratch *
+            </label>
+            <input
+              type="number"
+              value={scratch}
+              onChange={(e) => setScratch(e.target.value === '' ? '' : Number(e.target.value))}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid #d1d5db',
+                borderRadius: '8px',
+                fontSize: '14px'
+              }}
+              min="0"
+              max="20"
+              required
+            />
+          </div>
+          
+          <div>
+            <label style={{ display: 'block', marginBottom: '6px', fontWeight: '600', color: '#374151' }}>
+              Lane
+            </label>
+            <input
+              type="text"
+              value={lane}
+              onChange={(e) => setLane(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid #d1d5db',
+                borderRadius: '8px',
+                fontSize: '14px'
+              }}
+            />
+          </div>
+          
+          <div>
+            <label style={{ display: 'block', marginBottom: '6px', fontWeight: '600', color: '#374151' }}>
+              Division
+            </label>
+            <select
+              value={division}
+              onChange={(e) => setDivision(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid #d1d5db',
+                borderRadius: '8px',
+                fontSize: '14px'
+              }}
+            >
+              <option value="Open">Open</option>
+              <option value="Scratch">Scratch</option>
+              <option value="Handicap">Handicap</option>
+            </select>
+          </div>
+          
+          <div>
+            <label style={{ display: 'block', marginBottom: '6px', fontWeight: '600', color: '#374151' }}>
+              USBC Number
+            </label>
+            <input
+              type="text"
+              value={usbc}
+              onChange={(e) => setUsbc(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid #d1d5db',
+                borderRadius: '8px',
+                fontSize: '14px'
+              }}
+              placeholder="8 digits"
+              maxLength={8}
+            />
+          </div>
+        </div>
+        
+        <button
+          onClick={addPlayer}
+          style={{
+            padding: '12px 24px',
+            backgroundColor: '#f0a500',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontSize: '16px',
+            fontWeight: '600'
+          }}
+        >
+          Add Player
+        </button>
+      </div>
+
+      {/* Players List */}
+      <div style={{
+        background: 'linear-gradient(145deg, #ffffff 0%, #f8fafb 100%)',
+        borderRadius: '16px',
+        padding: '24px',
+        marginBottom: '24px',
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+        border: '1px solid rgba(240, 165, 0, 0.12)'
+      }}>
+        <h3 style={{ color: '#374151', marginBottom: '1rem' }}>Players ({players.length})</h3>
+        
+        {isLoading ? (
+          <div style={{ textAlign: 'center', padding: '2rem' }}>
+            <div>Loading players...</div>
+          </div>
+        ) : players.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
+            No players found. Add some players to get started!
+          </div>
+        ) : (
+          <div style={{
+            background: 'linear-gradient(145deg, #ffffff 0%, #f8fafb 100%)',
+            borderRadius: '16px',
+            padding: '24px',
+            marginBottom: '24px',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+            border: '1px solid rgba(240, 165, 0, 0.12)',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              overflowX: 'auto',
+              WebkitOverflowScrolling: 'touch',
+              borderRadius: '12px',
+              border: '1px solid #e5e7eb'
+            }}>
+              <table style={{
+                width: '100%',
+                borderCollapse: 'collapse',
+                fontSize: '14px',
+                backgroundColor: '#ffffff'
+              }} aria-label="Player List">
+
+            <thead>
+              {selectedSquad && (
+                <tr>
+                  <td colSpan={8} style={{ 
+                    backgroundColor: 'rgba(79, 140, 255, 0.1)', 
+                    color: '#4f8cff',
+                    textAlign: 'center',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    padding: '12px'
+                  }}>
+                    Squad: {selectedSquad.date} — {selectedSquad.time}
+                  </td>
+                </tr>
+              )}
+              <tr style={{
+                backgroundColor: '#f8fafc'
+              }}>
+                <th style={{ 
+                    cursor: 'pointer',
+                    padding: '18px 12px',
+                    textAlign: 'left',
+                    verticalAlign: 'middle',
+                    fontWeight: '700',
+                    color: '#374151',
+                    fontSize: '13px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    borderBottom: '2px solid #e5e7eb',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    background: 'transparent'
+                  }}>First Name</th>
+                  <th style={{ 
+                    cursor: 'pointer',
+                    padding: '18px 12px',
+                    textAlign: 'left',
+                    verticalAlign: 'middle',
+                    fontWeight: '700',
+                    color: '#374151',
+                    fontSize: '13px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    borderBottom: '2px solid #e5e7eb',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    background: 'transparent'
+                  }}>Last Name</th>
+                  <th style={{ 
+                    cursor: 'pointer',
+                    padding: '18px 12px',
+                    textAlign: 'center',
+                    verticalAlign: 'middle',
+                    fontWeight: '700',
+                    color: '#374151',
+                    fontSize: '13px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    borderBottom: '2px solid #e5e7eb',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    background: 'transparent'
+                  }}>Lane</th>
+                  <th style={{ 
+                    cursor: 'pointer',
+                    padding: '18px 12px',
+                    textAlign: 'center',
+                    verticalAlign: 'middle',
+                    fontWeight: '700',
+                    color: '#374151',
+                    fontSize: '13px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    borderBottom: '2px solid #e5e7eb',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    background: 'transparent'
+                  }}>Average</th>
+                  <th style={{ 
+                    cursor: 'pointer',
+                    padding: '18px 12px',
+                    textAlign: 'center',
+                    verticalAlign: 'middle',
+                    fontWeight: '700',
+                    color: '#374151',
+                    fontSize: '13px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    borderBottom: '2px solid #e5e7eb',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    background: 'transparent'
+                  }}>Handicap</th>
+                  <th style={{ 
+                    cursor: 'pointer',
+                    padding: '18px 12px',
+                    textAlign: 'center',
+                    verticalAlign: 'middle',
+                    fontWeight: '700',
+                    color: '#374151',
+                    fontSize: '13px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    borderBottom: '2px solid #e5e7eb',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    background: 'transparent'
+                  }}>Division</th>
+                  <th style={{ 
+                    cursor: 'pointer',
+                    padding: '18px 12px',
+                    textAlign: 'center',
+                    verticalAlign: 'middle',
+                    fontWeight: '700',
+                    color: '#374151',
+                    fontSize: '13px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    borderBottom: '2px solid #e5e7eb',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    background: 'transparent'
+                  }}>USBC</th>
+                  <th style={{ 
+                    padding: '18px 12px',
+                    textAlign: 'center',
+                    verticalAlign: 'middle',
+                    fontWeight: '700',
+                    color: '#374151',
+                    fontSize: '13px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    borderBottom: '2px solid #e5e7eb',
+                    background: 'transparent'
+                  }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {players.map((player, index) => {
+                  return (
+                    <tr key={player.id} style={{
+                      borderBottom: '1px solid #f3f4f6',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      backgroundColor: index % 2 === 0 ? '#ffffff' : '#f9fafb',
+                      borderRadius: '8px',
+                      margin: '2px 0'
+                    }} 
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#f0f9ff';
+                      e.currentTarget.style.transform = 'translateY(-1px)';
+                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = index % 2 === 0 ? '#ffffff' : '#f9fafb';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = 'none';
+                    }}>
+                      {/* First Name */}
+                      <td style={{ 
+                        padding: '16px 12px',
+                        textAlign: 'left',
+                        verticalAlign: 'middle',
+                        position: 'relative',
+                        fontWeight: '600',
+                        color: '#111827',
+                        fontSize: '14px'
+                      }}>
+                        <div style={{ position: 'relative', display: 'inline-block' }}>
+                          <input
+                            type="text"
+                            value={player.firstName || ''}
+                            onChange={(e) => updatePlayerField(player.id, 'firstName', e.target.value)}
+                            onKeyDown={(e) => handleKeyDown(e, player.id, 'firstName')}
+                            style={{
+                              width: '100%',
+                              padding: '8px 12px',
+                              border: '1px solid #d1d5db',
+                              borderRadius: '6px',
+                              fontSize: '14px',
+                              fontWeight: '600',
+                              background: '#ffffff',
+                              color: '#111827',
+                              transition: 'all 0.2s ease',
+                              outline: 'none'
+                            }}
+                            onFocus={(e) => {
+                              e.target.style.borderColor = '#3b82f6';
+                              e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+                              e.target.select();
+                            }}
+                            onBlur={(e) => {
+                              e.target.style.borderColor = '#d1d5db';
+                              e.target.style.boxShadow = 'none';
+                            }}
+                          />
+                          
+                          {/* Save Status Indicator */}
+                          {savingStatus[`${player.id}-firstName`] && (
+                            <div style={{
+                              position: 'absolute',
+                              right: '-20px',
+                              top: '50%',
+                              transform: 'translateY(-50%)',
+                              fontSize: '12px',
+                              zIndex: 10
+                            }}>
+                              {savingStatus[`${player.id}-firstName`] === 'saving' && (
+                                <span style={{ color: '#3b82f6' }}>💾</span>
+                              )}
+                              {savingStatus[`${player.id}-firstName`] === 'saved' && (
+                                <span style={{ color: '#10b981' }}>✅</span>
+                              )}
+                              {savingStatus[`${player.id}-firstName`] === 'error' && (
+                                <span style={{ color: '#ef4444' }}>❌</span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      
+                      {/* Last Name */}
+                      <td style={{ 
+                        padding: '16px 12px',
+                        textAlign: 'left',
+                        verticalAlign: 'middle',
+                        position: 'relative',
+                        fontWeight: '600',
+                        color: '#111827',
+                        fontSize: '14px'
+                      }}>
+                        <div style={{ position: 'relative', display: 'inline-block' }}>
+                          <input
+                            type="text"
+                            value={player.lastName || ''}
+                            onChange={(e) => updatePlayerField(player.id, 'lastName', e.target.value)}
+                            onKeyDown={(e) => handleKeyDown(e, player.id, 'lastName')}
+                            style={{
+                              width: '100%',
+                              padding: '8px 12px',
+                              border: '1px solid #d1d5db',
+                              borderRadius: '6px',
+                              fontSize: '14px',
+                              fontWeight: '600',
+                              background: '#ffffff',
+                              color: '#111827',
+                              transition: 'all 0.2s ease',
+                              outline: 'none'
+                            }}
+                            onFocus={(e) => {
+                              e.target.style.borderColor = '#3b82f6';
+                              e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+                              e.target.select();
+                            }}
+                            onBlur={(e) => {
+                              e.target.style.borderColor = '#d1d5db';
+                              e.target.style.boxShadow = 'none';
+                            }}
+                          />
+                          
+                          {/* Save Status Indicator */}
+                          {savingStatus[`${player.id}-lastName`] && (
+                            <div style={{
+                              position: 'absolute',
+                              right: '-20px',
+                              top: '50%',
+                              transform: 'translateY(-50%)',
+                              fontSize: '12px',
+                              zIndex: 10
+                            }}>
+                              {savingStatus[`${player.id}-lastName`] === 'saving' && (
+                                <span style={{ color: '#3b82f6' }}>💾</span>
+                              )}
+                              {savingStatus[`${player.id}-lastName`] === 'saved' && (
+                                <span style={{ color: '#10b981' }}>✅</span>
+                              )}
+                              {savingStatus[`${player.id}-lastName`] === 'error' && (
+                                <span style={{ color: '#ef4444' }}>❌</span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      
+                      {/* Lane */}
+                      <td style={{ 
+                        padding: '16px 12px',
+                        textAlign: 'center',
+                        verticalAlign: 'middle',
+                        position: 'relative',
+                        fontWeight: '500',
+                        color: player.lane ? '#111827' : '#9ca3af',
+                        fontSize: '14px'
+                      }}>
+                        <div style={{ position: 'relative', display: 'inline-block' }}>
+                          <input
+                            type="text"
+                            value={player.lane || ''}
+                            onChange={(e) => updatePlayerField(player.id, 'lane', e.target.value)}
+                            onKeyDown={(e) => handleKeyDown(e, player.id, 'lane')}
+                            placeholder="—"
+                            style={{
+                              width: '80px',
+                              padding: '8px 12px',
+                              border: '1px solid #d1d5db',
+                              borderRadius: '6px',
+                              textAlign: 'center',
+                              fontSize: '14px',
+                              fontWeight: '500',
+                              background: '#ffffff',
+                              color: '#111827',
+                              transition: 'all 0.2s ease',
+                              outline: 'none'
+                            }}
+                            onFocus={(e) => {
+                              e.target.style.borderColor = '#3b82f6';
+                              e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+                              e.target.select();
+                            }}
+                            onBlur={(e) => {
+                              e.target.style.borderColor = '#d1d5db';
+                              e.target.style.boxShadow = 'none';
+                            }}
+                          />
+                          
+                          {/* Save Status Indicator */}
+                          {savingStatus[`${player.id}-lane`] && (
+                            <div style={{
+                              position: 'absolute',
+                              right: '-20px',
+                              top: '50%',
+                              transform: 'translateY(-50%)',
+                              fontSize: '12px',
+                              zIndex: 10
+                            }}>
+                              {savingStatus[`${player.id}-lane`] === 'saving' && (
+                                <span style={{ color: '#3b82f6' }}>💾</span>
+                              )}
+                              {savingStatus[`${player.id}-lane`] === 'saved' && (
+                                <span style={{ color: '#10b981' }}>✅</span>
+                              )}
+                              {savingStatus[`${player.id}-lane`] === 'error' && (
+                                <span style={{ color: '#ef4444' }}>❌</span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                          cursor: isEditing ? 'default' : 'pointer'
+                        }}
+                        onDoubleClick={() => startEditingField(player, 'lane')}
+                        title={isEditing ? '' : 'Double-click to edit'}
+                      >
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            value={editValues.lane || ''}
+                            onChange={(e) => setEditValues({...editValues, lane: e.target.value})}
+                            onKeyDown={(e) => handleKeyPress(e, player.id)}
+                            onBlur={() => handleBlur(player.id)}
+                            style={{
+                              width: '100%',
+                              padding: '6px 8px',
+                              border: '1px solid #d1d5db',
+                              borderRadius: '4px',
+                              fontSize: '14px',
+                              textAlign: 'center'
+                            }}
+                            placeholder="Lane"
+                          />
+                        ) : (
+                          player.lane || '—'
+                        )}
+                      </td>
+                      
+                      {/* Average */}
+                      <td 
+                        style={{ 
+                          padding: '16px 12px',
+                          textAlign: 'center',
+                          verticalAlign: 'middle',
+                          fontWeight: '500',
+                          color: '#6b7280',
+                          fontSize: '14px',
+                          cursor: isEditing ? 'default' : 'pointer'
+                        }}
+                        onDoubleClick={() => startEditingField(player, 'average')}
+                        title={isEditing ? '' : 'Double-click to edit'}
+                      >
+                        {isEditing ? (
+                          <input
+                            type="number"
+                            value={editValues.average || ''}
+                            onChange={(e) => setEditValues({...editValues, average: Number(e.target.value)})}
+                            onKeyDown={(e) => handleKeyPress(e, player.id)}
+                            onBlur={() => handleBlur(player.id)}
+                            style={{
+                              width: '100%',
+                              padding: '6px 8px',
+                              border: '1px solid #d1d5db',
+                              borderRadius: '4px',
+                              fontSize: '14px',
+                              textAlign: 'center'
+                            }}
+                            min="0"
+                            max="300"
+                          />
+                        ) : (
+                          player.average
+                        )}
+                      </td>
+                      
+                      {/* Handicap */}
+                      <td 
+                        style={{ 
+                          padding: '16px 12px',
+                          textAlign: 'center',
+                          verticalAlign: 'middle',
+                          fontWeight: '500',
+                          color: '#6b7280',
+                          fontSize: '14px',
+                          cursor: isEditing ? 'default' : 'pointer'
+                        }}
+                        onDoubleClick={() => startEditingField(player, 'handicap')}
+                        title={isEditing ? '' : 'Double-click to edit'}
+                      >
+                        {isEditing ? (
+                          <input
+                            type="number"
+                            value={editValues.handicap || ''}
+                            onChange={(e) => setEditValues({...editValues, handicap: Number(e.target.value)})}
+                            onKeyDown={(e) => handleKeyPress(e, player.id)}
+                            onBlur={() => handleBlur(player.id)}
+                            style={{
+                              width: '100%',
+                              padding: '6px 8px',
+                              border: '1px solid #d1d5db',
+                              borderRadius: '4px',
+                              fontSize: '14px',
+                              textAlign: 'center'
+                            }}
+                            min="0"
+                            max="50"
+                          />
+                        ) : (
+                          player.handicap
+                        )}
+                      </td>
+                      
+                      {/* Division */}
+                      <td 
+                        style={{ 
+                          padding: '16px 12px',
+                          textAlign: 'center',
+                          verticalAlign: 'middle',
+                          fontWeight: '500',
+                          color: '#6b7280',
+                          fontSize: '14px',
+                          cursor: isEditing ? 'default' : 'pointer'
+                        }}
+                        onDoubleClick={() => startEditingField(player, 'division')}
+                        title={isEditing ? '' : 'Double-click to edit'}
+                      >
+                        {isEditing ? (
+                          <select
+                            value={editValues.division || 'Open'}
+                            onChange={(e) => setEditValues({...editValues, division: e.target.value})}
+                            onKeyDown={(e) => handleKeyPress(e, player.id)}
+                            onBlur={() => handleBlur(player.id)}
+                            style={{
+                              width: '100%',
+                              padding: '6px 8px',
+                              border: '1px solid #d1d5db',
+                              borderRadius: '4px',
+                              fontSize: '14px'
+                            }}
+                          >
+                            <option value="Open">Open</option>
+                            <option value="Handicap">Handicap</option>
+                            <option value="Scratch">Scratch</option>
+                          </select>
+                        ) : (
+                          player.division
+                        )}
+                      </td>
+                      
+                      {/* USBC */}
+                      <td 
+                        style={{ 
+                          padding: '16px 12px',
+                          textAlign: 'center',
+                          verticalAlign: 'middle',
+                          fontWeight: '500',
+                          color: player.usbc ? '#111827' : '#9ca3af',
+                          fontSize: '14px',
+                          cursor: isEditing ? 'default' : 'pointer'
+                        }}
+                        onDoubleClick={() => startEditingField(player, 'usbc')}
+                        title={isEditing ? '' : 'Double-click to edit'}
+                      >
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            value={editValues.usbc || ''}
+                            onChange={(e) => setEditValues({...editValues, usbc: e.target.value})}
+                            onKeyDown={(e) => handleKeyPress(e, player.id)}
+                            onBlur={() => handleBlur(player.id)}
+                            style={{
+                              width: '100%',
+                              padding: '6px 8px',
+                              border: '1px solid #d1d5db',
+                              borderRadius: '4px',
+                              fontSize: '14px',
+                              textAlign: 'center'
+                            }}
+                            placeholder="USBC #"
+                            maxLength={8}
+                          />
+                        ) : (
+                          player.usbc || '—'
+                        )}
+                      </td>
+                      
+                      {/* Actions */}
+                      <td style={{ 
+                        padding: '16px 12px',
+                        textAlign: 'center',
+                        verticalAlign: 'middle',
+                        fontSize: '14px'
+                      }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                          <button
+                            onClick={() => deletePlayer(player.id)}
+                            style={{
+                              padding: '6px 12px',
+                              backgroundColor: '#ef4444',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              fontSize: '12px',
+                              fontWeight: '500',
+                              transition: 'all 0.2s ease',
+                              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = '#dc2626';
+                              e.currentTarget.style.transform = 'translateY(-1px)';
+                              e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.2)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = '#ef4444';
+                              e.currentTarget.style.transform = 'translateY(0)';
+                              e.currentTarget.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.1)';
+                            }}
+                          >
+                            Delete
+                          </button>
+                          
+                          {/* Save status indicator */}
+                          {savingStatus[player.id] && (
+                            <span style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              padding: '4px 8px',
+                              fontSize: '10px',
+                              borderRadius: '4px',
+                              fontWeight: '500',
+                              backgroundColor: 
+                                savingStatus[player.id] === 'saving' ? '#fef3c7' :
+                                savingStatus[player.id] === 'saved' ? '#d1fae5' :
+                                '#fee2e2',
+                              color: 
+                                savingStatus[player.id] === 'saving' ? '#92400e' :
+                                savingStatus[player.id] === 'saved' ? '#065f46' :
+                                '#991b1b'
+                            }}>
+                              {savingStatus[player.id] === 'saving' && 'Saving...'}
+                              {savingStatus[player.id] === 'saved' && 'Saved'}
+                              {savingStatus[player.id] === 'error' && 'Error'}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            </div>
+          </div>
+        )}
+      </div>
+    </main>
+  );
+}
+
+// Export with error boundary wrapper
+function PlayersPage() {
+  return (
+    <ErrorBoundary>
+      <PlayersPageContent />
+    </ErrorBoundary>
+  );
+}
+
+export default PlayersPage;
