@@ -9,12 +9,8 @@ import "../../styles/login-validation.css";
 
 import { API } from "../../lib/api";
 import { useToast } from "../../components/Toast";
-import { logger } from '../lib/logger';
-
-
-
-
-
+import { logger } from '../../lib/logger';
+import { getErrorMessage, getErrorContext, isError } from '../../lib/error-utils';
 
 // Connection monitoring utilities
 const getConnectionQuality = () => {
@@ -30,7 +26,7 @@ const getConnectionQuality = () => {
 };
 
 const fetchWithRetry = async (url: string, options: RequestInit, maxRetries = 3): Promise<Response> => {
-  let lastError: Error;
+  let lastError: unknown;
   
   for (let i = 0; i <= maxRetries; i++) {
     try {
@@ -54,7 +50,7 @@ const fetchWithRetry = async (url: string, options: RequestInit, maxRetries = 3)
     }
   }
   
-  throw lastError!;
+  throw lastError || new Error('Request failed after retries');
 };
 
 export default function RequestResetPage() {
@@ -189,9 +185,9 @@ export default function RequestResetPage() {
       });
       
     } catch (err: unknown) {
-      const isNetworkError = err?.name === 'TypeError' || err?.message?.includes('Failed to fetch');
-      const isTimeoutError = err?.name === 'AbortError' || err?.message?.includes('timeout');
-      const isConnectionError = err?.message?.includes('No internet connection');
+      const isNetworkError = isError(err) && (err.name === 'TypeError' || err.message.includes('Failed to fetch'));
+      const isTimeoutError = isError(err) && (err.name === 'AbortError' || err.message.includes('timeout'));
+      const isConnectionError = isError(err) && err.message.includes('No internet connection');
       
       let errorMsg: string;
       let shouldRetry = false;
@@ -206,7 +202,7 @@ export default function RequestResetPage() {
         errorMsg = `Request timed out${connectionQuality === 'slow' ? ' (slow connection detected)' : ''}. Please try again.`;
         shouldRetry = true;
       } else {
-        errorMsg = `Network error: ${err?.message || 'Please check your connection'}`;
+        errorMsg = `Network error: ${getErrorMessage(err) || 'Please check your connection'}`;
       }
       
       setError(errorMsg);
@@ -219,7 +215,7 @@ export default function RequestResetPage() {
       if (shouldRetry && !isOnline) {
         const retryRequest = async () => {
           try {
-            await handleRequest(new Event('submit') as React.FormEvent));
+            await handleRequest(new Event('submit') as unknown as React.FormEvent);
           } catch (retryError) {
             logger.debug('Retry failed:', retryError);
           }
@@ -320,7 +316,7 @@ export default function RequestResetPage() {
           case 'Enter':
             e.preventDefault();
             if (!loading && fieldErrors.email === '' && email.trim()) {
-              handleRequest(new Event('submit') as React.FormEvent));
+              handleRequest(new Event('submit') as unknown as React.FormEvent);
             }
             break;
           case 'Escape':
@@ -390,7 +386,7 @@ export default function RequestResetPage() {
             onClick={() => setShowConnectionStatus(false)}
             aria-label="Dismiss connection status"
           >
-            ×
+            ï¿½
           </button>
         </div>
       )}

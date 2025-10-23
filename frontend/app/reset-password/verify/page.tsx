@@ -10,7 +10,8 @@ import "../../styles/bowling-animations.css";
 
 import { API } from "../../lib/api";
 import { useToast } from "../../components/Toast";
-import { logger } from '../lib/logger';
+import { logger } from '../../lib/logger';
+import { getErrorMessage, getErrorContext, isError } from '../../lib/error-utils';
 
 
 
@@ -137,8 +138,8 @@ export default function VerifyResetPage() {
         return response;
       } catch (error: unknown) {
         const isLastAttempt = attempt === maxRetries;
-        const isNetworkError = error.name === 'TypeError' || error.message.includes('Failed to fetch');
-        const isTimeoutError = error.name === 'AbortError' || error.message.includes('timeout');
+        const isNetworkError = isError(error) && (error.name === 'TypeError' || error.message.includes('Failed to fetch'));
+        const isTimeoutError = isError(error) && (error.name === 'AbortError' || error.message.includes('timeout'));
         
         if (isLastAttempt) {
           throw error;
@@ -341,9 +342,9 @@ export default function VerifyResetPage() {
       }, 2000);
       
     } catch (err: unknown) {
-      const isNetworkError = err?.name === 'TypeError' || err?.message?.includes('Failed to fetch');
-      const isTimeoutError = err?.name === 'AbortError' || err?.message?.includes('timeout');
-      const isConnectionError = err?.message?.includes('No internet connection');
+      const isNetworkError = isError(err) && (err.name === 'TypeError' || err.message.includes('Failed to fetch'));
+      const isTimeoutError = isError(err) && (err.name === 'AbortError' || err.message.includes('timeout'));
+      const isConnectionError = isError(err) && err.message.includes('No internet connection');
       
       let errorMsg: string;
       let shouldRetry = false;
@@ -358,7 +359,7 @@ export default function VerifyResetPage() {
         errorMsg = `Request timed out${connectionQuality === 'slow' ? ' (slow connection detected)' : ''}. Please try again.`;
         shouldRetry = true;
       } else {
-        errorMsg = `Network error: ${err?.message || 'Please check your connection'}`;
+        errorMsg = `Network error: ${getErrorMessage(err) || 'Please check your connection'}`;
       }
       
       setError(errorMsg);
@@ -371,7 +372,7 @@ export default function VerifyResetPage() {
       if (shouldRetry && !isOnline) {
         const retryVerify = async () => {
           try {
-            await handleVerify(new Event('submit') as React.FormEvent));
+            await handleVerify(new Event('submit') as unknown as React.FormEvent);
           } catch (retryError) {
             logger.debug('Retry failed:', retryError);
           }

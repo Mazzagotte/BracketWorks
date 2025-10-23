@@ -3,27 +3,20 @@
 import React, { useState, useEffect, useCallback } from 'react';
 
 import { 
-import { 
-
-import { logger } from '../lib/logger';
-
-
-
-
-
-
   DuplicateGroup, 
   DuplicateMatch, 
   scanForDuplicateGroups, 
   findDuplicatesForPlayer,
   getSmartSuggestions 
 } from '../utils/duplicateDetection';
+import {
   generateMergePreview, 
   validateMergeOperation, 
   calculateMergeConfidence,
   ExtendedPlayer,
   MergePreview 
 } from '../utils/playerMerging';
+import { logger } from '../lib/logger';
 
 interface DuplicateDetectionProps {
   players: any[];

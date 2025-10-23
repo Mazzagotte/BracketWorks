@@ -47,7 +47,7 @@ export function useAutoSave<T>({
       onSaveSuccess?.();
       info('Changes saved automatically', '', { duration: 2000 });
     } catch (err: unknown) {
-      onSaveError?.(err);
+      onSaveError?.(err instanceof Error ? err : new Error('Save failed'));
       showError('Failed to save changes automatically', 'Auto-save Error');
     } finally {
       setSaving(false);
@@ -227,7 +227,7 @@ export function useOfflineSync({
       setPendingItems(0);
     } catch (error: unknown) {
       showError('Failed to sync some changes', 'Sync Error');
-      logger.error('Sync failed:', error);
+      logger.error('Sync failed:', { error: error instanceof Error ? error.message : String(error) });
     } finally {
       setSyncing(false);
     }

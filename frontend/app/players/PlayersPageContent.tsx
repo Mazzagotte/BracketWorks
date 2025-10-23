@@ -4,8 +4,6 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 
 import Link from 'next/link'
 
-import { 
-
 import { API } from '../lib/api'
 import { usePageHeader } from '../lib/header-context'
 import { MobileTable } from '../../components/MobileTable'
@@ -22,8 +20,7 @@ import { AccessibleInput } from '../components/Accessibility'
 import { useAutoSave } from '../components/DataManagement'
 import EnhancedButton from '../components/EnhancedButton'
 import SmartSuggestions, { USBCValidationIndicator } from '../components/SmartSuggestions'
-
-
+import {
   PageContainer, 
   ContentWrapper, 
   Card, 

@@ -118,6 +118,7 @@ export interface TournamentForm {
 export interface ToastMessage {
   message: string;
   type?: 'success' | 'error' | 'info' | 'warning';
+  duration?: number;
 }
 
 // Performance monitoring types

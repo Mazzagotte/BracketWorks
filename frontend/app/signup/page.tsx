@@ -8,6 +8,7 @@ import "../styles/signup.css";
 import "../styles/validation.css";
 
 import { API } from "../lib/api";
+import { getErrorMessage } from "../lib/error-utils";
 
 
 
@@ -43,7 +44,7 @@ export default function SignupPage() {
 
   // Enhanced UX hooks
   // Simple toast replacement
-  const addToast = (toast: { message: string; type?: string }) => {
+  const addToast = (toast: { message: string; type?: string; duration?: number }) => {
     // Could implement toast UI here if needed
   };
 
@@ -223,7 +224,7 @@ export default function SignupPage() {
       }, 2000);
 
     } catch (err: unknown) {
-      const errorMsg = `Network error: ${err?.message || 'Please check your connection'}`;
+      const errorMsg = `Network error: ${getErrorMessage(err) || 'Please check your connection'}`;
       setError(errorMsg);
       addToast({
         type: 'error',

@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react';
 
 import { useAuth } from '../lib/auth-context';
+import { getErrorMessage, getErrorContext } from '../lib/error-utils';
 import { useToast } from '../components/Toast';
 import { logger } from '../lib/logger';
 import { API } from '../lib/api';
@@ -188,7 +189,7 @@ export const useLoginForm = (
       }, 1500);
       
     } catch (err: unknown) {
-      const errorMsg = `Network error: ${err?.message || 'Please check your connection'}`;
+      const errorMsg = `Network error: ${getErrorMessage(err) || 'Please check your connection'}`;
       setError(errorMsg);
       addToast({
         type: 'error',
@@ -196,7 +197,7 @@ export const useLoginForm = (
         duration: 6000
       });
       setShowButtonBall(false);
-      logger.error('Login failed', { error: err?.message, username });
+      logger.error('Login failed', getErrorContext(err));
     } finally {
       setLoading(false);
     }

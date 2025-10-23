@@ -8,7 +8,8 @@ import "../../styles/reset-password.css";
 
 import { API } from "../../lib/api";
 import { useToast } from "../../components/Toast";
-import { logger } from '../lib/logger';
+import { logger } from '../../lib/logger';
+import { getErrorMessage as getUtilErrorMessage, getErrorContext } from '../../lib/error-utils';
 
 
 
@@ -46,7 +47,7 @@ const getConnectionQuality = () => {
 };
 
 const fetchWithRetry = async (url: string, options: RequestInit, maxRetries = 3): Promise<Response> => {
-  let lastError: Error;
+  let lastError: unknown;
   
   for (let i = 0; i <= maxRetries; i++) {
     try {
@@ -70,7 +71,7 @@ const fetchWithRetry = async (url: string, options: RequestInit, maxRetries = 3)
     }
   }
   
-  throw lastError!;
+  throw lastError || new Error('Request failed after retries');
 };
 
 export default function ResetPasswordPage() {
@@ -168,12 +169,13 @@ export default function ResetPasswordPage() {
       }, 3000);
 
     } catch (err: unknown) {
-      logger.error('Reset password error:', err);
-      setError(err.message || 'Failed to reset password. Please try again.');
+      logger.error('Reset password error:', getErrorContext(err));
+      const errorMessage = getUtilErrorMessage(err);
+      setError(errorMessage || 'Failed to reset password. Please try again.');
       
       addToast({
         type: 'error',
-        message: err.message || 'Failed to reset password',
+        message: errorMessage || 'Failed to reset password',
         duration: 5000
       });
     } finally {
@@ -245,7 +247,7 @@ export default function ResetPasswordPage() {
             e.preventDefault();
             if (!loading && Object.values(fieldErrors).every(error => error === '') && 
                 email.trim() && code.trim() && newPassword && confirmPassword) {
-              handleReset(new Event('submit') as React.FormEvent));
+              handleReset(new Event('submit') as unknown as React.FormEvent);
             }
             break;
           case 'Escape':
