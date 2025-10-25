@@ -79,6 +79,25 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
+  // Prevent hydration mismatch by not rendering dynamic content until mounted
+  if (!mounted) {
+    return (
+      <ToastProvider>
+        <ErrorBoundary>
+          <SkipNavigation />
+          <div id="main-content">
+            <ErrorBoundary>
+              {children}
+            </ErrorBoundary>
+          </div>
+          <ToastContainer />
+          <ApiHealthCheck />
+          <DevAuthStatus />
+        </ErrorBoundary>
+      </ToastProvider>
+    );
+  }
+
   return (
     <ToastProvider>
       <ErrorBoundary>
@@ -93,7 +112,7 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
         ) : (
         <>
           {/* Desktop Sidebar - Only show when authenticated */}
-          {!isMobile && (isAuthenticated || (typeof window !== 'undefined' && localStorage.getItem('token') && localStorage.getItem('user_id'))) && (
+          {!isMobile && (isAuthenticated || (mounted && typeof window !== 'undefined' && localStorage.getItem('token') && localStorage.getItem('user_id'))) && (
             <Sidebar 
               firstName={firstName} 
               isMobile={false}
@@ -104,7 +123,7 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
           )}
 
           {/* Mobile Navigation */}
-          {isMobile && (isAuthenticated || (typeof window !== 'undefined' && localStorage.getItem('token') && localStorage.getItem('user_id'))) && (
+          {isMobile && (isAuthenticated || (mounted && typeof window !== 'undefined' && localStorage.getItem('token') && localStorage.getItem('user_id'))) && (
             <MobileNav
               isOpen={sidebarOpen}
               onClose={() => setSidebarOpen(false)}
@@ -114,7 +133,7 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
           )}
           
           {/* Enhanced Mobile Header */}
-          {isMobile && (isAuthenticated || (typeof window !== 'undefined' && localStorage.getItem('token') && localStorage.getItem('user_id'))) && (
+          {isMobile && (isAuthenticated || (mounted && typeof window !== 'undefined' && localStorage.getItem('token') && localStorage.getItem('user_id'))) && (
             <header 
               className="mobile-header"
               style={{
@@ -149,13 +168,13 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
                   cursor: 'pointer',
                   transition: 'all 0.2s ease'
                 }}
-                onTouchStart={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(240, 165, 0, 0.2)';
-                  e.currentTarget.style.transform = 'scale(0.95)';
+                onTouchStart={(changeEvent) => { 
+                  changeEvent.currentTarget.style.backgroundColor = 'rgba(240, 165, 0, 0.2)';
+                  changeEvent.currentTarget.style.transform = 'scale(0.95)';
                 }}
-                onTouchEnd={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(240, 165, 0, 0.1)';
-                  e.currentTarget.style.transform = 'scale(1)';
+                onTouchEnd={(changeEvent) => { 
+                  changeEvent.currentTarget.style.backgroundColor = 'rgba(240, 165, 0, 0.1)';
+                  changeEvent.currentTarget.style.transform = 'scale(1)';
                 }}
               >
                 ☰
@@ -205,7 +224,7 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
             suppressHydrationWarning={true}
           >
             {/* Modern Header for authenticated pages */}
-            {mounted && (isAuthenticated || (!isLoginPage && (typeof window !== 'undefined' && (localStorage.getItem('token') || localStorage.getItem('user_id'))))) && (
+            {mounted && (isAuthenticated || (!isLoginPage && (mounted && typeof window !== 'undefined' && (localStorage.getItem('token') || localStorage.getItem('user_id'))))) && (
               <ModernHeader 
                 title={headerContext.title}
                 subtitle={headerContext.subtitle}
@@ -220,7 +239,7 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
             <div 
               style={{ 
                 padding: isMobile ? '20px' : '32px',
-                paddingTop: mounted && (isAuthenticated || (!isLoginPage && (typeof window !== 'undefined' && (localStorage.getItem('token') || localStorage.getItem('user_id'))))) ? '0' : '20px'
+                paddingTop: mounted && (isAuthenticated || (!isLoginPage && (mounted && typeof window !== 'undefined' && (localStorage.getItem('token') || localStorage.getItem('user_id'))))) ? '0' : '20px'
               }}
               suppressHydrationWarning={true}
             >
@@ -251,6 +270,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="BracketWorks" />
         
+        {/* Performance optimizations */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="dns-prefetch" href="//fonts.googleapis.com" />
+        
         {/* Favicon configuration */}
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
@@ -271,3 +294,5 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
+
+

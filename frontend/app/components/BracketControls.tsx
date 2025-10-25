@@ -105,8 +105,8 @@ export function BracketControls({
           </label>
           <Select
             value={state.selectedSquad?.id || ''}
-            onChange={(e) => {
-              const squad = state.squads.find(s => s.id === parseInt(e.target.value))
+            onChange={(changeEvent) => {
+              const squad = state.squads.find(s => s.id === parseInt(changeEvent.target.value))
               onSquadSelect(squad)
             }}
             options={[
@@ -133,7 +133,7 @@ export function BracketControls({
         </label>
         <Select
           value={state.size}
-          onChange={(e) => onSizeChange(parseInt(e.target.value))}
+          onChange={(changeEvent) => onSizeChange(parseInt(changeEvent.target.value))}
           options={bracketSizes.map(size => ({
             value: size,
             label: `${size} players`
@@ -211,7 +211,7 @@ export function BracketControls({
             type="text"
             placeholder="Search by name..."
             value={state.playerSearchQuery}
-            onChange={(e) => onPlayerSearch(e.target.value)}
+            onChange={(changeEvent) => onPlayerSearch(changeEvent.target.value)}
           />
         </div>
       )}
@@ -308,3 +308,4 @@ export function BracketControls({
     </div>
   )
 }
+

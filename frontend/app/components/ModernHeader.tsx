@@ -272,13 +272,11 @@ export default function ModernHeader({
                 cursor: 'pointer',
                 transition: 'all 0.2s ease'
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-1px)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(240, 165, 0, 0.4)';
+              onMouseEnter={(changeEvent) => { changeEvent.currentTarget.style.transform = 'translateY(-1px)';
+                changeEvent.currentTarget.style.boxShadow = '0 4px 12px rgba(240, 165, 0, 0.4)';
               }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 3px 10px rgba(240, 165, 0, 0.3)';
+              onMouseLeave={(changeEvent) => { changeEvent.currentTarget.style.transform = 'translateY(0)';
+                changeEvent.currentTarget.style.boxShadow = '0 3px 10px rgba(240, 165, 0, 0.3)';
               }}
               >
                 {firstName.charAt(0).toUpperCase()}
@@ -307,3 +305,4 @@ export default function ModernHeader({
     </header>
   );
 }
+

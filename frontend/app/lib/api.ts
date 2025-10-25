@@ -3,34 +3,37 @@ import { ApiError, handleApiError, shouldRetry } from './errors';
 
 // API Configuration and enhanced fetch utilities
 
-export const API = (path: string) => {
-  const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
-  const fullUrl = baseUrl + path;
+export const buildApiUrl = (endpointPath: string) => {
+  const backendBaseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+  const completeApiUrl = backendBaseUrl + endpointPath;
   
   // Log API calls in development for debugging
   if (process.env.NODE_ENV === 'development') {
-    logger.debug(`API Call: ${fullUrl}`);
+    logger.debug(`API Call: ${completeApiUrl}`);
   }
   
-  return fullUrl;
+  return completeApiUrl;
 };
 
+// Backward compatibility - keeping API function
+export const API = buildApiUrl;
+
 // Request cache for GET requests
-const requestCache = new Map<string, { data: any; timestamp: number; ttl: number }>();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const apiRequestCache = new Map<string, { data: any; timestamp: number; ttl: number }>();
+const DEFAULT_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 // Enhanced API client with error handling, retry logic, and caching
 export class ApiClient {
-  private baseURL: string;
-  private defaultHeaders: Record<string, string>;
-  private getToken: () => string | null;
+  private backendBaseUrl: string;
+  private defaultRequestHeaders: Record<string, string>;
+  private getAuthToken: () => string | null;
 
-  constructor(baseURL?: string, getToken?: () => string | null) {
-    this.baseURL = baseURL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
-    this.defaultHeaders = {
+  constructor(backendBaseUrl?: string, getAuthToken?: () => string | null) {
+    this.backendBaseUrl = backendBaseUrl || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+    this.defaultRequestHeaders = {
       'Content-Type': 'application/json',
     };
-    this.getToken = getToken || (() => typeof window !== 'undefined' ? localStorage.getItem('token') : null);
+    this.getAuthToken = getAuthToken || (() => typeof window !== 'undefined' ? localStorage.getItem('token') : null);
   }
 
   private getCacheKey(endpoint: string, options: RequestInit): string {
@@ -38,20 +41,20 @@ export class ApiClient {
   }
 
   private getFromCache<T>(key: string): T | null {
-    const cached = requestCache.get(key);
+    const cached = apiRequestCache.get(key);
     if (cached && Date.now() - cached.timestamp < cached.ttl) {
       logger.debug('Cache hit', { key });
       return cached.data;
     }
     if (cached) {
-      requestCache.delete(key);
+      apiRequestCache.delete(key);
       logger.debug('Cache miss - expired', { key });
     }
     return null;
   }
 
-  private setCache<T>(key: string, data: T, ttl: number = CACHE_TTL): void {
-    requestCache.set(key, { data, timestamp: Date.now(), ttl });
+  private setCache<T>(key: string, data: T, ttl: number = DEFAULT_CACHE_TTL): void {
+    apiRequestCache.set(key, { data, timestamp: Date.now(), ttl });
     logger.debug('Cache set', { key, ttl });
   }
 
@@ -61,7 +64,7 @@ export class ApiClient {
     retries: number = 3,
     useCache: boolean = false
   ): Promise<T> {
-    const url = `${this.baseURL}${endpoint}`;
+    const url = `${this.backendBaseUrl}${endpoint}`;
     const startTime = Date.now();
     
     // Check cache for GET requests
@@ -76,13 +79,13 @@ export class ApiClient {
     const config: RequestInit = {
       ...options,
       headers: {
-        ...this.defaultHeaders,
+        ...this.defaultRequestHeaders,
         ...options.headers,
       },
     };
 
     // Add auth token if available
-    const token = this.getToken();
+    const token = this.getAuthToken();
     if (token) {
       config.headers = {
         ...config.headers,
@@ -185,14 +188,14 @@ export class ApiClient {
 
   // Clear cache
   clearCache(): void {
-    requestCache.clear();
+    apiRequestCache.clear();
     logger.info('API cache cleared');
   }
 
   // Clear specific cache entry
   clearCacheEntry(endpoint: string): void {
-    const keysToDelete = Array.from(requestCache.keys()).filter(key => key.includes(endpoint));
-    keysToDelete.forEach(key => requestCache.delete(key));
+    const keysToDelete = Array.from(apiRequestCache.keys()).filter(key => key.includes(endpoint));
+    keysToDelete.forEach(key => apiRequestCache.delete(key));
     logger.debug('Cache entries cleared', { endpoint, count: keysToDelete.length });
   }
 }

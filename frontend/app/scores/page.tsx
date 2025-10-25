@@ -37,14 +37,32 @@ import {
 
 export default function ScoresPage() {
   // Authentication check - must be at the top
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isInitialized } = useAuth();
 
   // Check if we have tokens in localStorage even if auth context isn't ready
   const hasStoredAuth = typeof window !== 'undefined' && 
     localStorage.getItem('token') && 
     localStorage.getItem('user_id');
 
-  // Authentication guard - redirect if not logged in
+  // Wait for auth initialization before making decisions
+  if (!isInitialized) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        minHeight: '100vh',
+        fontFamily: 'Inter, sans-serif'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ marginBottom: '1rem', fontSize: '1.2rem' }}>🎳</div>
+          <div>Loading score management...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Authentication guard - redirect if not logged in (only after initialization)
   if (!isAuthenticated && !hasStoredAuth) {
     return (
       <div style={{ 
@@ -103,7 +121,7 @@ export default function ScoresPage() {
 
   // Auto-save for score data
   const { saving: autoSaving, saveNow } = useAutoSave({
-    data: { scores: players.map(p => p.scores).filter(Boolean) },
+    data: { scores: players.map(player => player.scores).filter(Boolean) },
     saveFunction: async (data) => {
       if (typeof window !== 'undefined') {
         localStorage.setItem('scores-backup', JSON.stringify(data))
@@ -462,7 +480,7 @@ export default function ScoresPage() {
           return
         }
 
-        const player = players.find(p => p.id === playerId)
+        const player = players.find(playerItem => playerItem.id === playerId)
         if (!player) {
           setSavingStatus(prev => ({ ...prev, [saveKey]: 'error' }))
           return
@@ -544,7 +562,7 @@ export default function ScoresPage() {
         setSavingStatus(prev => ({ ...prev, [saveKey]: 'error' }))
         
         // Show error toast
-        const currentPlayer = players.find(p => p.id === playerId);
+        const currentPlayer = players.find(playerItem => playerItem.id === playerId);
         addToast({
           message: `Failed to save score for ${currentPlayer?.firstName || 'player'} ${currentPlayer?.lastName || ''}. Please try again.`,
           type: 'error',
@@ -615,7 +633,7 @@ export default function ScoresPage() {
   const handleKeyDown = (e: React.KeyboardEvent, playerId: number, field: string) => {
     if (e.key === 'Enter' || e.key === 'Tab') {
       // Move to next input field
-      const currentPlayerIndex = players.findIndex(p => p.id === playerId)
+      const currentPlayerIndex = players.findIndex(playerItem => playerItem.id === playerId)
       const fields = ['game1_scratch', 'game2_scratch', 'game3_scratch']
       const currentFieldIndex = fields.indexOf(field)
       
@@ -736,7 +754,7 @@ export default function ScoresPage() {
                             max="300"
                             className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             value={player.scores?.[`game${gameNum}_scratch` as keyof typeof player.scores] || ''}
-                            onChange={(e) => updateScore(player.id, `game${gameNum}_scratch`, parseInt(e.target.value) || 0)}
+                            onChange={(changeEvent) => updateScore(player.id, `game${gameNum}_scratch`, parseInt(changeEvent.target.value) || 0)}
                             placeholder={`G${gameNum}`}
                             inputMode="numeric"
                           />
@@ -1050,15 +1068,15 @@ export default function ScoresPage() {
                   borderRadius: '8px',
                   margin: '2px 0'
                 }} 
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#f0f9ff';
-                  e.currentTarget.style.transform = 'translateY(-1px)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+                onMouseEnter={(changeEvent) => { 
+                  changeEvent.currentTarget.style.backgroundColor = '#f0f9ff';
+                  changeEvent.currentTarget.style.transform = 'translateY(-1px)';
+                  changeEvent.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
                 }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = index % 2 === 0 ? '#ffffff' : '#f9fafb';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = 'none';
+                onMouseLeave={(changeEvent) => { 
+                  changeEvent.currentTarget.style.backgroundColor = index % 2 === 0 ? '#ffffff' : '#f9fafb';
+                  changeEvent.currentTarget.style.transform = 'translateY(0)';
+                  changeEvent.currentTarget.style.boxShadow = 'none';
                 }}>
                   <td style={{ 
                     padding: '16px 12px',
@@ -1112,8 +1130,8 @@ export default function ScoresPage() {
                         data-player={player.id}
                         data-field="game1_scratch"
                         value={player.scores?.game1_scratch ?? ''}
-                        onChange={e => updateScore(player.id, 'game1_scratch', e.target.value ? Number(e.target.value) : undefined)}
-                        onKeyDown={e => handleKeyDown(e, player.id, 'game1_scratch')}
+                        onChange={changeEvent => updateScore(player.id, 'game1_scratch', changeEvent.target.value ? Number(changeEvent.target.value) : undefined)}
+                        onKeyDown={keyEvent => handleKeyDown(keyEvent, player.id, 'game1_scratch')}
                         style={getScoreInputStyle(player.scores?.game1_scratch, { 
                           width: '60px', 
                           padding: '8px 24px 8px 12px', 
@@ -1127,19 +1145,19 @@ export default function ScoresPage() {
                           transition: 'all 0.2s ease',
                           outline: 'none'
                         })}
-                        onFocus={(e) => {
+                        onFocus={(changeEvent) => {
                           const validation = validateScore(player.scores?.game1_scratch)
-                          if (validation.isValid) {
-                            e.target.style.borderColor = '#3b82f6'
-                            e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)'
-                          }
-                          e.target.select()
+                          if (validation.isValid) { 
+                            changeEvent.target.style.borderColor = '#3b82f6'; 
+                            changeEvent.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+                          } 
+                          changeEvent.target.select()
                         }}
-                        onBlur={(e) => {
+                        onBlur={(changeEvent) => {
                           const validation = validateScore(player.scores?.game1_scratch)
-                          if (validation.isValid) {
-                            e.target.style.borderColor = '#d1d5db'
-                            e.target.style.boxShadow = 'none'
+                          if (validation.isValid) { 
+                            changeEvent.target.style.borderColor = '#d1d5db'; 
+                            changeEvent.target.style.boxShadow = 'none';
                           }
                         }}
                         title={!validateScore(player.scores?.game1_scratch).isValid ? validateScore(player.scores?.game1_scratch).message : ''}
@@ -1177,13 +1195,11 @@ export default function ScoresPage() {
                             transition: 'all 0.2s ease',
                             outline: 'none'
                           }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = '#f3f4f6';
-                            e.currentTarget.style.color = '#374151';
+                          onMouseEnter={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = '#f3f4f6';
+                            changeEvent.currentTarget.style.color = '#374151';
                           }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = 'transparent';
-                            e.currentTarget.style.color = '#6b7280';
+                          onMouseLeave={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = 'transparent';
+                            changeEvent.currentTarget.style.color = '#6b7280';
                           }}
                         >
                           ▲
@@ -1210,13 +1226,11 @@ export default function ScoresPage() {
                             transition: 'all 0.2s ease',
                             outline: 'none'
                           }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = '#f3f4f6';
-                            e.currentTarget.style.color = '#374151';
+                          onMouseEnter={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = '#f3f4f6';
+                            changeEvent.currentTarget.style.color = '#374151';
                           }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = 'transparent';
-                            e.currentTarget.style.color = '#6b7280';
+                          onMouseLeave={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = 'transparent';
+                            changeEvent.currentTarget.style.color = '#6b7280';
                           }}
                         >
                           ▼
@@ -1308,7 +1322,7 @@ export default function ScoresPage() {
                         max={300}
                         placeholder="—"
                         value={player.scores?.game2_scratch ?? ''}
-                        onChange={e => updateScore(player.id, 'game2_scratch', e.target.value ? Number(e.target.value) : undefined)}
+                        onChange={changeEvent => updateScore(player.id, 'game2_scratch', changeEvent.target.value ? Number(changeEvent.target.value) : undefined)}
                         style={getScoreInputStyle(player.scores?.game2_scratch, { 
                           width: '60px', 
                           padding: '8px 24px 8px 12px', 
@@ -1322,18 +1336,18 @@ export default function ScoresPage() {
                           transition: 'all 0.2s ease',
                           outline: 'none'
                         })}
-                        onFocus={(e) => {
+                        onFocus={(changeEvent) => {
                           const validation = validateScore(player.scores?.game2_scratch)
-                          if (validation.isValid) {
-                            e.target.style.borderColor = '#3b82f6'
-                            e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)'
+                          if (validation.isValid) { 
+                            changeEvent.target.style.borderColor = '#3b82f6'; 
+                            changeEvent.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
                           }
                         }}
-                        onBlur={(e) => {
+                        onBlur={(changeEvent) => {
                           const validation = validateScore(player.scores?.game2_scratch)
-                          if (validation.isValid) {
-                            e.target.style.borderColor = '#d1d5db'
-                            e.target.style.boxShadow = 'none'
+                          if (validation.isValid) { 
+                            changeEvent.target.style.borderColor = '#d1d5db'; 
+                            changeEvent.target.style.boxShadow = 'none';
                           }
                         }}
                         title={!validateScore(player.scores?.game2_scratch).isValid ? validateScore(player.scores?.game2_scratch).message : ''}
@@ -1371,13 +1385,11 @@ export default function ScoresPage() {
                             transition: 'all 0.2s ease',
                             outline: 'none'
                           }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = '#f3f4f6';
-                            e.currentTarget.style.color = '#374151';
+                          onMouseEnter={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = '#f3f4f6';
+                            changeEvent.currentTarget.style.color = '#374151';
                           }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = 'transparent';
-                            e.currentTarget.style.color = '#6b7280';
+                          onMouseLeave={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = 'transparent';
+                            changeEvent.currentTarget.style.color = '#6b7280';
                           }}
                         >
                           ▲
@@ -1404,13 +1416,11 @@ export default function ScoresPage() {
                             transition: 'all 0.2s ease',
                             outline: 'none'
                           }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = '#f3f4f6';
-                            e.currentTarget.style.color = '#374151';
+                          onMouseEnter={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = '#f3f4f6';
+                            changeEvent.currentTarget.style.color = '#374151';
                           }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = 'transparent';
-                            e.currentTarget.style.color = '#6b7280';
+                          onMouseLeave={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = 'transparent';
+                            changeEvent.currentTarget.style.color = '#6b7280';
                           }}
                         >
                           ▼
@@ -1502,7 +1512,7 @@ export default function ScoresPage() {
                         max={300}
                         placeholder="—"
                         value={player.scores?.game3_scratch ?? ''}
-                        onChange={e => updateScore(player.id, 'game3_scratch', e.target.value ? Number(e.target.value) : undefined)}
+                        onChange={changeEvent => updateScore(player.id, 'game3_scratch', changeEvent.target.value ? Number(changeEvent.target.value) : undefined)}
                         style={getScoreInputStyle(player.scores?.game3_scratch, { 
                           width: '60px', 
                           padding: '8px 24px 8px 12px', 
@@ -1516,18 +1526,18 @@ export default function ScoresPage() {
                           transition: 'all 0.2s ease',
                           outline: 'none'
                         })}
-                        onFocus={(e) => {
+                        onFocus={(changeEvent) => {
                           const validation = validateScore(player.scores?.game3_scratch)
-                          if (validation.isValid) {
-                            e.target.style.borderColor = '#3b82f6'
-                            e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)'
+                          if (validation.isValid) { 
+                            changeEvent.target.style.borderColor = '#3b82f6'; 
+                            changeEvent.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
                           }
                         }}
-                        onBlur={(e) => {
+                        onBlur={(changeEvent) => {
                           const validation = validateScore(player.scores?.game3_scratch)
-                          if (validation.isValid) {
-                            e.target.style.borderColor = '#d1d5db'
-                            e.target.style.boxShadow = 'none'
+                          if (validation.isValid) { 
+                            changeEvent.target.style.borderColor = '#d1d5db'; 
+                            changeEvent.target.style.boxShadow = 'none';
                           }
                         }}
                         title={!validateScore(player.scores?.game3_scratch).isValid ? validateScore(player.scores?.game3_scratch).message : ''}
@@ -1565,13 +1575,11 @@ export default function ScoresPage() {
                             transition: 'all 0.2s ease',
                             outline: 'none'
                           }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = '#f3f4f6';
-                            e.currentTarget.style.color = '#374151';
+                          onMouseEnter={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = '#f3f4f6';
+                            changeEvent.currentTarget.style.color = '#374151';
                           }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = 'transparent';
-                            e.currentTarget.style.color = '#6b7280';
+                          onMouseLeave={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = 'transparent';
+                            changeEvent.currentTarget.style.color = '#6b7280';
                           }}
                         >
                           ▲
@@ -1598,13 +1606,11 @@ export default function ScoresPage() {
                             transition: 'all 0.2s ease',
                             outline: 'none'
                           }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = '#f3f4f6';
-                            e.currentTarget.style.color = '#374151';
+                          onMouseEnter={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = '#f3f4f6';
+                            changeEvent.currentTarget.style.color = '#374151';
                           }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = 'transparent';
-                            e.currentTarget.style.color = '#6b7280';
+                          onMouseLeave={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = 'transparent';
+                            changeEvent.currentTarget.style.color = '#6b7280';
                           }}
                         >
                           ▼
@@ -1765,3 +1771,5 @@ export default function ScoresPage() {
     </ErrorBoundary>
   )
 }
+
+

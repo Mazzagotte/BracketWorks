@@ -159,15 +159,15 @@ export default function VerifyResetPage() {
   // Keyboard shortcuts for accessibility
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.altKey && e.key.toLowerCase() === 'e') {
+      if (e.altKey && e.key.toLowerCase() === 'e') { 
         e.preventDefault();
         document.getElementById('reset-email')?.focus();
       }
-      if (e.altKey && e.key.toLowerCase() === 'c') {
+      if (e.altKey && e.key.toLowerCase() === 'c') { 
         e.preventDefault();
         document.getElementById('reset-code')?.focus();
       }
-      if (e.key === 'Escape' && (error || Object.keys(fieldErrors).some(key => fieldErrors[key]))) {
+      if (e.key === 'Escape' && (error || Object.keys(fieldErrors).some(key => fieldErrors[key]))) { 
         e.preventDefault();
         setError('');
         setFieldErrors({});
@@ -223,9 +223,9 @@ export default function VerifyResetPage() {
     return !emailError && !codeError && email.trim() && code.trim();
   };
 
-  const handleVerify = async (e: React.FormEvent) => {
+  const handleVerify = async (e: React.FormEvent) => { 
     e.preventDefault();
-    
+
     // Clear previous errors
     setError("");
     setSuccess("");
@@ -458,8 +458,8 @@ export default function VerifyResetPage() {
               id="reset-email"
               type="email"
               value={email}
-              onChange={(e) => handleFieldChange('email', e.target.value)}
-              onBlur={(e) => handleFieldBlur('email', e.target.value)}
+              onChange={(changeEvent) => handleFieldChange('email', changeEvent.target.value)}
+              onBlur={(changeEvent) => handleFieldBlur('email', changeEvent.target.value)}
               className={`login-input ${fieldErrors.email ? 'error' : ''} ${
                 fieldTouched.email && !fieldErrors.email && email.trim() ? 'success' : ''
               }`}
@@ -491,8 +491,8 @@ export default function VerifyResetPage() {
               id="reset-code"
               type="text"
               value={code}
-              onChange={(e) => handleFieldChange('code', e.target.value)}
-              onBlur={(e) => handleFieldBlur('code', e.target.value)}
+              onChange={(changeEvent) => handleFieldChange('code', changeEvent.target.value)}
+              onBlur={(changeEvent) => handleFieldBlur('code', changeEvent.target.value)}
               className={`login-input ${fieldErrors.code ? 'error' : ''} ${
                 fieldTouched.code && !fieldErrors.code && code.trim() ? 'success' : ''
               }`}
@@ -563,3 +563,4 @@ export default function VerifyResetPage() {
     </div>
   );
 }
+

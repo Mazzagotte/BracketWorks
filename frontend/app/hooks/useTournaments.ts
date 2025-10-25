@@ -82,7 +82,7 @@ export function useTournaments() {
     
     try {
       const updatedTournament = await apiClient.put<Tournament>(`/api/v1/tournaments/${id}`, updates)
-      setTournaments(prev => prev.map(t => t.id === id ? updatedTournament : t))
+      setTournaments(prev => prev.map(tItem => tItem.id === id ? updatedTournament : tItem))
       addToast({
         type: 'success',
         message: 'Tournament updated successfully',
@@ -108,7 +108,7 @@ export function useTournaments() {
     
     try {
       await apiClient.delete(`/api/v1/tournaments/${id}`)
-      setTournaments(prev => prev.filter(t => t.id !== id))
+      setTournaments(prev => prev.filter(tItem => tItem.id !== id))
       addToast({
         type: 'success',
         message: 'Tournament deleted successfully',

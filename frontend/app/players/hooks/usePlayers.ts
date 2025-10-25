@@ -22,9 +22,10 @@ interface UsePlayersOptions {
   squads: Squad[];
   authToken: string | null;
   getItem: (key: string) => string | null;
+  entryFee: number;
 }
 
-export function usePlayers({ selectedSquad, squads, authToken, getItem }: UsePlayersOptions) {
+export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee }: UsePlayersOptions) {
   const [players, setPlayers] = useState<Player[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDemoMode, setIsDemoMode] = useState(false);
@@ -32,11 +33,11 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem }: UsePla
 
   const getDemoPlayers = useCallback(() => {
     return [
-      { id: 1, firstName: 'John', lastName: 'Doe', usbc: '12345678', average: 180, handicap: 0, scratch: 1, lane: 'A1', division: 'Open', totalCost: 25, amountPaid: 25 },
-      { id: 2, firstName: 'Jane', lastName: 'Smith', usbc: '87654321', average: 150, handicap: 2, scratch: 0, lane: 'A2', division: 'Womens', totalCost: 50, amountPaid: 25 },
-      { id: 3, firstName: 'Bob', lastName: 'Johnson', usbc: '11111111', average: 200, handicap: 1, scratch: 2, lane: 'B1', division: 'Senior', totalCost: 75, amountPaid: 75 }
+      { id: 1, firstName: 'John', lastName: 'Doe', usbc: '12345678', average: 180, handicap: 0, scratch: 1, lane: 'A1', division: 'Open', totalCost: (0 + 1) * entryFee, amountPaid: entryFee },
+      { id: 2, firstName: 'Jane', lastName: 'Smith', usbc: '87654321', average: 150, handicap: 2, scratch: 0, lane: 'A2', division: 'Womens', totalCost: (2 + 0) * entryFee, amountPaid: entryFee },
+      { id: 3, firstName: 'Bob', lastName: 'Johnson', usbc: '11111111', average: 200, handicap: 1, scratch: 2, lane: 'B1', division: 'Senior', totalCost: (1 + 2) * entryFee, amountPaid: entryFee * 3 }
     ];
-  }, []);
+  }, [entryFee]);
 
   const loadPlayers = useCallback(async () => {
     if (!authToken) return;
@@ -64,7 +65,7 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem }: UsePla
       const data = await response.json();
       
       const transformedData = data.map((bowler: BowlerApiResponse) => {
-        const squad = squads?.find(s => s.id === bowler.squad_id);
+        const squad = squads?.find(sItem => sItem.id === bowler.squad_id);
         return {
           id: bowler.id,
           firstName: bowler.name?.split(' ')[0] || '',
@@ -75,7 +76,7 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem }: UsePla
           scratch: bowler.scratch || 0,
           lane: bowler.lane || '',
           division: bowler.division || 'Open',
-          totalCost: ((bowler.scratch || 0) + (bowler.handicap || 0)) * 25,
+          totalCost: ((bowler.scratch || 0) + (bowler.handicap || 0)) * entryFee,
           amountPaid: bowler.amount_paid || 0,
           squad: squad ? { id: squad.id, date: squad.date, time: squad.time } : undefined
         };
@@ -142,19 +143,55 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem }: UsePla
   }, [authToken, selectedSquad, getItem]);
 
   const updatePlayer = useCallback(async (playerId: number, field: string, value: string | number) => {
-    if (!authToken) return;
-
+    console.log('updatePlayer called:', { playerId, field, value, authToken: !!authToken, isDemoMode });
+    
     const saveKey = `${playerId}-${field}`;
     setSavingStatus(prev => ({ ...prev, [saveKey]: 'saving' }));
 
+    // If in demo mode, just update local state
+    if (isDemoMode || !authToken) {
+      console.log('Demo mode or no auth - updating local state only');
+      
+      // Update local state with potential total cost recalculation
+      setPlayers(prev => prev.map(player => {
+        if (player.id === playerId) {
+          const updatedPlayer = { ...player, [field]: value };
+          
+          // Recalculate total cost if handicap or scratch changed
+          if (field === 'handicap' || field === 'scratch') {
+            updatedPlayer.totalCost = (updatedPlayer.handicap + updatedPlayer.scratch) * entryFee;
+          }
+          
+          return updatedPlayer;
+        }
+        return player;
+      }));
+
+      setSavingStatus(prev => ({ ...prev, [saveKey]: 'success' }));
+
+      // Clear success status after 2 seconds
+      setTimeout(() => {
+        setSavingStatus(prev => {
+          const newStatus = { ...prev };
+          delete newStatus[saveKey];
+          return newStatus;
+        });
+      }, 2000);
+      
+      return;
+    }
+
     // Optimistic update
-    const updatedPlayer = players.find(p => p.id === playerId);
+    const updatedPlayer = players.find(pItem => pItem.id === playerId);
     if (!updatedPlayer) {
+      console.log('Player not found:', playerId);
       setSavingStatus(prev => ({ ...prev, [saveKey]: 'error' }));
       return;
     }
 
     try {
+      console.log('Making API call to update player:', API(`/api/v1/bowlers/${playerId}`));
+      
       const response = await fetch(API(`/api/v1/bowlers/${playerId}`), {
         method: 'PATCH',
         headers: {
@@ -167,11 +204,23 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem }: UsePla
         })
       });
 
+      console.log('API response:', response.status, response.ok);
+
       if (response.ok) {
-        // Update local state
-        setPlayers(prev => prev.map(player =>
-          player.id === playerId ? { ...player, [field]: value } : player
-        ));
+        // Update local state with potential total cost recalculation
+        setPlayers(prev => prev.map(player => {
+          if (player.id === playerId) {
+            const updatedPlayer = { ...player, [field]: value };
+            
+            // Recalculate total cost if handicap or scratch changed
+            if (field === 'handicap' || field === 'scratch') {
+              updatedPlayer.totalCost = (updatedPlayer.handicap + updatedPlayer.scratch) * entryFee;
+            }
+            
+            return updatedPlayer;
+          }
+          return player;
+        }));
 
         setSavingStatus(prev => ({ ...prev, [saveKey]: 'success' }));
 
@@ -184,6 +233,8 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem }: UsePla
           });
         }, 2000);
       } else {
+        const errorText = await response.text();
+        console.log('API error response:', errorText);
         setSavingStatus(prev => ({ ...prev, [saveKey]: 'error' }));
         
         // Clear error status after 3 seconds
@@ -196,6 +247,7 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem }: UsePla
         }, 3000);
       }
     } catch (err) {
+      console.error('Failed to update player:', err);
       logger.error('Failed to update player', { error: err, playerId, field });
       setSavingStatus(prev => ({ ...prev, [saveKey]: 'error' }));
       
@@ -208,7 +260,7 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem }: UsePla
         });
       }, 3000);
     }
-  }, [authToken, players, getItem]);
+  }, [authToken, players, getItem, isDemoMode, entryFee]);
 
   const deletePlayer = useCallback(async (playerId: number) => {
     if (!authToken) return;
@@ -222,7 +274,7 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem }: UsePla
       });
 
       if (response.ok) {
-        setPlayers(prev => prev.filter(p => p.id !== playerId));
+        setPlayers(prev => prev.filter(pItem => pItem.id !== playerId));
       } else {
         const error = await response.text();
         alert(`Failed to delete player: ${error}`);

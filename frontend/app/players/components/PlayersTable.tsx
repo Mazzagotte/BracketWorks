@@ -8,8 +8,24 @@ const PlayersTable = memo(({
   onUpdatePlayer, 
   onDeletePlayer, 
   savingStatus,
-  isDemoMode 
+  isDemoMode,
+  entryFee 
 }: PlayersTableProps) => {
+  // Add pulse animation to document head if not already present
+  React.useEffect(() => {
+    if (!document.querySelector('#pulse-animation-styles')) {
+      const style = document.createElement('style');
+      style.id = 'pulse-animation-styles';
+      style.textContent = `
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  }, []);
+
   const getSavingIndicator = (playerId: number, field: string) => {
     const key = `${playerId}-${field}`;
     const status = savingStatus[key];
@@ -17,13 +33,36 @@ const PlayersTable = memo(({
     if (!status || status === 'idle') return null;
     
     return (
-      <span style={{
-        fontSize: '12px',
-        marginLeft: '8px',
-        color: status === 'saving' ? '#6b7280' : status === 'success' ? '#10b981' : '#ef4444'
+      <div style={{
+        position: 'absolute',
+        top: '-8px',
+        right: '-8px',
+        width: '16px',
+        height: '16px',
+        borderRadius: '50%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '10px',
+        fontWeight: 'bold',
+        ...(status === 'saving' && {
+          backgroundColor: '#f59e0b',
+          color: 'white',
+          animation: 'pulse 1s infinite'
+        }),
+        ...(status === 'success' && {
+          backgroundColor: '#10b981',
+          color: 'white'
+        }),
+        ...(status === 'error' && {
+          backgroundColor: '#ef4444',
+          color: 'white'
+        })
       }}>
-        {status === 'saving' ? '●' : status === 'success' ? '✓' : '✗'}
-      </span>
+        {status === 'saving' && '⋯'}
+        {status === 'success' && '✓'}
+        {status === 'error' && '✗'}
+      </div>
     );
   };
 
@@ -60,34 +99,34 @@ const PlayersTable = memo(({
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>
           <tr style={{ backgroundColor: '#f9fafb' }}>
-            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', fontWeight: '600', fontSize: '14px' }}>
+            <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid #e5e7eb', fontWeight: '600', fontSize: '14px' }}>
               Name
             </th>
-            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', fontWeight: '600', fontSize: '14px' }}>
+            <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid #e5e7eb', fontWeight: '600', fontSize: '14px' }}>
               USBC
             </th>
-            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', fontWeight: '600', fontSize: '14px' }}>
+            <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid #e5e7eb', fontWeight: '600', fontSize: '14px' }}>
               Lane
             </th>
-            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', fontWeight: '600', fontSize: '14px' }}>
+            <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid #e5e7eb', fontWeight: '600', fontSize: '14px' }}>
               Average
             </th>
-            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', fontWeight: '600', fontSize: '14px' }}>
-              Handicap
+            <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid #e5e7eb', fontWeight: '600', fontSize: '14px' }}>
+              Handicap Entries
             </th>
-            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', fontWeight: '600', fontSize: '14px' }}>
-              Scratch
+            <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid #e5e7eb', fontWeight: '600', fontSize: '14px' }}>
+              Scratch Entries
             </th>
-            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', fontWeight: '600', fontSize: '14px' }}>
+            <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid #e5e7eb', fontWeight: '600', fontSize: '14px' }}>
               Division
             </th>
-            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', fontWeight: '600', fontSize: '14px' }}>
+            <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid #e5e7eb', fontWeight: '600', fontSize: '14px' }}>
               Total Cost
             </th>
-            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', fontWeight: '600', fontSize: '14px' }}>
+            <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid #e5e7eb', fontWeight: '600', fontSize: '14px' }}>
               Amount Paid
             </th>
-            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', fontWeight: '600', fontSize: '14px' }}>
+            <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid #e5e7eb', fontWeight: '600', fontSize: '14px' }}>
               Actions
             </th>
           </tr>
@@ -95,279 +134,522 @@ const PlayersTable = memo(({
         <tbody>
           {players.map((player) => (
             <OptimizedTableRow key={player.id}>
-              <OptimizedTableCell>
-                <div>
-                  <input
-                    type="text"
-                    value={player.firstName}
-                    onChange={(e) => handleCellEdit(player.id, 'firstName', e.target.value)}
-                    style={{
-                      border: 'none',
-                      background: 'transparent',
-                      padding: '4px',
-                      fontSize: '14px',
-                      width: '80px',
-                      marginRight: '4px'
-                    }}
-                    placeholder="First"
-                  />
-                  <input
-                    type="text"
-                    value={player.lastName}
-                    onChange={(e) => handleCellEdit(player.id, 'lastName', e.target.value)}
-                    style={{
-                      border: 'none',
-                      background: 'transparent',
-                      padding: '4px',
-                      fontSize: '14px',
-                      width: '80px'
-                    }}
-                    placeholder="Last"
-                  />
-                  {getSavingIndicator(player.id, 'firstName')}
-                  {getSavingIndicator(player.id, 'lastName')}
+              <OptimizedTableCell style={{ textAlign: 'center', padding: '12px', borderBottom: '1px solid #e5e7eb' }}>
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '4px' }}>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type="text"
+                      value={player.firstName}
+                      onChange={(changeEvent) => handleCellEdit(player.id, 'firstName', changeEvent.target.value)}
+                      style={{
+                        border: '1px solid #d1d5db',
+                        borderRadius: '4px',
+                        padding: '8px',
+                        fontSize: '14px',
+                        width: '80px',
+                        marginRight: '4px',
+                        background: '#ffffff',
+                        outline: 'none',
+                        transition: 'all 0.2s ease',
+                        textAlign: 'center'
+                      }}
+                      placeholder="First"
+                      onFocus={(changeEvent) => {
+                        changeEvent.target.style.borderColor = '#3b82f6';
+                        changeEvent.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+                      }}
+                      onBlur={(changeEvent) => {
+                        changeEvent.target.style.borderColor = '#d1d5db';
+                        changeEvent.target.style.boxShadow = 'none';
+                      }}
+                    />
+                    {getSavingIndicator(player.id, 'firstName')}
+                  </div>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type="text"
+                      value={player.lastName}
+                      onChange={(changeEvent) => handleCellEdit(player.id, 'lastName', changeEvent.target.value)}
+                      style={{
+                        border: '1px solid #d1d5db',
+                        borderRadius: '4px',
+                        padding: '8px',
+                        fontSize: '14px',
+                        width: '80px',
+                        background: '#ffffff',
+                        outline: 'none',
+                        transition: 'all 0.2s ease',
+                        textAlign: 'center'
+                      }}
+                      placeholder="Last"
+                      onFocus={(changeEvent) => {
+                        changeEvent.target.style.borderColor = '#3b82f6';
+                        changeEvent.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+                      }}
+                      onBlur={(changeEvent) => {
+                        changeEvent.target.style.borderColor = '#d1d5db';
+                        changeEvent.target.style.boxShadow = 'none';
+                      }}
+                    />
+                    {getSavingIndicator(player.id, 'lastName')}
+                  </div>
                 </div>
               </OptimizedTableCell>
               
-              <OptimizedTableCell>
-                <input
-                  type="text"
-                  value={player.usbc || ''}
-                  onChange={(e) => handleCellEdit(player.id, 'usbc', e.target.value)}
-                  style={{
-                    border: 'none',
-                    background: 'transparent',
-                    padding: '4px',
-                    fontSize: '14px',
-                    width: '100px'
-                  }}
-                  placeholder="USBC #"
-                />
-                {getSavingIndicator(player.id, 'usbc')}
-              </OptimizedTableCell>
-
-              <OptimizedTableCell>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <button
-                    onClick={() => handleDecrement(player.id, 'lane', parseInt(player.lane.slice(1)) || 0)}
+              <OptimizedTableCell style={{ textAlign: 'center', padding: '12px', borderBottom: '1px solid #e5e7eb' }}>
+                <div style={{ position: 'relative', display: 'flex', justifyContent: 'center' }}>
+                  <input
+                    type="text"
+                    value={player.usbc || ''}
+                    onChange={(changeEvent) => handleCellEdit(player.id, 'usbc', changeEvent.target.value)}
                     style={{
-                      background: '#f3f4f6',
                       border: '1px solid #d1d5db',
                       borderRadius: '4px',
-                      width: '24px',
-                      height: '24px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      fontSize: '12px'
+                      padding: '8px',
+                      fontSize: '14px',
+                      width: '100px',
+                      background: '#ffffff',
+                      outline: 'none',
+                      transition: 'all 0.2s ease',
+                      textAlign: 'center'
                     }}
-                  >
-                    ↓
-                  </button>
+                    placeholder="USBC #"
+                    onFocus={(changeEvent) => {
+                      changeEvent.target.style.borderColor = '#3b82f6';
+                      changeEvent.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+                    }}
+                    onBlur={(changeEvent) => {
+                      changeEvent.target.style.borderColor = '#d1d5db';
+                      changeEvent.target.style.boxShadow = 'none';
+                    }}
+                  />
+                  {getSavingIndicator(player.id, 'usbc')}
+                </div>
+              </OptimizedTableCell>
+
+              <OptimizedTableCell style={{ textAlign: 'center', padding: '12px', borderBottom: '1px solid #e5e7eb' }}>
+                <div style={{ position: 'relative', display: 'inline-block' }}>
                   <input
                     type="text"
                     value={player.lane}
-                    onChange={(e) => handleCellEdit(player.id, 'lane', e.target.value)}
+                    onChange={(changeEvent) => handleCellEdit(player.id, 'lane', changeEvent.target.value)}
                     style={{
-                      border: 'none',
-                      background: 'transparent',
-                      padding: '4px',
-                      fontSize: '14px',
-                      width: '60px',
-                      textAlign: 'center'
-                    }}
-                  />
-                  <button
-                    onClick={() => handleIncrement(player.id, 'lane', parseInt(player.lane.slice(1)) || 0)}
-                    style={{
-                      background: '#f3f4f6',
                       border: '1px solid #d1d5db',
                       borderRadius: '4px',
-                      width: '24px',
-                      height: '24px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      fontSize: '12px'
+                      padding: '8px 24px 8px 8px',
+                      fontSize: '14px',
+                      width: '80px',
+                      textAlign: 'center',
+                      background: '#ffffff',
+                      outline: 'none',
+                      transition: 'all 0.2s ease'
                     }}
-                  >
-                    ↑
-                  </button>
+                    onFocus={(changeEvent) => {
+                      changeEvent.target.style.borderColor = '#3b82f6';
+                      changeEvent.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+                    }}
+                    onBlur={(changeEvent) => {
+                      changeEvent.target.style.borderColor = '#d1d5db';
+                      changeEvent.target.style.boxShadow = 'none';
+                    }}
+                  />
+                  {getSavingIndicator(player.id, 'lane')}
+                  
+                  {/* Increment/Decrement Arrows - Inside Input */}
+                  <div style={{ 
+                    position: 'absolute', 
+                    right: '4px', 
+                    top: '50%', 
+                    transform: 'translateY(-50%)',
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    gap: '1px' 
+                  }}>
+                    <button
+                      onClick={() => handleIncrement(player.id, 'lane', parseInt(player.lane.slice(1)) || 0)}
+                      style={{
+                        width: '12px',
+                        height: '8px',
+                        border: 'none',
+                        borderRadius: '1px',
+                        backgroundColor: 'transparent',
+                        color: '#6b7280',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        fontSize: '6px',
+                        fontWeight: 'bold',
+                        transition: 'all 0.2s ease',
+                        outline: 'none'
+                      }}
+                      onMouseEnter={(changeEvent) => { 
+                        changeEvent.currentTarget.style.backgroundColor = '#f3f4f6';
+                        changeEvent.currentTarget.style.color = '#374151';
+                      }}
+                      onMouseLeave={(changeEvent) => { 
+                        changeEvent.currentTarget.style.backgroundColor = 'transparent';
+                        changeEvent.currentTarget.style.color = '#6b7280';
+                      }}
+                    >
+                      ▲
+                    </button>
+                    <button
+                      onClick={() => handleDecrement(player.id, 'lane', parseInt(player.lane.slice(1)) || 0)}
+                      style={{
+                        width: '12px',
+                        height: '8px',
+                        border: 'none',
+                        borderRadius: '1px',
+                        backgroundColor: 'transparent',
+                        color: '#6b7280',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        fontSize: '6px',
+                        fontWeight: 'bold',
+                        transition: 'all 0.2s ease',
+                        outline: 'none'
+                      }}
+                      onMouseEnter={(changeEvent) => { 
+                        changeEvent.currentTarget.style.backgroundColor = '#f3f4f6';
+                        changeEvent.currentTarget.style.color = '#374151';
+                      }}
+                      onMouseLeave={(changeEvent) => { 
+                        changeEvent.currentTarget.style.backgroundColor = 'transparent';
+                        changeEvent.currentTarget.style.color = '#6b7280';
+                      }}
+                    >
+                      ▼
+                    </button>
+                  </div>
                   {getSavingIndicator(player.id, 'lane')}
                 </div>
               </OptimizedTableCell>
 
-              <OptimizedTableCell>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <button
-                    onClick={() => handleDecrement(player.id, 'average', player.average)}
-                    style={{
-                      background: '#f3f4f6',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '4px',
-                      width: '24px',
-                      height: '24px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      fontSize: '12px'
-                    }}
-                  >
-                    ↓
-                  </button>
+              <OptimizedTableCell style={{ textAlign: 'center', padding: '12px', borderBottom: '1px solid #e5e7eb' }}>
+                <div style={{ position: 'relative', display: 'inline-block' }}>
                   <input
                     type="number"
                     value={player.average}
-                    onChange={(e) => handleCellEdit(player.id, 'average', e.target.value)}
+                    onChange={(changeEvent) => handleCellEdit(player.id, 'average', changeEvent.target.value)}
                     style={{
-                      border: 'none',
-                      background: 'transparent',
-                      padding: '4px',
-                      fontSize: '14px',
-                      width: '60px',
-                      textAlign: 'center'
-                    }}
-                  />
-                  <button
-                    onClick={() => handleIncrement(player.id, 'average', player.average)}
-                    style={{
-                      background: '#f3f4f6',
                       border: '1px solid #d1d5db',
                       borderRadius: '4px',
-                      width: '24px',
-                      height: '24px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      fontSize: '12px'
+                      padding: '8px 24px 8px 8px',
+                      fontSize: '14px',
+                      width: '80px',
+                      textAlign: 'center',
+                      background: '#ffffff',
+                      outline: 'none',
+                      transition: 'all 0.2s ease'
                     }}
-                  >
-                    ↑
-                  </button>
+                    onFocus={(changeEvent) => {
+                      changeEvent.target.style.borderColor = '#3b82f6';
+                      changeEvent.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+                    }}
+                    onBlur={(changeEvent) => {
+                      changeEvent.target.style.borderColor = '#d1d5db';
+                      changeEvent.target.style.boxShadow = 'none';
+                    }}
+                  />
+                  
+                  {/* Increment/Decrement Arrows - Inside Input */}
+                  <div style={{ 
+                    position: 'absolute', 
+                    right: '4px', 
+                    top: '50%', 
+                    transform: 'translateY(-50%)',
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    gap: '1px' 
+                  }}>
+                    <button
+                      onClick={() => handleIncrement(player.id, 'average', player.average)}
+                      style={{
+                        width: '12px',
+                        height: '8px',
+                        border: 'none',
+                        borderRadius: '1px',
+                        backgroundColor: 'transparent',
+                        color: '#6b7280',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        fontSize: '6px',
+                        fontWeight: 'bold',
+                        transition: 'all 0.2s ease',
+                        outline: 'none'
+                      }}
+                      onMouseEnter={(changeEvent) => { 
+                        changeEvent.currentTarget.style.backgroundColor = '#f3f4f6';
+                        changeEvent.currentTarget.style.color = '#374151';
+                      }}
+                      onMouseLeave={(changeEvent) => { 
+                        changeEvent.currentTarget.style.backgroundColor = 'transparent';
+                        changeEvent.currentTarget.style.color = '#6b7280';
+                      }}
+                    >
+                      ▲
+                    </button>
+                    <button
+                      onClick={() => handleDecrement(player.id, 'average', player.average)}
+                      style={{
+                        width: '12px',
+                        height: '8px',
+                        border: 'none',
+                        borderRadius: '1px',
+                        backgroundColor: 'transparent',
+                        color: '#6b7280',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        fontSize: '6px',
+                        fontWeight: 'bold',
+                        transition: 'all 0.2s ease',
+                        outline: 'none'
+                      }}
+                      onMouseEnter={(changeEvent) => { 
+                        changeEvent.currentTarget.style.backgroundColor = '#f3f4f6';
+                        changeEvent.currentTarget.style.color = '#374151';
+                      }}
+                      onMouseLeave={(changeEvent) => { 
+                        changeEvent.currentTarget.style.backgroundColor = 'transparent';
+                        changeEvent.currentTarget.style.color = '#6b7280';
+                      }}
+                    >
+                      ▼
+                    </button>
+                  </div>
                   {getSavingIndicator(player.id, 'average')}
                 </div>
               </OptimizedTableCell>
 
-              <OptimizedTableCell>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <button
-                    onClick={() => handleDecrement(player.id, 'handicap', player.handicap)}
-                    style={{
-                      background: '#f3f4f6',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '4px',
-                      width: '24px',
-                      height: '24px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      fontSize: '12px'
-                    }}
-                  >
-                    ↓
-                  </button>
+              <OptimizedTableCell style={{ textAlign: 'center', padding: '12px', borderBottom: '1px solid #e5e7eb' }}>
+                <div style={{ position: 'relative', display: 'inline-block' }}>
                   <input
                     type="number"
                     value={player.handicap}
-                    onChange={(e) => handleCellEdit(player.id, 'handicap', e.target.value)}
+                    onChange={(changeEvent) => handleCellEdit(player.id, 'handicap', changeEvent.target.value)}
                     style={{
-                      border: 'none',
-                      background: 'transparent',
-                      padding: '4px',
-                      fontSize: '14px',
-                      width: '60px',
-                      textAlign: 'center'
-                    }}
-                  />
-                  <button
-                    onClick={() => handleIncrement(player.id, 'handicap', player.handicap)}
-                    style={{
-                      background: '#f3f4f6',
                       border: '1px solid #d1d5db',
                       borderRadius: '4px',
-                      width: '24px',
-                      height: '24px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      fontSize: '12px'
+                      padding: '8px 24px 8px 8px',
+                      fontSize: '14px',
+                      width: '80px',
+                      textAlign: 'center',
+                      background: '#ffffff',
+                      outline: 'none',
+                      transition: 'all 0.2s ease'
                     }}
-                  >
-                    ↑
-                  </button>
+                    onFocus={(changeEvent) => {
+                      changeEvent.target.style.borderColor = '#3b82f6';
+                      changeEvent.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+                    }}
+                    onBlur={(changeEvent) => {
+                      changeEvent.target.style.borderColor = '#d1d5db';
+                      changeEvent.target.style.boxShadow = 'none';
+                    }}
+                  />
+                  
+                  {/* Increment/Decrement Arrows - Inside Input */}
+                  <div style={{ 
+                    position: 'absolute', 
+                    right: '4px', 
+                    top: '50%', 
+                    transform: 'translateY(-50%)',
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    gap: '1px' 
+                  }}>
+                    <button
+                      onClick={() => handleIncrement(player.id, 'handicap', player.handicap)}
+                      style={{
+                        width: '12px',
+                        height: '8px',
+                        border: 'none',
+                        borderRadius: '1px',
+                        backgroundColor: 'transparent',
+                        color: '#6b7280',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        fontSize: '6px',
+                        fontWeight: 'bold',
+                        transition: 'all 0.2s ease',
+                        outline: 'none'
+                      }}
+                      onMouseEnter={(changeEvent) => { 
+                        changeEvent.currentTarget.style.backgroundColor = '#f3f4f6';
+                        changeEvent.currentTarget.style.color = '#374151';
+                      }}
+                      onMouseLeave={(changeEvent) => { 
+                        changeEvent.currentTarget.style.backgroundColor = 'transparent';
+                        changeEvent.currentTarget.style.color = '#6b7280';
+                      }}
+                    >
+                      ▲
+                    </button>
+                    <button
+                      onClick={() => handleDecrement(player.id, 'handicap', player.handicap)}
+                      style={{
+                        width: '12px',
+                        height: '8px',
+                        border: 'none',
+                        borderRadius: '1px',
+                        backgroundColor: 'transparent',
+                        color: '#6b7280',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        fontSize: '6px',
+                        fontWeight: 'bold',
+                        transition: 'all 0.2s ease',
+                        outline: 'none'
+                      }}
+                      onMouseEnter={(changeEvent) => { 
+                        changeEvent.currentTarget.style.backgroundColor = '#f3f4f6';
+                        changeEvent.currentTarget.style.color = '#374151';
+                      }}
+                      onMouseLeave={(changeEvent) => { 
+                        changeEvent.currentTarget.style.backgroundColor = 'transparent';
+                        changeEvent.currentTarget.style.color = '#6b7280';
+                      }}
+                    >
+                      ▼
+                    </button>
+                  </div>
                   {getSavingIndicator(player.id, 'handicap')}
                 </div>
               </OptimizedTableCell>
 
-              <OptimizedTableCell>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <button
-                    onClick={() => handleDecrement(player.id, 'scratch', player.scratch)}
-                    style={{
-                      background: '#f3f4f6',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '4px',
-                      width: '24px',
-                      height: '24px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      fontSize: '12px'
-                    }}
-                  >
-                    ↓
-                  </button>
+              <OptimizedTableCell style={{ textAlign: 'center', padding: '12px', borderBottom: '1px solid #e5e7eb' }}>
+                <div style={{ position: 'relative', display: 'inline-block' }}>
                   <input
                     type="number"
                     value={player.scratch}
-                    onChange={(e) => handleCellEdit(player.id, 'scratch', e.target.value)}
+                    onChange={(changeEvent) => handleCellEdit(player.id, 'scratch', changeEvent.target.value)}
                     style={{
-                      border: 'none',
-                      background: 'transparent',
-                      padding: '4px',
-                      fontSize: '14px',
-                      width: '60px',
-                      textAlign: 'center'
-                    }}
-                  />
-                  <button
-                    onClick={() => handleIncrement(player.id, 'scratch', player.scratch)}
-                    style={{
-                      background: '#f3f4f6',
                       border: '1px solid #d1d5db',
                       borderRadius: '4px',
-                      width: '24px',
-                      height: '24px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      fontSize: '12px'
+                      padding: '8px 24px 8px 8px',
+                      fontSize: '14px',
+                      width: '80px',
+                      textAlign: 'center',
+                      background: '#ffffff',
+                      outline: 'none',
+                      transition: 'all 0.2s ease'
                     }}
-                  >
-                    ↑
-                  </button>
+                    onFocus={(changeEvent) => {
+                      changeEvent.target.style.borderColor = '#3b82f6';
+                      changeEvent.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+                    }}
+                    onBlur={(changeEvent) => {
+                      changeEvent.target.style.borderColor = '#d1d5db';
+                      changeEvent.target.style.boxShadow = 'none';
+                    }}
+                  />
+                  
+                  {/* Increment/Decrement Arrows - Inside Input */}
+                  <div style={{ 
+                    position: 'absolute', 
+                    right: '4px', 
+                    top: '50%', 
+                    transform: 'translateY(-50%)',
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    gap: '1px' 
+                  }}>
+                    <button
+                      onClick={() => handleIncrement(player.id, 'scratch', player.scratch)}
+                      style={{
+                        width: '12px',
+                        height: '8px',
+                        border: 'none',
+                        borderRadius: '1px',
+                        backgroundColor: 'transparent',
+                        color: '#6b7280',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        fontSize: '6px',
+                        fontWeight: 'bold',
+                        transition: 'all 0.2s ease',
+                        outline: 'none'
+                      }}
+                      onMouseEnter={(changeEvent) => { 
+                        changeEvent.currentTarget.style.backgroundColor = '#f3f4f6';
+                        changeEvent.currentTarget.style.color = '#374151';
+                      }}
+                      onMouseLeave={(changeEvent) => { 
+                        changeEvent.currentTarget.style.backgroundColor = 'transparent';
+                        changeEvent.currentTarget.style.color = '#6b7280';
+                      }}
+                    >
+                      ▲
+                    </button>
+                    <button
+                      onClick={() => handleDecrement(player.id, 'scratch', player.scratch)}
+                      style={{
+                        width: '12px',
+                        height: '8px',
+                        border: 'none',
+                        borderRadius: '1px',
+                        backgroundColor: 'transparent',
+                        color: '#6b7280',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        fontSize: '6px',
+                        fontWeight: 'bold',
+                        transition: 'all 0.2s ease',
+                        outline: 'none'
+                      }}
+                      onMouseEnter={(changeEvent) => { 
+                        changeEvent.currentTarget.style.backgroundColor = '#f3f4f6';
+                        changeEvent.currentTarget.style.color = '#374151';
+                      }}
+                      onMouseLeave={(changeEvent) => { 
+                        changeEvent.currentTarget.style.backgroundColor = 'transparent';
+                        changeEvent.currentTarget.style.color = '#6b7280';
+                      }}
+                    >
+                      ▼
+                    </button>
+                  </div>
                   {getSavingIndicator(player.id, 'scratch')}
                 </div>
               </OptimizedTableCell>
 
-              <OptimizedTableCell>
+              <OptimizedTableCell style={{ textAlign: 'center', padding: '12px', borderBottom: '1px solid #e5e7eb' }}>
                 <select
                   value={player.division}
-                  onChange={(e) => handleCellEdit(player.id, 'division', e.target.value)}
+                  onChange={(changeEvent) => handleCellEdit(player.id, 'division', changeEvent.target.value)}
                   style={{
-                    border: 'none',
-                    background: 'transparent',
-                    padding: '4px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '4px',
+                    padding: '8px',
                     fontSize: '14px',
-                    width: '100px'
+                    width: '100px',
+                    background: '#ffffff',
+                    outline: 'none',
+                    transition: 'all 0.2s ease',
+                    textAlign: 'center'
+                  }}
+                  onFocus={(changeEvent) => {
+                    changeEvent.target.style.borderColor = '#3b82f6';
+                    changeEvent.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+                  }}
+                  onBlur={(changeEvent) => {
+                    changeEvent.target.style.borderColor = '#d1d5db';
+                    changeEvent.target.style.boxShadow = 'none';
                   }}
                 >
                   <option value="Open">Open</option>
@@ -378,31 +660,115 @@ const PlayersTable = memo(({
                 {getSavingIndicator(player.id, 'division')}
               </OptimizedTableCell>
 
-              <OptimizedTableCell>
+              <OptimizedTableCell style={{ textAlign: 'center', padding: '12px', borderBottom: '1px solid #e5e7eb' }}>
                 <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                  ${((player.scratch + player.handicap) * 25).toFixed(2)}
+                  ${player.totalCost.toFixed(2)}
                 </span>
               </OptimizedTableCell>
 
-              <OptimizedTableCell>
-                <input
-                  type="number"
-                  value={player.amountPaid}
-                  onChange={(e) => handleCellEdit(player.id, 'amountPaid', e.target.value)}
-                  style={{
-                    border: 'none',
-                    background: 'transparent',
-                    padding: '4px',
-                    fontSize: '14px',
-                    width: '80px'
-                  }}
-                  step="0.01"
-                  min="0"
-                />
-                {getSavingIndicator(player.id, 'amountPaid')}
+              <OptimizedTableCell style={{ textAlign: 'center', padding: '12px', borderBottom: '1px solid #e5e7eb' }}>
+                <div style={{ position: 'relative', display: 'inline-block' }}>
+                  <input
+                    type="number"
+                    value={player.amountPaid}
+                    onChange={(changeEvent) => handleCellEdit(player.id, 'amountPaid', changeEvent.target.value)}
+                    style={{
+                      border: '1px solid #d1d5db',
+                      borderRadius: '4px',
+                      padding: '8px 24px 8px 8px',
+                      fontSize: '14px',
+                      width: '100px',
+                      textAlign: 'center',
+                      background: '#ffffff',
+                      outline: 'none',
+                      transition: 'all 0.2s ease'
+                    }}
+                    step="0.01"
+                    min="0"
+                    onFocus={(changeEvent) => {
+                      changeEvent.target.style.borderColor = '#3b82f6';
+                      changeEvent.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+                    }}
+                    onBlur={(changeEvent) => {
+                      changeEvent.target.style.borderColor = '#d1d5db';
+                      changeEvent.target.style.boxShadow = 'none';
+                    }}
+                  />
+                  
+                  {/* Increment/Decrement Arrows - Inside Input */}
+                  <div style={{ 
+                    position: 'absolute', 
+                    right: '4px', 
+                    top: '50%', 
+                    transform: 'translateY(-50%)',
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    gap: '1px' 
+                  }}>
+                    <button
+                      onClick={() => handleIncrement(player.id, 'amountPaid', player.amountPaid, 0.01)}
+                      style={{
+                        width: '12px',
+                        height: '8px',
+                        border: 'none',
+                        borderRadius: '1px',
+                        backgroundColor: 'transparent',
+                        color: '#6b7280',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        fontSize: '6px',
+                        fontWeight: 'bold',
+                        transition: 'all 0.2s ease',
+                        outline: 'none'
+                      }}
+                      onMouseEnter={(changeEvent) => { 
+                        changeEvent.currentTarget.style.backgroundColor = '#f3f4f6';
+                        changeEvent.currentTarget.style.color = '#374151';
+                      }}
+                      onMouseLeave={(changeEvent) => { 
+                        changeEvent.currentTarget.style.backgroundColor = 'transparent';
+                        changeEvent.currentTarget.style.color = '#6b7280';
+                      }}
+                    >
+                      ▲
+                    </button>
+                    <button
+                      onClick={() => handleDecrement(player.id, 'amountPaid', player.amountPaid, 0.01)}
+                      style={{
+                        width: '12px',
+                        height: '8px',
+                        border: 'none',
+                        borderRadius: '1px',
+                        backgroundColor: 'transparent',
+                        color: '#6b7280',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        fontSize: '6px',
+                        fontWeight: 'bold',
+                        transition: 'all 0.2s ease',
+                        outline: 'none'
+                      }}
+                      onMouseEnter={(changeEvent) => { 
+                        changeEvent.currentTarget.style.backgroundColor = '#f3f4f6';
+                        changeEvent.currentTarget.style.color = '#374151';
+                      }}
+                      onMouseLeave={(changeEvent) => { 
+                        changeEvent.currentTarget.style.backgroundColor = 'transparent';
+                        changeEvent.currentTarget.style.color = '#6b7280';
+                      }}
+                    >
+                      ▼
+                    </button>
+                  </div>
+                  {getSavingIndicator(player.id, 'amountPaid')}
+                </div>
               </OptimizedTableCell>
 
-              <OptimizedTableCell>
+              <OptimizedTableCell style={{ textAlign: 'center', padding: '12px', borderBottom: '1px solid #e5e7eb' }}>
                 <button
                   onClick={() => onDeletePlayer(player.id)}
                   style={{
@@ -429,3 +795,4 @@ const PlayersTable = memo(({
 PlayersTable.displayName = 'PlayersTable';
 
 export default PlayersTable;
+

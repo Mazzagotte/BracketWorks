@@ -13,6 +13,17 @@ interface User {
 }
 
 interface AuthContextType {
+  // New descriptive names
+  authToken: string | null;
+  currentUser: User | null;
+  isUserAuthenticated: boolean;
+  isAuthInitialized: boolean;
+  authenticateUser: (authToken: string, userId: string, userData?: Partial<User>) => void;
+  logoutUser: () => void;
+  updateUserData: (userData: Partial<User>) => void;
+  clearUserAuth: () => void;
+  
+  // Backward compatibility properties (deprecated but functional)
   token: string | null;
   user: User | null;
   isAuthenticated: boolean;
@@ -30,66 +41,87 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [token, setToken] = useState<string | null>(null);
-  const [user, setUser] = useState<User | null>(null);
-  const [isInitialized, setIsInitialized] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  // Initialize auth state synchronously to prevent race conditions
-  useEffect(() => {
-    // Set mounted immediately
-    setMounted(true);
+  const getInitialAuthState = () => {
+    if (typeof window === 'undefined') return { authToken: null, currentUser: null };
     
-    // Initialize from localStorage synchronously (no delays)
     try {
+      const storedAuthToken = localStorage.getItem('token');
+      const storedUserId = localStorage.getItem('user_id');
+      const storedFirstName = localStorage.getItem('first_name');
+      
+      if (storedAuthToken && storedUserId) {
+        return {
+          authToken: storedAuthToken,
+          currentUser: { 
+            id: storedUserId, 
+            name: storedFirstName || undefined 
+          }
+        };
+      }
+    } catch (error) {
+      logger.error('❌ Error reading auth from localStorage:', error);
+    }
+    
+    return { authToken: null, currentUser: null };
+  };
+
+  const initialAuthState = getInitialAuthState();
+  const [authToken, setAuthToken] = useState<string | null>(initialAuthState.authToken);
+  const [currentUser, setCurrentUser] = useState<User | null>(initialAuthState.currentUser);
+  const [isAuthInitialized, setIsAuthInitialized] = useState(false);
+  const [isComponentMounted, setIsComponentMounted] = useState(false);
+
+  // Set mounted flag for hydration safety
+  useEffect(() => {
+    setIsComponentMounted(true);
+    // Mark auth as initialized after mounting
+    setIsAuthInitialized(true);
+    
+    // If we have tokens but no current auth state, restore from localStorage
+    if (typeof window !== 'undefined' && !authToken && !currentUser) {
       const storedToken = localStorage.getItem('token');
       const storedUserId = localStorage.getItem('user_id');
       const storedFirstName = localStorage.getItem('first_name');
       
       if (storedToken && storedUserId) {
-        setToken(storedToken);
-        setUser({ 
+        setAuthToken(storedToken);
+        setCurrentUser({ 
           id: storedUserId, 
           name: storedFirstName || undefined 
         });
       }
-    } catch (error) {
-      logger.error('❌ Error initializing auth:', error);
     }
-    
-    // Mark as initialized immediately after sync initialization
-    setIsInitialized(true);
-  }, []); // Run once on mount, no dependencies
+  }, [authToken, currentUser]);
 
   // Save to localStorage when state changes
   useEffect(() => {
-    if (!isInitialized) return;
+    if (!isComponentMounted) return; // Wait for hydration
 
-    if (token && user) {
-      localStorage.setItem('token', token);
-      localStorage.setItem('user_id', user.id);
+    if (authToken && currentUser) {
+      localStorage.setItem('token', authToken);
+      localStorage.setItem('user_id', currentUser.id);
     } else {
       localStorage.removeItem('token');
       localStorage.removeItem('user_id');
       localStorage.removeItem('userId'); // Handle inconsistent key usage
     }
-  }, [token, user, isInitialized]);
+  }, [authToken, currentUser, isComponentMounted]);
 
-  const login = (newToken: string, userId: string, userData?: Partial<User>) => {
-    setToken(newToken);
-    setUser({ id: userId, ...userData });
+  const authenticateUser = (newAuthToken: string, userId: string, userData?: Partial<User>) => {
+    setAuthToken(newAuthToken);
+    setCurrentUser({ id: userId, ...userData });
     
     // Immediately save to localStorage
-    localStorage.setItem('token', newToken);
+    localStorage.setItem('token', newAuthToken);
     localStorage.setItem('user_id', userId);
     if (userData?.name) {
       localStorage.setItem('first_name', userData.name);
     }
   };
 
-  const logout = () => {
-    setToken(null);
-    setUser(null);
+  const logoutUser = () => {
+    setAuthToken(null);
+    setCurrentUser(null);
     // Clear any other auth-related localStorage items
     localStorage.removeItem('token');
     localStorage.removeItem('user_id');
@@ -102,46 +134,42 @@ export function AuthProvider({ children }: AuthProviderProps) {
     });
   };
 
-  const updateUser = (userData: Partial<User>) => {
-    if (user) {
-      setUser({ ...user, ...userData });
+  const updateUserData = (userData: Partial<User>) => {
+    if (currentUser) {
+      setCurrentUser({ ...currentUser, ...userData });
     }
   };
 
-  const clearAuth = () => {
-    logout();
+  const clearUserAuth = () => {
+    logoutUser();
   };
 
-  const value: AuthContextType = {
-    token,
-    user,
-    isAuthenticated: !!(token && user),
-    isInitialized: mounted && isInitialized,
-    login,
-    logout,
-    updateUser,
-    clearAuth,
+  const authContextValue: AuthContextType = {
+    // New descriptive properties
+    authToken,
+    currentUser,
+    isUserAuthenticated: !!(authToken && currentUser),
+    isAuthInitialized: isAuthInitialized, // Use the explicit state
+    authenticateUser,
+    logoutUser,
+    updateUserData,
+    clearUserAuth,
+    
+    // Backward compatibility properties
+    token: authToken,
+    user: currentUser,
+    isAuthenticated: !!(authToken && currentUser),
+    isInitialized: isComponentMounted,
+    login: authenticateUser,
+    logout: logoutUser,
+    updateUser: updateUserData,
+    clearAuth: clearUserAuth,
   };
 
-  // Always provide the context, but show loading UI when not initialized
+  // No loading screen - provide context immediately
   return (
-    <AuthContext.Provider value={value}>
-      {(!mounted || !isInitialized) ? (
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center', 
-          minHeight: '100vh',
-          fontFamily: 'Inter, sans-serif'
-        }}>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ marginBottom: '1rem', fontSize: '1.2rem' }}>Loading...</div>
-            <div>Initializing BracketWorks...</div>
-          </div>
-        </div>
-      ) : (
-        children
-      )}
+    <AuthContext.Provider value={authContextValue}>
+      {children}
     </AuthContext.Provider>
   );
 }
@@ -157,9 +185,9 @@ export function useAuth(): AuthContextType {
   return context;
 }
 
-export function useToken(): string | null {
-  const { token } = useAuth();
-  return token;
+export function useAuthToken(): string | null {
+  const { authToken } = useAuth();
+  return authToken;
 }
 
 // Hook to check if auth is still initializing
@@ -182,27 +210,27 @@ export function useAuthInitialized(): boolean {
   return mounted && isInitialized;
 }
 
-export function useUser(): User | null {
-  const { user } = useAuth();
-  return user;
+export function useCurrentUser(): User | null {
+  const { currentUser } = useAuth();
+  return currentUser;
 }
 
 export function useIsAuthenticated(): boolean {
-  const { isAuthenticated } = useAuth();
-  return isAuthenticated;
+  const { isUserAuthenticated } = useAuth();
+  return isUserAuthenticated;
 }
 
 // Utility function for making authenticated API calls
 export function useAuthenticatedFetch() {
-  const { token, logout } = useAuth();
+  const { authToken, logoutUser } = useAuth();
 
   return async (url: string, options: RequestInit = {}) => {
-    if (!token) {
+    if (!authToken) {
       throw new Error('No authentication token available');
     }
 
     const headers = {
-      'Authorization': `Bearer ${token}`,
+      'Authorization': `Bearer ${authToken}`,
       'Content-Type': 'application/json',
       ...options.headers,
     };
@@ -214,10 +242,14 @@ export function useAuthenticatedFetch() {
 
     // Auto-logout on 401 responses
     if (response.status === 401) {
-      logout();
+      logoutUser();
       throw new Error('Authentication expired');
     }
 
     return response;
   };
 }
+
+// Backward compatibility exports for existing code
+export const useToken = useAuthToken;
+export const useUser = useCurrentUser;

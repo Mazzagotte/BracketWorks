@@ -35,16 +35,16 @@ class Logger {
       
       switch (level) {
         case 'debug':
-          logger.debug(`[${timestamp}] DEBUG: ${message}${contextStr}`);
+          console.debug(`[${timestamp}] DEBUG: ${message}${contextStr}`);
           break;
         case 'info':
           console.info(`[${timestamp}] INFO: ${message}${contextStr}`);
           break;
         case 'warn':
-          logger.warn(`[${timestamp}] WARN: ${message}${contextStr}`);
+          console.warn(`[${timestamp}] WARN: ${message}${contextStr}`);
           break;
         case 'error':
-          logger.error(`[${timestamp}] ERROR: ${message}${contextStr}`);
+          console.error(`[${timestamp}] ERROR: ${message}${contextStr}`);
           break;
       }
     }

@@ -105,14 +105,32 @@ interface EntryData {
 
 export default function PayoutsPage() {
   // Authentication check - must be at the top
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isInitialized } = useAuth();
 
   // Check if we have tokens in localStorage even if auth context isn't ready
   const hasStoredAuth = typeof window !== 'undefined' && 
     localStorage.getItem('token') && 
     localStorage.getItem('user_id');
 
-  // Authentication guard - redirect if not logged in
+  // Wait for auth initialization before making decisions
+  if (!isInitialized) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        minHeight: '100vh',
+        fontFamily: 'Inter, sans-serif'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ marginBottom: '1rem', fontSize: '1.2rem' }}>🎳</div>
+          <div>Loading payout management...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Authentication guard - redirect if not logged in (only after initialization)
   if (!isAuthenticated && !hasStoredAuth) {
     return (
       <div style={{ 
@@ -224,21 +242,21 @@ export default function PayoutsPage() {
     
     switch (sortBy) {
       case 'name':
-        sortedPlayers.sort((a, b) => {
-          const result = a.player_name.localeCompare(b.player_name)
+        sortedPlayers.sort((firstItem, secondItem) => {
+          const result = firstItem.player_name.localeCompare(secondItem.player_name)
           return sortDirection === 'asc' ? result : -result
         })
         break
       case 'brackets':
-        sortedPlayers.sort((a, b) => {
-          const result = a.total_brackets - b.total_brackets
+        sortedPlayers.sort((firstItem, secondItem) => {
+          const result = firstItem.total_brackets - secondItem.total_brackets
           return sortDirection === 'asc' ? result : -result
         })
         break
       case 'status':
-        sortedPlayers.sort((a, b) => {
-          const aKey = `${a.player_name}_${a.player_id}`
-          const bKey = `${b.player_name}_${b.player_id}`
+        sortedPlayers.sort((firstItem, secondItem) => {
+          const aKey = `${firstItem.player_name}_${firstItem.player_id}`
+          const bKey = `${secondItem.player_name}_${secondItem.player_id}`
           const aPaid = paidOutPlayers.has(aKey)
           const bPaid = paidOutPlayers.has(bKey)
           if (aPaid === bPaid) return 0
@@ -247,8 +265,8 @@ export default function PayoutsPage() {
         break
       case 'amount':
       default:
-        sortedPlayers.sort((a, b) => {
-          const result = a.total_amount - b.total_amount
+        sortedPlayers.sort((firstItem, secondItem) => {
+          const result = firstItem.total_amount - secondItem.total_amount
           return sortDirection === 'asc' ? result : -result
         })
         break
@@ -263,8 +281,8 @@ export default function PayoutsPage() {
       const rowBg = index % 2 === 0 ? '#fafbfc' : 'white'
       
       // Count bracket types
-      const scratchBrackets = player.brackets.filter(b => b.bracket_type.toLowerCase() === 'scratch').length
-      const handicapBrackets = player.brackets.filter(b => b.bracket_type.toLowerCase() === 'handicap').length
+      const scratchBrackets = player.brackets.filter(bracket => bracket.bracket_type.toLowerCase() === 'scratch').length
+      const handicapBrackets = player.brackets.filter(bracket => bracket.bracket_type.toLowerCase() === 'handicap').length
       
       return (
         <>
@@ -415,11 +433,9 @@ export default function PayoutsPage() {
                       ? '#dc2626' 
                       : '#16a34a'
                   }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'scale(1.05)'
+                  onMouseEnter={(changeEvent) => { changeEvent.currentTarget.style.transform = 'scale(1.05)'
                   }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'scale(1)'
+                  onMouseLeave={(changeEvent) => { changeEvent.currentTarget.style.transform = 'scale(1)'
                   }}
                 >
                   {paidOutPlayers.has(`${player.player_name}_${player.player_id}`) 
@@ -439,11 +455,9 @@ export default function PayoutsPage() {
                     backgroundColor: '#f3f4f6',
                     color: '#374151'
                   }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#e5e7eb'
+                  onMouseEnter={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = '#e5e7eb'
                   }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = '#f3f4f6'
+                  onMouseLeave={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = '#f3f4f6'
                   }}
                 >
                   {expandedPlayers.has(`${player.player_name}_${player.player_id}`) ? '▲' : '▼'}
@@ -577,13 +591,13 @@ export default function PayoutsPage() {
             height: '24px'
           }}
           title={autoRefreshEnabled ? 'Auto-refresh ON - Click to disable' : 'Auto-refresh OFF - Click to enable'}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = autoRefreshEnabled ? 'rgba(5, 150, 105, 0.15)' : 'rgba(107, 114, 128, 0.1)';
-            e.currentTarget.style.transform = 'scale(1.05)';
+          onMouseEnter={(changeEvent) => { 
+            changeEvent.currentTarget.style.backgroundColor = autoRefreshEnabled ? 'rgba(5, 150, 105, 0.15)' : 'rgba(107, 114, 128, 0.1)';
+            changeEvent.currentTarget.style.transform = 'scale(1.05)';
           }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = autoRefreshEnabled ? 'rgba(5, 150, 105, 0.1)' : 'transparent';
-            e.currentTarget.style.transform = 'scale(1)';
+          onMouseLeave={(changeEvent) => { 
+            changeEvent.currentTarget.style.backgroundColor = autoRefreshEnabled ? 'rgba(5, 150, 105, 0.1)' : 'transparent';
+            changeEvent.currentTarget.style.transform = 'scale(1)';
           }}
         >
           {autoRefreshEnabled ? 'ON' : 'OFF'}
@@ -883,7 +897,7 @@ export default function PayoutsPage() {
         },
         entries: entries
           .filter(entry => entry.total_brackets_entered > 0) // Only show players who actually entered brackets
-          .sort((a, b) => b.total_amount_won - a.total_amount_won), // Sort by amount won
+          .sort((firstItem, secondItem) => secondItem.total_amount_won - firstItem.total_amount_won), // Sort by amount won
         summary
       })
 
@@ -1080,8 +1094,8 @@ export default function PayoutsPage() {
                   fontSize: '14px',
                   transition: 'background-color 0.2s ease'
                 }}
-                onMouseOver={(e) => e.currentTarget.style.backgroundColor = colors.primaryHover}
-                onMouseOut={(e) => e.currentTarget.style.backgroundColor = colors.primary}
+                onMouseOver={(changeEvent) => changeEvent.currentTarget.style.backgroundColor = colors.primaryHover}
+                onMouseOut={(changeEvent) => changeEvent.currentTarget.style.backgroundColor = colors.primary}
               >
                 Generate Brackets
               </a>
@@ -1099,8 +1113,8 @@ export default function PayoutsPage() {
                   border: `1px solid ${colors.border}`,
                   transition: 'background-color 0.2s ease'
                 }}
-                onMouseOver={(e) => e.currentTarget.style.backgroundColor = colors.gray[200]}
-                onMouseOut={(e) => e.currentTarget.style.backgroundColor = colors.gray[100]}
+                onMouseOver={(changeEvent) => changeEvent.currentTarget.style.backgroundColor = colors.gray[200]}
+                onMouseOut={(changeEvent) => changeEvent.currentTarget.style.backgroundColor = colors.gray[100]}
               >
                 Manage Players
               </a>
@@ -1158,13 +1172,13 @@ export default function PayoutsPage() {
                 }}
                 onClick={() => copyToClipboard(formatCurrency(payoutData.total_prize_pool))}
                 title="Click to copy amount"
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)'
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)'
+                onMouseEnter={(changeEvent) => { 
+                  changeEvent.currentTarget.style.transform = 'translateY(-2px)'
+                  changeEvent.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)'
                 }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)'
-                  e.currentTarget.style.boxShadow = 'none'
+                onMouseLeave={(changeEvent) => { 
+                  changeEvent.currentTarget.style.transform = 'translateY(0)'
+                  changeEvent.currentTarget.style.boxShadow = 'none'
                 }}
               >
                 <h3 style={{ margin: '0 0 8px 0', color: colors.info, fontSize: '14px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1194,13 +1208,13 @@ export default function PayoutsPage() {
                 }}
                 onClick={() => copyToClipboard(formatCurrency(payoutData.total_scratch_pool))}
                 title="Click to copy amount"
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)'
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)'
+                onMouseEnter={(changeEvent) => { 
+                  changeEvent.currentTarget.style.transform = 'translateY(-2px)'
+                  changeEvent.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)'
                 }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)'
-                  e.currentTarget.style.boxShadow = 'none'
+                onMouseLeave={(changeEvent) => { 
+                  changeEvent.currentTarget.style.transform = 'translateY(0)'
+                  changeEvent.currentTarget.style.boxShadow = 'none'
                 }}
               >
                 <h3 style={{ margin: '0 0 8px 0', color: colors.success, fontSize: '14px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1230,13 +1244,13 @@ export default function PayoutsPage() {
                 }}
                 onClick={() => copyToClipboard(formatCurrency(payoutData.total_handicap_pool))}
                 title="Click to copy amount"
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)'
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)'
+                onMouseEnter={(changeEvent) => { 
+                  changeEvent.currentTarget.style.transform = 'translateY(-2px)'
+                  changeEvent.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)'
                 }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)'
-                  e.currentTarget.style.boxShadow = 'none'
+                onMouseLeave={(changeEvent) => { 
+                  changeEvent.currentTarget.style.transform = 'translateY(0)'
+                  changeEvent.currentTarget.style.boxShadow = 'none'
                 }}
               >
                 <h3 style={{ margin: '0 0 8px 0', color: colors.warning, fontSize: '14px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1477,8 +1491,8 @@ export default function PayoutsPage() {
                                 transition: 'background-color 0.2s ease'
                               }}
                               onClick={() => handleSort('name')}
-                              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f1f5f9'}
-                              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                              onMouseEnter={(changeEvent) => changeEvent.currentTarget.style.backgroundColor = '#f1f5f9'}
+                              onMouseLeave={(changeEvent) => changeEvent.currentTarget.style.backgroundColor = 'transparent'}
                             >
                               Player Name {sortBy === 'name' && (sortDirection === 'asc' ? '↑' : '↓')}
                             </div>
@@ -1495,8 +1509,8 @@ export default function PayoutsPage() {
                                 transition: 'background-color 0.2s ease'
                               }}
                               onClick={() => handleSort('brackets')}
-                              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f1f5f9'}
-                              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                              onMouseEnter={(changeEvent) => changeEvent.currentTarget.style.backgroundColor = '#f1f5f9'}
+                              onMouseLeave={(changeEvent) => changeEvent.currentTarget.style.backgroundColor = 'transparent'}
                             >
                               Brackets Won {sortBy === 'brackets' && (sortDirection === 'asc' ? '↑' : '↓')}
                             </div>
@@ -1513,8 +1527,8 @@ export default function PayoutsPage() {
                                 transition: 'background-color 0.2s ease'
                               }}
                               onClick={() => handleSort('amount')}
-                              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f1f5f9'}
-                              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                              onMouseEnter={(changeEvent) => changeEvent.currentTarget.style.backgroundColor = '#f1f5f9'}
+                              onMouseLeave={(changeEvent) => changeEvent.currentTarget.style.backgroundColor = 'transparent'}
                             >
                               Total Winnings {sortBy === 'amount' && (sortDirection === 'asc' ? '↑' : '↓')}
                             </div>
@@ -1531,8 +1545,8 @@ export default function PayoutsPage() {
                                 transition: 'background-color 0.2s ease'
                               }}
                               onClick={() => handleSort('status')}
-                              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f1f5f9'}
-                              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                              onMouseEnter={(changeEvent) => changeEvent.currentTarget.style.backgroundColor = '#f1f5f9'}
+                              onMouseLeave={(changeEvent) => changeEvent.currentTarget.style.backgroundColor = 'transparent'}
                             >
                               Payment Status {sortBy === 'status' && (sortDirection === 'asc' ? '↑' : '↓')}
                             </div>
@@ -1803,15 +1817,15 @@ export default function PayoutsPage() {
                           borderRadius: '8px',
                           margin: '2px 0'
                         }} 
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = '#f0f9ff';
-                          e.currentTarget.style.transform = 'translateY(-1px)';
-                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+                        onMouseEnter={(changeEvent) => { 
+                          changeEvent.currentTarget.style.backgroundColor = '#f0f9ff';
+                          changeEvent.currentTarget.style.transform = 'translateY(-1px)';
+                          changeEvent.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
                         }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = index % 2 === 0 ? '#ffffff' : '#f9fafb';
-                          e.currentTarget.style.transform = 'translateY(0)';
-                          e.currentTarget.style.boxShadow = 'none';
+                        onMouseLeave={(changeEvent) => { 
+                          changeEvent.currentTarget.style.backgroundColor = index % 2 === 0 ? '#ffffff' : '#f9fafb';
+                          changeEvent.currentTarget.style.transform = 'translateY(0)';
+                          changeEvent.currentTarget.style.boxShadow = 'none';
                         }}>
                           <td style={{ 
                             padding: '16px 12px',
@@ -2029,15 +2043,15 @@ function BracketPayoutTable({ bracket, formatCurrency }: { bracket: BracketPayou
                   borderRadius: '8px',
                   margin: '2px 0'
                 }} 
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#f0f9ff';
-                  e.currentTarget.style.transform = 'translateY(-1px)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+                onMouseEnter={(changeEvent) => { 
+                  changeEvent.currentTarget.style.backgroundColor = '#f0f9ff';
+                  changeEvent.currentTarget.style.transform = 'translateY(-1px)';
+                  changeEvent.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
                 }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = index % 2 === 0 ? '#ffffff' : '#f9fafb';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = 'none';
+                onMouseLeave={(changeEvent) => { 
+                  changeEvent.currentTarget.style.backgroundColor = index % 2 === 0 ? '#ffffff' : '#f9fafb';
+                  changeEvent.currentTarget.style.transform = 'translateY(0)';
+                  changeEvent.currentTarget.style.boxShadow = 'none';
                 }}>
                   <td style={{ 
                     padding: '16px 12px',
@@ -2098,3 +2112,5 @@ function BracketPayoutTable({ bracket, formatCurrency }: { bracket: BracketPayou
     </div>
   )
 }
+
+

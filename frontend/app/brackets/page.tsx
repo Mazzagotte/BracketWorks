@@ -8,7 +8,7 @@ import { usePageHeader } from '../lib/header-context'
 import { ErrorBoundary } from '../components/ErrorBoundary'
 import { useTournaments, useSquads, usePlayers } from '../hooks/useTournaments'
 import { useBrackets } from '../hooks/useBrackets'
-import { BracketRenderer } from '../components/BracketRenderer'
+import { BracketRenderer } from '../components/LazyComponents'
 import { BracketControls, BracketState } from '../components/BracketControls'
 import { MatchEditor } from '../components/MatchEditor'
 import { PageContainer, ContentWrapper } from '../components/UI'
@@ -19,14 +19,32 @@ import { logger } from '../lib/logger';
 
 export default function BracketsPage() {
   // Authentication check - must be at the top
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isInitialized } = useAuth();
 
   // Check if we have tokens in localStorage even if auth context isn't ready
   const hasStoredAuth = typeof window !== 'undefined' && 
     localStorage.getItem('token') && 
     localStorage.getItem('user_id');
 
-  // Authentication guard - redirect if not logged in
+  // Wait for auth initialization before making decisions
+  if (!isInitialized) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        minHeight: '100vh',
+        fontFamily: 'Inter, sans-serif'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ marginBottom: '1rem', fontSize: '1.2rem' }}>🎳</div>
+          <div>Loading bracket management...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Authentication guard - redirect if not logged in (only after initialization)
   if (!isAuthenticated && !hasStoredAuth) {
     return (
       <div style={{ 
@@ -269,12 +287,12 @@ export default function BracketsPage() {
           minHeight: '400px'
         }}>
           <BracketRenderer
-            preview={preview as any}
+            tournamentPreviewData={preview as any}
             selectedBracketType={selectedBracketType}
-            selectedBracket={selectedBracket}
-            selectedRound={selectedRound}
-            onMatchSelect={handleMatchSelect}
-            isMobile={isMobile}
+            selectedBracketConfiguration={selectedBracket}
+            selectedRoundNumber={selectedRound}
+            onMatchClick={handleMatchSelect}
+            isMobileDisplay={isMobile}
           />
         </div>
 

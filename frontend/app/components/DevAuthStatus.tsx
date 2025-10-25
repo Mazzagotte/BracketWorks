@@ -193,8 +193,7 @@ export function DevAuthStatus() {
               </div>
             )}
             <button
-              onClick={(e) => {
-                e.stopPropagation();
+              onClick={(changeEvent) => { changeEvent.stopPropagation();
                 checkApiStatus();
               }}
               style={{
@@ -265,3 +264,4 @@ export function DevAuthStatus() {
     </div>
   );
 }
+

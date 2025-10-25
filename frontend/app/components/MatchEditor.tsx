@@ -146,7 +146,7 @@ export function MatchEditor({
             <input
               type="number"
               value={scoreA}
-              onChange={(e) => setScoreA(e.target.value)}
+              onChange={(changeEvent) => setScoreA(changeEvent.target.value)}
               min="0"
               style={{
                 width: '100%',
@@ -172,7 +172,7 @@ export function MatchEditor({
             <input
               type="number"
               value={scoreB}
-              onChange={(e) => setScoreB(e.target.value)}
+              onChange={(changeEvent) => setScoreB(changeEvent.target.value)}
               min="0"
               style={{
                 width: '100%',
@@ -211,3 +211,4 @@ export function MatchEditor({
     </div>
   )
 }
+

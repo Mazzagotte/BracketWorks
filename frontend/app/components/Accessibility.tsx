@@ -183,12 +183,12 @@ export const FocusTrap: React.FC<FocusTrapProps> = ({
 
       if (e.shiftKey) {
         if (document.activeElement === firstElement) {
-          lastElement?.focus();
+          lastElement?.focus(); 
           e.preventDefault();
         }
       } else {
         if (document.activeElement === lastElement) {
-          firstElement?.focus();
+          firstElement?.focus(); 
           e.preventDefault();
         }
       }
@@ -355,8 +355,7 @@ export const AccessibleTabs: React.FC<AccessibleTabsProps> = ({
         break;
       default:
         return;
-    }
-
+    } 
     e.preventDefault();
     const newTab = tabs[newIndex];
     if (!newTab?.disabled) {
@@ -465,24 +464,24 @@ export function useKeyboardNavigation(
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     switch (e.key) {
-      case 'ArrowDown':
+      case 'ArrowDown': 
         e.preventDefault();
         setFocusedIndex((prev) => (prev + 1) % items.length);
         break;
-      case 'ArrowUp':
+      case 'ArrowUp': 
         e.preventDefault();
         setFocusedIndex((prev) => (prev === 0 ? items.length - 1 : prev - 1));
         break;
       case 'Enter':
-      case ' ':
+      case ' ': 
         e.preventDefault();
         onSelect(items[focusedIndex], focusedIndex);
         break;
-      case 'Home':
+      case 'Home': 
         e.preventDefault();
         setFocusedIndex(0);
         break;
-      case 'End':
+      case 'End': 
         e.preventDefault();
         setFocusedIndex(items.length - 1);
         break;
@@ -510,3 +509,4 @@ export function useHighContrastMode() {
 
   return isHighContrast;
 }
+

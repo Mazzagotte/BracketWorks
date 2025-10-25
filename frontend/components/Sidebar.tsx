@@ -200,3 +200,4 @@ export default function Sidebar({ firstName, isMobile = false, isOpen = false, o
     </aside>
   );
 }
+

@@ -12,7 +12,7 @@ import { useAuth } from "./lib/auth-context";
 
 
 export default function HomePage() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isInitialized } = useAuth();
   const [mounted, setMounted] = useState(false);
   
   // Prevent hydration issues
@@ -21,31 +21,29 @@ export default function HomePage() {
   }, []);
   
   useEffect(() => {
-    if (!mounted) return; // Wait for client-side hydration
+    // Immediate redirect as soon as we have auth state
+    if (!mounted) return;
     
-    // Only redirect to login if not authenticated
-    const token = localStorage.getItem('token');
-    const userId = localStorage.getItem('user_id');
-    
-    if (!isAuthenticated && !token && !userId) {
-      window.location.href = "/login";
-    } else if (isAuthenticated || (token && userId)) {
+    if (isAuthenticated) {
       window.location.href = "/dashboard";
+    } else {
+      window.location.href = "/login";
     }
   }, [isAuthenticated, mounted]);
   
-  if (!mounted) {
-    // Return a consistent loading state for SSR
-    return (
-      <div style={{ padding: '20px', textAlign: 'center' }}>
-        <p>Loading...</p>
-      </div>
-    );
-  }
-  
+  // Minimal loading state - redirect happens almost immediately
   return (
-    <div style={{ padding: '20px', textAlign: 'center' }}>
-      <p>Loading...</p>
+    <div style={{ 
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'center', 
+      minHeight: '100vh',
+      fontFamily: 'Inter, sans-serif'
+    }}>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ fontSize: '2rem' }}>🎳</div>
+      </div>
     </div>
   );
 }
+

@@ -28,7 +28,7 @@ const getConnectionQuality = () => {
 const fetchWithRetry = async (url: string, options: RequestInit, maxRetries = 3): Promise<Response> => {
   let lastError: unknown;
   
-  for (let i = 0; i <= maxRetries; i++) {
+  for (let index = 0; index <= maxRetries; index++) {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
@@ -43,9 +43,9 @@ const fetchWithRetry = async (url: string, options: RequestInit, maxRetries = 3)
     } catch (error: unknown) {
       lastError = error;
       
-      if (i === maxRetries) break;
+      if (index === maxRetries) break;
       
-      const delay = Math.min(1000 * Math.pow(2, i), 5000);
+      const delay = Math.min(1000 * Math.pow(2, index), 5000);
       await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
@@ -86,9 +86,9 @@ export default function RequestResetPage() {
     }
   }, []);
   
-  const handleRequest = useCallback(async (e: React.FormEvent) => {
+  const handleRequest = useCallback(async (e: React.FormEvent) => { 
     e.preventDefault();
-    
+
     // Clear previous messages
     setError("");
     setSuccess("");
@@ -313,13 +313,13 @@ export default function RequestResetPage() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey) {
         switch (e.key) {
-          case 'Enter':
+          case 'Enter': 
             e.preventDefault();
             if (!loading && fieldErrors.email === '' && email.trim()) {
               handleRequest(new Event('submit') as unknown as React.FormEvent);
             }
             break;
-          case 'Escape':
+          case 'Escape': 
             e.preventDefault();
             setError('');
             setSuccess('');
@@ -437,8 +437,8 @@ export default function RequestResetPage() {
               id="reset-email"
               type="email"
               value={email}
-              onChange={(e) => handleFieldChange('email', e.target.value)}
-              onBlur={(e) => handleFieldBlur('email', e.target.value)}
+              onChange={(changeEvent) => handleFieldChange('email', changeEvent.target.value)}
+              onBlur={(changeEvent) => handleFieldBlur('email', changeEvent.target.value)}
               className={`login-input ${fieldErrors.email ? 'error' : ''} ${
                 fieldTouched.email && !fieldErrors.email && email.trim() ? 'success' : ''
               }`}
@@ -510,3 +510,5 @@ export default function RequestResetPage() {
     </div>
   );
 }
+
+

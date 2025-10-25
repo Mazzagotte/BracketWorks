@@ -11,7 +11,7 @@ import { ErrorBoundary } from '../components/ErrorBoundary';
 import { getErrorMessage, getErrorContext } from '../lib/error-utils';
 import styles from '../page.module.css';
 import mobileStyles from './dashboard.module.css';
-import ConfirmationDialog from '../components/ConfirmationDialog';
+import { ConfirmationDialog } from '../components/LazyComponents';
 import Header from '../components/Header';
 import { MobileForm, MobileFormField } from '../../components/MobileForm';
 import { typography, colors, spacing, stylePresets } from '../lib/design-system';
@@ -36,22 +36,22 @@ import {
 } from '../components/UI';
 
 function get12hrTimes() {
-  const times: string[] = [];
+  const availableTimeSlots: string[] = [];
   // First all AM times
-  for (let h = 1; h <= 12; h++) {
-    for (let m = 0; m < 60; m += 30) {
-      times.push(`${h}:${m.toString().padStart(2, '0')} AM`);
+  for (let hour = 1; hour <= 12; hour++) {
+    for (let minutes = 0; minutes < 60; minutes += 30) {
+      availableTimeSlots.push(`${hour}:${minutes.toString().padStart(2, '0')} AM`);
     }
   }
   // Then all PM times
-  for (let h = 1; h <= 12; h++) {
-    for (let m = 0; m < 60; m += 30) {
-      times.push(`${h}:${m.toString().padStart(2, '0')} PM`);
+  for (let hour = 1; hour <= 12; hour++) {
+    for (let minutes = 0; minutes < 60; minutes += 30) {
+      availableTimeSlots.push(`${hour}:${minutes.toString().padStart(2, '0')} PM`);
     }
   }
-  return times;
+  return availableTimeSlots;
 }
-const timeOptions = get12hrTimes();
+const availableTimeOptions = get12hrTimes();
 // Show all AM and PM times
 
 // Currency formatting utilities
@@ -64,58 +64,58 @@ const formatCurrency = (value: number): string => {
   }).format(Math.round(value));
 };
 
-const parseCurrencyInput = (value: string): number => {
+const parseCurrencyInput = (userInput: string): number => {
   // Remove all non-numeric characters
-  const cleaned = value.replace(/[^0-9]/g, '');
-  const parsed = parseInt(cleaned);
-  return isNaN(parsed) ? 0 : parsed;
+  const cleanedNumericString = userInput.replace(/[^0-9]/g, '');
+  const parsedValue = parseInt(cleanedNumericString);
+  return isNaN(parsedValue) ? 0 : parsedValue;
 };
 
-const formatNumberInput = (value: number): string => {
+const formatNumberInput = (numericValue: number): string => {
   // Format for input display with commas but no $ symbol
-  return value === 0 ? '' : Math.round(value).toLocaleString('en-US');
+  return numericValue === 0 ? '' : Math.round(numericValue).toLocaleString('en-US');
 };
 
-function getDatesBetween(start: string, end: string): string[] {
-  if (!start || !end) return [];
-  const dates = [];
-  let current = new Date(start);
-  const endDate = new Date(end);
-  while (current <= endDate) {
-    dates.push(current.toISOString().slice(0, 10));
-    current.setDate(current.getDate() + 1);
+function getDatesBetween(startDate: string, endDate: string): string[] {
+  if (!startDate || !endDate) return [];
+  const dateList = [];
+  let currentDate = new Date(startDate);
+  const finalDate = new Date(endDate);
+  while (currentDate <= finalDate) {
+    dateList.push(currentDate.toISOString().slice(0, 10));
+    currentDate.setDate(currentDate.getDate() + 1);
   }
-  return dates;
+  return dateList;
 }
 
 function EditTournamentModal({ open, onClose, tournament, onSave, isMobile }: {
   open: boolean;
   onClose: () => void;
   tournament: Tournament | null;
-  onSave: (form: TournamentForm) => void;
+  onSave: (tournamentData: TournamentForm) => void;
   isMobile: boolean;
 }) {
-  const [form, setForm] = useState<TournamentForm>({
+  const [tournamentForm, setTournamentForm] = useState<TournamentForm>({
     name: '',
     location: '',
     start_date: '',
     end_date: '',
     squad_times: {}
   });
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
   // Track which input to focus (date, index)
-  const [focusTime, setFocusTime] = useState<{date: string, idx: number} | null>(null);
+  const [focusedTimeSlot, setFocusedTimeSlot] = useState<{date: string, idx: number} | null>(null);
   
   // Memoize timeInputs to prevent recreation on every render
-  const timeInputs = useMemo(() => {
-    const inputs: Record<string, Array<HTMLSelectElement | null>> = {};
-    return inputs;
+  const timeSlotInputReferences = useMemo(() => {
+    const inputRefs: Record<string, Array<HTMLSelectElement | null>> = {};
+    return inputRefs;
   }, []);
 
   useEffect(() => {
     if (tournament) {
-      setForm({
+      setTournamentForm({
         name: tournament.name || '',
         location: tournament.location || '',
         start_date: tournament.start_date || '',
@@ -127,11 +127,11 @@ function EditTournamentModal({ open, onClose, tournament, onSave, isMobile }: {
 
   // Focus new time input when added
   useEffect(() => {
-    if (focusTime && timeInputs[focusTime.date]?.[focusTime.idx]) {
-      timeInputs[focusTime.date][focusTime.idx]?.focus();
-      setFocusTime(null);
+    if (focusedTimeSlot && timeSlotInputReferences[focusedTimeSlot.date]?.[focusedTimeSlot.idx]) {
+      timeSlotInputReferences[focusedTimeSlot.date][focusedTimeSlot.idx]?.focus();
+      setFocusedTimeSlot(null);
     }
-  }, [focusTime, timeInputs]);
+  }, [focusedTimeSlot, timeSlotInputReferences]);
 
   // 12hr format validation (hh:mm am/pm)
   function isValid12hr(time: string) {
@@ -140,30 +140,30 @@ function EditTournamentModal({ open, onClose, tournament, onSave, isMobile }: {
 
   if (!open) return null;
 
-  const days = getDatesBetween(form.start_date || '', form.end_date || '');
+  const tournamentDays = getDatesBetween(tournamentForm.start_date || '', tournamentForm.end_date || '');
 
   return (
     <div className="modal-overlay">
       <form
         className="modal-content"
-        onSubmit={async e => {
-          e.preventDefault();
-          setSaving(true);
-          setError(null);
+        onSubmit={async submitEvent => {
+          submitEvent.preventDefault();
+          setIsSaving(true);
+          setValidationError(null);
           try {
             // Debug: log form data
             // eslint-disable-next-line no-console
-            logger.debug('Submitting tournament form', { form });
-            await onSave(form);
+            logger.debug('Submitting tournament form', { tournamentForm });
+            await onSave(tournamentForm);
           } catch (err: unknown) {
-            setError(getErrorMessage(err) || 'Failed to save.');
+            setValidationError(getErrorMessage(err) || 'Failed to save.');
           } finally {
-            setSaving(false);
+            setIsSaving(false);
           }
         }}
       >
-        {error && (
-          <div className="error-message">{error}</div>
+        {validationError && (
+          <div className="error-message">{validationError}</div>
         )}
         <EnhancedButton
           type="button"
@@ -180,49 +180,49 @@ function EditTournamentModal({ open, onClose, tournament, onSave, isMobile }: {
           // Mobile Form Layout
           <MobileForm
             title="Edit Tournament"
-            onSubmit={async (e) => {
-              e.preventDefault();
-              setSaving(true);
-              setError(null);
+            onSubmit={async (submitEvent) => {
+              submitEvent.preventDefault();
+              setIsSaving(true);
+              setValidationError(null);
               try {
-                await onSave(form);
+                await onSave(tournamentForm);
               } catch (err: unknown) {
-                setError(getErrorMessage(err) || 'Failed to save.');
+                setValidationError(getErrorMessage(err) || 'Failed to save.');
               } finally {
-                setSaving(false);
+                setIsSaving(false);
               }
             }}
-            isSubmitting={saving}
-            submitText={saving ? 'Saving...' : 'Save Tournament'}
+            isSubmitting={isSaving}
+            submitText={isSaving ? 'Saving...' : 'Save Tournament'}
           >
             <MobileFormField
               label="Tournament Name"
-              value={form.name}
-              onChange={(value: string) => setForm(f => ({ ...f, name: value }))}
+              value={tournamentForm.name}
+              onChange={(value: string) => setTournamentForm(f => ({ ...f, name: value }))}
               required={true}
               placeholder="Enter tournament name"
             />
             
             <MobileFormField
               label="Location"
-              value={form.location || ''}
-              onChange={(value: string) => setForm(f => ({ ...f, location: value }))}
+              value={tournamentForm.location || ''}
+              onChange={(value: string) => setTournamentForm(f => ({ ...f, location: value }))}
               placeholder="Enter tournament location"
             />
             
             <MobileFormField
               label="Start Date"
               type="text"
-              value={form.start_date || ''}
-              onChange={(value: string) => setForm(f => ({ ...f, start_date: value }))}
+              value={tournamentForm.start_date || ''}
+              onChange={(value: string) => setTournamentForm(f => ({ ...f, start_date: value }))}
               placeholder="YYYY-MM-DD"
             />
             
             <MobileFormField
               label="End Date"
               type="text"
-              value={form.end_date || ''}
-              onChange={(value: string) => setForm(f => ({ ...f, end_date: value }))}
+              value={tournamentForm.end_date || ''}
+              onChange={(value: string) => setTournamentForm(f => ({ ...f, end_date: value }))}
               placeholder="YYYY-MM-DD"
             />
           </MobileForm>
@@ -233,58 +233,58 @@ function EditTournamentModal({ open, onClose, tournament, onSave, isMobile }: {
           <div>
             <FormField label="Name" required>
               <Input
-                value={form.name}
-                onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                value={tournamentForm.name}
+                onChange={changeEvent => setTournamentForm(f => ({ ...f, name: changeEvent.target.value }))}
                 placeholder="Tournament name"
                 required
               />
             </FormField>
             <FormField label="Location">
               <Input
-                value={form.location || ''}
-                onChange={e => setForm(f => ({ ...f, location: e.target.value }))}
+                value={tournamentForm.location || ''}
+                onChange={changeEvent => setTournamentForm(f => ({ ...f, location: changeEvent.target.value }))}
                 placeholder="Tournament location"
               />
             </FormField>
             <FormField label="Start Date">
               <Input
                 type="date"
-                value={form.start_date || ''}
-                onChange={e => setForm(f => ({ ...f, start_date: e.target.value }))}
+                value={tournamentForm.start_date || ''}
+                onChange={changeEvent => setTournamentForm(f => ({ ...f, start_date: changeEvent.target.value }))}
               />
             </FormField>
             <FormField label="End Date">
               <Input
                 type="date"
-                value={form.end_date || ''}
-                onChange={e => setForm(f => ({ ...f, end_date: e.target.value }))}
+                value={tournamentForm.end_date || ''}
+                onChange={changeEvent => setTournamentForm(f => ({ ...f, end_date: changeEvent.target.value }))}
               />
             </FormField>
           </div>
           <div>
             <h3>Squad Times by Day</h3>
-            {days.length === 0 && <p className="text-secondary">Select start and end dates to add squad times.</p>}
-            {days.map(date => (
+            {tournamentDays.length === 0 && <p className="text-secondary">Select start and end dates to add squad times.</p>}
+            {tournamentDays.map(date => (
               <div key={date} className="squad-day">
                 <div className="squad-day-label">{date}</div>
-                {(form.squad_times[date] || []).map((time, i) => {
-                  if (!timeInputs[date]) timeInputs[date] = [];
+                {(tournamentForm.squad_times[date] || []).map((time, i) => {
+                  if (!timeSlotInputReferences[date]) timeSlotInputReferences[date] = [];
                   return (
                     <div key={i} className="squad-time-row">
                       <select
                         className="form-select"
-                        ref={el => { timeInputs[date][i] = el as HTMLSelectElement | null; }}
+                        ref={el => { timeSlotInputReferences[date][i] = el as HTMLSelectElement | null; }}
                         value={time}
-                        onChange={e => setForm(f => ({ ...f, squad_times: { ...f.squad_times, [date]: f.squad_times[date].map((t, j) => j === i ? e.target.value : t) } }))}
+                        onChange={changeEvent => setTournamentForm(f => ({ ...f, squad_times: { ...f.squad_times, [date]: f.squad_times[date].map((t, j) => j === i ? changeEvent.target.value : t) } }))}
                       >
                         <option value="" disabled>Select time</option>
-                        {timeOptions.map(opt => (
-                          <option key={opt} value={opt}>{opt}</option>
+                        {availableTimeOptions.map(timeOption => (
+                          <option key={timeOption} value={timeOption}>{timeOption}</option>
                         ))}
                       </select>
                       <EnhancedButton
                         type="button"
-                        onClick={() => setForm(f => ({ ...f, squad_times: { ...f.squad_times, [date]: f.squad_times[date].filter((_, j) => j !== i) } }))}
+                        onClick={() => setTournamentForm(f => ({ ...f, squad_times: { ...f.squad_times, [date]: f.squad_times[date].filter((_, j) => j !== i) } }))}
                         variant="danger"
                         size="sm"
                       >
@@ -296,11 +296,11 @@ function EditTournamentModal({ open, onClose, tournament, onSave, isMobile }: {
                 <EnhancedButton
                   type="button"
                   onClick={() => {
-                    const times = form.squad_times[date] || [];
+                    const times = tournamentForm.squad_times[date] || [];
                     // Only add if last is selected
                     if (times.length === 0 || (times[times.length - 1] && times[times.length - 1] !== '')) {
-                      setForm(f => ({ ...f, squad_times: { ...f.squad_times, [date]: [...(f.squad_times[date] || []), ''] } }));
-                      setFocusTime({ date, idx: (form.squad_times[date]?.length || 0) });
+                      setTournamentForm(f => ({ ...f, squad_times: { ...f.squad_times, [date]: [...(f.squad_times[date] || []), ''] } }));
+                      setFocusedTimeSlot({ date, idx: (tournamentForm.squad_times[date]?.length || 0) });
                     }
                   }}
                   variant="secondary"
@@ -316,7 +316,7 @@ function EditTournamentModal({ open, onClose, tournament, onSave, isMobile }: {
           <EnhancedButton
             type="submit"
             variant="primary"
-            loading={saving}
+            loading={isSaving}
           >
             Save
           </EnhancedButton>
@@ -338,15 +338,45 @@ function EditTournamentModal({ open, onClose, tournament, onSave, isMobile }: {
 
 export default function TournamentDashboard() {
   // Authentication check - must be at the top
-  const { isAuthenticated } = useAuth();
+  const { isUserAuthenticated, isAuthInitialized } = useAuth();
+  const [showDashboard, setShowDashboard] = useState(false);
 
   // Check if we have tokens in localStorage even if auth context isn't ready
-  const hasStoredAuth = typeof window !== 'undefined' && 
+  const hasStoredAuthTokens = typeof window !== 'undefined' && 
     localStorage.getItem('token') && 
     localStorage.getItem('user_id');
 
-  // Authentication guard - redirect if not logged in
-  if (!isAuthenticated && !hasStoredAuth) {
+  // Fallback: if auth isn't initialized after 3 seconds but we have tokens, show dashboard
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!isAuthInitialized && hasStoredAuthTokens) {
+        setShowDashboard(true);
+      }
+    }, 3000);
+    
+    return () => clearTimeout(timer);
+  }, [isAuthInitialized, hasStoredAuthTokens]);
+
+  // Wait for auth initialization before making decisions
+  if (!isAuthInitialized && !showDashboard) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        minHeight: '100vh',
+        fontFamily: 'Inter, sans-serif'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ marginBottom: '1rem', fontSize: '1.2rem' }}>🎳</div>
+          <div>Loading tournament dashboard...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Authentication guard - redirect if not logged in (only after initialization)
+  if (!isUserAuthenticated && !hasStoredAuthTokens) {
     return (
       <div style={{ 
         padding: '2rem', 
@@ -365,7 +395,7 @@ export default function TournamentDashboard() {
   }
 
   // Show loading if we have stored auth but context isn't ready yet
-  if (!isAuthenticated && hasStoredAuth) {
+  if (!isUserAuthenticated && hasStoredAuthTokens) {
     return (
       <div style={{ 
         padding: '2rem', 
@@ -628,7 +658,7 @@ export default function TournamentDashboard() {
   };
 
   // Save tournament handler with enhanced UX feedback
-  const handleSave = async (form: TournamentForm) => {
+  const handleSave = async (tournamentFormData: TournamentForm) => {
     const token = localStorage.getItem('token');
     if (!token) {
       addToast({
@@ -649,14 +679,14 @@ export default function TournamentDashboard() {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`
           },
-          body: JSON.stringify(form)
+          body: JSON.stringify(tournamentFormData)
         });
         if (res.ok) {
           savedTournament = await res.json();
           setTournament(savedTournament);
           addToast({
             type: 'success',
-            message: `Tournament "${form.name}" created successfully!`,
+            message: `Tournament "${tournamentFormData.name}" created successfully!`,
             duration: 4000
           });
         } else {
@@ -671,14 +701,14 @@ export default function TournamentDashboard() {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`
           },
-          body: JSON.stringify(form)
+          body: JSON.stringify(tournamentFormData)
         });
         if (res.ok) {
           savedTournament = await res.json();
           setTournament(savedTournament);
           addToast({
             type: 'success',
-            message: `Tournament "${form.name}" updated successfully!`,
+            message: `Tournament "${tournamentFormData.name}" updated successfully!`,
             duration: 4000
           });
         } else {
@@ -859,7 +889,7 @@ export default function TournamentDashboard() {
                           <select
                             className={mobileStyles.compactSelect}
                             value={bracketSettings.bracket_size}
-                            onChange={e => setBracketSettings(prev => ({ ...prev, bracket_size: parseInt(e.target.value) }))}
+                            onChange={changeEvent => setBracketSettings(prev => ({ ...prev, bracket_size: parseInt(changeEvent.target.value) }))}
                           >
                             <option value={4}>4 Players</option>
                             <option value={8}>8 Players</option>
@@ -876,8 +906,8 @@ export default function TournamentDashboard() {
                               type="text"
                               placeholder="0"
                               value={formatNumberInput(bracketSettings.cost_per_bracket)}
-                              onChange={e => {
-                                const numericValue = parseCurrencyInput(e.target.value);
+                              onChange={changeEvent => {
+                                const numericValue = parseCurrencyInput(changeEvent.target.value);
                                 setBracketSettings(prev => ({ ...prev, cost_per_bracket: numericValue }));
                               }}
                             />
@@ -903,8 +933,8 @@ export default function TournamentDashboard() {
                               type="text"
                               placeholder="0"
                               value={formatNumberInput(bracketSettings.first_place)}
-                              onChange={e => {
-                                const numericValue = parseCurrencyInput(e.target.value);
+                              onChange={changeEvent => {
+                                const numericValue = parseCurrencyInput(changeEvent.target.value);
                                 setBracketSettings(prev => ({ ...prev, first_place: numericValue }));
                               }}
                             />
@@ -920,8 +950,8 @@ export default function TournamentDashboard() {
                               type="text"
                               placeholder="0"
                               value={formatNumberInput(bracketSettings.second_place)}
-                              onChange={e => {
-                                const numericValue = parseCurrencyInput(e.target.value);
+                              onChange={changeEvent => {
+                                const numericValue = parseCurrencyInput(changeEvent.target.value);
                                 setBracketSettings(prev => ({ ...prev, second_place: numericValue }));
                               }}
                             />
@@ -937,8 +967,8 @@ export default function TournamentDashboard() {
                               type="text"
                               placeholder="0"
                               value={formatNumberInput(bracketSettings.house_amount)}
-                              onChange={e => {
-                                const numericValue = parseCurrencyInput(e.target.value);
+                              onChange={changeEvent => {
+                                const numericValue = parseCurrencyInput(changeEvent.target.value);
                                 setBracketSettings(prev => ({ ...prev, house_amount: numericValue }));
                               }}
                             />
@@ -966,8 +996,8 @@ export default function TournamentDashboard() {
                             max="100"
                             placeholder="80"
                             value={bracketSettings.handicap_percentage}
-                            onChange={e => {
-                              const value = Math.min(100, Math.max(0, parseInt(e.target.value) || 0));
+                            onChange={changeEvent => {
+                              const value = Math.min(100, Math.max(0, parseInt(changeEvent.target.value) || 0));
                               setBracketSettings(prev => ({ ...prev, handicap_percentage: value }));
                             }}
                           />
@@ -985,8 +1015,8 @@ export default function TournamentDashboard() {
                           min="1"
                           placeholder="200"
                           value={bracketSettings.handicap_base}
-                          onChange={e => {
-                            const value = Math.max(1, parseInt(e.target.value) || 200);
+                          onChange={changeEvent => {
+                            const value = Math.max(1, parseInt(changeEvent.target.value) || 200);
                             setBracketSettings(prev => ({ ...prev, handicap_base: value }));
                           }}
                         />
@@ -1051,8 +1081,7 @@ export default function TournamentDashboard() {
                       <button
                         key={squad.id}
                         className={`${mobileStyles.squadPillEnhanced} ${isSelected ? mobileStyles.selected : ''}`}
-                        onClick={async (e) => {
-                          e.preventDefault();
+                        onClick={async (changeEvent) => { changeEvent.preventDefault();
                           setSelectedSquadId(squad.id);
                           const token = localStorage.getItem('token');
                           const userId = localStorage.getItem('user_id');
@@ -1238,3 +1267,4 @@ export default function TournamentDashboard() {
     </ErrorBoundary>
   );
 }
+

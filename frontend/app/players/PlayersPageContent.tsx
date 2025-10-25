@@ -6,7 +6,7 @@ import Link from 'next/link'
 
 import { API } from '../lib/api'
 import { usePageHeader } from '../lib/header-context'
-import { MobileTable } from '../../components/MobileTable'
+import { MobileTable } from '../components/LazyComponents'
 import { useAuth } from '../lib/auth-context'
 import { logger, devLog } from '../lib/logger'
 import { ErrorBoundary } from '../components/ErrorBoundary'

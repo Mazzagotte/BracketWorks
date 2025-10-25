@@ -484,11 +484,9 @@ export const TableRow: React.FC<TableRowProps> = ({
       style={rowStyle}
       className={className}
       onClick={onClick}
-      onMouseEnter={onClick ? (e) => {
-        e.currentTarget.style.backgroundColor = colors.gray[50]
+      onMouseEnter={onClick ? (changeEvent) => { changeEvent.currentTarget.style.backgroundColor = colors.gray[50]
       } : undefined}
-      onMouseLeave={onClick ? (e) => {
-        e.currentTarget.style.backgroundColor = state !== 'default' ? stylePresets.tableRowStates[state].backgroundColor : 'transparent'
+      onMouseLeave={onClick ? (changeEvent) => { changeEvent.currentTarget.style.backgroundColor = state !== 'default' ? stylePresets.tableRowStates[state].backgroundColor : 'transparent'
       } : undefined}
     >
       {children}
@@ -687,13 +685,13 @@ export const Input: React.FC<InputProps> = ({
         required={required}
         className={`enhanced-input ${className}`}
         style={inputStyle}
-        onFocus={(e) => {
-          e.target.style.borderColor = colors.primary
-          e.target.style.boxShadow = `0 0 0 2px ${colors.primary}20`
+        onFocus={(changeEvent) => { 
+          changeEvent.target.style.borderColor = colors.primary;
+          changeEvent.target.style.boxShadow = `0 0 0 2px ${colors.primary}20`;
         }}
-        onBlur={(e) => {
-          e.target.style.borderColor = error ? colors.error : colors.border
-          e.target.style.boxShadow = 'none'
+        onBlur={(changeEvent) => { 
+          changeEvent.target.style.borderColor = error ? colors.error : colors.border;
+          changeEvent.target.style.boxShadow = 'none';
         }}
       />
     </div>
@@ -742,13 +740,13 @@ export const Select: React.FC<SelectProps> = ({
       required={required}
       className={`enhanced-select ${className}`}
       style={selectStyle}
-      onFocus={(e) => {
-        e.target.style.borderColor = colors.primary
-        e.target.style.boxShadow = `0 0 0 2px ${colors.primary}20`
+      onFocus={(changeEvent) => { 
+        changeEvent.target.style.borderColor = colors.primary;
+        changeEvent.target.style.boxShadow = `0 0 0 2px ${colors.primary}20`;
       }}
-      onBlur={(e) => {
-        e.target.style.borderColor = error ? colors.error : colors.border
-        e.target.style.boxShadow = 'none'
+      onBlur={(changeEvent) => { 
+        changeEvent.target.style.borderColor = error ? colors.error : colors.border;
+        changeEvent.target.style.boxShadow = 'none';
       }}
     >
       {placeholder && (
@@ -764,3 +762,4 @@ export const Select: React.FC<SelectProps> = ({
     </select>
   )
 }
+

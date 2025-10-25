@@ -29,13 +29,13 @@ export const Pagination: React.FC<PaginationProps> = ({
     const range = [];
     const rangeWithDots = [];
 
-    for (let i = 1; i <= totalPages; i++) {
+    for (let index = 1; index <= totalPages; index++) {
       if (
-        i === 1 ||
-        i === totalPages ||
-        (i >= currentPage - delta && i <= currentPage + delta)
+        index === 1 ||
+        index === totalPages ||
+        (index >= currentPage - delta && index <= currentPage + delta)
       ) {
-        range.push(i);
+        range.push(index);
       }
     }
 
@@ -91,7 +91,7 @@ export const Pagination: React.FC<PaginationProps> = ({
             <label className="text-sm text-gray-700">Show:</label>
             <select
               value={itemsPerPage}
-              onChange={(e) => onPageSizeChange(Number(e.target.value))}
+              onChange={(changeEvent) => onPageSizeChange(Number(changeEvent.target.value))}
               className="border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
             >
               {pageSizeOptions.map((size) => (
@@ -260,11 +260,11 @@ export function VirtualizedList<T>({
   );
 
   const visibleItems = [];
-  for (let i = startIndex; i <= endIndex; i++) {
+  for (let index = startIndex; index <= endIndex; index++) {
     visibleItems.push({
-      index: i,
-      item: items[i],
-      offsetTop: i * itemHeight,
+      index: index,
+      item: items[index],
+      offsetTop: index * itemHeight,
     });
   }
 
@@ -358,3 +358,5 @@ export function useLazyImage(src: string, threshold = 100) {
 
   return [setImageRef, imageSrc] as const;
 }
+
+

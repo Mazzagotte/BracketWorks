@@ -150,8 +150,8 @@ export default function SignupPage() {
     return null;
   };
 
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSignup = async (submitEvent: React.FormEvent) => {
+    submitEvent.preventDefault();
     
     const validationError = validateForm();
     if (validationError) {
@@ -257,9 +257,9 @@ export default function SignupPage() {
                 name="firstName"
                 placeholder="First Name"
                 value={firstName}
-                onChange={e => {
-                  setFirstName(e.target.value);
-                  updateFieldValidation('firstName', e.target.value);
+                onChange={changeEvent => {
+                  setFirstName(changeEvent.target.value);
+                  updateFieldValidation('firstName', changeEvent.target.value);
                 }}
                 required
                 className={`signup-input ${fieldValidation.firstName === true ? 'valid' : fieldValidation.firstName === false ? 'invalid' : ''}`}
@@ -275,9 +275,9 @@ export default function SignupPage() {
                 name="lastName"
                 placeholder="Last Name"
                 value={lastName}
-                onChange={e => {
-                  setLastName(e.target.value);
-                  updateFieldValidation('lastName', e.target.value);
+                onChange={changeEvent => {
+                  setLastName(changeEvent.target.value);
+                  updateFieldValidation('lastName', changeEvent.target.value);
                 }}
                 required
                 className={`signup-input ${fieldValidation.lastName === true ? 'valid' : fieldValidation.lastName === false ? 'invalid' : ''}`}
@@ -295,9 +295,9 @@ export default function SignupPage() {
               name="username"
               placeholder="Choose a username"
               value={username}
-              onChange={e => {
-                setUsername(e.target.value);
-                updateFieldValidation('username', e.target.value);
+              onChange={changeEvent => {
+                setUsername(changeEvent.target.value);
+                updateFieldValidation('username', changeEvent.target.value);
               }}
               autoComplete="username"
               required
@@ -322,7 +322,7 @@ export default function SignupPage() {
               name="organization"
               placeholder="Organization Name (optional)"
               value={organization}
-              onChange={e => setOrganization(e.target.value)}
+              onChange={changeEvent => setOrganization(changeEvent.target.value)}
               className="signup-input"
               aria-label="Organization"
             />
@@ -336,9 +336,9 @@ export default function SignupPage() {
               name="email"
               placeholder="Enter your email"
               value={email}
-              onChange={e => {
-                setEmail(e.target.value);
-                updateFieldValidation('email', e.target.value);
+              onChange={changeEvent => {
+                setEmail(changeEvent.target.value);
+                updateFieldValidation('email', changeEvent.target.value);
               }}
               autoComplete="email"
               required
@@ -357,9 +357,9 @@ export default function SignupPage() {
                 name="password"
                 placeholder="Create a password (min 6 characters)"
                 value={password}
-                onChange={e => {
-                  setPassword(e.target.value);
-                  updateFieldValidation('password', e.target.value);
+                onChange={changeEvent => {
+                  setPassword(changeEvent.target.value);
+                  updateFieldValidation('password', changeEvent.target.value);
                 }}
                 onFocus={() => setShowPasswordRequirements(true)}
                 onBlur={() => setShowPasswordRequirements(false)}
@@ -428,9 +428,9 @@ export default function SignupPage() {
                 name="confirmPassword"
                 placeholder="Confirm your password"
                 value={confirmPassword}
-                onChange={e => {
-                  setConfirmPassword(e.target.value);
-                  updateFieldValidation('confirmPassword', e.target.value);
+                onChange={changeEvent => {
+                  setConfirmPassword(changeEvent.target.value);
+                  updateFieldValidation('confirmPassword', changeEvent.target.value);
                 }}
                 autoComplete="new-password"
                 required
@@ -497,3 +497,4 @@ export default function SignupPage() {
     </div>
   );
 }
+

@@ -143,10 +143,10 @@ function detectDataConflicts(players: ExtendedPlayer[]): DataConflict[] {
   
   for (const field of fields) {
     const values = players
-      .map(p => ({ playerId: p.id, playerName: `${p.firstName} ${p.lastName}`, value: getPlayerFieldValue(p, field) }))
-      .filter(v => v.value !== undefined && v.value !== null && v.value !== '');
+      .map(player => ({ playerId: player.id, playerName: `${player.firstName} ${player.lastName}`, value: getPlayerFieldValue(player, field) }))
+      .filter(value => value.value !== undefined && value.value !== null && value.value !== '');
     
-    const uniqueValues = [...new Set(values.map(v => v.value))];
+    const uniqueValues = [...new Set(values.map(value => value.value))];
     
     if (uniqueValues.length > 1) {
       let suggestedResolution: DataConflict['suggestedResolution'] = 'manual_review';
@@ -208,8 +208,8 @@ function consolidatePlayerData(
     
     const field = rule.field as keyof Player;
     const values = allPlayers
-      .map(p => getPlayerFieldValue(p, field))
-      .filter(v => v !== undefined && v !== null && v !== '');
+      .map(player => getPlayerFieldValue(player, field))
+      .filter(value => value !== undefined && value !== null && value !== '');
     
     if (values.length === 0) continue;
     
@@ -224,13 +224,13 @@ function consolidatePlayerData(
         finalValue = values[values.length - 1];
         break;
       case 'max':
-        finalValue = Math.max(...values.filter(v => typeof v === 'number'));
+        finalValue = Math.max(...values.filter(value => typeof value === 'number') as number[]);
         break;
       case 'min':
-        finalValue = Math.min(...values.filter(v => typeof v === 'number'));
+        finalValue = Math.min(...values.filter(value => typeof value === 'number') as number[]);
         break;
       case 'sum':
-        finalValue = values.filter(v => typeof v === 'number').reduce((sum, val) => sum + val, 0);
+        finalValue = values.filter(value => typeof value === 'number').reduce((sum, val) => sum + (val as number), 0);
         break;
       case 'manual':
         // Keep original value for manual review
@@ -245,7 +245,7 @@ function consolidatePlayerData(
   }
   
   // Consolidate extended data
-  if (allPlayers.some(p => p.data)) {
+  if (allPlayers.some(pItem => pItem.data)) {
     consolidatedPlayer.data = consolidateExtendedData(allPlayers);
   }
   
@@ -259,20 +259,20 @@ function consolidateExtendedData(players: ExtendedPlayer[]): MergeableData {
   const consolidated: MergeableData = {};
   
   // Consolidate scores - keep highest scores for each game
-  const allScores = players.filter(p => p.data?.scores).map(p => p.data!.scores!);
+  const allScores = players.filter(player => player.data?.scores).map(player => player.data!.scores!);
   if (allScores.length > 0) {
     consolidated.scores = {
-      game1_scratch: Math.max(...allScores.map(s => s.game1_scratch || 0)),
-      game1_total: Math.max(...allScores.map(s => s.game1_total || 0)),
-      game2_scratch: Math.max(...allScores.map(s => s.game2_scratch || 0)),
-      game2_total: Math.max(...allScores.map(s => s.game2_total || 0)),
-      game3_scratch: Math.max(...allScores.map(s => s.game3_scratch || 0)),
-      game3_total: Math.max(...allScores.map(s => s.game3_total || 0))
+      game1_scratch: Math.max(...allScores.map(score => score.game1_scratch || 0)),
+      game1_total: Math.max(...allScores.map(score => score.game1_total || 0)),
+      game2_scratch: Math.max(...allScores.map(score => score.game2_scratch || 0)),
+      game2_total: Math.max(...allScores.map(score => score.game2_total || 0)),
+      game3_scratch: Math.max(...allScores.map(score => score.game3_scratch || 0)),
+      game3_total: Math.max(...allScores.map(score => score.game3_total || 0))
     };
   }
   
   // Consolidate bracket entries - sum all entries
-  const allBrackets = players.filter(p => p.data?.brackets).map(p => p.data!.brackets!);
+  const allBrackets = players.filter(player => player.data?.brackets).map(player => player.data!.brackets!);
   if (allBrackets.length > 0) {
     consolidated.brackets = {
       scratch: allBrackets.reduce((sum, b) => sum + (b.scratch || 0), 0),
@@ -281,11 +281,11 @@ function consolidateExtendedData(players: ExtendedPlayer[]): MergeableData {
   }
   
   // Consolidate payments - sum all amounts
-  const allPayments = players.filter(p => p.data?.payments).map(p => p.data!.payments!);
+  const allPayments = players.filter(player => player.data?.payments).map(player => player.data!.payments!);
   if (allPayments.length > 0) {
     consolidated.payments = {
-      totalCost: allPayments.reduce((sum, p) => sum + (p.totalCost || 0), 0),
-      amountPaid: allPayments.reduce((sum, p) => sum + (p.amountPaid || 0), 0)
+      totalCost: allPayments.reduce((sum, payment) => sum + (payment.totalCost || 0), 0),
+      amountPaid: allPayments.reduce((sum, payment) => sum + (payment.amountPaid || 0), 0)
     };
   }
   
@@ -306,9 +306,9 @@ export function generateMergePreview(
   
   // Estimate affected records
   const affectedRecords = {
-    brackets: playersToMerge.map(p => `${p.firstName} ${p.lastName} brackets`),
-    scores: playersToMerge.map(p => `${p.firstName} ${p.lastName} scores`),
-    payments: playersToMerge.map(p => `${p.firstName} ${p.lastName} payments`)
+    brackets: playersToMerge.map(player => `${player.firstName} ${player.lastName} brackets`),
+    scores: playersToMerge.map(player => `${player.firstName} ${player.lastName} scores`),
+    payments: playersToMerge.map(player => `${player.firstName} ${player.lastName} payments`)
   };
   
   const totalMergedPlayers = playersToMerge.length;
@@ -348,7 +348,7 @@ export function validateMergeOperation(preview: MergePreview): {
   }
   
   // Check for players with no data
-  const playersWithoutData = preview.playersToMerge.filter(p => !p.data || Object.keys(p.data).length === 0);
+  const playersWithoutData = preview.playersToMerge.filter(player => !player.data || Object.keys(player.data).length === 0);
   if (playersWithoutData.length > 0) {
     warnings.push(`${playersWithoutData.length} player(s) have no additional data to merge`);
   }
@@ -495,7 +495,7 @@ export function prepareMergeRequest(preview: MergePreview, resolutions: { field:
 } {
   return {
     primaryPlayerId: preview.primaryPlayer.id,
-    mergePlayerIds: preview.playersToMerge.map(p => p.id),
+    mergePlayerIds: preview.playersToMerge.map(player => player.id),
     consolidatedData: preview.consolidatedData.finalPlayer,
     conflictResolutions: resolutions.map(r => ({
       ...r,
@@ -504,3 +504,4 @@ export function prepareMergeRequest(preview: MergePreview, resolutions: { field:
     affectedTables: ['bowler', 'score', 'tournament_payout', 'generated_bracket', 'bracket_match']
   };
 }
+

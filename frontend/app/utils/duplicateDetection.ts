@@ -24,16 +24,16 @@ export interface DuplicateGroup {
 function levenshteinDistance(str1: string, str2: string): number {
   const matrix = Array(str2.length + 1).fill(null).map(() => Array(str1.length + 1).fill(null));
   
-  for (let i = 0; i <= str1.length; i++) matrix[0][i] = i;
-  for (let j = 0; j <= str2.length; j++) matrix[j][0] = j;
+  for (let firstStringIndex = 0; firstStringIndex <= str1.length; firstStringIndex++) matrix[0][firstStringIndex] = firstStringIndex;
+  for (let secondStringIndex = 0; secondStringIndex <= str2.length; secondStringIndex++) matrix[secondStringIndex][0] = secondStringIndex;
   
-  for (let j = 1; j <= str2.length; j++) {
-    for (let i = 1; i <= str1.length; i++) {
-      const indicator = str1[i - 1] === str2[j - 1] ? 0 : 1;
-      matrix[j][i] = Math.min(
-        matrix[j][i - 1] + 1,     // deletion
-        matrix[j - 1][i] + 1,     // insertion
-        matrix[j - 1][i - 1] + indicator // substitution
+  for (let secondStringIndex = 1; secondStringIndex <= str2.length; secondStringIndex++) {
+    for (let firstStringIndex = 1; firstStringIndex <= str1.length; firstStringIndex++) {
+      const substitutionCost = str1[firstStringIndex - 1] === str2[secondStringIndex - 1] ? 0 : 1;
+      matrix[secondStringIndex][firstStringIndex] = Math.min(
+        matrix[secondStringIndex][firstStringIndex - 1] + 1,     // deletion
+        matrix[secondStringIndex - 1][firstStringIndex] + 1,     // insertion
+        matrix[secondStringIndex - 1][firstStringIndex - 1] + substitutionCost   // substitution
       );
     }
   }
@@ -235,7 +235,7 @@ export function findDuplicatesForPlayer(
     }
   }
   
-  return duplicates.sort((a, b) => b.matchScore - a.matchScore);
+  return duplicates.sort((firstItem, secondItem) => secondItem.matchScore - firstItem.matchScore);
 }
 
 /**
@@ -259,8 +259,8 @@ export function scanForDuplicateGroups(
       duplicates.forEach(dup => processedIds.add(dup.player.id));
       
       // Determine confidence level
-      const highConfidenceCount = duplicates.filter(d => d.matchScore >= 0.95).length;
-      const mediumConfidenceCount = duplicates.filter(d => d.matchScore >= 0.85 && d.matchScore < 0.95).length;
+      const highConfidenceCount = duplicates.filter(duplicate => duplicate.matchScore >= 0.95).length;
+      const mediumConfidenceCount = duplicates.filter(duplicate => duplicate.matchScore >= 0.85 && duplicate.matchScore < 0.95).length;
       
       let confidence: 'high' | 'medium' | 'low' = 'low';
       let suggestedAction: 'merge' | 'review' | 'ignore' = 'ignore';
@@ -283,14 +283,14 @@ export function scanForDuplicateGroups(
     }
   }
   
-  return duplicateGroups.sort((a, b) => {
+  return duplicateGroups.sort((firstItem, secondItem) => {
     // Sort by confidence and then by match score
     const confidenceOrder = { high: 3, medium: 2, low: 1 };
-    const confDiff = confidenceOrder[b.confidence] - confidenceOrder[a.confidence];
+    const confDiff = confidenceOrder[secondItem.confidence] - confidenceOrder[firstItem.confidence];
     if (confDiff !== 0) return confDiff;
     
-    const maxScoreA = Math.max(...a.duplicates.map(d => d.matchScore));
-    const maxScoreB = Math.max(...b.duplicates.map(d => d.matchScore));
+    const maxScoreA = Math.max(...firstItem.duplicates.map(duplicate => duplicate.matchScore));
+    const maxScoreB = Math.max(...secondItem.duplicates.map(duplicate => duplicate.matchScore));
     return maxScoreB - maxScoreA;
   });
 }
@@ -357,9 +357,9 @@ export function getSmartSuggestions(
   const potentialDuplicates = findDuplicatesForPlayer(tempPlayer, players, 0.7); // Lower threshold for suggestions
   
   if (potentialDuplicates.length > 0) {
-    const exactMatches = potentialDuplicates.filter(d => d.matchType === 'exact');
-    const highMatches = potentialDuplicates.filter(d => d.matchScore >= 0.85);
-    const mediumMatches = potentialDuplicates.filter(d => d.matchScore >= 0.7 && d.matchScore < 0.85);
+    const exactMatches = potentialDuplicates.filter(duplicate => duplicate.matchType === 'exact');
+    const highMatches = potentialDuplicates.filter(duplicate => duplicate.matchScore >= 0.85);
+    const mediumMatches = potentialDuplicates.filter(duplicate => duplicate.matchScore >= 0.7 && duplicate.matchScore < 0.85);
     
     if (exactMatches.length > 0) {
       warnings.push('⚠️ Exact name match found - this player may already exist');
@@ -389,3 +389,4 @@ export function getSmartSuggestions(
     potentialDuplicates
   };
 }
+

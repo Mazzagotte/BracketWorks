@@ -21,6 +21,7 @@ export interface PlayersTableProps {
   onDeletePlayer: (playerId: number) => void;
   savingStatus: Record<string, SavingStatus>;
   isDemoMode: boolean;
+  entryFee: number;
 }
 
 export interface Squad {
@@ -35,6 +36,7 @@ export interface PlayerFormProps {
   onAddPlayer: (player: Omit<Player, 'id'>) => void;
   isLoading: boolean;
   squads: Squad[];
+  entryFee: number;
 }
 
 export interface PlayersStatsProps {

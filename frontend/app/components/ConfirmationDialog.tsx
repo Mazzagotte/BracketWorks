@@ -22,3 +22,4 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({ open, message, 
 };
 
 export default ConfirmationDialog;
+

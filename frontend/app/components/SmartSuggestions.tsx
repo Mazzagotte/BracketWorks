@@ -140,7 +140,7 @@ export default function SmartSuggestions({
     setShowSuggestions(false);
   };
 
-  const unacknowledgedWarnings = suggestions.warnings.filter(w => !acknowledgedWarnings.has(w));
+  const unacknowledgedWarnings = suggestions.warnings.filter(wItem => !acknowledgedWarnings.has(wItem));
   const hasContent = unacknowledgedWarnings.length > 0 || suggestions.potentialDuplicates.length > 0;
 
   if (!showSuggestions || !hasContent) {
@@ -188,13 +188,13 @@ export default function SmartSuggestions({
             borderRadius: '4px',
             transition: 'all 0.2s ease'
           }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(107, 114, 128, 0.1)';
-            e.currentTarget.style.color = '#374151';
+          onMouseEnter={(changeEvent) => { 
+            changeEvent.currentTarget.style.backgroundColor = 'rgba(107, 114, 128, 0.1)';
+            changeEvent.currentTarget.style.color = '#374151';
           }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
-            e.currentTarget.style.color = '#6b7280';
+          onMouseLeave={(changeEvent) => { 
+            changeEvent.currentTarget.style.backgroundColor = 'transparent';
+            changeEvent.currentTarget.style.color = '#6b7280';
           }}
           title="Dismiss suggestions"
         >
@@ -260,8 +260,8 @@ export default function SmartSuggestions({
                     transition: 'all 0.2s ease',
                     whiteSpace: 'nowrap'
                   }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#b91c1c'}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#dc2626'}
+                  onMouseEnter={(changeEvent) => changeEvent.currentTarget.style.backgroundColor = '#b91c1c'}
+                  onMouseLeave={(changeEvent) => changeEvent.currentTarget.style.backgroundColor = '#dc2626'}
                 >
                   Got it
                 </button>
@@ -337,8 +337,8 @@ export default function SmartSuggestions({
                   cursor: 'pointer',
                   transition: 'all 0.2s ease'
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#4b5563'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#6b7280'}
+                onMouseEnter={(changeEvent) => changeEvent.currentTarget.style.backgroundColor = '#4b5563'}
+                onMouseLeave={(changeEvent) => changeEvent.currentTarget.style.backgroundColor = '#6b7280'}
               >
                 Add Anyway
               </button>
@@ -358,8 +358,8 @@ export default function SmartSuggestions({
                   cursor: 'pointer',
                   transition: 'all 0.2s ease'
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
-                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                onMouseEnter={(changeEvent) => changeEvent.currentTarget.style.transform = 'scale(1.02)'}
+                onMouseLeave={(changeEvent) => changeEvent.currentTarget.style.transform = 'scale(1)'}
               >
                 View All
               </button>
@@ -548,15 +548,15 @@ function PotentialDuplicateCard({
         gap: '12px'
       }}
       onClick={onSelect}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = '#f0a500';
-        e.currentTarget.style.boxShadow = '0 2px 12px rgba(240, 165, 0, 0.15)';
-        e.currentTarget.style.transform = 'translateY(-1px)';
+      onMouseEnter={(changeEvent) => { 
+        changeEvent.currentTarget.style.borderColor = '#f0a500';
+        changeEvent.currentTarget.style.boxShadow = '0 2px 12px rgba(240, 165, 0, 0.15)';
+        changeEvent.currentTarget.style.transform = 'translateY(-1px)';
       }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = '#e5e7eb';
-        e.currentTarget.style.boxShadow = 'none';
-        e.currentTarget.style.transform = 'translateY(0)';
+      onMouseLeave={(changeEvent) => { 
+        changeEvent.currentTarget.style.borderColor = '#e5e7eb';
+        changeEvent.currentTarget.style.boxShadow = 'none';
+        changeEvent.currentTarget.style.transform = 'translateY(0)';
       }}
     >
       <div style={{ flex: 1 }}>
@@ -639,10 +639,9 @@ function PotentialDuplicateCard({
               cursor: 'pointer',
               transition: 'all 0.2s ease'
             }}
-            onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-            onClick={(e) => {
-              e.stopPropagation();
+            onMouseEnter={(changeEvent) => changeEvent.currentTarget.style.transform = 'scale(1.05)'}
+            onMouseLeave={(changeEvent) => changeEvent.currentTarget.style.transform = 'scale(1)'}
+            onClick={(changeEvent) => { changeEvent.stopPropagation();
               onMerge();
             }}
           >
@@ -662,10 +661,9 @@ function PotentialDuplicateCard({
             cursor: 'pointer',
             transition: 'all 0.2s ease'
           }}
-          onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-          onClick={(e) => {
-            e.stopPropagation();
+          onMouseEnter={(changeEvent) => changeEvent.currentTarget.style.transform = 'scale(1.05)'}
+          onMouseLeave={(changeEvent) => changeEvent.currentTarget.style.transform = 'scale(1)'}
+          onClick={(changeEvent) => { changeEvent.stopPropagation();
             onSelect();
           }}
         >
@@ -753,3 +751,4 @@ style.textContent = `
   }
 `;
 document.head.appendChild(style);
+

@@ -2,7 +2,7 @@ import React from 'react'
 
 // Pure bracket display component
 
-export interface Match { 
+export interface MatchData { 
   seedA: number
   seedB: number 
   playerA?: string
@@ -10,49 +10,49 @@ export interface Match {
   scoreA?: number
   scoreB?: number
   winner?: 'A' | 'B'
-  status?: 'pending' | 'in_progress' | 'completed'
+  matchStatus?: 'pending' | 'in_progress' | 'completed'
 }
 
-export interface BracketRound { 
-  name: string
-  matches: Match[] 
+export interface TournamentRound { 
+  roundName: string
+  roundMatches: MatchData[] 
 }
 
 
 
-interface BracketItem {
-  rounds?: BracketRound[];
+interface BracketConfiguration {
+  rounds?: TournamentRound[];
   title?: string;
 }
 
 interface BracketPreviewData {
-  rounds?: BracketRound[];
+  rounds?: TournamentRound[];
   multiple_brackets?: {
-    scratch_brackets?: BracketItem[];
-    handicap_brackets?: BracketItem[];
+    scratch_brackets?: BracketConfiguration[];
+    handicap_brackets?: BracketConfiguration[];
   };
-  scratch_brackets?: BracketItem[];
-  handicap_brackets?: BracketItem[];
+  scratch_brackets?: BracketConfiguration[];
+  handicap_brackets?: BracketConfiguration[];
 }
 
 interface BracketRendererProps {
-  preview: BracketPreviewData | null
+  tournamentPreviewData: BracketPreviewData | null
   selectedBracketType: 'scratch' | 'handicap'
-  selectedBracket: {type: 'scratch' | 'handicap', index: number} | null
-  selectedRound: number
-  onMatchSelect?: (bracketId: string, round: number, match: number) => void
-  isMobile?: boolean
+  selectedBracketConfiguration: {type: 'scratch' | 'handicap', index: number} | null
+  selectedRoundNumber: number
+  onMatchClick?: (bracketId: string, round: number, MatchData: number) => void
+  isMobileDisplay?: boolean
 }
 
 export function BracketRenderer({ 
-  preview, 
+  tournamentPreviewData, 
   selectedBracketType, 
-  selectedBracket,
-  selectedRound,
-  onMatchSelect,
-  isMobile = false
+  selectedBracketConfiguration,
+  selectedRoundNumber,
+  onMatchClick,
+  isMobileDisplay = false
 }: BracketRendererProps) {
-  if (!preview) {
+  if (!tournamentPreviewData) {
     return (
       <div style={{ 
         textAlign: 'center', 
@@ -61,22 +61,22 @@ export function BracketRenderer({
       }}>
         <p>No bracket data available</p>
         <p style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>
-          Generate a bracket to see the preview
+          Generate a bracket to see the tournamentPreviewData
         </p>
       </div>
     )
   }
 
-  // Handle single bracket preview
-  if (preview.rounds) {
-    return <SingleBracketView rounds={preview.rounds} onMatchSelect={onMatchSelect} />
+  // Handle single bracket tournamentPreviewData
+  if (tournamentPreviewData.rounds) {
+    return <SingleBracketView rounds={tournamentPreviewData.rounds} onMatchClick={onMatchClick} />
   }
 
   // Handle multiple brackets
-  if (preview.multiple_brackets) {
+  if (tournamentPreviewData.multiple_brackets) {
     const brackets = selectedBracketType === 'scratch' 
-      ? preview.multiple_brackets.scratch_brackets
-      : preview.multiple_brackets.handicap_brackets
+      ? tournamentPreviewData.multiple_brackets.scratch_brackets
+      : tournamentPreviewData.multiple_brackets.handicap_brackets
 
     if (!brackets || brackets.length === 0) {
       return (
@@ -93,10 +93,10 @@ export function BracketRenderer({
     return (
       <MultipleBracketsView 
         brackets={brackets}
-        selectedBracket={selectedBracket}
-        selectedRound={selectedRound}
-        onMatchSelect={onMatchSelect}
-        isMobile={isMobile}
+        selectedBracketConfiguration={selectedBracketConfiguration}
+        selectedRoundNumber={selectedRoundNumber}
+        onMatchClick={onMatchClick}
+        isMobileDisplay={isMobileDisplay}
       />
     )
   }
@@ -107,10 +107,10 @@ export function BracketRenderer({
 // Single bracket display
 function SingleBracketView({ 
   rounds, 
-  onMatchSelect 
+  onMatchClick 
 }: { 
-  rounds: BracketRound[]
-  onMatchSelect?: (bracketId: string, round: number, match: number) => void
+  rounds: TournamentRound[]
+  onMatchClick?: (bracketId: string, round: number, MatchData: number) => void
 }) {
   return (
     <div style={{
@@ -129,18 +129,18 @@ function SingleBracketView({
             textAlign: 'center',
             color: '#374151'
           }}>
-            {round.name}
+            {round.roundName}
           </h3>
           <div style={{
             display: 'flex',
             flexDirection: 'column',
             gap: '1rem'
           }}>
-            {round.matches.map((match, matchIndex) => (
+            {round.roundMatches.map((MatchData, matchIndex) => (
               <MatchCard 
                 key={matchIndex}
-                match={match}
-                onClick={() => onMatchSelect?.('single', roundIndex, matchIndex)}
+                MatchData={MatchData}
+                onClick={() => onMatchClick?.('single', roundIndex, matchIndex)}
               />
             ))}
           </div>
@@ -153,19 +153,19 @@ function SingleBracketView({
 // Multiple brackets display
 function MultipleBracketsView({ 
   brackets, 
-  selectedBracket,
-  selectedRound,
-  onMatchSelect,
-  isMobile
+  selectedBracketConfiguration,
+  selectedRoundNumber,
+  onMatchClick,
+  isMobileDisplay
 }: {
-  brackets: BracketItem[]
-  selectedBracket: {type: 'scratch' | 'handicap', index: number} | null
-  selectedRound: number
-  onMatchSelect?: (bracketId: string, round: number, match: number) => void
-  isMobile: boolean
+  brackets: BracketConfiguration[]
+  selectedBracketConfiguration: {type: 'scratch' | 'handicap', index: number} | null
+  selectedRoundNumber: number
+  onMatchClick?: (bracketId: string, round: number, MatchData: number) => void
+  isMobileDisplay: boolean
 }) {
-  if (selectedBracket) {
-    const bracket = brackets[selectedBracket.index]
+  if (selectedBracketConfiguration) {
+    const bracket = brackets[selectedBracketConfiguration.index]
     if (!bracket || !bracket.rounds) return null
 
     return (
@@ -183,14 +183,14 @@ function MultipleBracketsView({
             color: '#111827',
             margin: 0
           }}>
-            {bracket.title || `Bracket ${selectedBracket.index + 1}`}
+            {bracket.title || `Bracket ${selectedBracketConfiguration.index + 1}`}
           </h3>
         </div>
         
         <SingleBracketView 
           rounds={bracket.rounds}
-          onMatchSelect={(_, round, match) => 
-            onMatchSelect?.(`${selectedBracket.type}_${selectedBracket.index}`, round, match)
+          onMatchClick={(_, round, MatchData) => 
+            onMatchClick?.(`${selectedBracketConfiguration.type}_${selectedBracketConfiguration.index}`, round, MatchData)
           }
         />
       </div>
@@ -201,7 +201,7 @@ function MultipleBracketsView({
   return (
     <div style={{
       display: 'grid',
-      gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(300px, 1fr))',
+      gridTemplateColumns: isMobileDisplay ? '1fr' : 'repeat(auto-fill, minmax(300px, 1fr))',
       gap: '1rem',
       padding: '1rem'
     }}>
@@ -217,15 +217,15 @@ function MultipleBracketsView({
   )
 }
 
-// Individual match card
+// Individual MatchData card
 function MatchCard({ 
-  match, 
+  MatchData, 
   onClick 
 }: { 
-  match: Match
+  MatchData: MatchData
   onClick?: () => void
 }) {
-  const isCompleted = match.winner || (match.scoreA !== undefined && match.scoreB !== undefined)
+  const isCompleted = MatchData.winner || (MatchData.scoreA !== undefined && MatchData.scoreB !== undefined)
   
   return (
     <div 
@@ -238,16 +238,16 @@ function MatchCard({
         cursor: onClick ? 'pointer' : 'default',
         transition: 'all 0.2s ease'
       }}
-      onMouseOver={(e) => {
+      onMouseOver={(changeEvent) => {
         if (onClick) {
-          e.currentTarget.style.borderColor = '#3b82f6'
-          e.currentTarget.style.boxShadow = '0 2px 4px rgba(59, 130, 246, 0.1)'
+          changeEvent.currentTarget.style.borderColor = '#3b82f6'
+          changeEvent.currentTarget.style.boxShadow = '0 2px 4px rgba(59, 130, 246, 0.1)'
         }
       }}
-      onMouseOut={(e) => {
+      onMouseOut={(changeEvent) => {
         if (onClick) {
-          e.currentTarget.style.borderColor = '#e5e7eb'
-          e.currentTarget.style.boxShadow = 'none'
+          changeEvent.currentTarget.style.borderColor = '#e5e7eb'
+          changeEvent.currentTarget.style.boxShadow = 'none'
         }
       }}
     >
@@ -261,15 +261,15 @@ function MatchCard({
           fontSize: '0.875rem',
           color: '#6b7280'
         }}>
-          Seed {match.seedA} vs Seed {match.seedB}
+          Seed {MatchData.seedA} vs Seed {MatchData.seedB}
         </span>
-        {match.winner && (
+        {MatchData.winner && (
           <span style={{
             fontSize: '0.75rem',
             color: '#059669',
             fontWeight: '600'
           }}>
-            Winner: {match.winner}
+            Winner: {MatchData.winner}
           </span>
         )}
       </div>
@@ -280,15 +280,15 @@ function MatchCard({
           justifyContent: 'space-between',
           marginBottom: '0.25rem'
         }}>
-          <span>{match.playerA || `Player ${match.seedA}`}</span>
-          <span style={{ fontWeight: '600' }}>{match.scoreA || '-'}</span>
+          <span>{MatchData.playerA || `Player ${MatchData.seedA}`}</span>
+          <span style={{ fontWeight: '600' }}>{MatchData.scoreA || '-'}</span>
         </div>
         <div style={{ 
           display: 'flex', 
           justifyContent: 'space-between'
         }}>
-          <span>{match.playerB || `Player ${match.seedB}`}</span>
-          <span style={{ fontWeight: '600' }}>{match.scoreB || '-'}</span>
+          <span>{MatchData.playerB || `Player ${MatchData.seedB}`}</span>
+          <span style={{ fontWeight: '600' }}>{MatchData.scoreB || '-'}</span>
         </div>
       </div>
     </div>
@@ -301,14 +301,14 @@ function BracketCard({
   index, 
   onClick 
 }: { 
-  bracket: BracketItem
+  bracket: BracketConfiguration
   index: number
   onClick: () => void
 }) {
-  const totalMatches = bracket.rounds?.reduce((total: number, round: BracketRound) => 
-    total + (round.matches?.length || 0), 0) || 0
-  const completedMatches = bracket.rounds?.reduce((total: number, round: BracketRound) => 
-    total + (round.matches?.filter((m: Match) => m.winner || (m.scoreA && m.scoreB))?.length || 0), 0) || 0
+  const totalMatches = bracket.rounds?.reduce((total: number, round: TournamentRound) => 
+    total + (round.roundMatches?.length || 0), 0) || 0
+  const completedMatches = bracket.rounds?.reduce((total: number, round: TournamentRound) => 
+    total + (round.roundMatches?.filter((m: MatchData) => m.winner || (m.scoreA && m.scoreB))?.length || 0), 0) || 0
 
   return (
     <div 
@@ -321,13 +321,13 @@ function BracketCard({
         cursor: 'pointer',
         transition: 'all 0.2s ease'
       }}
-      onMouseOver={(e) => {
-        e.currentTarget.style.borderColor = '#3b82f6'
-        e.currentTarget.style.boxShadow = '0 4px 6px rgba(59, 130, 246, 0.1)'
+      onMouseOver={(changeEvent) => { 
+        changeEvent.currentTarget.style.borderColor = '#3b82f6'
+        changeEvent.currentTarget.style.boxShadow = '0 4px 6px rgba(59, 130, 246, 0.1)'
       }}
-      onMouseOut={(e) => {
-        e.currentTarget.style.borderColor = '#e5e7eb'
-        e.currentTarget.style.boxShadow = 'none'
+      onMouseOut={(changeEvent) => { 
+        changeEvent.currentTarget.style.borderColor = '#e5e7eb'
+        changeEvent.currentTarget.style.boxShadow = 'none'
       }}
     >
       <h4 style={{
@@ -364,3 +364,4 @@ function BracketCard({
     </div>
   )
 }
+

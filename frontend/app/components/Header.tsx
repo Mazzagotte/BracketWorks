@@ -242,17 +242,17 @@ const Header = memo(function Header({
   // Filter out dismissed notifications
   const visibleNotifications = useMemo(() => {
     return notifications.filter(notification => !dismissedNotifications.has(notification.id))
-      .sort((a, b) => {
+      .sort((firstItem, secondItem) => {
         // Sort by priority (high > medium > low) then by timestamp (newest first)
         const priorityOrder = { high: 3, medium: 2, low: 1 }
-        const aPriority = priorityOrder[a.priority || 'low']
-        const bPriority = priorityOrder[b.priority || 'low']
+        const aPriority = priorityOrder[firstItem.priority || 'low']
+        const bPriority = priorityOrder[secondItem.priority || 'low']
         
         if (aPriority !== bPriority) {
           return bPriority - aPriority
         }
         
-        return b.timestamp.getTime() - a.timestamp.getTime()
+        return secondItem.timestamp.getTime() - firstItem.timestamp.getTime()
       })
   }, [notifications, dismissedNotifications])
 
@@ -1263,8 +1263,8 @@ const Header = memo(function Header({
                         position: 'absolute',
                         top: '-2px',
                         right: '-2px',
-                        background: visibleNotifications.some(n => n.priority === 'high') ? '#ef4444' :
-                                   visibleNotifications.some(n => n.priority === 'medium') ? '#f59e0b' : '#3b82f6',
+                        background: visibleNotifications.some(nItem => nItem.priority === 'high') ? '#ef4444' :
+                                   visibleNotifications.some(nItem => nItem.priority === 'medium') ? '#f59e0b' : '#3b82f6',
                         color: 'white',
                         borderRadius: '50%',
                         width: '18px',
@@ -1533,13 +1533,11 @@ const Header = memo(function Header({
                   borderRadius: '4px',
                   transition: 'all 0.2s ease'
                 }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#f3f4f6'
-                  e.currentTarget.style.color = '#374151'
+                onMouseEnter={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = '#f3f4f6'
+                  changeEvent.currentTarget.style.color = '#374151'
                 }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent'
-                  e.currentTarget.style.color = '#6b7280'
+                onMouseLeave={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = 'transparent'
+                  changeEvent.currentTarget.style.color = '#6b7280'
                 }}
               >
                 ×
@@ -1563,13 +1561,11 @@ const Header = memo(function Header({
                   cursor: 'pointer',
                   transition: 'all 0.2s ease'
                 }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#f3f4f6'
-                  e.currentTarget.style.borderColor = '#9ca3af'
+                onMouseEnter={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = '#f3f4f6'
+                  changeEvent.currentTarget.style.borderColor = '#9ca3af'
                 }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent'
-                  e.currentTarget.style.borderColor = '#d1d5db'
+                onMouseLeave={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = 'transparent'
+                  changeEvent.currentTarget.style.borderColor = '#d1d5db'
                 }}
               >
                 Clear All
@@ -1589,3 +1585,5 @@ const Header = memo(function Header({
 Header.displayName = 'Header'
 
 export default Header
+
+

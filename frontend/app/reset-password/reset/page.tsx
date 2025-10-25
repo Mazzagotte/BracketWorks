@@ -49,7 +49,7 @@ const getConnectionQuality = () => {
 const fetchWithRetry = async (url: string, options: RequestInit, maxRetries = 3): Promise<Response> => {
   let lastError: unknown;
   
-  for (let i = 0; i <= maxRetries; i++) {
+  for (let index = 0; index <= maxRetries; index++) {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
@@ -64,9 +64,9 @@ const fetchWithRetry = async (url: string, options: RequestInit, maxRetries = 3)
     } catch (error: unknown) {
       lastError = error;
       
-      if (i === maxRetries) break;
+      if (index === maxRetries) break;
       
-      const delay = Math.min(1000 * Math.pow(2, i), 5000);
+      const delay = Math.min(1000 * Math.pow(2, index), 5000);
       await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
@@ -129,9 +129,9 @@ export default function ResetPasswordPage() {
     [newPassword, confirmPassword]
   );
 
-  const handleReset = useCallback(async (e: React.FormEvent) => {
+  const handleReset = useCallback(async (e: React.FormEvent) => { 
     e.preventDefault();
-    
+
     setLoading(true);
     setError('');
     setMessage('');
@@ -243,14 +243,14 @@ export default function ResetPasswordPage() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey) {
         switch (e.key) {
-          case 'Enter':
+          case 'Enter': 
             e.preventDefault();
             if (!loading && Object.values(fieldErrors).every(error => error === '') && 
                 email.trim() && code.trim() && newPassword && confirmPassword) {
               handleReset(new Event('submit') as unknown as React.FormEvent);
             }
             break;
-          case 'Escape':
+          case 'Escape': 
             e.preventDefault();
             setError('');
             setSuccess('');
@@ -409,9 +409,9 @@ export default function ResetPasswordPage() {
                 placeholder="Email Address"
                 value={email}
                 onChange={handleEmailChange}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && emailValid) {
-                    e.preventDefault();
+                onKeyDown={(changeEvent) => {
+                  if (changeEvent.key === 'Enter' && emailValid) { 
+                    changeEvent.preventDefault();
                     codeRef.current?.focus();
                   }
                 }}
@@ -430,9 +430,9 @@ export default function ResetPasswordPage() {
               placeholder="Reset Code"
               value={code}
               onChange={handleCodeChange}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && code.trim()) {
-                  e.preventDefault();
+              onKeyDown={(changeEvent) => {
+                if (changeEvent.key === 'Enter' && code.trim()) { 
+                  changeEvent.preventDefault();
                   passwordRef.current?.focus();
                 }
               }}
@@ -450,15 +450,9 @@ export default function ResetPasswordPage() {
                 letterSpacing: '0.3px',
                 marginBottom: '16px'
               }}
-              onFocus={(e) => {
-                e.target.style.border = '2px solid rgba(240, 165, 0, 0.4)';
-                e.target.style.boxShadow = '0 4px 16px rgba(240, 165, 0, 0.15)';
-                e.target.style.background = 'rgba(255, 255, 255, 0.95)';
+              onFocus={(changeEvent) => { changeEvent.target.style.border = '2px solid rgba(240, 165, 0, 0.4)'; changeEvent.target.style.boxShadow = '0 4px 16px rgba(240, 165, 0, 0.15)'; changeEvent.target.style.background = 'rgba(255, 255, 255, 0.95)';
               }}
-              onBlur={(e) => {
-                e.target.style.border = '2px solid rgba(26, 31, 46, 0.1)';
-                e.target.style.boxShadow = 'none';
-                e.target.style.background = 'rgba(248, 250, 252, 0.8)';
+              onBlur={(changeEvent) => { changeEvent.target.style.border = '2px solid rgba(26, 31, 46, 0.1)'; changeEvent.target.style.boxShadow = 'none'; changeEvent.target.style.background = 'rgba(248, 250, 252, 0.8)';
               }}
               required
             />
@@ -469,9 +463,9 @@ export default function ResetPasswordPage() {
                 placeholder="New Password"
                 value={newPassword}
                 onChange={handleNewPasswordChange}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && passwordStrength >= 50) {
-                    e.preventDefault();
+                onKeyDown={(changeEvent) => {
+                  if (changeEvent.key === 'Enter' && passwordStrength >= 50) { 
+                    changeEvent.preventDefault();
                     confirmPasswordRef.current?.focus();
                   }
                 }}
@@ -489,15 +483,9 @@ export default function ResetPasswordPage() {
                   fontWeight: 500,
                   letterSpacing: '0.3px'
                 }}
-                onFocus={(e) => {
-                  e.target.style.border = '2px solid rgba(240, 165, 0, 0.4)';
-                  e.target.style.boxShadow = '0 4px 16px rgba(240, 165, 0, 0.15)';
-                  e.target.style.background = 'rgba(255, 255, 255, 0.95)';
+                onFocus={(changeEvent) => { changeEvent.target.style.border = '2px solid rgba(240, 165, 0, 0.4)'; changeEvent.target.style.boxShadow = '0 4px 16px rgba(240, 165, 0, 0.15)'; changeEvent.target.style.background = 'rgba(255, 255, 255, 0.95)';
                 }}
-                onBlur={(e) => {
-                  e.target.style.border = '2px solid rgba(26, 31, 46, 0.1)';
-                  e.target.style.boxShadow = 'none';
-                  e.target.style.background = 'rgba(248, 250, 252, 0.8)';
+                onBlur={(changeEvent) => { changeEvent.target.style.border = '2px solid rgba(26, 31, 46, 0.1)'; changeEvent.target.style.boxShadow = 'none'; changeEvent.target.style.background = 'rgba(248, 250, 252, 0.8)';
                 }}
                 required
               />
@@ -525,13 +513,13 @@ export default function ResetPasswordPage() {
                     height: '28px'
                   }}
                   aria-label={showNewPassword ? "Hide new password" : "Show new password"}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color = 'rgba(26, 31, 46, 0.8)';
-                    e.currentTarget.style.background = 'rgba(26, 31, 46, 0.05)';
+                  onMouseEnter={(changeEvent) => { 
+                    changeEvent.currentTarget.style.color = 'rgba(26, 31, 46, 0.8)';
+                    changeEvent.currentTarget.style.background = 'rgba(26, 31, 46, 0.05)';
                   }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color = 'rgba(26, 31, 46, 0.6)';
-                    e.currentTarget.style.background = 'none';
+                  onMouseLeave={(changeEvent) => { 
+                    changeEvent.currentTarget.style.color = 'rgba(26, 31, 46, 0.6)';
+                    changeEvent.currentTarget.style.background = 'none';
                   }}
                 >
                   {showNewPassword ? "Hide" : "Show"}
@@ -571,9 +559,9 @@ export default function ResetPasswordPage() {
                 placeholder="Confirm New Password"
                 value={confirmPassword}
                 onChange={handleConfirmPasswordChange}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && passwordsMatch && emailValid && code.trim() && passwordStrength >= 50) {
-                    e.preventDefault();
+                onKeyDown={(changeEvent) => {
+                  if (changeEvent.key === 'Enter' && passwordsMatch && emailValid && code.trim() && passwordStrength >= 50) { 
+                    changeEvent.preventDefault();
                     (document.querySelector('button[type="submit"]') as HTMLButtonElement)?.click();
                   }
                 }}
@@ -591,15 +579,9 @@ export default function ResetPasswordPage() {
                   fontWeight: 500,
                   letterSpacing: '0.3px'
                 }}
-                onFocus={(e) => {
-                  e.target.style.border = '2px solid rgba(240, 165, 0, 0.4)';
-                  e.target.style.boxShadow = '0 4px 16px rgba(240, 165, 0, 0.15)';
-                  e.target.style.background = 'rgba(255, 255, 255, 0.95)';
+                onFocus={(changeEvent) => { changeEvent.target.style.border = '2px solid rgba(240, 165, 0, 0.4)'; changeEvent.target.style.boxShadow = '0 4px 16px rgba(240, 165, 0, 0.15)'; changeEvent.target.style.background = 'rgba(255, 255, 255, 0.95)';
                 }}
-                onBlur={(e) => {
-                  e.target.style.border = '2px solid rgba(26, 31, 46, 0.1)';
-                  e.target.style.boxShadow = 'none';
-                  e.target.style.background = 'rgba(248, 250, 252, 0.8)';
+                onBlur={(changeEvent) => { changeEvent.target.style.border = '2px solid rgba(26, 31, 46, 0.1)'; changeEvent.target.style.boxShadow = 'none'; changeEvent.target.style.background = 'rgba(248, 250, 252, 0.8)';
                 }}
                 required
               />
@@ -627,13 +609,13 @@ export default function ResetPasswordPage() {
                     height: '28px'
                   }}
                   aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color = 'rgba(26, 31, 46, 0.8)';
-                    e.currentTarget.style.background = 'rgba(26, 31, 46, 0.05)';
+                  onMouseEnter={(changeEvent) => { 
+                    changeEvent.currentTarget.style.color = 'rgba(26, 31, 46, 0.8)';
+                    changeEvent.currentTarget.style.background = 'rgba(26, 31, 46, 0.05)';
                   }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color = 'rgba(26, 31, 46, 0.6)';
-                    e.currentTarget.style.background = 'none';
+                  onMouseLeave={(changeEvent) => { 
+                    changeEvent.currentTarget.style.color = 'rgba(26, 31, 46, 0.6)';
+                    changeEvent.currentTarget.style.background = 'none';
                   }}
                 >
                   {showConfirmPassword ? "Hide" : "Show"}
@@ -700,16 +682,16 @@ export default function ResetPasswordPage() {
               transition: 'all 0.3s ease',
               letterSpacing: '0.5px'
             }}
-            onMouseEnter={(e) => {
+            onMouseEnter={(changeEvent) => {
               if (!loading && !message && emailValid && code.trim() && passwordStrength >= 50 && passwordsMatch) {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 12px 32px rgba(240, 165, 0, 0.4), 0 6px 16px rgba(0, 0, 0, 0.15)';
+                changeEvent.currentTarget.style.transform = 'translateY(-2px)';
+                changeEvent.currentTarget.style.boxShadow = '0 12px 32px rgba(240, 165, 0, 0.4), 0 6px 16px rgba(0, 0, 0, 0.15)';
               }
             }}
-            onMouseLeave={(e) => {
+            onMouseLeave={(changeEvent) => {
               if (!loading && !message) {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 8px 24px rgba(240, 165, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.1)';
+                changeEvent.currentTarget.style.transform = 'translateY(0)';
+                changeEvent.currentTarget.style.boxShadow = '0 8px 24px rgba(240, 165, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.1)';
               }
             }}
           >
@@ -744,13 +726,13 @@ export default function ResetPasswordPage() {
               border: '1px solid rgba(240, 165, 0, 0.2)',
               transition: 'all 0.2s ease'
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(240, 165, 0, 0.15)';
-              e.currentTarget.style.transform = 'translateY(-1px)';
+            onMouseEnter={(changeEvent) => { 
+              changeEvent.currentTarget.style.background = 'rgba(240, 165, 0, 0.15)';
+              changeEvent.currentTarget.style.transform = 'translateY(-1px)';
             }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(240, 165, 0, 0.08)';
-              e.currentTarget.style.transform = 'translateY(0)';
+            onMouseLeave={(changeEvent) => { 
+              changeEvent.currentTarget.style.background = 'rgba(240, 165, 0, 0.08)';
+              changeEvent.currentTarget.style.transform = 'translateY(0)';
             }}
           >
             Back to Login
@@ -760,3 +742,5 @@ export default function ResetPasswordPage() {
     </div>
   );
 }
+
+

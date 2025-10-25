@@ -59,7 +59,7 @@ export default function DuplicateDetection({ players, onMergeComplete, onDuplica
     
     // Generate merge preview
     const primaryPlayer = group.primaryPlayer as ExtendedPlayer;
-    const playersToMerge = group.duplicates.map(d => d.player as ExtendedPlayer);
+    const playersToMerge = group.duplicates.map(dItem => dItem.player as ExtendedPlayer);
     
     const preview = generateMergePreview(primaryPlayer, playersToMerge);
     setMergePreview(preview);
@@ -72,7 +72,7 @@ export default function DuplicateDetection({ players, onMergeComplete, onDuplica
   };
 
   const handleMergeDismiss = (groupId: string) => {
-    setDuplicateGroups(prev => prev.filter(g => g.id !== groupId));
+    setDuplicateGroups(prev => prev.filter(gItem => gItem.id !== groupId));
     if (onDuplicateResolved) {
       onDuplicateResolved(groupId);
     }
@@ -161,7 +161,7 @@ export default function DuplicateDetection({ players, onMergeComplete, onDuplica
               max="0.95"
               step="0.05"
               value={threshold}
-              onChange={(e) => setThreshold(parseFloat(e.target.value))}
+              onChange={(changeEvent) => setThreshold(parseFloat(changeEvent.target.value))}
               style={{
                 width: '80px',
                 accentColor: '#f0a500'
@@ -186,13 +186,13 @@ export default function DuplicateDetection({ players, onMergeComplete, onDuplica
               transition: 'all 0.2s ease',
               boxShadow: '0 2px 8px rgba(240, 165, 0, 0.25)'
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-1px)';
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(240, 165, 0, 0.35)';
+            onMouseEnter={(changeEvent) => { 
+              changeEvent.currentTarget.style.transform = 'translateY(-1px)';
+              changeEvent.currentTarget.style.boxShadow = '0 4px 12px rgba(240, 165, 0, 0.35)';
             }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 2px 8px rgba(240, 165, 0, 0.25)';
+            onMouseLeave={(changeEvent) => { 
+              changeEvent.currentTarget.style.transform = 'translateY(0)';
+              changeEvent.currentTarget.style.boxShadow = '0 2px 8px rgba(240, 165, 0, 0.25)';
             }}
           >
             🔄 Re-scan
@@ -294,16 +294,16 @@ function DuplicateGroupCard({
       cursor: 'pointer'
     }}
     onClick={onSelect}
-    onMouseEnter={(e) => {
+    onMouseEnter={(changeEvent) => {
       if (!isSelected) {
-        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
-        e.currentTarget.style.transform = 'translateY(-1px)';
+        changeEvent.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
+        changeEvent.currentTarget.style.transform = 'translateY(-1px)';
       }
     }}
-    onMouseLeave={(e) => {
+    onMouseLeave={(changeEvent) => {
       if (!isSelected) {
-        e.currentTarget.style.boxShadow = 'none';
-        e.currentTarget.style.transform = 'translateY(0)';
+        changeEvent.currentTarget.style.boxShadow = 'none';
+        changeEvent.currentTarget.style.transform = 'translateY(0)';
       }
     }}
     >
@@ -393,8 +393,7 @@ function DuplicateGroupCard({
         {/* Actions */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minWidth: '100px' }}>
           <button
-            onClick={(e) => {
-              e.stopPropagation();
+            onClick={(changeEvent) => { changeEvent.stopPropagation();
               onSelect();
             }}
             style={{
@@ -408,14 +407,13 @@ function DuplicateGroupCard({
               cursor: 'pointer',
               transition: 'all 0.2s ease'
             }}
-            onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
-            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            onMouseEnter={(changeEvent) => changeEvent.currentTarget.style.transform = 'scale(1.02)'}
+            onMouseLeave={(changeEvent) => changeEvent.currentTarget.style.transform = 'scale(1)'}
           >
             {isSelected ? '✓ Selected' : 'Review'}
           </button>
           <button
-            onClick={(e) => {
-              e.stopPropagation();
+            onClick={(changeEvent) => { changeEvent.stopPropagation();
               onDismiss();
             }}
             style={{
@@ -429,8 +427,8 @@ function DuplicateGroupCard({
               cursor: 'pointer',
               transition: 'all 0.2s ease'
             }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#4b5563'}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#6b7280'}
+            onMouseEnter={(changeEvent) => changeEvent.currentTarget.style.backgroundColor = '#4b5563'}
+            onMouseLeave={(changeEvent) => changeEvent.currentTarget.style.backgroundColor = '#6b7280'}
           >
             Dismiss
           </button>
@@ -586,8 +584,8 @@ function MergePreviewPanel({
             cursor: 'pointer',
             transition: 'all 0.2s ease'
           }}
-          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#4b5563'}
-          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#6b7280'}
+          onMouseEnter={(changeEvent) => changeEvent.currentTarget.style.backgroundColor = '#4b5563'}
+          onMouseLeave={(changeEvent) => changeEvent.currentTarget.style.backgroundColor = '#6b7280'}
         >
           Cancel
         </button>
@@ -608,16 +606,16 @@ function MergePreviewPanel({
             transition: 'all 0.2s ease',
             opacity: validation.isValid ? 1 : 0.6
           }}
-          onMouseEnter={(e) => {
+          onMouseEnter={(changeEvent) => {
             if (validation.isValid) {
-              e.currentTarget.style.transform = 'translateY(-1px)';
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(5, 150, 105, 0.25)';
+              changeEvent.currentTarget.style.transform = 'translateY(-1px)';
+              changeEvent.currentTarget.style.boxShadow = '0 4px 12px rgba(5, 150, 105, 0.25)';
             }
           }}
-          onMouseLeave={(e) => {
+          onMouseLeave={(changeEvent) => {
             if (validation.isValid) {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = 'none';
+              changeEvent.currentTarget.style.transform = 'translateY(0)';
+              changeEvent.currentTarget.style.boxShadow = 'none';
             }
           }}
         >
@@ -647,7 +645,7 @@ function MergeConfirmationDialog({
       await new Promise(resolve => setTimeout(resolve, 1500));
       
       const mergedId = preview.primaryPlayer.id;
-      const removedIds = preview.playersToMerge.map(p => p.id);
+      const removedIds = preview.playersToMerge.map(pItem => pItem.id);
       
       onConfirm(mergedId, removedIds);
     } catch (error) {
@@ -703,7 +701,7 @@ function MergeConfirmationDialog({
               <strong>Primary Player:</strong> {preview.primaryPlayer.firstName} {preview.primaryPlayer.lastName}
             </div>
             <div style={{ marginBottom: '8px' }}>
-              <strong>Players to Merge:</strong> {preview.playersToMerge.map(p => `${p.firstName} ${p.lastName}`).join(', ')}
+              <strong>Players to Merge:</strong> {preview.playersToMerge.map(pItem => `${pItem.firstName} ${pItem.lastName}`).join(', ')}
             </div>
             <div>
               <strong>Total Records Affected:</strong> {
@@ -781,3 +779,4 @@ style.textContent = `
   }
 `;
 document.head.appendChild(style);
+

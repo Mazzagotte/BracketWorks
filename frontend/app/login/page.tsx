@@ -87,7 +87,7 @@ export default function LoginPage() {
     setCapsLockOn(e.getModifierState('CapsLock'));
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => { 
     e.preventDefault();
     
     // Check if we're in a delay period
@@ -328,7 +328,7 @@ export default function LoginPage() {
               label="Username"
               placeholder="Username"
               value={username}
-              onChange={e => setUsername(e.target.value)}
+              onChange={changeEvent => setUsername(changeEvent.target.value)}
               autoComplete="username"
               required
               className="login-input"
@@ -359,7 +359,7 @@ export default function LoginPage() {
               label="Password"
               placeholder="Password"
               value={password}
-              onChange={e => setPassword(e.target.value)}
+              onChange={changeEvent => setPassword(changeEvent.target.value)}
               onKeyDown={handleKeyDown}
               onKeyUp={handleKeyUp}
               autoComplete="current-password"
@@ -590,3 +590,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
+

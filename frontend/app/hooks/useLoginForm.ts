@@ -56,7 +56,7 @@ export const useLoginForm = (
     setShowButtonBall(false);
   }, []);
 
-  const handleLogin = useCallback(async (e: React.FormEvent) => {
+  const handleLogin = useCallback(async (e: React.FormEvent) => { 
     e.preventDefault();
     
     // Validate inputs
@@ -219,3 +219,4 @@ export const useLoginForm = (
     clearForm
   };
 };
+

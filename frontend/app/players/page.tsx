@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState, useEffect, useCallback } from 'react'
 
 import { useAuth } from '../lib/auth-context'
 import { usePageHeader } from '../lib/header-context'
@@ -13,29 +13,56 @@ import PlayerForm from './components/PlayerForm'
 import { useClientStorage } from '../lib/storage'
 import { logger } from '../lib/logger'
 import { Squad } from './types'
+import { BracketSettings } from '../lib/types'
+import { apiClient } from '../lib/api'
 
 
 // Force dynamic rendering for this page
 
 
 export default function PlayersPage() {
-  const { isAuthenticated, token, user } = useAuth()
+  const { isAuthenticated, isInitialized, token, user } = useAuth()
   const { getItem } = useClientStorage()
   const [selectedSquadId, setSelectedSquadId] = useState<number | null>(null)
   const [squads, setSquads] = useState<Squad[]>([])
+  const [entryFee, setEntryFee] = useState<number>(25) // Default $25, will be loaded from tournament settings
+
+  // Load entry fee from tournament bracket settings
+  const loadEntryFee = useCallback(async () => {
+    if (!token) return;
+    
+    const tournamentId = getItem('tournament_id');
+    if (!tournamentId) return;
+    
+    try {
+      const settings = await apiClient.get<BracketSettings>(`/api/v1/bracket-settings/${tournamentId}`);
+      if (settings && typeof settings.cost_per_bracket === 'number') {
+        setEntryFee(settings.cost_per_bracket);
+        logger.info(`Loaded entry fee from tournament settings: $${settings.cost_per_bracket}`);
+      }
+    } catch (error) {
+      logger.warn('Failed to load bracket settings, using default entry fee:', error);
+    }
+  }, [token, getItem]);
+
+  // Load entry fee when tournament or auth changes
+  useEffect(() => {
+    loadEntryFee();
+  }, [loadEntryFee]);
   
-  const selectedSquad = squads.find(s => s.id === selectedSquadId) || null
+  const selectedSquad = squads.find(squad => squad.id === selectedSquadId) || null
 
   // Debug authentication state
   useEffect(() => {
     logger.debug('Players page auth state', {
       isAuthenticated,
+      isInitialized,
       hasToken: !!token,
       hasUser: !!user,
       tokenFromStorage: !!localStorage.getItem('token'),
       userIdFromStorage: !!localStorage.getItem('user_id')
     });
-  }, [isAuthenticated, token, user]);
+  }, [isAuthenticated, isInitialized, token, user]);
 
   const {
     players,
@@ -49,34 +76,32 @@ export default function PlayersPage() {
     selectedSquad,
     squads,
     authToken: token,
-    getItem
+    getItem,
+    entryFee
   })
-
-  // Set up page header
-  const playerHeaderActions = useMemo(() => (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-      <span style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-        Total Players: {players.length}
-      </span>
-      {isDemoMode && (
-        <span style={{ 
-          fontSize: '0.75rem', 
-          backgroundColor: '#fef3c7', 
-          color: '#92400e',
-          padding: '0.25rem 0.5rem',
-          borderRadius: '0.25rem'
-        }}>
-          Demo Mode
-        </span>
-      )}
-    </div>
-  ), [players.length, isDemoMode])
 
   usePageHeader({
     title: 'Players',
-    subtitle: 'Manage tournament participants and their information',
-    actions: playerHeaderActions
+    subtitle: 'Manage tournament participants and their information'
   })
+
+  // Wait for auth initialization
+  if (!isInitialized) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        minHeight: '100vh',
+        fontFamily: 'Inter, sans-serif'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ marginBottom: '1rem', fontSize: '1.2rem' }}>🎳</div>
+          <div>Loading player management...</div>
+        </div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return (
@@ -109,6 +134,7 @@ export default function PlayersPage() {
           onAddPlayer={addPlayer}
           isLoading={isLoading}
           squads={squads}
+          entryFee={entryFee}
         />
 
         {isLoading ? (
@@ -147,6 +173,7 @@ export default function PlayersPage() {
               onDeletePlayer={deletePlayer}
               savingStatus={savingStatus}
               isDemoMode={isDemoMode}
+              entryFee={entryFee}
             />
           </div>
         )}

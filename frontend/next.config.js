@@ -4,7 +4,7 @@
 const nextConfig = {
   output: 'standalone',
   
-  // Development performance optimizations
+  // Performance optimizations
   swcMinify: true, // Use faster SWC minifier
   
   // Remove rewrites since we're using NEXT_PUBLIC_BACKEND_URL directly in api.ts
@@ -17,9 +17,11 @@ const nextConfig = {
   // Enable SWC for faster compilation
   experimental: {
     forceSwcTransforms: true,
+    // Enable modern bundling optimizations
+    optimizePackageImports: ['@heroicons/react'],
   },
   
-  // Development optimizations
+  // Production and development optimizations
   webpack: (config, { dev, isServer }) => {
     if (dev) {
       // Faster development builds
@@ -39,8 +41,8 @@ const nextConfig = {
   },
   
   compiler: {
-    // Disable SWC minification in favor of Terser
-    removeConsole: false,
+    // Remove console logs in production for smaller bundles
+    removeConsole: process.env.NODE_ENV === 'production',
   },
 };
 
