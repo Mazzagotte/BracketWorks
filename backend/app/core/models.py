@@ -41,13 +41,6 @@ class Bowler(Base):
     usbc: Mapped[str | None] = mapped_column(String, nullable=True)
     amount_paid: Mapped[float | None] = mapped_column(Float, nullable=True, default=0.0)
 
-class Bracket(Base):
-    __tablename__ = "bracket"
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    name: Mapped[str] = mapped_column(String, nullable=False)
-    squad: Mapped[str | None] = mapped_column(String, nullable=True)
-    game_count: Mapped[int] = mapped_column(Integer, default=3)
-
 class Tournament(Base):
     __tablename__ = "tournament"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
