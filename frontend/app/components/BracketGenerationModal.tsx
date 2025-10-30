@@ -238,13 +238,15 @@ export default function BracketGenerationModal({
         scratchCount: 0,
         handicapCount: 0,
         totalPlayers: 0,
-        skippedPlayers: 0
+        skippedPlayers: 0,
+        scratchRefunds: 0,
+        handicapRefunds: 0
       }
     }
 
     const scratchBrackets = bracketResult.scratch_brackets || []
     const handicapBrackets = bracketResult.handicap_brackets || []
-    const validationWarnings = bracketResult.validation_warnings || {}
+    const summary = bracketResult.summary || {}
     
     // Count total players from first round of all brackets
     let totalPlayers = 0
@@ -259,13 +261,18 @@ export default function BracketGenerationModal({
       }
     })
 
-    const skippedPlayers = validationWarnings.total_skipped || 0
+    // Get refund counts from summary (more accurate than validation_warnings)
+    const scratchRefunds = summary.scratch_refund_entries || 0
+    const handicapRefunds = summary.handicap_refund_entries || 0
+    const totalRefunds = scratchRefunds + handicapRefunds
 
     return {
       scratchCount: scratchBrackets.length,
       handicapCount: handicapBrackets.length,
       totalPlayers,
-      skippedPlayers
+      skippedPlayers: totalRefunds,
+      scratchRefunds,
+      handicapRefunds
     }
   }
 
@@ -430,7 +437,7 @@ export default function BracketGenerationModal({
                     )}
                     <div className={styles.statItem} style={{ animationDelay: '0.3s' }}>
                       <span className={styles.statText}>
-                        {stats.skippedPlayers} Refund{stats.skippedPlayers !== 1 ? 's' : ''}
+                        {stats.skippedPlayers} Refund{stats.skippedPlayers !== 1 ? 's' : ''} ({stats.scratchRefunds} Scratch & {stats.handicapRefunds} Handicap)
                       </span>
                     </div>
                   </>

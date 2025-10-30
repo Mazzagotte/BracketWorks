@@ -43,18 +43,6 @@ class MatchScoreUpdate(BaseModel):
             data['score_b'] = BracketValidation.validate_score(data['score_b'])
         super().__init__(**data)
 
-@router.get("")
-def list_brackets(db: Session = Depends(get_db)):
-    return db.query(models.Bracket).order_by(models.Bracket.id.desc()).all()
-
-@router.post("")
-def create_bracket(bracket: schemas.BracketCreate, db: Session = Depends(get_db)):
-    obj = models.Bracket(name=bracket.name, squad=bracket.squad, game_count=bracket.game_count)
-    db.add(obj)
-    db.commit()
-    db.refresh(obj)
-    return obj
-
 @router.get("/preview")
 def preview(bracket_size: int = 8):
     """Generate a single bracket preview"""

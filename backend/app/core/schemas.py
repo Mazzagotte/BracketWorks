@@ -88,20 +88,6 @@ class Bowler(BowlerBase):
     class Config:
         from_attributes = True
 
-class BracketBase(BaseModel):
-    name: str
-    squad: str | None = None
-    game_count: int = 3
-
-class BracketCreate(BracketBase):
-    pass
-
-class Bracket(BracketBase):
-    id: int
-
-    class Config:
-        from_attributes = True
-
 class TournamentBase(BaseModel):
     name: str
     location: Optional[str] = None

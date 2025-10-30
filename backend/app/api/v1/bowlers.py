@@ -38,7 +38,7 @@ def list_bowlers(
             cost_per_bracket = settings.cost_per_bracket
     result = []
     for b in bowlers:
-        total_cost = ((b.handicap or 0) + (b.scratch or 0)) * cost_per_bracket
+        total_cost = ((b.handicap_entries or 0) + (b.scratch_entries or 0)) * cost_per_bracket
         b_dict = {
             "id": b.id,
             "tournament_id": b.tournament_id,
@@ -46,8 +46,8 @@ def list_bowlers(
             "user_id": b.user_id,
             "name": b.name,
             "average": b.average,
-            "handicap": b.handicap,
-            "scratch": b.scratch,
+            "handicap": b.handicap_entries,
+            "scratch": b.scratch_entries,
             "lane": b.lane,
             "division": b.division,
             "usbc": b.usbc,
@@ -65,8 +65,8 @@ def create_bowler(bowler: schemas.BowlerCreate, db: Session = Depends(get_db), c
         user_id=bowler.user_id,
         name=bowler.name, 
         average=bowler.average,
-        handicap=bowler.handicap,
-        scratch=bowler.scratch,
+        handicap_entries=bowler.handicap,
+        scratch_entries=bowler.scratch,
         lane=bowler.lane,
         division=bowler.division or 'Open',
         usbc=bowler.usbc,
