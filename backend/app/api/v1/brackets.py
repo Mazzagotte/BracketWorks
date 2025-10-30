@@ -106,7 +106,7 @@ def update_match_score_endpoint(
         raise HTTPException(status_code=500, detail=f"Error updating match score: {str(e)}")
 
 @router.get("/generate-multiple")
-def generate_tournament_brackets(
+def generate_tournament_brackets_endpoint(
     tournament_id: int,
     squad_id: Optional[int] = None,
     force_regenerate: bool = Query(False, description="Force regeneration even if brackets exist"),
