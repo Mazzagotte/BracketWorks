@@ -192,8 +192,8 @@ def generate_tournament_brackets_endpoint(
                 'firstName': first_name,
                 'lastName': last_name,
                 'average': bowler.average or 0,
-                'handicap': bowler.handicap or 0,  # Number of handicap brackets
-                'scratch': bowler.scratch or 0,    # Number of scratch brackets
+                'handicap': bowler.handicap_entries or 0,  # Number of handicap brackets
+                'scratch': bowler.scratch_entries or 0,    # Number of scratch brackets
                 'scores': {
                     'game1_scratch': score_record.game1_scratch if score_record else None,
                     'game1_total': score_record.game1_total if score_record else None,

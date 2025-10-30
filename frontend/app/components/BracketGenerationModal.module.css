@@ -54,11 +54,66 @@
    LOADING PHASE STYLES
    =================================== */
 
+/* Confetti Celebration */
+.confettiContainer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 1000;
+}
+
+.confetti {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  top: -10px;
+  opacity: 1;
+  animation: confettiFall 3s linear forwards;
+}
+
+@keyframes confettiFall {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+
 .loadingContent {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 1.5rem;
+}
+
+/* Tournament Context Info */
+.contextInfo {
+  width: 100%;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 0.5rem;
+}
+
+.contextText {
+  margin: 4px 0;
+  font-size: 0.875rem;
+  color: #4b5563;
+  font-family: 'Inter', sans-serif;
+  line-height: 1.5;
+}
+
+.contextLabel {
+  font-weight: 600;
+  color: #1f2937;
 }
 
 /* Bowling Ball Animation Container */
@@ -119,8 +174,53 @@
   font-size: 1.75rem;
   font-weight: 600;
   color: #1f2937;
-  margin: 0;
+  margin: 0 0 1.5rem 0;
   font-family: 'Inter', sans-serif;
+}
+
+/* Progress Bar Container */
+.progressBarContainer {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 0.75rem;
+}
+
+.progressBarBackground {
+  flex: 1;
+  height: 8px;
+  background-color: #e5e7eb;
+  border-radius: 9999px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.progressBarFill {
+  height: 100%;
+  background: linear-gradient(90deg, #f59e0b 0%, #f97316 50%, #10b981 100%);
+  border-radius: 9999px;
+  transition: width 0.1s linear;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
+}
+
+.progressText {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #6b7280;
+  min-width: 40px;
+  text-align: right;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Time Remaining Text */
+.timeRemaining {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #f59e0b;
+  margin: 0 0 1rem 0;
+  font-family: 'Inter', sans-serif;
+  text-align: center;
 }
 
 /* Progress Message - Rotating text */
@@ -218,6 +318,47 @@
   font-family: 'Inter', sans-serif;
 }
 
+/* Success Statistics Container */
+.statsContainer {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0.5rem 0;
+}
+
+.statItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  animation: slideInStat 0.5s ease forwards;
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+@keyframes slideInStat {
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.statIcon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.statText {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #065f46;
+  font-family: 'Inter', sans-serif;
+}
+
 /* ===================================
    ERROR PHASE STYLES
    =================================== */
@@ -263,6 +404,66 @@
   color: #1f2937;
   margin: 0;
   font-family: 'Inter', sans-serif;
+}
+
+/* Error suggestion text */
+.errorSuggestion {
+  font-size: 1rem;
+  color: #6b7280;
+  margin: 0.75rem 0 1.5rem 0;
+  line-height: 1.6;
+  max-width: 500px;
+}
+
+/* Technical details container */
+.technicalDetailsContainer {
+  margin-top: 1rem;
+  text-align: left;
+  width: 100%;
+  max-width: 600px;
+}
+
+/* Technical details toggle button */
+.technicalDetailsToggle {
+  background: transparent;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  color: #6b7280;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: 'Inter', sans-serif;
+}
+
+.technicalDetailsToggle:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+  color: #374151;
+}
+
+/* Technical details content */
+.technicalDetails {
+  margin-top: 0.75rem;
+  padding: 1rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 0.875rem;
+  color: #dc2626;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.technicalDetails code {
+  display: block;
+  white-space: pre-wrap;
 }
 
 .errorSubtext {
