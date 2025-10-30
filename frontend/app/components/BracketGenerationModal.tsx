@@ -13,6 +13,9 @@ interface BracketGenerationModalProps {
   onClose: () => void
   onRegenerate: () => void
   bracketGenerationPromise: Promise<any> | null
+  tournamentName?: string
+  squadName?: string
+  playerCount?: number
 }
 
 /**
@@ -30,6 +33,36 @@ const PROGRESS_MESSAGES = [
 ]
 
 /**
+ * Error message mappings for user-friendly display
+ */
+const ERROR_MESSAGES: { [key: string]: { friendly: string, suggestion: string } } = {
+  'No players found': {
+    friendly: 'No Players Found',
+    suggestion: 'Please add players to this tournament or squad before generating brackets.'
+  },
+  'No scores found': {
+    friendly: 'No Qualifying Scores',
+    suggestion: 'Please add qualifying scores for players before generating brackets.'
+  },
+  'Bracket size not configured': {
+    friendly: 'Bracket Size Not Set',
+    suggestion: 'Please configure bracket settings in the tournament dashboard first.'
+  },
+  'Tournament not found': {
+    friendly: 'Tournament Not Found',
+    suggestion: 'The selected tournament may have been deleted. Please refresh and try again.'
+  },
+  'Tournament ID must be a positive integer': {
+    friendly: 'Invalid Tournament Selection',
+    suggestion: 'Please select a valid tournament from the dashboard.'
+  },
+  'default': {
+    friendly: 'Generation Failed',
+    suggestion: 'An unexpected error occurred. Please try again or contact support if the problem persists.'
+  }
+}
+
+/**
  * BracketGenerationModal Component
  * 
  * Displays a modal during bracket generation with:
@@ -43,13 +76,21 @@ export default function BracketGenerationModal({
   isOpen,
   onClose,
   onRegenerate,
-  bracketGenerationPromise
+  bracketGenerationPromise,
+  tournamentName,
+  squadName,
+  playerCount
 }: BracketGenerationModalProps) {
   // State management
   const [currentPhase, setCurrentPhase] = useState<ModalPhase>('loading')
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0)
   const [shouldAutoClose, setShouldAutoClose] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
+  const [progress, setProgress] = useState(0)
+  const [elapsedTime, setElapsedTime] = useState(0)
+  const [bracketResult, setBracketResult] = useState<any>(null)
+  const [showTechnicalDetails, setShowTechnicalDetails] = useState(false)
+  const [showConfetti, setShowConfetti] = useState(false)
 
   /**
    * Reset modal state when it opens
@@ -59,6 +100,11 @@ export default function BracketGenerationModal({
       setCurrentPhase('loading')
       setCurrentMessageIndex(0)
       setErrorMessage('')
+      setProgress(0)
+      setElapsedTime(0)
+      setBracketResult(null)
+      setShowTechnicalDetails(false)
+      setShowConfetti(false)
     }
   }, [isOpen])
 
@@ -78,6 +124,34 @@ export default function BracketGenerationModal({
   }, [currentPhase, isOpen])
 
   /**
+   * Update progress and elapsed time during loading phase
+   * Progress bar fills over 15 seconds, time counts up
+   */
+  useEffect(() => {
+    if (currentPhase === 'loading' && isOpen) {
+      const TOTAL_DURATION_MS = 15000 // 15 seconds
+      const UPDATE_INTERVAL_MS = 100 // Update every 100ms for smooth animation
+      const startTime = Date.now()
+
+      const progressInterval = setInterval(() => {
+        const elapsed = Date.now() - startTime
+        const progressPercentage = Math.min((elapsed / TOTAL_DURATION_MS) * 100, 100)
+        const elapsedSeconds = Math.floor(elapsed / 1000)
+
+        setProgress(progressPercentage)
+        setElapsedTime(elapsedSeconds)
+
+        // Stop interval when we hit 15 seconds
+        if (elapsed >= TOTAL_DURATION_MS) {
+          clearInterval(progressInterval)
+        }
+      }, UPDATE_INTERVAL_MS)
+
+      return () => clearInterval(progressInterval)
+    }
+  }, [currentPhase, isOpen])
+
+  /**
    * Handle bracket generation with 15-second minimum duration
    */
   useEffect(() => {
@@ -92,9 +166,17 @@ export default function BracketGenerationModal({
 
       // Wait for both the API call and minimum duration
       Promise.all([bracketGenerationPromise, minimumDurationPromise])
-        .then(() => {
+        .then((results) => {
+          // Store the bracket generation result (first promise result)
+          const result = results[0]
+          setBracketResult(result)
+          
           // Both conditions met - show success
           setCurrentPhase('success')
+          
+          // Trigger confetti celebration
+          setShowConfetti(true)
+          setTimeout(() => setShowConfetti(false), 3000) // Hide after 3 seconds
           
           // Auto-close if enabled
           if (shouldAutoClose) {
@@ -126,7 +208,88 @@ export default function BracketGenerationModal({
     setCurrentPhase('loading')
     setCurrentMessageIndex(0)
     setErrorMessage('')
+    setProgress(0)
+    setElapsedTime(0)
     onRegenerate()
+  }
+
+  /**
+   * Format remaining time for display
+   */
+  const getTimeRemainingText = (): string => {
+    const TOTAL_SECONDS = 15
+    const remainingSeconds = Math.max(0, TOTAL_SECONDS - elapsedTime)
+    
+    if (remainingSeconds === 0) {
+      return 'Finishing up...'
+    } else if (remainingSeconds <= 3) {
+      return 'Almost done...'
+    } else {
+      return `${remainingSeconds} seconds remaining`
+    }
+  }
+
+  /**
+   * Extract success statistics from bracket result
+   */
+  const getSuccessStats = () => {
+    if (!bracketResult) {
+      return {
+        scratchCount: 0,
+        handicapCount: 0,
+        totalPlayers: 0,
+        skippedPlayers: 0
+      }
+    }
+
+    const scratchBrackets = bracketResult.scratch_brackets || []
+    const handicapBrackets = bracketResult.handicap_brackets || []
+    const validationWarnings = bracketResult.validation_warnings || {}
+    
+    // Count total players from first round of all brackets
+    let totalPlayers = 0
+    scratchBrackets.forEach((bracket: any) => {
+      if (bracket.rounds && bracket.rounds[0] && bracket.rounds[0].matches) {
+        totalPlayers += bracket.rounds[0].matches.length * 2
+      }
+    })
+    handicapBrackets.forEach((bracket: any) => {
+      if (bracket.rounds && bracket.rounds[0] && bracket.rounds[0].matches) {
+        totalPlayers += bracket.rounds[0].matches.length * 2
+      }
+    })
+
+    const skippedPlayers = validationWarnings.total_skipped || 0
+
+    return {
+      scratchCount: scratchBrackets.length,
+      handicapCount: handicapBrackets.length,
+      totalPlayers,
+      skippedPlayers
+    }
+  }
+
+  /**
+   * Parse error message and return user-friendly version
+   */
+  const parseErrorMessage = (error: string): { friendly: string, suggestion: string, technical: string } => {
+    // Find matching error pattern
+    for (const [pattern, messages] of Object.entries(ERROR_MESSAGES)) {
+      if (pattern !== 'default' && error.toLowerCase().includes(pattern.toLowerCase())) {
+        return {
+          friendly: messages.friendly,
+          suggestion: messages.suggestion,
+          technical: error
+        }
+      }
+    }
+    
+    // Return default if no match found
+    return {
+      friendly: ERROR_MESSAGES['default'].friendly,
+      suggestion: ERROR_MESSAGES['default'].suggestion,
+      technical: error
+    }
   }
 
   /**
@@ -145,9 +308,47 @@ export default function BracketGenerationModal({
         className={styles.modalCard} 
         onClick={(event) => event.stopPropagation()}
       >
+        {/* CONFETTI CELEBRATION */}
+        {showConfetti && (
+          <div className={styles.confettiContainer}>
+            {Array.from({ length: 50 }).map((_, i) => (
+              <div
+                key={i}
+                className={styles.confetti}
+                style={{
+                  left: `${Math.random() * 100}%`,
+                  animationDelay: `${Math.random() * 0.5}s`,
+                  backgroundColor: ['#fbbf24', '#f59e0b', '#22c55e', '#3b82f6', '#a855f7', '#ec4899'][i % 6]
+                }}
+              />
+            ))}
+          </div>
+        )}
+
         {/* LOADING PHASE */}
         {currentPhase === 'loading' && (
           <div className={styles.loadingContent}>
+            {/* Tournament Context Info */}
+            {(tournamentName || squadName || playerCount !== undefined) && (
+              <div className={styles.contextInfo}>
+                {tournamentName && (
+                  <p className={styles.contextText}>
+                    <span className={styles.contextLabel}>Tournament:</span> {tournamentName}
+                  </p>
+                )}
+                {squadName && (
+                  <p className={styles.contextText}>
+                    <span className={styles.contextLabel}>Squad:</span> {squadName}
+                  </p>
+                )}
+                {playerCount !== undefined && (
+                  <p className={styles.contextText}>
+                    <span className={styles.contextLabel}>Players:</span> {playerCount}
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* Bowling Ball Animation */}
             <div className={styles.animationContainer}>
               <div className={styles.bowlingBall}>
@@ -163,6 +364,17 @@ export default function BracketGenerationModal({
 
             {/* Main message */}
             <h2 className={styles.mainMessage}>Generating Brackets...</h2>
+
+            {/* Progress Bar */}
+            <div className={styles.progressBarContainer}>
+              <div className={styles.progressBarBackground}>
+                <div 
+                  className={styles.progressBarFill} 
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+              <div className={styles.progressText}>{Math.round(progress)}%</div>
+            </div>
 
             {/* Rotating progress message */}
             <p className={styles.progressMessage} key={currentMessageIndex}>
@@ -196,6 +408,36 @@ export default function BracketGenerationModal({
               Brackets Generated Successfully!
             </h2>
 
+            {/* Success Statistics */}
+            <div className={styles.statsContainer}>
+              {(() => {
+                const stats = getSuccessStats()
+                return (
+                  <>
+                    {stats.scratchCount > 0 && (
+                      <div className={styles.statItem} style={{ animationDelay: '0.1s' }}>
+                        <span className={styles.statText}>
+                          {stats.scratchCount} Scratch Bracket{stats.scratchCount !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+                    )}
+                    {stats.handicapCount > 0 && (
+                      <div className={styles.statItem} style={{ animationDelay: '0.2s' }}>
+                        <span className={styles.statText}>
+                          {stats.handicapCount} Handicap Bracket{stats.handicapCount !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+                    )}
+                    <div className={styles.statItem} style={{ animationDelay: '0.3s' }}>
+                      <span className={styles.statText}>
+                        {stats.skippedPlayers} Refund{stats.skippedPlayers !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                  </>
+                )
+              })()}
+            </div>
+
             {/* Action buttons */}
             <div className={styles.buttonContainer}>
               <button
@@ -220,20 +462,37 @@ export default function BracketGenerationModal({
             {/* Error Icon */}
             <div className={styles.errorIcon}>⚠️</div>
 
-            {/* Error message */}
-            <h2 className={styles.errorMessage}>
-              Whoops — the pins didn't fall this time.
-            </h2>
-            <p className={styles.errorSubtext}>
-              Please try again.
-            </p>
+            {(() => {
+              const parsedError = parseErrorMessage(errorMessage)
+              return (
+                <>
+                  {/* User-friendly error message */}
+                  <h2 className={styles.errorMessage}>
+                    {parsedError.friendly}
+                  </h2>
+                  
+                  {/* Suggestion */}
+                  <p className={styles.errorSuggestion}>
+                    {parsedError.suggestion}
+                  </p>
 
-            {/* Detailed error (if available) */}
-            {errorMessage && (
-              <p className={styles.errorDetails}>
-                {errorMessage}
-              </p>
-            )}
+                  {/* Technical Details (expandable) */}
+                  <div className={styles.technicalDetailsContainer}>
+                    <button
+                      onClick={() => setShowTechnicalDetails(!showTechnicalDetails)}
+                      className={styles.technicalDetailsToggle}
+                    >
+                      {showTechnicalDetails ? '▼' : '►'} Technical Details
+                    </button>
+                    {showTechnicalDetails && (
+                      <div className={styles.technicalDetails}>
+                        <code>{parsedError.technical}</code>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )
+            })()}
 
             {/* Action buttons */}
             <div className={styles.buttonContainer}>

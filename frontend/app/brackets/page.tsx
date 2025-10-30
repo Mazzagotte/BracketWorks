@@ -234,6 +234,9 @@ export default function BracketsPage() {
         onClose={handleModalClose}
         onRegenerate={handleRegenerate}
         bracketGenerationPromise={bracketGenerationPromise}
+        tournamentName={selectedTournament?.name}
+        squadName={selectedSquad ? `${selectedSquad.date} - ${selectedSquad.time}` : undefined}
+        playerCount={undefined}
       />
 
       <div style={{ 
@@ -251,7 +254,7 @@ export default function BracketsPage() {
         
         {selectedSquad && (
           <div style={{ marginTop: '0.5rem' }}>
-            <p><strong>Selected Squad:</strong> {selectedSquad.name} - {selectedSquad.time}</p>
+            <p><strong>Selected Squad:</strong> {selectedSquad.date} - {selectedSquad.time}</p>
           </div>
         )}
       </div>
