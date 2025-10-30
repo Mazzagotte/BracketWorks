@@ -1,17 +1,119 @@
 import React, { memo } from 'react';
 
-import { PlayersTableProps } from '../types';
+import { PlayersTableProps, SortableColumn } from '../types';
 import { OptimizedTableRow, OptimizedTableCell } from '../../lib/performance';
+
+// Sortable header component
+const SortableHeader: React.FC<{
+  column: SortableColumn;
+  children: React.ReactNode;
+  sortConfig: { column: SortableColumn | null; direction: 'asc' | 'desc' | null };
+  onSort: (column: SortableColumn) => void;
+}> = ({ column, children, sortConfig, onSort }) => {
+  const isActive = sortConfig.column === column;
+  const direction = isActive ? sortConfig.direction : null;
+  const [isHovered, setIsHovered] = React.useState(false);
+  
+  const getSortIcon = () => {
+    if (!isActive && !isHovered) return null;
+    if (direction === 'asc') return '▲';
+    if (direction === 'desc') return '▼';
+    return '▲▼';
+  };
+
+  const getIconColor = () => {
+    if (isActive) {
+      return direction === 'asc' ? '#3b82f6' : direction === 'desc' ? '#3b82f6' : '#9ca3af';
+    }
+    return isHovered ? '#6b7280' : '#d1d5db';
+  };
+
+  return (
+    <th 
+      style={{ 
+        padding: '12px 16px', 
+        textAlign: 'center', 
+        borderBottom: isActive ? '2px solid #3b82f6' : '1px solid #e5e7eb', 
+        fontWeight: isActive ? '700' : '600', 
+        fontSize: '13px',
+        cursor: 'pointer',
+        userSelect: 'none',
+        backgroundColor: isActive ? '#eff6ff' : isHovered ? '#f8fafc' : 'transparent',
+        transition: 'all 0.2s ease',
+        position: 'relative',
+        color: isActive ? '#1e40af' : '#374151'
+      }}
+      onClick={() => onSort(column)}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      title={`Click to sort by ${children}${isActive ? ` (${direction === 'asc' ? 'ascending' : 'descending'})` : ''}`}
+    >
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        gap: '6px',
+        minHeight: '20px'
+      }}>
+        <span style={{ 
+          fontWeight: 'inherit',
+          letterSpacing: '0.025em'
+        }}>
+          {children}
+        </span>
+        <div style={{ 
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '12px',
+          height: '16px',
+          fontSize: '8px',
+          lineHeight: '4px',
+          color: getIconColor(),
+          transition: 'color 0.2s ease',
+          opacity: isActive || isHovered ? 1 : 0.4,
+          animation: isActive ? 'sortChange 0.3s ease' : 'none'
+        }}>
+          {direction === 'asc' ? (
+            <span style={{ transform: 'translateY(2px)' }}>▲</span>
+          ) : direction === 'desc' ? (
+            <span style={{ transform: 'translateY(-2px)' }}>▼</span>
+          ) : (
+            <>
+              <span style={{ opacity: 0.6 }}>▲</span>
+              <span style={{ opacity: 0.6 }}>▼</span>
+            </>
+          )}
+        </div>
+      </div>
+      {isActive && (
+        <div style={{
+          position: 'absolute',
+          bottom: '-2px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '24px',
+          height: '2px',
+          backgroundColor: '#3b82f6',
+          borderRadius: '1px'
+        }} />
+      )}
+    </th>
+  );
+};
 
 const PlayersTable = memo(({ 
   players, 
   onUpdatePlayer, 
   onDeletePlayer, 
   savingStatus,
-  isDemoMode,
-  entryFee 
+  entryFee,
+  sortConfig,
+  onSort,
+  selectedSquad
 }: PlayersTableProps) => {
-  // Add pulse animation to document head if not already present
+  // Add pulse animation and hide number input spinners
   React.useEffect(() => {
     if (!document.querySelector('#pulse-animation-styles')) {
       const style = document.createElement('style');
@@ -20,6 +122,32 @@ const PlayersTable = memo(({
         @keyframes pulse {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.5; }
+        }
+        
+        @keyframes sortChange {
+          0% { transform: scale(1); }
+          50% { transform: scale(1.1); }
+          100% { transform: scale(1); }
+        }
+        
+        /* Hide number input spinners for cleaner look */
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+        
+        input[type="number"] {
+          -moz-appearance: textfield;
+        }
+        
+        /* Add subtle row hover effect */
+        .players-table-row {
+          transition: background-color 0.15s ease;
+        }
+        
+        .players-table-row:hover {
+          background-color: #f8fafc !important;
         }
       `;
       document.head.appendChild(style);
@@ -89,51 +217,96 @@ const PlayersTable = memo(({
         color: '#6b7280',
         fontSize: '1rem'
       }}>
-        {isDemoMode ? 'No demo players available' : 'No players found. Add some players to get started.'}
+        No players found. Add some players to get started.
       </div>
     );
   }
 
   return (
-    <div style={{ overflowX: 'auto' }}>
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+    <div style={{ 
+      overflowX: 'auto',
+      borderRadius: '8px',
+      border: '1px solid #e2e8f0',
+      backgroundColor: 'white',
+      boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)'
+    }}>
+      <table style={{ 
+        width: '100%', 
+        borderCollapse: 'collapse',
+        borderRadius: '8px',
+        overflow: 'hidden'
+      }}>
         <thead>
-          <tr style={{ backgroundColor: '#f9fafb' }}>
-            <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid #e5e7eb', fontWeight: '600', fontSize: '14px' }}>
+          {selectedSquad && (
+            <tr>
+              <td colSpan={10} style={{ 
+                backgroundColor: 'rgba(79, 140, 255, 0.1)', 
+                color: '#4f8cff',
+                textAlign: 'center',
+                fontSize: '14px',
+                fontWeight: '600',
+                padding: '12px'
+              }}>
+                Showing players for: {selectedSquad.date} — {selectedSquad.time}
+              </td>
+            </tr>
+          )}
+          <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+            <SortableHeader column="name" sortConfig={sortConfig} onSort={onSort}>
               Name
-            </th>
-            <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid #e5e7eb', fontWeight: '600', fontSize: '14px' }}>
+            </SortableHeader>
+            <th style={{ 
+              padding: '12px 16px', 
+              textAlign: 'center', 
+              borderBottom: '1px solid #e5e7eb', 
+              fontWeight: '600', 
+              fontSize: '13px',
+              color: '#374151',
+              letterSpacing: '0.025em'
+            }}>
               USBC
             </th>
-            <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid #e5e7eb', fontWeight: '600', fontSize: '14px' }}>
+            <SortableHeader column="lane" sortConfig={sortConfig} onSort={onSort}>
               Lane
-            </th>
-            <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid #e5e7eb', fontWeight: '600', fontSize: '14px' }}>
+            </SortableHeader>
+            <SortableHeader column="average" sortConfig={sortConfig} onSort={onSort}>
               Average
-            </th>
-            <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid #e5e7eb', fontWeight: '600', fontSize: '14px' }}>
+            </SortableHeader>
+            <SortableHeader column="handicap" sortConfig={sortConfig} onSort={onSort}>
               Handicap Entries
-            </th>
-            <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid #e5e7eb', fontWeight: '600', fontSize: '14px' }}>
+            </SortableHeader>
+            <SortableHeader column="scratch" sortConfig={sortConfig} onSort={onSort}>
               Scratch Entries
-            </th>
-            <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid #e5e7eb', fontWeight: '600', fontSize: '14px' }}>
+            </SortableHeader>
+            <SortableHeader column="division" sortConfig={sortConfig} onSort={onSort}>
               Division
-            </th>
-            <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid #e5e7eb', fontWeight: '600', fontSize: '14px' }}>
+            </SortableHeader>
+            <SortableHeader column="totalCost" sortConfig={sortConfig} onSort={onSort}>
               Total Cost
-            </th>
-            <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid #e5e7eb', fontWeight: '600', fontSize: '14px' }}>
+            </SortableHeader>
+            <SortableHeader column="amountPaid" sortConfig={sortConfig} onSort={onSort}>
               Amount Paid
-            </th>
-            <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid #e5e7eb', fontWeight: '600', fontSize: '14px' }}>
+            </SortableHeader>
+            <th style={{ 
+              padding: '12px 16px', 
+              textAlign: 'center', 
+              borderBottom: '1px solid #e5e7eb', 
+              fontWeight: '600', 
+              fontSize: '13px',
+              color: '#374151',
+              letterSpacing: '0.025em'
+            }}>
               Actions
             </th>
           </tr>
         </thead>
         <tbody>
           {players.map((player) => (
-            <OptimizedTableRow key={player.id}>
+            <OptimizedTableRow 
+              key={player.id} 
+              className="players-table-row"
+              style={{ backgroundColor: 'transparent' }}
+            >
               <OptimizedTableCell style={{ textAlign: 'center', padding: '12px', borderBottom: '1px solid #e5e7eb' }}>
                 <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '4px' }}>
                   <div style={{ position: 'relative' }}>

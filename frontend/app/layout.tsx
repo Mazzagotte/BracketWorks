@@ -20,6 +20,7 @@ import { DevAuthStatus } from './components/DevAuthStatus';
 
 function ClientLayout({ children }: { children: React.ReactNode }) {
   // All hooks must be called before any conditional returns
+  const auth = useAuth(); // Get auth directly
   const headerContext = useHeader();
   const [isLoginPage, setIsLoginPage] = useState(false);
   const [firstName, setFirstName] = useState<string | undefined>(undefined);
@@ -33,7 +34,6 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
     const pathname = window.location.pathname;
     setIsLoginPage(pathname === '/login' || pathname.startsWith('/reset-password'));
     setCurrentPage(pathname.slice(1) || 'dashboard'); // Remove leading slash
-    setFirstName(localStorage.getItem('first_name') || undefined);
     
     // Enhanced mobile detection with better breakpoints
     const checkMobile = () => {
@@ -50,6 +50,33 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  // Update login page detection when authenticated to handle cases where user logs in but hasn't redirected yet
+  useEffect(() => {
+    if (auth.isAuthenticated) {
+      setIsLoginPage(false);
+    }
+  }, [auth.isAuthenticated]);
+
+  // Update firstName whenever auth state changes
+  useEffect(() => {
+    if (auth.isAuthenticated && auth.user) {
+      const storedFirstName = localStorage.getItem('first_name') || auth.user.name || undefined;
+      setFirstName(storedFirstName);
+      logger.info('🔐 Layout: Auth state updated', { 
+        isAuthenticated: auth.isAuthenticated, 
+        hasUser: !!auth.user, 
+        firstName: storedFirstName,
+        userId: auth.user?.id 
+      });
+    } else {
+      setFirstName(undefined);
+      logger.info('🔐 Layout: Auth state cleared', { 
+        isAuthenticated: auth.isAuthenticated, 
+        hasUser: !!auth.user 
+      });
+    }
+  }, [auth.isAuthenticated, auth.user]);
+
   // Additional effect for sidebar management
   useEffect(() => {
     if (isMobile && sidebarOpen) {
@@ -63,21 +90,23 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
     };
   }, [isMobile, sidebarOpen]);
 
-  let user, isAuthenticated;
+  // Simple authentication check - trust the auth context
+  const isUserAuthenticated = mounted && auth.isAuthenticated;
   
-  try {
-    const auth = useAuth();
-    user = auth.user;
-    isAuthenticated = auth.isAuthenticated;
-  } catch (error) {
-    logger.error('Auth context error in ClientLayout:', error);
-    // Return minimal layout during auth initialization
-    return (
-      <div style={{ padding: '20px', textAlign: 'center' }}>
-        <div>Loading application...</div>
-      </div>
-    );
-  }
+  // Debug logging for auth state
+  useEffect(() => {
+    if (mounted) {
+      logger.info('🔍 Layout render - Auth State:', {
+        mounted,
+        'auth.isAuthenticated': auth.isAuthenticated,
+        'auth.user': auth.user,
+        'auth.token': !!auth.token,
+        isUserAuthenticated,
+        isLoginPage,
+        firstName
+      });
+    }
+  }, [mounted, auth.isAuthenticated, auth.user, auth.token, isUserAuthenticated, isLoginPage, firstName]);
 
   // Prevent hydration mismatch by not rendering dynamic content until mounted
   if (!mounted) {
@@ -112,7 +141,7 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
         ) : (
         <>
           {/* Desktop Sidebar - Only show when authenticated */}
-          {!isMobile && (isAuthenticated || (mounted && typeof window !== 'undefined' && localStorage.getItem('token') && localStorage.getItem('user_id'))) && (
+          {!isMobile && isUserAuthenticated && (
             <Sidebar 
               firstName={firstName} 
               isMobile={false}
@@ -123,7 +152,7 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
           )}
 
           {/* Mobile Navigation */}
-          {isMobile && (isAuthenticated || (mounted && typeof window !== 'undefined' && localStorage.getItem('token') && localStorage.getItem('user_id'))) && (
+          {isMobile && isUserAuthenticated && (
             <MobileNav
               isOpen={sidebarOpen}
               onClose={() => setSidebarOpen(false)}
@@ -133,7 +162,7 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
           )}
           
           {/* Enhanced Mobile Header */}
-          {isMobile && (isAuthenticated || (mounted && typeof window !== 'undefined' && localStorage.getItem('token') && localStorage.getItem('user_id'))) && (
+          {isMobile && isUserAuthenticated && (
             <header 
               className="mobile-header"
               style={{
@@ -216,7 +245,7 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
             className="container" 
             style={{ 
               marginLeft: !isMobile ? '260px' : '0',
-              marginTop: isMobile && isAuthenticated ? '60px' : '0',
+              marginTop: isMobile && isUserAuthenticated ? '60px' : '0',
               minHeight: '100vh',
               transition: 'all 0.3s ease',
               background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)'
@@ -224,7 +253,7 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
             suppressHydrationWarning={true}
           >
             {/* Modern Header for authenticated pages */}
-            {mounted && (isAuthenticated || (!isLoginPage && (mounted && typeof window !== 'undefined' && (localStorage.getItem('token') || localStorage.getItem('user_id'))))) && (
+            {mounted && isUserAuthenticated && (
               <ModernHeader 
                 title={headerContext.title}
                 subtitle={headerContext.subtitle}
@@ -239,7 +268,7 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
             <div 
               style={{ 
                 padding: isMobile ? '20px' : '32px',
-                paddingTop: mounted && (isAuthenticated || (!isLoginPage && (mounted && typeof window !== 'undefined' && (localStorage.getItem('token') || localStorage.getItem('user_id'))))) ? '0' : '20px'
+                paddingTop: mounted && isUserAuthenticated ? '0' : '20px'
               }}
               suppressHydrationWarning={true}
             >
@@ -287,12 +316,30 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <AuthProvider>
           <HeaderProvider>
-            <ClientLayout>{children}</ClientLayout>
+            <AuthAwareLayout>{children}</AuthAwareLayout>
           </HeaderProvider>
         </AuthProvider>
       </body>
     </html>
   );
+}
+
+// Separate component that's aware of auth changes
+function AuthAwareLayout({ children }: { children: React.ReactNode }) {
+  const auth = useAuth();
+  const [authKey, setAuthKey] = useState(0);
+  
+  // Force re-render when auth state changes
+  useEffect(() => {
+    setAuthKey(prev => prev + 1);
+    logger.info('🔄 AuthAwareLayout: Auth state changed, forcing re-render', {
+      isAuthenticated: auth.isAuthenticated,
+      hasUser: !!auth.user,
+      authKey: authKey + 1
+    });
+  }, [auth.isAuthenticated, auth.user]);
+  
+  return <ClientLayout key={authKey}>{children}</ClientLayout>;
 }
 
 

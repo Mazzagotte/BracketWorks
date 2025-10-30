@@ -1,311 +1,260 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
-import { Tournament, Squad, Player, BracketData, ScoreData, WinnerData, BracketSettings, ToastMessage } from '../lib/types'
-
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { useAuth } from '../lib/auth-context'
 import { usePageHeader } from '../lib/header-context'
 import { ErrorBoundary } from '../components/ErrorBoundary'
-import { useTournaments, useSquads, usePlayers } from '../hooks/useTournaments'
 import { useBrackets } from '../hooks/useBrackets'
-import { BracketRenderer } from '../components/LazyComponents'
-import { BracketControls, BracketState } from '../components/BracketControls'
-import { MatchEditor } from '../components/MatchEditor'
-import { PageContainer, ContentWrapper } from '../components/UI'
+import { useTournaments, useSquads } from '../hooks/useTournaments'
 import { useToast } from '../components/Toast'
-import { logger } from '../lib/logger';
-
-// Main bracket container component - simplified version using standardized hooks
+import BracketGenerationModal from '../components/BracketGenerationModal'
+import '../styles/bowling-animations.css'
 
 export default function BracketsPage() {
-  // Authentication check - must be at the top
-  const { isAuthenticated, isInitialized } = useAuth();
+  // State for modal and generation
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [bracketGenerationPromise, setBracketGenerationPromise] = useState<Promise<any> | null>(null)
+  
+  // Hooks for data fetching
+  const { generateTournamentBrackets } = useBrackets()
+  const { tournaments, fetchTournaments } = useTournaments()
+  const { squads, fetchSquads } = useSquads()
+  const { addToast } = useToast()
+  
+  // State for selected entities
+  const [selectedTournament, setSelectedTournament] = useState<any>(null)
+  const [selectedSquad, setSelectedSquad] = useState<any>(null)
 
-  // Check if we have tokens in localStorage even if auth context isn't ready
+  // Load tournaments on mount
+  useEffect(() => {
+    fetchTournaments()
+  }, [])
+
+  // Auto-select tournament from localStorage
+  useEffect(() => {
+    if (tournaments.length > 0 && !selectedTournament) {
+      const storedTournamentId = localStorage.getItem('lastTournamentId')
+      console.log('Looking for tournament, storedId:', storedTournamentId, 'available tournaments:', tournaments.length)
+      if (storedTournamentId) {
+        const storedTournament = tournaments.find(t => t.id === parseInt(storedTournamentId))
+        if (storedTournament) {
+          console.log('Selected tournament:', storedTournament)
+          setSelectedTournament(storedTournament)
+          fetchSquads(storedTournament.id)
+        }
+      }
+    }
+  }, [tournaments, selectedTournament])
+
+  // Auto-select squad from localStorage or use first squad
+  useEffect(() => {
+    if (squads.length > 0 && !selectedSquad) {
+      const storedSquadId = localStorage.getItem('selected_squad_id')
+      console.log('Looking for squad, storedId:', storedSquadId, 'available squads:', squads.length)
+      let squadToSelect = null
+      
+      if (storedSquadId) {
+        squadToSelect = squads.find(s => s.id === parseInt(storedSquadId))
+      }
+      
+      // If no stored squad or stored squad not found, select first squad
+      if (!squadToSelect) {
+        squadToSelect = squads[0]
+        console.log('No stored squad, selecting first squad:', squadToSelect)
+      } else {
+        console.log('Selected stored squad:', squadToSelect)
+      }
+      
+      if (squadToSelect) {
+        setSelectedSquad(squadToSelect)
+      }
+    }
+  }, [squads, selectedSquad])
+
+  // Handle generate brackets action
+  const handleGenerateBrackets = useCallback(() => {
+    console.log('Generate Brackets button clicked')
+    console.log('Selected Tournament:', selectedTournament)
+    console.log('Selected Squad:', selectedSquad)
+    
+    // Validation: Check for tournament selection
+    if (!selectedTournament) {
+      addToast({
+        type: 'error',
+        message: 'Please select a tournament first',
+        duration: 5000
+      })
+      return
+    }
+
+    // Validation: Check for squad selection
+    if (!selectedSquad) {
+      addToast({
+        type: 'error',
+        message: 'Please select a squad first',
+        duration: 5000
+      })
+      return
+    }
+
+    console.log('Validation passed, starting generation...')
+    // Start bracket generation
+    startBracketGeneration()
+  }, [selectedTournament, selectedSquad, addToast])
+
+  // Start the bracket generation process
+  const startBracketGeneration = useCallback(() => {
+    console.log('startBracketGeneration called')
+    
+    // Create the promise for bracket generation
+    const generationPromise = generateTournamentBrackets(
+      selectedTournament.id,
+      selectedSquad.id,
+      8, // Default bracket size
+      true // Save to database
+    )
+      .then((result) => {
+        console.log('Bracket generation successful:', result)
+        // Success - toast will be shown by modal
+        addToast({
+          type: 'success',
+          message: 'Brackets generated successfully!',
+          duration: 5000
+        })
+        return result
+      })
+      .catch((error) => {
+        // Error - will be handled by modal
+        console.error('Bracket generation failed:', error)
+        throw error
+      })
+
+    console.log('Setting promise and opening modal')
+    // Set the promise and open modal
+    setBracketGenerationPromise(generationPromise)
+    setIsModalOpen(true)
+  }, [selectedTournament, selectedSquad, generateTournamentBrackets, addToast])
+
+  // Handle modal close
+  const handleModalClose = () => {
+    setIsModalOpen(false)
+    setBracketGenerationPromise(null)
+  }
+
+  // Handle regenerate action from modal
+  const handleRegenerate = useCallback(() => {
+    // Restart the generation process
+    startBracketGeneration()
+  }, [startBracketGeneration])
+
+  // Memoize the Generate Brackets button to prevent infinite re-renders
+  const generateBracketsButton = useMemo(() => (
+    <button
+      onClick={handleGenerateBrackets}
+      style={{
+        backgroundColor: '#f0a500',
+        color: 'white',
+        border: 'none',
+        borderRadius: '8px',
+        padding: '10px 20px',
+        fontSize: '14px',
+        fontWeight: '600',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        transition: 'all 0.2s ease'
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.backgroundColor = '#d4940b'
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.backgroundColor = '#f0a500'
+      }}
+    >
+      Generate Brackets
+    </button>
+  ), [handleGenerateBrackets])
+
+  // Set page header with actions
+  usePageHeader({
+    title: 'Bracket Management',
+    subtitle: 'Create and manage tournament brackets',
+    actions: generateBracketsButton
+  })
+
+  // Authentication check
+  const { isAuthenticated, isInitialized } = useAuth()
+
+  // Check if we have tokens in localStorage
   const hasStoredAuth = typeof window !== 'undefined' && 
     localStorage.getItem('token') && 
-    localStorage.getItem('user_id');
+    localStorage.getItem('user_id')
 
-  // Wait for auth initialization before making decisions
+  // Wait for auth initialization
   if (!isInitialized) {
     return (
       <div style={{ 
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'center', 
-        minHeight: '100vh',
+        minHeight: '200px',
         fontFamily: 'Inter, sans-serif'
       }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ marginBottom: '1rem', fontSize: '1.2rem' }}>🎳</div>
-          <div>Loading bracket management...</div>
+          <div>Loading...</div>
         </div>
       </div>
-    );
+    )
   }
 
-  // Authentication guard - redirect if not logged in (only after initialization)
+  // Authentication guard
   if (!isAuthenticated && !hasStoredAuth) {
     return (
       <div style={{ 
         padding: '2rem', 
         textAlign: 'center',
-        minHeight: '50vh',
+        minHeight: '200px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center'
       }}>
         <div>
-          <div style={{ marginBottom: '1rem', fontSize: '2rem' }}>🔒</div>
           <div>Please log in to access bracket management</div>
         </div>
       </div>
-    );
-  }
-
-  // Show loading if we have stored auth but context isn't ready yet
-  if (!isAuthenticated && hasStoredAuth) {
-    return (
-      <div style={{ 
-        padding: '2rem', 
-        textAlign: 'center',
-        minHeight: '50vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}>
-        <div>
-          <div style={{ marginBottom: '1rem', fontSize: '2rem' }}>🎳</div>
-          <div>Loading bracket management...</div>
-        </div>
-      </div>
-    );
-  }
-
-  // State for selected entities
-  const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null)
-  const [selectedSquad, setSelectedSquad] = useState<Squad | null>(null)
-  const [bracketSize, setBracketSize] = useState(8)
-  const [selectedBracketType, setSelectedBracketType] = useState<'scratch' | 'handicap'>('scratch')
-  const [selectedBracket, setSelectedBracket] = useState<{type: 'scratch' | 'handicap', index: number} | null>(null)
-  const [selectedRound, setSelectedRound] = useState(0)
-  const [playerSearchQuery, setPlayerSearchQuery] = useState('')
-  const [isHydrated, setIsHydrated] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
-  
-  // Match editing state
-  const [selectedMatch, setSelectedMatch] = useState<{
-    bracket_id: string
-    round: number
-    match: number
-  } | null>(null)
-
-  // Use our standardized hooks
-  const { tournaments } = useTournaments()
-  const { squads, fetchSquads } = useSquads(selectedTournament?.id)
-  const { players, fetchPlayers } = usePlayers(selectedTournament?.id, selectedSquad?.id)
-  const { 
-    preview, 
-    loading, 
-    generatePreview, 
-    generateTournamentBrackets, 
-    updateMatchScore,
-    loadSavedBrackets 
-  } = useBrackets()
-
-  const { addToast } = useToast()
-
-  // Set page header
-  usePageHeader({
-    title: 'Tournament Brackets',
-    subtitle: 'Generate and manage tournament brackets',
-  })
-
-  // Hydration and mobile detection
-  useEffect(() => {
-    setIsHydrated(true)
-    loadSavedTournament()
-    
-    const checkMobile = () => setIsMobile(window.innerWidth <= 768)
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
-  }, [])
-
-  // Load saved tournament from localStorage
-  const loadSavedTournament = () => {
-    if (typeof window === 'undefined') return
-    
-    try {
-      const savedTournament = localStorage.getItem('selectedTournament')
-      if (savedTournament) {
-        const tournament = JSON.parse(savedTournament)
-        setSelectedTournament(tournament)
-      }
-    } catch (error) {
-      logger.error('Error loading saved tournament:', error)
-    }
-  }
-
-  // Handle tournament selection
-  const handleTournamentSelect = (tournament: Tournament) => {
-    setSelectedTournament(tournament)
-    if (tournament) {
-      localStorage.setItem('selectedTournament', JSON.stringify(tournament))
-      // Load saved brackets if they exist
-      loadSavedBrackets(tournament.id, selectedSquad?.id)
-    }
-  }
-
-  // Handle squad selection
-  const handleSquadSelect = (squad: Squad) => {
-    setSelectedSquad(squad)
-    if (selectedTournament?.id && squad?.id) {
-      localStorage.setItem(`selectedSquad_${selectedTournament.id}`, squad.id.toString())
-    }
-  }
-
-  // Handle match selection for score editing
-  const handleMatchSelect = (bracketId: string, round: number, match: number) => {
-    setSelectedMatch({ bracket_id: bracketId, round, match })
-  }
-
-  // Handle match update completion
-  const handleMatchUpdate = async () => {
-    // The match was updated, close the editor
-    setSelectedMatch(null)
-    // The useBrackets hook automatically updates the preview
-  }
-
-  // Generate tournament brackets
-  const handleGenerateTournament = async () => {
-    if (!selectedTournament?.id) {
-      addToast({
-        type: 'error',
-        message: 'No tournament selected',
-        duration: 4000
-      })
-      return
-    }
-
-    try {
-      await generateTournamentBrackets(
-        selectedTournament.id,
-        selectedSquad?.id,
-        bracketSize,
-        true
-      )
-    } catch (error) {
-      // Error handling is done in the hook
-    }
-  }
-
-  // Handle preview generation
-  const handleGeneratePreview = async () => {
-    try {
-      await generatePreview(bracketSize)
-    } catch (error) {
-      // Error handling is done in the hook
-    }
-  }
-
-  // Handle match score update
-  const handleScoreUpdate = async (
-    bracketId: string,
-    roundIndex: number,
-    matchIndex: number,
-    scoreA: number,
-    scoreB: number
-  ) => {
-    if (!selectedTournament?.id) return
-
-    try {
-      await updateMatchScore(selectedTournament.id, {
-        bracket_id: bracketId,
-        round_index: roundIndex,
-        match_index: matchIndex,
-        score_a: scoreA,
-        score_b: scoreB
-      }, selectedSquad?.id)
-    } catch (error) {
-      // Error handling is done in the hook
-    }
-  }
-
-  // Refresh all data
-  const refreshData = () => {
-    if (selectedTournament?.id) {
-      fetchSquads(selectedTournament.id)
-      fetchPlayers(selectedTournament.id, selectedSquad?.id)
-    }
-  }
-
-  // Create simplified state object for controls
-  const controlsState: BracketState = {
-    size: bracketSize,
-    preview: preview ? {
-      ...preview,
-      id: selectedTournament?.id || 0,
-      name: selectedTournament?.name || '',
-      players: players || []
-    } : null,
-    loading,
-    tournament: selectedTournament,
-    squads,
-    selectedSquad,
-    players,
-    loadingPlayers: false, // Handled by individual hooks now
-    selectedBracket,
-    selectedRound,
-    selectedBracketType,
-    playerSearchQuery,
-    isHydrated
+    )
   }
 
   return (
     <ErrorBoundary>
-      <PageContainer>
-      <ContentWrapper>
-        {/* Main Controls */}
-        <BracketControls
-          state={controlsState}
-          onSizeChange={setBracketSize}
-          onTournamentSelect={handleTournamentSelect}
-          onSquadSelect={handleSquadSelect}
-          onBracketTypeChange={setSelectedBracketType}
-          onPlayerSearch={setPlayerSearchQuery}
-          onGeneratePreview={handleGeneratePreview}
-          onGenerateTournament={handleGenerateTournament}
-          onRefreshData={refreshData}
-        />
+      {/* Bracket Generation Modal */}
+      <BracketGenerationModal
+        isOpen={isModalOpen}
+        onClose={handleModalClose}
+        onRegenerate={handleRegenerate}
+        bracketGenerationPromise={bracketGenerationPromise}
+      />
 
-        {/* Bracket Display */}
-        <div style={{
-          backgroundColor: '#ffffff',
-          borderRadius: '8px',
-          border: '1px solid #e5e7eb',
-          minHeight: '400px'
-        }}>
-          <BracketRenderer
-            tournamentPreviewData={preview as any}
-            selectedBracketType={selectedBracketType}
-            selectedBracketConfiguration={selectedBracket}
-            selectedRoundNumber={selectedRound}
-            onMatchClick={handleMatchSelect}
-            isMobileDisplay={isMobile}
-          />
-        </div>
-
-        {/* Match Editor Modal */}
-        <MatchEditor
-          selectedMatch={selectedMatch}
-          tournamentId={selectedTournament?.id}
-          squadId={selectedSquad?.id}
-          onMatchUpdate={handleMatchUpdate}
-          onClose={() => setSelectedMatch(null)}
-        />
-      </ContentWrapper>
-    </PageContainer>
+      <div style={{ 
+        padding: '2rem',
+        fontFamily: 'Inter, sans-serif'
+      }}>
+        <h1>Brackets Page</h1>
+        <p>Bracket content will be built here.</p>
+        
+        {selectedTournament && (
+          <div style={{ marginTop: '1rem' }}>
+            <p><strong>Selected Tournament:</strong> {selectedTournament.name}</p>
+          </div>
+        )}
+        
+        {selectedSquad && (
+          <div style={{ marginTop: '0.5rem' }}>
+            <p><strong>Selected Squad:</strong> {selectedSquad.name} - {selectedSquad.time}</p>
+          </div>
+        )}
+      </div>
     </ErrorBoundary>
   )
 }

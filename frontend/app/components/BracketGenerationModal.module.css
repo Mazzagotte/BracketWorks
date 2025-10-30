@@ -1,0 +1,407 @@
+/* ===================================
+   BRACKET GENERATION MODAL STYLES
+   =================================== */
+
+/* Modal Overlay - Dimmed background that blocks interaction */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Modal Card - The white container in the center */
+.modalCard {
+  background-color: white;
+  border-radius: 16px;
+  padding: 3rem;
+  min-width: 400px;
+  max-width: 500px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  text-align: center;
+  animation: slideIn 0.3s ease;
+  position: relative;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* ===================================
+   LOADING PHASE STYLES
+   =================================== */
+
+.loadingContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+/* Bowling Ball Animation Container */
+.animationContainer {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Bowling Ball - Animated */
+.bowlingBall {
+  width: 80px;
+  height: 80px;
+  position: relative;
+  animation: bowlingBallSpin 2s linear infinite;
+}
+
+@keyframes bowlingBallSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Ball Body - Gradient and styling */
+.ballBody {
+  width: 80px;
+  height: 80px;
+  background: radial-gradient(circle at 30% 30%, #4a4a4a, #1a1a1a);
+  border-radius: 50%;
+  border: 3px solid #333;
+  box-shadow: 
+    0 8px 16px rgba(0, 0, 0, 0.3),
+    inset 2px 2px 8px rgba(255, 255, 255, 0.1),
+    inset -2px -2px 8px rgba(0, 0, 0, 0.5);
+}
+
+/* Finger Holes on the Bowling Ball */
+.fingerHole {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background-color: #000;
+  border-radius: 50%;
+  box-shadow: 
+    inset 1px 1px 2px rgba(0, 0, 0, 0.8),
+    0 1px 2px rgba(255, 255, 255, 0.1);
+}
+
+/* Main Message during loading */
+.mainMessage {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Progress Message - Rotating text */
+.progressMessage {
+  font-size: 1rem;
+  color: #6b7280;
+  margin: 0;
+  min-height: 1.5rem;
+  animation: fadeInMessage 0.5s ease;
+  font-family: 'Inter', sans-serif;
+}
+
+@keyframes fadeInMessage {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Auto-close Checkbox Container */
+.checkboxContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  justify-content: center;
+}
+
+.checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #f0a500;
+}
+
+.checkboxLabel {
+  font-size: 0.875rem;
+  color: #4b5563;
+  cursor: pointer;
+  user-select: none;
+  font-family: 'Inter', sans-serif;
+}
+
+/* ===================================
+   SUCCESS PHASE STYLES
+   =================================== */
+
+.successContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  animation: fadeIn 0.5s ease;
+}
+
+/* Success Icon - Green checkmark */
+.successIcon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  font-weight: bold;
+  box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+  animation: successPulse 0.6s ease;
+}
+
+@keyframes successPulse {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.successMessage {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+}
+
+/* ===================================
+   ERROR PHASE STYLES
+   =================================== */
+
+.errorContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  animation: fadeIn 0.5s ease;
+}
+
+/* Error Icon - Red warning */
+.errorIcon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
+  animation: errorShake 0.6s ease;
+}
+
+@keyframes errorShake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-5px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(5px);
+  }
+}
+
+.errorMessage {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+}
+
+.errorSubtext {
+  font-size: 1rem;
+  color: #6b7280;
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+}
+
+.errorDetails {
+  font-size: 0.875rem;
+  color: #ef4444;
+  margin: 0.5rem 0 0 0;
+  padding: 0.75rem;
+  background-color: #fee2e2;
+  border-radius: 8px;
+  border-left: 4px solid #ef4444;
+  font-family: 'Courier New', monospace;
+  text-align: left;
+  max-width: 100%;
+  overflow-wrap: break-word;
+}
+
+/* ===================================
+   BUTTON STYLES
+   =================================== */
+
+.buttonContainer {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.button {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+  min-width: 140px;
+}
+
+.button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.button:active {
+  transform: translateY(0);
+}
+
+/* Primary Button - Golden/Orange */
+.primaryButton {
+  background: linear-gradient(135deg, #f0a500 0%, #e6941a 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(240, 165, 0, 0.3);
+}
+
+.primaryButton:hover {
+  background: linear-gradient(135deg, #e6941a 0%, #d4840a 100%);
+  box-shadow: 0 6px 16px rgba(240, 165, 0, 0.4);
+}
+
+/* Secondary Button - Gray */
+.secondaryButton {
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(107, 114, 128, 0.3);
+}
+
+.secondaryButton:hover {
+  background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+  box-shadow: 0 6px 16px rgba(107, 114, 128, 0.4);
+}
+
+/* ===================================
+   RESPONSIVE DESIGN
+   =================================== */
+
+/* Mobile devices */
+@media (max-width: 640px) {
+  .modalCard {
+    min-width: 90%;
+    max-width: 90%;
+    padding: 2rem 1.5rem;
+  }
+
+  .mainMessage,
+  .successMessage,
+  .errorMessage {
+    font-size: 1.25rem;
+  }
+
+  .progressMessage,
+  .errorSubtext {
+    font-size: 0.875rem;
+  }
+
+  .animationContainer {
+    width: 80px;
+    height: 80px;
+  }
+
+  .bowlingBall,
+  .ballBody {
+    width: 60px;
+    height: 60px;
+  }
+
+  .successIcon,
+  .errorIcon {
+    width: 60px;
+    height: 60px;
+    font-size: 2rem;
+  }
+
+  .buttonContainer {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .button {
+    width: 100%;
+    min-width: unset;
+  }
+
+  .checkboxLabel {
+    font-size: 0.75rem;
+  }
+}
+
+/* Tablet devices */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .modalCard {
+    min-width: 420px;
+  }
+}

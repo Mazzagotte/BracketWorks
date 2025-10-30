@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Tournament, Squad, Player, BracketData, ScoreData, WinnerData, BracketSettings, ToastMessage } from '../lib/types'
+import { SortConfig, SortableScoreColumn } from './types'
+import { SortableHeader } from './components/SortableHeader'
 
 import Link from 'next/link'
 
@@ -109,13 +111,153 @@ export default function ScoresPage() {
   const [isOnline, setIsOnline] = useState(true)
   const [pendingSaves, setPendingSaves] = useState<any[]>([])
   const [isMobile, setIsMobile] = useState(false)
+  
+  // Sorting state
+  const [sortConfig, setSortConfig] = useState<SortConfig>({
+    column: null,
+    direction: null
+  })
 
   // Enhanced UX hooks
   const { addToast } = useToast()
   
-  // Pagination for large player lists
+  // Hide number input spinners for cleaner look
+  useEffect(() => {
+    if (!document.querySelector('#scores-spinner-styles')) {
+      const style = document.createElement('style');
+      style.id = 'scores-spinner-styles';
+      style.textContent = `
+        @keyframes sortChange {
+          0% { transform: scale(1); }
+          50% { transform: scale(1.1); }
+          100% { transform: scale(1); }
+        }
+        
+        /* Hide number input spinners for cleaner look */
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+        
+        input[type="number"] {
+          -moz-appearance: textfield;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  }, []);
+
+  // Sorting functionality
+  const handleSort = useCallback((column: SortableScoreColumn) => {
+    setSortConfig(currentSort => {
+      if (currentSort.column === column) {
+        // Toggle direction: asc -> desc -> null (remove sort)
+        const newDirection = 
+          currentSort.direction === 'asc' ? 'desc' :
+          currentSort.direction === 'desc' ? null : 'asc';
+        return {
+          column: newDirection ? column : null,
+          direction: newDirection
+        };
+      } else {
+        // New column, start with ascending
+        return {
+          column,
+          direction: 'asc'
+        };
+      }
+    });
+  }, []);
+
+  // Sort players based on current sort configuration
+  const sortedPlayers = useMemo(() => {
+    if (!sortConfig.column || !sortConfig.direction) {
+      return players;
+    }
+
+    return [...players].sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+
+      // Handle different column types
+      switch (sortConfig.column) {
+        case 'firstName':
+          aValue = a.firstName?.toLowerCase() || '';
+          bValue = b.firstName?.toLowerCase() || '';
+          break;
+        case 'lastName':
+          aValue = a.lastName?.toLowerCase() || '';
+          bValue = b.lastName?.toLowerCase() || '';
+          break;
+        case 'lane':
+          aValue = a.lane || 0;
+          bValue = b.lane || 0;
+          break;
+        case 'average':
+          aValue = a.average || 0;
+          bValue = b.average || 0;
+          break;
+        case 'game1_scratch':
+          aValue = a.scores?.game1_scratch || 0;
+          bValue = b.scores?.game1_scratch || 0;
+          break;
+        case 'game1_total':
+          aValue = (a.scores?.game1_scratch || 0) + a.handicap;
+          bValue = (b.scores?.game1_scratch || 0) + b.handicap;
+          break;
+        case 'game2_scratch':
+          aValue = a.scores?.game2_scratch || 0;
+          bValue = b.scores?.game2_scratch || 0;
+          break;
+        case 'game2_total':
+          aValue = (a.scores?.game2_scratch || 0) + a.handicap;
+          bValue = (b.scores?.game2_scratch || 0) + b.handicap;
+          break;
+        case 'game3_scratch':
+          aValue = a.scores?.game3_scratch || 0;
+          bValue = b.scores?.game3_scratch || 0;
+          break;
+        case 'game3_total':
+          aValue = (a.scores?.game3_scratch || 0) + a.handicap;
+          bValue = (b.scores?.game3_scratch || 0) + b.handicap;
+          break;
+        case 'totalScratch':
+          aValue = (a.scores?.game1_scratch || 0) + (a.scores?.game2_scratch || 0) + (a.scores?.game3_scratch || 0);
+          bValue = (b.scores?.game1_scratch || 0) + (b.scores?.game2_scratch || 0) + (b.scores?.game3_scratch || 0);
+          break;
+        case 'totalWithHandicap':
+          const aScratch = (a.scores?.game1_scratch || 0) + (a.scores?.game2_scratch || 0) + (a.scores?.game3_scratch || 0);
+          const bScratch = (b.scores?.game1_scratch || 0) + (b.scores?.game2_scratch || 0) + (b.scores?.game3_scratch || 0);
+          aValue = aScratch + (a.handicap * 3);
+          bValue = bScratch + (b.handicap * 3);
+          break;
+        default:
+          aValue = 0;
+          bValue = 0;
+      }
+
+      // Handle numeric values
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        return sortConfig.direction === 'asc' ? aValue - bValue : bValue - aValue;
+      }
+
+      // Handle string values
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        const comparison = aValue.localeCompare(bValue);
+        return sortConfig.direction === 'asc' ? comparison : -comparison;
+      }
+
+      // Fallback comparison
+      if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [players, sortConfig]);
+  
+  // Pagination for large player lists (use sorted players)
   const paginationHook = usePagination({
-    items: players,
+    items: sortedPlayers,
     itemsPerPage: 20
   })
 
@@ -243,10 +385,10 @@ export default function ScoresPage() {
   usePageHeader({
     title: 'Scores',
     subtitle: tournament && selectedSquad 
-      ? `${tournament.name} • ${selectedSquad.name} • ${players.length} players`
+      ? `${tournament.name} • ${selectedSquad.name} • ${sortedPlayers.length} players${sortConfig.column ? ` • Sorted by ${sortConfig.column} (${sortConfig.direction})` : ''}`
       : tournament 
-        ? `${tournament.name} • ${players.length} players`
-        : `${players.length} players`,
+        ? `${tournament.name} • ${sortedPlayers.length} players${sortConfig.column ? ` • Sorted by ${sortConfig.column} (${sortConfig.direction})` : ''}`
+        : `${sortedPlayers.length} players${sortConfig.column ? ` • Sorted by ${sortConfig.column} (${sortConfig.direction})` : ''}`,
     actions: headerActions
   })
 
@@ -889,174 +1031,42 @@ export default function ScoresPage() {
                 backgroundColor: '#f8fafc',
                 borderBottom: '2px solid #e5e7eb'
               }}>
-                <th style={{ 
-                  cursor: 'pointer',
-                  padding: '18px 12px',
-                  textAlign: 'left',
-                  verticalAlign: 'middle',
-                  fontWeight: '700',
-                  color: '#374151',
-                  fontSize: '13px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                  borderBottom: '2px solid #e5e7eb',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  background: 'transparent'
-                }}>First Name</th>
-                <th style={{ 
-                  cursor: 'pointer',
-                  padding: '18px 12px',
-                  textAlign: 'left',
-                  verticalAlign: 'middle',
-                  fontWeight: '700',
-                  color: '#374151',
-                  fontSize: '13px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                  borderBottom: '2px solid #e5e7eb',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  background: 'transparent'
-                }}>Last Name</th>
-                <th style={{ 
-                  cursor: 'pointer',
-                  padding: '18px 12px',
-                  textAlign: 'center',
-                  verticalAlign: 'middle',
-                  fontWeight: '700',
-                  color: '#374151',
-                  fontSize: '13px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                  borderBottom: '2px solid #e5e7eb',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  background: 'transparent'
-                }}>Lane</th>
-                <th style={{ 
-                  cursor: 'pointer',
-                  padding: '18px 12px',
-                  textAlign: 'center',
-                  verticalAlign: 'middle',
-                  fontWeight: '700',
-                  color: '#374151',
-                  fontSize: '13px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                  borderBottom: '2px solid #e5e7eb',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  background: 'transparent'
-                }}>Avg</th>
-                <th style={{ 
-                  cursor: 'pointer',
-                  padding: '18px 12px',
-                  textAlign: 'center',
-                  verticalAlign: 'middle',
-                  fontWeight: '700',
-                  color: '#374151',
-                  fontSize: '13px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                  borderBottom: '2px solid #e5e7eb',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  background: 'transparent'
-                }}>Game 1 Scratch</th>
-                <th style={{ 
-                  cursor: 'pointer',
-                  padding: '18px 12px',
-                  textAlign: 'center',
-                  verticalAlign: 'middle',
-                  fontWeight: '700',
-                  color: '#374151',
-                  fontSize: '13px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                  borderBottom: '2px solid #e5e7eb',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  background: 'transparent'
-                }}>Game 1 Total</th>
-                <th style={{ 
-                  cursor: 'pointer',
-                  padding: '18px 12px',
-                  textAlign: 'center',
-                  verticalAlign: 'middle',
-                  fontWeight: '700',
-                  color: '#374151',
-                  fontSize: '13px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                  borderBottom: '2px solid #e5e7eb',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  background: 'transparent'
-                }}>Game 2 Scratch</th>
-                <th style={{ 
-                  cursor: 'pointer',
-                  padding: '18px 12px',
-                  textAlign: 'center',
-                  verticalAlign: 'middle',
-                  fontWeight: '700',
-                  color: '#374151',
-                  fontSize: '13px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                  borderBottom: '2px solid #e5e7eb',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  background: 'transparent'
-                }}>Game 2 Total</th>
-                <th style={{ 
-                  cursor: 'pointer',
-                  padding: '18px 12px',
-                  textAlign: 'center',
-                  verticalAlign: 'middle',
-                  fontWeight: '700',
-                  color: '#374151',
-                  fontSize: '13px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                  borderBottom: '2px solid #e5e7eb',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  background: 'transparent'
-                }}>Game 3 Scratch</th>
-                <th style={{ 
-                  cursor: 'pointer',
-                  padding: '18px 12px',
-                  textAlign: 'center',
-                  verticalAlign: 'middle',
-                  fontWeight: '700',
-                  color: '#374151',
-                  fontSize: '13px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                  borderBottom: '2px solid #e5e7eb',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  background: 'transparent'
-                }}>Game 3 Total</th>
-                <th style={{ 
-                  cursor: 'pointer',
-                  padding: '18px 12px',
-                  textAlign: 'center',
-                  verticalAlign: 'middle',
-                  fontWeight: '700',
-                  color: '#374151',
-                  fontSize: '13px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                  borderBottom: '2px solid #e5e7eb',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  background: 'transparent'
-                }}>Total Scratch</th>
-                <th style={{ 
-                  cursor: 'pointer',
-                  padding: '18px 12px',
-                  textAlign: 'center',
-                  verticalAlign: 'middle',
-                  fontWeight: '700',
-                  color: '#374151',
-                  fontSize: '13px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                  borderBottom: '2px solid #e5e7eb',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  background: 'transparent'
-                }}>Total</th>
+                <SortableHeader column="firstName" sortConfig={sortConfig} onSort={handleSort} align="left">
+                  First Name
+                </SortableHeader>
+                <SortableHeader column="lastName" sortConfig={sortConfig} onSort={handleSort} align="left">
+                  Last Name
+                </SortableHeader>
+                <SortableHeader column="lane" sortConfig={sortConfig} onSort={handleSort}>
+                  Lane
+                </SortableHeader>
+                <SortableHeader column="average" sortConfig={sortConfig} onSort={handleSort}>
+                  Avg
+                </SortableHeader>
+                <SortableHeader column="game1_scratch" sortConfig={sortConfig} onSort={handleSort}>
+                  Game 1 Scratch
+                </SortableHeader>
+                <SortableHeader column="game1_total" sortConfig={sortConfig} onSort={handleSort}>
+                  Game 1 Total
+                </SortableHeader>
+                <SortableHeader column="game2_scratch" sortConfig={sortConfig} onSort={handleSort}>
+                  Game 2 Scratch
+                </SortableHeader>
+                <SortableHeader column="game2_total" sortConfig={sortConfig} onSort={handleSort}>
+                  Game 2 Total
+                </SortableHeader>
+                <SortableHeader column="game3_scratch" sortConfig={sortConfig} onSort={handleSort}>
+                  Game 3 Scratch
+                </SortableHeader>
+                <SortableHeader column="game3_total" sortConfig={sortConfig} onSort={handleSort}>
+                  Game 3 Total
+                </SortableHeader>
+                <SortableHeader column="totalScratch" sortConfig={sortConfig} onSort={handleSort}>
+                  Total Scratch
+                </SortableHeader>
+                <SortableHeader column="totalWithHandicap" sortConfig={sortConfig} onSort={handleSort}>
+                  Total
+                </SortableHeader>
               </tr>
             </thead>
             <tbody>

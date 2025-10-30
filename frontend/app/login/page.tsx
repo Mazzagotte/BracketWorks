@@ -224,10 +224,14 @@ export default function LoginPage() {
       
       setShowButtonBall(false);
       
+      // Trigger multiple event types to ensure all components update
+      window.dispatchEvent(new Event('auth-state-changed'));
+      window.dispatchEvent(new Event('storage'));
+      
       // Smooth redirect with better UX - use Next.js router to preserve state
       setTimeout(() => {
         router.push('/dashboard');
-      }, 1500);
+      }, 1000);
       
     } catch (err: unknown) {
       const error = err as Error;
