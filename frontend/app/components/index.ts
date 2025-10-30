@@ -19,3 +19,6 @@ export * from './DataManagement';
 // Login Components
 export * from './LoginHeader';
 export * from './LoginLinks';
+
+// Bracket Generation Modal
+export { default as BracketGenerationModal } from './BracketGenerationModal';

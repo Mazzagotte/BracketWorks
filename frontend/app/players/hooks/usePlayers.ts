@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 
 import { Player, Squad } from '../types';
 import { logger } from '../../lib/logger';
-import { API } from '../../lib/api';
+import { API, apiClient } from '../../lib/api';
 
 interface BowlerApiResponse {
   id: number;
@@ -28,26 +28,29 @@ interface UsePlayersOptions {
 export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee }: UsePlayersOptions) {
   const [players, setPlayers] = useState<Player[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isDemoMode, setIsDemoMode] = useState(false);
   const [savingStatus, setSavingStatus] = useState<Record<string, 'idle' | 'saving' | 'success' | 'error'>>({});
 
-  const getDemoPlayers = useCallback(() => {
-    return [
-      { id: 1, firstName: 'John', lastName: 'Doe', usbc: '12345678', average: 180, handicap: 0, scratch: 1, lane: 'A1', division: 'Open', totalCost: (0 + 1) * entryFee, amountPaid: entryFee },
-      { id: 2, firstName: 'Jane', lastName: 'Smith', usbc: '87654321', average: 150, handicap: 2, scratch: 0, lane: 'A2', division: 'Womens', totalCost: (2 + 0) * entryFee, amountPaid: entryFee },
-      { id: 3, firstName: 'Bob', lastName: 'Johnson', usbc: '11111111', average: 200, handicap: 1, scratch: 2, lane: 'B1', division: 'Senior', totalCost: (1 + 2) * entryFee, amountPaid: entryFee * 3 }
-    ];
-  }, [entryFee]);
-
   const loadPlayers = useCallback(async () => {
-    if (!authToken) return;
+    if (!authToken) {
+      setPlayers([]);
+      setIsLoading(false);
+      return;
+    }
+    
+    // Check if there's a tournament loaded
+    const tournamentId = getItem('lastTournamentId');
+    if (!tournamentId) {
+      setPlayers([]);
+      setIsLoading(false);
+      return;
+    }
     
     setIsLoading(true);
     
     try {
       let bowlersUrl = '/api/v1/bowlers';
       if (selectedSquad) {
-        bowlersUrl = `/api/v1/bowlers?squad_id=${selectedSquad}`;
+        bowlersUrl = `/api/v1/bowlers?squad_id=${selectedSquad.id}`;
       }
       
       const response = await fetch(API(bowlersUrl), {
@@ -55,10 +58,9 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
       });
       
       if (!response.ok) {
-        // If API fails, load demo data
-        logger.warn('API not available, loading demo data', { status: response.status });
-        setIsDemoMode(true);
-        setPlayers(getDemoPlayers());
+        // If API fails, show empty players list
+        logger.warn('API not available, showing empty players list', { status: response.status });
+        setPlayers([]);
         return;
       }
 
@@ -85,182 +87,97 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
       setPlayers(transformedData);
     } catch (err) {
       logger.error('Failed to fetch bowlers', { error: err });
-      // Load demo data as fallback
-      setPlayers(getDemoPlayers());
+      // Don't load demo data - just show empty array
+      setPlayers([]);
     } finally {
       setIsLoading(false);
     }
-  }, [selectedSquad, squads, authToken, getDemoPlayers]);
+  }, [selectedSquad, squads, authToken]);
 
   const addPlayer = useCallback(async (newPlayer: Omit<Player, 'id'>) => {
     if (!authToken) return;
 
     try {
-      const response = await fetch(API('/api/v1/bowlers'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${authToken}`
-        },
-        body: JSON.stringify({
-          name: `${newPlayer.firstName} ${newPlayer.lastName}`,
-          usbc: newPlayer.usbc || '',
-          average: newPlayer.average,
-          handicap: newPlayer.handicap,
-          scratch: newPlayer.scratch,
-          lane: newPlayer.lane,
-          division: newPlayer.division,
-          amount_paid: newPlayer.amountPaid,
-          tournament_id: parseInt(getItem('tournament_id') || '1'),
-          squad_id: selectedSquad || null
-        })
-      });
+      const playerData = {
+        name: `${newPlayer.firstName} ${newPlayer.lastName}`,
+        usbc: newPlayer.usbc || '',
+        average: newPlayer.average,
+        handicap: newPlayer.handicap,
+        scratch: newPlayer.scratch,
+        lane: newPlayer.lane,
+        division: newPlayer.division,
+        amount_paid: newPlayer.amountPaid,
+        tournament_id: parseInt(getItem('tournament_id') || getItem('lastTournamentId') || '1'),
+        squad_id: selectedSquad ? selectedSquad.id : null
+      };
 
-      if (response.ok) {
-        const createdPlayer = await response.json();
-        const transformedPlayer = {
-          id: createdPlayer.id,
-          firstName: newPlayer.firstName,
-          lastName: newPlayer.lastName,
-          usbc: newPlayer.usbc || '',
-          average: newPlayer.average,
-          handicap: newPlayer.handicap,
-          scratch: newPlayer.scratch,
-          lane: newPlayer.lane,
-          division: newPlayer.division,
-          totalCost: newPlayer.totalCost,
-          amountPaid: newPlayer.amountPaid
-        };
-        setPlayers(prev => [...prev, transformedPlayer]);
-      } else {
-        const error = await response.text();
-        alert(`Failed to add player: ${error}`);
-      }
-    } catch (err) {
-      logger.error('Failed to add player', { error: err });
-      alert('Failed to add player. Please try again.');
+      console.log('Adding player with data:', playerData);
+      
+      const createdPlayer = await apiClient.post('/api/v1/bowlers', playerData) as BowlerApiResponse;
+      
+      const transformedPlayer = {
+        id: createdPlayer.id,
+        firstName: newPlayer.firstName,
+        lastName: newPlayer.lastName,
+        usbc: newPlayer.usbc || '',
+        average: newPlayer.average,
+        handicap: newPlayer.handicap,
+        scratch: newPlayer.scratch,
+        lane: newPlayer.lane,
+        division: newPlayer.division,
+        totalCost: newPlayer.totalCost,
+        amountPaid: newPlayer.amountPaid
+      };
+      setPlayers(prev => [...prev, transformedPlayer]);
+    } catch (err: any) {
+      console.error('Failed to add player:', err);
+      alert(`Failed to add player: ${err.message || 'Unknown error'}`);
     }
   }, [authToken, selectedSquad, getItem]);
 
-  const updatePlayer = useCallback(async (playerId: number, field: string, value: string | number) => {
-    console.log('updatePlayer called:', { playerId, field, value, authToken: !!authToken, isDemoMode });
-    
-    const saveKey = `${playerId}-${field}`;
-    setSavingStatus(prev => ({ ...prev, [saveKey]: 'saving' }));
+  const updatePlayer = useCallback(async (id: number, updates: Partial<Player>) => {
+    // Update local state immediately for better UX
+    setPlayers(prevPlayers => 
+      prevPlayers.map(player => 
+        player.id === id ? { ...player, ...updates } : player
+      )
+    );
 
-    // If in demo mode, just update local state
-    if (isDemoMode || !authToken) {
-      console.log('Demo mode or no auth - updating local state only');
-      
-      // Update local state with potential total cost recalculation
-      setPlayers(prev => prev.map(player => {
-        if (player.id === playerId) {
-          const updatedPlayer = { ...player, [field]: value };
-          
-          // Recalculate total cost if handicap or scratch changed
-          if (field === 'handicap' || field === 'scratch') {
-            updatedPlayer.totalCost = (updatedPlayer.handicap + updatedPlayer.scratch) * entryFee;
-          }
-          
-          return updatedPlayer;
-        }
-        return player;
-      }));
-
-      setSavingStatus(prev => ({ ...prev, [saveKey]: 'success' }));
-
-      // Clear success status after 2 seconds
-      setTimeout(() => {
-        setSavingStatus(prev => {
-          const newStatus = { ...prev };
-          delete newStatus[saveKey];
-          return newStatus;
-        });
-      }, 2000);
-      
-      return;
-    }
-
-    // Optimistic update
-    const updatedPlayer = players.find(pItem => pItem.id === playerId);
-    if (!updatedPlayer) {
-      console.log('Player not found:', playerId);
-      setSavingStatus(prev => ({ ...prev, [saveKey]: 'error' }));
+    if (!authToken) {
+      console.log('No auth - updating local state only');
       return;
     }
 
     try {
-      console.log('Making API call to update player:', API(`/api/v1/bowlers/${playerId}`));
+      setSavingStatus(prev => ({ ...prev, [id]: 'saving' }));
       
-      const response = await fetch(API(`/api/v1/bowlers/${playerId}`), {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${authToken}`
-        },
-        body: JSON.stringify({
-          [field]: value,
-          tournament_id: parseInt(getItem('tournament_id') || '1')
-        })
-      });
+      const playerData = {
+        name: `${updates.firstName || ''} ${updates.lastName || ''}`.trim(),
+        usbc: updates.usbc,
+        average: updates.average,
+        handicap: updates.handicap,
+        scratch: updates.scratch,
+        lane: updates.lane,
+        division: updates.division,
+        amount_paid: updates.amountPaid,
+        squad_id: selectedSquad ? selectedSquad.id : null
+      };
 
-      console.log('API response:', response.status, response.ok);
-
-      if (response.ok) {
-        // Update local state with potential total cost recalculation
-        setPlayers(prev => prev.map(player => {
-          if (player.id === playerId) {
-            const updatedPlayer = { ...player, [field]: value };
-            
-            // Recalculate total cost if handicap or scratch changed
-            if (field === 'handicap' || field === 'scratch') {
-              updatedPlayer.totalCost = (updatedPlayer.handicap + updatedPlayer.scratch) * entryFee;
-            }
-            
-            return updatedPlayer;
-          }
-          return player;
-        }));
-
-        setSavingStatus(prev => ({ ...prev, [saveKey]: 'success' }));
-
-        // Clear success status after 2 seconds
-        setTimeout(() => {
-          setSavingStatus(prev => {
-            const newStatus = { ...prev };
-            delete newStatus[saveKey];
-            return newStatus;
-          });
-        }, 2000);
-      } else {
-        const errorText = await response.text();
-        console.log('API error response:', errorText);
-        setSavingStatus(prev => ({ ...prev, [saveKey]: 'error' }));
-        
-        // Clear error status after 3 seconds
-        setTimeout(() => {
-          setSavingStatus(prev => {
-            const newStatus = { ...prev };
-            delete newStatus[saveKey];
-            return newStatus;
-          });
-        }, 3000);
-      }
-    } catch (err) {
-      console.error('Failed to update player:', err);
-      logger.error('Failed to update player', { error: err, playerId, field });
-      setSavingStatus(prev => ({ ...prev, [saveKey]: 'error' }));
+      await apiClient.put(`/api/v1/bowlers/${id}`, playerData);
+      setSavingStatus(prev => ({ ...prev, [id]: 'success' }));
       
-      // Clear error status after 3 seconds
+      // Clear success status after a delay
       setTimeout(() => {
-        setSavingStatus(prev => {
-          const newStatus = { ...prev };
-          delete newStatus[saveKey];
-          return newStatus;
-        });
-      }, 3000);
+        setSavingStatus(prev => ({ ...prev, [id]: 'idle' }));
+      }, 2000);
+    } catch (err: any) {
+      console.error('Failed to update player:', err);
+      setSavingStatus(prev => ({ ...prev, [id]: 'error' }));
+      // Revert the local change on error
+      loadPlayers();
+      alert(`Failed to update player: ${err.message || 'Unknown error'}`);
     }
-  }, [authToken, players, getItem, isDemoMode, entryFee]);
+  }, [authToken, selectedSquad, loadPlayers]);
 
   const deletePlayer = useCallback(async (playerId: number) => {
     if (!authToken) return;
@@ -268,20 +185,11 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
     if (!confirm('Are you sure you want to delete this player?')) return;
 
     try {
-      const response = await fetch(API(`/api/v1/bowlers/${playerId}`), {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${authToken}` }
-      });
-
-      if (response.ok) {
-        setPlayers(prev => prev.filter(pItem => pItem.id !== playerId));
-      } else {
-        const error = await response.text();
-        alert(`Failed to delete player: ${error}`);
-      }
-    } catch (err) {
-      logger.error('Failed to delete player', { error: err, playerId });
-      alert('Failed to delete player. Please try again.');
+      await apiClient.delete(`/api/v1/bowlers/${playerId}`);
+      setPlayers(prev => prev.filter(pItem => pItem.id !== playerId));
+    } catch (err: any) {
+      console.error('Failed to delete player:', err);
+      alert(`Failed to delete player: ${err.message || 'Unknown error'}`);
     }
   }, [authToken]);
 
@@ -292,7 +200,6 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
   return {
     players,
     isLoading,
-    isDemoMode,
     savingStatus,
     addPlayer,
     updatePlayer,

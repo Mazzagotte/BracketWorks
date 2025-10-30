@@ -800,37 +800,91 @@ export default function TournamentDashboard() {
   // Set up page header with action buttons
   const headerActions = useMemo(() => (
     <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-      <EnhancedButton
+      <button
         onClick={() => {
           setCreateMode(true);
           setModalOpen(true);
         }}
-        variant="primary"
-        size="sm"
+        style={{
+          backgroundColor: '#f0a500',
+          color: 'white',
+          border: 'none',
+          borderRadius: '8px',
+          padding: '10px 20px',
+          fontSize: '14px',
+          fontWeight: '600',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          transition: 'all 0.2s ease'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = '#d4940b'
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = '#f0a500'
+        }}
       >
         + New Tournament
-      </EnhancedButton>
+      </button>
       
       {tournament && (
-        <EnhancedButton
+        <button
           onClick={() => {
             setCreateMode(false);
             setModalOpen(true);
           }}
-          variant="secondary"
-          size="sm"
+          style={{
+            backgroundColor: '#f0a500',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            padding: '10px 20px',
+            fontSize: '14px',
+            fontWeight: '600',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            transition: 'all 0.2s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#d4940b'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = '#f0a500'
+          }}
         >
           Edit Tournament
-        </EnhancedButton>
+        </button>
       )}
       
-      <EnhancedButton
+      <button
         onClick={() => setLoadModalOpen(true)}
-        variant="secondary" 
-        size="sm"
+        style={{
+          backgroundColor: '#f0a500',
+          color: 'white',
+          border: 'none',
+          borderRadius: '8px',
+          padding: '10px 20px',
+          fontSize: '14px',
+          fontWeight: '600',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          transition: 'all 0.2s ease'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = '#d4940b'
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = '#f0a500'
+        }}
       >
         Load Tournament
-      </EnhancedButton>
+      </button>
     </div>
   ), [tournament]);
 

@@ -92,7 +92,7 @@ export function useBrackets() {
     try {
       const squadParam = squadId ? `&squad_id=${squadId}` : ''
       const data = await apiClient.get<BracketPreview>(
-        `/api/v1/brackets/generate-multiple?tournament_id=${tournamentId}${squadParam}&bracket_size=${bracketSize}&save_to_db=${saveToDb}`
+        `/api/v1/brackets/generate-multiple?tournament_id=${tournamentId}${squadParam}`
       )
       setPreview(data)
       

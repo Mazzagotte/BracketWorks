@@ -15,11 +15,18 @@ class BracketValidation(BaseModel):
         return size
     
     @staticmethod
-    def validate_tournament_id(tournament_id: int) -> int:
-        """Validate tournament ID"""
-        if not isinstance(tournament_id, int) or tournament_id <= 0:
+    def validate_tournament_id(tournament_id) -> int:
+        """Validate tournament ID - accepts string or int"""
+        # Convert to int if it's a string
+        try:
+            tournament_id_int = int(tournament_id)
+        except (ValueError, TypeError):
             raise ValueError("Tournament ID must be a positive integer")
-        return tournament_id
+        
+        if tournament_id_int <= 0:
+            raise ValueError("Tournament ID must be a positive integer")
+        
+        return tournament_id_int
     
     @staticmethod
     def sanitize_player_name(name: str) -> str:

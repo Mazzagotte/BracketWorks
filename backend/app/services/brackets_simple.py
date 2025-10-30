@@ -19,26 +19,30 @@ def generate_bracket_preview(size: int = 8) -> Dict[str, Any]:
         # Create matches for this round
         for i in range(0, current_size, 2):
             if round_num == 1:
-                # First round - use seed numbers
+                # First round - use seed numbers and placeholder names
                 matches.append({
                     "seedA": i + 1,
                     "seedB": i + 2,
                     "playerA": f"Player {i + 1}",
                     "playerB": f"Player {i + 2}",
-                    "scoreA": None,
-                    "scoreB": None,
+                    "qualifying_score_a": None,
+                    "qualifying_score_b": None,
+                    "match_score_a": None,
+                    "match_score_b": None,
                     "winner": None,
                     "status": "pending"
                 })
             else:
-                # Later rounds - placeholders
+                # Later rounds - TBD placeholders
                 matches.append({
                     "seedA": None,
                     "seedB": None,
                     "playerA": f"TBD",
-                    "playerB": f"TBD", 
-                    "scoreA": None,
-                    "scoreB": None,
+                    "playerB": f"TBD",
+                    "qualifying_score_a": None,
+                    "qualifying_score_b": None,
+                    "match_score_a": None,
+                    "match_score_b": None,
                     "winner": None,
                     "status": "pending"
                 })
@@ -63,91 +67,197 @@ def generate_tournament_brackets(
     bracket_size: int = 8
 ) -> Dict[str, Any]:
     """
-    Generate tournament brackets from actual player data.
-    Simplified version that focuses on readability.
+    Generate tournament brackets from actual player data with validation.
+    
+    Args:
+        players: List of player dictionaries with scores
+        bracket_size: Number of players per bracket (4, 8, 16, 32, 64, or 128)
+    
+    Returns:
+        Dictionary containing:
+        - scratch_brackets: List of generated scratch brackets
+        - handicap_brackets: List of generated handicap brackets
+        - summary: Statistics about bracket generation
+        - validation_warnings: Information about skipped players (if any)
     """
     if not players:
         return {
             "scratch_brackets": [],
             "handicap_brackets": [],
-            "summary": create_empty_summary()
+            "summary": create_empty_summary(),
+            "validation_warnings": {
+                "skipped_scratch_players": [],
+                "skipped_handicap_players": []
+            }
         }
     
-    # Separate players by bracket type entries
-    scratch_entries = create_scratch_entries(players)
-    handicap_entries = create_handicap_entries(players)
+    # Separate and validate players by bracket type entries
+    scratch_entries, skipped_scratch_players = create_scratch_entries(players)
+    handicap_entries, skipped_handicap_players = create_handicap_entries(players)
     
-    # Generate brackets
+    # Generate brackets from validated entries
     scratch_brackets = create_brackets(scratch_entries, bracket_size, "Scratch")
     handicap_brackets = create_brackets(handicap_entries, bracket_size, "Handicap")
     
-    # Create summary
+    # Create summary statistics
     summary = create_bracket_summary(scratch_entries, handicap_entries, scratch_brackets, handicap_brackets)
     
     return {
         "scratch_brackets": scratch_brackets,
         "handicap_brackets": handicap_brackets,
         "summary": summary,
-        "bracket_size": bracket_size
+        "bracket_size": bracket_size,
+        "validation_warnings": {
+            "skipped_scratch_players": skipped_scratch_players,
+            "skipped_handicap_players": skipped_handicap_players,
+            "total_skipped": len(skipped_scratch_players) + len(skipped_handicap_players)
+        }
     }
 
 
-def create_scratch_entries(players: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """Create scratch entries from player data"""
-    entries = []
+def create_scratch_entries(players: List[Dict[str, Any]]) -> tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    """Create scratch entries from player data with validation
+    
+    Returns:
+        tuple: (valid_entries, skipped_players)
+        - valid_entries: List of entries that passed validation
+        - skipped_players: List of players that were skipped with reasons
+    """
+    valid_entries = []
+    skipped_players = []
     
     for player in players:
-        # Get number of scratch brackets this player wants
+        # Get number of scratch brackets this player wants to enter
         scratch_count = player.get('scratch', 0)
         
         if scratch_count > 0:
-            # Calculate scratch total (sum of scratch games)
-            total_score = sum([
-                player.get('scores', {}).get('game1_scratch', 0),
-                player.get('scores', {}).get('game2_scratch', 0),
-                player.get('scores', {}).get('game3_scratch', 0)
-            ])
+            # Get individual game scores
+            scores_dict = player.get('scores', {})
+            game1_scratch = scores_dict.get('game1_scratch')
+            game2_scratch = scores_dict.get('game2_scratch')
+            game3_scratch = scores_dict.get('game3_scratch')
             
-            # Create entries for each bracket this player wants
-            for i in range(scratch_count):
-                entries.append({
+            player_full_name = f"{player.get('firstName', '')} {player.get('lastName', '')}".strip()
+            
+            # VALIDATION 1: Check if all scores are present
+            if game1_scratch is None or game2_scratch is None or game3_scratch is None:
+                missing_games = []
+                if game1_scratch is None:
+                    missing_games.append(1)
+                if game2_scratch is None:
+                    missing_games.append(2)
+                if game3_scratch is None:
+                    missing_games.append(3)
+                
+                skipped_players.append({
+                    'player_name': player_full_name,
                     'player_id': player.get('id'),
-                    'name': f"{player.get('firstName', '')} {player.get('lastName', '')}".strip(),
-                    'total_score': total_score,
+                    'bracket_type': 'scratch',
+                    'reason': 'Missing scratch game scores',
+                    'missing_games': missing_games
+                })
+                continue  # Skip this player
+            
+            # VALIDATION 2: Check if scores are within valid range (0-300)
+            if not (0 <= game1_scratch <= 300 and 
+                    0 <= game2_scratch <= 300 and 
+                    0 <= game3_scratch <= 300):
+                skipped_players.append({
+                    'player_name': player_full_name,
+                    'player_id': player.get('id'),
+                    'bracket_type': 'scratch',
+                    'reason': 'Invalid scratch score values (must be between 0 and 300)',
+                    'scores': [game1_scratch, game2_scratch, game3_scratch]
+                })
+                continue  # Skip this player
+            
+            # All validations passed - calculate total score
+            total_qualifying_score = game1_scratch + game2_scratch + game3_scratch
+            
+            # Create entries for each bracket this player wants to enter
+            for entry_num in range(scratch_count):
+                valid_entries.append({
+                    'player_id': player.get('id'),
+                    'name': player_full_name,
+                    'total_score': total_qualifying_score,
                     'average': player.get('average', 0),
-                    'entry_number': i + 1  # Track which entry this is for the player
+                    'entry_number': entry_num + 1  # Track which entry (1, 2, 3, etc.)
                 })
     
-    return entries
+    return valid_entries, skipped_players
 
 
-def create_handicap_entries(players: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """Create handicap entries from player data"""
-    entries = []
+def create_handicap_entries(players: List[Dict[str, Any]]) -> tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    """Create handicap entries from player data with validation
+    
+    Returns:
+        tuple: (valid_entries, skipped_players)
+        - valid_entries: List of entries that passed validation
+        - skipped_players: List of players that were skipped with reasons
+    """
+    valid_entries = []
+    skipped_players = []
     
     for player in players:
-        # Get number of handicap brackets this player wants
+        # Get number of handicap brackets this player wants to enter
         handicap_count = player.get('handicap', 0)
         
         if handicap_count > 0:
-            # Calculate handicap total (sum of total games with handicap)
-            total_score = sum([
-                player.get('scores', {}).get('game1_total', 0),
-                player.get('scores', {}).get('game2_total', 0),
-                player.get('scores', {}).get('game3_total', 0)
-            ])
+            # Get individual game scores (with handicap included)
+            scores_dict = player.get('scores', {})
+            game1_total = scores_dict.get('game1_total')
+            game2_total = scores_dict.get('game2_total')
+            game3_total = scores_dict.get('game3_total')
             
-            # Create entries for each bracket this player wants
-            for i in range(handicap_count):
-                entries.append({
+            player_full_name = f"{player.get('firstName', '')} {player.get('lastName', '')}".strip()
+            
+            # VALIDATION 1: Check if all scores are present
+            if game1_total is None or game2_total is None or game3_total is None:
+                missing_games = []
+                if game1_total is None:
+                    missing_games.append(1)
+                if game2_total is None:
+                    missing_games.append(2)
+                if game3_total is None:
+                    missing_games.append(3)
+                
+                skipped_players.append({
+                    'player_name': player_full_name,
                     'player_id': player.get('id'),
-                    'name': f"{player.get('firstName', '')} {player.get('lastName', '')}".strip(),
-                    'total_score': total_score,
+                    'bracket_type': 'handicap',
+                    'reason': 'Missing handicap game scores',
+                    'missing_games': missing_games
+                })
+                continue  # Skip this player
+            
+            # VALIDATION 2: Check if scores are within valid range (0-300)
+            # Note: Handicap scores can theoretically exceed 300, but we cap at 300 for safety
+            if not (0 <= game1_total <= 300 and 
+                    0 <= game2_total <= 300 and 
+                    0 <= game3_total <= 300):
+                skipped_players.append({
+                    'player_name': player_full_name,
+                    'player_id': player.get('id'),
+                    'bracket_type': 'handicap',
+                    'reason': 'Invalid handicap score values (must be between 0 and 300)',
+                    'scores': [game1_total, game2_total, game3_total]
+                })
+                continue  # Skip this player
+            
+            # All validations passed - calculate total score
+            total_qualifying_score = game1_total + game2_total + game3_total
+            
+            # Create entries for each bracket this player wants to enter
+            for entry_num in range(handicap_count):
+                valid_entries.append({
+                    'player_id': player.get('id'),
+                    'name': player_full_name,
+                    'total_score': total_qualifying_score,
                     'average': player.get('average', 0),
-                    'entry_number': i + 1  # Track which entry this is for the player
+                    'entry_number': entry_num + 1  # Track which entry (1, 2, 3, etc.)
                 })
     
-    return entries
+    return valid_entries, skipped_players
 
 
 def create_brackets(entries: List[Dict[str, Any]], bracket_size: int, bracket_type: str) -> List[Dict[str, Any]]:
@@ -155,7 +265,9 @@ def create_brackets(entries: List[Dict[str, Any]], bracket_size: int, bracket_ty
     if not entries:
         return []
     
-    # Randomly shuffle entries instead of sorting by score
+    # SINGLE RANDOMIZATION POINT: Shuffle all entries once here
+    # Players are then distributed sequentially into brackets
+    # This ensures fairness while avoiding unnecessary re-shuffling
     randomized_entries = entries.copy()  # Don't modify original list
     random.shuffle(randomized_entries)
     
@@ -164,11 +276,11 @@ def create_brackets(entries: List[Dict[str, Any]], bracket_size: int, bracket_ty
     
     # Create brackets while we have enough players
     while len(randomized_entries) >= bracket_size:
-        # Take next group of randomly ordered players
+        # Take next group of randomly ordered players (already shuffled above)
         bracket_players = randomized_entries[:bracket_size]
         randomized_entries = randomized_entries[bracket_size:]
         
-        # Create the bracket
+        # Create the bracket (players arrive already randomized)
         bracket = create_single_bracket(bracket_players, f"{bracket_type} Bracket {bracket_num}")
         brackets.append(bracket)
         bracket_num += 1
@@ -177,17 +289,19 @@ def create_brackets(entries: List[Dict[str, Any]], bracket_size: int, bracket_ty
 
 
 def create_single_bracket(players: List[Dict[str, Any]], title: str) -> Dict[str, Any]:
-    """Create a single bracket from a list of players with random seeding"""
+    """Create a single bracket from a list of players (already randomized)
+    
+    Players arrive already randomized from create_brackets(), so we assign
+    sequential seeds (1, 2, 3, ...) in the order received. No additional
+    shuffling is needed here.
+    """
     size = len(players)
     
-    # Randomly shuffle players for random seeding
-    shuffled_players = players.copy()
-    random.shuffle(shuffled_players)
+    # Players are already randomized - just assign seeds sequentially
+    # Seed 1 vs Seed 2, Seed 3 vs Seed 4, etc.
+    seeded_players = [(i + 1, player) for i, player in enumerate(players)]
     
-    # Assign sequential seeds to randomly ordered players
-    seeded_players = [(i + 1, player) for i, player in enumerate(shuffled_players)]
-    
-    # Create initial matches with random pairings
+    # Create initial matches with player pairings
     first_round_matches = []
     for i in range(0, size, 2):
         seed_a, player_a = seeded_players[i]
@@ -198,10 +312,14 @@ def create_single_bracket(players: List[Dict[str, Any]], title: str) -> Dict[str
             "seedB": seed_b,
             "playerA": player_a['name'],
             "playerB": player_b['name'],
-            "scoreA": player_a['total_score'],  # Show qualifying score for reference
-            "scoreB": player_b['total_score'],  # Show qualifying score for reference
+            # Qualifying scores (from games 1-3) shown for reference only
+            "qualifying_score_a": player_a['total_score'],
+            "qualifying_score_b": player_b['total_score'],
+            # Actual match scores (to be entered during tournament)
+            "match_score_a": None,
+            "match_score_b": None,
             "winner": None,     # No predetermined winner
-            "status": "pending" # All matches start as pending
+            "status": "pending" # Match status: pending, in_progress, completed, tied
         })
     
     # Build all rounds
@@ -219,7 +337,7 @@ def create_single_bracket(players: List[Dict[str, Any]], title: str) -> Dict[str
         if len(current_matches) == 1:
             break
             
-        # Create next round with TBD players (since first round is now pending)
+        # Create next round with TBD players (to be filled as winners advance)
         next_matches = []
         for i in range(0, len(current_matches), 2):
             if i + 1 < len(current_matches):
@@ -228,8 +346,10 @@ def create_single_bracket(players: List[Dict[str, Any]], title: str) -> Dict[str
                     "seedB": None,
                     "playerA": "TBD",
                     "playerB": "TBD",
-                    "scoreA": None,
-                    "scoreB": None,
+                    "qualifying_score_a": None,
+                    "qualifying_score_b": None,
+                    "match_score_a": None,
+                    "match_score_b": None,
                     "winner": None,
                     "status": "pending"
                 })
@@ -303,7 +423,13 @@ def update_match_score(
     score_a: int,
     score_b: int
 ) -> Dict[str, Any]:
-    """Update a match score and advance winners automatically"""
+    """Update a match score and advance winners automatically
+    
+    Handles three scenarios:
+    1. Player A wins (score_a > score_b) - advances Player A
+    2. Player B wins (score_b > score_a) - advances Player B
+    3. Tie (score_a == score_b) - marks as tied, requires manual resolution
+    """
     
     # Find the bracket and update the match
     if bracket_id.startswith('scratch_'):
@@ -316,10 +442,22 @@ def update_match_score(
         # Single bracket case
         if 'rounds' in brackets_data:
             match = brackets_data['rounds'][round_index]['matches'][match_index]
-            match['scoreA'] = score_a
-            match['scoreB'] = score_b
-            match['winner'] = 'A' if score_a > score_b else 'B'
-            match['status'] = 'completed'
+            match['match_score_a'] = score_a
+            match['match_score_b'] = score_b
+            
+            # Check for winner or tie
+            if score_a > score_b:
+                match['winner'] = 'A'
+                match['status'] = 'completed'
+            elif score_b > score_a:
+                match['winner'] = 'B'
+                match['status'] = 'completed'
+            else:
+                # TIE - Requires manual tiebreaker resolution
+                match['winner'] = None
+                match['status'] = 'tied'
+                match['tie_note'] = 'Scores are tied. A tiebreaker (rolloff or coin flip) is required to determine the winner.'
+                
         return brackets_data
     
     # Multiple brackets case
@@ -331,13 +469,25 @@ def update_match_score(
             match_index < len(bracket['rounds'][round_index]['matches'])):
             
             match = bracket['rounds'][round_index]['matches'][match_index]
-            match['scoreA'] = score_a
-            match['scoreB'] = score_b
-            match['winner'] = 'A' if score_a > score_b else 'B'
-            match['status'] = 'completed'
+            match['match_score_a'] = score_a
+            match['match_score_b'] = score_b
             
-            # Auto-advance winner to next round
-            advance_winner_to_next_round(bracket, round_index, match_index, match['winner'])
+            # Determine winner or tie
+            if score_a > score_b:
+                match['winner'] = 'A'
+                match['status'] = 'completed'
+                # Auto-advance winner to next round
+                advance_winner_to_next_round(bracket, round_index, match_index, match['winner'])
+            elif score_b > score_a:
+                match['winner'] = 'B'
+                match['status'] = 'completed'
+                # Auto-advance winner to next round
+                advance_winner_to_next_round(bracket, round_index, match_index, match['winner'])
+            else:
+                # TIE - Do NOT advance anyone, requires manual resolution
+                match['winner'] = None
+                match['status'] = 'tied'
+                match['tie_note'] = 'Scores are tied. A tiebreaker (rolloff or coin flip) is required to determine the winner.'
     
     return brackets_data
 
@@ -363,3 +513,152 @@ def advance_winner_to_next_round(bracket: Dict[str, Any], round_index: int, matc
             next_match['playerA'] = winner_name
         else:
             next_match['playerB'] = winner_name
+
+
+def validate_bracket_structure(bracket: Dict[str, Any]) -> List[str]:
+    """Validate a single bracket for logical errors and structural integrity
+    
+    Checks:
+    1. Bracket has rounds structure
+    2. First round has correct number of matches for bracket size
+    3. Each subsequent round has half the matches of the previous round
+    4. Final round has exactly 1 match
+    5. All first-round matches have player names assigned
+    
+    Args:
+        bracket: A single bracket dictionary
+        
+    Returns:
+        List of error messages (empty list if no errors)
+    """
+    validation_errors = []
+    
+    # Check 1: Bracket has rounds structure
+    if not bracket.get('rounds'):
+        validation_errors.append("Bracket is missing 'rounds' structure")
+        return validation_errors  # Can't continue validation without rounds
+    
+    rounds = bracket['rounds']
+    
+    if len(rounds) == 0:
+        validation_errors.append("Bracket has zero rounds")
+        return validation_errors
+    
+    # Check 2: First round has correct number of matches
+    first_round = rounds[0]
+    if 'matches' not in first_round:
+        validation_errors.append("First round is missing 'matches' structure")
+        return validation_errors
+    
+    first_round_match_count = len(first_round['matches'])
+    
+    # Bracket size should be double the first round matches
+    # e.g., 8-player bracket = 4 first-round matches
+    inferred_bracket_size = first_round_match_count * 2
+    
+    # Check 3: Each round has half the matches of the previous round
+    for round_index in range(1, len(rounds)):
+        previous_round = rounds[round_index - 1]
+        current_round = rounds[round_index]
+        
+        if 'matches' not in current_round:
+            validation_errors.append(f"Round {round_index + 1} is missing 'matches' structure")
+            continue
+        
+        previous_match_count = len(previous_round['matches'])
+        current_match_count = len(current_round['matches'])
+        expected_match_count = previous_match_count // 2
+        
+        if current_match_count != expected_match_count:
+            validation_errors.append(
+                f"Round {round_index + 1} should have {expected_match_count} matches "
+                f"(half of previous round's {previous_match_count}), but has {current_match_count}"
+            )
+    
+    # Check 4: Final round has exactly 1 match
+    final_round = rounds[-1]
+    if 'matches' in final_round:
+        final_match_count = len(final_round['matches'])
+        if final_match_count != 1:
+            validation_errors.append(
+                f"Final round should have exactly 1 match, but has {final_match_count}"
+            )
+    
+    # Check 5: All first-round matches have player names assigned
+    for match_index, match in enumerate(first_round['matches']):
+        player_a_name = match.get('playerA')
+        player_b_name = match.get('playerB')
+        
+        if not player_a_name or player_a_name == 'TBD':
+            validation_errors.append(
+                f"First round match {match_index + 1} is missing Player A name"
+            )
+        
+        if not player_b_name or player_b_name == 'TBD':
+            validation_errors.append(
+                f"First round match {match_index + 1} is missing Player B name"
+            )
+    
+    return validation_errors
+
+
+def validate_all_brackets(brackets_data: Dict[str, Any]) -> Dict[str, Any]:
+    """Validate entire bracket structure before saving to database
+    
+    Validates all scratch and handicap brackets for structural integrity
+    and logical consistency.
+    
+    Args:
+        brackets_data: Full bracket data structure with scratch and handicap brackets
+        
+    Returns:
+        Dictionary with validation results:
+        {
+            'is_valid': bool,
+            'errors': List[str],
+            'warnings': List[str]
+        }
+    """
+    all_validation_errors = []
+    validation_warnings = []
+    
+    # Validate scratch brackets
+    scratch_brackets = brackets_data.get('scratch_brackets', [])
+    for bracket_index, bracket in enumerate(scratch_brackets):
+        bracket_errors = validate_bracket_structure(bracket)
+        if bracket_errors:
+            for error in bracket_errors:
+                all_validation_errors.append(f"Scratch Bracket {bracket_index + 1}: {error}")
+    
+    # Validate handicap brackets
+    handicap_brackets = brackets_data.get('handicap_brackets', [])
+    for bracket_index, bracket in enumerate(handicap_brackets):
+        bracket_errors = validate_bracket_structure(bracket)
+        if bracket_errors:
+            for error in bracket_errors:
+                all_validation_errors.append(f"Handicap Bracket {bracket_index + 1}: {error}")
+    
+    # Add warnings for skipped players (from validation_warnings in brackets_data)
+    validation_data = brackets_data.get('validation_warnings', {})
+    skipped_scratch = validation_data.get('skipped_scratch_players', [])
+    skipped_handicap = validation_data.get('skipped_handicap_players', [])
+    
+    if skipped_scratch:
+        validation_warnings.append(
+            f"{len(skipped_scratch)} player(s) skipped from scratch brackets due to invalid/missing scores"
+        )
+    
+    if skipped_handicap:
+        validation_warnings.append(
+            f"{len(skipped_handicap)} player(s) skipped from handicap brackets due to invalid/missing scores"
+        )
+    
+    # Check if there are any brackets at all
+    if not scratch_brackets and not handicap_brackets:
+        validation_warnings.append("No brackets were generated. This may indicate insufficient players or all players were skipped.")
+    
+    return {
+        'is_valid': len(all_validation_errors) == 0,
+        'errors': all_validation_errors,
+        'warnings': validation_warnings
+    }

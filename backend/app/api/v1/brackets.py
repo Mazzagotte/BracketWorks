@@ -13,7 +13,8 @@ from ...core.errors import handle_error, NotFoundError, ValidationError
 from ...services.brackets_simple import (
     generate_bracket_preview, 
     generate_tournament_brackets, 
-    update_match_score
+    update_match_score,
+    validate_all_brackets
 )
 from ...services.bracket_persistence_simple import (
     save_brackets_simple, 
@@ -204,24 +205,41 @@ def generate_tournament_brackets(
             }
             players_data.append(player_data)
         
-        # Generate brackets
+        # Generate brackets with validation
         brackets_result = generate_tournament_brackets(players_data, bracket_settings.bracket_size)
+        
+        # Validate bracket structure before saving
+        validation_result = validate_all_brackets(brackets_result)
+        
+        # Log validation warnings if any
+        if validation_result['warnings']:
+            for warning in validation_result['warnings']:
+                logger.warning(f"Bracket validation warning: {warning}")
+        
+        # If validation errors exist, raise an exception
+        if not validation_result['is_valid']:
+            error_message = "Bracket validation failed: " + "; ".join(validation_result['errors'])
+            logger.error(error_message)
+            raise HTTPException(status_code=500, detail=error_message)
         
         # Save the generated brackets to database
         try:
             save_brackets_simple(db, tournament_id, squad_id, brackets_result)
+            logger.info(f"Successfully saved brackets for tournament {tournament_id}, squad {squad_id}")
         except Exception as save_error:
             # Log the save error but don't fail the generation
-            logger.warning(f"Failed to save brackets to database: {save_error}")
+            logger.error(f"Failed to save brackets to database: {save_error}")
+            raise HTTPException(status_code=500, detail=f"Failed to save brackets: {str(save_error)}")
         
-        # Prepare result
+        # Prepare result with validation info
         result = {
             "tournament_id": tournament_id,
             "tournament_name": tournament.name,
             "bracket_size": bracket_settings.bracket_size,
             "squad_id": squad_id,
             "generated_new": True,
-            **brackets_result
+            **brackets_result,
+            "validation_result": validation_result  # Include validation info in response
         }
         
         # Cache the result after successful generation and save

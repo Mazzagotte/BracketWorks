@@ -74,24 +74,50 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Set mounted flag for hydration safety
   useEffect(() => {
     setIsComponentMounted(true);
-    // Mark auth as initialized after mounting
     setIsAuthInitialized(true);
-    
-    // If we have tokens but no current auth state, restore from localStorage
-    if (typeof window !== 'undefined' && !authToken && !currentUser) {
+  }, []);
+
+  // Listen for storage changes and auth events
+  useEffect(() => {
+    const handleStorageChange = () => {
+      if (!isComponentMounted) return;
+      
       const storedToken = localStorage.getItem('token');
       const storedUserId = localStorage.getItem('user_id');
       const storedFirstName = localStorage.getItem('first_name');
       
-      if (storedToken && storedUserId) {
+      if (storedToken && storedUserId && (!authToken || !currentUser)) {
+        logger.info('🔄 Restoring auth state from localStorage on storage change', { userId: storedUserId });
         setAuthToken(storedToken);
         setCurrentUser({ 
           id: storedUserId, 
           name: storedFirstName || undefined 
         });
+      } else if (!storedToken && (authToken || currentUser)) {
+        logger.info('🔄 Clearing auth state due to localStorage change');
+        setAuthToken(null);
+        setCurrentUser(null);
       }
-    }
-  }, [authToken, currentUser]);
+    };
+
+    const handleAuthChange = () => {
+      if (!isComponentMounted) return;
+      logger.info('🔄 Handling auth-state-changed event');
+      handleStorageChange();
+    };
+
+    // Listen for storage changes
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('auth-state-changed', handleAuthChange);
+    
+    // Initial check
+    handleStorageChange();
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('auth-state-changed', handleAuthChange);
+    };
+  }, [isComponentMounted, authToken, currentUser]);
 
   // Save to localStorage when state changes
   useEffect(() => {
@@ -108,6 +134,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [authToken, currentUser, isComponentMounted]);
 
   const authenticateUser = (newAuthToken: string, userId: string, userData?: Partial<User>) => {
+    logger.info('🔐 Authenticating user', { userId });
+    
+    // Immediately update state
     setAuthToken(newAuthToken);
     setCurrentUser({ id: userId, ...userData });
     
@@ -116,6 +145,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
     localStorage.setItem('user_id', userId);
     if (userData?.name) {
       localStorage.setItem('first_name', userData.name);
+    }
+    
+    // Force initialization state update
+    setIsAuthInitialized(true);
+    
+    // Dispatch event to trigger re-renders
+    if (typeof window !== 'undefined') {
+      logger.info('📡 Dispatching auth-state-changed event');
+      window.dispatchEvent(new Event('auth-state-changed'));
+      
+      // Force a storage event as well
+      window.dispatchEvent(new Event('storage'));
     }
   };
 
@@ -165,6 +206,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
     updateUser: updateUserData,
     clearAuth: clearUserAuth,
   };
+
+  // Debug logging for auth state changes
+  useEffect(() => {
+    if (isComponentMounted) {
+      logger.info('🔐 Auth Context State Update:', {
+        authToken: !!authToken,
+        currentUser: !!currentUser,
+        isAuthenticated: !!(authToken && currentUser),
+        isInitialized: isAuthInitialized,
+        mounted: isComponentMounted
+      });
+    }
+  }, [authToken, currentUser, isAuthInitialized, isComponentMounted]);
 
   // No loading screen - provide context immediately
   return (
