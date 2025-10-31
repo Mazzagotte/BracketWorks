@@ -59,8 +59,8 @@ class BowlerBase(BaseModel):
     user_id: int
     name: str
     average: int | None = None
-    handicap: int | None = None
-    scratch: int | None = None
+    handicap_entries: int | None = None
+    scratch_entries: int | None = None
     lane: str | None = None
     division: str | None = None
     usbc: str | None = None
@@ -75,8 +75,8 @@ class BowlerUpdate(BaseModel):
     user_id: int | None = None
     name: str | None = None
     average: int | None = None
-    handicap: int | None = None
-    scratch: int | None = None
+    handicap_entries: int | None = None
+    scratch_entries: int | None = None
     lane: str | None = None
     division: str | None = None
     usbc: str | None = None

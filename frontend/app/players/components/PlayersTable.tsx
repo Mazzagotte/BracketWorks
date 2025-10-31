@@ -9,7 +9,8 @@ const SortableHeader: React.FC<{
   children: React.ReactNode;
   sortConfig: { column: SortableColumn | null; direction: 'asc' | 'desc' | null };
   onSort: (column: SortableColumn) => void;
-}> = ({ column, children, sortConfig, onSort }) => {
+  width?: string;
+}> = ({ column, children, sortConfig, onSort, width }) => {
   const isActive = sortConfig.column === column;
   const direction = isActive ? sortConfig.direction : null;
   const [isHovered, setIsHovered] = React.useState(false);
@@ -31,17 +32,19 @@ const SortableHeader: React.FC<{
   return (
     <th 
       style={{ 
-        padding: '12px 16px', 
+        padding: '10px 12px', 
         textAlign: 'center', 
-        borderBottom: isActive ? '2px solid #3b82f6' : '1px solid #e5e7eb', 
-        fontWeight: isActive ? '700' : '600', 
-        fontSize: '13px',
+        borderBottom: isActive ? '2px solid #3b82f6' : '2px solid #e5e7eb', 
+        fontWeight: isActive ? '800' : '700', 
+        fontSize: '12px',
         cursor: 'pointer',
         userSelect: 'none',
         backgroundColor: isActive ? '#eff6ff' : isHovered ? '#f8fafc' : 'transparent',
         transition: 'all 0.2s ease',
         position: 'relative',
-        color: isActive ? '#1e40af' : '#374151'
+        color: isActive ? '#1e40af' : '#374151',
+        ...(width && { width }),
+        lineHeight: '1.3'
       }}
       onClick={() => onSort(column)}
       onMouseEnter={() => setIsHovered(true)}
@@ -201,7 +204,8 @@ const PlayersTable = memo(({
   };
 
   const handleIncrement = (playerId: number, field: string, currentValue: number, step = 1) => {
-    onUpdatePlayer(playerId, field, currentValue + step);
+    const newValue = currentValue + step;
+    onUpdatePlayer(playerId, field, newValue);
   };
 
   const handleDecrement = (playerId: number, field: string, currentValue: number, step = 1) => {
@@ -239,7 +243,7 @@ const PlayersTable = memo(({
         <thead>
           {selectedSquad && (
             <tr>
-              <td colSpan={10} style={{ 
+              <td colSpan={9} style={{ 
                 backgroundColor: 'rgba(79, 140, 255, 0.1)', 
                 color: '#4f8cff',
                 textAlign: 'center',
@@ -252,49 +256,48 @@ const PlayersTable = memo(({
             </tr>
           )}
           <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-            <SortableHeader column="name" sortConfig={sortConfig} onSort={onSort}>
+            <SortableHeader column="name" sortConfig={sortConfig} onSort={onSort} width="16%">
               Name
             </SortableHeader>
             <th style={{ 
-              padding: '12px 16px', 
+              padding: '10px 12px', 
               textAlign: 'center', 
               borderBottom: '1px solid #e5e7eb', 
               fontWeight: '600', 
-              fontSize: '13px',
+              fontSize: '12px',
               color: '#374151',
-              letterSpacing: '0.025em'
+              letterSpacing: '0.025em',
+              width: '9%'
             }}>
               USBC
             </th>
-            <SortableHeader column="lane" sortConfig={sortConfig} onSort={onSort}>
+            <SortableHeader column="lane" sortConfig={sortConfig} onSort={onSort} width="7%">
               Lane
             </SortableHeader>
-            <SortableHeader column="average" sortConfig={sortConfig} onSort={onSort}>
+            <SortableHeader column="average" sortConfig={sortConfig} onSort={onSort} width="7%">
               Average
             </SortableHeader>
-            <SortableHeader column="handicap" sortConfig={sortConfig} onSort={onSort}>
-              Handicap Entries
+            <SortableHeader column="handicap" sortConfig={sortConfig} onSort={onSort} width="9%">
+              Handicap<br/>Entries
             </SortableHeader>
-            <SortableHeader column="scratch" sortConfig={sortConfig} onSort={onSort}>
-              Scratch Entries
+            <SortableHeader column="scratch" sortConfig={sortConfig} onSort={onSort} width="9%">
+              Scratch<br/>Entries
             </SortableHeader>
-            <SortableHeader column="division" sortConfig={sortConfig} onSort={onSort}>
+            <SortableHeader column="division" sortConfig={sortConfig} onSort={onSort} width="11%">
               Division
             </SortableHeader>
-            <SortableHeader column="totalCost" sortConfig={sortConfig} onSort={onSort}>
-              Total Cost
-            </SortableHeader>
-            <SortableHeader column="amountPaid" sortConfig={sortConfig} onSort={onSort}>
-              Amount Paid
+            <SortableHeader column="totalCost" sortConfig={sortConfig} onSort={onSort} width="15%">
+              Cost / Status
             </SortableHeader>
             <th style={{ 
-              padding: '12px 16px', 
+              padding: '10px 12px', 
               textAlign: 'center', 
               borderBottom: '1px solid #e5e7eb', 
               fontWeight: '600', 
-              fontSize: '13px',
+              fontSize: '12px',
               color: '#374151',
-              letterSpacing: '0.025em'
+              letterSpacing: '0.025em',
+              width: '15%'
             }}>
               Actions
             </th>
@@ -307,7 +310,7 @@ const PlayersTable = memo(({
               className="players-table-row"
               style={{ backgroundColor: 'transparent' }}
             >
-              <OptimizedTableCell style={{ textAlign: 'center', padding: '12px', borderBottom: '1px solid #e5e7eb' }}>
+              <OptimizedTableCell style={{ textAlign: 'center', padding: '10px', borderBottom: '1px solid #e5e7eb' }}>
                 <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '4px' }}>
                   <div style={{ position: 'relative' }}>
                     <input
@@ -317,9 +320,9 @@ const PlayersTable = memo(({
                       style={{
                         border: '1px solid #d1d5db',
                         borderRadius: '4px',
-                        padding: '8px',
-                        fontSize: '14px',
-                        width: '80px',
+                        padding: '6px',
+                        fontSize: '13px',
+                        width: '70px',
                         marginRight: '4px',
                         background: '#ffffff',
                         outline: 'none',
@@ -346,9 +349,9 @@ const PlayersTable = memo(({
                       style={{
                         border: '1px solid #d1d5db',
                         borderRadius: '4px',
-                        padding: '8px',
-                        fontSize: '14px',
-                        width: '80px',
+                        padding: '6px',
+                        fontSize: '13px',
+                        width: '70px',
                         background: '#ffffff',
                         outline: 'none',
                         transition: 'all 0.2s ease',
@@ -369,7 +372,7 @@ const PlayersTable = memo(({
                 </div>
               </OptimizedTableCell>
               
-              <OptimizedTableCell style={{ textAlign: 'center', padding: '12px', borderBottom: '1px solid #e5e7eb' }}>
+              <OptimizedTableCell style={{ textAlign: 'center', padding: '10px', borderBottom: '1px solid #e5e7eb' }}>
                 <div style={{ position: 'relative', display: 'flex', justifyContent: 'center' }}>
                   <input
                     type="text"
@@ -378,9 +381,9 @@ const PlayersTable = memo(({
                     style={{
                       border: '1px solid #d1d5db',
                       borderRadius: '4px',
-                      padding: '8px',
-                      fontSize: '14px',
-                      width: '100px',
+                      padding: '6px',
+                      fontSize: '13px',
+                      width: '90px',
                       background: '#ffffff',
                       outline: 'none',
                       transition: 'all 0.2s ease',
@@ -400,7 +403,7 @@ const PlayersTable = memo(({
                 </div>
               </OptimizedTableCell>
 
-              <OptimizedTableCell style={{ textAlign: 'center', padding: '12px', borderBottom: '1px solid #e5e7eb' }}>
+              <OptimizedTableCell style={{ textAlign: 'center', padding: '10px', borderBottom: '1px solid #e5e7eb' }}>
                 <div style={{ position: 'relative', display: 'inline-block' }}>
                   <input
                     type="text"
@@ -409,9 +412,9 @@ const PlayersTable = memo(({
                     style={{
                       border: '1px solid #d1d5db',
                       borderRadius: '4px',
-                      padding: '8px 24px 8px 8px',
-                      fontSize: '14px',
-                      width: '80px',
+                      padding: '6px 20px 6px 6px',
+                      fontSize: '13px',
+                      width: '60px',
                       textAlign: 'center',
                       background: '#ffffff',
                       outline: 'none',
@@ -439,7 +442,12 @@ const PlayersTable = memo(({
                     gap: '1px' 
                   }}>
                     <button
-                      onClick={() => handleIncrement(player.id, 'lane', parseInt(player.lane.slice(1)) || 0)}
+                      onClick={() => {
+                        const laneNum = typeof player.lane === 'string' 
+                          ? parseInt(player.lane) || 0
+                          : player.lane || 0;
+                        handleIncrement(player.id, 'lane', laneNum);
+                      }}
                       style={{
                         width: '12px',
                         height: '8px',
@@ -468,7 +476,12 @@ const PlayersTable = memo(({
                       ▲
                     </button>
                     <button
-                      onClick={() => handleDecrement(player.id, 'lane', parseInt(player.lane.slice(1)) || 0)}
+                      onClick={() => {
+                        const laneNum = typeof player.lane === 'string' 
+                          ? parseInt(player.lane) || 0
+                          : player.lane || 0;
+                        handleDecrement(player.id, 'lane', laneNum);
+                      }}
                       style={{
                         width: '12px',
                         height: '8px',
@@ -501,18 +514,18 @@ const PlayersTable = memo(({
                 </div>
               </OptimizedTableCell>
 
-              <OptimizedTableCell style={{ textAlign: 'center', padding: '12px', borderBottom: '1px solid #e5e7eb' }}>
+              <OptimizedTableCell style={{ textAlign: 'center', padding: '10px', borderBottom: '1px solid #e5e7eb' }}>
                 <div style={{ position: 'relative', display: 'inline-block' }}>
                   <input
-                    type="number"
+                    type="text"
                     value={player.average}
                     onChange={(changeEvent) => handleCellEdit(player.id, 'average', changeEvent.target.value)}
                     style={{
                       border: '1px solid #d1d5db',
                       borderRadius: '4px',
-                      padding: '8px 24px 8px 8px',
-                      fontSize: '14px',
-                      width: '80px',
+                      padding: '6px 20px 6px 6px',
+                      fontSize: '13px',
+                      width: '70px',
                       textAlign: 'center',
                       background: '#ffffff',
                       outline: 'none',
@@ -601,18 +614,18 @@ const PlayersTable = memo(({
                 </div>
               </OptimizedTableCell>
 
-              <OptimizedTableCell style={{ textAlign: 'center', padding: '12px', borderBottom: '1px solid #e5e7eb' }}>
+              <OptimizedTableCell style={{ textAlign: 'center', padding: '10px', borderBottom: '1px solid #e5e7eb' }}>
                 <div style={{ position: 'relative', display: 'inline-block' }}>
                   <input
-                    type="number"
+                    type="text"
                     value={player.handicap}
                     onChange={(changeEvent) => handleCellEdit(player.id, 'handicap', changeEvent.target.value)}
                     style={{
                       border: '1px solid #d1d5db',
                       borderRadius: '4px',
-                      padding: '8px 24px 8px 8px',
-                      fontSize: '14px',
-                      width: '80px',
+                      padding: '6px 20px 6px 6px',
+                      fontSize: '13px',
+                      width: '60px',
                       textAlign: 'center',
                       background: '#ffffff',
                       outline: 'none',
@@ -701,18 +714,18 @@ const PlayersTable = memo(({
                 </div>
               </OptimizedTableCell>
 
-              <OptimizedTableCell style={{ textAlign: 'center', padding: '12px', borderBottom: '1px solid #e5e7eb' }}>
+              <OptimizedTableCell style={{ textAlign: 'center', padding: '10px', borderBottom: '1px solid #e5e7eb' }}>
                 <div style={{ position: 'relative', display: 'inline-block' }}>
                   <input
-                    type="number"
+                    type="text"
                     value={player.scratch}
                     onChange={(changeEvent) => handleCellEdit(player.id, 'scratch', changeEvent.target.value)}
                     style={{
                       border: '1px solid #d1d5db',
                       borderRadius: '4px',
-                      padding: '8px 24px 8px 8px',
-                      fontSize: '14px',
-                      width: '80px',
+                      padding: '6px 20px 6px 6px',
+                      fontSize: '13px',
+                      width: '60px',
                       textAlign: 'center',
                       background: '#ffffff',
                       outline: 'none',
@@ -801,16 +814,16 @@ const PlayersTable = memo(({
                 </div>
               </OptimizedTableCell>
 
-              <OptimizedTableCell style={{ textAlign: 'center', padding: '12px', borderBottom: '1px solid #e5e7eb' }}>
+              <OptimizedTableCell style={{ textAlign: 'center', padding: '10px', borderBottom: '1px solid #e5e7eb' }}>
                 <select
                   value={player.division}
                   onChange={(changeEvent) => handleCellEdit(player.id, 'division', changeEvent.target.value)}
                   style={{
                     border: '1px solid #d1d5db',
                     borderRadius: '4px',
-                    padding: '8px',
-                    fontSize: '14px',
-                    width: '100px',
+                    padding: '6px',
+                    fontSize: '13px',
+                    width: '90px',
                     background: '#ffffff',
                     outline: 'none',
                     transition: 'all 0.2s ease',
@@ -833,115 +846,44 @@ const PlayersTable = memo(({
                 {getSavingIndicator(player.id, 'division')}
               </OptimizedTableCell>
 
-              <OptimizedTableCell style={{ textAlign: 'center', padding: '12px', borderBottom: '1px solid #e5e7eb' }}>
-                <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                  ${player.totalCost.toFixed(2)}
-                </span>
-              </OptimizedTableCell>
-
-              <OptimizedTableCell style={{ textAlign: 'center', padding: '12px', borderBottom: '1px solid #e5e7eb' }}>
-                <div style={{ position: 'relative', display: 'inline-block' }}>
-                  <input
-                    type="number"
-                    value={player.amountPaid}
-                    onChange={(changeEvent) => handleCellEdit(player.id, 'amountPaid', changeEvent.target.value)}
+              <OptimizedTableCell style={{ textAlign: 'center', padding: '10px', borderBottom: '1px solid #e5e7eb' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '13px', fontWeight: '600' }}>
+                    ${player.totalCost.toFixed(2)}
+                  </span>
+                  <span 
+                    onClick={() => {
+                      const newPaidAmount = player.amountPaid >= player.totalCost ? 0 : player.totalCost;
+                      handleCellEdit(player.id, 'amountPaid', newPaidAmount.toString());
+                    }}
                     style={{
-                      border: '1px solid #d1d5db',
-                      borderRadius: '4px',
-                      padding: '8px 24px 8px 8px',
-                      fontSize: '14px',
-                      width: '100px',
-                      textAlign: 'center',
-                      background: '#ffffff',
-                      outline: 'none',
-                      transition: 'all 0.2s ease'
+                      display: 'inline-block',
+                      padding: '2px 8px',
+                      borderRadius: '12px',
+                      fontSize: '10px',
+                      fontWeight: '700',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      userSelect: 'none',
+                      ...(player.amountPaid >= player.totalCost 
+                        ? {
+                            backgroundColor: '#10b981',
+                            color: 'white'
+                          }
+                        : {
+                            backgroundColor: '#ef4444',
+                            color: 'white'
+                          }
+                      )
                     }}
-                    step="0.01"
-                    min="0"
-                    onFocus={(changeEvent) => {
-                      changeEvent.target.style.borderColor = '#3b82f6';
-                      changeEvent.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
-                    }}
-                    onBlur={(changeEvent) => {
-                      changeEvent.target.style.borderColor = '#d1d5db';
-                      changeEvent.target.style.boxShadow = 'none';
-                    }}
-                  />
-                  
-                  {/* Increment/Decrement Arrows - Inside Input */}
-                  <div style={{ 
-                    position: 'absolute', 
-                    right: '4px', 
-                    top: '50%', 
-                    transform: 'translateY(-50%)',
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    gap: '1px' 
-                  }}>
-                    <button
-                      onClick={() => handleIncrement(player.id, 'amountPaid', player.amountPaid, 0.01)}
-                      style={{
-                        width: '12px',
-                        height: '8px',
-                        border: 'none',
-                        borderRadius: '1px',
-                        backgroundColor: 'transparent',
-                        color: '#6b7280',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer',
-                        fontSize: '6px',
-                        fontWeight: 'bold',
-                        transition: 'all 0.2s ease',
-                        outline: 'none'
-                      }}
-                      onMouseEnter={(changeEvent) => { 
-                        changeEvent.currentTarget.style.backgroundColor = '#f3f4f6';
-                        changeEvent.currentTarget.style.color = '#374151';
-                      }}
-                      onMouseLeave={(changeEvent) => { 
-                        changeEvent.currentTarget.style.backgroundColor = 'transparent';
-                        changeEvent.currentTarget.style.color = '#6b7280';
-                      }}
-                    >
-                      ▲
-                    </button>
-                    <button
-                      onClick={() => handleDecrement(player.id, 'amountPaid', player.amountPaid, 0.01)}
-                      style={{
-                        width: '12px',
-                        height: '8px',
-                        border: 'none',
-                        borderRadius: '1px',
-                        backgroundColor: 'transparent',
-                        color: '#6b7280',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer',
-                        fontSize: '6px',
-                        fontWeight: 'bold',
-                        transition: 'all 0.2s ease',
-                        outline: 'none'
-                      }}
-                      onMouseEnter={(changeEvent) => { 
-                        changeEvent.currentTarget.style.backgroundColor = '#f3f4f6';
-                        changeEvent.currentTarget.style.color = '#374151';
-                      }}
-                      onMouseLeave={(changeEvent) => { 
-                        changeEvent.currentTarget.style.backgroundColor = 'transparent';
-                        changeEvent.currentTarget.style.color = '#6b7280';
-                      }}
-                    >
-                      ▼
-                    </button>
-                  </div>
-                  {getSavingIndicator(player.id, 'amountPaid')}
+                    title={`Click to toggle payment status. Current: $${player.amountPaid.toFixed(2)}`}
+                  >
+                    {player.amountPaid >= player.totalCost ? 'PAID' : 'DUE'}
+                  </span>
                 </div>
               </OptimizedTableCell>
 
-              <OptimizedTableCell style={{ textAlign: 'center', padding: '12px', borderBottom: '1px solid #e5e7eb' }}>
+              <OptimizedTableCell style={{ textAlign: 'center', padding: '10px', borderBottom: '1px solid #e5e7eb' }}>
                 <button
                   onClick={() => onDeletePlayer(player.id)}
                   style={{

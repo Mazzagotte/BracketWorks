@@ -9,8 +9,8 @@ interface BowlerApiResponse {
   name?: string;
   usbc?: string;
   average?: number;
-  handicap?: number;
-  scratch?: number;
+  handicap_entries?: number;
+  scratch_entries?: number;
   lane?: string;
   division?: string;
   squad_id?: number;
@@ -74,11 +74,11 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
           lastName: bowler.name?.split(' ').slice(1).join(' ') || '',
           usbc: bowler.usbc || '',
           average: bowler.average || 0,
-          handicap: bowler.handicap || 0,
-          scratch: bowler.scratch || 0,
+          handicap: bowler.handicap_entries || 0,
+          scratch: bowler.scratch_entries || 0,
           lane: bowler.lane || '',
           division: bowler.division || 'Open',
-          totalCost: ((bowler.scratch || 0) + (bowler.handicap || 0)) * entryFee,
+          totalCost: ((bowler.scratch_entries || 0) + (bowler.handicap_entries || 0)) * entryFee,
           amountPaid: bowler.amount_paid || 0,
           squad: squad ? { id: squad.id, date: squad.date, time: squad.time } : undefined
         };
@@ -102,8 +102,8 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
         name: `${newPlayer.firstName} ${newPlayer.lastName}`,
         usbc: newPlayer.usbc || '',
         average: newPlayer.average,
-        handicap: newPlayer.handicap,
-        scratch: newPlayer.scratch,
+        handicap_entries: newPlayer.handicap,
+        scratch_entries: newPlayer.scratch,
         lane: newPlayer.lane,
         division: newPlayer.division,
         amount_paid: newPlayer.amountPaid,
@@ -136,6 +136,9 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
   }, [authToken, selectedSquad, getItem]);
 
   const updatePlayer = useCallback(async (id: number, updates: Partial<Player>) => {
+    // Get current player data before updating
+    const currentPlayer = players.find(p => p.id === id);
+    
     // Update local state immediately for better UX
     setPlayers(prevPlayers => 
       prevPlayers.map(player => 
@@ -148,36 +151,53 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
       return;
     }
 
-    try {
-      setSavingStatus(prev => ({ ...prev, [id]: 'saving' }));
-      
-      const playerData = {
-        name: `${updates.firstName || ''} ${updates.lastName || ''}`.trim(),
-        usbc: updates.usbc,
-        average: updates.average,
-        handicap: updates.handicap,
-        scratch: updates.scratch,
-        lane: updates.lane,
-        division: updates.division,
-        amount_paid: updates.amountPaid,
-        squad_id: selectedSquad ? selectedSquad.id : null
-      };
+    if (!currentPlayer) {
+      console.error('Player not found:', id);
+      return;
+    }
 
-      await apiClient.put(`/api/v1/bowlers/${id}`, playerData);
-      setSavingStatus(prev => ({ ...prev, [id]: 'success' }));
+    try {
+      // Determine which field is being updated for status tracking
+      const fieldKey = Object.keys(updates)[0]; // Get the first (and usually only) field being updated
+      const statusKey = `${id}-${fieldKey}`;
+      
+      setSavingStatus(prev => ({ ...prev, [statusKey]: 'saving' }));
+      
+      // Build playerData with only the fields that are being updated
+      const playerData: Record<string, any> = {};
+      
+      // Handle name fields specially - if either firstName or lastName is updated, send full name
+      if ('firstName' in updates || 'lastName' in updates) {
+        const mergedPlayer = { ...currentPlayer, ...updates };
+        playerData.name = `${mergedPlayer.firstName || ''} ${mergedPlayer.lastName || ''}`.trim();
+      }
+      
+      // Map frontend field names to backend field names and add only updated fields
+      if ('usbc' in updates) playerData.usbc = updates.usbc;
+      if ('average' in updates) playerData.average = updates.average;
+      if ('handicap' in updates) playerData.handicap_entries = updates.handicap;
+      if ('scratch' in updates) playerData.scratch_entries = updates.scratch;
+      if ('lane' in updates) playerData.lane = String(updates.lane ?? ''); // Backend expects string
+      if ('division' in updates) playerData.division = updates.division;
+      if ('amountPaid' in updates) playerData.amount_paid = updates.amountPaid;
+
+      await apiClient.patch(`/api/v1/bowlers/${id}`, playerData);
+      setSavingStatus(prev => ({ ...prev, [statusKey]: 'success' }));
       
       // Clear success status after a delay
       setTimeout(() => {
-        setSavingStatus(prev => ({ ...prev, [id]: 'idle' }));
+        setSavingStatus(prev => ({ ...prev, [statusKey]: 'idle' }));
       }, 2000);
     } catch (err: any) {
       console.error('Failed to update player:', err);
-      setSavingStatus(prev => ({ ...prev, [id]: 'error' }));
+      const fieldKey = Object.keys(updates)[0];
+      const statusKey = `${id}-${fieldKey}`;
+      setSavingStatus(prev => ({ ...prev, [statusKey]: 'error' }));
       // Revert the local change on error
       loadPlayers();
       alert(`Failed to update player: ${err.message || 'Unknown error'}`);
     }
-  }, [authToken, selectedSquad, loadPlayers]);
+  }, [authToken, selectedSquad, loadPlayers, players]);
 
   const deletePlayer = useCallback(async (playerId: number) => {
     if (!authToken) return;

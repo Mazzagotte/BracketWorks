@@ -110,6 +110,7 @@ html {
   -webkit-text-size-adjust: 100%; /* Prevent zoom on orientation change */
   -ms-text-size-adjust: 100%;
   font-size: 100%; /* Use browser default, typically 16px */
+  height: 100%;
 }
 
 body { 
@@ -122,6 +123,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden; /* Prevent horizontal scroll */
   line-height: 1.6;
+  min-height: 100%;
   
   /* Mobile optimizations */
   -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
@@ -144,6 +146,11 @@ input, textarea, [contenteditable] {
   -moz-user-select: text;
   -ms-user-select: text;
   user-select: text;
+}
+
+/* Ensure root elements fill viewport */
+#__next {
+  min-height: 100%;
 }
 
 /* Typography */
@@ -194,7 +201,7 @@ nav a {
 }
 
 .card {
-  background: var(--color-surface);
+  background: #ffffff;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   padding: var(--spacing-xl);
