@@ -179,7 +179,9 @@ export default function BracketsPage() {
   // Set page header with actions
   usePageHeader({
     title: 'Bracket Management',
-    subtitle: 'Create and manage tournament brackets',
+    subtitle: selectedTournament 
+      ? `Managing: ${selectedTournament.name}${selectedTournament.location ? ` • ${selectedTournament.location}` : ''}${selectedTournament.start_date ? ` • ${new Date(selectedTournament.start_date).toLocaleDateString()}` : ''}`
+      : 'Create and manage tournament brackets',
     actions: generateBracketsButton
   })
 

@@ -97,8 +97,11 @@ export default function ModernHeader({
       top: 0,
       zIndex: 100,
       width: '100%',
+      maxWidth: '100%',
       borderRadius: '16px',
-      margin: '8px 0'
+      margin: '8px 0',
+      boxSizing: 'border-box',
+      overflowX: 'hidden'
     }}>
       {/* Clean Status Indicator - Top Left to avoid overlap */}
       <div style={{
@@ -139,10 +142,11 @@ export default function ModernHeader({
       </div>
 
       <div style={{
-        maxWidth: '1400px',
+        maxWidth: '1200px',
         margin: '0 auto',
         padding: isMobile ? '0 16px' : '0 24px',
-        paddingTop: '12px' // Add space to avoid status indicator
+        paddingTop: '12px', // Add space to avoid status indicator
+        boxSizing: 'border-box'
       }}>
         {/* Main header content - forced column layout */}
         <div style={{

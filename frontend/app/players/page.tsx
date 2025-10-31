@@ -8,6 +8,7 @@ import { useAuth } from '../lib/auth-context'
 import { usePageHeader } from '../lib/header-context'
 import { ErrorBoundary } from '../components/ErrorBoundary'
 import { usePlayers } from './hooks/usePlayers'
+import { useTournaments } from '../hooks/useTournaments'
 import PlayersTable from './components/PlayersTable'
 import PlayerForm from './components/PlayerForm'
 import { logger } from '../lib/logger'
@@ -22,6 +23,8 @@ import { API } from '../lib/api'
 
 export default function PlayersPage() {
   const { isAuthenticated, isInitialized, token, user } = useAuth()
+  const { tournaments, fetchTournaments } = useTournaments()
+  const [selectedTournament, setSelectedTournament] = useState<any>(null)
   const [selectedSquadId, setSelectedSquadId] = useState<number | null>(null)
   const [squads, setSquads] = useState<Squad[]>([])
   const [entryFee, setEntryFee] = useState<number>(25) // Default $25, will be loaded from tournament settings
@@ -61,6 +64,24 @@ export default function PlayersPage() {
     
     return lastTournamentId;
   }, []);
+
+  // Load tournaments on mount
+  useEffect(() => {
+    fetchTournaments()
+  }, [])
+
+  // Auto-select tournament from localStorage
+  useEffect(() => {
+    if (tournaments.length > 0 && !selectedTournament) {
+      const storedTournamentId = localStorage.getItem('lastTournamentId')
+      if (storedTournamentId) {
+        const storedTournament = tournaments.find(t => t.id === parseInt(storedTournamentId))
+        if (storedTournament) {
+          setSelectedTournament(storedTournament)
+        }
+      }
+    }
+  }, [tournaments, selectedTournament])
 
   // Load entry fee from tournament bracket settings
   const loadEntryFee = useCallback(async () => {
@@ -189,8 +210,10 @@ export default function PlayersPage() {
   }, [players, sortConfig]);
 
   usePageHeader({
-    title: 'Players',
-    subtitle: 'Manage tournament participants and their information'
+    title: 'Entries',
+    subtitle: selectedTournament 
+      ? `Managing: ${selectedTournament.name}${selectedTournament.location ? ` • ${selectedTournament.location}` : ''}${selectedTournament.start_date ? ` • ${new Date(selectedTournament.start_date).toLocaleDateString()}` : ''}`
+      : 'Manage tournament participants and their information'
   })
 
   // Fetch squad data (similar to scores page)
@@ -319,28 +342,6 @@ export default function PlayersPage() {
         margin: '0 auto', 
         padding: '2rem 1rem' 
       }}>
-        {/* Debug info - Development only */}
-        {process.env.NODE_ENV === 'development' && (
-          <div style={{ 
-            backgroundColor: '#f3f4f6', 
-            padding: '1rem', 
-            marginBottom: '1rem', 
-            borderRadius: '0.5rem',
-            fontSize: '0.875rem'
-          }}>
-            <div>
-              <strong>Status:</strong> Entry Fee: ${entryFee} | 
-              Tournament ID: {localStorage.getItem('lastTournamentId') || 'None'} | 
-              Players: {players.length}
-            </div>
-            {sortConfig.column && (
-              <div style={{ marginTop: '0.5rem' }}>
-                <strong>Sorting:</strong> {sortConfig.column} ({sortConfig.direction})
-              </div>
-            )}
-          </div>
-        )}
-        
         <PlayerForm 
           onAddPlayer={addPlayer}
           isLoading={isLoading}

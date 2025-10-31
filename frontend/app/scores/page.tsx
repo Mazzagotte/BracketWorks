@@ -384,11 +384,9 @@ export default function ScoresPage() {
 
   usePageHeader({
     title: 'Scores',
-    subtitle: tournament && selectedSquad 
-      ? `${tournament.name} • ${selectedSquad.name} • ${sortedPlayers.length} players${sortConfig.column ? ` • Sorted by ${sortConfig.column} (${sortConfig.direction})` : ''}`
-      : tournament 
-        ? `${tournament.name} • ${sortedPlayers.length} players${sortConfig.column ? ` • Sorted by ${sortConfig.column} (${sortConfig.direction})` : ''}`
-        : `${sortedPlayers.length} players${sortConfig.column ? ` • Sorted by ${sortConfig.column} (${sortConfig.direction})` : ''}`,
+    subtitle: tournament 
+      ? `Managing: ${tournament.name}${tournament.location ? ` • ${tournament.location}` : ''}${tournament.start_date ? ` • ${new Date(tournament.start_date).toLocaleDateString()}` : ''}`
+      : 'Manage player scores and tournament results',
     actions: headerActions
   })
 
@@ -1008,7 +1006,7 @@ export default function ScoresPage() {
                 <table style={{
                   width: '100%',
                   borderCollapse: 'collapse',
-                  fontSize: '14px',
+                  fontSize: '13px',
                   backgroundColor: '#ffffff'
                 }} aria-label="Player Scores">
 
@@ -1019,9 +1017,9 @@ export default function ScoresPage() {
                     backgroundColor: 'rgba(79, 140, 255, 0.1)', 
                     color: '#4f8cff',
                     textAlign: 'center',
-                    fontSize: '14px',
+                    fontSize: '13px',
                     fontWeight: '600',
-                    padding: '12px'
+                    padding: '10px'
                   }}>
                     Showing scores for: {selectedSquad.date} — {selectedSquad.time}
                   </td>
@@ -1031,40 +1029,40 @@ export default function ScoresPage() {
                 backgroundColor: '#f8fafc',
                 borderBottom: '2px solid #e5e7eb'
               }}>
-                <SortableHeader column="firstName" sortConfig={sortConfig} onSort={handleSort} align="left">
+                <SortableHeader column="firstName" sortConfig={sortConfig} onSort={handleSort} align="left" width="9%">
                   First Name
                 </SortableHeader>
-                <SortableHeader column="lastName" sortConfig={sortConfig} onSort={handleSort} align="left">
+                <SortableHeader column="lastName" sortConfig={sortConfig} onSort={handleSort} align="left" width="9%">
                   Last Name
                 </SortableHeader>
-                <SortableHeader column="lane" sortConfig={sortConfig} onSort={handleSort}>
+                <SortableHeader column="lane" sortConfig={sortConfig} onSort={handleSort} width="5%">
                   Lane
                 </SortableHeader>
-                <SortableHeader column="average" sortConfig={sortConfig} onSort={handleSort}>
+                <SortableHeader column="average" sortConfig={sortConfig} onSort={handleSort} width="5%">
                   Avg
                 </SortableHeader>
-                <SortableHeader column="game1_scratch" sortConfig={sortConfig} onSort={handleSort}>
-                  Game 1 Scratch
+                <SortableHeader column="game1_scratch" sortConfig={sortConfig} onSort={handleSort} width="9%">
+                  Game 1<br/>Scratch
                 </SortableHeader>
-                <SortableHeader column="game1_total" sortConfig={sortConfig} onSort={handleSort}>
-                  Game 1 Total
+                <SortableHeader column="game1_total" sortConfig={sortConfig} onSort={handleSort} width="9%">
+                  Game 1<br/>Total
                 </SortableHeader>
-                <SortableHeader column="game2_scratch" sortConfig={sortConfig} onSort={handleSort}>
-                  Game 2 Scratch
+                <SortableHeader column="game2_scratch" sortConfig={sortConfig} onSort={handleSort} width="9%">
+                  Game 2<br/>Scratch
                 </SortableHeader>
-                <SortableHeader column="game2_total" sortConfig={sortConfig} onSort={handleSort}>
-                  Game 2 Total
+                <SortableHeader column="game2_total" sortConfig={sortConfig} onSort={handleSort} width="9%">
+                  Game 2<br/>Total
                 </SortableHeader>
-                <SortableHeader column="game3_scratch" sortConfig={sortConfig} onSort={handleSort}>
-                  Game 3 Scratch
+                <SortableHeader column="game3_scratch" sortConfig={sortConfig} onSort={handleSort} width="9%">
+                  Game 3<br/>Scratch
                 </SortableHeader>
-                <SortableHeader column="game3_total" sortConfig={sortConfig} onSort={handleSort}>
-                  Game 3 Total
+                <SortableHeader column="game3_total" sortConfig={sortConfig} onSort={handleSort} width="9%">
+                  Game 3<br/>Total
                 </SortableHeader>
-                <SortableHeader column="totalScratch" sortConfig={sortConfig} onSort={handleSort}>
-                  Total Scratch
+                <SortableHeader column="totalScratch" sortConfig={sortConfig} onSort={handleSort} width="9%">
+                  Total<br/>Scratch
                 </SortableHeader>
-                <SortableHeader column="totalWithHandicap" sortConfig={sortConfig} onSort={handleSort}>
+                <SortableHeader column="totalWithHandicap" sortConfig={sortConfig} onSort={handleSort} width="9%">
                   Total
                 </SortableHeader>
               </tr>
@@ -1089,47 +1087,47 @@ export default function ScoresPage() {
                   changeEvent.currentTarget.style.boxShadow = 'none';
                 }}>
                   <td style={{ 
-                    padding: '16px 12px',
+                    padding: '12px 10px',
                     textAlign: 'left',
                     verticalAlign: 'middle',
                     fontWeight: '600',
                     color: '#111827',
-                    fontSize: '14px'
+                    fontSize: '13px'
                   }}>{player.firstName}</td>
                   <td style={{ 
-                    padding: '16px 12px',
+                    padding: '12px 10px',
                     textAlign: 'left',
                     verticalAlign: 'middle',
                     fontWeight: '600',
                     color: '#111827',
-                    fontSize: '14px'
+                    fontSize: '13px'
                   }}>{player.lastName}</td>
                   <td style={{ 
-                    padding: '16px 12px',
+                    padding: '12px 10px',
                     textAlign: 'center',
                     verticalAlign: 'middle',
                     fontWeight: '500',
                     color: player.lane ? '#111827' : '#9ca3af',
-                    fontSize: '14px'
+                    fontSize: '13px'
                   }}>{player.lane || '—'}</td>
                   <td style={{ 
-                    padding: '16px 12px',
+                    padding: '12px 10px',
                     textAlign: 'center',
                     verticalAlign: 'middle',
                     fontWeight: '500',
                     color: '#6b7280',
-                    fontSize: '14px'
+                    fontSize: '13px'
                   }}>{player.average}</td>
                   
                   {/* Game 1 Scratch */}
                   <td style={{ 
-                    padding: '16px 12px',
+                    padding: '12px 10px',
                     textAlign: 'center',
                     verticalAlign: 'middle',
                     position: 'relative',
                     fontWeight: '500',
                     color: '#111827',
-                    fontSize: '14px'
+                    fontSize: '13px'
                   }}>
                     <div style={{ position: 'relative', display: 'inline-block' }}>
                       <input
@@ -1143,12 +1141,12 @@ export default function ScoresPage() {
                         onChange={changeEvent => updateScore(player.id, 'game1_scratch', changeEvent.target.value ? Number(changeEvent.target.value) : undefined)}
                         onKeyDown={keyEvent => handleKeyDown(keyEvent, player.id, 'game1_scratch')}
                         style={getScoreInputStyle(player.scores?.game1_scratch, { 
-                          width: '60px', 
-                          padding: '8px 24px 8px 12px', 
+                          width: '55px', 
+                          padding: '6px 20px 6px 8px', 
                           border: '1px solid #d1d5db', 
                           borderRadius: '6px',
                           textAlign: 'center',
-                          fontSize: '14px',
+                          fontSize: '13px',
                           fontWeight: '500',
                           background: '#ffffff',
                           color: '#111827',
@@ -1304,26 +1302,26 @@ export default function ScoresPage() {
                   
                   {/* Game 1 Total */}
                   <td style={{ 
-                    padding: '16px 12px',
+                    padding: '12px 10px',
                     textAlign: 'center',
                     verticalAlign: 'middle',
                     position: 'relative',
                     fontWeight: '600',
                     color: '#3b82f6',
-                    fontSize: '14px'
+                    fontSize: '13px'
                   }}>
                     {getGameTotal(player.scores?.game1_total, player.scores?.game1_scratch)}
                   </td>
                   
                   {/* Game 2 Scratch */}
                   <td style={{ 
-                    padding: '16px 12px',
+                    padding: '12px 10px',
                     textAlign: 'center',
                     verticalAlign: 'middle',
                     position: 'relative',
                     fontWeight: '500',
                     color: '#111827',
-                    fontSize: '14px'
+                    fontSize: '13px'
                   }}>
                     <div style={{ position: 'relative', display: 'inline-block' }}>
                       <input
@@ -1334,12 +1332,12 @@ export default function ScoresPage() {
                         value={player.scores?.game2_scratch ?? ''}
                         onChange={changeEvent => updateScore(player.id, 'game2_scratch', changeEvent.target.value ? Number(changeEvent.target.value) : undefined)}
                         style={getScoreInputStyle(player.scores?.game2_scratch, { 
-                          width: '60px', 
-                          padding: '8px 24px 8px 12px', 
+                          width: '55px', 
+                          padding: '6px 20px 6px 8px', 
                           border: '1px solid #d1d5db', 
                           borderRadius: '6px',
                           textAlign: 'center',
-                          fontSize: '14px',
+                          fontSize: '13px',
                           fontWeight: '500',
                           background: '#ffffff',
                           color: '#111827',
@@ -1494,26 +1492,26 @@ export default function ScoresPage() {
                   
                   {/* Game 2 Total */}
                   <td style={{ 
-                    padding: '16px 12px',
+                    padding: '12px 10px',
                     textAlign: 'center',
                     verticalAlign: 'middle',
                     position: 'relative',
                     fontWeight: '600',
                     color: '#3b82f6',
-                    fontSize: '14px'
+                    fontSize: '13px'
                   }}>
                     {getGameTotal(player.scores?.game2_total, player.scores?.game2_scratch)}
                   </td>
                   
                   {/* Game 3 Scratch */}
                   <td style={{ 
-                    padding: '16px 12px',
+                    padding: '12px 10px',
                     textAlign: 'center',
                     verticalAlign: 'middle',
                     position: 'relative',
                     fontWeight: '500',
                     color: '#111827',
-                    fontSize: '14px'
+                    fontSize: '13px'
                   }}>
                     <div style={{ position: 'relative', display: 'inline-block' }}>
                       <input
@@ -1524,12 +1522,12 @@ export default function ScoresPage() {
                         value={player.scores?.game3_scratch ?? ''}
                         onChange={changeEvent => updateScore(player.id, 'game3_scratch', changeEvent.target.value ? Number(changeEvent.target.value) : undefined)}
                         style={getScoreInputStyle(player.scores?.game3_scratch, { 
-                          width: '60px', 
-                          padding: '8px 24px 8px 12px', 
+                          width: '55px', 
+                          padding: '6px 20px 6px 8px', 
                           border: '1px solid #d1d5db', 
                           borderRadius: '6px',
                           textAlign: 'center',
-                          fontSize: '14px',
+                          fontSize: '13px',
                           fontWeight: '500',
                           background: '#ffffff',
                           color: '#111827',
@@ -1684,39 +1682,39 @@ export default function ScoresPage() {
                   
                   {/* Game 3 Total */}
                   <td style={{ 
-                    padding: '16px 12px',
+                    padding: '12px 10px',
                     textAlign: 'center',
                     verticalAlign: 'middle',
                     position: 'relative',
                     fontWeight: '600',
                     color: '#3b82f6',
-                    fontSize: '14px'
+                    fontSize: '13px'
                   }}>
                     {getGameTotal(player.scores?.game3_total, player.scores?.game3_scratch)}
                   </td>
                   
                   {/* Total Scratch */}
                   <td style={{ 
-                    padding: '16px 12px',
+                    padding: '12px 10px',
                     textAlign: 'center',
                     verticalAlign: 'middle',
                     position: 'relative',
                     fontWeight: '700',
                     color: '#374151',
-                    fontSize: '15px'
+                    fontSize: '13px'
                   }}>
                     {calculateTotalScratch(player) || '—'}
                   </td>
                   
                   {/* Total */}
                   <td style={{ 
-                    padding: '16px 12px',
+                    padding: '12px 10px',
                     textAlign: 'center',
                     verticalAlign: 'middle',
                     position: 'relative',
                     fontWeight: '700',
                     color: '#1f2937',
-                    fontSize: '16px',
+                    fontSize: '13px',
                     borderTopRightRadius: '12px',
                     borderBottomRightRadius: '12px'
                   }}>

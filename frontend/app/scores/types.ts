@@ -25,4 +25,5 @@ export interface SortableHeaderProps {
   sortConfig: SortConfig;
   onSort: (column: SortableScoreColumn) => void;
   align?: 'left' | 'center' | 'right';
+  width?: string;
 }

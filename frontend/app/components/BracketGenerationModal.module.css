@@ -33,7 +33,7 @@
   padding: 3rem;
   min-width: 400px;
   max-width: 500px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 4px 16px rgba(79, 140, 255, 0.2);
   text-align: center;
   animation: slideIn 0.3s ease;
   position: relative;
@@ -96,8 +96,8 @@
 /* Tournament Context Info */
 .contextInfo {
   width: 100%;
-  background-color: #f9fafb;
-  border: 1px solid #e5e7eb;
+  background-color: #dbeafe;
+  border: 1px solid #93c5fd;
   border-radius: 8px;
   padding: 12px 16px;
   margin-bottom: 0.5rem;
@@ -198,10 +198,10 @@
 
 .progressBarFill {
   height: 100%;
-  background: linear-gradient(90deg, #f59e0b 0%, #f97316 50%, #10b981 100%);
+  background: linear-gradient(90deg, #f0a500 0%, #4f8cff 50%, #10b981 100%);
   border-radius: 9999px;
   transition: width 0.1s linear;
-  box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
+  box-shadow: 0 0 8px rgba(79, 140, 255, 0.5);
 }
 
 .progressText {
@@ -217,7 +217,7 @@
 .timeRemaining {
   font-size: 0.9rem;
   font-weight: 500;
-  color: #f59e0b;
+  color: #4f8cff;
   margin: 0 0 1rem 0;
   font-family: 'Inter', sans-serif;
   text-align: center;
@@ -520,15 +520,15 @@
   transform: translateY(0);
 }
 
-/* Primary Button - Golden/Orange */
+/* Primary Button - Orange (App Primary) */
 .primaryButton {
-  background: linear-gradient(135deg, #f0a500 0%, #e6941a 100%);
+  background: linear-gradient(135deg, #f0a500 0%, #ff9800 100%);
   color: white;
   box-shadow: 0 4px 12px rgba(240, 165, 0, 0.3);
 }
 
 .primaryButton:hover {
-  background: linear-gradient(135deg, #e6941a 0%, #d4840a 100%);
+  background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
   box-shadow: 0 6px 16px rgba(240, 165, 0, 0.4);
 }
 

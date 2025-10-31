@@ -6,7 +6,8 @@ export const SortableHeader: React.FC<SortableHeaderProps> = ({
   children, 
   sortConfig, 
   onSort,
-  align = 'center'
+  align = 'center',
+  width
 }) => {
   const isActive = sortConfig.column === column;
   const direction = isActive ? sortConfig.direction : null;
@@ -38,18 +39,18 @@ export const SortableHeader: React.FC<SortableHeaderProps> = ({
     <th 
       style={{ 
         cursor: 'pointer',
-        padding: '18px 12px',
+        padding: '10px 12px',
         textAlign: getTextAlign(),
         verticalAlign: 'middle',
         fontWeight: isActive ? '800' : '700',
         color: isActive ? '#1e40af' : '#374151',
-        fontSize: '13px',
-        textTransform: 'uppercase',
-        letterSpacing: '0.5px',
+        fontSize: '12px',
         borderBottom: isActive ? '2px solid #3b82f6' : '2px solid #e5e7eb',
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         background: isActive ? '#eff6ff' : isHovered ? '#f8fafc' : 'transparent',
-        position: 'relative'
+        position: 'relative',
+        ...(width && { width }),
+        lineHeight: '1.3'
       }}
       onClick={() => onSort(column)}
       onMouseEnter={() => setIsHovered(true)}
@@ -65,7 +66,7 @@ export const SortableHeader: React.FC<SortableHeaderProps> = ({
       }}>
         <span style={{ 
           fontWeight: 'inherit',
-          letterSpacing: 'inherit'
+          letterSpacing: '0.025em'
         }}>
           {children}
         </span>

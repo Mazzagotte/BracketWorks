@@ -618,11 +618,9 @@ export default function PayoutsPage() {
 
   usePageHeader({
     title: 'Payouts',
-    subtitle: tournament && selectedSquad 
-      ? `${tournament.name} • ${selectedSquad.name}`
-      : tournament 
-        ? tournament.name
-        : 'Tournament prize distributions',
+    subtitle: tournament 
+      ? `Managing: ${tournament.name}${tournament.location ? ` • ${tournament.location}` : ''}${tournament.start_date ? ` • ${new Date(tournament.start_date).toLocaleDateString()}` : ''}`
+      : 'Tournament prize distributions',
     actions: headerActions
   })
 
