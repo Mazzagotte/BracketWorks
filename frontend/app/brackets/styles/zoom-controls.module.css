@@ -1,0 +1,234 @@
+/* Zoom Controls Styles */
+
+.container {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.controls {
+  background: white;
+  border-radius: 12px;
+  padding: 0.75rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.zoomGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.controlButton {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 2px solid #e5e7eb;
+  background: white;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.controlButton:hover:not(:disabled) {
+  background: #f0a500;
+  border-color: #f0a500;
+  color: white;
+  transform: scale(1.05);
+}
+
+.controlButton:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.controlButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.icon {
+  line-height: 1;
+}
+
+.zoomIndicator {
+  background: #f9fafb;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  min-width: 3.5rem;
+  text-align: center;
+}
+
+.zoomValue {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #374151;
+}
+
+.resetButton {
+  background: linear-gradient(135deg, #f0a500 0%, #e6941a 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.625rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.resetButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(240, 165, 0, 0.3);
+}
+
+.resetButton:active {
+  transform: translateY(0);
+}
+
+.resetIcon {
+  font-size: 1rem;
+}
+
+.panGroup {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 0.75rem;
+}
+
+.panControls {
+  display: grid;
+  grid-template-rows: auto auto auto;
+  gap: 0.25rem;
+}
+
+.panMiddle {
+  display: grid;
+  grid-template-columns: auto auto auto;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.panButton {
+  width: 2rem;
+  height: 2rem;
+  border: 2px solid #e5e7eb;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.panButton:hover {
+  background: #f0a500;
+  border-color: #f0a500;
+  color: white;
+  transform: scale(1.1);
+}
+
+.panButton:active {
+  transform: scale(0.9);
+}
+
+.panCenter {
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  color: #9ca3af;
+}
+
+.minimap {
+  background: white;
+  border-radius: 12px;
+  padding: 0.75rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  width: 200px;
+}
+
+.minimapLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.minimapCanvas {
+  background: #f9fafb;
+  border: 2px solid #e5e7eb;
+  border-radius: 6px;
+  height: 120px;
+  position: relative;
+  overflow: hidden;
+}
+
+.minimapViewport {
+  position: absolute;
+  border: 2px solid #f0a500;
+  background: rgba(240, 165, 0, 0.1);
+  pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  .container {
+    bottom: 1rem;
+    right: 1rem;
+  }
+
+  .controls {
+    padding: 0.5rem;
+  }
+
+  .controlButton {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  .minimap {
+    width: 160px;
+  }
+
+  .minimapCanvas {
+    height: 100px;
+  }
+}
+
+@media (max-width: 480px) {
+  .panGroup {
+    display: none;
+  }
+
+  .minimap {
+    display: none;
+  }
+}
+
+.controlButton:focus-visible,
+.resetButton:focus-visible,
+.panButton:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}

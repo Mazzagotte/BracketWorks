@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useEffect, useState } from 'react';
+import { useMemo, useEffect, useState, useRef } from 'react';
 import { Tournament, Squad, Player, BracketData, ScoreData, WinnerData, BracketSettings, ToastMessage, TournamentForm } from '../lib/types';
 
 import Link from 'next/link';
@@ -444,26 +444,46 @@ export default function TournamentDashboard() {
     handicap_base: 200
   });
   const [savingBracketSettings, setSavingBracketSettings] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved' | 'error'>('saved');
+  const [lastSavedTime, setLastSavedTime] = useState<Date | null>(null);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isMountedRef = useRef(false);
+  const [isClient, setIsClient] = useState(false);
   
   // Mobile detection state
   const [isMobile, setIsMobile] = useState(false);
 
+  // Track when component is mounted to prevent premature auto-saves
+  useEffect(() => {
+    isMountedRef.current = true;
+    setIsClient(true);
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
   // Save bracket settings
   const saveBracketSettings = async () => {
-    if (!tournament?.id) {
-      setConfirmMsg('Please load a tournament first before saving bracket settings.');
-      setConfirmOpen(true);
+    // Prevent save if not mounted or missing tournament
+    if (!isMountedRef.current || !tournament?.id) {
+      if (tournament?.id) {
+        setSaveStatus('error');
+        setConfirmMsg('Please load a tournament first before saving bracket settings.');
+        setConfirmOpen(true);
+      }
       return;
     }
     
     const token = localStorage.getItem('token');
     if (!token) {
+      setSaveStatus('error');
       setConfirmMsg('Please log in to save bracket settings.');
       setConfirmOpen(true);
       return;
     }
 
     setSavingBracketSettings(true);
+    setSaveStatus('saving');
     try {
       const data = await apiClient.post<BracketSettings>('/api/v1/bracket-settings/', {
         ...bracketSettings,
@@ -484,8 +504,11 @@ export default function TournamentDashboard() {
       
       // Update local state with the returned data (includes ID for new records)
       setBracketSettings(data);
+      setSaveStatus('saved');
+      setLastSavedTime(new Date());
     } catch (error) {
       logger.error('Failed to save bracket settings', { error });
+      setSaveStatus('error');
       addToast({
         type: 'error',
         message: 'Network error occurred while saving. Please check your connection and try again.',
@@ -495,6 +518,34 @@ export default function TournamentDashboard() {
       setSavingBracketSettings(false);
     }
   };
+
+  // Auto-save with debounce
+  const autoSaveBracketSettings = () => {
+    // Don't auto-save if component isn't mounted or no tournament selected
+    if (!isMountedRef.current || !tournament?.id) return;
+    
+    // Clear existing timeout
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    
+    // Mark as unsaved
+    setSaveStatus('unsaved');
+    
+    // Set new timeout for auto-save (1.5 seconds after last change)
+    saveTimeoutRef.current = setTimeout(() => {
+      saveBracketSettings();
+    }, 1500);
+  };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Load bracket settings
   const loadBracketSettings = async (tournamentId: number) => {
@@ -922,8 +973,38 @@ export default function TournamentDashboard() {
             {tournament && (
               <div className={mobileStyles.bracketSettingsCard}>
                 <div className={mobileStyles.settingsHeader}>
-                  <span className={mobileStyles.settingsIcon}>⚙️</span>
                   <h2 className={mobileStyles.settingsTitle}>Bracket Settings</h2>
+                  {/* Auto-save status indicator - only render on client to avoid hydration issues */}
+                  {isClient && (
+                    <div className={mobileStyles.saveStatus}>
+                      {saveStatus === 'saved' && lastSavedTime && (
+                        <div className={mobileStyles.statusSaved}>
+                          <span className={mobileStyles.statusIcon}>✓</span>
+                          <span className={mobileStyles.statusText}>
+                            Saved {new Date().getTime() - lastSavedTime.getTime() < 5000 ? 'just now' : 'at ' + lastSavedTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                      )}
+                      {saveStatus === 'saving' && (
+                        <div className={mobileStyles.statusSaving}>
+                          <span className={mobileStyles.statusSpinner}>⟳</span>
+                          <span className={mobileStyles.statusText}>Saving...</span>
+                        </div>
+                      )}
+                      {saveStatus === 'unsaved' && (
+                        <div className={mobileStyles.statusUnsaved}>
+                          <span className={mobileStyles.statusIcon}>●</span>
+                          <span className={mobileStyles.statusText}>Unsaved changes</span>
+                        </div>
+                      )}
+                      {saveStatus === 'error' && (
+                        <div className={mobileStyles.statusError}>
+                          <span className={mobileStyles.statusIcon}>⚠</span>
+                          <span className={mobileStyles.statusText}>Error saving</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
                 
                 <div className={mobileStyles.settingsContent}>
@@ -933,7 +1014,6 @@ export default function TournamentDashboard() {
                     {/* Left Column - Tournament Basics */}
                     <div className={mobileStyles.settingsColumn}>
                       <div className={mobileStyles.sectionHeader}>
-                        <span className={mobileStyles.sectionIcon}>🏆</span>
                         <h3 className={mobileStyles.sectionTitle}>Tournament</h3>
                       </div>
                       
@@ -943,7 +1023,10 @@ export default function TournamentDashboard() {
                           <select
                             className={mobileStyles.compactSelect}
                             value={bracketSettings.bracket_size}
-                            onChange={changeEvent => setBracketSettings(prev => ({ ...prev, bracket_size: parseInt(changeEvent.target.value) }))}
+                            onChange={changeEvent => {
+                              setBracketSettings(prev => ({ ...prev, bracket_size: parseInt(changeEvent.target.value) }));
+                              autoSaveBracketSettings();
+                            }}
                           >
                             <option value={4}>4 Players</option>
                             <option value={8}>8 Players</option>
@@ -963,6 +1046,7 @@ export default function TournamentDashboard() {
                               onChange={changeEvent => {
                                 const numericValue = parseCurrencyInput(changeEvent.target.value);
                                 setBracketSettings(prev => ({ ...prev, cost_per_bracket: numericValue }));
+                                autoSaveBracketSettings();
                               }}
                             />
                           </div>
@@ -973,7 +1057,6 @@ export default function TournamentDashboard() {
                     {/* Right Column - Prize Structure */}
                     <div className={mobileStyles.settingsColumn}>
                       <div className={mobileStyles.sectionHeader}>
-                        <span className={mobileStyles.sectionIcon}>💰</span>
                         <h3 className={mobileStyles.sectionTitle}>Prizes</h3>
                       </div>
                       
@@ -990,6 +1073,7 @@ export default function TournamentDashboard() {
                               onChange={changeEvent => {
                                 const numericValue = parseCurrencyInput(changeEvent.target.value);
                                 setBracketSettings(prev => ({ ...prev, first_place: numericValue }));
+                                autoSaveBracketSettings();
                               }}
                             />
                           </div>
@@ -1007,6 +1091,7 @@ export default function TournamentDashboard() {
                               onChange={changeEvent => {
                                 const numericValue = parseCurrencyInput(changeEvent.target.value);
                                 setBracketSettings(prev => ({ ...prev, second_place: numericValue }));
+                                autoSaveBracketSettings();
                               }}
                             />
                           </div>
@@ -1024,6 +1109,7 @@ export default function TournamentDashboard() {
                               onChange={changeEvent => {
                                 const numericValue = parseCurrencyInput(changeEvent.target.value);
                                 setBracketSettings(prev => ({ ...prev, house_amount: numericValue }));
+                                autoSaveBracketSettings();
                               }}
                             />
                           </div>
@@ -1035,7 +1121,6 @@ export default function TournamentDashboard() {
                   {/* Handicap Settings - Full Width */}
                   <div className={mobileStyles.settingsSection}>
                     <div className={mobileStyles.sectionHeader}>
-                      <span className={mobileStyles.sectionIcon}>📊</span>
                       <h3 className={mobileStyles.sectionTitle}>Handicap</h3>
                     </div>
                     
@@ -1049,10 +1134,19 @@ export default function TournamentDashboard() {
                             min="0"
                             max="100"
                             placeholder="80"
-                            value={bracketSettings.handicap_percentage}
+                            value={bracketSettings.handicap_percentage || ''}
                             onChange={changeEvent => {
-                              const value = Math.min(100, Math.max(0, parseInt(changeEvent.target.value) || 0));
+                              const inputValue = changeEvent.target.value;
+                              const numValue = parseInt(inputValue);
+                              const value = isNaN(numValue) ? 80 : Math.min(100, Math.max(0, numValue));
                               setBracketSettings(prev => ({ ...prev, handicap_percentage: value }));
+                            }}
+                            onBlur={() => {
+                              // Trigger autosave only when user leaves the field
+                              if (!bracketSettings.handicap_percentage || bracketSettings.handicap_percentage < 0) {
+                                setBracketSettings(prev => ({ ...prev, handicap_percentage: 80 }));
+                              }
+                              autoSaveBracketSettings();
                             }}
                           />
                           <span className={mobileStyles.inputSuffix}>%</span>
@@ -1068,44 +1162,24 @@ export default function TournamentDashboard() {
                           type="number"
                           min="1"
                           placeholder="200"
-                          value={bracketSettings.handicap_base}
+                          value={bracketSettings.handicap_base || ''}
                           onChange={changeEvent => {
-                            const value = Math.max(1, parseInt(changeEvent.target.value) || 200);
+                            const inputValue = changeEvent.target.value;
+                            const numValue = parseInt(inputValue);
+                            const value = isNaN(numValue) ? 200 : Math.max(1, numValue);
                             setBracketSettings(prev => ({ ...prev, handicap_base: value }));
+                          }}
+                          onBlur={() => {
+                            // Trigger autosave only when user leaves the field
+                            if (!bracketSettings.handicap_base || bracketSettings.handicap_base < 1) {
+                              setBracketSettings(prev => ({ ...prev, handicap_base: 200 }));
+                            }
+                            autoSaveBracketSettings();
                           }}
                         />
                       </div>
                     </div>
                   </div>
-                </div>
-
-                <div className={mobileStyles.buttonGroup}>
-                  <EnhancedButton
-                    onClick={saveBracketSettings}
-                    loading={savingBracketSettings}
-                    variant="primary"
-                    size="md"
-                    className={mobileStyles.saveButton}
-                  >
-                    Save Settings
-                  </EnhancedButton>
-                  <EnhancedButton
-                    onClick={() => setBracketSettings({
-                      tournament_id: tournament?.id || 0,
-                      bracket_size: 16,
-                      first_place: 0,
-                      second_place: 0,
-                      house_amount: 0,
-                      cost_per_bracket: 0,
-                      handicap_percentage: 80,
-                      handicap_base: 200
-                    })}
-                    variant="secondary"
-                    size="md"
-                    className={mobileStyles.resetButton}
-                  >
-                    Reset
-                  </EnhancedButton>
                 </div>
               </div>
             )}
@@ -1114,7 +1188,6 @@ export default function TournamentDashboard() {
             {squads.length > 0 ? (
               <div className={mobileStyles.squadSelectionCard}>
                 <div className={mobileStyles.squadHeader}>
-                  <span className={mobileStyles.squadIcon}>🎳</span>
                   <h2 className={mobileStyles.squadTitle}>Squad Selection</h2>
                   <div className={mobileStyles.squadCounter}>
                     {squads.length} available
@@ -1172,21 +1245,6 @@ export default function TournamentDashboard() {
                     </span>
                   </div>
                 )}
-                
-                <EnhancedButton
-                  disabled={!selectedSquadId}
-                  onClick={() => {
-                    // Confirm squad loaded
-                    const squad = squads.find(s => s.id === selectedSquadId);
-                    setConfirmMsg(squad ? `Squad loaded: ${squad.date} — ${squad.time}` : 'Squad loaded');
-                    setConfirmOpen(true);
-                  }}
-                  variant="primary"
-                  size="md"
-                  className={mobileStyles.loadSquadButton}
-                >
-                  {selectedSquadId ? 'Load Selected Squad' : 'Select a Squad First'}
-                </EnhancedButton>
               </div>
             ) : (
               <div className={mobileStyles.noSquadsCard}>

@@ -1,0 +1,252 @@
+/* Empty Bracket State Styles */
+
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  padding: 2rem;
+}
+
+.content {
+  max-width: 600px;
+  text-align: center;
+}
+
+.iconContainer {
+  margin-bottom: 2rem;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.bracketIcon {
+  width: 120px;
+  height: 120px;
+  margin: 0 auto;
+  background: linear-gradient(135deg, #f0a500 0%, #e6941a 100%);
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(240, 165, 0, 0.3);
+}
+
+.svg {
+  width: 70px;
+  height: 70px;
+  color: white;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 0.75rem;
+}
+
+.description {
+  font-size: 1.125rem;
+  color: #6b7280;
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
+.ctaButton {
+  background: linear-gradient(135deg, #f0a500 0%, #e6941a 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 1rem 2rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(240, 165, 0, 0.3);
+  margin-bottom: 3rem;
+}
+
+.ctaButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(240, 165, 0, 0.4);
+}
+
+.ctaButton:active {
+  transform: translateY(0);
+}
+
+.buttonIcon {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.features {
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  text-align: left;
+}
+
+.featuresTitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.featuresList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.feature {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.9375rem;
+  color: #6b7280;
+}
+
+.featureIcon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.demoPreview {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.demoLabel {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.demoBracket {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+  align-items: center;
+  overflow-x: auto;
+  padding: 1rem;
+}
+
+.demoRound {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.demoMatch {
+  background: #f9fafb;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.demoPlayer {
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.demoPlayer:last-child {
+  border-bottom: none;
+}
+
+.demoPlayer.champion {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  border: 2px solid #10b981;
+  color: #059669;
+  font-weight: 700;
+}
+
+@media (max-width: 640px) {
+  .container {
+    padding: 1.5rem;
+  }
+
+  .bracketIcon {
+    width: 100px;
+    height: 100px;
+  }
+
+  .svg {
+    width: 60px;
+    height: 60px;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .description {
+    font-size: 1rem;
+  }
+
+  .ctaButton {
+    padding: 0.875rem 1.5rem;
+    font-size: 1rem;
+  }
+
+  .features {
+    padding: 1.5rem;
+  }
+
+  .demoPreview {
+    padding: 1rem;
+  }
+
+  .demoBracket {
+    gap: 1rem;
+    padding: 0.5rem;
+  }
+
+  .demoRound {
+    gap: 1rem;
+  }
+
+  .demoPlayer {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8125rem;
+  }
+}
+
+.ctaButton:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .iconContainer {
+    animation: none;
+  }
+
+  .ctaButton:hover {
+    transform: none;
+  }
+}

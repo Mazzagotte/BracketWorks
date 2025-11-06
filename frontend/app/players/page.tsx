@@ -12,7 +12,7 @@ import { useTournaments } from '../hooks/useTournaments'
 import PlayersTable from './components/PlayersTable'
 import PlayerForm from './components/PlayerForm'
 import { logger } from '../lib/logger'
-import { Squad, SortConfig, SortableColumn, Player } from './types'
+import { Squad, Player } from './types'
 import { BracketSettings } from '../lib/types'
 import { apiClient } from '../lib/api'
 import { API } from '../lib/api'
@@ -30,27 +30,7 @@ export default function PlayersPage() {
   const [entryFee, setEntryFee] = useState<number>(25) // Default $25, will be loaded from tournament settings
   const [initialLoadComplete, setInitialLoadComplete] = useState<boolean>(false)
   
-  // Sorting state
-  const [sortConfig, setSortConfig] = useState<SortConfig>({ column: null, direction: null });
 
-  // Sorting function
-  const handleSort = useCallback((column: SortableColumn) => {
-    setSortConfig(prevSort => {
-      if (prevSort.column === column) {
-        // Same column: cycle through asc -> desc -> null
-        if (prevSort.direction === 'asc') {
-          return { column, direction: 'desc' };
-        } else if (prevSort.direction === 'desc') {
-          return { column: null, direction: null };
-        } else {
-          return { column, direction: 'asc' };
-        }
-      } else {
-        // New column: start with ascending
-        return { column, direction: 'asc' };
-      }
-    });
-  }, []);
 
   // Helper function to get tournament ID from various sources
   const getTournamentId = useCallback(() => {
@@ -125,6 +105,30 @@ export default function PlayersPage() {
   useEffect(() => {
     loadEntryFee();
   }, [loadEntryFee]);
+
+  // Reload entry fee when page becomes visible (handles navigation back from Dashboard)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log('Page became visible, reloading entry fee...');
+        loadEntryFee();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [loadEntryFee]);
+
+  // Also reload when component becomes focused (user clicks on the page)
+  useEffect(() => {
+    const handleFocus = () => {
+      console.log('Page gained focus, reloading entry fee...');
+      loadEntryFee();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [loadEntryFee]);
   
   const selectedSquad = squads.find(squad => squad.id === selectedSquadId) || null
 
@@ -171,50 +175,67 @@ export default function PlayersPage() {
     updatePlayer(playerId, updates);
   }, [updatePlayer]);
 
-  // Sort players based on current sort configuration
-  const sortedPlayers = useMemo(() => {
-    if (!sortConfig.column || !sortConfig.direction) {
-      return players;
-    }
-
-    return [...players].sort((a, b) => {
-      let aValue: any = a[sortConfig.column!];
-      let bValue: any = b[sortConfig.column!];
-
-      // Handle special cases
-      if (sortConfig.column === 'name') {
-        aValue = `${a.firstName} ${a.lastName}`.toLowerCase();
-        bValue = `${b.firstName} ${b.lastName}`.toLowerCase();
-      } else if (sortConfig.column === 'totalCost') {
-        // totalCost is a computed value, not directly stored on the player object
-        aValue = (a as any).brackets * entryFee;
-        bValue = (b as any).brackets * entryFee;
-      }
-
-      // Handle numeric values
-      if (typeof aValue === 'number' && typeof bValue === 'number') {
-        return sortConfig.direction === 'asc' ? aValue - bValue : bValue - aValue;
-      }
-
-      // Handle string values
-      if (typeof aValue === 'string' && typeof bValue === 'string') {
-        const comparison = aValue.localeCompare(bValue);
-        return sortConfig.direction === 'asc' ? comparison : -comparison;
-      }
-
-      // Fallback comparison
-      if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
-      if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
-      return 0;
-    });
-  }, [players, sortConfig]);
-
   usePageHeader({
     title: 'Entries',
     subtitle: selectedTournament 
       ? `Managing: ${selectedTournament.name}${selectedTournament.location ? ` • ${selectedTournament.location}` : ''}${selectedTournament.start_date ? ` • ${new Date(selectedTournament.start_date).toLocaleDateString()}` : ''}`
       : 'Manage tournament participants and their information'
   })
+
+  // Calculate entry totals
+  const entryTotals = useMemo(() => {
+    if (!players || players.length === 0) {
+      return {
+        totalPlayers: 0,
+        scratchEntries: 0,
+        handicapEntries: 0,
+        totalEntries: 0,
+        expectedScratchBrackets: 0,
+        expectedHandicapBrackets: 0,
+        scratchRefunds: 0,
+        handicapRefunds: 0,
+        totalRevenue: 0
+      }
+    }
+
+    const bracketSize = 8 // Default bracket size
+    let scratchCount = 0
+    let handicapCount = 0
+    let paidEntries = 0
+
+    players.forEach(player => {
+      const scratchEntries = player.scratch || 0
+      const handicapEntries = player.handicap || 0
+      const totalPlayerEntries = scratchEntries + handicapEntries
+      
+      scratchCount += scratchEntries
+      handicapCount += handicapEntries
+      
+      // Only count revenue if player has paid (amountPaid >= totalCost)
+      const isPaid = player.amountPaid && player.totalCost && player.amountPaid >= player.totalCost
+      if (isPaid) {
+        paidEntries += totalPlayerEntries
+      }
+    })
+
+    const totalEntries = scratchCount + handicapCount
+    const expectedScratchBrackets = Math.floor(scratchCount / bracketSize)
+    const expectedHandicapBrackets = Math.floor(handicapCount / bracketSize)
+    const scratchRefunds = scratchCount % bracketSize
+    const handicapRefunds = handicapCount % bracketSize
+
+    return {
+      totalPlayers: players.length,
+      scratchEntries: scratchCount,
+      handicapEntries: handicapCount,
+      totalEntries,
+      expectedScratchBrackets,
+      expectedHandicapBrackets,
+      scratchRefunds,
+      handicapRefunds,
+      totalRevenue: paidEntries * entryFee
+    }
+  }, [players, entryFee])
 
   // Fetch squad data (similar to scores page)
   useEffect(() => {
@@ -401,23 +422,182 @@ export default function PlayersPage() {
             </a>
           </div>
         ) : (
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '0.5rem',
-            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-            overflow: 'hidden'
-          }}>
-            <PlayersTable
-              players={sortedPlayers}
-              onUpdatePlayer={handleUpdatePlayer}
-              onDeletePlayer={deletePlayer}
-              savingStatus={savingStatus}
-              entryFee={entryFee}
-              sortConfig={sortConfig}
-              onSort={handleSort}
-              selectedSquad={selectedSquad}
-            />
-          </div>
+          <>
+            {/* Tournament Entry Summary */}
+            {getTournamentId() && players.length > 0 && (
+              <div style={{
+                backgroundColor: 'white',
+                borderRadius: '0.5rem',
+                boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+                padding: '1rem 1.5rem',
+                marginBottom: '1.5rem'
+              }}>
+                <h3 style={{
+                  fontSize: '0.875rem',
+                  fontWeight: '600',
+                  color: '#6b7280',
+                  marginBottom: '0.75rem',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em'
+                }}>
+                  Tournament Summary
+                </h3>
+                
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                  gap: '1rem'
+                }}>
+                  {/* Total Players */}
+                  <div style={{
+                    textAlign: 'center',
+                    padding: '0.75rem',
+                    backgroundColor: '#f9fafb',
+                    borderRadius: '0.5rem',
+                    border: '1px solid #e5e7eb'
+                  }}>
+                    <div style={{ 
+                      fontSize: '1.875rem', 
+                      fontWeight: '700', 
+                      color: '#111827',
+                      lineHeight: '1'
+                    }}>
+                      {entryTotals.totalPlayers}
+                    </div>
+                    <div style={{ 
+                      fontSize: '0.75rem', 
+                      color: '#6b7280', 
+                      marginTop: '0.25rem',
+                      fontWeight: '500'
+                    }}>
+                      Players
+                    </div>
+                  </div>
+
+                  {/* Handicap Entries */}
+                  <div style={{
+                    textAlign: 'center',
+                    padding: '0.75rem',
+                    backgroundColor: '#dbeafe',
+                    borderRadius: '0.5rem',
+                    border: '1px solid #bfdbfe'
+                  }}>
+                    <div style={{ 
+                      fontSize: '1.875rem', 
+                      fontWeight: '700', 
+                      color: '#1e40af',
+                      lineHeight: '1'
+                    }}>
+                      {entryTotals.handicapEntries}
+                    </div>
+                    <div style={{ 
+                      fontSize: '0.75rem', 
+                      color: '#1e40af', 
+                      marginTop: '0.25rem',
+                      fontWeight: '500'
+                    }}>
+                      Handicap
+                    </div>
+                    <div style={{ 
+                      fontSize: '0.75rem', 
+                      color: '#1e40af', 
+                      marginTop: '0.125rem',
+                      opacity: 0.8
+                    }}>
+                      {entryTotals.expectedHandicapBrackets} brkt
+                      {entryTotals.handicapRefunds > 0 && ` • ${entryTotals.handicapRefunds} ref`}
+                    </div>
+                  </div>
+
+                  {/* Scratch Entries */}
+                  <div style={{
+                    textAlign: 'center',
+                    padding: '0.75rem',
+                    backgroundColor: '#fef3c7',
+                    borderRadius: '0.5rem',
+                    border: '1px solid #fde68a'
+                  }}>
+                    <div style={{ 
+                      fontSize: '1.875rem', 
+                      fontWeight: '700', 
+                      color: '#92400e',
+                      lineHeight: '1'
+                    }}>
+                      {entryTotals.scratchEntries}
+                    </div>
+                    <div style={{ 
+                      fontSize: '0.75rem', 
+                      color: '#92400e', 
+                      marginTop: '0.25rem',
+                      fontWeight: '500'
+                    }}>
+                      Scratch
+                    </div>
+                    <div style={{ 
+                      fontSize: '0.75rem', 
+                      color: '#92400e', 
+                      marginTop: '0.125rem',
+                      opacity: 0.8
+                    }}>
+                      {entryTotals.expectedScratchBrackets} brkt
+                      {entryTotals.scratchRefunds > 0 && ` • ${entryTotals.scratchRefunds} ref`}
+                    </div>
+                  </div>
+
+                  {/* Total Revenue */}
+                  <div style={{
+                    textAlign: 'center',
+                    padding: '0.75rem',
+                    backgroundColor: '#d1fae5',
+                    borderRadius: '0.5rem',
+                    border: '1px solid #a7f3d0'
+                  }}>
+                    <div style={{ 
+                      fontSize: '1.875rem', 
+                      fontWeight: '700', 
+                      color: '#065f46',
+                      lineHeight: '1'
+                    }}>
+                      ${entryTotals.totalRevenue.toLocaleString()}
+                    </div>
+                    <div style={{ 
+                      fontSize: '0.75rem', 
+                      color: '#065f46', 
+                      marginTop: '0.25rem',
+                      fontWeight: '500'
+                    }}>
+                      Revenue
+                    </div>
+                    <div style={{ 
+                      fontSize: '0.75rem', 
+                      color: '#065f46', 
+                      marginTop: '0.125rem',
+                      opacity: 0.8
+                    }}>
+                      {entryTotals.totalEntries} × ${entryFee}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Players Table */}
+            <div style={{
+              backgroundColor: 'white',
+              borderRadius: '0.5rem',
+              boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+              overflow: 'hidden'
+            }}>
+              <PlayersTable
+                players={players}
+                onUpdatePlayer={handleUpdatePlayer}
+                onDeletePlayer={deletePlayer}
+                savingStatus={savingStatus}
+                entryFee={entryFee}
+                selectedSquad={selectedSquad}
+              />
+            </div>
+          </>
         )}
       </div>
     </ErrorBoundary>

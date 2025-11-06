@@ -47,10 +47,26 @@ export interface Player {
 
 // Bracket related types
 export interface BracketData {
-  id: number;
-  name: string;
-  players: Player[];
-  type?: string;
+  id?: number
+  name?: string
+  title?: string
+  players?: Player[]
+  type?: string
+  rounds?: Array<{
+    name: string
+    matches: Array<{
+      seedA?: number
+      seedB?: number
+      playerA?: string
+      playerB?: string
+      scoreA?: number
+      scoreB?: number
+      match_score_a?: number
+      match_score_b?: number
+      winner?: 'A' | 'B' | null
+      status?: 'pending' | 'in_progress' | 'completed' | 'tied'
+    }>
+  }>
 }
 
 export interface BracketSettings {

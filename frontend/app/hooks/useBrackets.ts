@@ -5,8 +5,24 @@ import { useToast } from '../components/Toast'
 import { BracketData, BracketSettings } from '../lib/types'
 
 export interface BracketPreview {
-  size: number
-  rounds: BracketRound[]
+  size?: number
+  rounds?: BracketRound[]  // Optional - for single bracket preview
+  bracket_size?: number
+  // API can return brackets in two formats:
+  // Format 1: Direct properties (current API format)
+  scratch_brackets?: BracketData[]
+  handicap_brackets?: BracketData[]
+  summary?: {
+    total_scratch_entries: number
+    total_handicap_entries: number
+    scratch_brackets_count: number
+    handicap_brackets_count: number
+    scratch_placed_entries: number
+    handicap_placed_entries: number
+    scratch_refund_entries: number
+    handicap_refund_entries: number
+  }
+  // Format 2: Wrapped in multiple_brackets (alternative format)
   multiple_brackets?: {
     scratch_brackets: BracketData[]
     handicap_brackets: BracketData[]
@@ -25,6 +41,9 @@ export interface BracketPreview {
     name: string
     id: number
   }
+  tournament_id?: number
+  tournament_name?: string
+  squad_id?: number
 }
 
 export interface BracketRound {
@@ -84,15 +103,20 @@ export function useBrackets() {
     tournamentId: number,
     squadId?: number,
     bracketSize: number = 8,
-    saveToDb: boolean = true
+    saveToDb: boolean = true,
+    forceRegenerate: boolean = false
   ) => {
     setLoading(true)
     setError(null)
     
     try {
       const squadParam = squadId ? `&squad_id=${squadId}` : ''
+      const forceParam = forceRegenerate ? '&force_regenerate=true' : ''
+      const url = `/api/v1/brackets/generate-multiple?tournament_id=${tournamentId}${squadParam}${forceParam}`
+      console.log('=== GENERATE BRACKETS URL ===', url, 'forceRegenerate:', forceRegenerate)
       const data = await apiClient.get<BracketPreview>(
-        `/api/v1/brackets/generate-multiple?tournament_id=${tournamentId}${squadParam}`
+        url,
+        !forceRegenerate  // useCache = false when forcing regeneration
       )
       setPreview(data)
       
@@ -159,9 +183,9 @@ export function useBrackets() {
     setError(null)
     
     try {
-      const squadParam = squadId ? `&squad_id=${squadId}` : ''
+      const squadParam = squadId ? `?squad_id=${squadId}` : ''
       const data = await apiClient.get<BracketPreview>(
-        `/api/v1/brackets/generate-multiple?tournament_id=${tournamentId}${squadParam}&save_to_db=false`
+        `/api/v1/brackets/load/${tournamentId}${squadParam}`
       )
       setPreview(data)
       return data

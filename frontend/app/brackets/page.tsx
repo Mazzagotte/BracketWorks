@@ -1,33 +1,70 @@
 'use client'
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react'
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useAuth } from '../lib/auth-context'
 import { usePageHeader } from '../lib/header-context'
 import { ErrorBoundary } from '../components/ErrorBoundary'
-import { useBrackets } from '../hooks/useBrackets'
+import { useBrackets, BracketPreview, Match } from '../hooks/useBrackets'
 import { useTournaments, useSquads } from '../hooks/useTournaments'
 import { useToast } from '../components/Toast'
+import { Tournament, Squad } from '../lib/types'
 import BracketGenerationModal from '../components/BracketGenerationModal'
+import { BracketTreeView } from './components/BracketTreeView'
+import { MatchDetailsModal } from './components/MatchDetailsModal'
+import { BracketStatsPanel } from './components/BracketStatsPanel'
+import { BracketTabs } from './components/BracketTabs'
+import { RoundNavigator } from './components/RoundNavigator'
+import { SearchFilter } from './components/SearchFilter'
+import { ZoomControls } from './components/ZoomControls'
+import { MobileBracketView } from './components/MobileBracketView'
+import { EmptyBracketState } from './components/EmptyBracketState'
 import '../styles/bowling-animations.css'
 
 export default function BracketsPage() {
   // State for modal and generation
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [bracketGenerationPromise, setBracketGenerationPromise] = useState<Promise<any> | null>(null)
+  const [bracketGenerationPromise, setBracketGenerationPromise] = useState<Promise<BracketPreview> | null>(null)
+  
+  // State for bracket display
+  const [activeTab, setActiveTab] = useState<'scratch' | 'handicap' | 'all'>('all')
+  const [currentRound, setCurrentRound] = useState(0)
+  const [selectedMatch, setSelectedMatch] = useState<{ round: number; match: number } | null>(null)
+  
+  // Ref to prevent infinite loop in useEffect
+  const loadingRef = useRef(false)
+  const lastLoadedRef = useRef<{tournamentId: number, squadId: number} | null>(null)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [selectedStatus, setSelectedStatus] = useState('all')
+  const [selectedSeedRange, setSelectedSeedRange] = useState('all')
+  const [zoomLevel, setZoomLevel] = useState(100)
+  const [isMobile, setIsMobile] = useState(false)
+  const [loadedBrackets, setLoadedBrackets] = useState<BracketPreview | null>(null)
   
   // Hooks for data fetching
-  const { generateTournamentBrackets } = useBrackets()
+  const { generateTournamentBrackets, loadSavedBrackets } = useBrackets()
   const { tournaments, fetchTournaments } = useTournaments()
   const { squads, fetchSquads } = useSquads()
   const { addToast } = useToast()
   
   // State for selected entities
-  const [selectedTournament, setSelectedTournament] = useState<any>(null)
-  const [selectedSquad, setSelectedSquad] = useState<any>(null)
+  const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null)
+  const [selectedSquad, setSelectedSquad] = useState<Squad | null>(null)
+  const [selectedBracketIndex, setSelectedBracketIndex] = useState<number>(0) // Which bracket to display (0-based)
+
+  // Detect mobile viewport
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768)
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   // Load tournaments on mount
   useEffect(() => {
     fetchTournaments()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Auto-select tournament from localStorage
@@ -44,6 +81,7 @@ export default function BracketsPage() {
         }
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tournaments, selectedTournament])
 
   // Auto-select squad from localStorage or use first squad
@@ -70,6 +108,69 @@ export default function BracketsPage() {
       }
     }
   }, [squads, selectedSquad])
+
+  // Fetch brackets when squad is selected
+  useEffect(() => {
+    const shouldLoad = selectedSquad && 
+                      selectedTournament && 
+                      !loadingRef.current &&
+                      (lastLoadedRef.current?.tournamentId !== selectedTournament.id || 
+                       lastLoadedRef.current?.squadId !== selectedSquad.id)
+    
+    if (shouldLoad) {
+      loadingRef.current = true
+      console.log('Loading brackets for tournament:', selectedTournament.id, 'squad:', selectedSquad.id)
+      loadSavedBrackets(selectedTournament.id, selectedSquad.id).then(brackets => {
+        console.log('Loaded brackets:', brackets)
+        setLoadedBrackets(brackets)
+        lastLoadedRef.current = { tournamentId: selectedTournament.id, squadId: selectedSquad.id }
+        loadingRef.current = false
+      }).catch(() => {
+        loadingRef.current = false
+      })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedSquad, selectedTournament])
+
+  // Reload brackets when page becomes visible (handles navigation back from Dashboard)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && selectedSquad && selectedTournament && !loadingRef.current) {
+        console.log('Brackets page became visible, reloading brackets...');
+        loadingRef.current = true;
+        loadSavedBrackets(selectedTournament.id, selectedSquad.id).then(brackets => {
+          setLoadedBrackets(brackets);
+          lastLoadedRef.current = { tournamentId: selectedTournament.id, squadId: selectedSquad.id };
+          loadingRef.current = false;
+        }).catch(() => {
+          loadingRef.current = false;
+        });
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [selectedSquad, selectedTournament]);
+
+  // Also reload when page gains focus
+  useEffect(() => {
+    const handleFocus = () => {
+      if (selectedSquad && selectedTournament && !loadingRef.current) {
+        console.log('Brackets page gained focus, reloading brackets...');
+        loadingRef.current = true;
+        loadSavedBrackets(selectedTournament.id, selectedSquad.id).then(brackets => {
+          setLoadedBrackets(brackets);
+          lastLoadedRef.current = { tournamentId: selectedTournament.id, squadId: selectedSquad.id };
+          loadingRef.current = false;
+        }).catch(() => {
+          loadingRef.current = false;
+        });
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [selectedSquad, selectedTournament]);
 
   // Handle generate brackets action
   const handleGenerateBrackets = useCallback(() => {
@@ -111,10 +212,40 @@ export default function BracketsPage() {
       selectedTournament.id,
       selectedSquad.id,
       8, // Default bracket size
-      true // Save to database
+      true, // Save to database
+      true  // Force regenerate to see debug output
     )
       .then((result) => {
         console.log('Bracket generation successful:', result)
+        
+        // Log detailed bracket information
+        console.log('=== DETAILED BRACKET ANALYSIS ===')
+        console.log('Total scratch brackets:', result.scratch_brackets?.length || 0)
+        console.log('Total handicap brackets:', result.handicap_brackets?.length || 0)
+        
+        // Log each handicap bracket with its players
+        if (result.handicap_brackets && result.handicap_brackets.length > 0) {
+          console.log('\nHandicap Brackets Details:')
+          result.handicap_brackets.forEach((bracket: any, idx: number) => {
+            const playerCount = bracket.rounds?.[0]?.matches?.reduce((sum: number, match: any) => {
+              return sum + (match.player1?.name ? 1 : 0) + (match.player2?.name ? 1 : 0)
+            }, 0) || 0
+            console.log(`  Bracket ${idx + 1}: ${bracket.name}, Players: ${playerCount}`)
+          })
+        }
+        
+        // Log summary data if available
+        if (result.summary) {
+          console.log('\n=== BRACKET GENERATION SUMMARY ===')
+          console.log('Scratch entries:', result.summary.total_scratch_entries)
+          console.log('Handicap entries:', result.summary.total_handicap_entries)
+          console.log('Scratch brackets created:', result.summary.scratch_brackets_count)
+          console.log('Handicap brackets created:', result.summary.handicap_brackets_count)
+          console.log('Scratch refunds:', result.summary.scratch_refund_entries)
+          console.log('Handicap refunds:', result.summary.handicap_refund_entries)
+          console.log('=== END SUMMARY ===')
+        }
+        
         // Success - toast will be shown by modal
         addToast({
           type: 'success',
@@ -136,16 +267,194 @@ export default function BracketsPage() {
   }, [selectedTournament, selectedSquad, generateTournamentBrackets, addToast])
 
   // Handle modal close
-  const handleModalClose = () => {
+  const handleModalClose = useCallback(() => {
     setIsModalOpen(false)
     setBracketGenerationPromise(null)
-  }
+    
+    // Reload brackets after generation
+    if (selectedSquad && selectedTournament) {
+      console.log('Reloading brackets after generation...')
+      loadingRef.current = false // Reset the loading ref
+      lastLoadedRef.current = null // Reset the last loaded ref to force reload
+      loadSavedBrackets(selectedTournament.id, selectedSquad.id).then(brackets => {
+        console.log('Reloaded brackets after generation:', brackets)
+        if (brackets) {
+          setLoadedBrackets(brackets)
+          lastLoadedRef.current = { tournamentId: selectedTournament.id, squadId: selectedSquad.id }
+          console.log('Brackets set, rounds available:', brackets.rounds?.length || 0)
+        } else {
+          console.error('Failed to load brackets after generation')
+        }
+      })
+    }
+  }, [selectedSquad, selectedTournament, loadSavedBrackets])
 
   // Handle regenerate action from modal
   const handleRegenerate = useCallback(() => {
     // Restart the generation process
     startBracketGeneration()
   }, [startBracketGeneration])
+
+  // Filter and process brackets based on active tab
+  const filteredBrackets = useMemo(() => {
+    if (!loadedBrackets) return []
+    
+    // Try direct properties first (current API format)
+    const scratch = loadedBrackets.scratch_brackets || loadedBrackets.multiple_brackets?.scratch_brackets || []
+    const handicap = loadedBrackets.handicap_brackets || loadedBrackets.multiple_brackets?.handicap_brackets || []
+    
+    const allBrackets = [...scratch, ...handicap]
+    
+    let filtered = allBrackets
+    
+    // Filter by tab
+    if (activeTab === 'scratch') {
+      filtered = scratch
+    } else if (activeTab === 'handicap') {
+      filtered = handicap
+    }
+    
+    return filtered
+  }, [loadedBrackets, activeTab])
+
+  // Convert brackets to rounds structure
+  const rounds = useMemo(() => {
+    if (!loadedBrackets) {
+      console.log('No loaded brackets')
+      return []
+    }
+    
+    console.log('=== ROUNDS EXTRACTION DEBUG ===')
+    console.log('Full loadedBrackets structure:', JSON.stringify(loadedBrackets, null, 2))
+    console.log('Active tab:', activeTab)
+    console.log('Has multiple_brackets?', !!loadedBrackets.multiple_brackets)
+    console.log('Has direct scratch_brackets?', !!loadedBrackets.scratch_brackets)
+    console.log('Has direct handicap_brackets?', !!loadedBrackets.handicap_brackets)
+    console.log('Has direct rounds?', !!loadedBrackets.rounds)
+    
+    // Check for direct scratch_brackets/handicap_brackets at top level (current API format)
+    const scratch_brackets = (loadedBrackets as any).scratch_brackets
+    const handicap_brackets = (loadedBrackets as any).handicap_brackets
+    
+    if (scratch_brackets || handicap_brackets) {
+      console.log('Scratch brackets count:', scratch_brackets?.length || 0)
+      console.log('Handicap brackets count:', handicap_brackets?.length || 0)
+      
+      if (scratch_brackets && scratch_brackets.length > 0) {
+        console.log('First scratch bracket structure:', JSON.stringify(scratch_brackets[0], null, 2))
+      }
+      
+      // Get rounds from the first available bracket based on active tab
+      let sourceBrackets: any[] = []
+      
+      if (activeTab === 'scratch' && scratch_brackets && scratch_brackets.length > 0) {
+        sourceBrackets = scratch_brackets
+        console.log('Using scratch brackets for activeTab=scratch')
+      } else if (activeTab === 'handicap' && handicap_brackets && handicap_brackets.length > 0) {
+        sourceBrackets = handicap_brackets
+        console.log('Using handicap brackets for activeTab=handicap')
+      } else if (activeTab === 'all') {
+        // For 'all' tab, prefer scratch if available, otherwise handicap
+        if (scratch_brackets && scratch_brackets.length > 0) {
+          sourceBrackets = scratch_brackets
+          console.log('Using scratch brackets for activeTab=all')
+        } else if (handicap_brackets && handicap_brackets.length > 0) {
+          sourceBrackets = handicap_brackets
+          console.log('Using handicap brackets for activeTab=all (no scratch available)')
+        }
+      }
+      
+      if (sourceBrackets.length > 0) {
+        // Use selectedBracketIndex, but ensure it's within bounds
+        const bracketIndex = Math.min(selectedBracketIndex, sourceBrackets.length - 1)
+        console.log(`Using bracket ${bracketIndex + 1} of ${sourceBrackets.length}`)
+        console.log('Source bracket has rounds?', !!sourceBrackets[bracketIndex].rounds)
+        if (sourceBrackets[bracketIndex].rounds) {
+          console.log('✅ Loading rounds from bracket:', sourceBrackets[bracketIndex].rounds.length, 'rounds available')
+          return sourceBrackets[bracketIndex].rounds
+        }
+      }
+    }
+    
+    // Check if we have the multiple_brackets wrapper structure (alternative API format)
+    if (loadedBrackets.multiple_brackets) {
+      const { scratch_brackets, handicap_brackets } = loadedBrackets.multiple_brackets
+      
+      console.log('Using multiple_brackets wrapper')
+      console.log('Scratch brackets count:', scratch_brackets?.length || 0)
+      console.log('Handicap brackets count:', handicap_brackets?.length || 0)
+      
+      // Get rounds from the first available bracket based on active tab
+      let sourceBrackets: any[] = []
+      
+      if (activeTab === 'scratch' && scratch_brackets && scratch_brackets.length > 0) {
+        sourceBrackets = scratch_brackets
+      } else if (activeTab === 'handicap' && handicap_brackets && handicap_brackets.length > 0) {
+        sourceBrackets = handicap_brackets
+      } else if (activeTab === 'all') {
+        if (scratch_brackets && scratch_brackets.length > 0) {
+          sourceBrackets = scratch_brackets
+        } else if (handicap_brackets && handicap_brackets.length > 0) {
+          sourceBrackets = handicap_brackets
+        }
+      }
+      
+      if (sourceBrackets.length > 0 && sourceBrackets[0].rounds) {
+        console.log('✅ Loading rounds from multiple_brackets wrapper:', sourceBrackets[0].rounds.length, 'rounds available')
+        return sourceBrackets[0].rounds
+      }
+    }
+    
+    // Fallback to direct rounds property if it exists (single bracket preview format)
+    if (loadedBrackets.rounds) {
+      console.log('✅ Loading rounds from direct property:', loadedBrackets.rounds.length, 'rounds available')
+      return loadedBrackets.rounds
+    }
+    
+    console.log('❌ No rounds found in bracket data')
+    console.log('=== END ROUNDS EXTRACTION DEBUG ===')
+    return []
+  }, [loadedBrackets, activeTab, selectedBracketIndex])
+
+  // Handle search and filter
+  const handleClearFilters = useCallback(() => {
+    setSearchTerm('')
+    setSelectedStatus('all')
+    setSelectedSeedRange('all')
+  }, [])
+
+  const activeFiltersCount = useMemo(() => {
+    let count = 0
+    if (searchTerm) count++
+    if (selectedStatus !== 'all') count++
+    if (selectedSeedRange !== 'all') count++
+    return count
+  }, [searchTerm, selectedStatus, selectedSeedRange])
+
+  // Handle zoom controls
+  const handleZoomIn = useCallback(() => {
+    setZoomLevel(prev => Math.min(prev + 10, 200))
+  }, [])
+
+  const handleZoomOut = useCallback(() => {
+    setZoomLevel(prev => Math.max(prev - 10, 50))
+  }, [])
+
+  const handleResetZoom = useCallback(() => {
+    setZoomLevel(100)
+  }, [])
+
+  // Handle match click
+  const handleMatchClick = useCallback((roundIndex: number, matchIndex: number) => {
+    if (rounds[roundIndex]?.matches[matchIndex]) {
+      setSelectedMatch({ round: roundIndex, match: matchIndex })
+    }
+  }, [rounds])
+
+  // Handle match modal close
+  const handleMatchModalClose = useCallback(() => {
+    setSelectedMatch(null)
+  }, [])
 
   // Memoize the Generate Brackets button to prevent infinite re-renders
   const generateBracketsButton = useMemo(() => (
@@ -241,23 +550,354 @@ export default function BracketsPage() {
         playerCount={undefined}
       />
 
+      {/* Match Details Modal */}
+      {selectedMatch && rounds[selectedMatch.round]?.matches[selectedMatch.match] && (
+        <MatchDetailsModal
+          match={rounds[selectedMatch.round].matches[selectedMatch.match]}
+          onClose={handleMatchModalClose}
+        />
+      )}
+
       <div style={{ 
-        padding: '2rem',
-        fontFamily: 'Inter, sans-serif'
+        padding: isMobile ? '0.5rem' : '1rem',
+        fontFamily: 'Inter, sans-serif',
+        position: 'relative'
       }}>
-        <h1>Brackets Page</h1>
-        <p>Bracket content will be built here.</p>
-        
-        {selectedTournament && (
-          <div style={{ marginTop: '1rem' }}>
-            <p><strong>Selected Tournament:</strong> {selectedTournament.name}</p>
-          </div>
-        )}
-        
-        {selectedSquad && (
-          <div style={{ marginTop: '0.5rem' }}>
-            <p><strong>Selected Squad:</strong> {selectedSquad.date} - {selectedSquad.time}</p>
-          </div>
+        {/* Show empty state if no brackets */}
+        {(() => {
+          const hasLoadedBrackets = !!loadedBrackets
+          const hasRounds = !!rounds
+          const roundsLength = rounds?.length || 0
+          const showEmpty = !hasLoadedBrackets || !hasRounds || roundsLength === 0
+          
+          console.log('=== DISPLAY CONDITION DEBUG ===')
+          console.log('loadedBrackets exists?', hasLoadedBrackets)
+          console.log('rounds exists?', hasRounds)
+          console.log('rounds.length:', roundsLength)
+          console.log('Show empty state?', showEmpty)
+          console.log('=== END DISPLAY CONDITION DEBUG ===')
+          
+          return showEmpty
+        })() ? (
+          <EmptyBracketState
+            onGenerateClick={handleGenerateBrackets}
+            showDemo={true}
+          />
+        ) : (
+          <>
+            {/* Bracket Tabs */}
+            <BracketTabs
+              activeTab={activeTab}
+              onTabChange={(tab) => {
+                setActiveTab(tab)
+                setSelectedBracketIndex(0) // Reset to first bracket when switching tabs
+              }}
+              scratchCount={loadedBrackets.multiple_brackets?.scratch_brackets?.length || 0}
+              handicapCount={loadedBrackets.multiple_brackets?.handicap_brackets?.length || 0}
+            />
+
+            {/* Search and Filter */}
+            <SearchFilter
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+              selectedStatus={selectedStatus}
+              onStatusChange={setSelectedStatus}
+              selectedSeedRange={selectedSeedRange}
+              onSeedRangeChange={setSelectedSeedRange}
+              onClearFilters={handleClearFilters}
+              activeFiltersCount={activeFiltersCount}
+            />
+
+            {/* Bracket Stats Panel */}
+            {filteredBrackets.length > 0 && rounds.length > 0 && (
+              <BracketStatsPanel
+                rounds={rounds}
+                bracketType={activeTab === 'all' ? 'scratch' : activeTab}
+                totalPlayers={loadedBrackets?.bracket_size || loadedBrackets?.size || 8}
+                lastUpdated={null}
+              />
+            )}
+
+            {/* Bracket Selector - Navigate between individual brackets */}
+            {(() => {
+              const scratchBrackets = loadedBrackets.scratch_brackets || loadedBrackets.multiple_brackets?.scratch_brackets || []
+              const handicapBrackets = loadedBrackets.handicap_brackets || loadedBrackets.multiple_brackets?.handicap_brackets || []
+              
+              let totalBrackets = 0
+              if (activeTab === 'scratch') totalBrackets = scratchBrackets.length
+              else if (activeTab === 'handicap') totalBrackets = handicapBrackets.length
+              else totalBrackets = scratchBrackets.length + handicapBrackets.length
+              
+              if (totalBrackets <= 1) return null // Don't show if only one bracket
+              
+              // Calculate bracket stats
+              const totalMatches = rounds.reduce((sum, round) => sum + round.matches.length, 0)
+              const completedMatches = rounds.reduce((sum, round) => 
+                sum + round.matches.filter(m => m.winner).length, 0)
+              const progressPercent = totalMatches > 0 ? Math.round((completedMatches / totalMatches) * 100) : 0
+              
+              // Get bracket type
+              const bracketType = activeTab === 'all' 
+                ? (scratchBrackets.length > 0 ? 'Scratch' : 'Handicap')
+                : activeTab.charAt(0).toUpperCase() + activeTab.slice(1)
+              
+              return (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '1.5rem',
+                  padding: '1.25rem 1.5rem',
+                  background: 'linear-gradient(135deg, #ffffff 0%, #f9fafb 100%)',
+                  borderRadius: '12px',
+                  marginBottom: '1rem',
+                  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)',
+                  border: '1px solid rgba(255, 255, 255, 0.8)',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  maxWidth: '900px',
+                  margin: '0 auto 1rem auto'
+                }}>
+                  {/* Gradient accent bar */}
+                  <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: '3px',
+                    background: 'linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899, #f59e0b)',
+                    backgroundSize: '200% 100%',
+                    animation: 'gradientShift 3s ease infinite'
+                  }} />
+                  
+                  {/* Previous Button */}
+                  <button
+                    onClick={() => setSelectedBracketIndex(Math.max(0, selectedBracketIndex - 1))}
+                    disabled={selectedBracketIndex === 0}
+                    style={{
+                      padding: '0.75rem 1.25rem',
+                      background: selectedBracketIndex === 0 
+                        ? 'linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)'
+                        : 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                      color: selectedBracketIndex === 0 ? '#9ca3af' : 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      cursor: selectedBracketIndex === 0 ? 'not-allowed' : 'pointer',
+                      fontWeight: '600',
+                      fontSize: '0.9375rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      boxShadow: selectedBracketIndex === 0 
+                        ? 'none' 
+                        : '0 2px 8px rgba(59, 130, 246, 0.3)'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (selectedBracketIndex !== 0) {
+                        e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)'
+                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.4)'
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (selectedBracketIndex !== 0) {
+                        e.currentTarget.style.transform = 'scale(1)'
+                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(59, 130, 246, 0.3)'
+                      }
+                    }}
+                  >
+                    <span style={{ fontSize: '1.125rem' }}>←</span>
+                    <span>Previous</span>
+                  </button>
+                  
+                  {/* Center Info Section */}
+                  <div style={{
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.75rem',
+                    minWidth: 0
+                  }}>
+                    {/* Bracket Title Row */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '1rem',
+                      flexWrap: 'wrap'
+                    }}>
+                      <h3 style={{
+                        fontSize: '1.25rem',
+                        fontWeight: '700',
+                        color: '#1f2937',
+                        margin: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem'
+                      }}>
+                        <span style={{
+                          background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent',
+                          backgroundClip: 'text'
+                        }}>
+                          Bracket {selectedBracketIndex + 1}
+                        </span>
+                        <span style={{ color: '#9ca3af', fontWeight: '400' }}>of</span>
+                        <span style={{ color: '#6b7280' }}>{totalBrackets}</span>
+                      </h3>
+                      
+                      {/* Bracket Type Badge */}
+                      <div style={{
+                        padding: '0.375rem 0.875rem',
+                        background: bracketType === 'Scratch'
+                          ? 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)'
+                          : 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+                        color: bracketType === 'Scratch' ? '#1e40af' : '#92400e',
+                        borderRadius: '6px',
+                        fontSize: '0.8125rem',
+                        fontWeight: '600',
+                        border: `1px solid ${bracketType === 'Scratch' ? '#93c5fd' : '#fcd34d'}`
+                      }}>
+                        {bracketType}
+                      </div>
+                      
+                      {/* Progress Badge */}
+                      <div style={{
+                        padding: '0.375rem 0.875rem',
+                        background: progressPercent === 100
+                          ? 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)'
+                          : 'linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)',
+                        color: progressPercent === 100 ? '#065f46' : '#6b7280',
+                        borderRadius: '6px',
+                        fontSize: '0.8125rem',
+                        fontWeight: '600',
+                        border: `1px solid ${progressPercent === 100 ? '#6ee7b7' : '#d1d5db'}`
+                      }}>
+                        {completedMatches}/{totalMatches} Complete
+                      </div>
+                    </div>
+                    
+                    {/* Progress Bar */}
+                    <div style={{
+                      width: '100%',
+                      height: '8px',
+                      background: 'linear-gradient(90deg, #e5e7eb 0%, #f3f4f6 100%)',
+                      borderRadius: '4px',
+                      overflow: 'hidden',
+                      position: 'relative',
+                      boxShadow: 'inset 0 1px 3px rgba(0, 0, 0, 0.1)'
+                    }}>
+                      <div style={{
+                        height: '100%',
+                        width: `${progressPercent}%`,
+                        background: progressPercent === 100
+                          ? 'linear-gradient(90deg, #10b981 0%, #059669 100%)'
+                          : 'linear-gradient(90deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%)',
+                        transition: 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+                        boxShadow: '0 0 8px rgba(59, 130, 246, 0.4)',
+                        position: 'relative'
+                      }}>
+                        <div style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          height: '50%',
+                          background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.3), transparent)',
+                          pointerEvents: 'none'
+                        }} />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Next Button */}
+                  <button
+                    onClick={() => setSelectedBracketIndex(Math.min(totalBrackets - 1, selectedBracketIndex + 1))}
+                    disabled={selectedBracketIndex >= totalBrackets - 1}
+                    style={{
+                      padding: '0.75rem 1.25rem',
+                      background: selectedBracketIndex >= totalBrackets - 1
+                        ? 'linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)'
+                        : 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                      color: selectedBracketIndex >= totalBrackets - 1 ? '#9ca3af' : 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      cursor: selectedBracketIndex >= totalBrackets - 1 ? 'not-allowed' : 'pointer',
+                      fontWeight: '600',
+                      fontSize: '0.9375rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      boxShadow: selectedBracketIndex >= totalBrackets - 1
+                        ? 'none'
+                        : '0 2px 8px rgba(59, 130, 246, 0.3)'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (selectedBracketIndex < totalBrackets - 1) {
+                        e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)'
+                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.4)'
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (selectedBracketIndex < totalBrackets - 1) {
+                        e.currentTarget.style.transform = 'scale(1)'
+                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(59, 130, 246, 0.3)'
+                      }
+                    }}
+                  >
+                    <span>Next</span>
+                    <span style={{ fontSize: '1.125rem' }}>→</span>
+                  </button>
+                </div>
+              )
+            })()}
+
+            {/* Bracket Display */}
+            {rounds.length > 0 ? (
+              isMobile ? (
+                <MobileBracketView
+                  rounds={rounds}
+                  currentRound={currentRound}
+                  onRoundChange={setCurrentRound}
+                  onMatchClick={handleMatchClick}
+                />
+              ) : (
+                <div style={{ 
+                  transform: `scale(${zoomLevel / 100})`,
+                  transformOrigin: 'top left',
+                  transition: 'transform 0.2s ease'
+                }}>
+                  <BracketTreeView
+                    rounds={rounds}
+                    onMatchClick={handleMatchClick}
+                    selectedMatch={selectedMatch}
+                    isMobile={isMobile}
+                  />
+                </div>
+              )
+            ) : (
+              <div style={{ 
+                textAlign: 'center', 
+                padding: '3rem',
+                color: '#6b7280'
+              }}>
+                <p>No matches found for the selected filters.</p>
+              </div>
+            )}
+
+            {/* Zoom Controls (Desktop only) */}
+            {!isMobile && rounds.length > 0 && (
+              <ZoomControls
+                zoomLevel={zoomLevel}
+                onZoomIn={handleZoomIn}
+                onZoomOut={handleZoomOut}
+                onResetZoom={handleResetZoom}
+                minZoom={50}
+                maxZoom={200}
+              />
+            )}
+          </>
         )}
       </div>
     </ErrorBoundary>

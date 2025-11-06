@@ -30,8 +30,6 @@ export interface PlayersTableProps {
   onDeletePlayer: (playerId: number) => void;
   savingStatus: Record<string, SavingStatus>;
   entryFee: number;
-  sortConfig: SortConfig;
-  onSort: (column: SortableColumn) => void;
   selectedSquad?: Squad | null;
 }
 
