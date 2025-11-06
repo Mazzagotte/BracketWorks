@@ -1,121 +1,22 @@
 import React, { memo } from 'react';
 
-import { PlayersTableProps, SortableColumn } from '../types';
+import { PlayersTableProps } from '../types';
 import { OptimizedTableRow, OptimizedTableCell } from '../../lib/performance';
-
-// Sortable header component
-const SortableHeader: React.FC<{
-  column: SortableColumn;
-  children: React.ReactNode;
-  sortConfig: { column: SortableColumn | null; direction: 'asc' | 'desc' | null };
-  onSort: (column: SortableColumn) => void;
-  width?: string;
-}> = ({ column, children, sortConfig, onSort, width }) => {
-  const isActive = sortConfig.column === column;
-  const direction = isActive ? sortConfig.direction : null;
-  const [isHovered, setIsHovered] = React.useState(false);
-  
-  const getSortIcon = () => {
-    if (!isActive && !isHovered) return null;
-    if (direction === 'asc') return '▲';
-    if (direction === 'desc') return '▼';
-    return '▲▼';
-  };
-
-  const getIconColor = () => {
-    if (isActive) {
-      return direction === 'asc' ? '#3b82f6' : direction === 'desc' ? '#3b82f6' : '#9ca3af';
-    }
-    return isHovered ? '#6b7280' : '#d1d5db';
-  };
-
-  return (
-    <th 
-      style={{ 
-        padding: '10px 12px', 
-        textAlign: 'center', 
-        borderBottom: isActive ? '2px solid #3b82f6' : '2px solid #e5e7eb', 
-        fontWeight: isActive ? '800' : '700', 
-        fontSize: '12px',
-        cursor: 'pointer',
-        userSelect: 'none',
-        backgroundColor: isActive ? '#eff6ff' : isHovered ? '#f8fafc' : 'transparent',
-        transition: 'all 0.2s ease',
-        position: 'relative',
-        color: isActive ? '#1e40af' : '#374151',
-        ...(width && { width }),
-        lineHeight: '1.3'
-      }}
-      onClick={() => onSort(column)}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      title={`Click to sort by ${children}${isActive ? ` (${direction === 'asc' ? 'ascending' : 'descending'})` : ''}`}
-    >
-      <div style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center', 
-        gap: '6px',
-        minHeight: '20px'
-      }}>
-        <span style={{ 
-          fontWeight: 'inherit',
-          letterSpacing: '0.025em'
-        }}>
-          {children}
-        </span>
-        <div style={{ 
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: '12px',
-          height: '16px',
-          fontSize: '8px',
-          lineHeight: '4px',
-          color: getIconColor(),
-          transition: 'color 0.2s ease',
-          opacity: isActive || isHovered ? 1 : 0.4,
-          animation: isActive ? 'sortChange 0.3s ease' : 'none'
-        }}>
-          {direction === 'asc' ? (
-            <span style={{ transform: 'translateY(2px)' }}>▲</span>
-          ) : direction === 'desc' ? (
-            <span style={{ transform: 'translateY(-2px)' }}>▼</span>
-          ) : (
-            <>
-              <span style={{ opacity: 0.6 }}>▲</span>
-              <span style={{ opacity: 0.6 }}>▼</span>
-            </>
-          )}
-        </div>
-      </div>
-      {isActive && (
-        <div style={{
-          position: 'absolute',
-          bottom: '-2px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: '24px',
-          height: '2px',
-          backgroundColor: '#3b82f6',
-          borderRadius: '1px'
-        }} />
-      )}
-    </th>
-  );
-};
 
 const PlayersTable = memo(({ 
   players, 
-  onUpdatePlayer, 
-  onDeletePlayer, 
-  savingStatus,
-  entryFee,
-  sortConfig,
-  onSort,
-  selectedSquad
+  onUpdatePlayer,
+  onDeletePlayer,
+  selectedSquad,
+  savingStatus
 }: PlayersTableProps) => {
+  
+  // Sort players by lane assignment
+  const sortedPlayers = [...players].sort((a, b) => {
+    const laneA = typeof a.lane === 'string' ? parseInt(a.lane) || 0 : a.lane || 0;
+    const laneB = typeof b.lane === 'string' ? parseInt(b.lane) || 0 : b.lane || 0;
+    return laneA - laneB;
+  });
   // Add pulse animation and hide number input spinners
   React.useEffect(() => {
     if (!document.querySelector('#pulse-animation-styles')) {
@@ -256,55 +157,127 @@ const PlayersTable = memo(({
             </tr>
           )}
           <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-            <SortableHeader column="name" sortConfig={sortConfig} onSort={onSort} width="16%">
-              Name
-            </SortableHeader>
             <th style={{ 
               padding: '10px 12px', 
               textAlign: 'center', 
-              borderBottom: '1px solid #e5e7eb', 
-              fontWeight: '600', 
+              borderBottom: '2px solid #e5e7eb', 
+              fontWeight: '700', 
               fontSize: '12px',
               color: '#374151',
               letterSpacing: '0.025em',
-              width: '9%'
+              width: '16%',
+              lineHeight: '1.3'
+            }}>
+              Name
+            </th>
+            <th style={{ 
+              padding: '10px 12px', 
+              textAlign: 'center', 
+              borderBottom: '2px solid #e5e7eb', 
+              fontWeight: '700', 
+              fontSize: '12px',
+              color: '#374151',
+              letterSpacing: '0.025em',
+              width: '9%',
+              lineHeight: '1.3'
             }}>
               USBC
             </th>
-            <SortableHeader column="lane" sortConfig={sortConfig} onSort={onSort} width="7%">
-              Lane
-            </SortableHeader>
-            <SortableHeader column="average" sortConfig={sortConfig} onSort={onSort} width="7%">
-              Average
-            </SortableHeader>
-            <SortableHeader column="handicap" sortConfig={sortConfig} onSort={onSort} width="9%">
-              Handicap<br/>Entries
-            </SortableHeader>
-            <SortableHeader column="scratch" sortConfig={sortConfig} onSort={onSort} width="9%">
-              Scratch<br/>Entries
-            </SortableHeader>
-            <SortableHeader column="division" sortConfig={sortConfig} onSort={onSort} width="11%">
-              Division
-            </SortableHeader>
-            <SortableHeader column="totalCost" sortConfig={sortConfig} onSort={onSort} width="15%">
-              Cost / Status
-            </SortableHeader>
             <th style={{ 
               padding: '10px 12px', 
               textAlign: 'center', 
-              borderBottom: '1px solid #e5e7eb', 
-              fontWeight: '600', 
+              borderBottom: '2px solid #e5e7eb', 
+              fontWeight: '700', 
               fontSize: '12px',
               color: '#374151',
               letterSpacing: '0.025em',
-              width: '15%'
+              width: '7%',
+              lineHeight: '1.3'
+            }}>
+              Lane
+            </th>
+            <th style={{ 
+              padding: '10px 12px', 
+              textAlign: 'center', 
+              borderBottom: '2px solid #e5e7eb', 
+              fontWeight: '700', 
+              fontSize: '12px',
+              color: '#374151',
+              letterSpacing: '0.025em',
+              width: '7%',
+              lineHeight: '1.3'
+            }}>
+              Average
+            </th>
+            <th style={{ 
+              padding: '10px 12px', 
+              textAlign: 'center', 
+              borderBottom: '2px solid #e5e7eb', 
+              fontWeight: '700', 
+              fontSize: '12px',
+              color: '#374151',
+              letterSpacing: '0.025em',
+              width: '9%',
+              lineHeight: '1.3'
+            }}>
+              Handicap<br/>Entries
+            </th>
+            <th style={{ 
+              padding: '10px 12px', 
+              textAlign: 'center', 
+              borderBottom: '2px solid #e5e7eb', 
+              fontWeight: '700', 
+              fontSize: '12px',
+              color: '#374151',
+              letterSpacing: '0.025em',
+              width: '9%',
+              lineHeight: '1.3'
+            }}>
+              Scratch<br/>Entries
+            </th>
+            <th style={{ 
+              padding: '10px 12px', 
+              textAlign: 'center', 
+              borderBottom: '2px solid #e5e7eb', 
+              fontWeight: '700', 
+              fontSize: '12px',
+              color: '#374151',
+              letterSpacing: '0.025em',
+              width: '11%',
+              lineHeight: '1.3'
+            }}>
+              Division
+            </th>
+            <th style={{ 
+              padding: '10px 12px', 
+              textAlign: 'center', 
+              borderBottom: '2px solid #e5e7eb', 
+              fontWeight: '700', 
+              fontSize: '12px',
+              color: '#374151',
+              letterSpacing: '0.025em',
+              width: '15%',
+              lineHeight: '1.3'
+            }}>
+              Cost / Status
+            </th>
+            <th style={{ 
+              padding: '10px 12px', 
+              textAlign: 'center', 
+              borderBottom: '2px solid #e5e7eb', 
+              fontWeight: '700', 
+              fontSize: '12px',
+              color: '#374151',
+              letterSpacing: '0.025em',
+              width: '15%',
+              lineHeight: '1.3'
             }}>
               Actions
             </th>
           </tr>
         </thead>
         <tbody>
-          {players.map((player) => (
+          {sortedPlayers.map((player) => (
             <OptimizedTableRow 
               key={player.id} 
               className="players-table-row"
@@ -403,44 +376,43 @@ const PlayersTable = memo(({
                 </div>
               </OptimizedTableCell>
 
-              <OptimizedTableCell style={{ textAlign: 'center', padding: '10px', borderBottom: '1px solid #e5e7eb' }}>
-                <div style={{ position: 'relative', display: 'inline-block' }}>
-                  <input
-                    type="text"
-                    value={player.lane}
-                    onChange={(changeEvent) => handleCellEdit(player.id, 'lane', changeEvent.target.value)}
-                    style={{
-                      border: '1px solid #d1d5db',
-                      borderRadius: '4px',
-                      padding: '6px 20px 6px 6px',
-                      fontSize: '13px',
-                      width: '60px',
-                      textAlign: 'center',
-                      background: '#ffffff',
-                      outline: 'none',
-                      transition: 'all 0.2s ease'
-                    }}
-                    onFocus={(changeEvent) => {
-                      changeEvent.target.style.borderColor = '#3b82f6';
-                      changeEvent.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
-                    }}
-                    onBlur={(changeEvent) => {
-                      changeEvent.target.style.borderColor = '#d1d5db';
-                      changeEvent.target.style.boxShadow = 'none';
-                    }}
-                  />
-                  {getSavingIndicator(player.id, 'lane')}
-                  
-                  {/* Increment/Decrement Arrows - Inside Input */}
-                  <div style={{ 
-                    position: 'absolute', 
-                    right: '4px', 
-                    top: '50%', 
-                    transform: 'translateY(-50%)',
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    gap: '1px' 
-                  }}>
+                            <OptimizedTableCell style={{ textAlign: 'center', padding: '10px', borderBottom: '1px solid #e5e7eb' }}>
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                  <div style={{ position: 'relative', display: 'inline-block' }}>
+                    <input
+                      type="text"
+                      value={player.lane?.toString() || ''}
+                      onChange={(changeEvent) => handleCellEdit(player.id, 'lane', changeEvent.target.value)}
+                      style={{
+                        border: '1px solid #d1d5db',
+                        borderRadius: '4px',
+                        padding: '6px 20px 6px 6px',
+                        fontSize: '13px',
+                        width: '60px',
+                        textAlign: 'center',
+                        background: '#ffffff',
+                        outline: 'none',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onFocus={(changeEvent) => {
+                        changeEvent.target.style.borderColor = '#3b82f6';
+                        changeEvent.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+                      }}
+                      onBlur={(changeEvent) => {
+                        changeEvent.target.style.borderColor = '#d1d5db';
+                        changeEvent.target.style.boxShadow = 'none';
+                      }}
+                    />
+                    {/* Increment/Decrement Arrows */}
+                    <div style={{ 
+                      position: 'absolute',
+                      right: '2px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      gap: '1px'
+                    }}>
                     <button
                       onClick={() => {
                         const laneNum = typeof player.lane === 'string' 
@@ -449,8 +421,8 @@ const PlayersTable = memo(({
                         handleIncrement(player.id, 'lane', laneNum);
                       }}
                       style={{
-                        width: '12px',
-                        height: '8px',
+                        width: '14px',
+                        height: '10px',
                         border: 'none',
                         borderRadius: '1px',
                         backgroundColor: 'transparent',
@@ -483,8 +455,8 @@ const PlayersTable = memo(({
                         handleDecrement(player.id, 'lane', laneNum);
                       }}
                       style={{
-                        width: '12px',
-                        height: '8px',
+                        width: '14px',
+                        height: '10px',
                         border: 'none',
                         borderRadius: '1px',
                         backgroundColor: 'transparent',
@@ -511,51 +483,53 @@ const PlayersTable = memo(({
                     </button>
                   </div>
                   {getSavingIndicator(player.id, 'lane')}
+                  </div>
                 </div>
               </OptimizedTableCell>
 
               <OptimizedTableCell style={{ textAlign: 'center', padding: '10px', borderBottom: '1px solid #e5e7eb' }}>
-                <div style={{ position: 'relative', display: 'inline-block' }}>
-                  <input
-                    type="text"
-                    value={player.average}
-                    onChange={(changeEvent) => handleCellEdit(player.id, 'average', changeEvent.target.value)}
-                    style={{
-                      border: '1px solid #d1d5db',
-                      borderRadius: '4px',
-                      padding: '6px 20px 6px 6px',
-                      fontSize: '13px',
-                      width: '70px',
-                      textAlign: 'center',
-                      background: '#ffffff',
-                      outline: 'none',
-                      transition: 'all 0.2s ease'
-                    }}
-                    onFocus={(changeEvent) => {
-                      changeEvent.target.style.borderColor = '#3b82f6';
-                      changeEvent.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
-                    }}
-                    onBlur={(changeEvent) => {
-                      changeEvent.target.style.borderColor = '#d1d5db';
-                      changeEvent.target.style.boxShadow = 'none';
-                    }}
-                  />
-                  
-                  {/* Increment/Decrement Arrows - Inside Input */}
-                  <div style={{ 
-                    position: 'absolute', 
-                    right: '4px', 
-                    top: '50%', 
-                    transform: 'translateY(-50%)',
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    gap: '1px' 
-                  }}>
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                  <div style={{ position: 'relative', display: 'inline-block' }}>
+                    <input
+                      type="text"
+                      value={player.average}
+                      onChange={(changeEvent) => handleCellEdit(player.id, 'average', changeEvent.target.value)}
+                      style={{
+                        border: '1px solid #d1d5db',
+                        borderRadius: '4px',
+                        padding: '6px 20px 6px 6px',
+                        fontSize: '13px',
+                        width: '70px',
+                        textAlign: 'center',
+                        background: '#ffffff',
+                        outline: 'none',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onFocus={(changeEvent) => {
+                        changeEvent.target.style.borderColor = '#3b82f6';
+                        changeEvent.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+                      }}
+                      onBlur={(changeEvent) => {
+                        changeEvent.target.style.borderColor = '#d1d5db';
+                        changeEvent.target.style.boxShadow = 'none';
+                      }}
+                    />
+                    
+                    {/* Increment/Decrement Arrows */}
+                    <div style={{ 
+                      position: 'absolute',
+                      right: '2px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      gap: '1px'
+                    }}>
                     <button
                       onClick={() => handleIncrement(player.id, 'average', player.average)}
                       style={{
-                        width: '12px',
-                        height: '8px',
+                        width: '14px',
+                        height: '10px',
                         border: 'none',
                         borderRadius: '1px',
                         backgroundColor: 'transparent',
@@ -583,8 +557,8 @@ const PlayersTable = memo(({
                     <button
                       onClick={() => handleDecrement(player.id, 'average', player.average)}
                       style={{
-                        width: '12px',
-                        height: '8px',
+                        width: '14px',
+                        height: '10px',
                         border: 'none',
                         borderRadius: '1px',
                         backgroundColor: 'transparent',
@@ -611,51 +585,53 @@ const PlayersTable = memo(({
                     </button>
                   </div>
                   {getSavingIndicator(player.id, 'average')}
+                  </div>
                 </div>
               </OptimizedTableCell>
 
               <OptimizedTableCell style={{ textAlign: 'center', padding: '10px', borderBottom: '1px solid #e5e7eb' }}>
-                <div style={{ position: 'relative', display: 'inline-block' }}>
-                  <input
-                    type="text"
-                    value={player.handicap}
-                    onChange={(changeEvent) => handleCellEdit(player.id, 'handicap', changeEvent.target.value)}
-                    style={{
-                      border: '1px solid #d1d5db',
-                      borderRadius: '4px',
-                      padding: '6px 20px 6px 6px',
-                      fontSize: '13px',
-                      width: '60px',
-                      textAlign: 'center',
-                      background: '#ffffff',
-                      outline: 'none',
-                      transition: 'all 0.2s ease'
-                    }}
-                    onFocus={(changeEvent) => {
-                      changeEvent.target.style.borderColor = '#3b82f6';
-                      changeEvent.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
-                    }}
-                    onBlur={(changeEvent) => {
-                      changeEvent.target.style.borderColor = '#d1d5db';
-                      changeEvent.target.style.boxShadow = 'none';
-                    }}
-                  />
-                  
-                  {/* Increment/Decrement Arrows - Inside Input */}
-                  <div style={{ 
-                    position: 'absolute', 
-                    right: '4px', 
-                    top: '50%', 
-                    transform: 'translateY(-50%)',
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    gap: '1px' 
-                  }}>
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                  <div style={{ position: 'relative', display: 'inline-block' }}>
+                    <input
+                      type="text"
+                      value={player.handicap}
+                      onChange={(changeEvent) => handleCellEdit(player.id, 'handicap', changeEvent.target.value)}
+                      style={{
+                        border: '1px solid #d1d5db',
+                        borderRadius: '4px',
+                        padding: '6px 20px 6px 6px',
+                        fontSize: '13px',
+                        width: '60px',
+                        textAlign: 'center',
+                        background: '#ffffff',
+                        outline: 'none',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onFocus={(changeEvent) => {
+                        changeEvent.target.style.borderColor = '#3b82f6';
+                        changeEvent.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+                      }}
+                      onBlur={(changeEvent) => {
+                        changeEvent.target.style.borderColor = '#d1d5db';
+                        changeEvent.target.style.boxShadow = 'none';
+                      }}
+                    />
+                    
+                    {/* Increment/Decrement Arrows */}
+                    <div style={{ 
+                      position: 'absolute',
+                      right: '2px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      gap: '1px'
+                    }}>
                     <button
                       onClick={() => handleIncrement(player.id, 'handicap', player.handicap)}
                       style={{
-                        width: '12px',
-                        height: '8px',
+                        width: '14px',
+                        height: '10px',
                         border: 'none',
                         borderRadius: '1px',
                         backgroundColor: 'transparent',
@@ -683,8 +659,8 @@ const PlayersTable = memo(({
                     <button
                       onClick={() => handleDecrement(player.id, 'handicap', player.handicap)}
                       style={{
-                        width: '12px',
-                        height: '8px',
+                        width: '14px',
+                        height: '10px',
                         border: 'none',
                         borderRadius: '1px',
                         backgroundColor: 'transparent',
@@ -711,51 +687,53 @@ const PlayersTable = memo(({
                     </button>
                   </div>
                   {getSavingIndicator(player.id, 'handicap')}
+                  </div>
                 </div>
               </OptimizedTableCell>
 
               <OptimizedTableCell style={{ textAlign: 'center', padding: '10px', borderBottom: '1px solid #e5e7eb' }}>
-                <div style={{ position: 'relative', display: 'inline-block' }}>
-                  <input
-                    type="text"
-                    value={player.scratch}
-                    onChange={(changeEvent) => handleCellEdit(player.id, 'scratch', changeEvent.target.value)}
-                    style={{
-                      border: '1px solid #d1d5db',
-                      borderRadius: '4px',
-                      padding: '6px 20px 6px 6px',
-                      fontSize: '13px',
-                      width: '60px',
-                      textAlign: 'center',
-                      background: '#ffffff',
-                      outline: 'none',
-                      transition: 'all 0.2s ease'
-                    }}
-                    onFocus={(changeEvent) => {
-                      changeEvent.target.style.borderColor = '#3b82f6';
-                      changeEvent.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
-                    }}
-                    onBlur={(changeEvent) => {
-                      changeEvent.target.style.borderColor = '#d1d5db';
-                      changeEvent.target.style.boxShadow = 'none';
-                    }}
-                  />
-                  
-                  {/* Increment/Decrement Arrows - Inside Input */}
-                  <div style={{ 
-                    position: 'absolute', 
-                    right: '4px', 
-                    top: '50%', 
-                    transform: 'translateY(-50%)',
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    gap: '1px' 
-                  }}>
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                  <div style={{ position: 'relative', display: 'inline-block' }}>
+                    <input
+                      type="text"
+                      value={player.scratch}
+                      onChange={(changeEvent) => handleCellEdit(player.id, 'scratch', changeEvent.target.value)}
+                      style={{
+                        border: '1px solid #d1d5db',
+                        borderRadius: '4px',
+                        padding: '6px 20px 6px 6px',
+                        fontSize: '13px',
+                        width: '60px',
+                        textAlign: 'center',
+                        background: '#ffffff',
+                        outline: 'none',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onFocus={(changeEvent) => {
+                        changeEvent.target.style.borderColor = '#3b82f6';
+                        changeEvent.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+                      }}
+                      onBlur={(changeEvent) => {
+                        changeEvent.target.style.borderColor = '#d1d5db';
+                        changeEvent.target.style.boxShadow = 'none';
+                      }}
+                    />
+                    
+                    {/* Increment/Decrement Arrows */}
+                    <div style={{ 
+                      position: 'absolute',
+                      right: '2px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      gap: '1px'
+                    }}>
                     <button
                       onClick={() => handleIncrement(player.id, 'scratch', player.scratch)}
                       style={{
-                        width: '12px',
-                        height: '8px',
+                        width: '14px',
+                        height: '10px',
                         border: 'none',
                         borderRadius: '1px',
                         backgroundColor: 'transparent',
@@ -783,8 +761,8 @@ const PlayersTable = memo(({
                     <button
                       onClick={() => handleDecrement(player.id, 'scratch', player.scratch)}
                       style={{
-                        width: '12px',
-                        height: '8px',
+                        width: '14px',
+                        height: '10px',
                         border: 'none',
                         borderRadius: '1px',
                         backgroundColor: 'transparent',
@@ -811,6 +789,7 @@ const PlayersTable = memo(({
                     </button>
                   </div>
                   {getSavingIndicator(player.id, 'scratch')}
+                  </div>
                 </div>
               </OptimizedTableCell>
 

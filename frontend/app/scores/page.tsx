@@ -352,16 +352,34 @@ export default function ScoresPage() {
   // Header configuration
   const headerActions = useMemo(() => (
     <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-      <EnhancedButton
+      <button
         onClick={() => {
           addToast({ message: 'Refreshing scores data...', type: 'info', duration: 2000 })
           window.location.reload()
         }}
-        variant="secondary"
-        size="sm"
+        style={{
+          backgroundColor: '#f0a500',
+          color: 'white',
+          border: 'none',
+          borderRadius: '8px',
+          padding: '10px 20px',
+          fontSize: '14px',
+          fontWeight: '600',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          transition: 'all 0.2s ease'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = '#d4940b'
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = '#f0a500'
+        }}
       >
-        🔄 Refresh Data
-      </EnhancedButton>
+        Refresh Data
+      </button>
       
       {pendingSaves.length > 0 && (
         <EnhancedButton
@@ -938,10 +956,9 @@ export default function ScoresPage() {
         </MobileLayout>
       ) : (
         // Desktop Layout
-    <main className="page-main">
+    <div>
       
-      <div className="page-content">
-        <div className="container" style={{ maxWidth: '1200px', margin: '0 auto' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1rem 1rem 1rem' }}>
         
           {/* Save Status Notification */}
           {saveMessage && (
@@ -992,14 +1009,13 @@ export default function ScoresPage() {
               background: 'linear-gradient(145deg, #ffffff 0%, #f8fafb 100%)',
               borderRadius: '16px',
               padding: '24px',
-              marginBottom: '24px',
               boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
               border: '1px solid rgba(240, 165, 0, 0.12)',
               overflow: 'hidden'
             }}>
               <div style={{
                 overflowX: 'auto',
-                WebkitOverflowScrolling: 'touch',
+                overscrollBehavior: 'none',
                 borderRadius: '12px',
                 border: '1px solid #e5e7eb'
               }}>
@@ -1732,7 +1748,7 @@ export default function ScoresPage() {
         {paginationHook.totalPages > 1 && (
           <div style={{ 
             marginTop: '2rem',
-            marginBottom: '1rem',
+            marginBottom: '0',
             display: 'flex', 
             justifyContent: 'center',
             alignItems: 'center',
@@ -1763,17 +1779,8 @@ export default function ScoresPage() {
             />
           </div>
         )}
-      
-          {/* Instructions */}
-          {!isLoading && players.length > 0 && (
-            <div className="instructions">
-              <strong>Instructions:</strong> Enter scratch scores for each game. Total scores (scratch + handicap) will be calculated automatically.
-              The totals are highlighted in blue for easy identification.
-            </div>
-          )}
         </div>
-      </div>
-    </main>
+    </div>
       )}
     </>
     </ErrorBoundary>

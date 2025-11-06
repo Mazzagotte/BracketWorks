@@ -390,6 +390,7 @@
 .settingsHeader {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   margin-bottom: 24px;
   gap: 10px;
 }
@@ -400,11 +401,90 @@
   color: #1a202c;
   letter-spacing: -0.025em;
   margin: 0;
+  flex: 0 0 auto;
 }
 
 .settingsIcon {
   font-size: 20px;
   color: #f0a500;
+}
+
+/* Auto-Save Status Indicator */
+.saveStatus {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.statusSaved {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #059669;
+  background-color: #d1fae5;
+  padding: 6px 12px;
+  border-radius: 8px;
+}
+
+.statusSaving {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #0284c7;
+  background-color: #dbeafe;
+  padding: 6px 12px;
+  border-radius: 8px;
+}
+
+.statusUnsaved {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #d97706;
+  background-color: #fef3c7;
+  padding: 6px 12px;
+  border-radius: 8px;
+}
+
+.statusError {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #dc2626;
+  background-color: #fee2e2;
+  padding: 6px 12px;
+  border-radius: 8px;
+}
+
+.statusIcon {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.statusSpinner {
+  font-size: 16px;
+  animation: spin 1s linear infinite;
+}
+
+.statusText {
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .settingsSection {
@@ -835,6 +915,18 @@
     padding: 20px 16px;
     border-radius: 16px;
     margin: 0 -4px;
+  }
+  
+  .settingsHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .saveStatus {
+    margin-left: 0;
+    width: 100%;
+    justify-content: center;
   }
   
   .formGrid {

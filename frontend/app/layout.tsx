@@ -245,7 +245,7 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
             style={{ 
               marginLeft: !isMobile ? '260px' : '0',
               marginTop: isMobile && isUserAuthenticated ? '60px' : '0',
-              minHeight: '100vh',
+              minHeight: isMobile && isUserAuthenticated ? 'calc(100vh - 60px)' : '100vh',
               width: !isMobile ? 'calc(100% - 260px)' : '100%',
               transition: 'all 0.3s ease',
               background: 'linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%)',
@@ -272,10 +272,11 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
               style={{ 
                 background: '#ffffff',
                 borderRadius: isMobile ? '12px' : '16px',
-                padding: isMobile ? '20px' : '24px 24px 32px 24px',
+                padding: isMobile ? '20px' : '24px',
                 paddingTop: mounted && isUserAuthenticated ? '20px' : '20px',
                 maxWidth: '1200px',
                 margin: mounted && isUserAuthenticated ? '20px auto 0 auto' : '0 auto',
+                marginBottom: '0',
                 boxSizing: 'border-box'
               }}
               suppressHydrationWarning={true}

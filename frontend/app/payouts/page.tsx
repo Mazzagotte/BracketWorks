@@ -648,6 +648,32 @@ export default function PayoutsPage() {
     return () => clearInterval(interval)
   }, [autoRefreshEnabled, tournament, selectedSquad]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Reload payout data when page becomes visible (handles navigation back from Dashboard)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && tournament) {
+        console.log('Payouts page became visible, reloading data...');
+        loadPayoutData();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [tournament, selectedSquad]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Also reload when page gains focus
+  useEffect(() => {
+    const handleFocus = () => {
+      if (tournament) {
+        console.log('Payouts page gained focus, reloading data...');
+        loadPayoutData();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [tournament, selectedSquad]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const loadPayoutData = async () => {
     if (!tournament) return
 
