@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 
 # Import advanced bracket generation
-from .brackets_advanced import create_brackets_with_history
+from .brackets_advanced import create_brackets_with_history, get_round_name
 
 def generate_bracket_preview(size: int = 8) -> Dict[str, Any]:
     """Generate a simple bracket preview with placeholder players"""
@@ -206,37 +206,23 @@ def generate_tournament_brackets(
     # ⏱️ START TIMING
     start_time = time.time()
     
-    # Generate brackets - use advanced algorithm if history available
-    if use_history and (scratch_history or handicap_history):
-        print("\n⏱️  Using ADVANCED algorithm with history constraints")
-        scratch_start = time.time()
-        scratch_brackets, leftover_scratch = create_brackets_with_history(
-            scratch_entries, bracket_size, "Scratch", scratch_history, seed
-        )
-        scratch_time = time.time() - scratch_start
-        print(f"   ✓ Scratch brackets generated in {scratch_time:.3f}s")
-        
-        handicap_start = time.time()
-        handicap_brackets, leftover_handicap = create_brackets_with_history(
-            handicap_entries, bracket_size, "Handicap", handicap_history, seed
-        )
-        handicap_time = time.time() - handicap_start
-        print(f"   ✓ Handicap brackets generated in {handicap_time:.3f}s")
-    else:
-        print("\n⏱️  Using SIMPLE random algorithm (no history)")
-        scratch_start = time.time()
-        scratch_brackets, leftover_scratch = create_brackets(
-            scratch_entries, bracket_size, "Scratch"
-        )
-        scratch_time = time.time() - scratch_start
-        print(f"   ✓ Scratch brackets generated in {scratch_time:.3f}s")
-        
-        handicap_start = time.time()
-        handicap_brackets, leftover_handicap = create_brackets(
-            handicap_entries, bracket_size, "Handicap"
-        )
-        handicap_time = time.time() - handicap_start
-        print(f"   ✓ Handicap brackets generated in {handicap_time:.3f}s")
+    # Always use advanced algorithm (handles both history and no-history cases)
+    has_history = len(scratch_history) > 0 or len(handicap_history) > 0
+    print(f"\n⏱️  Using constraint-based algorithm (history: {has_history})")
+    
+    scratch_start = time.time()
+    scratch_brackets, leftover_scratch = create_brackets_with_history(
+        scratch_entries, bracket_size, "Scratch", scratch_history, seed
+    )
+    scratch_time = time.time() - scratch_start
+    print(f"   ✓ Scratch brackets generated in {scratch_time:.3f}s")
+    
+    handicap_start = time.time()
+    handicap_brackets, leftover_handicap = create_brackets_with_history(
+        handicap_entries, bracket_size, "Handicap", handicap_history, seed
+    )
+    handicap_time = time.time() - handicap_start
+    print(f"   ✓ Handicap brackets generated in {handicap_time:.3f}s")
     
     # ⏱️ END TIMING
     total_time = time.time() - start_time
@@ -328,173 +314,6 @@ def create_handicap_entries(players: List[Dict[str, Any]]) -> tuple[List[Dict[st
                 })
     
     return valid_entries, skipped_players
-
-
-def create_brackets(entries: List[Dict[str, Any]], bracket_size: int, bracket_type: str) -> tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
-    """Create multiple full brackets from entries using random draw method
-    
-    Strategy (Option 2: Random Draw - No Seeding):
-    1. Randomly shuffle ALL entries
-    2. Fill brackets sequentially, ensuring no duplicate player_ids per bracket
-    3. Leftover entries that don't fill a complete bracket get refunds
-    
-    Returns:
-        tuple: (brackets, leftover_players)
-        - brackets: List of generated brackets with random placement
-        - leftover_players: List of players who couldn't be placed (need refunds)
-    """
-    if not entries:
-        return [], []
-    
-    # Calculate how many full brackets we can create
-    total_entries = len(entries)
-    num_full_brackets = total_entries // bracket_size
-    
-    if num_full_brackets == 0:
-        # Not enough entries for even one bracket - all get refunds
-        leftover_players = [{
-            'player_name': entry['name'],
-            'player_id': entry['player_id'],
-            'bracket_type': bracket_type.lower(),
-            'reason': f'Not enough players to form a complete {bracket_size}-player bracket',
-            'entry_number': entry.get('entry_number', 1)
-        } for entry in entries]
-        return [], leftover_players
-    
-    # Shuffle all entries
-    shuffled_entries = entries.copy()
-    random.shuffle(shuffled_entries)
-    
-    # Distribute entries to brackets, ensuring no duplicate player_ids per bracket
-    bracket_groups = [[] for _ in range(num_full_brackets)]
-    player_counts = [{} for _ in range(num_full_brackets)]  # Track player_id counts per bracket
-    skipped_entries = []
-    
-    for entry in shuffled_entries:
-        player_id = entry.get('player_id')
-        placed = False
-        
-        # Try to place in a bracket that doesn't already have this player_id
-        for bracket_idx in range(num_full_brackets):
-            if len(bracket_groups[bracket_idx]) < bracket_size:
-                # Check if this player is already in this bracket
-                if player_counts[bracket_idx].get(player_id, 0) == 0:
-                    bracket_groups[bracket_idx].append(entry)
-                    player_counts[bracket_idx][player_id] = player_counts[bracket_idx].get(player_id, 0) + 1
-                    placed = True
-                    break
-        
-        if not placed:
-            skipped_entries.append(entry)
-    
-    # Create brackets from complete groups
-    brackets = []
-    leftover_entries = []
-    
-    for bracket_idx, bracket_entries in enumerate(bracket_groups, 1):
-        if len(bracket_entries) == bracket_size:
-            bracket = create_single_bracket(bracket_entries, f"{bracket_type} Bracket {bracket_idx}")
-            brackets.append(bracket)
-        else:
-            # Incomplete bracket - add to leftovers
-            leftover_entries.extend(bracket_entries)
-    
-    # Add skipped entries to leftovers
-    leftover_entries.extend(skipped_entries)
-    
-    leftover_players = [{
-        'player_name': entry['name'],
-        'player_id': entry['player_id'],
-        'bracket_type': bracket_type.lower(),
-        'reason': f'Not enough players to form a complete {bracket_size}-player bracket',
-        'entry_number': entry.get('entry_number', 1)
-    } for entry in leftover_entries]
-    
-    return brackets, leftover_players
-
-
-def create_single_bracket(players: List[Dict[str, Any]], title: str) -> Dict[str, Any]:
-    """Create a single bracket from a list of players (already randomized)
-    
-    Players arrive already randomized from create_brackets(), so we assign
-    sequential seeds (1, 2, 3, ...) in the order received. No additional
-    shuffling is needed here.
-    """
-    size = len(players)
-    
-    # Players are already randomized - just assign seeds sequentially
-    # Seed 1 vs Seed 2, Seed 3 vs Seed 4, etc.
-    seeded_players = [(i + 1, player) for i, player in enumerate(players)]
-    
-    # Create initial matches with player pairings
-    first_round_matches = []
-    for i in range(0, size, 2):
-        seed_a, player_a = seeded_players[i]
-        seed_b, player_b = seeded_players[i + 1]
-        
-        first_round_matches.append({
-            "seedA": seed_a,
-            "seedB": seed_b,
-            "playerA": player_a['name'],
-            "playerB": player_b['name'],
-            # Actual match scores (to be entered during tournament)
-            "match_score_a": None,
-            "match_score_b": None,
-            "winner": None,     # No predetermined winner
-            "status": "pending" # Match status: pending, in_progress, completed, tied
-        })
-    
-    # Build all rounds
-    rounds = []
-    current_matches = first_round_matches
-    round_num = 1
-    
-    while len(current_matches) > 0:
-        round_name = get_round_name(round_num, size)
-        rounds.append({
-            "name": round_name,
-            "matches": current_matches.copy()
-        })
-        
-        if len(current_matches) == 1:
-            break
-            
-        # Create next round with TBD players (to be filled as winners advance)
-        next_matches = []
-        for i in range(0, len(current_matches), 2):
-            if i + 1 < len(current_matches):
-                next_matches.append({
-                    "seedA": None,
-                    "seedB": None,
-                    "playerA": "TBD",
-                    "playerB": "TBD",
-                    "match_score_a": None,
-                    "match_score_b": None,
-                    "winner": None,
-                    "status": "pending"
-                })
-        
-        current_matches = next_matches
-        round_num += 1
-    
-    return {
-        "title": title,
-        "rounds": rounds
-    }
-
-
-def get_round_name(round_num: int, bracket_size: int) -> str:
-    """Get the proper name for a tournament round"""
-    total_rounds = bracket_size.bit_length() - 1
-    
-    if round_num == total_rounds:
-        return "Final"
-    elif round_num == total_rounds - 1:
-        return "Semifinal"
-    elif round_num == total_rounds - 2:
-        return "Quarterfinal"
-    else:
-        return f"Round {round_num}"
 
 
 def create_bracket_summary(
