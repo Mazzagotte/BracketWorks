@@ -59,9 +59,79 @@ def save_brackets_simple(
         db.add(new_bracket)
         db.commit()
         
+        # Save first-round matches to history for future constraint checking
+        try:
+            save_first_round_to_history(db, tournament_id, brackets_data)
+        except Exception as hist_error:
+            # Log but don't fail the whole save if history recording fails
+            print(f"Warning: Failed to save match history: {hist_error}")
+        
     except Exception as e:
         db.rollback()
         raise Exception(f"Failed to save brackets: {str(e)}")
+
+
+def save_first_round_to_history(
+    db: Session,
+    tournament_id: int,
+    brackets_data: Dict[str, Any]
+) -> None:
+    """
+    Extract first-round matchups from brackets and save to match_history table.
+    This enables rematch prevention in future tournaments.
+    """
+    from ..core.models import MatchHistory
+    
+    # Process scratch brackets
+    scratch_brackets = brackets_data.get('scratch_brackets', [])
+    for bracket_num, bracket in enumerate(scratch_brackets, start=1):
+        rounds = bracket.get('rounds', [])
+        if rounds:
+            first_round = rounds[0]  # First round
+            matches = first_round.get('matches', [])
+            
+            for match in matches:
+                player_a_id = match.get('playerA_id')
+                player_b_id = match.get('playerB_id')
+                
+                # Only save if both player IDs are present
+                if player_a_id and player_b_id:
+                    history_entry = MatchHistory(
+                        tournament_id=tournament_id,
+                        player_a_id=min(player_a_id, player_b_id),  # Normalize
+                        player_b_id=max(player_a_id, player_b_id),
+                        bracket_type='scratch',
+                        bracket_number=bracket_num,
+                        round_number=1,
+                        created_at=datetime.utcnow().isoformat()
+                    )
+                    db.add(history_entry)
+    
+    # Process handicap brackets
+    handicap_brackets = brackets_data.get('handicap_brackets', [])
+    for bracket_num, bracket in enumerate(handicap_brackets, start=1):
+        rounds = bracket.get('rounds', [])
+        if rounds:
+            first_round = rounds[0]
+            matches = first_round.get('matches', [])
+            
+            for match in matches:
+                player_a_id = match.get('playerA_id')
+                player_b_id = match.get('playerB_id')
+                
+                if player_a_id and player_b_id:
+                    history_entry = MatchHistory(
+                        tournament_id=tournament_id,
+                        player_a_id=min(player_a_id, player_b_id),
+                        player_b_id=max(player_a_id, player_b_id),
+                        bracket_type='handicap',
+                        bracket_number=bracket_num,
+                        round_number=1,
+                        created_at=datetime.utcnow().isoformat()
+                    )
+                    db.add(history_entry)
+    
+    db.commit()
 
 
 def load_brackets_simple(

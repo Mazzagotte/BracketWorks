@@ -197,3 +197,16 @@ class PayoutSummary(Base):
     finalized_date: Mapped[str | None] = mapped_column(String, nullable=True)
     created_at: Mapped[str] = mapped_column(String, nullable=False)
     updated_at: Mapped[str] = mapped_column(String, nullable=False)
+
+
+class MatchHistory(Base):
+    """Track historical first-round matchups to prevent rematches"""
+    __tablename__ = "match_history"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tournament_id: Mapped[int] = mapped_column(Integer, ForeignKey("tournament.id"), nullable=False, index=True)
+    player_a_id: Mapped[int] = mapped_column(Integer, ForeignKey("bowler.id"), nullable=False, index=True)
+    player_b_id: Mapped[int] = mapped_column(Integer, ForeignKey("bowler.id"), nullable=False, index=True)
+    bracket_type: Mapped[str] = mapped_column(String(20), nullable=False, index=True)  # 'scratch' or 'handicap'
+    bracket_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    round_number: Mapped[int] = mapped_column(Integer, nullable=False)  # 1 for first round
+    created_at: Mapped[str] = mapped_column(String, nullable=False)

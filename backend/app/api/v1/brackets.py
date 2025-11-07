@@ -194,7 +194,14 @@ def generate_tournament_brackets_endpoint(
             players_data.append(player_data)
         
         # Generate brackets with validation
-        brackets_result = generate_tournament_brackets(players_data, bracket_settings.bracket_size)
+        brackets_result = generate_tournament_brackets(
+            players=players_data,
+            bracket_size=bracket_settings.bracket_size,
+            db=db,
+            tournament_id=tournament_id,
+            use_history=True,  # Enable advanced algorithm with history
+            seed=None  # Can be configurable later
+        )
         
         # Validate bracket structure before saving
         validation_result = validate_all_brackets(brackets_result)

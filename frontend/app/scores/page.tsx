@@ -605,10 +605,11 @@ export default function ScoresPage() {
         }
         
         // Auto-calculate totals when scratch scores are entered
+        // Use the player's handicap from the backend (already calculated with correct settings)
         if (field.includes('scratch')) {
           const gameNum = field.includes('game1') ? '1' : field.includes('game2') ? '2' : '3'
           const scratchScore = value || 0
-          const handicap = calculateHandicap(player.average)
+          const handicap = player.handicap || 0  // Use stored handicap value
           const totalScore = scratchScore + handicap
           updatedPlayer.scores![`game${gameNum}_total` as keyof typeof updatedPlayer.scores] = totalScore
         }
@@ -649,7 +650,7 @@ export default function ScoresPage() {
         if (field.includes('scratch')) {
           const gameNum = field.includes('game1') ? '1' : field.includes('game2') ? '2' : '3'
           const scratchScore = value || 0
-          const handicap = calculateHandicap(player.average)
+          const handicap = player.handicap || 0  // Use stored handicap value
           const totalScore = scratchScore + handicap
           updatedScores[`game${gameNum}_total` as keyof typeof updatedScores] = totalScore
         }
@@ -956,9 +957,11 @@ export default function ScoresPage() {
         </MobileLayout>
       ) : (
         // Desktop Layout
-    <div>
-      
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1rem 1rem 1rem' }}>
+      <div style={{ 
+        maxWidth: '1200px', 
+        margin: '0 auto', 
+        padding: '2rem 1rem'
+      }}>
         
           {/* Save Status Notification */}
           {saveMessage && (
@@ -1011,11 +1014,11 @@ export default function ScoresPage() {
               padding: '24px',
               boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
               border: '1px solid rgba(240, 165, 0, 0.12)',
-              overflow: 'hidden'
+              overflow: 'hidden',
+              marginBottom: '0'
             }}>
               <div style={{
                 overflowX: 'auto',
-                overscrollBehavior: 'none',
                 borderRadius: '12px',
                 border: '1px solid #e5e7eb'
               }}>
@@ -1749,6 +1752,7 @@ export default function ScoresPage() {
           <div style={{ 
             marginTop: '2rem',
             marginBottom: '0',
+            paddingBottom: '0',
             display: 'flex', 
             justifyContent: 'center',
             alignItems: 'center',
@@ -1780,7 +1784,6 @@ export default function ScoresPage() {
           </div>
         )}
         </div>
-    </div>
       )}
     </>
     </ErrorBoundary>

@@ -2,7 +2,12 @@
 Simplified bracket generation service - cleaner and more readable
 """
 import random
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Set, Tuple, Optional
+from sqlalchemy.orm import Session
+from datetime import datetime
+
+# Import advanced bracket generation
+from .brackets_advanced import create_brackets_with_history
 
 def generate_bracket_preview(size: int = 8) -> Dict[str, Any]:
     """Generate a simple bracket preview with placeholder players"""
@@ -62,9 +67,58 @@ def generate_bracket_preview(size: int = 8) -> Dict[str, Any]:
     }
 
 
+def fetch_match_history(
+    db: Session,
+    bracket_type: str,
+    tournament_id: Optional[int] = None,
+    exclude_tournament_id: Optional[int] = None
+) -> Set[Tuple[int, int]]:
+    """
+    Fetch historical first-round matchups from database.
+    
+    Args:
+        db: Database session
+        bracket_type: 'scratch' or 'handicap'
+        tournament_id: If provided, only get history from this tournament
+        exclude_tournament_id: If provided, exclude this tournament's history
+    
+    Returns:
+        Set of (player_a_id, player_b_id) tuples (normalized to min, max)
+    """
+    from ..core.models import MatchHistory
+    
+    # Build query
+    query = db.query(MatchHistory).filter(
+        MatchHistory.bracket_type == bracket_type,
+        MatchHistory.round_number == 1  # Only first-round matches
+    )
+    
+    if tournament_id is not None:
+        query = query.filter(MatchHistory.tournament_id == tournament_id)
+    
+    if exclude_tournament_id is not None:
+        query = query.filter(MatchHistory.tournament_id != exclude_tournament_id)
+    
+    # Fetch all matches
+    matches = query.all()
+    
+    # Build history set with normalized pairs
+    history_set = set()
+    for match in matches:
+        pair = (min(match.player_a_id, match.player_b_id), 
+                max(match.player_a_id, match.player_b_id))
+        history_set.add(pair)
+    
+    return history_set
+
+
 def generate_tournament_brackets(
     players: List[Dict[str, Any]], 
-    bracket_size: int = 8
+    bracket_size: int = 8,
+    db: Optional[Session] = None,
+    tournament_id: Optional[int] = None,
+    use_history: bool = True,
+    seed: Optional[int] = None
 ) -> Dict[str, Any]:
     """
     Generate tournament brackets from actual player data with validation.
@@ -72,6 +126,10 @@ def generate_tournament_brackets(
     Args:
         players: List of player dictionaries with scores
         bracket_size: Number of players per bracket (4, 8, 16, 32, 64, or 128)
+        db: Database session (optional, for match history)
+        tournament_id: Current tournament ID (optional, for excluding from history)
+        use_history: Whether to use match history for constraint-based pairing
+        seed: Optional RNG seed for reproducible brackets
     
     Returns:
         Dictionary containing:
@@ -95,9 +153,35 @@ def generate_tournament_brackets(
     scratch_entries, skipped_scratch_players = create_scratch_entries(players)
     handicap_entries, skipped_handicap_players = create_handicap_entries(players)
     
+    # Fetch match history if requested and database available
+    scratch_history = set()
+    handicap_history = set()
+    
+    if use_history and db is not None:
+        try:
+            scratch_history = fetch_match_history(
+                db, 
+                'scratch', 
+                exclude_tournament_id=tournament_id
+            )
+            handicap_history = fetch_match_history(
+                db,
+                'handicap',
+                exclude_tournament_id=tournament_id
+            )
+            print(f"Loaded {len(scratch_history)} scratch history pairs")
+            print(f"Loaded {len(handicap_history)} handicap history pairs")
+        except Exception as e:
+            print(f"Warning: Could not load match history: {e}")
+            # Fall back to no history
+            scratch_history = set()
+            handicap_history = set()
+    
     # DEBUG LOGGING
     print(f"\n=== BRACKET GENERATION DEBUG ===")
     print(f"Total players received: {len(players)}")
+    print(f"Using advanced algorithm: {use_history and db is not None}")
+    print(f"Seed: {seed}")
     print(f"\nFirst 3 players data:")
     for i, player in enumerate(players[:3]):
         print(f"  Player {i+1}: {player.get('firstName')} {player.get('lastName')}")
@@ -118,9 +202,23 @@ def generate_tournament_brackets(
     print(f"Expected scratch refunds: {len(scratch_entries) % bracket_size}")
     print(f"Expected handicap refunds: {len(handicap_entries) % bracket_size}")
     
-    # Generate brackets from validated entries
-    scratch_brackets, leftover_scratch = create_brackets(scratch_entries, bracket_size, "Scratch")
-    handicap_brackets, leftover_handicap = create_brackets(handicap_entries, bracket_size, "Handicap")
+    # Generate brackets - use advanced algorithm if history available
+    if use_history and (scratch_history or handicap_history):
+        print("Using ADVANCED algorithm with history constraints")
+        scratch_brackets, leftover_scratch = create_brackets_with_history(
+            scratch_entries, bracket_size, "Scratch", scratch_history, seed
+        )
+        handicap_brackets, leftover_handicap = create_brackets_with_history(
+            handicap_entries, bracket_size, "Handicap", handicap_history, seed
+        )
+    else:
+        print("Using SIMPLE random algorithm (no history)")
+        scratch_brackets, leftover_scratch = create_brackets(
+            scratch_entries, bracket_size, "Scratch"
+        )
+        handicap_brackets, leftover_handicap = create_brackets(
+            handicap_entries, bracket_size, "Handicap"
+        )
     
     print(f"\nActually created scratch brackets: {len(scratch_brackets)}")
     print(f"Actually created handicap brackets: {len(handicap_brackets)}")
