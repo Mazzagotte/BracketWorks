@@ -311,9 +311,8 @@ def create_brackets(entries: List[Dict[str, Any]], bracket_size: int, bracket_ty
     
     Strategy (Option 2: Random Draw - No Seeding):
     1. Randomly shuffle ALL entries
-    2. Fill brackets sequentially: First 8 → Bracket 1, Next 8 → Bracket 2, etc.
-    3. Ensure no player appears twice in same bracket (validation check)
-    4. Leftover entries that don't fill a complete bracket get refunds
+    2. Fill brackets sequentially, ensuring no duplicate player_ids per bracket
+    3. Leftover entries that don't fill a complete bracket get refunds
     
     Returns:
         tuple: (brackets, leftover_players)
@@ -338,38 +337,46 @@ def create_brackets(entries: List[Dict[str, Any]], bracket_size: int, bracket_ty
         } for entry in entries]
         return [], leftover_players
     
-    # Step 1: Randomly shuffle all entries
+    # Shuffle all entries
     shuffled_entries = entries.copy()
     random.shuffle(shuffled_entries)
     
-    # Step 2: Fill brackets sequentially from shuffled entries
+    # Distribute entries to brackets, ensuring no duplicate player_ids per bracket
+    bracket_groups = [[] for _ in range(num_full_brackets)]
+    player_counts = [{} for _ in range(num_full_brackets)]  # Track player_id counts per bracket
+    skipped_entries = []
+    
+    for entry in shuffled_entries:
+        player_id = entry.get('player_id')
+        placed = False
+        
+        # Try to place in a bracket that doesn't already have this player_id
+        for bracket_idx in range(num_full_brackets):
+            if len(bracket_groups[bracket_idx]) < bracket_size:
+                # Check if this player is already in this bracket
+                if player_counts[bracket_idx].get(player_id, 0) == 0:
+                    bracket_groups[bracket_idx].append(entry)
+                    player_counts[bracket_idx][player_id] = player_counts[bracket_idx].get(player_id, 0) + 1
+                    placed = True
+                    break
+        
+        if not placed:
+            skipped_entries.append(entry)
+    
+    # Create brackets from complete groups
     brackets = []
-    bracket_num = 1
-    entry_index = 0
+    leftover_entries = []
     
-    for bracket_idx in range(num_full_brackets):
-        # Take next bracket_size entries
-        bracket_entries = shuffled_entries[entry_index:entry_index + bracket_size]
-        
-        # Validation: Check if any player appears twice in this bracket
-        player_ids_in_bracket = [entry['player_id'] for entry in bracket_entries]
-        if len(player_ids_in_bracket) != len(set(player_ids_in_bracket)):
-            # Duplicate player detected - reshuffle this bracket's entries
-            # This is rare but can happen with random distribution
-            attempts = 0
-            while len(player_ids_in_bracket) != len(set(player_ids_in_bracket)) and attempts < 10:
-                random.shuffle(bracket_entries)
-                player_ids_in_bracket = [entry['player_id'] for entry in bracket_entries]
-                attempts += 1
-        
-        # Create the bracket
-        bracket = create_single_bracket(bracket_entries, f"{bracket_type} Bracket {bracket_num}")
-        brackets.append(bracket)
-        bracket_num += 1
-        entry_index += bracket_size
+    for bracket_idx, bracket_entries in enumerate(bracket_groups, 1):
+        if len(bracket_entries) == bracket_size:
+            bracket = create_single_bracket(bracket_entries, f"{bracket_type} Bracket {bracket_idx}")
+            brackets.append(bracket)
+        else:
+            # Incomplete bracket - add to leftovers
+            leftover_entries.extend(bracket_entries)
     
-    # Step 3: Collect leftover entries (didn't fit into full brackets)
-    leftover_entries = shuffled_entries[entry_index:]
+    # Add skipped entries to leftovers
+    leftover_entries.extend(skipped_entries)
     
     leftover_players = [{
         'player_name': entry['name'],
