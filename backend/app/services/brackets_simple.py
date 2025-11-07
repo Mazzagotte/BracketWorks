@@ -203,12 +203,12 @@ def generate_tournament_brackets(
     print(f"Expected scratch refunds: {len(scratch_entries) % bracket_size}")
     print(f"Expected handicap refunds: {len(handicap_entries) % bracket_size}")
     
-    # ⏱️ START TIMING
+    # START TIMING
     start_time = time.time()
     
     # Always use advanced algorithm (handles both history and no-history cases)
     has_history = len(scratch_history) > 0 or len(handicap_history) > 0
-    print(f"\n⏱️  Using constraint-based algorithm (history: {has_history})")
+    print(f"\n  Using constraint-based algorithm (history: {has_history})")
     
     scratch_start = time.time()
     scratch_brackets, leftover_scratch = create_brackets_with_history(
@@ -224,9 +224,9 @@ def generate_tournament_brackets(
     handicap_time = time.time() - handicap_start
     print(f"   ✓ Handicap brackets generated in {handicap_time:.3f}s")
     
-    # ⏱️ END TIMING
+    # END TIMING
     total_time = time.time() - start_time
-    print(f"\n⏱️  TOTAL GENERATION TIME: {total_time:.3f}s")
+    print(f"\n  TOTAL GENERATION TIME: {total_time:.3f}s")
     print(f"   - Scratch: {scratch_time:.3f}s for {len(scratch_brackets)} brackets")
     print(f"   - Handicap: {handicap_time:.3f}s for {len(handicap_brackets)} brackets")
     
