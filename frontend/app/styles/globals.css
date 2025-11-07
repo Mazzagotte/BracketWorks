@@ -111,8 +111,10 @@ html {
   -ms-text-size-adjust: 100%;
   font-size: 100%; /* Use browser default, typically 16px */
   height: 100%;
-  overscroll-behavior: none; /* Prevent overscroll bounce effect */
   overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: none;
+  -webkit-overscroll-behavior-y: none;
 }
 
 body { 
@@ -124,11 +126,9 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden; /* Prevent horizontal scroll */
-  overflow-y: auto;
-  overscroll-behavior: none; /* Prevent overscroll bounce effect */
+  overflow-y: visible;
   line-height: 1.6;
   min-height: 100%;
-  max-height: 100vh;
   
   /* Mobile optimizations */
   -webkit-user-select: none; /* Prevent accidental text selection */

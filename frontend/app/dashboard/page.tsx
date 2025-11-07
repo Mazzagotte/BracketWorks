@@ -504,6 +504,10 @@ export default function TournamentDashboard() {
       
       // Update local state with the returned data (includes ID for new records)
       setBracketSettings(data);
+      
+      // Clear cache for bracket settings to ensure fresh data on reload
+      apiClient.clearCacheEntry(`/api/v1/bracket-settings/${tournament.id}`);
+      
       setSaveStatus('saved');
       setLastSavedTime(new Date());
     } catch (error) {
