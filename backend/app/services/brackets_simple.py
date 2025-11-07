@@ -2,6 +2,7 @@
 Simplified bracket generation service - cleaner and more readable
 """
 import random
+import time
 from typing import List, Dict, Any, Set, Tuple, Optional
 from sqlalchemy.orm import Session
 from datetime import datetime
@@ -202,23 +203,46 @@ def generate_tournament_brackets(
     print(f"Expected scratch refunds: {len(scratch_entries) % bracket_size}")
     print(f"Expected handicap refunds: {len(handicap_entries) % bracket_size}")
     
+    # ⏱️ START TIMING
+    start_time = time.time()
+    
     # Generate brackets - use advanced algorithm if history available
     if use_history and (scratch_history or handicap_history):
-        print("Using ADVANCED algorithm with history constraints")
+        print("\n⏱️  Using ADVANCED algorithm with history constraints")
+        scratch_start = time.time()
         scratch_brackets, leftover_scratch = create_brackets_with_history(
             scratch_entries, bracket_size, "Scratch", scratch_history, seed
         )
+        scratch_time = time.time() - scratch_start
+        print(f"   ✓ Scratch brackets generated in {scratch_time:.3f}s")
+        
+        handicap_start = time.time()
         handicap_brackets, leftover_handicap = create_brackets_with_history(
             handicap_entries, bracket_size, "Handicap", handicap_history, seed
         )
+        handicap_time = time.time() - handicap_start
+        print(f"   ✓ Handicap brackets generated in {handicap_time:.3f}s")
     else:
-        print("Using SIMPLE random algorithm (no history)")
+        print("\n⏱️  Using SIMPLE random algorithm (no history)")
+        scratch_start = time.time()
         scratch_brackets, leftover_scratch = create_brackets(
             scratch_entries, bracket_size, "Scratch"
         )
+        scratch_time = time.time() - scratch_start
+        print(f"   ✓ Scratch brackets generated in {scratch_time:.3f}s")
+        
+        handicap_start = time.time()
         handicap_brackets, leftover_handicap = create_brackets(
             handicap_entries, bracket_size, "Handicap"
         )
+        handicap_time = time.time() - handicap_start
+        print(f"   ✓ Handicap brackets generated in {handicap_time:.3f}s")
+    
+    # ⏱️ END TIMING
+    total_time = time.time() - start_time
+    print(f"\n⏱️  TOTAL GENERATION TIME: {total_time:.3f}s")
+    print(f"   - Scratch: {scratch_time:.3f}s for {len(scratch_brackets)} brackets")
+    print(f"   - Handicap: {handicap_time:.3f}s for {len(handicap_brackets)} brackets")
     
     print(f"\nActually created scratch brackets: {len(scratch_brackets)}")
     print(f"Actually created handicap brackets: {len(handicap_brackets)}")
