@@ -1,7 +1,7 @@
 """create match history table
 
 Revision ID: create_match_history
-Revises: 
+Revises: drop_bracket_table
 Create Date: 2025-11-07
 
 """
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = 'create_match_history'
-down_revision = None  # Will be set to the latest migration
+down_revision = 'drop_bracket_table'
 branch_labels = None
 depends_on = None
 
@@ -30,9 +30,9 @@ def upgrade():
         sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
         
         sa.PrimaryKeyConstraint('id'),
-        sa.ForeignKeyConstraint(['tournament_id'], ['tournaments.id'], ondelete='CASCADE'),
-        sa.ForeignKeyConstraint(['player_a_id'], ['bowlers.id'], ondelete='CASCADE'),
-        sa.ForeignKeyConstraint(['player_b_id'], ['bowlers.id'], ondelete='CASCADE'),
+        sa.ForeignKeyConstraint(['tournament_id'], ['tournament.id'], ondelete='CASCADE'),
+        sa.ForeignKeyConstraint(['player_a_id'], ['bowler.id'], ondelete='CASCADE'),
+        sa.ForeignKeyConstraint(['player_b_id'], ['bowler.id'], ondelete='CASCADE'),
     )
     
     # Create indexes for efficient querying
