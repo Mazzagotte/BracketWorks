@@ -57,7 +57,6 @@ def save_brackets_simple(
         )
         
         db.add(new_bracket)
-        db.commit()
         
         # Save first-round matches to history for future constraint checking
         try:
@@ -65,6 +64,9 @@ def save_brackets_simple(
         except Exception as hist_error:
             # Log but don't fail the whole save if history recording fails
             print(f"Warning: Failed to save match history: {hist_error}")
+        
+        # Commit everything together
+        db.commit()
         
     except Exception as e:
         db.rollback()
@@ -131,7 +133,7 @@ def save_first_round_to_history(
                     )
                     db.add(history_entry)
     
-    db.commit()
+    # Don't commit here - let the parent function handle the transaction
 
 
 def load_brackets_simple(
