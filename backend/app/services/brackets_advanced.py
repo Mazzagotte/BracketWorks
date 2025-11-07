@@ -402,29 +402,53 @@ def generate_brackets_with_constraints(
     # Initialize RNG
     rng = random.Random(seed) if seed is not None else random.Random()
     
-    # Step 1: Deduplicate - no player twice in same bracket
-    unique = dedupe_by_id(entries)
+    # Step 1: Shuffle entire pool
+    pool = fisher_yates_shuffle(entries, rng)
     
-    if len(unique) < bracket_size:
+    # Step 2: Calculate how many brackets we can make
+    total_entries = len(pool)
+    target_count = total_entries // bracket_size
+    
+    if total_entries < bracket_size:
         return {
             'brackets': [],
-            'refunded': unique
+            'refunded': pool
         }
     
-    # Step 2: Shuffle pool
-    pool = fisher_yates_shuffle(unique, rng)
+    # Step 3: Distribute entries to groups, ensuring no duplicate player_ids per group
+    groups = [[] for _ in range(target_count)]
+    player_counts = [{} for _ in range(target_count)]  # Track player_id counts per group
+    skipped_entries = []
     
-    # Step 3: Calculate target brackets
-    target_count = len(pool) // bracket_size
+    for entry in pool:
+        player_id = entry.get('player_id')
+        placed = False
+        
+        # Try to place in a group that doesn't already have this player_id
+        for group_idx in range(target_count):
+            if len(groups[group_idx]) < bracket_size:
+                # Check if this player is already in this group
+                if player_counts[group_idx].get(player_id, 0) == 0:
+                    groups[group_idx].append(entry)
+                    player_counts[group_idx][player_id] = player_counts[group_idx].get(player_id, 0) + 1
+                    placed = True
+                    break
+        
+        if not placed:
+            skipped_entries.append(entry)
     
-    # Step 4: Slice into candidate groups
-    groups = []
-    i = 0
-    for _ in range(target_count):
-        group = pool[i:i + bracket_size]
-        groups.append(group)
-        i += bracket_size
-    leftovers = pool[i:]
+    # Step 4: Filter out incomplete groups and collect their entries as leftovers
+    complete_groups = []
+    leftovers = []
+    
+    for group in groups:
+        if len(group) == bracket_size:
+            complete_groups.append(group)
+        else:
+            leftovers.extend(group)
+    
+    leftovers.extend(skipped_entries)
+    groups = complete_groups
     
     # Step 5: Try to pair each group
     brackets = []
