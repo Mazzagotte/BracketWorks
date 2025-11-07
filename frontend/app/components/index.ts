@@ -17,7 +17,6 @@ export * from './Accessibility';
 export * from './DataManagement';
 
 // Login Components
-export * from './LoginHeader';
 export * from './LoginLinks';
 
 // Bracket Generation Modal
