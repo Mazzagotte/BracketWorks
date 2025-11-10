@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-
+import { colors, rgba } from './styles/colors';
 import './styles/globals.css';
 import './styles/colors.global.css';
 import './styles/login.css';
@@ -190,20 +190,20 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
                   justifyContent: 'center',
                   width: '44px',
                   height: '44px',
-                  background: 'rgba(240, 165, 0, 0.1)',
-                  border: '1px solid rgba(240, 165, 0, 0.3)',
+                  background: rgba(colors.brand.gold, 0.1),
+                  border: `1px solid ${rgba(colors.brand.gold, 0.3)}`,
                   borderRadius: '12px',
-                  color: '#f0a500',
+                  color: colors.brand.gold,
                   fontSize: '18px',
                   cursor: 'pointer',
                   transition: 'all 0.2s ease'
                 }}
                 onTouchStart={(changeEvent) => { 
-                  changeEvent.currentTarget.style.backgroundColor = 'rgba(240, 165, 0, 0.2)';
+                  changeEvent.currentTarget.style.backgroundColor = rgba(colors.brand.gold, 0.2);
                   changeEvent.currentTarget.style.transform = 'scale(0.95)';
                 }}
                 onTouchEnd={(changeEvent) => { 
-                  changeEvent.currentTarget.style.backgroundColor = 'rgba(240, 165, 0, 0.1)';
+                  changeEvent.currentTarget.style.backgroundColor = rgba(colors.brand.gold, 0.1);
                   changeEvent.currentTarget.style.transform = 'scale(1)';
                 }}
               >
@@ -217,7 +217,7 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
                 justifyContent: 'center'
               }}>
                 <h1 style={{
-                  color: '#ffffff',
+                  color: colors.white,
                   fontSize: '18px',
                   fontWeight: 600,
                   margin: 0,
@@ -230,7 +230,7 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
               {/* Page indicator */}
               <div style={{
                 fontSize: '12px',
-                color: '#9ca3af',
+                color: colors.gray[400],
                 background: 'rgba(255, 255, 255, 0.1)',
                 padding: '4px 8px',
                 borderRadius: '6px',
@@ -271,7 +271,7 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
             {/* Page Content - White card container */}
             <div 
               style={{ 
-                background: '#ffffff',
+                background: colors.white,
                 borderRadius: isMobile ? '12px' : '16px',
                 padding: isMobile ? '20px' : '24px',
                 paddingTop: mounted && isUserAuthenticated ? '20px' : '20px',
