@@ -14,7 +14,6 @@ import { BracketStatsPanel } from './components/BracketStatsPanel'
 import { BracketTabs } from './components/BracketTabs'
 import { RoundNavigator } from './components/RoundNavigator'
 import { SearchFilter } from './components/SearchFilter'
-import { ZoomControls } from './components/ZoomControls'
 import { MobileBracketView } from './components/MobileBracketView'
 import { EmptyBracketState } from './components/EmptyBracketState'
 import '../styles/bowling-animations.css'
@@ -34,7 +33,6 @@ export default function BracketsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedStatus, setSelectedStatus] = useState('all')
   const [selectedSeedRange, setSelectedSeedRange] = useState('all')
-  const [zoomLevel, setZoomLevel] = useState(100)
   const [isMobile, setIsMobile] = useState(false)
   const [loadedBrackets, setLoadedBrackets] = useState<BracketPreview | null>(null)
   
@@ -428,19 +426,6 @@ export default function BracketsPage() {
     if (selectedSeedRange !== 'all') count++
     return count
   }, [searchTerm, selectedStatus, selectedSeedRange])
-
-  // Handle zoom controls
-  const handleZoomIn = useCallback(() => {
-    setZoomLevel(prev => Math.min(prev + 10, 200))
-  }, [])
-
-  const handleZoomOut = useCallback(() => {
-    setZoomLevel(prev => Math.max(prev - 10, 50))
-  }, [])
-
-  const handleResetZoom = useCallback(() => {
-    setZoomLevel(100)
-  }, [])
 
   // Memoize the Generate Brackets button to prevent infinite re-renders
   const generateBracketsButton = useMemo(() => (
@@ -840,16 +825,10 @@ export default function BracketsPage() {
                   onRoundChange={setCurrentRound}
                 />
               ) : (
-                <div style={{ 
-                  transform: `scale(${zoomLevel / 100})`,
-                  transformOrigin: 'top left',
-                  transition: 'transform 0.2s ease'
-                }}>
-                  <BracketTreeView
-                    rounds={rounds}
-                    isMobile={isMobile}
-                  />
-                </div>
+                <BracketTreeView
+                  rounds={rounds}
+                  isMobile={isMobile}
+                />
               )
             ) : (
               <div style={{ 
@@ -859,18 +838,6 @@ export default function BracketsPage() {
               }}>
                 <p>No matches found for the selected filters.</p>
               </div>
-            )}
-
-            {/* Zoom Controls (Desktop only) */}
-            {!isMobile && rounds.length > 0 && (
-              <ZoomControls
-                zoomLevel={zoomLevel}
-                onZoomIn={handleZoomIn}
-                onZoomOut={handleZoomOut}
-                onResetZoom={handleResetZoom}
-                minZoom={50}
-                maxZoom={200}
-              />
             )}
           </>
         )}
