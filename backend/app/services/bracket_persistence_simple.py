@@ -1,15 +1,125 @@
 """
 Simplified bracket persistence - stores brackets as JSON instead of complex relational structure
+
+Match Structure in JSON:
+{
+    "seedA": int | None,
+    "seedB": int | None,
+    "playerA": str,
+    "playerB": str,
+    "playerA_id": int | None,
+    "playerB_id": int | None,
+    "qualifying_score_a": int | None,
+    "qualifying_score_b": int | None,
+    "scoreA": int | None,  # match_score_a
+    "scoreB": int | None,  # match_score_b
+    "winner": 'A' | 'B' | None,
+    "status": 'pending' | 'in_progress' | 'completed' | 'tied',
+    "tie_resolution_method": 'normal' | 'highest_game' | 'random' | None,  # How tie was resolved
+    "tie_notes": str | None  # Additional tie resolution details
+}
 """
 from sqlalchemy.orm import Session
 from sqlalchemy import Column, Integer, String, JSON, DateTime, ForeignKey, Boolean
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Tuple
 from datetime import datetime
 import logging
+import random
 
 from ..core.models import Base
 
 logger = logging.getLogger(__name__)
+
+
+def determine_winner_with_tiebreakers(
+    db: Session,
+    tournament_id: int,
+    player_a_id: Optional[int],
+    player_b_id: Optional[int],
+    score_a: int,
+    score_b: int,
+    use_scratch: bool
+) -> Tuple[Optional[str], str, Optional[str]]:
+    """
+    Determine the winner of a match with automatic tiebreaker logic.
+    
+    Args:
+        db: Database session
+        tournament_id: Tournament ID
+        player_a_id: Player A bowler ID
+        player_b_id: Player B bowler ID
+        score_a: Player A's score
+        score_b: Player B's score
+        use_scratch: Whether this is a scratch bracket (True) or handicap bracket (False)
+    
+    Returns:
+        Tuple of (winner, tie_resolution_method, tie_notes)
+        - winner: 'A', 'B', or None
+        - tie_resolution_method: 'normal', 'highest_game', 'random', or None
+        - tie_notes: Additional details about tie resolution
+    """
+    from ..core import models
+    
+    # Not a tie - return normal winner
+    if score_a > score_b:
+        return ('A', 'normal', None)
+    elif score_b > score_a:
+        return ('B', 'normal', None)
+    
+    # Tie detected - apply tiebreakers
+    logger.info(f"Tie detected: Player {player_a_id} vs {player_b_id} (both scored {score_a})")
+    
+    if not player_a_id or not player_b_id:
+        logger.warning("Cannot apply tiebreakers - missing player IDs")
+        return (None, None, "Tie - missing player data")
+    
+    # Fetch individual game scores for both players
+    score_a_record = db.query(models.Score).filter(
+        models.Score.tournament_id == tournament_id,
+        models.Score.bowler_id == player_a_id
+    ).first()
+    
+    score_b_record = db.query(models.Score).filter(
+        models.Score.tournament_id == tournament_id,
+        models.Score.bowler_id == player_b_id
+    ).first()
+    
+    if not score_a_record or not score_b_record:
+        logger.warning("Cannot apply tiebreakers - missing score records")
+        return (None, None, "Tie - missing score data")
+    
+    # Get all three game scores for each player
+    if use_scratch:
+        games_a = [score_a_record.game1_scratch, score_a_record.game2_scratch, score_a_record.game3_scratch]
+        games_b = [score_b_record.game1_scratch, score_b_record.game2_scratch, score_b_record.game3_scratch]
+    else:
+        games_a = [score_a_record.game1_total, score_a_record.game2_total, score_a_record.game3_total]
+        games_b = [score_b_record.game1_total, score_b_record.game2_total, score_b_record.game3_total]
+    
+    # Remove None values (incomplete scores)
+    games_a = [g for g in games_a if g is not None]
+    games_b = [g for g in games_b if g is not None]
+    
+    if not games_a or not games_b:
+        logger.warning("Cannot apply tiebreakers - incomplete game scores")
+        return (None, None, "Tie - incomplete scores")
+    
+    # Tiebreaker 1: Highest individual game
+    highest_a = max(games_a)
+    highest_b = max(games_b)
+    
+    if highest_a > highest_b:
+        logger.info(f"  Tiebreaker applied: Highest game - Player A wins ({highest_a} > {highest_b})")
+        return ('A', 'highest_game', f"Player A highest: {highest_a}, Player B highest: {highest_b}")
+    elif highest_b > highest_a:
+        logger.info(f"  Tiebreaker applied: Highest game - Player B wins ({highest_b} > {highest_a})")
+        return ('B', 'highest_game', f"Player A highest: {highest_a}, Player B highest: {highest_b}")
+    
+    # Tiebreaker 2: Random selection (if all games are equal)
+    winner = random.choice(['A', 'B'])
+    logger.info(f"  Tiebreaker applied: Random selection - Player {winner} wins")
+    return (winner, 'random', f"All games tied - random selection")
+
 
 class SimpleBracket(Base):
     """Simplified bracket storage using JSON"""
@@ -363,22 +473,30 @@ def hydrate_brackets_with_scores(
         if old_score_a != score_a or old_score_b != score_b:
             logger.debug(f"    Updated match: {match.get('playerA')} vs {match.get('playerB')}: {old_score_a}->{score_a}, {old_score_b}->{score_b}")
         
-        # Update winner and status based on scores
+        # Update winner and status based on scores with tiebreaker logic
         if score_a is not None and score_b is not None:
-            if score_a > score_b:
-                match['winner'] = 'A'
-                match['status'] = 'completed'
-            elif score_b > score_a:
-                match['winner'] = 'B'
+            winner, tie_method, tie_note = determine_winner_with_tiebreakers(
+                db, tournament_id, player_a_id, player_b_id, score_a, score_b, use_scratch
+            )
+            
+            match['winner'] = winner
+            match['tie_resolution_method'] = tie_method
+            match['tie_notes'] = tie_note
+            
+            if winner:
                 match['status'] = 'completed'
             else:
-                match['winner'] = None
-                match['status'] = 'tied'
+                match['status'] = 'tied'  # Couldn't resolve tie (missing data)
         elif score_a is not None or score_b is not None:
             match['status'] = 'in_progress'
+            match['winner'] = None
+            match['tie_resolution_method'] = None
+            match['tie_notes'] = None
         else:
             match['winner'] = None
             match['status'] = 'pending'
+            match['tie_resolution_method'] = None
+            match['tie_notes'] = None
     
     matches_updated = 0
     

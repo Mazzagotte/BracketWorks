@@ -151,6 +151,26 @@
   letter-spacing: 0.025em;
 }
 
+.tieResolutionBadge {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  letter-spacing: 0.025em;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: help;
+}
+
+.tieResolutionBadge:hover {
+  background: linear-gradient(135deg, #9f7aea 0%, #8b5cf6 100%);
+  transform: scale(1.02);
+  transition: all 0.2s ease;
+}
+
 /* ===================================
    MATCH INFO
    =================================== */

@@ -59,7 +59,9 @@ export interface Match {
   scoreA?: number
   scoreB?: number
   winner?: 'A' | 'B'
-  status?: 'pending' | 'in_progress' | 'completed'
+  status?: 'pending' | 'in_progress' | 'completed' | 'tied'
+  tie_resolution_method?: 'normal' | 'highest_game' | 'random' | null
+  tie_notes?: string | null
 }
 
 export interface MatchScoreUpdate {
