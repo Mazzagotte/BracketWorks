@@ -88,6 +88,11 @@ export function MatchDetailsModal({
           <span className={styles.bracketTypeBadge}>
             {bracketType.charAt(0).toUpperCase() + bracketType.slice(1)} Bracket
           </span>
+          {match.tie_resolution_method && match.tie_resolution_method !== 'normal' && (
+            <span className={styles.tieResolutionBadge} title={match.tie_notes || ''}>
+              ⚖️ {match.tie_resolution_method === 'highest_game' ? 'Tiebreaker: Highest Game' : 'Tiebreaker: Random'}
+            </span>
+          )}
         </div>
 
         {/* Match Info */}

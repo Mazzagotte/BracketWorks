@@ -11,6 +11,8 @@ export interface MatchData {
   scoreB?: number
   winner?: 'A' | 'B'
   matchStatus?: 'pending' | 'in_progress' | 'completed'
+  tie_resolution_method?: 'normal' | 'highest_game' | 'random' | null
+  tie_notes?: string | null
 }
 
 export interface TournamentRound { 
@@ -264,6 +266,19 @@ function MatchCard({
             fontWeight: '600'
           }}>
             Winner: {MatchData.winner}
+          </span>
+        )}
+        {MatchData.tie_resolution_method && MatchData.tie_resolution_method !== 'normal' && (
+          <span 
+            style={{
+              fontSize: '0.7rem',
+              color: '#8b5cf6',
+              fontWeight: '600',
+              marginLeft: '0.5rem'
+            }}
+            title={MatchData.tie_notes || ''}
+          >
+            ⚖️
           </span>
         )}
       </div>
