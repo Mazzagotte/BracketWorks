@@ -9,6 +9,7 @@ import { useTournaments, useSquads } from '../hooks/useTournaments'
 import { useToast } from '../components/Toast'
 import { Tournament, Squad } from '../lib/types'
 import BracketGenerationModal from '../components/BracketGenerationModal'
+import ExplainBracketsModal from './components/ExplainBracketsModal'
 import { BracketTreeView } from './components/BracketTreeView'
 import { BracketStatsPanel } from './components/BracketStatsPanel'
 import { BracketTabs } from './components/BracketTabs'
@@ -22,6 +23,7 @@ export default function BracketsPage() {
   // State for modal and generation
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [bracketGenerationPromise, setBracketGenerationPromise] = useState<Promise<BracketPreview> | null>(null)
+  const [isExplainModalOpen, setIsExplainModalOpen] = useState(false)
   
   // State for bracket display
   const [activeTab, setActiveTab] = useState<'scratch' | 'handicap' | 'all'>('all')
@@ -362,31 +364,62 @@ export default function BracketsPage() {
 
   // Memoize the Generate Brackets button to prevent infinite re-renders
   const generateBracketsButton = useMemo(() => (
-    <button
-      onClick={handleGenerateBrackets}
-      style={{
-        backgroundColor: '#f0a500',
-        color: 'white',
-        border: 'none',
-        borderRadius: '8px',
-        padding: '10px 20px',
-        fontSize: '14px',
-        fontWeight: '600',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        transition: 'all 0.2s ease'
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.backgroundColor = '#d4940b'
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.backgroundColor = '#f0a500'
-      }}
-    >
-      Generate Brackets
-    </button>
+    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+      <button
+        onClick={() => setIsExplainModalOpen(true)}
+        style={{
+          backgroundColor: 'transparent',
+          color: '#f0a500',
+          border: '2px solid #f0a500',
+          borderRadius: '8px',
+          padding: '10px 20px',
+          fontSize: '14px',
+          fontWeight: '600',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          transition: 'all 0.2s ease'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = 'rgba(240, 165, 0, 0.1)'
+          e.currentTarget.style.borderColor = '#d4940b'
+          e.currentTarget.style.color = '#d4940b'
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = 'transparent'
+          e.currentTarget.style.borderColor = '#f0a500'
+          e.currentTarget.style.color = '#f0a500'
+        }}
+      >
+        Explain Brackets
+      </button>
+      <button
+        onClick={handleGenerateBrackets}
+        style={{
+          backgroundColor: '#f0a500',
+          color: 'white',
+          border: 'none',
+          borderRadius: '8px',
+          padding: '10px 20px',
+          fontSize: '14px',
+          fontWeight: '600',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          transition: 'all 0.2s ease'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = '#d4940b'
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = '#f0a500'
+        }}
+      >
+        Generate Brackets
+      </button>
+    </div>
   ), [handleGenerateBrackets])
 
   // Set page header with actions
@@ -769,6 +802,12 @@ export default function BracketsPage() {
           </>
         )}
       </div>
+
+      {/* Explain Brackets Modal */}
+      <ExplainBracketsModal 
+        isOpen={isExplainModalOpen}
+        onClose={() => setIsExplainModalOpen(false)}
+      />
     </ErrorBoundary>
   )
 }
