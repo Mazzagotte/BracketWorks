@@ -240,17 +240,12 @@ export default function BracketsPage() {
     
     // Reload brackets after generation
     if (selectedSquad && selectedTournament) {
-      console.log('Reloading brackets after generation...')
       loadingRef.current = false // Reset the loading ref
       lastLoadedRef.current = null // Reset the last loaded ref to force reload
       loadSavedBrackets(selectedTournament.id, selectedSquad.id).then(brackets => {
-        console.log('Reloaded brackets after generation:', brackets)
         if (brackets) {
           setLoadedBrackets(brackets)
           lastLoadedRef.current = { tournamentId: selectedTournament.id, squadId: selectedSquad.id }
-          console.log('Brackets set, rounds available:', brackets.rounds?.length || 0)
-        } else {
-          console.error('Failed to load brackets after generation')
         }
       })
     }
@@ -321,10 +316,6 @@ export default function BracketsPage() {
     // Check if we have the multiple_brackets wrapper structure (alternative API format)
     if (loadedBrackets.multiple_brackets) {
       const { scratch_brackets, handicap_brackets } = loadedBrackets.multiple_brackets
-      
-      console.log('Using multiple_brackets wrapper')
-      console.log('Scratch brackets count:', scratch_brackets?.length || 0)
-      console.log('Handicap brackets count:', handicap_brackets?.length || 0)
       
       // Get rounds from the first available bracket based on active tab
       let sourceBrackets: any[] = []
@@ -474,13 +465,6 @@ export default function BracketsPage() {
           const hasRounds = !!rounds
           const roundsLength = rounds?.length || 0
           const showEmpty = !hasLoadedBrackets || !hasRounds || roundsLength === 0
-          
-          console.log('=== DISPLAY CONDITION DEBUG ===')
-          console.log('loadedBrackets exists?', hasLoadedBrackets)
-          console.log('rounds exists?', hasRounds)
-          console.log('rounds.length:', roundsLength)
-          console.log('Show empty state?', showEmpty)
-          console.log('=== END DISPLAY CONDITION DEBUG ===')
           
           return showEmpty
         })() ? (
