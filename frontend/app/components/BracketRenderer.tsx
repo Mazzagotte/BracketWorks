@@ -10,9 +10,11 @@ export interface MatchData {
   scoreA?: number
   scoreB?: number
   winner?: 'A' | 'B'
-  matchStatus?: 'pending' | 'in_progress' | 'completed'
-  tie_resolution_method?: 'normal' | 'highest_game' | 'random' | null
-  tie_notes?: string | null
+  matchStatus?: 'pending' | 'in_progress' | 'completed' | 'both_advance'
+  both_advance?: boolean
+  split_pot?: boolean
+  eliminated_player?: 'A' | 'B' | null
+  elimination_notes?: string | null
 }
 
 export interface TournamentRound { 
@@ -268,7 +270,7 @@ function MatchCard({
             Winner: {MatchData.winner}
           </span>
         )}
-        {MatchData.tie_resolution_method && MatchData.tie_resolution_method !== 'normal' && (
+        {MatchData.both_advance && (
           <span 
             style={{
               fontSize: '0.7rem',
@@ -276,9 +278,22 @@ function MatchCard({
               fontWeight: '600',
               marginLeft: '0.5rem'
             }}
-            title={MatchData.tie_notes || ''}
+            title={MatchData.elimination_notes || 'Both players advance - lower next round score will be eliminated'}
           >
-            ⚖️
+            🔀 Both Advance
+          </span>
+        )}
+        {MatchData.split_pot && (
+          <span 
+            style={{
+              fontSize: '0.7rem',
+              color: '#f59e0b',
+              fontWeight: '600',
+              marginLeft: '0.5rem'
+            }}
+            title="Finals tie - pot split evenly"
+          >
+            💰 Split Pot
           </span>
         )}
       </div>

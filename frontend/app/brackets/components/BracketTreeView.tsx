@@ -21,6 +21,8 @@ export interface TournamentRound extends BracketRound {
 interface BracketTreeViewProps {
   rounds: TournamentRound[]
   isMobile?: boolean
+  onMatchClick?: (match: Match, roundName: string, bracketType: 'scratch' | 'handicap') => void
+  bracketType?: 'scratch' | 'handicap'
 }
 
 /**
@@ -29,7 +31,9 @@ interface BracketTreeViewProps {
  */
 export function BracketTreeView({
   rounds,
-  isMobile = false
+  isMobile = false,
+  onMatchClick,
+  bracketType = 'scratch'
 }: BracketTreeViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [highlightedPlayer, setHighlightedPlayer] = useState<string | null>(null)
@@ -118,18 +122,26 @@ export function BracketTreeView({
                   className={`${styles.matchCard} ${styles[status]} ${isInPath ? styles.highlighted : ''}`}
                   style={{
                     gridColumn: '1',
-                    gridRow: `${gridRow} / span 2`
+                    gridRow: `${gridRow} / span 2`,
+                    cursor: onMatchClick ? 'pointer' : 'default'
                   }}
+                  onClick={() => onMatchClick && onMatchClick(match, displayRounds[0]?.name || 'Round 1', bracketType)}
                 >
-                  {/* Tie indicator */}
-                  {match.tie_resolution_method && match.tie_resolution_method !== 'normal' && (
-                    <div className={styles.tieIndicator} title={match.tie_notes || 'Tie resolved by tiebreaker'}>
-                      ⚖️
+                  {/* Tie indicator - both advance */}
+                  {match.both_advance && (
+                    <div className={styles.tieIndicator} title={match.elimination_notes || 'Both players advance - lower next round score will be eliminated'}>
+                      🔀
+                    </div>
+                  )}
+                  {/* Tie indicator - split pot */}
+                  {match.split_pot && (
+                    <div className={styles.tieIndicator} title="Finals tie - pot split evenly">
+                      💰
                     </div>
                   )}
                   <div 
                     className={`${styles.player} ${match.winner === 'A' ? styles.winner : ''} ${playerAHighlighted ? styles.highlightedPlayer : ''}`}
-                    onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerA ? null : match.playerA)}
+                    onClick={(e) => { e.stopPropagation(); setHighlightedPlayer(highlightedPlayer === match.playerA ? null : match.playerA); }}
                   >
                     <span className={styles.playerName}>{match.playerA || 'TBD'}</span>
                     <span className={styles.playerScore}>
@@ -138,7 +150,7 @@ export function BracketTreeView({
                   </div>
                   <div 
                     className={`${styles.player} ${match.winner === 'B' ? styles.winner : ''} ${playerBHighlighted ? styles.highlightedPlayer : ''}`}
-                    onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerB ? null : match.playerB)}
+                    onClick={(e) => { e.stopPropagation(); setHighlightedPlayer(highlightedPlayer === match.playerB ? null : match.playerB); }}
                   >
                     <span className={styles.playerName}>{match.playerB || 'TBD'}</span>
                     <span className={styles.playerScore}>
@@ -173,18 +185,26 @@ export function BracketTreeView({
                   className={`${styles.matchCard} ${styles[status]} ${isInPath ? styles.highlighted : ''}`}
                   style={{
                     gridColumn: '4',
-                    gridRow: `${gridRow} / span 2`
+                    gridRow: `${gridRow} / span 2`,
+                    cursor: onMatchClick ? 'pointer' : 'default'
                   }}
+                  onClick={() => onMatchClick && onMatchClick(match, displayRounds[1]?.name || 'Round 2', bracketType)}
                 >
-                  {/* Tie indicator */}
-                  {match.tie_resolution_method && match.tie_resolution_method !== 'normal' && (
-                    <div className={styles.tieIndicator} title={match.tie_notes || 'Tie resolved by tiebreaker'}>
-                      ⚖️
+                  {/* Tie indicator - both advance */}
+                  {match.both_advance && (
+                    <div className={styles.tieIndicator} title={match.elimination_notes || 'Both players advance - lower next round score will be eliminated'}>
+                      🔀
+                    </div>
+                  )}
+                  {/* Tie indicator - split pot */}
+                  {match.split_pot && (
+                    <div className={styles.tieIndicator} title="Finals tie - pot split evenly">
+                      💰
                     </div>
                   )}
                   <div 
                     className={`${styles.player} ${match.winner === 'A' ? styles.winner : ''} ${playerAHighlighted ? styles.highlightedPlayer : ''}`}
-                    onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerA ? null : match.playerA)}
+                    onClick={(e) => { e.stopPropagation(); setHighlightedPlayer(highlightedPlayer === match.playerA ? null : match.playerA); }}
                   >
                     <span className={styles.playerName}>{match.playerA || 'TBD'}</span>
                     <span className={styles.playerScore}>
@@ -193,7 +213,7 @@ export function BracketTreeView({
                   </div>
                   <div 
                     className={`${styles.player} ${match.winner === 'B' ? styles.winner : ''} ${playerBHighlighted ? styles.highlightedPlayer : ''}`}
-                    onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerB ? null : match.playerB)}
+                    onClick={(e) => { e.stopPropagation(); setHighlightedPlayer(highlightedPlayer === match.playerB ? null : match.playerB); }}
                   >
                     <span className={styles.playerName}>{match.playerB || 'TBD'}</span>
                     <span className={styles.playerScore}>
@@ -227,18 +247,26 @@ export function BracketTreeView({
                 className={`${styles.matchCard} ${styles[status]} ${isInPath ? styles.highlighted : ''}`}
                 style={{
                   gridColumn: '7',
-                  gridRow: `${gridRow} / span 2`
+                  gridRow: `${gridRow} / span 2`,
+                  cursor: onMatchClick ? 'pointer' : 'default'
                 }}
+                onClick={() => onMatchClick && onMatchClick(match, displayRounds[2]?.name || 'Round 3', bracketType)}
               >
-                {/* Tie indicator */}
-                {match.tie_resolution_method && match.tie_resolution_method !== 'normal' && (
-                  <div className={styles.tieIndicator} title={match.tie_notes || 'Tie resolved by tiebreaker'}>
-                    ⚖️
+                {/* Tie indicator - both advance */}
+                {match.both_advance && (
+                  <div className={styles.tieIndicator} title={match.elimination_notes || 'Both players advance - lower next round score will be eliminated'}>
+                    🔀
+                  </div>
+                )}
+                {/* Tie indicator - split pot */}
+                {match.split_pot && (
+                  <div className={styles.tieIndicator} title="Finals tie - pot split evenly">
+                    💰
                   </div>
                 )}
                 <div 
                   className={`${styles.player} ${match.winner === 'A' ? styles.winner : ''} ${playerAHighlighted ? styles.highlightedPlayer : ''}`}
-                  onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerA ? null : match.playerA)}
+                  onClick={(e) => { e.stopPropagation(); setHighlightedPlayer(highlightedPlayer === match.playerA ? null : match.playerA); }}
                 >
                   <span className={styles.playerName}>{match.playerA || 'TBD'}</span>
                   <span className={styles.playerScore}>
@@ -247,7 +275,7 @@ export function BracketTreeView({
                 </div>
                 <div 
                   className={`${styles.player} ${match.winner === 'B' ? styles.winner : ''} ${playerBHighlighted ? styles.highlightedPlayer : ''}`}
-                  onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerB ? null : match.playerB)}
+                  onClick={(e) => { e.stopPropagation(); setHighlightedPlayer(highlightedPlayer === match.playerB ? null : match.playerB); }}
                 >
                   <span className={styles.playerName}>{match.playerB || 'TBD'}</span>
                   <span className={styles.playerScore}>

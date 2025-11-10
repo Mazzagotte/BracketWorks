@@ -88,9 +88,14 @@ export function MatchDetailsModal({
           <span className={styles.bracketTypeBadge}>
             {bracketType.charAt(0).toUpperCase() + bracketType.slice(1)} Bracket
           </span>
-          {match.tie_resolution_method && match.tie_resolution_method !== 'normal' && (
-            <span className={styles.tieResolutionBadge} title={match.tie_notes || ''}>
-              ⚖️ {match.tie_resolution_method === 'highest_game' ? 'Tiebreaker: Highest Game' : 'Tiebreaker: Random'}
+          {match.both_advance && (
+            <span className={styles.tieResolutionBadge} title={match.elimination_notes || 'Both players advance - lower next round score will be eliminated'}>
+              🔀 Both Advance
+            </span>
+          )}
+          {match.split_pot && (
+            <span className={styles.tieResolutionBadge} title="Finals tie - pot split evenly">
+              💰 Split Pot
             </span>
           )}
         </div>
