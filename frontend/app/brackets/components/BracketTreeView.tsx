@@ -121,6 +121,12 @@ export function BracketTreeView({
                     gridRow: `${gridRow} / span 2`
                   }}
                 >
+                  {/* Tie indicator */}
+                  {match.tie_resolution_method && match.tie_resolution_method !== 'normal' && (
+                    <div className={styles.tieIndicator} title={match.tie_notes || 'Tie resolved by tiebreaker'}>
+                      ⚖️
+                    </div>
+                  )}
                   <div 
                     className={`${styles.player} ${match.winner === 'A' ? styles.winner : ''} ${playerAHighlighted ? styles.highlightedPlayer : ''}`}
                     onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerA ? null : match.playerA)}
@@ -170,6 +176,12 @@ export function BracketTreeView({
                     gridRow: `${gridRow} / span 2`
                   }}
                 >
+                  {/* Tie indicator */}
+                  {match.tie_resolution_method && match.tie_resolution_method !== 'normal' && (
+                    <div className={styles.tieIndicator} title={match.tie_notes || 'Tie resolved by tiebreaker'}>
+                      ⚖️
+                    </div>
+                  )}
                   <div 
                     className={`${styles.player} ${match.winner === 'A' ? styles.winner : ''} ${playerAHighlighted ? styles.highlightedPlayer : ''}`}
                     onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerA ? null : match.playerA)}
@@ -218,6 +230,12 @@ export function BracketTreeView({
                   gridRow: `${gridRow} / span 2`
                 }}
               >
+                {/* Tie indicator */}
+                {match.tie_resolution_method && match.tie_resolution_method !== 'normal' && (
+                  <div className={styles.tieIndicator} title={match.tie_notes || 'Tie resolved by tiebreaker'}>
+                    ⚖️
+                  </div>
+                )}
                 <div 
                   className={`${styles.player} ${match.winner === 'A' ? styles.winner : ''} ${playerAHighlighted ? styles.highlightedPlayer : ''}`}
                   onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerA ? null : match.playerA)}
