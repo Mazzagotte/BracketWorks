@@ -115,7 +115,6 @@ export function useBrackets() {
       const squadParam = squadId ? `&squad_id=${squadId}` : ''
       const forceParam = forceRegenerate ? '&force_regenerate=true' : ''
       const url = `/api/v1/brackets/generate-multiple?tournament_id=${tournamentId}${squadParam}${forceParam}`
-      console.log('=== GENERATE BRACKETS URL ===', url, 'forceRegenerate:', forceRegenerate)
       const data = await apiClient.get<BracketPreview>(
         url,
         !forceRegenerate  // useCache = false when forcing regeneration
