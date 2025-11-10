@@ -17,6 +17,7 @@ import { RoundNavigator } from './components/RoundNavigator'
 import { SearchFilter } from './components/SearchFilter'
 import { MobileBracketView } from './components/MobileBracketView'
 import { EmptyBracketState } from './components/EmptyBracketState'
+import { colors, semantic, gradients, shadows, rgba } from '../styles/colors'
 import '../styles/bowling-animations.css'
 
 export default function BracketsPage() {
@@ -368,9 +369,9 @@ export default function BracketsPage() {
       <button
         onClick={() => setIsExplainModalOpen(true)}
         style={{
-          backgroundColor: 'transparent',
-          color: '#f0a500',
-          border: '2px solid #f0a500',
+          backgroundColor: colors.transparent,
+          color: colors.brand.gold,
+          border: `2px solid ${colors.brand.gold}`,
           borderRadius: '8px',
           padding: '10px 20px',
           fontSize: '14px',
@@ -382,14 +383,14 @@ export default function BracketsPage() {
           transition: 'all 0.2s ease'
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = 'rgba(240, 165, 0, 0.1)'
-          e.currentTarget.style.borderColor = '#d4940b'
-          e.currentTarget.style.color = '#d4940b'
+          e.currentTarget.style.backgroundColor = rgba(colors.brand.gold, 0.1)
+          e.currentTarget.style.borderColor = colors.brand.goldDark
+          e.currentTarget.style.color = colors.brand.goldDark
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = 'transparent'
-          e.currentTarget.style.borderColor = '#f0a500'
-          e.currentTarget.style.color = '#f0a500'
+          e.currentTarget.style.backgroundColor = colors.transparent
+          e.currentTarget.style.borderColor = colors.brand.gold
+          e.currentTarget.style.color = colors.brand.gold
         }}
       >
         Explain Brackets
@@ -397,8 +398,8 @@ export default function BracketsPage() {
       <button
         onClick={handleGenerateBrackets}
         style={{
-          backgroundColor: '#f0a500',
-          color: 'white',
+          backgroundColor: semantic.button.primary,
+          color: colors.white,
           border: 'none',
           borderRadius: '8px',
           padding: '10px 20px',
@@ -411,10 +412,10 @@ export default function BracketsPage() {
           transition: 'all 0.2s ease'
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = '#d4940b'
+          e.currentTarget.style.backgroundColor = semantic.button.primaryHover
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = '#f0a500'
+          e.currentTarget.style.backgroundColor = semantic.button.primary
         }}
       >
         Generate Brackets
@@ -570,11 +571,11 @@ export default function BracketsPage() {
                   justifyContent: 'center',
                   gap: '1.5rem',
                   padding: '1.25rem 1.5rem',
-                  background: 'linear-gradient(135deg, #ffffff 0%, #f9fafb 100%)',
+                  background: gradients.grayLight,
                   borderRadius: '12px',
                   marginBottom: '1rem',
-                  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)',
-                  border: '1px solid rgba(255, 255, 255, 0.8)',
+                  boxShadow: shadows.md,
+                  border: `1px solid ${rgba(colors.white, 0.8)}`,
                   position: 'relative',
                   overflow: 'hidden',
                   maxWidth: '900px',
@@ -587,7 +588,7 @@ export default function BracketsPage() {
                     left: 0,
                     right: 0,
                     height: '3px',
-                    background: 'linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899, #f59e0b)',
+                    background: gradients.rainbow,
                     backgroundSize: '200% 100%',
                     animation: 'gradientShift 3s ease infinite'
                   }} />
@@ -599,9 +600,9 @@ export default function BracketsPage() {
                     style={{
                       padding: '0.75rem 1.25rem',
                       background: selectedBracketIndex === 0 
-                        ? 'linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)'
-                        : 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                      color: selectedBracketIndex === 0 ? '#9ca3af' : 'white',
+                        ? gradients.gray
+                        : gradients.blue,
+                      color: selectedBracketIndex === 0 ? colors.gray[400] : colors.white,
                       border: 'none',
                       borderRadius: '8px',
                       cursor: selectedBracketIndex === 0 ? 'not-allowed' : 'pointer',
@@ -613,18 +614,18 @@ export default function BracketsPage() {
                       transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                       boxShadow: selectedBracketIndex === 0 
                         ? 'none' 
-                        : '0 2px 8px rgba(59, 130, 246, 0.3)'
+                        : shadows.blue.sm
                     }}
                     onMouseEnter={(e) => {
                       if (selectedBracketIndex !== 0) {
                         e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)'
-                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.4)'
+                        e.currentTarget.style.boxShadow = shadows.blue.md
                       }
                     }}
                     onMouseLeave={(e) => {
                       if (selectedBracketIndex !== 0) {
                         e.currentTarget.style.transform = 'scale(1)'
-                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(59, 130, 246, 0.3)'
+                        e.currentTarget.style.boxShadow = shadows.blue.sm
                       }
                     }}
                   >
@@ -650,35 +651,35 @@ export default function BracketsPage() {
                       <h3 style={{
                         fontSize: '1.25rem',
                         fontWeight: '700',
-                        color: '#1f2937',
+                        color: semantic.text.primary,
                         margin: 0,
                         display: 'flex',
                         alignItems: 'center',
                         gap: '0.5rem'
                       }}>
                         <span style={{
-                          background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                          background: `linear-gradient(135deg, ${colors.blue.primary} 0%, ${colors.purple.primary} 100%)`,
                           WebkitBackgroundClip: 'text',
                           WebkitTextFillColor: 'transparent',
                           backgroundClip: 'text'
                         }}>
                           Bracket {selectedBracketIndex + 1}
                         </span>
-                        <span style={{ color: '#9ca3af', fontWeight: '400' }}>of</span>
-                        <span style={{ color: '#6b7280' }}>{totalBrackets}</span>
+                        <span style={{ color: colors.gray[400], fontWeight: '400' }}>of</span>
+                        <span style={{ color: colors.gray[500] }}>{totalBrackets}</span>
                       </h3>
                       
                       {/* Bracket Type Badge */}
                       <div style={{
                         padding: '0.375rem 0.875rem',
                         background: bracketType === 'Scratch'
-                          ? 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)'
-                          : 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
-                        color: bracketType === 'Scratch' ? '#1e40af' : '#92400e',
+                          ? gradients.blueLight
+                          : gradients.yellowLight,
+                        color: bracketType === 'Scratch' ? semantic.badge.scratch.text : semantic.badge.handicap.text,
                         borderRadius: '6px',
                         fontSize: '0.8125rem',
                         fontWeight: '600',
-                        border: `1px solid ${bracketType === 'Scratch' ? '#93c5fd' : '#fcd34d'}`
+                        border: `1px solid ${bracketType === 'Scratch' ? semantic.badge.scratch.border : semantic.badge.handicap.border}`
                       }}>
                         {bracketType}
                       </div>
@@ -687,13 +688,13 @@ export default function BracketsPage() {
                       <div style={{
                         padding: '0.375rem 0.875rem',
                         background: progressPercent === 100
-                          ? 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)'
-                          : 'linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)',
-                        color: progressPercent === 100 ? '#065f46' : '#6b7280',
+                          ? gradients.green
+                          : gradients.gray,
+                        color: progressPercent === 100 ? semantic.badge.complete.text : semantic.text.tertiary,
                         borderRadius: '6px',
                         fontSize: '0.8125rem',
                         fontWeight: '600',
-                        border: `1px solid ${progressPercent === 100 ? '#6ee7b7' : '#d1d5db'}`
+                        border: `1px solid ${progressPercent === 100 ? semantic.badge.complete.border : semantic.border.medium}`
                       }}>
                         {completedMatches}/{totalMatches} Complete
                       </div>
@@ -703,20 +704,20 @@ export default function BracketsPage() {
                     <div style={{
                       width: '100%',
                       height: '8px',
-                      background: 'linear-gradient(90deg, #e5e7eb 0%, #f3f4f6 100%)',
+                      background: `linear-gradient(90deg, ${colors.gray[200]} 0%, ${colors.gray[100]} 100%)`,
                       borderRadius: '4px',
                       overflow: 'hidden',
                       position: 'relative',
-                      boxShadow: 'inset 0 1px 3px rgba(0, 0, 0, 0.1)'
+                      boxShadow: shadows.inset
                     }}>
                       <div style={{
                         height: '100%',
                         width: `${progressPercent}%`,
                         background: progressPercent === 100
-                          ? 'linear-gradient(90deg, #10b981 0%, #059669 100%)'
-                          : 'linear-gradient(90deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%)',
+                          ? gradients.greenProgress
+                          : `linear-gradient(90deg, ${colors.blue.primary} 0%, ${colors.purple.primary} 50%, ${colors.pink.primary} 100%)`,
                         transition: 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-                        boxShadow: '0 0 8px rgba(59, 130, 246, 0.4)',
+                        boxShadow: `0 0 8px ${rgba(colors.blue.primary, 0.4)}`,
                         position: 'relative'
                       }}>
                         <div style={{
@@ -725,7 +726,7 @@ export default function BracketsPage() {
                           left: 0,
                           right: 0,
                           height: '50%',
-                          background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.3), transparent)',
+                          background: `linear-gradient(180deg, ${rgba(colors.white, 0.3)}, transparent)`,
                           pointerEvents: 'none'
                         }} />
                       </div>
@@ -739,9 +740,9 @@ export default function BracketsPage() {
                     style={{
                       padding: '0.75rem 1.25rem',
                       background: selectedBracketIndex >= totalBrackets - 1
-                        ? 'linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)'
-                        : 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                      color: selectedBracketIndex >= totalBrackets - 1 ? '#9ca3af' : 'white',
+                        ? gradients.gray
+                        : gradients.blue,
+                      color: selectedBracketIndex >= totalBrackets - 1 ? colors.gray[400] : colors.white,
                       border: 'none',
                       borderRadius: '8px',
                       cursor: selectedBracketIndex >= totalBrackets - 1 ? 'not-allowed' : 'pointer',
@@ -753,18 +754,18 @@ export default function BracketsPage() {
                       transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                       boxShadow: selectedBracketIndex >= totalBrackets - 1
                         ? 'none'
-                        : '0 2px 8px rgba(59, 130, 246, 0.3)'
+                        : shadows.blue.sm
                     }}
                     onMouseEnter={(e) => {
                       if (selectedBracketIndex < totalBrackets - 1) {
                         e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)'
-                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.4)'
+                        e.currentTarget.style.boxShadow = shadows.blue.md
                       }
                     }}
                     onMouseLeave={(e) => {
                       if (selectedBracketIndex < totalBrackets - 1) {
                         e.currentTarget.style.transform = 'scale(1)'
-                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(59, 130, 246, 0.3)'
+                        e.currentTarget.style.boxShadow = shadows.blue.sm
                       }
                     }}
                   >
