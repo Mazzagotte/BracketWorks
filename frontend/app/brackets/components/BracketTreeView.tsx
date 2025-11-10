@@ -21,7 +21,6 @@ export interface TournamentRound extends BracketRound {
 interface BracketTreeViewProps {
   rounds: TournamentRound[]
   isMobile?: boolean
-  onMatchClick?: (match: Match, roundName: string, bracketType: 'scratch' | 'handicap') => void
   bracketType?: 'scratch' | 'handicap'
 }
 
@@ -32,7 +31,6 @@ interface BracketTreeViewProps {
 export function BracketTreeView({
   rounds,
   isMobile = false,
-  onMatchClick,
   bracketType = 'scratch'
 }: BracketTreeViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -122,10 +120,8 @@ export function BracketTreeView({
                   className={`${styles.matchCard} ${styles[status]} ${isInPath ? styles.highlighted : ''}`}
                   style={{
                     gridColumn: '1',
-                    gridRow: `${gridRow} / span 2`,
-                    cursor: onMatchClick ? 'pointer' : 'default'
+                    gridRow: `${gridRow} / span 2`
                   }}
-                  onClick={() => onMatchClick && onMatchClick(match, displayRounds[0]?.name || 'Round 1', bracketType)}
                 >
                   {/* Tie indicator - both advance */}
                   {match.both_advance && (
@@ -141,7 +137,7 @@ export function BracketTreeView({
                   )}
                   <div 
                     className={`${styles.player} ${match.winner === 'A' ? styles.winner : ''} ${playerAHighlighted ? styles.highlightedPlayer : ''}`}
-                    onClick={(e) => { e.stopPropagation(); setHighlightedPlayer(highlightedPlayer === match.playerA ? null : match.playerA); }}
+                    onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerA ? null : match.playerA)}
                   >
                     <span className={styles.playerName}>{match.playerA || 'TBD'}</span>
                     <span className={styles.playerScore}>
@@ -185,10 +181,8 @@ export function BracketTreeView({
                   className={`${styles.matchCard} ${styles[status]} ${isInPath ? styles.highlighted : ''}`}
                   style={{
                     gridColumn: '4',
-                    gridRow: `${gridRow} / span 2`,
-                    cursor: onMatchClick ? 'pointer' : 'default'
+                    gridRow: `${gridRow} / span 2`
                   }}
-                  onClick={() => onMatchClick && onMatchClick(match, displayRounds[1]?.name || 'Round 2', bracketType)}
                 >
                   {/* Tie indicator - both advance */}
                   {match.both_advance && (
@@ -204,7 +198,7 @@ export function BracketTreeView({
                   )}
                   <div 
                     className={`${styles.player} ${match.winner === 'A' ? styles.winner : ''} ${playerAHighlighted ? styles.highlightedPlayer : ''}`}
-                    onClick={(e) => { e.stopPropagation(); setHighlightedPlayer(highlightedPlayer === match.playerA ? null : match.playerA); }}
+                    onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerA ? null : match.playerA)}
                   >
                     <span className={styles.playerName}>{match.playerA || 'TBD'}</span>
                     <span className={styles.playerScore}>
@@ -213,7 +207,7 @@ export function BracketTreeView({
                   </div>
                   <div 
                     className={`${styles.player} ${match.winner === 'B' ? styles.winner : ''} ${playerBHighlighted ? styles.highlightedPlayer : ''}`}
-                    onClick={(e) => { e.stopPropagation(); setHighlightedPlayer(highlightedPlayer === match.playerB ? null : match.playerB); }}
+                    onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerB ? null : match.playerB)}
                   >
                     <span className={styles.playerName}>{match.playerB || 'TBD'}</span>
                     <span className={styles.playerScore}>
@@ -247,10 +241,8 @@ export function BracketTreeView({
                 className={`${styles.matchCard} ${styles[status]} ${isInPath ? styles.highlighted : ''}`}
                 style={{
                   gridColumn: '7',
-                  gridRow: `${gridRow} / span 2`,
-                  cursor: onMatchClick ? 'pointer' : 'default'
+                  gridRow: `${gridRow} / span 2`
                 }}
-                onClick={() => onMatchClick && onMatchClick(match, displayRounds[2]?.name || 'Round 3', bracketType)}
               >
                 {/* Tie indicator - both advance */}
                 {match.both_advance && (
@@ -266,7 +258,7 @@ export function BracketTreeView({
                 )}
                 <div 
                   className={`${styles.player} ${match.winner === 'A' ? styles.winner : ''} ${playerAHighlighted ? styles.highlightedPlayer : ''}`}
-                  onClick={(e) => { e.stopPropagation(); setHighlightedPlayer(highlightedPlayer === match.playerA ? null : match.playerA); }}
+                  onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerA ? null : match.playerA)}
                 >
                   <span className={styles.playerName}>{match.playerA || 'TBD'}</span>
                   <span className={styles.playerScore}>
@@ -275,7 +267,7 @@ export function BracketTreeView({
                 </div>
                 <div 
                   className={`${styles.player} ${match.winner === 'B' ? styles.winner : ''} ${playerBHighlighted ? styles.highlightedPlayer : ''}`}
-                  onClick={(e) => { e.stopPropagation(); setHighlightedPlayer(highlightedPlayer === match.playerB ? null : match.playerB); }}
+                  onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerB ? null : match.playerB)}
                 >
                   <span className={styles.playerName}>{match.playerB || 'TBD'}</span>
                   <span className={styles.playerScore}>

@@ -16,7 +16,6 @@ import { RoundNavigator } from './components/RoundNavigator'
 import { SearchFilter } from './components/SearchFilter'
 import { MobileBracketView } from './components/MobileBracketView'
 import { EmptyBracketState } from './components/EmptyBracketState'
-import { MatchDetailsModal } from './components/MatchDetailsModal'
 import '../styles/bowling-animations.css'
 
 export default function BracketsPage() {
@@ -47,11 +46,6 @@ export default function BracketsPage() {
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null)
   const [selectedSquad, setSelectedSquad] = useState<Squad | null>(null)
   const [selectedBracketIndex, setSelectedBracketIndex] = useState<number>(0) // Which bracket to display (0-based)
-  
-  // State for match details modal
-  const [selectedMatch, setSelectedMatch] = useState<Match | null>(null)
-  const [selectedMatchRound, setSelectedMatchRound] = useState<string>('')
-  const [selectedMatchBracketType, setSelectedMatchBracketType] = useState<'scratch' | 'handicap'>('scratch')
 
   // Detect mobile viewport
   useEffect(() => {
@@ -262,13 +256,6 @@ export default function BracketsPage() {
     // Restart the generation process
     startBracketGeneration()
   }, [startBracketGeneration])
-
-  // Handle match card click to show details
-  const handleMatchClick = useCallback((match: Match, roundName: string, bracketType: 'scratch' | 'handicap') => {
-    setSelectedMatch(match)
-    setSelectedMatchRound(roundName)
-    setSelectedMatchBracketType(bracketType)
-  }, [])
 
   // Filter and process brackets based on active tab
   const filteredBrackets = useMemo(() => {
@@ -767,7 +754,6 @@ export default function BracketsPage() {
                 <BracketTreeView
                   rounds={rounds}
                   isMobile={isMobile}
-                  onMatchClick={handleMatchClick}
                   bracketType={activeTab === 'scratch' ? 'scratch' : 'handicap'}
                 />
               )
@@ -783,16 +769,6 @@ export default function BracketsPage() {
           </>
         )}
       </div>
-
-      {/* Match Details Modal */}
-      {selectedMatch && (
-        <MatchDetailsModal
-          match={selectedMatch}
-          onClose={() => setSelectedMatch(null)}
-          roundName={selectedMatchRound}
-          bracketType={selectedMatchBracketType}
-        />
-      )}
     </ErrorBoundary>
   )
 }
