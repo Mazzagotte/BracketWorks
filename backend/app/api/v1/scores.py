@@ -5,7 +5,7 @@ from pydantic import BaseModel
 import logging
 
 from app.api.deps import get_current_user, get_db
-from app.core.models import Score, Bowler, Tournament, Squad, BracketSettings
+from app.core.models import Score, Bowler, BracketSettings
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
