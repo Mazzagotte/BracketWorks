@@ -130,13 +130,13 @@ export function BracketTreeView({
                   {/* Tie indicator - both advance */}
                   {match.both_advance && (
                     <div className={styles.tieIndicator} title={match.elimination_notes || 'Both players advance - lower next round score will be eliminated'}>
-                      🔀
+                      TIE
                     </div>
                   )}
                   {/* Tie indicator - split pot */}
                   {match.split_pot && (
                     <div className={styles.tieIndicator} title="Finals tie - pot split evenly">
-                      💰
+                      SPLIT
                     </div>
                   )}
                   <div 
@@ -193,13 +193,13 @@ export function BracketTreeView({
                   {/* Tie indicator - both advance */}
                   {match.both_advance && (
                     <div className={styles.tieIndicator} title={match.elimination_notes || 'Both players advance - lower next round score will be eliminated'}>
-                      🔀
+                      TIE
                     </div>
                   )}
                   {/* Tie indicator - split pot */}
                   {match.split_pot && (
                     <div className={styles.tieIndicator} title="Finals tie - pot split evenly">
-                      💰
+                      SPLIT
                     </div>
                   )}
                   <div 
@@ -255,13 +255,13 @@ export function BracketTreeView({
                 {/* Tie indicator - both advance */}
                 {match.both_advance && (
                   <div className={styles.tieIndicator} title={match.elimination_notes || 'Both players advance - lower next round score will be eliminated'}>
-                    🔀
+                    TIE
                   </div>
                 )}
                 {/* Tie indicator - split pot */}
                 {match.split_pot && (
                   <div className={styles.tieIndicator} title="Finals tie - pot split evenly">
-                    💰
+                    SPLIT
                   </div>
                 )}
                 <div 

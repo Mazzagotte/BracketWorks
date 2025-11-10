@@ -280,7 +280,7 @@ function MatchCard({
             }}
             title={MatchData.elimination_notes || 'Both players advance - lower next round score will be eliminated'}
           >
-            🔀 Both Advance
+            BOTH ADVANCE
           </span>
         )}
         {MatchData.split_pot && (
@@ -293,7 +293,7 @@ function MatchCard({
             }}
             title="Finals tie - pot split evenly"
           >
-            💰 Split Pot
+            SPLIT POT
           </span>
         )}
       </div>
