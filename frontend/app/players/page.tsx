@@ -3,7 +3,7 @@
 export const dynamic = 'force-dynamic'
 
 import { useMemo, useState, useEffect, useCallback } from 'react'
-
+import { colors, semantic } from '../styles/colors'
 import { useAuth } from '../lib/auth-context'
 import { usePageHeader } from '../lib/header-context'
 import { ErrorBoundary } from '../components/ErrorBoundary'
@@ -300,10 +300,10 @@ export default function PlayersPage() {
         flexDirection: 'column',
         gap: '1rem'
       }}>
-        <div style={{ fontSize: '1.25rem', fontWeight: '600', color: '#374151' }}>
+        <div style={{ fontSize: '1.25rem', fontWeight: '600', color: semantic.text.primary }}>
           Authentication Required
         </div>
-        <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+        <div style={{ fontSize: '0.875rem', color: semantic.text.secondary }}>
           Please log in to access the players page.
         </div>
       </div>
@@ -329,7 +329,7 @@ export default function PlayersPage() {
             textAlign: 'center', 
             padding: '2rem',
             fontSize: '0.875rem',
-            color: '#6b7280'
+            color: semantic.text.secondary
           }}>
             Loading players...
           </div>
@@ -344,14 +344,14 @@ export default function PlayersPage() {
             <div style={{
               fontSize: '1.25rem',
               fontWeight: '600',
-              color: '#374151',
+              color: semantic.text.primary,
               marginBottom: '0.5rem'
             }}>
               No Tournament Loaded
             </div>
             <div style={{
               fontSize: '0.875rem',
-              color: '#6b7280',
+              color: semantic.text.secondary,
               marginBottom: '1.5rem'
             }}>
               Please load a tournament from the dashboard to manage players.
@@ -360,7 +360,7 @@ export default function PlayersPage() {
               href="/dashboard"
               style={{
                 display: 'inline-block',
-                backgroundColor: '#3b82f6',
+                backgroundColor: colors.blue.primary,
                 color: 'white',
                 padding: '0.75rem 1.5rem',
                 borderRadius: '0.375rem',
@@ -389,7 +389,7 @@ export default function PlayersPage() {
                 <h3 style={{
                   fontSize: '0.875rem',
                   fontWeight: '600',
-                  color: '#6b7280',
+                  color: semantic.text.secondary,
                   marginBottom: '0.75rem',
                   textTransform: 'uppercase',
                   letterSpacing: '0.05em'
@@ -406,21 +406,21 @@ export default function PlayersPage() {
                   <div style={{
                     textAlign: 'center',
                     padding: '0.75rem',
-                    backgroundColor: '#f9fafb',
+                    backgroundColor: colors.gray[50],
                     borderRadius: '0.5rem',
-                    border: '1px solid #e5e7eb'
+                    border: `1px solid ${colors.gray[200]}`
                   }}>
                     <div style={{ 
                       fontSize: '1.875rem', 
                       fontWeight: '700', 
-                      color: '#111827',
+                      color: colors.gray[900],
                       lineHeight: '1'
                     }}>
                       {entryTotals.totalPlayers}
                     </div>
                     <div style={{ 
                       fontSize: '0.75rem', 
-                      color: '#6b7280', 
+                      color: semantic.text.secondary, 
                       marginTop: '0.25rem',
                       fontWeight: '500'
                     }}>
@@ -432,21 +432,21 @@ export default function PlayersPage() {
                   <div style={{
                     textAlign: 'center',
                     padding: '0.75rem',
-                    backgroundColor: '#dbeafe',
+                    backgroundColor: colors.blue.light,
                     borderRadius: '0.5rem',
-                    border: '1px solid #bfdbfe'
+                    border: `1px solid ${colors.blue.lighter}`
                   }}>
                     <div style={{ 
                       fontSize: '1.875rem', 
                       fontWeight: '700', 
-                      color: '#1e40af',
+                      color: colors.blue.deeper,
                       lineHeight: '1'
                     }}>
                       {entryTotals.handicapEntries}
                     </div>
                     <div style={{ 
                       fontSize: '0.75rem', 
-                      color: '#1e40af', 
+                      color: colors.blue.deeper, 
                       marginTop: '0.25rem',
                       fontWeight: '500'
                     }}>
@@ -454,7 +454,7 @@ export default function PlayersPage() {
                     </div>
                     <div style={{ 
                       fontSize: '0.75rem', 
-                      color: '#1e40af', 
+                      color: colors.blue.deeper, 
                       marginTop: '0.125rem',
                       opacity: 0.8
                     }}>
@@ -467,21 +467,21 @@ export default function PlayersPage() {
                   <div style={{
                     textAlign: 'center',
                     padding: '0.75rem',
-                    backgroundColor: '#fef3c7',
+                    backgroundColor: colors.yellow.light,
                     borderRadius: '0.5rem',
-                    border: '1px solid #fde68a'
+                    border: `1px solid ${colors.brand.goldLighter}`
                   }}>
                     <div style={{ 
                       fontSize: '1.875rem', 
                       fontWeight: '700', 
-                      color: '#92400e',
+                      color: colors.yellow.dark,
                       lineHeight: '1'
                     }}>
                       {entryTotals.scratchEntries}
                     </div>
                     <div style={{ 
                       fontSize: '0.75rem', 
-                      color: '#92400e', 
+                      color: colors.yellow.dark, 
                       marginTop: '0.25rem',
                       fontWeight: '500'
                     }}>
@@ -489,7 +489,7 @@ export default function PlayersPage() {
                     </div>
                     <div style={{ 
                       fontSize: '0.75rem', 
-                      color: '#92400e', 
+                      color: colors.yellow.dark, 
                       marginTop: '0.125rem',
                       opacity: 0.8
                     }}>
@@ -502,21 +502,21 @@ export default function PlayersPage() {
                   <div style={{
                     textAlign: 'center',
                     padding: '0.75rem',
-                    backgroundColor: '#d1fae5',
+                    backgroundColor: colors.green.light,
                     borderRadius: '0.5rem',
-                    border: '1px solid #a7f3d0'
+                    border: `1px solid ${colors.green.lighter}`
                   }}>
                     <div style={{ 
                       fontSize: '1.875rem', 
                       fontWeight: '700', 
-                      color: '#065f46',
+                      color: colors.green.deeper,
                       lineHeight: '1'
                     }}>
                       ${entryTotals.totalRevenue.toLocaleString()}
                     </div>
                     <div style={{ 
                       fontSize: '0.75rem', 
-                      color: '#065f46', 
+                      color: colors.green.deeper, 
                       marginTop: '0.25rem',
                       fontWeight: '500'
                     }}>
@@ -524,7 +524,7 @@ export default function PlayersPage() {
                     </div>
                     <div style={{ 
                       fontSize: '0.75rem', 
-                      color: '#065f46', 
+                      color: colors.green.deeper, 
                       marginTop: '0.125rem',
                       opacity: 0.8
                     }}>
