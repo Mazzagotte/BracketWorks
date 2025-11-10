@@ -159,6 +159,9 @@ def generate_tournament_brackets_endpoint(
         
         # Get scores for these bowlers
         players_data = []
+        scores_found_count = 0
+        scores_missing_count = 0
+        
         for bowler in bowlers:
             # Get scores for this bowler
             scores = db.query(models.Score).filter(
@@ -169,6 +172,12 @@ def generate_tournament_brackets_endpoint(
                 scores = scores.filter(models.Score.squad_id == squad_id)
             
             score_record = scores.first()
+            
+            if score_record:
+                scores_found_count += 1
+            else:
+                scores_missing_count += 1
+                logger.warning(f"No scores found for bowler {bowler.name} (ID: {bowler.id}) in tournament {tournament_id}, squad {squad_id}")
             
             # Split name into first and last name
             name_parts = bowler.name.split(' ', 1)
@@ -192,6 +201,8 @@ def generate_tournament_brackets_endpoint(
                 } if score_record else {}
             }
             players_data.append(player_data)
+        
+        logger.info(f"Score lookup results: {scores_found_count} found, {scores_missing_count} missing")
         
         # Generate brackets with validation
         brackets_result = generate_tournament_brackets(
