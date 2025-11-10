@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 
 import './styles/globals.css';
+import './styles/colors.global.css';
 import './styles/login.css';
 
 import Sidebar from '../components/Sidebar';
