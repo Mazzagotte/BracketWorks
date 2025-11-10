@@ -310,6 +310,11 @@ def create_single_bracket_from_pairings(
     """
     # Create first round matches from pairings
     first_round_matches = []
+    
+    print(f"\n=== BRACKET MATCH CREATION DEBUG ===")
+    print(f"Creating bracket: {title}")
+    print(f"Number of pairings: {len(pairings)}")
+    
     for i, pairing in enumerate(pairings):
         home_player = pairing['home']
         away_player = pairing['away']
@@ -318,8 +323,14 @@ def create_single_bracket_from_pairings(
         home_scores = home_player.get('scores', {})
         away_scores = away_player.get('scores', {})
         
+        print(f"\nMatch {i+1}: {home_player.get('name')} vs {away_player.get('name')}")
+        print(f"  {home_player.get('name')} scores: {home_scores}")
+        print(f"  {away_player.get('name')} scores: {away_scores}")
+        
         match_score_a = home_scores.get('game1_total') if home_scores else None
         match_score_b = away_scores.get('game1_total') if away_scores else None
+        
+        print(f"  Game 1 scores: {match_score_a} vs {match_score_b}")
         
         # Determine winner if both scores exist
         winner = None
@@ -335,6 +346,8 @@ def create_single_bracket_from_pairings(
                 status = "tied"
         elif match_score_a is not None or match_score_b is not None:
             status = "in_progress"
+        
+        print(f"  Winner: {winner}, Status: {status}")
         
         first_round_matches.append({
             "seedA": i * 2 + 1,

@@ -188,14 +188,16 @@ def generate_tournament_brackets(
         print(f"  Player {i+1}: {player.get('firstName')} {player.get('lastName')}")
         print(f"    - scratch: {player.get('scratch', 0)}")
         print(f"    - handicap: {player.get('handicap', 0)}")
+        print(f"    - scores: {player.get('scores', {})}")
     
     print(f"\nScratch entries created: {len(scratch_entries)}")
     print(f"Handicap entries created: {len(handicap_entries)}")
     
     if len(handicap_entries) > 0:
-        print(f"\nFirst 5 handicap entries:")
-        for i, entry in enumerate(handicap_entries[:5]):
+        print(f"\nFirst 3 handicap entries with scores:")
+        for i, entry in enumerate(handicap_entries[:3]):
             print(f"  Entry {i+1}: {entry.get('name')} (player_id: {entry.get('player_id')}, entry #{entry.get('entry_number')})")
+            print(f"    - scores: {entry.get('scores', {})}")
     
     print(f"\nBracket size: {bracket_size}")
     print(f"Expected scratch brackets: {len(scratch_entries) // bracket_size}")
