@@ -111,7 +111,6 @@ export function MobileBracketView({
               <div className={styles.players}>
                 <div className={`${styles.player} ${match.winner === 'A' ? styles.winner : ''}`}>
                   <div className={styles.playerInfo}>
-                    <span className={styles.seed}>{match.seedA}</span>
                     <span className={styles.playerName}>{match.playerA || 'TBD'}</span>
                   </div>
                   {match.scoreA !== undefined && match.scoreA !== null && (
@@ -123,7 +122,6 @@ export function MobileBracketView({
 
                 <div className={`${styles.player} ${match.winner === 'B' ? styles.winner : ''}`}>
                   <div className={styles.playerInfo}>
-                    <span className={styles.seed}>{match.seedB}</span>
                     <span className={styles.playerName}>{match.playerB || 'TBD'}</span>
                   </div>
                   {match.scoreB !== undefined && match.scoreB !== null && (

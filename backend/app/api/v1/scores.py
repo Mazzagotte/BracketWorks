@@ -21,6 +21,32 @@ def calculate_handicap(average: int, handicap_base: float, handicap_percentage: 
     handicap = (handicap_base - average) * (handicap_percentage / 100)
     return int(round(handicap))
 
+
+def get_handicap_for_bowler(bowler: Bowler, tournament_id: int, db: Session) -> int:
+    """Get calculated handicap for a bowler based on tournament settings"""
+    settings = db.query(BracketSettings).filter(
+        BracketSettings.tournament_id == tournament_id
+    ).first()
+    
+    handicap_base = settings.handicap_base if settings else 200.0
+    handicap_percentage = settings.handicap_percentage if settings else 80.0
+    
+    return calculate_handicap(bowler.average, handicap_base, handicap_percentage)
+
+
+def calculate_game_totals(score_data, handicap: int) -> dict:
+    """Calculate game totals by adding handicap to scratch scores"""
+    totals = {}
+    
+    if hasattr(score_data, 'game1_scratch') and score_data.game1_scratch is not None:
+        totals['game1_total'] = score_data.game1_scratch + handicap
+    if hasattr(score_data, 'game2_scratch') and score_data.game2_scratch is not None:
+        totals['game2_total'] = score_data.game2_scratch + handicap
+    if hasattr(score_data, 'game3_scratch') and score_data.game3_scratch is not None:
+        totals['game3_total'] = score_data.game3_scratch + handicap
+    
+    return totals
+
 class ScoreCreate(BaseModel):
     bowler_id: int
     tournament_id: int
@@ -88,28 +114,13 @@ def create_or_update_score(
             detail="Bowler not found"
         )
     
-    # Get bracket settings for tournament
-    settings = db.query(BracketSettings).filter(
-        BracketSettings.tournament_id == score_data.tournament_id
-    ).first()
-    
-    # Use default values if settings not found
-    handicap_base = settings.handicap_base if settings else 200.0
-    handicap_percentage = settings.handicap_percentage if settings else 80.0
-    
-    # Calculate handicap
-    handicap = calculate_handicap(bowler.average, handicap_base, handicap_percentage)
+    # Calculate handicap and game totals
+    handicap = get_handicap_for_bowler(bowler, score_data.tournament_id, db)
     logger.info(f"Calculating handicap for bowler {bowler.name} (avg={bowler.average}): {handicap}")
     
-    # Calculate totals from scratch scores + handicap
+    # Build score dictionary with calculated totals
     score_dict = score_data.model_dump(exclude_unset=True)
-    
-    if score_data.game1_scratch is not None:
-        score_dict['game1_total'] = score_data.game1_scratch + handicap
-    if score_data.game2_scratch is not None:
-        score_dict['game2_total'] = score_data.game2_scratch + handicap
-    if score_data.game3_scratch is not None:
-        score_dict['game3_total'] = score_data.game3_scratch + handicap
+    score_dict.update(calculate_game_totals(score_data, handicap))
     
     # Check if score already exists for this bowler/tournament/squad
     existing_score = db.query(Score).filter(
@@ -159,30 +170,15 @@ def update_score(
             detail="Bowler not found"
         )
     
-    # Get bracket settings for tournament
-    settings = db.query(BracketSettings).filter(
-        BracketSettings.tournament_id == score.tournament_id
-    ).first()
-    
-    # Use default values if settings not found
-    handicap_base = settings.handicap_base if settings else 200.0
-    handicap_percentage = settings.handicap_percentage if settings else 80.0
-    
-    # Calculate handicap
-    handicap = calculate_handicap(bowler.average, handicap_base, handicap_percentage)
+    # Calculate handicap and game totals
+    handicap = get_handicap_for_bowler(bowler, score.tournament_id, db)
     logger.info(f"Calculating handicap for bowler {bowler.name} (avg={bowler.average}): {handicap}")
     
-    # Calculate totals from scratch scores + handicap
+    # Build score dictionary with calculated totals
     score_dict = score_data.model_dump(exclude_unset=True)
+    score_dict.update(calculate_game_totals(score_data, handicap))
     
-    if score_data.game1_scratch is not None:
-        score_dict['game1_total'] = score_data.game1_scratch + handicap
-    if score_data.game2_scratch is not None:
-        score_dict['game2_total'] = score_data.game2_scratch + handicap
-    if score_data.game3_scratch is not None:
-        score_dict['game3_total'] = score_data.game3_scratch + handicap
-    
-    # Update only provided fields
+    # Update fields
     for field, value in score_dict.items():
         setattr(score, field, value)
     

@@ -257,12 +257,6 @@ function MatchCard({
         alignItems: 'center',
         marginBottom: '0.5rem'
       }}>
-        <span style={{
-          fontSize: '0.875rem',
-          color: '#6b7280'
-        }}>
-          Seed {MatchData.seedA} vs Seed {MatchData.seedB}
-        </span>
         {MatchData.winner && (
           <span style={{
             fontSize: '0.75rem',
@@ -280,14 +274,14 @@ function MatchCard({
           justifyContent: 'space-between',
           marginBottom: '0.25rem'
         }}>
-          <span>{MatchData.playerA || `Player ${MatchData.seedA}`}</span>
+          <span>{MatchData.playerA || 'TBD'}</span>
           <span style={{ fontWeight: '600' }}>{MatchData.scoreA || '-'}</span>
         </div>
         <div style={{ 
           display: 'flex', 
           justifyContent: 'space-between'
         }}>
-          <span>{MatchData.playerB || `Player ${MatchData.seedB}`}</span>
+          <span>{MatchData.playerB || 'TBD'}</span>
           <span style={{ fontWeight: '600' }}>{MatchData.scoreB || '-'}</span>
         </div>
       </div>

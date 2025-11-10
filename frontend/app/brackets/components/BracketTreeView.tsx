@@ -49,14 +49,6 @@ export function BracketTreeView({
   // Each match occupies 2 rows (for the card height)
   // Connectors occupy the rows between matches
   const totalRows = displayRounds[0]?.matches.length * 3 || 12 // 3 rows per match (2 for card, 1 for spacing)
-  
-  console.log('🏀 Bracket Debug:', {
-    totalRounds: rounds.length,
-    displayRounds: displayRounds.length,
-    round1Matches: displayRounds[0]?.matches.length,
-    totalRows,
-    gridColumns: 9
-  })
 
   return (
     <div 
@@ -133,7 +125,6 @@ export function BracketTreeView({
                     className={`${styles.player} ${match.winner === 'A' ? styles.winner : ''} ${playerAHighlighted ? styles.highlightedPlayer : ''}`}
                     onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerA ? null : match.playerA)}
                   >
-                    <span className={styles.seed}>{match.seedA || '-'}</span>
                     <span className={styles.playerName}>{match.playerA || 'TBD'}</span>
                     <span className={styles.playerScore}>
                       {scoreA !== undefined && scoreA !== null ? scoreA : '-'}
@@ -143,7 +134,6 @@ export function BracketTreeView({
                     className={`${styles.player} ${match.winner === 'B' ? styles.winner : ''} ${playerBHighlighted ? styles.highlightedPlayer : ''}`}
                     onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerB ? null : match.playerB)}
                   >
-                    <span className={styles.seed}>{match.seedB || '-'}</span>
                     <span className={styles.playerName}>{match.playerB || 'TBD'}</span>
                     <span className={styles.playerScore}>
                       {scoreB !== undefined && scoreB !== null ? scoreB : '-'}
@@ -184,7 +174,6 @@ export function BracketTreeView({
                     className={`${styles.player} ${match.winner === 'A' ? styles.winner : ''} ${playerAHighlighted ? styles.highlightedPlayer : ''}`}
                     onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerA ? null : match.playerA)}
                   >
-                    <span className={styles.seed}>{match.seedA || '-'}</span>
                     <span className={styles.playerName}>{match.playerA || 'TBD'}</span>
                     <span className={styles.playerScore}>
                       {scoreA !== undefined && scoreA !== null ? scoreA : '-'}
@@ -194,7 +183,6 @@ export function BracketTreeView({
                     className={`${styles.player} ${match.winner === 'B' ? styles.winner : ''} ${playerBHighlighted ? styles.highlightedPlayer : ''}`}
                     onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerB ? null : match.playerB)}
                   >
-                    <span className={styles.seed}>{match.seedB || '-'}</span>
                     <span className={styles.playerName}>{match.playerB || 'TBD'}</span>
                     <span className={styles.playerScore}>
                       {scoreB !== undefined && scoreB !== null ? scoreB : '-'}
@@ -234,7 +222,6 @@ export function BracketTreeView({
                   className={`${styles.player} ${match.winner === 'A' ? styles.winner : ''} ${playerAHighlighted ? styles.highlightedPlayer : ''}`}
                   onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerA ? null : match.playerA)}
                 >
-                  <span className={styles.seed}>{match.seedA || '-'}</span>
                   <span className={styles.playerName}>{match.playerA || 'TBD'}</span>
                   <span className={styles.playerScore}>
                     {scoreA !== undefined && scoreA !== null ? scoreA : '-'}
@@ -244,7 +231,6 @@ export function BracketTreeView({
                   className={`${styles.player} ${match.winner === 'B' ? styles.winner : ''} ${playerBHighlighted ? styles.highlightedPlayer : ''}`}
                   onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerB ? null : match.playerB)}
                 >
-                  <span className={styles.seed}>{match.seedB || '-'}</span>
                   <span className={styles.playerName}>{match.playerB || 'TBD'}</span>
                   <span className={styles.playerScore}>
                     {scoreB !== undefined && scoreB !== null ? scoreB : '-'}
