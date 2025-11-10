@@ -1,0 +1,102 @@
+/**
+ * BracketWorks CSS Color Variables
+ * These match the TypeScript color system in colors.ts
+ */
+
+:root {
+  /* Brand Colors */
+  --color-brand-gold: #f0a500;
+  --color-brand-gold-dark: #d4940b;
+  --color-brand-gold-light: #f59e0b;
+  --color-brand-gold-lighter: #fde68a;
+  --color-brand-gold-pale: #fcd34d;
+
+  /* Blue Colors */
+  --color-blue-primary: #3b82f6;
+  --color-blue-dark: #2563eb;
+  --color-blue-deeper: #1e40af;
+  --color-blue-light: #dbeafe;
+  --color-blue-lighter: #bfdbfe;
+  --color-blue-pale: #93c5fd;
+
+  /* Purple Colors */
+  --color-purple-primary: #8b5cf6;
+  --color-purple-dark: #7c3aed;
+  --color-purple-light: #667eea;
+  --color-purple-accent: #764ba2;
+
+  /* Green Colors */
+  --color-green-primary: #10b981;
+  --color-green-secondary: #22c55e;
+  --color-green-dark: #059669;
+  --color-green-deeper: #065f46;
+  --color-green-light: #d1fae5;
+  --color-green-lighter: #a7f3d0;
+  --color-green-pale: #6ee7b7;
+
+  /* Pink Colors */
+  --color-pink-primary: #ec4899;
+
+  /* Red Colors */
+  --color-red-primary: #ef4444;
+
+  /* Yellow Colors */
+  --color-yellow-primary: #eab308;
+  --color-yellow-light: #fef3c7;
+  --color-yellow-dark: #92400e;
+
+  /* Gray Scale */
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #475569;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
+
+  /* Dark Mode */
+  --color-dark-base: #0f172a;
+  --color-dark-surface: #1e293b;
+  --color-dark-elevated: #334155;
+  --color-dark-lighter: #475569;
+  --color-dark-accent: #64748b;
+
+  /* Utility */
+  --color-white: #ffffff;
+  --color-black: #000000;
+
+  /* Gradients */
+  --gradient-brand: linear-gradient(135deg, var(--color-brand-gold) 0%, var(--color-brand-gold-dark) 100%);
+  --gradient-brand-subtle: linear-gradient(135deg, var(--color-brand-gold-light) 0%, var(--color-brand-gold-dark) 100%);
+  --gradient-blue: linear-gradient(135deg, var(--color-blue-primary) 0%, var(--color-blue-dark) 100%);
+  --gradient-blue-light: linear-gradient(135deg, var(--color-blue-light) 0%, var(--color-blue-lighter) 100%);
+  --gradient-purple-tie: linear-gradient(135deg, var(--color-purple-primary) 0%, var(--color-purple-dark) 100%);
+  --gradient-green: linear-gradient(135deg, var(--color-green-light) 0%, var(--color-green-lighter) 100%);
+  --gradient-gray: linear-gradient(135deg, var(--color-gray-100) 0%, var(--color-gray-200) 100%);
+  --gradient-dark: linear-gradient(145deg, #1a1a1a 0%, #0f0f0f 100%);
+  --gradient-yellow-light: linear-gradient(135deg, var(--color-yellow-light) 0%, var(--color-brand-gold-lighter) 100%);
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.5);
+  --shadow-blue-sm: 0 2px 8px rgba(59, 130, 246, 0.3);
+  --shadow-blue-md: 0 4px 12px rgba(59, 130, 246, 0.4);
+  --shadow-brand-sm: 0 2px 8px rgba(240, 165, 0, 0.3);
+  --shadow-brand-md: 0 4px 12px rgba(240, 165, 0, 0.4);
+  --shadow-purple-sm: 0 2px 8px rgba(139, 92, 246, 0.3);
+  --shadow-green-sm: 0 2px 4px rgba(16, 185, 129, 0.3);
+  --shadow-inset: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+
+  /* Opacity Levels */
+  --opacity-subtle: 0.05;
+  --opacity-light: 0.1;
+  --opacity-medium: 0.2;
+  --opacity-strong: 0.3;
+  --opacity-very-strong: 0.5;
+  --opacity-mostly-opaque: 0.75;
+  --opacity-almost-solid: 0.9;
+}

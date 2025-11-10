@@ -51,8 +51,8 @@ export default function ExplainBracketsModal({ isOpen, onClose }: ExplainBracket
           <section className={styles.section}>
             <h3>Single-Elimination Tournament</h3>
             <p>
-              BracketWorks uses a single-elimination format where 8 players compete through 3 rounds. 
-              Winners advance to the next round, while losers are eliminated (with some exceptions for ties).
+              BracketWorks uses a single-elimination format, where the number of players defined on the dashboard determines the bracket structure.
+              For example, with 8 players, the bracket consists of three rounds. Winners advance to the next round, while losers are eliminated — with a few exceptions in the case of ties.
             </p>
             <div className={styles.roundStructure}>
               <div className={styles.round}>
@@ -82,14 +82,13 @@ export default function ExplainBracketsModal({ isOpen, onClose }: ExplainBracket
                 <strong>Round 1 &amp; 2 Ties - Both Players Advance</strong>
               </div>
               <p>
-                When two players tie in Round 1 or Round 2, both advance to the next round. 
-                The player who scores lower in the next round is then eliminated, and their 
-                opponent is declared the winner of the tied match.
+                When two players tie in Round 1 or Round 2, both advance to the next round.
+                In that next round, the lower-scoring player between the two tied competitors is eliminated, and the higher-scoring player is declared the winner of the original tied match.
               </p>
               <div className={styles.example}>
-                <strong>Example:</strong> Player A and Player B tie in Round 1. Both advance to Round 2. 
-                In Round 2, Player A scores 220 and Player B scores 180. Player B is eliminated, 
-                and Player A wins the original Round 1 match.
+                <strong>Example:</strong> Player A and Player B tie in Round 1, so both advance to Round 2.
+                In Round 2, Player A scores 220 and Player B scores 180.
+                The lower score (Player B) is eliminated, and Player A is declared the winner of the original Round 1 match.
               </div>
             </div>
 
@@ -99,8 +98,7 @@ export default function ExplainBracketsModal({ isOpen, onClose }: ExplainBracket
                 <strong>Round 3 (Finals) Ties - Split Pot</strong>
               </div>
               <p>
-                When the finals match ends in a tie, both finalists share the prize pot equally. 
-                No further rounds are played.
+                When the finals match ends in a tie, both finalists split the prize pot evenly. No additional rounds are played.
               </p>
             </div>
           </section>
@@ -119,8 +117,7 @@ export default function ExplainBracketsModal({ isOpen, onClose }: ExplainBracket
             <div className={styles.bracketType}>
               <strong>Handicap Brackets</strong>
               <p>
-                Scores are adjusted based on each player's average to level the playing field. 
-                Lower-average players receive bonus points, making competition more balanced.
+                Scores are adjusted according to each player's average to level the playing field. Players with lower averages receive bonus pins, creating a more balanced competition.
               </p>
             </div>
           </section>
@@ -128,7 +125,7 @@ export default function ExplainBracketsModal({ isOpen, onClose }: ExplainBracket
           <section className={styles.section}>
             <h3>Match Progression</h3>
             <p>
-              Players are seeded into the bracket based on their tournament performance. 
+              Players are randomly placed into brackets. The system can optionally avoid rematches from previous tournaments if match history tracking is enabled.
               Each match displays:
             </p>
             <ul>
