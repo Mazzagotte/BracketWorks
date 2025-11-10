@@ -10,7 +10,6 @@ import { useToast } from '../components/Toast'
 import { Tournament, Squad } from '../lib/types'
 import BracketGenerationModal from '../components/BracketGenerationModal'
 import { BracketTreeView } from './components/BracketTreeView'
-import { MatchDetailsModal } from './components/MatchDetailsModal'
 import { BracketStatsPanel } from './components/BracketStatsPanel'
 import { BracketTabs } from './components/BracketTabs'
 import { RoundNavigator } from './components/RoundNavigator'
@@ -28,7 +27,6 @@ export default function BracketsPage() {
   // State for bracket display
   const [activeTab, setActiveTab] = useState<'scratch' | 'handicap' | 'all'>('all')
   const [currentRound, setCurrentRound] = useState(0)
-  const [selectedMatch, setSelectedMatch] = useState<{ round: number; match: number } | null>(null)
   
   // Ref to prevent infinite loop in useEffect
   const loadingRef = useRef(false)
@@ -444,18 +442,6 @@ export default function BracketsPage() {
     setZoomLevel(100)
   }, [])
 
-  // Handle match click
-  const handleMatchClick = useCallback((roundIndex: number, matchIndex: number) => {
-    if (rounds[roundIndex]?.matches[matchIndex]) {
-      setSelectedMatch({ round: roundIndex, match: matchIndex })
-    }
-  }, [rounds])
-
-  // Handle match modal close
-  const handleMatchModalClose = useCallback(() => {
-    setSelectedMatch(null)
-  }, [])
-
   // Memoize the Generate Brackets button to prevent infinite re-renders
   const generateBracketsButton = useMemo(() => (
     <button
@@ -550,15 +536,7 @@ export default function BracketsPage() {
         playerCount={undefined}
       />
 
-      {/* Match Details Modal */}
-      {selectedMatch && rounds[selectedMatch.round]?.matches[selectedMatch.match] && (
-        <MatchDetailsModal
-          match={rounds[selectedMatch.round].matches[selectedMatch.match]}
-          onClose={handleMatchModalClose}
-        />
-      )}
-
-      <div style={{ 
+      {/* Bracket content */}      <div style={{ 
         padding: isMobile ? '0.5rem' : '1rem',
         fontFamily: 'Inter, sans-serif',
         position: 'relative'
@@ -860,7 +838,6 @@ export default function BracketsPage() {
                   rounds={rounds}
                   currentRound={currentRound}
                   onRoundChange={setCurrentRound}
-                  onMatchClick={handleMatchClick}
                 />
               ) : (
                 <div style={{ 
@@ -870,8 +847,6 @@ export default function BracketsPage() {
                 }}>
                   <BracketTreeView
                     rounds={rounds}
-                    onMatchClick={handleMatchClick}
-                    selectedMatch={selectedMatch}
                     isMobile={isMobile}
                   />
                 </div>

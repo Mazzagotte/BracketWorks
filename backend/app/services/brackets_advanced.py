@@ -314,6 +314,28 @@ def create_single_bracket_from_pairings(
         home_player = pairing['home']
         away_player = pairing['away']
         
+        # Get Game 1 scores for Round 1 matches
+        home_scores = home_player.get('scores', {})
+        away_scores = away_player.get('scores', {})
+        
+        match_score_a = home_scores.get('game1_total') if home_scores else None
+        match_score_b = away_scores.get('game1_total') if away_scores else None
+        
+        # Determine winner if both scores exist
+        winner = None
+        status = "pending"
+        if match_score_a is not None and match_score_b is not None:
+            if match_score_a > match_score_b:
+                winner = "A"
+                status = "completed"
+            elif match_score_b > match_score_a:
+                winner = "B"
+                status = "completed"
+            elif match_score_a == match_score_b:
+                status = "tied"
+        elif match_score_a is not None or match_score_b is not None:
+            status = "in_progress"
+        
         first_round_matches.append({
             "seedA": i * 2 + 1,
             "seedB": i * 2 + 2,
@@ -321,16 +343,24 @@ def create_single_bracket_from_pairings(
             "playerB": away_player['name'],
             "playerA_id": home_player['player_id'],
             "playerB_id": away_player['player_id'],
-            "match_score_a": None,
-            "match_score_b": None,
-            "winner": None,
-            "status": "pending"
+            "scoreA": match_score_a,  # Frontend expects scoreA/scoreB
+            "scoreB": match_score_b,
+            "winner": winner,
+            "status": status
         })
     
     # Build all rounds
     rounds = []
     current_matches = first_round_matches
     round_num = 1
+    
+    # Keep track of original pairings for score lookup
+    player_scores_map = {}
+    for pairing in pairings:
+        home_player = pairing['home']
+        away_player = pairing['away']
+        player_scores_map[home_player['player_id']] = home_player.get('scores', {})
+        player_scores_map[away_player['player_id']] = away_player.get('scores', {})
     
     while len(current_matches) > 0:
         round_name = get_round_name(round_num, bracket_size)
@@ -342,21 +372,83 @@ def create_single_bracket_from_pairings(
         if len(current_matches) == 1:
             break
         
-        # Create next round with TBD players
+        # Create next round by advancing winners
         next_matches = []
+        game_field = f'game{round_num + 1}_total'  # game2_total for Round 2, game3_total for Round 3
+        
         for i in range(0, len(current_matches), 2):
             if i + 1 < len(current_matches):
+                match1 = current_matches[i]
+                match2 = current_matches[i + 1]
+                
+                # Determine who advances from each match
+                playerA = None
+                playerA_id = None
+                playerA_seed = None
+                match_score_a = None
+                
+                playerB = None
+                playerB_id = None
+                playerB_seed = None
+                match_score_b = None
+                
+                # Match 1 winner advances as Player A
+                if match1.get('winner') == 'A':
+                    playerA = match1['playerA']
+                    playerA_id = match1.get('playerA_id')
+                    playerA_seed = match1.get('seedA')
+                elif match1.get('winner') == 'B':
+                    playerA = match1['playerB']
+                    playerA_id = match1.get('playerB_id')
+                    playerA_seed = match1.get('seedB')
+                
+                # Match 2 winner advances as Player B
+                if match2.get('winner') == 'A':
+                    playerB = match2['playerA']
+                    playerB_id = match2.get('playerA_id')
+                    playerB_seed = match2.get('seedA')
+                elif match2.get('winner') == 'B':
+                    playerB = match2['playerB']
+                    playerB_id = match2.get('playerB_id')
+                    playerB_seed = match2.get('seedB')
+                
+                # Get scores for next game if players advanced
+                if playerA_id and playerA_id in player_scores_map:
+                    match_score_a = player_scores_map[playerA_id].get(game_field)
+                
+                if playerB_id and playerB_id in player_scores_map:
+                    match_score_b = player_scores_map[playerB_id].get(game_field)
+                
+                # Determine winner if both players and scores exist
+                winner = None
+                status = "pending"
+                
+                if playerA and playerB:
+                    if match_score_a is not None and match_score_b is not None:
+                        if match_score_a > match_score_b:
+                            winner = "A"
+                            status = "completed"
+                        elif match_score_b > match_score_a:
+                            winner = "B"
+                            status = "completed"
+                        elif match_score_a == match_score_b:
+                            status = "tied"
+                    elif match_score_a is not None or match_score_b is not None:
+                        status = "in_progress"
+                    else:
+                        status = "next_up"  # Both players known but no scores yet
+                
                 next_matches.append({
-                    "seedA": None,
-                    "seedB": None,
-                    "playerA": "TBD",
-                    "playerB": "TBD",
-                    "playerA_id": None,
-                    "playerB_id": None,
-                    "match_score_a": None,
-                    "match_score_b": None,
-                    "winner": None,
-                    "status": "pending"
+                    "seedA": playerA_seed,
+                    "seedB": playerB_seed,
+                    "playerA": playerA or "TBD",
+                    "playerB": playerB or "TBD",
+                    "playerA_id": playerA_id,
+                    "playerB_id": playerB_id,
+                    "scoreA": match_score_a,  # Frontend expects scoreA/scoreB
+                    "scoreB": match_score_b,
+                    "winner": winner,
+                    "status": status
                 })
         
         current_matches = next_matches

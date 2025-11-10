@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useRef, useState } from 'react'
 import styles from '../styles/bracket-tree.module.css'
 import { BracketRound, Match as BaseMatch } from '../../hooks/useBrackets'
 
@@ -20,23 +20,19 @@ export interface TournamentRound extends BracketRound {
 
 interface BracketTreeViewProps {
   rounds: TournamentRound[]
-  onMatchClick?: (roundIndex: number, matchIndex: number) => void
-  selectedMatch?: { round: number; match: number } | null
   isMobile?: boolean
 }
 
 /**
- * BracketTreeView - Tournament bracket visualization with connecting lines
- * Features: NCAA-style tree, animated transitions, responsive design
+ * BracketTreeView - Grid-based tournament bracket visualization
+ * Uses CSS Grid for precise alignment of cards and connectors
  */
 export function BracketTreeView({
   rounds,
-  onMatchClick,
-  selectedMatch,
   isMobile = false
 }: BracketTreeViewProps) {
-  const [selectedRoundIndex, setSelectedRoundIndex] = useState<number>(0)
   const containerRef = useRef<HTMLDivElement>(null)
+  const [highlightedPlayer, setHighlightedPlayer] = useState<string | null>(null)
 
   if (!rounds || rounds.length === 0) {
     return (
@@ -46,159 +42,207 @@ export function BracketTreeView({
     )
   }
 
-  const currentRound = rounds[selectedRoundIndex]
-  const isRoundComplete = currentRound.matches.every(m => m.winner)
-  const isFinalRound = selectedRoundIndex === rounds.length - 1
+  // Show first 3 rounds in bracket tree format
+  const displayRounds = rounds.slice(0, 3)
+  
+  // Grid configuration
+  // Each match occupies 2 rows (for the card height)
+  // Connectors occupy the rows between matches
+  const totalRows = displayRounds[0]?.matches.length * 3 || 12 // 3 rows per match (2 for card, 1 for spacing)
+  
+  console.log('🏀 Bracket Debug:', {
+    totalRounds: rounds.length,
+    displayRounds: displayRounds.length,
+    round1Matches: displayRounds[0]?.matches.length,
+    totalRows,
+    gridColumns: 9
+  })
 
   return (
     <div 
       ref={containerRef}
       className={`${styles.bracketTreeContainer} ${isMobile ? styles.mobile : styles.desktop}`}
     >
-      {/* Tournament Stepper */}
-      <div className={styles.tournamentStepper}>
-        {rounds.map((round, index) => {
-          const isActive = index === selectedRoundIndex
-          const isCompleted = round.matches.every(m => m.winner)
-          const isPast = index < selectedRoundIndex
-          const isFuture = index > selectedRoundIndex
-          const completedCount = round.matches.filter(m => m.winner).length
-          const totalMatches = round.matches.length
-
-          return (
-            <React.Fragment key={index}>
-              <div 
-                className={`${styles.stepperItem} ${isActive ? styles.active : ''} ${isCompleted ? styles.completed : ''} ${isPast ? styles.past : ''} ${isFuture ? styles.future : ''}`}
-                onClick={() => setSelectedRoundIndex(index)}
-              >
-                <div className={styles.stepperIcon}>
-                  {isCompleted ? (
-                    <span className={styles.checkIcon}>✓</span>
-                  ) : (
-                    <span className={styles.stepNumber}>{index + 1}</span>
-                  )}
-                </div>
-                <div className={styles.stepperContent}>
-                  <div className={styles.stepperLabel}>{round.roundName || `Round ${index + 1}`}</div>
-                  <div className={styles.stepperSubtext}>
-                    {completedCount}/{totalMatches} completed
-                  </div>
-                </div>
-              </div>
-
-              {/* Connector Line */}
-              {index < rounds.length - 1 && (
-                <div className={`${styles.stepperConnector} ${isCompleted ? styles.completed : ''}`}></div>
-              )}
-            </React.Fragment>
-          )
-        })}
-      </div>
-
-      {/* Round Details Section */}
-      <div className={styles.roundDetails}>
-        <div className={styles.roundDetailsHeader}>
-          <h2 className={styles.roundDetailsTitle}>{currentRound.roundName || `Round ${selectedRoundIndex + 1}`}</h2>
-          <div className={styles.roundProgress}>
-            <div className={styles.progressBar}>
-              <div 
-                className={styles.progressFill} 
-                style={{ width: `${(currentRound.matches.filter(m => m.winner).length / currentRound.matches.length) * 100}%` }}
-              ></div>
-            </div>
-            <span className={styles.progressText}>
-              {currentRound.matches.filter(m => m.winner).length} of {currentRound.matches.length} matches complete
-            </span>
-          </div>
-        </div>
-
-        {/* Matches Grid */}
-        <div className={styles.matchesGrid}>
-          {currentRound.matches.map((match, matchIndex) => {
-            const isSelected = selectedMatch?.round === selectedRoundIndex && selectedMatch?.match === matchIndex
-            const status = match.matchStatus || getMatchStatus(match)
-            const winner = match.winner === 'A' ? match.playerA : match.winner === 'B' ? match.playerB : null
-
+      {/* Card wrapper for the entire bracket */}
+      <div className={styles.bracketCard}>
+        {/* Round Headers with Numbered Badges */}
+        <div className={styles.headerRow}>
+          {displayRounds.map((round, roundIndex) => {
+            const completedMatches = round.matches.filter(m => m.winner).length
+            const totalMatches = round.matches.length
+            const progressPercent = (completedMatches / totalMatches) * 100
+            
             return (
-              <div
-                key={matchIndex}
-                className={`${styles.matchCard} ${styles[status]} ${isSelected ? styles.selected : ''}`}
-                onClick={() => onMatchClick?.(selectedRoundIndex, matchIndex)}
-              >
-                {/* Match Number */}
-                <div className={styles.matchNumber}>
-                  Match {matchIndex + 1}
-                </div>
-
-                {/* Player A */}
-                <div className={`${styles.playerRow} ${match.winner === 'A' ? styles.winner : ''}`}>
-                  <div className={styles.playerInfo}>
-                    {match.winner === 'A' && <span className={styles.trophy}>🏆</span>}
-                    <span className={styles.playerName}>
-                      {match.playerA || 'TBD'}
+              <div key={roundIndex} className={styles.roundHeader}>
+                <div className={styles.roundBadgeContainer}>
+                  <div className={styles.roundBadge}>{roundIndex + 1}</div>
+                  <div className={styles.roundInfo}>
+                    <h3 className={styles.roundTitle}>{round.roundName || `Round ${roundIndex + 1}`}</h3>
+                    <span className={styles.roundProgress}>
+                      {completedMatches}/{totalMatches} Complete
                     </span>
                   </div>
-                  <div className={styles.scoreContainer}>
-                    <span className={`${styles.score} ${match.winner === 'A' ? styles.winnerScore : ''}`}>
+                </div>
+                <div className={styles.progressBar}>
+                  <div 
+                    className={styles.progressFill}
+                    style={{ width: `${progressPercent}%` }}
+                  />
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Grid-based bracket layout */}
+        <div 
+          className={styles.bracketGrid}
+          style={{
+            gridTemplateRows: `repeat(${totalRows}, 1fr)`,
+            gridTemplateColumns: 'repeat(9, auto)' // 3 rounds × 3 columns each (match, h-connector, v-connector)
+          }}
+        >
+          {/* Round 1 - 4 matches */}
+          {displayRounds[0]?.matches.map((match, matchIndex) => {
+            const status = match.matchStatus || getMatchStatus(match)
+            const gridRow = matchIndex * 3 + 1 // Rows: 1, 4, 7, 10
+            
+            // Check if this match is in the highlighted player's path
+            const isInPath = highlightedPlayer && (
+              match.playerA === highlightedPlayer || 
+              match.playerB === highlightedPlayer
+            )
+            const playerAHighlighted = match.playerA === highlightedPlayer
+            const playerBHighlighted = match.playerB === highlightedPlayer
+            
+            return (
+              <React.Fragment key={`r0-m${matchIndex}`}>
+                {/* Match Card - spans 2 rows for height */}
+                <div 
+                  className={`${styles.matchCard} ${styles[status]} ${isInPath ? styles.highlighted : ''}`}
+                  style={{
+                    gridColumn: '1',
+                    gridRow: `${gridRow} / span 2`
+                  }}
+                >
+                  <div 
+                    className={`${styles.player} ${match.winner === 'A' ? styles.winner : ''} ${playerAHighlighted ? styles.highlightedPlayer : ''}`}
+                    onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerA ? null : match.playerA)}
+                  >
+                    <span className={styles.seed}>{match.seedA || '-'}</span>
+                    <span className={styles.playerName}>{match.playerA || 'TBD'}</span>
+                    <span className={styles.playerScore}>
                       {match.scoreA !== undefined && match.scoreA !== null ? match.scoreA : '-'}
                     </span>
                   </div>
-                </div>
-
-                <div className={styles.vs}>vs</div>
-
-                {/* Player B */}
-                <div className={`${styles.playerRow} ${match.winner === 'B' ? styles.winner : ''}`}>
-                  <div className={styles.playerInfo}>
-                    {match.winner === 'B' && <span className={styles.trophy}>🏆</span>}
-                    <span className={styles.playerName}>
-                      {match.playerB || 'TBD'}
-                    </span>
-                  </div>
-                  <div className={styles.scoreContainer}>
-                    <span className={`${styles.score} ${match.winner === 'B' ? styles.winnerScore : ''}`}>
+                  <div 
+                    className={`${styles.player} ${match.winner === 'B' ? styles.winner : ''} ${playerBHighlighted ? styles.highlightedPlayer : ''}`}
+                    onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerB ? null : match.playerB)}
+                  >
+                    <span className={styles.seed}>{match.seedB || '-'}</span>
+                    <span className={styles.playerName}>{match.playerB || 'TBD'}</span>
+                    <span className={styles.playerScore}>
                       {match.scoreB !== undefined && match.scoreB !== null ? match.scoreB : '-'}
                     </span>
                   </div>
                 </div>
+              </React.Fragment>
+            )
+          })}
 
-                {/* Status Badge */}
-                {status === 'completed' && winner && (
-                  <div className={styles.completedBadge}>
-                    <span className={styles.winnerLabel}>Winner:</span> {winner}
+          {/* Round 2 - 2 matches */}
+          {displayRounds[1]?.matches.map((match, matchIndex) => {
+            const status = match.matchStatus || getMatchStatus(match)
+            const gridRow = matchIndex * 6 + 2 // Rows: 2, 8 (centered between R1 pairs)
+            
+            const isInPath = highlightedPlayer && (
+              match.playerA === highlightedPlayer || 
+              match.playerB === highlightedPlayer
+            )
+            const playerAHighlighted = match.playerA === highlightedPlayer
+            const playerBHighlighted = match.playerB === highlightedPlayer
+            
+            return (
+              <React.Fragment key={`r1-m${matchIndex}`}>
+                {/* Match Card */}
+                <div 
+                  className={`${styles.matchCard} ${styles[status]} ${isInPath ? styles.highlighted : ''}`}
+                  style={{
+                    gridColumn: '4',
+                    gridRow: `${gridRow} / span 2`
+                  }}
+                >
+                  <div 
+                    className={`${styles.player} ${match.winner === 'A' ? styles.winner : ''} ${playerAHighlighted ? styles.highlightedPlayer : ''}`}
+                    onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerA ? null : match.playerA)}
+                  >
+                    <span className={styles.seed}>{match.seedA || '-'}</span>
+                    <span className={styles.playerName}>{match.playerA || 'TBD'}</span>
+                    <span className={styles.playerScore}>
+                      {match.scoreA !== undefined && match.scoreA !== null ? match.scoreA : '-'}
+                    </span>
                   </div>
-                )}
-                {status === 'next_up' && (
-                  <div className={styles.nextUpBadge}>Ready to Play</div>
-                )}
-                {status === 'pending' && (
-                  <div className={styles.pendingBadge}>Waiting for Players</div>
-                )}
+                  <div 
+                    className={`${styles.player} ${match.winner === 'B' ? styles.winner : ''} ${playerBHighlighted ? styles.highlightedPlayer : ''}`}
+                    onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerB ? null : match.playerB)}
+                  >
+                    <span className={styles.seed}>{match.seedB || '-'}</span>
+                    <span className={styles.playerName}>{match.playerB || 'TBD'}</span>
+                    <span className={styles.playerScore}>
+                      {match.scoreB !== undefined && match.scoreB !== null ? match.scoreB : '-'}
+                    </span>
+                  </div>
+                </div>
+              </React.Fragment>
+            )
+          })}
 
-                {/* Upset Indicator */}
-                {isUpset(match) && (
-                  <div className={styles.upsetBadge}>⚡ UPSET</div>
-                )}
+          {/* Round 3 - 1 match (Finals) */}
+          {displayRounds[2]?.matches.map((match, matchIndex) => {
+            const status = match.matchStatus || getMatchStatus(match)
+            const gridRow = 5 // Centered vertically (middle of 12 rows)
+            
+            const isInPath = highlightedPlayer && (
+              match.playerA === highlightedPlayer || 
+              match.playerB === highlightedPlayer
+            )
+            const playerAHighlighted = match.playerA === highlightedPlayer
+            const playerBHighlighted = match.playerB === highlightedPlayer
+            
+            return (
+              <div 
+                key={`r2-m${matchIndex}`}
+                className={`${styles.matchCard} ${styles[status]} ${isInPath ? styles.highlighted : ''}`}
+                style={{
+                  gridColumn: '7',
+                  gridRow: `${gridRow} / span 2`
+                }}
+              >
+                <div 
+                  className={`${styles.player} ${match.winner === 'A' ? styles.winner : ''} ${playerAHighlighted ? styles.highlightedPlayer : ''}`}
+                  onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerA ? null : match.playerA)}
+                >
+                  <span className={styles.seed}>{match.seedA || '-'}</span>
+                  <span className={styles.playerName}>{match.playerA || 'TBD'}</span>
+                  <span className={styles.playerScore}>
+                    {match.scoreA !== undefined && match.scoreA !== null ? match.scoreA : '-'}
+                  </span>
+                </div>
+                <div 
+                  className={`${styles.player} ${match.winner === 'B' ? styles.winner : ''} ${playerBHighlighted ? styles.highlightedPlayer : ''}`}
+                  onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerB ? null : match.playerB)}
+                >
+                  <span className={styles.seed}>{match.seedB || '-'}</span>
+                  <span className={styles.playerName}>{match.playerB || 'TBD'}</span>
+                  <span className={styles.playerScore}>
+                    {match.scoreB !== undefined && match.scoreB !== null ? match.scoreB : '-'}
+                  </span>
+                </div>
               </div>
             )
           })}
         </div>
       </div>
-
-      {/* Championship Banner */}
-      {isFinalRound && isRoundComplete && currentRound.matches[0]?.winner && (
-        <div className={styles.championshipBanner}>
-          <div className={styles.championTrophy}>🏆</div>
-          <div className={styles.championText}>
-            <div className={styles.championLabel}>Tournament Champion</div>
-            <div className={styles.championName}>
-              {currentRound.matches[0].winner === 'A' 
-                ? currentRound.matches[0].playerA 
-                : currentRound.matches[0].playerB}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
