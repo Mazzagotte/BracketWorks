@@ -26,19 +26,15 @@ class ScoreCreate(BaseModel):
     tournament_id: int
     squad_id: int
     game1_scratch: Optional[int] = None
-    game1_total: Optional[int] = None
     game2_scratch: Optional[int] = None
-    game2_total: Optional[int] = None
     game3_scratch: Optional[int] = None
-    game3_total: Optional[int] = None
+    # Note: game totals are calculated automatically by backend (scratch + handicap)
 
 class ScoreUpdate(BaseModel):
     game1_scratch: Optional[int] = None
-    game1_total: Optional[int] = None
     game2_scratch: Optional[int] = None
-    game2_total: Optional[int] = None
     game3_scratch: Optional[int] = None
-    game3_total: Optional[int] = None
+    # Note: game totals are calculated automatically by backend (scratch + handicap)
 
 class ScoreResponse(BaseModel):
     id: int
