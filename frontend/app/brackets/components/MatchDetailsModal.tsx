@@ -90,12 +90,12 @@ export function MatchDetailsModal({
           </span>
           {match.both_advance && (
             <span className={styles.tieResolutionBadge} title={match.elimination_notes || 'Both players advance - lower next round score will be eliminated'}>
-              🔀 Both Advance
+              BOTH ADVANCE
             </span>
           )}
           {match.split_pot && (
             <span className={styles.tieResolutionBadge} title="Finals tie - pot split evenly">
-              💰 Split Pot
+              SPLIT POT
             </span>
           )}
         </div>
