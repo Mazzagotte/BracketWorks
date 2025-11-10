@@ -309,22 +309,34 @@ def hydrate_brackets_with_scores(
     score_records = scores_query.all()
     logger.info(f"  Found {len(score_records)} score records in database")
     
-    scores_map = {
+    # Build maps for both scratch and total scores
+    scores_map_scratch = {
         score.bowler_id: {
-            'game1_total': score.game1_total,
-            'game2_total': score.game2_total,
-            'game3_total': score.game3_total,
+            'game1': score.game1_scratch,
+            'game2': score.game2_scratch,
+            'game3': score.game3_scratch,
+        }
+        for score in score_records
+    }
+    
+    scores_map_total = {
+        score.bowler_id: {
+            'game1': score.game1_total,
+            'game2': score.game2_total,
+            'game3': score.game3_total,
         }
         for score in score_records
     }
     
     # Log sample scores
-    for bowler_id, scores in list(scores_map.items())[:3]:
-        logger.debug(f"    Bowler {bowler_id}: G1={scores['game1_total']}, G2={scores['game2_total']}, G3={scores['game3_total']}")
+    for bowler_id in list(scores_map_total.keys())[:3]:
+        scratch = scores_map_scratch.get(bowler_id, {})
+        total = scores_map_total.get(bowler_id, {})
+        logger.debug(f"    Bowler {bowler_id}: Scratch=(G1={scratch.get('game1')}, G2={scratch.get('game2')}, G3={scratch.get('game3')}), Total=(G1={total.get('game1')}, G2={total.get('game2')}, G3={total.get('game3')})")
     
     # Helper function to update match scores
-    def update_match_scores(match: Dict[str, Any], round_num: int):
-        """Update scores for a single match based on round number"""
+    def update_match_scores(match: Dict[str, Any], round_num: int, use_scratch: bool):
+        """Update scores for a single match based on round number and bracket type"""
         player_a_id = match.get('playerA_id')
         player_b_id = match.get('playerB_id')
         
@@ -332,11 +344,14 @@ def hydrate_brackets_with_scores(
             return
         
         # Determine which game to use based on round (1-indexed in display, 0-indexed in code)
-        game_field = f'game{round_num + 1}_total'
+        game_key = f'game{round_num + 1}'
+        
+        # Choose the appropriate scores map based on bracket type
+        scores_map = scores_map_scratch if use_scratch else scores_map_total
         
         # Get fresh scores
-        score_a = scores_map.get(player_a_id, {}).get(game_field)
-        score_b = scores_map.get(player_b_id, {}).get(game_field)
+        score_a = scores_map.get(player_a_id, {}).get(game_key)
+        score_b = scores_map.get(player_b_id, {}).get(game_key)
         
         # Update match with fresh scores
         old_score_a = match.get('scoreA')
@@ -367,18 +382,18 @@ def hydrate_brackets_with_scores(
     
     matches_updated = 0
     
-    # Update scratch brackets
+    # Update scratch brackets - use scratch scores (no handicap)
     for bracket in bracket_data.get('scratch_brackets', []):
         for round_num, round_data in enumerate(bracket.get('rounds', [])):
             for match in round_data.get('matches', []):
-                update_match_scores(match, round_num)
+                update_match_scores(match, round_num, use_scratch=True)
                 matches_updated += 1
     
-    # Update handicap brackets
+    # Update handicap brackets - use total scores (with handicap)
     for bracket in bracket_data.get('handicap_brackets', []):
         for round_num, round_data in enumerate(bracket.get('rounds', [])):
             for match in round_data.get('matches', []):
-                update_match_scores(match, round_num)
+                update_match_scores(match, round_num, use_scratch=False)
                 matches_updated += 1
     
     logger.info(f"  Hydrated {matches_updated} matches with fresh scores")
