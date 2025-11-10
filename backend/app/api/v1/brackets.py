@@ -156,7 +156,7 @@ def generate_tournament_brackets_endpoint(
         # Get scores for these bowlers
         players_data = []
         
-        logger.info(f"🎯 SCORE DEBUG: Fetching scores for {len(bowlers)} bowlers")
+        logger.info(f"Fetching scores for {len(bowlers)} bowlers")
         
         for bowler in bowlers:
             # Get scores for this bowler from Score table
@@ -169,11 +169,11 @@ def generate_tournament_brackets_endpoint(
             
             score_record = scores.first()
             
-            logger.info(f"  Player: {bowler.name} (ID: {bowler.id})")
+            logger.info(f"Player: {bowler.name} (ID: {bowler.id})")
             if score_record:
-                logger.info(f"    ✅ Scores found: G1={score_record.game1_total}, G2={score_record.game2_total}, G3={score_record.game3_total}")
+                logger.info(f"  Scores found: G1={score_record.game1_total}, G2={score_record.game2_total}, G3={score_record.game3_total}")
             else:
-                logger.info(f"    ❌ NO SCORES FOUND")
+                logger.info(f"  No scores found")
             
             # Split name into first and last name
             name_parts = bowler.name.split(' ', 1)
@@ -190,7 +190,7 @@ def generate_tournament_brackets_endpoint(
                 'game3_total': score_record.game3_total if score_record else None,
             } if score_record else {}
             
-            logger.info(f"    📦 scores_dict: {scores_dict}")
+            logger.debug(f"  Scores dictionary: {scores_dict}")
             
             player_data = {
                 'id': bowler.id,

@@ -38,7 +38,7 @@ def save_brackets_simple(
         brackets_data: The bracket data returned from generate_multiple_brackets()
     """
     try:
-        print(f"💾 SAVE DEBUG: Saving brackets to simple_brackets table")
+        print(f"Saving brackets to simple_brackets table")
         print(f"  Tournament: {tournament_id}, Squad: {squad_id}")
         print(f"  Bracket count: Scratch={len(brackets_data.get('scratch_brackets', []))}, Handicap={len(brackets_data.get('handicap_brackets', []))}")
         
@@ -47,7 +47,7 @@ def save_brackets_simple(
             first_bracket = brackets_data['scratch_brackets'][0]
             if first_bracket.get('rounds'):
                 first_match = first_bracket['rounds'][0]['matches'][0]
-                print(f"  📊 Sample first match being saved:")
+                print(f"  Sample first match being saved:")
                 print(f"     {first_match.get('playerA')} (scoreA={first_match.get('scoreA')}) vs {first_match.get('playerB')} (scoreB={first_match.get('scoreB')})")
         
         # First, mark any existing brackets as inactive
@@ -167,7 +167,7 @@ def load_brackets_simple(
         Dictionary matching the format returned by generate_multiple_brackets(), or None if no brackets found
     """
     try:
-        print(f"📂 LOAD DEBUG: Loading brackets from simple_brackets table")
+        print(f"Loading brackets from simple_brackets table")
         print(f"  Tournament: {tournament_id}, Squad: {squad_id}, Refresh scores: {refresh_scores}")
         
         bracket_record = db.query(SimpleBracket).filter(
@@ -177,24 +177,24 @@ def load_brackets_simple(
         ).order_by(SimpleBracket.created_at.desc()).first()
         
         if not bracket_record:
-            print(f"  ❌ No brackets found")
+            print(f"  No brackets found")
             return None
         
-        print(f"  ✅ Found brackets created at {bracket_record.created_at}")
+        print(f"  Found brackets created at {bracket_record.created_at}")
         
         # Log first match to verify scores are in loaded data
         bracket_data = bracket_record.bracket_data
         
         # Refresh scores from database if requested
         if refresh_scores:
-            print(f"  🔄 Refreshing scores from database...")
+            print(f"  Refreshing scores from database...")
             bracket_data = hydrate_brackets_with_scores(db, tournament_id, squad_id, bracket_data)
         
         if bracket_data.get('scratch_brackets'):
             first_bracket = bracket_data['scratch_brackets'][0]
             if first_bracket.get('rounds'):
                 first_match = first_bracket['rounds'][0]['matches'][0]
-                print(f"  📊 Sample first match being loaded:")
+                print(f"  Sample first match being loaded:")
                 print(f"     {first_match.get('playerA')} (scoreA={first_match.get('scoreA')}) vs {first_match.get('playerB')} (scoreB={first_match.get('scoreB')})")
             
         return bracket_data
@@ -294,7 +294,7 @@ def hydrate_brackets_with_scores(
     """
     from ..core import models
     
-    print(f"🔄 HYDRATE: Refreshing scores for tournament {tournament_id}, squad {squad_id}")
+    print(f"Hydrating scores for tournament {tournament_id}, squad {squad_id}")
     
     # Build a map of bowler_id -> scores
     scores_query = db.query(models.Score).filter(
@@ -304,7 +304,7 @@ def hydrate_brackets_with_scores(
         scores_query = scores_query.filter(models.Score.squad_id == squad_id)
     
     score_records = scores_query.all()
-    print(f"  📊 Found {len(score_records)} score records in database")
+    print(f"  Found {len(score_records)} score records in database")
     
     scores_map = {
         score.bowler_id: {
@@ -378,7 +378,7 @@ def hydrate_brackets_with_scores(
                 update_match_scores(match, round_num)
                 matches_updated += 1
     
-    print(f"  ✅ Hydrated {matches_updated} matches with fresh scores")
+    print(f"  Hydrated {matches_updated} matches with fresh scores")
     
     return bracket_data
 

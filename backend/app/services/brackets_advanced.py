@@ -316,7 +316,9 @@ def create_single_bracket_from_pairings(
     # Create first round matches from pairings
     first_round_matches = []
     
-    print(f"🏀 BRACKET DEBUG: Creating bracket '{title}' with {len(pairings)} matches")
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info(f"Creating bracket '{title}' with {len(pairings)} matches")
     
     for i, pairing in enumerate(pairings):
         home_player = pairing['home']
@@ -326,15 +328,15 @@ def create_single_bracket_from_pairings(
         home_scores = home_player.get('scores', {})
         away_scores = away_player.get('scores', {})
         
-        print(f"  Match {i+1}: {home_player.get('name')} vs {away_player.get('name')}")
-        print(f"    Home scores: {home_scores}")
-        print(f"    Away scores: {away_scores}")
+        logger.debug(f"  Match {i+1}: {home_player.get('name')} vs {away_player.get('name')}")
+        logger.debug(f"    Home scores: {home_scores}")
+        logger.debug(f"    Away scores: {away_scores}")
         
         score_a = home_scores.get('game1_total') if home_scores else None
         score_b = away_scores.get('game1_total') if away_scores else None
         
-        print(f"    score_a (game1_total): {score_a}")
-        print(f"    score_b (game1_total): {score_b}")
+        logger.debug(f"    score_a (game1_total): {score_a}")
+        logger.debug(f"    score_b (game1_total): {score_b}")
         
         # Determine winner if both scores exist
         winner = None
@@ -364,7 +366,7 @@ def create_single_bracket_from_pairings(
             "status": status
         })
         
-        print(f"    ✅ Created match with scoreA={score_a}, scoreB={score_b}, winner={winner}, status={status}")
+        logger.debug(f"    Created match with scoreA={score_a}, scoreB={score_b}, winner={winner}, status={status}")
     
     # Build all rounds
     rounds = []
