@@ -107,7 +107,6 @@ export default function ScoresPage() {
   const [selectedSquad, setSelectedSquad] = useState<any | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [savingStatus, setSavingStatus] = useState<{[key: string]: 'saving' | 'saved' | 'error'}>({})
-  const [saveMessage, setSaveMessage] = useState<{type: 'success' | 'error', message: string} | null>(null)
   const [isOnline, setIsOnline] = useState(true)
   const [pendingSaves, setPendingSaves] = useState<any[]>([])
   const [isMobile, setIsMobile] = useState(false)
@@ -961,13 +960,6 @@ export default function ScoresPage() {
         padding: '2rem 1rem'
       }}>
         
-          {/* Save Status Notification */}
-          {saveMessage && (
-            <div className={`notification notification-${saveMessage.type}`}>
-              {saveMessage.message}
-            </div>
-          )}
-          
           {/* Offline Indicator */}
           {!isOnline && (
             <div className="notification notification-warning">
