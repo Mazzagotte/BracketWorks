@@ -94,7 +94,7 @@ export function MatchDetailsModal({
             </span>
           )}
           {match.split_pot && (
-            <span className={styles.tieResolutionBadge} title="Finals tie - pot split evenly">
+            <span className={styles.splitPotBadge} title="Finals tie - pot split evenly">
               SPLIT POT
             </span>
           )}

@@ -274,9 +274,16 @@ function MatchCard({
           <span 
             style={{
               fontSize: '0.7rem',
-              color: '#8b5cf6',
-              fontWeight: '600',
-              marginLeft: '0.5rem'
+              fontWeight: '700',
+              letterSpacing: '0.5px',
+              padding: '4px 10px',
+              borderRadius: '6px',
+              background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+              color: 'white',
+              textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)',
+              boxShadow: '0 2px 4px rgba(139, 92, 246, 0.3)',
+              marginLeft: '0.5rem',
+              cursor: 'help'
             }}
             title={MatchData.elimination_notes || 'Both players advance - lower next round score will be eliminated'}
           >
@@ -287,9 +294,16 @@ function MatchCard({
           <span 
             style={{
               fontSize: '0.7rem',
-              color: '#f59e0b',
-              fontWeight: '600',
-              marginLeft: '0.5rem'
+              fontWeight: '700',
+              letterSpacing: '0.5px',
+              padding: '4px 10px',
+              borderRadius: '6px',
+              background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+              color: 'white',
+              textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)',
+              boxShadow: '0 2px 4px rgba(245, 158, 11, 0.3)',
+              marginLeft: '0.5rem',
+              cursor: 'help'
             }}
             title="Finals tie - pot split evenly"
           >
