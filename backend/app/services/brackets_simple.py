@@ -350,7 +350,7 @@ def update_match_score(
     Handles three scenarios:
     1. Player A wins (score_a > score_b) - advances Player A
     2. Player B wins (score_b > score_a) - advances Player B
-    3. Tie (score_a == score_b) - marks as tied, requires manual resolution
+    3. Tie (score_a == score_b) - marked as tied, handled by bracket_persistence_simple hydration
     """
     
     # Find the bracket and update the match
@@ -375,10 +375,9 @@ def update_match_score(
                 match['winner'] = 'B'
                 match['status'] = 'completed'
             else:
-                # TIE - Requires manual tiebreaker resolution
+                # TIE - handled by bracket_persistence_simple hydration logic
                 match['winner'] = None
                 match['status'] = 'tied'
-                match['tie_note'] = 'Scores are tied. A tiebreaker (rolloff or coin flip) is required to determine the winner.'
                 
         return brackets_data
     
@@ -406,10 +405,9 @@ def update_match_score(
                 # Auto-advance winner to next round
                 advance_winner_to_next_round(bracket, round_index, match_index, match['winner'])
             else:
-                # TIE - Do NOT advance anyone, requires manual resolution
+                # TIE - handled by bracket_persistence_simple hydration logic
                 match['winner'] = None
                 match['status'] = 'tied'
-                match['tie_note'] = 'Scores are tied. A tiebreaker (rolloff or coin flip) is required to determine the winner.'
     
     return brackets_data
 
