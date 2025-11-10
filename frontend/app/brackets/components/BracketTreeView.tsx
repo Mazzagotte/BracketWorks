@@ -107,6 +107,10 @@ export function BracketTreeView({
             const status = match.matchStatus || getMatchStatus(match)
             const gridRow = matchIndex * 3 + 1 // Rows: 1, 4, 7, 10
             
+            // Handle both old (match_score_a) and new (scoreA) field names for backwards compatibility
+            const scoreA = (match as any).scoreA ?? (match as any).match_score_a
+            const scoreB = (match as any).scoreB ?? (match as any).match_score_b
+            
             // Check if this match is in the highlighted player's path
             const isInPath = highlightedPlayer && (
               match.playerA === highlightedPlayer || 
@@ -132,7 +136,7 @@ export function BracketTreeView({
                     <span className={styles.seed}>{match.seedA || '-'}</span>
                     <span className={styles.playerName}>{match.playerA || 'TBD'}</span>
                     <span className={styles.playerScore}>
-                      {match.scoreA !== undefined && match.scoreA !== null ? match.scoreA : '-'}
+                      {scoreA !== undefined && scoreA !== null ? scoreA : '-'}
                     </span>
                   </div>
                   <div 
@@ -142,7 +146,7 @@ export function BracketTreeView({
                     <span className={styles.seed}>{match.seedB || '-'}</span>
                     <span className={styles.playerName}>{match.playerB || 'TBD'}</span>
                     <span className={styles.playerScore}>
-                      {match.scoreB !== undefined && match.scoreB !== null ? match.scoreB : '-'}
+                      {scoreB !== undefined && scoreB !== null ? scoreB : '-'}
                     </span>
                   </div>
                 </div>
@@ -154,6 +158,10 @@ export function BracketTreeView({
           {displayRounds[1]?.matches.map((match, matchIndex) => {
             const status = match.matchStatus || getMatchStatus(match)
             const gridRow = matchIndex * 6 + 2 // Rows: 2, 8 (centered between R1 pairs)
+            
+            // Handle both old (match_score_a) and new (scoreA) field names for backwards compatibility
+            const scoreA = (match as any).scoreA ?? (match as any).match_score_a
+            const scoreB = (match as any).scoreB ?? (match as any).match_score_b
             
             const isInPath = highlightedPlayer && (
               match.playerA === highlightedPlayer || 
@@ -179,7 +187,7 @@ export function BracketTreeView({
                     <span className={styles.seed}>{match.seedA || '-'}</span>
                     <span className={styles.playerName}>{match.playerA || 'TBD'}</span>
                     <span className={styles.playerScore}>
-                      {match.scoreA !== undefined && match.scoreA !== null ? match.scoreA : '-'}
+                      {scoreA !== undefined && scoreA !== null ? scoreA : '-'}
                     </span>
                   </div>
                   <div 
@@ -189,7 +197,7 @@ export function BracketTreeView({
                     <span className={styles.seed}>{match.seedB || '-'}</span>
                     <span className={styles.playerName}>{match.playerB || 'TBD'}</span>
                     <span className={styles.playerScore}>
-                      {match.scoreB !== undefined && match.scoreB !== null ? match.scoreB : '-'}
+                      {scoreB !== undefined && scoreB !== null ? scoreB : '-'}
                     </span>
                   </div>
                 </div>
@@ -201,6 +209,10 @@ export function BracketTreeView({
           {displayRounds[2]?.matches.map((match, matchIndex) => {
             const status = match.matchStatus || getMatchStatus(match)
             const gridRow = 5 // Centered vertically (middle of 12 rows)
+            
+            // Handle both old (match_score_a) and new (scoreA) field names for backwards compatibility
+            const scoreA = (match as any).scoreA ?? (match as any).match_score_a
+            const scoreB = (match as any).scoreB ?? (match as any).match_score_b
             
             const isInPath = highlightedPlayer && (
               match.playerA === highlightedPlayer || 
@@ -225,7 +237,7 @@ export function BracketTreeView({
                   <span className={styles.seed}>{match.seedA || '-'}</span>
                   <span className={styles.playerName}>{match.playerA || 'TBD'}</span>
                   <span className={styles.playerScore}>
-                    {match.scoreA !== undefined && match.scoreA !== null ? match.scoreA : '-'}
+                    {scoreA !== undefined && scoreA !== null ? scoreA : '-'}
                   </span>
                 </div>
                 <div 
@@ -235,7 +247,7 @@ export function BracketTreeView({
                   <span className={styles.seed}>{match.seedB || '-'}</span>
                   <span className={styles.playerName}>{match.playerB || 'TBD'}</span>
                   <span className={styles.playerScore}>
-                    {match.scoreB !== undefined && match.scoreB !== null ? match.scoreB : '-'}
+                    {scoreB !== undefined && scoreB !== null ? scoreB : '-'}
                   </span>
                 </div>
               </div>

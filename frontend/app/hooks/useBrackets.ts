@@ -184,8 +184,10 @@ export function useBrackets() {
     
     try {
       const squadParam = squadId ? `?squad_id=${squadId}` : ''
+      // Disable caching to always get fresh scores from backend
       const data = await apiClient.get<BracketPreview>(
-        `/api/v1/brackets/load/${tournamentId}${squadParam}`
+        `/api/v1/brackets/load/${tournamentId}${squadParam}`,
+        false  // useCache=false to bypass cache and get fresh scores
       )
       setPreview(data)
       return data

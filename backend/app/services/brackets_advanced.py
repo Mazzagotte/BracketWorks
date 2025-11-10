@@ -306,14 +306,17 @@ def create_single_bracket_from_pairings(
 ) -> Dict[str, Any]:
     """
     Create a complete bracket structure from first-round pairings.
-    Builds all rounds with TBD placeholders for later rounds.
+    Builds all rounds with automatic score-based winner advancement.
+    
+    Score Field Naming Convention:
+    - Database: game1_total, game2_total, game3_total
+    - Output: scoreA, scoreB (camelCase for frontend)
+    - Round 1 uses game1_total, Round 2 uses game2_total, Round 3 uses game3_total
     """
     # Create first round matches from pairings
     first_round_matches = []
     
-    print(f"\n=== BRACKET MATCH CREATION DEBUG ===")
-    print(f"Creating bracket: {title}")
-    print(f"Number of pairings: {len(pairings)}")
+    print(f"🏀 BRACKET DEBUG: Creating bracket '{title}' with {len(pairings)} matches")
     
     for i, pairing in enumerate(pairings):
         home_player = pairing['home']
@@ -323,31 +326,30 @@ def create_single_bracket_from_pairings(
         home_scores = home_player.get('scores', {})
         away_scores = away_player.get('scores', {})
         
-        print(f"\nMatch {i+1}: {home_player.get('name')} vs {away_player.get('name')}")
-        print(f"  {home_player.get('name')} scores: {home_scores}")
-        print(f"  {away_player.get('name')} scores: {away_scores}")
+        print(f"  Match {i+1}: {home_player.get('name')} vs {away_player.get('name')}")
+        print(f"    Home scores: {home_scores}")
+        print(f"    Away scores: {away_scores}")
         
-        match_score_a = home_scores.get('game1_total') if home_scores else None
-        match_score_b = away_scores.get('game1_total') if away_scores else None
+        score_a = home_scores.get('game1_total') if home_scores else None
+        score_b = away_scores.get('game1_total') if away_scores else None
         
-        print(f"  Game 1 scores: {match_score_a} vs {match_score_b}")
+        print(f"    score_a (game1_total): {score_a}")
+        print(f"    score_b (game1_total): {score_b}")
         
         # Determine winner if both scores exist
         winner = None
         status = "pending"
-        if match_score_a is not None and match_score_b is not None:
-            if match_score_a > match_score_b:
+        if score_a is not None and score_b is not None:
+            if score_a > score_b:
                 winner = "A"
                 status = "completed"
-            elif match_score_b > match_score_a:
+            elif score_b > score_a:
                 winner = "B"
                 status = "completed"
-            elif match_score_a == match_score_b:
+            elif score_a == score_b:
                 status = "tied"
-        elif match_score_a is not None or match_score_b is not None:
+        elif score_a is not None or score_b is not None:
             status = "in_progress"
-        
-        print(f"  Winner: {winner}, Status: {status}")
         
         first_round_matches.append({
             "seedA": i * 2 + 1,
@@ -356,11 +358,13 @@ def create_single_bracket_from_pairings(
             "playerB": away_player['name'],
             "playerA_id": home_player['player_id'],
             "playerB_id": away_player['player_id'],
-            "scoreA": match_score_a,  # Frontend expects scoreA/scoreB
-            "scoreB": match_score_b,
+            "scoreA": score_a,  # camelCase for frontend
+            "scoreB": score_b,
             "winner": winner,
             "status": status
         })
+        
+        print(f"    ✅ Created match with scoreA={score_a}, scoreB={score_b}, winner={winner}, status={status}")
     
     # Build all rounds
     rounds = []
@@ -394,16 +398,16 @@ def create_single_bracket_from_pairings(
                 match1 = current_matches[i]
                 match2 = current_matches[i + 1]
                 
-                # Determine who advances from each match
+                # Advance winners from previous matches
                 playerA = None
                 playerA_id = None
                 playerA_seed = None
-                match_score_a = None
+                score_a = None
                 
                 playerB = None
                 playerB_id = None
                 playerB_seed = None
-                match_score_b = None
+                score_b = None
                 
                 # Match 1 winner advances as Player A
                 if match1.get('winner') == 'A':
@@ -427,26 +431,26 @@ def create_single_bracket_from_pairings(
                 
                 # Get scores for next game if players advanced
                 if playerA_id and playerA_id in player_scores_map:
-                    match_score_a = player_scores_map[playerA_id].get(game_field)
+                    score_a = player_scores_map[playerA_id].get(game_field)
                 
                 if playerB_id and playerB_id in player_scores_map:
-                    match_score_b = player_scores_map[playerB_id].get(game_field)
+                    score_b = player_scores_map[playerB_id].get(game_field)
                 
-                # Determine winner if both players and scores exist
+                # Determine winner for this round based on scores
                 winner = None
                 status = "pending"
                 
                 if playerA and playerB:
-                    if match_score_a is not None and match_score_b is not None:
-                        if match_score_a > match_score_b:
+                    if score_a is not None and score_b is not None:
+                        if score_a > score_b:
                             winner = "A"
                             status = "completed"
-                        elif match_score_b > match_score_a:
+                        elif score_b > score_a:
                             winner = "B"
                             status = "completed"
-                        elif match_score_a == match_score_b:
+                        elif score_a == score_b:
                             status = "tied"
-                    elif match_score_a is not None or match_score_b is not None:
+                    elif score_a is not None or score_b is not None:
                         status = "in_progress"
                     else:
                         status = "next_up"  # Both players known but no scores yet
@@ -458,8 +462,8 @@ def create_single_bracket_from_pairings(
                     "playerB": playerB or "TBD",
                     "playerA_id": playerA_id,
                     "playerB_id": playerB_id,
-                    "scoreA": match_score_a,  # Frontend expects scoreA/scoreB
-                    "scoreB": match_score_b,
+                    "scoreA": score_a,  # camelCase for frontend
+                    "scoreB": score_b,
                     "winner": winner,
                     "status": status
                 })

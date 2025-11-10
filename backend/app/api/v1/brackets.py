@@ -105,17 +105,13 @@ def generate_tournament_brackets_endpoint(
         # Validate tournament_id
         tournament_id = BracketValidation.validate_tournament_id(tournament_id)
         
-        # Check cache first (if not forcing regeneration)
+        # Check database for existing brackets (skip cache to always get fresh scores)
         cache_key = f"brackets_{tournament_id}_{squad_id}"
         if not force_regenerate:
-            cached_data = bracket_cache.get(cache_key)
-            if cached_data:
-                logger.info(f"Returning cached brackets for tournament {tournament_id}")
-                return cached_data
-            
-            # Check database
+            # Check database - always refresh scores from score table
             if brackets_exist_simple(db, tournament_id, squad_id):
-                existing_brackets = load_brackets_simple(db, tournament_id, squad_id)
+                # Load with refresh_scores=True to get current scores
+                existing_brackets = load_brackets_simple(db, tournament_id, squad_id, refresh_scores=True)
                 if existing_brackets:
                     tournament = db.query(models.Tournament).filter(models.Tournament.id == tournament_id).first()
                     if tournament:
@@ -127,8 +123,8 @@ def generate_tournament_brackets_endpoint(
                             "loaded_from_database": True,
                             **existing_brackets
                         }
-                        # Cache the result
-                        bracket_cache.set(cache_key, result)
+                        # DON'T cache - we want fresh scores every time
+                        logger.info(f"Loaded brackets with refreshed scores for tournament {tournament_id}")
                         return result
         
         # Generate new brackets (either no existing brackets or forced regeneration)
@@ -159,11 +155,11 @@ def generate_tournament_brackets_endpoint(
         
         # Get scores for these bowlers
         players_data = []
-        scores_found_count = 0
-        scores_missing_count = 0
+        
+        logger.info(f"🎯 SCORE DEBUG: Fetching scores for {len(bowlers)} bowlers")
         
         for bowler in bowlers:
-            # Get scores for this bowler
+            # Get scores for this bowler from Score table
             scores = db.query(models.Score).filter(
                 models.Score.bowler_id == bowler.id,
                 models.Score.tournament_id == tournament_id
@@ -173,36 +169,39 @@ def generate_tournament_brackets_endpoint(
             
             score_record = scores.first()
             
+            logger.info(f"  Player: {bowler.name} (ID: {bowler.id})")
             if score_record:
-                scores_found_count += 1
+                logger.info(f"    ✅ Scores found: G1={score_record.game1_total}, G2={score_record.game2_total}, G3={score_record.game3_total}")
             else:
-                scores_missing_count += 1
-                logger.warning(f"No scores found for bowler {bowler.name} (ID: {bowler.id}) in tournament {tournament_id}, squad {squad_id}")
+                logger.info(f"    ❌ NO SCORES FOUND")
             
             # Split name into first and last name
             name_parts = bowler.name.split(' ', 1)
             first_name = name_parts[0] if len(name_parts) > 0 else ''
             last_name = name_parts[1] if len(name_parts) > 1 else ''
             
+            # Create scores dictionary - matches Score table field names
+            scores_dict = {
+                'game1_scratch': score_record.game1_scratch if score_record else None,
+                'game1_total': score_record.game1_total if score_record else None,
+                'game2_scratch': score_record.game2_scratch if score_record else None,
+                'game2_total': score_record.game2_total if score_record else None,
+                'game3_scratch': score_record.game3_scratch if score_record else None,
+                'game3_total': score_record.game3_total if score_record else None,
+            } if score_record else {}
+            
+            logger.info(f"    📦 scores_dict: {scores_dict}")
+            
             player_data = {
                 'id': bowler.id,
                 'firstName': first_name,
                 'lastName': last_name,
                 'average': bowler.average or 0,
-                'handicap': bowler.handicap_entries or 0,  # Number of handicap brackets
-                'scratch': bowler.scratch_entries or 0,    # Number of scratch brackets
-                'scores': {
-                    'game1_scratch': score_record.game1_scratch if score_record else None,
-                    'game1_total': score_record.game1_total if score_record else None,
-                    'game2_scratch': score_record.game2_scratch if score_record else None,
-                    'game2_total': score_record.game2_total if score_record else None,
-                    'game3_scratch': score_record.game3_scratch if score_record else None,
-                    'game3_total': score_record.game3_total if score_record else None,
-                } if score_record else {}
+                'handicap': bowler.handicap_entries or 0,
+                'scratch': bowler.scratch_entries or 0,
+                'scores': scores_dict
             }
             players_data.append(player_data)
-        
-        logger.info(f"Score lookup results: {scores_found_count} found, {scores_missing_count} missing")
         
         # Generate brackets with validation
         brackets_result = generate_tournament_brackets(
@@ -260,17 +259,21 @@ def generate_tournament_brackets_endpoint(
 def load_tournament_brackets(
     tournament_id: int,
     squad_id: Optional[int] = None,
+    refresh_scores: bool = Query(True, description="Refresh scores from database"),
     db: Session = Depends(get_db)
 ):
-    """Load existing brackets for a tournament/squad from database"""
+    """Load existing brackets for a tournament/squad from database with fresh scores"""
     try:
         tournament = db.query(models.Tournament).filter(models.Tournament.id == tournament_id).first()
         if not tournament:
             raise HTTPException(status_code=404, detail="Tournament not found")
         
-        brackets_data = load_brackets_simple(db, tournament_id, squad_id)
+        # Load brackets with score refresh enabled by default
+        brackets_data = load_brackets_simple(db, tournament_id, squad_id, refresh_scores=refresh_scores)
         if not brackets_data:
             raise HTTPException(status_code=404, detail="No brackets found for this tournament/squad")
+        
+        logger.info(f"Loaded brackets for tournament {tournament_id} with refresh_scores={refresh_scores}")
         
         return {
             "tournament_id": tournament_id,
