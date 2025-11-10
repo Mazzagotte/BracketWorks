@@ -4,48 +4,432 @@
 
 .bracketTreeContainer {
   width: 100%;
-  height: 100%;
-  overflow: auto;
+  min-height: 100vh;
+  overflow-x: auto;
+  overflow-y: auto;
   position: relative;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  border-radius: 12px;
-  padding: 1.5rem;
-}
-
-/* ===================================
-   TOURNAMENT STEPPER
-   =================================== */
-
-.tournamentStepper {
+  background: #f3f4f6;
+  padding: 2rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 2rem;
-  padding: 1.5rem;
-  background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+}
+
+.emptyState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  color: #6b7280;
+  font-size: 1.125rem;
+}
+
+/* ===================================
+   BRACKET CARD WRAPPER
+   =================================== */
+
+.bracketCard {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+  max-width: 1400px;
+  width: 100%;
+}
+
+/* ===================================
+   ROUND HEADERS
+   =================================== */
+
+.headerRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  padding: 0 1rem;
+}
+
+.roundHeader {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  padding: 1rem;
   border-radius: 12px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  position: relative;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.roundHeader:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.roundBadgeContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.roundBadge {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: white;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  flex-shrink: 0;
+}
+
+/* Color each badge differently */
+.headerRow .roundHeader:nth-child(2) .roundBadge {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.headerRow .roundHeader:nth-child(3) .roundBadge {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+.roundInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.roundTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+  color: #1e293b;
+}
+
+.roundProgress {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.progressBar {
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 3px;
   overflow: hidden;
 }
 
-.tournamentStepper::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899, #f59e0b);
-  background-size: 200% 100%;
-  animation: gradientShift 3s ease infinite;
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #2563eb);
+  border-radius: 3px;
+  transition: width 0.3s ease;
 }
 
-@keyframes gradientShift {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
+/* Color each progress bar differently */
+.headerRow .roundHeader:nth-child(2) .progressFill {
+  background: linear-gradient(90deg, #8b5cf6, #7c3aed);
 }
+
+.headerRow .roundHeader:nth-child(3) .progressFill {
+  background: linear-gradient(90deg, #f59e0b, #d97706);
+}
+
+
+
+/* ===================================
+   GRID-BASED BRACKET LAYOUT
+   =================================== */
+
+.bracketGrid {
+  display: grid;
+  gap: 0;
+  align-items: center;
+  padding: 2rem;
+  min-height: 700px;
+  grid-auto-rows: minmax(40px, auto);
+}
+
+/* ===================================
+   MATCH CARD
+   =================================== */
+
+.matchCard {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease;
+  width: 280px;
+  min-height: 100px;
+  display: flex;
+  flex-direction: column;
+  justify-self: center;
+  align-self: center;
+}
+
+.matchCard:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.matchCard.completed {
+  border-color: #10b981;
+}
+
+.matchCard.in_progress {
+  border-color: #f59e0b;
+  animation: pulseMatch 2s ease-in-out infinite;
+}
+
+@keyframes pulseMatch {
+  0%, 100% { border-color: #f59e0b; }
+  50% { border-color: #fbbf24; }
+}
+
+.matchCard.next_up {
+  border-color: #3b82f6;
+}
+
+.matchCard.pending {
+  border-color: #d1d5db;
+  opacity: 0.7;
+}
+
+/* Winning Path Highlight */
+.matchCard.highlighted {
+  border-color: #8b5cf6;
+  border-width: 3px;
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+  animation: highlightPulse 2s ease-in-out infinite;
+}
+
+@keyframes highlightPulse {
+  0%, 100% { 
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+  }
+  50% { 
+    box-shadow: 0 0 30px rgba(139, 92, 246, 0.6);
+  }
+}
+
+
+/* ===================================
+   PLAYER ROW
+   =================================== */
+
+.player {
+  display: grid;
+  grid-template-columns: 35px 1fr 55px;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #f3f4f6;
+  transition: background-color 0.2s ease;
+  min-height: 45px;
+  cursor: pointer;
+}
+
+.player:last-child {
+  border-bottom: none;
+}
+
+.player:hover {
+  background: #f9fafb;
+}
+
+.player.highlightedPlayer {
+  background: linear-gradient(to right, #ede9fe 0%, white 100%);
+  font-weight: 700;
+  border-left: 4px solid #8b5cf6;
+}
+
+.player.winner {
+  background: linear-gradient(to right, #ecfdf5 0%, white 100%);
+  font-weight: 600;
+  border-left: 4px solid #10b981;
+}
+
+.seed {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #6b7280;
+  text-align: center;
+  background: #f3f4f6;
+  border-radius: 4px;
+  padding: 2px 6px;
+  min-width: 24px;
+}
+
+.player.winner .seed {
+  background: #d1fae5;
+  color: #059669;
+}
+
+.playerName {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #1f2937;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.player.winner .playerName {
+  color: #047857;
+  font-weight: 700;
+}
+
+.playerScore {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #6b7280;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.player.winner .playerScore {
+  color: #047857;
+  font-size: 1.125rem;
+}
+
+/* ===================================
+   GRID CONNECTOR LINES
+   =================================== */
+
+/* Horizontal connectors */
+.gridConnectorH {
+  background: #cbd5e1;
+  height: 2px;
+  width: 100%;
+  justify-self: stretch;
+  align-self: center;
+}
+
+/* Vertical connectors */
+.gridConnectorV {
+  background: #cbd5e1;
+  width: 2px;
+  height: 100%;
+  justify-self: center;
+  align-self: stretch;
+}
+
+/* OLD CONNECTOR STYLES - DEPRECATED */
+
+.connectorHorizontal {
+  position: absolute;
+  left: 250px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 2px;
+  background: #cbd5e1;
+  z-index: 1;
+}
+
+.connectorVerticalDown {
+  position: absolute;
+  left: 290px;
+  top: 50%;
+  width: 2px;
+  /* Height set dynamically via inline style */
+  background: #cbd5e1;
+  z-index: 1;
+}
+
+.connectorVerticalUp {
+  position: absolute;
+  left: 290px;
+  /* Top position set dynamically via inline style to extend upward */
+  width: 2px;
+  /* Height set dynamically via inline style */
+  background: #cbd5e1;
+  z-index: 1;
+}
+
+/* Horizontal connector from vertical meeting point to next round */
+.connectorToNext {
+  position: absolute;
+  left: 290px;
+  /* Top position set dynamically via inline style */
+  width: 60px; /* Match the gap between rounds */
+  height: 2px;
+  background: #cbd5e1;
+  z-index: 1;
+}
+
+
+/* ===================================
+   RESPONSIVE DESIGN
+   =================================== */
+
+@media (max-width: 1024px) {
+  .bracketTree {
+    gap: 60px;
+  }
+
+  .matchCard {
+    width: 220px;
+  }
+
+  .connectorHorizontal {
+    left: 220px;
+    width: 30px;
+  }
+
+  .connectorVerticalDown,
+  .connectorVerticalUp {
+    left: 250px;
+  }
+}
+
+@media (max-width: 768px) {
+  .bracketTreeContainer {
+    padding: 1rem;
+  }
+
+  .bracketTree {
+    gap: 40px;
+    padding: 1rem;
+  }
+
+  .matchCard {
+    width: 200px;
+  }
+
+  .roundTitle {
+    font-size: 1rem;
+  }
+
+  .player {
+    grid-template-columns: 25px 1fr 45px;
+    padding: 10px 12px;
+  }
+
+  .playerName {
+    font-size: 0.8125rem;
+  }
+
+  .connectorHorizontal {
+    left: 200px;
+    width: 20px;
+  }
+
+  .connectorVerticalDown,
+  .connectorVerticalUp {
+    left: 220px;
+  }
+}
+
+/* ===================================
+   OLD STEPPER STYLES (Keep for compatibility)
+   =================================== */
 
 .stepperItem {
   display: flex;

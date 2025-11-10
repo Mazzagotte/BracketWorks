@@ -6,14 +6,12 @@ export interface MobileBracketViewProps {
   rounds: TournamentRound[];
   currentRound: number;
   onRoundChange: (roundIndex: number) => void;
-  onMatchClick: (roundIndex: number, matchIndex: number) => void;
 }
 
 export function MobileBracketView({
   rounds,
   currentRound,
   onRoundChange,
-  onMatchClick,
 }: MobileBracketViewProps) {
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
@@ -99,7 +97,6 @@ export function MobileBracketView({
             <div
               key={index}
               className={`${styles.matchCard} ${styles[status]}`}
-              onClick={() => onMatchClick(currentRound, index)}
             >
               <div className={styles.matchHeader}>
                 <span className={styles.matchNumber}>Match {index + 1}</span>
