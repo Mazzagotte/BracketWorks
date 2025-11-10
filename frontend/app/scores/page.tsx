@@ -660,11 +660,9 @@ export default function ScoresPage() {
           tournament_id: parseInt(tournamentId),
           squad_id: selectedSquad.id,
           game1_scratch: updatedScores.game1_scratch,
-          game1_total: updatedScores.game1_total,
           game2_scratch: updatedScores.game2_scratch,
-          game2_total: updatedScores.game2_total,
-          game3_scratch: updatedScores.game3_scratch,
-          game3_total: updatedScores.game3_total
+          game3_scratch: updatedScores.game3_scratch
+          // Note: game totals are calculated by backend (scratch + handicap)
         }
 
         // Handle offline saves
