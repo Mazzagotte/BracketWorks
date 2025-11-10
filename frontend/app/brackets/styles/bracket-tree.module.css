@@ -171,6 +171,23 @@
   flex-direction: column;
   justify-self: center;
   align-self: center;
+  position: relative;
+}
+
+.tieIndicator {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  font-size: 1.2rem;
+  z-index: 10;
+  opacity: 0.9;
+  cursor: help;
+  transition: all 0.2s ease;
+}
+
+.tieIndicator:hover {
+  transform: scale(1.2);
+  opacity: 1;
 }
 
 .matchCard:hover {
