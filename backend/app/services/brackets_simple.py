@@ -280,7 +280,8 @@ def create_scratch_entries(players: List[Dict[str, Any]]) -> tuple[List[Dict[str
                     'player_id': player.get('id'),
                     'name': player_full_name,
                     'average': player.get('average', 0),
-                    'entry_number': entry_num + 1  # Track which entry (1, 2, 3, etc.)
+                    'entry_number': entry_num + 1,  # Track which entry (1, 2, 3, etc.)
+                    'scores': player.get('scores', {})  # Include bowling scores
                 })
     
     return valid_entries, skipped_players
@@ -310,7 +311,8 @@ def create_handicap_entries(players: List[Dict[str, Any]]) -> tuple[List[Dict[st
                     'player_id': player.get('id'),
                     'name': player_full_name,
                     'average': player.get('average', 0),
-                    'entry_number': entry_num + 1  # Track which entry (1, 2, 3, etc.)
+                    'entry_number': entry_num + 1,  # Track which entry (1, 2, 3, etc.)
+                    'scores': player.get('scores', {})  # Include bowling scores
                 })
     
     return valid_entries, skipped_players
