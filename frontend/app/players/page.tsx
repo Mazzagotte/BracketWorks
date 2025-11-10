@@ -36,12 +36,6 @@ export default function PlayersPage() {
   const getTournamentId = useCallback(() => {
     // Use localStorage.getItem directly like the scores page does
     const lastTournamentId = localStorage.getItem('lastTournamentId');
-    
-    console.log('� Tournament ID search debug:', {
-      lastTournamentId: lastTournamentId,
-      found: !!lastTournamentId
-    });
-    
     return lastTournamentId;
   }, []);
 
@@ -65,36 +59,24 @@ export default function PlayersPage() {
 
   // Load entry fee from tournament bracket settings
   const loadEntryFee = useCallback(async () => {
-    console.log('loadEntryFee called - token:', !!token);
-    
     if (!token) {
-      console.log('No token available, skipping bracket settings load');
       return;
     }
     
     const tournamentId = getTournamentId();
     
-    console.log('Found tournament ID:', tournamentId, 'from localStorage keys');
-    
     if (!tournamentId) {
-      console.log('No tournament ID available from any source, skipping bracket settings load');
       return;
     }
     
     try {
-      console.log(`Fetching bracket settings for tournament ${tournamentId}...`);
       const settings = await apiClient.get<BracketSettings>(`/api/v1/bracket-settings/${tournamentId}`);
-      console.log('Bracket settings response:', settings);
       
       if (settings && typeof settings.cost_per_bracket === 'number') {
-        console.log(`Setting entry fee to: $${settings.cost_per_bracket}`);
         setEntryFee(settings.cost_per_bracket);
         logger.info(`Loaded entry fee from tournament settings: $${settings.cost_per_bracket}`);
-      } else {
-        console.log('No cost_per_bracket found in settings, keeping default');
       }
     } catch (error) {
-      console.error('Error loading bracket settings:', error);
       logger.warn('Failed to load bracket settings, using default entry fee:', error);
     } finally {
       setInitialLoadComplete(true);
@@ -122,7 +104,6 @@ export default function PlayersPage() {
   // Also reload when component becomes focused (user clicks on the page)
   useEffect(() => {
     const handleFocus = () => {
-      console.log('Page gained focus, reloading entry fee...');
       loadEntryFee();
     };
 
@@ -131,16 +112,6 @@ export default function PlayersPage() {
   }, [loadEntryFee]);
   
   const selectedSquad = squads.find(squad => squad.id === selectedSquadId) || null
-
-  // Debug squad selection
-  useEffect(() => {
-    console.log('🎳 Players page squad debug:', {
-      selectedSquadId,
-      squads: squads.length,
-      selectedSquad,
-      squadsData: squads
-    });
-  }, [selectedSquadId, squads, selectedSquad]);
 
   // Debug authentication state
   useEffect(() => {
@@ -257,13 +228,11 @@ export default function PlayersPage() {
         });
         
         if (!userId || !lastTournamentId) {
-          console.log('Missing required parameters for squad fetch:', { userId, lastTournamentId });
           return;
         }
         
         // Fetch currently selected squad
         const selectedUrl = API(`/api/v1/squads/selected/?user_id=${userId}`);
-        console.log('🌐 Fetching selected squad from:', selectedUrl);
         
         const selectedResponse = await fetch(selectedUrl, {
           headers: {
@@ -272,23 +241,15 @@ export default function PlayersPage() {
           }
         });
         
-        console.log('📞 Selected squad response status:', selectedResponse.status);
-        
         if (selectedResponse.ok) {
           const selectedData = await selectedResponse.json();
-          console.log('✅ Selected squad response data:', selectedData);
           if (selectedData?.squad_id) {
             setSelectedSquadId(selectedData.squad_id);
-            console.log('🎯 Set selectedSquadId to:', selectedData.squad_id);
           }
-        } else {
-          const errorText = await selectedResponse.text();
-          console.log('❌ Selected squad error:', selectedResponse.status, errorText);
         }
 
         // Fetch all squads for tournament
         const squadsUrl = API(`/api/v1/squads/?tournament_id=${lastTournamentId}`);
-        console.log('🌐 Fetching all squads from:', squadsUrl);
         
         const squadsResponse = await fetch(squadsUrl, {
           headers: {
@@ -297,19 +258,12 @@ export default function PlayersPage() {
           }
         });
         
-        console.log('📞 All squads response status:', squadsResponse.status);
-        
         if (squadsResponse.ok) {
           const squadsData = await squadsResponse.json();
-          console.log('✅ All squads response data:', squadsData);
           setSquads(squadsData);
-          console.log('🎯 Set squads array to:', squadsData);
-        } else {
-          const errorText = await squadsResponse.text();
-          console.log('❌ All squads error:', squadsResponse.status, errorText);
         }
       } catch (error) {
-        console.error('Error fetching squad data:', error);
+        logger.error('Error fetching squad data:', error);
       }
     };
 
