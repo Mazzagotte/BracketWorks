@@ -420,7 +420,7 @@ export default function BracketsPage() {
         Generate Brackets
       </button>
     </div>
-  ), [handleGenerateBrackets])
+  ), [handleGenerateBrackets, setIsExplainModalOpen])
 
   // Set page header with actions
   usePageHeader({
