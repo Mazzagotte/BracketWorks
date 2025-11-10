@@ -88,11 +88,6 @@ export function MatchDetailsModal({
           <span className={styles.bracketTypeBadge}>
             {bracketType.charAt(0).toUpperCase() + bracketType.slice(1)} Bracket
           </span>
-          {match.both_advance && (
-            <span className={styles.tieResolutionBadge} title={match.elimination_notes || 'Both players advance - lower next round score will be eliminated'}>
-              BOTH ADVANCE
-            </span>
-          )}
           {match.split_pot && (
             <span className={styles.splitPotBadge} title="Finals tie - pot split evenly">
               SPLIT POT
