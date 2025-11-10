@@ -171,6 +171,26 @@
   transition: all 0.2s ease;
 }
 
+.splitPotBadge {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  letter-spacing: 0.025em;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: help;
+}
+
+.splitPotBadge:hover {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  transform: scale(1.02);
+  transition: all 0.2s ease;
+}
+
 /* ===================================
    MATCH INFO
    =================================== */

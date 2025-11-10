@@ -135,7 +135,7 @@ export function BracketTreeView({
                   )}
                   {/* Tie indicator - split pot */}
                   {match.split_pot && (
-                    <div className={styles.tieIndicator} title="Finals tie - pot split evenly">
+                    <div className={styles.splitPotIndicator} title="Finals tie - pot split evenly">
                       SPLIT
                     </div>
                   )}
@@ -198,7 +198,7 @@ export function BracketTreeView({
                   )}
                   {/* Tie indicator - split pot */}
                   {match.split_pot && (
-                    <div className={styles.tieIndicator} title="Finals tie - pot split evenly">
+                    <div className={styles.splitPotIndicator} title="Finals tie - pot split evenly">
                       SPLIT
                     </div>
                   )}
@@ -260,7 +260,7 @@ export function BracketTreeView({
                 )}
                 {/* Tie indicator - split pot */}
                 {match.split_pot && (
-                  <div className={styles.tieIndicator} title="Finals tie - pot split evenly">
+                  <div className={styles.splitPotIndicator} title="Finals tie - pot split evenly">
                     SPLIT
                   </div>
                 )}
