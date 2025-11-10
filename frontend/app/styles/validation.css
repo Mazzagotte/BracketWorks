@@ -6,7 +6,7 @@
   top: 50%;
   right: 12px;
   transform: translateY(-50%);
-  color: #10b981;
+  color: var(--color-green-primary);
   font-size: 14px;
   font-weight: bold;
   z-index: 2;
@@ -17,7 +17,7 @@
   top: 50%;
   right: 12px;
   transform: translateY(-50%);
-  color: #ef4444;
+  color: var(--color-red-primary);
   font-size: 11px;
   font-weight: 500;
   z-index: 2;
@@ -29,7 +29,7 @@
   top: 50%;
   right: 12px;
   transform: translateY(-50%);
-  color: #6b7280;
+  color: var(--color-gray-500);
   font-size: 14px;
   animation: spin 1s linear infinite;
   z-index: 2;
@@ -43,27 +43,27 @@
 /* Input validation states */
 .signup-input.valid,
 .signup-password-input.valid {
-  border-color: #10b981 !important;
+  border-color: var(--color-green-primary) !important;
   box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.1) !important;
 }
 
 .signup-input.invalid,
 .signup-password-input.invalid {
-  border-color: #ef4444 !important;
+  border-color: var(--color-red-primary) !important;
   box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.1) !important;
 }
 
 .signup-input.checking {
-  border-color: #6b7280 !important;
+  border-color: var(--color-gray-500) !important;
 }
 
 .signup-input.available {
-  border-color: #10b981 !important;
+  border-color: var(--color-green-primary) !important;
   background-color: rgba(16, 185, 129, 0.05) !important;
 }
 
 .signup-input.taken {
-  border-color: #ef4444 !important;
+  border-color: var(--color-red-primary) !important;
   background-color: rgba(239, 68, 68, 0.05) !important;
 }
 
@@ -94,12 +94,12 @@
   transition: all 0.3s ease;
 }
 
-.strength-fill.strength-0 { width: 0%; background-color: #ef4444; }
-.strength-fill.strength-1 { background-color: #ef4444; }
-.strength-fill.strength-2 { background-color: #f59e0b; }
-.strength-fill.strength-3 { background-color: #eab308; }
-.strength-fill.strength-4 { background-color: #22c55e; }
-.strength-fill.strength-5 { background-color: #10b981; }
+.strength-fill.strength-0 { width: 0%; background-color: var(--color-red-primary); }
+.strength-fill.strength-1 { background-color: var(--color-red-primary); }
+.strength-fill.strength-2 { background-color: var(--color-brand-gold-light); }
+.strength-fill.strength-3 { background-color: var(--color-yellow-primary); }
+.strength-fill.strength-4 { background-color: var(--color-green-secondary); }
+.strength-fill.strength-5 { background-color: var(--color-green-primary); }
 
 .strength-text {
   font-size: 11px;
@@ -109,11 +109,11 @@
 }
 
 .strength-text.strength-0,
-.strength-text.strength-1 { color: #ef4444; }
-.strength-text.strength-2 { color: #f59e0b; }
-.strength-text.strength-3 { color: #eab308; }
+.strength-text.strength-1 { color: var(--color-red-primary); }
+.strength-text.strength-2 { color: var(--color-brand-gold-light); }
+.strength-text.strength-3 { color: var(--color-yellow-primary); }
 .strength-text.strength-4,
-.strength-text.strength-5 { color: #10b981; }
+.strength-text.strength-5 { color: var(--color-green-primary); }
 
 /* Password requirements popup */
 .password-requirements {
@@ -163,7 +163,7 @@
 }
 
 .requirement.met {
-  color: #10b981;
+  color: var(--color-green-primary);
 }
 
 .requirement:last-child {
@@ -178,7 +178,7 @@
   padding: 4px 8px;
   font-size: 10px;
   font-weight: 500;
-  color: #10b981;
+  color: var(--color-green-primary);
   background: rgba(16, 185, 129, 0.1);
   border: 1px solid rgba(16, 185, 129, 0.2);
   border-radius: 4px;
@@ -202,12 +202,12 @@
 }
 
 .progress-step.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--gradient-purple);
   box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
 }
 
 .progress-step.completed {
-  background: #10b981;
+  background: var(--color-green-primary);
   box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
 }
 
