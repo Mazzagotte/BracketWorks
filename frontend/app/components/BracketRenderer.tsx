@@ -1,4 +1,5 @@
 import React from 'react'
+import { colors, semantic, gradients } from '../styles/colors'
 
 // Pure bracket display component
 
@@ -61,7 +62,7 @@ export function BracketRenderer({
       <div style={{ 
         textAlign: 'center', 
         padding: '2rem',
-        color: '#6b7280'
+        color: semantic.text.secondary
       }}>
         <p>No bracket data available</p>
         <p style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>
@@ -87,7 +88,7 @@ export function BracketRenderer({
         <div style={{ 
           textAlign: 'center', 
           padding: '2rem',
-          color: '#6b7280'
+          color: semantic.text.secondary
         }}>
           <p>No {selectedBracketType} brackets available</p>
         </div>
@@ -131,7 +132,7 @@ function SingleBracketView({
             fontWeight: '600',
             marginBottom: '1rem',
             textAlign: 'center',
-            color: '#374151'
+            color: semantic.text.primary
           }}>
             {round.roundName}
           </h3>
@@ -177,14 +178,14 @@ function MultipleBracketsView({
         <div style={{
           marginBottom: '1rem',
           padding: '1rem',
-          backgroundColor: '#f9fafb',
+          backgroundColor: colors.gray[50],
           borderRadius: '8px',
-          border: '1px solid #e5e7eb'
+          border: `1px solid ${colors.gray[200]}`
         }}>
           <h3 style={{
             fontSize: '1.25rem',
             fontWeight: '600',
-            color: '#111827',
+            color: colors.gray[900],
             margin: 0
           }}>
             {bracket.title || `Bracket ${selectedBracketConfiguration.index + 1}`}
@@ -235,22 +236,22 @@ function MatchCard({
     <div 
       onClick={onClick}
       style={{
-        border: '1px solid #e5e7eb',
+        border: `1px solid ${colors.gray[200]}`,
         borderRadius: '8px',
         padding: '0.75rem',
-        backgroundColor: isCompleted ? '#f0f9ff' : '#ffffff',
+        backgroundColor: isCompleted ? colors.blue.pale : colors.white,
         cursor: onClick ? 'pointer' : 'default',
         transition: 'all 0.2s ease'
       }}
       onMouseOver={(changeEvent) => {
         if (onClick) {
-          changeEvent.currentTarget.style.borderColor = '#3b82f6'
+          changeEvent.currentTarget.style.borderColor = colors.blue.primary
           changeEvent.currentTarget.style.boxShadow = '0 2px 4px rgba(59, 130, 246, 0.1)'
         }
       }}
       onMouseOut={(changeEvent) => {
         if (onClick) {
-          changeEvent.currentTarget.style.borderColor = '#e5e7eb'
+          changeEvent.currentTarget.style.borderColor = colors.gray[200]
           changeEvent.currentTarget.style.boxShadow = 'none'
         }
       }}
@@ -264,7 +265,7 @@ function MatchCard({
         {MatchData.winner && (
           <span style={{
             fontSize: '0.75rem',
-            color: '#059669',
+            color: semantic.status.success,
             fontWeight: '600'
           }}>
             Winner: {MatchData.winner}
@@ -278,7 +279,7 @@ function MatchCard({
               letterSpacing: '0.5px',
               padding: '4px 10px',
               borderRadius: '6px',
-              background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+              background: gradients.purpleTie,
               color: 'white',
               textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)',
               boxShadow: '0 2px 4px rgba(139, 92, 246, 0.3)',
@@ -298,7 +299,7 @@ function MatchCard({
               letterSpacing: '0.5px',
               padding: '4px 10px',
               borderRadius: '6px',
-              background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+              background: gradients.brandSubtle,
               color: 'white',
               textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)',
               boxShadow: '0 2px 4px rgba(245, 158, 11, 0.3)',
@@ -352,19 +353,19 @@ function BracketCard({
     <div 
       onClick={onClick}
       style={{
-        border: '1px solid #e5e7eb',
+        border: `1px solid ${colors.gray[200]}`,
         borderRadius: '8px',
         padding: '1rem',
-        backgroundColor: '#ffffff',
+        backgroundColor: colors.white,
         cursor: 'pointer',
         transition: 'all 0.2s ease'
       }}
       onMouseOver={(changeEvent) => { 
-        changeEvent.currentTarget.style.borderColor = '#3b82f6'
+        changeEvent.currentTarget.style.borderColor = colors.blue.primary
         changeEvent.currentTarget.style.boxShadow = '0 4px 6px rgba(59, 130, 246, 0.1)'
       }}
       onMouseOut={(changeEvent) => { 
-        changeEvent.currentTarget.style.borderColor = '#e5e7eb'
+        changeEvent.currentTarget.style.borderColor = colors.gray[200]
         changeEvent.currentTarget.style.boxShadow = 'none'
       }}
     >
@@ -372,14 +373,14 @@ function BracketCard({
         fontSize: '1.125rem',
         fontWeight: '600',
         marginBottom: '0.5rem',
-        color: '#111827'
+        color: colors.gray[900]
       }}>
         {bracket.title || `Bracket ${index + 1}`}
       </h4>
       
       <div style={{
         fontSize: '0.875rem',
-        color: '#6b7280',
+        color: semantic.text.secondary,
         marginBottom: '0.75rem'
       }}>
         Progress: {completedMatches}/{totalMatches} matches completed
@@ -387,7 +388,7 @@ function BracketCard({
       
       <div style={{
         width: '100%',
-        backgroundColor: '#e5e7eb',
+        backgroundColor: colors.gray[200],
         borderRadius: '4px',
         height: '8px',
         overflow: 'hidden'
@@ -395,7 +396,7 @@ function BracketCard({
         <div style={{
           width: `${totalMatches > 0 ? (completedMatches / totalMatches) * 100 : 0}%`,
           height: '100%',
-          backgroundColor: '#3b82f6',
+          backgroundColor: colors.blue.primary,
           transition: 'width 0.3s ease'
         }} />
       </div>
