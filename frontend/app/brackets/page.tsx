@@ -148,6 +148,26 @@ export default function BracketsPage() {
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [selectedSquad, selectedTournament]);
 
+  // Auto-refresh brackets every 5 seconds to pick up score updates
+  useEffect(() => {
+    if (!selectedSquad || !selectedTournament) return;
+
+    const intervalId = setInterval(() => {
+      if (!loadingRef.current) {
+        console.log('🔄 Auto-refreshing brackets to update scores...');
+        loadingRef.current = true;
+        loadSavedBrackets(selectedTournament.id, selectedSquad.id).then(brackets => {
+          setLoadedBrackets(brackets);
+          loadingRef.current = false;
+        }).catch(() => {
+          loadingRef.current = false;
+        });
+      }
+    }, 5000); // Refresh every 5 seconds
+
+    return () => clearInterval(intervalId);
+  }, [selectedSquad, selectedTournament, loadSavedBrackets]);
+
   // Also reload when page gains focus
   useEffect(() => {
     const handleFocus = () => {

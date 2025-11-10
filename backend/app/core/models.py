@@ -1,5 +1,6 @@
 from sqlalchemy.orm import declarative_base, Mapped, mapped_column, relationship
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Date, JSON, Text, Float
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Date, JSON, Text, Float, DateTime
+from datetime import datetime
 
 Base = declarative_base()
 
@@ -209,4 +210,4 @@ class MatchHistory(Base):
     bracket_type: Mapped[str] = mapped_column(String(20), nullable=False, index=True)  # 'scratch' or 'handicap'
     bracket_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
     round_number: Mapped[int] = mapped_column(Integer, nullable=False)  # 1 for first round
-    created_at: Mapped[str] = mapped_column(String, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
