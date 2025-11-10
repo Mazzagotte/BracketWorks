@@ -145,9 +145,6 @@ export function PlayerTooltip({
             <h4 className={styles.playerNameHeader}>
               {fullName || playerName}
             </h4>
-            {seed !== undefined && (
-              <span className={styles.seedBadge}>#{seed}</span>
-            )}
           </div>
 
           {/* Player Details */}

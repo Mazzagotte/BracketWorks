@@ -120,9 +120,6 @@ export function MatchDetailsModal({
           <div className={`${styles.playerCard} ${match.winner === 'A' ? styles.winnerCard : ''}`}>
             <div className={styles.playerCardHeader}>
               {match.winner === 'A' && <span className={styles.winnerBadge}>🏆 Winner</span>}
-              {match.seedA !== null && (
-                <span className={styles.seedBadge}>Seed #{match.seedA}</span>
-              )}
             </div>
             
             <h3 className={styles.playerName}>
@@ -185,9 +182,6 @@ export function MatchDetailsModal({
           <div className={`${styles.playerCard} ${match.winner === 'B' ? styles.winnerCard : ''}`}>
             <div className={styles.playerCardHeader}>
               {match.winner === 'B' && <span className={styles.winnerBadge}>🏆 Winner</span>}
-              {match.seedB !== null && (
-                <span className={styles.seedBadge}>Seed #{match.seedB}</span>
-              )}
             </div>
             
             <h3 className={styles.playerName}>
