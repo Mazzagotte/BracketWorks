@@ -3,12 +3,15 @@ Simplified bracket generation service - cleaner and more readable
 """
 import random
 import time
+import logging
 from typing import List, Dict, Any, Set, Tuple, Optional
 from sqlalchemy.orm import Session
 from datetime import datetime
 
 # Import advanced bracket generation
 from .brackets_advanced import create_brackets_with_history, get_round_name
+
+logger = logging.getLogger(__name__)
 
 def generate_bracket_preview(size: int = 8) -> Dict[str, Any]:
     """Generate a simple bracket preview with placeholder players"""
@@ -170,57 +173,49 @@ def generate_tournament_brackets(
                 'handicap',
                 exclude_tournament_id=tournament_id
             )
-            print(f"Loaded {len(scratch_history)} scratch history pairs")
-            print(f"Loaded {len(handicap_history)} handicap history pairs")
+            logger.info(f"Loaded {len(scratch_history)} scratch history pairs")
+            logger.info(f"Loaded {len(handicap_history)} handicap history pairs")
         except Exception as e:
-            print(f"Warning: Could not load match history: {e}")
+            logger.warning(f"Could not load match history: {e}")
             # Fall back to no history
             scratch_history = set()
             handicap_history = set()
     
-    # DEBUG LOGGING
-    print(f"\n=== BRACKET GENERATION DEBUG ===")
-    print(f"Total players received: {len(players)}")
-    print(f"Scratch entries created: {len(scratch_entries)}")
-    print(f"Handicap entries created: {len(handicap_entries)}")
-    print(f"Bracket size: {bracket_size}")
-    print(f"Expected scratch brackets: {len(scratch_entries) // bracket_size}")
-    print(f"Expected handicap brackets: {len(handicap_entries) // bracket_size}")
-    print(f"Expected scratch refunds: {len(scratch_entries) % bracket_size}")
-    print(f"Expected handicap refunds: {len(handicap_entries) % bracket_size}")
+    # Log bracket generation info
+    logger.info(f"Bracket generation started")
+    logger.info(f"  Total players: {len(players)}")
+    logger.info(f"  Scratch entries: {len(scratch_entries)}, Handicap entries: {len(handicap_entries)}")
+    logger.info(f"  Bracket size: {bracket_size}")
+    logger.info(f"  Expected brackets: Scratch={len(scratch_entries) // bracket_size}, Handicap={len(handicap_entries) // bracket_size}")
+    logger.info(f"  Expected refunds: Scratch={len(scratch_entries) % bracket_size}, Handicap={len(handicap_entries) % bracket_size}")
     
     # START TIMING
     start_time = time.time()
     
     # Always use advanced algorithm (handles both history and no-history cases)
     has_history = len(scratch_history) > 0 or len(handicap_history) > 0
-    print(f"\n  Using constraint-based algorithm (history: {has_history})")
+    logger.info(f"  Using constraint-based algorithm (history: {has_history})")
     
     scratch_start = time.time()
     scratch_brackets, leftover_scratch = create_brackets_with_history(
         scratch_entries, bracket_size, "Scratch", scratch_history, seed
     )
     scratch_time = time.time() - scratch_start
-    print(f"   ✓ Scratch brackets generated in {scratch_time:.3f}s")
+    logger.info(f"  Scratch brackets generated in {scratch_time:.3f}s")
     
     handicap_start = time.time()
     handicap_brackets, leftover_handicap = create_brackets_with_history(
         handicap_entries, bracket_size, "Handicap", handicap_history, seed
     )
     handicap_time = time.time() - handicap_start
-    print(f"   ✓ Handicap brackets generated in {handicap_time:.3f}s")
+    logger.info(f"  Handicap brackets generated in {handicap_time:.3f}s")
     
     # END TIMING
     total_time = time.time() - start_time
-    print(f"\n  TOTAL GENERATION TIME: {total_time:.3f}s")
-    print(f"   - Scratch: {scratch_time:.3f}s for {len(scratch_brackets)} brackets")
-    print(f"   - Handicap: {handicap_time:.3f}s for {len(handicap_brackets)} brackets")
+    logger.info(f"  Total generation time: {total_time:.3f}s")
     
-    print(f"\nActually created scratch brackets: {len(scratch_brackets)}")
-    print(f"Actually created handicap brackets: {len(handicap_brackets)}")
-    print(f"Leftover scratch entries: {len(leftover_scratch)}")
-    print(f"Leftover handicap entries: {len(leftover_handicap)}")
-    print(f"=== END DEBUG ===\n")
+    logger.info(f"Bracket generation complete: Scratch={len(scratch_brackets)}, Handicap={len(handicap_brackets)}")
+    logger.debug(f"  Leftover entries: Scratch={len(leftover_scratch)}, Handicap={len(leftover_handicap)}")
     
     # Combine skipped players and leftover players for total refunds
     all_skipped_scratch = skipped_scratch_players + leftover_scratch

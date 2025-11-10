@@ -5,8 +5,11 @@ from sqlalchemy.orm import Session
 from sqlalchemy import Column, Integer, String, JSON, DateTime, ForeignKey, Boolean
 from typing import Dict, Any, Optional, List
 from datetime import datetime
+import logging
 
 from ..core.models import Base
+
+logger = logging.getLogger(__name__)
 
 class SimpleBracket(Base):
     """Simplified bracket storage using JSON"""
@@ -38,17 +41,17 @@ def save_brackets_simple(
         brackets_data: The bracket data returned from generate_multiple_brackets()
     """
     try:
-        print(f"Saving brackets to simple_brackets table")
-        print(f"  Tournament: {tournament_id}, Squad: {squad_id}")
-        print(f"  Bracket count: Scratch={len(brackets_data.get('scratch_brackets', []))}, Handicap={len(brackets_data.get('handicap_brackets', []))}")
+        logger.info(f"Saving brackets to simple_brackets table")
+        logger.info(f"  Tournament: {tournament_id}, Squad: {squad_id}")
+        logger.info(f"  Bracket count: Scratch={len(brackets_data.get('scratch_brackets', []))}, Handicap={len(brackets_data.get('handicap_brackets', []))}")
         
         # Log first match to verify scores are present
         if brackets_data.get('scratch_brackets'):
             first_bracket = brackets_data['scratch_brackets'][0]
             if first_bracket.get('rounds'):
                 first_match = first_bracket['rounds'][0]['matches'][0]
-                print(f"  Sample first match being saved:")
-                print(f"     {first_match.get('playerA')} (scoreA={first_match.get('scoreA')}) vs {first_match.get('playerB')} (scoreB={first_match.get('scoreB')})")
+                logger.debug(f"  Sample first match being saved:")
+                logger.debug(f"     {first_match.get('playerA')} (scoreA={first_match.get('scoreA')}) vs {first_match.get('playerB')} (scoreB={first_match.get('scoreB')})")
         
         # First, mark any existing brackets as inactive
         db.query(SimpleBracket).filter(
@@ -75,7 +78,7 @@ def save_brackets_simple(
             save_first_round_to_history(db, tournament_id, brackets_data)
         except Exception as hist_error:
             # Log but don't fail the whole save if history recording fails
-            print(f"Warning: Failed to save match history: {hist_error}")
+            logger.warning(f"Failed to save match history: {hist_error}")
         
         # Commit everything together
         db.commit()
@@ -167,8 +170,8 @@ def load_brackets_simple(
         Dictionary matching the format returned by generate_multiple_brackets(), or None if no brackets found
     """
     try:
-        print(f"Loading brackets from simple_brackets table")
-        print(f"  Tournament: {tournament_id}, Squad: {squad_id}, Refresh scores: {refresh_scores}")
+        logger.info(f"Loading brackets from simple_brackets table")
+        logger.debug(f"  Tournament: {tournament_id}, Squad: {squad_id}, Refresh scores: {refresh_scores}")
         
         bracket_record = db.query(SimpleBracket).filter(
             SimpleBracket.tournament_id == tournament_id,
@@ -177,25 +180,25 @@ def load_brackets_simple(
         ).order_by(SimpleBracket.created_at.desc()).first()
         
         if not bracket_record:
-            print(f"  No brackets found")
+            logger.debug(f"  No brackets found")
             return None
         
-        print(f"  Found brackets created at {bracket_record.created_at}")
+        logger.info(f"  Found brackets created at {bracket_record.created_at}")
         
         # Log first match to verify scores are in loaded data
         bracket_data = bracket_record.bracket_data
         
         # Refresh scores from database if requested
         if refresh_scores:
-            print(f"  Refreshing scores from database...")
+            logger.debug(f"  Refreshing scores from database...")
             bracket_data = hydrate_brackets_with_scores(db, tournament_id, squad_id, bracket_data)
         
         if bracket_data.get('scratch_brackets'):
             first_bracket = bracket_data['scratch_brackets'][0]
             if first_bracket.get('rounds'):
                 first_match = first_bracket['rounds'][0]['matches'][0]
-                print(f"  Sample first match being loaded:")
-                print(f"     {first_match.get('playerA')} (scoreA={first_match.get('scoreA')}) vs {first_match.get('playerB')} (scoreB={first_match.get('scoreB')})")
+                logger.debug(f"  Sample first match being loaded:")
+                logger.debug(f"     {first_match.get('playerA')} (scoreA={first_match.get('scoreA')}) vs {first_match.get('playerB')} (scoreB={first_match.get('scoreB')})")
             
         return bracket_data
         
@@ -294,7 +297,7 @@ def hydrate_brackets_with_scores(
     """
     from ..core import models
     
-    print(f"Hydrating scores for tournament {tournament_id}, squad {squad_id}")
+    logger.info(f"Hydrating scores for tournament {tournament_id}, squad {squad_id}")
     
     # Build a map of bowler_id -> scores
     scores_query = db.query(models.Score).filter(
@@ -304,7 +307,7 @@ def hydrate_brackets_with_scores(
         scores_query = scores_query.filter(models.Score.squad_id == squad_id)
     
     score_records = scores_query.all()
-    print(f"  Found {len(score_records)} score records in database")
+    logger.info(f"  Found {len(score_records)} score records in database")
     
     scores_map = {
         score.bowler_id: {
@@ -317,7 +320,7 @@ def hydrate_brackets_with_scores(
     
     # Log sample scores
     for bowler_id, scores in list(scores_map.items())[:3]:
-        print(f"    Bowler {bowler_id}: G1={scores['game1_total']}, G2={scores['game2_total']}, G3={scores['game3_total']}")
+        logger.debug(f"    Bowler {bowler_id}: G1={scores['game1_total']}, G2={scores['game2_total']}, G3={scores['game3_total']}")
     
     # Helper function to update match scores
     def update_match_scores(match: Dict[str, Any], round_num: int):
@@ -343,7 +346,7 @@ def hydrate_brackets_with_scores(
         match['scoreB'] = score_b
         
         if old_score_a != score_a or old_score_b != score_b:
-            print(f"    ✏️  Updated match: {match.get('playerA')} vs {match.get('playerB')}: {old_score_a}→{score_a}, {old_score_b}→{score_b}")
+            logger.debug(f"    Updated match: {match.get('playerA')} vs {match.get('playerB')}: {old_score_a}->{score_a}, {old_score_b}->{score_b}")
         
         # Update winner and status based on scores
         if score_a is not None and score_b is not None:
@@ -378,7 +381,7 @@ def hydrate_brackets_with_scores(
                 update_match_scores(match, round_num)
                 matches_updated += 1
     
-    print(f"  Hydrated {matches_updated} matches with fresh scores")
+    logger.info(f"  Hydrated {matches_updated} matches with fresh scores")
     
     return bracket_data
 
