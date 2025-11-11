@@ -795,7 +795,7 @@ export default function BracketsPage() {
               <div style={{ 
                 textAlign: 'center', 
                 padding: '3rem',
-                color: '#6b7280'
+                color: colors.gray[500]
               }}>
                 <p>No matches found for the selected filters.</p>
               </div>
