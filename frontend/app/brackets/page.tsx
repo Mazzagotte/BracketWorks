@@ -8,6 +8,7 @@ import { useBrackets, BracketPreview, Match } from '../hooks/useBrackets'
 import { useTournaments, useSquads } from '../hooks/useTournaments'
 import { useToast } from '../components/Toast'
 import { Tournament, Squad } from '../lib/types'
+import { logger } from '../lib/logger'
 import BracketGenerationModal from '../components/BracketGenerationModal'
 import ExplainBracketsModal from './components/ExplainBracketsModal'
 import { BracketTreeView } from './components/BracketTreeView'
@@ -227,7 +228,7 @@ export default function BracketsPage() {
       })
       .catch((error) => {
         // Error - will be handled by modal
-        console.error('Bracket generation failed:', error)
+        console.error('Bracket generation failed', { error });
         throw error
       })
 

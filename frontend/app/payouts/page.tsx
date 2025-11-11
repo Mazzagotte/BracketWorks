@@ -652,7 +652,6 @@ export default function PayoutsPage() {
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (!document.hidden && tournament) {
-        console.log('Payouts page became visible, reloading data...');
         loadPayoutData();
       }
     };
@@ -665,7 +664,6 @@ export default function PayoutsPage() {
   useEffect(() => {
     const handleFocus = () => {
       if (tournament) {
-        console.log('Payouts page gained focus, reloading data...');
         loadPayoutData();
       }
     };

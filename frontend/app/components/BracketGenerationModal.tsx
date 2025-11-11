@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import { logger } from '../lib/logger'
 import styles from './BracketGenerationModal.module.css'
 
 /**
@@ -187,7 +188,7 @@ export default function BracketGenerationModal({
         })
         .catch((error) => {
           // Error occurred - show error immediately (bypass 15-second wait)
-          console.error('Bracket generation error:', error)
+          logger.error('Bracket generation error', { error });
           setErrorMessage(error.message || 'An unexpected error occurred')
           setCurrentPhase('error')
         })
