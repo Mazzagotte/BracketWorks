@@ -416,7 +416,7 @@ export default function TournamentDashboard() {
   // SSR-safe isAdmin state
   const [isAdmin, setIsAdmin] = useState(false);
   const [selectedSquadId, setSelectedSquadId] = useState<number | null>(null);
-  const [squads, setSquads] = useState<any[]>([]);
+  const [squads, setSquads] = useState<Squad[]>([]);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmMsg, setConfirmMsg] = useState('');
   const [loadModalOpen, setLoadModalOpen] = useState(false);
