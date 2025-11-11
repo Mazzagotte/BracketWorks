@@ -71,12 +71,18 @@
   /* Gradients */
   --gradient-brand: linear-gradient(135deg, var(--color-brand-gold) 0%, var(--color-brand-gold-dark) 100%);
   --gradient-brand-subtle: linear-gradient(135deg, var(--color-brand-gold-light) 0%, var(--color-brand-gold-dark) 100%);
+  --gradient-gold: linear-gradient(135deg, var(--color-brand-gold) 0%, var(--color-brand-gold-light) 100%);
   --gradient-blue: linear-gradient(135deg, var(--color-blue-primary) 0%, var(--color-blue-dark) 100%);
   --gradient-blue-light: linear-gradient(135deg, var(--color-blue-light) 0%, var(--color-blue-lighter) 100%);
+  --gradient-purple: linear-gradient(135deg, var(--color-purple-primary) 0%, var(--color-purple-dark) 100%);
   --gradient-purple-tie: linear-gradient(135deg, var(--color-purple-primary) 0%, var(--color-purple-dark) 100%);
   --gradient-green: linear-gradient(135deg, var(--color-green-light) 0%, var(--color-green-lighter) 100%);
+  --gradient-green-progress: linear-gradient(90deg, var(--color-green-primary) 0%, var(--color-green-dark) 100%);
   --gradient-gray: linear-gradient(135deg, var(--color-gray-100) 0%, var(--color-gray-200) 100%);
+  --gradient-gray-light: linear-gradient(135deg, var(--color-white) 0%, var(--color-gray-50) 100%);
   --gradient-dark: linear-gradient(145deg, #1a1a1a 0%, #0f0f0f 100%);
+  --gradient-dark-complex: linear-gradient(135deg, var(--color-dark-base) 0%, var(--color-dark-surface) 25%, var(--color-dark-elevated) 50%, var(--color-dark-lighter) 75%, var(--color-dark-accent) 100%);
+  --gradient-rainbow: linear-gradient(90deg, var(--color-blue-primary), var(--color-purple-primary), var(--color-pink-primary), var(--color-brand-gold-light));
   --gradient-yellow-light: linear-gradient(135deg, var(--color-yellow-light) 0%, var(--color-brand-gold-lighter) 100%);
 
   /* Shadows */
@@ -87,6 +93,7 @@
   --shadow-blue-md: 0 4px 12px rgba(59, 130, 246, 0.4);
   --shadow-brand-sm: 0 2px 8px rgba(240, 165, 0, 0.3);
   --shadow-brand-md: 0 4px 12px rgba(240, 165, 0, 0.4);
+  --shadow-brand-glow: 0 0 20px rgba(240, 165, 0, 0.4);
   --shadow-purple-sm: 0 2px 8px rgba(139, 92, 246, 0.3);
   --shadow-green-sm: 0 2px 4px rgba(16, 185, 129, 0.3);
   --shadow-inset: inset 0 1px 3px rgba(0, 0, 0, 0.1);
