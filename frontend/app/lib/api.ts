@@ -106,7 +106,9 @@ export class ApiClient {
           const errorData = await response.json()
           errorMessage = errorData.detail || errorData.message || errorMessage
           errorDetails = errorData
-        } catch {}
+        } catch (parseError) {
+          logger.debug('Failed to parse error response as JSON', { endpoint, status: response.status })
+        }
         
         logger.error('API request failed', { 
           endpoint, 

@@ -150,7 +150,10 @@ export default function ResetPasswordPage() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        const errorData = await response.json().catch((parseError) => {
+          logger.debug('Failed to parse password reset error response', { status: response.status });
+          return {};
+        });
         throw new Error(errorData.detail || 'Failed to reset password');
       }
 
