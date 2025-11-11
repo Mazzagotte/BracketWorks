@@ -68,8 +68,8 @@ export function BracketStatsPanel({
           matchesWaitingOnPrevious++  // Waiting for players from previous round
         }
         
-        // TODO: Add logic for matches with disputes/issues
-        // For now, we can check if there are scores but no winner (potential dispute)
+        // NOTE: Basic dispute detection - matches with scores but no winner
+        // Future enhancement: Could add explicit dispute status from backend
         if (hasScores && !hasWinner && bothPlayersAssigned) {
           // This could indicate a tie or dispute
           matchesWithIssues++
