@@ -49,14 +49,14 @@ interface BracketRendererProps {
   isMobileDisplay?: boolean
 }
 
-export function BracketRenderer({ 
+const BracketRendererComponent = ({ 
   tournamentPreviewData, 
   selectedBracketType, 
   selectedBracketConfiguration,
   selectedRoundNumber,
   onMatchClick,
   isMobileDisplay = false
-}: BracketRendererProps) {
+}: BracketRendererProps) => {
   if (!tournamentPreviewData) {
     return (
       <div style={{ 
@@ -403,4 +403,7 @@ function BracketCard({
     </div>
   )
 }
+
+// Export memoized component for better performance
+export const BracketRenderer = React.memo(BracketRendererComponent)
 

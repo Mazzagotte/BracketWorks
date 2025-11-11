@@ -29,12 +29,13 @@ interface BracketTreeViewProps {
 /**
  * BracketTreeView - Grid-based tournament bracket visualization
  * Uses CSS Grid for precise alignment of cards and connectors
+ * Optimized with React.memo to prevent unnecessary re-renders
  */
-export function BracketTreeView({
+const BracketTreeViewComponent = ({
   rounds,
   isMobile = false,
   bracketType = 'scratch'
-}: BracketTreeViewProps) {
+}: BracketTreeViewProps) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const [highlightedPlayer, setHighlightedPlayer] = useState<string | null>(null)
 
@@ -307,3 +308,7 @@ function isUpset(match: Match): boolean {
   
   return false
 }
+
+// Export memoized component for better performance
+export const BracketTreeView = React.memo(BracketTreeViewComponent)
+export default BracketTreeView
