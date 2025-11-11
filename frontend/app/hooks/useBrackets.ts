@@ -52,14 +52,14 @@ export interface BracketRound {
 }
 
 export interface Match {
-  seedA: number
-  seedB: number
+  seedA?: number
+  seedB?: number
   playerA?: string
   playerB?: string
   scoreA?: number
   scoreB?: number
   winner?: 'A' | 'B'
-  status?: 'pending' | 'in_progress' | 'completed' | 'tied' | 'both_advance'
+  status?: 'pending' | 'in_progress' | 'completed' | 'tied' | 'both_advance' | 'next_up'
   both_advance?: boolean
   split_pot?: boolean
   eliminated_player?: 'A' | 'B' | null

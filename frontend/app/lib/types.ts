@@ -46,27 +46,47 @@ export interface Player {
 }
 
 // Bracket related types
+export interface Match {
+  seedA?: number;
+  seedB?: number;
+  playerA?: string;
+  playerB?: string;
+  scoreA?: number;
+  scoreB?: number;
+  match_score_a?: number; // Legacy field
+  match_score_b?: number; // Legacy field
+  winner?: 'A' | 'B' | null;
+  status?: 'pending' | 'in_progress' | 'completed' | 'tied' | 'both_advance' | 'next_up';
+  matchStatus?: 'pending' | 'in_progress' | 'completed' | 'tied' | 'both_advance' | 'next_up';
+  both_advance?: boolean;
+  split_pot?: boolean;
+  eliminated_player?: 'A' | 'B' | null;
+  elimination_notes?: string | null;
+}
+
+export interface BracketRound {
+  name: string;
+  matches: Match[];
+}
+
 export interface BracketData {
-  id?: number
-  name?: string
-  title?: string
-  players?: Player[]
-  type?: string
-  rounds?: Array<{
-    name: string
-    matches: Array<{
-      seedA?: number
-      seedB?: number
-      playerA?: string
-      playerB?: string
-      scoreA?: number
-      scoreB?: number
-      match_score_a?: number
-      match_score_b?: number
-      winner?: 'A' | 'B' | null
-      status?: 'pending' | 'in_progress' | 'completed' | 'tied'
-    }>
-  }>
+  id?: number;
+  name?: string;
+  title?: string;
+  players?: Player[];
+  type?: string;
+  rounds?: BracketRound[];
+}
+
+export interface MultipleBracketsData {
+  scratch_brackets?: BracketData[];
+  handicap_brackets?: BracketData[];
+}
+
+export interface BracketResponse {
+  scratch_brackets?: BracketData[];
+  handicap_brackets?: BracketData[];
+  multiple_brackets?: MultipleBracketsData;
 }
 
 export interface BracketSettings {
@@ -84,6 +104,18 @@ export interface BracketSettings {
 }
 
 // Score related types
+export interface PendingScoreSave {
+  token: string;
+  data: {
+    bowler_id: number;
+    tournament_id: number;
+    squad_id: number;
+    game1_scratch: number;
+    game2_scratch: number;
+    game3_scratch: number;
+  };
+}
+
 export interface ScoreData {
   id: number;
   player_id: number;

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { Tournament, Squad, Player, BracketData, ScoreData, WinnerData, BracketSettings, ToastMessage } from '../lib/types'
+import { Tournament, Squad, Player, BracketData, ScoreData, WinnerData, BracketSettings, ToastMessage, PendingScoreSave } from '../lib/types'
 import { SortConfig, SortableScoreColumn } from './types'
 import { SortableHeader } from './components/SortableHeader'
 
@@ -104,11 +104,11 @@ export default function ScoresPage() {
 
   const [players, setPlayers] = useState<Player[]>([])
   const [tournament, setTournament] = useState<Tournament | null>(null)
-  const [selectedSquad, setSelectedSquad] = useState<any | null>(null)
+  const [selectedSquad, setSelectedSquad] = useState<Squad | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [savingStatus, setSavingStatus] = useState<{[key: string]: 'saving' | 'saved' | 'error'}>({})
   const [isOnline, setIsOnline] = useState(true)
-  const [pendingSaves, setPendingSaves] = useState<any[]>([])
+  const [pendingSaves, setPendingSaves] = useState<PendingScoreSave[]>([])
   const [isMobile, setIsMobile] = useState(false)
   
   // Sorting state

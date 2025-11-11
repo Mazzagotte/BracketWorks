@@ -6,9 +6,11 @@ import { BracketRound, Match as BaseMatch } from '../../hooks/useBrackets'
 
 // Extend Match to include additional fields used in display
 export interface Match extends BaseMatch {
-  qualifying_score_a?: number
-  qualifying_score_b?: number
-  matchStatus?: 'pending' | 'in_progress' | 'completed' | 'next_up'
+  qualifying_score_a?: number;
+  qualifying_score_b?: number;
+  match_score_a?: number; // Legacy field name
+  match_score_b?: number; // Legacy field name
+  matchStatus?: 'pending' | 'in_progress' | 'completed' | 'next_up' | 'tied' | 'both_advance';
 }
 
 export interface TournamentRound extends BracketRound {
@@ -102,8 +104,8 @@ export function BracketTreeView({
             const gridRow = matchIndex * 3 + 1 // Rows: 1, 4, 7, 10
             
             // Handle both old (match_score_a) and new (scoreA) field names for backwards compatibility
-            const scoreA = (match as any).scoreA ?? (match as any).match_score_a
-            const scoreB = (match as any).scoreB ?? (match as any).match_score_b
+            const scoreA = match.scoreA ?? match.match_score_a;
+            const scoreB = match.scoreB ?? match.match_score_b;
             
             // Check if this match is in the highlighted player's path
             const isInPath = highlightedPlayer && (
@@ -164,8 +166,8 @@ export function BracketTreeView({
             const gridRow = matchIndex * 6 + 2 // Rows: 2, 8 (centered between R1 pairs)
             
             // Handle both old (match_score_a) and new (scoreA) field names for backwards compatibility
-            const scoreA = (match as any).scoreA ?? (match as any).match_score_a
-            const scoreB = (match as any).scoreB ?? (match as any).match_score_b
+            const scoreA = match.scoreA ?? match.match_score_a;
+            const scoreB = match.scoreB ?? match.match_score_b;
             
             const isInPath = highlightedPlayer && (
               match.playerA === highlightedPlayer || 
@@ -225,8 +227,8 @@ export function BracketTreeView({
             const gridRow = 5 // Centered vertically (middle of 12 rows)
             
             // Handle both old (match_score_a) and new (scoreA) field names for backwards compatibility
-            const scoreA = (match as any).scoreA ?? (match as any).match_score_a
-            const scoreB = (match as any).scoreB ?? (match as any).match_score_b
+            const scoreA = match.scoreA ?? match.match_score_a;
+            const scoreB = match.scoreB ?? match.match_score_b;
             
             const isInPath = highlightedPlayer && (
               match.playerA === highlightedPlayer || 

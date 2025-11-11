@@ -13,7 +13,7 @@ import PlayersTable from './components/PlayersTable'
 import PlayerForm from './components/PlayerForm'
 import { logger } from '../lib/logger'
 import { Squad, Player } from './types'
-import { BracketSettings } from '../lib/types'
+import { BracketSettings, Tournament } from '../lib/types'
 import { apiClient } from '../lib/api'
 import { API } from '../lib/api'
 
@@ -24,7 +24,7 @@ import { API } from '../lib/api'
 export default function PlayersPage() {
   const { isAuthenticated, isInitialized, token, user } = useAuth()
   const { tournaments, fetchTournaments } = useTournaments()
-  const [selectedTournament, setSelectedTournament] = useState<any>(null)
+  const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null)
   const [selectedSquadId, setSelectedSquadId] = useState<number | null>(null)
   const [squads, setSquads] = useState<Squad[]>([])
   const [entryFee, setEntryFee] = useState<number>(25) // Default $25, will be loaded from tournament settings
