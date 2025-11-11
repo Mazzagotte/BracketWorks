@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import React, { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from 'react'
 import { useAuth } from '../lib/auth-context'
 import { usePageHeader } from '../lib/header-context'
 import { ErrorBoundary } from '../components/ErrorBoundary'
@@ -9,17 +9,19 @@ import { useTournaments, useSquads } from '../hooks/useTournaments'
 import { useToast } from '../components/Toast'
 import { Tournament, Squad, BracketResponse, BracketData, BracketRound } from '../lib/types'
 import { logger } from '../lib/logger'
-import BracketGenerationModal from '../components/BracketGenerationModal'
-import ExplainBracketsModal from './components/ExplainBracketsModal'
-import { BracketTreeView } from './components/BracketTreeView'
-import { BracketStatsPanel } from './components/BracketStatsPanel'
 import { BracketTabs } from './components/BracketTabs'
 import { RoundNavigator } from './components/RoundNavigator'
 import { SearchFilter } from './components/SearchFilter'
-import { MobileBracketView } from './components/MobileBracketView'
 import { EmptyBracketState } from './components/EmptyBracketState'
 import { colors, semantic, gradients, shadows, rgba } from '../styles/colors'
 import '../styles/bowling-animations.css'
+
+// Lazy load heavy components for better initial load performance
+const BracketGenerationModal = lazy(() => import('../components/BracketGenerationModal'))
+const ExplainBracketsModal = lazy(() => import('./components/ExplainBracketsModal'))
+const BracketTreeView = lazy(() => import('./components/BracketTreeView').then(mod => ({ default: mod.BracketTreeView })))
+const BracketStatsPanel = lazy(() => import('./components/BracketStatsPanel').then(mod => ({ default: mod.BracketStatsPanel })))
+const MobileBracketView = lazy(() => import('./components/MobileBracketView').then(mod => ({ default: mod.MobileBracketView })))
 
 export default function BracketsPage() {
   // State for modal and generation
@@ -143,11 +145,14 @@ export default function BracketsPage() {
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [selectedSquad, selectedTournament]);
 
-  // Auto-refresh brackets every 5 seconds to pick up score updates
+  // Auto-refresh brackets - use longer interval when page is not visible
   useEffect(() => {
     if (!selectedSquad || !selectedTournament) return;
 
-    const intervalId = setInterval(() => {
+    // Use 5s when visible, 30s when hidden for better performance
+    const getRefreshInterval = () => document.hidden ? 30000 : 5000;
+    
+    const refreshBrackets = () => {
       if (!loadingRef.current) {
         loadingRef.current = true;
         loadSavedBrackets(selectedTournament.id, selectedSquad.id).then(brackets => {
@@ -157,9 +162,22 @@ export default function BracketsPage() {
           loadingRef.current = false;
         });
       }
-    }, 5000); // Refresh every 5 seconds
+    };
 
-    return () => clearInterval(intervalId);
+    let intervalId = setInterval(refreshBrackets, getRefreshInterval());
+
+    // Adjust interval when visibility changes
+    const handleVisibilityChange = () => {
+      clearInterval(intervalId);
+      intervalId = setInterval(refreshBrackets, getRefreshInterval());
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [selectedSquad, selectedTournament, loadSavedBrackets]);
 
   // Also reload when page gains focus
@@ -480,15 +498,17 @@ export default function BracketsPage() {
   return (
     <ErrorBoundary>
       {/* Bracket Generation Modal */}
-      <BracketGenerationModal
-        isOpen={isModalOpen}
-        onClose={handleModalClose}
-        onRegenerate={handleRegenerate}
-        bracketGenerationPromise={bracketGenerationPromise}
-        tournamentName={selectedTournament?.name}
-        squadName={selectedSquad ? `${selectedSquad.date} - ${selectedSquad.time}` : undefined}
-        playerCount={undefined}
-      />
+      <Suspense fallback={<div>Loading...</div>}>
+        <BracketGenerationModal
+          isOpen={isModalOpen}
+          onClose={handleModalClose}
+          onRegenerate={handleRegenerate}
+          bracketGenerationPromise={bracketGenerationPromise}
+          tournamentName={selectedTournament?.name}
+          squadName={selectedSquad ? `${selectedSquad.date} - ${selectedSquad.time}` : undefined}
+          playerCount={undefined}
+        />
+      </Suspense>
 
       {/* Bracket content */}      <div style={{ 
         padding: isMobile ? '0.5rem' : '1rem',
@@ -535,12 +555,14 @@ export default function BracketsPage() {
 
             {/* Bracket Stats Panel */}
             {filteredBrackets.length > 0 && rounds.length > 0 && (
-              <BracketStatsPanel
-                rounds={rounds}
-                bracketType={activeTab === 'all' ? 'scratch' : activeTab}
-                totalPlayers={loadedBrackets?.bracket_size || loadedBrackets?.size || 8}
-                lastUpdated={null}
-              />
+              <Suspense fallback={<div style={{ padding: '1rem', textAlign: 'center' }}>Loading stats...</div>}>
+                <BracketStatsPanel
+                  rounds={rounds}
+                  bracketType={activeTab === 'all' ? 'scratch' : activeTab}
+                  totalPlayers={loadedBrackets?.bracket_size || loadedBrackets?.size || 8}
+                  lastUpdated={null}
+                />
+              </Suspense>
             )}
 
             {/* Bracket Selector - Navigate between individual brackets */}

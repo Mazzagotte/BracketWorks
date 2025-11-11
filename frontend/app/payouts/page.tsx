@@ -169,8 +169,8 @@ export default function PayoutsPage() {
   }
 
   const [tournament, setTournament] = useState<Tournament | null>(null)
-  const [squads, setSquads] = useState<any[]>([])
-  const [selectedSquad, setSelectedSquad] = useState<any | null>(null)
+  const [squads, setSquads] = useState<Squad[]>([])
+  const [selectedSquad, setSelectedSquad] = useState<Squad | null>(null)
   const [payoutData, setPayoutData] = useState<PayoutSummary | null>(null)
   const [entryData, setEntryData] = useState<EntryData | null>(null)
   const [loading, setLoading] = useState(false)
