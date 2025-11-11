@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useRef, useState } from 'react'
+import React, { useRef, useState, useMemo } from 'react'
 import styles from '../styles/bracket-tree.module.css'
 import { BracketRound, Match as BaseMatch } from '../../hooks/useBrackets'
 
@@ -50,6 +50,16 @@ const BracketTreeViewComponent = ({
   // Show first 3 rounds in bracket tree format
   const displayRounds = rounds.slice(0, 3)
   
+  // Memoize round statistics to avoid recalculating on every render
+  const roundStats = useMemo(() => {
+    return displayRounds.map(round => {
+      const completedMatches = round.matches.filter(m => m.winner).length
+      const totalMatches = round.matches.length
+      const progressPercent = (completedMatches / totalMatches) * 100
+      return { completedMatches, totalMatches, progressPercent }
+    })
+  }, [displayRounds])
+  
   // Grid configuration
   // Each match occupies 2 rows (for the card height)
   // Connectors occupy the rows between matches
@@ -65,9 +75,7 @@ const BracketTreeViewComponent = ({
         {/* Round Headers with Numbered Badges */}
         <div className={styles.headerRow}>
           {displayRounds.map((round, roundIndex) => {
-            const completedMatches = round.matches.filter(m => m.winner).length
-            const totalMatches = round.matches.length
-            const progressPercent = (completedMatches / totalMatches) * 100
+            const { completedMatches, totalMatches, progressPercent } = roundStats[roundIndex]
             
             return (
               <div key={roundIndex} className={styles.roundHeader}>

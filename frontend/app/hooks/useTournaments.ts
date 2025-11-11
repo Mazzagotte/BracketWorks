@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 import { apiClient } from '../lib/api'
 import { useToast } from '../components/Toast'
@@ -24,31 +24,45 @@ export interface Squad {
 
 
 
-// Hook for managing tournaments
+// Hook for managing tournaments with request deduplication
 export function useTournaments() {
   const [tournaments, setTournaments] = useState<Tournament[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { addToast } = useToast()
+  
+  // Request deduplication: track in-flight requests
+  const fetchPromiseRef = useRef<Promise<void> | null>(null)
 
   const fetchTournaments = async () => {
+    // If already fetching, return existing promise
+    if (fetchPromiseRef.current) {
+      return fetchPromiseRef.current
+    }
+    
     setLoading(true)
     setError(null)
     
-    try {
-      const data = await apiClient.get<Tournament[]>('/api/v1/tournaments/')
-      setTournaments(data)
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch tournaments'
-      setError(errorMessage)
-      addToast({
-        type: 'error',
-        message: errorMessage,
-        duration: 5000
-      })
-    } finally {
-      setLoading(false)
-    }
+    const fetchPromise = (async () => {
+      try {
+        const data = await apiClient.get<Tournament[]>('/api/v1/tournaments/')
+        setTournaments(data)
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to fetch tournaments'
+        setError(errorMessage)
+        addToast({
+          type: 'error',
+          message: errorMessage,
+          duration: 5000
+        })
+      } finally {
+        setLoading(false)
+        fetchPromiseRef.current = null
+      }
+    })()
+    
+    fetchPromiseRef.current = fetchPromise
+    return fetchPromise
   }
 
   const createTournament = async (tournament: Omit<Tournament, 'id'>) => {
@@ -143,34 +157,49 @@ export function useTournaments() {
   }
 }
 
-// Hook for managing squads
+// Hook for managing squads with request deduplication
 export function useSquads(tournamentId?: number) {
   const [squads, setSquads] = useState<Squad[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { addToast } = useToast()
+  
+  // Request deduplication: track in-flight requests per tournament
+  const fetchPromisesRef = useRef<Map<number, Promise<void>>>(new Map())
 
   const fetchSquads = async (tId?: number) => {
     const id = tId || tournamentId
     if (!id) return
 
+    // If already fetching this tournament's squads, return existing promise
+    const existingPromise = fetchPromisesRef.current.get(id)
+    if (existingPromise) {
+      return existingPromise
+    }
+
     setLoading(true)
     setError(null)
     
-    try {
-      const data = await apiClient.get<Squad[]>(`/api/v1/squads/?tournament_id=${id}`)
-      setSquads(data)
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch squads'
-      setError(errorMessage)
-      addToast({
-        type: 'error',
-        message: errorMessage,
-        duration: 5000
-      })
-    } finally {
-      setLoading(false)
-    }
+    const fetchPromise = (async () => {
+      try {
+        const data = await apiClient.get<Squad[]>(`/api/v1/squads/?tournament_id=${id}`)
+        setSquads(data)
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to fetch squads'
+        setError(errorMessage)
+        addToast({
+          type: 'error',
+          message: errorMessage,
+          duration: 5000
+        })
+      } finally {
+        setLoading(false)
+        fetchPromisesRef.current.delete(id)
+      }
+    })()
+    
+    fetchPromisesRef.current.set(id, fetchPromise)
+    return fetchPromise
   }
 
   useEffect(() => {
