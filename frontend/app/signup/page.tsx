@@ -9,6 +9,7 @@ import "../styles/validation.css";
 
 import { API } from "../lib/api";
 import { getErrorMessage } from "../lib/error-utils";
+import { logger } from "../lib/logger";
 
 
 
@@ -183,7 +184,10 @@ export default function SignupPage() {
       });
       
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
+        const data = await res.json().catch((parseError) => {
+          logger.debug('Failed to parse signup error response', { status: res.status });
+          return {};
+        });
         let errorMessage = "Signup failed";
         
         if (res.status === 409) {
