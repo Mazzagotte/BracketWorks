@@ -28,7 +28,7 @@
 }
 
 .modalContainer {
-  background: white;
+  background: var(--color-white);
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   max-width: 900px;
@@ -58,7 +58,7 @@
   justify-content: space-between;
   align-items: flex-start;
   padding: 2rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--color-gray-200);
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
 }
 
@@ -66,13 +66,13 @@
   margin: 0;
   font-size: 1.75rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-gray-900);
 }
 
 .roundName {
   margin: 0.25rem 0 0 0;
   font-size: 1rem;
-  color: #6b7280;
+  color: var(--color-gray-500);
   font-weight: 500;
 }
 
@@ -80,7 +80,7 @@
   background: none;
   border: none;
   font-size: 1.75rem;
-  color: #6b7280;
+  color: var(--color-gray-500);
   cursor: pointer;
   padding: 0.25rem;
   width: 2.5rem;
@@ -93,8 +93,8 @@
 }
 
 .closeButton:hover {
-  background-color: #f3f4f6;
-  color: #111827;
+  background-color: var(--color-gray-100);
+  color: var(--color-gray-900);
 }
 
 /* ===================================
@@ -118,32 +118,32 @@
 }
 
 .statusBadge.completed {
-  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-  color: #065f46;
-  border: 1px solid #10b981;
+  background: var(--gradient-green);
+  color: var(--color-green-deeper);
+  border: 1px solid var(--color-green-primary);
 }
 
 .statusBadge.in_progress {
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-  color: #78350f;
-  border: 1px solid #f59e0b;
+  background: var(--gradient-yellow);
+  color: var(--color-yellow-dark);
+  border: 1px solid var(--color-brand-gold-light);
 }
 
 .statusBadge.pending {
-  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-  color: #374151;
-  border: 1px solid #9ca3af;
+  background: linear-gradient(135deg, var(--color-gray-100) 0%, var(--color-gray-200) 100%);
+  color: var(--color-gray-700);
+  border: 1px solid var(--color-gray-400);
 }
 
 .statusBadge.scheduled {
-  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-  color: #1e40af;
-  border: 1px solid #3b82f6;
+  background: var(--gradient-blue);
+  color: var(--color-blue-deeper);
+  border: 1px solid var(--color-blue-primary);
 }
 
 .bracketTypeBadge {
-  background: linear-gradient(135deg, #f0a500 0%, #e6941a 100%);
-  color: white;
+  background: var(--gradient-brand);
+  color: var(--color-white);
   padding: 0.5rem 1rem;
   border-radius: 8px;
   font-weight: 700;
@@ -152,8 +152,8 @@
 }
 
 .tieResolutionBadge {
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-  color: white;
+  background: var(--gradient-purple-tie);
+  color: var(--color-white);
   padding: 0.5rem 1rem;
   border-radius: 8px;
   font-weight: 600;
@@ -166,14 +166,14 @@
 }
 
 .tieResolutionBadge:hover {
-  background: linear-gradient(135deg, #9f7aea 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #9f7aea 0%, var(--color-purple-primary) 100%);
   transform: scale(1.02);
   transition: all 0.2s ease;
 }
 
 .splitPotBadge {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  color: white;
+  background: linear-gradient(135deg, var(--color-brand-gold-light) 0%, #d97706 100%);
+  color: var(--color-white);
   padding: 0.5rem 1rem;
   border-radius: 8px;
   font-weight: 600;
@@ -186,7 +186,7 @@
 }
 
 .splitPotBadge:hover {
-  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  background: var(--gradient-gold);
   transform: scale(1.02);
   transition: all 0.2s ease;
 }
@@ -199,9 +199,9 @@
   display: flex;
   gap: 2rem;
   padding: 1.5rem 2rem;
-  background-color: #f9fafb;
-  border-top: 1px solid #e5e7eb;
-  border-bottom: 1px solid #e5e7eb;
+  background-color: var(--color-gray-50);
+  border-top: 1px solid var(--color-gray-200);
+  border-bottom: 1px solid var(--color-gray-200);
   flex-wrap: wrap;
 }
 
@@ -213,7 +213,7 @@
 
 .infoLabel {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: var(--color-gray-500);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-weight: 600;
@@ -221,7 +221,7 @@
 
 .infoValue {
   font-size: 1.125rem;
-  color: #111827;
+  color: var(--color-gray-900);
   font-weight: 700;
 }
 
@@ -238,16 +238,16 @@
 }
 
 .playerCard {
-  background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
-  border: 2px solid #e5e7eb;
+  background: linear-gradient(135deg, var(--color-white) 0%, var(--color-gray-50) 100%);
+  border: 2px solid var(--color-gray-200);
   border-radius: 12px;
   padding: 1.5rem;
   transition: all 0.3s ease;
 }
 
 .playerCard.winnerCard {
-  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-  border-color: #10b981;
+  background: var(--gradient-green);
+  border-color: var(--color-green-primary);
   box-shadow: 0 4px 16px rgba(16, 185, 129, 0.2);
 }
 
@@ -260,8 +260,8 @@
 }
 
 .winnerBadge {
-  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-  color: white;
+  background: var(--gradient-gold);
+  color: var(--color-white);
   padding: 0.375rem 0.75rem;
   border-radius: 6px;
   font-size: 0.8125rem;
@@ -279,8 +279,8 @@
 }
 
 .seedBadge {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: var(--gradient-purple-tie);
+  color: var(--color-white);
   padding: 0.375rem 0.75rem;
   border-radius: 6px;
   font-size: 0.8125rem;
@@ -291,12 +291,12 @@
   margin: 0 0 0.5rem 0;
   font-size: 1.5rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-gray-900);
 }
 
 .usbcNumber {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--color-gray-500);
   margin-bottom: 1rem;
   font-family: 'Courier New', monospace;
 }
@@ -307,7 +307,7 @@
   gap: 0.75rem;
   margin-bottom: 1.5rem;
   padding: 1rem;
-  background-color: white;
+  background-color: var(--color-white);
   border-radius: 8px;
 }
 
@@ -319,7 +319,7 @@
 
 .statLabel {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: var(--color-gray-500);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-weight: 600;
@@ -327,7 +327,7 @@
 
 .statValue {
   font-size: 1.25rem;
-  color: #111827;
+  color: var(--color-gray-900);
   font-weight: 700;
 }
 
@@ -337,14 +337,14 @@
   align-items: center;
   gap: 0.5rem;
   padding: 1.5rem;
-  background: linear-gradient(135deg, #f0a500 0%, #e6941a 100%);
+  background: var(--gradient-brand);
   border-radius: 8px;
   margin-bottom: 1rem;
 }
 
 .scoreLabel {
   font-size: 0.875rem;
-  color: white;
+  color: var(--color-white);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-weight: 700;
@@ -353,7 +353,7 @@
 .scoreValue {
   font-size: 3rem;
   font-weight: 700;
-  color: white;
+  color: var(--color-white);
 }
 
 .scoreValue.winnerScore {
@@ -372,7 +372,7 @@
 .tournamentRecord {
   text-align: center;
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--color-gray-500);
   font-weight: 500;
 }
 
@@ -389,8 +389,8 @@
 }
 
 .vsText {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: var(--gradient-purple-tie);
+  color: var(--color-white);
   width: 4rem;
   height: 4rem;
   border-radius: 50%;
@@ -403,11 +403,11 @@
 }
 
 .marginIndicator {
-  background-color: #f3f4f6;
+  background-color: var(--color-gray-100);
   padding: 0.5rem 1rem;
   border-radius: 6px;
   font-size: 0.875rem;
-  color: #374151;
+  color: var(--color-gray-700);
   font-weight: 600;
   white-space: nowrap;
 }
@@ -417,9 +417,9 @@
    =================================== */
 
 .upsetAlert {
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-  border: 2px solid #f59e0b;
-  color: #78350f;
+  background: var(--gradient-yellow);
+  border: 2px solid var(--color-brand-gold-light);
+  color: var(--color-yellow-dark);
   padding: 1rem 1.5rem;
   margin: 0 2rem 1.5rem 2rem;
   border-radius: 8px;
@@ -447,14 +447,14 @@
   justify-content: flex-end;
   gap: 1rem;
   padding: 1.5rem 2rem;
-  border-top: 1px solid #e5e7eb;
-  background-color: #f9fafb;
+  border-top: 1px solid var(--color-gray-200);
+  background-color: var(--color-gray-50);
 }
 
 .secondaryButton {
-  background-color: #f3f4f6;
-  color: #374151;
-  border: 1px solid #d1d5db;
+  background-color: var(--color-gray-100);
+  color: var(--color-gray-700);
+  border: 1px solid var(--color-gray-300);
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
   font-weight: 600;
@@ -464,8 +464,8 @@
 }
 
 .secondaryButton:hover {
-  background-color: #e5e7eb;
-  border-color: #9ca3af;
+  background-color: var(--color-gray-200);
+  border-color: var(--color-gray-400);
 }
 
 /* ===================================
@@ -542,6 +542,6 @@
 
 .closeButton:focus-visible,
 .secondaryButton:focus-visible {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid var(--color-blue-primary);
   outline-offset: 2px;
 }
