@@ -9,6 +9,7 @@ import { useTournaments, useSquads } from '../hooks/useTournaments'
 import { useToast } from '../components/Toast'
 import { Tournament, Squad, BracketResponse, BracketData, BracketRound } from '../lib/types'
 import { logger } from '../lib/logger'
+import { storage } from '../lib/storage'
 import { BracketTabs } from './components/BracketTabs'
 import { RoundNavigator } from './components/RoundNavigator'
 import { SearchFilter } from './components/SearchFilter'
@@ -53,14 +54,26 @@ export default function BracketsPage() {
   const [selectedSquad, setSelectedSquad] = useState<Squad | null>(null)
   const [selectedBracketIndex, setSelectedBracketIndex] = useState<number>(0) // Which bracket to display (0-based)
 
-  // Detect mobile viewport
+  // Detect mobile viewport with debouncing to reduce unnecessary re-renders
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth <= 768)
     }
+    
     checkMobile()
-    window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
+    
+    // Debounce resize events to avoid excessive state updates
+    let timeoutId: NodeJS.Timeout
+    const debouncedCheckMobile = () => {
+      clearTimeout(timeoutId)
+      timeoutId = setTimeout(checkMobile, 150) // 150ms debounce
+    }
+    
+    window.addEventListener('resize', debouncedCheckMobile)
+    return () => {
+      clearTimeout(timeoutId)
+      window.removeEventListener('resize', debouncedCheckMobile)
+    }
   }, [])
 
   // Load tournaments on mount
@@ -72,7 +85,7 @@ export default function BracketsPage() {
   // Auto-select tournament from localStorage
   useEffect(() => {
     if (tournaments.length > 0 && !selectedTournament) {
-      const storedTournamentId = localStorage.getItem('lastTournamentId')
+      const storedTournamentId = storage.getItem('lastTournamentId')
       if (storedTournamentId) {
         const storedTournament = tournaments.find(t => t.id === parseInt(storedTournamentId))
         if (storedTournament) {
@@ -87,7 +100,7 @@ export default function BracketsPage() {
   // Auto-select squad from localStorage or use first squad
   useEffect(() => {
     if (squads.length > 0 && !selectedSquad) {
-      const storedSquadId = localStorage.getItem('selected_squad_id')
+      const storedSquadId = storage.getItem('selected_squad_id')
       let squadToSelect = null
       
       if (storedSquadId) {
@@ -105,128 +118,72 @@ export default function BracketsPage() {
     }
   }, [squads, selectedSquad])
 
-  // Fetch brackets when squad is selected
-  useEffect(() => {
-    const shouldLoad = selectedSquad && 
-                      selectedTournament && 
-                      !loadingRef.current &&
-                      (lastLoadedRef.current?.tournamentId !== selectedTournament.id || 
-                       lastLoadedRef.current?.squadId !== selectedSquad.id)
-    
-    if (shouldLoad) {
-      loadingRef.current = true
-      loadSavedBrackets(selectedTournament.id, selectedSquad.id).then(brackets => {
-        setLoadedBrackets(brackets)
-        lastLoadedRef.current = { tournamentId: selectedTournament.id, squadId: selectedSquad.id }
-        loadingRef.current = false
-      }).catch(() => {
-        loadingRef.current = false
-      })
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedSquad, selectedTournament])
-
-  // Reload brackets when page becomes visible (handles navigation back from Dashboard)
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (!document.hidden && selectedSquad && selectedTournament && !loadingRef.current) {
-        loadingRef.current = true;
-        loadSavedBrackets(selectedTournament.id, selectedSquad.id).then(brackets => {
-          setLoadedBrackets(brackets);
-          lastLoadedRef.current = { tournamentId: selectedTournament.id, squadId: selectedSquad.id };
-          loadingRef.current = false;
-        }).catch(() => {
-          loadingRef.current = false;
-        });
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [selectedSquad, selectedTournament]);
-
-  // Auto-refresh brackets - use longer interval when page is not visible
+  // Unified bracket loading and auto-refresh with smart visibility/focus handling
   useEffect(() => {
     if (!selectedSquad || !selectedTournament) return;
 
-    // Use 5s when visible, 30s when hidden for better performance
-    const getRefreshInterval = () => document.hidden ? 30000 : 5000;
-    
-    const refreshBrackets = () => {
-      if (!loadingRef.current) {
-        loadingRef.current = true;
-        loadSavedBrackets(selectedTournament.id, selectedSquad.id).then(brackets => {
+    // Centralized bracket loading function
+    const loadBrackets = (skipIfSame = false) => {
+      // Skip if already loading
+      if (loadingRef.current) return;
+      
+      // Skip if we're already showing the right brackets
+      if (skipIfSame && 
+          lastLoadedRef.current?.tournamentId === selectedTournament.id && 
+          lastLoadedRef.current?.squadId === selectedSquad.id) {
+        return;
+      }
+
+      loadingRef.current = true;
+      loadSavedBrackets(selectedTournament.id, selectedSquad.id)
+        .then(brackets => {
           setLoadedBrackets(brackets);
+          lastLoadedRef.current = { tournamentId: selectedTournament.id, squadId: selectedSquad.id };
           loadingRef.current = false;
-        }).catch(() => {
+        })
+        .catch(() => {
           loadingRef.current = false;
         });
+    };
+
+    // Initial load when tournament/squad changes
+    loadBrackets(false);
+
+    // Auto-refresh interval - 5s when visible, 30s when hidden
+    const getRefreshInterval = () => document.hidden ? 30000 : 5000;
+    let intervalId = setInterval(() => loadBrackets(true), getRefreshInterval());
+
+    // Handle visibility changes - adjust interval and reload if becoming visible
+    const handleVisibilityChange = () => {
+      clearInterval(intervalId);
+      if (!document.hidden) {
+        loadBrackets(true); // Reload when becoming visible
+      }
+      intervalId = setInterval(() => loadBrackets(true), getRefreshInterval());
+    };
+
+    // Handle focus - reload to get latest data
+    const handleFocus = () => {
+      if (!document.hidden) {
+        loadBrackets(true);
       }
     };
 
-    let intervalId = setInterval(refreshBrackets, getRefreshInterval());
-
-    // Adjust interval when visibility changes
-    const handleVisibilityChange = () => {
-      clearInterval(intervalId);
-      intervalId = setInterval(refreshBrackets, getRefreshInterval());
-    };
-
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
     
     return () => {
       clearInterval(intervalId);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
     };
-  }, [selectedSquad, selectedTournament, loadSavedBrackets]);
-
-  // Also reload when page gains focus
-  useEffect(() => {
-    const handleFocus = () => {
-      if (selectedSquad && selectedTournament && !loadingRef.current) {
-        loadingRef.current = true;
-        loadSavedBrackets(selectedTournament.id, selectedSquad.id).then(brackets => {
-          setLoadedBrackets(brackets);
-          lastLoadedRef.current = { tournamentId: selectedTournament.id, squadId: selectedSquad.id };
-          loadingRef.current = false;
-        }).catch(() => {
-          loadingRef.current = false;
-        });
-      }
-    };
-
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSquad, selectedTournament]);
-
-  // Handle generate brackets action
-  const handleGenerateBrackets = useCallback(() => {
-    // Validation: Check for tournament selection
-    if (!selectedTournament) {
-      addToast({
-        type: 'error',
-        message: 'Please select a tournament first',
-        duration: 5000
-      })
-      return
-    }
-
-    // Validation: Check for squad selection
-    if (!selectedSquad) {
-      addToast({
-        type: 'error',
-        message: 'Please select a squad first',
-        duration: 5000
-      })
-      return
-    }
-
-    // Start bracket generation
-    startBracketGeneration()
-  }, [selectedTournament, selectedSquad, addToast])
 
   // Start the bracket generation process
   const startBracketGeneration = useCallback(() => {
+    if (!selectedTournament || !selectedSquad) return;
+    
     // Create the promise for bracket generation
     const generationPromise = generateTournamentBrackets(
       selectedTournament.id,
@@ -254,6 +211,32 @@ export default function BracketsPage() {
     setBracketGenerationPromise(generationPromise)
     setIsModalOpen(true)
   }, [selectedTournament, selectedSquad, generateTournamentBrackets, addToast])
+
+  // Handle generate brackets action
+  const handleGenerateBrackets = useCallback(() => {
+    // Validation: Check for tournament selection
+    if (!selectedTournament) {
+      addToast({
+        type: 'error',
+        message: 'Please select a tournament first',
+        duration: 5000
+      })
+      return
+    }
+
+    // Validation: Check for squad selection
+    if (!selectedSquad) {
+      addToast({
+        type: 'error',
+        message: 'Please select a squad first',
+        duration: 5000
+      })
+      return
+    }
+
+    // Start bracket generation
+    startBracketGeneration()
+  }, [selectedTournament, selectedSquad, addToast, startBracketGeneration])
 
   // Handle modal close
   const handleModalClose = useCallback(() => {
@@ -287,85 +270,59 @@ export default function BracketsPage() {
     const scratch = loadedBrackets.scratch_brackets || loadedBrackets.multiple_brackets?.scratch_brackets || []
     const handicap = loadedBrackets.handicap_brackets || loadedBrackets.multiple_brackets?.handicap_brackets || []
     
-    const allBrackets = [...scratch, ...handicap]
-    
-    let filtered = allBrackets
-    
-    // Filter by tab
+    // Early return based on tab to avoid unnecessary array concatenation
     if (activeTab === 'scratch') {
-      filtered = scratch
+      return scratch
     } else if (activeTab === 'handicap') {
-      filtered = handicap
+      return handicap
     }
     
-    return filtered
+    // Only create combined array for 'all' tab
+    return [...scratch, ...handicap]
   }, [loadedBrackets, activeTab])
 
   // Convert brackets to rounds structure
   const rounds = useMemo(() => {
     if (!loadedBrackets) return []
     
+    // Check for direct rounds property first (fastest path for single bracket preview)
+    if (loadedBrackets.rounds) {
+      return loadedBrackets.rounds
+    }
+    
     // Check for direct scratch_brackets/handicap_brackets at top level (current API format)
     const bracketResponse = loadedBrackets as BracketResponse;
     const scratch_brackets = bracketResponse.scratch_brackets;
     const handicap_brackets = bracketResponse.handicap_brackets;
     
+    // Helper function to get source brackets - eliminates duplicate logic
+    const getSourceBrackets = (scratch: BracketData[] | undefined, handicap: BracketData[] | undefined): BracketData[] => {
+      if (activeTab === 'scratch' && scratch?.length) {
+        return scratch
+      }
+      if (activeTab === 'handicap' && handicap?.length) {
+        return handicap
+      }
+      // For 'all' tab, prefer scratch if available
+      return scratch?.length ? scratch : (handicap || [])
+    }
+    
+    let sourceBrackets: BracketData[] = []
+    
     if (scratch_brackets || handicap_brackets) {
-      // Get rounds from the first available bracket based on active tab
-      let sourceBrackets: BracketData[] = [];
-      
-      if (activeTab === 'scratch' && scratch_brackets && scratch_brackets.length > 0) {
-        sourceBrackets = scratch_brackets;
-      } else if (activeTab === 'handicap' && handicap_brackets && handicap_brackets.length > 0) {
-        sourceBrackets = handicap_brackets;
-      } else if (activeTab === 'all') {
-        // For 'all' tab, prefer scratch if available, otherwise handicap
-        if (scratch_brackets && scratch_brackets.length > 0) {
-          sourceBrackets = scratch_brackets;
-        } else if (handicap_brackets && handicap_brackets.length > 0) {
-          sourceBrackets = handicap_brackets;
-        }
-      }
-      
-      if (sourceBrackets.length > 0) {
-        // Use selectedBracketIndex, but ensure it's within bounds
-        const bracketIndex = Math.min(selectedBracketIndex, sourceBrackets.length - 1)
-        if (sourceBrackets[bracketIndex].rounds) {
-          return sourceBrackets[bracketIndex].rounds || [];
-        }
-      }
+      sourceBrackets = getSourceBrackets(scratch_brackets, handicap_brackets)
+    } else if (bracketResponse.multiple_brackets) {
+      // Alternative API format with wrapper
+      const { scratch_brackets: wrapperScratch, handicap_brackets: wrapperHandicap } = bracketResponse.multiple_brackets
+      sourceBrackets = getSourceBrackets(wrapperScratch, wrapperHandicap)
     }
     
-    // Check if we have the multiple_brackets wrapper structure (alternative API format)
-    if (bracketResponse.multiple_brackets) {
-      const { scratch_brackets, handicap_brackets } = bracketResponse.multiple_brackets;
-      
-      // Get rounds from the first available bracket based on active tab
-      let sourceBrackets: BracketData[] = [];
-      
-      if (activeTab === 'scratch' && scratch_brackets && scratch_brackets.length > 0) {
-        sourceBrackets = scratch_brackets
-      } else if (activeTab === 'handicap' && handicap_brackets && handicap_brackets.length > 0) {
-        sourceBrackets = handicap_brackets
-      } else if (activeTab === 'all') {
-        if (scratch_brackets && scratch_brackets.length > 0) {
-          sourceBrackets = scratch_brackets
-        } else if (handicap_brackets && handicap_brackets.length > 0) {
-          sourceBrackets = handicap_brackets
-        }
-      }
-      
-      if (sourceBrackets.length > 0 && sourceBrackets[0].rounds) {
-        return sourceBrackets[0].rounds
-      }
-    }
+    // Early return if no brackets
+    if (!sourceBrackets.length) return []
     
-    // Fallback to direct rounds property if it exists (single bracket preview format)
-    if (loadedBrackets.rounds) {
-      return loadedBrackets.rounds
-    }
-    
-    return []
+    // Use selectedBracketIndex, but ensure it's within bounds
+    const bracketIndex = Math.min(selectedBracketIndex, sourceBrackets.length - 1)
+    return sourceBrackets[bracketIndex]?.rounds || []
   }, [loadedBrackets, activeTab, selectedBracketIndex])
 
   // Handle search and filter
@@ -457,8 +414,8 @@ export default function BracketsPage() {
 
   // Check if we have tokens in localStorage
   const hasStoredAuth = typeof window !== 'undefined' && 
-    localStorage.getItem('token') && 
-    localStorage.getItem('user_id')
+    storage.getItem('token') && 
+    storage.getItem('user_id')
 
   // Wait for auth initialization
   if (!isInitialized) {
