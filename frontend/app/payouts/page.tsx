@@ -915,7 +915,7 @@ export default function PayoutsPage() {
         tournament_info: {
           id: tournament.id,
           name: tournament.name,
-          squad_id: null // TODO: Add squad selection
+          squad_id: null // NOTE: Squad selection feature not yet implemented - showing all squads
         },
         entries: entries
           .filter(entry => entry.total_brackets_entered > 0) // Only show players who actually entered brackets
