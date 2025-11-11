@@ -18,13 +18,13 @@ interface MatchEditorProps {
   onClose?: () => void
 }
 
-export function MatchEditor({ 
+const MatchEditorComponent = ({ 
   selectedMatch, 
   tournamentId,
   squadId,
   onMatchUpdate,
   onClose 
-}: MatchEditorProps) {
+}: MatchEditorProps) => {
   const [scoreA, setScoreA] = useState('')
   const [scoreB, setScoreB] = useState('')
   const { updateMatchScore, loading } = useBrackets()
@@ -211,4 +211,7 @@ export function MatchEditor({
     </div>
   )
 }
+
+// Export memoized component for better performance
+export const MatchEditor = React.memo(MatchEditorComponent)
 
