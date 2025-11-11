@@ -110,8 +110,6 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
         tournament_id: parseInt(getItem('tournament_id') || getItem('lastTournamentId') || '1'),
         squad_id: selectedSquad ? selectedSquad.id : null
       };
-
-      console.log('Adding player with data:', playerData);
       
       const createdPlayer = await apiClient.post('/api/v1/bowlers', playerData) as BowlerApiResponse;
       
@@ -130,7 +128,7 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
       };
       setPlayers(prev => [...prev, transformedPlayer]);
     } catch (err: any) {
-      console.error('Failed to add player:', err);
+      logger.error('Failed to add player', { error: err });
       alert(`Failed to add player: ${err.message || 'Unknown error'}`);
     }
   }, [authToken, selectedSquad, getItem]);
@@ -147,12 +145,12 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
     );
 
     if (!authToken) {
-      console.log('No auth - updating local state only');
+      logger.debug('No auth - updating local state only');
       return;
     }
 
     if (!currentPlayer) {
-      console.error('Player not found:', id);
+      logger.error('Player not found', { playerId: id });
       return;
     }
 
@@ -189,7 +187,7 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
         setSavingStatus(prev => ({ ...prev, [statusKey]: 'idle' }));
       }, 2000);
     } catch (err: any) {
-      console.error('Failed to update player:', err);
+      logger.error('Failed to update player', { error: err, playerId: id });
       const fieldKey = Object.keys(updates)[0];
       const statusKey = `${id}-${fieldKey}`;
       setSavingStatus(prev => ({ ...prev, [statusKey]: 'error' }));
@@ -208,7 +206,7 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
       await apiClient.delete(`/api/v1/bowlers/${playerId}`);
       setPlayers(prev => prev.filter(pItem => pItem.id !== playerId));
     } catch (err: any) {
-      console.error('Failed to delete player:', err);
+      logger.error('Failed to delete player', { error: err, playerId });
       alert(`Failed to delete player: ${err.message || 'Unknown error'}`);
     }
   }, [authToken]);

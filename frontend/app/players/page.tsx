@@ -92,7 +92,6 @@ export default function PlayersPage() {
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (!document.hidden) {
-        console.log('Page became visible, reloading entry fee...');
         loadEntryFee();
       }
     };
@@ -212,20 +211,9 @@ export default function PlayersPage() {
   useEffect(() => {
     const fetchSquadData = async () => {
       try {
-        console.log('Fetching squad data for players page...');
-        
         // Get user ID and tournament ID
         const userId = localStorage.getItem('user_id') || user?.id?.toString();
         const lastTournamentId = getTournamentId();
-        
-        console.log('🔍 Squad fetch debug:', { 
-          userId, 
-          lastTournamentId,
-          userFromAuth: user?.id,
-          userIdFromStorage: localStorage.getItem('user_id'),
-          tournamentFromTournamentHelper: getTournamentId(),
-          allLocalStorageKeys: Object.keys(localStorage)
-        });
         
         if (!userId || !lastTournamentId) {
           return;
