@@ -3,14 +3,14 @@
 /* Field validation states */
 .login-input.error,
 .password-input.error {
-  border-color: #ef4444 !important;
+  border-color: var(--color-red-primary) !important;
   box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.1) !important;
   background-color: rgba(239, 68, 68, 0.02) !important;
 }
 
 .login-input.valid,
 .password-input.valid {
-  border-color: #10b981 !important;
+  border-color: var(--color-green-primary) !important;
   box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1) !important;
   background-color: rgba(16, 185, 129, 0.02) !important;
 }
@@ -25,7 +25,7 @@
   background: rgba(239, 68, 68, 0.1);
   border: 1px solid rgba(239, 68, 68, 0.2);
   border-radius: 6px;
-  color: #ef4444;
+  color: var(--color-red-primary);
   font-size: 13px;
   font-weight: 500;
   animation: slideInError 0.2s ease-out;
@@ -40,7 +40,7 @@
   background: rgba(16, 185, 129, 0.1);
   border: 1px solid rgba(16, 185, 129, 0.2);
   border-radius: 6px;
-  color: #10b981;
+  color: var(--color-green-primary);
   font-size: 13px;
   font-weight: 500;
   animation: slideInSuccess 0.2s ease-out;
@@ -55,7 +55,7 @@
   background: rgba(245, 158, 11, 0.1);
   border: 1px solid rgba(245, 158, 11, 0.2);
   border-radius: 4px;
-  color: #f59e0b;
+  color: var(--color-brand-gold-light);
   font-size: 12px;
   font-weight: 500;
 }
@@ -75,7 +75,7 @@
   align-items: center;
   gap: 8px;
   font-weight: 600;
-  color: #ef4444;
+  color: var(--color-red-primary);
   margin-bottom: 12px;
   font-size: 14px;
 }
@@ -108,7 +108,7 @@
 .success-icon {
   font-size: 14px;
   flex-shrink: 0;
-  color: #10b981;
+  color: var(--color-green-primary);
 }
 
 .warning-icon {
@@ -175,7 +175,7 @@
 .password-input:focus {
   outline: 2px solid rgba(59, 130, 246, 0.5);
   outline-offset: 2px;
-  border-color: #3b82f6 !important;
+  border-color: var(--color-blue-primary) !important;
 }
 
 /* High contrast mode support */
@@ -294,7 +294,7 @@
 
 /* Focus indicators for keyboard navigation */
 .login-form :focus-visible {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid var(--color-blue-primary);
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -321,19 +321,19 @@
 .connection-status.offline {
   background: rgba(239, 68, 68, 0.9);
   border: 1px solid rgba(239, 68, 68, 0.3);
-  color: white;
+  color: var(--color-white);
 }
 
 .connection-status.slow {
   background: rgba(245, 158, 11, 0.9);
   border: 1px solid rgba(245, 158, 11, 0.3);
-  color: white;
+  color: var(--color-white);
 }
 
 .connection-status.poor {
   background: rgba(249, 115, 22, 0.9);
   border: 1px solid rgba(249, 115, 22, 0.3);
-  color: white;
+  color: var(--color-white);
 }
 
 .connection-content {
@@ -410,19 +410,19 @@
 .connection-indicator.good {
   background: rgba(16, 185, 129, 0.1);
   border: 1px solid rgba(16, 185, 129, 0.2);
-  color: #10b981;
+  color: var(--color-green-primary);
 }
 
 .connection-indicator.slow {
   background: rgba(245, 158, 11, 0.1);
   border: 1px solid rgba(245, 158, 11, 0.2);
-  color: #f59e0b;
+  color: var(--color-brand-gold-light);
 }
 
 .connection-indicator.poor {
   background: rgba(239, 68, 68, 0.1);
   border: 1px solid rgba(239, 68, 68, 0.2);
-  color: #ef4444;
+  color: var(--color-red-primary);
 }
 
 /* Pulse animation for poor connection */
