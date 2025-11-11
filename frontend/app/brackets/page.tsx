@@ -7,7 +7,7 @@ import { ErrorBoundary } from '../components/ErrorBoundary'
 import { useBrackets, BracketPreview, Match } from '../hooks/useBrackets'
 import { useTournaments, useSquads } from '../hooks/useTournaments'
 import { useToast } from '../components/Toast'
-import { Tournament, Squad } from '../lib/types'
+import { Tournament, Squad, BracketResponse, BracketData, BracketRound } from '../lib/types'
 import { logger } from '../lib/logger'
 import BracketGenerationModal from '../components/BracketGenerationModal'
 import ExplainBracketsModal from './components/ExplainBracketsModal'
@@ -288,23 +288,24 @@ export default function BracketsPage() {
     if (!loadedBrackets) return []
     
     // Check for direct scratch_brackets/handicap_brackets at top level (current API format)
-    const scratch_brackets = (loadedBrackets as any).scratch_brackets
-    const handicap_brackets = (loadedBrackets as any).handicap_brackets
+    const bracketResponse = loadedBrackets as BracketResponse;
+    const scratch_brackets = bracketResponse.scratch_brackets;
+    const handicap_brackets = bracketResponse.handicap_brackets;
     
     if (scratch_brackets || handicap_brackets) {
       // Get rounds from the first available bracket based on active tab
-      let sourceBrackets: any[] = []
+      let sourceBrackets: BracketData[] = [];
       
       if (activeTab === 'scratch' && scratch_brackets && scratch_brackets.length > 0) {
-        sourceBrackets = scratch_brackets
+        sourceBrackets = scratch_brackets;
       } else if (activeTab === 'handicap' && handicap_brackets && handicap_brackets.length > 0) {
-        sourceBrackets = handicap_brackets
+        sourceBrackets = handicap_brackets;
       } else if (activeTab === 'all') {
         // For 'all' tab, prefer scratch if available, otherwise handicap
         if (scratch_brackets && scratch_brackets.length > 0) {
-          sourceBrackets = scratch_brackets
+          sourceBrackets = scratch_brackets;
         } else if (handicap_brackets && handicap_brackets.length > 0) {
-          sourceBrackets = handicap_brackets
+          sourceBrackets = handicap_brackets;
         }
       }
       
@@ -312,17 +313,17 @@ export default function BracketsPage() {
         // Use selectedBracketIndex, but ensure it's within bounds
         const bracketIndex = Math.min(selectedBracketIndex, sourceBrackets.length - 1)
         if (sourceBrackets[bracketIndex].rounds) {
-          return sourceBrackets[bracketIndex].rounds
+          return sourceBrackets[bracketIndex].rounds || [];
         }
       }
     }
     
     // Check if we have the multiple_brackets wrapper structure (alternative API format)
-    if (loadedBrackets.multiple_brackets) {
-      const { scratch_brackets, handicap_brackets } = loadedBrackets.multiple_brackets
+    if (bracketResponse.multiple_brackets) {
+      const { scratch_brackets, handicap_brackets } = bracketResponse.multiple_brackets;
       
       // Get rounds from the first available bracket based on active tab
-      let sourceBrackets: any[] = []
+      let sourceBrackets: BracketData[] = [];
       
       if (activeTab === 'scratch' && scratch_brackets && scratch_brackets.length > 0) {
         sourceBrackets = scratch_brackets
