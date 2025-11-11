@@ -127,9 +127,9 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
         amountPaid: newPlayer.amountPaid
       };
       setPlayers(prev => [...prev, transformedPlayer]);
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error('Failed to add player', { error: err });
-      alert(`Failed to add player: ${err.message || 'Unknown error'}`);
+      alert(`Failed to add player: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   }, [authToken, selectedSquad, getItem]);
 
@@ -186,14 +186,14 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
       setTimeout(() => {
         setSavingStatus(prev => ({ ...prev, [statusKey]: 'idle' }));
       }, 2000);
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error('Failed to update player', { error: err, playerId: id });
       const fieldKey = Object.keys(updates)[0];
       const statusKey = `${id}-${fieldKey}`;
       setSavingStatus(prev => ({ ...prev, [statusKey]: 'error' }));
       // Revert the local change on error
       loadPlayers();
-      alert(`Failed to update player: ${err.message || 'Unknown error'}`);
+      alert(`Failed to update player: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   }, [authToken, selectedSquad, loadPlayers, players]);
 
@@ -205,9 +205,9 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
     try {
       await apiClient.delete(`/api/v1/bowlers/${playerId}`);
       setPlayers(prev => prev.filter(pItem => pItem.id !== playerId));
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error('Failed to delete player', { error: err, playerId });
-      alert(`Failed to delete player: ${err.message || 'Unknown error'}`);
+      alert(`Failed to delete player: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   }, [authToken]);
 
