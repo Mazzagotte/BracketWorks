@@ -369,8 +369,8 @@ export default function PlayersPage() {
                 fontWeight: '500',
                 transition: 'background-color 0.2s'
               }}
-              onMouseOver={(e) => (e.target as HTMLElement).style.backgroundColor = '#2563eb'}
-              onMouseOut={(e) => (e.target as HTMLElement).style.backgroundColor = '#3b82f6'}
+              onMouseOver={(e) => (e.target as HTMLElement).style.backgroundColor = colors.blue.dark}
+              onMouseOut={(e) => (e.target as HTMLElement).style.backgroundColor = colors.blue.primary}
             >
               Go to Dashboard
             </a>
