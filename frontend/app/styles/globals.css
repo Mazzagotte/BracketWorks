@@ -1,54 +1,55 @@
 
 @import './animations.css';
+@import './colors.global.css';
 
 /* Design System Variables */
 :root {
-  /* Colors - Extended palette */
-  --color-primary: #4f8cff;
-  --color-primary-light: #6ed0fa;
-  --color-primary-hover: #2563eb;
-  --color-accent: #ffd580;
-  --color-background: #f8f9fb;
-  --color-surface: #ffffff;
-  --color-surface-hover: #f9fafb;
-  --color-text-primary: #1a1f2e;
-  --color-text-secondary: #6b7280;
-  --color-text-muted: #888888;
-  --color-text-light: #aaaaaa;
-  --color-border: #e5e7eb;
+  /* Legacy color variables - Now pointing to unified color system */
+  /* These are kept for backward compatibility with existing styles */
+  --color-primary: var(--color-blue-primary);
+  --color-primary-light: var(--color-blue-lighter);
+  --color-primary-hover: var(--color-blue-dark);
+  --color-accent: var(--color-brand-gold-lighter);
+  --color-background: var(--color-gray-50);
+  --color-surface: var(--color-white);
+  --color-surface-hover: var(--color-gray-50);
+  --color-text-primary: var(--color-gray-900);
+  --color-text-secondary: var(--color-gray-500);
+  --color-text-muted: var(--color-gray-400);
+  --color-text-light: var(--color-gray-300);
+  --color-border: var(--color-gray-200);
   --color-border-light: rgba(240, 165, 0, 0.2);
-  --color-border-hover: #9ca3af;
-  --color-orange: #f0a500;
-  --color-orange-hover: #e6941a;
-  --color-orange-dark: #d9831f;
-  --color-success: #10b981;
-  --color-success: #10b981;
-  --color-success-hover: #059669;
-  --color-warning: #f59e0b;
-  --color-warning-light: #ff9800;
-  --color-error: #ef4444;
-  --color-error-light: #e74c3c;
-  --color-info: #3b82f6;
+  --color-border-hover: var(--color-gray-400);
+  --color-orange: var(--color-brand-gold);
+  --color-orange-hover: var(--color-brand-gold-dark);
+  --color-orange-dark: var(--color-brand-gold-dark);
+  --color-success: var(--color-green-primary);
+  --color-success-hover: var(--color-green-dark);
+  --color-warning: var(--color-brand-gold-light);
+  --color-warning-light: var(--color-yellow-primary);
+  --color-error: var(--color-red-primary);
+  --color-error-light: var(--color-red-primary);
+  --color-info: var(--color-blue-primary);
   
-  /* State background colors */
+  /* State background colors - Point to unified color system */
   --color-bg-error: #fef2f2;
   --color-bg-error-border: #fecaca;
   --color-bg-success: #f0fdf4;
-  --color-bg-warning: #fef3c7;
-  --color-bg-info: #f0f9ff;
-  --color-bg-primary: #dbeafe;
+  --color-bg-warning: var(--color-yellow-light);
+  --color-bg-info: var(--color-blue-light);
+  --color-bg-primary: var(--color-blue-light);
   
-  /* Gray scale */
-  --color-gray-50: #f9fafb;
-  --color-gray-100: #f3f4f6;
-  --color-gray-200: #e5e7eb;
-  --color-gray-300: #d1d5db;
-  --color-gray-400: #9ca3af;
-  --color-gray-500: #6b7280;
-  --color-gray-600: #4b5563;
-  --color-gray-700: #374151;
-  --color-gray-800: #1f2937;
-  --color-gray-900: #111827;
+  /* Gray scale - Use unified color system */
+  --color-gray-50: var(--color-gray-50);
+  --color-gray-100: var(--color-gray-100);
+  --color-gray-200: var(--color-gray-200);
+  --color-gray-300: var(--color-gray-300);
+  --color-gray-400: var(--color-gray-400);
+  --color-gray-500: var(--color-gray-500);
+  --color-gray-600: var(--color-gray-600);
+  --color-gray-700: var(--color-gray-700);
+  --color-gray-800: var(--color-gray-800);
+  --color-gray-900: var(--color-gray-900);
   
   /* Typography - Mobile-first approach */
   --font-family-primary: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
