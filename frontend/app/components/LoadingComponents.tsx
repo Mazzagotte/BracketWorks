@@ -144,3 +144,158 @@ export const PageTransition: React.FC<PageTransitionProps> = ({
     </div>
   );
 };
+
+// Dashboard page skeleton
+export const DashboardSkeleton: React.FC = () => {
+  return (
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-6">
+        <Skeleton width="200px" height="2rem" />
+        <Skeleton width="120px" height="2.5rem" />
+      </div>
+      
+      {/* Stats cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="p-4 bg-white rounded-lg border">
+            <Skeleton width="50%" height="1rem" className="mb-2" />
+            <Skeleton width="80px" height="2rem" />
+          </div>
+        ))}
+      </div>
+      
+      {/* Content area */}
+      <div className="bg-white rounded-lg border p-6">
+        <Skeleton width="150px" height="1.5rem" className="mb-4" />
+        {[1, 2, 3, 4].map(i => (
+          <div key={i} className="mb-3">
+            <Skeleton width="100%" height="3rem" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// Bracket page skeleton
+export const BracketSkeleton: React.FC = () => {
+  return (
+    <div className="p-6">
+      <div className="mb-6">
+        <Skeleton width="200px" height="2rem" className="mb-4" />
+        <div className="flex gap-2">
+          <Skeleton width="100px" height="2.5rem" />
+          <Skeleton width="100px" height="2.5rem" />
+          <Skeleton width="100px" height="2.5rem" />
+        </div>
+      </div>
+      
+      <div className="bg-white rounded-lg border p-6">
+        <div className="grid grid-cols-2 gap-8">
+          {[1, 2].map(col => (
+            <div key={col} className="space-y-4">
+              {[1, 2, 3, 4].map(i => (
+                <Skeleton key={i} width="100%" height="4rem" />
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Scores page skeleton
+export const ScoresSkeleton: React.FC = () => {
+  return (
+    <div className="p-6">
+      <Skeleton width="150px" height="2rem" className="mb-6" />
+      
+      <div className="bg-white rounded-lg border overflow-hidden">
+        {/* Table header */}
+        <div className="p-4 bg-gray-50 border-b">
+          <div className="flex gap-4">
+            <Skeleton width="150px" height="1.5rem" />
+            <Skeleton width="100px" height="1.5rem" />
+            <Skeleton width="100px" height="1.5rem" />
+            <Skeleton width="100px" height="1.5rem" />
+          </div>
+        </div>
+        
+        {/* Table rows */}
+        {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+          <div key={i} className="p-4 border-b">
+            <div className="flex gap-4">
+              <Skeleton width="150px" height="1rem" />
+              <Skeleton width="100px" height="1rem" />
+              <Skeleton width="100px" height="1rem" />
+              <Skeleton width="100px" height="1rem" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// Payouts page skeleton
+export const PayoutsSkeleton: React.FC = () => {
+  return (
+    <div className="p-6 space-y-6">
+      <div className="flex justify-between items-center">
+        <Skeleton width="180px" height="2rem" />
+        <Skeleton width="150px" height="2.5rem" />
+      </div>
+      
+      {/* Summary cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="p-4 bg-white rounded-lg border text-center">
+            <Skeleton width="80px" height="2rem" className="mx-auto mb-2" />
+            <Skeleton width="100px" height="1rem" className="mx-auto" />
+          </div>
+        ))}
+      </div>
+      
+      {/* Table */}
+      <div className="bg-white rounded-lg border overflow-hidden">
+        {[1, 2, 3, 4, 5].map(i => (
+          <div key={i} className="p-4 border-b flex justify-between items-center">
+            <Skeleton width="200px" height="1.5rem" />
+            <Skeleton width="100px" height="2rem" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// Players page skeleton
+export const PlayersSkeleton: React.FC = () => {
+  return (
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
+        <Skeleton width="150px" height="2rem" />
+        <Skeleton width="120px" height="2.5rem" />
+      </div>
+      
+      <div className="bg-white rounded-lg border p-4">
+        <div className="mb-4 flex gap-4">
+          <Skeleton width="200px" height="2.5rem" />
+          <Skeleton width="150px" height="2.5rem" />
+        </div>
+        
+        {[1, 2, 3, 4, 5, 6].map(i => (
+          <div key={i} className="p-3 border-b flex justify-between items-center">
+            <div className="flex-1">
+              <Skeleton width="180px" height="1.2rem" className="mb-1" />
+              <Skeleton width="120px" height="0.9rem" />
+            </div>
+            <Skeleton width="80px" height="2rem" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};

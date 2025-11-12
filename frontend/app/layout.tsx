@@ -313,6 +313,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="dns-prefetch" href="//fonts.googleapis.com" />
         
+        {/* Preconnect to backend API */}
+        <link rel="preconnect" href={process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'} crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href={process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'} />
+        
+        {/* Preload critical resources */}
+        <link rel="preload" href="/logo.png" as="image" type="image/png" />
+        <link rel="preload" href="/styles/globals.css" as="style" />
+        
         {/* Favicon configuration */}
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />

@@ -207,7 +207,7 @@ export default function PlayersPage() {
     }
   }, [players, entryFee])
 
-  // Fetch squad data (similar to scores page)
+  // Fetch squad data (similar to scores page) - OPTIMIZED WITH PARALLEL REQUESTS
   useEffect(() => {
     const fetchSquadData = async () => {
       try {
@@ -219,37 +219,31 @@ export default function PlayersPage() {
           return;
         }
         
-        // Fetch currently selected squad
-        const selectedUrl = API(`/api/v1/squads/selected/?user_id=${userId}`);
-        
-        const selectedResponse = await fetch(selectedUrl, {
+        // Parallelize both squad requests for faster loading
+        const selectedSquadPromise = fetch(API(`/api/v1/squads/selected/?user_id=${userId}`), {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           }
-        });
+        }).then(res => res.ok ? res.json() : null);
         
-        if (selectedResponse.ok) {
-          const selectedData = await selectedResponse.json();
-          if (selectedData?.squad_id) {
-            setSelectedSquadId(selectedData.squad_id);
-          }
-        }
-
-        // Fetch all squads for tournament
-        const squadsUrl = API(`/api/v1/squads/?tournament_id=${lastTournamentId}`);
-        
-        const squadsResponse = await fetch(squadsUrl, {
+        const squadsPromise = fetch(API(`/api/v1/squads/?tournament_id=${lastTournamentId}`), {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           }
-        });
+        }).then(res => res.ok ? res.json() : []);
         
-        if (squadsResponse.ok) {
-          const squadsData = await squadsResponse.json();
-          setSquads(squadsData);
+        // Wait for both requests to complete
+        const [selectedData, squadsData] = await Promise.all([selectedSquadPromise, squadsPromise]);
+        
+        // Set selected squad ID
+        if (selectedData?.squad_id) {
+          setSelectedSquadId(selectedData.squad_id);
         }
+        
+        // Set all squads
+        setSquads(squadsData);
       } catch (error) {
         logger.error('Error fetching squad data:', error);
       }

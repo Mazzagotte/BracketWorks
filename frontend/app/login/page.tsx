@@ -14,6 +14,8 @@ import { ErrorMessage } from "../components/ErrorHandling";
 import { AccessibleInput } from "../components/Accessibility";
 import { useAuth } from "../lib/auth-context";
 import { logger } from "../lib/logger";
+import SignupModal from "../components/SignupModal";
+import ResetPasswordModal from "../components/ResetPasswordModal";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -21,11 +23,12 @@ export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
   const [showButtonBall, setShowButtonBall] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [showSignupModal, setShowSignupModal] = useState(false);
+  const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
   
   // Security enhancements
   const [passwordVisibilityTimer, setPasswordVisibilityTimer] = useState<NodeJS.Timeout | null>(null);
@@ -111,7 +114,6 @@ export default function LoginPage() {
     }
     
     setError("");
-    setSuccess("");
     setLoading(true);
     setShowButtonBall(true);
     
@@ -203,15 +205,8 @@ export default function LoginPage() {
       
       // Success
       const displayName = data.first_name || username;
-      setSuccess(`Welcome back, ${displayName}!`);
       
-      addToast({
-        type: 'success',
-        message: `Welcome back, ${displayName}!`,
-        duration: 3000
-      });
-      
-      // Store user data using auth context
+      // Store user data using auth context FIRST (before any UI updates)
       login(data.access_token, data.user_id, {
         name: data.first_name
       });
@@ -222,16 +217,19 @@ export default function LoginPage() {
       
       logger.userAction('User logged in', { userId: data.user_id, name: displayName });
       
-      setShowButtonBall(false);
-      
       // Trigger multiple event types to ensure all components update
       window.dispatchEvent(new Event('auth-state-changed'));
       window.dispatchEvent(new Event('storage'));
       
-      // Smooth redirect with better UX - use Next.js router to preserve state
-      setTimeout(() => {
-        router.push('/dashboard');
-      }, 1000);
+      // Show toast but redirect immediately (don't update page state to avoid flash)
+      addToast({
+        type: 'success',
+        message: `Welcome back, ${displayName}!`,
+        duration: 3000
+      });
+      
+      // Immediate redirect - no delay, no UI state changes
+      router.push('/dashboard');
       
     } catch (err: unknown) {
       const error = err as Error;
@@ -266,7 +264,9 @@ export default function LoginPage() {
         bottom: 0,
         zIndex: 1000,
         overflow: 'auto',
-        fontFamily: 'Inter, Segoe UI, Arial, sans-serif'
+        fontFamily: 'Inter, Segoe UI, Arial, sans-serif',
+        opacity: loading ? 0.98 : 1,
+        transition: 'opacity 0.3s ease'
       }}
     >
       <div 
@@ -276,38 +276,41 @@ export default function LoginPage() {
           zIndex: 1,
           width: '100%',
           maxWidth: '400px',
-          padding: '48px 32px',
+          padding: '40px 32px 32px',
           background: '#ffffff',
           borderRadius: '24px',
           boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15)',
-          textAlign: 'center'
+          textAlign: 'center',
+          opacity: loading ? 0.95 : 1,
+          transform: loading ? 'scale(0.99)' : 'scale(1)',
+          transition: 'opacity 0.3s ease, transform 0.3s ease'
         }}
       >
-        <div className="header-section" style={{ textAlign: 'center', marginBottom: '32px' }}>
+        <div className="header-section" style={{ textAlign: 'center', marginBottom: '24px' }}>
           <div className="logo-container" style={{
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            width: '80px',
-            height: '80px',
-            margin: '0 auto 24px auto',
-            padding: '16px',
+            width: '64px',
+            height: '64px',
+            margin: '0 auto 16px auto',
+            padding: '12px',
             background: 'linear-gradient(135deg, rgba(240, 165, 0, 0.1) 0%, rgba(240, 165, 0, 0.05) 100%)',
-            borderRadius: '20px',
+            borderRadius: '16px',
             border: '1px solid rgba(240, 165, 0, 0.15)'
           }}>
             <Image 
               src="/logo.png" 
               alt="BracketWorks Logo" 
-              width={72} 
-              height={72} 
-              style={{ borderRadius: '16px' }}
+              width={56} 
+              height={56} 
+              style={{ borderRadius: '12px' }}
             />
           </div>
           <h1 className="login-title" style={{
-            fontSize: '32px',
+            fontSize: '28px',
             fontWeight: 700,
-            margin: '0 0 12px 0',
+            margin: '0 0 8px 0',
             background: 'linear-gradient(135deg, #1a1f2e 0%, #2d3748 25%, #4a5568 50%, #f0a500 75%, #ff9800 100%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
@@ -317,14 +320,14 @@ export default function LoginPage() {
           }}>BracketWorks</h1>
           <div className="login-subtitle" style={{
             color: '#6b7280',
-            fontSize: '16px',
+            fontSize: '14px',
             fontWeight: 500,
-            margin: '0 0 32px 0',
+            margin: '0',
             lineHeight: 1.5
           }}>Bowling Brackets & Side Pots</div>
         </div>
         <form id="login-form" onSubmit={handleLogin} className="login-form" style={{ marginTop: 0, textAlign: 'left' }}>
-          <div className="input-container" style={{ marginBottom: '24px', position: 'relative' }}>
+          <div className="input-container" style={{ marginBottom: '16px', position: 'relative' }}>
             <AccessibleInput
               type="text"
               id="login-username"
@@ -355,7 +358,7 @@ export default function LoginPage() {
               }}
             />
           </div>
-          <div className="password-container" style={{ marginBottom: '24px', position: 'relative' }}>
+          <div className="password-container" style={{ marginBottom: '16px', position: 'relative' }}>
             <AccessibleInput
               type={showPassword ? "text" : "password"}
               id="login-password"
@@ -399,23 +402,33 @@ export default function LoginPage() {
                   right: '14px',
                   top: '50%',
                   transform: 'translateY(-50%)',
-                  marginTop: '12px', // Account for label space
-                  width: '32px',
-                  height: '32px',
+                  marginTop: '18px', // Adjusted to center better with input field
+                  padding: '6px 10px',
+                  height: 'auto',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  background: 'none',
-                  border: 'none',
+                  background: 'rgba(107, 114, 128, 0.08)',
+                  border: '1px solid rgba(107, 114, 128, 0.2)',
                   borderRadius: '6px',
                   cursor: 'pointer',
-                  fontSize: '16px',
+                  fontSize: '12px',
+                  fontWeight: 500,
                   color: '#6b7280',
                   transition: 'all 0.2s ease',
-                  zIndex: 10
+                  zIndex: 10,
+                  lineHeight: 1
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(107, 114, 128, 0.12)';
+                  e.currentTarget.style.borderColor = 'rgba(107, 114, 128, 0.3)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(107, 114, 128, 0.08)';
+                  e.currentTarget.style.borderColor = 'rgba(107, 114, 128, 0.2)';
                 }}
               >
-                {showPassword ? "🙈" : "👁️"}
+                {showPassword ? "Hide" : "Show"}
               </button>
             )}
             {/* Caps Lock Warning */}
@@ -487,7 +500,7 @@ export default function LoginPage() {
             style={{
               width: '100%',
               height: '48px',
-              marginTop: '24px',
+              marginTop: '20px',
               padding: '0 24px',
               fontSize: '16px',
               fontWeight: 600,
@@ -532,65 +545,108 @@ export default function LoginPage() {
             />
           </div>
         )}
-        {success && <div className="success-message" style={{
-          marginTop: '20px',
-          padding: '16px 20px',
-          background: '#10b981',
-          color: 'white',
-          borderRadius: '12px',
-          fontSize: '15px',
-          fontWeight: 600,
-          textAlign: 'center'
-        }}>
-          🎉 {success}
-        </div>}
         <div className="links-container" style={{
-          marginTop: '24px',
+          marginTop: '20px',
           display: 'flex',
           flexDirection: 'column',
-          gap: '12px',
+          gap: '10px',
           alignItems: 'center'
         }}>
-          <a href="/signup" className="signup-link" style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '12px 24px',
-            fontSize: '14px',
-            fontWeight: 500,
-            textDecoration: 'none',
-            borderRadius: '12px',
-            transition: 'all 0.2s ease',
-            width: '100%',
-            textAlign: 'center',
-            fontFamily: 'Inter, Segoe UI, Arial, sans-serif',
-            color: '#6b7280',
-            background: '#f9fafb',
-            border: '1px solid #e5e7eb'
-          }}>
+          <button
+            onClick={() => setShowSignupModal(true)}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '14px 24px',
+              fontSize: '15px',
+              fontWeight: 600,
+              textDecoration: 'none',
+              borderRadius: '12px',
+              transition: 'all 0.2s ease',
+              width: '100%',
+              textAlign: 'center',
+              fontFamily: 'Inter, Segoe UI, Arial, sans-serif',
+              color: '#1f2937',
+              background: '#ffffff',
+              border: '2px solid #e5e7eb',
+              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+              cursor: 'pointer'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#f9fafb';
+              e.currentTarget.style.borderColor = '#d1d5db';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = '#ffffff';
+              e.currentTarget.style.borderColor = '#e5e7eb';
+            }}
+          >
             Create Account
-          </a>
-          <a href="/reset-password/request" className="forgot-link" style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '12px 24px',
-            fontSize: '14px',
-            fontWeight: 500,
-            textDecoration: 'none',
-            borderRadius: '12px',
-            transition: 'all 0.2s ease',
-            width: '100%',
-            textAlign: 'center',
-            fontFamily: 'Inter, Segoe UI, Arial, sans-serif',
-            color: '#f0a500',
-            background: 'rgba(240, 165, 0, 0.08)',
-            border: '1px solid rgba(240, 165, 0, 0.2)'
-          }}>
+          </button>
+          <button 
+            onClick={() => setShowResetPasswordModal(true)}
+            className="forgot-link" 
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '14px 24px',
+              fontSize: '15px',
+              fontWeight: 600,
+              textDecoration: 'none',
+              borderRadius: '12px',
+              transition: 'all 0.2s ease',
+              width: '100%',
+              textAlign: 'center',
+              fontFamily: 'Inter, Segoe UI, Arial, sans-serif',
+              color: '#ffffff',
+              background: 'linear-gradient(135deg, #f0a500 0%, #e09800 100%)',
+              border: 'none',
+              boxShadow: '0 4px 12px rgba(240, 165, 0, 0.25)',
+              cursor: 'pointer'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 6px 16px rgba(240, 165, 0, 0.35)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(240, 165, 0, 0.25)';
+            }}
+          >
             Forgot Password?
-          </a>
+          </button>
         </div>
       </div>
+
+      {/* Signup Modal */}
+      <SignupModal 
+        isOpen={showSignupModal}
+        onClose={() => setShowSignupModal(false)}
+        onSuccess={() => {
+          setShowSignupModal(false);
+          addToast({
+            type: 'success',
+            message: 'Account created successfully! Please log in.',
+            duration: 4000
+          });
+        }}
+      />
+
+      {/* Reset Password Modal */}
+      <ResetPasswordModal 
+        isOpen={showResetPasswordModal}
+        onClose={() => setShowResetPasswordModal(false)}
+        onSuccess={() => {
+          setShowResetPasswordModal(false);
+          addToast({
+            type: 'success',
+            message: 'Password reset link sent! Check your email.',
+            duration: 4000
+          });
+        }}
+      />
     </div>
   );
 }

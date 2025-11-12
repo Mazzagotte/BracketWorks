@@ -29,6 +29,7 @@ export default function BracketsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [bracketGenerationPromise, setBracketGenerationPromise] = useState<Promise<BracketPreview> | null>(null)
   const [isExplainModalOpen, setIsExplainModalOpen] = useState(false)
+  const [isInitializing, setIsInitializing] = useState(true)
   
   // State for bracket display
   const [activeTab, setActiveTab] = useState<'scratch' | 'handicap' | 'all'>('all')
@@ -82,7 +83,7 @@ export default function BracketsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Auto-select tournament from localStorage
+  // Auto-select tournament from localStorage and load squads in one operation
   useEffect(() => {
     if (tournaments.length > 0 && !selectedTournament) {
       const storedTournamentId = storage.getItem('lastTournamentId')
@@ -90,9 +91,18 @@ export default function BracketsPage() {
         const storedTournament = tournaments.find(t => t.id === parseInt(storedTournamentId))
         if (storedTournament) {
           setSelectedTournament(storedTournament)
-          fetchSquads(storedTournament.id)
+          // Immediately fetch squads - no need to wait for re-render
+          fetchSquads(storedTournament.id).then(() => {
+            setIsInitializing(false)
+          })
+        } else {
+          setIsInitializing(false)
         }
+      } else {
+        setIsInitializing(false)
       }
+    } else if (tournaments.length > 0) {
+      setIsInitializing(false)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tournaments, selectedTournament])
@@ -206,7 +216,7 @@ export default function BracketsPage() {
         console.error('Bracket generation failed', { error });
         throw error
       })
-
+    
     // Set the promise and open modal
     setBracketGenerationPromise(generationPromise)
     setIsModalOpen(true)
@@ -472,8 +482,150 @@ export default function BracketsPage() {
         fontFamily: 'Inter, sans-serif',
         position: 'relative'
       }}>
-        {/* Show empty state if no brackets */}
-        {(() => {
+        {/* No Tournament Loaded State */}
+        {!selectedTournament && !isInitializing ? (
+          <div style={{
+            background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+            borderRadius: '20px',
+            padding: isMobile ? '40px 24px' : '60px 40px',
+            textAlign: 'center',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.06)',
+            border: '2px solid #e2e8f0',
+            margin: isMobile ? '20px 0' : '40px auto',
+            maxWidth: '800px'
+          }}>
+            <h2 style={{
+              fontSize: isMobile ? '22px' : '28px',
+              fontWeight: 700,
+              color: '#1e293b',
+              marginBottom: '12px',
+              letterSpacing: '-0.02em',
+              marginTop: '24px'
+            }}>
+              No Tournament Loaded
+            </h2>
+            <p style={{
+              fontSize: isMobile ? '15px' : '16px',
+              color: '#64748b',
+              marginBottom: '32px',
+              maxWidth: '560px',
+              margin: '0 auto 32px',
+              lineHeight: '1.6'
+            }}>
+              Load a tournament from the dashboard to generate and manage brackets. Once loaded, you'll be able to create brackets, track matches, and manage tournament progress.
+            </p>
+            <a 
+              href="/dashboard"
+              style={{
+                display: 'inline-block',
+                background: 'linear-gradient(135deg, #f0a500 0%, #e09800 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '12px',
+                padding: isMobile ? '12px 24px' : '14px 28px',
+                fontSize: isMobile ? '15px' : '16px',
+                fontWeight: '600',
+                textDecoration: 'none',
+                boxShadow: '0 4px 14px rgba(240, 165, 0, 0.3)',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 6px 20px rgba(240, 165, 0, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 14px rgba(240, 165, 0, 0.3)';
+              }}
+            >
+              Go to Dashboard
+            </a>
+            
+            {/* Info Cards */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '16px',
+              marginTop: '48px',
+              maxWidth: '800px',
+              margin: '48px auto 0'
+            }}>
+              <div style={{
+                background: 'white',
+                borderRadius: '12px',
+                padding: '20px',
+                textAlign: 'left',
+                border: '1px solid #e2e8f0',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-4px)';
+                e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.08)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}>
+                <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#1e293b', marginBottom: '4px' }}>
+                  Generate Brackets
+                </h3>
+                <p style={{ fontSize: '13px', color: '#64748b', lineHeight: '1.5', margin: 0 }}>
+                  Automatically create single or double elimination brackets from your player list
+                </p>
+              </div>
+              
+              <div style={{
+                background: 'white',
+                borderRadius: '12px',
+                padding: '20px',
+                textAlign: 'left',
+                border: '1px solid #e2e8f0',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-4px)';
+                e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.08)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}>
+                <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#1e293b', marginBottom: '4px' }}>
+                  Track Matches
+                </h3>
+                <p style={{ fontSize: '13px', color: '#64748b', lineHeight: '1.5', margin: 0 }}>
+                  View match-ups, update winners, and follow tournament progress in real-time
+                </p>
+              </div>
+              
+              <div style={{
+                background: 'white',
+                borderRadius: '12px',
+                padding: '20px',
+                textAlign: 'left',
+                border: '1px solid #e2e8f0',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-4px)';
+                e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.08)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}>
+                <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#1e293b', marginBottom: '4px' }}>
+                  Multiple Views
+                </h3>
+                <p style={{ fontSize: '13px', color: '#64748b', lineHeight: '1.5', margin: 0 }}>
+                  Separate scratch and handicap brackets, with mobile-friendly navigation
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : (
+        /* Show empty state if no brackets */
+        (() => {
           const hasLoadedBrackets = !!loadedBrackets
           const hasRounds = !!rounds
           const roundsLength = rounds?.length || 0
@@ -782,6 +934,7 @@ export default function BracketsPage() {
               </div>
             )}
           </>
+        )
         )}
       </div>
 
