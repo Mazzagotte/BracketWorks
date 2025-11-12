@@ -598,44 +598,55 @@ export default function TournamentDashboard() {
 
 
 
-  // Fetch tournaments and restore last loaded tournament from backend on mount
+  // Fetch tournaments and restore last loaded tournament from backend on mount - OPTIMIZED
   useEffect(() => {
     const adminFlag = localStorage.getItem('is_admin');
     setIsAdmin(adminFlag === '1' || adminFlag === 'true');
+    
+    // Batch read all localStorage data at once
     const lastTournamentId = localStorage.getItem('lastTournamentId');
     const token = localStorage.getItem('token');
     const userId = localStorage.getItem('user_id');
+    
     if (lastTournamentId && token) {
-      fetch(API(`/api/v1/tournaments/${lastTournamentId}`), {
+      // Parallelize all initial data fetches for faster loading
+      const tournamentPromise = fetch(API(`/api/v1/tournaments/${lastTournamentId}`), {
         headers: { Authorization: `Bearer ${token}` }
-      })
-        .then(res => res.ok ? res.json() : null)
-        .then(data => {
-          if (data) {
-            setTournament(data);
-            loadBracketSettings(data.id);
-          }
-        });
-      fetch(API(`/api/v1/squads/?tournament_id=${lastTournamentId}`), {
+      }).then(res => res.ok ? res.json() : null);
+      
+      const squadsPromise = fetch(API(`/api/v1/squads/?tournament_id=${lastTournamentId}`), {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         }
-      })
-        .then(res => res.ok ? res.json() : [])
-        .then(data => setSquads(data));
-      // Fetch selected squad from backend
-      if (userId) {
-        fetch(API(`/api/v1/squads/selected/?user_id=${userId}`), {
-          headers: { Authorization: `Bearer ${token}` }
+      }).then(res => res.ok ? res.json() : []);
+      
+      const selectedSquadPromise = userId
+        ? fetch(API(`/api/v1/squads/selected/?user_id=${userId}`), {
+            headers: { Authorization: `Bearer ${token}` }
+          }).then(res => res.ok ? res.json() : null)
+        : Promise.resolve(null);
+      
+      // Wait for all requests to complete in parallel
+      Promise.all([tournamentPromise, squadsPromise, selectedSquadPromise])
+        .then(([tournamentData, squadsData, selectedSquadData]) => {
+          // Set tournament and load bracket settings
+          if (tournamentData) {
+            setTournament(tournamentData);
+            loadBracketSettings(tournamentData.id);
+          }
+          
+          // Set squads data
+          setSquads(squadsData);
+          
+          // Set selected squad
+          if (selectedSquadData && selectedSquadData.squad_id) {
+            setSelectedSquadId(selectedSquadData.squad_id);
+          }
         })
-          .then(res => res.ok ? res.json() : null)
-          .then(data => {
-            if (data && data.squad_id) {
-              setSelectedSquadId(data.squad_id);
-            }
-          });
-      }
+        .catch(error => {
+          logger.error('Error loading initial dashboard data:', error);
+        });
     }
   }, []);
 
@@ -940,8 +951,55 @@ export default function TournamentDashboard() {
       >
         Load Tournament
       </button>
+      
+      {tournament && (
+        <button
+          onClick={() => {
+            setTournament(null);
+            setSquads([]);
+            setBracketSettings({
+              tournament_id: 0,
+              bracket_size: 16,
+              first_place: 0,
+              second_place: 0,
+              house_amount: 0,
+              cost_per_bracket: 0,
+              handicap_percentage: 80,
+              handicap_base: 200
+            });
+            localStorage.removeItem('lastTournamentId');
+            addToast({
+              type: 'success',
+              message: 'Tournament unloaded successfully',
+              duration: 3000
+            });
+          }}
+          style={{
+            backgroundColor: '#ef4444',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            padding: '10px 20px',
+            fontSize: '14px',
+            fontWeight: '600',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            transition: 'all 0.2s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#dc2626'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = '#ef4444'
+          }}
+        >
+          Unload Tournament
+        </button>
+      )}
     </div>
-  ), [tournament]);
+  ), [tournament, addToast]);
 
   usePageHeader({
     title: "Tournament Dashboard",
@@ -973,6 +1031,192 @@ export default function TournamentDashboard() {
           }}>
             {/* Enhanced Side-by-side container for cards */}
             <div className={mobileStyles.cardsContainer}>
+            
+            {/* Empty State - No Tournament Loaded */}
+            {!tournament && (
+              <div style={{
+                gridColumn: '1 / -1',
+                background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+                borderRadius: '20px',
+                padding: '60px 40px',
+                textAlign: 'center',
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.06)',
+                border: '2px solid #e2e8f0',
+                marginBottom: '24px'
+              }}>
+                <h2 style={{
+                  fontSize: '28px',
+                  fontWeight: 700,
+                  color: '#1e293b',
+                  marginBottom: '12px',
+                  letterSpacing: '-0.02em',
+                  marginTop: '24px'
+                }}>
+                  Welcome to Tournament Dashboard
+                </h2>
+                <p style={{
+                  fontSize: '16px',
+                  color: '#64748b',
+                  marginBottom: '32px',
+                  maxWidth: '560px',
+                  margin: '0 auto 32px',
+                  lineHeight: '1.6'
+                }}>
+                  Get started by creating a new tournament or loading an existing one to manage brackets, squads, and settings.
+                </p>
+                <div style={{
+                  display: 'flex',
+                  gap: '16px',
+                  justifyContent: 'center',
+                  flexWrap: 'wrap'
+                }}>
+                  <button
+                    onClick={() => {
+                      setCreateMode(true);
+                      setModalOpen(true);
+                    }}
+                    style={{
+                      background: 'linear-gradient(135deg, #f0a500 0%, #e09800 100%)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '12px',
+                      padding: '14px 28px',
+                      fontSize: '16px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      transition: 'all 0.2s ease',
+                      boxShadow: '0 4px 14px rgba(240, 165, 0, 0.3)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 6px 20px rgba(240, 165, 0, 0.4)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 4px 14px rgba(240, 165, 0, 0.3)';
+                    }}
+                  >
+                    Create New Tournament
+                  </button>
+                  <button
+                    onClick={() => setLoadModalOpen(true)}
+                    style={{
+                      background: 'white',
+                      color: '#f0a500',
+                      border: '2px solid #f0a500',
+                      borderRadius: '12px',
+                      padding: '14px 28px',
+                      fontSize: '16px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      transition: 'all 0.2s ease',
+                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.background = '#fffbf0';
+                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.background = 'white';
+                      e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.05)';
+                    }}
+                  >
+                    Load Existing Tournament
+                  </button>
+                </div>
+                
+                {/* Quick Info Cards */}
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                  gap: '16px',
+                  marginTop: '48px',
+                  maxWidth: '800px',
+                  margin: '48px auto 0'
+                }}>
+                  <div style={{
+                    background: 'white',
+                    borderRadius: '12px',
+                    padding: '20px',
+                    textAlign: 'left',
+                    border: '1px solid #e2e8f0',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-4px)';
+                    e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.08)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}>
+                    <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#1e293b', marginBottom: '4px' }}>
+                      Configure Settings
+                    </h3>
+                    <p style={{ fontSize: '13px', color: '#64748b', lineHeight: '1.5', margin: 0 }}>
+                      Set up bracket sizes, prizes, and handicap rules
+                    </p>
+                  </div>
+                  
+                  <div style={{
+                    background: 'white',
+                    borderRadius: '12px',
+                    padding: '20px',
+                    textAlign: 'left',
+                    border: '1px solid #e2e8f0',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-4px)';
+                    e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.08)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}>
+                    <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#1e293b', marginBottom: '4px' }}>
+                      Manage Squads
+                    </h3>
+                    <p style={{ fontSize: '13px', color: '#64748b', lineHeight: '1.5', margin: 0 }}>
+                      Create and organize multiple squads with dates and times
+                    </p>
+                  </div>
+                  
+                  <div style={{
+                    background: 'white',
+                    borderRadius: '12px',
+                    padding: '20px',
+                    textAlign: 'left',
+                    border: '1px solid #e2e8f0',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-4px)';
+                    e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.08)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}>
+                    <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#1e293b', marginBottom: '4px' }}>
+                      Track Results
+                    </h3>
+                    <p style={{ fontSize: '13px', color: '#64748b', lineHeight: '1.5', margin: 0 }}>
+                      Generate brackets, enter scores, and manage payouts
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             {/* Bracket Settings Card */}
             {tournament && (
               <div className={mobileStyles.bracketSettingsCard}>
@@ -981,14 +1225,19 @@ export default function TournamentDashboard() {
                   {/* Auto-save status indicator - only render on client to avoid hydration issues */}
                   {isClient && (
                     <div className={mobileStyles.saveStatus}>
-                      {saveStatus === 'saved' && lastSavedTime && (
-                        <div className={mobileStyles.statusSaved}>
-                          <span className={mobileStyles.statusIcon}>✓</span>
-                          <span className={mobileStyles.statusText}>
-                            Saved {new Date().getTime() - lastSavedTime.getTime() < 5000 ? 'just now' : 'at ' + lastSavedTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                        </div>
-                      )}
+                      {saveStatus === 'saved' && lastSavedTime && (() => {
+                        const now = Date.now()
+                        const timeSince = now - lastSavedTime.getTime()
+                        const timeText = timeSince < 5000 ? 'just now' : 'at ' + lastSavedTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                        return (
+                          <div className={mobileStyles.statusSaved}>
+                            <span className={mobileStyles.statusIcon}>✓</span>
+                            <span className={mobileStyles.statusText}>
+                              Saved {timeText}
+                            </span>
+                          </div>
+                        )
+                      })()}
                       {saveStatus === 'saving' && (
                         <div className={mobileStyles.statusSaving}>
                           <span className={mobileStyles.statusSpinner}>⟳</span>
@@ -1189,7 +1438,7 @@ export default function TournamentDashboard() {
             )}
 
             {/* Squad Selection Card */}
-            {squads.length > 0 ? (
+            {squads.length > 0 && (
               <div className={mobileStyles.squadSelectionCard}>
                 <div className={mobileStyles.squadHeader}>
                   <h2 className={mobileStyles.squadTitle}>Squad Selection</h2>
@@ -1249,14 +1498,6 @@ export default function TournamentDashboard() {
                     </span>
                   </div>
                 )}
-              </div>
-            ) : (
-              <div className={mobileStyles.noSquadsCard}>
-                <div className={mobileStyles.noSquadsIcon}>📅</div>
-                <div className={mobileStyles.noSquadsTitle}>More Features Coming Soon</div>
-                <div className={mobileStyles.noSquadsText}>
-                  Squad selection will appear here when squads are available
-                </div>
               </div>
             )}
           </div>

@@ -153,7 +153,7 @@ interface CardProps {
   noPadding?: boolean
 }
 
-export const Card: React.FC<CardProps> = ({ 
+export const Card: React.FC<CardProps> = React.memo(({ 
   children, 
   title,
   className = '',
@@ -180,7 +180,7 @@ export const Card: React.FC<CardProps> = ({
     )}
     {children}
   </div>
-)
+))
 
 // Grid Container Component
 interface GridProps {
@@ -230,7 +230,7 @@ interface StatCardProps {
   className?: string
 }
 
-export const StatCard: React.FC<StatCardProps> = ({ 
+export const StatCard: React.FC<StatCardProps> = React.memo(({ 
   title, 
   value, 
   subtitle,
@@ -318,7 +318,7 @@ export const StatCard: React.FC<StatCardProps> = ({
       )}
     </div>
   )
-}
+})
 
 // Button Component (enhanced)
 interface ButtonProps {

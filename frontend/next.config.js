@@ -18,11 +18,55 @@ const nextConfig = {
   experimental: {
     forceSwcTransforms: true,
     // Enable modern bundling optimizations
-    optimizePackageImports: ['@heroicons/react'],
+    optimizePackageImports: ['@heroicons/react', 'date-fns', 'lodash'],
   },
   
   // Production and development optimizations
   webpack: (config, { dev, isServer }) => {
+    if (!dev && !isServer) {
+      // Production client-side optimizations
+      config.optimization = {
+        ...config.optimization,
+        moduleIds: 'deterministic',
+        runtimeChunk: 'single',
+        splitChunks: {
+          chunks: 'all',
+          cacheGroups: {
+            // React and framework code
+            framework: {
+              test: /[\\/]node_modules[\\/](react|react-dom|scheduler|next)[\\/]/,
+              name: 'framework',
+              priority: 40,
+              enforce: true
+            },
+            // Vendor libraries
+            vendor: {
+              test: /[\\/]node_modules[\\/]/,
+              name: 'vendor',
+              priority: 30,
+              minChunks: 2,
+              reuseExistingChunk: true
+            },
+            // Common code used across pages
+            common: {
+              name: 'common',
+              minChunks: 2,
+              priority: 20,
+              reuseExistingChunk: true
+            },
+            // Styles
+            styles: {
+              name: 'styles',
+              test: /\.(css|scss)$/,
+              chunks: 'all',
+              enforce: true,
+              priority: 10
+            }
+          }
+        }
+      };
+    }
+    
     if (dev) {
       // Faster development builds
       config.optimization.splitChunks = {
@@ -37,6 +81,7 @@ const nextConfig = {
       config.optimization.providedExports = false;
       config.optimization.usedExports = false;
     }
+    
     return config;
   },
   

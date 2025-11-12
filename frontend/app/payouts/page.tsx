@@ -173,7 +173,7 @@ export default function PayoutsPage() {
   const [selectedSquad, setSelectedSquad] = useState<Squad | null>(null)
   const [payoutData, setPayoutData] = useState<PayoutSummary | null>(null)
   const [entryData, setEntryData] = useState<EntryData | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'payouts' | 'entries'>('payouts')
   const [paidOutPlayers, setPaidOutPlayers] = useState<Set<string>>(new Set())
@@ -183,8 +183,27 @@ export default function PayoutsPage() {
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date())
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true)
 
+  // Extract inline styles to constants to prevent object recreation on every render
+  const tableStyles = useMemo(() => ({
+    cell: {
+      display: 'table-cell',
+      padding: '16px 12px',
+      borderBottom: '1px solid #e2e8f0',
+      verticalAlign: 'middle' as const
+    },
+    evenRow: { backgroundColor: '#fafbfc' },
+    oddRow: { backgroundColor: 'white' },
+    rankColors: {
+      first: '#059669',
+      second: '#0369a1', 
+      third: '#d97706',
+      default: '#374151'
+    }
+  }), [])
+
   const getTimeSinceRefresh = useCallback(() => {
-    const diff = Math.floor((new Date().getTime() - lastRefresh.getTime()) / 1000)
+    const now = Date.now() // Cache once instead of creating multiple Date objects
+    const diff = Math.floor((now - lastRefresh.getTime()) / 1000)
     if (diff < 60) return `${diff}s ago`
     if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
     return `${Math.floor(diff / 3600)}h ago`
@@ -200,6 +219,8 @@ export default function PayoutsPage() {
       total_amount: number
       total_brackets: number
       best_place: number
+      scratchCount: number  // Pre-calculated
+      handicapCount: number // Pre-calculated
       brackets: Array<{
         bracket_name: string
         bracket_type: string
@@ -219,6 +240,8 @@ export default function PayoutsPage() {
           total_amount: 0,
           total_brackets: 0,
           best_place: winner.place,
+          scratchCount: 0,
+          handicapCount: 0,
           brackets: []
         })
       }
@@ -227,6 +250,14 @@ export default function PayoutsPage() {
       player.total_amount += winner.payout_amount
       player.total_brackets += 1
       player.best_place = Math.min(player.best_place, winner.place)
+      
+      // Pre-calculate bracket type counts to avoid filtering in render loop
+      if (winner.bracket_type.toLowerCase() === 'scratch') {
+        player.scratchCount++
+      } else if (winner.bracket_type.toLowerCase() === 'handicap') {
+        player.handicapCount++
+      }
+      
       player.brackets.push({
         bracket_name: winner.bracket_name,
         bracket_type: winner.bracket_type,
@@ -277,12 +308,15 @@ export default function PayoutsPage() {
       const isSecondEarner = index === 1
       const isThirdEarner = index === 2
       
-      const rankColor = isTopEarner ? '#059669' : isSecondEarner ? '#0369a1' : isThirdEarner ? '#d97706' : '#374151'
-      const rowBg = index % 2 === 0 ? '#fafbfc' : 'white'
+      const rankColor = isTopEarner ? tableStyles.rankColors.first 
+        : isSecondEarner ? tableStyles.rankColors.second 
+        : isThirdEarner ? tableStyles.rankColors.third 
+        : tableStyles.rankColors.default
+      const rowBg = index % 2 === 0 ? tableStyles.evenRow.backgroundColor : tableStyles.oddRow.backgroundColor
       
-      // Count bracket types
-      const scratchBrackets = player.brackets.filter(bracket => bracket.bracket_type.toLowerCase() === 'scratch').length
-      const handicapBrackets = player.brackets.filter(bracket => bracket.bracket_type.toLowerCase() === 'handicap').length
+      // Use pre-calculated bracket counts (no filtering in render!)
+      const scratchBrackets = player.scratchCount
+      const handicapBrackets = player.handicapCount
       
       return (
         <>
@@ -296,10 +330,7 @@ export default function PayoutsPage() {
           >
             {/* Rank */}
             <div style={{
-              display: 'table-cell',
-              padding: '16px 12px',
-              borderBottom: '1px solid #e2e8f0',
-              verticalAlign: 'middle'
+              ...tableStyles.cell,
             }}>
               <div style={{
                 display: 'flex',
@@ -314,10 +345,7 @@ export default function PayoutsPage() {
 
             {/* Player Name */}
             <div style={{
-              display: 'table-cell',
-              padding: '16px 12px',
-              borderBottom: '1px solid #e2e8f0',
-              verticalAlign: 'middle'
+              ...tableStyles.cell,
             }}>
               <div style={{
                 fontWeight: '600',
@@ -724,20 +752,20 @@ export default function PayoutsPage() {
     
     if (lastTournamentId && token) {
       try {
-        // Load tournament data
-        const tournamentResponse = await fetch(API(`/api/v1/tournaments/${lastTournamentId}`), {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+        // Parallelize tournament and squads requests for faster loading
+        const [tournamentResponse, squadsResponse] = await Promise.all([
+          fetch(API(`/api/v1/tournaments/${lastTournamentId}`), {
+            headers: { 'Authorization': `Bearer ${token}` }
+          }),
+          fetch(API(`/api/v1/squads/?tournament_id=${lastTournamentId}`), {
+            headers: { 'Authorization': `Bearer ${token}` }
+          })
+        ]);
         
         if (tournamentResponse.ok) {
           const tournamentData = await tournamentResponse.json();
           setTournament(tournamentData);
         }
-
-        // Load squads data
-        const squadsResponse = await fetch(API(`/api/v1/squads/?tournament_id=${lastTournamentId}`), {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
         
         if (squadsResponse.ok) {
           const squadsData = await squadsResponse.json();
@@ -750,7 +778,11 @@ export default function PayoutsPage() {
         }
       } catch (error) {
         logger.error('Error loading current tournament:', error);
+      } finally {
+        setLoading(false);
       }
+    } else {
+      setLoading(false);
     }
   }
 
@@ -931,13 +963,16 @@ export default function PayoutsPage() {
     }
   }
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2
-    }).format(amount)
-  }
+  // Memoize currency formatter to avoid recreating Intl.NumberFormat on every call
+  const currencyFormatter = useMemo(() => new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2
+  }), [])
+
+  const formatCurrency = useCallback((amount: number) => {
+    return currencyFormatter.format(amount)
+  }, [currencyFormatter])
 
   const togglePaidStatus = (playerKey: string) => {
     setPaidOutPlayers(prev => {
@@ -980,6 +1015,41 @@ export default function PayoutsPage() {
       setSortDirection('desc')
     }
   }
+
+  // Memoize payment statistics to avoid recalculating on every render
+  const paymentStats = useMemo(() => {
+    if (!payoutData) return null
+
+    const playerMap = new Map<string, { total_amount: number }>()
+    payoutData.winners_by_bracket.forEach(winner => {
+      const key = `${winner.player_name}_${winner.player_id}`
+      if (!playerMap.has(key)) {
+        playerMap.set(key, { total_amount: 0 })
+      }
+      playerMap.get(key)!.total_amount += winner.payout_amount
+    })
+    
+    const totalPlayers = playerMap.size
+    const paidPlayers = Array.from(playerMap.keys()).filter(key => paidOutPlayers.has(key)).length
+    const pendingPlayers = totalPlayers - paidPlayers
+    
+    const totalAmount = Array.from(playerMap.values()).reduce((sum, player) => sum + player.total_amount, 0)
+    const paidAmount = Array.from(playerMap.entries())
+      .filter(([key]) => paidOutPlayers.has(key))
+      .reduce((sum, [, player]) => sum + player.total_amount, 0)
+    const pendingAmount = totalAmount - paidAmount
+    const completionRate = totalPlayers > 0 ? Math.round((paidPlayers / totalPlayers) * 100) : 0
+
+    return {
+      totalPlayers,
+      paidPlayers,
+      pendingPlayers,
+      totalAmount,
+      paidAmount,
+      pendingAmount,
+      completionRate
+    }
+  }, [payoutData, paidOutPlayers])
 
   return (
     <ErrorBoundary>
@@ -1049,14 +1119,142 @@ export default function PayoutsPage() {
         {/* No Tournament Selected */}
         {!tournament && !loading && (
           <div style={{
-            backgroundColor: colors.surface,
-            borderRadius: '8px',
-            padding: '40px',
+            background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+            borderRadius: '20px',
+            padding: '60px 40px',
             textAlign: 'center',
-            boxShadow: colors.shadow.sm
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.06)',
+            border: '2px solid #e2e8f0',
+            margin: '40px auto',
+            maxWidth: '800px'
           }}>
-            <div style={{ color: colors.text.secondary, fontSize: '16px' }}>
-              Please select a tournament from the dashboard to view payouts
+            <h2 style={{
+              fontSize: '28px',
+              fontWeight: 700,
+              color: '#1e293b',
+              marginBottom: '12px',
+              letterSpacing: '-0.02em',
+              marginTop: '24px'
+            }}>
+              No Tournament Loaded
+            </h2>
+            <p style={{
+              fontSize: '16px',
+              color: '#64748b',
+              marginBottom: '32px',
+              maxWidth: '560px',
+              margin: '0 auto 32px',
+              lineHeight: '1.6'
+            }}>
+              Load a tournament from the dashboard to view payouts and prize distributions. Once loaded, you'll be able to see detailed payout breakdowns, winner lists, and prize pool information.
+            </p>
+            <a 
+              href="/dashboard"
+              style={{
+                display: 'inline-block',
+                background: 'linear-gradient(135deg, #f0a500 0%, #e09800 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '12px',
+                padding: '14px 28px',
+                fontSize: '16px',
+                fontWeight: '600',
+                textDecoration: 'none',
+                boxShadow: '0 4px 14px rgba(240, 165, 0, 0.3)',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 6px 20px rgba(240, 165, 0, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 14px rgba(240, 165, 0, 0.3)';
+              }}
+            >
+              Go to Dashboard
+            </a>
+            
+            {/* Info Cards */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '16px',
+              marginTop: '48px',
+              maxWidth: '800px',
+              margin: '48px auto 0'
+            }}>
+              <div style={{
+                background: 'white',
+                borderRadius: '12px',
+                padding: '20px',
+                textAlign: 'left',
+                border: '1px solid #e2e8f0',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-4px)';
+                e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.08)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}>
+                <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#1e293b', marginBottom: '4px' }}>
+                  Prize Pool Tracking
+                </h3>
+                <p style={{ fontSize: '13px', color: '#64748b', lineHeight: '1.5', margin: 0 }}>
+                  View total prize pools for scratch and handicap brackets with real-time calculations
+                </p>
+              </div>
+              
+              <div style={{
+                background: 'white',
+                borderRadius: '12px',
+                padding: '20px',
+                textAlign: 'left',
+                border: '1px solid #e2e8f0',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-4px)';
+                e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.08)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}>
+                <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#1e293b', marginBottom: '4px' }}>
+                  Winner Details
+                </h3>
+                <p style={{ fontSize: '13px', color: '#64748b', lineHeight: '1.5', margin: 0 }}>
+                  See first and second place winners for each bracket with payout amounts
+                </p>
+              </div>
+              
+              <div style={{
+                background: 'white',
+                borderRadius: '12px',
+                padding: '20px',
+                textAlign: 'left',
+                border: '1px solid #e2e8f0',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-4px)';
+                e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.08)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}>
+                <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#1e293b', marginBottom: '4px' }}>
+                  Export Reports
+                </h3>
+                <p style={{ fontSize: '13px', color: '#64748b', lineHeight: '1.5', margin: 0 }}>
+                  Download detailed payout reports and summaries for your records
+                </p>
+              </div>
             </div>
           </div>
         )}
@@ -1336,80 +1534,58 @@ export default function PayoutsPage() {
                 <h3 style={{ margin: '0 0 12px 0', color: colors.text.primary, fontSize: '16px', fontWeight: '600' }}>
                   💳 Payment Status Overview
                 </h3>
-                {(() => {
-                  // Calculate payment statistics
-                  const playerMap = new Map<string, { total_amount: number }>()
-                  payoutData.winners_by_bracket.forEach(winner => {
-                    const key = `${winner.player_name}_${winner.player_id}`
-                    if (!playerMap.has(key)) {
-                      playerMap.set(key, { total_amount: 0 })
-                    }
-                    playerMap.get(key)!.total_amount += winner.payout_amount
-                  })
-                  
-                  const totalPlayers = playerMap.size
-                  const paidPlayers = Array.from(playerMap.keys()).filter(key => paidOutPlayers.has(key)).length
-                  const pendingPlayers = totalPlayers - paidPlayers
-                  
-                  const totalAmount = Array.from(playerMap.values()).reduce((sum, player) => sum + player.total_amount, 0)
-                  const paidAmount = Array.from(playerMap.entries())
-                    .filter(([key]) => paidOutPlayers.has(key))
-                    .reduce((sum, [, player]) => sum + player.total_amount, 0)
-                  const pendingAmount = totalAmount - paidAmount
-                  
-                  return (
-                    <div style={{ 
-                      display: 'grid', 
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-                      gap: '12px'
+                {paymentStats && (
+                  <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                    gap: '12px'
+                  }}>
+                    <div style={{
+                      padding: '12px',
+                      backgroundColor: colors.backgrounds.success,
+                      borderRadius: '6px',
+                      textAlign: 'center'
                     }}>
-                      <div style={{
-                        padding: '12px',
-                        backgroundColor: colors.backgrounds.success,
-                        borderRadius: '6px',
-                        textAlign: 'center'
-                      }}>
-                        <div style={{ fontSize: '18px', fontWeight: 'bold', color: colors.success }}>
-                          {paidPlayers}
-                        </div>
-                        <div style={{ fontSize: '12px', color: colors.success }}>Paid Players</div>
-                        <div style={{ fontSize: '12px', fontWeight: '600', color: colors.success }}>
-                          {formatCurrency(paidAmount)}
-                        </div>
+                      <div style={{ fontSize: '18px', fontWeight: 'bold', color: colors.success }}>
+                        {paymentStats.paidPlayers}
                       </div>
-                      
-                      <div style={{
-                        padding: '12px',
-                        backgroundColor: colors.backgrounds.warning,
-                        borderRadius: '6px',
-                        textAlign: 'center'
-                      }}>
-                        <div style={{ fontSize: '18px', fontWeight: 'bold', color: colors.warning }}>
-                          {pendingPlayers}
-                        </div>
-                        <div style={{ fontSize: '12px', color: colors.warning }}>Pending Players</div>
-                        <div style={{ fontSize: '12px', fontWeight: '600', color: colors.warning }}>
-                          {formatCurrency(pendingAmount)}
-                        </div>
-                      </div>
-                      
-                      <div style={{
-                        padding: '12px',
-                        backgroundColor: colors.backgrounds.info,
-                        borderRadius: '6px',
-                        textAlign: 'center'
-                      }}>
-                        <div style={{ fontSize: '18px', fontWeight: 'bold', color: colors.info }}>
-                          {totalPlayers > 0 ? Math.round((paidPlayers / totalPlayers) * 100) : 0}%
-                        </div>
-                        <div style={{ fontSize: '12px', color: colors.info }}>Completion Rate</div>
-                        <div style={{ fontSize: '12px', fontWeight: '600', color: colors.info }}>
-                          {paidPlayers}/{totalPlayers} players
-                        </div>
+                      <div style={{ fontSize: '12px', color: colors.success }}>Paid Players</div>
+                      <div style={{ fontSize: '12px', fontWeight: '600', color: colors.success }}>
+                        {formatCurrency(paymentStats.paidAmount)}
                       </div>
                     </div>
-                  )
-                })()}
+                    
+                    <div style={{
+                      padding: '12px',
+                      backgroundColor: colors.backgrounds.warning,
+                      borderRadius: '6px',
+                      textAlign: 'center'
+                    }}>
+                      <div style={{ fontSize: '18px', fontWeight: 'bold', color: colors.warning }}>
+                        {paymentStats.pendingPlayers}
+                      </div>
+                      <div style={{ fontSize: '12px', color: colors.warning }}>Pending Players</div>
+                      <div style={{ fontSize: '12px', fontWeight: '600', color: colors.warning }}>
+                        {formatCurrency(paymentStats.pendingAmount)}
+                      </div>
+                    </div>
+                    
+                    <div style={{
+                      padding: '12px',
+                      backgroundColor: colors.backgrounds.info,
+                      borderRadius: '6px',
+                      textAlign: 'center'
+                    }}>
+                      <div style={{ fontSize: '18px', fontWeight: 'bold', color: colors.info }}>
+                        {paymentStats.completionRate}%
+                      </div>
+                      <div style={{ fontSize: '12px', color: colors.info }}>Completion Rate</div>
+                      <div style={{ fontSize: '12px', fontWeight: '600', color: colors.info }}>
+                        {paymentStats.paidPlayers}/{paymentStats.totalPlayers} players
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

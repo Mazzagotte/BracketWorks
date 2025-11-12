@@ -137,6 +137,7 @@ export default function Sidebar({ firstName, isMobile = false, isOpen = false, o
             <div key={link.href} style={{ width: '100%', marginBottom: '4px' }}>
               <Link
                 href={link.href}
+                prefetch={true}
                 onClick={(e) => {
                   logger.userAction('Sidebar link clicked', { href: link.href });
                 }}

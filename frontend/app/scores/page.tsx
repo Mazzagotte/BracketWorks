@@ -407,52 +407,59 @@ export default function ScoresPage() {
     actions: headerActions
   })
 
-  // Fetch tournament, squad, and players data
+  // Fetch tournament, squad, and players data - OPTIMIZED WITH PARALLEL REQUESTS
   useEffect(() => {
-    const lastTournamentId = localStorage.getItem('lastTournamentId')
-    const token = localStorage.getItem('token')
-    const userId = localStorage.getItem('user_id')
+    // Batch read all localStorage data at once for better performance
+    const { lastTournamentId, token, userId } = (() => {
+      if (typeof window === 'undefined') return { lastTournamentId: null, token: null, userId: null };
+      return {
+        lastTournamentId: localStorage.getItem('lastTournamentId'),
+        token: localStorage.getItem('token'),
+        userId: localStorage.getItem('user_id')
+      };
+    })();
     
     if (lastTournamentId && token) {
       setIsLoading(true)
       
-      // Fetch tournament info
-      fetch(API(`/api/v1/tournaments/${lastTournamentId}`), {
+      // Parallelize all initial data fetches for faster loading
+      const tournamentPromise = fetch(API(`/api/v1/tournaments/${lastTournamentId}`), {
         headers: { Authorization: `Bearer ${token}` }
-      })
-      .then(res => res.ok ? res.json() : null)
-      .then(data => {
-        if (data) setTournament(data)
-      })
+      }).then(res => res.ok ? res.json() : null)
 
-      // Fetch selected squad from backend
-      if (userId) {
-        fetch(API(`/api/v1/squads/selected/?user_id=${userId}`), {
-          headers: { Authorization: `Bearer ${token}` }
-        })
-        .then(res => res.ok ? res.json() : null)
-        .then(data => {
-          if (data && data.squad_id) {
-            // Find squad details
-            fetch(API(`/api/v1/squads/?tournament_id=${lastTournamentId}`), {
-              headers: { Authorization: `Bearer ${token}` }
-            })
-            .then(res => res.ok ? res.json() : [])
-            .then(squadsData => {
-              const squad = squadsData.find((s: Squad) => s.id === data.squad_id)
-              setSelectedSquad(squad || null)
-              
-              // Fetch players for this squad
-              if (squad) {
-                fetchPlayersWithScores(lastTournamentId, squad.id, token)
-              }
-            })
-          } else {
-            // No squad selected, fetch all players for tournament
-            fetchPlayersWithScores(lastTournamentId, null, token)
+      const squadsPromise = fetch(API(`/api/v1/squads/?tournament_id=${lastTournamentId}`), {
+        headers: { Authorization: `Bearer ${token}` }
+      }).then(res => res.ok ? res.json() : [])
+
+      const selectedSquadPromise = userId 
+        ? fetch(API(`/api/v1/squads/selected/?user_id=${userId}`), {
+            headers: { Authorization: `Bearer ${token}` }
+          }).then(res => res.ok ? res.json() : null)
+        : Promise.resolve(null)
+
+      // Wait for all requests to complete in parallel
+      Promise.all([tournamentPromise, squadsPromise, selectedSquadPromise])
+        .then(([tournamentData, squadsData, selectedSquadData]) => {
+          // Set tournament data
+          if (tournamentData) setTournament(tournamentData)
+
+          // Determine which squad to use
+          let squadToUse = null
+          if (selectedSquadData && selectedSquadData.squad_id) {
+            squadToUse = squadsData.find((s: Squad) => s.id === selectedSquadData.squad_id)
+            setSelectedSquad(squadToUse || null)
           }
+
+          // Fetch players with scores for the selected squad (or all if no squad)
+          fetchPlayersWithScores(lastTournamentId, squadToUse?.id || null, token)
         })
-      }
+        .catch(err => {
+          logger.error('Error fetching initial data:', err)
+          setIsLoading(false)
+        })
+    } else {
+      // No tournament loaded, stop loading immediately
+      setIsLoading(false)
     }
   }, [])
 
@@ -852,6 +859,54 @@ export default function ScoresPage() {
         >
           {/* Mobile content will go here */}
           <div className="space-y-4">
+            {/* No Tournament State */}
+            {!tournament && !isLoading && (
+              <div style={{
+                background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+                borderRadius: '16px',
+                padding: '40px 24px',
+                textAlign: 'center',
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.06)',
+                border: '2px solid #e2e8f0',
+                margin: '20px 0'
+              }}>
+                <h2 style={{
+                  fontSize: '22px',
+                  fontWeight: 700,
+                  color: '#1e293b',
+                  marginBottom: '12px',
+                  letterSpacing: '-0.02em'
+                }}>
+                  No Tournament Loaded
+                </h2>
+                <p style={{
+                  fontSize: '15px',
+                  color: '#64748b',
+                  marginBottom: '24px',
+                  lineHeight: '1.6'
+                }}>
+                  Load a tournament from the dashboard to start entering scores
+                </p>
+                <Link 
+                  href="/dashboard"
+                  style={{
+                    display: 'inline-block',
+                    background: 'linear-gradient(135deg, #f0a500 0%, #e09800 100%)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '10px',
+                    padding: '12px 24px',
+                    fontSize: '15px',
+                    fontWeight: '600',
+                    textDecoration: 'none',
+                    boxShadow: '0 4px 14px rgba(240, 165, 0, 0.3)'
+                  }}
+                >
+                  Go to Dashboard
+                </Link>
+              </div>
+            )}
+            
             {/* Tournament and Squad selector for mobile */}
             {tournament && (
               <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
@@ -959,6 +1014,89 @@ export default function ScoresPage() {
         margin: '0 auto', 
         padding: '2rem 1rem'
       }}>
+        
+          {/* No Tournament State - Desktop */}
+          {!tournament && !isLoading && (
+            <div style={{
+              background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+              borderRadius: '20px',
+              padding: '60px 40px',
+              textAlign: 'center',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.06)',
+              border: '2px solid #e2e8f0',
+              marginBottom: '24px'
+            }}>
+              <h2 style={{
+                fontSize: '28px',
+                fontWeight: 700,
+                color: '#1e293b',
+                marginBottom: '12px',
+                letterSpacing: '-0.02em',
+                marginTop: '24px'
+              }}>
+                No Tournament Loaded
+              </h2>
+              <p style={{
+                fontSize: '16px',
+                color: '#64748b',
+                marginBottom: '32px',
+                maxWidth: '560px',
+                margin: '0 auto 32px',
+                lineHeight: '1.6'
+              }}>
+                You need to load a tournament from the dashboard before you can enter scores. Once loaded, you'll be able to enter and manage scores for all players.
+              </p>
+              <Link 
+                href="/dashboard"
+                style={{
+                  display: 'inline-block',
+                  background: 'linear-gradient(135deg, #f0a500 0%, #e09800 100%)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '12px',
+                  padding: '14px 28px',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  textDecoration: 'none',
+                  boxShadow: '0 4px 14px rgba(240, 165, 0, 0.3)',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 6px 20px rgba(240, 165, 0, 0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 4px 14px rgba(240, 165, 0, 0.3)';
+                }}
+              >
+                Go to Dashboard
+              </Link>
+              
+              {/* Quick Info */}
+              <div style={{
+                marginTop: '48px',
+                padding: '24px',
+                background: 'white',
+                borderRadius: '12px',
+                border: '1px solid #e2e8f0',
+                maxWidth: '600px',
+                margin: '48px auto 0',
+                textAlign: 'left'
+              }}>
+                <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#1e293b', marginBottom: '12px' }}>
+                  What you can do with Scores:
+                </h3>
+                <ul style={{ fontSize: '14px', color: '#64748b', lineHeight: '1.8', paddingLeft: '20px', margin: 0 }}>
+                  <li>Enter scratch scores for each game</li>
+                  <li>Automatic handicap calculation</li>
+                  <li>Real-time totals and rankings</li>
+                  <li>Auto-save as you type</li>
+                  <li>Export scores to CSV</li>
+                </ul>
+              </div>
+            </div>
+          )}
         
           {/* Offline Indicator */}
           {!isOnline && (

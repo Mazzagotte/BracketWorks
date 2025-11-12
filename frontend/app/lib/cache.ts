@@ -89,3 +89,69 @@ export function useApiCache() {
 
   return { cachedFetch, ...cache }
 }
+
+/**
+ * Hook for stale-while-revalidate pattern
+ * Returns cached data immediately and revalidates in background
+ */
+export function useStaleWhileRevalidate<T>(
+  key: string,
+  fetchFn: () => Promise<T>,
+  options: {
+    ttl?: number
+    revalidateOnMount?: boolean
+    onSuccess?: (data: T) => void
+    onError?: (error: Error) => void
+  } = {}
+) {
+  const { ttl = 300000, revalidateOnMount = true, onSuccess, onError } = options
+  const cache = useCache<T>(ttl)
+  const [data, setData] = useState<T | null>(() => cache.get(key))
+  const [isLoading, setIsLoading] = useState(false)
+  const [isValidating, setIsValidating] = useState(false)
+  const [error, setError] = useState<Error | null>(null)
+
+  const revalidate = useCallback(async () => {
+    // If we have cached data, this is a background revalidation
+    const hasCachedData = cache.get(key) !== null
+    
+    if (hasCachedData) {
+      setIsValidating(true)
+    } else {
+      setIsLoading(true)
+    }
+
+    try {
+      const freshData = await fetchFn()
+      cache.set(key, freshData)
+      setData(freshData)
+      setError(null)
+      onSuccess?.(freshData)
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Fetch failed')
+      setError(error)
+      onError?.(error)
+    } finally {
+      setIsLoading(false)
+      setIsValidating(false)
+    }
+  }, [key, fetchFn, cache, onSuccess, onError])
+
+  useEffect(() => {
+    if (revalidateOnMount) {
+      revalidate()
+    }
+  }, [revalidateOnMount])
+
+  return { 
+    data, 
+    isLoading, 
+    isValidating, 
+    error, 
+    revalidate,
+    mutate: (newData: T) => {
+      cache.set(key, newData)
+      setData(newData)
+    }
+  }
+}

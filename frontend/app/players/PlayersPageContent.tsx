@@ -19,7 +19,8 @@ import { usePagination, VirtualizedList, Pagination } from '../components/Perfor
 import { AccessibleInput } from '../components/Accessibility'
 import { useAutoSave } from '../components/DataManagement'
 import EnhancedButton from '../components/EnhancedButton'
-import SmartSuggestions, { USBCValidationIndicator } from '../components/SmartSuggestions'
+import { SmartSuggestions } from '../components/LazyComponents'
+import { USBCValidationIndicator } from '../components/SmartSuggestions'
 import {
   PageContainer, 
   ContentWrapper, 
