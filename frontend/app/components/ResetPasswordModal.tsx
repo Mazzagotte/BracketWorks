@@ -318,9 +318,6 @@ export default function ResetPasswordModal({ isOpen, onClose, onSuccess }: Reset
           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
           zIndex: 10000
         }}>
-          <span style={{ fontSize: '18px' }}>
-            {!isOnline ? '⚠️' : connectionQuality === 'slow' ? '🐌' : '⚡'}
-          </span>
           <span style={{
             fontSize: '14px',
             fontWeight: 500,
@@ -399,7 +396,6 @@ export default function ResetPasswordModal({ isOpen, onClose, onSuccess }: Reset
               alignItems: 'center',
               gap: '8px'
             }}>
-              <span>⚠️</span>
               <span>{error}</span>
             </div>
           )}
@@ -458,7 +454,6 @@ export default function ResetPasswordModal({ isOpen, onClose, onSuccess }: Reset
                 alignItems: 'center',
                 gap: '4px'
               }}>
-                <span>⚠️</span>
                 {fieldErrors.email}
               </div>
             )}
@@ -471,7 +466,6 @@ export default function ResetPasswordModal({ isOpen, onClose, onSuccess }: Reset
                 alignItems: 'center',
                 gap: '4px'
               }}>
-                <span>✓</span>
                 Valid email format
               </div>
             )}
@@ -556,7 +550,6 @@ export default function ResetPasswordModal({ isOpen, onClose, onSuccess }: Reset
               alignItems: 'center',
               gap: '6px'
             }}>
-              <span>⌨️</span>
               Keyboard Shortcuts
             </summary>
             <div style={{

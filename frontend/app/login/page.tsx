@@ -463,16 +463,11 @@ export default function LoginPage() {
               background: '#fef2f2',
               border: '1px solid #fecaca',
               borderRadius: '12px',
-              fontSize: '14px',
-              color: '#dc2626',
-              textAlign: 'center',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px'
+              fontSize: '15px',
+              fontWeight: 600,
+              textAlign: 'center'
             }}>
-              <span>🔒</span>
-              <span>Please wait {loginDelay} seconds before trying again</span>
+              Please wait {loginDelay} seconds before trying again
             </div>
           )}
           {/* Failed Attempts Info */}

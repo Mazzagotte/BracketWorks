@@ -429,7 +429,7 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
                   color: '#22c55e',
                   fontSize: '18px',
                   fontWeight: 'bold'
-                }}>✓</span>
+                }}>[✓]</span>
               )}
             </div>
           </div>
@@ -495,7 +495,7 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
                 color: '#22c55e',
                 fontSize: '18px',
                 fontWeight: 'bold'
-              }}>✓</span>
+              }}>[✓]</span>
             )}
             {usernameAvailable === false && !checkingUsername && (
               <div style={{
@@ -588,7 +588,7 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
                 color: '#22c55e',
                 fontSize: '18px',
                 fontWeight: 'bold'
-              }}>✓</span>
+              }}>[✓]</span>
             )}
           </div>
 
@@ -721,19 +721,19 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
                   gap: '4px'
                 }}>
                   <div style={{ color: password.length >= 6 ? '#22c55e' : '#6b7280' }}>
-                    {password.length >= 6 ? '✓' : '○'} At least 6 characters
+                    {password.length >= 6 ? '[✓]' : '[ ]'} At least 6 characters
                   </div>
                   <div style={{ color: /[a-z]/.test(password) ? '#22c55e' : '#6b7280' }}>
-                    {/[a-z]/.test(password) ? '✓' : '○'} Lowercase letter
+                    {/[a-z]/.test(password) ? '[✓]' : '[ ]'} Lowercase letter
                   </div>
                   <div style={{ color: /[A-Z]/.test(password) ? '#22c55e' : '#6b7280' }}>
-                    {/[A-Z]/.test(password) ? '✓' : '○'} Uppercase letter
+                    {/[A-Z]/.test(password) ? '[✓]' : '[ ]'} Uppercase letter
                   </div>
                   <div style={{ color: /[0-9]/.test(password) ? '#22c55e' : '#6b7280' }}>
-                    {/[0-9]/.test(password) ? '✓' : '○'} Number
+                    {/[0-9]/.test(password) ? '[✓]' : '[ ]'} Number
                   </div>
                   <div style={{ color: /[^A-Za-z0-9]/.test(password) ? '#22c55e' : '#6b7280' }}>
-                    {/[^A-Za-z0-9]/.test(password) ? '✓' : '○'} Special character
+                    {/[^A-Za-z0-9]/.test(password) ? '[✓]' : '[ ]'} Special character
                   </div>
                 </div>
               </div>
@@ -824,7 +824,7 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
                 color: '#22c55e',
                 fontSize: '18px',
                 fontWeight: 'bold'
-              }}>✓</span>
+              }}>[✓]</span>
             )}
             {confirmPassword && !fieldValidation.confirmPassword && (
               <div style={{

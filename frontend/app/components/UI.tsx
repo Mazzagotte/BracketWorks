@@ -1,3 +1,4 @@
+import React from 'react'
 import { stylePresets, colors, spacing, typography, borderRadius, shadows, utils } from '../lib/design-system'
 
 // Page Container Component
