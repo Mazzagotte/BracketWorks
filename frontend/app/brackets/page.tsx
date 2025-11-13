@@ -77,6 +77,15 @@ export default function BracketsPage() {
     }
   }, [])
 
+  // Cleanup modals and state on unmount to prevent navigation blocking
+  useEffect(() => {
+    return () => {
+      setIsModalOpen(false);
+      setIsExplainModalOpen(false);
+      setBracketGenerationPromise(null);
+    };
+  }, []);
+
   // Load tournaments on mount
   useEffect(() => {
     fetchTournaments()
