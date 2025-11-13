@@ -87,9 +87,17 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
     }
     
     return () => {
+      // Always restore scroll on cleanup to prevent stuck state
       document.body.style.overflow = 'unset';
     };
   }, [isMobile, sidebarOpen]);
+
+  // Ensure body overflow is reset when navigating between pages
+  useEffect(() => {
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, []);
 
   // Simple authentication check - trust the auth context
   const isUserAuthenticated = mounted && auth.isAuthenticated;

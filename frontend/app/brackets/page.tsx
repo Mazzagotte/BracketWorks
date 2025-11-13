@@ -132,8 +132,14 @@ export default function BracketsPage() {
   useEffect(() => {
     if (!selectedSquad || !selectedTournament) return;
 
+    // Flag to track if component is still mounted
+    let isMounted = true;
+
     // Centralized bracket loading function
     const loadBrackets = (skipIfSame = false) => {
+      // Skip if component unmounted
+      if (!isMounted) return;
+      
       // Skip if already loading
       if (loadingRef.current) return;
       
@@ -147,12 +153,18 @@ export default function BracketsPage() {
       loadingRef.current = true;
       loadSavedBrackets(selectedTournament.id, selectedSquad.id)
         .then(brackets => {
+          if (!isMounted) {
+            loadingRef.current = false;
+            return;
+          }
           setLoadedBrackets(brackets);
           lastLoadedRef.current = { tournamentId: selectedTournament.id, squadId: selectedSquad.id };
           loadingRef.current = false;
         })
         .catch(() => {
-          loadingRef.current = false;
+          if (isMounted) {
+            loadingRef.current = false;
+          }
         });
     };
 
@@ -161,19 +173,25 @@ export default function BracketsPage() {
 
     // Auto-refresh interval - 5s when visible, 30s when hidden
     const getRefreshInterval = () => document.hidden ? 30000 : 5000;
-    let intervalId = setInterval(() => loadBrackets(true), getRefreshInterval());
+    let intervalId = setInterval(() => {
+      if (isMounted) loadBrackets(true);
+    }, getRefreshInterval());
 
     // Handle visibility changes - adjust interval and reload if becoming visible
     const handleVisibilityChange = () => {
+      if (!isMounted) return;
       clearInterval(intervalId);
       if (!document.hidden) {
         loadBrackets(true); // Reload when becoming visible
       }
-      intervalId = setInterval(() => loadBrackets(true), getRefreshInterval());
+      intervalId = setInterval(() => {
+        if (isMounted) loadBrackets(true);
+      }, getRefreshInterval());
     };
 
     // Handle focus - reload to get latest data
     const handleFocus = () => {
+      if (!isMounted) return;
       if (!document.hidden) {
         loadBrackets(true);
       }
@@ -183,9 +201,11 @@ export default function BracketsPage() {
     window.addEventListener('focus', handleFocus);
     
     return () => {
+      isMounted = false;
       clearInterval(intervalId);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('focus', handleFocus);
+      loadingRef.current = false; // Reset loading state on cleanup
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSquad, selectedTournament]);
