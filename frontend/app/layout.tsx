@@ -83,19 +83,19 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
     if (isMobile && sidebarOpen) {
       document.body.style.overflow = 'hidden';
     } else {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = 'auto';
     }
     
     return () => {
       // Always restore scroll on cleanup to prevent stuck state
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = 'auto';
     };
   }, [isMobile, sidebarOpen]);
 
   // Ensure body overflow is reset when navigating between pages
   useEffect(() => {
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = 'auto';
     };
   }, []);
 
