@@ -59,7 +59,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         };
       }
     } catch (error) {
-      logger.error('❌ Error reading auth from localStorage:', error);
+      logger.error('Error reading auth from localStorage:', error);
     }
     
     return { authToken: null, currentUser: null };
@@ -87,14 +87,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const storedFirstName = localStorage.getItem('first_name');
       
       if (storedToken && storedUserId && (!authToken || !currentUser)) {
-        logger.info('🔄 Restoring auth state from localStorage on storage change', { userId: storedUserId });
+        logger.info('Restoring auth state from localStorage on storage change', { userId: storedUserId });
         setAuthToken(storedToken);
         setCurrentUser({ 
           id: storedUserId, 
           name: storedFirstName || undefined 
         });
       } else if (!storedToken && (authToken || currentUser)) {
-        logger.info('🔄 Clearing auth state due to localStorage change');
+        logger.info('Clearing auth state due to localStorage change');
         setAuthToken(null);
         setCurrentUser(null);
       }
@@ -102,7 +102,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     const handleAuthChange = () => {
       if (!isComponentMounted) return;
-      logger.info('🔄 Handling auth-state-changed event');
+      logger.info('Handling auth-state-changed event');
       handleStorageChange();
     };
 
@@ -134,7 +134,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [authToken, currentUser, isComponentMounted]);
 
   const authenticateUser = (newAuthToken: string, userId: string, userData?: Partial<User>) => {
-    logger.info('🔐 Authenticating user', { userId });
+    logger.info('Authenticating user', { userId });
     
     // Immediately update state
     setAuthToken(newAuthToken);
@@ -152,7 +152,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     
     // Dispatch event to trigger re-renders
     if (typeof window !== 'undefined') {
-      logger.info('📡 Dispatching auth-state-changed event');
+      logger.info('Dispatching auth-state-changed event');
       window.dispatchEvent(new Event('auth-state-changed'));
       
       // Force a storage event as well
@@ -210,7 +210,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Debug logging for auth state changes
   useEffect(() => {
     if (isComponentMounted) {
-      logger.info('🔐 Auth Context State Update:', {
+      logger.info('Auth Context State Update:', {
         authToken: !!authToken,
         currentUser: !!currentUser,
         isAuthenticated: !!(authToken && currentUser),
@@ -233,7 +233,7 @@ export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
   if (context === undefined) {
     // More descriptive error message for debugging
-    logger.error('🚨 useAuth called outside of AuthProvider context');
+    logger.error('useAuth called outside of AuthProvider context');
     throw new Error('Authentication context is not available. Please refresh the page.');
   }
   return context;

@@ -409,7 +409,7 @@ export default function BracketGenerationModal({
         {currentPhase === 'success' && (
           <div className={styles.successContent}>
             {/* Success Icon */}
-            <div className={styles.successIcon}>✓</div>
+            <div className={styles.successIcon}></div>
 
             {/* Success message */}
             <h2 className={styles.successMessage}>
@@ -468,7 +468,7 @@ export default function BracketGenerationModal({
         {currentPhase === 'error' && (
           <div className={styles.errorContent}>
             {/* Error Icon */}
-            <div className={styles.errorIcon}>⚠️</div>
+            <div className={styles.errorIcon}></div>
 
             {(() => {
               const parsedError = parseErrorMessage(errorMessage)

@@ -109,7 +109,7 @@ def create_reset_email_html(reset_code: str, username: str) -> str:
     <body>
         <div class="container">
             <div class="header">
-                <h1>🎳 BracketWorks</h1>
+                <h1>BracketWorks</h1>
                 <h2>Password Reset Request</h2>
             </div>
             <div class="content">
@@ -168,7 +168,7 @@ def request_password_reset(email: str, background_tasks: BackgroundTasks, db: Se
     
     # Create HTML email with template
     html_body = create_reset_email_html(code, user.username)
-    background_tasks.add_task(send_email, email, "🎳 BracketWorks - Password Reset", html_body)
+    background_tasks.add_task(send_email, email, "BracketWorks - Password Reset", html_body)
     return {"message": "Reset code sent to email"}
 
 @router.post("/verify-reset-code")

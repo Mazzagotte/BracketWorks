@@ -57,7 +57,6 @@ export default function ScoresPage() {
         fontFamily: 'Inter, sans-serif'
       }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ marginBottom: '1rem', fontSize: '1.2rem' }}>🎳</div>
           <div>Loading score management...</div>
         </div>
       </div>
@@ -76,7 +75,6 @@ export default function ScoresPage() {
         justifyContent: 'center'
       }}>
         <div>
-          <div style={{ marginBottom: '1rem', fontSize: '2rem' }}>🔒</div>
           <div>Please log in to access score management</div>
         </div>
       </div>
@@ -95,7 +93,6 @@ export default function ScoresPage() {
         justifyContent: 'center'
       }}>
         <div>
-          <div style={{ marginBottom: '1rem', fontSize: '2rem' }}>🎳</div>
           <div>Loading score management...</div>
         </div>
       </div>
@@ -298,7 +295,7 @@ export default function ScoresPage() {
     
     if (pendingSaves.length === 0) {
       addToast({
-        message: '✅ All offline scores have been synchronized!',
+        message: 'All offline scores have been synchronized!',
         type: 'success',
         duration: 3000
       })
@@ -318,7 +315,7 @@ export default function ScoresPage() {
     const handleOffline = () => {
       setIsOnline(false)
       addToast({
-        message: '📡 You are offline. Scores will be saved when connection is restored.',
+        message: 'You are offline. Scores will be saved when connection is restored.',
         type: 'warning',
         duration: 5000
       })
@@ -393,7 +390,7 @@ export default function ScoresPage() {
           variant="primary"
           size="sm"
         >
-          📡 Sync Offline Scores ({pendingSaves.length})
+          Sync Offline Scores ({pendingSaves.length})
         </EnhancedButton>
       )}
     </div>
@@ -695,7 +692,7 @@ export default function ScoresPage() {
           // Show success toast for perfect games
           if (value === 300) {
             addToast({
-              message: `🎳 Perfect game! 300 scored by ${player.firstName} ${player.lastName}`,
+              message: `Perfect game! 300 scored by ${player.firstName} ${player.lastName}`,
               type: 'success',
               duration: 5000
             })
@@ -911,7 +908,7 @@ export default function ScoresPage() {
             {tournament && (
               <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
                 <h3 className="text-sm font-semibold text-gray-700 mb-2">
-                  📅 {tournament.name}
+                  {tournament.name}
                 </h3>
                 {selectedSquad && (
                   <p className="text-sm text-gray-600">
@@ -984,9 +981,9 @@ export default function ScoresPage() {
                           savingStatus[player.id] === 'saved' ? 'bg-green-100 text-green-800' :
                           'bg-red-100 text-red-800'
                         }`}>
-                          {savingStatus[player.id] === 'saving' && '💾 Saving...'}
-                          {savingStatus[player.id] === 'saved' && '✅ Saved'}
-                          {savingStatus[player.id] === 'error' && '❌ Error'}
+                          {savingStatus[player.id] === 'saving' && 'Saving...'}
+                          {savingStatus[player.id] === 'saved' && 'Saved'}
+                          {savingStatus[player.id] === 'error' && 'Error'}
                         </span>
                       </div>
                     )}
@@ -1102,7 +1099,7 @@ export default function ScoresPage() {
           {!isOnline && (
             <div className="notification notification-warning">
               <div className="offline-indicator">
-                <span>📡</span>
+                <span></span>
                 <span>You are offline. Scores are being saved locally and will sync when connection is restored.</span>
                 {pendingSaves.length > 0 && (
                   <span className="pending-count">
@@ -1130,7 +1127,7 @@ export default function ScoresPage() {
           {/* Mobile Scroll Hint */}
           {!isLoading && players.length > 0 && (
             <div className="mobile-scroll-hint">
-              👈 Scroll horizontally to see all score columns
+              Scroll horizontally to see all score columns
             </div>
           )}
 
@@ -1421,8 +1418,8 @@ export default function ScoresPage() {
                           })
                         }}>
                           {savingStatus[`${player.id}-game1_scratch`] === 'saving' && '⋯'}
-                          {savingStatus[`${player.id}-game1_scratch`] === 'saved' && '✓'}
-                          {savingStatus[`${player.id}-game1_scratch`] === 'error' && '✗'}
+                          {savingStatus[`${player.id}-game1_scratch`] === 'saved' && ''}
+                          {savingStatus[`${player.id}-game1_scratch`] === 'error' && ''}
                         </div>
                       )}
                     </div>
@@ -1611,8 +1608,8 @@ export default function ScoresPage() {
                           })
                         }}>
                           {savingStatus[`${player.id}-game2_scratch`] === 'saving' && '⋯'}
-                          {savingStatus[`${player.id}-game2_scratch`] === 'saved' && '✓'}
-                          {savingStatus[`${player.id}-game2_scratch`] === 'error' && '✗'}
+                          {savingStatus[`${player.id}-game2_scratch`] === 'saved' && ''}
+                          {savingStatus[`${player.id}-game2_scratch`] === 'error' && ''}
                         </div>
                       )}
                     </div>
@@ -1801,8 +1798,8 @@ export default function ScoresPage() {
                           })
                         }}>
                           {savingStatus[`${player.id}-game3_scratch`] === 'saving' && '⋯'}
-                          {savingStatus[`${player.id}-game3_scratch`] === 'saved' && '✓'}
-                          {savingStatus[`${player.id}-game3_scratch`] === 'error' && '✗'}
+                          {savingStatus[`${player.id}-game3_scratch`] === 'saved' && ''}
+                          {savingStatus[`${player.id}-game3_scratch`] === 'error' && ''}
                         </div>
                       )}
                     </div>

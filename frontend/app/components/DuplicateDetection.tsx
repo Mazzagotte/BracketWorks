@@ -114,7 +114,7 @@ export default function DuplicateDetection({ players, onMergeComplete, onDuplica
           margin: '0 auto 16px'
         }} />
         <h3 style={{ margin: '0 0 8px 0', color: '#374151', fontSize: '18px', fontWeight: '600' }}>
-          🔍 Scanning for Duplicates
+          Scanning for Duplicates
         </h3>
         <p style={{ margin: 0, color: '#6b7280', fontSize: '14px' }}>
           Analyzing {players.length} players for potential duplicates...
@@ -142,7 +142,7 @@ export default function DuplicateDetection({ players, onMergeComplete, onDuplica
       }}>
         <div>
           <h2 style={{ margin: '0 0 4px 0', color: '#374151', fontSize: '20px', fontWeight: '700' }}>
-            🔍 Duplicate Player Detection
+            Duplicate Player Detection
           </h2>
           <p style={{ margin: 0, color: '#6b7280', fontSize: '14px' }}>
             Found {duplicateGroups.length} potential duplicate group{duplicateGroups.length !== 1 ? 's' : ''}
@@ -195,7 +195,7 @@ export default function DuplicateDetection({ players, onMergeComplete, onDuplica
               changeEvent.currentTarget.style.boxShadow = '0 2px 8px rgba(240, 165, 0, 0.25)';
             }}
           >
-            🔄 Re-scan
+            Re-scan
           </button>
         </div>
       </div>
@@ -210,7 +210,7 @@ export default function DuplicateDetection({ players, onMergeComplete, onDuplica
           borderRadius: '12px',
           border: '1px solid rgba(5, 150, 105, 0.15)'
         }}>
-          <div style={{ fontSize: '48px', marginBottom: '12px' }}>✅</div>
+          <div style={{ fontSize: '48px', marginBottom: '12px' }}></div>
           <h3 style={{ margin: '0 0 8px 0', fontSize: '18px', fontWeight: '600' }}>
             No Duplicates Found
           </h3>
@@ -341,7 +341,7 @@ function DuplicateGroupCard({
           {/* Primary Player */}
           <div style={{ marginBottom: '12px' }}>
             <div style={{ fontSize: '16px', fontWeight: '600', color: '#374151', marginBottom: '4px' }}>
-              📋 Primary: {group.primaryPlayer.firstName} {group.primaryPlayer.lastName}
+              Primary: {group.primaryPlayer.firstName} {group.primaryPlayer.lastName}
             </div>
             <div style={{ fontSize: '13px', color: '#6b7280', display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
               {group.primaryPlayer.usbc && <span>USBC: {group.primaryPlayer.usbc}</span>}
@@ -353,7 +353,7 @@ function DuplicateGroupCard({
           {/* Duplicate Matches */}
           <div>
             <div style={{ fontSize: '14px', fontWeight: '600', color: '#374151', marginBottom: '8px' }}>
-              🔗 Potential Duplicates ({group.duplicates.length}):
+              Potential Duplicates ({group.duplicates.length}):
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               {group.duplicates.map((duplicate, i) => (
@@ -410,7 +410,7 @@ function DuplicateGroupCard({
             onMouseEnter={(changeEvent) => changeEvent.currentTarget.style.transform = 'scale(1.02)'}
             onMouseLeave={(changeEvent) => changeEvent.currentTarget.style.transform = 'scale(1)'}
           >
-            {isSelected ? '✓ Selected' : 'Review'}
+            {isSelected ? 'Selected' : 'Review'}
           </button>
           <button
             onClick={(changeEvent) => { changeEvent.stopPropagation();
@@ -466,7 +466,7 @@ function MergePreviewPanel({
         marginBottom: '20px'
       }}>
         <h3 style={{ margin: 0, color: '#374151', fontSize: '18px', fontWeight: '700' }}>
-          🔗 Merge Preview
+          Merge Preview
         </h3>
         <div style={{
           background: confidence.confidence > 0.85 ? '#059669' : confidence.confidence > 0.7 ? '#d97706' : '#dc2626',
@@ -483,7 +483,7 @@ function MergePreviewPanel({
       {/* Merge Impact */}
       <div style={{ marginBottom: '20px' }}>
         <h4 style={{ margin: '0 0 8px 0', color: '#374151', fontSize: '14px', fontWeight: '600' }}>
-          📊 Merge Impact:
+          Merge Impact:
         </h4>
         <p style={{ margin: '0 0 12px 0', color: '#6b7280', fontSize: '14px' }}>
           {preview.estimatedImpact}
@@ -539,7 +539,7 @@ function MergePreviewPanel({
               marginBottom: '8px'
             }}>
               <h5 style={{ margin: '0 0 8px 0', color: '#dc2626', fontSize: '14px', fontWeight: '600' }}>
-                ❌ Errors:
+                Errors:
               </h5>
               {validation.errors.map((error, i) => (
                 <div key={i} style={{ fontSize: '13px', color: '#7f1d1d', marginBottom: '4px' }}>
@@ -557,7 +557,7 @@ function MergePreviewPanel({
               padding: '12px'
             }}>
               <h5 style={{ margin: '0 0 8px 0', color: '#d97706', fontSize: '14px', fontWeight: '600' }}>
-                ⚠️ Warnings:
+                Warnings:
               </h5>
               {validation.warnings.map((warning, i) => (
                 <div key={i} style={{ fontSize: '13px', color: '#92400e', marginBottom: '4px' }}>
@@ -619,7 +619,7 @@ function MergePreviewPanel({
             }
           }}
         >
-          {validation.isValid ? '🔗 Proceed with Merge' : '❌ Cannot Merge'}
+          {validation.isValid ? 'Proceed with Merge' : 'Cannot Merge'}
         </button>
       </div>
     </div>
@@ -678,7 +678,7 @@ function MergeConfirmationDialog({
         boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
       }}>
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>⚠️</div>
+          <div style={{ fontSize: '48px', marginBottom: '16px' }}></div>
           <h2 style={{ margin: '0 0 8px 0', color: '#374151', fontSize: '24px', fontWeight: '700' }}>
             Confirm Player Merge
           </h2>
@@ -762,7 +762,7 @@ function MergeConfirmationDialog({
                 animation: 'spin 1s linear infinite'
               }} />
             )}
-            {isConfirming ? 'Merging...' : '🔗 Confirm Merge'}
+            {isConfirming ? 'Merging...' : 'Confirm Merge'}
           </button>
         </div>
       </div>

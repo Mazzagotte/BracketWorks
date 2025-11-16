@@ -563,7 +563,7 @@ export const TableCell: React.FC<TableCellProps> = ({
             color: colors.text.secondary,
             marginLeft: 'auto'
           }}>
-            {sortDirection === 'asc' ? '↑' : sortDirection === 'desc' ? '↓' : '↕'}
+            {sortDirection === 'asc' ? ' (Low-High)' : sortDirection === 'desc' ? ' (High-Low)' : ''}
           </span>
         )}
       </div>

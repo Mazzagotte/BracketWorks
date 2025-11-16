@@ -42,7 +42,7 @@ export function SearchFilter({
                 className={styles.clearSearch}
                 aria-label="Clear search"
               >
-                ✕
+                ×
               </button>
             )}
           </div>

@@ -76,7 +76,7 @@ export function MatchDetailsModal({
             onClick={onClose}
             aria-label="Close modal"
           >
-            ✕
+            ×
           </button>
         </div>
 

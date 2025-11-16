@@ -172,7 +172,7 @@ function EditTournamentModal({ open, onClose, tournament, onSave, isMobile }: {
           size="sm"
           className="modal-close"
         >
-          ✕
+          ×
         </EnhancedButton>
         <h2>Edit Tournament</h2>
         <div>
@@ -368,7 +368,6 @@ export default function TournamentDashboard() {
         fontFamily: 'Inter, sans-serif'
       }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ marginBottom: '1rem', fontSize: '1.2rem' }}>🎳</div>
           <div>Loading tournament dashboard...</div>
         </div>
       </div>
@@ -387,7 +386,6 @@ export default function TournamentDashboard() {
         justifyContent: 'center'
       }}>
         <div>
-          <div style={{ marginBottom: '1rem', fontSize: '2rem' }}>🔒</div>
           <div>Please log in to access the tournament dashboard</div>
         </div>
       </div>
@@ -406,7 +404,6 @@ export default function TournamentDashboard() {
         justifyContent: 'center'
       }}>
         <div>
-          <div style={{ marginBottom: '1rem', fontSize: '2rem' }}>🎳</div>
           <div>Loading tournament dashboard...</div>
         </div>
       </div>
@@ -1240,13 +1237,13 @@ export default function TournamentDashboard() {
                       })()}
                       {saveStatus === 'saving' && (
                         <div className={mobileStyles.statusSaving}>
-                          <span className={mobileStyles.statusSpinner}>⟳</span>
+                          <span className={mobileStyles.statusSpinner}></span>
                           <span className={mobileStyles.statusText}>Saving...</span>
                         </div>
                       )}
                       {saveStatus === 'unsaved' && (
                         <div className={mobileStyles.statusUnsaved}>
-                          <span className={mobileStyles.statusIcon}>●</span>
+                          <span className={mobileStyles.statusIcon}></span>
                           <span className={mobileStyles.statusText}>Unsaved changes</span>
                         </div>
                       )}

@@ -101,7 +101,7 @@ export function MobileBracketView({
               <div className={styles.matchHeader}>
                 <span className={styles.matchNumber}>Match {index + 1}</span>
                 <span className={`${styles.statusBadge} ${styles[status]}`}>
-                  {status === 'completed' && '✓'}
+                  {status === 'completed' && ''}
                   {status === 'in_progress' && '⚡'}
                   {status === 'next_up' && '▶'}
                   {status === 'pending' && '○'}

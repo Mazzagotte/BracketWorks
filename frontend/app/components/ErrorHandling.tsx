@@ -134,13 +134,13 @@ export const ErrorMessage: React.FC<ErrorMessageProps> = ({
   const typeStyles = {
     error: {
       bg: 'bg-red-50 border-red-200',
-      icon: '✕',
+      icon: '',
       iconColor: 'text-red-500',
       textColor: 'text-red-800',
     },
     warning: {
       bg: 'bg-yellow-50 border-yellow-200',
-      icon: '⚠',
+      icon: '',
       iconColor: 'text-yellow-500',
       textColor: 'text-yellow-800',
     },

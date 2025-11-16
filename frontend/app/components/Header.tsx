@@ -165,7 +165,7 @@ const Header = memo(function Header({
   // Memoized values for performance
   const pageIcon = useMemo(() => {
     switch (pageContext) {
-      case 'dashboard': return '📊'
+      case 'dashboard': return ''
       case 'scores': return '🎯'
       case 'players': return '👥'
       case 'brackets': return '🏆'
@@ -185,9 +185,9 @@ const Header = memo(function Header({
       case 'in_progress':
         return { icon: 'Squad', label: 'In Progress', bg: colors.yellow.light, color: colors.yellow.dark }
       case 'completed':
-        return { icon: '✅', label: 'Completed', bg: colors.green.light, color: colors.green.deeper }
+        return { icon: '', label: 'Completed', bg: colors.green.light, color: colors.green.deeper }
       case 'cancelled':
-        return { icon: '❌', label: 'Cancelled', bg: '#fee2e2', color: '#dc2626' }
+        return { icon: '', label: 'Cancelled', bg: '#fee2e2', color: '#dc2626' }
       default:
         return { icon: '❓', label: 'Unknown', bg: colors.gray[100], color: colors.gray[500] }
     }
@@ -327,9 +327,9 @@ const Header = memo(function Header({
     return visibleNotifications.map((notification, index) => {
       const typeIcon = {
         info: 'ℹ️',
-        success: '✅',
-        warning: '⚠️',
-        error: '❌'
+        success: '',
+        warning: '',
+        error: ''
       }[notification.type] || 'ℹ️'
       
       const priorityLabel = {
@@ -1082,7 +1082,7 @@ const Header = memo(function Header({
                         }}>
                           {isLoadingPlayers ? '⏳ Loading...' : 
                            playersCount > 0 ? `👥 ${playersCount} Players` : 
-                           '❌ No Players'}
+                           'No Players'}
                         </div>
                       )}
                     </div>
@@ -1319,7 +1319,7 @@ const Header = memo(function Header({
                             transition: 'all 0.2s ease'
                           }}
                         >
-                          📊
+                          
                         </button>
                       </div>
                     )}
@@ -1358,7 +1358,7 @@ const Header = memo(function Header({
                             Loading
                           </>
                         ) : (
-                          <>🔄 Refresh</>
+                          <>Refresh</>
                         )}
                       </button>
                     )}
@@ -1398,7 +1398,7 @@ const Header = memo(function Header({
                             Generating...
                           </>
                         ) : hasPreview ? (
-                          <>🔄 Regenerate</>
+                          <>Regenerate</>
                         ) : (
                           <>🏆 Generate</>
                         )}
@@ -1485,7 +1485,7 @@ const Header = memo(function Header({
                 filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2))'
               }}
             >
-              ⟳
+              
             </span>
           )}
         </div>
