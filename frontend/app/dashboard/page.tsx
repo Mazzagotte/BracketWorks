@@ -1231,7 +1231,7 @@ export default function TournamentDashboard() {
                         const timeText = timeSince < 5000 ? 'just now' : 'at ' + lastSavedTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                         return (
                           <div className={mobileStyles.statusSaved}>
-                            <span className={mobileStyles.statusIcon}>✓</span>
+                            <span className={mobileStyles.statusIcon}></span>
                             <span className={mobileStyles.statusText}>
                               Saved {timeText}
                             </span>
@@ -1252,7 +1252,7 @@ export default function TournamentDashboard() {
                       )}
                       {saveStatus === 'error' && (
                         <div className={mobileStyles.statusError}>
-                          <span className={mobileStyles.statusIcon}>⚠</span>
+                          <span className={mobileStyles.statusIcon}></span>
                           <span className={mobileStyles.statusText}>Error saving</span>
                         </div>
                       )}
@@ -1492,7 +1492,7 @@ export default function TournamentDashboard() {
                 
                 {selectedSquadId && (
                   <div className={mobileStyles.selectionFeedback}>
-                    <span className={mobileStyles.checkIcon}>✓</span>
+                    <span className={mobileStyles.checkIcon}></span>
                     <span>
                       Selected: {squads.find(s => s.id === selectedSquadId)?.date} — {squads.find(s => s.id === selectedSquadId)?.time}
                     </span>

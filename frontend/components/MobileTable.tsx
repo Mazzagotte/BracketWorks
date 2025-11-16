@@ -104,13 +104,13 @@ export function MobileTable({
           onClick={() => setViewMode('cards')}
           className={`view-toggle-btn ${viewMode === 'cards' ? 'active' : ''}`}
         >
-          📱 Cards
+          Cards
         </button>
         <button
           onClick={() => setViewMode('table')}
           className={`view-toggle-btn ${viewMode === 'table' ? 'active' : ''}`}
         >
-          📋 Table
+          Table
         </button>
       </div>
 
