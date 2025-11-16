@@ -265,7 +265,6 @@ export default function PlayersPage() {
         fontFamily: 'Inter, sans-serif'
       }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ marginBottom: '1rem', fontSize: '1.2rem' }}>🎳</div>
           <div>Loading player management...</div>
         </div>
       </div>

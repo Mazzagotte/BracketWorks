@@ -63,7 +63,7 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
     if (auth.isAuthenticated && auth.user) {
       const storedFirstName = localStorage.getItem('first_name') || auth.user.name || undefined;
       setFirstName(storedFirstName);
-      logger.info('🔐 Layout: Auth state updated', { 
+      logger.info('Layout: Auth state updated', { 
         isAuthenticated: auth.isAuthenticated, 
         hasUser: !!auth.user, 
         firstName: storedFirstName,
@@ -71,7 +71,7 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
       });
     } else {
       setFirstName(undefined);
-      logger.info('🔐 Layout: Auth state cleared', { 
+      logger.info('Layout: Auth state cleared', { 
         isAuthenticated: auth.isAuthenticated, 
         hasUser: !!auth.user 
       });
@@ -105,7 +105,7 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
   // Debug logging for auth state
   useEffect(() => {
     if (mounted) {
-      logger.info('🔍 Layout render - Auth State:', {
+      logger.info('Layout render - Auth State:', {
         mounted,
         'auth.isAuthenticated': auth.isAuthenticated,
         'auth.user': auth.user,
@@ -358,7 +358,7 @@ function AuthAwareLayout({ children }: { children: React.ReactNode }) {
   // Force re-render when auth state changes
   useEffect(() => {
     setAuthKey(prev => prev + 1);
-    logger.info('🔄 AuthAwareLayout: Auth state changed, forcing re-render', {
+    logger.info('AuthAwareLayout: Auth state changed, forcing re-render', {
       isAuthenticated: auth.isAuthenticated,
       hasUser: !!auth.user,
       authKey: authKey + 1

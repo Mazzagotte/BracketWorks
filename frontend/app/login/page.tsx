@@ -450,7 +450,7 @@ export default function LoginPage() {
                 gap: '8px',
                 zIndex: 20
               }}>
-                <span>⚠️</span>
+                <span></span>
                 <span>Caps Lock is ON</span>
               </div>
             )}

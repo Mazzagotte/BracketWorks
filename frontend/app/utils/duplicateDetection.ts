@@ -362,13 +362,13 @@ export function getSmartSuggestions(
     const mediumMatches = potentialDuplicates.filter(duplicate => duplicate.matchScore >= 0.7 && duplicate.matchScore < 0.85);
     
     if (exactMatches.length > 0) {
-      warnings.push('⚠️ Exact name match found - this player may already exist');
+      warnings.push('Exact name match found - this player may already exist');
       suggestions.push('Review existing players before adding');
     } else if (highMatches.length > 0) {
-      warnings.push('🔍 Very similar player found - check for duplicates');
+      warnings.push('Very similar player found - check for duplicates');
       suggestions.push('Consider if this is the same person with a slight name variation');
     } else if (mediumMatches.length > 0) {
-      suggestions.push('💡 Similar players found - you may want to verify this is a new player');
+      suggestions.push('Similar players found - you may want to verify this is a new player');
     }
   }
   
@@ -376,7 +376,7 @@ export function getSmartSuggestions(
   if (usbc) {
     const usbcValidation = validateUSBC(usbc, players);
     if (!usbcValidation.isValid) {
-      warnings.push(`❌ USBC Issue: ${usbcValidation.error}`);
+      warnings.push(`USBC Issue: ${usbcValidation.error}`);
       if (usbcValidation.suggestions) {
         suggestions.push(...usbcValidation.suggestions);
       }

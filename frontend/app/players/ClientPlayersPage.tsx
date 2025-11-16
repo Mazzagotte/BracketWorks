@@ -31,7 +31,6 @@ export default function ClientPlayersPage() {
         justifyContent: 'center'
       }}>
         <div>
-          <div style={{ marginBottom: '1rem' }}>🎳</div>
           <div>Loading player management...</div>
         </div>
       </div>
@@ -49,7 +48,6 @@ export default function ClientPlayersPage() {
       justifyContent: 'center'
     }}>
       <div>
-        <div style={{ marginBottom: '1rem' }}>🎳</div>
         <div>Initializing player management system...</div>
       </div>
     </div>

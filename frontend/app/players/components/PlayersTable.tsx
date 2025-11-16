@@ -92,8 +92,8 @@ const PlayersTable = memo(({
         })
       }}>
         {status === 'saving' && '⋯'}
-        {status === 'success' && '✓'}
-        {status === 'error' && '✗'}
+        {status === 'success' && ''}
+        {status === 'error' && ''}
       </div>
     );
   };

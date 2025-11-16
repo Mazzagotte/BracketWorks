@@ -214,7 +214,7 @@ export default function SmartSuggestions({
             alignItems: 'center',
             gap: '6px'
           }}>
-            ⚠️ Warnings
+            Warnings
           </h5>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {unacknowledgedWarnings.map((warning, index) => (
@@ -242,7 +242,7 @@ export default function SmartSuggestions({
                   </div>
                   {suggestions.suggestions.length > 0 && (
                     <div style={{ color: '#6b7280', fontSize: '12px' }}>
-                      💡 {suggestions.suggestions[0]}
+                      {suggestions.suggestions[0]}
                     </div>
                   )}
                 </div>
@@ -283,7 +283,7 @@ export default function SmartSuggestions({
             alignItems: 'center',
             gap: '6px'
           }}>
-            🔍 Similar Players Found ({suggestions.potentialDuplicates.length})
+            Similar Players Found ({suggestions.potentialDuplicates.length})
           </h5>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -321,7 +321,7 @@ export default function SmartSuggestions({
             gap: '12px'
           }}>
             <div style={{ fontSize: '13px', color: '#6b7280' }}>
-              💡 Review existing players before adding a new one
+              Review existing players before adding a new one
             </div>
             <div style={{ display: 'flex', gap: '8px' }}>
               <button
@@ -400,7 +400,7 @@ export default function SmartSuggestions({
             fontSize: '18px',
             fontWeight: '700'
           }}>
-            🔗 Merge Player Records
+            Merge Player Records
           </h3>
           
           <p style={{
@@ -423,7 +423,7 @@ export default function SmartSuggestions({
               Merge Impact: {mergePreview?.estimatedImpact || 'Analyzing...'}
             </div>
             <div style={{ fontSize: '12px', color: '#6b7280' }}>
-              🔗 Merging player records and consolidating data
+              Merging player records and consolidating data
             </div>
           </div>
           
@@ -436,7 +436,7 @@ export default function SmartSuggestions({
                 fontSize: '14px',
                 fontWeight: '600'
               }}>
-                ⚠️ Data Conflicts ({mergePreview.consolidatedData.dataConflicts.length})
+                Data Conflicts ({mergePreview.consolidatedData.dataConflicts.length})
               </h4>
               {mergePreview.consolidatedData.dataConflicts.map((conflict: DataConflict, index: number) => (
                 <div key={index} style={{
@@ -525,9 +525,9 @@ function PotentialDuplicateCard({
     switch (type) {
       case 'exact': return '🎯';
       case 'usbc': return '🔢';
-      case 'similar': return '👥';
-      case 'fuzzy': return '🔍';
-      default: return '❓';
+      case 'similar': return '';
+      case 'fuzzy': return '';
+      default: return '';
     }
   };
 
@@ -701,7 +701,7 @@ export function USBCValidationIndicator({
         fontSize: '11px',
         fontWeight: '600'
       }}>
-        ✅ Valid USBC
+        Valid USBC
       </div>
     );
   }
@@ -718,7 +718,7 @@ export function USBCValidationIndicator({
       fontSize: '11px',
       fontWeight: '600'
     }}>
-      ❌ {validation.error}
+      {validation.error}
     </div>
   );
 }

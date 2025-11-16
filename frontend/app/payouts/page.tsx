@@ -123,7 +123,6 @@ export default function PayoutsPage() {
         fontFamily: 'Inter, sans-serif'
       }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ marginBottom: '1rem', fontSize: '1.2rem' }}>🎳</div>
           <div>Loading payout management...</div>
         </div>
       </div>
@@ -142,7 +141,6 @@ export default function PayoutsPage() {
         justifyContent: 'center'
       }}>
         <div>
-          <div style={{ marginBottom: '1rem', fontSize: '2rem' }}>🔒</div>
           <div>Please log in to access payout management</div>
         </div>
       </div>
@@ -161,7 +159,6 @@ export default function PayoutsPage() {
         justifyContent: 'center'
       }}>
         <div>
-          <div style={{ marginBottom: '1rem', fontSize: '2rem' }}>🎳</div>
           <div>Loading payout management...</div>
         </div>
       </div>
@@ -1692,7 +1689,7 @@ export default function PayoutsPage() {
                               onMouseEnter={(changeEvent) => changeEvent.currentTarget.style.backgroundColor = '#f1f5f9'}
                               onMouseLeave={(changeEvent) => changeEvent.currentTarget.style.backgroundColor = 'transparent'}
                             >
-                              Player Name {sortBy === 'name' && (sortDirection === 'asc' ? '↑' : '↓')}
+                              Player Name {sortBy === 'name' && (sortDirection === 'asc' ? ' (A-Z)' : ' (Z-A)')}
                             </div>
                             <div 
                               style={{
@@ -1710,7 +1707,7 @@ export default function PayoutsPage() {
                               onMouseEnter={(changeEvent) => changeEvent.currentTarget.style.backgroundColor = '#f1f5f9'}
                               onMouseLeave={(changeEvent) => changeEvent.currentTarget.style.backgroundColor = 'transparent'}
                             >
-                              Brackets Won {sortBy === 'brackets' && (sortDirection === 'asc' ? '↑' : '↓')}
+                              Brackets Won {sortBy === 'brackets' && (sortDirection === 'asc' ? ' (Low-High)' : ' (High-Low)')}
                             </div>
                             <div 
                               style={{
@@ -1728,7 +1725,7 @@ export default function PayoutsPage() {
                               onMouseEnter={(changeEvent) => changeEvent.currentTarget.style.backgroundColor = '#f1f5f9'}
                               onMouseLeave={(changeEvent) => changeEvent.currentTarget.style.backgroundColor = 'transparent'}
                             >
-                              Total Winnings {sortBy === 'amount' && (sortDirection === 'asc' ? '↑' : '↓')}
+                              Total Winnings {sortBy === 'amount' && (sortDirection === 'asc' ? ' (Low-High)' : ' (High-Low)')}
                             </div>
                             <div 
                               style={{
@@ -1746,7 +1743,7 @@ export default function PayoutsPage() {
                               onMouseEnter={(changeEvent) => changeEvent.currentTarget.style.backgroundColor = '#f1f5f9'}
                               onMouseLeave={(changeEvent) => changeEvent.currentTarget.style.backgroundColor = 'transparent'}
                             >
-                              Payment Status {sortBy === 'status' && (sortDirection === 'asc' ? '↑' : '↓')}
+                              Payment Status {sortBy === 'status' && (sortDirection === 'asc' ? ' (A-Z)' : ' (Z-A)')}
                             </div>
                             <div style={{
                               display: 'table-cell',

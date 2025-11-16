@@ -269,7 +269,7 @@ export default function SignupPage() {
                 className={`signup-input ${fieldValidation.firstName === true ? 'valid' : fieldValidation.firstName === false ? 'invalid' : ''}`}
                 aria-label="First Name"
               />
-              {fieldValidation.firstName === true && <span className="validation-check">✓</span>}
+              {fieldValidation.firstName === true && <span className="validation-check"></span>}
             </div>
             <div className="signup-input-container">
               <label htmlFor="signup-lastname" className="signup-input-label">Last Name:</label>
@@ -287,7 +287,7 @@ export default function SignupPage() {
                 className={`signup-input ${fieldValidation.lastName === true ? 'valid' : fieldValidation.lastName === false ? 'invalid' : ''}`}
                 aria-label="Last Name"
               />
-              {fieldValidation.lastName === true && <span className="validation-check">✓</span>}
+              {fieldValidation.lastName === true && <span className="validation-check"></span>}
             </div>
           </div>
           
@@ -314,7 +314,7 @@ export default function SignupPage() {
               aria-label="Username"
             />
             {checkingUsername && <span className="validation-spinner">⋯</span>}
-            {usernameAvailable === true && <span className="validation-check">✓</span>}
+            {usernameAvailable === true && <span className="validation-check"></span>}
             {usernameAvailable === false && <span className="validation-error">Username taken</span>}
           </div>
           
@@ -349,7 +349,7 @@ export default function SignupPage() {
               className={`signup-input ${fieldValidation.email === true ? 'valid' : fieldValidation.email === false ? 'invalid' : ''}`}
               aria-label="Email"
             />
-            {fieldValidation.email === true && <span className="validation-check">✓</span>}
+            {fieldValidation.email === true && <span className="validation-check"></span>}
           </div>
           
           <div className="signup-password-container">
@@ -379,7 +379,7 @@ export default function SignupPage() {
                   onClick={() => setShowPassword(!showPassword)}
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
-                  {showPassword ? "🙈" : "👁️"}
+                  {showPassword ? "Hide" : "Show"}
                 </button>
               )}
             </div>
@@ -405,19 +405,19 @@ export default function SignupPage() {
               <div className="password-requirements">
                 <div className="requirement-title">Password requirements:</div>
                 <div className={`requirement ${password.length >= 6 ? 'met' : ''}`}>
-                  ✓ At least 6 characters
+                  At least 6 characters
                 </div>
                 <div className={`requirement ${/[a-z]/.test(password) ? 'met' : ''}`}>
-                  ✓ Lowercase letter
+                  Lowercase letter
                 </div>
                 <div className={`requirement ${/[A-Z]/.test(password) ? 'met' : ''}`}>
-                  ✓ Uppercase letter
+                  Uppercase letter
                 </div>
                 <div className={`requirement ${/[0-9]/.test(password) ? 'met' : ''}`}>
-                  ✓ Number
+                  Number
                 </div>
                 <div className={`requirement ${/[^A-Za-z0-9]/.test(password) ? 'met' : ''}`}>
-                  ✓ Special character
+                  Special character
                 </div>
               </div>
             )}
@@ -448,11 +448,11 @@ export default function SignupPage() {
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   aria-label={showConfirmPassword ? "Hide password" : "Show password"}
                 >
-                  {showConfirmPassword ? "🙈" : "👁️"}
+                  {showConfirmPassword ? "Hide" : "Show"}
                 </button>
               )}
             </div>
-            {fieldValidation.confirmPassword === true && <span className="validation-check">✓</span>}
+            {fieldValidation.confirmPassword === true && <span className="validation-check"></span>}
             {fieldValidation.confirmPassword === false && confirmPassword && (
               <span className="validation-error">Passwords don&apos;t match</span>
             )}
@@ -474,7 +474,7 @@ export default function SignupPage() {
 
           {success && (
             <div className="signup-success-message">
-              ✅ {success}
+              {success}
             </div>
           )}
 

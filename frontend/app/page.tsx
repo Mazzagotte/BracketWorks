@@ -41,7 +41,7 @@ export default function HomePage() {
       fontFamily: 'Inter, sans-serif'
     }}>
       <div style={{ textAlign: 'center' }}>
-        <div style={{ fontSize: '2rem' }}>🎳</div>
+        <div>Loading...</div>
       </div>
     </div>
   );

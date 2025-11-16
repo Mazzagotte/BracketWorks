@@ -103,21 +103,21 @@ const ToastComponent: React.FC<{ toast: Toast; onRemove: (id: string) => void }>
   const typeStyles = {
     success: {
       bg: 'bg-green-50 border-green-200',
-      icon: '✓',
+      icon: '',
       iconColor: 'text-green-600',
       titleColor: 'text-green-800',
       messageColor: 'text-green-700',
     },
     error: {
       bg: 'bg-red-50 border-red-200',
-      icon: '✕',
+      icon: '',
       iconColor: 'text-red-600',
       titleColor: 'text-red-800',
       messageColor: 'text-red-700',
     },
     warning: {
       bg: 'bg-yellow-50 border-yellow-200',
-      icon: '⚠',
+      icon: '',
       iconColor: 'text-yellow-600',
       titleColor: 'text-yellow-800',
       messageColor: 'text-yellow-700',

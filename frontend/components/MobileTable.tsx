@@ -166,7 +166,7 @@ export function MobileTable({
                     {column.label}
                     {column.sortable && sortBy === column.key && (
                       <span style={{ marginLeft: '4px' }}>
-                        {sortDirection === 'asc' ? '↑' : '↓'}
+                        {sortDirection === 'asc' ? ' (Low-High)' : ' (High-Low)'}
                       </span>
                     )}
                   </th>

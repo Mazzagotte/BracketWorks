@@ -78,7 +78,7 @@ def test_no_history():
     # Assertions
     assert len(result['brackets']) == 2, "Should create 2 brackets from 16 players"
     assert len(result['refunded']) == 0, "No refunds expected"
-    print("✅ TEST 1 PASSED")
+    print("TEST 1 PASSED")
 
 
 def test_small_history():
@@ -113,7 +113,7 @@ def test_small_history():
             assert pair not in history_set, f"Forbidden pairing found: {pair}"
     
     assert len(result['brackets']) == 1, "Should create 1 bracket"
-    print("✅ TEST 2 PASSED - No forbidden pairings in results")
+    print("TEST 2 PASSED - No forbidden pairings in results")
 
 
 def test_heavy_constraints():
@@ -154,7 +154,7 @@ def test_heavy_constraints():
             pair = normalize_pair(pairing['home']['player_id'], pairing['away']['player_id'])
             assert pair not in history_set, f"Forbidden pairing found: {pair}"
     
-    print("✅ TEST 3 PASSED - Heavy constraints respected")
+    print("TEST 3 PASSED - Heavy constraints respected")
 
 
 def test_impossible_constraints():
@@ -188,7 +188,7 @@ def test_impossible_constraints():
     # Should refund all players since no valid bracket possible
     assert len(result['brackets']) == 0, "No brackets should be created"
     assert len(result['refunded']) == 4, "All players should be refunded"
-    print("✅ TEST 4 PASSED - Correctly refunded impossible case")
+    print("TEST 4 PASSED - Correctly refunded impossible case")
 
 
 def test_multiple_brackets_with_history():
@@ -228,7 +228,7 @@ def test_multiple_brackets_with_history():
     
     assert len(result['brackets']) == 3, "Should create 3 brackets from 24 players"
     assert len(result['refunded']) == 0, "No refunds expected"
-    print("✅ TEST 5 PASSED")
+    print("TEST 5 PASSED")
 
 
 def test_deterministic_seeding():
@@ -270,7 +270,7 @@ def test_deterministic_seeding():
     print(f"Run 2 pairings: {pairings2}")
     
     assert pairings1 == pairings2, "Same seed should produce identical results"
-    print("✅ TEST 6 PASSED - Deterministic seeding works")
+    print("TEST 6 PASSED - Deterministic seeding works")
 
 
 def test_duplicate_prevention():
@@ -307,7 +307,7 @@ def test_duplicate_prevention():
         player_ids = [p['player_id'] for p in bracket['entrants']]
         assert len(player_ids) == len(set(player_ids)), "Duplicate player in bracket!"
     
-    print("✅ TEST 7 PASSED - No duplicates in same bracket")
+    print("TEST 7 PASSED - No duplicates in same bracket")
 
 
 def run_all_tests():
@@ -326,14 +326,14 @@ def run_all_tests():
         test_duplicate_prevention()
         
         print("\n" + "="*80)
-        print("✅ ALL TESTS PASSED!")
+        print("ALL TESTS PASSED!")
         print("="*80 + "\n")
         
     except AssertionError as e:
-        print(f"\n❌ TEST FAILED: {e}\n")
+        print(f"\nTEST FAILED: {e}\n")
         raise
     except Exception as e:
-        print(f"\n❌ ERROR: {e}\n")
+        print(f"\nERROR: {e}\n")
         raise
 
 

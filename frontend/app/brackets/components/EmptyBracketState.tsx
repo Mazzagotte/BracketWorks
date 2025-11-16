@@ -57,7 +57,7 @@ export function EmptyBracketState({
                 <span>Interactive tournament tree visualization</span>
               </li>
               <li className={styles.feature}>
-                <span className={styles.featureIcon}>📊</span>
+                <span className={styles.featureIcon}></span>
                 <span>Real-time score tracking and updates</span>
               </li>
               <li className={styles.feature}>
@@ -69,7 +69,7 @@ export function EmptyBracketState({
                 <span>Mobile-friendly interface</span>
               </li>
               <li className={styles.feature}>
-                <span className={styles.featureIcon}>🔍</span>
+                <span className={styles.featureIcon}></span>
                 <span>Player search and filtering</span>
               </li>
             </ul>
