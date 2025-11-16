@@ -70,35 +70,35 @@ export default function Nav() {
                 className={`${styles.mobileNavLink} ${isActive('/dashboard') ? styles.mobileActive : ''}`}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                🏆 Dashboard
+                Dashboard
               </Link>
               <Link 
                 href="/players" 
                 className={`${styles.mobileNavLink} ${isActive('/players') ? styles.mobileActive : ''}`}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                👥 Entries
+                Entries
               </Link>
               <Link 
                 href="/scores" 
                 className={`${styles.mobileNavLink} ${isActive('/scores') ? styles.mobileActive : ''}`}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                🎳 Scores
+                Scores
               </Link>
               <Link 
                 href="/brackets" 
                 className={`${styles.mobileNavLink} ${isActive('/brackets') ? styles.mobileActive : ''}`}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                🏅 Brackets
+                Brackets
               </Link>
               <Link 
                 href="/payouts" 
                 className={`${styles.mobileNavLink} ${isActive('/payouts') ? styles.mobileActive : ''}`}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                💰 Payouts
+                Payouts
               </Link>
             </div>
           </>

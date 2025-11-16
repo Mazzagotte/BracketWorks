@@ -844,7 +844,7 @@ export default function ScoresPage() {
                 }}
                 className="px-3 py-1 bg-blue-500 text-white text-sm rounded-md"
               >
-                🔄
+                Refresh
               </button>
               <button
                 onClick={() => {
@@ -852,7 +852,7 @@ export default function ScoresPage() {
                 }}
                 className="px-3 py-1 bg-green-500 text-white text-sm rounded-md"
               >
-                📊
+                Export
               </button>
             </div>
           }

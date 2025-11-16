@@ -15,11 +15,11 @@ export function MobileNav({ isOpen, onClose, firstName, currentPage }: MobileNav
   const [touchStartY, setTouchStartY] = useState<number | null>(null);
 
   const navItems = [
-    { href: '/dashboard', label: 'Dashboard', icon: '📊' },
-    { href: '/players', label: 'Entries', icon: '👥' },
-    { href: '/scores', label: 'Scores', icon: '🏆' },
-    { href: '/brackets', label: 'Brackets', icon: '🏅' },
-    { href: '/payouts', label: 'Payouts', icon: '💰' },
+    { href: '/dashboard', label: 'Dashboard', icon: '' },
+    { href: '/players', label: 'Entries', icon: '' },
+    { href: '/scores', label: 'Scores', icon: '' },
+    { href: '/brackets', label: 'Brackets', icon: '' },
+    { href: '/payouts', label: 'Payouts', icon: '' },
   ];
 
   const handleLogout = () => {

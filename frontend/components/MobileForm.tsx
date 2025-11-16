@@ -98,7 +98,7 @@ export function MobileFormField({
 
       {error && (
         <div className="mobile-field-error">
-          ⚠️ {error}
+          {error}
         </div>
       )}
 

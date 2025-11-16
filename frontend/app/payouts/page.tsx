@@ -1532,7 +1532,7 @@ export default function PayoutsPage() {
                 marginBottom: '24px'
               }}>
                 <h3 style={{ margin: '0 0 12px 0', color: colors.text.primary, fontSize: '16px', fontWeight: '600' }}>
-                  💳 Payment Status Overview
+                  Payment Status Overview
                 </h3>
                 {paymentStats && (
                   <div style={{ 
