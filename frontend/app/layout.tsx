@@ -40,10 +40,11 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
     const checkMobile = () => {
       const width = window.innerWidth;
       const height = window.innerHeight;
-      const isMobileWidth = width <= 768;
-      const isMobileHeight = height <= 800;
+      // Only treat phones as mobile - tablets (768px-1024px) get desktop experience
+      const isMobileWidth = width <= 480;
+      const isMobileHeight = height <= 600;
       const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-      setIsMobile(isMobileWidth || (isMobileHeight && isTouchDevice));
+      setIsMobile(isMobileWidth || (isMobileHeight && isTouchDevice && width <= 480));
     };
 
     checkMobile();
