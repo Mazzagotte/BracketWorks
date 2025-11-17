@@ -654,11 +654,11 @@ export default function TournamentDashboard() {
     }
   }, [loadModalOpen, isAdmin]);
 
-  // Mobile detection
+  // Mobile detection (phone only - tablets get desktop experience)
   useEffect(() => {
     const checkMobile = () => {
       const width = window.innerWidth;
-      setIsMobile(width <= 768);
+      setIsMobile(width <= 480);
     };
     
     checkMobile();

@@ -319,8 +319,8 @@ export function MobileTable({
           }
         }
 
-        /* Hide view toggle on desktop */
-        @media (min-width: 768px) {
+        /* Hide view toggle on tablets and desktop */
+        @media (min-width: 481px) {
           .mobile-view-toggle {
             display: none;
           }
