@@ -688,13 +688,47 @@ export default function TournamentDashboard() {
   };
 
   // Load selected tournament
-  const handleLoadTournament = (t: Tournament) => {
+  const handleLoadTournament = async (t: Tournament) => {
     setTournament(t);
     setLoadModalOpen(false);
     // Load bracket settings for this tournament
     loadBracketSettings(t.id);
     // Optionally, persist tournament id to localStorage for reload (not the full object)
     localStorage.setItem('lastTournamentId', String(t.id));
+    
+    // Load squads for this tournament
+    const token = localStorage.getItem('token');
+    const userId = localStorage.getItem('user_id');
+    if (token) {
+      try {
+        // Fetch squads for the tournament
+        const squadsData = await apiClient.get<Squad[]>(`/api/v1/squads/?tournament_id=${t.id}`);
+        setSquads(squadsData);
+        
+        // Fetch selected squad for the user
+        if (userId) {
+          try {
+            const selectedSquadData = await apiClient.get<{squad_id: number}>(`/api/v1/squads/selected/?user_id=${userId}`);
+            if (selectedSquadData && selectedSquadData.squad_id) {
+              setSelectedSquadId(selectedSquadData.squad_id);
+            } else {
+              setSelectedSquadId(null);
+            }
+          } catch (error) {
+            logger.warn('No selected squad found for user', { userId, error });
+            setSelectedSquadId(null);
+          }
+        }
+      } catch (error) {
+        logger.error('Error loading squads for tournament', { tournamentId: t.id, error });
+        setSquads([]);
+        addToast({
+          type: 'error',
+          message: 'Failed to load squads for this tournament',
+          duration: 5000
+        });
+      }
+    }
   };
 
   // Delete selected tournament with enhanced UX feedback
