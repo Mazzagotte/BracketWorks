@@ -114,8 +114,8 @@ html {
   height: 100%;
   overflow-x: hidden;
   overflow-y: auto;
-  overscroll-behavior-y: none;
-  -webkit-overscroll-behavior-y: none;
+  overscroll-behavior-y: auto;
+  -webkit-overscroll-behavior-y: auto;
 }
 
 body { 
@@ -127,30 +127,24 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden; /* Prevent horizontal scroll */
-  overflow-y: visible;
+  overflow-y: auto;
   line-height: 1.6;
   min-height: 100%;
   
-  /* Mobile optimizations */
-  -webkit-user-select: none; /* Prevent accidental text selection */
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
+  /* Mobile optimizations - only prevent selection on small phones */
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
   
   /* Handle safe areas for mobile devices */
   padding-top: var(--mobile-safe-area-top);
   padding-bottom: var(--mobile-safe-area-bottom);
   padding-left: var(--mobile-safe-area-left);
   padding-right: var(--mobile-safe-area-right);
-}
-
-/* Allow text selection for specific elements */
-p, h1, h2, h3, h4, h5, h6, span, div, 
-input, textarea, [contenteditable] {
-  -webkit-user-select: text;
-  -moz-user-select: text;
-  -ms-user-select: text;
-  user-select: text;
+  
+  /* Enable smooth touch scrolling on iOS */
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Ensure root elements fill viewport */
@@ -413,7 +407,7 @@ nav a {
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 480px) {
   :root {
     --font-size-4xl: 2rem;
     --font-size-3xl: 1.6rem;
@@ -617,7 +611,7 @@ nav a {
   touch-action: manipulation;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 480px) {
   .mobile-only {
     display: block;
   }
@@ -818,7 +812,7 @@ nav a {
 }
 
 /* Responsive Form Adjustments */
-@media (max-width: 768px) {
+@media (max-width: 480px) {
   .modal-content {
     min-width: auto;
     width: calc(100vw - var(--spacing-xl));
@@ -1148,7 +1142,7 @@ nav a {
   border-radius: var(--radius-md);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 480px) {
   .mobile-scroll-hint {
     display: block;
   }
@@ -1246,7 +1240,7 @@ nav a {
 }
 
 /* Mobile form enhancements */
-@media (max-width: 768px) {
+@media (max-width: 480px) {
   select, input[type="date"], input[type="time"] {
     font-size: 16px; /* Prevents zoom on iOS */
     min-height: var(--touch-target-comfortable);
@@ -1265,7 +1259,7 @@ nav a {
 }
 
 /* Mobile-specific animations */
-@media (prefers-reduced-motion: no-preference) and (max-width: 768px) {
+@media (prefers-reduced-motion: no-preference) and (max-width: 480px) {
   .mobile-fade-in {
     animation: mobileSlideUp 0.3s ease-out;
   }

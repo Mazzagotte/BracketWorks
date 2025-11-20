@@ -514,7 +514,7 @@
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 480px) {
   .tournamentCard {
     margin: 1rem auto 0 auto;
     padding: 1.2rem 1.5rem;
@@ -747,7 +747,7 @@
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 480px) {
   .entriesContainer {
     padding: 8px;
   }
@@ -947,7 +947,7 @@
 }
 
 /* Mobile responsiveness for header buttons */
-@media (max-width: 768px) {
+@media (max-width: 480px) {
   .headerButton {
     font-size: 0.875rem;
     padding: 10px 16px;
@@ -955,7 +955,8 @@
   }
 }
 
-@media (max-width: 480px) {
+/* Extra small phones */
+@media (max-width: 360px) {
   .headerButton {
     font-size: 0.8rem;
     padding: 8px 12px;

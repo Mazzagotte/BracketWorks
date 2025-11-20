@@ -107,8 +107,8 @@ const Header = memo(function Header({
       clearTimeout(timeoutId)
       timeoutId = setTimeout(() => {
         const width = window.innerWidth
-        setIsMobile(width < 768)
-        setIsVerySmall(width < 480)
+        setIsMobile(width <= 480) // Phone only - tablets get desktop experience
+        setIsVerySmall(width < 360)
       }, 150) // Throttle resize events
     }
     
