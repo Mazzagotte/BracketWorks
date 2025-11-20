@@ -101,7 +101,9 @@ export default function ModernHeader({
       borderRadius: '16px',
       margin: '8px 0',
       boxSizing: 'border-box',
-      overflowX: 'hidden'
+      overflowX: 'hidden',
+      paddingLeft: 'max(0px, env(safe-area-inset-left))',
+      paddingRight: 'max(0px, env(safe-area-inset-right))'
     }}>
       {/* Clean Status Indicator - Top Left to avoid overlap */}
       <div style={{

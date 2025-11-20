@@ -95,6 +95,9 @@ export function MobileNav({ isOpen, onClose, firstName, currentPage }: MobileNav
           display: 'flex',
           flexDirection: 'column',
           animation: 'slideDown 0.3s ease-out',
+          paddingLeft: 'env(safe-area-inset-left)',
+          paddingRight: 'env(safe-area-inset-right)',
+          paddingBottom: 'env(safe-area-inset-bottom)'
         }}
       >
         {/* Header */}
