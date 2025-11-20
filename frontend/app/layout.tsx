@@ -255,16 +255,12 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
             style={{ 
               marginLeft: !isMobile ? '260px' : '0',
               marginTop: isMobile && isUserAuthenticated ? '60px' : '0',
-              minHeight: isMobile && isUserAuthenticated ? 'calc(100vh - 60px)' : '100vh',
+              minHeight: '100vh', /* Allow content to be taller than viewport */
               width: !isMobile ? 'calc(100% - 260px)' : '100%',
               transition: 'all 0.3s ease',
               background: 'linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%)',
               padding: isMobile ? '16px' : '24px',
               boxSizing: 'border-box',
-              overflowX: 'hidden',
-              overflowY: 'auto',
-              WebkitOverflowScrolling: 'touch',
-              touchAction: 'pan-y pan-x',
               position: 'relative'
             }}
             suppressHydrationWarning={true}
