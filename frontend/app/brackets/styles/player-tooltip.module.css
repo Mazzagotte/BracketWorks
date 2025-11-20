@@ -172,7 +172,7 @@
    RESPONSIVE DESIGN
    =================================== */
 
-@media (max-width: 640px) {
+@media (max-width: 480px) {
   .tooltip {
     min-width: 240px;
     max-width: 280px;

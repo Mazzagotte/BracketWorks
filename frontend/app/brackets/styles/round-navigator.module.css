@@ -80,7 +80,7 @@
   flex-shrink: 0;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 480px) {
   .navigator {
     padding: 0.75rem 1rem;
   }

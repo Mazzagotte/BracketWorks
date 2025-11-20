@@ -549,7 +549,7 @@
    =================================== */
 
 /* Mobile devices */
-@media (max-width: 640px) {
+@media (max-width: 480px) {
   .modalCard {
     min-width: 90%;
     max-width: 90%;

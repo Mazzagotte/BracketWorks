@@ -470,7 +470,8 @@ nav a {
   }
 }
 
-@media (max-width: 640px) {
+/* Extra small phones */
+@media (max-width: 360px) {
   .container {
     padding: var(--spacing-md);
   }

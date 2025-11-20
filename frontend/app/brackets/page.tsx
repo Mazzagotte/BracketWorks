@@ -58,7 +58,7 @@ export default function BracketsPage() {
   // Detect mobile viewport with debouncing to reduce unnecessary re-renders
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768)
+      setIsMobile(window.innerWidth <= 480) // Phone only - tablets get desktop experience
     }
     
     checkMobile()
