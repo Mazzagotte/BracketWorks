@@ -370,7 +370,7 @@ html, body {
 }
 
 /* Responsive design */
-@media (max-width: 640px) {
+@media (max-width: 480px) {
   .signup-page-container {
     padding: 16px !important;
   }
@@ -397,7 +397,7 @@ html, body {
 }
 
 /* Medium screens - adjust grid */
-@media (max-width: 520px) {
+@media (max-width: 360px) {
   .signup-input-grid {
     grid-template-columns: 1fr !important;
   }
