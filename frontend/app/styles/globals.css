@@ -116,6 +116,7 @@ html {
   overflow-y: auto;
   overscroll-behavior-y: auto;
   -webkit-overscroll-behavior-y: auto;
+  touch-action: pan-y pan-x;
 }
 
 body { 
@@ -137,14 +138,11 @@ body {
   -ms-user-select: text;
   user-select: text;
   
-  /* Handle safe areas for mobile devices */
-  padding-top: var(--mobile-safe-area-top);
-  padding-bottom: var(--mobile-safe-area-bottom);
-  padding-left: var(--mobile-safe-area-left);
-  padding-right: var(--mobile-safe-area-right);
-  
   /* Enable smooth touch scrolling on iOS */
   -webkit-overflow-scrolling: touch;
+  
+  /* Ensure touch scrolling works on tablets */
+  touch-action: pan-y pan-x;
 }
 
 /* Ensure root elements fill viewport */

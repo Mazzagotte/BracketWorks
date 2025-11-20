@@ -263,7 +263,9 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
               boxSizing: 'border-box',
               overflowX: 'hidden',
               overflowY: 'auto',
-              WebkitOverflowScrolling: 'touch'
+              WebkitOverflowScrolling: 'touch',
+              touchAction: 'pan-y pan-x',
+              position: 'relative'
             }}
             suppressHydrationWarning={true}
           >
