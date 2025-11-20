@@ -532,7 +532,7 @@ const Header = memo(function Header({
         }
         
         /* Enhanced Responsive Design */
-        @media (max-width: 768px) {
+        @media (max-width: 480px) {
           .mobile-stack {
             flex-direction: column !important;
             align-items: stretch !important;

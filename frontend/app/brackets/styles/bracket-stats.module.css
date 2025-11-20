@@ -523,7 +523,7 @@
    RESPONSIVE DESIGN
    =================================== */
 
-@media (max-width: 640px) {
+@media (max-width: 480px) {
   .statsPanel {
     padding: 1rem;
     gap: 1rem;

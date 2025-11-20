@@ -802,7 +802,7 @@
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 360px) {
   .entriesContainer {
     padding: 4px;
   }
@@ -1172,7 +1172,7 @@
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 480px) {
   .playersTableContainer {
     padding: 0 4px;
   }
@@ -1369,7 +1369,7 @@
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 480px) {
   .entryForm {
     padding: 16px;
     margin: 16px 0;

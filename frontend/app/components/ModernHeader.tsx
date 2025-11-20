@@ -36,7 +36,7 @@ export default function ModernHeader({
     setMounted(true);
     
     const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
+      setIsMobile(window.innerWidth <= 480); // Phone only - tablets get desktop experience
     };
     
     checkMobile();
