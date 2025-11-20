@@ -29,12 +29,18 @@
 }
 
 /* Force dark background for signup page - consistent with login */
-html, body {
+/* SCOPED TO SIGNUP PAGE ONLY */
+body:has(.signup-page-container) {
   background: var(--gradient-dark) !important;
   overflow: hidden !important;
   height: 100vh !important;
   margin: 0 !important;
   padding: 0 !important;
+}
+
+html:has(.signup-page-container) {
+  overflow: hidden !important;
+  height: 100vh !important;
 }
 
 /* Main page container - consistent with login */

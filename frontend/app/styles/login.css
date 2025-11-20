@@ -22,11 +22,18 @@
   }
 }
 
-/* Force dark background to match the image */
-body {
+/* Force dark background to match the image - SCOPED TO LOGIN PAGE ONLY */
+body:has(.login-page-container) {
   background: var(--color-dark-elevated) !important;
   margin: 0 !important;
   padding: 0 !important;
+  overflow: hidden !important;
+  height: 100vh !important;
+}
+
+html:has(.login-page-container) {
+  overflow: hidden !important;
+  height: 100vh !important;
 }
 
 /* Main page container - Match the dark background */
