@@ -73,7 +73,7 @@
   transition: background 0.15s, color 0.15s;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 480px) {
   .heroCard {
     padding: 1.2rem 0.5rem 1rem 0.5rem;
     max-width: 98vw;
@@ -176,7 +176,7 @@
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 480px) {
   .main {
     padding: 4px;
   }
