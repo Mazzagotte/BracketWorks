@@ -51,9 +51,13 @@ export default function Sidebar({ firstName, isMobile = false, isOpen = false, o
       display: 'flex',
       pointerEvents: 'auto',
       flexDirection: 'column',
-      alignItems: 'center'
+      alignItems: 'center',
+      paddingTop: 'max(28px, env(safe-area-inset-top))',
+      paddingBottom: 'max(20px, env(safe-area-inset-bottom))',
+      paddingLeft: 'env(safe-area-inset-left)',
+      paddingRight: 'env(safe-area-inset-right)'
     }}>
-      <div style={{ width: '100%', padding: '28px 0 20px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.1)', position: 'relative' }}>
+      <div style={{ width: '100%', padding: '0 0 20px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.1)', position: 'relative' }}>
         {isMobile && (
           <button
             onClick={onClose}
