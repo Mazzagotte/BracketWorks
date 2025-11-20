@@ -29,7 +29,7 @@ export default function ExplainBracketsModal({ isOpen, onClose }: ExplainBracket
     
     return () => {
       document.removeEventListener('keydown', handleEscape)
-      document.body.style.overflow = 'unset'
+      document.body.style.overflow = 'auto'
     }
   }, [isOpen, onClose])
 
