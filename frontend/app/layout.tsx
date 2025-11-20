@@ -36,6 +36,12 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
     setIsLoginPage(pathname === '/login' || pathname.startsWith('/reset-password'));
     setCurrentPage(pathname.slice(1) || 'dashboard'); // Remove leading slash
     
+    // Force enable touch scrolling on body for all devices
+    document.body.style.overflow = 'auto';
+    document.body.style.touchAction = 'pan-y pan-x';
+    (document.body.style as any).webkitOverflowScrolling = 'touch';
+    document.documentElement.style.touchAction = 'pan-y pan-x';
+    
     // Enhanced mobile detection with better breakpoints
     const checkMobile = () => {
       const width = window.innerWidth;
@@ -79,17 +85,22 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
     }
   }, [auth.isAuthenticated, auth.user]);
 
-  // Additional effect for sidebar management
+  // Additional effect for sidebar management and touch scrolling
   useEffect(() => {
     if (isMobile && sidebarOpen) {
       document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none';
     } else {
       document.body.style.overflow = 'auto';
+      document.body.style.touchAction = 'pan-y pan-x';
+      (document.body.style as any).webkitOverflowScrolling = 'touch';
     }
     
     return () => {
       // Always restore scroll on cleanup to prevent stuck state
       document.body.style.overflow = 'auto';
+      document.body.style.touchAction = 'pan-y pan-x';
+      (document.body.style as any).webkitOverflowScrolling = 'touch';
     };
   }, [isMobile, sidebarOpen]);
 
@@ -97,6 +108,8 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     return () => {
       document.body.style.overflow = 'auto';
+      document.body.style.touchAction = 'pan-y pan-x';
+      (document.body.style as any).webkitOverflowScrolling = 'touch';
     };
   }, []);
 
