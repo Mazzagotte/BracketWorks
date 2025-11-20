@@ -112,11 +112,8 @@ html {
   -ms-text-size-adjust: 100%;
   font-size: 100%; /* Use browser default, typically 16px */
   height: 100%;
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior-y: auto;
-  -webkit-overscroll-behavior-y: auto;
-  touch-action: pan-y pan-x;
+  width: 100%;
+  overflow: hidden; /* Prevent double scrollbars */
 }
 
 body { 
@@ -127,10 +124,12 @@ body {
   background-color: var(--color-background);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  height: 100vh; /* Fixed height to create scroll container */
+  width: 100%;
   overflow-x: hidden; /* Prevent horizontal scroll */
-  overflow-y: auto;
+  overflow-y: auto; /* Body is the scroll container */
   line-height: 1.6;
-  min-height: 100%;
+  position: relative;
   
   /* Mobile optimizations - only prevent selection on small phones */
   -webkit-user-select: text;
@@ -143,11 +142,13 @@ body {
   
   /* Ensure touch scrolling works on tablets */
   touch-action: pan-y pan-x;
+  overscroll-behavior-y: auto;
 }
 
 /* Ensure root elements fill viewport */
 #__next {
   min-height: 100%;
+  position: relative;
 }
 
 /* Typography */
