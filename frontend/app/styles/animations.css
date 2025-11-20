@@ -658,7 +658,7 @@ button[style*="linear-gradient(90deg, #6ed0fa"]:not(:disabled):hover {
 }
 
 /* Mobile Responsive Styles */
-@media (max-width: 768px) {
+@media (max-width: 480px) {
   .enhanced-card {
     margin: 8px;
     padding: 20px !important;
@@ -751,7 +751,7 @@ button[style*="linear-gradient(90deg, #6ed0fa"]:not(:disabled):hover {
 }
 
 /* Mobile-specific animations */
-@media (max-width: 768px) {
+@media (max-width: 480px) {
   .mobile-slide-up {
     animation: mobileSlideUp 0.3s ease-out;
   }
@@ -792,7 +792,7 @@ button[style*="linear-gradient(90deg, #6ed0fa"]:not(:disabled):hover {
 }
 
 /* Dark mode mobile support */
-@media (max-width: 768px) and (prefers-color-scheme: dark) {
+@media (max-width: 480px) and (prefers-color-scheme: dark) {
   .enhanced-card {
     background: rgba(35, 43, 54, 0.95) !important;
     border-color: rgba(255, 255, 255, 0.1) !important;

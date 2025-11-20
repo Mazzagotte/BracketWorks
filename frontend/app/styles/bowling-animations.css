@@ -143,7 +143,7 @@
 }
 
 /* Responsive adjustments */
-@media (max-width: 768px) {
+@media (max-width: 480px) {
   .buttonBowlingBall {
     width: 20px;
     height: 20px;
@@ -178,7 +178,7 @@
 }
 
 /* Performance mode - disable complex animations on lower-end devices */
-@media (max-width: 768px), (hover: none) {
+@media (max-width: 480px), (hover: none) {
   .buttonBowlingBall {
     animation-duration: 6s; /* Slower on mobile */
   }

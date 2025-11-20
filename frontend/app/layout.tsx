@@ -261,7 +261,9 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
               background: 'linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%)',
               padding: isMobile ? '16px' : '24px',
               boxSizing: 'border-box',
-              overflowX: 'hidden'
+              overflowX: 'hidden',
+              overflowY: 'auto',
+              WebkitOverflowScrolling: 'touch'
             }}
             suppressHydrationWarning={true}
           >
@@ -312,7 +314,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes" />
         <meta name="theme-color" content={colors.brand.gold} />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
