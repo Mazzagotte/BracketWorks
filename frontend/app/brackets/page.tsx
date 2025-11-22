@@ -242,7 +242,7 @@ export default function BracketsPage() {
       })
       .catch((error) => {
         // Error - will be handled by modal
-        console.error('Bracket generation failed', { error });
+        logger.error('Bracket generation failed', { error });
         throw error
       })
     

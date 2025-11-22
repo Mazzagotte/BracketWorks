@@ -2,6 +2,7 @@
 
 import { Suspense, lazy, ComponentType } from 'react';
 import { Skeleton } from '../components/LoadingComponents';
+import { logger } from './logger';
 
 /**
  * Progressive loading utilities for deferring non-critical content
@@ -63,7 +64,7 @@ export async function progressiveDataFetch<T extends Record<string, any>>(
     fetchers.secondary().then(secondaryData => {
       onUpdate({ ...criticalData, ...secondaryData });
     }).catch(error => {
-      console.warn('Secondary data load failed:', error);
+      logger.warn('Secondary data load failed:', error);
     });
   }
 
@@ -72,7 +73,7 @@ export async function progressiveDataFetch<T extends Record<string, any>>(
     fetchers.analytics().then(analyticsData => {
       onUpdate({ ...criticalData, ...analyticsData });
     }).catch(error => {
-      console.warn('Analytics data load failed:', error);
+      logger.warn('Analytics data load failed:', error);
     });
   }
 
@@ -156,7 +157,7 @@ export function useHoverPreload<T>(
       cacheRef.current.set(dataKey, result);
       setData(result);
     } catch (error) {
-      console.error('Preload failed:', error);
+      logger.error('Preload failed:', error);
     } finally {
       setIsLoading(false);
     }
