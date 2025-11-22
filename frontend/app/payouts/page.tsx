@@ -103,68 +103,8 @@ interface EntryData {
   }
 }
 
-export default function PayoutsPage() {
-  // Authentication check - must be at the top
-  const { isAuthenticated, isInitialized } = useAuth();
-
-  // Check if we have tokens in localStorage even if auth context isn't ready
-  const hasStoredAuth = typeof window !== 'undefined' && 
-    localStorage.getItem('token') && 
-    localStorage.getItem('user_id');
-
-  // Wait for auth initialization before making decisions
-  if (!isInitialized) {
-    return (
-      <div style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center', 
-        minHeight: '100vh',
-        fontFamily: 'Inter, sans-serif'
-      }}>
-        <div style={{ textAlign: 'center' }}>
-          <div>Loading payout management...</div>
-        </div>
-      </div>
-    );
-  }
-
-  // Authentication guard - redirect if not logged in (only after initialization)
-  if (!isAuthenticated && !hasStoredAuth) {
-    return (
-      <div style={{ 
-        padding: '2rem', 
-        textAlign: 'center',
-        minHeight: '50vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}>
-        <div>
-          <div>Please log in to access payout management</div>
-        </div>
-      </div>
-    );
-  }
-
-  // Show loading if we have stored auth but context isn't ready yet
-  if (!isAuthenticated && hasStoredAuth) {
-    return (
-      <div style={{ 
-        padding: '2rem', 
-        textAlign: 'center',
-        minHeight: '50vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}>
-        <div>
-          <div>Loading payout management...</div>
-        </div>
-      </div>
-    );
-  }
-
+// Separate component to avoid hooks-after-return issue
+function PayoutsContent() {
   const [tournament, setTournament] = useState<Tournament | null>(null)
   const [squads, setSquads] = useState<Squad[]>([])
   const [selectedSquad, setSelectedSquad] = useState<Squad | null>(null)
@@ -649,53 +589,44 @@ export default function PayoutsPage() {
     actions: headerActions
   })
 
-  // Load current tournament on mount
+  // Consolidated data loading - Single useEffect to prevent multiple simultaneous loads
   useEffect(() => {
-    loadCurrentTournament()
+    let isMounted = true
+    let autoRefreshInterval: NodeJS.Timeout | null = null
+
+    // Initial load on mount
+    const initializeData = async () => {
+      await loadCurrentTournament()
+    }
+
+    // Only load on mount
+    initializeData()
+
+    // Setup auto-refresh if enabled
+    if (autoRefreshEnabled && tournament) {
+      autoRefreshInterval = setInterval(() => {
+        if (isMounted && !document.hidden) {
+          loadPayoutData()
+          setLastRefresh(new Date())
+        }
+      }, 30000) // Refresh every 30 seconds
+    }
+
+    // Cleanup
+    return () => {
+      isMounted = false
+      if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval)
+      }
+    }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto-load payout data when tournament or squad is available/changes
+  // Separate effect for tournament/squad changes only
   useEffect(() => {
     if (tournament) {
       loadPayoutData()
     }
-  }, [tournament, selectedSquad]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Auto-refresh functionality
-  useEffect(() => {
-    if (!autoRefreshEnabled || !tournament) return
-
-    const interval = setInterval(() => {
-      loadPayoutData()
-      setLastRefresh(new Date())
-    }, 30000) // Refresh every 30 seconds
-
-    return () => clearInterval(interval)
-  }, [autoRefreshEnabled, tournament, selectedSquad]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Reload payout data when page becomes visible (handles navigation back from Dashboard)
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (!document.hidden && tournament) {
-        loadPayoutData();
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [tournament, selectedSquad]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Also reload when page gains focus
-  useEffect(() => {
-    const handleFocus = () => {
-      if (tournament) {
-        loadPayoutData();
-      }
-    };
-
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, [tournament, selectedSquad]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [tournament?.id, selectedSquad?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadPayoutData = async () => {
     if (!tournament) return
@@ -2306,6 +2237,72 @@ function BracketPayoutTable({ bracket, formatCurrency }: { bracket: BracketPayou
       </div>
     </div>
   )
+}
+
+// Main exported component with auth guards
+export default function PayoutsPage() {
+  const { isAuthenticated, isInitialized } = useAuth();
+
+  // Check if we have tokens in localStorage even if auth context isn't ready
+  const hasStoredAuth = typeof window !== 'undefined' && 
+    localStorage.getItem('token') && 
+    localStorage.getItem('user_id');
+
+  // Wait for auth initialization before making decisions
+  if (!isInitialized) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        minHeight: '100vh',
+        fontFamily: 'Inter, sans-serif'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div>Loading payout management...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Authentication guard - redirect if not logged in (only after initialization)
+  if (!isAuthenticated && !hasStoredAuth) {
+    return (
+      <div style={{ 
+        padding: '2rem', 
+        textAlign: 'center',
+        minHeight: '50vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div>
+          <div>Please log in to access payout management</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading if we have stored auth but context isn't ready yet
+  if (!isAuthenticated && hasStoredAuth) {
+    return (
+      <div style={{ 
+        padding: '2rem', 
+        textAlign: 'center',
+        minHeight: '50vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div>
+          <div>Loading payout management...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Render the main content once authenticated
+  return <PayoutsContent />
 }
 
 
