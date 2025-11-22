@@ -589,44 +589,31 @@ function PayoutsContent() {
     actions: headerActions
   })
 
-  // Consolidated data loading - Single useEffect to prevent multiple simultaneous loads
+  // Load tournament on mount
   useEffect(() => {
-    let isMounted = true
-    let autoRefreshInterval: NodeJS.Timeout | null = null
-
-    // Initial load on mount
-    const initializeData = async () => {
-      await loadCurrentTournament()
-    }
-
-    // Only load on mount
-    initializeData()
-
-    // Setup auto-refresh if enabled
-    if (autoRefreshEnabled && tournament) {
-      autoRefreshInterval = setInterval(() => {
-        if (isMounted && !document.hidden) {
-          loadPayoutData()
-          setLastRefresh(new Date())
-        }
-      }, 30000) // Refresh every 30 seconds
-    }
-
-    // Cleanup
-    return () => {
-      isMounted = false
-      if (autoRefreshInterval) {
-        clearInterval(autoRefreshInterval)
-      }
-    }
+    loadCurrentTournament()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Separate effect for tournament/squad changes only
+  // Load payout data when tournament/squad changes
   useEffect(() => {
     if (tournament) {
       loadPayoutData()
     }
   }, [tournament?.id, selectedSquad?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-refresh functionality - separate effect with proper dependencies
+  useEffect(() => {
+    if (!autoRefreshEnabled || !tournament) return
+
+    const autoRefreshInterval = setInterval(() => {
+      if (!document.hidden) {
+        loadPayoutData()
+        setLastRefresh(new Date())
+      }
+    }, 30000) // Refresh every 30 seconds
+
+    return () => clearInterval(autoRefreshInterval)
+  }, [autoRefreshEnabled, tournament?.id, selectedSquad?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadPayoutData = async () => {
     if (!tournament) return
