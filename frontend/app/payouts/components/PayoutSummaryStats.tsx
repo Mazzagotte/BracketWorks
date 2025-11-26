@@ -19,28 +19,30 @@ const formatCurrency = (value: number): string => {
 export function PayoutSummaryStats({ payoutData, loading }: PayoutSummaryStatsProps) {
   if (loading || !payoutData) {
     return (
-      <Grid columns={4} gap="20px" style={{ marginBottom: '24px' }}>
-        <StatCard
-          label="Total Prize Pool"
-          value="Loading..."
-          variant="default"
-        />
-        <StatCard
-          label="Scratch Pool"
-          value="Loading..."
-          variant="default"
-        />
-        <StatCard
-          label="Handicap Pool"
-          value="Loading..."
-          variant="default"
-        />
-        <StatCard
-          label="Total Winners"
-          value="Loading..."
-          variant="default"
-        />
-      </Grid>
+      <div style={{ marginBottom: '24px' }}>
+        <Grid columns="4" gap="20px">
+          <StatCard
+            title="Total Prize Pool"
+            value="Loading..."
+            color="default"
+          />
+          <StatCard
+            title="Scratch Pool"
+            value="Loading..."
+            color="default"
+          />
+          <StatCard
+            title="Handicap Pool"
+            value="Loading..."
+            color="default"
+          />
+          <StatCard
+            title="Total Winners"
+            value="Loading..."
+            color="default"
+          />
+        </Grid>
+      </div>
     )
   }
 
@@ -50,32 +52,34 @@ export function PayoutSummaryStats({ payoutData, loading }: PayoutSummaryStatsPr
     : 0
 
   return (
-    <Grid columns={4} gap="20px" style={{ marginBottom: '24px' }}>
-      <StatCard
-        label="Total Prize Pool"
-        value={formatCurrency(payoutData.total_prize_pool)}
-        variant="success"
-        icon="💰"
-      />
-      <StatCard
-        label="Scratch Pool"
-        value={formatCurrency(payoutData.total_scratch_pool)}
-        variant="info"
-        icon="🎯"
-      />
-      <StatCard
-        label="Handicap Pool"
-        value={formatCurrency(payoutData.total_handicap_pool)}
-        variant="warning"
-        icon="⚖️"
-      />
-      <StatCard
-        label="Total Winners"
-        value={totalWinners.toString()}
-        subtitle={`Avg: ${formatCurrency(avgPayout)}`}
-        variant="default"
-        icon="🏆"
-      />
-    </Grid>
+    <div style={{ marginBottom: '24px' }}>
+      <Grid columns="4" gap="20px">
+        <StatCard
+          title="Total Prize Pool"
+          value={formatCurrency(payoutData.total_prize_pool)}
+          color="success"
+          icon="💰"
+        />
+        <StatCard
+          title="Scratch Pool"
+          value={formatCurrency(payoutData.total_scratch_pool)}
+          color="primary"
+          icon="🎯"
+        />
+        <StatCard
+          title="Handicap Pool"
+          value={formatCurrency(payoutData.total_handicap_pool)}
+          color="warning"
+          icon="⚖️"
+        />
+        <StatCard
+          title="Total Winners"
+          value={totalWinners.toString()}
+          subtitle={`Avg: ${formatCurrency(avgPayout)}`}
+          color="default"
+          icon="🏆"
+        />
+      </Grid>
+    </div>
   )
 }
