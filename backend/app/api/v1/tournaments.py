@@ -12,22 +12,27 @@ def create_tournament(
     db: Session = Depends(deps.get_db),
     user = Depends(deps.get_current_user)
 ):
-    db_tournament = models.Tournament(
-        name=tournament.name,
-        location=tournament.location,
-        start_date=tournament.start_date,
-        end_date=tournament.end_date,
-        squad_times=json.dumps(tournament.squad_times),
-        user_id=user.id
-    )
-    db.add(db_tournament)
-    db.commit()
-    db.refresh(db_tournament)
-    # squad_times is already stored as JSON string in the DB; no need to assign the dict here
-    # Parse squad_times before returning for API response
-    result = db_tournament.__dict__.copy()
-    result['squad_times'] = tournament.squad_times
-    return result
+    try:
+        db_tournament = models.Tournament(
+            name=tournament.name,
+            location=tournament.location,
+            start_date=tournament.start_date,
+            end_date=tournament.end_date,
+            squad_times=json.dumps(tournament.squad_times),
+            user_id=user.id
+        )
+        db.add(db_tournament)
+        db.commit()
+        db.refresh(db_tournament)
+        # squad_times is already stored as JSON string in the DB; no need to assign the dict here
+        # Parse squad_times before returning for API response
+        result = db_tournament.__dict__.copy()
+        result['squad_times'] = tournament.squad_times
+        return result
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error creating tournament: {e}")
+        raise HTTPException(status_code=500, detail="Failed to create tournament")
 
 @router.get("/", response_model=list[schemas.Tournament])
 def list_tournaments(
@@ -74,23 +79,31 @@ def update_tournament(
     db: Session = Depends(deps.get_db),
     user = Depends(deps.get_current_user)
 ):
-    db_t = db.query(models.Tournament).filter(models.Tournament.id == tournament_id).first()
-    if not db_t:
-        raise HTTPException(status_code=404, detail="Tournament not found")
-    db_t.name = tournament.name
-    if tournament.location is not None:
-        db_t.location = tournament.location
-    if tournament.start_date is not None:
-        db_t.start_date = tournament.start_date
-    if tournament.end_date is not None:
-        db_t.end_date = tournament.end_date
-    db_t.squad_times = json.dumps(tournament.squad_times)
-    db.commit()
-    db.refresh(db_t)
-    # Parse squad_times before returning for API response
-    result = db_t.__dict__.copy()
-    result['squad_times'] = tournament.squad_times
-    return result
+    try:
+        db_t = db.query(models.Tournament).filter(models.Tournament.id == tournament_id).first()
+        if not db_t:
+            raise HTTPException(status_code=404, detail="Tournament not found")
+        db_t.name = tournament.name
+        if tournament.location is not None:
+            db_t.location = tournament.location
+        if tournament.start_date is not None:
+            db_t.start_date = tournament.start_date
+        if tournament.end_date is not None:
+            db_t.end_date = tournament.end_date
+        db_t.squad_times = json.dumps(tournament.squad_times)
+        db.commit()
+        db.refresh(db_t)
+        # Parse squad_times before returning for API response
+        result = db_t.__dict__.copy()
+        result['squad_times'] = tournament.squad_times
+        return result
+    except HTTPException:
+        # re-raise 404 or other explicit HTTPExceptions
+        raise
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error updating tournament {tournament_id}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to update tournament")
 
 @router.delete("/{tournament_id}")
 def delete_tournament(

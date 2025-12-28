@@ -154,38 +154,44 @@ def update_score(
     current_user = Depends(get_current_user)
 ):
     """Update specific score by ID"""
-    
-    score = db.query(Score).filter(Score.id == score_id).first()
-    if not score:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Score not found"
-        )
-    
-    # Get bowler information
-    bowler = db.query(Bowler).filter(Bowler.id == score.bowler_id).first()
-    if not bowler:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Bowler not found"
-        )
-    
-    # Calculate handicap and game totals
-    handicap = get_handicap_for_bowler(bowler, score.tournament_id, db)
-    logger.info(f"Calculating handicap for bowler {bowler.name} (avg={bowler.average}): {handicap}")
-    
-    # Build score dictionary with calculated totals
-    score_dict = score_data.model_dump(exclude_unset=True)
-    score_dict.update(calculate_game_totals(score_data, handicap))
-    
-    # Update fields
-    for field, value in score_dict.items():
-        setattr(score, field, value)
-    
-    db.commit()
-    db.refresh(score)
-    logger.info(f"Updated score for bowler {bowler.name}: G1={score.game1_total}, G2={score.game2_total}, G3={score.game3_total}")
-    return score
+    try:
+        score = db.query(Score).filter(Score.id == score_id).first()
+        if not score:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Score not found"
+            )
+        
+        # Get bowler information
+        bowler = db.query(Bowler).filter(Bowler.id == score.bowler_id).first()
+        if not bowler:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Bowler not found"
+            )
+        
+        # Calculate handicap and game totals
+        handicap = get_handicap_for_bowler(bowler, score.tournament_id, db)
+        logger.info(f"Calculating handicap for bowler {bowler.name} (avg={bowler.average}): {handicap}")
+        
+        # Build score dictionary with calculated totals
+        score_dict = score_data.model_dump(exclude_unset=True)
+        score_dict.update(calculate_game_totals(score_data, handicap))
+        
+        # Update fields
+        for field, value in score_dict.items():
+            setattr(score, field, value)
+        
+        db.commit()
+        db.refresh(score)
+        logger.info(f"Updated score for bowler {bowler.name}: G1={score.game1_total}, G2={score.game2_total}, G3={score.game3_total}")
+        return score
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error updating score {score_id}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to update score")
 
 @router.delete("/{score_id}")
 def delete_score(
@@ -194,14 +200,20 @@ def delete_score(
     current_user = Depends(get_current_user)
 ):
     """Delete a score"""
-    
-    score = db.query(Score).filter(Score.id == score_id).first()
-    if not score:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Score not found"
-        )
-    
-    db.delete(score)
-    db.commit()
-    return {"message": "Score deleted successfully"}
+    try:
+        score = db.query(Score).filter(Score.id == score_id).first()
+        if not score:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Score not found"
+            )
+        
+        db.delete(score)
+        db.commit()
+        return {"message": "Score deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error deleting score {score_id}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to delete score")

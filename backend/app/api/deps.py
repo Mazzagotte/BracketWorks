@@ -12,6 +12,7 @@ engine = create_engine(
     echo=False,  # Disable SQL logging for better performance
     pool_size=settings.DATABASE_POOL_SIZE,
     max_overflow=settings.DATABASE_MAX_OVERFLOW,
+    pool_timeout=30,
     pool_pre_ping=True,
     pool_recycle=3600,  # Increased recycle time
     connect_args={
@@ -25,6 +26,13 @@ def get_db():
     db: Session = SessionLocal()
     try:
         yield db
+    except Exception as e:
+        try:
+            db.rollback()
+        except Exception as rollback_error:
+            logger.error(f"Database rollback failed: {rollback_error}")
+        # Re-raise to let FastAPI handle the original error
+        raise
     finally:
         db.close()
 

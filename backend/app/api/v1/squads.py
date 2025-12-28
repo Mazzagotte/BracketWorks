@@ -45,21 +45,26 @@ def create_squad(squad: schemas.SquadCreate, db: Session = Depends(deps.get_db))
             'date': str(existing.date),
             'time': existing.time
         }
-    obj = models.Squad(
-        tournament_id=squad.tournament_id,
-        date=squad.date,
-        time=squad.time
-    )
-    db.add(obj)
-    db.commit()
-    db.refresh(obj)
-    # Serialize date as string
-    return {
-        'id': obj.id,
-        'tournament_id': obj.tournament_id,
-        'date': str(obj.date),
-        'time': obj.time
-    }
+    try:
+        obj = models.Squad(
+            tournament_id=squad.tournament_id,
+            date=squad.date,
+            time=squad.time
+        )
+        db.add(obj)
+        db.commit()
+        db.refresh(obj)
+        # Serialize date as string
+        return {
+            'id': obj.id,
+            'tournament_id': obj.tournament_id,
+            'date': str(obj.date),
+            'time': obj.time
+        }
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error creating squad: {e}")
+        raise HTTPException(status_code=500, detail="Failed to create squad")
 
 @router.get("/", response_model=list[schemas.Squad])
 def list_squads(tournament_id: int, db: Session = Depends(deps.get_db)):
