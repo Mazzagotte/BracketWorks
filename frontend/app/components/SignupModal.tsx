@@ -249,11 +249,11 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
   const getStrengthColor = () => {
     switch(passwordStrength) {
       case 0:
-      case 1: return '#ef4444';
+      case 1: return '#D64545';
       case 2: return '#f97316';
-      case 3: return '#eab308';
+      case 3: return '#F2A900';
       case 4: return '#84cc16';
-      case 5: return '#22c55e';
+      case 5: return '#2FBF71';
       default: return '#e5e7eb';
     }
   };
@@ -296,12 +296,12 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
             margin: 0,
             fontSize: '24px',
             fontWeight: 700,
-            color: '#1f2937'
+            color: '#1F2A33'
           }}>Create Account</h2>
           <p style={{
             margin: '8px 0 0',
             fontSize: '14px',
-            color: '#6b7280'
+            color: '#5E6B75'
           }}>Join BracketWorks today</p>
         </div>
 
@@ -315,7 +315,7 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
               background: '#fef2f2',
               border: '1px solid #fecaca',
               borderRadius: '8px',
-              color: '#dc2626',
+              color: '#D64545',
               fontSize: '14px'
             }}>
               {error}
@@ -335,7 +335,7 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
                 display: 'block',
                 fontSize: '14px',
                 fontWeight: 500,
-                color: '#374151',
+                color: '#1F2A33',
                 marginBottom: '6px'
               }}>
                 First Name *
@@ -353,14 +353,14 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
                   padding: '12px 14px',
                   paddingRight: fieldValidation.firstName ? '40px' : '14px',
                   fontSize: '15px',
-                  border: `2px solid ${fieldValidation.firstName ? '#22c55e' : '#e5e7eb'}`,
+                  border: `2px solid ${fieldValidation.firstName ? '#2FBF71' : '#e5e7eb'}`,
                   borderRadius: '10px',
                   outline: 'none',
                   transition: 'all 0.2s ease'
                 }}
                 onFocus={(e) => {
                   if (!fieldValidation.firstName) {
-                    e.currentTarget.style.borderColor = '#6366f1';
+                    e.currentTarget.style.borderColor = '#F47C20';
                   }
                 }}
                 onBlur={(e) => {
@@ -374,7 +374,7 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
                   position: 'absolute',
                   right: '12px',
                   top: '41px',
-                  color: '#22c55e',
+                  color: '#2FBF71',
                   fontSize: '18px',
                   fontWeight: 'bold'
                 }}></span>
@@ -387,7 +387,7 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
                 display: 'block',
                 fontSize: '14px',
                 fontWeight: 500,
-                color: '#374151',
+                color: '#1F2A33',
                 marginBottom: '6px'
               }}>
                 Last Name *
@@ -405,14 +405,14 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
                   padding: '12px 14px',
                   paddingRight: fieldValidation.lastName ? '40px' : '14px',
                   fontSize: '15px',
-                  border: `2px solid ${fieldValidation.lastName ? '#22c55e' : '#e5e7eb'}`,
+                  border: `2px solid ${fieldValidation.lastName ? '#2FBF71' : '#e5e7eb'}`,
                   borderRadius: '10px',
                   outline: 'none',
                   transition: 'all 0.2s ease'
                 }}
                 onFocus={(e) => {
                   if (!fieldValidation.lastName) {
-                    e.currentTarget.style.borderColor = '#6366f1';
+                    e.currentTarget.style.borderColor = '#F47C20';
                   }
                 }}
                 onBlur={(e) => {
@@ -426,7 +426,7 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
                   position: 'absolute',
                   right: '12px',
                   top: '41px',
-                  color: '#22c55e',
+                  color: '#2FBF71',
                   fontSize: '18px',
                   fontWeight: 'bold'
                 }}></span>
@@ -440,7 +440,7 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
               display: 'block',
               fontSize: '14px',
               fontWeight: 500,
-              color: '#374151',
+              color: '#1F2A33',
               marginBottom: '6px'
             }}>
               Username *
@@ -459,8 +459,8 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
                 paddingRight: '40px',
                 fontSize: '15px',
                 border: `2px solid ${
-                  usernameAvailable === false ? '#ef4444' :
-                  usernameAvailable === true ? '#22c55e' :
+                  usernameAvailable === false ? '#D64545' :
+                  usernameAvailable === true ? '#2FBF71' :
                   '#e5e7eb'
                 }`,
                 borderRadius: '10px',
@@ -469,7 +469,7 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
               }}
               onFocus={(e) => {
                 if (usernameAvailable === null) {
-                  e.currentTarget.style.borderColor = '#6366f1';
+                  e.currentTarget.style.borderColor = '#F47C20';
                 }
               }}
               onBlur={(e) => {
@@ -483,7 +483,7 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
                 position: 'absolute',
                 right: '12px',
                 top: '41px',
-                color: '#6b7280',
+                color: '#5E6B75',
                 fontSize: '16px'
               }}>⋯</span>
             )}
@@ -492,7 +492,7 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
                 position: 'absolute',
                 right: '12px',
                 top: '41px',
-                color: '#22c55e',
+                color: '#2FBF71',
                 fontSize: '18px',
                 fontWeight: 'bold'
               }}>[✓]</span>
@@ -504,7 +504,7 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
                 left: 0,
                 marginTop: '4px',
                 fontSize: '13px',
-                color: '#ef4444',
+                color: '#D64545',
                 fontWeight: 500
               }}>Username taken</div>
             )}
@@ -516,7 +516,7 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
               display: 'block',
               fontSize: '14px',
               fontWeight: 500,
-              color: '#374151',
+              color: '#1F2A33',
               marginBottom: '6px'
             }}>
               Organization (optional)
@@ -535,7 +535,7 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
                 outline: 'none',
                 transition: 'all 0.2s ease'
               }}
-              onFocus={(e) => e.currentTarget.style.borderColor = '#6366f1'}
+              onFocus={(e) => e.currentTarget.style.borderColor = '#F47C20'}
               onBlur={(e) => e.currentTarget.style.borderColor = '#e5e7eb'}
             />
           </div>
@@ -546,7 +546,7 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
               display: 'block',
               fontSize: '14px',
               fontWeight: 500,
-              color: '#374151',
+              color: '#1F2A33',
               marginBottom: '6px'
             }}>
               Email *
@@ -564,14 +564,14 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
                 padding: '12px 14px',
                 paddingRight: fieldValidation.email ? '40px' : '14px',
                 fontSize: '15px',
-                border: `2px solid ${fieldValidation.email ? '#22c55e' : '#e5e7eb'}`,
+                border: `2px solid ${fieldValidation.email ? '#2FBF71' : '#e5e7eb'}`,
                 borderRadius: '10px',
                 outline: 'none',
                 transition: 'all 0.2s ease'
               }}
               onFocus={(e) => {
                 if (!fieldValidation.email) {
-                  e.currentTarget.style.borderColor = '#6366f1';
+                  e.currentTarget.style.borderColor = '#F47C20';
                 }
               }}
               onBlur={(e) => {
@@ -585,7 +585,7 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
                 position: 'absolute',
                 right: '12px',
                 top: '41px',
-                color: '#22c55e',
+                color: '#2FBF71',
                 fontSize: '18px',
                 fontWeight: 'bold'
               }}>[✓]</span>
@@ -598,7 +598,7 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
               display: 'block',
               fontSize: '14px',
               fontWeight: 500,
-              color: '#374151',
+              color: '#1F2A33',
               marginBottom: '6px'
             }}>
               Password *
@@ -620,14 +620,14 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
                   padding: '12px 14px',
                   paddingRight: '100px',
                   fontSize: '15px',
-                  border: `2px solid ${fieldValidation.password ? '#22c55e' : '#e5e7eb'}`,
+                  border: `2px solid ${fieldValidation.password ? '#2FBF71' : '#e5e7eb'}`,
                   borderRadius: '10px',
                   outline: 'none',
                   transition: 'all 0.2s ease'
                 }}
                 onFocusCapture={(e) => {
                   if (!fieldValidation.password) {
-                    e.currentTarget.style.borderColor = '#6366f1';
+                    e.currentTarget.style.borderColor = '#F47C20';
                   }
                 }}
                 onBlurCapture={(e) => {
@@ -646,20 +646,20 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
                     top: '50%',
                     transform: 'translateY(-50%)',
                     padding: '6px 10px',
-                    background: 'rgba(107, 114, 128, 0.08)',
-                    border: '1px solid rgba(107, 114, 128, 0.2)',
+                    background: 'rgba(94, 107, 117, 0.08)',
+                    border: '1px solid rgba(94, 107, 117, 0.2)',
                     borderRadius: '6px',
                     cursor: 'pointer',
                     fontSize: '12px',
                     fontWeight: 500,
-                    color: '#6b7280',
+                    color: '#5E6B75',
                     transition: 'all 0.2s ease'
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(107, 114, 128, 0.12)';
+                    e.currentTarget.style.background = 'rgba(94, 107, 117, 0.12)';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(107, 114, 128, 0.08)';
+                    e.currentTarget.style.background = 'rgba(94, 107, 117, 0.08)';
                   }}
                 >
                   {showPassword ? "Hide" : "Show"}
@@ -713,26 +713,26 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
                 <div style={{
                   fontWeight: 600,
                   marginBottom: '8px',
-                  color: '#374151'
+                  color: '#1F2A33'
                 }}>Password requirements:</div>
                 <div style={{
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '4px'
                 }}>
-                  <div style={{ color: password.length >= 6 ? '#22c55e' : '#6b7280' }}>
+                  <div style={{ color: password.length >= 6 ? '#2FBF71' : '#5E6B75' }}>
                     {password.length >= 6 ? '[Yes]' : '[ ]'} At least 6 characters
                   </div>
-                  <div style={{ color: /[a-z]/.test(password) ? '#22c55e' : '#6b7280' }}>
+                  <div style={{ color: /[a-z]/.test(password) ? '#2FBF71' : '#5E6B75' }}>
                     {/[a-z]/.test(password) ? '[Yes]' : '[ ]'} Lowercase letter
                   </div>
-                  <div style={{ color: /[A-Z]/.test(password) ? '#22c55e' : '#6b7280' }}>
+                  <div style={{ color: /[A-Z]/.test(password) ? '#2FBF71' : '#5E6B75' }}>
                     {/[A-Z]/.test(password) ? '[Yes]' : '[ ]'} Uppercase letter
                   </div>
-                  <div style={{ color: /[0-9]/.test(password) ? '#22c55e' : '#6b7280' }}>
+                  <div style={{ color: /[0-9]/.test(password) ? '#2FBF71' : '#5E6B75' }}>
                     {/[0-9]/.test(password) ? '[Yes]' : '[ ]'} Number
                   </div>
-                  <div style={{ color: /[^A-Za-z0-9]/.test(password) ? '#22c55e' : '#6b7280' }}>
+                  <div style={{ color: /[^A-Za-z0-9]/.test(password) ? '#2FBF71' : '#5E6B75' }}>
                     {/[^A-Za-z0-9]/.test(password) ? '[Yes]' : '[ ]'} Special character
                   </div>
                 </div>
@@ -746,7 +746,7 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
               display: 'block',
               fontSize: '14px',
               fontWeight: 500,
-              color: '#374151',
+              color: '#1F2A33',
               marginBottom: '6px'
             }}>
               Confirm Password *
@@ -767,8 +767,8 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
                   paddingRight: '100px',
                   fontSize: '15px',
                   border: `2px solid ${
-                    confirmPassword && !fieldValidation.confirmPassword ? '#ef4444' :
-                    fieldValidation.confirmPassword ? '#22c55e' :
+                    confirmPassword && !fieldValidation.confirmPassword ? '#D64545' :
+                    fieldValidation.confirmPassword ? '#2FBF71' :
                     '#e5e7eb'
                   }`,
                   borderRadius: '10px',
@@ -777,7 +777,7 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
                 }}
                 onFocus={(e) => {
                   if (!fieldValidation.confirmPassword && !(confirmPassword && !fieldValidation.confirmPassword)) {
-                    e.currentTarget.style.borderColor = '#6366f1';
+                    e.currentTarget.style.borderColor = '#F47C20';
                   }
                 }}
                 onBlur={(e) => {
@@ -821,7 +821,7 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
                 position: 'absolute',
                 right: '92px',
                 top: '41px',
-                color: '#22c55e',
+                color: '#2FBF71',
                 fontSize: '18px',
                 fontWeight: 'bold'
               }}>[✓]</span>
@@ -833,7 +833,7 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
                 left: 0,
                 marginTop: '4px',
                 fontSize: '13px',
-                color: '#ef4444',
+                color: '#D64545',
                 fontWeight: 500
               }}>Passwords don't match</div>
             )}
@@ -853,7 +853,7 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
                 padding: '14px',
                 fontSize: '15px',
                 fontWeight: 600,
-                color: '#6b7280',
+                color: '#5E6B75',
                 background: '#f9fafb',
                 border: '1px solid #e5e7eb',
                 borderRadius: '12px',
@@ -872,9 +872,9 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
                 padding: '14px',
                 fontSize: '15px',
                 fontWeight: 600,
-                color: '#1f2937',
-                background: loading ? '#e5e7eb' : '#ffffff',
-                border: '2px solid #e5e7eb',
+                color: '#ffffff',
+                background: loading ? '#E3E0DC' : '#F47C20',
+                border: '2px solid ' + (loading ? '#E3E0DC' : '#F47C20'),
                 borderRadius: '12px',
                 cursor: loading ? 'not-allowed' : 'pointer',
                 boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
@@ -882,14 +882,14 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
               }}
               onMouseEnter={(e) => {
                 if (!loading) {
-                  e.currentTarget.style.background = '#f9fafb';
-                  e.currentTarget.style.borderColor = '#d1d5db';
+                  e.currentTarget.style.background = '#D9651A';
+                  e.currentTarget.style.borderColor = '#D9651A';
                 }
               }}
               onMouseLeave={(e) => {
                 if (!loading) {
-                  e.currentTarget.style.background = '#ffffff';
-                  e.currentTarget.style.borderColor = '#e5e7eb';
+                  e.currentTarget.style.background = '#F47C20';
+                  e.currentTarget.style.borderColor = '#F47C20';
                 }
               }}
             >

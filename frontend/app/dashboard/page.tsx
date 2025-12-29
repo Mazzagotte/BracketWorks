@@ -903,7 +903,7 @@ export default function TournamentDashboard() {
           setModalOpen(true);
         }}
         style={{
-          backgroundColor: '#f0a500',
+          backgroundColor: '#F47C20',
           color: 'white',
           border: 'none',
           borderRadius: '8px',
@@ -917,10 +917,10 @@ export default function TournamentDashboard() {
           transition: 'all 0.2s ease'
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = '#d4940b'
+          e.currentTarget.style.backgroundColor = '#D9651A'
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = '#f0a500'
+          e.currentTarget.style.backgroundColor = '#F47C20'
         }}
       >
         + New Tournament
@@ -933,7 +933,7 @@ export default function TournamentDashboard() {
             setModalOpen(true);
           }}
           style={{
-            backgroundColor: '#f0a500',
+            backgroundColor: '#F47C20',
             color: 'white',
             border: 'none',
             borderRadius: '8px',
@@ -947,10 +947,10 @@ export default function TournamentDashboard() {
             transition: 'all 0.2s ease'
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = '#d4940b'
+            e.currentTarget.style.backgroundColor = '#D9651A'
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = '#f0a500'
+            e.currentTarget.style.backgroundColor = '#F47C20'
           }}
         >
           Edit Tournament
@@ -960,7 +960,7 @@ export default function TournamentDashboard() {
       <button
         onClick={() => setLoadModalOpen(true)}
         style={{
-          backgroundColor: '#f0a500',
+          backgroundColor: '#F47C20',
           color: 'white',
           border: 'none',
           borderRadius: '8px',
@@ -974,10 +974,10 @@ export default function TournamentDashboard() {
           transition: 'all 0.2s ease'
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = '#d4940b'
+          e.currentTarget.style.backgroundColor = '#D9651A'
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = '#f0a500'
+          e.currentTarget.style.backgroundColor = '#F47C20'
         }}
       >
         Load Tournament
@@ -1006,7 +1006,7 @@ export default function TournamentDashboard() {
             });
           }}
           style={{
-            backgroundColor: '#ef4444',
+            backgroundColor: '#D64545',
             color: 'white',
             border: 'none',
             borderRadius: '8px',
@@ -1023,7 +1023,7 @@ export default function TournamentDashboard() {
             e.currentTarget.style.backgroundColor = '#dc2626'
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = '#ef4444'
+            e.currentTarget.style.backgroundColor = '#B23A3A'
           }}
         >
           Unload Tournament
@@ -1107,7 +1107,7 @@ export default function TournamentDashboard() {
                       setModalOpen(true);
                     }}
                     style={{
-                      background: 'linear-gradient(135deg, #f0a500 0%, #e09800 100%)',
+                      background: 'linear-gradient(135deg, #F47C20 0%, #D9651A 100%)',
                       color: 'white',
                       border: 'none',
                       borderRadius: '12px',
@@ -1119,7 +1119,7 @@ export default function TournamentDashboard() {
                       alignItems: 'center',
                       gap: '10px',
                       transition: 'all 0.2s ease',
-                      boxShadow: '0 4px 14px rgba(240, 165, 0, 0.3)'
+                      boxShadow: '0 4px 14px rgba(244, 124, 32, 0.3)'
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.transform = 'translateY(-2px)';
@@ -1136,8 +1136,8 @@ export default function TournamentDashboard() {
                     onClick={() => setLoadModalOpen(true)}
                     style={{
                       background: 'white',
-                      color: '#f0a500',
-                      border: '2px solid #f0a500',
+                      color: '#F47C20',
+                      border: '2px solid #F47C20',
                       borderRadius: '12px',
                       padding: '14px 28px',
                       fontSize: '16px',

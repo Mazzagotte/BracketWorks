@@ -24,7 +24,7 @@ export const SortableHeader: React.FC<SortableHeaderProps> = ({
     if (isActive) {
       return direction === 'asc' ? '#3b82f6' : direction === 'desc' ? '#3b82f6' : '#9ca3af';
     }
-    return isHovered ? '#6b7280' : '#d1d5db';
+    return isHovered ? '#5E6B75' : '#d1d5db';
   };
 
   const getTextAlign = () => {

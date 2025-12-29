@@ -354,7 +354,7 @@ export default function ScoresPage() {
           window.location.reload()
         }}
         style={{
-          backgroundColor: '#f0a500',
+          backgroundColor: '#F47C20',
           color: 'white',
           border: 'none',
           borderRadius: '8px',
@@ -368,10 +368,10 @@ export default function ScoresPage() {
           transition: 'all 0.2s ease'
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = '#d4940b'
+          e.currentTarget.style.backgroundColor = '#D9651A'
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = '#f0a500'
+          e.currentTarget.style.backgroundColor = '#F47C20'
         }}
       >
         Refresh Data
@@ -564,7 +564,7 @@ export default function ScoresPage() {
     if (!validation.isValid) {
       return {
         ...baseStyle,
-        borderColor: '#ef4444',
+        borderColor: '#D64545',
         boxShadow: '0 0 0 3px rgba(239, 68, 68, 0.1)',
         backgroundColor: '#fef2f2'
       }
@@ -888,7 +888,7 @@ export default function ScoresPage() {
                   href="/dashboard"
                   style={{
                     display: 'inline-block',
-                    background: 'linear-gradient(135deg, #f0a500 0%, #e09800 100%)',
+                    background: 'linear-gradient(135deg, #F47C20 0%, #D9651A 100%)',
                     color: 'white',
                     border: 'none',
                     borderRadius: '10px',
@@ -1047,7 +1047,7 @@ export default function ScoresPage() {
                 href="/dashboard"
                 style={{
                   display: 'inline-block',
-                  background: 'linear-gradient(135deg, #f0a500 0%, #e09800 100%)',
+                  background: 'linear-gradient(135deg, #F47C20 0%, #D9651A 100%)',
                   color: 'white',
                   border: 'none',
                   borderRadius: '12px',
@@ -1259,7 +1259,7 @@ export default function ScoresPage() {
                     textAlign: 'center',
                     verticalAlign: 'middle',
                     fontWeight: '500',
-                    color: '#6b7280',
+                    color: '#5E6B75',
                     fontSize: '13px'
                   }}>{player.average}</td>
                   
@@ -1337,7 +1337,7 @@ export default function ScoresPage() {
                             border: 'none',
                             borderRadius: '1px',
                             backgroundColor: 'transparent',
-                            color: '#6b7280',
+                            color: '#5E6B75',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -1351,7 +1351,7 @@ export default function ScoresPage() {
                             changeEvent.currentTarget.style.color = '#374151';
                           }}
                           onMouseLeave={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = 'transparent';
-                            changeEvent.currentTarget.style.color = '#6b7280';
+                            changeEvent.currentTarget.style.color = '#5E6B75';
                           }}
                         >
                           ▲
@@ -1368,7 +1368,7 @@ export default function ScoresPage() {
                             border: 'none',
                             borderRadius: '1px',
                             backgroundColor: 'transparent',
-                            color: '#6b7280',
+                            color: '#5E6B75',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -1382,7 +1382,7 @@ export default function ScoresPage() {
                             changeEvent.currentTarget.style.color = '#374151';
                           }}
                           onMouseLeave={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = 'transparent';
-                            changeEvent.currentTarget.style.color = '#6b7280';
+                            changeEvent.currentTarget.style.color = '#5E6B75';
                           }}
                         >
                           ▼
@@ -1413,7 +1413,7 @@ export default function ScoresPage() {
                             color: 'white'
                           }),
                           ...(savingStatus[`${player.id}-game1_scratch`] === 'error' && {
-                            backgroundColor: '#ef4444',
+                            backgroundColor: '#D64545',
                             color: 'white'
                           })
                         }}>
@@ -1527,7 +1527,7 @@ export default function ScoresPage() {
                             border: 'none',
                             borderRadius: '1px',
                             backgroundColor: 'transparent',
-                            color: '#6b7280',
+                            color: '#5E6B75',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -1541,7 +1541,7 @@ export default function ScoresPage() {
                             changeEvent.currentTarget.style.color = '#374151';
                           }}
                           onMouseLeave={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = 'transparent';
-                            changeEvent.currentTarget.style.color = '#6b7280';
+                            changeEvent.currentTarget.style.color = '#5E6B75';
                           }}
                         >
                           ▲
@@ -1558,7 +1558,7 @@ export default function ScoresPage() {
                             border: 'none',
                             borderRadius: '1px',
                             backgroundColor: 'transparent',
-                            color: '#6b7280',
+                            color: '#5E6B75',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -1572,7 +1572,7 @@ export default function ScoresPage() {
                             changeEvent.currentTarget.style.color = '#374151';
                           }}
                           onMouseLeave={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = 'transparent';
-                            changeEvent.currentTarget.style.color = '#6b7280';
+                            changeEvent.currentTarget.style.color = '#5E6B75';
                           }}
                         >
                           ▼
@@ -1603,7 +1603,7 @@ export default function ScoresPage() {
                             color: 'white'
                           }),
                           ...(savingStatus[`${player.id}-game2_scratch`] === 'error' && {
-                            backgroundColor: '#ef4444',
+                            backgroundColor: '#D64545',
                             color: 'white'
                           })
                         }}>
@@ -1717,7 +1717,7 @@ export default function ScoresPage() {
                             border: 'none',
                             borderRadius: '1px',
                             backgroundColor: 'transparent',
-                            color: '#6b7280',
+                            color: '#5E6B75',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -1731,7 +1731,7 @@ export default function ScoresPage() {
                             changeEvent.currentTarget.style.color = '#374151';
                           }}
                           onMouseLeave={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = 'transparent';
-                            changeEvent.currentTarget.style.color = '#6b7280';
+                            changeEvent.currentTarget.style.color = '#5E6B75';
                           }}
                         >
                           ▲
@@ -1748,7 +1748,7 @@ export default function ScoresPage() {
                             border: 'none',
                             borderRadius: '1px',
                             backgroundColor: 'transparent',
-                            color: '#6b7280',
+                            color: '#5E6B75',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -1762,7 +1762,7 @@ export default function ScoresPage() {
                             changeEvent.currentTarget.style.color = '#374151';
                           }}
                           onMouseLeave={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = 'transparent';
-                            changeEvent.currentTarget.style.color = '#6b7280';
+                            changeEvent.currentTarget.style.color = '#5E6B75';
                           }}
                         >
                           ▼
@@ -1793,7 +1793,7 @@ export default function ScoresPage() {
                             color: 'white'
                           }),
                           ...(savingStatus[`${player.id}-game3_scratch`] === 'error' && {
-                            backgroundColor: '#ef4444',
+                            backgroundColor: '#D64545',
                             color: 'white'
                           })
                         }}>
@@ -1888,7 +1888,7 @@ export default function ScoresPage() {
               alignItems: 'center', 
               gap: '0.5rem',
               fontSize: '0.875rem',
-              color: '#6b7280'
+              color: '#5E6B75'
             }}>
               <span>
                 Showing {((paginationHook.currentPage - 1) * 20) + 1} to{' '}

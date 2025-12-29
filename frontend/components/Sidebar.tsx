@@ -35,7 +35,7 @@ export default function Sidebar({ firstName, isMobile = false, isOpen = false, o
   return (
     <aside style={{
       width: isMobile ? '280px' : '260px',
-      background: 'linear-gradient(180deg, #1a1f2e 0%, #2d3748 50%, #374151 100%)',
+      background: 'linear-gradient(180deg, #1F2A33 0%, #2A3944 50%, #374151 100%)',
       backdropFilter: 'blur(16px)',
       height: '100vh',
       padding: '0',
@@ -45,7 +45,7 @@ export default function Sidebar({ firstName, isMobile = false, isOpen = false, o
       boxShadow: '6px 0 32px rgba(0,0,0,0.2), 2px 0 12px rgba(0,0,0,0.15)',
       border: '1px solid rgba(255,255,255,0.08)',
       borderLeft: 'none',
-      borderRight: '2px solid rgba(240,165,0,0.1)',
+      borderRight: '2px solid rgba(244,124,32,0.1)',
       zIndex: 1000,
       transition: 'all 0.3s ease',
       display: 'flex',
@@ -99,8 +99,8 @@ export default function Sidebar({ firstName, isMobile = false, isOpen = false, o
             style={{ 
               marginBottom: '12px', 
               borderRadius: '18px', 
-              boxShadow: '0 4px 16px rgba(0,0,0,0.25), 0 2px 8px rgba(240,165,0,0.1)',
-              border: '2px solid rgba(240,165,0,0.2)'
+              boxShadow: '0 4px 16px rgba(0,0,0,0.25), 0 2px 8px rgba(244,124,32,0.1)',
+              border: '2px solid rgba(244,124,32,0.2)'
             }} 
           />
         </Link>
@@ -109,7 +109,7 @@ export default function Sidebar({ firstName, isMobile = false, isOpen = false, o
           fontWeight: 700, 
           fontSize: '1.35rem', 
           letterSpacing: '0.5px',
-          background: 'linear-gradient(135deg, #fff 0%, #f0a500 100%)',
+          background: 'linear-gradient(135deg, #fff 0%, #F47C20 100%)',
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
           backgroundClip: 'text'
@@ -121,9 +121,9 @@ export default function Sidebar({ firstName, isMobile = false, isOpen = false, o
         marginTop: '24px', 
         marginBottom: '16px',
         padding: '12px 16px',
-        background: 'rgba(240,165,0,0.08)',
+        background: 'rgba(244,124,32,0.08)',
         borderRadius: '12px',
-        border: '1px solid rgba(240,165,0,0.15)'
+        border: '1px solid rgba(244,124,32,0.15)'
       }}>
         <span style={{ 
           color: 'rgba(255,255,255,0.9)', 
@@ -146,9 +146,9 @@ export default function Sidebar({ firstName, isMobile = false, isOpen = false, o
                   logger.userAction('Sidebar link clicked', { href: link.href });
                 }}
                 style={{
-                  color: isActive ? '#f0a500' : 'rgba(255,255,255,0.85)',
+                  color: isActive ? '#F47C20' : 'rgba(255,255,255,0.85)',
                   background: isActive 
-                    ? 'linear-gradient(90deg, rgba(240,165,0,0.18) 0%, rgba(240,165,0,0.08) 100%)' 
+                    ? 'linear-gradient(90deg, rgba(244,124,32,0.18) 0%, rgba(244,124,32,0.08) 100%)' 
                     : 'rgba(255,255,255,0.02)',
                   textDecoration: 'none',
                   fontWeight: isActive ? 600 : 500,
@@ -158,9 +158,9 @@ export default function Sidebar({ firstName, isMobile = false, isOpen = false, o
                   display: 'block',
                   borderRadius: '14px',
                   border: isActive 
-                    ? '1px solid rgba(240,165,0,0.3)' 
+                    ? '1px solid rgba(244,124,32,0.3)' 
                     : '1px solid rgba(255,255,255,0.05)',
-                  borderLeft: isActive ? '4px solid #f0a500' : '4px solid transparent',
+                  borderLeft: isActive ? '4px solid #F47C20' : '4px solid transparent',
                   transition: 'all 0.2s ease',
                   cursor: 'pointer',
                   pointerEvents: 'auto'
@@ -177,26 +177,26 @@ export default function Sidebar({ firstName, isMobile = false, isOpen = false, o
         <button
           onClick={handleLogout}
           style={{
-            background: 'linear-gradient(135deg, #f0a500 0%, #ff9800 100%)',
-            color: '#1a1f2e',
+            background: 'linear-gradient(135deg, #F47C20 0%, #D9651A 100%)',
+            color: '#ffffff',
             fontWeight: 700,
             fontSize: '0.9rem',
-            border: '1px solid rgba(240,165,0,0.3)',
+            border: '1px solid rgba(244,124,32,0.3)',
             borderRadius: '12px',
             padding: '12px 28px',
             cursor: 'pointer',
-            boxShadow: '0 4px 16px rgba(240,165,0,0.2), 0 2px 8px rgba(0,0,0,0.1)',
+            boxShadow: '0 4px 16px rgba(244,124,32,0.2), 0 2px 8px rgba(0,0,0,0.1)',
             transition: 'all 0.2s ease',
             letterSpacing: '0.5px',
             width: '85%'
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.boxShadow = '0 6px 20px rgba(240,165,0,0.3), 0 4px 12px rgba(0,0,0,0.15)';
+            e.currentTarget.style.boxShadow = '0 6px 20px rgba(244,124,32,0.3), 0 4px 12px rgba(0,0,0,0.15)';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = '0 4px 16px rgba(240,165,0,0.2), 0 2px 8px rgba(0,0,0,0.1)';
+            e.currentTarget.style.boxShadow = '0 4px 16px rgba(244,124,32,0.2), 0 2px 8px rgba(0,0,0,0.1)';
           }}
         >
           Logout
