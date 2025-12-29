@@ -6,29 +6,29 @@
 :root {
   /* Legacy color variables - Now pointing to unified color system */
   /* These are kept for backward compatibility with existing styles */
-  --color-primary: var(--color-blue-primary);
-  --color-primary-light: var(--color-blue-lighter);
-  --color-primary-hover: var(--color-blue-dark);
-  --color-accent: var(--color-brand-gold-lighter);
+  --color-primary: var(--color-primary);
+  --color-primary-light: #bfdbfe;
+  --color-primary-hover: var(--color-primary-hover);
+  --color-accent: var(--color-warning);
   --color-background: var(--color-gray-50);
   --color-surface: var(--color-white);
   --color-surface-hover: var(--color-gray-50);
-  --color-text-primary: var(--color-gray-900);
-  --color-text-secondary: var(--color-gray-500);
+  --color-text-primary: var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
   --color-text-muted: var(--color-gray-400);
   --color-text-light: var(--color-gray-300);
   --color-border: var(--color-gray-200);
-  --color-border-light: rgba(240, 165, 0, 0.2);
+  --color-border-light: rgba(244, 124, 32, 0.2);
   --color-border-hover: var(--color-gray-400);
-  --color-orange: var(--color-brand-gold);
-  --color-orange-hover: var(--color-brand-gold-dark);
-  --color-orange-dark: var(--color-brand-gold-dark);
-  --color-success: var(--color-green-primary);
+  --color-orange: var(--color-primary);
+  --color-orange-hover: var(--color-primary-hover);
+  --color-orange-dark: var(--color-primary-hover);
+  --color-success: var(--color-success);
   --color-success-hover: var(--color-green-dark);
-  --color-warning: var(--color-brand-gold-light);
+  --color-warning: var(--color-warning);
   --color-warning-light: var(--color-yellow-primary);
-  --color-error: var(--color-red-primary);
-  --color-error-light: var(--color-red-primary);
+  --color-error: var(--color-error);
+  --color-error-light: var(--color-error);
   --color-info: var(--color-blue-primary);
   
   /* State background colors - Point to unified color system */

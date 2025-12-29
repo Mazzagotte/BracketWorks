@@ -151,7 +151,7 @@ export default function SmartSuggestions({
     <>
     <div className={className} style={{
       background: 'linear-gradient(145deg, #ffffff 0%, #fef7ed 100%)',
-      border: '2px solid #f0a500',
+      border: '2px solid #F47C20',
       borderRadius: '12px',
       padding: '16px',
       marginTop: '8px',
@@ -181,7 +181,7 @@ export default function SmartSuggestions({
           style={{
             background: 'transparent',
             border: 'none',
-            color: '#6b7280',
+            color: '#5E6B75',
             cursor: 'pointer',
             fontSize: '18px',
             padding: '4px',
@@ -194,7 +194,7 @@ export default function SmartSuggestions({
           }}
           onMouseLeave={(changeEvent) => { 
             changeEvent.currentTarget.style.backgroundColor = 'transparent';
-            changeEvent.currentTarget.style.color = '#6b7280';
+            changeEvent.currentTarget.style.color = '#5E6B75';
           }}
           title="Dismiss suggestions"
         >
@@ -241,7 +241,7 @@ export default function SmartSuggestions({
                     {warning}
                   </div>
                   {suggestions.suggestions.length > 0 && (
-                    <div style={{ color: '#6b7280', fontSize: '12px' }}>
+                    <div style={{ color: '#5E6B75', fontSize: '12px' }}>
                       {suggestions.suggestions[0]}
                     </div>
                   )}
@@ -300,7 +300,7 @@ export default function SmartSuggestions({
               <div style={{
                 textAlign: 'center',
                 padding: '8px',
-                color: '#6b7280',
+                color: '#5E6B75',
                 fontSize: '12px',
                 fontStyle: 'italic'
               }}>
@@ -320,14 +320,14 @@ export default function SmartSuggestions({
             justifyContent: 'space-between',
             gap: '12px'
           }}>
-            <div style={{ fontSize: '13px', color: '#6b7280' }}>
+            <div style={{ fontSize: '13px', color: '#5E6B75' }}>
               Review existing players before adding a new one
             </div>
             <div style={{ display: 'flex', gap: '8px' }}>
               <button
                 onClick={() => setShowSuggestions(false)}
                 style={{
-                  background: '#6b7280',
+                  background: '#5E6B75',
                   color: '#ffffff',
                   border: 'none',
                   borderRadius: '6px',
@@ -338,7 +338,7 @@ export default function SmartSuggestions({
                   transition: 'all 0.2s ease'
                 }}
                 onMouseEnter={(changeEvent) => changeEvent.currentTarget.style.backgroundColor = '#4b5563'}
-                onMouseLeave={(changeEvent) => changeEvent.currentTarget.style.backgroundColor = '#6b7280'}
+                onMouseLeave={(changeEvent) => changeEvent.currentTarget.style.backgroundColor = '#5E6B75'}
               >
                 Add Anyway
               </button>
@@ -348,7 +348,7 @@ export default function SmartSuggestions({
                   // View all similar players action
                 }}
                 style={{
-                  background: 'linear-gradient(135deg, #f0a500 0%, #e89700 100%)',
+                  background: 'linear-gradient(135deg, #F47C20 0%, #D9651A 100%)',
                   color: '#ffffff',
                   border: 'none',
                   borderRadius: '6px',
@@ -405,7 +405,7 @@ export default function SmartSuggestions({
           
           <p style={{
             margin: '0 0 20px 0',
-            color: '#6b7280',
+            color: '#5E6B75',
             fontSize: '14px'
           }}>
             Combining &quot;{firstName} {lastName}&quot; with existing player &quot;{selectedDuplicate?.player.firstName} {selectedDuplicate?.player.lastName}&quot;
@@ -422,7 +422,7 @@ export default function SmartSuggestions({
             <div style={{ fontSize: '14px', fontWeight: '600', color: '#374151', marginBottom: '4px' }}>
               Merge Impact: {mergePreview?.estimatedImpact || 'Analyzing...'}
             </div>
-            <div style={{ fontSize: '12px', color: '#6b7280' }}>
+            <div style={{ fontSize: '12px', color: '#5E6B75' }}>
               Merging player records and consolidating data
             </div>
           </div>
@@ -449,7 +449,7 @@ export default function SmartSuggestions({
                   <div style={{ fontSize: '13px', fontWeight: '600', color: '#dc2626', marginBottom: '4px' }}>
                     {conflict.field.toUpperCase()}
                   </div>
-                  <div style={{ fontSize: '12px', color: '#6b7280' }}>
+                  <div style={{ fontSize: '12px', color: '#5E6B75' }}>
                     {conflict.reasoning}
                   </div>
                 </div>
@@ -466,7 +466,7 @@ export default function SmartSuggestions({
             <button
               onClick={handleCancelMerge}
               style={{
-                background: '#6b7280',
+                background: '#5E6B75',
                 color: '#ffffff',
                 border: 'none',
                 borderRadius: '8px',
@@ -481,7 +481,7 @@ export default function SmartSuggestions({
             <button
               onClick={handleConfirmMerge}
               style={{
-                background: 'linear-gradient(135deg, #f0a500 0%, #e09400 100%)',
+                background: 'linear-gradient(135deg, #F47C20 0%, #D9651A 100%)',
                 color: '#ffffff',
                 border: 'none',
                 borderRadius: '8px',
@@ -517,7 +517,7 @@ function PotentialDuplicateCard({
       case 'usbc': return '#059669';
       case 'similar': return '#d97706';
       case 'fuzzy': return '#6366f1';
-      default: return '#6b7280';
+      default: return '#5E6B75';
     }
   };
 
@@ -549,7 +549,7 @@ function PotentialDuplicateCard({
       }}
       onClick={onSelect}
       onMouseEnter={(changeEvent) => { 
-        changeEvent.currentTarget.style.borderColor = '#f0a500';
+        changeEvent.currentTarget.style.borderColor = '#F47C20';
         changeEvent.currentTarget.style.boxShadow = '0 2px 12px rgba(240, 165, 0, 0.15)';
         changeEvent.currentTarget.style.transform = 'translateY(-1px)';
       }}
@@ -595,7 +595,7 @@ function PotentialDuplicateCard({
           alignItems: 'center',
           gap: '12px',
           fontSize: '12px',
-          color: '#6b7280'
+          color: '#5E6B75'
         }}>
           <span>{Math.round(duplicate.matchScore * 100)}% match</span>
           {duplicate.player.usbc && <span>USBC: {duplicate.player.usbc}</span>}
@@ -629,7 +629,7 @@ function PotentialDuplicateCard({
         {isHighConfidence && onMerge && (
           <button
             style={{
-              background: 'linear-gradient(135deg, #f0a500 0%, #e09400 100%)',
+              background: 'linear-gradient(135deg, #F47C20 0%, #D9651A 100%)',
               color: '#ffffff',
               border: 'none',
               borderRadius: '6px',
@@ -651,7 +651,7 @@ function PotentialDuplicateCard({
         
         <button
           style={{
-            background: isHighConfidence ? 'linear-gradient(135deg, #059669 0%, #047857 100%)' : 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)',
+            background: isHighConfidence ? 'linear-gradient(135deg, #059669 0%, #047857 100%)' : 'linear-gradient(135deg, #5E6B75 0%, #4b5563 100%)',
             color: '#ffffff',
             border: 'none',
             borderRadius: '6px',

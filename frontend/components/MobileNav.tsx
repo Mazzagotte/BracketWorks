@@ -90,7 +90,7 @@ export function MobileNav({ isOpen, onClose, firstName, currentPage }: MobileNav
           top: '60px',
           width: '100%',
           height: 'calc(100vh - 60px)',
-          backgroundColor: '#1a1f2e',
+          backgroundColor: '#1F2A33',
           zIndex: 1000,
           display: 'flex',
           flexDirection: 'column',
@@ -107,7 +107,7 @@ export function MobileNav({ isOpen, onClose, firstName, currentPage }: MobileNav
           textAlign: 'center'
         }}>
           <div style={{
-            color: '#f0a500',
+            color: '#F47C20',
             fontSize: '18px',
             fontWeight: 600,
             marginBottom: '8px'
@@ -143,19 +143,19 @@ export function MobileNav({ isOpen, onClose, firstName, currentPage }: MobileNav
                   display: 'flex',
                   alignItems: 'center',
                   padding: '16px 20px',
-                  color: isActive ? '#f0a500' : '#ffffff',
-                  backgroundColor: isActive ? 'rgba(240, 165, 0, 0.1)' : 'transparent',
+                  color: isActive ? '#F47C20' : '#ffffff',
+                  backgroundColor: isActive ? 'rgba(244, 124, 32, 0.1)' : 'transparent',
                   textDecoration: 'none',
                   fontSize: '16px',
                   fontWeight: isActive ? 600 : 400,
-                  borderLeft: isActive ? '4px solid #f0a500' : '4px solid transparent',
+                  borderLeft: isActive ? '4px solid #F47C20' : '4px solid transparent',
                   transition: 'all 0.2s ease'
                 }}
                 onTouchStart={(e) => {
                   e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
                 }}
                 onTouchEnd={(e) => {
-                  e.currentTarget.style.backgroundColor = isActive ? 'rgba(240, 165, 0, 0.1)' : 'transparent';
+                  e.currentTarget.style.backgroundColor = isActive ? 'rgba(244, 124, 32, 0.1)' : 'transparent';
                 }}
               >
                 <span style={{ marginRight: '12px', fontSize: '18px' }}>
@@ -174,8 +174,8 @@ export function MobileNav({ isOpen, onClose, firstName, currentPage }: MobileNav
             style={{
               width: '100%',
               padding: '16px',
-              backgroundColor: '#f0a500',
-              color: '#1a1f2e',
+              backgroundColor: '#F47C20',
+              color: '#ffffff',
               border: 'none',
               borderRadius: '12px',
               fontSize: '16px',
@@ -184,10 +184,10 @@ export function MobileNav({ isOpen, onClose, firstName, currentPage }: MobileNav
               transition: 'all 0.2s ease'
             }}
             onTouchStart={(e) => {
-              e.currentTarget.style.backgroundColor = '#ff9800';
+              e.currentTarget.style.backgroundColor = '#D9651A';
             }}
             onTouchEnd={(e) => {
-              e.currentTarget.style.backgroundColor = '#f0a500';
+              e.currentTarget.style.backgroundColor = '#F47C20';
             }}
           >
             Logout

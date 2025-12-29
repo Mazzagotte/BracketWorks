@@ -544,7 +544,7 @@ export default function ResetPasswordPage() {
                   <span style={{ 
                     fontSize: '0.85rem', 
                     fontWeight: 600,
-                    color: passwordStrength < 25 ? '#ef4444' : passwordStrength < 50 ? '#f59e0b' : passwordStrength < 75 ? '#3b82f6' : '#10b981'
+                    color: passwordStrength < 25 ? '#D64545' : passwordStrength < 50 ? '#f59e0b' : passwordStrength < 75 ? '#3b82f6' : '#10b981'
                   }}>
                     {getStrengthText}
                   </span>
@@ -670,7 +670,7 @@ export default function ResetPasswordPage() {
                 ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
                 : loading 
                   ? 'linear-gradient(135deg, rgba(240, 165, 0, 0.4) 0%, rgba(240, 165, 0, 0.3) 100%)' 
-                  : 'linear-gradient(135deg, #f0a500 0%, #ff9800 100%)',
+                  : 'linear-gradient(135deg, #F47C20 0%, #D9651A 100%)',
               color: message ? '#ffffff' : loading ? 'rgba(26, 31, 46, 0.6)' : '#1a1f2e',
               fontWeight: 700,
               fontSize: '1.1rem',
@@ -720,7 +720,7 @@ export default function ResetPasswordPage() {
           <a 
             href="/login" 
             style={{ 
-              color: '#f0a500',
+              color: '#F47C20',
               textDecoration: 'none',
               fontWeight: 600,
               padding: '8px 16px',

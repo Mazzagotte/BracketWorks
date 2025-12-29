@@ -87,7 +87,7 @@ const PlayersTable = memo(({
           color: 'white'
         }),
         ...(status === 'error' && {
-          backgroundColor: '#ef4444',
+          backgroundColor: '#D64545',
           color: 'white'
         })
       }}>
@@ -119,7 +119,7 @@ const PlayersTable = memo(({
       <div style={{ 
         textAlign: 'center', 
         padding: '2rem', 
-        color: '#6b7280',
+        color: '#5E6B75',
         fontSize: '1rem'
       }}>
         No players found. Add some players to get started.
@@ -426,7 +426,7 @@ const PlayersTable = memo(({
                         border: 'none',
                         borderRadius: '1px',
                         backgroundColor: 'transparent',
-                        color: '#6b7280',
+                        color: '#5E6B75',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -442,7 +442,7 @@ const PlayersTable = memo(({
                       }}
                       onMouseLeave={(changeEvent) => { 
                         changeEvent.currentTarget.style.backgroundColor = 'transparent';
-                        changeEvent.currentTarget.style.color = '#6b7280';
+                        changeEvent.currentTarget.style.color = '#5E6B75';
                       }}
                     >
                       ▲
@@ -460,7 +460,7 @@ const PlayersTable = memo(({
                         border: 'none',
                         borderRadius: '1px',
                         backgroundColor: 'transparent',
-                        color: '#6b7280',
+                        color: '#5E6B75',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -476,7 +476,7 @@ const PlayersTable = memo(({
                       }}
                       onMouseLeave={(changeEvent) => { 
                         changeEvent.currentTarget.style.backgroundColor = 'transparent';
-                        changeEvent.currentTarget.style.color = '#6b7280';
+                        changeEvent.currentTarget.style.color = '#5E6B75';
                       }}
                     >
                       ▼
@@ -533,7 +533,7 @@ const PlayersTable = memo(({
                         border: 'none',
                         borderRadius: '1px',
                         backgroundColor: 'transparent',
-                        color: '#6b7280',
+                        color: '#5E6B75',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -549,7 +549,7 @@ const PlayersTable = memo(({
                       }}
                       onMouseLeave={(changeEvent) => { 
                         changeEvent.currentTarget.style.backgroundColor = 'transparent';
-                        changeEvent.currentTarget.style.color = '#6b7280';
+                        changeEvent.currentTarget.style.color = '#5E6B75';
                       }}
                     >
                       ▲
@@ -562,7 +562,7 @@ const PlayersTable = memo(({
                         border: 'none',
                         borderRadius: '1px',
                         backgroundColor: 'transparent',
-                        color: '#6b7280',
+                        color: '#5E6B75',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -578,7 +578,7 @@ const PlayersTable = memo(({
                       }}
                       onMouseLeave={(changeEvent) => { 
                         changeEvent.currentTarget.style.backgroundColor = 'transparent';
-                        changeEvent.currentTarget.style.color = '#6b7280';
+                        changeEvent.currentTarget.style.color = '#5E6B75';
                       }}
                     >
                       ▼
@@ -635,7 +635,7 @@ const PlayersTable = memo(({
                         border: 'none',
                         borderRadius: '1px',
                         backgroundColor: 'transparent',
-                        color: '#6b7280',
+                        color: '#5E6B75',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -651,7 +651,7 @@ const PlayersTable = memo(({
                       }}
                       onMouseLeave={(changeEvent) => { 
                         changeEvent.currentTarget.style.backgroundColor = 'transparent';
-                        changeEvent.currentTarget.style.color = '#6b7280';
+                        changeEvent.currentTarget.style.color = '#5E6B75';
                       }}
                     >
                       ▲
@@ -664,7 +664,7 @@ const PlayersTable = memo(({
                         border: 'none',
                         borderRadius: '1px',
                         backgroundColor: 'transparent',
-                        color: '#6b7280',
+                        color: '#5E6B75',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -680,7 +680,7 @@ const PlayersTable = memo(({
                       }}
                       onMouseLeave={(changeEvent) => { 
                         changeEvent.currentTarget.style.backgroundColor = 'transparent';
-                        changeEvent.currentTarget.style.color = '#6b7280';
+                        changeEvent.currentTarget.style.color = '#5E6B75';
                       }}
                     >
                       ▼
@@ -737,7 +737,7 @@ const PlayersTable = memo(({
                         border: 'none',
                         borderRadius: '1px',
                         backgroundColor: 'transparent',
-                        color: '#6b7280',
+                        color: '#5E6B75',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -753,7 +753,7 @@ const PlayersTable = memo(({
                       }}
                       onMouseLeave={(changeEvent) => { 
                         changeEvent.currentTarget.style.backgroundColor = 'transparent';
-                        changeEvent.currentTarget.style.color = '#6b7280';
+                        changeEvent.currentTarget.style.color = '#5E6B75';
                       }}
                     >
                       ▲
@@ -766,7 +766,7 @@ const PlayersTable = memo(({
                         border: 'none',
                         borderRadius: '1px',
                         backgroundColor: 'transparent',
-                        color: '#6b7280',
+                        color: '#5E6B75',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -782,7 +782,7 @@ const PlayersTable = memo(({
                       }}
                       onMouseLeave={(changeEvent) => { 
                         changeEvent.currentTarget.style.backgroundColor = 'transparent';
-                        changeEvent.currentTarget.style.color = '#6b7280';
+                        changeEvent.currentTarget.style.color = '#5E6B75';
                       }}
                     >
                       ▼
@@ -850,7 +850,7 @@ const PlayersTable = memo(({
                             color: 'white'
                           }
                         : {
-                            backgroundColor: '#ef4444',
+                            backgroundColor: '#D64545',
                             color: 'white'
                           }
                       )

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { logger } from '../lib/logger'
+import { disableScroll, enableScroll } from '../utils/modalUtils'
 import styles from './BracketGenerationModal.module.css'
 
 /**
@@ -106,8 +107,31 @@ export default function BracketGenerationModal({
       setBracketResult(null)
       setShowTechnicalDetails(false)
       setShowConfetti(false)
+      disableScroll()
+    }
+
+    return () => {
+      enableScroll()
     }
   }, [isOpen])
+
+  /**
+   * Handle Escape key to close modal
+   */
+  useEffect(() => {
+    if (!isOpen) return
+
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose()
+      }
+    }
+
+    document.addEventListener('keydown', handleEscape)
+    return () => {
+      document.removeEventListener('keydown', handleEscape)
+    }
+  }, [isOpen, onClose])
 
   /**
    * Rotate progress messages every 3 seconds during loading phase
@@ -311,7 +335,15 @@ export default function BracketGenerationModal({
    * Render the modal based on current phase
    */
   return (
-    <div className={styles.modalOverlay} onClick={handleCloseModal}>
+    <div 
+      className={styles.modalOverlay} 
+      onClick={(e) => {
+        // Only close if clicking directly on the backdrop overlay, not the modal card
+        if (e.target === e.currentTarget) {
+          handleCloseModal()
+        }
+      }}
+    >
       <div 
         className={styles.modalCard} 
         onClick={(event) => event.stopPropagation()}

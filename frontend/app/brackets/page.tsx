@@ -10,6 +10,7 @@ import { useToast } from '../components/Toast'
 import { Tournament, Squad, BracketResponse, BracketData, BracketRound } from '../lib/types'
 import { logger } from '../lib/logger'
 import { storage } from '../lib/storage'
+import { cleanupModalState, resetScrollLocks, clearStrayOverlays } from '../utils/modalUtils'
 import { BracketTabs } from './components/BracketTabs'
 import { RoundNavigator } from './components/RoundNavigator'
 import { SearchFilter } from './components/SearchFilter'
@@ -79,10 +80,48 @@ export default function BracketsPage() {
 
   // Cleanup modals and state on unmount to prevent navigation blocking
   useEffect(() => {
+    // On mount, force-clear any stale scroll locks from other pages
+    resetScrollLocks();
+    // Also clear any stray overlays that might remain mounted
+    clearStrayOverlays();
+
     return () => {
       setIsModalOpen(false);
       setIsExplainModalOpen(false);
       setBracketGenerationPromise(null);
+      cleanupModalState();
+    };
+  }, []);
+
+  // Safety: whenever both modals are closed, ensure document state is restored
+  useEffect(() => {
+    if (!isModalOpen && !isExplainModalOpen) {
+      cleanupModalState();
+      clearStrayOverlays();
+    }
+  }, [isModalOpen, isExplainModalOpen]);
+
+  // Global cleanup: Ensure no modals are blocking navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Escape key closes all modals
+      if (e.key === 'Escape') {
+        setIsModalOpen(false);
+        setIsExplainModalOpen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    
+    // Ensure cleanup on page unload
+    const handleBeforeUnload = () => {
+      cleanupModalState();
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, []);
 
@@ -547,7 +586,7 @@ export default function BracketsPage() {
               href="/dashboard"
               style={{
                 display: 'inline-block',
-                background: 'linear-gradient(135deg, #f0a500 0%, #e09800 100%)',
+                background: 'linear-gradient(135deg, #F47C20 0%, #D9651A 100%)',
                 color: 'white',
                 border: 'none',
                 borderRadius: '12px',
@@ -555,7 +594,7 @@ export default function BracketsPage() {
                 fontSize: isMobile ? '15px' : '16px',
                 fontWeight: '600',
                 textDecoration: 'none',
-                boxShadow: '0 4px 14px rgba(240, 165, 0, 0.3)',
+                boxShadow: '0 4px 14px rgba(244, 124, 32, 0.3)',
                 transition: 'all 0.2s ease'
               }}
               onMouseEnter={(e) => {

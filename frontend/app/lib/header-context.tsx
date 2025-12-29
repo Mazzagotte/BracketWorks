@@ -31,16 +31,27 @@ export function HeaderProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const setHeaderProps = useCallback((props: Omit<HeaderContextType, 'setHeaderProps' | 'clearHeaderProps'>) => {
-    if (mounted) {
-      setHeaderPropsState(props);
-    }
-  }, [mounted]);
+    setHeaderPropsState((prev) => {
+      const sameBreadcrumbs = JSON.stringify(prev.breadcrumbs || []) === JSON.stringify(props.breadcrumbs || []);
+      const isSame =
+        prev.title === props.title &&
+        prev.subtitle === props.subtitle &&
+        prev.actions === props.actions &&
+        prev.centerContent === props.centerContent &&
+        prev.showBreadcrumbs === props.showBreadcrumbs &&
+        sameBreadcrumbs;
+
+      if (isSame) return prev;
+      return props;
+    });
+  }, []);
 
   const clearHeaderProps = useCallback(() => {
-    if (mounted) {
-      setHeaderPropsState({});
-    }
-  }, [mounted]);
+    setHeaderPropsState((prev) => {
+      const isEmpty = Object.keys(prev).length === 0;
+      return isEmpty ? prev : {};
+    });
+  }, []);
 
   return (
     <HeaderContext.Provider value={{
@@ -70,34 +81,18 @@ export function usePageHeader(props: {
   showBreadcrumbs?: boolean;
   breadcrumbs?: Array<{ label: string; href?: string }>;
 }) {
-  const { setHeaderProps, clearHeaderProps } = useHeader();
+  const { setHeaderProps } = useHeader();
+  const propsRef = React.useRef(props);
+  const hasSetProps = React.useRef(false);
 
-  // Memoize breadcrumbs serialization to avoid complex expressions in dependency array
-  const breadcrumbsString = useMemo(() => {
-    return JSON.stringify(props.breadcrumbs);
-  }, [props.breadcrumbs]);
+  // Update ref with latest props on every render
+  propsRef.current = props;
 
-  // Memoize the actions to prevent re-renders
-  const memoizedActions = useMemo(() => props.actions, [props.actions]);
-
+  // Set header props only once, but use updated ref values
   useEffect(() => {
-    setHeaderProps({
-      title: props.title,
-      subtitle: props.subtitle,
-      actions: memoizedActions,
-      centerContent: props.centerContent,
-      showBreadcrumbs: props.showBreadcrumbs,
-      breadcrumbs: props.breadcrumbs
-    });
-    return () => clearHeaderProps();
-  }, [
-    props.title,
-    props.subtitle,
-    memoizedActions,
-    props.centerContent,
-    props.showBreadcrumbs,
-    breadcrumbsString,
-    setHeaderProps, 
-    clearHeaderProps
-  ]);
+    if (!hasSetProps.current) {
+      hasSetProps.current = true;
+      setHeaderProps(propsRef.current);
+    }
+  }, []);
 }

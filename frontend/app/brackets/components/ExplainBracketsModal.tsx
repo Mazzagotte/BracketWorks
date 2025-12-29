@@ -2,6 +2,7 @@
 
 import React from 'react'
 import styles from '../styles/explain-brackets-modal.module.css'
+import { disableScroll, enableScroll } from '../../utils/modalUtils'
 
 interface ExplainBracketsModalProps {
   isOpen: boolean
@@ -9,7 +10,12 @@ interface ExplainBracketsModalProps {
 }
 
 export default function ExplainBracketsModal({ isOpen, onClose }: ExplainBracketsModalProps) {
-  if (!isOpen) return null
+  // Cleanup on mount to ensure document state is clean
+  React.useEffect(() => {
+    return () => {
+      enableScroll()
+    }
+  }, [])
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) {
@@ -19,19 +25,23 @@ export default function ExplainBracketsModal({ isOpen, onClose }: ExplainBracket
 
   React.useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') {
+        onClose()
+      }
     }
     
     if (isOpen) {
+      disableScroll()
       document.addEventListener('keydown', handleEscape)
-      document.body.style.overflow = 'hidden'
     }
     
     return () => {
+      enableScroll()
       document.removeEventListener('keydown', handleEscape)
-      document.body.style.overflow = 'auto'
     }
-  }, [isOpen, onClose])
+  }, [isOpen, onClose, enableScroll, disableScroll])
+
+  if (!isOpen) return null
 
   return (
     <div className={styles.overlay} onClick={handleBackdropClick}>

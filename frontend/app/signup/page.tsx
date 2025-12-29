@@ -465,7 +465,7 @@ export default function SignupPage() {
               borderRadius: '8px',
               padding: '12px',
               marginTop: '16px',
-              color: '#ef4444',
+              color: '#D64545',
               fontSize: '14px'
             }}>
               {error}

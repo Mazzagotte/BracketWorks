@@ -430,7 +430,7 @@ export default function VerifyResetPage() {
             fontSize: '28px',
             fontWeight: 700,
             margin: '0 0 8px 0',
-            background: 'linear-gradient(135deg, #1a1f2e 0%, #2d3748 25%, #4a5568 50%, #f0a500 75%, #ff9800 100%)',
+            background: 'linear-gradient(135deg, #1a1f2e 0%, #2d3748 25%, #4a5568 50%, #F47C20 75%, #D9651A 100%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
