@@ -306,13 +306,35 @@ export default function PlayersPage() {
         />
 
         {isLoading ? (
-          <div style={{ 
-            textAlign: 'center', 
-            padding: '2rem',
-            fontSize: '0.875rem',
-            color: semantic.text.secondary
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '0.5rem',
+            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+            padding: '1.5rem'
           }}>
-            Loading players...
+            <div style={{ marginBottom: '1rem', textAlign: 'center', color: semantic.text.secondary, fontSize: '0.875rem' }}>
+              Loading players...
+            </div>
+            {/* Skeleton Loading */}
+            {[1, 2, 3, 4, 5].map(i => (
+              <div key={i} style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(6, 1fr)',
+                gap: '12px',
+                padding: '12px',
+                marginBottom: '8px'
+              }}>
+                {[1, 2, 3, 4, 5, 6].map(j => (
+                  <div key={j} style={{
+                    background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
+                    backgroundSize: '200% 100%',
+                    animation: 'loading 1.5s infinite',
+                    borderRadius: '6px',
+                    height: '36px'
+                  }} />
+                ))}
+              </div>
+            ))}
           </div>
         ) : !getTournamentId() ? (
           <div style={{
@@ -439,8 +461,8 @@ export default function PlayersPage() {
                       marginTop: '0.125rem',
                       opacity: 0.8
                     }}>
-                      {entryTotals.expectedHandicapBrackets} brkt
-                      {entryTotals.handicapRefunds > 0 && ` • ${entryTotals.handicapRefunds} ref`}
+                      {entryTotals.expectedHandicapBrackets} Full Brackets
+                      {entryTotals.handicapRefunds > 0 && ` • ${entryTotals.handicapRefunds} Refunds`}
                     </div>
                   </div>
 
@@ -474,8 +496,8 @@ export default function PlayersPage() {
                       marginTop: '0.125rem',
                       opacity: 0.8
                     }}>
-                      {entryTotals.expectedScratchBrackets} brkt
-                      {entryTotals.scratchRefunds > 0 && ` • ${entryTotals.scratchRefunds} ref`}
+                      {entryTotals.expectedScratchBrackets} Full Brackets
+                      {entryTotals.scratchRefunds > 0 && ` • ${entryTotals.scratchRefunds} Refunds`}
                     </div>
                   </div>
 

@@ -67,6 +67,14 @@ export function MobileNav({ isOpen, onClose, firstName, currentPage }: MobileNav
       <div
         className="mobile-nav-backdrop"
         onClick={onClose}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') {
+            onClose();
+          }
+        }}
+        role="button"
+        tabIndex={0}
+        aria-label="Close navigation menu"
         style={{
           position: 'fixed',
           top: 0,
@@ -82,6 +90,8 @@ export function MobileNav({ isOpen, onClose, firstName, currentPage }: MobileNav
       {/* Navigation Panel */}
       <nav
         className="mobile-nav-panel"
+        role="navigation"
+        aria-label="Mobile navigation menu"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         style={{
@@ -139,6 +149,16 @@ export function MobileNav({ isOpen, onClose, firstName, currentPage }: MobileNav
                 key={item.href}
                 href={item.href}
                 onClick={onClose}
+                aria-label={item.label}
+                aria-current={isActive ? 'page' : undefined}
+                role="link"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    window.location.href = item.href;
+                  }
+                }}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -171,6 +191,7 @@ export function MobileNav({ isOpen, onClose, firstName, currentPage }: MobileNav
         <div style={{ padding: '20px' }}>
           <button
             onClick={handleLogout}
+            aria-label="Logout from BracketWorks"
             style={{
               width: '100%',
               padding: '16px',

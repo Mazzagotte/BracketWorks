@@ -141,21 +141,21 @@ html:has(.signup-page-container) {
 
 /* Modern typography - consistent with login */
 .signup-title {
-  font-size: 28px !important;
-  font-weight: 700 !important;
+  font-size: var(--font-size-5xl) !important;
+  font-weight: var(--font-weight-bold) !important;
   margin: 0 0 8px 0 !important;
   background: var(--gradient-brand) !important;
   -webkit-background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
   background-clip: text !important;
   letter-spacing: -0.5px !important;
-  line-height: 1.2 !important;
+  line-height: var(--line-height-tight) !important;
 }
 
 .signup-subtitle {
   color: var(--color-dark-accent) !important;
-  font-size: 15px !important;
-  font-weight: 500 !important;
+  font-size: var(--font-size-lg) !important;
+  font-weight: var(--font-weight-medium) !important;
   margin: 0 !important;
   letter-spacing: 0.2px !important;
 }
@@ -185,10 +185,10 @@ html:has(.signup-page-container) {
 .signup-input-label {
   display: block !important;
   margin-bottom: 6px !important;
-  font-size: 14px !important;
-  font-weight: 600 !important;
+  font-size: var(--font-size-md) !important;
+  font-weight: var(--font-weight-semibold) !important;
   color: var(--color-gray-700) !important;
-  font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;
+  font-family: var(--font-family-primary) !important;
 }
 
 /* Password field wrapper */
@@ -203,8 +203,8 @@ html:has(.signup-page-container) {
   width: 100% !important;
   height: 52px !important;
   padding: 0 16px !important;
-  font-size: 15px !important;
-  font-weight: 500 !important;
+  font-size: var(--font-size-lg) !important;
+  font-weight: var(--font-weight-medium) !important;
   border: 2px solid var(--color-gray-200) !important;
   border-radius: 12px !important;
   background: var(--color-white) !important;
@@ -213,7 +213,7 @@ html:has(.signup-page-container) {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
   letter-spacing: 0.3px !important;
   box-sizing: border-box !important;
-  font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;
+  font-family: var(--font-family-primary) !important;
   color: var(--color-gray-800) !important;
 }
 
@@ -249,7 +249,7 @@ html:has(.signup-page-container) {
   border: none !important;
   border-radius: 6px !important;
   cursor: pointer !important;
-  font-size: 16px !important;
+  font-size: var(--font-size-xl) !important;
   color: var(--color-dark-accent) !important;
   transition: all 0.2s ease !important;
   padding: 0 !important;
@@ -269,8 +269,8 @@ html:has(.signup-page-container) {
   height: 52px !important;
   margin-top: 24px !important;
   padding: 0 24px !important;
-  font-size: 16px !important;
-  font-weight: 600 !important;
+  font-size: var(--font-size-xl) !important;
+  font-weight: var(--font-weight-semibold) !important;
   letter-spacing: 0.3px !important;
   color: var(--color-white) !important;
   background: var(--gradient-gold) !important;
@@ -283,7 +283,7 @@ html:has(.signup-page-container) {
     0 2px 6px rgba(0, 0, 0, 0.1) !important;
   position: relative !important;
   overflow: hidden !important;
-  font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;
+  font-family: var(--font-family-primary) !important;
 }
 
 /* Add shimmer effect */
@@ -320,8 +320,8 @@ html:has(.signup-page-container) {
   background: var(--gradient-green) !important;
   color: white !important;
   border-radius: 12px !important;
-  font-size: 15px !important;
-  font-weight: 600 !important;
+  font-size: var(--font-size-lg) !important;
+  font-weight: var(--font-weight-semibold) !important;
   text-align: center !important;
   border: none !important;
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
@@ -344,14 +344,14 @@ html:has(.signup-page-container) {
   align-items: center !important;
   justify-content: center !important;
   padding: 12px 20px !important;
-  font-size: 14px !important;
-  font-weight: 500 !important;
+  font-size: var(--font-size-md) !important;
+  font-weight: var(--font-weight-medium) !important;
   text-decoration: none !important;
   border-radius: 10px !important;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
   min-width: 200px !important;
   text-align: center !important;
-  font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;
+  font-family: var(--font-family-primary) !important;
   letter-spacing: 0.1px !important;
   position: relative !important;
   overflow: hidden !important;
@@ -388,7 +388,7 @@ html:has(.signup-page-container) {
   }
   
   .signup-title {
-    font-size: 24px !important;
+    font-size: var(--font-size-4xl) !important;
   }
   
   .signup-input-grid {

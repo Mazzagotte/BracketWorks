@@ -358,7 +358,7 @@
 .bracketSettingsCard {
   background: linear-gradient(145deg, #ffffff 0%, #f8fafb 100%);
   border-radius: 20px;
-  padding: 24px;
+  padding: 16px 20px;
   box-shadow: 
     0 8px 25px -5px rgba(0, 0, 0, 0.08),
     0 4px 12px -4px rgba(0, 0, 0, 0.04);
@@ -391,7 +391,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
   gap: 10px;
 }
 
@@ -520,27 +520,27 @@
 .settingsContent {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 12px;
 }
 
 .settingsGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 24px;
+  gap: 16px;
 }
 
 .settingsColumn {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 10px;
 }
 
 .sectionHeader {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 12px;
-  padding-bottom: 8px;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
   border-bottom: 1px solid rgba(240, 165, 0, 0.2);
 }
 
@@ -558,13 +558,13 @@
 .fieldGroup {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .compactField {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .compactLabel {
@@ -577,7 +577,7 @@
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
-  padding: 10px 12px;
+  padding: 8px 10px;
   font-size: 14px;
   font-weight: 500;
   color: #2d3748;
@@ -992,7 +992,7 @@
 .squadSelectionCard {
   background: linear-gradient(145deg, #ffffff 0%, #f8fafb 100%);
   border-radius: 20px;
-  padding: 24px;
+  padding: 16px 20px;
   box-shadow: 
     0 8px 25px -5px rgba(0, 0, 0, 0.08),
     0 4px 12px -4px rgba(0, 0, 0, 0.04);
@@ -1024,7 +1024,7 @@
 .squadHeader {
   display: flex;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
   gap: 10px;
 }
 
@@ -1039,7 +1039,7 @@
 }
 
 .squadInfo {
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
 .squadDescription {
@@ -1064,15 +1064,15 @@
 
 .squadGrid {
   display: grid;
-  gap: 12px;
-  margin-bottom: 20px;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
 .squadPillEnhanced {
   background: #ffffff;
   border: 2px solid #e5e7eb;
   border-radius: 12px;
-  padding: 16px 18px;
+  padding: 12px 14px;
   font-size: 15px;
   font-weight: 500;
   color: #374151;

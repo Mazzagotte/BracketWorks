@@ -26,8 +26,8 @@
   border: 1px solid rgba(239, 68, 68, 0.2);
   border-radius: 6px;
   color: var(--color-red-primary);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
   animation: slideInError 0.2s ease-out;
 }
 
@@ -41,8 +41,8 @@
   border: 1px solid rgba(16, 185, 129, 0.2);
   border-radius: 6px;
   color: var(--color-green-primary);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
   animation: slideInSuccess 0.2s ease-out;
 }
 
@@ -56,8 +56,8 @@
   border: 1px solid rgba(245, 158, 11, 0.2);
   border-radius: 4px;
   color: var(--color-brand-gold-light);
-  font-size: 12px;
-  font-weight: 500;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
 }
 
 /* Form errors summary */
@@ -74,10 +74,10 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--color-red-primary);
   margin-bottom: 12px;
-  font-size: 14px;
+  font-size: var(--font-size-md);
 }
 
 .errors-list {
@@ -91,8 +91,8 @@
 
 .error-item {
   color: #dc2626;
-  font-size: 13px;
-  line-height: 1.4;
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-normal);
 }
 
 .error-item strong {
@@ -223,7 +223,7 @@
   .field-error,
   .field-success {
     padding: 6px 10px;
-    font-size: 12px;
+    font-size: var(--font-size-sm);
   }
   
   .form-errors-summary {
@@ -231,15 +231,15 @@
   }
   
   .errors-title {
-    font-size: 13px;
+    font-size: var(--font-size-base);
   }
   
   .error-item {
-    font-size: 12px;
+    font-size: var(--font-size-sm);
   }
   
   .password-visibility-notice {
-    font-size: 11px;
+    font-size: var(--font-size-xs);
     padding: 3px 6px;
   }
   
@@ -254,11 +254,11 @@
   }
   
   .connection-text {
-    font-size: 13px;
+    font-size: var(--font-size-base);
   }
   
   .retry-info {
-    font-size: 11px;
+    font-size: var(--font-size-xs);
     display: block;
     margin-left: 0;
     margin-top: 4px;

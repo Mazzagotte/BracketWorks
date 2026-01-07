@@ -90,21 +90,21 @@ html:has(.login-page-container) {
 
 /* Main title - Match the orange/brown color */
 .login-title {
-  font-size: 32px !important;
-  font-weight: 700 !important;
+  font-size: var(--font-size-6xl) !important;
+  font-weight: var(--font-weight-bold) !important;
   margin: 0 0 12px 0 !important;
   color: var(--color-brand-gold-dark) !important;
   letter-spacing: -0.5px !important;
-  line-height: 1.2 !important;
+  line-height: var(--line-height-tight) !important;
 }
 
 /* Subtitle */
 .login-subtitle {
   color: var(--color-gray-500) !important;
-  font-size: 16px !important;
-  font-weight: 500 !important;
+  font-size: var(--font-size-xl) !important;
+  font-weight: var(--font-weight-medium) !important;
   margin: 0 0 32px 0 !important;
-  line-height: 1.5 !important;
+  line-height: var(--line-height-normal) !important;
 }
 
 /* Form styling */
@@ -122,8 +122,8 @@ html:has(.login-page-container) {
 /* Input labels */
 .login-form label {
   display: block !important;
-  font-size: 14px !important;
-  font-weight: 500 !important;
+  font-size: var(--font-size-md) !important;
+  font-weight: var(--font-weight-medium) !important;
   color: var(--color-gray-700) !important;
   margin-bottom: 8px !important;
 }
@@ -133,8 +133,8 @@ html:has(.login-page-container) {
   width: 100% !important;
   height: 48px !important;
   padding: 0 16px !important;
-  font-size: 16px !important;
-  font-weight: 400 !important;
+  font-size: var(--font-size-xl) !important;
+  font-weight: var(--font-weight-normal) !important;
   border: 2px solid var(--color-gray-300) !important;
   border-radius: 12px !important;
   background: var(--color-white) !important;
@@ -143,7 +143,7 @@ html:has(.login-page-container) {
   box-shadow: none !important;
   letter-spacing: 0.3px !important;
   box-sizing: border-box !important;
-  font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;
+  font-family: var(--font-family-primary) !important;
   color: var(--color-gray-700) !important;
 }
 
@@ -184,7 +184,7 @@ html:has(.login-page-container) {
   border: none !important;
   border-radius: 6px !important;
   cursor: pointer !important;
-  font-size: 16px !important;
+  font-size: var(--font-size-xl) !important;
   color: var(--color-gray-500) !important;
   transition: all 0.2s ease !important;
 }
@@ -206,8 +206,8 @@ html:has(.login-page-container) {
   background: var(--color-green-primary) !important;
   color: white !important;
   border-radius: 12px !important;
-  font-size: 15px !important;
-  font-weight: 600 !important;
+  font-size: var(--font-size-lg) !important;
+  font-weight: var(--font-weight-semibold) !important;
   text-align: center !important;
 }
 
@@ -215,10 +215,10 @@ html:has(.login-page-container) {
 .login-button {
   width: 100% !important;
   height: 48px !important;
-  margin-top: 24px !important;
+  margin-top: 10px !important;
   padding: 0 24px !important;
-  font-size: 16px !important;
-  font-weight: 600 !important;
+  font-size: var(--font-size-xl) !important;
+  font-weight: var(--font-weight-semibold) !important;
   letter-spacing: 0.3px !important;
   color: var(--color-white) !important;
   background: var(--color-brand-gold) !important;
@@ -228,7 +228,7 @@ html:has(.login-page-container) {
   transition: all 0.2s ease !important;
   position: relative !important;
   overflow: hidden !important;
-  font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;
+  font-family: var(--font-family-primary) !important;
 }
 
 .login-button:hover {
@@ -243,10 +243,10 @@ html:has(.login-page-container) {
 
 /* Links container - Match the vertical stack */
 .links-container {
-  margin-top: 24px !important;
+  margin-top: 10px !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: 12px !important;
+  gap: 10px !important;
   align-items: center !important;
 }
 
@@ -256,14 +256,14 @@ html:has(.login-page-container) {
   align-items: center !important;
   justify-content: center !important;
   padding: 12px 24px !important;
-  font-size: 14px !important;
-  font-weight: 500 !important;
+  font-size: var(--font-size-md) !important;
+  font-weight: var(--font-weight-medium) !important;
   text-decoration: none !important;
   border-radius: 12px !important;
   transition: all 0.2s ease !important;
   width: 100% !important;
   text-align: center !important;
-  font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;
+  font-family: var(--font-family-primary) !important;
 }
 
 /* Back to Login button - Gray like in image */
@@ -302,6 +302,6 @@ html:has(.login-page-container) {
   }
   
   .login-title {
-    font-size: 28px !important;
+    font-size: var(--font-size-5xl) !important;
   }
 }
