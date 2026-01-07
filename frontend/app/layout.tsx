@@ -9,7 +9,7 @@ import './styles/login.css';
 import Sidebar from '../components/Sidebar';
 import ModernHeader from './components/ModernHeader';
 import { MobileNav } from '../components/MobileNav';
-import { ToastProvider, ToastContainer, SkipNavigation } from './components';
+import { ToastProvider } from './components/Toast';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { AuthProvider, useAuth, useIsAuthenticated } from './lib/auth-context';
 import { HeaderProvider, useHeader } from './lib/header-context';
@@ -136,13 +136,11 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
     return (
       <ToastProvider>
         <ErrorBoundary>
-          <SkipNavigation />
           <div id="main-content">
             <ErrorBoundary>
               {children}
             </ErrorBoundary>
           </div>
-          <ToastContainer />
           <ApiHealthCheck />
           <DevAuthStatus />
         </ErrorBoundary>
@@ -153,8 +151,6 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
   return (
     <ToastProvider>
       <ErrorBoundary>
-        <SkipNavigation />
-        
         {isLoginPage ? (
           <div id="main-content">
             <ErrorBoundary>
@@ -309,13 +305,13 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
               </ErrorBoundary>
             </div>
           </main>
+          
+          {/* Mobile Bottom Navigation */}
         </>
       )}
       
       {/* Development Authentication Status Indicator - Upper Right */}
       <DevAuthStatus />
-      
-      <ToastContainer />
       </ErrorBoundary>
     </ToastProvider>
   );

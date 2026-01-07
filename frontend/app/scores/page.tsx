@@ -117,32 +117,7 @@ export default function ScoresPage() {
   // Enhanced UX hooks
   const { addToast } = useToast()
   
-  // Hide number input spinners for cleaner look
-  useEffect(() => {
-    if (!document.querySelector('#scores-spinner-styles')) {
-      const style = document.createElement('style');
-      style.id = 'scores-spinner-styles';
-      style.textContent = `
-        @keyframes sortChange {
-          0% { transform: scale(1); }
-          50% { transform: scale(1.1); }
-          100% { transform: scale(1); }
-        }
-        
-        /* Hide number input spinners for cleaner look */
-        input[type="number"]::-webkit-outer-spin-button,
-        input[type="number"]::-webkit-inner-spin-button {
-          -webkit-appearance: none;
-          margin: 0;
-        }
-        
-        input[type="number"] {
-          -moz-appearance: textfield;
-        }
-      `;
-      document.head.appendChild(style);
-    }
-  }, []);
+  // Styles moved to globals.css; no inline style injection
 
   // Sorting functionality
   const handleSort = useCallback((column: SortableScoreColumn) => {
@@ -559,25 +534,24 @@ export default function ScoresPage() {
     return { isValid: true, message: '' }
   }
 
-  const getScoreInputStyle = (score: number | undefined, baseStyle: React.CSSProperties) => {
+  const getScoreInputClass = (score: number | undefined) => {
     const validation = validateScore(score)
-    if (!validation.isValid) {
-      return {
-        ...baseStyle,
-        borderColor: '#D64545',
-        boxShadow: '0 0 0 3px rgba(239, 68, 68, 0.1)',
-        backgroundColor: '#fef2f2'
-      }
-    }
-    if (score === 300) {
-      return {
-        ...baseStyle,
-        borderColor: '#10b981',
-        backgroundColor: '#f0fdf4',
-        fontWeight: '700'
-      }
-    }
-    return baseStyle
+    if (!validation.isValid) return 'score-input invalid'
+    if (score === 300) return 'score-input perfect'
+    return 'score-input'
+  }
+
+  const getSavingIndicator = (playerId: number, field: string) => {
+    const key = `${playerId}-${field}`
+    const status = savingStatus[key]
+    if (!status) return null
+    const cls = `saving-indicator ${status}`
+    return (<div className={cls}>{status === 'saving' ? '⋯' : ''}</div>)
+  }
+
+  const getPerfectBadge = (score: number | undefined) => {
+    if (score !== 300) return null
+    return <div className="perfect-badge">✓</div>
   }
 
   // Debounced save function
@@ -1173,10 +1147,10 @@ export default function ScoresPage() {
                 backgroundColor: '#f8fafc',
                 borderBottom: '2px solid #e5e7eb'
               }}>
-                <SortableHeader column="firstName" sortConfig={sortConfig} onSort={handleSort} align="left" width="9%">
+                <SortableHeader column="firstName" sortConfig={sortConfig} onSort={handleSort} align="center" width="9%">
                   First Name
                 </SortableHeader>
-                <SortableHeader column="lastName" sortConfig={sortConfig} onSort={handleSort} align="left" width="9%">
+                <SortableHeader column="lastName" sortConfig={sortConfig} onSort={handleSort} align="center" width="9%">
                   Last Name
                 </SortableHeader>
                 <SortableHeader column="lane" sortConfig={sortConfig} onSort={handleSort} width="5%">
@@ -1213,67 +1187,15 @@ export default function ScoresPage() {
             </thead>
             <tbody>
               {paginationHook.paginatedItems.map((player: Player, index: number) => (
-                <tr key={player.id} style={{
-                  borderBottom: '1px solid #f3f4f6',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  backgroundColor: index % 2 === 0 ? '#ffffff' : '#f9fafb',
-                  borderRadius: '8px',
-                  margin: '2px 0'
-                }} 
-                onMouseEnter={(changeEvent) => { 
-                  changeEvent.currentTarget.style.backgroundColor = '#f0f9ff';
-                  changeEvent.currentTarget.style.transform = 'translateY(-1px)';
-                  changeEvent.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
-                }}
-                onMouseLeave={(changeEvent) => { 
-                  changeEvent.currentTarget.style.backgroundColor = index % 2 === 0 ? '#ffffff' : '#f9fafb';
-                  changeEvent.currentTarget.style.transform = 'translateY(0)';
-                  changeEvent.currentTarget.style.boxShadow = 'none';
-                }}>
-                  <td style={{ 
-                    padding: '12px 10px',
-                    textAlign: 'left',
-                    verticalAlign: 'middle',
-                    fontWeight: '600',
-                    color: '#111827',
-                    fontSize: '13px'
-                  }}>{player.firstName}</td>
-                  <td style={{ 
-                    padding: '12px 10px',
-                    textAlign: 'left',
-                    verticalAlign: 'middle',
-                    fontWeight: '600',
-                    color: '#111827',
-                    fontSize: '13px'
-                  }}>{player.lastName}</td>
-                  <td style={{ 
-                    padding: '12px 10px',
-                    textAlign: 'center',
-                    verticalAlign: 'middle',
-                    fontWeight: '500',
-                    color: player.lane ? '#111827' : '#9ca3af',
-                    fontSize: '13px'
-                  }}>{player.lane || '—'}</td>
-                  <td style={{ 
-                    padding: '12px 10px',
-                    textAlign: 'center',
-                    verticalAlign: 'middle',
-                    fontWeight: '500',
-                    color: '#5E6B75',
-                    fontSize: '13px'
-                  }}>{player.average}</td>
+                <tr key={player.id} className={`scores-row ${index % 2 === 0 ? 'even' : 'odd'}`}>
+                  <td className="scores-cell name">{player.firstName}</td>
+                  <td className="scores-cell name">{player.lastName}</td>
+                  <td className={`scores-cell lane ${!player.lane ? 'lane-empty' : ''}`}>{player.lane || '—'}</td>
+                  <td className="scores-cell average">{player.average}</td>
                   
                   {/* Game 1 Scratch */}
-                  <td style={{ 
-                    padding: '12px 10px',
-                    textAlign: 'center',
-                    verticalAlign: 'middle',
-                    position: 'relative',
-                    fontWeight: '500',
-                    color: '#111827',
-                    fontSize: '13px'
-                  }}>
-                    <div style={{ position: 'relative', display: 'inline-block' }}>
+                  <td className="scores-cell scratch-input">
+                    <div className="pos-relative inline-block">
                       <input
                         type="number"
                         min={0}
@@ -1284,190 +1206,23 @@ export default function ScoresPage() {
                         value={player.scores?.game1_scratch ?? ''}
                         onChange={changeEvent => updateScore(player.id, 'game1_scratch', changeEvent.target.value ? Number(changeEvent.target.value) : undefined)}
                         onKeyDown={keyEvent => handleKeyDown(keyEvent, player.id, 'game1_scratch')}
-                        style={getScoreInputStyle(player.scores?.game1_scratch, { 
-                          width: '55px', 
-                          padding: '6px 20px 6px 8px', 
-                          border: '1px solid #d1d5db', 
-                          borderRadius: '6px',
-                          textAlign: 'center',
-                          fontSize: '13px',
-                          fontWeight: '500',
-                          background: '#ffffff',
-                          color: '#111827',
-                          transition: 'all 0.2s ease',
-                          outline: 'none'
-                        })}
-                        onFocus={(changeEvent) => {
-                          const validation = validateScore(player.scores?.game1_scratch)
-                          if (validation.isValid) { 
-                            changeEvent.target.style.borderColor = '#3b82f6'; 
-                            changeEvent.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
-                          } 
-                          changeEvent.target.select()
-                        }}
-                        onBlur={(changeEvent) => {
-                          const validation = validateScore(player.scores?.game1_scratch)
-                          if (validation.isValid) { 
-                            changeEvent.target.style.borderColor = '#d1d5db'; 
-                            changeEvent.target.style.boxShadow = 'none';
-                          }
-                        }}
+                        className={getScoreInputClass(player.scores?.game1_scratch)}
+                        onFocus={(changeEvent) => changeEvent.target.select()}
                         title={!validateScore(player.scores?.game1_scratch).isValid ? validateScore(player.scores?.game1_scratch).message : ''}
                       />
-                      
-                      {/* Increment/Decrement Arrows - Inside Input */}
-                      <div style={{ 
-                        position: 'absolute', 
-                        right: '4px', 
-                        top: '50%', 
-                        transform: 'translateY(-50%)',
-                        display: 'flex', 
-                        flexDirection: 'column', 
-                        gap: '1px' 
-                      }}>
-                        <button
-                          onClick={() => {
-                            const currentScore = player.scores?.game1_scratch || 0;
-                            const newScore = Math.min(300, currentScore + 1);
-                            updateScore(player.id, 'game1_scratch', newScore);
-                          }}
-                          style={{
-                            width: '12px',
-                            height: '8px',
-                            border: 'none',
-                            borderRadius: '1px',
-                            backgroundColor: 'transparent',
-                            color: '#5E6B75',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            cursor: 'pointer',
-                            fontSize: '6px',
-                            fontWeight: 'bold',
-                            transition: 'all 0.2s ease',
-                            outline: 'none'
-                          }}
-                          onMouseEnter={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = '#f3f4f6';
-                            changeEvent.currentTarget.style.color = '#374151';
-                          }}
-                          onMouseLeave={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = 'transparent';
-                            changeEvent.currentTarget.style.color = '#5E6B75';
-                          }}
-                        >
-                          ▲
-                        </button>
-                        <button
-                          onClick={() => {
-                            const currentScore = player.scores?.game1_scratch || 0;
-                            const newScore = Math.max(0, currentScore - 1);
-                            updateScore(player.id, 'game1_scratch', newScore);
-                          }}
-                          style={{
-                            width: '12px',
-                            height: '8px',
-                            border: 'none',
-                            borderRadius: '1px',
-                            backgroundColor: 'transparent',
-                            color: '#5E6B75',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            cursor: 'pointer',
-                            fontSize: '6px',
-                            fontWeight: 'bold',
-                            transition: 'all 0.2s ease',
-                            outline: 'none'
-                          }}
-                          onMouseEnter={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = '#f3f4f6';
-                            changeEvent.currentTarget.style.color = '#374151';
-                          }}
-                          onMouseLeave={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = 'transparent';
-                            changeEvent.currentTarget.style.color = '#5E6B75';
-                          }}
-                        >
-                          ▼
-                        </button>
-                      </div>
-                      
-                      {/* Save Status Indicator */}
-                      {savingStatus[`${player.id}-game1_scratch`] && (
-                        <div style={{
-                          position: 'absolute',
-                          top: '-8px',
-                          right: '-8px',
-                          width: '16px',
-                          height: '16px',
-                          borderRadius: '50%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '10px',
-                          fontWeight: 'bold',
-                          ...(savingStatus[`${player.id}-game1_scratch`] === 'saving' && {
-                            backgroundColor: '#f59e0b',
-                            color: 'white',
-                            animation: 'pulse 1s infinite'
-                          }),
-                          ...(savingStatus[`${player.id}-game1_scratch`] === 'saved' && {
-                            backgroundColor: '#10b981',
-                            color: 'white'
-                          }),
-                          ...(savingStatus[`${player.id}-game1_scratch`] === 'error' && {
-                            backgroundColor: '#D64545',
-                            color: 'white'
-                          })
-                        }}>
-                          {savingStatus[`${player.id}-game1_scratch`] === 'saving' && '⋯'}
-                          {savingStatus[`${player.id}-game1_scratch`] === 'saved' && ''}
-                          {savingStatus[`${player.id}-game1_scratch`] === 'error' && ''}
-                        </div>
-                      )}
+                      {getSavingIndicator(player.id, 'game1_scratch')}
                     </div>
-                    {player.scores?.game1_scratch === 300 && (
-                      <div style={{ 
-                        position: 'absolute', 
-                        top: '-8px', 
-                        right: '8px', 
-                        background: '#10b981', 
-                        color: 'white', 
-                        borderRadius: '50%', 
-                        width: '20px', 
-                        height: '20px', 
-                        fontSize: '12px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontWeight: 'bold'
-                      }}>
-                        ✓
-                      </div>
-                    )}
+                    {getPerfectBadge(player.scores?.game1_scratch)}
                   </td>
                   
                   {/* Game 1 Total */}
-                  <td style={{ 
-                    padding: '12px 10px',
-                    textAlign: 'center',
-                    verticalAlign: 'middle',
-                    position: 'relative',
-                    fontWeight: '600',
-                    color: '#3b82f6',
-                    fontSize: '13px'
-                  }}>
+                  <td className="scores-cell total">
                     {getGameTotal(player.scores?.game1_total, player.scores?.game1_scratch)}
                   </td>
                   
                   {/* Game 2 Scratch */}
-                  <td style={{ 
-                    padding: '12px 10px',
-                    textAlign: 'center',
-                    verticalAlign: 'middle',
-                    position: 'relative',
-                    fontWeight: '500',
-                    color: '#111827',
-                    fontSize: '13px'
-                  }}>
-                    <div style={{ position: 'relative', display: 'inline-block' }}>
+                  <td className="scores-cell scratch-input">
+                    <div className="pos-relative inline-block">
                       <input
                         type="number"
                         min={0}
@@ -1475,189 +1230,23 @@ export default function ScoresPage() {
                         placeholder="—"
                         value={player.scores?.game2_scratch ?? ''}
                         onChange={changeEvent => updateScore(player.id, 'game2_scratch', changeEvent.target.value ? Number(changeEvent.target.value) : undefined)}
-                        style={getScoreInputStyle(player.scores?.game2_scratch, { 
-                          width: '55px', 
-                          padding: '6px 20px 6px 8px', 
-                          border: '1px solid #d1d5db', 
-                          borderRadius: '6px',
-                          textAlign: 'center',
-                          fontSize: '13px',
-                          fontWeight: '500',
-                          background: '#ffffff',
-                          color: '#111827',
-                          transition: 'all 0.2s ease',
-                          outline: 'none'
-                        })}
-                        onFocus={(changeEvent) => {
-                          const validation = validateScore(player.scores?.game2_scratch)
-                          if (validation.isValid) { 
-                            changeEvent.target.style.borderColor = '#3b82f6'; 
-                            changeEvent.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
-                          }
-                        }}
-                        onBlur={(changeEvent) => {
-                          const validation = validateScore(player.scores?.game2_scratch)
-                          if (validation.isValid) { 
-                            changeEvent.target.style.borderColor = '#d1d5db'; 
-                            changeEvent.target.style.boxShadow = 'none';
-                          }
-                        }}
+                        className={getScoreInputClass(player.scores?.game2_scratch)}
+                        onFocus={(changeEvent) => changeEvent.target.select()}
                         title={!validateScore(player.scores?.game2_scratch).isValid ? validateScore(player.scores?.game2_scratch).message : ''}
                       />
-                      
-                      {/* Increment/Decrement Arrows - Inside Input */}
-                      <div style={{ 
-                        position: 'absolute', 
-                        right: '4px', 
-                        top: '50%', 
-                        transform: 'translateY(-50%)',
-                        display: 'flex', 
-                        flexDirection: 'column', 
-                        gap: '1px' 
-                      }}>
-                        <button
-                          onClick={() => {
-                            const currentScore = player.scores?.game2_scratch || 0;
-                            const newScore = Math.min(300, currentScore + 1);
-                            updateScore(player.id, 'game2_scratch', newScore);
-                          }}
-                          style={{
-                            width: '12px',
-                            height: '8px',
-                            border: 'none',
-                            borderRadius: '1px',
-                            backgroundColor: 'transparent',
-                            color: '#5E6B75',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            cursor: 'pointer',
-                            fontSize: '6px',
-                            fontWeight: 'bold',
-                            transition: 'all 0.2s ease',
-                            outline: 'none'
-                          }}
-                          onMouseEnter={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = '#f3f4f6';
-                            changeEvent.currentTarget.style.color = '#374151';
-                          }}
-                          onMouseLeave={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = 'transparent';
-                            changeEvent.currentTarget.style.color = '#5E6B75';
-                          }}
-                        >
-                          ▲
-                        </button>
-                        <button
-                          onClick={() => {
-                            const currentScore = player.scores?.game2_scratch || 0;
-                            const newScore = Math.max(0, currentScore - 1);
-                            updateScore(player.id, 'game2_scratch', newScore);
-                          }}
-                          style={{
-                            width: '12px',
-                            height: '8px',
-                            border: 'none',
-                            borderRadius: '1px',
-                            backgroundColor: 'transparent',
-                            color: '#5E6B75',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            cursor: 'pointer',
-                            fontSize: '6px',
-                            fontWeight: 'bold',
-                            transition: 'all 0.2s ease',
-                            outline: 'none'
-                          }}
-                          onMouseEnter={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = '#f3f4f6';
-                            changeEvent.currentTarget.style.color = '#374151';
-                          }}
-                          onMouseLeave={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = 'transparent';
-                            changeEvent.currentTarget.style.color = '#5E6B75';
-                          }}
-                        >
-                          ▼
-                        </button>
-                      </div>
-                      
-                      {/* Save Status Indicator */}
-                      {savingStatus[`${player.id}-game2_scratch`] && (
-                        <div style={{
-                          position: 'absolute',
-                          top: '-8px',
-                          right: '-8px',
-                          width: '16px',
-                          height: '16px',
-                          borderRadius: '50%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '10px',
-                          fontWeight: 'bold',
-                          ...(savingStatus[`${player.id}-game2_scratch`] === 'saving' && {
-                            backgroundColor: '#f59e0b',
-                            color: 'white',
-                            animation: 'pulse 1s infinite'
-                          }),
-                          ...(savingStatus[`${player.id}-game2_scratch`] === 'saved' && {
-                            backgroundColor: '#10b981',
-                            color: 'white'
-                          }),
-                          ...(savingStatus[`${player.id}-game2_scratch`] === 'error' && {
-                            backgroundColor: '#D64545',
-                            color: 'white'
-                          })
-                        }}>
-                          {savingStatus[`${player.id}-game2_scratch`] === 'saving' && '⋯'}
-                          {savingStatus[`${player.id}-game2_scratch`] === 'saved' && ''}
-                          {savingStatus[`${player.id}-game2_scratch`] === 'error' && ''}
-                        </div>
-                      )}
+                      {getSavingIndicator(player.id, 'game2_scratch')}
                     </div>
-                    {player.scores?.game2_scratch === 300 && (
-                      <div style={{ 
-                        position: 'absolute', 
-                        top: '-8px', 
-                        right: '8px', 
-                        background: '#10b981', 
-                        color: 'white', 
-                        borderRadius: '50%', 
-                        width: '20px', 
-                        height: '20px', 
-                        fontSize: '12px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontWeight: 'bold'
-                      }}>
-                        ✓
-                      </div>
-                    )}
+                    {getPerfectBadge(player.scores?.game2_scratch)}
                   </td>
                   
                   {/* Game 2 Total */}
-                  <td style={{ 
-                    padding: '12px 10px',
-                    textAlign: 'center',
-                    verticalAlign: 'middle',
-                    position: 'relative',
-                    fontWeight: '600',
-                    color: '#3b82f6',
-                    fontSize: '13px'
-                  }}>
+                  <td className="scores-cell total">
                     {getGameTotal(player.scores?.game2_total, player.scores?.game2_scratch)}
                   </td>
                   
                   {/* Game 3 Scratch */}
-                  <td style={{ 
-                    padding: '12px 10px',
-                    textAlign: 'center',
-                    verticalAlign: 'middle',
-                    position: 'relative',
-                    fontWeight: '500',
-                    color: '#111827',
-                    fontSize: '13px'
-                  }}>
-                    <div style={{ position: 'relative', display: 'inline-block' }}>
+                  <td className="scores-cell scratch-input">
+                    <div className="pos-relative inline-block">
                       <input
                         type="number"
                         min={0}
@@ -1665,203 +1254,27 @@ export default function ScoresPage() {
                         placeholder="—"
                         value={player.scores?.game3_scratch ?? ''}
                         onChange={changeEvent => updateScore(player.id, 'game3_scratch', changeEvent.target.value ? Number(changeEvent.target.value) : undefined)}
-                        style={getScoreInputStyle(player.scores?.game3_scratch, { 
-                          width: '55px', 
-                          padding: '6px 20px 6px 8px', 
-                          border: '1px solid #d1d5db', 
-                          borderRadius: '6px',
-                          textAlign: 'center',
-                          fontSize: '13px',
-                          fontWeight: '500',
-                          background: '#ffffff',
-                          color: '#111827',
-                          transition: 'all 0.2s ease',
-                          outline: 'none'
-                        })}
-                        onFocus={(changeEvent) => {
-                          const validation = validateScore(player.scores?.game3_scratch)
-                          if (validation.isValid) { 
-                            changeEvent.target.style.borderColor = '#3b82f6'; 
-                            changeEvent.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
-                          }
-                        }}
-                        onBlur={(changeEvent) => {
-                          const validation = validateScore(player.scores?.game3_scratch)
-                          if (validation.isValid) { 
-                            changeEvent.target.style.borderColor = '#d1d5db'; 
-                            changeEvent.target.style.boxShadow = 'none';
-                          }
-                        }}
+                        className={getScoreInputClass(player.scores?.game3_scratch)}
+                        onFocus={(changeEvent) => changeEvent.target.select()}
                         title={!validateScore(player.scores?.game3_scratch).isValid ? validateScore(player.scores?.game3_scratch).message : ''}
                       />
-                      
-                      {/* Increment/Decrement Arrows - Inside Input */}
-                      <div style={{ 
-                        position: 'absolute', 
-                        right: '4px', 
-                        top: '50%', 
-                        transform: 'translateY(-50%)',
-                        display: 'flex', 
-                        flexDirection: 'column', 
-                        gap: '1px' 
-                      }}>
-                        <button
-                          onClick={() => {
-                            const currentScore = player.scores?.game3_scratch || 0;
-                            const newScore = Math.min(300, currentScore + 1);
-                            updateScore(player.id, 'game3_scratch', newScore);
-                          }}
-                          style={{
-                            width: '12px',
-                            height: '8px',
-                            border: 'none',
-                            borderRadius: '1px',
-                            backgroundColor: 'transparent',
-                            color: '#5E6B75',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            cursor: 'pointer',
-                            fontSize: '6px',
-                            fontWeight: 'bold',
-                            transition: 'all 0.2s ease',
-                            outline: 'none'
-                          }}
-                          onMouseEnter={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = '#f3f4f6';
-                            changeEvent.currentTarget.style.color = '#374151';
-                          }}
-                          onMouseLeave={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = 'transparent';
-                            changeEvent.currentTarget.style.color = '#5E6B75';
-                          }}
-                        >
-                          ▲
-                        </button>
-                        <button
-                          onClick={() => {
-                            const currentScore = player.scores?.game3_scratch || 0;
-                            const newScore = Math.max(0, currentScore - 1);
-                            updateScore(player.id, 'game3_scratch', newScore);
-                          }}
-                          style={{
-                            width: '12px',
-                            height: '8px',
-                            border: 'none',
-                            borderRadius: '1px',
-                            backgroundColor: 'transparent',
-                            color: '#5E6B75',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            cursor: 'pointer',
-                            fontSize: '6px',
-                            fontWeight: 'bold',
-                            transition: 'all 0.2s ease',
-                            outline: 'none'
-                          }}
-                          onMouseEnter={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = '#f3f4f6';
-                            changeEvent.currentTarget.style.color = '#374151';
-                          }}
-                          onMouseLeave={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = 'transparent';
-                            changeEvent.currentTarget.style.color = '#5E6B75';
-                          }}
-                        >
-                          ▼
-                        </button>
-                      </div>
-                      
-                      {/* Save Status Indicator */}
-                      {savingStatus[`${player.id}-game3_scratch`] && (
-                        <div style={{
-                          position: 'absolute',
-                          top: '-8px',
-                          right: '-8px',
-                          width: '16px',
-                          height: '16px',
-                          borderRadius: '50%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '10px',
-                          fontWeight: 'bold',
-                          ...(savingStatus[`${player.id}-game3_scratch`] === 'saving' && {
-                            backgroundColor: '#f59e0b',
-                            color: 'white',
-                            animation: 'pulse 1s infinite'
-                          }),
-                          ...(savingStatus[`${player.id}-game3_scratch`] === 'saved' && {
-                            backgroundColor: '#10b981',
-                            color: 'white'
-                          }),
-                          ...(savingStatus[`${player.id}-game3_scratch`] === 'error' && {
-                            backgroundColor: '#D64545',
-                            color: 'white'
-                          })
-                        }}>
-                          {savingStatus[`${player.id}-game3_scratch`] === 'saving' && '⋯'}
-                          {savingStatus[`${player.id}-game3_scratch`] === 'saved' && ''}
-                          {savingStatus[`${player.id}-game3_scratch`] === 'error' && ''}
-                        </div>
-                      )}
+                      {getSavingIndicator(player.id, 'game3_scratch')}
                     </div>
-                    {player.scores?.game3_scratch === 300 && (
-                      <div style={{ 
-                        position: 'absolute', 
-                        top: '-8px', 
-                        right: '8px', 
-                        background: '#10b981', 
-                        color: 'white', 
-                        borderRadius: '50%', 
-                        width: '20px', 
-                        height: '20px', 
-                        fontSize: '12px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontWeight: 'bold'
-                      }}>
-                        ✓
-                      </div>
-                    )}
+                    {getPerfectBadge(player.scores?.game3_scratch)}
                   </td>
                   
                   {/* Game 3 Total */}
-                  <td style={{ 
-                    padding: '12px 10px',
-                    textAlign: 'center',
-                    verticalAlign: 'middle',
-                    position: 'relative',
-                    fontWeight: '600',
-                    color: '#3b82f6',
-                    fontSize: '13px'
-                  }}>
+                  <td className="scores-cell total">
                     {getGameTotal(player.scores?.game3_total, player.scores?.game3_scratch)}
                   </td>
                   
                   {/* Total Scratch */}
-                  <td style={{ 
-                    padding: '12px 10px',
-                    textAlign: 'center',
-                    verticalAlign: 'middle',
-                    position: 'relative',
-                    fontWeight: '700',
-                    color: '#374151',
-                    fontSize: '13px'
-                  }}>
+                  <td className="scores-cell total-scratch">
                     {calculateTotalScratch(player) || '—'}
                   </td>
                   
                   {/* Total */}
-                  <td style={{ 
-                    padding: '12px 10px',
-                    textAlign: 'center',
-                    verticalAlign: 'middle',
-                    position: 'relative',
-                    fontWeight: '700',
-                    color: '#1f2937',
-                    fontSize: '13px',
-                    borderTopRightRadius: '12px',
-                    borderBottomRightRadius: '12px'
-                  }}>
+                  <td className="scores-cell total-final">
                     {calculateDisplayTotal(player)}
                   </td>
                 </tr>

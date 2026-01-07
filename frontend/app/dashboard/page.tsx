@@ -1069,7 +1069,7 @@ export default function TournamentDashboard() {
                 gridColumn: '1 / -1',
                 background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
                 borderRadius: '20px',
-                padding: '60px 40px',
+                padding: '32px 24px',
                 textAlign: 'center',
                 boxShadow: '0 4px 20px rgba(0, 0, 0, 0.06)',
                 border: '2px solid #e2e8f0',
@@ -1081,7 +1081,7 @@ export default function TournamentDashboard() {
                   color: '#1e293b',
                   marginBottom: '12px',
                   letterSpacing: '-0.02em',
-                  marginTop: '24px'
+                  marginTop: '0'
                 }}>
                   Welcome to Tournament Dashboard
                 </h2>
