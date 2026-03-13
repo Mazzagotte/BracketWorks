@@ -414,25 +414,28 @@ def update_match_score(
 
 def advance_winner_to_next_round(bracket: Dict[str, Any], round_index: int, match_index: int, winner: str):
     """Advance the winner of a match to the next round"""
-    
+
     if round_index + 1 >= len(bracket['rounds']):
         return  # This was the final
-    
+
     # Find which match in the next round this winner goes to
     next_round = bracket['rounds'][round_index + 1]
     next_match_index = match_index // 2
-    
+
     if next_match_index < len(next_round['matches']):
         next_match = next_round['matches'][next_match_index]
         current_match = bracket['rounds'][round_index]['matches'][match_index]
-        
+
         winner_name = current_match['playerA'] if winner == 'A' else current_match['playerB']
-        
+        winner_id   = current_match.get('playerA_id') if winner == 'A' else current_match.get('playerB_id')
+
         # Determine if this winner goes to playerA or playerB slot
         if match_index % 2 == 0:
-            next_match['playerA'] = winner_name
+            next_match['playerA']    = winner_name
+            next_match['playerA_id'] = winner_id
         else:
-            next_match['playerB'] = winner_name
+            next_match['playerB']    = winner_name
+            next_match['playerB_id'] = winner_id
 
 
 def validate_bracket_structure(bracket: Dict[str, Any]) -> List[str]:

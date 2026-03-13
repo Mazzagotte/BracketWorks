@@ -271,28 +271,49 @@ def update_match_score_simple(
             bracket_index = None
             
         # Update the specific match
+        def apply_score_to_match(match, sa, sb, r_idx):
+            match['scoreA'] = sa
+            match['scoreB'] = sb
+            if sa > sb:
+                match['winner'] = 'A'
+                match['status'] = 'completed'
+                match['both_advance'] = False
+                match['split_pot'] = False
+            elif sb > sa:
+                match['winner'] = 'B'
+                match['status'] = 'completed'
+                match['both_advance'] = False
+                match['split_pot'] = False
+            else:
+                # Tie
+                match['winner'] = None
+                if r_idx == 2:  # Finals (round index 2 = Round 3)
+                    match['status'] = 'completed'
+                    match['both_advance'] = False
+                    match['split_pot'] = True
+                    match['elimination_notes'] = f"Finals tie - pot split evenly between {match.get('playerA')} and {match.get('playerB')}"
+                else:
+                    match['status'] = 'both_advance'
+                    match['both_advance'] = True
+                    match['split_pot'] = False
+                    match['elimination_notes'] = f"Tied in Round {r_idx + 1} - both players advance, lower Round {r_idx + 2} score will be eliminated"
+
         if bracket_type == 'rounds':
             # Single bracket format
-            if (round_index < len(bracket_data['rounds']) and 
+            if (round_index < len(bracket_data['rounds']) and
                 match_index < len(bracket_data['rounds'][round_index]['matches'])):
                 match = bracket_data['rounds'][round_index]['matches'][match_index]
-                match['scoreA'] = score_a
-                match['scoreB'] = score_b
-                match['winner'] = 'A' if score_a > score_b else 'B'
-                match['status'] = 'completed'
+                apply_score_to_match(match, score_a, score_b, round_index)
         else:
             # Multiple brackets format
-            if (bracket_type in bracket_data and 
+            if (bracket_type in bracket_data and
                 bracket_index < len(bracket_data[bracket_type]) and
                 'rounds' in bracket_data[bracket_type][bracket_index] and
                 round_index < len(bracket_data[bracket_type][bracket_index]['rounds']) and
                 match_index < len(bracket_data[bracket_type][bracket_index]['rounds'][round_index]['matches'])):
-                
+
                 match = bracket_data[bracket_type][bracket_index]['rounds'][round_index]['matches'][match_index]
-                match['scoreA'] = score_a
-                match['scoreB'] = score_b
-                match['winner'] = 'A' if score_a > score_b else 'B'
-                match['status'] = 'completed'
+                apply_score_to_match(match, score_a, score_b, round_index)
         
         # Save the updated data
         bracket_record.bracket_data = bracket_data
@@ -356,12 +377,35 @@ def hydrate_brackets_with_scores(
         total = scores_map_total.get(bowler_id, {})
         logger.debug(f"    Bowler {bowler_id}: Scratch=(G1={scratch.get('game1')}, G2={scratch.get('game2')}, G3={scratch.get('game3')}), Total=(G1={total.get('game1')}, G2={total.get('game2')}, G3={total.get('game3')})")
     
+    # Build a name -> bowler_id lookup from all round-1 matches across all brackets.
+    # This lets us resolve player IDs in round 2+ slots that only have player names
+    # (which happens when advance_winner_to_next_round didn't propagate IDs).
+    name_to_id: Dict[str, int] = {}
+    for bracket in list(bracket_data.get('scratch_brackets', [])) + list(bracket_data.get('handicap_brackets', [])):
+        rounds = bracket.get('rounds', [])
+        if rounds:
+            for m in rounds[0].get('matches', []):
+                if m.get('playerA') and m.get('playerA_id'):
+                    name_to_id[m['playerA']] = m['playerA_id']
+                if m.get('playerB') and m.get('playerB_id'):
+                    name_to_id[m['playerB']] = m['playerB_id']
+
     # Helper function to update match scores
     def update_match_scores(match: Dict[str, Any], round_num: int, use_scratch: bool):
         """Update scores for a single match based on round number and bracket type"""
         player_a_id = match.get('playerA_id')
         player_b_id = match.get('playerB_id')
-        
+
+        # Fall back to name lookup for round 2+ slots where IDs weren't propagated
+        if not player_a_id and match.get('playerA'):
+            player_a_id = name_to_id.get(match['playerA'])
+            if player_a_id:
+                match['playerA_id'] = player_a_id
+        if not player_b_id and match.get('playerB'):
+            player_b_id = name_to_id.get(match['playerB'])
+            if player_b_id:
+                match['playerB_id'] = player_b_id
+
         if not player_a_id or not player_b_id:
             return
         
@@ -449,115 +493,154 @@ def hydrate_brackets_with_scores(
                 matches_updated += 1
     
     logger.info(f"  Hydrated {matches_updated} matches with fresh scores")
-    
-    # RESOLVE TIES FROM PREVIOUS ROUNDS
-    # This must happen AFTER all matches are updated with fresh scores
-    # Check scratch brackets only (ties in handicap brackets follow normal rules)
-    for bracket in bracket_data.get('scratch_brackets', []):
+
+    # PROPAGATE WINNERS ROUND-BY-ROUND
+    # If scores were entered via the Scores page only, round 2+ slots are still
+    # TBD with no player names/IDs.  We reconstruct bracket progression here:
+    # for each completed match, advance the winner into the next round's slot,
+    # then re-run score hydration on that slot so the championship gets scored.
+    def propagate_and_rehydrate(bracket: Dict, use_scratch: bool):
         rounds = bracket.get('rounds', [])
-        
-        # Check Round 1 for ties, then resolve based on Round 2 scores
-        if len(rounds) >= 2:
-            round1_matches = rounds[0].get('matches', [])
-            round2_matches = rounds[1].get('matches', [])
-            
-            for match1 in round1_matches:
-                if match1.get('both_advance') and match1.get('scoreA') == match1.get('scoreB'):
-                    # Both players tied in Round 1 and advanced
-                    player_a_id = match1.get('playerA_id')
-                    player_b_id = match1.get('playerB_id')
-                    
-                    # Find their Round 2 scores
-                    # In the same bracket, they both face opponents in Round 2
-                    # We need to compare their Round 2 scores
-                    player_a_round2_score = None
-                    player_b_round2_score = None
-                    
-                    for match2 in round2_matches:
-                        if match2.get('playerA_id') == player_a_id or match2.get('playerB_id') == player_a_id:
-                            if match2.get('playerA_id') == player_a_id:
-                                player_a_round2_score = match2.get('scoreA')
-                            else:
-                                player_a_round2_score = match2.get('scoreB')
-                        
-                        if match2.get('playerA_id') == player_b_id or match2.get('playerB_id') == player_b_id:
-                            if match2.get('playerA_id') == player_b_id:
-                                player_b_round2_score = match2.get('scoreA')
-                            else:
-                                player_b_round2_score = match2.get('scoreB')
-                    
-                    # If both Round 2 scores are available, resolve the tie
-                    if player_a_round2_score is not None and player_b_round2_score is not None:
-                        if player_a_round2_score > player_b_round2_score:
-                            # Player A wins the Round 1 tie
-                            match1['winner'] = 'A'
-                            match1['status'] = 'completed'
-                            match1['both_advance'] = False
-                            match1['eliminated_player'] = 'B'
-                            match1['elimination_notes'] = f"Round 1 tie resolved: {match1.get('playerA')} scored {player_a_round2_score} in Round 2, {match1.get('playerB')} scored {player_b_round2_score} - {match1.get('playerB')} eliminated"
-                            logger.info(f"  Resolved Round 1 tie: {match1.get('playerA')} wins ({player_a_round2_score} > {player_b_round2_score} in Round 2)")
-                        elif player_b_round2_score > player_a_round2_score:
-                            # Player B wins the Round 1 tie
-                            match1['winner'] = 'B'
-                            match1['status'] = 'completed'
-                            match1['both_advance'] = False
-                            match1['eliminated_player'] = 'A'
-                            match1['elimination_notes'] = f"Round 1 tie resolved: {match1.get('playerB')} scored {player_b_round2_score} in Round 2, {match1.get('playerA')} scored {player_a_round2_score} - {match1.get('playerA')} eliminated"
-                            logger.info(f"  Resolved Round 1 tie: {match1.get('playerB')} wins ({player_b_round2_score} > {player_a_round2_score} in Round 2)")
-                        else:
-                            # STILL TIED in Round 2 - both advance again
-                            logger.info(f"  Round 1 tied players also tied in Round 2: {match1.get('playerA')} vs {match1.get('playerB')} (both {player_a_round2_score})")
-        
-        # Check Round 2 for ties, then resolve based on Round 3 scores
-        if len(rounds) >= 3:
-            round2_matches = rounds[1].get('matches', [])
-            round3_matches = rounds[2].get('matches', [])
-            
-            for match2 in round2_matches:
-                if match2.get('both_advance') and match2.get('scoreA') == match2.get('scoreB'):
-                    # Both players tied in Round 2 and advanced
-                    player_a_id = match2.get('playerA_id')
-                    player_b_id = match2.get('playerB_id')
-                    
-                    # Find their Round 3 scores
-                    player_a_round3_score = None
-                    player_b_round3_score = None
-                    
-                    for match3 in round3_matches:
-                        if match3.get('playerA_id') == player_a_id or match3.get('playerB_id') == player_a_id:
-                            if match3.get('playerA_id') == player_a_id:
-                                player_a_round3_score = match3.get('scoreA')
-                            else:
-                                player_a_round3_score = match3.get('scoreB')
-                        
-                        if match3.get('playerA_id') == player_b_id or match3.get('playerB_id') == player_b_id:
-                            if match3.get('playerA_id') == player_b_id:
-                                player_b_round3_score = match3.get('scoreA')
-                            else:
-                                player_b_round3_score = match3.get('scoreB')
-                    
-                    # If both Round 3 scores are available, resolve the tie
-                    if player_a_round3_score is not None and player_b_round3_score is not None:
-                        if player_a_round3_score > player_b_round3_score:
-                            # Player A wins the Round 2 tie
-                            match2['winner'] = 'A'
-                            match2['status'] = 'completed'
-                            match2['both_advance'] = False
-                            match2['eliminated_player'] = 'B'
-                            match2['elimination_notes'] = f"Round 2 tie resolved: {match2.get('playerA')} scored {player_a_round3_score} in Round 3, {match2.get('playerB')} scored {player_b_round3_score} - {match2.get('playerB')} eliminated"
-                            logger.info(f"  Resolved Round 2 tie: {match2.get('playerA')} wins ({player_a_round3_score} > {player_b_round3_score} in Round 3)")
-                        elif player_b_round3_score > player_a_round3_score:
-                            # Player B wins the Round 2 tie
-                            match2['winner'] = 'B'
-                            match2['status'] = 'completed'
-                            match2['both_advance'] = False
-                            match2['eliminated_player'] = 'A'
-                            match2['elimination_notes'] = f"Round 2 tie resolved: {match2.get('playerB')} scored {player_b_round3_score} in Round 3, {match2.get('playerA')} scored {player_a_round3_score} - {match2.get('playerA')} eliminated"
-                            logger.info(f"  Resolved Round 2 tie: {match2.get('playerB')} wins ({player_b_round3_score} > {player_a_round3_score} in Round 3)")
-                        else:
-                            # Round 3 tie - pot split (already handled in update_match_scores)
-                            logger.info(f"  Round 2 tied players also tied in Round 3 (finals): {match2.get('playerA')} vs {match2.get('playerB')} - pot split")
-    
+        for round_idx in range(len(rounds) - 1):
+            current_matches = rounds[round_idx].get('matches', [])
+            next_matches    = rounds[round_idx + 1].get('matches', [])
+
+            changed = False
+            for match_idx, match in enumerate(current_matches):
+                winner = match.get('winner')
+                if winner not in ('A', 'B'):
+                    continue
+
+                winner_name = match.get('playerA') if winner == 'A' else match.get('playerB')
+                winner_id   = match.get('playerA_id') if winner == 'A' else match.get('playerB_id')
+
+                if not winner_id:
+                    continue
+
+                next_idx = match_idx // 2
+                if next_idx >= len(next_matches):
+                    continue
+
+                nxt = next_matches[next_idx]
+                if match_idx % 2 == 0:
+                    if nxt.get('playerA_id') != winner_id:
+                        nxt['playerA']    = winner_name
+                        nxt['playerA_id'] = winner_id
+                        changed = True
+                else:
+                    if nxt.get('playerB_id') != winner_id:
+                        nxt['playerB']    = winner_name
+                        nxt['playerB_id'] = winner_id
+                        changed = True
+
+            if changed:
+                # Re-hydrate next round now that player IDs are populated
+                for match in next_matches:
+                    update_match_scores(match, round_idx + 1, use_scratch)
+
+    for bracket in bracket_data.get('scratch_brackets', []):
+        propagate_and_rehydrate(bracket, use_scratch=True)
+    for bracket in bracket_data.get('handicap_brackets', []):
+        propagate_and_rehydrate(bracket, use_scratch=False)
+
+    # RESOLVE TIES FROM PREVIOUS ROUNDS
+    # This must happen AFTER all matches are updated with fresh scores.
+    # Applies to both scratch and handicap brackets.
+
+    def find_player_score_in_round(player_id, matches):
+        """Return this player's score from the given round's matches, or None."""
+        for m in matches:
+            if m.get('playerA_id') == player_id:
+                return m.get('scoreA')
+            if m.get('playerB_id') == player_id:
+                return m.get('scoreB')
+        return None
+
+    def resolve_tie_using_next_round(tied_match, next_round_matches, next_round_num, final_round_num):
+        """
+        Compare the two tied players' scores from the next round.
+        - If one is higher → that player wins, other is eliminated.
+        - If still tied and more rounds remain → keep both_advance = True (cascade).
+        - If still tied in the final round → pot split (already marked by update_match_scores).
+        """
+        pid_a = tied_match.get('playerA_id')
+        pid_b = tied_match.get('playerB_id')
+
+        score_a = find_player_score_in_round(pid_a, next_round_matches)
+        score_b = find_player_score_in_round(pid_b, next_round_matches)
+
+        if score_a is None or score_b is None:
+            return  # Next round scores not yet entered — leave unresolved
+
+        if score_a > score_b:
+            tied_match['winner'] = 'A'
+            tied_match['status'] = 'completed'
+            tied_match['both_advance'] = False
+            tied_match['eliminated_player'] = 'B'
+            tied_match['elimination_notes'] = (
+                f"Tie resolved in Round {next_round_num}: "
+                f"{tied_match.get('playerA')} scored {score_a}, "
+                f"{tied_match.get('playerB')} scored {score_b} — "
+                f"{tied_match.get('playerB')} eliminated"
+            )
+            logger.info(f"  Resolved tie: {tied_match.get('playerA')} wins ({score_a} > {score_b} in Round {next_round_num})")
+
+        elif score_b > score_a:
+            tied_match['winner'] = 'B'
+            tied_match['status'] = 'completed'
+            tied_match['both_advance'] = False
+            tied_match['eliminated_player'] = 'A'
+            tied_match['elimination_notes'] = (
+                f"Tie resolved in Round {next_round_num}: "
+                f"{tied_match.get('playerB')} scored {score_b}, "
+                f"{tied_match.get('playerA')} scored {score_a} — "
+                f"{tied_match.get('playerA')} eliminated"
+            )
+            logger.info(f"  Resolved tie: {tied_match.get('playerB')} wins ({score_b} > {score_a} in Round {next_round_num})")
+
+        else:
+            # Still tied after next round
+            if next_round_num >= final_round_num:
+                # No more rounds — split pot
+                tied_match['winner'] = None
+                tied_match['status'] = 'completed'
+                tied_match['both_advance'] = False
+                tied_match['split_pot'] = True
+                tied_match['elimination_notes'] = (
+                    f"Tied through all {final_round_num} rounds — pot split evenly between "
+                    f"{tied_match.get('playerA')} and {tied_match.get('playerB')}"
+                )
+                logger.info(f"  Tie persists through finals: {tied_match.get('playerA')} vs {tied_match.get('playerB')} — pot split")
+            else:
+                # Cascade: still tied, both advance again
+                tied_match['both_advance'] = True
+                tied_match['elimination_notes'] = (
+                    f"Still tied after Round {next_round_num} — both advance to Round {next_round_num + 1}"
+                )
+                logger.info(f"  Tie cascades to Round {next_round_num + 1}: {tied_match.get('playerA')} vs {tied_match.get('playerB')}")
+
+    all_brackets = (
+        list(bracket_data.get('scratch_brackets', [])) +
+        list(bracket_data.get('handicap_brackets', []))
+    )
+
+    for bracket in all_brackets:
+        rounds = bracket.get('rounds', [])
+        total_rounds = len(rounds)
+
+        for round_idx in range(total_rounds - 1):
+            current_matches = rounds[round_idx].get('matches', [])
+            next_matches = rounds[round_idx + 1].get('matches', [])
+
+            for match in current_matches:
+                if match.get('both_advance') and match.get('scoreA') == match.get('scoreB'):
+                    resolve_tie_using_next_round(
+                        match,
+                        next_matches,
+                        next_round_num=round_idx + 2,   # 1-indexed display round
+                        final_round_num=total_rounds
+                    )
+
     return bracket_data
 
 

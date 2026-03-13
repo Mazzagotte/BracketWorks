@@ -13,6 +13,7 @@ export interface Winner {
   payout_percentage: number
   payout_amount: number
   prize_pool_total: number
+  split_pot?: boolean
 }
 
 export interface BracketPayout {
@@ -141,17 +142,12 @@ export function usePayouts(tournamentId: number | null, selectedSquadId: number 
   const loadEntryData = useCallback(async () => {
     if (!tournamentId) return
 
-    setLoading(true)
-    setError(null)
-
     try {
       const token = localStorage.getItem('token')
-      if (!token) {
-        setError('Not authenticated')
-        return
-      }
+      if (!token) return
 
-      const response = await fetch(API(`/api/v1/payouts/entries/${tournamentId}`), {
+      // Try the full live-entries endpoint first
+      const response = await fetch(API(`/api/v1/payouts/live-entries/${tournamentId}`), {
         headers: { 'Authorization': `Bearer ${token}` }
       })
 
@@ -161,44 +157,40 @@ export function usePayouts(tournamentId: number | null, selectedSquadId: number 
         return
       }
 
-      // Fallback: construct from brackets and bowler data
-      const [bracketResponse, bowlerResponse] = await Promise.all([
-        fetch(API(`/api/v1/brackets/?tournament_id=${tournamentId}`), {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }),
-        fetch(API(`/api/v1/bowlers/?tournament_id=${tournamentId}`), {
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
-      ])
-
-      if (!bracketResponse.ok || !bowlerResponse.ok) {
-        throw new Error('Failed to load entry data')
-      }
-
-      const bracketsData = await bracketResponse.json()
-      const bowlersData = await bowlerResponse.json()
-
-      // Process and construct entry data (simplified for now)
-      setEntryData({
-        tournament_info: {
-          id: tournamentId,
-          name: '',
-          squad_id: null
-        },
-        entries: [],
-        summary: {
-          total_players: bowlersData.length,
-          total_scratch_entries: 0,
-          total_handicap_entries: 0,
-          total_amount_distributed: 0,
-          average_per_player: 0
-        }
+      // Fallback: get bowler list so non-winners still appear in the payout list
+      const bowlerResponse = await fetch(API(`/api/v1/bowlers/?tournament_id=${tournamentId}`), {
+        headers: { 'Authorization': `Bearer ${token}` }
       })
+
+      if (bowlerResponse.ok) {
+        const bowlers = await bowlerResponse.json()
+        setEntryData({
+          tournament_info: { id: tournamentId, name: '', squad_id: null },
+          entries: bowlers.map((b: { id: number; name: string }) => ({
+            id: b.id,
+            name: b.name,
+            scratch_brackets_entered: 0,
+            handicap_brackets_entered: 0,
+            total_brackets_entered: 0,
+            scratch_brackets_won: 0,
+            handicap_brackets_won: 0,
+            total_brackets_won: 0,
+            total_amount_won: 0,
+            scratch_amount_won: 0,
+            handicap_amount_won: 0,
+            placement_details: [],
+          })),
+          summary: {
+            total_players: bowlers.length,
+            total_scratch_entries: 0,
+            total_handicap_entries: 0,
+            total_amount_distributed: 0,
+            average_per_player: 0,
+          },
+        })
+      }
     } catch (error) {
-      setError('Network error while loading entry data')
       logger.error('Error loading entry data:', error)
-    } finally {
-      setLoading(false)
     }
   }, [tournamentId])
 
