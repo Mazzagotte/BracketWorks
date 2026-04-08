@@ -7,6 +7,7 @@ import { ErrorBoundary } from '../components/ErrorBoundary'
 import { useTournaments, useSquads } from '../hooks/useTournaments'
 import { Tournament, Squad } from '../lib/types'
 import { usePayouts } from './hooks/usePayouts'
+import NoTournamentState from '../components/NoTournamentState'
 import { storage } from '../lib/storage'
 import styles from './payouts.module.css'
 
@@ -98,7 +99,7 @@ export default function PayoutsPage() {
   usePageHeader({
     title: 'Payout Distribution',
     subtitle: selectedTournament
-      ? `${selectedTournament.name}${selectedSquad ? ` · Squad ${selectedSquad.id}` : ''}`
+      ? `${selectedTournament.name}${selectedSquad ? ` · ${[selectedSquad.date, selectedSquad.time].filter(Boolean).join(' ')}` : ''}`
       : 'Load a tournament from the dashboard',
     actions: headerActions,
   })
@@ -120,6 +121,19 @@ export default function PayoutsPage() {
         <div className={styles.emptyTitle}>Please log in</div>
         <div className={styles.emptyMessage}>Sign in to view payout information.</div>
       </div>
+    )
+  }
+
+  if (typeof window !== 'undefined' && !localStorage.getItem('lastTournamentId')) {
+    return (
+      <NoTournamentState
+        description="Load a tournament from the dashboard to view payout distribution. Once loaded, you'll be able to see prize pools, track winners, and mark payouts as complete."
+        cards={[
+          { title: 'Prize Pool', text: 'View total scratch and handicap prize pools calculated from paid bracket entries' },
+          { title: 'Winner Tracking', text: 'See which players won, what position they finished, and how much they earned' },
+          { title: 'Mark as Paid', text: 'Track which winners have been paid out to stay organized during payout distribution' },
+        ]}
+      />
     )
   }
 

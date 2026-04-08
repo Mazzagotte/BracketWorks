@@ -3,7 +3,6 @@
 export const dynamic = 'force-dynamic'
 
 import { useMemo, useState, useEffect, useCallback } from 'react'
-import { colors, semantic } from '../styles/colors'
 import { useAuth } from '../lib/auth-context'
 import { usePageHeader } from '../lib/header-context'
 import { ErrorBoundary } from '../components/ErrorBoundary'
@@ -11,14 +10,12 @@ import { usePlayers } from './hooks/usePlayers'
 import { useTournaments } from '../hooks/useTournaments'
 import PlayersTable from './components/PlayersTable'
 import PlayerForm from './components/PlayerForm'
+import NoTournamentState from '../components/NoTournamentState'
 import { logger } from '../lib/logger'
 import { Squad, Player } from './types'
 import { BracketSettings, Tournament } from '../lib/types'
-import { apiClient } from '../lib/api'
-import { API } from '../lib/api'
-
-
-// Force dynamic rendering for this page
+import { apiClient, API } from '../lib/api'
+import styles from './entries.module.css'
 
 
 export default function PlayersPage() {
@@ -147,9 +144,9 @@ export default function PlayersPage() {
 
   usePageHeader({
     title: 'Entries',
-    subtitle: selectedTournament 
-      ? `Managing: ${selectedTournament.name}${selectedTournament.location ? ` • ${selectedTournament.location}` : ''}${selectedTournament.start_date ? ` • ${new Date(selectedTournament.start_date).toLocaleDateString()}` : ''}`
-      : 'Manage tournament participants and their information'
+    subtitle: selectedTournament
+      ? `${selectedTournament.name}${selectedSquad ? ` · ${[selectedSquad.date, selectedSquad.time].filter(Boolean).join(' ')}` : ''}`
+      : 'Select a tournament from the dashboard'
   })
 
   // Calculate entry totals
@@ -257,48 +254,38 @@ export default function PlayersPage() {
   // Wait for auth initialization
   if (!isInitialized) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center', 
-        minHeight: '100vh',
-        fontFamily: 'Inter, sans-serif'
-      }}>
-        <div style={{ textAlign: 'center' }}>
-          <div>Loading player management...</div>
-        </div>
+      <div className={styles.loadingScreen}>
+        <div>Loading player management...</div>
       </div>
     );
   }
 
   if (!isAuthenticated) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '50vh',
-        flexDirection: 'column',
-        gap: '1rem'
-      }}>
-        <div style={{ fontSize: '1.25rem', fontWeight: '600', color: semantic.text.primary }}>
-          Authentication Required
-        </div>
-        <div style={{ fontSize: '0.875rem', color: semantic.text.secondary }}>
-          Please log in to access the players page.
-        </div>
+      <div className={styles.authRequired}>
+        <div className={styles.authRequiredTitle}>Authentication Required</div>
+        <div className={styles.authRequiredText}>Please log in to access the players page.</div>
       </div>
+    )
+  }
+
+  if (typeof window !== 'undefined' && !localStorage.getItem('lastTournamentId')) {
+    return (
+      <NoTournamentState
+        description="Load a tournament from the dashboard to manage player entries. Once loaded, you'll be able to add players, set entry fees, and track registrations."
+        cards={[
+          { title: 'Add Players', text: 'Register bowlers with their name, average, and entry type for scratch or handicap brackets' },
+          { title: 'Track Entries', text: 'Monitor scratch and handicap entries, expected brackets, and revenue per squad' },
+          { title: 'Manage Fees', text: 'Set entry fees that automatically calculate total costs for each player' },
+        ]}
+      />
     )
   }
 
   return (
     <ErrorBoundary>
-      <div style={{ 
-        maxWidth: '1200px', 
-        margin: '0 auto', 
-        padding: '2rem 1rem' 
-      }}>
-        <PlayerForm 
+      <div className={styles.pageContainer}>
+        <PlayerForm
           onAddPlayer={addPlayer}
           isLoading={isLoading}
           squads={squads}
@@ -306,231 +293,67 @@ export default function PlayersPage() {
         />
 
         {isLoading ? (
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '0.5rem',
-            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-            padding: '1.5rem'
-          }}>
-            <div style={{ marginBottom: '1rem', textAlign: 'center', color: semantic.text.secondary, fontSize: '0.875rem' }}>
-              Loading players...
-            </div>
-            {/* Skeleton Loading */}
+          <div className={styles.skeletonCard}>
+            <div className={styles.skeletonText}>Loading players...</div>
             {[1, 2, 3, 4, 5].map(i => (
-              <div key={i} style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(6, 1fr)',
-                gap: '12px',
-                padding: '12px',
-                marginBottom: '8px'
-              }}>
+              <div key={i} className={styles.skeletonGrid}>
                 {[1, 2, 3, 4, 5, 6].map(j => (
-                  <div key={j} style={{
-                    background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
-                    backgroundSize: '200% 100%',
-                    animation: 'loading 1.5s infinite',
-                    borderRadius: '6px',
-                    height: '36px'
-                  }} />
+                  <div key={j} className={styles.skeletonItem} />
                 ))}
               </div>
             ))}
           </div>
         ) : !getTournamentId() ? (
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '0.5rem',
-            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-            padding: '3rem 2rem',
-            textAlign: 'center'
-          }}>
-            <div style={{
-              fontSize: '1.25rem',
-              fontWeight: '600',
-              color: semantic.text.primary,
-              marginBottom: '0.5rem'
-            }}>
-              No Tournament Loaded
-            </div>
-            <div style={{
-              fontSize: '0.875rem',
-              color: semantic.text.secondary,
-              marginBottom: '1.5rem'
-            }}>
+          <div className={styles.noTournament}>
+            <div className={styles.noTournamentTitle}>No Tournament Loaded</div>
+            <div className={styles.noTournamentText}>
               Please load a tournament from the dashboard to manage players.
             </div>
-            <a 
-              href="/dashboard"
-              style={{
-                display: 'inline-block',
-                backgroundColor: colors.blue.primary,
-                color: 'white',
-                padding: '0.75rem 1.5rem',
-                borderRadius: '0.375rem',
-                textDecoration: 'none',
-                fontSize: '0.875rem',
-                fontWeight: '500',
-                transition: 'background-color 0.2s'
-              }}
-              onMouseOver={(e) => (e.target as HTMLElement).style.backgroundColor = colors.blue.dark}
-              onMouseOut={(e) => (e.target as HTMLElement).style.backgroundColor = colors.blue.primary}
-            >
+            <a href="/dashboard" className={styles.dashboardLink}>
               Go to Dashboard
             </a>
           </div>
         ) : (
           <>
-            {/* Tournament Entry Summary */}
             {getTournamentId() && players.length > 0 && (
-              <div style={{
-                backgroundColor: 'white',
-                borderRadius: '0.5rem',
-                boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-                padding: '1rem 1.5rem',
-                marginBottom: '1.5rem'
-              }}>
-                <h3 style={{
-                  fontSize: '0.875rem',
-                  fontWeight: '600',
-                  color: semantic.text.secondary,
-                  marginBottom: '0.75rem',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em'
-                }}>
-                  Tournament Summary
-                </h3>
-                
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-                  gap: '1rem'
-                }}>
-                  {/* Total Players */}
-                  <div style={{
-                    textAlign: 'center',
-                    padding: '0.75rem',
-                    backgroundColor: colors.gray[50],
-                    borderRadius: '0.5rem',
-                    border: `1px solid ${colors.gray[200]}`
-                  }}>
-                    <div style={{ 
-                      fontSize: '1.875rem', 
-                      fontWeight: '700', 
-                      color: colors.gray[900],
-                      lineHeight: '1'
-                    }}>
+              <div className={styles.summaryCard}>
+                <h3 className={styles.summaryTitle}>Tournament Summary</h3>
+                <div className={styles.summaryGrid}>
+                  <div className={`${styles.statBox} ${styles.statBoxPlayers}`}>
+                    <div className={`${styles.statValue} ${styles.statValuePlayers}`}>
                       {entryTotals.totalPlayers}
                     </div>
-                    <div style={{ 
-                      fontSize: '0.75rem', 
-                      color: semantic.text.secondary, 
-                      marginTop: '0.25rem',
-                      fontWeight: '500'
-                    }}>
-                      Players
-                    </div>
+                    <div className={`${styles.statLabel} ${styles.statLabelPlayers}`}>Players</div>
                   </div>
 
-                  {/* Handicap Entries */}
-                  <div style={{
-                    textAlign: 'center',
-                    padding: '0.75rem',
-                    backgroundColor: colors.blue.light,
-                    borderRadius: '0.5rem',
-                    border: `1px solid ${colors.blue.lighter}`
-                  }}>
-                    <div style={{ 
-                      fontSize: '1.875rem', 
-                      fontWeight: '700', 
-                      color: colors.blue.deeper,
-                      lineHeight: '1'
-                    }}>
+                  <div className={`${styles.statBox} ${styles.statBoxHandicap}`}>
+                    <div className={`${styles.statValue} ${styles.statValueHandicap}`}>
                       {entryTotals.handicapEntries}
                     </div>
-                    <div style={{ 
-                      fontSize: '0.75rem', 
-                      color: colors.blue.deeper, 
-                      marginTop: '0.25rem',
-                      fontWeight: '500'
-                    }}>
-                      Handicap
-                    </div>
-                    <div style={{ 
-                      fontSize: '0.75rem', 
-                      color: colors.blue.deeper, 
-                      marginTop: '0.125rem',
-                      opacity: 0.8
-                    }}>
+                    <div className={`${styles.statLabel} ${styles.statLabelHandicap}`}>Handicap</div>
+                    <div className={`${styles.statDetail} ${styles.statDetailHandicap}`}>
                       {entryTotals.expectedHandicapBrackets} Full Brackets
                       {entryTotals.handicapRefunds > 0 && ` • ${entryTotals.handicapRefunds} Refunds`}
                     </div>
                   </div>
 
-                  {/* Scratch Entries */}
-                  <div style={{
-                    textAlign: 'center',
-                    padding: '0.75rem',
-                    backgroundColor: colors.yellow.light,
-                    borderRadius: '0.5rem',
-                    border: `1px solid ${colors.brand.goldLighter}`
-                  }}>
-                    <div style={{ 
-                      fontSize: '1.875rem', 
-                      fontWeight: '700', 
-                      color: colors.yellow.dark,
-                      lineHeight: '1'
-                    }}>
+                  <div className={`${styles.statBox} ${styles.statBoxScratch}`}>
+                    <div className={`${styles.statValue} ${styles.statValueScratch}`}>
                       {entryTotals.scratchEntries}
                     </div>
-                    <div style={{ 
-                      fontSize: '0.75rem', 
-                      color: colors.yellow.dark, 
-                      marginTop: '0.25rem',
-                      fontWeight: '500'
-                    }}>
-                      Scratch
-                    </div>
-                    <div style={{ 
-                      fontSize: '0.75rem', 
-                      color: colors.yellow.dark, 
-                      marginTop: '0.125rem',
-                      opacity: 0.8
-                    }}>
+                    <div className={`${styles.statLabel} ${styles.statLabelScratch}`}>Scratch</div>
+                    <div className={`${styles.statDetail} ${styles.statDetailScratch}`}>
                       {entryTotals.expectedScratchBrackets} Full Brackets
                       {entryTotals.scratchRefunds > 0 && ` • ${entryTotals.scratchRefunds} Refunds`}
                     </div>
                   </div>
 
-                  {/* Total Revenue */}
-                  <div style={{
-                    textAlign: 'center',
-                    padding: '0.75rem',
-                    backgroundColor: colors.green.light,
-                    borderRadius: '0.5rem',
-                    border: `1px solid ${colors.green.lighter}`
-                  }}>
-                    <div style={{ 
-                      fontSize: '1.875rem', 
-                      fontWeight: '700', 
-                      color: colors.green.deeper,
-                      lineHeight: '1'
-                    }}>
+                  <div className={`${styles.statBox} ${styles.statBoxRevenue}`}>
+                    <div className={`${styles.statValue} ${styles.statValueRevenue}`}>
                       ${entryTotals.totalRevenue.toLocaleString()}
                     </div>
-                    <div style={{ 
-                      fontSize: '0.75rem', 
-                      color: colors.green.deeper, 
-                      marginTop: '0.25rem',
-                      fontWeight: '500'
-                    }}>
-                      Revenue
-                    </div>
-                    <div style={{ 
-                      fontSize: '0.75rem', 
-                      color: colors.green.deeper, 
-                      marginTop: '0.125rem',
-                      opacity: 0.8
-                    }}>
+                    <div className={`${styles.statLabel} ${styles.statLabelRevenue}`}>Revenue</div>
+                    <div className={`${styles.statDetail} ${styles.statDetailRevenue}`}>
                       {entryTotals.totalEntries} × ${entryFee}
                     </div>
                   </div>
@@ -538,13 +361,7 @@ export default function PlayersPage() {
               </div>
             )}
 
-            {/* Players Table */}
-            <div style={{
-              backgroundColor: 'white',
-              borderRadius: '0.5rem',
-              boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-              overflow: 'hidden'
-            }}>
+            <div className={styles.tableCard}>
               <PlayersTable
                 players={players}
                 onUpdatePlayer={handleUpdatePlayer}

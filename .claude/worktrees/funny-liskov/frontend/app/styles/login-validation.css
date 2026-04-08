@@ -1,0 +1,496 @@
+/* Enhanced Login Validation & Accessibility Styles */
+
+/* Field validation states */
+.login-input.error,
+.password-input.error {
+  border-color: var(--color-red-primary) !important;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.1) !important;
+  background-color: rgba(239, 68, 68, 0.02) !important;
+}
+
+.login-input.valid,
+.password-input.valid {
+  border-color: var(--color-green-primary) !important;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1) !important;
+  background-color: rgba(16, 185, 129, 0.02) !important;
+}
+
+/* Field feedback messages */
+.field-error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 8px 12px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 6px;
+  color: var(--color-red-primary);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  animation: slideInError 0.2s ease-out;
+}
+
+.field-success {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 6px 12px;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 6px;
+  color: var(--color-green-primary);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  animation: slideInSuccess 0.2s ease-out;
+}
+
+.password-visibility-notice {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  padding: 4px 8px;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: 4px;
+  color: var(--color-brand-gold-light);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+/* Form errors summary */
+.form-errors-summary {
+  margin-top: 16px;
+  padding: 16px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  border-radius: 12px;
+  animation: slideInError 0.3s ease-out;
+}
+
+.errors-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-red-primary);
+  margin-bottom: 12px;
+  font-size: var(--font-size-md);
+}
+
+.errors-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.error-item {
+  color: #dc2626;
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-normal);
+}
+
+.error-item strong {
+  color: #991b1b;
+}
+
+/* Icons */
+.error-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.success-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+  color: var(--color-green-primary);
+}
+
+.warning-icon {
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+/* Enhanced button states */
+.login-button.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.login-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Enhanced password toggle */
+.password-toggle {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+  padding: 4px;
+}
+
+.password-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.05);
+}
+
+.password-toggle:focus {
+  outline: 2px solid rgba(59, 130, 246, 0.5);
+  outline-offset: 2px;
+}
+
+/* Animations */
+@keyframes slideInError {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInSuccess {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Focus management for accessibility */
+.login-input:focus,
+.password-input:focus {
+  outline: 2px solid rgba(59, 130, 246, 0.5);
+  outline-offset: 2px;
+  border-color: var(--color-blue-primary) !important;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .field-error {
+    background: #ffebee;
+    border-color: #d32f2f;
+    color: #b71c1c;
+  }
+  
+  .field-success {
+    background: #e8f5e8;
+    border-color: #2e7d32;
+    color: #1b5e20;
+  }
+  
+  .login-input.error,
+  .password-input.error {
+    border-color: #d32f2f !important;
+    border-width: 2px !important;
+  }
+  
+  .login-input.valid,
+  .password-input.valid {
+    border-color: #2e7d32 !important;
+    border-width: 2px !important;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .field-error,
+  .field-success,
+  .form-errors-summary {
+    animation: none;
+  }
+  
+  .password-toggle:hover {
+    transform: none;
+  }
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 480px) {
+  .field-error,
+  .field-success {
+    padding: 6px 10px;
+    font-size: var(--font-size-sm);
+  }
+  
+  .form-errors-summary {
+    padding: 12px;
+  }
+  
+  .errors-title {
+    font-size: var(--font-size-base);
+  }
+  
+  .error-item {
+    font-size: var(--font-size-sm);
+  }
+  
+  .password-visibility-notice {
+    font-size: var(--font-size-xs);
+    padding: 3px 6px;
+  }
+  
+  /* Connection status mobile adjustments */
+  .connection-status {
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    transform: none;
+    min-width: auto;
+    padding: 10px 16px;
+  }
+  
+  .connection-text {
+    font-size: var(--font-size-base);
+  }
+  
+  .retry-info {
+    font-size: var(--font-size-xs);
+    display: block;
+    margin-left: 0;
+    margin-top: 4px;
+  }
+  
+  .connection-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  
+  .connection-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 16px;
+    padding: 2px 6px;
+  }
+}
+
+/* Screen reader only content */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Focus indicators for keyboard navigation */
+.login-form :focus-visible {
+  outline: 2px solid var(--color-blue-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Connection Status Indicator */
+.connection-status {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(12px);
+  z-index: 1000;
+  animation: slideInDown 0.3s ease-out;
+  max-width: 90vw;
+  min-width: 300px;
+}
+
+.connection-status.offline {
+  background: rgba(239, 68, 68, 0.9);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: var(--color-white);
+}
+
+.connection-status.slow {
+  background: rgba(245, 158, 11, 0.9);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: var(--color-white);
+}
+
+.connection-status.poor {
+  background: rgba(249, 115, 22, 0.9);
+  border: 1px solid rgba(249, 115, 22, 0.3);
+  color: var(--color-white);
+}
+
+.connection-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.connection-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.connection-text {
+  font-weight: 600;
+  font-size: 14px;
+  flex: 1;
+}
+
+.retry-info {
+  font-size: 12px;
+  opacity: 0.9;
+  margin-left: 8px;
+  font-style: italic;
+}
+
+.connection-close {
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  margin-left: 12px;
+}
+
+.connection-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
+}
+
+.connection-close:focus {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: 2px;
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* Connection quality indicator in form */
+.login-form .connection-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 16px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  transition: all 0.3s ease;
+}
+
+.connection-indicator.good {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  color: var(--color-green-primary);
+}
+
+.connection-indicator.slow {
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  color: var(--color-brand-gold-light);
+}
+
+.connection-indicator.poor {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: var(--color-red-primary);
+}
+
+/* Pulse animation for poor connection */
+@keyframes connectionPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.connection-status.poor,
+.connection-status.offline {
+  animation: slideInDown 0.3s ease-out, connectionPulse 2s infinite 1s;
+}
+
+/* Keyboard shortcuts help */
+.keyboard-shortcuts {
+  margin-top: 12px;
+  margin-bottom: 0;
+  text-align: center;
+}
+
+.shortcuts-details {
+  display: inline-block;
+  text-align: left;
+}
+
+.shortcuts-summary {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.shortcuts-summary:hover {
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.shortcuts-content {
+  margin-top: 8px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+.shortcut-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.shortcut-item:last-child {
+  margin-bottom: 0;
+}
+
+kbd {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-family: monospace;
+  color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}

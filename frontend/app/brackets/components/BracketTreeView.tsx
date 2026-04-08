@@ -311,8 +311,8 @@ function isUpset(match: Match): boolean {
   if (!match.winner) return false
   
   // Upset if lower seed (higher number) beats higher seed (lower number)
-  if (match.winner === 'A' && match.seedA > match.seedB) return true
-  if (match.winner === 'B' && match.seedB > match.seedA) return true
+  if (match.winner === 'A' && match.seedA != null && match.seedB != null && match.seedA > match.seedB) return true
+  if (match.winner === 'B' && match.seedA != null && match.seedB != null && match.seedB > match.seedA) return true
   
   return false
 }

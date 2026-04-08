@@ -43,7 +43,6 @@ class UserCreate(BaseModel):
     email: EmailStr
     organization: Optional[str] = None
     password: str
-    is_admin: Optional[int] = 0
 
 class UserOut(BaseModel):
     id: int

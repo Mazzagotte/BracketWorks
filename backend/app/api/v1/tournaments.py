@@ -1,9 +1,11 @@
+import logging
 from fastapi import APIRouter, HTTPException, Depends, Request
 from sqlalchemy.orm import Session
 from ...core import models, schemas
 from ...api import deps
 import json
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 @router.post("/", response_model=schemas.Tournament)
@@ -83,6 +85,8 @@ def update_tournament(
         db_t = db.query(models.Tournament).filter(models.Tournament.id == tournament_id).first()
         if not db_t:
             raise HTTPException(status_code=404, detail="Tournament not found")
+        if db_t.user_id != user.id and not getattr(user, 'is_admin', False):
+            raise HTTPException(status_code=403, detail="Not authorized to update this tournament")
         db_t.name = tournament.name
         if tournament.location is not None:
             db_t.location = tournament.location
@@ -114,6 +118,8 @@ def delete_tournament(
     db_t = db.query(models.Tournament).filter(models.Tournament.id == tournament_id).first()
     if not db_t:
         raise HTTPException(status_code=404, detail="Tournament not found")
+    if db_t.user_id != user.id and not getattr(user, 'is_admin', False):
+        raise HTTPException(status_code=403, detail="Not authorized to delete this tournament")
     db.delete(db_t)
     db.commit()
     return {"ok": True}

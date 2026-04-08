@@ -243,9 +243,9 @@ export const StatCard: React.FC<StatCardProps> = React.memo(({
     switch (color) {
       case 'primary':
         return {
-          backgroundColor: '#dbeafe',
-          borderLeft: `4px solid ${colors.primary}`,
-          valueColor: colors.primary,
+          backgroundColor: 'rgba(244, 124, 32, 0.08)',
+          borderLeft: `4px solid var(--color-primary)`,
+          valueColor: 'var(--color-primary)',
         }
       case 'success':
         return {
@@ -321,19 +321,20 @@ export const StatCard: React.FC<StatCardProps> = React.memo(({
   )
 })
 
-// Button Component (enhanced)
+// Button Component
 interface ButtonProps {
   children: React.ReactNode
   onClick?: () => void
-  variant?: 'primary' | 'secondary' | 'success' | 'warning' | 'error'
+  variant?: 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'danger'
   size?: 'sm' | 'md' | 'lg'
   disabled?: boolean
   fullWidth?: boolean
   className?: string
   type?: 'button' | 'submit' | 'reset'
+  icon?: React.ReactNode
 }
 
-export const Button: React.FC<ButtonProps> = ({ 
+export const Button: React.FC<ButtonProps> = ({
   children,
   onClick,
   variant = 'primary',
@@ -341,69 +342,20 @@ export const Button: React.FC<ButtonProps> = ({
   disabled = false,
   fullWidth = false,
   className = '',
-  type = 'button'
-}) => {
-  const getVariantStyles = () => {
-    switch (variant) {
-      case 'primary':
-        return stylePresets.button.primary
-      case 'secondary':
-        return stylePresets.button.secondary
-      case 'success':
-        return {
-          ...stylePresets.button.primary,
-          backgroundColor: colors.success,
-        }
-      case 'warning':
-        return {
-          ...stylePresets.button.primary,
-          backgroundColor: colors.warning,
-        }
-      case 'error':
-        return {
-          ...stylePresets.button.primary,
-          backgroundColor: colors.error,
-        }
-      default:
-        return stylePresets.button.primary
-    }
-  }
-
-  const getSizeStyles = () => {
-    switch (size) {
-      case 'sm':
-        return {
-          padding: `${spacing.xs} ${spacing.md}`,
-          fontSize: typography.fontSize.sm,
-        }
-      case 'lg':
-        return {
-          padding: `${spacing.md} ${spacing.xl}`,
-          fontSize: typography.fontSize.lg,
-        }
-      default:
-        return {}
-    }
-  }
-
-  return (
-    <button
-      type={type}
-      onClick={onClick}
-      disabled={disabled}
-      style={{
-        ...getVariantStyles(),
-        ...getSizeStyles(),
-        width: fullWidth ? '100%' : 'auto',
-        opacity: disabled ? 0.6 : 1,
-        cursor: disabled ? 'not-allowed' : 'pointer',
-      }}
-      className={className}
-    >
-      {children}
-    </button>
-  )
-}
+  type = 'button',
+  icon,
+}) => (
+  <button
+    type={type}
+    onClick={onClick}
+    disabled={disabled}
+    style={{ width: fullWidth ? '100%' : undefined }}
+    className={`ds-btn ds-btn-${variant} ds-btn-${size} ${className}`}
+  >
+    {icon}
+    {children}
+  </button>
+)
 
 // Table Component
 // Table Components with enhanced styling
@@ -626,10 +578,12 @@ interface InputProps {
   type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url' | 'date' | 'datetime-local' | 'time'
   disabled?: boolean
   required?: boolean
+  name?: string
   className?: string
   icon?: string
   iconPosition?: 'left' | 'right'
   error?: boolean
+  size?: 'sm' | 'md' | 'lg'
 }
 
 export const Input: React.FC<InputProps> = ({
@@ -639,60 +593,60 @@ export const Input: React.FC<InputProps> = ({
   type = 'text',
   disabled = false,
   required = false,
+  name,
   className = '',
   icon,
   iconPosition = 'left',
-  error = false
+  error = false,
+  size = 'md',
 }) => {
-  const inputStyle = {
+  const heights = { sm: 'var(--input-height-sm)', md: 'var(--input-height)', lg: 'var(--input-height-lg)' }
+  const inputStyle: React.CSSProperties = {
     width: '100%',
-    padding: icon ? 
-      (iconPosition === 'left' ? `${spacing.sm} ${spacing.md} ${spacing.sm} ${spacing.xl}` : `${spacing.sm} ${spacing.xl} ${spacing.sm} ${spacing.md}`) :
-      `${spacing.sm} ${spacing.md}`,
-    border: `1px solid ${error ? colors.error : colors.border}`,
-    borderRadius: '8px',
-    fontSize: typography.fontSize.base,
-    backgroundColor: disabled ? colors.gray[50] : colors.surface,
-    color: colors.text.primary,
-    transition: 'all 0.2s ease',
-    outline: 'none'
-  }
-
-  const containerStyle = {
-    position: 'relative' as const,
-    display: 'inline-block',
-    width: '100%'
-  }
-
-  const iconStyle = {
-    position: 'absolute' as const,
-    top: '50%',
-    transform: 'translateY(-50%)',
-    [iconPosition]: spacing.md,
-    color: colors.text.secondary,
-    pointerEvents: 'none' as const,
-    fontSize: typography.fontSize.base
+    height: heights[size],
+    padding: icon
+      ? (iconPosition === 'left' ? '0 var(--spacing-md) 0 var(--spacing-xl)' : '0 var(--spacing-xl) 0 var(--spacing-md)')
+      : '0 var(--spacing-md)',
+    border: `1px solid ${error ? 'var(--color-error)' : 'var(--color-gray-200)'}`,
+    borderRadius: 'var(--radius-md)',
+    fontSize: 'var(--font-size-base)',
+    backgroundColor: disabled ? 'var(--color-gray-50)' : '#ffffff',
+    color: 'var(--color-text-primary)',
+    transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
+    outline: 'none',
+    boxSizing: 'border-box',
   }
 
   return (
-    <div style={containerStyle}>
-      {icon && <span style={iconStyle}>{icon}</span>}
+    <div style={{ position: 'relative', display: 'inline-block', width: '100%' }}>
+      {icon && (
+        <span style={{
+          position: 'absolute',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          [iconPosition]: 'var(--spacing-md)',
+          color: 'var(--color-text-secondary)',
+          pointerEvents: 'none',
+          fontSize: 'var(--font-size-base)',
+        }}>{icon}</span>
+      )}
       <input
         type={type}
         value={value}
+        name={name}
         onChange={onChange}
         placeholder={placeholder}
         disabled={disabled}
         required={required}
         className={`enhanced-input ${className}`}
         style={inputStyle}
-        onFocus={(changeEvent) => { 
-          changeEvent.target.style.borderColor = colors.primary;
-          changeEvent.target.style.boxShadow = `0 0 0 2px ${colors.primary}20`;
+        onFocus={(e) => {
+          e.target.style.borderColor = 'var(--color-primary)';
+          e.target.style.boxShadow = '0 0 0 3px rgba(244, 124, 32, 0.15)';
         }}
-        onBlur={(changeEvent) => { 
-          changeEvent.target.style.borderColor = error ? colors.error : colors.border;
-          changeEvent.target.style.boxShadow = 'none';
+        onBlur={(e) => {
+          e.target.style.borderColor = error ? 'var(--color-error)' : 'var(--color-gray-200)';
+          e.target.style.boxShadow = 'none';
         }}
       />
     </div>
@@ -706,8 +660,10 @@ interface SelectProps {
   placeholder?: string
   disabled?: boolean
   required?: boolean
+  name?: string
   className?: string
   error?: boolean
+  size?: 'sm' | 'md' | 'lg'
 }
 
 export const Select: React.FC<SelectProps> = ({
@@ -717,44 +673,51 @@ export const Select: React.FC<SelectProps> = ({
   placeholder,
   disabled = false,
   required = false,
+  name,
   className = '',
-  error = false
+  error = false,
+  size = 'md',
 }) => {
-  const selectStyle = {
+  const heights = { sm: 'var(--input-height-sm)', md: 'var(--input-height)', lg: 'var(--input-height-lg)' }
+  const selectStyle: React.CSSProperties = {
     width: '100%',
-    padding: `${spacing.sm} ${spacing.md}`,
-    border: `1px solid ${error ? colors.error : colors.border}`,
-    borderRadius: '8px',
-    fontSize: typography.fontSize.base,
-    backgroundColor: disabled ? colors.gray[50] : colors.surface,
-    color: colors.text.primary,
-    transition: 'all 0.2s ease',
+    height: heights[size],
+    padding: '0 var(--spacing-md)',
+    border: `1px solid ${error ? 'var(--color-error)' : 'var(--color-gray-200)'}`,
+    borderRadius: 'var(--radius-md)',
+    fontSize: 'var(--font-size-base)',
+    backgroundColor: disabled ? 'var(--color-gray-50)' : '#ffffff',
+    color: 'var(--color-text-primary)',
+    transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
     outline: 'none',
-    cursor: disabled ? 'not-allowed' : 'pointer'
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    boxSizing: 'border-box',
+    appearance: 'none',
+    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%235E6B75' d='M6 8L1 3h10z'/%3E%3C/svg%3E")`,
+    backgroundRepeat: 'no-repeat',
+    backgroundPosition: 'right 12px center',
+    paddingRight: '36px',
   }
 
   return (
     <select
       value={value}
+      name={name}
       onChange={onChange}
       disabled={disabled}
       required={required}
       className={`enhanced-select ${className}`}
       style={selectStyle}
-      onFocus={(changeEvent) => { 
-        changeEvent.target.style.borderColor = colors.primary;
-        changeEvent.target.style.boxShadow = `0 0 0 2px ${colors.primary}20`;
+      onFocus={(e) => {
+        e.target.style.borderColor = 'var(--color-primary)';
+        e.target.style.boxShadow = '0 0 0 3px rgba(244, 124, 32, 0.15)';
       }}
-      onBlur={(changeEvent) => { 
-        changeEvent.target.style.borderColor = error ? colors.error : colors.border;
-        changeEvent.target.style.boxShadow = 'none';
+      onBlur={(e) => {
+        e.target.style.borderColor = error ? 'var(--color-error)' : 'var(--color-gray-200)';
+        e.target.style.boxShadow = 'none';
       }}
     >
-      {placeholder && (
-        <option value="" disabled>
-          {placeholder}
-        </option>
-      )}
+      {placeholder && <option value="">{placeholder}</option>}
       {options.map((option) => (
         <option key={option.value} value={option.value}>
           {option.label}

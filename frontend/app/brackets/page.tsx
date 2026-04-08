@@ -10,17 +10,16 @@ import { useToast } from '../components/Toast'
 import { Tournament, Squad, BracketResponse, BracketData, BracketRound } from '../lib/types'
 import { logger } from '../lib/logger'
 import { storage } from '../lib/storage'
-import { cleanupModalState, resetScrollLocks, clearStrayOverlays } from '../utils/modalUtils'
+import { cleanupModalState, resetScrollLocks } from '../utils/modalUtils'
 import { BracketTabs } from './components/BracketTabs'
-import { RoundNavigator } from './components/RoundNavigator'
 import { SearchFilter } from './components/SearchFilter'
 import { EmptyBracketState } from './components/EmptyBracketState'
-import { colors, semantic, gradients, shadows, rgba } from '../styles/colors'
+import ExplainBracketsModal from './components/ExplainBracketsModal'
 import '../styles/bowling-animations.css'
+import styles from './brackets.module.css'
 
 // Lazy load heavy components for better initial load performance
 const BracketGenerationModal = lazy(() => import('../components/BracketGenerationModal'))
-const ExplainBracketsModal = lazy(() => import('./components/ExplainBracketsModal'))
 const BracketTreeView = lazy(() => import('./components/BracketTreeView').then(mod => ({ default: mod.BracketTreeView })))
 const BracketStatsPanel = lazy(() => import('./components/BracketStatsPanel').then(mod => ({ default: mod.BracketStatsPanel })))
 const MobileBracketView = lazy(() => import('./components/MobileBracketView').then(mod => ({ default: mod.MobileBracketView })))
@@ -47,7 +46,7 @@ export default function BracketsPage() {
   
   // Hooks for data fetching
   const { generateTournamentBrackets, loadSavedBrackets } = useBrackets()
-  const { tournaments, fetchTournaments } = useTournaments()
+  const { tournaments, fetchTournaments, loading: tournamentsLoading } = useTournaments()
   const { squads, fetchSquads } = useSquads()
   const { addToast } = useToast()
   
@@ -82,8 +81,6 @@ export default function BracketsPage() {
   useEffect(() => {
     // On mount, force-clear any stale scroll locks from other pages
     resetScrollLocks();
-    // Also clear any stray overlays that might remain mounted
-    clearStrayOverlays();
 
     return () => {
       setIsModalOpen(false);
@@ -97,7 +94,6 @@ export default function BracketsPage() {
   useEffect(() => {
     if (!isModalOpen && !isExplainModalOpen) {
       cleanupModalState();
-      clearStrayOverlays();
     }
   }, [isModalOpen, isExplainModalOpen]);
 
@@ -142,6 +138,8 @@ export default function BracketsPage() {
           // Immediately fetch squads - no need to wait for re-render
           fetchSquads(storedTournament.id).then(() => {
             setIsInitializing(false)
+          }).catch(() => {
+            setIsInitializing(false)
           })
         } else {
           setIsInitializing(false)
@@ -154,6 +152,13 @@ export default function BracketsPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tournaments, selectedTournament])
+
+  // If fetch completes with no tournaments, stop initializing
+  useEffect(() => {
+    if (!tournamentsLoading && tournaments.length === 0) {
+      setIsInitializing(false)
+    }
+  }, [tournamentsLoading, tournaments.length])
 
   // Auto-select squad from localStorage or use first squad
   useEffect(() => {
@@ -219,8 +224,8 @@ export default function BracketsPage() {
     // Initial load when tournament/squad changes
     loadBrackets(false);
 
-    // Auto-refresh interval - 5s when visible, 30s when hidden
-    const getRefreshInterval = () => document.hidden ? 30000 : 5000;
+    // Auto-refresh interval - 15s when visible, 60s when hidden
+    const getRefreshInterval = () => document.hidden ? 60000 : 15000;
     let intervalId = setInterval(() => {
       if (isMounted) loadBrackets(true);
     }, getRefreshInterval());
@@ -418,61 +423,15 @@ export default function BracketsPage() {
     return count
   }, [searchTerm, selectedStatus, selectedSeedRange])
 
+  const handleCloseExplainModal = useCallback(() => setIsExplainModalOpen(false), [])
+
   // Memoize the Generate Brackets button to prevent infinite re-renders
   const generateBracketsButton = useMemo(() => (
-    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-      <button
-        onClick={() => setIsExplainModalOpen(true)}
-        style={{
-          backgroundColor: colors.transparent,
-          color: colors.brand.gold,
-          border: `2px solid ${colors.brand.gold}`,
-          borderRadius: '8px',
-          padding: '10px 20px',
-          fontSize: '14px',
-          fontWeight: '600',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          transition: 'all 0.2s ease'
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = rgba(colors.brand.gold, 0.1)
-          e.currentTarget.style.borderColor = colors.brand.goldDark
-          e.currentTarget.style.color = colors.brand.goldDark
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = colors.transparent
-          e.currentTarget.style.borderColor = colors.brand.gold
-          e.currentTarget.style.color = colors.brand.gold
-        }}
-      >
+    <div className={styles.headerActions}>
+      <button onClick={() => setIsExplainModalOpen(true)} className={styles.explainBtn}>
         Explain Brackets
       </button>
-      <button
-        onClick={handleGenerateBrackets}
-        style={{
-          backgroundColor: semantic.button.primary,
-          color: colors.white,
-          border: 'none',
-          borderRadius: '8px',
-          padding: '10px 20px',
-          fontSize: '14px',
-          fontWeight: '600',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          transition: 'all 0.2s ease'
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = semantic.button.primaryHover
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = semantic.button.primary
-        }}
-      >
+      <button onClick={handleGenerateBrackets} className={styles.generateBtn}>
         Generate Brackets
       </button>
     </div>
@@ -481,9 +440,9 @@ export default function BracketsPage() {
   // Set page header with actions
   usePageHeader({
     title: 'Bracket Management',
-    subtitle: selectedTournament 
-      ? `Managing: ${selectedTournament.name}${selectedTournament.location ? ` • ${selectedTournament.location}` : ''}${selectedTournament.start_date ? ` • ${new Date(selectedTournament.start_date).toLocaleDateString()}` : ''}`
-      : 'Create and manage tournament brackets',
+    subtitle: selectedTournament
+      ? `${selectedTournament.name}${selectedSquad ? ` · ${[selectedSquad.date, selectedSquad.time].filter(Boolean).join(' ')}` : ''}`
+      : 'Select a tournament from the dashboard',
     actions: generateBracketsButton
   })
 
@@ -498,16 +457,8 @@ export default function BracketsPage() {
   // Wait for auth initialization
   if (!isInitialized) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center', 
-        minHeight: '200px',
-        fontFamily: 'Inter, sans-serif'
-      }}>
-        <div style={{ textAlign: 'center' }}>
-          <div>Loading...</div>
-        </div>
+      <div className={styles.loadingState}>
+        <div>Loading...</div>
       </div>
     )
   }
@@ -515,177 +466,65 @@ export default function BracketsPage() {
   // Authentication guard
   if (!isAuthenticated && !hasStoredAuth) {
     return (
-      <div style={{ 
-        padding: '2rem', 
-        textAlign: 'center',
-        minHeight: '200px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}>
-        <div>
-          <div>Please log in to access bracket management</div>
-        </div>
+      <div className={styles.authRequired}>
+        <div>Please log in to access bracket management</div>
       </div>
     )
   }
 
   return (
     <ErrorBoundary>
-      {/* Bracket Generation Modal */}
-      <Suspense fallback={<div>Loading...</div>}>
-        <BracketGenerationModal
-          isOpen={isModalOpen}
-          onClose={handleModalClose}
-          onRegenerate={handleRegenerate}
-          bracketGenerationPromise={bracketGenerationPromise}
-          tournamentName={selectedTournament?.name}
-          squadName={selectedSquad ? `${selectedSquad.date} - ${selectedSquad.time}` : undefined}
-          playerCount={undefined}
-        />
-      </Suspense>
+      {/* Bracket Generation Modal - only load when needed */}
+      {isModalOpen && (
+        <Suspense fallback={<div>Loading...</div>}>
+          <BracketGenerationModal
+            isOpen={isModalOpen}
+            onClose={handleModalClose}
+            onRegenerate={handleRegenerate}
+            bracketGenerationPromise={bracketGenerationPromise}
+            tournamentName={selectedTournament?.name}
+            squadName={selectedSquad ? `${selectedSquad.date} - ${selectedSquad.time}` : undefined}
+            playerCount={undefined}
+          />
+        </Suspense>
+      )}
 
-      {/* Bracket content */}      <div style={{ 
-        padding: isMobile ? '0.5rem' : '1rem',
-        fontFamily: 'Inter, sans-serif',
-        position: 'relative'
-      }}>
-        {/* No Tournament Loaded State */}
-        {!selectedTournament && !isInitializing ? (
-          <div style={{
-            background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
-            borderRadius: '20px',
-            padding: isMobile ? '40px 24px' : '60px 40px',
-            textAlign: 'center',
-            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.06)',
-            border: '2px solid #e2e8f0',
-            margin: isMobile ? '20px 0' : '40px auto',
-            maxWidth: '800px'
-          }}>
-            <h2 style={{
-              fontSize: isMobile ? '22px' : '28px',
-              fontWeight: 700,
-              color: '#1e293b',
-              marginBottom: '12px',
-              letterSpacing: '-0.02em',
-              marginTop: '24px'
-            }}>
+      {/* Bracket content */}
+      <div className={isMobile ? styles.contentWrapperMobile : styles.contentWrapperDesktop}>
+        {/* Loading State */}
+        {isInitializing ? (
+          <div className={styles.loadingState}>
+            <div>Loading...</div>
+          </div>
+        ) : /* No Tournament Loaded State */
+        !selectedTournament ? (
+          <div className={`${styles.noTournament} ${isMobile ? styles.noTournamentMobile : styles.noTournamentDesktop}`}>
+            <h2 className={`${styles.noTournamentTitle} ${isMobile ? styles.noTournamentTitleMobile : styles.noTournamentTitleDesktop}`}>
               No Tournament Loaded
             </h2>
-            <p style={{
-              fontSize: isMobile ? '15px' : '16px',
-              color: '#64748b',
-              marginBottom: '32px',
-              maxWidth: '560px',
-              margin: '0 auto 32px',
-              lineHeight: '1.6'
-            }}>
+            <p className={`${styles.noTournamentText} ${isMobile ? styles.noTournamentTextMobile : styles.noTournamentTextDesktop}`}>
               Load a tournament from the dashboard to generate and manage brackets. Once loaded, you'll be able to create brackets, track matches, and manage tournament progress.
             </p>
-            <a 
-              href="/dashboard"
-              style={{
-                display: 'inline-block',
-                background: 'linear-gradient(135deg, #F47C20 0%, #D9651A 100%)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '12px',
-                padding: isMobile ? '12px 24px' : '14px 28px',
-                fontSize: isMobile ? '15px' : '16px',
-                fontWeight: '600',
-                textDecoration: 'none',
-                boxShadow: '0 4px 14px rgba(244, 124, 32, 0.3)',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 6px 20px rgba(240, 165, 0, 0.4)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 4px 14px rgba(240, 165, 0, 0.3)';
-              }}
-            >
+            <a href="/dashboard" className={`${styles.dashboardBtn} ${isMobile ? styles.dashboardBtnMobile : styles.dashboardBtnDesktop}`}>
               Go to Dashboard
             </a>
-            
-            {/* Info Cards */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '16px',
-              marginTop: '48px',
-              maxWidth: '800px',
-              margin: '48px auto 0'
-            }}>
-              <div style={{
-                background: 'white',
-                borderRadius: '12px',
-                padding: '20px',
-                textAlign: 'left',
-                border: '1px solid #e2e8f0',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-4px)';
-                e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.08)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'none';
-              }}>
-                <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#1e293b', marginBottom: '4px' }}>
-                  Generate Brackets
-                </h3>
-                <p style={{ fontSize: '13px', color: '#64748b', lineHeight: '1.5', margin: 0 }}>
+
+            <div className={`${styles.infoCards} ${isMobile ? styles.infoCardsMobile : styles.infoCardsDesktop}`}>
+              <div className={styles.infoCard}>
+                <h3 className={styles.infoCardTitle}>Generate Brackets</h3>
+                <p className={styles.infoCardText}>
                   Automatically create single or double elimination brackets from your player list
                 </p>
               </div>
-              
-              <div style={{
-                background: 'white',
-                borderRadius: '12px',
-                padding: '20px',
-                textAlign: 'left',
-                border: '1px solid #e2e8f0',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-4px)';
-                e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.08)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'none';
-              }}>
-                <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#1e293b', marginBottom: '4px' }}>
-                  Track Matches
-                </h3>
-                <p style={{ fontSize: '13px', color: '#64748b', lineHeight: '1.5', margin: 0 }}>
+              <div className={styles.infoCard}>
+                <h3 className={styles.infoCardTitle}>Track Matches</h3>
+                <p className={styles.infoCardText}>
                   View match-ups, update winners, and follow tournament progress in real-time
                 </p>
               </div>
-              
-              <div style={{
-                background: 'white',
-                borderRadius: '12px',
-                padding: '20px',
-                textAlign: 'left',
-                border: '1px solid #e2e8f0',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-4px)';
-                e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.08)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'none';
-              }}>
-                <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#1e293b', marginBottom: '4px' }}>
-                  Multiple Views
-                </h3>
-                <p style={{ fontSize: '13px', color: '#64748b', lineHeight: '1.5', margin: 0 }}>
+              <div className={styles.infoCard}>
+                <h3 className={styles.infoCardTitle}>Multiple Views</h3>
+                <p className={styles.infoCardText}>
                   Separate scratch and handicap brackets, with mobile-friendly navigation
                 </p>
               </div>
@@ -714,8 +553,8 @@ export default function BracketsPage() {
                 setActiveTab(tab)
                 setSelectedBracketIndex(0) // Reset to first bracket when switching tabs
               }}
-              scratchCount={loadedBrackets.multiple_brackets?.scratch_brackets?.length || 0}
-              handicapCount={loadedBrackets.multiple_brackets?.handicap_brackets?.length || 0}
+              scratchCount={loadedBrackets.scratch_brackets?.length || loadedBrackets.multiple_brackets?.scratch_brackets?.length || 0}
+              handicapCount={loadedBrackets.handicap_brackets?.length || loadedBrackets.multiple_brackets?.handicap_brackets?.length || 0}
             />
 
             {/* Search and Filter */}
@@ -732,7 +571,7 @@ export default function BracketsPage() {
 
             {/* Bracket Stats Panel */}
             {filteredBrackets.length > 0 && rounds.length > 0 && (
-              <Suspense fallback={<div style={{ padding: '1rem', textAlign: 'center' }}>Loading stats...</div>}>
+              <Suspense fallback={<div className={styles.statsLoading}>Loading stats...</div>}>
                 <BracketStatsPanel
                   rounds={rounds}
                   bracketType={activeTab === 'all' ? 'scratch' : activeTab}
@@ -766,218 +605,59 @@ export default function BracketsPage() {
                 : activeTab.charAt(0).toUpperCase() + activeTab.slice(1)
               
               return (
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '1.5rem',
-                  padding: '1.25rem 1.5rem',
-                  background: gradients.grayLight,
-                  borderRadius: '12px',
-                  marginBottom: '1rem',
-                  boxShadow: shadows.md,
-                  border: `1px solid ${rgba(colors.white, 0.8)}`,
-                  position: 'relative',
-                  overflow: 'hidden',
-                  maxWidth: '900px',
-                  margin: '0 auto 1rem auto'
-                }}>
-                  {/* Gradient accent bar */}
-                  <div style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: '3px',
-                    background: gradients.rainbow,
-                    backgroundSize: '200% 100%',
-                    animation: 'gradientShift 3s ease infinite'
-                  }} />
-                  
-                  {/* Previous Button */}
+                <div className={styles.bracketNav}>
+                  <div className={styles.bracketNavAccent} />
+
                   <button
                     onClick={() => setSelectedBracketIndex(Math.max(0, selectedBracketIndex - 1))}
                     disabled={selectedBracketIndex === 0}
-                    style={{
-                      padding: '0.75rem 1.25rem',
-                      background: selectedBracketIndex === 0 
-                        ? gradients.gray
-                        : gradients.blue,
-                      color: selectedBracketIndex === 0 ? colors.gray[400] : colors.white,
-                      border: 'none',
-                      borderRadius: '8px',
-                      cursor: selectedBracketIndex === 0 ? 'not-allowed' : 'pointer',
-                      fontWeight: '600',
-                      fontSize: '0.9375rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                      boxShadow: selectedBracketIndex === 0 
-                        ? 'none' 
-                        : shadows.blue.sm
-                    }}
-                    onMouseEnter={(e) => {
-                      if (selectedBracketIndex !== 0) {
-                        e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)'
-                        e.currentTarget.style.boxShadow = shadows.blue.md
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (selectedBracketIndex !== 0) {
-                        e.currentTarget.style.transform = 'scale(1)'
-                        e.currentTarget.style.boxShadow = shadows.blue.sm
-                      }
-                    }}
+                    className={styles.navBtn}
                   >
-                    <span style={{ fontSize: '1.125rem' }}>←</span>
+                    <span className={styles.navArrow}>←</span>
                     <span>Previous</span>
                   </button>
-                  
-                  {/* Center Info Section */}
-                  <div style={{
-                    flex: 1,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.75rem',
-                    minWidth: 0
-                  }}>
-                    {/* Bracket Title Row */}
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '1rem',
-                      flexWrap: 'wrap'
-                    }}>
-                      <h3 style={{
-                        fontSize: '1.25rem',
-                        fontWeight: '700',
-                        color: semantic.text.primary,
-                        margin: 0,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem'
-                      }}>
-                        <span style={{
-                          background: `linear-gradient(135deg, ${colors.blue.primary} 0%, ${colors.purple.primary} 100%)`,
-                          WebkitBackgroundClip: 'text',
-                          WebkitTextFillColor: 'transparent',
-                          backgroundClip: 'text'
-                        }}>
-                          Bracket {selectedBracketIndex + 1}
-                        </span>
-                        <span style={{ color: colors.gray[400], fontWeight: '400' }}>of</span>
-                        <span style={{ color: colors.gray[500] }}>{totalBrackets}</span>
+
+                  <div className={styles.navCenter}>
+                    <div className={styles.navTitleRow}>
+                      <h3 className={styles.navTitle}>
+                        <span className={styles.navTitleGradient}>Bracket {selectedBracketIndex + 1}</span>
+                        <span className={styles.navTitleOf}>of</span>
+                        <span className={styles.navTitleTotal}>{totalBrackets}</span>
                       </h3>
-                      
-                      {/* Bracket Type Badge */}
-                      <div style={{
-                        padding: '0.375rem 0.875rem',
-                        background: bracketType === 'Scratch'
-                          ? gradients.blueLight
-                          : gradients.yellowLight,
-                        color: bracketType === 'Scratch' ? semantic.badge.scratch.text : semantic.badge.handicap.text,
-                        borderRadius: '6px',
-                        fontSize: '0.8125rem',
-                        fontWeight: '600',
-                        border: `1px solid ${bracketType === 'Scratch' ? semantic.badge.scratch.border : semantic.badge.handicap.border}`
-                      }}>
+
+                      <div className={`${styles.navBadge} ${bracketType === 'Scratch' ? styles.navBadgeScratch : styles.navBadgeHandicap}`}>
                         {bracketType}
                       </div>
-                      
-                      {/* Progress Badge */}
-                      <div style={{
-                        padding: '0.375rem 0.875rem',
-                        background: progressPercent === 100
-                          ? gradients.green
-                          : gradients.gray,
-                        color: progressPercent === 100 ? semantic.badge.complete.text : semantic.text.tertiary,
-                        borderRadius: '6px',
-                        fontSize: '0.8125rem',
-                        fontWeight: '600',
-                        border: `1px solid ${progressPercent === 100 ? semantic.badge.complete.border : semantic.border.medium}`
-                      }}>
+
+                      <div className={`${styles.navBadge} ${progressPercent === 100 ? styles.navBadgeComplete : styles.navBadgeProgress}`}>
                         {completedMatches}/{totalMatches} Complete
                       </div>
                     </div>
-                    
-                    {/* Progress Bar */}
-                    <div style={{
-                      width: '100%',
-                      height: '8px',
-                      background: `linear-gradient(90deg, ${colors.gray[200]} 0%, ${colors.gray[100]} 100%)`,
-                      borderRadius: '4px',
-                      overflow: 'hidden',
-                      position: 'relative',
-                      boxShadow: shadows.inset
-                    }}>
-                      <div style={{
-                        height: '100%',
-                        width: `${progressPercent}%`,
-                        background: progressPercent === 100
-                          ? gradients.greenProgress
-                          : `linear-gradient(90deg, ${colors.blue.primary} 0%, ${colors.purple.primary} 50%, ${colors.pink.primary} 100%)`,
-                        transition: 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-                        boxShadow: `0 0 8px ${rgba(colors.blue.primary, 0.4)}`,
-                        position: 'relative'
-                      }}>
-                        <div style={{
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          right: 0,
-                          height: '50%',
-                          background: `linear-gradient(180deg, ${rgba(colors.white, 0.3)}, transparent)`,
-                          pointerEvents: 'none'
-                        }} />
+
+                    <div className={styles.progressBarWrapper}>
+                      <div
+                        className={`${styles.progressBarFill} ${progressPercent === 100 ? styles.progressBarFillComplete : ''}`}
+                        style={{ width: `${progressPercent}%` }}
+                      >
+                        <div className={styles.progressBarSheen} />
                       </div>
                     </div>
                   </div>
-                  
-                  {/* Next Button */}
+
                   <button
                     onClick={() => setSelectedBracketIndex(Math.min(totalBrackets - 1, selectedBracketIndex + 1))}
                     disabled={selectedBracketIndex >= totalBrackets - 1}
-                    style={{
-                      padding: '0.75rem 1.25rem',
-                      background: selectedBracketIndex >= totalBrackets - 1
-                        ? gradients.gray
-                        : gradients.blue,
-                      color: selectedBracketIndex >= totalBrackets - 1 ? colors.gray[400] : colors.white,
-                      border: 'none',
-                      borderRadius: '8px',
-                      cursor: selectedBracketIndex >= totalBrackets - 1 ? 'not-allowed' : 'pointer',
-                      fontWeight: '600',
-                      fontSize: '0.9375rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                      boxShadow: selectedBracketIndex >= totalBrackets - 1
-                        ? 'none'
-                        : shadows.blue.sm
-                    }}
-                    onMouseEnter={(e) => {
-                      if (selectedBracketIndex < totalBrackets - 1) {
-                        e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)'
-                        e.currentTarget.style.boxShadow = shadows.blue.md
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (selectedBracketIndex < totalBrackets - 1) {
-                        e.currentTarget.style.transform = 'scale(1)'
-                        e.currentTarget.style.boxShadow = shadows.blue.sm
-                      }
-                    }}
+                    className={styles.navBtn}
                   >
                     <span>Next</span>
-                    <span style={{ fontSize: '1.125rem' }}>→</span>
+                    <span className={styles.navArrow}>→</span>
                   </button>
                 </div>
               )
             })()}
 
             {/* Bracket Display */}
+            <Suspense fallback={<div className={styles.loadingState}><div>Loading...</div></div>}>
             {rounds.length > 0 ? (
               isMobile ? (
                 <MobileBracketView
@@ -993,23 +673,20 @@ export default function BracketsPage() {
                 />
               )
             ) : (
-              <div style={{ 
-                textAlign: 'center', 
-                padding: '3rem',
-                color: colors.gray[500]
-              }}>
+              <div className={styles.noMatches}>
                 <p>No matches found for the selected filters.</p>
               </div>
             )}
+            </Suspense>
           </>
         )
         )}
       </div>
 
       {/* Explain Brackets Modal */}
-      <ExplainBracketsModal 
+      <ExplainBracketsModal
         isOpen={isExplainModalOpen}
-        onClose={() => setIsExplainModalOpen(false)}
+        onClose={handleCloseExplainModal}
       />
     </ErrorBoundary>
   )

@@ -124,4 +124,70 @@
   --opacity-very-strong: 0.5;
   --opacity-mostly-opaque: 0.75;
   --opacity-almost-solid: 0.9;
+
+  /* ── Spacing Scale ───────────────────────────────────────── */
+  --spacing-xs:   4px;
+  --spacing-sm:   8px;
+  --spacing-md:   16px;
+  --spacing-lg:   24px;
+  --spacing-xl:   32px;
+  --spacing-2xl:  48px;
+  --spacing-3xl:  64px;
+
+  /* ── Border Radius ───────────────────────────────────────── */
+  --radius-xs:    4px;
+  --radius-sm:    6px;
+  --radius-md:    8px;
+  --radius-lg:    12px;
+  --radius-xl:    16px;
+  --radius-2xl:   24px;
+  --radius-full:  9999px;
+
+  /* ── Shadows ─────────────────────────────────────────────── */
+  --shadow-xl:         0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  --shadow-card:       0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  --shadow-card-hover: 0 4px 16px rgba(0, 0, 0, 0.10), 0 2px 6px rgba(0, 0, 0, 0.06);
+
+  /* ── Layout ──────────────────────────────────────────────── */
+  --container-max-width: 1200px;
+  --content-max-width:   1200px;
+  --sidebar-width:       260px;
+
+  /* ── Touch Targets ───────────────────────────────────────── */
+  --touch-target-min:         44px;
+  --touch-target-comfortable: 48px;
+
+  /* ── Component Tokens ────────────────────────────────────── */
+  --input-height:    40px;
+  --input-height-sm: 32px;
+  --input-height-lg: 48px;
+  --btn-height:      40px;
+  --btn-height-sm:   32px;
+  --btn-height-lg:   48px;
+  --card-padding:    var(--spacing-lg);
+  --card-padding-sm: var(--spacing-md);
+  --card-radius:     var(--radius-lg);
+  --card-shadow:     var(--shadow-card);
+  --card-border:     1px solid var(--color-gray-200);
+
+  /* ── Surface / Background ────────────────────────────────── */
+  --color-surface:    #ffffff;
+  --color-background: #f5f6f8;
+  --color-border:     var(--color-gray-200);
+  --color-border-light: rgba(244, 124, 32, 0.2);
+
+  /* ── Typography ──────────────────────────────────────────── */
+  --font-family-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-size-xs:   11px;
+  --font-size-sm:   13px;
+  --font-size-base: 14px;
+  --font-size-lg:   16px;
+  --font-size-xl:   18px;
+  --font-size-2xl:  20px;
+  --font-size-3xl:  24px;
+  --font-size-4xl:  28px;
+  --font-weight-normal:   400;
+  --font-weight-medium:   500;
+  --font-weight-semibold: 600;
+  --font-weight-bold:     700;
 }

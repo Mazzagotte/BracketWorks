@@ -82,17 +82,9 @@ export function usePageHeader(props: {
   breadcrumbs?: Array<{ label: string; href?: string }>;
 }) {
   const { setHeaderProps } = useHeader();
-  const propsRef = React.useRef(props);
-  const hasSetProps = React.useRef(false);
 
-  // Update ref with latest props on every render
-  propsRef.current = props;
-
-  // Set header props only once, but use updated ref values
   useEffect(() => {
-    if (!hasSetProps.current) {
-      hasSetProps.current = true;
-      setHeaderProps(propsRef.current);
-    }
-  }, []);
+    setHeaderProps(props);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.title, props.subtitle, props.actions]);
 }

@@ -23,28 +23,13 @@ Match Structure in JSON:
 }
 """
 from sqlalchemy.orm import Session
-from sqlalchemy import Column, Integer, String, JSON, DateTime, ForeignKey, Boolean
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 import logging
 
-from ..core.models import Base
+from ..core.models import SimpleBracket
 
 logger = logging.getLogger(__name__)
-
-
-class SimpleBracket(Base):
-    """Simplified bracket storage using JSON"""
-    __tablename__ = "simple_brackets"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    tournament_id = Column(Integer, ForeignKey("tournament.id"), nullable=False, index=True)
-    squad_id = Column(Integer, ForeignKey("squad.id"), nullable=True, index=True)
-    bracket_data = Column(JSON, nullable=False)  # Store entire bracket structure as JSON
-    bracket_size = Column(Integer, nullable=False, default=8)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    is_active = Column(Boolean, default=True, index=True)
 
 
 def save_brackets_simple(

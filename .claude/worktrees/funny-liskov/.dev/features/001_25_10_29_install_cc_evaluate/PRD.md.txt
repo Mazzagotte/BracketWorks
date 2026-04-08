@@ -1,0 +1,42 @@
+cd C:\Users\JamesMazzagotte\Desktop\BracketWorks
+claude
+```
+
+## Step 1: Initial Project Analysis
+```
+Please analyze this bowling tournament app:
+1. Summarize the project structure
+2. Identify the tech stack being used
+3. List all main features and components
+4. Find any obvious errors, warnings, or issues in the codebase
+```
+
+## Step 2: Focus on the Brackets Tab
+```
+The brackets tab is complex and not working. It worked in a Python-only version in another folder. Please:
+1. Find all files related to the brackets/tournament bracket feature
+2. Explain how the bracket rendering logic works
+3. Identify any state management issues
+4. Check for data flow problems
+5. Look for any browser console errors or TypeScript errors
+```
+
+## Step 3: Deep Dive Debugging
+```
+/ask what are the most likely reasons the brackets tab isn't working? Provide specific file locations and line numbers where issues exist. Prioritize by severity.
+```
+
+## Step 4: Get a Fix Plan
+```
+Create a step-by-step plan to fix the brackets tab, including:
+1. What needs to be fixed first
+2. Code changes required
+3. Files that need modification
+4. Any dependencies or libraries that might be causing issues
+```
+
+## Bonus: Compare with Python Version
+
+If you still have the Python version, you could tell Claude Code:
+```
+I have a working Python version of this in [folder path]. Can you compare the bracket logic between the Python version and this version to identify what's missing or different?
