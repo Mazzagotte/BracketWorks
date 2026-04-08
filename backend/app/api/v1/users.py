@@ -15,8 +15,6 @@ pwd_context = CryptContext(
     deprecated="auto",
     bcrypt__default_rounds=10  # Reduced from default 12 for better performance
 )
-import secrets
-import time
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 
@@ -80,16 +78,24 @@ def login_json(login_data: schemas.LoginRequest, db: Session = Depends(get_db)):
         "first_name": user.first_name
     }
 
-# In-memory store for reset codes with expiration timestamps
-reset_codes = {}  # {email: {"code": code, "expires": timestamp}}
+RESET_TOKEN_EXPIRE_MINUTES = 15
 
-def cleanup_expired_codes():
-    """Remove expired reset codes to prevent memory leaks"""
-    current_time = time.time()
-    expired_emails = [email for email, data in reset_codes.items() 
-                     if current_time > data.get("expires", 0)]
-    for email in expired_emails:
-        del reset_codes[email]
+def create_reset_token(email: str) -> str:
+    """Create a signed JWT reset token valid for 15 minutes."""
+    from ...core.utils import create_access_token
+    from datetime import timedelta
+    return create_access_token(
+        {"sub": email, "type": "password_reset"},
+        expires_delta=timedelta(minutes=RESET_TOKEN_EXPIRE_MINUTES)
+    )
+
+def verify_reset_token(token: str) -> str | None:
+    """Decode and validate a reset token. Returns email or None."""
+    from ...core.utils import decode_access_token
+    payload = decode_access_token(token)
+    if not payload or payload.get("type") != "password_reset":
+        return None
+    return payload.get("sub")
 
 def create_reset_email_html(reset_code: str, username: str) -> str:
     """Create HTML email template for password reset"""
@@ -155,42 +161,35 @@ def send_email(to_email: str, subject: str, body: str):
 
 @router.post("/request-password-reset")
 def request_password_reset(email: str, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
-    # Clean up expired codes first
-    cleanup_expired_codes()
-    
-    # Find user by email
+    # Always return the same message to prevent email enumeration
+    generic_response = {"message": "If that email is registered, a reset link has been sent"}
+
     user = db.query(models.User).filter(models.User.email == email).first()
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    code = secrets.token_urlsafe(8)
-    # Code expires in 15 minutes (900 seconds)
-    reset_codes[email] = {"code": code, "expires": time.time() + 900}
-    
-    # Create HTML email with template
-    html_body = create_reset_email_html(code, user.username)
+        return generic_response
+
+    token = create_reset_token(email)
+    html_body = create_reset_email_html(token, user.username)
     background_tasks.add_task(send_email, email, "BracketWorks - Password Reset", html_body)
-    return {"message": "Reset code sent to email"}
+    return generic_response
 
 @router.post("/verify-reset-code")
-def verify_reset_code(email: str, code: str):
-    cleanup_expired_codes()
-    reset_data = reset_codes.get(email)
-    if not reset_data or reset_data.get("code") != code:
-        raise HTTPException(status_code=400, detail="Invalid or expired reset code")
-    return {"message": "Code verified"}
+def verify_reset_code(token: str):
+    email = verify_reset_token(token)
+    if not email:
+        raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+    return {"message": "Token verified"}
 
 @router.post("/reset-password")
-def reset_password(email: str, code: str, new_password: str, db: Session = Depends(get_db)):
-    cleanup_expired_codes()
-    reset_data = reset_codes.get(email)
-    if not reset_data or reset_data.get("code") != code:
-        raise HTTPException(status_code=400, detail="Invalid or expired reset code")
+def reset_password(token: str, new_password: str, db: Session = Depends(get_db)):
+    email = verify_reset_token(token)
+    if not email:
+        raise HTTPException(status_code=400, detail="Invalid or expired reset token")
     user = db.query(models.User).filter(models.User.email == email).first()
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    user.password = bcrypt.hash(new_password)  # Use instance attribute for password
+        raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+    user.password = bcrypt.hash(new_password)
     db.commit()
-    del reset_codes[email]
     return {"message": "Password reset successful"}
 
 @router.post("/admin-login")
@@ -219,7 +218,7 @@ def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
         last_name=user.last_name,
         organization=user.organization,
         password=hashed_password,
-        is_admin=bool(user.is_admin) if hasattr(user, 'is_admin') else False
+        is_admin=False
     )
     db.add(db_user)
     db.commit()

@@ -1,0 +1,44 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 32, 0, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.dialog {
+  background: #f8fff8;
+  border-radius: 18px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.12);
+  padding: 2rem 2.5rem;
+  min-width: 320px;
+  max-width: 90vw;
+  text-align: center;
+}
+.title {
+  color: #1a4d1a;
+  font-size: 1.3rem;
+  margin-bottom: 0.5rem;
+}
+.message {
+  color: #222;
+  margin-bottom: 1.5rem;
+}
+.okButton {
+  background: #217a3a;
+  color: #fff;
+  border: none;
+  border-radius: 24px;
+  padding: 0.7rem 2.2rem;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  transition: background 0.2s;
+}
+.okButton:hover {
+  background: #1a4d1a;
+}

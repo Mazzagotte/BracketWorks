@@ -1,0 +1,222 @@
+.squadPill {
+  font-size: 1.08em;
+  padding: 12px 28px;
+  border-radius: 32px;
+  border: 1.5px solid #ffd580;
+  background: #fff;
+  color: #232b36;
+  font-weight: 700;
+  box-shadow: 0 1px 4px #232b3608;
+  cursor: pointer;
+  transition: all 0.18s;
+  margin-bottom: 0.5em;
+}
+.squadPill[aria-pressed="true"] {
+  border: 2.5px solid #4f8cff;
+  background: linear-gradient(90deg, #6ed0fa 60%, #4f8cff 100%);
+  color: #fff;
+  box-shadow: 0 2px 12px #4f8cff33;
+}
+.squadPill:hover {
+  box-shadow: 0 4px 16px #4f8cff33;
+  border-color: #4f8cff;
+}
+.main {
+  background: #f8f9fb;
+  font-family: 'Inter', Arial, sans-serif;
+  padding: 0;
+}
+
+
+
+.squadTile {
+  background: #fff;
+  border: 1.5px solid #ffd580;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px #232b3608;
+  padding: 1.2em 1.2em 1em 1.2em;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: box-shadow 0.18s;
+}
+.squadTile:hover {
+  box-shadow: 0 4px 16px #4f8cff33;
+}
+
+
+
+.heroCard {
+  background: linear-gradient(135deg, #fff 80%, #f8f9fb 100%);
+  border-radius: 20px;
+  box-shadow: 0 8px 40px #232b3640, 0 1.5px 8px #f0a50020;
+  padding: 2.8rem 2.2rem 2.2rem 2.2rem;
+  margin: 2.2rem auto 2.7rem auto;
+  max-width: 640px;
+  text-align: center;
+}
+
+.squadTimePill {
+  display: inline-block;
+  background: linear-gradient(90deg, #f0a500 60%, #ffd580 100%);
+  color: #232b36;
+  font-weight: 600;
+  font-size: 1rem;
+  padding: 0.35em 1.1em;
+  border-radius: 18px;
+  margin: 0 0.25em 0.25em 0;
+  box-shadow: 0 1px 4px #232b3608;
+  letter-spacing: 0.01em;
+  transition: background 0.15s, color 0.15s;
+}
+
+@media (max-width: 480px) {
+  .heroCard {
+    padding: 1.2rem 0.5rem 1rem 0.5rem;
+    max-width: 98vw;
+  }
+  .squadTimePill {
+    font-size: 0.95rem;
+    padding: 0.3em 0.7em;
+  }
+}
+.heroTitle {
+  font-size: 2rem;
+  color: #232b36;
+  margin-bottom: 0.5rem;
+}
+.heroText {
+  color: #444;
+  margin-bottom: 1.5rem;
+}
+.primaryBtn {
+  background: #f0a500;
+  color: #232b36;
+  border: none;
+  border-radius: 8px;
+  padding: 0.7rem 1.6rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(240,165,0,0.08);
+  transition: background 0.15s, color 0.15s;
+}
+.primaryBtn:hover {
+  background: #232b36;
+  color: #fff;
+}
+
+.row {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 0 2rem;
+}
+.card {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(35,43,54,0.07);
+  padding: 1.5rem 1.2rem;
+  min-width: 260px;
+  max-width: 340px;
+  flex: 1 1 260px;
+}
+.actionList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.actionIcon {
+  margin-right: 0.5rem;
+  font-size: 1.1rem;
+}
+
+/* Mobile Responsive Design */
+@media (max-width: 480px) {
+  .main {
+    padding: 8px;
+  }
+  
+  .row {
+    gap: 1rem;
+    margin: 0 0.5rem;
+    flex-direction: column;
+  }
+  
+  .card {
+    min-width: auto;
+    max-width: none;
+    padding: 1.2rem 1rem;
+    border-radius: 12px;
+  }
+  
+  .squadPill {
+    font-size: 1rem;
+    padding: 10px 20px;
+    width: 100%;
+    text-align: center;
+    margin-bottom: 0.75em;
+  }
+  
+  .squadTile {
+    padding: 1rem;
+    min-height: 100px;
+    border-radius: 12px;
+  }
+  
+  .primaryBtn {
+    width: 100%;
+    padding: 14px 16px;
+    font-size: 16px;
+    min-height: 48px;
+  }
+}
+
+@media (max-width: 480px) {
+  .main {
+    padding: 4px;
+  }
+  
+  .row {
+    margin: 0 0.25rem;
+  }
+  
+  .card {
+    padding: 1rem 0.75rem;
+    border-radius: 10px;
+  }
+  
+  .squadPill {
+    font-size: 0.95rem;
+    padding: 8px 16px;
+  }
+  
+  .squadTile {
+    padding: 0.75rem;
+    min-height: 80px;
+  }
+}
+
+@media (max-width: 480px) {
+  .row {
+    margin: 0;
+  }
+  
+  .card {
+    padding: 0.75rem 0.5rem;
+  }
+  
+  .squadPill {
+    font-size: 0.9rem;
+    padding: 6px 12px;
+  }
+  
+  .primaryBtn {
+    font-size: 15px;
+    padding: 12px 14px;
+    min-height: 44px;
+  }
+}

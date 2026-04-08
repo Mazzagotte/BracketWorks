@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 
 import { apiClient } from '../lib/api'
 import { useToast } from '../components/Toast'
@@ -22,46 +22,58 @@ export interface Squad {
   time: string
 }
 
-
+// Module-level cache shared across all hook instances (survives page navigation)
+const _cache = {
+  tournaments: null as Tournament[] | null,
+  tournamentsFetchedAt: 0,
+  squads: new Map<number, Squad[]>(),
+  squadsFetchedAt: new Map<number, number>(),
+  inFlightTournaments: null as Promise<void> | null,
+  inFlightSquads: new Map<number, Promise<void>>(),
+  STALE_MS: 60_000, // 1 minute
+}
 
 // Hook for managing tournaments with request deduplication
 export function useTournaments() {
-  const [tournaments, setTournaments] = useState<Tournament[]>([])
+  const [tournaments, setTournaments] = useState<Tournament[]>(() => _cache.tournaments ?? [])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { addToast } = useToast()
-  
-  // Request deduplication: track in-flight requests
-  const fetchPromiseRef = useRef<Promise<void> | null>(null)
 
   const fetchTournaments = async () => {
-    // If already fetching, return existing promise
-    if (fetchPromiseRef.current) {
-      return fetchPromiseRef.current
+    // Serve from cache if still fresh
+    if (_cache.tournaments && Date.now() - _cache.tournamentsFetchedAt < _cache.STALE_MS) {
+      setTournaments(_cache.tournaments)
+      return
     }
-    
+
+    // Deduplicate in-flight requests
+    if (_cache.inFlightTournaments) {
+      await _cache.inFlightTournaments
+      if (_cache.tournaments) setTournaments(_cache.tournaments)
+      return
+    }
+
     setLoading(true)
     setError(null)
-    
+
     const fetchPromise = (async () => {
       try {
         const data = await apiClient.get<Tournament[]>('/api/v1/tournaments/')
+        _cache.tournaments = data
+        _cache.tournamentsFetchedAt = Date.now()
         setTournaments(data)
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to fetch tournaments'
         setError(errorMessage)
-        addToast({
-          type: 'error',
-          message: errorMessage,
-          duration: 5000
-        })
+        addToast({ type: 'error', message: errorMessage, duration: 5000 })
       } finally {
         setLoading(false)
-        fetchPromiseRef.current = null
+        _cache.inFlightTournaments = null
       }
     })()
-    
-    fetchPromiseRef.current = fetchPromise
+
+    _cache.inFlightTournaments = fetchPromise
     return fetchPromise
   }
 
@@ -70,7 +82,10 @@ export function useTournaments() {
     
     try {
       const newTournament = await apiClient.post<Tournament>('/api/v1/tournaments/', tournament)
-      setTournaments(prev => [...prev, newTournament])
+      const updated = [...(_cache.tournaments ?? []), newTournament]
+      _cache.tournaments = updated
+      _cache.tournamentsFetchedAt = Date.now()
+      setTournaments(updated)
       addToast({
         type: 'success',
         message: 'Tournament created successfully',
@@ -93,10 +108,13 @@ export function useTournaments() {
 
   const updateTournament = async (id: number, updates: Partial<Tournament>) => {
     setLoading(true)
-    
+
     try {
       const updatedTournament = await apiClient.put<Tournament>(`/api/v1/tournaments/${id}`, updates)
-      setTournaments(prev => prev.map(tItem => tItem.id === id ? updatedTournament : tItem))
+      const updated = (_cache.tournaments ?? []).map(t => t.id === id ? updatedTournament : t)
+      _cache.tournaments = updated
+      _cache.tournamentsFetchedAt = Date.now()
+      setTournaments(updated)
       addToast({
         type: 'success',
         message: 'Tournament updated successfully',
@@ -119,10 +137,13 @@ export function useTournaments() {
 
   const deleteTournament = async (id: number) => {
     setLoading(true)
-    
+
     try {
       await apiClient.delete(`/api/v1/tournaments/${id}`)
-      setTournaments(prev => prev.filter(tItem => tItem.id !== id))
+      const updated = (_cache.tournaments ?? []).filter(t => t.id !== id)
+      _cache.tournaments = updated
+      _cache.tournamentsFetchedAt = Date.now()
+      setTournaments(updated)
       addToast({
         type: 'success',
         message: 'Tournament deleted successfully',
@@ -159,46 +180,54 @@ export function useTournaments() {
 
 // Hook for managing squads with request deduplication
 export function useSquads(tournamentId?: number) {
-  const [squads, setSquads] = useState<Squad[]>([])
+  const [squads, setSquads] = useState<Squad[]>(() =>
+    tournamentId ? (_cache.squads.get(tournamentId) ?? []) : []
+  )
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { addToast } = useToast()
-  
-  // Request deduplication: track in-flight requests per tournament
-  const fetchPromisesRef = useRef<Map<number, Promise<void>>>(new Map())
 
   const fetchSquads = async (tId?: number) => {
     const id = tId || tournamentId
     if (!id) return
 
-    // If already fetching this tournament's squads, return existing promise
-    const existingPromise = fetchPromisesRef.current.get(id)
+    // Serve from cache if still fresh
+    const cachedSquads = _cache.squads.get(id)
+    const fetchedAt = _cache.squadsFetchedAt.get(id) ?? 0
+    if (cachedSquads && Date.now() - fetchedAt < _cache.STALE_MS) {
+      setSquads(cachedSquads)
+      return
+    }
+
+    // Deduplicate in-flight requests
+    const existingPromise = _cache.inFlightSquads.get(id)
     if (existingPromise) {
-      return existingPromise
+      await existingPromise
+      const fresh = _cache.squads.get(id)
+      if (fresh) setSquads(fresh)
+      return
     }
 
     setLoading(true)
     setError(null)
-    
+
     const fetchPromise = (async () => {
       try {
         const data = await apiClient.get<Squad[]>(`/api/v1/squads/?tournament_id=${id}`)
+        _cache.squads.set(id, data)
+        _cache.squadsFetchedAt.set(id, Date.now())
         setSquads(data)
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to fetch squads'
         setError(errorMessage)
-        addToast({
-          type: 'error',
-          message: errorMessage,
-          duration: 5000
-        })
+        addToast({ type: 'error', message: errorMessage, duration: 5000 })
       } finally {
         setLoading(false)
-        fetchPromisesRef.current.delete(id)
+        _cache.inFlightSquads.delete(id)
       }
     })()
-    
-    fetchPromisesRef.current.set(id, fetchPromise)
+
+    _cache.inFlightSquads.set(id, fetchPromise)
     return fetchPromise
   }
 

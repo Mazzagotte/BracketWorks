@@ -2,7 +2,6 @@
 
 import React, { memo, useMemo, useCallback } from 'react'
 import Link from 'next/link'
-import { colors } from '../styles/colors'
 
 
 
@@ -179,17 +178,17 @@ const Header = memo(function Header({
     
     switch (tournament.status) {
       case 'draft':
-        return { icon: '📝', label: 'Draft', bg: colors.gray[100], color: colors.gray[700] }
+        return { icon: '📝', label: 'Draft', bg: '#f3f4f6', color: '#374151' }
       case 'registration_open':
-        return { icon: '📝', label: 'Registration Open', bg: colors.blue.light, color: colors.blue.deeper }
+        return { icon: '📝', label: 'Registration Open', bg: '#dbeafe', color: '#1e40af' }
       case 'in_progress':
-        return { icon: 'Squad', label: 'In Progress', bg: colors.yellow.light, color: colors.yellow.dark }
+        return { icon: 'Squad', label: 'In Progress', bg: '#fef3c7', color: '#92400e' }
       case 'completed':
-        return { icon: '', label: 'Completed', bg: colors.green.light, color: colors.green.deeper }
+        return { icon: '', label: 'Completed', bg: '#d1fae5', color: '#065f46' }
       case 'cancelled':
         return { icon: '', label: 'Cancelled', bg: '#fee2e2', color: '#dc2626' }
       default:
-        return { icon: '❓', label: 'Unknown', bg: colors.gray[100], color: colors.gray[500] }
+        return { icon: '❓', label: 'Unknown', bg: '#f3f4f6', color: '#6b7280' }
     }
   }, [tournament?.status])
 
@@ -309,13 +308,13 @@ const Header = memo(function Header({
     return breadcrumbs.map((crumb, index) => (
       <React.Fragment key={`${crumb.label}-${index}`}>
         {crumb.href ? (
-          <Link href={crumb.href} className="breadcrumb-link" style={{ color: colors.gray[600], textDecoration: 'none' }}>
+          <Link href={crumb.href} className="breadcrumb-link" style={{ color: '#475569', textDecoration: 'none' }}>
             {crumb.label}
           </Link>
         ) : (
-          <span style={{ color: colors.gray[700] }}>{crumb.label}</span>
+          <span style={{ color: '#374151' }}>{crumb.label}</span>
         )}
-        {index < breadcrumbs.length - 1 && <span style={{ margin: '0 0.5rem', color: colors.gray[400] }}>/</span>}
+        {index < breadcrumbs.length - 1 && <span style={{ margin: '0 0.5rem', color: '#9ca3af' }}>/</span>}
       </React.Fragment>
     ))
   }, [breadcrumbs])
@@ -372,14 +371,14 @@ const Header = memo(function Header({
                     {priorityLabel}
                   </span>
                 )}
-                <span style={{ fontSize: '0.75rem', color: colors.gray[500] }}>
+                <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>
                   {notification.timestamp.toLocaleTimeString()}
                 </span>
               </div>
-              
-              <div style={{ 
+
+              <div style={{
                 fontWeight: '500',
-                color: colors.gray[900],
+                color: '#111827',
                 lineHeight: '1.4'
               }}>
                 {notification.message}
@@ -992,14 +991,14 @@ const Header = memo(function Header({
                       }}>
                         {tournament.start_date && (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                            <span style={{ fontWeight: '600', color: colors.gray[700], fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Start Date</span>
-                            <span style={{ fontWeight: '500', color: colors.dark.base }}>{new Date(tournament.start_date).toLocaleDateString()}</span>
+                            <span style={{ fontWeight: '600', color: '#374151', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Start Date</span>
+                            <span style={{ fontWeight: '500', color: '#0f172a' }}>{new Date(tournament.start_date).toLocaleDateString()}</span>
                           </div>
                         )}
                         {tournament.end_date && (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                            <span style={{ fontWeight: '600', color: colors.gray[700], fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>End Date</span>
-                            <span style={{ fontWeight: '500', color: colors.dark.base }}>{new Date(tournament.end_date).toLocaleDateString()}</span>
+                            <span style={{ fontWeight: '600', color: '#374151', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>End Date</span>
+                            <span style={{ fontWeight: '500', color: '#0f172a' }}>{new Date(tournament.end_date).toLocaleDateString()}</span>
                           </div>
                         )}
                       </div>
@@ -1012,7 +1011,7 @@ const Header = memo(function Header({
                     alignItems: 'center',
                     justifyContent: 'center',
                     minHeight: '80px',
-                    color: colors.gray[600],
+                    color: '#475569',
                     fontSize: '0.95rem'
                   }}>
                     <div style={{ textAlign: 'center' }}>

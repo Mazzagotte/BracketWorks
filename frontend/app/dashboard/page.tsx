@@ -14,10 +14,8 @@ import mobileStyles from './dashboard.module.css';
 import { ConfirmationDialog } from '../components/LazyComponents';
 import Header from '../components/Header';
 import { MobileForm, MobileFormField } from '../../components/MobileForm';
-import { typography, colors, spacing, stylePresets } from '../lib/design-system';
 import { API, apiClient } from '../lib/api';
 import { logger } from '../lib/logger';
-import { Spinner, LoadingButton, Skeleton, LoadingState } from '../components/LoadingComponents';
 import EnhancedButton from '../components/EnhancedButton';
 import { useToast } from '../components/Toast';
 import { useAsyncOperation, ErrorMessage } from '../components/ErrorHandling';
@@ -346,71 +344,7 @@ export default function TournamentDashboard() {
     localStorage.getItem('token') && 
     localStorage.getItem('user_id');
 
-  // Fallback: if auth isn't initialized after 3 seconds but we have tokens, show dashboard
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!isAuthInitialized && hasStoredAuthTokens) {
-        setShowDashboard(true);
-      }
-    }, 3000);
-    
-    return () => clearTimeout(timer);
-  }, [isAuthInitialized, hasStoredAuthTokens]);
-
-  // Wait for auth initialization before making decisions
-  if (!isAuthInitialized && !showDashboard) {
-    return (
-      <div style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center', 
-        minHeight: '100vh',
-        fontFamily: 'Inter, sans-serif'
-      }}>
-        <div style={{ textAlign: 'center' }}>
-          <div>Loading tournament dashboard...</div>
-        </div>
-      </div>
-    );
-  }
-
-  // Authentication guard - redirect if not logged in (only after initialization)
-  if (!isUserAuthenticated && !hasStoredAuthTokens) {
-    return (
-      <div style={{ 
-        padding: '2rem', 
-        textAlign: 'center',
-        minHeight: '50vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}>
-        <div>
-          <div>Please log in to access the tournament dashboard</div>
-        </div>
-      </div>
-    );
-  }
-
-  // Show loading if we have stored auth but context isn't ready yet
-  if (!isUserAuthenticated && hasStoredAuthTokens) {
-    return (
-      <div style={{ 
-        padding: '2rem', 
-        textAlign: 'center',
-        minHeight: '50vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}>
-        <div>
-          <div>Loading tournament dashboard...</div>
-        </div>
-      </div>
-    );
-  }
-
-  // SSR-safe isAdmin state
+  // All hooks must be called before conditional returns (React rules of hooks)
   const [isAdmin, setIsAdmin] = useState(false);
   const [selectedSquadId, setSelectedSquadId] = useState<number | null>(null);
   const [squads, setSquads] = useState<Squad[]>([]);
@@ -421,7 +355,7 @@ export default function TournamentDashboard() {
   const [deleteConfirm, setDeleteConfirm] = useState<{id: number, name: string} | null>(null);
   
   // Enhanced UX components
-  const { addToast, removeToast } = useToast();
+  const { addToast } = useToast();
   const { currentPage, totalPages, paginatedItems, goToPage } = usePagination({ 
     items: allTournaments, 
     itemsPerPage: 10 
@@ -593,7 +527,15 @@ export default function TournamentDashboard() {
   const [modalOpen, setModalOpen] = useState(false);
   const [createMode, setCreateMode] = useState(false);
 
-
+  // Fallback: if auth isn't initialized after 3 seconds but we have tokens, show dashboard
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!isAuthInitialized && hasStoredAuthTokens) {
+        setShowDashboard(true);
+      }
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [isAuthInitialized, hasStoredAuthTokens]);
 
   // Fetch tournaments and restore last loaded tournament from backend on mount - OPTIMIZED
   useEffect(() => {
@@ -896,134 +838,30 @@ export default function TournamentDashboard() {
 
   // Set up page header with action buttons
   const headerActions = useMemo(() => (
-    <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-      <button
-        onClick={() => {
-          setCreateMode(true);
-          setModalOpen(true);
-        }}
-        style={{
-          backgroundColor: '#F47C20',
-          color: 'white',
-          border: 'none',
-          borderRadius: '8px',
-          padding: '10px 20px',
-          fontSize: '14px',
-          fontWeight: '600',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          transition: 'all 0.2s ease'
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = '#D9651A'
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = '#F47C20'
-        }}
-      >
+    <div className={mobileStyles.headerActions}>
+      <button className={mobileStyles.headerBtn} onClick={() => { setCreateMode(true); setModalOpen(true); }}>
         + New Tournament
       </button>
-      
       {tournament && (
-        <button
-          onClick={() => {
-            setCreateMode(false);
-            setModalOpen(true);
-          }}
-          style={{
-            backgroundColor: '#F47C20',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            padding: '10px 20px',
-            fontSize: '14px',
-            fontWeight: '600',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            transition: 'all 0.2s ease'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = '#D9651A'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = '#F47C20'
-          }}
-        >
+        <button className={mobileStyles.headerBtn} onClick={() => { setCreateMode(false); setModalOpen(true); }}>
           Edit Tournament
         </button>
       )}
-      
-      <button
-        onClick={() => setLoadModalOpen(true)}
-        style={{
-          backgroundColor: '#F47C20',
-          color: 'white',
-          border: 'none',
-          borderRadius: '8px',
-          padding: '10px 20px',
-          fontSize: '14px',
-          fontWeight: '600',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          transition: 'all 0.2s ease'
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = '#D9651A'
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = '#F47C20'
-        }}
-      >
+      <button className={mobileStyles.headerBtn} onClick={() => setLoadModalOpen(true)}>
         Load Tournament
       </button>
-      
       {tournament && (
         <button
+          className={`${mobileStyles.headerBtn} ${mobileStyles.headerBtnDanger}`}
           onClick={() => {
             setTournament(null);
             setSquads([]);
             setBracketSettings({
-              tournament_id: 0,
-              bracket_size: 16,
-              first_place: 0,
-              second_place: 0,
-              house_amount: 0,
-              cost_per_bracket: 0,
-              handicap_percentage: 80,
-              handicap_base: 200
+              tournament_id: 0, bracket_size: 16, first_place: 0, second_place: 0,
+              house_amount: 0, cost_per_bracket: 0, handicap_percentage: 80, handicap_base: 200
             });
             localStorage.removeItem('lastTournamentId');
-            addToast({
-              type: 'success',
-              message: 'Tournament unloaded successfully',
-              duration: 3000
-            });
-          }}
-          style={{
-            backgroundColor: '#D64545',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            padding: '10px 20px',
-            fontSize: '14px',
-            fontWeight: '600',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            transition: 'all 0.2s ease'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = '#dc2626'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = '#B23A3A'
+            addToast({ type: 'success', message: 'Tournament unloaded successfully', duration: 3000 });
           }}
         >
           Unload Tournament
@@ -1032,14 +870,42 @@ export default function TournamentDashboard() {
     </div>
   ), [tournament, addToast]);
 
+  const selectedSquad = squads.find(s => s.id === selectedSquadId)
+  const squadLabel = selectedSquad ? ` · ${[selectedSquad.date, selectedSquad.time].filter(Boolean).join(' ')}` : ''
+
   usePageHeader({
     title: "Tournament Dashboard",
-    subtitle: tournament 
-      ? `Managing: ${tournament.name}${tournament.location ? ` • ${tournament.location}` : ''}${tournament.start_date ? ` • ${new Date(tournament.start_date).toLocaleDateString()}` : ''}`
-      : "Manage your bowling tournament settings and configuration",
+    subtitle: tournament
+      ? `${tournament.name}${squadLabel}`
+      : "Select or create a tournament to get started",
     centerContent: false,
     actions: headerActions
   });
+
+  // All hooks are declared above — conditional returns are safe below this line
+  if (!isAuthInitialized && !showDashboard) {
+    return (
+      <div className={mobileStyles.loadingScreen}>
+        <div className={mobileStyles.loadingContent}>Loading tournament dashboard...</div>
+      </div>
+    );
+  }
+
+  if (!isUserAuthenticated && !hasStoredAuthTokens) {
+    return (
+      <div className={mobileStyles.loadingScreen}>
+        <div className={mobileStyles.loadingContent}>Please log in to access the tournament dashboard</div>
+      </div>
+    );
+  }
+
+  if (!isUserAuthenticated && hasStoredAuthTokens) {
+    return (
+      <div className={mobileStyles.loadingScreen}>
+        <div className={mobileStyles.loadingContent}>Loading tournament dashboard...</div>
+      </div>
+    );
+  }
 
   return (
     <ErrorBoundary>
@@ -1054,195 +920,37 @@ export default function TournamentDashboard() {
         />
         <main className="page-main">
 
-          {/* Main Content Container - Centered */}
-          <div style={{
-            maxWidth: '1400px',
-            margin: '0 auto',
-            padding: '0 1rem'
-          }}>
-            {/* Enhanced Side-by-side container for cards */}
+          <div className={mobileStyles.contentContainer}>
             <div className={mobileStyles.cardsContainer}>
-            
+
             {/* Empty State - No Tournament Loaded */}
             {!tournament && (
-              <div style={{
-                gridColumn: '1 / -1',
-                background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
-                borderRadius: '20px',
-                padding: '32px 24px',
-                textAlign: 'center',
-                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.06)',
-                border: '2px solid #e2e8f0',
-                marginBottom: '24px'
-              }}>
-                <h2 style={{
-                  fontSize: '28px',
-                  fontWeight: 700,
-                  color: '#1e293b',
-                  marginBottom: '12px',
-                  letterSpacing: '-0.02em',
-                  marginTop: '0'
-                }}>
-                  Welcome to Tournament Dashboard
-                </h2>
-                <p style={{
-                  fontSize: '16px',
-                  color: '#64748b',
-                  marginBottom: '32px',
-                  maxWidth: '560px',
-                  margin: '0 auto 32px',
-                  lineHeight: '1.6'
-                }}>
+              <div className={mobileStyles.emptyState}>
+                <h2 className={mobileStyles.emptyStateTitle}>Welcome to Tournament Dashboard</h2>
+                <p className={mobileStyles.emptyStateText}>
                   Get started by creating a new tournament or loading an existing one to manage brackets, squads, and settings.
                 </p>
-                <div style={{
-                  display: 'flex',
-                  gap: '16px',
-                  justifyContent: 'center',
-                  flexWrap: 'wrap'
-                }}>
-                  <button
-                    onClick={() => {
-                      setCreateMode(true);
-                      setModalOpen(true);
-                    }}
-                    style={{
-                      background: 'linear-gradient(135deg, #F47C20 0%, #D9651A 100%)',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '12px',
-                      padding: '14px 28px',
-                      fontSize: '16px',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '10px',
-                      transition: 'all 0.2s ease',
-                      boxShadow: '0 4px 14px rgba(244, 124, 32, 0.3)'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'translateY(-2px)';
-                      e.currentTarget.style.boxShadow = '0 6px 20px rgba(240, 165, 0, 0.4)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.boxShadow = '0 4px 14px rgba(240, 165, 0, 0.3)';
-                    }}
-                  >
+                <div className={mobileStyles.emptyStateButtons}>
+                  <button className={mobileStyles.emptyStatePrimaryBtn} onClick={() => { setCreateMode(true); setModalOpen(true); }}>
                     Create New Tournament
                   </button>
-                  <button
-                    onClick={() => setLoadModalOpen(true)}
-                    style={{
-                      background: 'white',
-                      color: '#F47C20',
-                      border: '2px solid #F47C20',
-                      borderRadius: '12px',
-                      padding: '14px 28px',
-                      fontSize: '16px',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '10px',
-                      transition: 'all 0.2s ease',
-                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'translateY(-2px)';
-                      e.currentTarget.style.background = '#fffbf0';
-                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.background = 'white';
-                      e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.05)';
-                    }}
-                  >
+                  <button className={mobileStyles.emptyStateSecondaryBtn} onClick={() => setLoadModalOpen(true)}>
                     Load Existing Tournament
                   </button>
                 </div>
-                
-                {/* Quick Info Cards */}
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                  gap: '16px',
-                  marginTop: '48px',
-                  maxWidth: '800px',
-                  margin: '48px auto 0'
-                }}>
-                  <div style={{
-                    background: 'white',
-                    borderRadius: '12px',
-                    padding: '20px',
-                    textAlign: 'left',
-                    border: '1px solid #e2e8f0',
-                    transition: 'all 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-4px)';
-                    e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.08)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = 'none';
-                  }}>
-                    <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#1e293b', marginBottom: '4px' }}>
-                      Configure Settings
-                    </h3>
-                    <p style={{ fontSize: '13px', color: '#64748b', lineHeight: '1.5', margin: 0 }}>
-                      Set up bracket sizes, prizes, and handicap rules
-                    </p>
+
+                <div className={mobileStyles.infoCards}>
+                  <div className={mobileStyles.infoCard}>
+                    <h3 className={mobileStyles.infoCardTitle}>Configure Settings</h3>
+                    <p className={mobileStyles.infoCardText}>Set up bracket sizes, prizes, and handicap rules</p>
                   </div>
-                  
-                  <div style={{
-                    background: 'white',
-                    borderRadius: '12px',
-                    padding: '20px',
-                    textAlign: 'left',
-                    border: '1px solid #e2e8f0',
-                    transition: 'all 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-4px)';
-                    e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.08)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = 'none';
-                  }}>
-                    <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#1e293b', marginBottom: '4px' }}>
-                      Manage Squads
-                    </h3>
-                    <p style={{ fontSize: '13px', color: '#64748b', lineHeight: '1.5', margin: 0 }}>
-                      Create and organize multiple squads with dates and times
-                    </p>
+                  <div className={mobileStyles.infoCard}>
+                    <h3 className={mobileStyles.infoCardTitle}>Manage Squads</h3>
+                    <p className={mobileStyles.infoCardText}>Create and organize multiple squads with dates and times</p>
                   </div>
-                  
-                  <div style={{
-                    background: 'white',
-                    borderRadius: '12px',
-                    padding: '20px',
-                    textAlign: 'left',
-                    border: '1px solid #e2e8f0',
-                    transition: 'all 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-4px)';
-                    e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.08)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = 'none';
-                  }}>
-                    <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#1e293b', marginBottom: '4px' }}>
-                      Track Results
-                    </h3>
-                    <p style={{ fontSize: '13px', color: '#64748b', lineHeight: '1.5', margin: 0 }}>
-                      Generate brackets, enter scores, and manage payouts
-                    </p>
+                  <div className={mobileStyles.infoCard}>
+                    <h3 className={mobileStyles.infoCardTitle}>Track Results</h3>
+                    <p className={mobileStyles.infoCardText}>Generate brackets, enter scores, and manage payouts</p>
                   </div>
                 </div>
               </div>
@@ -1537,86 +1245,53 @@ export default function TournamentDashboard() {
 
           {/* Load Tournament Modal */}
           {loadModalOpen && (
-            <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.5)', zIndex: 1001, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <div style={{ background: colors.surface, borderRadius: 16, padding: 32, minWidth: 340, boxShadow: colors.shadow.lg, maxHeight: '80vh', overflowY: 'auto', position: 'relative' }}>
-                <h2 style={{ marginBottom: 18, color: colors.text.primary }}>{isAdmin ? 'All Tournaments' : 'Your Tournaments'}</h2>
+            <div className={mobileStyles.modalOverlay}>
+              <div className={mobileStyles.modalCard}>
+                <h2 className={mobileStyles.modalTitle}>{isAdmin ? 'All Tournaments' : 'Your Tournaments'}</h2>
                 {isAdmin && (
-                  <div style={{ marginBottom: 12 }}>
-                    <span style={{ fontSize: 15, color: colors.primary, fontWeight: 500 }}>Admin: Viewing all tournaments</span>
-                  </div>
+                  <div className={mobileStyles.adminBadge}>Admin: Viewing all tournaments</div>
                 )}
-                <EnhancedButton 
+                <EnhancedButton
                   onClick={() => setLoadModalOpen(false)}
                   variant="secondary"
                   size="sm"
-                  className="absolute top-4 right-4"
+                  className="modal-close"
                 >
                   &times;
                 </EnhancedButton>
                 {allTournaments.length === 0 ? (
-                  <div style={{ color: colors.text.secondary, fontSize: 16, textAlign: 'center', padding: '40px 0' }}>
-                    <div style={{ marginBottom: 12 }}>No tournaments found.</div>
-                    <div style={{ fontSize: 14, color: colors.text.muted }}>Create your first tournament to get started!</div>
+                  <div className={mobileStyles.emptyTournaments}>
+                    <div>No tournaments found.</div>
+                    <div className={mobileStyles.emptyTournamentsHint}>Create your first tournament to get started!</div>
                   </div>
                 ) : (
                   <>
-                    <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                    <ul className={mobileStyles.tournamentList}>
                       {paginatedItems.map((t: Tournament) => (
-                        <li key={t.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: `1px solid ${colors.border}`, transition: 'background-color 0.2s ease' }}>
+                        <li key={t.id} className={mobileStyles.tournamentItem}>
                           <div>
-                            <span style={{ fontWeight: 500, fontSize: 16, color: colors.text.primary }}>{t.name}</span>
-                            {t.location && (
-                              <div style={{ fontSize: 13, color: colors.text.secondary, marginTop: 2 }}>{t.location}</div>
-                            )}
+                            <span className={mobileStyles.tournamentName}>{t.name}</span>
+                            {t.location && <div className={mobileStyles.tournamentLocation}>{t.location}</div>}
                             {t.start_date && (
-                              <div style={{ fontSize: 12, color: colors.text.muted, marginTop: 2 }}>
+                              <div className={mobileStyles.tournamentDate}>
                                 {new Date(t.start_date).toLocaleDateString()}
-                                {t.end_date && t.end_date !== t.start_date && 
-                                  ` - ${new Date(t.end_date).toLocaleDateString()}`
-                                }
+                                {t.end_date && t.end_date !== t.start_date && ` - ${new Date(t.end_date).toLocaleDateString()}`}
                               </div>
                             )}
                           </div>
-                          <div style={{ display: 'flex', gap: 8 }}>
-                            <LoadingButton
-                              onClick={() => handleLoadTournament(t)}
-                              style={{ background: colors.primary, color: colors.text.white, fontSize: 14, padding: '8px 16px', borderRadius: 8, border: 'none', cursor: 'pointer', transition: 'all 0.2s ease' }}
-                            >
-                              Load
-                            </LoadingButton>
-                            <LoadingButton
-                              onClick={() => setDeleteConfirm({id: t.id, name: t.name})}
-                              style={{ background: colors.error, color: colors.text.white, fontSize: 14, padding: '8px 16px', borderRadius: 8, border: 'none', cursor: 'pointer', transition: 'all 0.2s ease' }}
-                            >
-                              Delete
-                            </LoadingButton>
+                          <div className={mobileStyles.tournamentActions}>
+                            <button className={mobileStyles.loadBtn} onClick={() => handleLoadTournament(t)}>Load</button>
+                            <button className={mobileStyles.deleteBtn} onClick={() => setDeleteConfirm({id: t.id, name: t.name})}>Delete</button>
                           </div>
                         </li>
                       ))}
                     </ul>
-                    
-                    {/* Pagination Controls */}
+
                     {totalPages > 1 && (
-                      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 20, padding: '12px 0', borderTop: `1px solid ${colors.border}` }}>
-                        <EnhancedButton
-                          onClick={() => goToPage(currentPage - 1)}
-                          disabled={currentPage === 1}
-                          variant="secondary"
-                          size="sm"
-                        >
-                          Previous
-                        </EnhancedButton>
-                        <span style={{ fontSize: 14, color: colors.text.secondary, padding: '0 16px' }}>
-                          Page {currentPage} of {totalPages}
-                        </span>
-                        <EnhancedButton
-                          onClick={() => goToPage(currentPage + 1)}
-                          disabled={currentPage === totalPages}
-                          variant="secondary"
-                          size="sm"
-                        >
-                          Next
-                        </EnhancedButton>
+                      <div className={mobileStyles.paginationBar}>
+                        <EnhancedButton onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} variant="secondary" size="sm">Previous</EnhancedButton>
+                        <span className={mobileStyles.paginationText}>Page {currentPage} of {totalPages}</span>
+                        <EnhancedButton onClick={() => goToPage(currentPage + 1)} disabled={currentPage === totalPages} variant="secondary" size="sm">Next</EnhancedButton>
                       </div>
                     )}
                   </>
@@ -1628,25 +1303,15 @@ export default function TournamentDashboard() {
 
         {/* Delete Confirmation Modal */}
         {deleteConfirm && (
-          <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.5)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ background: colors.surface, borderRadius: 16, padding: 32, minWidth: 340, boxShadow: colors.shadow.lg, maxHeight: '80vh', overflowY: 'auto', position: 'relative' }}>
-              <h2 style={{ marginBottom: 18, color: colors.error }}>Confirm Deletion</h2>
-              <p style={{ fontSize: 16, marginBottom: 24, color: colors.text.primary }}>Are you sure you want to delete tournament <span style={{ fontWeight: 700 }}>{deleteConfirm.name}</span>?</p>
-              <div style={{ display: 'flex', gap: 16, justifyContent: 'flex-end' }}>
-                <EnhancedButton 
-                  onClick={() => handleDeleteTournament(deleteConfirm.id)}
-                  variant="danger"
-                  size="md"
-                >
-                  Delete
-                </EnhancedButton>
-                <EnhancedButton 
-                  onClick={() => setDeleteConfirm(null)}
-                  variant="secondary"
-                  size="md"
-                >
-                  Cancel
-                </EnhancedButton>
+          <div className={mobileStyles.modalOverlay} style={{ zIndex: 2000 }}>
+            <div className={mobileStyles.modalCard}>
+              <h2 className={`${mobileStyles.modalTitle} ${mobileStyles.modalTitleDanger}`}>Confirm Deletion</h2>
+              <p className={mobileStyles.deleteConfirmText}>
+                Are you sure you want to delete tournament <strong>{deleteConfirm.name}</strong>?
+              </p>
+              <div className={mobileStyles.deleteConfirmActions}>
+                <EnhancedButton onClick={() => handleDeleteTournament(deleteConfirm.id)} variant="danger" size="md">Delete</EnhancedButton>
+                <EnhancedButton onClick={() => setDeleteConfirm(null)} variant="secondary" size="md">Cancel</EnhancedButton>
               </div>
             </div>
           </div>

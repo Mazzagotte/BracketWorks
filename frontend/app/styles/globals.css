@@ -1476,3 +1476,154 @@ button[class*="relative"]:focus {
     transform: scale(1);
   }
 }
+
+/* ============================================================
+   Design System — Button Classes (ds-btn-*)
+   Used by UI.tsx Button component for hover/focus/active states
+   ============================================================ */
+
+.ds-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  border-radius: var(--radius-md);
+  font-family: var(--font-family-primary);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.01em;
+  line-height: 1;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease, border-color 0.15s ease;
+  box-sizing: border-box;
+}
+
+.ds-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Sizes */
+.ds-btn-sm {
+  height: var(--btn-height-sm);
+  padding: 0 var(--spacing-md);
+  font-size: var(--font-size-sm);
+}
+
+.ds-btn-md {
+  height: var(--btn-height);
+  padding: 0 var(--spacing-lg);
+  font-size: var(--font-size-base);
+}
+
+.ds-btn-lg {
+  height: var(--btn-height-lg);
+  padding: 0 var(--spacing-xl);
+  font-size: var(--font-size-lg);
+}
+
+/* Primary — Brand orange */
+.ds-btn-primary {
+  background: linear-gradient(135deg, #F47C20 0%, #D9651A 100%);
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 1px 3px rgba(244, 124, 32, 0.25);
+}
+
+.ds-btn-primary:not(:disabled):hover {
+  background: linear-gradient(135deg, #D9651A 0%, #C25515 100%);
+  box-shadow: 0 4px 12px rgba(244, 124, 32, 0.35);
+  transform: translateY(-1px);
+}
+
+.ds-btn-primary:not(:disabled):active {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(244, 124, 32, 0.2);
+}
+
+.ds-btn-primary:focus-visible {
+  outline: 3px solid rgba(244, 124, 32, 0.45);
+  outline-offset: 2px;
+}
+
+/* Secondary — White with border */
+.ds-btn-secondary {
+  background: #ffffff;
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-gray-200);
+}
+
+.ds-btn-secondary:not(:disabled):hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: rgba(244, 124, 32, 0.04);
+}
+
+.ds-btn-secondary:not(:disabled):active {
+  background: rgba(244, 124, 32, 0.08);
+}
+
+.ds-btn-secondary:focus-visible {
+  outline: 3px solid rgba(244, 124, 32, 0.45);
+  outline-offset: 2px;
+}
+
+/* Success — Green */
+.ds-btn-success {
+  background: linear-gradient(135deg, var(--color-success) 0%, var(--color-green-dark) 100%);
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 1px 3px rgba(47, 191, 113, 0.25);
+}
+
+.ds-btn-success:not(:disabled):hover {
+  background: linear-gradient(135deg, #27a860 0%, #048a55 100%);
+  box-shadow: 0 4px 12px rgba(47, 191, 113, 0.35);
+  transform: translateY(-1px);
+}
+
+.ds-btn-success:focus-visible {
+  outline: 3px solid rgba(47, 191, 113, 0.45);
+  outline-offset: 2px;
+}
+
+/* Warning — Amber */
+.ds-btn-warning {
+  background: linear-gradient(135deg, var(--color-warning) 0%, #D9651A 100%);
+  color: #ffffff;
+  border: none;
+}
+
+.ds-btn-warning:not(:disabled):hover {
+  background: linear-gradient(135deg, #d49200 0%, #bf5915 100%);
+  transform: translateY(-1px);
+}
+
+.ds-btn-warning:focus-visible {
+  outline: 3px solid rgba(242, 169, 0, 0.45);
+  outline-offset: 2px;
+}
+
+/* Error / Danger — Red */
+.ds-btn-error,
+.ds-btn-danger {
+  background: linear-gradient(135deg, var(--color-error) 0%, #b83c3c 100%);
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 1px 3px rgba(214, 69, 69, 0.25);
+}
+
+.ds-btn-error:not(:disabled):hover,
+.ds-btn-danger:not(:disabled):hover {
+  background: linear-gradient(135deg, #b83c3c 0%, #9e2e2e 100%);
+  box-shadow: 0 4px 12px rgba(214, 69, 69, 0.35);
+  transform: translateY(-1px);
+}
+
+.ds-btn-error:focus-visible,
+.ds-btn-danger:focus-visible {
+  outline: 3px solid rgba(214, 69, 69, 0.45);
+  outline-offset: 2px;
+}

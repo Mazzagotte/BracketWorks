@@ -42,10 +42,10 @@ export const typography = {
 // Color palette
 export const colors = {
   // Primary brand colors
-  primary: 'var(--color-primary)',           // #4f8cff
-  primaryLight: 'var(--color-primary-light)', // #6ed0fa
-  primaryHover: '#2563eb',                   // Darker blue for hovers
-  accent: 'var(--color-accent)',             // #ffd580
+  primary: 'var(--color-primary)',           // #F47C20
+  primaryLight: 'var(--color-primary)',
+  primaryHover: 'var(--color-primary-hover)', // #D9651A
+  accent: 'var(--color-primary)',
   
   // Background colors
   background: 'var(--color-background)',     // #f8fafc
@@ -82,7 +82,7 @@ export const colors = {
     success: '#f0fdf4',                      // Light green background
     warning: '#fef3c7',                      // Light yellow background
     info: '#f0f9ff',                        // Light blue background
-    primary: '#dbeafe',                      // Light primary background
+    primary: 'rgba(244, 124, 32, 0.08)',      // Light primary background (brand orange tint)
   },
   
   // Neutral grays
@@ -102,8 +102,8 @@ export const colors = {
   // Specific component colors
   button: {
     primary: 'var(--color-primary)',
-    primaryHover: '#2563eb',
-    success: 'var(--color-success)', 
+    primaryHover: 'var(--color-primary-hover)',
+    success: 'var(--color-success)',
     successHover: '#059669',
     error: 'var(--color-error)',
     errorHover: '#dc2626',
@@ -195,9 +195,9 @@ export const stylePresets = {
   card: {
     backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
-    padding: spacing.xl,
+    padding: spacing.lg,
     boxShadow: shadows.sm,
-    marginBottom: spacing.lg,
+    border: `1px solid var(--color-gray-200)`,
   },
   
   // Button styles

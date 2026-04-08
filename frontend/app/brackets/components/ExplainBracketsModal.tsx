@@ -89,26 +89,43 @@ export default function ExplainBracketsModal({ isOpen, onClose }: ExplainBracket
             <div className={styles.tieRule}>
               <div className={styles.tieHeader}>
                 <span className={styles.tieBadge}>TIE</span>
-                <strong>Round 1 &amp; 2 Ties - Both Players Advance</strong>
+                <strong>Round 1 &amp; 2 Ties — Both Players Advance</strong>
               </div>
               <p>
                 When two players tie in Round 1 or Round 2, both advance to the next round.
-                In that next round, the lower-scoring player between the two tied competitors is eliminated, and the higher-scoring player is declared the winner of the original tied match.
+                In that next round, their scores are compared against each other — the lower-scoring player is eliminated, and the higher-scoring player is declared the winner of the original tied match.
               </p>
               <div className={styles.example}>
-                <strong>Example:</strong> Player A and Player B tie in Round 1, so both advance to Round 2.
+                <strong>Example:</strong> Player A and Player B tie in Round 1 (both score 210), so both advance to Round 2.
                 In Round 2, Player A scores 220 and Player B scores 180.
-                The lower score (Player B) is eliminated, and Player A is declared the winner of the original Round 1 match.
+                Player B is eliminated, and Player A is declared the Round 1 winner and advances to the Finals.
+              </div>
+            </div>
+
+            <div className={styles.tieRule}>
+              <div className={styles.tieHeader}>
+                <span className={styles.tieBadge}>TIE</span>
+                <strong>Cascading Ties — Carried Forward Until Resolved</strong>
+              </div>
+              <p>
+                If two players who tied in Round 1 are <em>also</em> tied in Round 2, both continue advancing to Round 3.
+                Their Round 3 scores then resolve all previous ties — the higher scorer wins, the lower scorer is eliminated.
+                Tying across all three games is extremely unlikely, but if it happens, the pot is split.
+              </p>
+              <div className={styles.example}>
+                <strong>Example:</strong> Player A and Player B tie in both Round 1 and Round 2 (scores 210 and 215).
+                Both advance to the Finals. Player A scores 240 in Round 3, Player B scores 220.
+                Player A wins the bracket. Player B is eliminated.
               </div>
             </div>
 
             <div className={styles.tieRule}>
               <div className={styles.tieHeader}>
                 <span className={styles.splitBadge}>SPLIT</span>
-                <strong>Round 3 (Finals) Ties - Split Pot</strong>
+                <strong>Finals Tie — Split Pot</strong>
               </div>
               <p>
-                When the finals match ends in a tie, both finalists split the prize pot evenly. No additional rounds are played.
+                If the Finals match ends in a tie (and there are no unresolved carry-over ties from earlier rounds), both finalists split the prize pot evenly.
               </p>
             </div>
           </section>

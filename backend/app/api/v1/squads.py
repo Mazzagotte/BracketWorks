@@ -1,12 +1,14 @@
+import logging
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from ...core import models, schemas
 from ...api import deps
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 @router.post("/select/", response_model=schemas.SelectedSquadOut)
-def select_squad(data: schemas.SelectedSquadCreate, db: Session = Depends(deps.get_db)):
+def select_squad(data: schemas.SelectedSquadCreate, db: Session = Depends(deps.get_db), user = Depends(deps.get_current_user)):
     # Remove any previous selection for this user
     db.query(models.SelectedSquad).filter(models.SelectedSquad.user_id == data.user_id).delete()
     obj = models.SelectedSquad(user_id=data.user_id, squad_id=data.squad_id)
@@ -16,21 +18,21 @@ def select_squad(data: schemas.SelectedSquadCreate, db: Session = Depends(deps.g
     return obj
 
 @router.get("/selected/", response_model=schemas.SelectedSquadOut)
-def get_selected_squad(user_id: int, db: Session = Depends(deps.get_db)):
+def get_selected_squad(user_id: int, db: Session = Depends(deps.get_db), user = Depends(deps.get_current_user)):
     obj = db.query(models.SelectedSquad).filter(models.SelectedSquad.user_id == user_id).first()
     if not obj:
         raise HTTPException(status_code=404, detail="No selected squad for user")
     return obj
 
 @router.delete("/select/")
-def clear_selected_squad(data: schemas.SelectedSquadDelete, db: Session = Depends(deps.get_db)):
+def clear_selected_squad(data: schemas.SelectedSquadDelete, db: Session = Depends(deps.get_db), user = Depends(deps.get_current_user)):
     """Clear the selected squad for a user"""
     deleted_count = db.query(models.SelectedSquad).filter(models.SelectedSquad.user_id == data.user_id).delete()
     db.commit()
     return {"message": f"Cleared selected squad for user {data.user_id}", "cleared": deleted_count > 0}
 
 @router.post("/", response_model=schemas.Squad)
-def create_squad(squad: schemas.SquadCreate, db: Session = Depends(deps.get_db)):
+def create_squad(squad: schemas.SquadCreate, db: Session = Depends(deps.get_db), user = Depends(deps.get_current_user)):
     # Check for existing squad with same tournament_id, date, and time
     existing = db.query(models.Squad).filter(
         models.Squad.tournament_id == squad.tournament_id,
@@ -92,7 +94,7 @@ def get_squad(squad_id: int, db: Session = Depends(deps.get_db)):
     }
 
 @router.delete("/tournament/{tournament_id}")
-def delete_tournament_squads(tournament_id: int, db: Session = Depends(deps.get_db)):
+def delete_tournament_squads(tournament_id: int, db: Session = Depends(deps.get_db), user = Depends(deps.get_current_user)):
     """Delete all squad times for a specific tournament"""
     # Check if tournament exists (optional validation)
     tournament = db.query(models.Tournament).filter(models.Tournament.id == tournament_id).first()
@@ -121,7 +123,7 @@ def delete_tournament_squads(tournament_id: int, db: Session = Depends(deps.get_
     }
 
 @router.delete("/{squad_id}")
-def delete_squad(squad_id: int, db: Session = Depends(deps.get_db)):
+def delete_squad(squad_id: int, db: Session = Depends(deps.get_db), user = Depends(deps.get_current_user)):
     """Delete a specific squad by ID"""
     obj = db.query(models.Squad).filter(models.Squad.id == squad_id).first()
     if not obj:
@@ -142,7 +144,7 @@ def delete_squad(squad_id: int, db: Session = Depends(deps.get_db)):
 
 
 @router.post("/sync/{tournament_id}")
-def sync_tournament_squads(tournament_id: int, db: Session = Depends(deps.get_db)):
+def sync_tournament_squads(tournament_id: int, db: Session = Depends(deps.get_db), user = Depends(deps.get_current_user)):
     """Sync squad records to match the tournament's squad_times data exactly"""
     import json
     from typing import Set, Tuple

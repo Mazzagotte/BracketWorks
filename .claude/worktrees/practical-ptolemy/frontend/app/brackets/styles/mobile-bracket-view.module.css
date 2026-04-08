@@ -1,0 +1,347 @@
+/* Mobile Bracket View Styles */
+
+.container {
+  position: relative;
+  padding: 1rem;
+  min-height: 60vh;
+  touch-action: pan-y;
+  user-select: none;
+}
+
+.roundIndicator {
+  background: linear-gradient(135deg, #f0a500 0%, #e6941a 100%);
+  color: white;
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(240, 165, 0, 0.3);
+}
+
+.roundNumber {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  opacity: 0.9;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.25rem;
+}
+
+.roundName {
+  display: block;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.swipeHints {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 10;
+}
+
+.swipeHint {
+  position: absolute;
+  top: 0;
+  background: rgba(240, 165, 0, 0.9);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 3rem;
+  height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  pointer-events: auto;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.swipeHint.left {
+  left: 0.5rem;
+}
+
+.swipeHint.right {
+  right: 0.5rem;
+}
+
+.swipeHint:hover {
+  transform: scale(1.1);
+  background: rgba(240, 165, 0, 1);
+}
+
+.swipeHint:active {
+  transform: scale(0.95);
+}
+
+.roundContent {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-bottom: 3rem;
+}
+
+.matchCard {
+  background: white;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border-left: 4px solid transparent;
+}
+
+.matchCard.completed {
+  border-left-color: #10b981;
+}
+
+.matchCard.in_progress {
+  border-left-color: #f59e0b;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.matchCard.next_up {
+  border-left-color: #3b82f6;
+}
+
+.matchCard.pending {
+  border-left-color: #9ca3af;
+  opacity: 0.7;
+}
+
+.matchCard:active {
+  transform: scale(0.98);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+  50% {
+    box-shadow: 0 4px 16px rgba(245, 158, 11, 0.3);
+  }
+}
+
+.matchHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.matchNumber {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.statusBadge {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+}
+
+.statusBadge.completed {
+  background: #d1fae5;
+  color: #059669;
+}
+
+.statusBadge.in_progress {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.statusBadge.next_up {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.statusBadge.pending {
+  background: #f3f4f6;
+  color: #9ca3af;
+}
+
+.players {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.player {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: #f9fafb;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.player.winner {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  border: 2px solid #10b981;
+  font-weight: 600;
+}
+
+.playerInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.seed {
+  background: linear-gradient(135deg, #f0a500 0%, #e6941a 100%);
+  color: white;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.playerName {
+  font-size: 1rem;
+  color: #374151;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.score {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #374151;
+  flex-shrink: 0;
+}
+
+.vs {
+  text-align: center;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #9ca3af;
+  padding: 0.5rem 0;
+}
+
+.matchFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e5e7eb;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.time {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.time::before {
+  content: '🕐';
+  font-size: 1rem;
+}
+
+.lane {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.lane::before {
+  content: '🎳';
+  font-size: 1rem;
+}
+
+.progressDots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.5rem 0;
+}
+
+.dot {
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 50%;
+  background: #d1d5db;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.dot.active {
+  background: #f0a500;
+  width: 2rem;
+  border-radius: 1rem;
+}
+
+.dot:hover:not(.active) {
+  background: #9ca3af;
+  transform: scale(1.2);
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 0.75rem;
+  }
+
+  .roundIndicator {
+    padding: 0.75rem 1rem;
+  }
+
+  .roundName {
+    font-size: 1.125rem;
+  }
+
+  .swipeHint {
+    width: 2.5rem;
+    height: 2.5rem;
+    font-size: 1rem;
+  }
+
+  .matchCard {
+    padding: 0.75rem;
+  }
+
+  .player {
+    padding: 0.5rem;
+  }
+
+  .playerName {
+    font-size: 0.9375rem;
+  }
+
+  .score {
+    font-size: 1.25rem;
+  }
+}
+
+.swipeHint:focus-visible,
+.matchCard:focus-visible,
+.dot:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}

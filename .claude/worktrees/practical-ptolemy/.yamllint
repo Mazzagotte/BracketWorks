@@ -1,0 +1,25 @@
+# YAMLLint configuration for GitHub Actions workflows
+extends: default
+
+rules:
+  line-length:
+    max: 120
+    allow-non-breakable-words: true
+    allow-non-breakable-inline-mappings: true
+  
+  # Suppress warnings for GitHub Actions expressions
+  truthy:
+    allowed-values: ['true', 'false', 'on']
+    check-keys: false
+  
+  comments:
+    min-spaces-from-content: 1
+  
+  # Allow GitHub Actions specific patterns
+  quoted-strings:
+    quote-type: any
+    required: false
+
+ignore: |
+  # Ignore specific patterns that trigger false positives in GitHub Actions
+  *.github/workflows/*.yml

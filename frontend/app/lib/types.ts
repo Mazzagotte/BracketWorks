@@ -12,7 +12,7 @@ export interface Tournament {
 
 export interface Squad {
   id: number;
-  name: string;
+  name?: string;
   tournament_id?: number;
   date?: string;
   time: string;

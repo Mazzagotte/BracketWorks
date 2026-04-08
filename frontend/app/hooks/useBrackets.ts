@@ -1,5 +1,5 @@
 // Standardized hooks for bracket operations
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { apiClient } from '../lib/api'
 import { useToast } from '../components/Toast'
 import { BracketData, BracketSettings } from '../lib/types'
@@ -81,10 +81,10 @@ export function useBrackets() {
   const [error, setError] = useState<string | null>(null)
   const { addToast } = useToast()
 
-  const generatePreview = async (size: number = 8) => {
+  const generatePreview = useCallback(async (size: number = 8) => {
     setLoading(true)
     setError(null)
-    
+
     try {
       const data = await apiClient.get<BracketPreview>(`/api/v1/brackets/preview?bracket_size=${size}`)
       setPreview(data)
@@ -101,9 +101,9 @@ export function useBrackets() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [addToast])
 
-  const generateTournamentBrackets = async (
+  const generateTournamentBrackets = useCallback(async (
     tournamentId: number,
     squadId?: number,
     bracketSize: number = 8,
@@ -112,7 +112,7 @@ export function useBrackets() {
   ) => {
     setLoading(true)
     setError(null)
-    
+
     try {
       const squadParam = squadId ? `&squad_id=${squadId}` : ''
       const forceParam = forceRegenerate ? '&force_regenerate=true' : ''
@@ -122,13 +122,13 @@ export function useBrackets() {
         !forceRegenerate  // useCache = false when forcing regeneration
       )
       setPreview(data)
-      
+
       addToast({
         type: 'success',
         message: 'Tournament brackets generated successfully!',
         duration: 5000
       })
-      
+
       return data
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to generate tournament brackets'
@@ -142,16 +142,16 @@ export function useBrackets() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [addToast])
 
-  const updateMatchScore = async (
+  const updateMatchScore = useCallback(async (
     tournamentId: number,
     scoreUpdate: MatchScoreUpdate,
     squadId?: number
   ) => {
     setLoading(true)
     setError(null)
-    
+
     try {
       const squadParam = squadId ? `&squad_id=${squadId}` : ''
       const data = await apiClient.post<BracketPreview>(
@@ -159,13 +159,13 @@ export function useBrackets() {
         scoreUpdate
       )
       setPreview(data)
-      
+
       addToast({
         type: 'success',
         message: 'Match score updated successfully',
         duration: 3000
       })
-      
+
       return data
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to update match score'
@@ -179,12 +179,12 @@ export function useBrackets() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [addToast])
 
-  const loadSavedBrackets = async (tournamentId: number, squadId?: number) => {
+  const loadSavedBrackets = useCallback(async (tournamentId: number, squadId?: number) => {
     setLoading(true)
     setError(null)
-    
+
     try {
       const squadParam = squadId ? `?squad_id=${squadId}` : ''
       // Disable caching to always get fresh scores from backend
@@ -201,12 +201,12 @@ export function useBrackets() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  const clearPreview = () => {
+  const clearPreview = useCallback(() => {
     setPreview(null)
     setError(null)
-  }
+  }, [])
 
   return {
     preview,

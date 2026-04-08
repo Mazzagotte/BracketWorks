@@ -1,0 +1,354 @@
+/* Modern Login Page Styles - Match Design Exactly */
+
+@keyframes fadeIn {
+  from { 
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Force dark background to match the image - SCOPED TO LOGIN PAGE ONLY */
+body:has(.login-page-container) {
+  background: var(--color-dark-elevated) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  height: 100vh !important;
+}
+
+html:has(.login-page-container) {
+  overflow: hidden !important;
+  height: 100vh !important;
+}
+
+/* Main page container - Match the dark background */
+.login-page-container {
+  min-height: 100vh !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 24px !important;
+  background: var(--color-dark-elevated) !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  z-index: 1000 !important;
+  overflow: auto !important;
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;
+}
+
+/* Modern login card - Match the white rounded card */
+.enhanced-card {
+  position: relative !important;
+  z-index: 1 !important;
+  width: 100% !important;
+  max-width: 400px !important;
+  padding: 48px 32px !important;
+  background: var(--color-white) !important;
+  border-radius: 24px !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15) !important;
+  animation: slideUp 0.6s ease-out !important;
+  text-align: center !important;
+}
+
+/* Header section */
+.header-section {
+  text-align: center !important;
+  margin-bottom: 32px !important;
+}
+
+/* Logo container - Keep it simple like the image */
+.logo-container {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 80px !important;
+  height: 80px !important;
+  margin: 0 auto 24px auto !important;
+  padding: 16px !important;
+  background: linear-gradient(135deg, rgba(240, 165, 0, 0.1) 0%, rgba(240, 165, 0, 0.05) 100%) !important;
+  border-radius: 20px !important;
+  border: 1px solid rgba(240, 165, 0, 0.15) !important;
+}
+
+/* Main title */
+.login-title {
+  font-size: var(--font-size-6xl) !important;
+  font-weight: var(--font-weight-bold) !important;
+  margin: 0 0 8px 0 !important;
+  background: linear-gradient(135deg, #1F2A33 0%, #2A3944 25%, #374151 50%, #F47C20 75%, #D9651A 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+  letter-spacing: -0.5px !important;
+  line-height: var(--line-height-tight) !important;
+}
+
+/* Subtitle */
+.login-subtitle {
+  color: var(--color-gray-500) !important;
+  font-size: var(--font-size-xl) !important;
+  font-weight: var(--font-weight-medium) !important;
+  margin: 0 0 32px 0 !important;
+  line-height: var(--line-height-normal) !important;
+}
+
+/* Form styling */
+.login-form {
+  margin-top: 0 !important;
+  text-align: left !important;
+}
+
+/* Input containers */
+.input-container, .password-container {
+  margin-bottom: 24px !important;
+  position: relative !important;
+}
+
+/* Input labels */
+.login-form label {
+  display: block !important;
+  font-size: var(--font-size-md) !important;
+  font-weight: var(--font-weight-medium) !important;
+  color: var(--color-gray-700) !important;
+  margin-bottom: 8px !important;
+}
+
+/* Modern input styling - Match the clean design */
+.login-input, .password-input {
+  width: 100% !important;
+  height: 48px !important;
+  padding: 0 16px !important;
+  font-size: var(--font-size-xl) !important;
+  font-weight: var(--font-weight-normal) !important;
+  border: 2px solid var(--color-gray-300) !important;
+  border-radius: 12px !important;
+  background: var(--color-white) !important;
+  transition: all 0.2s ease !important;
+  outline: none !important;
+  box-shadow: none !important;
+  letter-spacing: 0.3px !important;
+  box-sizing: border-box !important;
+  font-family: var(--font-family-primary) !important;
+  color: var(--color-gray-700) !important;
+}
+
+.password-input {
+  padding-right: 48px !important;
+}
+
+/* Focus states */
+.login-input:focus, .password-input:focus {
+  border-color: var(--color-brand-gold) !important;
+  box-shadow: 0 0 0 3px rgba(240, 165, 0, 0.1) !important;
+}
+
+/* Error states - Match the red border in image */
+.login-input.error, .password-input.error,
+.login-input[aria-invalid="true"], .password-input[aria-invalid="true"] {
+  border-color: var(--color-red-primary) !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+}
+
+.login-input::placeholder, .password-input::placeholder {
+  color: var(--color-gray-400) !important;
+  font-weight: 400 !important;
+}
+
+/* Password toggle */
+.password-toggle {
+  position: absolute !important;
+  right: 14px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 32px !important;
+  height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: none !important;
+  border: none !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  font-size: var(--font-size-xl) !important;
+  color: var(--color-gray-500) !important;
+  transition: all 0.2s ease !important;
+}
+
+.password-toggle:hover {
+  background: var(--color-gray-100) !important;
+  color: var(--color-gray-700) !important;
+}
+
+/* Error message styling */
+.error-container {
+  margin-top: 20px !important;
+}
+
+/* Success message */
+.success-message {
+  margin-top: 20px !important;
+  padding: 16px 20px !important;
+  background: var(--color-green-primary) !important;
+  color: white !important;
+  border-radius: 12px !important;
+  font-size: var(--font-size-lg) !important;
+  font-weight: var(--font-weight-semibold) !important;
+  text-align: center !important;
+}
+
+/* Login button - Match the orange button */
+.login-button {
+  width: 100% !important;
+  height: 48px !important;
+  margin-top: 10px !important;
+  padding: 0 24px !important;
+  font-size: var(--font-size-xl) !important;
+  font-weight: var(--font-weight-semibold) !important;
+  letter-spacing: 0.3px !important;
+  color: var(--color-white) !important;
+  background: var(--color-brand-gold) !important;
+  border: none !important;
+  border-radius: 12px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  position: relative !important;
+  overflow: hidden !important;
+  font-family: var(--font-family-primary) !important;
+}
+
+.login-button:hover {
+  background: var(--color-brand-gold-dark) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(240, 165, 0, 0.3) !important;
+}
+
+.login-button:active {
+  transform: translateY(0) !important;
+}
+
+/* Links container - Match the vertical stack */
+.links-container {
+  margin-top: 10px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+  align-items: center !important;
+}
+
+/* Link styling - Match the design */
+.signup-link, .forgot-link {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 12px 24px !important;
+  font-size: var(--font-size-md) !important;
+  font-weight: var(--font-weight-medium) !important;
+  text-decoration: none !important;
+  border-radius: 12px !important;
+  transition: all 0.2s ease !important;
+  width: 100% !important;
+  text-align: center !important;
+  font-family: var(--font-family-primary) !important;
+}
+
+/* Back to Login button - Gray like in image */
+.signup-link {
+  color: var(--color-gray-500) !important;
+  background: var(--color-gray-50) !important;
+  border: 1px solid var(--color-gray-200) !important;
+}
+
+.signup-link:hover {
+  background: var(--color-gray-100) !important;
+  border-color: var(--color-gray-300) !important;
+}
+
+/* Have a Code button - Light orange like in image */
+.forgot-link {
+  color: var(--color-brand-gold) !important;
+  background: rgba(240, 165, 0, 0.08) !important;
+  border: 1px solid rgba(240, 165, 0, 0.2) !important;
+}
+
+.forgot-link:hover {
+  background: rgba(240, 165, 0, 0.12) !important;
+  border-color: rgba(240, 165, 0, 0.3) !important;
+}
+
+/* Caps Lock warning */
+.caps-lock-warning {
+  position: absolute !important;
+  top: 100% !important;
+  left: 0 !important;
+  right: 0 !important;
+  margin-top: 4px !important;
+  padding: 8px 12px !important;
+  background: #fef3c7 !important;
+  border: 1px solid #f59e0b !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  color: #92400e !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  z-index: 20 !important;
+}
+
+/* Login delay countdown */
+.login-delay-warning {
+  margin-top: 12px !important;
+  padding: 12px 16px !important;
+  background: #fef2f2 !important;
+  border: 1px solid #fecaca !important;
+  border-radius: 12px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: #dc2626 !important;
+  text-align: center !important;
+}
+
+/* Failed attempts counter */
+.failed-attempts-info {
+  margin-top: 8px !important;
+  padding: 8px 12px !important;
+  background: #fffbeb !important;
+  border: 1px solid #fed7aa !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  color: #ea580c !important;
+  text-align: center !important;
+}
+
+/* Responsive design */
+@media (max-width: 480px) {
+  .login-page-container {
+    padding: 16px !important;
+  }
+  
+  .enhanced-card {
+    padding: 40px 24px !important;
+    max-width: 100% !important;
+  }
+  
+  .login-title {
+    font-size: var(--font-size-5xl) !important;
+  }
+}

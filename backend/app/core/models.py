@@ -35,6 +35,7 @@ class Bowler(Base):
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     name: Mapped[str] = mapped_column(String, nullable=False)
     average: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    handicap: Mapped[int | None] = mapped_column(Integer, nullable=True)  # Calculated handicap pins
     handicap_entries: Mapped[int | None] = mapped_column(Integer, nullable=True)
     scratch_entries: Mapped[int | None] = mapped_column(Integer, nullable=True)
     lane: Mapped[str | None] = mapped_column(String, nullable=True)
@@ -211,3 +212,17 @@ class MatchHistory(Base):
     bracket_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
     round_number: Mapped[int] = mapped_column(Integer, nullable=False)  # 1 for first round
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+
+
+class SimpleBracket(Base):
+    """Simplified bracket storage using JSON"""
+    __tablename__ = "simple_brackets"
+
+    id = Column(Integer, primary_key=True, index=True)
+    tournament_id = Column(Integer, ForeignKey("tournament.id"), nullable=False, index=True)
+    squad_id = Column(Integer, ForeignKey("squad.id"), nullable=True, index=True)
+    bracket_data = Column(JSON, nullable=False)
+    bracket_size = Column(Integer, nullable=False, default=8)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    is_active = Column(Boolean, default=True, index=True)

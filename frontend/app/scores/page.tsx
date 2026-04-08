@@ -13,26 +13,27 @@ import { API } from '../lib/api'
 import { usePageHeader } from '../lib/header-context'
 import EnhancedButton from '../components/EnhancedButton'
 import { MobileLayout } from '../../components/MobileLayout'
-import { typography, colors, spacing, stylePresets } from '../lib/design-system'
-import { Spinner, LoadingButton, LoadingState } from '../components/LoadingComponents'
+import { Spinner } from '../components/LoadingComponents'
+import styles from './scores.module.css'
 import { useToast } from '../components/Toast'
 import { ErrorMessage } from '../components/ErrorHandling'
 import { usePagination, Pagination } from '../components/Performance'
 import { AccessibleInput } from '../components/Accessibility'
 import { useAutoSave } from '../components/DataManagement'
+import NoTournamentState from '../components/NoTournamentState'
 import { logger } from '../lib/logger';
-import { 
-  PageContainer, 
-  ContentWrapper, 
-  Card, 
-  Grid, 
+import {
+  PageContainer,
+  ContentWrapper,
+  Card,
+  Grid,
   StatCard,
   Button,
   Table,
   TableHeader,
   TableBody,
   TableRow,
-  TableCell
+  TableCell,
 } from '../components/UI'
 
 
@@ -45,59 +46,6 @@ export default function ScoresPage() {
   const hasStoredAuth = typeof window !== 'undefined' && 
     localStorage.getItem('token') && 
     localStorage.getItem('user_id');
-
-  // Wait for auth initialization before making decisions
-  if (!isInitialized) {
-    return (
-      <div style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center', 
-        minHeight: '100vh',
-        fontFamily: 'Inter, sans-serif'
-      }}>
-        <div style={{ textAlign: 'center' }}>
-          <div>Loading score management...</div>
-        </div>
-      </div>
-    );
-  }
-
-  // Authentication guard - redirect if not logged in (only after initialization)
-  if (!isAuthenticated && !hasStoredAuth) {
-    return (
-      <div style={{ 
-        padding: '2rem', 
-        textAlign: 'center',
-        minHeight: '50vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}>
-        <div>
-          <div>Please log in to access score management</div>
-        </div>
-      </div>
-    );
-  }
-
-  // Show loading if we have stored auth but context isn't ready yet
-  if (!isAuthenticated && hasStoredAuth) {
-    return (
-      <div style={{ 
-        padding: '2rem', 
-        textAlign: 'center',
-        minHeight: '50vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}>
-        <div>
-          <div>Loading score management...</div>
-        </div>
-      </div>
-    );
-  }
 
   const [players, setPlayers] = useState<Player[]>([])
   const [tournament, setTournament] = useState<Tournament | null>(null)
@@ -322,35 +270,15 @@ export default function ScoresPage() {
 
   // Header configuration
   const headerActions = useMemo(() => (
-    <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-      <button
+    <div className={styles.headerActions}>
+      <Button
         onClick={() => {
           addToast({ message: 'Refreshing scores data...', type: 'info', duration: 2000 })
           window.location.reload()
         }}
-        style={{
-          backgroundColor: '#F47C20',
-          color: 'white',
-          border: 'none',
-          borderRadius: '8px',
-          padding: '10px 20px',
-          fontSize: '14px',
-          fontWeight: '600',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          transition: 'all 0.2s ease'
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = '#D9651A'
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = '#F47C20'
-        }}
       >
         Refresh Data
-      </button>
+      </Button>
       
       {pendingSaves.length > 0 && (
         <EnhancedButton
@@ -373,9 +301,9 @@ export default function ScoresPage() {
 
   usePageHeader({
     title: 'Scores',
-    subtitle: tournament 
-      ? `Managing: ${tournament.name}${tournament.location ? ` • ${tournament.location}` : ''}${tournament.start_date ? ` • ${new Date(tournament.start_date).toLocaleDateString()}` : ''}`
-      : 'Manage player scores and tournament results',
+    subtitle: tournament
+      ? `${tournament.name}${selectedSquad ? ` · ${[selectedSquad.date, selectedSquad.time].filter(Boolean).join(' ')}` : ''}`
+      : 'Select a tournament from the dashboard',
     actions: headerActions
   })
 
@@ -434,6 +362,44 @@ export default function ScoresPage() {
       setIsLoading(false)
     }
   }, [])
+
+  // Auth guards (after all hooks)
+  if (!isInitialized) {
+    return (
+      <div className={styles.loadingState}>
+        <div>Loading score management...</div>
+      </div>
+    )
+  }
+
+  if (!isAuthenticated && !hasStoredAuth) {
+    return (
+      <div className={styles.authRequired}>
+        <div>Please log in to access score management</div>
+      </div>
+    )
+  }
+
+  if (!isAuthenticated && hasStoredAuth) {
+    return (
+      <div className={styles.authRequired}>
+        <div>Loading score management...</div>
+      </div>
+    )
+  }
+
+  if (typeof window !== 'undefined' && !localStorage.getItem('lastTournamentId')) {
+    return (
+      <NoTournamentState
+        description="Load a tournament from the dashboard to enter and manage scores. Once loaded, you'll be able to record game scores for each player across all rounds."
+        cards={[
+          { title: 'Enter Scores', text: 'Record game scores for each player per round directly in the score sheet' },
+          { title: 'Auto-Save', text: 'Scores are saved automatically as you type — no need to manually submit' },
+          { title: 'Sort & Filter', text: 'Sort players by name, average, or score to quickly find and update entries' },
+        ]}
+      />
+    )
+  }
 
   const fetchPlayersWithScores = async (tournamentId: string, squadId: number | null, token: string) => {
     try {
@@ -832,47 +798,12 @@ export default function ScoresPage() {
           <div className="space-y-4">
             {/* No Tournament State */}
             {!tournament && !isLoading && (
-              <div style={{
-                background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
-                borderRadius: '16px',
-                padding: '40px 24px',
-                textAlign: 'center',
-                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.06)',
-                border: '2px solid #e2e8f0',
-                margin: '20px 0'
-              }}>
-                <h2 style={{
-                  fontSize: '22px',
-                  fontWeight: 700,
-                  color: '#1e293b',
-                  marginBottom: '12px',
-                  letterSpacing: '-0.02em'
-                }}>
-                  No Tournament Loaded
-                </h2>
-                <p style={{
-                  fontSize: '15px',
-                  color: '#64748b',
-                  marginBottom: '24px',
-                  lineHeight: '1.6'
-                }}>
+              <div className={styles.noTournamentMobile}>
+                <h2 className={styles.noTournamentTitleMobile}>No Tournament Loaded</h2>
+                <p className={styles.noTournamentTextMobile}>
                   Load a tournament from the dashboard to start entering scores
                 </p>
-                <Link 
-                  href="/dashboard"
-                  style={{
-                    display: 'inline-block',
-                    background: 'linear-gradient(135deg, #F47C20 0%, #D9651A 100%)',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '10px',
-                    padding: '12px 24px',
-                    fontSize: '15px',
-                    fontWeight: '600',
-                    textDecoration: 'none',
-                    boxShadow: '0 4px 14px rgba(240, 165, 0, 0.3)'
-                  }}
-                >
+                <Link href="/dashboard" className={styles.dashboardBtnMobile}>
                   Go to Dashboard
                 </Link>
               </div>
@@ -980,85 +911,22 @@ export default function ScoresPage() {
         </MobileLayout>
       ) : (
         // Desktop Layout
-      <div style={{ 
-        maxWidth: '1200px', 
-        margin: '0 auto', 
-        padding: '2rem 1rem'
-      }}>
-        
+      <div className={styles.desktopContainer}>
+
           {/* No Tournament State - Desktop */}
           {!tournament && !isLoading && (
-            <div style={{
-              background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
-              borderRadius: '20px',
-              padding: '60px 40px',
-              textAlign: 'center',
-              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.06)',
-              border: '2px solid #e2e8f0',
-              marginBottom: '24px'
-            }}>
-              <h2 style={{
-                fontSize: '28px',
-                fontWeight: 700,
-                color: '#1e293b',
-                marginBottom: '12px',
-                letterSpacing: '-0.02em',
-                marginTop: '24px'
-              }}>
-                No Tournament Loaded
-              </h2>
-              <p style={{
-                fontSize: '16px',
-                color: '#64748b',
-                marginBottom: '32px',
-                maxWidth: '560px',
-                margin: '0 auto 32px',
-                lineHeight: '1.6'
-              }}>
+            <div className={styles.noTournamentDesktop}>
+              <h2 className={styles.noTournamentTitleDesktop}>No Tournament Loaded</h2>
+              <p className={styles.noTournamentTextDesktop}>
                 You need to load a tournament from the dashboard before you can enter scores. Once loaded, you'll be able to enter and manage scores for all players.
               </p>
-              <Link 
-                href="/dashboard"
-                style={{
-                  display: 'inline-block',
-                  background: 'linear-gradient(135deg, #F47C20 0%, #D9651A 100%)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '12px',
-                  padding: '14px 28px',
-                  fontSize: '16px',
-                  fontWeight: '600',
-                  textDecoration: 'none',
-                  boxShadow: '0 4px 14px rgba(240, 165, 0, 0.3)',
-                  transition: 'all 0.2s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 6px 20px rgba(240, 165, 0, 0.4)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 4px 14px rgba(240, 165, 0, 0.3)';
-                }}
-              >
+              <Link href="/dashboard" className={styles.dashboardBtnDesktop}>
                 Go to Dashboard
               </Link>
-              
-              {/* Quick Info */}
-              <div style={{
-                marginTop: '48px',
-                padding: '24px',
-                background: 'white',
-                borderRadius: '12px',
-                border: '1px solid #e2e8f0',
-                maxWidth: '600px',
-                margin: '48px auto 0',
-                textAlign: 'left'
-              }}>
-                <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#1e293b', marginBottom: '12px' }}>
-                  What you can do with Scores:
-                </h3>
-                <ul style={{ fontSize: '14px', color: '#64748b', lineHeight: '1.8', paddingLeft: '20px', margin: 0 }}>
+
+              <div className={styles.quickInfo}>
+                <h3 className={styles.quickInfoTitle}>What you can do with Scores:</h3>
+                <ul className={styles.quickInfoList}>
                   <li>Enter scratch scores for each game</li>
                   <li>Automatic handicap calculation</li>
                   <li>Real-time totals and rankings</li>
@@ -1086,14 +954,14 @@ export default function ScoresPage() {
 
           {/* Loading State */}
           {isLoading && (
-            <div className="text-center text-secondary" style={{ padding: '3rem' }}>
+            <div className={styles.statusMessage}>
               Loading players and scores...
             </div>
           )}
 
           {/* No Players State */}
-          {!isLoading && players.length === 0 && (
-            <div className="text-center text-secondary" style={{ padding: '3rem' }}>
+          {!isLoading && players.length === 0 && tournament && (
+            <div className={styles.statusMessage}>
               No players found. <Link href="/players">Add some players first</Link>
             </div>
           )}
@@ -1107,46 +975,19 @@ export default function ScoresPage() {
 
           {/* Scores Table */}
           {!isLoading && players.length > 0 && (
-            <div style={{
-              background: 'linear-gradient(145deg, #ffffff 0%, #f8fafb 100%)',
-              borderRadius: '16px',
-              padding: '24px',
-              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-              border: '1px solid rgba(240, 165, 0, 0.12)',
-              overflow: 'hidden',
-              marginBottom: '0'
-            }}>
-              <div style={{
-                overflowX: 'auto',
-                borderRadius: '12px',
-                border: '1px solid #e5e7eb'
-              }}>
-                <table style={{
-                  width: '100%',
-                  borderCollapse: 'collapse',
-                  fontSize: '13px',
-                  backgroundColor: '#ffffff'
-                }} aria-label="Player Scores">
+            <div className={styles.tableCard}>
+              <div className={styles.tableWrapper}>
+                <table className={styles.table} aria-label="Player Scores">
 
             <thead>
               {selectedSquad && (
-                <tr>
-                  <td colSpan={12} style={{ 
-                    backgroundColor: 'rgba(79, 140, 255, 0.1)', 
-                    color: '#4f8cff',
-                    textAlign: 'center',
-                    fontSize: '13px',
-                    fontWeight: '600',
-                    padding: '10px'
-                  }}>
+                <tr className={styles.squadRow}>
+                  <td colSpan={12}>
                     Showing scores for: {selectedSquad.date} — {selectedSquad.time}
                   </td>
                 </tr>
               )}
-              <tr style={{
-                backgroundColor: '#f8fafc',
-                borderBottom: '2px solid #e5e7eb'
-              }}>
+              <tr className={styles.tableHeaderRow}>
                 <SortableHeader column="firstName" sortConfig={sortConfig} onSort={handleSort} align="center" width="9%">
                   First Name
                 </SortableHeader>
@@ -1287,22 +1128,8 @@ export default function ScoresPage() {
 
         {/* Pagination Controls */}
         {paginationHook.totalPages > 1 && (
-          <div style={{ 
-            marginTop: '2rem',
-            marginBottom: '0',
-            paddingBottom: '0',
-            display: 'flex', 
-            justifyContent: 'center',
-            alignItems: 'center',
-            gap: '1rem'
-          }}>
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '0.5rem',
-              fontSize: '0.875rem',
-              color: '#5E6B75'
-            }}>
+          <div className={styles.paginationWrapper}>
+            <div className={styles.paginationInfo}>
               <span>
                 Showing {((paginationHook.currentPage - 1) * 20) + 1} to{' '}
                 {Math.min(paginationHook.currentPage * 20, players.length)} of{' '}

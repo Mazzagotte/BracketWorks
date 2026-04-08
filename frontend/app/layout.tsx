@@ -1,17 +1,17 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { colors, rgba } from './styles/colors';
 import './styles/globals.css';
 import './styles/colors.global.css';
 import './styles/login.css';
+import styles from './layout.module.css';
 
 import Sidebar from '../components/Sidebar';
 import ModernHeader from './components/ModernHeader';
 import { MobileNav } from '../components/MobileNav';
 import { ToastProvider } from './components/Toast';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { AuthProvider, useAuth, useIsAuthenticated } from './lib/auth-context';
+import { AuthProvider, useAuth } from './lib/auth-context';
 import { HeaderProvider, useHeader } from './lib/header-context';
 import { logger } from './lib/logger';
 import { ApiHealthCheck } from './components/ApiHealthCheck';
@@ -134,30 +134,27 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
   // Prevent hydration mismatch by not rendering dynamic content until mounted
   if (!mounted) {
     return (
-      <ToastProvider>
-        <ErrorBoundary>
-          <div id="main-content">
-            <ErrorBoundary>
-              {children}
-            </ErrorBoundary>
-          </div>
-          <ApiHealthCheck />
-          <DevAuthStatus />
-        </ErrorBoundary>
-      </ToastProvider>
+      <ErrorBoundary>
+        <div id="main-content">
+          <ErrorBoundary>
+            {children}
+          </ErrorBoundary>
+        </div>
+        <ApiHealthCheck />
+        <DevAuthStatus />
+      </ErrorBoundary>
     );
   }
 
   return (
-    <ToastProvider>
-      <ErrorBoundary>
-        {isLoginPage ? (
-          <div id="main-content">
-            <ErrorBoundary>
-              {children}
-            </ErrorBoundary>
-          </div>
-        ) : (
+    <ErrorBoundary>
+      {isLoginPage ? (
+        <div id="main-content">
+          <ErrorBoundary>
+            {children}
+          </ErrorBoundary>
+        </div>
+      ) : (
         <>
           {/* Desktop Sidebar - Only show when authenticated */}
           {!isMobile && isUserAuthenticated && (
@@ -180,126 +177,38 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
             />
           )}
           
-          {/* Enhanced Mobile Header */}
+          {/* Mobile Header */}
           {isMobile && isUserAuthenticated && (
-            <header 
-              className="mobile-header"
-              style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '60px',
-                background: 'linear-gradient(135deg, #1a1f2e 0%, #2d3748 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                padding: '0 16px',
-                zIndex: 997,
-                boxShadow: '0 2px 12px rgba(0, 0, 0, 0.15)',
-                backdropFilter: 'blur(10px)'
-              }}
-            >
+            <header className={styles.mobileHeader}>
               <button
                 onClick={() => setSidebarOpen(true)}
                 aria-label="Open navigation menu"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '44px',
-                  height: '44px',
-                  background: rgba(colors.brand.gold, 0.1),
-                  border: `1px solid ${rgba(colors.brand.gold, 0.3)}`,
-                  borderRadius: '12px',
-                  color: colors.brand.gold,
-                  fontSize: '18px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
-                }}
-                onTouchStart={(changeEvent) => { 
-                  changeEvent.currentTarget.style.backgroundColor = rgba(colors.brand.gold, 0.2);
-                  changeEvent.currentTarget.style.transform = 'scale(0.95)';
-                }}
-                onTouchEnd={(changeEvent) => { 
-                  changeEvent.currentTarget.style.backgroundColor = rgba(colors.brand.gold, 0.1);
-                  changeEvent.currentTarget.style.transform = 'scale(1)';
-                }}
+                className={styles.hamburgerBtn}
               >
                 ☰
               </button>
-              
-              <div style={{
-                flex: 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <h1 style={{
-                  color: colors.white,
-                  fontSize: '18px',
-                  fontWeight: 600,
-                  margin: 0,
-                  letterSpacing: '0.5px'
-                }}>
-                  BracketWorks
-                </h1>
+              <div className={styles.mobileHeaderCenter}>
+                <h1 className={styles.mobileHeaderTitle}>BracketWorks</h1>
               </div>
-
-              {/* Page indicator */}
-              <div style={{
-                fontSize: '12px',
-                color: colors.gray[400],
-                background: 'rgba(255, 255, 255, 0.1)',
-                padding: '4px 8px',
-                borderRadius: '6px',
-                textTransform: 'capitalize'
-              }}>
-                {currentPage}
-              </div>
+              <div className={styles.pageIndicator}>{currentPage}</div>
             </header>
           )}
           
-          <main 
+          <main
             id="main-content"
-            style={{ 
-              marginLeft: !isMobile ? '260px' : '0',
-              marginTop: isMobile && isUserAuthenticated ? '60px' : '0',
-              minHeight: '100vh', /* Allow content to be taller than viewport */
-              width: !isMobile ? 'calc(100% - 260px)' : '100%',
-              transition: 'all 0.3s ease',
-              background: 'linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%)',
-              padding: isMobile ? '16px' : '24px',
-              boxSizing: 'border-box',
-              position: 'relative'
-            }}
-            suppressHydrationWarning={true}
+            className={`${styles.main} ${isMobile ? styles.mainMobile : styles.mainDesktop} ${isMobile && isUserAuthenticated ? styles.mainMobileAuth : ''}`}
           >
             {/* Modern Header for authenticated pages */}
             {mounted && isUserAuthenticated && (
-              <ModernHeader 
+              <ModernHeader
                 title={headerContext.title}
                 subtitle={headerContext.subtitle}
                 actions={headerContext.actions}
-                centerContent={headerContext.centerContent}
-                showBreadcrumbs={headerContext.showBreadcrumbs}
-                breadcrumbs={headerContext.breadcrumbs}
               />
             )}
-            
-            {/* Page Content - White card container */}
-            <div 
-              style={{ 
-                background: colors.white,
-                borderRadius: isMobile ? '12px' : '16px',
-                padding: isMobile ? '20px' : '24px',
-                paddingTop: mounted && isUserAuthenticated ? '20px' : '20px',
-                maxWidth: '1200px',
-                margin: mounted && isUserAuthenticated ? '20px auto 0 auto' : '0 auto',
-                marginBottom: '0',
-                boxSizing: 'border-box'
-              }}
-              suppressHydrationWarning={true}
-            >
+
+            {/* Page Content */}
+            <div className={`${styles.contentCard} ${isMobile ? styles.contentCardMobile : ''} ${!(mounted && isUserAuthenticated) ? styles.contentCardNoAuth : ''}`}>
               <ErrorBoundary>
                 {children}
               </ErrorBoundary>
@@ -313,7 +222,6 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
       {/* Development Authentication Status Indicator - Upper Right */}
       <DevAuthStatus />
       </ErrorBoundary>
-    </ToastProvider>
   );
 }
 
@@ -322,7 +230,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes, viewport-fit=cover" />
-        <meta name="theme-color" content={colors.brand.gold} />
+        <meta name="theme-color" content="#F47C20" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="BracketWorks" />
@@ -352,7 +260,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <AuthProvider>
           <HeaderProvider>
-            <AuthAwareLayout>{children}</AuthAwareLayout>
+            <ToastProvider>
+              <AuthAwareLayout>{children}</AuthAwareLayout>
+            </ToastProvider>
           </HeaderProvider>
         </AuthProvider>
       </body>
