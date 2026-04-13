@@ -502,7 +502,7 @@ export default function BracketsPage() {
               No Tournament Loaded
             </h2>
             <p className={`${styles.noTournamentText} ${isMobile ? styles.noTournamentTextMobile : styles.noTournamentTextDesktop}`}>
-              Load a tournament from the dashboard to generate and manage brackets. Once loaded, you'll be able to create brackets, track matches, and manage tournament progress.
+              Load a tournament from the dashboard to generate and manage brackets. Once loaded, you&apos;ll be able to create brackets, track matches, and manage tournament progress.
             </p>
             <a href="/dashboard" className={`${styles.dashboardBtn} ${isMobile ? styles.dashboardBtnMobile : styles.dashboardBtnDesktop}`}>
               Go to Dashboard
