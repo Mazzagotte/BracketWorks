@@ -68,7 +68,6 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
     <h1 style={stylePresets.pageHeader}>
       {title}
     </h1>
-PageHeader.displayName = 'PageHeader'
     {subtitle && (
       <p style={{
         fontSize: typography.fontSize.lg,
@@ -322,6 +321,8 @@ export const StatCard: React.FC<StatCardProps> = React.memo(({
     </div>
   )
 })
+
+StatCard.displayName = 'StatCard'
 
 // Button Component
 interface ButtonProps {
