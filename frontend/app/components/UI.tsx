@@ -68,6 +68,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
     <h1 style={stylePresets.pageHeader}>
       {title}
     </h1>
+PageHeader.displayName = 'PageHeader'
     {subtitle && (
       <p style={{
         fontSize: typography.fontSize.lg,
@@ -182,6 +183,7 @@ export const Card: React.FC<CardProps> = React.memo(({
     {children}
   </div>
 ))
+Card.displayName = 'Card'
 
 // Grid Container Component
 interface GridProps {

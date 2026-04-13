@@ -375,7 +375,7 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
               )}
             </div>
             {confirmPassword && !fieldValidation.confirmPassword && (
-              <div className={styles.fieldHint}>Passwords don't match</div>
+              <div className={styles.fieldHint}>Passwords don&apos;t match</div>
             )}
           </div>
 
