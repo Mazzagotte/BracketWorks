@@ -129,28 +129,25 @@
 .passwordToggle {
   position: absolute;
   right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  margin-top: 12px;
-  padding: 4px 10px;
+  bottom: 0;
+  height: var(--input-height-lg);
   display: flex;
   align-items: center;
-  justify-content: center;
-  background: rgba(107, 114, 128, 0.08);
-  border: 1px solid rgba(107, 114, 128, 0.15);
-  border-radius: 6px;
+  gap: 4px;
+  background: none;
+  border: none;
   cursor: pointer;
   font-size: 12px;
-  font-weight: 500;
   color: #6b7280;
-  transition: all 0.15s ease;
+  padding: 0 4px;
   z-index: 10;
-  line-height: 1;
+  transform: none;
+  user-select: none;
 }
 
 .passwordToggle:hover {
-  background: rgba(107, 114, 128, 0.14);
-  border-color: rgba(107, 114, 128, 0.25);
+  color: #374151;
+  transform: none;
 }
 
 /* Caps Lock Warning */

@@ -35,17 +35,12 @@
   --line-height-relaxed: 1.625;
   --line-height-loose: 2;
   
-  /* Legacy color variables - Now pointing to unified color system */
-  /* These are kept for backward compatibility with existing styles */
-  --color-primary: var(--color-primary);
+  /* Legacy color aliases - pointing to unified color system */
   --color-primary-light: #bfdbfe;
-  --color-primary-hover: var(--color-primary-hover);
   --color-accent: var(--color-warning);
   --color-background: var(--color-gray-50);
   --color-surface: var(--color-white);
   --color-surface-hover: var(--color-gray-50);
-  --color-text-primary: var(--color-text-primary);
-  --color-text-secondary: var(--color-text-secondary);
   --color-text-muted: var(--color-gray-400);
   --color-text-light: var(--color-gray-300);
   --color-border: var(--color-gray-200);
@@ -54,11 +49,8 @@
   --color-orange: var(--color-primary);
   --color-orange-hover: var(--color-primary-hover);
   --color-orange-dark: var(--color-primary-hover);
-  --color-success: var(--color-success);
   --color-success-hover: var(--color-green-dark);
-  --color-warning: var(--color-warning);
   --color-warning-light: var(--color-yellow-primary);
-  --color-error: var(--color-error);
   --color-error-light: var(--color-error);
   --color-info: var(--color-blue-primary);
 }
@@ -910,7 +902,6 @@ nav a {
 
 /* Page Layout */
 .page-main {
-  background: var(--color-background);
   font-family: var(--font-family-primary);
 }
 
@@ -1624,6 +1615,25 @@ button[class*="relative"]:focus {
 
 .ds-btn-error:focus-visible,
 .ds-btn-danger:focus-visible {
+  outline: 3px solid rgba(214, 69, 69, 0.45);
+  outline-offset: 2px;
+}
+
+/* Destructive — orange default, red on hover */
+.ds-btn-destructive {
+  background: linear-gradient(135deg, #F47C20 0%, #D9651A 100%);
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 1px 3px rgba(244, 124, 32, 0.25);
+}
+
+.ds-btn-destructive:not(:disabled):hover {
+  background: linear-gradient(135deg, #D64545 0%, #b83c3c 100%);
+  box-shadow: 0 4px 12px rgba(214, 69, 69, 0.35);
+  transform: translateY(-1px);
+}
+
+.ds-btn-destructive:focus-visible {
   outline: 3px solid rgba(214, 69, 69, 0.45);
   outline-offset: 2px;
 }
