@@ -53,7 +53,7 @@ const BracketTreeViewComponent = ({
   // Memoize round statistics to avoid recalculating on every render
   const roundStats = useMemo(() => {
     return displayRounds.map(round => {
-      const completedMatches = round.matches.filter(m => m.winner).length
+      const completedMatches = round.matches.filter(m => m.winner || m.split_pot || m.both_advance).length
       const totalMatches = round.matches.length
       const progressPercent = (completedMatches / totalMatches) * 100
       return { completedMatches, totalMatches, progressPercent }
@@ -80,7 +80,7 @@ const BracketTreeViewComponent = ({
             return (
               <div key={roundIndex} className={styles.roundHeader}>
                 <div className={styles.roundBadgeContainer}>
-                  <div className={styles.roundBadge}>{roundIndex + 1}</div>
+                  <div className={`${styles.roundBadge} ${styles[`roundBadge${roundIndex + 1}`] || ''}`}>{roundIndex + 1}</div>
                   <div className={styles.roundInfo}>
                     <h3 className={styles.roundTitle}>{round.roundName || `Round ${roundIndex + 1}`}</h3>
                     <span className={styles.roundProgress}>
@@ -298,7 +298,7 @@ const BracketTreeViewComponent = ({
  * Helper function to determine match status based on data
  */
 function getMatchStatus(match: Match): 'pending' | 'in_progress' | 'completed' | 'next_up' {
-  if (match.winner) return 'completed'
+  if (match.winner || match.split_pot || match.both_advance) return 'completed'
   if (match.scoreA !== undefined || match.scoreB !== undefined) return 'in_progress'
   if (!match.playerA || !match.playerB || match.playerA === 'TBD' || match.playerB === 'TBD') return 'pending'
   return 'next_up' // Both players assigned, no scores yet

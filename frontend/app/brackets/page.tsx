@@ -1,13 +1,13 @@
 'use client'
 
-import React, { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from 'react'
 import { useAuth } from '../lib/auth-context'
 import { usePageHeader } from '../lib/header-context'
 import { ErrorBoundary } from '../components/ErrorBoundary'
-import { useBrackets, BracketPreview, Match } from '../hooks/useBrackets'
+import { useBrackets, BracketPreview } from '../hooks/useBrackets'
 import { useTournaments, useSquads } from '../hooks/useTournaments'
 import { useToast } from '../components/Toast'
-import { Tournament, Squad, BracketResponse, BracketData, BracketRound } from '../lib/types'
+import { Tournament, Squad, BracketResponse, BracketData } from '../lib/types'
 import { logger } from '../lib/logger'
 import { storage } from '../lib/storage'
 import { cleanupModalState, resetScrollLocks } from '../utils/modalUtils'
@@ -21,7 +21,6 @@ import styles from './brackets.module.css'
 // Lazy load heavy components for better initial load performance
 const BracketGenerationModal = lazy(() => import('../components/BracketGenerationModal'))
 const BracketTreeView = lazy(() => import('./components/BracketTreeView').then(mod => ({ default: mod.BracketTreeView })))
-const BracketStatsPanel = lazy(() => import('./components/BracketStatsPanel').then(mod => ({ default: mod.BracketStatsPanel })))
 const MobileBracketView = lazy(() => import('./components/MobileBracketView').then(mod => ({ default: mod.MobileBracketView })))
 
 export default function BracketsPage() {
@@ -428,10 +427,10 @@ export default function BracketsPage() {
   // Memoize the Generate Brackets button to prevent infinite re-renders
   const generateBracketsButton = useMemo(() => (
     <div className={styles.headerActions}>
-      <button onClick={() => setIsExplainModalOpen(true)} className={styles.explainBtn}>
+      <button onClick={() => setIsExplainModalOpen(true)} className="ds-btn ds-btn-primary ds-btn-md">
         Explain Brackets
       </button>
-      <button onClick={handleGenerateBrackets} className={styles.generateBtn}>
+      <button onClick={handleGenerateBrackets} className="ds-btn ds-btn-primary ds-btn-md">
         Generate Brackets
       </button>
     </div>
@@ -534,10 +533,9 @@ export default function BracketsPage() {
         /* Show empty state if no brackets */
         (() => {
           const hasLoadedBrackets = !!loadedBrackets
-          const hasRounds = !!rounds
           const roundsLength = rounds?.length || 0
-          const showEmpty = !hasLoadedBrackets || !hasRounds || roundsLength === 0
-          
+          const showEmpty = !hasLoadedBrackets || roundsLength === 0
+
           return showEmpty
         })() ? (
           <EmptyBracketState
@@ -569,17 +567,6 @@ export default function BracketsPage() {
               activeFiltersCount={activeFiltersCount}
             />
 
-            {/* Bracket Stats Panel */}
-            {filteredBrackets.length > 0 && rounds.length > 0 && (
-              <Suspense fallback={<div className={styles.statsLoading}>Loading stats...</div>}>
-                <BracketStatsPanel
-                  rounds={rounds}
-                  bracketType={activeTab === 'all' ? 'scratch' : activeTab}
-                  totalPlayers={loadedBrackets?.bracket_size || loadedBrackets?.size || 8}
-                  lastUpdated={null}
-                />
-              </Suspense>
-            )}
 
             {/* Bracket Selector - Navigate between individual brackets */}
             {(() => {
@@ -595,8 +582,8 @@ export default function BracketsPage() {
               
               // Calculate bracket stats
               const totalMatches = rounds.reduce((sum, round) => sum + round.matches.length, 0)
-              const completedMatches = rounds.reduce((sum, round) => 
-                sum + round.matches.filter(m => m.winner).length, 0)
+              const completedMatches = rounds.reduce((sum, round) =>
+                sum + round.matches.filter(m => m.winner || m.split_pot || m.both_advance).length, 0)
               const progressPercent = totalMatches > 0 ? Math.round((completedMatches / totalMatches) * 100) : 0
               
               // Get bracket type
@@ -606,7 +593,6 @@ export default function BracketsPage() {
               
               return (
                 <div className={styles.bracketNav}>
-                  <div className={styles.bracketNavAccent} />
 
                   <button
                     onClick={() => setSelectedBracketIndex(Math.max(0, selectedBracketIndex - 1))}
@@ -638,9 +624,7 @@ export default function BracketsPage() {
                       <div
                         className={`${styles.progressBarFill} ${progressPercent === 100 ? styles.progressBarFillComplete : ''}`}
                         style={{ width: `${progressPercent}%` }}
-                      >
-                        <div className={styles.progressBarSheen} />
-                      </div>
+                      />
                     </div>
                   </div>
 

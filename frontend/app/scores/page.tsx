@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { Tournament, Squad, Player, BracketData, ScoreData, WinnerData, BracketSettings, ToastMessage, PendingScoreSave } from '../lib/types'
+import { Tournament, Squad, Player, ScoreData, PendingScoreSave } from '../lib/types'
 import { SortConfig, SortableScoreColumn } from './types'
 import { SortableHeader } from './components/SortableHeader'
 
@@ -16,25 +16,11 @@ import { MobileLayout } from '../../components/MobileLayout'
 import { Spinner } from '../components/LoadingComponents'
 import styles from './scores.module.css'
 import { useToast } from '../components/Toast'
-import { ErrorMessage } from '../components/ErrorHandling'
 import { usePagination, Pagination } from '../components/Performance'
-import { AccessibleInput } from '../components/Accessibility'
 import { useAutoSave } from '../components/DataManagement'
 import NoTournamentState from '../components/NoTournamentState'
 import { logger } from '../lib/logger';
-import {
-  PageContainer,
-  ContentWrapper,
-  Card,
-  Grid,
-  StatCard,
-  Button,
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableCell,
-} from '../components/UI'
+import { Button } from '../components/UI'
 
 
 
@@ -180,8 +166,8 @@ export default function ScoresPage() {
     itemsPerPage: 20
   })
 
-  // Auto-save for score data
-  const { saving: autoSaving, saveNow } = useAutoSave({
+  // Auto-save scores backup to localStorage
+  useAutoSave({
     data: { scores: players.map(player => player.scores).filter(Boolean) },
     saveFunction: async (data) => {
       if (typeof window !== 'undefined') {
@@ -487,12 +473,6 @@ export default function ScoresPage() {
     }
   }
 
-  const calculateHandicap = (average: number) => {
-    // Handicap = 80% of (200 - average)
-    if (!average || average >= 200) return 0
-    return Math.round((200 - average) * 0.8)
-  }
-
   const validateScore = (score: number | undefined) => {
     if (score === undefined || score === null) return { isValid: true, message: '' }
     if (score < 0) return { isValid: false, message: 'Score cannot be negative' }
@@ -692,41 +672,23 @@ export default function ScoresPage() {
 
   const calculateTotalWithHandicap = (player: Player) => {
     const scores = player.scores || {}
-    return (scores.game1_total || 0) + (scores.game2_total || 0) + (scores.game3_total || 0)
+    const scratch = (scores.game1_scratch || 0) + (scores.game2_scratch || 0) + (scores.game3_scratch || 0)
+    const gamesPlayed = [scores.game1_scratch, scores.game2_scratch, scores.game3_scratch].filter(s => s !== undefined && s !== null).length
+    return scratch + (player.handicap * gamesPlayed)
   }
 
-  const getGameTotal = (gameTotal: number | undefined, scratchScore: number | undefined) => {
-    // Only show total if there's an actual scratch score entered
-    if (scratchScore === undefined || scratchScore === null) {
-      return '—'
-    }
-    return gameTotal || '—'
+  const getGameTotal = (scratchScore: number | undefined, handicap: number) => {
+    if (scratchScore === undefined || scratchScore === null) return '—'
+    return scratchScore + handicap
   }
 
   const calculateDisplayTotal = (player: Player) => {
     const scores = player.scores || {}
-    // Only calculate total if at least one scratch score is entered
-    const hasScratches = scores.game1_scratch !== undefined && scores.game1_scratch !== null ||
-                         scores.game2_scratch !== undefined && scores.game2_scratch !== null ||
-                         scores.game3_scratch !== undefined && scores.game3_scratch !== null
-    
-    if (!hasScratches) {
-      return '—'
-    }
-    
-    // Calculate total from individual game totals that have scratch scores
-    let total = 0
-    if (scores.game1_scratch !== undefined && scores.game1_scratch !== null) {
-      total += scores.game1_total || 0
-    }
-    if (scores.game2_scratch !== undefined && scores.game2_scratch !== null) {
-      total += scores.game2_total || 0
-    }
-    if (scores.game3_scratch !== undefined && scores.game3_scratch !== null) {
-      total += scores.game3_total || 0
-    }
-    
-    return total || '—'
+    const games = [scores.game1_scratch, scores.game2_scratch, scores.game3_scratch]
+    const played = games.filter(s => s !== undefined && s !== null)
+    if (played.length === 0) return '—'
+    const scratch = played.reduce((sum, s) => sum + (s || 0), 0)
+    return scratch + (player.handicap * played.length)
   }
 
   // Keyboard navigation helper
@@ -877,21 +839,6 @@ export default function ScoresPage() {
                         </div>
                       ))}
                     </div>
-                    
-                    {/* Save status indicator */}
-                    {savingStatus[player.id] && (
-                      <div className="mt-2 text-center">
-                        <span className={`inline-flex items-center px-2 py-1 text-xs rounded ${
-                          savingStatus[player.id] === 'saving' ? 'bg-yellow-100 text-yellow-800' :
-                          savingStatus[player.id] === 'saved' ? 'bg-green-100 text-green-800' :
-                          'bg-red-100 text-red-800'
-                        }`}>
-                          {savingStatus[player.id] === 'saving' && 'Saving...'}
-                          {savingStatus[player.id] === 'saved' && 'Saved'}
-                          {savingStatus[player.id] === 'error' && 'Error'}
-                        </span>
-                      </div>
-                    )}
                   </div>
                 ))}
               </div>
@@ -1058,7 +1005,7 @@ export default function ScoresPage() {
                   
                   {/* Game 1 Total */}
                   <td className="scores-cell total">
-                    {getGameTotal(player.scores?.game1_total, player.scores?.game1_scratch)}
+                    {getGameTotal(player.scores?.game1_scratch, player.handicap)}
                   </td>
                   
                   {/* Game 2 Scratch */}
@@ -1082,7 +1029,7 @@ export default function ScoresPage() {
                   
                   {/* Game 2 Total */}
                   <td className="scores-cell total">
-                    {getGameTotal(player.scores?.game2_total, player.scores?.game2_scratch)}
+                    {getGameTotal(player.scores?.game2_scratch, player.handicap)}
                   </td>
                   
                   {/* Game 3 Scratch */}
@@ -1106,7 +1053,7 @@ export default function ScoresPage() {
                   
                   {/* Game 3 Total */}
                   <td className="scores-cell total">
-                    {getGameTotal(player.scores?.game3_total, player.scores?.game3_scratch)}
+                    {getGameTotal(player.scores?.game3_scratch, player.handicap)}
                   </td>
                   
                   {/* Total Scratch */}

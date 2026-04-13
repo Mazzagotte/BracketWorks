@@ -138,10 +138,15 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
     const currentPlayer = players.find(p => p.id === id);
     
     // Update local state immediately for better UX
-    setPlayers(prevPlayers => 
-      prevPlayers.map(player => 
-        player.id === id ? { ...player, ...updates } : player
-      )
+    setPlayers(prevPlayers =>
+      prevPlayers.map(player => {
+        if (player.id !== id) return player;
+        const merged = { ...player, ...updates };
+        if ('handicap' in updates || 'scratch' in updates) {
+          merged.totalCost = (merged.scratch + merged.handicap) * entryFee;
+        }
+        return merged;
+      })
     );
 
     if (!authToken) {

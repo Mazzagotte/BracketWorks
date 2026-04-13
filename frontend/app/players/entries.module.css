@@ -1,7 +1,6 @@
 /* Entries page responsive styles */
 
 .entriesContainer {
-  background: #f8f9fb;
   font-family: 'Inter, Arial, sans-serif';
   padding: 0;
   overflow-x: hidden; /* Prevent horizontal scroll on mobile */

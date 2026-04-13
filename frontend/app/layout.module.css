@@ -88,19 +88,15 @@
   margin-top: 60px;
 }
 
-/* White card container */
+/* Page content container */
 .contentCard {
-  background: #ffffff;
-  border-radius: 16px;
-  padding: 24px;
   max-width: 1200px;
   margin: 20px auto 0 auto;
   box-sizing: border-box;
 }
 
 .contentCardMobile {
-  border-radius: 12px;
-  padding: 20px;
+  padding: 4px;
 }
 
 .contentCardNoAuth {

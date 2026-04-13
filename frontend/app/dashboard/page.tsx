@@ -1,37 +1,21 @@
 "use client";
 
 import { useMemo, useEffect, useState, useRef } from 'react';
-import { Tournament, Squad, Player, BracketData, ScoreData, WinnerData, BracketSettings, ToastMessage, TournamentForm } from '../lib/types';
+import { Tournament, Squad, BracketSettings, TournamentForm } from '../lib/types';
 
-import Link from 'next/link';
-
-import { usePageHeader, useHeader } from '../lib/header-context';
+import { usePageHeader } from '../lib/header-context';
 import { useAuth } from '../lib/auth-context';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { getErrorMessage, getErrorContext } from '../lib/error-utils';
-import styles from '../page.module.css';
 import mobileStyles from './dashboard.module.css';
 import { ConfirmationDialog } from '../components/LazyComponents';
-import Header from '../components/Header';
 import { MobileForm, MobileFormField } from '../../components/MobileForm';
 import { API, apiClient } from '../lib/api';
 import { logger } from '../lib/logger';
 import EnhancedButton from '../components/EnhancedButton';
 import { useToast } from '../components/Toast';
-import { useAsyncOperation, ErrorMessage } from '../components/ErrorHandling';
 import { usePagination } from '../components/Performance';
-import { useAutoSave } from '../components/DataManagement';
-import { 
-  PageContainer, 
-  ContentWrapper, 
-  Card, 
-  Grid, 
-  StatCard,
-  Button,
-  FormField,
-  Input,
-  Select
-} from '../components/UI';
+import { FormField, Input, Select } from '../components/UI';
 
 function get12hrTimes() {
   const availableTimeSlots: string[] = [];
@@ -51,16 +35,6 @@ function get12hrTimes() {
 }
 const availableTimeOptions = get12hrTimes();
 // Show all AM and PM times
-
-// Currency formatting utilities
-const formatCurrency = (value: number): string => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(Math.round(value));
-};
 
 const parseCurrencyInput = (userInput: string): number => {
   // Remove all non-numeric characters
@@ -131,11 +105,6 @@ function EditTournamentModal({ open, onClose, tournament, onSave, isMobile }: {
     }
   }, [focusedTimeSlot, timeSlotInputReferences]);
 
-  // 12hr format validation (hh:mm am/pm)
-  function isValid12hr(time: string) {
-    return /^([1-9]|1[0-2]):[0-5][0-9] ?([aApP][mM])$/.test(time.trim());
-  }
-
   if (!open) return null;
 
   const tournamentDays = getDatesBetween(tournamentForm.start_date || '', tournamentForm.end_date || '');
@@ -163,15 +132,14 @@ function EditTournamentModal({ open, onClose, tournament, onSave, isMobile }: {
         {validationError && (
           <div className="error-message">{validationError}</div>
         )}
-        <EnhancedButton
+        <button
           type="button"
-          onClick={onClose}
-          variant="secondary"
-          size="sm"
           className="modal-close"
+          onClick={onClose}
+          aria-label="Close"
         >
           ×
-        </EnhancedButton>
+        </button>
         <h2>Edit Tournament</h2>
         <div>
         {isMobile ? (
@@ -839,20 +807,20 @@ export default function TournamentDashboard() {
   // Set up page header with action buttons
   const headerActions = useMemo(() => (
     <div className={mobileStyles.headerActions}>
-      <button className={mobileStyles.headerBtn} onClick={() => { setCreateMode(true); setModalOpen(true); }}>
+      <button className="ds-btn ds-btn-primary ds-btn-md" onClick={() => { setCreateMode(true); setModalOpen(true); }}>
         + New Tournament
       </button>
       {tournament && (
-        <button className={mobileStyles.headerBtn} onClick={() => { setCreateMode(false); setModalOpen(true); }}>
+        <button className="ds-btn ds-btn-primary ds-btn-md" onClick={() => { setCreateMode(false); setModalOpen(true); }}>
           Edit Tournament
         </button>
       )}
-      <button className={mobileStyles.headerBtn} onClick={() => setLoadModalOpen(true)}>
+      <button className="ds-btn ds-btn-primary ds-btn-md" onClick={() => setLoadModalOpen(true)}>
         Load Tournament
       </button>
       {tournament && (
         <button
-          className={`${mobileStyles.headerBtn} ${mobileStyles.headerBtnDanger}`}
+          className="ds-btn ds-btn-destructive ds-btn-md"
           onClick={() => {
             setTournament(null);
             setSquads([]);
@@ -1193,7 +1161,7 @@ export default function TournamentDashboard() {
                 </div>
                 
                 <div className={mobileStyles.squadGrid}>
-                  {squads.map((squad, index) => {
+                  {squads.map((squad) => {
                     const isSelected = selectedSquadId === squad.id;
                     
                     return (
@@ -1251,14 +1219,13 @@ export default function TournamentDashboard() {
                 {isAdmin && (
                   <div className={mobileStyles.adminBadge}>Admin: Viewing all tournaments</div>
                 )}
-                <EnhancedButton
-                  onClick={() => setLoadModalOpen(false)}
-                  variant="secondary"
-                  size="sm"
+                <button
                   className="modal-close"
+                  onClick={() => setLoadModalOpen(false)}
+                  aria-label="Close"
                 >
                   &times;
-                </EnhancedButton>
+                </button>
                 {allTournaments.length === 0 ? (
                   <div className={mobileStyles.emptyTournaments}>
                     <div>No tournaments found.</div>

@@ -161,11 +161,9 @@ export default function PayoutsPage() {
   const filteredNonWinners = nonWinners.filter(w =>
     !searchQuery || w.player_name.toLowerCase().includes(searchQuery.toLowerCase())
   )
-  const visibleRows = searchQuery
+  const visibleRows = (searchQuery || showNonWinners)
     ? [...filteredWinners, ...filteredNonWinners]
-    : showNonWinners
-      ? [...filteredWinners, ...filteredNonWinners]
-      : filteredWinners
+    : filteredWinners
 
   return (
     <ErrorBoundary>
