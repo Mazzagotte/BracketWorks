@@ -856,7 +856,7 @@ export default function ScoresPage() {
             <div className={styles.noTournamentDesktop}>
               <h2 className={styles.noTournamentTitleDesktop}>No Tournament Loaded</h2>
               <p className={styles.noTournamentTextDesktop}>
-                You need to load a tournament from the dashboard before you can enter scores. Once loaded, you'll be able to enter and manage scores for all players.
+                You need to load a tournament from the dashboard before you can enter scores. Once loaded, you&apos;ll be able to enter and manage scores for all players.
               </p>
               <Link href="/dashboard" className={styles.dashboardBtnDesktop}>
                 Go to Dashboard

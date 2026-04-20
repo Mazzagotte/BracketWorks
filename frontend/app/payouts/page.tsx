@@ -95,6 +95,45 @@ export default function PayoutsPage() {
     actions: headerActions,
   })
 
+  // Aggregate winners across brackets to compute paid stats
+  // Must be declared before any early returns (Rules of Hooks)
+  const handicapBrackets = payoutData?.handicap_brackets ?? []
+  const scratchBrackets = payoutData?.scratch_brackets ?? []
+
+  const aggregatedWinners = useMemo(() => {
+    const hBrackets = payoutData?.handicap_brackets ?? []
+    const sBrackets = payoutData?.scratch_brackets ?? []
+    const allWinners = [...hBrackets, ...sBrackets].flatMap(b => b.winners)
+    const byPlayer: Record<string, {
+      player_id: number
+      player_name: string
+      total_won: number
+      winnings: { bracket_name: string; position: string; payout_amount: number; payout_percentage: number; split_pot?: boolean }[]
+    }> = {}
+    for (const w of allWinners) {
+      const key = String(w.player_id ?? w.player_name)
+      if (!byPlayer[key]) byPlayer[key] = { player_id: w.player_id, player_name: w.player_name, total_won: 0, winnings: [] }
+      byPlayer[key].total_won += w.payout_amount
+      byPlayer[key].winnings.push({ bracket_name: w.bracket_name, position: w.position, payout_amount: w.payout_amount, payout_percentage: w.payout_percentage, split_pot: w.split_pot })
+    }
+    return Object.values(byPlayer).sort((a, b) => b.total_won - a.total_won)
+  }, [payoutData])
+
+  const { totalUniqueWinners, paidCount, remainingAmount } = useMemo(() => {
+    const totalUniqueWinners = aggregatedWinners.length
+    const paidCount = aggregatedWinners.filter(w => paidKeys.has(String(w.player_id ?? w.player_name))).length
+    const remainingAmount = aggregatedWinners
+      .filter(w => !paidKeys.has(String(w.player_id ?? w.player_name)))
+      .reduce((sum, w) => sum + w.total_won, 0)
+    return { totalUniqueWinners, paidCount, remainingAmount }
+  }, [aggregatedWinners, paidKeys])
+
+  const filteredWinners = useMemo(() =>
+    aggregatedWinners.filter(w =>
+      !searchQuery || w.player_name.toLowerCase().includes(searchQuery.toLowerCase())
+    ), [aggregatedWinners, searchQuery]
+  )
+
   const hasStoredAuth = typeof window !== 'undefined' && storage.getItem('token') && storage.getItem('user_id')
 
   if (!isInitialized) {
@@ -118,7 +157,7 @@ export default function PayoutsPage() {
   if (typeof window !== 'undefined' && !localStorage.getItem('lastTournamentId')) {
     return (
       <NoTournamentState
-        description="Load a tournament from the dashboard to view payout distribution. Once loaded, you'll be able to see prize pools, track winners, and mark payouts as complete."
+        description="Load a tournament from the dashboard to view payout distribution. Once loaded, you&apos;ll be able to see prize pools, track winners, and mark payouts as complete."
         cards={[
           { title: 'Prize Pool', text: 'View total scratch and handicap prize pools calculated from paid bracket entries' },
           { title: 'Winner Tracking', text: 'See which players won, what position they finished, and how much they earned' },
@@ -127,43 +166,6 @@ export default function PayoutsPage() {
       />
     )
   }
-
-  // Aggregate winners across brackets to compute paid stats
-  const handicapBrackets = payoutData?.handicap_brackets ?? []
-  const scratchBrackets = payoutData?.scratch_brackets ?? []
-
-  // Condense all winners into one row per player, summing totals
-  const aggregatedWinners = useMemo(() => {
-    const allWinners = [...handicapBrackets, ...scratchBrackets].flatMap(b => b.winners)
-    const byPlayer: Record<string, {
-      player_id: number
-      player_name: string
-      total_won: number
-      winnings: { bracket_name: string; position: string; payout_amount: number; payout_percentage: number; split_pot?: boolean }[]
-    }> = {}
-    for (const w of allWinners) {
-      const key = String(w.player_id ?? w.player_name)
-      if (!byPlayer[key]) byPlayer[key] = { player_id: w.player_id, player_name: w.player_name, total_won: 0, winnings: [] }
-      byPlayer[key].total_won += w.payout_amount
-      byPlayer[key].winnings.push({ bracket_name: w.bracket_name, position: w.position, payout_amount: w.payout_amount, payout_percentage: w.payout_percentage, split_pot: w.split_pot })
-    }
-    return Object.values(byPlayer).sort((a, b) => b.total_won - a.total_won)
-  }, [handicapBrackets, scratchBrackets])
-
-  const { totalUniqueWinners, paidCount, remainingAmount } = useMemo(() => {
-    const totalUniqueWinners = aggregatedWinners.length
-    const paidCount = aggregatedWinners.filter(w => paidKeys.has(String(w.player_id ?? w.player_name))).length
-    const remainingAmount = aggregatedWinners
-      .filter(w => !paidKeys.has(String(w.player_id ?? w.player_name)))
-      .reduce((sum, w) => sum + w.total_won, 0)
-    return { totalUniqueWinners, paidCount, remainingAmount }
-  }, [aggregatedWinners, paidKeys])
-
-  const filteredWinners = useMemo(() =>
-    aggregatedWinners.filter(w =>
-      !searchQuery || w.player_name.toLowerCase().includes(searchQuery.toLowerCase())
-    ), [aggregatedWinners, searchQuery]
-  )
 
   const matchesSearch = (name: string) =>
     !searchQuery || name.toLowerCase().includes(searchQuery.toLowerCase())
