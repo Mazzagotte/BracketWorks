@@ -182,6 +182,7 @@ export const Card: React.FC<CardProps> = React.memo(({
     {children}
   </div>
 ))
+Card.displayName = 'Card'
 
 // Grid Container Component
 interface GridProps {
@@ -320,6 +321,7 @@ export const StatCard: React.FC<StatCardProps> = React.memo(({
     </div>
   )
 })
+;(StatCard as React.MemoExoticComponent<React.FC<StatCardProps>>).displayName = 'StatCard'
 
 // Button Component
 interface ButtonProps {
