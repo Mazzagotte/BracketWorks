@@ -309,13 +309,26 @@ export default function ScoresPage() {
       const response = await fetch(API(bowlersUrl), {
         headers: { Authorization: `Bearer ${token}` }
       })
+
+      if (!response.ok) {
+        logger.error(`Bowlers API returned ${response.status} for url: ${bowlersUrl}`)
+      }
       
-      const data = response.ok ? await response.json() : []
+      let data = response.ok ? await response.json() : []
+
+      // Fallback: if squad-filtered fetch returns no results, load all tournament players.
+      // Players added without a squad selection have squad_id = null and won't match the squad filter.
+      if (squadId && data.length === 0) {
+        const fallbackResponse = await fetch(API(`/api/v1/bowlers/?tournament_id=${tournamentId}`), {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        if (fallbackResponse.ok) {
+          data = await fallbackResponse.json()
+        }
+      }
       
-      // Fetch existing scores from database
-      const scoresUrl = squadId 
-        ? `/api/v1/scores/?tournament_id=${tournamentId}&squad_id=${squadId}`
-        : `/api/v1/scores/?tournament_id=${tournamentId}`
+      // Fetch existing scores from database (always without squad filter to catch all scores)
+      const scoresUrl = `/api/v1/scores/?tournament_id=${tournamentId}`
       
       const scoresResponse = await fetch(API(scoresUrl), {
         headers: { Authorization: `Bearer ${token}` }
