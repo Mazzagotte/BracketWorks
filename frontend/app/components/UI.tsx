@@ -232,14 +232,14 @@ interface StatCardProps {
   className?: string
 }
 
-export const StatCard: React.FC<StatCardProps> = React.memo(({ 
+export const StatCard: React.FC<StatCardProps> = React.memo(function StatCard({ 
   title, 
   value, 
   subtitle,
   icon,
   color = 'default',
   className = '' 
-}) => {
+}) {
   const getColorStyles = () => {
     switch (color) {
       case 'primary':
@@ -321,7 +321,6 @@ export const StatCard: React.FC<StatCardProps> = React.memo(({
     </div>
   )
 })
-;(StatCard as React.MemoExoticComponent<React.FC<StatCardProps>>).displayName = 'StatCard'
 
 // Button Component
 interface ButtonProps {

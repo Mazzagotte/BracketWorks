@@ -61,16 +61,8 @@ const BracketTreeViewComponent = ({
     return false
   }
 
-  if (!rounds || rounds.length === 0) {
-    return (
-      <div className={styles.emptyState}>
-        <p>No bracket rounds available</p>
-      </div>
-    )
-  }
-
   // Show first 3 rounds in bracket tree format
-  const displayRounds = rounds.slice(0, 3)
+  const displayRounds = (rounds ?? []).slice(0, 3)
   
   // Memoize round statistics to avoid recalculating on every render
   const roundStats = useMemo(() => {
@@ -81,6 +73,14 @@ const BracketTreeViewComponent = ({
       return { completedMatches, totalMatches, progressPercent }
     })
   }, [displayRounds])
+
+  if (!rounds || rounds.length === 0) {
+    return (
+      <div className={styles.emptyState}>
+        <p>No bracket rounds available</p>
+      </div>
+    )
+  }
   
   // Grid configuration
   // Each match occupies 2 rows (for the card height)
