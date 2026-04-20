@@ -298,6 +298,94 @@ export default function ScoresPage() {
     actions: headerActions
   })
 
+  // fetchPlayersWithScores must be defined before the useEffect that calls it
+  // (and before any early-return guards) so the closure captures it properly.
+  const fetchPlayersWithScores = useCallback(async (tournamentId: string, squadId: number | null, token: string) => {
+    try {
+      const bowlersUrl = squadId 
+        ? `/api/v1/bowlers/?tournament_id=${tournamentId}&squad_id=${squadId}`
+        : `/api/v1/bowlers/?tournament_id=${tournamentId}`
+      
+      const response = await fetch(API(bowlersUrl), {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      
+      const data = response.ok ? await response.json() : []
+      
+      // Fetch existing scores from database
+      const scoresUrl = squadId 
+        ? `/api/v1/scores/?tournament_id=${tournamentId}&squad_id=${squadId}`
+        : `/api/v1/scores/?tournament_id=${tournamentId}`
+      
+      const scoresResponse = await fetch(API(scoresUrl), {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      
+      const scoresData = scoresResponse.ok ? await scoresResponse.json() : []
+      
+      // Create a lookup map for scores by bowler_id
+      const scoresMap = new Map()
+      scoresData.forEach((score: ScoreData) => {
+        scoresMap.set(score.bowler_id, {
+          game1_scratch: score.game1_scratch,
+          game1_total: score.game1_total,
+          game2_scratch: score.game2_scratch,
+          game2_total: score.game2_total,
+          game3_scratch: score.game3_scratch,
+          game3_total: score.game3_total
+        })
+      })
+      
+      // Transform bowlers data to match our player structure
+      const transformedData = (data || []).map((bowler: Player) => {
+        const nameParts = bowler.name.split(' ')
+        const existingScores = scoresMap.get(bowler.id) || {
+          game1_scratch: undefined,
+          game1_total: undefined,
+          game2_scratch: undefined,
+          game2_total: undefined,
+          game3_scratch: undefined,
+          game3_total: undefined
+        }
+        
+        return {
+          id: bowler.id,
+          firstName: nameParts[0] || '',
+          lastName: nameParts.slice(1).join(' ') || '',
+          handicap: bowler.handicap || 0,
+          average: bowler.average || 0,
+          lane: bowler.lane || null,
+          scores: existingScores
+        }
+      })
+      
+      // Sort players by lane (players with lanes first, sorted numerically, then players without lanes)
+      const sortedData = transformedData.sort((a: Player, b: Player) => {
+        // If both have lanes, sort numerically
+        if (a.lane && b.lane) {
+          return parseInt(a.lane.toString()) - parseInt(b.lane.toString())
+        }
+        // If only a has a lane, a comes first
+        if (a.lane && !b.lane) {
+          return -1
+        }
+        // If only b has a lane, b comes first
+        if (!a.lane && b.lane) {
+          return 1
+        }
+        // If neither has a lane, maintain original order (sort by name as fallback)
+        return a.lastName.localeCompare(b.lastName)
+      })
+      
+      setPlayers(sortedData)
+    } catch (err) {
+      logger.error('Error fetching players:', err)
+      setPlayers([])
+    } finally {
+      setIsLoading(false)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Fetch tournament, squad, and players data - OPTIMIZED WITH PARALLEL REQUESTS
   useEffect(() => {
     // Batch read all localStorage data at once for better performance
@@ -392,91 +480,7 @@ export default function ScoresPage() {
     )
   }
 
-  const fetchPlayersWithScores = async (tournamentId: string, squadId: number | null, token: string) => {
-    try {
-      const bowlersUrl = squadId 
-        ? `/api/v1/bowlers/?tournament_id=${tournamentId}&squad_id=${squadId}`
-        : `/api/v1/bowlers/?tournament_id=${tournamentId}`
-      
-      const response = await fetch(API(bowlersUrl), {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      
-      const data = response.ok ? await response.json() : []
-      
-      // Fetch existing scores from database
-      const scoresUrl = squadId 
-        ? `/api/v1/scores/?tournament_id=${tournamentId}&squad_id=${squadId}`
-        : `/api/v1/scores/?tournament_id=${tournamentId}`
-      
-      const scoresResponse = await fetch(API(scoresUrl), {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      
-      const scoresData = scoresResponse.ok ? await scoresResponse.json() : []
-      
-      // Create a lookup map for scores by bowler_id
-      const scoresMap = new Map()
-      scoresData.forEach((score: ScoreData) => {
-        scoresMap.set(score.bowler_id, {
-          game1_scratch: score.game1_scratch,
-          game1_total: score.game1_total,
-          game2_scratch: score.game2_scratch,
-          game2_total: score.game2_total,
-          game3_scratch: score.game3_scratch,
-          game3_total: score.game3_total
-        })
-      })
-      
-      // Transform bowlers data to match our player structure
-      const transformedData = (data || []).map((bowler: Player) => {
-        const nameParts = bowler.name.split(' ')
-        const existingScores = scoresMap.get(bowler.id) || {
-          game1_scratch: undefined,
-          game1_total: undefined,
-          game2_scratch: undefined,
-          game2_total: undefined,
-          game3_scratch: undefined,
-          game3_total: undefined
-        }
-        
-        return {
-          id: bowler.id,
-          firstName: nameParts[0] || '',
-          lastName: nameParts.slice(1).join(' ') || '',
-          handicap: bowler.handicap || 0,
-          average: bowler.average || 0,
-          lane: bowler.lane || null,
-          scores: existingScores
-        }
-      })
-      
-      // Sort players by lane (players with lanes first, sorted numerically, then players without lanes)
-      const sortedData = transformedData.sort((a: Player, b: Player) => {
-        // If both have lanes, sort numerically
-        if (a.lane && b.lane) {
-          return parseInt(a.lane.toString()) - parseInt(b.lane.toString())
-        }
-        // If only a has a lane, a comes first
-        if (a.lane && !b.lane) {
-          return -1
-        }
-        // If only b has a lane, b comes first
-        if (!a.lane && b.lane) {
-          return 1
-        }
-        // If neither has a lane, maintain original order (sort by name as fallback)
-        return a.lastName.localeCompare(b.lastName)
-      })
-      
-      setPlayers(sortedData)
-    } catch (err) {
-      logger.error('Error fetching players:', err)
-      setPlayers([])
-    } finally {
-      setIsLoading(false)
-    }
-  }
+
 
   const validateScore = (score: number | undefined) => {
     if (score === undefined || score === null) return { isValid: true, message: '' }
