@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import './styles/globals.css';
 import './styles/colors.global.css';
 import './styles/login.css';
+import './styles/bowling-animations.css';
 import styles from './layout.module.css';
 
 import Sidebar from '../components/Sidebar';
@@ -244,7 +245,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="dns-prefetch" href={process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'} />
         
         {/* Preload critical resources */}
-        <link rel="preload" href="/logo.png" as="image" type="image/png" />
+        <link rel="preload" href="/logo.svg" as="image" type="image/png" />
         <link rel="preload" href="/styles/globals.css" as="style" />
         
         {/* Favicon configuration */}

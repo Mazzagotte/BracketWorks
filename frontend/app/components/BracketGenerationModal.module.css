@@ -28,15 +28,16 @@
 
 /* Modal Card - The white container in the center */
 .modalCard {
-  background-color: white;
+  background-color: #FAF4E8;
   border-radius: 16px;
   padding: 3rem;
   min-width: 400px;
   max-width: 500px;
-  box-shadow: 0 4px 16px rgba(79, 140, 255, 0.2);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(240, 120, 32, 0.15);
   text-align: center;
   animation: slideIn 0.3s ease;
   position: relative;
+  border-top: 4px solid #F47C20;
 }
 
 @keyframes slideIn {
@@ -96,8 +97,8 @@
 /* Tournament Context Info */
 .contextInfo {
   width: 100%;
-  background-color: #dbeafe;
-  border: 1px solid #93c5fd;
+  background-color: rgba(240, 120, 32, 0.06);
+  border: 1px solid rgba(240, 120, 32, 0.2);
   border-radius: 8px;
   padding: 12px 16px;
   margin-bottom: 0.5rem;
@@ -190,7 +191,7 @@
 .progressBarBackground {
   flex: 1;
   height: 8px;
-  background-color: #e5e7eb;
+  background-color: rgba(240, 120, 32, 0.12);
   border-radius: 9999px;
   overflow: hidden;
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -198,10 +199,10 @@
 
 .progressBarFill {
   height: 100%;
-  background: linear-gradient(90deg, #f0a500 0%, #4f8cff 50%, #10b981 100%);
+  background: linear-gradient(90deg, #F47C20 0%, #D9651A 100%);
   border-radius: 9999px;
   transition: width 0.1s linear;
-  box-shadow: 0 0 8px rgba(79, 140, 255, 0.5);
+  box-shadow: 0 0 8px rgba(244, 124, 32, 0.4);
 }
 
 .progressText {
@@ -217,7 +218,7 @@
 .timeRemaining {
   font-size: 0.9rem;
   font-weight: 500;
-  color: #4f8cff;
+  color: #F47C20;
   margin: 0 0 1rem 0;
   font-family: 'Inter', sans-serif;
   text-align: center;
@@ -257,7 +258,7 @@
   width: 18px;
   height: 18px;
   cursor: pointer;
-  accent-color: #f0a500;
+  accent-color: #F47C20;
 }
 
 .checkboxLabel {
@@ -281,21 +282,6 @@
 }
 
 /* Success Icon - Green checkmark */
-.successIcon {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 3rem;
-  font-weight: bold;
-  box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
-  animation: successPulse 0.6s ease;
-}
-
 @keyframes successPulse {
   0% {
     transform: scale(0);
@@ -332,8 +318,8 @@
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
-  background-color: #f0fdf4;
-  border: 1px solid #bbf7d0;
+  background-color: rgba(240, 120, 32, 0.05);
+  border: 1px solid rgba(240, 120, 32, 0.2);
   border-radius: 8px;
   animation: slideInStat 0.5s ease forwards;
   opacity: 0;
@@ -355,7 +341,7 @@
 .statText {
   font-size: 0.95rem;
   font-weight: 500;
-  color: #065f46;
+  color: #1A1A1A;
   font-family: 'Inter', sans-serif;
 }
 
@@ -426,10 +412,10 @@
 /* Technical details toggle button */
 .technicalDetailsToggle {
   background: transparent;
-  border: 1px solid #d1d5db;
+  border: 1px solid rgba(240, 120, 32, 0.2);
   border-radius: 6px;
   padding: 0.5rem 1rem;
-  color: #6b7280;
+  color: rgba(26, 26, 26, 0.5);
   font-size: 0.875rem;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -440,17 +426,17 @@
 }
 
 .technicalDetailsToggle:hover {
-  background: #f9fafb;
-  border-color: #9ca3af;
-  color: #374151;
+  background: rgba(240, 120, 32, 0.06);
+  border-color: rgba(240, 120, 32, 0.35);
+  color: #F47C20;
 }
 
 /* Technical details content */
 .technicalDetails {
   margin-top: 0.75rem;
   padding: 1rem;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
+  background: rgba(240, 120, 32, 0.04);
+  border: 1px solid rgba(240, 120, 32, 0.15);
   border-radius: 6px;
   font-family: 'Monaco', 'Courier New', monospace;
   font-size: 0.875rem;
@@ -522,26 +508,27 @@
 
 /* Primary Button - Orange (App Primary) */
 .primaryButton {
-  background: linear-gradient(135deg, #f0a500 0%, #ff9800 100%);
+  background: linear-gradient(135deg, #F47C20 0%, #D9651A 100%);
   color: white;
-  box-shadow: 0 4px 12px rgba(240, 165, 0, 0.3);
+  box-shadow: 0 4px 12px rgba(244, 124, 32, 0.3);
 }
 
 .primaryButton:hover {
-  background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
-  box-shadow: 0 6px 16px rgba(240, 165, 0, 0.4);
+  background: linear-gradient(135deg, #D9651A 0%, #c05010 100%);
+  box-shadow: 0 6px 16px rgba(244, 124, 32, 0.4);
 }
 
 /* Secondary Button - Gray */
 .secondaryButton {
-  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
-  color: white;
-  box-shadow: 0 4px 12px rgba(107, 114, 128, 0.3);
+  background: transparent;
+  color: #F47C20;
+  border: 2px solid #F47C20;
+  box-shadow: none;
 }
 
 .secondaryButton:hover {
-  background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
-  box-shadow: 0 6px 16px rgba(107, 114, 128, 0.4);
+  background: rgba(244, 124, 32, 0.08);
+  box-shadow: 0 4px 12px rgba(244, 124, 32, 0.15);
 }
 
 /* ===================================

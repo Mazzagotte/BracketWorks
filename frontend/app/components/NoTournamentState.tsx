@@ -24,18 +24,18 @@ export default function NoTournamentState({ description, cards }: NoTournamentSt
 
   return (
     <div style={{
-      background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
-      borderRadius: '20px',
+      background: '#FAF4E8',
+      borderRadius: '16px',
       textAlign: 'center',
-      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.06)',
-      border: '2px solid #e2e8f0',
+      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+      border: '1px solid rgba(240, 120, 32, 0.2)',
       maxWidth: '800px',
       padding: isMobile ? '40px 24px' : '60px 40px',
       margin: isMobile ? '20px 0' : '40px auto',
     }}>
       <h2 style={{
         fontWeight: 700,
-        color: '#1e293b',
+        color: '#1A1A1A',
         marginBottom: '12px',
         letterSpacing: '-0.02em',
         marginTop: '24px',
@@ -45,7 +45,7 @@ export default function NoTournamentState({ description, cards }: NoTournamentSt
       </h2>
 
       <p style={{
-        color: '#64748b',
+        color: 'rgba(26, 26, 26, 0.55)',
         margin: '0 auto 32px',
         lineHeight: 1.6,
         maxWidth: '560px',
@@ -84,16 +84,16 @@ export default function NoTournamentState({ description, cards }: NoTournamentSt
         }}>
           {cards.map((card, i) => (
             <div key={i} style={{
-              background: 'white',
+              background: '#FFFCF5',
               borderRadius: '12px',
               padding: '20px',
               textAlign: 'left',
-              border: '1px solid #e2e8f0',
+              border: '1px solid rgba(240, 120, 32, 0.15)',
             }}>
               <h3 style={{
                 fontSize: '15px',
                 fontWeight: 600,
-                color: '#1e293b',
+                color: '#1A1A1A',
                 marginBottom: '4px',
                 margin: '0 0 4px',
               }}>
@@ -101,7 +101,7 @@ export default function NoTournamentState({ description, cards }: NoTournamentSt
               </h3>
               <p style={{
                 fontSize: '13px',
-                color: '#64748b',
+                color: 'rgba(26, 26, 26, 0.55)',
                 lineHeight: 1.5,
                 margin: 0,
               }}>

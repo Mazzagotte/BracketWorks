@@ -1,4 +1,34 @@
 /* ========================================
+   Page Container
+   ======================================== */
+
+.pageContainer {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+/* ========================================
+   Combined Control Panel (tabs + search + nav)
+   ======================================== */
+
+.controlPanel {
+  background: #FAF4E8;
+  border-radius: 14px;
+  border: 1px solid rgba(240, 120, 32, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 0;
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+}
+
+.controlDivider {
+  height: 1px;
+  background: rgba(240, 120, 32, 0.15);
+  margin: 0;
+}
+
+/* ========================================
    Header Action Buttons
    ======================================== */
 
@@ -223,14 +253,11 @@
   justify-content: center;
   gap: 1.5rem;
   padding: 1.25rem 1.5rem;
-  background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
-  border-radius: 12px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.8);
+  background: transparent;
   position: relative;
   overflow: hidden;
-  max-width: 900px;
-  margin: 0 auto 1rem auto;
+  max-width: 100%;
+  margin: 0;
 }
 
 .bracketNavAccent {
@@ -320,9 +347,9 @@
 }
 
 .navBadgeScratch {
-  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-  color: #334155;
-  border: 1px solid #cbd5e1;
+  background: rgba(240, 120, 32, 0.08);
+  color: #1A1A1A;
+  border: 1px solid rgba(240, 120, 32, 0.2);
 }
 
 .navBadgeHandicap {
@@ -338,16 +365,16 @@
 }
 
 .navBadgeProgress {
-  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-  color: #6b7280;
-  border: 1px solid #d1d5db;
+  background: rgba(240, 120, 32, 0.05);
+  color: rgba(26, 26, 26, 0.6);
+  border: 1px solid rgba(240, 120, 32, 0.15);
 }
 
 /* Progress Bar */
 .progressBarWrapper {
   width: 100%;
   height: 8px;
-  background: linear-gradient(90deg, #e5e7eb 0%, #f3f4f6 100%);
+  background: rgba(240, 120, 32, 0.12);
   border-radius: 4px;
   overflow: hidden;
   position: relative;

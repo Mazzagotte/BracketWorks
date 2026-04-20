@@ -192,7 +192,7 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
 
           {/* First Name / Last Name */}
           <div className={styles.nameRow}>
-            <div style={{ position: 'relative' }}>
+            <div className={styles.fieldRelative}>
               <label className={styles.label}>First Name *</label>
               <input
                 type="text"
@@ -203,7 +203,7 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
               />
               {fieldValidation.firstName && <span className={styles.checkIcon}>&#10003;</span>}
             </div>
-            <div style={{ position: 'relative' }}>
+            <div className={styles.fieldRelative}>
               <label className={styles.label}>Last Name *</label>
               <input
                 type="text"
@@ -304,14 +304,11 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
               <div className={styles.strengthMeter}>
                 <div className={styles.strengthTrack}>
                   <div
-                    className={styles.strengthFill}
-                    style={{
-                      width: `${(passwordStrength / 5) * 100}%`,
-                      background: getStrengthColor()
-                    }}
+                    className={`${styles.strengthFill} ${styles[`strength${passwordStrength}` as keyof typeof styles]}`}
+                    style={{ width: `${(passwordStrength / 5) * 100}%` }}
                   />
                 </div>
-                <div className={styles.strengthLabel} style={{ color: getStrengthColor() }}>
+                <div className={`${styles.strengthLabel} ${styles[`strength${passwordStrength}` as keyof typeof styles]}`}>
                   {getStrengthText()}
                 </div>
               </div>
@@ -375,17 +372,17 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
               )}
             </div>
             {confirmPassword && !fieldValidation.confirmPassword && (
-              <div className={styles.fieldHint}>Passwords don&apos;t match</div>
+              <div className={styles.fieldHint}>Passwords don't match</div>
             )}
           </div>
 
           {/* Buttons */}
           <div className={styles.buttons}>
-            <button type="button" onClick={onClose} disabled={loading} className={styles.cancelBtn}>
-              Cancel
-            </button>
             <button type="submit" disabled={loading} className={styles.submitBtn}>
               {loading ? 'Creating...' : 'Create Account'}
+            </button>
+            <button type="button" onClick={onClose} disabled={loading} className={styles.cancelBtn}>
+              Cancel
             </button>
           </div>
         </form>

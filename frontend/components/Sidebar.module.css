@@ -2,18 +2,18 @@
 
 .sidebar {
   width: 260px;
-  background: linear-gradient(180deg, #1F2A33 0%, #2A3944 50%, #374151 100%);
+  background: linear-gradient(180deg, #1A1A1A 0%, #2D2D2D 60%, #222222 100%);
   height: 100vh;
   position: fixed;
   left: 0;
   top: 0;
-  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
-  border-right: 1px solid rgba(244, 124, 32, 0.1);
+  box-shadow: none;
+  border-right: 3px solid #F07820;
   z-index: 1000;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: max(28px, env(safe-area-inset-top));
+  padding-top: max(0px, env(safe-area-inset-top));
   padding-bottom: max(20px, env(safe-area-inset-bottom));
   transition: left 0.3s ease;
 }
@@ -30,56 +30,51 @@
 /* Logo area */
 .brand {
   width: 100%;
-  padding: 0 0 20px;
+  padding: 0 0 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 3px solid #F07820;
   position: relative;
+  background: var(--color-brand-ivory-light, #FAF4E8);
 }
 
+
+
 .logoLink {
-  display: inline-block;
-  transition: transform 0.2s ease;
+  display: block;
+  width: 100%;
+  padding: 12px 0;
+  transition: opacity 0.2s ease;
 }
 
 .logoLink:hover {
-  transform: scale(1.05);
+  opacity: 0.9;
 }
 
 .logoImg {
-  margin-bottom: 12px;
-  border-radius: 18px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25), 0 2px 8px rgba(244, 124, 32, 0.1);
-  border: 2px solid rgba(244, 124, 32, 0.2);
-}
-
-.brandName {
-  font-weight: 700;
-  font-size: 1.35rem;
-  letter-spacing: 0.5px;
-  background: linear-gradient(135deg, #fff 0%, #F47C20 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  width: 80%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
 }
 
 /* Welcome card */
 .welcome {
   width: 85%;
   text-align: center;
-  margin-top: 24px;
-  margin-bottom: 16px;
-  padding: 12px 16px;
-  background: rgba(244, 124, 32, 0.08);
+  margin-top: 16px;
+  margin-bottom: 12px;
+  padding: 10px 16px;
+  background: rgba(212, 88, 10, 0.25);
   border-radius: 12px;
-  border: 1px solid rgba(244, 124, 32, 0.15);
+  border: 1px solid rgba(240, 120, 32, 0.25);
 }
 
 .welcomeText {
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--color-brand-ivory, #F0E0C0);
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   letter-spacing: 0.3px;
 }
 
@@ -98,39 +93,39 @@
 }
 
 .navLink {
-  color: rgba(255, 255, 255, 0.85);
-  background: rgba(255, 255, 255, 0.02);
+  color: rgba(240, 224, 192, 0.75);
+  background: transparent;
   text-decoration: none;
   font-weight: 500;
   font-size: 0.95rem;
-  padding: 14px 22px;
+  padding: 12px 20px;
   width: 100%;
   display: block;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.04);
-  border-left: 4px solid transparent;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  border-left: 3px solid transparent;
   transition: all 0.2s ease;
   box-sizing: border-box;
 }
 
 .navLink:hover {
-  color: rgba(255, 255, 255, 1);
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.08);
-  border-left-color: rgba(244, 124, 32, 0.4);
+  color: var(--color-brand-ivory, #F0E0C0);
+  background: rgba(240, 120, 32, 0.1);
+  border-color: rgba(240, 120, 32, 0.15);
+  border-left-color: rgba(240, 120, 32, 0.7);
 }
 
 .navLinkActive {
-  color: #F47C20;
-  background: linear-gradient(90deg, rgba(244, 124, 32, 0.18) 0%, rgba(244, 124, 32, 0.06) 100%);
+  color: var(--color-brand-ivory, #F0E0C0);
+  background: linear-gradient(90deg, rgba(240, 120, 32, 0.22) 0%, rgba(240, 120, 32, 0.06) 100%);
   font-weight: 600;
-  border: 1px solid rgba(244, 124, 32, 0.25);
-  border-left: 4px solid #F47C20;
+  border: 1px solid rgba(240, 120, 32, 0.3);
+  border-left: 3px solid var(--color-brand-orange, #F07820);
 }
 
 .navLinkActive:hover {
-  background: linear-gradient(90deg, rgba(244, 124, 32, 0.22) 0%, rgba(244, 124, 32, 0.08) 100%);
-  border-left-color: #F47C20;
+  background: linear-gradient(90deg, rgba(240, 120, 32, 0.28) 0%, rgba(240, 120, 32, 0.1) 100%);
+  border-left-color: var(--color-brand-orange, #F07820);
 }
 
 /* Spacer */
@@ -141,29 +136,29 @@
 /* Logout */
 .logoutWrap {
   width: 100%;
-  padding: 20px 16px;
+  padding: 16px 16px;
 }
 
 .logoutBtn {
   width: 85%;
   margin: 0 auto;
   display: block;
-  background: linear-gradient(135deg, #F47C20 0%, #D9651A 100%);
-  color: #ffffff;
+  background: var(--gradient-brand-logo, linear-gradient(135deg, #E8480C 0%, #C13000 60%, #3D1A06 100%));
+  color: var(--color-brand-ivory, #F0E0C0);
   font-weight: 700;
   font-size: 0.9rem;
   border: none;
   border-radius: 12px;
   padding: 12px 28px;
   cursor: pointer;
-  box-shadow: 0 4px 16px rgba(244, 124, 32, 0.2);
+  box-shadow: 0 4px 16px rgba(212, 88, 10, 0.35);
   transition: all 0.2s ease;
   letter-spacing: 0.5px;
 }
 
 .logoutBtn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(244, 124, 32, 0.3);
+  box-shadow: 0 6px 20px rgba(212, 88, 10, 0.5);
 }
 
 .logoutBtn:active {
@@ -173,11 +168,11 @@
 /* Mobile close button */
 .closeBtn {
   position: absolute;
-  top: 16px;
-  right: 16px;
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
-  color: #ffffff;
+  top: 12px;
+  right: 12px;
+  background: rgba(240, 120, 32, 0.15);
+  border: 1px solid rgba(240, 120, 32, 0.3);
+  color: var(--color-brand-ivory, #F0E0C0);
   font-size: 18px;
   width: 32px;
   height: 32px;
@@ -190,5 +185,5 @@
 }
 
 .closeBtn:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(240, 120, 32, 0.3);
 }

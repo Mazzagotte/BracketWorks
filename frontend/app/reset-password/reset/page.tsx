@@ -439,27 +439,10 @@ export default function ResetPasswordPage() {
                   passwordRef.current?.focus();
                 }
               }}
-              style={{
-                width: '100%',
-                padding: '16px 18px',
-                borderRadius: '14px',
-                border: '2px solid rgba(26, 31, 46, 0.1)',
-                fontSize: '1rem',
-                background: 'rgba(248, 250, 252, 0.8)',
-                backdropFilter: 'blur(8px)',
-                transition: 'all 0.2s ease',
-                outline: 'none',
-                fontWeight: 500,
-                letterSpacing: '0.3px',
-                marginBottom: '16px'
-              }}
-              onFocus={(changeEvent) => { changeEvent.target.style.border = '2px solid rgba(240, 165, 0, 0.4)'; changeEvent.target.style.boxShadow = '0 4px 16px rgba(240, 165, 0, 0.15)'; changeEvent.target.style.background = 'rgba(255, 255, 255, 0.95)';
-              }}
-              onBlur={(changeEvent) => { changeEvent.target.style.border = '2px solid rgba(26, 31, 46, 0.1)'; changeEvent.target.style.boxShadow = 'none'; changeEvent.target.style.background = 'rgba(248, 250, 252, 0.8)';
-              }}
+              className="form-input auth-code-input"
               required
             />
-            <div style={{ position: 'relative', marginBottom: '8px' }}>
+            <div className="pw-field-wrapper">
               <input
                 ref={passwordRef}
                 type={mounted && showNewPassword ? "text" : "password"}
@@ -472,58 +455,15 @@ export default function ResetPasswordPage() {
                     confirmPasswordRef.current?.focus();
                   }
                 }}
-                className={newPassword ? (passwordStrength > 50 ? 'input-valid' : passwordStrength > 25 ? '' : 'input-invalid') : ''}
-                style={{
-                  width: '100%',
-                  padding: '16px 80px 16px 18px', // Extra space for both icons
-                  borderRadius: '14px',
-                  border: '2px solid rgba(26, 31, 46, 0.1)',
-                  fontSize: '1rem',
-                  background: 'rgba(248, 250, 252, 0.8)',
-                  backdropFilter: 'blur(8px)',
-                  transition: 'all 0.2s ease',
-                  outline: 'none',
-                  fontWeight: 500,
-                  letterSpacing: '0.3px'
-                }}
-                onFocus={(changeEvent) => { changeEvent.target.style.border = '2px solid rgba(240, 165, 0, 0.4)'; changeEvent.target.style.boxShadow = '0 4px 16px rgba(240, 165, 0, 0.15)'; changeEvent.target.style.background = 'rgba(255, 255, 255, 0.95)';
-                }}
-                onBlur={(changeEvent) => { changeEvent.target.style.border = '2px solid rgba(26, 31, 46, 0.1)'; changeEvent.target.style.boxShadow = 'none'; changeEvent.target.style.background = 'rgba(248, 250, 252, 0.8)';
-                }}
+                className={`form-input pw-input ${newPassword ? (passwordStrength > 50 ? 'input-valid' : passwordStrength > 25 ? '' : 'input-invalid') : ''}`}
                 required
               />
               {mounted && (
                 <button
                   type="button"
                   onClick={() => setShowNewPassword(!showNewPassword)}
-                  style={{
-                    position: 'absolute',
-                    right: '50px', // Position to left of validation icon
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontSize: '16px',
-                    color: 'rgba(26, 31, 46, 0.6)',
-                    transition: 'color 0.2s ease',
-                    padding: '4px',
-                    borderRadius: '4px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '28px',
-                    height: '28px'
-                  }}
+                  className="pw-toggle-btn"
                   aria-label={showNewPassword ? "Hide new password" : "Show new password"}
-                  onMouseEnter={(changeEvent) => { 
-                    changeEvent.currentTarget.style.color = 'rgba(26, 31, 46, 0.8)';
-                    changeEvent.currentTarget.style.background = 'rgba(26, 31, 46, 0.05)';
-                  }}
-                  onMouseLeave={(changeEvent) => { 
-                    changeEvent.currentTarget.style.color = 'rgba(26, 31, 46, 0.6)';
-                    changeEvent.currentTarget.style.background = 'none';
-                  }}
                 >
                   {showNewPassword ? "Hide" : "Show"}
                 </button>
@@ -536,18 +476,10 @@ export default function ResetPasswordPage() {
             </div>
 
             {newPassword && (
-              <div style={{ marginBottom: '16px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                  <span style={{ fontSize: '0.85rem', color: 'rgba(26, 31, 46, 0.7)', fontWeight: 500 }}>
-                    Password Strength
-                  </span>
-                  <span style={{ 
-                    fontSize: '0.85rem', 
-                    fontWeight: 600,
-                    color: passwordStrength < 25 ? '#D64545' : passwordStrength < 50 ? '#f59e0b' : passwordStrength < 75 ? '#3b82f6' : '#10b981'
-                  }}>
-                    {getStrengthText}
-                  </span>
+              <div className="strength-wrapper">
+                <div className="strength-header">
+                  <span className="strength-label">Password Strength</span>
+                  <span className={`strength-value ${getStrengthClass}`}>{getStrengthText}</span>
                 </div>
                 <div className="password-strength-meter">
                   <div className={`password-strength-bar ${getStrengthClass}`}></div>
@@ -555,7 +487,7 @@ export default function ResetPasswordPage() {
               </div>
             )}
 
-            <div style={{ position: 'relative', marginBottom: '16px' }}>
+            <div className="pw-field-wrapper" style={{ marginBottom: '16px' }}>
               <input
                 ref={confirmPasswordRef}
                 type={mounted && showConfirmPassword ? "text" : "password"}
@@ -568,58 +500,15 @@ export default function ResetPasswordPage() {
                     (document.querySelector('button[type="submit"]') as HTMLButtonElement)?.click();
                   }
                 }}
-                className={confirmPassword ? (passwordsMatch ? 'input-valid' : 'input-invalid') : ''}
-                style={{
-                  width: '100%',
-                  padding: '16px 80px 16px 18px', // Extra space for both icons
-                  borderRadius: '14px',
-                  border: '2px solid rgba(26, 31, 46, 0.1)',
-                  fontSize: '1rem',
-                  background: 'rgba(248, 250, 252, 0.8)',
-                  backdropFilter: 'blur(8px)',
-                  transition: 'all 0.2s ease',
-                  outline: 'none',
-                  fontWeight: 500,
-                  letterSpacing: '0.3px'
-                }}
-                onFocus={(changeEvent) => { changeEvent.target.style.border = '2px solid rgba(240, 165, 0, 0.4)'; changeEvent.target.style.boxShadow = '0 4px 16px rgba(240, 165, 0, 0.15)'; changeEvent.target.style.background = 'rgba(255, 255, 255, 0.95)';
-                }}
-                onBlur={(changeEvent) => { changeEvent.target.style.border = '2px solid rgba(26, 31, 46, 0.1)'; changeEvent.target.style.boxShadow = 'none'; changeEvent.target.style.background = 'rgba(248, 250, 252, 0.8)';
-                }}
+                className={`form-input pw-input ${confirmPassword ? (passwordsMatch ? 'input-valid' : 'input-invalid') : ''}`}
                 required
               />
               {mounted && (
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  style={{
-                    position: 'absolute',
-                    right: '50px', // Position to left of validation icon
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontSize: '16px',
-                    color: 'rgba(26, 31, 46, 0.6)',
-                    transition: 'color 0.2s ease',
-                    padding: '4px',
-                    borderRadius: '4px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '28px',
-                    height: '28px'
-                  }}
+                  className="pw-toggle-btn"
                   aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
-                  onMouseEnter={(changeEvent) => { 
-                    changeEvent.currentTarget.style.color = 'rgba(26, 31, 46, 0.8)';
-                    changeEvent.currentTarget.style.background = 'rgba(26, 31, 46, 0.05)';
-                  }}
-                  onMouseLeave={(changeEvent) => { 
-                    changeEvent.currentTarget.style.color = 'rgba(26, 31, 46, 0.6)';
-                    changeEvent.currentTarget.style.background = 'none';
-                  }}
                 >
                   {showConfirmPassword ? "Hide" : "Show"}
                 </button>
@@ -632,77 +521,20 @@ export default function ResetPasswordPage() {
             </div>
           </div>
 
-          {error && <div style={{ 
-            background: 'rgba(211, 47, 47, 0.08)',
-            border: '1px solid rgba(211, 47, 47, 0.2)',
-            borderRadius: '12px',
-            padding: '16px 20px',
-            marginBottom: '20px',
-            color: '#d32f2f',
-            fontWeight: 500,
-            fontSize: '0.95rem'
-          }}>
-            {error}
-          </div>}
+          {error && <div className="auth-alert-error">{error}</div>}
 
-          {message && <div style={{ 
-            background: 'rgba(56, 142, 60, 0.08)',
-            border: '1px solid rgba(56, 142, 60, 0.2)',
-            borderRadius: '12px',
-            padding: '16px 20px',
-            marginBottom: '20px',
-            color: '#388e3c',
-            fontWeight: 500,
-            fontSize: '0.95rem'
-          }}>
-            {message}
-          </div>}
+          {message && <div className="auth-alert-success">{message}</div>}
 
           <button 
             type="submit" 
             disabled={loading || !emailValid || !code.trim() || passwordStrength < 50 || !passwordsMatch}
-            className={message ? 'btn-success animate-pulse' : loading ? 'btn-loading' : ''}
-            style={{
-              width: '100%',
-              padding: '16px 0',
-              borderRadius: '14px',
-              background: message
-                ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-                : loading 
-                  ? 'linear-gradient(135deg, rgba(240, 165, 0, 0.4) 0%, rgba(240, 165, 0, 0.3) 100%)' 
-                  : 'linear-gradient(135deg, #F47C20 0%, #D9651A 100%)',
-              color: message ? '#ffffff' : loading ? 'rgba(26, 31, 46, 0.6)' : '#1a1f2e',
-              fontWeight: 700,
-              fontSize: '1.1rem',
-              border: message ? '2px solid rgba(16, 185, 129, 0.3)' : '2px solid rgba(240, 165, 0, 0.3)',
-              cursor: (loading || !emailValid || !code.trim() || passwordStrength < 50 || !passwordsMatch) ? 'not-allowed' : 'pointer',
-              boxShadow: message 
-                ? '0 8px 24px rgba(16, 185, 129, 0.3), 0 4px 12px rgba(0, 0, 0, 0.1)'
-                : loading 
-                  ? '0 4px 16px rgba(240, 165, 0, 0.1)' 
-                  : '0 8px 24px rgba(240, 165, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.1)',
-              marginBottom: '24px',
-              transition: 'all 0.3s ease',
-              letterSpacing: '0.5px'
-            }}
-            onMouseEnter={(changeEvent) => {
-              if (!loading && !message && emailValid && code.trim() && passwordStrength >= 50 && passwordsMatch) {
-                changeEvent.currentTarget.style.transform = 'translateY(-2px)';
-                changeEvent.currentTarget.style.boxShadow = '0 12px 32px rgba(240, 165, 0, 0.4), 0 6px 16px rgba(0, 0, 0, 0.15)';
-              }
-            }}
-            onMouseLeave={(changeEvent) => {
-              if (!loading && !message) {
-                changeEvent.currentTarget.style.transform = 'translateY(0)';
-                changeEvent.currentTarget.style.boxShadow = '0 8px 24px rgba(240, 165, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.1)';
-              }
-            }}
+            className={`auth-submit-btn ${message ? 'is-success' : loading ? 'is-loading' : ''}`}
           >
             {message 
               ? 'Password Reset Complete' 
               : loading 
                 ? (
-                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                  <span className="auth-submit-content">
                     <div className="spinner spinner-sm"></div>
                     Resetting Password...
                   </span>
@@ -712,34 +544,8 @@ export default function ResetPasswordPage() {
           </button>
         </form>
 
-        <div style={{ 
-          marginTop: '24px',
-          display: 'flex',
-          justifyContent: 'center'
-        }}>
-          <a 
-            href="/login" 
-            style={{ 
-              color: '#F47C20',
-              textDecoration: 'none',
-              fontWeight: 600,
-              padding: '8px 16px',
-              borderRadius: '8px',
-              background: 'rgba(240, 165, 0, 0.08)',
-              border: '1px solid rgba(240, 165, 0, 0.2)',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(changeEvent) => { 
-              changeEvent.currentTarget.style.background = 'rgba(240, 165, 0, 0.15)';
-              changeEvent.currentTarget.style.transform = 'translateY(-1px)';
-            }}
-            onMouseLeave={(changeEvent) => { 
-              changeEvent.currentTarget.style.background = 'rgba(240, 165, 0, 0.08)';
-              changeEvent.currentTarget.style.transform = 'translateY(0)';
-            }}
-          >
-            Back to Login
-          </a>
+        <div className="auth-back-wrapper">
+          <a href="/login" className="auth-back-link">Back to Login</a>
         </div>
       </div>
     </div>

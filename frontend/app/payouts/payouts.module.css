@@ -1,4 +1,187 @@
 /* =============================================
+   PAGE CONTAINER
+   ============================================= */
+
+.pageContainer {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+/* =============================================
+   SUMMARY CARD  (matches entries page)
+   ============================================= */
+
+.summaryCard {
+  background-color: #FAF4E8;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(240, 120, 32, 0.2);
+  padding: 0;
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+}
+
+.summaryTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1A1A1A;
+  margin: 0;
+  padding: 14px 24px;
+  background: #F0E0C0;
+  border-bottom: 3px solid #F07820;
+  border-radius: 16px 16px 0 0;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+}
+
+.statBox {
+  text-align: center;
+  padding: 24px 16px;
+  border-right: 1px solid rgba(26, 26, 26, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 110px;
+}
+
+.statBox:last-child {
+  border-right: none;
+}
+
+.statValue {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+  color: #1A1A1A;
+}
+
+.statValueGreen {
+  color: #059669;
+}
+
+.statLabel {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: rgba(26, 26, 26, 0.55);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.statDetail {
+  font-size: 0.75rem;
+  color: rgba(26, 26, 26, 0.5);
+  margin-top: 2px;
+}
+
+.progressBarRow {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.progressBar {
+  width: 100%;
+  height: 6px;
+  background: rgba(26, 26, 26, 0.1);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.progressBarFill {
+  height: 100%;
+  background: linear-gradient(90deg, #059669, #34d399);
+  border-radius: 99px;
+  transition: width 0.4s ease;
+  min-width: 0;
+}
+
+.remainingLabel {
+  font-size: 0.7rem;
+  color: rgba(26, 26, 26, 0.45);
+  margin-top: 4px;
+}
+
+@media (max-width: 640px) {
+  .summaryGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .statBox:nth-child(2) {
+    border-right: none;
+  }
+  .statBox:nth-child(1),
+  .statBox:nth-child(2) {
+    border-bottom: 1px solid rgba(26, 26, 26, 0.08);
+  }
+}
+
+/* =============================================
+   TABLE CARD  (matches entries page)
+   ============================================= */
+
+.tableCard {
+  background-color: #FAF4E8;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(240, 120, 32, 0.2);
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+
+.tableCardHeader {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1A1A1A;
+  margin: 0;
+  padding: 14px 24px;
+  background: #F0E0C0;
+  border-bottom: 3px solid #F07820;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.headerPool {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #059669;
+}
+
+.searchStandalone {
+  margin-bottom: 1.5rem;
+}
+
+.searchStandalone .searchInput {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Sub-header separating individual brackets within a type section */
+.bracketSubHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  background: rgba(240, 120, 32, 0.05);
+  border-bottom: 1px solid rgba(240, 120, 32, 0.12);
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(26, 26, 26, 0.6);
+}
+
+.bracketSubHeader span:last-child {
+  color: #059669;
+  font-weight: 700;
+}
+
+/* =============================================
    CONTROL BAR
    ============================================= */
 
@@ -28,7 +211,7 @@
   margin-bottom: 5px;
   font-size: 11px;
   font-weight: 600;
-  color: #94a3b8;
+  color: rgba(26, 26, 26, 0.5);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -37,11 +220,11 @@
   width: 100%;
   padding: 9px 12px;
   border-radius: 10px;
-  border: 1px solid #e2e8f0;
+  border: 1.5px solid rgba(240, 120, 32, 0.2);
   font-size: 14px;
   font-weight: 500;
-  background: #f8fafc;
-  color: #1e293b;
+  background: #FFFCF5;
+  color: #1A1A1A;
   cursor: pointer;
   transition: border-color 0.15s, box-shadow 0.15s;
   appearance: none;
@@ -154,71 +337,7 @@
    STATS ROW
    ============================================= */
 
-.statsRow {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-@media (max-width: 768px) {
-  .statsRow { grid-template-columns: repeat(2, 1fr); }
-}
-
-@media (max-width: 480px) {
-  .statsRow { grid-template-columns: 1fr 1fr; }
-}
-
-.statCard {
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: var(--radius-xl, 16px);
-  padding: 18px 16px 14px;
-  position: relative;
-  overflow: hidden;
-}
-
-.statCard::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #F47C20, #D9651A);
-  border-radius: 0;
-}
-
-.statCardIcon {
-  font-size: 22px;
-  margin-bottom: 8px;
-  display: block;
-}
-
-.statCardLabel {
-  font-size: 11px;
-  font-weight: 600;
-  color: #94a3b8;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-bottom: 4px;
-}
-
-.statCardValue {
-  font-size: 24px;
-  font-weight: 800;
-  color: #1e293b;
-  line-height: 1;
-  margin-bottom: 4px;
-}
-
-.statCardValue.green  { color: #16a34a; }
-.statCardValue.orange { color: #F47C20; }
-
-.statCardSub {
-  font-size: 12px;
-  color: #94a3b8;
-}
+/* statsRow removed — replaced by summaryCard */
 
 /* =============================================
    ERROR / WARN BANNER
@@ -239,85 +358,27 @@
    TABS
    ============================================= */
 
-.tabBar {
-  display: flex;
-  background: #f1f5f9;
-  border-radius: 12px;
-  padding: 4px;
-  margin-bottom: 16px;
-  width: fit-content;
-}
-
-.tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 20px;
-  background: none;
-  border: none;
-  border-radius: 9px;
-  font-size: 14px;
-  font-weight: 500;
-  color: #64748b;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
-}
-
-.tab:hover:not(.active) {
-  color: #1e293b;
-  background: rgba(255,255,255,0.5);
-}
-
-.tab.active {
-  background: white;
-  color: #F47C20;
-  font-weight: 600;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-}
-
-.tabCount {
-  background: #e2e8f0;
-  color: #475569;
-  border-radius: 20px;
-  padding: 1px 8px;
-  font-size: 11px;
-  font-weight: 700;
-  min-width: 20px;
-  text-align: center;
-}
-
-.tab.active .tabCount {
-  background: #fff0e6;
-  color: #F47C20;
-}
+/* tabs removed from payouts page */
 
 /* =============================================
    SEARCH BAR
    ============================================= */
 
 .searchBar {
-  position: relative;
-  margin-bottom: 16px;
-}
-
-.searchIcon {
-  position: absolute;
-  left: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 14px;
-  pointer-events: none;
-  opacity: 0.5;
+  padding: 14px 20px;
+  border-bottom: 1px solid rgba(240, 120, 32, 0.12);
+  background: rgba(240, 120, 32, 0.03);
 }
 
 .searchInput {
   width: 100%;
-  padding: 11px 16px 11px 40px;
-  border: 1.5px solid #e2e8f0;
+  padding: 10px 14px;
+  border: 1.5px solid rgba(240, 120, 32, 0.2);
   border-radius: 10px;
   font-size: 14px;
   box-sizing: border-box;
-  background: white;
+  background: #FFFCF5;
+  color: #1A1A1A;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 
@@ -325,6 +386,10 @@
   outline: none;
   border-color: #F47C20;
   box-shadow: 0 0 0 3px rgba(244, 124, 32, 0.12);
+}
+
+.searchInput::placeholder {
+  color: rgba(26, 26, 26, 0.35);
 }
 
 /* =============================================
@@ -338,14 +403,14 @@
   justify-content: center;
   gap: 12px;
   padding: 64px 24px;
-  color: #94a3b8;
+  color: rgba(26, 26, 26, 0.5);
   font-size: 14px;
 }
 
 .loadingSpinner {
   width: 32px;
   height: 32px;
-  border: 3px solid #e2e8f0;
+  border: 3px solid rgba(240, 120, 32, 0.15);
   border-top-color: #F47C20;
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
@@ -358,27 +423,21 @@
   justify-content: center;
   padding: 64px 24px;
   text-align: center;
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: var(--radius-xl, 16px);
-}
-
-.emptyIcon {
-  font-size: 48px;
-  margin-bottom: 16px;
-  opacity: 0.6;
+  background: #FAF4E8;
+  border: 1px solid rgba(240, 120, 32, 0.2);
+  border-radius: 16px;
 }
 
 .emptyTitle {
   font-size: 17px;
   font-weight: 700;
-  color: #1e293b;
+  color: #1A1A1A;
   margin-bottom: 8px;
 }
 
 .emptyMessage {
   font-size: 14px;
-  color: #64748b;
+  color: rgba(26, 26, 26, 0.55);
   max-width: 380px;
   line-height: 1.6;
 }
@@ -388,12 +447,7 @@
    ============================================= */
 
 .bracketGroup {
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: var(--radius-xl, 16px);
-  overflow: hidden;
-  margin-bottom: 16px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  background: transparent;
 }
 
 .bracketHeader {
@@ -403,8 +457,8 @@
   flex-wrap: wrap;
   gap: 10px;
   padding: 16px 20px;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-bottom: 1px solid #e2e8f0;
+  background: rgba(240, 120, 32, 0.05);
+  border-bottom: 1px solid rgba(240, 120, 32, 0.12);
 }
 
 .bracketTitle {
@@ -442,8 +496,8 @@
   letter-spacing: 0.06em;
 }
 
-.bracketTypeBadge.scratch  { background: #fff0e6; color: #F47C20; }
-.bracketTypeBadge.handicap { background: #f0fdf4; color: #16a34a; }
+.bracketTypeBadge.scratch  { background: rgba(240, 120, 32, 0.1); color: #F47C20; }
+.bracketTypeBadge.handicap { background: rgba(5, 150, 105, 0.1); color: #059669; }
 
 .bracketMeta {
   display: flex;
@@ -469,7 +523,7 @@
 .prizeAmount {
   font-size: 22px;
   font-weight: 800;
-  color: #16a34a;
+  color: #059669;
 }
 
 .prizeLabel {
@@ -487,18 +541,19 @@
   align-items: center;
   gap: 16px;
   padding: 14px 20px;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid rgba(240, 120, 32, 0.1);
   transition: background 0.1s;
+  background: #FFFCF5;
 }
 
 .winnerRow:last-child { border-bottom: none; }
-.winnerRow:hover { background: #fafafa; }
+.winnerRow:hover { background: rgba(240, 120, 32, 0.05); }
 
 /* Paid row — muted */
 .winnerRow.isPaid {
-  opacity: 0.55;
+  opacity: 0.5;
 }
-.winnerRow.isPaid:hover { background: #f8fafc; }
+.winnerRow.isPaid:hover { background: rgba(240, 120, 32, 0.03); }
 
 .paidBadge {
   display: inline-flex;
@@ -506,13 +561,14 @@
   gap: 5px;
   font-size: 12px;
   font-weight: 700;
-  color: #16a34a;
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
+  color: #059669;
+  background: rgba(5, 150, 105, 0.1);
+  border: 1px solid rgba(5, 150, 105, 0.3);
   border-radius: 20px;
   padding: 4px 12px;
   white-space: nowrap;
   flex-shrink: 0;
+  cursor: pointer;
 }
 
 .markPaidBtn {
@@ -521,9 +577,9 @@
   gap: 5px;
   font-size: 12px;
   font-weight: 600;
-  color: #64748b;
-  background: white;
-  border: 1.5px solid #e2e8f0;
+  color: rgba(26, 26, 26, 0.5);
+  background: transparent;
+  border: 1.5px solid rgba(240, 120, 32, 0.25);
   border-radius: 20px;
   padding: 4px 12px;
   cursor: pointer;
@@ -533,37 +589,36 @@
 }
 
 .markPaidBtn:hover {
-  border-color: #16a34a;
-  color: #16a34a;
-  background: #f0fdf4;
+  border-color: #059669;
+  color: #059669;
+  background: rgba(5, 150, 105, 0.06);
 }
 
 .showEntriesBtn {
   display: block;
   width: 100%;
-  margin-top: 8px;
-  padding: 11px;
-  background: white;
-  border: 1.5px dashed #e2e8f0;
-  border-radius: 10px;
+  padding: 12px;
+  background: rgba(240, 120, 32, 0.04);
+  border: none;
+  border-top: 1px dashed rgba(240, 120, 32, 0.2);
   font-size: 13px;
   font-weight: 600;
-  color: #64748b;
+  color: rgba(26, 26, 26, 0.5);
   cursor: pointer;
-  transition: border-color 0.15s, color 0.15s;
+  transition: color 0.15s, background 0.15s;
 }
 
 .showEntriesBtn:hover {
-  border-color: #94a3b8;
-  color: #1e293b;
+  color: #F47C20;
+  background: rgba(240, 120, 32, 0.07);
 }
 
 /* 1st place gets a subtle gold tint */
 .winnerRow.firstPlace {
-  background: linear-gradient(90deg, #fffbeb 0%, white 60%);
+  background: linear-gradient(90deg, #FFF8E6 0%, #FFFCF5 60%);
 }
 .winnerRow.firstPlace:hover {
-  background: linear-gradient(90deg, #fef3c7 0%, #fffbf5 60%);
+  background: linear-gradient(90deg, #FEEFC3 0%, rgba(240, 120, 32, 0.05) 60%);
 }
 
 /* =============================================
@@ -585,7 +640,7 @@
 .place1     { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #78350f; }
 .place2     { background: linear-gradient(135deg, #d1d5db, #9ca3af); color: #374151; }
 .place3     { background: linear-gradient(135deg, #fb923c, #ea580c); color: white; }
-.placeOther { background: #f1f5f9; color: #64748b; }
+.placeOther { background: rgba(240, 120, 32, 0.08); color: rgba(26, 26, 26, 0.4); }
 
 /* =============================================
    WINNER INFO
@@ -599,7 +654,7 @@
 .winnerName {
   font-weight: 700;
   font-size: 15px;
-  color: #1e293b;
+  color: #1A1A1A;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -623,7 +678,7 @@
 
 .winnerMeta {
   font-size: 12px;
-  color: #94a3b8;
+  color: rgba(26, 26, 26, 0.45);
   margin-top: 2px;
 }
 
@@ -639,7 +694,7 @@
 .payoutAmount {
   font-size: 20px;
   font-weight: 800;
-  color: #16a34a;
+  color: #059669;
 }
 
 .firstPlace .payoutAmount {
@@ -656,13 +711,13 @@
    ENTRIES TABLE
    ============================================= */
 
-.tableCard {
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: var(--radius-xl, 16px);
+.entriesTableCard {
+  background: #FAF4E8;
+  border: 1px solid rgba(240, 120, 32, 0.2);
+  border-radius: 16px;
   overflow: hidden;
-  margin-bottom: 16px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
 .tableWrapper {
@@ -676,8 +731,8 @@
 }
 
 .entriesTable thead tr {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-bottom: 1px solid #e2e8f0;
+  background: rgba(240, 120, 32, 0.05);
+  border-bottom: 1px solid rgba(240, 120, 32, 0.12);
 }
 
 .entriesTable th {
@@ -685,7 +740,7 @@
   text-align: left;
   font-size: 11px;
   font-weight: 700;
-  color: #64748b;
+  color: rgba(26, 26, 26, 0.5);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   white-space: nowrap;
@@ -693,8 +748,9 @@
 
 .entriesTable td {
   padding: 13px 16px;
-  border-bottom: 1px solid #f1f5f9;
-  color: #334155;
+  border-bottom: 1px solid rgba(240, 120, 32, 0.08);
+  color: #1A1A1A;
+  background: #FFFCF5;
   vertical-align: middle;
 }
 
@@ -703,7 +759,7 @@
 }
 
 .entriesTable tbody tr:hover td {
-  background: #fafbfc;
+  background: rgba(240, 120, 32, 0.04);
 }
 
 /* winner row in entries */
@@ -720,7 +776,7 @@
 .playerCell {
   font-weight: 700;
   font-size: 15px;
-  color: #1e293b;
+  color: #1A1A1A;
   white-space: nowrap;
 }
 
@@ -732,12 +788,12 @@
 .winningsCell {
   font-weight: 800;
   font-size: 15px;
-  color: #16a34a;
+  color: #059669;
   text-align: right;
 }
 
 .winningsCellEmpty {
-  color: #cbd5e1;
+  color: rgba(26, 26, 26, 0.2);
   text-align: right;
 }
 
@@ -751,8 +807,8 @@
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  background: #f1f5f9;
-  color: #475569;
+  background: rgba(240, 120, 32, 0.08);
+  color: rgba(26, 26, 26, 0.6);
   font-size: 11px;
   font-weight: 600;
   padding: 3px 9px;
@@ -781,12 +837,12 @@
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  border: 1.5px solid #e2e8f0;
+  border: 1.5px solid rgba(240, 120, 32, 0.2);
   border-radius: 10px;
-  background: white;
+  background: #FFFCF5;
   font-size: 13px;
   font-weight: 600;
-  color: #475569;
+  color: rgba(26, 26, 26, 0.55);
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
@@ -794,7 +850,7 @@
 .pageBtn:hover:not(:disabled) {
   border-color: #F47C20;
   color: #F47C20;
-  background: #fff8f3;
+  background: rgba(240, 120, 32, 0.06);
 }
 
 .pageBtn:disabled {

@@ -25,6 +25,7 @@ export default function PlayersPage() {
   const [selectedSquadId, setSelectedSquadId] = useState<number | null>(null)
   const [squads, setSquads] = useState<Squad[]>([])
   const [entryFee, setEntryFee] = useState<number>(25) // Default $25, will be loaded from tournament settings
+  const [bracketSize, setBracketSize] = useState<number>(8) // Default 8, will be loaded from tournament settings
   const [initialLoadComplete, setInitialLoadComplete] = useState<boolean>(false)
   
 
@@ -72,6 +73,9 @@ export default function PlayersPage() {
       if (settings && typeof settings.cost_per_bracket === 'number') {
         setEntryFee(settings.cost_per_bracket);
         logger.info(`Loaded entry fee from tournament settings: $${settings.cost_per_bracket}`);
+      }
+      if (settings && typeof settings.bracket_size === 'number') {
+        setBracketSize(settings.bracket_size);
       }
     } catch (error) {
       logger.warn('Failed to load bracket settings, using default entry fee:', error);
@@ -127,6 +131,7 @@ export default function PlayersPage() {
     savingStatus,
     addPlayer,
     updatePlayer,
+    cancelPendingPatches,
     deletePlayer
   } = usePlayers({
     selectedSquad,
@@ -142,11 +147,47 @@ export default function PlayersPage() {
     updatePlayer(playerId, updates);
   }, [updatePlayer]);
 
+  // DEV ONLY: randomize averages and entries for all players
+  const handleRandomize = useCallback(async () => {
+    const updates = players.map(player => ({
+      id: player.id,
+      average: Math.floor(Math.random() * 91) + 140, // 140–230
+      handicap_entries: Math.floor(Math.random() * 15) + 1, // 1–15
+      scratch_entries: Math.floor(Math.random() * 15) + 1, // 1–15
+    }))
+
+    // Optimistic local update
+    updates.forEach(u => {
+      updatePlayer(u.id, {
+        average: u.average,
+        handicap: u.handicap_entries,
+        scratch: u.scratch_entries,
+      })
+    })
+
+    // Single bulk write — one DB transaction instead of N individual PATCHes
+    // Cancel the debounce timers that updatePlayer scheduled so they don't double-write
+    cancelPendingPatches()
+    try {
+      await apiClient.bulkPatch('/api/v1/bowlers/bulk-update', updates)
+    } catch (err) {
+      console.error('Bulk randomize failed', err)
+    }
+  }, [players, updatePlayer, cancelPendingPatches])
+
+  const isDev = process.env.NODE_ENV === 'development'
+
+  const headerActions = useMemo(() => {
+    if (!isDev || players.length === 0) return undefined
+    return (
+      <button className={styles.devButton} onClick={handleRandomize}>DEV: Randomize Data</button>
+    )
+  }, [isDev, players.length, handleRandomize])
+
   usePageHeader({
     title: 'Entries',
-    subtitle: selectedTournament
-      ? `${selectedTournament.name}${selectedSquad ? ` · ${[selectedSquad.date, selectedSquad.time].filter(Boolean).join(' ')}` : ''}`
-      : 'Select a tournament from the dashboard'
+    subtitle: undefined,
+    actions: headerActions
   })
 
   // Calculate entry totals
@@ -165,44 +206,56 @@ export default function PlayersPage() {
       }
     }
 
-    const bracketSize = 8 // Default bracket size
-    let scratchCount = 0
-    let handicapCount = 0
-    let paidEntries = 0
+    // Mirrors the backend's two-phase fill algorithm (brackets_advanced.py).
+    // Phase 1 uses the same convergence formula:
+    //   Start with k = floor(total / bracketSize). Each player contributes
+    //   at most min(count, k) entries (one per bracket). If that capped supply
+    //   can't fill k brackets, reduce k and re-check until stable.
+    // Phase 2 only affects pairing quality (rematch avoidance), not count.
+    // The frontend estimate therefore matches the backend bracket count exactly.
+    const simulateBracketFill = (playerCounts: number[]) => {
+      const total = playerCounts.reduce((a, b) => a + b, 0)
+      if (total < bracketSize) return { brackets: 0, refunds: total }
 
-    players.forEach(player => {
-      const scratchEntries = player.scratch || 0
-      const handicapEntries = player.handicap || 0
-      const totalPlayerEntries = scratchEntries + handicapEntries
-      
-      scratchCount += scratchEntries
-      handicapCount += handicapEntries
-      
-      // Only count revenue if player has paid (amountPaid >= totalCost)
-      const isPaid = player.amountPaid && player.totalCost && player.amountPaid >= player.totalCost
-      if (isPaid) {
-        paidEntries += totalPlayerEntries
+      let k = Math.floor(total / bracketSize)
+      while (k > 0) {
+        const fillable = playerCounts.reduce((sum, c) => sum + Math.min(c, k), 0)
+        const newK = Math.floor(fillable / bracketSize)
+        if (newK >= k) break   // stable — k is achievable
+        k = newK
       }
-    })
 
+      return { brackets: k, refunds: total - k * bracketSize }
+    }
+
+    const scratchCounts = players.map(p => p.scratch || 0)
+    const handicapCounts = players.map(p => p.handicap || 0)
+
+    const scratchSim = simulateBracketFill(scratchCounts)
+    const handicapSim = simulateBracketFill(handicapCounts)
+
+    const scratchCount = scratchCounts.reduce((a, b) => a + b, 0)
+    const handicapCount = handicapCounts.reduce((a, b) => a + b, 0)
     const totalEntries = scratchCount + handicapCount
-    const expectedScratchBrackets = Math.floor(scratchCount / bracketSize)
-    const expectedHandicapBrackets = Math.floor(handicapCount / bracketSize)
-    const scratchRefunds = scratchCount % bracketSize
-    const handicapRefunds = handicapCount % bracketSize
+
+    let paidEntries = 0
+    players.forEach(player => {
+      const isPaid = player.amountPaid && player.totalCost && player.amountPaid >= player.totalCost
+      if (isPaid) paidEntries += (player.scratch || 0) + (player.handicap || 0)
+    })
 
     return {
       totalPlayers: players.length,
       scratchEntries: scratchCount,
       handicapEntries: handicapCount,
       totalEntries,
-      expectedScratchBrackets,
-      expectedHandicapBrackets,
-      scratchRefunds,
-      handicapRefunds,
+      expectedScratchBrackets: scratchSim.brackets,
+      expectedHandicapBrackets: handicapSim.brackets,
+      scratchRefunds: scratchSim.refunds,
+      handicapRefunds: handicapSim.refunds,
       totalRevenue: paidEntries * entryFee
     }
-  }, [players, entryFee])
+  }, [players, entryFee, bracketSize])
 
   // Fetch squad data (similar to scores page) - OPTIMIZED WITH PARALLEL REQUESTS
   useEffect(() => {
@@ -319,43 +372,32 @@ export default function PlayersPage() {
               <div className={styles.summaryCard}>
                 <h3 className={styles.summaryTitle}>Tournament Summary</h3>
                 <div className={styles.summaryGrid}>
-                  <div className={`${styles.statBox} ${styles.statBoxPlayers}`}>
-                    <div className={`${styles.statValue} ${styles.statValuePlayers}`}>
-                      {entryTotals.totalPlayers}
-                    </div>
-                    <div className={`${styles.statLabel} ${styles.statLabelPlayers}`}>Players</div>
+                  <div className={styles.statBox}>
+                    <div className={styles.statValue}>{entryTotals.totalPlayers}</div>
+                    <div className={styles.statLabel}>Players</div>
                   </div>
 
-                  <div className={`${styles.statBox} ${styles.statBoxHandicap}`}>
-                    <div className={`${styles.statValue} ${styles.statValueHandicap}`}>
-                      {entryTotals.handicapEntries}
-                    </div>
-                    <div className={`${styles.statLabel} ${styles.statLabelHandicap}`}>Handicap</div>
-                    <div className={`${styles.statDetail} ${styles.statDetailHandicap}`}>
-                      {entryTotals.expectedHandicapBrackets} Full Brackets
-                      {entryTotals.handicapRefunds > 0 && ` • ${entryTotals.handicapRefunds} Refunds`}
-                    </div>
+                  <div className={styles.statBox}>
+                    <div className={styles.statValue}>{entryTotals.handicapEntries}</div>
+                    <div className={styles.statLabel}>Handicap Entries</div>
+                    <div className={styles.statDetail}>{entryTotals.expectedHandicapBrackets} bracket{entryTotals.expectedHandicapBrackets !== 1 ? 's' : ''}</div>
+                    {entryTotals.handicapRefunds > 0 && (
+                      <div className={styles.statRefund}>~{entryTotals.handicapRefunds} refund{entryTotals.handicapRefunds !== 1 ? 's' : ''}</div>
+                    )}
                   </div>
 
-                  <div className={`${styles.statBox} ${styles.statBoxScratch}`}>
-                    <div className={`${styles.statValue} ${styles.statValueScratch}`}>
-                      {entryTotals.scratchEntries}
-                    </div>
-                    <div className={`${styles.statLabel} ${styles.statLabelScratch}`}>Scratch</div>
-                    <div className={`${styles.statDetail} ${styles.statDetailScratch}`}>
-                      {entryTotals.expectedScratchBrackets} Full Brackets
-                      {entryTotals.scratchRefunds > 0 && ` • ${entryTotals.scratchRefunds} Refunds`}
-                    </div>
+                  <div className={styles.statBox}>
+                    <div className={styles.statValue}>{entryTotals.scratchEntries}</div>
+                    <div className={styles.statLabel}>Scratch Entries</div>
+                    <div className={styles.statDetail}>{entryTotals.expectedScratchBrackets} bracket{entryTotals.expectedScratchBrackets !== 1 ? 's' : ''}</div>
+                    {entryTotals.scratchRefunds > 0 && (
+                      <div className={styles.statRefund}>~{entryTotals.scratchRefunds} refund{entryTotals.scratchRefunds !== 1 ? 's' : ''}</div>
+                    )}
                   </div>
 
                   <div className={`${styles.statBox} ${styles.statBoxRevenue}`}>
-                    <div className={`${styles.statValue} ${styles.statValueRevenue}`}>
-                      ${entryTotals.totalRevenue.toLocaleString()}
-                    </div>
-                    <div className={`${styles.statLabel} ${styles.statLabelRevenue}`}>Revenue</div>
-                    <div className={`${styles.statDetail} ${styles.statDetailRevenue}`}>
-                      {entryTotals.totalEntries} × ${entryFee}
-                    </div>
+                    <div className={styles.statValue}>${entryTotals.totalRevenue.toLocaleString()}</div>
+                    <div className={styles.statLabel}>Revenue</div>
                   </div>
                 </div>
               </div>

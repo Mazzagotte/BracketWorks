@@ -440,9 +440,6 @@ export default function BracketGenerationModal({
         {/* SUCCESS PHASE */}
         {currentPhase === 'success' && (
           <div className={styles.successContent}>
-            {/* Success Icon */}
-            <div className={styles.successIcon}></div>
-
             {/* Success message */}
             <h2 className={styles.successMessage}>
               Brackets Generated Successfully!
@@ -454,23 +451,23 @@ export default function BracketGenerationModal({
                 const stats = getSuccessStats()
                 return (
                   <>
-                    {stats.scratchCount > 0 && (
-                      <div className={styles.statItem} style={{ animationDelay: '0.1s' }}>
-                        <span className={styles.statText}>
-                          {stats.scratchCount} Scratch Bracket{stats.scratchCount !== 1 ? 's' : ''}
-                        </span>
-                      </div>
-                    )}
                     {stats.handicapCount > 0 && (
-                      <div className={styles.statItem} style={{ animationDelay: '0.2s' }}>
+                      <div className={styles.statItem} style={{ animationDelay: '0.1s' }}>
                         <span className={styles.statText}>
                           {stats.handicapCount} Handicap Bracket{stats.handicapCount !== 1 ? 's' : ''}
                         </span>
                       </div>
                     )}
+                    {stats.scratchCount > 0 && (
+                      <div className={styles.statItem} style={{ animationDelay: '0.2s' }}>
+                        <span className={styles.statText}>
+                          {stats.scratchCount} Scratch Bracket{stats.scratchCount !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+                    )}
                     <div className={styles.statItem} style={{ animationDelay: '0.3s' }}>
                       <span className={styles.statText}>
-                        {stats.skippedPlayers} Refund{stats.skippedPlayers !== 1 ? 's' : ''} ({stats.scratchRefunds} Scratch & {stats.handicapRefunds} Handicap)
+                        {stats.skippedPlayers} Refund{stats.skippedPlayers !== 1 ? 's' : ''} ({stats.handicapRefunds} Handicap & {stats.scratchRefunds} Scratch)
                       </span>
                     </div>
                   </>

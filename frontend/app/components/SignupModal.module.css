@@ -14,8 +14,6 @@
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -26,13 +24,14 @@
 
 /* Modal card */
 .modal {
-  background: #ffffff;
+  background: #FAF4E8;
   border-radius: 20px;
   max-width: 480px;
   width: 100%;
   max-height: 90vh;
   overflow: auto;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(240, 120, 32, 0.2);
   animation: slideUp 0.3s ease-out;
   scrollbar-width: none;
 }
@@ -44,20 +43,22 @@
 /* Header */
 .header {
   padding: 28px 28px 20px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 3px solid #F07820;
+  background: #F0E0C0;
+  border-radius: 20px 20px 0 0;
 }
 
 .title {
   margin: 0;
   font-size: 22px;
   font-weight: 700;
-  color: #1F2A33;
+  color: #1A1A1A;
 }
 
 .subtitle {
   margin: 6px 0 0;
   font-size: 14px;
-  color: #5E6B75;
+  color: rgba(26, 26, 26, 0.55);
 }
 
 /* Form body */
@@ -95,7 +96,7 @@
   display: block;
   font-size: 13px;
   font-weight: 600;
-  color: #374151;
+  color: #1A1A1A;
   margin-bottom: 6px;
   letter-spacing: 0.1px;
 }
@@ -104,24 +105,24 @@
   width: 100%;
   padding: 11px 14px;
   font-size: 15px;
-  border: 2px solid #e5e7eb;
+  border: 1px solid rgba(26, 26, 26, 0.2);
   border-radius: 10px;
   outline: none;
-  background: #fafafa;
+  background: #ffffff;
   transition: all 0.2s ease;
   box-sizing: border-box;
   font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
-  color: #374151;
+  color: #1A1A1A;
 }
 
 .input:focus {
   border-color: #F47C20;
   background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(244, 124, 32, 0.1);
+  box-shadow: 0 0 0 3px rgba(244, 124, 32, 0.15);
 }
 
 .input::placeholder {
-  color: #9ca3af;
+  color: rgba(26, 26, 26, 0.35);
 }
 
 .inputValid {
@@ -197,6 +198,18 @@
   height: 100%;
   transition: all 0.3s ease;
   border-radius: 2px;
+}
+
+/* Strength level colors */
+.strength0, .strength1 { background: #D64545; color: #D64545; }
+.strength2             { background: #f97316; color: #f97316; }
+.strength3             { background: #F2A900; color: #F2A900; }
+.strength4             { background: #84cc16; color: #84cc16; }
+.strength5             { background: #2FBF71; color: #2FBF71; }
+
+/* Relative wrapper for name fields */
+.fieldRelative {
+  position: relative;
 }
 
 .strengthLabel {
@@ -277,9 +290,9 @@
   padding: 13px;
   font-size: 15px;
   font-weight: 600;
-  color: #5E6B75;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
+  color: #F07820;
+  background: transparent;
+  border: 1px solid #F07820;
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -287,8 +300,8 @@
 }
 
 .cancelBtn:hover:not(:disabled) {
-  background: #f3f4f6;
-  border-color: #d1d5db;
+  background: rgba(240, 120, 32, 0.08);
+  border-color: #D4580A;
 }
 
 .cancelBtn:disabled {

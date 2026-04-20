@@ -84,10 +84,10 @@ html:has(.signup-page-container) {
   max-width: 520px !important;
   max-height: calc(100vh - 48px) !important;
   padding: 40px !important;
-  background: rgba(255, 255, 255, 0.98) !important;
-  backdrop-filter: blur(20px) !important;
+  background: #FAF4E8 !important;
+  backdrop-filter: none !important;
   border-radius: 20px !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border: 1px solid rgba(240, 120, 32, 0.2) !important;
   box-shadow: 
     0 32px 64px rgba(0, 0, 0, 0.12),
     0 16px 32px rgba(0, 0, 0, 0.08),
@@ -187,7 +187,7 @@ html:has(.signup-page-container) {
   margin-bottom: 6px !important;
   font-size: var(--font-size-md) !important;
   font-weight: var(--font-weight-semibold) !important;
-  color: var(--color-gray-700) !important;
+  color: #1A1A1A !important;
   font-family: var(--font-family-primary) !important;
 }
 
@@ -205,16 +205,16 @@ html:has(.signup-page-container) {
   padding: 0 16px !important;
   font-size: var(--font-size-lg) !important;
   font-weight: var(--font-weight-medium) !important;
-  border: 2px solid var(--color-gray-200) !important;
+  border: 1px solid rgba(26, 26, 26, 0.2) !important;
   border-radius: 12px !important;
-  background: var(--color-white) !important;
+  background: #ffffff !important;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
   outline: none !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+  box-shadow: none !important;
   letter-spacing: 0.3px !important;
   box-sizing: border-box !important;
   font-family: var(--font-family-primary) !important;
-  color: var(--color-gray-800) !important;
+  color: #1A1A1A !important;
 }
 
 .signup-password-input {
@@ -330,7 +330,13 @@ html:has(.signup-page-container) {
 
 /* Error container */
 .signup-error-container {
-  margin-top: 20px !important;
+  margin-top: 16px !important;
+  padding: 12px 16px !important;
+  background: rgba(239, 68, 68, 0.08) !important;
+  border: 1px solid rgba(239, 68, 68, 0.2) !important;
+  border-radius: 8px !important;
+  color: #b91c1c !important;
+  font-size: 14px !important;
 }
 
 /* Link styling - consistent with login */
@@ -355,20 +361,18 @@ html:has(.signup-page-container) {
   letter-spacing: 0.1px !important;
   position: relative !important;
   overflow: hidden !important;
-  color: var(--color-dark-accent) !important;
-  background: rgba(255, 255, 255, 0.08) !important;
-  backdrop-filter: blur(10px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
-  box-shadow: 
-    0 2px 8px rgba(0, 0, 0, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  color: #F07820 !important;
+  background: rgba(240, 120, 32, 0.06) !important;
+  backdrop-filter: none !important;
+  border: 1px solid rgba(240, 120, 32, 0.2) !important;
+  box-shadow: none !important;
   cursor: pointer !important;
 }
 
 .signup-login-button:hover {
-  color: var(--color-dark-lighter) !important;
-  background: rgba(255, 255, 255, 0.12) !important;
-  border-color: rgba(255, 255, 255, 0.25) !important;
+  color: #D4580A !important;
+  background: rgba(240, 120, 32, 0.12) !important;
+  border-color: rgba(240, 120, 32, 0.3) !important;
   transform: translateY(-1px) !important;
   box-shadow: 
     0 4px 12px rgba(0, 0, 0, 0.15),

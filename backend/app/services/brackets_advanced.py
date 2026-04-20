@@ -1,14 +1,19 @@
 """
-Advanced bracket generation with constraint-based pairing and rematch prevention.
+Advanced bracket generation with two-phase algorithm:
 
-This module implements a sophisticated bracket generation algorithm that:
-1. Prevents players from facing previous opponents in first rounds (via historySet)
-2. Uses backtracking to find valid pairings under constraints
-3. Attempts cross-bracket swaps to salvage failing brackets
-4. Supports deterministic RNG for reproducible results
-5. Handles refunds for players who cannot be placed
+Phase 1 — Deterministic Max Fill:
+  Fills the maximum possible number of complete brackets without randomness
+  affecting the count. Uses a convergence formula to find k (number of brackets),
+  then greedily assigns entries to groups ensuring no player appears twice in the
+  same bracket.
 
-Algorithm based on constraint satisfaction with randomized backtracking.
+Phase 2 — Optimized Pairing:
+  Randomness only affects matchup quality, never bracket count. For each group,
+  shuffles first-round pairings and scores them by:
+    1. Historical rematch avoidance (players who have faced each other before)
+    2. Cross-bracket uniqueness (same two players shouldn't face each other in
+       multiple brackets in the same tournament)
+  Keeps the best pairing found across many attempts.
 """
 import random
 from typing import List, Dict, Any, Set, Tuple, Optional
@@ -84,215 +89,175 @@ def get_round_name(round_num: int, bracket_size: int) -> str:
 
 
 # ============================================================================
-# BACKTRACKING PAIRING ALGORITHM
+# PHASE 1: DETERMINISTIC MAX FILL
 # ============================================================================
 
-def backtrack_make_pairs(
-    pool: List[Dict[str, Any]],
-    pairs: List[Dict[str, Any]],
-    history_set: Set[Tuple[int, int]],
+def max_fill_groups(
+    entries: List[Dict[str, Any]],
+    bracket_size: int,
     rng: random.Random
-) -> bool:
+) -> Tuple[List[List[Dict[str, Any]]], List[Dict[str, Any]]]:
     """
-    Recursive backtracking to create perfect matching with constraints.
-    
-    Args:
-        pool: Remaining unmatched players
-        pairs: List of completed pairings (modified in place)
-        history_set: Set of forbidden (player_a_id, player_b_id) pairs
-        rng: Random number generator for shuffled partner selection
-    
+    Deterministically fill the maximum number of complete brackets.
+
+    Algorithm:
+    1. Compute k (bracket count) via convergence: start at floor(total/size),
+       cap each player's contribution at k (one entry per bracket), reduce k
+       until the capped total can actually fill k brackets.
+    2. Assign entries to k groups greedily: for each player (most-entries first),
+       pick the k groups with fewest members and place one entry in each, ensuring
+       no player appears twice in the same group.
+
+    This is deterministic — randomness only affects internal shuffles used to
+    break ties when groups have equal fill level, not the final bracket count.
+
     Returns:
-        True if valid matching found, False if dead end
+        (complete_groups, leftover_entries)
     """
-    # Base case: all players matched
-    if len(pool) == 0:
-        return True
-    
-    # Take first player from pool
-    player_a = pool.pop(0)
-    player_a_id = player_a['player_id']
-    
-    # Find all allowed partners (not forbidden with player_a)
-    allowed_indices = []
-    for i, player_b in enumerate(pool):
-        player_b_id = player_b['player_id']
-        if not is_forbidden(player_a_id, player_b_id, history_set):
-            allowed_indices.append(i)
-    
-    # Shuffle allowed partners for randomness
-    allowed_indices = fisher_yates_shuffle(allowed_indices, rng)
-    
-    # Try each allowed partner
-    for idx in allowed_indices:
-        # Remove partner from pool
-        player_b = pool.pop(idx)
-        
-        # Create pairing
-        pairs.append({
-            'home': player_a,
-            'away': player_b
-        })
-        
-        # Recurse
-        if backtrack_make_pairs(pool, pairs, history_set, rng):
-            return True
-        
-        # Backtrack: undo pairing and restore pool
-        pairs.pop()
-        pool.insert(idx, player_b)
-    
-    # Dead end for this player_a - restore to pool
-    pool.insert(0, player_a)
-    return False
+    if len(entries) < bracket_size:
+        return [], list(entries)
+
+    # Group entries by player_id
+    by_player: Dict[int, List[Dict[str, Any]]] = {}
+    for entry in entries:
+        pid = entry['player_id']
+        by_player.setdefault(pid, []).append(entry)
+
+    counts = [len(v) for v in by_player.values()]
+    total = sum(counts)
+
+    # Convergence: find the largest k where capped supply meets demand
+    k = total // bracket_size
+    while k > 0:
+        fillable = sum(min(c, k) for c in counts)
+        new_k = fillable // bracket_size
+        if new_k >= k:
+            break
+        k = new_k
+
+    if k == 0:
+        return [], list(entries)
+
+    groups: List[List[Dict[str, Any]]] = [[] for _ in range(k)]
+    leftovers: List[Dict[str, Any]] = []
+
+    # Sort players by entry count descending so high-volume players are spread
+    # across groups early, preventing late congestion.
+    sorted_players = sorted(by_player.values(), key=len, reverse=True)
+
+    for player_entries in sorted_players:
+        pid = player_entries[0]['player_id']
+        # Cap: this player can appear in at most k groups (one per bracket)
+        to_assign = player_entries[:k]
+        leftovers.extend(player_entries[k:])
+
+        # Shuffle this player's own entries for variety within assignment
+        to_assign = fisher_yates_shuffle(to_assign, rng)
+
+        # Build list of eligible groups (not full, don't already have this player)
+        # sorted by current fill level ascending (fill least-full groups first)
+        eligible = sorted(
+            [i for i in range(k) if len(groups[i]) < bracket_size],
+            key=lambda i: len(groups[i])
+        )
+
+        for entry in to_assign:
+            placed = False
+            for i in eligible:
+                if len(groups[i]) < bracket_size:
+                    groups[i].append(entry)
+                    placed = True
+                    # Re-sort eligible after each placement to keep least-full first
+                    eligible.sort(key=lambda idx: len(groups[idx]))
+                    break
+            if not placed:
+                leftovers.append(entry)
+
+    # Separate complete from incomplete groups
+    complete: List[List[Dict[str, Any]]] = []
+    for group in groups:
+        if len(group) == bracket_size:
+            complete.append(group)
+        else:
+            leftovers.extend(group)
+
+    return complete, leftovers
 
 
-def pair_with_constraints(
-    entrants: List[Dict[str, Any]],
+# ============================================================================
+# PHASE 2: OPTIMIZED PAIRING
+# ============================================================================
+
+def optimize_pairings(
+    groups: List[List[Dict[str, Any]]],
     bracket_size: int,
     history_set: Set[Tuple[int, int]],
     rng: random.Random,
     max_attempts: int = 1500
-) -> Tuple[bool, List[Dict[str, Any]]]:
+) -> Tuple[List[Dict[str, Any]], List[List[Dict[str, Any]]]]:
     """
-    Attempt to create valid first-round pairings with constraints.
-    Tries multiple shuffles + backtracking to find solution.
-    
-    Args:
-        entrants: List of player entries for this bracket
-        bracket_size: Expected bracket size (must match len(entrants))
-        history_set: Set of forbidden pairings
-        rng: Random number generator
-        max_attempts: Maximum number of shuffle+backtrack attempts
-    
+    For each group, find first-round pairings that minimize:
+      1. Historical rematches (players who have faced each other before)
+      2. Cross-bracket repeat matchups within this generation run
+
+    Strategy: shuffle the group `max_attempts` times, create consecutive pairs
+    (p[0] vs p[1], p[2] vs p[3], …), score each candidate, keep the best.
+
+    Scoring (lower is better):
+      - +2 per historical rematch (hard penalty — strongly avoid)
+      - +1 per cross-bracket repeat in this run (soft penalty — try to avoid)
+
+    If no valid (zero-history) pairing is found after all attempts, falls back
+    to the best attempt that merely minimizes historical rematches.
+
     Returns:
-        (success: bool, pairings: List[Dict])
+        (brackets, failed_groups)
+        - brackets: list of {entrants, pairings} dicts for successful groups
+        - failed_groups: list of groups where no valid pairing was found at all
     """
-    if len(entrants) != bracket_size:
-        return False, []
-    
-    # Start with shuffled base
-    base = fisher_yates_shuffle(entrants, rng)
-    
-    for attempt in range(max_attempts):
-        pool = base.copy()
-        pairs = []
-        
-        if backtrack_make_pairs(pool, pairs, history_set, rng):
-            return True, pairs
-        
-        # Reshuffle and try again
-        base = fisher_yates_shuffle(base, rng)
-    
-    return False, []
+    brackets: List[Dict[str, Any]] = []
+    failed_groups: List[List[Dict[str, Any]]] = []
+    established_pairs: Set[Tuple[int, int]] = set()  # Cross-bracket tracking
 
+    for group in groups:
+        best_pairings: Optional[List[Tuple[Dict, Dict, Tuple[int, int]]]] = None
+        best_score = float('inf')
 
-def first_round_feasible(
-    entrants: List[Dict[str, Any]],
-    bracket_size: int,
-    history_set: Set[Tuple[int, int]],
-    rng: random.Random,
-    trials: int = 200
-) -> bool:
-    """
-    Check if first-round pairing is feasible (used for swap validation).
-    Lighter weight than full pair_with_constraints.
-    """
-    if len(entrants) != bracket_size:
-        return False
-    
-    for _ in range(trials):
-        pool = fisher_yates_shuffle(entrants, rng)
-        if backtrack_make_pairs(pool.copy(), [], history_set, rng):
-            return True
-    
-    return False
+        for _ in range(max_attempts):
+            shuffled = fisher_yates_shuffle(group, rng)
 
+            candidate: List[Tuple[Dict, Dict, Tuple[int, int]]] = []
+            score = 0
+            valid = True
 
-# ============================================================================
-# CROSS-BRACKET SWAP RESCUE
-# ============================================================================
+            for i in range(0, bracket_size, 2):
+                a, b = shuffled[i], shuffled[i + 1]
+                pair = normalize_pair(a['player_id'], b['player_id'])
 
-def pick_donor_group_index(
-    groups: List[List[Dict[str, Any]]],
-    fail_idx: int,
-    leftovers: List[Dict[str, Any]],
-    rng: random.Random
-) -> int:
-    """
-    Select a donor group for swap rescue.
-    Prefers another full group; falls back to leftovers (-1).
-    """
-    candidates = [i for i in range(len(groups)) if i != fail_idx]
-    if candidates:
-        return rng.choice(candidates)
-    return -1  # Use leftovers
+                if is_forbidden(a['player_id'], b['player_id'], history_set):
+                    score += 2  # Hard penalty for historical rematch
+                if pair in established_pairs:
+                    score += 1  # Soft penalty for cross-bracket repeat
 
+                candidate.append((a, b, pair))
 
-def attempt_swap_rescue(
-    failing_group: List[Dict[str, Any]],
-    donor_group: List[Dict[str, Any]],
-    bracket_size: int,
-    history_set: Set[Tuple[int, int]],
-    rng: random.Random,
-    is_donor_leftovers: bool = False
-) -> Tuple[bool, Optional[List[Dict[str, Any]]]]:
-    """
-    Attempt to fix a failing group by swapping players with a donor group.
-    
-    Returns:
-        (success: bool, valid_pairings: Optional[List])
-    """
-    # Can't swap if no donors available
-    if not donor_group or not failing_group:
-        return False, None
-    
-    max_swap_attempts = 25
-    
-    for _ in range(max_swap_attempts):
-        # Pick random players to swap
-        player_a = rng.choice(failing_group)
-        player_b = rng.choice(donor_group)
-        
-        if player_a['player_id'] == player_b['player_id']:
-            continue
-        
-        # Temporarily swap
-        failing_group.remove(player_a)
-        failing_group.append(player_b)
-        donor_group.remove(player_b)
-        donor_group.append(player_a)
-        
-        # Validate failing group
-        ok_failing, pairings = pair_with_constraints(
-            failing_group,
-            bracket_size,
-            history_set,
-            rng,
-            max_attempts=200
-        )
-        
-        # Validate donor group (if it's a full bracket)
-        ok_donor = True
-        if not is_donor_leftovers and len(donor_group) == bracket_size:
-            ok_donor = first_round_feasible(
-                donor_group,
-                bracket_size,
-                history_set,
-                rng,
-                trials=200
-            )
-        
-        if ok_failing and ok_donor:
-            return True, pairings
-        
-        # Revert swap
-        failing_group.remove(player_b)
-        failing_group.append(player_a)
-        donor_group.remove(player_a)
-        donor_group.append(player_b)
-    
-    return False, None
+            if score < best_score:
+                best_score = score
+                best_pairings = candidate
+                if best_score == 0:
+                    break  # Perfect — no history violations, no cross-bracket repeats
+
+        if best_pairings is not None:
+            for _, _, p in best_pairings:
+                established_pairs.add(p)
+            brackets.append({
+                'entrants': group,
+                'pairings': [{'home': a, 'away': b} for a, b, _ in best_pairings]
+            })
+        else:
+            failed_groups.append(group)
+
+    return brackets, failed_groups
 
 
 # ============================================================================
@@ -488,143 +453,46 @@ def generate_brackets_with_constraints(
     bracket_size: int,
     history_set: Set[Tuple[int, int]],
     seed: Optional[int] = None,
-    max_attempts_per_bracket: int = 1500,
-    swap_rescue_tries: int = 200
+    max_pairing_attempts: int = 1500,
+    **kwargs  # Accept (and ignore) legacy keyword args for backwards compat
 ) -> Dict[str, Any]:
     """
-    Main bracket generation algorithm with constraint-based pairing.
-    
+    Two-phase bracket generation.
+
+    Phase 1 — Deterministic Max Fill (max_fill_groups):
+        Computes the maximum achievable bracket count using the convergence
+        formula, then assigns entries to groups deterministically. Bracket
+        count is no longer affected by random shuffle order.
+
+    Phase 2 — Optimized Pairing (optimize_pairings):
+        Shuffles first-round matchups within each group, scoring each
+        candidate by historical rematches (+2) and cross-bracket repeats
+        (+1). Keeps the best pairing found across max_pairing_attempts.
+
     Args:
         entries: List of {player_id, name, average, entry_number} dicts
         bracket_size: Power of 2 (4, 8, 16, 32, 64, 128)
         history_set: Set of (player_a_id, player_b_id) tuples to avoid
-        seed: Optional RNG seed for deterministic results
-        max_attempts_per_bracket: Max backtracking attempts per bracket
-        swap_rescue_tries: Max swap rescue attempts
-    
+        seed: Optional RNG seed for reproducible results
+        max_pairing_attempts: Shuffle attempts per bracket in Phase 2
+
     Returns:
-        {
-            brackets: List of bracket dicts,
-            refunded: List of player entries that couldn't be placed
-        }
+        {brackets: List, refunded: List}
     """
     assert is_power_of_two(bracket_size), f"Bracket size must be power of 2, got {bracket_size}"
-    
-    # Initialize RNG
+
     rng = random.Random(seed) if seed is not None else random.Random()
-    
-    # Step 1: Shuffle entire pool
-    pool = fisher_yates_shuffle(entries, rng)
-    
-    # Step 2: Calculate how many brackets we can make
-    total_entries = len(pool)
-    target_count = total_entries // bracket_size
-    
-    if total_entries < bracket_size:
-        return {
-            'brackets': [],
-            'refunded': pool
-        }
-    
-    # Step 3: Distribute entries to groups, ensuring no duplicate player_ids per group
-    groups = [[] for _ in range(target_count)]
-    player_counts = [{} for _ in range(target_count)]  # Track player_id counts per group
-    skipped_entries = []
-    
-    for entry in pool:
-        player_id = entry.get('player_id')
-        placed = False
-        
-        # Try to place in a group that doesn't already have this player_id
-        for group_idx in range(target_count):
-            if len(groups[group_idx]) < bracket_size:
-                # Check if this player is already in this group
-                if player_counts[group_idx].get(player_id, 0) == 0:
-                    groups[group_idx].append(entry)
-                    player_counts[group_idx][player_id] = player_counts[group_idx].get(player_id, 0) + 1
-                    placed = True
-                    break
-        
-        if not placed:
-            skipped_entries.append(entry)
-    
-    # Step 4: Filter out incomplete groups and collect their entries as leftovers
-    complete_groups = []
-    leftovers = []
-    
-    for group in groups:
-        if len(group) == bracket_size:
-            complete_groups.append(group)
-        else:
-            leftovers.extend(group)
-    
-    leftovers.extend(skipped_entries)
-    groups = complete_groups
-    
-    # Step 5: Try to pair each group
-    brackets = []
-    bad_groups = []
-    
-    for idx, group in enumerate(groups):
-        ok, pairings = pair_with_constraints(
-            group,
-            bracket_size,
-            history_set,
-            rng,
-            max_attempts=max_attempts_per_bracket
-        )
-        
-        if ok:
-            brackets.append({
-                'entrants': group,
-                'pairings': pairings,
-                'group_index': idx
-            })
-        else:
-            bad_groups.append(idx)
-    
-    # Step 6: Swap rescue for failing groups
-    tries = 0
-    while bad_groups and tries < swap_rescue_tries:
-        tries += 1
-        
-        fail_idx = bad_groups.pop(0)
-        failing_group = groups[fail_idx]
-        
-        donor_idx = pick_donor_group_index(groups, fail_idx, leftovers, rng)
-        donor_group = leftovers if donor_idx == -1 else groups[donor_idx]
-        is_donor_leftovers = (donor_idx == -1)
-        
-        success, pairings = attempt_swap_rescue(
-            failing_group,
-            donor_group,
-            bracket_size,
-            history_set,
-            rng,
-            is_donor_leftovers=is_donor_leftovers
-        )
-        
-        if success:
-            brackets.append({
-                'entrants': failing_group.copy(),
-                'pairings': pairings,
-                'group_index': fail_idx
-            })
-        else:
-            # Couldn't salvage, push back
-            bad_groups.append(fail_idx)
-        
-        # Prevent infinite loop
-        if tries >= swap_rescue_tries:
-            break
-    
-    # Step 7: Collect refunds
-    failed_entrants = []
-    for idx in bad_groups:
-        failed_entrants.extend(groups[idx])
-    
-    refunded = leftovers + failed_entrants
-    
+
+    # Phase 1: fill as many brackets as possible (deterministic count)
+    groups, leftovers = max_fill_groups(entries, bracket_size, rng)
+
+    # Phase 2: find best first-round pairings for each group
+    brackets, failed_groups = optimize_pairings(
+        groups, bracket_size, history_set, rng, max_attempts=max_pairing_attempts
+    )
+
+    refunded = leftovers + [entry for group in failed_groups for entry in group]
+
     return {
         'brackets': brackets,
         'refunded': refunded

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 
 import { logger } from './logger';
 
@@ -70,6 +70,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [currentUser, setCurrentUser] = useState<User | null>(initialAuthState.currentUser);
   const [isAuthInitialized, setIsAuthInitialized] = useState(false);
   const [isComponentMounted, setIsComponentMounted] = useState(false);
+
+  // Refs let the storage event handler always see current values without
+  // being listed as effect dependencies (avoids the re-render loop).
+  const authTokenRef = useRef(authToken);
+  const currentUserRef = useRef(currentUser);
+  useEffect(() => { authTokenRef.current = authToken; }, [authToken]);
+  useEffect(() => { currentUserRef.current = currentUser; }, [currentUser]);
 
   // Set mounted flag for hydration safety
   useEffect(() => {

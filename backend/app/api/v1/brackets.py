@@ -153,27 +153,26 @@ def generate_tournament_brackets_endpoint(
         if not bowlers:
             raise HTTPException(status_code=404, detail="No players found for this tournament/squad")
         
-        # Get scores for these bowlers
+        # Get scores for these bowlers — single query, build lookup map
         players_data = []
-        
+
         logger.info(f"Fetching scores for {len(bowlers)} bowlers")
-        
+
+        scores_query = db.query(models.Score).filter(
+            models.Score.tournament_id == tournament_id
+        )
+        if squad_id:
+            scores_query = scores_query.filter(models.Score.squad_id == squad_id)
+        scores_map = {s.bowler_id: s for s in scores_query.all()}
+
         for bowler in bowlers:
-            # Get scores for this bowler from Score table
-            scores = db.query(models.Score).filter(
-                models.Score.bowler_id == bowler.id,
-                models.Score.tournament_id == tournament_id
-            )
-            if squad_id:
-                scores = scores.filter(models.Score.squad_id == squad_id)
-            
-            score_record = scores.first()
-            
-            logger.info(f"Player: {bowler.name} (ID: {bowler.id})")
+            score_record = scores_map.get(bowler.id)
+
+            logger.debug(f"Player: {bowler.name} (ID: {bowler.id})")
             if score_record:
-                logger.info(f"  Scores found: G1={score_record.game1_total}, G2={score_record.game2_total}, G3={score_record.game3_total}")
+                logger.debug(f"  Scores found: G1={score_record.game1_total}, G2={score_record.game2_total}, G3={score_record.game3_total}")
             else:
-                logger.info(f"  No scores found")
+                logger.debug(f"  No scores found")
             
             # Split name into first and last name
             name_parts = bowler.name.split(' ', 1)

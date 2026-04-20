@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from pydantic import BaseModel
@@ -22,15 +22,25 @@ def calculate_handicap(average: int, handicap_base: float, handicap_percentage: 
     return int(round(handicap))
 
 
-def get_handicap_for_bowler(bowler: Bowler, tournament_id: int, db: Session) -> int:
-    """Get calculated handicap for a bowler based on tournament settings"""
-    settings = db.query(BracketSettings).filter(
-        BracketSettings.tournament_id == tournament_id
-    ).first()
-    
+def get_handicap_for_bowler(
+    bowler: Bowler,
+    tournament_id: int,
+    db: Session,
+    settings: Optional[BracketSettings] = None,
+) -> int:
+    """Get calculated handicap for a bowler based on tournament settings.
+
+    Pass ``settings`` to avoid an extra DB round-trip when the caller has
+    already fetched BracketSettings (e.g. in a batch loop).
+    """
+    if settings is None:
+        settings = db.query(BracketSettings).filter(
+            BracketSettings.tournament_id == tournament_id
+        ).first()
+
     handicap_base = settings.handicap_base if settings else 200.0
     handicap_percentage = settings.handicap_percentage if settings else 80.0
-    
+
     return calculate_handicap(bowler.average, handicap_base, handicap_percentage)
 
 

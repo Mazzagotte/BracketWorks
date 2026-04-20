@@ -182,7 +182,6 @@ export const Card: React.FC<CardProps> = React.memo(({
     {children}
   </div>
 ))
-Card.displayName = 'Card'
 
 // Grid Container Component
 interface GridProps {
@@ -321,8 +320,6 @@ export const StatCard: React.FC<StatCardProps> = React.memo(({
     </div>
   )
 })
-
-StatCard.displayName = 'StatCard'
 
 // Button Component
 interface ButtonProps {
@@ -542,32 +539,16 @@ export const FormField: React.FC<FormFieldProps> = ({
   required = false, 
   className = '' 
 }) => (
-  <div className={`form-field ${className}`} style={{ marginBottom: spacing.md }}>
+  <div className={`form-field ${className}`}>
     {label && (
-      <label 
-        className="form-label"
-        style={{
-          display: 'block',
-          fontSize: typography.fontSize.sm,
-          fontWeight: typography.fontWeight.medium,
-          color: colors.text.primary,
-          marginBottom: spacing.xs
-        }}
-      >
+      <label className="form-label">
         {label}
-        {required && <span style={{ color: colors.error, marginLeft: '2px' }}>*</span>}
+        {required && <span className="form-required">*</span>}
       </label>
     )}
     {children}
     {error && (
-      <div 
-        className="form-error"
-        style={{
-          fontSize: typography.fontSize.sm,
-          color: colors.error,
-          marginTop: spacing.xs
-        }}
-      >
+      <div className="form-error">
         {error}
       </div>
     )}
@@ -603,35 +584,14 @@ export const Input: React.FC<InputProps> = ({
   error = false,
   size = 'md',
 }) => {
-  const heights = { sm: 'var(--input-height-sm)', md: 'var(--input-height)', lg: 'var(--input-height-lg)' }
-  const inputStyle: React.CSSProperties = {
-    width: '100%',
-    height: heights[size],
-    padding: icon
-      ? (iconPosition === 'left' ? '0 var(--spacing-md) 0 var(--spacing-xl)' : '0 var(--spacing-xl) 0 var(--spacing-md)')
-      : '0 var(--spacing-md)',
-    border: `1px solid ${error ? 'var(--color-error)' : 'var(--color-gray-200)'}`,
-    borderRadius: 'var(--radius-md)',
-    fontSize: 'var(--font-size-base)',
-    backgroundColor: disabled ? 'var(--color-gray-50)' : '#ffffff',
-    color: 'var(--color-text-primary)',
-    transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
-    outline: 'none',
-    boxSizing: 'border-box',
-  }
+  const sizeClass = size !== 'md' ? `size-${size}` : ''
+  const iconClass = icon ? `has-icon-${iconPosition}` : ''
+  const errorClass = error ? 'is-error' : ''
 
   return (
-    <div style={{ position: 'relative', display: 'inline-block', width: '100%' }}>
+    <div className="input-wrapper">
       {icon && (
-        <span style={{
-          position: 'absolute',
-          top: '50%',
-          transform: 'translateY(-50%)',
-          [iconPosition]: 'var(--spacing-md)',
-          color: 'var(--color-text-secondary)',
-          pointerEvents: 'none',
-          fontSize: 'var(--font-size-base)',
-        }}>{icon}</span>
+        <span className={`input-icon ${iconPosition}`}>{icon}</span>
       )}
       <input
         type={type}
@@ -641,16 +601,7 @@ export const Input: React.FC<InputProps> = ({
         placeholder={placeholder}
         disabled={disabled}
         required={required}
-        className={`enhanced-input ${className}`}
-        style={inputStyle}
-        onFocus={(e) => {
-          e.target.style.borderColor = 'var(--color-primary)';
-          e.target.style.boxShadow = '0 0 0 3px rgba(244, 124, 32, 0.15)';
-        }}
-        onBlur={(e) => {
-          e.target.style.borderColor = error ? 'var(--color-error)' : 'var(--color-gray-200)';
-          e.target.style.boxShadow = 'none';
-        }}
+        className={`enhanced-input ${sizeClass} ${iconClass} ${errorClass} ${className}`.trim()}
       />
     </div>
   )
@@ -681,26 +632,8 @@ export const Select: React.FC<SelectProps> = ({
   error = false,
   size = 'md',
 }) => {
-  const heights = { sm: 'var(--input-height-sm)', md: 'var(--input-height)', lg: 'var(--input-height-lg)' }
-  const selectStyle: React.CSSProperties = {
-    width: '100%',
-    height: heights[size],
-    padding: '0 var(--spacing-md)',
-    border: `1px solid ${error ? 'var(--color-error)' : 'var(--color-gray-200)'}`,
-    borderRadius: 'var(--radius-md)',
-    fontSize: 'var(--font-size-base)',
-    backgroundColor: disabled ? 'var(--color-gray-50)' : '#ffffff',
-    color: 'var(--color-text-primary)',
-    transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
-    outline: 'none',
-    cursor: disabled ? 'not-allowed' : 'pointer',
-    boxSizing: 'border-box',
-    appearance: 'none',
-    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%235E6B75' d='M6 8L1 3h10z'/%3E%3C/svg%3E")`,
-    backgroundRepeat: 'no-repeat',
-    backgroundPosition: 'right 12px center',
-    paddingRight: '36px',
-  }
+  const sizeClass = size !== 'md' ? `size-${size}` : ''
+  const errorClass = error ? 'is-error' : ''
 
   return (
     <select
@@ -709,16 +642,7 @@ export const Select: React.FC<SelectProps> = ({
       onChange={onChange}
       disabled={disabled}
       required={required}
-      className={`enhanced-select ${className}`}
-      style={selectStyle}
-      onFocus={(e) => {
-        e.target.style.borderColor = 'var(--color-primary)';
-        e.target.style.boxShadow = '0 0 0 3px rgba(244, 124, 32, 0.15)';
-      }}
-      onBlur={(e) => {
-        e.target.style.borderColor = error ? 'var(--color-error)' : 'var(--color-gray-200)';
-        e.target.style.boxShadow = 'none';
-      }}
+      className={`enhanced-select ${sizeClass} ${errorClass} ${className}`.trim()}
     >
       {placeholder && <option value="">{placeholder}</option>}
       {options.map((option) => (
