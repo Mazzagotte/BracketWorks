@@ -67,7 +67,7 @@
 .main {
   min-height: 100vh;
   transition: all 0.3s ease;
-  background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%);
+  background: #1A1A1A;
   box-sizing: border-box;
   position: relative;
 }
@@ -75,7 +75,7 @@
 .mainDesktop {
   margin-left: 260px;
   width: calc(100% - 260px);
-  padding: 24px;
+  padding: 0 24px 24px 24px;
 }
 
 .mainMobile {

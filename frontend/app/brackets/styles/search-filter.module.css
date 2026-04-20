@@ -1,11 +1,12 @@
 /* Search Filter Styles */
 
 .container {
-  background: white;
-  border-radius: 12px;
-  padding: 1.25rem 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  margin-bottom: 1.5rem;
+  background: transparent;
+  border-radius: 0;
+  padding: 1rem 1.25rem;
+  box-shadow: none;
+  border: none;
+  margin-bottom: 0;
 }
 
 .filterGroup {
@@ -43,12 +44,24 @@
 
 .searchInput:focus {
   outline: none;
-  border-color: #f0a500;
-  box-shadow: 0 0 0 3px rgba(240, 165, 0, 0.1);
+  border-color: #F47C20;
+  box-shadow: 0 0 0 3px rgba(244, 124, 32, 0.1);
 }
 
 .searchInput::placeholder {
   color: #9ca3af;
+}
+
+.resultCount {
+  display: block;
+  margin-top: 5px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #F47C20;
+}
+
+.resultCountEmpty {
+  color: #ef4444;
 }
 
 .clearSearch {
@@ -88,8 +101,8 @@
 
 .select:focus {
   outline: none;
-  border-color: #f0a500;
-  box-shadow: 0 0 0 3px rgba(240, 165, 0, 0.1);
+  border-color: #F47C20;
+  box-shadow: 0 0 0 3px rgba(244, 124, 32, 0.1);
 }
 
 .select:hover {

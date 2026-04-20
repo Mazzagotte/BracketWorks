@@ -23,13 +23,28 @@ export default function ModernHeader({
   const { user } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [activeTournament, setActiveTournament] = useState<string | null>(null);
+  const [activeSquad, setActiveSquad] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
     const checkMobile = () => setIsMobile(window.innerWidth <= 480);
     checkMobile();
     window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+
+    const readTournament = () => setActiveTournament(localStorage.getItem('activeTournamentName'));
+    readTournament();
+    window.addEventListener('tournament-changed', readTournament);
+
+    const readSquad = () => setActiveSquad(localStorage.getItem('activeSquadLabel') || null);
+    readSquad();
+    window.addEventListener('squad-changed', readSquad);
+
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+      window.removeEventListener('tournament-changed', readTournament);
+      window.removeEventListener('squad-changed', readSquad);
+    };
   }, []);
 
   const getPageTitle = () => {
@@ -71,31 +86,30 @@ export default function ModernHeader({
                 </p>
               )}
             </div>
-
-            <div className={`${styles.userArea} ${isMobile ? styles.userAreaMobile : ''}`}>
-              <div className={styles.userInfo}>
-                <span
-                  className={`${styles.greetingText} ${isMobile ? styles.greetingTextMobile : ''}`}
-                  suppressHydrationWarning
-                >
-                  {getGreeting()}
-                </span>
-                <span className={`${styles.userNameText} ${isMobile ? styles.userNameTextMobile : ''}`}>
-                  {firstName}
-                </span>
-              </div>
-              <div className={`${styles.avatar} ${isMobile ? styles.avatarMobile : ''}`}>
-                {firstName.charAt(0).toUpperCase()}
-              </div>
-            </div>
           </div>
 
-          {/* Actions row */}
-          {actions && (
-            <div className={styles.actions}>
-              {actions}
+          {/* Active tournament strip */}
+          {mounted && (
+            <div className={styles.tournamentStrip}>
+              <span className={styles.tournamentStripLabel}>Active Tournament:</span>
+              {activeTournament
+                ? <span className={styles.tournamentStripName}>{activeTournament}</span>
+                : <span className={styles.tournamentStripNone}>No tournament selected</span>
+              }
+              {activeTournament && activeSquad && (
+                <>
+                  <span className={styles.tournamentStripDivider}>·</span>
+                  <span className={styles.tournamentStripLabel}>Squad:</span>
+                  <span className={styles.tournamentStripName}>{activeSquad}</span>
+                </>
+              )}
             </div>
           )}
+
+          {/* Actions row - always rendered to maintain consistent 150px layout */}
+          <div className={styles.actions}>
+            {actions}
+          </div>
         </div>
       </div>
     </header>

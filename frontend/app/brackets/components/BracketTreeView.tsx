@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useRef, useState, useMemo } from 'react'
+import React, { useRef, useState, useMemo, useEffect } from 'react'
 import styles from '../styles/bracket-tree.module.css'
 import { BracketRound, Match as BaseMatch } from '../../hooks/useBrackets'
 
@@ -24,6 +24,8 @@ interface BracketTreeViewProps {
   rounds: TournamentRound[]
   isMobile?: boolean
   bracketType?: 'scratch' | 'handicap'
+  searchTerm?: string
+  statusFilter?: string
 }
 
 /**
@@ -34,14 +36,42 @@ interface BracketTreeViewProps {
 const BracketTreeViewComponent = ({
   rounds,
   isMobile = false,
-  bracketType = 'scratch'
+  bracketType = 'scratch',
+  searchTerm = '',
+  statusFilter = 'all'
 }: BracketTreeViewProps) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const [highlightedPlayer, setHighlightedPlayer] = useState<string | null>(null)
 
-  // Compute display rounds before any early return so hooks run consistently.
-  const displayRounds = (rounds || []).slice(0, 3)
+  // Clear click-highlight when user starts searching
+  useEffect(() => {
+    if (searchTerm) setHighlightedPlayer(null)
+  }, [searchTerm])
 
+  const isPlayerHighlighted = (name: string | undefined): boolean => {
+    if (!name) return false
+    if (searchTerm) return name.toLowerCase().includes(searchTerm.toLowerCase())
+    return highlightedPlayer === name
+  }
+
+  const isMatchDimmed = (match: Match): boolean => {
+    const status = match.matchStatus || getMatchStatus(match)
+    if (statusFilter !== 'all' && status !== statusFilter) return true
+    if (searchTerm && !isPlayerHighlighted(match.playerA) && !isPlayerHighlighted(match.playerB)) return true
+    return false
+  }
+
+  if (!rounds || rounds.length === 0) {
+    return (
+      <div className={styles.emptyState}>
+        <p>No bracket rounds available</p>
+      </div>
+    )
+  }
+
+  // Show first 3 rounds in bracket tree format
+  const displayRounds = rounds.slice(0, 3)
+  
   // Memoize round statistics to avoid recalculating on every render
   const roundStats = useMemo(() => {
     return displayRounds.map(round => {
@@ -51,19 +81,11 @@ const BracketTreeViewComponent = ({
       return { completedMatches, totalMatches, progressPercent }
     })
   }, [displayRounds])
-
-  if (!rounds || rounds.length === 0) {
-    return (
-      <div className={styles.emptyState}>
-        <p>No bracket rounds available</p>
-      </div>
-    )
-  }
   
   // Grid configuration
   // Each match occupies 2 rows (for the card height)
   // Connectors occupy the rows between matches
-  const totalRows = displayRounds[0]?.matches.length * 3 || 12 // 3 rows per match (2 for card, 1 for spacing)
+  const totalRows = (displayRounds[0]?.matches.length * 3 - 1) || 11 // -1 to avoid trailing empty row
 
   return (
     <div 
@@ -103,7 +125,7 @@ const BracketTreeViewComponent = ({
         <div 
           className={styles.bracketGrid}
           style={{
-            gridTemplateRows: `repeat(${totalRows}, 1fr)`,
+            gridTemplateRows: `repeat(${totalRows}, auto)`,
             gridTemplateColumns: 'repeat(9, auto)' // 3 rounds × 3 columns each (match, h-connector, v-connector)
           }}
         >
@@ -111,54 +133,50 @@ const BracketTreeViewComponent = ({
           {displayRounds[0]?.matches.map((match, matchIndex) => {
             const status = match.matchStatus || getMatchStatus(match)
             const gridRow = matchIndex * 3 + 1 // Rows: 1, 4, 7, 10
-            
+
             // Handle both old (match_score_a) and new (scoreA) field names for backwards compatibility
             const scoreA = match.scoreA ?? match.match_score_a;
             const scoreB = match.scoreB ?? match.match_score_b;
-            
-            // Check if this match is in the highlighted player's path
-            const isInPath = highlightedPlayer && (
-              match.playerA === highlightedPlayer || 
-              match.playerB === highlightedPlayer
-            )
-            const playerAHighlighted = match.playerA === highlightedPlayer
-            const playerBHighlighted = match.playerB === highlightedPlayer
+
+            const isInPath = isPlayerHighlighted(match.playerA) || isPlayerHighlighted(match.playerB)
+            const playerAHighlighted = isPlayerHighlighted(match.playerA)
+            const playerBHighlighted = isPlayerHighlighted(match.playerB)
             
             return (
               <React.Fragment key={`r0-m${matchIndex}`}>
                 {/* Match Card - spans 2 rows for height */}
-                <div 
-                  className={`${styles.matchCard} ${styles[status]} ${isInPath ? styles.highlighted : ''}`}
+                <div
+                  className={`${styles.matchCard} ${styles[status]} ${isInPath ? styles.highlighted : ''} ${isMatchDimmed(match) ? styles.dimmed : ''}`}
                   style={{
                     gridColumn: '1',
                     gridRow: `${gridRow} / span 2`
                   }}
                 >
-                  {/* Tie indicator - both advance */}
-                  {match.both_advance && (
-                    <div className={styles.tieIndicator} title={match.elimination_notes || 'Both players advance - lower next round score will be eliminated'}>
-                      TIE
-                    </div>
-                  )}
-                  {/* Tie indicator - split pot */}
-                  {match.split_pot && (
-                    <div className={styles.splitPotIndicator} title="Finals tie - pot split evenly">
-                      SPLIT
-                    </div>
-                  )}
+                  <div className={styles.matchLabel}>
+                    Match {matchIndex + 1}
+                    {match.both_advance && (
+                      <span className={styles.tieIndicator} title={match.elimination_notes || 'Both players advance - lower next round score will be eliminated'}>TIE</span>
+                    )}
+                    {match.split_pot && (
+                      <span className={styles.splitPotIndicator} title="Finals tie - pot split evenly">SPLIT</span>
+                    )}
+                  </div>
                   <div 
                     className={`${styles.player} ${match.winner === 'A' ? styles.winner : ''} ${playerAHighlighted ? styles.highlightedPlayer : ''}`}
                     onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerA ? null : match.playerA)}
                   >
+                    <span className={styles.playerSeed}>{match.seedA !== undefined ? `#${match.seedA}` : ''}</span>
                     <span className={styles.playerName}>{match.playerA || 'TBD'}</span>
                     <span className={styles.playerScore}>
                       {scoreA !== undefined && scoreA !== null ? scoreA : '-'}
                     </span>
                   </div>
+                  <div className={styles.vsRow}>vs</div>
                   <div 
                     className={`${styles.player} ${match.winner === 'B' ? styles.winner : ''} ${playerBHighlighted ? styles.highlightedPlayer : ''}`}
                     onClick={(e) => { e.stopPropagation(); setHighlightedPlayer(highlightedPlayer === match.playerB ? null : match.playerB); }}
                   >
+                    <span className={styles.playerSeed}>{match.seedB !== undefined ? `#${match.seedB}` : ''}</span>
                     <span className={styles.playerName}>{match.playerB || 'TBD'}</span>
                     <span className={styles.playerScore}>
                       {scoreB !== undefined && scoreB !== null ? scoreB : '-'}
@@ -173,53 +191,50 @@ const BracketTreeViewComponent = ({
           {displayRounds[1]?.matches.map((match, matchIndex) => {
             const status = match.matchStatus || getMatchStatus(match)
             const gridRow = matchIndex * 6 + 2 // Rows: 2, 8 (centered between R1 pairs)
-            
+
             // Handle both old (match_score_a) and new (scoreA) field names for backwards compatibility
             const scoreA = match.scoreA ?? match.match_score_a;
             const scoreB = match.scoreB ?? match.match_score_b;
-            
-            const isInPath = highlightedPlayer && (
-              match.playerA === highlightedPlayer || 
-              match.playerB === highlightedPlayer
-            )
-            const playerAHighlighted = match.playerA === highlightedPlayer
-            const playerBHighlighted = match.playerB === highlightedPlayer
+
+            const isInPath = isPlayerHighlighted(match.playerA) || isPlayerHighlighted(match.playerB)
+            const playerAHighlighted = isPlayerHighlighted(match.playerA)
+            const playerBHighlighted = isPlayerHighlighted(match.playerB)
             
             return (
               <React.Fragment key={`r1-m${matchIndex}`}>
                 {/* Match Card */}
-                <div 
-                  className={`${styles.matchCard} ${styles[status]} ${isInPath ? styles.highlighted : ''}`}
+                <div
+                  className={`${styles.matchCard} ${styles[status]} ${isInPath ? styles.highlighted : ''} ${isMatchDimmed(match) ? styles.dimmed : ''}`}
                   style={{
                     gridColumn: '4',
                     gridRow: `${gridRow} / span 2`
                   }}
                 >
-                  {/* Tie indicator - both advance */}
-                  {match.both_advance && (
-                    <div className={styles.tieIndicator} title={match.elimination_notes || 'Both players advance - lower next round score will be eliminated'}>
-                      TIE
-                    </div>
-                  )}
-                  {/* Tie indicator - split pot */}
-                  {match.split_pot && (
-                    <div className={styles.splitPotIndicator} title="Finals tie - pot split evenly">
-                      SPLIT
-                    </div>
-                  )}
+                  <div className={styles.matchLabel}>
+                    Semifinal {matchIndex + 1}
+                    {match.both_advance && (
+                      <span className={styles.tieIndicator} title={match.elimination_notes || 'Both players advance - lower next round score will be eliminated'}>TIE</span>
+                    )}
+                    {match.split_pot && (
+                      <span className={styles.splitPotIndicator} title="Finals tie - pot split evenly">SPLIT</span>
+                    )}
+                  </div>
                   <div 
                     className={`${styles.player} ${match.winner === 'A' ? styles.winner : ''} ${playerAHighlighted ? styles.highlightedPlayer : ''}`}
                     onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerA ? null : match.playerA)}
                   >
+                    <span className={styles.playerSeed}>{match.seedA !== undefined ? `#${match.seedA}` : ''}</span>
                     <span className={styles.playerName}>{match.playerA || 'TBD'}</span>
                     <span className={styles.playerScore}>
                       {scoreA !== undefined && scoreA !== null ? scoreA : '-'}
                     </span>
                   </div>
+                  <div className={styles.vsRow}>vs</div>
                   <div 
                     className={`${styles.player} ${match.winner === 'B' ? styles.winner : ''} ${playerBHighlighted ? styles.highlightedPlayer : ''}`}
                     onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerB ? null : match.playerB)}
                   >
+                    <span className={styles.playerSeed}>{match.seedB !== undefined ? `#${match.seedB}` : ''}</span>
                     <span className={styles.playerName}>{match.playerB || 'TBD'}</span>
                     <span className={styles.playerScore}>
                       {scoreB !== undefined && scoreB !== null ? scoreB : '-'}
@@ -234,52 +249,49 @@ const BracketTreeViewComponent = ({
           {displayRounds[2]?.matches.map((match, matchIndex) => {
             const status = match.matchStatus || getMatchStatus(match)
             const gridRow = 5 // Centered vertically (middle of 12 rows)
-            
+
             // Handle both old (match_score_a) and new (scoreA) field names for backwards compatibility
             const scoreA = match.scoreA ?? match.match_score_a;
             const scoreB = match.scoreB ?? match.match_score_b;
-            
-            const isInPath = highlightedPlayer && (
-              match.playerA === highlightedPlayer || 
-              match.playerB === highlightedPlayer
-            )
-            const playerAHighlighted = match.playerA === highlightedPlayer
-            const playerBHighlighted = match.playerB === highlightedPlayer
+
+            const isInPath = isPlayerHighlighted(match.playerA) || isPlayerHighlighted(match.playerB)
+            const playerAHighlighted = isPlayerHighlighted(match.playerA)
+            const playerBHighlighted = isPlayerHighlighted(match.playerB)
             
             return (
-              <div 
+              <div
                 key={`r2-m${matchIndex}`}
-                className={`${styles.matchCard} ${styles[status]} ${isInPath ? styles.highlighted : ''}`}
+                className={`${styles.matchCard} ${styles.finals} ${styles[status]} ${isInPath ? styles.highlighted : ''} ${isMatchDimmed(match) ? styles.dimmed : ''}`}
                 style={{
                   gridColumn: '7',
                   gridRow: `${gridRow} / span 2`
                 }}
               >
-                {/* Tie indicator - both advance */}
-                {match.both_advance && (
-                  <div className={styles.tieIndicator} title={match.elimination_notes || 'Both players advance - lower next round score will be eliminated'}>
-                    TIE
-                  </div>
-                )}
-                {/* Tie indicator - split pot */}
-                {match.split_pot && (
-                  <div className={styles.splitPotIndicator} title="Finals tie - pot split evenly">
-                    SPLIT
-                  </div>
-                )}
+                <div className={styles.matchLabel}>
+                  Final
+                  {match.both_advance && (
+                    <span className={styles.tieIndicator} title={match.elimination_notes || 'Both players advance - lower next round score will be eliminated'}>TIE</span>
+                  )}
+                  {match.split_pot && (
+                    <span className={styles.splitPotIndicator} title="Finals tie - pot split evenly">SPLIT</span>
+                  )}
+                </div>
                 <div 
                   className={`${styles.player} ${match.winner === 'A' ? styles.winner : ''} ${playerAHighlighted ? styles.highlightedPlayer : ''}`}
                   onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerA ? null : match.playerA)}
                 >
+                  <span className={styles.playerSeed}>{match.seedA !== undefined ? `#${match.seedA}` : ''}</span>
                   <span className={styles.playerName}>{match.playerA || 'TBD'}</span>
                   <span className={styles.playerScore}>
                     {scoreA !== undefined && scoreA !== null ? scoreA : '-'}
                   </span>
                 </div>
+                <div className={styles.vsRow}>vs</div>
                 <div 
                   className={`${styles.player} ${match.winner === 'B' ? styles.winner : ''} ${playerBHighlighted ? styles.highlightedPlayer : ''}`}
                   onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerB ? null : match.playerB)}
                 >
+                  <span className={styles.playerSeed}>{match.seedB !== undefined ? `#${match.seedB}` : ''}</span>
                   <span className={styles.playerName}>{match.playerB || 'TBD'}</span>
                   <span className={styles.playerScore}>
                     {scoreB !== undefined && scoreB !== null ? scoreB : '-'}
@@ -288,6 +300,36 @@ const BracketTreeViewComponent = ({
               </div>
             )
           })}
+
+          {/* ── Connectors R1 → R2 ── */}
+          {displayRounds[1]?.matches.map((_, i) => (
+            <React.Fragment key={`conn-r1r2-${i}`}>
+              {/* Bracket ] shape: borders at midpoint of each R1 pair */}
+              <div
+                className={styles.connectorBracket}
+                style={{ gridColumn: '2', gridRow: `${i * 6 + 2} / ${i * 6 + 5}` }}
+              />
+              {/* Horizontal arm → R2 match */}
+              <div
+                className={styles.connectorArm}
+                style={{ gridColumn: '3', gridRow: `${i * 6 + 2} / ${i * 6 + 4}` }}
+              />
+            </React.Fragment>
+          ))}
+
+          {/* ── Connectors R2 → R3 ── */}
+          {displayRounds[2]?.matches?.length > 0 && (
+            <>
+              <div
+                className={styles.connectorBracket}
+                style={{ gridColumn: '5', gridRow: '3 / 9' }}
+              />
+              <div
+                className={styles.connectorArm}
+                style={{ gridColumn: '6', gridRow: '5 / 7' }}
+              />
+            </>
+          )}
         </div>
       </div>
     </div>

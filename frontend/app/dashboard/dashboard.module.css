@@ -293,12 +293,10 @@
   
   .bracketSettingsCard {
     min-width: unset;
-    padding: 20px;
   }
   
   .squadSelectionCard {
     min-width: unset;
-    padding: 20px;
   }
   
   .settingsTitle, .squadTitle {
@@ -356,11 +354,11 @@
 }
 
 .bracketSettingsCard {
-  background: linear-gradient(145deg, #ffffff 0%, #f8fafb 100%);
+  background: #FAF4E8;
   border-radius: var(--radius-xl);
-  padding: var(--card-padding-sm);
+  padding: 0;
   box-shadow: var(--shadow-card-hover);
-  border: 1px solid rgba(244, 124, 32, 0.15);
+  border: 1px solid rgba(240, 120, 32, 0.2);
   position: relative;
   overflow: hidden;
   flex: 1;
@@ -368,35 +366,21 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.bracketSettingsCard:hover {
-  transform: translateY(-2px);
-  box-shadow: 
-    0 12px 35px -5px rgba(0, 0, 0, 0.12),
-    0 8px 20px -4px rgba(0, 0, 0, 0.08);
-}
-
-.bracketSettingsCard::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #f0a500 0%, #ff8c00 100%);
-}
-
 .settingsHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  padding: 20px 24px 16px;
+  background: #F0E0C0;
+  border-bottom: 3px solid #F07820;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   gap: 10px;
 }
 
 .settingsTitle {
   font-size: 22px;
   font-weight: 700;
-  color: #1a202c;
+  color: #1A1A1A;
   letter-spacing: -0.025em;
   margin: 0;
   flex: 0 0 auto;
@@ -424,8 +408,8 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #059669;
-  background-color: #d1fae5;
+  color: rgba(26, 26, 26, 0.6);
+  background-color: rgba(26, 26, 26, 0.08);
   padding: 6px 12px;
   border-radius: 8px;
 }
@@ -434,8 +418,8 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #0284c7;
-  background-color: #dbeafe;
+  color: #F07820;
+  background-color: rgba(240, 120, 32, 0.1);
   padding: 6px 12px;
   border-radius: 8px;
 }
@@ -444,8 +428,8 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #d97706;
-  background-color: #fef3c7;
+  color: rgba(26, 26, 26, 0.6);
+  background-color: rgba(26, 26, 26, 0.08);
   padding: 6px 12px;
   border-radius: 8px;
 }
@@ -454,8 +438,8 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #dc2626;
-  background-color: #fee2e2;
+  color: #D64545;
+  background-color: rgba(214, 69, 69, 0.1);
   padding: 6px 12px;
   border-radius: 8px;
 }
@@ -486,7 +470,7 @@
 }
 
 .settingsSection {
-  margin-bottom: 32px;
+  margin-bottom: 8px;
 }
 
 .settingsSection:last-child {
@@ -518,28 +502,29 @@
 .settingsContent {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
+  padding: 14px 20px 18px;
 }
 
 .settingsGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 12px;
 }
 
 .settingsColumn {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
 }
 
 .sectionHeader {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 8px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid rgba(240, 165, 0, 0.2);
+  margin-bottom: 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(26, 26, 26, 0.12);
 }
 
 .sectionIcon {
@@ -549,14 +534,14 @@
 .sectionTitle {
   font-size: 16px;
   font-weight: 600;
-  color: #2d3748;
+  color: #1A1A1A;
   margin: 0;
 }
 
 .fieldGroup {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .compactField {
@@ -568,24 +553,24 @@
 .compactLabel {
   font-size: 13px;
   font-weight: 600;
-  color: #4a5568;
+  color: #1A1A1A;
 }
 
 .compactSelect, .compactInput {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid rgba(26, 26, 26, 0.2);
   border-radius: 8px;
   padding: 8px 10px;
   font-size: 14px;
   font-weight: 500;
-  color: #2d3748;
+  color: #1A1A1A;
   transition: all 0.2s ease;
 }
 
 .compactSelect:focus, .compactInput:focus {
   outline: none;
-  border-color: #f0a500;
-  box-shadow: 0 0 0 2px rgba(240, 165, 0, 0.1);
+  border-color: #F07820;
+  box-shadow: 0 0 0 3px rgba(240, 120, 32, 0.15);
 }
 
 .compactInputWrapper {
@@ -597,7 +582,7 @@
 .currencySymbol {
   position: absolute;
   left: 12px;
-  color: #718096;
+  color: rgba(26, 26, 26, 0.5);
   font-weight: 600;
   z-index: 1;
 }
@@ -609,7 +594,7 @@
 .inputSuffix {
   position: absolute;
   right: 12px;
-  color: #718096;
+  color: rgba(26, 26, 26, 0.5);
   font-weight: 600;
 }
 
@@ -628,10 +613,36 @@
 
 .handicapSeparator {
   padding: 0 8px;
-  color: #718096;
+  color: rgba(26, 26, 26, 0.5);
   font-weight: 600;
   font-size: 14px;
   margin-bottom: 8px;
+}
+
+/* BYE checkbox */
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1A1A1A;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkboxInput {
+  width: 18px;
+  height: 18px;
+  accent-color: #F07820;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.checkboxHint {
+  font-weight: 400;
+  color: rgba(26, 26, 26, 0.55);
+  font-size: 13px;
 }
 
 .formField {
@@ -906,7 +917,6 @@
 
 @media (max-width: 767px) {
   .bracketSettingsCard {
-    padding: 20px 16px;
     border-radius: 16px;
     margin: 0 -4px;
   }
@@ -984,46 +994,31 @@
 
 /* Enhanced Squad Selection Styles */
 .squadSelectionCard {
-  background: linear-gradient(145deg, #ffffff 0%, #f8fafb 100%);
+  background: #FAF4E8;
   border-radius: var(--radius-xl);
-  padding: 16px 20px;
+  padding: 0;
   box-shadow: var(--shadow-card-hover);
-  border: 1px solid rgba(244, 124, 32, 0.12);
+  border: 1px solid rgba(240, 120, 32, 0.2);
   position: relative;
   overflow: hidden;
   flex: 1;
   min-width: 300px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.squadSelectionCard:hover {
-  transform: translateY(-2px);
-  box-shadow: 
-    0 12px 35px -5px rgba(0, 0, 0, 0.12),
-    0 8px 20px -4px rgba(0, 0, 0, 0.08);
-}
-
-.squadSelectionCard::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #10b981 0%, #059669 100%);
 }
 
 .squadHeader {
   display: flex;
   align-items: center;
-  margin-bottom: 16px;
+  padding: 20px 24px 16px;
+  background: #F0E0C0;
+  border-bottom: 3px solid #F07820;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   gap: 10px;
 }
 
 .squadCounter {
   margin-left: auto;
-  background: rgba(16, 185, 129, 0.1);
-  color: #059669;
+  background: rgba(240, 120, 32, 0.12);
+  color: #F07820;
   padding: 4px 8px;
   border-radius: 6px;
   font-size: 12px;
@@ -1031,11 +1026,12 @@
 }
 
 .squadInfo {
-  margin-bottom: 12px;
+  padding: 12px 24px 0;
+  margin-bottom: 0;
 }
 
 .squadDescription {
-  color: #64748b;
+  color: rgba(26, 26, 26, 0.55);
   font-size: 14px;
   margin: 0;
   font-weight: 500;
@@ -1044,7 +1040,7 @@
 .squadTitle {
   font-size: 22px;
   font-weight: 700;
-  color: #1a202c;
+  color: #1A1A1A;
   letter-spacing: -0.025em;
   margin: 0;
 }
@@ -1058,20 +1054,20 @@
   display: grid;
   gap: 8px;
   margin-bottom: 12px;
+  padding: 16px 24px 0;
 }
 
 .squadPillEnhanced {
   background: #ffffff;
-  border: 2px solid #e5e7eb;
+  border: 1px solid rgba(26, 26, 26, 0.2);
   border-radius: 12px;
   padding: 12px 14px;
   font-size: 15px;
   font-weight: 500;
-  color: #374151;
+  color: #1A1A1A;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   text-align: left;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
   position: relative;
   display: flex;
   flex-direction: column;
@@ -1087,12 +1083,12 @@
 .squadDate {
   font-size: 16px;
   font-weight: 600;
-  color: #1e293b;
+  color: #1A1A1A;
 }
 
 .squadTimeSlot {
   font-size: 14px;
-  color: #64748b;
+  color: rgba(26, 26, 26, 0.55);
   font-weight: 500;
 }
 
@@ -1101,44 +1097,43 @@
   align-items: center;
   gap: 8px;
   padding: 12px 16px;
-  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
-  border: 1px solid #a7f3d0;
+  margin: 12px 24px 16px;
+  background: rgba(47, 191, 113, 0.08);
+  border: 1px solid rgba(47, 191, 113, 0.3);
   border-radius: 10px;
-  color: #059669;
+  color: #2FBF71;
   font-size: 14px;
   font-weight: 500;
-  margin-bottom: 16px;
 }
 
 .checkIcon {
-  color: #10b981;
+  color: #2FBF71;
   font-weight: 700;
   font-size: 14px;
 }
 
 .squadPillEnhanced:hover {
-  border-color: #10b981;
-  background: #f0fdf4;
+  border-color: rgba(240, 120, 32, 0.4);
+  background: #fff8f2;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
 }
 
 .squadPillEnhanced.selected {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  border-color: #10b981;
+  background: linear-gradient(135deg, #F47C20 0%, #D9651A 100%);
+  border-color: #F07820;
   color: white;
   font-weight: 600;
-  box-shadow: 
-    0 4px 12px rgba(16, 185, 129, 0.25),
-    0 2px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 12px rgba(244, 124, 32, 0.3);
+}
+
+.squadPillEnhanced.selected .squadDate,
+.squadPillEnhanced.selected .squadTimeSlot {
+  color: white;
 }
 
 .squadPillEnhanced.selected:hover {
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  background: linear-gradient(135deg, #D9651A 0%, #C05510 100%);
   transform: translateY(-1px);
-  box-shadow: 
-    0 6px 16px rgba(16, 185, 129, 0.3),
-    0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .loadSquadButton {
@@ -1220,10 +1215,6 @@
     max-width: 800px;
     padding: 32px;
   }
-
-  .bracketSettingsCard {
-    padding: 32px;
-  }
 }
 
 /* Header Action Buttons */
@@ -1264,30 +1255,35 @@
 /* Empty State */
 .emptyState {
   grid-column: 1 / -1;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-radius: 20px;
-  padding: 32px 24px;
+  background: #FAF4E8;
+  border-radius: 16px;
+  padding: 60px 40px;
   text-align: center;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-  border: 2px solid #e2e8f0;
-  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(240, 120, 32, 0.2);
+  margin: 40px auto;
+  max-width: 800px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .emptyStateTitle {
   font-size: 28px;
   font-weight: 700;
-  color: #1e293b;
+  color: #1A1A1A;
   margin-bottom: 12px;
   letter-spacing: -0.02em;
-  margin-top: 0;
+  margin-top: 24px;
+  padding: 0;
 }
 
 .emptyStateText {
   font-size: 16px;
-  color: #64748b;
+  color: rgba(26, 26, 26, 0.55);
   max-width: 560px;
   margin: 0 auto 32px;
   line-height: 1.6;
+  padding: 0;
 }
 
 .emptyStateButtons {
@@ -1295,6 +1291,7 @@
   gap: 16px;
   justify-content: center;
   flex-wrap: wrap;
+  padding: 0 24px;
 }
 
 .emptyStatePrimaryBtn {
@@ -1319,9 +1316,9 @@
 }
 
 .emptyStateSecondaryBtn {
-  background: var(--color-surface);
-  color: var(--color-primary);
-  border: 2px solid var(--color-primary);
+  background: linear-gradient(135deg, #F47C20 0%, #D9651A 100%);
+  color: white;
+  border: none;
   border-radius: var(--radius-lg);
   padding: 14px 28px;
   font-size: 16px;
@@ -1331,50 +1328,50 @@
   align-items: center;
   gap: 10px;
   transition: all 0.2s ease;
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--shadow-brand-sm);
 }
 
 .emptyStateSecondaryBtn:hover {
   transform: translateY(-2px);
-  background: rgba(244, 124, 32, 0.05);
-  box-shadow: var(--shadow-card-hover);
+  box-shadow: var(--shadow-brand-md);
 }
 
 .infoCards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 16px;
-  margin-top: 48px;
+  margin-top: 32px;
   max-width: 800px;
   margin-left: auto;
   margin-right: auto;
+  padding: 0 24px 28px;
 }
 
 .infoCard {
-  background: white;
+  background: #F0E0C0;
   border-radius: 12px;
   padding: 20px;
   text-align: left;
-  border: 1px solid #e2e8f0;
+  border: 1px solid rgba(240, 120, 32, 0.2);
   transition: all 0.2s ease;
 }
 
 .infoCard:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(240, 120, 32, 0.15);
 }
 
 .infoCardTitle {
   font-size: 15px;
   font-weight: 600;
-  color: #1e293b;
+  color: #1A1A1A;
   margin-bottom: 4px;
   margin-top: 0;
 }
 
 .infoCardText {
   font-size: 13px;
-  color: #64748b;
+  color: rgba(26, 26, 26, 0.6);
   line-height: 1.5;
   margin: 0;
 }
@@ -1393,7 +1390,6 @@
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0, 0, 0, 0.5);
   z-index: 1001;
   display: flex;
   align-items: center;
@@ -1401,21 +1397,26 @@
 }
 
 .modalCard {
-  background: #ffffff;
+  background: #FAF4E8;
   border-radius: var(--radius-xl);
-  padding: 32px;
+  padding: 0;
   min-width: 340px;
   max-width: 540px;
   width: 90vw;
   box-shadow: var(--shadow-xl);
+  border: 1px solid rgba(240, 120, 32, 0.2);
   max-height: 80vh;
   overflow-y: auto;
   position: relative;
 }
 
 .modalTitle {
-  margin-bottom: 18px;
-  color: #1a202c;
+  margin: 0;
+  padding: 24px 28px 20px;
+  background: #F0E0C0;
+  border-bottom: 3px solid #F07820;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  color: #1A1A1A;
   font-size: 20px;
   font-weight: 700;
 }
@@ -1425,29 +1426,29 @@
 }
 
 .adminBadge {
-  font-size: 15px;
+  font-size: 14px;
   color: #F47C20;
   font-weight: 500;
-  margin-bottom: 12px;
+  padding: 8px 28px 0;
 }
 
 .emptyTournaments {
-  color: #64748b;
+  color: rgba(26, 26, 26, 0.55);
   font-size: 16px;
   text-align: center;
-  padding: 40px 0;
+  padding: 40px 28px;
 }
 
 .emptyTournamentsHint {
   font-size: 14px;
-  color: #9ca3af;
+  color: rgba(26, 26, 26, 0.4);
   margin-top: 12px;
 }
 
 .tournamentList {
   list-style: none;
-  padding: 0;
-  margin: 0;
+  padding: 0 28px;
+  margin: 16px 0 0;
 }
 
 .tournamentItem {
@@ -1455,25 +1456,25 @@
   flex-direction: column;
   gap: 8px;
   padding: 12px 0;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid rgba(26, 26, 26, 0.1);
 }
 
 .tournamentName {
   font-weight: 500;
   font-size: 16px;
-  color: #1a202c;
+  color: #1A1A1A;
   word-break: break-word;
 }
 
 .tournamentLocation {
   font-size: 13px;
-  color: #64748b;
+  color: rgba(26, 26, 26, 0.55);
   margin-top: 2px;
 }
 
 .tournamentDate {
   font-size: 12px;
-  color: #9ca3af;
+  color: rgba(26, 26, 26, 0.4);
   margin-top: 2px;
 }
 
@@ -1520,26 +1521,28 @@
   align-items: center;
   gap: 12px;
   margin-top: 20px;
-  padding: 12px 0;
-  border-top: 1px solid #e2e8f0;
+  padding: 12px 28px 24px;
+  border-top: 1px solid rgba(26, 26, 26, 0.1);
 }
 
 .paginationText {
   font-size: 14px;
-  color: #64748b;
+  color: rgba(26, 26, 26, 0.55);
   padding: 0 16px;
 }
 
 .deleteConfirmText {
   font-size: 16px;
-  margin-bottom: 24px;
-  color: #1a202c;
+  margin: 0;
+  padding: 24px 28px;
+  color: #1A1A1A;
 }
 
 .deleteConfirmActions {
   display: flex;
   gap: 16px;
   justify-content: flex-end;
+  padding: 0 28px 24px;
 }
 
 /* Loading states */
@@ -1558,6 +1561,11 @@
 }
 
 @media (max-width: 480px) {
+  .emptyState {
+    padding: 40px 24px;
+    margin: 20px 0;
+  }
+
   .emptyStateTitle {
     font-size: 22px;
   }

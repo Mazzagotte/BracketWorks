@@ -21,10 +21,8 @@ export const SortableHeader: React.FC<SortableHeaderProps> = ({
   };
 
   const getIconColor = () => {
-    if (isActive) {
-      return direction === 'asc' ? '#3b82f6' : direction === 'desc' ? '#3b82f6' : '#9ca3af';
-    }
-    return isHovered ? '#5E6B75' : '#d1d5db';
+    if (isActive) return '#F07820';
+    return isHovered ? 'rgba(26,26,26,0.5)' : 'rgba(26,26,26,0.25)';
   };
 
   const getTextAlign = () => {
@@ -37,20 +35,15 @@ export const SortableHeader: React.FC<SortableHeaderProps> = ({
 
   return (
     <th 
+      className="entries-header-cell"
       style={{ 
         cursor: 'pointer',
-        padding: '10px 12px',
-        textAlign: getTextAlign(),
-        verticalAlign: 'middle',
-        fontWeight: isActive ? '800' : '700',
-        color: isActive ? '#1e40af' : '#374151',
-        fontSize: '12px',
-        borderBottom: isActive ? '2px solid #3b82f6' : '2px solid #e5e7eb',
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        background: isActive ? '#eff6ff' : isHovered ? '#f8fafc' : 'transparent',
+        color: isActive ? '#F07820' : '#1A1A1A',
+        background: isActive ? 'rgba(240,120,32,0.12)' : isHovered ? 'rgba(240,120,32,0.06)' : undefined,
+        borderBottom: isActive ? '3px solid #F07820' : undefined,
+        transition: 'all 0.15s ease',
         position: 'relative',
         ...(width && { width }),
-        lineHeight: '1.3'
       }}
       onClick={() => onSort(column)}
       onMouseEnter={() => setIsHovered(true)}
@@ -60,8 +53,8 @@ export const SortableHeader: React.FC<SortableHeaderProps> = ({
       <div style={{ 
         display: 'flex', 
         alignItems: 'center', 
-        justifyContent: getTextAlign(),
-        gap: '6px',
+        justifyContent: 'center',
+        gap: '4px',
         minHeight: '20px'
       }}>
         <span style={{ 
@@ -104,7 +97,7 @@ export const SortableHeader: React.FC<SortableHeaderProps> = ({
           transform: 'translateX(-50%)',
           width: '24px',
           height: '2px',
-          backgroundColor: '#3b82f6',
+          backgroundColor: '#F07820',
           borderRadius: '1px'
         }} />
       )}

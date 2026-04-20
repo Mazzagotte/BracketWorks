@@ -414,37 +414,17 @@ export default function VerifyResetPage() {
 
       <div className="enhanced-card">
         <div className="header-section">
-          <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+          <div className="auth-logo-section">
             <Image 
-              src="/logo.png" 
+              src="/logo.svg" 
               alt="BracketWorks Logo" 
               width={72}
               height={72}
-              style={{
-                borderRadius: '16px',
-                marginBottom: '16px'
-              }}
+              className="auth-logo-img"
             />
           </div>
-          <h1 className="login-title" style={{
-            fontSize: '28px',
-            fontWeight: 700,
-            margin: '0 0 8px 0',
-            background: 'linear-gradient(135deg, #1a1f2e 0%, #2d3748 25%, #4a5568 50%, #F47C20 75%, #D9651A 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-            letterSpacing: '-0.5px',
-            lineHeight: '1.2',
-            textAlign: 'center'
-          }}>BracketWorks</h1>
-          <h2 style={{
-            fontSize: '24px',
-            fontWeight: 600,
-            margin: '16px 0 8px 0',
-            color: '#1a1f2e',
-            textAlign: 'center'
-          }}>Verify Reset Code</h2>
+          <h1 className="auth-brand-title">BracketWorks</h1>
+          <h2 className="auth-page-heading">Verify Reset Code</h2>
           <div className="login-subtitle">Enter your email address and the reset code we sent you.</div>
         </div>
 

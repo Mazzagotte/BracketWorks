@@ -150,8 +150,9 @@ export class ApiClient {
       }
       
       if (retries > 0 && shouldRetry(error)) {
-        logger.info(`Retrying API request (${retries} retries left)`, { endpoint })
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        const delayMs = 300 * Math.pow(2, 3 - retries) // 300ms, 600ms, 1200ms
+        logger.info(`Retrying API request (${retries} retries left, delay ${delayMs}ms)`, { endpoint })
+        await new Promise(resolve => setTimeout(resolve, delayMs))
         return this.request<T>(endpoint, options, retries - 1, useCache)
       }
       
@@ -181,6 +182,13 @@ export class ApiClient {
     return this.request<T>(endpoint, {
       method: 'PATCH',
       body: data ? JSON.stringify(data) : undefined,
+    });
+  }
+
+  async bulkPatch<T>(endpoint: string, items: unknown[]): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: 'PATCH',
+      body: JSON.stringify(items),
     });
   }
 

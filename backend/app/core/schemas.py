@@ -116,6 +116,7 @@ class BracketSettingsBase(BaseModel):
     cost_per_bracket: Optional[float] = None
     handicap_percentage: Optional[float] = 80.0
     handicap_base: Optional[float] = 200.0
+    allow_bye: Optional[bool] = False
 
 class BracketSettingsCreate(BracketSettingsBase):
     pass
@@ -128,6 +129,7 @@ class BracketSettingsUpdate(BaseModel):
     cost_per_bracket: Optional[float] = None
     handicap_percentage: Optional[float] = None
     handicap_base: Optional[float] = None
+    allow_bye: Optional[bool] = None
 
 class BracketSettings(BracketSettingsBase):
     id: int

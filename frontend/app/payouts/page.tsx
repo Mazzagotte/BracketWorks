@@ -30,7 +30,6 @@ export default function PayoutsPage() {
   const [selectedSquad, setSelectedSquad] = useState<Squad | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [paidKeys, setPaidKeys] = useState<Set<string>>(new Set())
-  const [showNonWinners, setShowNonWinners] = useState(false)
 
   const { payoutData, entryData, loading, error, loadPayoutData, loadEntryData } =
     usePayouts(selectedTournament?.id ?? null, selectedSquad?.id ?? null)
@@ -88,19 +87,11 @@ export default function PayoutsPage() {
     loadEntryData()
   }, [selectedTournament, loadPayoutData, loadEntryData])
 
-  const headerActions = useMemo(() => (
-    <div className={styles.actions}>
-      <button onClick={handleRefresh} className={styles.refreshBtn} disabled={loading || !selectedTournament}>
-        {loading ? <span className={styles.spinner} /> : '↻'} Refresh
-      </button>
-    </div>
-  ), [handleRefresh, loading, selectedTournament])
+  const headerActions = useMemo(() => undefined, [])
 
   usePageHeader({
     title: 'Payout Distribution',
-    subtitle: selectedTournament
-      ? `${selectedTournament.name}${selectedSquad ? ` · ${[selectedSquad.date, selectedSquad.time].filter(Boolean).join(' ')}` : ''}`
-      : 'Load a tournament from the dashboard',
+    subtitle: undefined,
     actions: headerActions,
   })
 
@@ -137,55 +128,83 @@ export default function PayoutsPage() {
     )
   }
 
-  // Aggregate winners by player — sum totals across multiple brackets
-  const flatWinners = payoutData?.winners_by_bracket ?? []
-  const aggregatedWinners = Object.values(
-    flatWinners.reduce<Record<string, { player_id: number; player_name: string; total_won: number; brackets: string[] }>>((acc, w) => {
+  // Aggregate winners across brackets to compute paid stats
+  const handicapBrackets = payoutData?.handicap_brackets ?? []
+  const scratchBrackets = payoutData?.scratch_brackets ?? []
+
+  // Condense all winners into one row per player, summing totals
+  const aggregatedWinners = useMemo(() => {
+    const allWinners = [...handicapBrackets, ...scratchBrackets].flatMap(b => b.winners)
+    const byPlayer: Record<string, {
+      player_id: number
+      player_name: string
+      total_won: number
+      winnings: { bracket_name: string; position: string; payout_amount: number; payout_percentage: number; split_pot?: boolean }[]
+    }> = {}
+    for (const w of allWinners) {
       const key = String(w.player_id ?? w.player_name)
-      if (!acc[key]) acc[key] = { player_id: w.player_id, player_name: w.player_name, total_won: 0, brackets: [] }
-      acc[key].total_won += w.payout_amount
-      acc[key].brackets.push(`${w.bracket_name} (${w.position})`)
-      return acc
-    }, {})
-  ).sort((a, b) => b.total_won - a.total_won)
+      if (!byPlayer[key]) byPlayer[key] = { player_id: w.player_id, player_name: w.player_name, total_won: 0, winnings: [] }
+      byPlayer[key].total_won += w.payout_amount
+      byPlayer[key].winnings.push({ bracket_name: w.bracket_name, position: w.position, payout_amount: w.payout_amount, payout_percentage: w.payout_percentage, split_pot: w.split_pot })
+    }
+    return Object.values(byPlayer).sort((a, b) => b.total_won - a.total_won)
+  }, [handicapBrackets, scratchBrackets])
 
-  // Append non-winners at the bottom
-  const winnerIds = new Set(aggregatedWinners.map(w => String(w.player_id ?? w.player_name)))
-  const nonWinners = (entryData?.entries ?? [])
-    .filter(e => !winnerIds.has(String(e.id)))
-    .map(e => ({ player_id: e.id, player_name: e.name, total_won: 0, brackets: [] as string[] }))
+  const { totalUniqueWinners, paidCount, remainingAmount } = useMemo(() => {
+    const totalUniqueWinners = aggregatedWinners.length
+    const paidCount = aggregatedWinners.filter(w => paidKeys.has(String(w.player_id ?? w.player_name))).length
+    const remainingAmount = aggregatedWinners
+      .filter(w => !paidKeys.has(String(w.player_id ?? w.player_name)))
+      .reduce((sum, w) => sum + w.total_won, 0)
+    return { totalUniqueWinners, paidCount, remainingAmount }
+  }, [aggregatedWinners, paidKeys])
 
-  const filteredWinners = aggregatedWinners.filter(w =>
-    !searchQuery || w.player_name.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredWinners = useMemo(() =>
+    aggregatedWinners.filter(w =>
+      !searchQuery || w.player_name.toLowerCase().includes(searchQuery.toLowerCase())
+    ), [aggregatedWinners, searchQuery]
   )
-  const filteredNonWinners = nonWinners.filter(w =>
-    !searchQuery || w.player_name.toLowerCase().includes(searchQuery.toLowerCase())
-  )
-  const visibleRows = (searchQuery || showNonWinners)
-    ? [...filteredWinners, ...filteredNonWinners]
-    : filteredWinners
+
+  const matchesSearch = (name: string) =>
+    !searchQuery || name.toLowerCase().includes(searchQuery.toLowerCase())
 
   return (
     <ErrorBoundary>
-      <div>
-        {/* Stats row */}
+      <div className={styles.pageContainer}>
+        {/* Summary card */}
         {payoutData && (
-          <div className={styles.statsRow}>
-            <div className={styles.statCard}>
-              <div className={styles.statCardLabel}>Total Prize Pool</div>
-              <div className={`${styles.statCardValue} ${styles.green}`}>{formatCurrency(payoutData.total_prize_pool)}</div>
-            </div>
-            <div className={styles.statCard}>
-              <div className={styles.statCardLabel}>Scratch Pool</div>
-              <div className={styles.statCardValue}>{formatCurrency(payoutData.total_scratch_pool)}</div>
-            </div>
-            <div className={styles.statCard}>
-              <div className={styles.statCardLabel}>Handicap Pool</div>
-              <div className={styles.statCardValue}>{formatCurrency(payoutData.total_handicap_pool)}</div>
-            </div>
-            <div className={styles.statCard}>
-              <div className={styles.statCardLabel}>Paid Out</div>
-              <div className={styles.statCardValue}>{paidKeys.size} / {aggregatedWinners.length}</div>
+          <div className={styles.summaryCard}>
+            <h3 className={styles.summaryTitle}>Payout Summary</h3>
+            <div className={styles.summaryGrid}>
+              <div className={styles.statBox}>
+                <div className={`${styles.statValue} ${styles.statValueGreen}`}>{formatCurrency(payoutData.total_prize_pool)}</div>
+                <div className={styles.statLabel}>Total Prize Pool</div>
+              </div>
+              <div className={styles.statBox}>
+                <div className={styles.statValue}>{formatCurrency(payoutData.total_handicap_pool)}</div>
+                <div className={styles.statLabel}>Handicap Pool</div>
+              </div>
+              <div className={styles.statBox}>
+                <div className={styles.statValue}>{formatCurrency(payoutData.total_scratch_pool)}</div>
+                <div className={styles.statLabel}>Scratch Pool</div>
+              </div>
+              <div className={styles.statBox}>
+                <div className={styles.statValue}>{paidCount} / {totalUniqueWinners}</div>
+                <div className={styles.statLabel}>Paid Out</div>
+                {totalUniqueWinners > 0 && (
+                  <div className={styles.progressBarRow}>
+                    <div className={styles.progressBar}>
+                      <div
+                        className={styles.progressBarFill}
+                        style={{ width: `${(paidCount / totalUniqueWinners) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+                {remainingAmount > 0 && (
+                  <div className={styles.remainingLabel}>{formatCurrency(remainingAmount)} remaining</div>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -193,87 +212,85 @@ export default function PayoutsPage() {
         {error && <div className={styles.errorBanner}>{error}</div>}
 
         {/* Search */}
-        <div className={styles.searchBar}>
-          <input
-            type="text"
-            placeholder="Search by player name..."
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            className={styles.searchInput}
-            style={{ paddingLeft: '16px' }}
-          />
-        </div>
+        {payoutData && aggregatedWinners.length > 0 && (
+          <div className={styles.searchStandalone}>
+            <input
+              type="text"
+              placeholder="Search by player name..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className={styles.searchInput}
+            />
+          </div>
+        )}
 
-        {/* List */}
-        {loading ? (
+        {/* Loading / empty states */}
+        {loading && (
           <div className={styles.loadingRow}>
             <div className={styles.loadingSpinner} />
             <span>Calculating payouts...</span>
           </div>
-        ) : !selectedTournament ? (
+        )}
+        {!loading && !selectedTournament && (
           <div className={styles.emptyState}>
             <div className={styles.emptyTitle}>No Tournament Loaded</div>
             <div className={styles.emptyMessage}>Load a tournament from the dashboard to view payout information.</div>
           </div>
-        ) : filteredWinners.length === 0 && !searchQuery ? (
+        )}
+        {!loading && selectedTournament && aggregatedWinners.length === 0 && !loading && (
           <div className={styles.emptyState}>
             <div className={styles.emptyTitle}>No Payouts Yet</div>
             <div className={styles.emptyMessage}>Winners will appear here once bracket matches are completed.</div>
           </div>
-        ) : visibleRows.length === 0 ? (
-          <div className={styles.emptyState}>
-            <div className={styles.emptyTitle}>No results</div>
-            <div className={styles.emptyMessage}>No players match your search.</div>
-          </div>
-        ) : (
-          <>
+        )}
+
+        {/* Single condensed winners card */}
+        {!loading && aggregatedWinners.length > 0 && (
+          <div className={styles.tableCard}>
+            <div className={styles.tableCardHeader}>
+              <span>Winners</span>
+              <span className={styles.headerPool}>{formatCurrency(payoutData!.total_prize_pool)} total</span>
+            </div>
             <div className={styles.bracketGroup}>
-              {visibleRows.map((row, index) => {
+              {(filteredWinners.length === 0 ? (
+                <div className={styles.emptyState}>
+                  <div className={styles.emptyTitle}>No results</div>
+                  <div className={styles.emptyMessage}>No players match your search.</div>
+                </div>
+              ) : filteredWinners.map((row, index) => {
                 const key = String(row.player_id ?? row.player_name)
                 const isPaid = paidKeys.has(key)
-                const isWinner = row.total_won > 0
                 return (
                   <div
                     key={key}
-                    className={`${styles.winnerRow} ${index === 0 && isWinner ? styles.firstPlace : ''} ${isPaid ? styles.isPaid : ''}`}
+                    className={`${styles.winnerRow} ${index === 0 ? styles.firstPlace : ''} ${isPaid ? styles.isPaid : ''}`}
                   >
-                    <div className={isWinner ? placeBadgeClass(index + 1) : `${styles.placeBadge} ${styles.placeOther}`}>
-                      {isWinner ? index + 1 : '—'}
-                    </div>
+                    <div className={placeBadgeClass(index + 1)}>{index + 1}</div>
                     <div className={styles.winnerInfo}>
-                      <div className={styles.winnerName}>{row.player_name}</div>
-                      {row.brackets.length > 0 && (
-                        <div className={styles.winnerMeta}>{row.brackets.join(' · ')}</div>
-                      )}
+                      <div className={styles.winnerName}>
+                        {row.player_name}
+                        {row.winnings.some(w => w.split_pot) && <span className={styles.splitBadge}>Split</span>}
+                      </div>
+                      <div className={styles.winnerMeta}>
+                        {row.winnings.map(w => `${w.bracket_name} – ${w.position} (${formatCurrency(w.payout_amount)})`).join(' · ')}
+                      </div>
                     </div>
                     <div className={styles.payoutCol}>
-                      {isWinner && (
-                        <div className={styles.payoutAmount}>{formatCurrency(row.total_won)}</div>
+                      <div className={styles.payoutAmount}>{formatCurrency(row.total_won)}</div>
+                      {row.winnings.length > 1 && (
+                        <div className={styles.payoutPct}>{row.winnings.length} brackets</div>
                       )}
                     </div>
-                    {isWinner && (
-                      isPaid ? (
-                        <button className={styles.paidBadge} onClick={() => togglePaid(key)}>
-                          ✓ Paid
-                        </button>
-                      ) : (
-                        <button className={styles.markPaidBtn} onClick={() => togglePaid(key)}>
-                          Mark Paid
-                        </button>
-                      )
+                    {isPaid ? (
+                      <button className={styles.paidBadge} onClick={() => togglePaid(key)}>✓ Paid</button>
+                    ) : (
+                      <button className={styles.markPaidBtn} onClick={() => togglePaid(key)}>Mark Paid</button>
                     )}
                   </div>
                 )
-              })}
+              }))}
             </div>
-            {!searchQuery && filteredNonWinners.length > 0 && (
-              <button className={styles.showEntriesBtn} onClick={() => setShowNonWinners(v => !v)}>
-                {showNonWinners
-                  ? 'Hide non-winners'
-                  : `Show all entries (${filteredNonWinners.length} more)`}
-              </button>
-            )}
-          </>
+          </div>
         )}
       </div>
     </ErrorBoundary>

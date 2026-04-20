@@ -40,14 +40,13 @@ export default function Sidebar({ firstName, isMobile = false, isOpen = false, o
         )}
         <Link href="/" className={styles.logoLink}>
           <Image
-            src="/logo.png"
+            src="/logo.svg"
             alt="BracketWorks Logo"
-            width={68}
-            height={68}
+            width={160}
+            height={160}
             className={styles.logoImg}
           />
         </Link>
-        <span className={styles.brandName}>BracketWorks</span>
       </div>
 
       <div className={styles.welcome}>

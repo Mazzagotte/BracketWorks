@@ -136,15 +136,15 @@ export default function ResetPasswordModal({ isOpen, onClose, onSuccess }: Reset
           </div>
 
           <div className={styles.buttons}>
-            <button type="button" onClick={handleClose} disabled={loading} className={styles.cancelBtn}>
-              Cancel
-            </button>
             <button
               type="submit"
               disabled={loading || !!fieldError || !email.trim()}
               className={styles.submitBtn}
             >
               {loading ? 'Sending...' : 'Send Reset Code'}
+            </button>
+            <button type="button" onClick={handleClose} disabled={loading} className={styles.cancelBtn}>
+              Cancel
             </button>
           </div>
         </form>

@@ -6,11 +6,11 @@
 export const colors = {
   // Primary Brand Colors
   brand: {
-    gold: '#f0a500',
-    goldDark: '#d4940b',
-    goldLight: '#f59e0b',
-    goldLighter: '#fde68a',
-    goldPale: '#fcd34d',
+    gold: '#F97316',
+    goldDark: '#FB823C',
+    goldLight: '#F97316',
+    goldLighter: '#fed7aa',
+    goldPale: '#fdba74',
   },
 
   // Blue - Interactive Elements
@@ -75,15 +75,15 @@ export const colors = {
 
   // Dark Mode Backgrounds
   dark: {
-    base: '#0f172a',
-    surface: '#1e293b',
-    elevated: '#334155',
-    lighter: '#475569',
-    accent: '#64748b',
+    base: '#1F2937',
+    surface: '#2F2F2F',
+    elevated: '#374151',
+    lighter: '#4b5563',
+    accent: '#6b7280',
   },
 
   // Utility Colors
-  white: '#ffffff',
+  white: '#FAFAF9',
   black: '#000000',
   transparent: 'transparent',
 } as const

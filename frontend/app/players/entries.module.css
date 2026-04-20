@@ -1059,13 +1059,13 @@
 }
 
 .playersTable th {
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-  color: #2d3748;
-  font-weight: 600;
+  background: #F0E0C0;
+  color: #1A1A1A;
+  font-weight: 700;
   font-size: 0.8rem;
   padding: 12px 8px;
   text-align: center;
-  border-bottom: 2px solid #cbd5e0;
+  border-bottom: 2px solid #F07820;
   white-space: nowrap;
   cursor: pointer;
   transition: background-color 0.2s ease;
@@ -1073,15 +1073,15 @@
 }
 
 .playersTable th:hover {
-  background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e0 100%);
+  background: #e8d0a8;
 }
 
 .playersTable td {
   padding: 10px 8px;
   text-align: center;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid rgba(26, 26, 26, 0.08);
   font-size: 0.875rem;
-  color: #4a5568;
+  color: #1A1A1A;
   white-space: nowrap;
 }
 
@@ -1090,7 +1090,7 @@
 }
 
 .playersTable tbody tr:nth-child(even) {
-  background-color: #f8fafc;
+  background-color: rgba(240, 120, 32, 0.04);
 }
 
 .playersTable tbody tr:nth-child(odd) {
@@ -1098,7 +1098,7 @@
 }
 
 .playersTable tbody tr:hover {
-  background-color: #edf2f7 !important;
+  background-color: rgba(240, 120, 32, 0.08) !important;
   transform: scale(1.001);
 }
 
@@ -1479,9 +1479,10 @@
 
 /* Loading skeleton card */
 .skeletonCard {
-  background-color: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  background-color: #FAF4E8;
+  border-radius: var(--radius-xl);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(240, 120, 32, 0.2);
   padding: 1.5rem;
 }
 
@@ -1510,23 +1511,24 @@
 
 /* No tournament loaded state */
 .noTournament {
-  background-color: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  background-color: #FAF4E8;
+  border-radius: var(--radius-xl);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(240, 120, 32, 0.2);
   padding: 3rem 2rem;
   text-align: center;
 }
 
 .noTournamentTitle {
   font-size: 1.25rem;
-  font-weight: 600;
-  color: #1F2A33;
+  font-weight: 700;
+  color: #1A1A1A;
   margin-bottom: 0.5rem;
 }
 
 .noTournamentText {
   font-size: 0.875rem;
-  color: #5E6B75;
+  color: rgba(26, 26, 26, 0.6);
   margin-bottom: 1.5rem;
 }
 
@@ -1548,91 +1550,130 @@
 
 /* Tournament Summary Card */
 .summaryCard {
-  background-color: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-  padding: 1rem 1.5rem;
+  background-color: #FAF4E8;
+  border-radius: var(--radius-xl);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(240, 120, 32, 0.2);
+  padding: 0;
   margin-bottom: 1.5rem;
+  overflow: hidden;
 }
 
 .summaryTitle {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #5E6B75;
-  margin-bottom: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1A1A1A;
+  margin: 0;
+  padding: 14px 24px;
+  background: #F0E0C0;
+  border-bottom: 3px solid #F07820;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  text-transform: none;
+  letter-spacing: normal;
 }
 
 .summaryGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  padding: 0;
 }
 
 .statBox {
   text-align: center;
-  padding: 0.75rem;
-  border-radius: 0.5rem;
+  padding: 24px 16px;
+  border-right: 1px solid rgba(26, 26, 26, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 110px;
 }
 
-.statBoxPlayers {
-  background-color: #f9fafb;
-  border: 1px solid #e5e7eb;
-}
-
-.statBoxHandicap {
-  background-color: #eff6ff;
-  border: 1px solid #dbeafe;
-}
-
-.statBoxScratch {
-  background-color: #fffbeb;
-  border: 1px solid #fef3c7;
+.statBox:last-child {
+  border-right: none;
 }
 
 .statBoxRevenue {
-  background-color: #f0fdf4;
-  border: 1px solid #dcfce7;
+}
+
+.statIcon {
+  font-size: 1.5rem;
+  line-height: 1;
+  margin-bottom: 4px;
 }
 
 .statValue {
-  font-size: 1.875rem;
-  font-weight: 700;
+  font-size: 2rem;
+  font-weight: 800;
   line-height: 1;
+  color: #1A1A1A;
 }
-
-.statValuePlayers { color: #111827; }
-.statValueHandicap { color: #1e40af; }
-.statValueScratch { color: #92400e; }
-.statValueRevenue { color: #166534; }
 
 .statLabel {
   font-size: 0.75rem;
-  margin-top: 0.25rem;
-  font-weight: 500;
+  font-weight: 700;
+  color: rgba(26, 26, 26, 0.55);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
-
-.statLabelPlayers { color: #5E6B75; }
-.statLabelHandicap { color: #1e40af; }
-.statLabelScratch { color: #92400e; }
-.statLabelRevenue { color: #166534; }
 
 .statDetail {
   font-size: 0.75rem;
-  margin-top: 0.125rem;
-  opacity: 0.8;
+  color: rgba(26, 26, 26, 0.5);
+  margin-top: 2px;
 }
 
-.statDetailHandicap { color: #1e40af; }
-.statDetailScratch { color: #92400e; }
-.statDetailRevenue { color: #166534; }
+.statRefund {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #D9651A;
+  background: rgba(240, 120, 32, 0.12);
+  border-radius: 20px;
+  padding: 2px 10px;
+  margin-top: 4px;
+}
+
+@media (max-width: 640px) {
+  .summaryGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .statBox:nth-child(2) {
+    border-right: none;
+  }
+  .statBox:nth-child(1),
+  .statBox:nth-child(2) {
+    border-bottom: 1px solid rgba(26, 26, 26, 0.08);
+  }
+}
+
+/* DEV toolbar */
+.devButton {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1.5px dashed rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.devButton:hover {
+  background: rgba(240, 120, 32, 0.2);
+  border-color: #F07820;
+  color: #F07820;
+}
 
 /* Players table wrapper */
 .tableCard {
-  background-color: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  background-color: #FAF4E8;
+  border-radius: var(--radius-xl);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(240, 120, 32, 0.2);
   overflow: hidden;
 }
 
@@ -1641,18 +1682,28 @@
    ======================================== */
 
 .formCard {
-  padding: 1.5rem;
-  background-color: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-  margin-bottom: 2rem;
+  padding: 0;
+  background-color: #FAF4E8;
+  border-radius: var(--radius-xl);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(240, 120, 32, 0.2);
+  margin-bottom: 1.5rem;
+  overflow: hidden;
 }
 
 .formTitle {
-  font-size: 1.125rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-  color: #111827;
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0;
+  padding: 16px 24px;
+  color: #1A1A1A;
+  background: #F0E0C0;
+  border-bottom: 3px solid #F07820;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+
+.formCard form {
+  padding: 20px 24px;
 }
 
 .formGrid {
@@ -1665,26 +1716,28 @@
 .fieldLabel {
   display: block;
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 600;
   margin-bottom: 0.25rem;
-  color: #374151;
+  color: #1A1A1A;
 }
 
 .fieldInput {
   width: 100%;
   padding: 0.5rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid rgba(26, 26, 26, 0.2);
   border-radius: 0.375rem;
   font-size: 0.875rem;
   box-sizing: border-box;
   height: 36px;
   line-height: 1.2;
+  background: #ffffff;
+  color: #1A1A1A;
 }
 
 .fieldInput:focus {
   outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(244, 124, 32, 0.15);
+  border-color: #F07820;
+  box-shadow: 0 0 0 3px rgba(240, 120, 32, 0.12);
 }
 
 .fieldSelect {
@@ -1697,17 +1750,20 @@
   height: 36px;
   line-height: 1;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%235E6B75' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%231A1A1A' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 0.5rem center;
   background-size: 12px;
   padding-right: 2rem;
+  background-color: #ffffff;
+  color: #1A1A1A;
+  border: 1px solid rgba(26, 26, 26, 0.2);
 }
 
 .fieldSelect:focus {
   outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(244, 124, 32, 0.15);
+  border-color: #F07820;
+  box-shadow: 0 0 0 3px rgba(240, 120, 32, 0.12);
 }
 
 .submitBtn {

@@ -101,6 +101,7 @@ export interface BracketSettings {
   house_amount: number;
   handicap_percentage: number;
   handicap_base: number;
+  allow_bye?: boolean;
 }
 
 // Score related types

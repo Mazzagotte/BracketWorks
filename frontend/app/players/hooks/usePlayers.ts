@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 import { Player, Squad } from '../types';
 import { logger } from '../../lib/logger';
@@ -29,6 +29,11 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
   const [players, setPlayers] = useState<Player[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [savingStatus, setSavingStatus] = useState<Record<string, 'idle' | 'saving' | 'success' | 'error'>>({});
+
+  // Pending debounce timers per player: playerId -> timeout handle
+  const patchTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
+  // Latest pending patch payload per player — so the debounced call always sends the freshest values
+  const pendingPatches = useRef<Record<number, Record<string, any>>>({});
 
   const loadPlayers = useCallback(async () => {
     if (!authToken) {
@@ -134,9 +139,6 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
   }, [authToken, selectedSquad, getItem]);
 
   const updatePlayer = useCallback(async (id: number, updates: Partial<Player>) => {
-    // Get current player data before updating
-    const currentPlayer = players.find(p => p.id === id);
-    
     // Update local state immediately for better UX
     setPlayers(prevPlayers =>
       prevPlayers.map(player => {
@@ -154,53 +156,67 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
       return;
     }
 
-    if (!currentPlayer) {
-      logger.error('Player not found', { playerId: id });
-      return;
+    // Build the API payload for this update
+    const playerData: Record<string, any> = {};
+
+    // Name requires the current merged state — read from setPlayers' functional updater isn't possible
+    // here, so we still need the current snapshot for name fields only
+    if ('firstName' in updates || 'lastName' in updates) {
+      setPlayers(prev => {
+        const current = prev.find(p => p.id === id);
+        if (current) {
+          const merged = { ...current, ...updates };
+          playerData.name = `${merged.firstName || ''} ${merged.lastName || ''}`.trim();
+        }
+        return prev; // no change — just reading
+      });
     }
 
-    try {
-      // Determine which field is being updated for status tracking
-      const fieldKey = Object.keys(updates)[0]; // Get the first (and usually only) field being updated
-      const statusKey = `${id}-${fieldKey}`;
-      
-      setSavingStatus(prev => ({ ...prev, [statusKey]: 'saving' }));
-      
-      // Build playerData with only the fields that are being updated
-      const playerData: Record<string, any> = {};
-      
-      // Handle name fields specially - if either firstName or lastName is updated, send full name
-      if ('firstName' in updates || 'lastName' in updates) {
-        const mergedPlayer = { ...currentPlayer, ...updates };
-        playerData.name = `${mergedPlayer.firstName || ''} ${mergedPlayer.lastName || ''}`.trim();
+    if ('usbc' in updates) playerData.usbc = updates.usbc;
+    if ('average' in updates) playerData.average = updates.average;
+    if ('handicap' in updates) playerData.handicap_entries = updates.handicap;
+    if ('scratch' in updates) playerData.scratch_entries = updates.scratch;
+    if ('lane' in updates) playerData.lane = String(updates.lane ?? '');
+    if ('division' in updates) playerData.division = updates.division;
+    if ('amountPaid' in updates) playerData.amount_paid = updates.amountPaid;
+
+    // Merge into the pending patch for this player so the debounced call always
+    // sends ALL accumulated changes, not just the latest single field
+    pendingPatches.current[id] = { ...(pendingPatches.current[id] ?? {}), ...playerData };
+
+    // Mark unsaved immediately so the UI shows a saving indicator
+    const firstField = Object.keys(updates)[0];
+    const statusKey = `${id}-${firstField}`;
+    setSavingStatus(prev => ({ ...prev, [statusKey]: 'saving' }));
+
+    // Clear any existing debounce timer for this player
+    if (patchTimers.current[id]) clearTimeout(patchTimers.current[id]);
+
+    // Debounce: send the PATCH 400ms after the last change for this player
+    patchTimers.current[id] = setTimeout(async () => {
+      const payload = pendingPatches.current[id];
+      if (!payload || Object.keys(payload).length === 0) return;
+      delete pendingPatches.current[id];
+
+      try {
+        await apiClient.patch(`/api/v1/bowlers/${id}`, payload);
+        setSavingStatus(prev => ({ ...prev, [statusKey]: 'success' }));
+        setTimeout(() => setSavingStatus(prev => ({ ...prev, [statusKey]: 'idle' })), 2000);
+      } catch (err: unknown) {
+        logger.error('Failed to update player', { error: err, playerId: id });
+        setSavingStatus(prev => ({ ...prev, [statusKey]: 'error' }));
+        loadPlayers(); // revert optimistic update
+        alert(`Failed to update player: ${err instanceof Error ? err.message : 'Unknown error'}`);
       }
-      
-      // Map frontend field names to backend field names and add only updated fields
-      if ('usbc' in updates) playerData.usbc = updates.usbc;
-      if ('average' in updates) playerData.average = updates.average;
-      if ('handicap' in updates) playerData.handicap_entries = updates.handicap;
-      if ('scratch' in updates) playerData.scratch_entries = updates.scratch;
-      if ('lane' in updates) playerData.lane = String(updates.lane ?? ''); // Backend expects string
-      if ('division' in updates) playerData.division = updates.division;
-      if ('amountPaid' in updates) playerData.amount_paid = updates.amountPaid;
+    }, 400);
+  }, [authToken, entryFee, loadPlayers]);
 
-      await apiClient.patch(`/api/v1/bowlers/${id}`, playerData);
-      setSavingStatus(prev => ({ ...prev, [statusKey]: 'success' }));
-      
-      // Clear success status after a delay
-      setTimeout(() => {
-        setSavingStatus(prev => ({ ...prev, [statusKey]: 'idle' }));
-      }, 2000);
-    } catch (err: unknown) {
-      logger.error('Failed to update player', { error: err, playerId: id });
-      const fieldKey = Object.keys(updates)[0];
-      const statusKey = `${id}-${fieldKey}`;
-      setSavingStatus(prev => ({ ...prev, [statusKey]: 'error' }));
-      // Revert the local change on error
-      loadPlayers();
-      alert(`Failed to update player: ${err instanceof Error ? err.message : 'Unknown error'}`);
-    }
-  }, [authToken, selectedSquad, loadPlayers, players]);
+  // Cancel all pending debounced patches (e.g. after a bulk write)
+  const cancelPendingPatches = useCallback(() => {
+    Object.values(patchTimers.current).forEach(clearTimeout);
+    patchTimers.current = {};
+    pendingPatches.current = {};
+  }, []);
 
   const deletePlayer = useCallback(async (playerId: number) => {
     if (!authToken) return;
@@ -220,12 +236,20 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
     loadPlayers();
   }, [loadPlayers]);
 
+  // Clear any pending debounce timers when the hook unmounts
+  useEffect(() => {
+    return () => {
+      Object.values(patchTimers.current).forEach(clearTimeout);
+    };
+  }, []);
+
   return {
     players,
     isLoading,
     savingStatus,
     addPlayer,
     updatePlayer,
+    cancelPendingPatches,
     deletePlayer,
     loadPlayers
   };

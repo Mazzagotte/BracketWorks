@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
-import "../styles/bowling-animations.css";
 import styles from "./login.module.css";
 
 import { API } from "../lib/api";
@@ -192,17 +191,13 @@ export default function LoginPage() {
     <div className={styles.page}>
       <div className={`${styles.card} ${loading ? styles.loading : ''}`}>
         {/* Header */}
-        <div className={styles.logoWrap}>
-          <Image
-            src="/logo.png"
-            alt="BracketWorks Logo"
-            width={56}
-            height={56}
-            style={{ borderRadius: '12px' }}
-          />
-        </div>
-        <h1 className={styles.title}>BracketWorks</h1>
-        <div className={styles.subtitle}>Bowling Brackets & Side Pots</div>
+        <Image
+          src="/logo.svg"
+          alt="BracketWorks Logo"
+          width={220}
+          height={220}
+          style={{ height: 'auto', display: 'block', marginBottom: '8px', margin: '0 auto 8px' }}
+        />
 
         {/* Form */}
         <form id="login-form" onSubmit={handleLogin} className={styles.form}>

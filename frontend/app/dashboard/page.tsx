@@ -60,12 +60,13 @@ function getDatesBetween(startDate: string, endDate: string): string[] {
   return dateList;
 }
 
-function EditTournamentModal({ open, onClose, tournament, onSave, isMobile }: {
+function EditTournamentModal({ open, onClose, tournament, onSave, isMobile, isCreateMode }: {
   open: boolean;
   onClose: () => void;
   tournament: Tournament | null;
   onSave: (tournamentData: TournamentForm) => void;
   isMobile: boolean;
+  isCreateMode: boolean;
 }) {
   const [tournamentForm, setTournamentForm] = useState<TournamentForm>({
     name: '',
@@ -86,6 +87,7 @@ function EditTournamentModal({ open, onClose, tournament, onSave, isMobile }: {
   }, []);
 
   useEffect(() => {
+    if (!open) return;
     if (tournament) {
       setTournamentForm({
         name: tournament.name || '',
@@ -94,8 +96,10 @@ function EditTournamentModal({ open, onClose, tournament, onSave, isMobile }: {
         end_date: tournament.end_date || '',
         squad_times: tournament.squad_times || {}
       });
+    } else {
+      setTournamentForm({ name: '', location: '', start_date: '', end_date: '', squad_times: {} });
     }
-  }, [tournament]);
+  }, [open, tournament]);
 
   // Focus new time input when added
   useEffect(() => {
@@ -140,12 +144,12 @@ function EditTournamentModal({ open, onClose, tournament, onSave, isMobile }: {
         >
           ×
         </button>
-        <h2>Edit Tournament</h2>
+        <h2>{isCreateMode ? 'Create Tournament' : 'Edit Tournament'}</h2>
         <div>
         {isMobile ? (
           // Mobile Form Layout
           <MobileForm
-            title="Edit Tournament"
+            title={isCreateMode ? 'Create Tournament' : 'Edit Tournament'}
             onSubmit={async (submitEvent) => {
               submitEvent.preventDefault();
               setIsSaving(true);
@@ -340,17 +344,25 @@ export default function TournamentDashboard() {
     house_amount: 0,
     cost_per_bracket: 0,
     handicap_percentage: 80,
-    handicap_base: 200
+    handicap_base: 200,
+    allow_bye: false
   });
   const [savingBracketSettings, setSavingBracketSettings] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved' | 'error'>('saved');
   const [lastSavedTime, setLastSavedTime] = useState<Date | null>(null);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef(false);
+  // Always holds the latest bracketSettings so async callbacks aren't stale
+  const bracketSettingsRef = useRef<BracketSettings>(bracketSettings);
   const [isClient, setIsClient] = useState(false);
   
   // Mobile detection state
   const [isMobile, setIsMobile] = useState(false);
+
+  // Keep ref in sync so timeout callbacks always read the latest settings
+  useEffect(() => {
+    bracketSettingsRef.current = bracketSettings;
+  }, [bracketSettings]);
 
   // Track when component is mounted to prevent premature auto-saves
   useEffect(() => {
@@ -383,14 +395,15 @@ export default function TournamentDashboard() {
 
     setSavingBracketSettings(true);
     setSaveStatus('saving');
+    const latestSettings = bracketSettingsRef.current;
     try {
       const data = await apiClient.post<BracketSettings>('/api/v1/bracket-settings/', {
-        ...bracketSettings,
+        ...latestSettings,
         tournament_id: tournament.id
       });
       
       // Check if it was a create or update operation
-      const isUpdate = data.id && bracketSettings.id;
+      const isUpdate = data.id && latestSettings.id;
       const message = isUpdate 
         ? 'Bracket settings updated successfully!' 
         : 'Bracket settings saved successfully!';
@@ -402,7 +415,9 @@ export default function TournamentDashboard() {
       });
       
       // Update local state with the returned data (includes ID for new records)
-      setBracketSettings(data);
+      // Merge rather than replace to preserve frontend-only fields (e.g. allow_bye)
+      // that the backend may not echo back yet
+      setBracketSettings(prev => ({ ...prev, ...data }));
       
       // Clear cache for bracket settings to ensure fresh data on reload
       apiClient.clearCacheEntry(`/api/v1/bracket-settings/${tournament.id}`);
@@ -541,6 +556,13 @@ export default function TournamentDashboard() {
           if (tournamentData) {
             setTournament(tournamentData);
             loadBracketSettings(tournamentData.id);
+          } else {
+            // Tournament no longer accessible — clear stale localStorage
+            localStorage.removeItem('lastTournamentId');
+            localStorage.removeItem('activeTournamentName');
+            localStorage.removeItem('activeSquadLabel');
+            window.dispatchEvent(new Event('tournament-changed'));
+            window.dispatchEvent(new Event('squad-changed'));
           }
           
           // Set squads data
@@ -554,6 +576,12 @@ export default function TournamentDashboard() {
         .catch(error => {
           logger.error('Error loading initial dashboard data:', error);
         });
+    } else {
+      // No stored tournament — clear any stale header strip data
+      localStorage.removeItem('activeTournamentName');
+      localStorage.removeItem('activeSquadLabel');
+      window.dispatchEvent(new Event('tournament-changed'));
+      window.dispatchEvent(new Event('squad-changed'));
     }
   }, []);
 
@@ -605,6 +633,8 @@ export default function TournamentDashboard() {
     loadBracketSettings(t.id);
     // Optionally, persist tournament id to localStorage for reload (not the full object)
     localStorage.setItem('lastTournamentId', String(t.id));
+    localStorage.setItem('activeTournamentName', t.name);
+    window.dispatchEvent(new Event('tournament-changed'));
     
     // Load squads for this tournament
     const token = localStorage.getItem('token');
@@ -829,6 +859,10 @@ export default function TournamentDashboard() {
               house_amount: 0, cost_per_bracket: 0, handicap_percentage: 80, handicap_base: 200
             });
             localStorage.removeItem('lastTournamentId');
+            localStorage.removeItem('activeTournamentName');
+            localStorage.removeItem('activeSquadLabel');
+            window.dispatchEvent(new Event('tournament-changed'));
+            window.dispatchEvent(new Event('squad-changed'));
             addToast({ type: 'success', message: 'Tournament unloaded successfully', duration: 3000 });
           }}
         >
@@ -841,11 +875,15 @@ export default function TournamentDashboard() {
   const selectedSquad = squads.find(s => s.id === selectedSquadId)
   const squadLabel = selectedSquad ? ` · ${[selectedSquad.date, selectedSquad.time].filter(Boolean).join(' ')}` : ''
 
+  useEffect(() => {
+    const label = selectedSquad ? [selectedSquad.date, selectedSquad.time].filter(Boolean).join(' ') : '';
+    localStorage.setItem('activeSquadLabel', label);
+    window.dispatchEvent(new Event('squad-changed'));
+  }, [selectedSquad]);
+
   usePageHeader({
     title: "Tournament Dashboard",
-    subtitle: tournament
-      ? `${tournament.name}${squadLabel}`
-      : "Select or create a tournament to get started",
+    subtitle: undefined,
     centerContent: false,
     actions: headerActions
   });
@@ -885,6 +923,7 @@ export default function TournamentDashboard() {
           tournament={createMode ? null : tournament}
           onSave={handleSave}
           isMobile={isMobile}
+          isCreateMode={createMode}
         />
         <main className="page-main">
 
@@ -1140,6 +1179,25 @@ export default function TournamentDashboard() {
                       </div>
                     </div>
                   </div>
+
+                  {/* BYE Setting */}
+                  <div className={mobileStyles.settingsSection}>
+                    <div className={mobileStyles.sectionHeader}>
+                      <h3 className={mobileStyles.sectionTitle}>Other</h3>
+                    </div>
+                    <label className={mobileStyles.checkboxLabel}>
+                      <input
+                        type="checkbox"
+                        className={mobileStyles.checkboxInput}
+                        checked={!!bracketSettings.allow_bye}
+                        onChange={e => {
+                          setBracketSettings(prev => ({ ...prev, allow_bye: e.target.checked }));
+                          autoSaveBracketSettings();
+                        }}
+                      />
+                      Allow &ldquo;BYE&rdquo; <span className={mobileStyles.checkboxHint}>(One per Bracket)</span>
+                    </label>
+                  </div>
                 </div>
               </div>
             )}
@@ -1196,15 +1254,6 @@ export default function TournamentDashboard() {
                     );
                   })}
                 </div>
-                
-                {selectedSquadId && (
-                  <div className={mobileStyles.selectionFeedback}>
-                    <span className={mobileStyles.checkIcon}></span>
-                    <span>
-                      Selected: {squads.find(s => s.id === selectedSquadId)?.date} — {squads.find(s => s.id === selectedSquadId)?.time}
-                    </span>
-                  </div>
-                )}
               </div>
             )}
           </div>

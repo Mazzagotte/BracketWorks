@@ -66,7 +66,7 @@
   background: 
     radial-gradient(ellipse at 30% 30%, rgba(255,255,255,0.4) 0%, transparent 40%),
     radial-gradient(ellipse at 70% 70%, rgba(0,0,0,0.3) 0%, transparent 40%),
-    linear-gradient(135deg, #f0a500 0%, #ff9800 50%, #ff6f00 100%);
+    var(--gradient-bowling-ball);
   border-radius: 50%;
   top: 50%;
   left: 0;
@@ -91,15 +91,15 @@
   width: 4px;
   height: 4px;
   background: 
-    radial-gradient(circle, #1a1a1a 0%, #333 100%);
+    radial-gradient(circle, var(--color-bowling-ball) 0%, var(--color-bowling-ball-shadow) 100%);
   border-radius: 50%;
   top: 6px;
   left: 8px;
   box-shadow: 
-    6px 2px 0 0 #1a1a1a,
-    6px 2px 0 1px #333,
-    3px 8px 0 0 #1a1a1a,
-    3px 8px 0 1px #333,
+    6px 2px 0 0 var(--color-bowling-ball),
+    6px 2px 0 1px var(--color-bowling-ball-shadow),
+    3px 8px 0 0 var(--color-bowling-ball),
+    3px 8px 0 1px var(--color-bowling-ball-shadow),
     inset 0 0.5px 1px rgba(0, 0, 0, 0.8);
 }
 
@@ -155,10 +155,10 @@
     top: 5px;
     left: 6px;
     box-shadow: 
-      5px 1px 0 0 #1a1a1a,
-      5px 1px 0 1px #333,
-      2px 6px 0 0 #1a1a1a,
-      2px 6px 0 1px #333;
+      5px 1px 0 0 var(--color-bowling-ball),
+      5px 1px 0 1px var(--color-bowling-ball-shadow),
+      2px 6px 0 0 var(--color-bowling-ball),
+      2px 6px 0 1px var(--color-bowling-ball-shadow);
   }
   
   .buttonBowlingBall + .ballTrail {

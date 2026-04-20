@@ -64,6 +64,7 @@ class BracketSettings(Base):
     cost_per_bracket: Mapped[float | None] = mapped_column(Float, nullable=True)
     handicap_percentage: Mapped[float | None] = mapped_column(Float, nullable=True, default=80.0)
     handicap_base: Mapped[float | None] = mapped_column(Float, nullable=True, default=200.0)
+    allow_bye: Mapped[bool | None] = mapped_column(Boolean, nullable=True, default=False)
 
 class Score(Base):
     __tablename__ = "score"

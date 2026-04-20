@@ -90,13 +90,13 @@
 }
 
 .error-item {
-  color: #dc2626;
+  color: var(--color-red-dark);
   font-size: var(--font-size-base);
   line-height: var(--line-height-normal);
 }
 
 .error-item strong {
-  color: #991b1b;
+  color: var(--color-error-text-deep);
 }
 
 /* Icons */
@@ -181,26 +181,26 @@
 /* High contrast mode support */
 @media (prefers-contrast: high) {
   .field-error {
-    background: #ffebee;
-    border-color: #d32f2f;
-    color: #b71c1c;
+    background: var(--color-hc-error-bg);
+    border-color: var(--color-hc-error-border);
+    color: var(--color-hc-error-text);
   }
   
   .field-success {
-    background: #e8f5e8;
-    border-color: #2e7d32;
-    color: #1b5e20;
+    background: var(--color-hc-success-bg);
+    border-color: var(--color-hc-success-border);
+    color: var(--color-hc-success-text);
   }
   
   .login-input.error,
   .password-input.error {
-    border-color: #d32f2f !important;
+    border-color: var(--color-hc-error-border) !important;
     border-width: 2px !important;
   }
   
   .login-input.valid,
   .password-input.valid {
-    border-color: #2e7d32 !important;
+    border-color: var(--color-hc-success-border) !important;
     border-width: 2px !important;
   }
 }

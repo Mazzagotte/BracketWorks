@@ -10,6 +10,7 @@ export interface SearchFilterProps {
   onSeedRangeChange: (range: string) => void;
   onClearFilters: () => void;
   activeFiltersCount: number;
+  searchResultCount?: number | null;
 }
 
 export function SearchFilter({
@@ -21,6 +22,7 @@ export function SearchFilter({
   onSeedRangeChange,
   onClearFilters,
   activeFiltersCount,
+  searchResultCount,
 }: SearchFilterProps) {
   return (
     <div className={styles.container}>
@@ -46,6 +48,13 @@ export function SearchFilter({
               </button>
             )}
           </div>
+          {searchTerm && searchResultCount !== null && searchResultCount !== undefined && (
+            <span className={`${styles.resultCount} ${searchResultCount === 0 ? styles.resultCountEmpty : ''}`}>
+              {searchResultCount === 0
+                ? 'No players found'
+                : `${searchResultCount} player${searchResultCount !== 1 ? 's' : ''} found`}
+            </span>
+          )}
         </label>
 
         <label className={styles.label}>

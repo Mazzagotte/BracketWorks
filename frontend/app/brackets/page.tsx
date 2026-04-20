@@ -15,6 +15,7 @@ import { BracketTabs } from './components/BracketTabs'
 import { SearchFilter } from './components/SearchFilter'
 import { EmptyBracketState } from './components/EmptyBracketState'
 import ExplainBracketsModal from './components/ExplainBracketsModal'
+import NoTournamentState from '../components/NoTournamentState'
 import '../styles/bowling-animations.css'
 import styles from './brackets.module.css'
 
@@ -414,6 +415,19 @@ export default function BracketsPage() {
     setSelectedSeedRange('all')
   }, [])
 
+  const searchResultCount = useMemo(() => {
+    if (!searchTerm || !rounds.length) return null
+    const term = searchTerm.toLowerCase()
+    const matched = new Set<string>()
+    rounds.forEach(round => {
+      round.matches.forEach(match => {
+        if (match.playerA && match.playerA.toLowerCase().includes(term)) matched.add(match.playerA)
+        if (match.playerB && match.playerB.toLowerCase().includes(term)) matched.add(match.playerB)
+      })
+    })
+    return matched.size
+  }, [searchTerm, rounds])
+
   const activeFiltersCount = useMemo(() => {
     let count = 0
     if (searchTerm) count++
@@ -425,23 +439,24 @@ export default function BracketsPage() {
   const handleCloseExplainModal = useCallback(() => setIsExplainModalOpen(false), [])
 
   // Memoize the Generate Brackets button to prevent infinite re-renders
-  const generateBracketsButton = useMemo(() => (
-    <div className={styles.headerActions}>
-      <button onClick={() => setIsExplainModalOpen(true)} className="ds-btn ds-btn-primary ds-btn-md">
-        Explain Brackets
-      </button>
-      <button onClick={handleGenerateBrackets} className="ds-btn ds-btn-primary ds-btn-md">
-        Generate Brackets
-      </button>
-    </div>
-  ), [handleGenerateBrackets, setIsExplainModalOpen])
+  const generateBracketsButton = useMemo(() => {
+    if (!selectedTournament) return undefined
+    return (
+      <div className={styles.headerActions}>
+        <button onClick={() => setIsExplainModalOpen(true)} className={styles.explainBtn}>
+          Explain Brackets
+        </button>
+        <button onClick={handleGenerateBrackets} className={styles.generateBtn}>
+          Generate Brackets
+        </button>
+      </div>
+    )
+  }, [selectedTournament, handleGenerateBrackets, setIsExplainModalOpen])
 
   // Set page header with actions
   usePageHeader({
-    title: 'Bracket Management',
-    subtitle: selectedTournament
-      ? `${selectedTournament.name}${selectedSquad ? ` · ${[selectedSquad.date, selectedSquad.time].filter(Boolean).join(' ')}` : ''}`
-      : 'Select a tournament from the dashboard',
+    title: 'Bracket View',
+    subtitle: undefined,
     actions: generateBracketsButton
   })
 
@@ -489,7 +504,7 @@ export default function BracketsPage() {
       )}
 
       {/* Bracket content */}
-      <div className={isMobile ? styles.contentWrapperMobile : styles.contentWrapperDesktop}>
+      <div className={styles.pageContainer}>
         {/* Loading State */}
         {isInitializing ? (
           <div className={styles.loadingState}>
@@ -497,38 +512,14 @@ export default function BracketsPage() {
           </div>
         ) : /* No Tournament Loaded State */
         !selectedTournament ? (
-          <div className={`${styles.noTournament} ${isMobile ? styles.noTournamentMobile : styles.noTournamentDesktop}`}>
-            <h2 className={`${styles.noTournamentTitle} ${isMobile ? styles.noTournamentTitleMobile : styles.noTournamentTitleDesktop}`}>
-              No Tournament Loaded
-            </h2>
-            <p className={`${styles.noTournamentText} ${isMobile ? styles.noTournamentTextMobile : styles.noTournamentTextDesktop}`}>
-              Load a tournament from the dashboard to generate and manage brackets. Once loaded, you&apos;ll be able to create brackets, track matches, and manage tournament progress.
-            </p>
-            <a href="/dashboard" className={`${styles.dashboardBtn} ${isMobile ? styles.dashboardBtnMobile : styles.dashboardBtnDesktop}`}>
-              Go to Dashboard
-            </a>
-
-            <div className={`${styles.infoCards} ${isMobile ? styles.infoCardsMobile : styles.infoCardsDesktop}`}>
-              <div className={styles.infoCard}>
-                <h3 className={styles.infoCardTitle}>Generate Brackets</h3>
-                <p className={styles.infoCardText}>
-                  Automatically create single or double elimination brackets from your player list
-                </p>
-              </div>
-              <div className={styles.infoCard}>
-                <h3 className={styles.infoCardTitle}>Track Matches</h3>
-                <p className={styles.infoCardText}>
-                  View match-ups, update winners, and follow tournament progress in real-time
-                </p>
-              </div>
-              <div className={styles.infoCard}>
-                <h3 className={styles.infoCardTitle}>Multiple Views</h3>
-                <p className={styles.infoCardText}>
-                  Separate scratch and handicap brackets, with mobile-friendly navigation
-                </p>
-              </div>
-            </div>
-          </div>
+          <NoTournamentState
+            description="Load a tournament from the dashboard to generate and manage brackets. Once loaded, you'll be able to create brackets, track matches, and manage tournament progress."
+            cards={[
+              { title: 'Generate Brackets', text: 'Automatically create single or double elimination brackets from your player list' },
+              { title: 'Track Matches', text: 'View match-ups, update winners, and follow tournament progress in real-time' },
+              { title: 'Multiple Views', text: 'Separate scratch and handicap brackets, with mobile-friendly navigation' },
+            ]}
+          />
         ) : (
         /* Show empty state if no brackets */
         (() => {
@@ -544,32 +535,37 @@ export default function BracketsPage() {
           />
         ) : (
           <>
-            {/* Bracket Tabs */}
-            <BracketTabs
-              activeTab={activeTab}
-              onTabChange={(tab) => {
-                setActiveTab(tab)
-                setSelectedBracketIndex(0) // Reset to first bracket when switching tabs
-              }}
-              scratchCount={loadedBrackets.scratch_brackets?.length || loadedBrackets.multiple_brackets?.scratch_brackets?.length || 0}
-              handicapCount={loadedBrackets.handicap_brackets?.length || loadedBrackets.multiple_brackets?.handicap_brackets?.length || 0}
-            />
+            {/* Combined Control Panel: Search + Tabs + Navigator */}
+            <div className={styles.controlPanel}>
+              {/* Search and Filter */}
+              <SearchFilter
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
+                selectedStatus={selectedStatus}
+                onStatusChange={setSelectedStatus}
+                selectedSeedRange={selectedSeedRange}
+                onSeedRangeChange={setSelectedSeedRange}
+                onClearFilters={handleClearFilters}
+                activeFiltersCount={activeFiltersCount}
+                searchResultCount={searchResultCount}
+              />
 
-            {/* Search and Filter */}
-            <SearchFilter
-              searchTerm={searchTerm}
-              onSearchChange={setSearchTerm}
-              selectedStatus={selectedStatus}
-              onStatusChange={setSelectedStatus}
-              selectedSeedRange={selectedSeedRange}
-              onSeedRangeChange={setSelectedSeedRange}
-              onClearFilters={handleClearFilters}
-              activeFiltersCount={activeFiltersCount}
-            />
+              {/* Divider */}
+              <div className={styles.controlDivider} />
 
+              {/* Bracket Tabs */}
+              <BracketTabs
+                activeTab={activeTab}
+                onTabChange={(tab) => {
+                  setActiveTab(tab)
+                  setSelectedBracketIndex(0)
+                }}
+                scratchCount={loadedBrackets.scratch_brackets?.length || loadedBrackets.multiple_brackets?.scratch_brackets?.length || 0}
+                handicapCount={loadedBrackets.handicap_brackets?.length || loadedBrackets.multiple_brackets?.handicap_brackets?.length || 0}
+              />
 
-            {/* Bracket Selector - Navigate between individual brackets */}
-            {(() => {
+              {/* Bracket Navigator - only shown when there are multiple brackets */}
+              {(() => {
               const scratchBrackets = loadedBrackets.scratch_brackets || loadedBrackets.multiple_brackets?.scratch_brackets || []
               const handicapBrackets = loadedBrackets.handicap_brackets || loadedBrackets.multiple_brackets?.handicap_brackets || []
               
@@ -592,7 +588,9 @@ export default function BracketsPage() {
                 : activeTab.charAt(0).toUpperCase() + activeTab.slice(1)
               
               return (
-                <div className={styles.bracketNav}>
+                <>
+                  <div className={styles.controlDivider} />
+                  <div className={styles.bracketNav}>
 
                   <button
                     onClick={() => setSelectedBracketIndex(Math.max(0, selectedBracketIndex - 1))}
@@ -636,9 +634,11 @@ export default function BracketsPage() {
                     <span>Next</span>
                     <span className={styles.navArrow}>→</span>
                   </button>
-                </div>
+                  </div>
+                </>
               )
             })()}
+            </div>{/* end controlPanel */}
 
             {/* Bracket Display */}
             <Suspense fallback={<div className={styles.loadingState}><div>Loading...</div></div>}>
@@ -654,6 +654,8 @@ export default function BracketsPage() {
                   rounds={rounds}
                   isMobile={isMobile}
                   bracketType={activeTab === 'scratch' ? 'scratch' : 'handicap'}
+                  searchTerm={searchTerm}
+                  statusFilter={selectedStatus}
                 />
               )
             ) : (

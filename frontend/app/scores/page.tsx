@@ -254,17 +254,24 @@ export default function ScoresPage() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  // DEV ONLY: randomize game scores for all loaded players
+  const handleRandomizeScores = useCallback(async () => {
+    for (const player of players) {
+      const g1 = Math.floor(Math.random() * 121) + 130 // 130–250
+      const g2 = Math.floor(Math.random() * 121) + 130
+      const g3 = Math.floor(Math.random() * 121) + 130
+      await updateScore(player.id, 'game1_scratch', g1)
+      await updateScore(player.id, 'game2_scratch', g2)
+      await updateScore(player.id, 'game3_scratch', g3)
+    }
+  }, [players]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Header configuration
   const headerActions = useMemo(() => (
     <div className={styles.headerActions}>
-      <Button
-        onClick={() => {
-          addToast({ message: 'Refreshing scores data...', type: 'info', duration: 2000 })
-          window.location.reload()
-        }}
-      >
-        Refresh Data
-      </Button>
+      {process.env.NODE_ENV === 'development' && players.length > 0 && (
+        <button className={styles.devButton} onClick={handleRandomizeScores}>DEV: Randomize Scores</button>
+      )}
       
       {pendingSaves.length > 0 && (
         <EnhancedButton
@@ -283,13 +290,11 @@ export default function ScoresPage() {
         </EnhancedButton>
       )}
     </div>
-  ), [pendingSaves.length, addToast, processPendingSaves])
+  ), [players.length, handleRandomizeScores, pendingSaves.length, addToast, processPendingSaves])
 
   usePageHeader({
     title: 'Scores',
-    subtitle: tournament
-      ? `${tournament.name}${selectedSquad ? ` · ${[selectedSquad.date, selectedSquad.time].filter(Boolean).join(' ')}` : ''}`
-      : 'Select a tournament from the dashboard',
+    subtitle: undefined,
     actions: headerActions
   })
 
@@ -493,11 +498,6 @@ export default function ScoresPage() {
     if (!status) return null
     const cls = `saving-indicator ${status}`
     return (<div className={cls}>{status === 'saving' ? '⋯' : ''}</div>)
-  }
-
-  const getPerfectBadge = (score: number | undefined) => {
-    if (score !== 300) return null
-    return <div className="perfect-badge">✓</div>
   }
 
   // Debounced save function
@@ -738,15 +738,6 @@ export default function ScoresPage() {
             <div className="flex gap-2">
               <button
                 onClick={() => {
-                  addToast({ message: 'Refreshing scores data...', type: 'info', duration: 2000 })
-                  window.location.reload()
-                }}
-                className="px-3 py-1 bg-blue-500 text-white text-sm rounded-md"
-              >
-                Refresh
-              </button>
-              <button
-                onClick={() => {
                   addToast({ message: 'Export functionality coming soon', type: 'info', duration: 3000 })
                 }}
                 className="px-3 py-1 bg-green-500 text-white text-sm rounded-md"
@@ -865,7 +856,7 @@ export default function ScoresPage() {
             <div className={styles.noTournamentDesktop}>
               <h2 className={styles.noTournamentTitleDesktop}>No Tournament Loaded</h2>
               <p className={styles.noTournamentTextDesktop}>
-                You need to load a tournament from the dashboard before you can enter scores. Once loaded, you&apos;ll be able to enter and manage scores for all players.
+                You need to load a tournament from the dashboard before you can enter scores. Once loaded, you'll be able to enter and manage scores for all players.
               </p>
               <Link href="/dashboard" className={styles.dashboardBtnDesktop}>
                 Go to Dashboard
@@ -922,19 +913,18 @@ export default function ScoresPage() {
 
           {/* Scores Table */}
           {!isLoading && players.length > 0 && (
-            <div className={styles.tableCard}>
-              <div className={styles.tableWrapper}>
-                <table className={styles.table} aria-label="Player Scores">
+            <div className="entries-container">
+                <table className="entries-table" aria-label="Player Scores">
 
             <thead>
               {selectedSquad && (
-                <tr className={styles.squadRow}>
-                  <td colSpan={12}>
+                <tr>
+                  <td colSpan={12} className="squad-banner">
                     Showing scores for: {selectedSquad.date} — {selectedSquad.time}
                   </td>
                 </tr>
               )}
-              <tr className={styles.tableHeaderRow}>
+              <tr className="entries-header-row">
                 <SortableHeader column="firstName" sortConfig={sortConfig} onSort={handleSort} align="center" width="9%">
                   First Name
                 </SortableHeader>
@@ -1000,7 +990,6 @@ export default function ScoresPage() {
                       />
                       {getSavingIndicator(player.id, 'game1_scratch')}
                     </div>
-                    {getPerfectBadge(player.scores?.game1_scratch)}
                   </td>
                   
                   {/* Game 1 Total */}
@@ -1024,7 +1013,6 @@ export default function ScoresPage() {
                       />
                       {getSavingIndicator(player.id, 'game2_scratch')}
                     </div>
-                    {getPerfectBadge(player.scores?.game2_scratch)}
                   </td>
                   
                   {/* Game 2 Total */}
@@ -1048,7 +1036,6 @@ export default function ScoresPage() {
                       />
                       {getSavingIndicator(player.id, 'game3_scratch')}
                     </div>
-                    {getPerfectBadge(player.scores?.game3_scratch)}
                   </td>
                   
                   {/* Game 3 Total */}
@@ -1069,7 +1056,6 @@ export default function ScoresPage() {
               ))}
             </tbody>
           </table>
-        </div>
         </div>
         )}
 
