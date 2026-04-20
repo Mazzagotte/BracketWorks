@@ -50,7 +50,7 @@ export function EmptyBracketState({
         {/* Features List */}
         {showDemo && (
           <div className={styles.features}>
-            <h3 className={styles.featuresTitle}>What you'll get:</h3>
+            <h3 className={styles.featuresTitle}>What you&apos;ll get:</h3>
             <ul className={styles.featuresList}>
               <li className={styles.feature}>
                 <span className={styles.featureIcon}>🏆</span>

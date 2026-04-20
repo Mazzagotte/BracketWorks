@@ -144,7 +144,7 @@ export default function ExplainBracketsModal({ isOpen, onClose }: ExplainBracket
             <div className={styles.bracketType}>
               <strong>Handicap Brackets</strong>
               <p>
-                Scores are adjusted according to each player's average to level the playing field. Players with lower averages receive bonus pins, creating a more balanced competition.
+                Scores are adjusted according to each player&apos;s average to level the playing field. Players with lower averages receive bonus pins, creating a more balanced competition.
               </p>
             </div>
           </section>
