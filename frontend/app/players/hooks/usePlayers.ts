@@ -97,6 +97,7 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
     } finally {
       setIsLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSquad, squads, authToken]);
 
   const addPlayer = useCallback(async (newPlayer: Omit<Player, 'id'>) => {

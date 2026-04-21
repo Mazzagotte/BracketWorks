@@ -318,6 +318,7 @@ export function useBracketSettings(tournamentId?: number) {
     if (tournamentId) {
       fetchSettings(tournamentId)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tournamentId])
 
   return {

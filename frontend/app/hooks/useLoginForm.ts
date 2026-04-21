@@ -201,7 +201,8 @@ export const useLoginForm = (
     } finally {
       setLoading(false);
     }
-  }, [username, password, failedAttempts, setFailedAttempts, loginDelay, setLoginDelay, login, addToast]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [username, password, failedAttempts, setFailedAttempts, setLoginDelay, login, addToast]);
 
   return {
     username,

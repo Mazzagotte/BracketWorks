@@ -73,6 +73,9 @@ export function DevAuthStatus() {
     return () => clearInterval(interval);
   }, []);
 
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   // Only show in development
   if (process.env.NODE_ENV === 'production') {
     return null;
@@ -86,9 +89,6 @@ export function DevAuthStatus() {
       default: return '#6b7280';
     }
   };
-
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
 
   const getStatusText = (status: string) => {
     switch (status) {

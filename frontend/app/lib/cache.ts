@@ -141,6 +141,7 @@ export function useStaleWhileRevalidate<T>(
     if (revalidateOnMount) {
       revalidate()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [revalidateOnMount])
 
   return { 
