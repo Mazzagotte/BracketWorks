@@ -83,6 +83,41 @@ def create_bowler(bowler: schemas.BowlerCreate, db: Session = Depends(get_db), c
     return obj
 
 
+class BulkBowlerUpdate(BaseModel):
+    id: int
+    name: str | None = None
+    average: int | None = None
+    handicap_entries: int | None = None
+    scratch_entries: int | None = None
+    lane: str | None = None
+    division: str | None = None
+    usbc: str | None = None
+    amount_paid: float | None = None
+
+
+# Bulk PATCH must be registered before /{bowler_id} to avoid route shadowing
+@router.patch("/bulk-update")
+def bulk_update_bowlers(
+    updates: List[BulkBowlerUpdate],
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if not updates:
+        return {"updated": 0}
+
+    for item in updates:
+        data = {k: v for k, v in item.model_dump(exclude_unset=True).items() if k != "id" and v is not None}
+        if data:
+            db.execute(
+                sa_update(models.Bowler)
+                .where(models.Bowler.id == item.id, models.Bowler.user_id == current_user.id)
+                .values(**data)
+            )
+
+    db.commit()
+    return {"updated": len(updates)}
+
+
 # PATCH endpoint to update bowler fields — single UPDATE statement, no extra SELECT
 @router.patch("/{bowler_id}")
 def update_bowler(
@@ -106,41 +141,6 @@ def update_bowler(
         raise HTTPException(status_code=404, detail="Bowler not found or access denied")
 
     return {"id": bowler_id}
-
-
-class BulkBowlerUpdate(BaseModel):
-    id: int
-    name: str | None = None
-    average: int | None = None
-    handicap_entries: int | None = None
-    scratch_entries: int | None = None
-    lane: str | None = None
-    division: str | None = None
-    usbc: str | None = None
-    amount_paid: float | None = None
-
-
-# Bulk PATCH — update many bowlers in a single transaction
-@router.patch("/bulk-update")
-def bulk_update_bowlers(
-    updates: List[BulkBowlerUpdate],
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
-):
-    if not updates:
-        return {"updated": 0}
-
-    for item in updates:
-        data = {k: v for k, v in item.model_dump(exclude_unset=True).items() if k != "id" and v is not None}
-        if data:
-            db.execute(
-                sa_update(models.Bowler)
-                .where(models.Bowler.id == item.id, models.Bowler.user_id == current_user.id)
-                .values(**data)
-            )
-
-    db.commit()
-    return {"updated": len(updates)}
 
 @router.delete("/{bowler_id}")
 def delete_bowler(bowler_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):

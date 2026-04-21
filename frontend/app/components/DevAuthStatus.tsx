@@ -87,6 +87,9 @@ export function DevAuthStatus() {
     }
   };
 
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   const getStatusText = (status: string) => {
     switch (status) {
       case 'online': return 'API Online';
@@ -124,20 +127,20 @@ export function DevAuthStatus() {
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {/* API Status Dot */}
-          <div style={{
+          <div suppressHydrationWarning style={{
             width: '8px',
             height: '8px',
             borderRadius: '50%',
-            backgroundColor: getStatusColor(apiStatus.status),
+            backgroundColor: mounted ? getStatusColor(apiStatus.status) : '#f59e0b',
             animation: apiStatus.status === 'checking' ? 'pulse 2s infinite' : 'none'
           }} />
           
           {/* Auth Status Dot */}
-          <div style={{
+          <div suppressHydrationWarning style={{
             width: '8px',
             height: '8px',
             borderRadius: '50%',
-            backgroundColor: auth.isAuthenticated ? '#10b981' : '#ef4444'
+            backgroundColor: mounted ? (auth.isAuthenticated ? '#10b981' : '#ef4444') : '#f59e0b'
           }} />
           
           <span style={{ fontWeight: '500' }}>
