@@ -117,7 +117,7 @@ def bulk_update_bowlers(
     if not rows_by_fields:
         return {"updated": 0}
 
-    total_updated = 0
+    total_submitted = 0
     for field_set, param_list in rows_by_fields.items():
         fields = list(field_set)
         stmt = (
@@ -127,12 +127,13 @@ def bulk_update_bowlers(
                 models.Bowler.user_id == current_user.id,
             )
             .values({f: bindparam(f) for f in fields})
+            .execution_options(synchronize_session=False)
         )
-        result = db.execute(stmt, param_list)
-        total_updated += result.rowcount
+        db.execute(stmt, param_list)
+        total_submitted += len(param_list)
 
     db.commit()
-    return {"updated": total_updated}
+    return {"updated": total_submitted}
 
 
 # PATCH endpoint to update bowler fields — single UPDATE statement, no extra SELECT
