@@ -34,6 +34,8 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
   const patchTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
   // Latest pending patch payload per player — so the debounced call always sends the freshest values
   const pendingPatches = useRef<Record<number, Record<string, any>>>({});
+  // Single shared timer for flushing all pending patches as one bulk request
+  const bulkFlushTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const loadPlayers = useCallback(async () => {
     if (!authToken) {
@@ -190,31 +192,43 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
     const statusKey = `${id}-${firstField}`;
     setSavingStatus(prev => ({ ...prev, [statusKey]: 'saving' }));
 
-    // Clear any existing debounce timer for this player
-    if (patchTimers.current[id]) clearTimeout(patchTimers.current[id]);
+    // Single shared flush: restart the shared timer on every change.
+    // When it fires, all accumulated patches across ALL players are sent
+    // as one bulk-update request instead of N individual PATCHes.
+    if (bulkFlushTimer.current) clearTimeout(bulkFlushTimer.current);
+    bulkFlushTimer.current = setTimeout(async () => {
+      const snapshot = { ...pendingPatches.current };
+      pendingPatches.current = {};
+      bulkFlushTimer.current = null;
 
-    // Debounce: send the PATCH 400ms after the last change for this player
-    patchTimers.current[id] = setTimeout(async () => {
-      const payload = pendingPatches.current[id];
-      if (!payload || Object.keys(payload).length === 0) return;
-      delete pendingPatches.current[id];
+      const payload = Object.entries(snapshot)
+        .filter(([, data]) => Object.keys(data).length > 0)
+        .map(([playerId, data]) => ({ id: Number(playerId), ...data }));
+
+      if (payload.length === 0) return;
 
       try {
-        await apiClient.patch(`/api/v1/bowlers/${id}`, payload);
-        setSavingStatus(prev => ({ ...prev, [statusKey]: 'success' }));
-        setTimeout(() => setSavingStatus(prev => ({ ...prev, [statusKey]: 'idle' })), 2000);
+        await apiClient.bulkPatch('/api/v1/bowlers/bulk-update', payload);
+        payload.forEach(row => {
+          const key = `${row.id}-${Object.keys(snapshot[row.id] ?? {})[0] ?? 'field'}`;
+          setSavingStatus(prev => ({ ...prev, [key]: 'success' }));
+          setTimeout(() => setSavingStatus(prev => ({ ...prev, [key]: 'idle' })), 2000);
+        });
       } catch (err: unknown) {
-        logger.error('Failed to update player', { error: err, playerId: id });
-        setSavingStatus(prev => ({ ...prev, [statusKey]: 'error' }));
-        loadPlayers(); // revert optimistic update
-        alert(`Failed to update player: ${err instanceof Error ? err.message : 'Unknown error'}`);
+        logger.error('Failed to bulk update players', { error: err });
+        payload.forEach(row => {
+          setSavingStatus(prev => ({ ...prev, [`${row.id}-${firstField}`]: 'error' }));
+        });
+        loadPlayers(); // revert optimistic updates
+        alert(`Failed to save changes: ${err instanceof Error ? err.message : 'Unknown error'}`);
       }
     }, 400);
   }, [authToken, entryFee, loadPlayers]);
 
   // Cancel all pending debounced patches (e.g. after a bulk write)
   const cancelPendingPatches = useCallback(() => {
-    Object.values(patchTimers.current).forEach(clearTimeout);
+    if (bulkFlushTimer.current) clearTimeout(bulkFlushTimer.current);
+    bulkFlushTimer.current = null;
     patchTimers.current = {};
     pendingPatches.current = {};
   }, []);
@@ -240,6 +254,7 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
   // Clear any pending debounce timers when the hook unmounts
   useEffect(() => {
     return () => {
+      if (bulkFlushTimer.current) clearTimeout(bulkFlushTimer.current);
       Object.values(patchTimers.current).forEach(clearTimeout);
     };
   }, []);
