@@ -722,6 +722,11 @@ export default function TournamentDashboard() {
         if (res.ok) {
           savedTournament = await res.json();
           setTournament(savedTournament);
+          // Auto-load the newly created tournament
+          localStorage.setItem('lastTournamentId', String(savedTournament.id));
+          localStorage.setItem('activeTournamentName', savedTournament.name);
+          window.dispatchEvent(new Event('tournament-changed'));
+          loadBracketSettings(savedTournament.id);
           addToast({
             type: 'success',
             message: `Tournament "${tournamentFormData.name}" created successfully!`,
