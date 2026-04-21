@@ -55,7 +55,7 @@ class UserOut(BaseModel):
 class BowlerBase(BaseModel):
     tournament_id: int
     squad_id: int | None = None
-    user_id: int
+    user_id: int | None = None
     name: str
     average: int | None = None
     handicap_entries: int | None = None
