@@ -590,6 +590,7 @@ export default function TournamentDashboard() {
     if (loadModalOpen) {
       fetchAllTournaments();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadModalOpen, isAdmin]);
 
   // Mobile detection (phone only - tablets get desktop experience)

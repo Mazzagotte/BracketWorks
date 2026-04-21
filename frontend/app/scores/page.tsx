@@ -453,6 +453,7 @@ export default function ScoresPage() {
       // No tournament loaded, stop loading immediately
       setIsLoading(false)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Auth guards (after all hooks)

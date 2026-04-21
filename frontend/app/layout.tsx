@@ -283,6 +283,7 @@ function AuthAwareLayout({ children }: { children: React.ReactNode }) {
       hasUser: !!auth.user,
       authKey: authKey + 1
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auth.isAuthenticated, auth.user]);
   
   return <ClientLayout key={authKey}>{children}</ClientLayout>;

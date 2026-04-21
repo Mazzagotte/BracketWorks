@@ -165,6 +165,7 @@ export function useTournaments() {
 
   useEffect(() => {
     fetchTournaments()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return {
@@ -235,6 +236,7 @@ export function useSquads(tournamentId?: number) {
     if (tournamentId) {
       fetchSquads(tournamentId)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tournamentId])
 
   return {
@@ -312,6 +314,7 @@ export function usePlayers(tournamentId?: number, squadId?: number) {
     if (tournamentId) {
       fetchPlayers(tournamentId, squadId)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tournamentId, squadId])
 
   return {

@@ -40,6 +40,7 @@ export default function PlayersPage() {
   // Load tournaments on mount
   useEffect(() => {
     fetchTournaments()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Auto-select tournament from localStorage
@@ -82,6 +83,7 @@ export default function PlayersPage() {
     } finally {
       setInitialLoadComplete(true);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   // Load entry fee when tournament or auth changes
@@ -302,6 +304,7 @@ export default function PlayersPage() {
     if (isInitialized && token && initialLoadComplete) {
       fetchSquadData();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isInitialized, token, initialLoadComplete]);
 
   // Wait for auth initialization

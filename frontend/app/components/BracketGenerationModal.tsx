@@ -217,6 +217,7 @@ export default function BracketGenerationModal({
           setCurrentPhase('error')
         })
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, bracketGenerationPromise, currentPhase])
 
   /**
