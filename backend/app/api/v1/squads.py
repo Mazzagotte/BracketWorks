@@ -1,5 +1,7 @@
 import logging
+from typing import Dict, List, Optional
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from ...core import models, schemas
 from ...api import deps
@@ -143,8 +145,12 @@ def delete_squad(squad_id: int, db: Session = Depends(deps.get_db), user = Depen
     }
 
 
+class SquadSyncRequest(BaseModel):
+    squad_times: Optional[Dict[str, List[str]]] = None
+
+
 @router.post("/sync/{tournament_id}")
-def sync_tournament_squads(tournament_id: int, db: Session = Depends(deps.get_db), user = Depends(deps.get_current_user)):
+def sync_tournament_squads(tournament_id: int, body: SquadSyncRequest = SquadSyncRequest(), db: Session = Depends(deps.get_db), user = Depends(deps.get_current_user)):
     """Sync squad records to match the tournament's squad_times data exactly"""
     import json
     from typing import Set, Tuple
@@ -153,35 +159,36 @@ def sync_tournament_squads(tournament_id: int, db: Session = Depends(deps.get_db
     if tournament_id <= 0:
         raise HTTPException(status_code=400, detail="Invalid tournament ID")
     
-    # Get tournament and validate it exists
-    tournament = db.query(models.Tournament).filter(models.Tournament.id == tournament_id).first()
-    if not tournament:
-        raise HTTPException(status_code=404, detail="Tournament not found")
-    
-    # Parse tournament squad_times JSON
-    if not tournament.squad_times:
-        expected_squads = set()
+    # Use squad_times from request body if provided, otherwise fall back to DB
+    if body.squad_times is not None:
+        squad_times_data = body.squad_times
     else:
-        try:
-            squad_times_data = json.loads(tournament.squad_times)
-            expected_squads: Set[Tuple[str, str]] = set()
-            
-            # Validate the structure and content
-            if not isinstance(squad_times_data, dict):
-                raise ValueError("squad_times must be a dictionary")
-                
-            for date, times in squad_times_data.items():
-                if not isinstance(date, str):
-                    raise ValueError(f"Date key must be string, got {type(date)}")
-                if not isinstance(times, list):
-                    raise ValueError(f"Times for date {date} must be a list, got {type(times)}")
-                    
-                for time in times:
-                    if isinstance(time, str) and time.strip():  # Only include non-empty string times
-                        expected_squads.add((date, time.strip()))
-                        
-        except (json.JSONDecodeError, ValueError) as e:
-            raise HTTPException(status_code=400, detail=f"Invalid squad_times format: {str(e)}")
+        tournament = db.query(models.Tournament).filter(models.Tournament.id == tournament_id).first()
+        if not tournament:
+            raise HTTPException(status_code=404, detail="Tournament not found")
+        if not tournament.squad_times:
+            squad_times_data = {}
+        else:
+            try:
+                squad_times_data = json.loads(tournament.squad_times)
+            except json.JSONDecodeError as e:
+                raise HTTPException(status_code=400, detail=f"Invalid squad_times format in DB: {str(e)}")
+    
+    # Build expected set from squad_times_data
+    try:
+        expected_squads: Set[Tuple[str, str]] = set()
+        if not isinstance(squad_times_data, dict):
+            raise ValueError("squad_times must be a dictionary")
+        for date, times in squad_times_data.items():
+            if not isinstance(date, str):
+                raise ValueError(f"Date key must be string, got {type(date)}")
+            if not isinstance(times, list):
+                raise ValueError(f"Times for date {date} must be a list, got {type(times)}")
+            for time in times:
+                if isinstance(time, str) and time.strip():
+                    expected_squads.add((date, time.strip()))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid squad_times format: {str(e)}")
     
     # Get current squad records from database
     try:

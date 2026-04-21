@@ -768,7 +768,8 @@ export default function TournamentDashboard() {
             headers: {
               'Content-Type': 'application/json',
               Authorization: `Bearer ${token}`
-            }
+            },
+            body: JSON.stringify({ squad_times: tournamentFormData.squad_times })
           });
           
           if (syncRes.ok) {
