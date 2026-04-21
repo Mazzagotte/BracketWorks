@@ -45,6 +45,7 @@ export default function Sidebar({ firstName, isMobile = false, isOpen = false, o
             width={160}
             height={160}
             className={styles.logoImg}
+            priority
           />
         </Link>
       </div>

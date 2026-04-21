@@ -246,7 +246,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         
         {/* Preload critical resources */}
         <link rel="preload" href="/logo.svg" as="image" type="image/png" />
-        <link rel="preload" href="/styles/globals.css" as="style" />
         
         {/* Favicon configuration */}
         <link rel="icon" href="/favicon.ico" sizes="any" />

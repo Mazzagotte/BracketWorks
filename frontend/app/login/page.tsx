@@ -197,6 +197,7 @@ export default function LoginPage() {
           width={220}
           height={220}
           style={{ height: 'auto', display: 'block', marginBottom: '8px', margin: '0 auto 8px' }}
+          priority
         />
 
         {/* Form */}
