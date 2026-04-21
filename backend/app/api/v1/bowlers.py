@@ -154,7 +154,20 @@ def delete_bowler(bowler_id: int, db: Session = Depends(get_db), current_user: m
     ).first()
     if not bowler:
         raise HTTPException(status_code=404, detail="Bowler not found or access denied")
-    
+
+    bowler_id = bowler.id
+    # Delete FK-dependent records first
+    db.query(models.TournamentPayout).filter(models.TournamentPayout.bowler_id == bowler_id).delete()
+    db.query(models.TournamentWinner).filter(models.TournamentWinner.bowler_id == bowler_id).delete()
+    db.query(models.Score).filter(models.Score.bowler_id == bowler_id).delete()
+    db.query(models.MatchHistory).filter(
+        (models.MatchHistory.player_a_id == bowler_id) | (models.MatchHistory.player_b_id == bowler_id)
+    ).delete(synchronize_session=False)
+    # Null out bracket match references (match history is already gone; bracket matches just reference the bowler)
+    from sqlalchemy import update as _upd
+    db.execute(_upd(models.BracketMatch).where(models.BracketMatch.player_a_id == bowler_id).values(player_a_id=None))
+    db.execute(_upd(models.BracketMatch).where(models.BracketMatch.player_b_id == bowler_id).values(player_b_id=None))
+
     db.delete(bowler)
     db.commit()
     return {"message": "Bowler deleted successfully"}
