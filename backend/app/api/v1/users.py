@@ -33,7 +33,7 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     
     if not user:
         # Use timing-safe comparison to prevent username enumeration
-        pwd_context.verify("dummy_password", "$2b$10$dummy.hash.to.prevent.timing.attacks")
+        pwd_context.verify("dummy_password", "$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
     
     if not pwd_context.verify(form_data.password, user.password):
@@ -61,7 +61,7 @@ def login_json(login_data: schemas.LoginRequest, db: Session = Depends(get_db)):
     
     if not user:
         # Use timing-safe comparison to prevent username enumeration
-        pwd_context.verify("dummy_password", "$2b$10$dummy.hash.to.prevent.timing.attacks")
+        pwd_context.verify("dummy_password", "$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
     
     if not pwd_context.verify(login_data.password, user.password):

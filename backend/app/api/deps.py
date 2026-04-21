@@ -20,7 +20,8 @@ engine = create_engine(
     pool_recycle=3600,  # Increased recycle time
     connect_args={
         "connect_timeout": 10,
-        "application_name": "bracketworks_api"
+        "application_name": "bracketworks_api",
+        **({"sslmode": "require"} if "render.com" in settings.DATABASE_URL else {})
     } if "postgresql" in settings.DATABASE_URL else {}
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

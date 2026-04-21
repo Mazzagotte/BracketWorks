@@ -236,7 +236,7 @@ export function useBracketSettings(tournamentId?: number) {
     setError(null)
     
     try {
-      const data = await apiClient.get<BracketSettings>(`/api/v1/bracket_settings/?tournament_id=${id}`)
+      const data = await apiClient.get<BracketSettings>(`/api/v1/bracket-settings/${id}`)
       setSettings(data)
       return data
     } catch (err) {
@@ -256,7 +256,7 @@ export function useBracketSettings(tournamentId?: number) {
     setError(null)
     
     try {
-      const data = await apiClient.put<BracketSettings>(`/api/v1/bracket_settings/${settings?.id}`, updates)
+      const data = await apiClient.put<BracketSettings>(`/api/v1/bracket-settings/${settings?.id}`, updates)
       setSettings(data)
       
       addToast({
@@ -287,7 +287,7 @@ export function useBracketSettings(tournamentId?: number) {
     setError(null)
     
     try {
-      const data = await apiClient.post<BracketSettings>('/api/v1/bracket_settings/', {
+      const data = await apiClient.post<BracketSettings>('/api/v1/bracket-settings/', {
         ...settingsData,
         tournament_id: tournamentId
       })
