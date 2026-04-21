@@ -13,11 +13,11 @@ logger = logging.getLogger(__name__)
 engine = create_engine(
     settings.DATABASE_URL,
     echo=False,  # Disable SQL logging for better performance
-    pool_size=settings.DATABASE_POOL_SIZE,
-    max_overflow=settings.DATABASE_MAX_OVERFLOW,
+    pool_size=5,
+    max_overflow=10,
     pool_timeout=30,
-    pool_pre_ping=True,
-    pool_recycle=3600,  # Increased recycle time
+    pool_pre_ping=False,   # pool_recycle handles stale connections; pre_ping adds a round-trip to every request
+    pool_recycle=1800,     # Recycle connections after 30 min to prevent idle timeout disconnects
     connect_args={
         "connect_timeout": 10,
         "application_name": "bracketworks_api",

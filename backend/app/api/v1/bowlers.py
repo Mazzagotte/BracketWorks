@@ -2,8 +2,9 @@
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import update as sa_update
+from sqlalchemy import update as sa_update, bindparam
 from typing import List
+from collections import defaultdict
 from pydantic import BaseModel
 from ..deps import get_db, get_current_user
 from ...core import models, schemas
@@ -105,17 +106,33 @@ def bulk_update_bowlers(
     if not updates:
         return {"updated": 0}
 
+    # Group rows by which fields are being set so we can issue one
+    # executemany per unique field-set (one DB round-trip per group).
+    rows_by_fields: dict = defaultdict(list)
     for item in updates:
         data = {k: v for k, v in item.model_dump(exclude_unset=True).items() if k != "id" and v is not None}
         if data:
-            db.execute(
-                sa_update(models.Bowler)
-                .where(models.Bowler.id == item.id, models.Bowler.user_id == current_user.id)
-                .values(**data)
+            rows_by_fields[frozenset(data.keys())].append({"_id": item.id, **data})
+
+    if not rows_by_fields:
+        return {"updated": 0}
+
+    total_updated = 0
+    for field_set, param_list in rows_by_fields.items():
+        fields = list(field_set)
+        stmt = (
+            sa_update(models.Bowler)
+            .where(
+                models.Bowler.id == bindparam("_id"),
+                models.Bowler.user_id == current_user.id,
             )
+            .values({f: bindparam(f) for f in fields})
+        )
+        result = db.execute(stmt, param_list)
+        total_updated += result.rowcount
 
     db.commit()
-    return {"updated": len(updates)}
+    return {"updated": total_updated}
 
 
 # PATCH endpoint to update bowler fields — single UPDATE statement, no extra SELECT
