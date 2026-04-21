@@ -17,11 +17,11 @@ def select_squad(data: schemas.SelectedSquadCreate, db: Session = Depends(deps.g
     db.refresh(obj)
     return obj
 
-@router.get("/selected/", response_model=schemas.SelectedSquadOut)
+@router.get("/selected/")
 def get_selected_squad(user_id: int, db: Session = Depends(deps.get_db), user = Depends(deps.get_current_user)):
     obj = db.query(models.SelectedSquad).filter(models.SelectedSquad.user_id == user_id).first()
     if not obj:
-        raise HTTPException(status_code=404, detail="No selected squad for user")
+        return None
     return obj
 
 @router.delete("/select/")
