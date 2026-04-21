@@ -116,7 +116,8 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
         division: newPlayer.division,
         amount_paid: newPlayer.amountPaid,
         tournament_id: parseInt(getItem('tournament_id') || getItem('lastTournamentId') || '1'),
-        squad_id: selectedSquad ? selectedSquad.id : null
+        squad_id: selectedSquad ? selectedSquad.id : null,
+        user_id: parseInt(getItem('user_id') || '0')
       };
       
       const createdPlayer = await apiClient.post('/api/v1/bowlers', playerData) as BowlerApiResponse;
@@ -236,8 +237,6 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
   const deletePlayer = useCallback(async (playerId: number) => {
     if (!authToken) return;
     
-    if (!confirm('Are you sure you want to delete this player?')) return;
-
     try {
       await apiClient.delete(`/api/v1/bowlers/${playerId}`);
       setPlayers(prev => prev.filter(pItem => pItem.id !== playerId));

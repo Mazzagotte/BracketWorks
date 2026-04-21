@@ -127,6 +127,12 @@ export default function PlayersPage() {
     });
   }, [isAuthenticated, isInitialized, token, user]);
 
+  const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null)
+
+  const handleDeletePlayer = useCallback((id: number) => {
+    setDeleteConfirmId(id)
+  }, [])
+
   const {
     players,
     isLoading,
@@ -410,7 +416,7 @@ export default function PlayersPage() {
               <PlayersTable
                 players={players}
                 onUpdatePlayer={handleUpdatePlayer}
-                onDeletePlayer={deletePlayer}
+                onDeletePlayer={handleDeletePlayer}
                 savingStatus={savingStatus}
                 entryFee={entryFee}
                 selectedSquad={selectedSquad}
@@ -419,6 +425,32 @@ export default function PlayersPage() {
           </>
         )}
       </div>
+
+      {deleteConfirmId !== null && (
+        <div className={styles.confirmOverlay}>
+          <div className={styles.confirmDialog}>
+            <h2 className={styles.confirmTitle}>Delete Player</h2>
+            <p className={styles.confirmMessage}>Are you sure you want to delete this player? This cannot be undone.</p>
+            <div className={styles.confirmButtons}>
+              <button
+                className={styles.confirmCancel}
+                onClick={() => setDeleteConfirmId(null)}
+              >
+                Cancel
+              </button>
+              <button
+                className={styles.confirmDelete}
+                onClick={() => {
+                  deletePlayer(deleteConfirmId!)
+                  setDeleteConfirmId(null)
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </ErrorBoundary>
   )
 }

@@ -1668,6 +1668,80 @@
   color: #F07820;
 }
 
+/* Delete confirmation dialog */
+.confirmOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.confirmDialog {
+  background: #1a1a1a;
+  border: 1px solid rgba(240, 120, 32, 0.3);
+  border-radius: 16px;
+  padding: 2rem 2.5rem;
+  min-width: 320px;
+  max-width: 90vw;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.confirmTitle {
+  color: #fff;
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0 0 0.75rem;
+}
+
+.confirmMessage {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.95rem;
+  margin: 0 0 1.75rem;
+  line-height: 1.5;
+}
+
+.confirmButtons {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.confirmCancel {
+  padding: 0.6rem 1.6rem;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.confirmCancel:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.confirmDelete {
+  padding: 0.6rem 1.6rem;
+  border-radius: 24px;
+  border: none;
+  background: #c0392b;
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.confirmDelete:hover {
+  background: #e74c3c;
+}
+
 /* Players table wrapper */
 .tableCard {
   background-color: #FAF4E8;
