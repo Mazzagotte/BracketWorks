@@ -471,7 +471,7 @@ export default function TournamentDashboard() {
     if (!token) return;
 
     try {
-      const settings = await apiClient.get<BracketSettings>(`/api/v1/bracket-settings/${tournamentId}`);
+      const settings = await apiClient.get<BracketSettings>(`/api/v1/bracket-settings/${tournamentId}`, false);
       if (settings) {
         setBracketSettings({
           ...settings,

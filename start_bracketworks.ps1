@@ -15,7 +15,7 @@ Write-Host "  Frontend : http://localhost:$Port" -ForegroundColor Green
 Write-Host "  Backend  : $BackendUrl" -ForegroundColor Yellow
 Write-Host ""
 
-# Start frontend in a new window
+# Start frontend in a new windowng f
 $cmd = "Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned; " +
        "cd '$FrontendPath'; " +
        "`$env:NEXT_PUBLIC_BACKEND_URL='$BackendUrl'; " +
