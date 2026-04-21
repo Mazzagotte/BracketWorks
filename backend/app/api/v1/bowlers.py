@@ -2,9 +2,8 @@
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import update as sa_update, text
+from sqlalchemy import update as sa_update
 from typing import List
-from collections import defaultdict
 from pydantic import BaseModel
 from ..deps import get_db, get_current_user
 from ...core import models, schemas
@@ -106,42 +105,21 @@ def bulk_update_bowlers(
     if not updates:
         return {"updated": 0}
 
-    # Group rows by which fields are being set — one UPDATE...FROM VALUES per group
-    groups: dict = defaultdict(list)
+    count = 0
     for item in updates:
         data = {k: v for k, v in item.model_dump(exclude_unset=True).items() if k != "id" and v is not None}
-        if data:
-            groups[frozenset(data.keys())].append({"id": item.id, **data})
-
-    if not groups:
-        return {"updated": 0}
-
-    total = 0
-    for field_set, rows in groups.items():
-        fields = sorted(field_set)
-        params: dict = {"user_id": current_user.id}
-        value_tuples = []
-        for i, row in enumerate(rows):
-            parts = [f":id_{i}"]
-            params[f"id_{i}"] = row["id"]
-            for f in fields:
-                params[f"{f}_{i}"] = row[f]
-                parts.append(f":{f}_{i}")
-            value_tuples.append(f"({', '.join(parts)})")
-
-        set_clause = ", ".join(f"{f} = v.{f}" for f in fields)
-        col_names = ", ".join(["id"] + fields)
-        sql = text(f"""
-            UPDATE bowlers
-            SET {set_clause}
-            FROM (VALUES {', '.join(value_tuples)}) AS v({col_names})
-            WHERE bowlers.id = v.id::int AND bowlers.user_id = :user_id
-        """)
-        result = db.execute(sql, params)
-        total += result.rowcount
+        if not data:
+            continue
+        db.execute(
+            sa_update(models.Bowler)
+            .where(models.Bowler.id == item.id, models.Bowler.user_id == current_user.id)
+            .values(**data)
+            .execution_options(synchronize_session=False)
+        )
+        count += 1
 
     db.commit()
-    return {"updated": total}
+    return {"updated": count}
 
 
 # PATCH endpoint to update bowler fields — single UPDATE statement, no extra SELECT
