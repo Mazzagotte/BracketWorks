@@ -4,14 +4,16 @@ import re
 
 class BracketValidation(BaseModel):
     """Enhanced validation for bracket operations"""
+    ALLOWED_BRACKET_SIZES = {8}
     
     @staticmethod
     def validate_bracket_size(size: int) -> int:
-        """Ensure bracket size is a power of 2 and within reasonable limits"""
-        if not isinstance(size, int) or size < 4 or size > 64:
-            raise ValueError("Bracket size must be between 4 and 64")
-        if size & (size - 1) != 0:
-            raise ValueError("Bracket size must be a power of 2")
+        """Ensure bracket size is one of the supported values."""
+        if not isinstance(size, int):
+            raise ValueError("Bracket size must be an integer")
+        if size not in BracketValidation.ALLOWED_BRACKET_SIZES:
+            allowed = ", ".join(str(s) for s in sorted(BracketValidation.ALLOWED_BRACKET_SIZES))
+            raise ValueError(f"Bracket size must be one of: {allowed}")
         return size
     
     @staticmethod

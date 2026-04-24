@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import './styles/globals.css';
 import './styles/colors.global.css';
 import './styles/login.css';
@@ -24,40 +25,67 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
   // All hooks must be called before any conditional returns
   const auth = useAuth(); // Get auth directly
   const headerContext = useHeader();
+  const pathname = usePathname();
+  const router = useRouter();
   const [isLoginPage, setIsLoginPage] = useState(false);
   const [firstName, setFirstName] = useState<string | undefined>(undefined);
   const [isMobile, setIsMobile] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState('');
   const [mounted, setMounted] = useState(false);
+  const wasAuthenticated = useRef(false);
 
   useEffect(() => {
     setMounted(true);
-    const pathname = window.location.pathname;
-    setIsLoginPage(pathname === '/login' || pathname.startsWith('/reset-password'));
-    setCurrentPage(pathname.slice(1) || 'dashboard'); // Remove leading slash
-    
     // Force enable touch scrolling on body for all devices
     document.body.style.overflow = 'auto';
     document.body.style.touchAction = 'pan-y pan-x';
     (document.body.style as any).webkitOverflowScrolling = 'touch';
     document.documentElement.style.touchAction = 'pan-y pan-x';
     
-    // Enhanced mobile detection with better breakpoints
+    // Treat phones and tablets up to 768px as mobile — sidebar at narrower widths is too cramped
     const checkMobile = () => {
-      const width = window.innerWidth;
-      const height = window.innerHeight;
-      // Only treat phones as mobile - tablets (768px-1024px) get desktop experience
-      const isMobileWidth = width <= 480;
-      const isMobileHeight = height <= 600;
-      const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-      setIsMobile(isMobileWidth || (isMobileHeight && isTouchDevice && width <= 480));
+      setIsMobile(window.innerWidth <= 768);
     };
 
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  useEffect(() => {
+    const currentPath = pathname || '/';
+    const onLoginLikePage = currentPath === '/login' || currentPath.startsWith('/reset-password') || currentPath.startsWith('/signup');
+    setIsLoginPage(onLoginLikePage);
+    setCurrentPage(currentPath.slice(1) || 'dashboard');
+  }, [pathname]);
+
+  // Track whether the user has been authenticated this session
+  useEffect(() => {
+    if (auth.isAuthenticated) {
+      wasAuthenticated.current = true;
+    }
+  }, [auth.isAuthenticated]);
+
+  useEffect(() => {
+    if (!mounted) return;
+
+    const currentPath = pathname || '/';
+    const isPublicRoute =
+      currentPath === '/login' ||
+      currentPath.startsWith('/reset-password') ||
+      currentPath.startsWith('/signup');
+
+    if (!auth.isAuthenticated && !isPublicRoute) {
+      // If user was authenticated before, their session expired — tell them why
+      router.replace(wasAuthenticated.current ? '/login?expired=true' : '/login');
+      return;
+    }
+
+    if (auth.isAuthenticated && currentPath === '/login') {
+      router.replace('/dashboard');
+    }
+  }, [mounted, pathname, auth.isAuthenticated, router]);
 
   // Update login page detection when authenticated to handle cases where user logs in but hasn't redirected yet
   useEffect(() => {

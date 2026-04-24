@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator
 from typing import Dict, List, Optional
 
 class LoginRequest(BaseModel):
@@ -118,6 +118,15 @@ class BracketSettingsBase(BaseModel):
     handicap_base: Optional[float] = 200.0
     allow_bye: Optional[bool] = False
 
+    @field_validator('bracket_size')
+    @classmethod
+    def validate_bracket_size(cls, value: Optional[int]) -> Optional[int]:
+        if value is None:
+            return value
+        if value != 8:
+            raise ValueError('Bracket size must be 8 for three-game sets')
+        return value
+
 class BracketSettingsCreate(BracketSettingsBase):
     pass
 
@@ -130,6 +139,15 @@ class BracketSettingsUpdate(BaseModel):
     handicap_percentage: Optional[float] = None
     handicap_base: Optional[float] = None
     allow_bye: Optional[bool] = None
+
+    @field_validator('bracket_size')
+    @classmethod
+    def validate_bracket_size(cls, value: Optional[int]) -> Optional[int]:
+        if value is None:
+            return value
+        if value != 8:
+            raise ValueError('Bracket size must be 8 for three-game sets')
+        return value
 
 class BracketSettings(BracketSettingsBase):
     id: int

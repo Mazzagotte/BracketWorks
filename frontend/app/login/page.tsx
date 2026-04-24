@@ -28,6 +28,8 @@ export default function LoginPage() {
   const [mounted, setMounted] = useState(false);
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
+  const [sessionExpired, setSessionExpired] = useState(false);
+  const [loginFailed, setLoginFailed] = useState(false);
 
   // Security enhancements
   const [passwordVisibilityTimer, setPasswordVisibilityTimer] = useState<NodeJS.Timeout | null>(null);
@@ -40,7 +42,24 @@ export default function LoginPage() {
   useEffect(() => {
     setTimeout(() => setMounted(true), 100);
     logger.info('Login page loaded');
+
+    // Check if redirected here due to session expiry
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('expired') === 'true') {
+      setSessionExpired(true);
+    }
+
+    // Pre-fill last used username
+    const lastUsername = localStorage.getItem('last_username');
+    if (lastUsername) setUsername(lastUsername);
   }, []);
+
+  // Auto-focus username after mount
+  useEffect(() => {
+    if (mounted) {
+      document.getElementById('login-username')?.focus();
+    }
+  }, [mounted]);
 
   // Password visibility timeout - auto-hide after 5 seconds
   useEffect(() => {
@@ -88,6 +107,7 @@ export default function LoginPage() {
     }
 
     setError("");
+    setLoginFailed(false);
     setLoading(true);
     setShowButtonBall(true);
 
@@ -151,6 +171,7 @@ export default function LoginPage() {
         }
 
         setError(errorMessage);
+        setLoginFailed(true);
         setShowButtonBall(false);
         return;
       }
@@ -158,6 +179,8 @@ export default function LoginPage() {
       // Success
       setFailedAttempts(0);
       setLoginDelay(0);
+      setLoginFailed(false);
+      localStorage.setItem('last_username', username.trim());
 
       const displayName = data.first_name || username;
 
@@ -191,14 +214,22 @@ export default function LoginPage() {
     <div className={styles.page}>
       <div className={`${styles.card} ${loading ? styles.loading : ''}`}>
         {/* Header */}
-        <Image
-          src="/logo.svg"
-          alt="BracketWorks Logo"
-          width={220}
-          height={220}
-          style={{ height: 'auto', display: 'block', marginBottom: '8px', margin: '0 auto 8px' }}
-          priority
-        />
+        <div className={styles.logoWrap}>
+          <Image
+            src="/logo.svg"
+            alt="BracketWorks Logo"
+            width={220}
+            height={220}
+            style={{ width: '100%', height: 'auto', display: 'block' }}
+            priority
+          />
+        </div>
+
+        {sessionExpired && (
+          <div className={styles.sessionExpiredBanner}>
+            Your session expired. Please log in again.
+          </div>
+        )}
 
         {/* Form */}
         <form id="login-form" onSubmit={handleLogin} className={styles.form}>
@@ -213,7 +244,7 @@ export default function LoginPage() {
               onChange={e => setUsername(e.target.value)}
               autoComplete="username"
               required
-              className={styles.input}
+              className={`${styles.input} ${loginFailed ? styles.inputError : ''}`}
             />
           </div>
 
@@ -230,7 +261,7 @@ export default function LoginPage() {
               onKeyUp={handleKeyUp}
               autoComplete="current-password"
               required
-              className={`${styles.input} ${capsLockOn ? styles.inputCapsLock : ''}`}
+              className={`${styles.input} ${capsLockOn ? styles.inputCapsLock : ''} ${loginFailed ? styles.inputError : ''}`}
               style={mounted ? { paddingRight: '52px' } : undefined}
             />
             {mounted && (

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
@@ -214,17 +214,32 @@ export const ToastContainer: React.FC = () => {
 export const useToastHelpers = () => {
   const { addToast } = useToast();
 
-  return {
-    success: (message: string, title?: string, options?: Partial<Toast>) =>
+  const success = useCallback(
+    (message: string, title?: string, options?: Partial<Toast>) =>
       addToast({ type: 'success', message, title, ...options }),
-    
-    error: (message: string, title?: string, options?: Partial<Toast>) =>
+    [addToast]
+  );
+
+  const error = useCallback(
+    (message: string, title?: string, options?: Partial<Toast>) =>
       addToast({ type: 'error', message, title, ...options }),
-    
-    warning: (message: string, title?: string, options?: Partial<Toast>) =>
+    [addToast]
+  );
+
+  const warning = useCallback(
+    (message: string, title?: string, options?: Partial<Toast>) =>
       addToast({ type: 'warning', message, title, ...options }),
-    
-    info: (message: string, title?: string, options?: Partial<Toast>) =>
+    [addToast]
+  );
+
+  const info = useCallback(
+    (message: string, title?: string, options?: Partial<Toast>) =>
       addToast({ type: 'info', message, title, ...options }),
-  };
+    [addToast]
+  );
+
+  return useMemo(
+    () => ({ success, error, warning, info }),
+    [success, error, warning, info]
+  );
 };

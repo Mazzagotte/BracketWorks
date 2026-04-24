@@ -142,6 +142,40 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
     }
   }, [authToken, selectedSquad, getItem]);
 
+  const importPlayers = useCallback(async (newPlayers: Omit<Player, 'id'>[]) => {
+    if (!authToken || newPlayers.length === 0) {
+      return { successCount: 0, failedCount: newPlayers.length };
+    }
+
+    const payloads = newPlayers.map((newPlayer) => ({
+      name: `${newPlayer.firstName} ${newPlayer.lastName}`.trim(),
+      usbc: newPlayer.usbc || '',
+      average: newPlayer.average,
+      handicap_entries: newPlayer.handicap,
+      scratch_entries: newPlayer.scratch,
+      lane: newPlayer.lane,
+      division: newPlayer.division,
+      amount_paid: newPlayer.amountPaid,
+      tournament_id: parseInt(getItem('tournament_id') || getItem('lastTournamentId') || '1'),
+      squad_id: selectedSquad ? selectedSquad.id : null,
+      user_id: parseInt(getItem('user_id') || '0')
+    }));
+
+    const results = await Promise.allSettled(payloads.map((playerData) => apiClient.post('/api/v1/bowlers', playerData)));
+    const successCount = results.filter((result) => result.status === 'fulfilled').length;
+    const failedCount = results.length - successCount;
+
+    if (successCount > 0) {
+      await loadPlayers();
+    }
+
+    if (failedCount > 0) {
+      logger.warn('Some imported players failed to save', { successCount, failedCount });
+    }
+
+    return { successCount, failedCount };
+  }, [authToken, getItem, loadPlayers, selectedSquad]);
+
   const updatePlayer = useCallback(async (id: number, updates: Partial<Player>) => {
     // Update local state immediately for better UX
     setPlayers(prevPlayers =>
@@ -264,6 +298,7 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
     savingStatus,
     addPlayer,
     updatePlayer,
+    importPlayers,
     cancelPendingPatches,
     deletePlayer,
     loadPlayers

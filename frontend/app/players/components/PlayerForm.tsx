@@ -1,20 +1,32 @@
-import React, { memo, useState } from 'react';
+import React, { memo, useState, useEffect } from 'react';
 
 import { PlayerFormProps } from '../types';
 import styles from '../entries.module.css';
 
+const EMPTY_FORM = {
+  firstName: '',
+  lastName: '',
+  usbc: '',
+  average: 150,
+  handicap: 0,
+  scratch: 0,
+  lane: 'A1',
+  division: 'Open',
+  amountPaid: 0
+};
+
 const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee }: PlayerFormProps) => {
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    usbc: '',
-    average: 150,
-    handicap: 0,
-    scratch: 0,
-    lane: 'A1',
-    division: 'Open',
-    amountPaid: 0
-  });
+  const [formData, setFormData] = useState({ ...EMPTY_FORM });
+
+  const isDirty = formData.firstName.trim() !== '' || formData.lastName.trim() !== '';
+
+  // Warn if browser is closed/refreshed with unsaved data
+  useEffect(() => {
+    if (!isDirty) return;
+    const handler = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ''; };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [isDirty]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,18 +45,7 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee }: PlayerFor
       totalCost
     });
 
-    // Reset form
-    setFormData({
-      firstName: '',
-      lastName: '',
-      usbc: '',
-      average: 150,
-      handicap: 0,
-      scratch: 0,
-      lane: 'A1',
-      division: 'Open',
-      amountPaid: 0
-    });
+    setFormData({ ...EMPTY_FORM });
   };
 
   const handleInputChange = (field: string, value: string | number) => {
@@ -54,6 +55,12 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee }: PlayerFor
   return (
     <div className={styles.formCard}>
       <h3 className={styles.formTitle}>Add New Player</h3>
+
+      {isDirty && (
+        <div className={styles.unsavedBanner}>
+          Unsaved changes — submit the form or your data will be lost if you navigate away.
+        </div>
+      )}
 
       <form onSubmit={handleSubmit}>
         <div className={styles.formGrid}>

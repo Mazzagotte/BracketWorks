@@ -8,6 +8,34 @@ import logging
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+
+def validate_prize_distribution(
+    bracket_size: Optional[int],
+    cost_per_bracket: Optional[float],
+    first_place: Optional[float],
+    second_place: Optional[float],
+    house_amount: Optional[float]
+) -> None:
+    """Validate that 1st + 2nd + house equals bracket_size * cost_per_bracket."""
+    size = float(bracket_size or 0)
+    cost = float(cost_per_bracket or 0)
+    first = float(first_place or 0)
+    second = float(second_place or 0)
+    house = float(house_amount or 0)
+
+    expected_total = size * cost
+    actual_total = first + second + house
+
+    if abs(actual_total - expected_total) > 0.009:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Invalid prize distribution: first_place + second_place + house_amount "
+                f"must equal bracket_size * cost_per_bracket ({expected_total:.2f}). "
+                f"Current total: {actual_total:.2f}."
+            )
+        )
+
 def recalculate_player_handicaps(
     db: Session, 
     tournament_id: int, 
@@ -60,6 +88,15 @@ def create_bracket_settings(
         for field, value in bracket_settings.model_dump().items():
             if value is not None:
                 setattr(existing_settings, field, value)
+
+        validate_prize_distribution(
+            existing_settings.bracket_size,
+            existing_settings.cost_per_bracket,
+            existing_settings.first_place,
+            existing_settings.second_place,
+            existing_settings.house_amount
+        )
+
         db.commit()
         db.refresh(existing_settings)
         
@@ -80,6 +117,15 @@ def create_bracket_settings(
     else:
         # Create new settings
         db_settings = models.BracketSettings(**bracket_settings.model_dump())
+
+        validate_prize_distribution(
+            db_settings.bracket_size,
+            db_settings.cost_per_bracket,
+            db_settings.first_place,
+            db_settings.second_place,
+            db_settings.house_amount
+        )
+
         db.add(db_settings)
         db.commit()
         db.refresh(db_settings)
@@ -134,6 +180,14 @@ def update_bracket_settings(
     
     for field, value in update_data.items():
         setattr(db_settings, field, value)
+
+    validate_prize_distribution(
+        db_settings.bracket_size,
+        db_settings.cost_per_bracket,
+        db_settings.first_place,
+        db_settings.second_place,
+        db_settings.house_amount
+    )
     
     db.commit()
     db.refresh(db_settings)

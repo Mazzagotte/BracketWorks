@@ -52,7 +52,7 @@
   gap: 8px;
   margin-bottom: 16px;
   justify-content: center;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   align-items: center;
   width: 100%;
   background: var(--color-gray-50);
@@ -60,6 +60,19 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   padding: 12px 16px;
   border: 1px solid var(--color-gray-200);
+}
+
+@media (max-width: 600px) {
+  .formContainer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .formContainer .formInput,
+  .formContainer .addButton {
+    width: 100%;
+    box-sizing: border-box;
+  }
 }
 
 .formInput {
@@ -115,7 +128,7 @@
 
 .searchInput {
   flex: 1;
-  min-width: 200px;
+  min-width: 120px;
   font-size: 16px;
   padding: 8px 12px;
   border-radius: 8px;
@@ -136,7 +149,7 @@
   border-radius: 8px;
   border: 1px solid var(--color-gray-300);
   background: var(--color-white);
-  min-width: 150px;
+  min-width: 110px;
   transition: all 0.2s ease;
 }
 
@@ -1668,6 +1681,17 @@
   color: #F07820;
 }
 
+/* Unsaved changes banner */
+.unsavedBanner {
+  background: rgba(249, 115, 22, 0.1);
+  border: 1px solid rgba(249, 115, 22, 0.35);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #fb923c;
+  margin-bottom: 12px;
+}
+
 /* Delete confirmation dialog */
 .confirmOverlay {
   position: fixed;
@@ -1861,4 +1885,44 @@
 .submitBtn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.formActions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.secondaryBtn {
+  background: #ffffff;
+  color: #1A1A1A;
+  padding: 0.75rem 1.5rem;
+  border: 1px solid rgba(26, 26, 26, 0.25);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.secondaryBtn:hover:not(:disabled) {
+  border-color: #F07820;
+  color: #A94F12;
+  box-shadow: 0 0 0 3px rgba(240, 120, 32, 0.12);
+}
+
+.secondaryBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.hiddenInput {
+  display: none;
+}
+
+.importHint {
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+  color: #5E6470;
 }

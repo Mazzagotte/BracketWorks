@@ -242,13 +242,8 @@ export default function ScoresPage() {
     }
   }, [pendingSaves, addToast, processPendingSaves])
 
-  // Mobile detection (phone only - tablets get desktop experience)
   useEffect(() => {
-    const checkMobile = () => {
-      const width = window.innerWidth;
-      setIsMobile(width <= 480);
-    };
-    
+    const checkMobile = () => setIsMobile(window.innerWidth <= 768);
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);

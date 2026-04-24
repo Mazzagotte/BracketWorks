@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useMemo, useState, useEffect, useCallback } from 'react'
+import { useMemo, useRef, useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../lib/auth-context'
 import { usePageHeader } from '../lib/header-context'
 import { ErrorBoundary } from '../components/ErrorBoundary'
@@ -16,6 +16,8 @@ import { Squad, Player } from './types'
 import { BracketSettings, Tournament } from '../lib/types'
 import { apiClient, API } from '../lib/api'
 import styles from './entries.module.css'
+import { useToastHelpers } from '../components/Toast'
+import ImportLoadingModal from '../components/ImportLoadingModal'
 
 
 export default function PlayersPage() {
@@ -76,7 +78,7 @@ export default function PlayersPage() {
         logger.info(`Loaded entry fee from tournament settings: $${settings.cost_per_bracket}`);
       }
       if (settings && typeof settings.bracket_size === 'number') {
-        setBracketSize(settings.bracket_size);
+        setBracketSize(8);
       }
     } catch (error) {
       logger.warn('Failed to load bracket settings, using default entry fee:', error);
@@ -138,6 +140,7 @@ export default function PlayersPage() {
     isLoading,
     savingStatus,
     addPlayer,
+    importPlayers,
     updatePlayer,
     cancelPendingPatches,
     deletePlayer
@@ -184,13 +187,141 @@ export default function PlayersPage() {
   }, [players, updatePlayer, cancelPendingPatches])
 
   const isDev = process.env.NODE_ENV === 'development'
+  const [isDeletingAll, setIsDeletingAll] = useState(false)
+
+  // Import from Excel — file input ref lives here so the button can be in the header
+  const importFileRef = useRef<HTMLInputElement | null>(null)
+  const [isImporting, setIsImporting] = useState(false)
+  const [importFileName, setImportFileName] = useState<string | undefined>(undefined)
+  const toast = useToastHelpers()
+
+  const parseNumber = (value: unknown, fallback = 0) => {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : fallback
+  }
+
+  const getValue = (row: Record<string, unknown>, keys: string[]) => {
+    for (const key of keys) {
+      if (row[key] !== undefined && row[key] !== null && String(row[key]).trim() !== '') return row[key]
+    }
+    return undefined
+  }
+
+  const normalizeHeader = (h: string) => h.trim().toLowerCase().replace(/[_\s\-#]+/g, '')
+
+  const parseExcelPlayers = async (file: File) => {
+    const XLSX = await import('xlsx')
+    const buffer = await file.arrayBuffer()
+    const workbook = XLSX.read(buffer, { type: 'array' })
+    const firstSheet = workbook.SheetNames[0]
+    if (!firstSheet) return []
+    const worksheet = workbook.Sheets[firstSheet]
+    const rawRows = XLSX.utils.sheet_to_json<Record<string, unknown>>(worksheet, { defval: '' })
+    return rawRows.map((rawRow) => {
+      const nr: Record<string, unknown> = {}
+      for (const [k, v] of Object.entries(rawRow)) { nr[normalizeHeader(k)] = v }
+      const fullName = String(getValue(nr, ['name', 'bowlername']) || '').trim()
+      let firstName = String(getValue(nr, ['firstname', 'first', 'givenname', 'fname']) || '').trim()
+      let lastName  = String(getValue(nr, ['lastname', 'last', 'surname', 'familyname', 'lname']) || '').trim()
+      if ((!firstName || !lastName) && fullName) {
+        const parts = fullName.split(/\s+/).filter(Boolean)
+        firstName = firstName || parts[0] || ''
+        lastName  = lastName  || parts.slice(1).join(' ')
+      }
+      if (!firstName || !lastName) return null
+      const handicap = Math.max(0, Math.floor(parseNumber(getValue(nr, ['handicap', 'handicapentries', 'handicapbrackets']), 0)))
+      const scratch  = Math.max(0, Math.floor(parseNumber(getValue(nr, ['scratch',  'scratchentries',  'scratchbrackets']),  0)))
+      return {
+        firstName, lastName,
+        usbc:       String(getValue(nr, ['usbc', 'usbcnumber']) || '').trim(),
+        average:    Math.max(0, Math.floor(parseNumber(getValue(nr, ['average', 'avg']), 150))),
+        handicap, scratch,
+        lane:       String(getValue(nr, ['lane']) || 'A1').trim() || 'A1',
+        division:   String(getValue(nr, ['division']) || 'Open').trim() || 'Open',
+        amountPaid: Math.max(0, parseNumber(getValue(nr, ['amountpaid', 'paid', 'payment']), 0)),
+        totalCost:  (scratch + handicap) * entryFee,
+      }
+    }).filter((p): p is NonNullable<typeof p> => p !== null)
+  }
+
+  const handleDeleteAllPlayers = useCallback(async () => {
+    if (!window.confirm(`Delete all ${players.length} players? This cannot be undone.`)) return
+    setIsDeletingAll(true)
+    try {
+      await Promise.allSettled(players.map(p => deletePlayer(p.id)))
+      toast.success('All players deleted.', 'DEV')
+    } catch (err) {
+      toast.error(`Delete failed: ${err instanceof Error ? err.message : 'Unknown error'}`, 'DEV')
+    } finally {
+      setIsDeletingAll(false)
+    }
+  }, [players, deletePlayer, toast])
+
+  const handleImportFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setImportFileName(file.name)
+    setIsImporting(true)
+    try {
+      const imported = await parseExcelPlayers(file)
+      if (imported.length === 0) {
+        toast.warning('No valid player rows found. Please include first and last name columns.', 'Import Warning')
+        return
+      }
+
+      // Deduplicate against existing players (case-insensitive full name match)
+      const existingNames = new Set(
+        players.map(p => `${p.first_name} ${p.last_name}`.trim().toLowerCase())
+      )
+      const duplicates = imported.filter(p =>
+        existingNames.has(`${p.first_name} ${p.last_name}`.trim().toLowerCase())
+      )
+      const toImport = imported.filter(p =>
+        !existingNames.has(`${p.first_name} ${p.last_name}`.trim().toLowerCase())
+      )
+
+      if (duplicates.length > 0 && toImport.length === 0) {
+        toast.warning(
+          `All ${duplicates.length} player${duplicates.length !== 1 ? 's' : ''} already exist and were skipped.`,
+          'No New Players'
+        )
+        return
+      }
+
+      const result = await importPlayers(toImport)
+      toast.success(
+        `Added ${result.successCount} player${result.successCount !== 1 ? 's' : ''} successfully.` +
+        (result.failedCount > 0 ? ` ${result.failedCount} failed.` : '') +
+        (duplicates.length > 0 ? ` ${duplicates.length} duplicate${duplicates.length !== 1 ? 's' : ''} skipped.` : ''),
+        'Import Complete'
+      )
+    } catch (err) {
+      toast.error(`Failed to import Excel file: ${err instanceof Error ? err.message : 'Unknown error'}`, 'Import Failed')
+    } finally {
+      setIsImporting(false)
+      setImportFileName(undefined)
+      e.target.value = ''
+    }
+  }
 
   const headerActions = useMemo(() => {
-    if (!isDev || players.length === 0) return undefined
-    return (
-      <button className={styles.devButton} onClick={handleRandomize}>DEV: Randomize Data</button>
+    const buttons = []
+    if (isDev && players.length > 0) {
+      buttons.push(<button key="randomize" className={styles.devButton} onClick={handleRandomize}>DEV: Randomize Data</button>)
+      buttons.push(<button key="deleteAll" className={styles.devButton} onClick={handleDeleteAllPlayers} disabled={isDeletingAll}>{isDeletingAll ? 'Deleting…' : 'DEV: Delete All'}</button>)
+    }
+    buttons.push(
+      <button
+        key="import"
+        className="ds-btn ds-btn-primary ds-btn-md"
+        onClick={() => importFileRef.current?.click()}
+        disabled={isImporting}
+      >
+        {isImporting ? 'Importing…' : 'Import from Excel'}
+      </button>
     )
-  }, [isDev, players.length, handleRandomize])
+    return <>{buttons}</>
+  }, [isDev, players.length, handleRandomize, isImporting, handleDeleteAllPlayers, isDeletingAll])
 
   usePageHeader({
     title: 'Entries',
@@ -347,6 +478,16 @@ export default function PlayersPage() {
   return (
     <ErrorBoundary>
       <div className={styles.pageContainer}>
+        <ImportLoadingModal isOpen={isImporting} fileName={importFileName} />
+        {/* Hidden file input for Excel import — triggered by header button */}
+        <input
+          ref={importFileRef}
+          type="file"
+          accept=".xlsx,.xls"
+          onChange={handleImportFileSelected}
+          style={{ display: 'none' }}
+        />
+
         <PlayerForm
           onAddPlayer={addPlayer}
           isLoading={isLoading}

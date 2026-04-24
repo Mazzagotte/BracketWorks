@@ -39,14 +39,16 @@ export default function Sidebar({ firstName, isMobile = false, isOpen = false, o
           <button onClick={onClose} className={styles.closeBtn}>×</button>
         )}
         <Link href="/" className={styles.logoLink}>
-          <Image
-            src="/logo.svg"
-            alt="BracketWorks Logo"
-            width={160}
-            height={160}
-            className={styles.logoImg}
-            priority
-          />
+          <div className={styles.logoWrap}>
+            <Image
+              src="/logo.svg"
+              alt="BracketWorks Logo"
+              width={160}
+              height={160}
+              style={{ width: '100%', height: 'auto', display: 'block' }}
+              priority
+            />
+          </div>
         </Link>
       </div>
 
