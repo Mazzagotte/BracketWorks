@@ -163,7 +163,7 @@ export default function ScoresPage() {
   // Pagination for large player lists (use sorted players)
   const paginationHook = usePagination({
     items: sortedPlayers,
-    itemsPerPage: 20
+    itemsPerPage: 50
   })
 
   // Auto-save scores backup to localStorage
@@ -849,7 +849,7 @@ export default function ScoresPage() {
             )}
             
             {/* Mobile pagination */}
-            {!isLoading && players.length > 20 && (
+            {!isLoading && players.length > 50 && (
               <div className="flex justify-center mt-6">
                 <Pagination
                   currentPage={paginationHook.currentPage}
@@ -1077,8 +1077,8 @@ export default function ScoresPage() {
           <div className={styles.paginationWrapper}>
             <div className={styles.paginationInfo}>
               <span>
-                Showing {((paginationHook.currentPage - 1) * 20) + 1} to{' '}
-                {Math.min(paginationHook.currentPage * 20, players.length)} of{' '}
+                Showing {((paginationHook.currentPage - 1) * 50) + 1} to{' '}
+                {Math.min(paginationHook.currentPage * 50, players.length)} of{' '}
                 {players.length} players
               </span>
             </div>
