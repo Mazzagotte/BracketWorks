@@ -15,8 +15,8 @@ logger = logging.getLogger(__name__)
 
 def generate_bracket_preview(size: int = 8) -> Dict[str, Any]:
     """Generate a simple bracket preview with placeholder players"""
-    if size not in [4, 8, 16, 32, 64, 128]:
-        raise ValueError("Bracket size must be 4, 8, 16, 32, 64, or 128")
+    if size != 8:
+        raise ValueError("Bracket size must be 8 for three-game sets")
     
     rounds = []
     current_size = size

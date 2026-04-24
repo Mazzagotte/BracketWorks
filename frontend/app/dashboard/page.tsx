@@ -338,7 +338,7 @@ export default function TournamentDashboard() {
   // Bracket settings state
   const [bracketSettings, setBracketSettings] = useState<BracketSettings>({
     tournament_id: 0,
-    bracket_size: 16,
+    bracket_size: 8,
     first_place: 0,
     second_place: 0,
     house_amount: 0,
@@ -352,6 +352,7 @@ export default function TournamentDashboard() {
   const [lastSavedTime, setLastSavedTime] = useState<Date | null>(null);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef(false);
+  const lastPrizeValidationKeyRef = useRef<string>('');
   // Always holds the latest bracketSettings so async callbacks aren't stale
   const bracketSettingsRef = useRef<BracketSettings>(bracketSettings);
   const [isClient, setIsClient] = useState(false);
@@ -363,6 +364,29 @@ export default function TournamentDashboard() {
   useEffect(() => {
     bracketSettingsRef.current = bracketSettings;
   }, [bracketSettings]);
+
+  const calculateHouseAmount = (settings: Pick<BracketSettings, 'bracket_size' | 'cost_per_bracket' | 'first_place' | 'second_place'>) => {
+    const bracketSize = Number(settings.bracket_size ?? 0);
+    const costPerBracket = Number(settings.cost_per_bracket ?? 0);
+    const firstPlace = Number(settings.first_place ?? 0);
+    const secondPlace = Number(settings.second_place ?? 0);
+    return (bracketSize * costPerBracket) - firstPlace - secondPlace;
+  };
+
+  const applyAutoHouse = (prev: BracketSettings, patch: Partial<BracketSettings>): BracketSettings => {
+    const next = { ...prev, ...patch };
+    return {
+      ...next,
+      house_amount: calculateHouseAmount(next)
+    };
+  };
+
+  const computedHouseAmount = useMemo(() => calculateHouseAmount(bracketSettings), [
+    bracketSettings.bracket_size,
+    bracketSettings.cost_per_bracket,
+    bracketSettings.first_place,
+    bracketSettings.second_place
+  ]);
 
   // Track when component is mounted to prevent premature auto-saves
   useEffect(() => {
@@ -396,9 +420,45 @@ export default function TournamentDashboard() {
     setSavingBracketSettings(true);
     setSaveStatus('saving');
     const latestSettings = bracketSettingsRef.current;
+
+    // Enforce prize split integrity: 1st + 2nd + House must equal bracket_size * entry_fee
+    const bracketSize = Number(latestSettings.bracket_size ?? 0);
+    const costPerBracket = Number(latestSettings.cost_per_bracket ?? 0);
+    const firstPlace = Number(latestSettings.first_place ?? 0);
+    const secondPlace = Number(latestSettings.second_place ?? 0);
+    const houseAmount = calculateHouseAmount(latestSettings);
+    const expectedTotal = bracketSize * costPerBracket;
+    const actualTotal = firstPlace + secondPlace + houseAmount;
+
+    if (houseAmount < 0) {
+      setSaveStatus('error');
+      addToast({
+        type: 'warning',
+        message: 'Prize split invalid: 1st + 2nd cannot exceed Bracket Size x Entry Fee.',
+        duration: 6000
+      });
+      return;
+    }
+
+    if (Math.abs(actualTotal - expectedTotal) > 0.009) {
+      setSaveStatus('error');
+      const validationKey = `${expectedTotal.toFixed(2)}|${actualTotal.toFixed(2)}`;
+      if (lastPrizeValidationKeyRef.current !== validationKey) {
+        addToast({
+          type: 'warning',
+          message: `Prize split mismatch: 1st + 2nd + House ($${actualTotal.toFixed(2)}) must equal Bracket Size x Entry Fee ($${expectedTotal.toFixed(2)}).`,
+          duration: 6000
+        });
+        lastPrizeValidationKeyRef.current = validationKey;
+      }
+      return;
+    }
+    lastPrizeValidationKeyRef.current = '';
+
     try {
       const data = await apiClient.post<BracketSettings>('/api/v1/bracket-settings/', {
         ...latestSettings,
+        house_amount: houseAmount,
         tournament_id: tournament.id
       });
       
@@ -417,7 +477,7 @@ export default function TournamentDashboard() {
       // Update local state with the returned data (includes ID for new records)
       // Merge rather than replace to preserve frontend-only fields (e.g. allow_bye)
       // that the backend may not echo back yet
-      setBracketSettings(prev => ({ ...prev, ...data }));
+      setBracketSettings(prev => applyAutoHouse(prev, data));
       
       // Clear cache for bracket settings to ensure fresh data on reload
       apiClient.clearCacheEntry(`/api/v1/bracket-settings/${tournament.id}`);
@@ -427,9 +487,10 @@ export default function TournamentDashboard() {
     } catch (error) {
       logger.error('Failed to save bracket settings', { error });
       setSaveStatus('error');
+      const message = getErrorMessage(error) || 'Failed to save bracket settings. Please review your values and try again.';
       addToast({
         type: 'error',
-        message: 'Network error occurred while saving. Please check your connection and try again.',
+        message,
         duration: 7000
       });
     } finally {
@@ -473,11 +534,13 @@ export default function TournamentDashboard() {
     try {
       const settings = await apiClient.get<BracketSettings>(`/api/v1/bracket-settings/${tournamentId}`, false);
       if (settings) {
-        setBracketSettings({
+        const loaded = {
           ...settings,
-          handicap_percentage: settings.handicap_percentage ?? 80, // Default to 80% if not set
-          handicap_base: settings.handicap_base ?? 200 // Default to 200 if not set
-        });
+          bracket_size: 8,
+          handicap_percentage: settings.handicap_percentage ?? 80,
+          handicap_base: settings.handicap_base ?? 200
+        };
+        setBracketSettings(prev => applyAutoHouse(prev, loaded));
       } else {
         // No existing settings found, keep defaults
         setBracketSettings(prev => ({
@@ -862,7 +925,7 @@ export default function TournamentDashboard() {
             setTournament(null);
             setSquads([]);
             setBracketSettings({
-              tournament_id: 0, bracket_size: 16, first_place: 0, second_place: 0,
+              tournament_id: 0, bracket_size: 8, first_place: 0, second_place: 0,
               house_amount: 0, cost_per_bracket: 0, handicap_percentage: 80, handicap_base: 200
             });
             localStorage.removeItem('lastTournamentId');
@@ -1030,13 +1093,11 @@ export default function TournamentDashboard() {
                             className={mobileStyles.compactSelect}
                             value={bracketSettings.bracket_size}
                             onChange={changeEvent => {
-                              setBracketSettings(prev => ({ ...prev, bracket_size: parseInt(changeEvent.target.value) }));
+                              setBracketSettings(prev => applyAutoHouse(prev, { bracket_size: parseInt(changeEvent.target.value) }));
                               autoSaveBracketSettings();
                             }}
                           >
-                            <option value={4}>4 Players</option>
                             <option value={8}>8 Players</option>
-                            <option value={16}>16 Players</option>
                           </select>
                         </div>
                         
@@ -1051,7 +1112,7 @@ export default function TournamentDashboard() {
                               value={formatNumberInput(bracketSettings.cost_per_bracket)}
                               onChange={changeEvent => {
                                 const numericValue = parseCurrencyInput(changeEvent.target.value);
-                                setBracketSettings(prev => ({ ...prev, cost_per_bracket: numericValue }));
+                                setBracketSettings(prev => applyAutoHouse(prev, { cost_per_bracket: numericValue }));
                                 autoSaveBracketSettings();
                               }}
                             />
@@ -1078,7 +1139,7 @@ export default function TournamentDashboard() {
                               value={formatNumberInput(bracketSettings.first_place)}
                               onChange={changeEvent => {
                                 const numericValue = parseCurrencyInput(changeEvent.target.value);
-                                setBracketSettings(prev => ({ ...prev, first_place: numericValue }));
+                                setBracketSettings(prev => applyAutoHouse(prev, { first_place: numericValue }));
                                 autoSaveBracketSettings();
                               }}
                             />
@@ -1096,7 +1157,7 @@ export default function TournamentDashboard() {
                               value={formatNumberInput(bracketSettings.second_place)}
                               onChange={changeEvent => {
                                 const numericValue = parseCurrencyInput(changeEvent.target.value);
-                                setBracketSettings(prev => ({ ...prev, second_place: numericValue }));
+                                setBracketSettings(prev => applyAutoHouse(prev, { second_place: numericValue }));
                                 autoSaveBracketSettings();
                               }}
                             />
@@ -1104,19 +1165,16 @@ export default function TournamentDashboard() {
                         </div>
 
                         <div className={mobileStyles.compactField}>
-                          <label className={mobileStyles.compactLabel}>House Take</label>
+                          <label className={mobileStyles.compactLabel}>House Take (Auto)</label>
                           <div className={mobileStyles.compactInputWrapper}>
                             <span className={mobileStyles.currencySymbol}>$</span>
                             <input
                               className={mobileStyles.compactInput}
                               type="text"
                               placeholder="0"
-                              value={formatNumberInput(bracketSettings.house_amount)}
-                              onChange={changeEvent => {
-                                const numericValue = parseCurrencyInput(changeEvent.target.value);
-                                setBracketSettings(prev => ({ ...prev, house_amount: numericValue }));
-                                autoSaveBracketSettings();
-                              }}
+                              value={formatNumberInput(computedHouseAmount)}
+                              readOnly
+                              title="Auto-calculated as (Bracket Size × Entry Fee) - 1st Place - 2nd Place"
                             />
                           </div>
                         </div>

@@ -42,7 +42,7 @@ export interface Squad {
 }
 
 export interface PlayerFormProps {
-  onAddPlayer: (player: Omit<Player, 'id'>) => void;
+  onAddPlayer: (player: Omit<Player, 'id'>) => Promise<void> | void;
   isLoading: boolean;
   squads: Squad[];
   entryFee: number;

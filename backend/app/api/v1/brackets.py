@@ -142,6 +142,12 @@ def generate_tournament_brackets_endpoint(
                 status_code=400, 
                 detail="Tournament bracket size not configured. Please set bracket size in tournament settings."
             )
+
+        # Enforce supported bracket sizes for three-game sets
+        try:
+            BracketValidation.validate_bracket_size(bracket_settings.bracket_size)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
         
         # Get bowlers for this tournament/squad
         bowlers_query = db.query(models.Bowler).filter(models.Bowler.tournament_id == tournament_id)
@@ -251,6 +257,8 @@ def generate_tournament_brackets_endpoint(
         
         return result
         
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating brackets: {str(e)}")
 

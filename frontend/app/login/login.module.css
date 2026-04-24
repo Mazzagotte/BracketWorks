@@ -26,13 +26,13 @@
   font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
 }
 
-/* Card */
+/* Card — base size targets large screens (1400px+) */
 .card {
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 480px;
-  padding: 0 32px 32px;
+  max-width: 400px;
+  padding: 16px 28px 28px;
   background: var(--color-brand-ivory-light, #FAF4E8);
   border-radius: var(--radius-2xl);
   box-shadow:
@@ -41,6 +41,23 @@
   text-align: center;
   animation: fadeInUp 0.4s ease-out;
   overflow: hidden;
+}
+
+/* Proportional zoom for common laptop sizes */
+@media (max-width: 1400px) {
+  .card { zoom: 0.9; }
+}
+@media (max-width: 1100px) {
+  .card { zoom: 0.82; }
+}
+@media (max-width: 900px) {
+  .card { zoom: 0.75; }
+}
+
+/* Wrapper controls logo size; Image fills it at 100% */
+.logoWrap {
+  width: 150px;
+  margin: 0 auto 12px;
 }
 
 .card.loading {
@@ -75,7 +92,7 @@
 }
 
 .inputGroup {
-  margin-bottom: 16px;
+  margin-bottom: 14px;
   position: relative;
 }
 
@@ -109,8 +126,25 @@
   border-color: #D64545 !important;
 }
 
+.inputError {
+  border-color: #D64545 !important;
+  background: rgba(214, 69, 69, 0.04) !important;
+}
+
+.sessionExpiredBanner {
+  background: rgba(251, 146, 60, 0.12);
+  border: 1px solid rgba(251, 146, 60, 0.45);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #fb923c;
+  text-align: center;
+  margin-bottom: 14px;
+}
+
 .passwordWrap {
-  margin-bottom: 16px;
+  margin-bottom: 14px;
   position: relative;
 }
 
@@ -159,8 +193,8 @@
 
 /* Delay / Attempts warnings */
 .delayWarning {
-  margin-bottom: 16px;
-  padding: 12px 16px;
+  margin-bottom: 14px;
+  padding: 10px 14px;
   background: rgba(214, 69, 69, 0.12);
   border: 1px solid rgba(214, 69, 69, 0.4);
   border-radius: 12px;
@@ -171,8 +205,8 @@
 }
 
 .attemptsInfo {
-  margin-bottom: 16px;
-  padding: 8px 12px;
+  margin-bottom: 14px;
+  padding: 6px 12px;
   background: rgba(249, 115, 22, 0.1);
   border: 1px solid rgba(249, 115, 22, 0.3);
   border-radius: 8px;
@@ -228,7 +262,7 @@
 
 /* Error container */
 .errorWrap {
-  margin-top: 16px;
+  margin-top: 14px;
 }
 
 /* Divider */
@@ -236,7 +270,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  margin: 24px 0 20px;
+  margin: 18px 0 16px;
   color: #b8a898;
   font-size: 12px;
   font-weight: 500;
@@ -256,7 +290,7 @@
 .actions {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   align-items: center;
 }
 
@@ -264,7 +298,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 13px 24px;
+  padding: 11px 24px;
   font-size: 15px;
   font-weight: 600;
   text-decoration: none;
@@ -288,8 +322,7 @@
 }
 
 .forgotLink {
-  margin-top: 4px;
-  padding: 8px;
+  padding: 6px;
   font-size: 14px;
   font-weight: 500;
   color: var(--color-brand-charcoal, #333333);
@@ -304,13 +337,37 @@
   color: var(--color-brand-charcoal-deep, #1A1A1A);
 }
 
-/* Responsive */
+/* Mobile phones — stop zooming, switch to padding-based adjustments */
 @media (max-width: 480px) {
-  .page {
-    padding: 16px;
+  .card {
+    zoom: 1;
+    padding: 14px 18px 22px;
+    border-radius: 16px;
   }
 
+  .page {
+    padding: 12px;
+    align-items: flex-start;
+    padding-top: 20px;
+  }
+
+  .logoWrap {
+    width: 120px;
+    margin-bottom: 8px;
+  }
+
+  .divider {
+    margin: 14px 0 12px;
+  }
+}
+
+/* Very small phones */
+@media (max-width: 360px) {
   .card {
-    padding: 32px 24px 28px;
+    padding: 12px 14px 18px;
+  }
+
+  .logoWrap {
+    width: 75px;
   }
 }

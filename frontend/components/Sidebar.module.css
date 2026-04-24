@@ -1,7 +1,7 @@
 /* Sidebar Styles */
 
 .sidebar {
-  width: 260px;
+  width: 208px;
   background: linear-gradient(180deg, #1A1A1A 0%, #2D2D2D 60%, #222222 100%);
   height: 100vh;
   position: fixed;
@@ -16,6 +16,7 @@
   padding-top: max(0px, env(safe-area-inset-top));
   padding-bottom: max(20px, env(safe-area-inset-bottom));
   transition: left 0.3s ease;
+  overflow: hidden;
 }
 
 .sidebarMobile {
@@ -30,13 +31,14 @@
 /* Logo area */
 .brand {
   width: 100%;
-  padding: 0 0 16px;
+  padding: 0 0 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
   border-bottom: 3px solid #F07820;
   position: relative;
   background: var(--color-brand-ivory-light, #FAF4E8);
+  flex-shrink: 0;
 }
 
 
@@ -44,7 +46,7 @@
 .logoLink {
   display: block;
   width: 100%;
-  padding: 12px 0;
+  padding: 8px 0;
   transition: opacity 0.2s ease;
 }
 
@@ -52,10 +54,8 @@
   opacity: 0.9;
 }
 
-.logoImg {
-  width: 80%;
-  height: auto;
-  display: block;
+.logoWrap {
+  width: 82%;
   margin: 0 auto;
 }
 
@@ -63,16 +63,17 @@
 .welcome {
   width: 85%;
   text-align: center;
-  margin-top: 16px;
-  margin-bottom: 12px;
-  padding: 10px 16px;
-  background: rgba(212, 88, 10, 0.25);
+  margin-top: 8px;
+  margin-bottom: 6px;
+  padding: 6px 12px;
+  background: var(--color-brand-ivory-light, #FAF4E8);
   border-radius: 12px;
-  border: 1px solid rgba(240, 120, 32, 0.25);
+  border: 1px solid rgba(107, 45, 15, 0.2);
+  flex-shrink: 0;
 }
 
 .welcomeText {
-  color: var(--color-brand-ivory, #F0E0C0);
+  color: #5a4030;
   font-weight: 600;
   font-size: 0.9rem;
   letter-spacing: 0.3px;
@@ -82,10 +83,11 @@
 .nav {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  margin-top: 8px;
+  gap: 2px;
+  margin-top: 4px;
   width: 100%;
   padding: 0 16px;
+  flex-shrink: 0;
 }
 
 .navItem {
@@ -98,7 +100,7 @@
   text-decoration: none;
   font-weight: 500;
   font-size: 0.95rem;
-  padding: 12px 20px;
+  padding: 9px 16px;
   width: 100%;
   display: block;
   border-radius: 10px;
@@ -136,7 +138,8 @@
 /* Logout */
 .logoutWrap {
   width: 100%;
-  padding: 16px 16px;
+  padding: 10px 16px;
+  flex-shrink: 0;
 }
 
 .logoutBtn {
@@ -163,6 +166,53 @@
 
 .logoutBtn:active {
   transform: translateY(0);
+}
+
+/* Slightly compact sidebar for mid-range desktops (1101px–1400px) */
+@media (max-width: 1400px) and (min-width: 1101px) {
+  .sidebar {
+    width: 184px;
+  }
+
+  .brand,
+  .welcome,
+  .nav,
+  .logoutWrap {
+    zoom: 0.92;
+  }
+}
+
+/* Compact sidebar for smaller desktops/laptops (769px–1100px) */
+@media (max-width: 1100px) and (min-width: 769px) {
+  .sidebar {
+    width: 168px;
+  }
+
+  /* Zoom the content sections — sidebar container stays 210px so height/positioning are unaffected */
+  .brand,
+  .welcome,
+  .nav,
+  .logoutWrap {
+    zoom: 0.85;
+  }
+}
+
+/* Short viewport — shrink sidebar content to fit without scrolling */
+@media (max-height: 700px) and (min-width: 769px) {
+  .brand,
+  .welcome,
+  .nav,
+  .logoutWrap {
+    zoom: 0.82;
+  }
+}
+@media (max-height: 580px) and (min-width: 769px) {
+  .brand,
+  .welcome,
+  .nav,
+  .logoutWrap {
+    zoom: 0.70;
+  }
 }
 
 /* Mobile close button */
