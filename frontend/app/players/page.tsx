@@ -271,13 +271,13 @@ export default function PlayersPage() {
 
       // Deduplicate against existing players (case-insensitive full name match)
       const existingNames = new Set(
-        players.map(p => `${p.first_name} ${p.last_name}`.trim().toLowerCase())
+        players.map(p => `${p.firstName} ${p.lastName}`.trim().toLowerCase())
       )
       const duplicates = imported.filter(p =>
-        existingNames.has(`${p.first_name} ${p.last_name}`.trim().toLowerCase())
+        existingNames.has(`${p.firstName} ${p.lastName}`.trim().toLowerCase())
       )
       const toImport = imported.filter(p =>
-        !existingNames.has(`${p.first_name} ${p.last_name}`.trim().toLowerCase())
+        !existingNames.has(`${p.firstName} ${p.lastName}`.trim().toLowerCase())
       )
 
       if (duplicates.length > 0 && toImport.length === 0) {
