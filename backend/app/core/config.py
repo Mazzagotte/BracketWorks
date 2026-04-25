@@ -15,7 +15,7 @@ class Settings(BaseModel):
     # Database
     DATABASE_URL: str = os.getenv(
         "DATABASE_URL", 
-        "postgresql://bracketworks_database_user:MW0r5GaFvgwfEQ7LLqArlUKOybMlkYLG@dpg-d34bbaripnbc73fqtcng-a.oregon-postgres.render.com/bracketworks_database"
+        "postgresql://bracketworks:bracketworks@localhost:5432/bracketworks"
     )
     DATABASE_POOL_SIZE: int = int(os.getenv("DATABASE_POOL_SIZE", "20"))  # Increased for dev
     DATABASE_MAX_OVERFLOW: int = int(os.getenv("DATABASE_MAX_OVERFLOW", "30"))  # Increased for dev

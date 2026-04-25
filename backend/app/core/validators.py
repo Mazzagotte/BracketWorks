@@ -1,10 +1,10 @@
 from pydantic import BaseModel, validator
-from typing import Optional
+from typing import ClassVar, Optional
 import re
 
 class BracketValidation(BaseModel):
     """Enhanced validation for bracket operations"""
-    ALLOWED_BRACKET_SIZES = {8}
+    ALLOWED_BRACKET_SIZES: ClassVar[set[int]] = {8}
     
     @staticmethod
     def validate_bracket_size(size: int) -> int:

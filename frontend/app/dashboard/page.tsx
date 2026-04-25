@@ -12,6 +12,7 @@ import { ConfirmationDialog } from '../components/LazyComponents';
 import { MobileForm, MobileFormField } from '../../components/MobileForm';
 import { API, apiClient } from '../lib/api';
 import { logger } from '../lib/logger';
+import { defaultBracketPrograms, normalizeBracketPrograms } from '../lib/bracketPrograms';
 import EnhancedButton from '../components/EnhancedButton';
 import { useToast } from '../components/Toast';
 import { usePagination } from '../components/Performance';
@@ -34,6 +35,7 @@ function get12hrTimes() {
   return availableTimeSlots;
 }
 const availableTimeOptions = get12hrTimes();
+const BRACKET_SETTINGS_AUTOSAVE_DELAY_MS = 600;
 // Show all AM and PM times
 
 const parseCurrencyInput = (userInput: string): number => {
@@ -47,6 +49,19 @@ const formatNumberInput = (numericValue: number): string => {
   // Format for input display with commas but no $ symbol
   return numericValue === 0 ? '' : Math.round(numericValue).toLocaleString('en-US');
 };
+
+const createDefaultBracketSettings = (tournamentId = 0): BracketSettings => ({
+  tournament_id: tournamentId,
+  bracket_size: 8,
+  first_place_amount: 0,
+  second_place_amount: 0,
+  house_fee_amount: 0,
+  default_entry_fee: 0,
+  bracket_programs: defaultBracketPrograms,
+  handicap_percentage: 80,
+  handicap_base: 200,
+  allow_byes: false,
+})
 
 function getDatesBetween(startDate: string, endDate: string): string[] {
   if (!startDate || !endDate) return [];
@@ -337,15 +352,7 @@ export default function TournamentDashboard() {
   
   // Bracket settings state
   const [bracketSettings, setBracketSettings] = useState<BracketSettings>({
-    tournament_id: 0,
-    bracket_size: 8,
-    first_place: 0,
-    second_place: 0,
-    house_amount: 0,
-    cost_per_bracket: 0,
-    handicap_percentage: 80,
-    handicap_base: 200,
-    allow_bye: false
+    ...createDefaultBracketSettings(),
   });
   const [savingBracketSettings, setSavingBracketSettings] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved' | 'error'>('saved');
@@ -365,11 +372,11 @@ export default function TournamentDashboard() {
     bracketSettingsRef.current = bracketSettings;
   }, [bracketSettings]);
 
-  const calculateHouseAmount = (settings: Pick<BracketSettings, 'bracket_size' | 'cost_per_bracket' | 'first_place' | 'second_place'>) => {
+  const calculateHouseAmount = (settings: Pick<BracketSettings, 'bracket_size' | 'default_entry_fee' | 'first_place_amount' | 'second_place_amount'>) => {
     const bracketSize = Number(settings.bracket_size ?? 0);
-    const costPerBracket = Number(settings.cost_per_bracket ?? 0);
-    const firstPlace = Number(settings.first_place ?? 0);
-    const secondPlace = Number(settings.second_place ?? 0);
+    const costPerBracket = Number(settings.default_entry_fee ?? 0);
+    const firstPlace = Number(settings.first_place_amount ?? 0);
+    const secondPlace = Number(settings.second_place_amount ?? 0);
     return (bracketSize * costPerBracket) - firstPlace - secondPlace;
   };
 
@@ -377,15 +384,15 @@ export default function TournamentDashboard() {
     const next = { ...prev, ...patch };
     return {
       ...next,
-      house_amount: calculateHouseAmount(next)
+      house_fee_amount: calculateHouseAmount(next)
     };
   };
 
   const computedHouseAmount = useMemo(() => calculateHouseAmount(bracketSettings), [
     bracketSettings.bracket_size,
-    bracketSettings.cost_per_bracket,
-    bracketSettings.first_place,
-    bracketSettings.second_place
+    bracketSettings.default_entry_fee,
+    bracketSettings.first_place_amount,
+    bracketSettings.second_place_amount
   ]);
 
   // Track when component is mounted to prevent premature auto-saves
@@ -423,9 +430,10 @@ export default function TournamentDashboard() {
 
     // Enforce prize split integrity: 1st + 2nd + House must equal bracket_size * entry_fee
     const bracketSize = Number(latestSettings.bracket_size ?? 0);
-    const costPerBracket = Number(latestSettings.cost_per_bracket ?? 0);
-    const firstPlace = Number(latestSettings.first_place ?? 0);
-    const secondPlace = Number(latestSettings.second_place ?? 0);
+    const costPerBracket = Number(latestSettings.default_entry_fee ?? 0);
+    const firstPlace = Number(latestSettings.first_place_amount ?? 0);
+    const secondPlace = Number(latestSettings.second_place_amount ?? 0);
+    const normalizedPrograms = normalizeBracketPrograms(latestSettings.bracket_programs, costPerBracket)
     const houseAmount = calculateHouseAmount(latestSettings);
     const expectedTotal = bracketSize * costPerBracket;
     const actualTotal = firstPlace + secondPlace + houseAmount;
@@ -458,7 +466,8 @@ export default function TournamentDashboard() {
     try {
       const data = await apiClient.post<BracketSettings>('/api/v1/bracket-settings/', {
         ...latestSettings,
-        house_amount: houseAmount,
+        bracket_programs: normalizedPrograms,
+        house_fee_amount: houseAmount,
         tournament_id: tournament.id
       });
       
@@ -475,9 +484,12 @@ export default function TournamentDashboard() {
       });
       
       // Update local state with the returned data (includes ID for new records)
-      // Merge rather than replace to preserve frontend-only fields (e.g. allow_bye)
+      // Merge rather than replace to preserve frontend-only fields (e.g. allow_byes)
       // that the backend may not echo back yet
-      setBracketSettings(prev => applyAutoHouse(prev, data));
+      setBracketSettings(prev => applyAutoHouse(prev, {
+        ...data,
+        bracket_programs: normalizeBracketPrograms(data.bracket_programs, data.default_entry_fee),
+      }));
       
       // Clear cache for bracket settings to ensure fresh data on reload
       apiClient.clearCacheEntry(`/api/v1/bracket-settings/${tournament.id}`);
@@ -498,6 +510,15 @@ export default function TournamentDashboard() {
     }
   };
 
+  const saveBracketSettingsImmediately = () => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+    }
+
+    void saveBracketSettings();
+  };
+
   // Auto-save with debounce
   const autoSaveBracketSettings = () => {
     // Don't auto-save if component isn't mounted or no tournament selected
@@ -511,10 +532,25 @@ export default function TournamentDashboard() {
     // Mark as unsaved
     setSaveStatus('unsaved');
     
-    // Set new timeout for auto-save (1.5 seconds after last change)
+    // Keep autosave responsive while still coalescing rapid edits.
     saveTimeoutRef.current = setTimeout(() => {
       saveBracketSettings();
-    }, 1500);
+    }, BRACKET_SETTINGS_AUTOSAVE_DELAY_MS);
+  };
+
+  const updateBracketSettings = (
+    updater: (previous: BracketSettings) => BracketSettings,
+    saveMode: 'none' | 'debounced' | 'immediate' = 'debounced',
+  ) => {
+    const next = updater(bracketSettingsRef.current);
+    bracketSettingsRef.current = next;
+    setBracketSettings(next);
+
+    if (saveMode === 'immediate') {
+      saveBracketSettingsImmediately();
+    } else if (saveMode === 'debounced') {
+      autoSaveBracketSettings();
+    }
   };
 
   // Cleanup timeout on unmount
@@ -537,37 +573,117 @@ export default function TournamentDashboard() {
         const loaded = {
           ...settings,
           bracket_size: 8,
+          bracket_programs: normalizeBracketPrograms(settings.bracket_programs, settings.default_entry_fee),
           handicap_percentage: settings.handicap_percentage ?? 80,
           handicap_base: settings.handicap_base ?? 200
         };
         setBracketSettings(prev => applyAutoHouse(prev, loaded));
       } else {
-        // No existing settings found, keep defaults
-        setBracketSettings(prev => ({
-          ...prev,
-          tournament_id: tournamentId,
-          id: undefined // Clear any existing ID
-        }));
+        setBracketSettings(createDefaultBracketSettings(tournamentId));
       }
     } catch (error: unknown) {
       if (getErrorMessage(error).includes('404')) {
         // Tournament not found or no bracket settings exist - use defaults
         logger.warn('No bracket settings found for tournament', { tournamentId });
-        setBracketSettings(prev => ({
-          ...prev,
-          tournament_id: tournamentId,
-          id: undefined // Clear any existing ID
-        }));
+        setBracketSettings(createDefaultBracketSettings(tournamentId));
       } else {
         logger.error('Error loading bracket settings', getErrorContext(error));
         // On network error, still set up defaults for the tournament
-        setBracketSettings(prev => ({
-          ...prev,
-          tournament_id: tournamentId,
-          id: undefined
-        }));
+        setBracketSettings(createDefaultBracketSettings(tournamentId));
       }
     }
+  };
+
+  const getOptionalBracketEntryCount = async (programKey: string) => {
+    if (!tournament?.id) return 0;
+
+    const token = localStorage.getItem('token');
+    if (!token) return 0;
+
+    const normalizedKey = programKey.trim().toLowerCase();
+    const limit = 500;
+    let offset = 0;
+    let totalEntries = 0;
+
+    while (true) {
+      const params = new URLSearchParams({
+        tournament_id: String(tournament.id),
+        limit: String(limit),
+        offset: String(offset),
+      });
+
+      const response = await fetch(API(`/api/v1/bowlers?${params.toString()}`), {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Unable to check existing ${programKey} entries.`);
+      }
+
+      const bowlers = await response.json() as Array<{ program_entry_counts?: Record<string, number> | null }>;
+      totalEntries += bowlers.reduce((sum, bowler) => sum + Number(bowler.program_entry_counts?.[normalizedKey] || 0), 0);
+
+      if (bowlers.length < limit) {
+        break;
+      }
+
+      offset += limit;
+    }
+
+    return totalEntries;
+  };
+
+  const updateBracketProgram = (index: number, patch: Partial<NonNullable<BracketSettings['bracket_programs']>[number]>) => {
+    updateBracketSettings(previous => ({
+      ...previous,
+      bracket_programs: normalizeBracketPrograms(
+        (previous.bracket_programs || defaultBracketPrograms).map((program, programIndex) =>
+          programIndex === index ? { ...program, ...patch } : program
+        ),
+        previous.default_entry_fee,
+      ),
+    }), 'immediate');
+  };
+
+  const handleOptionalBracketToggle = async (programKey: string, enabled: boolean) => {
+    const programIndex = normalizeBracketPrograms(
+      bracketSettings.bracket_programs,
+      bracketSettings.default_entry_fee,
+    ).findIndex(existingProgram => existingProgram.key === programKey);
+
+    if (programIndex < 0) {
+      return;
+    }
+
+    if (!enabled) {
+      try {
+        const existingEntries = await getOptionalBracketEntryCount(programKey);
+        if (existingEntries > 0) {
+          const programName = normalizeBracketPrograms(
+            bracketSettings.bracket_programs,
+            bracketSettings.default_entry_fee,
+          ).find(existingProgram => existingProgram.key === programKey)?.name || programKey;
+
+          const confirmed = window.confirm(
+            `${programName} has ${existingEntries} existing entr${existingEntries === 1 ? 'y' : 'ies'} in this tournament. Disabling it will hide those entries from the Entries page and can affect totals. Continue?`
+          );
+
+          if (!confirmed) {
+            return;
+          }
+        }
+      } catch (error) {
+        logger.error('Failed to verify existing optional bracket entries', { programKey, error: getErrorContext(error) });
+        addToast({
+          type: 'error',
+          message: `Couldn't verify existing ${programKey} entries. Try again.`,
+          duration: 4000,
+        });
+        return;
+      }
+    }
+
+    updateBracketProgram(programIndex, { enabled });
   };
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -615,6 +731,10 @@ export default function TournamentDashboard() {
       // Wait for all requests to complete in parallel
       Promise.all([tournamentPromise, squadsPromise, selectedSquadPromise])
         .then(([tournamentData, squadsData, selectedSquadData]) => {
+          const storedSelectedSquadId = localStorage.getItem('selected_squad_id');
+          const restoredSelectedSquadId = selectedSquadData?.squad_id
+            ?? (storedSelectedSquadId ? Number(storedSelectedSquadId) : null);
+
           // Set tournament and load bracket settings
           if (tournamentData) {
             setTournament(tournamentData);
@@ -623,6 +743,7 @@ export default function TournamentDashboard() {
             // Tournament no longer accessible — clear stale localStorage
             localStorage.removeItem('lastTournamentId');
             localStorage.removeItem('activeTournamentName');
+            localStorage.removeItem('selected_squad_id');
             localStorage.removeItem('activeSquadLabel');
             window.dispatchEvent(new Event('tournament-changed'));
             window.dispatchEvent(new Event('squad-changed'));
@@ -632,8 +753,10 @@ export default function TournamentDashboard() {
           setSquads(squadsData);
           
           // Set selected squad
-          if (selectedSquadData && selectedSquadData.squad_id) {
-            setSelectedSquadId(selectedSquadData.squad_id);
+          if (restoredSelectedSquadId && squadsData.some((squad: Squad) => squad.id === restoredSelectedSquadId)) {
+            setSelectedSquadId(restoredSelectedSquadId);
+          } else {
+            setSelectedSquadId(null);
           }
         })
         .catch(error => {
@@ -641,6 +764,7 @@ export default function TournamentDashboard() {
         });
     } else {
       // No stored tournament — clear any stale header strip data
+      localStorage.removeItem('selected_squad_id');
       localStorage.removeItem('activeTournamentName');
       localStorage.removeItem('activeSquadLabel');
       window.dispatchEvent(new Event('tournament-changed'));
@@ -713,14 +837,24 @@ export default function TournamentDashboard() {
         if (userId) {
           try {
             const selectedSquadData = await apiClient.get<{squad_id: number}>(`/api/v1/squads/selected/?user_id=${userId}`);
-            if (selectedSquadData && selectedSquadData.squad_id) {
-              setSelectedSquadId(selectedSquadData.squad_id);
+            const storedSelectedSquadId = localStorage.getItem('selected_squad_id');
+            const restoredSelectedSquadId = selectedSquadData?.squad_id
+              ?? (storedSelectedSquadId ? Number(storedSelectedSquadId) : null);
+
+            if (restoredSelectedSquadId && squadsData.some(squad => squad.id === restoredSelectedSquadId)) {
+              setSelectedSquadId(restoredSelectedSquadId);
             } else {
               setSelectedSquadId(null);
             }
           } catch (error) {
             logger.warn('No selected squad found for user', { userId, error });
-            setSelectedSquadId(null);
+            const storedSelectedSquadId = localStorage.getItem('selected_squad_id');
+            const restoredSelectedSquadId = storedSelectedSquadId ? Number(storedSelectedSquadId) : null;
+            setSelectedSquadId(
+              restoredSelectedSquadId && squadsData.some(squad => squad.id === restoredSelectedSquadId)
+                ? restoredSelectedSquadId
+                : null
+            );
           }
         }
       } catch (error) {
@@ -924,12 +1058,11 @@ export default function TournamentDashboard() {
           onClick={() => {
             setTournament(null);
             setSquads([]);
-            setBracketSettings({
-              tournament_id: 0, bracket_size: 8, first_place: 0, second_place: 0,
-              house_amount: 0, cost_per_bracket: 0, handicap_percentage: 80, handicap_base: 200
-            });
+            setSelectedSquadId(null);
+            setBracketSettings(createDefaultBracketSettings());
             localStorage.removeItem('lastTournamentId');
             localStorage.removeItem('activeTournamentName');
+            localStorage.removeItem('selected_squad_id');
             localStorage.removeItem('activeSquadLabel');
             window.dispatchEvent(new Event('tournament-changed'));
             window.dispatchEvent(new Event('squad-changed'));
@@ -944,6 +1077,12 @@ export default function TournamentDashboard() {
 
   const selectedSquad = squads.find(s => s.id === selectedSquadId)
   const squadLabel = selectedSquad ? ` · ${[selectedSquad.date, selectedSquad.time].filter(Boolean).join(' ')}` : ''
+
+  useEffect(() => {
+    if (selectedSquadId !== null) {
+      localStorage.setItem('selected_squad_id', String(selectedSquadId));
+    }
+  }, [selectedSquadId]);
 
   useEffect(() => {
     const label = selectedSquad ? [selectedSquad.date, selectedSquad.time].filter(Boolean).join(' ') : '';
@@ -1093,8 +1232,10 @@ export default function TournamentDashboard() {
                             className={mobileStyles.compactSelect}
                             value={bracketSettings.bracket_size}
                             onChange={changeEvent => {
-                              setBracketSettings(prev => applyAutoHouse(prev, { bracket_size: parseInt(changeEvent.target.value) }));
-                              autoSaveBracketSettings();
+                              updateBracketSettings(
+                                previous => applyAutoHouse(previous, { bracket_size: parseInt(changeEvent.target.value) }),
+                                'immediate',
+                              );
                             }}
                           >
                             <option value={8}>8 Players</option>
@@ -1109,11 +1250,16 @@ export default function TournamentDashboard() {
                               className={mobileStyles.compactInput}
                               type="text"
                               placeholder="0"
-                              value={formatNumberInput(bracketSettings.cost_per_bracket)}
+                              value={formatNumberInput(bracketSettings.default_entry_fee)}
                               onChange={changeEvent => {
                                 const numericValue = parseCurrencyInput(changeEvent.target.value);
-                                setBracketSettings(prev => applyAutoHouse(prev, { cost_per_bracket: numericValue }));
-                                autoSaveBracketSettings();
+                                updateBracketSettings(
+                                  previous => applyAutoHouse(previous, { default_entry_fee: numericValue }),
+                                  'none',
+                                );
+                              }}
+                              onBlur={() => {
+                                saveBracketSettingsImmediately();
                               }}
                             />
                           </div>
@@ -1136,11 +1282,16 @@ export default function TournamentDashboard() {
                               className={mobileStyles.compactInput}
                               type="text"
                               placeholder="0"
-                              value={formatNumberInput(bracketSettings.first_place)}
+                              value={formatNumberInput(bracketSettings.first_place_amount)}
                               onChange={changeEvent => {
                                 const numericValue = parseCurrencyInput(changeEvent.target.value);
-                                setBracketSettings(prev => applyAutoHouse(prev, { first_place: numericValue }));
-                                autoSaveBracketSettings();
+                                updateBracketSettings(
+                                  previous => applyAutoHouse(previous, { first_place_amount: numericValue }),
+                                  'none',
+                                );
+                              }}
+                              onBlur={() => {
+                                saveBracketSettingsImmediately();
                               }}
                             />
                           </div>
@@ -1154,11 +1305,16 @@ export default function TournamentDashboard() {
                               className={mobileStyles.compactInput}
                               type="text"
                               placeholder="0"
-                              value={formatNumberInput(bracketSettings.second_place)}
+                              value={formatNumberInput(bracketSettings.second_place_amount)}
                               onChange={changeEvent => {
                                 const numericValue = parseCurrencyInput(changeEvent.target.value);
-                                setBracketSettings(prev => applyAutoHouse(prev, { second_place: numericValue }));
-                                autoSaveBracketSettings();
+                                updateBracketSettings(
+                                  previous => applyAutoHouse(previous, { second_place_amount: numericValue }),
+                                  'none',
+                                );
+                              }}
+                              onBlur={() => {
+                                saveBracketSettingsImmediately();
                               }}
                             />
                           </div>
@@ -1203,14 +1359,15 @@ export default function TournamentDashboard() {
                               const inputValue = changeEvent.target.value;
                               const numValue = parseInt(inputValue);
                               const value = isNaN(numValue) ? 80 : Math.min(100, Math.max(0, numValue));
-                              setBracketSettings(prev => ({ ...prev, handicap_percentage: value }));
+                              updateBracketSettings(previous => ({ ...previous, handicap_percentage: value }), 'none');
                             }}
                             onBlur={() => {
                               // Trigger autosave only when user leaves the field
-                              if (!bracketSettings.handicap_percentage || bracketSettings.handicap_percentage < 0) {
-                                setBracketSettings(prev => ({ ...prev, handicap_percentage: 80 }));
+                              if (!bracketSettingsRef.current.handicap_percentage || bracketSettingsRef.current.handicap_percentage < 0) {
+                                updateBracketSettings(previous => ({ ...previous, handicap_percentage: 80 }), 'immediate');
+                                return;
                               }
-                              autoSaveBracketSettings();
+                              saveBracketSettingsImmediately();
                             }}
                           />
                           <span className={mobileStyles.inputSuffix}>%</span>
@@ -1231,14 +1388,15 @@ export default function TournamentDashboard() {
                             const inputValue = changeEvent.target.value;
                             const numValue = parseInt(inputValue);
                             const value = isNaN(numValue) ? 200 : Math.max(1, numValue);
-                            setBracketSettings(prev => ({ ...prev, handicap_base: value }));
+                            updateBracketSettings(previous => ({ ...previous, handicap_base: value }), 'none');
                           }}
                           onBlur={() => {
                             // Trigger autosave only when user leaves the field
-                            if (!bracketSettings.handicap_base || bracketSettings.handicap_base < 1) {
-                              setBracketSettings(prev => ({ ...prev, handicap_base: 200 }));
+                            if (!bracketSettingsRef.current.handicap_base || bracketSettingsRef.current.handicap_base < 1) {
+                              updateBracketSettings(previous => ({ ...previous, handicap_base: 200 }), 'immediate');
+                              return;
                             }
-                            autoSaveBracketSettings();
+                            saveBracketSettingsImmediately();
                           }}
                         />
                       </div>
@@ -1254,14 +1412,45 @@ export default function TournamentDashboard() {
                       <input
                         type="checkbox"
                         className={mobileStyles.checkboxInput}
-                        checked={!!bracketSettings.allow_bye}
+                        checked={!!bracketSettings.allow_byes}
                         onChange={e => {
-                          setBracketSettings(prev => ({ ...prev, allow_bye: e.target.checked }));
-                          autoSaveBracketSettings();
+                          updateBracketSettings(previous => ({ ...previous, allow_byes: e.target.checked }), 'immediate');
                         }}
                       />
                       Allow &ldquo;BYE&rdquo; <span className={mobileStyles.checkboxHint}>(One per Bracket)</span>
                     </label>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {tournament && (
+              <div className={mobileStyles.bracketSettingsCard}>
+                <div className={mobileStyles.settingsHeader}>
+                  <h2 className={mobileStyles.settingsTitle}>Optional Brackets</h2>
+                </div>
+
+                <div className={mobileStyles.settingsContent}>
+                  <div className={mobileStyles.programList}>
+                    {normalizeBracketPrograms(bracketSettings.bracket_programs, bracketSettings.default_entry_fee)
+                      .filter(program => program.key !== 'handicap' && program.key !== 'scratch')
+                      .map(program => (
+                        <div key={program.key} className={mobileStyles.programCard}>
+                          <label className={mobileStyles.checkboxLabel}>
+                            <input
+                              type="checkbox"
+                              className={mobileStyles.checkboxInput}
+                              checked={program.enabled ?? false}
+                              onChange={event => {
+                                void handleOptionalBracketToggle(program.key, event.target.checked)
+                              }}
+                            />
+                            <span>
+                              {program.name}
+                            </span>
+                          </label>
+                        </div>
+                      ))}
                   </div>
                 </div>
               </div>

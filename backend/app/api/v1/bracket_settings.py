@@ -11,17 +11,17 @@ logger = logging.getLogger(__name__)
 
 def validate_prize_distribution(
     bracket_size: Optional[int],
-    cost_per_bracket: Optional[float],
-    first_place: Optional[float],
-    second_place: Optional[float],
-    house_amount: Optional[float]
+    default_entry_fee: Optional[float],
+    first_place_amount: Optional[float],
+    second_place_amount: Optional[float],
+    house_fee_amount: Optional[float]
 ) -> None:
-    """Validate that 1st + 2nd + house equals bracket_size * cost_per_bracket."""
+    """Validate that prize distribution matches bracket_size * default_entry_fee."""
     size = float(bracket_size or 0)
-    cost = float(cost_per_bracket or 0)
-    first = float(first_place or 0)
-    second = float(second_place or 0)
-    house = float(house_amount or 0)
+    cost = float(default_entry_fee or 0)
+    first = float(first_place_amount or 0)
+    second = float(second_place_amount or 0)
+    house = float(house_fee_amount or 0)
 
     expected_total = size * cost
     actual_total = first + second + house
@@ -30,8 +30,8 @@ def validate_prize_distribution(
         raise HTTPException(
             status_code=400,
             detail=(
-                "Invalid prize distribution: first_place + second_place + house_amount "
-                f"must equal bracket_size * cost_per_bracket ({expected_total:.2f}). "
+                "Invalid prize distribution: first_place_amount + second_place_amount + house_fee_amount "
+                f"must equal bracket_size * default_entry_fee ({expected_total:.2f}). "
                 f"Current total: {actual_total:.2f}."
             )
         )
@@ -45,20 +45,20 @@ def recalculate_player_handicaps(
     """Recalculate handicaps for all players in a tournament based on new settings."""
     try:
         # Get all bowlers for this tournament
-        bowlers = db.query(models.Bowler).filter(
-            models.Bowler.tournament_id == tournament_id
+        players = db.query(models.TournamentPlayer).filter(
+            models.TournamentPlayer.tournament_id == tournament_id
         ).all()
         
         updated_count = 0
-        for bowler in bowlers:
-            if bowler.average is not None:
+        for player in players:
+            if player.average is not None:
                 # Calculate handicap: (base - average) * (percentage / 100)
-                new_handicap = int((handicap_base - bowler.average) * (handicap_percentage / 100))
+                new_handicap = int((handicap_base - player.average) * (handicap_percentage / 100))
                 # Ensure handicap is not negative
                 new_handicap = max(0, new_handicap)
                 
-                if bowler.handicap != new_handicap:
-                    bowler.handicap = new_handicap
+                if player.handicap_pins != new_handicap:
+                    player.handicap_pins = new_handicap
                     updated_count += 1
         
         if updated_count > 0:
@@ -73,7 +73,7 @@ def recalculate_player_handicaps(
 
 @router.post("/", response_model=schemas.BracketSettings)
 def create_bracket_settings(
-    bracket_settings: schemas.BracketSettingsCreate,
+    bracket_settings: schemas.TournamentBracketSettingsCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
@@ -91,10 +91,10 @@ def create_bracket_settings(
 
         validate_prize_distribution(
             existing_settings.bracket_size,
-            existing_settings.cost_per_bracket,
-            existing_settings.first_place,
-            existing_settings.second_place,
-            existing_settings.house_amount
+            existing_settings.default_entry_fee,
+            existing_settings.first_place_amount,
+            existing_settings.second_place_amount,
+            existing_settings.house_fee_amount
         )
 
         db.commit()
@@ -116,14 +116,14 @@ def create_bracket_settings(
         return existing_settings
     else:
         # Create new settings
-        db_settings = models.BracketSettings(**bracket_settings.model_dump())
+        db_settings = models.TournamentBracketSettings(**bracket_settings.model_dump())
 
         validate_prize_distribution(
             db_settings.bracket_size,
-            db_settings.cost_per_bracket,
-            db_settings.first_place,
-            db_settings.second_place,
-            db_settings.house_amount
+            db_settings.default_entry_fee,
+            db_settings.first_place_amount,
+            db_settings.second_place_amount,
+            db_settings.house_fee_amount
         )
 
         db.add(db_settings)
@@ -151,21 +151,21 @@ def get_bracket_settings(
     current_user: models.User = Depends(get_current_user)
 ):
     """Get bracket settings for a tournament."""
-    settings = db.query(models.BracketSettings).filter(
-        models.BracketSettings.tournament_id == tournament_id
+    settings = db.query(models.TournamentBracketSettings).filter(
+        models.TournamentBracketSettings.tournament_id == tournament_id
     ).first()
     return settings
 
 @router.put("/{settings_id}", response_model=schemas.BracketSettings)
 def update_bracket_settings(
     settings_id: int,
-    bracket_settings: schemas.BracketSettingsUpdate,
+    bracket_settings: schemas.TournamentBracketSettingsUpdate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
     """Update existing bracket settings."""
-    db_settings = db.query(models.BracketSettings).filter(
-        models.BracketSettings.id == settings_id
+    db_settings = db.query(models.TournamentBracketSettings).filter(
+        models.TournamentBracketSettings.id == settings_id
     ).first()
     
     if not db_settings:
@@ -183,10 +183,10 @@ def update_bracket_settings(
 
     validate_prize_distribution(
         db_settings.bracket_size,
-        db_settings.cost_per_bracket,
-        db_settings.first_place,
-        db_settings.second_place,
-        db_settings.house_amount
+        db_settings.default_entry_fee,
+        db_settings.first_place_amount,
+        db_settings.second_place_amount,
+        db_settings.house_fee_amount
     )
     
     db.commit()
@@ -214,8 +214,8 @@ def delete_bracket_settings(
     current_user: models.User = Depends(get_current_user)
 ):
     """Delete bracket settings."""
-    db_settings = db.query(models.BracketSettings).filter(
-        models.BracketSettings.id == settings_id
+    db_settings = db.query(models.TournamentBracketSettings).filter(
+        models.TournamentBracketSettings.id == settings_id
     ).first()
     
     if not db_settings:

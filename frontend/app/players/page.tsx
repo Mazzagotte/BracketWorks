@@ -13,8 +13,9 @@ import PlayerForm from './components/PlayerForm'
 import NoTournamentState from '../components/NoTournamentState'
 import { logger } from '../lib/logger'
 import { Squad, Player } from './types'
-import { BracketSettings, Tournament } from '../lib/types'
+import { BracketProgramDefinition, BracketSettings, Tournament } from '../lib/types'
 import { apiClient, API } from '../lib/api'
+import { calculatePlayerTotalCost, defaultBracketPrograms, getEnabledBracketPrograms, normalizeBracketPrograms, normalizePlayerBracketEntries, summarizeEntries } from '../lib/bracketPrograms'
 import styles from './entries.module.css'
 import { useToastHelpers } from '../components/Toast'
 import ImportLoadingModal from '../components/ImportLoadingModal'
@@ -28,7 +29,9 @@ export default function PlayersPage() {
   const [squads, setSquads] = useState<Squad[]>([])
   const [entryFee, setEntryFee] = useState<number>(25) // Default $25, will be loaded from tournament settings
   const [bracketSize, setBracketSize] = useState<number>(8) // Default 8, will be loaded from tournament settings
+  const [bracketPrograms, setBracketPrograms] = useState<BracketProgramDefinition[]>(defaultBracketPrograms)
   const [initialLoadComplete, setInitialLoadComplete] = useState<boolean>(false)
+  const enabledBracketPrograms = useMemo(() => getEnabledBracketPrograms(bracketPrograms), [bracketPrograms])
   
 
 
@@ -73,15 +76,17 @@ export default function PlayersPage() {
     try {
       const settings = await apiClient.get<BracketSettings>(`/api/v1/bracket-settings/${tournamentId}`);
       
-      if (settings && typeof settings.cost_per_bracket === 'number') {
-        setEntryFee(settings.cost_per_bracket);
-        logger.info(`Loaded entry fee from tournament settings: $${settings.cost_per_bracket}`);
+      if (settings && typeof settings.default_entry_fee === 'number') {
+        setEntryFee(settings.default_entry_fee);
+        logger.info(`Loaded entry fee from tournament settings: $${settings.default_entry_fee}`);
       }
+      setBracketPrograms(normalizeBracketPrograms(settings?.bracket_programs, settings?.default_entry_fee ?? entryFee))
       if (settings && typeof settings.bracket_size === 'number') {
         setBracketSize(8);
       }
     } catch (error) {
       logger.warn('Failed to load bracket settings, using default entry fee:', error);
+      setBracketPrograms(normalizeBracketPrograms(undefined, entryFee))
     } finally {
       setInitialLoadComplete(true);
     }
@@ -117,6 +122,12 @@ export default function PlayersPage() {
   
   const selectedSquad = squads.find(squad => squad.id === selectedSquadId) || null
 
+  useEffect(() => {
+    if (selectedSquadId !== null) {
+      localStorage.setItem('selected_squad_id', String(selectedSquadId));
+    }
+  }, [selectedSquadId]);
+
   // Debug authentication state
   useEffect(() => {
     logger.debug('Players page auth state', {
@@ -149,23 +160,51 @@ export default function PlayersPage() {
     squads,
     authToken: token,
     entryFee,
+    bracketPrograms: enabledBracketPrograms,
     getItem: (key: string) => localStorage.getItem(key)
   })
 
   // Adapter function to match PlayersTable expected signature
   const handleUpdatePlayer = useCallback((playerId: number, field: string, value: string | number) => {
-    const updates: Partial<Player> = { [field]: value };
+    let updates: Partial<Player>
+
+    if (field.startsWith('bracketEntry:')) {
+      const programKey = field.split(':', 2)[1]
+      const existingPlayer = players.find(player => player.id === playerId)
+      const nextBracketEntries = {
+        ...(existingPlayer?.bracketEntries || {}),
+        [programKey]: Number(value || 0),
+      }
+      updates = {
+        bracketEntries: nextBracketEntries,
+        handicap: programKey === 'handicap' ? Number(value || 0) : existingPlayer?.handicap,
+        scratch: programKey === 'scratch' ? Number(value || 0) : existingPlayer?.scratch,
+      }
+    } else {
+      updates = { [field]: value };
+    }
+
     updatePlayer(playerId, updates);
-  }, [updatePlayer]);
+  }, [players, updatePlayer]);
 
   // DEV ONLY: randomize averages and entries for all players
   const handleRandomize = useCallback(async () => {
-    const updates = players.map(player => ({
-      id: player.id,
-      average: Math.floor(Math.random() * 91) + 140, // 140–230
-      handicap_entries: Math.floor(Math.random() * 15) + 1, // 1–15
-      scratch_entries: Math.floor(Math.random() * 15) + 1, // 1–15
-    }))
+    const updates = players.map(player => {
+      const programEntryCounts = Object.fromEntries(
+        enabledBracketPrograms.map(program => [
+          program.key,
+          Math.floor(Math.random() * 15) + 1,
+        ]),
+      )
+
+      return {
+        id: player.id,
+        average: Math.floor(Math.random() * 91) + 140, // 140–230
+        handicap_entries: programEntryCounts.handicap ?? 0,
+        scratch_entries: programEntryCounts.scratch ?? 0,
+        program_entry_counts: programEntryCounts,
+      }
+    })
 
     // Optimistic local update
     updates.forEach(u => {
@@ -173,6 +212,7 @@ export default function PlayersPage() {
         average: u.average,
         handicap: u.handicap_entries,
         scratch: u.scratch_entries,
+        bracketEntries: u.program_entry_counts,
       })
     })
 
@@ -184,7 +224,7 @@ export default function PlayersPage() {
     } catch (err) {
       console.error('Bulk randomize failed', err)
     }
-  }, [players, updatePlayer, cancelPendingPatches])
+  }, [players, enabledBracketPrograms, updatePlayer, cancelPendingPatches])
 
   const isDev = process.env.NODE_ENV === 'development'
   const [isDeletingAll, setIsDeletingAll] = useState(false)
@@ -231,15 +271,16 @@ export default function PlayersPage() {
       if (!firstName || !lastName) return null
       const handicap = Math.max(0, Math.floor(parseNumber(getValue(nr, ['handicap', 'handicapentries', 'handicapbrackets']), 0)))
       const scratch  = Math.max(0, Math.floor(parseNumber(getValue(nr, ['scratch',  'scratchentries',  'scratchbrackets']),  0)))
+      const bracketEntries = normalizePlayerBracketEntries(undefined, handicap, scratch)
       return {
         firstName, lastName,
         usbc:       String(getValue(nr, ['usbc', 'usbcnumber']) || '').trim(),
         average:    Math.max(0, Math.floor(parseNumber(getValue(nr, ['average', 'avg']), 150))),
         handicap, scratch,
+        bracketEntries,
         lane:       String(getValue(nr, ['lane']) || 'A1').trim() || 'A1',
-        division:   String(getValue(nr, ['division']) || 'Open').trim() || 'Open',
         amountPaid: Math.max(0, parseNumber(getValue(nr, ['amountpaid', 'paid', 'payment']), 0)),
-        totalCost:  (scratch + handicap) * entryFee,
+        totalCost: calculatePlayerTotalCost(bracketEntries, bracketPrograms, entryFee),
       }
     }).filter((p): p is NonNullable<typeof p> => p !== null)
   }
@@ -334,67 +375,14 @@ export default function PlayersPage() {
     if (!players || players.length === 0) {
       return {
         totalPlayers: 0,
-        scratchEntries: 0,
-        handicapEntries: 0,
         totalEntries: 0,
-        expectedScratchBrackets: 0,
-        expectedHandicapBrackets: 0,
-        scratchRefunds: 0,
-        handicapRefunds: 0,
-        totalRevenue: 0
+        totalRevenue: 0,
+        programSummaries: [],
       }
     }
 
-    // Mirrors the backend's two-phase fill algorithm (brackets_advanced.py).
-    // Phase 1 uses the same convergence formula:
-    //   Start with k = floor(total / bracketSize). Each player contributes
-    //   at most min(count, k) entries (one per bracket). If that capped supply
-    //   can't fill k brackets, reduce k and re-check until stable.
-    // Phase 2 only affects pairing quality (rematch avoidance), not count.
-    // The frontend estimate therefore matches the backend bracket count exactly.
-    const simulateBracketFill = (playerCounts: number[]) => {
-      const total = playerCounts.reduce((a, b) => a + b, 0)
-      if (total < bracketSize) return { brackets: 0, refunds: total }
-
-      let k = Math.floor(total / bracketSize)
-      while (k > 0) {
-        const fillable = playerCounts.reduce((sum, c) => sum + Math.min(c, k), 0)
-        const newK = Math.floor(fillable / bracketSize)
-        if (newK >= k) break   // stable — k is achievable
-        k = newK
-      }
-
-      return { brackets: k, refunds: total - k * bracketSize }
-    }
-
-    const scratchCounts = players.map(p => p.scratch || 0)
-    const handicapCounts = players.map(p => p.handicap || 0)
-
-    const scratchSim = simulateBracketFill(scratchCounts)
-    const handicapSim = simulateBracketFill(handicapCounts)
-
-    const scratchCount = scratchCounts.reduce((a, b) => a + b, 0)
-    const handicapCount = handicapCounts.reduce((a, b) => a + b, 0)
-    const totalEntries = scratchCount + handicapCount
-
-    let paidEntries = 0
-    players.forEach(player => {
-      const isPaid = player.amountPaid && player.totalCost && player.amountPaid >= player.totalCost
-      if (isPaid) paidEntries += (player.scratch || 0) + (player.handicap || 0)
-    })
-
-    return {
-      totalPlayers: players.length,
-      scratchEntries: scratchCount,
-      handicapEntries: handicapCount,
-      totalEntries,
-      expectedScratchBrackets: scratchSim.brackets,
-      expectedHandicapBrackets: handicapSim.brackets,
-      scratchRefunds: scratchSim.refunds,
-      handicapRefunds: handicapSim.refunds,
-      totalRevenue: paidEntries * entryFee
-    }
-  }, [players, entryFee, bracketSize])
+    return summarizeEntries(players, enabledBracketPrograms, bracketSize, entryFee)
+  }, [players, enabledBracketPrograms, entryFee, bracketSize])
 
   // Fetch squad data (similar to scores page) - OPTIMIZED WITH PARALLEL REQUESTS
   useEffect(() => {
@@ -425,10 +413,15 @@ export default function PlayersPage() {
         
         // Wait for both requests to complete
         const [selectedData, squadsData] = await Promise.all([selectedSquadPromise, squadsPromise]);
+        const storedSelectedSquadId = localStorage.getItem('selected_squad_id');
+        const restoredSelectedSquadId = selectedData?.squad_id
+          ?? (storedSelectedSquadId ? Number(storedSelectedSquadId) : null);
         
         // Set selected squad ID
-        if (selectedData?.squad_id) {
-          setSelectedSquadId(selectedData.squad_id);
+        if (restoredSelectedSquadId && squadsData.some((squad: Squad) => squad.id === restoredSelectedSquadId)) {
+          setSelectedSquadId(restoredSelectedSquadId);
+        } else {
+          setSelectedSquadId(null);
         }
         
         // Set all squads
@@ -493,6 +486,7 @@ export default function PlayersPage() {
           isLoading={isLoading}
           squads={squads}
           entryFee={entryFee}
+          bracketPrograms={enabledBracketPrograms}
         />
 
         {isLoading ? (
@@ -527,23 +521,16 @@ export default function PlayersPage() {
                     <div className={styles.statLabel}>Players</div>
                   </div>
 
-                  <div className={styles.statBox}>
-                    <div className={styles.statValue}>{entryTotals.handicapEntries}</div>
-                    <div className={styles.statLabel}>Handicap Entries</div>
-                    <div className={styles.statDetail}>{entryTotals.expectedHandicapBrackets} bracket{entryTotals.expectedHandicapBrackets !== 1 ? 's' : ''}</div>
-                    {entryTotals.handicapRefunds > 0 && (
-                      <div className={styles.statRefund}>~{entryTotals.handicapRefunds} refund{entryTotals.handicapRefunds !== 1 ? 's' : ''}</div>
-                    )}
-                  </div>
-
-                  <div className={styles.statBox}>
-                    <div className={styles.statValue}>{entryTotals.scratchEntries}</div>
-                    <div className={styles.statLabel}>Scratch Entries</div>
-                    <div className={styles.statDetail}>{entryTotals.expectedScratchBrackets} bracket{entryTotals.expectedScratchBrackets !== 1 ? 's' : ''}</div>
-                    {entryTotals.scratchRefunds > 0 && (
-                      <div className={styles.statRefund}>~{entryTotals.scratchRefunds} refund{entryTotals.scratchRefunds !== 1 ? 's' : ''}</div>
-                    )}
-                  </div>
+                    {entryTotals.programSummaries.map(program => (
+                      <div key={program.key} className={styles.statBox}>
+                        <div className={styles.statValue}>{program.totalEntries}</div>
+                        <div className={styles.statLabel}>{program.name} Entries</div>
+                        <div className={styles.statDetail}>{program.expectedBrackets} bracket{program.expectedBrackets !== 1 ? 's' : ''}</div>
+                        {program.refunds > 0 && (
+                          <div className={styles.statRefund}>~{program.refunds} refund{program.refunds !== 1 ? 's' : ''}</div>
+                        )}
+                      </div>
+                    ))}
 
                   <div className={`${styles.statBox} ${styles.statBoxRevenue}`}>
                     <div className={styles.statValue}>${entryTotals.totalRevenue.toLocaleString()}</div>
@@ -560,6 +547,7 @@ export default function PlayersPage() {
                 onDeletePlayer={handleDeletePlayer}
                 savingStatus={savingStatus}
                 entryFee={entryFee}
+                bracketPrograms={enabledBracketPrograms}
                 selectedSquad={selectedSquad}
               />
             </div>

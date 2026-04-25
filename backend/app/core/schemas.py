@@ -1,5 +1,17 @@
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import AliasChoices, BaseModel, ConfigDict, EmailStr, Field, field_validator
 from typing import Dict, List, Optional
+
+
+class BracketProgramDefinition(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    key: str
+    name: str
+    division: Optional[str] = "Any"
+    scoring_mode: str = Field(validation_alias=AliasChoices("scoring_mode", "scoringMode"))
+    entry_fee: Optional[float] = Field(default=None, validation_alias=AliasChoices("entry_fee", "entryFee"))
+    enabled: bool = True
+    display_order: Optional[int] = Field(default=None, validation_alias=AliasChoices("display_order", "displayOrder"))
 
 class LoginRequest(BaseModel):
     username: str
@@ -14,10 +26,9 @@ class SelectedSquadCreate(SelectedSquadBase):
     pass
 
 class SelectedSquadOut(SelectedSquadBase):
-    id: int
+    model_config = ConfigDict(from_attributes=True)
 
-    class Config:
-        from_attributes = True
+    id: int
 
 class SelectedSquadDelete(BaseModel):
     user_id: int
@@ -31,10 +42,9 @@ class SquadCreate(SquadBase):
     pass
 
 class Squad(SquadBase):
-    id: int
+    model_config = ConfigDict(from_attributes=True)
 
-    class Config:
-        from_attributes = True
+    id: int
 
 class UserCreate(BaseModel):
     first_name: str
@@ -52,40 +62,50 @@ class UserOut(BaseModel):
     email: EmailStr
     organization: Optional[str] = None
     is_admin: int
-class BowlerBase(BaseModel):
+
+
+class PlayerBase(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     tournament_id: int
     squad_id: int | None = None
     user_id: int | None = None
-    name: str
+    full_name: str = Field(validation_alias=AliasChoices("full_name", "name"))
     average: int | None = None
-    handicap_entries: int | None = None
-    scratch_entries: int | None = None
+    handicap_entry_count: int | None = Field(default=None, validation_alias=AliasChoices("handicap_entry_count", "handicap_entries"))
+    scratch_entry_count: int | None = Field(default=None, validation_alias=AliasChoices("scratch_entry_count", "scratch_entries"))
+    program_entry_counts: Dict[str, int] | None = Field(default=None, validation_alias=AliasChoices("program_entry_counts", "bracket_entries"))
     lane: str | None = None
     division: str | None = None
-    usbc: str | None = None
+    usbc_number: str | None = Field(default=None, validation_alias=AliasChoices("usbc_number", "usbc"))
     amount_paid: float | None = None
 
-class BowlerCreate(BowlerBase):
+
+class PlayerCreate(PlayerBase):
     pass
 
-class BowlerUpdate(BaseModel):
+
+class PlayerUpdate(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     tournament_id: int | None = None
     squad_id: int | None = None
     user_id: int | None = None
-    name: str | None = None
+    full_name: str | None = Field(default=None, validation_alias=AliasChoices("full_name", "name"))
     average: int | None = None
-    handicap_entries: int | None = None
-    scratch_entries: int | None = None
+    handicap_entry_count: int | None = Field(default=None, validation_alias=AliasChoices("handicap_entry_count", "handicap_entries"))
+    scratch_entry_count: int | None = Field(default=None, validation_alias=AliasChoices("scratch_entry_count", "scratch_entries"))
+    program_entry_counts: Dict[str, int] | None = Field(default=None, validation_alias=AliasChoices("program_entry_counts", "bracket_entries"))
     lane: str | None = None
     division: str | None = None
-    usbc: str | None = None
+    usbc_number: str | None = Field(default=None, validation_alias=AliasChoices("usbc_number", "usbc"))
     amount_paid: float | None = None
 
-class Bowler(BowlerBase):
-    id: int
 
-    class Config:
-        from_attributes = True
+class Player(PlayerBase):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    id: int
 
 class TournamentBase(BaseModel):
     name: str
@@ -101,22 +121,25 @@ class TournamentUpdate(TournamentBase):
     pass
 
 class Tournament(TournamentBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     user_id: int
 
-    class Config:
-        from_attributes = True
 
-class BracketSettingsBase(BaseModel):
+class TournamentBracketSettingsBase(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     tournament_id: int
     bracket_size: Optional[int] = None
-    first_place: Optional[float] = None
-    second_place: Optional[float] = None
-    house_amount: Optional[float] = None
-    cost_per_bracket: Optional[float] = None
+    first_place_amount: Optional[float] = Field(default=None, validation_alias=AliasChoices("first_place_amount", "first_place"))
+    second_place_amount: Optional[float] = Field(default=None, validation_alias=AliasChoices("second_place_amount", "second_place"))
+    house_fee_amount: Optional[float] = Field(default=None, validation_alias=AliasChoices("house_fee_amount", "house_amount"))
+    default_entry_fee: Optional[float] = Field(default=None, validation_alias=AliasChoices("default_entry_fee", "cost_per_bracket"))
+    bracket_programs: List[BracketProgramDefinition] | None = None
     handicap_percentage: Optional[float] = 80.0
     handicap_base: Optional[float] = 200.0
-    allow_bye: Optional[bool] = False
+    allow_byes: Optional[bool] = Field(default=False, validation_alias=AliasChoices("allow_byes", "allow_bye"))
 
     @field_validator('bracket_size')
     @classmethod
@@ -127,18 +150,22 @@ class BracketSettingsBase(BaseModel):
             raise ValueError('Bracket size must be 8 for three-game sets')
         return value
 
-class BracketSettingsCreate(BracketSettingsBase):
+class TournamentBracketSettingsCreate(TournamentBracketSettingsBase):
     pass
 
-class BracketSettingsUpdate(BaseModel):
+
+class TournamentBracketSettingsUpdate(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     bracket_size: Optional[int] = None
-    first_place: Optional[float] = None
-    second_place: Optional[float] = None
-    house_amount: Optional[float] = None
-    cost_per_bracket: Optional[float] = None
+    first_place_amount: Optional[float] = Field(default=None, validation_alias=AliasChoices("first_place_amount", "first_place"))
+    second_place_amount: Optional[float] = Field(default=None, validation_alias=AliasChoices("second_place_amount", "second_place"))
+    house_fee_amount: Optional[float] = Field(default=None, validation_alias=AliasChoices("house_fee_amount", "house_amount"))
+    default_entry_fee: Optional[float] = Field(default=None, validation_alias=AliasChoices("default_entry_fee", "cost_per_bracket"))
+    bracket_programs: List[BracketProgramDefinition] | None = None
     handicap_percentage: Optional[float] = None
     handicap_base: Optional[float] = None
-    allow_bye: Optional[bool] = None
+    allow_byes: Optional[bool] = Field(default=None, validation_alias=AliasChoices("allow_byes", "allow_bye"))
 
     @field_validator('bracket_size')
     @classmethod
@@ -149,8 +176,17 @@ class BracketSettingsUpdate(BaseModel):
             raise ValueError('Bracket size must be 8 for three-game sets')
         return value
 
-class BracketSettings(BracketSettingsBase):
+class TournamentBracketSettings(TournamentBracketSettingsBase):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
     id: int
 
-    class Config:
-        from_attributes = True
+
+BowlerBase = PlayerBase
+BowlerCreate = PlayerCreate
+BowlerUpdate = PlayerUpdate
+Bowler = Player
+BracketSettingsBase = TournamentBracketSettingsBase
+BracketSettingsCreate = TournamentBracketSettingsCreate
+BracketSettingsUpdate = TournamentBracketSettingsUpdate
+BracketSettings = TournamentBracketSettings

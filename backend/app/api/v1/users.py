@@ -224,3 +224,19 @@ def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(db_user)
     return db_user
+
+
+@router.get("/check-username")
+def check_username(username: str, db: Session = Depends(get_db)):
+    normalized_username = username.strip()
+
+    if len(normalized_username) < 3:
+        raise HTTPException(status_code=400, detail="Username must be at least 3 characters")
+
+    existing = (
+        db.query(models.User.id)
+        .filter(models.User.username == normalized_username)
+        .first()
+    )
+
+    return {"available": existing is None}

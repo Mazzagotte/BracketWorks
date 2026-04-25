@@ -124,37 +124,25 @@ def delete_tournament(
     try:
         # Delete in FK dependency order
         # 1. Payouts depend on winners/brackets
-        db.query(models.TournamentPayout).filter(models.TournamentPayout.tournament_id == tournament_id).delete()
-        db.query(models.TournamentWinner).filter(models.TournamentWinner.tournament_id == tournament_id).delete()
-        db.query(models.PayoutSummary).filter(models.PayoutSummary.tournament_id == tournament_id).delete()
-        db.query(models.BracketSummary).filter(models.BracketSummary.tournament_id == tournament_id).delete()
+        db.query(models.BracketPayout).filter(models.BracketPayout.tournament_id == tournament_id).delete()
+        db.query(models.BracketWinner).filter(models.BracketWinner.tournament_id == tournament_id).delete()
+        db.query(models.TournamentPayoutSummary).filter(models.TournamentPayoutSummary.tournament_id == tournament_id).delete()
 
-        # 2. Bracket matches/rounds depend on generated_bracket
-        bracket_ids = [b.id for b in db.query(models.GeneratedBracket.id).filter(
-            models.GeneratedBracket.tournament_id == tournament_id).all()]
-        if bracket_ids:
-            round_ids = [r.id for r in db.query(models.BracketRound.id).filter(
-                models.BracketRound.bracket_id.in_(bracket_ids)).all()]
-            if round_ids:
-                db.query(models.BracketMatch).filter(models.BracketMatch.round_id.in_(round_ids)).delete()
-            db.query(models.BracketRound).filter(models.BracketRound.bracket_id.in_(bracket_ids)).delete()
-        db.query(models.GeneratedBracket).filter(models.GeneratedBracket.tournament_id == tournament_id).delete()
+        # 2. Active bracket snapshots, scores, history, players, settings
+        db.query(models.BracketSnapshot).filter(models.BracketSnapshot.tournament_id == tournament_id).delete()
+        db.query(models.FirstRoundMatchupHistory).filter(models.FirstRoundMatchupHistory.tournament_id == tournament_id).delete()
+        db.query(models.PlayerScore).filter(models.PlayerScore.tournament_id == tournament_id).delete()
+        db.query(models.TournamentPlayer).filter(models.TournamentPlayer.tournament_id == tournament_id).delete()
+        db.query(models.TournamentBracketSettings).filter(models.TournamentBracketSettings.tournament_id == tournament_id).delete()
 
-        # 3. Simple brackets, scores, match history, bowlers, settings
-        db.query(models.SimpleBracket).filter(models.SimpleBracket.tournament_id == tournament_id).delete()
-        db.query(models.MatchHistory).filter(models.MatchHistory.tournament_id == tournament_id).delete()
-        db.query(models.Score).filter(models.Score.tournament_id == tournament_id).delete()
-        db.query(models.Bowler).filter(models.Bowler.tournament_id == tournament_id).delete()
-        db.query(models.BracketSettings).filter(models.BracketSettings.tournament_id == tournament_id).delete()
-
-        # 4. SelectedSquad depends on Squad — delete before Squad
-        squad_ids = [s.id for s in db.query(models.Squad.id).filter(
-            models.Squad.tournament_id == tournament_id).all()]
+        # 3. User squad selections depend on squads
+        squad_ids = [s.id for s in db.query(models.TournamentSquad.id).filter(
+            models.TournamentSquad.tournament_id == tournament_id).all()]
         if squad_ids:
-            db.query(models.SelectedSquad).filter(models.SelectedSquad.squad_id.in_(squad_ids)).delete()
-        db.query(models.Squad).filter(models.Squad.tournament_id == tournament_id).delete()
+            db.query(models.UserSquadSelection).filter(models.UserSquadSelection.tournament_squad_id.in_(squad_ids)).delete()
+        db.query(models.TournamentSquad).filter(models.TournamentSquad.tournament_id == tournament_id).delete()
 
-        # 5. Finally delete the tournament
+        # 4. Finally delete the tournament
         db.delete(db_t)
         db.commit()
     except Exception as e:

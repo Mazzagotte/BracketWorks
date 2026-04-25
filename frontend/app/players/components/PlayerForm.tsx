@@ -2,6 +2,7 @@ import React, { memo, useState, useEffect } from 'react';
 
 import { PlayerFormProps } from '../types';
 import styles from '../entries.module.css';
+import { calculatePlayerTotalCost, normalizePlayerBracketEntries } from '../../lib/bracketPrograms';
 
 const EMPTY_FORM = {
   firstName: '',
@@ -10,12 +11,12 @@ const EMPTY_FORM = {
   average: 150,
   handicap: 0,
   scratch: 0,
+  bracketEntries: { handicap: 0, scratch: 0 },
   lane: 'A1',
-  division: 'Open',
   amountPaid: 0
 };
 
-const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee }: PlayerFormProps) => {
+const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketPrograms }: PlayerFormProps) => {
   const [formData, setFormData] = useState({ ...EMPTY_FORM });
 
   const isDirty = formData.firstName.trim() !== '' || formData.lastName.trim() !== '';
@@ -36,10 +37,15 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee }: PlayerFor
       return;
     }
 
-    const totalCost = (formData.scratch + formData.handicap) * entryFee;
+    const totalCost = calculatePlayerTotalCost(
+      normalizePlayerBracketEntries(formData.bracketEntries, formData.handicap, formData.scratch),
+      bracketPrograms,
+      entryFee,
+    );
 
     onAddPlayer({
       ...formData,
+      bracketEntries: normalizePlayerBracketEntries(formData.bracketEntries, formData.handicap, formData.scratch),
       firstName: formData.firstName.trim(),
       lastName: formData.lastName.trim(),
       totalCost
@@ -51,6 +57,19 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee }: PlayerFor
   const handleInputChange = (field: string, value: string | number) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
+
+  const handleBracketEntryChange = (programKey: string, value: string) => {
+    const count = Math.max(0, parseInt(value, 10) || 0)
+    setFormData(prev => ({
+      ...prev,
+      bracketEntries: {
+        ...prev.bracketEntries,
+        [programKey]: count,
+      },
+      handicap: programKey === 'handicap' ? count : prev.handicap,
+      scratch: programKey === 'scratch' ? count : prev.scratch,
+    }))
+  }
 
   return (
     <div className={styles.formCard}>
@@ -121,62 +140,53 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee }: PlayerFor
             />
           </div>
 
-          <div>
-            <label className={styles.fieldLabel}>Division</label>
-            <select
-              value={formData.division}
-              onChange={(e) => handleInputChange('division', e.target.value)}
-              className={styles.fieldSelect}
-            >
-              <option value="Open">Open</option>
-              <option value="Womens">Womens</option>
-              <option value="Senior">Senior</option>
-              <option value="Junior">Junior</option>
-            </select>
+        </div>
+
+        <div className={styles.compactSection}>
+          <div className={styles.compactSectionHeader}>
+            <div>
+              <h4 className={styles.compactSectionTitle}>Entries & Payment</h4>
+            </div>
           </div>
 
-          <div>
-            <label className={styles.fieldLabel}>Handicap Brackets</label>
-            <input
-              type="number"
-              value={formData.handicap}
-              onChange={(e) => handleInputChange('handicap', parseInt(e.target.value) || 0)}
-              className={styles.fieldInput}
-              min="0"
-            />
-          </div>
+          <div className={styles.compactGrid}>
 
-          <div>
-            <label className={styles.fieldLabel}>Scratch Brackets</label>
-            <input
-              type="number"
-              value={formData.scratch}
-              onChange={(e) => handleInputChange('scratch', parseInt(e.target.value) || 0)}
-              className={styles.fieldInput}
-              min="0"
-            />
-          </div>
+          {bracketPrograms.map(program => (
+            <div key={program.key} className={styles.compactField}>
+              <label className={styles.fieldLabel}>{program.name}</label>
+              <input
+                type="number"
+                value={formData.bracketEntries[program.key] || 0}
+                onChange={(e) => handleBracketEntryChange(program.key, e.target.value)}
+                className={`${styles.fieldInput} ${styles.compactInput}`}
+                min="0"
+              />
+            </div>
+          ))}
 
-          <div>
+          <div className={styles.compactField}>
             <label className={styles.fieldLabel}>Amount Paid</label>
             <input
               type="number"
               value={formData.amountPaid}
               onChange={(e) => handleInputChange('amountPaid', parseFloat(e.target.value) || 0)}
-              className={styles.fieldInput}
+              className={`${styles.fieldInput} ${styles.compactInput}`}
               min="0"
               step="0.01"
             />
           </div>
         </div>
+        </div>
 
-        <button
-          type="submit"
-          disabled={isLoading}
-          className={styles.submitBtn}
-        >
-          {isLoading ? 'Adding...' : 'Add Player'}
-        </button>
+        <div className={styles.formFooter}>
+          <button
+            type="submit"
+            disabled={isLoading}
+            className={styles.submitBtn}
+          >
+            {isLoading ? 'Adding...' : 'Add Player'}
+          </button>
+        </div>
       </form>
     </div>
   );

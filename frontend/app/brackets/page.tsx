@@ -7,10 +7,11 @@ import { ErrorBoundary } from '../components/ErrorBoundary'
 import { useBrackets, BracketPreview } from '../hooks/useBrackets'
 import { useTournaments, useSquads } from '../hooks/useTournaments'
 import { useToast } from '../components/Toast'
-import { Tournament, Squad, BracketResponse, BracketData } from '../lib/types'
+import { Tournament, Squad, BracketResponse } from '../lib/types'
 import { logger } from '../lib/logger'
 import { storage } from '../lib/storage'
 import { cleanupModalState, resetScrollLocks } from '../utils/modalUtils'
+import { getBracketGroups } from '../lib/bracketPrograms'
 import { BracketTabs } from './components/BracketTabs'
 import { SearchFilter } from './components/SearchFilter'
 import { EmptyBracketState } from './components/EmptyBracketState'
@@ -32,7 +33,7 @@ export default function BracketsPage() {
   const [isInitializing, setIsInitializing] = useState(true)
   
   // State for bracket display
-  const [activeTab, setActiveTab] = useState<'scratch' | 'handicap' | 'all'>('all')
+  const [activeTab, setActiveTab] = useState('all')
   const [currentRound, setCurrentRound] = useState(0)
   
   // Ref to prevent infinite loop in useEffect
@@ -345,24 +346,34 @@ export default function BracketsPage() {
     startBracketGeneration()
   }, [startBracketGeneration])
 
-  // Filter and process brackets based on active tab
-  const filteredBrackets = useMemo(() => {
-    if (!loadedBrackets) return []
-    
-    // Try direct properties first (current API format)
-    const scratch = loadedBrackets.scratch_brackets || loadedBrackets.multiple_brackets?.scratch_brackets || []
-    const handicap = loadedBrackets.handicap_brackets || loadedBrackets.multiple_brackets?.handicap_brackets || []
-    
-    // Early return based on tab to avoid unnecessary array concatenation
-    if (activeTab === 'scratch') {
-      return scratch
-    } else if (activeTab === 'handicap') {
-      return handicap
+  const bracketGroups = useMemo(() => {
+    return getBracketGroups(loadedBrackets as BracketResponse | null).filter(group => group.brackets?.length)
+  }, [loadedBrackets])
+
+  useEffect(() => {
+    if (activeTab === 'all') return
+    if (!bracketGroups.some(group => group.key === activeTab)) {
+      setActiveTab(bracketGroups.length > 1 ? 'all' : (bracketGroups[0]?.key || 'all'))
+      setSelectedBracketIndex(0)
     }
-    
-    // Only create combined array for 'all' tab
-    return [...scratch, ...handicap]
-  }, [loadedBrackets, activeTab])
+  }, [activeTab, bracketGroups])
+
+  // Filter and process brackets based on active tab
+  const filteredBracketItems = useMemo(() => {
+    if (activeTab === 'all') {
+      return bracketGroups.flatMap(group => group.brackets.map(bracket => ({ group, bracket })))
+    }
+
+    const activeGroup = bracketGroups.find(group => group.key === activeTab)
+    if (!activeGroup) return []
+    return activeGroup.brackets.map(bracket => ({ group: activeGroup, bracket }))
+  }, [activeTab, bracketGroups])
+
+  const activeBracketItem = useMemo(() => {
+    if (!filteredBracketItems.length) return null
+    const safeIndex = Math.min(selectedBracketIndex, filteredBracketItems.length - 1)
+    return filteredBracketItems[safeIndex] || null
+  }, [filteredBracketItems, selectedBracketIndex])
 
   // Convert brackets to rounds structure
   const rounds = useMemo(() => {
@@ -372,41 +383,9 @@ export default function BracketsPage() {
     if (loadedBrackets.rounds) {
       return loadedBrackets.rounds
     }
-    
-    // Check for direct scratch_brackets/handicap_brackets at top level (current API format)
-    const bracketResponse = loadedBrackets as BracketResponse;
-    const scratch_brackets = bracketResponse.scratch_brackets;
-    const handicap_brackets = bracketResponse.handicap_brackets;
-    
-    // Helper function to get source brackets - eliminates duplicate logic
-    const getSourceBrackets = (scratch: BracketData[] | undefined, handicap: BracketData[] | undefined): BracketData[] => {
-      if (activeTab === 'scratch' && scratch?.length) {
-        return scratch
-      }
-      if (activeTab === 'handicap' && handicap?.length) {
-        return handicap
-      }
-      // For 'all' tab, prefer scratch if available
-      return scratch?.length ? scratch : (handicap || [])
-    }
-    
-    let sourceBrackets: BracketData[] = []
-    
-    if (scratch_brackets || handicap_brackets) {
-      sourceBrackets = getSourceBrackets(scratch_brackets, handicap_brackets)
-    } else if (bracketResponse.multiple_brackets) {
-      // Alternative API format with wrapper
-      const { scratch_brackets: wrapperScratch, handicap_brackets: wrapperHandicap } = bracketResponse.multiple_brackets
-      sourceBrackets = getSourceBrackets(wrapperScratch, wrapperHandicap)
-    }
-    
-    // Early return if no brackets
-    if (!sourceBrackets.length) return []
-    
-    // Use selectedBracketIndex, but ensure it's within bounds
-    const bracketIndex = Math.min(selectedBracketIndex, sourceBrackets.length - 1)
-    return sourceBrackets[bracketIndex]?.rounds || []
-  }, [loadedBrackets, activeTab, selectedBracketIndex])
+
+    return activeBracketItem?.bracket?.rounds || []
+  }, [activeBracketItem, loadedBrackets])
 
   // Handle search and filter
   const handleClearFilters = useCallback(() => {
@@ -555,24 +534,20 @@ export default function BracketsPage() {
 
               {/* Bracket Tabs */}
               <BracketTabs
+                tabs={[
+                  ...(bracketGroups.length > 1 ? [{ id: 'all', label: 'View All', count: filteredBracketItems.length }] : []),
+                  ...bracketGroups.map(group => ({ id: group.key, label: group.name, count: group.brackets.length })),
+                ]}
                 activeTab={activeTab}
                 onTabChange={(tab) => {
                   setActiveTab(tab)
                   setSelectedBracketIndex(0)
                 }}
-                scratchCount={loadedBrackets.scratch_brackets?.length || loadedBrackets.multiple_brackets?.scratch_brackets?.length || 0}
-                handicapCount={loadedBrackets.handicap_brackets?.length || loadedBrackets.multiple_brackets?.handicap_brackets?.length || 0}
               />
 
               {/* Bracket Navigator - only shown when there are multiple brackets */}
               {(() => {
-              const scratchBrackets = loadedBrackets.scratch_brackets || loadedBrackets.multiple_brackets?.scratch_brackets || []
-              const handicapBrackets = loadedBrackets.handicap_brackets || loadedBrackets.multiple_brackets?.handicap_brackets || []
-              
-              let totalBrackets = 0
-              if (activeTab === 'scratch') totalBrackets = scratchBrackets.length
-              else if (activeTab === 'handicap') totalBrackets = handicapBrackets.length
-              else totalBrackets = scratchBrackets.length + handicapBrackets.length
+              const totalBrackets = filteredBracketItems.length
               
               if (totalBrackets <= 1) return null // Don't show if only one bracket
               
@@ -583,9 +558,7 @@ export default function BracketsPage() {
               const progressPercent = totalMatches > 0 ? Math.round((completedMatches / totalMatches) * 100) : 0
               
               // Get bracket type
-              const bracketType = activeTab === 'all' 
-                ? (scratchBrackets.length > 0 ? 'Scratch' : 'Handicap')
-                : activeTab.charAt(0).toUpperCase() + activeTab.slice(1)
+              const bracketType = activeBracketItem?.group?.name || 'Bracket'
               
               return (
                 <>
@@ -653,7 +626,7 @@ export default function BracketsPage() {
                 <BracketTreeView
                   rounds={rounds}
                   isMobile={isMobile}
-                  bracketType={activeTab === 'scratch' ? 'scratch' : 'handicap'}
+                  bracketType={activeBracketItem?.group?.scoring_mode === 'scratch' ? 'scratch' : 'handicap'}
                   searchTerm={searchTerm}
                   statusFilter={selectedStatus}
                 />

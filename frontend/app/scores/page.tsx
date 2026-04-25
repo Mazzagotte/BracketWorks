@@ -331,38 +331,38 @@ export default function ScoresPage() {
       
       const scoresData = scoresResponse.ok ? await scoresResponse.json() : []
       
-      // Create a lookup map for scores by bowler_id
+      // Create a lookup map for scores by player_id
       const scoresMap = new Map()
       scoresData.forEach((score: ScoreData) => {
-        scoresMap.set(score.bowler_id, {
+        scoresMap.set(score.player_id, {
           game1_scratch: score.game1_scratch,
-          game1_total: score.game1_total,
+          game1_with_handicap: score.game1_with_handicap,
           game2_scratch: score.game2_scratch,
-          game2_total: score.game2_total,
+          game2_with_handicap: score.game2_with_handicap,
           game3_scratch: score.game3_scratch,
-          game3_total: score.game3_total
+          game3_with_handicap: score.game3_with_handicap
         })
       })
       
-      // Transform bowlers data to match our player structure
-      const transformedData = (data || []).map((bowler: Player) => {
-        const nameParts = bowler.name.split(' ')
-        const existingScores = scoresMap.get(bowler.id) || {
+      // Transform API player data to match the local score-entry structure
+      const transformedData = (data || []).map((playerRecord: Player) => {
+        const nameParts = (playerRecord.fullName || '').split(' ')
+        const existingScores = scoresMap.get(playerRecord.id) || {
           game1_scratch: undefined,
-          game1_total: undefined,
+          game1_with_handicap: undefined,
           game2_scratch: undefined,
-          game2_total: undefined,
+          game2_with_handicap: undefined,
           game3_scratch: undefined,
-          game3_total: undefined
+          game3_with_handicap: undefined
         }
         
         return {
-          id: bowler.id,
+          id: playerRecord.id,
           firstName: nameParts[0] || '',
           lastName: nameParts.slice(1).join(' ') || '',
-          handicap: bowler.handicap || 0,
-          average: bowler.average || 0,
-          lane: bowler.lane || null,
+          handicap: playerRecord.handicapPins || 0,
+          average: playerRecord.average || 0,
+          lane: playerRecord.lane || null,
           scores: existingScores
         }
       })
@@ -588,11 +588,11 @@ export default function ScoresPage() {
           const scratchScore = value || 0
           const handicap = player.handicap || 0  // Use stored handicap value
           const totalScore = scratchScore + handicap
-          updatedScores[`game${gameNum}_total` as keyof typeof updatedScores] = totalScore
+          updatedScores[`game${gameNum}_with_handicap` as keyof typeof updatedScores] = totalScore
         }
 
         const scoreData = {
-          bowler_id: playerId,
+          player_id: playerId,
           tournament_id: parseInt(tournamentId),
           squad_id: selectedSquad.id,
           game1_scratch: updatedScores.game1_scratch,
@@ -912,8 +912,54 @@ export default function ScoresPage() {
 
           {/* No Players State */}
           {!isLoading && players.length === 0 && tournament && (
-            <div className={styles.statusMessage}>
-              No players found. <Link href="/players">Add some players first</Link>
+            <div className={styles.emptyScoresState}>
+              <div className={styles.emptyScoresAccentGlow} aria-hidden="true" />
+
+              <div className={styles.emptyScoresBadge}>Tournament Ready</div>
+
+              <div className={styles.emptyScoresHeroRow}>
+                <div className={styles.emptyScoresIconContainer}>
+                  <div className={styles.emptyScoresIcon}>
+                    <svg viewBox="0 0 100 100" className={styles.emptyScoresIconSvg} aria-hidden="true">
+                      <rect x="18" y="18" width="64" height="64" rx="8" ry="8" fill="none" stroke="currentColor" strokeWidth="4" />
+                      <line x1="30" y1="38" x2="70" y2="38" stroke="currentColor" strokeWidth="4" />
+                      <line x1="30" y1="54" x2="70" y2="54" stroke="currentColor" strokeWidth="4" />
+                      <line x1="30" y1="70" x2="55" y2="70" stroke="currentColor" strokeWidth="4" />
+                    </svg>
+                  </div>
+                </div>
+
+                <div>
+                  <h2 className={styles.emptyScoresTitle}>No players loaded for this squad yet</h2>
+                  <p className={styles.emptyScoresText}>
+                    Scores will appear here once entries have been added for the selected tournament and squad. Start by loading players into Entries, then come back here to enter game scores.
+                  </p>
+                </div>
+              </div>
+
+              <div className={styles.emptyScoresActions}>
+                <Link href="/players" className={`${styles.emptyScoresPrimaryAction} ds-btn ds-btn-primary ds-btn-md`}>
+                  Go To Entries
+                </Link>
+                <Link href="/dashboard" className={`${styles.emptyScoresSecondaryAction} ds-btn ds-btn-secondary ds-btn-md`}>
+                  Back To Dashboard
+                </Link>
+              </div>
+
+              <div className={styles.emptyScoresFeaturesGrid}>
+                <div className={styles.emptyScoresFeatureCard}>
+                  <h3>Load Entries</h3>
+                  <p>Add bowlers in Entries for the selected tournament and squad before entering any scores.</p>
+                </div>
+                <div className={styles.emptyScoresFeatureCard}>
+                  <h3>Enter Game Scores</h3>
+                  <p>Capture game-by-game scratch scores and let handicap totals calculate automatically.</p>
+                </div>
+                <div className={styles.emptyScoresFeatureCard}>
+                  <h3>Track Results</h3>
+                  <p>Sort and review totals quickly to prepare clean bracket seeding and payouts.</p>
+                </div>
+              </div>
             </div>
           )}
 

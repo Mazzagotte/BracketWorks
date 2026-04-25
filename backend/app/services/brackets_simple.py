@@ -10,6 +10,7 @@ from datetime import datetime
 
 # Import advanced bracket generation
 from .brackets_advanced import create_brackets_with_history, get_round_name
+from ..core.bracket_programs import normalize_bowler_bracket_entries, normalize_bracket_programs
 
 logger = logging.getLogger(__name__)
 
@@ -121,6 +122,7 @@ def generate_tournament_brackets(
     bracket_size: int = 8,
     db: Optional[Session] = None,
     tournament_id: Optional[int] = None,
+    bracket_programs: Optional[List[Dict[str, Any]]] = None,
     use_history: bool = True,
     seed: Optional[int] = None
 ) -> Dict[str, Any]:
@@ -144,96 +146,185 @@ def generate_tournament_brackets(
     """
     if not players:
         return {
+            "bracket_groups": [],
             "scratch_brackets": [],
             "handicap_brackets": [],
             "summary": create_empty_summary(),
             "validation_warnings": {
                 "skipped_scratch_players": [],
-                "skipped_handicap_players": []
+                "skipped_handicap_players": [],
+                "by_program": {}
             }
         }
-    
-    # Separate and validate players by bracket type entries
-    scratch_entries, skipped_scratch_players = create_scratch_entries(players)
-    handicap_entries, skipped_handicap_players = create_handicap_entries(players)
-    
-    # Fetch match history if requested and database available
-    scratch_history = set()
-    handicap_history = set()
-    
-    if use_history and db is not None:
-        try:
-            scratch_history = fetch_match_history(
-                db, 
-                'scratch', 
-                exclude_tournament_id=tournament_id
-            )
-            handicap_history = fetch_match_history(
-                db,
-                'handicap',
-                exclude_tournament_id=tournament_id
-            )
-            logger.info(f"Loaded {len(scratch_history)} scratch history pairs")
-            logger.info(f"Loaded {len(handicap_history)} handicap history pairs")
-        except Exception as e:
-            logger.warning(f"Could not load match history: {e}")
-            # Fall back to no history
-            scratch_history = set()
-            handicap_history = set()
-    
-    # Log bracket generation info
+
+    programs = normalize_bracket_programs(bracket_programs)
+
     logger.info(f"Bracket generation started")
     logger.info(f"  Total players: {len(players)}")
-    logger.info(f"  Scratch entries: {len(scratch_entries)}, Handicap entries: {len(handicap_entries)}")
     logger.info(f"  Bracket size: {bracket_size}")
-    logger.info(f"  Expected brackets: Scratch={len(scratch_entries) // bracket_size}, Handicap={len(handicap_entries) // bracket_size}")
-    logger.info(f"  Expected refunds: Scratch={len(scratch_entries) % bracket_size}, Handicap={len(handicap_entries) % bracket_size}")
-    
-    # START TIMING
+
     start_time = time.time()
-    
-    # Always use advanced algorithm (handles both history and no-history cases)
-    has_history = len(scratch_history) > 0 or len(handicap_history) > 0
-    logger.info(f"  Using constraint-based algorithm (history: {has_history})")
-    
-    scratch_start = time.time()
-    scratch_brackets, leftover_scratch = create_brackets_with_history(
-        scratch_entries, bracket_size, "Scratch", scratch_history, seed
-    )
-    scratch_time = time.time() - scratch_start
-    logger.info(f"  Scratch brackets generated in {scratch_time:.3f}s")
-    
-    handicap_start = time.time()
-    handicap_brackets, leftover_handicap = create_brackets_with_history(
-        handicap_entries, bracket_size, "Handicap", handicap_history, seed
-    )
-    handicap_time = time.time() - handicap_start
-    logger.info(f"  Handicap brackets generated in {handicap_time:.3f}s")
-    
-    # END TIMING
+
+    bracket_groups: List[Dict[str, Any]] = []
+    validation_by_program: Dict[str, List[Dict[str, Any]]] = {}
+
+    for program in programs:
+        if not program.get('enabled', True):
+            continue
+
+        entries, skipped_players = create_entries_for_program(players, program)
+        history_key = program['key'][:20]
+        history_set: Set[Tuple[int, int]] = set()
+
+        if use_history and db is not None:
+            try:
+                history_set = fetch_match_history(
+                    db,
+                    history_key,
+                    exclude_tournament_id=tournament_id,
+                )
+            except Exception as error:
+                logger.warning(f"Could not load match history for {program['key']}: {error}")
+
+        group_start = time.time()
+        brackets, leftover_players = create_brackets_with_history(
+            entries,
+            bracket_size,
+            program['name'],
+            history_set,
+            seed,
+        )
+        logger.info(
+            "  %s brackets generated in %.3fs (%s entries, %s brackets, %s refunds)",
+            program['name'],
+            time.time() - group_start,
+            len(entries),
+            len(brackets),
+            len(leftover_players),
+        )
+
+        placed_entries = calculate_placed_entries(brackets)
+        all_skipped = skipped_players + leftover_players
+        validation_by_program[program['key']] = all_skipped
+
+        bracket_groups.append(
+            {
+                "key": program['key'],
+                "name": program['name'],
+                "division": program['division'],
+                "scoring_mode": program['scoring_mode'],
+                "entry_fee": program.get('entry_fee'),
+                "display_order": program['display_order'],
+                "brackets": brackets,
+                "entries_count": len(entries),
+                "placed_entries": placed_entries,
+                "refund_entries": len(entries) - placed_entries,
+                "skipped_players": all_skipped,
+            }
+        )
+
     total_time = time.time() - start_time
     logger.info(f"  Total generation time: {total_time:.3f}s")
-    
-    logger.info(f"Bracket generation complete: Scratch={len(scratch_brackets)}, Handicap={len(handicap_brackets)}")
-    logger.debug(f"  Leftover entries: Scratch={len(leftover_scratch)}, Handicap={len(leftover_handicap)}")
-    
-    # Combine skipped players and leftover players for total refunds
-    all_skipped_scratch = skipped_scratch_players + leftover_scratch
-    all_skipped_handicap = skipped_handicap_players + leftover_handicap
-    
-    # Create summary statistics
-    summary = create_bracket_summary(scratch_entries, handicap_entries, scratch_brackets, handicap_brackets)
-    
+
+    scratch_group = next((group for group in bracket_groups if group['key'] == 'scratch'), None)
+    handicap_group = next((group for group in bracket_groups if group['key'] == 'handicap'), None)
+    summary = create_bracket_summary_from_groups(bracket_groups)
+
     return {
-        "scratch_brackets": scratch_brackets,
-        "handicap_brackets": handicap_brackets,
+        "bracket_groups": bracket_groups,
+        "scratch_brackets": scratch_group['brackets'] if scratch_group else [],
+        "handicap_brackets": handicap_group['brackets'] if handicap_group else [],
         "summary": summary,
         "bracket_size": bracket_size,
         "validation_warnings": {
-            "skipped_scratch_players": all_skipped_scratch,
-            "skipped_handicap_players": all_skipped_handicap,
-            "total_skipped": len(all_skipped_scratch) + len(all_skipped_handicap)
+            "skipped_scratch_players": validation_by_program.get('scratch', []),
+            "skipped_handicap_players": validation_by_program.get('handicap', []),
+            "by_program": validation_by_program,
+            "total_skipped": sum(len(items) for items in validation_by_program.values())
         }
+    }
+
+
+def create_entries_for_program(
+    players: List[Dict[str, Any]],
+    program: Dict[str, Any],
+) -> tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    valid_entries: List[Dict[str, Any]] = []
+    skipped_players: List[Dict[str, Any]] = []
+
+    for player in players:
+        if not player_matches_program(player, program):
+            continue
+
+        player_entries = normalize_bowler_bracket_entries(
+            player.get('bracket_entries'),
+            handicap_entries=player.get('handicap'),
+            scratch_entries=player.get('scratch'),
+        )
+        entry_count = max(0, int(player_entries.get(program['key'], 0)))
+
+        if entry_count <= 0:
+            continue
+
+        player_full_name = f"{player.get('firstName', '')} {player.get('lastName', '')}".strip()
+        for entry_num in range(entry_count):
+            valid_entries.append(
+                {
+                    'player_id': player.get('id'),
+                    'name': player_full_name,
+                    'average': player.get('average', 0),
+                    'entry_number': entry_num + 1,
+                    'scores': player.get('scores', {}),
+                }
+            )
+
+    return valid_entries, skipped_players
+
+
+def player_matches_program(player: Dict[str, Any], program: Dict[str, Any]) -> bool:
+    required_division = str(program.get('division') or 'Any').strip().lower()
+    if required_division in {'', 'any', 'open'}:
+        return True
+    player_division = str(player.get('division') or 'Open').strip().lower()
+    return player_division == required_division
+
+
+def calculate_placed_entries(brackets: List[Dict[str, Any]]) -> int:
+    if not brackets:
+        return 0
+    return len(brackets) * (len(brackets[0]['rounds'][0]['matches']) * 2 if brackets[0].get('rounds') else 0)
+
+
+def create_bracket_summary_from_groups(bracket_groups: List[Dict[str, Any]]) -> Dict[str, Any]:
+    scratch_group = next((group for group in bracket_groups if group['key'] == 'scratch'), None)
+    handicap_group = next((group for group in bracket_groups if group['key'] == 'handicap'), None)
+
+    total_entries = sum(group.get('entries_count', 0) for group in bracket_groups)
+    total_brackets = sum(len(group.get('brackets', [])) for group in bracket_groups)
+
+    return {
+        "total_entries": total_entries,
+        "total_bracket_groups": len(bracket_groups),
+        "total_brackets": total_brackets,
+        "group_summaries": [
+            {
+                "key": group['key'],
+                "name": group['name'],
+                "entries_count": group.get('entries_count', 0),
+                "brackets_count": len(group.get('brackets', [])),
+                "placed_entries": group.get('placed_entries', 0),
+                "refund_entries": group.get('refund_entries', 0),
+            }
+            for group in bracket_groups
+        ],
+        "total_scratch_entries": scratch_group['entries_count'] if scratch_group else 0,
+        "total_handicap_entries": handicap_group['entries_count'] if handicap_group else 0,
+        "scratch_brackets_count": len(scratch_group['brackets']) if scratch_group else 0,
+        "handicap_brackets_count": len(handicap_group['brackets']) if handicap_group else 0,
+        "scratch_placed_entries": scratch_group['placed_entries'] if scratch_group else 0,
+        "handicap_placed_entries": handicap_group['placed_entries'] if handicap_group else 0,
+        "scratch_refund_entries": scratch_group['refund_entries'] if scratch_group else 0,
+        "handicap_refund_entries": handicap_group['refund_entries'] if handicap_group else 0,
     }
 
 
@@ -326,6 +417,10 @@ def create_bracket_summary(
 def create_empty_summary() -> Dict[str, Any]:
     """Create an empty summary when no players are provided"""
     return {
+        "total_entries": 0,
+        "total_bracket_groups": 0,
+        "total_brackets": 0,
+        "group_summaries": [],
         "total_scratch_entries": 0,
         "total_handicap_entries": 0,
         "scratch_brackets_count": 0,
@@ -352,6 +447,31 @@ def update_match_score(
     2. Player B wins (score_b > score_a) - advances Player B
     3. Tie (score_a == score_b) - marked as tied, handled by bracket_persistence_simple hydration
     """
+
+    if bracket_id.startswith('group:'):
+        _, group_key, bracket_index_text = bracket_id.split(':', 2)
+        bracket_group = next(
+            (group for group in brackets_data.get('bracket_groups', []) if group.get('key') == group_key),
+            None,
+        )
+        if bracket_group and int(bracket_index_text) < len(bracket_group.get('brackets', [])):
+            bracket = bracket_group['brackets'][int(bracket_index_text)]
+            if round_index < len(bracket['rounds']) and match_index < len(bracket['rounds'][round_index]['matches']):
+                match = bracket['rounds'][round_index]['matches'][match_index]
+                match['match_score_a'] = score_a
+                match['match_score_b'] = score_b
+                if score_a > score_b:
+                    match['winner'] = 'A'
+                    match['status'] = 'completed'
+                    advance_winner_to_next_round(bracket, round_index, match_index, match['winner'])
+                elif score_b > score_a:
+                    match['winner'] = 'B'
+                    match['status'] = 'completed'
+                    advance_winner_to_next_round(bracket, round_index, match_index, match['winner'])
+                else:
+                    match['winner'] = None
+                    match['status'] = 'tied'
+        return brackets_data
     
     # Find the bracket and update the match
     if bracket_id.startswith('scratch_'):

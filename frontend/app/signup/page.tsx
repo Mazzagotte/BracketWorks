@@ -97,7 +97,8 @@ export default function SignupPage() {
     setCheckingUsername(true);
     try {
       const res = await fetch(API(`/api/v1/users/check-username?username=${encodeURIComponent(username)}`));
-      setUsernameAvailable(res.ok);
+      const data = await res.json().catch(() => null);
+      setUsernameAvailable(typeof data?.available === 'boolean' ? data.available : null);
     } catch {
       setUsernameAvailable(null);
     } finally {

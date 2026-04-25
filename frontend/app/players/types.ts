@@ -1,3 +1,5 @@
+import { BracketProgramDefinition } from '../lib/types';
+
 export type Player = { 
   id: number, 
   usbc?: string, 
@@ -6,8 +8,8 @@ export type Player = {
   average: number, 
   handicap: number, 
   scratch: number, 
+  bracketEntries: Record<string, number>,
   lane: string, 
-  division: string, 
   totalCost: number, 
   amountPaid: number, 
   squad?: { id: number, date: string, time: string } 
@@ -17,7 +19,7 @@ export type SavingStatus = 'idle' | 'saving' | 'success' | 'error';
 
 export type SortDirection = 'asc' | 'desc' | null;
 
-export type SortableColumn = 'name' | 'average' | 'handicap' | 'scratch' | 'lane' | 'totalCost' | 'amountPaid' | 'division';
+export type SortableColumn = 'name' | 'average' | 'handicap' | 'scratch' | 'lane' | 'totalCost' | 'amountPaid';
 
 export interface SortConfig {
   column: SortableColumn | null;
@@ -30,6 +32,7 @@ export interface PlayersTableProps {
   onDeletePlayer: (playerId: number) => void;
   savingStatus: Record<string, SavingStatus>;
   entryFee: number;
+  bracketPrograms: BracketProgramDefinition[];
   selectedSquad?: Squad | null;
 }
 
@@ -46,6 +49,7 @@ export interface PlayerFormProps {
   isLoading: boolean;
   squads: Squad[];
   entryFee: number;
+  bracketPrograms: BracketProgramDefinition[];
 }
 
 export interface PlayersStatsProps {

@@ -3,27 +3,37 @@ from fastapi import HTTPException, Depends
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.pool import StaticPool
 
 from ..core import models, utils
 from ..core.config import settings
 
 logger = logging.getLogger(__name__)
 
-# Use configuration from settings
-engine = create_engine(
-    settings.DATABASE_URL,
-    echo=False,  # Disable SQL logging for better performance
-    pool_size=5,
-    max_overflow=10,
-    pool_timeout=30,
-    pool_pre_ping=False,   # pool_recycle handles stale connections; pre_ping adds a round-trip to every request
-    pool_recycle=1800,     # Recycle connections after 30 min to prevent idle timeout disconnects
-    connect_args={
-        "connect_timeout": 10,
-        "application_name": "bracketworks_api",
-        **({"sslmode": "require"} if "render.com" in settings.DATABASE_URL else {})
-    } if "postgresql" in settings.DATABASE_URL else {}
-)
+_is_sqlite = settings.DATABASE_URL.startswith("sqlite")
+
+if _is_sqlite:
+    engine = create_engine(
+        settings.DATABASE_URL,
+        echo=False,
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+else:
+    engine = create_engine(
+        settings.DATABASE_URL,
+        echo=False,
+        pool_size=5,
+        max_overflow=10,
+        pool_timeout=30,
+        pool_pre_ping=False,
+        pool_recycle=1800,
+        connect_args={
+            "connect_timeout": 10,
+            "application_name": "bracketworks_api",
+            **({"sslmode": "require"} if "render.com" in settings.DATABASE_URL else {})
+        },
+    )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def get_db():
