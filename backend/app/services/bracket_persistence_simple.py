@@ -32,6 +32,46 @@ from ..core.models import SimpleBracket
 logger = logging.getLogger(__name__)
 
 
+def get_bracket_groups(bracket_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    groups = bracket_data.get('bracket_groups')
+    if groups:
+        return groups
+    return [
+        {
+            'key': 'scratch',
+            'name': 'Scratch',
+            'scoring_mode': 'scratch',
+            'brackets': bracket_data.get('scratch_brackets', []),
+        },
+        {
+            'key': 'handicap',
+            'name': 'Handicap',
+            'scoring_mode': 'handicap',
+            'brackets': bracket_data.get('handicap_brackets', []),
+        },
+    ]
+
+
+def ensure_legacy_bracket_views(bracket_data: Dict[str, Any]) -> Dict[str, Any]:
+    groups = get_bracket_groups(bracket_data)
+    bracket_data['bracket_groups'] = groups
+    bracket_data['scratch_brackets'] = next(
+        (group.get('brackets', []) for group in groups if group.get('key') == 'scratch'),
+        bracket_data.get('scratch_brackets', []),
+    )
+    bracket_data['handicap_brackets'] = next(
+        (group.get('brackets', []) for group in groups if group.get('key') == 'handicap'),
+        bracket_data.get('handicap_brackets', []),
+    )
+    return bracket_data
+
+
+def iter_group_brackets(bracket_data: Dict[str, Any]):
+    for group in get_bracket_groups(bracket_data):
+        for bracket_num, bracket in enumerate(group.get('brackets', []), start=1):
+            yield group, bracket_num, bracket
+
+
 def save_brackets_simple(
     db: Session,
     tournament_id: int,
@@ -48,9 +88,10 @@ def save_brackets_simple(
         brackets_data: The bracket data returned from generate_multiple_brackets()
     """
     try:
+        brackets_data = ensure_legacy_bracket_views(brackets_data.copy())
         logger.info(f"Saving brackets to simple_brackets table")
         logger.info(f"  Tournament: {tournament_id}, Squad: {squad_id}")
-        logger.info(f"  Bracket count: Scratch={len(brackets_data.get('scratch_brackets', []))}, Handicap={len(brackets_data.get('handicap_brackets', []))}")
+        logger.info(f"  Bracket groups: {len(brackets_data.get('bracket_groups', []))}")
         
         # Log first match to verify scores are present
         if brackets_data.get('scratch_brackets'):
@@ -105,10 +146,8 @@ def save_first_round_to_history(
     This enables rematch prevention in future tournaments.
     """
     from ..core.models import MatchHistory
-    
-    # Process scratch brackets
-    scratch_brackets = brackets_data.get('scratch_brackets', [])
-    for bracket_num, bracket in enumerate(scratch_brackets, start=1):
+
+    for group, bracket_num, bracket in iter_group_brackets(brackets_data):
         rounds = bracket.get('rounds', [])
         if rounds:
             first_round = rounds[0]  # First round
@@ -124,37 +163,13 @@ def save_first_round_to_history(
                         tournament_id=tournament_id,
                         player_a_id=min(player_a_id, player_b_id),  # Normalize
                         player_b_id=max(player_a_id, player_b_id),
-                        bracket_type='scratch',
+                        bracket_type=str(group.get('key', 'scratch'))[:20],
                         bracket_number=bracket_num,
                         round_number=1,
                         created_at=datetime.utcnow()
                     )
                     db.add(history_entry)
-    
-    # Process handicap brackets
-    handicap_brackets = brackets_data.get('handicap_brackets', [])
-    for bracket_num, bracket in enumerate(handicap_brackets, start=1):
-        rounds = bracket.get('rounds', [])
-        if rounds:
-            first_round = rounds[0]
-            matches = first_round.get('matches', [])
-            
-            for match in matches:
-                player_a_id = match.get('playerA_id')
-                player_b_id = match.get('playerB_id')
-                
-                if player_a_id and player_b_id:
-                    history_entry = MatchHistory(
-                        tournament_id=tournament_id,
-                        player_a_id=min(player_a_id, player_b_id),
-                        player_b_id=max(player_a_id, player_b_id),
-                        bracket_type='handicap',
-                        bracket_number=bracket_num,
-                        round_number=1,
-                        created_at=datetime.utcnow()
-                    )
-                    db.add(history_entry)
-    
+
     # Don't commit here - let the parent function handle the transaction
 
 
@@ -193,15 +208,15 @@ def load_brackets_simple(
         logger.info(f"  Found brackets created at {bracket_record.created_at}")
         
         # Log first match to verify scores are in loaded data
-        bracket_data = bracket_record.bracket_data
+        bracket_data = ensure_legacy_bracket_views(bracket_record.bracket_data)
         
         # Refresh scores from database if requested
         if refresh_scores:
             logger.debug(f"  Refreshing scores from database...")
             bracket_data = hydrate_brackets_with_scores(db, tournament_id, squad_id, bracket_data)
         
-        if bracket_data.get('scratch_brackets'):
-            first_bracket = bracket_data['scratch_brackets'][0]
+        if bracket_data.get('bracket_groups') and bracket_data['bracket_groups'][0].get('brackets'):
+            first_bracket = bracket_data['bracket_groups'][0]['brackets'][0]
             if first_bracket.get('rounds'):
                 first_match = first_bracket['rounds'][0]['matches'][0]
                 logger.debug(f"  Sample first match being loaded:")
@@ -241,10 +256,14 @@ def update_match_score_simple(
             return None
             
         # Update the match in the JSON data
-        bracket_data = bracket_record.bracket_data.copy()
+        bracket_data = ensure_legacy_bracket_views(bracket_record.bracket_data.copy())
         
         # Determine which bracket type and find the match
-        if bracket_id.startswith('scratch_'):
+        if bracket_id.startswith('group:'):
+            _, group_key, bracket_index_text = bracket_id.split(':', 2)
+            bracket_type = group_key
+            bracket_index = int(bracket_index_text)
+        elif bracket_id.startswith('scratch_'):
             bracket_type = 'scratch_brackets'
             bracket_index = int(bracket_id.split('_')[1])
         elif bracket_id.startswith('handicap_'):
@@ -289,6 +308,15 @@ def update_match_score_simple(
                 match_index < len(bracket_data['rounds'][round_index]['matches'])):
                 match = bracket_data['rounds'][round_index]['matches'][match_index]
                 apply_score_to_match(match, score_a, score_b, round_index)
+        elif bracket_id.startswith('group:'):
+            group = next((item for item in bracket_data.get('bracket_groups', []) if item.get('key') == bracket_type), None)
+            if (group and bracket_index < len(group.get('brackets', [])) and
+                'rounds' in group['brackets'][bracket_index] and
+                round_index < len(group['brackets'][bracket_index]['rounds']) and
+                match_index < len(group['brackets'][bracket_index]['rounds'][round_index]['matches'])):
+
+                match = group['brackets'][bracket_index]['rounds'][round_index]['matches'][match_index]
+                apply_score_to_match(match, score_a, score_b, round_index)
         else:
             # Multiple brackets format
             if (bracket_type in bracket_data and
@@ -301,7 +329,7 @@ def update_match_score_simple(
                 apply_score_to_match(match, score_a, score_b, round_index)
         
         # Save the updated data
-        bracket_record.bracket_data = bracket_data
+        bracket_record.bracket_data = ensure_legacy_bracket_views(bracket_data)
         bracket_record.updated_at = datetime.utcnow()
         
         db.commit()
@@ -326,6 +354,7 @@ def hydrate_brackets_with_scores(
     from ..core import models
     
     logger.info(f"Hydrating scores for tournament {tournament_id}, squad {squad_id}")
+    bracket_data = ensure_legacy_bracket_views(bracket_data)
     
     # Build a map of bowler_id -> scores
     scores_query = db.query(models.Score).filter(
@@ -366,7 +395,7 @@ def hydrate_brackets_with_scores(
     # This lets us resolve player IDs in round 2+ slots that only have player names
     # (which happens when advance_winner_to_next_round didn't propagate IDs).
     name_to_id: Dict[str, int] = {}
-    for bracket in list(bracket_data.get('scratch_brackets', [])) + list(bracket_data.get('handicap_brackets', [])):
+    for group, _, bracket in iter_group_brackets(bracket_data):
         rounds = bracket.get('rounds', [])
         if rounds:
             for m in rounds[0].get('matches', []):
@@ -464,17 +493,11 @@ def hydrate_brackets_with_scores(
     matches_updated = 0
     
     # Update scratch brackets - use scratch scores (no handicap)
-    for bracket in bracket_data.get('scratch_brackets', []):
+    for group, _, bracket in iter_group_brackets(bracket_data):
+        use_scratch = str(group.get('scoring_mode') or '').lower() == 'scratch'
         for round_num, round_data in enumerate(bracket.get('rounds', [])):
             for match in round_data.get('matches', []):
-                update_match_scores(match, round_num, use_scratch=True)
-                matches_updated += 1
-    
-    # Update handicap brackets - use total scores (with handicap)
-    for bracket in bracket_data.get('handicap_brackets', []):
-        for round_num, round_data in enumerate(bracket.get('rounds', [])):
-            for match in round_data.get('matches', []):
-                update_match_scores(match, round_num, use_scratch=False)
+                update_match_scores(match, round_num, use_scratch=use_scratch)
                 matches_updated += 1
     
     logger.info(f"  Hydrated {matches_updated} matches with fresh scores")
@@ -523,10 +546,8 @@ def hydrate_brackets_with_scores(
                 for match in next_matches:
                     update_match_scores(match, round_idx + 1, use_scratch)
 
-    for bracket in bracket_data.get('scratch_brackets', []):
-        propagate_and_rehydrate(bracket, use_scratch=True)
-    for bracket in bracket_data.get('handicap_brackets', []):
-        propagate_and_rehydrate(bracket, use_scratch=False)
+    for group, _, bracket in iter_group_brackets(bracket_data):
+        propagate_and_rehydrate(bracket, use_scratch=str(group.get('scoring_mode') or '').lower() == 'scratch')
 
     # RESOLVE TIES FROM PREVIOUS ROUNDS
     # This must happen AFTER all matches are updated with fresh scores.
@@ -604,10 +625,7 @@ def hydrate_brackets_with_scores(
                 )
                 logger.info(f"  Tie cascades to Round {next_round_num + 1}: {tied_match.get('playerA')} vs {tied_match.get('playerB')}")
 
-    all_brackets = (
-        list(bracket_data.get('scratch_brackets', [])) +
-        list(bracket_data.get('handicap_brackets', []))
-    )
+    all_brackets = [bracket for _, _, bracket in iter_group_brackets(bracket_data)]
 
     for bracket in all_brackets:
         rounds = bracket.get('rounds', [])

@@ -343,9 +343,9 @@ def save_tournament_payouts_endpoint(
 
         payout_data = calculate_tournament_payouts(brackets_data, entry_fees, house_percentage)
 
-        existing_summary = db.query(models.PayoutSummary).filter(
-            models.PayoutSummary.tournament_id == tournament_id,
-            models.PayoutSummary.squad_id == squad_id,
+        existing_summary = db.query(models.TournamentPayoutSummary).filter(
+            models.TournamentPayoutSummary.tournament_id == tournament_id,
+            models.TournamentPayoutSummary.squad_id == squad_id,
         ).first()
 
         if existing_summary and existing_summary.is_finalized:
@@ -359,7 +359,7 @@ def save_tournament_payouts_endpoint(
                 payout_summary = existing_summary
                 payout_summary.updated_at = current_time
             else:
-                payout_summary = models.PayoutSummary(
+                payout_summary = models.TournamentPayoutSummary(
                     tournament_id=tournament_id,
                     squad_id=squad_id,
                     created_at=current_time,
@@ -430,23 +430,23 @@ def get_payout_history_endpoint(
     """Get saved payout history for a tournament."""
     try:
         tournament     = _verify_tournament_access(db, tournament_id, current_user)
-        payout_summary = db.query(models.PayoutSummary).filter(
-            models.PayoutSummary.tournament_id == tournament_id,
-            models.PayoutSummary.squad_id == squad_id,
+        payout_summary = db.query(models.TournamentPayoutSummary).filter(
+            models.TournamentPayoutSummary.tournament_id == tournament_id,
+            models.TournamentPayoutSummary.squad_id == squad_id,
         ).first()
 
         if not payout_summary:
             raise HTTPException(status_code=404, detail="No payout history found")
 
-        winners = db.query(models.TournamentWinner).filter(
-            models.TournamentWinner.tournament_id == tournament_id,
-            models.TournamentWinner.squad_id == squad_id,
-        ).order_by(models.TournamentWinner.bracket_type, models.TournamentWinner.placement).all()
+        winners = db.query(models.BracketWinner).filter(
+            models.BracketWinner.tournament_id == tournament_id,
+            models.BracketWinner.squad_id == squad_id,
+        ).order_by(models.BracketWinner.bracket_group_key, models.BracketWinner.placement).all()
 
-        payouts = db.query(models.TournamentPayout).filter(
-            models.TournamentPayout.tournament_id == tournament_id,
-            models.TournamentPayout.squad_id == squad_id,
-        ).order_by(models.TournamentPayout.bracket_type, models.TournamentPayout.placement).all()
+        payouts = db.query(models.BracketPayout).filter(
+            models.BracketPayout.tournament_id == tournament_id,
+            models.BracketPayout.squad_id == squad_id,
+        ).order_by(models.BracketPayout.bracket_group_key, models.BracketPayout.placement).all()
 
         return {
             "tournament_info": {"id": tournament_id, "name": tournament.name, "squad_id": squad_id},
@@ -515,17 +515,24 @@ def _save_winners_and_payouts(
     Does NOT commit — the calling endpoint owns the transaction.
     Raises on error so the caller can roll back.
     """
-    db.query(models.TournamentWinner).filter(
-        models.TournamentWinner.tournament_id == tournament_id,
-        models.TournamentWinner.squad_id == squad_id,
+    db.query(models.BracketWinner).filter(
+        models.BracketWinner.tournament_id == tournament_id,
+        models.BracketWinner.squad_id == squad_id,
     ).delete()
-    db.query(models.TournamentPayout).filter(
-        models.TournamentPayout.tournament_id == tournament_id,
-        models.TournamentPayout.squad_id == squad_id,
+    db.query(models.BracketPayout).filter(
+        models.BracketPayout.tournament_id == tournament_id,
+        models.BracketPayout.squad_id == squad_id,
     ).delete()
 
     all_bracket_data = payout_data["scratch_brackets"] + payout_data["handicap_brackets"]
     total_saved = 0
+
+    snapshot_record = db.query(models.BracketSnapshot).filter(
+        models.BracketSnapshot.tournament_id == tournament_id,
+        models.BracketSnapshot.squad_id == squad_id if squad_id else models.BracketSnapshot.squad_id.is_(None),
+        models.BracketSnapshot.is_current == True,
+    ).order_by(models.BracketSnapshot.created_at.desc()).first()
+    snapshot_id = snapshot_record.id if snapshot_record else None
 
     for bracket_data in all_bracket_data:
         bracket_name = bracket_data["bracket_name"]
@@ -533,24 +540,16 @@ def _save_winners_and_payouts(
         bracket_size = bracket_data["bracket_size"]
         prize_pool   = float(bracket_data["prize_pool"])
 
-        bracket_record = db.query(models.GeneratedBracket).filter(
-            models.GeneratedBracket.tournament_id == tournament_id,
-            models.GeneratedBracket.squad_id == squad_id if squad_id else models.GeneratedBracket.squad_id.is_(None),
-            models.GeneratedBracket.bracket_type == bracket_type,
-            models.GeneratedBracket.title == bracket_name,
-        ).first()
-        actual_bracket_id = bracket_record.id if bracket_record else 1
-
         for winner_data in bracket_data["winners"]:
             total_saved += 1
 
-            winner = models.TournamentWinner(
+            winner = models.BracketWinner(
                 tournament_id=  tournament_id,
                 squad_id=       squad_id,
-                bracket_id=     actual_bracket_id,
-                bowler_id=      winner_data.get("player_id") or 0,
-                bracket_type=   bracket_type,
-                bracket_name=   bracket_name,
+                bracket_snapshot_id=snapshot_id,
+                player_id=      winner_data.get("player_id") or 0,
+                bracket_group_key=bracket_type,
+                bracket_label=  bracket_name,
                 placement=      winner_data["place"],
                 placement_text= winner_data["position"],
                 player_name=    winner_data["player_name"],
@@ -560,14 +559,14 @@ def _save_winners_and_payouts(
             db.add(winner)
             db.flush()
 
-            payout = models.TournamentPayout(
+            payout = models.BracketPayout(
                 tournament_id=     tournament_id,
                 squad_id=          squad_id,
-                bracket_id=        actual_bracket_id,
-                winner_id=         winner.id,
-                bowler_id=         winner_data.get("player_id") or 0,
-                bracket_type=      bracket_type,
-                bracket_name=      bracket_name,
+                bracket_snapshot_id=snapshot_id,
+                bracket_winner_id= winner.id,
+                player_id=         winner_data.get("player_id") or 0,
+                bracket_group_key= bracket_type,
+                bracket_label=     bracket_name,
                 placement=         winner_data["place"],
                 player_name=       winner_data["player_name"],
                 prize_pool_total=  prize_pool,

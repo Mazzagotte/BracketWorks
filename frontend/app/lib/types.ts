@@ -21,27 +21,28 @@ export interface Squad {
 // Player related types
 export interface Player {
   id: number;
-  usbc?: string;
+  usbcNumber?: string;
   firstName: string;
   lastName: string;
-  name?: string; // Sometimes used as full name
+  fullName?: string;
   average: number;
-  handicap: number;
-  scratch?: number;
+  handicapPins: number;
+  handicapEntryCount?: number;
+  scratchEntryCount?: number;
   lane?: string | number | null;
   division?: string;
   totalCost?: number;
   amountPaid?: number;
+  programEntryCounts?: Record<string, number>;
   squad?: Squad;
-  bowler_id?: number;
   player_id?: number;
   scores?: {
     game1_scratch?: number;
-    game1_total?: number;
+    game1_with_handicap?: number;
     game2_scratch?: number;
-    game2_total?: number;
+    game2_with_handicap?: number;
     game3_scratch?: number;
-    game3_total?: number;
+    game3_with_handicap?: number;
   };
 }
 
@@ -78,6 +79,27 @@ export interface BracketData {
   rounds?: BracketRound[];
 }
 
+export interface BracketProgramDefinition {
+  key: string;
+  name: string;
+  division?: string;
+  scoring_mode: string;
+  entry_fee?: number | null;
+  enabled?: boolean;
+  display_order?: number | null;
+}
+
+export interface BracketGroup {
+  key: string;
+  name: string;
+  scoring_mode?: string;
+  division?: string;
+  brackets: BracketData[];
+  entries_count?: number;
+  placed_entries?: number;
+  refund_entries?: number;
+}
+
 export interface MultipleBracketsData {
   scratch_brackets?: BracketData[];
   handicap_brackets?: BracketData[];
@@ -86,6 +108,7 @@ export interface MultipleBracketsData {
 export interface BracketResponse {
   scratch_brackets?: BracketData[];
   handicap_brackets?: BracketData[];
+  bracket_groups?: BracketGroup[];
   multiple_brackets?: MultipleBracketsData;
 }
 
@@ -94,21 +117,22 @@ export interface BracketSettings {
   tournament_id: number;
   scratch_brackets?: BracketData[];
   handicap_brackets?: BracketData[];
+  bracket_programs?: BracketProgramDefinition[];
   bracket_size: number;
-  cost_per_bracket: number;
-  first_place: number;
-  second_place: number;
-  house_amount: number;
+  default_entry_fee: number;
+  first_place_amount: number;
+  second_place_amount: number;
+  house_fee_amount: number;
   handicap_percentage: number;
   handicap_base: number;
-  allow_bye?: boolean;
+  allow_byes?: boolean;
 }
 
 // Score related types
 export interface PendingScoreSave {
   token: string;
   data: {
-    bowler_id: number;
+    player_id: number;
     tournament_id: number;
     squad_id: number;
     game1_scratch: number;
@@ -123,13 +147,12 @@ export interface ScoreData {
   squad_id: number;
   score?: number;
   game_number?: number;
-  bowler_id: number;
   game1_scratch?: number;
-  game1_total?: number;
+  game1_with_handicap?: number;
   game2_scratch?: number;
-  game2_total?: number;
+  game2_with_handicap?: number;
   game3_scratch?: number;
-  game3_total?: number;
+  game3_with_handicap?: number;
 }
 
 // Winner related types

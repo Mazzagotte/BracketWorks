@@ -157,7 +157,7 @@ export function usePayouts(tournamentId: number | null, selectedSquadId: number 
         return
       }
 
-      // Fallback: get bowler list so non-winners still appear in the payout list
+      // Fallback: get player list so non-winners still appear in the payout list
       const bowlerResponse = await fetch(API(`/api/v1/bowlers/?tournament_id=${tournamentId}`), {
         headers: { 'Authorization': `Bearer ${token}` }
       })
@@ -166,9 +166,9 @@ export function usePayouts(tournamentId: number | null, selectedSquadId: number 
         const bowlers = await bowlerResponse.json()
         setEntryData({
           tournament_info: { id: tournamentId, name: '', squad_id: null },
-          entries: bowlers.map((b: { id: number; name: string }) => ({
+          entries: bowlers.map((b: { id: number; full_name: string }) => ({
             id: b.id,
-            name: b.name,
+            name: b.full_name,
             scratch_brackets_entered: 0,
             handicap_brackets_entered: 0,
             total_brackets_entered: 0,

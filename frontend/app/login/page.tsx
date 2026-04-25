@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
@@ -32,7 +32,7 @@ export default function LoginPage() {
   const [loginFailed, setLoginFailed] = useState(false);
 
   // Security enhancements
-  const [passwordVisibilityTimer, setPasswordVisibilityTimer] = useState<NodeJS.Timeout | null>(null);
+  const passwordVisibilityTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [capsLockOn, setCapsLockOn] = useState(false);
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [loginDelay, setLoginDelay] = useState(0);
@@ -64,26 +64,28 @@ export default function LoginPage() {
   // Password visibility timeout - auto-hide after 5 seconds
   useEffect(() => {
     if (showPassword) {
-      if (passwordVisibilityTimer) {
-        clearTimeout(passwordVisibilityTimer);
+      if (passwordVisibilityTimerRef.current) {
+        clearTimeout(passwordVisibilityTimerRef.current);
       }
       const timer = setTimeout(() => {
         setShowPassword(false);
         addToast({ type: 'info', message: 'Password hidden for security', duration: 2000 });
       }, 5000);
-      setPasswordVisibilityTimer(timer);
+      passwordVisibilityTimerRef.current = timer;
     } else {
-      if (passwordVisibilityTimer) {
-        clearTimeout(passwordVisibilityTimer);
-        setPasswordVisibilityTimer(null);
+      if (passwordVisibilityTimerRef.current) {
+        clearTimeout(passwordVisibilityTimerRef.current);
+        passwordVisibilityTimerRef.current = null;
       }
     }
+
     return () => {
-      if (passwordVisibilityTimer) {
-        clearTimeout(passwordVisibilityTimer);
+      if (passwordVisibilityTimerRef.current) {
+        clearTimeout(passwordVisibilityTimerRef.current);
+        passwordVisibilityTimerRef.current = null;
       }
     };
-  }, [showPassword, addToast, passwordVisibilityTimer]);
+  }, [showPassword, addToast]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     setCapsLockOn(e.getModifierState('CapsLock'));

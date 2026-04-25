@@ -2,12 +2,13 @@
 import { useState, useEffect, useCallback } from 'react'
 import { apiClient } from '../lib/api'
 import { useToast } from '../components/Toast'
-import { BracketData, BracketSettings } from '../lib/types'
+import { BracketData, BracketGroup, BracketSettings } from '../lib/types'
 
 export interface BracketPreview {
   size?: number
   rounds?: BracketRound[]  // Optional - for single bracket preview
   bracket_size?: number
+  bracket_groups?: BracketGroup[]
   // API can return brackets in two formats:
   // Format 1: Direct properties (current API format)
   scratch_brackets?: BracketData[]

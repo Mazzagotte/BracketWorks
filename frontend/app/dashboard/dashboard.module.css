@@ -518,6 +518,51 @@
   gap: 6px;
 }
 
+.programList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.programCard {
+  border: 1px solid rgba(240, 120, 32, 0.16);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.55);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.programGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  align-items: end;
+}
+
+.programAddButton,
+.programRemoveButton {
+  border: 1px solid rgba(240, 120, 32, 0.2);
+  background: #fff7ec;
+  color: #a24d14;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.programRemoveButton {
+  align-self: flex-end;
+}
+
+.programAddButton:disabled,
+.programRemoveButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .sectionHeader {
   display: flex;
   align-items: center;

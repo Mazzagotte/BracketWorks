@@ -204,6 +204,8 @@ def generate_tournament_brackets_endpoint(
                 'average': bowler.average or 0,
                 'handicap': bowler.handicap_entries or 0,
                 'scratch': bowler.scratch_entries or 0,
+                'division': bowler.division or 'Open',
+                'bracket_entries': bowler.bracket_entries or {},
                 'scores': scores_dict
             }
             players_data.append(player_data)
@@ -214,6 +216,7 @@ def generate_tournament_brackets_endpoint(
             bracket_size=bracket_settings.bracket_size,
             db=db,
             tournament_id=tournament_id,
+            bracket_programs=bracket_settings.bracket_programs,
             use_history=True,  # Enable advanced algorithm with history
             seed=None  # Can be configurable later
         )

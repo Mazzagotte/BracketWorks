@@ -7,6 +7,7 @@ const PlayersTable = memo(({
   players, 
   onUpdatePlayer,
   onDeletePlayer,
+  bracketPrograms,
   selectedSquad,
   savingStatus
 }: PlayersTableProps) => {
@@ -38,6 +39,10 @@ const PlayersTable = memo(({
     onUpdatePlayer(playerId, field, processedValue);
   };
 
+  const handleBracketEntryEdit = (playerId: number, programKey: string, value: string) => {
+    onUpdatePlayer(playerId, `bracketEntry:${programKey}`, parseInt(value, 10) || 0)
+  }
+
   const handleIncrement = (playerId: number, field: string, currentValue: number, step = 1) => {
     const newValue = currentValue + step;
     onUpdatePlayer(playerId, field, newValue);
@@ -62,7 +67,7 @@ const PlayersTable = memo(({
         <thead>
           {selectedSquad && (
             <tr>
-              <td colSpan={9} className="squad-banner">
+              <td colSpan={6 + bracketPrograms.length} className="squad-banner">
                 Showing players for: {selectedSquad.date} — {selectedSquad.time}
               </td>
             </tr>
@@ -80,15 +85,11 @@ const PlayersTable = memo(({
             <th className="entries-header-cell col-average">
               Average
             </th>
-            <th className="entries-header-cell col-handicap">
-              Handicap<br/>Entries
-            </th>
-            <th className="entries-header-cell col-scratch">
-              Scratch<br/>Entries
-            </th>
-            <th className="entries-header-cell col-division">
-              Division
-            </th>
+            {bracketPrograms.map(program => (
+              <th key={program.key} className="entries-header-cell col-scratch">
+                {program.name}<br/>Entries
+              </th>
+            ))}
             <th className="entries-header-cell col-cost">
               Cost / Status
             </th>
@@ -98,7 +99,12 @@ const PlayersTable = memo(({
           </tr>
         </thead>
         <tbody>
-          {sortedPlayers.map((player) => (
+          {sortedPlayers.map((player) => {
+            const totalEntries = Object.values(player.bracketEntries || {}).reduce((sum, count) => sum + Number(count || 0), 0)
+            const needsEntryFee = totalEntries > 0 && player.totalCost <= 0
+            const isPaid = !needsEntryFee && player.amountPaid >= player.totalCost
+
+            return (
             <OptimizedTableRow 
               key={player.id}
               className="players-table-row"
@@ -170,53 +176,21 @@ const PlayersTable = memo(({
                 </div>
               </OptimizedTableCell>
 
-              <OptimizedTableCell className="entries-cell">
-                <div className="flex-center">
-                  <div className="pos-relative inline-block">
-                    <input
-                      className="entries-input entries-control w-65"
-                      type="text"
-                      value={player.handicap}
-                      onChange={(changeEvent) => handleCellEdit(player.id, 'handicap', changeEvent.target.value)}
-                    />
-                    
-                  {getSavingIndicator(player.id, 'handicap')}
+              {bracketPrograms.map(program => (
+                <OptimizedTableCell key={program.key} className="entries-cell">
+                  <div className="flex-center">
+                    <div className="pos-relative inline-block">
+                      <input
+                        className="entries-input entries-control w-65"
+                        type="text"
+                        value={player.bracketEntries?.[program.key] || 0}
+                        onChange={(changeEvent) => handleBracketEntryEdit(player.id, program.key, changeEvent.target.value)}
+                      />
+                      {getSavingIndicator(player.id, `bracketEntry:${program.key}`)}
+                    </div>
                   </div>
-                </div>
-              </OptimizedTableCell>
-
-              <OptimizedTableCell className="entries-cell">
-                <div className="flex-center">
-                  <div className="pos-relative inline-block">
-                    <input
-                      className="entries-input entries-control w-65"
-                      type="text"
-                      value={player.scratch}
-                      onChange={(changeEvent) => handleCellEdit(player.id, 'scratch', changeEvent.target.value)}
-                    />
-                    
-                  {getSavingIndicator(player.id, 'scratch')}
-                  </div>
-                </div>
-              </OptimizedTableCell>
-
-              <OptimizedTableCell className="entries-cell">
-                <div className="flex-center">
-                  <div className="pos-relative inline-block">
-                    <select
-                      className="entries-select entries-control w-65"
-                      value={player.division}
-                      onChange={(changeEvent) => handleCellEdit(player.id, 'division', changeEvent.target.value)}
-                    >
-                      <option value="Open">Open</option>
-                      <option value="Womens">Womens</option>
-                      <option value="Senior">Senior</option>
-                      <option value="Junior">Junior</option>
-                    </select>
-                    {getSavingIndicator(player.id, 'division')}
-                  </div>
-                </div>
-              </OptimizedTableCell>
+                </OptimizedTableCell>
+              ))}
 
               <OptimizedTableCell className="entries-cell">
                 <div className="flex-center gap-10">
@@ -225,13 +199,14 @@ const PlayersTable = memo(({
                   </span>
                   <span 
                     onClick={() => {
-                      const newPaidAmount = player.amountPaid >= player.totalCost ? 0 : player.totalCost;
+                      if (needsEntryFee) return;
+                      const newPaidAmount = isPaid ? 0 : player.totalCost;
                       handleCellEdit(player.id, 'amountPaid', newPaidAmount.toString());
                     }}
-                    className={`payment-badge ${player.amountPaid >= player.totalCost ? 'payment-badge--paid' : 'payment-badge--due'}`}
-                    title={`Click to toggle payment status. Current: $${player.amountPaid.toFixed(2)}`}
+                    className={`payment-badge ${isPaid ? 'payment-badge--paid' : 'payment-badge--due'}`}
+                    title={needsEntryFee ? 'Set a bracket entry fee in tournament settings to calculate player cost.' : `Click to toggle payment status. Current: $${player.amountPaid.toFixed(2)}`}
                   >
-                    {player.amountPaid >= player.totalCost ? 'PAID' : 'DUE'}
+                    {needsEntryFee ? 'SET FEE' : isPaid ? 'PAID' : 'DUE'}
                   </span>
                 </div>
               </OptimizedTableCell>
@@ -245,7 +220,7 @@ const PlayersTable = memo(({
                 </button>
               </OptimizedTableCell>
             </OptimizedTableRow>
-          ))}
+          )})}
         </tbody>
       </table>
     </div>

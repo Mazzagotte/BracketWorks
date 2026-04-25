@@ -53,14 +53,32 @@ A comprehensive web application for managing tournament brackets, tracking playe
 git clone <repository-url>
 cd BracketWorks
 
-# Start all services with Docker
-docker-compose up --build
+# Start local database and backend with Docker
+docker compose up -d --build db backend
+
+# Start the frontend locally
+cd frontend
+yarn install
+yarn dev
 
 # Access the application
 # Frontend: http://localhost:3000
 # Backend API: http://localhost:8000/docs
 # Database: localhost:5432
 ```
+
+### Docker Development Notes
+```bash
+# Default local Docker database URL used by the backend container
+postgresql://bracketworks:bracketworks@db:5432/bracketworks
+
+# Default local database URL if you run the backend outside Docker
+postgresql://bracketworks:bracketworks@localhost:5432/bracketworks
+```
+
+- The backend container now waits for Postgres and runs `alembic upgrade head` automatically on startup.
+- The PowerShell launcher [start_bracketworks.ps1](e:/BracketWorks/start_bracketworks.ps1) starts Docker `db` and `backend`, then launches the frontend against `http://localhost:8000`.
+- If you want the frontend in Docker too, run `docker compose up --build`, then open `http://localhost:3000`.
 
 ### Option 2: Manual Setup
 

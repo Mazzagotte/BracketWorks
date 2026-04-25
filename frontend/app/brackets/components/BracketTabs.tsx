@@ -3,12 +3,16 @@
 import React from 'react'
 import styles from '../styles/bracket-tabs.module.css'
 
+interface BracketTabItem {
+  id: string
+  label: string
+  count?: number
+}
+
 interface BracketTabsProps {
-  activeTab: 'scratch' | 'handicap' | 'all'
-  onTabChange: (tab: 'scratch' | 'handicap' | 'all') => void
-  scratchCount?: number
-  handicapCount?: number
-  showAllOption?: boolean
+  tabs: BracketTabItem[]
+  activeTab: string
+  onTabChange: (tab: string) => void
 }
 
 /**
@@ -16,69 +20,38 @@ interface BracketTabsProps {
  * Features: Scratch vs Handicap tabs, counts, view all option
  */
 export function BracketTabs({
+  tabs,
   activeTab,
-  onTabChange,
-  scratchCount = 0,
-  handicapCount = 0,
-  showAllOption = true
+  onTabChange
 }: BracketTabsProps) {
+  const activeIndex = Math.max(0, tabs.findIndex(tab => tab.id === activeTab))
+
   return (
     <div className={styles.tabsContainer}>
       <div className={styles.tabsList} role="tablist">
-        {/* Scratch Tab */}
-        <button
-          className={`${styles.tab} ${activeTab === 'scratch' ? styles.active : ''}`}
-          onClick={() => onTabChange('scratch')}
-          role="tab"
-          aria-selected={activeTab === 'scratch'}
-          aria-controls="scratch-panel"
-        >
-          <span className={styles.tabLabel}>Scratch Brackets</span>
-          {scratchCount > 0 && (
-            <span className={styles.tabCount}>{scratchCount}</span>
-          )}
-        </button>
-
-        {/* Handicap Tab */}
-        <button
-          className={`${styles.tab} ${activeTab === 'handicap' ? styles.active : ''}`}
-          onClick={() => onTabChange('handicap')}
-          role="tab"
-          aria-selected={activeTab === 'handicap'}
-          aria-controls="handicap-panel"
-        >
-          <span className={styles.tabLabel}>Handicap Brackets</span>
-          {handicapCount > 0 && (
-            <span className={styles.tabCount}>{handicapCount}</span>
-          )}
-        </button>
-
-        {/* All Tab */}
-        {showAllOption && (
+        {tabs.map(tab => (
           <button
-            className={`${styles.tab} ${activeTab === 'all' ? styles.active : ''}`}
-            onClick={() => onTabChange('all')}
+            key={tab.id}
+            className={`${styles.tab} ${activeTab === tab.id ? styles.active : ''}`}
+            onClick={() => onTabChange(tab.id)}
             role="tab"
-            aria-selected={activeTab === 'all'}
-            aria-controls="all-panel"
+            aria-selected={activeTab === tab.id}
+            aria-controls={`${tab.id}-panel`}
           >
-            <span className={styles.tabLabel}>View All</span>
-            {(scratchCount + handicapCount) > 0 && (
-              <span className={styles.tabCount}>{scratchCount + handicapCount}</span>
+            <span className={styles.tabLabel}>{tab.label}</span>
+            {(tab.count || 0) > 0 && (
+              <span className={styles.tabCount}>{tab.count}</span>
             )}
           </button>
-        )}
+        ))}
       </div>
 
       {/* Active Indicator */}
       <div 
         className={styles.activeIndicator}
         style={{
-          transform: `translateX(${
-            activeTab === 'scratch' ? '0%' : 
-            activeTab === 'handicap' ? '100%' : 
-            '200%'
-          })`
+          width: tabs.length > 0 ? `calc((100% - 1rem) / ${tabs.length})` : undefined,
+          transform: `translateX(${activeIndex * 100}%)`
         }}
       />
     </div>
