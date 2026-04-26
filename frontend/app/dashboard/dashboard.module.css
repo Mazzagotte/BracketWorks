@@ -337,7 +337,7 @@
     min-width: unset;
   }
   
-  .settingsTitle, .squadTitle {
+  .settingsTitle {
     font-size: 20px;
   }
 
@@ -1184,22 +1184,30 @@
   flex: 0 1 auto;
 }
 
-.squadHeader {
-  display: flex;
-  align-items: center;
-  padding: 20px 24px 16px;
-  background: #F0E0C0;
-  border-bottom: 3px solid #F07820;
-  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-  gap: 10px;
+.squadGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  padding: 12px 14px 14px;
+  width: max-content;
+  max-width: 100%;
+  min-width: 220px;
 }
 
-.squadTitle {
-  font-size: 22px;
-  font-weight: 700;
-  color: #1A1A1A;
-  letter-spacing: -0.025em;
-  margin: 0;
+.squadPillEnhanced {
+  appearance: none;
+  border: 1px solid rgba(240, 120, 32, 0.3);
+  background: linear-gradient(180deg, #ffffff 0%, #fffaf3 100%);
+  border-radius: 10px;
+  padding: 12px 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.squadPillEnhanced:focus-visible {
+  outline: 2px solid rgba(240, 120, 32, 0.4);
+  outline-offset: 2px;
 }
 
 .squadIcon {
@@ -1215,13 +1223,13 @@
 
 .squadDate {
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
   color: #1A1A1A;
 }
 
 .squadTimeSlot {
   font-size: 14px;
-  color: rgba(26, 26, 26, 0.55);
+  color: rgba(26, 26, 26, 0.72);
   font-weight: 500;
 }
 
@@ -1257,6 +1265,7 @@
   color: white;
   font-weight: 600;
   box-shadow: 0 4px 12px rgba(244, 124, 32, 0.3);
+  outline: 1px solid rgba(255, 255, 255, 0.35);
 }
 
 .squadPillEnhanced.selected .squadDate,
@@ -1360,6 +1369,19 @@
 
 .headerDeleteBtn {
   margin-left: auto;
+  background: #dc2626;
+  border-color: #b91c1c;
+  color: #ffffff;
+}
+
+.headerDeleteBtn:hover {
+  background: #b91c1c;
+  border-color: #991b1b;
+}
+
+.headerDeleteBtn:focus-visible {
+  outline: 2px solid #fecaca;
+  outline-offset: 2px;
 }
 
 .headerBtn {
@@ -1531,31 +1553,36 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 20px;
+  background: rgba(15, 18, 28, 0.38);
+  backdrop-filter: blur(4px);
 }
 
 .modalCard {
-  background: #FAF4E8;
-  border-radius: var(--radius-xl);
+  background: linear-gradient(180deg, #fdf9f0 0%, #faf4e8 100%);
+  border-radius: 18px;
   padding: 0;
-  min-width: 340px;
-  max-width: 540px;
-  width: 90vw;
-  box-shadow: var(--shadow-xl);
-  border: 1px solid rgba(240, 120, 32, 0.2);
-  max-height: 80vh;
+  min-width: min(340px, 100%);
+  width: fit-content;
+  max-width: min(620px, 100%);
+  box-shadow: 0 18px 44px rgba(16, 22, 39, 0.25);
+  border: 1px solid rgba(240, 120, 32, 0.24);
+  max-height: 86vh;
   overflow-y: auto;
   position: relative;
 }
 
 .modalTitle {
   margin: 0;
-  padding: 24px 28px 20px;
-  background: #F0E0C0;
-  border-bottom: 3px solid #F07820;
-  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  padding: 24px 56px 18px 28px;
+  background: linear-gradient(180deg, #f2e3c6 0%, #eddbbb 100%);
+  border-bottom: 2px solid #f07820;
+  border-radius: 18px 18px 0 0;
   color: #1A1A1A;
-  font-size: 20px;
-  font-weight: 700;
+  font-size: 22px;
+  line-height: 1.15;
+  font-weight: 800;
+  letter-spacing: -0.01em;
 }
 
 .modalTitleDanger {
@@ -1564,16 +1591,16 @@
 
 .adminBadge {
   font-size: 14px;
-  color: #F47C20;
-  font-weight: 500;
-  padding: 8px 28px 0;
+  color: #9e5a1e;
+  font-weight: 600;
+  padding: 10px 28px 0;
 }
 
 .emptyTournaments {
   color: rgba(26, 26, 26, 0.55);
-  font-size: 16px;
+  font-size: 17px;
   text-align: center;
-  padding: 40px 28px;
+  padding: 42px 28px;
 }
 
 .emptyTournamentsHint {
@@ -1584,72 +1611,88 @@
 
 .tournamentList {
   list-style: none;
-  padding: 0 28px;
-  margin: 16px 0 0;
+  padding: 10px 24px 4px;
+  margin: 8px 0 0;
 }
 
 .tournamentItem {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 12px 0;
-  border-bottom: 1px solid rgba(26, 26, 26, 0.1);
+  gap: 10px;
+  padding: 16px;
+  margin-bottom: 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.58);
+  border: 1px solid rgba(26, 26, 26, 0.08);
+  box-shadow: 0 6px 14px rgba(15, 20, 35, 0.05);
 }
 
 .tournamentName {
-  font-weight: 500;
-  font-size: 16px;
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 1.2;
   color: #1A1A1A;
   word-break: break-word;
 }
 
 .tournamentLocation {
-  font-size: 13px;
-  color: rgba(26, 26, 26, 0.55);
-  margin-top: 2px;
+  font-size: 14px;
+  color: rgba(26, 26, 26, 0.62);
+  margin-top: 4px;
 }
 
 .tournamentDate {
-  font-size: 12px;
-  color: rgba(26, 26, 26, 0.4);
-  margin-top: 2px;
+  font-size: 13px;
+  color: rgba(26, 26, 26, 0.45);
+  margin-top: 4px;
 }
 
 .tournamentActions {
   display: flex;
-  gap: 8px;
+  gap: 10px;
+  margin-top: 4px;
 }
 
 .loadBtn {
-  background: var(--color-primary);
+  background: linear-gradient(135deg, #f47c20 0%, #db6716 100%);
   color: white;
   font-size: 14px;
-  padding: 8px 16px;
-  border-radius: var(--radius-md);
+  padding: 10px 18px;
+  border-radius: 10px;
   border: none;
   cursor: pointer;
   transition: all 0.2s ease;
-  font-weight: 500;
+  font-weight: 700;
+  box-shadow: 0 4px 10px rgba(244, 124, 32, 0.25);
 }
 
 .loadBtn:hover {
-  background: var(--color-primary-hover);
+  filter: brightness(1.04);
+  transform: translateY(-1px);
 }
 
 .deleteBtn {
-  background: var(--color-error);
+  background: linear-gradient(135deg, #d94f4f 0%, #c73b3b 100%);
   color: white;
   font-size: 14px;
-  padding: 8px 16px;
-  border-radius: var(--radius-md);
+  padding: 10px 18px;
+  border-radius: 10px;
   border: none;
   cursor: pointer;
   transition: all 0.2s ease;
-  font-weight: 500;
+  font-weight: 700;
+  box-shadow: 0 4px 10px rgba(205, 66, 66, 0.24);
 }
 
 .deleteBtn:hover {
-  background: #B23A3A;
+  filter: brightness(1.03);
+  transform: translateY(-1px);
+}
+
+.loadBtn:focus-visible,
+.deleteBtn:focus-visible {
+  outline: 2px solid rgba(26, 26, 26, 0.55);
+  outline-offset: 2px;
 }
 
 .paginationBar {
@@ -1657,8 +1700,8 @@
   justify-content: center;
   align-items: center;
   gap: 12px;
-  margin-top: 20px;
-  padding: 12px 28px 24px;
+  margin-top: 8px;
+  padding: 14px 28px 24px;
   border-top: 1px solid rgba(26, 26, 26, 0.1);
 }
 
@@ -1725,7 +1768,45 @@
 
   .modalCard {
     min-width: unset;
-    margin: 16px;
-    padding: 24px;
+    margin: 0;
+    width: 100%;
+    border-radius: 14px;
+    max-height: 88vh;
+  }
+
+  .modalTitle {
+    font-size: 22px;
+    padding: 20px 52px 16px 20px;
+    border-radius: 14px 14px 0 0;
+  }
+
+  .adminBadge {
+    padding: 8px 20px 0;
+  }
+
+  .tournamentList {
+    padding: 10px 16px 0;
+  }
+
+  .tournamentItem {
+    padding: 14px;
+  }
+
+  .tournamentName {
+    font-size: 18px;
+  }
+
+  .tournamentLocation {
+    font-size: 15px;
+  }
+
+  .tournamentDate {
+    font-size: 14px;
+  }
+
+  .loadBtn,
+  .deleteBtn {
+    min-height: 38px;
+    padding: 9px 14px;
   }
 }

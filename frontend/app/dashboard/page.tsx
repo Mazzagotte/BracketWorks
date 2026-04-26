@@ -1120,44 +1120,45 @@ export default function TournamentDashboard() {
   // Set up page header with action buttons
   const headerActions = useMemo(() => (
     <div className={mobileStyles.headerActions}>
-      <button className="ds-btn ds-btn-primary ds-btn-md" onClick={() => { setCreateMode(true); setModalOpen(true); }}>
-        + New Tournament
-      </button>
-      {tournament && (
-        <button className="ds-btn ds-btn-primary ds-btn-md" onClick={() => { setCreateMode(false); setModalOpen(true); }}>
-          Edit Tournament
-        </button>
-      )}
-      <button className="ds-btn ds-btn-primary ds-btn-md" onClick={() => setLoadModalOpen(true)}>
-        Load Tournament
-      </button>
-      {tournament && (
-        <button
-          className={`ds-btn ds-btn-destructive ds-btn-md ${mobileStyles.headerDeleteBtn}`}
-          onClick={() => setDeleteConfirm({ id: tournament.id, name: tournament.name })}
-        >
-          Delete Tournament
-        </button>
-      )}
-      {tournament && (
-        <button
-          className="ds-btn ds-btn-destructive ds-btn-md"
-          onClick={() => {
-            setTournament(null);
-            setSquads([]);
-            setSelectedSquadId(null);
-            setBracketSettings(createDefaultBracketSettings());
-            localStorage.removeItem('lastTournamentId');
-            localStorage.removeItem('activeTournamentName');
-            localStorage.removeItem('selected_squad_id');
-            localStorage.removeItem('activeSquadLabel');
-            window.dispatchEvent(new Event('tournament-changed'));
-            window.dispatchEvent(new Event('squad-changed'));
-            addToast({ type: 'success', message: 'Tournament unloaded successfully', duration: 3000 });
-          }}
-        >
-          Unload Tournament
-        </button>
+      {tournament ? (
+        <>
+          <button className="ds-btn ds-btn-primary ds-btn-sm" onClick={() => { setCreateMode(false); setModalOpen(true); }}>
+            Edit Tournament
+          </button>
+          <button
+            className="ds-btn ds-btn-destructive ds-btn-sm"
+            onClick={() => {
+              setTournament(null);
+              setSquads([]);
+              setSelectedSquadId(null);
+              setBracketSettings(createDefaultBracketSettings());
+              localStorage.removeItem('lastTournamentId');
+              localStorage.removeItem('activeTournamentName');
+              localStorage.removeItem('selected_squad_id');
+              localStorage.removeItem('activeSquadLabel');
+              window.dispatchEvent(new Event('tournament-changed'));
+              window.dispatchEvent(new Event('squad-changed'));
+              addToast({ type: 'success', message: 'Tournament unloaded successfully', duration: 3000 });
+            }}
+          >
+            Unload Tournament
+          </button>
+          <button
+            className={`ds-btn ds-btn-destructive ds-btn-sm ${mobileStyles.headerDeleteBtn}`}
+            onClick={() => setDeleteConfirm({ id: tournament.id, name: tournament.name })}
+          >
+            Delete Tournament
+          </button>
+        </>
+      ) : (
+        <>
+          <button className="ds-btn ds-btn-primary ds-btn-sm" onClick={() => { setCreateMode(true); setModalOpen(true); }}>
+            + New Tournament
+          </button>
+          <button className="ds-btn ds-btn-primary ds-btn-sm" onClick={() => setLoadModalOpen(true)}>
+            Load Tournament
+          </button>
+        </>
       )}
     </div>
   ), [tournament, addToast]);
@@ -1531,10 +1532,10 @@ export default function TournamentDashboard() {
             )}
 
             {/* Squad Selection Card */}
-            {squads.length > 0 && (
+            {tournament && squads.length > 0 && (
               <div className={`${mobileStyles.squadSelectionCard} ${mobileStyles.squadSelectionCompactCard}`}>
-                <div className={mobileStyles.squadHeader}>
-                  <h2 className={mobileStyles.squadTitle}>Squad Selection</h2>
+                <div className={mobileStyles.settingsHeader}>
+                  <h2 className={mobileStyles.settingsTitle}>Squad Selection</h2>
                 </div>
                 
                 <div className={mobileStyles.squadGrid}>

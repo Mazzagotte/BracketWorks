@@ -570,18 +570,17 @@ def hydrate_brackets_with_scores(
     # This must happen AFTER all matches are updated with fresh scores.
     # Applies to both scratch and handicap brackets.
 
-    def find_player_score_in_round(player_id, matches):
-        """Return this player's score from the given round's matches, or None."""
-        for m in matches:
-            if m.get('playerA_id') == player_id:
-                return m.get('scoreA')
-            if m.get('playerB_id') == player_id:
-                return m.get('scoreB')
-        return None
+    def get_player_score_for_round(player_id: Optional[int], round_idx: int, use_scratch: bool, use_reverse: bool) -> Optional[int]:
+        """Return a player's score for the game mapped to the given bracket round index."""
+        if not player_id:
+            return None
+        game_key = f'game{3 - round_idx}' if use_reverse else f'game{round_idx + 1}'
+        score_map = scores_map_scratch if use_scratch else scores_map_total
+        return score_map.get(player_id, {}).get(game_key)
 
-    def resolve_tie_using_next_round(tied_match, next_round_matches, next_round_num, final_round_num):
+    def resolve_tie_using_next_round(tied_match, next_round_idx: int, final_round_idx: int, use_scratch: bool, use_reverse: bool):
         """
-        Compare the two tied players' scores from the next round.
+        Compare the two tied players' scores from the next round's game.
         - If one is higher → that player wins, other is eliminated.
         - If still tied and more rounds remain → keep both_advance = True (cascade).
         - If still tied in the final round → pot split (already marked by update_match_scores).
@@ -589,11 +588,14 @@ def hydrate_brackets_with_scores(
         pid_a = tied_match.get('playerA_id')
         pid_b = tied_match.get('playerB_id')
 
-        score_a = find_player_score_in_round(pid_a, next_round_matches)
-        score_b = find_player_score_in_round(pid_b, next_round_matches)
+        score_a = get_player_score_for_round(pid_a, next_round_idx, use_scratch, use_reverse)
+        score_b = get_player_score_for_round(pid_b, next_round_idx, use_scratch, use_reverse)
 
         if score_a is None or score_b is None:
             return  # Next round scores not yet entered — leave unresolved
+
+        next_round_num = next_round_idx + 1  # display round number (1-indexed)
+        final_round_num = final_round_idx + 1
 
         if score_a > score_b:
             tied_match['winner'] = 'A'
@@ -623,7 +625,7 @@ def hydrate_brackets_with_scores(
 
         else:
             # Still tied after next round
-            if next_round_num >= final_round_num:
+            if next_round_idx >= final_round_idx:
                 # No more rounds — split pot
                 tied_match['winner'] = None
                 tied_match['status'] = 'completed'
@@ -642,24 +644,34 @@ def hydrate_brackets_with_scores(
                 )
                 logger.info(f"  Tie cascades to Round {next_round_num + 1}: {tied_match.get('playerA')} vs {tied_match.get('playerB')}")
 
-    all_brackets = [bracket for _, _, bracket in iter_group_brackets(bracket_data)]
-
-    for bracket in all_brackets:
+    for group, _, bracket in iter_group_brackets(bracket_data):
+        scoring_mode = str(group.get('scoring_mode') or '').lower()
+        use_scratch = scoring_mode in ('scratch', 'reverse_scratch', 'reverse')
+        use_reverse = scoring_mode in ('reverse_scratch', 'reverse_handicap', 'reverse')
         rounds = bracket.get('rounds', [])
         total_rounds = len(rounds)
 
         for round_idx in range(total_rounds - 1):
             current_matches = rounds[round_idx].get('matches', [])
-            next_matches = rounds[round_idx + 1].get('matches', [])
 
             for match in current_matches:
                 if match.get('both_advance') and match.get('scoreA') == match.get('scoreB'):
                     resolve_tie_using_next_round(
                         match,
-                        next_matches,
-                        next_round_num=round_idx + 2,   # 1-indexed display round
-                        final_round_num=total_rounds
+                        next_round_idx=round_idx + 1,
+                        final_round_idx=total_rounds - 1,
+                        use_scratch=use_scratch,
+                        use_reverse=use_reverse,
                     )
+
+    # Re-run propagation after tie resolution so newly-resolved winners fill next-round slots.
+    for group, _, bracket in iter_group_brackets(bracket_data):
+        scoring_mode = str(group.get('scoring_mode') or '').lower()
+        propagate_and_rehydrate(
+            bracket,
+            use_scratch=scoring_mode in ('scratch', 'reverse_scratch', 'reverse'),
+            use_reverse=scoring_mode in ('reverse_scratch', 'reverse_handicap', 'reverse'),
+        )
 
     return bracket_data
 

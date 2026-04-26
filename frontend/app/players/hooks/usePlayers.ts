@@ -32,6 +32,7 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
   const [players, setPlayers] = useState<Player[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [savingStatus, setSavingStatus] = useState<Record<string, 'idle' | 'saving' | 'success' | 'error'>>({});
+  const playersRef = useRef<Player[]>([]);
 
   // Pending debounce timers per player: playerId -> timeout handle
   const patchTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
@@ -214,17 +215,12 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
     // Build the API payload for this update
     const playerData: Record<string, any> = {};
 
-    // Name requires the current merged state — read from setPlayers' functional updater isn't possible
-    // here, so we still need the current snapshot for name fields only
+    // Name requires the current merged state to avoid dropping first/last updates.
+    // Use a ref snapshot so payload creation is deterministic.
     if ('firstName' in updates || 'lastName' in updates) {
-      setPlayers(prev => {
-        const current = prev.find(p => p.id === id);
-        if (current) {
-          const merged = { ...current, ...updates };
-          playerData.full_name = `${merged.firstName || ''} ${merged.lastName || ''}`.trim();
-        }
-        return prev; // no change — just reading
-      });
+      const current = playersRef.current.find(player => player.id === id);
+      const merged = { ...(current ?? {}), ...updates };
+      playerData.full_name = `${merged.firstName || ''} ${merged.lastName || ''}`.trim();
     }
 
     if ('usbc' in updates) playerData.usbc_number = updates.usbc;
@@ -300,6 +296,10 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
   useEffect(() => {
     loadPlayers();
   }, [loadPlayers]);
+
+  useEffect(() => {
+    playersRef.current = players;
+  }, [players]);
 
   useEffect(() => {
     setPlayers(prevPlayers =>

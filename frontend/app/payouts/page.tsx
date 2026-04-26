@@ -9,6 +9,7 @@ import { Tournament, Squad } from '../lib/types'
 import { usePayouts } from './hooks/usePayouts'
 import NoTournamentState from '../components/NoTournamentState'
 import { storage } from '../lib/storage'
+import { useToast } from '../components/Toast'
 import Link from 'next/link'
 import styles from './payouts.module.css'
 
@@ -23,6 +24,7 @@ function placeBadgeClass(place: number) {
 }
 
 export default function PayoutsPage() {
+  const { addToast } = useToast()
   const { isAuthenticated, isInitialized } = useAuth()
   const { tournaments, fetchTournaments } = useTournaments()
   const { squads, fetchSquads } = useSquads()
@@ -32,6 +34,8 @@ export default function PayoutsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [paidKeys, setPaidKeys] = useState<Set<string>>(new Set())
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set())
+  const [isExportingExcel, setIsExportingExcel] = useState(false)
+  const [isExportingPdf, setIsExportingPdf] = useState(false)
 
   const toggleExpanded = useCallback((key: string) => {
     setExpandedKeys(prev => {
@@ -98,14 +102,6 @@ export default function PayoutsPage() {
     loadEntryData()
   }, [selectedTournament, loadPayoutData, loadEntryData])
 
-  const headerActions = useMemo(() => undefined, [])
-
-  usePageHeader({
-    title: 'Payout Distribution',
-    subtitle: undefined,
-    actions: headerActions,
-  })
-
   // Aggregate winners across brackets to compute paid stats
   const aggregatedWinners = useMemo(() => {
     const allWinners = payoutData?.winners_by_bracket ?? []
@@ -138,6 +134,198 @@ export default function PayoutsPage() {
       !searchQuery || w.player_name.toLowerCase().includes(searchQuery.toLowerCase())
     ), [aggregatedWinners, searchQuery]
   )
+
+  const buildExportRows = useCallback(() => {
+    return filteredWinners.map((row, index) => ({
+      Rank: index + 1,
+      Player: row.player_name,
+      'Total Won': Number(row.total_won),
+      'Payout Details': row.winnings
+        .map(w => `${w.bracket_name} - ${w.position} (${formatCurrency(w.payout_amount)})`)
+        .join(' | '),
+      Paid: paidKeys.has(String(row.player_id ?? row.player_name)) ? 'Yes' : 'No',
+    }))
+  }, [filteredWinners, paidKeys])
+
+  const buildExportFileName = useCallback((suffix: 'xlsx' | 'pdf') => {
+    const safeTournament = (selectedTournament?.name || 'payouts')
+      .replace(/[^a-zA-Z0-9\-_ ]+/g, '')
+      .trim()
+      .replace(/\s+/g, '_') || 'payouts'
+    const safeSquad = selectedSquad
+      ? `${selectedSquad.date || ''}_${selectedSquad.time || ''}`
+        .replace(/[^a-zA-Z0-9\-_ ]+/g, '')
+        .trim()
+        .replace(/\s+/g, '_')
+      : 'all_squads'
+    const dateStamp = new Date().toISOString().slice(0, 10)
+    return `${safeTournament}_${safeSquad}_payouts_${dateStamp}.${suffix}`
+  }, [selectedTournament, selectedSquad])
+
+  const handleExportToExcel = useCallback(async () => {
+    const rows = buildExportRows()
+    if (rows.length === 0) {
+      addToast({ type: 'warning', message: 'No payout rows to export.', duration: 3000 })
+      return
+    }
+
+    setIsExportingExcel(true)
+    try {
+      const XLSX = await import('xlsx')
+      const worksheet = XLSX.utils.json_to_sheet(rows)
+      const workbook = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Payouts')
+      XLSX.writeFile(workbook, buildExportFileName('xlsx'))
+      addToast({
+        type: 'success',
+        message: `Exported ${rows.length} payout row${rows.length !== 1 ? 's' : ''} to Excel.`,
+        duration: 3000,
+      })
+    } catch (err) {
+      addToast({
+        type: 'error',
+        message: `Failed to export Excel file: ${err instanceof Error ? err.message : 'Unknown error'}`,
+        duration: 5000,
+      })
+    } finally {
+      setIsExportingExcel(false)
+    }
+  }, [addToast, buildExportFileName, buildExportRows])
+
+  const handleExportToPdf = useCallback(() => {
+    const rows = filteredWinners.map((winner, index) => ({
+      rank: index + 1,
+      playerName: winner.player_name,
+      totalWon: winner.total_won,
+    }))
+    if (rows.length === 0) {
+      addToast({ type: 'warning', message: 'No payout rows to export.', duration: 3000 })
+      return
+    }
+
+    setIsExportingPdf(true)
+    try {
+      const escapeHtml = (value: string) =>
+        value
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/\"/g, '&quot;')
+          .replace(/'/g, '&#39;')
+
+      const tableRows = rows.map(row => `
+        <tr>
+          <td>${row.rank}</td>
+          <td>${escapeHtml(String(row.playerName))}</td>
+          <td>${escapeHtml(formatCurrency(Number(row.totalWon)))}</td>
+          <td><div class="rowSignatureLine"></div></td>
+        </tr>`).join('')
+
+      const tournamentName = selectedTournament?.name || 'Unknown Tournament'
+      const squadLabel = selectedSquad
+        ? `${selectedSquad.date || ''} ${selectedSquad.time || ''}`.trim()
+        : 'All Squads'
+      const generatedAt = new Date().toLocaleString()
+      const logoUrl = `${window.location.origin}/logo.svg`
+
+      const printWindow = window.open('', '_blank')
+      if (!printWindow) {
+        addToast({ type: 'error', message: 'Popup blocked. Allow popups to export PDF.', duration: 5000 })
+        return
+      }
+
+      printWindow.document.write(`<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Payout Export</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 24px; color: #1a1a1a; }
+      .reportHeader { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 10px; }
+      .reportBrand { display: flex; align-items: center; gap: 12px; }
+      .logo { width: 120px; height: auto; object-fit: contain; }
+      h1 { margin: 0; font-size: 22px; }
+      .meta { margin: 0 0 16px; color: #555; font-size: 12px; }
+      table { width: 100%; border-collapse: collapse; font-size: 12px; }
+      th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: top; }
+      th { background: #f2f2f2; font-weight: 700; }
+      tr:nth-child(even) { background: #fafafa; }
+      .signatureColumn { width: 220px; }
+      .rowSignatureLine { width: 100%; min-height: 18px; border-bottom: 1px solid #1a1a1a; }
+    </style>
+  </head>
+  <body>
+    <div class="reportHeader">
+      <div class="reportBrand">
+        <img src="${escapeHtml(logoUrl)}" alt="BracketWorks Logo" class="logo" />
+      </div>
+      <h1>Payout Distribution Export</h1>
+    </div>
+    <div class="meta">Tournament: ${escapeHtml(tournamentName)} | Squad: ${escapeHtml(squadLabel)} | Generated: ${escapeHtml(generatedAt)}</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Player Name</th>
+          <th>Total Won</th>
+          <th class="signatureColumn">Player Signature</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${tableRows}
+      </tbody>
+    </table>
+    <script>
+      window.addEventListener('load', function () {
+        setTimeout(function () {
+          window.print();
+        }, 200);
+      });
+    </script>
+  </body>
+</html>`)
+      printWindow.document.close()
+      printWindow.focus()
+      addToast({
+        type: 'success',
+        message: `Prepared ${rows.length} payout row${rows.length !== 1 ? 's' : ''} for PDF export.`,
+        duration: 3000,
+      })
+    } catch (err) {
+      addToast({
+        type: 'error',
+        message: `Failed to export PDF: ${err instanceof Error ? err.message : 'Unknown error'}`,
+        duration: 5000,
+      })
+    } finally {
+      setIsExportingPdf(false)
+    }
+  }, [addToast, filteredWinners, selectedTournament, selectedSquad])
+
+  const headerActions = useMemo(() => (
+    <>
+      <button
+        className="ds-btn ds-btn-primary ds-btn-sm"
+        onClick={handleExportToExcel}
+        disabled={loading || isExportingExcel || filteredWinners.length === 0}
+      >
+        {isExportingExcel ? 'Exporting Excel...' : 'Export to Excel'}
+      </button>
+      <button
+        className="ds-btn ds-btn-secondary ds-btn-sm"
+        onClick={handleExportToPdf}
+        disabled={loading || isExportingPdf || filteredWinners.length === 0}
+      >
+        {isExportingPdf ? 'Exporting PDF...' : 'Export to PDF'}
+      </button>
+    </>
+  ), [filteredWinners.length, handleExportToExcel, handleExportToPdf, isExportingExcel, isExportingPdf, loading])
+
+  usePageHeader({
+    title: 'Payout Distribution',
+    subtitle: undefined,
+    actions: headerActions,
+  })
 
   const programSummaries = useMemo(
     () => (payoutData?.program_summaries ?? []).filter(program => program.total_brackets > 0),

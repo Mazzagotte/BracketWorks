@@ -1,0 +1,189 @@
+.pageContainer {
+  max-width: 1100px;
+  margin: 0 auto 32px;
+  padding: 1.25rem 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  align-items: start;
+  gap: 24px;
+}
+
+.card {
+  background-color: #faf4e8;
+  border: 1px solid rgba(240, 120, 32, 0.2);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+}
+
+.cardTitle {
+  margin: 0;
+  padding: 14px 20px;
+  background: #f0e0c0;
+  border-bottom: 3px solid #f07820;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.optionRow {
+  display: grid;
+  grid-template-columns: 170px minmax(0, 1fr);
+  align-items: center;
+  column-gap: 16px;
+  row-gap: 8px;
+  padding: 0.8rem 20px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.optionRow:first-of-type {
+  border-top: none;
+}
+
+.optionText {
+  min-width: 0;
+  width: 100%;
+}
+
+.optionTitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  line-height: 1.25;
+}
+
+.optionHint {
+  margin-top: 4px;
+  font-size: 0.85rem;
+  color: rgba(26, 26, 26, 0.65);
+  line-height: 1.35;
+}
+
+.input {
+  width: 100%;
+  max-width: 360px;
+  border: 1px solid rgba(0, 0, 0, 0.16);
+  background: #ffffff;
+  color: #1a1a1a;
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-size: 0.9rem;
+  justify-self: start;
+}
+
+.staticValue {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.passwordFieldWrap {
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.passwordFieldWrap .input {
+  max-width: none;
+}
+
+.visibilityBtn {
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  background: #f3f4f6;
+  color: #1f2937;
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.meterWrap {
+  grid-column: 2;
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.meterBar {
+  height: 6px;
+  flex: 1;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.meterOn {
+  background: linear-gradient(90deg, #f47c20 0%, #d9651a 100%);
+}
+
+.meterLabel {
+  margin-left: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #6b7280;
+}
+
+.checkboxLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: #1f2937;
+}
+
+.input:focus {
+  outline: none;
+  border-color: rgba(240, 120, 32, 0.6);
+  box-shadow: 0 0 0 3px rgba(240, 120, 32, 0.14);
+}
+
+.actionRow {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.85rem;
+  padding: 0 20px 18px;
+}
+
+@media (max-width: 980px) {
+  .pageContainer {
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .pageContainer {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+
+  .optionRow {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .input {
+    width: 100%;
+    max-width: none;
+  }
+
+  .passwordFieldWrap {
+    max-width: none;
+  }
+
+  .meterWrap {
+    grid-column: 1;
+    max-width: none;
+  }
+
+  .actionRow {
+    width: 100%;
+  }
+}

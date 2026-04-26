@@ -28,6 +28,7 @@ class Settings(BaseModel):
     SENDGRID_API_KEY: str = os.getenv("SENDGRID_API_KEY", "")
     FROM_EMAIL: str = os.getenv("FROM_EMAIL", "support@bracketworks.app")
     FROM_NAME: str = os.getenv("FROM_NAME", "BracketWorks")
+    FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:3000")
     
     # Caching
     CACHE_TTL_SECONDS: int = int(os.getenv("CACHE_TTL_SECONDS", "300"))

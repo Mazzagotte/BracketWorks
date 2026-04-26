@@ -517,7 +517,15 @@ def update_match_score(
                     advance_winner_to_next_round(bracket, round_index, match_index, match['winner'])
                 else:
                     match['winner'] = None
-                    match['status'] = 'tied'
+                    is_final_round = round_index == len(bracket.get('rounds', [])) - 1
+                    if is_final_round:
+                        match['status'] = 'completed'
+                        match['both_advance'] = False
+                        match['split_pot'] = True
+                    else:
+                        match['status'] = 'both_advance'
+                        match['both_advance'] = True
+                        match['split_pot'] = False
         return brackets_data
     
     # Find the bracket and update the match
@@ -542,9 +550,17 @@ def update_match_score(
                 match['winner'] = 'B'
                 match['status'] = 'completed'
             else:
-                # TIE - handled by bracket_persistence_simple hydration logic
+                # Tie semantics should match hydration logic for immediate UI consistency.
                 match['winner'] = None
-                match['status'] = 'tied'
+                is_final_round = round_index == len(brackets_data.get('rounds', [])) - 1
+                if is_final_round:
+                    match['status'] = 'completed'
+                    match['both_advance'] = False
+                    match['split_pot'] = True
+                else:
+                    match['status'] = 'both_advance'
+                    match['both_advance'] = True
+                    match['split_pot'] = False
                 
         return brackets_data
     
@@ -572,9 +588,17 @@ def update_match_score(
                 # Auto-advance winner to next round
                 advance_winner_to_next_round(bracket, round_index, match_index, match['winner'])
             else:
-                # TIE - handled by bracket_persistence_simple hydration logic
+                # Tie semantics should match hydration logic for immediate UI consistency.
                 match['winner'] = None
-                match['status'] = 'tied'
+                is_final_round = round_index == len(bracket.get('rounds', [])) - 1
+                if is_final_round:
+                    match['status'] = 'completed'
+                    match['both_advance'] = False
+                    match['split_pot'] = True
+                else:
+                    match['status'] = 'both_advance'
+                    match['both_advance'] = True
+                    match['split_pot'] = False
     
     return brackets_data
 

@@ -3,10 +3,11 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from ...core import models, schemas
 from ...core.config import settings
-from ..deps import get_db
+from ..deps import get_db, get_current_user
 from fastapi.responses import JSONResponse
 from passlib.hash import bcrypt
 from passlib.context import CryptContext
+from datetime import datetime, timedelta
 import logging
 
 # Optimize bcrypt for faster verification (reduce rounds for development)
@@ -21,6 +22,79 @@ from sendgrid.helpers.mail import Mail
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+@router.get("/me", response_model=schemas.UserOut)
+def get_my_account(current_user: models.User = Depends(get_current_user)):
+    return current_user
+
+
+@router.put("/me", response_model=schemas.UserOut)
+def update_my_account(
+    payload: schemas.UserAccountUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    incoming = payload.model_dump(exclude_unset=True)
+    if not incoming:
+        raise HTTPException(status_code=400, detail="No fields provided for update")
+
+    if "username" in incoming:
+        normalized_username = (incoming["username"] or "").strip()
+        if len(normalized_username) < 3:
+            raise HTTPException(status_code=400, detail="Username must be at least 3 characters")
+        existing_username = (
+            db.query(models.User.id)
+            .filter(models.User.username == normalized_username, models.User.id != current_user.id)
+            .first()
+        )
+        if existing_username:
+            raise HTTPException(status_code=400, detail="Username already exists")
+        current_user.username = normalized_username
+
+    if "email" in incoming:
+        normalized_email = (incoming["email"] or "").strip().lower()
+        existing_email = (
+            db.query(models.User.id)
+            .filter(models.User.email == normalized_email, models.User.id != current_user.id)
+            .first()
+        )
+        if existing_email:
+            raise HTTPException(status_code=400, detail="Email already exists")
+        current_user.email = normalized_email
+
+    if "first_name" in incoming:
+        current_user.first_name = (incoming["first_name"] or "").strip()
+
+    if "last_name" in incoming:
+        current_user.last_name = (incoming["last_name"] or "").strip()
+
+    if "organization" in incoming:
+        org_value = incoming["organization"]
+        current_user.organization = org_value.strip() if isinstance(org_value, str) and org_value.strip() else None
+
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
+
+@router.post("/change-password")
+def change_my_password(
+    payload: schemas.ChangePasswordRequest,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    if not pwd_context.verify(payload.current_password, current_user.password):
+        raise HTTPException(status_code=400, detail="Current password is incorrect")
+
+    if pwd_context.verify(payload.new_password, current_user.password):
+        raise HTTPException(status_code=400, detail="New password must be different from current password")
+
+    current_user.password = pwd_context.hash(payload.new_password)
+    db.commit()
+
+    return {"message": "Password updated successfully"}
+
 
 @router.post("/login")
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
@@ -83,11 +157,11 @@ RESET_TOKEN_EXPIRE_MINUTES = 15
 def create_reset_token(email: str) -> str:
     """Create a signed JWT reset token valid for 15 minutes."""
     from ...core.utils import create_access_token
-    from datetime import timedelta
     return create_access_token(
         {"sub": email, "type": "password_reset"},
         expires_delta=timedelta(minutes=RESET_TOKEN_EXPIRE_MINUTES)
     )
+
 
 def verify_reset_token(token: str) -> str | None:
     """Decode and validate a reset token. Returns email or None."""
@@ -133,6 +207,7 @@ def create_reset_email_html(reset_code: str, username: str) -> str:
     </body>
     </html>
     """
+
 
 def send_email(to_email: str, subject: str, body: str):
     """Send email using SendGrid API"""
@@ -218,7 +293,7 @@ def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
         last_name=user.last_name,
         organization=user.organization,
         password=hashed_password,
-        is_admin=False
+        is_admin=False,
     )
     db.add(db_user)
     db.commit()

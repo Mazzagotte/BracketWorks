@@ -16,10 +16,12 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     else:
         expire = now + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     
+    token_type = to_encode.get("type", "access")
+
     to_encode.update({
         "exp": expire,
         "iat": now,  # Add issued at time
-        "type": "access"  # Token type for validation
+        "type": token_type  # Token type for validation
     })
     
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)

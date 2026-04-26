@@ -81,11 +81,46 @@
 
 .logoutWrap {
   padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.settingsBtn {
+  width: 100%;
+  padding: 0 16px;
+  height: 50px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  text-decoration: none;
+  background: linear-gradient(135deg, #5f646c 0%, #474b52 60%, #31343a 100%);
+  color: #f4f6f8;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  transition: background 0.2s ease;
+}
+
+.settingsBtn:active {
+  background: #3b4047;
+}
+
+.settingsBtnActive {
+  background: linear-gradient(135deg, #6a7078 0%, #50555d 60%, #383c43 100%);
 }
 
 .logoutBtn {
   width: 100%;
-  padding: 16px;
+  padding: 0 16px;
+  height: 50px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: linear-gradient(135deg, #F47C20 0%, #D9651A 100%);
   color: #ffffff;
   border: none;
