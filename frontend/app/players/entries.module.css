@@ -1580,21 +1580,29 @@
 }
 
 .summaryGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 14px;
-  padding: 18px;
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-items: stretch;
+  gap: 10px;
+  padding: 18px 14px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
 }
 
 .statBox {
   text-align: center;
-  padding: 24px 16px;
+  padding: 22px 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-height: 110px;
+  min-height: 104px;
+  min-width: 156px;
+  width: fit-content;
+  flex: 0 0 auto;
   border: 1px solid rgba(26, 26, 26, 0.08);
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.52);
@@ -1645,14 +1653,14 @@
 
 @media (max-width: 640px) {
   .summaryGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
     padding: 14px;
-    gap: 10px;
+    gap: 8px;
   }
 
   .statBox {
     min-height: 96px;
     padding: 18px 12px;
+    min-width: 140px;
   }
 
   .statValue {
@@ -1792,7 +1800,7 @@
   font-size: 1rem;
   font-weight: 700;
   margin: 0;
-  padding: 16px 24px;
+  padding: 10px 20px;
   color: #1A1A1A;
   background: #F0E0C0;
   border-bottom: 3px solid #F07820;
@@ -1800,14 +1808,14 @@
 }
 
 .formCard form {
-  padding: 20px 24px;
+  padding: 12px 20px;
 }
 
 .formGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.25rem;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
 }
 
 .fieldLabel {
@@ -1838,8 +1846,8 @@
 }
 
 .compactSection {
-  margin-bottom: 1.25rem;
-  padding: 1rem;
+  margin-bottom: 0.6rem;
+  padding: 0.6rem 0.85rem;
   background: rgba(255, 255, 255, 0.58);
   border: 1px solid rgba(26, 26, 26, 0.08);
   border-radius: 16px;
@@ -1850,7 +1858,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 0.9rem;
+  margin-bottom: 0.5rem;
 }
 
 .compactSectionTitle {
@@ -1863,7 +1871,7 @@
 .compactGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(110px, max-content));
-  gap: 0.85rem 1rem;
+  gap: 0.4rem 0.75rem;
   align-items: end;
 }
 

@@ -34,6 +34,10 @@ class Settings(BaseModel):
     
     # Logging
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
+
+    # Experimental bracket optimizer
+    BRACKETS_EXPERIMENTAL_ENABLED: bool = os.getenv("BRACKETS_EXPERIMENTAL_ENABLED", "true").lower() == "true"
+    BRACKETS_EXPERIMENTAL_ATTEMPTS: int = int(os.getenv("BRACKETS_EXPERIMENTAL_ATTEMPTS", "64"))
     
     @property
     def is_production(self) -> bool:

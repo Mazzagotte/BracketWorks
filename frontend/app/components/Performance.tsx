@@ -125,12 +125,14 @@ interface UsePaginationOptions<T> {
   items: T[];
   itemsPerPage?: number;
   initialPage?: number;
+  resetOnItemsChange?: boolean;
 }
 
 export function usePagination<T>({
   items,
   itemsPerPage = 10,
   initialPage = 1,
+  resetOnItemsChange = true,
 }: UsePaginationOptions<T>) {
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [pageSize, setPageSize] = useState(itemsPerPage);
@@ -138,10 +140,12 @@ export function usePagination<T>({
   const totalItems = items.length;
   const totalPages = Math.ceil(totalItems / pageSize);
 
-  // Reset to page 1 when items change
+  // Optionally reset to page 1 when items change
   useEffect(() => {
-    setCurrentPage(1);
-  }, [items]);
+    if (resetOnItemsChange) {
+      setCurrentPage(1);
+    }
+  }, [items, resetOnItemsChange]);
 
   // Ensure current page is valid
   useEffect(() => {

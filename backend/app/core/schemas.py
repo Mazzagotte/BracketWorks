@@ -11,6 +11,7 @@ class BracketProgramDefinition(BaseModel):
     scoring_mode: str = Field(validation_alias=AliasChoices("scoring_mode", "scoringMode"))
     entry_fee: Optional[float] = Field(default=None, validation_alias=AliasChoices("entry_fee", "entryFee"))
     enabled: bool = True
+    allow_byes: Optional[bool] = Field(default=False, validation_alias=AliasChoices("allow_byes", "allowByes"))
     display_order: Optional[int] = Field(default=None, validation_alias=AliasChoices("display_order", "displayOrder"))
 
 class LoginRequest(BaseModel):

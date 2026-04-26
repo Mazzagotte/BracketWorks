@@ -22,11 +22,14 @@ export interface Squad {
 export interface Player {
   id: number;
   usbcNumber?: string;
+  usbc?: string;           // runtime alias for usbcNumber
   firstName: string;
   lastName: string;
   fullName?: string;
   average: number;
-  handicapPins: number;
+  handicapPins?: number;   // optional; use handicap when reading
+  handicap?: number;       // runtime alias for handicapPins
+  scratch?: number;        // entry count for scratch program
   handicapEntryCount?: number;
   scratchEntryCount?: number;
   lane?: string | number | null;
@@ -86,6 +89,7 @@ export interface BracketProgramDefinition {
   scoring_mode: string;
   entry_fee?: number | null;
   enabled?: boolean;
+  allow_byes?: boolean;
   display_order?: number | null;
 }
 

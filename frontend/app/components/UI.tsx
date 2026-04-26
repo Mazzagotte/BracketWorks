@@ -1,5 +1,6 @@
 import React from 'react'
 import { stylePresets, colors, spacing, typography, borderRadius, shadows, utils } from '../lib/design-system'
+import { handleTableArrowNavigation } from '../lib/tableKeyboard'
 
 // Page Container Component
 interface PageContainerProps {
@@ -379,6 +380,7 @@ export const Table: React.FC<TableProps> = ({
         ...stylePresets.table,
         ...(variant === 'bordered' && { border: `1px solid ${colors.border}` })
       }} 
+      onKeyDownCapture={handleTableArrowNavigation}
       className={`${className} ${hoverable ? 'table-hoverable' : ''}`}
       data-variant={variant}
     >

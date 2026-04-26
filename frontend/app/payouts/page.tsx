@@ -31,6 +31,16 @@ export default function PayoutsPage() {
   const [selectedSquad, setSelectedSquad] = useState<Squad | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [paidKeys, setPaidKeys] = useState<Set<string>>(new Set())
+  const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set())
+
+  const toggleExpanded = useCallback((key: string) => {
+    setExpandedKeys(prev => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }, [])
 
   const { payoutData, entryData, loading, error, loadPayoutData, loadEntryData } =
     usePayouts(selectedTournament?.id ?? null, selectedSquad?.id ?? null)
@@ -97,14 +107,8 @@ export default function PayoutsPage() {
   })
 
   // Aggregate winners across brackets to compute paid stats
-  // Must be declared before any early returns (Rules of Hooks)
-  const handicapBrackets = payoutData?.handicap_brackets ?? []
-  const scratchBrackets = payoutData?.scratch_brackets ?? []
-
   const aggregatedWinners = useMemo(() => {
-    const hBrackets = payoutData?.handicap_brackets ?? []
-    const sBrackets = payoutData?.scratch_brackets ?? []
-    const allWinners = [...hBrackets, ...sBrackets].flatMap(b => b.winners)
+    const allWinners = payoutData?.winners_by_bracket ?? []
     const byPlayer: Record<string, {
       player_id: number
       player_name: string
@@ -133,6 +137,11 @@ export default function PayoutsPage() {
     aggregatedWinners.filter(w =>
       !searchQuery || w.player_name.toLowerCase().includes(searchQuery.toLowerCase())
     ), [aggregatedWinners, searchQuery]
+  )
+
+  const programSummaries = useMemo(
+    () => (payoutData?.program_summaries ?? []).filter(program => program.total_brackets > 0),
+    [payoutData]
   )
 
   const hasStoredAuth = typeof window !== 'undefined' && storage.getItem('token') && storage.getItem('user_id')
@@ -183,14 +192,13 @@ export default function PayoutsPage() {
                 <div className={`${styles.statValue} ${styles.statValueGreen}`}>{formatCurrency(payoutData.total_prize_pool)}</div>
                 <div className={styles.statLabel}>Total Prize Pool</div>
               </div>
-              <div className={styles.statBox}>
-                <div className={styles.statValue}>{formatCurrency(payoutData.total_handicap_pool)}</div>
-                <div className={styles.statLabel}>Handicap Pool</div>
-              </div>
-              <div className={styles.statBox}>
-                <div className={styles.statValue}>{formatCurrency(payoutData.total_scratch_pool)}</div>
-                <div className={styles.statLabel}>Scratch Pool</div>
-              </div>
+              {programSummaries.map(program => (
+                <div key={program.key} className={styles.statBox}>
+                  <div className={styles.statValue}>{formatCurrency(program.total_prize_pool)}</div>
+                  <div className={styles.statLabel}>{program.name} Pool</div>
+                  <div className={styles.statDetail}>{program.total_brackets} bracket{program.total_brackets !== 1 ? 's' : ''}</div>
+                </div>
+              ))}
               <div className={styles.statBox}>
                 <div className={styles.statValue}>{paidCount} / {totalUniqueWinners}</div>
                 <div className={styles.statLabel}>Paid Out</div>
@@ -317,10 +325,19 @@ export default function PayoutsPage() {
                       <div className={styles.winnerName}>
                         {row.player_name}
                         {row.winnings.some(w => w.split_pot) && <span className={styles.splitBadge}>Split</span>}
+                        <button
+                          className={styles.toggleDetailsBtn}
+                          onClick={() => toggleExpanded(key)}
+                          aria-label={expandedKeys.has(key) ? 'Hide brackets' : 'Show brackets'}
+                        >
+                          {expandedKeys.has(key) ? '▲' : '▼'} {row.winnings.length} bracket{row.winnings.length !== 1 ? 's' : ''}
+                        </button>
                       </div>
-                      <div className={styles.winnerMeta}>
-                        {row.winnings.map(w => `${w.bracket_name} – ${w.position} (${formatCurrency(w.payout_amount)})`).join(' · ')}
-                      </div>
+                      {expandedKeys.has(key) && (
+                        <div className={styles.winnerMeta}>
+                          {row.winnings.map(w => `${w.bracket_name} – ${w.position} (${formatCurrency(w.payout_amount)})`).join(' · ')}
+                        </div>
+                      )}
                     </div>
                     <div className={styles.payoutCol}>
                       <div className={styles.payoutAmount}>{formatCurrency(row.total_won)}</div>

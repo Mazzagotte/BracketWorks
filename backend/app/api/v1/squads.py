@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 from typing import Dict, List, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -8,6 +9,31 @@ from ...api import deps
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+def _squad_sort_key(date_value: str, time_value: str):
+    date_text = str(date_value or "")
+    time_text = str(time_value or "")
+
+    try:
+        parsed_date = datetime.strptime(date_text, "%Y-%m-%d").date()
+    except ValueError:
+        parsed_date = None
+
+    parsed_time = None
+    for time_format in ("%I:%M %p", "%I %p", "%H:%M", "%H"):
+        try:
+            parsed_time = datetime.strptime(time_text, time_format).time()
+            break
+        except ValueError:
+            continue
+
+    return (
+        parsed_date is None,
+        parsed_date or date_text,
+        parsed_time is None,
+        parsed_time or time_text,
+    )
 
 @router.post("/select/", response_model=schemas.SelectedSquadOut)
 def select_squad(data: schemas.SelectedSquadCreate, db: Session = Depends(deps.get_db), user = Depends(deps.get_current_user)):
@@ -73,6 +99,7 @@ def create_squad(squad: schemas.SquadCreate, db: Session = Depends(deps.get_db),
 @router.get("/", response_model=list[schemas.Squad])
 def list_squads(tournament_id: int, db: Session = Depends(deps.get_db)):
     squads = db.query(models.Squad).filter(models.Squad.tournament_id == tournament_id).all()
+    squads = sorted(squads, key=lambda squad: _squad_sort_key(str(squad.date), squad.time))
     return [
         {
             'id': s.id,
@@ -224,7 +251,7 @@ def sync_tournament_squads(tournament_id: int, body: SquadSyncRequest = SquadSyn
                         errors.append(f"Failed to delete squad ({squad.date}, {squad.time}): {str(e)}")
         
         # Create missing squads
-        for date, time in squads_to_create:
+        for date, time in sorted(squads_to_create, key=lambda squad: _squad_sort_key(squad[0], squad[1])):
             try:
                 new_squad = models.Squad(
                     tournament_id=tournament_id,
@@ -248,8 +275,8 @@ def sync_tournament_squads(tournament_id: int, body: SquadSyncRequest = SquadSyn
         "created_count": created_count,
         "deleted_count": deleted_count,
         "selected_squad_cleanup_count": selected_squad_cleanup_count,
-        "expected_squads": list(expected_squads),
-        "current_squads_before": list(current_squads_set)
+        "expected_squads": sorted(list(expected_squads), key=lambda squad: _squad_sort_key(squad[0], squad[1])),
+        "current_squads_before": sorted(list(current_squads_set), key=lambda squad: _squad_sort_key(str(squad[0]), squad[1]))
     }
     
     if errors:

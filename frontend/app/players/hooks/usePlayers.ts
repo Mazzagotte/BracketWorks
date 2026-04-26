@@ -58,10 +58,11 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
     setIsLoading(true);
     
     try {
-      let bowlersUrl = '/api/v1/bowlers';
+      const params = new URLSearchParams({ tournament_id: tournamentId });
       if (selectedSquad) {
-        bowlersUrl = `/api/v1/bowlers?squad_id=${selectedSquad.id}`;
+        params.set('squad_id', String(selectedSquad.id));
       }
+      const bowlersUrl = `/api/v1/bowlers?${params.toString()}`;
       
       const response = await fetch(API(bowlersUrl), {
         headers: { Authorization: `Bearer ${authToken}` }
@@ -300,6 +301,19 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
     loadPlayers();
   }, [loadPlayers]);
 
+  useEffect(() => {
+    setPlayers(prevPlayers =>
+      prevPlayers.map(player => ({
+        ...player,
+        totalCost: calculatePlayerTotalCost(
+          normalizePlayerBracketEntries(player.bracketEntries, player.handicap, player.scratch),
+          bracketPrograms,
+          entryFee,
+        ),
+      }))
+    );
+  }, [bracketPrograms, entryFee]);
+
   // Clear any pending debounce timers when the hook unmounts
   useEffect(() => {
     return () => {
@@ -317,6 +331,7 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
     importPlayers,
     cancelPendingPatches,
     deletePlayer,
-    loadPlayers
+    loadPlayers,
+    bulkSetPlayers: setPlayers,
   };
 }

@@ -29,6 +29,15 @@ export interface PayoutSummary {
   total_prize_pool: number
   total_scratch_pool: number
   total_handicap_pool: number
+  program_summaries: Array<{
+    key: string
+    name: string
+    display_order: number
+    scoring_mode: string
+    total_brackets: number
+    total_winners: number
+    total_prize_pool: number
+  }>
   scratch_brackets: BracketPayout[]
   handicap_brackets: BracketPayout[]
   winners_by_bracket: Winner[]

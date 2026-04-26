@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Render launcher script for BracketWorks backend
+Launcher script for BracketWorks backend
 This script is placed in the project root and launches the backend from the backend/ directory
 """
 

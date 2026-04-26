@@ -38,6 +38,25 @@
   align-items: center;
 }
 
+.devButton {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1.5px dashed rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.devButton:hover {
+  background: rgba(240, 120, 32, 0.2);
+  border-color: #F07820;
+  color: #F07820;
+}
+
 .explainBtn {
   background-color: transparent;
   color: #F47C20;

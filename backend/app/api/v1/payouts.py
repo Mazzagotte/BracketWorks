@@ -22,6 +22,7 @@ from ...services.payouts import (
     DEFAULT_PRESETS,
 )
 from ...services.bracket_persistence_simple import load_generated_brackets
+from ...core.bracket_programs import normalize_bracket_programs
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -38,21 +39,34 @@ def _get_entry_fees(
     handicap_fee: Optional[float],
 ) -> Dict[str, float]:
     """Resolve entry fees: explicit params > tournament BracketSettings > global defaults."""
-    if scratch_fee is not None and handicap_fee is not None:
-        return {"scratch": scratch_fee, "handicap": handicap_fee}
-
     bracket_settings = db.query(models.BracketSettings).filter(
         models.BracketSettings.tournament_id == tournament_id
     ).first()
 
+    fallback_entry_fee = None
     if bracket_settings and bracket_settings.cost_per_bracket is not None:
-        cost = float(bracket_settings.cost_per_bracket)
-        return {"scratch": cost, "handicap": cost}
+        fallback_entry_fee = float(bracket_settings.cost_per_bracket)
 
-    return {
-        "scratch":  scratch_fee  if scratch_fee  is not None else DEFAULT_ENTRY_FEES["scratch"],
+    resolved_fees: Dict[str, float] = {
+        "scratch": scratch_fee if scratch_fee is not None else DEFAULT_ENTRY_FEES["scratch"],
         "handicap": handicap_fee if handicap_fee is not None else DEFAULT_ENTRY_FEES["handicap"],
     }
+
+    if fallback_entry_fee is not None:
+        resolved_fees["scratch"] = scratch_fee if scratch_fee is not None else fallback_entry_fee
+        resolved_fees["handicap"] = handicap_fee if handicap_fee is not None else fallback_entry_fee
+
+    if bracket_settings:
+        programs = normalize_bracket_programs(bracket_settings.bracket_programs, fallback_entry_fee)
+        for program in programs:
+            key = str(program.get("key") or "").strip().lower()
+            if not key:
+                continue
+            entry_fee = program.get("entry_fee")
+            if entry_fee is not None:
+                resolved_fees[key] = float(entry_fee)
+
+    return resolved_fees
 
 
 def _verify_tournament_access(db: Session, tournament_id: int, current_user) -> models.Tournament:

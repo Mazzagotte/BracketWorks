@@ -271,16 +271,18 @@
 
 /* Enhanced Bracket Settings Styles */
 .cardsContainer {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 32px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  align-content: flex-start;
+  justify-content: flex-start;
+  gap: 24px;
   margin-bottom: 32px;
-  align-items: start;
 }
 
 @media (max-width: 1200px) {
   .cardsContainer {
-    grid-template-columns: 1fr;
+    flex-direction: column;
     gap: 24px;
   }
 }
@@ -294,6 +296,42 @@
   .bracketSettingsCard {
     min-width: unset;
   }
+
+  .optionalBracketsCard {
+    width: 100%;
+    min-width: 0;
+    justify-self: stretch;
+  }
+
+  .mainBracketSettingsCard {
+    width: 100%;
+    min-width: 0;
+    justify-self: stretch;
+  }
+
+  .mainBracketSettingsCard .settingsGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .mainBracketSettingsCard .settingsContent {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .mainBracketSettingsCard .settingsSection,
+  .mainBracketSettingsCard .sectionHeader,
+  .mainBracketSettingsCard .fieldGroup,
+  .mainBracketSettingsCard .handicapContainer {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .squadSelectionCompactCard {
+    width: 100%;
+    min-width: 0;
+    justify-self: stretch;
+  }
   
   .squadSelectionCard {
     min-width: unset;
@@ -301,6 +339,27 @@
   
   .settingsTitle, .squadTitle {
     font-size: 20px;
+  }
+
+  .mainBracketSettingsCard .compactSelect,
+  .mainBracketSettingsCard .compactInputWrapper {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .mainBracketSettingsCard .handicapField > .compactInput {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .compactSelect,
+  .compactInput {
+    font-size: 16px;
+    padding: 10px 12px;
+  }
+
+  .compactInputWrapper .compactInput {
+    padding-left: 30px;
   }
   
   .sectionTitle {
@@ -366,6 +425,97 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.optionalBracketsCard {
+  justify-self: start;
+  width: fit-content;
+  max-width: 100%;
+  min-width: 0;
+  flex: 0 1 auto;
+}
+
+.optionalBracketsCard .settingsHeader {
+  padding: 16px 18px 12px;
+}
+
+.optionalBracketsCard .settingsContent {
+  padding: 10px 12px 12px;
+  gap: 6px;
+}
+
+.optionalBracketsCard .programList {
+  gap: 6px;
+}
+
+.optionalBracketsCard .programCard {
+  padding: 8px 10px;
+  border-radius: 10px;
+}
+
+.optionalBracketsCard .checkboxLabel {
+  font-size: 13px;
+  gap: 8px;
+}
+
+.mainBracketSettingsCard {
+  justify-self: start;
+  width: fit-content;
+  max-width: 100%;
+  min-width: 0;
+  flex: 0 1 auto;
+}
+
+.mainBracketSettingsCard .settingsContent {
+  width: max-content;
+  max-width: 100%;
+  align-self: flex-start;
+  gap: 6px;
+  padding: 10px 16px 12px;
+}
+
+.mainBracketSettingsCard .settingsGrid {
+  display: inline-grid;
+  grid-template-columns: max-content max-content;
+  justify-content: start;
+  column-gap: 12px;
+  row-gap: 4px;
+}
+
+.mainBracketSettingsCard .settingsColumn {
+  gap: 4px;
+}
+
+.mainBracketSettingsCard .settingsSection {
+  width: max-content;
+  max-width: 100%;
+  margin-bottom: 6px;
+}
+
+.mainBracketSettingsCard .sectionHeader {
+  width: max-content;
+  max-width: 100%;
+  margin-bottom: 4px;
+  padding-bottom: 3px;
+}
+
+.mainBracketSettingsCard .handicapContainer {
+  width: max-content;
+  max-width: 100%;
+  grid-template-columns: max-content auto max-content;
+  justify-content: start;
+  gap: 8px;
+}
+
+.mainBracketSettingsCard .fieldGroup {
+  width: max-content;
+  max-width: 100%;
+}
+
+.mainBracketSettingsCard .settingsHeader {
+  width: 100%;
+  justify-content: flex-start;
+  padding: 14px 16px 12px;
+}
+
 .settingsHeader {
   display: flex;
   align-items: center;
@@ -389,84 +539,6 @@
 .settingsIcon {
   font-size: 20px;
   color: #f0a500;
-}
-
-/* Auto-Save Status Indicator */
-.saveStatus {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  padding: 6px 12px;
-  border-radius: 8px;
-  transition: all 0.3s ease;
-}
-
-.statusSaved {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: rgba(26, 26, 26, 0.6);
-  background-color: rgba(26, 26, 26, 0.08);
-  padding: 6px 12px;
-  border-radius: 8px;
-}
-
-.statusSaving {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #F07820;
-  background-color: rgba(240, 120, 32, 0.1);
-  padding: 6px 12px;
-  border-radius: 8px;
-}
-
-.statusUnsaved {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: rgba(26, 26, 26, 0.6);
-  background-color: rgba(26, 26, 26, 0.08);
-  padding: 6px 12px;
-  border-radius: 8px;
-}
-
-.statusError {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #D64545;
-  background-color: rgba(214, 69, 69, 0.1);
-  padding: 6px 12px;
-  border-radius: 8px;
-}
-
-.statusIcon {
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.statusSpinner {
-  font-size: 16px;
-  animation: spin 1s linear infinite;
-}
-
-.statusText {
-  font-size: 13px;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 .settingsSection {
@@ -521,17 +593,16 @@
 .programList {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .programCard {
   border: 1px solid rgba(240, 120, 32, 0.16);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.55);
-  padding: 12px;
+  padding: 10px 12px;
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  align-items: center;
 }
 
 .programGrid {
@@ -596,7 +667,7 @@
 }
 
 .compactLabel {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: #1A1A1A;
 }
@@ -605,9 +676,9 @@
   width: 100%;
   background: #ffffff;
   border: 1px solid rgba(26, 26, 26, 0.2);
-  border-radius: 8px;
-  padding: 8px 10px;
-  font-size: 14px;
+  border-radius: 7px;
+  padding: 6px 9px;
+  font-size: 13px;
   font-weight: 500;
   color: #1A1A1A;
   transition: all 0.2s ease;
@@ -626,6 +697,17 @@
   width: 100%;
 }
 
+.mainBracketSettingsCard .compactSelect,
+.mainBracketSettingsCard .compactInputWrapper {
+  width: 96px;
+  min-width: 0;
+}
+
+.mainBracketSettingsCard .handicapField > .compactInput {
+  width: 96px;
+  min-width: 0;
+}
+
 .currencySymbol {
   position: absolute;
   left: 12px;
@@ -635,7 +717,7 @@
 }
 
 .compactInputWrapper .compactInput {
-  padding-left: 28px;
+  padding-left: 24px;
 }
 
 .inputSuffix {
@@ -968,17 +1050,58 @@
     border-radius: 16px;
     margin: 0 -4px;
   }
+
+  .optionalBracketsCard {
+    width: 100%;
+    min-width: 0;
+    justify-self: stretch;
+  }
+
+  .mainBracketSettingsCard {
+    width: 100%;
+    min-width: 0;
+    justify-self: stretch;
+  }
+
+  .mainBracketSettingsCard .settingsGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .mainBracketSettingsCard .settingsContent {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .mainBracketSettingsCard .settingsSection,
+  .mainBracketSettingsCard .sectionHeader,
+  .mainBracketSettingsCard .fieldGroup,
+  .mainBracketSettingsCard .handicapContainer {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .squadSelectionCompactCard {
+    width: 100%;
+    min-width: 0;
+    justify-self: stretch;
+  }
   
   .settingsHeader {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
   }
-  
-  .saveStatus {
-    margin-left: 0;
+
+  .mainBracketSettingsCard .compactSelect,
+  .mainBracketSettingsCard .compactInputWrapper {
     width: 100%;
-    justify-content: center;
+    min-width: 0;
+  }
+
+  .mainBracketSettingsCard .handicapField > .compactInput {
+    width: 100%;
+    min-width: 0;
   }
   
   .formGrid {
@@ -1053,6 +1176,14 @@
   min-width: 0;
 }
 
+.squadSelectionCompactCard {
+  justify-self: start;
+  width: fit-content;
+  max-width: 100%;
+  min-width: 0;
+  flex: 0 1 auto;
+}
+
 .squadHeader {
   display: flex;
   align-items: center;
@@ -1061,28 +1192,6 @@
   border-bottom: 3px solid #F07820;
   border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   gap: 10px;
-}
-
-.squadCounter {
-  margin-left: auto;
-  background: rgba(240, 120, 32, 0.12);
-  color: #F07820;
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.squadInfo {
-  padding: 12px 24px 0;
-  margin-bottom: 0;
-}
-
-.squadDescription {
-  color: rgba(26, 26, 26, 0.55);
-  font-size: 14px;
-  margin: 0;
-  font-weight: 500;
 }
 
 .squadTitle {
@@ -1096,30 +1205,6 @@
 .squadIcon {
   font-size: 20px;
   color: #10b981;
-}
-
-.squadGrid {
-  display: grid;
-  gap: 8px;
-  margin-bottom: 12px;
-  padding: 16px 24px 0;
-}
-
-.squadPillEnhanced {
-  background: #ffffff;
-  border: 1px solid rgba(26, 26, 26, 0.2);
-  border-radius: 12px;
-  padding: 12px 14px;
-  font-size: 15px;
-  font-weight: 500;
-  color: #1A1A1A;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  text-align: left;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
 }
 
 .squadTime {
@@ -1271,6 +1356,10 @@
   gap: 12px;
   align-items: center;
   flex-wrap: wrap;
+}
+
+.headerDeleteBtn {
+  margin-left: auto;
 }
 
 .headerBtn {
