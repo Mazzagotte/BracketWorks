@@ -9,7 +9,6 @@ import styles from "./login.module.css";
 import { API } from "../lib/api";
 import { LoadingButton } from "../components/LoadingComponents";
 import { useToast } from "../components/Toast";
-import { ErrorMessage } from "../components/ErrorHandling";
 import { AccessibleInput } from "../components/Accessibility";
 import { useAuth } from "../lib/auth-context";
 import { logger } from "../lib/logger";
@@ -23,7 +22,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showButtonBall, setShowButtonBall] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [showSignupModal, setShowSignupModal] = useState(false);
@@ -111,7 +109,6 @@ export default function LoginPage() {
     setError("");
     setLoginFailed(false);
     setLoading(true);
-    setShowButtonBall(true);
 
     const loginData = {
       username: username.trim(),
@@ -174,7 +171,6 @@ export default function LoginPage() {
 
         setError(errorMessage);
         setLoginFailed(true);
-        setShowButtonBall(false);
         return;
       }
 
@@ -205,7 +201,6 @@ export default function LoginPage() {
       const errorMsg = `Network error: ${error?.message || 'Please check your connection'}`;
       setError(errorMsg);
       addToast({ type: 'error', message: errorMsg, duration: 6000 });
-      setShowButtonBall(false);
       logger.error('Login failed', { error: error?.message, username });
     } finally {
       setLoading(false);
@@ -313,26 +308,9 @@ export default function LoginPage() {
             disabled={loginDelay > 0}
             aria-label={loading ? 'Logging in, please wait' : 'Log in to your account'}
           >
-            {showButtonBall && <div className={`buttonBowlingBall ${styles.bowlingBall}`} />}
             Login
           </LoadingButton>
         </form>
-
-        {error && (
-          <div className={styles.errorWrap}>
-            <ErrorMessage
-              error={error}
-              type="error"
-              onRetry={() => {
-                setError("");
-                setPassword("");
-                document.getElementById('login-username')?.focus();
-              }}
-              onDismiss={() => setError("")}
-              retryLabel="Try Again"
-            />
-          </div>
-        )}
 
         {/* Divider */}
         <div className={styles.divider}>or</div>

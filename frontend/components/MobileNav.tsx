@@ -91,6 +91,14 @@ export function MobileNav({ isOpen, onClose, firstName, currentPage }: MobileNav
         </div>
 
         <div className={styles.logoutWrap}>
+          <Link
+            href="/settings"
+            onClick={onClose}
+            className={`${styles.settingsBtn} ${currentPage === 'settings' ? styles.settingsBtnActive : ''}`}
+            aria-current={currentPage === 'settings' ? 'page' : undefined}
+          >
+            Settings
+          </Link>
           <button onClick={handleLogout} className={styles.logoutBtn} aria-label="Logout">
             Logout
           </button>

@@ -40,7 +40,6 @@ export default function BracketsPage() {
   const loadingRef = useRef(false)
   const lastLoadedRef = useRef<{tournamentId: number, squadId: number} | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedStatus, setSelectedStatus] = useState('all')
   const [isMobile, setIsMobile] = useState(false)
   const [loadedBrackets, setLoadedBrackets] = useState<BracketPreview | null>(null)
   
@@ -405,7 +404,6 @@ export default function BracketsPage() {
   // Handle search and filter
   const handleClearFilters = useCallback(() => {
     setSearchTerm('')
-    setSelectedStatus('all')
   }, [])
 
   const searchResultCount = useMemo(() => {
@@ -421,13 +419,6 @@ export default function BracketsPage() {
     return matched.size
   }, [searchTerm, rounds])
 
-  const activeFiltersCount = useMemo(() => {
-    let count = 0
-    if (searchTerm) count++
-    if (selectedStatus !== 'all') count++
-    return count
-  }, [searchTerm, selectedStatus])
-
   const handleCloseExplainModal = useCallback(() => setIsExplainModalOpen(false), [])
   const isDev = process.env.NODE_ENV === 'development'
 
@@ -436,15 +427,15 @@ export default function BracketsPage() {
     if (!selectedTournament) return undefined
     return (
       <div className={styles.headerActions}>
-        <button onClick={() => setIsExplainModalOpen(true)} className={styles.explainBtn}>
+        <button onClick={() => setIsExplainModalOpen(true)} className={`ds-btn ds-btn-secondary ds-btn-sm ${styles.explainBtn}`}>
           Explain Brackets
         </button>
         {isDev && (
-          <button onClick={handleDeleteAllBrackets} className={styles.devButton}>
+          <button onClick={handleDeleteAllBrackets} className={`ds-btn ds-btn-destructive ds-btn-sm ${styles.devButton}`}>
             DEV: Delete All Brackets
           </button>
         )}
-        <button onClick={handleGenerateBrackets} className={styles.generateBtn}>
+        <button onClick={handleGenerateBrackets} className={`ds-btn ds-btn-primary ds-btn-sm ${styles.generateBtn}`}>
           Generate Brackets
         </button>
       </div>
@@ -539,10 +530,7 @@ export default function BracketsPage() {
               <SearchFilter
                 searchTerm={searchTerm}
                 onSearchChange={setSearchTerm}
-                selectedStatus={selectedStatus}
-                onStatusChange={setSelectedStatus}
                 onClearFilters={handleClearFilters}
-                activeFiltersCount={activeFiltersCount}
                 searchResultCount={searchResultCount}
               />
 
@@ -602,10 +590,6 @@ export default function BracketsPage() {
                       <div className={`${styles.navBadge} ${bracketType === 'Scratch' ? styles.navBadgeScratch : styles.navBadgeHandicap}`}>
                         {bracketType}
                       </div>
-
-                      <div className={`${styles.navBadge} ${progressPercent === 100 ? styles.navBadgeComplete : styles.navBadgeProgress}`}>
-                        {completedMatches}/{totalMatches} Complete
-                      </div>
                     </div>
 
                     <div className={styles.progressBarWrapper}>
@@ -645,7 +629,7 @@ export default function BracketsPage() {
                   isMobile={isMobile}
                   bracketType={activeBracketItem?.group?.scoring_mode === 'scratch' ? 'scratch' : 'handicap'}
                   searchTerm={searchTerm}
-                  statusFilter={selectedStatus}
+                  statusFilter="all"
                 />
               )
             ) : (

@@ -38,10 +38,12 @@ export default function ScoresPage() {
   const [tournament, setTournament] = useState<Tournament | null>(null)
   const [selectedSquad, setSelectedSquad] = useState<Squad | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [savingStatus, setSavingStatus] = useState<{[key: string]: 'saving' | 'saved' | 'error'}>({})
   const [isOnline, setIsOnline] = useState(true)
   const [pendingSaves, setPendingSaves] = useState<PendingScoreSave[]>([])
   const [isMobile, setIsMobile] = useState(false)
+  const [isImporting, setIsImporting] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
+  const importFileRef = useRef<HTMLInputElement | null>(null)
   
   // Sorting state
   const [sortConfig, setSortConfig] = useState<SortConfig>({
@@ -323,12 +325,258 @@ export default function ScoresPage() {
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  const normalizeHeader = (h: string) => h.trim().toLowerCase().replace(/[_\s\-#]+/g, '')
+
+  const parseScoreNumber = (value: unknown): number | undefined => {
+    if (value === null || value === undefined) return undefined
+    const raw = String(value).trim()
+    if (raw === '') return undefined
+    const parsed = Number(raw)
+    if (!Number.isFinite(parsed)) return undefined
+    const rounded = Math.round(parsed)
+    if (rounded < 0 || rounded > 300) return undefined
+    return rounded
+  }
+
+  const parsePlayerId = (value: unknown): number | undefined => {
+    if (value === null || value === undefined) return undefined
+    const raw = String(value).trim()
+    if (raw === '') return undefined
+    const parsed = Number(raw)
+    if (!Number.isInteger(parsed) || parsed <= 0) return undefined
+    return parsed
+  }
+
+  const handleExportScoresToExcel = useCallback(async () => {
+    if (players.length === 0) {
+      addToast({ message: 'No scores to export.', type: 'warning', duration: 3000 })
+      return
+    }
+
+    setIsExporting(true)
+    try {
+      const XLSX = await import('xlsx')
+      const rows = sortedPlayers.map(player => ({
+        'Player ID': player.id,
+        'First Name': player.firstName || '',
+        'Last Name': player.lastName || '',
+        'Lane': player.lane || '',
+        'Average': Number(player.average || 0),
+        'Handicap': Number(player.handicap || 0),
+        'Game 1 Scratch': player.scores?.game1_scratch ?? '',
+        'Game 2 Scratch': player.scores?.game2_scratch ?? '',
+        'Game 3 Scratch': player.scores?.game3_scratch ?? '',
+        'Total Scratch': calculateTotalScratch(player),
+        'Total With Handicap': calculateDisplayTotal(player),
+      }))
+
+      const worksheet = XLSX.utils.json_to_sheet(rows)
+      const workbook = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Scores')
+
+      const safeTournament = (tournament?.name || 'scores')
+        .replace(/[^a-zA-Z0-9\-_ ]+/g, '')
+        .trim()
+        .replace(/\s+/g, '_') || 'scores'
+      const safeSquad = selectedSquad
+        ? `${selectedSquad.date || ''}_${selectedSquad.time || ''}`.replace(/[^a-zA-Z0-9\-_ ]+/g, '').trim().replace(/\s+/g, '_')
+        : 'all_squads'
+      const dateStamp = new Date().toISOString().slice(0, 10)
+      const fileName = `${safeTournament}_${safeSquad}_scores_${dateStamp}.xlsx`
+
+      XLSX.writeFile(workbook, fileName)
+      addToast({ message: `Exported ${rows.length} score row${rows.length !== 1 ? 's' : ''}.`, type: 'success', duration: 3000 })
+    } catch (err) {
+      addToast({ message: `Failed to export Excel file: ${err instanceof Error ? err.message : 'Unknown error'}`, type: 'error', duration: 5000 })
+    } finally {
+      setIsExporting(false)
+    }
+  }, [players.length, sortedPlayers, tournament, selectedSquad, addToast])
+
+  const handleImportScoresFileSelected = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setIsImporting(true)
+    try {
+      const token = localStorage.getItem('token')
+      const tournamentId = localStorage.getItem('lastTournamentId')
+      const squad = selectedSquadRef.current
+      if (!token || !tournamentId || !squad) {
+        addToast({ message: 'Select a tournament and squad before importing scores.', type: 'error', duration: 4000 })
+        return
+      }
+
+      const XLSX = await import('xlsx')
+      const buffer = await file.arrayBuffer()
+      const workbook = XLSX.read(buffer, { type: 'array' })
+      const firstSheet = workbook.SheetNames[0]
+      if (!firstSheet) {
+        addToast({ message: 'Excel file has no sheets.', type: 'error', duration: 4000 })
+        return
+      }
+
+      const worksheet = workbook.Sheets[firstSheet]
+      const rawRows = XLSX.utils.sheet_to_json<Record<string, unknown>>(worksheet, { defval: '' })
+      if (rawRows.length === 0) {
+        addToast({ message: 'No score rows found in file.', type: 'warning', duration: 3000 })
+        return
+      }
+
+      type ImportRow = {
+        playerId?: number
+        firstName: string
+        lastName: string
+        game1_scratch?: number
+        game2_scratch?: number
+        game3_scratch?: number
+      }
+
+      const parsedRows: ImportRow[] = rawRows.map(rawRow => {
+        const normalized: Record<string, unknown> = {}
+        for (const [key, value] of Object.entries(rawRow)) {
+          normalized[normalizeHeader(key)] = value
+        }
+
+        const fullName = String(normalized.name || normalized.bowlername || '').trim()
+        let firstName = String(normalized.firstname || normalized.first || '').trim()
+        let lastName = String(normalized.lastname || normalized.last || '').trim()
+        if ((!firstName || !lastName) && fullName) {
+          const parts = fullName.split(/\s+/).filter(Boolean)
+          firstName = firstName || parts[0] || ''
+          lastName = lastName || parts.slice(1).join(' ')
+        }
+
+        return {
+          playerId: parsePlayerId(normalized.playerid || normalized.id || normalized.bowlerid),
+          firstName,
+          lastName,
+          game1_scratch: parseScoreNumber(normalized.game1scratch),
+          game2_scratch: parseScoreNumber(normalized.game2scratch),
+          game3_scratch: parseScoreNumber(normalized.game3scratch),
+        }
+      })
+
+      const byId = new Map(playersRef.current.map(player => [player.id, player]))
+      const byName = new Map(
+        playersRef.current.map(player => [
+          `${(player.firstName || '').trim().toLowerCase()}|${(player.lastName || '').trim().toLowerCase()}`,
+          player,
+        ])
+      )
+
+      const matched: Array<{ player: Player; scores: { game1_scratch?: number; game2_scratch?: number; game3_scratch?: number } }> = []
+      let skipped = 0
+
+      parsedRows.forEach(row => {
+        const hasAnyScore = row.game1_scratch !== undefined || row.game2_scratch !== undefined || row.game3_scratch !== undefined
+        if (!hasAnyScore) return
+
+        let target: Player | undefined
+        if (row.playerId) target = byId.get(row.playerId)
+        if (!target) {
+          const key = `${row.firstName.trim().toLowerCase()}|${row.lastName.trim().toLowerCase()}`
+          target = byName.get(key)
+        }
+
+        if (!target) {
+          skipped += 1
+          return
+        }
+
+        matched.push({
+          player: target,
+          scores: {
+            game1_scratch: row.game1_scratch,
+            game2_scratch: row.game2_scratch,
+            game3_scratch: row.game3_scratch,
+          }
+        })
+      })
+
+      if (matched.length === 0) {
+        addToast({ message: 'No matching players found for imported score rows.', type: 'warning', duration: 4000 })
+        return
+      }
+
+      const scoreMap = new Map(matched.map(item => [item.player.id, item.scores]))
+      setPlayers(prev => prev.map(player => {
+        const imported = scoreMap.get(player.id)
+        if (!imported) return player
+        const g1 = imported.game1_scratch
+        const g2 = imported.game2_scratch
+        const g3 = imported.game3_scratch
+        return {
+          ...player,
+          scores: {
+            ...player.scores,
+            game1_scratch: g1,
+            game1_with_handicap: g1 !== undefined ? g1 + (player.handicap || 0) : undefined,
+            game2_scratch: g2,
+            game2_with_handicap: g2 !== undefined ? g2 + (player.handicap || 0) : undefined,
+            game3_scratch: g3,
+            game3_with_handicap: g3 !== undefined ? g3 + (player.handicap || 0) : undefined,
+          }
+        }
+      }))
+
+      const persistResults = await Promise.allSettled(
+        matched.map(item => fetch(API('/api/v1/scores/'), {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            player_id: item.player.id,
+            tournament_id: parseInt(tournamentId, 10),
+            squad_id: squad.id,
+            game1_scratch: item.scores.game1_scratch,
+            game2_scratch: item.scores.game2_scratch,
+            game3_scratch: item.scores.game3_scratch,
+          })
+        }))
+      )
+
+      const persisted = persistResults.filter(result => result.status === 'fulfilled' && result.value.ok).length
+      const failed = matched.length - persisted
+      addToast({
+        message: `Imported ${persisted} player score${persisted !== 1 ? 's' : ''}.` +
+          (failed > 0 ? ` ${failed} failed to save.` : '') +
+          (skipped > 0 ? ` ${skipped} row${skipped !== 1 ? 's' : ''} skipped (no player match).` : ''),
+        type: failed > 0 ? 'warning' : 'success',
+        duration: 5000
+      })
+    } catch (err) {
+      addToast({ message: `Failed to import Excel file: ${err instanceof Error ? err.message : 'Unknown error'}`, type: 'error', duration: 5000 })
+    } finally {
+      setIsImporting(false)
+      e.target.value = ''
+    }
+  }, [addToast])
+
   // Header configuration
   const headerActions = useMemo(() => (
     <div className={styles.headerActions}>
       {process.env.NODE_ENV === 'development' && players.length > 0 && (
         <button className={styles.devButton} onClick={handleRandomizeScores}>DEV: Randomize Scores</button>
       )}
+
+      <button
+        className="ds-btn ds-btn-primary ds-btn-sm"
+        onClick={handleExportScoresToExcel}
+        disabled={isExporting || players.length === 0}
+      >
+        {isExporting ? 'Exporting…' : 'Export to Excel'}
+      </button>
+
+      <button
+        className="ds-btn ds-btn-primary ds-btn-sm"
+        onClick={() => importFileRef.current?.click()}
+        disabled={isImporting || players.length === 0}
+      >
+        {isImporting ? 'Importing…' : 'Import from Excel'}
+      </button>
       
       {pendingSaves.length > 0 && (
         <EnhancedButton
@@ -347,7 +595,7 @@ export default function ScoresPage() {
         </EnhancedButton>
       )}
     </div>
-  ), [players.length, handleRandomizeScores, pendingSaves.length, addToast, processPendingSaves])
+  ), [players.length, handleRandomizeScores, pendingSaves.length, addToast, processPendingSaves, handleExportScoresToExcel, isExporting, isImporting])
 
   usePageHeader({
     title: 'Scores',
@@ -579,14 +827,6 @@ export default function ScoresPage() {
     return 'score-input'
   }
 
-  const getSavingIndicator = (playerId: number, field: string) => {
-    const key = `${playerId}-${field}`
-    const status = savingStatus[key]
-    if (!status) return null
-    const cls = `saving-indicator ${status}`
-    return (<div className={cls}>{status === 'saving' ? '⋯' : ''}</div>)
-  }
-
   // Debounced save function
   const debouncedSaves = new Map<string, NodeJS.Timeout>()
   
@@ -635,9 +875,6 @@ export default function ScoresPage() {
       clearTimeout(existingTimeout)
     }
     
-    // Set saving status
-    setSavingStatus(prev => ({ ...prev, [saveKey]: 'saving' }))
-    
     // Debounced save to backend (500ms delay)
     const timeoutId = setTimeout(async () => {
       try {
@@ -645,13 +882,11 @@ export default function ScoresPage() {
         const tournamentId = localStorage.getItem('lastTournamentId')
         
         if (!token || !tournamentId || !selectedSquadRef.current) {
-          setSavingStatus(prev => ({ ...prev, [saveKey]: 'error' }))
           return
         }
 
         const player = players.find(playerItem => playerItem.id === playerId)
         if (!player) {
-          setSavingStatus(prev => ({ ...prev, [saveKey]: 'error' }))
           return
         }
 
@@ -678,7 +913,6 @@ export default function ScoresPage() {
         // Handle offline saves
         if (!isOnline) {
           setPendingSaves(prev => [...prev, { token, data: scoreData }])
-          setSavingStatus(prev => ({ ...prev, [saveKey]: 'saved' }))
           // Store in localStorage as backup
           localStorage.setItem(`pending_save_${Date.now()}`, JSON.stringify({ token, data: scoreData }))
           return
@@ -694,8 +928,6 @@ export default function ScoresPage() {
         })
         
         if (response.ok) {
-          setSavingStatus(prev => ({ ...prev, [saveKey]: 'saved' }))
-          
           // Show success toast for perfect games
           if (value === 300) {
             addToast({
@@ -714,19 +946,9 @@ export default function ScoresPage() {
         } else {
           throw new Error(`Save failed: ${response.status}`)
         }
-        
-        // Clear save status after 2 seconds
-        setTimeout(() => {
-          setSavingStatus(prev => {
-            const updated = { ...prev }
-            delete updated[saveKey]
-            return updated
-          })
-        }, 2000)
-        
+
       } catch (error) {
         logger.error('Failed to save score:', error)
-        setSavingStatus(prev => ({ ...prev, [saveKey]: 'error' }))
         
         // Show error toast
         const currentPlayer = players.find(playerItem => playerItem.id === playerId);
@@ -735,15 +957,6 @@ export default function ScoresPage() {
           type: 'error',
           duration: 5000
         })
-        
-        // Clear error status after 3 seconds
-        setTimeout(() => {
-          setSavingStatus(prev => {
-            const updated = { ...prev }
-            delete updated[saveKey]
-            return updated
-          })
-        }, 3000)
       }
       
       debouncedSaves.delete(saveKey)
@@ -815,6 +1028,13 @@ export default function ScoresPage() {
   return (
     <ErrorBoundary>
       <>
+      <input
+        ref={importFileRef}
+        type="file"
+        accept=".xlsx,.xls"
+        onChange={handleImportScoresFileSelected}
+        style={{ display: 'none' }}
+      />
       {isMobile ? (
         <MobileLayout
           title="Scores"
@@ -824,12 +1044,18 @@ export default function ScoresPage() {
           headerActions={
             <div className="flex gap-2">
               <button
-                onClick={() => {
-                  addToast({ message: 'Export functionality coming soon', type: 'info', duration: 3000 })
-                }}
-                className="px-3 py-1 bg-green-500 text-white text-sm rounded-md"
+                onClick={handleExportScoresToExcel}
+                disabled={isExporting || players.length === 0}
+                className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md disabled:opacity-50"
               >
-                Export
+                {isExporting ? 'Exporting…' : 'Export'}
+              </button>
+              <button
+                onClick={() => importFileRef.current?.click()}
+                disabled={isImporting || players.length === 0}
+                className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md disabled:opacity-50"
+              >
+                {isImporting ? 'Importing…' : 'Import'}
               </button>
             </div>
           }
@@ -1121,7 +1347,6 @@ export default function ScoresPage() {
                         onFocus={(changeEvent) => changeEvent.target.select()}
                         title={!validateScore(player.scores?.game1_scratch).isValid ? validateScore(player.scores?.game1_scratch).message : ''}
                       />
-                      {getSavingIndicator(player.id, 'game1_scratch')}
                     </div>
                   </td>
                   
@@ -1147,7 +1372,6 @@ export default function ScoresPage() {
                         onFocus={(changeEvent) => changeEvent.target.select()}
                         title={!validateScore(player.scores?.game2_scratch).isValid ? validateScore(player.scores?.game2_scratch).message : ''}
                       />
-                      {getSavingIndicator(player.id, 'game2_scratch')}
                     </div>
                   </td>
                   
@@ -1173,7 +1397,6 @@ export default function ScoresPage() {
                         onFocus={(changeEvent) => changeEvent.target.select()}
                         title={!validateScore(player.scores?.game3_scratch).isValid ? validateScore(player.scores?.game3_scratch).message : ''}
                       />
-                      {getSavingIndicator(player.id, 'game3_scratch')}
                     </div>
                   </td>
                   

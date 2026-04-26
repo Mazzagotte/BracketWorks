@@ -1,4 +1,5 @@
 from pydantic import AliasChoices, BaseModel, ConfigDict, EmailStr, Field, field_validator
+from datetime import datetime
 from typing import Dict, List, Optional
 
 
@@ -56,6 +57,8 @@ class UserCreate(BaseModel):
     password: str
 
 class UserOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     first_name: str
     last_name: str
@@ -63,6 +66,19 @@ class UserOut(BaseModel):
     email: EmailStr
     organization: Optional[str] = None
     is_admin: int
+
+
+class UserAccountUpdate(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    username: Optional[str] = None
+    email: Optional[EmailStr] = None
+    organization: Optional[str] = None
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str = Field(min_length=8)
 
 
 class PlayerBase(BaseModel):

@@ -78,6 +78,13 @@ export default function Sidebar({ firstName, isMobile = false, isOpen = false, o
       <div className={styles.spacer} />
 
       <div className={styles.logoutWrap}>
+        <Link
+          href="/settings"
+          prefetch={true}
+          className={`${styles.settingsBtn} ${pathname === '/settings' ? styles.settingsBtnActive : ''}`}
+        >
+          Settings
+        </Link>
         <button onClick={handleLogout} className={styles.logoutBtn}>
           Logout
         </button>

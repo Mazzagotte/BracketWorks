@@ -381,6 +381,55 @@ export default function PlayersPage() {
     }
   }
 
+  const handleExportToExcel = useCallback(async () => {
+    if (players.length === 0) {
+      toast.warning('No players to export.', 'Export')
+      return
+    }
+
+    try {
+      const XLSX = await import('xlsx')
+      const rows = players.map(player => {
+        const row: Record<string, string | number> = {
+          'First Name': player.firstName || '',
+          'Last Name': player.lastName || '',
+          'USBC': player.usbc || '',
+          'Lane': player.lane?.toString() || '',
+          'Average': Number(player.average || 0),
+          'Handicap': Number(player.handicap || 0),
+          'Scratch': Number(player.scratch || 0),
+        }
+
+        enabledBracketPrograms.forEach(program => {
+          row[`${program.name} Entries`] = Number(player.bracketEntries?.[program.key] || 0)
+        })
+
+        row['Total Cost'] = Number(player.totalCost || 0)
+        row['Amount Paid'] = Number(player.amountPaid || 0)
+        return row
+      })
+
+      const worksheet = XLSX.utils.json_to_sheet(rows)
+      const workbook = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Entries')
+
+      const safeTournament = (selectedTournament?.name || 'entries')
+        .replace(/[^a-zA-Z0-9\-_ ]+/g, '')
+        .trim()
+        .replace(/\s+/g, '_') || 'entries'
+      const safeSquad = selectedSquad
+        ? `${selectedSquad.date || ''}_${selectedSquad.time || ''}`.replace(/[^a-zA-Z0-9\-_ ]+/g, '').trim().replace(/\s+/g, '_')
+        : 'all_squads'
+      const dateStamp = new Date().toISOString().slice(0, 10)
+      const fileName = `${safeTournament}_${safeSquad}_entries_${dateStamp}.xlsx`
+
+      XLSX.writeFile(workbook, fileName)
+      toast.success(`Exported ${players.length} player${players.length !== 1 ? 's' : ''}.`, 'Export Complete')
+    } catch (err) {
+      toast.error(`Failed to export Excel file: ${err instanceof Error ? err.message : 'Unknown error'}`, 'Export Failed')
+    }
+  }, [players, enabledBracketPrograms, selectedTournament, selectedSquad, toast])
+
   const headerActions = useMemo(() => {
     const buttons = []
     if (isDev && players.length > 0) {
@@ -389,8 +438,18 @@ export default function PlayersPage() {
     }
     buttons.push(
       <button
+        key="export"
+        className="ds-btn ds-btn-primary ds-btn-sm"
+        onClick={handleExportToExcel}
+        disabled={players.length === 0}
+      >
+        Export to Excel
+      </button>
+    )
+    buttons.push(
+      <button
         key="import"
-        className="ds-btn ds-btn-primary ds-btn-md"
+        className="ds-btn ds-btn-primary ds-btn-sm"
         onClick={() => importFileRef.current?.click()}
         disabled={isImporting}
       >
@@ -398,7 +457,7 @@ export default function PlayersPage() {
       </button>
     )
     return <>{buttons}</>
-  }, [isDev, players.length, handleRandomize, isImporting, handleDeleteAllPlayers, isDeletingAll])
+  }, [isDev, players.length, handleRandomize, isImporting, handleDeleteAllPlayers, isDeletingAll, handleExportToExcel])
 
   usePageHeader({
     title: 'Entries',
