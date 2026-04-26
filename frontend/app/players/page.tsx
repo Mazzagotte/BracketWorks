@@ -154,7 +154,8 @@ export default function PlayersPage() {
     importPlayers,
     updatePlayer,
     cancelPendingPatches,
-    deletePlayer
+    deletePlayer,
+    bulkSetPlayers,
   } = usePlayers({
     selectedSquad,
     squads,
@@ -187,44 +188,79 @@ export default function PlayersPage() {
     updatePlayer(playerId, updates);
   }, [players, updatePlayer]);
 
-  // DEV ONLY: randomize averages and entries for all players
+  // Stable ref so handleRandomize never needs players in its dep array
+  const playersRef = useRef<typeof players>([])
+  useEffect(() => { playersRef.current = players }, [players])
+
+  // DEV ONLY: build all random data in memory, then do ONE setPlayers + ONE bulk API call
   const handleRandomize = useCallback(async () => {
-    const updates = players.map(player => {
+    const current = playersRef.current
+
+    type UpdateRow = {
+      id: number
+      average: number
+      handicap_entries: number
+      scratch_entries: number
+      program_entry_counts: Record<string, number>
+    }
+
+    const updates: UpdateRow[] = current.map(player => {
       const programEntryCounts = Object.fromEntries(
         enabledBracketPrograms.map(program => [
           program.key,
-          Math.floor(Math.random() * 15) + 1,
+          Math.floor(Math.random() * 16),
         ]),
       )
-
       return {
         id: player.id,
-        average: Math.floor(Math.random() * 91) + 140, // 140–230
+        average: Math.floor(Math.random() * 91) + 140,
         handicap_entries: programEntryCounts.handicap ?? 0,
         scratch_entries: programEntryCounts.scratch ?? 0,
         program_entry_counts: programEntryCounts,
       }
     })
 
-    // Optimistic local update
-    updates.forEach(u => {
-      updatePlayer(u.id, {
+    // Build a lookup for O(1) access in the state updater
+    const updateMap = new Map(updates.map(u => [u.id, u]))
+
+    // Single state update — no cascade
+    // Compute costs first so we can set amountPaid = totalCost (all PAID)
+    const costMap = new Map(
+      updates.map(u => [
+        u.id,
+        calculatePlayerTotalCost(u.program_entry_counts, enabledBracketPrograms, entryFee),
+      ])
+    )
+
+    bulkSetPlayers(prev => prev.map(player => {
+      const u = updateMap.get(player.id)
+      if (!u) return player
+      const bracketEntries = u.program_entry_counts
+      const totalCost = costMap.get(player.id) ?? 0
+      return {
+        ...player,
         average: u.average,
         handicap: u.handicap_entries,
         scratch: u.scratch_entries,
-        bracketEntries: u.program_entry_counts,
-      })
-    })
+        bracketEntries,
+        totalCost,
+        amountPaid: totalCost,
+      }
+    }))
 
-    // Single bulk write — one DB transaction instead of N individual PATCHes
-    // Cancel the debounce timers that updatePlayer scheduled so they don't double-write
+    // Include amount_paid in the bulk write so it persists
+    const updatesWithPaid = updates.map(u => ({
+      ...u,
+      amount_paid: costMap.get(u.id) ?? 0,
+    }))
+
     cancelPendingPatches()
     try {
-      await apiClient.bulkPatch('/api/v1/bowlers/bulk-update', updates)
+      await apiClient.bulkPatch('/api/v1/bowlers/bulk-update', updatesWithPaid)
     } catch (err) {
       console.error('Bulk randomize failed', err)
     }
-  }, [players, enabledBracketPrograms, updatePlayer, cancelPendingPatches])
+  }, [enabledBracketPrograms, entryFee, bulkSetPlayers, cancelPendingPatches])
 
   const isDev = process.env.NODE_ENV === 'development'
   const [isDeletingAll, setIsDeletingAll] = useState(false)
@@ -524,7 +560,7 @@ export default function PlayersPage() {
                     {entryTotals.programSummaries.map(program => (
                       <div key={program.key} className={styles.statBox}>
                         <div className={styles.statValue}>{program.totalEntries}</div>
-                        <div className={styles.statLabel}>{program.name} Entries</div>
+                        <div className={styles.statLabel}>{program.name}</div>
                         <div className={styles.statDetail}>{program.expectedBrackets} bracket{program.expectedBrackets !== 1 ? 's' : ''}</div>
                         {program.refunds > 0 && (
                           <div className={styles.statRefund}>~{program.refunds} refund{program.refunds !== 1 ? 's' : ''}</div>

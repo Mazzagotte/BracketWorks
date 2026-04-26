@@ -3,7 +3,7 @@ Payout calculation and winner tracking service for tournament brackets.
 Handles prize distribution based on bracket results and tournament settings.
 """
 
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 import logging
 from decimal import Decimal, ROUND_HALF_UP
 
@@ -23,6 +23,28 @@ DEFAULT_ENTRY_FEES = {
 }
 
 
+def _get_bracket_groups(brackets_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    groups = brackets_data.get("bracket_groups")
+    if groups:
+        return groups
+    return [
+        {
+            "key": "scratch",
+            "name": "Scratch",
+            "display_order": 1,
+            "scoring_mode": "scratch",
+            "brackets": brackets_data.get("scratch_brackets", []),
+        },
+        {
+            "key": "handicap",
+            "name": "Handicap",
+            "display_order": 2,
+            "scoring_mode": "handicap",
+            "brackets": brackets_data.get("handicap_brackets", []),
+        },
+    ]
+
+
 def count_bracket_entries(bracket: Dict[str, Any]) -> int:
     """Count actual players (non-BYE) in round 1 of a bracket."""
     if not bracket.get('rounds'):
@@ -35,6 +57,19 @@ def count_bracket_entries(bracket: Dict[str, Any]) -> int:
         if match.get('playerB') and match.get('playerB') != 'BYE':
             count += 1
     return count if count > 0 else bracket.get('size', 8)
+
+
+def bracket_has_bye_slot(bracket: Dict[str, Any]) -> bool:
+    """Return True when any first-round slot is a BYE."""
+    if not bracket.get('rounds'):
+        return False
+    first_round_matches = bracket['rounds'][0].get('matches', [])
+    for match in first_round_matches:
+        if str(match.get('playerA') or '').strip().upper() == 'BYE':
+            return True
+        if str(match.get('playerB') or '').strip().upper() == 'BYE':
+            return True
+    return False
 
 
 def extract_bracket_winners(bracket: Dict[str, Any]) -> Dict[str, Any]:
@@ -65,6 +100,7 @@ def extract_bracket_winners(bracket: Dict[str, Any]) -> Dict[str, Any]:
                             "place": 1,
                             "position": "1st",
                             "player_name": championship_match.get(name_key, ''),
+
                             "player_id": championship_match.get(id_key),
                             "score": championship_match.get(score_key),
                             "bracket_type": bracket.get('bracket_type', 'Unknown'),
@@ -163,7 +199,8 @@ def calculate_bracket_prize_pool(
     actual_entries = entry_count if entry_count is not None else bracket_size
     total_collected = Decimal(str(actual_entries)) * fee_per_entry
 
-    if house_percentage and house_percentage > 0:
+    has_bye_slot = bracket_has_bye_slot(bracket_info)
+    if house_percentage and house_percentage > 0 and not has_bye_slot:
         house_take = total_collected * Decimal(str(house_percentage)) / Decimal('100')
         total_pool = total_collected - house_take
     else:
@@ -189,6 +226,7 @@ def calculate_tournament_payouts(
         logger.warning(f"Invalid house_percentage {house_percentage}, using 0")
         house_percentage = 0.0
 
+    total_pool      = Decimal('0')
     scratch_pool    = Decimal('0')
     handicap_pool   = Decimal('0')
     total_collected = Decimal('0')
@@ -197,27 +235,50 @@ def calculate_tournament_payouts(
     scratch_brackets_out  = []
     handicap_brackets_out = []
     winners_by_bracket    = []
+    program_summaries     = []
 
     try:
-        for i, bracket in enumerate(brackets_data.get('scratch_brackets', [])):
-            bp = _calculate_single_bracket_payout(
-                bracket, f"Scratch Bracket {i+1}", entry_fees, house_percentage
-            )
-            scratch_brackets_out.append(bp)
-            scratch_pool    += bp.pop("_prize_pool_d")
-            total_collected += bp.pop("_collected_d")
-            house_take      += bp.pop("_house_d")
-            winners_by_bracket.extend(bp["winners"])
+        for group in sorted(_get_bracket_groups(brackets_data), key=lambda item: item.get("display_order", 0)):
+            group_key = str(group.get("key") or "unknown").lower()
+            group_name = str(group.get("name") or group_key.replace("_", " ").title())
+            group_brackets = group.get("brackets", []) or []
+            group_pool = Decimal("0")
+            group_brackets_out = []
 
-        for i, bracket in enumerate(brackets_data.get('handicap_brackets', [])):
-            bp = _calculate_single_bracket_payout(
-                bracket, f"Handicap Bracket {i+1}", entry_fees, house_percentage
+            for i, bracket in enumerate(group_brackets):
+                bracket_with_type = {**bracket, "bracket_type": group_key}
+                bp = _calculate_single_bracket_payout(
+                    bracket_with_type,
+                    f"{group_name} Bracket {i+1}",
+                    entry_fees,
+                    house_percentage,
+                )
+                group_brackets_out.append(bp)
+                group_pool += bp.pop("_prize_pool_d")
+                total_collected += bp.pop("_collected_d")
+                house_take += bp.pop("_house_d")
+                winners_by_bracket.extend(bp["winners"])
+
+            total_pool += group_pool
+
+            if group_key == "scratch":
+                scratch_brackets_out = group_brackets_out
+                scratch_pool = group_pool
+            elif group_key == "handicap":
+                handicap_brackets_out = group_brackets_out
+                handicap_pool = group_pool
+
+            program_summaries.append(
+                {
+                    "key": group_key,
+                    "name": group_name,
+                    "display_order": group.get("display_order", 0),
+                    "scoring_mode": group.get("scoring_mode", group_key),
+                    "total_brackets": len(group_brackets_out),
+                    "total_winners": sum(len(bracket.get("winners", [])) for bracket in group_brackets_out),
+                    "total_prize_pool": float(group_pool.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)),
+                }
             )
-            handicap_brackets_out.append(bp)
-            handicap_pool   += bp.pop("_prize_pool_d")
-            total_collected += bp.pop("_collected_d")
-            house_take      += bp.pop("_house_d")
-            winners_by_bracket.extend(bp["winners"])
 
         def _q(d: Decimal) -> float:
             return float(d.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP))
@@ -225,12 +286,13 @@ def calculate_tournament_payouts(
         return {
             "scratch_brackets":    scratch_brackets_out,
             "handicap_brackets":   handicap_brackets_out,
-            "total_prize_pool":    _q(scratch_pool + handicap_pool),
+            "total_prize_pool":    _q(total_pool),
             "total_scratch_pool":  _q(scratch_pool),
             "total_handicap_pool": _q(handicap_pool),
             "total_collected":     _q(total_collected),
             "house_take":          _q(house_take),
             "house_percentage":    house_percentage,
+            "program_summaries":   program_summaries,
             "winners_by_bracket":  winners_by_bracket,
         }
 
@@ -241,6 +303,7 @@ def calculate_tournament_payouts(
             "scratch_brackets":   [],
             "handicap_brackets":  [],
             "total_prize_pool":   0.0,
+            "program_summaries":  [],
             "winners_by_bracket": [],
         }
 
@@ -259,11 +322,12 @@ def _calculate_single_bracket_payout(
     bracket_size   = bracket.get('size', 8)
     bracket_type   = bracket.get('bracket_type', 'Unknown').lower()
     actual_entries = count_bracket_entries(bracket)
+    has_bye_slot   = bracket_has_bye_slot(bracket)
 
     fee_per_entry   = Decimal(str(entry_fees.get(bracket_type, entry_fees.get('scratch', 25.00))))
     total_collected = Decimal(str(actual_entries)) * fee_per_entry
 
-    if house_percentage and house_percentage > 0:
+    if house_percentage and house_percentage > 0 and not has_bye_slot:
         house_take = (total_collected * Decimal(str(house_percentage)) / Decimal('100')).quantize(
             Decimal('0.01'), rounding=ROUND_HALF_UP
         )
@@ -314,7 +378,8 @@ def _calculate_single_bracket_payout(
         "prize_pool":       float(prize_pool),
         "total_collected":  float(total_collected),
         "house_take":       float(house_take),
-        "house_percentage": house_percentage,
+        "house_percentage": 0.0 if has_bye_slot else house_percentage,
+        "has_bye_slot":     has_bye_slot,
         "winners":          calculated_winners,
         "payout_percentages": payout_percentages,
         "status":           winners_info.get('status', 'unknown'),

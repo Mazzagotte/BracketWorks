@@ -2,6 +2,16 @@ import { BracketGroup, BracketProgramDefinition, BracketResponse, Player } from 
 
 export const requiredBracketProgramKeys = ['handicap', 'scratch'] as const
 
+const legacyBracketProgramKeyMap: Record<string, string> = {
+  womens: 'womens_scratch',
+  seniors: 'seniors_scratch',
+  juniors: 'juniors_scratch',
+}
+
+function canonicalizeBracketProgramKey(key: string): string {
+  return legacyBracketProgramKeyMap[key] ?? key
+}
+
 export const defaultBracketPrograms: BracketProgramDefinition[] = [
   {
     key: 'handicap',
@@ -9,6 +19,7 @@ export const defaultBracketPrograms: BracketProgramDefinition[] = [
     division: 'Any',
     scoring_mode: 'handicap',
     enabled: true,
+    allow_byes: false,
     display_order: 1,
   },
   {
@@ -17,41 +28,96 @@ export const defaultBracketPrograms: BracketProgramDefinition[] = [
     division: 'Any',
     scoring_mode: 'scratch',
     enabled: true,
+    allow_byes: false,
     display_order: 2,
   },
   {
-    key: 'reverse',
-    name: 'Reverse',
+    key: 'reverse_scratch',
+    name: 'Reverse Scratch',
     division: 'Any',
-    scoring_mode: 'reverse',
+    scoring_mode: 'reverse_scratch',
     enabled: false,
+    allow_byes: false,
     display_order: 3,
   },
   {
-    key: 'womens',
-    name: 'Womens',
-    division: 'Womens',
-    scoring_mode: 'scratch',
+    key: 'reverse_handicap',
+    name: 'Reverse Handicap',
+    division: 'Any',
+    scoring_mode: 'reverse_handicap',
     enabled: false,
+    allow_byes: false,
     display_order: 4,
   },
   {
-    key: 'seniors',
-    name: 'Seniors',
-    division: 'Senior',
+    key: 'womens_scratch',
+    name: "Women's Scratch",
+    division: 'Womens',
     scoring_mode: 'scratch',
     enabled: false,
+    allow_byes: false,
     display_order: 5,
   },
   {
-    key: 'juniors',
-    name: 'Juniors',
+    key: 'womens_handicap',
+    name: "Women's Handicap",
+    division: 'Womens',
+    scoring_mode: 'handicap',
+    enabled: false,
+    allow_byes: false,
+    display_order: 6,
+  },
+  {
+    key: 'seniors_scratch',
+    name: 'Seniors Scratch',
+    division: 'Senior',
+    scoring_mode: 'scratch',
+    enabled: false,
+    allow_byes: false,
+    display_order: 7,
+  },
+  {
+    key: 'seniors_handicap',
+    name: 'Seniors Handicap',
+    division: 'Senior',
+    scoring_mode: 'handicap',
+    enabled: false,
+    allow_byes: false,
+    display_order: 8,
+  },
+  {
+    key: 'juniors_scratch',
+    name: 'Juniors Scratch',
     division: 'Junior',
     scoring_mode: 'scratch',
     enabled: false,
-    display_order: 6,
+    allow_byes: false,
+    display_order: 9,
+  },
+  {
+    key: 'juniors_handicap',
+    name: 'Juniors Handicap',
+    division: 'Junior',
+    scoring_mode: 'handicap',
+    enabled: false,
+    allow_byes: false,
+    display_order: 10,
   },
 ]
+
+function getDefaultBracketProgram(key: string): BracketProgramDefinition | undefined {
+  return defaultBracketPrograms.find(program => program.key === key)
+}
+
+function shouldUseCanonicalProgramName(key: string, name: string | undefined): boolean {
+  const normalizedName = (name || '').trim().toLowerCase()
+  return (
+    !normalizedName
+    || (key === 'womens_scratch' && normalizedName === 'womens')
+    || (key === 'seniors_scratch' && normalizedName === 'seniors')
+    || (key === 'juniors_scratch' && normalizedName === 'juniors')
+  )
+}
 
 export function normalizeBracketPrograms(
   programs: BracketProgramDefinition[] | undefined,
@@ -60,7 +126,7 @@ export function normalizeBracketPrograms(
   const source = programs?.length ? [...programs] : []
   const configuredKeys = new Set(
     source
-      .map(program => String(program.key || '').trim().toLowerCase().replace(/\s+/g, '-'))
+      .map(program => canonicalizeBracketProgramKey(String(program.key || '').trim().toLowerCase().replace(/\s+/g, '-')))
       .filter(Boolean),
   )
 
@@ -72,29 +138,39 @@ export function normalizeBracketPrograms(
 
   const seen = new Set<string>()
 
-  return source
+  const normalized = source
     .map((program, index) => {
-      const key = String(program.key || '')
+      const rawKey = String(program.key || '')
         .trim()
         .toLowerCase()
         .replace(/\s+/g, '-')
+      const key = canonicalizeBracketProgramKey(rawKey)
       if (!key || seen.has(key)) {
         return null
       }
       seen.add(key)
+      const canonicalProgramDefaults = getDefaultBracketProgram(key)
+      const aliasedProgramDefaults = rawKey !== key ? canonicalProgramDefaults : undefined
       return {
+        ...aliasedProgramDefaults,
         ...program,
         key,
-        name: (program.name || key.replace(/-/g, ' ').replace(/\b\w/g, letter => letter.toUpperCase())).trim(),
-        division: (program.division || 'Any').trim() || 'Any',
-        scoring_mode: (program.scoring_mode || key).trim().toLowerCase(),
-        entry_fee: program.entry_fee ?? fallbackEntryFee,
+        name: (
+          (shouldUseCanonicalProgramName(key, program.name) ? canonicalProgramDefaults?.name : undefined)
+          || aliasedProgramDefaults?.name
+          || program.name
+          || key.replace(/-/g, ' ').replace(/\b\w/g, letter => letter.toUpperCase())
+        ).trim(),
+        division: (canonicalProgramDefaults?.division || aliasedProgramDefaults?.division || program.division || 'Any').trim() || 'Any',
+        scoring_mode: (canonicalProgramDefaults?.scoring_mode || aliasedProgramDefaults?.scoring_mode || program.scoring_mode || key).trim().toLowerCase(),
+        entry_fee: (program.entry_fee != null && program.entry_fee > 0) ? program.entry_fee : fallbackEntryFee,
         enabled: requiredBracketProgramKeys.includes(key as (typeof requiredBracketProgramKeys)[number]) ? true : (program.enabled ?? false),
-        display_order: program.display_order ?? (index + 1),
+        allow_byes: Boolean(program.allow_byes ?? canonicalProgramDefaults?.allow_byes ?? aliasedProgramDefaults?.allow_byes ?? false),
+        display_order: program.display_order ?? canonicalProgramDefaults?.display_order ?? aliasedProgramDefaults?.display_order ?? (index + 1),
       }
     })
-    .filter((program): program is BracketProgramDefinition => !!program)
-    .sort((left, right) => (left.display_order ?? 0) - (right.display_order ?? 0))
+    .filter(Boolean) as BracketProgramDefinition[];
+  return normalized.sort((left, right) => (left.display_order ?? 0) - (right.display_order ?? 0))
 }
 
 export function getEnabledBracketPrograms(programs: BracketProgramDefinition[] | undefined): BracketProgramDefinition[] {
@@ -111,7 +187,7 @@ export function normalizePlayerBracketEntries(
   const normalized: Record<string, number> = {}
 
   Object.entries(bracketEntries || {}).forEach(([key, value]) => {
-    const normalizedKey = key.trim().toLowerCase().replace(/\s+/g, '-')
+    const normalizedKey = canonicalizeBracketProgramKey(key.trim().toLowerCase().replace(/\s+/g, '-'))
     if (!normalizedKey) return
     normalized[normalizedKey] = Math.max(0, Number(value || 0))
   })
@@ -135,8 +211,9 @@ export function calculatePlayerTotalCost(
   const normalizedEntries = normalizePlayerBracketEntries(bracketEntries)
 
   return Object.entries(normalizedEntries).reduce((total, [key, count]) => {
-    const entryFee = Number(programMap.get(key)?.entry_fee ?? fallbackEntryFee ?? 0)
-    return total + (Math.max(0, count) * entryFee)
+    const progFee = programMap.get(key)?.entry_fee
+    const fee = Number((progFee != null && progFee > 0) ? progFee : (fallbackEntryFee ?? 0))
+    return total + (Math.max(0, count) * fee)
   }, 0)
 }
 
@@ -164,7 +241,11 @@ export function getBracketGroups(response: BracketResponse | null | undefined): 
 
 export function summarizeEntries(players: Player[], programs: BracketProgramDefinition[], bracketSize: number, fallbackEntryFee: number) {
   const programSummaries = programs.map(program => {
-    const counts = players.map(player => player.programEntryCounts?.[program.key] || 0)
+    const counts = players.map(player =>
+      (player as unknown as { bracketEntries?: Record<string, number> }).bracketEntries?.[program.key]
+      ?? player.programEntryCounts?.[program.key]
+      ?? 0
+    )
     const totalEntries = counts.reduce((sum, count) => sum + count, 0)
     const fillResult = simulateBracketFill(counts, bracketSize)
 

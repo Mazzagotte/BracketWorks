@@ -12,6 +12,7 @@ interface ButtonProps {
   className?: string;
   type?: 'button' | 'submit' | 'reset';
   loading?: boolean;
+  disableSuccessState?: boolean;
 }
 
 export default function EnhancedButton({
@@ -22,7 +23,8 @@ export default function EnhancedButton({
   disabled = false,
   className = '',
   type = 'button',
-  loading = false
+  loading = false,
+  disableSuccessState = false
 }: ButtonProps) {
   const [buttonState, setButtonState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [ripples, setRipples] = useState<Array<{id: number, x: number, y: number}>>([]);
@@ -50,6 +52,10 @@ export default function EnhancedButton({
   const handleClick = async (event: React.MouseEvent) => {
     createRipple(event);
     if (!disabled && onClick && buttonState === 'idle') {
+      if (disableSuccessState) {
+        await onClick();
+        return;
+      }
       try {
         setButtonState('loading');
         const result = onClick();

@@ -31,7 +31,6 @@ else:
         connect_args={
             "connect_timeout": 10,
             "application_name": "bracketworks_api",
-            **({"sslmode": "require"} if "render.com" in settings.DATABASE_URL else {})
         },
     )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

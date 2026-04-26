@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 
 import { logger } from '../app/lib/logger';
+import { handleTableArrowNavigation } from '../app/lib/tableKeyboard';
 
 interface MobileTableProps<T = Record<string, unknown>> {
   data: T[];
@@ -151,7 +152,7 @@ export function MobileTable({
       ) : (
         /* Table View - Horizontally Scrollable */
         <div className="mobile-table-wrapper">
-          <table className="mobile-table">
+          <table className="mobile-table" onKeyDownCapture={handleTableArrowNavigation}>
             <thead>
               <tr>
                 {mobileColumns.map((column) => (

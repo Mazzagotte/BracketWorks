@@ -157,7 +157,11 @@ def max_fill_groups(
         # Build list of eligible groups (not full, don't already have this player)
         # sorted by current fill level ascending (fill least-full groups first)
         eligible = sorted(
-            [i for i in range(k) if len(groups[i]) < bracket_size],
+            [
+                i for i in range(k)
+                if len(groups[i]) < bracket_size
+                and all(existing.get('player_id') != pid for existing in groups[i])
+            ],
             key=lambda i: len(groups[i])
         )
 
@@ -167,7 +171,9 @@ def max_fill_groups(
                 if len(groups[i]) < bracket_size:
                     groups[i].append(entry)
                     placed = True
-                    # Re-sort eligible after each placement to keep least-full first
+                    # A player can only appear once per group.
+                    eligible = [idx for idx in eligible if idx != i]
+                    # Re-sort remaining groups after each placement.
                     eligible.sort(key=lambda idx: len(groups[idx]))
                     break
             if not placed:
@@ -218,28 +224,69 @@ def optimize_pairings(
     brackets: List[Dict[str, Any]] = []
     failed_groups: List[List[Dict[str, Any]]] = []
     established_pairs: Set[Tuple[int, int]] = set()  # Cross-bracket tracking
+    bye_recipient_counts: Dict[int, int] = {}  # Avoid repeatedly giving BYE to same player
+
+    def _group_is_impossible(group: List[Dict[str, Any]]) -> bool:
+        """Return True if any real player in the group has all other real players forbidden."""
+        real = [e for e in group if e.get('player_id') is not None]
+        for player in real:
+            pid = player['player_id']
+            if all(
+                is_forbidden(pid, other['player_id'], history_set)
+                for other in real
+                if other['player_id'] != pid
+            ):
+                return True
+        return False
 
     for group in groups:
-        best_pairings: Optional[List[Tuple[Dict, Dict, Tuple[int, int]]]] = None
+        # Short-circuit: if any player has all opponents forbidden, the bracket
+        # cannot be validly filled — refund the whole group immediately.
+        if _group_is_impossible(group):
+            failed_groups.append(group)
+            continue
+
+        best_pairings: Optional[List[Tuple[Dict, Dict, Tuple[int, int], Optional[int]]]] = None
         best_score = float('inf')
 
         for _ in range(max_attempts):
             shuffled = fisher_yates_shuffle(group, rng)
 
-            candidate: List[Tuple[Dict, Dict, Tuple[int, int]]] = []
+            candidate: List[Tuple[Dict, Dict, Tuple[int, int], Optional[int]]] = []
             score = 0
             valid = True
 
             for i in range(0, bracket_size, 2):
                 a, b = shuffled[i], shuffled[i + 1]
-                pair = normalize_pair(a['player_id'], b['player_id'])
+                a_id = a.get('player_id')
+                b_id = b.get('player_id')
 
-                if is_forbidden(a['player_id'], b['player_id'], history_set):
+                # Never allow a bowler to face themself in round one.
+                if a_id is not None and b_id is not None and a_id == b_id:
+                    valid = False
+                    break
+
+                # BYE slots (player_id=None) are exempt from history/cross checks.
+                if a_id is None or b_id is None:
+                    bye_recipient_id = b_id if a_id is None else a_id
+                    if bye_recipient_id is not None:
+                        # Soft penalty: distribute BYEs across players when possible.
+                        score += 2 * bye_recipient_counts.get(bye_recipient_id, 0)
+                    candidate.append((a, b, (-1, -1), bye_recipient_id))
+                    continue
+
+                pair = normalize_pair(a_id, b_id)
+
+                if is_forbidden(a_id, b_id, history_set):
                     score += 2  # Hard penalty for historical rematch
                 if pair in established_pairs:
                     score += 1  # Soft penalty for cross-bracket repeat
 
-                candidate.append((a, b, pair))
+                candidate.append((a, b, pair, None))
+
+            # Ignore invalid or incomplete candidates entirely.
+            if not valid or len(candidate) != (bracket_size // 2):
+                continue
 
             if score < best_score:
                 best_score = score
@@ -248,11 +295,14 @@ def optimize_pairings(
                     break  # Perfect — no history violations, no cross-bracket repeats
 
         if best_pairings is not None:
-            for _, _, p in best_pairings:
-                established_pairs.add(p)
+            for _, _, p, bye_recipient_id in best_pairings:
+                if p != (-1, -1):
+                    established_pairs.add(p)
+                elif bye_recipient_id is not None:
+                    bye_recipient_counts[bye_recipient_id] = bye_recipient_counts.get(bye_recipient_id, 0) + 1
             brackets.append({
                 'entrants': group,
-                'pairings': [{'home': a, 'away': b} for a, b, _ in best_pairings]
+                'pairings': [{'home': a, 'away': b} for a, b, _, _ in best_pairings]
             })
         else:
             failed_groups.append(group)
@@ -288,6 +338,8 @@ def create_single_bracket_from_pairings(
     for i, pairing in enumerate(pairings):
         home_player = pairing['home']
         away_player = pairing['away']
+        home_is_bye = str(home_player.get('name') or '').strip().upper() == 'BYE'
+        away_is_bye = str(away_player.get('name') or '').strip().upper() == 'BYE'
         
         # Get Game 1 scores for Round 1 matches
         home_scores = home_player.get('scores', {})
@@ -303,10 +355,16 @@ def create_single_bracket_from_pairings(
         logger.debug(f"    score_a (game1_total): {score_a}")
         logger.debug(f"    score_b (game1_total): {score_b}")
         
-        # Determine winner if both scores exist
+        # Determine winner if both scores exist (or auto-advance on BYE)
         winner = None
         status = "pending"
-        if score_a is not None and score_b is not None:
+        if home_is_bye and not away_is_bye:
+            winner = "B"
+            status = "completed"
+        elif away_is_bye and not home_is_bye:
+            winner = "A"
+            status = "completed"
+        elif score_a is not None and score_b is not None:
             if score_a > score_b:
                 winner = "A"
                 status = "completed"
@@ -508,7 +566,8 @@ def create_brackets_with_history(
     bracket_size: int,
     bracket_type: str,
     history_set: Set[Tuple[int, int]] = None,
-    seed: Optional[int] = None
+    seed: Optional[int] = None,
+    allow_single_bye_per_bracket: bool = False,
 ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
     """
     Wrapper function to integrate with existing bracket generation system.
@@ -550,6 +609,128 @@ def create_brackets_with_history(
             bracket_size
         )
         brackets.append(bracket)
+
+    # Optional universal BYE mode: if standard generation leaves refunds,
+    # rebuild from the full entry pool using a mixed layout of normal brackets
+    # (size) and BYE brackets (size-1 + BYE), then pick the best placement.
+    if allow_single_bye_per_bracket and result.get('refunded'):
+        real_slots = bracket_size - 1
+        total_entries = len(entries)
+        standard_refunded = list(result.get('refunded', []))
+        standard_placed = total_entries - len(standard_refunded)
+
+        if real_slots > 0:
+            by_player: Dict[Any, List[Dict[str, Any]]] = {}
+            for entry in entries:
+                player_id = entry.get('player_id')
+                if player_id is None:
+                    continue
+                by_player.setdefault(player_id, []).append(entry)
+
+            sorted_players = sorted(by_player.values(), key=len, reverse=True)
+            bye_entry = {
+                'player_id': None,
+                'name': 'BYE',
+                'average': 0,
+                'entry_number': 0,
+                'scores': {},
+            }
+
+            best_layout_brackets: Optional[List[Dict[str, Any]]] = None
+            best_layout_refunded: Optional[List[Dict[str, Any]]] = None
+            best_layout_placed = standard_placed
+            best_layout_normal_count = len(result.get('brackets', []))
+
+            max_bye_brackets = total_entries // real_slots
+            for bye_count in range(1, max_bye_brackets + 1):
+                remaining_after_byes = total_entries - (bye_count * real_slots)
+                if remaining_after_byes < 0:
+                    continue
+
+                normal_count = remaining_after_byes // bracket_size
+                target_groups = normal_count + bye_count
+                if target_groups <= 0:
+                    continue
+
+                candidate_rng = random.Random(seed + bye_count) if seed is not None else random.Random()
+                capacities = [bracket_size for _ in range(normal_count)] + [real_slots for _ in range(bye_count)]
+                groups: List[List[Dict[str, Any]]] = [[] for _ in range(target_groups)]
+                candidate_refunded: List[Dict[str, Any]] = []
+
+                for player_entries in sorted_players:
+                    player_id = player_entries[0].get('player_id')
+                    assignable_entries = fisher_yates_shuffle(player_entries[:target_groups], candidate_rng)
+                    candidate_refunded.extend(player_entries[target_groups:])
+
+                    for entry in assignable_entries:
+                        eligible = [
+                            index for index in range(target_groups)
+                            if len(groups[index]) < capacities[index]
+                            and all(existing.get('player_id') != player_id for existing in groups[index])
+                        ]
+
+                        if not eligible:
+                            candidate_refunded.append(entry)
+                            continue
+
+                        eligible.sort(key=lambda index: (len(groups[index]) / capacities[index], len(groups[index])))
+                        groups[eligible[0]].append(entry)
+
+                fully_filled = True
+                for i, group in enumerate(groups):
+                    if len(group) != capacities[i]:
+                        candidate_refunded.extend(group)
+                        fully_filled = False
+
+                if not fully_filled:
+                    continue
+
+                augmented_groups: List[List[Dict[str, Any]]] = []
+                for i, group in enumerate(groups):
+                    if i >= normal_count:
+                        augmented_groups.append(group + [bye_entry.copy()])
+                    else:
+                        augmented_groups.append(group)
+
+                optimized_brackets, failed_groups = optimize_pairings(
+                    groups=augmented_groups,
+                    bracket_size=bracket_size,
+                    history_set=history_set,
+                    rng=candidate_rng,
+                    max_attempts=1500,
+                )
+
+                for failed_group in failed_groups:
+                    candidate_refunded.extend(
+                        [
+                            entry for entry in failed_group
+                            if str(entry.get('name') or '').strip().upper() != 'BYE'
+                        ]
+                    )
+
+                candidate_placed = total_entries - len(candidate_refunded)
+                if candidate_placed > best_layout_placed or (
+                    candidate_placed == best_layout_placed and normal_count > best_layout_normal_count
+                ):
+                    best_layout_brackets = optimized_brackets
+                    best_layout_refunded = candidate_refunded
+                    best_layout_placed = candidate_placed
+                    best_layout_normal_count = normal_count
+
+            if best_layout_brackets is not None and best_layout_refunded is not None and best_layout_placed > standard_placed:
+                result['brackets'] = best_layout_brackets
+                result['refunded'] = best_layout_refunded
+
+                brackets = []
+                for i, bracket_data in enumerate(result['brackets']):
+                    bracket_num = i + 1
+                    bracket_title = f"{bracket_type} Bracket {bracket_num}"
+                    bracket = create_single_bracket_from_pairings(
+                        bracket_data['pairings'],
+                        bracket_title,
+                        bracket_size
+                    )
+                    brackets.append(bracket)
     
     # Convert refunded to existing format
     leftover_players = []

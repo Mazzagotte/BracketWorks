@@ -21,20 +21,6 @@ interface BracketGenerationModalProps {
 }
 
 /**
- * Bowling-themed progress messages that rotate during generation
- */
-const PROGRESS_MESSAGES = [
-  "Rolling your brackets…",
-  "Knocking down some math…",
-  "Wiping the lanes…",
-  "Cleaning the gutters…",
-  "Setting up a perfect game…",
-  "Assigning bowlers…",
-  "Setting up matches…",
-  "Finalizing bracket sheet…"
-]
-
-/**
  * Error message mappings for user-friendly display
  */
 const ERROR_MESSAGES: { [key: string]: { friendly: string, suggestion: string } } = {
@@ -69,10 +55,8 @@ const ERROR_MESSAGES: { [key: string]: { friendly: string, suggestion: string } 
  * 
  * Displays a modal during bracket generation with:
  * - Loading state with bowling ball animation
- * - Rotating progress messages
- * - 15-second minimum duration enforcement
+ * - Navigation lock during active generation
  * - Success and error states
- * - Auto-close option
  */
 export default function BracketGenerationModal({
   isOpen,
@@ -85,14 +69,11 @@ export default function BracketGenerationModal({
 }: BracketGenerationModalProps) {
   // State management
   const [currentPhase, setCurrentPhase] = useState<ModalPhase>('loading')
-  const [currentMessageIndex, setCurrentMessageIndex] = useState(0)
-  const [shouldAutoClose, setShouldAutoClose] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
-  const [progress, setProgress] = useState(0)
-  const [elapsedTime, setElapsedTime] = useState(0)
   const [bracketResult, setBracketResult] = useState<any>(null)
   const [showTechnicalDetails, setShowTechnicalDetails] = useState(false)
   const [showConfetti, setShowConfetti] = useState(false)
+  const isGenerating = currentPhase === 'loading'
 
   /**
    * Reset modal state when it opens
@@ -100,10 +81,7 @@ export default function BracketGenerationModal({
   useEffect(() => {
     if (isOpen) {
       setCurrentPhase('loading')
-      setCurrentMessageIndex(0)
       setErrorMessage('')
-      setProgress(0)
-      setElapsedTime(0)
       setBracketResult(null)
       setShowTechnicalDetails(false)
       setShowConfetti(false)
@@ -123,6 +101,11 @@ export default function BracketGenerationModal({
 
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        if (isGenerating) {
+          e.preventDefault()
+          e.stopPropagation()
+          return
+        }
         onClose()
       }
     }
@@ -131,91 +114,103 @@ export default function BracketGenerationModal({
     return () => {
       document.removeEventListener('keydown', handleEscape)
     }
-  }, [isOpen, onClose])
+  }, [isOpen, onClose, isGenerating])
 
   /**
-   * Rotate progress messages every 3 seconds during loading phase
+   * Block navigation while generation is in progress.
    */
   useEffect(() => {
-    if (currentPhase === 'loading' && isOpen) {
-      const messageRotationInterval = setInterval(() => {
-        setCurrentMessageIndex((previousIndex) => 
-          (previousIndex + 1) % PROGRESS_MESSAGES.length
-        )
-      }, 3000) // Change message every 3 seconds
-
-      return () => clearInterval(messageRotationInterval)
+    if (!isOpen || !isGenerating) {
+      return
     }
-  }, [currentPhase, isOpen])
+
+    const unloadMessage = 'Bracket generation is still in progress. Please wait until it completes.'
+
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault()
+      event.returnValue = unloadMessage
+      return unloadMessage
+    }
+
+    const handleDocumentClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null
+      const anchor = target?.closest('a[href]') as HTMLAnchorElement | null
+      if (!anchor) {
+        return
+      }
+
+      event.preventDefault()
+      event.stopPropagation()
+    }
+
+    const handlePopState = () => {
+      window.history.pushState({ bracketGenerationLock: true }, '', window.location.href)
+    }
+
+    const handleKeyNavigation = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null
+      const tagName = target?.tagName?.toLowerCase()
+      const isEditable = !!target?.isContentEditable || tagName === 'input' || tagName === 'textarea'
+      const key = event.key.toLowerCase()
+      const isRefresh = key === 'f5' || ((event.ctrlKey || event.metaKey) && key === 'r')
+      const isHistoryNav = (event.altKey && key === 'arrowleft') || (!isEditable && key === 'backspace')
+
+      if (isRefresh || isHistoryNav) {
+        event.preventDefault()
+        event.stopPropagation()
+      }
+    }
+
+    window.history.pushState({ bracketGenerationLock: true }, '', window.location.href)
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    window.addEventListener('popstate', handlePopState)
+    window.addEventListener('keydown', handleKeyNavigation, true)
+    document.addEventListener('click', handleDocumentClick, true)
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+      window.removeEventListener('popstate', handlePopState)
+      window.removeEventListener('keydown', handleKeyNavigation, true)
+      document.removeEventListener('click', handleDocumentClick, true)
+    }
+  }, [isOpen, isGenerating])
 
   /**
-   * Update progress and elapsed time during loading phase
-   * Progress bar fills over 15 seconds, time counts up
-   */
-  useEffect(() => {
-    if (currentPhase === 'loading' && isOpen) {
-      const TOTAL_DURATION_MS = 15000 // 15 seconds
-      const UPDATE_INTERVAL_MS = 100 // Update every 100ms for smooth animation
-      const startTime = Date.now()
-
-      const progressInterval = setInterval(() => {
-        const elapsed = Date.now() - startTime
-        const progressPercentage = Math.min((elapsed / TOTAL_DURATION_MS) * 100, 100)
-        const elapsedSeconds = Math.floor(elapsed / 1000)
-
-        setProgress(progressPercentage)
-        setElapsedTime(elapsedSeconds)
-
-        // Stop interval when we hit 15 seconds
-        if (elapsed >= TOTAL_DURATION_MS) {
-          clearInterval(progressInterval)
-        }
-      }, UPDATE_INTERVAL_MS)
-
-      return () => clearInterval(progressInterval)
-    }
-  }, [currentPhase, isOpen])
-
-  /**
-   * Handle bracket generation with 15-second minimum duration
+   * Handle bracket generation lifecycle
    */
   useEffect(() => {
     if (isOpen && bracketGenerationPromise && currentPhase === 'loading') {
-      const generationStartTime = Date.now()
-      const MINIMUM_DURATION_MS = 15000 // 15 seconds
+      let cancelled = false
 
-      // Create a promise that resolves after minimum duration
-      const minimumDurationPromise = new Promise<void>((resolve) => {
-        setTimeout(resolve, MINIMUM_DURATION_MS)
-      })
+      Promise.resolve(bracketGenerationPromise)
+        .then((result) => {
+          if (cancelled) {
+            return
+          }
 
-      // Wait for both the API call and minimum duration
-      Promise.all([bracketGenerationPromise, minimumDurationPromise])
-        .then((results) => {
-          // Store the bracket generation result (first promise result)
-          const result = results[0]
           setBracketResult(result)
           
-          // Both conditions met - show success
           setCurrentPhase('success')
-          
-          // Trigger confetti celebration
           setShowConfetti(true)
-          setTimeout(() => setShowConfetti(false), 3000) // Hide after 3 seconds
-          
-          // Auto-close if enabled
-          if (shouldAutoClose) {
-            setTimeout(() => {
-              handleCloseModal()
-            }, 1000) // 1 second delay before auto-closing
-          }
+          setTimeout(() => {
+            if (!cancelled) {
+              setShowConfetti(false)
+            }
+          }, 3000)
         })
         .catch((error) => {
-          // Error occurred - show error immediately (bypass 15-second wait)
+          if (cancelled) {
+            return
+          }
+
           logger.error('Bracket generation error', { error });
           setErrorMessage(error.message || 'An unexpected error occurred')
           setCurrentPhase('error')
         })
+
+      return () => {
+        cancelled = true
+      }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, bracketGenerationPromise, currentPhase])
@@ -224,6 +219,9 @@ export default function BracketGenerationModal({
    * Handle modal close
    */
   const handleCloseModal = () => {
+    if (isGenerating) {
+      return
+    }
     onClose()
   }
 
@@ -232,27 +230,8 @@ export default function BracketGenerationModal({
    */
   const handleRegenerateClick = () => {
     setCurrentPhase('loading')
-    setCurrentMessageIndex(0)
     setErrorMessage('')
-    setProgress(0)
-    setElapsedTime(0)
     onRegenerate()
-  }
-
-  /**
-   * Format remaining time for display
-   */
-  const getTimeRemainingText = (): string => {
-    const TOTAL_SECONDS = 15
-    const remainingSeconds = Math.max(0, TOTAL_SECONDS - elapsedTime)
-    
-    if (remainingSeconds === 0) {
-      return 'Finishing up...'
-    } else if (remainingSeconds <= 3) {
-      return 'Almost done...'
-    } else {
-      return `${remainingSeconds} seconds remaining`
-    }
   }
 
   /**
@@ -261,44 +240,53 @@ export default function BracketGenerationModal({
   const getSuccessStats = () => {
     if (!bracketResult) {
       return {
-        scratchCount: 0,
-        handicapCount: 0,
-        totalPlayers: 0,
+        programSummaries: [] as Array<{ name: string; brackets_count: number; refund_entries: number; entries_count: number }>,
         skippedPlayers: 0,
-        scratchRefunds: 0,
-        handicapRefunds: 0
+        refundBreakdownText: '0'
       }
     }
 
-    const scratchBrackets = bracketResult.scratch_brackets || []
-    const handicapBrackets = bracketResult.handicap_brackets || []
     const summary = bracketResult.summary || {}
-    
-    // Count total players from first round of all brackets
-    let totalPlayers = 0
-    scratchBrackets.forEach((bracket: any) => {
-      if (bracket.rounds && bracket.rounds[0] && bracket.rounds[0].matches) {
-        totalPlayers += bracket.rounds[0].matches.length * 2
-      }
-    })
-    handicapBrackets.forEach((bracket: any) => {
-      if (bracket.rounds && bracket.rounds[0] && bracket.rounds[0].matches) {
-        totalPlayers += bracket.rounds[0].matches.length * 2
-      }
-    })
+    const groupSummaries = Array.isArray(summary.group_summaries) ? summary.group_summaries : []
 
-    // Get refund counts from summary (more accurate than validation_warnings)
-    const scratchRefunds = summary.scratch_refund_entries || 0
-    const handicapRefunds = summary.handicap_refund_entries || 0
-    const totalRefunds = scratchRefunds + handicapRefunds
+    const programSummaries = groupSummaries.map((group: any) => ({
+      name: String(group?.name || group?.key || 'Bracket Program'),
+      brackets_count: Number(group?.brackets_count || 0),
+      refund_entries: Number(group?.refund_entries || 0),
+      entries_count: Number(group?.entries_count || 0),
+    }))
+
+    const totalRefunds = programSummaries.reduce(
+      (sum, group) => sum + group.refund_entries,
+      0,
+    )
+
+    const refundParts = programSummaries
+      .filter(group => group.refund_entries > 0)
+      .map(group => `${group.refund_entries} ${group.name}`)
+    const refundBreakdownText = refundParts.length > 0 ? refundParts.join(' & ') : '0'
+
+    // Backwards-compatible fallback for older API responses.
+    if (programSummaries.length === 0) {
+      const scratchCount = Number((bracketResult.scratch_brackets || []).length)
+      const handicapCount = Number((bracketResult.handicap_brackets || []).length)
+      const scratchRefunds = Number(summary.scratch_refund_entries || 0)
+      const handicapRefunds = Number(summary.handicap_refund_entries || 0)
+
+      return {
+        programSummaries: [
+          { name: 'Handicap', brackets_count: handicapCount, refund_entries: handicapRefunds, entries_count: 0 },
+          { name: 'Scratch', brackets_count: scratchCount, refund_entries: scratchRefunds, entries_count: 0 },
+        ],
+        skippedPlayers: scratchRefunds + handicapRefunds,
+        refundBreakdownText: `${handicapRefunds} Handicap & ${scratchRefunds} Scratch`,
+      }
+    }
 
     return {
-      scratchCount: scratchBrackets.length,
-      handicapCount: handicapBrackets.length,
-      totalPlayers,
+      programSummaries,
       skippedPlayers: totalRefunds,
-      scratchRefunds,
-      handicapRefunds
+      refundBreakdownText,
     }
   }
 
@@ -340,7 +328,7 @@ export default function BracketGenerationModal({
       className={styles.modalOverlay} 
       onClick={(e) => {
         // Only close if clicking directly on the backdrop overlay, not the modal card
-        if (e.target === e.currentTarget) {
+        if (!isGenerating && e.target === e.currentTarget) {
           handleCloseModal()
         }
       }}
@@ -406,35 +394,10 @@ export default function BracketGenerationModal({
             {/* Main message */}
             <h2 className={styles.mainMessage}>Generating Brackets...</h2>
 
-            {/* Progress Bar */}
-            <div className={styles.progressBarContainer}>
-              <div className={styles.progressBarBackground}>
-                <div 
-                  className={styles.progressBarFill} 
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-              <div className={styles.progressText}>{Math.round(progress)}%</div>
-            </div>
-
-            {/* Rotating progress message */}
-            <p className={styles.progressMessage} key={currentMessageIndex}>
-              {PROGRESS_MESSAGES[currentMessageIndex]}
+            <p className={styles.generationLockNote}>
+              Please wait. Navigation is temporarily locked until generation completes.
             </p>
 
-            {/* Auto-close checkbox */}
-            <div className={styles.checkboxContainer}>
-              <input
-                type="checkbox"
-                id="autoCloseCheckbox"
-                checked={shouldAutoClose}
-                onChange={(event) => setShouldAutoClose(event.target.checked)}
-                className={styles.checkbox}
-              />
-              <label htmlFor="autoCloseCheckbox" className={styles.checkboxLabel}>
-                Close automatically when generation completes
-              </label>
-            </div>
           </div>
         )}
 
@@ -452,23 +415,16 @@ export default function BracketGenerationModal({
                 const stats = getSuccessStats()
                 return (
                   <>
-                    {stats.handicapCount > 0 && (
-                      <div className={styles.statItem} style={{ animationDelay: '0.1s' }}>
+                    {stats.programSummaries.map((program, index) => (
+                      <div key={program.name} className={styles.statItem} style={{ animationDelay: `${0.1 + (index * 0.1)}s` }}>
                         <span className={styles.statText}>
-                          {stats.handicapCount} Handicap Bracket{stats.handicapCount !== 1 ? 's' : ''}
+                          {program.brackets_count} {program.name} Bracket{program.brackets_count !== 1 ? 's' : ''}
                         </span>
                       </div>
-                    )}
-                    {stats.scratchCount > 0 && (
-                      <div className={styles.statItem} style={{ animationDelay: '0.2s' }}>
-                        <span className={styles.statText}>
-                          {stats.scratchCount} Scratch Bracket{stats.scratchCount !== 1 ? 's' : ''}
-                        </span>
-                      </div>
-                    )}
-                    <div className={styles.statItem} style={{ animationDelay: '0.3s' }}>
+                    ))}
+                    <div className={styles.statItem} style={{ animationDelay: `${0.1 + (stats.programSummaries.length * 0.1)}s` }}>
                       <span className={styles.statText}>
-                        {stats.skippedPlayers} Refund{stats.skippedPlayers !== 1 ? 's' : ''} ({stats.handicapRefunds} Handicap & {stats.scratchRefunds} Scratch)
+                        {stats.skippedPlayers} Refund{stats.skippedPlayers !== 1 ? 's' : ''} ({stats.refundBreakdownText})
                       </span>
                     </div>
                   </>

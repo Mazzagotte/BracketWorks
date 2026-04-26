@@ -6,8 +6,6 @@ export interface SearchFilterProps {
   onSearchChange: (term: string) => void;
   selectedStatus: string;
   onStatusChange: (status: string) => void;
-  selectedSeedRange: string;
-  onSeedRangeChange: (range: string) => void;
   onClearFilters: () => void;
   activeFiltersCount: number;
   searchResultCount?: number | null;
@@ -18,8 +16,6 @@ export function SearchFilter({
   onSearchChange,
   selectedStatus,
   onStatusChange,
-  selectedSeedRange,
-  onSeedRangeChange,
   onClearFilters,
   activeFiltersCount,
   searchResultCount,
@@ -34,7 +30,7 @@ export function SearchFilter({
               type="text"
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Search by name, USBC number..."
+              placeholder="Search players in current bracket..."
               className={styles.searchInput}
               aria-label="Search players"
             />
@@ -51,8 +47,8 @@ export function SearchFilter({
           {searchTerm && searchResultCount !== null && searchResultCount !== undefined && (
             <span className={`${styles.resultCount} ${searchResultCount === 0 ? styles.resultCountEmpty : ''}`}>
               {searchResultCount === 0
-                ? 'No players found'
-                : `${searchResultCount} player${searchResultCount !== 1 ? 's' : ''} found`}
+                ? 'No players found in current bracket'
+                : `${searchResultCount} player${searchResultCount !== 1 ? 's' : ''} found in current bracket`}
             </span>
           )}
         </label>
@@ -70,22 +66,6 @@ export function SearchFilter({
             <option value="in_progress">In Progress</option>
             <option value="pending">Pending</option>
             <option value="next_up">Next Up</option>
-          </select>
-        </label>
-
-        <label className={styles.label}>
-          <span className={styles.labelText}>Seed Range</span>
-          <select
-            value={selectedSeedRange}
-            onChange={(e) => onSeedRangeChange(e.target.value)}
-            className={styles.select}
-            aria-label="Filter by seed range"
-          >
-            <option value="all">All Seeds</option>
-            <option value="1-4">Top Seeds (1-4)</option>
-            <option value="5-8">5-8 Seeds</option>
-            <option value="9-16">9-16 Seeds</option>
-            <option value="17+">Lower Seeds (17+)</option>
           </select>
         </label>
 

@@ -14,7 +14,7 @@
 
 .summaryCard {
   background-color: #FAF4E8;
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   border: 1px solid rgba(240, 120, 32, 0.2);
   padding: 0;
@@ -30,29 +30,39 @@
   padding: 14px 24px;
   background: #F0E0C0;
   border-bottom: 3px solid #F07820;
-  border-radius: 16px 16px 0 0;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  text-transform: none;
+  letter-spacing: normal;
 }
 
 .summaryGrid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0;
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-items: stretch;
+  gap: 10px;
+  padding: 18px 14px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
 }
 
 .statBox {
   text-align: center;
-  padding: 24px 16px;
-  border-right: 1px solid rgba(26, 26, 26, 0.08);
+  padding: 22px 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-height: 110px;
-}
-
-.statBox:last-child {
-  border-right: none;
+  min-height: 104px;
+  min-width: 156px;
+  width: fit-content;
+  flex: 0 0 auto;
+  border: 1px solid rgba(26, 26, 26, 0.08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.52);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
 .statValue {
@@ -81,7 +91,7 @@
 }
 
 .progressBarRow {
-  width: 100%;
+  width: min(120px, 100%);
   margin-top: 8px;
 }
 
@@ -109,14 +119,14 @@
 
 @media (max-width: 640px) {
   .summaryGrid {
-    grid-template-columns: repeat(2, 1fr);
+    padding: 14px;
+    gap: 8px;
   }
-  .statBox:nth-child(2) {
-    border-right: none;
-  }
-  .statBox:nth-child(1),
-  .statBox:nth-child(2) {
-    border-bottom: 1px solid rgba(26, 26, 26, 0.08);
+
+  .statBox {
+    min-height: 96px;
+    padding: 18px 12px;
+    min-width: 140px;
   }
 }
 
@@ -868,9 +878,6 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .splitBadge {
@@ -890,6 +897,28 @@
   font-size: 12px;
   color: rgba(26, 26, 26, 0.45);
   margin-top: 2px;
+}
+
+.toggleDetailsBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(26, 26, 26, 0.45);
+  background: none;
+  border: 1px solid rgba(26, 26, 26, 0.15);
+  border-radius: 20px;
+  padding: 1px 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.toggleDetailsBtn:hover {
+  color: #F07820;
+  border-color: #F07820;
 }
 
 /* =============================================

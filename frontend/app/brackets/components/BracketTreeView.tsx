@@ -165,7 +165,6 @@ const BracketTreeViewComponent = ({
                     className={`${styles.player} ${match.winner === 'A' ? styles.winner : ''} ${playerAHighlighted ? styles.highlightedPlayer : ''}`}
                     onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerA ? null : match.playerA)}
                   >
-                    <span className={styles.playerSeed}>{match.seedA !== undefined ? `#${match.seedA}` : ''}</span>
                     <span className={styles.playerName}>{match.playerA || 'TBD'}</span>
                     <span className={styles.playerScore}>
                       {scoreA !== undefined && scoreA !== null ? scoreA : '-'}
@@ -176,7 +175,6 @@ const BracketTreeViewComponent = ({
                     className={`${styles.player} ${match.winner === 'B' ? styles.winner : ''} ${playerBHighlighted ? styles.highlightedPlayer : ''}`}
                     onClick={(e) => { e.stopPropagation(); setHighlightedPlayer(highlightedPlayer === match.playerB ? null : match.playerB); }}
                   >
-                    <span className={styles.playerSeed}>{match.seedB !== undefined ? `#${match.seedB}` : ''}</span>
                     <span className={styles.playerName}>{match.playerB || 'TBD'}</span>
                     <span className={styles.playerScore}>
                       {scoreB !== undefined && scoreB !== null ? scoreB : '-'}
@@ -223,7 +221,6 @@ const BracketTreeViewComponent = ({
                     className={`${styles.player} ${match.winner === 'A' ? styles.winner : ''} ${playerAHighlighted ? styles.highlightedPlayer : ''}`}
                     onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerA ? null : match.playerA)}
                   >
-                    <span className={styles.playerSeed}>{match.seedA !== undefined ? `#${match.seedA}` : ''}</span>
                     <span className={styles.playerName}>{match.playerA || 'TBD'}</span>
                     <span className={styles.playerScore}>
                       {scoreA !== undefined && scoreA !== null ? scoreA : '-'}
@@ -234,7 +231,6 @@ const BracketTreeViewComponent = ({
                     className={`${styles.player} ${match.winner === 'B' ? styles.winner : ''} ${playerBHighlighted ? styles.highlightedPlayer : ''}`}
                     onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerB ? null : match.playerB)}
                   >
-                    <span className={styles.playerSeed}>{match.seedB !== undefined ? `#${match.seedB}` : ''}</span>
                     <span className={styles.playerName}>{match.playerB || 'TBD'}</span>
                     <span className={styles.playerScore}>
                       {scoreB !== undefined && scoreB !== null ? scoreB : '-'}
@@ -280,7 +276,6 @@ const BracketTreeViewComponent = ({
                   className={`${styles.player} ${match.winner === 'A' ? styles.winner : ''} ${playerAHighlighted ? styles.highlightedPlayer : ''}`}
                   onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerA ? null : match.playerA)}
                 >
-                  <span className={styles.playerSeed}>{match.seedA !== undefined ? `#${match.seedA}` : ''}</span>
                   <span className={styles.playerName}>{match.playerA || 'TBD'}</span>
                   <span className={styles.playerScore}>
                     {scoreA !== undefined && scoreA !== null ? scoreA : '-'}
@@ -291,7 +286,6 @@ const BracketTreeViewComponent = ({
                   className={`${styles.player} ${match.winner === 'B' ? styles.winner : ''} ${playerBHighlighted ? styles.highlightedPlayer : ''}`}
                   onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerB ? null : match.playerB)}
                 >
-                  <span className={styles.playerSeed}>{match.seedB !== undefined ? `#${match.seedB}` : ''}</span>
                   <span className={styles.playerName}>{match.playerB || 'TBD'}</span>
                   <span className={styles.playerScore}>
                     {scoreB !== undefined && scoreB !== null ? scoreB : '-'}
@@ -344,19 +338,6 @@ function getMatchStatus(match: Match): 'pending' | 'in_progress' | 'completed' |
   if (match.scoreA !== undefined || match.scoreB !== undefined) return 'in_progress'
   if (!match.playerA || !match.playerB || match.playerA === 'TBD' || match.playerB === 'TBD') return 'pending'
   return 'next_up' // Both players assigned, no scores yet
-}
-
-/**
- * Helper function to detect upsets (lower seed beating higher seed)
- */
-function isUpset(match: Match): boolean {
-  if (!match.winner) return false
-  
-  // Upset if lower seed (higher number) beats higher seed (lower number)
-  if (match.winner === 'A' && match.seedA != null && match.seedB != null && match.seedA > match.seedB) return true
-  if (match.winner === 'B' && match.seedA != null && match.seedB != null && match.seedB > match.seedA) return true
-  
-  return false
 }
 
 // Export memoized component for better performance

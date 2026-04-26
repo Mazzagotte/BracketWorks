@@ -10,6 +10,7 @@ from datetime import datetime
 
 # Import advanced bracket generation
 from .brackets_advanced import create_brackets_with_history, get_round_name
+from .brackets_experimental import ExperimentalConfig, generate_brackets_experimental
 from ..core.bracket_programs import normalize_bowler_bracket_entries, normalize_bracket_programs
 
 logger = logging.getLogger(__name__)
@@ -124,7 +125,9 @@ def generate_tournament_brackets(
     tournament_id: Optional[int] = None,
     bracket_programs: Optional[List[Dict[str, Any]]] = None,
     use_history: bool = True,
-    seed: Optional[int] = None
+    seed: Optional[int] = None,
+    use_experimental_optimizer: bool = False,
+    experimental_attempts: Optional[int] = None,
 ) -> Dict[str, Any]:
     """
     Generate tournament brackets from actual player data with validation.
@@ -167,6 +170,7 @@ def generate_tournament_brackets(
 
     bracket_groups: List[Dict[str, Any]] = []
     validation_by_program: Dict[str, List[Dict[str, Any]]] = {}
+    experimental_debug: Dict[str, Any] = {}
 
     for program in programs:
         if not program.get('enabled', True):
@@ -187,13 +191,50 @@ def generate_tournament_brackets(
                 logger.warning(f"Could not load match history for {program['key']}: {error}")
 
         group_start = time.time()
-        brackets, leftover_players = create_brackets_with_history(
-            entries,
-            bracket_size,
-            program['name'],
-            history_set,
-            seed,
-        )
+        group_debug: Dict[str, Any] = {
+            "mode": "standard",
+            "attempts": 1,
+        }
+
+        if use_experimental_optimizer:
+            cfg = ExperimentalConfig(
+                attempts=max(1, int(experimental_attempts or 64)),
+            )
+            exp_result = generate_brackets_experimental(
+                entries=entries,
+                bracket_size=bracket_size,
+                bracket_type=program['name'],
+                history_set=history_set,
+                seed=seed,
+                allow_single_bye_per_bracket=bool(program.get('allow_byes', False)),
+                config=cfg,
+            )
+            brackets = exp_result.brackets
+            leftover_players = exp_result.leftovers
+            group_debug = {
+                "mode": "experimental",
+                "attempts": exp_result.attempts_evaluated,
+                "selected_seed": exp_result.selected_seed,
+                "placed_entries": exp_result.selected.placed_entries,
+                "refunded_entries": exp_result.selected.refunded_entries,
+                "unique_pairs": exp_result.selected.unique_pairs,
+                "max_refunds_single_player": exp_result.selected.max_refunds_single_player,
+                "refund_variance": exp_result.selected.refund_variance,
+                "cap_violations": exp_result.selected.cap_violations,
+                "cap_feasible": exp_result.selected.feasible_under_cap,
+                "score": exp_result.selected.score,
+            }
+        else:
+            brackets, leftover_players = create_brackets_with_history(
+                entries,
+                bracket_size,
+                program['name'],
+                history_set,
+                seed,
+                allow_single_bye_per_bracket=bool(program.get('allow_byes', False)),
+            )
+
+        experimental_debug[program['key']] = group_debug
         logger.info(
             "  %s brackets generated in %.3fs (%s entries, %s brackets, %s refunds)",
             program['name'],
@@ -220,6 +261,7 @@ def generate_tournament_brackets(
                 "placed_entries": placed_entries,
                 "refund_entries": len(entries) - placed_entries,
                 "skipped_players": all_skipped,
+                "generation_debug": group_debug,
             }
         )
 
@@ -236,6 +278,11 @@ def generate_tournament_brackets(
         "handicap_brackets": handicap_group['brackets'] if handicap_group else [],
         "summary": summary,
         "bracket_size": bracket_size,
+        "generation_mode": "experimental" if use_experimental_optimizer else "standard",
+        "generation_debug": {
+            "experimental_enabled": use_experimental_optimizer,
+            "programs": experimental_debug,
+        },
         "validation_warnings": {
             "skipped_scratch_players": validation_by_program.get('scratch', []),
             "skipped_handicap_players": validation_by_program.get('handicap', []),
@@ -253,9 +300,6 @@ def create_entries_for_program(
     skipped_players: List[Dict[str, Any]] = []
 
     for player in players:
-        if not player_matches_program(player, program):
-            continue
-
         player_entries = normalize_bowler_bracket_entries(
             player.get('bracket_entries'),
             handicap_entries=player.get('handicap'),
@@ -281,18 +325,21 @@ def create_entries_for_program(
     return valid_entries, skipped_players
 
 
-def player_matches_program(player: Dict[str, Any], program: Dict[str, Any]) -> bool:
-    required_division = str(program.get('division') or 'Any').strip().lower()
-    if required_division in {'', 'any', 'open'}:
-        return True
-    player_division = str(player.get('division') or 'Open').strip().lower()
-    return player_division == required_division
-
-
 def calculate_placed_entries(brackets: List[Dict[str, Any]]) -> int:
     if not brackets:
         return 0
-    return len(brackets) * (len(brackets[0]['rounds'][0]['matches']) * 2 if brackets[0].get('rounds') else 0)
+
+    placed = 0
+    for bracket in brackets:
+        rounds = bracket.get('rounds') or []
+        if not rounds:
+            continue
+        for match in rounds[0].get('matches', []):
+            if str(match.get('playerA') or '').strip().upper() != 'BYE':
+                placed += 1
+            if str(match.get('playerB') or '').strip().upper() != 'BYE':
+                placed += 1
+    return placed
 
 
 def create_bracket_summary_from_groups(bracket_groups: List[Dict[str, Any]]) -> Dict[str, Any]:

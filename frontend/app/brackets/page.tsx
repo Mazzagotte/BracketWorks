@@ -41,12 +41,11 @@ export default function BracketsPage() {
   const lastLoadedRef = useRef<{tournamentId: number, squadId: number} | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedStatus, setSelectedStatus] = useState('all')
-  const [selectedSeedRange, setSelectedSeedRange] = useState('all')
   const [isMobile, setIsMobile] = useState(false)
   const [loadedBrackets, setLoadedBrackets] = useState<BracketPreview | null>(null)
   
   // Hooks for data fetching
-  const { generateTournamentBrackets, loadSavedBrackets } = useBrackets()
+  const { generateTournamentBrackets, loadSavedBrackets, deleteTournamentBrackets } = useBrackets()
   const { tournaments, fetchTournaments, loading: tournamentsLoading } = useTournaments()
   const { squads, fetchSquads } = useSquads()
   const { addToast } = useToast()
@@ -101,9 +100,8 @@ export default function BracketsPage() {
   // Global cleanup: Ensure no modals are blocking navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Escape key closes all modals
+      // Escape key closes explain modal; generation modal manages its own close policy.
       if (e.key === 'Escape') {
-        setIsModalOpen(false);
         setIsExplainModalOpen(false);
       }
     };
@@ -274,7 +272,7 @@ export default function BracketsPage() {
       selectedSquad.id,
       8, // Default bracket size
       true, // Save to database
-      true  // Force regenerate to see debug output
+      true // Force regenerate to see debug output
     )
       .then((result) => {
         // Success - toast will be shown by modal
@@ -346,6 +344,23 @@ export default function BracketsPage() {
     startBracketGeneration()
   }, [startBracketGeneration])
 
+  const handleDeleteAllBrackets = useCallback(async () => {
+    if (!selectedTournament || !selectedSquad) return
+
+    const confirmed = window.confirm('Delete all saved brackets for this tournament/squad? This cannot be undone.')
+    if (!confirmed) return
+
+    try {
+      await deleteTournamentBrackets(selectedTournament.id, selectedSquad.id)
+      setLoadedBrackets(null)
+      setActiveTab('all')
+      setSelectedBracketIndex(0)
+      lastLoadedRef.current = null
+    } catch {
+      // Toast is handled in the hook
+    }
+  }, [selectedTournament, selectedSquad, deleteTournamentBrackets])
+
   const bracketGroups = useMemo(() => {
     return getBracketGroups(loadedBrackets as BracketResponse | null).filter(group => group.brackets?.length)
   }, [loadedBrackets])
@@ -391,7 +406,6 @@ export default function BracketsPage() {
   const handleClearFilters = useCallback(() => {
     setSearchTerm('')
     setSelectedStatus('all')
-    setSelectedSeedRange('all')
   }, [])
 
   const searchResultCount = useMemo(() => {
@@ -411,11 +425,11 @@ export default function BracketsPage() {
     let count = 0
     if (searchTerm) count++
     if (selectedStatus !== 'all') count++
-    if (selectedSeedRange !== 'all') count++
     return count
-  }, [searchTerm, selectedStatus, selectedSeedRange])
+  }, [searchTerm, selectedStatus])
 
   const handleCloseExplainModal = useCallback(() => setIsExplainModalOpen(false), [])
+  const isDev = process.env.NODE_ENV === 'development'
 
   // Memoize the Generate Brackets button to prevent infinite re-renders
   const generateBracketsButton = useMemo(() => {
@@ -425,12 +439,17 @@ export default function BracketsPage() {
         <button onClick={() => setIsExplainModalOpen(true)} className={styles.explainBtn}>
           Explain Brackets
         </button>
+        {isDev && (
+          <button onClick={handleDeleteAllBrackets} className={styles.devButton}>
+            DEV: Delete All Brackets
+          </button>
+        )}
         <button onClick={handleGenerateBrackets} className={styles.generateBtn}>
           Generate Brackets
         </button>
       </div>
     )
-  }, [selectedTournament, handleGenerateBrackets, setIsExplainModalOpen])
+  }, [selectedTournament, handleGenerateBrackets, setIsExplainModalOpen, isDev, handleDeleteAllBrackets])
 
   // Set page header with actions
   usePageHeader({
@@ -522,8 +541,6 @@ export default function BracketsPage() {
                 onSearchChange={setSearchTerm}
                 selectedStatus={selectedStatus}
                 onStatusChange={setSelectedStatus}
-                selectedSeedRange={selectedSeedRange}
-                onSeedRangeChange={setSelectedSeedRange}
                 onClearFilters={handleClearFilters}
                 activeFiltersCount={activeFiltersCount}
                 searchResultCount={searchResultCount}

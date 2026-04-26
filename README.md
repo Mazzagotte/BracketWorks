@@ -36,7 +36,7 @@ A comprehensive web application for managing tournament brackets, tracking playe
 - **Frontend**: Next.js 14 (TypeScript), Progressive Web App, Responsive Design
 - **Backend**: FastAPI (Python 3.13), SQLAlchemy ORM, Alembic Migrations
 - **Database**: PostgreSQL with optimized indexing
-- **Deployment**: Docker containers, Render.com production hosting
+- **Deployment**: Docker containers for local and self-hosted environments
 - **Development**: Hot reload, comprehensive testing suite
 
 ## Quick Start
@@ -186,20 +186,14 @@ alembic downgrade -1
 
 ## Deployment
 
-### Production Deployment (Render.com)
-The application is configured for deployment on Render.com with:
-- Automatic deployments from main branch
-- Environment variable management
-- PostgreSQL database hosting
-- CDN integration for static assets
+The current setup is focused on local Docker and local PostgreSQL development.
 
-### Docker Production
 ```bash
-# Build production images
-docker-compose -f docker-compose.prod.yml build
+# Start local services
+docker compose up -d --build db backend
 
-# Deploy with production configuration
-docker-compose -f docker-compose.prod.yml up -d
+# Stop local services
+docker compose down
 ```
 
 ## Known Issues & Platform Notes

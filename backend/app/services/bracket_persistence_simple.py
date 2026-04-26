@@ -54,6 +54,14 @@ def get_bracket_groups(bracket_data: Dict[str, Any]) -> List[Dict[str, Any]]:
 
 def ensure_legacy_bracket_views(bracket_data: Dict[str, Any]) -> Dict[str, Any]:
     groups = get_bracket_groups(bracket_data)
+    # Migrate legacy 'reverse' scoring_mode to 'reverse_scratch' so old snapshots
+    # are treated correctly by the hydration logic.
+    for group in groups:
+        if str(group.get('scoring_mode') or '').lower() == 'reverse':
+            group['scoring_mode'] = 'reverse_scratch'
+            if str(group.get('key') or '').lower() == 'reverse':
+                group['key'] = 'reverse_scratch'
+                group['name'] = group.get('name', 'Reverse Scratch')
     bracket_data['bracket_groups'] = groups
     bracket_data['scratch_brackets'] = next(
         (group.get('brackets', []) for group in groups if group.get('key') == 'scratch'),
@@ -405,7 +413,7 @@ def hydrate_brackets_with_scores(
                     name_to_id[m['playerB']] = m['playerB_id']
 
     # Helper function to update match scores
-    def update_match_scores(match: Dict[str, Any], round_num: int, use_scratch: bool):
+    def update_match_scores(match: Dict[str, Any], round_num: int, use_scratch: bool, use_reverse: bool = False):
         """Update scores for a single match based on round number and bracket type"""
         player_a_id = match.get('playerA_id')
         player_b_id = match.get('playerB_id')
@@ -423,8 +431,10 @@ def hydrate_brackets_with_scores(
         if not player_a_id or not player_b_id:
             return
         
-        # Determine which game to use based on round (1-indexed in display, 0-indexed in code)
-        game_key = f'game{round_num + 1}'
+        # Determine which game to use based on round.
+        # Normal brackets: Round 1 = Game 1, Round 2 = Game 2, Round 3 = Game 3.
+        # Reverse brackets: Round 1 = Game 3, Round 2 = Game 2, Round 3 = Game 1.
+        game_key = f'game{3 - round_num}' if use_reverse else f'game{round_num + 1}'
         
         # Choose the appropriate scores map based on bracket type
         scores_map = scores_map_scratch if use_scratch else scores_map_total
@@ -492,12 +502,14 @@ def hydrate_brackets_with_scores(
     
     matches_updated = 0
     
-    # Update scratch brackets - use scratch scores (no handicap)
+    # Update brackets - use_scratch selects scratch vs total scores; use_reverse inverts round→game mapping
     for group, _, bracket in iter_group_brackets(bracket_data):
-        use_scratch = str(group.get('scoring_mode') or '').lower() == 'scratch'
+        scoring_mode = str(group.get('scoring_mode') or '').lower()
+        use_scratch = scoring_mode in ('scratch', 'reverse_scratch', 'reverse')
+        use_reverse = scoring_mode in ('reverse_scratch', 'reverse_handicap', 'reverse')
         for round_num, round_data in enumerate(bracket.get('rounds', [])):
             for match in round_data.get('matches', []):
-                update_match_scores(match, round_num, use_scratch=use_scratch)
+                update_match_scores(match, round_num, use_scratch=use_scratch, use_reverse=use_reverse)
                 matches_updated += 1
     
     logger.info(f"  Hydrated {matches_updated} matches with fresh scores")
@@ -507,7 +519,7 @@ def hydrate_brackets_with_scores(
     # TBD with no player names/IDs.  We reconstruct bracket progression here:
     # for each completed match, advance the winner into the next round's slot,
     # then re-run score hydration on that slot so the championship gets scored.
-    def propagate_and_rehydrate(bracket: Dict, use_scratch: bool):
+    def propagate_and_rehydrate(bracket: Dict, use_scratch: bool, use_reverse: bool = False):
         rounds = bracket.get('rounds', [])
         for round_idx in range(len(rounds) - 1):
             current_matches = rounds[round_idx].get('matches', [])
@@ -544,10 +556,15 @@ def hydrate_brackets_with_scores(
             if changed:
                 # Re-hydrate next round now that player IDs are populated
                 for match in next_matches:
-                    update_match_scores(match, round_idx + 1, use_scratch)
+                    update_match_scores(match, round_idx + 1, use_scratch, use_reverse=use_reverse)
 
     for group, _, bracket in iter_group_brackets(bracket_data):
-        propagate_and_rehydrate(bracket, use_scratch=str(group.get('scoring_mode') or '').lower() == 'scratch')
+        scoring_mode = str(group.get('scoring_mode') or '').lower()
+        propagate_and_rehydrate(
+            bracket,
+            use_scratch=scoring_mode in ('scratch', 'reverse_scratch', 'reverse'),
+            use_reverse=scoring_mode in ('reverse_scratch', 'reverse_handicap', 'reverse'),
+        )
 
     # RESOLVE TIES FROM PREVIOUS ROUNDS
     # This must happen AFTER all matches are updated with fresh scores.

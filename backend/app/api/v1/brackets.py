@@ -6,10 +6,11 @@ from pydantic import BaseModel
 import logging
 
 from ..deps import get_db
-from ...core import models, schemas
+from ...core import models
+from ...core.config import settings
 from ...core.cache import bracket_cache
 from ...core.validators import BracketValidation
-from ...core.errors import handle_error, NotFoundError, ValidationError
+from ...core.errors import handle_error, ValidationError
 from ...services.brackets_simple import (
     generate_bracket_preview, 
     generate_tournament_brackets, 
@@ -21,7 +22,6 @@ from ...services.bracket_persistence_simple import (
     load_brackets_simple, 
     delete_brackets_simple,
     brackets_exist_simple,
-    update_match_score_simple
 )
 
 logger = logging.getLogger(__name__)
@@ -98,13 +98,24 @@ def generate_tournament_brackets_endpoint(
     tournament_id: int,
     squad_id: Optional[int] = None,
     force_regenerate: bool = Query(False, description="Force regeneration even if brackets exist"),
+    use_experimental: Optional[bool] = Query(None, description="Override experimental optimizer feature flag"),
+    experimental_attempts: Optional[int] = Query(None, ge=1, le=500, description="Experimental optimizer seed attempts"),
+    seed: Optional[int] = Query(None, description="Optional deterministic seed for bracket generation"),
     db: Session = Depends(get_db)
 ):
     """Generate multiple brackets for a tournament based on player entries and scores"""
     try:
         # Validate tournament_id
         tournament_id = BracketValidation.validate_tournament_id(tournament_id)
+
+        experimental_enabled = settings.BRACKETS_EXPERIMENTAL_ENABLED if use_experimental is None else use_experimental
+        configured_attempts = settings.BRACKETS_EXPERIMENTAL_ATTEMPTS
+        selected_attempts = experimental_attempts if experimental_attempts is not None else configured_attempts
         
+        # Experimental runs should regenerate so we can compare outputs.
+        if use_experimental is True:
+            force_regenerate = True
+
         # Check database for existing brackets (skip cache to always get fresh scores)
         cache_key = f"brackets_{tournament_id}_{squad_id}"
         if not force_regenerate:
@@ -157,7 +168,33 @@ def generate_tournament_brackets_endpoint(
         bowlers = bowlers_query.all()
         
         if not bowlers:
-            raise HTTPException(status_code=404, detail="No players found for this tournament/squad")
+            logger.info(
+                "No players found for tournament %s squad %s; returning empty bracket result",
+                tournament_id,
+                squad_id,
+            )
+            empty_result = generate_tournament_brackets(
+                players=[],
+                bracket_size=bracket_settings.bracket_size,
+                db=db,
+                tournament_id=tournament_id,
+                bracket_programs=bracket_settings.bracket_programs,
+                use_history=True,
+                seed=seed,
+                use_experimental_optimizer=experimental_enabled,
+                experimental_attempts=selected_attempts,
+            )
+            result = {
+                "tournament_id": tournament_id,
+                "tournament_name": tournament.name,
+                "bracket_size": bracket_settings.bracket_size,
+                "squad_id": squad_id,
+                "generated_new": False,
+                "no_players": True,
+                **empty_result,
+            }
+            bracket_cache.set(cache_key, result)
+            return result
         
         # Get scores for these bowlers — single query, build lookup map
         players_data = []
@@ -218,7 +255,9 @@ def generate_tournament_brackets_endpoint(
             tournament_id=tournament_id,
             bracket_programs=bracket_settings.bracket_programs,
             use_history=True,  # Enable advanced algorithm with history
-            seed=None  # Can be configurable later
+            seed=seed,
+            use_experimental_optimizer=experimental_enabled,
+            experimental_attempts=selected_attempts,
         )
         
         # Validate bracket structure before saving
@@ -251,6 +290,9 @@ def generate_tournament_brackets_endpoint(
             "bracket_size": bracket_settings.bracket_size,
             "squad_id": squad_id,
             "generated_new": True,
+            "experimental_enabled": experimental_enabled,
+            "experimental_attempts": selected_attempts,
+            "seed": seed,
             **brackets_result,
             "validation_result": validation_result  # Include validation info in response
         }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { Tournament, Squad, Player, ScoreData, PendingScoreSave } from '../lib/types'
 import { SortConfig, SortableScoreColumn } from './types'
 import { SortableHeader } from './components/SortableHeader'
@@ -21,6 +21,7 @@ import { useAutoSave } from '../components/DataManagement'
 import NoTournamentState from '../components/NoTournamentState'
 import { logger } from '../lib/logger';
 import { Button } from '../components/UI'
+import { handleTableArrowNavigation } from '../lib/tableKeyboard'
 
 
 
@@ -163,12 +164,20 @@ export default function ScoresPage() {
   // Pagination for large player lists (use sorted players)
   const paginationHook = usePagination({
     items: sortedPlayers,
-    itemsPerPage: 50
+    itemsPerPage: 50,
+    resetOnItemsChange: false
   })
+
+  // Stable reference for auto-save — only changes when scores actually change
+  const autoSaveData = useMemo(
+    () => ({ scores: players.map(player => player.scores).filter(Boolean) }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [players]
+  )
 
   // Auto-save scores backup to localStorage
   useAutoSave({
-    data: { scores: players.map(player => player.scores).filter(Boolean) },
+    data: autoSaveData,
     saveFunction: async (data) => {
       if (typeof window !== 'undefined') {
         localStorage.setItem('scores-backup', JSON.stringify(data))
@@ -249,17 +258,70 @@ export default function ScoresPage() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // DEV ONLY: randomize game scores for all loaded players
+  // Stable ref so handleRandomizeScores never needs players in its dep array
+  const playersRef = useRef(players)
+  useEffect(() => { playersRef.current = players }, [players])
+
+  // Stable ref for selectedSquad so save closures never go stale
+  const selectedSquadRef = useRef(selectedSquad)
+  useEffect(() => { selectedSquadRef.current = selectedSquad }, [selectedSquad])
+
+  // DEV ONLY: build all random scores in memory, then do ONE setPlayers + ONE bulk API call
   const handleRandomizeScores = useCallback(async () => {
-    for (const player of players) {
-      const g1 = Math.floor(Math.random() * 121) + 130 // 130–250
-      const g2 = Math.floor(Math.random() * 121) + 130
-      const g3 = Math.floor(Math.random() * 121) + 130
-      await updateScore(player.id, 'game1_scratch', g1)
-      await updateScore(player.id, 'game2_scratch', g2)
-      await updateScore(player.id, 'game3_scratch', g3)
+    const token = localStorage.getItem('token')
+    const tournamentId = localStorage.getItem('lastTournamentId')
+    const currentPlayers = playersRef.current
+
+    // Build random scores for every player
+    const scoreMap: Record<number, { g1: number; g2: number; g3: number }> = {}
+    currentPlayers.forEach(player => {
+      scoreMap[player.id] = {
+        g1: Math.floor(Math.random() * 121) + 130,
+        g2: Math.floor(Math.random() * 121) + 130,
+        g3: Math.floor(Math.random() * 121) + 130,
+      }
+    })
+
+    // Single state update — no cascade
+    setPlayers(prev => prev.map(player => {
+      const s = scoreMap[player.id]
+      if (!s) return player
+      return {
+        ...player,
+        scores: {
+          game1_scratch: s.g1,
+          game1_with_handicap: s.g1 + (player.handicap || 0),
+          game2_scratch: s.g2,
+          game2_with_handicap: s.g2 + (player.handicap || 0),
+          game3_scratch: s.g3,
+          game3_with_handicap: s.g3 + (player.handicap || 0),
+        }
+      }
+    }))
+
+    // Persist to backend — fire-and-forget each save without touching React state
+    const squad = selectedSquadRef.current
+    if (token && tournamentId && squad) {
+      await Promise.allSettled(
+        currentPlayers.map(player => {
+          const s = scoreMap[player.id]
+          if (!s) return Promise.resolve()
+          return fetch(API('/api/v1/scores/'), {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              player_id: player.id,
+              tournament_id: parseInt(tournamentId),
+              squad_id: squad.id,
+              game1_scratch: s.g1,
+              game2_scratch: s.g2,
+              game3_scratch: s.g3,
+            }),
+          })
+        })
+      )
     }
-  }, [players]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Header configuration
   const headerActions = useMemo(() => (
@@ -345,8 +407,9 @@ export default function ScoresPage() {
       })
       
       // Transform API player data to match the local score-entry structure
-      const transformedData = (data || []).map((playerRecord: Player) => {
-        const nameParts = (playerRecord.fullName || '').split(' ')
+      const transformedData = (data || []).map((playerRecord: Player & { full_name?: string; handicap_pins?: number }) => {
+        const fullName = playerRecord.fullName || playerRecord.full_name || ''
+        const nameParts = fullName.split(' ')
         const existingScores = scoresMap.get(playerRecord.id) || {
           game1_scratch: undefined,
           game1_with_handicap: undefined,
@@ -360,7 +423,7 @@ export default function ScoresPage() {
           id: playerRecord.id,
           firstName: nameParts[0] || '',
           lastName: nameParts.slice(1).join(' ') || '',
-          handicap: playerRecord.handicapPins || 0,
+          handicap: playerRecord.handicapPins || playerRecord.handicap_pins || 0,
           average: playerRecord.average || 0,
           lane: playerRecord.lane || null,
           scores: existingScores
@@ -431,11 +494,22 @@ export default function ScoresPage() {
           if (tournamentData) setTournament(tournamentData)
 
           // Determine which squad to use
-          let squadToUse = null
+          let squadToUse: Squad | null = null
           if (selectedSquadData && selectedSquadData.squad_id) {
-            squadToUse = squadsData.find((s: Squad) => s.id === selectedSquadData.squad_id)
-            setSelectedSquad(squadToUse || null)
+            squadToUse = squadsData.find((s: Squad) => s.id === selectedSquadData.squad_id) || null
           }
+          // Fallback to localStorage selected_squad_id
+          if (!squadToUse) {
+            const storedSquadId = localStorage.getItem('selected_squad_id')
+            if (storedSquadId) {
+              squadToUse = squadsData.find((s: Squad) => s.id === parseInt(storedSquadId)) || null
+            }
+          }
+          // Final fallback: use the first available squad
+          if (!squadToUse && squadsData.length > 0) {
+            squadToUse = squadsData[0]
+          }
+          setSelectedSquad(squadToUse)
 
           // Fetch players with scores for the selected squad (or all if no squad)
           fetchPlayersWithScores(lastTournamentId, squadToUse?.id || null, token)
@@ -570,7 +644,7 @@ export default function ScoresPage() {
         const token = localStorage.getItem('token')
         const tournamentId = localStorage.getItem('lastTournamentId')
         
-        if (!token || !tournamentId || !selectedSquad) {
+        if (!token || !tournamentId || !selectedSquadRef.current) {
           setSavingStatus(prev => ({ ...prev, [saveKey]: 'error' }))
           return
         }
@@ -594,7 +668,7 @@ export default function ScoresPage() {
         const scoreData = {
           player_id: playerId,
           tournament_id: parseInt(tournamentId),
-          squad_id: selectedSquad.id,
+          squad_id: selectedSquadRef.current.id,
           game1_scratch: updatedScores.game1_scratch,
           game2_scratch: updatedScores.game2_scratch,
           game3_scratch: updatedScores.game3_scratch
@@ -973,7 +1047,7 @@ export default function ScoresPage() {
           {/* Scores Table */}
           {!isLoading && players.length > 0 && (
             <div className="entries-container">
-                <table className="entries-table" aria-label="Player Scores">
+                <table className="entries-table" aria-label="Player Scores" onKeyDownCapture={handleTableArrowNavigation}>
 
             <thead>
               {selectedSquad && (
@@ -1064,8 +1138,11 @@ export default function ScoresPage() {
                         min={0}
                         max={300}
                         placeholder="—"
+                        data-player={player.id}
+                        data-field="game2_scratch"
                         value={player.scores?.game2_scratch ?? ''}
                         onChange={changeEvent => updateScore(player.id, 'game2_scratch', changeEvent.target.value ? Number(changeEvent.target.value) : undefined)}
+                        onKeyDown={keyEvent => handleKeyDown(keyEvent, player.id, 'game2_scratch')}
                         className={getScoreInputClass(player.scores?.game2_scratch)}
                         onFocus={(changeEvent) => changeEvent.target.select()}
                         title={!validateScore(player.scores?.game2_scratch).isValid ? validateScore(player.scores?.game2_scratch).message : ''}
@@ -1087,8 +1164,11 @@ export default function ScoresPage() {
                         min={0}
                         max={300}
                         placeholder="—"
+                        data-player={player.id}
+                        data-field="game3_scratch"
                         value={player.scores?.game3_scratch ?? ''}
                         onChange={changeEvent => updateScore(player.id, 'game3_scratch', changeEvent.target.value ? Number(changeEvent.target.value) : undefined)}
+                        onKeyDown={keyEvent => handleKeyDown(keyEvent, player.id, 'game3_scratch')}
                         className={getScoreInputClass(player.scores?.game3_scratch)}
                         onFocus={(changeEvent) => changeEvent.target.select()}
                         title={!validateScore(player.scores?.game3_scratch).isValid ? validateScore(player.scores?.game3_scratch).message : ''}

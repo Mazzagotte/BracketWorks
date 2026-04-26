@@ -290,6 +290,7 @@ function EditTournamentModal({ open, onClose, tournament, onSave, isMobile, isCr
                   }}
                   variant="secondary"
                   size="sm"
+                  disableSuccessState
                 >
                   Add Time
                 </EnhancedButton>
@@ -362,7 +363,6 @@ export default function TournamentDashboard() {
   const lastPrizeValidationKeyRef = useRef<string>('');
   // Always holds the latest bracketSettings so async callbacks aren't stale
   const bracketSettingsRef = useRef<BracketSettings>(bracketSettings);
-  const [isClient, setIsClient] = useState(false);
   
   // Mobile detection state
   const [isMobile, setIsMobile] = useState(false);
@@ -398,7 +398,6 @@ export default function TournamentDashboard() {
   // Track when component is mounted to prevent premature auto-saves
   useEffect(() => {
     isMountedRef.current = true;
-    setIsClient(true);
     return () => {
       isMountedRef.current = false;
     };
@@ -683,8 +682,46 @@ export default function TournamentDashboard() {
       }
     }
 
-    updateBracketProgram(programIndex, { enabled });
+    updateBracketSettings(previous => {
+      const normalizedPrograms = normalizeBracketPrograms(previous.bracket_programs, previous.default_entry_fee)
+      const nextPrograms = normalizedPrograms.map((program, index) =>
+        index === programIndex
+          ? { ...program, enabled, ...(enabled ? {} : { allow_byes: false }) }
+          : program
+      )
+
+      const nextAllowByes = nextPrograms.some(program => {
+        const isAlwaysVisible = program.key === 'handicap' || program.key === 'scratch'
+        return Boolean(program.allow_byes) && (isAlwaysVisible || Boolean(program.enabled))
+      })
+
+      return {
+        ...previous,
+        bracket_programs: nextPrograms,
+        allow_byes: nextAllowByes,
+      }
+    }, 'immediate')
   };
+
+  const handleByeProgramToggle = (programKey: string, allowByes: boolean) => {
+    updateBracketSettings(previous => {
+      const normalizedPrograms = normalizeBracketPrograms(previous.bracket_programs, previous.default_entry_fee)
+      const nextPrograms = normalizedPrograms.map(program =>
+        program.key === programKey ? { ...program, allow_byes: allowByes } : program
+      )
+
+      const nextAllowByes = nextPrograms.some(program => {
+        const isAlwaysVisible = program.key === 'handicap' || program.key === 'scratch'
+        return Boolean(program.allow_byes) && (isAlwaysVisible || Boolean(program.enabled))
+      })
+
+      return {
+        ...previous,
+        bracket_programs: nextPrograms,
+        allow_byes: nextAllowByes,
+      }
+    }, 'immediate')
+  }
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [createMode, setCreateMode] = useState(false);
@@ -877,6 +914,20 @@ export default function TournamentDashboard() {
       
       setAllTournaments(allTournaments.filter(t => t.id !== id));
       setDeleteConfirm(null);
+
+      if (tournament?.id === id) {
+        setTournament(null);
+        setSquads([]);
+        setSelectedSquadId(null);
+        setBracketSettings(createDefaultBracketSettings());
+        localStorage.removeItem('lastTournamentId');
+        localStorage.removeItem('activeTournamentName');
+        localStorage.removeItem('selected_squad_id');
+        localStorage.removeItem('activeSquadLabel');
+        window.dispatchEvent(new Event('tournament-changed'));
+        window.dispatchEvent(new Event('squad-changed'));
+      }
+
       addToast({
         type: 'success',
         message: `Tournament "${deletedTournament?.name || id}" deleted successfully!`,
@@ -903,6 +954,32 @@ export default function TournamentDashboard() {
       });
       return;
     }
+
+    const normalizeSquadTimes = (squadTimes?: Record<string, string[]>) =>
+      Object.fromEntries(
+        Object.entries(squadTimes || {})
+          .map(([date, times]) => [date, (times || []).filter(Boolean)] as [string, string[]])
+          .filter(([, times]) => times.length > 0)
+          .sort(([left], [right]) => left.localeCompare(right))
+      );
+
+    const isOnlySquadTimesUpdate = !!tournament && !createMode && (() => {
+      const original = {
+        name: tournament.name || '',
+        location: tournament.location || '',
+        start_date: tournament.start_date || '',
+        end_date: tournament.end_date || '',
+      };
+      const updated = {
+        name: tournamentFormData.name || '',
+        location: tournamentFormData.location || '',
+        start_date: tournamentFormData.start_date || '',
+        end_date: tournamentFormData.end_date || '',
+      };
+
+      return JSON.stringify(original) === JSON.stringify(updated)
+        && JSON.stringify(normalizeSquadTimes(tournament.squad_times)) !== JSON.stringify(normalizeSquadTimes(tournamentFormData.squad_times));
+    })();
 
     try {
       let savedTournament = tournament;
@@ -946,11 +1023,13 @@ export default function TournamentDashboard() {
         if (res.ok) {
           savedTournament = await res.json();
           setTournament(savedTournament);
-          addToast({
-            type: 'success',
-            message: `Tournament "${tournamentFormData.name}" updated successfully!`,
-            duration: 4000
-          });
+          if (!isOnlySquadTimesUpdate) {
+            addToast({
+              type: 'success',
+              message: `Tournament "${tournamentFormData.name}" updated successfully!`,
+              duration: 4000
+            });
+          }
         } else {
           const errorData = await res.json().catch(() => null);
           throw new Error(errorData?.detail || `Failed to update tournament: ${res.status}`);
@@ -1052,6 +1131,14 @@ export default function TournamentDashboard() {
       <button className="ds-btn ds-btn-primary ds-btn-md" onClick={() => setLoadModalOpen(true)}>
         Load Tournament
       </button>
+      {tournament && (
+        <button
+          className={`ds-btn ds-btn-destructive ds-btn-md ${mobileStyles.headerDeleteBtn}`}
+          onClick={() => setDeleteConfirm({ id: tournament.id, name: tournament.name })}
+        >
+          Delete Tournament
+        </button>
+      )}
       {tournament && (
         <button
           className="ds-btn ds-btn-destructive ds-btn-md"
@@ -1174,45 +1261,9 @@ export default function TournamentDashboard() {
             
             {/* Bracket Settings Card */}
             {tournament && (
-              <div className={mobileStyles.bracketSettingsCard}>
+              <div className={`${mobileStyles.bracketSettingsCard} ${mobileStyles.mainBracketSettingsCard}`}>
                 <div className={mobileStyles.settingsHeader}>
                   <h2 className={mobileStyles.settingsTitle}>Bracket Settings</h2>
-                  {/* Auto-save status indicator - only render on client to avoid hydration issues */}
-                  {isClient && (
-                    <div className={mobileStyles.saveStatus}>
-                      {saveStatus === 'saved' && lastSavedTime && (() => {
-                        const now = Date.now()
-                        const timeSince = now - lastSavedTime.getTime()
-                        const timeText = timeSince < 5000 ? 'just now' : 'at ' + lastSavedTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                        return (
-                          <div className={mobileStyles.statusSaved}>
-                            <span className={mobileStyles.statusIcon}></span>
-                            <span className={mobileStyles.statusText}>
-                              Saved {timeText}
-                            </span>
-                          </div>
-                        )
-                      })()}
-                      {saveStatus === 'saving' && (
-                        <div className={mobileStyles.statusSaving}>
-                          <span className={mobileStyles.statusSpinner}></span>
-                          <span className={mobileStyles.statusText}>Saving...</span>
-                        </div>
-                      )}
-                      {saveStatus === 'unsaved' && (
-                        <div className={mobileStyles.statusUnsaved}>
-                          <span className={mobileStyles.statusIcon}></span>
-                          <span className={mobileStyles.statusText}>Unsaved changes</span>
-                        </div>
-                      )}
-                      {saveStatus === 'error' && (
-                        <div className={mobileStyles.statusError}>
-                          <span className={mobileStyles.statusIcon}></span>
-                          <span className={mobileStyles.statusText}>Error saving</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
                 </div>
                 
                 <div className={mobileStyles.settingsContent}>
@@ -1403,38 +1454,61 @@ export default function TournamentDashboard() {
                     </div>
                   </div>
 
-                  {/* BYE Setting */}
-                  <div className={mobileStyles.settingsSection}>
-                    <div className={mobileStyles.sectionHeader}>
-                      <h3 className={mobileStyles.sectionTitle}>Other</h3>
-                    </div>
-                    <label className={mobileStyles.checkboxLabel}>
-                      <input
-                        type="checkbox"
-                        className={mobileStyles.checkboxInput}
-                        checked={!!bracketSettings.allow_byes}
-                        onChange={e => {
-                          updateBracketSettings(previous => ({ ...previous, allow_byes: e.target.checked }), 'immediate');
-                        }}
-                      />
-                      Allow &ldquo;BYE&rdquo; <span className={mobileStyles.checkboxHint}>(One per Bracket)</span>
-                    </label>
+                </div>
+              </div>
+            )}
+
+            {tournament && (
+              <div className={`${mobileStyles.bracketSettingsCard} ${mobileStyles.optionalBracketsCard}`}>
+                <div className={mobileStyles.settingsHeader}>
+                  <h2 className={mobileStyles.settingsTitle}>Bye Settings</h2>
+                </div>
+
+                <div className={mobileStyles.settingsContent}>
+                  <div className={mobileStyles.programList}>
+                    {(() => {
+                      const visibleForByes = normalizeBracketPrograms(bracketSettings.bracket_programs, bracketSettings.default_entry_fee)
+                        .filter(program => program.key === 'handicap' || program.key === 'scratch' || Boolean(program.enabled))
+                      const orderedVisibleForByes = [...visibleForByes].sort((left, right) =>
+                        left.name.localeCompare(right.name, undefined, { sensitivity: 'base' })
+                      )
+                      const renderCard = (program: typeof visibleForByes[number]) => (
+                        <div key={`bye-${program.key}`} className={mobileStyles.programCard}>
+                          <label className={mobileStyles.checkboxLabel}>
+                            <input
+                              type="checkbox"
+                              className={mobileStyles.checkboxInput}
+                              checked={Boolean(program.allow_byes ?? bracketSettings.allow_byes ?? false)}
+                              onChange={event => {
+                                handleByeProgramToggle(program.key, event.target.checked)
+                              }}
+                            />
+                            <span>{program.name}</span>
+                          </label>
+                        </div>
+                      )
+                      return orderedVisibleForByes.map(renderCard)
+                    })()}
                   </div>
                 </div>
               </div>
             )}
 
             {tournament && (
-              <div className={mobileStyles.bracketSettingsCard}>
+              <div className={`${mobileStyles.bracketSettingsCard} ${mobileStyles.optionalBracketsCard}`}>
                 <div className={mobileStyles.settingsHeader}>
                   <h2 className={mobileStyles.settingsTitle}>Optional Brackets</h2>
                 </div>
 
                 <div className={mobileStyles.settingsContent}>
                   <div className={mobileStyles.programList}>
-                    {normalizeBracketPrograms(bracketSettings.bracket_programs, bracketSettings.default_entry_fee)
-                      .filter(program => program.key !== 'handicap' && program.key !== 'scratch')
-                      .map(program => (
+                    {(() => {
+                      const optional = normalizeBracketPrograms(bracketSettings.bracket_programs, bracketSettings.default_entry_fee)
+                        .filter(program => program.key !== 'handicap' && program.key !== 'scratch' && program.key !== 'reverse')
+                      const orderedOptional = [...optional].sort((left, right) =>
+                        left.name.localeCompare(right.name, undefined, { sensitivity: 'base' })
+                      )
+                      const renderCard = (program: typeof optional[number]) => (
                         <div key={program.key} className={mobileStyles.programCard}>
                           <label className={mobileStyles.checkboxLabel}>
                             <input
@@ -1445,12 +1519,12 @@ export default function TournamentDashboard() {
                                 void handleOptionalBracketToggle(program.key, event.target.checked)
                               }}
                             />
-                            <span>
-                              {program.name}
-                            </span>
+                            <span>{program.name}</span>
                           </label>
                         </div>
-                      ))}
+                      )
+                      return orderedOptional.map(renderCard)
+                    })()}
                   </div>
                 </div>
               </div>
@@ -1458,18 +1532,9 @@ export default function TournamentDashboard() {
 
             {/* Squad Selection Card */}
             {squads.length > 0 && (
-              <div className={mobileStyles.squadSelectionCard}>
+              <div className={`${mobileStyles.squadSelectionCard} ${mobileStyles.squadSelectionCompactCard}`}>
                 <div className={mobileStyles.squadHeader}>
                   <h2 className={mobileStyles.squadTitle}>Squad Selection</h2>
-                  <div className={mobileStyles.squadCounter}>
-                    {squads.length} available
-                  </div>
-                </div>
-                
-                <div className={mobileStyles.squadInfo}>
-                  <p className={mobileStyles.squadDescription}>
-                    Choose your preferred time slot for the tournament
-                  </p>
                 </div>
                 
                 <div className={mobileStyles.squadGrid}>

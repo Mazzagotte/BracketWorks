@@ -75,6 +75,8 @@ export interface MatchScoreUpdate {
   score_b: number
 }
 
+type BracketGenerationMode = 'auto' | 'standard' | 'experimental'
+
 // Hook for bracket operations
 export function useBrackets() {
   const [preview, setPreview] = useState<BracketPreview | null>(null)
@@ -109,26 +111,49 @@ export function useBrackets() {
     squadId?: number,
     bracketSize: number = 8,
     saveToDb: boolean = true,
-    forceRegenerate: boolean = false
+    forceRegenerate: boolean = false,
+    generationMode: BracketGenerationMode = 'experimental'
   ) => {
     setLoading(true)
     setError(null)
 
     try {
+      const envExperimentalRaw = process.env.NEXT_PUBLIC_BRACKETS_EXPERIMENTAL_ENABLED
+      const envExperimentalEnabled = envExperimentalRaw
+        ? envExperimentalRaw.toLowerCase() === 'true'
+        : true
+      const experimentalEnabled = generationMode === 'auto'
+        ? envExperimentalEnabled
+        : generationMode === 'experimental'
+      const effectiveForceRegenerate = forceRegenerate || experimentalEnabled
       const squadParam = squadId ? `&squad_id=${squadId}` : ''
-      const forceParam = forceRegenerate ? '&force_regenerate=true' : ''
-      const url = `/api/v1/brackets/generate-multiple?tournament_id=${tournamentId}${squadParam}${forceParam}`
+      const forceParam = effectiveForceRegenerate ? '&force_regenerate=true' : ''
+      const attemptsRaw = process.env.NEXT_PUBLIC_BRACKETS_EXPERIMENTAL_ATTEMPTS
+      const attempts = attemptsRaw && /^\d+$/.test(attemptsRaw) ? Number(attemptsRaw) : undefined
+
+      const experimentalParam = experimentalEnabled ? '&use_experimental=true' : ''
+      const attemptsParam = experimentalEnabled && attempts ? `&experimental_attempts=${attempts}` : ''
+
+      const url = `/api/v1/brackets/generate-multiple?tournament_id=${tournamentId}${squadParam}${forceParam}${experimentalParam}${attemptsParam}`
       const data = await apiClient.get<BracketPreview>(
         url,
-        !forceRegenerate  // useCache = false when forcing regeneration
+        !effectiveForceRegenerate  // useCache = false when forcing regeneration
       )
       setPreview(data)
 
-      addToast({
-        type: 'success',
-        message: 'Tournament brackets generated successfully!',
-        duration: 5000
-      })
+      if ((data as BracketPreview & { no_players?: boolean }).no_players) {
+        addToast({
+          type: 'warning',
+          message: 'No players found for the selected tournament/squad. Brackets were not generated.',
+          duration: 5000
+        })
+      } else {
+        addToast({
+          type: 'success',
+          message: 'Tournament brackets generated successfully!',
+          duration: 5000
+        })
+      }
 
       return data
     } catch (err) {
@@ -204,6 +229,36 @@ export function useBrackets() {
     }
   }, [])
 
+  const deleteTournamentBrackets = useCallback(async (tournamentId: number, squadId?: number) => {
+    setLoading(true)
+    setError(null)
+
+    try {
+      const squadParam = squadId ? `?squad_id=${squadId}` : ''
+      await apiClient.delete(`/api/v1/brackets/delete/${tournamentId}${squadParam}`)
+      setPreview(null)
+
+      addToast({
+        type: 'success',
+        message: 'Brackets deleted successfully',
+        duration: 4000
+      })
+
+      return true
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to delete brackets'
+      setError(errorMessage)
+      addToast({
+        type: 'error',
+        message: errorMessage,
+        duration: 5000
+      })
+      throw err
+    } finally {
+      setLoading(false)
+    }
+  }, [addToast])
+
   const clearPreview = useCallback(() => {
     setPreview(null)
     setError(null)
@@ -217,6 +272,7 @@ export function useBrackets() {
     generateTournamentBrackets,
     updateMatchScore,
     loadSavedBrackets,
+    deleteTournamentBrackets,
     clearPreview,
     setPreview
   }

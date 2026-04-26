@@ -46,17 +46,17 @@ def test_app_health(client):
     assert response.status_code == 200
 
 @pytest.mark.unit
-def test_brackets_list_endpoint(client):
-    """Test the brackets list endpoint"""
-    response = client.get("/api/v1/brackets")
+def test_brackets_preview_endpoint(client):
+    """Test the brackets preview endpoint"""
+    response = client.get("/api/v1/brackets/preview?size=8")
     assert response.status_code == 200
-    # Should return empty list initially
-    assert response.json() == []
+    data = response.json()
+    assert "rounds" in data
 
 @pytest.mark.unit
 def test_bracket_generation_service():
     """Test bracket generation logic directly"""
-    from app.services.brackets import generate_bracket_preview
+    from app.services.brackets_simple import generate_bracket_preview
     
     # Test valid bracket size
     preview = generate_bracket_preview(8)
@@ -91,20 +91,14 @@ def test_invalid_bracket_size():
 
 @pytest.mark.unit
 def test_bracket_preview_generation():
-    """Test bracket preview generation with different sizes"""
-    from app.services.brackets import generate_bracket_preview
+    """Test bracket preview generation"""
+    from app.services.brackets_simple import generate_bracket_preview
     
-    # Test 4-player bracket
-    preview_4 = generate_bracket_preview(4)
-    assert preview_4["size"] == 4
-    
-    # Test 8-player bracket  
+    # generate_bracket_preview only supports size=8
     preview_8 = generate_bracket_preview(8)
     assert preview_8["size"] == 8
-    
-    # Test 16-player bracket
-    preview_16 = generate_bracket_preview(16)
-    assert preview_16["size"] == 16
+    assert "rounds" in preview_8
+    assert len(preview_8["rounds"]) == 3  # 8 -> 4 -> 2 -> winner (3 rounds)
 
 @pytest.mark.unit
 def test_input_validation():
@@ -151,17 +145,17 @@ def test_cache_functionality():
 @pytest.mark.slow
 @pytest.mark.integration
 def test_large_bracket_generation():
-    """Test generation of large brackets"""
-    from app.services.brackets import generate_bracket_preview
+    """Test that generate_bracket_preview enforces its size constraint"""
+    from app.services.brackets_simple import generate_bracket_preview
+    import pytest as _pytest
     
-    # Test 64-player bracket (maximum size)
-    preview_64 = generate_bracket_preview(64)
-    assert preview_64["size"] == 64
-    assert len(preview_64["rounds"]) == 6  # 64 -> 32 -> 16 -> 8 -> 4 -> 2 -> 1
+    # Only size 8 is supported
+    preview_8 = generate_bracket_preview(8)
+    assert preview_8["size"] == 8
     
-    # First round should have 32 matches (64 players / 2)
-    first_round = preview_64["rounds"][0]
-    assert len(first_round["matches"]) == 32
+    # Other sizes raise ValueError
+    with _pytest.raises(ValueError):
+        generate_bracket_preview(64)
 
 @pytest.mark.unit
 def test_match_score_validation():

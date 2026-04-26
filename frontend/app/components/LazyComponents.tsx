@@ -13,15 +13,6 @@ export const BracketRenderer = dynamic(() => import('./BracketRenderer').then(mo
   ssr: false
 });
 
-export const SmartSuggestions = dynamic(() => import('./SmartSuggestions'), {
-  loading: () => (
-    <div className={styles.inlineLoading}>
-      Loading suggestions...
-    </div>
-  ),
-  ssr: false
-});
-
 export const MobileTable = dynamic(() => import('../../components/MobileTable').then(mod => ({ default: mod.MobileTable })), {
   loading: () => (
     <div className={styles.inlineLoading}>
@@ -42,16 +33,5 @@ export const BracketGenerationModal = dynamic(() => import('./BracketGenerationM
       <div className={styles.modalLoadingText}>Loading...</div>
     </div>
   ),
-  ssr: false
-});
-
-export const DataManagement = dynamic(() => import('./DataManagement').then(mod => ({
-  default: () => null // Export utility functions only
-})), {
-  ssr: false
-});
-
-export const HoverPreview = dynamic(() => import('./HoverPreview'), {
-  loading: () => null,
   ssr: false
 });
