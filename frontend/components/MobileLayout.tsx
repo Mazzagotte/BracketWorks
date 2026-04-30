@@ -95,7 +95,7 @@ export function MobileLayout({
       <style jsx>{`
         .mobile-layout {
           min-height: 100vh;
-          background: #f8f9fb;
+          background: var(--color-gray-50);
           position: relative;
         }
 
@@ -104,17 +104,17 @@ export function MobileLayout({
           top: 0;
           left: 0;
           right: 0;
-          background: rgba(255, 255, 255, 0.95);
+          background: var(--color-surface);
           backdrop-filter: blur(10px);
-          border-bottom: 1px solid rgba(229, 231, 235, 0.8);
+          border-bottom: 1px solid var(--color-border);
           z-index: 100;
           transition: all 0.2s ease;
         }
 
         .mobile-header.scrolled {
-          background: rgba(255, 255, 255, 0.98);
-          border-bottom-color: #e5e7eb;
-          box-shadow: 0 1px 8px rgba(0, 0, 0, 0.1);
+          background: var(--color-surface);
+          border-bottom-color: var(--color-gray-200);
+          box-shadow: 0 1px 8px var(--opacity-black-10);
         }
 
         .mobile-header-content {
@@ -142,8 +142,8 @@ export function MobileLayout({
           height: 40px;
           border-radius: 50%;
           border: none;
-          background: #f3f4f6;
-          color: #1a1f2e;
+          background: var(--color-gray-100);
+          color: var(--color-text-primary);
           font-size: 18px;
           font-weight: bold;
           cursor: pointer;
@@ -152,12 +152,12 @@ export function MobileLayout({
         }
 
         .mobile-back-button:hover {
-          background: #e5e7eb;
+          background: var(--color-gray-200);
           transform: translateX(-2px);
         }
 
         .mobile-back-button:active {
-          background: #d1d5db;
+          background: var(--color-gray-300);
           transform: translateX(0);
         }
 
@@ -169,7 +169,7 @@ export function MobileLayout({
         .mobile-title {
           font-size: 20px;
           font-weight: 700;
-          color: #1a1f2e;
+          color: var(--color-text-primary);
           margin: 0;
           line-height: 1.2;
           white-space: nowrap;
@@ -179,7 +179,7 @@ export function MobileLayout({
 
         .mobile-subtitle {
           font-size: 14px;
-          color: #6b7280;
+          color: var(--color-text-secondary);
           margin: 2px 0 0 0;
           line-height: 1.3;
           white-space: nowrap;
@@ -272,8 +272,8 @@ export function MobileContainer({
 
   const backgroundColor = {
     transparent: 'transparent',
-    white: '#ffffff',
-    gray: '#f8f9fb'
+    white: 'var(--color-white)',
+    gray: 'var(--color-gray-50)'
   }[background];
 
   return (
@@ -288,7 +288,7 @@ export function MobileContainer({
           padding: ${padding ? '16px' : '0'};
           background: ${backgroundColor};
           border-radius: ${rounded ? '12px' : '0'};
-          box-shadow: ${shadow ? '0 2px 8px rgba(0, 0, 0, 0.1)' : 'none'};
+          box-shadow: ${shadow ? '0 2px 8px var(--opacity-black-10)' : 'none'};
         }
 
         @media (max-width: 480px) {

@@ -9,10 +9,10 @@
 }
 
 .card {
-  background-color: #faf4e8;
-  border: 1px solid rgba(240, 120, 32, 0.2);
+  background-color: var(--color-brand-ivory-light);
+  border: 1px solid var(--color-border-light);
   border-radius: var(--radius-xl);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-soft);
   padding: 0;
   margin: 0;
   overflow: hidden;
@@ -21,11 +21,11 @@
 .cardTitle {
   margin: 0;
   padding: 14px 20px;
-  background: #f0e0c0;
-  border-bottom: 3px solid #f07820;
+  background: var(--color-brand-ivory);
+  border-bottom: 3px solid var(--color-brand-orange);
   font-size: 1rem;
   font-weight: 700;
-  color: #1a1a1a;
+  color: var(--color-brand-charcoal-deep);
 }
 
 .optionRow {
@@ -35,7 +35,7 @@
   column-gap: 16px;
   row-gap: 8px;
   padding: 0.8rem 20px;
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  border-top: 1px solid var(--color-border-soft);
 }
 
 .optionRow:first-of-type {
@@ -50,23 +50,23 @@
 .optionTitle {
   font-size: 0.95rem;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--color-brand-charcoal-deep);
   line-height: 1.25;
 }
 
 .optionHint {
   margin-top: 4px;
   font-size: 0.85rem;
-  color: rgba(26, 26, 26, 0.65);
+  color: var(--color-text-muted);
   line-height: 1.35;
 }
 
 .input {
   width: 100%;
   max-width: 360px;
-  border: 1px solid rgba(0, 0, 0, 0.16);
-  background: #ffffff;
-  color: #1a1a1a;
+  border: 1px solid var(--color-border-muted);
+  background: var(--color-surface);
+  color: var(--color-brand-charcoal-deep);
   border-radius: 10px;
   padding: 9px 12px;
   font-size: 0.9rem;
@@ -76,7 +76,7 @@
 .staticValue {
   font-size: 0.9rem;
   font-weight: 600;
-  color: #374151;
+  color: var(--color-gray-700);
 }
 
 .passwordFieldWrap {
@@ -92,9 +92,9 @@
 }
 
 .visibilityBtn {
-  border: 1px solid rgba(0, 0, 0, 0.2);
-  background: #f3f4f6;
-  color: #1f2937;
+  border: 1px solid var(--color-border-subtle);
+  background: var(--color-gray-100);
+  color: var(--color-secondary);
   border-radius: 8px;
   padding: 7px 10px;
   font-size: 0.8rem;
@@ -116,18 +116,18 @@
   height: 6px;
   flex: 1;
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.12);
+  background: var(--color-overlay-soft);
 }
 
 .meterOn {
-  background: linear-gradient(90deg, #f47c20 0%, #d9651a 100%);
+  background: var(--gradient-brand);
 }
 
 .meterLabel {
   margin-left: 4px;
   font-size: 0.75rem;
   font-weight: 700;
-  color: #6b7280;
+  color: var(--color-text-secondary);
 }
 
 .checkboxLabel {
@@ -135,13 +135,13 @@
   align-items: center;
   gap: 8px;
   font-size: 0.9rem;
-  color: #1f2937;
+  color: var(--color-secondary);
 }
 
 .input:focus {
   outline: none;
-  border-color: rgba(240, 120, 32, 0.6);
-  box-shadow: 0 0 0 3px rgba(240, 120, 32, 0.14);
+  border-color: var(--color-primary);
+  box-shadow: var(--ring-brand);
 }
 
 .actionRow {

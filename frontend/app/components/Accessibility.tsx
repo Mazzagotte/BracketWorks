@@ -95,7 +95,7 @@ export const AccessibleInput: React.FC<AccessibleInputProps> = ({
       <label 
         htmlFor={inputId} 
         className="block text-sm font-medium"
-        style={{ color: 'var(--label-color, #374151)' }}
+        style={{ color: 'var(--label-color, var(--color-gray-700))' }}
       >
         {label}
         {required && <span className="text-red-500 ml-1" aria-label="required">*</span>}

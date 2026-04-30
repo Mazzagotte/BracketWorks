@@ -61,9 +61,9 @@ html:has(.login-page-container) {
   width: 100% !important;
   max-width: 400px !important;
   padding: 48px 32px !important;
-  background: #FAF4E8 !important;
+  background: var(--color-brand-ivory-light) !important;
   border-radius: 24px !important;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15) !important;
+  box-shadow: 0 20px 60px var(--opacity-black-15) !important;
   animation: slideUp 0.6s ease-out !important;
   text-align: center !important;
 }
@@ -83,7 +83,7 @@ html:has(.login-page-container) {
   height: 80px !important;
   margin: 0 auto 24px auto !important;
   padding: 16px !important;
-  background: linear-gradient(135deg, rgba(240, 165, 0, 0.1) 0%, rgba(240, 165, 0, 0.05) 100%) !important;
+  background: linear-gradient(135deg, var(--color-border-light) 0%, rgba(240, 165, 0, 0.05) 100%) !important;
   border-radius: 20px !important;
   border: 1px solid rgba(240, 165, 0, 0.15) !important;
 }
@@ -124,7 +124,7 @@ html:has(.login-page-container) {
   display: block !important;
   font-size: var(--font-size-md) !important;
   font-weight: var(--font-weight-medium) !important;
-  color: #1A1A1A !important;
+  color: var(--color-text-primary) !important;
   margin-bottom: 8px !important;
 }
 
@@ -137,14 +137,14 @@ html:has(.login-page-container) {
   font-weight: var(--font-weight-normal) !important;
   border: 1px solid rgba(26, 26, 26, 0.2) !important;
   border-radius: 12px !important;
-  background: #ffffff !important;
+  background: var(--color-white) !important;
   transition: all 0.2s ease !important;
   outline: none !important;
   box-shadow: none !important;
   letter-spacing: 0.3px !important;
   box-sizing: border-box !important;
   font-family: var(--font-family-primary) !important;
-  color: #1A1A1A !important;
+  color: var(--color-text-primary) !important;
 }
 
 .password-input {
@@ -154,7 +154,7 @@ html:has(.login-page-container) {
 /* Focus states */
 .login-input:focus, .password-input:focus {
   border-color: var(--color-brand-gold) !important;
-  box-shadow: 0 0 0 3px rgba(240, 165, 0, 0.1) !important;
+  box-shadow: 0 0 0 3px var(--color-border-light) !important;
 }
 
 /* Error states - Match the red border in image */
@@ -234,7 +234,7 @@ html:has(.login-page-container) {
 .login-button:hover {
   background: var(--color-brand-gold-dark) !important;
   transform: translateY(-1px) !important;
-  box-shadow: 0 4px 12px rgba(240, 165, 0, 0.3) !important;
+  box-shadow: 0 4px 12px var(--color-border-hover) !important;
 }
 
 .login-button:active {
@@ -282,12 +282,12 @@ html:has(.login-page-container) {
 .forgot-link {
   color: var(--color-brand-gold) !important;
   background: rgba(240, 165, 0, 0.08) !important;
-  border: 1px solid rgba(240, 165, 0, 0.2) !important;
+  border: 1px solid var(--color-border-light) !important;
 }
 
 .forgot-link:hover {
   background: rgba(240, 165, 0, 0.12) !important;
-  border-color: rgba(240, 165, 0, 0.3) !important;
+  border-color: var(--color-border-hover) !important;
 }
 
 /* Responsive design */
@@ -321,7 +321,7 @@ html:has(.login-page-container) {
   font-size: 28px !important;
   font-weight: 700 !important;
   margin: 0 0 8px 0 !important;
-  background: linear-gradient(135deg, #1a1f2e 0%, #2d3748 25%, #4a5568 50%, #F47C20 75%, #D9651A 100%) !important;
+  background: linear-gradient(135deg, #1a1f2e 0%, #2d3748 25%, #4a5568 50%, var(--color-primary) 75%, var(--color-primary-hover) 100%) !important;
   -webkit-background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
   background-clip: text !important;
@@ -334,6 +334,6 @@ html:has(.login-page-container) {
   font-size: 24px !important;
   font-weight: 600 !important;
   margin: 16px 0 8px 0 !important;
-  color: #1A1A1A !important;
+  color: var(--color-text-primary) !important;
   text-align: center !important;
 }

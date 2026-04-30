@@ -213,12 +213,22 @@ export default function PayoutsPage() {
           .replace(/\"/g, '&quot;')
           .replace(/'/g, '&#39;')
 
+      const formatCurrencyPrint = (value: number) =>
+        new Intl.NumberFormat('en-US', {
+          style: 'currency',
+          currency: 'USD',
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }).format(Number(value) || 0)
+
+      const totalAmount = rows.reduce((sum, row) => sum + Number(row.totalWon || 0), 0)
+
       const tableRows = rows.map(row => `
         <tr>
-          <td>${row.rank}</td>
+          <td class="rankCol">${row.rank}</td>
           <td>${escapeHtml(String(row.playerName))}</td>
-          <td>${escapeHtml(formatCurrency(Number(row.totalWon)))}</td>
-          <td><div class="rowSignatureLine"></div></td>
+          <td class="amountCol">${escapeHtml(formatCurrencyPrint(Number(row.totalWon)))}</td>
+          <td class="sigCol"><div class="sigLine"></div></td>
         </tr>`).join('')
 
       const tournamentName = selectedTournament?.name || 'Unknown Tournament'
@@ -228,64 +238,81 @@ export default function PayoutsPage() {
       const generatedAt = new Date().toLocaleString()
       const logoUrl = `${window.location.origin}/logo.svg`
 
-      const printWindow = window.open('', '_blank')
-      if (!printWindow) {
-        addToast({ type: 'error', message: 'Popup blocked. Allow popups to export PDF.', duration: 5000 })
-        return
-      }
-
-      printWindow.document.write(`<!doctype html>
+      const html = `<!doctype html>
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>Payout Export</title>
+    <title>Payout Distribution Export</title>
     <style>
-      body { font-family: Arial, sans-serif; margin: 24px; color: #1a1a1a; }
-      .reportHeader { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 10px; }
-      .reportBrand { display: flex; align-items: center; gap: 12px; }
-      .logo { width: 120px; height: auto; object-fit: contain; }
-      h1 { margin: 0; font-size: 22px; }
-      .meta { margin: 0 0 16px; color: #555; font-size: 12px; }
+      @page { size: letter; margin: 18mm 16mm; }
+      body { font-family: Arial, sans-serif; color: #111; margin: 0; font-size: 12px; }
+      .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #ccc; }
+      .logo { width: 100px; height: auto; }
+      .headerRight { text-align: right; }
+      h1 { margin: 0; font-size: 18px; }
+      .meta { margin: 0; font-size: 10px; color: #555; }
+      .summary { margin: 10px 0 14px; font-size: 12px; }
       table { width: 100%; border-collapse: collapse; font-size: 12px; }
-      th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: top; }
-      th { background: #f2f2f2; font-weight: 700; }
-      tr:nth-child(even) { background: #fafafa; }
-      .signatureColumn { width: 220px; }
-      .rowSignatureLine { width: 100%; min-height: 18px; border-bottom: 1px solid #1a1a1a; }
+      th { background: #f0f0f0; font-weight: 700; border-bottom: 2px solid #999; padding: 6px 8px; text-align: left; }
+      td { border-bottom: 1px solid #ddd; padding: 7px 8px; vertical-align: middle; }
+      .rankCol { width: 40px; color: #555; }
+      .amountCol { width: 90px; font-weight: 600; }
+      .sigCol { width: 220px; }
+      .sigLine { border-bottom: 1px solid #555; height: 18px; }
     </style>
   </head>
   <body>
-    <div class="reportHeader">
-      <div class="reportBrand">
-        <img src="${escapeHtml(logoUrl)}" alt="BracketWorks Logo" class="logo" />
+    <div class="header">
+      <img src="${escapeHtml(logoUrl)}" alt="BracketWorks" class="logo" />
+      <div class="headerRight">
+        <h1>Payout Distribution</h1>
+        <p class="meta">${escapeHtml(tournamentName)} &mdash; ${escapeHtml(squadLabel)}</p>
+        <p class="meta">Generated: ${escapeHtml(generatedAt)}</p>
       </div>
-      <h1>Payout Distribution Export</h1>
     </div>
-    <div class="meta">Tournament: ${escapeHtml(tournamentName)} | Squad: ${escapeHtml(squadLabel)} | Generated: ${escapeHtml(generatedAt)}</div>
+    <div class="summary">${rows.length} winner${rows.length !== 1 ? 's' : ''} &nbsp;&middot;&nbsp; Total: <strong>${escapeHtml(formatCurrencyPrint(totalAmount))}</strong></div>
     <table>
       <thead>
         <tr>
-          <th>Rank</th>
+          <th class="rankCol">#</th>
           <th>Player Name</th>
-          <th>Total Won</th>
-          <th class="signatureColumn">Player Signature</th>
+          <th class="amountCol">Amount</th>
+          <th class="sigCol">Signature</th>
         </tr>
       </thead>
       <tbody>
         ${tableRows}
       </tbody>
     </table>
-    <script>
-      window.addEventListener('load', function () {
-        setTimeout(function () {
-          window.print();
-        }, 200);
-      });
-    </script>
   </body>
-</html>`)
-      printWindow.document.close()
-      printWindow.focus()
+</html>`
+
+      const iframe = document.createElement('iframe')
+      iframe.style.position = 'fixed'
+      iframe.style.width = '0'
+      iframe.style.height = '0'
+      iframe.style.border = 'none'
+      iframe.style.opacity = '0'
+      document.body.appendChild(iframe)
+
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document
+      if (!iframeDoc) {
+        document.body.removeChild(iframe)
+        addToast({ type: 'error', message: 'Failed to prepare print document.', duration: 5000 })
+        return
+      }
+
+      iframeDoc.open()
+      iframeDoc.write(html)
+      iframeDoc.close()
+
+      iframe.contentWindow?.focus()
+      iframe.contentWindow?.print()
+
+      setTimeout(() => {
+        document.body.removeChild(iframe)
+      }, 1000)
+
       addToast({
         type: 'success',
         message: `Prepared ${rows.length} payout row${rows.length !== 1 ? 's' : ''} for PDF export.`,

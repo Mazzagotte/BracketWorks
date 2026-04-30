@@ -88,7 +88,7 @@ export function MobileTable({
         <div style={{
           textAlign: 'center',
           padding: '40px 20px',
-          color: '#6b7280',
+          color: 'var(--color-text-secondary)',
           fontSize: '16px'
         }}>
           {emptyMessage}
@@ -124,12 +124,12 @@ export function MobileTable({
               className="mobile-card"
               onClick={() => onRowClick?.(row)}
               style={{
-                backgroundColor: '#ffffff',
+                backgroundColor: 'var(--color-white)',
                 borderRadius: '12px',
                 padding: '16px',
                 marginBottom: '12px',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                border: '1px solid #e5e7eb',
+                boxShadow: '0 2px 8px var(--opacity-black-10)',
+                border: '1px solid var(--color-gray-200)',
                 cursor: onRowClick ? 'pointer' : 'default'
               }}
             >
@@ -207,7 +207,7 @@ export function MobileTable({
           display: flex;
           gap: 8px;
           margin-bottom: 16px;
-          background: #f8f9fb;
+          background: var(--color-gray-50);
           padding: 4px;
           border-radius: 8px;
         }
@@ -217,7 +217,7 @@ export function MobileTable({
           padding: 8px 12px;
           border: none;
           background: transparent;
-          color: #6b7280;
+          color: var(--color-text-secondary);
           border-radius: 6px;
           cursor: pointer;
           font-size: 14px;
@@ -225,9 +225,9 @@ export function MobileTable({
         }
 
         .view-toggle-btn.active {
-          background: #ffffff;
-          color: #1a1f2e;
-          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+          background: var(--color-white);
+          color: var(--color-text-primary);
+          box-shadow: 0 1px 3px var(--opacity-black-10);
         }
 
         .mobile-cards-view {
@@ -240,7 +240,7 @@ export function MobileTable({
           justify-content: space-between;
           align-items: center;
           padding: 8px 0;
-          border-bottom: 1px solid #f3f4f6;
+          border-bottom: 1px solid var(--color-gray-100);
         }
 
         .mobile-card-row:last-child {
@@ -249,13 +249,13 @@ export function MobileTable({
 
         .mobile-card-label {
           font-weight: 600;
-          color: #6b7280;
+          color: var(--color-text-secondary);
           font-size: 14px;
           flex: 1;
         }
 
         .mobile-card-value {
-          color: #1a1f2e;
+          color: var(--color-text-primary);
           font-size: 14px;
           text-align: right;
           flex: 1;
@@ -265,13 +265,13 @@ export function MobileTable({
           overflow-x: auto;
           -webkit-overflow-scrolling: touch;
           border-radius: 8px;
-          border: 1px solid #e5e7eb;
+          border: 1px solid var(--color-gray-200);
         }
 
         .mobile-table {
           width: 100%;
           border-collapse: collapse;
-          background: #ffffff;
+          background: var(--color-white);
           min-width: 500px; /* Ensure horizontal scroll */
         }
 
@@ -279,33 +279,33 @@ export function MobileTable({
         .mobile-table td {
           padding: 12px 8px;
           text-align: left;
-          border-bottom: 1px solid #f3f4f6;
+          border-bottom: 1px solid var(--color-gray-100);
           font-size: 14px;
         }
 
         .mobile-table th {
-          background: #f8f9fb;
+          background: var(--color-gray-50);
           font-weight: 600;
-          color: #1a1f2e;
+          color: var(--color-text-primary);
           position: sticky;
           top: 0;
           z-index: 10;
         }
 
         .mobile-table tr:hover {
-          background: #f8f9fb;
+          background: var(--color-gray-50);
         }
 
         .mobile-loading-row {
           padding: 16px;
-          border-bottom: 1px solid #f3f4f6;
+          border-bottom: 1px solid var(--color-gray-100);
           display: flex;
           flex-direction: column;
           gap: 8px;
         }
 
         .loading-skeleton {
-          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+          background: linear-gradient(90deg, var(--color-gray-100) 25%, var(--color-gray-200) 50%, var(--color-gray-100) 75%);
           background-size: 200% 100%;
           animation: loading 1.5s infinite;
           border-radius: 4px;

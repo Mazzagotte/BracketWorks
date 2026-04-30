@@ -726,6 +726,16 @@ export default function TournamentDashboard() {
   const [modalOpen, setModalOpen] = useState(false);
   const [createMode, setCreateMode] = useState(false);
 
+  // Lock body scroll when no tournament is loaded
+  useEffect(() => {
+    if (!tournament) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => { document.body.style.overflow = '' }
+  }, [tournament])
+
   // Fallback: if auth isn't initialized after 3 seconds but we have tokens, show dashboard
   useEffect(() => {
     const timer = setTimeout(() => {

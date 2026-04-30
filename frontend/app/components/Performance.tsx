@@ -53,9 +53,9 @@ export const Pagination: React.FC<PaginationProps> = ({
     width: 34,
     height: 34,
     borderRadius: 8,
-    border: '1px solid rgba(240, 120, 32, 0.25)',
-    background: 'rgba(255,255,255,0.04)',
-    color: 'rgba(240, 224, 192, 0.7)',
+    border: '1px solid var(--color-border-light)',
+    background: 'var(--color-surface)',
+    color: 'var(--color-text-secondary)',
     fontSize: 14,
     fontWeight: 500,
     cursor: 'pointer',
@@ -64,9 +64,9 @@ export const Pagination: React.FC<PaginationProps> = ({
 
   const btnActive: React.CSSProperties = {
     ...btnBase,
-    background: '#F07820',
-    border: '1px solid #F07820',
-    color: '#fff',
+    background: 'var(--color-primary)',
+    border: '1px solid var(--color-primary)',
+    color: 'var(--color-white)',
     fontWeight: 700,
   };
 
@@ -91,7 +91,7 @@ export const Pagination: React.FC<PaginationProps> = ({
       {/* Page numbers */}
       {pageNumbers.map((page, index) =>
         page === '...' ? (
-          <span key={`dots-${index}`} style={{ color: 'rgba(240,224,192,0.4)', padding: '0 2px' }}>
+          <span key={`dots-${index}`} style={{ color: 'var(--color-text-secondary)', padding: '0 2px' }}>
             …
           </span>
         ) : (

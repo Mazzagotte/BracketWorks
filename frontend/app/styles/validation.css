@@ -50,7 +50,7 @@
 .signup-input.invalid,
 .signup-password-input.invalid {
   border-color: var(--color-red-primary) !important;
-  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.1) !important;
+  box-shadow: 0 0 0 1px var(--color-error-input-bg) !important;
 }
 
 .signup-input.checking {
@@ -83,7 +83,7 @@
 .strength-bar {
   flex: 1;
   height: 4px;
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: var(--opacity-white-10);
   border-radius: 2px;
   overflow: hidden;
 }
@@ -197,7 +197,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--opacity-white-20);
   transition: all 0.3s ease;
 }
 
@@ -215,7 +215,7 @@
 .signup-button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-  background: rgba(255, 255, 255, 0.1) !important;
+  background: var(--opacity-white-10) !important;
 }
 
 /* Responsive validation adjustments */

@@ -28,16 +28,16 @@
 
 /* Modal Card - The white container in the center */
 .modalCard {
-  background-color: #FAF4E8;
+  background-color: var(--color-brand-ivory-light);
   border-radius: 16px;
   padding: 3rem;
   min-width: 400px;
   max-width: 500px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(240, 120, 32, 0.15);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18), 0 0 0 1px var(--color-border-light);
   text-align: center;
   animation: slideIn 0.3s ease;
   position: relative;
-  border-top: 4px solid #F47C20;
+  border-top: 4px solid var(--color-primary);
 }
 
 @keyframes slideIn {
@@ -98,7 +98,7 @@
 .contextInfo {
   width: 100%;
   background-color: rgba(240, 120, 32, 0.06);
-  border: 1px solid rgba(240, 120, 32, 0.2);
+  border: 1px solid var(--color-border-light);
   border-radius: 8px;
   padding: 12px 16px;
   margin-bottom: 0.5rem;
@@ -107,14 +107,14 @@
 .contextText {
   margin: 4px 0;
   font-size: 0.875rem;
-  color: #4b5563;
+  color: var(--color-dark-lighter);
   font-family: 'Inter', sans-serif;
   line-height: 1.5;
 }
 
 .contextLabel {
   font-weight: 600;
-  color: #1f2937;
+  color: var(--color-secondary);
 }
 
 /* Bowling Ball Animation Container */
@@ -149,12 +149,12 @@
 .ballBody {
   width: 80px;
   height: 80px;
-  background: radial-gradient(circle at 30% 30%, #4a4a4a, #1a1a1a);
+  background: radial-gradient(circle at 30% 30%, #4a4a4a, var(--color-text-primary));
   border-radius: 50%;
   border: 3px solid #333;
   box-shadow: 
     0 8px 16px rgba(0, 0, 0, 0.3),
-    inset 2px 2px 8px rgba(255, 255, 255, 0.1),
+    inset 2px 2px 8px var(--opacity-white-10),
     inset -2px -2px 8px rgba(0, 0, 0, 0.5);
 }
 
@@ -167,14 +167,14 @@
   border-radius: 50%;
   box-shadow: 
     inset 1px 1px 2px rgba(0, 0, 0, 0.8),
-    0 1px 2px rgba(255, 255, 255, 0.1);
+    0 1px 2px var(--opacity-white-10);
 }
 
 /* Main Message during loading */
 .mainMessage {
   font-size: 1.75rem;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--color-secondary);
   margin: 0 0 1.5rem 0;
   font-family: 'Inter', sans-serif;
 }
@@ -184,7 +184,7 @@
   padding: 0.75rem 1rem;
   border-radius: 8px;
   border: 1px solid rgba(240, 120, 32, 0.22);
-  background: rgba(240, 120, 32, 0.08);
+  background: var(--color-border-light);
   color: #7a3f00;
   font-size: 0.9rem;
   line-height: 1.4;
@@ -222,7 +222,7 @@
 .successMessage {
   font-size: 1.75rem;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--color-secondary);
   margin: 0;
   font-family: 'Inter', sans-serif;
 }
@@ -242,7 +242,7 @@
   gap: 12px;
   padding: 12px 16px;
   background-color: rgba(240, 120, 32, 0.05);
-  border: 1px solid rgba(240, 120, 32, 0.2);
+  border: 1px solid var(--color-border-light);
   border-radius: 8px;
   animation: slideInStat 0.5s ease forwards;
   opacity: 0;
@@ -264,7 +264,7 @@
 .statText {
   font-size: 0.95rem;
   font-weight: 500;
-  color: #1A1A1A;
+  color: var(--color-text-primary);
   font-family: 'Inter', sans-serif;
 }
 
@@ -285,7 +285,7 @@
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  background: linear-gradient(135deg, var(--color-error) 0%, var(--color-red-dark) 100%);
   color: white;
   display: flex;
   align-items: center;
@@ -310,7 +310,7 @@
 .errorMessage {
   font-size: 1.5rem;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--color-secondary);
   margin: 0;
   font-family: 'Inter', sans-serif;
 }
@@ -318,7 +318,7 @@
 /* Error suggestion text */
 .errorSuggestion {
   font-size: 1rem;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   margin: 0.75rem 0 1.5rem 0;
   line-height: 1.6;
   max-width: 500px;
@@ -335,7 +335,7 @@
 /* Technical details toggle button */
 .technicalDetailsToggle {
   background: transparent;
-  border: 1px solid rgba(240, 120, 32, 0.2);
+  border: 1px solid var(--color-border-light);
   border-radius: 6px;
   padding: 0.5rem 1rem;
   color: rgba(26, 26, 26, 0.5);
@@ -351,7 +351,7 @@
 .technicalDetailsToggle:hover {
   background: rgba(240, 120, 32, 0.06);
   border-color: rgba(240, 120, 32, 0.35);
-  color: #F47C20;
+  color: var(--color-primary);
 }
 
 /* Technical details content */
@@ -359,11 +359,11 @@
   margin-top: 0.75rem;
   padding: 1rem;
   background: rgba(240, 120, 32, 0.04);
-  border: 1px solid rgba(240, 120, 32, 0.15);
+  border: 1px solid var(--color-border-light);
   border-radius: 6px;
   font-family: 'Monaco', 'Courier New', monospace;
   font-size: 0.875rem;
-  color: #dc2626;
+  color: var(--color-red-dark);
   word-wrap: break-word;
   overflow-wrap: break-word;
   max-height: 200px;
@@ -377,12 +377,12 @@
 
 .errorDetails {
   font-size: 0.875rem;
-  color: #ef4444;
+  color: var(--color-error);
   margin: 0.5rem 0 0 0;
   padding: 0.75rem;
   background-color: #fee2e2;
   border-radius: 8px;
-  border-left: 4px solid #ef4444;
+  border-left: 4px solid var(--color-error);
   font-family: 'Courier New', monospace;
   text-align: left;
   max-width: 100%;
@@ -415,7 +415,7 @@
 
 .button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px var(--opacity-black-15);
 }
 
 .button:active {
@@ -424,27 +424,27 @@
 
 /* Primary Button - Orange (App Primary) */
 .primaryButton {
-  background: linear-gradient(135deg, #F47C20 0%, #D9651A 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
   color: white;
-  box-shadow: 0 4px 12px rgba(244, 124, 32, 0.3);
+  box-shadow: 0 4px 12px var(--color-border-hover);
 }
 
 .primaryButton:hover {
-  background: linear-gradient(135deg, #D9651A 0%, #c05010 100%);
+  background: linear-gradient(135deg, var(--color-primary-hover) 0%, var(--color-primary-hover) 100%);
   box-shadow: 0 6px 16px rgba(244, 124, 32, 0.4);
 }
 
 /* Secondary Button - Gray */
 .secondaryButton {
   background: transparent;
-  color: #F47C20;
-  border: 2px solid #F47C20;
+  color: var(--color-primary);
+  border: 2px solid var(--color-primary);
   box-shadow: none;
 }
 
 .secondaryButton:hover {
   background: rgba(244, 124, 32, 0.08);
-  box-shadow: 0 4px 12px rgba(244, 124, 32, 0.15);
+  box-shadow: 0 4px 12px var(--color-border-light);
 }
 
 /* ===================================

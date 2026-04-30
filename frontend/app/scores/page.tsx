@@ -27,7 +27,7 @@ import { handleTableArrowNavigation } from '../lib/tableKeyboard'
 
 export default function ScoresPage() {
   // Authentication check - must be at the top
-  const { isAuthenticated, isInitialized } = useAuth();
+  const { isAuthenticated, isInitialized, token: authToken } = useAuth();
 
   // Check if we have tokens in localStorage even if auth context isn't ready
   const hasStoredAuth = typeof window !== 'undefined' && 
@@ -556,10 +556,61 @@ export default function ScoresPage() {
   }, [addToast])
 
   // Header configuration
+  const devClearGame = useCallback(async (gameNumber: 2 | 3) => {
+    if (!confirm(`Clear all Game ${gameNumber} scores for this tournament/squad?`)) return
+    if (!tournament?.id) {
+      addToast({ type: 'error', message: 'No tournament selected.', duration: 3000 })
+      return
+    }
+
+    const token = authToken || localStorage.getItem('token')
+    if (!token) {
+      addToast({ type: 'error', message: 'Your session expired. Please log in again.', duration: 4000 })
+      return
+    }
+
+    const params = new URLSearchParams({ tournament_id: String(tournament?.id) })
+    if (selectedSquad) params.set('squad_id', String(selectedSquad.id))
+    const res = await fetch(API(`/api/v1/scores/dev/clear-game/${gameNumber}?${params}`), {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    })
+
+    let body: { message?: string; detail?: string } = {}
+    try {
+      body = await res.json()
+    } catch {
+      // Best-effort parse only.
+    }
+
+    if (res.status === 401) {
+      addToast({ type: 'error', message: 'Unauthorized. Please sign in again.', duration: 4000 })
+      return
+    }
+
+    addToast({ type: res.ok ? 'success' : 'error', message: body.message ?? body.detail, duration: 3000 })
+    if (res.ok) {
+      setPlayers(prev => prev.map(p => ({
+        ...p,
+        scores: p.scores
+          ? {
+              ...p.scores,
+              [`game${gameNumber}_scratch`]: undefined,
+              [`game${gameNumber}_with_handicap`]: undefined,
+            }
+          : p.scores,
+      })))
+    }
+  }, [tournament, selectedSquad, addToast, authToken])
+
   const headerActions = useMemo(() => (
     <div className={styles.headerActions}>
       {process.env.NODE_ENV === 'development' && players.length > 0 && (
-        <button className={styles.devButton} onClick={handleRandomizeScores}>DEV: Randomize Scores</button>
+        <>
+          <button className={styles.devButton} onClick={handleRandomizeScores}>DEV: Randomize Scores</button>
+          <button className={styles.devButton} onClick={() => devClearGame(2)}>DEV: Clear Game 2</button>
+          <button className={styles.devButton} onClick={() => devClearGame(3)}>DEV: Clear Game 3</button>
+        </>
       )}
 
       <button
@@ -595,7 +646,7 @@ export default function ScoresPage() {
         </EnhancedButton>
       )}
     </div>
-  ), [players.length, handleRandomizeScores, pendingSaves.length, addToast, processPendingSaves, handleExportScoresToExcel, isExporting, isImporting])
+  ), [players.length, handleRandomizeScores, devClearGame, pendingSaves.length, addToast, processPendingSaves, handleExportScoresToExcel, isExporting, isImporting])
 
   usePageHeader({
     title: 'Scores',
@@ -1273,6 +1324,7 @@ export default function ScoresPage() {
           {/* Scores Table */}
           {!isLoading && players.length > 0 && (
             <div className="entries-container">
+
                 <table className="entries-table" aria-label="Player Scores" onKeyDownCapture={handleTableArrowNavigation}>
 
             <thead>

@@ -23,9 +23,9 @@
 }
 
 @keyframes glow {
-  0% { box-shadow: 0 0 5px rgba(240, 165, 0, 0.2); }
+  0% { box-shadow: 0 0 5px var(--color-border-light); }
   50% { box-shadow: 0 0 20px rgba(240, 165, 0, 0.4); }
-  100% { box-shadow: 0 0 5px rgba(240, 165, 0, 0.2); }
+  100% { box-shadow: 0 0 5px var(--color-border-light); }
 }
 
 /* Force dark background for signup page - consistent with login */
@@ -71,7 +71,7 @@ html:has(.signup-page-container) {
   width: 100%;
   height: 100%;
   background: 
-    radial-gradient(circle at 25% 25%, rgba(240, 165, 0, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 25% 25%, var(--color-border-light) 0%, transparent 50%),
     radial-gradient(circle at 75% 75%, rgba(79, 140, 255, 0.1) 0%, transparent 50%);
   z-index: 0;
 }
@@ -84,14 +84,14 @@ html:has(.signup-page-container) {
   max-width: 520px !important;
   max-height: calc(100vh - 48px) !important;
   padding: 40px !important;
-  background: #FAF4E8 !important;
+  background: var(--color-brand-ivory-light) !important;
   backdrop-filter: none !important;
   border-radius: 20px !important;
-  border: 1px solid rgba(240, 120, 32, 0.2) !important;
+  border: 1px solid var(--color-border-light) !important;
   box-shadow: 
     0 32px 64px rgba(0, 0, 0, 0.12),
-    0 16px 32px rgba(0, 0, 0, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+    0 16px 32px var(--opacity-black-08),
+    inset 0 1px 0 var(--opacity-white-30) !important;
   animation: slideUp 0.6s ease-out !important;
   transform-origin: center bottom !important;
   transition: transform 0.3s ease !important;
@@ -125,13 +125,13 @@ html:has(.signup-page-container) {
   padding: 12px !important;
   background: linear-gradient(135deg, rgba(240, 165, 0, 0.15) 0%, rgba(255, 152, 0, 0.12) 25%, rgba(255, 193, 7, 0.08) 50%, rgba(255, 235, 59, 0.05) 75%, rgba(240, 165, 0, 0.03) 100%) !important;
   border-radius: 16px !important;
-  border: 1px solid rgba(240, 165, 0, 0.2) !important;
+  border: 1px solid var(--color-border-light) !important;
   transition: all 0.3s ease !important;
 }
 
 .logo-container:hover {
   transform: translateY(-2px) scale(1.02) !important;
-  box-shadow: 0 8px 24px rgba(240, 165, 0, 0.2) !important;
+  box-shadow: 0 8px 24px var(--color-border-light) !important;
 }
 
 /* Logo image styling */
@@ -187,7 +187,7 @@ html:has(.signup-page-container) {
   margin-bottom: 6px !important;
   font-size: var(--font-size-md) !important;
   font-weight: var(--font-weight-semibold) !important;
-  color: #1A1A1A !important;
+  color: var(--color-text-primary) !important;
   font-family: var(--font-family-primary) !important;
 }
 
@@ -207,14 +207,14 @@ html:has(.signup-page-container) {
   font-weight: var(--font-weight-medium) !important;
   border: 1px solid rgba(26, 26, 26, 0.2) !important;
   border-radius: 12px !important;
-  background: #ffffff !important;
+  background: var(--color-white) !important;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
   outline: none !important;
   box-shadow: none !important;
   letter-spacing: 0.3px !important;
   box-sizing: border-box !important;
   font-family: var(--font-family-primary) !important;
-  color: #1A1A1A !important;
+  color: var(--color-text-primary) !important;
 }
 
 .signup-password-input {
@@ -224,8 +224,8 @@ html:has(.signup-page-container) {
 .signup-input:focus, .signup-password-input:focus {
   border-color: var(--color-brand-gold) !important;
   box-shadow: 
-    0 0 0 3px rgba(240, 165, 0, 0.1),
-    0 4px 12px rgba(0, 0, 0, 0.08) !important;
+    0 0 0 3px var(--color-border-light),
+    0 4px 12px var(--opacity-black-08) !important;
   transform: translateY(-1px) !important;
 }
 
@@ -279,8 +279,8 @@ html:has(.signup-page-container) {
   cursor: pointer !important;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
   box-shadow: 
-    0 4px 12px rgba(240, 165, 0, 0.3),
-    0 2px 6px rgba(0, 0, 0, 0.1) !important;
+    0 4px 12px var(--color-border-hover),
+    0 2px 6px var(--opacity-black-10) !important;
   position: relative !important;
   overflow: hidden !important;
   font-family: var(--font-family-primary) !important;
@@ -294,7 +294,7 @@ html:has(.signup-page-container) {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.2) 25%, rgba(255, 255, 255, 0.4) 50%, rgba(255, 255, 255, 0.2) 75%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, var(--opacity-white-20) 25%, rgba(255, 255, 255, 0.4) 50%, var(--opacity-white-20) 75%, transparent 100%);
   transition: left 0.5s ease;
 }
 
@@ -306,7 +306,7 @@ html:has(.signup-page-container) {
   transform: translateY(-2px) !important;
   box-shadow: 
     0 8px 24px rgba(240, 165, 0, 0.4),
-    0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    0 4px 12px var(--opacity-black-15) !important;
 }
 
 .signup-button:active {
@@ -361,21 +361,21 @@ html:has(.signup-page-container) {
   letter-spacing: 0.1px !important;
   position: relative !important;
   overflow: hidden !important;
-  color: #F07820 !important;
+  color: var(--color-primary) !important;
   background: rgba(240, 120, 32, 0.06) !important;
   backdrop-filter: none !important;
-  border: 1px solid rgba(240, 120, 32, 0.2) !important;
+  border: 1px solid var(--color-border-light) !important;
   box-shadow: none !important;
   cursor: pointer !important;
 }
 
 .signup-login-button:hover {
-  color: #D4580A !important;
+  color: var(--color-primary-hover) !important;
   background: rgba(240, 120, 32, 0.12) !important;
   border-color: rgba(240, 120, 32, 0.3) !important;
   transform: translateY(-1px) !important;
   box-shadow: 
-    0 4px 12px rgba(0, 0, 0, 0.15),
+    0 4px 12px var(--opacity-black-15),
     inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
 }
 

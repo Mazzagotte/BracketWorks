@@ -18,7 +18,7 @@
   align-items: center;
   justify-content: center;
   min-height: 400px;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-size: 1.125rem;
 }
 
@@ -27,11 +27,11 @@
    =================================== */
 
 .bracketCard {
-  background: #FAF4E8;
+  background: var(--color-brand-ivory-light);
   border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(240, 120, 32, 0.2);
-  border-top: 4px solid #F47C20;
+  box-shadow: 0 2px 8px var(--opacity-black-08);
+  border: 1px solid var(--color-border-light);
+  border-top: 4px solid var(--color-primary);
   padding: 1.25rem 1.5rem;
   max-width: none;
   width: 100%;
@@ -53,8 +53,8 @@
   background: rgba(240, 120, 32, 0.05);
   padding: 0.75rem 1rem;
   border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  border: 1px solid rgba(240, 120, 32, 0.15);
+  box-shadow: 0 2px 8px var(--opacity-black-06);
+  border: 1px solid var(--color-border-light);
   border-top: 3px solid rgba(240, 120, 32, 0.5);
   transition: all 0.3s ease;
 }
@@ -80,8 +80,8 @@
   font-size: 1.25rem;
   font-weight: 700;
   color: white;
-  background: linear-gradient(135deg, #F47C20 0%, #D9651A 100%);
-  box-shadow: 0 2px 8px rgba(244, 124, 32, 0.3);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
+  box-shadow: 0 2px 8px var(--color-border-hover);
   flex-shrink: 0;
 }
 
@@ -98,25 +98,25 @@
   font-size: 1rem;
   font-weight: 600;
   margin: 0;
-  color: #1f2937;
+  color: var(--color-secondary);
 }
 
 .roundProgress {
   font-size: 0.75rem;
-  color: #4b5563;
+  color: var(--color-dark-lighter);
   font-weight: 500;
 }
 
 .progressBar {
   height: 6px;
-  background: rgba(240, 120, 32, 0.15);
+  background: var(--color-border-light);
   border-radius: 3px;
   overflow: hidden;
 }
 
 .progressFill {
   height: 100%;
-  background: linear-gradient(135deg, #F47C20 0%, #D9651A 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
   border-radius: 3px;
   transition: width 0.3s ease;
 }
@@ -142,10 +142,10 @@
 
 .matchCard {
   background: #FFFCF5;
-  border: 1.5px solid rgba(240, 120, 32, 0.2);
+  border: 1.5px solid var(--color-border-light);
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 12px var(--opacity-black-06);
   transition: all 0.2s ease;
   width: 280px;
   min-height: 110px;
@@ -165,7 +165,7 @@
   cursor: help;
   background: #7c3aed;
   color: white;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  text-shadow: 0 1px 2px var(--opacity-black-15);
   box-shadow: 0 1px 4px rgba(124, 58, 237, 0.3);
 }
 
@@ -176,10 +176,10 @@
   padding: 2px 6px;
   border-radius: 4px;
   cursor: help;
-  background: linear-gradient(135deg, #F47C20 0%, #D9651A 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
   color: white;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
-  box-shadow: 0 1px 4px rgba(244, 124, 32, 0.3);
+  text-shadow: 0 1px 2px var(--opacity-black-15);
+  box-shadow: 0 1px 4px var(--color-border-hover);
 }
 
 /* Finals card — gold premium treatment */
@@ -196,38 +196,38 @@
 }
 
 .matchCard:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 16px var(--opacity-black-15);
   transform: translateY(-2px);
 }
 
 .matchCard.completed {
   border-color: rgba(16, 185, 129, 0.35);
   border-width: 1.5px;
-  border-left: 4px solid #10b981;
+  border-left: 4px solid var(--color-success);
 }
 
 .matchCard.in_progress {
   border-color: rgba(240, 120, 32, 0.4);
-  border-left: 4px solid #F47C20;
+  border-left: 4px solid var(--color-primary);
   border-width: 1.5px;
   border-left-width: 4px;
   animation: pulseMatch 2s ease-in-out infinite;
 }
 
 @keyframes pulseMatch {
-  0%, 100% { border-left-color: #F47C20; }
+  0%, 100% { border-left-color: var(--color-primary); }
   50% { border-left-color: rgba(244, 124, 32, 0.4); }
 }
 
 .matchCard.next_up {
-  border-color: rgba(240, 120, 32, 0.2);
+  border-color: var(--color-border-light);
   border-left: 3px solid rgba(240, 120, 32, 0.45);
   border-width: 1.5px;
   border-left-width: 3px;
 }
 
 .matchCard.pending {
-  border-color: rgba(0, 0, 0, 0.08);
+  border-color: var(--opacity-black-08);
   border-left: 3px solid rgba(0, 0, 0, 0.12);
   border-width: 1.5px;
   border-left-width: 3px;
@@ -243,7 +243,7 @@
 
 /* Winning Path Highlight */
 .matchCard.highlighted {
-  border-color: #F47C20;
+  border-color: var(--color-primary);
   border-width: 3px;
   box-shadow: 0 4px 16px rgba(244, 124, 32, 0.4);
   animation: highlightPulse 2s ease-in-out infinite;
@@ -274,7 +274,7 @@
   text-transform: uppercase;
   color: rgba(240, 120, 32, 0.7);
   background: rgba(240, 120, 32, 0.05);
-  border-bottom: 1px solid rgba(240, 120, 32, 0.1);
+  border-bottom: 1px solid var(--color-border-light);
 }
 
 .vsRow {
@@ -288,8 +288,8 @@
   text-transform: uppercase;
   color: rgba(26, 26, 26, 0.22);
   background: rgba(240, 120, 32, 0.04);
-  border-top: 1px solid rgba(240, 120, 32, 0.08);
-  border-bottom: 1px solid rgba(240, 120, 32, 0.08);
+  border-top: 1px solid var(--color-border-light);
+  border-bottom: 1px solid var(--color-border-light);
 }
 
 /* ===================================
@@ -318,42 +318,42 @@
 .player.highlightedPlayer {
   background: linear-gradient(to right, rgba(244, 124, 32, 0.08) 0%, #FFFCF5 100%);
   font-weight: 700;
-  border-left: 4px solid #F47C20;
+  border-left: 4px solid var(--color-primary);
   padding-left: 8px;
 }
 
 .player.winner {
   background: linear-gradient(to right, #d1fae5 0%, #FFFCF5 100%);
   font-weight: 600;
-  border-left: 4px solid #10b981;
+  border-left: 4px solid var(--color-success);
   padding-left: 8px;
 }
 
 .playerName {
   font-size: 0.875rem;
   font-weight: 500;
-  color: #1f2937;
+  color: var(--color-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .player.winner .playerName {
-  color: #059669;
+  color: var(--color-green-dark);
   font-weight: 700;
 }
 
 .playerScore {
   font-size: 0.9375rem;
   font-weight: 700;
-  color: #4b5563;
+  color: var(--color-dark-lighter);
   text-align: right;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
 }
 
 .player.winner .playerScore {
-  color: #059669;
+  color: var(--color-green-dark);
   font-size: 1rem;
   text-shadow: 0 0 12px rgba(16, 185, 129, 0.25);
 }
@@ -423,7 +423,7 @@
 /* Focus visible for keyboard navigation */
 .matchCard:focus-visible,
 .roundHeader:focus-visible {
-  outline: 2px solid #F47C20;
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 

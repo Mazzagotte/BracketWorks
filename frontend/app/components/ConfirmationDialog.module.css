@@ -36,7 +36,7 @@
   padding: 0.7rem 2.2rem;
   font-size: 1rem;
   cursor: pointer;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  box-shadow: 0 1px 4px var(--opacity-black-08);
   transition: background 0.2s;
 }
 .okButton:hover {

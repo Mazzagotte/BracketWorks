@@ -42,7 +42,7 @@ const formatCurrency = (value: number): string => {
 
 const getRankBadge = (rank: number) => {
   if (rank === 1) return { emoji: '🥇', color: colors.success, label: '1st' }
-  if (rank === 2) return { emoji: '🥈', color: '#0369a1', label: '2nd' }
+  if (rank === 2) return { emoji: '🥈', color: 'var(--color-blue-dark)', label: '2nd' }
   if (rank === 3) return { emoji: '🥉', color: colors.warning, label: '3rd' }
   return null
 }

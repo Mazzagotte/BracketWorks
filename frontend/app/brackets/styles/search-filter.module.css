@@ -25,7 +25,7 @@
 .labelText {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #374151;
+  color: var(--color-gray-700);
 }
 
 .searchWrapper {
@@ -35,7 +35,7 @@
 .searchInput {
   width: 100%;
   padding: 0.75rem 1rem;
-  border: 2px solid #e5e7eb;
+  border: 2px solid var(--color-gray-200);
   border-radius: 8px;
   font-size: 0.9375rem;
   transition: all 0.2s ease;
@@ -43,12 +43,12 @@
 
 .searchInput:focus {
   outline: none;
-  border-color: #F47C20;
-  box-shadow: 0 0 0 3px rgba(244, 124, 32, 0.1);
+  border-color: var(--color-primary);
+  box-shadow: var(--ring-brand);
 }
 
 .searchInput::placeholder {
-  color: #9ca3af;
+  color: var(--color-gray-400);
 }
 
 .resultCount {
@@ -56,38 +56,38 @@
   margin-top: 5px;
   font-size: 0.75rem;
   font-weight: 500;
-  color: #F47C20;
+  color: var(--color-primary);
 }
 
 .resultCountEmpty {
-  color: #b45309;
+  color: var(--color-warning-text);
 }
 
 .select {
   width: 100%;
   padding: 0.75rem 1rem;
-  border: 2px solid #e5e7eb;
+  border: 2px solid var(--color-gray-200);
   border-radius: 8px;
   font-size: 0.9375rem;
-  background: white;
+  background: var(--color-surface);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .select:focus {
   outline: none;
-  border-color: #F47C20;
-  box-shadow: 0 0 0 3px rgba(244, 124, 32, 0.1);
+  border-color: var(--color-primary);
+  box-shadow: var(--ring-brand);
 }
 
 .select:hover {
-  border-color: #d1d5db;
+  border-color: var(--color-gray-300);
 }
 
 .clearButton {
-  background: #f8fafc;
-  color: #374151;
-  border: 1px solid #d1d5db;
+  background: var(--color-gray-50);
+  color: var(--color-gray-700);
+  border: 1px solid var(--color-gray-300);
   border-radius: 8px;
   padding: 0.75rem 1.25rem;
   display: flex;
@@ -103,8 +103,8 @@
 }
 
 .clearButton:hover {
-  background: #f1f5f9;
-  border-color: #9ca3af;
+  background: var(--color-gray-100);
+  border-color: var(--color-gray-400);
 }
 
 .clearButton:active {
@@ -139,6 +139,6 @@
 
 .searchInput:focus-visible,
 .clearButton:focus-visible {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid var(--color-blue-accent);
   outline-offset: 2px;
 }

@@ -1,5 +1,5 @@
 const shimmer = {
-  background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
+  background: 'linear-gradient(90deg, var(--color-gray-100) 25%, var(--color-gray-200) 50%, var(--color-gray-100) 75%)',
   backgroundSize: '200% 100%',
   animation: 'shimmer 1.5s infinite',
   borderRadius: '8px',
@@ -20,7 +20,7 @@ export default function ScoresLoading() {
       {/* Stat cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '28px' }}>
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} style={{ background: '#fff', borderRadius: '16px', padding: '20px', border: '1px solid #e5e7eb', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+          <div key={i} style={{ background: 'var(--color-surface)', borderRadius: '16px', padding: '20px', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-soft)' }}>
             <div style={{ ...shimmer, width: '90px', height: '14px', marginBottom: '10px' }} />
             <div style={{ ...shimmer, width: '80px', height: '28px' }} />
           </div>
@@ -34,14 +34,14 @@ export default function ScoresLoading() {
       </div>
 
       {/* Scores table */}
-      <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e5e7eb', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1fr', gap: '12px', padding: '14px 20px', borderBottom: '1px solid #f3f4f6', background: '#f9fafb' }}>
+      <div style={{ background: 'var(--color-surface)', borderRadius: '16px', border: '1px solid var(--color-border)', overflow: 'hidden', boxShadow: 'var(--shadow-soft)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1fr', gap: '12px', padding: '14px 20px', borderBottom: '1px solid var(--color-gray-100)', background: 'var(--color-gray-50)' }}>
           {[160, 70, 70, 70, 70, 90].map((w, i) => (
             <div key={i} style={{ ...shimmer, width: `${w}px`, height: '16px' }} />
           ))}
         </div>
         {Array.from({ length: 10 }).map((_, i) => (
-          <div key={i} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1fr', gap: '12px', padding: '12px 20px', borderBottom: '1px solid #f9fafb' }}>
+          <div key={i} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1fr', gap: '12px', padding: '12px 20px', borderBottom: '1px solid var(--color-gray-50)' }}>
             <div style={{ ...shimmer, width: '140px', height: '16px' }} />
             <div style={{ ...shimmer, width: '55px', height: '32px', borderRadius: '6px' }} />
             <div style={{ ...shimmer, width: '55px', height: '32px', borderRadius: '6px' }} />

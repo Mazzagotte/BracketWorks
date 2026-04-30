@@ -34,40 +34,40 @@
    ======================================== */
 
 .primary {
-  background: linear-gradient(135deg, #F07820 0%, #D4580A 100%);
-  color: #ffffff;
-  border: 1px solid rgba(240, 120, 32, 0.2);
-  box-shadow: 0 4px 12px rgba(240, 120, 32, 0.3), 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
+  color: var(--color-white);
+  border: 1px solid var(--color-border-light);
+  box-shadow: 0 4px 12px rgba(240, 120, 32, 0.3), 0 2px 4px var(--opacity-black-10);
 }
 
 .secondary {
   background: transparent;
-  border: 2px solid #F07820;
-  color: #F07820;
+  border: 2px solid var(--color-primary);
+  color: var(--color-primary);
   font-weight: 700;
   box-shadow: none;
 }
 
 .success {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: #ffffff;
+  background: linear-gradient(135deg, var(--color-success) 0%, var(--color-green-dark) 100%);
+  color: var(--color-white);
   border: 1px solid rgba(16, 185, 129, 0.2);
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
 .danger {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  color: #ffffff;
+  background: linear-gradient(135deg, var(--color-error) 0%, var(--color-red-dark) 100%);
+  color: var(--color-white);
   border: 1px solid rgba(239, 68, 68, 0.2);
   box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
 
 .glass {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--opacity-white-10);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(240, 165, 0, 0.3);
-  color: #374151;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--color-border-hover);
+  color: var(--color-gray-700);
+  box-shadow: 0 4px 12px var(--opacity-black-10);
 }
 
 /* ========================================
@@ -87,15 +87,15 @@
    ======================================== */
 
 .stateSuccess {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  background: linear-gradient(135deg, var(--color-success) 0%, var(--color-green-dark) 100%) !important;
   border: 1px solid rgba(16, 185, 129, 0.2) !important;
-  color: #ffffff !important;
+  color: var(--color-white) !important;
 }
 
 .stateError {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+  background: linear-gradient(135deg, var(--color-error) 0%, var(--color-red-dark) 100%) !important;
   border: 1px solid rgba(239, 68, 68, 0.2) !important;
-  color: #ffffff !important;
+  color: var(--color-white) !important;
 }
 
 .stateLoading {
@@ -130,7 +130,7 @@
   opacity: 0;
   transition: opacity 0.3s;
   border-radius: 8px;
-  background: linear-gradient(to right, transparent, rgba(240, 165, 0, 0.2), transparent);
+  background: linear-gradient(to right, transparent, var(--color-border-light), transparent);
   pointer-events: none;
 }
 

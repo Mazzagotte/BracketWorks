@@ -41,10 +41,10 @@ export class ErrorBoundary extends Component<Props, State> {
         <div style={{
           padding: '2rem',
           textAlign: 'center',
-          border: '1px solid #e5e7eb',
+          border: '1px solid var(--color-border)',
           borderRadius: '8px',
-          backgroundColor: '#fef2f2',
-          color: '#dc2626'
+          backgroundColor: 'var(--color-hc-error-bg)',
+          color: 'var(--color-error)'
         }}>
           <h2>Something went wrong</h2>
           <details style={{ marginTop: '1rem' }}>
@@ -52,7 +52,7 @@ export class ErrorBoundary extends Component<Props, State> {
             <pre style={{ 
               textAlign: 'left', 
               padding: '1rem',
-              backgroundColor: '#f3f4f6',
+              backgroundColor: 'var(--color-gray-100)',
               borderRadius: '4px',
               fontSize: '0.875rem',
               overflow: 'auto'
@@ -65,8 +65,8 @@ export class ErrorBoundary extends Component<Props, State> {
             style={{
               marginTop: '1rem',
               padding: '0.5rem 1rem',
-              backgroundColor: '#dc2626',
-              color: 'white',
+              backgroundColor: 'var(--color-error)',
+              color: 'var(--color-white)',
               border: 'none',
               borderRadius: '4px',
               cursor: 'pointer'

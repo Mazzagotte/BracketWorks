@@ -4,13 +4,13 @@
   justify-content: center;
   min-height: 200px;
   font-size: 14px;
-  color: #6b7280;
+  color: var(--color-text-secondary);
 }
 
 .inlineLoading {
   padding: 1rem;
   font-size: 14px;
-  color: #6b7280;
+  color: var(--color-text-secondary);
 }
 
 .modalLoading {
@@ -19,11 +19,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: var(--overlay-dark);
   z-index: 1000;
 }
 
 .modalLoadingText {
-  color: #fff;
+  color: var(--color-white);
   font-size: 16px;
 }
