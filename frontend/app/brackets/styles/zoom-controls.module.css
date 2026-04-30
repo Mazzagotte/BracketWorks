@@ -14,7 +14,7 @@
   background: white;
   border-radius: 12px;
   padding: 0.75rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px var(--opacity-black-15);
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -29,7 +29,7 @@
 .controlButton {
   width: 2.5rem;
   height: 2.5rem;
-  border: 2px solid #e5e7eb;
+  border: 2px solid var(--color-gray-200);
   background: white;
   border-radius: 8px;
   cursor: pointer;
@@ -39,12 +39,12 @@
   justify-content: center;
   font-size: 1.25rem;
   font-weight: 600;
-  color: #374151;
+  color: var(--color-gray-700);
 }
 
 .controlButton:hover:not(:disabled) {
-  background: #f0a500;
-  border-color: #f0a500;
+  background: var(--color-warning);
+  border-color: var(--color-warning);
   color: white;
   transform: scale(1.05);
 }
@@ -63,7 +63,7 @@
 }
 
 .zoomIndicator {
-  background: #f9fafb;
+  background: var(--color-gray-50);
   padding: 0.5rem 0.75rem;
   border-radius: 6px;
   min-width: 3.5rem;
@@ -73,11 +73,11 @@
 .zoomValue {
   font-size: 0.875rem;
   font-weight: 700;
-  color: #374151;
+  color: var(--color-gray-700);
 }
 
 .resetButton {
-  background: linear-gradient(135deg, #f0a500 0%, #e6941a 100%);
+  background: linear-gradient(135deg, var(--color-warning) 0%, #e6941a 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -94,7 +94,7 @@
 
 .resetButton:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(240, 165, 0, 0.3);
+  box-shadow: 0 4px 12px var(--color-border-hover);
 }
 
 .resetButton:active {
@@ -106,7 +106,7 @@
 }
 
 .panGroup {
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--color-gray-200);
   padding-top: 0.75rem;
 }
 
@@ -126,7 +126,7 @@
 .panButton {
   width: 2rem;
   height: 2rem;
-  border: 2px solid #e5e7eb;
+  border: 2px solid var(--color-gray-200);
   background: white;
   border-radius: 6px;
   cursor: pointer;
@@ -135,12 +135,12 @@
   align-items: center;
   justify-content: center;
   font-size: 0.75rem;
-  color: #6b7280;
+  color: var(--color-text-secondary);
 }
 
 .panButton:hover {
-  background: #f0a500;
-  border-color: #f0a500;
+  background: var(--color-warning);
+  border-color: var(--color-warning);
   color: white;
   transform: scale(1.1);
 }
@@ -156,29 +156,29 @@
   align-items: center;
   justify-content: center;
   font-size: 1rem;
-  color: #9ca3af;
+  color: var(--color-gray-400);
 }
 
 .minimap {
   background: white;
   border-radius: 12px;
   padding: 0.75rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px var(--opacity-black-15);
   width: 200px;
 }
 
 .minimapLabel {
   font-size: 0.75rem;
   font-weight: 600;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   margin-bottom: 0.5rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 .minimapCanvas {
-  background: #f9fafb;
-  border: 2px solid #e5e7eb;
+  background: var(--color-gray-50);
+  border: 2px solid var(--color-gray-200);
   border-radius: 6px;
   height: 120px;
   position: relative;
@@ -187,8 +187,8 @@
 
 .minimapViewport {
   position: absolute;
-  border: 2px solid #f0a500;
-  background: rgba(240, 165, 0, 0.1);
+  border: 2px solid var(--color-warning);
+  background: var(--color-border-light);
   pointer-events: none;
 }
 

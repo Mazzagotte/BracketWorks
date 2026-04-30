@@ -9,13 +9,13 @@
 }
 
 .roundIndicator {
-  background: linear-gradient(135deg, #f0a500 0%, #e6941a 100%);
+  background: linear-gradient(135deg, var(--color-warning) 0%, #e6941a 100%);
   color: white;
   border-radius: 12px;
   padding: 1rem 1.5rem;
   margin-bottom: 1.5rem;
   text-align: center;
-  box-shadow: 0 2px 8px rgba(240, 165, 0, 0.3);
+  box-shadow: 0 2px 8px var(--color-border-hover);
 }
 
 .roundNumber {
@@ -91,18 +91,18 @@
   background: white;
   border-radius: 12px;
   padding: 1rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px var(--opacity-black-08);
   transition: all 0.2s ease;
   cursor: pointer;
   border-left: 4px solid transparent;
 }
 
 .matchCard.completed {
-  border-left-color: #10b981;
+  border-left-color: var(--color-success);
 }
 
 .matchCard.in_progress {
-  border-left-color: #f59e0b;
+  border-left-color: var(--color-warning-amber);
   animation: pulse 2s ease-in-out infinite;
 }
 
@@ -111,18 +111,18 @@
 }
 
 .matchCard.pending {
-  border-left-color: #9ca3af;
+  border-left-color: var(--color-gray-400);
   opacity: 0.7;
 }
 
 .matchCard:active {
   transform: scale(0.98);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 4px var(--opacity-black-10);
 }
 
 @keyframes pulse {
   0%, 100% {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 8px var(--opacity-black-08);
   }
   50% {
     box-shadow: 0 4px 16px rgba(245, 158, 11, 0.3);
@@ -139,7 +139,7 @@
 .matchNumber {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -156,7 +156,7 @@
 
 .statusBadge.completed {
   background: #d1fae5;
-  color: #059669;
+  color: var(--color-green-dark);
 }
 
 .statusBadge.in_progress {
@@ -170,8 +170,8 @@
 }
 
 .statusBadge.pending {
-  background: #f3f4f6;
-  color: #9ca3af;
+  background: var(--color-gray-100);
+  color: var(--color-gray-400);
 }
 
 .players {
@@ -185,14 +185,14 @@
   justify-content: space-between;
   align-items: center;
   padding: 0.75rem;
-  background: #f9fafb;
+  background: var(--color-gray-50);
   border-radius: 8px;
   transition: all 0.2s ease;
 }
 
 .player.winner {
   background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-  border: 2px solid #10b981;
+  border: 2px solid var(--color-success);
   font-weight: 600;
 }
 
@@ -204,7 +204,7 @@
 }
 
 .seed {
-  background: linear-gradient(135deg, #f0a500 0%, #e6941a 100%);
+  background: linear-gradient(135deg, var(--color-warning) 0%, #e6941a 100%);
   color: white;
   width: 2rem;
   height: 2rem;
@@ -219,7 +219,7 @@
 
 .playerName {
   font-size: 1rem;
-  color: #374151;
+  color: var(--color-gray-700);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -228,7 +228,7 @@
 .score {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #374151;
+  color: var(--color-gray-700);
   flex-shrink: 0;
 }
 
@@ -236,7 +236,7 @@
   text-align: center;
   font-size: 0.875rem;
   font-weight: 600;
-  color: #9ca3af;
+  color: var(--color-gray-400);
   padding: 0.5rem 0;
 }
 
@@ -246,9 +246,9 @@
   align-items: center;
   margin-top: 0.75rem;
   padding-top: 0.75rem;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--color-gray-200);
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--color-text-secondary);
 }
 
 .time {
@@ -285,7 +285,7 @@
   width: 0.625rem;
   height: 0.625rem;
   border-radius: 50%;
-  background: #d1d5db;
+  background: var(--color-gray-300);
   border: none;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -293,13 +293,13 @@
 }
 
 .dot.active {
-  background: #f0a500;
+  background: var(--color-warning);
   width: 2rem;
   border-radius: 1rem;
 }
 
 .dot:hover:not(.active) {
-  background: #9ca3af;
+  background: var(--color-gray-400);
   transform: scale(1.2);
 }
 

@@ -1,5 +1,5 @@
 const shimmer = {
-  background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
+  background: 'linear-gradient(90deg, var(--color-gray-100) 25%, var(--color-gray-200) 50%, var(--color-gray-100) 75%)',
   backgroundSize: '200% 100%',
   animation: 'shimmer 1.5s infinite',
   borderRadius: '8px',
@@ -33,7 +33,7 @@ export default function BracketsLoading() {
       </div>
 
       {/* Bracket tree area */}
-      <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e5e7eb', padding: '32px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', overflowX: 'auto' }}>
+      <div style={{ background: 'var(--color-surface)', borderRadius: '16px', border: '1px solid var(--color-border)', padding: '32px', boxShadow: 'var(--shadow-soft)', overflowX: 'auto' }}>
         {/* Simulated bracket rounds */}
         <div style={{ display: 'flex', gap: '40px', alignItems: 'center', minWidth: '600px' }}>
           {/* Round 1 — 8 matches */}
@@ -56,7 +56,7 @@ export default function BracketsLoading() {
           </div>
           {/* Final */}
           <div style={{ marginTop: '196px' }}>
-            <div style={{ ...shimmer, width: '140px', height: '44px', borderRadius: '10px', background: 'linear-gradient(90deg, #fde8d8 25%, #fbd0b8 50%, #fde8d8 75%)', backgroundSize: '200% 100%' }} />
+            <div style={{ ...shimmer, width: '140px', height: '44px', borderRadius: '10px', background: 'linear-gradient(90deg, var(--color-brand-ivory-light) 25%, var(--color-brand-ivory) 50%, var(--color-brand-ivory-light) 75%)', backgroundSize: '200% 100%' }} />
           </div>
         </div>
       </div>

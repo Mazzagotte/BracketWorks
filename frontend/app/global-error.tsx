@@ -16,8 +16,8 @@ export default function GlobalError({
             <button
               onClick={() => reset()}
               style={{
-                backgroundColor: '#F47C20',
-                color: 'white',
+                backgroundColor: 'var(--color-primary-hover)',
+                color: 'var(--color-white)',
                 border: 'none',
                 borderRadius: '8px',
                 padding: '10px 20px',

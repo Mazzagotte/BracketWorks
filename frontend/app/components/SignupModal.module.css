@@ -24,14 +24,14 @@
 
 /* Modal card */
 .modal {
-  background: #FAF4E8;
+  background: var(--color-brand-ivory-light);
   border-radius: 20px;
   max-width: 480px;
   width: 100%;
   max-height: 90vh;
   overflow: auto;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(240, 120, 32, 0.2);
+  border: 1px solid var(--color-border-light);
   animation: slideUp 0.3s ease-out;
   scrollbar-width: none;
 }
@@ -43,8 +43,8 @@
 /* Header */
 .header {
   padding: 28px 28px 20px;
-  border-bottom: 3px solid #F07820;
-  background: #F0E0C0;
+  border-bottom: 3px solid var(--color-primary);
+  background: var(--color-brand-ivory);
   border-radius: 20px 20px 0 0;
 }
 
@@ -52,7 +52,7 @@
   margin: 0;
   font-size: 22px;
   font-weight: 700;
-  color: #1A1A1A;
+  color: var(--color-text-primary);
 }
 
 .subtitle {
@@ -73,7 +73,7 @@
   background: #fef2f2;
   border: 1px solid #fecaca;
   border-radius: 10px;
-  color: #D64545;
+  color: var(--color-error);
   font-size: 14px;
   font-weight: 500;
 }
@@ -96,7 +96,7 @@
   display: block;
   font-size: 13px;
   font-weight: 600;
-  color: #1A1A1A;
+  color: var(--color-text-primary);
   margin-bottom: 6px;
   letter-spacing: 0.1px;
 }
@@ -108,17 +108,17 @@
   border: 1px solid rgba(26, 26, 26, 0.2);
   border-radius: 10px;
   outline: none;
-  background: #ffffff;
+  background: var(--color-white);
   transition: all 0.2s ease;
   box-sizing: border-box;
   font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
-  color: #1A1A1A;
+  color: var(--color-text-primary);
 }
 
 .input:focus {
-  border-color: #F47C20;
-  background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(244, 124, 32, 0.15);
+  border-color: var(--color-primary);
+  background: var(--color-white);
+  box-shadow: 0 0 0 3px var(--color-border-light);
 }
 
 .input::placeholder {
@@ -126,12 +126,12 @@
 }
 
 .inputValid {
-  border-color: #2FBF71 !important;
-  background: #ffffff;
+  border-color: var(--color-success) !important;
+  background: var(--color-white);
 }
 
 .inputError {
-  border-color: #D64545 !important;
+  border-color: var(--color-error) !important;
 }
 
 .inputWithIcon {
@@ -147,7 +147,7 @@
   position: absolute;
   right: 12px;
   bottom: 12px;
-  color: #2FBF71;
+  color: var(--color-success);
   font-size: 16px;
   font-weight: bold;
   pointer-events: none;
@@ -170,7 +170,7 @@
   border: none;
   cursor: pointer;
   font-size: 12px;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   padding: 0 4px;
   z-index: 10;
   transform: none;
@@ -178,7 +178,7 @@
 }
 
 .passwordToggle:hover {
-  color: #374151;
+  color: var(--color-gray-700);
   transform: none;
 }
 
@@ -189,7 +189,7 @@
 
 .strengthTrack {
   height: 4px;
-  background: #e5e7eb;
+  background: var(--color-gray-200);
   border-radius: 2px;
   overflow: hidden;
 }
@@ -201,11 +201,11 @@
 }
 
 /* Strength level colors */
-.strength0, .strength1 { background: #D64545; color: #D64545; }
+.strength0, .strength1 { background: var(--color-error); color: var(--color-error); }
 .strength2             { background: #f97316; color: #f97316; }
-.strength3             { background: #F2A900; color: #F2A900; }
+.strength3             { background: var(--color-warning); color: var(--color-warning); }
 .strength4             { background: #84cc16; color: #84cc16; }
-.strength5             { background: #2FBF71; color: #2FBF71; }
+.strength5             { background: var(--color-success); color: var(--color-success); }
 
 /* Relative wrapper for name fields */
 .fieldRelative {
@@ -226,10 +226,10 @@
   right: 0;
   margin-top: 8px;
   padding: 14px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  background: var(--color-white);
+  border: 1px solid var(--color-gray-200);
   border-radius: 10px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 16px var(--opacity-black-10);
   z-index: 10;
   font-size: 13px;
 }
@@ -250,11 +250,11 @@
 }
 
 .requirementMet {
-  color: #2FBF71;
+  color: var(--color-success);
 }
 
 .requirementUnmet {
-  color: #9ca3af;
+  color: var(--color-gray-400);
 }
 
 /* Inline field hint */
@@ -262,11 +262,11 @@
   margin-top: 4px;
   font-size: 12px;
   font-weight: 500;
-  color: #D64545;
+  color: var(--color-error);
 }
 
 .fieldHintAvailable {
-  color: #2FBF71;
+  color: var(--color-success);
 }
 
 /* Username checking indicator */
@@ -274,7 +274,7 @@
   position: absolute;
   right: 12px;
   bottom: 14px;
-  color: #9ca3af;
+  color: var(--color-gray-400);
   font-size: 14px;
 }
 
@@ -290,9 +290,9 @@
   padding: 13px;
   font-size: 15px;
   font-weight: 600;
-  color: #F07820;
+  color: var(--color-primary);
   background: transparent;
-  border: 1px solid #F07820;
+  border: 1px solid var(--color-primary);
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -300,8 +300,8 @@
 }
 
 .cancelBtn:hover:not(:disabled) {
-  background: rgba(240, 120, 32, 0.08);
-  border-color: #D4580A;
+  background: var(--color-border-light);
+  border-color: var(--color-primary-hover);
 }
 
 .cancelBtn:disabled {
@@ -314,13 +314,13 @@
   padding: 13px;
   font-size: 15px;
   font-weight: 600;
-  color: #ffffff;
-  background: linear-gradient(135deg, #F47C20 0%, #e06a10 100%);
+  color: var(--color-white);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
   border: none;
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(244, 124, 32, 0.25);
+  box-shadow: 0 2px 8px var(--color-border-light);
   font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
 }
 

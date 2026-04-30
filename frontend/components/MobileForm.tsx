@@ -119,7 +119,7 @@ export function MobileFormField({
           align-items: center;
           font-size: 16px;
           font-weight: 600;
-          color: #1a1f2e;
+          color: var(--color-text-primary);
           margin-bottom: 8px;
           gap: 8px;
         }
@@ -129,27 +129,27 @@ export function MobileFormField({
         }
 
         .required-indicator {
-          color: #ef4444;
+          color: var(--color-error);
           margin-left: 4px;
         }
 
         .mobile-input-container {
           position: relative;
           border-radius: 12px;
-          border: 2px solid #e5e7eb;
-          background: #ffffff;
+          border: 2px solid var(--color-gray-200);
+          background: var(--color-white);
           transition: all 0.2s ease;
           overflow: hidden;
         }
 
         .mobile-input-container.focused {
-          border-color: #4f8cff;
-          box-shadow: 0 0 0 3px rgba(79, 140, 255, 0.1);
+          border-color: var(--color-blue-accent);
+          box-shadow: var(--ring-blue);
         }
 
         .mobile-input-container.error {
-          border-color: #ef4444;
-          box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+          border-color: var(--color-error);
+          box-shadow: 0 0 0 3px var(--color-error-input-bg);
         }
 
         .mobile-input {
@@ -158,14 +158,14 @@ export function MobileFormField({
           font-size: 16px; /* Prevents zoom on iOS */
           border: none;
           background: transparent;
-          color: #1a1f2e;
+          color: var(--color-text-primary);
           outline: none;
           appearance: none;
           box-sizing: border-box;
         }
 
         .mobile-input::placeholder {
-          color: #9ca3af;
+          color: var(--color-gray-400);
         }
 
         .mobile-textarea {
@@ -188,17 +188,17 @@ export function MobileFormField({
           display: flex;
           align-items: center;
           gap: 6px;
-          color: #ef4444;
+          color: var(--color-error);
           font-size: 14px;
           margin-top: 8px;
           padding: 8px 12px;
-          background: #fef2f2;
+          background: var(--color-hc-error-bg);
           border-radius: 8px;
-          border: 1px solid #fecaca;
+          border: 1px solid var(--color-error-border);
         }
 
         .mobile-field-help {
-          color: #6b7280;
+          color: var(--color-text-secondary);
           font-size: 14px;
           margin-top: 6px;
           padding-left: 4px;
@@ -231,20 +231,20 @@ export function MobileFormField({
         /* Dark mode support */
         @media (prefers-color-scheme: dark) {
           .mobile-input-container {
-            background: #374151;
-            border-color: #4b5563;
+            background: var(--color-gray-700);
+            border-color: var(--color-dark-lighter);
           }
           
           .mobile-input {
-            color: #f9fafb;
+            color: var(--color-gray-50);
           }
           
           .mobile-input::placeholder {
-            color: #9ca3af;
+            color: var(--color-gray-400);
           }
           
           .mobile-form-label {
-            color: #f9fafb;
+            color: var(--color-gray-50);
           }
         }
       `}</style>
@@ -308,15 +308,15 @@ export function MobileForm({
           max-width: 500px;
           margin: 0 auto;
           padding: 20px;
-          background: #ffffff;
+          background: var(--color-white);
           border-radius: 16px;
-          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 4px 16px var(--opacity-black-10);
         }
 
         .mobile-form-title {
           font-size: 24px;
           font-weight: 700;
-          color: #1a1f2e;
+          color: var(--color-text-primary);
           margin-bottom: 24px;
           text-align: center;
         }
@@ -334,8 +334,8 @@ export function MobileForm({
           padding: 16px;
           font-size: 17px;
           font-weight: 600;
-          color: #ffffff;
-          background: linear-gradient(135deg, #4f8cff 0%, #6ed0fa 100%);
+          color: var(--color-white);
+          background: var(--gradient-blue-light);
           border: none;
           border-radius: 12px;
           cursor: pointer;
@@ -349,7 +349,7 @@ export function MobileForm({
 
         .mobile-form-submit:hover:not(:disabled) {
           transform: translateY(-1px);
-          box-shadow: 0 6px 20px rgba(79, 140, 255, 0.3);
+          box-shadow: var(--shadow-blue-md);
         }
 
         .mobile-form-submit:active {
@@ -363,7 +363,7 @@ export function MobileForm({
         }
 
         .mobile-form-submit.submitting {
-          background: #9ca3af;
+          background: var(--color-gray-400);
         }
 
         .loading-spinner {

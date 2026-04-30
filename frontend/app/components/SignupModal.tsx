@@ -171,8 +171,8 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
   };
 
   const getStrengthColor = () => {
-    const colors = ['#D64545', '#D64545', '#f97316', '#F2A900', '#84cc16', '#2FBF71'];
-    return colors[passwordStrength] || '#e5e7eb';
+    const colors = ['var(--color-error)', 'var(--color-error)', '#f97316', 'var(--color-warning)', '#84cc16', 'var(--color-success)'];
+    return colors[passwordStrength] || 'var(--color-gray-200)';
   };
 
   const inputClass = (valid: boolean, hasError?: boolean) =>

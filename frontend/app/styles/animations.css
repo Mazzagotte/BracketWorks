@@ -129,7 +129,7 @@
 
 .hover-lift:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  box-shadow: 0 8px 25px var(--opacity-black-15);
 }
 
 .hover-glow {
@@ -184,7 +184,7 @@ button[style*="linear-gradient(90deg, #ffb347"]:not(:disabled):hover {
   box-shadow: 0 4px 20px rgba(255, 179, 71, 0.4) !important;
 }
 
-button[style*="linear-gradient(90deg, #f0a500"]:not(:disabled):hover {
+button[style*="linear-gradient(90deg, var(--color-warning)"]:not(:disabled):hover {
   box-shadow: 0 4px 20px rgba(240, 165, 0, 0.4) !important;
 }
 
@@ -329,7 +329,7 @@ button[style*="linear-gradient(90deg, #6ed0fa"]:not(:disabled):hover {
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--opacity-white-20);
   box-shadow: 
     0 8px 32px rgba(31, 38, 135, 0.15),
     0 2px 8px rgba(31, 38, 135, 0.1);
@@ -347,7 +347,7 @@ button[style*="linear-gradient(90deg, #6ed0fa"]:not(:disabled):hover {
   background: rgba(35, 43, 54, 0.85);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--opacity-white-10);
   box-shadow: 
     0 8px 32px rgba(0, 0, 0, 0.3),
     0 2px 8px rgba(0, 0, 0, 0.2);
@@ -358,7 +358,7 @@ button[style*="linear-gradient(90deg, #6ed0fa"]:not(:disabled):hover {
   border-radius: 16px;
   padding: 24px;
   box-shadow: 
-    0 4px 16px rgba(0, 0, 0, 0.08),
+    0 4px 16px var(--opacity-black-08),
     0 1px 4px rgba(0, 0, 0, 0.04),
     inset 0 1px 0 rgba(255, 255, 255, 0.9);
   border: 1px solid rgba(255, 255, 255, 0.8);
@@ -387,7 +387,7 @@ button[style*="linear-gradient(90deg, #6ed0fa"]:not(:disabled):hover {
   transform: translateY(-4px) scale(1.02);
   box-shadow: 
     0 12px 32px rgba(0, 0, 0, 0.12),
-    0 4px 16px rgba(0, 0, 0, 0.08),
+    0 4px 16px var(--opacity-black-08),
     inset 0 1px 0 rgba(255, 255, 255, 1);
 }
 
@@ -410,7 +410,7 @@ button[style*="linear-gradient(90deg, #6ed0fa"]:not(:disabled):hover {
   left: -50%;
   width: 200%;
   height: 200%;
-  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+  background: radial-gradient(circle, var(--opacity-white-10) 0%, transparent 70%);
   opacity: 0;
   transition: opacity 0.5s ease;
   pointer-events: none;
@@ -445,7 +445,7 @@ button[style*="linear-gradient(90deg, #6ed0fa"]:not(:disabled):hover {
 .spinner {
   width: 20px;
   height: 20px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border: 2px solid var(--opacity-white-30);
   border-top: 2px solid currentColor;
   border-radius: 50%;
   animation: spin 1s linear infinite;
@@ -795,6 +795,6 @@ button[style*="linear-gradient(90deg, #6ed0fa"]:not(:disabled):hover {
 @media (max-width: 480px) and (prefers-color-scheme: dark) {
   .enhanced-card {
     background: rgba(35, 43, 54, 0.95) !important;
-    border-color: rgba(255, 255, 255, 0.1) !important;
+    border-color: var(--opacity-white-10) !important;
   }
 }

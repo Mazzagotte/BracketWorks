@@ -2,13 +2,13 @@
 
 .sidebar {
   width: 208px;
-  background: linear-gradient(180deg, #1A1A1A 0%, #2D2D2D 60%, #222222 100%);
+  background: linear-gradient(180deg, var(--color-dark-base) 0%, var(--color-dark-surface) 60%, var(--color-dark-elevated) 100%);
   height: 100vh;
   position: fixed;
   left: 0;
   top: 0;
   box-shadow: none;
-  border-right: 3px solid #F07820;
+  border-right: 3px solid var(--color-primary);
   z-index: 1000;
   display: flex;
   flex-direction: column;
@@ -35,9 +35,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  border-bottom: 3px solid #F07820;
+  border-bottom: 3px solid var(--color-primary);
   position: relative;
-  background: var(--color-brand-ivory-light, #FAF4E8);
+  background: var(--color-brand-ivory-light, var(--color-brand-ivory-light));
   flex-shrink: 0;
 }
 
@@ -66,14 +66,14 @@
   margin-top: 8px;
   margin-bottom: 6px;
   padding: 6px 12px;
-  background: var(--color-brand-ivory-light, #FAF4E8);
+  background: var(--color-brand-ivory-light, var(--color-brand-ivory-light));
   border-radius: 12px;
-  border: 1px solid rgba(107, 45, 15, 0.2);
+  border: 1px solid var(--color-border-light);
   flex-shrink: 0;
 }
 
 .welcomeText {
-  color: #5a4030;
+  color: var(--color-text-primary);
   font-weight: 600;
   font-size: 0.9rem;
   letter-spacing: 0.3px;
@@ -95,7 +95,7 @@
 }
 
 .navLink {
-  color: rgba(240, 224, 192, 0.75);
+  color: var(--color-brand-ivory);
   background: transparent;
   text-decoration: none;
   font-weight: 500;
@@ -111,23 +111,23 @@
 }
 
 .navLink:hover {
-  color: var(--color-brand-ivory, #F0E0C0);
-  background: rgba(240, 120, 32, 0.1);
-  border-color: rgba(240, 120, 32, 0.15);
-  border-left-color: rgba(240, 120, 32, 0.7);
+  color: var(--color-brand-ivory, var(--color-brand-ivory));
+  background: var(--color-border-light);
+  border-color: var(--color-border-light);
+  border-left-color: var(--color-primary);
 }
 
 .navLinkActive {
-  color: var(--color-brand-ivory, #F0E0C0);
-  background: linear-gradient(90deg, rgba(240, 120, 32, 0.22) 0%, rgba(240, 120, 32, 0.06) 100%);
+  color: var(--color-brand-ivory, var(--color-brand-ivory));
+  background: linear-gradient(90deg, var(--color-border-hover) 0%, var(--color-border-light) 100%);
   font-weight: 600;
-  border: 1px solid rgba(240, 120, 32, 0.3);
-  border-left: 3px solid var(--color-brand-orange, #F07820);
+  border: 1px solid var(--color-border-hover);
+  border-left: 3px solid var(--color-primary);
 }
 
 .navLinkActive:hover {
-  background: linear-gradient(90deg, rgba(240, 120, 32, 0.28) 0%, rgba(240, 120, 32, 0.1) 100%);
-  border-left-color: var(--color-brand-orange, #F07820);
+  background: linear-gradient(90deg, var(--color-border-hover) 0%, var(--color-border-light) 100%);
+  border-left-color: var(--color-primary);
 }
 
 /* Spacer */
@@ -153,8 +153,8 @@
   justify-content: center;
   text-align: center;
   text-decoration: none;
-  background: linear-gradient(135deg, #5f646c 0%, #474b52 60%, #31343a 100%);
-  color: #f4f6f8;
+  background: linear-gradient(135deg, var(--color-dark-lighter) 0%, var(--color-dark-elevated) 60%, var(--color-dark-base) 100%);
+  color: var(--color-white);
   font-weight: 700;
   font-size: 0.9rem;
   border: none;
@@ -163,18 +163,18 @@
   height: 42px;
   line-height: 1;
   cursor: pointer;
-  box-shadow: 0 4px 16px rgba(32, 36, 42, 0.4);
+  box-shadow: var(--shadow-md);
   transition: all 0.2s ease;
   letter-spacing: 0.5px;
 }
 
 .settingsBtn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(32, 36, 42, 0.55);
+  box-shadow: var(--shadow-lg);
 }
 
 .settingsBtnActive {
-  background: linear-gradient(135deg, #6a7078 0%, #50555d 60%, #383c43 100%);
+  background: linear-gradient(135deg, var(--color-dark-accent) 0%, var(--color-dark-lighter) 60%, var(--color-dark-elevated) 100%);
 }
 
 .logoutBtn {
@@ -183,8 +183,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--gradient-brand-logo, linear-gradient(135deg, #E8480C 0%, #C13000 60%, #3D1A06 100%));
-  color: var(--color-brand-ivory, #F0E0C0);
+  background: var(--gradient-brand-logo);
+  color: var(--color-brand-ivory, var(--color-brand-ivory));
   font-weight: 700;
   font-size: 0.9rem;
   border: none;
@@ -193,14 +193,14 @@
   height: 42px;
   line-height: 1;
   cursor: pointer;
-  box-shadow: 0 4px 16px rgba(212, 88, 10, 0.35);
+  box-shadow: var(--shadow-brand-md);
   transition: all 0.2s ease;
   letter-spacing: 0.5px;
 }
 
 .logoutBtn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(212, 88, 10, 0.5);
+  box-shadow: var(--shadow-brand-glow);
 }
 
 .logoutBtn:active {
@@ -259,9 +259,9 @@
   position: absolute;
   top: 12px;
   right: 12px;
-  background: rgba(240, 120, 32, 0.15);
-  border: 1px solid rgba(240, 120, 32, 0.3);
-  color: var(--color-brand-ivory, #F0E0C0);
+  background: var(--color-border-light);
+  border: 1px solid var(--color-border-hover);
+  color: var(--color-brand-ivory);
   font-size: 18px;
   width: 32px;
   height: 32px;
@@ -274,5 +274,5 @@
 }
 
 .closeBtn:hover {
-  background: rgba(240, 120, 32, 0.3);
+  background: var(--color-border-light);
 }

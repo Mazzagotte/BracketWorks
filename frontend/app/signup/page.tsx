@@ -461,12 +461,12 @@ export default function SignupPage() {
 
           {error && (
             <div className="signup-error-container" style={{
-              background: 'rgba(239, 68, 68, 0.1)',
+              background: 'var(--color-error-input-bg)',
               border: '1px solid rgba(239, 68, 68, 0.2)',
               borderRadius: '8px',
               padding: '12px',
               marginTop: '16px',
-              color: '#D64545',
+              color: 'var(--color-error)',
               fontSize: '14px'
             }}>
               {error}

@@ -43,9 +43,9 @@ export const LoginLinks: React.FC<LoginLinksProps> = ({
           width: '100%',
           textAlign: 'center',
           fontFamily: 'Inter, Segoe UI, Arial, sans-serif',
-          color: '#6b7280',
-          background: '#f9fafb',
-          border: '1px solid #e5e7eb'
+          color: 'var(--color-text-secondary)',
+          background: 'var(--color-gray-50)',
+          border: '1px solid var(--color-border)'
         }}
       >
         Create Account
@@ -67,9 +67,9 @@ export const LoginLinks: React.FC<LoginLinksProps> = ({
           width: '100%',
           textAlign: 'center',
           fontFamily: 'Inter, Segoe UI, Arial, sans-serif',
-          color: '#f0a500',
-          background: 'rgba(240, 165, 0, 0.08)',
-          border: '1px solid rgba(240, 165, 0, 0.2)'
+          color: 'var(--color-warning)',
+          background: 'var(--color-yellow-light)',
+          border: '1px solid var(--color-border-light)'
         }}
       >
         Forgot Password?

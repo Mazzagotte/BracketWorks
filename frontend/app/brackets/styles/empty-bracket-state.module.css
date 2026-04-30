@@ -13,7 +13,7 @@
   border: 1px solid color-mix(in srgb, var(--color-brand-orange) 20%, transparent);
   border-radius: 20px;
   padding: 2.15rem;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 12px 30px var(--opacity-black-10);
   overflow: hidden;
 }
 
@@ -169,7 +169,7 @@
 .featureCard:hover {
   transform: translateY(-2px);
   border-color: color-mix(in srgb, var(--color-brand-orange) 28%, transparent);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 6px 16px var(--opacity-black-08);
 }
 
 .featureCard h3 {

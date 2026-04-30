@@ -83,10 +83,10 @@ export function DevAuthStatus() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'online': return '#10b981';
-      case 'offline': return '#ef4444';
-      case 'checking': return '#f59e0b';
-      default: return '#6b7280';
+      case 'online': return 'var(--color-success)';
+      case 'offline': return 'var(--color-error)';
+      case 'checking': return 'var(--color-warning-amber)';
+      default: return 'var(--color-text-secondary)';
     }
   };
 
@@ -105,10 +105,10 @@ export function DevAuthStatus() {
       top: '10px',
       right: '10px',
       zIndex: 9999,
-      backgroundColor: '#ffffff',
-      border: '1px solid #e5e7eb',
+      backgroundColor: 'var(--color-surface)',
+      border: '1px solid var(--color-border)',
       borderRadius: '8px',
-      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+      boxShadow: 'var(--shadow-md)',
       fontSize: '12px',
       fontFamily: 'Inter, sans-serif',
       minWidth: isExpanded ? '300px' : '120px',
@@ -131,7 +131,7 @@ export function DevAuthStatus() {
             width: '8px',
             height: '8px',
             borderRadius: '50%',
-            backgroundColor: mounted ? getStatusColor(apiStatus.status) : '#f59e0b',
+            backgroundColor: mounted ? getStatusColor(apiStatus.status) : 'var(--color-warning-amber)',
             animation: apiStatus.status === 'checking' ? 'pulse 2s infinite' : 'none'
           }} />
           
@@ -140,7 +140,7 @@ export function DevAuthStatus() {
             width: '8px',
             height: '8px',
             borderRadius: '50%',
-            backgroundColor: mounted ? (auth.isAuthenticated ? '#10b981' : '#ef4444') : '#f59e0b'
+            backgroundColor: mounted ? (auth.isAuthenticated ? 'var(--color-success)' : 'var(--color-error)') : 'var(--color-warning-amber)'
           }} />
           
           <span style={{ fontWeight: '500' }}>
@@ -148,7 +148,7 @@ export function DevAuthStatus() {
           </span>
         </div>
         
-        <span style={{ fontSize: '10px', color: '#6b7280' }}>
+        <span style={{ fontSize: '10px', color: 'var(--color-text-secondary)' }}>
           {isExpanded ? '▼' : '▶'}
         </span>
       </div>
@@ -157,11 +157,11 @@ export function DevAuthStatus() {
       {isExpanded && (
         <div style={{
           padding: '0 12px 12px 12px',
-          borderTop: '1px solid #f3f4f6'
+          borderTop: '1px solid var(--color-gray-100)'
         }}>
           {/* API Status */}
           <div style={{ marginBottom: '12px' }}>
-            <div style={{ fontWeight: '600', marginBottom: '4px', color: '#374151' }}>
+            <div style={{ fontWeight: '600', marginBottom: '4px', color: 'var(--color-gray-700)' }}>
               API Status
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
@@ -171,27 +171,27 @@ export function DevAuthStatus() {
                 borderRadius: '50%',
                 backgroundColor: getStatusColor(apiStatus.status)
               }} />
-              <span style={{ color: '#6b7280' }}>
+              <span style={{ color: 'var(--color-text-secondary)' }}>
                 {getStatusText(apiStatus.status)}
               </span>
             </div>
             {apiStatus.url && (
-              <div style={{ color: '#6b7280', fontSize: '11px', wordBreak: 'break-all' }}>
+              <div style={{ color: 'var(--color-text-secondary)', fontSize: '11px', wordBreak: 'break-all' }}>
                 URL: {apiStatus.url}
               </div>
             )}
             {apiStatus.responseTime && (
-              <div style={{ color: '#6b7280', fontSize: '11px' }}>
+              <div style={{ color: 'var(--color-text-secondary)', fontSize: '11px' }}>
                 Response: {apiStatus.responseTime}ms
               </div>
             )}
             {apiStatus.error && (
-              <div style={{ color: '#ef4444', fontSize: '11px', wordBreak: 'break-all' }}>
+              <div style={{ color: 'var(--color-error)', fontSize: '11px', wordBreak: 'break-all' }}>
                 Error: {apiStatus.error}
               </div>
             )}
             {apiStatus.lastChecked && (
-              <div style={{ color: '#6b7280', fontSize: '11px' }}>
+              <div style={{ color: 'var(--color-text-secondary)', fontSize: '11px' }}>
                 Last: {apiStatus.lastChecked.toLocaleTimeString()}
               </div>
             )}
@@ -203,8 +203,8 @@ export function DevAuthStatus() {
                 marginTop: '4px',
                 padding: '2px 6px',
                 fontSize: '10px',
-                backgroundColor: '#f3f4f6',
-                border: '1px solid #d1d5db',
+                backgroundColor: 'var(--color-gray-100)',
+                border: '1px solid var(--color-gray-300)',
                 borderRadius: '4px',
                 cursor: 'pointer'
               }}
@@ -215,7 +215,7 @@ export function DevAuthStatus() {
 
           {/* Auth Status */}
           <div style={{ marginBottom: '12px' }}>
-            <div style={{ fontWeight: '600', marginBottom: '4px', color: '#374151' }}>
+            <div style={{ fontWeight: '600', marginBottom: '4px', color: 'var(--color-gray-700)' }}>
               Authentication
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
@@ -223,34 +223,34 @@ export function DevAuthStatus() {
                 width: '6px',
                 height: '6px',
                 borderRadius: '50%',
-                backgroundColor: auth.isAuthenticated ? '#10b981' : '#ef4444'
+                backgroundColor: auth.isAuthenticated ? 'var(--color-success)' : 'var(--color-error)'
               }} />
-              <span style={{ color: '#6b7280' }}>
+              <span style={{ color: 'var(--color-text-secondary)' }}>
                 {auth.isAuthenticated ? 'Authenticated' : 'Not Authenticated'}
               </span>
             </div>
             {auth.user && (
-              <div style={{ color: '#6b7280', fontSize: '11px' }}>
+              <div style={{ color: 'var(--color-text-secondary)', fontSize: '11px' }}>
                 User: {auth.user.name || auth.user.id}
               </div>
             )}
-            <div style={{ color: '#6b7280', fontSize: '11px' }}>
+            <div style={{ color: 'var(--color-text-secondary)', fontSize: '11px' }}>
               Token: {auth.token ? 'Present' : 'Missing'}
             </div>
           </div>
 
           {/* Local Storage */}
           <div>
-            <div style={{ fontWeight: '600', marginBottom: '4px', color: '#374151' }}>
+            <div style={{ fontWeight: '600', marginBottom: '4px', color: 'var(--color-gray-700)' }}>
               Local Storage
             </div>
-            <div style={{ color: '#6b7280', fontSize: '11px' }}>
+            <div style={{ color: 'var(--color-text-secondary)', fontSize: '11px' }}>
               token: {typeof window !== 'undefined' && localStorage.getItem('token') ? 'Present' : 'Missing'}
             </div>
-            <div style={{ color: '#6b7280', fontSize: '11px' }}>
+            <div style={{ color: 'var(--color-text-secondary)', fontSize: '11px' }}>
               user_id: {typeof window !== 'undefined' && localStorage.getItem('user_id') ? 'Present' : 'Missing'}
             </div>
-            <div style={{ color: '#6b7280', fontSize: '11px' }}>
+            <div style={{ color: 'var(--color-text-secondary)', fontSize: '11px' }}>
               first_name: {typeof window !== 'undefined' && localStorage.getItem('first_name') ? 'Present' : 'Missing'}
             </div>
           </div>

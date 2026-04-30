@@ -178,27 +178,27 @@ const Header = memo(function Header({
     
     switch (tournament.status) {
       case 'draft':
-        return { icon: '📝', label: 'Draft', bg: '#f3f4f6', color: '#374151' }
+        return { icon: '📝', label: 'Draft', bg: 'var(--color-gray-100)', color: 'var(--color-gray-700)' }
       case 'registration_open':
-        return { icon: '📝', label: 'Registration Open', bg: '#dbeafe', color: '#1e40af' }
+        return { icon: '📝', label: 'Registration Open', bg: 'var(--color-blue-light)', color: 'var(--color-blue-deeper)' }
       case 'in_progress':
-        return { icon: 'Squad', label: 'In Progress', bg: '#fef3c7', color: '#92400e' }
+        return { icon: 'Squad', label: 'In Progress', bg: 'var(--color-yellow-light)', color: 'var(--color-warning-text-deep)' }
       case 'completed':
-        return { icon: '', label: 'Completed', bg: '#d1fae5', color: '#065f46' }
+        return { icon: '', label: 'Completed', bg: 'var(--color-green-light)', color: 'var(--color-success-text-deep)' }
       case 'cancelled':
-        return { icon: '', label: 'Cancelled', bg: '#fee2e2', color: '#dc2626' }
+        return { icon: '', label: 'Cancelled', bg: 'var(--color-hc-error-bg)', color: 'var(--color-red-dark)' }
       default:
-        return { icon: '❓', label: 'Unknown', bg: '#f3f4f6', color: '#6b7280' }
+        return { icon: '❓', label: 'Unknown', bg: 'var(--color-gray-100)', color: 'var(--color-text-secondary)' }
     }
   }, [tournament?.status])
 
   const connectionStyles = useMemo(() => ({
     padding: '0.25rem 0.5rem',
     borderRadius: '12px',
-    backgroundColor: connectionStatus === 'online' ? '#ecfdf5' : 
-                   connectionStatus === 'syncing' ? '#fef3c7' : '#fef2f2',
-    color: connectionStatus === 'online' ? '#065f46' : 
-           connectionStatus === 'syncing' ? '#92400e' : '#991b1b'
+      backgroundColor: connectionStatus === 'online' ? 'var(--color-hc-success-bg)' : 
+           connectionStatus === 'syncing' ? 'var(--color-yellow-light)' : 'var(--color-hc-error-bg)',
+      color: connectionStatus === 'online' ? 'var(--color-success-text-deep)' : 
+        connectionStatus === 'syncing' ? 'var(--color-warning-text-deep)' : 'var(--color-error-text-deep)'
   }), [connectionStatus])
 
   const lastUpdatedText = useMemo(() => {
@@ -274,7 +274,7 @@ const Header = memo(function Header({
           style={{ 
             height: '60px',
             borderRadius: '8px',
-            border: '1px solid #e2e8f0'
+            border: '1px solid var(--color-border)'
           }}>
         </div>
       )
@@ -286,11 +286,11 @@ const Header = memo(function Header({
         data-tooltip={tooltip}
         style={{ 
           textAlign: 'center',
-          background: '#ffffff',
+          background: 'var(--color-surface)',
           padding: '0.5rem',
           borderRadius: '8px',
-          border: '1px solid #e2e8f0',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+          border: '1px solid var(--color-border)',
+          boxShadow: 'var(--shadow-soft)',
           cursor: 'pointer'
         }}>
         <div style={{ fontSize: '1.25rem', fontWeight: '700' }}>
@@ -308,13 +308,13 @@ const Header = memo(function Header({
     return breadcrumbs.map((crumb, index) => (
       <React.Fragment key={`${crumb.label}-${index}`}>
         {crumb.href ? (
-          <Link href={crumb.href} className="breadcrumb-link" style={{ color: '#475569', textDecoration: 'none' }}>
+          <Link href={crumb.href} className="breadcrumb-link" style={{ color: 'var(--color-text-secondary)', textDecoration: 'none' }}>
             {crumb.label}
           </Link>
         ) : (
-          <span style={{ color: '#374151' }}>{crumb.label}</span>
+          <span style={{ color: 'var(--color-text-primary)' }}>{crumb.label}</span>
         )}
-        {index < breadcrumbs.length - 1 && <span style={{ margin: '0 0.5rem', color: '#9ca3af' }}>/</span>}
+        {index < breadcrumbs.length - 1 && <span style={{ margin: '0 0.5rem', color: 'var(--color-text-secondary)' }}>/</span>}
       </React.Fragment>
     ))
   }, [breadcrumbs])
@@ -343,7 +343,7 @@ const Header = memo(function Header({
           className={`notification-item priority-${notification.priority || 'low'} type-${notification.type}`}
           style={{ 
             padding: '1rem',
-            borderBottom: index < visibleNotifications.length - 1 ? '1px solid #f3f4f6' : 'none',
+            borderBottom: index < visibleNotifications.length - 1 ? '1px solid var(--color-gray-100)' : 'none',
             position: 'relative'
           }}>
           <button
@@ -364,21 +364,21 @@ const Header = memo(function Header({
                     fontWeight: '700',
                     padding: '0.125rem 0.375rem',
                     borderRadius: '0.25rem',
-                    backgroundColor: notification.priority === 'high' ? '#ef4444' : '#f59e0b',
-                    color: 'white',
+                    backgroundColor: notification.priority === 'high' ? 'var(--color-error)' : 'var(--color-warning-amber)',
+                    color: 'var(--color-white)',
                     textTransform: 'uppercase'
                   }}>
                     {priorityLabel}
                   </span>
                 )}
-                <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
                   {notification.timestamp.toLocaleTimeString()}
                 </span>
               </div>
 
               <div style={{
                 fontWeight: '500',
-                color: '#111827',
+                color: 'var(--color-text-primary)',
                 lineHeight: '1.4'
               }}>
                 {notification.message}
@@ -450,14 +450,14 @@ const Header = memo(function Header({
         }
         
         .header-container {
-          background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-          color: #1e293b;
+          background: var(--color-background);
+          color: var(--color-text-primary);
           padding: ${isMobile ? (isHeaderCollapsed ? '0.75rem 1rem' : '1.5rem 1rem') : '2rem'};
           border-radius: 0 0 16px 16px;
           margin: 0 auto 2rem;
           max-width: 1200px;
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-          border: 1px solid #e2e8f0;
+          box-shadow: var(--shadow-md);
+          border: 1px solid var(--color-border);
           position: relative;
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           transform: ${isMobile && isHeaderCollapsed ? 'translateY(-10px)' : 'translateY(0)'};
@@ -465,8 +465,12 @@ const Header = memo(function Header({
         }
         
         .header-container:hover {
-          box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+          box-shadow: var(--shadow-card-hover);
           transform: ${isMobile && isHeaderCollapsed ? 'translateY(-12px)' : 'translateY(-2px)'};
+        }
+
+        .header-container nav {
+          background: var(--color-background);
         }
         
         .interactive-button {
@@ -475,12 +479,12 @@ const Header = memo(function Header({
         
         .interactive-button:hover {
           transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          box-shadow: var(--shadow-md);
         }
         
         .interactive-button:active {
           transform: translateY(0);
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          box-shadow: var(--shadow-sm);
         }
         
         .notification-badge {
@@ -493,7 +497,7 @@ const Header = memo(function Header({
         
         .stats-card:hover {
           transform: translateY(-4px) scale(1.02);
-          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+          box-shadow: var(--shadow-card-hover);
         }
         
         .progress-bar {
@@ -510,7 +514,7 @@ const Header = memo(function Header({
           height: 100%;
           background: linear-gradient(90deg, 
             transparent, 
-            rgba(255, 255, 255, 0.4), 
+            var(--color-brand-ivory-light), 
             transparent
           );
           animation: shimmer 2s infinite;
@@ -526,7 +530,7 @@ const Header = memo(function Header({
         }
         
         .breadcrumb-link:hover {
-          color: #1e40af !important;
+          color: var(--color-primary) !important;
           text-decoration: underline !important;
         }
         
@@ -577,7 +581,7 @@ const Header = memo(function Header({
         @media (hover: none) and (pointer: coarse) {
           .stats-card:hover {
             transform: none;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow-sm);
           }
           
           .interactive-button:hover {
@@ -591,7 +595,7 @@ const Header = memo(function Header({
         
         /* Enhanced Visual Feedback */
         .skeleton {
-          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+          background: var(--gradient-gray);
           background-size: 200% 100%;
           animation: skeleton-loading 1.5s infinite;
         }
@@ -602,20 +606,20 @@ const Header = memo(function Header({
         }
         
         .success-indicator {
-          border-left: 4px solid #10b981;
-          background: #f0fdf4;
+          border-left: 4px solid var(--color-success);
+          background: var(--color-hc-success-bg);
           transition: all 0.3s ease;
         }
         
         .warning-indicator {
-          border-left: 4px solid #f59e0b;
-          background: #fffbeb;
+          border-left: 4px solid var(--color-warning-amber);
+          background: var(--color-yellow-light);
           transition: all 0.3s ease;
         }
         
         .error-indicator {
-          border-left: 4px solid #ef4444;
-          background: #fef2f2;
+          border-left: 4px solid var(--color-error);
+          background: var(--color-hc-error-bg);
           transition: all 0.3s ease;
         }
         
@@ -631,10 +635,10 @@ const Header = memo(function Header({
           margin-right: 0.5rem;
         }
         
-        .status-online { background-color: #10b981; }
-        .status-offline { background-color: #ef4444; }
+        .status-online { background-color: var(--color-success); }
+        .status-offline { background-color: var(--color-error); }
         .status-syncing { 
-          background-color: #f59e0b;
+          background-color: var(--color-warning-amber);
           animation: pulse 1s ease-in-out infinite alternate;
         }
         
@@ -651,7 +655,7 @@ const Header = memo(function Header({
         .connection-indicator:hover {
           opacity: 1;
           transform: scale(1);
-          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+          box-shadow: var(--shadow-md);
         }
         
         .connection-indicator.connection-pulse {
@@ -661,11 +665,11 @@ const Header = memo(function Header({
         @keyframes connectionPulse {
           0%, 100% { 
             opacity: 0.9;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow-sm);
           }
           50% { 
             opacity: 1;
-            box-shadow: 0 4px 20px rgba(245, 158, 11, 0.3);
+            box-shadow: var(--shadow-brand-glow);
           }
         }
         
@@ -680,8 +684,8 @@ const Header = memo(function Header({
           bottom: 100%;
           left: 50%;
           transform: translateX(-50%);
-          background: rgba(0, 0, 0, 0.8);
-          color: white;
+          background: var(--color-dark-base);
+          color: var(--color-white);
           padding: 0.5rem;
           border-radius: 4px;
           font-size: 0.75rem;
@@ -707,43 +711,43 @@ const Header = memo(function Header({
         }
         
         .notification-item:hover {
-          background-color: #f9fafb;
+          background-color: var(--color-gray-50);
           transform: translateX(2px);
         }
         
         .notification-item.priority-high {
-          border-left-color: #ef4444;
-          background-color: #fef2f2;
+          border-left-color: var(--color-error);
+          background-color: var(--color-hc-error-bg);
         }
         
         .notification-item.priority-medium {
-          border-left-color: #f59e0b;
-          background-color: #fffbeb;
+          border-left-color: var(--color-warning-amber);
+          background-color: var(--color-yellow-light);
         }
         
         .notification-item.priority-low {
-          border-left-color: #3b82f6;
-          background-color: #eff6ff;
+          border-left-color: var(--color-blue-primary);
+          background-color: var(--color-blue-light);
         }
         
         .notification-item.type-success {
-          border-left-color: #10b981;
-          background-color: #f0fdf4;
+          border-left-color: var(--color-success);
+          background-color: var(--color-hc-success-bg);
         }
         
         .notification-item.type-error {
-          border-left-color: #ef4444;
-          background-color: #fef2f2;
+          border-left-color: var(--color-error);
+          background-color: var(--color-hc-error-bg);
         }
         
         .notification-item.type-warning {
-          border-left-color: #f59e0b;
-          background-color: #fffbeb;
+          border-left-color: var(--color-warning-amber);
+          background-color: var(--color-yellow-light);
         }
         
         .notification-item.type-info {
-          border-left-color: #3b82f6;
-          background-color: #eff6ff;
+          border-left-color: var(--color-blue-primary);
+          background-color: var(--color-blue-light);
         }
         
         .notification-actions {
@@ -763,21 +767,21 @@ const Header = memo(function Header({
         }
         
         .notification-action-btn.primary {
-          background-color: #3b82f6;
-          color: white;
+          background-color: var(--color-primary);
+          color: var(--color-white);
         }
         
         .notification-action-btn.primary:hover {
-          background-color: #2563eb;
+          background-color: var(--color-primary-hover);
         }
         
         .notification-action-btn.secondary {
-          background-color: #f3f4f6;
-          color: #374151;
+          background-color: var(--color-gray-100);
+          color: var(--color-gray-700);
         }
         
         .notification-action-btn.secondary:hover {
-          background-color: #e5e7eb;
+          background-color: var(--color-gray-200);
         }
         
         .notification-dismiss {
@@ -786,7 +790,7 @@ const Header = memo(function Header({
           right: 0.5rem;
           background: none;
           border: none;
-          color: #9ca3af;
+          color: var(--color-text-secondary);
           cursor: pointer;
           font-size: 1rem;
           width: 20px;
@@ -799,8 +803,8 @@ const Header = memo(function Header({
         }
         
         .notification-dismiss:hover {
-          background-color: #f3f4f6;
-          color: #374151;
+          background-color: var(--color-gray-100);
+          color: var(--color-gray-700);
         }
       `}</style>
       
@@ -852,7 +856,7 @@ const Header = memo(function Header({
                 margin: 0, 
                 fontSize: isMobile ? (isHeaderCollapsed ? '1.25rem' : '1.75rem') : '2.25rem',
                 fontWeight: '700',
-                color: '#1e293b',
+                color: 'var(--color-text-primary)',
                 wordBreak: 'break-word',
                 textAlign: 'center'
               }}>
@@ -866,8 +870,8 @@ const Header = memo(function Header({
                   style={{
                     width: '20px',
                     height: '20px',
-                    border: '2px solid rgba(30, 41, 59, 0.2)',
-                    borderTop: '2px solid #1e293b',
+                    border: '2px solid var(--color-border)',
+                    borderTop: '2px solid var(--color-text-primary)',
                     borderRadius: '50%'
                   }}>
                 </div>
@@ -879,7 +883,7 @@ const Header = memo(function Header({
               <p style={{ 
                 margin: '0 0 1rem 0', 
                 fontSize: isMobile ? '1rem' : '1.125rem', 
-                color: '#64748b',
+                color: 'var(--color-text-secondary)',
                 fontWeight: '400',
                 textAlign: 'center'
               }}>
@@ -904,11 +908,11 @@ const Header = memo(function Header({
                 <div 
                   className="tournament-info"
                   style={{ 
-                    background: '#ffffff',
+                    background: 'var(--color-surface)',
                     padding: isMobile ? '1rem' : '1.5rem',
                     borderRadius: '16px',
-                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-                    border: '1px solid #e2e8f0',
+                    boxShadow: 'var(--shadow-soft)',
+                    border: '1px solid var(--color-border)',
                     overflow: 'hidden',
                     minHeight: '120px',
                     display: 'flex',
@@ -934,7 +938,7 @@ const Header = memo(function Header({
                           margin: '0 0 0.5rem 0', 
                           fontSize: isMobile ? '1.125rem' : '1.375rem',
                           fontWeight: '700',
-                          color: '#0f172a',
+                          color: 'var(--color-text-primary)',
                           lineHeight: '1.2',
                           textAlign: 'center'
                         }}>
@@ -945,10 +949,10 @@ const Header = memo(function Header({
                             display: 'flex',
                             alignItems: 'center',
                             gap: '0.5rem',
-                            color: '#64748b',
+                            color: 'var(--color-text-secondary)',
                             fontSize: '0.95rem'
                           }}>
-                            <span style={{ color: '#e11d48' }}>📍</span>
+                            <span style={{ color: 'var(--color-error)' }}>📍</span>
                             <span style={{ fontWeight: '500' }}>{tournament.location}</span>
                           </div>
                         )}
@@ -966,7 +970,7 @@ const Header = memo(function Header({
                           gap: '0.5rem',
                           backgroundColor: statusInfo.bg,
                           color: statusInfo.color,
-                          border: `1px solid ${statusInfo.color}20`,
+                          border: '1px solid var(--color-border-light)',
                           whiteSpace: 'nowrap'
                         }}>
                           <span>{statusInfo.icon}</span>
@@ -982,23 +986,23 @@ const Header = memo(function Header({
                         gap: isMobile ? '1rem' : '2rem',
                         marginBottom: '1.25rem',
                         fontSize: '0.875rem',
-                        color: '#64748b',
+                        color: 'var(--color-text-secondary)',
                         flexWrap: 'wrap',
                         padding: '0.75rem',
-                        backgroundColor: '#f8fafc',
+                        backgroundColor: 'var(--color-gray-50)',
                         borderRadius: '8px',
-                        border: '1px solid #e2e8f0'
+                        border: '1px solid var(--color-border)'
                       }}>
                         {tournament.start_date && (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                            <span style={{ fontWeight: '600', color: '#374151', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Start Date</span>
-                            <span style={{ fontWeight: '500', color: '#0f172a' }}>{new Date(tournament.start_date).toLocaleDateString()}</span>
+                            <span style={{ fontWeight: '600', color: 'var(--color-gray-700)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Start Date</span>
+                            <span style={{ fontWeight: '500', color: 'var(--color-text-primary)' }}>{new Date(tournament.start_date).toLocaleDateString()}</span>
                           </div>
                         )}
                         {tournament.end_date && (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                            <span style={{ fontWeight: '600', color: '#374151', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>End Date</span>
-                            <span style={{ fontWeight: '500', color: '#0f172a' }}>{new Date(tournament.end_date).toLocaleDateString()}</span>
+                            <span style={{ fontWeight: '600', color: 'var(--color-gray-700)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>End Date</span>
+                            <span style={{ fontWeight: '500', color: 'var(--color-text-primary)' }}>{new Date(tournament.end_date).toLocaleDateString()}</span>
                           </div>
                         )}
                       </div>
@@ -1011,7 +1015,7 @@ const Header = memo(function Header({
                     alignItems: 'center',
                     justifyContent: 'center',
                     minHeight: '80px',
-                    color: '#475569',
+                    color: 'var(--color-text-secondary)',
                     fontSize: '0.95rem'
                   }}>
                     <div style={{ textAlign: 'center' }}>
@@ -1041,23 +1045,23 @@ const Header = memo(function Header({
                           display: 'flex',
                           alignItems: 'center',
                           gap: '0.5rem',
-                          background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)',
+                          background: 'var(--gradient-blue-light)',
                           padding: '0.625rem 1rem',
                           borderRadius: '24px',
-                          border: '1px solid #3b82f6',
-                          boxShadow: '0 2px 4px rgba(59, 130, 246, 0.1)'
+                          border: '1px solid var(--color-blue-primary)',
+                          boxShadow: 'var(--shadow-blue-sm)'
                         }}>
                           <span style={{ 
                             fontSize: '0.8rem',
                             fontWeight: '600',
-                            color: '#1e40af',
+                            color: 'var(--color-blue-deeper)',
                             textTransform: 'uppercase',
                             letterSpacing: '0.025em'
                           }}>Squad:</span>
                           <span style={{ 
                             fontSize: '0.95rem',
                             fontWeight: '700',
-                            color: '#1e40af'
+                            color: 'var(--color-blue-deeper)'
                           }}>
                             {selectedSquad.time}
                           </span>
@@ -1068,16 +1072,15 @@ const Header = memo(function Header({
                       {(pageContext === 'brackets' || pageContext === 'players' || pageContext === 'scores') && (
                         <div style={{
                           padding: '0.625rem 1rem',
-                          backgroundColor: playersCount > 0 ? 'linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)' : 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
-                          border: `1px solid ${playersCount > 0 ? '#10b981' : '#f59e0b'}`,
+                          background: playersCount > 0 ? 'var(--color-green-light)' : 'var(--color-yellow-light)',
+                          border: `1px solid ${playersCount > 0 ? 'var(--color-success)' : 'var(--color-warning-amber)'}`,
                           borderRadius: '24px',
                           fontSize: '0.85rem',
                           fontWeight: '700',
-                          color: playersCount > 0 ? '#059669' : '#92400e',
+                          color: playersCount > 0 ? 'var(--color-green-dark)' : 'var(--color-warning-text-deep)',
                           minWidth: '130px',
                           textAlign: 'center',
-                          boxShadow: `0 2px 4px ${playersCount > 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)'}`,
-                          textShadow: '0 1px 2px rgba(255, 255, 255, 0.8)'
+                          boxShadow: playersCount > 0 ? 'var(--shadow-green-sm)' : 'var(--shadow-brand-sm)'
                         }}>
                           {isLoadingPlayers ? '⏳ Loading...' : 
                            playersCount > 0 ? `👥 ${playersCount} Players` : 
@@ -1094,11 +1097,11 @@ const Header = memo(function Header({
                   <div 
                     className="actions-box"
                     style={{
-                      background: '#ffffff',
+                      background: 'var(--color-surface)',
                       padding: isMobile ? '1rem' : '1.5rem',
                       borderRadius: '16px',
-                      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-                      border: '1px solid #e2e8f0',
+                      boxShadow: 'var(--shadow-soft)',
+                      border: '1px solid var(--color-border)',
                       minHeight: '120px',
                       display: 'flex',
                       flexDirection: 'column',
@@ -1111,7 +1114,7 @@ const Header = memo(function Header({
                     <div style={{
                       fontSize: '0.875rem',
                       fontWeight: '600',
-                      color: '#475569',
+                      color: 'var(--color-text-secondary)',
                       textTransform: 'uppercase',
                       letterSpacing: '0.025em',
                       marginBottom: '0.5rem'
@@ -1133,11 +1136,11 @@ const Header = memo(function Header({
             {/* Tournament Progress - Separate section for consistent sizing */}
             {showTournamentInfo && stats?.completionPercentage !== undefined && !isHeaderCollapsed && (
               <div style={{ 
-                background: '#ffffff',
+                background: 'var(--color-surface)',
                 padding: isMobile ? '1rem' : '1.5rem',
                 borderRadius: '16px',
-                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-                border: '1px solid #e2e8f0',
+                boxShadow: 'var(--shadow-soft)',
+                border: '1px solid var(--color-border)',
                 marginTop: '1rem',
                 maxWidth: isMobile ? '100%' : '600px',
                 width: 'fit-content'
@@ -1151,14 +1154,14 @@ const Header = memo(function Header({
                   <span style={{ 
                     fontSize: '0.875rem',
                     fontWeight: '600',
-                    color: '#475569',
+                    color: 'var(--color-text-secondary)',
                     textTransform: 'uppercase',
                     letterSpacing: '0.025em'
                   }}>Tournament Progress</span>
                   <span style={{ 
                     fontSize: '1.125rem', 
                     fontWeight: '700',
-                    color: '#0f172a'
+                    color: 'var(--color-text-primary)'
                   }}>
                     {Math.round(stats.completionPercentage)}%
                   </span>
@@ -1168,17 +1171,17 @@ const Header = memo(function Header({
                   style={{ 
                     width: '100%', 
                     height: '10px', 
-                    backgroundColor: '#e2e8f0', 
+                    backgroundColor: 'var(--color-border)', 
                     borderRadius: '5px',
                     overflow: 'hidden'
                   }}>
                   <div style={{ 
                     height: '100%', 
-                    background: 'linear-gradient(90deg, #10b981 0%, #059669 100%)',
+                    background: 'var(--gradient-green-progress)',
                     width: `${stats.completionPercentage}%`,
                     transition: 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
                     borderRadius: '5px',
-                    boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.1)'
+                    boxShadow: 'var(--shadow-inset)'
                   }} />
                 </div>
               </div>
@@ -1239,19 +1242,19 @@ const Header = memo(function Header({
                   onClick={handleNotificationToggle}
                   className={`interactive-button ${isMobile ? 'touch-target' : ''}`}
                   style={{
-                    background: '#ffffff',
-                    border: '1px solid #e2e8f0',
+                    background: 'var(--color-surface)',
+                    border: '1px solid var(--color-border)',
                     borderRadius: '50%',
                     width: isMobile ? '48px' : '40px',
                     height: isMobile ? '48px' : '40px',
-                    color: '#64748b',
+                    color: 'var(--color-text-secondary)',
                     cursor: 'pointer',
                     fontSize: '1.25rem',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     position: 'relative',
-                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+                    boxShadow: 'var(--shadow-sm)'
                   }}
                 >
                   🔔
@@ -1262,9 +1265,9 @@ const Header = memo(function Header({
                         position: 'absolute',
                         top: '-2px',
                         right: '-2px',
-                        background: visibleNotifications.some(nItem => nItem.priority === 'high') ? '#ef4444' :
-                                   visibleNotifications.some(nItem => nItem.priority === 'medium') ? '#f59e0b' : '#3b82f6',
-                        color: 'white',
+                        background: visibleNotifications.some(nItem => nItem.priority === 'high') ? 'var(--color-error)' :
+                                   visibleNotifications.some(nItem => nItem.priority === 'medium') ? 'var(--color-warning-amber)' : 'var(--color-blue-primary)',
+                        color: 'var(--color-white)',
                         borderRadius: '50%',
                         width: '18px',
                         height: '18px',
@@ -1295,10 +1298,10 @@ const Header = memo(function Header({
                           style={{
                             padding: '6px 12px',
                             fontSize: '0.75rem',
-                            border: '1px solid #e5e7eb',
+                            border: '1px solid var(--color-border)',
                             borderRadius: '6px 0 0 6px',
-                            backgroundColor: viewMode === 'tree' ? '#3b82f6' : '#f9fafb',
-                            color: viewMode === 'tree' ? 'white' : '#374151',
+                            backgroundColor: viewMode === 'tree' ? 'var(--color-primary)' : 'var(--color-gray-50)',
+                            color: viewMode === 'tree' ? 'var(--color-white)' : 'var(--color-gray-700)',
                             cursor: 'pointer',
                             transition: 'all 0.2s ease'
                           }}
@@ -1310,10 +1313,10 @@ const Header = memo(function Header({
                           style={{
                             padding: '6px 12px',
                             fontSize: '0.75rem',
-                            border: '1px solid #e5e7eb',
+                            border: '1px solid var(--color-border)',
                             borderRadius: '0 6px 6px 0',
-                            backgroundColor: viewMode === 'table' ? '#3b82f6' : '#f9fafb',
-                            color: viewMode === 'table' ? 'white' : '#374151',
+                            backgroundColor: viewMode === 'table' ? 'var(--color-primary)' : 'var(--color-gray-50)',
+                            color: viewMode === 'table' ? 'var(--color-white)' : 'var(--color-gray-700)',
                             cursor: 'pointer',
                             transition: 'all 0.2s ease'
                           }}
@@ -1331,9 +1334,9 @@ const Header = memo(function Header({
                         style={{
                           padding: '6px 12px',
                           fontSize: '0.75rem',
-                          backgroundColor: '#f3f4f6',
-                          color: '#374151',
-                          border: '1px solid #d1d5db',
+                          backgroundColor: 'var(--color-gray-100)',
+                          color: 'var(--color-gray-700)',
+                          border: '1px solid var(--color-gray-300)',
                           borderRadius: '6px',
                           cursor: isLoadingPlayers ? 'not-allowed' : 'pointer',
                           opacity: isLoadingPlayers ? 0.6 : 1,
@@ -1349,8 +1352,8 @@ const Header = memo(function Header({
                               display: 'inline-block',
                               width: '12px',
                               height: '12px',
-                              border: '1px solid #d1d5db',
-                              borderTop: '1px solid #374151',
+                              border: '1px solid var(--color-gray-300)',
+                              borderTop: '1px solid var(--color-gray-700)',
                               borderRadius: '50%',
                               animation: 'spin 1s linear infinite'
                             }}></span>
@@ -1370,8 +1373,8 @@ const Header = memo(function Header({
                         style={{
                           padding: '6px 16px',
                           fontSize: '0.75rem',
-                          backgroundColor: hasPreview ? '#059669' : '#3b82f6',
-                          color: 'white',
+                          backgroundColor: hasPreview ? 'var(--color-green-dark)' : 'var(--color-primary)',
+                          color: 'var(--color-white)',
                           border: 'none',
                           borderRadius: '6px',
                           cursor: (isGenerating || !tournament || playersCount === 0) ? 'not-allowed' : 'pointer',
@@ -1389,8 +1392,8 @@ const Header = memo(function Header({
                               display: 'inline-block',
                               width: '12px',
                               height: '12px',
-                              border: '2px solid rgba(255, 255, 255, 0.3)',
-                              borderTop: '2px solid white',
+                              border: '2px solid var(--color-border-light)',
+                              borderTop: '2px solid var(--color-white)',
                               borderRadius: '50%',
                               animation: 'spin 1s linear infinite'
                             }}></span>
@@ -1442,17 +1445,17 @@ const Header = memo(function Header({
             fontSize: '0.75rem',
             fontWeight: '500',
             zIndex: 10,
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
+            boxShadow: 'var(--shadow-sm)',
+            border: '1px solid var(--color-border-light)',
             backdropFilter: 'blur(8px)',
             cursor: 'pointer',
             transition: 'all 0.3s ease',
             background: connectionStatus === 'online' 
-              ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.9) 0%, rgba(5, 150, 105, 0.9) 100%)' 
+              ? 'var(--gradient-success-btn)' 
               : connectionStatus === 'syncing'
-              ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.9) 0%, rgba(217, 119, 6, 0.9) 100%)'
-              : 'linear-gradient(135deg, rgba(239, 68, 68, 0.9) 0%, rgba(220, 38, 38, 0.9) 100%)',
-            color: 'white'
+              ? 'var(--gradient-warning-base)'
+              : 'var(--gradient-error-btn)',
+            color: 'var(--color-white)'
           }}
           title={
             connectionStatus === 'online' ? 'Connected to server' :
@@ -1469,8 +1472,7 @@ const Header = memo(function Header({
           
           {/* Status Text */}
           <span style={{ 
-            textTransform: 'capitalize',
-            textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)'
+            textTransform: 'capitalize'
           }}>
             {connectionStatus}
           </span>
@@ -1480,8 +1482,7 @@ const Header = memo(function Header({
             <span 
               className="loading-spinner" 
               style={{ 
-                fontSize: '0.75rem',
-                filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2))'
+                fontSize: '0.75rem'
               }}
             >
               
@@ -1499,25 +1500,25 @@ const Header = memo(function Header({
             top: '100%',
             right: isMobile ? '1rem' : '2rem',
             marginTop: '0.5rem',
-            background: 'white',
-            color: '#1f2937',
+            background: 'var(--color-surface)',
+            color: 'var(--color-text-primary)',
             borderRadius: '12px',
-            boxShadow: '0 8px 30px rgba(0, 0, 0, 0.15)',
-            border: '1px solid #e5e7eb',
+            boxShadow: 'var(--shadow-modal)',
+            border: '1px solid var(--color-border)',
             zIndex: 1000,
             minWidth: '350px',
             maxWidth: isMobile ? '90vw' : '450px',
             maxHeight: '400px',
             overflowY: 'auto'
           }}>
-          <div style={{ padding: '1rem', borderBottom: '1px solid #f3f4f6', background: '#f9fafb' }}>
+          <div style={{ padding: '1rem', borderBottom: '1px solid var(--color-gray-100)', background: 'var(--color-gray-50)' }}>
             <div style={{ 
               display: 'flex', 
               justifyContent: 'space-between', 
               alignItems: 'center',
               marginBottom: '0.5rem'
             }}>
-              <h3 style={{ margin: '0', fontSize: '1.125rem', fontWeight: '600', color: '#1f2937' }}>
+              <h3 style={{ margin: '0', fontSize: '1.125rem', fontWeight: '600', color: 'var(--color-text-primary)' }}>
                 Notifications ({visibleNotifications.length})
               </h3>
               <button
@@ -1527,16 +1528,16 @@ const Header = memo(function Header({
                   border: 'none',
                   fontSize: '1.5rem',
                   cursor: 'pointer',
-                  color: '#6b7280',
+                  color: 'var(--color-text-secondary)',
                   padding: '0.25rem',
                   borderRadius: '4px',
                   transition: 'all 0.2s ease'
                 }}
-                onMouseEnter={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = '#f3f4f6'
-                  changeEvent.currentTarget.style.color = '#374151'
+                onMouseEnter={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = 'var(--color-gray-100)'
+                  changeEvent.currentTarget.style.color = 'var(--color-gray-700)'
                 }}
                 onMouseLeave={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = 'transparent'
-                  changeEvent.currentTarget.style.color = '#6b7280'
+                  changeEvent.currentTarget.style.color = 'var(--color-text-secondary)'
                 }}
               >
                 ×
@@ -1552,19 +1553,19 @@ const Header = memo(function Header({
                 }}
                 style={{
                   background: 'none',
-                  border: '1px solid #d1d5db',
+                  border: '1px solid var(--color-gray-300)',
                   borderRadius: '6px',
                   padding: '0.25rem 0.75rem',
                   fontSize: '0.75rem',
-                  color: '#6b7280',
+                  color: 'var(--color-text-secondary)',
                   cursor: 'pointer',
                   transition: 'all 0.2s ease'
                 }}
-                onMouseEnter={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = '#f3f4f6'
-                  changeEvent.currentTarget.style.borderColor = '#9ca3af'
+                onMouseEnter={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = 'var(--color-gray-100)'
+                  changeEvent.currentTarget.style.borderColor = 'var(--color-gray-400)'
                 }}
                 onMouseLeave={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = 'transparent'
-                  changeEvent.currentTarget.style.borderColor = '#d1d5db'
+                  changeEvent.currentTarget.style.borderColor = 'var(--color-gray-300)'
                 }}
               >
                 Clear All

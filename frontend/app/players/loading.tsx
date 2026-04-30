@@ -1,5 +1,5 @@
 const shimmer = {
-  background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
+  background: 'linear-gradient(90deg, var(--color-gray-100) 25%, var(--color-gray-200) 50%, var(--color-gray-100) 75%)',
   backgroundSize: '200% 100%',
   animation: 'shimmer 1.5s infinite',
   borderRadius: '8px',
@@ -25,16 +25,16 @@ export default function PlayersLoading() {
       </div>
 
       {/* Card with table */}
-      <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e5e7eb', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+      <div style={{ background: 'var(--color-surface)', borderRadius: '16px', border: '1px solid var(--color-border)', overflow: 'hidden', boxShadow: 'var(--shadow-soft)' }}>
         {/* Table header */}
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr', gap: '16px', padding: '14px 20px', borderBottom: '1px solid #f3f4f6', background: '#f9fafb' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr', gap: '16px', padding: '14px 20px', borderBottom: '1px solid var(--color-gray-100)', background: 'var(--color-gray-50)' }}>
           {['200px', '80px', '80px', '80px', '100px'].map((w, i) => (
             <div key={i} style={{ ...shimmer, width: w, height: '16px' }} />
           ))}
         </div>
         {/* Table rows */}
         {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr', gap: '16px', padding: '14px 20px', borderBottom: '1px solid #f9fafb' }}>
+          <div key={i} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr', gap: '16px', padding: '14px 20px', borderBottom: '1px solid var(--color-gray-50)' }}>
             <div style={{ ...shimmer, width: '160px', height: '16px' }} />
             <div style={{ ...shimmer, width: '60px', height: '16px' }} />
             <div style={{ ...shimmer, width: '50px', height: '16px' }} />

@@ -347,7 +347,7 @@ export default function BracketGenerationModal({
                 style={{
                   left: `${Math.random() * 100}%`,
                   animationDelay: `${Math.random() * 0.5}s`,
-                  backgroundColor: ['#fbbf24', '#f59e0b', '#22c55e', '#3b82f6', '#a855f7', '#ec4899'][i % 6]
+                  backgroundColor: ['#fbbf24', 'var(--color-warning-amber)', '#22c55e', '#3b82f6', '#a855f7', '#ec4899'][i % 6]
                 }}
               />
             ))}

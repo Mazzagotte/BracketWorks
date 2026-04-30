@@ -42,10 +42,10 @@ export function ApiHealthCheck() {
   
   const getStatusColor = () => {
     switch (status) {
-      case 'checking': return '#f59e0b'
-      case 'connected': return '#10b981'
-      case 'failed': return '#ef4444'
-      default: return '#6b7280'
+      case 'checking': return 'var(--color-warning-amber)'
+      case 'connected': return 'var(--color-success)'
+      case 'failed': return 'var(--color-error)'
+      default: return 'var(--color-text-secondary)'
     }
   }
   
@@ -63,10 +63,10 @@ export function ApiHealthCheck() {
       position: 'fixed',
       bottom: '20px',
       right: '20px',
-      background: 'white',
+      background: 'var(--color-surface)',
       padding: '12px 16px',
       borderRadius: '8px',
-      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+      boxShadow: 'var(--shadow-md)',
       border: `2px solid ${getStatusColor()}`,
       fontSize: '12px',
       minWidth: '200px',
@@ -83,13 +83,13 @@ export function ApiHealthCheck() {
         </strong>
       </div>
       
-      <div style={{ color: '#6b7280', marginBottom: '4px' }}>
+      <div style={{ color: 'var(--color-text-secondary)', marginBottom: '4px' }}>
         Backend: {backendUrl}
       </div>
       
       {error && (
         <div style={{ 
-          color: '#ef4444', 
+          color: 'var(--color-error)', 
           fontSize: '11px',
           marginTop: '4px',
           wordBreak: 'break-word'
@@ -104,8 +104,8 @@ export function ApiHealthCheck() {
           style={{
             marginTop: '8px',
             padding: '4px 8px',
-            background: '#f59e0b',
-            color: 'white',
+            background: 'var(--gradient-brand)',
+            color: 'var(--color-white)',
             border: 'none',
             borderRadius: '4px',
             fontSize: '11px',

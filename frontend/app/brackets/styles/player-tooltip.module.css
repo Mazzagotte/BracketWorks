@@ -54,7 +54,7 @@
   height: 16px;
   background: white;
   transform: translateX(-50%) rotate(45deg);
-  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 2px 2px 4px var(--opacity-black-10);
   z-index: -1;
 }
 
@@ -63,7 +63,7 @@
    =================================== */
 
 .tooltipHeader {
-  background: linear-gradient(135deg, #f0a500 0%, #e6941a 100%);
+  background: linear-gradient(135deg, var(--color-warning) 0%, #e6941a 100%);
   color: white;
   padding: 1rem 1.25rem;
   border-radius: 12px 12px 0 0;
@@ -104,7 +104,7 @@
   border-radius: 6px;
   font-size: 0.875rem;
   font-weight: 700;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid var(--opacity-white-30);
 }
 
 /* ===================================
@@ -123,7 +123,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 0.5rem 0;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid var(--color-gray-100);
 }
 
 .detailRow:last-child {
@@ -132,7 +132,7 @@
 
 .detailLabel {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.025em;
@@ -145,7 +145,7 @@
 }
 
 .detailValue.highlight {
-  color: #f0a500;
+  color: var(--color-warning);
   font-size: 1.125rem;
 }
 
@@ -154,7 +154,7 @@
   flex-direction: column;
   gap: 0.25rem;
   padding: 0.75rem;
-  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  background: linear-gradient(135deg, var(--color-gray-50) 0%, var(--color-gray-100) 100%);
   border-radius: 8px;
   margin-top: 0.25rem;
 }
@@ -165,7 +165,7 @@
 
 .recordRow .detailValue {
   font-size: 0.9375rem;
-  color: #374151;
+  color: var(--color-gray-700);
 }
 
 /* ===================================

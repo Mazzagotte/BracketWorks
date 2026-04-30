@@ -42,36 +42,36 @@ export const typography = {
 // Color palette
 export const colors = {
   // Primary brand colors
-  primary: 'var(--color-primary)',           // #F47C20
+  primary: 'var(--color-primary)',           // var(--color-primary)
   primaryLight: 'var(--color-primary)',
-  primaryHover: 'var(--color-primary-hover)', // #D9651A
+  primaryHover: 'var(--color-primary-hover)', // var(--color-primary-hover)
   accent: 'var(--color-primary)',
   
   // Background colors
   background: 'var(--color-background)',     // #f8fafc
-  surface: 'var(--color-surface)',           // #ffffff
-  surfaceHover: '#f9fafb',                   // Light gray hover
+  surface: 'var(--color-surface)',           // var(--color-white)
+  surfaceHover: 'var(--color-gray-50)',                   // Light gray hover
   
   // Text colors
   text: {
     primary: 'var(--color-text-primary)',   // #1a1f2e
-    secondary: 'var(--color-text-secondary)', // #6b7280
+    secondary: 'var(--color-text-secondary)', // var(--color-text-secondary)
     muted: '#888888',                        // Muted text
     light: '#aaaaaa',                        // Light text
-    white: '#ffffff',                        // White text
+    white: 'var(--color-white)',                        // White text
   },
   
   // Border colors  
-  border: 'var(--color-border)',             // #e5e7eb
-  borderLight: 'var(--color-border-light)',  // rgba(240, 165, 0, 0.2)
-  borderHover: '#9ca3af',                    // Darker border on hover
+  border: 'var(--color-border)',             // var(--color-gray-200)
+  borderLight: 'var(--color-border-light)',  // var(--color-border-light)
+  borderHover: 'var(--color-gray-400)',                    // Darker border on hover
   
   // Status colors
-  success: 'var(--color-success)',           // #10b981
-  successHover: '#059669',                   // Darker green
-  warning: 'var(--color-warning)',           // #f59e0b
+  success: 'var(--color-success)',           // var(--color-success)
+  successHover: 'var(--color-green-dark)',                   // Darker green
+  warning: 'var(--color-warning)',           // var(--color-warning-amber)
   warningLight: '#ff9800',                   // Light orange
-  error: 'var(--color-error)',               // #ef4444
+  error: 'var(--color-error)',               // var(--color-error)
   errorLight: '#e74c3c',                     // Light red
   info: '#3b82f6',                          // Blue info
   
@@ -87,15 +87,15 @@ export const colors = {
   
   // Neutral grays
   gray: {
-    50: '#f9fafb',
-    100: '#f3f4f6', 
-    200: '#e5e7eb',
-    300: '#d1d5db',
-    400: '#9ca3af',
-    500: '#6b7280',
-    600: '#4b5563',
-    700: '#374151',
-    800: '#1f2937',
+    50: 'var(--color-gray-50)',
+    100: 'var(--color-gray-100)', 
+    200: 'var(--color-gray-200)',
+    300: 'var(--color-gray-300)',
+    400: 'var(--color-gray-400)',
+    500: 'var(--color-text-secondary)',
+    600: 'var(--color-dark-lighter)',
+    700: 'var(--color-gray-700)',
+    800: 'var(--color-secondary)',
     900: '#111827',
   },
   
@@ -104,11 +104,11 @@ export const colors = {
     primary: 'var(--color-primary)',
     primaryHover: 'var(--color-primary-hover)',
     success: 'var(--color-success)',
-    successHover: '#059669',
+    successHover: 'var(--color-green-dark)',
     error: 'var(--color-error)',
-    errorHover: '#dc2626',
+    errorHover: 'var(--color-red-dark)',
     secondary: 'var(--color-surface)',
-    secondaryHover: '#f3f4f6',
+    secondaryHover: 'var(--color-gray-100)',
   },
   
   // Shadow colors

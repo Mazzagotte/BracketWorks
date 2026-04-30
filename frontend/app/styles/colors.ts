@@ -33,9 +33,9 @@ export const colors = {
 
   // Green - Success & Complete States
   green: {
-    primary: '#10b981',
+    primary: 'var(--color-success)',
     secondary: '#22c55e',
-    dark: '#059669',
+    dark: 'var(--color-green-dark)',
     deeper: '#065f46',
     light: '#d1fae5',
     lighter: '#a7f3d0',
@@ -49,7 +49,7 @@ export const colors = {
 
   // Red - Error States
   red: {
-    primary: '#ef4444',
+    primary: 'var(--color-error)',
   },
 
   // Yellow - Warning & Handicap
@@ -61,25 +61,25 @@ export const colors = {
 
   // Grays - Backgrounds & Text
   gray: {
-    50: '#f9fafb',
-    100: '#f3f4f6',
-    200: '#e5e7eb',
-    300: '#d1d5db',
-    400: '#9ca3af',
-    500: '#6b7280',
+    50: 'var(--color-gray-50)',
+    100: 'var(--color-gray-100)',
+    200: 'var(--color-gray-200)',
+    300: 'var(--color-gray-300)',
+    400: 'var(--color-gray-400)',
+    500: 'var(--color-text-secondary)',
     600: '#475569',
-    700: '#374151',
-    800: '#1f2937',
+    700: 'var(--color-gray-700)',
+    800: 'var(--color-secondary)',
     900: '#111827',
   },
 
   // Dark Mode Backgrounds
   dark: {
-    base: '#1F2937',
+    base: 'var(--color-secondary)',
     surface: '#2F2F2F',
-    elevated: '#374151',
-    lighter: '#4b5563',
-    accent: '#6b7280',
+    elevated: 'var(--color-gray-700)',
+    lighter: 'var(--color-dark-lighter)',
+    accent: 'var(--color-text-secondary)',
   },
 
   // Utility Colors
@@ -180,7 +180,7 @@ export const gradients = {
   gray: `linear-gradient(135deg, ${colors.gray[100]} 0%, ${colors.gray[200]} 100%)`,
   grayLight: `linear-gradient(135deg, ${colors.white} 0%, ${colors.gray[50]} 100%)`,
   
-  dark: `linear-gradient(145deg, #1a1a1a 0%, #0f0f0f 100%)`,
+  dark: `linear-gradient(145deg, var(--color-text-primary) 0%, #0f0f0f 100%)`,
   darkComplex: `linear-gradient(135deg, ${colors.dark.base} 0%, ${colors.dark.surface} 25%, ${colors.dark.elevated} 50%, ${colors.dark.lighter} 75%, ${colors.dark.accent} 100%)`,
   
   rainbow: `linear-gradient(90deg, ${colors.blue.primary}, ${colors.purple.primary}, ${colors.pink.primary}, ${colors.brand.goldLight})`,
@@ -192,8 +192,8 @@ export const gradients = {
  * Shadow definitions with color-specific shadows
  */
 export const shadows = {
-  sm: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-  md: '0 4px 16px rgba(0, 0, 0, 0.08)',
+  sm: '0 1px 3px 0 var(--opacity-black-10)',
+  md: '0 4px 16px var(--opacity-black-08)',
   lg: '0 20px 60px rgba(0, 0, 0, 0.5)',
   
   blue: {
@@ -202,7 +202,7 @@ export const shadows = {
   },
   
   brand: {
-    sm: '0 2px 8px rgba(240, 165, 0, 0.3)',
+    sm: '0 2px 8px var(--color-border-hover)',
     md: '0 4px 12px rgba(240, 165, 0, 0.4)',
     glow: '0 0 20px rgba(240, 165, 0, 0.4)',
   },
@@ -215,7 +215,7 @@ export const shadows = {
     sm: '0 2px 4px rgba(16, 185, 129, 0.3)',
   },
   
-  inset: 'inset 0 1px 3px rgba(0, 0, 0, 0.1)',
+  inset: 'inset 0 1px 3px var(--opacity-black-10)',
 } as const
 
 /**

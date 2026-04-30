@@ -193,13 +193,13 @@ export const LoadingStates = memo(({
       <div className="loading-state" style={{ 
         textAlign: 'center', 
         padding: '2rem',
-        color: '#666'
+        color: 'var(--color-text-secondary)'
       }}>
         <div className="spinner" style={{
           width: '2rem',
           height: '2rem',
-          border: '3px solid #f3f3f3',
-          borderTop: '3px solid #F47C20',
+          border: '3px solid var(--color-gray-100)',
+          borderTop: '3px solid var(--color-primary)',
           borderRadius: '50%',
           animation: 'spin 1s linear infinite',
           margin: '0 auto 1rem'
@@ -214,8 +214,8 @@ export const LoadingStates = memo(({
       <div className="error-state" style={{
         textAlign: 'center',
         padding: '2rem',
-        color: '#e53e3e',
-        background: '#fed7d7',
+        color: 'var(--color-error)',
+        background: 'var(--color-hc-error-bg)',
         borderRadius: '8px',
         margin: '1rem 0'
       }}>

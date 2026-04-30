@@ -8,7 +8,7 @@
 .backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--color-dark-base);
   z-index: 999;
   backdrop-filter: blur(4px);
 }
@@ -19,7 +19,7 @@
   top: 60px;
   width: 100%;
   height: calc(100vh - 60px);
-  background: #1F2A33;
+  background: var(--color-secondary);
   z-index: 1000;
   display: flex;
   flex-direction: column;
@@ -31,19 +31,19 @@
 
 .header {
   padding: 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--color-border-light);
   text-align: center;
 }
 
 .greeting {
-  color: #F47C20;
+  color: var(--color-primary);
   font-size: 18px;
   font-weight: 600;
   margin-bottom: 4px;
 }
 
 .userName {
-  color: #ffffff;
+  color: var(--color-white);
   font-size: 16px;
 }
 
@@ -59,7 +59,7 @@
   display: flex;
   align-items: center;
   padding: 16px 20px;
-  color: #ffffff;
+  color: var(--color-white);
   background: transparent;
   text-decoration: none;
   font-size: 16px;
@@ -69,14 +69,14 @@
 }
 
 .link:active {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--color-surface-hover);
 }
 
 .linkActive {
-  color: #F47C20;
-  background: rgba(244, 124, 32, 0.1);
+  color: var(--color-primary);
+  background: var(--color-border-light);
   font-weight: 600;
-  border-left-color: #F47C20;
+  border-left-color: var(--color-primary);
 }
 
 .logoutWrap {
@@ -96,8 +96,8 @@
   justify-content: center;
   text-align: center;
   text-decoration: none;
-  background: linear-gradient(135deg, #5f646c 0%, #474b52 60%, #31343a 100%);
-  color: #f4f6f8;
+  background: linear-gradient(135deg, var(--color-dark-lighter) 0%, var(--color-dark-elevated) 60%, var(--color-dark-base) 100%);
+  color: var(--color-white);
   border: none;
   border-radius: 12px;
   font-size: 16px;
@@ -106,11 +106,11 @@
 }
 
 .settingsBtn:active {
-  background: #3b4047;
+  background: var(--color-dark-elevated);
 }
 
 .settingsBtnActive {
-  background: linear-gradient(135deg, #6a7078 0%, #50555d 60%, #383c43 100%);
+  background: linear-gradient(135deg, var(--color-dark-accent) 0%, var(--color-dark-lighter) 60%, var(--color-dark-elevated) 100%);
 }
 
 .logoutBtn {
@@ -121,8 +121,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #F47C20 0%, #D9651A 100%);
-  color: #ffffff;
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
+  color: var(--color-white);
   border: none;
   border-radius: 12px;
   font-size: 16px;
@@ -132,7 +132,7 @@
 }
 
 .logoutBtn:active {
-  background: #D9651A;
+  background: var(--color-primary-hover);
 }
 
 .swipeIndicator {
@@ -142,6 +142,6 @@
   transform: translateX(-50%);
   width: 40px;
   height: 4px;
-  background: rgba(255, 255, 255, 0.3);
+  background: var(--opacity-white-30);
   border-radius: 2px;
 }

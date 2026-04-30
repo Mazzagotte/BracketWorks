@@ -4,7 +4,7 @@
   background: linear-gradient(135deg, rgba(26, 26, 26, 0.98) 0%, rgba(45, 45, 45, 0.98) 50%, rgba(34, 34, 34, 0.98) 100%);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border-bottom: 3px solid #F07820;
+  border-bottom: 3px solid var(--color-primary);
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
   padding: 20px 0;
   min-height: 80px;
@@ -63,7 +63,7 @@
   font-size: 24px;
   font-weight: 700;
   margin: 0;
-  background: linear-gradient(135deg, #fff 0%, #F47C20 100%);
+  background: linear-gradient(135deg, #fff 0%, var(--color-primary) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -117,7 +117,7 @@
 
 .userNameText {
   font-size: 13px;
-  color: #F47C20;
+  color: var(--color-primary);
   font-weight: 600;
 }
 
@@ -129,14 +129,14 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #F47C20 0%, #D9651A 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 14px;
   font-weight: 700;
-  color: #ffffff;
-  box-shadow: 0 3px 10px rgba(244, 124, 32, 0.3);
+  color: var(--color-white);
+  box-shadow: 0 3px 10px var(--color-border-hover);
   transition: all 0.2s ease;
 }
 
@@ -182,7 +182,7 @@
 
 .tournamentStripName {
   font-size: 12px;
-  color: #F07820;
+  color: var(--color-primary);
   font-weight: 600;
   background: rgba(240, 120, 32, 0.12);
   border: 1px solid rgba(240, 120, 32, 0.3);
@@ -197,7 +197,7 @@
 }
 
 .tournamentStripDivider {
-  color: rgba(255, 255, 255, 0.2);
+  color: var(--opacity-white-20);
   font-size: 12px;
 }
 

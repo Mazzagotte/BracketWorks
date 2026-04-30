@@ -22,31 +22,46 @@ export default function NoTournamentState({ description, cards }: NoTournamentSt
     return () => window.removeEventListener('resize', check)
   }, [])
 
+  useEffect(() => {
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [])
+
   return (
     <div style={{
-      background: '#FAF4E8',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: 'auto',
+      width: '100%',
+      boxSizing: 'border-box',
+      padding: '16px',
+    }}>
+    <div style={{
+      background: 'var(--color-brand-ivory-light)',
       borderRadius: '16px',
       textAlign: 'center',
-      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
-      border: '1px solid rgba(240, 120, 32, 0.2)',
+      boxShadow: 'var(--shadow-soft)',
+      border: '1px solid var(--color-border-light)',
       maxWidth: '800px',
-      padding: isMobile ? '40px 24px' : '60px 40px',
-      margin: isMobile ? '20px 0' : '40px auto',
+      width: '100%',
+      padding: '14px 20px 18px',
     }}>
       <h2 style={{
         fontWeight: 700,
-        color: '#1A1A1A',
+        color: 'var(--color-text-primary)',
         marginBottom: '12px',
         letterSpacing: '-0.02em',
-        marginTop: '24px',
+        marginTop: '0',
         fontSize: isMobile ? '22px' : '28px',
       }}>
         No Tournament Loaded
       </h2>
 
       <p style={{
-        color: 'rgba(26, 26, 26, 0.55)',
-        margin: '0 auto 32px',
+        color: 'var(--color-text-secondary)',
+        margin: '0 auto 16px',
         lineHeight: 1.6,
         maxWidth: '560px',
         fontSize: isMobile ? '15px' : '16px',
@@ -58,13 +73,13 @@ export default function NoTournamentState({ description, cards }: NoTournamentSt
         href="/dashboard"
         style={{
           display: 'inline-block',
-          background: 'linear-gradient(135deg, #F47C20 0%, #D9651A 100%)',
-          color: 'white',
+          background: 'var(--gradient-brand)',
+          color: 'var(--color-white)',
           border: 'none',
           borderRadius: '12px',
           fontWeight: 600,
           textDecoration: 'none',
-          boxShadow: '0 4px 14px rgba(244, 124, 32, 0.3)',
+          boxShadow: 'var(--shadow-brand-md)',
           transition: 'all 0.2s ease',
           padding: isMobile ? '12px 24px' : '14px 28px',
           fontSize: isMobile ? '15px' : '16px',
@@ -76,24 +91,24 @@ export default function NoTournamentState({ description, cards }: NoTournamentSt
       {cards && cards.length > 0 && (
         <div style={{
           gap: '16px',
-          marginTop: '48px',
+          marginTop: '20px',
           maxWidth: '800px',
-          margin: '48px auto 0',
+          margin: '20px auto 0',
           display: 'grid',
           gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(200px, 1fr))',
         }}>
           {cards.map((card, i) => (
             <div key={i} style={{
-              background: '#FFFCF5',
+              background: 'var(--color-brand-ivory-light)',
               borderRadius: '12px',
               padding: '20px',
               textAlign: 'left',
-              border: '1px solid rgba(240, 120, 32, 0.15)',
+              border: '1px solid var(--color-border-light)',
             }}>
               <h3 style={{
                 fontSize: '15px',
                 fontWeight: 600,
-                color: '#1A1A1A',
+                color: 'var(--color-text-primary)',
                 marginBottom: '4px',
                 margin: '0 0 4px',
               }}>
@@ -101,7 +116,7 @@ export default function NoTournamentState({ description, cards }: NoTournamentSt
               </h3>
               <p style={{
                 fontSize: '13px',
-                color: 'rgba(26, 26, 26, 0.55)',
+                color: 'var(--color-text-secondary)',
                 lineHeight: 1.5,
                 margin: 0,
               }}>
@@ -111,6 +126,7 @@ export default function NoTournamentState({ description, cards }: NoTournamentSt
           ))}
         </div>
       )}
+    </div>
     </div>
   )
 }

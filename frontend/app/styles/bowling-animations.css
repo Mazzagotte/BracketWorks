@@ -75,8 +75,8 @@
   animation: buttonRoll 5s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
   pointer-events: none;
   box-shadow: 
-    0 4px 8px rgba(240, 165, 0, 0.3),
-    inset 1px 1px 3px rgba(255, 255, 255, 0.3),
+    0 4px 8px var(--color-border-hover),
+    inset 1px 1px 3px var(--opacity-white-30),
     inset -1px -1px 3px rgba(0, 0, 0, 0.2);
   will-change: transform;
   /* Performance optimizations */
@@ -127,7 +127,7 @@
   height: 20px;
   background: 
     radial-gradient(circle, 
-      rgba(240, 165, 0, 0.3) 0%, 
+      var(--color-border-hover) 0%, 
       rgba(255, 152, 0, 0.2) 50%, 
       transparent 100%);
   border-radius: 50%;

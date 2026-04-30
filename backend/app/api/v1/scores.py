@@ -232,3 +232,35 @@ def delete_score(
         db.rollback()
         logger.error(f"Error deleting score {score_id}: {e}")
         raise HTTPException(status_code=500, detail="Failed to delete score")
+
+
+@router.delete("/dev/clear-game/{game_number}")
+def dev_clear_game_scores(
+    game_number: int,
+    tournament_id: int = Query(...),
+    squad_id: Optional[int] = Query(None),
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user),
+):
+    """
+    DEV ONLY — Null out all scores for a specific game number (2 or 3)
+    across all players in the given tournament/squad.
+    """
+    if game_number not in (2, 3):
+        raise HTTPException(status_code=400, detail="Only game 2 or game 3 can be cleared with this endpoint")
+
+    query = db.query(PlayerScore).filter(PlayerScore.tournament_id == tournament_id)
+    if squad_id is not None:
+        query = query.filter(PlayerScore.squad_id == squad_id)
+
+    scores = query.all()
+    scratch_field = f"game{game_number}_scratch"
+    total_field = f"game{game_number}_total"
+
+    for score in scores:
+        setattr(score, scratch_field, None)
+        setattr(score, total_field, None)
+
+    db.commit()
+    logger.info(f"[DEV] Cleared game {game_number} scores for tournament {tournament_id}, squad {squad_id} ({len(scores)} records)")
+    return {"message": f"Cleared game {game_number} scores for {len(scores)} player(s)"}

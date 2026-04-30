@@ -18,7 +18,7 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background: linear-gradient(145deg, #1A1A1A 0%, #2D2D2D 50%, #222222 100%);
+  background: linear-gradient(145deg, var(--color-text-primary) 0%, #2D2D2D 50%, #222222 100%);
   position: fixed;
   inset: 0;
   z-index: 1000;
@@ -33,7 +33,7 @@
   width: 100%;
   max-width: 400px;
   padding: 16px 28px 28px;
-  background: var(--color-brand-ivory-light, #FAF4E8);
+  background: var(--color-brand-ivory-light, var(--color-brand-ivory-light));
   border-radius: var(--radius-2xl);
   box-shadow:
     0 24px 64px rgba(0, 0, 0, 0.4),
@@ -69,7 +69,7 @@
   font-size: 28px;
   font-weight: 700;
   margin: 0 0 6px;
-  background: linear-gradient(135deg, #ffffff 0%, #f8d5b0 50%, #F97316 100%);
+  background: linear-gradient(135deg, var(--color-white) 0%, #f8d5b0 50%, #F97316 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -104,7 +104,7 @@
   font-weight: 400;
   border: 2px solid #e2d5c3;
   border-radius: var(--radius-lg);
-  background: #ffffff;
+  background: var(--color-white);
   transition: all 0.2s ease;
   outline: none;
   box-sizing: border-box;
@@ -114,7 +114,7 @@
 
 .input:focus {
   border-color: #F97316;
-  background: #ffffff;
+  background: var(--color-white);
   box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
 }
 
@@ -123,11 +123,11 @@
 }
 
 .inputCapsLock {
-  border-color: #D64545 !important;
+  border-color: var(--color-error) !important;
 }
 
 .inputError {
-  border-color: #D64545 !important;
+  border-color: var(--color-error) !important;
   background: rgba(214, 69, 69, 0.04) !important;
 }
 
@@ -181,7 +181,7 @@
   margin-top: 4px;
   padding: 8px 12px;
   background: #FFF3E0;
-  border: 1px solid #F2A900;
+  border: 1px solid var(--color-warning);
   border-radius: 8px;
   font-size: 14px;
   color: #D97706;
@@ -224,7 +224,7 @@
   font-size: 16px;
   font-weight: 600;
   letter-spacing: 0.3px;
-  color: #ffffff;
+  color: var(--color-white);
   background: var(--gradient-brand-logo, linear-gradient(135deg, #E8480C 0%, #C13000 60%, #3D1A06 100%));
   border: none;
   border-radius: var(--radius-lg, 12px);
@@ -308,7 +308,7 @@
   text-align: center;
   font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
   color: var(--color-brand-charcoal, #333333);
-  background: var(--color-brand-ivory, #F0E0C0);
+  background: var(--color-brand-ivory, var(--color-brand-ivory));
   border: 2px solid rgba(51, 51, 51, 0.2);
   cursor: pointer;
 }
@@ -316,7 +316,7 @@
 .createAccountBtn:hover {
   background: #ede0d0;
   border-color: rgba(107, 45, 15, 0.5);
-  color: var(--color-brand-charcoal-deep, #1A1A1A);
+  color: var(--color-brand-charcoal-deep, var(--color-text-primary));
   transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(26, 26, 26, 0.15);
 }
@@ -334,7 +334,7 @@
 }
 
 .forgotLink:hover {
-  color: var(--color-brand-charcoal-deep, #1A1A1A);
+  color: var(--color-brand-charcoal-deep, var(--color-text-primary));
 }
 
 /* Mobile phones — stop zooming, switch to padding-based adjustments */

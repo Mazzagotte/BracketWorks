@@ -21,8 +21,8 @@ export const SortableHeader: React.FC<SortableHeaderProps> = ({
   };
 
   const getIconColor = () => {
-    if (isActive) return '#F07820';
-    return isHovered ? 'rgba(26,26,26,0.5)' : 'rgba(26,26,26,0.25)';
+    if (isActive) return 'var(--color-primary)';
+    return isHovered ? 'var(--color-text-secondary)' : 'var(--color-gray-400)';
   };
 
   const getTextAlign = () => {
@@ -38,9 +38,9 @@ export const SortableHeader: React.FC<SortableHeaderProps> = ({
       className="entries-header-cell"
       style={{ 
         cursor: 'pointer',
-        color: isActive ? '#F07820' : '#1A1A1A',
-        background: isActive ? 'rgba(240,120,32,0.12)' : isHovered ? 'rgba(240,120,32,0.06)' : undefined,
-        borderBottom: isActive ? '3px solid #F07820' : undefined,
+        color: isActive ? 'var(--color-primary)' : 'var(--color-text-primary)',
+        background: isActive ? 'var(--color-border-light)' : isHovered ? 'var(--color-surface-hover)' : undefined,
+        borderBottom: isActive ? '3px solid var(--color-primary)' : undefined,
         transition: 'all 0.15s ease',
         position: 'relative',
         ...(width && { width }),
@@ -97,7 +97,7 @@ export const SortableHeader: React.FC<SortableHeaderProps> = ({
           transform: 'translateX(-50%)',
           width: '24px',
           height: '2px',
-          backgroundColor: '#F07820',
+          backgroundColor: 'var(--color-primary)',
           borderRadius: '1px'
         }} />
       )}
