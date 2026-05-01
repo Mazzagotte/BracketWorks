@@ -1779,7 +1779,8 @@
   border-radius: var(--radius-xl);
   box-shadow: 0 2px 8px var(--opacity-black-08);
   border: 1px solid var(--color-border-light);
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 /* ========================================

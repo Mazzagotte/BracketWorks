@@ -475,9 +475,9 @@ callsites@^3.0.0:
   integrity sha512-P8BjAsXvZS+VIDUI11hHCQEv74YT67YUi5JJFNWIqL235sBmjX4+qx9Muvls5ivyNENctx46xQLQ3aTuE7ssaQ==
 
 caniuse-lite@^1.0.30001579:
-  version "1.0.30001751"
-  resolved "https://registry.npmjs.org/caniuse-lite/-/caniuse-lite-1.0.30001751.tgz"
-  integrity sha512-A0QJhug0Ly64Ii3eIqHu5X51ebln3k4yTUkY1j8drqpWHVreg/VLijN48cZ1bYPiqOQuqpkIKnzr/Ul8V+p6Cw==
+  version "1.0.30001791"
+  resolved "https://registry.npmjs.org/caniuse-lite/-/caniuse-lite-1.0.30001791.tgz"
+  integrity sha512-yk0l/YSrOnFZk3UROpDLQD9+kC1l4meK/wed583AXrzoarMGJcbRi2Q4RaUYbKxYAsZ8sWmaSa/DsLmdBeI1vQ==
 
 cfb@~1.2.1:
   version "1.2.2"

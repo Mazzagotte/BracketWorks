@@ -55,7 +55,7 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const currentPath = pathname || '/';
-    const onLoginLikePage = currentPath === '/login' || currentPath.startsWith('/reset-password') || currentPath.startsWith('/signup');
+    const onLoginLikePage = currentPath === '/login' || currentPath.startsWith('/reset-password') || currentPath.startsWith('/signup') || currentPath.startsWith('/view');
     setIsLoginPage(onLoginLikePage);
     setCurrentPage(currentPath.slice(1) || 'dashboard');
   }, [pathname]);
@@ -74,7 +74,8 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
     const isPublicRoute =
       currentPath === '/login' ||
       currentPath.startsWith('/reset-password') ||
-      currentPath.startsWith('/signup');
+      currentPath.startsWith('/signup') ||
+      currentPath.startsWith('/view');
 
     if (!auth.isAuthenticated && !isPublicRoute) {
       // If user was authenticated before, their session expired — tell them why
@@ -86,13 +87,6 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
       router.replace('/dashboard');
     }
   }, [mounted, pathname, auth.isAuthenticated, router]);
-
-  // Update login page detection when authenticated to handle cases where user logs in but hasn't redirected yet
-  useEffect(() => {
-    if (auth.isAuthenticated) {
-      setIsLoginPage(false);
-    }
-  }, [auth.isAuthenticated]);
 
   // Update firstName whenever auth state changes
   useEffect(() => {

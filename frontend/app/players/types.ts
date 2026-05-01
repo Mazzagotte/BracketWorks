@@ -5,6 +5,7 @@ export type Player = {
   usbc?: string, 
   firstName: string, 
   lastName: string, 
+  division?: string,
   average: number, 
   handicap: number, 
   scratch: number, 

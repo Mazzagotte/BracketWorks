@@ -3,6 +3,7 @@ import React, { memo, useMemo, useState } from 'react';
 import { PlayersTableProps } from '../types';
 import { OptimizedTableRow, OptimizedTableCell } from '../../lib/performance';
 import { handleTableArrowNavigation } from '../../lib/tableKeyboard';
+import { divisionOptions, isProgramAllowedForDivision, normalizeDivision } from '../../lib/bracketPrograms';
 
 type SortDirection = 'asc' | 'desc';
 
@@ -31,6 +32,7 @@ const PlayersTable = memo(({
       if (column === 'name') return `${player.firstName || ''} ${player.lastName || ''}`.trim().toLowerCase();
       if (column === 'usbc') return String(player.usbc || '').toLowerCase();
       if (column === 'lane') return getNumber(player.lane);
+      if (column === 'division') return normalizeDivision(player.division).toLowerCase();
       if (column === 'average') return getNumber(player.average);
       if (column === 'cost') return getNumber(player.totalCost);
       if (column.startsWith('bracket:')) {
@@ -112,22 +114,28 @@ const PlayersTable = memo(({
         <thead>
           {selectedSquad && (
             <tr>
-              <td colSpan={6 + bracketPrograms.length} className="squad-banner">
+              <td colSpan={7 + bracketPrograms.length} className="squad-banner">
                 Showing players for: {selectedSquad.date} — {selectedSquad.time}
               </td>
             </tr>
           )}
           <tr className="entries-header-row">
+            <th className="entries-header-cell col-usbc" aria-sort={getAriaSort('usbc')}>
+              <button type="button" className={`entries-sort-btn ${getSortState('usbc') !== 'none' ? 'is-active' : ''}`} onClick={() => toggleSort('usbc')}>
+                <span>USBC</span>
+                <span className={`entries-sort-icon ${getSortState('usbc')}`} aria-hidden="true">{getSortState('usbc') === 'asc' ? '▲' : getSortState('usbc') === 'desc' ? '▼' : '▲▼'}</span>
+              </button>
+            </th>
             <th className="entries-header-cell col-name" aria-sort={getAriaSort('name')}>
               <button type="button" className={`entries-sort-btn ${getSortState('name') !== 'none' ? 'is-active' : ''}`} onClick={() => toggleSort('name')}>
                 <span>Name</span>
                 <span className={`entries-sort-icon ${getSortState('name')}`} aria-hidden="true">{getSortState('name') === 'asc' ? '▲' : getSortState('name') === 'desc' ? '▼' : '▲▼'}</span>
               </button>
             </th>
-            <th className="entries-header-cell col-usbc" aria-sort={getAriaSort('usbc')}>
-              <button type="button" className={`entries-sort-btn ${getSortState('usbc') !== 'none' ? 'is-active' : ''}`} onClick={() => toggleSort('usbc')}>
-                <span>USBC</span>
-                <span className={`entries-sort-icon ${getSortState('usbc')}`} aria-hidden="true">{getSortState('usbc') === 'asc' ? '▲' : getSortState('usbc') === 'desc' ? '▼' : '▲▼'}</span>
+            <th className="entries-header-cell col-division" aria-sort={getAriaSort('division')}>
+              <button type="button" className={`entries-sort-btn ${getSortState('division') !== 'none' ? 'is-active' : ''}`} onClick={() => toggleSort('division')}>
+                <span>Division</span>
+                <span className={`entries-sort-icon ${getSortState('division')}`} aria-hidden="true">{getSortState('division') === 'asc' ? '▲' : getSortState('division') === 'desc' ? '▼' : '▲▼'}</span>
               </button>
             </th>
             <th className="entries-header-cell col-lane" aria-sort={getAriaSort('lane')}>
@@ -172,8 +180,20 @@ const PlayersTable = memo(({
               key={player.id}
               className="players-table-row"
             >
+              <OptimizedTableCell className="entries-cell medium">
+                <div className="pos-relative flex-center">
+                    <input
+                    className="entries-input entries-control w-80"
+                    type="text"
+                    value={player.usbc || ''}
+                    onChange={(changeEvent) => handleCellEdit(player.id, 'usbc', changeEvent.target.value)}
+                    placeholder="USBC #"
+                  />
+                </div>
+              </OptimizedTableCell>
+
               <OptimizedTableCell className="entries-cell">
-                <div className="flex-center gap-6">
+                <div className="flex-center gap-3">
                   <div className="pos-relative">
                     <input
                       className="entries-input entries-control w-75"
@@ -194,20 +214,24 @@ const PlayersTable = memo(({
                   </div>
                 </div>
               </OptimizedTableCell>
-              
-              <OptimizedTableCell className="entries-cell medium">
-                <div className="pos-relative flex-center">
-                    <input
-                    className="entries-input entries-control w-95"
-                    type="text"
-                    value={player.usbc || ''}
-                    onChange={(changeEvent) => handleCellEdit(player.id, 'usbc', changeEvent.target.value)}
-                    placeholder="USBC #"
-                  />
+
+              <OptimizedTableCell className="entries-cell">
+                <div className="flex-center">
+                  <div className="pos-relative inline-block">
+                    <select
+                      className="entries-select entries-control w-85"
+                      value={normalizeDivision(player.division)}
+                      onChange={(changeEvent) => handleCellEdit(player.id, 'division', changeEvent.target.value)}
+                    >
+                      {divisionOptions.map(option => (
+                        <option key={option} value={option}>{option}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </OptimizedTableCell>
 
-                            <OptimizedTableCell className="entries-cell">
+              <OptimizedTableCell className="entries-cell">
                 <div className="flex-center">
                   <div className="pos-relative inline-block">
                     <input
@@ -237,19 +261,26 @@ const PlayersTable = memo(({
                 <OptimizedTableCell key={program.key} className="entries-cell">
                   <div className="flex-center">
                     <div className="pos-relative inline-block">
+                      {(() => {
+                        const isAllowed = isProgramAllowedForDivision(program.division, player.division)
+                        const visibleValue = isAllowed ? (player.bracketEntries?.[program.key] || 0) : 0
+                        return (
                       <input
                         className="entries-input entries-control w-65"
                         type="text"
-                        value={player.bracketEntries?.[program.key] || 0}
+                        value={visibleValue}
                         onChange={(changeEvent) => handleBracketEntryEdit(player.id, program.key, changeEvent.target.value)}
+                        disabled={!isAllowed}
                       />
+                        )
+                      })()}
                     </div>
                   </div>
                 </OptimizedTableCell>
               ))}
 
               <OptimizedTableCell className="entries-cell">
-                <div className="flex-center gap-10">
+                <div className="flex-center gap-6">
                   <span className="entries-cost">
                     ${player.totalCost.toFixed(2)}
                   </span>
@@ -269,10 +300,12 @@ const PlayersTable = memo(({
 
               <OptimizedTableCell className="entries-cell">
                 <button
-                  className="entries-delete-btn entries-control"
+                  className="entries-delete-btn"
                   onClick={() => onDeletePlayer(player.id)}
+                  aria-label={`Delete ${player.firstName} ${player.lastName}`.trim()}
+                  title="Delete player"
                 >
-                  Delete
+                  <span className="entries-delete-icon" aria-hidden="true">{'\u{1F5D1}'}</span>
                 </button>
               </OptimizedTableCell>
             </OptimizedTableRow>

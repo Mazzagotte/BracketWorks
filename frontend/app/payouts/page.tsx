@@ -464,51 +464,30 @@ export default function PayoutsPage() {
           </div>
         )}
         {!loading && selectedTournament && aggregatedWinners.length === 0 && !loading && (
-          <div className={styles.emptyPayoutState}>
-            <div className={styles.emptyPayoutAccentGlow} aria-hidden="true" />
-
-            <div className={styles.emptyPayoutBadge}>Tournament Ready</div>
-
-            <div className={styles.emptyPayoutHeroRow}>
-              <div className={styles.emptyPayoutIconContainer}>
-                <div className={styles.emptyPayoutIcon}>
-                  <svg viewBox="0 0 100 100" className={styles.emptyPayoutIconSvg} aria-hidden="true">
-                    <path d="M36 24h28v10a14 14 0 0 1-8 12v8h8v8H36v-8h8v-8a14 14 0 0 1-8-12V24z" fill="none" stroke="currentColor" strokeWidth="4" />
-                    <path d="M30 28H18a10 10 0 0 0 10 10h8" fill="none" stroke="currentColor" strokeWidth="4" />
-                    <path d="M70 28h12a10 10 0 0 1-10 10h-8" fill="none" stroke="currentColor" strokeWidth="4" />
-                  </svg>
-                </div>
-              </div>
-
-              <div>
-                <h2 className={styles.emptyPayoutTitle}>No payouts calculated yet</h2>
-                <p className={styles.emptyPayoutText}>
-                  This tournament and squad are loaded, but no finalized winners are available for payout distribution yet. Complete brackets first, then return here to review and mark payouts.
-                </p>
-              </div>
-            </div>
-
-            <div className={styles.emptyPayoutActions}>
-              <Link href="/brackets" className={`${styles.emptyPayoutPrimaryAction} ds-btn ds-btn-primary ds-btn-md`}>
-                Go To Brackets
-              </Link>
-              <Link href="/dashboard" className={`${styles.emptyPayoutSecondaryAction} ds-btn ds-btn-secondary ds-btn-md`}>
-                Back To Dashboard
-              </Link>
-            </div>
-
-            <div className={styles.emptyPayoutFeaturesGrid}>
-              <div className={styles.emptyPayoutFeatureCard}>
-                <h3>Finish Matches</h3>
-                <p>Update winners in Brackets so payout calculations can determine prize distribution.</p>
-              </div>
-              <div className={styles.emptyPayoutFeatureCard}>
-                <h3>Review Winners</h3>
-                <p>Verify player placements, split pots, and payout amounts before issuing payments.</p>
-              </div>
-              <div className={styles.emptyPayoutFeatureCard}>
-                <h3>Track Paid Status</h3>
-                <p>Mark payouts complete as you pay winners to keep the payout process organized.</p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', padding: '16px', boxSizing: 'border-box' }}>
+            <div style={{
+              background: 'var(--color-brand-ivory-light)',
+              border: '1px solid var(--color-border-light)',
+              borderRadius: '16px',
+              boxShadow: 'var(--shadow-soft)',
+              padding: '32px 36px 36px',
+              maxWidth: '560px',
+              width: '100%',
+              textAlign: 'center',
+            }}>
+              <h2 style={{ fontWeight: 700, fontSize: '26px', color: 'var(--color-text-primary)', margin: '0 0 10px', letterSpacing: '-0.02em' }}>
+                No Payouts Calculated Yet
+              </h2>
+              <p style={{ color: 'var(--color-text-secondary)', fontSize: '15px', lineHeight: 1.6, margin: '0 0 24px' }}>
+                Complete brackets first, then return here to review and mark payouts.
+              </p>
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <Link href="/brackets" className="ds-btn ds-btn-primary ds-btn-md">
+                  Go to Brackets
+                </Link>
+                <Link href="/dashboard" className="ds-btn ds-btn-secondary ds-btn-md">
+                  Back to Dashboard
+                </Link>
               </div>
             </div>
           </div>

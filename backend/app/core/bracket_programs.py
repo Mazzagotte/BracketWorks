@@ -121,6 +121,26 @@ LEGACY_BRACKET_PROGRAM_NAME_MAP = {
 }
 
 
+def normalize_division(division: str | None) -> str:
+    value = str(division or "Men").strip().lower()
+    if value in {"men", "mens", "men's"}:
+        return "Men"
+    if value in {"womens", "women", "women's"}:
+        return "Women"
+    if value in {"senior", "seniors", "senior's"}:
+        return "Senior"
+    if value in {"junior", "juniors", "junior's"}:
+        return "Junior"
+    return "Men"
+
+
+def is_program_allowed_for_division(program_division: str | None, player_division: str | None) -> bool:
+    target = str(program_division or "Any").strip().lower()
+    if not target or target in {"any", "open"}:
+        return True
+    return normalize_division(target) == normalize_division(player_division)
+
+
 def _canonicalize_bracket_program_key(key: str) -> str:
     return LEGACY_BRACKET_PROGRAM_KEY_MAP.get(key, key)
 

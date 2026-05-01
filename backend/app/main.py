@@ -2,7 +2,7 @@
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.v1 import health, bowlers, brackets, tournaments, users, squads, bracket_settings, scores, payouts
+from app.api.v1 import health, bowlers, brackets, tournaments, users, squads, bracket_settings, scores, payouts, public
 
 app = FastAPI(title="BracketWorks API", version="0.0.1")
 
@@ -55,3 +55,4 @@ app.include_router(squads.router, prefix="/api/v1/squads", tags=["squads"])
 app.include_router(bracket_settings.router, prefix="/api/v1/bracket-settings", tags=["bracket-settings"])
 app.include_router(scores.router, prefix="/api/v1/scores", tags=["scores"])
 app.include_router(payouts.router, prefix="/api/v1/payouts", tags=["payouts"])
+app.include_router(public.router, prefix="/api/v1/public", tags=["public"])

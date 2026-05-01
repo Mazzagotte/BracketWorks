@@ -2,6 +2,44 @@ import { BracketGroup, BracketProgramDefinition, BracketResponse, Player } from 
 
 export const requiredBracketProgramKeys = ['handicap', 'scratch'] as const
 
+export const divisionOptions = ['Men', 'Women', 'Senior', 'Junior'] as const
+export type BowlerDivision = (typeof divisionOptions)[number]
+
+export function normalizeDivision(division?: string | null): BowlerDivision {
+  const value = String(division || 'Men').trim().toLowerCase()
+  if (value === 'men' || value === 'mens' || value === "men's") return 'Men'
+  if (value === 'womens' || value === "women's" || value === 'women') return 'Women'
+  if (value === 'senior' || value === 'seniors' || value === "senior's") return 'Senior'
+  if (value === 'junior' || value === 'juniors' || value === "junior's") return 'Junior'
+  return 'Men'
+}
+
+export function isProgramAllowedForDivision(programDivision: string | undefined, playerDivision: string | undefined): boolean {
+  const target = String(programDivision || 'Any').trim().toLowerCase()
+  if (!target || target === 'any' || target === 'open') {
+    return true
+  }
+  return normalizeDivision(target) === normalizeDivision(playerDivision)
+}
+
+export function filterEntriesForDivision(
+  entries: Record<string, number> | undefined,
+  programs: BracketProgramDefinition[],
+  division: string | undefined,
+): Record<string, number> {
+  const normalized = normalizePlayerBracketEntries(entries)
+  const filtered: Record<string, number> = {}
+
+  Object.entries(normalized).forEach(([key, count]) => {
+    const program = programs.find(programItem => programItem.key === key)
+    if (!program || isProgramAllowedForDivision(program.division, division)) {
+      filtered[key] = Math.max(0, Number(count || 0))
+    }
+  })
+
+  return filtered
+}
+
 const legacyBracketProgramKeyMap: Record<string, string> = {
   womens: 'womens_scratch',
   seniors: 'seniors_scratch',
