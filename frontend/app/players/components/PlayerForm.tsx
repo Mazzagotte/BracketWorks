@@ -2,7 +2,7 @@ import React, { memo, useState, useEffect } from 'react';
 
 import { PlayerFormProps } from '../types';
 import styles from '../entries.module.css';
-import { calculatePlayerTotalCost, normalizePlayerBracketEntries } from '../../lib/bracketPrograms';
+import { calculatePlayerTotalCost, divisionOptions, filterEntriesForDivision, isProgramAllowedForDivision, normalizeDivision, normalizePlayerBracketEntries } from '../../lib/bracketPrograms';
 
 const EMPTY_FORM = {
   firstName: '',
@@ -12,6 +12,7 @@ const EMPTY_FORM = {
   handicap: 0,
   scratch: 0,
   bracketEntries: { handicap: 0, scratch: 0 },
+  division: 'Mens',
   lane: 'A1',
   amountPaid: 0
 };
@@ -55,7 +56,20 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
   };
 
   const handleInputChange = (field: string, value: string | number) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => {
+      if (field !== 'division') {
+        return { ...prev, [field]: value }
+      }
+      const nextDivision = normalizeDivision(String(value))
+      const nextEntries = filterEntriesForDivision(prev.bracketEntries, bracketPrograms, nextDivision)
+      return {
+        ...prev,
+        division: nextDivision,
+        bracketEntries: nextEntries,
+        handicap: nextEntries.handicap ?? 0,
+        scratch: nextEntries.scratch ?? 0,
+      }
+    });
   };
 
   const handleBracketEntryChange = (programKey: string, value: string) => {
@@ -140,6 +154,19 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
             />
           </div>
 
+          <div>
+            <label className={styles.fieldLabel}>Division</label>
+            <select
+              value={formData.division}
+              onChange={(e) => handleInputChange('division', e.target.value)}
+              className={styles.fieldInput}
+            >
+              {divisionOptions.map(option => (
+                <option key={option} value={option}>{option}</option>
+              ))}
+            </select>
+          </div>
+
         </div>
 
         <div className={styles.compactSection}>
@@ -160,6 +187,7 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
                 onChange={(e) => handleBracketEntryChange(program.key, e.target.value)}
                 className={`${styles.fieldInput} ${styles.compactInput}`}
                 min="0"
+                disabled={!isProgramAllowedForDivision(program.division, formData.division)}
               />
             </div>
           ))}

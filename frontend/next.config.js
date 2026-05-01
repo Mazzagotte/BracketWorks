@@ -67,21 +67,6 @@ const nextConfig = {
       };
     }
     
-    if (dev) {
-      // Faster development builds
-      config.optimization.splitChunks = {
-        chunks: 'all',
-        cacheGroups: {
-          default: false,
-          vendors: false,
-        },
-      };
-      
-      // Reduce bundle analysis in development
-      config.optimization.providedExports = false;
-      config.optimization.usedExports = false;
-    }
-    
     return config;
   },
   

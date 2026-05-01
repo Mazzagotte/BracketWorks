@@ -7,7 +7,7 @@ from typing import List
 from pydantic import BaseModel
 from ..deps import get_db, get_current_user
 from ...core import models, schemas
-from ...core.bracket_programs import calculate_bowler_total_cost, normalize_bowler_bracket_entries
+from ...core.bracket_programs import calculate_bowler_total_cost, normalize_bowler_bracket_entries, normalize_division
 
 router = APIRouter()
 
@@ -70,7 +70,7 @@ def list_bowlers(
                 scratch_entries=player.scratch_entry_count,
             ),
             "lane": player.lane,
-            "division": player.division,
+            "division": normalize_division(player.division),
             "usbc_number": player.usbc_number,
             "amount_paid": player.amount_paid,
             "total_cost": total_cost
@@ -94,7 +94,7 @@ def create_bowler(player: schemas.PlayerCreate, db: Session = Depends(get_db), c
             scratch_entries=player.scratch_entry_count,
         ),
         lane=player.lane,
-        division=player.division or 'Open',
+        division=normalize_division(player.division),
         usbc_number=player.usbc_number,
         amount_paid=player.amount_paid or 0.0
     )
@@ -130,6 +130,8 @@ def bulk_update_bowlers(
     count = 0
     for item in updates:
         data = {k: v for k, v in item.model_dump(exclude_unset=True).items() if k != "id" and v is not None}
+        if "division" in data:
+            data["division"] = normalize_division(data["division"])
         if not data:
             continue
         db.execute(
@@ -153,6 +155,8 @@ def update_bowler(
     current_user: models.User = Depends(get_current_user)
 ):
     update_data = {k: v for k, v in player.model_dump(exclude_unset=True).items() if v is not None}
+    if "division" in update_data:
+        update_data["division"] = normalize_division(update_data["division"])
     if not update_data:
         return {"id": bowler_id}
 

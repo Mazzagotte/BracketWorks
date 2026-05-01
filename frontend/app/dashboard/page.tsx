@@ -785,6 +785,8 @@ export default function TournamentDashboard() {
           // Set tournament and load bracket settings
           if (tournamentData) {
             setTournament(tournamentData);
+            localStorage.setItem('activeTournamentName', tournamentData.name);
+            window.dispatchEvent(new Event('tournament-changed'));
             loadBracketSettings(tournamentData.id);
           } else {
             // Tournament no longer accessible — clear stale localStorage

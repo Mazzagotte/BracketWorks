@@ -4,7 +4,7 @@ import { Player, Squad } from '../types';
 import { logger } from '../../lib/logger';
 import { API, apiClient } from '../../lib/api';
 import { BracketProgramDefinition } from '../../lib/types';
-import { calculatePlayerTotalCost, normalizePlayerBracketEntries } from '../../lib/bracketPrograms';
+import { calculatePlayerTotalCost, filterEntriesForDivision, normalizeDivision, normalizePlayerBracketEntries } from '../../lib/bracketPrograms';
 
 interface PlayerApiResponse {
   id: number;
@@ -15,6 +15,7 @@ interface PlayerApiResponse {
   scratch_entry_count?: number;
   program_entry_counts?: Record<string, number>;
   lane?: string;
+  division?: string;
   squad_id?: number;
   amount_paid?: number;
 }
@@ -55,14 +56,19 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
       setIsLoading(false);
       return;
     }
+
+    // Enforce squad-scoped player view: no squad selected means no entries shown.
+    if (!selectedSquad) {
+      setPlayers([]);
+      setIsLoading(false);
+      return;
+    }
     
     setIsLoading(true);
     
     try {
       const params = new URLSearchParams({ tournament_id: tournamentId });
-      if (selectedSquad) {
-        params.set('squad_id', String(selectedSquad.id));
-      }
+      params.set('squad_id', String(selectedSquad.id));
       const bowlersUrl = `/api/v1/bowlers?${params.toString()}`;
       
       const response = await fetch(API(bowlersUrl), {
@@ -86,6 +92,7 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
           firstName,
           lastName: rest.join(' '),
           usbc: player.usbc_number || '',
+          division: normalizeDivision(player.division),
           average: player.average || 0,
           handicap: player.handicap_entry_count || 0,
           scratch: player.scratch_entry_count || 0,
@@ -128,6 +135,7 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
         scratch_entry_count: newPlayer.scratch,
         program_entry_counts: newPlayer.bracketEntries,
         lane: newPlayer.lane,
+        division: normalizeDivision(newPlayer.division),
         amount_paid: newPlayer.amountPaid,
         tournament_id: parseInt(getItem('tournament_id') || getItem('lastTournamentId') || '1'),
         squad_id: selectedSquad ? selectedSquad.id : null,
@@ -141,6 +149,7 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
         firstName: newPlayer.firstName,
         lastName: newPlayer.lastName,
         usbc: newPlayer.usbc || '',
+        division: normalizeDivision(newPlayer.division),
         average: newPlayer.average,
         handicap: newPlayer.handicap,
         scratch: newPlayer.scratch,
@@ -169,6 +178,7 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
       scratch_entry_count: newPlayer.scratch,
       program_entry_counts: newPlayer.bracketEntries,
       lane: newPlayer.lane,
+      division: normalizeDivision(newPlayer.division),
       amount_paid: newPlayer.amountPaid,
       tournament_id: parseInt(getItem('tournament_id') || getItem('lastTournamentId') || '1'),
       squad_id: selectedSquad ? selectedSquad.id : null,
@@ -196,7 +206,24 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
       prevPlayers.map(player => {
         if (player.id !== id) return player;
         const merged = { ...player, ...updates };
+        if ('division' in updates) {
+          merged.division = normalizeDivision(updates.division)
+        }
+        merged.bracketEntries = filterEntriesForDivision(
+          normalizePlayerBracketEntries(merged.bracketEntries, merged.handicap, merged.scratch),
+          bracketPrograms,
+          merged.division,
+        )
+        merged.handicap = merged.bracketEntries.handicap ?? 0
+        merged.scratch = merged.bracketEntries.scratch ?? 0
         if ('handicap' in updates || 'scratch' in updates || 'bracketEntries' in updates) {
+          merged.totalCost = calculatePlayerTotalCost(
+            normalizePlayerBracketEntries(merged.bracketEntries, merged.handicap, merged.scratch),
+            bracketPrograms,
+            entryFee,
+          );
+        }
+        if ('division' in updates) {
           merged.totalCost = calculatePlayerTotalCost(
             normalizePlayerBracketEntries(merged.bracketEntries, merged.handicap, merged.scratch),
             bracketPrograms,
@@ -215,6 +242,26 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
     // Build the API payload for this update
     const playerData: Record<string, any> = {};
 
+    const currentPlayer = playersRef.current.find(player => player.id === id)
+    const nextDivision = 'division' in updates
+      ? normalizeDivision(updates.division)
+      : normalizeDivision(currentPlayer?.division)
+    const nextHandicap = 'handicap' in updates
+      ? Number(updates.handicap || 0)
+      : Number(currentPlayer?.handicap || 0)
+    const nextScratch = 'scratch' in updates
+      ? Number(updates.scratch || 0)
+      : Number(currentPlayer?.scratch || 0)
+    const nextBracketEntries = filterEntriesForDivision(
+      normalizePlayerBracketEntries(
+        ('bracketEntries' in updates ? updates.bracketEntries : currentPlayer?.bracketEntries),
+        nextHandicap,
+        nextScratch,
+      ),
+      bracketPrograms,
+      nextDivision,
+    )
+
     // Name requires the current merged state to avoid dropping first/last updates.
     // Use a ref snapshot so payload creation is deterministic.
     if ('firstName' in updates || 'lastName' in updates) {
@@ -225,10 +272,13 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
 
     if ('usbc' in updates) playerData.usbc_number = updates.usbc;
     if ('average' in updates) playerData.average = updates.average;
-    if ('handicap' in updates) playerData.handicap_entry_count = updates.handicap;
-    if ('scratch' in updates) playerData.scratch_entry_count = updates.scratch;
-    if ('bracketEntries' in updates) playerData.program_entry_counts = updates.bracketEntries;
+    if ('handicap' in updates || 'scratch' in updates || 'bracketEntries' in updates || 'division' in updates) {
+      playerData.handicap_entry_count = nextBracketEntries.handicap ?? 0
+      playerData.scratch_entry_count = nextBracketEntries.scratch ?? 0
+      playerData.program_entry_counts = nextBracketEntries
+    }
     if ('lane' in updates) playerData.lane = String(updates.lane ?? '');
+    if ('division' in updates) playerData.division = normalizeDivision(updates.division);
     if ('amountPaid' in updates) playerData.amount_paid = updates.amountPaid;
 
     // Merge into the pending patch for this player so the debounced call always
@@ -303,14 +353,28 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
 
   useEffect(() => {
     setPlayers(prevPlayers =>
-      prevPlayers.map(player => ({
-        ...player,
-        totalCost: calculatePlayerTotalCost(
+      prevPlayers.map(player => {
+        const division = normalizeDivision(player.division)
+        const bracketEntries = filterEntriesForDivision(
           normalizePlayerBracketEntries(player.bracketEntries, player.handicap, player.scratch),
           bracketPrograms,
-          entryFee,
-        ),
-      }))
+          division,
+        )
+        const handicap = bracketEntries.handicap ?? 0
+        const scratch = bracketEntries.scratch ?? 0
+        return {
+          ...player,
+          division,
+          bracketEntries,
+          handicap,
+          scratch,
+          totalCost: calculatePlayerTotalCost(
+            normalizePlayerBracketEntries(bracketEntries, handicap, scratch),
+            bracketPrograms,
+            entryFee,
+          ),
+        }
+      })
     );
   }, [bracketPrograms, entryFee]);
 

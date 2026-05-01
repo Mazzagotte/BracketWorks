@@ -15,7 +15,7 @@ import { logger } from '../lib/logger'
 import { Squad, Player } from './types'
 import { BracketProgramDefinition, BracketSettings, Tournament } from '../lib/types'
 import { apiClient, API } from '../lib/api'
-import { calculatePlayerTotalCost, defaultBracketPrograms, getEnabledBracketPrograms, normalizeBracketPrograms, normalizePlayerBracketEntries, summarizeEntries } from '../lib/bracketPrograms'
+import { calculatePlayerTotalCost, defaultBracketPrograms, filterEntriesForDivision, getEnabledBracketPrograms, normalizeBracketPrograms, normalizeDivision, normalizePlayerBracketEntries, summarizeEntries } from '../lib/bracketPrograms'
 import styles from './entries.module.css'
 import { useToastHelpers } from '../components/Toast'
 import ImportLoadingModal from '../components/ImportLoadingModal'
@@ -205,11 +205,16 @@ export default function PlayersPage() {
     }
 
     const updates: UpdateRow[] = current.map(player => {
-      const programEntryCounts = Object.fromEntries(
+      const rawProgramEntryCounts = Object.fromEntries(
         enabledBracketPrograms.map(program => [
           program.key,
           Math.floor(Math.random() * 16),
         ]),
+      )
+      const programEntryCounts = filterEntriesForDivision(
+        normalizePlayerBracketEntries(rawProgramEntryCounts),
+        enabledBracketPrograms,
+        normalizeDivision(player.division),
       )
       return {
         id: player.id,

@@ -1,0 +1,18 @@
+.shell {
+  min-height: 100vh;
+  padding: 0 0 var(--spacing-xl);
+  background:
+    radial-gradient(circle at top, var(--color-dark-elevated) 0%, var(--color-dark-base) 34%, var(--color-background) 34.5%, var(--color-background) 100%);
+}
+
+.inner {
+  min-height: 100vh;
+}
+
+@media (max-width: 768px) {
+  .shell {
+    padding-bottom: var(--spacing-lg);
+    background:
+      linear-gradient(180deg, var(--color-dark-base) 0 260px, var(--color-background) 260px 100%);
+  }
+}

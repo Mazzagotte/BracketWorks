@@ -11,7 +11,7 @@ from datetime import datetime
 # Import advanced bracket generation
 from .brackets_advanced import create_brackets_with_history, get_round_name
 from .brackets_experimental import ExperimentalConfig, generate_brackets_experimental
-from ..core.bracket_programs import normalize_bowler_bracket_entries, normalize_bracket_programs
+from ..core.bracket_programs import is_program_allowed_for_division, normalize_bowler_bracket_entries, normalize_bracket_programs
 
 logger = logging.getLogger(__name__)
 
@@ -300,6 +300,9 @@ def create_entries_for_program(
     skipped_players: List[Dict[str, Any]] = []
 
     for player in players:
+        if not is_program_allowed_for_division(program.get('division'), player.get('division')):
+            continue
+
         player_entries = normalize_bowler_bracket_entries(
             player.get('bracket_entries'),
             handicap_entries=player.get('handicap'),
