@@ -285,7 +285,7 @@ export function summarizeEntries(players: Player[], programs: BracketProgramDefi
       ?? 0
     )
     const totalEntries = counts.reduce((sum, count) => sum + count, 0)
-    const fillResult = simulateBracketFill(counts, bracketSize)
+    const fillResult = simulateBracketFill(counts, bracketSize, Boolean(program.allow_byes))
 
     return {
       ...program,
@@ -310,24 +310,30 @@ export function summarizeEntries(players: Player[], programs: BracketProgramDefi
   }
 }
 
-function simulateBracketFill(playerCounts: number[], bracketSize: number) {
+function simulateBracketFill(playerCounts: number[], bracketSize: number, allowSingleByePerBracket: boolean) {
   const total = playerCounts.reduce((sum, count) => sum + count, 0)
-  if (total < bracketSize) {
+  const minimumGroupSize = (allowSingleByePerBracket && bracketSize > 1) ? (bracketSize - 1) : bracketSize
+
+  if (total < minimumGroupSize) {
     return { brackets: 0, refunds: total }
   }
 
-  let bracketCount = Math.floor(total / bracketSize)
+  let bracketCount = Math.floor(total / minimumGroupSize)
   while (bracketCount > 0) {
     const fillable = playerCounts.reduce((sum, count) => sum + Math.min(count, bracketCount), 0)
-    const nextBracketCount = Math.floor(fillable / bracketSize)
-    if (nextBracketCount >= bracketCount) {
-      break
+    const minRequiredEntries = bracketCount * minimumGroupSize
+    if (fillable >= minRequiredEntries) {
+      const maxAssignableEntries = Math.min(total, fillable, bracketCount * bracketSize)
+      return {
+        brackets: bracketCount,
+        refunds: total - maxAssignableEntries,
+      }
     }
-    bracketCount = nextBracketCount
+    bracketCount -= 1
   }
 
   return {
-    brackets: bracketCount,
-    refunds: total - (bracketCount * bracketSize),
+    brackets: 0,
+    refunds: total,
   }
 }

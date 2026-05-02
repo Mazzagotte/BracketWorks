@@ -17,6 +17,7 @@ import EnhancedButton from '../components/EnhancedButton';
 import { useToast } from '../components/Toast';
 import { usePagination } from '../components/Performance';
 import { FormField, Input, Select } from '../components/UI';
+import ShareQRModal from '../components/ShareQRModal';
 
 function get12hrTimes() {
   const availableTimeSlots: string[] = [];
@@ -341,6 +342,7 @@ export default function TournamentDashboard() {
   const [loadModalOpen, setLoadModalOpen] = useState(false);
   const [allTournaments, setAllTournaments] = useState<Tournament[]>([]);
   const [deleteConfirm, setDeleteConfirm] = useState<{id: number, name: string} | null>(null);
+  const [shareQROpen, setShareQROpen] = useState(false);
   
   // Enhanced UX components
   const { addToast } = useToast();
@@ -1137,6 +1139,9 @@ export default function TournamentDashboard() {
           <button className="ds-btn ds-btn-primary ds-btn-sm" onClick={() => { setCreateMode(false); setModalOpen(true); }}>
             Edit Tournament
           </button>
+          <button className="ds-btn ds-btn-secondary ds-btn-sm" onClick={() => setShareQROpen(true)}>
+            Share QR
+          </button>
           <button
             className="ds-btn ds-btn-destructive ds-btn-sm"
             onClick={() => {
@@ -1226,6 +1231,14 @@ export default function TournamentDashboard() {
     <ErrorBoundary>
       <>
         <ConfirmationDialog open={confirmOpen} message={confirmMsg} onClose={() => setConfirmOpen(false)} />
+        {tournament && (
+          <ShareQRModal
+            open={shareQROpen}
+            onClose={() => setShareQROpen(false)}
+            tournamentId={tournament.id}
+            tournamentName={tournament.name}
+          />
+        )}
         <EditTournamentModal
           open={modalOpen}
           onClose={() => { setModalOpen(false); setCreateMode(false); }}

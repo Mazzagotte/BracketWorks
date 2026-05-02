@@ -20,6 +20,27 @@ import styles from './entries.module.css'
 import { useToastHelpers } from '../components/Toast'
 import ImportLoadingModal from '../components/ImportLoadingModal'
 
+function bracketProgramsEqual(left: BracketProgramDefinition[], right: BracketProgramDefinition[]): boolean {
+  if (left.length !== right.length) return false
+  for (let i = 0; i < left.length; i += 1) {
+    const l = left[i]
+    const r = right[i]
+    if (
+      l.key !== r.key
+      || l.name !== r.name
+      || (l.division || '') !== (r.division || '')
+      || l.scoring_mode !== r.scoring_mode
+      || (l.entry_fee ?? null) !== (r.entry_fee ?? null)
+      || Boolean(l.enabled) !== Boolean(r.enabled)
+      || Boolean(l.allow_byes) !== Boolean(r.allow_byes)
+      || (l.display_order ?? null) !== (r.display_order ?? null)
+    ) {
+      return false
+    }
+  }
+  return true
+}
+
 
 export default function PlayersPage() {
   const { isAuthenticated, isInitialized, token, user } = useAuth()
@@ -75,18 +96,24 @@ export default function PlayersPage() {
     
     try {
       const settings = await apiClient.get<BracketSettings>(`/api/v1/bracket-settings/${tournamentId}`);
+      const nextEntryFee = typeof settings?.default_entry_fee === 'number' ? settings.default_entry_fee : null
+      const nextPrograms = normalizeBracketPrograms(settings?.bracket_programs, nextEntryFee ?? entryFee)
       
-      if (settings && typeof settings.default_entry_fee === 'number') {
-        setEntryFee(settings.default_entry_fee);
-        logger.info(`Loaded entry fee from tournament settings: $${settings.default_entry_fee}`);
+      if (nextEntryFee != null) {
+        setEntryFee(prev => {
+          if (prev === nextEntryFee) return prev
+          logger.info(`Loaded entry fee from tournament settings: $${nextEntryFee}`)
+          return nextEntryFee
+        })
       }
-      setBracketPrograms(normalizeBracketPrograms(settings?.bracket_programs, settings?.default_entry_fee ?? entryFee))
+      setBracketPrograms(prev => (bracketProgramsEqual(prev, nextPrograms) ? prev : nextPrograms))
       if (settings && typeof settings.bracket_size === 'number') {
         setBracketSize(8);
       }
     } catch (error) {
       logger.warn('Failed to load bracket settings, using default entry fee:', error);
-      setBracketPrograms(normalizeBracketPrograms(undefined, entryFee))
+      const fallbackPrograms = normalizeBracketPrograms(undefined, entryFee)
+      setBracketPrograms(prev => (bracketProgramsEqual(prev, fallbackPrograms) ? prev : fallbackPrograms))
     } finally {
       setInitialLoadComplete(true);
     }

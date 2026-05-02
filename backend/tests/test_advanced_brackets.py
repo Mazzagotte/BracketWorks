@@ -13,6 +13,7 @@ sys.path.append('..')
 
 from backend.app.services.brackets_advanced import (
     generate_brackets_with_constraints,
+    create_brackets_with_history,
     normalize_pair,
     is_forbidden,
     fisher_yates_shuffle,
@@ -158,9 +159,9 @@ def test_heavy_constraints():
 
 
 def test_impossible_constraints():
-    """Test 4: Impossible constraints - no valid pairing exists"""
+    """Test 4: Impossible constraints degrade gracefully instead of hard-refunding"""
     print("\n" + "="*60)
-    print("TEST 4: Impossible Constraints (Should Refund)")
+    print("TEST 4: Impossible Constraints (Soft Penalty Fallback)")
     print("="*60)
     
     entries = create_test_entries(4)
@@ -185,10 +186,20 @@ def test_impossible_constraints():
     
     print_bracket_summary(result)
     
-    # Should refund all players since no valid bracket possible
-    assert len(result['brackets']) == 0, "No brackets should be created"
-    assert len(result['refunded']) == 4, "All players should be refunded"
-    print("TEST 4 PASSED - Correctly refunded impossible case")
+    # History constraints are now soft penalties, so generation should still
+    # produce a bracket even when a fully clean pairing is impossible.
+    assert len(result['brackets']) == 1, "Bracket should still be created"
+    assert len(result['refunded']) == 0, "Players should not be refunded in soft-penalty mode"
+
+    # Validate that at least one forbidden pairing appears (unavoidable case).
+    forbidden_seen = False
+    for pairing in result['brackets'][0]['pairings']:
+        pair = normalize_pair(pairing['home']['player_id'], pairing['away']['player_id'])
+        if pair in history_set:
+            forbidden_seen = True
+            break
+    assert forbidden_seen, "Expected at least one forbidden pairing in impossible constraint scenario"
+    print("TEST 4 PASSED - Generated bracket with unavoidable historical rematch")
 
 
 def test_multiple_brackets_with_history():
@@ -308,6 +319,46 @@ def test_duplicate_prevention():
         assert len(player_ids) == len(set(player_ids)), "Duplicate player in bracket!"
     
     print("TEST 7 PASSED - No duplicates in same bracket")
+
+
+def test_allow_byes_limits_to_zero_or_one_per_bracket():
+    """When BYEs are enabled, each generated bracket should contain at most one BYE slot."""
+    entries = []
+    counts = [1, 8, 8, 4, 15, 5, 11]  # Uneven distribution similar to production women's data.
+    for pid, count in enumerate(counts, start=1):
+        for entry_num in range(count):
+            entries.append(
+                {
+                    'player_id': pid,
+                    'name': f'Player {pid}',
+                    'average': 180,
+                    'entry_number': entry_num + 1,
+                    'scores': {},
+                }
+            )
+
+    brackets, leftovers = create_brackets_with_history(
+        entries=entries,
+        bracket_size=8,
+        bracket_type='Womens Handicap',
+        history_set=set(),
+        seed=42,
+        allow_single_bye_per_bracket=True,
+    )
+
+    assert len(brackets) > 0, "Expected at least one bracket to be generated with BYEs enabled"
+
+    for bracket in brackets:
+        first_round_matches = bracket['rounds'][0]['matches']
+        bye_slots = sum(
+            1
+            for match in first_round_matches
+            for player_name in (match.get('playerA'), match.get('playerB'))
+            if str(player_name or '').strip().upper() == 'BYE'
+        )
+        assert bye_slots in (0, 1), f"Expected 0 or 1 BYE per bracket, found {bye_slots}"
+
+    assert all(item.get('player_name') != 'BYE' for item in leftovers)
 
 
 def run_all_tests():

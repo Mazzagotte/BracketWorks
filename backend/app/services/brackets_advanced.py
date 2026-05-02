@@ -226,26 +226,7 @@ def optimize_pairings(
     established_pairs: Set[Tuple[int, int]] = set()  # Cross-bracket tracking
     bye_recipient_counts: Dict[int, int] = {}  # Avoid repeatedly giving BYE to same player
 
-    def _group_is_impossible(group: List[Dict[str, Any]]) -> bool:
-        """Return True if any real player in the group has all other real players forbidden."""
-        real = [e for e in group if e.get('player_id') is not None]
-        for player in real:
-            pid = player['player_id']
-            if all(
-                is_forbidden(pid, other['player_id'], history_set)
-                for other in real
-                if other['player_id'] != pid
-            ):
-                return True
-        return False
-
     for group in groups:
-        # Short-circuit: if any player has all opponents forbidden, the bracket
-        # cannot be validly filled — refund the whole group immediately.
-        if _group_is_impossible(group):
-            failed_groups.append(group)
-            continue
-
         best_pairings: Optional[List[Tuple[Dict, Dict, Tuple[int, int], Optional[int]]]] = None
         best_score = float('inf')
 
@@ -676,18 +657,23 @@ def create_brackets_with_history(
                         eligible.sort(key=lambda index: (len(groups[index]) / capacities[index], len(groups[index])))
                         groups[eligible[0]].append(entry)
 
-                fully_filled = True
+                # Keep any fully filled groups and refund incomplete ones.
+                # This avoids all-or-nothing collapse when distribution across
+                # players is uneven (common in division-restricted programs).
+                filled_group_records: List[Tuple[List[Dict[str, Any]], int]] = []
                 for i, group in enumerate(groups):
-                    if len(group) != capacities[i]:
+                    capacity = capacities[i]
+                    if len(group) == capacity:
+                        filled_group_records.append((group, capacity))
+                    else:
                         candidate_refunded.extend(group)
-                        fully_filled = False
 
-                if not fully_filled:
+                if not filled_group_records:
                     continue
 
                 augmented_groups: List[List[Dict[str, Any]]] = []
-                for i, group in enumerate(groups):
-                    if i >= normal_count:
+                for group, capacity in filled_group_records:
+                    if capacity == real_slots:
                         augmented_groups.append(group + [bye_entry.copy()])
                     else:
                         augmented_groups.append(group)
@@ -716,6 +702,59 @@ def create_brackets_with_history(
                     best_layout_refunded = candidate_refunded
                     best_layout_placed = candidate_placed
                     best_layout_normal_count = normal_count
+
+            # Deterministic BYE-only fallback: build as many (size-1 + BYE)
+            # groups as possible by taking one entry from each of the most
+            # available distinct players per group.
+            by_player_for_greedy: Dict[Any, List[Dict[str, Any]]] = {
+                pid: items.copy() for pid, items in by_player.items() if items
+            }
+            greedy_groups: List[List[Dict[str, Any]]] = []
+
+            while True:
+                eligible = [pid for pid, items in by_player_for_greedy.items() if items]
+                if len(eligible) < real_slots:
+                    break
+
+                selected = sorted(
+                    eligible,
+                    key=lambda pid: (-len(by_player_for_greedy[pid]), pid),
+                )[:real_slots]
+
+                group: List[Dict[str, Any]] = []
+                for pid in selected:
+                    group.append(by_player_for_greedy[pid].pop())
+
+                greedy_groups.append(group + [bye_entry.copy()])
+
+            if greedy_groups:
+                candidate_rng = random.Random((seed or 0) + 99991) if seed is not None else random.Random()
+                optimized_brackets, failed_groups = optimize_pairings(
+                    groups=greedy_groups,
+                    bracket_size=bracket_size,
+                    history_set=history_set,
+                    rng=candidate_rng,
+                    max_attempts=1500,
+                )
+
+                candidate_refunded: List[Dict[str, Any]] = []
+                for failed_group in failed_groups:
+                    candidate_refunded.extend(
+                        [
+                            entry for entry in failed_group
+                            if str(entry.get('name') or '').strip().upper() != 'BYE'
+                        ]
+                    )
+
+                for items in by_player_for_greedy.values():
+                    candidate_refunded.extend(items)
+
+                candidate_placed = total_entries - len(candidate_refunded)
+                if candidate_placed > best_layout_placed:
+                    best_layout_brackets = optimized_brackets
+                    best_layout_refunded = candidate_refunded
+                    best_layout_placed = candidate_placed
+                    best_layout_normal_count = 0
 
             if best_layout_brackets is not None and best_layout_refunded is not None and best_layout_placed > standard_placed:
                 result['brackets'] = best_layout_brackets

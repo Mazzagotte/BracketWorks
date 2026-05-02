@@ -254,6 +254,7 @@ def generate_tournament_brackets(
                 "name": program['name'],
                 "division": program['division'],
                 "scoring_mode": program['scoring_mode'],
+                "allow_byes": bool(program.get('allow_byes', False)),
                 "entry_fee": program.get('entry_fee'),
                 "display_order": program['display_order'],
                 "brackets": brackets,
