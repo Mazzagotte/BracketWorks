@@ -28,6 +28,30 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+
+def detect_bye_misconfiguration_errors(brackets_result: dict, bracket_size: int) -> list[str]:
+    """Return user-facing errors when strict BYE program settings are likely misconfigured."""
+    errors: list[str] = []
+    for group in brackets_result.get('bracket_groups', []):
+        entries_count = int(group.get('entries_count', 0) or 0)
+        allow_byes = bool(group.get('allow_byes', False))
+        brackets_count = len(group.get('brackets', []) or [])
+        refunds_count = int(group.get('refund_entries', 0) or 0)
+        name = str(group.get('name') or group.get('key') or 'Bracket program')
+
+        # Strong signal: one short of a full bracket with no generated bracket.
+        if entries_count == (bracket_size - 1) and brackets_count == 0 and not allow_byes:
+            errors.append(
+                f"{name}: {entries_count} entries is one short of bracket size {bracket_size}. "
+                f"Enable allow_byes for this program to generate a bracket with one BYE."
+            )
+            continue
+
+        # Do not hard-fail for larger pools where at least one full bracket exists;
+        # one-slot remainders are expected and can be validly refunded.
+
+    return errors
+
 class MatchScoreUpdate(BaseModel):
     bracket_id: str  # Format: "scratch_1" or "handicap_2" 
     round_index: int
@@ -259,6 +283,16 @@ def generate_tournament_brackets_endpoint(
             use_experimental_optimizer=experimental_enabled,
             experimental_attempts=selected_attempts,
         )
+
+        bye_config_errors = detect_bye_misconfiguration_errors(
+            brackets_result,
+            bracket_settings.bracket_size,
+        )
+        if bye_config_errors:
+            raise HTTPException(
+                status_code=400,
+                detail="; ".join(bye_config_errors),
+            )
         
         # Validate bracket structure before saving
         validation_result = validate_all_brackets(brackets_result)

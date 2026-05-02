@@ -182,3 +182,27 @@ def test_match_score_validation():
             score_a=-1,  # Invalid
             score_b=175
         )
+
+
+@pytest.mark.unit
+def test_detect_bye_misconfiguration_errors_one_short_without_byes():
+    from app.api.v1.brackets import detect_bye_misconfiguration_errors
+
+    result = {
+        "bracket_groups": [
+            {
+                "key": "womens_scratch",
+                "name": "Women's Scratch",
+                "allow_byes": False,
+                "entries_count": 7,
+                "refund_entries": 7,
+                "brackets": [],
+            }
+        ]
+    }
+
+    errors = detect_bye_misconfiguration_errors(result, bracket_size=8)
+    assert len(errors) == 1
+    assert "Women's Scratch" in errors[0]
+    assert "Enable allow_byes" in errors[0]
+

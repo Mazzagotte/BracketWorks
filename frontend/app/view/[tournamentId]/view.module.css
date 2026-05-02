@@ -185,12 +185,17 @@
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
+  box-sizing: border-box;
 }
 
 .tab {
+  appearance: none;
+  -webkit-appearance: none;
   flex: 1;
   padding: 8px 10px;
   border: 1px solid transparent;
+  box-sizing: border-box;
+  margin: 0;
   border-radius: 8px;
   background: transparent;
   color: rgba(255, 255, 255, 0.6);
@@ -970,56 +975,219 @@
   color: var(--color-primary);
 }
 
-@media (max-width: 600px) {
-  .headerInner { padding: var(--spacing-md) var(--spacing-sm) 0; }
-  .headerTop { flex-wrap: wrap; }
-  .brandCol { padding-right: 0; border-right: none; }
-  .tournamentCol { flex-basis: 100%; order: 3; }
-  .liveIndicator { margin-left: auto; }
-  .brandLogo { width: 40px; height: 40px; }
-  .tournamentName { font-size: var(--font-size-lg); white-space: normal; }
-  .controlsPanel {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+/* ── Responsive column header helpers ── */
+.thFull  { display: inline; }
+.thShort { display: none; }
+
+/* ── Tablet: 481px – 768px ─────────────────────────────────────────────────── */
+@media (min-width: 481px) and (max-width: 768px) {
+  .headerInner { padding: 0 16px; }
+  .brandEyebrow { font-size: 11px; }
+  .squadSelect {
+    min-height: 32px;
+    height: 32px;
   }
-  .squadSelector { flex-direction: column; align-items: stretch; }
-  .squadSelect { max-width: none; }
-  .tabsTrack { gap: 4px; padding: 4px; }
-  .tab { font-size: var(--font-size-xs); padding: 8px var(--spacing-xs); }
-  .main { padding: 14px 10px; }
-  .bracketNavigator {
-    gap: 8px;
+  .tabsTrack { gap: 2px; padding: 2px; }
+  .tab {
+    min-height: 32px;
+    height: 32px;
+    padding: 0 8px;
+    font-size: 12px;
   }
   .bracketNavBtn {
+    min-height: 32px;
+    height: 32px;
     min-width: 96px;
-    height: 34px;
-    font-size: 0.85rem;
-    border-radius: 9px;
-    gap: 5px;
+    padding: 0 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    gap: 4px;
   }
-  .bracketNavTitle {
-    font-size: 1.1rem;
+  .groupTitle {
+    font-size: 1.45rem;
+    padding: 0.8rem 0.9rem 0.7rem;
   }
-  .bracketNavCount {
-    font-size: 1rem;
+  .main { padding: 16px 14px; }
+  .matchCard { width: 200px; }
+  .bracketRound { min-width: 200px; }
+  .winnersGrid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+}
+
+/* ── Mobile: up to 480px ───────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  /* Header — logo spans 2 rows; title row + squad row; tabs below */
+  .headerInner {
+    padding: 0 12px;
   }
-  .bracketNavTitleRow {
+  .headerTop {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
+    column-gap: 8px;
+    row-gap: 6px;
+    align-items: start;
+    padding: 10px 0 8px;
+  }
+  .controlsPanel {
+    display: contents;
+  }
+  .brandCol {
+    display: contents;
+  }
+  /* Hide "BracketWorks · Public Tournament View" text — saves vertical space */
+  .brandEyebrow { display: none; }
+  .brandText {
+    grid-column: 2;
+    grid-row: 1;
+    min-width: 0;
+  }
+  .brandLogo {
+    grid-column: 1;
+    grid-row: 1 / 3;
+    width: auto;
+    height: 100%;
+    max-height: 72px;
+    align-self: stretch;
+  }
+  /* Promote tournament name to act as the visible title */
+  .brandSubline {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--color-white);
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  /* Squad selector: row 2, beside the spanning logo */
+  .squadSelector {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: start;
+    align-self: center;
+    flex-direction: row;
+    align-items: center;
     gap: 6px;
   }
-  .bracketPillsArrow {
-    width: 30px;
+  .squadLabel { font-size: 10px; letter-spacing: 0.04em; }
+  .squadSelect {
+    flex: 0 1 auto;
+    width: fit-content;
+    max-width: min(52vw, 240px);
+    min-height: 30px;
     height: 30px;
-    font-size: 14px;
+    padding: 0 10px;
+    font-size: 12px;
   }
-  .bracketPill {
-    min-width: 44px;
-    min-height: 34px;
+  /* Tabs: full-width row 3 */
+  .tabs {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    width: 100%;
   }
-  .bracketRounds { gap: 10px; }
-  .bracketRound { min-width: 190px; }
+  .tabsTrack {
+    gap: 1px;
+    padding: 1px;
+    width: 100%;
+    height: 30px;
+    border-radius: 10px;
+    align-items: stretch;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+  .tab,
+  .tabActive {
+    font-size: 9px;
+    line-height: 1;
+    padding: 0 2px !important;
+    min-height: 28px !important;
+    height: 28px !important;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    margin: 0;
+  }
+
+  /* Main content area */
+  .main { padding: 12px 10px; }
+
+  .groupTitle {
+    font-size: 1.2rem;
+    padding: 0.72rem 0.8rem 0.62rem;
+  }
+
+  /* Alive table — shorter header text */
+  .thFull  { display: none; }
+  .thShort { display: inline; }
+  .table thead th { padding: 10px 6px; }
+  .table td { padding: 10px 6px; }
+
+  /* Bracket navigation */
+  .bracketNavigator {
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .bracketNavBtn {
+    min-width: 84px;
+    min-height: 28px !important;
+    height: 28px !important;
+    line-height: 1 !important;
+    padding: 0 6px !important;
+    font-size: 9px !important;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    border-radius: 6px;
+    gap: 4px;
+    border: 1px solid var(--color-border-light);
+    background: var(--color-surface);
+    color: var(--color-text-secondary);
+    box-shadow: none;
+  }
+  .bracketNavBtn span {
+    line-height: 1;
+  }
+  .bracketNavBtn:hover:not(:disabled) {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    background: var(--color-brand-ivory-light);
+    filter: none;
+  }
+  .bracketNavBtn:disabled {
+    opacity: 0.4;
+    border-color: var(--color-border-light);
+    background: var(--color-surface);
+    color: var(--color-text-secondary);
+  }
+  .bracketNavTitle { font-size: 1.1rem; }
+  .bracketNavCount { font-size: 0.95rem; }
+  .bracketNavTitleRow { gap: 6px; }
+
+  /* Bracket pill nav */
+  .bracketPillsArrow { width: 30px; height: 30px; font-size: 14px; }
+  .bracketPill { min-width: 44px; min-height: 34px; }
+
+  /* Bracket tree: narrower match cards on phones */
+  .bracketTreeWrap {
+    overflow: hidden;
+  }
+  .bracketRounds,
+  .bracketRoundsExtra {
+    overflow: visible;
+    flex-direction: column;
+  }
+  .bracketRound {
+    min-width: 100%;
+  }
+  .matchCard { width: 200px; }
   .matchSlot { padding: 7px 8px; }
+  .bracketRounds { gap: 10px; }
+
+  /* Winners */
   .winnersGrid { grid-template-columns: 1fr; }
+
+  /* Footer */
   .footer { flex-direction: column; align-items: stretch; }
   .footerBrand { align-items: flex-start; }
   .refreshBtn { width: 100%; }

@@ -113,7 +113,10 @@ export function DevAuthStatus() {
       fontFamily: 'Inter, sans-serif',
       minWidth: isExpanded ? '300px' : '120px',
       transition: 'all 0.3s ease'
-    }}>
+    }}
+    className="dev-status-panel"
+    >
+      <style>{`@media (max-width: 480px) { .dev-status-panel { display: none !important; } }`}</style>
       {/* Compact View */}
       <div 
         style={{

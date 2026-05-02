@@ -158,9 +158,18 @@ function AliveView({ bracketGroups }: { bracketGroups: BracketGroup[] }) {
         <thead>
           <tr>
             <th>Bowler</th>
-            <th className={styles.thCenter}>Brackets</th>
-            <th className={styles.thCenter}>After Game 1</th>
-            <th className={styles.thCenter}>After Game 2</th>
+            <th className={styles.thCenter}>
+              <span className={styles.thFull}>Brackets</span>
+              <span className={styles.thShort}>#</span>
+            </th>
+            <th className={styles.thCenter}>
+              <span className={styles.thFull}>After Game 1</span>
+              <span className={styles.thShort}>G1</span>
+            </th>
+            <th className={styles.thCenter}>
+              <span className={styles.thFull}>After Game 2</span>
+              <span className={styles.thShort}>G2</span>
+            </th>
             <th className={styles.thCenter}>Won</th>
           </tr>
         </thead>
@@ -241,6 +250,10 @@ function MatchCard({
 
 function BracketView({ group }: { group: BracketGroup }) {
   const [activeBracket, setActiveBracket] = useState(0)
+  const [treeScale, setTreeScale] = useState(1)
+  const [treeScaledHeight, setTreeScaledHeight] = useState<number | null>(null)
+  const treeWrapRef = useRef<HTMLDivElement>(null)
+  const treeGridRef = useRef<HTMLDivElement>(null)
   const bracket = group.brackets[activeBracket]
   const totalBrackets = group.brackets.length
   const rounds = bracket?.rounds ?? []
@@ -248,6 +261,44 @@ function BracketView({ group }: { group: BracketGroup }) {
   const totalRows = (treeRounds[0]?.matches.length ?? 0) * 2
   const canRenderTree = treeRounds.length > 0 && totalRows > 0
   const treeColumns = treeRounds.length === 1 ? 1 : treeRounds.length === 2 ? 4 : 7
+
+  useEffect(() => {
+    if (!canRenderTree) {
+      setTreeScale(1)
+      setTreeScaledHeight(null)
+      return
+    }
+
+    const recalcTreeFit = () => {
+      const wrap = treeWrapRef.current
+      const grid = treeGridRef.current
+      if (!wrap || !grid) return
+
+      const isMobile = window.matchMedia('(max-width: 480px)').matches
+      if (!isMobile) {
+        setTreeScale(1)
+        setTreeScaledHeight(null)
+        return
+      }
+
+      const availableWidth = wrap.clientWidth
+      const naturalWidth = grid.scrollWidth
+      const naturalHeight = grid.scrollHeight
+      if (!availableWidth || !naturalWidth || !naturalHeight) return
+
+      const nextScale = Math.min(1, availableWidth / naturalWidth)
+      setTreeScale(nextScale)
+      setTreeScaledHeight(Math.ceil(naturalHeight * nextScale))
+    }
+
+    const raf = window.requestAnimationFrame(recalcTreeFit)
+    window.addEventListener('resize', recalcTreeFit)
+
+    return () => {
+      window.cancelAnimationFrame(raf)
+      window.removeEventListener('resize', recalcTreeFit)
+    }
+  }, [canRenderTree, activeBracket, treeColumns, totalRows])
 
   const labelForRound = (roundIndex: number) => {
     if (roundIndex === 2) return 'Final'
@@ -296,12 +347,19 @@ function BracketView({ group }: { group: BracketGroup }) {
         <>
           {canRenderTree ? (
             <>
-              <div className={styles.bracketTreeWrap}>
+              <div
+                className={styles.bracketTreeWrap}
+                ref={treeWrapRef}
+                style={{ height: treeScaledHeight ?? undefined }}
+              >
                 <div
                   className={styles.bracketTreeGrid}
+                  ref={treeGridRef}
                   style={{
                     gridTemplateRows: `repeat(${totalRows}, auto)`,
                     gridTemplateColumns: `repeat(${treeColumns}, auto)`,
+                    transform: treeScale < 1 ? `scale(${treeScale})` : undefined,
+                    transformOrigin: treeScale < 1 ? 'top left' : undefined,
                   }}
                 >
                   {treeRounds[0]?.matches.map((match, mi) => (
@@ -664,9 +722,9 @@ export default function TournamentViewPage() {
                       className={`${styles.tab} ${tab === t ? styles.tabActive : ''}`}
                       onClick={() => setTab(t)}
                     >
-                      {t === 'alive' && 'Bracket Summary'}
+                      {t === 'alive' && <><span className={styles.thFull}>Bracket Summary</span><span className={styles.thShort}>Summary</span></>}
                       {t === 'brackets' && 'Brackets'}
-                      {t === 'sidePots' && 'Side Pots'}
+                      {t === 'sidePots' && <><span className={styles.thFull}>Side Pots</span><span className={styles.thShort}>Side Pots</span></>}
                     </button>
                   ))}
                 </div>
