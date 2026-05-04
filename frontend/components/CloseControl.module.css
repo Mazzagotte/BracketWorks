@@ -1,0 +1,64 @@
+.root {
+  --close-size: 42px;
+  --close-icon-size: 18px;
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--close-size);
+  height: var(--close-size);
+  padding: 0;
+  border: 1px solid rgba(165, 79, 12, 0.22);
+  border-radius: 10px;
+  background: linear-gradient(180deg, #ffb451 0%, #ff8a1f 48%, #ef6900 100%);
+  color: #fff;
+  box-shadow: 0 10px 22px rgba(239, 105, 0, 0.28), 0 2px 5px rgba(110, 43, 0, 0.16);
+  cursor: pointer;
+  transition: transform 0.14s ease, box-shadow 0.14s ease, filter 0.14s ease;
+  flex-shrink: 0;
+}
+
+.root:hover {
+  filter: saturate(1.05) brightness(1.02);
+  box-shadow: 0 14px 26px rgba(239, 105, 0, 0.34), 0 3px 8px rgba(110, 43, 0, 0.18);
+  transform: translateY(-1px);
+}
+
+.root:active {
+  transform: translateY(1px);
+  box-shadow: 0 7px 16px rgba(239, 105, 0, 0.24), 0 2px 5px rgba(110, 43, 0, 0.14);
+}
+
+.root:focus-visible {
+  outline: 3px solid rgba(255, 138, 31, 0.3);
+  outline-offset: 3px;
+}
+
+.inline {
+  position: relative;
+}
+
+.absolute {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 1;
+}
+
+.small {
+  --close-size: 34px;
+  --close-icon-size: 14px;
+  border-radius: 9px;
+}
+
+.xsmall {
+  --close-size: 26px;
+  --close-icon-size: 11px;
+  border-radius: 8px;
+  box-shadow: 0 6px 14px rgba(239, 105, 0, 0.22), 0 2px 4px rgba(110, 43, 0, 0.12);
+}
+
+.icon {
+  width: var(--close-icon-size);
+  height: var(--close-icon-size);
+}

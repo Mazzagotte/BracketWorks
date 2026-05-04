@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '../lib/auth-context';
+import { getActiveSquadLabel, getActiveTournamentName } from '../lib/selection-session';
 import styles from './ModernHeader.module.css';
 
 interface ModernHeaderProps {
@@ -28,15 +29,15 @@ export default function ModernHeader({
 
   useEffect(() => {
     setMounted(true);
-    const checkMobile = () => setIsMobile(window.innerWidth <= 768);
+    const checkMobile = () => setIsMobile(window.innerWidth <= 480);
     checkMobile();
     window.addEventListener('resize', checkMobile);
 
-    const readTournament = () => setActiveTournament(localStorage.getItem('activeTournamentName'));
+    const readTournament = () => setActiveTournament(getActiveTournamentName());
     readTournament();
     window.addEventListener('tournament-changed', readTournament);
 
-    const readSquad = () => setActiveSquad(localStorage.getItem('activeSquadLabel') || null);
+    const readSquad = () => setActiveSquad(getActiveSquadLabel());
     readSquad();
     window.addEventListener('squad-changed', readSquad);
 

@@ -116,6 +116,19 @@ export interface BracketResponse {
   multiple_brackets?: MultipleBracketsData;
 }
 
+export interface SidePot {
+  key: string;
+  name: string;
+  enabled: boolean;
+}
+
+export interface SidePotsSettings {
+  tournament_id: number;
+  entry_fee: number;
+  prize_amount: number;
+  pots: SidePot[];
+}
+
 export interface BracketSettings {
   id?: number;
   tournament_id: number;

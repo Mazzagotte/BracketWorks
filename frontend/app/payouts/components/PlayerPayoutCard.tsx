@@ -1,6 +1,4 @@
-import { useState } from 'react'
-import { Card, Button } from '../../components/UI'
-import { colors, spacing } from '../../lib/design-system'
+import { Card } from '../../components/UI'
 import EnhancedButton from '../../components/EnhancedButton'
 
 export interface PlayerWinnings {
@@ -41,9 +39,9 @@ const formatCurrency = (value: number): string => {
 }
 
 const getRankBadge = (rank: number) => {
-  if (rank === 1) return { emoji: '🥇', color: colors.success, label: '1st' }
-  if (rank === 2) return { emoji: '🥈', color: 'var(--color-blue-dark)', label: '2nd' }
-  if (rank === 3) return { emoji: '🥉', color: colors.warning, label: '3rd' }
+  if (rank === 1) return { emoji: '🥇', label: '1st' }
+  if (rank === 2) return { emoji: '🥈', label: '2nd' }
+  if (rank === 3) return { emoji: '🥉', label: '3rd' }
   return null
 }
 
@@ -59,63 +57,32 @@ export function PlayerPayoutCard({
   const rankBadge = getRankBadge(rank)
 
   return (
-    <div style={{
-      marginBottom: spacing.md,
-      borderLeft: isPaidOut ? `4px solid ${colors.success}` : undefined,
-      backgroundColor: isPaidOut ? colors.backgrounds.success : 'white',
-    }}>
+    <div className={`bw-player-card-wrap ${isPaidOut ? 'bw-player-card-wrap-paid' : ''}`}>
     <Card>
       {/* Header Section */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'flex-start',
-        marginBottom: spacing.md 
-      }}>
-        <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.xs }}>
+      <div className="bw-player-card-header">
+        <div className="bw-player-card-left">
+          <div className="bw-player-card-name-row">
             {rankBadge && (
-              <span style={{ fontSize: '24px' }} title={`${rankBadge.label} Place`}>
+              <span className="bw-player-card-rank-icon" title={`${rankBadge.label} Place`}>
                 {rankBadge.emoji}
               </span>
             )}
-            <h3 style={{ 
-              fontSize: '20px',
-              fontWeight: 600,
-              margin: 0,
-              color: colors.text.primary 
-            }}>
+            <h3 className="bw-player-card-name">
               {player.player_name}
             </h3>
             {isPaidOut && (
-              <span style={{
-                padding: '2px 8px',
-                borderRadius: '4px',
-                backgroundColor: colors.success,
-                color: 'white',
-                fontSize: '12px',
-                fontWeight: 600
-              }}>
+              <span className="bw-player-card-paid-badge">
                 PAID
               </span>
             )}
           </div>
           
-          <div style={{ 
-            fontSize: '32px', 
-            fontWeight: 700, 
-            color: rankBadge ? rankBadge.color : colors.primary,
-            marginBottom: spacing.xs
-          }}>
+          <div className="bw-player-card-amount" data-rank={rank <= 3 ? rank : undefined}>
             {formatCurrency(player.total_amount)}
           </div>
           
-          <div style={{ 
-            display: 'flex', 
-            gap: spacing.md, 
-            fontSize: '14px',
-            color: colors.text.secondary 
-          }}>
+          <div className="bw-player-card-stats">
             <span>
               🎯 {player.total_brackets} bracket{player.total_brackets !== 1 ? 's' : ''}
             </span>
@@ -130,11 +97,7 @@ export function PlayerPayoutCard({
       </div>
 
       {/* Action Buttons */}
-      <div style={{ 
-        display: 'flex', 
-        gap: spacing.sm, 
-        marginBottom: isExpanded ? spacing.md : 0 
-      }}>
+      <div className={`bw-player-card-actions ${isExpanded ? 'bw-player-card-actions-open' : ''}`}>
         <EnhancedButton
           variant={isPaidOut ? 'secondary' : 'primary'}
           size="sm"
@@ -162,54 +125,24 @@ export function PlayerPayoutCard({
 
       {/* Expanded Details */}
       {isExpanded && (
-        <div style={{ 
-          marginTop: spacing.md,
-          paddingTop: spacing.md,
-          borderTop: `1px solid ${colors.border}` 
-        }}>
-          <h4 style={{ 
-            fontSize: '16px',
-            fontWeight: 600,
-            marginBottom: spacing.sm,
-            color: colors.text.primary 
-          }}>
+        <div className="bw-player-card-details">
+          <h4 className="bw-player-card-details-title">
             Bracket Details
           </h4>
           
-          <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.sm }}>
+          <div className="bw-player-card-brackets">
             {player.brackets.map((bracket, idx) => (
-              <div
-                key={idx}
-                style={{
-                  padding: spacing.sm,
-                  backgroundColor: colors.surface,
-                  borderRadius: '4px',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
-                }}
-              >
-                <div style={{ flex: 1 }}>
-                  <div style={{ 
-                    fontWeight: 600, 
-                    color: colors.text.primary,
-                    marginBottom: '2px' 
-                  }}>
+              <div key={idx} className="bw-player-card-bracket-row">
+                <div className="bw-player-card-bracket-left">
+                  <div className="bw-player-card-bracket-name">
                     {bracket.bracket_name}
                   </div>
-                  <div style={{ 
-                    fontSize: '13px', 
-                    color: colors.text.secondary 
-                  }}>
+                  <div className="bw-player-card-bracket-info">
                     {bracket.bracket_type} • {bracket.position} • Score: {bracket.score}
                   </div>
                 </div>
                 
-                <div style={{ 
-                  fontWeight: 700, 
-                  color: colors.primary,
-                  fontSize: '16px' 
-                }}>
+                <div className="bw-player-card-bracket-amount">
                   {formatCurrency(bracket.payout_amount)}
                 </div>
               </div>

@@ -36,6 +36,7 @@
   display: flex;
   gap: 12px;
   align-items: center;
+  width: 100%;
 }
 
 .devButton {
@@ -43,9 +44,9 @@
   font-weight: 700;
   padding: 6px 14px;
   border-radius: 6px;
-  border: 1.5px dashed var(--color-border-light);
-  background: var(--color-surface);
-  color: var(--color-text-secondary);
+  border: 1.5px dashed rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.6);
   cursor: pointer;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -55,6 +56,13 @@
   background: var(--color-surface-hover);
   border-color: var(--color-brand-orange);
   color: var(--color-brand-orange);
+}
+
+.devGroup {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-left: auto;
 }
 
 .explainBtn {
@@ -400,15 +408,37 @@
   box-shadow: var(--shadow-inset);
 }
 
-.progressBarFill {
+.progressMeter {
+  width: 100%;
   height: 100%;
-  background: var(--gradient-brand);
-  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: var(--shadow-brand-sm);
-  position: relative;
+  appearance: none;
+  border: none;
+  border-radius: 4px;
+  overflow: hidden;
+  background: transparent;
 }
 
-.progressBarFillComplete {
+.progressMeter::-webkit-progress-bar {
+  background: transparent;
+}
+
+.progressMeter::-webkit-progress-value {
+  background: var(--gradient-brand);
+  box-shadow: var(--shadow-brand-sm);
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.progressMeter::-moz-progress-bar {
+  background: var(--gradient-brand);
+  box-shadow: var(--shadow-brand-sm);
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.progressMeterComplete::-webkit-progress-value {
+  background: var(--gradient-green-progress);
+}
+
+.progressMeterComplete::-moz-progress-bar {
   background: var(--gradient-green-progress);
 }
 

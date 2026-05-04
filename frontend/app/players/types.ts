@@ -1,4 +1,6 @@
-import { BracketProgramDefinition } from '../lib/types';
+import { BracketProgramDefinition, SidePot, SidePotsSettings } from '../lib/types';
+
+export type { SidePot, SidePotsSettings };
 
 export type Player = { 
   id: number, 
@@ -10,6 +12,7 @@ export type Player = {
   handicap: number, 
   scratch: number, 
   bracketEntries: Record<string, number>,
+  sidePotEntries?: Record<string, boolean>,
   lane: string, 
   totalCost: number, 
   amountPaid: number, 
@@ -29,12 +32,13 @@ export interface SortConfig {
 
 export interface PlayersTableProps {
   players: Player[];
-  onUpdatePlayer: (playerId: number, field: string, value: string | number) => void;
+  onUpdatePlayer: (playerId: number, field: string, value: string | number | boolean) => void;
   onDeletePlayer: (playerId: number) => void;
   savingStatus: Record<string, SavingStatus>;
   entryFee: number;
   bracketPrograms: BracketProgramDefinition[];
   selectedSquad?: Squad | null;
+  sidePots?: SidePotsSettings | null;
 }
 
 export interface Squad {

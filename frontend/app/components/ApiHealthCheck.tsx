@@ -40,15 +40,6 @@ export function ApiHealthCheck() {
     checkHealth()
   }, [])
   
-  const getStatusColor = () => {
-    switch (status) {
-      case 'checking': return 'var(--color-warning-amber)'
-      case 'connected': return 'var(--color-success)'
-      case 'failed': return 'var(--color-error)'
-      default: return 'var(--color-text-secondary)'
-    }
-  }
-  
   const getStatusIcon = () => {
     switch (status) {
       case 'checking': return '⏳'
@@ -59,41 +50,20 @@ export function ApiHealthCheck() {
   }
   
   return (
-    <div style={{
-      position: 'fixed',
-      bottom: '20px',
-      right: '20px',
-      background: 'var(--color-surface)',
-      padding: '12px 16px',
-      borderRadius: '8px',
-      boxShadow: 'var(--shadow-md)',
-      border: `2px solid ${getStatusColor()}`,
-      fontSize: '12px',
-      minWidth: '200px',
-      zIndex: 1000
-    }}>
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        marginBottom: '8px'
-      }}>
-        <span style={{ marginRight: '8px' }}>{getStatusIcon()}</span>
-        <strong style={{ color: getStatusColor() }}>
+    <div className={`bw-api-status bw-api-status-${status}`}>
+      <div className="bw-api-status-header">
+        <span className="bw-api-status-icon">{getStatusIcon()}</span>
+        <strong>
           API Status: {status.charAt(0).toUpperCase() + status.slice(1)}
         </strong>
       </div>
       
-      <div style={{ color: 'var(--color-text-secondary)', marginBottom: '4px' }}>
+      <div className="bw-api-status-url">
         Backend: {backendUrl}
       </div>
       
       {error && (
-        <div style={{ 
-          color: 'var(--color-error)', 
-          fontSize: '11px',
-          marginTop: '4px',
-          wordBreak: 'break-word'
-        }}>
+        <div className="bw-api-status-error">
           Error: {error}
         </div>
       )}
@@ -101,16 +71,7 @@ export function ApiHealthCheck() {
       {status === 'failed' && (
         <button
           onClick={() => window.location.reload()}
-          style={{
-            marginTop: '8px',
-            padding: '4px 8px',
-            background: 'var(--gradient-brand)',
-            color: 'var(--color-white)',
-            border: 'none',
-            borderRadius: '4px',
-            fontSize: '11px',
-            cursor: 'pointer'
-          }}
+          className="ds-btn ds-btn-primary bw-api-status-retry"
         >
           Retry
         </button>

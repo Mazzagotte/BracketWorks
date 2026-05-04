@@ -170,6 +170,10 @@
   box-sizing: border-box;
 }
 
+.modalOverlayTop {
+  z-index: 2000;
+}
+
 .mobileModalContent {
   background: var(--color-surface);
   backdrop-filter: blur(12px);
@@ -275,15 +279,26 @@
   flex-wrap: wrap;
   align-items: flex-start;
   align-content: flex-start;
-  justify-content: flex-start;
+  justify-content: center;
   gap: 24px;
   margin-bottom: 32px;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 640px) {
   .cardsContainer {
     flex-direction: column;
     gap: 24px;
+  }
+
+  .bracketSettingsCard,
+  .squadSelectionCard {
+    flex: 0 0 100%;
+    width: 100%;
+  }
+
+  .mainBracketSettingsCard {
+    flex: 0 0 100%;
+    width: 100%;
   }
 }
 
@@ -294,7 +309,8 @@
   }
   
   .bracketSettingsCard {
-    min-width: unset;
+    width: 100%;
+    flex: 0 0 100%;
   }
 
   .optionalBracketsCard {
@@ -412,6 +428,98 @@
   }
 }
 
+@media (min-width: 641px) and (max-width: 900px) {
+  .cardsContainer {
+    column-gap: 12px;
+    row-gap: 6px;
+    margin-bottom: 16px;
+  }
+
+  .bracketSettingsCard {
+    border-radius: 12px;
+  }
+
+  .settingsHeader {
+    padding: 10px 14px 8px;
+  }
+
+  .settingsTitle {
+    font-size: 16px;
+  }
+
+  .mainBracketSettingsCard .settingsContent {
+    padding: 8px 12px 10px;
+    gap: 4px;
+  }
+
+  .optionalBracketsCard .settingsContent {
+    padding: 6px 10px 10px;
+  }
+
+  .optionalBracketsCard .settingsHeader {
+    padding: 10px 14px 8px;
+  }
+
+  .compactLabel {
+    font-size: 11px;
+  }
+
+  .compactSelect,
+  .compactInput {
+    font-size: 12px;
+    padding: 5px 8px;
+  }
+
+  .sectionTitle {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+
+  .programCard {
+    padding: 6px 10px;
+    border-radius: 8px;
+  }
+
+  .checkboxLabel {
+    font-size: 12px;
+    gap: 7px;
+  }
+
+  .checkboxInput {
+    width: 15px;
+    height: 15px;
+  }
+
+  .squadPillEnhanced {
+    padding: 10px 12px;
+  }
+
+  .squadDate {
+    font-size: 13px;
+  }
+
+  .squadTimeSlot {
+    font-size: 11px;
+  }
+
+  .squadSelectionCompactCard .settingsHeader {
+    padding: 10px 14px 8px;
+  }
+
+  .sidePotsCard .settingsContent {
+    padding: 8px 10px 10px;
+    gap: 8px;
+  }
+
+  .sidePotName {
+    font-size: 12px;
+  }
+
+  .sidePotFields {
+    gap: 8px;
+  }
+}
+
 .bracketSettingsCard {
   background: var(--color-brand-ivory-light);
   border-radius: var(--radius-xl);
@@ -420,17 +528,13 @@
   border: 1px solid var(--color-border-light);
   position: relative;
   overflow: hidden;
-  flex: 1;
-  min-width: 0;
+  flex: 0 0 auto;
+  width: max-content;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .optionalBracketsCard {
-  justify-self: start;
-  width: fit-content;
-  max-width: 100%;
-  min-width: 0;
-  flex: 0 1 auto;
+  /* inherits fixed width from .bracketSettingsCard */
 }
 
 .optionalBracketsCard .settingsHeader {
@@ -457,15 +561,11 @@
 }
 
 .mainBracketSettingsCard {
-  justify-self: start;
-  width: fit-content;
-  max-width: 100%;
-  min-width: 0;
-  flex: 0 1 auto;
+  flex: 0 0 auto;
+  width: max-content;
 }
 
 .mainBracketSettingsCard .settingsContent {
-  width: max-content;
   max-width: 100%;
   align-self: flex-start;
   gap: 6px;
@@ -703,9 +803,31 @@
   min-width: 0;
 }
 
-.mainBracketSettingsCard .handicapField > .compactInput {
-  width: 96px;
+.mainBracketSettingsCard .handicapField > .compactInput,
+.mainBracketSettingsCard .handicapField > .compactInputWrapper {
+  width: 56px;
   min-width: 0;
+}
+
+.mainBracketSettingsCard .handicapField .compactInputWrapper .compactInput {
+  width: 100%;
+  padding-right: 20px;
+}
+
+.handicapPercentRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.handicapPercentRow .compactInput {
+  width: 56px;
+}
+
+.percentLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-muted);
 }
 
 .currencySymbol {
@@ -1172,16 +1294,99 @@
   border: 1px solid var(--color-border-light);
   position: relative;
   overflow: hidden;
-  flex: 1;
-  min-width: 0;
+  flex: 0 0 auto;
+  width: max-content;
 }
 
+/* Side Pots Card */
+.sidePotsCard {
+  /* inherits fixed width from .bracketSettingsCard */
+}
+
+.sidePotsCard .settingsContent {
+  padding: 10px 14px 14px;
+  gap: 10px;
+}
+
+.sidePotRow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--color-border-soft);
+}
+
+.sidePotRow:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.sidePotToggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.sidePotName {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.sidePotFields {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  padding-left: 26px;
+}
+
+.sidePotsCard .compactInput:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.sidePotSharedFee {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  padding-bottom: 10px;
+  margin-bottom: 4px;
+  border-bottom: 2px solid var(--color-border-soft);
+}
+
+.sidePotSharedFee .compactInputWrapper {
+  width: 80px;
+}
+
+.sidePotRow {
+  display: flex;
+  align-items: center;
+}
+
+.sidePotToggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.sidePotName {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+
+
 .squadSelectionCompactCard {
-  justify-self: start;
-  width: fit-content;
-  max-width: 100%;
-  min-width: 0;
-  flex: 0 1 auto;
+  /* inherits fixed width from .squadSelectionCard */
 }
 
 .squadGrid {
@@ -1189,7 +1394,6 @@
   grid-template-columns: 1fr;
   gap: 8px;
   padding: 12px 14px 14px;
-  width: max-content;
   max-width: 100%;
   min-width: 220px;
 }
@@ -1334,6 +1538,34 @@
   line-height: 1.5;
 }
 
+.createTournamentModalContent {
+  max-height: none;
+  overflow-y: visible;
+  min-width: clamp(320px, calc(100vw - 32px), 720px);
+}
+
+/* Unify header bg with body — single card appearance */
+.createTournamentModalContent > h2,
+.createTournamentModalContent > button + h2 {
+  background: var(--color-surface) !important;
+}
+
+.createTournamentFormGrid {
+  grid-template-columns: 1fr 1fr;
+  padding: clamp(14px, 2vw, 20px) clamp(16px, 2.5vw, 24px) 4px;
+  gap: clamp(14px, 1.5vw, 24px);
+}
+
+
+/* Match footer to modal body and round its bottom corners to fit the card */
+.createTournamentActionGroup {
+  margin-top: 0;
+  padding: 14px 24px;
+  background: var(--color-surface);
+  border-top: 1px solid rgba(255, 122, 0, 0.2);
+  border-radius: 0 0 var(--radius-2xl) var(--radius-2xl);
+}
+
 @media (min-width: 768px) {
   .formGrid {
     grid-template-columns: 1fr;
@@ -1365,10 +1597,36 @@
   gap: 12px;
   align-items: center;
   flex-wrap: wrap;
+  width: 100%;
+}
+
+.devButton {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1.5px dashed rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.devButton:hover {
+  background: var(--color-border-light);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.devGroup {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-left: auto;
 }
 
 .headerDeleteBtn {
-  margin-left: auto;
   background: var(--color-red-dark);
   border-color: var(--color-error-dark);
 }

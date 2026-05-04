@@ -43,16 +43,11 @@ export function MobileLayout({
     }
   };
 
-  const paddingValue = {
-    none: '0',
-    small: '12px',
-    medium: '16px',
-    large: '24px'
-  }[padding];
+  const hasHeader = Boolean(title || showBackButton || headerActions);
 
   return (
     <div className="mobile-layout">
-      {(title || showBackButton || headerActions) && (
+      {hasHeader && (
         <header className={`mobile-header ${isScrolled ? 'scrolled' : ''}`}>
           <div className="mobile-header-content">
             <div className="mobile-header-left">
@@ -80,14 +75,8 @@ export function MobileLayout({
         </header>
       )}
 
-      <main 
-        className={`mobile-main ${fullWidth ? 'full-width' : ''}`}
-        style={{ 
-          padding: paddingValue,
-          paddingTop: (title || showBackButton || headerActions) 
-            ? `calc(${paddingValue} + 80px)` 
-            : paddingValue
-        }}
+      <main
+        className={`mobile-main ${fullWidth ? 'full-width' : ''} mobile-main-pad-${padding} ${hasHeader ? 'mobile-main-has-header' : ''}`}
       >
         {children}
       </main>
@@ -205,6 +194,38 @@ export function MobileLayout({
           max-width: none;
         }
 
+        .mobile-main-pad-none {
+          padding: 0;
+        }
+
+        .mobile-main-pad-small {
+          padding: 12px;
+        }
+
+        .mobile-main-pad-medium {
+          padding: 16px;
+        }
+
+        .mobile-main-pad-large {
+          padding: 24px;
+        }
+
+        .mobile-main-has-header.mobile-main-pad-none {
+          padding-top: 80px;
+        }
+
+        .mobile-main-has-header.mobile-main-pad-small {
+          padding-top: calc(12px + 80px);
+        }
+
+        .mobile-main-has-header.mobile-main-pad-medium {
+          padding-top: calc(16px + 80px);
+        }
+
+        .mobile-main-has-header.mobile-main-pad-large {
+          padding-top: calc(24px + 80px);
+        }
+
         /* Responsive adjustments */
         @media (max-width: 480px) {
           .mobile-header-content {
@@ -233,11 +254,29 @@ export function MobileLayout({
             padding-right: max(0px, env(safe-area-inset-right));
             padding-top: max(0px, env(safe-area-inset-top));
           }
-          
-          .mobile-main {
-            padding-left: max(${paddingValue}, env(safe-area-inset-left));
-            padding-right: max(${paddingValue}, env(safe-area-inset-right));
-            padding-bottom: max(${paddingValue}, env(safe-area-inset-bottom));
+
+          .mobile-main-pad-none {
+            padding-left: max(0px, env(safe-area-inset-left));
+            padding-right: max(0px, env(safe-area-inset-right));
+            padding-bottom: max(0px, env(safe-area-inset-bottom));
+          }
+
+          .mobile-main-pad-small {
+            padding-left: max(12px, env(safe-area-inset-left));
+            padding-right: max(12px, env(safe-area-inset-right));
+            padding-bottom: max(12px, env(safe-area-inset-bottom));
+          }
+
+          .mobile-main-pad-medium {
+            padding-left: max(16px, env(safe-area-inset-left));
+            padding-right: max(16px, env(safe-area-inset-right));
+            padding-bottom: max(16px, env(safe-area-inset-bottom));
+          }
+
+          .mobile-main-pad-large {
+            padding-left: max(24px, env(safe-area-inset-left));
+            padding-right: max(24px, env(safe-area-inset-right));
+            padding-bottom: max(24px, env(safe-area-inset-bottom));
           }
         }
       `}</style>

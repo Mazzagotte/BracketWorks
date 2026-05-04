@@ -259,6 +259,7 @@ interface MobileFormProps {
   submitText?: string;
   isSubmitting?: boolean;
   className?: string;
+  flat?: boolean;
 }
 
 export function MobileForm({ 
@@ -267,7 +268,8 @@ export function MobileForm({
   title, 
   submitText = 'Submit',
   isSubmitting = false,
-  className = ''
+  className = '',
+  flat = false
 }: MobileFormProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -276,8 +278,8 @@ export function MobileForm({
   };
 
   return (
-    <div className={`mobile-form-container ${className}`}>
-      {title && (
+    <div className={`mobile-form-container ${flat ? 'mobile-form-container--flat' : ''} ${className}`}>
+      {title && !flat && (
         <h2 className="mobile-form-title">{title}</h2>
       )}
       
@@ -311,6 +313,14 @@ export function MobileForm({
           background: var(--color-white);
           border-radius: 16px;
           box-shadow: 0 4px 16px var(--opacity-black-10);
+        }
+
+        .mobile-form-container--flat {
+          background: transparent;
+          border-radius: 0;
+          box-shadow: none;
+          padding: 20px 24px 8px;
+          max-width: 100%;
         }
 
         .mobile-form-title {

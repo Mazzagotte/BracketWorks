@@ -155,19 +155,30 @@ export function usePayouts(tournamentId: number | null, selectedSquadId: number 
       const token = localStorage.getItem('token')
       if (!token) return
 
+      const squadParam = selectedSquadId ? `?squad_id=${selectedSquadId}` : ''
+
       // Try the full live-entries endpoint first
-      const response = await fetch(API(`/api/v1/payouts/live-entries/${tournamentId}`), {
+      const response = await fetch(API(`/api/v1/payouts/live-entries/${tournamentId}${squadParam}`), {
         headers: { 'Authorization': `Bearer ${token}` }
       })
 
       if (response.ok) {
         const data = await response.json()
-        setEntryData(data)
-        return
+        // If live-entries returned no players (e.g. brackets not yet generated),
+        // fall through to the bowlers fallback so names are still available.
+        if (data?.entries?.length > 0) {
+          setEntryData(data)
+          return
+        }
       }
 
       // Fallback: get player list so non-winners still appear in the payout list
-      const bowlerResponse = await fetch(API(`/api/v1/bowlers/?tournament_id=${tournamentId}`), {
+      const bowlersParams = new URLSearchParams({ tournament_id: String(tournamentId) })
+      if (selectedSquadId) {
+        bowlersParams.set('squad_id', String(selectedSquadId))
+      }
+
+      const bowlerResponse = await fetch(API(`/api/v1/bowlers/?${bowlersParams.toString()}`), {
         headers: { 'Authorization': `Bearer ${token}` }
       })
 
@@ -201,7 +212,7 @@ export function usePayouts(tournamentId: number | null, selectedSquadId: number 
     } catch (error) {
       logger.error('Error loading entry data:', error)
     }
-  }, [tournamentId])
+  }, [selectedSquadId, tournamentId])
 
   return {
     payoutData,

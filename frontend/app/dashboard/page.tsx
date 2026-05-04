@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useEffect, useState, useRef } from 'react';
-import { Tournament, Squad, BracketSettings, TournamentForm } from '../lib/types';
+import { Tournament, Squad, BracketSettings, TournamentForm, SidePotsSettings, SidePot } from '../lib/types';
 
 import { usePageHeader } from '../lib/header-context';
 import { useAuth } from '../lib/auth-context';
@@ -18,6 +18,18 @@ import { useToast } from '../components/Toast';
 import { usePagination } from '../components/Performance';
 import { FormField, Input, Select } from '../components/UI';
 import ShareQRModal from '../components/ShareQRModal';
+import ActionConfirmDialog from '../components/ActionConfirmDialog';
+import {
+  clearSelectedSquad,
+  clearSelectedTournament,
+  getSelectedSquadId,
+  getSelectedTournamentId,
+  notifySettingsChanged,
+  setActiveSquadLabel,
+  setSelectedSquad,
+  setSelectedTournament,
+} from '../lib/selection-session';
+import CloseControl from '../../components/CloseControl';
 
 function get12hrTimes() {
   const availableTimeSlots: string[] = [];
@@ -63,6 +75,22 @@ const createDefaultBracketSettings = (tournamentId = 0): BracketSettings => ({
   handicap_base: 200,
   allow_byes: false,
 })
+
+const DEFAULT_SIDE_POTS: SidePot[] = [
+  { key: 'high_game_scratch', name: 'High Game Scratch', enabled: false },
+  { key: 'high_series_scratch', name: 'High Series Scratch', enabled: false },
+  { key: 'high_game_handicap', name: 'High Game Handicap', enabled: false },
+  { key: 'high_series_handicap', name: 'High Series Handicap', enabled: false },
+]
+
+const createDefaultSidePots = (tournamentId = 0): SidePotsSettings => ({
+  tournament_id: tournamentId,
+  entry_fee: 0,
+  prize_amount: 0,
+  pots: DEFAULT_SIDE_POTS.map(p => ({ ...p })),
+})
+
+const SIDE_POTS_STORAGE_KEY = (tournamentId: number) => `sidePots_${tournamentId}`
 
 function getDatesBetween(startDate: string, endDate: string): string[] {
   if (!startDate || !endDate) return [];
@@ -132,7 +160,7 @@ function EditTournamentModal({ open, onClose, tournament, onSave, isMobile, isCr
   return (
     <div className="modal-overlay">
       <form
-        className="modal-content"
+        className={`modal-content ${isCreateMode ? mobileStyles.createTournamentModalContent : ''}`}
         onSubmit={async submitEvent => {
           submitEvent.preventDefault();
           setIsSaving(true);
@@ -152,20 +180,14 @@ function EditTournamentModal({ open, onClose, tournament, onSave, isMobile, isCr
         {validationError && (
           <div className="error-message">{validationError}</div>
         )}
-        <button
-          type="button"
-          className="modal-close"
-          onClick={onClose}
-          aria-label="Close"
-        >
-          ×
-        </button>
+        <CloseControl position="absolute" onClick={onClose} />
         <h2>{isCreateMode ? 'Create Tournament' : 'Edit Tournament'}</h2>
         <div>
         {isMobile ? (
           // Mobile Form Layout
           <MobileForm
             title={isCreateMode ? 'Create Tournament' : 'Edit Tournament'}
+            flat
             onSubmit={async (submitEvent) => {
               submitEvent.preventDefault();
               setIsSaving(true);
@@ -215,7 +237,7 @@ function EditTournamentModal({ open, onClose, tournament, onSave, isMobile, isCr
         ) : (
           // Desktop Form Layout
           <>
-        <div className="form-grid">
+        <div className={`form-grid ${isCreateMode ? mobileStyles.createTournamentFormGrid : ''}`}>
           <div>
             <FormField label="Name" required>
               <Input
@@ -268,14 +290,11 @@ function EditTournamentModal({ open, onClose, tournament, onSave, isMobile, isCr
                           <option key={timeOption} value={timeOption}>{timeOption}</option>
                         ))}
                       </select>
-                      <EnhancedButton
-                        type="button"
+                      <CloseControl
                         onClick={() => setTournamentForm(f => ({ ...f, squad_times: { ...f.squad_times, [date]: f.squad_times[date].filter((_, j) => j !== i) } }))}
-                        variant="danger"
-                        size="sm"
-                      >
-                        ×
-                      </EnhancedButton>
+                        label="Remove squad time"
+                        size="xs"
+                      />
                     </div>
                   );
                 })}
@@ -299,7 +318,7 @@ function EditTournamentModal({ open, onClose, tournament, onSave, isMobile, isCr
             ))}
           </div>
         </div>
-        <div className="action-group">
+        <div className={`action-group ${isCreateMode ? mobileStyles.createTournamentActionGroup : ''}`}>
           <EnhancedButton
             type="submit"
             variant="primary"
@@ -339,6 +358,7 @@ export default function TournamentDashboard() {
   const [squads, setSquads] = useState<Squad[]>([]);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmMsg, setConfirmMsg] = useState('');
+  const [optionalToggleConfirm, setOptionalToggleConfirm] = useState<{ programKey: string; programName: string; existingEntries: number } | null>(null);
   const [loadModalOpen, setLoadModalOpen] = useState(false);
   const [allTournaments, setAllTournaments] = useState<Tournament[]>([]);
   const [deleteConfirm, setDeleteConfirm] = useState<{id: number, name: string} | null>(null);
@@ -365,7 +385,10 @@ export default function TournamentDashboard() {
   const lastPrizeValidationKeyRef = useRef<string>('');
   // Always holds the latest bracketSettings so async callbacks aren't stale
   const bracketSettingsRef = useRef<BracketSettings>(bracketSettings);
-  
+
+  // Side pots state
+  const [sidePots, setSidePots] = useState<SidePotsSettings>(createDefaultSidePots());
+
   // Mobile detection state
   const [isMobile, setIsMobile] = useState(false);
 
@@ -494,6 +517,7 @@ export default function TournamentDashboard() {
       
       // Clear cache for bracket settings to ensure fresh data on reload
       apiClient.clearCacheEntry(`/api/v1/bracket-settings/${tournament.id}`);
+      notifySettingsChanged();
       
       setSaveStatus('saved');
       setLastSavedTime(new Date());
@@ -595,6 +619,50 @@ export default function TournamentDashboard() {
     }
   };
 
+  const loadSidePots = (tournamentId: number) => {
+    try {
+      const stored = localStorage.getItem(SIDE_POTS_STORAGE_KEY(tournamentId));
+      if (stored) {
+        const parsed = JSON.parse(stored) as Partial<SidePotsSettings> & { pots?: Array<Partial<SidePot> & { entry_fee?: number }> };
+        // Merge stored pots against current defaults so new pots always appear
+        // and old per-pot entry_fee fields are ignored
+        const mergedPots = DEFAULT_SIDE_POTS.map(defaultPot => {
+          const savedPot = parsed.pots?.find(p => p.key === defaultPot.key);
+          return savedPot
+            ? { key: defaultPot.key, name: defaultPot.name, enabled: savedPot.enabled ?? false }
+            : { ...defaultPot };
+        });
+        // Top-level fields
+        const entry_fee = typeof parsed.entry_fee === 'number' && !isNaN(parsed.entry_fee) ? parsed.entry_fee : 0;
+        const prize_amount = typeof parsed.prize_amount === 'number' && !isNaN(parsed.prize_amount) ? parsed.prize_amount : 0;
+        const merged: SidePotsSettings = { tournament_id: tournamentId, entry_fee, prize_amount, pots: mergedPots };
+        setSidePots(merged);
+        // Overwrite stale storage with the merged/clean shape
+        localStorage.setItem(SIDE_POTS_STORAGE_KEY(tournamentId), JSON.stringify(merged));
+      } else {
+        setSidePots(createDefaultSidePots(tournamentId));
+      }
+    } catch {
+      setSidePots(createDefaultSidePots(tournamentId));
+    }
+  };
+
+  const saveSidePots = (next: SidePotsSettings) => {
+    localStorage.setItem(SIDE_POTS_STORAGE_KEY(next.tournament_id), JSON.stringify(next));
+    notifySettingsChanged();
+  };
+
+  const updateSidePot = (key: string, patch: Partial<SidePot>) => {
+    setSidePots(prev => {
+      const next: SidePotsSettings = {
+        ...prev,
+        pots: prev.pots.map(p => p.key === key ? { ...p, ...patch } : p),
+      };
+      saveSidePots(next);
+      return next;
+    });
+  };
+
   const getOptionalBracketEntryCount = async (programKey: string) => {
     if (!tournament?.id) return 0;
 
@@ -646,6 +714,28 @@ export default function TournamentDashboard() {
     }), 'immediate');
   };
 
+  const applyOptionalBracketToggle = (programKey: string, enabled: boolean) => {
+    updateBracketSettings(previous => {
+      const normalizedPrograms = normalizeBracketPrograms(previous.bracket_programs, previous.default_entry_fee);
+      const nextPrograms = normalizedPrograms.map(program =>
+        program.key === programKey
+          ? { ...program, enabled, ...(enabled ? {} : { allow_byes: false }) }
+          : program
+      );
+
+      const nextAllowByes = nextPrograms.some(program => {
+        const isAlwaysVisible = program.key === 'handicap' || program.key === 'scratch';
+        return Boolean(program.allow_byes) && (isAlwaysVisible || Boolean(program.enabled));
+      });
+
+      return {
+        ...previous,
+        bracket_programs: nextPrograms,
+        allow_byes: nextAllowByes,
+      };
+    }, 'immediate');
+  };
+
   const handleOptionalBracketToggle = async (programKey: string, enabled: boolean) => {
     const programIndex = normalizeBracketPrograms(
       bracketSettings.bracket_programs,
@@ -665,13 +755,8 @@ export default function TournamentDashboard() {
             bracketSettings.default_entry_fee,
           ).find(existingProgram => existingProgram.key === programKey)?.name || programKey;
 
-          const confirmed = window.confirm(
-            `${programName} has ${existingEntries} existing entr${existingEntries === 1 ? 'y' : 'ies'} in this tournament. Disabling it will hide those entries from the Entries page and can affect totals. Continue?`
-          );
-
-          if (!confirmed) {
-            return;
-          }
+          setOptionalToggleConfirm({ programKey, programName, existingEntries });
+          return;
         }
       } catch (error) {
         logger.error('Failed to verify existing optional bracket entries', { programKey, error: getErrorContext(error) });
@@ -684,25 +769,7 @@ export default function TournamentDashboard() {
       }
     }
 
-    updateBracketSettings(previous => {
-      const normalizedPrograms = normalizeBracketPrograms(previous.bracket_programs, previous.default_entry_fee)
-      const nextPrograms = normalizedPrograms.map((program, index) =>
-        index === programIndex
-          ? { ...program, enabled, ...(enabled ? {} : { allow_byes: false }) }
-          : program
-      )
-
-      const nextAllowByes = nextPrograms.some(program => {
-        const isAlwaysVisible = program.key === 'handicap' || program.key === 'scratch'
-        return Boolean(program.allow_byes) && (isAlwaysVisible || Boolean(program.enabled))
-      })
-
-      return {
-        ...previous,
-        bracket_programs: nextPrograms,
-        allow_byes: nextAllowByes,
-      }
-    }, 'immediate')
+    applyOptionalBracketToggle(programKey, enabled);
   };
 
   const handleByeProgramToggle = (programKey: string, allowByes: boolean) => {
@@ -754,7 +821,7 @@ export default function TournamentDashboard() {
     setIsAdmin(adminFlag === '1' || adminFlag === 'true');
     
     // Batch read all localStorage data at once
-    const lastTournamentId = localStorage.getItem('lastTournamentId');
+    const lastTournamentId = getSelectedTournamentId();
     const token = localStorage.getItem('token');
     const userId = localStorage.getItem('user_id');
     
@@ -780,24 +847,19 @@ export default function TournamentDashboard() {
       // Wait for all requests to complete in parallel
       Promise.all([tournamentPromise, squadsPromise, selectedSquadPromise])
         .then(([tournamentData, squadsData, selectedSquadData]) => {
-          const storedSelectedSquadId = localStorage.getItem('selected_squad_id');
+          const storedSelectedSquadId = getSelectedSquadId();
           const restoredSelectedSquadId = selectedSquadData?.squad_id
             ?? (storedSelectedSquadId ? Number(storedSelectedSquadId) : null);
 
           // Set tournament and load bracket settings
           if (tournamentData) {
             setTournament(tournamentData);
-            localStorage.setItem('activeTournamentName', tournamentData.name);
-            window.dispatchEvent(new Event('tournament-changed'));
+            setSelectedTournament(tournamentData.id, tournamentData.name);
             loadBracketSettings(tournamentData.id);
+            loadSidePots(tournamentData.id);
           } else {
             // Tournament no longer accessible — clear stale localStorage
-            localStorage.removeItem('lastTournamentId');
-            localStorage.removeItem('activeTournamentName');
-            localStorage.removeItem('selected_squad_id');
-            localStorage.removeItem('activeSquadLabel');
-            window.dispatchEvent(new Event('tournament-changed'));
-            window.dispatchEvent(new Event('squad-changed'));
+            clearSelectedTournament({ clearSquad: true });
           }
           
           // Set squads data
@@ -805,9 +867,13 @@ export default function TournamentDashboard() {
           
           // Set selected squad
           if (restoredSelectedSquadId && squadsData.some((squad: Squad) => squad.id === restoredSelectedSquadId)) {
+            const restoredSquad = squadsData.find((squad: Squad) => squad.id === restoredSelectedSquadId) || null;
             setSelectedSquadId(restoredSelectedSquadId);
+            setSelectedSquad(restoredSelectedSquadId);
+            setActiveSquadLabel(restoredSquad ? [restoredSquad.date, restoredSquad.time].filter(Boolean).join(' ') : '');
           } else {
             setSelectedSquadId(null);
+            clearSelectedSquad();
           }
         })
         .catch(error => {
@@ -815,11 +881,8 @@ export default function TournamentDashboard() {
         });
     } else {
       // No stored tournament — clear any stale header strip data
-      localStorage.removeItem('selected_squad_id');
-      localStorage.removeItem('activeTournamentName');
-      localStorage.removeItem('activeSquadLabel');
-      window.dispatchEvent(new Event('tournament-changed'));
-      window.dispatchEvent(new Event('squad-changed'));
+      clearSelectedSquad();
+      clearSelectedTournament();
     }
   }, []);
 
@@ -870,10 +933,9 @@ export default function TournamentDashboard() {
     setLoadModalOpen(false);
     // Load bracket settings for this tournament
     loadBracketSettings(t.id);
+    loadSidePots(t.id);
     // Optionally, persist tournament id to localStorage for reload (not the full object)
-    localStorage.setItem('lastTournamentId', String(t.id));
-    localStorage.setItem('activeTournamentName', t.name);
-    window.dispatchEvent(new Event('tournament-changed'));
+    setSelectedTournament(t.id, t.name);
     
     // Load squads for this tournament
     const token = localStorage.getItem('token');
@@ -888,24 +950,29 @@ export default function TournamentDashboard() {
         if (userId) {
           try {
             const selectedSquadData = await apiClient.get<{squad_id: number}>(`/api/v1/squads/selected/?user_id=${userId}`);
-            const storedSelectedSquadId = localStorage.getItem('selected_squad_id');
+            const storedSelectedSquadId = getSelectedSquadId();
             const restoredSelectedSquadId = selectedSquadData?.squad_id
               ?? (storedSelectedSquadId ? Number(storedSelectedSquadId) : null);
 
             if (restoredSelectedSquadId && squadsData.some(squad => squad.id === restoredSelectedSquadId)) {
+              const restoredSquad = squadsData.find(squad => squad.id === restoredSelectedSquadId) || null;
               setSelectedSquadId(restoredSelectedSquadId);
+              setSelectedSquad(restoredSelectedSquadId);
+              setActiveSquadLabel(restoredSquad ? [restoredSquad.date, restoredSquad.time].filter(Boolean).join(' ') : '');
             } else {
               setSelectedSquadId(null);
+              clearSelectedSquad();
             }
           } catch (error) {
             logger.warn('No selected squad found for user', { userId, error });
-            const storedSelectedSquadId = localStorage.getItem('selected_squad_id');
+            const storedSelectedSquadId = getSelectedSquadId();
             const restoredSelectedSquadId = storedSelectedSquadId ? Number(storedSelectedSquadId) : null;
-            setSelectedSquadId(
-              restoredSelectedSquadId && squadsData.some(squad => squad.id === restoredSelectedSquadId)
-                ? restoredSelectedSquadId
-                : null
-            );
+            const fallbackSquad = restoredSelectedSquadId && squadsData.some(squad => squad.id === restoredSelectedSquadId)
+              ? (squadsData.find(squad => squad.id === restoredSelectedSquadId) || null)
+              : null;
+            setSelectedSquadId(fallbackSquad?.id ?? null);
+            setSelectedSquad(fallbackSquad?.id ?? null);
+            setActiveSquadLabel(fallbackSquad ? [fallbackSquad.date, fallbackSquad.time].filter(Boolean).join(' ') : '');
           }
         }
       } catch (error) {
@@ -934,12 +1001,8 @@ export default function TournamentDashboard() {
         setSquads([]);
         setSelectedSquadId(null);
         setBracketSettings(createDefaultBracketSettings());
-        localStorage.removeItem('lastTournamentId');
-        localStorage.removeItem('activeTournamentName');
-        localStorage.removeItem('selected_squad_id');
-        localStorage.removeItem('activeSquadLabel');
-        window.dispatchEvent(new Event('tournament-changed'));
-        window.dispatchEvent(new Event('squad-changed'));
+        setSidePots(createDefaultSidePots());
+        clearSelectedTournament({ clearSquad: true });
       }
 
       addToast({
@@ -1011,10 +1074,9 @@ export default function TournamentDashboard() {
           savedTournament = await res.json();
           setTournament(savedTournament);
           // Auto-load the newly created tournament
-          localStorage.setItem('lastTournamentId', String(savedTournament.id));
-          localStorage.setItem('activeTournamentName', savedTournament.name);
-          window.dispatchEvent(new Event('tournament-changed'));
+          setSelectedTournament(savedTournament.id, savedTournament.name);
           loadBracketSettings(savedTournament.id);
+          loadSidePots(savedTournament.id);
           addToast({
             type: 'success',
             message: `Tournament "${tournamentFormData.name}" created successfully!`,
@@ -1139,7 +1201,7 @@ export default function TournamentDashboard() {
           <button className="ds-btn ds-btn-primary ds-btn-sm" onClick={() => { setCreateMode(false); setModalOpen(true); }}>
             Edit Tournament
           </button>
-          <button className="ds-btn ds-btn-secondary ds-btn-sm" onClick={() => setShareQROpen(true)}>
+          <button className="ds-btn ds-btn-primary ds-btn-sm" onClick={() => setShareQROpen(true)}>
             Share QR
           </button>
           <button
@@ -1149,12 +1211,8 @@ export default function TournamentDashboard() {
               setSquads([]);
               setSelectedSquadId(null);
               setBracketSettings(createDefaultBracketSettings());
-              localStorage.removeItem('lastTournamentId');
-              localStorage.removeItem('activeTournamentName');
-              localStorage.removeItem('selected_squad_id');
-              localStorage.removeItem('activeSquadLabel');
-              window.dispatchEvent(new Event('tournament-changed'));
-              window.dispatchEvent(new Event('squad-changed'));
+              setSidePots(createDefaultSidePots());
+              clearSelectedTournament({ clearSquad: true });
               addToast({ type: 'success', message: 'Tournament unloaded successfully', duration: 3000 });
             }}
           >
@@ -1166,6 +1224,28 @@ export default function TournamentDashboard() {
           >
             Delete Tournament
           </button>
+          {selectedSquadId !== null && (
+            <div className={mobileStyles.devGroup}>
+              <button
+                className={mobileStyles.devButton}
+                onClick={async () => {
+                  setSelectedSquadId(null);
+                  clearSelectedSquad();
+                  const token = localStorage.getItem('token');
+                  const userId = localStorage.getItem('user_id');
+                  if (token && userId) {
+                    await fetch(API('/api/v1/squads/select/'), {
+                      method: 'DELETE',
+                      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                      body: JSON.stringify({ user_id: Number(userId) }),
+                    });
+                  }
+                }}
+              >
+                Dev: Unload Squad
+              </button>
+            </div>
+          )}
         </>
       ) : (
         <>
@@ -1178,21 +1258,20 @@ export default function TournamentDashboard() {
         </>
       )}
     </div>
-  ), [tournament, addToast]);
+  ), [tournament, selectedSquadId, addToast]);
 
   const selectedSquad = squads.find(s => s.id === selectedSquadId)
   const squadLabel = selectedSquad ? ` · ${[selectedSquad.date, selectedSquad.time].filter(Boolean).join(' ')}` : ''
 
   useEffect(() => {
     if (selectedSquadId !== null) {
-      localStorage.setItem('selected_squad_id', String(selectedSquadId));
+      setSelectedSquad(selectedSquadId);
     }
   }, [selectedSquadId]);
 
   useEffect(() => {
     const label = selectedSquad ? [selectedSquad.date, selectedSquad.time].filter(Boolean).join(' ') : '';
-    localStorage.setItem('activeSquadLabel', label);
-    window.dispatchEvent(new Event('squad-changed'));
+    setActiveSquadLabel(label);
   }, [selectedSquad]);
 
   usePageHeader({
@@ -1231,6 +1310,22 @@ export default function TournamentDashboard() {
     <ErrorBoundary>
       <>
         <ConfirmationDialog open={confirmOpen} message={confirmMsg} onClose={() => setConfirmOpen(false)} />
+        <ActionConfirmDialog
+          open={Boolean(optionalToggleConfirm)}
+          title="Disable Bracket Program?"
+          message={optionalToggleConfirm
+            ? `${optionalToggleConfirm.programName} has ${optionalToggleConfirm.existingEntries} existing entr${optionalToggleConfirm.existingEntries === 1 ? 'y' : 'ies'} in this tournament. Disabling it will permanently delete those entries from the database and can affect totals.`
+            : ''}
+          confirmLabel="Disable"
+          cancelLabel="Keep Enabled"
+          onCancel={() => setOptionalToggleConfirm(null)}
+          onConfirm={() => {
+            if (optionalToggleConfirm) {
+              applyOptionalBracketToggle(optionalToggleConfirm.programKey, false);
+            }
+            setOptionalToggleConfirm(null);
+          }}
+        />
         {tournament && (
           <ShareQRModal
             open={shareQROpen}
@@ -1285,6 +1380,54 @@ export default function TournamentDashboard() {
               </div>
             )}
             
+            {/* Squad Selection Card */}
+            {tournament && squads.length > 0 && (
+              <div className={`${mobileStyles.squadSelectionCard} ${mobileStyles.squadSelectionCompactCard}`}>
+                <div className={mobileStyles.settingsHeader}>
+                  <h2 className={mobileStyles.settingsTitle}>Squad Selection</h2>
+                </div>
+                
+                <div className={mobileStyles.squadGrid}>
+                  {squads.map((squad) => {
+                    const isSelected = selectedSquadId === squad.id;
+                    
+                    return (
+                      <button
+                        key={squad.id}
+                        className={`${mobileStyles.squadPillEnhanced} ${isSelected ? mobileStyles.selected : ''}`}
+                        onClick={async (changeEvent) => { changeEvent.preventDefault();
+                          setSelectedSquadId(squad.id);
+                          setSelectedSquad(squad.id);
+                          setActiveSquadLabel([squad.date, squad.time].filter(Boolean).join(' '));
+                          const token = localStorage.getItem('token');
+                          const userId = localStorage.getItem('user_id');
+                          if (token && userId) {
+                            await fetch(API('/api/v1/squads/select/'), {
+                              method: 'POST',
+                              headers: {
+                                'Content-Type': 'application/json',
+                                Authorization: `Bearer ${token}`
+                              },
+                              body: JSON.stringify({
+                                user_id: Number(userId),
+                                squad_id: squad.id
+                              })
+                            });
+                          }
+                        }}
+                        aria-pressed={isSelected}
+                      >
+                        <div className={mobileStyles.squadTime}>
+                          <div className={mobileStyles.squadDate}>{squad.date}</div>
+                          <div className={mobileStyles.squadTimeSlot}>{squad.time}</div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Bracket Settings Card */}
             {tournament && (
               <div className={`${mobileStyles.bracketSettingsCard} ${mobileStyles.mainBracketSettingsCard}`}>
@@ -1424,7 +1567,7 @@ export default function TournamentDashboard() {
                     <div className={mobileStyles.handicapContainer}>
                       <div className={mobileStyles.handicapField}>
                         <label className={mobileStyles.compactLabel}>Percentage</label>
-                        <div className={mobileStyles.compactInputWrapper}>
+                        <div className={mobileStyles.handicapPercentRow}>
                           <input
                             className={mobileStyles.compactInput}
                             type="number"
@@ -1447,7 +1590,7 @@ export default function TournamentDashboard() {
                               saveBracketSettingsImmediately();
                             }}
                           />
-                          <span className={mobileStyles.inputSuffix}>%</span>
+                          <span className={mobileStyles.percentLabel}>%</span>
                         </div>
                       </div>
                       
@@ -1556,51 +1699,69 @@ export default function TournamentDashboard() {
               </div>
             )}
 
-            {/* Squad Selection Card */}
-            {tournament && squads.length > 0 && (
-              <div className={`${mobileStyles.squadSelectionCard} ${mobileStyles.squadSelectionCompactCard}`}>
+            {/* Side Pots Card */}
+            {tournament && (
+              <div className={`${mobileStyles.bracketSettingsCard} ${mobileStyles.sidePotsCard}`}>
                 <div className={mobileStyles.settingsHeader}>
-                  <h2 className={mobileStyles.settingsTitle}>Squad Selection</h2>
+                  <h2 className={mobileStyles.settingsTitle}>Side Pots</h2>
                 </div>
-                
-                <div className={mobileStyles.squadGrid}>
-                  {squads.map((squad) => {
-                    const isSelected = selectedSquadId === squad.id;
-                    
-                    return (
-                      <button
-                        key={squad.id}
-                        className={`${mobileStyles.squadPillEnhanced} ${isSelected ? mobileStyles.selected : ''}`}
-                        onClick={async (changeEvent) => { changeEvent.preventDefault();
-                          setSelectedSquadId(squad.id);
-                          const token = localStorage.getItem('token');
-                          const userId = localStorage.getItem('user_id');
-                          if (token && userId) {
-                            await fetch(API('/api/v1/squads/select/'), {
-                              method: 'POST',
-                              headers: {
-                                'Content-Type': 'application/json',
-                                Authorization: `Bearer ${token}`
-                              },
-                              body: JSON.stringify({
-                                user_id: Number(userId),
-                                squad_id: squad.id
-                              })
-                            });
-                          }
-                        }}
-                        aria-pressed={isSelected}
-                      >
-                        <div className={mobileStyles.squadTime}>
-                          <div className={mobileStyles.squadDate}>{squad.date}</div>
-                          <div className={mobileStyles.squadTimeSlot}>{squad.time}</div>
-                        </div>
-                      </button>
-                    );
-                  })}
+                <div className={mobileStyles.settingsContent}>
+                  {/* Shared entry fee + prize */}
+                  <div className={mobileStyles.sidePotSharedFee}>
+                    <div className={mobileStyles.compactField}>
+                      <label className={mobileStyles.compactLabel}>Entry Fee</label>
+                      <div className={mobileStyles.compactInputWrapper}>
+                        <span className={mobileStyles.currencySymbol}>$</span>
+                        <input
+                          className={mobileStyles.compactInput}
+                          type="text"
+                          placeholder="0"
+                          value={formatNumberInput(sidePots.entry_fee)}
+                          onChange={e => {
+                            const next = { ...sidePots, entry_fee: parseCurrencyInput(e.target.value) };
+                            setSidePots(next);
+                            saveSidePots(next);
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <div className={mobileStyles.compactField}>
+                      <label className={mobileStyles.compactLabel}>Prize</label>
+                      <div className={mobileStyles.compactInputWrapper}>
+                        <span className={mobileStyles.currencySymbol}>$</span>
+                        <input
+                          className={mobileStyles.compactInput}
+                          type="text"
+                          placeholder="0"
+                          value={formatNumberInput(sidePots.prize_amount)}
+                          onChange={e => {
+                            const next = { ...sidePots, prize_amount: parseCurrencyInput(e.target.value) };
+                            setSidePots(next);
+                            saveSidePots(next);
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Per-pot toggles */}
+                  {sidePots.pots.map(pot => (
+                    <div key={pot.key} className={mobileStyles.programCard}>
+                      <label className={mobileStyles.checkboxLabel}>
+                        <input
+                          type="checkbox"
+                          className={mobileStyles.checkboxInput}
+                          checked={pot.enabled}
+                          onChange={e => updateSidePot(pot.key, { enabled: e.target.checked })}
+                        />
+                        <span>{pot.name}</span>
+                      </label>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
+
           </div>
           {/* End Main Content Container */}
           </div>
@@ -1613,13 +1774,7 @@ export default function TournamentDashboard() {
                 {isAdmin && (
                   <div className={mobileStyles.adminBadge}>Admin: Viewing all tournaments</div>
                 )}
-                <button
-                  className="modal-close"
-                  onClick={() => setLoadModalOpen(false)}
-                  aria-label="Close"
-                >
-                  &times;
-                </button>
+                <CloseControl position="absolute" onClick={() => setLoadModalOpen(false)} />
                 {allTournaments.length === 0 ? (
                   <div className={mobileStyles.emptyTournaments}>
                     <div>No tournaments found.</div>
@@ -1664,8 +1819,9 @@ export default function TournamentDashboard() {
 
         {/* Delete Confirmation Modal */}
         {deleteConfirm && (
-          <div className={mobileStyles.modalOverlay} style={{ zIndex: 2000 }}>
+          <div className={`${mobileStyles.modalOverlay} ${mobileStyles.modalOverlayTop}`}>
             <div className={mobileStyles.modalCard}>
+              <CloseControl onClick={() => setDeleteConfirm(null)} position="absolute" size="sm" label="Close tournament deletion dialog" />
               <h2 className={`${mobileStyles.modalTitle} ${mobileStyles.modalTitleDanger}`}>Confirm Deletion</h2>
               <p className={mobileStyles.deleteConfirmText}>
                 Are you sure you want to delete tournament <strong>{deleteConfirm.name}</strong>?

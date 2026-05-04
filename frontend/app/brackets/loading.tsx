@@ -1,67 +1,49 @@
-const shimmer = {
-  background: 'linear-gradient(90deg, var(--color-gray-100) 25%, var(--color-gray-200) 50%, var(--color-gray-100) 75%)',
-  backgroundSize: '200% 100%',
-  animation: 'shimmer 1.5s infinite',
-  borderRadius: '8px',
-} as const
-
 export default function BracketsLoading() {
   return (
-    <div style={{ padding: '24px', maxWidth: '1400px', margin: '0 auto' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
-        <div style={{ ...shimmer, width: '180px', height: '32px' }} />
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <div style={{ ...shimmer, width: '160px', height: '40px' }} />
-          <div style={{ ...shimmer, width: '140px', height: '40px' }} />
-          <div style={{ ...shimmer, width: '120px', height: '40px' }} />
+    <div className="bw-sk-page">
+      <div className="bw-sk-header">
+        <div className="bw-sk bw-sk-w-lg bw-sk-h-title" />
+        <div className="bw-sk-header-actions">
+          <div className="bw-sk bw-sk-w-lg bw-sk-h-input" />
+          <div className="bw-sk bw-sk-w-lg bw-sk-h-input" />
+          <div className="bw-sk bw-sk-w-md bw-sk-h-input" />
         </div>
       </div>
 
-      {/* Selector row */}
-      <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
-        <div style={{ ...shimmer, width: '200px', height: '40px' }} />
-        <div style={{ ...shimmer, width: '180px', height: '40px' }} />
-        <div style={{ ...shimmer, flex: 1, height: '40px' }} />
+      <div className="bw-sk-filters-lg">
+        <div className="bw-sk bw-sk-w-xl bw-sk-h-input" />
+        <div className="bw-sk bw-sk-w-lg bw-sk-h-input" />
+        <div className="bw-sk bw-sk-w-flex bw-sk-h-input" />
       </div>
 
-      {/* Tabs */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
-        {[80, 90, 60].map((w, i) => (
-          <div key={i} style={{ ...shimmer, width: `${w}px`, height: '36px', borderRadius: '20px' }} />
-        ))}
+      <div className="bw-sk-tabs-pill">
+        <div className="bw-sk bw-sk-w-xs bw-sk-h-tab bw-sk-r-pill" />
+        <div className="bw-sk bw-sk-w-sm bw-sk-h-tab bw-sk-r-pill" />
+        <div className="bw-sk bw-sk-w-xs bw-sk-h-tab bw-sk-r-pill" />
       </div>
 
-      {/* Bracket tree area */}
-      <div style={{ background: 'var(--color-surface)', borderRadius: '16px', border: '1px solid var(--color-border)', padding: '32px', boxShadow: 'var(--shadow-soft)', overflowX: 'auto' }}>
-        {/* Simulated bracket rounds */}
-        <div style={{ display: 'flex', gap: '40px', alignItems: 'center', minWidth: '600px' }}>
-          {/* Round 1 — 8 matches */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div className="bw-sk-bracket-tree">
+        <div className="bw-sk-bracket-rounds">
+          <div className="bw-sk-bracket-round bw-sk-bracket-round-8">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} style={{ ...shimmer, width: '140px', height: '44px', borderRadius: '10px' }} />
+              <div key={i} className="bw-sk bw-sk-w-md bw-sk-h-bracket bw-sk-r-card" />
             ))}
           </div>
-          {/* Round 2 — 4 matches */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '52px', marginTop: '28px' }}>
+          <div className="bw-sk-bracket-round bw-sk-bracket-round-4">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} style={{ ...shimmer, width: '140px', height: '44px', borderRadius: '10px' }} />
+              <div key={i} className="bw-sk bw-sk-w-md bw-sk-h-bracket bw-sk-r-card" />
             ))}
           </div>
-          {/* Round 3 — 2 matches */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '140px', marginTop: '84px' }}>
+          <div className="bw-sk-bracket-round bw-sk-bracket-round-2">
             {Array.from({ length: 2 }).map((_, i) => (
-              <div key={i} style={{ ...shimmer, width: '140px', height: '44px', borderRadius: '10px' }} />
+              <div key={i} className="bw-sk bw-sk-w-md bw-sk-h-bracket bw-sk-r-card" />
             ))}
           </div>
-          {/* Final */}
-          <div style={{ marginTop: '196px' }}>
-            <div style={{ ...shimmer, width: '140px', height: '44px', borderRadius: '10px', background: 'linear-gradient(90deg, var(--color-brand-ivory-light) 25%, var(--color-brand-ivory) 50%, var(--color-brand-ivory-light) 75%)', backgroundSize: '200% 100%' }} />
+          <div className="bw-sk-bracket-round bw-sk-bracket-round-1">
+            <div className="bw-sk-warm bw-sk-w-md bw-sk-h-bracket bw-sk-r-card" />
           </div>
         </div>
       </div>
-
-      <style>{`@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }`}</style>
     </div>
   )
 }

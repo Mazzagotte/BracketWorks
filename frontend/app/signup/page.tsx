@@ -389,7 +389,6 @@ export default function SignupPage() {
                 <div className="strength-bar">
                   <div 
                     className={`strength-fill strength-${passwordStrength}`}
-                    style={{ width: `${(passwordStrength / 5) * 100}%` }}
                   ></div>
                 </div>
                 <span className={`strength-text strength-${passwordStrength}`}>
@@ -460,15 +459,7 @@ export default function SignupPage() {
           </div>
 
           {error && (
-            <div className="signup-error-container" style={{
-              background: 'var(--color-error-input-bg)',
-              border: '1px solid rgba(239, 68, 68, 0.2)',
-              borderRadius: '8px',
-              padding: '12px',
-              marginTop: '16px',
-              color: 'var(--color-error)',
-              fontSize: '14px'
-            }}>
+            <div className="signup-error-container signup-error-msg">
               {error}
             </div>
           )}

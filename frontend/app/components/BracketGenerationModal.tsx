@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { logger } from '../lib/logger'
 import { disableScroll, enableScroll } from '../utils/modalUtils'
+import CloseControl from '../../components/CloseControl'
 import styles from './BracketGenerationModal.module.css'
 
 /**
@@ -337,6 +338,13 @@ export default function BracketGenerationModal({
         className={styles.modalCard} 
         onClick={(event) => event.stopPropagation()}
       >
+        <CloseControl
+          onClick={handleCloseModal}
+          position="absolute"
+          size="sm"
+          label="Close bracket generation modal"
+          disabled={isGenerating}
+        />
         {/* CONFETTI CELEBRATION */}
         {showConfetti && (
           <div className={styles.confettiContainer}>
@@ -344,11 +352,6 @@ export default function BracketGenerationModal({
               <div
                 key={i}
                 className={styles.confetti}
-                style={{
-                  left: `${Math.random() * 100}%`,
-                  animationDelay: `${Math.random() * 0.5}s`,
-                  backgroundColor: ['#fbbf24', 'var(--color-warning-amber)', '#22c55e', '#3b82f6', '#a855f7', '#ec4899'][i % 6]
-                }}
               />
             ))}
           </div>
@@ -385,9 +388,9 @@ export default function BracketGenerationModal({
                 <div className={styles.ballBody} />
                 
                 {/* Finger holes on the ball */}
-                <div className={styles.fingerHole} style={{ top: '15px', left: '15px' }} />
-                <div className={styles.fingerHole} style={{ top: '25px', left: '35px' }} />
-                <div className={styles.fingerHole} style={{ top: '35px', left: '25px' }} />
+              <div className={`${styles.fingerHole} ${styles.fingerHole1}`} />
+                <div className={`${styles.fingerHole} ${styles.fingerHole2}`} />
+                <div className={`${styles.fingerHole} ${styles.fingerHole3}`} />
               </div>
             </div>
 
@@ -416,13 +419,13 @@ export default function BracketGenerationModal({
                 return (
                   <>
                     {stats.programSummaries.map((program, index) => (
-                      <div key={program.name} className={styles.statItem} style={{ animationDelay: `${0.1 + (index * 0.1)}s` }}>
+                      <div key={program.name} className={styles.statItem}>
                         <span className={styles.statText}>
                           {program.brackets_count} {program.name} Bracket{program.brackets_count !== 1 ? 's' : ''}
                         </span>
                       </div>
                     ))}
-                    <div className={styles.statItem} style={{ animationDelay: `${0.1 + (stats.programSummaries.length * 0.1)}s` }}>
+                    <div className={styles.statItem}>
                       <span className={styles.statText}>
                         {stats.skippedPlayers} Refund{stats.skippedPlayers !== 1 ? 's' : ''} ({stats.refundBreakdownText})
                       </span>

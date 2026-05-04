@@ -1,4 +1,4 @@
-import { BracketGroup, BracketProgramDefinition, BracketResponse, Player } from './types'
+import { BracketGroup, BracketProgramDefinition, BracketResponse, Player, SidePotsSettings } from './types'
 
 export const requiredBracketProgramKeys = ['handicap', 'scratch'] as const
 
@@ -32,7 +32,9 @@ export function filterEntriesForDivision(
 
   Object.entries(normalized).forEach(([key, count]) => {
     const program = programs.find(programItem => programItem.key === key)
-    if (!program || isProgramAllowedForDivision(program.division, division)) {
+    // Drop entries for programs that are not currently active/visible.
+    // This keeps optional bracket toggles in sync with Entries state.
+    if (program && isProgramAllowedForDivision(program.division, division)) {
       filtered[key] = Math.max(0, Number(count || 0))
     }
   })
@@ -253,6 +255,22 @@ export function calculatePlayerTotalCost(
     const fee = Number((progFee != null && progFee > 0) ? progFee : (fallbackEntryFee ?? 0))
     return total + (Math.max(0, count) * fee)
   }, 0)
+}
+
+/**
+ * Returns the additional cost a player owes for checked side pots.
+ * Each enabled+checked pot costs sidePots.entry_fee.
+ */
+export function calculateSidePotCost(
+  sidePotEntries: Record<string, boolean> | undefined,
+  sidePots: SidePotsSettings | null | undefined,
+): number {
+  if (!sidePots || sidePots.entry_fee <= 0 || !sidePotEntries) return 0
+  const enabledKeys = new Set(sidePots.pots.filter(p => p.enabled).map(p => p.key))
+  const checkedCount = Object.entries(sidePotEntries).filter(
+    ([key, checked]) => checked && enabledKeys.has(key)
+  ).length
+  return checkedCount * sidePots.entry_fee
 }
 
 export function getBracketGroups(response: BracketResponse | null | undefined): BracketGroup[] {

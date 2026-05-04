@@ -18,6 +18,7 @@
   min-width: 320px;
   max-width: 90vw;
   text-align: center;
+  position: relative;
 }
 .title {
   color: #1a4d1a;

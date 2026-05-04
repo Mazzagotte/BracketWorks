@@ -9,7 +9,6 @@ import styles from "./login.module.css";
 import { API } from "../lib/api";
 import { LoadingButton } from "../components/LoadingComponents";
 import { useToast } from "../components/Toast";
-import { AccessibleInput } from "../components/Accessibility";
 import { useAuth } from "../lib/auth-context";
 import { logger } from "../lib/logger";
 import SignupModal from "../components/SignupModal";
@@ -217,7 +216,7 @@ export default function LoginPage() {
             alt="BracketWorks Logo"
             width={220}
             height={220}
-            style={{ width: '100%', height: 'auto', display: 'block' }}
+            className={styles.logoImage}
             priority
           />
         </div>
@@ -231,11 +230,11 @@ export default function LoginPage() {
         {/* Form */}
         <form id="login-form" onSubmit={handleLogin} className={styles.form}>
           <div className={styles.inputGroup}>
-            <AccessibleInput
+            <input
               type="text"
               id="login-username"
               name="username"
-              label="Username"
+              aria-label="Username"
               placeholder="Username"
               value={username}
               onChange={e => setUsername(e.target.value)}
@@ -246,11 +245,11 @@ export default function LoginPage() {
           </div>
 
           <div className={styles.passwordWrap}>
-            <AccessibleInput
+            <input
               type={showPassword ? "text" : "password"}
               id="login-password"
               name="password"
-              label="Password"
+              aria-label="Password"
               placeholder="Password"
               value={password}
               onChange={e => setPassword(e.target.value)}
@@ -259,7 +258,6 @@ export default function LoginPage() {
               autoComplete="current-password"
               required
               className={`${styles.input} ${capsLockOn ? styles.inputCapsLock : ''} ${loginFailed ? styles.inputError : ''}`}
-              style={mounted ? { paddingRight: '52px' } : undefined}
             />
             {mounted && (
               <button

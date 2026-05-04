@@ -4,9 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 
 import Image from "next/image";
 
-import "../../styles/login.css";
 import "../../styles/login-validation.css";
-import "../../styles/bowling-animations.css";
 
 import { API } from "../../lib/api";
 import { useToast } from "../../components/Toast";

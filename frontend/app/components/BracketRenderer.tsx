@@ -1,5 +1,5 @@
 import React from 'react'
-import { colors, semantic, gradients } from '../styles/colors'
+import styles from './BracketRenderer.module.css'
 
 // Pure bracket display component
 
@@ -59,13 +59,9 @@ const BracketRendererComponent = ({
 }: BracketRendererProps) => {
   if (!tournamentPreviewData) {
     return (
-      <div style={{ 
-        textAlign: 'center', 
-        padding: '2rem',
-        color: semantic.text.secondary
-      }}>
+      <div className={styles.emptyState}>
         <p>No bracket data available</p>
-        <p style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>
+        <p className={styles.emptyStateSub}>
           Generate a bracket to see the tournamentPreviewData
         </p>
       </div>
@@ -85,11 +81,7 @@ const BracketRendererComponent = ({
 
     if (!brackets || brackets.length === 0) {
       return (
-        <div style={{ 
-          textAlign: 'center', 
-          padding: '2rem',
-          color: semantic.text.secondary
-        }}>
+        <div className={styles.emptyState}>
           <p>No {selectedBracketType} brackets available</p>
         </div>
       )
@@ -118,29 +110,11 @@ function SingleBracketView({
   onMatchClick?: (bracketId: string, round: number, MatchData: number) => void
 }) {
   return (
-    <div style={{
-      display: 'flex',
-      gap: '2rem',
-      overflowX: 'auto',
-      padding: '1rem',
-      minHeight: '400px'
-    }}>
+    <div className={styles.roundsRow}>
       {rounds.map((round, roundIndex) => (
-        <div key={roundIndex} style={{ minWidth: '200px' }}>
-          <h3 style={{
-            fontSize: '1.125rem',
-            fontWeight: '600',
-            marginBottom: '1rem',
-            textAlign: 'center',
-            color: semantic.text.primary
-          }}>
-            {round.roundName}
-          </h3>
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '1rem'
-          }}>
+        <div key={roundIndex} className={styles.roundCol}>
+          <h3 className={styles.roundTitle}>{round.roundName}</h3>
+          <div className={styles.roundMatches}>
             {round.roundMatches.map((MatchData, matchIndex) => (
               <MatchCard 
                 key={matchIndex}
@@ -175,19 +149,8 @@ function MultipleBracketsView({
 
     return (
       <div>
-        <div style={{
-          marginBottom: '1rem',
-          padding: '1rem',
-          backgroundColor: colors.gray[50],
-          borderRadius: '8px',
-          border: `1px solid ${colors.gray[200]}`
-        }}>
-          <h3 style={{
-            fontSize: '1.25rem',
-            fontWeight: '600',
-            color: colors.gray[900],
-            margin: 0
-          }}>
+        <div className={styles.bracketHeader}>
+          <h3 className={styles.bracketHeaderTitle}>
             {bracket.title || `Bracket ${selectedBracketConfiguration.index + 1}`}
           </h3>
         </div>
@@ -204,12 +167,7 @@ function MultipleBracketsView({
 
   // Show bracket grid
   return (
-    <div style={{
-      display: 'grid',
-      gridTemplateColumns: isMobileDisplay ? '1fr' : 'repeat(auto-fill, minmax(300px, 1fr))',
-      gap: '1rem',
-      padding: '1rem'
-    }}>
+    <div className={isMobileDisplay ? styles.bracketsGridMobile : styles.bracketsGrid}>
       {brackets.map((bracket, index) => (
         <BracketCard 
           key={index}
@@ -233,101 +191,37 @@ function MatchCard({
   const isCompleted = MatchData.winner || (MatchData.scoreA !== undefined && MatchData.scoreB !== undefined)
   
   return (
-    <div 
+    <div
       onClick={onClick}
-      style={{
-        border: `1px solid ${colors.gray[200]}`,
-        borderRadius: '8px',
-        padding: '0.75rem',
-        backgroundColor: isCompleted ? colors.blue.pale : colors.white,
-        cursor: onClick ? 'pointer' : 'default',
-        transition: 'all 0.2s ease'
-      }}
-      onMouseOver={(changeEvent) => {
-        if (onClick) {
-          changeEvent.currentTarget.style.borderColor = colors.blue.primary
-          changeEvent.currentTarget.style.boxShadow = '0 2px 4px rgba(59, 130, 246, 0.1)'
-        }
-      }}
-      onMouseOut={(changeEvent) => {
-        if (onClick) {
-          changeEvent.currentTarget.style.borderColor = colors.gray[200]
-          changeEvent.currentTarget.style.boxShadow = 'none'
-        }
-      }}
+      className={`${styles.matchCard} ${onClick ? styles.matchCardClickable : ''} ${isCompleted ? styles.matchCardCompleted : ''}`}
     >
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '0.5rem'
-      }}>
+      <div className={styles.matchStatusRow}>
         {MatchData.winner && (
-          <span style={{
-            fontSize: '0.75rem',
-            color: semantic.status.success,
-            fontWeight: '600'
-          }}>
-            Winner: {MatchData.winner}
-          </span>
+          <span className={styles.matchWinner}>Winner: {MatchData.winner}</span>
         )}
         {MatchData.both_advance && (
-          <span 
-            style={{
-              fontSize: '0.7rem',
-              fontWeight: '700',
-              letterSpacing: '0.5px',
-              padding: '4px 10px',
-              borderRadius: '6px',
-              background: gradients.purpleTie,
-              color: 'white',
-              textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)',
-              boxShadow: '0 2px 4px rgba(139, 92, 246, 0.3)',
-              marginLeft: '0.5rem',
-              cursor: 'help'
-            }}
+          <span
+            className={styles.badgeBothAdvance}
             title={MatchData.elimination_notes || 'Both players advance - lower next round score will be eliminated'}
           >
             BOTH ADVANCE
           </span>
         )}
         {MatchData.split_pot && (
-          <span 
-            style={{
-              fontSize: '0.7rem',
-              fontWeight: '700',
-              letterSpacing: '0.5px',
-              padding: '4px 10px',
-              borderRadius: '6px',
-              background: gradients.brandSubtle,
-              color: 'white',
-              textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)',
-              boxShadow: '0 2px 4px rgba(245, 158, 11, 0.3)',
-              marginLeft: '0.5rem',
-              cursor: 'help'
-            }}
-            title="Finals tie - pot split evenly"
-          >
+          <span className={styles.badgeSplitPot} title="Finals tie - pot split evenly">
             SPLIT POT
           </span>
         )}
       </div>
-      
-      <div style={{ fontSize: '0.875rem' }}>
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between',
-          marginBottom: '0.25rem'
-        }}>
+
+      <div className={styles.matchBody}>
+        <div className={styles.matchPlayerRow}>
           <span>{MatchData.playerA || 'TBD'}</span>
-          <span style={{ fontWeight: '600' }}>{MatchData.scoreA || '-'}</span>
+          <span className={styles.matchScore}>{MatchData.scoreA || '-'}</span>
         </div>
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between'
-        }}>
+        <div className={styles.matchPlayerRowLast}>
           <span>{MatchData.playerB || 'TBD'}</span>
-          <span style={{ fontWeight: '600' }}>{MatchData.scoreB || '-'}</span>
+          <span className={styles.matchScore}>{MatchData.scoreB || '-'}</span>
         </div>
       </div>
     </div>
@@ -349,56 +243,21 @@ function BracketCard({
   const completedMatches = bracket.rounds?.reduce((total: number, round: TournamentRound) => 
     total + (round.roundMatches?.filter((m: MatchData) => m.winner || (m.scoreA && m.scoreB))?.length || 0), 0) || 0
 
+  const progressPct = totalMatches > 0 ? (completedMatches / totalMatches) * 100 : 0
+
   return (
-    <div 
-      onClick={onClick}
-      style={{
-        border: `1px solid ${colors.gray[200]}`,
-        borderRadius: '8px',
-        padding: '1rem',
-        backgroundColor: colors.white,
-        cursor: 'pointer',
-        transition: 'all 0.2s ease'
-      }}
-      onMouseOver={(changeEvent) => { 
-        changeEvent.currentTarget.style.borderColor = colors.blue.primary
-        changeEvent.currentTarget.style.boxShadow = '0 4px 6px rgba(59, 130, 246, 0.1)'
-      }}
-      onMouseOut={(changeEvent) => { 
-        changeEvent.currentTarget.style.borderColor = colors.gray[200]
-        changeEvent.currentTarget.style.boxShadow = 'none'
-      }}
-    >
-      <h4 style={{
-        fontSize: '1.125rem',
-        fontWeight: '600',
-        marginBottom: '0.5rem',
-        color: colors.gray[900]
-      }}>
+    <div onClick={onClick} className={styles.bracketCard}>
+      <h4 className={styles.bracketCardTitle}>
         {bracket.title || `Bracket ${index + 1}`}
       </h4>
-      
-      <div style={{
-        fontSize: '0.875rem',
-        color: semantic.text.secondary,
-        marginBottom: '0.75rem'
-      }}>
+      <div className={styles.bracketCardProgress}>
         Progress: {completedMatches}/{totalMatches} matches completed
       </div>
-      
-      <div style={{
-        width: '100%',
-        backgroundColor: colors.gray[200],
-        borderRadius: '4px',
-        height: '8px',
-        overflow: 'hidden'
-      }}>
-        <div style={{
-          width: `${totalMatches > 0 ? (completedMatches / totalMatches) * 100 : 0}%`,
-          height: '100%',
-          backgroundColor: colors.blue.primary,
-          transition: 'width 0.3s ease'
-        }} />
+      <div className={styles.progressBar}>
+        <div
+          className={styles.progressFill}
+          style={{ '--progress': `${progressPct}%` } as React.CSSProperties}
+        />
       </div>
     </div>
   )

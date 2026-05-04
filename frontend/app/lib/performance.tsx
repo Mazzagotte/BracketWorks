@@ -190,20 +190,8 @@ export const LoadingStates = memo(({
 }) => {
   if (isLoading) {
     return (
-      <div className="loading-state" style={{ 
-        textAlign: 'center', 
-        padding: '2rem',
-        color: 'var(--color-text-secondary)'
-      }}>
-        <div className="spinner" style={{
-          width: '2rem',
-          height: '2rem',
-          border: '3px solid var(--color-gray-100)',
-          borderTop: '3px solid var(--color-primary)',
-          borderRadius: '50%',
-          animation: 'spin 1s linear infinite',
-          margin: '0 auto 1rem'
-        }} />
+      <div className="loading-state bw-perf-loading">
+        <div className="spinner bw-perf-spinner" />
         {loadingText}
       </div>
     );
@@ -211,14 +199,7 @@ export const LoadingStates = memo(({
 
   if (error) {
     return (
-      <div className="error-state" style={{
-        textAlign: 'center',
-        padding: '2rem',
-        color: 'var(--color-error)',
-        background: 'var(--color-hc-error-bg)',
-        borderRadius: '8px',
-        margin: '1rem 0'
-      }}>
+      <div className="error-state bw-perf-error">
         {errorText}: {error}
       </div>
     );

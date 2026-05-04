@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 
-import "../../styles/login.css";
 import "../../styles/login-validation.css";
 import "../../styles/reset-password.css";
 
@@ -487,7 +486,7 @@ export default function ResetPasswordPage() {
               </div>
             )}
 
-            <div className="pw-field-wrapper" style={{ marginBottom: '16px' }}>
+            <div className="pw-field-wrapper pw-field-wrapper-confirm">
               <input
                 ref={confirmPasswordRef}
                 type={mounted && showConfirmPassword ? "text" : "password"}

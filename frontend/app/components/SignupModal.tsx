@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { API } from '../lib/api';
 import { logger } from '../lib/logger';
+import CloseControl from '../../components/CloseControl';
 import styles from './SignupModal.module.css';
 
 interface SignupModalProps {
@@ -181,6 +182,7 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
   return (
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.modal} onClick={e => e.stopPropagation()}>
+        <CloseControl onClick={onClose} position="absolute" size="sm" label="Close signup modal" disabled={false} />
         {/* Header */}
         <div className={styles.header}>
           <h2 className={styles.title}>Create Account</h2>
@@ -306,7 +308,6 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
                 <div className={styles.strengthTrack}>
                   <div
                     className={`${styles.strengthFill} ${styles[`strength${passwordStrength}` as keyof typeof styles]}`}
-                    style={{ width: `${(passwordStrength / 5) * 100}%` }}
                   />
                 </div>
                 <div className={`${styles.strengthLabel} ${styles[`strength${passwordStrength}` as keyof typeof styles]}`}>

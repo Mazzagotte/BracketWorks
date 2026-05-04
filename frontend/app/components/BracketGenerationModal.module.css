@@ -170,6 +170,77 @@
     0 1px 2px var(--opacity-white-10);
 }
 
+.fingerHole1 { top: 15px; left: 15px; }
+.fingerHole2 { top: 25px; left: 35px; }
+.fingerHole3 { top: 35px; left: 25px; }
+
+/* Confetti color bands (by color group) */
+.confetti:nth-child(6n+1) { background-color: #fbbf24; }
+.confetti:nth-child(6n+2) { background-color: var(--color-warning-amber, #f59e0b); }
+.confetti:nth-child(6n+3) { background-color: #22c55e; }
+.confetti:nth-child(6n+4) { background-color: #3b82f6; }
+.confetti:nth-child(6n+5) { background-color: #a855f7; }
+.confetti:nth-child(6n+6) { background-color: #ec4899; }
+
+/* Confetti positions & animation delays (50 particles) */
+.confetti:nth-child(1)  { left:  8%; animation-delay: 0.12s; }
+.confetti:nth-child(2)  { left: 16%; animation-delay: 0.28s; }
+.confetti:nth-child(3)  { left: 24%; animation-delay: 0.05s; }
+.confetti:nth-child(4)  { left: 32%; animation-delay: 0.41s; }
+.confetti:nth-child(5)  { left: 40%; animation-delay: 0.18s; }
+.confetti:nth-child(6)  { left: 48%; animation-delay: 0.35s; }
+.confetti:nth-child(7)  { left: 56%; animation-delay: 0.08s; }
+.confetti:nth-child(8)  { left: 64%; animation-delay: 0.47s; }
+.confetti:nth-child(9)  { left: 72%; animation-delay: 0.22s; }
+.confetti:nth-child(10) { left: 80%; animation-delay: 0.14s; }
+.confetti:nth-child(11) { left:  4%; animation-delay: 0.39s; }
+.confetti:nth-child(12) { left: 11%; animation-delay: 0.03s; }
+.confetti:nth-child(13) { left: 19%; animation-delay: 0.44s; }
+.confetti:nth-child(14) { left: 27%; animation-delay: 0.17s; }
+.confetti:nth-child(15) { left: 35%; animation-delay: 0.31s; }
+.confetti:nth-child(16) { left: 43%; animation-delay: 0.09s; }
+.confetti:nth-child(17) { left: 51%; animation-delay: 0.26s; }
+.confetti:nth-child(18) { left: 59%; animation-delay: 0.48s; }
+.confetti:nth-child(19) { left: 67%; animation-delay: 0.11s; }
+.confetti:nth-child(20) { left: 75%; animation-delay: 0.37s; }
+.confetti:nth-child(21) { left: 83%; animation-delay: 0.21s; }
+.confetti:nth-child(22) { left: 91%; animation-delay: 0.04s; }
+.confetti:nth-child(23) { left:  3%; animation-delay: 0.43s; }
+.confetti:nth-child(24) { left: 13%; animation-delay: 0.16s; }
+.confetti:nth-child(25) { left: 22%; animation-delay: 0.33s; }
+.confetti:nth-child(26) { left: 30%; animation-delay: 0.07s; }
+.confetti:nth-child(27) { left: 38%; animation-delay: 0.45s; }
+.confetti:nth-child(28) { left: 46%; animation-delay: 0.19s; }
+.confetti:nth-child(29) { left: 54%; animation-delay: 0.36s; }
+.confetti:nth-child(30) { left: 62%; animation-delay: 0.02s; }
+.confetti:nth-child(31) { left: 70%; animation-delay: 0.49s; }
+.confetti:nth-child(32) { left: 78%; animation-delay: 0.24s; }
+.confetti:nth-child(33) { left: 86%; animation-delay: 0.13s; }
+.confetti:nth-child(34) { left: 94%; animation-delay: 0.40s; }
+.confetti:nth-child(35) { left:  6%; animation-delay: 0.06s; }
+.confetti:nth-child(36) { left: 15%; animation-delay: 0.29s; }
+.confetti:nth-child(37) { left: 23%; animation-delay: 0.46s; }
+.confetti:nth-child(38) { left: 31%; animation-delay: 0.10s; }
+.confetti:nth-child(39) { left: 39%; animation-delay: 0.38s; }
+.confetti:nth-child(40) { left: 47%; animation-delay: 0.15s; }
+.confetti:nth-child(41) { left: 55%; animation-delay: 0.27s; }
+.confetti:nth-child(42) { left: 63%; animation-delay: 0.50s; }
+.confetti:nth-child(43) { left: 71%; animation-delay: 0.01s; }
+.confetti:nth-child(44) { left: 79%; animation-delay: 0.32s; }
+.confetti:nth-child(45) { left: 87%; animation-delay: 0.20s; }
+.confetti:nth-child(46) { left: 95%; animation-delay: 0.42s; }
+.confetti:nth-child(47) { left: 10%; animation-delay: 0.25s; }
+.confetti:nth-child(48) { left: 20%; animation-delay: 0.08s; }
+.confetti:nth-child(49) { left: 50%; animation-delay: 0.34s; }
+.confetti:nth-child(50) { left: 90%; animation-delay: 0.23s; }
+
+/* Stat item staggered entry delays */
+.statItem:nth-child(1) { animation-delay: 0.1s; }
+.statItem:nth-child(2) { animation-delay: 0.2s; }
+.statItem:nth-child(3) { animation-delay: 0.3s; }
+.statItem:nth-child(4) { animation-delay: 0.4s; }
+.statItem:nth-child(5) { animation-delay: 0.5s; }
+
 /* Main Message during loading */
 .mainMessage {
   font-size: 1.75rem;

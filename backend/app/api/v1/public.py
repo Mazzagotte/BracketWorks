@@ -246,3 +246,36 @@ def get_public_winners(
     except Exception as e:
         logger.error(f"Error building winners summary: {e}")
         return {"all_winners": [], "error": True}
+
+
+@router.get("/tournament/{tournament_id}/scores")
+def get_public_scores(
+    tournament_id: int,
+    squad_id: Optional[int] = Query(None),
+    db: Session = Depends(get_db),
+):
+    """Live scores for the side pots leaderboard — no auth required."""
+    _get_tournament_or_404(db, tournament_id)
+
+    query = (
+        db.query(models.PlayerScore, models.TournamentPlayer.full_name)
+        .join(models.TournamentPlayer, models.PlayerScore.player_id == models.TournamentPlayer.id)
+        .filter(models.PlayerScore.tournament_id == tournament_id)
+    )
+    if squad_id:
+        query = query.filter(models.PlayerScore.squad_id == squad_id)
+
+    rows = query.all()
+    return [
+        {
+            "player_id": score.player_id,
+            "player_name": full_name,
+            "game1_scratch": score.game1_scratch,
+            "game2_scratch": score.game2_scratch,
+            "game3_scratch": score.game3_scratch,
+            "game1_with_handicap": score.game1_with_handicap,
+            "game2_with_handicap": score.game2_with_handicap,
+            "game3_with_handicap": score.game3_with_handicap,
+        }
+        for score, full_name in rows
+    ]

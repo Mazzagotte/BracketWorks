@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef, useLayoutEffect } from 'react';
 
 interface PaginationProps {
   currentPage: number;
@@ -46,43 +46,13 @@ export const Pagination: React.FC<PaginationProps> = ({
 
   if (totalPages <= 1) return null;
 
-  const btnBase: React.CSSProperties = {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 34,
-    height: 34,
-    borderRadius: 8,
-    border: '1px solid var(--color-border-light)',
-    background: 'var(--color-surface)',
-    color: 'var(--color-text-secondary)',
-    fontSize: 14,
-    fontWeight: 500,
-    cursor: 'pointer',
-    transition: 'all 0.15s ease',
-  };
-
-  const btnActive: React.CSSProperties = {
-    ...btnBase,
-    background: 'var(--color-primary)',
-    border: '1px solid var(--color-primary)',
-    color: 'var(--color-white)',
-    fontWeight: 700,
-  };
-
-  const btnDisabled: React.CSSProperties = {
-    ...btnBase,
-    opacity: 0.3,
-    cursor: 'not-allowed',
-  };
-
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+    <div className="bw-pagination">
       {/* Previous */}
       <button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage <= 1}
-        style={currentPage <= 1 ? btnDisabled : btnBase}
+        className={`bw-pagination-btn ${currentPage <= 1 ? 'bw-pagination-btn-disabled' : ''}`}
         aria-label="Previous page"
       >
         ‹
@@ -91,14 +61,14 @@ export const Pagination: React.FC<PaginationProps> = ({
       {/* Page numbers */}
       {pageNumbers.map((page, index) =>
         page === '...' ? (
-          <span key={`dots-${index}`} style={{ color: 'var(--color-text-secondary)', padding: '0 2px' }}>
+          <span key={`dots-${index}`} className="bw-pagination-ellipsis">
             …
           </span>
         ) : (
           <button
             key={page}
             onClick={() => onPageChange(page as number)}
-            style={currentPage === page ? btnActive : btnBase}
+            className={`bw-pagination-btn ${currentPage === page ? 'bw-pagination-btn-active' : ''}`}
             aria-label={`Page ${page}`}
             aria-current={currentPage === page ? 'page' : undefined}
           >
@@ -111,7 +81,7 @@ export const Pagination: React.FC<PaginationProps> = ({
       <button
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage >= totalPages}
-        style={currentPage >= totalPages ? btnDisabled : btnBase}
+        className={`bw-pagination-btn ${currentPage >= totalPages ? 'bw-pagination-btn-disabled' : ''}`}
         aria-label="Next page"
       >
         ›
@@ -215,6 +185,8 @@ export function VirtualizedList<T>({
   className = '',
 }: VirtualizedListProps<T>) {
   const [scrollTop, setScrollTop] = useState(0);
+  const outerRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
 
   const totalHeight = items.length * itemHeight;
   const visibleItemCount = Math.ceil(containerHeight / itemHeight);
@@ -234,34 +206,41 @@ export function VirtualizedList<T>({
     });
   }
 
+  useLayoutEffect(() => {
+    if (outerRef.current) outerRef.current.style.height = `${containerHeight}px`;
+    if (innerRef.current) innerRef.current.style.height = `${totalHeight}px`;
+  }, [containerHeight, totalHeight]);
+
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     setScrollTop(e.currentTarget.scrollTop);
   };
 
   return (
     <div
+      ref={outerRef}
       className={`relative overflow-auto ${className}`}
-      style={{ height: containerHeight }}
       onScroll={handleScroll}
     >
-      <div style={{ height: totalHeight, position: 'relative' }}>
+      <div ref={innerRef} className="bw-vlist-inner">
         {visibleItems.map(({ index, item, offsetTop }) => (
-          <div
-            key={index}
-            style={{
-              position: 'absolute',
-              top: offsetTop,
-              left: 0,
-              right: 0,
-              height: itemHeight,
-            }}
-          >
+          <VirtualItem key={index} offsetTop={offsetTop} itemHeight={itemHeight}>
             {renderItem(item, index)}
-          </div>
+          </VirtualItem>
         ))}
       </div>
     </div>
   );
+}
+
+function VirtualItem({ offsetTop, itemHeight, children }: { offsetTop: number; itemHeight: number; children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    if (ref.current) {
+      ref.current.style.top = `${offsetTop}px`;
+      ref.current.style.height = `${itemHeight}px`;
+    }
+  }, [offsetTop, itemHeight]);
+  return <div ref={ref} className="bw-vlist-item">{children}</div>;
 }
 
 // Infinite scroll hook

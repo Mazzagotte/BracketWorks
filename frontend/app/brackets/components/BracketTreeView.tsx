@@ -82,11 +82,6 @@ const BracketTreeViewComponent = ({
     )
   }
   
-  // Grid configuration
-  // Each match occupies 2 rows (for the card height)
-  // Connectors occupy the rows between matches
-  const totalRows = (displayRounds[0]?.matches.length * 3 - 1) || 11 // -1 to avoid trailing empty row
-
   return (
     <div 
       ref={containerRef}
@@ -97,7 +92,7 @@ const BracketTreeViewComponent = ({
         {/* Round Headers with Numbered Badges */}
         <div className={styles.headerRow}>
           {displayRounds.map((round, roundIndex) => {
-            const { completedMatches, totalMatches, progressPercent } = roundStats[roundIndex]
+            const { completedMatches, totalMatches } = roundStats[roundIndex]
             
             return (
               <div key={roundIndex} className={styles.roundHeader}>
@@ -110,29 +105,22 @@ const BracketTreeViewComponent = ({
                     </span>
                   </div>
                 </div>
-                <div className={styles.progressBar}>
-                  <div 
-                    className={styles.progressFill}
-                    style={{ width: `${progressPercent}%` }}
-                  />
-                </div>
+                <progress
+                  className={styles.progressMeter}
+                  value={completedMatches}
+                  max={totalMatches || 1}
+                  aria-label={`${round.roundName || `Round ${roundIndex + 1}`} completion`}
+                />
               </div>
             )
           })}
         </div>
 
         {/* Grid-based bracket layout */}
-        <div 
-          className={styles.bracketGrid}
-          style={{
-            gridTemplateRows: `repeat(${totalRows}, auto)`,
-            gridTemplateColumns: 'repeat(9, auto)' // 3 rounds × 3 columns each (match, h-connector, v-connector)
-          }}
-        >
+        <div className={styles.bracketGrid}>
           {/* Round 1 - 4 matches */}
           {displayRounds[0]?.matches.map((match, matchIndex) => {
             const status = match.matchStatus || getMatchStatus(match)
-            const gridRow = matchIndex * 3 + 1 // Rows: 1, 4, 7, 10
 
             // Handle both old (match_score_a) and new (scoreA) field names for backwards compatibility
             const scoreA = match.scoreA ?? match.match_score_a;
@@ -146,11 +134,7 @@ const BracketTreeViewComponent = ({
               <React.Fragment key={`r0-m${matchIndex}`}>
                 {/* Match Card - spans 2 rows for height */}
                 <div
-                  className={`${styles.matchCard} ${styles[status]} ${isInPath ? styles.highlighted : ''} ${isMatchDimmed(match) ? styles.dimmed : ''}`}
-                  style={{
-                    gridColumn: '1',
-                    gridRow: `${gridRow} / span 2`
-                  }}
+                  className={`${styles.matchCard} ${styles[status]} ${isInPath ? styles.highlighted : ''} ${isMatchDimmed(match) ? styles.dimmed : ''} ${styles[`r1m${matchIndex + 1}`] || ''}`}
                 >
                   <div className={styles.matchLabel}>
                     Match {matchIndex + 1}
@@ -188,7 +172,6 @@ const BracketTreeViewComponent = ({
           {/* Round 2 - 2 matches */}
           {displayRounds[1]?.matches.map((match, matchIndex) => {
             const status = match.matchStatus || getMatchStatus(match)
-            const gridRow = matchIndex * 6 + 2 // Rows: 2, 8 (centered between R1 pairs)
 
             // Handle both old (match_score_a) and new (scoreA) field names for backwards compatibility
             const scoreA = match.scoreA ?? match.match_score_a;
@@ -202,11 +185,7 @@ const BracketTreeViewComponent = ({
               <React.Fragment key={`r1-m${matchIndex}`}>
                 {/* Match Card */}
                 <div
-                  className={`${styles.matchCard} ${styles[status]} ${isInPath ? styles.highlighted : ''} ${isMatchDimmed(match) ? styles.dimmed : ''}`}
-                  style={{
-                    gridColumn: '4',
-                    gridRow: `${gridRow} / span 2`
-                  }}
+                  className={`${styles.matchCard} ${styles[status]} ${isInPath ? styles.highlighted : ''} ${isMatchDimmed(match) ? styles.dimmed : ''} ${styles[`r2m${matchIndex + 1}`] || ''}`}
                 >
                   <div className={styles.matchLabel}>
                     Semifinal {matchIndex + 1}
@@ -244,7 +223,6 @@ const BracketTreeViewComponent = ({
           {/* Round 3 - 1 match (Finals) */}
           {displayRounds[2]?.matches.map((match, matchIndex) => {
             const status = match.matchStatus || getMatchStatus(match)
-            const gridRow = 5 // Centered vertically (middle of 12 rows)
 
             // Handle both old (match_score_a) and new (scoreA) field names for backwards compatibility
             const scoreA = match.scoreA ?? match.match_score_a;
@@ -257,11 +235,7 @@ const BracketTreeViewComponent = ({
             return (
               <div
                 key={`r2-m${matchIndex}`}
-                className={`${styles.matchCard} ${styles.finals} ${styles[status]} ${isInPath ? styles.highlighted : ''} ${isMatchDimmed(match) ? styles.dimmed : ''}`}
-                style={{
-                  gridColumn: '7',
-                  gridRow: `${gridRow} / span 2`
-                }}
+                className={`${styles.matchCard} ${styles.finals} ${styles[status]} ${isInPath ? styles.highlighted : ''} ${isMatchDimmed(match) ? styles.dimmed : ''} ${styles.r3m1}`}
               >
                 <div className={styles.matchLabel}>
                   Final
@@ -300,13 +274,10 @@ const BracketTreeViewComponent = ({
             <React.Fragment key={`conn-r1r2-${i}`}>
               {/* Bracket ] shape: borders at midpoint of each R1 pair */}
               <div
-                className={styles.connectorBracket}
-                style={{ gridColumn: '2', gridRow: `${i * 6 + 2} / ${i * 6 + 5}` }}
+                className={`${styles.connectorBracket} ${i === 0 ? styles.connR1R2Bracket1 : styles.connR1R2Bracket2}`}
               />
-              {/* Horizontal arm → R2 match */}
               <div
-                className={styles.connectorArm}
-                style={{ gridColumn: '3', gridRow: `${i * 6 + 2} / ${i * 6 + 4}` }}
+                className={`${styles.connectorArm} ${i === 0 ? styles.connR1R2Arm1 : styles.connR1R2Arm2}`}
               />
             </React.Fragment>
           ))}
@@ -315,12 +286,10 @@ const BracketTreeViewComponent = ({
           {displayRounds[2]?.matches?.length > 0 && (
             <>
               <div
-                className={styles.connectorBracket}
-                style={{ gridColumn: '5', gridRow: '3 / 9' }}
+                className={`${styles.connectorBracket} ${styles.connR2R3Bracket}`}
               />
               <div
-                className={styles.connectorArm}
-                style={{ gridColumn: '6', gridRow: '5 / 7' }}
+                className={`${styles.connectorArm} ${styles.connR2R3Arm}`}
               />
             </>
           )}

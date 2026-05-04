@@ -73,9 +73,9 @@ export function MobileTable({
       <div className="mobile-table-loading">
         {[...Array(5)].map((_, i) => (
           <div key={i} className="mobile-loading-row">
-            <div className="loading-skeleton" style={{ width: '60%', height: '20px' }} />
-            <div className="loading-skeleton" style={{ width: '40%', height: '20px' }} />
-            <div className="loading-skeleton" style={{ width: '80%', height: '20px' }} />
+            <div className="loading-skeleton loading-skeleton-60" />
+            <div className="loading-skeleton loading-skeleton-40" />
+            <div className="loading-skeleton loading-skeleton-80" />
           </div>
         ))}
       </div>
@@ -85,12 +85,7 @@ export function MobileTable({
   if (data.length === 0) {
     return (
       <div className="mobile-table-empty">
-        <div style={{
-          textAlign: 'center',
-          padding: '40px 20px',
-          color: 'var(--color-text-secondary)',
-          fontSize: '16px'
-        }}>
+        <div className="mobile-table-empty-message">
           {emptyMessage}
         </div>
       </div>
@@ -121,17 +116,8 @@ export function MobileTable({
           {sortedData.map((row, index) => (
             <div
               key={index}
-              className="mobile-card"
+              className={`mobile-card ${onRowClick ? 'mobile-card-clickable' : ''}`}
               onClick={() => onRowClick?.(row)}
-              style={{
-                backgroundColor: 'var(--color-white)',
-                borderRadius: '12px',
-                padding: '16px',
-                marginBottom: '12px',
-                boxShadow: '0 2px 8px var(--opacity-black-10)',
-                border: '1px solid var(--color-gray-200)',
-                cursor: onRowClick ? 'pointer' : 'default'
-              }}
             >
               {mobileColumns.map((column) => (
                 <div key={column.key} className="mobile-card-row">
@@ -159,14 +145,12 @@ export function MobileTable({
                   <th
                     key={column.key}
                     onClick={() => column.sortable && handleSort(column.key)}
-                    style={{
-                      cursor: column.sortable ? 'pointer' : 'default',
-                      minWidth: column.width || '100px'
-                    }}
+                    className={column.sortable ? 'mobile-th-sortable' : ''}
+                    width={column.width || '100px'}
                   >
                     {column.label}
                     {column.sortable && sortBy === column.key && (
-                      <span style={{ marginLeft: '4px' }}>
+                      <span className="mobile-sort-indicator">
                         {sortDirection === 'asc' ? ' (Low-High)' : ' (High-Low)'}
                       </span>
                     )}
@@ -179,9 +163,7 @@ export function MobileTable({
                 <tr
                   key={index}
                   onClick={() => onRowClick?.(row)}
-                  style={{
-                    cursor: onRowClick ? 'pointer' : 'default'
-                  }}
+                  className={onRowClick ? 'mobile-row-clickable' : ''}
                 >
                   {mobileColumns.map((column) => (
                     <td key={column.key}>
@@ -233,6 +215,19 @@ export function MobileTable({
         .mobile-cards-view {
           display: flex;
           flex-direction: column;
+        }
+
+        .mobile-card {
+          background-color: var(--color-white);
+          border-radius: 12px;
+          padding: 16px;
+          margin-bottom: 12px;
+          box-shadow: 0 2px 8px var(--opacity-black-10);
+          border: 1px solid var(--color-gray-200);
+        }
+
+        .mobile-card-clickable {
+          cursor: pointer;
         }
 
         .mobile-card-row {
@@ -292,8 +287,20 @@ export function MobileTable({
           z-index: 10;
         }
 
+        .mobile-th-sortable {
+          cursor: pointer;
+        }
+
+        .mobile-sort-indicator {
+          margin-left: 4px;
+        }
+
         .mobile-table tr:hover {
           background: var(--color-gray-50);
+        }
+
+        .mobile-row-clickable {
+          cursor: pointer;
         }
 
         .mobile-loading-row {
@@ -305,10 +312,30 @@ export function MobileTable({
         }
 
         .loading-skeleton {
+          height: 20px;
           background: linear-gradient(90deg, var(--color-gray-100) 25%, var(--color-gray-200) 50%, var(--color-gray-100) 75%);
           background-size: 200% 100%;
           animation: loading 1.5s infinite;
           border-radius: 4px;
+        }
+
+        .loading-skeleton-40 {
+          width: 40%;
+        }
+
+        .loading-skeleton-60 {
+          width: 60%;
+        }
+
+        .loading-skeleton-80 {
+          width: 80%;
+        }
+
+        .mobile-table-empty-message {
+          text-align: center;
+          padding: 40px 20px;
+          color: var(--color-text-secondary);
+          font-size: 16px;
         }
 
         @keyframes loading {

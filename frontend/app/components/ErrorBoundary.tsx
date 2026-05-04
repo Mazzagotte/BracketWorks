@@ -38,39 +38,17 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div style={{
-          padding: '2rem',
-          textAlign: 'center',
-          border: '1px solid var(--color-border)',
-          borderRadius: '8px',
-          backgroundColor: 'var(--color-hc-error-bg)',
-          color: 'var(--color-error)'
-        }}>
+        <div className="bw-error-boundary">
           <h2>Something went wrong</h2>
-          <details style={{ marginTop: '1rem' }}>
+          <details className="bw-error-boundary-details">
             <summary>Error details</summary>
-            <pre style={{ 
-              textAlign: 'left', 
-              padding: '1rem',
-              backgroundColor: 'var(--color-gray-100)',
-              borderRadius: '4px',
-              fontSize: '0.875rem',
-              overflow: 'auto'
-            }}>
+            <pre className="bw-error-boundary-pre">
               {this.state.error?.toString()}
             </pre>
           </details>
           <button
             onClick={() => this.setState({ hasError: false })}
-            style={{
-              marginTop: '1rem',
-              padding: '0.5rem 1rem',
-              backgroundColor: 'var(--color-error)',
-              color: 'var(--color-white)',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
+            className="bw-error-boundary-btn"
           >
             Try again
           </button>
