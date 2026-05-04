@@ -1,5 +1,4 @@
 import React from 'react'
-import { stylePresets, colors, spacing, typography, borderRadius, shadows, utils } from '../lib/design-system'
 import { handleTableArrowNavigation } from '../lib/tableKeyboard'
 
 // Page Container Component
@@ -10,8 +9,7 @@ interface PageContainerProps {
 
 export const PageContainer: React.FC<PageContainerProps> = ({ children, className = '' }) => (
   <div 
-    style={stylePresets.pageContainer}
-    className={className}
+    className={`bw-ui-page-container ${className}`}
   >
     {children}
   </div>
@@ -20,24 +18,15 @@ export const PageContainer: React.FC<PageContainerProps> = ({ children, classNam
 // Content Wrapper Component
 interface ContentWrapperProps {
   children: React.ReactNode
-  maxWidth?: string
-  padding?: string
   className?: string
 }
 
 export const ContentWrapper: React.FC<ContentWrapperProps> = ({ 
   children, 
-  maxWidth = stylePresets.contentWrapper.maxWidth,
-  padding = stylePresets.contentWrapper.padding,
   className = '' 
 }) => (
   <div 
-    style={{
-      ...stylePresets.contentWrapper,
-      maxWidth,
-      padding,
-    }}
-    className={className}
+    className={`bw-ui-content-wrapper ${className}`}
   >
     {children}
   </div>
@@ -60,34 +49,18 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   className = '' 
 }) => (
   <div 
-    style={{
-      marginBottom: spacing.xl,
-      textAlign: centered ? 'center' : 'left',
-    }}
-    className={className}
+    className={`bw-ui-ph-wrap ${centered ? 'bw-ui-ph-center' : ''} ${className}`}
   >
-    <h1 style={stylePresets.pageHeader}>
+    <h1 className="bw-ui-ph-title">
       {title}
     </h1>
     {subtitle && (
-      <p style={{
-        fontSize: typography.fontSize.lg,
-        color: colors.text.secondary,
-        marginTop: spacing.sm,
-        marginBottom: spacing.lg,
-        lineHeight: typography.lineHeight.normal,
-      }}>
+      <p className="bw-ui-ph-subtitle">
         {subtitle}
       </p>
     )}
     {actions && (
-      <div style={{
-        marginTop: spacing.lg,
-        ...utils.flexRow,
-        justifyContent: centered ? 'center' : 'flex-start',
-        gap: spacing.md,
-        flexWrap: 'wrap',
-      }}>
+      <div className={`bw-ui-ph-actions ${centered ? 'bw-ui-ph-actions-center' : ''}`}>
         {actions}
       </div>
     )}
@@ -109,37 +82,20 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
   className = '' 
 }) => (
   <div 
-    style={{
-      ...utils.flexRow,
-      justifyContent: 'space-between',
-      alignItems: 'flex-start',
-      marginBottom: spacing.lg,
-      flexWrap: 'wrap',
-      gap: spacing.md,
-    }}
-    className={className}
+    className={`bw-ui-sh-wrap ${className}`}
   >
     <div>
-      <h2 style={stylePresets.sectionHeader}>
+      <h2 className="bw-ui-sh-title">
         {title}
       </h2>
       {subtitle && (
-        <p style={{
-          fontSize: typography.fontSize.base,
-          color: colors.text.secondary,
-          marginTop: spacing.xs,
-          lineHeight: typography.lineHeight.normal,
-        }}>
+        <p className="bw-ui-sh-subtitle">
           {subtitle}
         </p>
       )}
     </div>
     {actions && (
-      <div style={{
-        ...utils.flexRow,
-        gap: spacing.sm,
-        flexWrap: 'wrap',
-      }}>
+      <div className="bw-ui-sh-actions">
         {actions}
       </div>
     )}
@@ -151,7 +107,6 @@ interface CardProps {
   children: React.ReactNode
   title?: string
   className?: string
-  padding?: string
   noPadding?: boolean
 }
 
@@ -159,24 +114,13 @@ export const Card: React.FC<CardProps> = React.memo(({
   children, 
   title,
   className = '',
-  padding = stylePresets.card.padding,
   noPadding = false
 }) => (
   <div 
-    style={{
-      ...stylePresets.card,
-      padding: noPadding ? '0' : padding,
-    }}
-    className={className}
+    className={`bw-ui-card ${noPadding ? 'bw-ui-card-no-padding' : ''} ${className}`}
   >
     {title && (
-      <h3 style={{
-        fontSize: typography.fontSize.xl,
-        fontWeight: typography.fontWeight.semibold,
-        color: colors.text.primary,
-        marginBottom: spacing.lg,
-        marginTop: '0',
-      }}>
+      <h3 className="bw-ui-card-title">
         {title}
       </h3>
     )}
@@ -189,39 +133,20 @@ Card.displayName = 'Card'
 interface GridProps {
   children: React.ReactNode
   columns?: 'auto-fit' | '2' | '3' | '4' | string
-  gap?: string
   className?: string
 }
 
 export const Grid: React.FC<GridProps> = ({ 
   children, 
   columns = 'auto-fit',
-  gap = spacing.lg,
   className = '' 
-}) => {
-  const getGridTemplate = () => {
-    switch (columns) {
-      case 'auto-fit': return 'repeat(auto-fit, minmax(280px, 1fr))'
-      case '2': return 'repeat(2, 1fr)'
-      case '3': return 'repeat(3, 1fr)'  
-      case '4': return 'repeat(4, 1fr)'
-      default: return columns
-    }
-  }
-
-  return (
-    <div 
-      style={{
-        display: 'grid',
-        gridTemplateColumns: getGridTemplate(),
-        gap,
-      }}
-      className={className}
-    >
-      {children}
-    </div>
-  )
-}
+}) => (
+  <div 
+    className={`bw-grid bw-grid-cols-${columns} ${className}`}
+  >
+    {children}
+  </div>
+)
 
 // Stat Card Component
 interface StatCardProps {
@@ -241,81 +166,23 @@ export const StatCard: React.FC<StatCardProps> = React.memo(function StatCard({
   color = 'default',
   className = '' 
 }) {
-  const getColorStyles = () => {
-    switch (color) {
-      case 'primary':
-        return {
-          backgroundColor: 'rgba(244, 124, 32, 0.08)',
-          borderLeft: `4px solid var(--color-primary)`,
-          valueColor: 'var(--color-primary)',
-        }
-      case 'success':
-        return {
-          backgroundColor: '#d1fae5',
-          borderLeft: `4px solid ${colors.success}`,
-          valueColor: colors.success,
-        }
-      case 'warning':
-        return {
-          backgroundColor: '#fef3c7',
-          borderLeft: `4px solid ${colors.warning}`,
-          valueColor: colors.warning,
-        }
-      case 'error':
-        return {
-          backgroundColor: '#fee2e2',
-          borderLeft: `4px solid ${colors.error}`,
-          valueColor: colors.error,
-        }
-      default:
-        return {
-          backgroundColor: colors.surface,
-          borderLeft: `4px solid ${colors.border}`,
-          valueColor: colors.text.primary,
-        }
-    }
-  }
-
-  const colorStyles = getColorStyles()
-
   return (
     <div 
-      style={{
-        ...stylePresets.card,
-        ...colorStyles,
-        textAlign: 'center',
-      }}
-      className={className}
+      className={`bw-stat-card bw-stat-card-${color} ${className}`}
     >
       {icon && (
-        <div style={{
-          fontSize: typography.fontSize['2xl'],
-          marginBottom: spacing.sm,
-        }}>
+        <div className="bw-stat-card-icon">
           {icon}
         </div>
       )}
-      <div style={{
-        fontSize: typography.fontSize['2xl'],
-        fontWeight: typography.fontWeight.bold,
-        color: colorStyles.valueColor,
-        marginBottom: spacing.xs,
-      }}>
+      <div className="bw-stat-card-value">
         {value}
       </div>
-      <div style={{
-        fontSize: typography.fontSize.sm,
-        color: colors.text.primary,
-        fontWeight: typography.fontWeight.medium,
-        marginBottom: subtitle ? spacing.xs : 0,
-      }}>
+      <div className="bw-stat-card-label">
         {title}
       </div>
       {subtitle && (
-        <div style={{
-          fontSize: typography.fontSize.xs,
-          color: colors.text.secondary,
-        }}>
+        <div className="bw-stat-card-subtitle">
           {subtitle}
         </div>
       )}
@@ -351,8 +218,7 @@ export const Button: React.FC<ButtonProps> = ({
     type={type}
     onClick={onClick}
     disabled={disabled}
-    style={{ width: fullWidth ? '100%' : undefined }}
-    className={`ds-btn ds-btn-${variant} ds-btn-${size} ${className}`}
+    className={`ds-btn ds-btn-${variant} ds-btn-${size} ${fullWidth ? 'bw-btn-full' : ''} ${className}`}
   >
     {icon}
     {children}
@@ -374,14 +240,10 @@ export const Table: React.FC<TableProps> = ({
   className = '',
   hoverable = true
 }) => (
-  <div style={{ overflowX: 'auto', borderRadius: borderRadius.lg }}>
+  <div className="bw-ui-table-wrap">
     <table 
-      style={{
-        ...stylePresets.table,
-        ...(variant === 'bordered' && { border: `1px solid ${colors.border}` })
-      }} 
+      className={`bw-ui-table ${variant === 'bordered' ? 'bw-ui-table-bordered' : ''} ${className} ${hoverable ? 'table-hoverable' : ''}`}
       onKeyDownCapture={handleTableArrowNavigation}
-      className={`${className} ${hoverable ? 'table-hoverable' : ''}`}
       data-variant={variant}
     >
       {children}
@@ -428,27 +290,14 @@ export const TableRow: React.FC<TableRowProps> = ({
   className = '',
   state = 'default',
   onClick
-}) => {
-  const rowStyle: React.CSSProperties = {
-    cursor: onClick ? 'pointer' : 'default',
-    transition: 'background-color 0.15s ease',
-    ...(state !== 'default' && stylePresets.tableRowStates[state])
-  }
-
-  return (
-    <tr 
-      style={rowStyle}
-      className={className}
-      onClick={onClick}
-      onMouseEnter={onClick ? (changeEvent) => { changeEvent.currentTarget.style.backgroundColor = colors.gray[50]
-      } : undefined}
-      onMouseLeave={onClick ? (changeEvent) => { changeEvent.currentTarget.style.backgroundColor = state !== 'default' ? stylePresets.tableRowStates[state].backgroundColor : 'transparent'
-      } : undefined}
-    >
-      {children}
-    </tr>
-  )
-}
+}) => (
+  <tr 
+    className={`bw-ui-tr ${state !== 'default' ? `bw-ui-tr-${state}` : ''} ${onClick ? 'bw-ui-tr-clickable' : ''} ${className}`}
+    onClick={onClick}
+  >
+    {children}
+  </tr>
+)
 
 interface TableCellProps {
   children: React.ReactNode
@@ -474,50 +323,21 @@ export const TableCell: React.FC<TableCellProps> = ({
   sortDirection = null
 }) => {
   const Component = header ? 'th' : 'td'
-  
-  const baseStyle = header ? stylePresets.tableHeader : stylePresets.tableCell
-  
-  // Create variant overrides
-  let variantOverrides: React.CSSProperties = {}
-  if (variant === 'compact') {
-    const compactStyle = stylePresets.tableVariants.compact[header ? 'header' : 'cell']
-    variantOverrides = {
-      padding: compactStyle.padding,
-      fontSize: compactStyle.fontSize
-    }
-  } else if (variant === 'comfortable') {
-    const comfortableStyle = stylePresets.tableVariants.comfortable[header ? 'header' : 'cell']
-    variantOverrides = {
-      padding: comfortableStyle.padding,
-      fontSize: comfortableStyle.fontSize
-    }
-  }
-
-  const style: React.CSSProperties = { 
-    ...baseStyle, 
-    ...variantOverrides,
-    textAlign: align,
-    cursor: sortable ? 'pointer' : 'default',
-    userSelect: sortable ? 'none' : 'auto',
-    ...customStyle, // Apply custom styles last to override defaults
-  }
-
+  const baseClass = header ? 'bw-ui-th' : 'bw-ui-td'
+  const variantClass = variant !== 'default' ? `bw-ui-tc-${variant}` : ''
+  const sortableClass = sortable ? 'bw-ui-tc-sortable' : ''
   const handleClick = sortable && onSort ? onSort : undefined
 
   return (
     <Component 
-      style={style} 
-      className={className}
+      style={Object.keys(customStyle).length > 0 ? customStyle : undefined}
+      className={`${baseClass} bw-ui-tc-${align} ${variantClass} ${sortableClass} ${className}`}
       onClick={handleClick}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: spacing.xs }}>
+      <div className="bw-ui-tc-inner">
         {children}
         {sortable && (
-          <span style={{ 
-            fontSize: typography.fontSize.xs,
-            color: colors.text.secondary,
-            marginLeft: 'auto'
-          }}>
+          <span className="bw-ui-tc-sort-hint">
             {sortDirection === 'asc' ? ' (Low-High)' : sortDirection === 'desc' ? ' (High-Low)' : ''}
           </span>
         )}

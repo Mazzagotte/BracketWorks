@@ -103,6 +103,14 @@ export function PlayerTooltip({
     }
   }, [isVisible, position])
 
+  // Apply tooltip position imperatively to avoid style={{ }} prop
+  useEffect(() => {
+    if (tooltipRef.current) {
+      tooltipRef.current.style.top = `${position.top}px`
+      tooltipRef.current.style.left = `${position.left}px`
+    }
+  }, [position.top, position.left])
+
   // Don't show tooltip if no additional info is available
   const hasAdditionalInfo = fullName || usbcNumber || average !== undefined || 
                             handicap !== undefined || qualifyingScore !== undefined || 
@@ -130,10 +138,6 @@ export function PlayerTooltip({
         <div
           ref={tooltipRef}
           className={styles.tooltip}
-          style={{
-            top: `${position.top}px`,
-            left: `${position.left}px`
-          }}
           role="tooltip"
         >
           {/* Arrow */}

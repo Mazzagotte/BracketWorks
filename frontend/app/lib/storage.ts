@@ -15,18 +15,25 @@ class CachedStorage {
    * Fast synchronous reads from memory cache
    */
   getItem(key: string): string | null {
-    // Check cache first
-    if (this.cache.has(key)) {
-      return this.cache.get(key)!
+    // If there is a pending debounced write, return it immediately so listeners
+    // (e.g., header reacting to custom events) see the latest value.
+    if (this.writeQueue.has(key)) {
+      const queuedValue = this.writeQueue.get(key) ?? null
+      this.cache.set(key, queuedValue)
+      return queuedValue
     }
 
-    // Fallback to localStorage
     if (typeof window === 'undefined') return null
     
     try {
-      const value = localStorage.getItem(key)
-      this.cache.set(key, value)
-      return value
+      // Always reconcile with localStorage so direct writes (outside this wrapper)
+      // are visible across page transitions.
+      const liveValue = localStorage.getItem(key)
+      const cachedValue = this.cache.has(key) ? this.cache.get(key)! : null
+      if (cachedValue !== liveValue) {
+        this.cache.set(key, liveValue)
+      }
+      return liveValue
     } catch (error) {
       console.error('localStorage.getItem failed:', error)
       return null

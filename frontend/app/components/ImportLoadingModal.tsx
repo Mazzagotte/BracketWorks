@@ -16,9 +16,9 @@ export default function ImportLoadingModal({ isOpen, fileName }: ImportLoadingMo
       <div className={styles.card}>
         <div className={styles.bowlingBall}>
           <div className={styles.ballBody} />
-          <div className={styles.fingerHole} style={{ top: '15px', left: '15px' }} />
-          <div className={styles.fingerHole} style={{ top: '25px', left: '35px' }} />
-          <div className={styles.fingerHole} style={{ top: '35px', left: '25px' }} />
+          <div className={`${styles.fingerHole} ${styles.fingerHole1}`} />
+          <div className={`${styles.fingerHole} ${styles.fingerHole2}`} />
+          <div className={`${styles.fingerHole} ${styles.fingerHole3}`} />
         </div>
         <h2 className={styles.title}>Importing Players…</h2>
         {fileName && <p className={styles.subtitle}>{fileName}</p>}

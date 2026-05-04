@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { Tournament, Squad, Player, ScoreData, PendingScoreSave } from '../lib/types'
 import { SortConfig, SortableScoreColumn } from './types'
 import { SortableHeader } from './components/SortableHeader'
@@ -9,9 +10,11 @@ import Link from 'next/link'
 
 import { useAuth } from '../lib/auth-context'
 import { ErrorBoundary } from '../components/ErrorBoundary'
+import ActionConfirmDialog from '../components/ActionConfirmDialog'
 import { API } from '../lib/api'
 import { usePageHeader } from '../lib/header-context'
 import EnhancedButton from '../components/EnhancedButton'
+import CloseControl from '../../components/CloseControl'
 import { MobileLayout } from '../../components/MobileLayout'
 import { Spinner } from '../components/LoadingComponents'
 import styles from './scores.module.css'
@@ -22,6 +25,8 @@ import NoTournamentState from '../components/NoTournamentState'
 import { logger } from '../lib/logger';
 import { Button } from '../components/UI'
 import { handleTableArrowNavigation } from '../lib/tableKeyboard'
+import { getSelectedSquadId, getSelectedTournamentId } from '../lib/selection-session'
+import { storage } from '../lib/storage'
 
 
 
@@ -34,6 +39,11 @@ export default function ScoresPage() {
     localStorage.getItem('token') && 
     localStorage.getItem('user_id');
 
+  const router = useRouter()
+  const [showCalcPayoutsConfirm, setShowCalcPayoutsConfirm] = useState(false)
+  const [missingScoreNames, setMissingScoreNames] = useState<string[]>([])
+  const [clearGameConfirm, setClearGameConfirm] = useState<2 | 3 | null>(null)
+
   const [players, setPlayers] = useState<Player[]>([])
   const [tournament, setTournament] = useState<Tournament | null>(null)
   const [selectedSquad, setSelectedSquad] = useState<Squad | null>(null)
@@ -43,6 +53,7 @@ export default function ScoresPage() {
   const [isMobile, setIsMobile] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
+  const [isScoresLocked, setIsScoresLocked] = useState(false)
   const importFileRef = useRef<HTMLInputElement | null>(null)
   
   // Sorting state
@@ -53,6 +64,52 @@ export default function ScoresPage() {
 
   // Enhanced UX hooks
   const { addToast } = useToast()
+
+  const getScopedPayoutUnlockKey = useCallback((tournamentId: number | null, squadId: number | null) => {
+    if (!tournamentId) return null
+    return `payouts_unlocked_${tournamentId}_${squadId ?? 'all'}`
+  }, [])
+
+  const getScopedScoresLockKey = useCallback((tournamentId: number | null, squadId: number | null) => {
+    if (!tournamentId) return null
+    return `scores_locked_${tournamentId}_${squadId ?? 'all'}`
+  }, [])
+
+  const unlockPayoutsAndGo = useCallback(() => {
+    const tournamentId = tournament?.id ?? null
+    const squadId = selectedSquad?.id ?? null
+
+    if (tournamentId) {
+      const unlockKey = getScopedPayoutUnlockKey(tournamentId, squadId)
+      const lockKey = getScopedScoresLockKey(tournamentId, squadId)
+      if (unlockKey) storage.setItem(unlockKey, '1')
+      if (lockKey) storage.setItem(lockKey, '1')
+      setIsScoresLocked(true)
+    }
+
+    sessionStorage.setItem('payouts_unlocked', '1')
+    router.push('/payouts')
+  }, [getScopedPayoutUnlockKey, getScopedScoresLockKey, router, selectedSquad, tournament])
+
+  const unlockScoresTable = useCallback(() => {
+    const tournamentId = tournament?.id ?? null
+    const squadId = selectedSquad?.id ?? null
+    if (!tournamentId) return
+
+    const lockKey = getScopedScoresLockKey(tournamentId, squadId)
+    const payoutKey = getScopedPayoutUnlockKey(tournamentId, squadId)
+
+    if (lockKey) storage.removeItem(lockKey)
+    if (payoutKey) storage.removeItem(payoutKey)
+    sessionStorage.removeItem('payouts_unlocked')
+    setIsScoresLocked(false)
+
+    addToast({
+      message: 'Scores unlocked. Payout access revoked until Calculate Payouts is clicked again.',
+      type: 'success',
+      duration: 4000,
+    })
+  }, [addToast, getScopedPayoutUnlockKey, getScopedScoresLockKey, selectedSquad, tournament])
   
   // Styles moved to globals.css; no inline style injection
 
@@ -254,7 +311,7 @@ export default function ScoresPage() {
   }, [pendingSaves, addToast, processPendingSaves])
 
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth <= 768);
+    const checkMobile = () => setIsMobile(window.innerWidth <= 480);
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
@@ -271,7 +328,7 @@ export default function ScoresPage() {
   // DEV ONLY: build all random scores in memory, then do ONE setPlayers + ONE bulk API call
   const handleRandomizeScores = useCallback(async () => {
     const token = localStorage.getItem('token')
-    const tournamentId = localStorage.getItem('lastTournamentId')
+    const tournamentId = getSelectedTournamentId()
     const currentPlayers = playersRef.current
 
     // Build random scores for every player
@@ -394,13 +451,19 @@ export default function ScoresPage() {
   }, [players.length, sortedPlayers, tournament, selectedSquad, addToast])
 
   const handleImportScoresFileSelected = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (isScoresLocked) {
+      addToast({ message: 'Scores are locked. Unlock scores to import changes.', type: 'warning', duration: 3000 })
+      e.target.value = ''
+      return
+    }
+
     const file = e.target.files?.[0]
     if (!file) return
 
     setIsImporting(true)
     try {
       const token = localStorage.getItem('token')
-      const tournamentId = localStorage.getItem('lastTournamentId')
+      const tournamentId = getSelectedTournamentId()
       const squad = selectedSquadRef.current
       if (!token || !tournamentId || !squad) {
         addToast({ message: 'Select a tournament and squad before importing scores.', type: 'error', duration: 4000 })
@@ -553,11 +616,10 @@ export default function ScoresPage() {
       setIsImporting(false)
       e.target.value = ''
     }
-  }, [addToast])
+  }, [addToast, isScoresLocked])
 
   // Header configuration
-  const devClearGame = useCallback(async (gameNumber: 2 | 3) => {
-    if (!confirm(`Clear all Game ${gameNumber} scores for this tournament/squad?`)) return
+  const clearGameScores = useCallback(async (gameNumber: 2 | 3) => {
     if (!tournament?.id) {
       addToast({ type: 'error', message: 'No tournament selected.', duration: 3000 })
       return
@@ -603,16 +665,12 @@ export default function ScoresPage() {
     }
   }, [tournament, selectedSquad, addToast, authToken])
 
+  const devClearGame = useCallback((gameNumber: 2 | 3) => {
+    setClearGameConfirm(gameNumber)
+  }, [])
+
   const headerActions = useMemo(() => (
     <div className={styles.headerActions}>
-      {process.env.NODE_ENV === 'development' && players.length > 0 && (
-        <>
-          <button className={styles.devButton} onClick={handleRandomizeScores}>DEV: Randomize Scores</button>
-          <button className={styles.devButton} onClick={() => devClearGame(2)}>DEV: Clear Game 2</button>
-          <button className={styles.devButton} onClick={() => devClearGame(3)}>DEV: Clear Game 3</button>
-        </>
-      )}
-
       <button
         className="ds-btn ds-btn-primary ds-btn-sm"
         onClick={handleExportScoresToExcel}
@@ -624,10 +682,37 @@ export default function ScoresPage() {
       <button
         className="ds-btn ds-btn-primary ds-btn-sm"
         onClick={() => importFileRef.current?.click()}
-        disabled={isImporting || players.length === 0}
+        disabled={isImporting || players.length === 0 || isScoresLocked}
       >
         {isImporting ? 'Importing…' : 'Import from Excel'}
       </button>
+
+      {players.length > 0 && !isScoresLocked && (
+        <button
+          className="ds-btn ds-btn-success ds-btn-sm"
+          onClick={() => {
+            const missing = players
+              .filter(p => {
+                const s = p.scores
+                return !s || s.game1_scratch == null || s.game2_scratch == null || s.game3_scratch == null
+              })
+              .map(p => `${p.firstName} ${p.lastName}`.trim())
+            setMissingScoreNames(missing)
+            setShowCalcPayoutsConfirm(true)
+          }}
+        >
+          Calculate Payouts
+        </button>
+      )}
+
+      {players.length > 0 && isScoresLocked && (
+        <button
+          className="ds-btn ds-btn-destructive ds-btn-sm"
+          onClick={unlockScoresTable}
+        >
+          Unlock Scores
+        </button>
+      )}
       
       {pendingSaves.length > 0 && (
         <EnhancedButton
@@ -645,9 +730,16 @@ export default function ScoresPage() {
           Sync Offline Scores ({pendingSaves.length})
         </EnhancedButton>
       )}
-    </div>
-  ), [players.length, handleRandomizeScores, devClearGame, pendingSaves.length, addToast, processPendingSaves, handleExportScoresToExcel, isExporting, isImporting])
 
+      {process.env.NODE_ENV === 'development' && players.length > 0 && (
+        <div className={styles.devGroup}>
+          <button className={styles.devButton} onClick={handleRandomizeScores} disabled={isScoresLocked}>DEV: Randomize Scores</button>
+          <button className={styles.devButton} onClick={() => devClearGame(2)} disabled={isScoresLocked}>DEV: Clear Game 2</button>
+          <button className={styles.devButton} onClick={() => devClearGame(3)} disabled={isScoresLocked}>DEV: Clear Game 3</button>
+        </div>
+      )}
+    </div>
+  ), [players, players.length, handleRandomizeScores, devClearGame, pendingSaves.length, addToast, processPendingSaves, handleExportScoresToExcel, isExporting, isImporting, isScoresLocked, unlockScoresTable])
   usePageHeader({
     title: 'Scores',
     subtitle: undefined,
@@ -762,7 +854,7 @@ export default function ScoresPage() {
     const { lastTournamentId, token, userId } = (() => {
       if (typeof window === 'undefined') return { lastTournamentId: null, token: null, userId: null };
       return {
-        lastTournamentId: localStorage.getItem('lastTournamentId'),
+        lastTournamentId: getSelectedTournamentId(),
         token: localStorage.getItem('token'),
         userId: localStorage.getItem('user_id')
       };
@@ -799,7 +891,7 @@ export default function ScoresPage() {
           }
           // Fallback to localStorage selected_squad_id
           if (!squadToUse) {
-            const storedSquadId = localStorage.getItem('selected_squad_id')
+            const storedSquadId = getSelectedSquadId()
             if (storedSquadId) {
               squadToUse = squadsData.find((s: Squad) => s.id === parseInt(storedSquadId)) || null
             }
@@ -823,6 +915,19 @@ export default function ScoresPage() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  useEffect(() => {
+    const tournamentId = tournament?.id ?? null
+    const squadId = selectedSquad?.id ?? null
+    const lockKey = getScopedScoresLockKey(tournamentId, squadId)
+
+    if (!lockKey) {
+      setIsScoresLocked(false)
+      return
+    }
+
+    setIsScoresLocked(storage.getItem(lockKey) === '1')
+  }, [getScopedScoresLockKey, selectedSquad, tournament])
 
   // Auth guards (after all hooks)
   if (!isInitialized) {
@@ -849,7 +954,7 @@ export default function ScoresPage() {
     )
   }
 
-  if (typeof window !== 'undefined' && !localStorage.getItem('lastTournamentId')) {
+  if (typeof window !== 'undefined' && !getSelectedTournamentId()) {
     return (
       <NoTournamentState
         description="Load a tournament from the dashboard to enter and manage scores. Once loaded, you'll be able to record game scores for each player across all rounds."
@@ -857,6 +962,18 @@ export default function ScoresPage() {
           { title: 'Enter Scores', text: 'Record game scores for each player per round directly in the score sheet' },
           { title: 'Auto-Save', text: 'Scores are saved automatically as you type — no need to manually submit' },
           { title: 'Sort & Filter', text: 'Sort players by name, average, or score to quickly find and update entries' },
+        ]}
+      />
+    )
+  }
+
+  if (typeof window !== 'undefined' && !getSelectedSquadId()) {
+    return (
+      <NoTournamentState
+        title="No Squad Selected"
+        description="Select a squad from the dashboard to enter and manage scores for that session."
+        cards={[
+          { title: 'Select a Squad', text: 'Choose a squad from the dashboard to view and enter scores for its players' },
         ]}
       />
     )
@@ -882,6 +999,11 @@ export default function ScoresPage() {
   const debouncedSaves = new Map<string, NodeJS.Timeout>()
   
   const updateScore = async (playerId: number, field: string, value: number | undefined) => {
+    if (isScoresLocked) {
+      addToast({ message: 'Scores are locked. Unlock scores to edit.', type: 'warning', duration: 2500 })
+      return
+    }
+
     const saveKey = `${playerId}-${field}`
     
     // Validate score range
@@ -930,7 +1052,7 @@ export default function ScoresPage() {
     const timeoutId = setTimeout(async () => {
       try {
         const token = localStorage.getItem('token')
-        const tournamentId = localStorage.getItem('lastTournamentId')
+        const tournamentId = getSelectedTournamentId()
         
         if (!token || !tournamentId || !selectedSquadRef.current) {
           return
@@ -1044,6 +1166,11 @@ export default function ScoresPage() {
 
   // Keyboard navigation helper
   const handleKeyDown = (e: React.KeyboardEvent, playerId: number, field: string) => {
+    if (isScoresLocked) {
+      e.preventDefault()
+      return
+    }
+
     if (e.key === 'Enter' || e.key === 'Tab') {
       // Move to next input field
       const currentPlayerIndex = players.findIndex(playerItem => playerItem.id === playerId)
@@ -1079,12 +1206,86 @@ export default function ScoresPage() {
   return (
     <ErrorBoundary>
       <>
+      <ActionConfirmDialog
+        open={clearGameConfirm !== null}
+        title="Clear Game Scores?"
+        message={clearGameConfirm !== null ? `Clear all Game ${clearGameConfirm} scores for this tournament/squad? This cannot be undone.` : ''}
+        confirmLabel="Clear Scores"
+        cancelLabel="Cancel"
+        onCancel={() => setClearGameConfirm(null)}
+        onConfirm={() => {
+          if (clearGameConfirm !== null) {
+            void clearGameScores(clearGameConfirm)
+          }
+          setClearGameConfirm(null)
+        }}
+      />
+      {/* Calculate Payouts confirmation modal */}
+      {showCalcPayoutsConfirm && (
+        <div className="bw-scores-calc-overlay">
+          <div className="bw-scores-calc-modal">
+            <CloseControl onClick={() => setShowCalcPayoutsConfirm(false)} position="absolute" size="sm" label="Close payout confirmation dialog" />
+            {missingScoreNames.length > 0 ? (
+              <>
+                <div className="bw-scores-calc-head">
+                  <h2 className="bw-scores-calc-title bw-scores-calc-title-warning">Missing Scores</h2>
+                </div>
+                <p className="bw-scores-calc-text bw-scores-calc-text-tight">
+                  The following {missingScoreNames.length === 1 ? 'bowler is' : `${missingScoreNames.length} bowlers are`} missing one or more game scores. All scores must be entered and finalized before calculating payouts to ensure accurate results.
+                </p>
+                <div className="bw-scores-calc-missing-list">
+                  {missingScoreNames.map((name, i) => (
+                    <div key={i} className={`bw-scores-calc-missing-item ${i < missingScoreNames.length - 1 ? 'bw-scores-calc-missing-item-border' : ''}`}>{name}</div>
+                  ))}
+                </div>
+                <div className="bw-scores-calc-actions">
+                  <button
+                    className="ds-btn ds-btn-secondary ds-btn-sm"
+                    onClick={() => setShowCalcPayoutsConfirm(false)}
+                  >
+                    Go Back &amp; Enter Scores
+                  </button>
+                  <button
+                    className="ds-btn ds-btn-sm bw-scores-calc-btn-warning"
+                    onClick={() => { setShowCalcPayoutsConfirm(false); unlockPayoutsAndGo() }}
+                  >
+                    Proceed Anyway
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="bw-scores-calc-head">
+                  <h2 className="bw-scores-calc-title">All Scores Complete</h2>
+                </div>
+                <p className="bw-scores-calc-text">
+                  All {players.length} bowler{players.length !== 1 ? 's' : ''} have scores for all 3 games. Confirm these scores are final before calculating payouts — winners will be determined from these results.
+                </p>
+                <div className="bw-scores-calc-actions">
+                  <button
+                    className="ds-btn ds-btn-secondary ds-btn-sm"
+                    onClick={() => setShowCalcPayoutsConfirm(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="ds-btn ds-btn-success ds-btn-sm"
+                    onClick={() => { setShowCalcPayoutsConfirm(false); unlockPayoutsAndGo() }}
+                  >
+                    Confirm &amp; Calculate Payouts
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
       <input
         ref={importFileRef}
         type="file"
         accept=".xlsx,.xls"
         onChange={handleImportScoresFileSelected}
-        style={{ display: 'none' }}
+        className="sr-only"
       />
       {isMobile ? (
         <MobileLayout
@@ -1185,6 +1386,7 @@ export default function ScoresPage() {
                             className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             value={player.scores?.[`game${gameNum}_scratch` as keyof typeof player.scores] || ''}
                             onChange={(changeEvent) => updateScore(player.id, `game${gameNum}_scratch`, parseInt(changeEvent.target.value) || 0)}
+                            disabled={isScoresLocked}
                             placeholder={`G${gameNum}`}
                             inputMode="numeric"
                           />
@@ -1395,6 +1597,7 @@ export default function ScoresPage() {
                         value={player.scores?.game1_scratch ?? ''}
                         onChange={changeEvent => updateScore(player.id, 'game1_scratch', changeEvent.target.value ? Number(changeEvent.target.value) : undefined)}
                         onKeyDown={keyEvent => handleKeyDown(keyEvent, player.id, 'game1_scratch')}
+                        disabled={isScoresLocked}
                         className={getScoreInputClass(player.scores?.game1_scratch)}
                         onFocus={(changeEvent) => changeEvent.target.select()}
                         title={!validateScore(player.scores?.game1_scratch).isValid ? validateScore(player.scores?.game1_scratch).message : ''}
@@ -1420,6 +1623,7 @@ export default function ScoresPage() {
                         value={player.scores?.game2_scratch ?? ''}
                         onChange={changeEvent => updateScore(player.id, 'game2_scratch', changeEvent.target.value ? Number(changeEvent.target.value) : undefined)}
                         onKeyDown={keyEvent => handleKeyDown(keyEvent, player.id, 'game2_scratch')}
+                        disabled={isScoresLocked}
                         className={getScoreInputClass(player.scores?.game2_scratch)}
                         onFocus={(changeEvent) => changeEvent.target.select()}
                         title={!validateScore(player.scores?.game2_scratch).isValid ? validateScore(player.scores?.game2_scratch).message : ''}
@@ -1445,6 +1649,7 @@ export default function ScoresPage() {
                         value={player.scores?.game3_scratch ?? ''}
                         onChange={changeEvent => updateScore(player.id, 'game3_scratch', changeEvent.target.value ? Number(changeEvent.target.value) : undefined)}
                         onKeyDown={keyEvent => handleKeyDown(keyEvent, player.id, 'game3_scratch')}
+                        disabled={isScoresLocked}
                         className={getScoreInputClass(player.scores?.game3_scratch)}
                         onFocus={(changeEvent) => changeEvent.target.select()}
                         title={!validateScore(player.scores?.game3_scratch).isValid ? validateScore(player.scores?.game3_scratch).message : ''}

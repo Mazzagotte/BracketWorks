@@ -60,6 +60,12 @@
   margin: 0 auto 12px;
 }
 
+.logoImage {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
 .card.loading {
   opacity: 0.95;
   transform: scale(0.99);
@@ -146,6 +152,10 @@
 .passwordWrap {
   margin-bottom: 14px;
   position: relative;
+}
+
+.passwordWrap .input {
+  padding-right: 52px;
 }
 
 .passwordToggle {

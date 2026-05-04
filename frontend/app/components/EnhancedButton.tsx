@@ -27,7 +27,7 @@ export default function EnhancedButton({
   disableSuccessState = false
 }: ButtonProps) {
   const [buttonState, setButtonState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  const [ripples, setRipples] = useState<Array<{id: number, x: number, y: number}>>([]);
+  const [ripples, setRipples] = useState<number[]>([]);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const mountedRef = useRef(true);
 
@@ -38,12 +38,11 @@ export default function EnhancedButton({
 
   const createRipple = (event: React.MouseEvent) => {
     if (buttonRef.current && !disabled && buttonState === 'idle') {
-      const rect = buttonRef.current.getBoundingClientRect();
-      const newRipple = { id: Date.now(), x: event.clientX - rect.left, y: event.clientY - rect.top };
-      setRipples(prev => [...prev, newRipple]);
+      const newRippleId = Date.now();
+      setRipples(prev => [...prev, newRippleId]);
       setTimeout(() => {
         if (mountedRef.current) {
-          setRipples(prev => prev.filter(r => r.id !== newRipple.id));
+          setRipples(prev => prev.filter(r => r !== newRippleId));
         }
       }, 600);
     }
@@ -90,11 +89,10 @@ export default function EnhancedButton({
       onClick={handleClick}
       disabled={isDisabled}
     >
-      {ripples.map(ripple => (
+      {ripples.map(rippleId => (
         <span
-          key={ripple.id}
+          key={rippleId}
           className={styles.ripple}
-          style={{ left: ripple.x - 10, top: ripple.y - 10 }}
         />
       ))}
 

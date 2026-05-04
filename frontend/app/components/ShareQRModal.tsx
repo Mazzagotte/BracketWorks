@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { QRCodeCanvas } from "qrcode.react";
 import { useToast } from "./Toast";
+import CloseControl from "../../components/CloseControl";
 import styles from "./ShareQRModal.module.css";
 
 interface ShareQRModalProps {
@@ -275,11 +276,7 @@ export default function ShareQRModal({ open, onClose, tournamentId, tournamentNa
             <h2 className={styles.title}>Share Live Bracket</h2>
             <p className={styles.tournamentName}>{tournamentName}</p>
           </div>
-          <button className={styles.closeBtn} onClick={onClose} aria-label="Close">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M2 2l12 12M14 2L2 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
-          </button>
+          <CloseControl onClick={onClose} size="sm" />
         </div>
 
         {/* QR Code */}
@@ -305,7 +302,7 @@ export default function ShareQRModal({ open, onClose, tournamentId, tournamentNa
             onClick={handleCopy}
           >
             {copied ? (
-              <><svg width="13" height="13" viewBox="0 0 13 13" fill="none" style={{verticalAlign:"middle",marginRight:4}}><path d="M1.5 7L5 10.5L11.5 2.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>Copied!</>
+              <><svg width="13" height="13" viewBox="0 0 13 13" fill="none" className={styles.iconInline}><path d="M1.5 7L5 10.5L11.5 2.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>Copied!</>
             ) : "Copy link"}
           </button>
         </div>
@@ -313,7 +310,7 @@ export default function ShareQRModal({ open, onClose, tournamentId, tournamentNa
         {/* Actions */}
         <div className={styles.actions}>
           <button className={styles.exportBtn} onClick={handleExportPng}>
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{flexShrink:0}}>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className={styles.iconNoShrink}>
               <path d="M7 1v8M4 6l3 3 3-3M2 11h10" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
             Download PNG
@@ -324,7 +321,7 @@ export default function ShareQRModal({ open, onClose, tournamentId, tournamentNa
         <p className={styles.hint}>No login required — bowlers can view scores from any device.</p>
 
         {/* Hidden canvas used for PDF export */}
-        <div ref={canvasRef} style={{ display: "none" }}>
+        <div ref={canvasRef} hidden>
           <QRCodeCanvas
             value={publicUrl}
             size={400}

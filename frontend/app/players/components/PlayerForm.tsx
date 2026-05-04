@@ -19,6 +19,14 @@ const EMPTY_FORM = {
 
 const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketPrograms }: PlayerFormProps) => {
   const [formData, setFormData] = useState({ ...EMPTY_FORM });
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const draftTotal = calculatePlayerTotalCost(
+    normalizePlayerBracketEntries(formData.bracketEntries, formData.handicap, formData.scratch),
+    bracketPrograms,
+    entryFee,
+  )
+  const balanceDue = Math.max(0, draftTotal - formData.amountPaid)
 
   const isDirty = formData.firstName.trim() !== '' || formData.lastName.trim() !== '';
 
@@ -34,9 +42,11 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
     e.preventDefault();
 
     if (!formData.firstName.trim() || !formData.lastName.trim()) {
-      alert('Please enter both first and last name');
+      setSubmitError('Please enter both first and last name.');
       return;
     }
+
+    setSubmitError(null);
 
     const totalCost = calculatePlayerTotalCost(
       normalizePlayerBracketEntries(formData.bracketEntries, formData.handicap, formData.scratch),
@@ -94,6 +104,8 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
           Unsaved changes — submit the form or your data will be lost if you navigate away.
         </div>
       )}
+
+      {submitError && <div className="error-message">{submitError}</div>}
 
       <form onSubmit={handleSubmit}>
         <div className={styles.formGrid}>
@@ -173,6 +185,12 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
           <div className={styles.compactSectionHeader}>
             <div>
               <h4 className={styles.compactSectionTitle}>Entries & Payment</h4>
+            </div>
+            <div className={styles.compactSectionMeta}>
+              <span className={styles.compactPill}>Total ${draftTotal.toFixed(2)}</span>
+              <span className={`${styles.compactPill} ${styles.compactPillMuted}`}>
+                Due ${balanceDue.toFixed(2)}
+              </span>
             </div>
           </div>
 

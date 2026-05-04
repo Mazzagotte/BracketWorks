@@ -3,6 +3,8 @@
  * Reduces multiple localStorage reads to a single operation
  */
 
+import { getSelectedSquadId, getSelectedTournamentId } from './selection-session'
+
 export interface TournamentSessionData {
   lastTournamentId: string | null;
   token: string | null;
@@ -26,10 +28,10 @@ export function getTournamentSessionData(): TournamentSessionData {
 
   try {
     return {
-      lastTournamentId: localStorage.getItem('lastTournamentId'),
+      lastTournamentId: getSelectedTournamentId(),
       token: localStorage.getItem('token'),
       userId: localStorage.getItem('user_id'),
-      selectedSquadId: localStorage.getItem('selected_squad_id'),
+      selectedSquadId: getSelectedSquadId(),
     };
   } catch (error) {
     console.error('Failed to read tournament session data:', error);

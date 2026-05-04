@@ -219,6 +219,9 @@
   color: var(--bw-orange, #ff7a00);
 }
 
+.iconInline { vertical-align: middle; margin-right: 4px; }
+.iconNoShrink { flex-shrink: 0; }
+
 /* ── Footer hint ─────────────────────────────────── */
 .hint {
   font-size: var(--font-size-xs, 11px);

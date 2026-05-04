@@ -1,6 +1,6 @@
 import React, { memo, useMemo, useState } from 'react';
 
-import { PlayersTableProps } from '../types';
+import { PlayersTableProps, SidePotsSettings } from '../types';
 import { OptimizedTableRow, OptimizedTableCell } from '../../lib/performance';
 import { handleTableArrowNavigation } from '../../lib/tableKeyboard';
 import { divisionOptions, isProgramAllowedForDivision, normalizeDivision } from '../../lib/bracketPrograms';
@@ -17,8 +17,13 @@ const PlayersTable = memo(({
   onUpdatePlayer,
   onDeletePlayer,
   bracketPrograms,
-  selectedSquad
+  selectedSquad,
+  sidePots,
 }: PlayersTableProps) => {
+  const enabledPots = useMemo(
+    () => (sidePots?.pots ?? []).filter(p => p.enabled),
+    [sidePots]
+  );
   const [sortConfig, setSortConfig] = useState<SortConfig>({ column: 'lane', direction: 'asc' });
 
   const sortedPlayers = useMemo(() => {
@@ -90,6 +95,10 @@ const PlayersTable = memo(({
     onUpdatePlayer(playerId, `bracketEntry:${programKey}`, parseInt(value, 10) || 0)
   }
 
+  const handleSidePotToggle = (playerId: number, potKey: string, current: boolean) => {
+    onUpdatePlayer(playerId, `sidePot:${potKey}`, !current)
+  }
+
   const handleIncrement = (playerId: number, field: string, currentValue: number, step = 1) => {
     const newValue = currentValue + step;
     onUpdatePlayer(playerId, field, newValue);
@@ -114,7 +123,7 @@ const PlayersTable = memo(({
         <thead>
           {selectedSquad && (
             <tr>
-              <td colSpan={7 + bracketPrograms.length} className="squad-banner">
+              <td colSpan={7 + bracketPrograms.length + enabledPots.length} className="squad-banner">
                 Showing players for: {selectedSquad.date} — {selectedSquad.time}
               </td>
             </tr>
@@ -158,6 +167,11 @@ const PlayersTable = memo(({
                 </button>
               </th>
             ))}
+            {enabledPots.map(pot => (
+              <th key={pot.key} className="entries-header-cell col-sidepot">
+                {pot.name}
+              </th>
+            ))}
             <th className="entries-header-cell col-cost" aria-sort={getAriaSort('cost')}>
               <button type="button" className={`entries-sort-btn ${getSortState('cost') !== 'none' ? 'is-active' : ''}`} onClick={() => toggleSort('cost')}>
                 <span>Cost / Status</span>
@@ -180,7 +194,7 @@ const PlayersTable = memo(({
               key={player.id}
               className="players-table-row"
             >
-              <OptimizedTableCell className="entries-cell medium">
+              <OptimizedTableCell className="entries-cell medium col-usbc">
                 <div className="pos-relative flex-center">
                     <input
                     className="entries-input entries-control w-80"
@@ -192,7 +206,7 @@ const PlayersTable = memo(({
                 </div>
               </OptimizedTableCell>
 
-              <OptimizedTableCell className="entries-cell">
+              <OptimizedTableCell className="entries-cell col-name">
                 <div className="flex-center gap-3">
                   <div className="pos-relative">
                     <input
@@ -215,7 +229,7 @@ const PlayersTable = memo(({
                 </div>
               </OptimizedTableCell>
 
-              <OptimizedTableCell className="entries-cell">
+              <OptimizedTableCell className="entries-cell col-division">
                 <div className="flex-center">
                   <div className="pos-relative inline-block">
                     <select
@@ -231,7 +245,7 @@ const PlayersTable = memo(({
                 </div>
               </OptimizedTableCell>
 
-              <OptimizedTableCell className="entries-cell">
+              <OptimizedTableCell className="entries-cell col-lane">
                 <div className="flex-center">
                   <div className="pos-relative inline-block">
                     <input
@@ -244,7 +258,7 @@ const PlayersTable = memo(({
                 </div>
               </OptimizedTableCell>
 
-              <OptimizedTableCell className="entries-cell">
+              <OptimizedTableCell className="entries-cell col-average">
                 <div className="flex-center">
                   <div className="pos-relative inline-block">
                     <input
@@ -258,7 +272,7 @@ const PlayersTable = memo(({
               </OptimizedTableCell>
 
               {bracketPrograms.map(program => (
-                <OptimizedTableCell key={program.key} className="entries-cell">
+                <OptimizedTableCell key={program.key} className="entries-cell col-scratch">
                   <div className="flex-center">
                     <div className="pos-relative inline-block">
                       {(() => {
@@ -279,7 +293,23 @@ const PlayersTable = memo(({
                 </OptimizedTableCell>
               ))}
 
-              <OptimizedTableCell className="entries-cell">
+              {enabledPots.map(pot => {
+                const checked = Boolean(player.sidePotEntries?.[pot.key])
+                return (
+                  <OptimizedTableCell key={pot.key} className="entries-cell entries-cell--sidepot col-sidepot">
+                    <div className="flex-center">
+                      <input
+                        type="checkbox"
+                        className="sidepot-checkbox"
+                        checked={checked}
+                        onChange={() => handleSidePotToggle(player.id, pot.key, checked)}
+                        aria-label={`${pot.name} for ${player.firstName} ${player.lastName}`}
+                      />
+                    </div>
+                  </OptimizedTableCell>
+                )
+              })}
+              <OptimizedTableCell className="entries-cell col-cost">
                 <div className="flex-center gap-6">
                   <span className="entries-cost">
                     ${player.totalCost.toFixed(2)}
@@ -298,7 +328,7 @@ const PlayersTable = memo(({
                 </div>
               </OptimizedTableCell>
 
-              <OptimizedTableCell className="entries-cell">
+              <OptimizedTableCell className="entries-cell col-actions">
                 <button
                   className="entries-delete-btn"
                   onClick={() => onDeletePlayer(player.id)}

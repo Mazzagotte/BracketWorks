@@ -1,4 +1,3 @@
-import { colors, spacing } from '../../lib/design-system'
 import EnhancedButton from '../../components/EnhancedButton'
 
 interface PayoutFiltersProps {
@@ -27,50 +26,22 @@ export function PayoutFilters({
   onFilterPaidStatusChange
 }: PayoutFiltersProps) {
   return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      gap: spacing.md,
-      marginBottom: spacing.lg,
-      padding: spacing.md,
-      backgroundColor: colors.surface,
-      borderRadius: '8px',
-      border: `1px solid ${colors.border}`
-    }}>
-      {/* Search Bar */}
+    <div className="bw-payout-filters">
       <div>
         <input
           type="text"
           placeholder="Search by player name..."
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
-          style={{
-            width: '100%',
-            padding: '10px 12px',
-            fontSize: '16px',
-            border: `1px solid ${colors.border}`,
-            borderRadius: '4px',
-            outline: 'none',
-          }}
+          className="bw-payout-filters-search"
         />
       </div>
 
-      {/* Sort Controls */}
-      <div style={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: spacing.sm,
-        alignItems: 'center'
-      }}>
-        <span style={{ 
-          fontSize: '14px', 
-          fontWeight: 600, 
-          color: colors.text.primary,
-          marginRight: spacing.xs
-        }}>
+      <div className="bw-payout-filters-row">
+        <span className="bw-payout-filters-label bw-payout-filters-label-inline">
           Sort by:
         </span>
-        
+
         <EnhancedButton
           variant={sortBy === 'amount' ? 'primary' : 'secondary'}
           size="sm"
@@ -78,7 +49,7 @@ export function PayoutFilters({
         >
           Amount
         </EnhancedButton>
-        
+
         <EnhancedButton
           variant={sortBy === 'name' ? 'primary' : 'secondary'}
           size="sm"
@@ -86,7 +57,7 @@ export function PayoutFilters({
         >
           Name
         </EnhancedButton>
-        
+
         <EnhancedButton
           variant={sortBy === 'brackets' ? 'primary' : 'secondary'}
           size="sm"
@@ -94,7 +65,7 @@ export function PayoutFilters({
         >
           Brackets
         </EnhancedButton>
-        
+
         <EnhancedButton
           variant={sortBy === 'status' ? 'primary' : 'secondary'}
           size="sm"
@@ -102,7 +73,7 @@ export function PayoutFilters({
         >
           Status
         </EnhancedButton>
-        
+
         <EnhancedButton
           variant="secondary"
           size="sm"
@@ -112,24 +83,12 @@ export function PayoutFilters({
         </EnhancedButton>
       </div>
 
-      {/* Filter Controls */}
-      <div style={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: spacing.md,
-        paddingTop: spacing.sm,
-        borderTop: `1px solid ${colors.border}`
-      }}>
-        {/* Bracket Type Filter */}
-        <div style={{ display: 'flex', gap: spacing.sm, alignItems: 'center' }}>
-          <span style={{ 
-            fontSize: '14px', 
-            fontWeight: 600, 
-            color: colors.text.primary 
-          }}>
+      <div className="bw-payout-filters-groups">
+        <div className="bw-payout-filters-group">
+          <span className="bw-payout-filters-label">
             Type:
           </span>
-          
+
           <EnhancedButton
             variant={filterType === 'all' ? 'primary' : 'secondary'}
             size="sm"
@@ -137,7 +96,7 @@ export function PayoutFilters({
           >
             All
           </EnhancedButton>
-          
+
           <EnhancedButton
             variant={filterType === 'scratch' ? 'primary' : 'secondary'}
             size="sm"
@@ -145,7 +104,7 @@ export function PayoutFilters({
           >
             Scratch
           </EnhancedButton>
-          
+
           <EnhancedButton
             variant={filterType === 'handicap' ? 'primary' : 'secondary'}
             size="sm"
@@ -155,16 +114,11 @@ export function PayoutFilters({
           </EnhancedButton>
         </div>
 
-        {/* Paid Status Filter */}
-        <div style={{ display: 'flex', gap: spacing.sm, alignItems: 'center' }}>
-          <span style={{ 
-            fontSize: '14px', 
-            fontWeight: 600, 
-            color: colors.text.primary 
-          }}>
+        <div className="bw-payout-filters-group">
+          <span className="bw-payout-filters-label">
             Status:
           </span>
-          
+
           <EnhancedButton
             variant={filterPaidStatus === 'all' ? 'primary' : 'secondary'}
             size="sm"
@@ -172,7 +126,7 @@ export function PayoutFilters({
           >
             All
           </EnhancedButton>
-          
+
           <EnhancedButton
             variant={filterPaidStatus === 'unpaid' ? 'primary' : 'secondary'}
             size="sm"
@@ -180,7 +134,7 @@ export function PayoutFilters({
           >
             Unpaid
           </EnhancedButton>
-          
+
           <EnhancedButton
             variant={filterPaidStatus === 'paid' ? 'primary' : 'secondary'}
             size="sm"

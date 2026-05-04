@@ -94,12 +94,22 @@
   transition: all 0.3s ease;
 }
 
-.strength-fill.strength-0 { width: 0%; background-color: var(--color-red-primary); }
-.strength-fill.strength-1 { background-color: var(--color-red-primary); }
-.strength-fill.strength-2 { background-color: var(--color-brand-gold-light); }
-.strength-fill.strength-3 { background-color: var(--color-yellow-primary); }
-.strength-fill.strength-4 { background-color: var(--color-green-secondary); }
-.strength-fill.strength-5 { background-color: var(--color-green-primary); }
+.strength-fill.strength-0 { width:   0%; background-color: var(--color-red-primary); }
+.strength-fill.strength-1 { width:  20%; background-color: var(--color-red-primary); }
+.strength-fill.strength-2 { width:  40%; background-color: var(--color-brand-gold-light); }
+.strength-fill.strength-3 { width:  60%; background-color: var(--color-yellow-primary); }
+.strength-fill.strength-4 { width:  80%; background-color: var(--color-green-secondary); }
+.strength-fill.strength-5 { width: 100%; background-color: var(--color-green-primary); }
+
+.signup-error-msg {
+  background: var(--color-error-input-bg);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 16px;
+  color: var(--color-error);
+  font-size: 14px;
+}
 
 .strength-text {
   font-size: var(--font-size-xs);

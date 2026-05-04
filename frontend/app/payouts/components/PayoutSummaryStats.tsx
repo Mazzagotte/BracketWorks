@@ -1,5 +1,4 @@
 import { StatCard, Grid } from '../../components/UI'
-import { colors } from '../../lib/design-system'
 import { PayoutSummary } from '../hooks/usePayouts'
 
 interface PayoutSummaryStatsProps {
@@ -19,7 +18,7 @@ const formatCurrency = (value: number): string => {
 export function PayoutSummaryStats({ payoutData, loading }: PayoutSummaryStatsProps) {
   if (loading || !payoutData) {
     return (
-      <div style={{ marginBottom: '24px' }}>
+      <div className="bw-payout-stats-mb">
         <Grid columns="4" gap="20px">
           <StatCard
             title="Total Prize Pool"
@@ -52,7 +51,7 @@ export function PayoutSummaryStats({ payoutData, loading }: PayoutSummaryStatsPr
     : 0
 
   return (
-    <div style={{ marginBottom: '24px' }}>
+    <div className="bw-payout-stats-mb">
       <Grid columns="4" gap="20px">
         <StatCard
           title="Total Prize Pool"

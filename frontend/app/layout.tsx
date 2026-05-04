@@ -43,9 +43,9 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
     (document.body.style as any).webkitOverflowScrolling = 'touch';
     document.documentElement.style.touchAction = 'pan-y pan-x';
     
-    // Treat phones and tablets up to 768px as mobile — sidebar at narrower widths is too cramped
+    // Treat phones up to 480px as mobile layout
     const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
+      setIsMobile(window.innerWidth <= 480);
     };
 
     checkMobile();

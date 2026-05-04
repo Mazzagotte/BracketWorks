@@ -1,4 +1,3 @@
-import { colors, spacing } from '../../lib/design-system'
 import { Card } from '../../components/UI'
 import EnhancedButton from '../../components/EnhancedButton'
 
@@ -19,36 +18,21 @@ export function EmptyPayoutState({
 }: EmptyPayoutStateProps) {
   return (
     <Card>
-      <div style={{
-        textAlign: 'center',
-        padding: `${spacing.xl} ${spacing.lg}`,
-        color: colors.text.secondary
-      }}>
-        <div style={{ fontSize: '64px', marginBottom: spacing.md }}>
+      <div className="bw-empty-payout-wrap">
+        <div className="bw-empty-payout-icon">
           {icon}
         </div>
-        
-        <h3 style={{
-          fontSize: '20px',
-          fontWeight: 600,
-          color: colors.text.primary,
-          marginBottom: spacing.sm
-        }}>
+
+        <h3 className="bw-empty-payout-title">
           {title}
         </h3>
-        
-        <p style={{
-          fontSize: '16px',
-          color: colors.text.secondary,
-          marginBottom: actionText ? spacing.lg : 0,
-          maxWidth: '500px',
-          margin: '0 auto'
-        }}>
+
+        <p className={`bw-empty-payout-text ${actionText ? 'bw-empty-payout-text-with-action' : ''}`}>
           {message}
         </p>
-        
+
         {actionText && actionLink && (
-          <div style={{ marginTop: spacing.lg }}>
+          <div className="bw-empty-payout-action">
             <EnhancedButton
               variant="primary"
               onClick={() => { window.location.href = actionLink }}

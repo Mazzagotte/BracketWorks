@@ -34,6 +34,7 @@
   border: 1px solid var(--color-border-light);
   animation: slideUp 0.3s ease-out;
   scrollbar-width: none;
+  position: relative;
 }
 
 .modal::-webkit-scrollbar {
@@ -200,12 +201,13 @@
   border-radius: 2px;
 }
 
-/* Strength level colors */
-.strength0, .strength1 { background: var(--color-error); color: var(--color-error); }
-.strength2             { background: #f97316; color: #f97316; }
-.strength3             { background: var(--color-warning); color: var(--color-warning); }
-.strength4             { background: #84cc16; color: #84cc16; }
-.strength5             { background: var(--color-success); color: var(--color-success); }
+/* Strength level colors + widths */
+.strength0 { width:   0%; background: var(--color-error); color: var(--color-error); }
+.strength1 { width:  20%; background: var(--color-error); color: var(--color-error); }
+.strength2 { width:  40%; background: #f97316; color: #f97316; }
+.strength3 { width:  60%; background: var(--color-warning); color: var(--color-warning); }
+.strength4 { width:  80%; background: #84cc16; color: #84cc16; }
+.strength5 { width: 100%; background: var(--color-success); color: var(--color-success); }
 
 /* Relative wrapper for name fields */
 .fieldRelative {

@@ -274,8 +274,7 @@
     position: absolute;
     top: 8px;
     right: 8px;
-    font-size: 16px;
-    padding: 2px 6px;
+    padding: 0;
   }
 }
 
@@ -362,21 +361,7 @@
 }
 
 .connection-close {
-  background: none;
-  border: none;
-  color: inherit;
-  font-size: 20px;
-  font-weight: bold;
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 4px;
-  transition: all 0.2s ease;
   margin-left: 12px;
-}
-
-.connection-close:hover {
-  background: var(--opacity-white-20);
-  transform: scale(1.1);
 }
 
 .connection-close:focus {

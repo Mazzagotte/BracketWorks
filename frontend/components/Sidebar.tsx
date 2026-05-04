@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../app/lib/auth-context';
 import { buildApiUrl } from '../app/lib/api';
 import { logger } from '../app/lib/logger';
+import CloseControl from './CloseControl';
 import { navLinks } from './nav-links';
 import styles from './Sidebar.module.css';
 
@@ -85,7 +86,7 @@ export default function Sidebar({ firstName, isMobile = false, isOpen = false, o
     <aside className={sidebarClass}>
       <div className={styles.brand}>
         {isMobile && (
-          <button onClick={onClose} className={styles.closeBtn}>×</button>
+          <CloseControl onClick={onClose} size="sm" className={styles.closeBtn} label="Close navigation" />
         )}
         <Link href="/" className={styles.logoLink}>
           <div className={styles.logoWrap}>
@@ -94,7 +95,7 @@ export default function Sidebar({ firstName, isMobile = false, isOpen = false, o
               alt="BracketWorks Logo"
               width={160}
               height={160}
-              style={{ width: '100%', height: 'auto', display: 'block' }}
+              className={styles.logoImage}
               priority
             />
           </div>

@@ -37,14 +37,11 @@
 
 .summaryGrid {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   justify-content: center;
   align-items: stretch;
   gap: 10px;
   padding: 18px 14px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scrollbar-width: thin;
 }
 
 .statBox {
@@ -59,10 +56,10 @@
   min-width: 156px;
   width: fit-content;
   flex: 0 0 auto;
-  border: 1px solid rgba(26, 26, 26, 0.08);
+  border: 1px solid var(--color-border-muted);
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.52);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  background: var(--color-surface-glass);
+  box-shadow: var(--shadow-inset-white-sm);
 }
 
 .statValue {
@@ -79,14 +76,14 @@
 .statLabel {
   font-size: 0.75rem;
   font-weight: 700;
-  color: rgba(26, 26, 26, 0.55);
+  color: var(--color-text-muted-strong);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 .statDetail {
   font-size: 0.75rem;
-  color: rgba(26, 26, 26, 0.5);
+  color: var(--color-text-muted);
   margin-top: 2px;
 }
 
@@ -95,26 +92,63 @@
   margin-top: 8px;
 }
 
-.progressBar {
+.progressMeter {
   width: 100%;
   height: 6px;
-  background: rgba(26, 26, 26, 0.1);
+  appearance: none;
+  border: none;
   border-radius: 99px;
   overflow: hidden;
+  background: rgba(26, 26, 26, 0.1);
 }
 
-.progressBarFill {
-  height: 100%;
+.progressMeter::-webkit-progress-bar {
+  background: rgba(26, 26, 26, 0.1);
+  border-radius: 99px;
+}
+
+.progressMeter::-webkit-progress-value {
   background: linear-gradient(90deg, var(--color-green-dark), #34d399);
   border-radius: 99px;
-  transition: width 0.4s ease;
-  min-width: 0;
+}
+
+.progressMeter::-moz-progress-bar {
+  background: linear-gradient(90deg, var(--color-green-dark), #34d399);
+  border-radius: 99px;
 }
 
 .remainingLabel {
   font-size: 0.7rem;
   color: rgba(26, 26, 26, 0.45);
   margin-top: 4px;
+}
+
+@media (max-width: 900px) {
+  .summaryGrid {
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 12px 10px;
+  }
+
+  .statBox {
+    min-width: 100px;
+    min-height: 80px;
+    flex: 1 1 100px;
+    padding: 12px 10px;
+  }
+
+  .statValue {
+    font-size: 1.4rem;
+  }
+
+  .statLabel {
+    font-size: 0.65rem;
+  }
+
+  .statDetail {
+    font-size: 0.65rem;
+  }
 }
 
 @media (max-width: 640px) {
@@ -127,6 +161,10 @@
     min-height: 96px;
     padding: 18px 12px;
     min-width: 140px;
+  }
+
+  .statValue {
+    font-size: 1.7rem;
   }
 }
 
@@ -861,6 +899,7 @@
 .place2     { background: linear-gradient(135deg, var(--color-gray-300), var(--color-gray-400)); color: var(--color-gray-700); }
 .place3     { background: linear-gradient(135deg, #fb923c, #ea580c); color: white; }
 .placeOther { background: var(--color-border-light); color: rgba(26, 26, 26, 0.4); }
+.placeSP    { background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark, #c05a00)); color: white; font-size: 11px; letter-spacing: 0.03em; }
 
 /* =============================================
    WINNER INFO
@@ -944,6 +983,28 @@
   font-size: 11px;
   color: #94a3b8;
   margin-top: 1px;
+}
+
+.sidePotPicker {
+  flex: 0 1 260px;
+  min-width: 180px;
+}
+
+.sidePotWinnerSelect {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1.5px solid var(--color-border-light);
+  background: #FFFCF5;
+  color: var(--color-text-primary);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.sidePotWinnerSelect:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(244, 124, 32, 0.12);
 }
 
 /* =============================================

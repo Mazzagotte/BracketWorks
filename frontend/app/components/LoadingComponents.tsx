@@ -81,12 +81,28 @@ export const Skeleton: React.FC<SkeletonProps> = ({
   width = '100%',
   rounded = false
 }) => {
+  const normalizedHeight = typeof height === 'number' ? `${height}px` : height;
+  const normalizedWidth = typeof width === 'number' ? `${width}px` : width;
+
   return (
-    <div
-      className={`animate-pulse bg-gray-200 ${rounded ? 'rounded-full' : 'rounded'} ${className}`}
-      style={{ height, width }}
+    <svg
+      className={`animate-pulse ${className}`}
+      width={normalizedWidth}
+      height={normalizedHeight}
       aria-hidden="true"
-    />
+      role="presentation"
+      focusable="false"
+    >
+      <rect
+        x="0"
+        y="0"
+        width="100%"
+        height="100%"
+        rx={rounded ? '9999' : '4'}
+        ry={rounded ? '9999' : '4'}
+        fill="var(--color-gray-200)"
+      />
+    </svg>
   );
 };
 

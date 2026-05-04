@@ -24,8 +24,6 @@ export function BracketTabs({
   activeTab,
   onTabChange
 }: BracketTabsProps) {
-  const activeIndex = Math.max(0, tabs.findIndex(tab => tab.id === activeTab))
-
   return (
     <div className={styles.tabsContainer}>
       <div className={styles.tabsList} role="tablist">
@@ -45,15 +43,6 @@ export function BracketTabs({
           </button>
         ))}
       </div>
-
-      {/* Active Indicator */}
-      <div 
-        className={styles.activeIndicator}
-        style={{
-          width: tabs.length > 0 ? `calc((100% - 1rem) / ${tabs.length})` : undefined,
-          transform: `translateX(${activeIndex * 100}%)`
-        }}
-      />
     </div>
   )
 }

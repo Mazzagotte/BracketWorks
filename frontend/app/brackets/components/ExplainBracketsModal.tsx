@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import CloseControl from '../../../components/CloseControl'
 import styles from '../styles/explain-brackets-modal.module.css'
 import { disableScroll, enableScroll } from '../../utils/modalUtils'
 
@@ -49,13 +50,7 @@ export default function ExplainBracketsModal({ isOpen, onClose }: ExplainBracket
       <div className={styles.modal}>
         <div className={styles.header}>
           <h2>How Brackets Work</h2>
-          <button 
-            className={styles.closeButton}
-            onClick={onClose}
-            aria-label="Close modal"
-          >
-            ×
-          </button>
+          <CloseControl onClick={onClose} label="Close modal" />
         </div>
 
         <div className={styles.content}>

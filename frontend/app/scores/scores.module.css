@@ -29,6 +29,7 @@
   gap: 12px;
   align-items: center;
   flex-wrap: wrap;
+  width: 100%;
 }
 
 .devButton {
@@ -48,6 +49,13 @@
   background: var(--color-border-light);
   border-color: var(--color-primary);
   color: var(--color-primary);
+}
+
+.devGroup {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-left: auto;
 }
 
 /* ========================================
@@ -393,6 +401,7 @@
   gap: 12px;
   align-items: center;
   flex-wrap: wrap;
+  width: 100%;
 }
 
 .devButton {

@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../lib/auth-context';
 import { API } from '../lib/api';
 import { getErrorMessage } from '../lib/error-utils';
+import styles from './DevAuthStatus.module.css';
 
 
 
@@ -15,6 +16,12 @@ interface ApiStatus {
   error?: string;
   url?: string;
 }
+
+const statusDotClass = (s: string, stylesObj: typeof styles) =>
+  s === 'online' ? stylesObj.dotOnline : s === 'offline' ? stylesObj.dotOffline : s === 'checking' ? stylesObj.dotChecking : stylesObj.dotDefault;
+
+const statusText = (s: string) =>
+  s === 'online' ? 'API Online' : s === 'offline' ? 'API Offline' : s === 'checking' ? 'Checking...' : 'Unknown';
 
 export function DevAuthStatus() {
   const auth = useAuth();
@@ -81,192 +88,86 @@ export function DevAuthStatus() {
     return null;
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'online': return 'var(--color-success)';
-      case 'offline': return 'var(--color-error)';
-      case 'checking': return 'var(--color-warning-amber)';
-      default: return 'var(--color-text-secondary)';
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'online': return 'API Online';
-      case 'offline': return 'API Offline';
-      case 'checking': return 'Checking...';
-      default: return 'Unknown';
-    }
-  };
-
   return (
-    <div style={{
-      position: 'fixed',
-      top: '10px',
-      right: '10px',
-      zIndex: 9999,
-      backgroundColor: 'var(--color-surface)',
-      border: '1px solid var(--color-border)',
-      borderRadius: '8px',
-      boxShadow: 'var(--shadow-md)',
-      fontSize: '12px',
-      fontFamily: 'Inter, sans-serif',
-      minWidth: isExpanded ? '300px' : '120px',
-      transition: 'all 0.3s ease'
-    }}
-    className="dev-status-panel"
-    >
-      <style>{`@media (max-width: 480px) { .dev-status-panel { display: none !important; } }`}</style>
-      {/* Compact View */}
-      <div 
-        style={{
-          padding: '8px 12px',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between'
-        }}
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {/* API Status Dot */}
-          <div suppressHydrationWarning style={{
-            width: '8px',
-            height: '8px',
-            borderRadius: '50%',
-            backgroundColor: mounted ? getStatusColor(apiStatus.status) : 'var(--color-warning-amber)',
-            animation: apiStatus.status === 'checking' ? 'pulse 2s infinite' : 'none'
-          }} />
-          
-          {/* Auth Status Dot */}
-          <div suppressHydrationWarning style={{
-            width: '8px',
-            height: '8px',
-            borderRadius: '50%',
-            backgroundColor: mounted ? (auth.isAuthenticated ? 'var(--color-success)' : 'var(--color-error)') : 'var(--color-warning-amber)'
-          }} />
-          
-          <span style={{ fontWeight: '500' }}>
-            {isExpanded ? 'Dev Status' : 'Dev'}
-          </span>
+    <div className={`${styles.panel} ${isExpanded ? styles.panelExpanded : ''}`}>
+      {/* Compact header */}
+      <div className={styles.header} onClick={() => setIsExpanded(!isExpanded)}>
+        <div className={styles.headerLeft}>
+          {/* API Status dot */}
+          <div
+            suppressHydrationWarning
+            className={`${styles.dot} ${mounted ? statusDotClass(apiStatus.status, styles) : styles.dotDefault}`}
+          />
+          {/* Auth Status dot */}
+          <div
+            suppressHydrationWarning
+            className={`${styles.dot} ${mounted ? (auth.isAuthenticated ? styles.dotOnline : styles.dotOffline) : styles.dotDefault}`}
+          />
+          <span className={styles.label}>{isExpanded ? 'Dev Status' : 'Dev'}</span>
         </div>
-        
-        <span style={{ fontSize: '10px', color: 'var(--color-text-secondary)' }}>
-          {isExpanded ? '▼' : '▶'}
-        </span>
+        <span className={styles.chevron}>{isExpanded ? '▼' : '▶'}</span>
       </div>
 
-      {/* Expanded View */}
+      {/* Expanded body */}
       {isExpanded && (
-        <div style={{
-          padding: '0 12px 12px 12px',
-          borderTop: '1px solid var(--color-gray-100)'
-        }}>
-          {/* API Status */}
-          <div style={{ marginBottom: '12px' }}>
-            <div style={{ fontWeight: '600', marginBottom: '4px', color: 'var(--color-gray-700)' }}>
-              API Status
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
-              <div style={{
-                width: '6px',
-                height: '6px',
-                borderRadius: '50%',
-                backgroundColor: getStatusColor(apiStatus.status)
-              }} />
-              <span style={{ color: 'var(--color-text-secondary)' }}>
-                {getStatusText(apiStatus.status)}
-              </span>
+        <div className={styles.body}>
+          {/* API Status section */}
+          <div className={styles.section}>
+            <div className={styles.sectionTitle}>API Status</div>
+            <div className={styles.row}>
+              <div className={`${styles.dotSm} ${statusDotClass(apiStatus.status, styles)}`} />
+              <span className={styles.text}>{statusText(apiStatus.status)}</span>
             </div>
             {apiStatus.url && (
-              <div style={{ color: 'var(--color-text-secondary)', fontSize: '11px', wordBreak: 'break-all' }}>
-                URL: {apiStatus.url}
-              </div>
+              <div className={styles.url}>URL: {apiStatus.url}</div>
             )}
-            {apiStatus.responseTime && (
-              <div style={{ color: 'var(--color-text-secondary)', fontSize: '11px' }}>
-                Response: {apiStatus.responseTime}ms
-              </div>
+            {apiStatus.responseTime != null && (
+              <div className={styles.meta}>Response: {apiStatus.responseTime}ms</div>
             )}
             {apiStatus.error && (
-              <div style={{ color: 'var(--color-error)', fontSize: '11px', wordBreak: 'break-all' }}>
-                Error: {apiStatus.error}
-              </div>
+              <div className={styles.error}>Error: {apiStatus.error}</div>
             )}
             {apiStatus.lastChecked && (
-              <div style={{ color: 'var(--color-text-secondary)', fontSize: '11px' }}>
-                Last: {apiStatus.lastChecked.toLocaleTimeString()}
-              </div>
+              <div className={styles.meta}>Last: {apiStatus.lastChecked.toLocaleTimeString()}</div>
             )}
             <button
-              onClick={(changeEvent) => { changeEvent.stopPropagation();
-                checkApiStatus();
-              }}
-              style={{
-                marginTop: '4px',
-                padding: '2px 6px',
-                fontSize: '10px',
-                backgroundColor: 'var(--color-gray-100)',
-                border: '1px solid var(--color-gray-300)',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
+              className={styles.refreshBtn}
+              onClick={(e) => { e.stopPropagation(); checkApiStatus(); }}
             >
               Refresh
             </button>
           </div>
 
-          {/* Auth Status */}
-          <div style={{ marginBottom: '12px' }}>
-            <div style={{ fontWeight: '600', marginBottom: '4px', color: 'var(--color-gray-700)' }}>
-              Authentication
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
-              <div style={{
-                width: '6px',
-                height: '6px',
-                borderRadius: '50%',
-                backgroundColor: auth.isAuthenticated ? 'var(--color-success)' : 'var(--color-error)'
-              }} />
-              <span style={{ color: 'var(--color-text-secondary)' }}>
+          {/* Auth Status section */}
+          <div className={styles.section}>
+            <div className={styles.sectionTitle}>Authentication</div>
+            <div className={styles.row}>
+              <div className={`${styles.dotSm} ${auth.isAuthenticated ? styles.dotOnline : styles.dotOffline}`} />
+              <span className={styles.text}>
                 {auth.isAuthenticated ? 'Authenticated' : 'Not Authenticated'}
               </span>
             </div>
             {auth.user && (
-              <div style={{ color: 'var(--color-text-secondary)', fontSize: '11px' }}>
-                User: {auth.user.name || auth.user.id}
-              </div>
+              <div className={styles.meta}>User: {auth.user.name || auth.user.id}</div>
             )}
-            <div style={{ color: 'var(--color-text-secondary)', fontSize: '11px' }}>
-              Token: {auth.token ? 'Present' : 'Missing'}
-            </div>
+            <div className={styles.meta}>Token: {auth.token ? 'Present' : 'Missing'}</div>
           </div>
 
-          {/* Local Storage */}
-          <div>
-            <div style={{ fontWeight: '600', marginBottom: '4px', color: 'var(--color-gray-700)' }}>
-              Local Storage
-            </div>
-            <div style={{ color: 'var(--color-text-secondary)', fontSize: '11px' }}>
+          {/* Local Storage section */}
+          <div className={styles.section}>
+            <div className={styles.sectionTitle}>Local Storage</div>
+            <div className={styles.meta}>
               token: {typeof window !== 'undefined' && localStorage.getItem('token') ? 'Present' : 'Missing'}
             </div>
-            <div style={{ color: 'var(--color-text-secondary)', fontSize: '11px' }}>
+            <div className={styles.meta}>
               user_id: {typeof window !== 'undefined' && localStorage.getItem('user_id') ? 'Present' : 'Missing'}
             </div>
-            <div style={{ color: 'var(--color-text-secondary)', fontSize: '11px' }}>
+            <div className={styles.meta}>
               first_name: {typeof window !== 'undefined' && localStorage.getItem('first_name') ? 'Present' : 'Missing'}
             </div>
           </div>
         </div>
       )}
-      
-      {/* Add pulse animation */}
-      <style jsx>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.5; }
-        }
-      `}</style>
     </div>
   );
 }

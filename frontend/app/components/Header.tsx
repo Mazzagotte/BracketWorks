@@ -2,6 +2,8 @@
 
 import React, { memo, useMemo, useCallback } from 'react'
 import Link from 'next/link'
+import CloseControl from '../../components/CloseControl'
+import hdr from './Header.module.css'
 
 
 
@@ -174,32 +176,17 @@ const Header = memo(function Header({
   }, [pageContext])
 
   const statusInfo = useMemo(() => {
-    if (!tournament?.status) return { icon: '', label: '', bg: '', color: '' }
+    if (!tournament?.status) return { icon: '', label: '', statusClass: '' }
     
     switch (tournament.status) {
-      case 'draft':
-        return { icon: '📝', label: 'Draft', bg: 'var(--color-gray-100)', color: 'var(--color-gray-700)' }
-      case 'registration_open':
-        return { icon: '📝', label: 'Registration Open', bg: 'var(--color-blue-light)', color: 'var(--color-blue-deeper)' }
-      case 'in_progress':
-        return { icon: 'Squad', label: 'In Progress', bg: 'var(--color-yellow-light)', color: 'var(--color-warning-text-deep)' }
-      case 'completed':
-        return { icon: '', label: 'Completed', bg: 'var(--color-green-light)', color: 'var(--color-success-text-deep)' }
-      case 'cancelled':
-        return { icon: '', label: 'Cancelled', bg: 'var(--color-hc-error-bg)', color: 'var(--color-red-dark)' }
-      default:
-        return { icon: '❓', label: 'Unknown', bg: 'var(--color-gray-100)', color: 'var(--color-text-secondary)' }
+      case 'draft':              return { icon: '📝', label: 'Draft',             statusClass: hdr.statusDraft }
+      case 'registration_open': return { icon: '📝', label: 'Registration Open', statusClass: hdr.statusRegistrationOpen }
+      case 'in_progress':       return { icon: 'Squad', label: 'In Progress',   statusClass: hdr.statusInProgress }
+      case 'completed':         return { icon: '', label: 'Completed',        statusClass: hdr.statusCompleted }
+      case 'cancelled':         return { icon: '', label: 'Cancelled',        statusClass: hdr.statusCancelled }
+      default:                  return { icon: '❓', label: 'Unknown',           statusClass: '' }
     }
   }, [tournament?.status])
-
-  const connectionStyles = useMemo(() => ({
-    padding: '0.25rem 0.5rem',
-    borderRadius: '12px',
-      backgroundColor: connectionStatus === 'online' ? 'var(--color-hc-success-bg)' : 
-           connectionStatus === 'syncing' ? 'var(--color-yellow-light)' : 'var(--color-hc-error-bg)',
-      color: connectionStatus === 'online' ? 'var(--color-success-text-deep)' : 
-        connectionStatus === 'syncing' ? 'var(--color-warning-text-deep)' : 'var(--color-error-text-deep)'
-  }), [connectionStatus])
 
   const lastUpdatedText = useMemo(() => {
     return lastUpdated ? new Date(lastUpdated).toLocaleTimeString() : null
@@ -269,34 +256,16 @@ const Header = memo(function Header({
   }) => {
     if (isLoading) {
       return (
-        <div 
-          className="skeleton"
-          style={{ 
-            height: '60px',
-            borderRadius: '8px',
-            border: '1px solid var(--color-border)'
-          }}>
-        </div>
+        <div className={`skeleton ${hdr.statsSkeleton}`}></div>
       )
     }
     
     return (
       <div 
         className={`stats-card ${tooltip ? 'tooltip' : ''}`}
-        data-tooltip={tooltip}
-        style={{ 
-          textAlign: 'center',
-          background: 'var(--color-surface)',
-          padding: '0.5rem',
-          borderRadius: '8px',
-          border: '1px solid var(--color-border)',
-          boxShadow: 'var(--shadow-soft)',
-          cursor: 'pointer'
-        }}>
-        <div style={{ fontSize: '1.25rem', fontWeight: '700' }}>
-          {value}
-        </div>
-        <div style={{ fontSize: '0.75rem', opacity: 0.8 }}>{label}</div>
+        data-tooltip={tooltip}>
+        <div className={hdr.statsCardValue}>{value}</div>
+        <div className={hdr.statsCardLabel}>{label}</div>
       </div>
     )
   }, [])
@@ -308,13 +277,13 @@ const Header = memo(function Header({
     return breadcrumbs.map((crumb, index) => (
       <React.Fragment key={`${crumb.label}-${index}`}>
         {crumb.href ? (
-          <Link href={crumb.href} className="breadcrumb-link" style={{ color: 'var(--color-text-secondary)', textDecoration: 'none' }}>
+          <Link href={crumb.href} className={`breadcrumb-link ${hdr.breadcrumbLink}`}>
             {crumb.label}
           </Link>
         ) : (
-          <span style={{ color: 'var(--color-text-primary)' }}>{crumb.label}</span>
+          <span className={hdr.breadcrumbCurrent}>{crumb.label}</span>
         )}
-        {index < breadcrumbs.length - 1 && <span style={{ margin: '0 0.5rem', color: 'var(--color-text-secondary)' }}>/</span>}
+        {index < breadcrumbs.length - 1 && <span className={hdr.breadcrumbSep}>/</span>}
       </React.Fragment>
     ))
   }, [breadcrumbs])
@@ -340,47 +309,29 @@ const Header = memo(function Header({
       return (
         <div 
           key={notification.id} 
-          className={`notification-item priority-${notification.priority || 'low'} type-${notification.type}`}
-          style={{ 
-            padding: '1rem',
-            borderBottom: index < visibleNotifications.length - 1 ? '1px solid var(--color-gray-100)' : 'none',
-            position: 'relative'
-          }}>
-          <button
+          className={`notification-item priority-${notification.priority || 'low'} type-${notification.type} ${index < visibleNotifications.length - 1 ? hdr.notifItemNotLast : ''}`}>
+          <CloseControl
             className="notification-dismiss"
             onClick={() => handleDismissNotification(notification.id)}
+            label="Dismiss notification"
+            size="xs"
             title="Dismiss"
-          >
-            ×
-          </button>
+          />
           
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.5rem' }}>
-            <span style={{ fontSize: '1rem' }}>{typeIcon}</span>
-            <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+          <div className={hdr.notifRow}>
+            <span>{typeIcon}</span>
+            <div className={hdr.notifContent}>
+              <div className={hdr.notifMeta}>
                 {notification.priority && notification.priority !== 'low' && (
-                  <span style={{
-                    fontSize: '0.625rem',
-                    fontWeight: '700',
-                    padding: '0.125rem 0.375rem',
-                    borderRadius: '0.25rem',
-                    backgroundColor: notification.priority === 'high' ? 'var(--color-error)' : 'var(--color-warning-amber)',
-                    color: 'var(--color-white)',
-                    textTransform: 'uppercase'
-                  }}>
+                  <span className={`${hdr.notifPriorityBadge} ${notification.priority === 'high' ? hdr.notifPriorityHigh : hdr.notifPriorityMedium}`}>
                     {priorityLabel}
                   </span>
                 )}
-                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
+                <span className={hdr.notifTimestamp}>
                   {notification.timestamp.toLocaleTimeString()}
                 </span>
               </div>
-
-              <div style={{
-                fontWeight: '500',
-                color: 'var(--color-text-primary)',
-                lineHeight: '1.4'
-              }}>
+              <div className={hdr.notifMessage}>
                 {notification.message}
               </div>
               
@@ -503,6 +454,10 @@ const Header = memo(function Header({
         .progress-bar {
           overflow: hidden;
           position: relative;
+          width: 100%;
+          height: 10px;
+          background-color: var(--color-border);
+          border-radius: 5px;
         }
         
         .progress-bar::after {
@@ -788,191 +743,78 @@ const Header = memo(function Header({
           position: absolute;
           top: 0.5rem;
           right: 0.5rem;
-          background: none;
-          border: none;
-          color: var(--color-text-secondary);
-          cursor: pointer;
-          font-size: 1rem;
-          width: 20px;
-          height: 20px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 50%;
-          transition: all 0.2s ease;
-        }
-        
-        .notification-dismiss:hover {
-          background-color: var(--color-gray-100);
-          color: var(--color-gray-700);
+          padding: 0;
         }
       `}</style>
       
       <div className="header-container">
       {/* Background Pattern */}
-      <div style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        opacity: 0.03,
-        backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23475569' fill-opacity='0.4'%3E%3Ccircle cx='7' cy='7' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-        borderRadius: '0 0 16px 16px'
-      }} />
+      <div className={hdr.bgPattern} />
 
-      <div style={{ position: 'relative', zIndex: 1 }}>
+      <div className={hdr.innerWrapper}>
         {/* Breadcrumbs */}
         {breadcrumbElements && !isHeaderCollapsed && (
-          <nav className={isMobile ? "mobile-text-sm mobile-spacing" : ""} style={{ marginBottom: '1rem', fontSize: '0.875rem', opacity: 0.7 }}>
+          <nav className={`${hdr.breadcrumbNav} ${isMobile ? 'mobile-text-sm mobile-spacing' : ''}`}>
             {breadcrumbElements}
           </nav>
         )}
 
         {/* Main Header Content */}
-        <div className={isMobile && !isHeaderCollapsed ? "mobile-stack" : ""} style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: isMobile ? 'center' : 'flex-start',
-          flexDirection: isMobile && !isHeaderCollapsed ? 'column' : 'row',
-          gap: isMobile ? '1rem' : '2rem'
-        }}>
+        <div className={`${hdr.mainRow} ${isMobile && !isHeaderCollapsed ? hdr.mainRowMobile : ''}`}>
           {/* Left Section - Title and Info */}
-          <div style={{ flex: 1, minWidth: 0 }}>
+          <div className={hdr.leftSection}>
             {/* Title Section */}
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center',
-              gap: '0.75rem',
-              marginBottom: isHeaderCollapsed ? 0 : '0.5rem'
-            }}>
+            <div className={`${hdr.titleRow} ${isHeaderCollapsed ? hdr.titleRowCollapsed : ''}`}>
               {pageIcon && (
-                <span style={{ fontSize: isMobile ? '1.25rem' : '1.5rem' }}>
+                <span className={isMobile ? hdr.pageIconMobile : hdr.pageIcon}>
                   {pageIcon}
                 </span>
               )}
-              <h1 style={{ 
-                margin: 0, 
-                fontSize: isMobile ? (isHeaderCollapsed ? '1.25rem' : '1.75rem') : '2.25rem',
-                fontWeight: '700',
-                color: 'var(--color-text-primary)',
-                wordBreak: 'break-word',
-                textAlign: 'center'
-              }}>
+              <h1 className={`${hdr.h1} ${isMobile ? (isHeaderCollapsed ? hdr.h1MobileCollapsed : hdr.h1Mobile) : ''}`}>
                 {title}
               </h1>
               
               {isLoading && (
                 <div 
-                  className="tooltip loading-spinner"
-                  data-tooltip="Loading..."
-                  style={{
-                    width: '20px',
-                    height: '20px',
-                    border: '2px solid var(--color-border)',
-                    borderTop: '2px solid var(--color-text-primary)',
-                    borderRadius: '50%'
-                  }}>
+                  className={`tooltip loading-spinner ${hdr.headerLoadingSpinner}`}
+                  data-tooltip="Loading...">
                 </div>
               )}
             </div>
 
             {/* Subtitle */}
             {subtitle && !isHeaderCollapsed && (
-              <p style={{ 
-                margin: '0 0 1rem 0', 
-                fontSize: isMobile ? '1rem' : '1.125rem', 
-                color: 'var(--color-text-secondary)',
-                fontWeight: '400',
-                textAlign: 'center'
-              }}>
+              <p className={`${hdr.subtitle} ${isMobile ? hdr.subtitleMobile : ''}`}>
                 {subtitle}
               </p>
             )}
 
             {/* Tournament Info & Actions Section */}
             {showTournamentInfo && !isHeaderCollapsed && (
-              <div style={{
-                display: 'flex',
-                gap: '1rem',
-                marginTop: '1rem',
-                alignItems: 'flex-start',
-                flexDirection: isMobile ? 'column' : 'row',
-                justifyContent: 'center',
-                maxWidth: '1200px',
-                margin: '1rem auto 0',
-                width: '100%'
-              }}>
+              <div className={`${hdr.tournamentSection} ${isMobile ? hdr.tournamentSectionMobile : ''}`}>
                 {/* Tournament Info Box */}
                 <div 
-                  className="tournament-info"
-                  style={{ 
-                    background: 'var(--color-surface)',
-                    padding: isMobile ? '1rem' : '1.5rem',
-                    borderRadius: '16px',
-                    boxShadow: 'var(--shadow-soft)',
-                    border: '1px solid var(--color-border)',
-                    overflow: 'hidden',
-                    minHeight: '120px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    flex: isMobile ? '1' : 'none',
-                    maxWidth: isMobile ? '100%' : '500px',
-                    width: isMobile ? '100%' : 'fit-content'
-                  }}>
+                  className={`tournament-info ${hdr.tournamentBox} ${isMobile ? hdr.tournamentBoxMobile : ''}`}>
                 {tournament ? (
                   <>
                     {/* Tournament Header */}
-                    <div style={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between',
-                      alignItems: 'flex-start',
-                      marginBottom: '1.25rem',
-                      flexWrap: 'wrap',
-                      gap: '1rem'
-                    }}>
+                    <div className={hdr.tournamentHeader}>
                       {/* Tournament Name and Location */}
-                      <div style={{ flex: 1, minWidth: '250px' }}>
-                        <h3 style={{ 
-                          margin: '0 0 0.5rem 0', 
-                          fontSize: isMobile ? '1.125rem' : '1.375rem',
-                          fontWeight: '700',
-                          color: 'var(--color-text-primary)',
-                          lineHeight: '1.2',
-                          textAlign: 'center'
-                        }}>
+                      <div className={hdr.tournamentNameCol}>
+                        <h3 className={`${hdr.tournamentName} ${isMobile ? hdr.tournamentNameMobile : ''}`}>
                           {tournament.name}
                         </h3>
                         {tournament.location && (
-                          <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.5rem',
-                            color: 'var(--color-text-secondary)',
-                            fontSize: '0.95rem'
-                          }}>
-                            <span style={{ color: 'var(--color-error)' }}>📍</span>
-                            <span style={{ fontWeight: '500' }}>{tournament.location}</span>
+                          <div className={hdr.locationRow}>
+                            <span className={hdr.locationPin}>📍</span>
+                            <span className={hdr.locationText}>{tournament.location}</span>
                           </div>
                         )}
                       </div>
 
                       {/* Tournament Status Badge */}
                       {tournament.status && (
-                        <div style={{
-                          padding: '0.5rem 1rem',
-                          borderRadius: '20px',
-                          fontSize: '0.8rem',
-                          fontWeight: '600',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.5rem',
-                          backgroundColor: statusInfo.bg,
-                          color: statusInfo.color,
-                          border: '1px solid var(--color-border-light)',
-                          whiteSpace: 'nowrap'
-                        }}>
+                        <div className={`${hdr.statusBadge} ${statusInfo.statusClass}`}>
                           <span>{statusInfo.icon}</span>
                           {statusInfo.label}
                         </div>
@@ -981,28 +823,17 @@ const Header = memo(function Header({
 
                     {/* Tournament Dates */}
                     {(tournament.start_date || tournament.end_date) && (
-                      <div style={{ 
-                        display: 'flex',
-                        gap: isMobile ? '1rem' : '2rem',
-                        marginBottom: '1.25rem',
-                        fontSize: '0.875rem',
-                        color: 'var(--color-text-secondary)',
-                        flexWrap: 'wrap',
-                        padding: '0.75rem',
-                        backgroundColor: 'var(--color-gray-50)',
-                        borderRadius: '8px',
-                        border: '1px solid var(--color-border)'
-                      }}>
+                      <div className={`${hdr.datesSection} ${isMobile ? hdr.datesSectionMobile : ''}`}>
                         {tournament.start_date && (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                            <span style={{ fontWeight: '600', color: 'var(--color-gray-700)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Start Date</span>
-                            <span style={{ fontWeight: '500', color: 'var(--color-text-primary)' }}>{new Date(tournament.start_date).toLocaleDateString()}</span>
+                          <div className={hdr.dateItem}>
+                            <span className={hdr.dateLabel}>Start Date</span>
+                            <span className={hdr.dateValue}>{new Date(tournament.start_date).toLocaleDateString()}</span>
                           </div>
                         )}
                         {tournament.end_date && (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                            <span style={{ fontWeight: '600', color: 'var(--color-gray-700)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>End Date</span>
-                            <span style={{ fontWeight: '500', color: 'var(--color-text-primary)' }}>{new Date(tournament.end_date).toLocaleDateString()}</span>
+                          <div className={hdr.dateItem}>
+                            <span className={hdr.dateLabel}>End Date</span>
+                            <span className={hdr.dateValue}>{new Date(tournament.end_date).toLocaleDateString()}</span>
                           </div>
                         )}
                       </div>
@@ -1010,78 +841,30 @@ const Header = memo(function Header({
                   </>
                 ) : (
                   /* Loading/No Tournament State */
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    minHeight: '80px',
-                    color: 'var(--color-text-secondary)',
-                    fontSize: '0.95rem'
-                  }}>
-                    <div style={{ textAlign: 'center' }}>
-                      <div style={{ marginBottom: '0.5rem', fontSize: '2rem' }}>🏆</div>
+                  <div className={hdr.noTournament}>
+                    <div className={hdr.noTournamentInner}>
+                      <div className={hdr.noTournamentIcon}>🏆</div>
                       <div>No tournament loaded</div>
                     </div>
                   </div>
                 )}
 
                 {/* Bottom Section - Always reserve space for consistent sizing */}
-                <div style={{ 
-                  marginTop: 'auto',
-                  paddingTop: (selectedSquad || (pageContext === 'brackets' || pageContext === 'players' || pageContext === 'scores')) ? '0.75rem' : '0'
-                }}>
+                <div className={`${hdr.bottomSection} ${(selectedSquad || (pageContext === 'brackets' || pageContext === 'players' || pageContext === 'scores')) ? hdr.bottomSectionWithContent : ''}`}>
                   {/* Squad and Players Info */}
                   {(pageContext === 'brackets' || pageContext === 'dashboard' || pageContext === 'players' || pageContext === 'scores') && (
-                    <div style={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: '0.75rem',
-                      flexWrap: 'wrap',
-                      minHeight: '40px' // Reserve consistent space
-                    }}>
+                    <div className={hdr.squadRow}>
                       {/* Selected Squad Badge */}
                       {selectedSquad && (
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.5rem',
-                          background: 'var(--gradient-blue-light)',
-                          padding: '0.625rem 1rem',
-                          borderRadius: '24px',
-                          border: '1px solid var(--color-blue-primary)',
-                          boxShadow: 'var(--shadow-blue-sm)'
-                        }}>
-                          <span style={{ 
-                            fontSize: '0.8rem',
-                            fontWeight: '600',
-                            color: 'var(--color-blue-deeper)',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.025em'
-                          }}>Squad:</span>
-                          <span style={{ 
-                            fontSize: '0.95rem',
-                            fontWeight: '700',
-                            color: 'var(--color-blue-deeper)'
-                          }}>
-                            {selectedSquad.time}
-                          </span>
+                        <div className={hdr.squadBadge}>
+                          <span className={hdr.squadLabel}>Squad:</span>
+                          <span className={hdr.squadTime}>{selectedSquad.time}</span>
                         </div>
                       )}
 
                       {/* Players Count - Only show on pages that manage players */}
                       {(pageContext === 'brackets' || pageContext === 'players' || pageContext === 'scores') && (
-                        <div style={{
-                          padding: '0.625rem 1rem',
-                          background: playersCount > 0 ? 'var(--color-green-light)' : 'var(--color-yellow-light)',
-                          border: `1px solid ${playersCount > 0 ? 'var(--color-success)' : 'var(--color-warning-amber)'}`,
-                          borderRadius: '24px',
-                          fontSize: '0.85rem',
-                          fontWeight: '700',
-                          color: playersCount > 0 ? 'var(--color-green-dark)' : 'var(--color-warning-text-deep)',
-                          minWidth: '130px',
-                          textAlign: 'center',
-                          boxShadow: playersCount > 0 ? 'var(--shadow-green-sm)' : 'var(--shadow-brand-sm)'
-                        }}>
+                        <div className={`${hdr.playersBadge} ${playersCount > 0 ? hdr.playersBadgeHas : hdr.playersBadgeNone}`}>
                           {isLoadingPlayers ? '⏳ Loading...' : 
                            playersCount > 0 ? `👥 ${playersCount} Players` : 
                            'No Players'}
@@ -1095,37 +878,10 @@ const Header = memo(function Header({
                 {/* Actions Box */}
                 {actions && (
                   <div 
-                    className="actions-box"
-                    style={{
-                      background: 'var(--color-surface)',
-                      padding: isMobile ? '1rem' : '1.5rem',
-                      borderRadius: '16px',
-                      boxShadow: 'var(--shadow-soft)',
-                      border: '1px solid var(--color-border)',
-                      minHeight: '120px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'center',
-                      gap: '0.75rem',
-                      minWidth: isMobile ? '100%' : '200px',
-                      maxWidth: isMobile ? '100%' : '300px'
-                    }}
+                    className={`actions-box ${hdr.actionsBox} ${isMobile ? hdr.actionsBoxMobile : ''}`}
                   >
-                    <div style={{
-                      fontSize: '0.875rem',
-                      fontWeight: '600',
-                      color: 'var(--color-text-secondary)',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.025em',
-                      marginBottom: '0.5rem'
-                    }}>
-                      Quick Actions
-                    </div>
-                    <div style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '0.5rem'
-                    }}>
+                    <div className={hdr.actionsLabel}>Quick Actions</div>
+                    <div className={hdr.actionsInner}>
                       {actions}
                     </div>
                   </div>
@@ -1135,67 +891,25 @@ const Header = memo(function Header({
 
             {/* Tournament Progress - Separate section for consistent sizing */}
             {showTournamentInfo && stats?.completionPercentage !== undefined && !isHeaderCollapsed && (
-              <div style={{ 
-                background: 'var(--color-surface)',
-                padding: isMobile ? '1rem' : '1.5rem',
-                borderRadius: '16px',
-                boxShadow: 'var(--shadow-soft)',
-                border: '1px solid var(--color-border)',
-                marginTop: '1rem',
-                maxWidth: isMobile ? '100%' : '600px',
-                width: 'fit-content'
-              }}>
-                <div style={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: '0.75rem'
-                }}>
-                  <span style={{ 
-                    fontSize: '0.875rem',
-                    fontWeight: '600',
-                    color: 'var(--color-text-secondary)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.025em'
-                  }}>Tournament Progress</span>
-                  <span style={{ 
-                    fontSize: '1.125rem', 
-                    fontWeight: '700',
-                    color: 'var(--color-text-primary)'
-                  }}>
-                    {Math.round(stats.completionPercentage)}%
-                  </span>
+              <div className={`${hdr.progressSection} ${isMobile ? hdr.progressSectionMobile : ''}`}>
+                <div className={hdr.progressHeader}>
+                  <span className={hdr.progressLabel}>Tournament Progress</span>
+                  <span className={hdr.progressValue}>{Math.round(stats.completionPercentage)}%</span>
                 </div>
                 <div 
                   className="progress-bar"
-                  style={{ 
-                    width: '100%', 
-                    height: '10px', 
-                    backgroundColor: 'var(--color-border)', 
-                    borderRadius: '5px',
-                    overflow: 'hidden'
-                  }}>
-                  <div style={{ 
-                    height: '100%', 
-                    background: 'var(--gradient-green-progress)',
-                    width: `${stats.completionPercentage}%`,
-                    transition: 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-                    borderRadius: '5px',
-                    boxShadow: 'var(--shadow-inset)'
-                  }} />
+                >
+                  <div
+                    className={hdr.progressFill}
+                    style={{ width: `${stats.completionPercentage}%` }}
+                  />
                 </div>
               </div>
             )}
 
             {/* Tournament Stats */}
             {stats && !isHeaderCollapsed && (
-              <div className={isVerySmall ? "mobile-grid-single" : ""} style={{ 
-                marginTop: '1rem',
-                display: 'grid',
-                gridTemplateColumns: isMobile ? (isVerySmall ? '1fr' : '1fr 1fr') : 'repeat(auto-fit, minmax(120px, 1fr))',
-                gap: '0.75rem',
-                maxWidth: isMobile ? '100%' : '600px'
-              }}>
+              <div className={`${hdr.statsGrid} ${isMobile ? (isVerySmall ? hdr.statsGridVerySmall : hdr.statsGridMobile) : ''} ${isVerySmall ? 'mobile-grid-single' : ''}`}>
                 {stats?.totalPlayers && renderStatsCard({
                   value: `${stats.playersRegistered || 0}/${stats.totalPlayers}`,
                   label: "Players",
@@ -1228,55 +942,20 @@ const Header = memo(function Header({
           </div>
 
           {/* Right Section - Actions and Status */}
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '1rem',
-            flexDirection: isMobile ? 'row' : 'column',
-            alignSelf: isMobile ? 'stretch' : 'flex-start'
-          }}>
+          <div className={`${hdr.rightSection} ${isMobile ? hdr.rightSectionMobile : ''}`}>
             {/* Notifications */}
             {visibleNotifications.length > 0 && (
-              <div style={{ position: 'relative' }}>
+              <div className={hdr.notifBtnWrap}>
                 <button
                   onClick={handleNotificationToggle}
-                  className={`interactive-button ${isMobile ? 'touch-target' : ''}`}
-                  style={{
-                    background: 'var(--color-surface)',
-                    border: '1px solid var(--color-border)',
-                    borderRadius: '50%',
-                    width: isMobile ? '48px' : '40px',
-                    height: isMobile ? '48px' : '40px',
-                    color: 'var(--color-text-secondary)',
-                    cursor: 'pointer',
-                    fontSize: '1.25rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    position: 'relative',
-                    boxShadow: 'var(--shadow-sm)'
-                  }}
+                  className={`interactive-button ${hdr.notifBtn} ${isMobile ? `touch-target ${hdr.notifBtnMobile}` : ''}`}
                 >
                   🔔
                   {visibleNotifications.length > 0 && (
-                    <span 
-                      className="notification-badge"
-                      style={{
-                        position: 'absolute',
-                        top: '-2px',
-                        right: '-2px',
-                        background: visibleNotifications.some(nItem => nItem.priority === 'high') ? 'var(--color-error)' :
-                                   visibleNotifications.some(nItem => nItem.priority === 'medium') ? 'var(--color-warning-amber)' : 'var(--color-blue-primary)',
-                        color: 'var(--color-white)',
-                        borderRadius: '50%',
-                        width: '18px',
-                        height: '18px',
-                        fontSize: '0.75rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontWeight: 'bold'
-                      }}>
+                    <span className={`notification-badge ${hdr.notifBadge} ${
+                      visibleNotifications.some(n => n.priority === 'high') ? hdr.notifBadgeHigh :
+                      visibleNotifications.some(n => n.priority === 'medium') ? hdr.notifBadgeMedium : hdr.notifBadgeLow
+                    }`}>
                       {visibleNotifications.length > 9 ? '9+' : visibleNotifications.length}
                     </span>
                   )}
@@ -1286,40 +965,22 @@ const Header = memo(function Header({
 
             {/* Actions */}
             {(actions || (pageContext === 'brackets' && (onGenerateBracket || onRefreshPlayers || onViewModeChange))) && !isHeaderCollapsed && (
-              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+              <div className={hdr.bracketControls}>
                 {/* Bracket-specific controls */}
                 {pageContext === 'brackets' && (
                   <>
                     {/* View Mode Selector */}
                     {onViewModeChange && (
-                      <div style={{ display: 'flex', gap: '4px' }}>
+                      <div className={hdr.vmBtnGroup}>
                         <button
                           onClick={() => onViewModeChange('tree')}
-                          style={{
-                            padding: '6px 12px',
-                            fontSize: '0.75rem',
-                            border: '1px solid var(--color-border)',
-                            borderRadius: '6px 0 0 6px',
-                            backgroundColor: viewMode === 'tree' ? 'var(--color-primary)' : 'var(--color-gray-50)',
-                            color: viewMode === 'tree' ? 'var(--color-white)' : 'var(--color-gray-700)',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease'
-                          }}
+                          className={`${hdr.vmBtn} ${hdr.vmBtnLeft} ${viewMode === 'tree' ? hdr.vmBtnActive : hdr.vmBtnInactive}`}
                         >
                           🌳
                         </button>
                         <button
                           onClick={() => onViewModeChange('table')}
-                          style={{
-                            padding: '6px 12px',
-                            fontSize: '0.75rem',
-                            border: '1px solid var(--color-border)',
-                            borderRadius: '0 6px 6px 0',
-                            backgroundColor: viewMode === 'table' ? 'var(--color-primary)' : 'var(--color-gray-50)',
-                            color: viewMode === 'table' ? 'var(--color-white)' : 'var(--color-gray-700)',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease'
-                          }}
+                          className={`${hdr.vmBtn} ${hdr.vmBtnRight} ${viewMode === 'table' ? hdr.vmBtnActive : hdr.vmBtnInactive}`}
                         >
                           
                         </button>
@@ -1331,34 +992,10 @@ const Header = memo(function Header({
                       <button
                         onClick={onRefreshPlayers}
                         disabled={isLoadingPlayers}
-                        style={{
-                          padding: '6px 12px',
-                          fontSize: '0.75rem',
-                          backgroundColor: 'var(--color-gray-100)',
-                          color: 'var(--color-gray-700)',
-                          border: '1px solid var(--color-gray-300)',
-                          borderRadius: '6px',
-                          cursor: isLoadingPlayers ? 'not-allowed' : 'pointer',
-                          opacity: isLoadingPlayers ? 0.6 : 1,
-                          transition: 'all 0.2s ease',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '4px'
-                        }}
+                        className={`${hdr.refreshBtn} ${isLoadingPlayers ? hdr.refreshBtnDisabled : ''}`}
                       >
                         {isLoadingPlayers ? (
-                          <>
-                            <span style={{ 
-                              display: 'inline-block',
-                              width: '12px',
-                              height: '12px',
-                              border: '1px solid var(--color-gray-300)',
-                              borderTop: '1px solid var(--color-gray-700)',
-                              borderRadius: '50%',
-                              animation: 'spin 1s linear infinite'
-                            }}></span>
-                            Loading
-                          </>
+                          <><span className={hdr.refreshSpinner}></span>Loading</>
                         ) : (
                           <>Refresh</>
                         )}
@@ -1370,35 +1007,10 @@ const Header = memo(function Header({
                       <button
                         onClick={onGenerateBracket}
                         disabled={isGenerating || !tournament || playersCount === 0}
-                        style={{
-                          padding: '6px 16px',
-                          fontSize: '0.75rem',
-                          backgroundColor: hasPreview ? 'var(--color-green-dark)' : 'var(--color-primary)',
-                          color: 'var(--color-white)',
-                          border: 'none',
-                          borderRadius: '6px',
-                          cursor: (isGenerating || !tournament || playersCount === 0) ? 'not-allowed' : 'pointer',
-                          opacity: (isGenerating || !tournament || playersCount === 0) ? 0.6 : 1,
-                          transition: 'all 0.2s ease',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          fontWeight: '500'
-                        }}
+                        className={`${hdr.generateBtn} ${hasPreview ? hdr.generateBtnPreview : ''} ${(isGenerating || !tournament || playersCount === 0) ? hdr.generateBtnDisabled : ''}`}
                       >
                         {isGenerating ? (
-                          <>
-                            <span style={{ 
-                              display: 'inline-block',
-                              width: '12px',
-                              height: '12px',
-                              border: '2px solid var(--color-border-light)',
-                              borderTop: '2px solid var(--color-white)',
-                              borderRadius: '50%',
-                              animation: 'spin 1s linear infinite'
-                            }}></span>
-                            Generating...
-                          </>
+                          <><span className={hdr.generateSpinner}></span>Generating...</>
                         ) : hasPreview ? (
                           <>Regenerate</>
                         ) : (
@@ -1412,14 +1024,7 @@ const Header = memo(function Header({
             )}
 
             {/* Status Info */}
-            <div style={{ 
-              display: 'flex', 
-              flexDirection: isMobile ? 'row' : 'column',
-              alignItems: isMobile ? 'center' : 'flex-end',
-              gap: '0.5rem',
-              fontSize: '0.75rem',
-              opacity: 0.9
-            }}>
+            <div className={`${hdr.statusInfo} ${isMobile ? hdr.statusInfoMobile : ''}`}>
               {/* Last Updated */}
               {lastUpdatedText && (
                 <span>
@@ -1432,31 +1037,7 @@ const Header = memo(function Header({
 
         {/* Enhanced Connection Status Indicator - Bottom Right */}
         <div 
-          className={`connection-indicator ${connectionStatus === 'syncing' ? 'connection-pulse' : ''}`}
-          style={{
-            position: 'absolute',
-            bottom: '1rem',
-            right: '1rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            padding: '0.5rem 0.75rem',
-            borderRadius: '20px',
-            fontSize: '0.75rem',
-            fontWeight: '500',
-            zIndex: 10,
-            boxShadow: 'var(--shadow-sm)',
-            border: '1px solid var(--color-border-light)',
-            backdropFilter: 'blur(8px)',
-            cursor: 'pointer',
-            transition: 'all 0.3s ease',
-            background: connectionStatus === 'online' 
-              ? 'var(--gradient-success-btn)' 
-              : connectionStatus === 'syncing'
-              ? 'var(--gradient-warning-base)'
-              : 'var(--gradient-error-btn)',
-            color: 'var(--color-white)'
-          }}
+          className={`connection-indicator ${connectionStatus === 'syncing' ? 'connection-pulse' : ''} ${hdr.connIndicator} ${connectionStatus === 'online' ? hdr.connOnline : connectionStatus === 'syncing' ? hdr.connSyncing : hdr.connOffline}`}
           title={
             connectionStatus === 'online' ? 'Connected to server' :
             connectionStatus === 'syncing' ? 'Syncing data...' :
@@ -1464,27 +1045,20 @@ const Header = memo(function Header({
           }
         >
           {/* Status Icon */}
-          <span style={{ fontSize: '0.875rem' }}>
+          <span>
             {connectionStatus === 'online' ? '🟢' : 
              connectionStatus === 'syncing' ? '🟡' : 
              '🔴'}
           </span>
           
           {/* Status Text */}
-          <span style={{ 
-            textTransform: 'capitalize'
-          }}>
+          <span className={hdr.connText}>
             {connectionStatus}
           </span>
           
           {/* Syncing Animation */}
           {connectionStatus === 'syncing' && (
-            <span 
-              className="loading-spinner" 
-              style={{ 
-                fontSize: '0.75rem'
-              }}
-            >
+            <span className="loading-spinner">
               
             </span>
           )}
@@ -1494,54 +1068,13 @@ const Header = memo(function Header({
       {/* Notification Dropdown */}
       {showNotifications && visibleNotifications.length > 0 && (
         <div 
-          className="notification-dropdown"
-          style={{
-            position: 'absolute',
-            top: '100%',
-            right: isMobile ? '1rem' : '2rem',
-            marginTop: '0.5rem',
-            background: 'var(--color-surface)',
-            color: 'var(--color-text-primary)',
-            borderRadius: '12px',
-            boxShadow: 'var(--shadow-modal)',
-            border: '1px solid var(--color-border)',
-            zIndex: 1000,
-            minWidth: '350px',
-            maxWidth: isMobile ? '90vw' : '450px',
-            maxHeight: '400px',
-            overflowY: 'auto'
-          }}>
-          <div style={{ padding: '1rem', borderBottom: '1px solid var(--color-gray-100)', background: 'var(--color-gray-50)' }}>
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center',
-              marginBottom: '0.5rem'
-            }}>
-              <h3 style={{ margin: '0', fontSize: '1.125rem', fontWeight: '600', color: 'var(--color-text-primary)' }}>
+          className={`notification-dropdown ${hdr.notifDropdown} ${isMobile ? hdr.notifDropdownMobile : ''}`}>
+          <div className={hdr.notifDropdownHeader}>
+            <div className={hdr.notifDropdownTitleRow}>
+              <h3 className={hdr.notifDropdownTitle}>
                 Notifications ({visibleNotifications.length})
               </h3>
-              <button
-                onClick={handleNotificationClose}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '1.5rem',
-                  cursor: 'pointer',
-                  color: 'var(--color-text-secondary)',
-                  padding: '0.25rem',
-                  borderRadius: '4px',
-                  transition: 'all 0.2s ease'
-                }}
-                onMouseEnter={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = 'var(--color-gray-100)'
-                  changeEvent.currentTarget.style.color = 'var(--color-gray-700)'
-                }}
-                onMouseLeave={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = 'transparent'
-                  changeEvent.currentTarget.style.color = 'var(--color-text-secondary)'
-                }}
-              >
-                ×
-              </button>
+              <CloseControl onClick={handleNotificationClose} label="Close notifications" size="sm" />
             </div>
             
             {visibleNotifications.length > 1 && (
@@ -1551,28 +1084,13 @@ const Header = memo(function Header({
                     handleDismissNotification(notification.id)
                   })
                 }}
-                style={{
-                  background: 'none',
-                  border: '1px solid var(--color-gray-300)',
-                  borderRadius: '6px',
-                  padding: '0.25rem 0.75rem',
-                  fontSize: '0.75rem',
-                  color: 'var(--color-text-secondary)',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
-                }}
-                onMouseEnter={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = 'var(--color-gray-100)'
-                  changeEvent.currentTarget.style.borderColor = 'var(--color-gray-400)'
-                }}
-                onMouseLeave={(changeEvent) => { changeEvent.currentTarget.style.backgroundColor = 'transparent'
-                  changeEvent.currentTarget.style.borderColor = 'var(--color-gray-300)'
-                }}
+                className={hdr.clearAllBtn}
               >
                 Clear All
               </button>
             )}
           </div>
-          <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+          <div className={hdr.notifList}>
             {notificationElements}
           </div>
         </div>

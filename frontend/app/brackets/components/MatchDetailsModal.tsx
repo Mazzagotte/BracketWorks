@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import CloseControl from '../../../components/CloseControl'
 import styles from '../styles/match-details-modal.module.css'
 import { Match } from './BracketTreeView'
 
@@ -71,13 +72,7 @@ export function MatchDetailsModal({
               <p className={styles.roundName}>{roundName}</p>
             )}
           </div>
-          <button 
-            className={styles.closeButton}
-            onClick={onClose}
-            aria-label="Close modal"
-          >
-            ×
-          </button>
+          <CloseControl onClick={onClose} label="Close modal" />
         </div>
 
         {/* Status Badge */}

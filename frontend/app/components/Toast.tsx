@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import CloseControl from '../../components/CloseControl';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
@@ -179,13 +180,12 @@ const ToastComponent: React.FC<{ toast: Toast; onRemove: (id: string) => void }>
         )}
       </div>
       {toast.dismissible && (
-        <button
+        <CloseControl
           onClick={handleRemove}
-          className={`ml-2 ${styles.iconColor} hover:opacity-75`}
-          aria-label="Dismiss notification"
-        >
-          ×
-        </button>
+          className={`ml-2 ${styles.iconColor}`}
+          label="Dismiss notification"
+          size="xs"
+        />
       )}
     </div>
   );

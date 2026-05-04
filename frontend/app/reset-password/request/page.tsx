@@ -4,11 +4,11 @@ import { useState, useEffect, useRef, useCallback } from "react";
 
 import Image from "next/image";
 
-import "../../styles/login.css";
 import "../../styles/login-validation.css";
 
 import { API } from "../../lib/api";
 import { useToast } from "../../components/Toast";
+import CloseControl from "../../../components/CloseControl";
 import { logger } from '../../lib/logger';
 import { getErrorMessage, getErrorContext, isError } from '../../lib/error-utils';
 
@@ -381,13 +381,12 @@ export default function RequestResetPage() {
               <span className="retry-info">Will retry when connected</span>
             )}
           </div>
-          <button 
+          <CloseControl
             className="connection-close"
             onClick={() => setShowConnectionStatus(false)}
-            aria-label="Dismiss connection status"
-          >
-            �
-          </button>
+            label="Dismiss connection status"
+            size="xs"
+          />
         </div>
       )}
 

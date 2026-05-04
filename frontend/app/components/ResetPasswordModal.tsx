@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { API } from '../lib/api';
 import { logger } from '../lib/logger';
+import CloseControl from '../../components/CloseControl';
 import styles from './ResetPasswordModal.module.css';
 
 interface ResetPasswordModalProps {
@@ -107,6 +108,7 @@ export default function ResetPasswordModal({ isOpen, onClose, onSuccess }: Reset
   return (
     <div className={styles.overlay} onClick={handleClose}>
       <div className={styles.modal} onClick={e => e.stopPropagation()}>
+        <CloseControl onClick={handleClose} position="absolute" size="sm" label="Close reset password modal" disabled={loading} />
         <div className={styles.header}>
           <h2 className={styles.title}>Reset Password</h2>
           <p className={styles.subtitle}>Enter your email to receive a reset code</p>

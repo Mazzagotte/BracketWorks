@@ -13,8 +13,10 @@
 }
 
 .tabsList {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
   gap: 0.5rem;
   position: relative;
   z-index: 1;
@@ -40,6 +42,9 @@
   gap: 0.5rem;
   position: relative;
   user-select: none;
+  flex: 0 0 auto;
+  min-height: 44px;
+  white-space: nowrap;
 }
 
 .tab:hover {
@@ -99,13 +104,29 @@
    RESPONSIVE DESIGN
    =================================== */
 
+@media (max-width: 900px) {
+  .tabsContainer {
+    padding: 0.5rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .tabsList {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    width: max-content;
+    min-width: 100%;
+    padding-bottom: 2px;
+  }
+}
+
 @media (max-width: 480px) {
   .tabsContainer {
     padding: 0.375rem;
   }
 
   .tabsList {
-    grid-template-columns: 1fr;
+    gap: 0.375rem;
   }
 
   .tab {

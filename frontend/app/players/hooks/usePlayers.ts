@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Player, Squad } from '../types';
 import { logger } from '../../lib/logger';
 import { API, apiClient } from '../../lib/api';
+import { useToastHelpers } from '../../components/Toast';
 import { BracketProgramDefinition } from '../../lib/types';
 import { calculatePlayerTotalCost, filterEntriesForDivision, normalizeDivision, normalizePlayerBracketEntries } from '../../lib/bracketPrograms';
 
@@ -30,6 +31,7 @@ interface UsePlayersOptions {
 }
 
 export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee, bracketPrograms }: UsePlayersOptions) {
+  const toast = useToastHelpers();
   const [players, setPlayers] = useState<Player[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [savingStatus, setSavingStatus] = useState<Record<string, 'idle' | 'saving' | 'success' | 'error'>>({});
@@ -161,9 +163,9 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
       setPlayers(prev => [...prev, transformedPlayer]);
     } catch (err: unknown) {
       logger.error('Failed to add player', { error: err });
-      alert(`Failed to add player: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      toast.error(`Failed to add player: ${err instanceof Error ? err.message : 'Unknown error'}`, 'Add Player');
     }
-  }, [authToken, selectedSquad, getItem]);
+  }, [authToken, selectedSquad, getItem, toast]);
 
   const importPlayers = useCallback(async (newPlayers: Omit<Player, 'id'>[]) => {
     if (!authToken || newPlayers.length === 0) {
@@ -318,10 +320,10 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
           setSavingStatus(prev => ({ ...prev, [`${row.id}-${firstField}`]: 'error' }));
         });
         loadPlayers(); // revert optimistic updates
-        alert(`Failed to save changes: ${err instanceof Error ? err.message : 'Unknown error'}`);
+        toast.error(`Failed to save changes: ${err instanceof Error ? err.message : 'Unknown error'}`, 'Save Failed');
       }
     }, 400);
-  }, [authToken, bracketPrograms, entryFee, loadPlayers]);
+  }, [authToken, bracketPrograms, entryFee, loadPlayers, toast]);
 
   // Cancel all pending debounced patches (e.g. after a bulk write)
   const cancelPendingPatches = useCallback(() => {
@@ -339,9 +341,9 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
       setPlayers(prev => prev.filter(pItem => pItem.id !== playerId));
     } catch (err: unknown) {
       logger.error('Failed to delete player', { error: err, playerId });
-      alert(`Failed to delete player: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      toast.error(`Failed to delete player: ${err instanceof Error ? err.message : 'Unknown error'}`, 'Delete Failed');
     }
-  }, [authToken]);
+  }, [authToken, toast]);
 
   useEffect(() => {
     loadPlayers();

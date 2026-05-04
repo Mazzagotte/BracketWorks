@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } fro
 import { useAuth } from '../lib/auth-context'
 import { usePageHeader } from '../lib/header-context'
 import { ErrorBoundary } from '../components/ErrorBoundary'
+import ActionConfirmDialog from '../components/ActionConfirmDialog'
 import { useBrackets, BracketPreview } from '../hooks/useBrackets'
 import { useTournaments, useSquads } from '../hooks/useTournaments'
 import { useToast } from '../components/Toast'
@@ -17,7 +18,6 @@ import { SearchFilter } from './components/SearchFilter'
 import { EmptyBracketState } from './components/EmptyBracketState'
 import ExplainBracketsModal from './components/ExplainBracketsModal'
 import NoTournamentState from '../components/NoTournamentState'
-import '../styles/bowling-animations.css'
 import styles from './brackets.module.css'
 
 // Lazy load heavy components for better initial load performance
@@ -30,6 +30,7 @@ export default function BracketsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [bracketGenerationPromise, setBracketGenerationPromise] = useState<Promise<BracketPreview> | null>(null)
   const [isExplainModalOpen, setIsExplainModalOpen] = useState(false)
+  const [deleteBracketsConfirmOpen, setDeleteBracketsConfirmOpen] = useState(false)
   const [isInitializing, setIsInitializing] = useState(true)
   
   // State for bracket display
@@ -158,23 +159,15 @@ export default function BracketsPage() {
     }
   }, [tournamentsLoading, tournaments.length])
 
-  // Auto-select squad from localStorage or use first squad
+  // Auto-select squad from localStorage only (no fallback to first squad)
   useEffect(() => {
     if (squads.length > 0 && !selectedSquad) {
       const storedSquadId = storage.getItem('selected_squad_id')
-      let squadToSelect = null
-      
       if (storedSquadId) {
-        squadToSelect = squads.find(s => s.id === parseInt(storedSquadId))
-      }
-      
-      // If no stored squad or stored squad not found, select first squad
-      if (!squadToSelect) {
-        squadToSelect = squads[0]
-      }
-      
-      if (squadToSelect) {
-        setSelectedSquad(squadToSelect)
+        const squadToSelect = squads.find(s => s.id === parseInt(storedSquadId))
+        if (squadToSelect) {
+          setSelectedSquad(squadToSelect)
+        }
       }
     }
   }, [squads, selectedSquad])
@@ -343,11 +336,8 @@ export default function BracketsPage() {
     startBracketGeneration()
   }, [startBracketGeneration])
 
-  const handleDeleteAllBrackets = useCallback(async () => {
+  const executeDeleteAllBrackets = useCallback(async () => {
     if (!selectedTournament || !selectedSquad) return
-
-    const confirmed = window.confirm('Delete all saved brackets for this tournament/squad? This cannot be undone.')
-    if (!confirmed) return
 
     try {
       await deleteTournamentBrackets(selectedTournament.id, selectedSquad.id)
@@ -359,6 +349,10 @@ export default function BracketsPage() {
       // Toast is handled in the hook
     }
   }, [selectedTournament, selectedSquad, deleteTournamentBrackets])
+
+  const handleDeleteAllBrackets = useCallback(() => {
+    setDeleteBracketsConfirmOpen(true)
+  }, [])
 
   const bracketGroups = useMemo(() => {
     return getBracketGroups(loadedBrackets as BracketResponse | null).filter(group => group.brackets?.length)
@@ -430,14 +424,16 @@ export default function BracketsPage() {
         <button onClick={() => setIsExplainModalOpen(true)} className={`ds-btn ds-btn-secondary ds-btn-sm ${styles.explainBtn}`}>
           Explain Brackets
         </button>
-        {isDev && (
-          <button onClick={handleDeleteAllBrackets} className={`ds-btn ds-btn-destructive ds-btn-sm ${styles.devButton}`}>
-            DEV: Delete All Brackets
-          </button>
-        )}
         <button onClick={handleGenerateBrackets} className={`ds-btn ds-btn-primary ds-btn-sm ${styles.generateBtn}`}>
           Generate Brackets
         </button>
+        {isDev && (
+          <div className={styles.devGroup}>
+            <button onClick={handleDeleteAllBrackets} className={styles.devButton}>
+              DEV: Delete All Brackets
+            </button>
+          </div>
+        )}
       </div>
     )
   }, [selectedTournament, handleGenerateBrackets, setIsExplainModalOpen, isDev, handleDeleteAllBrackets])
@@ -507,6 +503,14 @@ export default function BracketsPage() {
               { title: 'Generate Brackets', text: 'Automatically create single or double elimination brackets from your player list' },
               { title: 'Track Matches', text: 'View match-ups, update winners, and follow tournament progress in real-time' },
               { title: 'Multiple Views', text: 'Separate scratch and handicap brackets, with mobile-friendly navigation' },
+            ]}
+          />
+        ) : !selectedSquad ? (
+          <NoTournamentState
+            title="No Squad Selected"
+            description="Select a squad from the dashboard to generate and view brackets for that session."
+            cards={[
+              { title: 'Select a Squad', text: 'Choose a squad from the dashboard to generate and view its brackets' },
             ]}
           />
         ) : (
@@ -593,9 +597,10 @@ export default function BracketsPage() {
                     </div>
 
                     <div className={styles.progressBarWrapper}>
-                      <div
-                        className={`${styles.progressBarFill} ${progressPercent === 100 ? styles.progressBarFillComplete : ''}`}
-                        style={{ width: `${progressPercent}%` }}
+                      <progress
+                        className={`${styles.progressMeter} ${progressPercent === 100 ? styles.progressMeterComplete : ''}`}
+                        value={selectedBracketIndex + 1}
+                        max={totalBrackets}
                       />
                     </div>
                   </div>
@@ -644,6 +649,19 @@ export default function BracketsPage() {
       </div>
 
       {/* Explain Brackets Modal */}
+      <ActionConfirmDialog
+        open={deleteBracketsConfirmOpen}
+        title="Delete Saved Brackets?"
+        message="Delete all saved brackets for this tournament/squad? This cannot be undone."
+        confirmLabel="Delete Brackets"
+        cancelLabel="Cancel"
+        onCancel={() => setDeleteBracketsConfirmOpen(false)}
+        onConfirm={() => {
+          setDeleteBracketsConfirmOpen(false)
+          void executeDeleteAllBrackets()
+        }}
+      />
+
       <ExplainBracketsModal
         isOpen={isExplainModalOpen}
         onClose={handleCloseExplainModal}
