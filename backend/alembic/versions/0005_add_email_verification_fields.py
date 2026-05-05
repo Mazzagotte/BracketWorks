@@ -15,8 +15,9 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.drop_column("users", "email_verified_at")
-    op.drop_column("users", "email_verified")
+    # Use IF EXISTS in case columns were already removed manually
+    op.execute("ALTER TABLE users DROP COLUMN IF EXISTS email_verified_at")
+    op.execute("ALTER TABLE users DROP COLUMN IF EXISTS email_verified")
 
 
 def downgrade() -> None:

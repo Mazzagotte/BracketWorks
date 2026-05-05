@@ -120,9 +120,31 @@ export default function BracketsPage() {
     };
   }, []);
 
-  // Load tournaments on mount
+  // Load tournaments on mount — and prefetch squads + brackets in parallel
+  // when we already know the last-used IDs from localStorage (common case).
   useEffect(() => {
-    fetchTournaments()
+    const storedTournamentId = storage.getItem('lastTournamentId')
+    const storedSquadId = storage.getItem('selected_squad_id')
+
+    if (storedTournamentId && storedSquadId) {
+      const tId = parseInt(storedTournamentId)
+      const sId = parseInt(storedSquadId)
+      // Fire all three requests in parallel — don't wait for tournaments before fetching squads/brackets
+      Promise.all([
+        fetchTournaments(),
+        fetchSquads(tId),
+        loadSavedBrackets(tId, sId).then(brackets => {
+          if (brackets) {
+            setLoadedBrackets(brackets)
+            lastLoadedRef.current = { tournamentId: tId, squadId: sId }
+          }
+        }).catch(() => {}),
+      ])
+    } else if (storedTournamentId) {
+      Promise.all([fetchTournaments(), fetchSquads(parseInt(storedTournamentId))])
+    } else {
+      fetchTournaments()
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -212,8 +234,8 @@ export default function BracketsPage() {
         });
     };
 
-    // Initial load when tournament/squad changes
-    loadBrackets(false);
+    // Initial load when tournament/squad changes — skip if prefetch already populated this pair
+    loadBrackets(true);
 
     // Auto-refresh interval - 15s when visible, 60s when hidden
     const getRefreshInterval = () => document.hidden ? 60000 : 15000;

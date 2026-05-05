@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../app/lib/auth-context';
 import { buildApiUrl } from '../app/lib/api';
 import { logger } from '../app/lib/logger';
+import { shouldRequireTimeSlotBeforeLeavingDashboard, showSelectTimeSlotReminder } from '../app/lib/selection-session';
 import CloseControl from './CloseControl';
 import { navLinks } from './nav-links';
 import styles from './Sidebar.module.css';
@@ -76,6 +77,18 @@ export default function Sidebar({ firstName, isMobile = false, isOpen = false, o
     window.location.href = '/login';
   };
 
+  const handleProtectedNavigation = (event: React.MouseEvent<HTMLAnchorElement>, targetPath: string) => {
+    if (shouldRequireTimeSlotBeforeLeavingDashboard(pathname || '', targetPath)) {
+      event.preventDefault();
+      showSelectTimeSlotReminder();
+      return;
+    }
+
+    if (isMobile) {
+      onClose?.();
+    }
+  };
+
   const sidebarClass = [
     styles.sidebar,
     isMobile ? styles.sidebarMobile : '',
@@ -88,7 +101,7 @@ export default function Sidebar({ firstName, isMobile = false, isOpen = false, o
         {isMobile && (
           <CloseControl onClick={onClose} size="sm" className={styles.closeBtn} label="Close navigation" />
         )}
-        <Link href="/" className={styles.logoLink}>
+        <Link href="/" className={styles.logoLink} onClick={event => handleProtectedNavigation(event, '/')}>
           <div className={styles.logoWrap}>
             <Image
               src="/logo.svg"
@@ -116,6 +129,7 @@ export default function Sidebar({ firstName, isMobile = false, isOpen = false, o
               <Link
                 href={link.href}
                 prefetch={true}
+                onClick={event => handleProtectedNavigation(event, link.href)}
                 className={`${styles.navLink} ${isActive ? styles.navLinkActive : ''}`}
               >
                 {link.label}
@@ -136,6 +150,7 @@ export default function Sidebar({ firstName, isMobile = false, isOpen = false, o
         <Link
           href="/settings"
           prefetch={true}
+          onClick={event => handleProtectedNavigation(event, '/settings')}
           className={`${styles.settingsBtn} ${pathname === '/settings' ? styles.settingsBtnActive : ''}`}
         >
           Settings

@@ -8,7 +8,6 @@ import logging
 from ..deps import get_db
 from ...core import models
 from ...core.config import settings
-from ...core.cache import bracket_cache
 from ...core.validators import BracketValidation
 from ...core.errors import handle_error, ValidationError
 from ...services.brackets_simple import (
@@ -141,26 +140,23 @@ def generate_tournament_brackets_endpoint(
             force_regenerate = True
 
         # Check database for existing brackets (skip cache to always get fresh scores)
-        cache_key = f"brackets_{tournament_id}_{squad_id}"
         if not force_regenerate:
-            # Check database - always refresh scores from score table
-            if brackets_exist_simple(db, tournament_id, squad_id):
-                # Load with refresh_scores=True to get current scores
-                existing_brackets = load_brackets_simple(db, tournament_id, squad_id, refresh_scores=True)
-                if existing_brackets:
-                    tournament = db.query(models.Tournament).filter(models.Tournament.id == tournament_id).first()
-                    if tournament:
-                        result = {
-                            "tournament_id": tournament_id,
-                            "tournament_name": tournament.name,
-                            "bracket_size": existing_brackets.get('bracket_size', 8),
-                            "squad_id": squad_id,
-                            "loaded_from_database": True,
-                            **existing_brackets
-                        }
-                        # DON'T cache - we want fresh scores every time
-                        logger.info(f"Loaded brackets with refreshed scores for tournament {tournament_id}")
-                        return result
+            # Load with refresh_scores=True to get current scores (single query, no separate exist check)
+            existing_brackets = load_brackets_simple(db, tournament_id, squad_id, refresh_scores=True)
+            if existing_brackets:
+                tournament = db.query(models.Tournament).filter(models.Tournament.id == tournament_id).first()
+                if tournament:
+                    result = {
+                        "tournament_id": tournament_id,
+                        "tournament_name": tournament.name,
+                        "bracket_size": existing_brackets.get('bracket_size', 8),
+                        "squad_id": squad_id,
+                        "loaded_from_database": True,
+                        **existing_brackets
+                    }
+                    # DON'T cache - we want fresh scores every time
+                    logger.info(f"Loaded brackets with refreshed scores for tournament {tournament_id}")
+                    return result
         
         # Generate new brackets (either no existing brackets or forced regeneration)
         tournament = db.query(models.Tournament).filter(models.Tournament.id == tournament_id).first()
@@ -217,7 +213,6 @@ def generate_tournament_brackets_endpoint(
                 "no_players": True,
                 **empty_result,
             }
-            bracket_cache.set(cache_key, result)
             return result
         
         # Get scores for these bowlers — single query, build lookup map
@@ -331,9 +326,6 @@ def generate_tournament_brackets_endpoint(
             "validation_result": validation_result  # Include validation info in response
         }
         
-        # Cache the result after successful generation and save
-        bracket_cache.set(cache_key, result)
-        
         return result
         
     except HTTPException:
@@ -386,10 +378,9 @@ def delete_tournament_brackets(
         if not tournament:
             raise HTTPException(status_code=404, detail="Tournament not found")
         
-        if not brackets_exist_simple(db, tournament_id, squad_id):
+        deleted = delete_brackets_simple(db, tournament_id, squad_id)
+        if not deleted:
             raise HTTPException(status_code=404, detail="No brackets found to delete")
-        
-        delete_brackets_simple(db, tournament_id, squad_id)
         
         return {"message": "Brackets deleted successfully"}
         

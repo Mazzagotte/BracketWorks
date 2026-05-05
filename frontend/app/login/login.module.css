@@ -97,6 +97,26 @@
   --label-color: #5a4030;
 }
 
+.formIntro {
+  margin: 0 0 14px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: #6f5746;
+  text-align: center;
+}
+
+.errorBanner {
+  margin-bottom: 14px;
+  padding: 10px 14px;
+  background: rgba(214, 69, 69, 0.12);
+  border: 1px solid rgba(214, 69, 69, 0.35);
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #b42318;
+  text-align: center;
+}
+
 .inputGroup {
   margin-bottom: 14px;
   position: relative;
@@ -329,6 +349,14 @@
   color: var(--color-brand-charcoal-deep, var(--color-text-primary));
   transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(26, 26, 26, 0.15);
+}
+
+.createAccountBtn:disabled,
+.forgotLink:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .forgotLink {

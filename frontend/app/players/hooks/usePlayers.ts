@@ -37,6 +37,14 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
   const [savingStatus, setSavingStatus] = useState<Record<string, 'idle' | 'saving' | 'success' | 'error'>>({});
   const playersRef = useRef<Player[]>([]);
 
+  // Refs for values used only in client-side transforms — keeping them out of
+  // loadPlayers' dependency array prevents a second player fetch whenever
+  // bracket settings arrive after the initial squad/player load.
+  const bracketProgramsRef = useRef(bracketPrograms);
+  const entryFeeRef = useRef(entryFee);
+  useEffect(() => { bracketProgramsRef.current = bracketPrograms; }, [bracketPrograms]);
+  useEffect(() => { entryFeeRef.current = entryFee; }, [entryFee]);
+
   // Pending debounce timers per player: playerId -> timeout handle
   const patchTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
   // Latest pending patch payload per player — so the debounced call always sends the freshest values
@@ -89,6 +97,11 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
       const transformedData = data.map((player: PlayerApiResponse) => {
         const squad = squads?.find(sItem => sItem.id === player.squad_id);
         const [firstName = '', ...rest] = (player.full_name || '').split(' ')
+        const bracketEntries = normalizePlayerBracketEntries(
+          player.program_entry_counts,
+          player.handicap_entry_count || 0,
+          player.scratch_entry_count || 0,
+        );
         return {
           id: player.id,
           firstName,
@@ -98,17 +111,9 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
           average: player.average || 0,
           handicap: player.handicap_entry_count || 0,
           scratch: player.scratch_entry_count || 0,
-          bracketEntries: normalizePlayerBracketEntries(
-            player.program_entry_counts,
-            player.handicap_entry_count || 0,
-            player.scratch_entry_count || 0,
-          ),
+          bracketEntries,
           lane: player.lane || '',
-          totalCost: calculatePlayerTotalCost(
-            normalizePlayerBracketEntries(player.program_entry_counts, player.handicap_entry_count || 0, player.scratch_entry_count || 0),
-            bracketPrograms,
-            entryFee,
-          ),
+          totalCost: calculatePlayerTotalCost(bracketEntries, bracketProgramsRef.current, entryFeeRef.current),
           amountPaid: player.amount_paid || 0,
           squad: squad ? { id: squad.id, date: squad.date, time: squad.time } : undefined
         };
@@ -122,8 +127,10 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
     } finally {
       setIsLoading(false);
     }
+  // bracketPrograms and entryFee are intentionally read via refs to avoid
+  // re-fetching players when settings arrive after the initial load.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedSquad, squads, authToken, bracketPrograms, entryFee]);
+  }, [selectedSquad, squads, authToken]);
 
   const addPlayer = useCallback(async (newPlayer: Omit<Player, 'id'>) => {
     if (!authToken) return;
@@ -370,11 +377,7 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
           bracketEntries,
           handicap,
           scratch,
-          totalCost: calculatePlayerTotalCost(
-            normalizePlayerBracketEntries(bracketEntries, handicap, scratch),
-            bracketPrograms,
-            entryFee,
-          ),
+          totalCost: calculatePlayerTotalCost(bracketEntries, bracketPrograms, entryFee),
         }
       })
     );

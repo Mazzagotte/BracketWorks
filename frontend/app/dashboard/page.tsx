@@ -587,36 +587,38 @@ export default function TournamentDashboard() {
     };
   }, []);
 
-  // Load bracket settings
-  const loadBracketSettings = async (tournamentId: number) => {
+  const fetchBracketSettingsData = async (tournamentId: number): Promise<BracketSettings> => {
     const token = localStorage.getItem('token');
-    if (!token) return;
+    if (!token) {
+      return createDefaultBracketSettings(tournamentId);
+    }
 
     try {
       const settings = await apiClient.get<BracketSettings>(`/api/v1/bracket-settings/${tournamentId}`, false);
       if (settings) {
-        const loaded = {
+        return {
           ...settings,
           bracket_size: 8,
           bracket_programs: normalizeBracketPrograms(settings.bracket_programs, settings.default_entry_fee),
           handicap_percentage: settings.handicap_percentage ?? 80,
-          handicap_base: settings.handicap_base ?? 200
+          handicap_base: settings.handicap_base ?? 200,
         };
-        setBracketSettings(prev => applyAutoHouse(prev, loaded));
-      } else {
-        setBracketSettings(createDefaultBracketSettings(tournamentId));
       }
     } catch (error: unknown) {
       if (getErrorMessage(error).includes('404')) {
-        // Tournament not found or no bracket settings exist - use defaults
         logger.warn('No bracket settings found for tournament', { tournamentId });
-        setBracketSettings(createDefaultBracketSettings(tournamentId));
       } else {
         logger.error('Error loading bracket settings', getErrorContext(error));
-        // On network error, still set up defaults for the tournament
-        setBracketSettings(createDefaultBracketSettings(tournamentId));
       }
     }
+
+    return createDefaultBracketSettings(tournamentId);
+  };
+
+  // Load bracket settings
+  const loadBracketSettings = async (tournamentId: number) => {
+    const loaded = await fetchBracketSettingsData(tournamentId);
+    setBracketSettings(prev => applyAutoHouse(prev, loaded));
   };
 
   const loadSidePots = (tournamentId: number) => {
@@ -830,6 +832,8 @@ export default function TournamentDashboard() {
       const tournamentPromise = fetch(API(`/api/v1/tournaments/${lastTournamentId}`), {
         headers: { Authorization: `Bearer ${token}` }
       }).then(res => res.ok ? res.json() : null);
+
+      const bracketSettingsPromise = fetchBracketSettingsData(Number(lastTournamentId));
       
       const squadsPromise = fetch(API(`/api/v1/squads/?tournament_id=${lastTournamentId}`), {
         headers: {
@@ -845,17 +849,17 @@ export default function TournamentDashboard() {
         : Promise.resolve(null);
       
       // Wait for all requests to complete in parallel
-      Promise.all([tournamentPromise, squadsPromise, selectedSquadPromise])
-        .then(([tournamentData, squadsData, selectedSquadData]) => {
+      Promise.all([tournamentPromise, squadsPromise, selectedSquadPromise, bracketSettingsPromise])
+        .then(([tournamentData, squadsData, selectedSquadData, loadedBracketSettings]) => {
           const storedSelectedSquadId = getSelectedSquadId();
           const restoredSelectedSquadId = selectedSquadData?.squad_id
             ?? (storedSelectedSquadId ? Number(storedSelectedSquadId) : null);
 
-          // Set tournament and load bracket settings
+          // Set tournament and related state from the same startup batch.
           if (tournamentData) {
             setTournament(tournamentData);
             setSelectedTournament(tournamentData.id, tournamentData.name);
-            loadBracketSettings(tournamentData.id);
+            setBracketSettings(prev => applyAutoHouse(prev, loadedBracketSettings));
             loadSidePots(tournamentData.id);
           } else {
             // Tournament no longer accessible — clear stale localStorage
@@ -931,8 +935,6 @@ export default function TournamentDashboard() {
   const handleLoadTournament = async (t: Tournament) => {
     setTournament(t);
     setLoadModalOpen(false);
-    // Load bracket settings for this tournament
-    loadBracketSettings(t.id);
     loadSidePots(t.id);
     // Optionally, persist tournament id to localStorage for reload (not the full object)
     setSelectedTournament(t.id, t.name);
@@ -942,38 +944,37 @@ export default function TournamentDashboard() {
     const userId = localStorage.getItem('user_id');
     if (token) {
       try {
-        // Fetch squads for the tournament
-        const squadsData = await apiClient.get<Squad[]>(`/api/v1/squads/?tournament_id=${t.id}`);
+        const bracketSettingsPromise = fetchBracketSettingsData(t.id);
+        const squadsPromise = apiClient.get<Squad[]>(`/api/v1/squads/?tournament_id=${t.id}`);
+        const selectedSquadPromise = userId
+          ? apiClient.get<{squad_id: number}>(`/api/v1/squads/selected/?user_id=${userId}`)
+              .catch(error => {
+                logger.warn('No selected squad found for user', { userId, error });
+                return null;
+              })
+          : Promise.resolve(null);
+
+        const [loadedBracketSettings, squadsData, selectedSquadData] = await Promise.all([
+          bracketSettingsPromise,
+          squadsPromise,
+          selectedSquadPromise,
+        ]);
+
+        setBracketSettings(prev => applyAutoHouse(prev, loadedBracketSettings));
         setSquads(squadsData);
         
-        // Fetch selected squad for the user
-        if (userId) {
-          try {
-            const selectedSquadData = await apiClient.get<{squad_id: number}>(`/api/v1/squads/selected/?user_id=${userId}`);
-            const storedSelectedSquadId = getSelectedSquadId();
-            const restoredSelectedSquadId = selectedSquadData?.squad_id
-              ?? (storedSelectedSquadId ? Number(storedSelectedSquadId) : null);
+        const storedSelectedSquadId = getSelectedSquadId();
+        const restoredSelectedSquadId = selectedSquadData?.squad_id
+          ?? (storedSelectedSquadId ? Number(storedSelectedSquadId) : null);
 
-            if (restoredSelectedSquadId && squadsData.some(squad => squad.id === restoredSelectedSquadId)) {
-              const restoredSquad = squadsData.find(squad => squad.id === restoredSelectedSquadId) || null;
-              setSelectedSquadId(restoredSelectedSquadId);
-              setSelectedSquad(restoredSelectedSquadId);
-              setActiveSquadLabel(restoredSquad ? [restoredSquad.date, restoredSquad.time].filter(Boolean).join(' ') : '');
-            } else {
-              setSelectedSquadId(null);
-              clearSelectedSquad();
-            }
-          } catch (error) {
-            logger.warn('No selected squad found for user', { userId, error });
-            const storedSelectedSquadId = getSelectedSquadId();
-            const restoredSelectedSquadId = storedSelectedSquadId ? Number(storedSelectedSquadId) : null;
-            const fallbackSquad = restoredSelectedSquadId && squadsData.some(squad => squad.id === restoredSelectedSquadId)
-              ? (squadsData.find(squad => squad.id === restoredSelectedSquadId) || null)
-              : null;
-            setSelectedSquadId(fallbackSquad?.id ?? null);
-            setSelectedSquad(fallbackSquad?.id ?? null);
-            setActiveSquadLabel(fallbackSquad ? [fallbackSquad.date, fallbackSquad.time].filter(Boolean).join(' ') : '');
-          }
+        if (restoredSelectedSquadId && squadsData.some(squad => squad.id === restoredSelectedSquadId)) {
+          const restoredSquad = squadsData.find(squad => squad.id === restoredSelectedSquadId) || null;
+          setSelectedSquadId(restoredSelectedSquadId);
+          setSelectedSquad(restoredSelectedSquadId);
+          setActiveSquadLabel(restoredSquad ? [restoredSquad.date, restoredSquad.time].filter(Boolean).join(' ') : '');
+        } else {
+          setSelectedSquadId(null);
+          clearSelectedSquad();
         }
       } catch (error) {
         logger.error('Error loading squads for tournament', { tournamentId: t.id, error });
