@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '../app/lib/auth-context';
 import { logger } from '../app/lib/logger';
+import { shouldRequireTimeSlotBeforeLeavingDashboard, showSelectTimeSlotReminder } from '../app/lib/selection-session';
 import { navLinks } from './nav-links';
 import styles from './MobileNav.module.css';
 
@@ -22,6 +23,17 @@ export function MobileNav({ isOpen, onClose, firstName, currentPage }: MobileNav
     logger.userAction('User logged out via mobile nav');
     logout();
     window.location.href = '/login';
+  };
+
+  const handleProtectedNavigation = (event: React.MouseEvent<HTMLAnchorElement>, targetPath: string) => {
+    const currentPath = `/${currentPage || ''}`.replace('//', '/');
+    if (shouldRequireTimeSlotBeforeLeavingDashboard(currentPath, targetPath)) {
+      event.preventDefault();
+      showSelectTimeSlotReminder();
+      return;
+    }
+
+    onClose();
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -80,7 +92,7 @@ export function MobileNav({ isOpen, onClose, firstName, currentPage }: MobileNav
               <Link
                 key={item.href}
                 href={item.href}
-                onClick={onClose}
+                onClick={event => handleProtectedNavigation(event, item.href)}
                 className={`${styles.link} ${isActive ? styles.linkActive : ''}`}
                 aria-current={isActive ? 'page' : undefined}
               >
@@ -93,7 +105,7 @@ export function MobileNav({ isOpen, onClose, firstName, currentPage }: MobileNav
         <div className={styles.logoutWrap}>
           <Link
             href="/settings"
-            onClick={onClose}
+            onClick={event => handleProtectedNavigation(event, '/settings')}
             className={`${styles.settingsBtn} ${currentPage === 'settings' ? styles.settingsBtnActive : ''}`}
             aria-current={currentPage === 'settings' ? 'page' : undefined}
           >

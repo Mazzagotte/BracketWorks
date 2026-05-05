@@ -1,5 +1,6 @@
 
 
+from decimal import Decimal
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import update as sa_update
@@ -7,7 +8,7 @@ from typing import List
 from pydantic import BaseModel
 from ..deps import get_db, get_current_user
 from ...core import models, schemas
-from ...core.bracket_programs import calculate_bowler_total_cost, normalize_bowler_bracket_entries, normalize_division
+from ...core.bracket_programs import normalize_bowler_bracket_entries, normalize_bracket_programs, normalize_division
 
 router = APIRouter()
 
@@ -45,15 +46,24 @@ def list_bowlers(
             default_entry_fee = settings.cost_per_bracket
         if settings:
             bracket_programs = settings.bracket_programs
+
+    # Pre-compute normalized programs once — avoids O(N) normalize_bracket_programs calls
+    normalized_programs = normalize_bracket_programs(bracket_programs, default_entry_fee)
+    program_map = {p["key"]: p for p in normalized_programs}
+
     result = []
     for player in players:
-        total_cost = calculate_bowler_total_cost(
-            player.bracket_entries,
-            bracket_programs,
-            default_entry_fee,
-            handicap_entries=player.handicap_entries,
-            scratch_entries=player.scratch_entries,
+        # Normalize entries once per player and reuse for both program_entry_counts and total_cost
+        normalized_entries = normalize_bowler_bracket_entries(
+            player.program_entry_counts,
+            handicap_entries=player.handicap_entry_count,
+            scratch_entries=player.scratch_entry_count,
         )
+        total_cost = float(sum(
+            Decimal(str(program_map.get(key, {}).get("entry_fee") or default_entry_fee or 0)) * count
+            for key, count in normalized_entries.items()
+            if count > 0
+        ))
         player_dict = {
             "id": player.id,
             "tournament_id": player.tournament_id,
@@ -64,11 +74,7 @@ def list_bowlers(
             "handicap_pins": player.handicap_pins,
             "handicap_entry_count": player.handicap_entry_count,
             "scratch_entry_count": player.scratch_entry_count,
-            "program_entry_counts": normalize_bowler_bracket_entries(
-                player.program_entry_counts,
-                handicap_entries=player.handicap_entry_count,
-                scratch_entries=player.scratch_entry_count,
-            ),
+            "program_entry_counts": normalized_entries,
             "lane": player.lane,
             "division": normalize_division(player.division),
             "usbc_number": player.usbc_number,

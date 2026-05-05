@@ -109,12 +109,13 @@ def save_brackets_simple(
                 logger.debug(f"  Sample first match being saved:")
                 logger.debug(f"     {first_match.get('playerA')} (scoreA={first_match.get('scoreA')}) vs {first_match.get('playerB')} (scoreB={first_match.get('scoreB')})")
         
-        # First, mark any existing brackets as inactive
+        # Hard-delete any existing active brackets — inactive rows are never read
+        # so there's no value in keeping them; this keeps the table lean.
         db.query(SimpleBracket).filter(
             SimpleBracket.tournament_id == tournament_id,
             SimpleBracket.squad_id == squad_id if squad_id else SimpleBracket.squad_id.is_(None),
             SimpleBracket.is_active == True
-        ).update({'is_active': False, 'updated_at': datetime.utcnow()})
+        ).delete(synchronize_session=False)
         
         # Create new bracket record
         new_bracket = SimpleBracket(
@@ -680,17 +681,20 @@ def delete_brackets_simple(
     db: Session,
     tournament_id: int,
     squad_id: Optional[int] = None
-) -> None:
+) -> int:
     """
-    Delete all brackets for a tournament/squad by marking them as inactive.
+    Hard-delete all active brackets for a tournament/squad.
+    Returns the number of rows deleted.
     """
     try:
-        db.query(SimpleBracket).filter(
+        deleted = db.query(SimpleBracket).filter(
             SimpleBracket.tournament_id == tournament_id,
-            SimpleBracket.squad_id == squad_id if squad_id else SimpleBracket.squad_id.is_(None)
-        ).update({'is_active': False, 'updated_at': datetime.utcnow()})
+            SimpleBracket.squad_id == squad_id if squad_id else SimpleBracket.squad_id.is_(None),
+            SimpleBracket.is_active == True
+        ).delete(synchronize_session=False)
         
         db.commit()
+        return deleted
         
     except Exception as e:
         db.rollback()

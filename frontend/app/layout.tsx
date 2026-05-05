@@ -18,6 +18,7 @@ import { HeaderProvider, useHeader } from './lib/header-context';
 import { logger } from './lib/logger';
 import { ApiHealthCheck } from './components/ApiHealthCheck';
 import { DevAuthStatus } from './components/DevAuthStatus';
+import { TimeSlotReminderModal } from './components/TimeSlotReminderModal';
 
 
 
@@ -163,8 +164,6 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
             {children}
           </ErrorBoundary>
         </div>
-        <ApiHealthCheck />
-        <DevAuthStatus />
       </ErrorBoundary>
     );
   }
@@ -243,7 +242,8 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
       )}
       
       {/* Development Authentication Status Indicator - Upper Right */}
-      <DevAuthStatus />
+      {!isLoginPage && <DevAuthStatus />}
+      <TimeSlotReminderModal />
       </ErrorBoundary>
   );
 }

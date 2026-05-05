@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from typing import List, Optional
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 import logging
@@ -132,34 +133,29 @@ def create_or_update_score(
     # Calculate handicap and game totals
     handicap = get_handicap_for_bowler(player, score_data.tournament_id, db)
     logger.info(f"Calculating handicap for player {player.full_name} (avg={player.average}): {handicap}")
-    
+
     # Build score dictionary with calculated totals
     score_dict = score_data.model_dump(exclude_unset=True)
     score_dict.update(calculate_game_totals(score_data, handicap))
-    
-    # Check if score already exists for this bowler/tournament/squad
-    existing_score = db.query(PlayerScore).filter(
-        PlayerScore.player_id == score_data.player_id,
-        PlayerScore.tournament_id == score_data.tournament_id,
-        PlayerScore.squad_id == score_data.squad_id
-    ).first()
-    
-    if existing_score:
-        # Update existing score
-        for field, value in score_dict.items():
-            setattr(existing_score, field, value)
-        db.commit()
-        db.refresh(existing_score)
-        logger.info(f"Updated score for player {player.full_name}: G1={existing_score.game1_total}, G2={existing_score.game2_total}, G3={existing_score.game3_total}")
-        return existing_score
-    else:
-        # Create new score
-        new_score = PlayerScore(**score_dict)
-        db.add(new_score)
-        db.commit()
-        db.refresh(new_score)
-        logger.info(f"Created new score for player {player.full_name}: G1={new_score.game1_total}, G2={new_score.game2_total}, G3={new_score.game3_total}")
-        return new_score
+
+    # Single-statement upsert — no separate SELECT needed.
+    # The unique constraint on (player_id, tournament_id, squad_id) makes this safe.
+    update_cols = {k: v for k, v in score_dict.items()
+                   if k not in ("player_id", "tournament_id", "squad_id")}
+    stmt = (
+        pg_insert(PlayerScore)
+        .values(**score_dict)
+        .on_conflict_do_update(
+            constraint="uq_player_scores_player_tournament_squad",
+            set_=update_cols,
+        )
+        .returning(PlayerScore)
+    )
+    result = db.execute(stmt)
+    db.commit()
+    score = result.scalars().one()
+    logger.info(f"Upserted score for player {player.full_name}: G1={score.game1_total}, G2={score.game2_total}, G3={score.game3_total}")
+    return score
 
 @router.put("/{score_id}", response_model=ScoreResponse)
 def update_score(

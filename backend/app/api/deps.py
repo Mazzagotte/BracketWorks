@@ -23,10 +23,10 @@ else:
     engine = create_engine(
         settings.DATABASE_URL,
         echo=False,
-        pool_size=5,
-        max_overflow=10,
+        pool_size=settings.DATABASE_POOL_SIZE,
+        max_overflow=settings.DATABASE_MAX_OVERFLOW,
         pool_timeout=30,
-        pool_pre_ping=False,
+        pool_pre_ping=True,
         pool_recycle=1800,
         connect_args={
             "connect_timeout": 10,

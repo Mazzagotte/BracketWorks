@@ -49,12 +49,16 @@ export default function PlayersPage() {
   const { isAuthenticated, isInitialized, token, user } = useAuth()
   const { tournaments, fetchTournaments } = useTournaments()
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null)
-  const [selectedSquadId, setSelectedSquadId] = useState<number | null>(null)
+  const [selectedSquadId, setSelectedSquadId] = useState<number | null>(() => {
+    if (typeof window === 'undefined') return null
+    const id = getSelectedSquadId()
+    return id ? Number(id) : null
+  })
   const [squads, setSquads] = useState<Squad[]>([])
   const [entryFee, setEntryFee] = useState<number>(25) // Default $25, will be loaded from tournament settings
   const [bracketSize, setBracketSize] = useState<number>(8) // Default 8, will be loaded from tournament settings
   const [bracketPrograms, setBracketPrograms] = useState<BracketProgramDefinition[]>(defaultBracketPrograms)
-  const [initialLoadComplete, setInitialLoadComplete] = useState<boolean>(false)
+  // initialLoadComplete removed — squad fetch now runs in parallel with bracket-settings
   const [sidePots, setSidePots] = useState<SidePotsSettings | null>(null)
   // Per-player side pot entries: { [playerId]: { [potKey]: boolean } } — localStorage only
   const [sidePotEntriesMap, setSidePotEntriesMap] = useState<Record<number, Record<string, boolean>>>({})
@@ -113,6 +117,7 @@ export default function PlayersPage() {
   }, [])
 
   // Load entry fee from tournament bracket settings
+  const lastEntryFeeFetchRef = useRef(0)
   const loadEntryFee = useCallback(async () => {
     if (!token) {
       return;
@@ -127,7 +132,8 @@ export default function PlayersPage() {
     loadSidePots(tournamentId);
     
     try {
-      const settings = await apiClient.get<BracketSettings>(`/api/v1/bracket-settings/${tournamentId}`, false);
+      lastEntryFeeFetchRef.current = Date.now()
+      const settings = await apiClient.get<BracketSettings>(`/api/v1/bracket-settings/${tournamentId}`);
       const nextEntryFee = typeof settings?.default_entry_fee === 'number' ? settings.default_entry_fee : null
       const nextPrograms = normalizeBracketPrograms(settings?.bracket_programs, nextEntryFee ?? entryFee)
       
@@ -147,7 +153,7 @@ export default function PlayersPage() {
       const fallbackPrograms = normalizeBracketPrograms(undefined, entryFee)
       setBracketPrograms(prev => (bracketProgramsEqual(prev, fallbackPrograms) ? prev : fallbackPrograms))
     } finally {
-      setInitialLoadComplete(true);
+      // nothing — squad fetch no longer gated on this
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, loadSidePots]);
@@ -159,8 +165,9 @@ export default function PlayersPage() {
 
   // Reload entry fee when page becomes visible (handles navigation back from Dashboard)
   useEffect(() => {
+    const REFETCH_COOLDOWN_MS = 30_000
     const handleVisibilityChange = () => {
-      if (!document.hidden) {
+      if (!document.hidden && Date.now() - lastEntryFeeFetchRef.current > REFETCH_COOLDOWN_MS) {
         loadEntryFee();
       }
     };
@@ -169,17 +176,23 @@ export default function PlayersPage() {
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [loadEntryFee]);
 
-  // Also reload when component becomes focused (user clicks on the page)
+  // Reload when window regains focus (e.g. alt-tab back from another app)
   useEffect(() => {
+    const REFETCH_COOLDOWN_MS = 30_000
     const handleFocus = () => {
-      loadEntryFee();
+      if (Date.now() - lastEntryFeeFetchRef.current > REFETCH_COOLDOWN_MS) {
+        loadEntryFee();
+      }
     };
 
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
   }, [loadEntryFee]);
 
-  const selectedSquad = squads.find(squad => squad.id === selectedSquadId) || null
+  // Use loaded squad if available, otherwise a minimal placeholder so usePlayers
+  // can begin fetching immediately without waiting for the squads API response.
+  const selectedSquad = squads.find(squad => squad.id === selectedSquadId)
+    ?? (selectedSquadId != null ? { id: selectedSquadId, date: '', time: '' } as Squad : null)
 
   useEffect(() => {
     if (selectedSquadId !== null) {
@@ -689,11 +702,11 @@ export default function PlayersPage() {
       }
     };
 
-    if (isInitialized && token && initialLoadComplete) {
+    if (isInitialized && token) {
       fetchSquadData();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isInitialized, token, initialLoadComplete]);
+  }, [isInitialized, token]);
 
   // Wait for auth initialization
   if (!isInitialized) {

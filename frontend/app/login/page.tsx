@@ -17,12 +17,13 @@ import ResetPasswordModal from "../components/ResetPasswordModal";
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
+  const usernameInputRef = useRef<HTMLInputElement | null>(null);
+  const loginDelayTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
   const [sessionExpired, setSessionExpired] = useState(false);
@@ -37,7 +38,6 @@ export default function LoginPage() {
   const { addToast } = useToast();
 
   useEffect(() => {
-    setTimeout(() => setMounted(true), 100);
     logger.info('Login page loaded');
 
     // Check if redirected here due to session expiry
@@ -49,14 +49,9 @@ export default function LoginPage() {
     // Pre-fill last used username
     const lastUsername = localStorage.getItem('last_username');
     if (lastUsername) setUsername(lastUsername);
-  }, []);
 
-  // Auto-focus username after mount
-  useEffect(() => {
-    if (mounted) {
-      document.getElementById('login-username')?.focus();
-    }
-  }, [mounted]);
+    usernameInputRef.current?.focus();
+  }, []);
 
   // Password visibility timeout - auto-hide after 5 seconds
   useEffect(() => {
@@ -83,6 +78,26 @@ export default function LoginPage() {
       }
     };
   }, [showPassword, addToast]);
+
+  useEffect(() => {
+    return () => {
+      if (loginDelayTimerRef.current) {
+        clearInterval(loginDelayTimerRef.current);
+      }
+    };
+  }, []);
+
+  const updateUsername = (value: string) => {
+    setUsername(value);
+    if (error) setError('');
+    if (loginFailed) setLoginFailed(false);
+  };
+
+  const updatePassword = (value: string) => {
+    setPassword(value);
+    if (error) setError('');
+    if (loginFailed) setLoginFailed(false);
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     setCapsLockOn(e.getModifierState('CapsLock'));
@@ -154,9 +169,18 @@ export default function LoginPage() {
         if (delaySeconds > 0) {
           setLoginDelay(delaySeconds);
           errorMessage += ` Please wait ${delaySeconds} seconds before trying again.`;
-          const timer = setInterval(() => {
+          if (loginDelayTimerRef.current) {
+            clearInterval(loginDelayTimerRef.current);
+          }
+          loginDelayTimerRef.current = setInterval(() => {
             setLoginDelay(prev => {
-              if (prev <= 1) { clearInterval(timer); return 0; }
+              if (prev <= 1) {
+                if (loginDelayTimerRef.current) {
+                  clearInterval(loginDelayTimerRef.current);
+                  loginDelayTimerRef.current = null;
+                }
+                return 0;
+              }
               return prev - 1;
             });
           }, 1000);
@@ -177,6 +201,11 @@ export default function LoginPage() {
       setFailedAttempts(0);
       setLoginDelay(0);
       setLoginFailed(false);
+      setError('');
+      if (loginDelayTimerRef.current) {
+        clearInterval(loginDelayTimerRef.current);
+        loginDelayTimerRef.current = null;
+      }
       localStorage.setItem('last_username', username.trim());
 
       const displayName = data.first_name || username;
@@ -229,16 +258,28 @@ export default function LoginPage() {
 
         {/* Form */}
         <form id="login-form" onSubmit={handleLogin} className={styles.form}>
+          <div className={styles.formIntro}>
+            Log in to BracketWorks
+          </div>
+
+          {error && (
+            <div className={styles.errorBanner} role="alert" aria-live="polite">
+              {error}
+            </div>
+          )}
+
           <div className={styles.inputGroup}>
             <input
+              ref={usernameInputRef}
               type="text"
               id="login-username"
               name="username"
               aria-label="Username"
               placeholder="Username"
               value={username}
-              onChange={e => setUsername(e.target.value)}
+              onChange={e => updateUsername(e.target.value)}
               autoComplete="username"
+              autoFocus
               required
               className={`${styles.input} ${loginFailed ? styles.inputError : ''}`}
             />
@@ -252,34 +293,32 @@ export default function LoginPage() {
               aria-label="Password"
               placeholder="Password"
               value={password}
-              onChange={e => setPassword(e.target.value)}
+              onChange={e => updatePassword(e.target.value)}
               onKeyDown={handleKeyDown}
               onKeyUp={handleKeyUp}
               autoComplete="current-password"
               required
               className={`${styles.input} ${capsLockOn ? styles.inputCapsLock : ''} ${loginFailed ? styles.inputError : ''}`}
             />
-            {mounted && (
-              <button
-                type="button"
-                className={styles.passwordToggle}
-                onClick={() => setShowPassword(!showPassword)}
-                aria-label={showPassword ? "Hide password" : "Show password"}
-              >
-                {showPassword ? (
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-10-7-10-7a18.08 18.08 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 10 7 10 7a18.09 18.09 0 01-2.96 3.84M1 1l22 22"/>
-                  </svg>
-                ) : (
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/>
-                    <circle cx="12" cy="12" r="3"/>
-                  </svg>
-                )}
-                {showPassword ? "Hide" : "Show"}
-              </button>
-            )}
-            {capsLockOn && mounted && (
+            <button
+              type="button"
+              className={styles.passwordToggle}
+              onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? (
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-10-7-10-7a18.08 18.08 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 10 7 10 7a18.09 18.09 0 01-2.96 3.84M1 1l22 22"/>
+                </svg>
+              ) : (
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              )}
+              {showPassword ? "Hide" : "Show"}
+            </button>
+            {capsLockOn && (
               <div className={styles.capsLockWarning}>
                 <span>Caps Lock is ON</span>
               </div>
@@ -318,12 +357,14 @@ export default function LoginPage() {
           <button
             onClick={() => setShowSignupModal(true)}
             className={styles.createAccountBtn}
+            disabled={loading}
           >
             Create Account
           </button>
           <button
             onClick={() => setShowResetPasswordModal(true)}
             className={styles.forgotLink}
+            disabled={loading}
           >
             Forgot Password?
           </button>
@@ -343,8 +384,7 @@ export default function LoginPage() {
         isOpen={showResetPasswordModal}
         onClose={() => setShowResetPasswordModal(false)}
         onSuccess={() => {
-          setShowResetPasswordModal(false);
-          addToast({ type: 'success', message: 'Password reset link sent! Check your email.', duration: 4000 });
+          addToast({ type: 'success', message: 'If that email exists, a reset code has been sent.', duration: 4000 });
         }}
       />
     </div>

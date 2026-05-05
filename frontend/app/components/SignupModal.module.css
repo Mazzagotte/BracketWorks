@@ -79,6 +79,17 @@
   font-weight: 500;
 }
 
+.success {
+  margin-bottom: 20px;
+  padding: 12px 14px;
+  background: #ecfdf3;
+  border: 1px solid #a6f4c5;
+  border-radius: 10px;
+  color: #067647;
+  font-size: 14px;
+  font-weight: 500;
+}
+
 /* Name row */
 .nameRow {
   display: grid;

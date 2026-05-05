@@ -71,3 +71,18 @@ export function clearSelectedSquad() {
 export function notifySettingsChanged() {
   dispatchSelectionEvent('settings-changed')
 }
+
+export function shouldRequireTimeSlotBeforeLeavingDashboard(currentPath: string, targetPath: string): boolean {
+  if (currentPath !== '/dashboard') return false
+  if (targetPath === '/dashboard') return false
+
+  const tournamentId = getSelectedTournamentId()
+  const selectedSquadId = getSelectedSquadId()
+
+  return Boolean(tournamentId) && !selectedSquadId
+}
+
+export function showSelectTimeSlotReminder() {
+  if (typeof window === 'undefined') return
+  window.dispatchEvent(new Event('bw-select-time-slot-reminder'))
+}

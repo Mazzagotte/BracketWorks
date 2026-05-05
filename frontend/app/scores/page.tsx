@@ -754,15 +754,18 @@ export default function ScoresPage() {
         ? `/api/v1/bowlers/?tournament_id=${tournamentId}&squad_id=${squadId}`
         : `/api/v1/bowlers/?tournament_id=${tournamentId}`
       
-      const response = await fetch(API(bowlersUrl), {
-        headers: { Authorization: `Bearer ${token}` }
-      })
+      // Fire bowlers and scores in parallel — scores don't depend on bowlers
+      const scoresUrl = `/api/v1/scores/?tournament_id=${tournamentId}`
+      const [bowlersResponse, scoresResponse] = await Promise.all([
+        fetch(API(bowlersUrl), { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(API(scoresUrl), { headers: { Authorization: `Bearer ${token}` } }),
+      ])
 
-      if (!response.ok) {
-        logger.error(`Bowlers API returned ${response.status} for url: ${bowlersUrl}`)
+      if (!bowlersResponse.ok) {
+        logger.error(`Bowlers API returned ${bowlersResponse.status} for url: ${bowlersUrl}`)
       }
       
-      let data = response.ok ? await response.json() : []
+      let data = bowlersResponse.ok ? await bowlersResponse.json() : []
 
       // Fallback: if squad-filtered fetch returns no results, load all tournament players.
       // Players added without a squad selection have squad_id = null and won't match the squad filter.
@@ -774,13 +777,6 @@ export default function ScoresPage() {
           data = await fallbackResponse.json()
         }
       }
-      
-      // Fetch existing scores from database (always without squad filter to catch all scores)
-      const scoresUrl = `/api/v1/scores/?tournament_id=${tournamentId}`
-      
-      const scoresResponse = await fetch(API(scoresUrl), {
-        headers: { Authorization: `Bearer ${token}` }
-      })
       
       const scoresData = scoresResponse.ok ? await scoresResponse.json() : []
       

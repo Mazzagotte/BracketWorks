@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { API } from '../lib/api';
 import { logger } from '../lib/logger';
 import CloseControl from '../../components/CloseControl';
@@ -13,6 +13,7 @@ interface SignupModalProps {
 }
 
 export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalProps) {
+  const successCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [username, setUsername] = useState('');
@@ -29,6 +30,7 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
   const [checkingUsername, setCheckingUsername] = useState(false);
   const [showPasswordRequirements, setShowPasswordRequirements] = useState(false);
+  const [signupSuccess, setSignupSuccess] = useState(false);
   const [fieldValidation, setFieldValidation] = useState({
     firstName: false,
     lastName: false,
@@ -62,10 +64,15 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
   // Reset form when modal closes
   useEffect(() => {
     if (!isOpen) {
+      if (successCloseTimerRef.current) {
+        clearTimeout(successCloseTimerRef.current);
+        successCloseTimerRef.current = null;
+      }
       setFirstName(''); setLastName(''); setUsername('');
       setOrganization(''); setEmail(''); setPassword('');
       setConfirmPassword(''); setError('');
       setUsernameAvailable(null); setPasswordStrength(0);
+      setSignupSuccess(false);
       setShowPassword(false); setShowConfirmPassword(false);
       setShowPasswordRequirements(false);
       setFieldValidation({
@@ -74,6 +81,22 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
       });
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    return () => {
+      if (successCloseTimerRef.current) {
+        clearTimeout(successCloseTimerRef.current);
+      }
+    };
+  }, []);
+
+  const getPasswordRequirementChecks = (pw: string) => ({
+    minLength: pw.length >= 6,
+    lower: /[a-z]/.test(pw),
+    upper: /[A-Z]/.test(pw),
+    number: /[0-9]/.test(pw),
+    special: /[^A-Za-z0-9]/.test(pw),
+  });
 
   const calculatePasswordStrength = (pw: string) => {
     let s = 0;
@@ -106,7 +129,10 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
       case 'lastName': return value.trim().length >= 2;
       case 'username': return value.trim().length >= 3 && /^[a-zA-Z0-9_]+$/.test(value);
       case 'email': return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-      case 'password': return value.length >= 6;
+      case 'password': {
+        const checks = getPasswordRequirementChecks(value);
+        return checks.minLength && checks.lower && checks.upper && checks.number && checks.special;
+      }
       case 'confirmPassword': return value === password && value.length > 0;
       default: return false;
     }
@@ -117,6 +143,21 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
     setFieldValidation(prev => ({ ...prev, [field]: isValid }));
   };
 
+  const clearTransientFeedback = () => {
+    if (error) setError('');
+    if (signupSuccess) setSignupSuccess(false);
+  };
+
+  const isFormReady =
+    validateField('firstName', firstName) &&
+    validateField('lastName', lastName) &&
+    validateField('username', username) &&
+    validateField('email', email) &&
+    validateField('password', password) &&
+    validateField('confirmPassword', confirmPassword) &&
+    usernameAvailable === true &&
+    !checkingUsername;
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -126,9 +167,16 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
     if (!username.trim()) { setError('Username is required'); return; }
     if (!email.trim()) { setError('Email is required'); return; }
     if (!password.trim()) { setError('Password is required'); return; }
-    if (password.length < 6) { setError('Password must be at least 6 characters'); return; }
+    const passwordChecks = getPasswordRequirementChecks(password);
+    if (!(passwordChecks.minLength && passwordChecks.lower && passwordChecks.upper && passwordChecks.number && passwordChecks.special)) {
+      setError('Password must be at least 6 characters and include uppercase, lowercase, number, and special character');
+      return;
+    }
     if (password !== confirmPassword) { setError('Passwords do not match'); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setError('Please enter a valid email address'); return; }
+    if (usernameAvailable === false) { setError('Username is taken'); return; }
+    if (checkingUsername || usernameAvailable !== true) { setError('Please wait for username availability check to complete'); return; }
+    if (!isFormReady) { setError('Please complete all required fields'); return; }
 
     setLoading(true);
     try {
@@ -154,8 +202,11 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
       }
 
       logger.info('Signup successful', { username });
-      onSuccess?.();
-      onClose();
+      setSignupSuccess(true);
+      successCloseTimerRef.current = setTimeout(() => {
+        onSuccess?.();
+        onClose();
+      }, 650);
     } catch (err: unknown) {
       logger.error('Signup error', { error: err instanceof Error ? err.message : String(err) });
       setError(err instanceof Error ? err.message : 'An error occurred during signup');
@@ -191,6 +242,7 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
 
         {/* Form */}
         <form onSubmit={handleSignup} className={styles.body}>
+          {signupSuccess && <div className={styles.success}>Account created successfully! Redirecting to login...</div>}
           {error && <div className={styles.error}>{error}</div>}
 
           {/* First Name / Last Name */}
@@ -200,7 +252,11 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
               <input
                 type="text"
                 value={firstName}
-                onChange={e => { setFirstName(e.target.value); updateFieldValidation('firstName', e.target.value); }}
+                onChange={e => {
+                  clearTransientFeedback();
+                  setFirstName(e.target.value);
+                  updateFieldValidation('firstName', e.target.value);
+                }}
                 required
                 className={`${inputClass(fieldValidation.firstName)} ${fieldValidation.firstName ? styles.inputWithIcon : ''}`}
               />
@@ -211,7 +267,11 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
               <input
                 type="text"
                 value={lastName}
-                onChange={e => { setLastName(e.target.value); updateFieldValidation('lastName', e.target.value); }}
+                onChange={e => {
+                  clearTransientFeedback();
+                  setLastName(e.target.value);
+                  updateFieldValidation('lastName', e.target.value);
+                }}
                 required
                 className={`${inputClass(fieldValidation.lastName)} ${fieldValidation.lastName ? styles.inputWithIcon : ''}`}
               />
@@ -225,7 +285,11 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
             <input
               type="text"
               value={username}
-              onChange={e => { setUsername(e.target.value); updateFieldValidation('username', e.target.value); }}
+              onChange={e => {
+                clearTransientFeedback();
+                setUsername(e.target.value);
+                updateFieldValidation('username', e.target.value);
+              }}
               required
               className={`${styles.input} ${styles.inputWithIcon} ${
                 usernameAvailable === false ? styles.inputError :
@@ -239,6 +303,9 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
             {usernameAvailable === false && !checkingUsername && (
               <div className={styles.fieldHint}>Username is taken</div>
             )}
+            {usernameAvailable === true && !checkingUsername && (
+              <div className={`${styles.fieldHint} ${styles.fieldHintAvailable}`}>Username available</div>
+            )}
           </div>
 
           {/* Organization */}
@@ -247,7 +314,10 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
             <input
               type="text"
               value={organization}
-              onChange={e => setOrganization(e.target.value)}
+              onChange={e => {
+                clearTransientFeedback();
+                setOrganization(e.target.value);
+              }}
               placeholder="Organization name"
               className={styles.input}
             />
@@ -259,7 +329,11 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
             <input
               type="email"
               value={email}
-              onChange={e => { setEmail(e.target.value); updateFieldValidation('email', e.target.value); }}
+              onChange={e => {
+                clearTransientFeedback();
+                setEmail(e.target.value);
+                updateFieldValidation('email', e.target.value);
+              }}
               required
               className={`${inputClass(fieldValidation.email)} ${fieldValidation.email ? styles.inputWithIcon : ''}`}
             />
@@ -273,7 +347,12 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
               <input
                 type={mounted && showPassword ? "text" : "password"}
                 value={password}
-                onChange={e => { setPassword(e.target.value); updateFieldValidation('password', e.target.value); }}
+                onChange={e => {
+                  clearTransientFeedback();
+                  setPassword(e.target.value);
+                  updateFieldValidation('password', e.target.value);
+                  updateFieldValidation('confirmPassword', confirmPassword);
+                }}
                 onFocus={() => setShowPasswordRequirements(true)}
                 onBlur={() => setShowPasswordRequirements(false)}
                 required
@@ -322,11 +401,11 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
                 <div className={styles.requirementsTitle}>Password requirements</div>
                 <div className={styles.requirementsList}>
                   {[
-                    { met: password.length >= 6, label: 'At least 6 characters' },
-                    { met: /[a-z]/.test(password), label: 'Lowercase letter' },
-                    { met: /[A-Z]/.test(password), label: 'Uppercase letter' },
-                    { met: /[0-9]/.test(password), label: 'Number' },
-                    { met: /[^A-Za-z0-9]/.test(password), label: 'Special character' },
+                    { met: getPasswordRequirementChecks(password).minLength, label: 'At least 6 characters' },
+                    { met: getPasswordRequirementChecks(password).lower, label: 'Lowercase letter' },
+                    { met: getPasswordRequirementChecks(password).upper, label: 'Uppercase letter' },
+                    { met: getPasswordRequirementChecks(password).number, label: 'Number' },
+                    { met: getPasswordRequirementChecks(password).special, label: 'Special character' },
                   ].map(r => (
                     <div key={r.label} className={r.met ? styles.requirementMet : styles.requirementUnmet}>
                       {r.met ? '\u2713' : '\u25CB'} {r.label}
@@ -344,7 +423,11 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
               <input
                 type={mounted && showConfirmPassword ? "text" : "password"}
                 value={confirmPassword}
-                onChange={e => { setConfirmPassword(e.target.value); updateFieldValidation('confirmPassword', e.target.value); }}
+                onChange={e => {
+                  clearTransientFeedback();
+                  setConfirmPassword(e.target.value);
+                  updateFieldValidation('confirmPassword', e.target.value);
+                }}
                 required
                 placeholder="Confirm your password"
                 className={`${styles.input} ${styles.inputWithToggle} ${
@@ -380,7 +463,7 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
 
           {/* Buttons */}
           <div className={styles.buttons}>
-            <button type="submit" disabled={loading} className={styles.submitBtn}>
+            <button type="submit" disabled={loading || !isFormReady} className={styles.submitBtn}>
               {loading ? 'Creating...' : 'Create Account'}
             </button>
             <button type="button" onClick={onClose} disabled={loading} className={styles.cancelBtn}>
