@@ -1,4 +1,4 @@
-import React, { memo, useState, useEffect } from 'react';
+import React, { memo, useState, useEffect, useRef } from 'react';
 
 import { PlayerFormProps } from '../types';
 import styles from '../entries.module.css';
@@ -17,9 +17,37 @@ const EMPTY_FORM = {
   amountPaid: 0
 };
 
-const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketPrograms }: PlayerFormProps) => {
+const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketPrograms, prefillDraft, prefillVersion }: PlayerFormProps) => {
   const [formData, setFormData] = useState({ ...EMPTY_FORM });
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const averageInputRef = useRef<HTMLInputElement | null>(null)
+
+  useEffect(() => {
+    if (!prefillDraft) return
+
+    setFormData(prev => {
+      const nextDivision = prefillDraft.division ? normalizeDivision(prefillDraft.division) : prev.division
+      const nextEntries = filterEntriesForDivision(prev.bracketEntries, bracketPrograms, nextDivision)
+      return {
+        ...prev,
+        firstName: prefillDraft.firstName ?? prev.firstName,
+        lastName: prefillDraft.lastName ?? prev.lastName,
+        usbc: prefillDraft.usbc ?? prev.usbc,
+        average: prefillDraft.average ?? prev.average,
+        lane: prefillDraft.lane ?? prev.lane,
+        division: nextDivision,
+        bracketEntries: nextEntries,
+        handicap: nextEntries.handicap ?? 0,
+        scratch: nextEntries.scratch ?? 0,
+      }
+    })
+
+    // Move keyboard focus so the next user input goes into Average immediately.
+    window.setTimeout(() => {
+      averageInputRef.current?.focus()
+      averageInputRef.current?.select()
+    }, 0)
+  }, [prefillDraft, prefillVersion, bracketPrograms])
 
   const draftTotal = calculatePlayerTotalCost(
     normalizePlayerBracketEntries(formData.bracketEntries, formData.handicap, formData.scratch),
@@ -146,6 +174,7 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
           <div>
             <label className={styles.fieldLabel}>Average</label>
             <input
+              ref={averageInputRef}
               type="number"
               value={formData.average}
               onChange={(e) => handleInputChange('average', parseInt(e.target.value) || 0)}

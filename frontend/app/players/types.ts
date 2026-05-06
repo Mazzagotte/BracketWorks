@@ -55,6 +55,17 @@ export interface PlayerFormProps {
   squads: Squad[];
   entryFee: number;
   bracketPrograms: BracketProgramDefinition[];
+  prefillDraft?: PlayerFormPrefillDraft | null;
+  prefillVersion?: number;
+}
+
+export interface PlayerFormPrefillDraft {
+  firstName?: string;
+  lastName?: string;
+  usbc?: string;
+  division?: string;
+  lane?: string;
+  average?: number;
 }
 
 export interface PlayersStatsProps {

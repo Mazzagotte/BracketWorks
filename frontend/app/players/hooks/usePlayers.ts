@@ -28,9 +28,12 @@ interface UsePlayersOptions {
   getItem: (key: string) => string | null;
   entryFee: number;
   bracketPrograms: BracketProgramDefinition[];
+  searchUsbc?: string;
+  searchFirstName?: string;
+  searchLastName?: string;
 }
 
-export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee, bracketPrograms }: UsePlayersOptions) {
+export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee, bracketPrograms, searchUsbc, searchFirstName, searchLastName }: UsePlayersOptions) {
   const toast = useToastHelpers();
   const [players, setPlayers] = useState<Player[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -79,6 +82,15 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
     try {
       const params = new URLSearchParams({ tournament_id: tournamentId });
       params.set('squad_id', String(selectedSquad.id));
+      if (searchUsbc?.trim()) {
+        params.set('usbc_number', searchUsbc.trim());
+      }
+      if (searchFirstName?.trim()) {
+        params.set('first_name', searchFirstName.trim());
+      }
+      if (searchLastName?.trim()) {
+        params.set('last_name', searchLastName.trim());
+      }
       const bowlersUrl = `/api/v1/bowlers?${params.toString()}`;
       
       const response = await fetch(API(bowlersUrl), {
@@ -130,7 +142,7 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
   // bracketPrograms and entryFee are intentionally read via refs to avoid
   // re-fetching players when settings arrive after the initial load.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedSquad, squads, authToken]);
+  }, [selectedSquad, squads, authToken, searchUsbc, searchFirstName, searchLastName]);
 
   const addPlayer = useCallback(async (newPlayer: Omit<Player, 'id'>) => {
     if (!authToken) return;

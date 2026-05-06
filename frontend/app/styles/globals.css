@@ -453,17 +453,20 @@ input[type='number'] { appearance: textfield; -moz-appearance: textfield; }
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   border-color: rgba(255, 122, 0, 0.2);
+  display: block;
 }
 .entries-table {
-  width: max-content;
-  min-width: 100%;
+  width: auto;
+  min-width: auto;
+  table-layout: auto;
   overflow: hidden;
   border-radius: var(--radius-md);
+  white-space: nowrap;
 }
 .entries-header-row { border-bottom: 3px solid var(--color-primary); }
-.entries-header-cell { padding: 8px 4px; text-align: center; font-size: var(--font-size-sm); letter-spacing: 0.02em; line-height: 1.3; }
-.entries-cell { padding: 5px 2px; text-align: center; color: var(--color-text-primary); }
-.entries-cell.medium { padding: 6px 3px; }
+.entries-header-cell { padding: 6px 2px; text-align: center; font-size: var(--font-size-sm); letter-spacing: 0.01em; line-height: 1.2; }
+.entries-cell { padding: 4px 1px; text-align: center; color: var(--color-text-primary); }
+.entries-cell.medium { padding: 4px 2px; }
 .players-table-row,
 .scores-row { height: 44px; background: var(--color-surface); transition: background-color 0.15s ease; }
 .players-table-row:nth-child(even),
@@ -471,8 +474,8 @@ input[type='number'] { appearance: textfield; -moz-appearance: textfield; }
 .players-table-row:hover,
 .scores-row:hover { background: rgba(255, 122, 0, 0.12) !important; }
 
-.entries-header-cell.col-name { width: 124px; }
-.entries-header-cell.col-usbc { width: 96px; }
+.entries-header-cell.col-name { width: auto; min-width: 140px; }
+.entries-header-cell.col-usbc { width: auto; min-width: 90px; }
 .entries-header-cell.col-lane { width: 64px; }
 .entries-header-cell.col-average { width: 72px; }
 .entries-header-cell.col-handicap { width: 84px; }
@@ -489,6 +492,14 @@ input[type='number'] { appearance: textfield; -moz-appearance: textfield; }
 .entries-header-cell.col-division { width: 84px; }
 .entries-header-cell.col-cost { width: 108px; }
 .entries-header-cell.col-actions { width: 46px; }
+
+.entries-table .entries-cell.col-name {
+  min-width: 160px;
+}
+
+.entries-table .entries-cell.col-usbc {
+  min-width: 96px;
+}
 
 .entries-sort-btn { width: 100%; border: 0; background: transparent; color: inherit; font: inherit; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 0; }
 .entries-sort-btn.is-active,

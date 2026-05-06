@@ -620,3 +620,69 @@
   color: #64748b;
   padding: 3rem;
 }
+
+.scoresSearchCard {
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border-light);
+  border-radius: 14px;
+  background: var(--color-brand-ivory-light);
+  box-shadow: 0 2px 8px var(--opacity-black-06);
+}
+
+.scoresSearchTitle {
+  margin: 0 0 10px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.scoresSearchRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.scoresSearchInput {
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid var(--color-border-light);
+  border-radius: 10px;
+  padding: 0 12px;
+  font-size: 0.9rem;
+  color: var(--color-text-primary);
+  background: var(--color-white);
+}
+
+.scoresSearchInput:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 22%, transparent);
+}
+
+.scoresSearchClear {
+  min-height: 38px;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 28%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  color: var(--color-primary);
+  padding: 0 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.scoresSearchClear:hover {
+  background: color-mix(in srgb, var(--color-primary) 16%, transparent);
+}
+
+@media (max-width: 900px) {
+  .scoresSearchRow {
+    grid-template-columns: 1fr;
+  }
+
+  .scoresSearchClear {
+    width: 100%;
+  }
+}

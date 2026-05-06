@@ -38,6 +38,20 @@ class User(Base):
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
+class BowlerProfile(Base):
+    __tablename__ = "bowler_profiles"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    first_name: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    last_name: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    usbc_number: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, index=True)
+    archived_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class TournamentPlayer(Base):
     __tablename__ = "tournament_players"
 
@@ -45,6 +59,7 @@ class TournamentPlayer(Base):
     tournament_id: Mapped[int] = mapped_column(Integer, ForeignKey("tournaments.id"), nullable=False, index=True)
     squad_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("tournament_squads.id"), nullable=True, index=True)
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    bowler_profile_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("bowler_profiles.id"), nullable=True, index=True)
     full_name: Mapped[str] = mapped_column(String, nullable=False)
     average: Mapped[int | None] = mapped_column(Integer, nullable=True)
     handicap_pins: Mapped[int | None] = mapped_column(Integer, nullable=True)
@@ -234,6 +249,7 @@ class BracketSnapshot(Base):
 SelectedSquad = UserSquadSelection
 Squad = TournamentSquad
 Bowler = TournamentPlayer
+BowlerProfileModel = BowlerProfile
 BracketSettings = TournamentBracketSettings
 Score = PlayerScore
 TournamentWinner = BracketWinner
