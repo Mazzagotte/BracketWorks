@@ -356,11 +356,17 @@ export default function PlayersPage() {
     })
 
     // Single state update — no cascade
-    // Compute costs first so we can set amountPaid = totalCost (all PAID)
-    const costMap = new Map(
+    // Keep base bracket cost separate from full due (base + side pots).
+    const baseCostMap = new Map(
       updates.map(u => [
         u.id,
-        calculatePlayerTotalCost(u.program_entry_counts, enabledBracketPrograms, entryFee)
+        calculatePlayerTotalCost(u.program_entry_counts, enabledBracketPrograms, entryFee),
+      ])
+    )
+    const totalDueMap = new Map(
+      updates.map(u => [
+        u.id,
+        (baseCostMap.get(u.id) ?? 0)
           + calculateSidePotCost(randomizedSidePotEntries.get(u.id), sidePots),
       ])
     )
@@ -382,7 +388,8 @@ export default function PlayersPage() {
       const u = updateMap.get(player.id)
       if (!u) return player
       const bracketEntries = u.program_entry_counts
-      const totalCost = costMap.get(player.id) ?? 0
+      const totalCost = baseCostMap.get(player.id) ?? 0
+      const totalDue = totalDueMap.get(player.id) ?? totalCost
       return {
         ...player,
         average: u.average,
@@ -391,14 +398,14 @@ export default function PlayersPage() {
         bracketEntries,
         sidePotEntries: randomizedSidePotEntries.get(player.id) ?? player.sidePotEntries,
         totalCost,
-        amountPaid: totalCost,
+        amountPaid: totalDue,
       }
     }))
 
     // Include amount_paid in the bulk write so it persists
     const updatesWithPaid = updates.map(u => ({
       ...u,
-      amount_paid: costMap.get(u.id) ?? 0,
+      amount_paid: totalDueMap.get(u.id) ?? 0,
     }))
 
     cancelPendingPatches()
