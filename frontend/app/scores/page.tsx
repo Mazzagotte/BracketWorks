@@ -54,6 +54,8 @@ export default function ScoresPage() {
   const [isImporting, setIsImporting] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [isScoresLocked, setIsScoresLocked] = useState(false)
+  const [searchFirstName, setSearchFirstName] = useState('')
+  const [searchLastName, setSearchLastName] = useState('')
   const importFileRef = useRef<HTMLInputElement | null>(null)
   
   // Sorting state
@@ -219,13 +221,34 @@ export default function ScoresPage() {
       return 0;
     });
   }, [players, sortConfig]);
+
+  const filteredPlayers = useMemo(() => {
+    const firstNameQuery = searchFirstName.trim().toLowerCase()
+    const lastNameQuery = searchLastName.trim().toLowerCase()
+
+    if (!firstNameQuery && !lastNameQuery) {
+      return sortedPlayers
+    }
+
+    return sortedPlayers.filter(player => {
+      const first = (player.firstName || '').toLowerCase()
+      const last = (player.lastName || '').toLowerCase()
+      const firstMatches = !firstNameQuery || first.includes(firstNameQuery)
+      const lastMatches = !lastNameQuery || last.includes(lastNameQuery)
+      return firstMatches && lastMatches
+    })
+  }, [sortedPlayers, searchFirstName, searchLastName])
   
   // Pagination for large player lists (use sorted players)
   const paginationHook = usePagination({
-    items: sortedPlayers,
+    items: filteredPlayers,
     itemsPerPage: 50,
     resetOnItemsChange: false
   })
+
+  useEffect(() => {
+    paginationHook.goToPage(1)
+  }, [searchFirstName, searchLastName, paginationHook.goToPage])
 
   // Stable reference for auto-save — only changes when scores actually change
   const autoSaveData = useMemo(
@@ -1519,8 +1542,40 @@ export default function ScoresPage() {
             </div>
           )}
 
-          {/* Scores Table */}
           {!isLoading && players.length > 0 && (
+            <div className={styles.scoresSearchCard}>
+              <h3 className={styles.scoresSearchTitle}>Scores Table Search</h3>
+              <div className={styles.scoresSearchRow}>
+                <input
+                  type="text"
+                  className={styles.scoresSearchInput}
+                  placeholder="Search First Name"
+                  value={searchFirstName}
+                  onChange={(event) => setSearchFirstName(event.target.value)}
+                />
+                <input
+                  type="text"
+                  className={styles.scoresSearchInput}
+                  placeholder="Search Last Name"
+                  value={searchLastName}
+                  onChange={(event) => setSearchLastName(event.target.value)}
+                />
+                <button
+                  type="button"
+                  className={styles.scoresSearchClear}
+                  onClick={() => {
+                    setSearchFirstName('')
+                    setSearchLastName('')
+                  }}
+                >
+                  Clear Search
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Scores Table */}
+          {!isLoading && filteredPlayers.length > 0 && (
             <div className="entries-container">
 
                 <table className="entries-table" aria-label="Player Scores" onKeyDownCapture={handleTableArrowNavigation}>
@@ -1674,14 +1729,20 @@ export default function ScoresPage() {
         </div>
         )}
 
+        {!isLoading && players.length > 0 && filteredPlayers.length === 0 && (
+          <div className={styles.statusMessage}>
+            No players match the current first/last name search.
+          </div>
+        )}
+
         {/* Pagination Controls */}
         {paginationHook.totalPages > 1 && (
           <div className={styles.paginationWrapper}>
             <div className={styles.paginationInfo}>
               <span>
                 Showing {((paginationHook.currentPage - 1) * 50) + 1} to{' '}
-                {Math.min(paginationHook.currentPage * 50, players.length)} of{' '}
-                {players.length} players
+                {Math.min(paginationHook.currentPage * 50, filteredPlayers.length)} of{' '}
+                {filteredPlayers.length} players
               </span>
             </div>
             
@@ -1690,7 +1751,7 @@ export default function ScoresPage() {
               totalPages={paginationHook.totalPages}
               onPageChange={paginationHook.goToPage}
               itemsPerPage={20}
-              totalItems={players.length}
+              totalItems={filteredPlayers.length}
               showItemCount={false}
               showPageSize={false}
             />

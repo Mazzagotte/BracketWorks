@@ -87,6 +87,7 @@ class PlayerBase(BaseModel):
     tournament_id: int
     squad_id: int | None = None
     user_id: int | None = None
+    bowler_profile_id: int | None = None
     full_name: str = Field(validation_alias=AliasChoices("full_name", "name"))
     average: int | None = None
     handicap_entry_count: int | None = Field(default=None, validation_alias=AliasChoices("handicap_entry_count", "handicap_entries"))
@@ -108,6 +109,7 @@ class PlayerUpdate(BaseModel):
     tournament_id: int | None = None
     squad_id: int | None = None
     user_id: int | None = None
+    bowler_profile_id: int | None = None
     full_name: str | None = Field(default=None, validation_alias=AliasChoices("full_name", "name"))
     average: int | None = None
     handicap_entry_count: int | None = Field(default=None, validation_alias=AliasChoices("handicap_entry_count", "handicap_entries"))
@@ -123,6 +125,23 @@ class Player(PlayerBase):
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
     id: int
+
+
+class BowlerProfileBase(BaseModel):
+    first_name: str
+    last_name: str
+    usbc_number: str | None = None
+
+
+class BowlerProfile(BowlerProfileBase):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    user_id: int
+    is_active: bool
+    archived_at: datetime | None
+    created_at: datetime
+    updated_at: datetime
 
 class TournamentBase(BaseModel):
     name: str

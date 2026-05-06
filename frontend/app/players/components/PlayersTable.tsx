@@ -26,6 +26,21 @@ const PlayersTable = memo(({
   );
   const [sortConfig, setSortConfig] = useState<SortConfig>({ column: 'lane', direction: 'asc' });
 
+  const maxUsbcChars = useMemo(() => {
+    const maxChars = players.reduce((maxValue, player) => Math.max(maxValue, String(player.usbc || '').trim().length), 0)
+    return Math.min(14, Math.max(8, maxChars))
+  }, [players])
+
+  const maxFirstNameChars = useMemo(() => {
+    const maxChars = players.reduce((maxValue, player) => Math.max(maxValue, (player.firstName || '').trim().length), 0)
+    return Math.min(16, Math.max(5, maxChars))
+  }, [players])
+
+  const maxLastNameChars = useMemo(() => {
+    const maxChars = players.reduce((maxValue, player) => Math.max(maxValue, (player.lastName || '').trim().length), 0)
+    return Math.min(20, Math.max(6, maxChars))
+  }, [players])
+
   const sortedPlayers = useMemo(() => {
     const getNumber = (value: unknown) => {
       if (typeof value === 'number') return value;
@@ -197,8 +212,9 @@ const PlayersTable = memo(({
               <OptimizedTableCell className="entries-cell medium col-usbc">
                 <div className="pos-relative flex-center">
                     <input
-                    className="entries-input entries-control w-80"
+                    className="entries-input entries-control"
                     type="text"
+                    size={maxUsbcChars}
                     value={player.usbc || ''}
                     onChange={(changeEvent) => handleCellEdit(player.id, 'usbc', changeEvent.target.value)}
                     placeholder="USBC #"
@@ -210,8 +226,9 @@ const PlayersTable = memo(({
                 <div className="flex-center gap-3">
                   <div className="pos-relative">
                     <input
-                      className="entries-input entries-control w-75"
+                      className="entries-input entries-control"
                       type="text"
+                      size={maxFirstNameChars}
                       value={player.firstName}
                       onChange={(changeEvent) => handleCellEdit(player.id, 'firstName', changeEvent.target.value)}
                       placeholder="First"
@@ -219,8 +236,9 @@ const PlayersTable = memo(({
                   </div>
                   <div className="pos-relative">
                     <input
-                      className="entries-input entries-control w-75"
+                      className="entries-input entries-control"
                       type="text"
+                      size={maxLastNameChars}
                       value={player.lastName}
                       onChange={(changeEvent) => handleCellEdit(player.id, 'lastName', changeEvent.target.value)}
                       placeholder="Last"

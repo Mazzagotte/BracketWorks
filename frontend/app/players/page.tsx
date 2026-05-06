@@ -13,7 +13,7 @@ import PlayersTable from './components/PlayersTable'
 import PlayerForm from './components/PlayerForm'
 import NoTournamentState from '../components/NoTournamentState'
 import { logger } from '../lib/logger'
-import { Squad, Player } from './types'
+import { Squad, Player, PlayerFormPrefillDraft } from './types'
 import { BracketProgramDefinition, BracketSettings, SidePotsSettings, Tournament } from '../lib/types'
 import { apiClient, API } from '../lib/api'
 import { calculatePlayerTotalCost, calculateSidePotCost, defaultBracketPrograms, filterEntriesForDivision, getEnabledBracketPrograms, normalizeBracketPrograms, normalizeDivision, normalizePlayerBracketEntries, summarizeEntries } from '../lib/bracketPrograms'
@@ -60,9 +60,83 @@ export default function PlayersPage() {
   const [bracketPrograms, setBracketPrograms] = useState<BracketProgramDefinition[]>(defaultBracketPrograms)
   // initialLoadComplete removed — squad fetch now runs in parallel with bracket-settings
   const [sidePots, setSidePots] = useState<SidePotsSettings | null>(null)
+  const [historySearchUsbc, setHistorySearchUsbc] = useState('')
+  const [historySearchFirstName, setHistorySearchFirstName] = useState('')
+  const [historySearchLastName, setHistorySearchLastName] = useState('')
+  const [debouncedHistorySearchUsbc, setDebouncedHistorySearchUsbc] = useState('')
+  const [debouncedHistorySearchFirstName, setDebouncedHistorySearchFirstName] = useState('')
+  const [debouncedHistorySearchLastName, setDebouncedHistorySearchLastName] = useState('')
+  const [historyResults, setHistoryResults] = useState<Array<{ id: number; first_name: string; last_name: string; usbc_number?: string | null }>>([])
+  const [isHistorySearching, setIsHistorySearching] = useState(false)
+  const [prefillDraft, setPrefillDraft] = useState<PlayerFormPrefillDraft | null>(null)
+  const [prefillVersion, setPrefillVersion] = useState(0)
+  const [searchUsbc, setSearchUsbc] = useState('')
+  const [searchFirstName, setSearchFirstName] = useState('')
+  const [searchLastName, setSearchLastName] = useState('')
+  const [debouncedSearchUsbc, setDebouncedSearchUsbc] = useState('')
+  const [debouncedSearchFirstName, setDebouncedSearchFirstName] = useState('')
+  const [debouncedSearchLastName, setDebouncedSearchLastName] = useState('')
   // Per-player side pot entries: { [playerId]: { [potKey]: boolean } } — localStorage only
   const [sidePotEntriesMap, setSidePotEntriesMap] = useState<Record<number, Record<string, boolean>>>({})
   const enabledBracketPrograms = useMemo(() => getEnabledBracketPrograms(bracketPrograms), [bracketPrograms])
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedHistorySearchUsbc(historySearchUsbc)
+      setDebouncedHistorySearchFirstName(historySearchFirstName)
+      setDebouncedHistorySearchLastName(historySearchLastName)
+    }, 300)
+    return () => window.clearTimeout(timer)
+  }, [historySearchUsbc, historySearchFirstName, historySearchLastName])
+
+  useEffect(() => {
+    const runHistorySearch = async () => {
+      if (!token) {
+        setHistoryResults([])
+        return
+      }
+
+      const hasSearch = Boolean(
+        debouncedHistorySearchUsbc.trim()
+        || debouncedHistorySearchFirstName.trim()
+        || debouncedHistorySearchLastName.trim()
+      )
+      if (!hasSearch) {
+        setHistoryResults([])
+        return
+      }
+
+      setIsHistorySearching(true)
+      try {
+        const params = new URLSearchParams()
+        if (debouncedHistorySearchUsbc.trim()) params.set('usbc_number', debouncedHistorySearchUsbc.trim())
+        if (debouncedHistorySearchFirstName.trim()) params.set('first_name', debouncedHistorySearchFirstName.trim())
+        if (debouncedHistorySearchLastName.trim()) params.set('last_name', debouncedHistorySearchLastName.trim())
+        params.set('limit', '25')
+
+        const data = await apiClient.get<Array<{ id: number; first_name: string; last_name: string; usbc_number?: string | null }>>(
+          `/api/v1/bowlers/profiles?${params.toString()}`
+        )
+        setHistoryResults(Array.isArray(data) ? data : [])
+      } catch (error) {
+        logger.error('Failed to search bowler history', { error })
+        setHistoryResults([])
+      } finally {
+        setIsHistorySearching(false)
+      }
+    }
+
+    void runHistorySearch()
+  }, [token, debouncedHistorySearchUsbc, debouncedHistorySearchFirstName, debouncedHistorySearchLastName])
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedSearchUsbc(searchUsbc)
+      setDebouncedSearchFirstName(searchFirstName)
+      setDebouncedSearchLastName(searchLastName)
+    }, 300)
+    return () => window.clearTimeout(timer)
+  }, [searchUsbc, searchFirstName, searchLastName])
   
 
 
@@ -235,8 +309,24 @@ export default function PlayersPage() {
     authToken: token,
     entryFee,
     bracketPrograms: enabledBracketPrograms,
-    getItem: (key: string) => localStorage.getItem(key)
+    getItem: (key: string) => localStorage.getItem(key),
+    searchUsbc: debouncedSearchUsbc,
+    searchFirstName: debouncedSearchFirstName,
+    searchLastName: debouncedSearchLastName,
   })
+
+  const handleUseHistoryResult = useCallback((profile: { first_name: string; last_name: string; usbc_number?: string | null }) => {
+    setPrefillDraft({
+      firstName: profile.first_name,
+      lastName: profile.last_name,
+      usbc: profile.usbc_number || '',
+    })
+    setHistorySearchUsbc('')
+    setHistorySearchFirstName('')
+    setHistorySearchLastName('')
+    setHistoryResults([])
+    setPrefillVersion(prev => prev + 1)
+  }, [])
 
   useEffect(() => {
     const handleSettingsChanged = () => {
@@ -440,40 +530,174 @@ export default function PlayersPage() {
 
   const normalizeHeader = (h: string) => h.trim().toLowerCase().replace(/[_\s\-#]+/g, '')
 
-  const parseExcelPlayers = async (file: File) => {
+  const buildImportIdentity = (firstName: string, lastName: string, usbc: string) => {
+    const normalizedUsbc = String(usbc || '').trim().toLowerCase()
+    if (normalizedUsbc) {
+      return `usbc:${normalizedUsbc}`
+    }
+    return `name:${`${firstName} ${lastName}`.trim().toLowerCase()}`
+  }
+
+  type ImportablePlayer = Omit<Player, 'id'> & {
+    sourceRow: number
+    normalizedName: string
+    importKey: string
+  }
+
+  type SkippedImportRow = {
+    row: number
+    reason: string
+    name?: string
+  }
+
+  const importedNameSuffixes = new Set([
+    'jr', 'jr.', 'sr', 'sr.', 'ii', 'iii', 'iv', 'v',
+    'md', 'm.d.', 'phd', 'ph.d.', 'dds', 'dmd', 'esq', 'esquire'
+  ])
+
+  const parseImportedFullName = (fullName: string) => {
+    const trimmed = fullName.trim()
+    if (!trimmed) return { firstName: '', lastName: '' }
+
+    const stripTrailingMiddleInitial = (firstNameValue: string) => {
+      const parts = firstNameValue.split(/\s+/).filter(Boolean)
+      if (parts.length <= 1) return firstNameValue.trim()
+
+      const trailingToken = parts[parts.length - 1]
+      if (/^[a-z]\.??$/i.test(trailingToken)) {
+        return parts.slice(0, -1).join(' ').trim()
+      }
+
+      return firstNameValue.trim()
+    }
+
+    if (trimmed.includes(',')) {
+      const segments = trimmed
+        .split(',')
+        .map(segment => segment.trim())
+        .filter(Boolean)
+
+      if (segments.length >= 2) {
+        const trailingSegment = segments[segments.length - 1].toLowerCase()
+        const hasTrailingSuffix = segments.length >= 3 && importedNameSuffixes.has(trailingSegment)
+        const rawFirstName = (hasTrailingSuffix ? segments.slice(1, -1) : segments.slice(1)).join(' ').trim()
+        return {
+          firstName: stripTrailingMiddleInitial(rawFirstName),
+          lastName: [segments[0], ...(hasTrailingSuffix ? [segments[segments.length - 1]] : [])].join(' ').trim(),
+        }
+      }
+    }
+
+    const parts = trimmed.split(/\s+/).filter(Boolean)
+    if (parts.length === 0) return { firstName: '', lastName: '' }
+    if (parts.length === 1) return { firstName: parts[0], lastName: '' }
+
+    const lastToken = parts[parts.length - 1].toLowerCase()
+    if (parts.length >= 3 && importedNameSuffixes.has(lastToken)) {
+      return {
+        firstName: parts.slice(0, -2).join(' ').trim(),
+        lastName: parts.slice(-2).join(' ').trim(),
+      }
+    }
+
+    return {
+      firstName: parts[0] || '',
+      lastName: parts.slice(1).join(' ').trim(),
+    }
+  }
+
+  const parseExcelPlayers = async (file: File): Promise<{ players: ImportablePlayer[]; skippedRows: SkippedImportRow[] }> => {
     const XLSX = await import('xlsx')
     const buffer = await file.arrayBuffer()
     const workbook = XLSX.read(buffer, { type: 'array' })
     const firstSheet = workbook.SheetNames[0]
-    if (!firstSheet) return []
+    if (!firstSheet) return { players: [], skippedRows: [{ row: 1, reason: 'No worksheet found' }] }
     const worksheet = workbook.Sheets[firstSheet]
-    const rawRows = XLSX.utils.sheet_to_json<Record<string, unknown>>(worksheet, { defval: '' })
-    return rawRows.map((rawRow) => {
+    const sheetRows = XLSX.utils.sheet_to_json<unknown[]>(worksheet, { header: 1, defval: '' })
+
+    const detectHeaderRowIndex = (rows: unknown[][]): number => {
+      for (let index = 0; index < rows.length; index += 1) {
+        const normalizedCells = rows[index]
+          .map(cell => normalizeHeader(String(cell || '')))
+          .filter(Boolean)
+        if (normalizedCells.length === 0) continue
+
+        const hasName = normalizedCells.includes('name') || normalizedCells.includes('bowlername')
+        const hasSplitName = normalizedCells.includes('firstname') || normalizedCells.includes('lastname')
+        const hasAvg = normalizedCells.includes('avg') || normalizedCells.includes('average')
+
+        if ((hasName || hasSplitName) && hasAvg) {
+          return index
+        }
+      }
+      return -1
+    }
+
+    const headerRowIndex = detectHeaderRowIndex(sheetRows)
+    if (headerRowIndex < 0) {
+      return {
+        players: [],
+        skippedRows: [{ row: 1, reason: 'Could not detect header row (expected Name/First/Last and Avg columns)' }],
+      }
+    }
+
+    const headerCells = (sheetRows[headerRowIndex] || []).map(cell => normalizeHeader(String(cell || '')))
+    const players: ImportablePlayer[] = []
+    const skippedRows: SkippedImportRow[] = []
+
+    for (let rowIndex = headerRowIndex + 1; rowIndex < sheetRows.length; rowIndex += 1) {
+      const sourceRow = rowIndex + 1
+      const sourceCells = sheetRows[rowIndex] || []
+
+      // Skip fully blank rows quickly.
+      if (sourceCells.every(cell => String(cell ?? '').trim() === '')) {
+        continue
+      }
+
       const nr: Record<string, unknown> = {}
-      for (const [k, v] of Object.entries(rawRow)) { nr[normalizeHeader(k)] = v }
+      for (let colIndex = 0; colIndex < headerCells.length; colIndex += 1) {
+        const key = headerCells[colIndex]
+        if (!key) continue
+        nr[key] = sourceCells[colIndex]
+      }
       const fullName = String(getValue(nr, ['name', 'bowlername']) || '').trim()
       let firstName = String(getValue(nr, ['firstname', 'first', 'givenname', 'fname']) || '').trim()
       let lastName  = String(getValue(nr, ['lastname', 'last', 'surname', 'familyname', 'lname']) || '').trim()
       if ((!firstName || !lastName) && fullName) {
-        const parts = fullName.split(/\s+/).filter(Boolean)
-        firstName = firstName || parts[0] || ''
-        lastName  = lastName  || parts.slice(1).join(' ')
+        const parsedName = parseImportedFullName(fullName)
+        firstName = firstName || parsedName.firstName
+        lastName  = lastName  || parsedName.lastName
       }
-      if (!firstName || !lastName) return null
+      if (!firstName || !lastName) {
+        skippedRows.push({
+          row: sourceRow,
+          reason: 'Missing first or last name',
+          name: fullName || `${firstName} ${lastName}`.trim() || undefined,
+        })
+        continue
+      }
       const handicap = Math.max(0, Math.floor(parseNumber(getValue(nr, ['handicap', 'handicapentries', 'handicapbrackets']), 0)))
       const scratch  = Math.max(0, Math.floor(parseNumber(getValue(nr, ['scratch',  'scratchentries',  'scratchbrackets']),  0)))
       const bracketEntries = normalizePlayerBracketEntries(undefined, handicap, scratch)
-      return {
+      const normalizedName = `${firstName} ${lastName}`.trim().toLowerCase()
+      const usbc = String(getValue(nr, ['usbc', 'usbcnumber', 'nationalid']) || '').trim()
+      const importKey = buildImportIdentity(firstName, lastName, usbc)
+      players.push({
         firstName, lastName,
-        usbc:       String(getValue(nr, ['usbc', 'usbcnumber']) || '').trim(),
+        usbc,
         average:    Math.max(0, Math.floor(parseNumber(getValue(nr, ['average', 'avg']), 150))),
         handicap, scratch,
         bracketEntries,
         lane:       String(getValue(nr, ['lane']) || 'A1').trim() || 'A1',
         amountPaid: Math.max(0, parseNumber(getValue(nr, ['amountpaid', 'paid', 'payment']), 0)),
         totalCost: calculatePlayerTotalCost(bracketEntries, bracketPrograms, entryFee),
-      }
-    }).filter((p): p is NonNullable<typeof p> => p !== null)
+        sourceRow,
+        normalizedName,
+        importKey,
+      })
+    }
+
+    return { players, skippedRows }
   }
 
   const executeDeleteAllPlayers = useCallback(async () => {
@@ -498,28 +722,68 @@ export default function PlayersPage() {
     setImportFileName(file.name)
     setIsImporting(true)
     try {
-      const imported = await parseExcelPlayers(file)
+      const { players: imported, skippedRows } = await parseExcelPlayers(file)
+      const logSkippedRows = () => {
+        if (skippedRows.length === 0) return
+        const onlyFileDuplicates = skippedRows.every(row => row.reason.startsWith('Duplicate within file'))
+        const logContext = {
+          skippedRowsCount: skippedRows.length,
+          skippedRowsPreview: skippedRows.slice(0, 10),
+        }
+        if (onlyFileDuplicates) {
+          logger.info('Import skipped duplicate rows from file', logContext)
+        } else {
+          logger.warn('Import skipped rows', logContext)
+        }
+      }
+
       if (imported.length === 0) {
         toast.warning('No valid player rows found. Please include first and last name columns.', 'Import Warning')
+        logSkippedRows()
         return
       }
 
-      // Deduplicate against existing players (case-insensitive full name match)
-      const existingNames = new Set(
-        players.map(p => `${p.firstName} ${p.lastName}`.trim().toLowerCase())
-      )
-      const duplicates = imported.filter(p =>
-        existingNames.has(`${p.firstName} ${p.lastName}`.trim().toLowerCase())
-      )
-      const toImport = imported.filter(p =>
-        !existingNames.has(`${p.firstName} ${p.lastName}`.trim().toLowerCase())
-      )
+      // Deduplicate within the uploaded file first.
+      const seenImportedNames = new Map<string, number>()
+      const uniqueImported: ImportablePlayer[] = []
+      for (const player of imported) {
+        const firstSeenAt = seenImportedNames.get(player.importKey)
+        if (firstSeenAt != null) {
+          skippedRows.push({
+            row: player.sourceRow,
+            reason: `Duplicate within file (first seen at row ${firstSeenAt})`,
+            name: `${player.firstName} ${player.lastName}${player.usbc ? ` [${player.usbc}]` : ''}`.trim(),
+          })
+          continue
+        }
+        seenImportedNames.set(player.importKey, player.sourceRow)
+        uniqueImported.push(player)
+      }
 
-      if (duplicates.length > 0 && toImport.length === 0) {
+      // Deduplicate against existing players.
+      const existingNames = new Set(
+        players.map(p => buildImportIdentity(p.firstName, p.lastName, p.usbc || ''))
+      )
+      const toImport: Omit<Player, 'id'>[] = []
+      for (const player of uniqueImported) {
+        if (existingNames.has(player.importKey)) {
+          skippedRows.push({
+            row: player.sourceRow,
+            reason: 'Already exists in entries table',
+            name: `${player.firstName} ${player.lastName}${player.usbc ? ` [${player.usbc}]` : ''}`.trim(),
+          })
+          continue
+        }
+        const { sourceRow: _sourceRow, normalizedName: _normalizedName, importKey: _importKey, ...payload } = player
+        toImport.push(payload)
+      }
+
+      if (toImport.length === 0) {
         toast.warning(
-          `All ${duplicates.length} player${duplicates.length !== 1 ? 's' : ''} already exist and were skipped.`,
+          `No new players were imported. ${skippedRows.length} row${skippedRows.length !== 1 ? 's were' : ' was'} skipped.`,
           'No New Players'
         )
+        logSkippedRows()
         return
       }
 
@@ -527,9 +791,18 @@ export default function PlayersPage() {
       toast.success(
         `Added ${result.successCount} player${result.successCount !== 1 ? 's' : ''} successfully.` +
         (result.failedCount > 0 ? ` ${result.failedCount} failed.` : '') +
-        (duplicates.length > 0 ? ` ${duplicates.length} duplicate${duplicates.length !== 1 ? 's' : ''} skipped.` : ''),
+        (skippedRows.length > 0 ? ` ${skippedRows.length} row${skippedRows.length !== 1 ? 's' : ''} skipped.` : ''),
         'Import Complete'
       )
+
+      if (skippedRows.length > 0) {
+        const preview = skippedRows
+          .slice(0, 5)
+          .map(row => `Row ${row.row}: ${row.reason}${row.name ? ` (${row.name})` : ''}`)
+          .join(' | ')
+        toast.warning(`Skipped rows: ${preview}${skippedRows.length > 5 ? ' | ...' : ''}`, 'Import Details')
+        logSkippedRows()
+      }
     } catch (err) {
       toast.error(`Failed to import Excel file: ${err instanceof Error ? err.message : 'Unknown error'}`, 'Import Failed')
     } finally {
@@ -771,12 +1044,76 @@ export default function PlayersPage() {
           className="sr-only"
         />
 
+        <div className={styles.formCard}>
+          <h3 className={styles.formTitle}>Bowler History Search</h3>
+          <div className={styles.historyPanelBody}>
+            <div className={styles.searchContainer}>
+              <input
+                type="text"
+                className={styles.searchInput}
+                placeholder="USBC #"
+                value={historySearchUsbc}
+                onChange={(event) => setHistorySearchUsbc(event.target.value)}
+              />
+              <input
+                type="text"
+                className={styles.searchInput}
+                placeholder="First Name"
+                value={historySearchFirstName}
+                onChange={(event) => setHistorySearchFirstName(event.target.value)}
+              />
+              <input
+                type="text"
+                className={styles.searchInput}
+                placeholder="Last Name"
+                value={historySearchLastName}
+                onChange={(event) => setHistorySearchLastName(event.target.value)}
+              />
+              <button
+                type="button"
+                className={styles.clearFilters}
+                onClick={() => {
+                  setHistorySearchUsbc('')
+                  setHistorySearchFirstName('')
+                  setHistorySearchLastName('')
+                  setHistoryResults([])
+                }}
+              >
+                Clear
+              </button>
+            </div>
+
+            {isHistorySearching ? (
+              <p className={styles.historyMeta}>Searching bowler history...</p>
+            ) : historyResults.length === 0 ? (
+              <p className={styles.historyMeta}>Type USBC, first name, or last name to find prior bowlers.</p>
+            ) : (
+              <div className={styles.historyResultsList}>
+                {historyResults.map(profile => (
+                  <button
+                    key={profile.id}
+                    type="button"
+                    className={styles.historyResultButton}
+                    onClick={() => handleUseHistoryResult(profile)}
+                  >
+                    <span className={styles.historyResultName}>{profile.first_name} {profile.last_name}</span>
+                    <span className={styles.historyResultUsbc}>{profile.usbc_number ? `USBC ${profile.usbc_number}` : 'No USBC on file'}</span>
+                    <span className={styles.historyResultAction}>Use in Add Form</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
         <PlayerForm
           onAddPlayer={addPlayer}
           isLoading={isLoading}
           squads={squads}
           entryFee={entryFee}
           bracketPrograms={enabledBracketPrograms}
+          prefillDraft={prefillDraft}
+          prefillVersion={prefillVersion}
         />
 
         {isLoading ? (
@@ -802,55 +1139,97 @@ export default function PlayersPage() {
           </div>
         ) : (
           <>
-            {getTournamentId() && players.length > 0 && (
-              <div className={styles.summaryCard}>
-                <h3 className={styles.summaryTitle}>Tournament Summary</h3>
-                <div className={styles.summaryGrid}>
-                  <div className={styles.statBox}>
-                    <div className={styles.statValue}>{entryTotals.totalPlayers}</div>
-                    <div className={styles.statLabel}>Players</div>
+            <div className={styles.entriesSectionWidth}>
+              {getTournamentId() && players.length > 0 && (
+                <div className={styles.summaryCard}>
+                  <h3 className={styles.summaryTitle}>Tournament Summary</h3>
+                  <div className={styles.summaryGrid}>
+                    <div className={styles.statBox}>
+                      <div className={styles.statValue}>{entryTotals.totalPlayers}</div>
+                      <div className={styles.statLabel}>Players</div>
+                    </div>
+
+                      {entryTotals.programSummaries.map(program => (
+                        <div key={program.key} className={styles.statBox}>
+                          <div className={styles.statValue}>{program.totalEntries}</div>
+                          <div className={styles.statLabel}>{program.name}</div>
+                          <div className={styles.statDetail}>{program.expectedBrackets} bracket{program.expectedBrackets !== 1 ? 's' : ''}</div>
+                          {program.refunds > 0 && (
+                            <div className={styles.statRefund}>~{program.refunds} refund{program.refunds !== 1 ? 's' : ''}</div>
+                          )}
+                        </div>
+                      ))}
+
+                      {sidePotSummaries.map(pot => (
+                        <div key={pot.key} className={styles.statBox}>
+                          <div className={styles.statValue}>{pot.count}</div>
+                          <div className={styles.statLabel}>{pot.name}</div>
+                          {pot.fee > 0 && (
+                            <div className={styles.statDetail}>${(pot.count * pot.fee).toLocaleString()}</div>
+                          )}
+                        </div>
+                      ))}
+
+                    <div className={`${styles.statBox} ${styles.statBoxRevenue}`}>
+                      <div className={styles.statValue}>${entryTotals.totalRevenue.toLocaleString()}</div>
+                      <div className={styles.statLabel}>Revenue</div>
+                    </div>
                   </div>
+                </div>
+              )}
 
-                    {entryTotals.programSummaries.map(program => (
-                      <div key={program.key} className={styles.statBox}>
-                        <div className={styles.statValue}>{program.totalEntries}</div>
-                        <div className={styles.statLabel}>{program.name}</div>
-                        <div className={styles.statDetail}>{program.expectedBrackets} bracket{program.expectedBrackets !== 1 ? 's' : ''}</div>
-                        {program.refunds > 0 && (
-                          <div className={styles.statRefund}>~{program.refunds} refund{program.refunds !== 1 ? 's' : ''}</div>
-                        )}
-                      </div>
-                    ))}
-
-                    {sidePotSummaries.map(pot => (
-                      <div key={pot.key} className={styles.statBox}>
-                        <div className={styles.statValue}>{pot.count}</div>
-                        <div className={styles.statLabel}>{pot.name}</div>
-                        {pot.fee > 0 && (
-                          <div className={styles.statDetail}>${(pot.count * pot.fee).toLocaleString()}</div>
-                        )}
-                      </div>
-                    ))}
-
-                  <div className={`${styles.statBox} ${styles.statBoxRevenue}`}>
-                    <div className={styles.statValue}>${entryTotals.totalRevenue.toLocaleString()}</div>
-                    <div className={styles.statLabel}>Revenue</div>
+              <div className={styles.formCard}>
+                <h3 className={styles.formTitle}>Entries Table Search</h3>
+                <div className={styles.tableSearchPanelBody}>
+                  <div className={styles.searchContainer}>
+                    <input
+                      type="text"
+                      className={styles.searchInput}
+                      placeholder="Search USBC #"
+                      value={searchUsbc}
+                      onChange={(event) => setSearchUsbc(event.target.value)}
+                    />
+                    <input
+                      type="text"
+                      className={styles.searchInput}
+                      placeholder="Search First Name"
+                      value={searchFirstName}
+                      onChange={(event) => setSearchFirstName(event.target.value)}
+                    />
+                    <input
+                      type="text"
+                      className={styles.searchInput}
+                      placeholder="Search Last Name"
+                      value={searchLastName}
+                      onChange={(event) => setSearchLastName(event.target.value)}
+                    />
+                    <button
+                      type="button"
+                      className={styles.clearFilters}
+                      onClick={() => {
+                        setSearchUsbc('')
+                        setSearchFirstName('')
+                        setSearchLastName('')
+                      }}
+                    >
+                      Clear Search
+                    </button>
                   </div>
                 </div>
               </div>
-            )}
 
-            <div className={styles.tableCard}>
-              <PlayersTable
-                players={players}
-                onUpdatePlayer={handleUpdatePlayer}
-                onDeletePlayer={handleDeletePlayer}
-                savingStatus={savingStatus}
-                entryFee={entryFee}
-                bracketPrograms={enabledBracketPrograms}
-                selectedSquad={selectedSquad}
-                sidePots={sidePots}
-              />
+              <div className={styles.tableCard}>
+                <PlayersTable
+                  players={players}
+                  onUpdatePlayer={handleUpdatePlayer}
+                  onDeletePlayer={handleDeletePlayer}
+                  savingStatus={savingStatus}
+                  entryFee={entryFee}
+                  bracketPrograms={enabledBracketPrograms}
+                  selectedSquad={selectedSquad}
+                  sidePots={sidePots}
+                />
+              </div>
             </div>
           </>
         )}
