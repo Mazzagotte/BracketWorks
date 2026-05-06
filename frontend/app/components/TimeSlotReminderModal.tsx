@@ -33,11 +33,11 @@ export function TimeSlotReminderModal() {
     <div className={styles.overlay} onClick={() => setOpen(false)}>
       <div className={styles.modal} onClick={event => event.stopPropagation()}>
         <div className={styles.header}>
-          <h3 className={styles.title}>Select Time Slot</h3>
+          <h3 className={styles.title}>Select Squad Time</h3>
         </div>
         <div className={styles.body}>
           <p className={styles.message}>
-            Please select a time slot from the available times on the Dashboard before leaving this page.
+            Please select a squad time from the available times on the Dashboard before leaving this page.
           </p>
           <div className={styles.actions}>
             <button type="button" className={styles.primaryButton} onClick={() => setOpen(false)}>
