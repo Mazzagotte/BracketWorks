@@ -1,0 +1,629 @@
+/* ===================================================
+   Admin Console — matches app design system
+   Uses the same card/surface/typography tokens as
+   settings.module.css and dashboard.module.css
+   =================================================== */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-bottom: 32px;
+}
+
+/* ---- State / loading cards ---- */
+.stateCard {
+  background-color: var(--color-brand-ivory-light);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-soft);
+  padding: 28px;
+  color: var(--color-text-primary);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* ---- Error banner ---- */
+.errorBanner {
+  padding: 12px 16px;
+  border-radius: var(--radius-lg);
+  background: rgba(214, 69, 69, 0.08);
+  border: 1px solid rgba(214, 69, 69, 0.25);
+  color: var(--color-red-primary);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* ---- Tab row ---- */
+.tabRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tabButton {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 8px 18px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border);
+  background: var(--color-brand-ivory-light);
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.tabButton:hover {
+  border-color: var(--color-brand-orange);
+  color: var(--color-brand-orange);
+}
+
+.tabButtonActive {
+  background: var(--color-brand-orange);
+  border-color: var(--color-brand-orange);
+  color: #fff;
+  font-weight: 700;
+}
+
+.tabButtonActive:hover {
+  color: #fff;
+}
+
+/* ---- Refresh button ---- */
+.refreshButton {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 7px 14px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: var(--color-brand-ivory-light);
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.refreshButton:hover {
+  border-color: var(--color-brand-orange);
+  color: var(--color-brand-orange);
+}
+
+.refreshButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---- Layout ---- */
+.sectionStack {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.metricGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 14px;
+}
+
+.twoColumnGrid,
+.databaseLayout {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 20px;
+}
+
+/* ---- Metric cards ---- */
+.metricCard {
+  padding: 18px 20px;
+  background-color: var(--color-brand-ivory-light);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-soft);
+}
+
+/* Tone classes kept for backward compat but all use same base now */
+.toneOrange,
+.toneBlue,
+.toneGreen,
+.toneGold,
+.toneRed,
+.toneSlate {}
+
+.metricLabel {
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.metricValue {
+  margin-top: 10px;
+  color: var(--color-brand-charcoal-deep);
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* ---- Panels (cards with header strip) ---- */
+.panel {
+  background-color: var(--color-brand-ivory-light);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-soft);
+  overflow: hidden;
+}
+
+.panelHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 20px;
+  background: var(--color-brand-ivory);
+  border-bottom: 3px solid var(--color-brand-orange);
+}
+
+.panelTitle {
+  margin: 0;
+  color: var(--color-brand-charcoal-deep);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.panelSubtle {
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.panelBody {
+  padding: 16px 20px;
+}
+
+/* ---- List rows inside panels ---- */
+.listStack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 20px;
+}
+
+.listRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid var(--color-border);
+  transition: background 0.12s ease;
+}
+
+.listRow:hover {
+  background: rgba(255, 122, 0, 0.05);
+}
+
+.primaryText {
+  color: var(--color-brand-charcoal-deep);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.secondaryText {
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  margin-top: 2px;
+}
+
+.valuePill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  padding: 5px 10px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 122, 0, 0.1);
+  color: var(--color-brand-orange-dark);
+  font-size: 12px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+/* ---- Data tables ---- */
+.tableWrap {
+  overflow: auto;
+  max-height: 480px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.table th,
+.table td {
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.table th {
+  position: sticky;
+  top: 0;
+  background: var(--color-brand-ivory);
+  color: var(--color-brand-charcoal-deep);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-bottom: 2px solid var(--color-brand-orange);
+}
+
+.table tbody tr:hover {
+  background: rgba(255, 122, 0, 0.04);
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* ---- Database explorer ---- */
+.tableList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px;
+  max-height: 480px;
+  overflow-y: auto;
+}
+
+.tableListButton {
+  appearance: none;
+  -webkit-appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.65);
+  color: var(--color-brand-charcoal-deep);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.tableListButton:hover {
+  border-color: var(--color-brand-orange);
+  background: rgba(255, 122, 0, 0.05);
+}
+
+.tableListButtonActive {
+  background: var(--color-brand-orange);
+  border-color: var(--color-brand-orange-dark);
+  color: #fff;
+}
+
+.tableListButtonActive:hover {
+  background: var(--color-brand-orange-dark);
+}
+
+.tableListButtonActive .valuePill {
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
+
+/* ---- Empty state ---- */
+.emptyState {
+  padding: 20px;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* ---- Table row actions ---- */
+.rowActions {
+  display: flex;
+  gap: 6px;
+}
+
+.actionBtn {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 5px 10px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-brand-ivory-light);
+  color: var(--color-brand-charcoal-deep);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+
+.actionBtn:hover {
+  border-color: var(--color-brand-orange);
+  background: rgba(255, 122, 0, 0.06);
+}
+
+.actionBtnDanger {
+  color: var(--color-red-primary);
+  border-color: rgba(214, 69, 69, 0.3);
+}
+
+.actionBtnDanger:hover {
+  background: rgba(214, 69, 69, 0.06);
+  border-color: var(--color-red-primary);
+}
+
+/* ---- Modals ---- */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.modal {
+  background: var(--color-brand-ivory-light);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-modal);
+  width: 100%;
+  max-width: 460px;
+  overflow: hidden;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 20px;
+  background: var(--color-brand-ivory);
+  border-bottom: 3px solid var(--color-brand-orange);
+}
+
+.modalTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-brand-charcoal-deep);
+}
+
+.modalClose {
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  background: none;
+  font-size: 16px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: 2px 4px;
+  line-height: 1;
+}
+
+.modalClose:hover {
+  color: var(--color-brand-charcoal-deep);
+}
+
+.modalBody {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px;
+}
+
+.modalError {
+  padding: 10px 14px;
+  border-radius: var(--radius-lg);
+  background: rgba(214, 69, 69, 0.08);
+  border: 1px solid rgba(214, 69, 69, 0.25);
+  color: var(--color-red-primary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--color-border);
+}
+
+.formRow {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.formLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.formInput {
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: #fff;
+  color: var(--color-brand-charcoal-deep);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.12s ease;
+}
+
+.formInput:focus {
+  border-color: var(--color-brand-orange);
+}
+
+.toolbarRow {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.2fr) repeat(3, minmax(140px, 1fr));
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.toolbarInput,
+.toolbarSelect {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: #fff;
+  color: var(--color-brand-charcoal-deep);
+  font-size: 13px;
+}
+
+.toolbarInput:focus,
+.toolbarSelect:focus {
+  outline: none;
+  border-color: var(--color-brand-orange);
+}
+
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 9px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+
+.statusActive {
+  color: #155724;
+  background: rgba(47, 191, 113, 0.15);
+  border-color: rgba(47, 191, 113, 0.35);
+}
+
+.statusDraft {
+  color: #6c431d;
+  background: rgba(255, 122, 0, 0.1);
+  border-color: rgba(255, 122, 0, 0.32);
+}
+
+.statusCompleted {
+  color: #1f3d7a;
+  background: rgba(59, 130, 246, 0.12);
+  border-color: rgba(59, 130, 246, 0.28);
+}
+
+.statusArchived {
+  color: #5c4b3b;
+  background: rgba(120, 120, 120, 0.14);
+  border-color: rgba(120, 120, 120, 0.3);
+}
+
+.detailCard {
+  margin: 8px 0;
+  padding: 12px 14px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.65);
+}
+
+.detailGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 8px 12px;
+  color: var(--color-brand-charcoal-deep);
+  font-size: 13px;
+}
+
+.detailNote {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.detailLinks {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.linkBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-brand-ivory-light);
+  color: var(--color-brand-charcoal-deep);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.linkBtn:hover {
+  border-color: var(--color-brand-orange);
+  color: var(--color-brand-orange-dark);
+}
+
+.checkboxRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--color-brand-charcoal-deep);
+}
+
+.paginationRow {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+.warnText {
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(214, 69, 69, 0.3);
+  background: rgba(214, 69, 69, 0.08);
+  color: var(--color-red-primary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 960px) {
+  .twoColumnGrid,
+  .databaseLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .toolbarRow {
+    grid-template-columns: 1fr;
+  }
+}

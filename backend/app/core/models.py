@@ -36,6 +36,20 @@ class User(Base):
     organization: Mapped[str | None] = mapped_column(String, nullable=True)
     password: Mapped[str] = mapped_column(String, nullable=False)
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+
+
+class AdminAuditLog(Base):
+    __tablename__ = "admin_audit_logs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    admin_user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    action: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
+    target_type: Mapped[str | None] = mapped_column(String(40), nullable=True, index=True)
+    target_id: Mapped[str | None] = mapped_column(String(80), nullable=True, index=True)
+    reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    details: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow, index=True)
 
 
 class BowlerProfile(Base):
@@ -89,6 +103,8 @@ class Tournament(Base):
     start_date: Mapped[str | None] = mapped_column(String, nullable=True)
     end_date: Mapped[str | None] = mapped_column(String, nullable=True)
     squad_times: Mapped[str | None] = mapped_column(Text, nullable=True)
+    archived_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, index=True)
+    archive_reason: Mapped[str | None] = mapped_column(String, nullable=True)
 
 
 class TournamentBracketSettings(Base):

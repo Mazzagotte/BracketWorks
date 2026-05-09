@@ -67,7 +67,7 @@
 .main {
   min-height: 100vh;
   transition: all 0.3s ease;
-  background: var(--color-text-primary);
+  background: linear-gradient(160deg, #1e1e1e 0%, #252525 100%);
   box-sizing: border-box;
   position: relative;
 }

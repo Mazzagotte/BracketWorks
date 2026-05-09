@@ -50,13 +50,31 @@ $DockerBuildMode = if ($env:BRACKETWORKS_DOCKER_BUILD) {
 $WaitForFrontend = if ($env:BRACKETWORKS_WAIT_FOR_FRONTEND) {
     $env:BRACKETWORKS_WAIT_FOR_FRONTEND -match "^(1|true|yes)$"
 } else {
-    $false
+    $true
+}
+
+$WaitForBackend = if ($env:BRACKETWORKS_WAIT_FOR_BACKEND) {
+    $env:BRACKETWORKS_WAIT_FOR_BACKEND -match "^(1|true|yes)$"
+} else {
+    $true
+}
+
+$BackendWaitRetries = if ($env:BRACKETWORKS_BACKEND_WAIT_RETRIES) {
+    [int]$env:BRACKETWORKS_BACKEND_WAIT_RETRIES
+} else {
+    40
+}
+
+$BackendWaitDelayMs = if ($env:BRACKETWORKS_BACKEND_WAIT_DELAY_MS) {
+    [int]$env:BRACKETWORKS_BACKEND_WAIT_DELAY_MS
+} else {
+    500
 }
 
 $FrontendWaitRetries = if ($env:BRACKETWORKS_FRONTEND_WAIT_RETRIES) {
     [int]$env:BRACKETWORKS_FRONTEND_WAIT_RETRIES
 } else {
-    20
+    60
 }
 
 $FrontendWaitDelayMs = if ($env:BRACKETWORKS_FRONTEND_WAIT_DELAY_MS) {
@@ -64,6 +82,9 @@ $FrontendWaitDelayMs = if ($env:BRACKETWORKS_FRONTEND_WAIT_DELAY_MS) {
 } else {
     500
 }
+
+$BackendHealthUrl = "$BackendUrl/health"
+$FrontendHealthUrl = "http://localhost:$Port/login"
 
 # Ensure Node.js is in PATH
 if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
@@ -119,29 +140,48 @@ Start-Process powershell -ArgumentList "-NoExit", "-Command", $backendCmd
 $cmd = "Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned; " +
        "cd '$FrontendPath'; " +
        "`$env:NEXT_PUBLIC_BACKEND_URL='$BackendUrl'; " +
-       "npm run dev; " +
+       "npm.cmd run dev; " +
        "Read-Host 'Press Enter to close'"
 Start-Process powershell -ArgumentList "-NoExit", "-Command", $cmd
 
-if ($WaitForFrontend) {
-    Write-Host "Waiting for frontend to be ready..." -ForegroundColor Yellow
-    $ready = $false
-    for ($i = 0; $i -lt $FrontendWaitRetries; $i++) {
-        Start-Sleep -Milliseconds $FrontendWaitDelayMs
+if ($WaitForBackend) {
+    Write-Host "Waiting for backend to be ready..." -ForegroundColor Yellow
+    $backendReady = $false
+    for ($i = 0; $i -lt $BackendWaitRetries; $i++) {
+        Start-Sleep -Milliseconds $BackendWaitDelayMs
         try {
-            $null = Invoke-WebRequest -Uri "http://localhost:$Port" -TimeoutSec 1 -UseBasicParsing -ErrorAction Stop
-            $ready = $true
+            $null = Invoke-WebRequest -Uri $BackendHealthUrl -TimeoutSec 1 -UseBasicParsing -ErrorAction Stop
+            $backendReady = $true
             break
         } catch {}
     }
 
-    if ($ready) {
+    if ($backendReady) {
+        Write-Host "Backend ready: $BackendHealthUrl" -ForegroundColor Green
+    } else {
+        Write-Host "Backend not ready yet. Continuing startup (it may still be booting)." -ForegroundColor Yellow
+    }
+}
+
+if ($WaitForFrontend) {
+    Write-Host "Waiting for frontend to be ready..." -ForegroundColor Yellow
+    $frontendReady = $false
+    for ($i = 0; $i -lt $FrontendWaitRetries; $i++) {
+        Start-Sleep -Milliseconds $FrontendWaitDelayMs
+        try {
+            $null = Invoke-WebRequest -Uri $FrontendHealthUrl -TimeoutSec 1 -UseBasicParsing -ErrorAction Stop
+            $frontendReady = $true
+            break
+        } catch {}
+    }
+
+    if ($frontendReady) {
         Write-Host "Ready! Opening http://localhost:$Port" -ForegroundColor Green
     } else {
         Write-Host "Frontend is taking a while - opening browser anyway (it may still be compiling)." -ForegroundColor Yellow
     }
     Start-Process "http://localhost:$Port"
 } else {
-    Write-Host "Opening browser now for faster startup (disable with BRACKETWORKS_WAIT_FOR_FRONTEND=true)." -ForegroundColor Green
+    Write-Host "Opening browser immediately (set BRACKETWORKS_WAIT_FOR_FRONTEND=true to wait for readiness)." -ForegroundColor Green
     Start-Process "http://localhost:$Port"
 }

@@ -16,7 +16,6 @@ const nextConfig = {
   
   // Enable SWC for faster compilation
   experimental: {
-    forceSwcTransforms: true,
     // Enable modern bundling optimizations
     optimizePackageImports: ['@heroicons/react', 'date-fns', 'lodash'],
   },
@@ -70,10 +69,6 @@ const nextConfig = {
     return config;
   },
   
-  compiler: {
-    // Remove console logs in production for smaller bundles
-    removeConsole: process.env.NODE_ENV === 'production',
-  },
 };
 
 module.exports = nextConfig;

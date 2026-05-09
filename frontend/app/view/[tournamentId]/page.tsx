@@ -364,7 +364,7 @@ function MatchCard({
         {margin !== null && <span className={styles.matchMargin}>+{margin}</span>}
       </div>
 
-      <div className={`${styles.matchSlot} ${playerAWon ? styles.winner : ''} ${match.playerB === 'BYE' ? styles.autoWin : ''} ${hlA ? styles.matchSlotHighlight : ''} ${dimA ? styles.matchSlotDim : ''}`}>
+      <div data-highlighted={hlA ? 'true' : undefined} className={`${styles.matchSlot} ${playerAWon ? styles.winner : ''} ${match.playerB === 'BYE' ? styles.autoWin : ''} ${hlA ? styles.matchSlotHighlight : ''} ${dimA ? styles.matchSlotDim : ''}`}>
         <span
           className={`${styles.matchName} ${onNameClick && match.playerA && match.playerA !== 'BYE' ? styles.matchNameClickable : ''}`}
           onClick={() => match.playerA && match.playerA !== 'BYE' && onNameClick?.(match.playerA)}
@@ -372,7 +372,7 @@ function MatchCard({
         {match.scoreA != null && <span className={styles.matchScore}>{match.scoreA}</span>}
       </div>
       <div className={styles.vsRow}>vs</div>
-      <div className={`${styles.matchSlot} ${playerBWon ? styles.winner : ''} ${match.playerA === 'BYE' ? styles.autoWin : ''} ${hlB ? styles.matchSlotHighlight : ''} ${dimB ? styles.matchSlotDim : ''}`}>
+      <div data-highlighted={hlB ? 'true' : undefined} className={`${styles.matchSlot} ${playerBWon ? styles.winner : ''} ${match.playerA === 'BYE' ? styles.autoWin : ''} ${hlB ? styles.matchSlotHighlight : ''} ${dimB ? styles.matchSlotDim : ''}`}>
         <span
           className={`${styles.matchName} ${onNameClick && match.playerB && match.playerB !== 'BYE' ? styles.matchNameClickable : ''}`}
           onClick={() => match.playerB && match.playerB !== 'BYE' && onNameClick?.(match.playerB)}
@@ -455,6 +455,37 @@ function BracketView({ group, highlightName, onNameClick }: {
       window.removeEventListener('resize', recalcTreeFit)
     }
   }, [canRenderTree, activeBracket, treeColumns, totalRows])
+
+
+  // Jump to the bracket containing the highlighted bowler
+  useEffect(() => {
+    if (!highlightName) return
+    const nameL = highlightName.toLowerCase()
+    for (let bi = 0; bi < group.brackets.length; bi++) {
+      const b = group.brackets[bi]
+      for (const r of (b.rounds ?? [])) {
+        for (const m of r.matches) {
+          if (
+            (m.playerA && m.playerA.toLowerCase() === nameL) ||
+            (m.playerB && m.playerB.toLowerCase() === nameL)
+          ) {
+            setActiveBracket(bi)
+            return
+          }
+        }
+      }
+    }
+  }, [highlightName, group.brackets])
+
+  // Scroll highlighted match into view after bracket navigation settles
+  useLayoutEffect(() => {
+    if (!highlightName) return
+    const id = setTimeout(() => {
+      const el = treeWrapRef.current?.querySelector('[data-highlighted="true"]') as HTMLElement | null
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 150)
+    return () => clearTimeout(id)
+  }, [highlightName, activeBracket])
 
   const labelForRound = (roundIndex: number) => {
     if (roundIndex === 2) return 'Final'
@@ -639,6 +670,28 @@ function BracketsTabView({ bracketGroups }: { bracketGroups: BracketGroup[] }) {
   const handleNameClick = useCallback((name: string) => {
     setHighlightName((prev) => (prev === name ? '' : name))
   }, [])
+
+  // Auto-navigate to the group containing the highlighted bowler
+  useEffect(() => {
+    if (!highlightName) return
+    const nameL = highlightName.toLowerCase()
+    for (let gi = 0; gi < bracketGroups.length; gi++) {
+      const grp = bracketGroups[gi]
+      for (const b of grp.brackets) {
+        for (const r of (b.rounds ?? [])) {
+          for (const m of r.matches) {
+            if (
+              (m.playerA && m.playerA.toLowerCase() === nameL) ||
+              (m.playerB && m.playerB.toLowerCase() === nameL)
+            ) {
+              setActiveGroup(gi)
+              return
+            }
+          }
+        }
+      }
+    }
+  }, [highlightName, bracketGroups])
 
   if (bracketGroups.length === 0) {
     return (
@@ -999,6 +1052,12 @@ export default function TournamentViewPage() {
   const refreshTimer = useRef<ReturnType<typeof setInterval> | null>(null)
   const refreshInFlightRef = useRef(false)
 
+  // Persist tab preference to localStorage across sessions
+    const [copied, setCopied] = useState(false)
+  useEffect(() => {
+    try { localStorage.setItem('bw-view-tab', tab) } catch {}
+  }, [tab])
+
   // ── Fetch helpers ──────────────────────────────────────────────────────────
 
   const looksNumeric = /^\d+$/.test((tournamentRef ?? '').trim())
@@ -1055,6 +1114,26 @@ export default function TournamentViewPage() {
     return Array.isArray(data) ? data as PublicScoreRow[] : []
   }, [])
 
+  const handleShare = useCallback(() => {
+    const url = window.location.href
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(url).then(() => {
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
+      }).catch(() => {})
+    } else {
+      const el = document.createElement('textarea')
+      el.value = url
+      el.style.cssText = 'position:fixed;opacity:0'
+      document.body.appendChild(el)
+      el.select()
+      try { document.execCommand('copy') } catch {}
+      document.body.removeChild(el)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }, [])
+
   // ── Session cache hydration/persistence ───────────────────────────────────
 
   useEffect(() => {
@@ -1063,7 +1142,14 @@ export default function TournamentViewPage() {
 
     try {
       const raw = sessionStorage.getItem(cacheKey)
-      if (!raw) return
+      if (!raw) {
+        // No session cache — restore just the tab preference from localStorage
+        try {
+          const savedTab = localStorage.getItem('bw-view-tab')
+          if (savedTab === 'alive' || savedTab === 'brackets' || savedTab === 'sidePots') setTab(savedTab)
+        } catch {}
+        return
+      }
 
       const cached = JSON.parse(raw) as PublicViewCache
       if (!cached?.tournament) return
@@ -1206,20 +1292,33 @@ export default function TournamentViewPage() {
 
             {/* Centre: squad selector + tabs */}
             <div className={styles.controlsPanel}>
-              {tournament && tournament.squads.length > 1 && (
-                <div className={styles.squadSelector}>
-                  <label className={styles.squadLabel}>Squad</label>
-                  <select
-                    className={styles.squadSelect}
-                    value={selectedSquadId ?? ''}
-                    onChange={(e) => setSelectedSquadId(Number(e.target.value))}
-                  >
-                    {tournament.squads.map((s) => (
-                      <option key={s.id} value={s.id}>{formatSquad(s)}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
+              <div className={styles.controlsTopRow}>
+                {tournament && tournament.squads.length > 1 && (
+                  <div className={styles.squadSelector}>
+                    <label className={styles.squadLabel}>Squad</label>
+                    <select
+                      className={styles.squadSelect}
+                      value={selectedSquadId ?? ''}
+                      onChange={(e) => setSelectedSquadId(Number(e.target.value))}
+                    >
+                      {tournament.squads.map((s) => (
+                        <option key={s.id} value={s.id}>{formatSquad(s)}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  className={`${styles.shareBtn} ${copied ? styles.shareBtnCopied : ''}`}
+                  onClick={handleShare}
+                  title="Copy link to share with bowlers"
+                >
+                  <span className={styles.shareBtnIcon} aria-hidden="true">↗</span>
+                  <span>{copied ? 'Link Copied' : 'Share View'}</span>
+                </button>
+              </div>
+
               <nav className={styles.tabs} aria-label="View sections">
                 <div className={styles.tabsTrack}>
                   {(['alive', 'brackets', 'sidePots'] as Tab[]).map((t) => (

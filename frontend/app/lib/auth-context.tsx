@@ -10,6 +10,7 @@ interface User {
   id: string;
   email?: string;
   name?: string;
+  isAdmin?: boolean;
 }
 
 interface AuthContextType {
@@ -48,13 +49,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const storedAuthToken = localStorage.getItem('token');
       const storedUserId = localStorage.getItem('user_id');
       const storedFirstName = localStorage.getItem('first_name');
+      const storedIsAdmin = localStorage.getItem('is_admin');
       
       if (storedAuthToken && storedUserId) {
         return {
           authToken: storedAuthToken,
           currentUser: { 
             id: storedUserId, 
-            name: storedFirstName || undefined 
+            name: storedFirstName || undefined,
+            isAdmin: storedIsAdmin === '1' || storedIsAdmin === 'true',
           }
         };
       }
@@ -92,13 +95,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const storedToken = localStorage.getItem('token');
       const storedUserId = localStorage.getItem('user_id');
       const storedFirstName = localStorage.getItem('first_name');
+      const storedIsAdmin = localStorage.getItem('is_admin');
       
       if (storedToken && storedUserId && (!authToken || !currentUser)) {
         logger.info('Restoring auth state from localStorage on storage change', { userId: storedUserId });
         setAuthToken(storedToken);
         setCurrentUser({ 
           id: storedUserId, 
-          name: storedFirstName || undefined 
+          name: storedFirstName || undefined,
+          isAdmin: storedIsAdmin === '1' || storedIsAdmin === 'true',
         });
       } else if (!storedToken && (authToken || currentUser)) {
         logger.info('Clearing auth state due to localStorage change');
@@ -133,10 +138,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (authToken && currentUser) {
       localStorage.setItem('token', authToken);
       localStorage.setItem('user_id', currentUser.id);
+      localStorage.setItem('is_admin', currentUser.isAdmin ? 'true' : 'false');
     } else {
       localStorage.removeItem('token');
       localStorage.removeItem('user_id');
       localStorage.removeItem('userId'); // Handle inconsistent key usage
+      localStorage.removeItem('is_admin');
     }
   }, [authToken, currentUser, isComponentMounted]);
 
@@ -153,6 +160,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (userData?.name) {
       localStorage.setItem('first_name', userData.name);
     }
+    localStorage.setItem('is_admin', userData?.isAdmin ? 'true' : 'false');
     
     // Force initialization state update
     setIsAuthInitialized(true);
@@ -174,6 +182,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     localStorage.removeItem('token');
     localStorage.removeItem('user_id');
     localStorage.removeItem('userId');
+    localStorage.removeItem('is_admin');
     // Clear any pending saves that might contain sensitive data
     Object.keys(localStorage).forEach(key => {
       if (key.startsWith('pending_save_')) {
