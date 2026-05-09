@@ -22,8 +22,12 @@ interface SidebarProps {
 
 export default function Sidebar({ firstName, isMobile = false, isOpen = false, onClose }: SidebarProps) {
   const pathname = usePathname();
-  const { logout } = useAuth();
+  const { logout, currentUser } = useAuth();
   const [tournamentId, setTournamentId] = useState<string | null>(null);
+
+  const visibleLinks = currentUser?.isAdmin
+    ? [...navLinks, { href: '/admin', label: 'Admin' }]
+    : navLinks;
 
   useEffect(() => {
     const read = () =>
@@ -122,7 +126,7 @@ export default function Sidebar({ firstName, isMobile = false, isOpen = false, o
       </div>
 
       <nav className={styles.nav}>
-        {navLinks.map(link => {
+        {visibleLinks.map(link => {
           const isActive = pathname === link.href;
           return (
             <div key={link.href} className={styles.navItem}>

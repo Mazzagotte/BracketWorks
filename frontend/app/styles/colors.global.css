@@ -85,11 +85,11 @@
   --color-gray-900: #111827;
 
   /* Dark Mode */
-  --color-dark-base: #1F2937;
-  --color-dark-surface: #2F2F2F;
-  --color-dark-elevated: #374151;
-  --color-dark-lighter: #4b5563;
-  --color-dark-accent: #6b7280;
+  --color-dark-base: #1e1e1e;
+  --color-dark-surface: #252525;
+  --color-dark-elevated: #2e2e2e;
+  --color-dark-lighter: #3a3a3a;
+  --color-dark-accent: #484848;
 
   /* Utility */
   --color-white: #FAFAF9;

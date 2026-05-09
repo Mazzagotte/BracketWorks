@@ -16,8 +16,12 @@ interface MobileNavProps {
 }
 
 export function MobileNav({ isOpen, onClose, firstName, currentPage }: MobileNavProps) {
-  const { logout } = useAuth();
+  const { logout, currentUser } = useAuth();
   const [touchStartY, setTouchStartY] = useState<number | null>(null);
+
+  const visibleLinks = currentUser?.isAdmin
+    ? [...navLinks, { href: '/admin', label: 'Admin' }]
+    : navLinks;
 
   const handleLogout = () => {
     logger.userAction('User logged out via mobile nav');
@@ -86,7 +90,7 @@ export function MobileNav({ isOpen, onClose, firstName, currentPage }: MobileNav
         </div>
 
         <div className={styles.items}>
-          {navLinks.map(item => {
+          {visibleLinks.map(item => {
             const isActive = currentPage === item.href.slice(1);
             return (
               <Link

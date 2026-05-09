@@ -210,11 +210,15 @@ export default function LoginPage() {
 
       const displayName = data.first_name || username;
 
-      login(data.access_token, data.user_id, { name: data.first_name });
+      login(data.access_token, data.user_id, {
+        name: data.first_name,
+        isAdmin: Boolean(data.is_admin),
+      });
 
       if (data.first_name) {
         localStorage.setItem('first_name', data.first_name);
       }
+      localStorage.setItem('is_admin', data.is_admin ? 'true' : 'false');
 
       logger.userAction('User logged in', { userId: data.user_id, name: displayName });
 

@@ -511,31 +511,6 @@ export default function PayoutsPage() {
         mainSection = buildTable(rows, 1)
       }
 
-      // Side pots table
-      const sidePotRows = sidePotAccounting.summaries.map(pot => {
-        const isPaid = sidePotPaidKeys.has(pot.key)
-        const paidStyle = isPaid ? 'background:#f3f3f3;color:#999;' : ''
-        return `<tr style="${paidStyle}">
-          <td>${esc(pot.name)}</td>
-          <td>${pot.winnerName ? esc(pot.winnerName) : '<span class="muted">Pending</span>'}</td>
-          <td class="amtCol">${pot.entryCount}</td>
-          <td class="amtCol bold">${fmt(pot.pool)}</td>
-          <td class="sigCol">${isPaid ? `<div class="paidStamp">PAID ${esc(paidStampDate)}</div>` : '<div class="sigLine"></div>'}</td>
-        </tr>`
-      }).join('')
-
-      const sidePotSection = sidePotAccounting.summaries.length > 0 ? `
-        <div class="sectionTitle">Side Pot Winners</div>
-        <table>
-          <thead><tr>
-            <th>Pot</th><th>Winner</th>
-            <th class="amtCol">Entries</th>
-            <th class="amtCol">Pool</th>
-            <th class="sigCol">Signature</th>
-          </tr></thead>
-          <tbody>${sidePotRows}</tbody>
-        </table>` : ''
-
       const html = `<!doctype html>
 <html>
 <head>
@@ -593,7 +568,6 @@ export default function PayoutsPage() {
     <span>Paid: <strong>${paidCount}/${rows.length}</strong></span>
   </div>
   ${mainSection}
-  ${sidePotSection}
 </body>
 </html>`
 

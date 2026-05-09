@@ -588,9 +588,6 @@ export default function BracketsPage() {
                 sum + round.matches.filter(m => m.winner || m.split_pot || m.both_advance).length, 0)
               const progressPercent = totalMatches > 0 ? Math.round((completedMatches / totalMatches) * 100) : 0
               
-              // Get bracket type
-              const bracketType = activeBracketItem?.group?.name || 'Bracket'
-              
               return (
                 <>
                   <div className={styles.controlDivider} />
@@ -612,10 +609,6 @@ export default function BracketsPage() {
                         <span className={styles.navTitleOf}>of</span>
                         <span className={styles.navTitleTotal}>{totalBrackets}</span>
                       </h3>
-
-                      <div className={`${styles.navBadge} ${bracketType === 'Scratch' ? styles.navBadgeScratch : styles.navBadgeHandicap}`}>
-                        {bracketType}
-                      </div>
                     </div>
 
                     <div className={styles.progressBarWrapper}>

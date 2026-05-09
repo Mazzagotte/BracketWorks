@@ -148,6 +148,15 @@ export class ApiClient {
           window.location.href = '/login'
         }
       }
+
+      // Surface a clearer message for browser-level fetch/CORS failures.
+      if (!appError.statusCode && (error instanceof TypeError || appError.message.toLowerCase().includes('fetch'))) {
+        throw new ApiError(
+          `Unable to reach the backend at ${this.backendBaseUrl}. Check that the API is running and that CORS allows the frontend origin.`,
+          undefined,
+          'NETWORK_ERROR'
+        )
+      }
       
       if (retries > 0 && shouldRetry(error)) {
         const delayMs = 300 * Math.pow(2, 3 - retries) // 300ms, 600ms, 1200ms

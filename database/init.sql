@@ -30,7 +30,9 @@ CREATE TABLE IF NOT EXISTS tournament (
   location TEXT,
   start_date TEXT,
   end_date TEXT,
-  squad_times TEXT
+  squad_times TEXT,
+  archived_at TIMESTAMP,
+  archive_reason TEXT
 );
 
 CREATE TABLE IF NOT EXISTS entry (
@@ -49,5 +51,6 @@ CREATE TABLE IF NOT EXISTS users (
   last_name TEXT NOT NULL,
   organization TEXT,
   password TEXT NOT NULL,
-  is_admin BOOLEAN DEFAULT FALSE
+  is_admin BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
