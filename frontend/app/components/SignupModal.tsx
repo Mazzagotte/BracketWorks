@@ -222,33 +222,28 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
     return labels[passwordStrength] || '';
   };
 
-  const getStrengthColor = () => {
-    const colors = ['var(--color-error)', 'var(--color-error)', '#f97316', 'var(--color-warning)', '#84cc16', 'var(--color-success)'];
-    return colors[passwordStrength] || 'var(--color-gray-200)';
-  };
-
   const inputClass = (valid: boolean, hasError?: boolean) =>
-    `${styles.input} ${valid ? styles.inputValid : ''} ${hasError ? styles.inputError : ''}`;
+    `surface-authInput ${valid ? 'surface-authInputValid' : ''} ${hasError ? 'surface-authInputError' : ''}`;
 
   return (
     <div className={styles.overlay} onClick={onClose}>
-      <div className={styles.modal} onClick={e => e.stopPropagation()}>
+      <div className={`surface-card surface-modalShell ${styles.modal}`} onClick={e => e.stopPropagation()}>
         <CloseControl onClick={onClose} position="absolute" size="sm" label="Close signup modal" disabled={false} />
         {/* Header */}
-        <div className={styles.header}>
+        <div className={`surface-cardHeader ${styles.header}`}>
           <h2 className={styles.title}>Create Account</h2>
           <p className={styles.subtitle}>Join BracketWorks today</p>
         </div>
 
         {/* Form */}
         <form onSubmit={handleSignup} className={styles.body}>
-          {signupSuccess && <div className={styles.success}>Account created successfully! Redirecting to login...</div>}
-          {error && <div className={styles.error}>{error}</div>}
+          {signupSuccess && <div className="surface-feedback surface-feedbackSuccess">Account created successfully! Redirecting to login...</div>}
+          {error && <div className="surface-feedback surface-feedbackError">{error}</div>}
 
           {/* First Name / Last Name */}
           <div className={styles.nameRow}>
             <div className={styles.fieldRelative}>
-              <label className={styles.label}>First Name *</label>
+              <label className="surface-authLabel">First Name *</label>
               <input
                 type="text"
                 value={firstName}
@@ -260,10 +255,10 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
                 required
                 className={`${inputClass(fieldValidation.firstName)} ${fieldValidation.firstName ? styles.inputWithIcon : ''}`}
               />
-              {fieldValidation.firstName && <span className={styles.checkIcon}>&#10003;</span>}
+              {fieldValidation.firstName && <span className={styles.checkIcon}>Valid</span>}
             </div>
             <div className={styles.fieldRelative}>
-              <label className={styles.label}>Last Name *</label>
+              <label className="surface-authLabel">Last Name *</label>
               <input
                 type="text"
                 value={lastName}
@@ -275,13 +270,13 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
                 required
                 className={`${inputClass(fieldValidation.lastName)} ${fieldValidation.lastName ? styles.inputWithIcon : ''}`}
               />
-              {fieldValidation.lastName && <span className={styles.checkIcon}>&#10003;</span>}
+              {fieldValidation.lastName && <span className={styles.checkIcon}>Valid</span>}
             </div>
           </div>
 
           {/* Username */}
           <div className={styles.field}>
-            <label className={styles.label}>Username *</label>
+            <label className="surface-authLabel">Username *</label>
             <input
               type="text"
               value={username}
@@ -291,26 +286,26 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
                 updateFieldValidation('username', e.target.value);
               }}
               required
-              className={`${styles.input} ${styles.inputWithIcon} ${
-                usernameAvailable === false ? styles.inputError :
-                usernameAvailable === true ? styles.inputValid : ''
+              className={`surface-authInput ${styles.inputWithIcon} ${
+                usernameAvailable === false ? 'surface-authInputError' :
+                usernameAvailable === true ? 'surface-authInputValid' : ''
               }`}
             />
             {checkingUsername && <span className={styles.checking}>...</span>}
             {usernameAvailable === true && !checkingUsername && (
-              <span className={styles.checkIcon}>&#10003;</span>
+              <span className={styles.checkIcon}>Valid</span>
             )}
             {usernameAvailable === false && !checkingUsername && (
-              <div className={styles.fieldHint}>Username is taken</div>
+              <div className="surface-authHint">Username is taken</div>
             )}
             {usernameAvailable === true && !checkingUsername && (
-              <div className={`${styles.fieldHint} ${styles.fieldHintAvailable}`}>Username available</div>
+              <div className="surface-authHint surface-authHintSuccess">Username available</div>
             )}
           </div>
 
           {/* Organization */}
           <div className={styles.field}>
-            <label className={styles.label}>Organization (optional)</label>
+            <label className="surface-authLabel">Organization (optional)</label>
             <input
               type="text"
               value={organization}
@@ -319,13 +314,13 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
                 setOrganization(e.target.value);
               }}
               placeholder="Organization name"
-              className={styles.input}
+              className="surface-authInput"
             />
           </div>
 
           {/* Email */}
           <div className={styles.field}>
-            <label className={styles.label}>Email *</label>
+            <label className="surface-authLabel">Email *</label>
             <input
               type="email"
               value={email}
@@ -337,12 +332,12 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
               required
               className={`${inputClass(fieldValidation.email)} ${fieldValidation.email ? styles.inputWithIcon : ''}`}
             />
-            {fieldValidation.email && <span className={styles.checkIcon}>&#10003;</span>}
+            {fieldValidation.email && <span className={styles.checkIcon}>Valid</span>}
           </div>
 
           {/* Password */}
           <div className={styles.field}>
-            <label className={styles.label}>Password *</label>
+            <label className="surface-authLabel">Password *</label>
             <div className={styles.passwordWrap}>
               <input
                 type={mounted && showPassword ? "text" : "password"}
@@ -418,7 +413,7 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
 
           {/* Confirm Password */}
           <div className={styles.field}>
-            <label className={styles.label}>Confirm Password *</label>
+            <label className="surface-authLabel">Confirm Password *</label>
             <div className={styles.passwordWrap}>
               <input
                 type={mounted && showConfirmPassword ? "text" : "password"}
@@ -430,9 +425,9 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
                 }}
                 required
                 placeholder="Confirm your password"
-                className={`${styles.input} ${styles.inputWithToggle} ${
-                  confirmPassword && !fieldValidation.confirmPassword ? styles.inputError :
-                  fieldValidation.confirmPassword ? styles.inputValid : ''
+                className={`surface-authInput ${styles.inputWithToggle} ${
+                  confirmPassword && !fieldValidation.confirmPassword ? 'surface-authInputError' :
+                  fieldValidation.confirmPassword ? 'surface-authInputValid' : ''
                 }`}
               />
               {mounted && (
@@ -457,16 +452,16 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
               )}
             </div>
             {confirmPassword && !fieldValidation.confirmPassword && (
-              <div className={styles.fieldHint}>Passwords don&apos;t match</div>
+              <div className="surface-authHint">Passwords don&apos;t match</div>
             )}
           </div>
 
           {/* Buttons */}
           <div className={styles.buttons}>
-            <button type="submit" disabled={loading || !isFormReady} className={styles.submitBtn}>
+            <button type="submit" disabled={loading || !isFormReady} className="surface-authButton surface-authButtonPrimary">
               {loading ? 'Creating...' : 'Create Account'}
             </button>
-            <button type="button" onClick={onClose} disabled={loading} className={styles.cancelBtn}>
+            <button type="button" onClick={onClose} disabled={loading} className="surface-authButton surface-authButtonSecondary">
               Cancel
             </button>
           </div>

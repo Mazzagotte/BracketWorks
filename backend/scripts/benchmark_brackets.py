@@ -2,11 +2,10 @@ from __future__ import annotations
 
 import argparse
 import json
-import math
 import statistics
 import sys
 import time
-from collections import Counter, defaultdict
+from collections import Counter
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -80,6 +79,12 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def apply_squad_filter(query: Any, squad_id: Optional[int], squad_column: Any) -> Any:
+    if squad_id is None:
+        return query
+    return query.filter(squad_column == squad_id)
+
+
 def build_players_data(db, tournament_id: int, squad_id: Optional[int]) -> Tuple[List[Dict[str, Any]], int, Any, str]:
     tournament = db.query(models.Tournament).filter(models.Tournament.id == tournament_id).first()
     if not tournament:
@@ -91,17 +96,21 @@ def build_players_data(db, tournament_id: int, squad_id: Optional[int]) -> Tuple
     if not bracket_settings or not bracket_settings.bracket_size:
         raise ValueError("Tournament bracket settings missing or bracket_size not configured")
 
-    bowlers_query = db.query(models.Bowler).filter(models.Bowler.tournament_id == tournament_id)
-    if squad_id is not None:
-        bowlers_query = bowlers_query.filter(models.Bowler.squad_id == squad_id)
+    bowlers_query = apply_squad_filter(
+        db.query(models.Bowler).filter(models.Bowler.tournament_id == tournament_id),
+        squad_id,
+        models.Bowler.squad_id,
+    )
 
     bowlers = bowlers_query.all()
     if not bowlers:
         raise ValueError("No bowlers found for the selected tournament/squad")
 
-    scores_query = db.query(models.Score).filter(models.Score.tournament_id == tournament_id)
-    if squad_id is not None:
-        scores_query = scores_query.filter(models.Score.squad_id == squad_id)
+    scores_query = apply_squad_filter(
+        db.query(models.Score).filter(models.Score.tournament_id == tournament_id),
+        squad_id,
+        models.Score.squad_id,
+    )
     scores_map = {s.bowler_id: s for s in scores_query.all()}
 
     players_data: List[Dict[str, Any]] = []

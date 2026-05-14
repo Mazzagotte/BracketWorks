@@ -42,10 +42,10 @@ export function ApiHealthCheck() {
   
   const getStatusIcon = () => {
     switch (status) {
-      case 'checking': return '⏳'
-      case 'connected': return ''
-      case 'failed': return ''
-      default: return '❓'
+      case 'checking': return '...'
+      case 'connected': return 'OK'
+      case 'failed': return 'ERR'
+      default: return '?'
     }
   }
   

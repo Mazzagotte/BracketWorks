@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 
 import { logger } from './logger';
+import { API } from './api';
 
 
 
@@ -13,13 +14,18 @@ interface User {
   isAdmin?: boolean;
 }
 
+interface AuthSessionData {
+  refreshToken?: string;
+  sessionId?: string;
+}
+
 interface AuthContextType {
   // New descriptive names
   authToken: string | null;
   currentUser: User | null;
   isUserAuthenticated: boolean;
   isAuthInitialized: boolean;
-  authenticateUser: (authToken: string, userId: string, userData?: Partial<User>) => void;
+  authenticateUser: (authToken: string, userId: string, userData?: Partial<User>, authSession?: AuthSessionData) => void;
   logoutUser: () => void;
   updateUserData: (userData: Partial<User>) => void;
   clearUserAuth: () => void;
@@ -29,7 +35,7 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isInitialized: boolean;
-  login: (token: string, userId: string, userData?: Partial<User>) => void;
+  login: (token: string, userId: string, userData?: Partial<User>, authSession?: AuthSessionData) => void;
   logout: () => void;
   updateUser: (userData: Partial<User>) => void;
   clearAuth: () => void;
@@ -141,13 +147,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
       localStorage.setItem('is_admin', currentUser.isAdmin ? 'true' : 'false');
     } else {
       localStorage.removeItem('token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('session_id');
       localStorage.removeItem('user_id');
       localStorage.removeItem('userId'); // Handle inconsistent key usage
       localStorage.removeItem('is_admin');
     }
   }, [authToken, currentUser, isComponentMounted]);
 
-  const authenticateUser = (newAuthToken: string, userId: string, userData?: Partial<User>) => {
+  const authenticateUser = (newAuthToken: string, userId: string, userData?: Partial<User>, authSession?: AuthSessionData) => {
     logger.info('Authenticating user', { userId });
     
     // Immediately update state
@@ -156,6 +164,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     
     // Immediately save to localStorage
     localStorage.setItem('token', newAuthToken);
+    if (authSession?.refreshToken) {
+      localStorage.setItem('refresh_token', authSession.refreshToken);
+    }
+    if (authSession?.sessionId) {
+      localStorage.setItem('session_id', authSession.sessionId);
+    }
     localStorage.setItem('user_id', userId);
     if (userData?.name) {
       localStorage.setItem('first_name', userData.name);
@@ -176,10 +190,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const logoutUser = () => {
+    const existingToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const existingRefreshToken = typeof window !== 'undefined' ? localStorage.getItem('refresh_token') : null;
+
+    if (existingToken) {
+      fetch(API('/api/v1/users/logout'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${existingToken}`,
+        },
+        body: JSON.stringify({ refresh_token: existingRefreshToken, all_sessions: false }),
+      }).catch((error) => {
+        logger.warn('Backend logout failed', { error: String(error) });
+      });
+    }
+
     setAuthToken(null);
     setCurrentUser(null);
     // Clear any other auth-related localStorage items
     localStorage.removeItem('token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('session_id');
     localStorage.removeItem('user_id');
     localStorage.removeItem('userId');
     localStorage.removeItem('is_admin');
@@ -305,12 +337,48 @@ export function useAuthenticatedFetch() {
       ...options.headers,
     };
 
-    const response = await fetch(url, {
+    let response = await fetch(url, {
       ...options,
       headers,
     });
 
-    // Auto-logout on 401 responses
+    if (response.status === 401) {
+      const refreshToken = typeof window !== 'undefined' ? localStorage.getItem('refresh_token') : null;
+      if (refreshToken) {
+        try {
+          const refreshResponse = await fetch(API('/api/v1/users/refresh'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refresh_token: refreshToken }),
+          });
+
+          if (refreshResponse.ok) {
+            const refreshData = await refreshResponse.json();
+            if (refreshData?.access_token) {
+              localStorage.setItem('token', refreshData.access_token);
+              if (refreshData.refresh_token) {
+                localStorage.setItem('refresh_token', refreshData.refresh_token);
+              }
+              if (refreshData.session_id) {
+                localStorage.setItem('session_id', refreshData.session_id);
+              }
+
+              response = await fetch(url, {
+                ...options,
+                headers: {
+                  ...headers,
+                  Authorization: `Bearer ${refreshData.access_token}`,
+                },
+              });
+            }
+          }
+        } catch (error) {
+          logger.warn('Authenticated fetch refresh failed', { error: String(error) });
+        }
+      }
+    }
+
+    // Auto-logout on terminal 401 responses
     if (response.status === 401) {
       logoutUser();
       throw new Error('Authentication expired');

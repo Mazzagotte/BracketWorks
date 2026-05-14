@@ -26,12 +26,12 @@
   margin: 0;
   font-size: 1.25rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-gray-900);
 }
 
 .bracketTypeBadge {
-  background: linear-gradient(135deg, var(--color-warning) 0%, #e6941a 100%);
-  color: white;
+  background: var(--gradient-brand-subtle);
+  color: var(--color-white);
   padding: 0.375rem 0.75rem;
   border-radius: 6px;
   font-size: 0.8125rem;
@@ -70,7 +70,7 @@
 .progressBarContainer {
   width: 100%;
   height: 2rem;
-  background-color: rgba(240, 120, 32, 0.12);
+  background-color: var(--color-border-light);
   border-radius: 8px;
   overflow: hidden;
   position: relative;
@@ -78,7 +78,7 @@
 
 .progressBarFill {
   height: 100%;
-  background: linear-gradient(135deg, var(--color-warning) 0%, #e6941a 100%);
+  background: var(--gradient-brand-subtle);
   transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
@@ -112,11 +112,11 @@
 }
 
 .progressBarText {
-  color: white;
+  color: var(--color-white);
   font-weight: 700;
   font-size: 0.875rem;
   z-index: 1;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  text-shadow: 0 1px 2px var(--opacity-black-20);
 }
 
 .progressSubtext {
@@ -136,7 +136,7 @@
 }
 
 .statCard {
-  background: white;
+  background: var(--color-white);
   border: 1px solid var(--color-gray-200);
   border-radius: 4px;
   padding: 0.375rem 0.5rem;
@@ -155,17 +155,17 @@
 /* Bracket Health Stats Color Schemes */
 .statCard.needingScores {
   border-color: var(--color-warning-amber);
-  background: linear-gradient(135deg, #fef3c7 0%, #fffbeb 100%);
+  background: linear-gradient(135deg, var(--color-warning-light-2) 0%, var(--color-brand-ivory-soft) 100%);
 }
 
 .statCard.withIssues {
   border-color: var(--color-error);
-  background: linear-gradient(135deg, #fee2e2 0%, #fef2f2 100%);
+  background: linear-gradient(135deg, var(--color-error-border-light) 0%, var(--color-error-bg-light) 100%);
 }
 
 .statCard.readyToPlay {
   border-color: var(--color-success);
-  background: linear-gradient(135deg, #d1fae5 0%, #ecfdf5 100%);
+  background: linear-gradient(135deg, var(--color-green-light) 0%, var(--color-green-lighter) 100%);
 }
 
 .statCard.waiting {
@@ -176,12 +176,12 @@
 /* Old stat card styles - keep for compatibility */
 .statCard.completed {
   border-color: var(--color-success);
-  background: linear-gradient(135deg, #d1fae5 0%, #ecfdf5 100%);
+  background: linear-gradient(135deg, var(--color-green-light) 0%, var(--color-green-lighter) 100%);
 }
 
 .statCard.inProgress {
   border-color: var(--color-warning-amber);
-  background: linear-gradient(135deg, #fef3c7 0%, #fffbeb 100%);
+  background: linear-gradient(135deg, var(--color-warning-light-2) 0%, var(--color-brand-ivory-soft) 100%);
 }
 
 .statCard.pending {
@@ -190,14 +190,14 @@
 }
 
 .statCard.players {
-  border-color: #3b82f6;
-  background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%);
+  border-color: var(--color-blue-primary);
+  background: var(--gradient-blue-light);
 }
 
 .statValue {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-gray-900);
   line-height: 1;
 }
 
@@ -217,7 +217,7 @@
 
 .toggleButton {
   width: 100%;
-  background: white;
+  background: var(--color-white);
   border: 1px solid var(--color-gray-200);
   border-radius: 4px;
   padding: 0.375rem 0.5rem;
@@ -304,7 +304,7 @@
 
 .progressBarFill {
   height: 100%;
-  background: linear-gradient(135deg, var(--color-warning) 0%, #e6941a 100%);
+  background: var(--gradient-brand-subtle);
   transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
@@ -313,7 +313,7 @@
 }
 
 .progressBarText {
-  color: white;
+  color: var(--color-white);
   font-weight: 600;
   font-size: 0.75rem;
   z-index: 1;
@@ -340,7 +340,7 @@
 .infoValue {
   font-size: 0.875rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-gray-900);
 }
 
 .infoSubtext {
@@ -350,7 +350,7 @@
 
 .completionBadge {
   background: linear-gradient(135deg, var(--color-success) 0%, var(--color-green-dark) 100%);
-  color: white;
+  color: var(--color-white);
   padding: 0.5rem;
   border-radius: 4px;
   text-align: center;
@@ -363,12 +363,12 @@
    =================================== */
 
 .currentRoundSection {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: var(--gradient-purple-soft);
+  color: var(--color-white);
   padding: 1.25rem;
   border-radius: 10px;
   text-align: center;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 12px var(--opacity-black-30);
 }
 
 .currentRoundLabel {
@@ -396,8 +396,8 @@
    =================================== */
 
 .estimationSection {
-  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-  border: 2px solid #3b82f6;
+  background: var(--gradient-blue-light);
+  border: 2px solid var(--color-blue-primary);
   border-radius: 10px;
   padding: 1.25rem;
   display: flex;
@@ -415,7 +415,7 @@
 
 .estimationLabel {
   font-size: 0.8125rem;
-  color: #1e40af;
+  color: var(--color-info-text);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.025em;
@@ -425,13 +425,13 @@
 .estimationValue {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #1e3a8a;
+  color: var(--color-blue-deeper);
   margin-bottom: 0.25rem;
 }
 
 .estimationNote {
   font-size: 0.75rem;
-  color: #3b82f6;
+  color: var(--color-blue-primary);
   font-style: italic;
 }
 
@@ -440,12 +440,12 @@
    =================================== */
 
 .completionBadge {
-  background: linear-gradient(135deg, #fbbf24 0%, var(--color-warning-amber) 100%);
-  color: white;
+  background: linear-gradient(135deg, var(--color-brand-gold-light) 0%, var(--color-warning-amber) 100%);
+  color: var(--color-white);
   padding: 1.5rem;
   border-radius: 10px;
   text-align: center;
-  box-shadow: 0 4px 16px rgba(251, 191, 36, 0.4);
+  box-shadow: 0 4px 16px var(--color-border-hover);
   display: flex;
   align-items: center;
   justify-content: center;

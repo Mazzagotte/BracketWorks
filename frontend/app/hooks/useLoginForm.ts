@@ -174,6 +174,9 @@ export const useLoginForm = (
       login(data.access_token, data.user_id, {
         name: data.first_name,
         isAdmin: Boolean(data.is_admin),
+      }, {
+        refreshToken: data.refresh_token,
+        sessionId: data.session_id,
       });
       
       if (data.first_name) {

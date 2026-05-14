@@ -9,7 +9,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.8);
+  background-color: var(--opacity-black-80);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -33,7 +33,7 @@
   padding: 3rem;
   min-width: 400px;
   max-width: 500px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18), 0 0 0 1px var(--color-border-light);
+  box-shadow: 0 4px 24px var(--opacity-black-18), 0 0 0 1px var(--color-border-light);
   text-align: center;
   animation: slideIn 0.3s ease;
   position: relative;
@@ -97,7 +97,7 @@
 /* Tournament Context Info */
 .contextInfo {
   width: 100%;
-  background-color: rgba(240, 120, 32, 0.06);
+  background-color: var(--color-warning-surface);
   border: 1px solid var(--color-border-light);
   border-radius: 8px;
   padding: 12px 16px;
@@ -108,7 +108,7 @@
   margin: 4px 0;
   font-size: 0.875rem;
   color: var(--color-dark-lighter);
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-family-primary);
   line-height: 1.5;
 }
 
@@ -149,13 +149,13 @@
 .ballBody {
   width: 80px;
   height: 80px;
-  background: radial-gradient(circle at 30% 30%, #4a4a4a, var(--color-text-primary));
+  background: radial-gradient(circle at 30% 30%, var(--color-gray-500), var(--color-text-primary));
   border-radius: 50%;
-  border: 3px solid #333;
+  border: 3px solid var(--color-brand-charcoal);
   box-shadow: 
-    0 8px 16px rgba(0, 0, 0, 0.3),
+    0 8px 16px var(--opacity-black-30),
     inset 2px 2px 8px var(--opacity-white-10),
-    inset -2px -2px 8px rgba(0, 0, 0, 0.5);
+    inset -2px -2px 8px var(--opacity-black-50);
 }
 
 /* Finger Holes on the Bowling Ball */
@@ -163,10 +163,10 @@
   position: absolute;
   width: 10px;
   height: 10px;
-  background-color: #000;
+  background-color: var(--color-brand-charcoal-deep);
   border-radius: 50%;
   box-shadow: 
-    inset 1px 1px 2px rgba(0, 0, 0, 0.8),
+    inset 1px 1px 2px var(--opacity-black-80),
     0 1px 2px var(--opacity-white-10);
 }
 
@@ -175,12 +175,12 @@
 .fingerHole3 { top: 35px; left: 25px; }
 
 /* Confetti color bands (by color group) */
-.confetti:nth-child(6n+1) { background-color: #fbbf24; }
-.confetti:nth-child(6n+2) { background-color: var(--color-warning-amber, #f59e0b); }
-.confetti:nth-child(6n+3) { background-color: #22c55e; }
-.confetti:nth-child(6n+4) { background-color: #3b82f6; }
-.confetti:nth-child(6n+5) { background-color: #a855f7; }
-.confetti:nth-child(6n+6) { background-color: #ec4899; }
+.confetti:nth-child(6n+1) { background-color: var(--color-warning-light-2); }
+.confetti:nth-child(6n+2) { background-color: var(--color-warning-amber); }
+.confetti:nth-child(6n+3) { background-color: var(--color-green-secondary); }
+.confetti:nth-child(6n+4) { background-color: var(--color-blue-primary); }
+.confetti:nth-child(6n+5) { background-color: var(--color-purple-primary); }
+.confetti:nth-child(6n+6) { background-color: var(--color-pink-primary); }
 
 /* Confetti positions & animation delays (50 particles) */
 .confetti:nth-child(1)  { left:  8%; animation-delay: 0.12s; }
@@ -247,20 +247,20 @@
   font-weight: 600;
   color: var(--color-secondary);
   margin: 0 0 1.5rem 0;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-family-primary);
 }
 
 .generationLockNote {
   margin: 0;
   padding: 0.75rem 1rem;
   border-radius: 8px;
-  border: 1px solid rgba(240, 120, 32, 0.22);
+  border: 1px solid var(--color-border-light);
   background: var(--color-border-light);
-  color: #7a3f00;
+  color: var(--color-warning-text);
   font-size: 0.9rem;
   line-height: 1.4;
   font-weight: 500;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-family-primary);
 }
 
 /* ===================================
@@ -295,7 +295,7 @@
   font-weight: 600;
   color: var(--color-secondary);
   margin: 0;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-family-primary);
 }
 
 /* Success Statistics Container */
@@ -312,7 +312,7 @@
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
-  background-color: rgba(240, 120, 32, 0.05);
+  background-color: var(--color-warning-tint);
   border: 1px solid var(--color-border-light);
   border-radius: 8px;
   animation: slideInStat 0.5s ease forwards;
@@ -336,7 +336,7 @@
   font-size: 0.95rem;
   font-weight: 500;
   color: var(--color-text-primary);
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-family-primary);
 }
 
 /* ===================================
@@ -357,12 +357,12 @@
   height: 80px;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--color-error) 0%, var(--color-red-dark) 100%);
-  color: white;
+  color: var(--color-white);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 3rem;
-  box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
+  box-shadow: var(--shadow-error-sm);
   animation: errorShake 0.6s ease;
 }
 
@@ -383,7 +383,7 @@
   font-weight: 600;
   color: var(--color-secondary);
   margin: 0;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-family-primary);
 }
 
 /* Error suggestion text */
@@ -409,19 +409,19 @@
   border: 1px solid var(--color-border-light);
   border-radius: 6px;
   padding: 0.5rem 1rem;
-  color: rgba(26, 26, 26, 0.5);
+  color: var(--color-text-muted);
   font-size: 0.875rem;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-family-primary);
 }
 
 .technicalDetailsToggle:hover {
-  background: rgba(240, 120, 32, 0.06);
-  border-color: rgba(240, 120, 32, 0.35);
+  background: var(--color-warning-surface);
+  border-color: var(--color-border-light);
   color: var(--color-primary);
 }
 
@@ -429,10 +429,10 @@
 .technicalDetails {
   margin-top: 0.75rem;
   padding: 1rem;
-  background: rgba(240, 120, 32, 0.04);
+  background: var(--color-warning-tint);
   border: 1px solid var(--color-border-light);
   border-radius: 6px;
-  font-family: 'Monaco', 'Courier New', monospace;
+  font-family: var(--font-family-mono);
   font-size: 0.875rem;
   color: var(--color-red-dark);
   word-wrap: break-word;
@@ -451,10 +451,10 @@
   color: var(--color-error);
   margin: 0.5rem 0 0 0;
   padding: 0.75rem;
-  background-color: #fee2e2;
+  background-color: var(--color-error-bg-light);
   border-radius: 8px;
   border-left: 4px solid var(--color-error);
-  font-family: 'Courier New', monospace;
+  font-family: var(--font-family-mono);
   text-align: left;
   max-width: 100%;
   overflow-wrap: break-word;
@@ -477,7 +477,7 @@
   border-radius: 8px;
   font-size: 1rem;
   font-weight: 600;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-family-primary);
   cursor: pointer;
   border: none;
   transition: all 0.2s ease;
@@ -495,14 +495,12 @@
 
 /* Primary Button - Orange (App Primary) */
 .primaryButton {
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
-  color: white;
   box-shadow: 0 4px 12px var(--color-border-hover);
 }
 
 .primaryButton:hover {
   background: linear-gradient(135deg, var(--color-primary-hover) 0%, var(--color-primary-hover) 100%);
-  box-shadow: 0 6px 16px rgba(244, 124, 32, 0.4);
+  box-shadow: 0 6px 16px var(--color-border-hover);
 }
 
 /* Secondary Button - Gray */
@@ -514,7 +512,7 @@
 }
 
 .secondaryButton:hover {
-  background: rgba(244, 124, 32, 0.08);
+  background: var(--color-warning-surface);
   box-shadow: 0 4px 12px var(--color-border-light);
 }
 

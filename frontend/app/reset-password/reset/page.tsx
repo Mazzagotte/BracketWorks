@@ -2,9 +2,6 @@
 
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 
-import "../../styles/login-validation.css";
-import "../../styles/reset-password.css";
-
 import { API } from "../../lib/api";
 import { useToast } from "../../components/Toast";
 import { logger } from '../../lib/logger';
@@ -136,7 +133,7 @@ export default function ResetPasswordPage() {
     setMessage('');
     
     try {
-      const response = await fetchWithRetry(API('/api/v1/auth/reset-password'), {
+      const response = await fetchWithRetry(API('/api/v1/users/reset-password'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -20,7 +20,7 @@ export default function ImportLoadingModal({ isOpen, fileName }: ImportLoadingMo
           <div className={`${styles.fingerHole} ${styles.fingerHole2}`} />
           <div className={`${styles.fingerHole} ${styles.fingerHole3}`} />
         </div>
-        <h2 className={styles.title}>Importing Players…</h2>
+        <h2 className={styles.title}>Importing Players...</h2>
         {fileName && <p className={styles.subtitle}>{fileName}</p>}
         <p className={styles.subtitle}>Please wait, do not navigate away.</p>
       </div>

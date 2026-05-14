@@ -10,7 +10,7 @@ import { getErrorMessage, getErrorContext } from '../lib/error-utils';
 import mobileStyles from './dashboard.module.css';
 import { ConfirmationDialog } from '../components/LazyComponents';
 import { MobileForm, MobileFormField } from '../../components/MobileForm';
-import { API, apiClient } from '../lib/api';
+import { API, apiClient, apiFetch } from '../lib/api';
 import { logger } from '../lib/logger';
 import { defaultBracketPrograms, normalizeBracketPrograms } from '../lib/bracketPrograms';
 import EnhancedButton from '../components/EnhancedButton';
@@ -91,6 +91,13 @@ const createDefaultSidePots = (tournamentId = 0): SidePotsSettings => ({
 })
 
 const SIDE_POTS_STORAGE_KEY = (tournamentId: number) => `sidePots_${tournamentId}`
+
+type TournamentBootstrapResponse = {
+  tournament: Tournament | null;
+  squads: Squad[];
+  selected_squad: { squad_id: number } | null;
+  bracket_settings: Partial<BracketSettings> | null;
+};
 
 function getDatesBetween(startDate: string, endDate: string): string[] {
   if (!startDate || !endDate) return [];
@@ -414,10 +421,7 @@ export default function TournamentDashboard() {
   };
 
   const computedHouseAmount = useMemo(() => calculateHouseAmount(bracketSettings), [
-    bracketSettings.bracket_size,
-    bracketSettings.default_entry_fee,
-    bracketSettings.first_place_amount,
-    bracketSettings.second_place_amount
+    bracketSettings
   ]);
 
   // Track when component is mounted to prevent premature auto-saves
@@ -615,6 +619,15 @@ export default function TournamentDashboard() {
     return createDefaultBracketSettings(tournamentId);
   };
 
+  const fetchTournamentBootstrap = async (tournamentId: number): Promise<TournamentBootstrapResponse | null> => {
+    try {
+      return await apiClient.get<TournamentBootstrapResponse>(`/api/v1/tournaments/bootstrap?tournament_id=${tournamentId}`, false);
+    } catch (error) {
+      logger.error('Failed to load tournament bootstrap data', { tournamentId, error: getErrorContext(error) });
+      return null;
+    }
+  };
+
   // Load bracket settings
   const loadBracketSettings = async (tournamentId: number) => {
     const loaded = await fetchBracketSettingsData(tournamentId);
@@ -683,7 +696,7 @@ export default function TournamentDashboard() {
         offset: String(offset),
       });
 
-      const response = await fetch(API(`/api/v1/bowlers?${params.toString()}`), {
+      const response = await apiFetch(API(`/api/v1/bowlers?${params.toString()}`), {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -825,38 +838,34 @@ export default function TournamentDashboard() {
     // Batch read all localStorage data at once
     const lastTournamentId = getSelectedTournamentId();
     const token = localStorage.getItem('token');
-    const userId = localStorage.getItem('user_id');
-    
-    if (lastTournamentId && token) {
-      // Parallelize all initial data fetches for faster loading
-      const tournamentPromise = fetch(API(`/api/v1/tournaments/${lastTournamentId}`), {
-        headers: { Authorization: `Bearer ${token}` }
-      }).then(res => res.ok ? res.json() : null);
 
-      const bracketSettingsPromise = fetchBracketSettingsData(Number(lastTournamentId));
-      
-      const squadsPromise = fetch(API(`/api/v1/squads/?tournament_id=${lastTournamentId}`), {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        }
-      }).then(res => res.ok ? res.json() : []);
-      
-      const selectedSquadPromise = userId
-        ? fetch(API(`/api/v1/squads/selected/?user_id=${userId}`), {
-            headers: { Authorization: `Bearer ${token}` }
-          }).then(res => res.ok ? res.json() : null)
-        : Promise.resolve(null);
-      
-      // Wait for all requests to complete in parallel
-      Promise.all([tournamentPromise, squadsPromise, selectedSquadPromise, bracketSettingsPromise])
-        .then(([tournamentData, squadsData, selectedSquadData, loadedBracketSettings]) => {
+    if (lastTournamentId && token) {
+      const bootstrapStarted = performance.now();
+      fetchTournamentBootstrap(Number(lastTournamentId))
+        .then(bootstrap => {
+          const tournamentData = bootstrap?.tournament ?? null;
+          const squadsData = bootstrap?.squads ?? [];
+          const selectedSquadData = bootstrap?.selected_squad ?? null;
+          const loadedBracketSettings = bootstrap?.bracket_settings
+            ? {
+                ...createDefaultBracketSettings(Number(lastTournamentId)),
+                ...bootstrap.bracket_settings,
+                bracket_size: 8,
+                bracket_programs: normalizeBracketPrograms(
+                  bootstrap.bracket_settings.bracket_programs,
+                  bootstrap.bracket_settings.default_entry_fee,
+                ),
+                handicap_percentage: bootstrap.bracket_settings.handicap_percentage ?? 80,
+                handicap_base: bootstrap.bracket_settings.handicap_base ?? 200,
+              }
+            : createDefaultBracketSettings(Number(lastTournamentId));
+
           const storedSelectedSquadId = getSelectedSquadId();
           const restoredSelectedSquadId = selectedSquadData?.squad_id
             ?? (storedSelectedSquadId ? Number(storedSelectedSquadId) : null);
 
           // Set tournament and related state from the same startup batch.
-          if (tournamentData) {
+          if (tournamentData && tournamentData.id) {
             setTournament(tournamentData);
             setSelectedTournament(tournamentData.id, tournamentData.name);
             setBracketSettings(prev => applyAutoHouse(prev, loadedBracketSettings));
@@ -879,6 +888,14 @@ export default function TournamentDashboard() {
             setSelectedSquadId(null);
             clearSelectedSquad();
           }
+
+          logger.info('Dashboard bootstrap load completed', {
+            tournamentId: Number(lastTournamentId),
+            durationMs: Math.round((performance.now() - bootstrapStarted) * 100) / 100,
+            squadsCount: squadsData.length,
+            hasSelectedSquad: Boolean(selectedSquadData?.squad_id),
+            hasBracketSettings: Boolean(bootstrap?.bracket_settings),
+          });
         })
         .catch(error => {
           logger.error('Error loading initial dashboard data:', error);
@@ -888,7 +905,7 @@ export default function TournamentDashboard() {
       clearSelectedSquad();
       clearSelectedTournament();
     }
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fetch tournaments when load modal opens
   useEffect(() => {
@@ -938,27 +955,34 @@ export default function TournamentDashboard() {
     loadSidePots(t.id);
     // Optionally, persist tournament id to localStorage for reload (not the full object)
     setSelectedTournament(t.id, t.name);
-    
+
     // Load squads for this tournament
     const token = localStorage.getItem('token');
-    const userId = localStorage.getItem('user_id');
     if (token) {
       try {
-        const bracketSettingsPromise = fetchBracketSettingsData(t.id);
-        const squadsPromise = apiClient.get<Squad[]>(`/api/v1/squads/?tournament_id=${t.id}`);
-        const selectedSquadPromise = userId
-          ? apiClient.get<{squad_id: number}>(`/api/v1/squads/selected/?user_id=${userId}`)
-              .catch(error => {
-                logger.warn('No selected squad found for user', { userId, error });
-                return null;
-              })
-          : Promise.resolve(null);
+        const bootstrap = await fetchTournamentBootstrap(t.id);
+        if (!bootstrap || !bootstrap.tournament) {
+          throw new Error('Tournament bootstrap payload missing');
+        }
 
-        const [loadedBracketSettings, squadsData, selectedSquadData] = await Promise.all([
-          bracketSettingsPromise,
-          squadsPromise,
-          selectedSquadPromise,
-        ]);
+        const loadedBracketSettings = bootstrap.bracket_settings
+          ? {
+              ...createDefaultBracketSettings(t.id),
+              ...bootstrap.bracket_settings,
+              bracket_size: 8,
+              bracket_programs: normalizeBracketPrograms(
+                bootstrap.bracket_settings.bracket_programs,
+                bootstrap.bracket_settings.default_entry_fee,
+              ),
+              handicap_percentage: bootstrap.bracket_settings.handicap_percentage ?? 80,
+              handicap_base: bootstrap.bracket_settings.handicap_base ?? 200,
+            }
+          : createDefaultBracketSettings(t.id);
+        const squadsData = bootstrap.squads || [];
+        const selectedSquadData = bootstrap.selected_squad;
+
+        setTournament(bootstrap.tournament);
+        setSelectedTournament(bootstrap.tournament.id, bootstrap.tournament.name);
 
         setBracketSettings(prev => applyAutoHouse(prev, loadedBracketSettings));
         setSquads(squadsData);
@@ -1063,7 +1087,7 @@ export default function TournamentDashboard() {
       let savedTournament = tournament;
       if (createMode) {
         // Create new tournament
-        const res = await fetch(API('/api/v1/tournaments/'), {
+        const res = await apiFetch(API('/api/v1/tournaments/'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -1089,7 +1113,7 @@ export default function TournamentDashboard() {
         }
       } else if (tournament) {
         // Update existing tournament
-        const res = await fetch(API(`/api/v1/tournaments/${tournament.id}`), {
+        const res = await apiFetch(API(`/api/v1/tournaments/${tournament.id}`), {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -1116,7 +1140,7 @@ export default function TournamentDashboard() {
       // Sync squad times to database using the new sync endpoint
       if (savedTournament) {
         try {
-          const syncRes = await fetch(API(`/api/v1/squads/sync/${savedTournament.id}`), {
+          const syncRes = await apiFetch(API(`/api/v1/squads/sync/${savedTournament.id}`), {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -1167,7 +1191,7 @@ export default function TournamentDashboard() {
         
         // Reload squads after sync
         try {
-          const squadRes = await fetch(API(`/api/v1/squads/?tournament_id=${savedTournament.id}`), {
+          const squadRes = await apiFetch(API(`/api/v1/squads/?tournament_id=${savedTournament.id}`), {
             headers: {
               'Content-Type': 'application/json',
               Authorization: `Bearer ${token}`
@@ -1235,7 +1259,7 @@ export default function TournamentDashboard() {
                   const token = localStorage.getItem('token');
                   const userId = localStorage.getItem('user_id');
                   if (token && userId) {
-                    await fetch(API('/api/v1/squads/select/'), {
+                    await apiFetch(API('/api/v1/squads/select/'), {
                       method: 'DELETE',
                       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                       body: JSON.stringify({ user_id: Number(userId) }),
@@ -1403,7 +1427,7 @@ export default function TournamentDashboard() {
                           const token = localStorage.getItem('token');
                           const userId = localStorage.getItem('user_id');
                           if (token && userId) {
-                            await fetch(API('/api/v1/squads/select/'), {
+                            await apiFetch(API('/api/v1/squads/select/'), {
                               method: 'POST',
                               headers: {
                                 'Content-Type': 'application/json',
@@ -1838,4 +1862,9 @@ export default function TournamentDashboard() {
     </ErrorBoundary>
   );
 }
+
+
+
+
+
 

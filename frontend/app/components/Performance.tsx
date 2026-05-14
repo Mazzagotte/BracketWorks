@@ -55,14 +55,14 @@ export const Pagination: React.FC<PaginationProps> = ({
         className={`bw-pagination-btn ${currentPage <= 1 ? 'bw-pagination-btn-disabled' : ''}`}
         aria-label="Previous page"
       >
-        ‹
+        Prev
       </button>
 
       {/* Page numbers */}
       {pageNumbers.map((page, index) =>
         page === '...' ? (
           <span key={`dots-${index}`} className="bw-pagination-ellipsis">
-            …
+            ...
           </span>
         ) : (
           <button
@@ -84,7 +84,7 @@ export const Pagination: React.FC<PaginationProps> = ({
         className={`bw-pagination-btn ${currentPage >= totalPages ? 'bw-pagination-btn-disabled' : ''}`}
         aria-label="Next page"
       >
-        ›
+        Next
       </button>
     </div>
   );

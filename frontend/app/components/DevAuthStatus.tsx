@@ -105,7 +105,7 @@ export function DevAuthStatus() {
           />
           <span className={styles.label}>{isExpanded ? 'Dev Status' : 'Dev'}</span>
         </div>
-        <span className={styles.chevron}>{isExpanded ? '▼' : '▶'}</span>
+        <span className={styles.chevron}>{isExpanded ? 'Collapse' : 'Expand'}</span>
       </div>
 
       {/* Expanded body */}

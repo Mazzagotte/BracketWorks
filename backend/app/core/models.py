@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, JSON, String, Text
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, JSON, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, declarative_base, mapped_column, synonym
 
 Base = declarative_base()
@@ -37,6 +37,61 @@ class User(Base):
     password: Mapped[str] = mapped_column(String, nullable=False)
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+
+
+class AuthSession(Base):
+    __tablename__ = "auth_sessions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    session_id: Mapped[str] = mapped_column(String(64), nullable=False, unique=True, index=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    token_family: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    refresh_token_hash: Mapped[str] = mapped_column(String(128), nullable=False, unique=True, index=True)
+    source_ip_hash: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
+    user_agent_fingerprint: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    device_nickname: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    region_hint: Mapped[str | None] = mapped_column(String(80), nullable=True, index=True)
+    risk_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    issued_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow, index=True)
+    last_seen_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, index=True)
+    is_revoked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, index=True)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    replaced_by_session_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+
+
+class LoginAttempt(Base):
+    __tablename__ = "login_attempts"
+    __table_args__ = (
+        UniqueConstraint("username", "source_ip_hash", name="uq_login_attempt_username_ip"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    username: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    source_ip_hash: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    window_start: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    failed_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    blocked_until: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, index=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class IdempotencyKey(Base):
+    __tablename__ = "idempotency_keys"
+    __table_args__ = (
+        UniqueConstraint("idempotency_key", "endpoint_scope", name="uq_idempotency_key_scope"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    idempotency_key: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    endpoint_scope: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    request_fingerprint: Mapped[str] = mapped_column(String(128), nullable=False)
+    user_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    status_code: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    response_body: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    state: Mapped[str] = mapped_column(String(24), nullable=False, default="processing", index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow, index=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, index=True)
 
 
 class AdminAuditLog(Base):

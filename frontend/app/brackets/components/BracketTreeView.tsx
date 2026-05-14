@@ -269,7 +269,7 @@ const BracketTreeViewComponent = ({
             )
           })}
 
-          {/* ── Connectors R1 → R2 ── */}
+          {/* Connectors R1 to R2 */}
           {displayRounds[1]?.matches.map((_, i) => (
             <React.Fragment key={`conn-r1r2-${i}`}>
               {/* Bracket ] shape: borders at midpoint of each R1 pair */}
@@ -282,7 +282,7 @@ const BracketTreeViewComponent = ({
             </React.Fragment>
           ))}
 
-          {/* ── Connectors R2 → R3 ── */}
+          {/* Connectors R2 to R3 */}
           {displayRounds[2]?.matches?.length > 0 && (
             <>
               <div

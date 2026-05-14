@@ -9,16 +9,59 @@
 }
 .innerWrapper { position: relative; z-index: 1; }
 
+.headerContainer {
+  background: var(--color-background);
+  color: var(--color-text-primary);
+  padding: 2rem;
+  border-radius: 0 0 16px 16px;
+  margin: 0 auto 2rem;
+  max-width: 1200px;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--color-border);
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateY(0);
+  animation: hdrSlideDown 0.5s ease-out;
+}
+
+.headerContainer:hover {
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-2px);
+}
+
+.headerContainer nav {
+  background: var(--color-background);
+}
+
+.headerContainerMobile {
+  padding: 1.5rem 1rem;
+}
+
+.headerContainerCollapsed {
+  padding: 0.75rem 1rem;
+  transform: translateY(-10px);
+}
+
+.headerContainerCollapsed:hover {
+  transform: translateY(-12px);
+}
+
 /* ── Breadcrumbs ──────────────────────────────────── */
 .breadcrumbNav { margin-bottom: 1rem; font-size: 0.875rem; opacity: 0.7; }
 .breadcrumbLink { color: var(--color-text-secondary); text-decoration: none; }
+.breadcrumbLink:hover { color: var(--color-primary); text-decoration: underline; }
 .breadcrumbCurrent { color: var(--color-text-primary); }
 .breadcrumbSep { margin: 0 0.5rem; color: var(--color-text-secondary); }
+.mobileTextSm { font-size: 0.875rem; }
+.mobileSpacing { margin: 0.5rem 0; }
 
 /* ── Stats card (renderStatsCard) ────────────────── */
 .statsSkeleton { height: 60px; border-radius: 8px; border: 1px solid var(--color-border); }
 .statsCardValue { font-size: 1.25rem; font-weight: 700; }
 .statsCardLabel { font-size: 0.75rem; opacity: 0.8; }
+.statsCard { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+.statsCard:hover { transform: translateY(-4px) scale(1.02); box-shadow: var(--shadow-card-hover); }
+.skeleton { background: var(--gradient-gray); background-size: 200% 100%; animation: hdrSkeletonLoading 1.5s infinite; }
 
 /* ── Notification item content ────────────────────── */
 .notifRow { display: flex; align-items: flex-start; gap: 0.5rem; margin-bottom: 0.5rem; }
@@ -37,6 +80,31 @@
 .notifTimestamp { font-size: 0.75rem; color: var(--color-text-secondary); }
 .notifMessage { font-weight: 500; color: var(--color-text-primary); line-height: 1.4; }
 .notifItemNotLast { border-bottom: 1px solid var(--color-gray-100); }
+.notificationItem { transition: all 0.2s ease; border-left: 4px solid transparent; }
+.notificationItem:hover { background-color: var(--color-gray-50); transform: translateX(2px); }
+.priorityHigh { border-left-color: var(--color-error); background-color: var(--color-hc-error-bg); }
+.priorityMedium { border-left-color: var(--color-warning-amber); background-color: var(--color-yellow-light); }
+.priorityLow { border-left-color: var(--color-blue-primary); background-color: var(--color-blue-light); }
+.typeSuccess { border-left-color: var(--color-success); background-color: var(--color-hc-success-bg); }
+.typeError { border-left-color: var(--color-error); background-color: var(--color-hc-error-bg); }
+.typeWarning { border-left-color: var(--color-warning-amber); background-color: var(--color-yellow-light); }
+.typeInfo { border-left-color: var(--color-blue-primary); background-color: var(--color-blue-light); }
+.notificationActions { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+.notificationActionBtn { padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.75rem; font-weight: 500; cursor: pointer; transition: all 0.2s ease; border: none; }
+.notificationActionBtnPrimary { background-color: var(--color-primary); color: var(--color-white); }
+.notificationActionBtnPrimary:hover { background-color: var(--color-primary-hover); }
+.notificationActionBtnSecondary { background-color: var(--color-gray-100); color: var(--color-gray-700); }
+.notificationActionBtnSecondary:hover { background-color: var(--color-gray-200); }
+.notificationDismiss { position: absolute; top: 0.5rem; right: 0.5rem; padding: 0; }
+.interactiveButton { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+.interactiveButton:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.interactiveButton:active { transform: translateY(0); box-shadow: var(--shadow-sm); }
+.notificationBadge { animation: hdrBounce 2s infinite; }
+.tooltip { position: relative; cursor: help; }
+.tooltip::after { content: attr(data-tooltip); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: var(--color-dark-base); color: var(--color-white); padding: 0.5rem; border-radius: 4px; font-size: 0.75rem; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; z-index: 1000; }
+.tooltip:hover::after { opacity: 1; }
+.loadingSpinner { animation: hdrSpin 1s linear infinite; display: inline-block; }
+.tournamentInfo { animation: hdrFadeInScale 0.6s ease-out 0.2s both; }
 
 /* ── Main layout ──────────────────────────────────── */
 .mainRow {
@@ -305,6 +373,50 @@
   letter-spacing: 0.025em;
 }
 .progressValue { font-size: 1.125rem; font-weight: 700; color: var(--color-text-primary); }
+.progressBar {
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+  height: 10px;
+  background-color: var(--color-border);
+  border-radius: 5px;
+}
+
+.progressBar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, var(--color-brand-ivory-light), transparent);
+  animation: hdrShimmer 2s infinite;
+}
+
+.progressMeter {
+  appearance: none;
+  width: 100%;
+  height: 10px;
+  display: block;
+  border: none;
+  background: transparent;
+}
+
+.progressMeter::-webkit-progress-bar {
+  background: transparent;
+}
+
+.progressMeter::-webkit-progress-value {
+  background: var(--gradient-green-progress);
+  border-radius: 5px;
+  box-shadow: var(--shadow-inset);
+}
+
+.progressMeter::-moz-progress-bar {
+  background: var(--gradient-green-progress);
+  border-radius: 5px;
+  box-shadow: var(--shadow-inset);
+}
 .progressFill {
   height: 100%;
   background: var(--gradient-green-progress);
@@ -323,6 +435,7 @@
 }
 .statsGridMobile { grid-template-columns: 1fr 1fr; max-width: 100%; }
 .statsGridVerySmall { grid-template-columns: 1fr; }
+.mobileGridSingle { grid-template-columns: 1fr !important; }
 
 /* Right section */
 .rightSection {
@@ -352,6 +465,7 @@
   box-shadow: var(--shadow-sm);
 }
 .notifBtnMobile { width: 48px; height: 48px; }
+.touchTarget { min-height: 44px; min-width: 44px; padding: 12px; }
 .notifBadge {
   position: absolute;
   top: -2px; right: -2px;
@@ -389,7 +503,7 @@
   font-size: 0.75rem;
   background: var(--color-gray-100);
   color: var(--color-gray-700);
-  border: 1px solid var(--color-gray-300, #d1d5db);
+  border: 1px solid var(--color-gray-300);
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -401,8 +515,8 @@
 .refreshSpinner {
   display: inline-block;
   width: 12px; height: 12px;
-  border: 1px solid var(--color-gray-300, #d1d5db);
-  border-top: 1px solid var(--color-gray-700, #374151);
+  border: 1px solid var(--color-gray-300);
+  border-top: 1px solid var(--color-gray-700);
   border-radius: 50%;
   animation: hdrSpin 1s linear infinite;
 }
@@ -466,6 +580,9 @@
 .connSyncing  { background: var(--gradient-warning-base); }
 .connOffline  { background: var(--gradient-error-btn); }
 .connText     { text-transform: capitalize; }
+.connectionIndicator { opacity: 0.9; transform: scale(0.95); }
+.connectionIndicator:hover { opacity: 1; transform: scale(1); box-shadow: var(--shadow-md); }
+.connectionPulse { animation: hdrConnectionPulse 2s ease-in-out infinite; }
 
 /* Notification dropdown */
 .notifDropdown {
@@ -498,7 +615,7 @@
 .notifDropdownTitle { margin: 0; font-size: 1.125rem; font-weight: 600; color: var(--color-text-primary); }
 .clearAllBtn {
   background: none;
-  border: 1px solid var(--color-gray-300, #d1d5db);
+  border: 1px solid var(--color-gray-300);
   border-radius: 6px;
   padding: 0.25rem 0.75rem;
   font-size: 0.75rem;
@@ -506,10 +623,65 @@
   cursor: pointer;
   transition: all 0.2s ease;
 }
-.clearAllBtn:hover { background: var(--color-gray-100); border-color: var(--color-gray-400, #9ca3af); }
+.clearAllBtn:hover { background: var(--color-gray-100); border-color: var(--color-gray-400); }
 .notifList { max-height: 200px; overflow-y: auto; }
+.notificationDropdown { animation: hdrSlideDown 0.3s ease-out; }
+
+@keyframes hdrSlideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes hdrFadeInScale {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes hdrBounce {
+  0%, 20%, 53%, 80%, 100% { transform: translate3d(0,0,0); }
+  40%, 43% { transform: translate3d(0,-8px,0); }
+  70% { transform: translate3d(0,-4px,0); }
+  90% { transform: translate3d(0,-2px,0); }
+}
+
+@keyframes hdrShimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+@keyframes hdrSkeletonLoading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes hdrConnectionPulse {
+  0%, 100% { opacity: 0.9; box-shadow: var(--shadow-sm); }
+  50% { opacity: 1; box-shadow: var(--shadow-brand-glow); }
+}
 
 @keyframes hdrSpin {
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
+}
+
+@media (max-width: 480px) {
+  .mobileMini {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .statsCard:hover {
+    transform: none;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .interactiveButton:hover {
+    transform: none;
+  }
+
+  .interactiveButton:active {
+    transform: scale(0.95);
+  }
 }

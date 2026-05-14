@@ -11,7 +11,7 @@ import Link from 'next/link'
 import { useAuth } from '../lib/auth-context'
 import { ErrorBoundary } from '../components/ErrorBoundary'
 import ActionConfirmDialog from '../components/ActionConfirmDialog'
-import { API } from '../lib/api'
+import { API, apiClient, apiFetch } from '../lib/api'
 import { usePageHeader } from '../lib/header-context'
 import EnhancedButton from '../components/EnhancedButton'
 import CloseControl from '../../components/CloseControl'
@@ -27,6 +27,13 @@ import { Button } from '../components/UI'
 import { handleTableArrowNavigation } from '../lib/tableKeyboard'
 import { getSelectedSquadId, getSelectedTournamentId } from '../lib/selection-session'
 import { storage } from '../lib/storage'
+
+
+type TournamentBootstrapResponse = {
+  tournament: Tournament | null;
+  squads: Squad[];
+  selected_squad: { squad_id: number } | null;
+};
 
 
 
@@ -248,7 +255,7 @@ export default function ScoresPage() {
 
   useEffect(() => {
     paginationHook.goToPage(1)
-  }, [searchFirstName, searchLastName, paginationHook.goToPage])
+  }, [searchFirstName, searchLastName]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Stable reference for auto-save — only changes when scores actually change
   const autoSaveData = useMemo(
@@ -274,7 +281,7 @@ export default function ScoresPage() {
     
     for (const saveData of saves) {
       try {
-        const response = await fetch(API('/api/v1/scores/'), {
+        const response = await apiFetch(API('/api/v1/scores/'), {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${saveData.token}`,
@@ -388,7 +395,7 @@ export default function ScoresPage() {
         currentPlayers.map(player => {
           const s = scoreMap[player.id]
           if (!s) return Promise.resolve()
-          return fetch(API('/api/v1/scores/'), {
+          return apiFetch(API('/api/v1/scores/'), {
             method: 'POST',
             headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -607,7 +614,7 @@ export default function ScoresPage() {
       }))
 
       const persistResults = await Promise.allSettled(
-        matched.map(item => fetch(API('/api/v1/scores/'), {
+        matched.map(item => apiFetch(API('/api/v1/scores/'), {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${token}`,
@@ -656,7 +663,7 @@ export default function ScoresPage() {
 
     const params = new URLSearchParams({ tournament_id: String(tournament?.id) })
     if (selectedSquad) params.set('squad_id', String(selectedSquad.id))
-    const res = await fetch(API(`/api/v1/scores/dev/clear-game/${gameNumber}?${params}`), {
+    const res = await apiFetch(API(`/api/v1/scores/dev/clear-game/${gameNumber}?${params}`), {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -699,7 +706,7 @@ export default function ScoresPage() {
         onClick={handleExportScoresToExcel}
         disabled={isExporting || players.length === 0}
       >
-        {isExporting ? 'Exporting…' : 'Export to Excel'}
+        {isExporting ? 'Exporting...' : 'Export to Excel'}
       </button>
 
       <button
@@ -707,7 +714,7 @@ export default function ScoresPage() {
         onClick={() => importFileRef.current?.click()}
         disabled={isImporting || players.length === 0 || isScoresLocked}
       >
-        {isImporting ? 'Importing…' : 'Import from Excel'}
+        {isImporting ? 'Importing...' : 'Import from Excel'}
       </button>
 
       {players.length > 0 && !isScoresLocked && (
@@ -762,7 +769,7 @@ export default function ScoresPage() {
         </div>
       )}
     </div>
-  ), [players, players.length, handleRandomizeScores, devClearGame, pendingSaves.length, addToast, processPendingSaves, handleExportScoresToExcel, isExporting, isImporting, isScoresLocked, unlockScoresTable])
+  ), [players, handleRandomizeScores, devClearGame, pendingSaves.length, addToast, processPendingSaves, handleExportScoresToExcel, isExporting, isImporting, isScoresLocked, unlockScoresTable])
   usePageHeader({
     title: 'Scores',
     subtitle: undefined,
@@ -780,8 +787,8 @@ export default function ScoresPage() {
       // Fire bowlers and scores in parallel — scores don't depend on bowlers
       const scoresUrl = `/api/v1/scores/?tournament_id=${tournamentId}`
       const [bowlersResponse, scoresResponse] = await Promise.all([
-        fetch(API(bowlersUrl), { headers: { Authorization: `Bearer ${token}` } }),
-        fetch(API(scoresUrl), { headers: { Authorization: `Bearer ${token}` } }),
+        apiFetch(API(bowlersUrl), { headers: { Authorization: `Bearer ${token}` } }),
+        apiFetch(API(scoresUrl), { headers: { Authorization: `Bearer ${token}` } }),
       ])
 
       if (!bowlersResponse.ok) {
@@ -793,7 +800,7 @@ export default function ScoresPage() {
       // Fallback: if squad-filtered fetch returns no results, load all tournament players.
       // Players added without a squad selection have squad_id = null and won't match the squad filter.
       if (squadId && data.length === 0) {
-        const fallbackResponse = await fetch(API(`/api/v1/bowlers/?tournament_id=${tournamentId}`), {
+        const fallbackResponse = await apiFetch(API(`/api/v1/bowlers/?tournament_id=${tournamentId}`), {
           headers: { Authorization: `Bearer ${token}` }
         })
         if (fallbackResponse.ok) {
@@ -870,36 +877,24 @@ export default function ScoresPage() {
   // Fetch tournament, squad, and players data - OPTIMIZED WITH PARALLEL REQUESTS
   useEffect(() => {
     // Batch read all localStorage data at once for better performance
-    const { lastTournamentId, token, userId } = (() => {
-      if (typeof window === 'undefined') return { lastTournamentId: null, token: null, userId: null };
+    const { lastTournamentId, token } = (() => {
+      if (typeof window === 'undefined') return { lastTournamentId: null, token: null };
       return {
         lastTournamentId: getSelectedTournamentId(),
         token: localStorage.getItem('token'),
-        userId: localStorage.getItem('user_id')
       };
     })();
     
     if (lastTournamentId && token) {
       setIsLoading(true)
-      
-      // Parallelize all initial data fetches for faster loading
-      const tournamentPromise = fetch(API(`/api/v1/tournaments/${lastTournamentId}`), {
-        headers: { Authorization: `Bearer ${token}` }
-      }).then(res => res.ok ? res.json() : null)
+      const bootstrapStarted = performance.now()
 
-      const squadsPromise = fetch(API(`/api/v1/squads/?tournament_id=${lastTournamentId}`), {
-        headers: { Authorization: `Bearer ${token}` }
-      }).then(res => res.ok ? res.json() : [])
+      apiClient.get<TournamentBootstrapResponse>(`/api/v1/tournaments/bootstrap?tournament_id=${lastTournamentId}`, false)
+        .then((bootstrap) => {
+          const tournamentData = bootstrap?.tournament ?? null
+          const squadsData = bootstrap?.squads ?? []
+          const selectedSquadData = bootstrap?.selected_squad ?? null
 
-      const selectedSquadPromise = userId 
-        ? fetch(API(`/api/v1/squads/selected/?user_id=${userId}`), {
-            headers: { Authorization: `Bearer ${token}` }
-          }).then(res => res.ok ? res.json() : null)
-        : Promise.resolve(null)
-
-      // Wait for all requests to complete in parallel
-      Promise.all([tournamentPromise, squadsPromise, selectedSquadPromise])
-        .then(([tournamentData, squadsData, selectedSquadData]) => {
           // Set tournament data
           if (tournamentData) setTournament(tournamentData)
 
@@ -920,6 +915,13 @@ export default function ScoresPage() {
             squadToUse = squadsData[0]
           }
           setSelectedSquad(squadToUse)
+
+          logger.info('Scores bootstrap load completed', {
+            tournamentId: Number(lastTournamentId),
+            durationMs: Math.round((performance.now() - bootstrapStarted) * 100) / 100,
+            squadsCount: squadsData.length,
+            hasSelectedSquad: Boolean(selectedSquadData?.squad_id),
+          })
 
           // Fetch players with scores for the selected squad (or all if no squad)
           fetchPlayersWithScores(lastTournamentId, squadToUse?.id || null, token)
@@ -1110,7 +1112,7 @@ export default function ScoresPage() {
           return
         }
 
-        const response = await fetch(API('/api/v1/scores/'), {
+        const response = await apiFetch(API('/api/v1/scores/'), {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -1319,14 +1321,14 @@ export default function ScoresPage() {
                 disabled={isExporting || players.length === 0}
                 className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md disabled:opacity-50"
               >
-                {isExporting ? 'Exporting…' : 'Export'}
+                {isExporting ? 'Exporting...' : 'Export'}
               </button>
               <button
                 onClick={() => importFileRef.current?.click()}
                 disabled={isImporting || players.length === 0}
                 className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md disabled:opacity-50"
               >
-                {isImporting ? 'Importing…' : 'Import'}
+                {isImporting ? 'Importing...' : 'Import'}
               </button>
             </div>
           }
@@ -1763,5 +1765,10 @@ export default function ScoresPage() {
     </ErrorBoundary>
   )
 }
+
+
+
+
+
 
 

@@ -1,4 +1,4 @@
-from pydantic import AliasChoices, BaseModel, ConfigDict, EmailStr, Field, field_validator
+from pydantic import AliasChoices, BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
 from datetime import datetime
 from typing import Dict, List, Optional
 
@@ -19,6 +19,51 @@ class LoginRequest(BaseModel):
     username: str
     password: str
     grant_type: Optional[str] = "password"
+
+
+class TokenPairResponse(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
+    session_id: str
+    user_id: int
+    is_admin: bool
+    first_name: Optional[str] = None
+    challenge_required: bool = False
+    challenge_type: Optional[str] = None
+
+
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str
+
+
+class LogoutRequest(BaseModel):
+    refresh_token: Optional[str] = None
+    all_sessions: bool = False
+
+
+class SessionRevokeResponse(BaseModel):
+    revoked_sessions: int
+
+
+class SessionInfo(BaseModel):
+    session_id: str
+    issued_at: datetime
+    last_seen_at: datetime
+    expires_at: datetime
+    is_revoked: bool
+    revoked_at: Optional[datetime] = None
+    device_nickname: Optional[str] = None
+    region_hint: Optional[str] = None
+    risk_score: float = 0.0
+
+
+class SessionListResponse(BaseModel):
+    sessions: List[SessionInfo]
+
+
+class SessionRevokeRequest(BaseModel):
+    session_id: str
 
 class SelectedSquadBase(BaseModel):
     user_id: int
@@ -78,6 +123,27 @@ class UserAccountUpdate(BaseModel):
 
 class ChangePasswordRequest(BaseModel):
     current_password: str
+    new_password: str = Field(min_length=8)
+
+
+class PasswordResetRequest(BaseModel):
+    email: EmailStr
+
+
+class PasswordResetVerifyRequest(BaseModel):
+    email: Optional[EmailStr] = None
+    token: Optional[str] = None
+    code: Optional[str] = None
+
+    @model_validator(mode="after")
+    def validate_token_or_code(self):
+        token_value = (self.token or self.code or "").strip()
+        if not token_value:
+            raise ValueError("token or code is required")
+        return self
+
+
+class PasswordResetConfirmRequest(PasswordResetVerifyRequest):
     new_password: str = Field(min_length=8)
 
 

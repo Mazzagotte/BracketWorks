@@ -27,8 +27,8 @@
 .errorBanner {
   padding: 12px 16px;
   border-radius: var(--radius-lg);
-  background: rgba(214, 69, 69, 0.08);
-  border: 1px solid rgba(214, 69, 69, 0.25);
+  background: var(--color-error-bg);
+  border: 1px solid var(--color-error-border);
   color: var(--color-red-primary);
   font-size: 14px;
   font-weight: 600;
@@ -63,12 +63,12 @@
 .tabButtonActive {
   background: var(--color-brand-orange);
   border-color: var(--color-brand-orange);
-  color: #fff;
+  color: var(--color-white);
   font-weight: 700;
 }
 
 .tabButtonActive:hover {
-  color: #fff;
+  color: var(--color-white);
 }
 
 /* ---- Refresh button ---- */
@@ -200,13 +200,13 @@
   gap: 12px;
   padding: 10px 14px;
   border-radius: var(--radius-lg);
-  background: rgba(255, 255, 255, 0.65);
+  background: var(--opacity-white-65);
   border: 1px solid var(--color-border);
   transition: background 0.12s ease;
 }
 
 .listRow:hover {
-  background: rgba(255, 122, 0, 0.05);
+  background: var(--color-warning-tint);
 }
 
 .primaryText {
@@ -228,7 +228,7 @@
   min-width: 36px;
   padding: 5px 10px;
   border-radius: var(--radius-full);
-  background: rgba(255, 122, 0, 0.1);
+  background: var(--color-border-light);
   color: var(--color-brand-orange-dark);
   font-size: 12px;
   font-weight: 800;
@@ -268,7 +268,7 @@
 }
 
 .table tbody tr:hover {
-  background: rgba(255, 122, 0, 0.04);
+  background: var(--color-warning-tint);
 }
 
 .table tbody tr:last-child td {
@@ -296,7 +296,7 @@
   padding: 10px 14px;
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-border);
-  background: rgba(255, 255, 255, 0.65);
+  background: var(--opacity-white-65);
   color: var(--color-brand-charcoal-deep);
   font-size: 13px;
   font-weight: 600;
@@ -307,13 +307,13 @@
 
 .tableListButton:hover {
   border-color: var(--color-brand-orange);
-  background: rgba(255, 122, 0, 0.05);
+  background: var(--color-warning-tint);
 }
 
 .tableListButtonActive {
   background: var(--color-brand-orange);
   border-color: var(--color-brand-orange-dark);
-  color: #fff;
+  color: var(--color-white);
 }
 
 .tableListButtonActive:hover {
@@ -321,8 +321,8 @@
 }
 
 .tableListButtonActive .valuePill {
-  background: rgba(255, 255, 255, 0.22);
-  color: #fff;
+  background: var(--opacity-white-20);
+  color: var(--color-white);
 }
 
 /* ---- Empty state ---- */
@@ -357,16 +357,16 @@
 
 .actionBtn:hover {
   border-color: var(--color-brand-orange);
-  background: rgba(255, 122, 0, 0.06);
+  background: var(--color-warning-tint);
 }
 
 .actionBtnDanger {
   color: var(--color-red-primary);
-  border-color: rgba(214, 69, 69, 0.3);
+  border-color: var(--color-error-border);
 }
 
 .actionBtnDanger:hover {
-  background: rgba(214, 69, 69, 0.06);
+  background: var(--color-error-input-bg);
   border-color: var(--color-red-primary);
 }
 
@@ -375,7 +375,7 @@
   position: fixed;
   inset: 0;
   z-index: 500;
-  background: rgba(0, 0, 0, 0.45);
+  background: var(--overlay-black);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -435,8 +435,8 @@
 .modalError {
   padding: 10px 14px;
   border-radius: var(--radius-lg);
-  background: rgba(214, 69, 69, 0.08);
-  border: 1px solid rgba(214, 69, 69, 0.25);
+  background: var(--color-error-bg);
+  border: 1px solid var(--color-error-border);
   color: var(--color-red-primary);
   font-size: 13px;
   font-weight: 600;
@@ -469,7 +469,7 @@
   padding: 9px 12px;
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
-  background: #fff;
+  background: var(--color-white);
   color: var(--color-brand-charcoal-deep);
   font-size: 14px;
   outline: none;
@@ -494,7 +494,7 @@
   padding: 8px 10px;
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
-  background: #fff;
+  background: var(--color-white);
   color: var(--color-brand-charcoal-deep);
   font-size: 13px;
 }
@@ -517,27 +517,27 @@
 }
 
 .statusActive {
-  color: #155724;
-  background: rgba(47, 191, 113, 0.15);
-  border-color: rgba(47, 191, 113, 0.35);
+  color: var(--color-green-dark);
+  background: var(--color-success-soft);
+  border-color: var(--color-success-border);
 }
 
 .statusDraft {
-  color: #6c431d;
-  background: rgba(255, 122, 0, 0.1);
-  border-color: rgba(255, 122, 0, 0.32);
+  color: var(--color-brand-gold-dark);
+  background: var(--color-border-light);
+  border-color: var(--color-border-hover);
 }
 
 .statusCompleted {
-  color: #1f3d7a;
-  background: rgba(59, 130, 246, 0.12);
-  border-color: rgba(59, 130, 246, 0.28);
+  color: var(--color-info-text);
+  background: var(--color-info-bg);
+  border-color: var(--color-blue-accent-border);
 }
 
 .statusArchived {
-  color: #5c4b3b;
-  background: rgba(120, 120, 120, 0.14);
-  border-color: rgba(120, 120, 120, 0.3);
+  color: var(--color-gray-600);
+  background: var(--opacity-white-20);
+  border-color: var(--color-gray-300);
 }
 
 .detailCard {
@@ -545,7 +545,7 @@
   padding: 12px 14px;
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-border);
-  background: rgba(255, 255, 255, 0.65);
+  background: var(--opacity-white-65);
 }
 
 .detailGrid {
@@ -609,8 +609,8 @@
   margin-top: 10px;
   padding: 8px 10px;
   border-radius: var(--radius-md);
-  border: 1px solid rgba(214, 69, 69, 0.3);
-  background: rgba(214, 69, 69, 0.08);
+  border: 1px solid var(--color-error-border);
+  background: var(--color-error-bg);
   color: var(--color-red-primary);
   font-size: 12px;
   font-weight: 700;

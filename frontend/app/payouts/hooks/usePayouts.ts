@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
-import { API } from '../../lib/api'
+import { API, apiFetch } from '../../lib/api'
 import { logger } from '../../lib/logger'
 
 export interface Winner {
@@ -120,7 +120,7 @@ export function usePayouts(tournamentId: number | null, selectedSquadId: number 
       const url = `/api/v1/payouts/calculate/${tournamentId}${squadParam}`
       logger.debug('Loading payouts from', { url })
       
-      const response = await fetch(API(url), {
+      const response = await apiFetch(API(url), {
         headers: { 'Authorization': `Bearer ${token}` }
       })
 
@@ -158,7 +158,7 @@ export function usePayouts(tournamentId: number | null, selectedSquadId: number 
       const squadParam = selectedSquadId ? `?squad_id=${selectedSquadId}` : ''
 
       // Try the full live-entries endpoint first
-      const response = await fetch(API(`/api/v1/payouts/live-entries/${tournamentId}${squadParam}`), {
+      const response = await apiFetch(API(`/api/v1/payouts/live-entries/${tournamentId}${squadParam}`), {
         headers: { 'Authorization': `Bearer ${token}` }
       })
 
@@ -178,7 +178,7 @@ export function usePayouts(tournamentId: number | null, selectedSquadId: number 
         bowlersParams.set('squad_id', String(selectedSquadId))
       }
 
-      const bowlerResponse = await fetch(API(`/api/v1/bowlers/?${bowlersParams.toString()}`), {
+      const bowlerResponse = await apiFetch(API(`/api/v1/bowlers/?${bowlersParams.toString()}`), {
         headers: { 'Authorization': `Bearer ${token}` }
       })
 
@@ -225,3 +225,8 @@ export function usePayouts(tournamentId: number | null, selectedSquadId: number 
     refreshPayouts: loadPayoutData
   }
 }
+
+
+
+
+

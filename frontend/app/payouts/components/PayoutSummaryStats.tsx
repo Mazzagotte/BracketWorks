@@ -19,7 +19,7 @@ export function PayoutSummaryStats({ payoutData, loading }: PayoutSummaryStatsPr
   if (loading || !payoutData) {
     return (
       <div className="bw-payout-stats-mb">
-        <Grid columns="4" gap="20px">
+        <Grid columns="4">
           <StatCard
             title="Total Prize Pool"
             value="Loading..."
@@ -52,31 +52,31 @@ export function PayoutSummaryStats({ payoutData, loading }: PayoutSummaryStatsPr
 
   return (
     <div className="bw-payout-stats-mb">
-      <Grid columns="4" gap="20px">
+      <Grid columns="4">
         <StatCard
           title="Total Prize Pool"
           value={formatCurrency(payoutData.total_prize_pool)}
           color="success"
-          icon="💰"
+          icon="POOL"
         />
         <StatCard
           title="Scratch Pool"
           value={formatCurrency(payoutData.total_scratch_pool)}
           color="primary"
-          icon="🎯"
+          icon="SCR"
         />
         <StatCard
           title="Handicap Pool"
           value={formatCurrency(payoutData.total_handicap_pool)}
           color="warning"
-          icon="⚖️"
+          icon="HCP"
         />
         <StatCard
           title="Total Winners"
           value={totalWinners.toString()}
           subtitle={`Avg: ${formatCurrency(avgPayout)}`}
           color="default"
-          icon="🏆"
+          icon="WIN"
         />
       </Grid>
     </div>

@@ -3,7 +3,7 @@ Public read-only endpoints for the bowler-facing tournament view.
 No authentication required — intended for QR-code accessible display pages.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import Optional
@@ -19,6 +19,14 @@ from ...services.payouts import get_tournament_winners_summary, extract_bracket_
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+
+def _set_public_cache_headers(response: Response, *, max_age: int, stale_while_revalidate: int = 0) -> None:
+    parts = [f"public", f"max-age={max_age}"]
+    if stale_while_revalidate > 0:
+        parts.append(f"stale-while-revalidate={stale_while_revalidate}")
+    response.headers["Cache-Control"] = ", ".join(parts)
+    response.headers["Vary"] = "Accept-Encoding"
 
 
 def _get_tournament_or_404(db: Session, tournament_id: int) -> models.Tournament:
@@ -84,6 +92,7 @@ def _get_tournament_by_slug_or_404(db: Session, tournament_slug: str) -> models.
 @router.get("/tournament/{tournament_id}")
 def get_public_tournament_info(
     tournament_id: int,
+    response: Response,
     db: Session = Depends(get_db),
 ):
     """Tournament name, location, and squads — no auth required."""
@@ -94,6 +103,7 @@ def get_public_tournament_info(
         .order_by(models.TournamentSquad.date, models.TournamentSquad.time)
         .all()
     )
+    _set_public_cache_headers(response, max_age=60, stale_while_revalidate=300)
     return {
         "id": tournament.id,
         "name": tournament.name,
@@ -108,6 +118,7 @@ def get_public_tournament_info(
 @router.get("/tournament/by-name/{tournament_name}")
 def get_public_tournament_info_by_name(
     tournament_name: str,
+    response: Response,
     db: Session = Depends(get_db),
 ):
     """Tournament name, location, and squads via name lookup — no auth required."""
@@ -118,6 +129,7 @@ def get_public_tournament_info_by_name(
         .order_by(models.TournamentSquad.date, models.TournamentSquad.time)
         .all()
     )
+    _set_public_cache_headers(response, max_age=60, stale_while_revalidate=300)
     return {
         "id": tournament.id,
         "name": tournament.name,
@@ -132,6 +144,7 @@ def get_public_tournament_info_by_name(
 @router.get("/tournament/by-slug/{tournament_slug}")
 def get_public_tournament_info_by_slug(
     tournament_slug: str,
+    response: Response,
     db: Session = Depends(get_db),
 ):
     """Tournament name, location, and squads via slug lookup — no auth required."""
@@ -142,6 +155,7 @@ def get_public_tournament_info_by_slug(
         .order_by(models.TournamentSquad.date, models.TournamentSquad.time)
         .all()
     )
+    _set_public_cache_headers(response, max_age=60, stale_while_revalidate=300)
     return {
         "id": tournament.id,
         "name": tournament.name,
@@ -157,6 +171,7 @@ def get_public_tournament_info_by_slug(
 def get_public_bowlers(
     tournament_id: int,
     squad_id: Optional[int] = Query(None),
+    response: Response = None,
     db: Session = Depends(get_db),
 ):
     """Bowler list for the public view — no auth required."""
@@ -172,6 +187,9 @@ def get_public_bowlers(
         models.TournamentPlayer.lane,
         models.TournamentPlayer.full_name,
     ).all()
+
+    if response is not None:
+        _set_public_cache_headers(response, max_age=30, stale_while_revalidate=120)
 
     return [
         {
@@ -196,10 +214,14 @@ def get_public_bowlers(
 def get_public_brackets(
     tournament_id: int,
     squad_id: Optional[int] = Query(None),
+    response: Response = None,
     db: Session = Depends(get_db),
 ):
     """Saved bracket data for the public view — no auth required."""
     _get_tournament_or_404(db, tournament_id)
+
+    if response is not None:
+        _set_public_cache_headers(response, max_age=15, stale_while_revalidate=45)
 
     data = load_brackets_simple(db, tournament_id, squad_id)
     if not data:
@@ -216,10 +238,14 @@ def get_public_brackets(
 def get_public_winners(
     tournament_id: int,
     squad_id: Optional[int] = Query(None),
+    response: Response = None,
     db: Session = Depends(get_db),
 ):
     """Winner summary for the public view — no auth required."""
     _get_tournament_or_404(db, tournament_id)
+
+    if response is not None:
+        _set_public_cache_headers(response, max_age=15, stale_while_revalidate=60)
 
     data = load_generated_brackets(db, tournament_id, squad_id)
     if not data:
@@ -252,10 +278,15 @@ def get_public_winners(
 def get_public_scores(
     tournament_id: int,
     squad_id: Optional[int] = Query(None),
+    response: Response = None,
     db: Session = Depends(get_db),
 ):
     """Live scores for the side pots leaderboard — no auth required."""
     _get_tournament_or_404(db, tournament_id)
+
+    # Scores are live-changing; keep cache very short.
+    if response is not None:
+        _set_public_cache_headers(response, max_age=5, stale_while_revalidate=10)
 
     query = (
         db.query(models.PlayerScore, models.TournamentPlayer.full_name)

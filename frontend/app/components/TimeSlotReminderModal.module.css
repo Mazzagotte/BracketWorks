@@ -6,22 +6,18 @@
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: rgba(26, 26, 26, 0.42);
+  background: var(--overlay-black);
 }
 
 .modal {
   width: 100%;
   max-width: 440px;
   border-radius: 18px;
-  border: 1px solid var(--color-border-light);
-  background: var(--color-brand-ivory-light);
-  box-shadow: 0 22px 56px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 22px 56px var(--opacity-black-30);
 }
 
 .header {
   padding: 20px 22px 14px;
-  border-bottom: 2px solid var(--color-primary);
-  background: var(--color-brand-ivory);
   border-radius: 18px 18px 0 0;
 }
 
@@ -52,10 +48,7 @@
 .primaryButton {
   min-width: 120px;
   padding: 11px 16px;
-  border: none;
   border-radius: 12px;
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
-  color: var(--color-white);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -65,7 +58,7 @@
 
 .primaryButton:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(244, 124, 32, 0.35);
+  box-shadow: 0 4px 14px var(--color-border-hover);
 }
 
 @media (max-width: 480px) {

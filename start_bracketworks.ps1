@@ -85,10 +85,18 @@ $FrontendWaitDelayMs = if ($env:BRACKETWORKS_FRONTEND_WAIT_DELAY_MS) {
 
 $BackendHealthUrl = "$BackendUrl/health"
 $FrontendHealthUrl = "http://localhost:$Port/login"
+$RepoNodePath = Join-Path $ProjectRoot ".tools\node-v22.22.3-win-x64"
 
 # Ensure Node.js is in PATH
-if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
+if (Test-Path (Join-Path $RepoNodePath "node.exe")) {
+    $env:PATH = "$RepoNodePath;$env:PATH"
+} elseif (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
     $env:PATH = "C:\Program Files\nodejs;$env:PATH"
+}
+
+if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
+    Write-Host "npm not found. Install Node.js with npm support." -ForegroundColor Red
+    exit 1
 }
 
 if ($BackendMode -eq "docker" -and -not (Get-Command docker -ErrorAction SilentlyContinue)) {
@@ -137,10 +145,19 @@ if ($BackendMode -eq "docker") {
 Start-Process powershell -ArgumentList "-NoExit", "-Command", $backendCmd
 
 # Start frontend in a new window
+$frontendStartCmd = "npm.cmd run dev"
+$frontendInstallCmd = "npm.cmd ci"
+
 $cmd = "Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned; " +
+    "`$env:PATH='$env:PATH'; " +
        "cd '$FrontendPath'; " +
        "`$env:NEXT_PUBLIC_BACKEND_URL='$BackendUrl'; " +
-       "npm.cmd run dev; " +
+       "if (-not (Test-Path '.\\node_modules\\.bin\\next.cmd')) { " +
+       "Write-Host 'Next.js binary missing. Installing frontend dependencies...' -ForegroundColor Yellow; " +
+       "$frontendInstallCmd; " +
+       "if (`$LASTEXITCODE -ne 0) { Write-Host 'Frontend dependency install failed.' -ForegroundColor Red; Read-Host 'Press Enter to close'; exit 1 } " +
+       "}; " +
+    "$frontendStartCmd; " +
        "Read-Host 'Press Enter to close'"
 Start-Process powershell -ArgumentList "-NoExit", "-Command", $cmd
 

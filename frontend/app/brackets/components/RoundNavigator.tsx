@@ -33,9 +33,7 @@ export function RoundNavigator({
               <span className={styles.roundNumber}>{index + 1}</span>
               <span className={styles.roundName}>{round.name}</span>
             </button>
-            {index < rounds.length - 1 && (
-              <span className={styles.separator}>→</span>
-            )}
+            {index < rounds.length - 1 && <span className={styles.separator} aria-hidden="true" />}
           </React.Fragment>
         ))}
       </div>

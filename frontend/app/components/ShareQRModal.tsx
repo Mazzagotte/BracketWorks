@@ -26,6 +26,10 @@ const TEMPLATE_LAYOUT = {
   titleMinFontPx: 26
 };
 
+function readRootCssVar(name: string) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
 function slugify(name: string): string {
   return name
     .toLowerCase()
@@ -46,6 +50,8 @@ export default function ShareQRModal({ open, onClose, tournamentId, tournamentNa
   const publicUrl = typeof window !== "undefined"
     ? `${window.location.origin}/view/${slug}`
     : `/view/${slug}`;
+  const qrBackgroundColor = typeof window !== "undefined" ? readRootCssVar("--share-qr-code-bg") : "";
+  const qrForegroundColor = typeof window !== "undefined" ? readRootCssVar("--share-qr-code-fg") : "";
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -102,6 +108,10 @@ export default function ShareQRModal({ open, onClose, tournamentId, tournamentNa
     }
     ctx.scale(dpr, dpr);
 
+    const posterFillColor = readRootCssVar("--share-qr-poster-fill");
+    const posterShadowColor = readRootCssVar("--share-qr-title-shadow");
+    const posterStrokeColor = readRootCssVar("--share-qr-title-stroke");
+
     const wrapText = (text: string, maxWidth: number) => {
       const words = text.split(" ");
       const lines: string[] = [];
@@ -132,7 +142,7 @@ export default function ShareQRModal({ open, onClose, tournamentId, tournamentNa
     ctx.drawImage(templateImage, 0, 0, W, H);
 
     // Tournament title overlay
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = posterFillColor;
     ctx.textAlign = "center";
     ctx.textBaseline = "alphabetic";
     ctx.font = "800 66px Inter, Arial, sans-serif";
@@ -189,10 +199,10 @@ export default function ShareQRModal({ open, onClose, tournamentId, tournamentNa
     const titleFirstBaselineY = titleZoneTop + (zoneHeight - titleBlockH) / 2 + fittedLineHeight * 0.9;
 
     ctx.font = `800 ${fittedTitleSize}px Inter, Arial, sans-serif`;
-    ctx.shadowColor = "rgba(0, 0, 0, 0.33)";
+    ctx.shadowColor = posterShadowColor;
     ctx.shadowBlur = Math.max(2, fittedTitleSize * 0.14);
     ctx.shadowOffsetY = Math.max(1, fittedTitleSize * 0.05);
-    ctx.strokeStyle = "rgba(0, 0, 0, 0.24)";
+    ctx.strokeStyle = posterStrokeColor;
     ctx.lineWidth = Math.max(1, fittedTitleSize * 0.055);
     ctx.lineJoin = "round";
     fittedTitleLines.forEach((line, i) => {
@@ -248,6 +258,7 @@ export default function ShareQRModal({ open, onClose, tournamentId, tournamentNa
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, tournamentName, publicUrl, templateSrc]);
 
   const handleExportPng = async () => {
@@ -282,21 +293,22 @@ export default function ShareQRModal({ open, onClose, tournamentId, tournamentNa
         {/* QR Code */}
         <div className={styles.qrSection}>
           <div className={styles.posterPreview}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={previewPosterSrc || templateSrc}
               alt="QR poster preview"
               className={styles.posterImage}
             />
           </div>
-          <p className={styles.qrLabel}>Live poster preview</p>
+          <p className={`${styles.qrLabel} ${styles.mutedMicrocopy}`}>Live poster preview</p>
         </div>
 
         {/* Divider */}
-        <div className={styles.divider}><span>or share the link</span></div>
+        <div className={`${styles.divider} ${styles.mutedMicrocopy}`}><span>or share the link</span></div>
 
         {/* URL row */}
-        <div className={styles.urlRow}>
-          <span className={styles.urlText}>{publicUrl}</span>
+        <div className={`${styles.urlRow} ${styles.outlinedPanel}`}>
+          <span className={`${styles.urlText} ${styles.mutedMicrocopy}`}>{publicUrl}</span>
           <button
             className={`${styles.copyBtn} ${copied ? styles.copyBtnSuccess : ""}`}
             onClick={handleCopy}
@@ -309,7 +321,7 @@ export default function ShareQRModal({ open, onClose, tournamentId, tournamentNa
 
         {/* Actions */}
         <div className={styles.actions}>
-          <button className={styles.exportBtn} onClick={handleExportPng}>
+          <button className={`${styles.exportBtn} ${styles.outlinedPanel}`} onClick={handleExportPng}>
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className={styles.iconNoShrink}>
               <path d="M7 1v8M4 6l3 3 3-3M2 11h10" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
@@ -318,15 +330,15 @@ export default function ShareQRModal({ open, onClose, tournamentId, tournamentNa
         </div>
 
         {/* Footer */}
-        <p className={styles.hint}>No login required — bowlers can view scores from any device.</p>
+        <p className={`${styles.hint} ${styles.mutedMicrocopy}`}>No login required - bowlers can view scores from any device.</p>
 
         {/* Hidden canvas used for PDF export */}
         <div ref={canvasRef} hidden>
           <QRCodeCanvas
             value={publicUrl}
             size={400}
-            bgColor="#ffffff"
-            fgColor="#2b2b2b"
+            bgColor={qrBackgroundColor}
+            fgColor={qrForegroundColor}
             level="H"
             imageSettings={{
               src: "/logo.svg",

@@ -254,10 +254,7 @@ function BracketCard({
         Progress: {completedMatches}/{totalMatches} matches completed
       </div>
       <div className={styles.progressBar}>
-        <div
-          className={styles.progressFill}
-          style={{ '--progress': `${progressPct}%` } as React.CSSProperties}
-        />
+        <progress className={styles.progressMeter} value={progressPct} max={100} />
       </div>
     </div>
   )

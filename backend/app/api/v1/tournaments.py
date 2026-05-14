@@ -1,12 +1,41 @@
 import logging
-from fastapi import APIRouter, HTTPException, Depends, Request
+from fastapi import APIRouter, HTTPException, Depends, Request, Query
 from sqlalchemy.orm import Session
 from ...core import models, schemas
 from ...api import deps
 import json
+from time import perf_counter
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+def _tournament_to_dict(tournament: models.Tournament) -> dict:
+    tournament_dict = tournament.__dict__.copy()
+    if tournament.squad_times:
+        tournament_dict['squad_times'] = json.loads(tournament.squad_times)
+    else:
+        tournament_dict['squad_times'] = {}
+    return tournament_dict
+
+
+def _bracket_settings_to_dict(settings: models.TournamentBracketSettings | None) -> dict | None:
+    if not settings:
+        return None
+
+    return {
+        'id': settings.id,
+        'tournament_id': settings.tournament_id,
+        'bracket_size': settings.bracket_size,
+        'first_place_amount': settings.first_place_amount,
+        'second_place_amount': settings.second_place_amount,
+        'house_fee_amount': settings.house_fee_amount,
+        'default_entry_fee': settings.default_entry_fee,
+        'bracket_programs': settings.bracket_programs,
+        'handicap_percentage': settings.handicap_percentage,
+        'handicap_base': settings.handicap_base,
+        'allow_byes': settings.allow_byes,
+    }
 
 @router.post("/", response_model=schemas.Tournament)
 def create_tournament(
@@ -39,23 +68,105 @@ def create_tournament(
 @router.get("/", response_model=list[schemas.Tournament])
 def list_tournaments(
     request: Request,
+    limit: int | None = Query(default=None, ge=1, le=500),
+    offset: int = Query(default=0, ge=0),
     db: Session = Depends(deps.get_db),
     user = Depends(deps.get_current_user)
 ):
     show_all = request.query_params.get('all') == '1'
+    query = db.query(models.Tournament).order_by(models.Tournament.id.desc())
+
     if show_all and getattr(user, 'is_admin', False):
-        tournaments = db.query(models.Tournament).all()
+        pass
     else:
-        tournaments = db.query(models.Tournament).filter(models.Tournament.user_id == user.id).all()
-    # Build response with squad_times parsed as dict
-    result = []
-    for t in tournaments:
-        t_dict = t.__dict__.copy()
-        if t.squad_times:
-            t_dict['squad_times'] = json.loads(t.squad_times)
-        else:
-            t_dict['squad_times'] = {}
-        result.append(t_dict)
+        query = query.filter(models.Tournament.user_id == user.id)
+
+    if offset:
+        query = query.offset(offset)
+    if limit is not None:
+        query = query.limit(limit)
+
+    tournaments = query.all()
+    return [_tournament_to_dict(tournament) for tournament in tournaments]
+
+
+@router.get("/bootstrap")
+def get_tournament_bootstrap(
+    tournament_id: int,
+    db: Session = Depends(deps.get_db),
+    user = Depends(deps.get_current_user),
+):
+    started = perf_counter()
+    tournament_query = db.query(models.Tournament).filter(models.Tournament.id == tournament_id)
+    if not getattr(user, 'is_admin', False):
+        tournament_query = tournament_query.filter(models.Tournament.user_id == user.id)
+
+    tournament = tournament_query.first()
+    if not tournament:
+        logger.info(
+            "Bootstrap load completed",
+            extra={
+                "tournament_id": tournament_id,
+                "user_id": getattr(user, 'id', None),
+                "found": False,
+                "duration_ms": round((perf_counter() - started) * 1000, 2),
+            },
+        )
+        return {
+            'tournament': None,
+            'squads': [],
+            'selected_squad': None,
+            'bracket_settings': None,
+        }
+
+    squads = db.query(models.Squad).filter(
+        models.Squad.tournament_id == tournament_id
+    ).order_by(models.Squad.date.asc(), models.Squad.time.asc(), models.Squad.id.asc()).all()
+
+    squad_payload = [
+        {
+            'id': squad.id,
+            'tournament_id': squad.tournament_id,
+            'date': str(squad.date),
+            'time': squad.time,
+        }
+        for squad in squads
+    ]
+
+    selected = db.query(models.SelectedSquad).filter(models.SelectedSquad.user_id == user.id).first()
+    allowed_squad_ids = {squad.id for squad in squads}
+    selected_payload = None
+    if selected and selected.squad_id in allowed_squad_ids:
+        selected_payload = {
+            'id': selected.id,
+            'user_id': selected.user_id,
+            'squad_id': selected.squad_id,
+        }
+
+    settings = db.query(models.TournamentBracketSettings).filter(
+        models.TournamentBracketSettings.tournament_id == tournament_id
+    ).first()
+
+    result = {
+        'tournament': _tournament_to_dict(tournament),
+        'squads': squad_payload,
+        'selected_squad': selected_payload,
+        'bracket_settings': _bracket_settings_to_dict(settings),
+    }
+
+    logger.info(
+        "Bootstrap load completed",
+        extra={
+            "tournament_id": tournament_id,
+            "user_id": getattr(user, 'id', None),
+            "found": True,
+            "squads_count": len(squad_payload),
+            "has_selected_squad": selected_payload is not None,
+            "has_bracket_settings": settings is not None,
+            "duration_ms": round((perf_counter() - started) * 1000, 2),
+        },
+    )
+
     return result
 
 @router.get("/{tournament_id}", response_model=schemas.Tournament)
@@ -67,12 +178,7 @@ def get_tournament(
     t = db.query(models.Tournament).filter(models.Tournament.id == tournament_id).first()
     if not t:
         raise HTTPException(status_code=404, detail="Tournament not found")
-    t_dict = t.__dict__.copy()
-    if t.squad_times:
-        t_dict['squad_times'] = json.loads(t.squad_times)
-    else:
-        t_dict['squad_times'] = {}
-    return t_dict
+    return _tournament_to_dict(t)
 
 @router.put("/{tournament_id}", response_model=schemas.Tournament)
 def update_tournament(

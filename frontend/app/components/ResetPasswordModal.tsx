@@ -162,19 +162,19 @@ export default function ResetPasswordModal({ isOpen, onClose, onSuccess }: Reset
 
   return (
     <div className={styles.overlay} onClick={handleClose}>
-      <div className={styles.modal} onClick={e => e.stopPropagation()}>
+      <div className={`surface-card surface-modalShell ${styles.modal}`} onClick={e => e.stopPropagation()}>
         <CloseControl onClick={handleClose} position="absolute" size="sm" label="Close reset password modal" disabled={loading} />
-        <div className={styles.header}>
+        <div className={`surface-cardHeader ${styles.header}`}>
           <h2 className={styles.title}>Reset Password</h2>
           <p className={styles.subtitle}>Enter your email to receive a reset code</p>
         </div>
 
         <form onSubmit={handleSubmit} className={styles.body}>
-          {success && <div className={styles.success}>{success}</div>}
-          {error && <div className={styles.error}>{error}</div>}
+          {success && <div className="surface-feedback surface-feedbackSuccess">{success}</div>}
+          {error && <div className="surface-feedback surface-feedbackError">{error}</div>}
 
           <div className={styles.field}>
-            <label className={styles.label}>Email Address *</label>
+            <label className="surface-authLabel">Email Address *</label>
             <input
               ref={emailRef}
               type="email"
@@ -184,24 +184,24 @@ export default function ResetPasswordModal({ isOpen, onClose, onSuccess }: Reset
               placeholder="Enter your email"
               required
               disabled={loading}
-              className={`${styles.input} ${
-                fieldError ? styles.inputError :
-                isValid ? styles.inputValid : ''
+              className={`surface-authInput ${
+                fieldError ? 'surface-authInputError' :
+                isValid ? 'surface-authInputValid' : ''
               }`}
             />
-            {fieldError && <div className={styles.fieldHint}>{fieldError}</div>}
-            {isValid && <div className={`${styles.fieldHint} ${styles.fieldHintValid}`}>Valid email format</div>}
+            {fieldError && <div className="surface-authHint">{fieldError}</div>}
+            {isValid && <div className="surface-authHint surface-authHintSuccess">Valid email format</div>}
           </div>
 
           <div className={styles.buttons}>
             <button
               type="submit"
               disabled={submitDisabled}
-              className={styles.submitBtn}
+              className="surface-authButton surface-authButtonPrimary"
             >
               {loading ? 'Sending...' : (cooldownSeconds > 0 ? `Retry in ${cooldownSeconds}s` : 'Send Reset Code')}
             </button>
-            <button type="button" onClick={handleClose} disabled={loading} className={styles.cancelBtn}>
+            <button type="button" onClick={handleClose} disabled={loading} className="surface-authButton surface-authButtonSecondary">
               {success ? 'Close' : 'Cancel'}
             </button>
           </div>

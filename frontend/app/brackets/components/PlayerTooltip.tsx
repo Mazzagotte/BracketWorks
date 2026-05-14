@@ -145,7 +145,7 @@ export function PlayerTooltip({
 
           {/* Header */}
           <div className={styles.tooltipHeader}>
-            {isWinner && <span className={styles.winnerIcon}>🏆</span>}
+            {isWinner && <span className={styles.winnerIcon}>WIN</span>}
             <h4 className={styles.playerNameHeader}>
               {fullName || playerName}
             </h4>

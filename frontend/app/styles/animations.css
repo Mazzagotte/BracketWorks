@@ -137,7 +137,7 @@
 }
 
 .hover-glow:hover {
-  box-shadow: 0 0 20px rgba(79, 140, 255, 0.4);
+  box-shadow: 0 0 20px var(--color-blue-accent-border);
 }
 
 .hover-scale {
@@ -171,26 +171,12 @@ button[type="submit"] {
 button[type="submit"]:not(:disabled):hover {
   transform: scale(1.05);
   filter: brightness(1.1);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 16px var(--opacity-black-20);
 }
 
 .primaryBtn:not(:disabled):active,
 button[type="submit"]:not(:disabled):active {
   transform: scale(0.95);
-}
-
-/* Specific Button Colors Hover Effects */
-button[style*="linear-gradient(90deg, #ffb347"]:not(:disabled):hover {
-  box-shadow: 0 4px 20px rgba(255, 179, 71, 0.4) !important;
-}
-
-button[style*="linear-gradient(90deg, var(--color-warning)"]:not(:disabled):hover {
-  box-shadow: 0 4px 20px rgba(240, 165, 0, 0.4) !important;
-}
-
-button[style*="linear-gradient(90deg, #4f8cff"]:not(:disabled):hover,
-button[style*="linear-gradient(90deg, #6ed0fa"]:not(:disabled):hover {
-  box-shadow: 0 4px 20px rgba(79, 140, 255, 0.4) !important;
 }
 
 /* Tournament Bracket Animations */
@@ -207,7 +193,7 @@ button[style*="linear-gradient(90deg, #6ed0fa"]:not(:disabled):hover {
 
 @keyframes highlightWinner {
   0% { background-color: transparent; }
-  50% { background-color: rgba(76, 175, 80, 0.2); }
+  50% { background-color: var(--color-success-border); }
   100% { background-color: transparent; }
 }
 
@@ -289,7 +275,7 @@ button[style*="linear-gradient(90deg, #6ed0fa"]:not(:disabled):hover {
 .ripple-effect {
   position: absolute;
   border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.6);
+  background-color: var(--opacity-white-60);
   transform: scale(0);
   animation: ripple 0.6s linear;
 }
@@ -326,31 +312,31 @@ button[style*="linear-gradient(90deg, #6ed0fa"]:not(:disabled):hover {
 
 /* Modern Card Design System */
 .glass-card {
-  background: rgba(255, 255, 255, 0.85);
+  background: var(--opacity-white-85);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid var(--opacity-white-20);
   box-shadow: 
-    0 8px 32px rgba(31, 38, 135, 0.15),
-    0 2px 8px rgba(31, 38, 135, 0.1);
+    0 8px 32px var(--opacity-black-15),
+    0 2px 8px var(--opacity-black-10);
   transition: all 0.3s ease;
 }
 
 .glass-card:hover {
   transform: translateY(-2px);
   box-shadow: 
-    0 16px 48px rgba(31, 38, 135, 0.2),
-    0 4px 16px rgba(31, 38, 135, 0.15);
+    0 16px 48px var(--opacity-black-20),
+    0 4px 16px var(--opacity-black-15);
 }
 
 .glass-card-dark {
-  background: rgba(35, 43, 54, 0.85);
+  background: var(--color-dark-glass);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid var(--opacity-white-10);
   box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.3),
-    0 2px 8px rgba(0, 0, 0, 0.2);
+    0 8px 32px var(--opacity-black-30),
+    0 2px 8px var(--opacity-black-20);
 }
 
 .enhanced-card {
@@ -359,9 +345,9 @@ button[style*="linear-gradient(90deg, #6ed0fa"]:not(:disabled):hover {
   padding: 24px;
   box-shadow: 
     0 4px 16px var(--opacity-black-08),
-    0 1px 4px rgba(0, 0, 0, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.8);
+    0 1px 4px var(--opacity-black-03),
+    inset 0 1px 0 var(--opacity-white-90);
+  border: 1px solid var(--opacity-white-80);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
@@ -374,7 +360,7 @@ button[style*="linear-gradient(90deg, #6ed0fa"]:not(:disabled):hover {
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(79, 140, 255, 0.4), transparent);
+  background: linear-gradient(90deg, transparent, var(--color-blue-accent-border), transparent);
   opacity: 0;
   transition: opacity 0.3s ease;
 }
@@ -386,9 +372,9 @@ button[style*="linear-gradient(90deg, #6ed0fa"]:not(:disabled):hover {
 .enhanced-card:hover {
   transform: translateY(-4px) scale(1.02);
   box-shadow: 
-    0 12px 32px rgba(0, 0, 0, 0.12),
+    0 12px 32px var(--opacity-black-12),
     0 4px 16px var(--opacity-black-08),
-    inset 0 1px 0 rgba(255, 255, 255, 1);
+    inset 0 1px 0 var(--color-white);
 }
 
 .premium-card {
@@ -397,8 +383,8 @@ button[style*="linear-gradient(90deg, #6ed0fa"]:not(:disabled):hover {
   padding: 32px;
   color: white;
   box-shadow: 
-    0 8px 32px rgba(102, 126, 234, 0.3),
-    0 2px 8px rgba(102, 126, 234, 0.2);
+    0 8px 32px var(--opacity-black-30),
+    var(--shadow-purple-sm);
   position: relative;
   overflow: hidden;
 }
@@ -794,7 +780,7 @@ button[style*="linear-gradient(90deg, #6ed0fa"]:not(:disabled):hover {
 /* Dark mode mobile support */
 @media (max-width: 480px) and (prefers-color-scheme: dark) {
   .enhanced-card {
-    background: rgba(35, 43, 54, 0.95) !important;
+    background: var(--color-dark-glass-strong) !important;
     border-color: var(--opacity-white-10) !important;
   }
 }

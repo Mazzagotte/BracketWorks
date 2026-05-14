@@ -21,12 +21,23 @@ export const API = buildApiUrl;
 // Request cache for GET requests
 const apiRequestCache = new Map<string, { data: any; timestamp: number; ttl: number }>();
 const DEFAULT_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const authFetchCache = new Map<string, { body: string; status: number; statusText: string; headers: [string, string][]; timestamp: number; ttl: number }>();
+const authFetchInFlight = new Map<string, Promise<Response>>();
+const AUTH_FETCH_CACHE_TTL_MS = 60 * 1000; // 60 seconds
 
 // Enhanced API client with error handling, retry logic, and caching
 export class ApiClient {
   private backendBaseUrl: string;
   private defaultRequestHeaders: Record<string, string>;
   private getAuthToken: () => string | null;
+  private refreshPromise: Promise<string | null> | null = null;
+
+  private generateIdempotencyKey(): string {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+    return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  }
 
   constructor(backendBaseUrl?: string, getAuthToken?: () => string | null) {
     this.backendBaseUrl = backendBaseUrl || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
@@ -58,11 +69,112 @@ export class ApiClient {
     logger.debug('Cache set', { key, ttl });
   }
 
+  private getAuthFetchCacheKey(url: string, method: string, headers: Record<string, string>): string {
+    const authHeader = headers.Authorization || '';
+    return `${method}:${url}:${authHeader}`;
+  }
+
+  private shouldUseAuthFetchCache(method: string, url: string, options: RequestInit): boolean {
+    if (method !== 'GET') {
+      return false;
+    }
+    if (options.cache === 'no-store') {
+      return false;
+    }
+
+    const lowerUrl = url.toLowerCase();
+    if (
+      lowerUrl.includes('/api/v1/scores') ||
+      lowerUrl.includes('/api/v1/brackets/generate-multiple') ||
+      lowerUrl.includes('/api/v1/public/live')
+    ) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private buildResponseFromCached(entry: { body: string; status: number; statusText: string; headers: [string, string][] }): Response {
+    return new Response(entry.body, {
+      status: entry.status,
+      statusText: entry.statusText,
+      headers: new Headers(entry.headers),
+    });
+  }
+
+  private clearAuthStorage(): void {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    localStorage.removeItem('token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('session_id');
+    localStorage.removeItem('user_id');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('is_admin');
+  }
+
+  private async refreshAccessToken(): Promise<string | null> {
+    if (typeof window === 'undefined') {
+      return null;
+    }
+
+    if (this.refreshPromise) {
+      return this.refreshPromise;
+    }
+
+    const refreshToken = localStorage.getItem('refresh_token');
+    if (!refreshToken) {
+      return null;
+    }
+
+    this.refreshPromise = (async () => {
+      try {
+        const response = await fetch(`${this.backendBaseUrl}/api/v1/users/refresh`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh_token: refreshToken }),
+        });
+
+        if (!response.ok) {
+          this.clearAuthStorage();
+          return null;
+        }
+
+        const data = await response.json();
+        if (!data?.access_token) {
+          this.clearAuthStorage();
+          return null;
+        }
+
+        localStorage.setItem('token', data.access_token);
+        if (data.refresh_token) {
+          localStorage.setItem('refresh_token', data.refresh_token);
+        }
+        if (data.session_id) {
+          localStorage.setItem('session_id', data.session_id);
+        }
+        window.dispatchEvent(new Event('auth-state-changed'));
+        window.dispatchEvent(new Event('storage'));
+        return data.access_token as string;
+      } catch (error) {
+        logger.warn('Access token refresh failed', { error: String(error) });
+        this.clearAuthStorage();
+        return null;
+      } finally {
+        this.refreshPromise = null;
+      }
+    })();
+
+    return this.refreshPromise;
+  }
+
   private async request<T>(
     endpoint: string, 
     options: RequestInit = {},
     retries: number = 3,
-    useCache: boolean = false
+    useCache: boolean = false,
+    allowAuthRefresh: boolean = true
   ): Promise<T> {
     const url = `${this.backendBaseUrl}${endpoint}`;
     const startTime = Date.now();
@@ -84,6 +196,12 @@ export class ApiClient {
       },
     };
 
+    const method = (config.method || 'GET').toUpperCase();
+    const requestHeaders = config.headers as Record<string, string>;
+    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) && !requestHeaders['Idempotency-Key']) {
+      requestHeaders['Idempotency-Key'] = this.generateIdempotencyKey();
+    }
+
     // Add auth token if available
     const token = this.getAuthToken();
     if (token) {
@@ -95,7 +213,22 @@ export class ApiClient {
 
     try {
       logger.apiCall(config.method || 'GET', endpoint);
-      const response = await fetch(url, config);
+      let response = await fetch(url, config);
+
+      if (response.status === 401 && allowAuthRefresh) {
+        const refreshedAccessToken = await this.refreshAccessToken();
+        if (refreshedAccessToken) {
+          const retryHeaders = {
+            ...(config.headers || {}),
+            Authorization: `Bearer ${refreshedAccessToken}`,
+          };
+          response = await fetch(url, {
+            ...config,
+            headers: retryHeaders,
+          });
+        }
+      }
+
       const duration = Date.now() - startTime;
       
       if (!response.ok) {
@@ -143,8 +276,7 @@ export class ApiClient {
       // Handle auth errors automatically
       if (appError.statusCode === 401) {
         if (typeof window !== 'undefined') {
-          localStorage.removeItem('token')
-          localStorage.removeItem('user_id')
+          this.clearAuthStorage()
           window.location.href = '/login'
         }
       }
@@ -162,7 +294,7 @@ export class ApiClient {
         const delayMs = 300 * Math.pow(2, 3 - retries) // 300ms, 600ms, 1200ms
         logger.info(`Retrying API request (${retries} retries left, delay ${delayMs}ms)`, { endpoint })
         await new Promise(resolve => setTimeout(resolve, delayMs))
-        return this.request<T>(endpoint, options, retries - 1, useCache)
+        return this.request<T>(endpoint, options, retries - 1, useCache, false)
       }
       
       throw appError
@@ -205,9 +337,102 @@ export class ApiClient {
     return this.request<T>(endpoint, { method: 'DELETE' });
   }
 
+  async fetchWithAuth(input: string, options: RequestInit = {}, allowAuthRefresh: boolean = true): Promise<Response> {
+    const isAbsoluteUrl = /^https?:\/\//i.test(input)
+    const url = isAbsoluteUrl ? input : `${this.backendBaseUrl}${input}`
+
+    const baseHeaders = {
+      ...this.defaultRequestHeaders,
+      ...((options.headers as Record<string, string>) || {}),
+    }
+
+    const token = this.getAuthToken()
+    if (token && !baseHeaders.Authorization) {
+      baseHeaders.Authorization = `Bearer ${token}`
+    }
+
+    const config: RequestInit = {
+      ...options,
+      headers: baseHeaders,
+    }
+
+    const method = (config.method || 'GET').toUpperCase()
+    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) && !baseHeaders['Idempotency-Key']) {
+      baseHeaders['Idempotency-Key'] = this.generateIdempotencyKey()
+    }
+    const useAuthFetchCache = this.shouldUseAuthFetchCache(method, url, config)
+    const cacheKey = this.getAuthFetchCacheKey(url, method, baseHeaders)
+
+    if (useAuthFetchCache) {
+      const cached = authFetchCache.get(cacheKey)
+      if (cached && Date.now() - cached.timestamp < cached.ttl) {
+        return this.buildResponseFromCached(cached)
+      }
+      if (cached) {
+        authFetchCache.delete(cacheKey)
+      }
+
+      const existingRequest = authFetchInFlight.get(cacheKey)
+      if (existingRequest) {
+        const sharedResponse = await existingRequest
+        return sharedResponse.clone()
+      }
+    }
+
+    const fetchPromise = (async () => {
+      let response = await fetch(url, config)
+
+      if (response.status === 401 && allowAuthRefresh) {
+        const refreshedAccessToken = await this.refreshAccessToken()
+        if (refreshedAccessToken) {
+          response = await fetch(url, {
+            ...config,
+            headers: {
+              ...baseHeaders,
+              Authorization: `Bearer ${refreshedAccessToken}`,
+            },
+          })
+        }
+      }
+
+      if (response.status === 401 && typeof window !== 'undefined') {
+        this.clearAuthStorage()
+        window.location.href = '/login'
+      }
+
+      if (useAuthFetchCache && response.ok) {
+        const clone = response.clone()
+        const body = await clone.text()
+        authFetchCache.set(cacheKey, {
+          body,
+          status: response.status,
+          statusText: response.statusText,
+          headers: Array.from(response.headers.entries()),
+          timestamp: Date.now(),
+          ttl: AUTH_FETCH_CACHE_TTL_MS,
+        })
+      }
+
+      return response
+    })()
+
+    if (useAuthFetchCache) {
+      authFetchInFlight.set(cacheKey, fetchPromise)
+      try {
+        return await fetchPromise
+      } finally {
+        authFetchInFlight.delete(cacheKey)
+      }
+    }
+
+    return fetchPromise
+  }
+
   // Clear cache
   clearCache(): void {
     apiRequestCache.clear();
+    authFetchCache.clear();
+    authFetchInFlight.clear();
     logger.info('API cache cleared');
   }
 
@@ -221,3 +446,4 @@ export class ApiClient {
 
 // Create singleton instance
 export const apiClient = new ApiClient();
+export const apiFetch = (input: string, options: RequestInit = {}) => apiClient.fetchWithAuth(input, options)

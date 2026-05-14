@@ -13,10 +13,6 @@
    ============================================= */
 
 .summaryCard {
-  background-color: var(--color-brand-ivory-light);
-  border-radius: var(--radius-xl);
-  box-shadow: 0 2px 8px var(--opacity-black-08);
-  border: 1px solid var(--color-border-light);
   padding: 0;
   margin-bottom: 1.5rem;
   overflow: hidden;
@@ -28,8 +24,6 @@
   color: var(--color-text-primary);
   margin: 0;
   padding: 14px 24px;
-  background: var(--color-brand-ivory);
-  border-bottom: 3px solid var(--color-primary);
   border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   text-transform: none;
   letter-spacing: normal;
@@ -99,27 +93,27 @@
   border: none;
   border-radius: 99px;
   overflow: hidden;
-  background: rgba(26, 26, 26, 0.1);
+  background: var(--opacity-black-10);
 }
 
 .progressMeter::-webkit-progress-bar {
-  background: rgba(26, 26, 26, 0.1);
+  background: var(--opacity-black-10);
   border-radius: 99px;
 }
 
 .progressMeter::-webkit-progress-value {
-  background: linear-gradient(90deg, var(--color-green-dark), #34d399);
+  background: linear-gradient(90deg, var(--color-green-dark), var(--color-green-light-2));
   border-radius: 99px;
 }
 
 .progressMeter::-moz-progress-bar {
-  background: linear-gradient(90deg, var(--color-green-dark), #34d399);
+  background: linear-gradient(90deg, var(--color-green-dark), var(--color-green-light-2));
   border-radius: 99px;
 }
 
 .remainingLabel {
   font-size: 0.7rem;
-  color: rgba(26, 26, 26, 0.45);
+  color: var(--color-text-muted-medium);
   margin-top: 4px;
 }
 
@@ -217,11 +211,11 @@
   justify-content: space-between;
   align-items: center;
   padding: 10px 20px;
-  background: rgba(240, 120, 32, 0.05);
-  border-bottom: 1px solid rgba(240, 120, 32, 0.12);
+  background: var(--color-warning-tint);
+  border-bottom: 1px solid var(--color-border-light);
   font-size: 13px;
   font-weight: 700;
-  color: rgba(26, 26, 26, 0.6);
+  color: var(--color-text-muted-alt);
 }
 
 .bracketSubHeader span:last-child {
@@ -259,7 +253,7 @@
   margin-bottom: 5px;
   font-size: 11px;
   font-weight: 600;
-  color: rgba(26, 26, 26, 0.5);
+  color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -271,7 +265,7 @@
   border: 1.5px solid var(--color-border-light);
   font-size: 14px;
   font-weight: 500;
-  background: #FFFCF5;
+  background: var(--color-brand-ivory-soft);
   color: var(--color-text-primary);
   cursor: pointer;
   transition: border-color 0.15s, box-shadow 0.15s;
@@ -285,8 +279,8 @@
 .fieldSelect:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(244, 124, 32, 0.12);
-  background-color: white;
+  box-shadow: var(--ring-warning);
+  background-color: var(--color-white);
 }
 
 .fieldSelect:disabled {
@@ -307,7 +301,7 @@
   gap: 7px;
   padding: 9px 18px;
   background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
-  color: white;
+  color: var(--color-white);
   border: none;
   border-radius: 10px;
   font-size: 14px;
@@ -320,7 +314,7 @@
 
 .refreshBtn:hover:not(:disabled) {
   opacity: 0.9;
-  box-shadow: 0 4px 12px rgba(244, 124, 32, 0.4);
+  box-shadow: 0 4px 12px var(--color-border-hover);
 }
 
 .refreshBtn:disabled {
@@ -334,9 +328,9 @@
   align-items: center;
   gap: 7px;
   padding: 9px 18px;
-  background: white;
+  background: var(--color-white);
   color: var(--color-text-primary);
-  border: 1.5px solid #e2e8f0;
+  border: 1.5px solid var(--color-gray-200);
   border-radius: 10px;
   font-size: 14px;
   font-weight: 600;
@@ -346,7 +340,7 @@
 }
 
 .saveBtn:hover:not(:disabled) {
-  background: #f8fafc;
+  background: var(--color-gray-50);
   border-color: var(--color-primary);
   color: var(--color-primary);
 }
@@ -358,7 +352,7 @@
 
 .lastCalcLabel {
   font-size: 12px;
-  color: #94a3b8;
+  color: var(--color-text-secondary);
   white-space: nowrap;
 }
 
@@ -370,8 +364,8 @@
   display: inline-block;
   width: 14px;
   height: 14px;
-  border: 2px solid rgba(255, 255, 255, 0.5);
-  border-top-color: white;
+  border: 2px solid var(--opacity-white-50);
+  border-top-color: var(--color-white);
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
   flex-shrink: 0;
@@ -392,9 +386,9 @@
    ============================================= */
 
 .errorBanner {
-  background: #fef2f2;
+  background: var(--color-error-bg-light);
   color: var(--color-red-dark);
-  border: 1px solid #fecaca;
+  border: 1px solid var(--color-error-border-light);
   border-left: 4px solid var(--color-red-dark);
   border-radius: 10px;
   padding: 12px 16px;
@@ -414,8 +408,8 @@
 
 .searchBar {
   padding: 14px 20px;
-  border-bottom: 1px solid rgba(240, 120, 32, 0.12);
-  background: rgba(240, 120, 32, 0.03);
+  border-bottom: 1px solid var(--color-border-light);
+  background: var(--color-warning-tint);
 }
 
 .searchInput {
@@ -425,7 +419,7 @@
   border-radius: 10px;
   font-size: 14px;
   box-sizing: border-box;
-  background: #FFFCF5;
+  background: var(--color-brand-ivory-soft);
   color: var(--color-text-primary);
   transition: border-color 0.15s, box-shadow 0.15s;
 }
@@ -433,11 +427,11 @@
 .searchInput:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(244, 124, 32, 0.12);
+  box-shadow: 0 0 0 3px var(--color-border-light);
 }
 
 .searchInput::placeholder {
-  color: rgba(26, 26, 26, 0.35);
+  color: var(--color-text-muted-medium);
 }
 
 /* =============================================
@@ -451,7 +445,7 @@
   justify-content: center;
   gap: 12px;
   padding: 64px 24px;
-  color: rgba(26, 26, 26, 0.5);
+  color: var(--color-text-muted);
   font-size: 14px;
 }
 
@@ -485,7 +479,7 @@
 
 .emptyMessage {
   font-size: 14px;
-  color: rgba(26, 26, 26, 0.55);
+  color: var(--color-text-muted-strong);
   max-width: 380px;
   line-height: 1.6;
 }
@@ -715,8 +709,8 @@
   flex-wrap: wrap;
   gap: 10px;
   padding: 16px 20px;
-  background: rgba(240, 120, 32, 0.05);
-  border-bottom: 1px solid rgba(240, 120, 32, 0.12);
+  background: var(--color-warning-tint);
+  border-bottom: 1px solid var(--color-border-light);
 }
 
 .bracketTitle {
@@ -736,8 +730,8 @@
   flex-shrink: 0;
 }
 
-.bracketIcon.scratch  { background: #fff0e6; }
-.bracketIcon.handicap { background: #f0fdf4; }
+.bracketIcon.scratch  { background: var(--color-brand-ivory-soft); }
+.bracketIcon.handicap { background: var(--color-green-light); }
 
 .bracketTitleText {
   font-weight: 700;
@@ -755,7 +749,7 @@
 }
 
 .bracketTypeBadge.scratch  { background: var(--color-border-light); color: var(--color-primary); }
-.bracketTypeBadge.handicap { background: rgba(5, 150, 105, 0.1); color: var(--color-green-dark); }
+.bracketTypeBadge.handicap { background: var(--color-success-soft); color: var(--color-green-dark); }
 
 .bracketMeta {
   display: flex;
@@ -770,12 +764,12 @@
 .metaStatValue {
   font-size: 13px;
   font-weight: 600;
-  color: #475569;
+  color: var(--color-gray-600);
 }
 
 .metaStatLabel {
   font-size: 11px;
-  color: #94a3b8;
+  color: var(--color-text-secondary);
 }
 
 .prizeAmount {
@@ -786,7 +780,7 @@
 
 .prizeLabel {
   font-size: 11px;
-  color: #94a3b8;
+  color: var(--color-text-secondary);
   font-weight: 500;
 }
 
@@ -801,17 +795,17 @@
   padding: 14px 20px;
   border-bottom: 1px solid var(--color-border-light);
   transition: background 0.1s;
-  background: #FFFCF5;
+  background: var(--color-brand-ivory-soft);
 }
 
 .winnerRow:last-child { border-bottom: none; }
-.winnerRow:hover { background: rgba(240, 120, 32, 0.05); }
+.winnerRow:hover { background: var(--color-warning-tint); }
 
 /* Paid row — muted */
 .winnerRow.isPaid {
   opacity: 0.5;
 }
-.winnerRow.isPaid:hover { background: rgba(240, 120, 32, 0.03); }
+.winnerRow.isPaid:hover { background: var(--color-warning-tint); }
 
 .paidBadge {
   display: inline-flex;
@@ -820,8 +814,8 @@
   font-size: 12px;
   font-weight: 700;
   color: var(--color-green-dark);
-  background: rgba(5, 150, 105, 0.1);
-  border: 1px solid rgba(5, 150, 105, 0.3);
+  background: var(--color-success-soft);
+  border: 1px solid var(--color-success-border);
   border-radius: 20px;
   padding: 4px 12px;
   white-space: nowrap;
@@ -835,9 +829,9 @@
   gap: 5px;
   font-size: 12px;
   font-weight: 600;
-  color: rgba(26, 26, 26, 0.5);
+  color: var(--color-text-muted);
   background: transparent;
-  border: 1.5px solid rgba(240, 120, 32, 0.25);
+  border: 1.5px solid var(--color-border-light);
   border-radius: 20px;
   padding: 4px 12px;
   cursor: pointer;
@@ -849,34 +843,34 @@
 .markPaidBtn:hover {
   border-color: var(--color-green-dark);
   color: var(--color-green-dark);
-  background: rgba(5, 150, 105, 0.06);
+  background: var(--color-success-soft);
 }
 
 .showEntriesBtn {
   display: block;
   width: 100%;
   padding: 12px;
-  background: rgba(240, 120, 32, 0.04);
+  background: var(--color-warning-tint);
   border: none;
   border-top: 1px dashed var(--color-border-light);
   font-size: 13px;
   font-weight: 600;
-  color: rgba(26, 26, 26, 0.5);
+  color: var(--color-text-muted);
   cursor: pointer;
   transition: color 0.15s, background 0.15s;
 }
 
 .showEntriesBtn:hover {
   color: var(--color-primary);
-  background: rgba(240, 120, 32, 0.07);
+  background: var(--color-warning-surface);
 }
 
 /* 1st place gets a subtle gold tint */
 .winnerRow.firstPlace {
-  background: linear-gradient(90deg, #FFF8E6 0%, #FFFCF5 60%);
+  background: linear-gradient(90deg, var(--color-yellow-light) 0%, var(--color-brand-ivory-soft) 60%);
 }
 .winnerRow.firstPlace:hover {
-  background: linear-gradient(90deg, #FEEFC3 0%, rgba(240, 120, 32, 0.05) 60%);
+  background: linear-gradient(90deg, var(--color-brand-gold-lighter) 0%, var(--color-warning-tint) 60%);
 }
 
 /* =============================================
@@ -895,11 +889,11 @@
   flex-shrink: 0;
 }
 
-.place1     { background: linear-gradient(135deg, #fbbf24, var(--color-warning-amber)); color: #78350f; }
+.place1     { background: linear-gradient(135deg, var(--color-warning-light-2), var(--color-warning-amber)); color: var(--color-yellow-dark); }
 .place2     { background: linear-gradient(135deg, var(--color-gray-300), var(--color-gray-400)); color: var(--color-gray-700); }
-.place3     { background: linear-gradient(135deg, #fb923c, #ea580c); color: white; }
-.placeOther { background: var(--color-border-light); color: rgba(26, 26, 26, 0.4); }
-.placeSP    { background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark, #c05a00)); color: white; font-size: 11px; letter-spacing: 0.03em; }
+.place3     { background: linear-gradient(135deg, var(--color-orange-light), var(--color-orange-deep)); color: var(--color-white); }
+.placeOther { background: var(--color-border-light); color: var(--color-text-muted-medium); }
+.placeSP    { background: linear-gradient(135deg, var(--color-primary), var(--color-brand-orange-dark)); color: var(--color-white); font-size: 11px; letter-spacing: 0.03em; }
 
 /* =============================================
    WINNER INFO
@@ -924,8 +918,8 @@
   align-items: center;
   font-size: 10px;
   font-weight: 700;
-  background: #ede9fe;
-  color: #7c3aed;
+  background: var(--color-purple-light);
+  color: var(--color-purple-dark);
   padding: 2px 8px;
   border-radius: 20px;
   white-space: nowrap;
@@ -934,7 +928,7 @@
 
 .winnerMeta {
   font-size: 12px;
-  color: rgba(26, 26, 26, 0.45);
+  color: var(--color-text-muted-medium);
   margin-top: 2px;
 }
 
@@ -944,9 +938,9 @@
   gap: 4px;
   font-size: 11px;
   font-weight: 600;
-  color: rgba(26, 26, 26, 0.45);
+  color: var(--color-text-muted-medium);
   background: none;
-  border: 1px solid rgba(26, 26, 26, 0.15);
+  border: 1px solid var(--color-text-muted-overlay);
   border-radius: 20px;
   padding: 1px 8px;
   cursor: pointer;
@@ -981,7 +975,7 @@
 
 .payoutPct {
   font-size: 11px;
-  color: #94a3b8;
+  color: var(--color-text-secondary);
   margin-top: 1px;
 }
 
@@ -995,7 +989,7 @@
   padding: 8px 10px;
   border-radius: 10px;
   border: 1.5px solid var(--color-border-light);
-  background: #FFFCF5;
+  background: var(--color-brand-ivory-soft);
   color: var(--color-text-primary);
   font-size: 13px;
   font-weight: 500;
@@ -1004,7 +998,7 @@
 .sidePotWinnerSelect:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(244, 124, 32, 0.12);
+  box-shadow: 0 0 0 3px var(--color-border-light);
 }
 
 /* =============================================
@@ -1031,8 +1025,8 @@
 }
 
 .entriesTable thead tr {
-  background: rgba(240, 120, 32, 0.05);
-  border-bottom: 1px solid rgba(240, 120, 32, 0.12);
+  background: var(--color-warning-tint);
+  border-bottom: 1px solid var(--color-border-light);
 }
 
 .entriesTable th {
@@ -1040,7 +1034,7 @@
   text-align: left;
   font-size: 11px;
   font-weight: 700;
-  color: rgba(26, 26, 26, 0.5);
+  color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   white-space: nowrap;
@@ -1050,7 +1044,7 @@
   padding: 13px 16px;
   border-bottom: 1px solid var(--color-border-light);
   color: var(--color-text-primary);
-  background: #FFFCF5;
+  background: var(--color-brand-ivory-soft);
   vertical-align: middle;
 }
 
@@ -1059,15 +1053,15 @@
 }
 
 .entriesTable tbody tr:hover td {
-  background: rgba(240, 120, 32, 0.04);
+  background: var(--color-warning-tint);
 }
 
 /* winner row in entries */
 .entriesTable tbody tr.isWinner td {
-  background: #f0fdf4;
+  background: var(--color-green-light);
 }
 .entriesTable tbody tr.isWinner:hover td {
-  background: #dcfce7;
+  background: var(--color-green-lighter);
 }
 
 .colCenter { text-align: center !important; }
@@ -1093,7 +1087,7 @@
 }
 
 .winningsCellEmpty {
-  color: rgba(26, 26, 26, 0.2);
+  color: var(--color-text-muted-overlay);
   text-align: right;
 }
 
@@ -1108,7 +1102,7 @@
   align-items: center;
   gap: 3px;
   background: var(--color-border-light);
-  color: rgba(26, 26, 26, 0.6);
+  color: var(--color-text-muted-alt);
   font-size: 11px;
   font-weight: 600;
   padding: 3px 9px;
@@ -1116,9 +1110,9 @@
   white-space: nowrap;
 }
 
-.chip.place1chip { background: #fffbeb; color: #92400e; }
-.chip.place2chip { background: #f8fafc; color: #475569; }
-.chip.place3chip { background: #fff7ed; color: #9a3412; }
+.chip.place1chip { background: var(--color-yellow-light); color: var(--color-yellow-dark); }
+.chip.place2chip { background: var(--color-gray-50); color: var(--color-gray-600); }
+.chip.place3chip { background: var(--color-brand-ivory-soft); color: var(--color-orange-deep); }
 
 /* =============================================
    PAGINATION
@@ -1139,10 +1133,10 @@
   padding: 8px 16px;
   border: 1.5px solid var(--color-border-light);
   border-radius: 10px;
-  background: #FFFCF5;
+  background: var(--color-brand-ivory-soft);
   font-size: 13px;
   font-weight: 600;
-  color: rgba(26, 26, 26, 0.55);
+  color: var(--color-text-muted-strong);
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
@@ -1150,7 +1144,7 @@
 .pageBtn:hover:not(:disabled) {
   border-color: var(--color-primary);
   color: var(--color-primary);
-  background: rgba(240, 120, 32, 0.06);
+  background: var(--color-warning-surface);
 }
 
 .pageBtn:disabled {
@@ -1161,7 +1155,7 @@
 .pageLabel {
   font-size: 13px;
   font-weight: 600;
-  color: #64748b;
+  color: var(--color-gray-500);
   min-width: 60px;
   text-align: center;
 }
@@ -1171,8 +1165,8 @@
    ============================================= */
 
 .tableSummaryRow td {
-  background: #f8fafc !important;
-  border-top: 2px solid #e2e8f0 !important;
+  background: var(--color-gray-50) !important;
+  border-top: 2px solid var(--color-gray-200) !important;
   font-weight: 700;
   font-size: 13px;
   color: var(--color-text-primary);

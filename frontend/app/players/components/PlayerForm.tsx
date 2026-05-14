@@ -4,7 +4,20 @@ import { PlayerFormProps } from '../types';
 import styles from '../entries.module.css';
 import { calculatePlayerTotalCost, divisionOptions, filterEntriesForDivision, isProgramAllowedForDivision, normalizeDivision, normalizePlayerBracketEntries } from '../../lib/bracketPrograms';
 
-const EMPTY_FORM = {
+type PlayerFormState = {
+  firstName: string;
+  lastName: string;
+  usbc: string;
+  average: number;
+  handicap: number;
+  scratch: number;
+  bracketEntries: Record<string, number>;
+  division: string;
+  lane: string;
+  amountPaid: number;
+};
+
+const EMPTY_FORM: PlayerFormState = {
   firstName: '',
   lastName: '',
   usbc: '',
@@ -18,7 +31,7 @@ const EMPTY_FORM = {
 };
 
 const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketPrograms, prefillDraft, prefillVersion }: PlayerFormProps) => {
-  const [formData, setFormData] = useState({ ...EMPTY_FORM });
+  const [formData, setFormData] = useState<PlayerFormState>({ ...EMPTY_FORM });
   const [submitError, setSubmitError] = useState<string | null>(null);
   const averageInputRef = useRef<HTMLInputElement | null>(null)
 

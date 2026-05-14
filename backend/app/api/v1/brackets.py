@@ -1,15 +1,18 @@
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Query
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from typing import Optional
 from pydantic import BaseModel
 import logging
 
-from ..deps import get_db
+from ..deps import SessionLocal, get_db
 from ...core import models
+from ...core.async_jobs import job_store, to_dict
 from ...core.config import settings
 from ...core.validators import BracketValidation
 from ...core.errors import handle_error, ValidationError
+from ...core.idempotency import IdempotencyReplay, begin_request, complete_request, fail_request
 from ...services.brackets_simple import (
     generate_bracket_preview, 
     generate_tournament_brackets, 
@@ -81,10 +84,28 @@ def update_match_score_endpoint(
     score_update: MatchScoreUpdate,
     tournament_id: int,
     squad_id: Optional[int] = None,
+    idempotency_key: Optional[str] = Header(None, alias="Idempotency-Key"),
     db: Session = Depends(get_db)
 ):
     """Update match score and auto-advance winner to next round"""
     try:
+        idempotency_record = None
+        if idempotency_key:
+            replay_or_record = begin_request(
+                db,
+                endpoint_scope="brackets:update-match-score",
+                idempotency_key=idempotency_key,
+                request_payload={
+                    "tournament_id": tournament_id,
+                    "squad_id": squad_id,
+                    "score_update": score_update.model_dump(),
+                },
+                user_id=None,
+            )
+            if isinstance(replay_or_record, IdempotencyReplay):
+                return JSONResponse(status_code=replay_or_record.status_code, content=replay_or_record.response_body)
+            idempotency_record = replay_or_record
+
         # Get the current tournament brackets
         brackets_data = load_brackets_simple(db, tournament_id, squad_id)
         if not brackets_data:
@@ -107,13 +128,23 @@ def update_match_score_endpoint(
         except Exception as save_error:
             logger.error(f"Failed to save updated brackets: {save_error}")
             raise HTTPException(status_code=500, detail="Failed to save bracket updates")
+
+        if idempotency_record:
+            complete_request(db, idempotency_record, status_code=200, response_body=updated_result)
+            db.commit()
         
         return updated_result
         
     except HTTPException:
+        if 'idempotency_record' in locals() and idempotency_record is not None:
+            fail_request(db, idempotency_record)
+            db.commit()
         raise
     except Exception as e:
         logger.error(f"Error updating match score: {e}")
+        if 'idempotency_record' in locals() and idempotency_record is not None:
+            fail_request(db, idempotency_record)
+            db.commit()
         raise HTTPException(status_code=500, detail=f"Error updating match score: {str(e)}")
 
 @router.get("/generate-multiple")
@@ -124,10 +155,31 @@ def generate_tournament_brackets_endpoint(
     use_experimental: Optional[bool] = Query(None, description="Override experimental optimizer feature flag"),
     experimental_attempts: Optional[int] = Query(None, ge=1, le=500, description="Experimental optimizer seed attempts"),
     seed: Optional[int] = Query(None, description="Optional deterministic seed for bracket generation"),
+    idempotency_key: Optional[str] = Header(None, alias="Idempotency-Key"),
     db: Session = Depends(get_db)
 ):
     """Generate multiple brackets for a tournament based on player entries and scores"""
     try:
+        idempotency_record = None
+        if idempotency_key:
+            replay_or_record = begin_request(
+                db,
+                endpoint_scope="brackets:generate-multiple",
+                idempotency_key=idempotency_key,
+                request_payload={
+                    "tournament_id": tournament_id,
+                    "squad_id": squad_id,
+                    "force_regenerate": force_regenerate,
+                    "use_experimental": use_experimental,
+                    "experimental_attempts": experimental_attempts,
+                    "seed": seed,
+                },
+                user_id=None,
+            )
+            if isinstance(replay_or_record, IdempotencyReplay):
+                return JSONResponse(status_code=replay_or_record.status_code, content=replay_or_record.response_body)
+            idempotency_record = replay_or_record
+
         # Validate tournament_id
         tournament_id = BracketValidation.validate_tournament_id(tournament_id)
 
@@ -156,6 +208,9 @@ def generate_tournament_brackets_endpoint(
                     }
                     # DON'T cache - we want fresh scores every time
                     logger.info(f"Loaded brackets with refreshed scores for tournament {tournament_id}")
+                    if idempotency_record:
+                        complete_request(db, idempotency_record, status_code=200, response_body=result)
+                        db.commit()
                     return result
         
         # Generate new brackets (either no existing brackets or forced regeneration)
@@ -213,6 +268,9 @@ def generate_tournament_brackets_endpoint(
                 "no_players": True,
                 **empty_result,
             }
+            if idempotency_record:
+                complete_request(db, idempotency_record, status_code=200, response_body=result)
+                db.commit()
             return result
         
         # Get scores for these bowlers — single query, build lookup map
@@ -325,13 +383,64 @@ def generate_tournament_brackets_endpoint(
             **brackets_result,
             "validation_result": validation_result  # Include validation info in response
         }
+
+        if idempotency_record:
+            complete_request(db, idempotency_record, status_code=200, response_body=result)
+            db.commit()
         
         return result
         
     except HTTPException:
+        if 'idempotency_record' in locals() and idempotency_record is not None:
+            fail_request(db, idempotency_record)
+            db.commit()
         raise
     except Exception as e:
+        if 'idempotency_record' in locals() and idempotency_record is not None:
+            fail_request(db, idempotency_record)
+            db.commit()
         raise HTTPException(status_code=500, detail=f"Error generating brackets: {str(e)}")
+
+
+@router.post("/generate-multiple-async")
+def generate_tournament_brackets_async(
+    background_tasks: BackgroundTasks,
+    tournament_id: int,
+    squad_id: Optional[int] = None,
+    force_regenerate: bool = Query(False),
+    use_experimental: Optional[bool] = Query(None),
+    experimental_attempts: Optional[int] = Query(None, ge=1, le=500),
+    seed: Optional[int] = Query(None),
+):
+    """Queue bracket generation and return a job handle for polling."""
+    job = job_store.create("brackets.generate")
+
+    def _run_job() -> dict:
+        db = SessionLocal()
+        try:
+            return generate_tournament_brackets_endpoint(
+                tournament_id=tournament_id,
+                squad_id=squad_id,
+                force_regenerate=force_regenerate,
+                use_experimental=use_experimental,
+                experimental_attempts=experimental_attempts,
+                seed=seed,
+                idempotency_key=None,
+                db=db,
+            )
+        finally:
+            db.close()
+
+    background_tasks.add_task(job_store.run, job.job_id, _run_job)
+    return {"job_id": job.job_id, "status": job.status}
+
+
+@router.get("/jobs/{job_id}")
+def get_bracket_job_status(job_id: str):
+    job = job_store.get(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return to_dict(job)
 
 @router.get("/load/{tournament_id}")
 def load_tournament_brackets(

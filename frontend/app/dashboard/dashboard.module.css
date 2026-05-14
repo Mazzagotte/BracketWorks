@@ -1562,7 +1562,7 @@
   margin-top: 0;
   padding: 14px 24px;
   background: var(--color-surface);
-  border-top: 1px solid rgba(255, 122, 0, 0.2);
+  border-top: 1px solid var(--color-border-light);
   border-radius: 0 0 var(--radius-2xl) var(--radius-2xl);
 }
 
@@ -1605,9 +1605,9 @@
   font-weight: 700;
   padding: 6px 14px;
   border-radius: 6px;
-  border: 1.5px dashed rgba(255, 255, 255, 0.35);
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.6);
+  border: 1.5px dashed var(--opacity-white-35);
+  background: var(--opacity-white-08);
+  color: var(--opacity-white-60);
   cursor: pointer;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -1988,7 +1988,7 @@
   align-items: center;
   justify-content: center;
   min-height: 50vh;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-family-primary);
 }
 
 .loadingContent {

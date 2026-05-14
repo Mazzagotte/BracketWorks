@@ -1,0 +1,233 @@
+.mobileFormField {
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+.mobileFormLabel {
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 8px;
+  gap: 8px;
+}
+
+.fieldIcon {
+  font-size: 18px;
+}
+
+.requiredIndicator {
+  color: var(--color-error);
+  margin-left: 4px;
+}
+
+.mobileInputContainer {
+  position: relative;
+  border-radius: 12px;
+  border: 2px solid var(--color-gray-200);
+  background: var(--color-white);
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+.focused {
+  border-color: var(--color-blue-accent);
+  box-shadow: var(--ring-blue);
+}
+
+.error {
+  border-color: var(--color-error);
+  box-shadow: 0 0 0 3px var(--color-error-input-bg);
+}
+
+.mobileInput {
+  width: 100%;
+  padding: 16px;
+  font-size: 16px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-primary);
+  outline: none;
+  appearance: none;
+  box-sizing: border-box;
+}
+
+.mobileInput::placeholder {
+  color: var(--color-gray-400);
+}
+
+.mobileTextarea {
+  resize: vertical;
+  min-height: 80px;
+  font-family: inherit;
+}
+
+.mobileSelect {
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6,9 12,15 18,9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  padding-right: 40px;
+  cursor: pointer;
+}
+
+.mobileFieldError {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-error);
+  font-size: 14px;
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: var(--color-hc-error-bg);
+  border-radius: 8px;
+  border: 1px solid var(--color-error-border);
+}
+
+.mobileFieldHelp {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  margin-top: 6px;
+  padding-left: 4px;
+}
+
+.mobileNumberInput::-webkit-outer-spin-button,
+.mobileNumberInput::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.mobileNumberInput {
+  -moz-appearance: textfield;
+}
+
+.mobileFormContainer {
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 20px;
+  background: var(--color-white);
+  border-radius: 16px;
+  box-shadow: 0 4px 16px var(--opacity-black-10);
+}
+
+.mobileFormContainerFlat {
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 20px 24px 8px;
+  max-width: 100%;
+}
+
+.mobileFormTitle {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.mobileForm {
+  width: 100%;
+}
+
+.mobileFormFields {
+  margin-bottom: 24px;
+}
+
+.mobileFormSubmit {
+  width: 100%;
+  padding: 16px;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--color-white);
+  background: var(--gradient-blue-light);
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 56px;
+}
+
+.mobileFormSubmit:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-blue-md);
+}
+
+.mobileFormSubmit:active {
+  transform: translateY(0);
+}
+
+.mobileFormSubmit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.mobileFormSubmitSubmitting {
+  background: var(--color-gray-400);
+}
+
+.loadingSpinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .mobileInput {
+    padding: 18px 16px;
+    font-size: 16px;
+  }
+
+  .mobileFormLabel {
+    font-size: 17px;
+    margin-bottom: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .mobileFormContainer {
+    margin: 10px;
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .mobileFormTitle {
+    font-size: 20px;
+    margin-bottom: 20px;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .mobileInputContainer {
+    background: var(--color-gray-700);
+    border-color: var(--color-dark-lighter);
+  }
+
+  .mobileInput {
+    color: var(--color-gray-50);
+  }
+
+  .mobileInput::placeholder {
+    color: var(--color-gray-400);
+  }
+
+  .mobileFormLabel {
+    color: var(--color-gray-50);
+  }
+}

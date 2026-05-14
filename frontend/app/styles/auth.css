@@ -1,0 +1,7 @@
+/*
+  Layer: auth flow stylesheet entrypoint.
+  Consolidates page-scoped auth styles into one import surface.
+*/
+
+@import './auth-pages.css';
+@import './auth-validation.css';
