@@ -1,0 +1,142 @@
+/*
+  BracketWorks main stylesheet entrypoint.
+
+  CSS structure:
+  1. colors.global.css      -> base token catalog and compatibility tokens
+  2. animations.css         -> shared animation keyframes and helpers
+  3. bowling-animations.css -> decorative bowling-specific effects
+  4. globals.css            -> reset, typography, layout, and shared primitives
+  5. auth.css               -> auth flow stylesheet entrypoint
+
+  Change the active app theme here first.
+  Component layout/details stay in *.module.css files.
+*/
+
+@import './colors.global.css';
+@import './animations.css';
+@import './bowling-animations.css';
+@import './globals.css';
+@import './auth.css';
+
+:root {
+  /* Active theme: core brand controls */
+  --bw-orange: #ff7a00;
+  --bw-orange-dark: #e55f00;
+  --bw-orange-light: #ffb347;
+  --bw-charcoal: #2b2b2b;
+  --bw-muted: #6b6b6b;
+  --bw-card: #f4f1ec;
+  --bw-page: #ffffff;
+  --bw-page-soft: #f7f5f2;
+  --bw-border: #e5e0d8;
+  --bw-ivory: #f0e0c0;
+  --bw-ivory-light: #faf4e8;
+  --bw-ivory-soft: #fffef7;
+  --bw-surface-hover-warm: #fff8f2;
+  --bw-pin-shadow: #d9cfc3;
+  --bw-font-family-primary: 'Inter', 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
+  --bw-font-family-mono: 'Courier New', Monaco, monospace;
+
+  /* Active theme: semantic aliases used throughout the app */
+  --color-surface-hover: #f0e8dd;
+  --color-border-light: rgba(255, 122, 0, 0.2);
+  --color-border-hover: rgba(255, 122, 0, 0.45);
+  --color-orange: var(--bw-orange);
+  --color-orange-hover: var(--bw-orange-dark);
+  --color-orange-dark: var(--bw-orange-dark);
+
+  /* Active theme: typography scale */
+  --font-family-primary: var(--bw-font-family-primary);
+  --font-family-mono: var(--bw-font-family-mono);
+  --font-size-xs: 11px;
+  --font-size-sm: 12px;
+  --font-size-base: 13px;
+  --font-size-lg: 15px;
+  --font-size-xl: 16px;
+  --font-size-2xl: 18px;
+  --font-size-3xl: 20px;
+  --font-size-4xl: 24px;
+  --font-size-5xl: 28px;
+  --font-size-6xl: 34px;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --line-height-tight: 1.2;
+  --line-height-normal: 1.6;
+
+  /* Active theme: spacing and sizing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-full: 999px;
+  --container-max-width: 1200px;
+  --content-max-width: 960px;
+  --touch-target-min: 36px;
+  --touch-target-comfortable: 44px;
+  --input-height-sm: 32px;
+  --input-height: 40px;
+  --input-height-lg: 48px;
+  --btn-height-sm: 32px;
+  --btn-height: 40px;
+  --btn-height-lg: 48px;
+
+  /* Active theme: opacity helpers used across global and module CSS */
+  --opacity-white-10: rgba(255, 255, 255, 0.1);
+  --opacity-white-20: rgba(255, 255, 255, 0.2);
+  --opacity-white-04: rgba(255, 255, 255, 0.04);
+  --opacity-white-06: rgba(255, 255, 255, 0.06);
+  --opacity-white-12: rgba(255, 255, 255, 0.12);
+  --opacity-white-25: rgba(255, 255, 255, 0.25);
+  --opacity-white-30: rgba(255, 255, 255, 0.3);
+  --opacity-white-08: rgba(255, 255, 255, 0.08);
+  --opacity-white-35: rgba(255, 255, 255, 0.35);
+  --opacity-white-40: rgba(255, 255, 255, 0.4);
+  --opacity-white-50: rgba(255, 255, 255, 0.5);
+  --opacity-white-60: rgba(255, 255, 255, 0.6);
+  --opacity-white-65: rgba(255, 255, 255, 0.65);
+  --opacity-white-70: rgba(255, 255, 255, 0.7);
+  --opacity-white-80: rgba(255, 255, 255, 0.8);
+  --opacity-white-85: rgba(255, 255, 255, 0.85);
+  --opacity-white-90: rgba(255, 255, 255, 0.9);
+
+  --opacity-black-18: rgba(0, 0, 0, 0.18);
+  --opacity-black-20: rgba(0, 0, 0, 0.2);
+  --opacity-black-25: rgba(0, 0, 0, 0.25);
+  --opacity-black-16: rgba(0, 0, 0, 0.16);
+  --opacity-black-30: rgba(0, 0, 0, 0.3);
+  --opacity-black-50: rgba(0, 0, 0, 0.5);
+  --opacity-black-60: rgba(0, 0, 0, 0.6);
+  --opacity-black-75: rgba(0, 0, 0, 0.75);
+  --opacity-black-80: rgba(0, 0, 0, 0.8);
+  --opacity-black-05: rgba(0, 0, 0, 0.05);
+
+  --share-qr-poster-fill: #ffffff;
+  --share-qr-title-shadow: rgba(0, 0, 0, 0.33);
+  --share-qr-title-stroke: rgba(0, 0, 0, 0.24);
+  --share-qr-code-bg: #ffffff;
+  --share-qr-code-fg: #2b2b2b;
+
+  /* Active theme: shared effects and gradients */
+  --gradient-brand: linear-gradient(135deg, var(--bw-orange-light), var(--bw-orange), var(--bw-orange-dark));
+  --gradient-brand-hover: linear-gradient(135deg, var(--bw-orange), var(--bw-orange-dark));
+  --gradient-dark-alt: linear-gradient(145deg, var(--color-dark-surface) 0%, var(--color-dark-base) 100%);
+  --gradient-dark-subtle: linear-gradient(145deg, var(--color-dark-elevated) 0%, var(--color-dark-base) 100%);
+  --shadow-soft: 0 2px 6px rgba(0, 0, 0, 0.04);
+  --shadow-hover: 0 6px 12px rgba(0, 0, 0, 0.06);
+  --shadow-modal: 0 24px 64px rgba(0, 0, 0, 0.35);
+  --shadow-btn: 0 1px 3px rgba(255, 122, 0, 0.25);
+  --shadow-btn-hover: 0 4px 12px rgba(255, 122, 0, 0.35);
+  --ring-brand: 0 0 0 3px rgba(255, 122, 0, 0.15);
+  --ring-danger: 0 0 0 3px rgba(214, 69, 69, 0.35);
+  --gradient-danger: linear-gradient(180deg, #e45757 0%, #d64545 100%);
+  --gradient-danger-hover: linear-gradient(180deg, #dd4c4c 0%, #c83e3e 100%);
+}

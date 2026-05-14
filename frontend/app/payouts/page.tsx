@@ -9,7 +9,8 @@ import { SidePotsSettings, Tournament, Squad } from '../lib/types'
 import { usePayouts } from './hooks/usePayouts'
 import NoTournamentState from '../components/NoTournamentState'
 import { storage } from '../lib/storage'
-import { API } from '../lib/api'
+import { API, apiClient, apiFetch } from '../lib/api'
+import { logger } from '../lib/logger'
 import { useToast } from '../components/Toast'
 import { getSelectedSquadId, getSelectedTournamentId } from '../lib/selection-session'
 import Link from 'next/link'
@@ -33,6 +34,12 @@ interface ScoreRow {
   game1_with_handicap?: number | null
   game2_with_handicap?: number | null
   game3_with_handicap?: number | null
+}
+
+type TournamentBootstrapResponse = {
+  tournament: Tournament | null;
+  squads: Squad[];
+  selected_squad: { squad_id: number } | null;
 }
 
 export default function PayoutsPage() {
@@ -105,6 +112,50 @@ export default function PayoutsPage() {
   }, [])
 
   useEffect(() => {
+    if (!isInitialized || !isAuthenticated) return
+
+    const hydrateFromBootstrap = async () => {
+      const storedId = getSelectedTournamentId()
+      if (!storedId) return
+      const bootstrapStarted = performance.now()
+
+      try {
+        const bootstrap = await apiClient.get<TournamentBootstrapResponse>(
+          `/api/v1/tournaments/bootstrap?tournament_id=${storedId}`,
+          false,
+        )
+
+        if (!bootstrap?.tournament) return
+
+        setSelectedTournament(bootstrap.tournament)
+        fetchSquads(bootstrap.tournament.id)
+
+        const storedSquadId = getSelectedSquadId()
+        const restoredSelectedSquadId = bootstrap.selected_squad?.squad_id
+          ?? (storedSquadId ? Number(storedSquadId) : null)
+
+        if (restoredSelectedSquadId) {
+          const restored = (bootstrap.squads || []).find(s => s.id === restoredSelectedSquadId) || null
+          setSelectedSquad(restored)
+        } else if ((bootstrap.squads || []).length > 0) {
+          setSelectedSquad(bootstrap.squads[0])
+        }
+
+        logger.info('Payouts bootstrap load completed', {
+          tournamentId: Number(storedId),
+          durationMs: Math.round((performance.now() - bootstrapStarted) * 100) / 100,
+          squadsCount: (bootstrap.squads || []).length,
+          hasSelectedSquad: Boolean(bootstrap.selected_squad?.squad_id),
+        })
+      } catch {
+        // Fallback to existing tournament/squad initialization flow.
+      }
+    }
+
+    void hydrateFromBootstrap()
+  }, [fetchSquads, isAuthenticated, isInitialized])
+
+  useEffect(() => {
     if (tournaments.length > 0 && !selectedTournament) {
       const storedId = getSelectedTournamentId()
       const found = storedId ? tournaments.find(t => t.id === parseInt(storedId)) : null
@@ -154,7 +205,7 @@ export default function PayoutsPage() {
       if (selectedSquad?.id) params.set('squad_id', String(selectedSquad.id))
 
       try {
-        const response = await fetch(API(`/api/v1/scores/?${params.toString()}`), {
+        const response = await apiFetch(API(`/api/v1/scores/?${params.toString()}`), {
           headers: { Authorization: `Bearer ${token}` },
         })
         if (!response.ok) {
@@ -332,7 +383,7 @@ export default function PayoutsPage() {
     } catch {
       return empty
     }
-  }, [selectedTournament, entryData, scoreRows, settingsRevision])
+  }, [selectedTournament, entryData, scoreRows])
 
   const buildExportRows = useCallback(() => {
     return filteredWinners.map((row, index) => ({
@@ -459,18 +510,18 @@ export default function PayoutsPage() {
       const generatedAt = new Date().toLocaleString()
       const paidStampDate = new Date().toLocaleDateString()
       const logoUrl = `${window.location.origin}/logo.svg`
+      const printCssUrl = `${window.location.origin}/payouts-print.css`
       const useDoubleCol = rows.length > 20
 
       // Build a single table's rows for a slice
-      const buildTableRows = (slice: typeof rows, startRank: number) => {
+      const buildTableRows = (slice: typeof rows) => {
         return slice.map(row => {
-          const paidStyle = row.isPaid ? 'background:#f3f3f3;color:#999;' : ''
           const entryTag = [
             row.scratchCount > 0 ? `S×${row.scratchCount}` : '',
             row.handicapCount > 0 ? `H×${row.handicapCount}` : '',
             row.otherCount > 0 ? `O×${row.otherCount}` : '',
           ].filter(Boolean).join(' ')
-          return `<tr style="${paidStyle}">
+          return `<tr class="${row.isPaid ? 'isPaidRow' : ''}">
             <td class="rankCol">${row.rank}</td>
             <td>
               <div class="playerName">${esc(row.playerName)}</div>
@@ -484,7 +535,7 @@ export default function PayoutsPage() {
         }).join('')
       }
 
-      const buildTable = (slice: typeof rows, startRank: number) => `
+      const buildTable = (slice: typeof rows) => `
         <table>
           <thead><tr>
             <th class="rankCol">#</th>
@@ -494,7 +545,7 @@ export default function PayoutsPage() {
             <th class="amtCol">Amount</th>
             <th class="sigCol">Signature</th>
           </tr></thead>
-          <tbody>${buildTableRows(slice, startRank)}</tbody>
+          <tbody>${buildTableRows(slice)}</tbody>
         </table>`
 
       let mainSection: string
@@ -504,11 +555,11 @@ export default function PayoutsPage() {
         const rightRows = rows.slice(mid)
         mainSection = `
           <div class="twoCol">
-            <div class="col">${buildTable(leftRows, 1)}</div>
-            <div class="col">${buildTable(rightRows, mid + 1)}</div>
+            <div class="col">${buildTable(leftRows)}</div>
+            <div class="col">${buildTable(rightRows)}</div>
           </div>`
       } else {
-        mainSection = buildTable(rows, 1)
+        mainSection = buildTable(rows)
       }
 
       const html = `<!doctype html>
@@ -516,41 +567,7 @@ export default function PayoutsPage() {
 <head>
   <meta charset="utf-8"/>
   <title>Payout Distribution — ${esc(tournamentName)}</title>
-  <style>
-    @page {
-      size: letter;
-      margin: 16mm 14mm 20mm;
-      @bottom-center { content: "Page " counter(page) " of " counter(pages); font-size: 9px; color: #888; font-family: Arial, sans-serif; }
-    }
-    * { box-sizing: border-box; }
-    body { font-family: Arial, sans-serif; color: #111; margin: 0; font-size: 11px; }
-    .header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 3px solid #f07820; }
-    .logo { width: 90px; height: auto; }
-    .headerRight { text-align: right; }
-    h1 { margin: 0 0 2px; font-size: 20px; color: #111; }
-    .meta { margin: 0; font-size: 9.5px; color: #666; line-height: 1.5; }
-    .summary { margin: 8px 0 12px; font-size: 11px; color: #444; display: flex; gap: 16px; }
-    .summary strong { color: #111; }
-    table { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 0; }
-    th { background: #f07820; color: white; font-weight: 700; padding: 5px 7px; text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; }
-    td { border-bottom: 1px solid #e8e8e8; padding: 6px 7px; vertical-align: top; }
-    tr:last-child td { border-bottom: none; }
-    .rankCol { width: 28px; color: #888; text-align: center; padding-top: 7px; }
-    .amtCol { width: 72px; text-align: right; white-space: nowrap; }
-    .sigCol { width: 160px; }
-    .sigLine { border-bottom: 1px solid #888; height: 16px; margin-top: 4px; }
-    .paidStamp { color: #166534; font-weight: 700; font-size: 10px; letter-spacing: 0.03em; text-align: center; padding-top: 4px; }
-    .bold { font-weight: 700; }
-    .muted { color: #aaa; font-size: 10px; }
-    .playerName { font-weight: 600; }
-    .entryTag { font-size: 9px; color: #f07820; font-weight: 600; margin-top: 1px; letter-spacing: 0.03em; }
-    .breakdown { font-size: 9px; color: #777; margin-top: 2px; line-height: 1.4; }
-    .sidePotBreakdown { color: #b45309; }
-    .twoCol { display: flex; gap: 14px; align-items: flex-start; }
-    .col { flex: 1; min-width: 0; }
-    .sectionTitle { font-size: 13px; font-weight: 700; color: #111; margin: 18px 0 6px; padding-bottom: 4px; border-bottom: 2px solid #f07820; }
-    .footer { margin-top: 16px; font-size: 9px; color: #aaa; text-align: center; }
-  </style>
+  <link rel="stylesheet" href="${esc(printCssUrl)}" />
 </head>
 <body>
   <div class="header">
@@ -572,8 +589,12 @@ export default function PayoutsPage() {
 </html>`
 
       const iframe = document.createElement('iframe')
-      iframe.style.cssText = 'position:fixed;width:0;height:0;border:none;opacity:0;'
-      document.body.appendChild(iframe)
+    iframe.style.position = 'fixed'
+    iframe.style.width = '0'
+    iframe.style.height = '0'
+    iframe.style.border = 'none'
+    iframe.style.opacity = '0'
+    document.body.appendChild(iframe)
 
       const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document
       if (!iframeDoc) {
@@ -586,10 +607,28 @@ export default function PayoutsPage() {
       iframeDoc.write(html)
       iframeDoc.close()
 
-      iframe.contentWindow?.focus()
-      iframe.contentWindow?.print()
+      let cleanedUp = false
+      const cleanupIframe = () => {
+        if (cleanedUp) return
+        cleanedUp = true
+        if (iframe.parentNode) {
+          document.body.removeChild(iframe)
+        }
+      }
 
-      setTimeout(() => { document.body.removeChild(iframe) }, 1000)
+      const printIframe = () => {
+        iframe.contentWindow?.focus()
+        iframe.contentWindow?.print()
+        setTimeout(cleanupIframe, 1000)
+      }
+
+      const stylesheet = iframeDoc.querySelector('link[rel="stylesheet"]')
+      if (stylesheet) {
+        stylesheet.addEventListener('load', printIframe, { once: true })
+        stylesheet.addEventListener('error', printIframe, { once: true })
+      } else {
+        printIframe()
+      }
 
       addToast({
         type: 'success',
@@ -605,7 +644,7 @@ export default function PayoutsPage() {
     } finally {
       setIsExportingPdf(false)
     }
-  }, [addToast, filteredWinners, selectedTournament, selectedSquad, paidKeys, sidePotAccounting, sidePotPaidKeys])
+  }, [addToast, filteredWinners, selectedTournament, selectedSquad, paidKeys, sidePotAccounting])
 
   const headerActions = useMemo(() => (
     <>
@@ -694,8 +733,8 @@ export default function PayoutsPage() {
       <div className={styles.pageContainer}>
         {/* Summary card */}
         {payoutData && (
-          <div className={styles.summaryCard}>
-            <h3 className={styles.summaryTitle}>Payout Summary</h3>
+          <div className={`surface-card ${styles.summaryCard}`}>
+            <h3 className={`surface-cardHeader ${styles.summaryTitle}`}>Payout Summary</h3>
             <div className={styles.summaryGrid}>
               <div className={styles.statBox}>
                 <div className={`${styles.statValue} ${styles.statValueGreen}`}>{formatCurrency(displayedTotalPrizePool)}</div>
@@ -814,7 +853,7 @@ export default function PayoutsPage() {
                           onClick={() => toggleExpanded(key)}
                           aria-label={expandedKeys.has(key) ? 'Hide brackets' : 'Show brackets'}
                         >
-                          {expandedKeys.has(key) ? '▲' : '▼'} {row.winnings.length} bracket{row.winnings.length !== 1 ? 's' : ''}
+                          {expandedKeys.has(key) ? 'Hide' : 'Show'} {row.winnings.length} bracket{row.winnings.length !== 1 ? 's' : ''}
                         </button>
                       </div>
                       {expandedKeys.has(key) && (
@@ -830,7 +869,7 @@ export default function PayoutsPage() {
                       )}
                     </div>
                     {isPaid ? (
-                      <button className={styles.paidBadge} onClick={() => togglePaid(key)}>✓ Paid</button>
+                      <button className={styles.paidBadge} onClick={() => togglePaid(key)}>Paid</button>
                     ) : (
                       <button className={styles.markPaidBtn} onClick={() => togglePaid(key)}>Mark Paid</button>
                     )}
@@ -865,7 +904,7 @@ export default function PayoutsPage() {
                       <div className={styles.payoutAmount}>{formatCurrency(pot.pool)}</div>
                     </div>
                     {isPaid ? (
-                      <button className={styles.paidBadge} onClick={() => toggleSidePotPaid(pot.key)}>✓ Paid</button>
+                      <button className={styles.paidBadge} onClick={() => toggleSidePotPaid(pot.key)}>Paid</button>
                     ) : (
                       <button
                         className={styles.markPaidBtn}
@@ -886,3 +925,8 @@ export default function PayoutsPage() {
     </ErrorBoundary>
   )
 }
+
+
+
+
+

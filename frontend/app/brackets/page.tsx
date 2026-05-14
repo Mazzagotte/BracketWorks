@@ -598,7 +598,6 @@ export default function BracketsPage() {
                     disabled={selectedBracketIndex === 0}
                     className={styles.navBtn}
                   >
-                    <span className={styles.navArrow}>←</span>
                     <span>Previous</span>
                   </button>
 
@@ -626,7 +625,7 @@ export default function BracketsPage() {
                     className={styles.navBtn}
                   >
                     <span>Next</span>
-                    <span className={styles.navArrow}>→</span>
+                    <span>Next</span>
                   </button>
                   </div>
                 </>

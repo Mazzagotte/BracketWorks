@@ -213,6 +213,9 @@ export default function LoginPage() {
       login(data.access_token, data.user_id, {
         name: data.first_name,
         isAdmin: Boolean(data.is_admin),
+      }, {
+        refreshToken: data.refresh_token,
+        sessionId: data.session_id,
       });
 
       if (data.first_name) {
@@ -320,7 +323,7 @@ export default function LoginPage() {
                   <circle cx="12" cy="12" r="3"/>
                 </svg>
               )}
-              {showPassword ? "Hide" : "Show"}
+              {showPassword ? 'Hide Password' : 'Show Password'}
             </button>
             {capsLockOn && (
               <div className={styles.capsLockWarning}>

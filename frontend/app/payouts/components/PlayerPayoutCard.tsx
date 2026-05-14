@@ -39,9 +39,9 @@ const formatCurrency = (value: number): string => {
 }
 
 const getRankBadge = (rank: number) => {
-  if (rank === 1) return { emoji: '🥇', label: '1st' }
-  if (rank === 2) return { emoji: '🥈', label: '2nd' }
-  if (rank === 3) return { emoji: '🥉', label: '3rd' }
+  if (rank === 1) return { badge: '1st', label: '1st' }
+  if (rank === 2) return { badge: '2nd', label: '2nd' }
+  if (rank === 3) return { badge: '3rd', label: '3rd' }
   return null
 }
 
@@ -65,7 +65,7 @@ export function PlayerPayoutCard({
           <div className="bw-player-card-name-row">
             {rankBadge && (
               <span className="bw-player-card-rank-icon" title={`${rankBadge.label} Place`}>
-                {rankBadge.emoji}
+                {rankBadge.badge}
               </span>
             )}
             <h3 className="bw-player-card-name">
@@ -84,13 +84,13 @@ export function PlayerPayoutCard({
           
           <div className="bw-player-card-stats">
             <span>
-              🎯 {player.total_brackets} bracket{player.total_brackets !== 1 ? 's' : ''}
+              Brackets: {player.total_brackets} bracket{player.total_brackets !== 1 ? 's' : ''}
             </span>
             {player.scratchCount > 0 && (
-              <span>⚡ {player.scratchCount} scratch</span>
+              <span>Scratch: {player.scratchCount}</span>
             )}
             {player.handicapCount > 0 && (
-              <span>⚖️ {player.handicapCount} handicap</span>
+              <span>Handicap: {player.handicapCount}</span>
             )}
           </div>
         </div>
@@ -103,7 +103,7 @@ export function PlayerPayoutCard({
           size="sm"
           onClick={onTogglePaid}
         >
-          {isPaidOut ? '✓ Paid' : 'Mark as Paid'}
+          {isPaidOut ? 'Paid' : 'Mark as Paid'}
         </EnhancedButton>
         
         <EnhancedButton
@@ -111,7 +111,7 @@ export function PlayerPayoutCard({
           size="sm"
           onClick={onToggleExpand}
         >
-          {isExpanded ? '▼ Hide Details' : '▶ Show Details'}
+          {isExpanded ? 'Hide Details' : 'Show Details'}
         </EnhancedButton>
         
         <EnhancedButton
@@ -119,7 +119,7 @@ export function PlayerPayoutCard({
           size="sm"
           onClick={onCopyDetails}
         >
-          📋 Copy
+          Copy
         </EnhancedButton>
       </div>
 

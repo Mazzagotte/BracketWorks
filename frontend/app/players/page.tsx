@@ -15,13 +15,20 @@ import NoTournamentState from '../components/NoTournamentState'
 import { logger } from '../lib/logger'
 import { Squad, Player, PlayerFormPrefillDraft } from './types'
 import { BracketProgramDefinition, BracketSettings, SidePotsSettings, Tournament } from '../lib/types'
-import { apiClient, API } from '../lib/api'
+import { apiClient, API, apiFetch } from '../lib/api'
 import { calculatePlayerTotalCost, calculateSidePotCost, defaultBracketPrograms, filterEntriesForDivision, getEnabledBracketPrograms, normalizeBracketPrograms, normalizeDivision, normalizePlayerBracketEntries, summarizeEntries } from '../lib/bracketPrograms'
 import styles from './entries.module.css'
 import CloseControl from '../../components/CloseControl'
 import { useToastHelpers } from '../components/Toast'
 import ImportLoadingModal from '../components/ImportLoadingModal'
 import { getSelectedSquadId, getSelectedTournamentId, setSelectedSquad } from '../lib/selection-session'
+
+type TournamentBootstrapResponse = {
+  tournament: Tournament | null;
+  squads: Squad[];
+  selected_squad: { squad_id: number } | null;
+  bracket_settings: Partial<BracketSettings> | null;
+}
 
 function bracketProgramsEqual(left: BracketProgramDefinition[], right: BracketProgramDefinition[]): boolean {
   if (left.length !== right.length) return false
@@ -265,14 +272,18 @@ export default function PlayersPage() {
 
   // Use loaded squad if available, otherwise a minimal placeholder so usePlayers
   // can begin fetching immediately without waiting for the squads API response.
-  const selectedSquad = squads.find(squad => squad.id === selectedSquadId)
-    ?? (selectedSquadId != null ? { id: selectedSquadId, date: '', time: '' } as Squad : null)
+  const selectedSquad = useMemo(
+    () => squads.find(squad => squad.id === selectedSquadId)
+      ?? (selectedSquadId != null ? { id: selectedSquadId, date: '', time: '' } as Squad : null),
+    [squads, selectedSquadId],
+  )
 
   useEffect(() => {
     if (selectedSquadId !== null) {
       setSelectedSquad(selectedSquadId)
     }
   }, [selectedSquadId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
 
   // Debug authentication state
   useEffect(() => {
@@ -886,7 +897,7 @@ export default function PlayersPage() {
         onClick={() => importFileRef.current?.click()}
         disabled={isImporting}
       >
-        {isImporting ? 'Importing…' : 'Import from Excel'}
+        {isImporting ? 'Importing...' : 'Import from Excel'}
       </button>,
     ]
     return (
@@ -895,7 +906,7 @@ export default function PlayersPage() {
         {isDev && players.length > 0 && (
           <div className={styles.devGroup}>
             <button key="randomize" className={styles.devButton} onClick={handleRandomize}>DEV: Randomize Data</button>
-            <button key="deleteAll" className={styles.devButton} onClick={handleDeleteAllPlayers} disabled={isDeletingAll}>{isDeletingAll ? 'Deleting…' : 'DEV: Delete All'}</button>
+            <button key="deleteAll" className={styles.devButton} onClick={handleDeleteAllPlayers} disabled={isDeletingAll}>{isDeletingAll ? 'Deleting...' : 'DEV: Delete All'}</button>
           </div>
         )}
       </>
@@ -938,32 +949,41 @@ export default function PlayersPage() {
   // Fetch squad data (similar to scores page) - OPTIMIZED WITH PARALLEL REQUESTS
   useEffect(() => {
     const fetchSquadData = async () => {
+      const bootstrapStarted = performance.now();
       try {
-        // Get user ID and tournament ID
-        const userId = localStorage.getItem('user_id') || user?.id?.toString();
         const lastTournamentId = getTournamentId();
-        
-        if (!userId || !lastTournamentId) {
+
+        if (!lastTournamentId) {
           return;
         }
-        
-        // Parallelize both squad requests for faster loading
-        const selectedSquadPromise = fetch(API(`/api/v1/squads/selected/?user_id=${userId}`), {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
+
+        const bootstrap = await apiClient.get<TournamentBootstrapResponse>(
+          `/api/v1/tournaments/bootstrap?tournament_id=${lastTournamentId}`,
+          false,
+        );
+        const selectedData = bootstrap?.selected_squad ?? null;
+        const squadsData = bootstrap?.squads ?? [];
+
+        if (bootstrap?.tournament) {
+          setSelectedTournament(bootstrap.tournament);
+        }
+
+        if (bootstrap?.bracket_settings) {
+          const settings = bootstrap.bracket_settings;
+          const nextEntryFee = typeof settings.default_entry_fee === 'number' ? settings.default_entry_fee : null;
+          const normalizedPrograms = normalizeBracketPrograms(settings.bracket_programs, nextEntryFee ?? entryFee);
+
+          if (nextEntryFee != null) {
+            setEntryFee(prev => (prev === nextEntryFee ? prev : nextEntryFee));
           }
-        }).then(res => res.ok ? res.json() : null);
-        
-        const squadsPromise = fetch(API(`/api/v1/squads/?tournament_id=${lastTournamentId}`), {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
+          setBracketPrograms(prev => (bracketProgramsEqual(prev, normalizedPrograms) ? prev : normalizedPrograms));
+          if (typeof settings.bracket_size === 'number') {
+            setBracketSize(8);
           }
-        }).then(res => res.ok ? res.json() : []);
-        
-        // Wait for both requests to complete
-        const [selectedData, squadsData] = await Promise.all([selectedSquadPromise, squadsPromise]);
+        }
+
+        loadSidePots(lastTournamentId);
+
         const storedSelectedSquadId = getSelectedSquadId();
         const restoredSelectedSquadId = selectedData?.squad_id
           ?? (storedSelectedSquadId ? Number(storedSelectedSquadId) : null);
@@ -977,6 +997,14 @@ export default function PlayersPage() {
         
         // Set all squads
         setSquads(squadsData);
+
+        logger.info('Players bootstrap load completed', {
+          tournamentId: Number(lastTournamentId),
+          durationMs: Math.round((performance.now() - bootstrapStarted) * 100) / 100,
+          squadsCount: squadsData.length,
+          hasSelectedSquad: Boolean(selectedData?.squad_id),
+          hasBracketSettings: Boolean(bootstrap?.bracket_settings),
+        });
       } catch (error) {
         logger.error('Error fetching squad data:', error);
       }
@@ -986,7 +1014,7 @@ export default function PlayersPage() {
       fetchSquadData();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isInitialized, token]);
+  }, [isInitialized, token, getTournamentId, loadSidePots, entryFee]);
 
   // Wait for auth initialization
   if (!isInitialized) {
@@ -1277,3 +1305,8 @@ export default function PlayersPage() {
     </ErrorBoundary>
   )
 }
+
+
+
+
+

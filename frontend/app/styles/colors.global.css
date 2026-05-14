@@ -1,21 +1,22 @@
 /**
- * BracketWorks CSS Color Variables
- * These match the TypeScript color system in colors.ts
+ * BracketWorks base token catalog.
+ * This file holds the broad reusable token set and compatibility aliases.
+ * main.css applies the active app theme overrides that you are most likely to change.
  */
 
 :root {
   /* Primary Brand Colors - Orange (from logo brackets & ball) */
-  --color-primary: #F07820;
-  --color-primary-hover: #F49040;
+  --color-primary: var(--bw-orange, #F07820);
+  --color-primary-hover: var(--bw-orange-dark, #F49040);
 
   /* Logo Brand Palette */
-  --color-brand-orange:        #F07820;   /* brackets / ball / subtitle text */
-  --color-brand-orange-light:  #F49040;   /* hover / highlight */
-  --color-brand-orange-dark:   #D4580A;   /* pin stripes / ball shadow / deep accent */
-  --color-brand-charcoal:      #333333;   /* BracketWorks wordmark */
+  --color-brand-orange:        var(--bw-orange, #F07820);   /* brackets / ball / subtitle text */
+  --color-brand-orange-light:  var(--bw-orange-light, #F49040);   /* hover / highlight */
+  --color-brand-orange-dark:   var(--bw-orange-dark, #D4580A);   /* pin stripes / ball shadow / deep accent */
+  --color-brand-charcoal:      var(--bw-charcoal, #333333);   /* BracketWorks wordmark */
   --color-brand-charcoal-deep: #1A1A1A;   /* darkest shadow */
-  --color-brand-ivory:         #F0E0C0;   /* pin bodies */
-  --color-brand-ivory-light:   #FAF4E8;   /* card / light surface background */
+  --color-brand-ivory:         var(--bw-ivory, #F0E0C0);   /* pin bodies */
+  --color-brand-ivory-light:   var(--bw-ivory-light, #FAF4E8);   /* card / light surface background */
   
   /* Secondary Brand Colors - Dark */
   --color-secondary: #1F2937;
@@ -28,8 +29,8 @@
   --color-disabled: #E3E0DC;
   
   /* Text Colors */
-  --color-text-primary: #FAFAF9;
-  --color-text-secondary: #9ca3af;
+  --color-text-primary: var(--bw-charcoal, #FAFAF9);
+  --color-text-secondary: var(--bw-muted, #9ca3af);
   
   /* Legacy Brand Colors (kept for backward compatibility) */
   --color-brand-gold: var(--color-brand-orange);
@@ -90,6 +91,8 @@
   --color-dark-elevated: #2e2e2e;
   --color-dark-lighter: #3a3a3a;
   --color-dark-accent: #484848;
+  --color-dark-glass: rgba(35, 43, 54, 0.85);
+  --color-dark-glass-strong: rgba(35, 43, 54, 0.95);
 
   /* Utility */
   --color-white: #FAFAF9;
@@ -263,10 +266,10 @@
   --color-text-muted-subtle: rgba(26, 26, 26, 0.72);
 
   /* ── Extended Ivory / Warm Surfaces ─────────────────────── */
-  --color-brand-ivory-soft:    #fffef7;
+  --color-brand-ivory-soft:    var(--bw-ivory-soft, #fffef7);
   --color-brand-ivory-warm:    #f2e3c6;
   --color-brand-text-warm:     #9e5a1e;
-  --color-surface-hover-warm:  #fff8f2;
+  --color-surface-hover-warm:  var(--bw-surface-hover-warm, #fff8f2);
   --color-white-glass:         rgba(255, 255, 255, 0.35);
   --color-surface-translucent: rgba(255, 255, 255, 0.58);
   --color-surface-translucent-strong: rgba(255, 255, 255, 0.80);
@@ -372,13 +375,14 @@
   --card-border:     1px solid var(--color-gray-200);
 
   /* ── Surface / Background ────────────────────────────────── */
-  --color-surface:    var(--color-dark-surface);
-  --color-background: var(--color-dark-base);
-  --color-border:     var(--color-dark-elevated);
+  --color-surface:    var(--bw-card, var(--color-dark-surface));
+  --color-background: var(--bw-page-soft, var(--color-dark-base));
+  --color-border:     var(--bw-border, var(--color-dark-elevated));
   --color-border-light: rgba(249, 115, 22, 0.2);
 
   /* ── Typography ──────────────────────────────────────────── */
-  --font-family-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-family-primary: var(--bw-font-family-primary, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
+  --font-family-mono: var(--bw-font-family-mono, 'Courier New', Monaco, monospace);
   --font-size-xs:   11px;
   --font-size-sm:   13px;
   --font-size-base: 14px;

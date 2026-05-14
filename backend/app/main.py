@@ -1,8 +1,12 @@
 
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+
 from app.api.v1 import admin, health, bowlers, brackets, tournaments, users, squads, bracket_settings, scores, payouts, public
+from app.core.config import settings
+from app.core.rate_limit import RateLimiter
 
 app = FastAPI(title="BracketWorks API", version="0.0.1")
 
@@ -31,6 +35,78 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
+
+rate_limiter = RateLimiter(
+    redis_url=settings.REDIS_URL or None,
+    key_prefix=settings.RATE_LIMIT_KEY_PREFIX,
+)
+
+
+def _extract_client_identifier(request: Request) -> str:
+    forwarded_for = request.headers.get("x-forwarded-for")
+    if forwarded_for:
+        ip = forwarded_for.split(",")[0].strip()
+    elif request.client:
+        ip = request.client.host
+    else:
+        ip = "unknown"
+    return ip or "unknown"
+
+
+def _route_rate_limit(path: str, method: str) -> tuple[str, int, int] | None:
+    if method == "OPTIONS":
+        return None
+
+    if path in {"/api/v1/users/login", "/api/v1/users/login-json", "/api/v1/users/admin-login"}:
+        return ("auth-login", settings.RATE_LIMIT_LOGIN_PER_MINUTE, 60)
+
+    if path in {"/api/v1/users/request-password-reset", "/api/v1/users/verify-reset-code", "/api/v1/users/reset-password"}:
+        return ("auth-reset", settings.RATE_LIMIT_PASSWORD_RESET_PER_MINUTE, 60)
+
+    if path.startswith("/api/v1/public"):
+        return ("public-read", settings.RATE_LIMIT_PUBLIC_PER_MINUTE, 60)
+
+    if path == "/api/v1/brackets/generate-multiple":
+        return ("bracket-generate", settings.RATE_LIMIT_BRACKET_GENERATE_PER_MINUTE, 60)
+
+    return None
+
+
+@app.middleware("http")
+async def rate_limit_middleware(request: Request, call_next):
+    rule = _route_rate_limit(request.url.path, request.method)
+    if not rule:
+        return await call_next(request)
+
+    route_name, limit, window_seconds = rule
+    client_identifier = _extract_client_identifier(request)
+    scope_key = f"{route_name}:{client_identifier}"
+    result = rate_limiter.hit(scope_key, limit=limit, window_seconds=window_seconds)
+
+    if not result.allowed:
+        return JSONResponse(
+            status_code=429,
+            content={
+                "detail": "Rate limit exceeded. Please retry later.",
+                "code": "rate_limited",
+                "context": {
+                    "route": route_name,
+                    "retry_after_seconds": result.retry_after_seconds,
+                },
+            },
+            headers={
+                "Retry-After": str(result.retry_after_seconds),
+                "X-RateLimit-Limit": str(result.limit),
+                "X-RateLimit-Remaining": "0",
+                "X-RateLimit-Reset": str(result.retry_after_seconds),
+            },
+        )
+
+    response = await call_next(request)
+    response.headers["X-RateLimit-Limit"] = str(result.limit)
+    response.headers["X-RateLimit-Remaining"] = str(result.remaining)
+    response.headers["X-RateLimit-Reset"] = str(result.retry_after_seconds)
+    return response
 
 # Root endpoint for basic testing
 @app.get("/")

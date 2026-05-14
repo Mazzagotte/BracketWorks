@@ -1,0 +1,206 @@
+@page {
+  --print-font-family: Arial, sans-serif;
+  --print-text-primary: #111;
+  --print-text-muted: #888;
+  --print-text-muted-strong: #777;
+  --print-text-secondary: #666;
+  --print-text-subtle: #444;
+  --print-text-faint: #999;
+  --print-text-disabled: #aaa;
+  --print-surface: #fff;
+  --print-brand: #f07820;
+  --print-brand-dark: #b45309;
+  --print-success: #166534;
+  --print-border: #e8e8e8;
+  --print-row-muted: #f3f3f3;
+}
+
+@page {
+  size: letter;
+  margin: 16mm 14mm 20mm;
+
+  @bottom-center {
+    content: "Page " counter(page) " of " counter(pages);
+    font-size: 9px;
+    color: var(--print-text-muted);
+    font-family: var(--print-font-family);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--print-font-family);
+  color: var(--print-text-primary);
+  margin: 0;
+  font-size: 11px;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 3px solid var(--print-brand);
+}
+
+.logo {
+  width: 90px;
+  height: auto;
+}
+
+.headerRight {
+  text-align: right;
+}
+
+h1 {
+  margin: 0 0 2px;
+  font-size: 20px;
+  color: var(--print-text-primary);
+}
+
+.meta {
+  margin: 0;
+  font-size: 9.5px;
+  color: var(--print-text-secondary);
+  line-height: 1.5;
+}
+
+.summary {
+  margin: 8px 0 12px;
+  font-size: 11px;
+  color: var(--print-text-subtle);
+  display: flex;
+  gap: 16px;
+}
+
+.summary strong {
+  color: var(--print-text-primary);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  margin-bottom: 0;
+}
+
+th {
+  background: var(--print-brand);
+  color: var(--print-surface);
+  font-weight: 700;
+  padding: 5px 7px;
+  text-align: left;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+td {
+  border-bottom: 1px solid var(--print-border);
+  padding: 6px 7px;
+  vertical-align: top;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+.rankCol {
+  width: 28px;
+  color: var(--print-text-muted);
+  text-align: center;
+  padding-top: 7px;
+}
+
+.amtCol {
+  width: 72px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.sigCol {
+  width: 160px;
+}
+
+.sigLine {
+  border-bottom: 1px solid var(--print-text-muted);
+  height: 16px;
+  margin-top: 4px;
+}
+
+.paidStamp {
+  color: var(--print-success);
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 0.03em;
+  text-align: center;
+  padding-top: 4px;
+}
+
+.bold {
+  font-weight: 700;
+}
+
+.muted {
+  color: var(--print-text-disabled);
+  font-size: 10px;
+}
+
+.playerName {
+  font-weight: 600;
+}
+
+.entryTag {
+  font-size: 9px;
+  color: var(--print-brand);
+  font-weight: 600;
+  margin-top: 1px;
+  letter-spacing: 0.03em;
+}
+
+.breakdown {
+  font-size: 9px;
+  color: var(--print-text-muted-strong);
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+.sidePotBreakdown {
+  color: var(--print-brand-dark);
+}
+
+.twoCol {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.col {
+  flex: 1;
+  min-width: 0;
+}
+
+.sectionTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--print-text-primary);
+  margin: 18px 0 6px;
+  padding-bottom: 4px;
+  border-bottom: 2px solid var(--print-brand);
+}
+
+.footer {
+  margin-top: 16px;
+  font-size: 9px;
+  color: var(--print-text-disabled);
+  text-align: center;
+}
+
+.isPaidRow td {
+  background: var(--print-row-muted);
+  color: var(--print-text-faint);
+}

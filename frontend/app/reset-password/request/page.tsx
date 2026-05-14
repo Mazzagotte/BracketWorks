@@ -4,8 +4,6 @@ import { useState, useEffect, useRef, useCallback } from "react";
 
 import Image from "next/image";
 
-import "../../styles/login-validation.css";
-
 import { API } from "../../lib/api";
 import { useToast } from "../../components/Toast";
 import CloseControl from "../../../components/CloseControl";

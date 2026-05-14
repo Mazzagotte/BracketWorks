@@ -225,8 +225,8 @@ function AliveView({
   }
 
   const renderSortIndicator = (key: AliveSortKey) => {
-    if (sortKey !== key) return <span className={styles.sortNeutral}>▼</span>
-    return <span className={styles.sortActive}>{sortDirection === 'asc' ? '▲' : '▼'}</span>
+    if (sortKey !== key) return <span className={styles.sortNeutral}>Sort</span>
+    return <span className={styles.sortActive}>{sortDirection === 'asc' ? 'Asc' : 'Desc'}</span>
   }
 
   if (rows.length === 0) {
@@ -380,7 +380,7 @@ function MatchCard({
         {match.scoreB != null && match.playerB !== 'BYE' && <span className={styles.matchScore}>{match.scoreB}</span>}
       </div>
       {match.split_pot && <div className={styles.matchBadge}>Split</div>}
-      {match.both_advance && <div className={styles.matchBadge}>Both ↑</div>}
+      {match.both_advance && <div className={styles.matchBadge}>Both Advance</div>}
     </div>
   )
 }
@@ -522,12 +522,12 @@ function BracketView({ group, highlightName, onNameClick }: {
             disabled={activeBracket === 0}
             onClick={() => setActiveBracket((prev) => Math.max(0, prev - 1))}
             aria-label="Previous bracket"
-          >←</button>
+          >Prev</button>
           <div className={styles.bracketPills}>
             {pillIndices[0] > 0 && (
               <>
                 <button type="button" className={styles.bracketPill} onClick={() => setActiveBracket(0)} aria-label="Bracket 1">1</button>
-                {pillIndices[0] > 1 && <span className={styles.bracketPillEllipsis}>…</span>}
+                {pillIndices[0] > 1 && <span className={styles.bracketPillEllipsis}>...</span>}
               </>
             )}
             {pillIndices.map((i) => (
@@ -541,7 +541,7 @@ function BracketView({ group, highlightName, onNameClick }: {
             ))}
             {pillIndices[pillIndices.length - 1] < totalBrackets - 1 && (
               <>
-                {pillIndices[pillIndices.length - 1] < totalBrackets - 2 && <span className={styles.bracketPillEllipsis}>…</span>}
+                {pillIndices[pillIndices.length - 1] < totalBrackets - 2 && <span className={styles.bracketPillEllipsis}>...</span>}
                 <button type="button" className={styles.bracketPill} onClick={() => setActiveBracket(totalBrackets - 1)} aria-label={`Bracket ${totalBrackets}`}>{totalBrackets}</button>
               </>
             )}
@@ -552,7 +552,7 @@ function BracketView({ group, highlightName, onNameClick }: {
             disabled={activeBracket === totalBrackets - 1}
             onClick={() => setActiveBracket((prev) => Math.min(totalBrackets - 1, prev + 1))}
             aria-label="Next bracket"
-          >→</button>
+          >Next</button>
         </div>
       )}
 
@@ -724,7 +724,7 @@ function BracketsTabView({ bracketGroups }: { bracketGroups: BracketGroup[] }) {
         <input
           type="search"
           className={styles.bracketSearchInput}
-          placeholder="Highlight a bowler…"
+          placeholder="Highlight a bowler..."
           value={bracketSearch}
           onChange={(e) => {
             const val = e.target.value
@@ -961,7 +961,7 @@ function SidePotsLeaderboard({ scoreRows, tournamentId, lastRefresh, isRefreshin
       <div className={styles.sidePotRefreshRow}>
         <span className={`${styles.liveDot} ${isRefreshing ? styles.liveDotRefreshing : ''}`} />
         <span className={styles.sidePotRefreshMeta}>
-          {isRefreshing ? 'Refreshing…' : lastRefreshLabel ? `Updated ${lastRefreshLabel}` : 'Live'}
+          {isRefreshing ? 'Refreshing...' : lastRefreshLabel ? `Updated ${lastRefreshLabel}` : 'Live'}
         </span>
       </div>
       {showScratchSection && (
@@ -1005,9 +1005,9 @@ function WinnersView({ winners }: { winners: Winner[] }) {
 
   const placeLabel = (place?: number) => {
     if (!place) return ''
-    if (place === 1) return '🥇 1st'
-    if (place === 2) return '🥈 2nd'
-    if (place === 3) return '🥉 3rd'
+    if (place === 1) return '1st'
+    if (place === 2) return '2nd'
+    if (place === 3) return '3rd'
     return `${place}th`
   }
 
@@ -1124,7 +1124,8 @@ export default function TournamentViewPage() {
     } else {
       const el = document.createElement('textarea')
       el.value = url
-      el.style.cssText = 'position:fixed;opacity:0'
+      el.style.position = 'fixed'
+      el.style.opacity = '0'
       document.body.appendChild(el)
       el.select()
       try { document.execCommand('copy') } catch {}
@@ -1346,7 +1347,7 @@ export default function TournamentViewPage() {
           <div className={styles.section}>
             <div className={styles.loadingScreen}>
               <div className={styles.spinner} />
-              <p>Loading tournament…</p>
+              <p>Loading tournament...</p>
             </div>
           </div>
         ) : (

@@ -34,14 +34,14 @@
 .bracketHeader {
   margin-bottom: 1rem;
   padding: 1rem;
-  background: var(--color-gray-50, #f9fafb);
+  background: var(--color-gray-50);
   border-radius: 8px;
-  border: 1px solid var(--color-gray-200, #e5e7eb);
+  border: 1px solid var(--color-gray-200);
 }
 .bracketHeaderTitle {
   font-size: 1.25rem;
   font-weight: 600;
-  color: var(--color-gray-900, #111827);
+  color: var(--color-gray-900);
   margin: 0;
 }
 .bracketsGrid {
@@ -59,10 +59,10 @@
 
 /* ── MatchCard ───────────────────────────────────── */
 .matchCard {
-  border: 1px solid var(--color-gray-200, #e5e7eb);
+  border: 1px solid var(--color-gray-200);
   border-radius: 8px;
   padding: 0.75rem;
-  background: var(--color-white, #ffffff);
+  background: var(--color-white);
   cursor: default;
   transition: all 0.2s ease;
 }
@@ -70,11 +70,11 @@
   cursor: pointer;
 }
 .matchCardClickable:hover {
-  border-color: #3b82f6;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
+  border-color: var(--color-blue-primary);
+  box-shadow: 0 2px 4px var(--color-info-bg);
 }
 .matchCardCompleted {
-  background: #93c5fd; /* colors.blue.pale */
+  background: var(--color-blue-pale);
 }
 .matchStatusRow {
   display: flex;
@@ -93,10 +93,10 @@
   letter-spacing: 0.5px;
   padding: 4px 10px;
   border-radius: 6px;
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-  color: white;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-  box-shadow: 0 2px 4px rgba(139, 92, 246, 0.3);
+  background: var(--gradient-purple-tie);
+  color: var(--color-white);
+  text-shadow: 0 1px 2px var(--opacity-black-20);
+  box-shadow: 0 2px 4px var(--opacity-black-30);
   margin-left: 0.5rem;
   cursor: help;
 }
@@ -106,10 +106,10 @@
   letter-spacing: 0.5px;
   padding: 4px 10px;
   border-radius: 6px;
-  background: linear-gradient(135deg, var(--color-brand-gold-light, #f59e0b) 0%, var(--color-brand-gold-dark, #d97706) 100%);
-  color: white;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-  box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
+  background: linear-gradient(135deg, var(--color-brand-gold-light) 0%, var(--color-brand-gold-dark) 100%);
+  color: var(--color-white);
+  text-shadow: 0 1px 2px var(--opacity-black-20);
+  box-shadow: 0 2px 4px var(--opacity-black-30);
   margin-left: 0.5rem;
   cursor: help;
 }
@@ -127,22 +127,22 @@
 
 /* ── BracketCard ─────────────────────────────────── */
 .bracketCard {
-  border: 1px solid var(--color-gray-200, #e5e7eb);
+  border: 1px solid var(--color-gray-200);
   border-radius: 8px;
   padding: 1rem;
-  background: var(--color-white, #ffffff);
+  background: var(--color-white);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 .bracketCard:hover {
-  border-color: #3b82f6;
-  box-shadow: 0 4px 6px rgba(59, 130, 246, 0.1);
+  border-color: var(--color-blue-primary);
+  box-shadow: 0 4px 6px var(--color-info-bg);
 }
 .bracketCardTitle {
   font-size: 1.125rem;
   font-weight: 600;
   margin-bottom: 0.5rem;
-  color: var(--color-gray-900, #111827);
+  color: var(--color-gray-900);
 }
 .bracketCardProgress {
   font-size: 0.875rem;
@@ -151,14 +151,30 @@
 }
 .progressBar {
   width: 100%;
-  background: var(--color-gray-200, #e5e7eb);
+  background: var(--color-gray-200);
   border-radius: 4px;
   height: 8px;
   overflow: hidden;
 }
-.progressFill {
-  height: 100%;
-  background: #3b82f6;
-  transition: width 0.3s ease;
-  width: var(--progress, 0%);
+.progressMeter {
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  display: block;
+  border: none;
+  background: transparent;
+}
+
+.progressMeter::-webkit-progress-bar {
+  background: transparent;
+}
+
+.progressMeter::-webkit-progress-value {
+  background: var(--color-blue-primary);
+  border-radius: 4px;
+}
+
+.progressMeter::-moz-progress-bar {
+  background: var(--color-blue-primary);
+  border-radius: 4px;
 }

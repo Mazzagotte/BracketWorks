@@ -24,7 +24,7 @@ export const SortableHeader: React.FC<SortableHeaderProps> = ({
   return (
     <th
       className={`entries-header-cell bw-sortable-header ${isActive ? 'bw-sortable-header-active' : ''} ${isHovered ? 'bw-sortable-header-hover' : ''}`}
-      width={width}
+      style={width ? { width } : undefined}
       onClick={() => onSort(column)}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -36,14 +36,11 @@ export const SortableHeader: React.FC<SortableHeaderProps> = ({
         </span>
         <div className={`bw-sortable-header-icon ${isActive ? 'bw-sortable-header-icon-active' : ''} ${isHovered ? 'bw-sortable-header-icon-hover' : ''}`}>
           {direction === 'asc' ? (
-            <span className="bw-sortable-header-arrow-up">▲</span>
+            <span className="bw-sortable-header-arrow-up">Asc</span>
           ) : direction === 'desc' ? (
-            <span className="bw-sortable-header-arrow-down">▼</span>
+            <span className="bw-sortable-header-arrow-down">Desc</span>
           ) : (
-            <>
-              <span className="bw-sortable-header-arrow-muted">▲</span>
-              <span className="bw-sortable-header-arrow-muted">▼</span>
-            </>
+            <span className="bw-sortable-header-arrow-muted">Sort</span>
           )}
         </div>
       </div>

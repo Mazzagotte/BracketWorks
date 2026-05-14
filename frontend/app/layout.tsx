@@ -1,8 +1,5 @@
 import type { ReactNode } from 'react';
-import './styles/globals.css';
-import './styles/colors.global.css';
-import './styles/login.css';
-import './styles/bowling-animations.css';
+import './styles/main.css';
 import styles from './layout.module.css';
 
 import ModernHeader from './components/ModernHeader';

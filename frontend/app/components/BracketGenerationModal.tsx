@@ -439,7 +439,7 @@ export default function BracketGenerationModal({
             <div className={styles.buttonContainer}>
               <button
                 onClick={handleRegenerateClick}
-                className={`${styles.button} ${styles.primaryButton}`}
+                className={`surface-primaryCta ${styles.button} ${styles.primaryButton}`}
               >
                 Regenerate Brackets
               </button>
@@ -479,7 +479,7 @@ export default function BracketGenerationModal({
                       onClick={() => setShowTechnicalDetails(!showTechnicalDetails)}
                       className={styles.technicalDetailsToggle}
                     >
-                      {showTechnicalDetails ? '▼' : '►'} Technical Details
+                      {showTechnicalDetails ? 'Hide Details' : 'View Details'}
                     </button>
                     {showTechnicalDetails && (
                       <div className={styles.technicalDetails}>
@@ -495,7 +495,7 @@ export default function BracketGenerationModal({
             <div className={styles.buttonContainer}>
               <button
                 onClick={handleRegenerateClick}
-                className={`${styles.button} ${styles.primaryButton}`}
+                className={`surface-primaryCta ${styles.button} ${styles.primaryButton}`}
               >
                 Retry
               </button>

@@ -74,7 +74,7 @@ export function MobileBracketView({
             onClick={() => onRoundChange(currentRound - 1)}
             aria-label="Previous round"
           >
-            ◀
+            Prev
           </button>
         )}
         {currentRound < rounds.length - 1 && (
@@ -83,7 +83,7 @@ export function MobileBracketView({
             onClick={() => onRoundChange(currentRound + 1)}
             aria-label="Next round"
           >
-            ▶
+            Next
           </button>
         )}
       </div>
@@ -101,10 +101,10 @@ export function MobileBracketView({
               <div className={styles.matchHeader}>
                 <span className={styles.matchNumber}>Match {index + 1}</span>
                 <span className={`${styles.statusBadge} ${styles[status]}`}>
-                  {status === 'completed' && ''}
-                  {status === 'in_progress' && '⚡'}
-                  {status === 'next_up' && '▶'}
-                  {status === 'pending' && '○'}
+                  {status === 'completed' && 'DONE'}
+                  {status === 'in_progress' && 'LIVE'}
+                  {status === 'next_up' && 'NEXT'}
+                  {status === 'pending' && 'WAIT'}
                 </span>
               </div>
 

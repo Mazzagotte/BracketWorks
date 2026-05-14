@@ -79,7 +79,7 @@ export function PayoutFilters({
           size="sm"
           onClick={onSortDirectionToggle}
         >
-          {sortDirection === 'asc' ? '↑ Asc' : '↓ Desc'}
+          {sortDirection === 'asc' ? 'Ascending' : 'Descending'}
         </EnhancedButton>
       </div>
 

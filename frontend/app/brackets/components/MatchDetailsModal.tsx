@@ -119,7 +119,7 @@ export function MatchDetailsModal({
           {/* Player A */}
           <div className={`${styles.playerCard} ${match.winner === 'A' ? styles.winnerCard : ''}`}>
             <div className={styles.playerCardHeader}>
-              {match.winner === 'A' && <span className={styles.winnerBadge}>🏆 Winner</span>}
+              {match.winner === 'A' && <span className={styles.winnerBadge}>Winner</span>}
             </div>
             
             <h3 className={styles.playerName}>
@@ -181,7 +181,7 @@ export function MatchDetailsModal({
           {/* Player B */}
           <div className={`${styles.playerCard} ${match.winner === 'B' ? styles.winnerCard : ''}`}>
             <div className={styles.playerCardHeader}>
-              {match.winner === 'B' && <span className={styles.winnerBadge}>🏆 Winner</span>}
+              {match.winner === 'B' && <span className={styles.winnerBadge}>Winner</span>}
             </div>
             
             <h3 className={styles.playerName}>
@@ -234,7 +234,7 @@ export function MatchDetailsModal({
         {((match.winner === 'A' && match.seedA !== null && match.seedB !== null && match.seedA > match.seedB) ||
           (match.winner === 'B' && match.seedA !== null && match.seedB !== null && match.seedB > match.seedA)) && (
           <div className={styles.upsetAlert}>
-            ⚡ <strong>UPSET!</strong> Lower seed defeated higher seed
+            <strong>UPSET!</strong> Lower seed defeated higher seed
           </div>
         )}
 

@@ -4,7 +4,7 @@ import math
 from typing import Any, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from passlib.context import CryptContext
 from pydantic import BaseModel
 from sqlalchemy import MetaData, Table, asc, delete, desc, func, inspect, or_, select, text
@@ -54,6 +54,14 @@ class AdminDeleteTournamentPayload(BaseModel):
 
 
 router = APIRouter()
+
+
+def _set_admin_cache_headers(response: Response, *, max_age: int, stale_while_revalidate: int = 0) -> None:
+    parts = ["private", f"max-age={max_age}"]
+    if stale_while_revalidate > 0:
+        parts.append(f"stale-while-revalidate={stale_while_revalidate}")
+    response.headers["Cache-Control"] = ", ".join(parts)
+    response.headers["Vary"] = "Accept-Encoding, Authorization"
 
 
 def _serialize_value(value: Any):
@@ -308,6 +316,7 @@ def get_admin_overview(
 
 @router.get("/users")
 def get_admin_users(
+    response: Response,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=25, ge=5, le=200),
     search: Optional[str] = Query(default=None),
@@ -377,6 +386,8 @@ def get_admin_users(
 
     rows = db.execute(query.offset(offset).limit(page_size))
 
+    _set_admin_cache_headers(response, max_age=15, stale_while_revalidate=45)
+
     return {
         "users": [
             {
@@ -401,6 +412,7 @@ def get_admin_users(
 
 @router.get("/tournaments")
 def get_admin_tournaments(
+    response: Response,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=25, ge=5, le=200),
     search: Optional[str] = Query(default=None),
@@ -496,6 +508,8 @@ def get_admin_tournaments(
         query = query.order_by(models.Tournament.id.desc())
 
     rows = db.execute(query.offset(offset).limit(page_size))
+
+    _set_admin_cache_headers(response, max_age=15, stale_while_revalidate=45)
 
     return {
         "tournaments": [
@@ -844,6 +858,7 @@ def get_database_table_rows(
 
 @router.get("/audit-logs")
 def get_admin_audit_logs(
+    response: Response,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=25, ge=5, le=200),
     action: Optional[str] = Query(default=None),
@@ -896,6 +911,8 @@ def get_admin_audit_logs(
         .offset(offset)
         .limit(page_size)
     )
+
+    _set_admin_cache_headers(response, max_age=10, stale_while_revalidate=30)
 
     return {
         "logs": [

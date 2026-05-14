@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from typing import List, Optional
@@ -7,6 +8,7 @@ import logging
 
 from app.api.deps import get_current_user, get_db
 from app.core.models import PlayerScore, TournamentBracketSettings, TournamentPlayer
+from app.core.idempotency import IdempotencyReplay, begin_request, complete_request, fail_request
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -117,55 +119,111 @@ def get_scores(
 @router.post("/", response_model=ScoreResponse)
 def create_or_update_score(
     score_data: ScoreCreate,
+    idempotency_key: Optional[str] = Header(None, alias="Idempotency-Key"),
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
     """Create or update a score for a player."""
     
-    # Get player information
-    player = db.query(TournamentPlayer).filter(TournamentPlayer.id == score_data.player_id).first()
-    if not player:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Player not found"
-        )
-    
-    # Calculate handicap and game totals
-    handicap = get_handicap_for_bowler(player, score_data.tournament_id, db)
-    logger.info(f"Calculating handicap for player {player.full_name} (avg={player.average}): {handicap}")
+    idempotency_record = None
+    try:
+        if idempotency_key:
+            replay_or_record = begin_request(
+                db,
+                endpoint_scope="scores:create-or-update",
+                idempotency_key=idempotency_key,
+                request_payload=score_data.model_dump(exclude_unset=False),
+                user_id=getattr(current_user, "id", None),
+            )
+            if isinstance(replay_or_record, IdempotencyReplay):
+                return JSONResponse(status_code=replay_or_record.status_code, content=replay_or_record.response_body)
+            idempotency_record = replay_or_record
 
-    # Build score dictionary with calculated totals
-    score_dict = score_data.model_dump(exclude_unset=True)
-    score_dict.update(calculate_game_totals(score_data, handicap))
+        # Get player information
+        player = db.query(TournamentPlayer).filter(TournamentPlayer.id == score_data.player_id).first()
+        if not player:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Player not found"
+            )
 
-    # Single-statement upsert — no separate SELECT needed.
-    # The unique constraint on (player_id, tournament_id, squad_id) makes this safe.
-    update_cols = {k: v for k, v in score_dict.items()
-                   if k not in ("player_id", "tournament_id", "squad_id")}
-    stmt = (
-        pg_insert(PlayerScore)
-        .values(**score_dict)
-        .on_conflict_do_update(
-            constraint="uq_player_scores_player_tournament_squad",
-            set_=update_cols,
+        # Calculate handicap and game totals
+        handicap = get_handicap_for_bowler(player, score_data.tournament_id, db)
+        logger.info(f"Calculating handicap for player {player.full_name} (avg={player.average}): {handicap}")
+
+        # Build score dictionary with calculated totals
+        score_dict = score_data.model_dump(exclude_unset=True)
+        score_dict.update(calculate_game_totals(score_data, handicap))
+
+        # Single-statement upsert — no separate SELECT needed.
+        # The unique constraint on (player_id, tournament_id, squad_id) makes this safe.
+        update_cols = {k: v for k, v in score_dict.items()
+                       if k not in ("player_id", "tournament_id", "squad_id")}
+        stmt = (
+            pg_insert(PlayerScore)
+            .values(**score_dict)
+            .on_conflict_do_update(
+                constraint="uq_player_scores_player_tournament_squad",
+                set_=update_cols,
+            )
+            .returning(PlayerScore)
         )
-        .returning(PlayerScore)
-    )
-    result = db.execute(stmt)
-    db.commit()
-    score = result.scalars().one()
-    logger.info(f"Upserted score for player {player.full_name}: G1={score.game1_total}, G2={score.game2_total}, G3={score.game3_total}")
-    return score
+        result = db.execute(stmt)
+        db.commit()
+        score = result.scalars().one()
+        logger.info(f"Upserted score for player {player.full_name}: G1={score.game1_total}, G2={score.game2_total}, G3={score.game3_total}")
+
+        if idempotency_record:
+            response_body = {
+                "id": score.id,
+                "player_id": score.player_id,
+                "tournament_id": score.tournament_id,
+                "squad_id": score.squad_id,
+                "game1_scratch": score.game1_scratch,
+                "game1_with_handicap": score.game1_total,
+                "game2_scratch": score.game2_scratch,
+                "game2_with_handicap": score.game2_total,
+                "game3_scratch": score.game3_scratch,
+                "game3_with_handicap": score.game3_total,
+            }
+            complete_request(db, idempotency_record, status_code=200, response_body=response_body)
+            db.commit()
+
+        return score
+    except HTTPException:
+        if idempotency_record:
+            fail_request(db, idempotency_record)
+            db.commit()
+        raise
+    except Exception:
+        if idempotency_record:
+            fail_request(db, idempotency_record)
+            db.commit()
+        raise
 
 @router.put("/{score_id}", response_model=ScoreResponse)
 def update_score(
     score_id: int,
     score_data: ScoreUpdate,
+    idempotency_key: Optional[str] = Header(None, alias="Idempotency-Key"),
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
     """Update specific score by ID"""
+    idempotency_record = None
     try:
+        if idempotency_key:
+            replay_or_record = begin_request(
+                db,
+                endpoint_scope="scores:update",
+                idempotency_key=idempotency_key,
+                request_payload={"score_id": score_id, **score_data.model_dump(exclude_unset=False)},
+                user_id=getattr(current_user, "id", None),
+            )
+            if isinstance(replay_or_record, IdempotencyReplay):
+                return JSONResponse(status_code=replay_or_record.status_code, content=replay_or_record.response_body)
+            idempotency_record = replay_or_record
+
         score = db.query(PlayerScore).filter(PlayerScore.id == score_id).first()
         if not score:
             raise HTTPException(
@@ -196,22 +254,59 @@ def update_score(
         db.commit()
         db.refresh(score)
         logger.info(f"Updated score for player {player.full_name}: G1={score.game1_total}, G2={score.game2_total}, G3={score.game3_total}")
+
+        if idempotency_record:
+            response_body = {
+                "id": score.id,
+                "player_id": score.player_id,
+                "tournament_id": score.tournament_id,
+                "squad_id": score.squad_id,
+                "game1_scratch": score.game1_scratch,
+                "game1_with_handicap": score.game1_total,
+                "game2_scratch": score.game2_scratch,
+                "game2_with_handicap": score.game2_total,
+                "game3_scratch": score.game3_scratch,
+                "game3_with_handicap": score.game3_total,
+            }
+            complete_request(db, idempotency_record, status_code=200, response_body=response_body)
+            db.commit()
+
         return score
     except HTTPException:
+        if idempotency_record:
+            fail_request(db, idempotency_record)
+            db.commit()
         raise
     except Exception as e:
         db.rollback()
         logger.error(f"Error updating score {score_id}: {e}")
+        if idempotency_record:
+            fail_request(db, idempotency_record)
+            db.commit()
         raise HTTPException(status_code=500, detail="Failed to update score")
 
 @router.delete("/{score_id}")
 def delete_score(
     score_id: int,
+    idempotency_key: Optional[str] = Header(None, alias="Idempotency-Key"),
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
     """Delete a score"""
+    idempotency_record = None
     try:
+        if idempotency_key:
+            replay_or_record = begin_request(
+                db,
+                endpoint_scope="scores:delete",
+                idempotency_key=idempotency_key,
+                request_payload={"score_id": score_id},
+                user_id=getattr(current_user, "id", None),
+            )
+            if isinstance(replay_or_record, IdempotencyReplay):
+                return JSONResponse(status_code=replay_or_record.status_code, content=replay_or_record.response_body)
+            idempotency_record = replay_or_record
+
         score = db.query(PlayerScore).filter(PlayerScore.id == score_id).first()
         if not score:
             raise HTTPException(
@@ -221,12 +316,22 @@ def delete_score(
         
         db.delete(score)
         db.commit()
-        return {"message": "Score deleted successfully"}
+        response_body = {"message": "Score deleted successfully"}
+        if idempotency_record:
+            complete_request(db, idempotency_record, status_code=200, response_body=response_body)
+            db.commit()
+        return response_body
     except HTTPException:
+        if idempotency_record:
+            fail_request(db, idempotency_record)
+            db.commit()
         raise
     except Exception as e:
         db.rollback()
         logger.error(f"Error deleting score {score_id}: {e}")
+        if idempotency_record:
+            fail_request(db, idempotency_record)
+            db.commit()
         raise HTTPException(status_code=500, detail="Failed to delete score")
 
 

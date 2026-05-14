@@ -63,15 +63,15 @@ export default function ExplainBracketsModal({ isOpen, onClose }: ExplainBracket
             <div className={styles.roundStructure}>
               <div className={styles.round}>
                 <strong>Round 1 (Quarterfinals)</strong>
-                <span>8 players → 4 winners</span>
+                <span>8 players to 4 winners</span>
               </div>
               <div className={styles.round}>
                 <strong>Round 2 (Semifinals)</strong>
-                <span>4 players → 2 winners</span>
+                <span>4 players to 2 winners</span>
               </div>
               <div className={styles.round}>
                 <strong>Round 3 (Finals)</strong>
-                <span>2 players → 1 champion</span>
+                <span>2 players to 1 champion</span>
               </div>
             </div>
           </section>

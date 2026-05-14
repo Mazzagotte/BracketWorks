@@ -7,7 +7,7 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  font-family: Inter, sans-serif;
+  font-family: var(--font-family-primary);
   text-align: center;
 }
 
@@ -37,9 +37,9 @@
   font-weight: 700;
   padding: 6px 14px;
   border-radius: 6px;
-  border: 1.5px dashed rgba(255, 255, 255, 0.35);
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.6);
+  border: 1.5px dashed var(--opacity-white-35);
+  background: var(--opacity-white-08);
+  color: var(--opacity-white-60);
   cursor: pointer;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -94,7 +94,7 @@
 .noTournamentTextMobile,
 .noTournamentTextDesktop {
   font-size: 0.875rem;
-  color: rgba(26, 26, 26, 0.6);
+  color: var(--color-text-muted-alt);
   margin-bottom: 1.5rem;
   max-width: 560px;
   margin-left: auto;
@@ -118,14 +118,14 @@
 
 .dashboardBtnMobile:hover,
 .dashboardBtnDesktop:hover {
-  background: linear-gradient(135deg, #E06B18 0%, #C25515 100%);
+  background: var(--gradient-brand-hover);
 }
 
 /* Quick Info Box */
 .quickInfo {
   margin: 2rem auto 0;
   padding: 20px 24px;
-  background: rgba(240, 120, 32, 0.05);
+  background: var(--color-warning-tint);
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-border-light);
   max-width: 520px;
@@ -141,7 +141,7 @@
 
 .quickInfoList {
   font-size: 0.8125rem;
-  color: rgba(26, 26, 26, 0.6);
+  color: var(--color-text-muted-alt);
   line-height: 1.8;
   padding-left: 20px;
   margin: 0;
@@ -165,7 +165,7 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 0.875rem;
-  color: rgba(26, 26, 26, 0.6);
+  color: var(--color-text-muted-alt);
 }
 
 /* ========================================
@@ -174,7 +174,7 @@
 
 .statusMessage {
   text-align: center;
-  color: rgba(26, 26, 26, 0.6);
+  color: var(--color-text-muted-alt);
   padding: 3rem;
   background-color: var(--color-brand-ivory-light);
   border-radius: var(--radius-xl);
@@ -409,9 +409,9 @@
   font-weight: 700;
   padding: 6px 14px;
   border-radius: 6px;
-  border: 1.5px dashed rgba(255, 255, 255, 0.35);
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.6);
+  border: 1.5px dashed var(--opacity-white-35);
+  background: var(--opacity-white-08);
+  color: var(--opacity-white-60);
   cursor: pointer;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -439,22 +439,22 @@
    ======================================== */
 
 .noTournamentMobile {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  background: var(--gradient-gray);
   border-radius: 16px;
   padding: 14px 20px 18px;
   text-align: center;
   box-shadow: 0 4px 20px var(--opacity-black-06);
-  border: 2px solid #e2e8f0;
+  border: 2px solid var(--color-gray-200);
   margin: 12px 0;
 }
 
 .noTournamentDesktop {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  background: var(--gradient-gray);
   border-radius: 20px;
   padding: 14px 20px 18px;
   text-align: center;
   box-shadow: 0 4px 20px var(--opacity-black-06);
-  border: 2px solid #e2e8f0;
+  border: 2px solid var(--color-gray-200);
   margin-bottom: 12px;
 }
 
@@ -477,14 +477,14 @@
 
 .noTournamentTextMobile {
   font-size: 15px;
-  color: #64748b;
+  color: var(--color-gray-500);
   margin-bottom: 24px;
   line-height: 1.6;
 }
 
 .noTournamentTextDesktop {
   font-size: 16px;
-  color: #64748b;
+  color: var(--color-gray-500);
   margin: 0 auto 22px;
   max-width: 560px;
   line-height: 1.6;
@@ -519,16 +519,16 @@
 
 .dashboardBtnDesktop:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(240, 165, 0, 0.4);
+  box-shadow: 0 6px 20px var(--color-border-hover);
 }
 
 /* Quick Info Box */
 .quickInfo {
   margin: 20px auto 0;
   padding: 14px;
-  background: white;
+  background: var(--color-white);
   border-radius: 12px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--color-gray-200);
   max-width: 600px;
   text-align: left;
 }
@@ -542,7 +542,7 @@
 
 .quickInfoList {
   font-size: 14px;
-  color: #64748b;
+  color: var(--color-gray-500);
   line-height: 1.8;
   padding-left: 20px;
   margin: 0;
@@ -553,11 +553,11 @@
    ======================================== */
 
 .tableCard {
-  background: linear-gradient(145deg, var(--color-white) 0%, #f8fafb 100%);
+  background: var(--gradient-gray-light);
   border-radius: 16px;
   padding: 24px;
   box-shadow: 0 4px 20px var(--opacity-black-08);
-  border: 1px solid rgba(240, 165, 0, 0.12);
+  border: 1px solid var(--color-border-light);
   overflow: hidden;
   margin-bottom: 0;
 }
@@ -576,8 +576,8 @@
 }
 
 .squadRow td {
-  background-color: rgba(79, 140, 255, 0.1);
-  color: #4f8cff;
+  background-color: var(--color-blue-light);
+  color: var(--color-blue-primary);
   text-align: center;
   font-size: 13px;
   font-weight: 600;
@@ -585,7 +585,7 @@
 }
 
 .tableHeaderRow {
-  background-color: #f8fafc;
+  background-color: var(--color-gray-50);
   border-bottom: 2px solid var(--color-gray-200);
 }
 
@@ -608,7 +608,7 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 0.875rem;
-  color: #5E6B75;
+  color: var(--color-gray-500);
 }
 
 /* ========================================
@@ -617,7 +617,7 @@
 
 .statusMessage {
   text-align: center;
-  color: #64748b;
+  color: var(--color-gray-500);
   padding: 3rem;
 }
 

@@ -2,14 +2,17 @@
 Payout management API endpoints for tournament winner tracking and prize distribution.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Query
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from typing import Optional, Dict, Any
 import logging
 from datetime import datetime
 
-from ..deps import get_db, get_current_user
+from ..deps import SessionLocal, get_db, get_current_user
 from ...core import models
+from ...core.async_jobs import job_store, to_dict
+from ...core.idempotency import IdempotencyReplay, begin_request, complete_request, fail_request
 from ...core.schemas import UserOut
 from ...services.payouts import (
     calculate_tournament_payouts,
@@ -340,6 +343,7 @@ def save_tournament_payouts_endpoint(
     scratch_fee:      Optional[float] = Query(None),
     handicap_fee:     Optional[float] = Query(None),
     house_percentage: float           = Query(0.0),
+    idempotency_key: Optional[str] = Header(None, alias="Idempotency-Key"),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
@@ -348,6 +352,25 @@ def save_tournament_payouts_endpoint(
         raise HTTPException(status_code=400, detail="House percentage must be between 0 and 100")
 
     try:
+        idempotency_record = None
+        if idempotency_key:
+            replay_or_record = begin_request(
+                db,
+                endpoint_scope="payouts:save",
+                idempotency_key=idempotency_key,
+                request_payload={
+                    "tournament_id": tournament_id,
+                    "squad_id": squad_id,
+                    "scratch_fee": scratch_fee,
+                    "handicap_fee": handicap_fee,
+                    "house_percentage": house_percentage,
+                },
+                user_id=current_user.id,
+            )
+            if isinstance(replay_or_record, IdempotencyReplay):
+                return JSONResponse(status_code=replay_or_record.status_code, content=replay_or_record.response_body)
+            idempotency_record = replay_or_record
+
         tournament  = _verify_tournament_access(db, tournament_id, current_user)
         entry_fees  = _get_entry_fees(db, tournament_id, scratch_fee, handicap_fee)
 
@@ -408,7 +431,7 @@ def save_tournament_payouts_endpoint(
                 f"total_pool={payout_summary.total_prize_pool}, winners={total_winners}"
             )
 
-            return {
+            response_body = {
                 "status":  "success",
                 "message": "Payouts saved successfully",
                 "summary": {
@@ -418,16 +441,72 @@ def save_tournament_payouts_endpoint(
                 }
             }
 
+            if idempotency_record:
+                complete_request(db, idempotency_record, status_code=200, response_body=response_body)
+                db.commit()
+
+            return response_body
+
         except Exception as save_error:
             db.rollback()
             logger.error(f"Error during payout save transaction: {save_error}", exc_info=True)
+            if idempotency_record:
+                fail_request(db, idempotency_record)
+                db.commit()
             raise HTTPException(status_code=500, detail="Failed to save payouts - transaction rolled back")
 
     except HTTPException:
+        if 'idempotency_record' in locals() and idempotency_record is not None:
+            fail_request(db, idempotency_record)
+            db.commit()
         raise
     except Exception as e:
         logger.error(f"Error saving tournament payouts: {e}", exc_info=True)
+        if 'idempotency_record' in locals() and idempotency_record is not None:
+            fail_request(db, idempotency_record)
+            db.commit()
         raise HTTPException(status_code=500, detail="Failed to save payouts")
+
+
+@router.post("/save/{tournament_id}/async")
+def save_tournament_payouts_async(
+    tournament_id: int,
+    background_tasks: BackgroundTasks,
+    squad_id: Optional[int] = None,
+    scratch_fee: Optional[float] = Query(None),
+    handicap_fee: Optional[float] = Query(None),
+    house_percentage: float = Query(0.0),
+    current_user: models.User = Depends(get_current_user),
+):
+    """Queue payout save and return a job handle for polling."""
+    job = job_store.create("payouts.save")
+
+    def _run_job() -> dict:
+        db = SessionLocal()
+        try:
+            return save_tournament_payouts_endpoint(
+                tournament_id=tournament_id,
+                squad_id=squad_id,
+                scratch_fee=scratch_fee,
+                handicap_fee=handicap_fee,
+                house_percentage=house_percentage,
+                idempotency_key=None,
+                db=db,
+                current_user=current_user,
+            )
+        finally:
+            db.close()
+
+    background_tasks.add_task(job_store.run, job.job_id, _run_job)
+    return {"job_id": job.job_id, "status": job.status}
+
+
+@router.get("/jobs/{job_id}")
+def get_payout_job_status(job_id: str):
+    job = job_store.get(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return to_dict(job)
 
 
 # ---------------------------------------------------------------------------

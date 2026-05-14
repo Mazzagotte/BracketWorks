@@ -13,7 +13,7 @@
 }
 
 .btn:focus {
-  box-shadow: 0 0 0 2px #fff, 0 0 0 4px rgba(240, 165, 0, 0.5);
+  box-shadow: 0 0 0 2px var(--color-white), var(--ring-warning);
 }
 
 .btn:disabled {
@@ -37,7 +37,7 @@
   background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
   color: var(--color-white);
   border: 1px solid var(--color-border-light);
-  box-shadow: 0 4px 12px rgba(240, 120, 32, 0.3), 0 2px 4px var(--opacity-black-10);
+  box-shadow: 0 4px 12px var(--color-border-hover), 0 2px 4px var(--opacity-black-10);
 }
 
 .secondary {
@@ -51,15 +51,15 @@
 .success {
   background: linear-gradient(135deg, var(--color-success) 0%, var(--color-green-dark) 100%);
   color: var(--color-white);
-  border: 1px solid rgba(16, 185, 129, 0.2);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  border: 1px solid var(--color-success-border);
+  box-shadow: var(--shadow-success-md);
 }
 
 .danger {
   background: linear-gradient(135deg, var(--color-error) 0%, var(--color-red-dark) 100%);
   color: var(--color-white);
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+  border: 1px solid var(--color-error-border);
+  box-shadow: var(--shadow-danger-sm);
 }
 
 .glass {
@@ -88,13 +88,13 @@
 
 .stateSuccess {
   background: linear-gradient(135deg, var(--color-success) 0%, var(--color-green-dark) 100%) !important;
-  border: 1px solid rgba(16, 185, 129, 0.2) !important;
+  border: 1px solid var(--color-success-border) !important;
   color: var(--color-white) !important;
 }
 
 .stateError {
   background: linear-gradient(135deg, var(--color-error) 0%, var(--color-red-dark) 100%) !important;
-  border: 1px solid rgba(239, 68, 68, 0.2) !important;
+  border: 1px solid var(--color-error-border) !important;
   color: var(--color-white) !important;
 }
 
@@ -114,7 +114,7 @@
   border-radius: 50%;
   width: 20px;
   height: 20px;
-  background-color: rgba(240, 120, 32, 0.4);
+  background-color: var(--color-border-hover);
   animation: ping 0.6s cubic-bezier(0, 0, 0.2, 1) forwards;
 }
 

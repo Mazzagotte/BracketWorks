@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 
 import { Player, Squad } from '../types';
 import { logger } from '../../lib/logger';
-import { API, apiClient } from '../../lib/api';
+import { API, apiClient, apiFetch } from '../../lib/api';
 import { useToastHelpers } from '../../components/Toast';
 import { BracketProgramDefinition } from '../../lib/types';
 import { calculatePlayerTotalCost, filterEntriesForDivision, normalizeDivision, normalizePlayerBracketEntries } from '../../lib/bracketPrograms';
@@ -93,7 +93,7 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
       }
       const bowlersUrl = `/api/v1/bowlers?${params.toString()}`;
       
-      const response = await fetch(API(bowlersUrl), {
+      const response = await apiFetch(API(bowlersUrl), {
         headers: { Authorization: `Bearer ${authToken}` }
       });
       
@@ -416,3 +416,8 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
     bulkSetPlayers: setPlayers,
   };
 }
+
+
+
+
+

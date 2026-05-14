@@ -1,7 +1,7 @@
 /* Entries page responsive styles */
 
 .entriesContainer {
-  font-family: 'Inter, Arial, sans-serif';
+  font-family: var(--font-family-primary);
   padding: 0;
   overflow-x: hidden; /* Prevent horizontal scroll on mobile */
 }
@@ -451,7 +451,7 @@
   font-size: 14px;
   margin: 0 auto;
   overflow: visible;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-family: var(--font-family-primary);
 }
 
 .entriesTable td {
@@ -1065,7 +1065,7 @@
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 4px 20px var(--opacity-black-08);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: var(--font-family-primary);
   font-size: 0.875rem;
   border: 1px solid var(--color-gray-200);
 }
@@ -1461,7 +1461,7 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  font-family: Inter, sans-serif;
+  font-family: var(--font-family-primary);
   text-align: center;
 }
 
@@ -1870,10 +1870,10 @@
 }
 
 .historyResultButton {
-  border: 1px solid #d0d7de !important;
-  background: #f8f8f8 !important;
+  border: 1px solid var(--color-gray-300) !important;
+  background: var(--color-gray-50) !important;
   background-image: none !important;
-  color: #1f2328 !important;
+  color: var(--color-text-primary) !important;
   border-radius: 10px;
   padding: 12px 14px;
   display: flex;
@@ -1900,27 +1900,27 @@
 .historyResultName {
   font-size: 1rem;
   font-weight: 700;
-  color: #1f2328 !important;
+  color: var(--color-text-primary) !important;
 }
 
 .historyResultUsbc {
   font-size: 0.84rem;
-  color: #4b5563 !important;
+  color: var(--color-gray-500) !important;
   font-weight: 600;
 }
 
 .historyResultAction {
   font-size: 0.8rem;
-  color: #111111 !important;
+  color: var(--color-gray-900) !important;
   font-weight: 600;
   margin-top: 2px;
 }
 
 /* Extra specificity to beat generic button rules from global stylesheets. */
 .historyResultsList .historyResultButton {
-  background-color: #f8f8f8 !important;
-  border-color: #d0d7de !important;
-  color: #1f2328 !important;
+  background-color: var(--color-gray-50) !important;
+  border-color: var(--color-gray-300) !important;
+  color: var(--color-text-primary) !important;
 }
 
 .historyMeta {

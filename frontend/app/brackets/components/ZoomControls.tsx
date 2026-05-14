@@ -75,7 +75,7 @@ export function ZoomControls({
                 aria-label="Pan up"
                 title="Pan up"
               >
-                ▲
+                Up
               </button>
               <div className={styles.panMiddle}>
                 <button
@@ -84,16 +84,16 @@ export function ZoomControls({
                   aria-label="Pan left"
                   title="Pan left"
                 >
-                  ◀
+                  Left
                 </button>
-                <div className={styles.panCenter}>⊕</div>
+                <div className={styles.panCenter}>Pan</div>
                 <button
                   onClick={() => onPanChange('right')}
                   className={styles.panButton}
                   aria-label="Pan right"
                   title="Pan right"
                 >
-                  ▶
+                  Right
                 </button>
               </div>
               <button
@@ -102,7 +102,7 @@ export function ZoomControls({
                 aria-label="Pan down"
                 title="Pan down"
               >
-                ▼
+                Down
               </button>
             </div>
           </div>

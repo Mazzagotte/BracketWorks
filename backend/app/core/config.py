@@ -23,8 +23,16 @@ class Settings(BaseModel):
     # Security
     SECRET_KEY: str = os.getenv("SECRET_KEY", "change-me-in-production")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "120"))
+    REFRESH_TOKEN_EXPIRE_DAYS: int = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "30"))
+    LOGIN_RATE_LIMIT_WINDOW_MINUTES: int = int(os.getenv("LOGIN_RATE_LIMIT_WINDOW_MINUTES", "15"))
+    LOGIN_RATE_LIMIT_ACCOUNT_THRESHOLD: int = int(os.getenv("LOGIN_RATE_LIMIT_ACCOUNT_THRESHOLD", "5"))
+    LOGIN_RATE_LIMIT_IP_HARD_CAP: int = int(os.getenv("LOGIN_RATE_LIMIT_IP_HARD_CAP", "25"))
+    LOGIN_RATE_LIMIT_BASE_BLOCK_SECONDS: int = int(os.getenv("LOGIN_RATE_LIMIT_BASE_BLOCK_SECONDS", "30"))
+    LOGIN_RATE_LIMIT_MAX_BLOCK_SECONDS: int = int(os.getenv("LOGIN_RATE_LIMIT_MAX_BLOCK_SECONDS", "900"))
     
     # Email Settings
+    RESEND_API_KEY: str = os.getenv("RESEND_API_KEY", "")
+    RESEND_TEMPLATE_ID: str = os.getenv("RESEND_TEMPLATE_ID", "")
     SENDGRID_API_KEY: str = os.getenv("SENDGRID_API_KEY", "")
     FROM_EMAIL: str = os.getenv("FROM_EMAIL", "support@bracketworks.app")
     FROM_NAME: str = os.getenv("FROM_NAME", "BracketWorks")
@@ -35,6 +43,14 @@ class Settings(BaseModel):
     
     # Logging
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
+
+    # Distributed rate limiting
+    REDIS_URL: str = os.getenv("REDIS_URL", "")
+    RATE_LIMIT_KEY_PREFIX: str = os.getenv("RATE_LIMIT_KEY_PREFIX", "bracketworks:ratelimit")
+    RATE_LIMIT_LOGIN_PER_MINUTE: int = int(os.getenv("RATE_LIMIT_LOGIN_PER_MINUTE", "10"))
+    RATE_LIMIT_PASSWORD_RESET_PER_MINUTE: int = int(os.getenv("RATE_LIMIT_PASSWORD_RESET_PER_MINUTE", "6"))
+    RATE_LIMIT_PUBLIC_PER_MINUTE: int = int(os.getenv("RATE_LIMIT_PUBLIC_PER_MINUTE", "120"))
+    RATE_LIMIT_BRACKET_GENERATE_PER_MINUTE: int = int(os.getenv("RATE_LIMIT_BRACKET_GENERATE_PER_MINUTE", "20"))
 
     # Experimental bracket optimizer
     BRACKETS_EXPERIMENTAL_ENABLED: bool = os.getenv("BRACKETS_EXPERIMENTAL_ENABLED", "true").lower() == "true"

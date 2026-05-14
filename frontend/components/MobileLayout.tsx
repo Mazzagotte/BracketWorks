@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
+import styles from './MobileLayout.module.css';
 import { logger } from '../app/lib/logger';
 
 interface MobileLayoutProps {
@@ -45,29 +46,43 @@ export function MobileLayout({
 
   const hasHeader = Boolean(title || showBackButton || headerActions);
 
+  const mainPadClass = {
+    none: styles.padNone,
+    small: styles.padSmall,
+    medium: styles.padMedium,
+    large: styles.padLarge,
+  }[padding];
+
+  const mainHeaderPadClass = {
+    none: styles.hasHeaderPadNone,
+    small: styles.hasHeaderPadSmall,
+    medium: styles.hasHeaderPadMedium,
+    large: styles.hasHeaderPadLarge,
+  }[padding];
+
   return (
-    <div className="mobile-layout">
+    <div className={styles.mobileLayout}>
       {hasHeader && (
-        <header className={`mobile-header ${isScrolled ? 'scrolled' : ''}`}>
-          <div className="mobile-header-content">
-            <div className="mobile-header-left">
+        <header className={`${styles.mobileHeader} ${isScrolled ? styles.mobileHeaderScrolled : ''}`}>
+          <div className={styles.mobileHeaderContent}>
+            <div className={styles.mobileHeaderLeft}>
               {showBackButton && (
                 <button
                   onClick={handleBackClick}
-                  className="mobile-back-button"
+                  className={styles.mobileBackButton}
                   aria-label="Go back"
                 >
-                  ←
+                  Back
                 </button>
               )}
-              <div className="mobile-header-text">
-                {title && <h1 className="mobile-title">{title}</h1>}
-                {subtitle && <p className="mobile-subtitle">{subtitle}</p>}
+              <div className={styles.mobileHeaderText}>
+                {title && <h1 className={styles.mobileTitle}>{title}</h1>}
+                {subtitle && <p className={styles.mobileSubtitle}>{subtitle}</p>}
               </div>
             </div>
-            
+
             {headerActions && (
-              <div className="mobile-header-actions">
+              <div className={styles.mobileHeaderActions}>
                 {headerActions}
               </div>
             )}
@@ -76,210 +91,10 @@ export function MobileLayout({
       )}
 
       <main
-        className={`mobile-main ${fullWidth ? 'full-width' : ''} mobile-main-pad-${padding} ${hasHeader ? 'mobile-main-has-header' : ''}`}
+        className={`${styles.mobileMain} ${fullWidth ? styles.fullWidth : ''} ${mainPadClass} ${hasHeader ? mainHeaderPadClass : ''}`}
       >
         {children}
       </main>
-
-      <style jsx>{`
-        .mobile-layout {
-          min-height: 100vh;
-          background: var(--color-gray-50);
-          position: relative;
-        }
-
-        .mobile-header {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          background: var(--color-surface);
-          backdrop-filter: blur(10px);
-          border-bottom: 1px solid var(--color-border);
-          z-index: 100;
-          transition: all 0.2s ease;
-        }
-
-        .mobile-header.scrolled {
-          background: var(--color-surface);
-          border-bottom-color: var(--color-gray-200);
-          box-shadow: 0 1px 8px var(--opacity-black-10);
-        }
-
-        .mobile-header-content {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 16px;
-          max-width: 100%;
-          margin: 0 auto;
-        }
-
-        .mobile-header-left {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          flex: 1;
-          min-width: 0; /* Allow text truncation */
-        }
-
-        .mobile-back-button {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
-          border: none;
-          background: var(--color-gray-100);
-          color: var(--color-text-primary);
-          font-size: 18px;
-          font-weight: bold;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          flex-shrink: 0;
-        }
-
-        .mobile-back-button:hover {
-          background: var(--color-gray-200);
-          transform: translateX(-2px);
-        }
-
-        .mobile-back-button:active {
-          background: var(--color-gray-300);
-          transform: translateX(0);
-        }
-
-        .mobile-header-text {
-          flex: 1;
-          min-width: 0;
-        }
-
-        .mobile-title {
-          font-size: 20px;
-          font-weight: 700;
-          color: var(--color-text-primary);
-          margin: 0;
-          line-height: 1.2;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        .mobile-subtitle {
-          font-size: 14px;
-          color: var(--color-text-secondary);
-          margin: 2px 0 0 0;
-          line-height: 1.3;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        .mobile-header-actions {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          flex-shrink: 0;
-        }
-
-        .mobile-main {
-          width: 100%;
-          max-width: 1200px;
-          margin: 0 auto;
-          box-sizing: border-box;
-        }
-
-        .mobile-main.full-width {
-          max-width: none;
-        }
-
-        .mobile-main-pad-none {
-          padding: 0;
-        }
-
-        .mobile-main-pad-small {
-          padding: 12px;
-        }
-
-        .mobile-main-pad-medium {
-          padding: 16px;
-        }
-
-        .mobile-main-pad-large {
-          padding: 24px;
-        }
-
-        .mobile-main-has-header.mobile-main-pad-none {
-          padding-top: 80px;
-        }
-
-        .mobile-main-has-header.mobile-main-pad-small {
-          padding-top: calc(12px + 80px);
-        }
-
-        .mobile-main-has-header.mobile-main-pad-medium {
-          padding-top: calc(16px + 80px);
-        }
-
-        .mobile-main-has-header.mobile-main-pad-large {
-          padding-top: calc(24px + 80px);
-        }
-
-        /* Responsive adjustments */
-        @media (max-width: 480px) {
-          .mobile-header-content {
-            padding: 12px 16px;
-          }
-          
-          .mobile-title {
-            font-size: 18px;
-          }
-          
-          .mobile-subtitle {
-            font-size: 13px;
-          }
-          
-          .mobile-back-button {
-            width: 36px;
-            height: 36px;
-            font-size: 16px;
-          }
-        }
-
-        /* Safe area support for modern mobile devices */
-        @supports (padding: max(0px)) {
-          .mobile-header {
-            padding-left: max(0px, env(safe-area-inset-left));
-            padding-right: max(0px, env(safe-area-inset-right));
-            padding-top: max(0px, env(safe-area-inset-top));
-          }
-
-          .mobile-main-pad-none {
-            padding-left: max(0px, env(safe-area-inset-left));
-            padding-right: max(0px, env(safe-area-inset-right));
-            padding-bottom: max(0px, env(safe-area-inset-bottom));
-          }
-
-          .mobile-main-pad-small {
-            padding-left: max(12px, env(safe-area-inset-left));
-            padding-right: max(12px, env(safe-area-inset-right));
-            padding-bottom: max(12px, env(safe-area-inset-bottom));
-          }
-
-          .mobile-main-pad-medium {
-            padding-left: max(16px, env(safe-area-inset-left));
-            padding-right: max(16px, env(safe-area-inset-right));
-            padding-bottom: max(16px, env(safe-area-inset-bottom));
-          }
-
-          .mobile-main-pad-large {
-            padding-left: max(24px, env(safe-area-inset-left));
-            padding-right: max(24px, env(safe-area-inset-right));
-            padding-bottom: max(24px, env(safe-area-inset-bottom));
-          }
-        }
-      `}</style>
     </div>
   );
 }
@@ -302,41 +117,24 @@ export function MobileContainer({
   rounded = false,
   shadow = false
 }: MobileContainerProps) {
-  const maxWidthValue = {
-    small: '400px',
-    medium: '600px',
-    large: '800px',
-    full: '100%'
+  const maxWidthClass = {
+    small: styles.maxSmall,
+    medium: styles.maxMedium,
+    large: styles.maxLarge,
+    full: styles.maxFull,
   }[maxWidth];
 
-  const backgroundColor = {
-    transparent: 'transparent',
-    white: 'var(--color-white)',
-    gray: 'var(--color-gray-50)'
+  const backgroundClass = {
+    transparent: styles.bgTransparent,
+    white: styles.bgWhite,
+    gray: styles.bgGray,
   }[background];
 
   return (
-    <div className="mobile-container">
+    <div
+      className={`${styles.mobileContainer} ${maxWidthClass} ${backgroundClass} ${padding ? styles.containerPad : ''} ${rounded ? styles.rounded : ''} ${shadow ? styles.shadow : ''}`}
+    >
       {children}
-      
-      <style jsx>{`
-        .mobile-container {
-          width: 100%;
-          max-width: ${maxWidthValue};
-          margin: 0 auto;
-          padding: ${padding ? '16px' : '0'};
-          background: ${backgroundColor};
-          border-radius: ${rounded ? '12px' : '0'};
-          box-shadow: ${shadow ? '0 2px 8px var(--opacity-black-10)' : 'none'};
-        }
-
-        @media (max-width: 480px) {
-          .mobile-container {
-            padding: ${padding ? '12px' : '0'};
-            border-radius: ${rounded ? '8px' : '0'};
-          }
-        }
-      `}</style>
     </div>
   );
 }
@@ -355,29 +153,36 @@ export function MobileGrid({
   gap = 'medium',
   breakpoint = '640px'
 }: MobileGridProps) {
-  const gapValue = {
-    small: '8px',
-    medium: '16px',
-    large: '24px'
+  const gapClass = {
+    small: styles.gapSmall,
+    medium: styles.gapMedium,
+    large: styles.gapLarge,
   }[gap];
 
-  return (
-    <div className="mobile-grid">
-      {children}
-      
-      <style jsx>{`
-        .mobile-grid {
-          display: grid;
-          grid-template-columns: 1fr;
-          gap: ${gapValue};
-        }
+  const colsClass = {
+    '480px': {
+      1: styles.bp480Cols1,
+      2: styles.bp480Cols2,
+      3: styles.bp480Cols3,
+      4: styles.bp480Cols4,
+    },
+    '640px': {
+      1: styles.bp640Cols1,
+      2: styles.bp640Cols2,
+      3: styles.bp640Cols3,
+      4: styles.bp640Cols4,
+    },
+    '768px': {
+      1: styles.bp768Cols1,
+      2: styles.bp768Cols2,
+      3: styles.bp768Cols3,
+      4: styles.bp768Cols4,
+    },
+  }[breakpoint][columns];
 
-        @media (min-width: ${breakpoint}) {
-          .mobile-grid {
-            grid-template-columns: repeat(${columns}, 1fr);
-          }
-        }
-      `}</style>
+  return (
+    <div className={`${styles.mobileGrid} ${gapClass} ${colsClass}`}>
+      {children}
     </div>
   );
 }

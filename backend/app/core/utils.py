@@ -4,7 +4,7 @@ from .config import settings
 
 # Use SECRET_KEY from environment/config
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 120
+ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None):
     to_encode = data.copy()

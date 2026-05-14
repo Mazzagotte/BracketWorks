@@ -130,9 +130,30 @@ CORS_ORIGINS=["http://localhost:3000","https://yourdomain.com"]
 # Optional: Logging Level
 LOG_LEVEL=INFO
 
+# Password reset email provider (Resend preferred)
+RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxxx
+RESEND_TEMPLATE_ID=password-reset
+FROM_EMAIL=no-reply@bracketworks.app
+FROM_NAME=BracketWorks
+FRONTEND_URL=http://localhost:3000
+
+# Optional legacy fallback provider
+SENDGRID_API_KEY=
+
 # Optional: Cache Configuration
 REDIS_URL=redis://localhost:6379
+
+# Rate limiting (per-minute defaults)
+RATE_LIMIT_LOGIN_PER_MINUTE=10
+RATE_LIMIT_PASSWORD_RESET_PER_MINUTE=6
+RATE_LIMIT_PUBLIC_PER_MINUTE=120
+RATE_LIMIT_BRACKET_GENERATE_PER_MINUTE=20
 ```
+
+Rate limiting behavior:
+- Production should use Redis-backed counters via `REDIS_URL`.
+- If Redis is unavailable, the API falls back to process-local in-memory counters.
+- Rate-limited responses return HTTP `429` with `Retry-After` and `X-RateLimit-*` headers.
 
 ## Project Structure
 

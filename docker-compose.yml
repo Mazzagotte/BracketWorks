@@ -17,6 +17,17 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   backend:
     build:
       context: ./backend
@@ -27,8 +38,17 @@ services:
       DATABASE_URL: ${DATABASE_URL:-postgresql://bracketworks:bracketworks@db:5432/bracketworks}
       SECRET_KEY: ${SECRET_KEY:-local-development-secret-key-change-me}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      FROM_EMAIL: ${FROM_EMAIL:-support@bracketworks.app}
+      FROM_NAME: ${FROM_NAME:-BracketWorks}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      RESEND_TEMPLATE_ID: ${RESEND_TEMPLATE_ID:-}
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY:-}
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     ports:
       - "8000:8000"

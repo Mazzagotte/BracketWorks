@@ -14,7 +14,7 @@ export function EmptyPayoutState({
   message = 'There are no brackets or winners to display payouts for yet.',
   actionText,
   actionLink,
-  icon = '🏆'
+  icon = 'WIN'
 }: EmptyPayoutStateProps) {
   return (
     <Card>

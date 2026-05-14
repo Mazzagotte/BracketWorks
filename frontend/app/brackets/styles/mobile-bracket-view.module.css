@@ -9,8 +9,8 @@
 }
 
 .roundIndicator {
-  background: linear-gradient(135deg, var(--color-warning) 0%, #e6941a 100%);
-  color: white;
+  background: var(--gradient-brand-subtle);
+  color: var(--color-white);
   border-radius: 12px;
   padding: 1rem 1.5rem;
   margin-bottom: 1.5rem;
@@ -47,20 +47,24 @@
 .swipeHint {
   position: absolute;
   top: 0;
-  background: rgba(240, 165, 0, 0.9);
-  color: white;
+  background: var(--color-warning);
+  color: var(--color-white);
   border: none;
-  border-radius: 50%;
-  width: 3rem;
+  border-radius: 999px;
+  min-width: 4.25rem;
   height: 3rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.25rem;
+  padding: 0 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
   pointer-events: auto;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 8px var(--opacity-black-20);
 }
 
 .swipeHint.left {
@@ -73,7 +77,7 @@
 
 .swipeHint:hover {
   transform: scale(1.1);
-  background: rgba(240, 165, 0, 1);
+  background: var(--color-warning);
 }
 
 .swipeHint:active {
@@ -107,7 +111,7 @@
 }
 
 .matchCard.next_up {
-  border-left-color: #3b82f6;
+  border-left-color: var(--color-blue-primary);
 }
 
 .matchCard.pending {
@@ -125,7 +129,7 @@
     box-shadow: 0 2px 8px var(--opacity-black-08);
   }
   50% {
-    box-shadow: 0 4px 16px rgba(245, 158, 11, 0.3);
+    box-shadow: 0 4px 16px var(--color-border-hover);
   }
 }
 
@@ -155,18 +159,18 @@
 }
 
 .statusBadge.completed {
-  background: #d1fae5;
+  background: var(--color-green-light);
   color: var(--color-green-dark);
 }
 
 .statusBadge.in_progress {
-  background: #fef3c7;
-  color: #d97706;
+  background: var(--color-warning-light-2);
+  color: var(--color-brand-gold-dark);
 }
 
 .statusBadge.next_up {
-  background: #dbeafe;
-  color: #2563eb;
+  background: var(--color-blue-light);
+  color: var(--color-blue-dark);
 }
 
 .statusBadge.pending {
@@ -191,7 +195,7 @@
 }
 
 .player.winner {
-  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  background: linear-gradient(135deg, var(--color-green-light) 0%, var(--color-green-lighter) 100%);
   border: 2px solid var(--color-success);
   font-weight: 600;
 }
@@ -204,8 +208,8 @@
 }
 
 .seed {
-  background: linear-gradient(135deg, var(--color-warning) 0%, #e6941a 100%);
-  color: white;
+  background: var(--gradient-brand-subtle);
+  color: var(--color-white);
   width: 2rem;
   height: 2rem;
   border-radius: 6px;
@@ -258,7 +262,7 @@
 }
 
 .time::before {
-  content: '🕐';
+  content: 'Time';
   font-size: 1rem;
 }
 
@@ -269,7 +273,7 @@
 }
 
 .lane::before {
-  content: '🎳';
+  content: 'Lane';
   font-size: 1rem;
 }
 
@@ -317,9 +321,10 @@
   }
 
   .swipeHint {
-    width: 2.5rem;
+    min-width: 3.5rem;
     height: 2.5rem;
-    font-size: 1rem;
+    padding: 0 0.625rem;
+    font-size: 0.75rem;
   }
 
   .matchCard {
@@ -342,6 +347,6 @@
 .swipeHint:focus-visible,
 .matchCard:focus-visible,
 .dot:focus-visible {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid var(--color-blue-primary);
   outline-offset: 2px;
 }

@@ -8,7 +8,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.6);
+  background-color: var(--opacity-black-60);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
@@ -30,7 +30,7 @@
 .modalContainer {
   background: var(--color-white);
   border-radius: 16px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 20px 60px var(--opacity-black-30);
   max-width: 900px;
   width: 100%;
   max-height: 90vh;
@@ -59,7 +59,7 @@
   align-items: flex-start;
   padding: 2rem;
   border-bottom: 1px solid var(--color-gray-200);
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  background: var(--gradient-gray-light);
 }
 
 .modalTitle {
@@ -166,13 +166,13 @@
 }
 
 .tieResolutionBadge:hover {
-  background: linear-gradient(135deg, #9f7aea 0%, var(--color-purple-primary) 100%);
+  background: var(--gradient-purple);
   transform: scale(1.02);
   transition: all 0.2s ease;
 }
 
 .splitPotBadge {
-  background: linear-gradient(135deg, var(--color-brand-gold-light) 0%, #d97706 100%);
+  background: linear-gradient(135deg, var(--color-brand-gold-light) 0%, var(--color-brand-gold-dark) 100%);
   color: var(--color-white);
   padding: 0.5rem 1rem;
   border-radius: 8px;
@@ -248,7 +248,7 @@
 .playerCard.winnerCard {
   background: var(--gradient-green);
   border-color: var(--color-green-primary);
-  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.2);
+  box-shadow: 0 4px 16px var(--color-success-border);
 }
 
 .playerCardHeader {
@@ -298,7 +298,7 @@
   font-size: 0.875rem;
   color: var(--color-gray-500);
   margin-bottom: 1rem;
-  font-family: 'Courier New', monospace;
+  font-family: var(--font-family-mono);
 }
 
 .playerStats {
@@ -399,7 +399,7 @@
   justify-content: center;
   font-weight: 700;
   font-size: 1.25rem;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 12px var(--opacity-black-30);
 }
 
 .marginIndicator {
