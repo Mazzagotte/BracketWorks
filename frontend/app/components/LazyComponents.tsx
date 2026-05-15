@@ -13,7 +13,7 @@ export const MobileTable = dynamic(() => import('../../components/MobileTable').
   ssr: false
 });
 
-export const ConfirmationDialog = dynamic(() => import('./ConfirmationDialog'), {
+export const ConfirmationDialog = dynamic(() => import('./ConfirmationDialog').then(mod => ({ default: mod.default })), {
   loading: () => null,
   ssr: false
 });

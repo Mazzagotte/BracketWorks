@@ -80,6 +80,10 @@
   transform: scale(0.99);
 }
 
+.resetCard {
+  zoom: 1 !important;
+}
+
 .title {
   font-size: 28px;
   font-weight: 700;
@@ -124,6 +128,28 @@
   font-weight: 500;
   color: var(--color-error-text-deep);
   text-align: center;
+}
+
+.infoBanner,
+.successBanner {
+  margin-bottom: 14px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+}
+
+.infoBanner {
+  background: color-mix(in srgb, var(--color-warning-surface) 72%, white);
+  border: 1px solid color-mix(in srgb, var(--color-warning) 76%, white);
+  color: var(--color-orange-light);
+}
+
+.successBanner {
+  background: color-mix(in srgb, var(--color-success) 14%, white);
+  border: 1px solid color-mix(in srgb, var(--color-success) 34%, white);
+  color: color-mix(in srgb, var(--color-success) 78%, black);
 }
 
 .inputGroup {
@@ -294,6 +320,70 @@
   box-shadow: none;
 }
 
+.resetSubmitButton {
+  width: 100%;
+  min-height: var(--input-height-lg);
+  margin-top: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-brand-md);
+}
+
+.successModalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: color-mix(in srgb, var(--color-brand-charcoal-deep) 62%, transparent);
+}
+
+.successModalCard {
+  width: 100%;
+  max-width: 420px;
+  padding: 28px;
+  text-align: center;
+}
+
+.successModalHeader {
+  margin-bottom: 18px;
+}
+
+.successModalTitle {
+  margin: 0 0 10px;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-brand-charcoal-deep);
+}
+
+.successModalText {
+  margin: 0;
+  color: var(--color-text-muted-subtle);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.successModalCountdown {
+  margin-bottom: 18px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--color-brand-ivory-soft);
+  color: var(--color-brand-charcoal);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.successModalButton {
+  width: 100%;
+  min-height: var(--input-height-lg);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .bowlingBall {
   position: absolute;
   left: 50%;
@@ -426,6 +516,7 @@
   }
 
   .loginBtn:hover:not(:disabled),
+  .resetSubmitButton:hover:not(:disabled),
   .createAccountBtn:hover,
   .forgotLink:hover,
   .passwordToggle:hover {

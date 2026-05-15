@@ -30,8 +30,8 @@ export function TimeSlotReminderModal() {
   if (!open) return null
 
   return (
-    <div className={styles.overlay} onClick={() => setOpen(false)}>
-      <div className={`surface-card ${styles.modal}`} onClick={event => event.stopPropagation()}>
+    <div className={styles.overlay}>
+      <div className={`surface-card ${styles.modal}`}>
         <div className={`surface-cardHeader ${styles.header}`}>
           <h3 className={styles.title}>Select Squad Time</h3>
         </div>

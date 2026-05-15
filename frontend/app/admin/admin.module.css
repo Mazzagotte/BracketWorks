@@ -185,6 +185,269 @@
   padding: 16px 20px;
 }
 
+.emailGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.emailCard {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border);
+  background: var(--opacity-white-65);
+}
+
+.emailCardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.emailMetaGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.emailMetaLabel {
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.emailMetaValue {
+  color: var(--color-brand-charcoal-deep);
+  font-size: 13px;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.emailCode {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: var(--color-brand-ivory-light);
+  color: var(--color-brand-charcoal-deep);
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-x: auto;
+}
+
+.emailPreviewFrame {
+  padding: 12px;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border);
+  background: linear-gradient(180deg, #f5efe6 0%, #efe6d8 100%);
+}
+
+.emailPreviewShell {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 20px;
+  border: 1px solid #e3d8c8;
+  background: #ffffff;
+  box-shadow: 0 12px 28px rgba(62, 39, 20, 0.08);
+}
+
+.emailPreviewBrand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 22px 20px 0;
+}
+
+.emailPreviewLogo {
+  max-width: 156px;
+  width: 100%;
+  height: 40px;
+  object-fit: contain;
+}
+
+.emailPreviewLogoFallback {
+  color: var(--color-brand-charcoal-deep);
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.emailPreviewAccent {
+  width: 68px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--color-brand-orange);
+}
+
+.emailPreviewBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 18px 0 0;
+}
+
+.emailPreviewTitle {
+  margin: 0;
+  padding: 16px 28px 0;
+  color: #2d3138;
+  font-size: 21px;
+  font-weight: 800;
+  line-height: 1.18;
+  text-align: center;
+}
+
+.emailPreviewTextStack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-top: 16px;
+}
+
+.emailPreviewText {
+  margin: 0;
+  padding: 0 28px;
+  color: #4c5563;
+  font-size: 14px;
+  line-height: 1.65;
+  text-align: center;
+}
+
+.emailPreviewButton {
+  display: inline-flex;
+  align-self: center;
+  justify-content: center;
+  margin: 22px auto 0;
+  padding: 12px 22px;
+  border-radius: 12px;
+  background: var(--color-brand-orange);
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.emailPreviewHint {
+  padding: 18px 28px 0;
+  color: #6a7280;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.emailPreviewLinkBox {
+  margin: 12px 28px 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #f0c696;
+  background: #fff7ef;
+  color: #8a4e11;
+  font-size: 12px;
+  line-height: 1.55;
+  word-break: break-word;
+}
+
+.emailPreviewWarning {
+  margin: 18px 28px 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #f0c696;
+  background: #fff7ef;
+  color: #8a4e11;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.emailPreviewMutedBox {
+  margin: 18px 28px 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #dcdfe5;
+  background: #f7f8fa;
+  color: #576170;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.emailPreviewWarningStrong {
+  margin: 18px 28px 0;
+  padding: 13px 14px;
+  border-radius: 12px;
+  border: 1px solid #efc18b;
+  background: #fff2e2;
+  color: #874204;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.emailPreviewInfoGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 18px 28px 0;
+}
+
+.emailPreviewInfoCard {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #dcdfe5;
+  background: #f8f9fb;
+}
+
+.emailPreviewInfoLabel {
+  color: #6a7280;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.emailPreviewInfoValue {
+  margin-top: 4px;
+  color: #2d3138;
+  font-size: 13px;
+  line-height: 1.55;
+  word-break: break-word;
+}
+
+.emailPreviewFooter {
+  margin-top: 22px;
+  padding: 18px 20px 20px;
+  background: #333333;
+  text-align: center;
+}
+
+.emailPreviewFooterBrand {
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.emailPreviewFooterTag {
+  margin-top: 6px;
+  color: #f28c18;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.emailPreviewFooterHelp {
+  margin-top: 10px;
+  color: #d7d7d7;
+  font-size: 12px;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
 /* ---- List rows inside panels ---- */
 .listStack {
   display: flex;
@@ -624,6 +887,10 @@
   }
 
   .toolbarRow {
+    grid-template-columns: 1fr;
+  }
+
+  .emailPreviewInfoGrid {
     grid-template-columns: 1fr;
   }
 }

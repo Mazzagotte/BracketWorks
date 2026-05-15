@@ -1,6 +1,12 @@
 
+from pathlib import Path
+
+from dotenv import load_dotenv
 from pydantic import BaseModel
 import os
+
+
+load_dotenv(Path(__file__).resolve().parents[3] / ".env", override=False)
 
 class Settings(BaseModel):
     # Environment
@@ -32,11 +38,9 @@ class Settings(BaseModel):
     
     # Email Settings
     RESEND_API_KEY: str = os.getenv("RESEND_API_KEY", "")
-    RESEND_TEMPLATE_ID: str = os.getenv("RESEND_TEMPLATE_ID", "")
-    SENDGRID_API_KEY: str = os.getenv("SENDGRID_API_KEY", "")
-    FROM_EMAIL: str = os.getenv("FROM_EMAIL", "support@bracketworks.app")
+    FROM_EMAIL: str = os.getenv("FROM_EMAIL", "no-reply@bracketworks.app")
     FROM_NAME: str = os.getenv("FROM_NAME", "BracketWorks")
-    FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:3000")
+    FRONTEND_URL: str = os.getenv("FRONTEND_URL", "https://bracketworks.app")
     
     # Caching
     CACHE_TTL_SECONDS: int = int(os.getenv("CACHE_TTL_SECONDS", "300"))

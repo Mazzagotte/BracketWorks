@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from ..deps import get_db, require_admin_user
 from ...core import models
+from ...services import email_service
 
 _pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__default_rounds=10)
 
@@ -206,6 +207,35 @@ def _hard_delete_tournament(db: Session, tournament_id: int) -> None:
 
     db.execute(delete(models.TournamentSquad).where(models.TournamentSquad.tournament_id == tournament_id))
     db.execute(delete(models.Tournament).where(models.Tournament.id == tournament_id))
+
+
+@router.get("/email-previews")
+def get_admin_email_previews(
+    response: Response,
+    _admin: models.User = Depends(require_admin_user),
+):
+    _set_admin_cache_headers(response, max_age=60, stale_while_revalidate=120)
+
+    previews = []
+    for preview in email_service.get_admin_email_previews():
+        payload = preview.get("payload") or {}
+        template = payload.get("template") or {}
+        previews.append(
+            {
+                "slug": preview.get("slug"),
+                "name": preview.get("name"),
+                "description": preview.get("description"),
+                "from": payload.get("from"),
+                "to": payload.get("to"),
+                "subject": payload.get("subject"),
+                "template_id": template.get("id"),
+                "variables": template.get("variables") or {},
+                "primary_action_label": preview.get("primary_action_label"),
+                "primary_action_url": preview.get("primary_action_url"),
+            }
+        )
+
+    return {"emails": previews}
 
 
 @router.get("/overview")

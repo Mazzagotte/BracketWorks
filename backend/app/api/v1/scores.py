@@ -52,11 +52,11 @@ def calculate_game_totals(score_data, handicap: int) -> dict:
     totals = {}
     
     if hasattr(score_data, 'game1_scratch') and score_data.game1_scratch is not None:
-        totals['game1_total'] = score_data.game1_scratch + handicap
+        totals['game1_with_handicap'] = score_data.game1_scratch + handicap
     if hasattr(score_data, 'game2_scratch') and score_data.game2_scratch is not None:
-        totals['game2_total'] = score_data.game2_scratch + handicap
+        totals['game2_with_handicap'] = score_data.game2_scratch + handicap
     if hasattr(score_data, 'game3_scratch') and score_data.game3_scratch is not None:
-        totals['game3_total'] = score_data.game3_scratch + handicap
+        totals['game3_with_handicap'] = score_data.game3_scratch + handicap
     
     return totals
 

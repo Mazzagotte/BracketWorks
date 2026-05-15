@@ -125,41 +125,9 @@
   transform: none;
 }
 
-/* Strength meter */
-.strengthMeter {
-  margin-top: 8px;
-}
-
-.strengthTrack {
-  height: 4px;
-  background: var(--color-gray-200);
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.strengthFill {
-  height: 100%;
-  transition: all 0.3s ease;
-  border-radius: 2px;
-}
-
-/* Strength level colors + widths */
-.strength0 { width:   0%; background: var(--color-error); color: var(--color-error); }
-.strength1 { width:  20%; background: var(--color-error); color: var(--color-error); }
-.strength2 { width:  40%; background: var(--color-warning-amber); color: var(--color-warning-amber); }
-.strength3 { width:  60%; background: var(--color-warning); color: var(--color-warning); }
-.strength4 { width:  80%; background: var(--color-green-light-2); color: var(--color-green-light-2); }
-.strength5 { width: 100%; background: var(--color-success); color: var(--color-success); }
-
 /* Relative wrapper for name fields */
 .fieldRelative {
   position: relative;
-}
-
-.strengthLabel {
-  margin-top: 4px;
-  font-size: 12px;
-  font-weight: 600;
 }
 
 /* Requirements tooltip */
@@ -191,14 +159,6 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-}
-
-.requirementMet {
-  color: var(--color-success);
-}
-
-.requirementUnmet {
-  color: var(--color-gray-400);
 }
 
 /* Username checking indicator */

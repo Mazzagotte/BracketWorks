@@ -100,7 +100,7 @@ if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
 }
 
 if ($BackendMode -eq "docker" -and -not (Get-Command docker -ErrorAction SilentlyContinue)) {
-    Write-Host "Docker backend mode is selected but Docker is not available." -ForegroundColor Red
+    Write-Host "Docker backend mode is selected but Docke5433r is not available." -ForegroundColor Red
     Write-Host "Install or start Docker Desktop, or set BRACKETWORKS_BACKEND_MODE=local in .env." -ForegroundColor Yellow
     exit 1
 }

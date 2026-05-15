@@ -60,7 +60,7 @@
 .mobileTextarea {
   resize: vertical;
   min-height: 80px;
-  font-family: inherit;
+  font-family: var(--font-family-primary);
 }
 
 .mobileSelect {

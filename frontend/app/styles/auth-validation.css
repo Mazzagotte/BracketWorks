@@ -475,6 +475,7 @@ kbd {
 /* Signup validation                                                           */
 /* ========================================================================== */
 
+.surface-authValidationBadgeSuccess,
 .validation-check {
   position: absolute;
   top: 50%;
@@ -500,6 +501,7 @@ kbd {
   white-space: nowrap;
 }
 
+.surface-authValidationBadgePending,
 .validation-spinner {
   position: absolute;
   top: 50%;

@@ -76,7 +76,7 @@ BracketWorks is a web platform for running bowling tournaments with bracket gene
   - NEXT_PUBLIC_BACKEND_URL
 
 ### External Dependencies
-- SendGrid for transactional email (password reset)
+- Resend hosted templates for transactional email (password reset)
 
 ## 4) Non-Functional Requirements (Baseline Targets)
 These targets are recommended as the operational baseline for the current architecture.
@@ -183,21 +183,21 @@ These targets are recommended as the operational baseline for the current archit
 
 ### Assumptions and Dependencies
 - PostgreSQL is reachable and migration-compatible on startup
-- SendGrid is available for email workflows when reset emails are required
+- Resend hosted templates are used for password reset email workflows
 - Frontend has correct NEXT_PUBLIC_BACKEND_URL for environment
 
 ## 8) Architecture Views
 ### System Context (Textual)
 - Users interact with Next.js frontend
 - Frontend calls FastAPI backend over HTTPS (production)
-- Backend persists to PostgreSQL and optionally calls SendGrid
+- Backend persists to PostgreSQL and calls Resend hosted templates for password reset email
 - Public viewers consume read-only public endpoints
 
 ### Container/Component View
 - Frontend container/process: presentation and workflow orchestration
 - Backend container/process: auth, domain logic, APIs, monitoring middleware
 - Database container/service: primary transactional state
-- External service: SendGrid for transactional email
+- External service: Resend for transactional email
 
 ### Critical Data Flows
 - Login: frontend -> users/login-json -> token/session state
@@ -634,11 +634,11 @@ This section captures implementation progress completed after this specification
 - ✅ P0-1: Rate limiting deployed with Redis + in-memory fallback; all endpoints within scope protected
 - ✅ P0-3: CI gates blocking merges on backend/frontend test and security failures
 - ✅ P0-4: Auth regression test suite validating refresh rotation, logout, admin revoke, and throttle
-- ⏸ P0-2: Email verification deferred pending user SendGrid setup and configuration
+- ⏸ P0-2: Email verification deferred pending user Resend template setup and configuration
 
 **Recommended Immediate Next Steps:**
 - **If continuing to P1:** Begin P1-1 (metrics/tracing baseline) to establish observability for SLO enforcement
-- **If handling email verification first:** User to configure SendGrid API key and coordinate P0-2 implementation
+- **If handling email verification first:** User to configure Resend API key and hosted templates and coordinate P0-2 implementation
 - **For all paths:** Validate rate limit behavior in staging under realistic load before production promotion
 
 ### 20.5 P0/P1/P2 Implementation Backlog (Actionable)

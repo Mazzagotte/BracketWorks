@@ -18,12 +18,6 @@ export default function ExplainBracketsModal({ isOpen, onClose }: ExplainBracket
     }
   }, [])
 
-  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) {
-      onClose()
-    }
-  }
-
   React.useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -46,7 +40,7 @@ export default function ExplainBracketsModal({ isOpen, onClose }: ExplainBracket
   if (!isOpen) return null
 
   return (
-    <div className={styles.overlay} onClick={handleBackdropClick}>
+    <div className={styles.overlay}>
       <div className={styles.modal}>
         <div className={styles.header}>
           <h2>How Brackets Work</h2>

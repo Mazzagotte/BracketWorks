@@ -531,6 +531,7 @@ html:has(.signup-page-container) {
   font-weight: 400 !important;
 }
 
+.surface-authPasswordToggle,
 .signup-password-toggle {
   position: absolute !important;
   right: 16px !important;
@@ -556,6 +557,7 @@ html:has(.signup-page-container) {
   z-index: 10 !important;
 }
 
+.surface-authPasswordToggle:hover,
 .signup-password-toggle:hover {
   background: var(--color-border-soft) !important;
   color: var(--color-dark-lighter) !important;

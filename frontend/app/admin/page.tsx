@@ -121,6 +121,23 @@ type AuditLogsResponse = {
   total_pages: number;
 };
 
+type EmailPreview = {
+  slug: string;
+  name: string;
+  description: string;
+  from: string;
+  to: string;
+  subject: string;
+  template_id: string;
+  variables: Record<string, string>;
+  primary_action_label: string | null;
+  primary_action_url: string | null;
+};
+
+type EmailPreviewsResponse = {
+  emails: EmailPreview[];
+};
+
 type DeletePreview = {
   impact: Record<string, number>;
   dependent_total_rows: number;
@@ -128,7 +145,7 @@ type DeletePreview = {
   score_count?: number;
 };
 
-type AdminTab = "overview" | "users" | "tournaments" | "database" | "audit";
+type AdminTab = "overview" | "emails" | "users" | "tournaments" | "database" | "audit";
 
 function buildQuery(params: Record<string, string | number | boolean | null | undefined>) {
   const query = new URLSearchParams();
@@ -138,6 +155,131 @@ function buildQuery(params: Record<string, string | number | boolean | null | un
   });
   const queryString = query.toString();
   return queryString ? `?${queryString}` : "";
+}
+
+function EmailPreviewFrame({ email }: { email: EmailPreview }) {
+  const vars = email.variables;
+  const actionLabel = email.primary_action_label || "Open Link";
+  const actionUrl = email.primary_action_url;
+  const supportEmail = vars.support_email || "support@bracketworks.app";
+  const verifyLink = vars.verify_url || vars.verification_url || vars.button_url || "Missing verify URL";
+  const resetLink = vars.reset_url || "Missing reset URL";
+
+  return (
+    <div className={styles.emailPreviewFrame}>
+      <div className={styles.emailPreviewShell}>
+        <div className={styles.emailPreviewBrand}>
+          {vars.logo_url ? (
+            <img src={vars.logo_url} alt="BracketWorks" className={styles.emailPreviewLogo} />
+          ) : (
+            <div className={styles.emailPreviewLogoFallback}>BracketWorks</div>
+          )}
+          <div className={styles.emailPreviewAccent} />
+        </div>
+
+        <div className={styles.emailPreviewBody}>
+          {email.slug === "verify-email" && (
+            <>
+              <h4 className={styles.emailPreviewTitle}>Verify your email</h4>
+              <div className={styles.emailPreviewTextStack}>
+                <p className={styles.emailPreviewText}>
+                  Welcome to BracketWorks. Please confirm your email address to finish setting up your account.
+                </p>
+                <p className={styles.emailPreviewText}>
+                  Click the button below to verify your email. This link will expire in <strong>{vars.expiration_minutes || "30"} minutes</strong>.
+                </p>
+              </div>
+              {actionUrl && <a className={styles.emailPreviewButton} href={actionUrl} target="_blank" rel="noreferrer">{actionLabel}</a>}
+              <div className={styles.emailPreviewHint}>If the button does not work, copy and paste this link into your browser:</div>
+              <div className={styles.emailPreviewLinkBox}>{verifyLink}</div>
+              <div className={styles.emailPreviewWarning}>If you did not create a BracketWorks account, you can safely ignore this email.</div>
+            </>
+          )}
+
+          {email.slug === "reset-password" && (
+            <>
+              <h4 className={styles.emailPreviewTitle}>Reset your password</h4>
+              <div className={styles.emailPreviewTextStack}>
+                <p className={styles.emailPreviewText}>
+                  We received a request to reset your BracketWorks password.
+                </p>
+                <p className={styles.emailPreviewText}>
+                  Use the button below to set a new password. This link will expire in <strong>{vars.expiration_minutes || "10"} minutes</strong>.
+                </p>
+              </div>
+              {actionUrl && <a className={styles.emailPreviewButton} href={actionUrl} target="_blank" rel="noreferrer">{actionLabel}</a>}
+              <div className={styles.emailPreviewHint}>If the button does not work, copy and paste this link into your browser:</div>
+              <div className={styles.emailPreviewLinkBox}>{resetLink}</div>
+              <div className={styles.emailPreviewMutedBox}>If you did not request a password reset, you can ignore this email and your password will remain unchanged.</div>
+            </>
+          )}
+
+          {email.slug === "welcome-email" && (
+            <>
+              <h4 className={styles.emailPreviewTitle}>Welcome to BracketWorks</h4>
+              <div className={styles.emailPreviewTextStack}>
+                <p className={styles.emailPreviewText}>
+                  Hi {vars.first_name || "there"}, your account is ready.
+                </p>
+                <p className={styles.emailPreviewText}>
+                  You can now manage brackets, squads, payouts, and scores from one place.
+                </p>
+                <p className={styles.emailPreviewText}>
+                  Start by signing in and setting up your first tournament.
+                </p>
+              </div>
+              <div className={styles.emailPreviewMutedBox}>Your account email is verified separately so you can confirm ownership before using all account features.</div>
+            </>
+          )}
+
+          {email.slug === "password-change" && (
+            <>
+              <h4 className={styles.emailPreviewTitle}>Your password was changed</h4>
+              <div className={styles.emailPreviewTextStack}>
+                <p className={styles.emailPreviewText}>
+                  Hi {vars.first_name || "there"}, this is a confirmation that your BracketWorks password was updated.
+                </p>
+                <p className={styles.emailPreviewText}>
+                  If you did not make this change, secure your account immediately and contact support.
+                </p>
+              </div>
+              <div className={styles.emailPreviewWarningStrong}>This is a security notification. Review recent account activity if this change was unexpected.</div>
+            </>
+          )}
+
+          {email.slug === "email-change" && (
+            <>
+              <h4 className={styles.emailPreviewTitle}>Your email was changed</h4>
+              <div className={styles.emailPreviewTextStack}>
+                <p className={styles.emailPreviewText}>
+                  Hi {vars.first_name || "there"}, your BracketWorks account email was updated.
+                </p>
+                <p className={styles.emailPreviewText}>
+                  Keep this for your records. If you did not authorize this change, contact support immediately.
+                </p>
+              </div>
+              <div className={styles.emailPreviewInfoGrid}>
+                <div className={styles.emailPreviewInfoCard}>
+                  <div className={styles.emailPreviewInfoLabel}>Previous Email</div>
+                  <div className={styles.emailPreviewInfoValue}>{vars.previous_email || "-"}</div>
+                </div>
+                <div className={styles.emailPreviewInfoCard}>
+                  <div className={styles.emailPreviewInfoLabel}>New Email</div>
+                  <div className={styles.emailPreviewInfoValue}>{vars.new_email || "-"}</div>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className={styles.emailPreviewFooter}>
+          <div className={styles.emailPreviewFooterBrand}>BracketWorks</div>
+          <div className={styles.emailPreviewFooterTag}>Bowling Brackets &amp; Side Pots</div>
+          <div className={styles.emailPreviewFooterHelp}>Need help? Contact {supportEmail}</div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function AdminPage() {
@@ -180,6 +322,10 @@ export default function AdminPage() {
   const [auditAction, setAuditAction] = useState("");
   const [auditTargetType, setAuditTargetType] = useState("");
   const [auditPage, setAuditPage] = useState(1);
+
+  const [emailPreviewsResponse, setEmailPreviewsResponse] = useState<EmailPreviewsResponse>({ emails: [] });
+  const [emailPreviewsLoading, setEmailPreviewsLoading] = useState(false);
+  const [emailPreviewsLoaded, setEmailPreviewsLoaded] = useState(false);
 
   const [refreshing, setRefreshing] = useState(false);
 
@@ -332,9 +478,30 @@ export default function AdminPage() {
     }
   }, [currentUser?.isAdmin, auditPage, auditSearch, auditAction, auditTargetType]);
 
+  const loadEmailPreviews = useCallback(async (manual = false) => {
+    if (!currentUser?.isAdmin) return;
+    if (manual) setRefreshing(true);
+    setEmailPreviewsLoading(true);
+    setError(null);
+    try {
+      const data = await apiClient.get<EmailPreviewsResponse>("/api/v1/admin/email-previews", false);
+      setEmailPreviewsResponse(data);
+      setEmailPreviewsLoaded(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load email previews");
+    } finally {
+      setEmailPreviewsLoading(false);
+      if (manual) setRefreshing(false);
+    }
+  }, [currentUser?.isAdmin]);
+
   const loadActiveTab = useCallback(async (manual = false) => {
     if (activeTab === "overview") {
       await loadOverview(manual);
+      return;
+    }
+    if (activeTab === "emails") {
+      await loadEmailPreviews(manual);
       return;
     }
     if (activeTab === "users") {
@@ -350,7 +517,7 @@ export default function AdminPage() {
       return;
     }
     await loadAuditLogs(manual);
-  }, [activeTab, loadOverview, loadUsers, loadTournaments, loadTables, loadAuditLogs]);
+  }, [activeTab, loadOverview, loadEmailPreviews, loadUsers, loadTournaments, loadTables, loadAuditLogs]);
 
   const refreshButton = useMemo(() => (
     <button
@@ -381,6 +548,13 @@ export default function AdminPage() {
     }
     void loadOverview(false);
   }, [isAuthInitialized, isUserAuthenticated, currentUser?.isAdmin, router, loadOverview]);
+
+  useEffect(() => {
+    if (!isAuthInitialized || !isUserAuthenticated || !currentUser?.isAdmin) return;
+    if (activeTab === "emails") {
+      void loadEmailPreviews(false);
+    }
+  }, [activeTab, isAuthInitialized, isUserAuthenticated, currentUser?.isAdmin, loadEmailPreviews]);
 
   useEffect(() => {
     if (!isAuthInitialized || !isUserAuthenticated || !currentUser?.isAdmin) return;
@@ -469,7 +643,7 @@ export default function AdminPage() {
       {error && <div className={styles.errorBanner}>{error}</div>}
 
       <div className={styles.tabRow}>
-        {(["overview", "users", "tournaments", "database", "audit"] as AdminTab[]).map((tab) => (
+        {(["overview", "emails", "users", "tournaments", "database", "audit"] as AdminTab[]).map((tab) => (
           <button
             key={tab}
             type="button"
@@ -478,6 +652,8 @@ export default function AdminPage() {
           >
             {tab === "overview"
               ? "Overview"
+              : tab === "emails"
+                ? "Emails"
               : tab === "users"
                 ? "Users"
                 : tab === "tournaments"
@@ -488,6 +664,65 @@ export default function AdminPage() {
           </button>
         ))}
       </div>
+
+      {activeTab === "emails" && (
+        <section className={styles.panel}>
+          <div className={styles.panelHeader}>
+            <h3 className={styles.panelTitle}>Auth Email Previews</h3>
+            <span className={styles.panelSubtle}>{emailPreviewsResponse.emails.length} templates</span>
+          </div>
+          <div className={styles.panelBody}>
+            {emailPreviewsLoading && !emailPreviewsLoaded ? (
+              <div className={styles.emptyState}>Loading email previews...</div>
+            ) : emailPreviewsResponse.emails.length === 0 ? (
+              <div className={styles.emptyState}>No email previews available.</div>
+            ) : (
+              <div className={styles.emailGrid}>
+                {emailPreviewsResponse.emails.map((email) => (
+                  <article key={email.slug} className={styles.emailCard}>
+                    <div className={styles.emailCardHeader}>
+                      <div>
+                        <div className={styles.primaryText}>{email.name}</div>
+                        <div className={styles.secondaryText}>{email.description}</div>
+                      </div>
+                      <span className={styles.valuePill}>{email.template_id}</span>
+                    </div>
+                    <div>
+                      <div className={styles.emailMetaLabel}>Visual Preview</div>
+                      <EmailPreviewFrame email={email} />
+                    </div>
+                    <div className={styles.emailMetaGrid}>
+                      <div>
+                        <div className={styles.emailMetaLabel}>Subject</div>
+                        <div className={styles.emailMetaValue}>{email.subject}</div>
+                      </div>
+                      <div>
+                        <div className={styles.emailMetaLabel}>From</div>
+                        <div className={styles.emailMetaValue}>{email.from}</div>
+                      </div>
+                      <div>
+                        <div className={styles.emailMetaLabel}>To</div>
+                        <div className={styles.emailMetaValue}>{email.to}</div>
+                      </div>
+                      <div>
+                        <div className={styles.emailMetaLabel}>Slug</div>
+                        <div className={styles.emailMetaValue}>{email.slug}</div>
+                      </div>
+                    </div>
+                    {email.primary_action_url && (
+                      <div className={styles.detailLinks}>
+                        <a className={styles.linkBtn} href={email.primary_action_url} target="_blank" rel="noreferrer">
+                          {email.primary_action_label || "Open action URL"}
+                        </a>
+                      </div>
+                    )}
+                  </article>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
       {activeTab === "overview" && (
         <div className={styles.sectionStack}>
