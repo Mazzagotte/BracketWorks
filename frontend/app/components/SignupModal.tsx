@@ -1,7 +1,16 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { API } from '../lib/api';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import {
+  SignupConfirmPasswordFieldSection,
+  SignupNameFieldsSection,
+  SignupPasswordFieldSection,
+  SignupUsernameFieldSection,
+} from './SignupFieldSections';
+import AuthFeedback from './AuthFeedback';
+import PasswordStrengthPanel from './PasswordStrengthPanel';
+import { useSignupForm } from '../hooks/useSignupForm';
+import { getSignupValidationError, submitSignup } from '../lib/auth/signup';
 import { logger } from '../lib/logger';
 import CloseControl from '../../components/CloseControl';
 import styles from './SignupModal.module.css';
@@ -9,57 +18,32 @@ import styles from './SignupModal.module.css';
 interface SignupModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess?: () => void;
+  onSuccess?: (message: string) => void;
 }
 
 export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalProps) {
   const successCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [username, setUsername] = useState('');
-  const [organization, setOrganization] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  const [passwordStrength, setPasswordStrength] = useState(0);
-  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
-  const [checkingUsername, setCheckingUsername] = useState(false);
-  const [showPasswordRequirements, setShowPasswordRequirements] = useState(false);
   const [signupSuccess, setSignupSuccess] = useState(false);
-  const [fieldValidation, setFieldValidation] = useState({
-    firstName: false,
-    lastName: false,
-    username: false,
-    email: false,
-    password: false,
-    confirmPassword: false
-  });
-
-  useEffect(() => { setMounted(true); }, []);
-
-  useEffect(() => {
-    if (password) {
-      setPasswordStrength(calculatePasswordStrength(password));
-    } else {
-      setPasswordStrength(0);
-    }
-  }, [password]);
-
-  useEffect(() => {
-    const debounceTimer = setTimeout(() => {
-      if (username.trim().length >= 3) {
-        checkUsernameAvailability(username);
-      } else {
-        setUsernameAvailable(null);
-      }
-    }, 500);
-    return () => clearTimeout(debounceTimer);
-  }, [username]);
+  const {
+    checkingUsername,
+    fieldValidity,
+    isFormReady,
+    mounted,
+    passwordRequirementChecks,
+    passwordStrength,
+    resetForm,
+    setShowConfirmPassword,
+    setShowPassword,
+    setShowPasswordRequirements,
+    showConfirmPassword,
+    showPassword,
+    showPasswordRequirements,
+    updateValue,
+    usernameAvailable,
+    values: { confirmPassword, email, firstName, lastName, organization, password, username },
+  } = useSignupForm();
 
   // Reset form when modal closes
   useEffect(() => {
@@ -68,19 +52,11 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
         clearTimeout(successCloseTimerRef.current);
         successCloseTimerRef.current = null;
       }
-      setFirstName(''); setLastName(''); setUsername('');
-      setOrganization(''); setEmail(''); setPassword('');
-      setConfirmPassword(''); setError('');
-      setUsernameAvailable(null); setPasswordStrength(0);
+      resetForm();
+      setError('');
       setSignupSuccess(false);
-      setShowPassword(false); setShowConfirmPassword(false);
-      setShowPasswordRequirements(false);
-      setFieldValidation({
-        firstName: false, lastName: false, username: false,
-        email: false, password: false, confirmPassword: false
-      });
     }
-  }, [isOpen]);
+  }, [isOpen, resetForm]);
 
   useEffect(() => {
     return () => {
@@ -90,121 +66,48 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
     };
   }, []);
 
-  const getPasswordRequirementChecks = (pw: string) => ({
-    minLength: pw.length >= 6,
-    lower: /[a-z]/.test(pw),
-    upper: /[A-Z]/.test(pw),
-    number: /[0-9]/.test(pw),
-    special: /[^A-Za-z0-9]/.test(pw),
-  });
-
-  const calculatePasswordStrength = (pw: string) => {
-    let s = 0;
-    if (pw.length >= 6) s++;
-    if (pw.length >= 10) s++;
-    if (/[a-z]/.test(pw)) s++;
-    if (/[A-Z]/.test(pw)) s++;
-    if (/[0-9]/.test(pw)) s++;
-    if (/[^A-Za-z0-9]/.test(pw)) s++;
-    return Math.min(s, 5);
-  };
-
-  const checkUsernameAvailability = async (un: string) => {
-    if (un.length < 3) { setUsernameAvailable(null); return; }
-    setCheckingUsername(true);
-    try {
-      const res = await fetch(API(`/api/v1/users/check-username?username=${encodeURIComponent(un)}`));
-      const data = await res.json().catch(() => null);
-      setUsernameAvailable(typeof data?.available === 'boolean' ? data.available : null);
-    } catch {
-      setUsernameAvailable(null);
-    } finally {
-      setCheckingUsername(false);
-    }
-  };
-
-  const validateField = (field: string, value: string) => {
-    switch (field) {
-      case 'firstName':
-      case 'lastName': return value.trim().length >= 2;
-      case 'username': return value.trim().length >= 3 && /^[a-zA-Z0-9_]+$/.test(value);
-      case 'email': return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-      case 'password': {
-        const checks = getPasswordRequirementChecks(value);
-        return checks.minLength && checks.lower && checks.upper && checks.number && checks.special;
-      }
-      case 'confirmPassword': return value === password && value.length > 0;
-      default: return false;
-    }
-  };
-
-  const updateFieldValidation = (field: string, value: string) => {
-    const isValid = validateField(field, value);
-    setFieldValidation(prev => ({ ...prev, [field]: isValid }));
-  };
-
   const clearTransientFeedback = () => {
     if (error) setError('');
     if (signupSuccess) setSignupSuccess(false);
   };
 
-  const isFormReady =
-    validateField('firstName', firstName) &&
-    validateField('lastName', lastName) &&
-    validateField('username', username) &&
-    validateField('email', email) &&
-    validateField('password', password) &&
-    validateField('confirmPassword', confirmPassword) &&
-    usernameAvailable === true &&
-    !checkingUsername;
-
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    if (!firstName.trim()) { setError('First name is required'); return; }
-    if (!lastName.trim()) { setError('Last name is required'); return; }
-    if (!username.trim()) { setError('Username is required'); return; }
-    if (!email.trim()) { setError('Email is required'); return; }
-    if (!password.trim()) { setError('Password is required'); return; }
-    const passwordChecks = getPasswordRequirementChecks(password);
-    if (!(passwordChecks.minLength && passwordChecks.lower && passwordChecks.upper && passwordChecks.number && passwordChecks.special)) {
-      setError('Password must be at least 6 characters and include uppercase, lowercase, number, and special character');
+    const validationError = getSignupValidationError({
+      firstName,
+      lastName,
+      username,
+      organization,
+      email,
+      password,
+      confirmPassword,
+      usernameAvailable,
+      checkingUsername,
+    });
+    if (validationError) {
+      setError(validationError);
       return;
     }
-    if (password !== confirmPassword) { setError('Passwords do not match'); return; }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setError('Please enter a valid email address'); return; }
-    if (usernameAvailable === false) { setError('Username is taken'); return; }
-    if (checkingUsername || usernameAvailable !== true) { setError('Please wait for username availability check to complete'); return; }
     if (!isFormReady) { setError('Please complete all required fields'); return; }
 
     setLoading(true);
     try {
-      const res = await fetch(API('/api/v1/users/signup'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          first_name: firstName.trim(),
-          last_name: lastName.trim(),
-          username: username.trim(),
-          organization: organization.trim() || undefined,
-          email: email.trim(),
-          password
-        })
+      const { successMessage } = await submitSignup({
+        firstName,
+        lastName,
+        username,
+        organization,
+        email,
+        password,
       });
 
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({ detail: 'Signup failed' }));
-        let errorMessage = 'Signup failed';
-        if (res.status === 409) errorMessage = 'Username or email already exists';
-        else if (errorData.detail) errorMessage = errorData.detail;
-        throw new Error(errorMessage);
-      }
-
       logger.info('Signup successful', { username });
+      setError('');
       setSignupSuccess(true);
       successCloseTimerRef.current = setTimeout(() => {
-        onSuccess?.();
+        onSuccess?.(successMessage);
         onClose();
       }, 650);
     } catch (err: unknown) {
@@ -215,19 +118,26 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
     }
   };
 
-  if (!isOpen) return null;
-
   const getStrengthText = () => {
     const labels = ['Very Weak', 'Weak', 'Fair', 'Good', 'Strong', 'Very Strong'];
     return labels[passwordStrength] || '';
   };
+  const strengthTone = useMemo(() => {
+    if (passwordStrength <= 1) return 'weak';
+    if (passwordStrength === 2) return 'fair';
+    if (passwordStrength === 3) return 'good';
+    return 'strong';
+  }, [passwordStrength]);
+  const passwordStrengthPercent = Math.max(passwordStrength * 20, 8);
 
   const inputClass = (valid: boolean, hasError?: boolean) =>
     `surface-authInput ${valid ? 'surface-authInputValid' : ''} ${hasError ? 'surface-authInputError' : ''}`;
 
+  if (!isOpen) return null;
+
   return (
-    <div className={styles.overlay} onClick={onClose}>
-      <div className={`surface-card surface-modalShell ${styles.modal}`} onClick={e => e.stopPropagation()}>
+    <div className={styles.overlay}>
+      <div className={`surface-card surface-modalShell ${styles.modal}`}>
         <CloseControl onClick={onClose} position="absolute" size="sm" label="Close signup modal" disabled={false} />
         {/* Header */}
         <div className={`surface-cardHeader ${styles.header}`}>
@@ -237,71 +147,58 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
 
         {/* Form */}
         <form onSubmit={handleSignup} className={styles.body}>
-          {signupSuccess && <div className="surface-feedback surface-feedbackSuccess">Account created successfully! Redirecting to login...</div>}
-          {error && <div className="surface-feedback surface-feedbackError">{error}</div>}
+          <AuthFeedback
+            success={signupSuccess ? 'Account created. Check your email for your welcome message and verification link. Redirecting to login...' : ''}
+            error={error}
+          />
 
-          {/* First Name / Last Name */}
-          <div className={styles.nameRow}>
-            <div className={styles.fieldRelative}>
-              <label className="surface-authLabel">First Name *</label>
-              <input
-                type="text"
-                value={firstName}
-                onChange={e => {
-                  clearTransientFeedback();
-                  setFirstName(e.target.value);
-                  updateFieldValidation('firstName', e.target.value);
-                }}
-                required
-                className={`${inputClass(fieldValidation.firstName)} ${fieldValidation.firstName ? styles.inputWithIcon : ''}`}
-              />
-              {fieldValidation.firstName && <span className={styles.checkIcon}>Valid</span>}
-            </div>
-            <div className={styles.fieldRelative}>
-              <label className="surface-authLabel">Last Name *</label>
-              <input
-                type="text"
-                value={lastName}
-                onChange={e => {
-                  clearTransientFeedback();
-                  setLastName(e.target.value);
-                  updateFieldValidation('lastName', e.target.value);
-                }}
-                required
-                className={`${inputClass(fieldValidation.lastName)} ${fieldValidation.lastName ? styles.inputWithIcon : ''}`}
-              />
-              {fieldValidation.lastName && <span className={styles.checkIcon}>Valid</span>}
-            </div>
-          </div>
-
-          {/* Username */}
-          <div className={styles.field}>
-            <label className="surface-authLabel">Username *</label>
-            <input
-              type="text"
-              value={username}
-              onChange={e => {
+          <SignupNameFieldsSection
+            containerClassName={styles.nameRow}
+            fieldClassName={styles.fieldRelative}
+            labelClassName="surface-authLabel"
+            firstName={{
+              label: 'First Name *',
+              value: firstName,
+              onChange: value => {
                 clearTransientFeedback();
-                setUsername(e.target.value);
-                updateFieldValidation('username', e.target.value);
-              }}
-              required
-              className={`surface-authInput ${styles.inputWithIcon} ${
-                usernameAvailable === false ? 'surface-authInputError' :
-                usernameAvailable === true ? 'surface-authInputValid' : ''
-              }`}
-            />
-            {checkingUsername && <span className={styles.checking}>...</span>}
-            {usernameAvailable === true && !checkingUsername && (
-              <span className={styles.checkIcon}>Valid</span>
-            )}
-            {usernameAvailable === false && !checkingUsername && (
-              <div className="surface-authHint">Username is taken</div>
-            )}
-            {usernameAvailable === true && !checkingUsername && (
-              <div className="surface-authHint surface-authHintSuccess">Username available</div>
-            )}
-          </div>
+                updateValue('firstName', value);
+              },
+              inputClassName: `${inputClass(fieldValidity.firstName)} ${fieldValidity.firstName ? styles.inputWithIcon : ''}`,
+              validBadge: fieldValidity.firstName ? <span className={`${styles.checkIcon} surface-authValidationBadgeSuccess`}>Valid</span> : null,
+            }}
+            lastName={{
+              label: 'Last Name *',
+              value: lastName,
+              onChange: value => {
+                clearTransientFeedback();
+                updateValue('lastName', value);
+              },
+              inputClassName: `${inputClass(fieldValidity.lastName)} ${fieldValidity.lastName ? styles.inputWithIcon : ''}`,
+              validBadge: fieldValidity.lastName ? <span className={`${styles.checkIcon} surface-authValidationBadgeSuccess`}>Valid</span> : null,
+            }}
+          />
+
+          <SignupUsernameFieldSection
+            containerClassName={styles.field}
+            labelClassName="surface-authLabel"
+            value={username}
+            onChange={value => {
+              clearTransientFeedback();
+              updateValue('username', value);
+            }}
+            checking={checkingUsername}
+            availability={usernameAvailable}
+            inputClassName={`surface-authInput ${styles.inputWithIcon} ${
+              usernameAvailable === false ? 'surface-authInputError' :
+              usernameAvailable === true ? 'surface-authInputValid' : ''
+            }`}
+            checkingIndicator={<span className={`${styles.checking} surface-authValidationBadgePending`}>Checking</span>}
+            availableIndicator={usernameAvailable === true && !checkingUsername ? <span className={`${styles.checkIcon} surface-authValidationBadgeSuccess`}>Valid</span> : null}
+            takenIndicator={usernameAvailable === false && !checkingUsername ? <div className="surface-authHint">Username is taken</div> : null}
+          />
+          {usernameAvailable === true && !checkingUsername && (
+            <div className="surface-authHint surface-authHintSuccess">Username available</div>
+          )}
 
           {/* Organization */}
           <div className={styles.field}>
@@ -311,7 +208,7 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
               value={organization}
               onChange={e => {
                 clearTransientFeedback();
-                setOrganization(e.target.value);
+                updateValue('organization', e.target.value);
               }}
               placeholder="Organization name"
               className="surface-authInput"
@@ -326,135 +223,110 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
               value={email}
               onChange={e => {
                 clearTransientFeedback();
-                setEmail(e.target.value);
-                updateFieldValidation('email', e.target.value);
+                updateValue('email', e.target.value);
               }}
               required
-              className={`${inputClass(fieldValidation.email)} ${fieldValidation.email ? styles.inputWithIcon : ''}`}
+              className={`${inputClass(fieldValidity.email)} ${fieldValidity.email ? styles.inputWithIcon : ''}`}
             />
-            {fieldValidation.email && <span className={styles.checkIcon}>Valid</span>}
+            {fieldValidity.email && <span className={`${styles.checkIcon} surface-authValidationBadgeSuccess`}>Valid</span>}
           </div>
 
-          {/* Password */}
-          <div className={styles.field}>
-            <label className="surface-authLabel">Password *</label>
-            <div className={styles.passwordWrap}>
-              <input
-                type={mounted && showPassword ? "text" : "password"}
-                value={password}
-                onChange={e => {
-                  clearTransientFeedback();
-                  setPassword(e.target.value);
-                  updateFieldValidation('password', e.target.value);
-                  updateFieldValidation('confirmPassword', confirmPassword);
-                }}
-                onFocus={() => setShowPasswordRequirements(true)}
-                onBlur={() => setShowPasswordRequirements(false)}
-                required
-                placeholder="Min 6 characters"
-                className={`${inputClass(fieldValidation.password)} ${styles.inputWithToggle}`}
+          <SignupPasswordFieldSection
+            containerClassName={styles.field}
+            labelClassName="surface-authLabel"
+            wrapperClassName={styles.passwordWrap}
+            inputClassName={`${inputClass(fieldValidity.password)} ${styles.inputWithToggle}`}
+            value={password}
+            onChange={value => {
+              clearTransientFeedback();
+              updateValue('password', value);
+            }}
+            mounted={mounted}
+            showPassword={showPassword}
+            onToggleVisibility={() => setShowPassword(!showPassword)}
+            onFocus={() => setShowPasswordRequirements(true)}
+            onBlur={() => setShowPasswordRequirements(false)}
+            showRequirements={showPasswordRequirements}
+            passwordStrength={passwordStrength}
+            passwordRequirementChecks={passwordRequirementChecks}
+            toggleButton={
+              <button
+                type="button"
+                className={`${styles.passwordToggle} surface-authPasswordToggle`}
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? (
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-10-7-10-7a18.08 18.08 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 10 7 10 7a18.09 18.09 0 01-2.96 3.84M1 1l22 22"/>
+                  </svg>
+                ) : (
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                )}
+                {showPassword ? "Hide" : "Show"}
+              </button>
+            }
+            strengthMeter={
+              <PasswordStrengthPanel
+                strengthText={getStrengthText()}
+                strengthPercent={passwordStrengthPercent}
+                tone={strengthTone}
+                requirements={[
+                  { met: passwordRequirementChecks.minLength, label: 'At least 6 characters' },
+                  { met: passwordRequirementChecks.lower, label: 'Lowercase letter' },
+                  { met: passwordRequirementChecks.upper, label: 'Uppercase letter' },
+                  { met: passwordRequirementChecks.number, label: 'Number' },
+                  { met: passwordRequirementChecks.special, label: 'Special character' },
+                ]}
               />
-              {mounted && (
-                <button
-                  type="button"
-                  className={styles.passwordToggle}
-                  onClick={() => setShowPassword(!showPassword)}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                >
-                  {showPassword ? (
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-10-7-10-7a18.08 18.08 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 10 7 10 7a18.09 18.09 0 01-2.96 3.84M1 1l22 22"/>
-                    </svg>
-                  ) : (
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/>
-                      <circle cx="12" cy="12" r="3"/>
-                    </svg>
-                  )}
-                  {showPassword ? "Hide" : "Show"}
-                </button>
-              )}
-            </div>
+            }
+            requirementsPanel={null}
+            placeholder="Min 6 characters"
+          />
 
-            {/* Strength meter */}
-            {password && (
-              <div className={styles.strengthMeter}>
-                <div className={styles.strengthTrack}>
-                  <div
-                    className={`${styles.strengthFill} ${styles[`strength${passwordStrength}` as keyof typeof styles]}`}
-                  />
-                </div>
-                <div className={`${styles.strengthLabel} ${styles[`strength${passwordStrength}` as keyof typeof styles]}`}>
-                  {getStrengthText()}
-                </div>
-              </div>
-            )}
-
-            {/* Requirements tooltip */}
-            {showPasswordRequirements && (
-              <div className={styles.requirements}>
-                <div className={styles.requirementsTitle}>Password requirements</div>
-                <div className={styles.requirementsList}>
-                  {[
-                    { met: getPasswordRequirementChecks(password).minLength, label: 'At least 6 characters' },
-                    { met: getPasswordRequirementChecks(password).lower, label: 'Lowercase letter' },
-                    { met: getPasswordRequirementChecks(password).upper, label: 'Uppercase letter' },
-                    { met: getPasswordRequirementChecks(password).number, label: 'Number' },
-                    { met: getPasswordRequirementChecks(password).special, label: 'Special character' },
-                  ].map(r => (
-                    <div key={r.label} className={r.met ? styles.requirementMet : styles.requirementUnmet}>
-                      {r.met ? '\u2713' : '\u25CB'} {r.label}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Confirm Password */}
-          <div className={styles.field}>
-            <label className="surface-authLabel">Confirm Password *</label>
-            <div className={styles.passwordWrap}>
-              <input
-                type={mounted && showConfirmPassword ? "text" : "password"}
-                value={confirmPassword}
-                onChange={e => {
-                  clearTransientFeedback();
-                  setConfirmPassword(e.target.value);
-                  updateFieldValidation('confirmPassword', e.target.value);
-                }}
-                required
-                placeholder="Confirm your password"
-                className={`surface-authInput ${styles.inputWithToggle} ${
-                  confirmPassword && !fieldValidation.confirmPassword ? 'surface-authInputError' :
-                  fieldValidation.confirmPassword ? 'surface-authInputValid' : ''
-                }`}
-              />
-              {mounted && (
-                <button
-                  type="button"
-                  className={styles.passwordToggle}
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  aria-label={showConfirmPassword ? "Hide password" : "Show password"}
-                >
-                  {showConfirmPassword ? (
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-10-7-10-7a18.08 18.08 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 10 7 10 7a18.09 18.09 0 01-2.96 3.84M1 1l22 22"/>
-                    </svg>
-                  ) : (
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/>
-                      <circle cx="12" cy="12" r="3"/>
-                    </svg>
-                  )}
-                  {showConfirmPassword ? "Hide" : "Show"}
-                </button>
-              )}
-            </div>
-            {confirmPassword && !fieldValidation.confirmPassword && (
-              <div className="surface-authHint">Passwords don&apos;t match</div>
-            )}
-          </div>
+          <SignupConfirmPasswordFieldSection
+            containerClassName={styles.field}
+            labelClassName="surface-authLabel"
+            wrapperClassName={styles.passwordWrap}
+            inputClassName={`surface-authInput ${styles.inputWithToggle} ${
+              confirmPassword && !fieldValidity.confirmPassword ? 'surface-authInputError' :
+              fieldValidity.confirmPassword ? 'surface-authInputValid' : ''
+            }`}
+            value={confirmPassword}
+            onChange={value => {
+              clearTransientFeedback();
+              updateValue('confirmPassword', value);
+            }}
+            mounted={mounted}
+            showPassword={showConfirmPassword}
+            onToggleVisibility={() => setShowConfirmPassword(!showConfirmPassword)}
+            toggleButton={
+              <button
+                type="button"
+                className={`${styles.passwordToggle} surface-authPasswordToggle`}
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+              >
+                {showConfirmPassword ? (
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-10-7-10-7a18.08 18.08 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 10 7 10 7a18.09 18.09 0 01-2.96 3.84M1 1l22 22"/>
+                  </svg>
+                ) : (
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                )}
+                {showConfirmPassword ? "Hide" : "Show"}
+              </button>
+            }
+            validIndicator={fieldValidity.confirmPassword ? <div className="surface-authHint surface-authHintSuccess">Passwords match</div> : null}
+            invalidIndicator={confirmPassword && !fieldValidity.confirmPassword ? <div className="surface-authHint">Passwords don&apos;t match</div> : null}
+            placeholder="Confirm your password"
+          />
 
           {/* Buttons */}
           <div className={styles.buttons}>

@@ -1,12 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 
 import Image from "next/image";
 
-import { API } from "../lib/api";
-import { getErrorMessage } from "../lib/error-utils";
-import { logger } from "../lib/logger";
+import AuthFeedback from "../components/AuthFeedback";
+import PasswordStrengthPanel from "../components/PasswordStrengthPanel";
+import {
+  SignupConfirmPasswordFieldSection,
+  SignupNameFieldsSection,
+  SignupPasswordFieldSection,
+  SignupUsernameFieldSection,
+} from "../components/SignupFieldSections";
+import { useSignupForm } from "../hooks/useSignupForm";
+import { getSignupValidationError, submitSignup } from "../lib/auth/signup";
 
 
 
@@ -14,31 +21,43 @@ import { logger } from "../lib/logger";
 
 
 export default function SignupPage() {
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [username, setUsername] = useState("");
-  const [organization, setOrganization] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  const [passwordStrength, setPasswordStrength] = useState(0);
-  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
-  const [checkingUsername, setCheckingUsername] = useState(false);
-  const [showPasswordRequirements, setShowPasswordRequirements] = useState(false);
-  const [fieldValidation, setFieldValidation] = useState({
-    firstName: false,
-    lastName: false,
-    username: false,
-    email: false,
-    password: false,
-    confirmPassword: false
-  });
+  const {
+    checkingUsername,
+    fieldValidity,
+    mounted,
+    passwordRequirementChecks,
+    passwordStrength,
+    resetForm,
+    setShowConfirmPassword,
+    setShowPassword,
+    setShowPasswordRequirements,
+    showConfirmPassword,
+    showPassword,
+    showPasswordRequirements,
+    updateValue,
+    usernameAvailable,
+    values: { confirmPassword, email, firstName, lastName, organization, password, username },
+  } = useSignupForm();
+  const strengthTone = useMemo(() => {
+    if (passwordStrength <= 1) return 'weak';
+    if (passwordStrength === 2) return 'fair';
+    if (passwordStrength === 3) return 'good';
+    return 'strong';
+  }, [passwordStrength]);
+  const passwordStrengthPercent = Math.max(passwordStrength * 20, 8);
+  const requirementItems = useMemo(
+    () => [
+      { met: passwordRequirementChecks.minLength, label: 'At least 6 characters' },
+      { met: passwordRequirementChecks.lower, label: 'Lowercase letter' },
+      { met: passwordRequirementChecks.upper, label: 'Uppercase letter' },
+      { met: passwordRequirementChecks.number, label: 'Number' },
+      { met: passwordRequirementChecks.special, label: 'Special character' },
+    ],
+    [passwordRequirementChecks]
+  );
 
   // Enhanced UX hooks
   // Simple toast replacement
@@ -46,113 +65,20 @@ export default function SignupPage() {
     // Could implement toast UI here if needed
   };
 
-  // Prevent hydration mismatch
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Password strength effect
-  useEffect(() => {
-    if (password) {
-      const strength = calculatePasswordStrength(password);
-      setPasswordStrength(strength);
-    } else {
-      setPasswordStrength(0);
-    }
-  }, [password]);
-
-  // Username availability effect
-  useEffect(() => {
-    const debounceTimer = setTimeout(() => {
-      if (username.trim().length >= 3) {
-        checkUsernameAvailability(username);
-      }
-    }, 500);
-
-    return () => clearTimeout(debounceTimer);
-  }, [username]);
-
-  // Password strength calculation
-  const calculatePasswordStrength = (password: string) => {
-    let strength = 0;
-    if (password.length >= 6) strength += 1;
-    if (password.length >= 10) strength += 1;
-    if (/[a-z]/.test(password)) strength += 1;
-    if (/[A-Z]/.test(password)) strength += 1;
-    if (/[0-9]/.test(password)) strength += 1;
-    if (/[^A-Za-z0-9]/.test(password)) strength += 1;
-    return Math.min(strength, 5);
-  };
-
-  // Username availability check
-  const checkUsernameAvailability = async (username: string) => {
-    if (username.length < 3) {
-      setUsernameAvailable(null);
-      return;
-    }
-
-    setCheckingUsername(true);
-    try {
-      const res = await fetch(API(`/api/v1/users/check-username?username=${encodeURIComponent(username)}`));
-      const data = await res.json().catch(() => null);
-      setUsernameAvailable(typeof data?.available === 'boolean' ? data.available : null);
-    } catch {
-      setUsernameAvailable(null);
-    } finally {
-      setCheckingUsername(false);
-    }
-  };
-
-  // Real-time field validation
-  const validateField = (field: string, value: string) => {
-    switch (field) {
-      case 'firstName':
-      case 'lastName':
-        return value.trim().length >= 2;
-      case 'username':
-        return value.trim().length >= 3 && /^[a-zA-Z0-9_]+$/.test(value);
-      case 'email':
-        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-      case 'password':
-        return value.length >= 6;
-      case 'confirmPassword':
-        return value === password;
-      default:
-        return false;
-    }
-  };
-
-  // Update field validation state
-  const updateFieldValidation = (field: string, value: string) => {
-    const isValid = validateField(field, value);
-    setFieldValidation(prev => ({
-      ...prev,
-      [field]: isValid
-    }));
-    return isValid;
-  };
-
-  // Form validation
-  const validateForm = () => {
-    if (!firstName.trim()) return "First name is required";
-    if (!lastName.trim()) return "Last name is required";
-    if (!username.trim()) return "Username is required";
-    if (!email.trim()) return "Email is required";
-    if (!password.trim()) return "Password is required";
-    if (password.length < 6) return "Password must be at least 6 characters";
-    if (password !== confirmPassword) return "Passwords do not match";
-    
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) return "Please enter a valid email address";
-    
-    return null;
-  };
-
   const handleSignup = async (submitEvent: React.FormEvent) => {
     submitEvent.preventDefault();
     
-    const validationError = validateForm();
+    const validationError = getSignupValidationError({
+      firstName,
+      lastName,
+      username,
+      organization,
+      email,
+      password,
+      confirmPassword,
+      usernameAvailable,
+      checkingUsername,
+    });
     if (validationError) {
       setError(validationError);
       addToast({
@@ -168,42 +94,15 @@ export default function SignupPage() {
     setLoading(true);
 
     try {
-      const res = await fetch(API("/api/v1/users/signup"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          first_name: firstName.trim(), 
-          last_name: lastName.trim(), 
-          username: username.trim(), 
-          organization: organization.trim() || undefined, 
-          email: email.trim(), 
-          password 
-        })
+      const { successMessage } = await submitSignup({
+        firstName,
+        lastName,
+        username,
+        organization,
+        email,
+        password,
       });
-      
-      if (!res.ok) {
-        const data = await res.json().catch((parseError) => {
-          logger.debug('Failed to parse signup error response', { status: res.status });
-          return {};
-        });
-        let errorMessage = "Signup failed";
-        
-        if (res.status === 409) {
-          errorMessage = "Username or email already exists";
-        } else if (data.detail) {
-          errorMessage = data.detail;
-        }
-        
-        setError(errorMessage);
-        addToast({
-          type: 'error',
-          message: errorMessage,
-          duration: 6000
-        });
-        return;
-      }
-      
-      const successMessage = `Welcome ${firstName}! Your account has been created successfully.`;
+
       setSuccess(successMessage);
       addToast({
         type: 'success',
@@ -211,22 +110,15 @@ export default function SignupPage() {
         duration: 5000
       });
 
-      // Clear form
-      setFirstName("");
-      setLastName("");
-      setUsername("");
-      setOrganization("");
-      setEmail("");
-      setPassword("");
-      setConfirmPassword("");
+      resetForm();
 
       // Redirect to login after a delay
       setTimeout(() => {
-        window.location.href = '/login';
+        window.location.href = '/login?signup=success';
       }, 2000);
 
     } catch (err: unknown) {
-      const errorMsg = `Network error: ${getErrorMessage(err) || 'Please check your connection'}`;
+      const errorMsg = err instanceof Error ? err.message : 'Signup failed';
       setError(errorMsg);
       addToast({
         type: 'error',
@@ -250,71 +142,55 @@ export default function SignupPage() {
         </div>
         
         <form id="signup-form" onSubmit={handleSignup} className="signup-form">
-          <div className="signup-input-grid">
-            <div className="signup-input-container">
-              <label htmlFor="signup-firstname" className="signup-input-label">First Name:</label>
-              <input
-                type="text"
-                id="signup-firstname"
-                name="firstName"
-                placeholder="First Name"
-                value={firstName}
-                onChange={changeEvent => {
-                  setFirstName(changeEvent.target.value);
-                  updateFieldValidation('firstName', changeEvent.target.value);
-                }}
-                required
-                className={`signup-input ${fieldValidation.firstName === true ? 'valid' : fieldValidation.firstName === false ? 'invalid' : ''}`}
-                aria-label="First Name"
-              />
-              {fieldValidation.firstName === true && <span className="validation-check">Valid</span>}
-            </div>
-            <div className="signup-input-container">
-              <label htmlFor="signup-lastname" className="signup-input-label">Last Name:</label>
-              <input
-                type="text"
-                id="signup-lastname"
-                name="lastName"
-                placeholder="Last Name"
-                value={lastName}
-                onChange={changeEvent => {
-                  setLastName(changeEvent.target.value);
-                  updateFieldValidation('lastName', changeEvent.target.value);
-                }}
-                required
-                className={`signup-input ${fieldValidation.lastName === true ? 'valid' : fieldValidation.lastName === false ? 'invalid' : ''}`}
-                aria-label="Last Name"
-              />
-              {fieldValidation.lastName === true && <span className="validation-check">Valid</span>}
-            </div>
-          </div>
-          
-          <div className="signup-input-container username-container">
-            <label htmlFor="signup-username" className="signup-input-label">Username:</label>
-            <input
-              type="text"
-              id="signup-username"
-              name="username"
-              placeholder="Choose a username"
-              value={username}
-              onChange={changeEvent => {
-                setUsername(changeEvent.target.value);
-                updateFieldValidation('username', changeEvent.target.value);
-              }}
-              autoComplete="username"
-              required
-              className={`signup-input ${
-                checkingUsername ? 'checking' :
-                usernameAvailable === true ? 'valid available' :
-                usernameAvailable === false ? 'invalid taken' :
-                fieldValidation.username === false ? 'invalid' : ''
-              }`}
-              aria-label="Username"
-            />
-            {checkingUsername && <span className="validation-spinner">Checking</span>}
-            {usernameAvailable === true && <span className="validation-check">Valid</span>}
-            {usernameAvailable === false && <span className="validation-error">Username taken</span>}
-          </div>
+          <SignupNameFieldsSection
+            containerClassName="signup-input-grid"
+            fieldClassName="signup-input-container"
+            labelClassName="signup-input-label"
+            firstName={{
+              label: 'First Name:',
+              value: firstName,
+              onChange: value => updateValue('firstName', value),
+              inputClassName: `signup-input ${fieldValidity.firstName === true ? 'valid' : fieldValidity.firstName === false ? 'invalid' : ''}`,
+              validBadge: fieldValidity.firstName === true ? <span className="validation-check">Valid</span> : null,
+              inputId: 'signup-firstname',
+              inputName: 'firstName',
+              placeholder: 'First Name',
+              ariaLabel: 'First Name',
+            }}
+            lastName={{
+              label: 'Last Name:',
+              value: lastName,
+              onChange: value => updateValue('lastName', value),
+              inputClassName: `signup-input ${fieldValidity.lastName === true ? 'valid' : fieldValidity.lastName === false ? 'invalid' : ''}`,
+              validBadge: fieldValidity.lastName === true ? <span className="validation-check">Valid</span> : null,
+              inputId: 'signup-lastname',
+              inputName: 'lastName',
+              placeholder: 'Last Name',
+              ariaLabel: 'Last Name',
+            }}
+          />
+
+          <SignupUsernameFieldSection
+            containerClassName="signup-input-container username-container"
+            labelClassName="signup-input-label"
+            value={username}
+            onChange={value => updateValue('username', value)}
+            checking={checkingUsername}
+            availability={usernameAvailable}
+            inputClassName={`signup-input ${
+              checkingUsername ? 'checking' :
+              usernameAvailable === true ? 'valid available' :
+              usernameAvailable === false ? 'invalid taken' :
+              fieldValidity.username === false ? 'invalid' : ''
+            }`}
+            checkingIndicator={<span className="validation-spinner">Checking</span>}
+            availableIndicator={<span className="validation-check">Valid</span>}
+            takenIndicator={<span className="validation-error">Username taken</span>}
+            inputId="signup-username"
+            inputName="username"
+            placeholder="Choose a username"
+            ariaLabel="Username"
+          />
           
           <div className="signup-input-container">
             <label htmlFor="signup-organization" className="signup-input-label">Organization (optional):</label>
@@ -324,7 +200,7 @@ export default function SignupPage() {
               name="organization"
               placeholder="Organization Name (optional)"
               value={organization}
-              onChange={changeEvent => setOrganization(changeEvent.target.value)}
+              onChange={changeEvent => updateValue('organization', changeEvent.target.value)}
               className="signup-input"
               aria-label="Organization"
             />
@@ -338,134 +214,96 @@ export default function SignupPage() {
               name="email"
               placeholder="Enter your email"
               value={email}
-              onChange={changeEvent => {
-                setEmail(changeEvent.target.value);
-                updateFieldValidation('email', changeEvent.target.value);
-              }}
+              onChange={changeEvent => updateValue('email', changeEvent.target.value)}
               autoComplete="email"
               required
-              className={`signup-input ${fieldValidation.email === true ? 'valid' : fieldValidation.email === false ? 'invalid' : ''}`}
+              className={`signup-input ${fieldValidity.email === true ? 'valid' : fieldValidity.email === false ? 'invalid' : ''}`}
               aria-label="Email"
             />
-            {fieldValidation.email === true && <span className="validation-check">Valid</span>}
+            {fieldValidity.email === true && <span className="validation-check">Valid</span>}
           </div>
           
-          <div className="signup-password-container">
-            <label htmlFor="signup-password" className="signup-input-label">Password:</label>
-            <div className="signup-password-field-wrapper">
-              <input
-                type={mounted && showPassword ? "text" : "password"}
-                id="signup-password"
-                name="password"
-                placeholder="Create a password (min 6 characters)"
-                value={password}
-                onChange={changeEvent => {
-                  setPassword(changeEvent.target.value);
-                  updateFieldValidation('password', changeEvent.target.value);
-                }}
-                onFocus={() => setShowPasswordRequirements(true)}
-                onBlur={() => setShowPasswordRequirements(false)}
-                autoComplete="new-password"
-                required
-                className={`signup-password-input ${fieldValidation.password === true ? 'valid' : fieldValidation.password === false ? 'invalid' : ''}`}
-                aria-label="Password"
+          <SignupPasswordFieldSection
+            containerClassName="signup-password-container"
+            labelClassName="signup-input-label"
+            wrapperClassName="signup-password-field-wrapper"
+            inputClassName={`signup-password-input ${fieldValidity.password === true ? 'valid' : fieldValidity.password === false ? 'invalid' : ''}`}
+            value={password}
+            onChange={value => updateValue('password', value)}
+            mounted={mounted}
+            showPassword={showPassword}
+            onToggleVisibility={() => setShowPassword(!showPassword)}
+            onFocus={() => setShowPasswordRequirements(true)}
+            onBlur={() => setShowPasswordRequirements(false)}
+            showRequirements={showPasswordRequirements}
+            passwordStrength={passwordStrength}
+            passwordRequirementChecks={passwordRequirementChecks}
+            toggleButton={
+              <button
+                type="button"
+                className="signup-password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? 'Hide Password' : 'Show Password'}
+              </button>
+            }
+            strengthMeter={
+              <PasswordStrengthPanel
+                strengthText={
+                  passwordStrength === 0 ? 'Very Weak' :
+                  passwordStrength === 1 ? 'Weak' :
+                  passwordStrength === 2 ? 'Fair' :
+                  passwordStrength === 3 ? 'Good' :
+                  passwordStrength === 4 ? 'Strong' :
+                  'Very Strong'
+                }
+                strengthPercent={passwordStrengthPercent}
+                tone={strengthTone}
+                requirements={requirementItems}
               />
-              {mounted && (
-                <button
-                  type="button"
-                  className="signup-password-toggle"
-                  onClick={() => setShowPassword(!showPassword)}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                >
-                  {showPassword ? 'Hide Password' : 'Show Password'}
-                </button>
-              )}
-            </div>
-            {password && (
-              <div className="password-strength">
-                <div className="strength-bar">
-                  <div 
-                    className={`strength-fill strength-${passwordStrength}`}
-                  ></div>
-                </div>
-                <span className={`strength-text strength-${passwordStrength}`}>
-                  {passwordStrength === 0 && 'Very Weak'}
-                  {passwordStrength === 1 && 'Weak'}
-                  {passwordStrength === 2 && 'Fair'}
-                  {passwordStrength === 3 && 'Good'}
-                  {passwordStrength === 4 && 'Strong'}
-                  {passwordStrength === 5 && 'Very Strong'}
-                </span>
-              </div>
-            )}
-            {showPasswordRequirements && (
-              <div className="password-requirements">
-                <div className="requirement-title">Password requirements:</div>
-                <div className={`requirement ${password.length >= 6 ? 'met' : ''}`}>
-                  At least 6 characters
-                </div>
-                <div className={`requirement ${/[a-z]/.test(password) ? 'met' : ''}`}>
-                  Lowercase letter
-                </div>
-                <div className={`requirement ${/[A-Z]/.test(password) ? 'met' : ''}`}>
-                  Uppercase letter
-                </div>
-                <div className={`requirement ${/[0-9]/.test(password) ? 'met' : ''}`}>
-                  Number
-                </div>
-                <div className={`requirement ${/[^A-Za-z0-9]/.test(password) ? 'met' : ''}`}>
-                  Special character
-                </div>
-              </div>
-            )}
-          </div>
-          
-          <div className="signup-password-container">
-            <label htmlFor="signup-confirm-password" className="signup-input-label">Confirm Password:</label>
-            <div className="signup-password-field-wrapper">
-              <input
-                type={mounted && showConfirmPassword ? "text" : "password"}
-                id="signup-confirm-password"
-                name="confirmPassword"
-                placeholder="Confirm your password"
-                value={confirmPassword}
-                onChange={changeEvent => {
-                  setConfirmPassword(changeEvent.target.value);
-                  updateFieldValidation('confirmPassword', changeEvent.target.value);
-                }}
-                autoComplete="new-password"
-                required
-                className={`signup-password-input ${fieldValidation.confirmPassword === true ? 'valid' : fieldValidation.confirmPassword === false ? 'invalid' : ''}`}
-                aria-label="Confirm Password"
-              />
-              {mounted && (
-                <button
-                  type="button"
-                  className="signup-password-toggle"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  aria-label={showConfirmPassword ? "Hide password" : "Show password"}
-                >
-                  {showConfirmPassword ? 'Hide Password' : 'Show Password'}
-                </button>
-              )}
-            </div>
-            {fieldValidation.confirmPassword === true && <span className="validation-check">Valid</span>}
-            {fieldValidation.confirmPassword === false && confirmPassword && (
-              <span className="validation-error">Passwords don&apos;t match</span>
-            )}
-          </div>
+            }
+            requirementsPanel={null}
+            inputId="signup-password"
+            inputName="password"
+            placeholder="Create a password (min 6 characters)"
+            ariaLabel="Password"
+          />
 
-          {error && (
-            <div className="signup-error-container signup-error-msg">
-              {error}
-            </div>
-          )}
+          <SignupConfirmPasswordFieldSection
+            containerClassName="signup-password-container"
+            labelClassName="signup-input-label"
+            wrapperClassName="signup-password-field-wrapper"
+            inputClassName={`signup-password-input ${fieldValidity.confirmPassword === true ? 'valid' : fieldValidity.confirmPassword === false ? 'invalid' : ''}`}
+            value={confirmPassword}
+            onChange={value => updateValue('confirmPassword', value)}
+            mounted={mounted}
+            showPassword={showConfirmPassword}
+            onToggleVisibility={() => setShowConfirmPassword(!showConfirmPassword)}
+            toggleButton={
+              <button
+                type="button"
+                className="signup-password-toggle"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+              >
+                {showConfirmPassword ? 'Hide Password' : 'Show Password'}
+              </button>
+            }
+            validIndicator={fieldValidity.confirmPassword === true ? <span className="validation-check">Valid</span> : null}
+            invalidIndicator={fieldValidity.confirmPassword === false ? <span className="validation-error">Passwords don&apos;t match</span> : null}
+            inputId="signup-confirm-password"
+            inputName="confirmPassword"
+            placeholder="Confirm your password"
+            ariaLabel="Confirm Password"
+          />
 
-          {success && (
-            <div className="signup-success-message">
-              {success}
-            </div>
-          )}
+          <AuthFeedback
+            success={success}
+            error={error}
+            successClassName="signup-success-message"
+            errorClassName="signup-error-container signup-error-msg"
+          />
 
           <button
             type="submit"

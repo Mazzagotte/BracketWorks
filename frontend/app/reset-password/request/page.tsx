@@ -1,55 +1,21 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 
 import Image from "next/image";
 
-import { API } from "../../lib/api";
+import AuthFeedback from "../../components/AuthFeedback";
+import AuthValidatedInputField from "../../components/AuthValidatedInputField";
+import { useAuthFormShortcuts } from "../../hooks/useAuthFormShortcuts";
+import { useCooldownTimer } from "../../hooks/useCooldownTimer";
+import { useFieldValidation } from "../../hooks/useFieldValidation";
+import { describeNetworkRequestError, useNetworkRequest } from "../../hooks/useNetworkRequest";
+import { PasswordResetRateLimitError, requestPasswordReset } from "../../lib/auth/password-reset";
+import { getEmailValidationError } from '../../lib/auth/validation';
 import { useToast } from "../../components/Toast";
 import CloseControl from "../../../components/CloseControl";
 import { logger } from '../../lib/logger';
-import { getErrorMessage, getErrorContext, isError } from '../../lib/error-utils';
-
-// Connection monitoring utilities
-const getConnectionQuality = () => {
-  if (typeof navigator !== 'undefined' && 'connection' in navigator) {
-    const conn = (navigator as any).connection;
-    if (conn) {
-      if (conn.effectiveType === '4g' && conn.downlink > 5) return 'fast';
-      if (conn.effectiveType === '3g' || conn.downlink < 1) return 'slow';
-      if (conn.effectiveType === '2g' || conn.downlink < 0.5) return 'poor';
-    }
-  }
-  return 'good';
-};
-
-const fetchWithRetry = async (url: string, options: RequestInit, maxRetries = 3): Promise<Response> => {
-  let lastError: unknown;
-  
-  for (let index = 0; index <= maxRetries; index++) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
-      
-      const response = await fetch(url, {
-        ...options,
-        signal: controller.signal
-      });
-      
-      clearTimeout(timeoutId);
-      return response;
-    } catch (error: unknown) {
-      lastError = error;
-      
-      if (index === maxRetries) break;
-      
-      const delay = Math.min(1000 * Math.pow(2, index), 5000);
-      await new Promise(resolve => setTimeout(resolve, delay));
-    }
-  }
-  
-  throw lastError || new Error('Request failed after retries');
-};
+import { getErrorMessage, getErrorContext } from '../../lib/error-utils';
 
 export default function RequestResetPage() {
   const [email, setEmail] = useState("");
@@ -57,39 +23,52 @@ export default function RequestResetPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
-  const [isOnline, setIsOnline] = useState(true);
-  const [connectionQuality, setConnectionQuality] = useState<'fast' | 'good' | 'slow' | 'poor'>('good');
-  const [retryQueue, setRetryQueue] = useState<(() => Promise<void>)[]>([]);
-  const [showConnectionStatus, setShowConnectionStatus] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState({
-    email: ""
-  });
-  const [fieldTouched, setFieldTouched] = useState({
-    email: false
-  });
+  const formValues = useMemo(() => ({ email }), [email]);
+  const { clearCooldown, cooldownSeconds, startCooldown } = useCooldownTimer();
   
   const emailRef = useRef<HTMLInputElement>(null);
   const { addToast } = useToast();
-
-  // Validation function
-  const validateField = useCallback((fieldName: string, value: string): string => {
+  const {
+    connectionQuality,
+    dismissConnectionStatus,
+    enqueueRetry,
+    fetchWithRetry,
+    isOnline,
+    pendingRetryCount,
+    showConnectionStatus,
+  } = useNetworkRequest();
+  const {
+    fieldErrors,
+    fieldTouched,
+    handleFieldBlur,
+    handleFieldChange,
+    resetValidation,
+    setFieldError,
+    validateAll,
+  } = useFieldValidation(formValues, (fieldName, value) => {
     switch (fieldName) {
       case 'email':
-        if (!value.trim()) return 'Email is required';
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(value)) return 'Please enter a valid email address';
-        return '';
+        return getEmailValidationError(value);
       default:
         return '';
     }
-  }, []);
+  });
   
-  const handleRequest = useCallback(async (e: React.FormEvent) => { 
-    e.preventDefault();
-
+  const submitRequest = useCallback(async () => {
     // Clear previous messages
     setError("");
     setSuccess("");
+
+    if (cooldownSeconds > 0) {
+      const errorMsg = `Please wait ${cooldownSeconds} seconds before sending another code.`;
+      setError(errorMsg);
+      addToast({
+        type: 'warning',
+        message: errorMsg,
+        duration: 4000,
+      });
+      return;
+    }
     
     // Check connection status before attempting request
     if (!isOnline) {
@@ -105,15 +84,8 @@ export default function RequestResetPage() {
 
     // Validate email field
     setIsValidating(true);
-    const emailError = validateField('email', email);
-    
-    setFieldErrors({
-      email: emailError
-    });
-    
-    setFieldTouched({
-      email: true
-    });
+    const nextErrors = validateAll(formValues);
+    const emailError = nextErrors.email;
     
     if (emailError) {
       setIsValidating(false);
@@ -133,75 +105,34 @@ export default function RequestResetPage() {
     setIsValidating(false);
     
     try {
-      const res = await fetchWithRetry(API("/api/v1/users/request-password-reset"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim() })
+      const result = await requestPasswordReset(email, fetchWithRetry);
+      startCooldown(result.cooldownSeconds);
+      setSuccess(result.successMessage);
+      addToast({
+        type: 'success',
+        message: 'If an account exists for this email, a password reset link has been sent.',
+        duration: 5000
       });
-      
-      const text = await res.text();
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch {
-        data = { raw: text };
-      }
-      
-      if (!res.ok) {
-        let errorMessage = 'Failed to send reset code';
-        
-        if (res.status === 404) {
-          errorMessage = 'Email address not found';
-          setFieldErrors(prev => ({ ...prev, email: 'Email not found' }));
-        } else if (res.status === 429) {
-          errorMessage = 'Too many requests. Please try again later.';
-        } else if (data.detail) {
-          errorMessage = data.detail;
-        }
-        
-        setError(errorMessage);
+
+    } catch (err: unknown) {
+      if (err instanceof PasswordResetRateLimitError) {
+        startCooldown(err.retryAfterSeconds);
+        setError(err.message);
         addToast({
           type: 'error',
-          message: errorMessage,
-          duration: 6000
+          message: err.message,
+          duration: 6000,
         });
-        
+
         setTimeout(() => {
           emailRef.current?.focus();
         }, 100);
-        
         return;
       }
-      
-      // Success
-      const successMessage = "Reset code sent to your email. Check your inbox and proceed to verify the code.";
-      setSuccess(successMessage);
-      addToast({
-        type: 'success',
-        message: "?? Reset code sent! Check your email inbox.",
-        duration: 5000
-      });
-      
-    } catch (err: unknown) {
-      const isNetworkError = isError(err) && (err.name === 'TypeError' || err.message.includes('Failed to fetch'));
-      const isTimeoutError = isError(err) && (err.name === 'AbortError' || err.message.includes('timeout'));
-      const isConnectionError = isError(err) && err.message.includes('No internet connection');
-      
-      let errorMsg: string;
-      let shouldRetry = false;
-      
-      if (isConnectionError) {
-        errorMsg = 'No internet connection detected. Please check your network.';
-        shouldRetry = true;
-      } else if (isNetworkError) {
-        errorMsg = `Connection failed${connectionQuality === 'poor' ? ' (poor connection detected)' : ''}. Please try again.`;
-        shouldRetry = true;
-      } else if (isTimeoutError) {
-        errorMsg = `Request timed out${connectionQuality === 'slow' ? ' (slow connection detected)' : ''}. Please try again.`;
-        shouldRetry = true;
-      } else {
-        errorMsg = `Network error: ${getErrorMessage(err) || 'Please check your connection'}`;
-      }
+
+      const networkError = describeNetworkRequestError(err, connectionQuality);
+      const errorMsg = networkError.message || `Network error: ${getErrorMessage(err) || 'Please check your connection'}`;
+      const shouldRetry = networkError.shouldRetry;
       
       setError(errorMsg);
       addToast({
@@ -213,12 +144,12 @@ export default function RequestResetPage() {
       if (shouldRetry && !isOnline) {
         const retryRequest = async () => {
           try {
-            await handleRequest(new Event('submit') as unknown as React.FormEvent);
+            await submitRequest();
           } catch (retryError) {
             logger.debug('Retry failed:', retryError);
           }
         };
-        setRetryQueue(prev => [...prev, retryRequest]);
+        enqueueRetry(retryRequest);
         
         addToast({
           type: 'info',
@@ -229,137 +160,31 @@ export default function RequestResetPage() {
     } finally {
       setLoading(false);
     }
-  }, [isOnline, email, validateField, addToast, connectionQuality]);
+  }, [addToast, connectionQuality, cooldownSeconds, email, enqueueRetry, fetchWithRetry, formValues, isOnline, startCooldown, validateAll]);
 
-  useEffect(() => {
-    // Auto-focus email field
-    if (emailRef.current) {
-      emailRef.current.focus();
-    }
+  const handleRequest = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    await submitRequest();
+  }, [submitRequest]);
 
-    // Connection monitoring
-    const handleOnline = () => {
-      setIsOnline(true);
-      setConnectionQuality(getConnectionQuality());
-      
-      // Process retry queue
-      if (retryQueue.length > 0) {
-        addToast({
-          type: 'info',
-          message: 'Connection restored. Processing pending requests...',
-          duration: 3000
-        });
-        
-        retryQueue.forEach(retryFn => retryFn());
-        setRetryQueue([]);
-      }
-    };
-    
-    const handleOffline = () => {
-      setIsOnline(false);
-      setShowConnectionStatus(true);
-      addToast({
-        type: 'warning',
-        message: 'Connection lost. Requests will be retried automatically.',
-        duration: 5000
-      });
-    };
+  const clearRequestFeedback = useCallback(() => {
+    setError('');
+    setSuccess('');
+    clearCooldown();
+    resetValidation();
+  }, [clearCooldown, resetValidation]);
 
-    const measureConnectionQuality = async () => {
-      if (!navigator.onLine) {
-        setConnectionQuality('poor');
-        setShowConnectionStatus(true);
-        return;
-      }
-
-      const startTime = Date.now();
-      try {
-        // Ping a small endpoint to measure response time
-        await fetch(API('/api/health'), { 
-          method: 'HEAD',
-          cache: 'no-cache',
-          signal: AbortSignal.timeout(5000)
-        });
-        const responseTime = Date.now() - startTime;
-        
-        if (responseTime < 500) {
-          setConnectionQuality('good');
-        } else if (responseTime < 2000) {
-          setConnectionQuality('slow');
-        } else {
-          setConnectionQuality('poor');
-        }
-        
-        setShowConnectionStatus(responseTime > 1000);
-      } catch (error) {
-        setConnectionQuality('poor');
-        setShowConnectionStatus(true);
-      }
-    };
-
-    // Initial checks
-    setIsOnline(navigator.onLine);
-    measureConnectionQuality();
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    
-    // Periodic connection quality checks
-    const qualityInterval = setInterval(measureConnectionQuality, 30000);
-
-    // Keyboard shortcuts
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey || e.metaKey) {
-        switch (e.key) {
-          case 'Enter': 
-            e.preventDefault();
-            if (!loading && fieldErrors.email === '' && email.trim()) {
-              handleRequest(new Event('submit') as unknown as React.FormEvent);
-            }
-            break;
-          case 'Escape': 
-            e.preventDefault();
-            setError('');
-            setSuccess('');
-            setFieldErrors({ email: '' });
-            break;
-        }
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-      document.removeEventListener('keydown', handleKeyDown);
-      clearInterval(qualityInterval);
-    };
-  }, [retryQueue, loading, fieldErrors.email, email, addToast, handleRequest]);
-
-  // Real-time field validation
-  const handleFieldChange = (fieldName: string, value: string) => {
-    if (fieldName === 'email') {
-      setEmail(value);
-    }
-    
-    // Clear error when user starts typing
-    if (fieldErrors[fieldName as keyof typeof fieldErrors] && value.trim()) {
-      setFieldErrors(prev => ({ ...prev, [fieldName]: '' }));
-    }
-    
-    // Validate on blur or when field has been touched
-    if (fieldTouched[fieldName as keyof typeof fieldTouched]) {
-      const error = validateField(fieldName, value);
-      setFieldErrors(prev => ({ ...prev, [fieldName]: error }));
-    }
-  };
-
-  const handleFieldBlur = (fieldName: string, value: string) => {
-    setFieldTouched(prev => ({ ...prev, [fieldName]: true }));
-    const error = validateField(fieldName, value);
-    setFieldErrors(prev => ({ ...prev, [fieldName]: error }));
-  };
+  useAuthFormShortcuts({
+    focusOnMount: () => {
+      emailRef.current?.focus();
+    },
+    canSubmitShortcut: () => !loading && fieldErrors.email === '' && email.trim().length > 0,
+    onSubmitShortcut: () => {
+      void submitRequest();
+    },
+    enableEscape: true,
+    onEscape: clearRequestFeedback,
+  });
 
   return (
     <div className="login-page-container">
@@ -367,21 +192,18 @@ export default function RequestResetPage() {
       {showConnectionStatus && (
         <div className={`connection-status ${isOnline ? connectionQuality : 'offline'}`} role="alert" aria-live="polite">
           <div className="connection-content">
-            <span className="connection-icon">
-              {!isOnline ? '??' : connectionQuality === 'slow' ? '??' : '??'}
-            </span>
             <span className="connection-text">
               {!isOnline ? 'No internet connection' : 
                connectionQuality === 'slow' ? 'Slow connection detected' : 
                'Poor connection quality'}
             </span>
-            {!isOnline && retryQueue.length > 0 && (
+            {!isOnline && pendingRetryCount > 0 && (
               <span className="retry-info">Will retry when connected</span>
             )}
           </div>
           <CloseControl
             className="connection-close"
-            onClick={() => setShowConnectionStatus(false)}
+            onClick={dismissConnectionStatus}
             label="Dismiss connection status"
             size="xs"
           />
@@ -405,58 +227,43 @@ export default function RequestResetPage() {
         </div>
 
         <form onSubmit={handleRequest} className="login-form">
-          <div className="input-container">
-            <label htmlFor="reset-email" className="input-label">
-              Email Address
-            </label>
-            <input
-              ref={emailRef}
-              id="reset-email"
-              type="email"
-              value={email}
-              onChange={(changeEvent) => handleFieldChange('email', changeEvent.target.value)}
-              onBlur={(changeEvent) => handleFieldBlur('email', changeEvent.target.value)}
-              className={`login-input ${fieldErrors.email ? 'error' : ''} ${
-                fieldTouched.email && !fieldErrors.email && email.trim() ? 'success' : ''
-              }`}
-              placeholder="Enter your email address"
-              autoComplete="email"
-              required
-              disabled={loading}
-              aria-describedby={fieldErrors.email ? 'email-error' : 'email-help'}
-              aria-invalid={!!fieldErrors.email}
-            />
-            {fieldErrors.email && (
-              <div id="email-error" className="field-error" role="alert">
-                {fieldErrors.email}
-              </div>
-            )}
-            {!fieldErrors.email && fieldTouched.email && email.trim() && (
-              <div id="email-help" className="field-success">
-                ? Valid email format
-              </div>
-            )}
-          </div>
+          <AuthValidatedInputField
+            label="Email Address"
+            inputId="reset-email"
+            inputRef={emailRef}
+            type="email"
+            value={email}
+            onChange={(nextValue) => {
+              setEmail(nextValue);
+              handleFieldChange('email', nextValue, { email: nextValue });
+            }}
+            onBlur={(nextValue) => handleFieldBlur('email', nextValue, { email: nextValue })}
+            className={`login-input ${fieldErrors.email ? 'error' : ''} ${
+              fieldTouched.email && !fieldErrors.email && email.trim() ? 'success' : ''
+            }`}
+            placeholder="Enter your email address"
+            autoComplete="email"
+            disabled={loading}
+            errorMessage={fieldErrors.email}
+            successMessage={!fieldErrors.email && fieldTouched.email && email.trim() ? 'Valid email format' : ''}
+            errorId="email-error"
+            successId="email-help"
+          />
 
-          {error && (
-            <div className="error-container" role="alert">
-              <span className="error-icon">??</span>
-              <span>{error}</span>
-            </div>
-          )}
-
-          {success && (
-            <div className="success-message" role="alert">
-              ? {success}
-            </div>
-          )}
+          <AuthFeedback
+            success={success}
+            error={error}
+            successClassName="success-message"
+            errorClassName="error-container"
+            wrapErrorInSpan={true}
+          />
 
           <button
             type="submit"
             className={`login-button ${loading ? 'loading' : ''}`}
-            disabled={loading || !!fieldErrors.email || !email.trim() || isValidating}
+            disabled={loading || !!fieldErrors.email || !email.trim() || isValidating || cooldownSeconds > 0}
           >
-            {loading ? 'Sending reset code...' : 'Send Reset Code'}
+            {loading ? 'Sending reset code...' : cooldownSeconds > 0 ? `Retry in ${cooldownSeconds}s` : 'Send Reset Code'}
           </button>
         </form>
 

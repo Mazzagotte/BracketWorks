@@ -130,15 +130,11 @@ CORS_ORIGINS=["http://localhost:3000","https://yourdomain.com"]
 # Optional: Logging Level
 LOG_LEVEL=INFO
 
-# Password reset email provider (Resend preferred)
+# Password reset email provider (Resend hosted templates)
 RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxxx
-RESEND_TEMPLATE_ID=password-reset
 FROM_EMAIL=no-reply@bracketworks.app
 FROM_NAME=BracketWorks
-FRONTEND_URL=http://localhost:3000
-
-# Optional legacy fallback provider
-SENDGRID_API_KEY=
+FRONTEND_URL=https://bracketworks.app
 
 # Optional: Cache Configuration
 REDIS_URL=redis://localhost:6379

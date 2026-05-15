@@ -23,8 +23,8 @@ export default function ActionConfirmDialog({
   if (!open) return null;
 
   return (
-    <div className={styles.overlay} onClick={onCancel}>
-      <div className={`surface-card ${styles.dialog}`} onClick={event => event.stopPropagation()} role="dialog" aria-modal="true" aria-label={title}>
+    <div className={styles.overlay}>
+      <div className={`surface-card ${styles.dialog}`} role="dialog" aria-modal="true" aria-label={title}>
         <CloseControl onClick={onCancel} position="absolute" size="sm" label="Close confirmation dialog" />
         <div className={`surface-cardHeader ${styles.header}`}>
           <h2 className={styles.title}>{title}</h2>

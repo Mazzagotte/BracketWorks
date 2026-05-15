@@ -4,16 +4,20 @@ from sqlalchemy.orm import Session
 from ...core import models, schemas
 from ...core.config import settings
 from ..deps import get_db, get_current_user, require_admin_user
+from ...services.email_service import (
+    sendEmailChangeEmail,
+    sendPasswordChangeEmail,
+    sendResetPasswordEmail,
+    sendVerifyEmail,
+    sendWelcomeEmail,
+)
 from passlib.hash import bcrypt
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
 import hashlib
-import json
 import logging
 import secrets
 import uuid
-from urllib import error as url_error
-from urllib import request as url_request
 
 # Optimize bcrypt for faster verification (reduce rounds for development)
 pwd_context = CryptContext(
@@ -21,8 +25,6 @@ pwd_context = CryptContext(
     deprecated="auto",
     bcrypt__default_rounds=10  # Reduced from default 12 for better performance
 )
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
 
 logger = logging.getLogger(__name__)
 
@@ -154,14 +156,16 @@ def _register_failed_login(db: Session, username: str, source_ip_hash: str) -> N
 
 
 def _clear_failed_login_attempts(db: Session, username: str, source_ip_hash: str) -> None:
-    (
+    attempts = (
         db.query(models.LoginAttempt)
         .filter(
             models.LoginAttempt.username == username,
             models.LoginAttempt.source_ip_hash == source_ip_hash,
         )
-        .delete(synchronize_session=False)
+        .all()
     )
+    for attempt in attempts:
+        db.delete(attempt)
     db.commit()
 
 
@@ -249,12 +253,16 @@ def get_my_account(current_user: models.User = Depends(get_current_user)):
 @router.put("/me", response_model=schemas.UserOut)
 def update_my_account(
     payload: schemas.UserAccountUpdate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
     incoming = payload.model_dump(exclude_unset=True)
     if not incoming:
         raise HTTPException(status_code=400, detail="No fields provided for update")
+
+    previous_email = current_user.email.strip().lower()
+    email_changed = False
 
     if "username" in incoming:
         normalized_username = (incoming["username"] or "").strip()
@@ -278,7 +286,10 @@ def update_my_account(
         )
         if existing_email:
             raise HTTPException(status_code=400, detail="Email already exists")
-        current_user.email = normalized_email
+        if normalized_email != previous_email:
+            current_user.email = normalized_email
+            current_user.email_verified_at = None
+            email_changed = True
 
     if "first_name" in incoming:
         current_user.first_name = (incoming["first_name"] or "").strip()
@@ -292,12 +303,24 @@ def update_my_account(
 
     db.commit()
     db.refresh(current_user)
+
+    if email_changed:
+        background_tasks.add_task(
+            sendEmailChangeEmail,
+            previous_email,
+            first_name=current_user.first_name,
+            previous_email=previous_email,
+            new_email=current_user.email,
+        )
+        _issue_email_verification(db, current_user, background_tasks)
+
     return current_user
 
 
 @router.post("/change-password")
 def change_my_password(
     payload: schemas.ChangePasswordRequest,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
@@ -309,6 +332,7 @@ def change_my_password(
 
     current_user.password = pwd_context.hash(payload.new_password)
     db.commit()
+    background_tasks.add_task(sendPasswordChangeEmail, current_user.email, current_user.first_name)
 
     return {"message": "Password updated successfully"}
 
@@ -476,200 +500,158 @@ def admin_revoke_user_sessions(
     db.commit()
     return schemas.SessionRevokeResponse(revoked_sessions=len(sessions))
 
-RESET_TOKEN_EXPIRE_MINUTES = 15
+RESET_TOKEN_EXPIRE_MINUTES = 10
+EMAIL_VERIFICATION_EXPIRE_MINUTES = 30
 
 def create_reset_token(email: str) -> str:
-    """Create a signed JWT reset token valid for 15 minutes."""
-    from ...core.utils import create_access_token
-    return create_access_token(
-        {"sub": email, "type": "password_reset"},
-        expires_delta=timedelta(minutes=RESET_TOKEN_EXPIRE_MINUTES)
-    )
+    return secrets.token_urlsafe(32)
 
 
-def verify_reset_token(token: str) -> str | None:
-    """Decode and validate a reset token. Returns email or None."""
-    from ...core.utils import decode_access_token
-    payload = decode_access_token(token)
-    if not payload or payload.get("type") != "password_reset":
-        return None
-    return payload.get("sub")
-
-def create_reset_email_html(reset_code: str, username: str, reset_url: str) -> str:
-    """Create HTML email template for password reset"""
-    return f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <style>
-            body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
-            .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-            .header {{ background: linear-gradient(135deg, #232b36 0%, #3a4756 100%); color: white; padding: 20px; text-align: center; }}
-            .content {{ background: #f9f9f9; padding: 30px; }}
-            .reset-code {{ font-size: 24px; font-weight: bold; color: #007bff; text-align: center; padding: 20px; background: white; margin: 20px 0; border-radius: 5px; }}
-            .footer {{ text-align: center; padding: 20px; color: #666; font-size: 14px; }}
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <div class="header">
-                <h1>BracketWorks</h1>
-                <h2>Password Reset Request</h2>
-            </div>
-            <div class="content">
-                <p>Hello {username},</p>
-                <p>You requested a password reset for your BracketWorks account. Use the following code to reset your password:</p>
-                <div class="reset-code">{reset_code}</div>
-                <p>Or click this secure link:</p>
-                <p><a href="{reset_url}">{reset_url}</a></p>
-                <p>This code will expire in 15 minutes for security reasons.</p>
-                <p>If you didn't request this reset, please ignore this email.</p>
-                <p>Thanks,<br>The BracketWorks Team</p>
-            </div>
-            <div class="footer">
-                <p>© 2025 BracketWorks. All rights reserved.</p>
-            </div>
-        </div>
-    </body>
-    </html>
-    """
+def create_email_verification_token(email: str) -> str:
+    return secrets.token_urlsafe(32)
 
 
-def _send_email_via_resend(to_email: str, subject: str, body: str, reset_url: str, reset_code: str, username: str) -> bool:
-    if not settings.RESEND_API_KEY:
-        return False
-
-    payload: dict[str, object] = {
-        "from": f"{settings.FROM_NAME} <{settings.FROM_EMAIL}>",
-        "to": [to_email],
-        "subject": subject,
-    }
-
-    # Use Resend template when provided; fallback to inline HTML body.
-    if settings.RESEND_TEMPLATE_ID:
-        payload["template"] = {
-            "id": settings.RESEND_TEMPLATE_ID,
-            "variables": {
-                "RESET_URL": reset_url,
-                "RESET_CODE": reset_code,
-                "USERNAME": username,
-            },
-        }
-    else:
-        payload["html"] = body
-
-    request_body = json.dumps(payload).encode("utf-8")
-    req = url_request.Request(
-        "https://api.resend.com/emails",
-        data=request_body,
-        headers={
-            "Authorization": f"Bearer {settings.RESEND_API_KEY}",
-            "Content-Type": "application/json",
-        },
-        method="POST",
-    )
-
-    try:
-        with url_request.urlopen(req, timeout=15) as response:
-            status_code = getattr(response, "status", None) or response.getcode()
-            if 200 <= status_code < 300:
-                logger.info("Password reset email sent via Resend")
-                return True
-            logger.warning("Resend returned non-success status", extra={"status_code": status_code})
-            return False
-    except url_error.HTTPError as exc:
-        details = exc.read().decode("utf-8", errors="replace")
-        logger.error("Resend email failed", extra={"status_code": exc.code, "details": details})
-        return False
-    except Exception as exc:
-        logger.error("Resend email failed", extra={"error": str(exc)})
-        return False
-
-
-def _send_email_via_sendgrid(to_email: str, subject: str, body: str) -> bool:
-    if not settings.SENDGRID_API_KEY:
-        return False
-
-    try:
-        message = Mail(
-            from_email=(settings.FROM_EMAIL, settings.FROM_NAME),
-            to_emails=to_email,
-            subject=subject,
-            html_content=body,
+def _invalidate_existing_reset_tokens(db: Session, user_id: int, now: datetime) -> None:
+    active_tokens = (
+        db.query(models.PasswordResetToken)
+        .filter(
+            models.PasswordResetToken.user_id == user_id,
+            models.PasswordResetToken.used_at.is_(None),
+            models.PasswordResetToken.expires_at >= now,
         )
-        sg = SendGridAPIClient(api_key=settings.SENDGRID_API_KEY)
-        response = sg.send(message)
-        logger.info(f"Email sent successfully via SendGrid. Status code: {response.status_code}")
-        return True
-    except Exception as exc:
-        logger.error(f"Failed to send email via SendGrid: {exc}")
-        return False
+        .all()
+    )
+    for active_token in active_tokens:
+        active_token.used_at = now
 
 
-def send_email(to_email: str, subject: str, body: str, reset_url: str, reset_code: str, username: str):
-    """Send password reset email via Resend first, then fallback to SendGrid."""
-    try:
-        if _send_email_via_resend(to_email, subject, body, reset_url, reset_code, username):
-            return True
-        if _send_email_via_sendgrid(to_email, subject, body):
-            return True
+def _save_reset_token(db: Session, user_id: int, token: str) -> models.PasswordResetToken:
+    now = _utcnow()
+    _invalidate_existing_reset_tokens(db, user_id, now)
+    reset_token = models.PasswordResetToken(
+        user_id=user_id,
+        token_hash=_hash_value(token),
+        expires_at=now + timedelta(minutes=RESET_TOKEN_EXPIRE_MINUTES),
+    )
+    db.add(reset_token)
+    db.commit()
+    db.refresh(reset_token)
+    return reset_token
 
-        logger.warning("No email provider configured or all providers failed")
-        return False
-    except Exception as exc:
-        logger.error(f"Failed to send email: {exc}")
-        return False
+
+def _get_valid_reset_record(db: Session, token: str) -> models.PasswordResetToken | None:
+    token_hash = _hash_value(token)
+    reset_record = (
+        db.query(models.PasswordResetToken)
+        .filter(models.PasswordResetToken.token_hash == token_hash)
+        .first()
+    )
+    if not reset_record:
+        return None
+    now = _utcnow()
+    if reset_record.used_at is not None or reset_record.expires_at < now:
+        return None
+    return reset_record
+
+
+def _invalidate_existing_email_verification_tokens(db: Session, user_id: int, now: datetime) -> None:
+    active_tokens = (
+        db.query(models.EmailVerificationToken)
+        .filter(
+            models.EmailVerificationToken.user_id == user_id,
+            models.EmailVerificationToken.used_at.is_(None),
+            models.EmailVerificationToken.expires_at >= now,
+        )
+        .all()
+    )
+    for active_token in active_tokens:
+        active_token.used_at = now
+
+
+def _save_email_verification_token(db: Session, user_id: int, email: str, token: str) -> models.EmailVerificationToken:
+    now = _utcnow()
+    _invalidate_existing_email_verification_tokens(db, user_id, now)
+    verification_token = models.EmailVerificationToken(
+        user_id=user_id,
+        email=email,
+        token_hash=_hash_value(token),
+        expires_at=now + timedelta(minutes=EMAIL_VERIFICATION_EXPIRE_MINUTES),
+    )
+    db.add(verification_token)
+    db.commit()
+    db.refresh(verification_token)
+    return verification_token
+
+
+def _get_valid_email_verification_record(db: Session, token: str) -> models.EmailVerificationToken | None:
+    token_hash = _hash_value(token)
+    verification_record = (
+        db.query(models.EmailVerificationToken)
+        .filter(models.EmailVerificationToken.token_hash == token_hash)
+        .first()
+    )
+    if not verification_record:
+        return None
+    now = _utcnow()
+    if verification_record.used_at is not None or verification_record.expires_at < now:
+        return None
+    return verification_record
+
+
+def _issue_email_verification(db: Session, user: models.User, background_tasks: BackgroundTasks) -> str:
+    token = create_email_verification_token(user.email)
+    _save_email_verification_token(db, user.id, user.email, token)
+    background_tasks.add_task(sendVerifyEmail, user.email, token, None)
+    return token
 
 @router.post("/request-password-reset")
 def request_password_reset(payload: schemas.PasswordResetRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     # Always return the same message to prevent email enumeration
-    generic_response = {"message": "If that email is registered, a reset link has been sent"}
+    generic_response = {"message": "If an account exists for this email, a password reset link has been sent."}
 
-    email = payload.email
+    email = payload.email.strip().lower()
     user = db.query(models.User).filter(models.User.email == email).first()
     if not user:
         return generic_response
 
     token = create_reset_token(email)
-    reset_url = f"{settings.FRONTEND_URL.rstrip('/')}/reset-password/reset?email={email}&code={token}"
-    html_body = create_reset_email_html(token, user.username, reset_url)
-    background_tasks.add_task(send_email, email, "BracketWorks - Password Reset", html_body, reset_url, token, user.username)
+    _save_reset_token(db, user.id, token)
+    background_tasks.add_task(sendResetPasswordEmail, email, token, None)
     return generic_response
 
 @router.post("/verify-reset-code")
-def verify_reset_code(payload: schemas.PasswordResetVerifyRequest):
+def verify_reset_code(payload: schemas.PasswordResetVerifyRequest, db: Session = Depends(get_db)):
     token = (payload.token or payload.code or "").strip()
-    email = verify_reset_token(token)
-    if not email:
+    reset_record = _get_valid_reset_record(db, token)
+    if not reset_record:
         raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+    user = db.query(models.User).filter(models.User.id == reset_record.user_id).first()
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+    email = user.email
     if payload.email and payload.email.lower().strip() != email.lower().strip():
         raise HTTPException(status_code=400, detail="Invalid or expired reset token")
-    return {"message": "Token verified"}
+    return {"message": "Token verified", "email": email}
 
 @router.post("/reset-password")
 def reset_password(payload: schemas.PasswordResetConfirmRequest, db: Session = Depends(get_db)):
     token = (payload.token or payload.code or "").strip()
-    email = verify_reset_token(token)
-    if not email:
+    reset_record = _get_valid_reset_record(db, token)
+    if not reset_record:
         raise HTTPException(status_code=400, detail="Invalid or expired reset token")
-    if payload.email and payload.email.lower().strip() != email.lower().strip():
-        raise HTTPException(status_code=400, detail="Invalid or expired reset token")
-    user = db.query(models.User).filter(models.User.email == email).first()
+    user = db.query(models.User).filter(models.User.id == reset_record.user_id).first()
     if not user:
         raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+    email = user.email
+    if payload.email and payload.email.lower().strip() != email.lower().strip():
+        raise HTTPException(status_code=400, detail="Invalid or expired reset token")
     user.password = bcrypt.hash(payload.new_password)
+    reset_record.used_at = _utcnow()
     db.commit()
     return {"message": "Password reset successful"}
 
-@router.post("/admin-login")
-def admin_login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    user = db.query(models.User).filter(models.User.username == form_data.username, models.User.is_admin == True).first()
-    if not user or not bcrypt.verify(form_data.password, user.password):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid admin credentials")
-    return {"message": "Admin login successful", "user_id": user.id}
-
 @router.post("/signup", response_model=schemas.UserOut)
-def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
+def signup(user: schemas.UserCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     # Check if user exists
     existing = db.query(models.User).filter(models.User.username == user.username).first()
     if existing:
@@ -688,11 +670,45 @@ def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
         organization=user.organization,
         password=hashed_password,
         is_admin=False,
+        email_verified_at=None,
     )
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
+    background_tasks.add_task(sendWelcomeEmail, db_user.email, db_user.first_name)
+    _issue_email_verification(db, db_user, background_tasks)
     return db_user
+
+
+@router.post("/request-email-verification")
+def request_email_verification(
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    if current_user.email_verified_at is not None:
+        return {"message": "Email already verified"}
+
+    _issue_email_verification(db, current_user, background_tasks)
+    return {"message": "Verification email sent"}
+
+
+@router.post("/verify-email")
+def verify_email(payload: schemas.EmailVerificationConfirmRequest, db: Session = Depends(get_db)):
+    token = (payload.token or payload.code or "").strip()
+    verification_record = _get_valid_email_verification_record(db, token)
+    if not verification_record:
+        raise HTTPException(status_code=400, detail="Invalid or expired verification token")
+
+    user = db.query(models.User).filter(models.User.id == verification_record.user_id).first()
+    if not user or user.email.strip().lower() != verification_record.email.strip().lower():
+        raise HTTPException(status_code=400, detail="Invalid or expired verification token")
+
+    now = _utcnow()
+    user.email_verified_at = now
+    verification_record.used_at = now
+    db.commit()
+    return {"message": "Email verified successfully"}
 
 
 @router.get("/check-username")

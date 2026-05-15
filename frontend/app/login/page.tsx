@@ -9,6 +9,7 @@ import styles from "./login.module.css";
 import { API } from "../lib/api";
 import { LoadingButton } from "../components/LoadingComponents";
 import { useToast } from "../components/Toast";
+import { useLoginSecurity } from "../hooks/useLoginSecurity";
 import { useAuth } from "../lib/auth-context";
 import { logger } from "../lib/logger";
 import SignupModal from "../components/SignupModal";
@@ -18,24 +19,37 @@ export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
   const usernameInputRef = useRef<HTMLInputElement | null>(null);
-  const loginDelayTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
+  const [showResetSuccessModal, setShowResetSuccessModal] = useState(false);
+  const [resetSuccessCountdown, setResetSuccessCountdown] = useState(10);
   const [sessionExpired, setSessionExpired] = useState(false);
+  const [signupSuccessNotice, setSignupSuccessNotice] = useState(false);
+  const [verificationSuccessNotice, setVerificationSuccessNotice] = useState(false);
   const [loginFailed, setLoginFailed] = useState(false);
 
-  // Security enhancements
-  const passwordVisibilityTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const [capsLockOn, setCapsLockOn] = useState(false);
-  const [failedAttempts, setFailedAttempts] = useState(0);
-  const [loginDelay, setLoginDelay] = useState(0);
-
   const { addToast } = useToast();
+  const {
+    capsLockOn,
+    clearLoginDelay,
+    failedAttempts,
+    handleKeyDown,
+    handleKeyUp,
+    loginDelay,
+    setFailedAttempts,
+    setShowPassword,
+    showPassword,
+    startLoginDelay,
+  } = useLoginSecurity({
+    passwordAutoHideMs: 5000,
+    onPasswordAutoHide: () => {
+      addToast({ type: 'info', message: 'Password hidden for security', duration: 2000 });
+    },
+  });
 
   useEffect(() => {
     logger.info('Login page loaded');
@@ -46,6 +60,19 @@ export default function LoginPage() {
       setSessionExpired(true);
     }
 
+    if (params.get('signup') === 'success') {
+      setSignupSuccessNotice(true);
+    }
+
+    if (params.get('verified') === 'success') {
+      setVerificationSuccessNotice(true);
+    }
+
+    if (params.get('reset') === 'success') {
+      setShowResetSuccessModal(true);
+      setResetSuccessCountdown(10);
+    }
+
     // Pre-fill last used username
     const lastUsername = localStorage.getItem('last_username');
     if (lastUsername) setUsername(lastUsername);
@@ -53,39 +80,43 @@ export default function LoginPage() {
     usernameInputRef.current?.focus();
   }, []);
 
-  // Password visibility timeout - auto-hide after 5 seconds
   useEffect(() => {
-    if (showPassword) {
-      if (passwordVisibilityTimerRef.current) {
-        clearTimeout(passwordVisibilityTimerRef.current);
-      }
-      const timer = setTimeout(() => {
-        setShowPassword(false);
-        addToast({ type: 'info', message: 'Password hidden for security', duration: 2000 });
-      }, 5000);
-      passwordVisibilityTimerRef.current = timer;
-    } else {
-      if (passwordVisibilityTimerRef.current) {
-        clearTimeout(passwordVisibilityTimerRef.current);
-        passwordVisibilityTimerRef.current = null;
-      }
+    if (!showResetSuccessModal) {
+      return;
     }
 
-    return () => {
-      if (passwordVisibilityTimerRef.current) {
-        clearTimeout(passwordVisibilityTimerRef.current);
-        passwordVisibilityTimerRef.current = null;
-      }
-    };
-  }, [showPassword, addToast]);
+    const intervalId = window.setInterval(() => {
+      setResetSuccessCountdown(previous => {
+        if (previous <= 1) {
+          window.clearInterval(intervalId);
+          return 0;
+        }
+
+        return previous - 1;
+      });
+    }, 1000);
+
+    return () => window.clearInterval(intervalId);
+  }, [showResetSuccessModal]);
+
+  const dismissResetSuccessModal = () => {
+    setShowResetSuccessModal(false);
+    setResetSuccessCountdown(10);
+
+    const params = new URLSearchParams(window.location.search);
+    params.delete('reset');
+    const nextSearch = params.toString();
+    const nextUrl = `${window.location.pathname}${nextSearch ? `?${nextSearch}` : ''}`;
+    window.history.replaceState({}, '', nextUrl);
+  };
 
   useEffect(() => {
-    return () => {
-      if (loginDelayTimerRef.current) {
-        clearInterval(loginDelayTimerRef.current);
-      }
-    };
-  }, []);
+    if (showResetSuccessModal || resetSuccessCountdown !== 0) {
+      return;
+    }
+
+    dismissResetSuccessModal();
+  }, [resetSuccessCountdown, showResetSuccessModal]);
 
   const updateUsername = (value: string) => {
     setUsername(value);
@@ -98,15 +129,6 @@ export default function LoginPage() {
     if (error) setError('');
     if (loginFailed) setLoginFailed(false);
   };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    setCapsLockOn(e.getModifierState('CapsLock'));
-  };
-
-  const handleKeyUp = (e: React.KeyboardEvent) => {
-    setCapsLockOn(e.getModifierState('CapsLock'));
-  };
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -167,23 +189,8 @@ export default function LoginPage() {
         }
 
         if (delaySeconds > 0) {
-          setLoginDelay(delaySeconds);
+          startLoginDelay(delaySeconds);
           errorMessage += ` Please wait ${delaySeconds} seconds before trying again.`;
-          if (loginDelayTimerRef.current) {
-            clearInterval(loginDelayTimerRef.current);
-          }
-          loginDelayTimerRef.current = setInterval(() => {
-            setLoginDelay(prev => {
-              if (prev <= 1) {
-                if (loginDelayTimerRef.current) {
-                  clearInterval(loginDelayTimerRef.current);
-                  loginDelayTimerRef.current = null;
-                }
-                return 0;
-              }
-              return prev - 1;
-            });
-          }, 1000);
         }
 
         if (newFailedAttempts >= 3) {
@@ -199,13 +206,9 @@ export default function LoginPage() {
 
       // Success
       setFailedAttempts(0);
-      setLoginDelay(0);
+      clearLoginDelay();
       setLoginFailed(false);
       setError('');
-      if (loginDelayTimerRef.current) {
-        clearInterval(loginDelayTimerRef.current);
-        loginDelayTimerRef.current = null;
-      }
       localStorage.setItem('last_username', username.trim());
 
       const displayName = data.first_name || username;
@@ -244,6 +247,34 @@ export default function LoginPage() {
 
   return (
     <div className={styles.page}>
+      {showResetSuccessModal ? (
+        <div className={styles.successModalOverlay} role="presentation">
+          <div
+            className={`${styles.successModalCard} surface-card surface-modalShell`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="password-reset-success-title"
+          >
+            <div className={styles.successModalHeader}>
+              <h2 id="password-reset-success-title" className={styles.successModalTitle}>Password Updated</h2>
+              <p className={styles.successModalText}>
+                Your password has been reset successfully. You can log in now with your new password.
+              </p>
+            </div>
+            <div className={styles.successModalCountdown}>
+              This message closes in {resetSuccessCountdown}s.
+            </div>
+            <button
+              type="button"
+              className={`${styles.successModalButton} surface-authButton surface-authButtonPrimary`}
+              onClick={dismissResetSuccessModal}
+            >
+              Continue to Login
+            </button>
+          </div>
+        </div>
+      ) : null}
+
       <div className={`${styles.card} ${loading ? styles.loading : ''}`}>
         {/* Header */}
         <div className={styles.logoWrap}>
@@ -260,6 +291,18 @@ export default function LoginPage() {
         {sessionExpired && (
           <div className={styles.sessionExpiredBanner}>
             Your session expired. Please log in again.
+          </div>
+        )}
+
+        {signupSuccessNotice && (
+          <div className={styles.infoBanner} role="status" aria-live="polite">
+            Account created. Check your email for your welcome message and verification link.
+          </div>
+        )}
+
+        {verificationSuccessNotice && (
+          <div className={styles.successBanner} role="status" aria-live="polite">
+            Email verified. You can log in now.
           </div>
         )}
 
@@ -309,7 +352,7 @@ export default function LoginPage() {
             />
             <button
               type="button"
-              className={styles.passwordToggle}
+              className={`${styles.passwordToggle} surface-authPasswordToggle`}
               onClick={() => setShowPassword(!showPassword)}
               aria-label={showPassword ? "Hide password" : "Show password"}
             >
@@ -381,9 +424,10 @@ export default function LoginPage() {
       <SignupModal
         isOpen={showSignupModal}
         onClose={() => setShowSignupModal(false)}
-        onSuccess={() => {
+        onSuccess={(message) => {
           setShowSignupModal(false);
-          addToast({ type: 'success', message: 'Account created successfully! Please log in.', duration: 4000 });
+          addToast({ type: 'success', message, duration: 5000 });
+          setSignupSuccessNotice(true);
         }}
       />
 
@@ -391,7 +435,7 @@ export default function LoginPage() {
         isOpen={showResetPasswordModal}
         onClose={() => setShowResetPasswordModal(false)}
         onSuccess={() => {
-          addToast({ type: 'success', message: 'If that email exists, a reset code has been sent.', duration: 4000 });
+          addToast({ type: 'success', message: 'If an account exists for this email, a password reset link has been sent.', duration: 4000 });
         }}
       />
     </div>

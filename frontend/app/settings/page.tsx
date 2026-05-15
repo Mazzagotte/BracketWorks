@@ -39,12 +39,26 @@ const emptyProfile: AccountProfile = {
   email_verified_at: null,
 };
 
+function formatVerifiedDate(value: string | null | undefined): string {
+  if (!value) {
+    return '';
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return '';
+  }
+
+  return parsed.toLocaleString();
+}
+
 export default function SettingsPage() {
   const { updateUser, logout } = useAuth();
   const { addToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
+  const [resendingVerification, setResendingVerification] = useState(false);
   const [profile, setProfile] = useState<AccountProfile>(emptyProfile);
   const [sessions, setSessions] = useState<SessionInfo[]>([]);
   const [loadingSessions, setLoadingSessions] = useState(false);
@@ -60,6 +74,7 @@ export default function SettingsPage() {
     new_password: '',
     confirm_password: '',
   });
+  const verifiedOnLabel = formatVerifiedDate(profile.email_verified_at);
 
   usePageHeader({
     title: 'Settings',
@@ -127,6 +142,23 @@ export default function SettingsPage() {
     setProfile(prev => ({ ...prev, [key]: value }));
   };
 
+  const resendVerificationEmail = async () => {
+    if (profile.email_verified) {
+      addToast({ type: 'info', message: 'This email is already verified.', duration: 2500 });
+      return;
+    }
+
+    setResendingVerification(true);
+    try {
+      await apiClient.post('/api/v1/users/request-email-verification', {});
+      addToast({ type: 'success', message: `Verification email sent to ${profile.email}.`, duration: 3500 });
+    } catch (err) {
+      addToast({ type: 'error', message: err instanceof Error ? err.message : 'Failed to send verification email', duration: 5000 });
+    } finally {
+      setResendingVerification(false);
+    }
+  };
+
   const saveProfile = async () => {
     if (!profile.username.trim()) {
       addToast({ type: 'warning', message: 'Username is required.', duration: 3000 });
@@ -135,6 +167,7 @@ export default function SettingsPage() {
 
     setSavingProfile(true);
     try {
+      const previousEmail = profile.email.trim().toLowerCase();
       const updated = await apiClient.put<AccountProfile & { id: number; is_admin: boolean }>('/api/v1/users/me', {
         first_name: profile.first_name.trim(),
         last_name: profile.last_name.trim(),
@@ -158,7 +191,16 @@ export default function SettingsPage() {
         updateUser({ name: updated.first_name });
       }
 
-      addToast({ type: 'success', message: 'Account updated.', duration: 2500 });
+      const emailChanged = previousEmail !== (updated.email || '').trim().toLowerCase();
+      if (emailChanged) {
+        addToast({
+          type: 'success',
+          message: `Email updated. We sent a change notice to ${previousEmail} and a new verification email to ${updated.email}.`,
+          duration: 5000,
+        });
+      } else {
+        addToast({ type: 'success', message: 'Account updated.', duration: 2500 });
+      }
     } catch (err) {
       addToast({ type: 'error', message: err instanceof Error ? err.message : 'Failed to update account', duration: 5000 });
     } finally {
@@ -190,7 +232,7 @@ export default function SettingsPage() {
       });
 
       setPasswordForm({ current_password: '', new_password: '', confirm_password: '' });
-      addToast({ type: 'success', message: 'Password updated successfully.', duration: 2500 });
+      addToast({ type: 'success', message: 'Password updated. A confirmation email was sent to your account.', duration: 3500 });
 
       if (logoutAfterPasswordChange) {
         addToast({ type: 'info', message: 'Signing out for security. Please log in with your new password.', duration: 3000 });
@@ -279,6 +321,34 @@ export default function SettingsPage() {
             onChange={e => handleProfileChange('email', e.target.value)}
             placeholder="Email"
           />
+        </div>
+
+        <div className={styles.optionRow}>
+          <div className={styles.optionText}>
+            <div className={styles.optionTitle}>Email Verification</div>
+            <div className={styles.optionHint}>
+              {profile.email_verified
+                ? verifiedOnLabel
+                  ? `Your account email is verified. Verified on ${verifiedOnLabel}.`
+                  : 'Your account email is verified.'
+                : 'Your account email is not verified yet. Some security actions may require verification.'}
+            </div>
+          </div>
+          <div className={styles.verificationPanel}>
+            <div className={profile.email_verified ? styles.verificationBadgeVerified : styles.verificationBadgePending}>
+              {profile.email_verified ? 'Verified' : 'Verification Required'}
+            </div>
+            {!profile.email_verified ? (
+              <button
+                type="button"
+                className="ds-btn ds-btn-outline ds-btn-sm"
+                onClick={resendVerificationEmail}
+                disabled={resendingVerification}
+              >
+                {resendingVerification ? 'Sending...' : 'Resend Verification Email'}
+              </button>
+            ) : null}
+          </div>
         </div>
 
         <div className={styles.optionRow}>

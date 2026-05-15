@@ -111,6 +111,8 @@ class UserOut(BaseModel):
     email: EmailStr
     organization: Optional[str] = None
     is_admin: int
+    email_verified: bool = False
+    email_verified_at: Optional[datetime] = None
 
 
 class UserAccountUpdate(BaseModel):
@@ -145,6 +147,18 @@ class PasswordResetVerifyRequest(BaseModel):
 
 class PasswordResetConfirmRequest(PasswordResetVerifyRequest):
     new_password: str = Field(min_length=8)
+
+
+class EmailVerificationConfirmRequest(BaseModel):
+    token: Optional[str] = None
+    code: Optional[str] = None
+
+    @model_validator(mode="after")
+    def validate_token_or_code(self):
+        token_value = (self.token or self.code or "").strip()
+        if not token_value:
+            raise ValueError("token or code is required")
+        return self
 
 
 class PlayerBase(BaseModel):
