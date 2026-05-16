@@ -412,11 +412,21 @@ export default function PayoutsPage() {
 
     setIsExportingExcel(true)
     try {
-      const XLSX = await import('xlsx')
-      const worksheet = XLSX.utils.json_to_sheet(rows)
-      const workbook = XLSX.utils.book_new()
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Payouts')
-      XLSX.writeFile(workbook, buildExportFileName('xlsx'))
+      const { Workbook } = await import('exceljs')
+      const workbook = new Workbook()
+      const worksheet = workbook.addWorksheet('Payouts')
+      if (rows.length > 0) {
+        worksheet.columns = Object.keys(rows[0]).map(key => ({ header: key, key }))
+        worksheet.addRows(rows)
+      }
+      const xlsxBuffer = await workbook.xlsx.writeBuffer()
+      const blob = new Blob([xlsxBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = buildExportFileName('xlsx')
+      a.click()
+      URL.revokeObjectURL(url)
       addToast({
         type: 'success',
         message: `Exported ${rows.length} payout row${rows.length !== 1 ? 's' : ''} to Excel.`,

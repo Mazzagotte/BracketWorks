@@ -14,12 +14,12 @@
     "browserslist:update": "npx.cmd update-browserslist-db@latest"
   },
   "dependencies": {
-    "next": "^14.2.35",
+    "exceljs": "^4.4.0",
+    "next": "^16.2.6",
     "qrcode.react": "^4.2.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "styled-jsx": "^5.1.7",
-    "xlsx": "^0.18.5"
+    "styled-jsx": "^5.1.7"
   },
   "devDependencies": {
     "@types/node": "^20.12.12",

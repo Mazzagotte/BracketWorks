@@ -618,13 +618,16 @@ export default function PlayersPage() {
   }
 
   const parseExcelPlayers = async (file: File): Promise<{ players: ImportablePlayer[]; skippedRows: SkippedImportRow[] }> => {
-    const XLSX = await import('xlsx')
+    const { Workbook } = await import('exceljs')
     const buffer = await file.arrayBuffer()
-    const workbook = XLSX.read(buffer, { type: 'array' })
-    const firstSheet = workbook.SheetNames[0]
-    if (!firstSheet) return { players: [], skippedRows: [{ row: 1, reason: 'No worksheet found' }] }
-    const worksheet = workbook.Sheets[firstSheet]
-    const sheetRows = XLSX.utils.sheet_to_json<unknown[]>(worksheet, { header: 1, defval: '' })
+    const workbook = new Workbook()
+    await workbook.xlsx.load(buffer)
+    const worksheet = workbook.worksheets[0]
+    if (!worksheet) return { players: [], skippedRows: [{ row: 1, reason: 'No worksheet found' }] }
+    const sheetRows: unknown[][] = []
+    worksheet.eachRow({ includeEmpty: true }, (row) => {
+      sheetRows.push((row.values as unknown[]).slice(1).map(v => v === null || v === undefined ? '' : v))
+    })
 
     const detectHeaderRowIndex = (rows: unknown[][]): number => {
       for (let index = 0; index < rows.length; index += 1) {
@@ -830,7 +833,7 @@ export default function PlayersPage() {
     }
 
     try {
-      const XLSX = await import('xlsx')
+      const { Workbook } = await import('exceljs')
       const enabledSidePots = (sidePots?.pots ?? []).filter(pot => pot.enabled)
       const rows = players.map(player => {
         const row: Record<string, string | number> = {
@@ -860,9 +863,12 @@ export default function PlayersPage() {
         return row
       })
 
-      const worksheet = XLSX.utils.json_to_sheet(rows)
-      const workbook = XLSX.utils.book_new()
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Entries')
+      const workbook = new Workbook()
+      const worksheet = workbook.addWorksheet('Entries')
+      if (rows.length > 0) {
+        worksheet.columns = Object.keys(rows[0]).map(key => ({ header: key, key }))
+        worksheet.addRows(rows)
+      }
 
       const safeTournament = (selectedTournament?.name || 'entries')
         .replace(/[^a-zA-Z0-9\-_ ]+/g, '')
@@ -874,7 +880,14 @@ export default function PlayersPage() {
       const dateStamp = new Date().toISOString().slice(0, 10)
       const fileName = `${safeTournament}_${safeSquad}_entries_${dateStamp}.xlsx`
 
-      XLSX.writeFile(workbook, fileName)
+      const xlsxBuffer = await workbook.xlsx.writeBuffer()
+      const blob = new Blob([xlsxBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = fileName
+      a.click()
+      URL.revokeObjectURL(url)
       toast.success(`Exported ${players.length} player${players.length !== 1 ? 's' : ''}.`, 'Export Complete')
     } catch (err) {
       toast.error(`Failed to export Excel file: ${err instanceof Error ? err.message : 'Unknown error'}`, 'Export Failed')
