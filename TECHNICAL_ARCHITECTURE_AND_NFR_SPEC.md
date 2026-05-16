@@ -59,8 +59,8 @@ BracketWorks is a web platform for running bowling tournaments with bracket gene
   - startup migration enforcement before API process serving traffic
 
 ## 3) Hosting and Deployment Model
-### Current Target Model
-- Containerized deployment via Docker Compose:
+### Local Development Model
+- Containerized development via Docker Compose:
   - db: postgres:16
   - backend: FastAPI container (wait-for-db + alembic upgrade head)
   - frontend: Next.js container (optional in mixed local mode)
@@ -69,9 +69,23 @@ BracketWorks is a web platform for running bowling tournaments with bracket gene
   - full local process mode
   - full compose stack
 
+### Production Deployment (Railway)
+- Platform: Railway (cloud PaaS)
+- Service topology:
+  - PostgreSQL: Railway managed database plugin (postgres:16)
+  - Redis: Railway managed Redis plugin (redis:7)
+  - Backend: FastAPI container, Dockerfile builder, root = `backend/`, port 8000
+  - Frontend: Next.js multi-stage production build, Dockerfile builder, root = `frontend/`, port 3000
+- Custom domains:
+  - Frontend: `bracketworks.app` (DNS CNAME via Cloudflare)
+  - Backend API: `api.bracketworks.app` (DNS CNAME via Cloudflare)
+- Environment configuration:
+  - Backend: DATABASE_URL, REDIS_URL, SECRET_KEY, ENVIRONMENT, DEBUG, FROM_EMAIL, FROM_NAME, CORS_ORIGINS, FRONTEND_URL
+  - Frontend: NEXT_PUBLIC_BACKEND_URL
+
 ### Environment and Configuration
 - Backend configuration through environment variables:
-  - DATABASE_URL, SECRET_KEY, CORS_ORIGINS, LOG_LEVEL, ENVIRONMENT, DEBUG
+  - DATABASE_URL, REDIS_URL, SECRET_KEY, CORS_ORIGINS, LOG_LEVEL, ENVIRONMENT, DEBUG
 - Frontend configuration through environment variables:
   - NEXT_PUBLIC_BACKEND_URL
 
@@ -450,6 +464,9 @@ These targets are recommended as the operational baseline for the current archit
 | 2026-05-13 | 20 | **P0 Execution Complete**: Implemented rate limiting (P0-1), security/quality CI gates (P0-3), auth integration tests (P0-4), and supporting infrastructure. Email verification (P0-2) deferred per user request. All validation passing (5 auth tests + 17 smoke checks). Updated compliance position and backlog status. | Copilot | TBD |
 | 2026-05-13 | 20 | **P2 Backend Baseline**: Added async job endpoints for heavy bracket/payout operations (P2-1), idempotency key persistence and replay-safe mutation handling (P2-2), CDN cache-control headers on public APIs (P2-3 backend), and session intelligence/MFA-ready auth contract extensions (P2-4 backend). Auth regression and smoke tests still passing. | Copilot | TBD |
 | 2026-05-13 | 20 | **P2 Frontend Baseline**: Added active-session visibility/revoke UI in Settings and automatic Idempotency-Key headers for mutating API requests, completing P2-4 frontend baseline and P2-2 client integration. | Copilot | TBD |
+| 2026-05-15 | 3, 20 | **Railway Production Deployment**: Configured Railway 4-service topology (PostgreSQL, Redis, backend, frontend) with custom domains `bracketworks.app` and `api.bracketworks.app` managed via Cloudflare. Frontend Dockerfile rewritten to multi-stage production build using Next.js `output: 'standalone'`. Backend environment variables set; CORS_ORIGINS and FRONTEND_URL pending frontend URL confirmation. | Copilot | TBD |
+| 2026-05-15 | 20 | **Dependency and CI hardening**: Upgraded `next` from `14.2.5` to `14.2.35` (CVE-2025-55184, CVE-2025-67779 HIGH); upgraded `pytest-asyncio` to `>=0.24.0` with `asyncio_mode = "auto"` for pytest 9 compatibility; pinned GitHub Actions to `checkout@v4.2.2`, `setup-python@v5.6.0`, `setup-node@v4.4.0` to address Node 20 deprecation. | Copilot | TBD |
+| 2026-05-15 | 20 | **Codebase cleanup**: Removed 3 dead helper functions from `backend/app/core/errors.py`; fixed `setBracketSize` hardcoded-8 bug in players page; removed unused imports and replaced `console.error` with structured logger; deleted 4 dead frontend files and unused root `backend/main.py`; cleaned admin, payouts, performance, tournaments, and scores pages. | Copilot | TBD |
 ## 19) Architecture Improvement Roadmap
 The following items are recommended future additions to mature the platform beyond the current baseline.
 
@@ -612,6 +629,26 @@ This section captures implementation progress completed after this specification
 - CI governance expansion implemented:
   - auth lifecycle smoke workflow added in GitHub Actions
   - security-quality-gates.yml scoped to backend/frontend quality with path filters for sensitive areas
+- **Dependency and CI hardening (COMPLETED 2026-05-15):**
+  - `frontend/package.json`: upgraded `next` from `14.2.5` to `14.2.35` to remediate CVE-2025-55184 and CVE-2025-67779 (HIGH severity)
+  - `frontend/package-lock.json`: regenerated after version upgrade
+  - `backend/requirements.txt` and `backend/requirements-dev.txt`: upgraded `pytest-asyncio` to `>=0.24.0` to fix `AttributeError: 'Package' object has no attribute 'obj'` crash with pytest 9.x
+  - `backend/pyproject.toml`: added `asyncio_mode = "auto"` under `[tool.pytest.ini_options]` required by pytest-asyncio 0.24+
+  - `.github/workflows/security-quality-gates.yml` and `auth-smoke.yml`: pinned action versions to `checkout@v4.2.2`, `setup-python@v5.6.0`, `setup-node@v4.4.0` to resolve GitHub Actions Node 20 deprecation warnings
+- **Production deployment configuration (COMPLETED 2026-05-15):**
+  - Railway 4-service topology deployed: PostgreSQL plugin, Redis plugin, Backend service (Dockerfile builder, `backend/Dockerfile`, port 8000), Frontend service (Dockerfile builder, `frontend/Dockerfile`, port 3000)
+  - Custom domains configured: `bracketworks.app` (frontend), `api.bracketworks.app` (backend), DNS managed via Cloudflare
+  - `frontend/Dockerfile` rewritten from single-stage `yarn dev` to multi-stage production build using `output: 'standalone'`
+  - Backend environment variables set on Railway: DATABASE_URL, REDIS_URL, ENVIRONMENT, DEBUG, FROM_EMAIL, FROM_NAME, SECRET_KEY
+  - Pending Railway backend variables: CORS_ORIGINS, FRONTEND_URL (to be set after frontend deployment confirmed)
+- **Codebase cleanup (COMPLETED 2026-05-14/15):**
+  - `backend/app/core/errors.py`: removed 3 dead helper functions never called anywhere (`safe_execute`, `validate_required_fields`, `validate_positive_integer`)
+  - `frontend/app/players/page.tsx`: fixed `setBracketSize` bug where both call sites hardcoded `8` instead of `settings.bracket_size`; replaced `console.error` with structured `logger.error`
+  - `frontend/app/scores/page.tsx`: removed unused `Button` import
+  - `frontend/app/payouts/page.tsx`, `frontend/app/admin/page.tsx`, `frontend/app/lib/performance.tsx`: removed dead state, unused constants, and unused exports
+  - `backend/app/main.py`: removed debug print statement; `backend/app/services/tournaments.py`: simplified if/else pattern
+  - Deleted 4 dead frontend files: `storage-batch.ts`, `ApiHealthCheck.tsx`, `useRealtime.ts`, `RealtimeContext.tsx`
+  - Deleted unused root `backend/main.py`
 
 ### 20.2 Explicitly Not Yet Completed
 - Email verification enforcement in password reset and privileged flows (P0-2: deferred per user request for custom setup)
@@ -620,6 +657,8 @@ This section captures implementation progress completed after this specification
 - Backup automation, restore drill automation, and formal runbooks (P1-3)
 - Frontend API client hardening completion across all authenticated pages (P1-4)
 - Public-view measurement runs to quantify latency/load improvement after cache headers (P2-3 validation scope)
+- Railway frontend service full deployment: `NEXT_PUBLIC_BACKEND_URL` env var not yet set; CORS_ORIGINS and FRONTEND_URL not yet set on backend service
+- Codebase cleanup remaining pages: brackets, dashboard, settings, auth pages (login, signup, reset-password, verify-email)
 
 ### 20.3 Compliance Position Versus This Spec
 - Session Strategy control: Fully Implemented (baseline refresh rotation, logout, admin revoke completed; advanced session intelligence pending P2-4)

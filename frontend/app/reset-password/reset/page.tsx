@@ -159,7 +159,7 @@ export default function ResetPasswordPage() {
     } finally {
       setLoading(false);
     }
-  }, [addToast, code, connectionQuality, email, enqueueRetry, fetchWithRetry, hasToken, isOnline, isPreview, newPassword]);
+  }, [addToast, code, connectionQuality, email, enqueueRetry, fetchWithRetry, hasToken, isOnline, isPreview, newPassword, router]);
 
   const handleReset = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
