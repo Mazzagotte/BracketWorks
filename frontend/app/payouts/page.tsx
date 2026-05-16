@@ -58,7 +58,6 @@ export default function PayoutsPage() {
   const [isExportingExcel, setIsExportingExcel] = useState(false)
   const [isExportingPdf, setIsExportingPdf] = useState(false)
   const [isUnlocked, setIsUnlocked] = useState(false)
-  const [settingsRevision, setSettingsRevision] = useState(0)
 
   const getPayoutUnlockKey = useCallback((tournamentId: number | null, squadId: number | null) => {
     if (!tournamentId) return null
@@ -85,14 +84,6 @@ export default function PayoutsPage() {
 
     setIsUnlocked(storage.getItem(key) === '1')
   }, [getPayoutUnlockKey, selectedSquad, selectedTournament])
-
-  useEffect(() => {
-    const handleSettingsChanged = () => {
-      setSettingsRevision(prev => prev + 1)
-    }
-    window.addEventListener('settings-changed', handleSettingsChanged)
-    return () => window.removeEventListener('settings-changed', handleSettingsChanged)
-  }, [])
 
   const toggleExpanded = useCallback((key: string) => {
     setExpandedKeys(prev => {
@@ -710,9 +701,6 @@ export default function PayoutsPage() {
       />
     )
   }
-
-  const matchesSearch = (name: string) =>
-    !searchQuery || name.toLowerCase().includes(searchQuery.toLowerCase())
 
   if (!isUnlocked) {
     return (

@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 import math
 from typing import Any, Optional
@@ -12,8 +12,6 @@ from sqlalchemy.orm import Session
 
 from ..deps import get_db, require_admin_user
 from ...core import models
-from ...services import email_service
-
 _pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__default_rounds=10)
 
 
@@ -71,6 +69,18 @@ def _serialize_value(value: Any):
 
     if isinstance(value, bool | int | str):
         return value
+
+
+def _serialize_utc_timestamp(value: datetime | None) -> str | None:
+    if value is None:
+        return None
+
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=UTC)
+    else:
+        value = value.astimezone(UTC)
+
+    return value.isoformat()
 
     if isinstance(value, float):
         return value if math.isfinite(value) else None
@@ -209,33 +219,131 @@ def _hard_delete_tournament(db: Session, tournament_id: int) -> None:
     db.execute(delete(models.Tournament).where(models.Tournament.id == tournament_id))
 
 
-@router.get("/email-previews")
-def get_admin_email_previews(
-    response: Response,
-    _admin: models.User = Depends(require_admin_user),
-):
-    _set_admin_cache_headers(response, max_age=60, stale_while_revalidate=120)
+def _get_user_delete_impact(db: Session, user_id: int) -> dict[str, int]:
+    player_ids = list(
+        db.scalars(select(models.TournamentPlayer.id).where(models.TournamentPlayer.user_id == user_id))
+    )
+    touched_tournament_ids = list(
+        db.scalars(select(models.TournamentPlayer.tournament_id).where(models.TournamentPlayer.user_id == user_id).distinct())
+    )
 
-    previews = []
-    for preview in email_service.get_admin_email_previews():
-        payload = preview.get("payload") or {}
-        template = payload.get("template") or {}
-        previews.append(
-            {
-                "slug": preview.get("slug"),
-                "name": preview.get("name"),
-                "description": preview.get("description"),
-                "from": payload.get("from"),
-                "to": payload.get("to"),
-                "subject": payload.get("subject"),
-                "template_id": template.get("id"),
-                "variables": template.get("variables") or {},
-                "primary_action_label": preview.get("primary_action_label"),
-                "primary_action_url": preview.get("primary_action_url"),
-            }
+    bracket_winner_count = 0
+    bracket_payout_count = 0
+    first_round_history_count = 0
+    player_score_count = 0
+    if player_ids:
+        bracket_winner_count = db.scalar(
+            select(func.count()).select_from(models.BracketWinner).where(models.BracketWinner.player_id.in_(player_ids))
+        ) or 0
+        bracket_payout_count = db.scalar(
+            select(func.count()).select_from(models.BracketPayout).where(models.BracketPayout.player_id.in_(player_ids))
+        ) or 0
+        first_round_history_count = db.scalar(
+            select(func.count())
+            .select_from(models.FirstRoundMatchupHistory)
+            .where(
+                or_(
+                    models.FirstRoundMatchupHistory.left_player_id.in_(player_ids),
+                    models.FirstRoundMatchupHistory.right_player_id.in_(player_ids),
+                )
+            )
+        ) or 0
+        player_score_count = db.scalar(
+            select(func.count()).select_from(models.PlayerScore).where(models.PlayerScore.player_id.in_(player_ids))
+        ) or 0
+
+    bracket_snapshot_count = 0
+    payout_summary_count = 0
+    if touched_tournament_ids:
+        bracket_snapshot_count = db.scalar(
+            select(func.count())
+            .select_from(models.BracketSnapshot)
+            .where(models.BracketSnapshot.tournament_id.in_(touched_tournament_ids))
+        ) or 0
+        payout_summary_count = db.scalar(
+            select(func.count())
+            .select_from(models.TournamentPayoutSummary)
+            .where(models.TournamentPayoutSummary.tournament_id.in_(touched_tournament_ids))
+        ) or 0
+
+    return {
+        "users": 1,
+        "owned_tournaments": db.scalar(select(func.count()).select_from(models.Tournament).where(models.Tournament.user_id == user_id)) or 0,
+        "auth_sessions": db.scalar(select(func.count()).select_from(models.AuthSession).where(models.AuthSession.user_id == user_id)) or 0,
+        "idempotency_keys": db.scalar(select(func.count()).select_from(models.IdempotencyKey).where(models.IdempotencyKey.user_id == user_id)) or 0,
+        "password_reset_tokens": db.scalar(select(func.count()).select_from(models.PasswordResetToken).where(models.PasswordResetToken.user_id == user_id)) or 0,
+        "email_verification_tokens": db.scalar(select(func.count()).select_from(models.EmailVerificationToken).where(models.EmailVerificationToken.user_id == user_id)) or 0,
+        "admin_audit_logs_authored": db.scalar(select(func.count()).select_from(models.AdminAuditLog).where(models.AdminAuditLog.admin_user_id == user_id)) or 0,
+        "bowler_profiles": db.scalar(select(func.count()).select_from(models.BowlerProfile).where(models.BowlerProfile.user_id == user_id)) or 0,
+        "tournament_players": len(player_ids),
+        "player_scores": player_score_count,
+        "bracket_winners": bracket_winner_count,
+        "bracket_payouts": bracket_payout_count,
+        "first_round_history": first_round_history_count,
+        "bracket_snapshots_invalidated": bracket_snapshot_count,
+        "payout_summaries_invalidated": payout_summary_count,
+        "user_squad_selections": db.scalar(select(func.count()).select_from(models.UserSquadSelection).where(models.UserSquadSelection.user_id == user_id)) or 0,
+    }
+
+
+def _hard_delete_user(db: Session, user_id: int) -> dict[str, int]:
+    impact = _get_user_delete_impact(db, user_id)
+
+    player_rows = db.execute(
+        select(
+            models.TournamentPlayer.id,
+            models.TournamentPlayer.tournament_id,
+            models.TournamentPlayer.bowler_profile_id,
+        ).where(models.TournamentPlayer.user_id == user_id)
+    ).all()
+    player_ids = [row.id for row in player_rows]
+    touched_tournament_ids = sorted({row.tournament_id for row in player_rows})
+    bowler_profile_ids = sorted({row.bowler_profile_id for row in player_rows if row.bowler_profile_id is not None})
+
+    if player_ids:
+        bracket_winner_ids = list(
+            db.scalars(select(models.BracketWinner.id).where(models.BracketWinner.player_id.in_(player_ids)))
+        )
+        payout_filters = [models.BracketPayout.player_id.in_(player_ids)]
+        if bracket_winner_ids:
+            payout_filters.append(models.BracketPayout.bracket_winner_id.in_(bracket_winner_ids))
+
+        db.execute(delete(models.BracketPayout).where(or_(*payout_filters)))
+        db.execute(delete(models.BracketWinner).where(models.BracketWinner.player_id.in_(player_ids)))
+        db.execute(
+            delete(models.FirstRoundMatchupHistory).where(
+                or_(
+                    models.FirstRoundMatchupHistory.left_player_id.in_(player_ids),
+                    models.FirstRoundMatchupHistory.right_player_id.in_(player_ids),
+                )
+            )
+        )
+        db.execute(delete(models.PlayerScore).where(models.PlayerScore.player_id.in_(player_ids)))
+        db.execute(delete(models.TournamentPlayer).where(models.TournamentPlayer.id.in_(player_ids)))
+
+    if touched_tournament_ids:
+        db.execute(
+            delete(models.TournamentPayoutSummary).where(
+                models.TournamentPayoutSummary.tournament_id.in_(touched_tournament_ids)
+            )
+        )
+        db.execute(
+            delete(models.BracketSnapshot).where(models.BracketSnapshot.tournament_id.in_(touched_tournament_ids))
         )
 
-    return {"emails": previews}
+    if bowler_profile_ids:
+        db.execute(delete(models.BowlerProfile).where(models.BowlerProfile.id.in_(bowler_profile_ids)))
+
+    db.execute(delete(models.UserSquadSelection).where(models.UserSquadSelection.user_id == user_id))
+    db.execute(delete(models.AuthSession).where(models.AuthSession.user_id == user_id))
+    db.execute(delete(models.IdempotencyKey).where(models.IdempotencyKey.user_id == user_id))
+    db.execute(delete(models.PasswordResetToken).where(models.PasswordResetToken.user_id == user_id))
+    db.execute(delete(models.EmailVerificationToken).where(models.EmailVerificationToken.user_id == user_id))
+    db.execute(delete(models.AdminAuditLog).where(models.AdminAuditLog.admin_user_id == user_id))
+    db.execute(delete(models.BowlerProfile).where(models.BowlerProfile.user_id == user_id))
+    db.execute(delete(models.User).where(models.User.id == user_id))
+
+    return impact
 
 
 @router.get("/overview")
@@ -374,6 +482,12 @@ def get_admin_users(
 
     tournament_count_expr = func.count(func.distinct(models.Tournament.id))
     profile_count_expr = func.count(func.distinct(models.BowlerProfile.id))
+    last_login_expr = (
+        select(func.max(models.AuthSession.last_seen_at))
+        .where(models.AuthSession.user_id == models.User.id)
+        .correlate(models.User)
+        .scalar_subquery()
+    )
 
     query = (
         select(
@@ -384,12 +498,23 @@ def get_admin_users(
             models.User.last_name,
             models.User.organization,
             models.User.is_admin,
+            models.User.email_verified_at,
+            last_login_expr.label("last_login_at"),
             tournament_count_expr.label("tournament_count"),
             profile_count_expr.label("profile_count"),
         )
         .outerjoin(models.Tournament, models.Tournament.user_id == models.User.id)
         .outerjoin(models.BowlerProfile, models.BowlerProfile.user_id == models.User.id)
-        .group_by(models.User.id)
+        .group_by(
+            models.User.id,
+            models.User.username,
+            models.User.email,
+            models.User.first_name,
+            models.User.last_name,
+            models.User.organization,
+            models.User.is_admin,
+            models.User.email_verified_at,
+        )
     )
 
     if normalized_search:
@@ -428,6 +553,9 @@ def get_admin_users(
                 "last_name": row.last_name,
                 "organization": row.organization,
                 "is_admin": row.is_admin,
+                "email_verified": row.email_verified_at is not None,
+                "email_verified_at": _serialize_utc_timestamp(row.email_verified_at),
+                "last_login_at": _serialize_utc_timestamp(row.last_login_at),
                 "tournament_count": row.tournament_count,
                 "profile_count": row.profile_count,
             }
@@ -1072,13 +1200,7 @@ def admin_delete_user_preview(
     if user.id == admin.id:
         raise HTTPException(status_code=400, detail="You cannot delete your own account")
 
-    impact = {
-        "users": 1,
-        "owned_tournaments": db.scalar(select(func.count()).select_from(models.Tournament).where(models.Tournament.user_id == user_id)) or 0,
-        "bowler_profiles": db.scalar(select(func.count()).select_from(models.BowlerProfile).where(models.BowlerProfile.user_id == user_id)) or 0,
-        "tournament_players": db.scalar(select(func.count()).select_from(models.TournamentPlayer).where(models.TournamentPlayer.user_id == user_id)) or 0,
-        "user_squad_selections": db.scalar(select(func.count()).select_from(models.UserSquadSelection).where(models.UserSquadSelection.user_id == user_id)) or 0,
-    }
+    impact = _get_user_delete_impact(db, user_id)
 
     return {
         "user_id": user_id,
@@ -1108,7 +1230,8 @@ def admin_delete_user(
     if payload.confirm_text.strip().upper() != "DELETE":
         raise HTTPException(status_code=400, detail="confirm_text must equal DELETE")
 
-    tournament_count = db.scalar(select(func.count()).select_from(models.Tournament).where(models.Tournament.user_id == user_id)) or 0
+    impact = _get_user_delete_impact(db, user_id)
+    tournament_count = impact.get("owned_tournaments", 0)
     if tournament_count > 0:
         raise HTTPException(status_code=400, detail="User owns tournaments. Reassign or delete them first.")
 
@@ -1119,12 +1242,12 @@ def admin_delete_user(
         target_type="user",
         target_id=user_id,
         reason=reason,
-        details={"username": user.username, "email": user.email},
+        details={"username": user.username, "email": user.email, "impact": impact},
     )
 
-    db.delete(user)
+    _hard_delete_user(db, user_id)
     db.commit()
-    return {"ok": True}
+    return {"ok": True, "impact": impact}
 
 
 @router.delete("/users/{user_id}")

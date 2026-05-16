@@ -227,7 +227,7 @@ export default function PlayersPage() {
       }
       setBracketPrograms(prev => (bracketProgramsEqual(prev, nextPrograms) ? prev : nextPrograms))
       if (settings && typeof settings.bracket_size === 'number') {
-        setBracketSize(8);
+        setBracketSize(settings.bracket_size);
       }
     } catch (error) {
       logger.warn('Failed to load bracket settings, using default entry fee:', error);
@@ -513,7 +513,7 @@ export default function PlayersPage() {
     try {
       await apiClient.bulkPatch('/api/v1/bowlers/bulk-update', updatesWithPaid)
     } catch (err) {
-      console.error('Bulk randomize failed', err)
+      logger.error('Bulk randomize failed', { error: err })
     }
   }, [enabledBracketPrograms, entryFee, sidePots, getTournamentId, bulkSetPlayers, cancelPendingPatches])
 
@@ -978,7 +978,7 @@ export default function PlayersPage() {
           }
           setBracketPrograms(prev => (bracketProgramsEqual(prev, normalizedPrograms) ? prev : normalizedPrograms));
           if (typeof settings.bracket_size === 'number') {
-            setBracketSize(8);
+            setBracketSize(settings.bracket_size);
           }
         }
 

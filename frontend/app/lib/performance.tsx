@@ -1,24 +1,5 @@
 import React, { memo, useMemo, useCallback } from 'react';
 
-import { logger } from '../lib/logger';
-
-// Performance monitoring hook
-export function usePerformanceMonitor(componentName: string) {
-  React.useEffect(() => {
-    const startTime = performance.now();
-    
-    return () => {
-      const endTime = performance.now();
-      const renderTime = endTime - startTime;
-      
-      // Log slow renders (>16ms for 60fps)
-      if (renderTime > 16) {
-        logger.performanceMetric(`${componentName} render`, renderTime, 'ms');
-      }
-    };
-  });
-}
-
 // Memoized table row component
 export const OptimizedTableRow = memo(({ 
   children, 

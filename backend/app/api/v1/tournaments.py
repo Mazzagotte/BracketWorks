@@ -76,9 +76,7 @@ def list_tournaments(
     show_all = request.query_params.get('all') == '1'
     query = db.query(models.Tournament).order_by(models.Tournament.id.desc())
 
-    if show_all and getattr(user, 'is_admin', False):
-        pass
-    else:
+    if not (show_all and getattr(user, 'is_admin', False)):
         query = query.filter(models.Tournament.user_id == user.id)
 
     if offset:

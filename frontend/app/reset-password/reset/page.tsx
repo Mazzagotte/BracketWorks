@@ -41,6 +41,7 @@ export default function ResetPasswordPage() {
     strengthText,
     values: { code, confirmPassword, email, newPassword },
   } = formState;
+  const isPreview = code.trim() === "preview-reset-token";
   const hasToken = code.trim().length > 0;
   const formValues = useMemo(
     () => ({
@@ -92,6 +93,15 @@ export default function ResetPasswordPage() {
   );
 
   const submitReset = useCallback(async () => {
+    if (isPreview) {
+      addToast({
+        type: 'info',
+        message: 'Development preview mode only. This page is not submitting a real password reset.',
+        duration: 3500,
+      });
+      return;
+    }
+
     if (!hasToken) {
       setError('This reset link is missing or invalid. Request a new password reset email.');
       return;
@@ -149,7 +159,7 @@ export default function ResetPasswordPage() {
     } finally {
       setLoading(false);
     }
-  }, [addToast, code, connectionQuality, email, enqueueRetry, fetchWithRetry, hasToken, isOnline, newPassword]);
+  }, [addToast, code, connectionQuality, email, enqueueRetry, fetchWithRetry, hasToken, isOnline, isPreview, newPassword]);
 
   const handleReset = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -210,10 +220,18 @@ export default function ResetPasswordPage() {
 
         <form onSubmit={handleReset} className={loginStyles.form}>
           <div className={loginStyles.formIntro}>
-            {hasToken
+            {isPreview
+              ? 'Development preview mode for the reset password email landing page.'
+              : hasToken
               ? 'Create a new secure password for your account.'
               : 'This reset link is missing or invalid. Request a new password reset email.'}
           </div>
+
+          {isPreview ? (
+            <div className={loginStyles.sessionExpiredBanner} role="status" aria-live="polite">
+              Preview token detected. You can inspect the real page layout here, but submitting is disabled.
+            </div>
+          ) : null}
 
           {error ? (
             <div className={loginStyles.errorBanner} role="alert" aria-live="polite">
@@ -308,10 +326,10 @@ export default function ResetPasswordPage() {
 
               <button
                 type="submit"
-                disabled={loading || !hasToken || passwordStrength < 50 || !passwordsMatch || Object.values(fieldErrors).some(Boolean)}
+                disabled={isPreview || loading || !hasToken || passwordStrength < 50 || !passwordsMatch || Object.values(fieldErrors).some(Boolean)}
                 className={`${loginStyles.resetSubmitButton} surface-authButton surface-authButtonPrimary`}
               >
-                {loading ? 'Resetting Password...' : 'Reset Password'}
+                {isPreview ? 'Preview Only' : loading ? 'Resetting Password...' : 'Reset Password'}
               </button>
             </>
           ) : (
