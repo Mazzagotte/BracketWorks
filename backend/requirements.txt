@@ -16,5 +16,5 @@ redis==5.0.8
 
 # Testing dependencies
 pytest==7.4.4
-pytest-asyncio==0.23.2
+pytest-asyncio>=0.24.0
 httpx==0.25.2
