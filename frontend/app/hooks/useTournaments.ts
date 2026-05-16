@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
 import { apiClient } from '../lib/api'
 import { useToast } from '../components/Toast'
@@ -40,7 +40,7 @@ export function useTournaments() {
   const [error, setError] = useState<string | null>(null)
   const { addToast } = useToast()
 
-  const fetchTournaments = async () => {
+  const fetchTournaments = useCallback(async () => {
     // Serve from cache if still fresh
     if (_cache.tournaments && Date.now() - _cache.tournamentsFetchedAt < _cache.STALE_MS) {
       setTournaments(_cache.tournaments)
@@ -75,7 +75,7 @@ export function useTournaments() {
 
     _cache.inFlightTournaments = fetchPromise
     return fetchPromise
-  }
+  }, [addToast])
 
   const createTournament = async (tournament: Omit<Tournament, 'id'>) => {
     setLoading(true)
@@ -188,7 +188,7 @@ export function useSquads(tournamentId?: number) {
   const [error, setError] = useState<string | null>(null)
   const { addToast } = useToast()
 
-  const fetchSquads = async (tId?: number) => {
+  const fetchSquads = useCallback(async (tId?: number) => {
     const id = tId || tournamentId
     if (!id) return
 
@@ -230,7 +230,7 @@ export function useSquads(tournamentId?: number) {
 
     _cache.inFlightSquads.set(id, fetchPromise)
     return fetchPromise
-  }
+  }, [addToast, tournamentId])
 
   useEffect(() => {
     if (tournamentId) {

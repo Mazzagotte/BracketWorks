@@ -14,7 +14,7 @@
     "browserslist:update": "npx.cmd update-browserslist-db@latest"
   },
   "dependencies": {
-    "next": "14.2.5",
+    "next": "14.2.35",
     "qrcode.react": "^4.2.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
@@ -26,7 +26,7 @@
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "eslint": "^8.57.0",
-    "eslint-config-next": "14.2.5",
+    "eslint-config-next": "14.2.35",
     "typescript": "^5.5.4"
   }
 }

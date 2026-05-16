@@ -23,7 +23,6 @@ import { usePagination, Pagination } from '../components/Performance'
 import { useAutoSave } from '../components/DataManagement'
 import NoTournamentState from '../components/NoTournamentState'
 import { logger } from '../lib/logger';
-import { Button } from '../components/UI'
 import { handleTableArrowNavigation } from '../lib/tableKeyboard'
 import { getSelectedSquadId, getSelectedTournamentId } from '../lib/selection-session'
 import { storage } from '../lib/storage'

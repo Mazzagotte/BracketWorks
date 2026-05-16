@@ -166,60 +166,6 @@ def build_email_change_email_payload(
     }
 
 
-def get_admin_email_previews() -> list[dict[str, object]]:
-    preview_recipient = "preview@bracketworks.app"
-    reset_url = build_reset_password_url("preview-reset-token")
-    verify_url = build_verify_email_url("preview-verify-token")
-
-    return [
-        {
-            "slug": RESET_PASSWORD_TEMPLATE_ID,
-            "name": "Reset Password",
-            "description": "Sent when a user requests a password reset.",
-            "primary_action_label": "Reset Password",
-            "primary_action_url": reset_url,
-            "payload": build_reset_password_payload(preview_recipient, reset_url=reset_url),
-        },
-        {
-            "slug": VERIFY_EMAIL_TEMPLATE_ID,
-            "name": "Verify Email",
-            "description": "Sent after signup and when a user requests a verification resend.",
-            "primary_action_label": "Verify Email",
-            "primary_action_url": verify_url,
-            "payload": build_verify_email_payload(preview_recipient, verification_url=verify_url),
-        },
-        {
-            "slug": WELCOME_EMAIL_TEMPLATE_ID,
-            "name": "Welcome Email",
-            "description": "Sent after a new account is created.",
-            "primary_action_label": None,
-            "primary_action_url": None,
-            "payload": build_welcome_email_payload(preview_recipient, first_name="Taylor"),
-        },
-        {
-            "slug": PASSWORD_CHANGE_TEMPLATE_ID,
-            "name": "Password Change",
-            "description": "Sent after a user changes their password.",
-            "primary_action_label": None,
-            "primary_action_url": None,
-            "payload": build_password_change_email_payload(preview_recipient, first_name="Taylor"),
-        },
-        {
-            "slug": EMAIL_CHANGE_TEMPLATE_ID,
-            "name": "Email Change",
-            "description": "Sent after a user changes the email address on their account.",
-            "primary_action_label": None,
-            "primary_action_url": None,
-            "payload": build_email_change_email_payload(
-                preview_recipient,
-                first_name="Taylor",
-                previous_email="old@bracketworks.app",
-                new_email="new@bracketworks.app",
-            ),
-        },
-    ]
-
-
 def _frontend_url(path: str) -> str:
     return f"{settings.FRONTEND_URL.rstrip('/')}{path}"
 

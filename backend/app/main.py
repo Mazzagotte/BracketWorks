@@ -25,8 +25,6 @@ origins.extend([
 # Remove duplicates while preserving order
 origins = list(dict.fromkeys(origins))
 
-print(f"CORS Origins configured: {origins}")  # For debugging
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,

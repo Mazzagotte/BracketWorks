@@ -13,10 +13,17 @@ type VerificationState = "loading" | "success" | "error";
 export default function VerifyEmailPage() {
   const searchParams = useSearchParams();
   const token = (searchParams.get("token") || "").trim();
+  const isPreview = token === "preview-verify-token" || searchParams.get("preview") === "1";
   const [state, setState] = useState<VerificationState>(token ? "loading" : "error");
   const [message, setMessage] = useState(token ? "Verifying your email..." : "This verification link is missing or invalid.");
 
   useEffect(() => {
+    if (isPreview) {
+      setState("success");
+      setMessage("Development preview: this is how the verify email landing page looks after a successful verification.");
+      return;
+    }
+
     if (!token) {
       return;
     }
@@ -53,7 +60,7 @@ export default function VerifyEmailPage() {
     return () => {
       isCancelled = true;
     };
-  }, [token]);
+  }, [isPreview, token]);
 
   const bannerClassName = useMemo(() => {
     if (state === "success") {

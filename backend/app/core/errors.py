@@ -59,28 +59,3 @@ def handle_error(error: Exception) -> HTTPException:
         }
     )
 
-def safe_execute(func, *args, **kwargs):
-    """Safely execute a function and handle errors"""
-    try:
-        return func(*args, **kwargs)
-    except AppError:
-        raise  # Re-raise app errors as-is
-    except Exception as e:
-        logger.error(f"Error in {func.__name__}: {str(e)}", exc_info=True)
-        raise AppError(f"Operation failed: {str(e)}")
-
-def validate_required_fields(data: Dict[str, Any], required_fields: list) -> None:
-    """Validate that required fields are present"""
-    missing_fields = [field for field in required_fields if field not in data or data[field] is None]
-    if missing_fields:
-        raise ValidationError(f"Missing required fields: {', '.join(missing_fields)}")
-
-def validate_positive_integer(value: Any, field_name: str) -> int:
-    """Validate that a value is a positive integer"""
-    try:
-        int_value = int(value)
-        if int_value <= 0:
-            raise ValidationError(f"{field_name} must be a positive integer")
-        return int_value
-    except (ValueError, TypeError):
-        raise ValidationError(f"{field_name} must be a valid integer")
