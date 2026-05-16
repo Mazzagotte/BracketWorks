@@ -441,7 +441,7 @@ export default function ScoresPage() {
 
     setIsExporting(true)
     try {
-      const XLSX = await import('xlsx')
+      const { Workbook } = await import('exceljs')
       const rows = sortedPlayers.map(player => ({
         'Player ID': player.id,
         'First Name': player.firstName || '',
@@ -456,9 +456,12 @@ export default function ScoresPage() {
         'Total With Handicap': calculateDisplayTotal(player),
       }))
 
-      const worksheet = XLSX.utils.json_to_sheet(rows)
-      const workbook = XLSX.utils.book_new()
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Scores')
+      const workbook = new Workbook()
+      const worksheet = workbook.addWorksheet('Scores')
+      if (rows.length > 0) {
+        worksheet.columns = Object.keys(rows[0]).map(key => ({ header: key, key }))
+        worksheet.addRows(rows)
+      }
 
       const safeTournament = (tournament?.name || 'scores')
         .replace(/[^a-zA-Z0-9\-_ ]+/g, '')
@@ -470,7 +473,14 @@ export default function ScoresPage() {
       const dateStamp = new Date().toISOString().slice(0, 10)
       const fileName = `${safeTournament}_${safeSquad}_scores_${dateStamp}.xlsx`
 
-      XLSX.writeFile(workbook, fileName)
+      const xlsxBuffer = await workbook.xlsx.writeBuffer()
+      const blob = new Blob([xlsxBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = fileName
+      a.click()
+      URL.revokeObjectURL(url)
       addToast({ message: `Exported ${rows.length} score row${rows.length !== 1 ? 's' : ''}.`, type: 'success', duration: 3000 })
     } catch (err) {
       addToast({ message: `Failed to export Excel file: ${err instanceof Error ? err.message : 'Unknown error'}`, type: 'error', duration: 5000 })
@@ -499,17 +509,27 @@ export default function ScoresPage() {
         return
       }
 
-      const XLSX = await import('xlsx')
+      const { Workbook } = await import('exceljs')
       const buffer = await file.arrayBuffer()
-      const workbook = XLSX.read(buffer, { type: 'array' })
-      const firstSheet = workbook.SheetNames[0]
-      if (!firstSheet) {
+      const workbook = new Workbook()
+      await workbook.xlsx.load(buffer)
+      const worksheet = workbook.worksheets[0]
+      if (!worksheet) {
         addToast({ message: 'Excel file has no sheets.', type: 'error', duration: 4000 })
         return
       }
-
-      const worksheet = workbook.Sheets[firstSheet]
-      const rawRows = XLSX.utils.sheet_to_json<Record<string, unknown>>(worksheet, { defval: '' })
+      const headers: string[] = []
+      const rawRows: Record<string, unknown>[] = []
+      worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+        const cells = (row.values as unknown[]).slice(1)
+        if (rowNumber === 1) {
+          cells.forEach(cell => headers.push(String(cell ?? '')))
+        } else {
+          const obj: Record<string, unknown> = {}
+          headers.forEach((header, i) => { obj[header] = cells[i] ?? '' })
+          rawRows.push(obj)
+        }
+      })
       if (rawRows.length === 0) {
         addToast({ message: 'No score rows found in file.', type: 'warning', duration: 3000 })
         return

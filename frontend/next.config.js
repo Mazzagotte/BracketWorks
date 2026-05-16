@@ -4,9 +4,6 @@
 const nextConfig = {
   output: 'standalone',
   
-  // Performance optimizations
-  swcMinify: true, // Use faster SWC minifier
-  
   // Remove rewrites since we're using NEXT_PUBLIC_BACKEND_URL directly in api.ts
   
   // Disable image optimization to avoid requiring 'sharp' dependency
