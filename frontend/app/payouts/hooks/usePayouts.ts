@@ -178,7 +178,7 @@ export function usePayouts(tournamentId: number | null, selectedSquadId: number 
         bowlersParams.set('squad_id', String(selectedSquadId))
       }
 
-      const bowlerResponse = await apiFetch(API(`/api/v1/bowlers/?${bowlersParams.toString()}`), {
+      const bowlerResponse = await apiFetch(API(`/api/v1/bowlers?${bowlersParams.toString()}`), {
         headers: { 'Authorization': `Bearer ${token}` }
       })
 
