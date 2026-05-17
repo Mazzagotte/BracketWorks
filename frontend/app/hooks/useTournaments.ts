@@ -263,7 +263,7 @@ export function usePlayers(tournamentId?: number, squadId?: number) {
     
     try {
       const squadParam = (sId || squadId) ? `&squad_id=${sId || squadId}` : ''
-      const data = await apiClient.get<Player[]>(`/api/v1/bowlers/?tournament_id=${id}${squadParam}`)
+      const data = await apiClient.get<Player[]>(`/api/v1/bowlers?tournament_id=${id}${squadParam}`)
       setPlayers(data)
       
       addToast({

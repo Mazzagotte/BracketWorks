@@ -800,8 +800,8 @@ export default function ScoresPage() {
   const fetchPlayersWithScores = useCallback(async (tournamentId: string, squadId: number | null, token: string) => {
     try {
       const bowlersUrl = squadId 
-        ? `/api/v1/bowlers/?tournament_id=${tournamentId}&squad_id=${squadId}`
-        : `/api/v1/bowlers/?tournament_id=${tournamentId}`
+        ? `/api/v1/bowlers?tournament_id=${tournamentId}&squad_id=${squadId}`
+        : `/api/v1/bowlers?tournament_id=${tournamentId}`
       
       // Fire bowlers and scores in parallel — scores don't depend on bowlers
       const scoresUrl = `/api/v1/scores/?tournament_id=${tournamentId}`
@@ -819,7 +819,7 @@ export default function ScoresPage() {
       // Fallback: if squad-filtered fetch returns no results, load all tournament players.
       // Players added without a squad selection have squad_id = null and won't match the squad filter.
       if (squadId && data.length === 0) {
-        const fallbackResponse = await apiFetch(API(`/api/v1/bowlers/?tournament_id=${tournamentId}`), {
+        const fallbackResponse = await apiFetch(API(`/api/v1/bowlers?tournament_id=${tournamentId}`), {
           headers: { Authorization: `Bearer ${token}` }
         })
         if (fallbackResponse.ok) {

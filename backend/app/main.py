@@ -8,7 +8,7 @@ from app.api.v1 import admin, health, bowlers, brackets, tournaments, users, squ
 from app.core.config import settings
 from app.core.rate_limit import RateLimiter
 
-app = FastAPI(title="BracketWorks API", version="0.0.1")
+app = FastAPI(title="BracketWorks API", version="0.0.1", redirect_slashes=False)
 
 # CORS origins - get from environment variable with fallback to local dev
 cors_origins_str = os.getenv("CORS_ORIGINS", "http://localhost:3000")
