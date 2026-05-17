@@ -3,9 +3,24 @@ import { ApiError, handleApiError, shouldRetry } from './errors';
 
 // API Configuration and enhanced fetch utilities
 
+/**
+ * Returns the backend base URL, upgrading http:// → https:// when the
+ * page itself is served over HTTPS to prevent mixed-content blocking.
+ */
+function getBackendBaseUrl(): string {
+  const configured = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+  if (
+    typeof window !== 'undefined' &&
+    window.location.protocol === 'https:' &&
+    configured.startsWith('http://')
+  ) {
+    return configured.replace('http://', 'https://');
+  }
+  return configured;
+}
+
 export const buildApiUrl = (endpointPath: string) => {
-  const backendBaseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
-  const completeApiUrl = backendBaseUrl + endpointPath;
+  const completeApiUrl = getBackendBaseUrl() + endpointPath;
   
   // Log API calls in development for debugging
   if (process.env.NODE_ENV === 'development') {
@@ -40,7 +55,7 @@ export class ApiClient {
   }
 
   constructor(backendBaseUrl?: string, getAuthToken?: () => string | null) {
-    this.backendBaseUrl = backendBaseUrl || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+    this.backendBaseUrl = backendBaseUrl || getBackendBaseUrl();
     this.defaultRequestHeaders = {
       'Content-Type': 'application/json',
     };

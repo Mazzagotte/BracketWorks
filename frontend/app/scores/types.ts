@@ -1,9 +1,10 @@
-export type SortDirection = 'asc' | 'desc' | null;
+// Re-export shared sort types so existing imports keep working
+export type { SortConfig, SortDirection, SortableHeaderProps } from '../components/SortableHeader';
 
-export type SortableScoreColumn = 
-  | 'firstName' 
-  | 'lastName' 
-  | 'lane' 
+export type SortableScoreColumn =
+  | 'firstName'
+  | 'lastName'
+  | 'lane'
   | 'average'
   | 'game1_scratch'
   | 'game1_total'
@@ -13,17 +14,3 @@ export type SortableScoreColumn =
   | 'game3_total'
   | 'totalScratch'
   | 'totalWithHandicap';
-
-export interface SortConfig {
-  column: SortableScoreColumn | null;
-  direction: SortDirection;
-}
-
-export interface SortableHeaderProps {
-  column: SortableScoreColumn;
-  children: React.ReactNode;
-  sortConfig: SortConfig;
-  onSort: (column: SortableScoreColumn) => void;
-  align?: 'left' | 'center' | 'right';
-  width?: string;
-}
