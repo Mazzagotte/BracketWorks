@@ -12,15 +12,20 @@ export function handleTableArrowNavigation(event: React.KeyboardEvent<HTMLElemen
   }
 
   const target = event.target as HTMLElement
+  const isHorizontal = event.key === 'ArrowLeft' || event.key === 'ArrowRight'
 
-  // Do not hijack arrow keys while user is actively editing form controls.
-  // This avoids disrupting numeric score entry and caret movement.
+  // Never hijack arrows inside textareas, selects, or contentEditable elements.
   if (
-    target instanceof HTMLInputElement
-    || target instanceof HTMLTextAreaElement
+    target instanceof HTMLTextAreaElement
     || target instanceof HTMLSelectElement
     || target.isContentEditable
   ) {
+    return
+  }
+
+  // For horizontal arrows only, preserve native caret movement inside text inputs.
+  // Vertical arrows (Up/Down) navigate rows even from within inputs (spreadsheet-style).
+  if (isHorizontal && target instanceof HTMLInputElement) {
     return
   }
 
