@@ -15,10 +15,11 @@
   position: fixed;
   inset: 0;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   z-index: 9999;
-  padding: 20px;
+  padding: max(20px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom));
+  overflow-y: auto;
   animation: fadeIn 0.2s ease-out;
 }
 
@@ -195,5 +196,9 @@
   .nameRow {
     grid-template-columns: 1fr;
     gap: 16px;
+  }
+
+  .buttons {
+    flex-direction: column;
   }
 }

@@ -228,7 +228,7 @@ def _authenticate_and_issue_tokens(username: str, password: str, db: Session, re
 
     user = (
         db.query(models.User)
-        .filter(models.User.username == normalized_username)
+        .filter(models.User.username.ilike(normalized_username))
         .first()
     )
 

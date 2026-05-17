@@ -5,6 +5,8 @@ import { usePageHeader } from '../lib/header-context';
 import { useToast } from '../components/Toast';
 import { apiClient } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
+import { calculatePasswordStrengthPercent, getPasswordRequirementChecks, hasStrongPassword } from '../lib/auth/validation';
+import PasswordStrengthPanel from '../components/PasswordStrengthPanel';
 import styles from './settings.module.css';
 
 type AccountProfile = {
@@ -121,22 +123,40 @@ export default function SettingsPage() {
     loadSessions();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const passwordStrength = useMemo(() => {
-    const value = passwordForm.new_password || '';
-    if (!value) return { label: 'Enter a new password', score: 0 };
+  const passwordStrengthPercent = useMemo(
+    () => calculatePasswordStrengthPercent(passwordForm.new_password, 8),
+    [passwordForm.new_password]
+  );
 
-    let score = 0;
-    if (value.length >= 8) score += 1;
-    if (value.length >= 12) score += 1;
-    if (/[A-Z]/.test(value)) score += 1;
-    if (/[a-z]/.test(value)) score += 1;
-    if (/\d/.test(value)) score += 1;
-    if (/[^A-Za-z0-9]/.test(value)) score += 1;
+  const passwordStrengthTone = useMemo(() => {
+    if (passwordStrengthPercent < 25) return 'weak' as const;
+    if (passwordStrengthPercent < 50) return 'fair' as const;
+    if (passwordStrengthPercent < 75) return 'good' as const;
+    return 'strong' as const;
+  }, [passwordStrengthPercent]);
 
-    if (score <= 2) return { label: 'Weak', score: 1 };
-    if (score <= 4) return { label: 'Medium', score: 2 };
-    return { label: 'Strong', score: 3 };
-  }, [passwordForm.new_password]);
+  const passwordStrengthText = useMemo(() => {
+    if (passwordStrengthPercent < 25) return 'Weak';
+    if (passwordStrengthPercent < 50) return 'Fair';
+    if (passwordStrengthPercent < 75) return 'Good';
+    return 'Strong';
+  }, [passwordStrengthPercent]);
+
+  const passwordChecks = useMemo(
+    () => getPasswordRequirementChecks(passwordForm.new_password, 8),
+    [passwordForm.new_password]
+  );
+
+  const requirementItems = useMemo(
+    () => [
+      { label: 'At least 8 characters', met: passwordChecks.minLength },
+      { label: 'One lowercase letter', met: passwordChecks.lower },
+      { label: 'One uppercase letter', met: passwordChecks.upper },
+      { label: 'One number', met: passwordChecks.number },
+      { label: 'One symbol', met: passwordChecks.special },
+    ],
+    [passwordChecks]
+  );
 
   const handleProfileChange = (key: keyof AccountProfile, value: string) => {
     setProfile(prev => ({ ...prev, [key]: value }));
@@ -214,8 +234,8 @@ export default function SettingsPage() {
       return;
     }
 
-    if (passwordForm.new_password.length < 8) {
-      addToast({ type: 'warning', message: 'New password must be at least 8 characters.', duration: 3000 });
+    if (!hasStrongPassword(passwordForm.new_password, 8)) {
+      addToast({ type: 'warning', message: 'Password must be at least 8 characters and include uppercase, lowercase, number, and symbol.', duration: 4000 });
       return;
     }
 
@@ -398,7 +418,6 @@ export default function SettingsPage() {
         <div className={styles.optionRow}>
           <div className={styles.optionText}>
             <div className={styles.optionTitle}>New Password</div>
-            <div className={styles.optionHint}>At least 8 characters.</div>
           </div>
           <div className={styles.passwordFieldWrap}>
             <input
@@ -416,12 +435,14 @@ export default function SettingsPage() {
               {showPasswords.next ? 'Hide' : 'Show'}
             </button>
           </div>
-          <div className={styles.meterWrap}>
-            <div className={`${styles.meterBar} ${passwordStrength.score >= 1 ? styles.meterOn : ''}`} />
-            <div className={`${styles.meterBar} ${passwordStrength.score >= 2 ? styles.meterOn : ''}`} />
-            <div className={`${styles.meterBar} ${passwordStrength.score >= 3 ? styles.meterOn : ''}`} />
-            <span className={styles.meterLabel}>{passwordStrength.label}</span>
-          </div>
+          {passwordForm.new_password.length > 0 && (
+            <PasswordStrengthPanel
+              strengthText={passwordStrengthText}
+              strengthPercent={passwordStrengthPercent}
+              tone={passwordStrengthTone}
+              requirements={requirementItems}
+            />
+          )}
         </div>
 
         <div className={styles.optionRow}>

@@ -32,6 +32,7 @@
   inset: 0;
   z-index: 1000;
   overflow: auto;
+  overscroll-behavior: none;
   font-family: var(--font-family-primary);
 }
 
@@ -488,8 +489,7 @@
 
   .page {
     padding: 12px;
-    align-items: flex-start;
-    padding-top: 20px;
+    align-items: center;
     animation: none;
     background-position: center center;
   }
@@ -532,6 +532,6 @@
   }
 
   .logoWrap {
-    width: 75px;
+    width: 90px;
   }
 }
