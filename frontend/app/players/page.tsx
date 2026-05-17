@@ -517,7 +517,7 @@ export default function PlayersPage() {
     }
   }, [enabledBracketPrograms, entryFee, sidePots, getTournamentId, bulkSetPlayers, cancelPendingPatches])
 
-  const isDev = process.env.NODE_ENV === 'development'
+  const isDev = process.env.NODE_ENV === 'development' || !!user?.isAdmin
   const [isDeletingAll, setIsDeletingAll] = useState(false)
   const [deleteAllPlayersConfirmOpen, setDeleteAllPlayersConfirmOpen] = useState(false)
 

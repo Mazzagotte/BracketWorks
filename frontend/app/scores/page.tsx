@@ -38,7 +38,7 @@ type TournamentBootstrapResponse = {
 
 export default function ScoresPage() {
   // Authentication check - must be at the top
-  const { isAuthenticated, isInitialized, token: authToken } = useAuth();
+  const { isAuthenticated, isInitialized, token: authToken, currentUser } = useAuth();
 
   // Check if we have tokens in localStorage even if auth context isn't ready
   const hasStoredAuth = typeof window !== 'undefined' && 
@@ -780,7 +780,7 @@ export default function ScoresPage() {
         </EnhancedButton>
       )}
 
-      {process.env.NODE_ENV === 'development' && players.length > 0 && (
+      {(process.env.NODE_ENV === 'development' || !!currentUser?.isAdmin) && players.length > 0 && (
         <div className={styles.devGroup}>
           <button className={styles.devButton} onClick={handleRandomizeScores} disabled={isScoresLocked}>DEV: Randomize Scores</button>
           <button className={styles.devButton} onClick={() => devClearGame(2)} disabled={isScoresLocked}>DEV: Clear Game 2</button>
@@ -788,7 +788,7 @@ export default function ScoresPage() {
         </div>
       )}
     </div>
-  ), [players, handleRandomizeScores, devClearGame, pendingSaves.length, addToast, processPendingSaves, handleExportScoresToExcel, isExporting, isImporting, isScoresLocked, unlockScoresTable])
+  ), [players, handleRandomizeScores, devClearGame, pendingSaves.length, addToast, processPendingSaves, handleExportScoresToExcel, isExporting, isImporting, isScoresLocked, unlockScoresTable, currentUser])
   usePageHeader({
     title: 'Scores',
     subtitle: undefined,

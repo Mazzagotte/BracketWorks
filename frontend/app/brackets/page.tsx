@@ -436,7 +436,8 @@ export default function BracketsPage() {
   }, [searchTerm, rounds])
 
   const handleCloseExplainModal = useCallback(() => setIsExplainModalOpen(false), [])
-  const isDev = process.env.NODE_ENV === 'development'
+  const { isAuthenticated, isInitialized, currentUser } = useAuth()
+  const isDev = process.env.NODE_ENV === 'development' || !!currentUser?.isAdmin
 
   // Memoize the Generate Brackets button to prevent infinite re-renders
   const generateBracketsButton = useMemo(() => {
@@ -466,9 +467,6 @@ export default function BracketsPage() {
     subtitle: undefined,
     actions: generateBracketsButton
   })
-
-  // Authentication check
-  const { isAuthenticated, isInitialized } = useAuth()
 
   // Check if we have tokens in localStorage
   const hasStoredAuth = typeof window !== 'undefined' && 
