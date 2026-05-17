@@ -122,7 +122,7 @@ export default function ScoresPage() {
   // Styles moved to globals.css; no inline style injection
 
   // Sorting functionality
-  const handleSort = useCallback((column: SortableScoreColumn) => {
+  const handleSort = useCallback((column: string) => {
     setSortConfig(currentSort => {
       if (currentSort.column === column) {
         // Toggle direction: asc -> desc -> null (remove sort)

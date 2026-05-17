@@ -573,20 +573,6 @@ input[type='number'] { appearance: textfield; -moz-appearance: textfield; }
   min-width: 96px;
 }
 
-.entries-sort-btn { width: 100%; border: 0; background: transparent; color: inherit; font: inherit; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 0; }
-.entries-sort-btn.is-active,
-.entries-sort-icon.asc,
-.entries-sort-icon.desc { color: var(--color-primary); }
-.entries-sort-icon {
-  min-width: 2rem;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  line-height: 1;
-  text-align: center;
-  text-transform: uppercase;
-  color: var(--color-text-muted-medium);
-}
 
 .players-table {
   width: 100%;
@@ -825,7 +811,6 @@ button:is([class*='Btn'], [class*='Button']):not([class*='dev']):not([class*='De
 }
 
 /* Exclusions: keep utility and non-action controls unchanged */
-button.entries-sort-btn,
 button.modal-close,
 button.payment-badge {
   background: initial !important;

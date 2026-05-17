@@ -4,13 +4,7 @@ import { PlayersTableProps, SidePotsSettings } from '../types';
 import { OptimizedTableRow, OptimizedTableCell } from '../../lib/performance';
 import { handleTableArrowNavigation } from '../../lib/tableKeyboard';
 import { divisionOptions, isProgramAllowedForDivision, normalizeDivision } from '../../lib/bracketPrograms';
-
-type SortDirection = 'asc' | 'desc';
-
-type SortConfig = {
-  column: string;
-  direction: SortDirection;
-};
+import { SortableHeader, SortConfig } from '../../components/SortableHeader';
 
 const PlayersTable = memo(({ 
   players, 
@@ -42,6 +36,8 @@ const PlayersTable = memo(({
   }, [players])
 
   const sortedPlayers = useMemo(() => {
+    if (!sortConfig.column || !sortConfig.direction) return [...players];
+
     const getNumber = (value: unknown) => {
       if (typeof value === 'number') return value;
       if (typeof value === 'string') return parseFloat(value) || 0;
@@ -63,8 +59,8 @@ const PlayersTable = memo(({
     };
 
     return [...players].sort((left, right) => {
-      const leftValue = getSortValue(left, sortConfig.column);
-      const rightValue = getSortValue(right, sortConfig.column);
+      const leftValue = getSortValue(left, sortConfig.column!);
+      const rightValue = getSortValue(right, sortConfig.column!);
 
       if (typeof leftValue === 'number' && typeof rightValue === 'number') {
         return sortConfig.direction === 'asc' ? leftValue - rightValue : rightValue - leftValue;
@@ -78,31 +74,13 @@ const PlayersTable = memo(({
   const toggleSort = (column: string) => {
     setSortConfig(current => {
       if (current.column === column) {
-        return { column, direction: current.direction === 'asc' ? 'desc' : 'asc' };
+        const newDir = current.direction === 'asc' ? 'desc' : current.direction === 'desc' ? null : 'asc';
+        return { column: newDir ? column : null, direction: newDir };
       }
       return { column, direction: 'asc' };
     });
   };
 
-  const getSortState = (column: string): 'asc' | 'desc' | 'none' => {
-    if (sortConfig.column !== column) return 'none';
-    return sortConfig.direction;
-  };
-
-  const getAriaSort = (column: string): 'ascending' | 'descending' | 'none' => {
-    const state = getSortState(column);
-    if (state === 'asc') return 'ascending';
-    if (state === 'desc') return 'descending';
-    return 'none';
-  };
-
-  const getSortIndicatorLabel = (column: string) => {
-    const state = getSortState(column)
-    if (state === 'asc') return 'Asc'
-    if (state === 'desc') return 'Desc'
-    return 'Sort'
-  }
-  
   // Styles moved to globals.css; no inline style injection
   
   // No inline style injection; styles are defined in globals.css
@@ -151,55 +129,34 @@ const PlayersTable = memo(({
             </tr>
           )}
           <tr className="entries-header-row">
-            <th className="entries-header-cell col-usbc" aria-sort={getAriaSort('usbc')}>
-              <button type="button" className={`entries-sort-btn ${getSortState('usbc') !== 'none' ? 'is-active' : ''}`} onClick={() => toggleSort('usbc')}>
-                <span>USBC</span>
-                <span className={`entries-sort-icon ${getSortState('usbc')}`} aria-hidden="true">{getSortIndicatorLabel('usbc')}</span>
-              </button>
-            </th>
-            <th className="entries-header-cell col-name" aria-sort={getAriaSort('name')}>
-              <button type="button" className={`entries-sort-btn ${getSortState('name') !== 'none' ? 'is-active' : ''}`} onClick={() => toggleSort('name')}>
-                <span>Name</span>
-                <span className={`entries-sort-icon ${getSortState('name')}`} aria-hidden="true">{getSortIndicatorLabel('name')}</span>
-              </button>
-            </th>
-            <th className="entries-header-cell col-division" aria-sort={getAriaSort('division')}>
-              <button type="button" className={`entries-sort-btn ${getSortState('division') !== 'none' ? 'is-active' : ''}`} onClick={() => toggleSort('division')}>
-                <span>Division</span>
-                <span className={`entries-sort-icon ${getSortState('division')}`} aria-hidden="true">{getSortIndicatorLabel('division')}</span>
-              </button>
-            </th>
-            <th className="entries-header-cell col-lane" aria-sort={getAriaSort('lane')}>
-              <button type="button" className={`entries-sort-btn ${getSortState('lane') !== 'none' ? 'is-active' : ''}`} onClick={() => toggleSort('lane')}>
-                <span>Lane</span>
-                <span className={`entries-sort-icon ${getSortState('lane')}`} aria-hidden="true">{getSortIndicatorLabel('lane')}</span>
-              </button>
-            </th>
-            <th className="entries-header-cell col-average" aria-sort={getAriaSort('average')}>
-              <button type="button" className={`entries-sort-btn ${getSortState('average') !== 'none' ? 'is-active' : ''}`} onClick={() => toggleSort('average')}>
-                <span>Average</span>
-                <span className={`entries-sort-icon ${getSortState('average')}`} aria-hidden="true">{getSortIndicatorLabel('average')}</span>
-              </button>
-            </th>
+            <SortableHeader column="usbc" sortConfig={sortConfig} onSort={toggleSort} className="col-usbc">
+              USBC
+            </SortableHeader>
+            <SortableHeader column="name" sortConfig={sortConfig} onSort={toggleSort} className="col-name">
+              Name
+            </SortableHeader>
+            <SortableHeader column="division" sortConfig={sortConfig} onSort={toggleSort} className="col-division">
+              Division
+            </SortableHeader>
+            <SortableHeader column="lane" sortConfig={sortConfig} onSort={toggleSort} className="col-lane">
+              Lane
+            </SortableHeader>
+            <SortableHeader column="average" sortConfig={sortConfig} onSort={toggleSort} className="col-average">
+              Average
+            </SortableHeader>
             {bracketPrograms.map(program => (
-              <th key={program.key} className="entries-header-cell col-scratch" aria-sort={getAriaSort(`bracket:${program.key}`)}>
-                <button type="button" className={`entries-sort-btn ${getSortState(`bracket:${program.key}`) !== 'none' ? 'is-active' : ''}`} onClick={() => toggleSort(`bracket:${program.key}`)}>
-                  <span>{program.name}</span>
-                  <span className={`entries-sort-icon ${getSortState(`bracket:${program.key}`)}`} aria-hidden="true">{getSortIndicatorLabel(`bracket:${program.key}`)}</span>
-                </button>
-              </th>
+              <SortableHeader key={program.key} column={`bracket:${program.key}`} sortConfig={sortConfig} onSort={toggleSort} className="col-scratch">
+                {program.name}
+              </SortableHeader>
             ))}
             {enabledPots.map(pot => (
               <th key={pot.key} className="entries-header-cell col-sidepot">
                 {pot.name}
               </th>
             ))}
-            <th className="entries-header-cell col-cost" aria-sort={getAriaSort('cost')}>
-              <button type="button" className={`entries-sort-btn ${getSortState('cost') !== 'none' ? 'is-active' : ''}`} onClick={() => toggleSort('cost')}>
-                <span>Cost / Status</span>
-                <span className={`entries-sort-icon ${getSortState('cost')}`} aria-hidden="true">{getSortIndicatorLabel('cost')}</span>
-              </button>
-            </th>
+            <SortableHeader column="cost" sortConfig={sortConfig} onSort={toggleSort} className="col-cost">
+              Cost / Status
+            </SortableHeader>
             <th className="entries-header-cell col-actions">
               Actions
             </th>
