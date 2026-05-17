@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import type { Metadata } from 'next';
 import './styles/main.css';
 import styles from './layout.module.css';
 
@@ -11,6 +12,18 @@ import { DevAuthStatus } from './components/DevAuthStatus';
 import { TimeSlotReminderModal } from './components/TimeSlotReminderModal';
 
 import AuthAwareLayout from '../components/AuthAwareLayout';
+
+export const metadata: Metadata = {
+  title: 'BracketWorks',
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icons/icon.svg', type: 'image/svg+xml' },
+      { url: '/icons/icon-192.png', type: 'image/png', sizes: '32x32' },
+    ],
+    apple: '/icons/icon-192.png',
+  },
+};
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
@@ -30,15 +43,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <link rel="preconnect" href={process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'} crossOrigin="anonymous" />
         <link rel="dns-prefetch" href={process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'} />
         
-        {/* Favicon configuration */}
-        <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
-        <link rel="apple-touch-icon" href="/icons/icon-192.png" />
         <link rel="manifest" href="/manifest.json" />
-        
-        {/* Additional favicon sizes for better compatibility */}
-        <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-192.png" />
-        <link rel="icon" type="image/png" sizes="16x16" href="/icons/icon-192.png" />
       </head>
       <body>
         <AuthProvider>

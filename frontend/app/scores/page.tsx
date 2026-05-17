@@ -24,7 +24,7 @@ import { useAutoSave } from '../components/DataManagement'
 import NoTournamentState from '../components/NoTournamentState'
 import { logger } from '../lib/logger';
 import { handleTableArrowNavigation } from '../lib/tableKeyboard'
-import { getSelectedSquadId, getSelectedTournamentId } from '../lib/selection-session'
+import { getSelectedSquadId, getSelectedTournamentId, setSelectedSquad as persistSelectedSquad } from '../lib/selection-session'
 import { storage } from '../lib/storage'
 
 
@@ -934,6 +934,10 @@ export default function ScoresPage() {
             squadToUse = squadsData[0]
           }
           setSelectedSquad(squadToUse)
+          // Persist resolved squad to localStorage so guards and other pages see it consistently
+          if (squadToUse && !getSelectedSquadId()) {
+            persistSelectedSquad(squadToUse.id)
+          }
 
           logger.info('Scores bootstrap load completed', {
             tournamentId: Number(lastTournamentId),
@@ -1007,7 +1011,7 @@ export default function ScoresPage() {
     )
   }
 
-  if (typeof window !== 'undefined' && !getSelectedSquadId()) {
+  if (!isLoading && typeof window !== 'undefined' && !getSelectedSquadId() && !selectedSquad) {
     return (
       <NoTournamentState
         title="No Squad Selected"
