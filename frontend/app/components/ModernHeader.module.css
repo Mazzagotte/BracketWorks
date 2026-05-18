@@ -172,6 +172,13 @@
   margin-top: 6px;
 }
 
+.tournamentStripGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
 .tournamentStripLabel {
   font-size: 11px;
   color: var(--opacity-white-40);
@@ -237,9 +244,19 @@
   }
 
   .tournamentStrip {
-    flex-wrap: wrap;
-    gap: 4px 6px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
     margin-top: 0;
+  }
+
+  .tournamentStripGroup {
+    width: 100%;
+    gap: 6px;
+  }
+
+  .tournamentStripDivider {
+    display: none;
   }
 
   .tournamentStripLabel {
@@ -247,8 +264,11 @@
   }
 
   .tournamentStripName {
-    font-size: 11px;
-    padding: 1px 8px;
+    font-size: 10px;
+    line-height: 1;
+    min-height: 15px;
+    padding: 0 7px;
+    border-radius: 14px;
   }
 
   .actions {

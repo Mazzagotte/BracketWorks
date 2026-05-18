@@ -92,16 +92,20 @@ export default function ModernHeader({
           {/* Active tournament strip */}
           {mounted && (
             <div className={styles.tournamentStrip}>
-              <span className={styles.tournamentStripLabel}>Active Tournament:</span>
-              {activeTournament
-                ? <span className={styles.tournamentStripName}>{activeTournament}</span>
-                : <span className={styles.tournamentStripNone}>No tournament selected</span>
-              }
+              <div className={styles.tournamentStripGroup}>
+                <span className={styles.tournamentStripLabel}>Active Tournament:</span>
+                {activeTournament
+                  ? <span className={styles.tournamentStripName}>{activeTournament}</span>
+                  : <span className={styles.tournamentStripNone}>No tournament selected</span>
+                }
+              </div>
               {activeTournament && activeSquad && (
                 <>
                   <span className={styles.tournamentStripDivider}>·</span>
-                  <span className={styles.tournamentStripLabel}>Squad:</span>
-                  <span className={styles.tournamentStripName}>{activeSquad}</span>
+                  <div className={styles.tournamentStripGroup}>
+                    <span className={styles.tournamentStripLabel}>Squad:</span>
+                    <span className={styles.tournamentStripName}>{activeSquad}</span>
+                  </div>
                 </>
               )}
             </div>
