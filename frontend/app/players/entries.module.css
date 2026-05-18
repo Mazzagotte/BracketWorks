@@ -1574,7 +1574,7 @@
   font-weight: 700;
   color: var(--color-text-primary);
   margin: 0;
-  padding: 14px 24px;
+  padding: 12px 18px;
   background: var(--color-brand-ivory);
   border-bottom: 3px solid var(--color-primary);
   border-radius: var(--radius-xl) var(--radius-xl) 0 0;
@@ -1588,12 +1588,12 @@
   justify-content: center;
   align-items: stretch;
   gap: 10px;
-  padding: 18px 14px;
+  padding: 14px 12px;
 }
 
 .statBox {
   text-align: center;
-  padding: 22px 16px;
+  padding: 18px 14px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1673,10 +1673,10 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 26px;
+    min-height: 24px;
     border-radius: 999px;
     padding: 0 12px;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 700;
     border: 1px solid var(--color-border-light);
     background: var(--color-white);
@@ -1686,72 +1686,83 @@
 
   .summaryGrid {
     display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 12px;
-    padding: 12px;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 12px 12px;
   }
 
   .statBox {
-    min-height: 100px;
-    padding: 16px 12px;
-    min-width: 140px;
-    flex: 0 1 calc(50% - 6px);
-    max-width: 180px;
+    width: 100%;
+    min-height: 62px;
+    padding: 10px 12px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    justify-content: stretch;
+    gap: 8px 10px;
+    min-width: 0;
+    flex: none;
   }
 
   .statBoxRevenue {
-    flex: 0 1 calc(50% - 6px);
-    max-width: 180px;
+    order: -1;
+    min-height: 72px;
+    padding: 12px;
+    background: linear-gradient(135deg, var(--color-brand-soft), var(--color-brand-tint-soft));
   }
 
   .statValue {
-    font-size: 1.5rem;
+    font-size: 1.3rem;
+    grid-row: 1 / span 2;
+    align-self: center;
+    min-width: 3.1rem;
   }
 
   .statLabel {
-    font-size: 0.7rem;
+    font-size: 0.64rem;
+    align-self: end;
+    text-align: left;
   }
 
   .statDetail {
-    font-size: 0.66rem;
+    font-size: 0.62rem;
+    text-align: left;
   }
 
   .statRefund {
-    font-size: 0.62rem;
-    padding: 2px 8px;
+    font-size: 0.58rem;
+    padding: 2px 7px;
+    justify-self: end;
+    white-space: nowrap;
   }
 }
 
 @media (max-width: 640px) {
   .summaryGrid {
-    gap: 10px;
-    padding: 12px 10px;
+    gap: 7px;
+    padding: 8px 10px 10px;
   }
 
   .statBox {
-    min-height: 95px;
-    padding: 14px 10px;
-    min-width: 120px;
-    flex: 0 1 calc(50% - 5px);
-    max-width: 160px;
+    min-height: 58px;
+    padding: 9px 10px;
+    gap: 6px 8px;
   }
 
   .statBoxRevenue {
-    flex: 0 1 calc(50% - 5px);
-    max-width: 160px;
+    min-height: 68px;
   }
 
   .statValue {
-    font-size: 1.4rem;
+    font-size: 1.15rem;
   }
 
   .statLabel {
-    font-size: 0.68rem;
+    font-size: 0.62rem;
   }
 
   .statDetail {
-    font-size: 0.64rem;
+    font-size: 0.6rem;
   }
 
   .statRefund {
@@ -1771,50 +1782,47 @@
   }
 
   .mobileSummaryChips {
-    gap: 5px;
-    padding: 10px 10px 8px;
+    gap: 4px;
+    padding: 8px 10px 6px;
     margin-bottom: 0;
   }
 
   .mobileSummaryChip {
-    min-height: 24px;
-    padding: 0 10px;
-    font-size: 11px;
+    min-height: 22px;
+    padding: 0 9px;
+    font-size: 10px;
   }
 
   .summaryGrid {
-    gap: 8px;
-    padding: 10px;
+    gap: 6px;
+    padding: 8px 8px 10px;
   }
 
   .statBox {
-    min-height: 88px;
-    padding: 12px 8px;
-    min-width: 110px;
-    flex: 0 1 calc(50% - 4px);
-    max-width: 145px;
+    min-height: 54px;
+    padding: 8px 9px;
+    gap: 5px 7px;
   }
 
   .statBoxRevenue {
-    flex: 0 1 calc(50% - 4px);
-    max-width: 145px;
+    min-height: 64px;
   }
 
   .statValue {
-    font-size: 1.2rem;
+    font-size: 1.05rem;
   }
 
   .statLabel {
-    font-size: 0.65rem;
+    font-size: 0.6rem;
   }
 
   .statDetail {
-    font-size: 0.62rem;
+    font-size: 0.58rem;
   }
 
   .statRefund {
     font-size: 0.58rem;
-    padding: 1px 6px;
+    padding: 1px 5px;
   }
 }
 
@@ -1984,7 +1992,7 @@
   font-size: 1rem;
   font-weight: 700;
   margin: 0;
-  padding: 10px 20px;
+  padding: 9px 16px;
   color: var(--color-text-primary);
   background: var(--color-brand-ivory);
   border-bottom: 3px solid var(--color-primary);
@@ -1992,11 +2000,11 @@
 }
 
 .formCard form {
-  padding: 12px 20px;
+  padding: 10px 16px;
 }
 
 .historyPanelBody {
-  padding: 12px 20px 16px;
+  padding: 10px 16px 14px;
   background: var(--color-white-ultra-soft);
 }
 
@@ -2098,12 +2106,82 @@
   }
 
   .formTitle {
-    padding: 12px 14px;
+    padding: 10px 12px;
     font-size: 0.95rem;
   }
 
+  .formCard form {
+    padding: 10px;
+  }
+
+  .formGrid {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .fieldInput {
+    height: 44px;
+    padding: 0.65rem 0.75rem;
+    font-size: 16px;
+  }
+
+  .fieldLabel {
+    font-size: 0.8rem;
+    margin-bottom: 0.2rem;
+  }
+
+  .compactSection {
+    padding: 0.5rem 0.7rem;
+    border-radius: 14px;
+    margin-bottom: 0.5rem;
+  }
+
+  .compactSectionHeader {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .compactSectionMeta {
+    justify-content: flex-start;
+  }
+
+  .compactGrid {
+    grid-template-columns: 1fr;
+    gap: 0.45rem;
+  }
+
+  .compactField {
+    width: 100%;
+  }
+
+  .compactField .fieldLabel {
+    text-align: left;
+    white-space: normal;
+  }
+
+  .compactInput {
+    max-width: none;
+  }
+
+  .formFooter {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+    padding: 8px 0 0;
+    margin-top: 0.25rem;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, var(--color-brand-ivory-light) 28%);
+  }
+
+  .submitBtn {
+    min-height: 48px;
+    font-size: 15px;
+  }
+
   .historyPanelBody {
-    padding: 12px;
+    padding: 10px;
   }
 
   .historyResultsList {
@@ -2111,7 +2189,7 @@
   }
 
   .historyResultButton {
-    padding: 12px;
+    padding: 10px 12px;
     border-radius: 12px;
     margin-bottom: 8px;
   }
@@ -2129,13 +2207,13 @@
   }
 
   .historyMeta {
-    padding: 12px;
+    padding: 10px;
     text-align: center;
   }
 }
 
 .tableSearchPanelBody {
-  padding: 12px 20px 14px;
+  padding: 10px 16px 12px;
 }
 
 .tableSearchPanelBody .searchContainer {
@@ -2334,11 +2412,11 @@
 
 @media (max-width: 640px) {
   .formCard form {
-    padding: 18px;
+    padding: 10px;
   }
 
   .historyPanelBody {
-    padding: 14px 18px 16px;
+    padding: 12px 14px 14px;
   }
 
   .formGrid {
@@ -2347,6 +2425,7 @@
 
   .formFooter {
     align-items: stretch;
+    padding-top: 8px;
   }
 
   .submitBtn {
@@ -2710,5 +2789,14 @@
   .mobileProgramGrid,
   .mobilePlayerActionsRow {
     grid-template-columns: 1fr;
+  }
+
+  .compactSectionMeta {
+    gap: 0.35rem;
+  }
+
+  .compactPill {
+    font-size: 0.68rem;
+    padding: 0.18rem 0.52rem;
   }
 }
