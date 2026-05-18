@@ -3,20 +3,14 @@
 
   CSS structure:
   1. colors.global.css      -> base token catalog and compatibility tokens
-  2. animations.css         -> shared animation keyframes and helpers
-  3. bowling-animations.css -> decorative bowling-specific effects
-  4. globals.css            -> reset, typography, layout, and shared primitives
-  5. auth.css               -> auth flow stylesheet entrypoint
+  2. globals.css            -> reset, typography, layout, and shared primitives
 
   Change the active app theme here first.
   Component layout/details stay in *.module.css files.
 */
 
 @import './colors.global.css';
-@import './animations.css';
-@import './bowling-animations.css';
 @import './globals.css';
-@import './auth.css';
 
 :root {
   /* Active theme: core brand controls */

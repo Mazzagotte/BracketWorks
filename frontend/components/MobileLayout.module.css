@@ -238,6 +238,20 @@
   }
 
   .mobileSubtitle {
+    transition: all 0.5s ease;
+  }
+}
+
+/* Slow animations on touch devices */
+@media (hover: none) and (pointer: coarse) {
+  .mobileHeaderContent {
+    transition: all 0.5s ease;
+  }
+
+  .mobileContent {
+    transition: all 0.5s ease;
+  }
+}
     font-size: 13px;
   }
 

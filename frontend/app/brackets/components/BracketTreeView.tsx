@@ -76,11 +76,12 @@ const BracketTreeViewComponent = ({
   }, [displayRounds])
 
   useEffect(() => {
-    const applyMobileFit = () => {
-      const container = containerRef.current
-      const card = cardRef.current
-      if (!container || !card) return
+    const container = containerRef.current
+    const card = cardRef.current
 
+    if (!container || !card) return
+
+    const applyMobileFit = () => {
       // Reset before measuring natural size
       card.style.transform = ''
       card.style.transformOrigin = ''
@@ -108,8 +109,6 @@ const BracketTreeViewComponent = ({
 
     return () => {
       window.removeEventListener('resize', applyMobileFit)
-      const container = containerRef.current
-      const card = cardRef.current
       if (container) container.style.minHeight = ''
       if (card) {
         card.style.transform = ''

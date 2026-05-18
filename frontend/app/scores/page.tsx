@@ -1014,12 +1014,12 @@ export default function ScoresPage() {
     }
   }, [])
 
-  const markRowSaved = (playerId: number) => {
+  const markRowSaved = useCallback((playerId: number) => {
     setRowSaveState(prev => ({ ...prev, [playerId]: 'saved' }))
     window.setTimeout(() => {
       setRowSaveState(prev => (prev[playerId] === 'saved' ? { ...prev, [playerId]: 'idle' } : prev))
     }, 1400)
-  }
+  }, [])
 
   const focusNextMobileInput = useCallback((playerId: number, field: string) => {
     const fields = ['game1_scratch', 'game2_scratch', 'game3_scratch']
@@ -1045,7 +1045,7 @@ export default function ScoresPage() {
     }
   }, [paginationHook.paginatedItems])
 
-  const updateScore = async (
+  const updateScore = useCallback(async (
     playerId: number,
     field: string,
     value: number | undefined,
@@ -1059,8 +1059,7 @@ export default function ScoresPage() {
     }
 
     const saveKey = `${playerId}-${field}`
-    
-    // Validate score range
+
     if (value !== undefined && (value < 0 || value > 300)) {
       addToast({
         message: `Invalid score: ${value}. Scores must be between 0 and 300.`,
@@ -1076,8 +1075,7 @@ export default function ScoresPage() {
     }
 
     setRowSaveState(prev => ({ ...prev, [playerId]: 'saving' }))
-    
-    // Update local state first for immediate UI feedback
+
     setPlayers(prev => prev.map(player => {
       if (player.id === playerId) {
         const updatedPlayer = {
@@ -1087,17 +1085,15 @@ export default function ScoresPage() {
             [field]: value
           }
         }
-        
-        // Auto-calculate totals when scratch scores are entered
-        // Use the player's handicap from the backend (already calculated with correct settings)
+
         if (field.includes('scratch')) {
           const gameNum = field.includes('game1') ? '1' : field.includes('game2') ? '2' : '3'
           const scratchScore = value || 0
-          const handicap = player.handicap || 0  // Use stored handicap value
+          const handicap = player.handicap || 0
           const totalScore = scratchScore + handicap
           updatedPlayer.scores![`game${gameNum}_total` as keyof typeof updatedPlayer.scores] = totalScore
         }
-        
+
         return updatedPlayer
       }
       return player
@@ -1107,18 +1103,16 @@ export default function ScoresPage() {
       window.setTimeout(() => focusNextMobileInput(playerId, field), 0)
     }
 
-    // Clear existing timeout for this field
     const existingTimeout = debouncedSavesRef.current.get(saveKey)
     if (existingTimeout) {
       clearTimeout(existingTimeout)
     }
-    
-    // Debounced save to backend (500ms delay)
+
     const timeoutId = setTimeout(async () => {
       try {
         const token = localStorage.getItem('token')
         const tournamentId = getSelectedTournamentId()
-        
+
         if (!token || !tournamentId || !selectedSquadRef.current) {
           setRowSaveState(prev => ({ ...prev, [playerId]: 'failed' }))
           return
@@ -1130,12 +1124,11 @@ export default function ScoresPage() {
           return
         }
 
-        // Calculate the updated scores for API call
         const updatedScores = { ...player.scores, [field]: value }
         if (field.includes('scratch')) {
           const gameNum = field.includes('game1') ? '1' : field.includes('game2') ? '2' : '3'
           const scratchScore = value || 0
-          const handicap = player.handicap || 0  // Use stored handicap value
+          const handicap = player.handicap || 0
           const totalScore = scratchScore + handicap
           updatedScores[`game${gameNum}_with_handicap` as keyof typeof updatedScores] = totalScore
         }
@@ -1147,13 +1140,10 @@ export default function ScoresPage() {
           game1_scratch: updatedScores.game1_scratch,
           game2_scratch: updatedScores.game2_scratch,
           game3_scratch: updatedScores.game3_scratch
-          // Note: game totals are calculated by backend (scratch + handicap)
         }
 
-        // Handle offline saves
         if (!isOnline) {
           setPendingSaves(prev => [...prev, { token, data: scoreData }])
-          // Store in localStorage as backup
           localStorage.setItem(`pending_save_${Date.now()}`, JSON.stringify({ token, data: scoreData }))
           setRowSaveState(prev => ({ ...prev, [playerId]: 'failed' }))
           return
@@ -1167,10 +1157,9 @@ export default function ScoresPage() {
           },
           body: JSON.stringify(scoreData)
         })
-        
+
         if (response.ok) {
           markRowSaved(playerId)
-          // Show success toast for perfect games
           if (value === 300) {
             addToast({
               message: `Perfect game! 300 scored by ${player.firstName} ${player.lastName}`,
@@ -1178,9 +1167,8 @@ export default function ScoresPage() {
               duration: 5000
             })
           } else if (value && value >= 250) {
-            // Show toast for high scores
             addToast({
-              message: `� Excellent score: ${value} by ${player.firstName} ${player.lastName}`,
+              message: `Excellent score: ${value} by ${player.firstName} ${player.lastName}`,
               type: 'success',
               duration: 3000
             })
@@ -1191,9 +1179,8 @@ export default function ScoresPage() {
 
       } catch (error) {
         logger.error('Failed to save score:', error)
-        
-        // Show error toast
-        const currentPlayer = playersRef.current.find(playerItem => playerItem.id === playerId);
+
+        const currentPlayer = playersRef.current.find(playerItem => playerItem.id === playerId)
         setRowSaveState(prev => ({ ...prev, [playerId]: 'failed' }))
         addToast({
           message: `Failed to save score for ${currentPlayer?.firstName || 'player'} ${currentPlayer?.lastName || ''}. Please try again.`,
@@ -1201,12 +1188,25 @@ export default function ScoresPage() {
           duration: 5000
         })
       }
-      
+
       debouncedSavesRef.current.delete(saveKey)
     }, 500)
-    
+
     debouncedSavesRef.current.set(saveKey, timeoutId)
-  }
+  }, [
+    addToast,
+    focusNextMobileInput,
+    isMobile,
+    isOnline,
+    isScoresLocked,
+    markRowSaved,
+    playersRef,
+    selectedSquadRef,
+    setLastEdit,
+    setPendingSaves,
+    setPlayers,
+    setRowSaveState,
+  ])
 
   const retryPlayerSave = useCallback(async (player: Player) => {
     const token = localStorage.getItem('token')
@@ -1237,7 +1237,7 @@ export default function ScoresPage() {
       setRowSaveState(prev => ({ ...prev, [player.id]: 'failed' }))
       logger.error('Retry score save failed', { error, playerId: player.id })
     }
-  }, [])
+  }, [markRowSaved])
 
   const undoLastEdit = useCallback(() => {
     if (!lastEdit) return
@@ -1330,7 +1330,7 @@ export default function ScoresPage() {
     }
 
     addToast({ message: 'All visible scores saved.', type: 'success', duration: 2500 })
-  }, [addToast, paginationHook.paginatedItems])
+  }, [addToast, markRowSaved, paginationHook.paginatedItems])
 
   const markScoresComplete = useCallback(() => {
     const missing = players
