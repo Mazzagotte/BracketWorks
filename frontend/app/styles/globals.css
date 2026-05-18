@@ -566,8 +566,6 @@ input[type='number'] { appearance: textfield; -moz-appearance: textfield; }
 }
 .entries-table .players-table-row:nth-child(even) .entries-cell.col-name { background: var(--color-brand-tint-soft); }
 .entries-table .players-table-row:hover .entries-cell.col-name { background: var(--color-brand-tint-mid) !important; }
-.entries-header-cell.col-name::after,
-.entries-table .entries-cell.col-name::after { content: ''; position: absolute; top: 0; right: -6px; width: 6px; height: 100%; background: linear-gradient(to right, var(--opacity-black-08), transparent); pointer-events: none; }
 
 .entries-table .entries-cell.col-usbc {
   min-width: 96px;
@@ -588,8 +586,6 @@ input[type='number'] { appearance: textfield; -moz-appearance: textfield; }
 .players-table td.col-name { background: var(--color-surface); }
 .players-table tr:nth-child(even) td.col-name { background: var(--color-brand-tint-soft); }
 .players-table tr:hover td.col-name { background: var(--color-brand-tint-mid) !important; }
-.players-table th.col-name::after,
-.players-table td.col-name::after { content: ''; position: absolute; top: 0; right: -6px; width: 6px; height: 100%; background: linear-gradient(to right, var(--opacity-black-08), transparent); pointer-events: none; }
 .players-table th.col-usbc,
 .players-table td.col-usbc { width: 96px; }
 .players-table th.col-lane,
@@ -628,7 +624,7 @@ input[type='number'] { appearance: textfield; -moz-appearance: textfield; }
 
 .scores-table { min-width: 1100px; border-collapse: separate; border-spacing: 0 var(--spacing-sm); font-size: var(--font-size-sm); }
 .scores-cell,
-.scores-table td { padding: 10px 8px; text-align: center; color: var(--color-text-primary); }
+.scores-table td { padding: 4px 4px; text-align: center; color: var(--color-text-primary); }
 .scores-cell.name,
 .scores-cell.total-final { font-weight: var(--font-weight-bold); }
 .scores-cell.total { font-weight: var(--font-weight-semibold); color: var(--color-primary); }

@@ -1192,7 +1192,7 @@ export default function PlayersPage() {
 
                       {entryTotals.programSummaries.map(program => (
                         <div key={program.key} className={styles.statBox}>
-                          <div className={styles.statValue}>{program.totalEntries}</div>
+                          <div className={styles.statValue}>~{program.totalEntries}</div>
                           <div className={styles.statLabel}>{program.name}</div>
                           <div className={styles.statDetail}>{program.expectedBrackets} bracket{program.expectedBrackets !== 1 ? 's' : ''}</div>
                           {program.refunds > 0 && (
