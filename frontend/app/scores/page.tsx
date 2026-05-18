@@ -1002,58 +1002,6 @@ export default function ScoresPage() {
     setIsScoresLocked(storage.getItem(lockKey) === '1')
   }, [getScopedScoresLockKey, selectedSquad, tournament])
 
-  // Auth guards (after all hooks)
-  if (!isInitialized) {
-    return (
-      <div className={styles.loadingState}>
-        <div>Loading score management...</div>
-      </div>
-    )
-  }
-
-  if (!isAuthenticated && !hasStoredAuth) {
-    return (
-      <div className={styles.authRequired}>
-        <div>Please log in to access score management</div>
-      </div>
-    )
-  }
-
-  if (!isAuthenticated && hasStoredAuth) {
-    return (
-      <div className={styles.authRequired}>
-        <div>Loading score management...</div>
-      </div>
-    )
-  }
-
-  if (typeof window !== 'undefined' && !getSelectedTournamentId()) {
-    return (
-      <NoTournamentState
-        description="Load a tournament from the dashboard to enter and manage scores. Once loaded, you'll be able to record game scores for each player across all rounds."
-        cards={[
-          { title: 'Enter Scores', text: 'Record game scores for each player per round directly in the score sheet' },
-          { title: 'Auto-Save', text: 'Scores are saved automatically as you type — no need to manually submit' },
-          { title: 'Sort & Filter', text: 'Sort players by name, average, or score to quickly find and update entries' },
-        ]}
-      />
-    )
-  }
-
-  if (!isLoading && typeof window !== 'undefined' && !getSelectedSquadId() && !selectedSquad) {
-    return (
-      <NoTournamentState
-        title="No Squad Selected"
-        description="Select a squad from the dashboard to enter and manage scores for that session."
-        cards={[
-          { title: 'Select a Squad', text: 'Choose a squad from the dashboard to view and enter scores for its players' },
-        ]}
-      />
-    )
-  }
-
-
-
   const validateScore = (score: number | undefined) => {
     if (score === undefined || score === null) return { isValid: true, message: '' }
     if (score < 0) return { isValid: false, message: 'Score cannot be negative' }
@@ -1069,9 +1017,10 @@ export default function ScoresPage() {
   }
 
   useEffect(() => {
+    const pendingMap = debouncedSavesRef.current
     return () => {
-      debouncedSavesRef.current.forEach(timeoutId => clearTimeout(timeoutId))
-      debouncedSavesRef.current.clear()
+      pendingMap.forEach(timeoutId => clearTimeout(timeoutId))
+      pendingMap.clear()
     }
   }, [])
 
@@ -1304,7 +1253,7 @@ export default function ScoresPage() {
     if (!lastEdit) return
     void updateScore(lastEdit.playerId, lastEdit.field, lastEdit.previous, { trackHistory: false, moveNextOnMobile: false })
     setLastEdit(null)
-  }, [lastEdit])
+  }, [lastEdit, updateScore])
 
   const calculateTotalScratch = (player: Player) => {
     const scores = player.scores || {}
@@ -1408,6 +1357,56 @@ export default function ScoresPage() {
     if (state === 'failed') return 'Failed'
     return 'Ready'
   }, [rowSaveState])
+
+  // Auth guards (after all hooks)
+  if (!isInitialized) {
+    return (
+      <div className={styles.loadingState}>
+        <div>Loading score management...</div>
+      </div>
+    )
+  }
+
+  if (!isAuthenticated && !hasStoredAuth) {
+    return (
+      <div className={styles.authRequired}>
+        <div>Please log in to access score management</div>
+      </div>
+    )
+  }
+
+  if (!isAuthenticated && hasStoredAuth) {
+    return (
+      <div className={styles.authRequired}>
+        <div>Loading score management...</div>
+      </div>
+    )
+  }
+
+  if (typeof window !== 'undefined' && !getSelectedTournamentId()) {
+    return (
+      <NoTournamentState
+        description="Load a tournament from the dashboard to enter and manage scores. Once loaded, you'll be able to record game scores for each player across all rounds."
+        cards={[
+          { title: 'Enter Scores', text: 'Record game scores for each player per round directly in the score sheet' },
+          { title: 'Auto-Save', text: 'Scores are saved automatically as you type — no need to manually submit' },
+          { title: 'Sort & Filter', text: 'Sort players by name, average, or score to quickly find and update entries' },
+        ]}
+      />
+    )
+  }
+
+  if (!isLoading && typeof window !== 'undefined' && !getSelectedSquadId() && !selectedSquad) {
+    return (
+      <NoTournamentState
+        title="No Squad Selected"
+        description="Select a squad from the dashboard to enter and manage scores for that session."
+        cards={[
+          { title: 'Select a Squad', text: 'Choose a squad from the dashboard to view and enter scores for its players' },
+        ]}
+      />
+    )
+  }
 
   // Keyboard navigation helper
   const handleKeyDown = (e: React.KeyboardEvent, playerId: number, field: string) => {
