@@ -119,216 +119,105 @@ export default function ScoresPage() {
     sessionStorage.removeItem('payouts_unlocked')
     setIsScoresLocked(false)
 
-          <div className={styles.mobileScoresPage}>
-            {!tournament && !isLoading && (
-              <div className={styles.noTournamentMobile}>
-                <h2 className={styles.noTournamentTitleMobile}>No Tournament Loaded</h2>
-                <p className={styles.noTournamentTextMobile}>
-                  Load a tournament from the dashboard to start entering scores
-                </p>
-                <Link href="/dashboard" className={styles.dashboardBtnMobile}>
-                  Go to Dashboard
-                </Link>
-              </div>
-            )}
+    addToast({
+      message: 'Scores unlocked. Payout access revoked until Calculate Payouts is clicked again.',
+      type: 'success',
+      duration: 4000,
+    })
+  }, [addToast, getScopedPayoutUnlockKey, getScopedScoresLockKey, selectedSquad, tournament])
+  
+  // Styles moved to globals.css; no inline style injection
 
-            {tournament && (
-              <div className={styles.mobileScoresToolbarSticky}>
-                <div className={styles.mobileScoresContextCard}>
-                  <div className={styles.mobileScoresContextTitle}>{tournament.name}</div>
-                  {selectedSquad && (
-                    <div className={styles.mobileScoresContextMeta}>Squad: {selectedSquad.date} - {selectedSquad.time}</div>
-                  )}
-                </div>
+  // Sorting functionality
+  const handleSort = useCallback((column: string) => {
+    setSortConfig(currentSort => {
+      if (currentSort.column === column) {
+        // Toggle direction: asc -> desc -> null (remove sort)
+        const newDirection = 
+          currentSort.direction === 'asc' ? 'desc' :
+          currentSort.direction === 'desc' ? null : 'asc';
+        return {
+          column: newDirection ? column : null,
+          direction: newDirection
+        };
+      } else {
+        // New column, start with ascending
+        return {
+          column,
+          direction: 'asc'
+        };
+      }
+    });
+  }, []);
 
-                <div className={styles.mobileGameSelector}>
-                  {[1, 2, 3, 'all'].map(option => {
-                    const active = mobileSelectedGame === option
-                    return (
-                      <button
-                        key={String(option)}
-                        type="button"
-                        className={`${styles.mobileGameSelectorBtn} ${active ? styles.mobileGameSelectorBtnActive : ''}`}
-                        onClick={() => setMobileSelectedGame(option as 1 | 2 | 3 | 'all')}
-                      >
-                        {option === 'all' ? 'All' : `Game ${option}`}
-                      </button>
-                    )
-                  })}
-                </div>
+  // Sort players based on current sort configuration
+  const sortedPlayers = useMemo(() => {
+    if (!sortConfig.column || !sortConfig.direction) {
+      return players;
+    }
 
-                <div className={styles.mobileSaveBar}>
-                  <span>Saving: {rowStateCounts.saving}</span>
-                  <span>Failed: {rowStateCounts.failed}</span>
-                  <button
-                    type="button"
-                    onClick={undoLastEdit}
-                    disabled={!lastEdit}
-                    className={styles.mobileUndoBtn}
-                  >
-                    Undo
-                  </button>
-                </div>
+    return [...players].sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
 
-                <button
-                  type="button"
-                  className={styles.mobileFilterToggle}
-                  onClick={() => setMobileFiltersOpen(previous => !previous)}
-                >
-                  {mobileFiltersOpen ? 'Hide Filters' : 'Show Filters'}
-                </button>
+      // Handle different column types
+      switch (sortConfig.column) {
+        case 'firstName':
+          aValue = a.firstName?.toLowerCase() || '';
+          bValue = b.firstName?.toLowerCase() || '';
+          break;
+        case 'lastName':
+          aValue = a.lastName?.toLowerCase() || '';
+          bValue = b.lastName?.toLowerCase() || '';
+          break;
+        case 'lane':
+          aValue = a.lane || 0;
+          bValue = b.lane || 0;
+          break;
+        case 'average':
+          aValue = a.average || 0;
+          bValue = b.average || 0;
+          break;
+        case 'game1_scratch':
+          aValue = a.scores?.game1_scratch || 0;
+          bValue = b.scores?.game1_scratch || 0;
+          break;
+        case 'game1_total':
+          aValue = (a.scores?.game1_scratch || 0) + a.handicap;
+          bValue = (b.scores?.game1_scratch || 0) + b.handicap;
+          break;
+        case 'game2_scratch':
+          aValue = a.scores?.game2_scratch || 0;
+          bValue = b.scores?.game2_scratch || 0;
+          break;
+        case 'game2_total':
+          aValue = (a.scores?.game2_scratch || 0) + a.handicap;
+          bValue = (b.scores?.game2_scratch || 0) + b.handicap;
+          break;
+        case 'game3_scratch':
+          aValue = a.scores?.game3_scratch || 0;
+          bValue = b.scores?.game3_scratch || 0;
+          break;
+        case 'game3_total':
+          aValue = (a.scores?.game3_scratch || 0) + a.handicap;
+          bValue = (b.scores?.game3_scratch || 0) + b.handicap;
+          break;
+        case 'totalScratch':
+          aValue = (a.scores?.game1_scratch || 0) + (a.scores?.game2_scratch || 0) + (a.scores?.game3_scratch || 0);
+          bValue = (b.scores?.game1_scratch || 0) + (b.scores?.game2_scratch || 0) + (b.scores?.game3_scratch || 0);
+          break;
+        case 'totalWithHandicap':
+          const aScratch = (a.scores?.game1_scratch || 0) + (a.scores?.game2_scratch || 0) + (a.scores?.game3_scratch || 0);
+          const bScratch = (b.scores?.game1_scratch || 0) + (b.scores?.game2_scratch || 0) + (b.scores?.game3_scratch || 0);
+          aValue = aScratch + (a.handicap * 3);
+          bValue = bScratch + (b.handicap * 3);
+          break;
+        default:
+          aValue = 0;
+          bValue = 0;
+      }
 
-                {mobileFiltersOpen && (
-                  <div className={styles.mobileFilterDrawer}>
-                    <div className={styles.mobileFilterChips}>
-                      <button type="button" className={`${styles.mobileFilterChip} ${mobileFilterMode === 'all' ? styles.mobileFilterChipActive : ''}`} onClick={() => setMobileFilterMode('all')}>All</button>
-                      <button type="button" className={`${styles.mobileFilterChip} ${mobileFilterMode === 'missing' ? styles.mobileFilterChipActive : ''}`} onClick={() => setMobileFilterMode('missing')}>Missing Scores</button>
-                      <button type="button" className={`${styles.mobileFilterChip} ${mobileFilterMode === 'review' ? styles.mobileFilterChipActive : ''}`} onClick={() => setMobileFilterMode('review')}>Needs Review</button>
-                    </div>
-                    <div className={styles.mobileSearchInputs}>
-                      <input
-                        type="text"
-                        className={styles.scoresSearchInput}
-                        placeholder="Search First Name"
-                        value={searchFirstName}
-                        onChange={event => setSearchFirstName(event.target.value)}
-                      />
-                      <input
-                        type="text"
-                        className={styles.scoresSearchInput}
-                        placeholder="Search Last Name"
-                        value={searchLastName}
-                        onChange={event => setSearchLastName(event.target.value)}
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {isLoading && (
-              <div className={styles.mobileLoadingWrap}>
-                <Spinner size="lg" />
-              </div>
-            )}
-
-            {!isLoading && paginationHook.paginatedItems.length > 0 && (
-              <div className={styles.mobileScoreList}>
-                {paginationHook.paginatedItems.map((player: Player) => {
-                  const isExpanded = Boolean(mobileExpandedPlayers[player.id])
-                  const rowState = rowSaveState[player.id] || 'idle'
-                  const playerName = `${player.firstName} ${player.lastName}`.trim()
-                  const visibleGames = mobileSelectedGame === 'all' ? [1, 2, 3] : [mobileSelectedGame]
-
-                  return (
-                    <article key={player.id} className={styles.mobileScoreCard}>
-                      <button
-                        type="button"
-                        className={styles.mobileScoreCardHeader}
-                        onClick={() => setMobileExpandedPlayers(previous => ({ ...previous, [player.id]: !previous[player.id] }))}
-                        aria-expanded={isExpanded}
-                        aria-controls={`mobile-score-details-${player.id}`}
-                      >
-                        <div className={styles.mobileScoreIdentity}>
-                          <div className={styles.mobileScoreName}>{playerName}</div>
-                          <div className={styles.mobileScoreMeta}>Lane {player.lane || '-'} • G{mobileSelectedGame === 'all' ? '1-3' : mobileSelectedGame}</div>
-                        </div>
-                        <div className={styles.mobileScoreHeaderRight}>
-                          <span className={`${styles.mobileSaveStatePill} ${styles[`mobileSaveState${rowState.charAt(0).toUpperCase()}${rowState.slice(1)}`]}`}>{getRowStateLabel(player.id)}</span>
-                          <span className={styles.mobileScoreTotal}>T {calculateDisplayTotal(player)}</span>
-                          <span className={styles.mobileExpandGlyph}>{isExpanded ? '−' : '+'}</span>
-                        </div>
-                      </button>
-
-                      {isExpanded && (
-                        <div id={`mobile-score-details-${player.id}`} className={styles.mobileScoreCardBody}>
-                          <div className={styles.mobileContextChips}>
-                            <span className={styles.mobileContextChip}>Avg {player.average}</span>
-                            <span className={styles.mobileContextChip}>HDCP {player.handicap}</span>
-                            <span className={styles.mobileContextChip}>Scratch {calculateTotalScratch(player)}</span>
-                          </div>
-
-                          <div className={styles.mobileGameInputGrid}>
-                            {visibleGames.map(gameNum => {
-                              const field = `game${gameNum}_scratch`
-                              const rawValue = player.scores?.[field as keyof ScoreData] as number | undefined
-
-                              return (
-                                <label key={gameNum} className={styles.mobileGameInputField}>
-                                  <span>Game {gameNum}</span>
-                                  <input
-                                    type="number"
-                                    min={0}
-                                    max={300}
-                                    value={rawValue ?? ''}
-                                    placeholder={`G${gameNum}`}
-                                    inputMode="numeric"
-                                    data-mobile-player={player.id}
-                                    data-mobile-field={field}
-                                    className={styles.mobileScoreInput}
-                                    onFocus={event => event.target.select()}
-                                    onChange={event => {
-                                      const nextValue = event.target.value.trim() === '' ? undefined : Number(event.target.value)
-                                      void updateScore(player.id, field, Number.isFinite(nextValue as number) ? (nextValue as number) : undefined, { moveNextOnMobile: true })
-                                    }}
-                                    disabled={isScoresLocked}
-                                  />
-                                  <span className={styles.mobileGameTotal}>Total {getGameTotal(rawValue, player.handicap)}</span>
-                                </label>
-                              )
-                            })}
-                          </div>
-
-                          {rowState === 'failed' && (
-                            <button
-                              type="button"
-                              className={styles.mobileRetryBtn}
-                              onClick={() => void retryPlayerSave(player)}
-                            >
-                              Retry Save
-                            </button>
-                          )}
-                        </div>
-                      )}
-                    </article>
-                  )
-                })}
-              </div>
-            )}
-
-            {!isLoading && players.length > 0 && paginationHook.paginatedItems.length === 0 && (
-              <div className={styles.statusMessage}>No players match the current mobile filters.</div>
-            )}
-
-            {!isLoading && players.length > 50 && (
-              <div className={styles.mobilePaginationWrap}>
-                <Pagination
-                  currentPage={paginationHook.currentPage}
-                  totalPages={paginationHook.totalPages}
-                  onPageChange={paginationHook.goToPage}
-                />
-              </div>
-            )}
-
-            {!isLoading && players.length > 0 && (
-              <div className={styles.mobileBottomActions}>
-                <button type="button" className={styles.mobileBottomBtn} onClick={() => void saveAllVisibleScores()}>
-                  Save All ({paginationHook.paginatedItems.length})
-                </button>
-                <button type="button" className={styles.mobileBottomBtnSecondary} onClick={markScoresComplete}>
-                  Mark Complete
-                </button>
-                <button
-                  type="button"
-                  className={styles.mobileBottomBtnSecondary}
-                  onClick={handleExportScoresToExcel}
-                  disabled={isExporting}
-                >
-                  {isExporting ? 'Exporting...' : 'Export'}
-                </button>
-              </div>
-            )}
-          </div>
+      // Handle numeric values
       if (typeof aValue === 'number' && typeof bValue === 'number') {
         return sortConfig.direction === 'asc' ? aValue - bValue : bValue - aValue;
       }
