@@ -146,50 +146,28 @@ const PlayersTable = memo(({
 
     return (
       <article key={player.id} className={`${styles.mobilePlayerCard} ${cardStatusClass}`}>
-        <div className={styles.mobilePlayerCardTop}>
-          <div className={styles.mobilePlayerIdentity}>
-            <h4 className={styles.mobilePlayerName}>{playerName}</h4>
-            <div className={styles.mobilePlayerMeta}>{normalizeDivision(player.division)} · Lane {player.lane || '-'}</div>
-          </div>
+        <button
+          type="button"
+          className={styles.mobilePlayerHeader}
+          onClick={() => toggleMobileCard(player.id)}
+          aria-expanded={isExpanded}
+          aria-controls={`mobile-player-details-${player.id}`}
+        >
+          <div className={styles.mobilePlayerCompactView}>
+            <div className={styles.mobilePlayerIdentity}>
+              <h4 className={styles.mobilePlayerName}>{playerName}</h4>
+            </div>
 
-          <div className={styles.mobilePlayerTotals}>
-            <span className={styles.mobilePlayerCost}>${player.totalCost.toFixed(2)}</span>
-            <span className={`${styles.mobileStatusPill} ${statusPillClass}`}>
-              {needsEntryFee ? 'SET FEE' : isPaid ? 'PAID' : 'DUE'}
-            </span>
-          </div>
-        </div>
+            <div className={styles.mobilePlayerTotals}>
+              <span className={styles.mobilePlayerCost}>${player.totalCost.toFixed(2)}</span>
+              <span className={`${styles.mobileStatusPill} ${statusPillClass}`}>
+                {needsEntryFee ? 'SET FEE' : isPaid ? 'PAID' : 'DUE'}
+              </span>
+            </div>
 
-        <div className={styles.mobilePlayerActionsRow}>
-          <button
-            type="button"
-            className={styles.mobilePlayerActionBtn}
-            onClick={() => {
-              if (needsEntryFee) return;
-              const newPaidAmount = isPaid ? 0 : player.totalCost;
-              handleCellEdit(player.id, 'amountPaid', newPaidAmount.toString());
-            }}
-            disabled={needsEntryFee}
-          >
-            Toggle Paid
-          </button>
-          <button
-            type="button"
-            className={styles.mobilePlayerActionBtnSecondary}
-            onClick={() => toggleMobileCard(player.id)}
-            aria-expanded={isExpanded}
-            aria-controls={`mobile-player-details-${player.id}`}
-          >
-            {isExpanded ? 'Hide Details' : 'Edit Details'}
-          </button>
-          <button
-            type="button"
-            className={styles.mobilePlayerActionBtnDanger}
-            onClick={() => onDeletePlayer(player.id)}
-          >
-            Delete
-          </button>
-        </div>
+            <span className={styles.mobileExpandIcon}>{isExpanded ? '−' : '+'}</span>
+          </div>
+        </button>
 
         {isExpanded && (
           <div id={`mobile-player-details-${player.id}`} className={styles.mobilePlayerDetails}>
@@ -274,6 +252,28 @@ const PlayersTable = memo(({
                 </div>
               </div>
             )}
+
+            <div className={styles.mobilePlayerActionsRow}>
+              <button
+                type="button"
+                className={styles.mobilePlayerActionBtn}
+                onClick={() => {
+                  if (needsEntryFee) return;
+                  const newPaidAmount = isPaid ? 0 : player.totalCost;
+                  handleCellEdit(player.id, 'amountPaid', newPaidAmount.toString());
+                }}
+                disabled={needsEntryFee}
+              >
+                {isPaid ? 'Mark Due' : 'Mark Paid'}
+              </button>
+              <button
+                type="button"
+                className={styles.mobilePlayerActionBtnDanger}
+                onClick={() => onDeletePlayer(player.id)}
+              >
+                Delete
+              </button>
+            </div>
           </div>
         )}
       </article>
