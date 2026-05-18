@@ -691,7 +691,7 @@ export default function BracketsPage() {
 
                           return (
                             <button
-                              key={`${item.group.key}-${item.bracket.bracket_id}-${index}`}
+                              key={`${section.key}-${index}`}
                               className={styles.mobileBracketListItem}
                               onClick={() => {
                                 setSelectedBracketIndex(index)
