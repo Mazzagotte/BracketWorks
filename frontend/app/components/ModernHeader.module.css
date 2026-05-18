@@ -220,3 +220,40 @@
     margin-right: -16px;
   }
 }
+
+@media (max-width: 480px) {
+  .header {
+    position: static;  /* scroll with content on mobile */
+    /* undo the -16px bleed from the 768px rule — main padding is now 0 */
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+    padding: 10px 0 12px;
+    min-height: 0;
+  }
+
+  .title {
+    display: none;   /* page name already shown in the top fixed bar */
+  }
+
+  .tournamentStrip {
+    flex-wrap: wrap;
+    gap: 4px 6px;
+    margin-top: 0;
+  }
+
+  .tournamentStripLabel {
+    font-size: 10px;
+  }
+
+  .tournamentStripName {
+    font-size: 11px;
+    padding: 1px 8px;
+  }
+
+  .actions {
+    margin-top: 10px;
+    padding-top: 10px;
+    gap: 8px;
+  }
+}
