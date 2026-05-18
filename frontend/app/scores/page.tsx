@@ -62,10 +62,7 @@ export default function ScoresPage() {
   const [isScoresLocked, setIsScoresLocked] = useState(false)
   const [searchFirstName, setSearchFirstName] = useState('')
   const [searchLastName, setSearchLastName] = useState('')
-  const [mobileSelectedGame, setMobileSelectedGame] = useState<1 | 2 | 3 | 'all'>('all')
   const [mobileExpandedPlayers, setMobileExpandedPlayers] = useState<Record<number, boolean>>({})
-  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
-  const [mobileFilterMode, setMobileFilterMode] = useState<'all' | 'missing' | 'review'>('all')
   const [rowSaveState, setRowSaveState] = useState<Record<number, 'idle' | 'saving' | 'saved' | 'failed'>>({})
   const [lastEdit, setLastEdit] = useState<{ playerId: number; field: string; previous: number | undefined } | null>(null)
   const importFileRef = useRef<HTMLInputElement | null>(null)
@@ -262,15 +259,8 @@ export default function ScoresPage() {
     return [scores.game1_scratch, scores.game2_scratch, scores.game3_scratch].some(score => (score || 0) >= 250)
   }, [])
 
-  const mobilePlayers = useMemo(() => {
-    if (mobileFilterMode === 'missing') {
-      return filteredPlayers.filter(hasMissingScore)
-    }
-    if (mobileFilterMode === 'review') {
-      return filteredPlayers.filter(needsReviewScore)
-    }
-    return filteredPlayers
-  }, [filteredPlayers, hasMissingScore, mobileFilterMode, needsReviewScore])
+  // Mobile shows all filtered players (no additional mode filtering)
+  const mobilePlayers = filteredPlayers
 
   const visiblePlayers = isMobile ? mobilePlayers : filteredPlayers
   
@@ -283,7 +273,7 @@ export default function ScoresPage() {
 
   useEffect(() => {
     paginationHook.goToPage(1)
-  }, [searchFirstName, searchLastName, mobileFilterMode, isMobile]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [searchFirstName, searchLastName, isMobile]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Stable reference for auto-save — only changes when scores actually change
   const autoSaveData = useMemo(
@@ -1548,19 +1538,6 @@ export default function ScoresPage() {
                 </div>
               )}
 
-              {/* Game selector */}
-              <div className={styles.mobileGameSelector}>
-                {(['all', 1, 2, 3] as const).map(g => (
-                  <button
-                    key={g}
-                    className={`${styles.mobileGameSelectorBtn} ${mobileSelectedGame === g ? styles.mobileGameSelectorBtnActive : ''}`}
-                    onClick={() => setMobileSelectedGame(g)}
-                  >
-                    {g === 'all' ? 'All' : `G${g}`}
-                  </button>
-                ))}
-              </div>
-
               {/* Save status bar */}
               <div className={styles.mobileSaveBar}>
                 {rowStateCounts.saving > 0 && <span>Saving {rowStateCounts.saving}…</span>}
@@ -1570,47 +1547,6 @@ export default function ScoresPage() {
                   <button className={styles.mobileUndoBtn} onClick={undoLastEdit}>Undo</button>
                 )}
               </div>
-
-              {/* Filter toggle */}
-              <button
-                className={styles.mobileFilterToggle}
-                onClick={() => setMobileFiltersOpen(o => !o)}
-              >
-                {mobileFiltersOpen ? 'Hide Filters ▲' : 'Filters & Search ▼'}
-              </button>
-
-              {/* Filter drawer */}
-              {mobileFiltersOpen && (
-                <div className={styles.mobileFilterDrawer}>
-                  <div className={styles.mobileFilterChips}>
-                    {(['all', 'missing', 'review'] as const).map(mode => (
-                      <button
-                        key={mode}
-                        className={`${styles.mobileFilterChip} ${mobileFilterMode === mode ? styles.mobileFilterChipActive : ''}`}
-                        onClick={() => setMobileFilterMode(mode)}
-                      >
-                        {mode === 'all' ? 'All' : mode === 'missing' ? 'Missing' : 'Review'}
-                      </button>
-                    ))}
-                  </div>
-                  <div className={styles.mobileSearchInputs}>
-                    <input
-                      type="text"
-                      placeholder="First name…"
-                      value={searchFirstName}
-                      onChange={e => setSearchFirstName(e.target.value)}
-                      className={styles.mobileScoreInput}
-                    />
-                    <input
-                      type="text"
-                      placeholder="Last name…"
-                      value={searchLastName}
-                      onChange={e => setSearchLastName(e.target.value)}
-                      className={styles.mobileScoreInput}
-                    />
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* No tournament state */}
@@ -1642,8 +1578,6 @@ export default function ScoresPage() {
                   const hasFailed = saveState === 'failed'
                   const saveLabel = saveState === 'saving' ? 'Saving…' : saveState === 'saved' ? 'Saved ✓' : saveState === 'failed' ? 'Failed' : ''
                   const pilotClass = saveState === 'saving' ? styles.mobileSaveStateSaving : saveState === 'saved' ? styles.mobileSaveStateSaved : saveState === 'failed' ? styles.mobileSaveStateFailed : styles.mobileSaveStateIdle
-
-                  const gamesToShow = mobileSelectedGame === 'all' ? [1, 2, 3] : [mobileSelectedGame as number]
 
                   return (
                     <div key={player.id} className={styles.mobileScoreCard}>
@@ -1686,7 +1620,7 @@ export default function ScoresPage() {
 
                           {/* Score inputs */}
                           <div className={styles.mobileGameInputGrid}>
-                            {gamesToShow.map(gameNum => {
+                            {[1, 2, 3].map(gameNum => {
                               const fieldKey = `game${gameNum}_scratch` as keyof typeof player.scores
                               const scratch = player.scores?.[fieldKey] as number | undefined
                               return (
