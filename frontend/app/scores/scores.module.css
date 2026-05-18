@@ -699,3 +699,366 @@
     width: 100%;
   }
 }
+
+/* ========================================
+   Mobile Scores UX
+   ======================================== */
+
+.mobileScoresPage {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 70px;
+}
+
+.mobileScoresToolbarSticky {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 7px;
+  background: color-mix(in srgb, var(--color-brand-ivory-light) 94%, var(--color-white) 6%);
+  border: 1px solid var(--color-border-light);
+  border-radius: 12px;
+  box-shadow: 0 3px 10px var(--opacity-black-08);
+}
+
+.mobileScoresContextCard {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mobileScoresContextTitle {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.mobileScoresContextMeta {
+  font-size: 0.74rem;
+  color: var(--color-text-muted-alt);
+}
+
+.mobileGameSelector {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.mobileGameSelectorBtn {
+  min-height: 30px;
+  border-radius: 10px;
+  border: 1px solid var(--color-border-light);
+  background: var(--color-white);
+  color: var(--color-text-primary);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.mobileGameSelectorBtnActive {
+  border-color: color-mix(in srgb, var(--color-primary) 42%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
+  color: var(--color-primary);
+}
+
+.mobileSaveBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.69rem;
+  font-weight: 700;
+  color: var(--color-text-muted-strong);
+}
+
+.mobileUndoBtn {
+  margin-left: auto;
+  min-height: 26px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border-light);
+  background: var(--color-white);
+  padding: 0 10px;
+  font-size: 0.69rem;
+  font-weight: 700;
+}
+
+.mobileFilterToggle {
+  min-height: 32px;
+  border-radius: 10px;
+  border: 1px solid var(--color-border-light);
+  background: var(--color-white);
+  color: var(--color-text-primary);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.mobileFilterDrawer {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mobileFilterChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.mobileFilterChip {
+  min-height: 24px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border-light);
+  background: var(--color-white);
+  padding: 0 10px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.mobileFilterChipActive {
+  border-color: color-mix(in srgb, var(--color-primary) 36%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
+  color: var(--color-primary);
+}
+
+.mobileSearchInputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.mobileLoadingWrap {
+  display: flex;
+  justify-content: center;
+  padding: 24px 0;
+}
+
+.mobileScoreList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mobileScoreCard {
+  border: 1px solid var(--color-border-light);
+  border-radius: 12px;
+  background: var(--color-white);
+  box-shadow: 0 1px 4px var(--opacity-black-08);
+  overflow: hidden;
+}
+
+.mobileScoreCardHeader {
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 7px 9px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  text-align: left;
+}
+
+.mobileScoreIdentity {
+  min-width: 0;
+  flex: 1;
+}
+
+.mobileScoreName {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.mobileScoreMeta {
+  margin-top: 1px;
+  font-size: 0.69rem;
+  color: var(--color-text-muted-alt);
+}
+
+.mobileScoreHeaderRight {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.mobileSaveStatePill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 18px;
+  border-radius: 999px;
+  padding: 0 7px;
+  border: 1px solid transparent;
+  font-size: 0.59rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+
+.mobileSaveStateIdle {
+  background: var(--color-gray-100);
+  border-color: var(--color-border-light);
+  color: var(--color-text-muted-strong);
+}
+
+.mobileSaveStateSaving {
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 28%, transparent);
+  color: var(--color-primary);
+}
+
+.mobileSaveStateSaved {
+  background: var(--color-success-soft);
+  border-color: var(--color-success-border);
+  color: var(--color-success-text-deep);
+}
+
+.mobileSaveStateFailed {
+  background: var(--color-error-bg-light);
+  border-color: var(--color-error-border-light);
+  color: var(--color-error);
+}
+
+.mobileScoreTotal {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--color-text-primary);
+}
+
+.mobileExpandGlyph {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--color-primary);
+}
+
+.mobileScoreCardBody {
+  border-top: 1px solid var(--color-border-light);
+  background: var(--color-gray-50);
+  padding: 7px 9px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mobileContextChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.mobileContextChip {
+  min-height: 20px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border-light);
+  background: var(--color-white);
+  font-size: 0.63rem;
+  font-weight: 700;
+  color: var(--color-text-muted-strong);
+  padding: 0 7px;
+}
+
+.mobileGameInputGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.mobileGameInputField {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mobileGameInputField > span:first-child {
+  font-size: 0.59rem;
+  font-weight: 700;
+  color: var(--color-text-muted-strong);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.mobileScoreInput {
+  min-height: 40px;
+  border-radius: 10px;
+  border: 1px solid var(--color-border-light);
+  background: var(--color-white);
+  padding: 0 9px;
+  font-size: 0.94rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.mobileScoreInput:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: var(--ring-brand-base);
+}
+
+.mobileGameTotal {
+  font-size: 0.61rem;
+  color: var(--color-text-muted-alt);
+}
+
+.mobileRetryBtn {
+  min-height: 32px;
+  border-radius: 10px;
+  border: 1px solid var(--color-error-border-light);
+  color: var(--color-error);
+  background: var(--color-error-bg-light);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.mobilePaginationWrap {
+  display: flex;
+  justify-content: center;
+  padding: 4px 0 2px;
+}
+
+.mobileBottomActions {
+  position: fixed;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  z-index: 30;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 5px;
+  padding: 7px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border-light);
+  background: color-mix(in srgb, var(--color-white) 94%, var(--color-brand-ivory-light) 6%);
+  box-shadow: 0 -2px 12px var(--opacity-black-12);
+}
+
+.mobileBottomBtn,
+.mobileBottomBtnSecondary {
+  min-height: 36px;
+  border-radius: 10px;
+  font-size: 0.69rem;
+  font-weight: 700;
+}
+
+.mobileBottomBtn {
+  border: 1px solid color-mix(in srgb, var(--color-primary) 35%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
+  color: var(--color-primary);
+}
+
+.mobileBottomBtnSecondary {
+  border: 1px solid var(--color-border-light);
+  background: var(--color-white);
+  color: var(--color-text-primary);
+}
+
+@media (max-width: 560px) {
+  .mobileSearchInputs {
+    grid-template-columns: 1fr;
+  }
+
+  .mobileGameInputGrid {
+    grid-template-columns: 1fr;
+  }
+}

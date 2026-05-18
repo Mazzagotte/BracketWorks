@@ -62,7 +62,14 @@ export default function ScoresPage() {
   const [isScoresLocked, setIsScoresLocked] = useState(false)
   const [searchFirstName, setSearchFirstName] = useState('')
   const [searchLastName, setSearchLastName] = useState('')
+  const [mobileSelectedGame, setMobileSelectedGame] = useState<1 | 2 | 3 | 'all'>('all')
+  const [mobileExpandedPlayers, setMobileExpandedPlayers] = useState<Record<number, boolean>>({})
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
+  const [mobileFilterMode, setMobileFilterMode] = useState<'all' | 'missing' | 'review'>('all')
+  const [rowSaveState, setRowSaveState] = useState<Record<number, 'idle' | 'saving' | 'saved' | 'failed'>>({})
+  const [lastEdit, setLastEdit] = useState<{ playerId: number; field: string; previous: number | undefined } | null>(null)
   const importFileRef = useRef<HTMLInputElement | null>(null)
+  const debouncedSavesRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
   
   // Sorting state
   const [sortConfig, setSortConfig] = useState<SortConfig>({
@@ -112,105 +119,216 @@ export default function ScoresPage() {
     sessionStorage.removeItem('payouts_unlocked')
     setIsScoresLocked(false)
 
-    addToast({
-      message: 'Scores unlocked. Payout access revoked until Calculate Payouts is clicked again.',
-      type: 'success',
-      duration: 4000,
-    })
-  }, [addToast, getScopedPayoutUnlockKey, getScopedScoresLockKey, selectedSquad, tournament])
-  
-  // Styles moved to globals.css; no inline style injection
+          <div className={styles.mobileScoresPage}>
+            {!tournament && !isLoading && (
+              <div className={styles.noTournamentMobile}>
+                <h2 className={styles.noTournamentTitleMobile}>No Tournament Loaded</h2>
+                <p className={styles.noTournamentTextMobile}>
+                  Load a tournament from the dashboard to start entering scores
+                </p>
+                <Link href="/dashboard" className={styles.dashboardBtnMobile}>
+                  Go to Dashboard
+                </Link>
+              </div>
+            )}
 
-  // Sorting functionality
-  const handleSort = useCallback((column: string) => {
-    setSortConfig(currentSort => {
-      if (currentSort.column === column) {
-        // Toggle direction: asc -> desc -> null (remove sort)
-        const newDirection = 
-          currentSort.direction === 'asc' ? 'desc' :
-          currentSort.direction === 'desc' ? null : 'asc';
-        return {
-          column: newDirection ? column : null,
-          direction: newDirection
-        };
-      } else {
-        // New column, start with ascending
-        return {
-          column,
-          direction: 'asc'
-        };
-      }
-    });
-  }, []);
+            {tournament && (
+              <div className={styles.mobileScoresToolbarSticky}>
+                <div className={styles.mobileScoresContextCard}>
+                  <div className={styles.mobileScoresContextTitle}>{tournament.name}</div>
+                  {selectedSquad && (
+                    <div className={styles.mobileScoresContextMeta}>Squad: {selectedSquad.date} - {selectedSquad.time}</div>
+                  )}
+                </div>
 
-  // Sort players based on current sort configuration
-  const sortedPlayers = useMemo(() => {
-    if (!sortConfig.column || !sortConfig.direction) {
-      return players;
-    }
+                <div className={styles.mobileGameSelector}>
+                  {[1, 2, 3, 'all'].map(option => {
+                    const active = mobileSelectedGame === option
+                    return (
+                      <button
+                        key={String(option)}
+                        type="button"
+                        className={`${styles.mobileGameSelectorBtn} ${active ? styles.mobileGameSelectorBtnActive : ''}`}
+                        onClick={() => setMobileSelectedGame(option as 1 | 2 | 3 | 'all')}
+                      >
+                        {option === 'all' ? 'All' : `Game ${option}`}
+                      </button>
+                    )
+                  })}
+                </div>
 
-    return [...players].sort((a, b) => {
-      let aValue: any;
-      let bValue: any;
+                <div className={styles.mobileSaveBar}>
+                  <span>Saving: {rowStateCounts.saving}</span>
+                  <span>Failed: {rowStateCounts.failed}</span>
+                  <button
+                    type="button"
+                    onClick={undoLastEdit}
+                    disabled={!lastEdit}
+                    className={styles.mobileUndoBtn}
+                  >
+                    Undo
+                  </button>
+                </div>
 
-      // Handle different column types
-      switch (sortConfig.column) {
-        case 'firstName':
-          aValue = a.firstName?.toLowerCase() || '';
-          bValue = b.firstName?.toLowerCase() || '';
-          break;
-        case 'lastName':
-          aValue = a.lastName?.toLowerCase() || '';
-          bValue = b.lastName?.toLowerCase() || '';
-          break;
-        case 'lane':
-          aValue = a.lane || 0;
-          bValue = b.lane || 0;
-          break;
-        case 'average':
-          aValue = a.average || 0;
-          bValue = b.average || 0;
-          break;
-        case 'game1_scratch':
-          aValue = a.scores?.game1_scratch || 0;
-          bValue = b.scores?.game1_scratch || 0;
-          break;
-        case 'game1_total':
-          aValue = (a.scores?.game1_scratch || 0) + a.handicap;
-          bValue = (b.scores?.game1_scratch || 0) + b.handicap;
-          break;
-        case 'game2_scratch':
-          aValue = a.scores?.game2_scratch || 0;
-          bValue = b.scores?.game2_scratch || 0;
-          break;
-        case 'game2_total':
-          aValue = (a.scores?.game2_scratch || 0) + a.handicap;
-          bValue = (b.scores?.game2_scratch || 0) + b.handicap;
-          break;
-        case 'game3_scratch':
-          aValue = a.scores?.game3_scratch || 0;
-          bValue = b.scores?.game3_scratch || 0;
-          break;
-        case 'game3_total':
-          aValue = (a.scores?.game3_scratch || 0) + a.handicap;
-          bValue = (b.scores?.game3_scratch || 0) + b.handicap;
-          break;
-        case 'totalScratch':
-          aValue = (a.scores?.game1_scratch || 0) + (a.scores?.game2_scratch || 0) + (a.scores?.game3_scratch || 0);
-          bValue = (b.scores?.game1_scratch || 0) + (b.scores?.game2_scratch || 0) + (b.scores?.game3_scratch || 0);
-          break;
-        case 'totalWithHandicap':
-          const aScratch = (a.scores?.game1_scratch || 0) + (a.scores?.game2_scratch || 0) + (a.scores?.game3_scratch || 0);
-          const bScratch = (b.scores?.game1_scratch || 0) + (b.scores?.game2_scratch || 0) + (b.scores?.game3_scratch || 0);
-          aValue = aScratch + (a.handicap * 3);
-          bValue = bScratch + (b.handicap * 3);
-          break;
-        default:
-          aValue = 0;
-          bValue = 0;
-      }
+                <button
+                  type="button"
+                  className={styles.mobileFilterToggle}
+                  onClick={() => setMobileFiltersOpen(previous => !previous)}
+                >
+                  {mobileFiltersOpen ? 'Hide Filters' : 'Show Filters'}
+                </button>
 
-      // Handle numeric values
+                {mobileFiltersOpen && (
+                  <div className={styles.mobileFilterDrawer}>
+                    <div className={styles.mobileFilterChips}>
+                      <button type="button" className={`${styles.mobileFilterChip} ${mobileFilterMode === 'all' ? styles.mobileFilterChipActive : ''}`} onClick={() => setMobileFilterMode('all')}>All</button>
+                      <button type="button" className={`${styles.mobileFilterChip} ${mobileFilterMode === 'missing' ? styles.mobileFilterChipActive : ''}`} onClick={() => setMobileFilterMode('missing')}>Missing Scores</button>
+                      <button type="button" className={`${styles.mobileFilterChip} ${mobileFilterMode === 'review' ? styles.mobileFilterChipActive : ''}`} onClick={() => setMobileFilterMode('review')}>Needs Review</button>
+                    </div>
+                    <div className={styles.mobileSearchInputs}>
+                      <input
+                        type="text"
+                        className={styles.scoresSearchInput}
+                        placeholder="Search First Name"
+                        value={searchFirstName}
+                        onChange={event => setSearchFirstName(event.target.value)}
+                      />
+                      <input
+                        type="text"
+                        className={styles.scoresSearchInput}
+                        placeholder="Search Last Name"
+                        value={searchLastName}
+                        onChange={event => setSearchLastName(event.target.value)}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {isLoading && (
+              <div className={styles.mobileLoadingWrap}>
+                <Spinner size="lg" />
+              </div>
+            )}
+
+            {!isLoading && paginationHook.paginatedItems.length > 0 && (
+              <div className={styles.mobileScoreList}>
+                {paginationHook.paginatedItems.map((player: Player) => {
+                  const isExpanded = Boolean(mobileExpandedPlayers[player.id])
+                  const rowState = rowSaveState[player.id] || 'idle'
+                  const playerName = `${player.firstName} ${player.lastName}`.trim()
+                  const visibleGames = mobileSelectedGame === 'all' ? [1, 2, 3] : [mobileSelectedGame]
+
+                  return (
+                    <article key={player.id} className={styles.mobileScoreCard}>
+                      <button
+                        type="button"
+                        className={styles.mobileScoreCardHeader}
+                        onClick={() => setMobileExpandedPlayers(previous => ({ ...previous, [player.id]: !previous[player.id] }))}
+                        aria-expanded={isExpanded}
+                        aria-controls={`mobile-score-details-${player.id}`}
+                      >
+                        <div className={styles.mobileScoreIdentity}>
+                          <div className={styles.mobileScoreName}>{playerName}</div>
+                          <div className={styles.mobileScoreMeta}>Lane {player.lane || '-'} • G{mobileSelectedGame === 'all' ? '1-3' : mobileSelectedGame}</div>
+                        </div>
+                        <div className={styles.mobileScoreHeaderRight}>
+                          <span className={`${styles.mobileSaveStatePill} ${styles[`mobileSaveState${rowState.charAt(0).toUpperCase()}${rowState.slice(1)}`]}`}>{getRowStateLabel(player.id)}</span>
+                          <span className={styles.mobileScoreTotal}>T {calculateDisplayTotal(player)}</span>
+                          <span className={styles.mobileExpandGlyph}>{isExpanded ? '−' : '+'}</span>
+                        </div>
+                      </button>
+
+                      {isExpanded && (
+                        <div id={`mobile-score-details-${player.id}`} className={styles.mobileScoreCardBody}>
+                          <div className={styles.mobileContextChips}>
+                            <span className={styles.mobileContextChip}>Avg {player.average}</span>
+                            <span className={styles.mobileContextChip}>HDCP {player.handicap}</span>
+                            <span className={styles.mobileContextChip}>Scratch {calculateTotalScratch(player)}</span>
+                          </div>
+
+                          <div className={styles.mobileGameInputGrid}>
+                            {visibleGames.map(gameNum => {
+                              const field = `game${gameNum}_scratch`
+                              const rawValue = player.scores?.[field as keyof ScoreData] as number | undefined
+
+                              return (
+                                <label key={gameNum} className={styles.mobileGameInputField}>
+                                  <span>Game {gameNum}</span>
+                                  <input
+                                    type="number"
+                                    min={0}
+                                    max={300}
+                                    value={rawValue ?? ''}
+                                    placeholder={`G${gameNum}`}
+                                    inputMode="numeric"
+                                    data-mobile-player={player.id}
+                                    data-mobile-field={field}
+                                    className={styles.mobileScoreInput}
+                                    onFocus={event => event.target.select()}
+                                    onChange={event => {
+                                      const nextValue = event.target.value.trim() === '' ? undefined : Number(event.target.value)
+                                      void updateScore(player.id, field, Number.isFinite(nextValue as number) ? (nextValue as number) : undefined, { moveNextOnMobile: true })
+                                    }}
+                                    disabled={isScoresLocked}
+                                  />
+                                  <span className={styles.mobileGameTotal}>Total {getGameTotal(rawValue, player.handicap)}</span>
+                                </label>
+                              )
+                            })}
+                          </div>
+
+                          {rowState === 'failed' && (
+                            <button
+                              type="button"
+                              className={styles.mobileRetryBtn}
+                              onClick={() => void retryPlayerSave(player)}
+                            >
+                              Retry Save
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </article>
+                  )
+                })}
+              </div>
+            )}
+
+            {!isLoading && players.length > 0 && paginationHook.paginatedItems.length === 0 && (
+              <div className={styles.statusMessage}>No players match the current mobile filters.</div>
+            )}
+
+            {!isLoading && players.length > 50 && (
+              <div className={styles.mobilePaginationWrap}>
+                <Pagination
+                  currentPage={paginationHook.currentPage}
+                  totalPages={paginationHook.totalPages}
+                  onPageChange={paginationHook.goToPage}
+                />
+              </div>
+            )}
+
+            {!isLoading && players.length > 0 && (
+              <div className={styles.mobileBottomActions}>
+                <button type="button" className={styles.mobileBottomBtn} onClick={() => void saveAllVisibleScores()}>
+                  Save All ({paginationHook.paginatedItems.length})
+                </button>
+                <button type="button" className={styles.mobileBottomBtnSecondary} onClick={markScoresComplete}>
+                  Mark Complete
+                </button>
+                <button
+                  type="button"
+                  className={styles.mobileBottomBtnSecondary}
+                  onClick={handleExportScoresToExcel}
+                  disabled={isExporting}
+                >
+                  {isExporting ? 'Exporting...' : 'Export'}
+                </button>
+              </div>
+            )}
+          </div>
       if (typeof aValue === 'number' && typeof bValue === 'number') {
         return sortConfig.direction === 'asc' ? aValue - bValue : bValue - aValue;
       }
@@ -244,17 +362,39 @@ export default function ScoresPage() {
       return firstMatches && lastMatches
     })
   }, [sortedPlayers, searchFirstName, searchLastName])
+
+  const hasMissingScore = useCallback((player: Player) => {
+    const scores = player.scores || {}
+    return scores.game1_scratch == null || scores.game2_scratch == null || scores.game3_scratch == null
+  }, [])
+
+  const needsReviewScore = useCallback((player: Player) => {
+    const scores = player.scores || {}
+    return [scores.game1_scratch, scores.game2_scratch, scores.game3_scratch].some(score => (score || 0) >= 250)
+  }, [])
+
+  const mobilePlayers = useMemo(() => {
+    if (mobileFilterMode === 'missing') {
+      return filteredPlayers.filter(hasMissingScore)
+    }
+    if (mobileFilterMode === 'review') {
+      return filteredPlayers.filter(needsReviewScore)
+    }
+    return filteredPlayers
+  }, [filteredPlayers, hasMissingScore, mobileFilterMode, needsReviewScore])
+
+  const visiblePlayers = isMobile ? mobilePlayers : filteredPlayers
   
   // Pagination for large player lists (use sorted players)
   const paginationHook = usePagination({
-    items: filteredPlayers,
+    items: visiblePlayers,
     itemsPerPage: 50,
     resetOnItemsChange: false
   })
 
   useEffect(() => {
     paginationHook.goToPage(1)
-  }, [searchFirstName, searchLastName]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [searchFirstName, searchLastName, mobileFilterMode, isMobile]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Stable reference for auto-save — only changes when scores actually change
   const autoSaveData = useMemo(
@@ -1039,10 +1179,52 @@ export default function ScoresPage() {
     return 'score-input'
   }
 
-  // Debounced save function
-  const debouncedSaves = new Map<string, NodeJS.Timeout>()
-  
-  const updateScore = async (playerId: number, field: string, value: number | undefined) => {
+  useEffect(() => {
+    return () => {
+      debouncedSavesRef.current.forEach(timeoutId => clearTimeout(timeoutId))
+      debouncedSavesRef.current.clear()
+    }
+  }, [])
+
+  const markRowSaved = (playerId: number) => {
+    setRowSaveState(prev => ({ ...prev, [playerId]: 'saved' }))
+    window.setTimeout(() => {
+      setRowSaveState(prev => (prev[playerId] === 'saved' ? { ...prev, [playerId]: 'idle' } : prev))
+    }, 1400)
+  }
+
+  const focusNextMobileInput = useCallback((playerId: number, field: string) => {
+    const fields = ['game1_scratch', 'game2_scratch', 'game3_scratch']
+    const currentFieldIndex = fields.indexOf(field)
+    const currentPlayerIndex = paginationHook.paginatedItems.findIndex(player => player.id === playerId)
+
+    let nextField: string | null = null
+    let nextPlayerId: number | null = null
+
+    if (currentFieldIndex < fields.length - 1) {
+      nextField = fields[currentFieldIndex + 1]
+      nextPlayerId = playerId
+    } else if (currentPlayerIndex >= 0 && currentPlayerIndex < paginationHook.paginatedItems.length - 1) {
+      nextField = fields[0]
+      nextPlayerId = paginationHook.paginatedItems[currentPlayerIndex + 1].id
+    }
+
+    if (!nextField || !nextPlayerId) return
+    const target = document.querySelector(`input[data-mobile-player="${nextPlayerId}"][data-mobile-field="${nextField}"]`) as HTMLInputElement | null
+    if (target) {
+      target.focus()
+      target.select()
+    }
+  }, [paginationHook.paginatedItems])
+
+  const updateScore = async (
+    playerId: number,
+    field: string,
+    value: number | undefined,
+    options: { trackHistory?: boolean; moveNextOnMobile?: boolean } = {}
+  ) => {
+    const { trackHistory = true, moveNextOnMobile = false } = options
+
     if (isScoresLocked) {
       addToast({ message: 'Scores are locked. Unlock scores to edit.', type: 'warning', duration: 2500 })
       return
@@ -1059,6 +1241,13 @@ export default function ScoresPage() {
       })
       return
     }
+
+    if (trackHistory) {
+      const previousValue = playersRef.current.find(player => player.id === playerId)?.scores?.[field as keyof ScoreData] as number | undefined
+      setLastEdit({ playerId, field, previous: previousValue })
+    }
+
+    setRowSaveState(prev => ({ ...prev, [playerId]: 'saving' }))
     
     // Update local state first for immediate UI feedback
     setPlayers(prev => prev.map(player => {
@@ -1086,8 +1275,12 @@ export default function ScoresPage() {
       return player
     }))
 
+    if (isMobile && moveNextOnMobile) {
+      window.setTimeout(() => focusNextMobileInput(playerId, field), 0)
+    }
+
     // Clear existing timeout for this field
-    const existingTimeout = debouncedSaves.get(saveKey)
+    const existingTimeout = debouncedSavesRef.current.get(saveKey)
     if (existingTimeout) {
       clearTimeout(existingTimeout)
     }
@@ -1099,11 +1292,13 @@ export default function ScoresPage() {
         const tournamentId = getSelectedTournamentId()
         
         if (!token || !tournamentId || !selectedSquadRef.current) {
+          setRowSaveState(prev => ({ ...prev, [playerId]: 'failed' }))
           return
         }
 
-        const player = players.find(playerItem => playerItem.id === playerId)
+        const player = playersRef.current.find(playerItem => playerItem.id === playerId)
         if (!player) {
+          setRowSaveState(prev => ({ ...prev, [playerId]: 'failed' }))
           return
         }
 
@@ -1132,6 +1327,7 @@ export default function ScoresPage() {
           setPendingSaves(prev => [...prev, { token, data: scoreData }])
           // Store in localStorage as backup
           localStorage.setItem(`pending_save_${Date.now()}`, JSON.stringify({ token, data: scoreData }))
+          setRowSaveState(prev => ({ ...prev, [playerId]: 'failed' }))
           return
         }
 
@@ -1145,6 +1341,7 @@ export default function ScoresPage() {
         })
         
         if (response.ok) {
+          markRowSaved(playerId)
           // Show success toast for perfect games
           if (value === 300) {
             addToast({
@@ -1168,7 +1365,8 @@ export default function ScoresPage() {
         logger.error('Failed to save score:', error)
         
         // Show error toast
-        const currentPlayer = players.find(playerItem => playerItem.id === playerId);
+        const currentPlayer = playersRef.current.find(playerItem => playerItem.id === playerId);
+        setRowSaveState(prev => ({ ...prev, [playerId]: 'failed' }))
         addToast({
           message: `Failed to save score for ${currentPlayer?.firstName || 'player'} ${currentPlayer?.lastName || ''}. Please try again.`,
           type: 'error',
@@ -1176,11 +1374,48 @@ export default function ScoresPage() {
         })
       }
       
-      debouncedSaves.delete(saveKey)
+      debouncedSavesRef.current.delete(saveKey)
     }, 500)
     
-    debouncedSaves.set(saveKey, timeoutId)
+    debouncedSavesRef.current.set(saveKey, timeoutId)
   }
+
+  const retryPlayerSave = useCallback(async (player: Player) => {
+    const token = localStorage.getItem('token')
+    const tournamentId = getSelectedTournamentId()
+    if (!token || !tournamentId || !selectedSquadRef.current) return
+
+    setRowSaveState(prev => ({ ...prev, [player.id]: 'saving' }))
+    try {
+      const response = await apiFetch(API('/api/v1/scores/'), {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          player_id: player.id,
+          tournament_id: parseInt(tournamentId, 10),
+          squad_id: selectedSquadRef.current.id,
+          game1_scratch: player.scores?.game1_scratch,
+          game2_scratch: player.scores?.game2_scratch,
+          game3_scratch: player.scores?.game3_scratch,
+        })
+      })
+
+      if (!response.ok) throw new Error(`Retry failed: ${response.status}`)
+      markRowSaved(player.id)
+    } catch (error) {
+      setRowSaveState(prev => ({ ...prev, [player.id]: 'failed' }))
+      logger.error('Retry score save failed', { error, playerId: player.id })
+    }
+  }, [])
+
+  const undoLastEdit = useCallback(() => {
+    if (!lastEdit) return
+    void updateScore(lastEdit.playerId, lastEdit.field, lastEdit.previous, { trackHistory: false, moveNextOnMobile: false })
+    setLastEdit(null)
+  }, [lastEdit])
 
   const calculateTotalScratch = (player: Player) => {
     const scores = player.scores || {}
@@ -1207,6 +1442,83 @@ export default function ScoresPage() {
     const scratch = played.reduce((sum, s) => sum + (s || 0), 0)
     return scratch + (player.handicap * played.length)
   }
+
+  const rowStateCounts = useMemo(() => {
+    const values = Object.values(rowSaveState)
+    return {
+      saving: values.filter(state => state === 'saving').length,
+      failed: values.filter(state => state === 'failed').length,
+    }
+  }, [rowSaveState])
+
+  const saveAllVisibleScores = useCallback(async () => {
+    const token = localStorage.getItem('token')
+    const tournamentId = getSelectedTournamentId()
+    const squad = selectedSquadRef.current
+
+    if (!token || !tournamentId || !squad || paginationHook.paginatedItems.length === 0) return
+
+    paginationHook.paginatedItems.forEach(player => {
+      setRowSaveState(prev => ({ ...prev, [player.id]: 'saving' }))
+    })
+
+    const results = await Promise.allSettled(
+      paginationHook.paginatedItems.map(async player => {
+        const response = await apiFetch(API('/api/v1/scores/'), {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            player_id: player.id,
+            tournament_id: parseInt(tournamentId, 10),
+            squad_id: squad.id,
+            game1_scratch: player.scores?.game1_scratch,
+            game2_scratch: player.scores?.game2_scratch,
+            game3_scratch: player.scores?.game3_scratch,
+          })
+        })
+
+        if (!response.ok) throw new Error(`Save failed for ${player.id}`)
+        markRowSaved(player.id)
+      })
+    )
+
+    let failed = 0
+    results.forEach((result, index) => {
+      if (result.status === 'rejected') {
+        failed += 1
+        const playerId = paginationHook.paginatedItems[index]?.id
+        if (playerId) {
+          setRowSaveState(prev => ({ ...prev, [playerId]: 'failed' }))
+        }
+      }
+    })
+
+    if (failed > 0) {
+      addToast({ message: `Saved with ${failed} failure${failed === 1 ? '' : 's'}.`, type: 'warning', duration: 3500 })
+      return
+    }
+
+    addToast({ message: 'All visible scores saved.', type: 'success', duration: 2500 })
+  }, [addToast, paginationHook.paginatedItems])
+
+  const markScoresComplete = useCallback(() => {
+    const missing = players
+      .filter(player => hasMissingScore(player))
+      .map(player => `${player.firstName} ${player.lastName}`.trim())
+    setMissingScoreNames(missing)
+    setShowCalcPayoutsConfirm(true)
+  }, [hasMissingScore, players])
+
+  const getRowStateLabel = useCallback((playerId: number) => {
+    const state = rowSaveState[playerId] || 'idle'
+    if (state === 'saving') return 'Saving'
+    if (state === 'saved') return 'Saved'
+    if (state === 'failed') return 'Failed'
+    return 'Ready'
+  }, [rowSaveState])
 
   // Keyboard navigation helper
   const handleKeyDown = (e: React.KeyboardEvent, playerId: number, field: string) => {

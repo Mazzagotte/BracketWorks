@@ -157,6 +157,8 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
               value={formData.firstName}
               onChange={(e) => handleInputChange('firstName', e.target.value)}
               className={styles.fieldInput}
+              placeholder="First Name *"
+              aria-label="First Name"
               required
             />
           </div>
@@ -168,6 +170,8 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
               value={formData.lastName}
               onChange={(e) => handleInputChange('lastName', e.target.value)}
               className={styles.fieldInput}
+              placeholder="Last Name *"
+              aria-label="Last Name"
               required
             />
           </div>
@@ -180,7 +184,8 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
               onChange={(e) => handleInputChange('usbc', e.target.value)}
               className={styles.fieldInput}
               maxLength={8}
-              placeholder="8 digits"
+              placeholder="USBC Number"
+              aria-label="USBC Number"
             />
           </div>
 
@@ -194,6 +199,8 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
               className={styles.fieldInput}
               min="0"
               max="300"
+              placeholder="Average"
+              aria-label="Average"
             />
           </div>
 
@@ -204,7 +211,8 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
               value={formData.lane}
               onChange={(e) => handleInputChange('lane', e.target.value)}
               className={styles.fieldInput}
-              placeholder="A1"
+              placeholder="Lane (e.g. A1)"
+              aria-label="Lane"
             />
           </div>
 
@@ -214,6 +222,7 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
               value={formData.division}
               onChange={(e) => handleInputChange('division', e.target.value)}
               className={styles.fieldInput}
+              aria-label="Division"
             >
               {divisionOptions.map(option => (
                 <option key={option} value={option}>{option}</option>
