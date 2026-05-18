@@ -23,7 +23,9 @@ export const metadata: Metadata = {
   title: 'BracketWorks - Professional Bowling Tournament Manager',
   description: 'Create and manage bowling tournaments with smart brackets, live scoring, and automatic payouts. Professional tournament management made simple.',
   metadataBase: new URL('https://bracketworks.app'),
-  canonical: 'https://bracketworks.app',
+  alternates: {
+    canonical: 'https://bracketworks.app',
+  },
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: 'any' },
@@ -70,8 +72,9 @@ export const metadata: Metadata = {
   category: 'Sports',
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
-  const pathname = headers().get('x-pathname');
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  const headerStore = await headers();
+  const pathname = headerStore.get('x-pathname');
   const publicRoute = isPublicRoute(pathname);
 
   return (
