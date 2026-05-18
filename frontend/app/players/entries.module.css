@@ -1664,9 +1664,9 @@
   .mobileSummaryChips {
     display: flex;
     gap: 6px;
-    padding: 0 12px;
+    padding: 12px 12px 0;
     flex-wrap: wrap;
-    margin-bottom: 12px;
+    margin-bottom: 0;
   }
 
   .mobileSummaryChip {
@@ -1685,56 +1685,61 @@
   }
 
   .summaryGrid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    justify-content: stretch;
-    gap: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
     padding: 12px;
   }
 
   .statBox {
-    min-height: 90px;
-    padding: 14px 10px;
-    min-width: auto;
-    flex: none;
+    min-height: 100px;
+    padding: 16px 12px;
+    min-width: 140px;
+    flex: 0 1 calc(50% - 6px);
+    max-width: 180px;
   }
 
-  .statBox:last-child {
-    grid-column: 1 / -1;
+  .statBoxRevenue {
+    flex: 0 1 calc(50% - 6px);
+    max-width: 180px;
   }
 
   .statValue {
-    font-size: 1.6rem;
+    font-size: 1.5rem;
   }
 
   .statLabel {
-    font-size: 0.68rem;
+    font-size: 0.7rem;
   }
 
   .statDetail {
-    font-size: 0.65rem;
+    font-size: 0.66rem;
   }
 
   .statRefund {
-    font-size: 0.6rem;
+    font-size: 0.62rem;
     padding: 2px 8px;
   }
 }
 
 @media (max-width: 640px) {
   .summaryGrid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-    padding: 10px;
+    gap: 10px;
+    padding: 12px 10px;
   }
 
   .statBox {
-    min-height: 84px;
-    padding: 12px 8px;
+    min-height: 95px;
+    padding: 14px 10px;
+    min-width: 120px;
+    flex: 0 1 calc(50% - 5px);
+    max-width: 160px;
   }
 
-  .statBox:last-child {
-    grid-column: 1 / -1;
+  .statBoxRevenue {
+    flex: 0 1 calc(50% - 5px);
+    max-width: 160px;
   }
 
   .statValue {
@@ -1742,11 +1747,16 @@
   }
 
   .statLabel {
-    font-size: 0.65rem;
+    font-size: 0.68rem;
   }
 
   .statDetail {
-    font-size: 0.62rem;
+    font-size: 0.64rem;
+  }
+
+  .statRefund {
+    font-size: 0.6rem;
+    padding: 1px 6px;
   }
 }
 
@@ -1756,14 +1766,14 @@
   }
 
   .summaryTitle {
-    padding: 10px 12px;
+    padding: 11px 13px;
     font-size: 0.9rem;
   }
 
   .mobileSummaryChips {
-    gap: 4px;
-    padding: 0 10px;
-    margin-bottom: 10px;
+    gap: 5px;
+    padding: 10px 10px 8px;
+    margin-bottom: 0;
   }
 
   .mobileSummaryChip {
@@ -1773,14 +1783,21 @@
   }
 
   .summaryGrid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 6px;
-    padding: 8px;
+    gap: 8px;
+    padding: 10px;
   }
 
   .statBox {
-    min-height: 78px;
-    padding: 10px 6px;
+    min-height: 88px;
+    padding: 12px 8px;
+    min-width: 110px;
+    flex: 0 1 calc(50% - 4px);
+    max-width: 145px;
+  }
+
+  .statBoxRevenue {
+    flex: 0 1 calc(50% - 4px);
+    max-width: 145px;
   }
 
   .statValue {
@@ -1788,16 +1805,18 @@
   }
 
   .statLabel {
-    font-size: 0.62rem;
+    font-size: 0.65rem;
   }
 
   .statDetail {
-    font-size: 0.6rem;
+    font-size: 0.62rem;
   }
 
   .statRefund {
     font-size: 0.58rem;
     padding: 1px 6px;
+  }
+}
   }
 }
 
@@ -2450,7 +2469,7 @@
   justify-content: space-between;
   align-items: center;
   gap: 10px;
-  padding: 10px;
+  padding: 8px;
 }
 
 .mobilePlayerCardTop {
@@ -2537,14 +2556,14 @@
 .mobilePlayerActionsRow {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  padding-top: 8px;
+  gap: 6px;
+  padding-top: 6px;
   border-top: 1px solid var(--color-border-soft);
 }
 
 .mobilePlayerActionBtn,
 .mobilePlayerActionBtnDanger {
-  min-height: 40px;
+  min-height: 36px;
   border-radius: 10px;
   border: 1px solid var(--color-border-light);
   font-size: 12px;
@@ -2570,7 +2589,7 @@
 
 .mobilePlayerDetails {
   border-top: 1px solid var(--color-border-soft);
-  padding: 10px;
+  padding: 8px;
   display: flex;
   flex-direction: column;
   gap: 8px;
