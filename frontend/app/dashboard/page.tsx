@@ -383,6 +383,9 @@ export default function TournamentDashboard() {
 
   // All hooks must be called before conditional returns (React rules of hooks)
   const [isAdmin, setIsAdmin] = useState(false);
+  const [tournament, setTournament] = useState<Tournament | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [createMode, setCreateMode] = useState(false);
   const [selectedSquadId, setSelectedSquadId] = useState<number | null>(null);
   const [squads, setSquads] = useState<Squad[]>([]);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -840,10 +843,6 @@ export default function TournamentDashboard() {
       }
     }, 'immediate')
   }
-  const [tournament, setTournament] = useState<Tournament | null>(null);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [createMode, setCreateMode] = useState(false);
-
   // Lock body scroll when no tournament is loaded
   useEffect(() => {
     if (!tournament) {
