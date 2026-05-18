@@ -634,14 +634,6 @@ input[type='number'] { appearance: textfield; -moz-appearance: textfield; }
 .total-score { background: var(--color-brand-bg-subtle) !important; }
 .total-score { font-weight: var(--font-weight-semibold); color: var(--color-primary); }
 
-/* Mobile table: tighter cell padding on narrow screens */
-@media (max-width: 600px) {
-  .entries-header-cell { padding: 3px 1px !important; font-size: 11px; }
-  .entries-cell { padding: 2px 1px !important; }
-  .players-table th { padding: 2px !important; }
-  .players-table td { padding: 1px 2px !important; }
-}
-
 /* Status / badges */
 .payment-badge { display: inline-block; padding: 2px 8px; border-radius: var(--radius-full); font-size: 10px; font-weight: var(--font-weight-bold); cursor: pointer; user-select: none; transition: all 0.2s ease; }
 .payment-badge--paid { background: var(--color-success); color: var(--color-white); }

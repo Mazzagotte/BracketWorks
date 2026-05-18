@@ -1,10 +1,11 @@
-import React, { memo, useMemo, useState } from 'react';
+import React, { memo, useEffect, useMemo, useState } from 'react';
 
 import { PlayersTableProps, SidePotsSettings } from '../types';
 import { OptimizedTableRow, OptimizedTableCell } from '../../lib/performance';
 import { handleTableArrowNavigation } from '../../lib/tableKeyboard';
 import { divisionOptions, isProgramAllowedForDivision, normalizeDivision } from '../../lib/bracketPrograms';
 import { SortableHeader, SortConfig } from '../../components/SortableHeader';
+import styles from '../entries.module.css';
 
 const PlayersTable = memo(({ 
   players, 
@@ -19,6 +20,19 @@ const PlayersTable = memo(({
     [sidePots]
   );
   const [sortConfig, setSortConfig] = useState<SortConfig>({ column: 'lane', direction: 'asc' });
+  const [isMobileLayout, setIsMobileLayout] = useState(false);
+  const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({});
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const mediaQuery = window.matchMedia('(max-width: 900px)');
+    const syncLayout = () => setIsMobileLayout(mediaQuery.matches);
+    syncLayout();
+
+    mediaQuery.addEventListener('change', syncLayout);
+    return () => mediaQuery.removeEventListener('change', syncLayout);
+  }, []);
 
   const maxUsbcChars = useMemo(() => {
     const maxChars = players.reduce((maxValue, player) => Math.max(maxValue, String(player.usbc || '').trim().length), 0)
@@ -109,6 +123,163 @@ const PlayersTable = memo(({
     onUpdatePlayer(playerId, field, newValue);
   };
 
+  const toggleMobileCard = (playerId: number) => {
+    setExpandedRows(previous => ({ ...previous, [playerId]: !previous[playerId] }));
+  };
+
+  const renderMobileCard = (player: typeof players[number]) => {
+    const totalEntries = Object.values(player.bracketEntries || {}).reduce((sum, count) => sum + Number(count || 0), 0);
+    const needsEntryFee = totalEntries > 0 && player.totalCost <= 0;
+    const isPaid = !needsEntryFee && player.amountPaid >= player.totalCost;
+    const isExpanded = Boolean(expandedRows[player.id]);
+    const playerName = `${player.firstName || ''} ${player.lastName || ''}`.trim() || 'Unnamed Player';
+    const cardStatusClass = needsEntryFee
+      ? styles.mobilePlayerCardSetFee
+      : isPaid
+        ? styles.mobilePlayerCardPaid
+        : styles.mobilePlayerCardDue;
+    const statusPillClass = needsEntryFee
+      ? styles.mobileStatusPillSetFee
+      : isPaid
+        ? styles.mobileStatusPillPaid
+        : styles.mobileStatusPillDue;
+
+    return (
+      <article key={player.id} className={`${styles.mobilePlayerCard} ${cardStatusClass}`}>
+        <div className={styles.mobilePlayerCardTop}>
+          <div className={styles.mobilePlayerIdentity}>
+            <h4 className={styles.mobilePlayerName}>{playerName}</h4>
+            <div className={styles.mobilePlayerMeta}>{normalizeDivision(player.division)} · Lane {player.lane || '-'}</div>
+          </div>
+
+          <div className={styles.mobilePlayerTotals}>
+            <span className={styles.mobilePlayerCost}>${player.totalCost.toFixed(2)}</span>
+            <span className={`${styles.mobileStatusPill} ${statusPillClass}`}>
+              {needsEntryFee ? 'SET FEE' : isPaid ? 'PAID' : 'DUE'}
+            </span>
+          </div>
+        </div>
+
+        <div className={styles.mobilePlayerActionsRow}>
+          <button
+            type="button"
+            className={styles.mobilePlayerActionBtn}
+            onClick={() => {
+              if (needsEntryFee) return;
+              const newPaidAmount = isPaid ? 0 : player.totalCost;
+              handleCellEdit(player.id, 'amountPaid', newPaidAmount.toString());
+            }}
+            disabled={needsEntryFee}
+          >
+            Toggle Paid
+          </button>
+          <button
+            type="button"
+            className={styles.mobilePlayerActionBtnSecondary}
+            onClick={() => toggleMobileCard(player.id)}
+            aria-expanded={isExpanded}
+            aria-controls={`mobile-player-details-${player.id}`}
+          >
+            {isExpanded ? 'Hide Details' : 'Edit Details'}
+          </button>
+          <button
+            type="button"
+            className={styles.mobilePlayerActionBtnDanger}
+            onClick={() => onDeletePlayer(player.id)}
+          >
+            Delete
+          </button>
+        </div>
+
+        {isExpanded && (
+          <div id={`mobile-player-details-${player.id}`} className={styles.mobilePlayerDetails}>
+            <div className={styles.mobilePlayerFieldGrid}>
+              <label className={styles.mobilePlayerField}>
+                <span>USBC</span>
+                <input className="entries-input entries-control" type="text" value={player.usbc || ''} onChange={event => handleCellEdit(player.id, 'usbc', event.target.value)} />
+              </label>
+
+              <label className={styles.mobilePlayerField}>
+                <span>First Name</span>
+                <input className="entries-input entries-control" type="text" value={player.firstName || ''} onChange={event => handleCellEdit(player.id, 'firstName', event.target.value)} />
+              </label>
+
+              <label className={styles.mobilePlayerField}>
+                <span>Last Name</span>
+                <input className="entries-input entries-control" type="text" value={player.lastName || ''} onChange={event => handleCellEdit(player.id, 'lastName', event.target.value)} />
+              </label>
+
+              <label className={styles.mobilePlayerField}>
+                <span>Division</span>
+                <select className="entries-select entries-control" value={normalizeDivision(player.division)} onChange={event => handleCellEdit(player.id, 'division', event.target.value)}>
+                  {divisionOptions.map(option => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label className={styles.mobilePlayerField}>
+                <span>Lane</span>
+                <input className="entries-input entries-control" type="text" value={player.lane || ''} onChange={event => handleCellEdit(player.id, 'lane', event.target.value)} />
+              </label>
+
+              <label className={styles.mobilePlayerField}>
+                <span>Average</span>
+                <input className="entries-input entries-control" type="text" value={player.average} onChange={event => handleCellEdit(player.id, 'average', event.target.value)} />
+              </label>
+            </div>
+
+            {bracketPrograms.length > 0 && (
+              <div className={styles.mobileProgramSection}>
+                <div className={styles.mobileSectionTitle}>Bracket Entries</div>
+                <div className={styles.mobileProgramGrid}>
+                  {bracketPrograms.map(program => {
+                    const isAllowed = isProgramAllowedForDivision(program.division, player.division);
+                    const visibleValue = isAllowed ? (player.bracketEntries?.[program.key] || 0) : 0;
+
+                    return (
+                      <label key={program.key} className={styles.mobilePlayerField}>
+                        <span>{program.name}</span>
+                        <input
+                          className="entries-input entries-control"
+                          type="text"
+                          value={visibleValue}
+                          disabled={!isAllowed}
+                          onChange={event => handleBracketEntryEdit(player.id, program.key, event.target.value)}
+                        />
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {enabledPots.length > 0 && (
+              <div className={styles.mobileProgramSection}>
+                <div className={styles.mobileSectionTitle}>Side Pots</div>
+                <div className={styles.mobileSidePotList}>
+                  {enabledPots.map(pot => {
+                    const checked = Boolean(player.sidePotEntries?.[pot.key]);
+                    return (
+                      <label key={pot.key} className={styles.mobileSidePotToggle}>
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => handleSidePotToggle(player.id, pot.key, checked)}
+                        />
+                        <span>{pot.name}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </article>
+    );
+  };
+
   if (players.length === 0) {
     return (
       <div className="entries-empty">
@@ -118,7 +289,19 @@ const PlayersTable = memo(({
   }
 
   return (
-    <div className="entries-container">
+    <div className={`entries-container ${isMobileLayout ? styles.mobileEntriesContainer : ''}`}>
+      {isMobileLayout ? (
+        <>
+          {selectedSquad && (
+            <div className={styles.mobileSquadBanner}>
+              Showing players for: {selectedSquad.date} — {selectedSquad.time}
+            </div>
+          )}
+          <div className={styles.mobilePlayersList}>
+            {sortedPlayers.map(player => renderMobileCard(player))}
+          </div>
+        </>
+      ) : (
       <table className="entries-table" onKeyDownCapture={handleTableArrowNavigation}>
         <thead>
           {selectedSquad && (
@@ -324,6 +507,7 @@ const PlayersTable = memo(({
           )})}
         </tbody>
       </table>
+      )}
     </div>
   );
 });

@@ -2218,3 +2218,150 @@
     gap: 10px;
   }
 }
+
+  .settingsHeaderToggle {
+    width: 100%;
+    border: 0;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .settingsHeaderToggle:focus-visible {
+    outline: 2px solid var(--color-border-hover);
+    outline-offset: -2px;
+  }
+
+  .settingsTitleBlock {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .settingsMeta {
+    font-size: 12px;
+    color: var(--color-text-muted-subtle);
+    font-weight: 600;
+  }
+
+  .cardExpandIcon {
+    font-size: 22px;
+    line-height: 1;
+    color: var(--color-primary);
+    font-weight: 600;
+  }
+
+  .cardQuickStats {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px 8px;
+    border: 1px solid var(--color-border-faint);
+    border-radius: 8px;
+    background: var(--color-surface-translucent);
+  }
+
+  .cardQuickStatsRow {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .cardQuickStatItem {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px 8px;
+    border: 1px solid var(--color-border-faint);
+    border-radius: 8px;
+    background: var(--color-surface-translucent);
+  }
+
+  .cardPrimaryStat {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .cardSecondaryStat {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-text-muted-subtle);
+  }
+
+  @media (max-width: 480px) {
+    .cardsContainer {
+      gap: 14px;
+    }
+
+    .bracketSettingsCard,
+    .squadSelectionCard {
+      border-radius: 14px;
+    }
+
+    .settingsHeader {
+      padding: 12px 14px 10px;
+      gap: 8px;
+    }
+
+    .settingsTitle {
+      font-size: 18px;
+      line-height: 1.15;
+    }
+
+    .settingsMeta {
+      font-size: 11px;
+    }
+
+    .cardExpandIcon {
+      font-size: 20px;
+    }
+
+    .settingsContent {
+      padding: 10px 12px 12px;
+      gap: 6px;
+    }
+
+    .programCard {
+      padding: 8px 10px;
+    }
+
+    .squadGrid {
+      gap: 6px;
+      padding: 10px 12px 12px;
+    }
+
+    .squadPillEnhanced {
+      padding: 10px 12px;
+    }
+
+    .squadDate {
+      font-size: 14px;
+    }
+
+    .squadTimeSlot {
+      font-size: 12px;
+    }
+
+    .cardQuickStatsRow {
+      gap: 6px;
+    }
+
+    .cardQuickStats,
+    .cardQuickStatItem {
+      padding: 5px 7px;
+    }
+
+    .cardPrimaryStat {
+      font-size: 13px;
+    }
+
+    .cardSecondaryStat {
+      font-size: 10px;
+    }
+  }

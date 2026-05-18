@@ -63,6 +63,10 @@ const formatNumberInput = (numericValue: number): string => {
   return numericValue === 0 ? '' : Math.round(numericValue).toLocaleString('en-US');
 };
 
+const formatCurrencyLabel = (numericValue: number): string => {
+  return `$${Math.round(numericValue || 0).toLocaleString('en-US')}`;
+};
+
 const createDefaultBracketSettings = (tournamentId = 0): BracketSettings => ({
   tournament_id: tournamentId,
   bracket_size: 8,
@@ -97,6 +101,24 @@ type TournamentBootstrapResponse = {
   squads: Squad[];
   selected_squad: { squad_id: number } | null;
   bracket_settings: Partial<BracketSettings> | null;
+};
+
+type DashboardCardKey = 'squadSelection' | 'bracketSettings' | 'byeSettings' | 'optionalBrackets' | 'sidePots';
+
+const collapsedMobileCards: Record<DashboardCardKey, boolean> = {
+  squadSelection: false,
+  bracketSettings: false,
+  byeSettings: false,
+  optionalBrackets: false,
+  sidePots: false,
+};
+
+const expandedDesktopCards: Record<DashboardCardKey, boolean> = {
+  squadSelection: true,
+  bracketSettings: true,
+  byeSettings: true,
+  optionalBrackets: true,
+  sidePots: true,
 };
 
 function getDatesBetween(startDate: string, endDate: string): string[] {
@@ -398,11 +420,23 @@ export default function TournamentDashboard() {
 
   // Mobile detection state
   const [isMobile, setIsMobile] = useState(false);
+  const [expandedCards, setExpandedCards] = useState<Record<DashboardCardKey, boolean>>(expandedDesktopCards);
+
+  const toggleCard = (cardKey: DashboardCardKey) => {
+    if (!isMobile) return;
+    setExpandedCards(previous => ({ ...previous, [cardKey]: !previous[cardKey] }));
+  };
+
+  const isCardExpanded = (cardKey: DashboardCardKey) => !isMobile || expandedCards[cardKey];
 
   // Keep ref in sync so timeout callbacks always read the latest settings
   useEffect(() => {
     bracketSettingsRef.current = bracketSettings;
   }, [bracketSettings]);
+
+  useEffect(() => {
+    setExpandedCards(isMobile ? collapsedMobileCards : expandedDesktopCards);
+  }, [isMobile, tournament?.id]);
 
   const calculateHouseAmount = (settings: Pick<BracketSettings, 'bracket_size' | 'default_entry_fee' | 'first_place_amount' | 'second_place_amount'>) => {
     const bracketSize = Number(settings.bracket_size ?? 0);
@@ -1287,6 +1321,11 @@ export default function TournamentDashboard() {
 
   const selectedSquad = squads.find(s => s.id === selectedSquadId)
   const squadLabel = selectedSquad ? ` · ${[selectedSquad.date, selectedSquad.time].filter(Boolean).join(' ')}` : ''
+  const enabledOptionalProgramsCount = normalizeBracketPrograms(bracketSettings.bracket_programs, bracketSettings.default_entry_fee)
+    .filter(program => program.key !== 'handicap' && program.key !== 'scratch' && program.key !== 'reverse' && Boolean(program.enabled)).length;
+  const enabledByeProgramsCount = normalizeBracketPrograms(bracketSettings.bracket_programs, bracketSettings.default_entry_fee)
+    .filter(program => (program.key === 'handicap' || program.key === 'scratch' || Boolean(program.enabled)) && Boolean(program.allow_byes ?? bracketSettings.allow_byes ?? false)).length;
+  const enabledSidePotsCount = sidePots.pots.filter(pot => pot.enabled).length;
 
   useEffect(() => {
     if (selectedSquadId !== null) {
@@ -1408,11 +1447,30 @@ export default function TournamentDashboard() {
             {/* Squad Selection Card */}
             {tournament && squads.length > 0 && (
               <div className={`${mobileStyles.squadSelectionCard} ${mobileStyles.squadSelectionCompactCard}`}>
-                <div className={mobileStyles.settingsHeader}>
-                  <h2 className={mobileStyles.settingsTitle}>Squad Selection</h2>
-                </div>
-                
-                <div className={mobileStyles.squadGrid}>
+                <button
+                  type="button"
+                  className={`${mobileStyles.settingsHeader} ${mobileStyles.settingsHeaderToggle}`}
+                  onClick={() => toggleCard('squadSelection')}
+                  aria-expanded={isCardExpanded('squadSelection')}
+                  aria-controls="dashboard-squad-selection-content"
+                >
+                  <div className={mobileStyles.settingsTitleBlock}>
+                    <h2 className={mobileStyles.settingsTitle}>Squad Selection</h2>
+                    <div className={mobileStyles.settingsMeta}>{squads.length} squads configured</div>
+                  </div>
+                  {isMobile && (
+                    <span className={mobileStyles.cardExpandIcon} aria-hidden="true">
+                      {isCardExpanded('squadSelection') ? '−' : '+'}
+                    </span>
+                  )}
+                </button>
+
+                {isCardExpanded('squadSelection') && (
+                <div id="dashboard-squad-selection-content" className={mobileStyles.squadGrid}>
+                  <div className={mobileStyles.cardQuickStats}>
+                    <span className={mobileStyles.cardPrimaryStat}>{selectedSquad ? [selectedSquad.date, selectedSquad.time].filter(Boolean).join(' ') : 'No squad selected'}</span>
+                    <span className={mobileStyles.cardSecondaryStat}>Active Squad</span>
+                  </div>
                   {squads.map((squad) => {
                     const isSelected = selectedSquadId === squad.id;
                     
@@ -1450,17 +1508,43 @@ export default function TournamentDashboard() {
                     );
                   })}
                 </div>
+                )}
               </div>
             )}
 
             {/* Bracket Settings Card */}
             {tournament && (
               <div className={`${mobileStyles.bracketSettingsCard} ${mobileStyles.mainBracketSettingsCard}`}>
-                <div className={mobileStyles.settingsHeader}>
-                  <h2 className={mobileStyles.settingsTitle}>Bracket Settings</h2>
-                </div>
-                
-                <div className={mobileStyles.settingsContent}>
+                <button
+                  type="button"
+                  className={`${mobileStyles.settingsHeader} ${mobileStyles.settingsHeaderToggle}`}
+                  onClick={() => toggleCard('bracketSettings')}
+                  aria-expanded={isCardExpanded('bracketSettings')}
+                  aria-controls="dashboard-bracket-settings-content"
+                >
+                  <div className={mobileStyles.settingsTitleBlock}>
+                    <h2 className={mobileStyles.settingsTitle}>Bracket Settings</h2>
+                    <div className={mobileStyles.settingsMeta}>Primary tournament configuration</div>
+                  </div>
+                  {isMobile && (
+                    <span className={mobileStyles.cardExpandIcon} aria-hidden="true">
+                      {isCardExpanded('bracketSettings') ? '−' : '+'}
+                    </span>
+                  )}
+                </button>
+
+                {isCardExpanded('bracketSettings') && (
+                <div id="dashboard-bracket-settings-content" className={mobileStyles.settingsContent}>
+                  <div className={mobileStyles.cardQuickStatsRow}>
+                    <div className={mobileStyles.cardQuickStatItem}>
+                      <span className={mobileStyles.cardPrimaryStat}>{formatCurrencyLabel(bracketSettings.default_entry_fee)}</span>
+                      <span className={mobileStyles.cardSecondaryStat}>Entry Fee</span>
+                    </div>
+                    <div className={mobileStyles.cardQuickStatItem}>
+                      <span className={mobileStyles.cardPrimaryStat}>{formatCurrencyLabel(computedHouseAmount)}</span>
+                      <span className={mobileStyles.cardSecondaryStat}>House (Auto)</span>
+                    </div>
+                  </div>
                   {/* Main Settings Grid */}
                   <div className={mobileStyles.settingsGrid}>
                     
@@ -1649,16 +1733,32 @@ export default function TournamentDashboard() {
                   </div>
 
                 </div>
+                )}
               </div>
             )}
 
             {tournament && (
               <div className={`${mobileStyles.bracketSettingsCard} ${mobileStyles.optionalBracketsCard}`}>
-                <div className={mobileStyles.settingsHeader}>
-                  <h2 className={mobileStyles.settingsTitle}>Bye Settings</h2>
-                </div>
+                <button
+                  type="button"
+                  className={`${mobileStyles.settingsHeader} ${mobileStyles.settingsHeaderToggle}`}
+                  onClick={() => toggleCard('byeSettings')}
+                  aria-expanded={isCardExpanded('byeSettings')}
+                  aria-controls="dashboard-bye-settings-content"
+                >
+                  <div className={mobileStyles.settingsTitleBlock}>
+                    <h2 className={mobileStyles.settingsTitle}>Bye Settings</h2>
+                    <div className={mobileStyles.settingsMeta}>{enabledByeProgramsCount} programs allow byes</div>
+                  </div>
+                  {isMobile && (
+                    <span className={mobileStyles.cardExpandIcon} aria-hidden="true">
+                      {isCardExpanded('byeSettings') ? '−' : '+'}
+                    </span>
+                  )}
+                </button>
 
-                <div className={mobileStyles.settingsContent}>
+                {isCardExpanded('byeSettings') && (
+                <div id="dashboard-bye-settings-content" className={mobileStyles.settingsContent}>
                   <div className={mobileStyles.programList}>
                     {(() => {
                       const visibleForByes = normalizeBracketPrograms(bracketSettings.bracket_programs, bracketSettings.default_entry_fee)
@@ -1685,16 +1785,32 @@ export default function TournamentDashboard() {
                     })()}
                   </div>
                 </div>
+                )}
               </div>
             )}
 
             {tournament && (
               <div className={`${mobileStyles.bracketSettingsCard} ${mobileStyles.optionalBracketsCard}`}>
-                <div className={mobileStyles.settingsHeader}>
-                  <h2 className={mobileStyles.settingsTitle}>Optional Brackets</h2>
-                </div>
+                <button
+                  type="button"
+                  className={`${mobileStyles.settingsHeader} ${mobileStyles.settingsHeaderToggle}`}
+                  onClick={() => toggleCard('optionalBrackets')}
+                  aria-expanded={isCardExpanded('optionalBrackets')}
+                  aria-controls="dashboard-optional-brackets-content"
+                >
+                  <div className={mobileStyles.settingsTitleBlock}>
+                    <h2 className={mobileStyles.settingsTitle}>Optional Brackets</h2>
+                    <div className={mobileStyles.settingsMeta}>{enabledOptionalProgramsCount} enabled</div>
+                  </div>
+                  {isMobile && (
+                    <span className={mobileStyles.cardExpandIcon} aria-hidden="true">
+                      {isCardExpanded('optionalBrackets') ? '−' : '+'}
+                    </span>
+                  )}
+                </button>
 
-                <div className={mobileStyles.settingsContent}>
+                {isCardExpanded('optionalBrackets') && (
+                <div id="dashboard-optional-brackets-content" className={mobileStyles.settingsContent}>
                   <div className={mobileStyles.programList}>
                     {(() => {
                       const optional = normalizeBracketPrograms(bracketSettings.bracket_programs, bracketSettings.default_entry_fee)
@@ -1721,16 +1837,42 @@ export default function TournamentDashboard() {
                     })()}
                   </div>
                 </div>
+                )}
               </div>
             )}
 
             {/* Side Pots Card */}
             {tournament && (
               <div className={`${mobileStyles.bracketSettingsCard} ${mobileStyles.sidePotsCard}`}>
-                <div className={mobileStyles.settingsHeader}>
-                  <h2 className={mobileStyles.settingsTitle}>Side Pots</h2>
-                </div>
-                <div className={mobileStyles.settingsContent}>
+                <button
+                  type="button"
+                  className={`${mobileStyles.settingsHeader} ${mobileStyles.settingsHeaderToggle}`}
+                  onClick={() => toggleCard('sidePots')}
+                  aria-expanded={isCardExpanded('sidePots')}
+                  aria-controls="dashboard-side-pots-content"
+                >
+                  <div className={mobileStyles.settingsTitleBlock}>
+                    <h2 className={mobileStyles.settingsTitle}>Side Pots</h2>
+                    <div className={mobileStyles.settingsMeta}>{enabledSidePotsCount} of {sidePots.pots.length} enabled</div>
+                  </div>
+                  {isMobile && (
+                    <span className={mobileStyles.cardExpandIcon} aria-hidden="true">
+                      {isCardExpanded('sidePots') ? '−' : '+'}
+                    </span>
+                  )}
+                </button>
+                {isCardExpanded('sidePots') && (
+                <div id="dashboard-side-pots-content" className={mobileStyles.settingsContent}>
+                  <div className={mobileStyles.cardQuickStatsRow}>
+                    <div className={mobileStyles.cardQuickStatItem}>
+                      <span className={mobileStyles.cardPrimaryStat}>{formatCurrencyLabel(sidePots.entry_fee)}</span>
+                      <span className={mobileStyles.cardSecondaryStat}>Entry Fee</span>
+                    </div>
+                    <div className={mobileStyles.cardQuickStatItem}>
+                      <span className={mobileStyles.cardPrimaryStat}>{formatCurrencyLabel(sidePots.prize_amount)}</span>
+                      <span className={mobileStyles.cardSecondaryStat}>Prize</span>
+                    </div>
+                  </div>
                   {/* Shared entry fee + prize */}
                   <div className={mobileStyles.sidePotSharedFee}>
                     <div className={mobileStyles.compactField}>
@@ -1784,6 +1926,7 @@ export default function TournamentDashboard() {
                     </div>
                   ))}
                 </div>
+                )}
               </div>
             )}
 
