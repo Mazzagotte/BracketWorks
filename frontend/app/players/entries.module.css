@@ -1693,50 +1693,59 @@
 
   .statBox {
     width: 100%;
-    min-height: 62px;
-    padding: 10px 12px;
+    min-height: 58px;
+    padding: 9px 12px;
     display: grid;
     grid-template-columns: auto 1fr;
-    align-items: center;
-    justify-content: stretch;
-    gap: 3px 10px;
+    grid-template-rows: auto auto auto;
+    align-items: start;
+    gap: 1px 10px;
     min-width: 0;
     flex: none;
   }
 
   .statBoxRevenue {
     order: -1;
-    min-height: 72px;
-    padding: 12px;
+    min-height: 68px;
+    padding: 11px 12px;
     background: linear-gradient(135deg, var(--color-brand-soft), var(--color-brand-tint-soft));
   }
 
   .statValue {
     font-size: 1.3rem;
-    grid-row: 1 / span 3;
+    grid-column: 1;
+    grid-row: 2 / span 2;
     align-self: center;
-    min-width: 2.7rem;
+    min-width: 2.5rem;
   }
 
   .statLabel {
-    font-size: 0.66rem;
-    align-self: end;
+    font-size: 0.7rem;
+    font-weight: 700;
+    grid-column: 1 / -1;
+    grid-row: 1;
+    align-self: start;
     text-align: left;
+    padding-bottom: 2px;
   }
 
   .statDetail {
-    font-size: 0.62rem;
+    font-size: 0.63rem;
     grid-column: 2;
+    grid-row: 2;
     justify-self: end;
+    align-self: end;
     text-align: right;
     white-space: nowrap;
   }
 
   .statRefund {
-    font-size: 0.58rem;
+    font-size: 0.6rem;
     padding: 2px 7px;
     grid-column: 2;
+    grid-row: 3;
     justify-self: end;
+    align-self: start;
     white-space: nowrap;
   }
 }
@@ -1748,13 +1757,13 @@
   }
 
   .statBox {
-    min-height: 58px;
-    padding: 9px 10px;
-    gap: 2px 8px;
+    min-height: 54px;
+    padding: 8px 10px;
+    gap: 1px 8px;
   }
 
   .statBoxRevenue {
-    min-height: 68px;
+    min-height: 64px;
   }
 
   .statValue {
@@ -1762,15 +1771,15 @@
   }
 
   .statLabel {
-    font-size: 0.61rem;
+    font-size: 0.65rem;
   }
 
   .statDetail {
-    font-size: 0.58rem;
+    font-size: 0.6rem;
   }
 
   .statRefund {
-    font-size: 0.6rem;
+    font-size: 0.58rem;
     padding: 1px 6px;
   }
 }
@@ -1803,13 +1812,13 @@
   }
 
   .statBox {
-    min-height: 54px;
-    padding: 8px 9px;
-    gap: 2px 7px;
+    min-height: 50px;
+    padding: 7px 9px;
+    gap: 1px 7px;
   }
 
   .statBoxRevenue {
-    min-height: 64px;
+    min-height: 60px;
   }
 
   .statValue {
@@ -1817,15 +1826,15 @@
   }
 
   .statLabel {
-    font-size: 0.58rem;
+    font-size: 0.62rem;
   }
 
   .statDetail {
-    font-size: 0.56rem;
+    font-size: 0.57rem;
   }
 
   .statRefund {
-    font-size: 0.58rem;
+    font-size: 0.56rem;
     padding: 1px 5px;
   }
 }
