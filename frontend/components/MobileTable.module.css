@@ -179,14 +179,3 @@
     display: none;
   }
 }
-
-/* Slow animations on touch devices */
-@media (hover: none) and (pointer: coarse) {
-  .mobileRow {
-    transition: all 0.5s ease;
-  }
-
-  .skeletonLoading {
-    animation: loading 2s infinite;
-  }
-}
