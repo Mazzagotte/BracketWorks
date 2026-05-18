@@ -1,0 +1,363 @@
+.container {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+/* Hero Section */
+.hero {
+  background: linear-gradient(135deg, #4f8cff 0%, #2c5aa0 100%);
+  color: white;
+  padding: 80px 20px;
+  text-align: center;
+  min-height: 600px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.heroContent {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.heroTitle {
+  font-size: 48px;
+  font-weight: 700;
+  margin: 0 0 24px 0;
+  line-height: 1.2;
+}
+
+.heroSubtitle {
+  font-size: 20px;
+  margin: 0 0 40px 0;
+  opacity: 0.95;
+  line-height: 1.6;
+}
+
+.heroCTA {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.button {
+  padding: 14px 32px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-block;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.buttonPrimary {
+  background-color: white;
+  color: #4f8cff;
+}
+
+.buttonPrimary:hover {
+  background-color: #f0f0f0;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.buttonSecondary {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 2px solid white;
+}
+
+.buttonSecondary:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+.buttonLarge {
+  padding: 16px 48px;
+  font-size: 18px;
+}
+
+/* Features Section */
+.features {
+  padding: 80px 20px;
+  background-color: #fdf8f4;
+}
+
+.featuresContainer {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.sectionTitle {
+  font-size: 40px;
+  font-weight: 700;
+  text-align: center;
+  margin: 0 0 60px 0;
+  color: #1a1a1a;
+}
+
+.featureGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 40px;
+  margin-bottom: 60px;
+}
+
+.featureCard {
+  background: white;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.featureCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.featureIcon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.featureCard h3 {
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+  color: #1a1a1a;
+}
+
+.featureCard p {
+  color: #666;
+  line-height: 1.6;
+  margin: 0;
+  font-size: 15px;
+}
+
+/* How It Works Section */
+.howItWorks {
+  padding: 80px 20px;
+  background-color: white;
+}
+
+.howItWorksContainer {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.stepsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 40px;
+}
+
+.step {
+  text-align: center;
+}
+
+.stepNumber {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #4f8cff 0%, #2c5aa0 100%);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0 auto 20px;
+}
+
+.step h3 {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+  color: #1a1a1a;
+}
+
+.step p {
+  color: #666;
+  line-height: 1.6;
+  margin: 0;
+  font-size: 15px;
+}
+
+/* Benefits Section */
+.benefits {
+  padding: 80px 20px;
+  background-color: #f5f5f5;
+}
+
+.benefitsContainer {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.benefitsList {
+  display: grid;
+  gap: 40px;
+}
+
+.benefit {
+  background: white;
+  padding: 30px;
+  border-radius: 8px;
+  border-left: 4px solid #4f8cff;
+}
+
+.benefit h3 {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+  color: #1a1a1a;
+}
+
+.benefit p {
+  color: #666;
+  line-height: 1.6;
+  margin: 0;
+  font-size: 15px;
+}
+
+/* CTA Section */
+.ctaSection {
+  padding: 80px 20px;
+  background: linear-gradient(135deg, #4f8cff 0%, #2c5aa0 100%);
+  color: white;
+  text-align: center;
+}
+
+.ctaContent {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.ctaSection h2 {
+  font-size: 40px;
+  font-weight: 700;
+  margin: 0 0 16px 0;
+}
+
+.ctaSection p {
+  font-size: 18px;
+  margin: 0 0 32px 0;
+  opacity: 0.95;
+  line-height: 1.6;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .heroTitle {
+    font-size: 36px;
+  }
+
+  .heroSubtitle {
+    font-size: 18px;
+  }
+
+  .heroCTA {
+    flex-direction: column;
+  }
+
+  .button {
+    width: 100%;
+  }
+
+  .sectionTitle {
+    font-size: 32px;
+    margin-bottom: 40px;
+  }
+
+  .featureGrid {
+    gap: 24px;
+  }
+
+  .featureCard {
+    padding: 24px;
+  }
+
+  .featureIcon {
+    font-size: 40px;
+  }
+
+  .featureCard h3 {
+    font-size: 18px;
+  }
+
+  .stepsGrid {
+    gap: 24px;
+  }
+
+  .ctaSection h2 {
+    font-size: 32px;
+  }
+
+  .ctaSection p {
+    font-size: 16px;
+  }
+
+  .hero {
+    padding: 60px 20px;
+    min-height: auto;
+  }
+
+  .features,
+  .howItWorks,
+  .benefits,
+  .ctaSection {
+    padding: 60px 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .heroTitle {
+    font-size: 28px;
+  }
+
+  .heroSubtitle {
+    font-size: 16px;
+  }
+
+  .sectionTitle {
+    font-size: 26px;
+  }
+
+  .featureCard h3 {
+    font-size: 16px;
+  }
+
+  .featureCard p,
+  .step p,
+  .benefit p {
+    font-size: 14px;
+  }
+
+  .button {
+    padding: 12px 24px;
+    font-size: 14px;
+  }
+
+  .hero {
+    padding: 40px 16px;
+  }
+
+  .features,
+  .howItWorks,
+  .benefits,
+  .ctaSection {
+    padding: 40px 16px;
+  }
+
+  .featureCard {
+    padding: 20px;
+  }
+
+  .benefit {
+    padding: 20px;
+  }
+}

@@ -14,7 +14,10 @@ import { TimeSlotReminderModal } from './components/TimeSlotReminderModal';
 import AuthAwareLayout from '../components/AuthAwareLayout';
 
 export const metadata: Metadata = {
-  title: 'BracketWorks',
+  title: 'BracketWorks - Professional Bowling Tournament Manager',
+  description: 'Create and manage bowling tournaments with smart brackets, live scoring, and automatic payouts. Professional tournament management made simple.',
+  metadataBase: new URL('https://bracketworks.app'),
+  canonical: 'https://bracketworks.app',
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: 'any' },
@@ -23,6 +26,42 @@ export const metadata: Metadata = {
     ],
     apple: [{ url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
   },
+  openGraph: {
+    type: 'website',
+    url: 'https://bracketworks.app',
+    title: 'BracketWorks - Professional Bowling Tournament Manager',
+    description: 'Create and manage bowling tournaments with smart brackets, live scoring, and automatic payouts.',
+    siteName: 'BracketWorks',
+    locale: 'en_US',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'BracketWorks - Bowling Tournament Manager',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'BracketWorks',
+    description: 'Professional bowling tournament management platform',
+    images: ['/twitter-image.png'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  keywords: ['bowling', 'tournament', 'brackets', 'scoring', 'competition', 'bowling league'],
+  applicationName: 'BracketWorks',
+  category: 'Sports',
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -45,6 +84,32 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <link rel="dns-prefetch" href={process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'} />
         
         <link rel="manifest" href="/manifest.json" />
+        
+        {/* JSON-LD Structured Data */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'WebApplication',
+              name: 'BracketWorks',
+              url: 'https://bracketworks.app',
+              description: 'Professional bowling tournament management platform with smart brackets, live scoring, and automatic payouts',
+              applicationCategory: 'SportsApplication',
+              offers: {
+                '@type': 'Offer',
+                price: '0',
+                priceCurrency: 'USD',
+              },
+              image: 'https://bracketworks.app/og-image.png',
+              author: {
+                '@type': 'Organization',
+                name: 'BracketWorks',
+                url: 'https://bracketworks.app',
+              },
+            }),
+          }}
+        />
       </head>
       <body>
         <AuthProvider>
