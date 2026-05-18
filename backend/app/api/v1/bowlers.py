@@ -140,12 +140,16 @@ def list_bowlers(
     players = query.order_by(models.Bowler.id.desc()).limit(limit).offset(offset).all()
     default_entry_fee = 0
     bracket_programs = None
+    handicap_percentage = None
+    handicap_base = None
     if tournament_id:
         settings = db.query(models.BracketSettings).filter(models.BracketSettings.tournament_id == tournament_id).first()
         if settings and settings.cost_per_bracket:
             default_entry_fee = settings.cost_per_bracket
         if settings:
             bracket_programs = settings.bracket_programs
+            handicap_percentage = settings.handicap_percentage
+            handicap_base = settings.handicap_base
 
     # Pre-compute normalized programs once — avoids O(N) normalize_bracket_programs calls
     normalized_programs = normalize_bracket_programs(bracket_programs, default_entry_fee)
@@ -164,6 +168,11 @@ def list_bowlers(
             for key, count in normalized_entries.items()
             if count > 0
         ))
+        # Compute per-game handicap from current tournament settings (avoids stale stored values)
+        if player.average is not None and handicap_percentage is not None and handicap_base is not None:
+            computed_handicap = max(0, int((handicap_base - player.average) * (handicap_percentage / 100)))
+        else:
+            computed_handicap = player.handicap_pins
         player_dict = {
             "id": player.id,
             "tournament_id": player.tournament_id,
@@ -172,7 +181,7 @@ def list_bowlers(
             "bowler_profile_id": player.bowler_profile_id,
             "full_name": player.full_name,
             "average": player.average,
-            "handicap_pins": player.handicap_pins,
+            "handicap_pins": computed_handicap,
             "handicap_entry_count": player.handicap_entry_count,
             "scratch_entry_count": player.scratch_entry_count,
             "program_entry_counts": normalized_entries,
@@ -267,6 +276,13 @@ def create_bowler(player: schemas.PlayerCreate, db: Session = Depends(get_db), c
     first_name, last_name = _split_full_name(player.full_name)
     canonical_name = f"{(profile.first_name if profile else first_name).strip()} {(profile.last_name if profile else last_name).strip()}".strip() or player.full_name.strip()
 
+    # Compute per-game handicap from current tournament settings
+    handicap_pins = None
+    if player.average is not None:
+        t_settings = db.query(models.BracketSettings).filter(models.BracketSettings.tournament_id == player.tournament_id).first()
+        if t_settings and t_settings.handicap_percentage is not None and t_settings.handicap_base is not None:
+            handicap_pins = max(0, int((t_settings.handicap_base - player.average) * (t_settings.handicap_percentage / 100)))
+
     obj = models.TournamentPlayer(
         tournament_id=player.tournament_id,
         squad_id=player.squad_id,
@@ -274,6 +290,7 @@ def create_bowler(player: schemas.PlayerCreate, db: Session = Depends(get_db), c
         bowler_profile_id=profile.id if profile else None,
         full_name=canonical_name,
         average=player.average,
+        handicap_pins=handicap_pins,
         handicap_entry_count=player.handicap_entry_count,
         scratch_entry_count=player.scratch_entry_count,
         program_entry_counts=normalize_bowler_bracket_entries(
@@ -358,6 +375,12 @@ def bulk_update_bowlers(
                 data["usbc_number"] = None
                 data["bowler_profile_id"] = None
 
+        # Recompute handicap_pins when average is updated
+        if "average" in data and data["average"] is not None:
+            t_settings = db.query(models.BracketSettings).filter(models.BracketSettings.tournament_id == bowler.tournament_id).first()
+            if t_settings and t_settings.handicap_percentage is not None and t_settings.handicap_base is not None:
+                data["handicap_pins"] = max(0, int((t_settings.handicap_base - data["average"]) * (t_settings.handicap_percentage / 100)))
+
         if data:
             db.execute(
                 sa_update(models.Bowler)
@@ -420,6 +443,12 @@ def update_bowler(
         else:
             update_data["usbc_number"] = None
             update_data["bowler_profile_id"] = None
+
+    # Recompute handicap_pins when average is updated
+    if "average" in update_data and update_data["average"] is not None:
+        t_settings = db.query(models.BracketSettings).filter(models.BracketSettings.tournament_id == bowler.tournament_id).first()
+        if t_settings and t_settings.handicap_percentage is not None and t_settings.handicap_base is not None:
+            update_data["handicap_pins"] = max(0, int((t_settings.handicap_base - update_data["average"]) * (t_settings.handicap_percentage / 100)))
 
     result = db.execute(
         sa_update(models.Bowler)
