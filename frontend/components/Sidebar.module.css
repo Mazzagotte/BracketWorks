@@ -310,3 +310,14 @@
 .closeBtn:hover {
   background: var(--color-border-light);
 }
+
+/* Slow animations on touch devices */
+@media (hover: none) and (pointer: coarse) {
+  .nav a {
+    transition: all 0.4s ease;
+  }
+
+  .sidebarButton {
+    transition: all 0.4s ease;
+  }
+}

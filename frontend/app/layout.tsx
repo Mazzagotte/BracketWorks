@@ -1,17 +1,23 @@
 import type { ReactNode } from 'react';
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import './styles/main.css';
-import styles from './layout.module.css';
 
-import ModernHeader from './components/ModernHeader';
-import { ToastProvider } from './components/Toast';
-import { ErrorBoundary } from './components/ErrorBoundary';
-import { AuthProvider } from './lib/auth-context';
-import { HeaderProvider } from './lib/header-context';
-import { DevAuthStatus } from './components/DevAuthStatus';
-import { TimeSlotReminderModal } from './components/TimeSlotReminderModal';
+import ProtectedRouteShell from './components/ProtectedRouteShell';
 
-import AuthAwareLayout from '../components/AuthAwareLayout';
+const PUBLIC_ROUTE_PREFIXES = ['/login', '/signup', '/reset-password', '/verify-email', '/view'];
+
+function isPublicRoute(pathname: string | null) {
+  if (!pathname) {
+    return false;
+  }
+
+  if (pathname === '/') {
+    return true;
+  }
+
+  return PUBLIC_ROUTE_PREFIXES.some(prefix => pathname === prefix || pathname.startsWith(`${prefix}/`));
+}
 
 export const metadata: Metadata = {
   title: 'BracketWorks - Professional Bowling Tournament Manager',
@@ -65,6 +71,9 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
+  const pathname = headers().get('x-pathname');
+  const publicRoute = isPublicRoute(pathname);
+
   return (
     <html lang="en">
       <head>
@@ -112,13 +121,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
       </head>
       <body>
-        <AuthProvider>
-          <HeaderProvider>
-            <ToastProvider>
-              <AuthAwareLayout>{children}</AuthAwareLayout>
-            </ToastProvider>
-          </HeaderProvider>
-        </AuthProvider>
+        {publicRoute ? children : <ProtectedRouteShell>{children}</ProtectedRouteShell>}
       </body>
     </html>
   );

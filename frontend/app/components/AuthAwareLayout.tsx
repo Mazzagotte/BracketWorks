@@ -7,8 +7,6 @@ import Sidebar from '../../components/Sidebar';
 import { MobileNav } from '../../components/MobileNav';
 import ModernHeader from './ModernHeader';
 import { ErrorBoundary } from './ErrorBoundary';
-import { DevAuthStatus } from './DevAuthStatus';
-import { TimeSlotReminderModal } from './TimeSlotReminderModal';
 import { useAuth } from '../lib/auth-context';
 import { useHeader } from '../lib/header-context';
 import styles from '../layout.module.css';
@@ -18,7 +16,6 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
   const headerContext = useHeader();
   const pathname = usePathname();
   const router = useRouter();
-  const [isLoginPage, setIsLoginPage] = useState(false);
   const [firstName, setFirstName] = useState<string | undefined>(undefined);
   const [isMobile, setIsMobile] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -44,8 +41,6 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const currentPath = pathname || '/';
-    const onLoginLikePage = currentPath === '/login' || currentPath.startsWith('/reset-password') || currentPath.startsWith('/signup') || currentPath.startsWith('/view');
-    setIsLoginPage(onLoginLikePage);
     setCurrentPage(currentPath.slice(1) || 'dashboard');
   }, [pathname]);
 
@@ -58,20 +53,9 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!mounted) return;
 
-    const currentPath = pathname || '/';
-    const isPublicRoute =
-      currentPath === '/login' ||
-      currentPath.startsWith('/reset-password') ||
-      currentPath.startsWith('/signup') ||
-      currentPath.startsWith('/view');
-
-    if (!auth.isAuthenticated && !isPublicRoute) {
+    if (!auth.isAuthenticated) {
       router.replace(wasAuthenticated.current ? '/login?expired=true' : '/login');
       return;
-    }
-
-    if (auth.isAuthenticated && currentPath === '/login') {
-      router.replace('/dashboard');
     }
   }, [mounted, pathname, auth.isAuthenticated, router]);
 
@@ -125,72 +109,60 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <ErrorBoundary>
-      {isLoginPage ? (
-        <div id="main-content">
+      {!isMobile && isUserAuthenticated && (
+        <Sidebar
+          firstName={firstName}
+          isMobile={false}
+          isOpen={true}
+          onToggle={() => setSidebarOpen(!sidebarOpen)}
+          onClose={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {isMobile && isUserAuthenticated && (
+        <MobileNav
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          firstName={firstName}
+          currentPage={currentPage}
+        />
+      )}
+
+      {isMobile && isUserAuthenticated && (
+        <header className={styles.mobileHeader}>
+          <button
+            onClick={() => setSidebarOpen(true)}
+            aria-label="Open navigation menu"
+            className={styles.hamburgerBtn}
+          >
+            ☰
+          </button>
+          <div className={styles.mobileHeaderCenter}>
+            <h1 className={styles.mobileHeaderTitle}>BracketWorks</h1>
+          </div>
+          <div className={styles.pageIndicator}>{currentPage}</div>
+        </header>
+      )}
+
+      <main
+        id="main-content"
+        className={`${styles.main} ${isMobile ? styles.mainMobile : styles.mainDesktop} ${isMobile && isUserAuthenticated ? styles.mainMobileAuth : ''}`}
+      >
+        {mounted && isUserAuthenticated && (
+          <ModernHeader
+            title={headerContext.title}
+            subtitle={headerContext.subtitle}
+            actions={headerContext.actions}
+          />
+        )}
+
+        <div className={`${styles.contentCard} ${isMobile ? styles.contentCardMobile : ''} ${!(mounted && isUserAuthenticated) ? styles.contentCardNoAuth : ''}`}>
           <ErrorBoundary>
             {children}
           </ErrorBoundary>
         </div>
-      ) : (
-        <>
-          {!isMobile && isUserAuthenticated && (
-            <Sidebar
-              firstName={firstName}
-              isMobile={false}
-              isOpen={true}
-              onToggle={() => setSidebarOpen(!sidebarOpen)}
-              onClose={() => setSidebarOpen(false)}
-            />
-          )}
+      </main>
 
-          {isMobile && isUserAuthenticated && (
-            <MobileNav
-              isOpen={sidebarOpen}
-              onClose={() => setSidebarOpen(false)}
-              firstName={firstName}
-              currentPage={currentPage}
-            />
-          )}
-
-          {isMobile && isUserAuthenticated && (
-            <header className={styles.mobileHeader}>
-              <button
-                onClick={() => setSidebarOpen(true)}
-                aria-label="Open navigation menu"
-                className={styles.hamburgerBtn}
-              >
-                ☰
-              </button>
-              <div className={styles.mobileHeaderCenter}>
-                <h1 className={styles.mobileHeaderTitle}>BracketWorks</h1>
-              </div>
-              <div className={styles.pageIndicator}>{currentPage}</div>
-            </header>
-          )}
-
-          <main
-            id="main-content"
-            className={`${styles.main} ${isMobile ? styles.mainMobile : styles.mainDesktop} ${isMobile && isUserAuthenticated ? styles.mainMobileAuth : ''}`}
-          >
-            {mounted && isUserAuthenticated && (
-              <ModernHeader
-                title={headerContext.title}
-                subtitle={headerContext.subtitle}
-                actions={headerContext.actions}
-              />
-            )}
-
-            <div className={`${styles.contentCard} ${isMobile ? styles.contentCardMobile : ''} ${!(mounted && isUserAuthenticated) ? styles.contentCardNoAuth : ''}`}>
-              <ErrorBoundary>
-                {children}
-              </ErrorBoundary>
-            </div>
-          </main>
-        </>
-      )}
-
-      {!isLoginPage && <DevAuthStatus />}
-      <TimeSlotReminderModal />
     </ErrorBoundary>
   );
 }

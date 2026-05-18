@@ -165,7 +165,7 @@ export default function HomePage() {
             <div className={styles.benefit}>
               <h3>Scale from Small Leagues to Large Events</h3>
               <p>
-                Whether you're running a casual bowling league or a major tournament, BracketWorks adapts to your needs with flexible bracket types and payout structures.
+                Whether you&apos;re running a casual bowling league or a major tournament, BracketWorks adapts to your needs with flexible bracket types and payout structures.
               </p>
             </div>
           </div>

@@ -266,6 +266,7 @@
 
   .button {
     width: 100%;
+    transition: all 0.5s ease;
   }
 
   .sectionTitle {
@@ -279,6 +280,7 @@
 
   .featureCard {
     padding: 24px;
+    transition: all 0.5s ease;
   }
 
   .featureIcon {
@@ -338,8 +340,7 @@
   }
 
   .button {
-    padding: 12px 24px;
-    font-size: 14px;
+    transition: all 0.6s ease;
   }
 
   .hero {
@@ -355,8 +356,22 @@
 
   .featureCard {
     padding: 20px;
+    transition: all 0.6s ease;
   }
 
+  .benefit {
+    padding: 20px;
+  }
+}
+
+/* Slow down animations on touch devices for better feel */
+@media (hover: none) and (pointer: coarse) {
+  .button {
+    transition: all 0.6s ease !important;
+  }
+
+  .featureCard {
+    transition: all 0.6s ease !important
   .benefit {
     padding: 20px;
   }

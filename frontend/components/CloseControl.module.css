@@ -48,6 +48,14 @@
 .small {
   --close-size: 34px;
   --close-icon-size: 14px;
+}
+
+/* Slow animations on touch devices */
+@media (hover: none) and (pointer: coarse) {
+  .root {
+    transition: transform 0.4s ease, box-shadow 0.4s ease, filter 0.4s ease;
+  }
+}
   border-radius: 9px;
 }
 
