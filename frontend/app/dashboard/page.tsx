@@ -1267,7 +1267,7 @@ export default function TournamentDashboard() {
                   }
                 }}
               >
-                Dev: Unload Squad
+                Unload Squad
               </button>
             </div>
           )}
