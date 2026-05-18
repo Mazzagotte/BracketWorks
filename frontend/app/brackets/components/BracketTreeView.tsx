@@ -41,6 +41,7 @@ const BracketTreeViewComponent = ({
   statusFilter = 'all'
 }: BracketTreeViewProps) => {
   const containerRef = useRef<HTMLDivElement>(null)
+  const cardRef = useRef<HTMLDivElement>(null)
   const [highlightedPlayer, setHighlightedPlayer] = useState<string | null>(null)
 
   // Clear click-highlight when user starts searching
@@ -74,6 +75,50 @@ const BracketTreeViewComponent = ({
     })
   }, [displayRounds])
 
+  useEffect(() => {
+    const applyMobileFit = () => {
+      const container = containerRef.current
+      const card = cardRef.current
+      if (!container || !card) return
+
+      // Reset before measuring natural size
+      card.style.transform = ''
+      card.style.transformOrigin = ''
+      card.style.width = ''
+      container.style.minHeight = ''
+
+      if (!isMobile) return
+
+      const availableWidth = container.clientWidth
+      const naturalWidth = card.scrollWidth
+      const naturalHeight = card.scrollHeight
+      if (!availableWidth || !naturalWidth || !naturalHeight) return
+
+      if (naturalWidth <= availableWidth) return
+
+      const nextScale = Math.max(0.6, Math.min(1, availableWidth / naturalWidth))
+      card.style.transform = `scale(${nextScale})`
+      card.style.transformOrigin = 'top left'
+      card.style.width = `${100 / nextScale}%`
+      container.style.minHeight = `${Math.ceil(naturalHeight * nextScale)}px`
+    }
+
+    applyMobileFit()
+    window.addEventListener('resize', applyMobileFit)
+
+    return () => {
+      window.removeEventListener('resize', applyMobileFit)
+      const container = containerRef.current
+      const card = cardRef.current
+      if (container) container.style.minHeight = ''
+      if (card) {
+        card.style.transform = ''
+        card.style.transformOrigin = ''
+        card.style.width = ''
+      }
+    }
+  }, [isMobile, rounds])
+
   if (!rounds || rounds.length === 0) {
     return (
       <div className={styles.emptyState}>
@@ -88,7 +133,7 @@ const BracketTreeViewComponent = ({
       className={`${styles.bracketTreeContainer} ${isMobile ? styles.mobile : styles.desktop}`}
     >
       {/* Card wrapper for the entire bracket */}
-      <div className={styles.bracketCard}>
+      <div ref={cardRef} className={styles.bracketCard}>
         {/* Round Headers with Numbered Badges */}
         <div className={styles.headerRow}>
           {displayRounds.map((round, roundIndex) => {

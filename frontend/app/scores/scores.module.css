@@ -708,13 +708,13 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding-bottom: 70px;
+  padding-bottom: 8px;
 }
 
 .mobileScoresToolbarSticky {
-  position: sticky;
-  top: 0;
-  z-index: 20;
+  position: relative;
+  top: auto;
+  z-index: auto;
   display: flex;
   flex-direction: column;
   gap: 6px;

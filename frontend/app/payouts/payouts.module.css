@@ -1171,3 +1171,116 @@
   font-size: 13px;
   color: var(--color-text-primary);
 }
+
+@media (max-width: 900px) {
+  .pageContainer {
+    padding: 1rem 0.75rem;
+  }
+
+  .summaryTitle,
+  .tableCardHeader {
+    padding: 12px 14px;
+  }
+
+  .tableCardHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .headerPool {
+    font-size: 0.82rem;
+  }
+
+  .searchStandalone {
+    margin-bottom: 0.9rem;
+  }
+
+  .winnerRow {
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr);
+    grid-template-areas:
+      'badge info'
+      'amount action';
+    align-items: start;
+    gap: 8px 10px;
+    padding: 10px 12px;
+  }
+
+  .placeBadge {
+    grid-area: badge;
+    width: 30px;
+    height: 30px;
+    font-size: 12px;
+  }
+
+  .winnerInfo {
+    grid-area: info;
+    min-width: 0;
+  }
+
+  .winnerName {
+    font-size: 0.93rem;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .toggleDetailsBtn {
+    font-size: 0.65rem;
+    padding: 1px 7px;
+  }
+
+  .winnerMeta {
+    margin-top: 4px;
+    font-size: 0.72rem;
+    line-height: 1.4;
+  }
+
+  .payoutCol {
+    grid-area: amount;
+    text-align: left;
+    padding-left: 2px;
+  }
+
+  .payoutAmount,
+  .firstPlace .payoutAmount {
+    font-size: 1.05rem;
+  }
+
+  .payoutPct {
+    font-size: 0.68rem;
+  }
+
+  .paidBadge,
+  .markPaidBtn {
+    grid-area: action;
+    justify-self: end;
+    min-height: 30px;
+    font-size: 0.7rem;
+    padding: 4px 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .winnerRow {
+    grid-template-columns: 30px minmax(0, 1fr);
+    grid-template-areas:
+      'badge info'
+      'amount amount'
+      'action action';
+  }
+
+  .payoutCol {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+
+  .paidBadge,
+  .markPaidBtn {
+    justify-self: stretch;
+    justify-content: center;
+    width: 100%;
+  }
+}
