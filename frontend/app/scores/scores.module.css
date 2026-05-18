@@ -423,6 +423,19 @@
   color: var(--color-primary);
 }
 
+@media (max-width: 480px) {
+  .devButton {
+    width: 100%;
+    max-width: none;
+    min-height: var(--touch-target-comfortable);
+  }
+
+  .devGroup {
+    width: 100%;
+    margin-left: 0;
+    flex-wrap: wrap;
+  }
+}
 
 /* ========================================
    Desktop Container

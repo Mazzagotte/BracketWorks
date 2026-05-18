@@ -918,8 +918,8 @@ export default function PlayersPage() {
         {normalButtons}
         {isDev && players.length > 0 && (
           <div className={styles.devGroup}>
-            <button key="randomize" className={styles.devButton} onClick={handleRandomize}>DEV: Randomize Data</button>
-            <button key="deleteAll" className={styles.devButton} onClick={handleDeleteAllPlayers} disabled={isDeletingAll}>{isDeletingAll ? 'Deleting...' : 'DEV: Delete All'}</button>
+            <button key="randomize" className={styles.devButton} onClick={handleRandomize}>Randomize Data</button>
+            <button key="deleteAll" className={styles.devButton} onClick={handleDeleteAllPlayers} disabled={isDeletingAll}>{isDeletingAll ? 'Deleting...' : 'Delete All'}</button>
           </div>
         )}
       </>

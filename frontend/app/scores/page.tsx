@@ -782,9 +782,9 @@ export default function ScoresPage() {
 
       {(process.env.NODE_ENV === 'development' || !!currentUser?.isAdmin) && players.length > 0 && (
         <div className={styles.devGroup}>
-          <button className={styles.devButton} onClick={handleRandomizeScores} disabled={isScoresLocked}>DEV: Randomize Scores</button>
-          <button className={styles.devButton} onClick={() => devClearGame(2)} disabled={isScoresLocked}>DEV: Clear Game 2</button>
-          <button className={styles.devButton} onClick={() => devClearGame(3)} disabled={isScoresLocked}>DEV: Clear Game 3</button>
+          <button className={styles.devButton} onClick={handleRandomizeScores} disabled={isScoresLocked}>Randomize Scores</button>
+          <button className={styles.devButton} onClick={() => devClearGame(2)} disabled={isScoresLocked}>Clear Game 2</button>
+          <button className={styles.devButton} onClick={() => devClearGame(3)} disabled={isScoresLocked}>Clear Game 3</button>
         </div>
       )}
     </div>

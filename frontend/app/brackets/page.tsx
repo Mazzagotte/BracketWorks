@@ -453,7 +453,7 @@ export default function BracketsPage() {
         {isDev && (
           <div className={styles.devGroup}>
             <button onClick={handleDeleteAllBrackets} className={styles.devButton}>
-              DEV: Delete All Brackets
+              Delete All Brackets
             </button>
           </div>
         )}

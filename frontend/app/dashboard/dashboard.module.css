@@ -1636,10 +1636,17 @@
     gap: 8px;
   }
 
+  .devButton {
+    width: 100%;
+    max-width: none;
+    min-height: var(--touch-target-comfortable);
+  }
+
   .devGroup {
     grid-column: 1 / -1;
     margin-left: 0;
     justify-content: flex-end;
+    flex-wrap: wrap;
   }
 }
 
