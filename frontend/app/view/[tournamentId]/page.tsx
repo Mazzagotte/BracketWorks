@@ -95,8 +95,6 @@ interface PublicViewCache {
 }
 
 type Tab = 'alive' | 'brackets' | 'sidePots'
-type AliveSortKey = 'name' | 'afterG1' | 'afterG2' | 'won'
-type SortDirection = 'asc' | 'desc'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -181,8 +179,6 @@ function AliveView({
 }) {
   const rows = useMemo(() => computeAlive(bracketGroups), [bracketGroups])
   const [searchQuery, setSearchQuery] = useState('')
-  const [sortKey, setSortKey] = useState<AliveSortKey>('won')
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
 
   const hasBrackets = bracketGroups.some((group) => group.brackets.length > 0)
   const hasRounds = bracketGroups.some((group) => group.brackets.some((bracket) => (bracket.rounds?.length ?? 0) > 0))
@@ -193,41 +189,15 @@ function AliveView({
     return rows.filter((row) => row.name.toLowerCase().includes(normalizedSearch))
   }, [rows, normalizedSearch])
 
+  // Always sorted: 1st/2nd desc → G2 desc → G1 desc → name asc
   const sortedRows = useMemo(() => {
-    const nextRows = [...filteredRows]
-    nextRows.sort((a, b) => {
-      let cmp = 0
-      if (sortKey === 'name') {
-        cmp = a.name.localeCompare(b.name)
-      } else {
-        cmp = a[sortKey] - b[sortKey]
-      }
-
-      if (cmp === 0) {
-        if (b.won !== a.won) return b.won - a.won
-        if (b.afterG2 !== a.afterG2) return b.afterG2 - a.afterG2
-        if (b.afterG1 !== a.afterG1) return b.afterG1 - a.afterG1
-        return a.name.localeCompare(b.name)
-      }
-
-      return sortDirection === 'asc' ? cmp : -cmp
+    return [...filteredRows].sort((a, b) => {
+      if (b.won !== a.won) return b.won - a.won
+      if (b.afterG2 !== a.afterG2) return b.afterG2 - a.afterG2
+      if (b.afterG1 !== a.afterG1) return b.afterG1 - a.afterG1
+      return a.name.localeCompare(b.name)
     })
-    return nextRows
-  }, [filteredRows, sortDirection, sortKey])
-
-  const updateSort = (nextKey: AliveSortKey) => {
-    if (sortKey === nextKey) {
-      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'))
-      return
-    }
-    setSortKey(nextKey)
-    setSortDirection(nextKey === 'name' ? 'asc' : 'desc')
-  }
-
-  const renderSortIndicator = (key: AliveSortKey) => {
-    if (sortKey !== key) return <span className={styles.sortNeutral}>Sort</span>
-    return <span className={styles.sortActive}>{sortDirection === 'asc' ? 'Asc' : 'Desc'}</span>
-  }
+  }, [filteredRows])
 
   if (rows.length === 0) {
     if (!hasBrackets) {
@@ -277,22 +247,16 @@ function AliveView({
           <table className={styles.table}>
             <thead>
               <tr>
-                <th className={styles.thSortable} onClick={() => updateSort('name')}>
-                  Bowler {renderSortIndicator('name')}
-                </th>
-                <th className={`${styles.thCenter} ${styles.thSortable}`} onClick={() => updateSort('afterG1')}>
+                <th>Bowler</th>
+                <th className={styles.thCenter}>
                   <span className={styles.thFull}>After Game 1</span>
                   <span className={styles.thShort}>G1</span>
-                  {renderSortIndicator('afterG1')}
                 </th>
-                <th className={`${styles.thCenter} ${styles.thSortable}`} onClick={() => updateSort('afterG2')}>
+                <th className={styles.thCenter}>
                   <span className={styles.thFull}>After Game 2</span>
                   <span className={styles.thShort}>G2</span>
-                  {renderSortIndicator('afterG2')}
                 </th>
-                <th className={`${styles.thCenter} ${styles.thSortable}`} onClick={() => updateSort('won')}>
-                  1st/2nd {renderSortIndicator('won')}
-                </th>
+                <th className={styles.thCenter}>1st/2nd</th>
               </tr>
             </thead>
             <tbody>
