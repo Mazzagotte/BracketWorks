@@ -2203,3 +2203,322 @@
   font-size: 0.8rem;
   color: var(--color-gray-500);
 }
+
+/* ========================================
+   Canonical mobile entries overrides
+   ======================================== */
+
+.mobileSummaryChips {
+  display: none;
+}
+
+.searchContainerSticky {
+  position: static;
+}
+
+.mobileEntriesContainer {
+  width: 100%;
+}
+
+.mobileSquadBanner {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  background: var(--color-brand-bg-subtle);
+  border: 1px solid var(--color-border-light);
+}
+
+.mobilePlayersList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mobilePlayerCard {
+  border: 1px solid var(--color-border-light);
+  border-left: 4px solid var(--color-border-light);
+  border-radius: 12px;
+  background: var(--color-white);
+  box-shadow: 0 1px 4px var(--opacity-black-08);
+  padding: 10px;
+}
+
+.mobilePlayerCardPaid {
+  border-left-color: var(--color-success);
+  background: linear-gradient(180deg, var(--color-white) 0%, var(--color-success-soft) 100%);
+}
+
+.mobilePlayerCardDue {
+  border-left-color: var(--color-error);
+  background: linear-gradient(180deg, var(--color-white) 0%, var(--color-error-bg-light) 100%);
+}
+
+.mobilePlayerCardSetFee {
+  border-left-color: var(--color-warning);
+  background: linear-gradient(180deg, var(--color-white) 0%, var(--color-warning-surface) 100%);
+}
+
+.mobilePlayerCardTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.mobilePlayerIdentity {
+  min-width: 0;
+}
+
+.mobilePlayerName {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  line-height: 1.2;
+}
+
+.mobilePlayerMeta {
+  margin-top: 3px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+.mobilePlayerTotals {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.mobilePlayerCost {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.mobileStatusPill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 20px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  border: 1px solid transparent;
+}
+
+.mobileStatusPillPaid {
+  color: var(--color-success-text-deep);
+  background: var(--color-success-soft);
+  border-color: var(--color-success-border);
+}
+
+.mobileStatusPillDue {
+  color: var(--color-error);
+  background: var(--color-error-bg-light);
+  border-color: var(--color-error-border-light);
+}
+
+.mobileStatusPillSetFee {
+  color: var(--color-warning-text);
+  background: var(--color-warning-surface);
+  border-color: var(--color-warning);
+}
+
+.mobilePlayerActionsRow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  margin-top: 8px;
+}
+
+.mobilePlayerActionBtn,
+.mobilePlayerActionBtnSecondary,
+.mobilePlayerActionBtnDanger {
+  min-height: 40px;
+  border-radius: 10px;
+  border: 1px solid var(--color-border-light);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.mobilePlayerActionBtn {
+  background: var(--color-warning-surface);
+  color: var(--color-warning-text);
+}
+
+.mobilePlayerActionBtnSecondary {
+  background: var(--color-brand-bg-subtle);
+  color: var(--color-text-primary);
+}
+
+.mobilePlayerActionBtnDanger {
+  background: var(--color-error);
+  color: var(--color-white);
+  border-color: var(--color-error);
+}
+
+.mobilePlayerActionBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.mobilePlayerDetails {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--color-border-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mobilePlayerFieldGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.mobileProgramSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mobileSectionTitle {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted-strong);
+}
+
+.mobileProgramGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.mobilePlayerField {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.mobilePlayerField > span {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--color-text-muted-strong);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.mobilePlayerField input,
+.mobilePlayerField select {
+  min-height: 38px;
+}
+
+.mobileSidePotList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mobileSidePotToggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+@media (max-width: 900px) {
+  .pageContainer {
+    width: 100%;
+    max-width: 100%;
+    padding: 1rem 0.6rem 1.5rem;
+  }
+
+  .entriesSectionWidth {
+    width: 100%;
+  }
+
+  .formCard,
+  .summaryCard,
+  .tableCard {
+    border-radius: 14px;
+  }
+
+  .formTitle,
+  .summaryTitle {
+    padding: 10px 14px;
+    font-size: 0.95rem;
+  }
+
+  .tableSearchPanelBody {
+    padding: 10px 12px 12px;
+  }
+
+  .searchContainerSticky {
+    position: sticky;
+    top: 8px;
+    z-index: 15;
+    margin-bottom: 0;
+    background: var(--color-brand-ivory-light);
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid var(--color-border-light);
+  }
+
+  .searchContainerSticky .searchInput,
+  .searchContainerSticky .clearFilters {
+    width: 100%;
+    min-height: 42px;
+  }
+
+  .searchContainerSticky {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .mobileSummaryChips {
+    display: flex;
+    gap: 6px;
+    padding: 10px 10px 0;
+    flex-wrap: wrap;
+  }
+
+  .mobileSummaryChip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 28px;
+    border-radius: 999px;
+    padding: 0 10px;
+    font-size: 11px;
+    font-weight: 700;
+    border: 1px solid var(--color-border-light);
+    background: var(--color-white);
+    color: var(--color-text-primary);
+  }
+
+  .summaryGrid {
+    padding-top: 10px;
+  }
+}
+
+@media (max-width: 560px) {
+  .mobilePlayerFieldGrid,
+  .mobileProgramGrid,
+  .mobilePlayerActionsRow {
+    grid-template-columns: 1fr;
+  }
+}

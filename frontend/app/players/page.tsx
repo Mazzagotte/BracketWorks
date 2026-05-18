@@ -959,6 +959,18 @@ export default function PlayersPage() {
       }))
   }, [sidePots, players])
 
+  const paymentSummary = useMemo(() => {
+    const paidCount = players.filter(player => player.amountPaid >= player.totalCost && player.totalCost > 0).length
+    const dueCount = players.filter(player => player.totalCost > player.amountPaid).length
+    const outstandingAmount = players.reduce((sum, player) => sum + Math.max(0, player.totalCost - player.amountPaid), 0)
+
+    return {
+      paidCount,
+      dueCount,
+      outstandingAmount,
+    }
+  }, [players])
+
   // Fetch squad data (similar to scores page) - OPTIMIZED WITH PARALLEL REQUESTS
   useEffect(() => {
     const fetchSquadData = async () => {
@@ -1184,6 +1196,11 @@ export default function PlayersPage() {
               {getTournamentId() && players.length > 0 && (
                 <div className={styles.summaryCard}>
                   <h3 className={styles.summaryTitle}>Tournament Summary</h3>
+                  <div className={styles.mobileSummaryChips}>
+                    <div className={styles.mobileSummaryChip}>Paid: {paymentSummary.paidCount}</div>
+                    <div className={styles.mobileSummaryChip}>Due: {paymentSummary.dueCount}</div>
+                    <div className={styles.mobileSummaryChip}>Outstanding: ${paymentSummary.outstandingAmount.toLocaleString()}</div>
+                  </div>
                   <div className={styles.summaryGrid}>
                     <div className={styles.statBox}>
                       <div className={styles.statValue}>{entryTotals.totalPlayers}</div>
@@ -1222,7 +1239,7 @@ export default function PlayersPage() {
               <div className={styles.formCard}>
                 <h3 className={styles.formTitle}>Entries Table Search</h3>
                 <div className={styles.tableSearchPanelBody}>
-                  <div className={styles.searchContainer}>
+                  <div className={`${styles.searchContainer} ${styles.searchContainerSticky}`}>
                     <input
                       type="text"
                       className={styles.searchInput}
