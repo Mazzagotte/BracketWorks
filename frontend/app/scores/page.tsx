@@ -369,7 +369,7 @@ export default function ScoresPage() {
   }, [pendingSaves, addToast, processPendingSaves])
 
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth <= 480);
+    const checkMobile = () => setIsMobile(window.innerWidth <= 900);
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
@@ -1532,33 +1532,88 @@ export default function ScoresPage() {
         className="sr-only"
       />
       {isMobile ? (
-        <MobileLayout
-          title="Scores"
-          subtitle="Enter and manage bowling scores"
-          showBackButton={true}
-          onBack={() => window.history.back()}
-          headerActions={
-            <div className="flex gap-2">
+        <MobileLayout padding="small">
+          <div className={styles.mobileScoresPage}>
+            {/* Sticky toolbar */}
+            <div className={styles.mobileScoresToolbarSticky}>
+              {/* Context: tournament + squad */}
+              {tournament && (
+                <div className={styles.mobileScoresContextCard}>
+                  <span className={styles.mobileScoresContextTitle}>{tournament.name}</span>
+                  {selectedSquad && (
+                    <span className={styles.mobileScoresContextMeta}>
+                      Squad: {selectedSquad.date} — {selectedSquad.time}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Game selector */}
+              <div className={styles.mobileGameSelector}>
+                {(['all', 1, 2, 3] as const).map(g => (
+                  <button
+                    key={g}
+                    className={`${styles.mobileGameSelectorBtn} ${mobileSelectedGame === g ? styles.mobileGameSelectorBtnActive : ''}`}
+                    onClick={() => setMobileSelectedGame(g)}
+                  >
+                    {g === 'all' ? 'All' : `G${g}`}
+                  </button>
+                ))}
+              </div>
+
+              {/* Save status bar */}
+              <div className={styles.mobileSaveBar}>
+                {rowStateCounts.saving > 0 && <span>Saving {rowStateCounts.saving}…</span>}
+                {rowStateCounts.saving === 0 && rowStateCounts.failed === 0 && <span>Auto-save on</span>}
+                {rowStateCounts.failed > 0 && <span>{rowStateCounts.failed} failed</span>}
+                {lastEdit && (
+                  <button className={styles.mobileUndoBtn} onClick={undoLastEdit}>Undo</button>
+                )}
+              </div>
+
+              {/* Filter toggle */}
               <button
-                onClick={handleExportScoresToExcel}
-                disabled={isExporting || players.length === 0}
-                className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md disabled:opacity-50"
+                className={styles.mobileFilterToggle}
+                onClick={() => setMobileFiltersOpen(o => !o)}
               >
-                {isExporting ? 'Exporting...' : 'Export'}
+                {mobileFiltersOpen ? 'Hide Filters ▲' : 'Filters & Search ▼'}
               </button>
-              <button
-                onClick={() => importFileRef.current?.click()}
-                disabled={isImporting || players.length === 0}
-                className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md disabled:opacity-50"
-              >
-                {isImporting ? 'Importing...' : 'Import'}
-              </button>
+
+              {/* Filter drawer */}
+              {mobileFiltersOpen && (
+                <div className={styles.mobileFilterDrawer}>
+                  <div className={styles.mobileFilterChips}>
+                    {(['all', 'missing', 'review'] as const).map(mode => (
+                      <button
+                        key={mode}
+                        className={`${styles.mobileFilterChip} ${mobileFilterMode === mode ? styles.mobileFilterChipActive : ''}`}
+                        onClick={() => setMobileFilterMode(mode)}
+                      >
+                        {mode === 'all' ? 'All' : mode === 'missing' ? 'Missing' : 'Review'}
+                      </button>
+                    ))}
+                  </div>
+                  <div className={styles.mobileSearchInputs}>
+                    <input
+                      type="text"
+                      placeholder="First name…"
+                      value={searchFirstName}
+                      onChange={e => setSearchFirstName(e.target.value)}
+                      className={styles.mobileScoreInput}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Last name…"
+                      value={searchLastName}
+                      onChange={e => setSearchLastName(e.target.value)}
+                      className={styles.mobileScoreInput}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
-          }
-        >
-          {/* Mobile content will go here */}
-          <div className="space-y-4">
-            {/* No Tournament State */}
+
+            {/* No tournament state */}
             {!tournament && !isLoading && (
               <div className={styles.noTournamentMobile}>
                 <h2 className={styles.noTournamentTitleMobile}>No Tournament Loaded</h2>
@@ -1570,89 +1625,152 @@ export default function ScoresPage() {
                 </Link>
               </div>
             )}
-            
-            {/* Tournament and Squad selector for mobile */}
-            {tournament && (
-              <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
-                <h3 className="text-sm font-semibold text-gray-700 mb-2">
-                  {tournament.name}
-                </h3>
-                {selectedSquad && (
-                  <p className="text-sm text-gray-600">
-                    Squad: {selectedSquad.date} — {selectedSquad.time}
-                  </p>
-                )}
-              </div>
-            )}
-            
-            {/* Loading state for mobile */}
+
+            {/* Loading */}
             {isLoading && (
-              <div className="flex justify-center py-8">
+              <div className={styles.mobileLoadingWrap}>
                 <Spinner size="lg" />
               </div>
             )}
-            
-            {/* Players list for mobile - simplified card view */}
-            {!isLoading && players.length > 0 && (
-              <div className="space-y-3">
-                {paginationHook.paginatedItems.map((player: Player) => (
-                  <div key={player.id} className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <h4 className="font-semibold text-gray-900">
-                          {player.firstName} {player.lastName}
-                        </h4>
-                        <p className="text-sm text-gray-600">
-                          Lane {player.lane} • Avg: {player.average} • HDCP: {player.handicap}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-sm font-semibold text-blue-600">
-                          Total: {calculateTotalWithHandicap(player)}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          Scratch: {calculateTotalScratch(player)}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Score input grid for mobile */}
-                    <div className="grid grid-cols-3 gap-2">
-                      {[1, 2, 3].map((gameNum) => (
-                        <div key={gameNum} className="text-center">
-                          <label className="block text-xs font-medium text-gray-700 mb-1">
-                            Game {gameNum}
-                          </label>
-                          <input
-                            type="number"
-                            min="0"
-                            max="300"
-                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            value={player.scores?.[`game${gameNum}_scratch` as keyof typeof player.scores] || ''}
-                            onChange={(changeEvent) => updateScore(player.id, `game${gameNum}_scratch`, parseInt(changeEvent.target.value) || 0)}
-                            disabled={isScoresLocked}
-                            placeholder={`G${gameNum}`}
-                            inputMode="numeric"
-                          />
-                          <div className="text-xs text-gray-500 mt-1">
-                            +{player.handicap} = {(player.scores?.[`game${gameNum}_scratch` as keyof typeof player.scores] || 0) + player.handicap}
+
+            {/* Player score cards */}
+            {!isLoading && paginationHook.paginatedItems.length > 0 && (
+              <div className={styles.mobileScoreList}>
+                {paginationHook.paginatedItems.map((player: Player) => {
+                  const isExpanded = !!mobileExpandedPlayers[player.id]
+                  const saveState = rowSaveState[player.id] || 'idle'
+                  const hasFailed = saveState === 'failed'
+                  const saveLabel = saveState === 'saving' ? 'Saving…' : saveState === 'saved' ? 'Saved ✓' : saveState === 'failed' ? 'Failed' : ''
+                  const pilotClass = saveState === 'saving' ? styles.mobileSaveStateSaving : saveState === 'saved' ? styles.mobileSaveStateSaved : saveState === 'failed' ? styles.mobileSaveStateFailed : styles.mobileSaveStateIdle
+
+                  const gamesToShow = mobileSelectedGame === 'all' ? [1, 2, 3] : [mobileSelectedGame as number]
+
+                  return (
+                    <div key={player.id} className={styles.mobileScoreCard}>
+                      {/* Card header — tap to expand */}
+                      <button
+                        className={styles.mobileScoreCardHeader}
+                        onClick={() => setMobileExpandedPlayers(prev => ({ ...prev, [player.id]: !prev[player.id] }))}
+                      >
+                        <div className={styles.mobileScoreIdentity}>
+                          <div className={styles.mobileScoreName}>
+                            {player.firstName} {player.lastName}
+                          </div>
+                          <div className={styles.mobileScoreMeta}>
+                            {player.lane ? `Lane ${player.lane} • ` : ''}Avg: {player.average} • HDCP: {player.handicap}
                           </div>
                         </div>
-                      ))}
+                        <div className={styles.mobileScoreHeaderRight}>
+                          {saveLabel && (
+                            <span className={`${styles.mobileSaveStatePill} ${pilotClass}`}>{saveLabel}</span>
+                          )}
+                          <span className={styles.mobileScoreTotal}>
+                            {calculateDisplayTotal(player)}
+                          </span>
+                          <span className={styles.mobileExpandGlyph}>{isExpanded ? '▲' : '▼'}</span>
+                        </div>
+                      </button>
+
+                      {/* Expanded body */}
+                      {isExpanded && (
+                        <div className={styles.mobileScoreCardBody}>
+                          {/* Context chips */}
+                          <div className={styles.mobileContextChips}>
+                            <span className={styles.mobileContextChip}>
+                              Scratch: {calculateTotalScratch(player)}
+                            </span>
+                            <span className={styles.mobileContextChip}>
+                              Total: {calculateTotalWithHandicap(player)}
+                            </span>
+                          </div>
+
+                          {/* Score inputs */}
+                          <div className={styles.mobileGameInputGrid}>
+                            {gamesToShow.map(gameNum => {
+                              const fieldKey = `game${gameNum}_scratch` as keyof typeof player.scores
+                              const scratch = player.scores?.[fieldKey] as number | undefined
+                              return (
+                                <div key={gameNum} className={styles.mobileGameInputField}>
+                                  <span>G{gameNum}</span>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    max="300"
+                                    inputMode="numeric"
+                                    disabled={isScoresLocked}
+                                    placeholder="—"
+                                    data-mobile-player={player.id}
+                                    data-mobile-field={`game${gameNum}_scratch`}
+                                    className={styles.mobileScoreInput}
+                                    value={scratch ?? ''}
+                                    onChange={e => updateScore(player.id, `game${gameNum}_scratch`, parseInt(e.target.value) || 0)}
+                                    onKeyDown={e => {
+                                      if (e.key === 'Enter') {
+                                        e.preventDefault()
+                                        focusNextMobileInput(player.id, `game${gameNum}_scratch`)
+                                      }
+                                    }}
+                                  />
+                                  <span className={styles.mobileGameTotal}>
+                                    +{player.handicap} = {getGameTotal(scratch, player.handicap)}
+                                  </span>
+                                </div>
+                              )
+                            })}
+                          </div>
+
+                          {/* Retry on failure */}
+                          {hasFailed && (
+                            <button
+                              className={styles.mobileRetryBtn}
+                              onClick={() => saveAllVisibleScores()}
+                            >
+                              Retry Save
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
-            
-            {/* Mobile pagination */}
-            {!isLoading && players.length > 50 && (
-              <div className="flex justify-center mt-6">
+
+            {/* Pagination */}
+            {!isLoading && paginationHook.totalPages > 1 && (
+              <div className={styles.mobilePaginationWrap}>
                 <Pagination
                   currentPage={paginationHook.currentPage}
                   totalPages={paginationHook.totalPages}
                   onPageChange={paginationHook.goToPage}
                 />
+              </div>
+            )}
+
+            {/* Bottom action bar */}
+            {!isLoading && players.length > 0 && (
+              <div className={styles.mobileBottomActions}>
+                <button
+                  className={styles.mobileBottomBtn}
+                  onClick={saveAllVisibleScores}
+                  disabled={isScoresLocked}
+                >
+                  Save All
+                </button>
+                <button
+                  className={styles.mobileBottomBtnSecondary}
+                  onClick={handleExportScoresToExcel}
+                  disabled={isExporting || players.length === 0}
+                >
+                  {isExporting ? 'Exporting…' : 'Export'}
+                </button>
+                <button
+                  className={styles.mobileBottomBtnSecondary}
+                  onClick={() => importFileRef.current?.click()}
+                  disabled={isImporting}
+                >
+                  {isImporting ? 'Importing…' : 'Import'}
+                </button>
               </div>
             )}
           </div>
