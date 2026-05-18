@@ -1574,7 +1574,7 @@
   font-weight: 700;
   color: var(--color-text-primary);
   margin: 0;
-  padding: 12px 18px;
+  padding: 10px 14px;
   background: var(--color-brand-ivory);
   border-bottom: 3px solid var(--color-primary);
   border-radius: var(--radius-xl) var(--radius-xl) 0 0;
@@ -1587,20 +1587,20 @@
   flex-wrap: wrap;
   justify-content: center;
   align-items: stretch;
-  gap: 10px;
-  padding: 14px 12px;
+  gap: 8px;
+  padding: 10px;
 }
 
 .statBox {
   text-align: center;
-  padding: 18px 14px;
+  padding: 14px 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  min-height: 104px;
-  min-width: 156px;
+  gap: 5px;
+  min-height: 88px;
+  min-width: 132px;
   width: fit-content;
   flex: 0 0 auto;
   border: 1px solid var(--color-border-muted);
@@ -1621,7 +1621,7 @@
 }
 
 .statValue {
-  font-size: 2rem;
+  font-size: 1.7rem;
   font-weight: 800;
   line-height: 1;
   color: var(--color-text-primary);
@@ -1636,19 +1636,19 @@
 }
 
 .statDetail {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--color-text-muted);
-  margin-top: 2px;
+  margin-top: 1px;
 }
 
 .statRefund {
-  font-size: 0.7rem;
+  font-size: 0.66rem;
   font-weight: 700;
   color: var(--color-primary-hover);
   background: var(--color-brand-tint-mid);
   border-radius: 20px;
-  padding: 2px 10px;
-  margin-top: 4px;
+  padding: 1px 8px;
+  margin-top: 2px;
 }
 
 @media (max-width: 900px) {
@@ -1696,10 +1696,10 @@
     min-height: 62px;
     padding: 10px 12px;
     display: grid;
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: auto 1fr;
     align-items: center;
     justify-content: stretch;
-    gap: 8px 10px;
+    gap: 3px 10px;
     min-width: 0;
     flex: none;
   }
@@ -1713,25 +1713,29 @@
 
   .statValue {
     font-size: 1.3rem;
-    grid-row: 1 / span 2;
+    grid-row: 1 / span 3;
     align-self: center;
-    min-width: 3.1rem;
+    min-width: 2.7rem;
   }
 
   .statLabel {
-    font-size: 0.64rem;
+    font-size: 0.66rem;
     align-self: end;
     text-align: left;
   }
 
   .statDetail {
     font-size: 0.62rem;
-    text-align: left;
+    grid-column: 2;
+    justify-self: end;
+    text-align: right;
+    white-space: nowrap;
   }
 
   .statRefund {
     font-size: 0.58rem;
     padding: 2px 7px;
+    grid-column: 2;
     justify-self: end;
     white-space: nowrap;
   }
@@ -1746,7 +1750,7 @@
   .statBox {
     min-height: 58px;
     padding: 9px 10px;
-    gap: 6px 8px;
+    gap: 2px 8px;
   }
 
   .statBoxRevenue {
@@ -1758,11 +1762,11 @@
   }
 
   .statLabel {
-    font-size: 0.62rem;
+    font-size: 0.61rem;
   }
 
   .statDetail {
-    font-size: 0.6rem;
+    font-size: 0.58rem;
   }
 
   .statRefund {
@@ -1801,7 +1805,7 @@
   .statBox {
     min-height: 54px;
     padding: 8px 9px;
-    gap: 5px 7px;
+    gap: 2px 7px;
   }
 
   .statBoxRevenue {
@@ -1809,15 +1813,15 @@
   }
 
   .statValue {
-    font-size: 1.05rem;
+    font-size: 1rem;
   }
 
   .statLabel {
-    font-size: 0.6rem;
+    font-size: 0.58rem;
   }
 
   .statDetail {
-    font-size: 0.58rem;
+    font-size: 0.56rem;
   }
 
   .statRefund {
@@ -1999,6 +2003,35 @@
   border-radius: var(--radius-xl) var(--radius-xl) 0 0;
 }
 
+.formTitleToggle {
+  width: 100%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0;
+  padding: 9px 16px;
+  color: var(--color-text-primary);
+  background: var(--color-brand-ivory);
+  border-bottom: 3px solid var(--color-primary);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.formTitleToggle:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+.formTitleExpandIcon {
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--color-primary);
+}
+
 .formCard form {
   padding: 10px 16px;
 }
@@ -2110,6 +2143,11 @@
     font-size: 0.95rem;
   }
 
+  .formTitleToggle {
+    padding: 10px 12px;
+    font-size: 0.95rem;
+  }
+
   .formCard form {
     padding: 10px;
   }
@@ -2120,10 +2158,29 @@
     margin-bottom: 0.6rem;
   }
 
+  .formGrid .fieldLabel {
+    display: none;
+  }
+
   .fieldInput {
     height: 44px;
     padding: 0.65rem 0.75rem;
     font-size: 16px;
+    border: 1px solid var(--color-gray-300);
+    border-radius: 10px;
+    background: var(--color-white);
+    transition: all 0.2s ease;
+  }
+
+  .fieldInput:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: var(--ring-brand-base);
+  }
+
+  .formGrid .fieldInput::placeholder {
+    color: var(--color-gray-400);
+    opacity: 1;
   }
 
   .fieldLabel {

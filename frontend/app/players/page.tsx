@@ -80,6 +80,9 @@ export default function PlayersPage() {
   const [searchUsbc, setSearchUsbc] = useState('')
   const [searchFirstName, setSearchFirstName] = useState('')
   const [searchLastName, setSearchLastName] = useState('')
+  const [isMobileView, setIsMobileView] = useState(false)
+  const [historySearchCollapsed, setHistorySearchCollapsed] = useState(false)
+  const [tableSearchCollapsed, setTableSearchCollapsed] = useState(false)
   const [debouncedSearchUsbc, setDebouncedSearchUsbc] = useState('')
   const [debouncedSearchFirstName, setDebouncedSearchFirstName] = useState('')
   const [debouncedSearchLastName, setDebouncedSearchLastName] = useState('')
@@ -144,6 +147,22 @@ export default function PlayersPage() {
     }, 300)
     return () => window.clearTimeout(timer)
   }, [searchUsbc, searchFirstName, searchLastName])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const mediaQuery = window.matchMedia('(max-width: 900px)')
+    const syncMobileState = () => {
+      const mobile = mediaQuery.matches
+      setIsMobileView(mobile)
+      setHistorySearchCollapsed(mobile)
+      setTableSearchCollapsed(mobile)
+    }
+
+    syncMobileState()
+    mediaQuery.addEventListener('change', syncMobileState)
+    return () => mediaQuery.removeEventListener('change', syncMobileState)
+  }, [])
   
 
 
@@ -1098,7 +1117,20 @@ export default function PlayersPage() {
         />
 
         <div className={styles.formCard}>
-          <h3 className={styles.formTitle}>Bowler History Search</h3>
+          {isMobileView ? (
+            <button
+              type="button"
+              className={styles.formTitleToggle}
+              aria-expanded={!historySearchCollapsed}
+              onClick={() => setHistorySearchCollapsed(previous => !previous)}
+            >
+              <span>Bowler History Search</span>
+              <span className={styles.formTitleExpandIcon}>{historySearchCollapsed ? '+' : '−'}</span>
+            </button>
+          ) : (
+            <h3 className={styles.formTitle}>Bowler History Search</h3>
+          )}
+          {(!isMobileView || !historySearchCollapsed) && (
           <div className={styles.historyPanelBody}>
             <div className={styles.searchContainer}>
               <input
@@ -1157,6 +1189,7 @@ export default function PlayersPage() {
               </div>
             )}
           </div>
+          )}
         </div>
 
         <PlayerForm
@@ -1237,7 +1270,20 @@ export default function PlayersPage() {
               )}
 
               <div className={styles.formCard}>
-                <h3 className={styles.formTitle}>Entries Table Search</h3>
+                {isMobileView ? (
+                  <button
+                    type="button"
+                    className={styles.formTitleToggle}
+                    aria-expanded={!tableSearchCollapsed}
+                    onClick={() => setTableSearchCollapsed(previous => !previous)}
+                  >
+                    <span>Entries Table Search</span>
+                    <span className={styles.formTitleExpandIcon}>{tableSearchCollapsed ? '+' : '−'}</span>
+                  </button>
+                ) : (
+                  <h3 className={styles.formTitle}>Entries Table Search</h3>
+                )}
+                {(!isMobileView || !tableSearchCollapsed) && (
                 <div className={styles.tableSearchPanelBody}>
                   <div className={`${styles.searchContainer} ${styles.searchContainerSticky}`}>
                     <input
@@ -1274,6 +1320,7 @@ export default function PlayersPage() {
                     </button>
                   </div>
                 </div>
+                )}
               </div>
 
               <div className={styles.tableCard}>
