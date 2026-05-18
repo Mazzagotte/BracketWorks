@@ -1681,32 +1681,6 @@ export default function ScoresPage() {
               </div>
             )}
 
-            {/* Bottom action bar */}
-            {!isLoading && players.length > 0 && (
-              <div className={styles.mobileBottomActions}>
-                <button
-                  className={styles.mobileBottomBtn}
-                  onClick={saveAllVisibleScores}
-                  disabled={isScoresLocked}
-                >
-                  Save All
-                </button>
-                <button
-                  className={styles.mobileBottomBtnSecondary}
-                  onClick={handleExportScoresToExcel}
-                  disabled={isExporting || players.length === 0}
-                >
-                  {isExporting ? 'Exporting…' : 'Export'}
-                </button>
-                <button
-                  className={styles.mobileBottomBtnSecondary}
-                  onClick={() => importFileRef.current?.click()}
-                  disabled={isImporting}
-                >
-                  {isImporting ? 'Importing…' : 'Import'}
-                </button>
-              </div>
-            )}
           </div>
         </MobileLayout>
       ) : (

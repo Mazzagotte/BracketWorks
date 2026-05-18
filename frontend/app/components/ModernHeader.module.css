@@ -281,5 +281,33 @@
     margin-top: 10px;
     padding-top: 10px;
     gap: 8px;
+    align-items: stretch;
+    justify-content: stretch;
+  }
+
+  /* Keep all header actions consistent on mobile regardless of page/module */
+  .actions :global(button),
+  .actions :global(a) {
+    min-height: 34px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 0 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    line-height: 1.1;
+    flex: 1 1 calc(50% - 4px);
+  }
+
+  .actions :global(button:disabled),
+  .actions :global(a[aria-disabled='true']) {
+    opacity: 0.55;
+  }
+
+  .actions :global(button:active),
+  .actions :global(a:active) {
+    transform: translateY(1px);
   }
 }

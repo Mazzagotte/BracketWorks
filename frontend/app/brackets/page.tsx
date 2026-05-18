@@ -23,7 +23,6 @@ import styles from './brackets.module.css'
 // Lazy load heavy components for better initial load performance
 const BracketGenerationModal = lazy(() => import('../components/BracketGenerationModal'))
 const BracketTreeView = lazy(() => import('./components/BracketTreeView').then(mod => ({ default: mod.BracketTreeView })))
-const MobileBracketView = lazy(() => import('./components/MobileBracketView').then(mod => ({ default: mod.MobileBracketView })))
 
 export default function BracketsPage() {
   // State for modal and generation
@@ -35,7 +34,7 @@ export default function BracketsPage() {
   
   // State for bracket display
   const [activeTab, setActiveTab] = useState('all')
-  const [currentRound, setCurrentRound] = useState(0)
+  const [mobileOpenBracketIndex, setMobileOpenBracketIndex] = useState<number | null>(null)
   
   // Ref to prevent infinite loop in useEffect
   const loadingRef = useRef(false)
@@ -399,11 +398,57 @@ export default function BracketsPage() {
     return activeGroup.brackets.map(bracket => ({ group: activeGroup, bracket }))
   }, [activeTab, bracketGroups])
 
+  const searchFilteredBracketItems = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase()
+    if (!term) return filteredBracketItems
+
+    return filteredBracketItems.filter(({ bracket }) =>
+      (bracket.rounds || []).some(round =>
+        round.matches.some(match =>
+          (match.playerA || '').toLowerCase().includes(term) ||
+          (match.playerB || '').toLowerCase().includes(term)
+        )
+      )
+    )
+  }, [filteredBracketItems, searchTerm])
+
+  const mobileBracketSections = useMemo(() => {
+    const grouped = new Map<string, { key: string; name: string; items: Array<{ item: typeof searchFilteredBracketItems[number]; index: number }> }>()
+
+    searchFilteredBracketItems.forEach((item, index) => {
+      const existing = grouped.get(item.group.key)
+      if (existing) {
+        existing.items.push({ item, index })
+      } else {
+        grouped.set(item.group.key, {
+          key: item.group.key,
+          name: item.group.name,
+          items: [{ item, index }],
+        })
+      }
+    })
+
+    return Array.from(grouped.values())
+  }, [searchFilteredBracketItems])
+
+  useEffect(() => {
+    if (selectedBracketIndex >= searchFilteredBracketItems.length) {
+      setSelectedBracketIndex(0)
+    }
+  }, [searchFilteredBracketItems.length, selectedBracketIndex])
+
+  useEffect(() => {
+    if (!isMobile || mobileOpenBracketIndex === null) return
+    if (mobileOpenBracketIndex >= searchFilteredBracketItems.length) {
+      setMobileOpenBracketIndex(null)
+    }
+  }, [isMobile, mobileOpenBracketIndex, searchFilteredBracketItems.length])
+
   const activeBracketItem = useMemo(() => {
-    if (!filteredBracketItems.length) return null
-    const safeIndex = Math.min(selectedBracketIndex, filteredBracketItems.length - 1)
-    return filteredBracketItems[safeIndex] || null
-  }, [filteredBracketItems, selectedBracketIndex])
+    if (!searchFilteredBracketItems.length) return null
+    const safeIndex = Math.min(selectedBracketIndex, searchFilteredBracketItems.length - 1)
+    return searchFilteredBracketItems[safeIndex] || null
+  }, [searchFilteredBracketItems, selectedBracketIndex])
 
   // Convert brackets to rounds structure
   const rounds = useMemo(() => {
@@ -423,17 +468,9 @@ export default function BracketsPage() {
   }, [])
 
   const searchResultCount = useMemo(() => {
-    if (!searchTerm || !rounds.length) return null
-    const term = searchTerm.toLowerCase()
-    const matched = new Set<string>()
-    rounds.forEach(round => {
-      round.matches.forEach(match => {
-        if (match.playerA && match.playerA.toLowerCase().includes(term)) matched.add(match.playerA)
-        if (match.playerB && match.playerB.toLowerCase().includes(term)) matched.add(match.playerB)
-      })
-    })
-    return matched.size
-  }, [searchTerm, rounds])
+    if (!searchTerm) return null
+    return searchFilteredBracketItems.length
+  }, [searchFilteredBracketItems.length, searchTerm])
 
   const handleCloseExplainModal = useCallback(() => setIsExplainModalOpen(false), [])
   const { isAuthenticated, isInitialized, currentUser } = useAuth()
@@ -537,8 +574,7 @@ export default function BracketsPage() {
         /* Show empty state if no brackets */
         (() => {
           const hasLoadedBrackets = !!loadedBrackets
-          const roundsLength = rounds?.length || 0
-          const showEmpty = !hasLoadedBrackets || roundsLength === 0
+          const showEmpty = !hasLoadedBrackets || filteredBracketItems.length === 0
 
           return showEmpty
         })() ? (
@@ -571,12 +607,13 @@ export default function BracketsPage() {
                 onTabChange={(tab) => {
                   setActiveTab(tab)
                   setSelectedBracketIndex(0)
+                  setMobileOpenBracketIndex(null)
                 }}
               />
 
               {/* Bracket Navigator - only shown when there are multiple brackets */}
-              {(() => {
-              const totalBrackets = filteredBracketItems.length
+              {!isMobile && (() => {
+              const totalBrackets = searchFilteredBracketItems.length
               
               if (totalBrackets <= 1) return null // Don't show if only one bracket
               
@@ -633,22 +670,82 @@ export default function BracketsPage() {
 
             {/* Bracket Display */}
             <Suspense fallback={<div className={styles.loadingState}><div>Loading...</div></div>}>
-            {rounds.length > 0 ? (
-              isMobile ? (
-                <MobileBracketView
-                  rounds={rounds}
-                  currentRound={currentRound}
-                  onRoundChange={setCurrentRound}
-                />
+            {isMobile ? (
+              searchFilteredBracketItems.length === 0 ? (
+                <div className={styles.noMatches}>
+                  <p>No brackets contain that player name.</p>
+                </div>
+              ) : mobileOpenBracketIndex === null ? (
+                <div className={styles.mobileBracketList}>
+                  {mobileBracketSections.map(section => (
+                    <section key={section.key} className={styles.mobileBracketSection}>
+                      <h3 className={styles.mobileBracketSectionTitle}>{section.name}</h3>
+                      <div className={styles.mobileBracketSectionList}>
+                        {section.items.map(({ item, index }) => {
+                          const itemRounds = item.bracket.rounds || []
+                          const totalMatches = itemRounds.reduce((sum, round) => sum + round.matches.length, 0)
+                          const completedMatches = itemRounds.reduce(
+                            (sum, round) => sum + round.matches.filter(m => m.winner || m.split_pot || m.both_advance).length,
+                            0
+                          )
+
+                          return (
+                            <button
+                              key={`${item.group.key}-${item.bracket.bracket_id}-${index}`}
+                              className={styles.mobileBracketListItem}
+                              onClick={() => {
+                                setSelectedBracketIndex(index)
+                                setMobileOpenBracketIndex(index)
+                              }}
+                            >
+                              <div className={styles.mobileBracketListTitleRow}>
+                                <span className={styles.mobileBracketListTitle}>Bracket {index + 1}</span>
+                                <span className={styles.mobileBracketListMode}>{item.group.name}</span>
+                              </div>
+                              <div className={styles.mobileBracketListMeta}>
+                                {completedMatches}/{totalMatches} matches complete
+                              </div>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </section>
+                  ))}
+                </div>
+              ) : activeBracketItem ? (
+                <div className={styles.mobileTreeViewWrap}>
+                  <div className={styles.mobileTreeHeader}>
+                    <button
+                      className={styles.mobileTreeBackBtn}
+                      onClick={() => setMobileOpenBracketIndex(null)}
+                    >
+                      Back to Brackets
+                    </button>
+                    <div className={styles.mobileTreeTitle}>
+                      Bracket {selectedBracketIndex + 1} • {activeBracketItem.group.name}
+                    </div>
+                  </div>
+                  <BracketTreeView
+                    rounds={rounds}
+                    isMobile={true}
+                    bracketType={activeBracketItem.group.scoring_mode === 'scratch' ? 'scratch' : 'handicap'}
+                    searchTerm={searchTerm}
+                    statusFilter="all"
+                  />
+                </div>
               ) : (
-                <BracketTreeView
-                  rounds={rounds}
-                  isMobile={isMobile}
-                  bracketType={activeBracketItem?.group?.scoring_mode === 'scratch' ? 'scratch' : 'handicap'}
-                  searchTerm={searchTerm}
-                  statusFilter="all"
-                />
+                <div className={styles.noMatches}>
+                  <p>No bracket selected.</p>
+                </div>
               )
+            ) : rounds.length > 0 ? (
+              <BracketTreeView
+                rounds={rounds}
+                isMobile={false}
+                bracketType={activeBracketItem?.group?.scoring_mode === 'scratch' ? 'scratch' : 'handicap'}
+                searchTerm={searchTerm}
+                statusFilter="all"
+              />
             ) : (
               <div className={styles.noMatches}>
                 <p>No matches found for the selected filters.</p>

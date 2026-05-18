@@ -58,6 +58,14 @@ export default function PayoutsPage() {
   const [isExportingExcel, setIsExportingExcel] = useState(false)
   const [isExportingPdf, setIsExportingPdf] = useState(false)
   const [isUnlocked, setIsUnlocked] = useState(false)
+  const [isMobileView, setIsMobileView] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobileView(window.innerWidth <= 900)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   const getPayoutUnlockKey = useCallback((tournamentId: number | null, squadId: number | null) => {
     if (!tournamentId) return null
@@ -654,17 +662,17 @@ export default function PayoutsPage() {
         onClick={handleExportToExcel}
         disabled={loading || isExportingExcel || filteredWinners.length === 0}
       >
-        {isExportingExcel ? 'Exporting Excel...' : 'Export to Excel'}
+        {isExportingExcel ? 'Exporting...' : isMobileView ? 'Excel' : 'Export to Excel'}
       </button>
       <button
         className="ds-btn ds-btn-primary ds-btn-sm"
         onClick={handleExportToPdf}
         disabled={loading || isExportingPdf || filteredWinners.length === 0}
       >
-        {isExportingPdf ? 'Exporting PDF...' : 'Export to PDF'}
+        {isExportingPdf ? 'Exporting...' : isMobileView ? 'PDF' : 'Export to PDF'}
       </button>
     </>
-  ), [filteredWinners.length, handleExportToExcel, handleExportToPdf, isExportingExcel, isExportingPdf, loading])
+  ), [filteredWinners.length, handleExportToExcel, handleExportToPdf, isExportingExcel, isExportingPdf, isMobileView, loading])
 
   usePageHeader({
     title: 'Payout Distribution',
