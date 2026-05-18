@@ -1,31 +1,23 @@
 import type { ReactNode } from 'react';
 import type { Metadata } from 'next';
-import { headers } from 'next/headers';
 import './styles/main.css';
+import styles from './layout.module.css';
 
-import ProtectedRouteShell from './components/ProtectedRouteShell';
+import ModernHeader from './components/ModernHeader';
+import { ToastProvider } from './components/Toast';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { AuthProvider } from './lib/auth-context';
+import { HeaderProvider } from './lib/header-context';
+import { DevAuthStatus } from './components/DevAuthStatus';
+import { TimeSlotReminderModal } from './components/TimeSlotReminderModal';
 
-const PUBLIC_ROUTE_PREFIXES = ['/login', '/signup', '/reset-password', '/verify-email', '/view'];
-
-function isPublicRoute(pathname: string | null) {
-  if (!pathname) {
-    return false;
-  }
-
-  if (pathname === '/') {
-    return true;
-  }
-
-  return PUBLIC_ROUTE_PREFIXES.some(prefix => pathname === prefix || pathname.startsWith(`${prefix}/`));
-}
+import AuthAwareLayout from '../components/AuthAwareLayout';
 
 export const metadata: Metadata = {
   title: 'BracketWorks - Professional Bowling Tournament Manager',
   description: 'Create and manage bowling tournaments with smart brackets, live scoring, and automatic payouts. Professional tournament management made simple.',
   metadataBase: new URL('https://bracketworks.app'),
-  alternates: {
-    canonical: 'https://bracketworks.app',
-  },
+  canonical: 'https://bracketworks.app',
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: 'any' },
@@ -72,11 +64,7 @@ export const metadata: Metadata = {
   category: 'Sports',
 };
 
-export default async function RootLayout({ children }: { children: ReactNode }) {
-  const headerStore = await headers();
-  const pathname = headerStore.get('x-pathname');
-  const publicRoute = isPublicRoute(pathname);
-
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <head>
@@ -124,7 +112,13 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         />
       </head>
       <body>
-        {publicRoute ? children : <ProtectedRouteShell>{children}</ProtectedRouteShell>}
+        <AuthProvider>
+          <HeaderProvider>
+            <ToastProvider>
+              <AuthAwareLayout>{children}</AuthAwareLayout>
+            </ToastProvider>
+          </HeaderProvider>
+        </AuthProvider>
       </body>
     </html>
   );
