@@ -162,9 +162,11 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
                 ☰
               </button>
               <div className={styles.mobileHeaderCenter}>
-                <h1 className={styles.mobileHeaderTitle}>BracketWorks</h1>
+                <h1 className={styles.mobileHeaderTitle}>
+                  {headerContext.title || currentPage.charAt(0).toUpperCase() + currentPage.slice(1)}
+                </h1>
+                <span className={styles.mobileHeaderBrand}>BracketWorks</span>
               </div>
-              <div className={styles.pageIndicator}>{currentPage}</div>
             </header>
           )}
 
