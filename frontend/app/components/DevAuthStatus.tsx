@@ -24,7 +24,7 @@ const statusText = (s: string) =>
   s === 'online' ? 'API Online' : s === 'offline' ? 'API Offline' : s === 'checking' ? 'Checking...' : 'Unknown';
 
 export function DevAuthStatus() {
-  const auth = useAuth();
+  const { isUserAuthenticated, currentUser, authToken } = useAuth();
   const [apiStatus, setApiStatus] = useState<ApiStatus>({ status: 'checking' });
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -101,7 +101,7 @@ export function DevAuthStatus() {
           {/* Auth Status dot */}
           <div
             suppressHydrationWarning
-            className={`${styles.dot} ${mounted ? (auth.isAuthenticated ? styles.dotOnline : styles.dotOffline) : styles.dotDefault}`}
+            className={`${styles.dot} ${mounted ? (isUserAuthenticated ? styles.dotOnline : styles.dotOffline) : styles.dotDefault}`}
           />
           <span className={styles.label}>{isExpanded ? 'Dev Status' : 'Dev'}</span>
         </div>
@@ -142,15 +142,15 @@ export function DevAuthStatus() {
           <div className={styles.section}>
             <div className={styles.sectionTitle}>Authentication</div>
             <div className={styles.row}>
-              <div className={`${styles.dotSm} ${auth.isAuthenticated ? styles.dotOnline : styles.dotOffline}`} />
+              <div className={`${styles.dotSm} ${isUserAuthenticated ? styles.dotOnline : styles.dotOffline}`} />
               <span className={styles.text}>
-                {auth.isAuthenticated ? 'Authenticated' : 'Not Authenticated'}
+                {isUserAuthenticated ? 'Authenticated' : 'Not Authenticated'}
               </span>
             </div>
-            {auth.user && (
-              <div className={styles.meta}>User: {auth.user.name || auth.user.id}</div>
+            {currentUser && (
+              <div className={styles.meta}>User: {currentUser.name || currentUser.id}</div>
             )}
-            <div className={styles.meta}>Token: {auth.token ? 'Present' : 'Missing'}</div>
+            <div className={styles.meta}>Token: {authToken ? 'Present' : 'Missing'}</div>
           </div>
 
           {/* Local Storage section */}

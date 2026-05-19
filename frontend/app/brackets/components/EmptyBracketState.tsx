@@ -1,4 +1,4 @@
-import React from 'react';
+import Link from 'next/link';
 
 export interface EmptyBracketStateProps {
   onGenerateClick: () => void;
@@ -20,9 +20,9 @@ export function EmptyBracketState({ onGenerateClick }: EmptyBracketStateProps) {
           <button onClick={onGenerateClick} className="ds-btn ds-btn-primary ds-btn-md">
             Generate Brackets
           </button>
-          <a href="/dashboard" className="ds-btn ds-btn-secondary ds-btn-md">
+          <Link href="/dashboard" className="ds-btn ds-btn-secondary ds-btn-md">
             Back to Dashboard
-          </a>
+          </Link>
         </div>
       </div>
     </div>

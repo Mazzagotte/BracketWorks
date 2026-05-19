@@ -473,7 +473,7 @@ export default function BracketsPage() {
   }, [searchFilteredBracketItems.length, searchTerm])
 
   const handleCloseExplainModal = useCallback(() => setIsExplainModalOpen(false), [])
-  const { isAuthenticated, isInitialized, currentUser } = useAuth()
+  const { isUserAuthenticated, isAuthInitialized, currentUser } = useAuth()
   const isDev = process.env.NODE_ENV === 'development' || !!currentUser?.isAdmin
 
   // Memoize the Generate Brackets button to prevent infinite re-renders
@@ -511,7 +511,7 @@ export default function BracketsPage() {
     storage.getItem('user_id')
 
   // Wait for auth initialization
-  if (!isInitialized) {
+  if (!isAuthInitialized) {
     return (
       <div className={styles.loadingState}>
         <div>Loading...</div>
@@ -520,7 +520,7 @@ export default function BracketsPage() {
   }
 
   // Authentication guard
-  if (!isAuthenticated && !hasStoredAuth) {
+  if (!isUserAuthenticated && !hasStoredAuth) {
     return (
       <div className={styles.authRequired}>
         <div>Please log in to access bracket management</div>

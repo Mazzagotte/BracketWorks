@@ -27,7 +27,7 @@ function isPublicRoute(pathname: string): boolean {
 }
 
 function ClientLayout({ children }: { children: ReactNode }) {
-  const auth = useAuth();
+  const { isUserAuthenticated, currentUser, isAuthInitialized } = useAuth();
   const headerContext = useHeader();
   const pathname = usePathname();
   const router = useRouter();
@@ -61,28 +61,28 @@ function ClientLayout({ children }: { children: ReactNode }) {
   }, [currentPath]);
 
   useEffect(() => {
-    if (auth.isAuthenticated) {
+    if (isUserAuthenticated) {
       wasAuthenticated.current = true;
     }
-  }, [auth.isAuthenticated]);
+  }, [isUserAuthenticated]);
 
   useEffect(() => {
-    if (!mounted) return;
+    if (!mounted || !isAuthInitialized) return;
 
-    if (!auth.isAuthenticated && !isPublicPath) {
+    if (!isUserAuthenticated && !isPublicPath) {
       router.replace(wasAuthenticated.current ? '/login?expired=true' : '/login');
     }
-  }, [mounted, auth.isAuthenticated, isPublicPath, router]);
+  }, [mounted, isAuthInitialized, isUserAuthenticated, isPublicPath, router]);
 
   useEffect(() => {
-    if (auth.isAuthenticated && auth.user) {
-      const storedFirstName = localStorage.getItem('first_name') || auth.user.name || undefined;
+    if (isUserAuthenticated && currentUser) {
+      const storedFirstName = localStorage.getItem('first_name') || currentUser.name || undefined;
       setFirstName(storedFirstName);
       return;
     }
 
     setFirstName(undefined);
-  }, [auth.isAuthenticated, auth.user]);
+  }, [isUserAuthenticated, currentUser]);
 
   useEffect(() => {
     if (isPublicPath) {
@@ -120,7 +120,7 @@ function ClientLayout({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const isUserAuthenticated = mounted && auth.isAuthenticated && !isPublicPath;
+  const showAuthenticatedShell = mounted && isAuthInitialized && isUserAuthenticated && !isPublicPath;
 
   if (!mounted) {
     return (
@@ -136,7 +136,7 @@ function ClientLayout({ children }: { children: ReactNode }) {
 
   return (
     <ErrorBoundary>
-      {!isMobile && isUserAuthenticated && (
+      {!isMobile && showAuthenticatedShell && (
         <Sidebar
           firstName={firstName}
           isMobile={false}
@@ -146,7 +146,7 @@ function ClientLayout({ children }: { children: ReactNode }) {
         />
       )}
 
-      {isMobile && isUserAuthenticated && (
+      {isMobile && showAuthenticatedShell && (
         <MobileNav
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
@@ -155,7 +155,7 @@ function ClientLayout({ children }: { children: ReactNode }) {
         />
       )}
 
-      {isMobile && isUserAuthenticated && (
+      {isMobile && showAuthenticatedShell && (
         <header className={styles.mobileHeader}>
           <button
             onClick={() => setSidebarOpen(true)}
@@ -175,9 +175,9 @@ function ClientLayout({ children }: { children: ReactNode }) {
 
       <main
         id="main-content"
-        className={`${styles.main} ${isMobile ? styles.mainMobile : styles.mainDesktop} ${isMobile && isUserAuthenticated ? styles.mainMobileAuth : ''}`}
+        className={`${styles.main} ${isMobile ? styles.mainMobile : styles.mainDesktop} ${isMobile && showAuthenticatedShell ? styles.mainMobileAuth : ''}`}
       >
-        {mounted && isUserAuthenticated && (
+        {mounted && showAuthenticatedShell && (
           <ModernHeader
             title={headerContext.title}
             subtitle={headerContext.subtitle}
@@ -185,7 +185,7 @@ function ClientLayout({ children }: { children: ReactNode }) {
           />
         )}
 
-        <div className={`${styles.contentCard} ${isMobile ? styles.contentCardMobile : ''} ${!isUserAuthenticated ? styles.contentCardNoAuth : ''}`}>
+        <div className={`${styles.contentCard} ${isMobile ? styles.contentCardMobile : ''} ${!showAuthenticatedShell ? styles.contentCardNoAuth : ''}`}>
           <ErrorBoundary>
             {children}
           </ErrorBoundary>

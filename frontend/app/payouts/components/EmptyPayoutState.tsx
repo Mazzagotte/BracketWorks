@@ -1,3 +1,6 @@
+'use client'
+
+import { useRouter } from 'next/navigation'
 import { Card } from '../../components/UI'
 import EnhancedButton from '../../components/EnhancedButton'
 
@@ -16,6 +19,8 @@ export function EmptyPayoutState({
   actionLink,
   icon = 'WIN'
 }: EmptyPayoutStateProps) {
+  const router = useRouter()
+
   return (
     <Card>
       <div className="bw-empty-payout-wrap">
@@ -35,7 +40,7 @@ export function EmptyPayoutState({
           <div className="bw-empty-payout-action">
             <EnhancedButton
               variant="primary"
-              onClick={() => { window.location.href = actionLink }}
+              onClick={() => { router.push(actionLink) }}
             >
               {actionText}
             </EnhancedButton>

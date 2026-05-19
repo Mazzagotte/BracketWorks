@@ -38,11 +38,13 @@ type TournamentBootstrapResponse = {
 
 export default function ScoresPage() {
   // Authentication check - must be at the top
-  const { isAuthenticated, isInitialized, token: authToken, currentUser } = useAuth();
+  const { isUserAuthenticated, isAuthInitialized, authToken, currentUser } = useAuth();
+  const storedAuthToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  const sessionToken = authToken || storedAuthToken;
 
   // Check if we have tokens in localStorage even if auth context isn't ready
   const hasStoredAuth = typeof window !== 'undefined' && 
-    localStorage.getItem('token') && 
+    sessionToken && 
     localStorage.getItem('user_id');
 
   const router = useRouter()
@@ -302,7 +304,7 @@ export default function ScoresPage() {
         const response = await apiFetch(API('/api/v1/scores/'), {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${saveData.token}`,
+            'Authorization': `Bearer ${saveData.authToken}`,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify(saveData.data)
@@ -375,7 +377,7 @@ export default function ScoresPage() {
 
   // DEV ONLY: build all random scores in memory, then do ONE setPlayers + ONE bulk API call
   const handleRandomizeScores = useCallback(async () => {
-    const token = localStorage.getItem('token')
+    const token = sessionToken
     const tournamentId = getSelectedTournamentId()
     const currentPlayers = playersRef.current
 
@@ -520,7 +522,7 @@ export default function ScoresPage() {
 
     setIsImporting(true)
     try {
-      const token = localStorage.getItem('token')
+      const token = sessionToken
       const tournamentId = getSelectedTournamentId()
       const squad = selectedSquadRef.current
       if (!token || !tournamentId || !squad) {
@@ -684,7 +686,7 @@ export default function ScoresPage() {
       setIsImporting(false)
       e.target.value = ''
     }
-  }, [addToast, isScoresLocked])
+  }, [addToast, isScoresLocked, sessionToken])
 
   // Header configuration
   const clearGameScores = useCallback(async (gameNumber: 2 | 3) => {
@@ -693,7 +695,7 @@ export default function ScoresPage() {
       return
     }
 
-    const token = authToken || localStorage.getItem('token')
+    const token = sessionToken
     if (!token) {
       addToast({ type: 'error', message: 'Your session expired. Please log in again.', duration: 4000 })
       return
@@ -731,7 +733,7 @@ export default function ScoresPage() {
           : p.scores,
       })))
     }
-  }, [tournament, selectedSquad, addToast, authToken])
+  }, [tournament, selectedSquad, addToast, sessionToken])
 
   const devClearGame = useCallback((gameNumber: 2 | 3) => {
     setClearGameConfirm(gameNumber)
@@ -919,7 +921,7 @@ export default function ScoresPage() {
       if (typeof window === 'undefined') return { lastTournamentId: null, token: null };
       return {
         lastTournamentId: getSelectedTournamentId(),
-        token: localStorage.getItem('token'),
+        token: sessionToken,
       };
     })();
     
@@ -977,7 +979,7 @@ export default function ScoresPage() {
       setIsLoading(false)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [sessionToken])
 
   useEffect(() => {
     const tournamentId = tournament?.id ?? null
@@ -1110,7 +1112,7 @@ export default function ScoresPage() {
 
     const timeoutId = setTimeout(async () => {
       try {
-        const token = localStorage.getItem('token')
+        const token = sessionToken
         const tournamentId = getSelectedTournamentId()
 
         if (!token || !tournamentId || !selectedSquadRef.current) {
@@ -1143,8 +1145,8 @@ export default function ScoresPage() {
         }
 
         if (!isOnline) {
-          setPendingSaves(prev => [...prev, { token, data: scoreData }])
-          localStorage.setItem(`pending_save_${Date.now()}`, JSON.stringify({ token, data: scoreData }))
+          setPendingSaves(prev => [...prev, { authToken: token, data: scoreData }])
+          localStorage.setItem(`pending_save_${Date.now()}`, JSON.stringify({ authToken: token, data: scoreData }))
           setRowSaveState(prev => ({ ...prev, [playerId]: 'failed' }))
           return
         }
@@ -1206,10 +1208,11 @@ export default function ScoresPage() {
     setPendingSaves,
     setPlayers,
     setRowSaveState,
+    sessionToken,
   ])
 
   const retryPlayerSave = useCallback(async (player: Player) => {
-    const token = localStorage.getItem('token')
+    const token = sessionToken
     const tournamentId = getSelectedTournamentId()
     if (!token || !tournamentId || !selectedSquadRef.current) return
 
@@ -1237,7 +1240,7 @@ export default function ScoresPage() {
       setRowSaveState(prev => ({ ...prev, [player.id]: 'failed' }))
       logger.error('Retry score save failed', { error, playerId: player.id })
     }
-  }, [markRowSaved])
+  }, [markRowSaved, sessionToken])
 
   const undoLastEdit = useCallback(() => {
     if (!lastEdit) return
@@ -1280,7 +1283,7 @@ export default function ScoresPage() {
   }, [rowSaveState])
 
   const saveAllVisibleScores = useCallback(async () => {
-    const token = localStorage.getItem('token')
+    const token = sessionToken
     const tournamentId = getSelectedTournamentId()
     const squad = selectedSquadRef.current
 
@@ -1330,7 +1333,7 @@ export default function ScoresPage() {
     }
 
     addToast({ message: 'All visible scores saved.', type: 'success', duration: 2500 })
-  }, [addToast, markRowSaved, paginationHook.paginatedItems])
+  }, [addToast, markRowSaved, paginationHook.paginatedItems, sessionToken])
 
   const markScoresComplete = useCallback(() => {
     const missing = players
@@ -1349,7 +1352,7 @@ export default function ScoresPage() {
   }, [rowSaveState])
 
   // Auth guards (after all hooks)
-  if (!isInitialized) {
+  if (!isAuthInitialized) {
     return (
       <div className={styles.loadingState}>
         <div>Loading score management...</div>
@@ -1357,7 +1360,7 @@ export default function ScoresPage() {
     )
   }
 
-  if (!isAuthenticated && !hasStoredAuth) {
+  if (!isUserAuthenticated && !hasStoredAuth) {
     return (
       <div className={styles.authRequired}>
         <div>Please log in to access score management</div>
@@ -1365,7 +1368,7 @@ export default function ScoresPage() {
     )
   }
 
-  if (!isAuthenticated && hasStoredAuth) {
+  if (!isUserAuthenticated && hasStoredAuth) {
     return (
       <div className={styles.authRequired}>
         <div>Loading score management...</div>

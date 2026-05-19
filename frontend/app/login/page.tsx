@@ -17,7 +17,7 @@ import ResetPasswordModal from "../components/ResetPasswordModal";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { authenticateUser } = useAuth();
   const usernameInputRef = useRef<HTMLInputElement | null>(null);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -213,7 +213,7 @@ export default function LoginPage() {
 
       const displayName = data.first_name || username;
 
-      login(data.access_token, data.user_id, {
+      authenticateUser(data.access_token, data.user_id, {
         name: data.first_name,
         isAdmin: Boolean(data.is_admin),
       }, {

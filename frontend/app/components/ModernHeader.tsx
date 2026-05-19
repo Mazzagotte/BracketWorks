@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '../lib/auth-context';
 import { getActiveSquadLabel, getActiveTournamentName } from '../lib/selection-session';
@@ -9,10 +9,7 @@ import styles from './ModernHeader.module.css';
 interface ModernHeaderProps {
   title?: string;
   subtitle?: string;
-  actions?: React.ReactNode;
-  showBreadcrumbs?: boolean;
-  breadcrumbs?: Array<{ label: string; href?: string }>;
-  centerContent?: boolean;
+  actions?: ReactNode;
 }
 
 export default function ModernHeader({
@@ -21,7 +18,7 @@ export default function ModernHeader({
   actions,
 }: ModernHeaderProps) {
   const pathname = usePathname();
-  const { user } = useAuth();
+  const { currentUser } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [activeTournament, setActiveTournament] = useState<string | null>(null);
@@ -69,7 +66,7 @@ export default function ModernHeader({
     return 'Good evening';
   };
 
-  const firstName = mounted ? (user?.name || localStorage.getItem('first_name') || 'User') : 'User';
+  const firstName = mounted ? (currentUser?.name || localStorage.getItem('first_name') || 'User') : 'User';
 
   return (
     <header className={styles.header}>

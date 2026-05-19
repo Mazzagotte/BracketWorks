@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '../app/lib/auth-context';
 import { logger } from '../app/lib/logger';
 import { shouldRequireTimeSlotBeforeLeavingDashboard, showSelectTimeSlotReminder } from '../app/lib/selection-session';
@@ -16,7 +17,8 @@ interface MobileNavProps {
 }
 
 export function MobileNav({ isOpen, onClose, firstName, currentPage }: MobileNavProps) {
-  const { logout, currentUser } = useAuth();
+  const router = useRouter();
+  const { logoutUser, currentUser } = useAuth();
   const [touchStartY, setTouchStartY] = useState<number | null>(null);
 
   const visibleLinks = currentUser?.isAdmin
@@ -25,8 +27,8 @@ export function MobileNav({ isOpen, onClose, firstName, currentPage }: MobileNav
 
   const handleLogout = () => {
     logger.userAction('User logged out via mobile nav');
-    logout();
-    window.location.href = '/login';
+    logoutUser();
+    router.push('/login');
   };
 
   const handleProtectedNavigation = (event: React.MouseEvent<HTMLAnchorElement>, targetPath: string) => {

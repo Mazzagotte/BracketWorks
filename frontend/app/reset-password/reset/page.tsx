@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from 'next/link';
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState, useEffect, useRef, useMemo, useCallback } from "react";
 
@@ -334,14 +335,14 @@ export default function ResetPasswordPage() {
             </>
           ) : (
             <div className={loginStyles.actions}>
-              <a href="/reset-password/request" className={loginStyles.createAccountBtn}>
+              <Link href="/reset-password/request" className={loginStyles.createAccountBtn}>
                 Request New Reset Link
-              </a>
+              </Link>
             </div>
           )}
 
           <div className={loginStyles.actions}>
-            <a href="/login" className={loginStyles.forgotLink}>Back to Login</a>
+            <Link href="/login" className={loginStyles.forgotLink}>Back to Login</Link>
           </div>
         </form>
       </div>
