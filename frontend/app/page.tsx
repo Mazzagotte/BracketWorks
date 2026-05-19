@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 // ...existing code...
 import styles from './page.module.css';
