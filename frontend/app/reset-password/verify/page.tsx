@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { type FormEvent, useState, useEffect, useRef, useCallback, useMemo } from "react";
 
 import Image from "next/image";
 
@@ -14,11 +14,6 @@ import { getEmailValidationError, getResetCodeValidationError } from '../../lib/
 import { useToast } from "../../components/Toast";
 import { logger } from '../../lib/logger';
 import { getErrorMessage } from '../../lib/error-utils';
-
-
-
-
-
 
 export default function VerifyResetPage() {
   const [email, setEmail] = useState("");
@@ -199,7 +194,7 @@ export default function VerifyResetPage() {
     }
   }, [addToast, code, connectionQuality, email, enqueueRetry, fetchWithRetry, formValues, isOnline, setFieldError, validateAll]);
 
-  const handleVerify = useCallback(async (e: React.FormEvent) => {
+  const handleVerify = useCallback(async (e: FormEvent) => {
     e.preventDefault();
     await submitVerification();
   }, [submitVerification]);
