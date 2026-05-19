@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 
 import Sidebar from './Sidebar';
@@ -13,7 +13,20 @@ import { useAuth } from '../app/lib/auth-context';
 import { useHeader } from '../app/lib/header-context';
 import styles from '../app/layout.module.css';
 
-function ClientLayout({ children }: { children: React.ReactNode }) {
+const PUBLIC_ROUTES = new Set(['/', '/login', '/signup', '/verify-email']);
+
+function isPublicRoute(pathname: string): boolean {
+  if (PUBLIC_ROUTES.has(pathname)) {
+    return true;
+  }
+
+  return pathname === '/reset-password'
+    || pathname.startsWith('/reset-password/')
+    || pathname === '/view'
+    || pathname.startsWith('/view/');
+}
+
+function ClientLayout({ children }: { children: ReactNode }) {
   const auth = useAuth();
   const headerContext = useHeader();
   const pathname = usePathname();
@@ -24,12 +37,14 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
   const [currentPage, setCurrentPage] = useState('');
   const [mounted, setMounted] = useState(false);
   const wasAuthenticated = useRef(false);
+  const currentPath = pathname || '/';
+  const isPublicPath = isPublicRoute(currentPath);
 
   useEffect(() => {
     setMounted(true);
     document.body.style.overflow = 'auto';
     document.body.style.touchAction = 'pan-y pan-x';
-    (document.body.style as any).webkitOverflowScrolling = 'touch';
+    (document.body.style as { webkitOverflowScrolling?: string }).webkitOverflowScrolling = 'touch';
     document.documentElement.style.touchAction = 'pan-y pan-x';
 
     const checkMobile = () => {
@@ -42,9 +57,8 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const currentPath = pathname || '/';
     setCurrentPage(currentPath.slice(1) || 'dashboard');
-  }, [pathname]);
+  }, [currentPath]);
 
   useEffect(() => {
     if (auth.isAuthenticated) {
@@ -55,47 +69,58 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!mounted) return;
 
-    if (!auth.isAuthenticated) {
+    if (!auth.isAuthenticated && !isPublicPath) {
       router.replace(wasAuthenticated.current ? '/login?expired=true' : '/login');
-      return;
     }
-  }, [mounted, auth.isAuthenticated, router]);
+  }, [mounted, auth.isAuthenticated, isPublicPath, router]);
 
   useEffect(() => {
     if (auth.isAuthenticated && auth.user) {
       const storedFirstName = localStorage.getItem('first_name') || auth.user.name || undefined;
       setFirstName(storedFirstName);
-    } else {
-      setFirstName(undefined);
+      return;
     }
+
+    setFirstName(undefined);
   }, [auth.isAuthenticated, auth.user]);
 
   useEffect(() => {
+    if (isPublicPath) {
+      document.body.style.overflow = 'auto';
+      document.body.style.touchAction = 'pan-y pan-x';
+      (document.body.style as { webkitOverflowScrolling?: string }).webkitOverflowScrolling = 'touch';
+      return () => {
+        document.body.style.overflow = 'auto';
+        document.body.style.touchAction = 'pan-y pan-x';
+        (document.body.style as { webkitOverflowScrolling?: string }).webkitOverflowScrolling = 'touch';
+      };
+    }
+
     if (isMobile && sidebarOpen) {
       document.body.style.overflow = 'hidden';
       document.body.style.touchAction = 'none';
     } else {
       document.body.style.overflow = 'auto';
       document.body.style.touchAction = 'pan-y pan-x';
-      (document.body.style as any).webkitOverflowScrolling = 'touch';
+      (document.body.style as { webkitOverflowScrolling?: string }).webkitOverflowScrolling = 'touch';
     }
 
     return () => {
       document.body.style.overflow = 'auto';
       document.body.style.touchAction = 'pan-y pan-x';
-      (document.body.style as any).webkitOverflowScrolling = 'touch';
+      (document.body.style as { webkitOverflowScrolling?: string }).webkitOverflowScrolling = 'touch';
     };
-  }, [isMobile, sidebarOpen]);
+  }, [isMobile, isPublicPath, sidebarOpen]);
 
   useEffect(() => {
     return () => {
       document.body.style.overflow = 'auto';
       document.body.style.touchAction = 'pan-y pan-x';
-      (document.body.style as any).webkitOverflowScrolling = 'touch';
+      (document.body.style as { webkitOverflowScrolling?: string }).webkitOverflowScrolling = 'touch';
     };
   }, []);
 
-  const isUserAuthenticated = mounted && auth.isAuthenticated;
+  const isUserAuthenticated = mounted && auth.isAuthenticated && !isPublicPath;
 
   if (!mounted) {
     return (
@@ -160,7 +185,7 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
           />
         )}
 
-        <div className={`${styles.contentCard} ${isMobile ? styles.contentCardMobile : ''} ${!(mounted && isUserAuthenticated) ? styles.contentCardNoAuth : ''}`}>
+        <div className={`${styles.contentCard} ${isMobile ? styles.contentCardMobile : ''} ${!isUserAuthenticated ? styles.contentCardNoAuth : ''}`}>
           <ErrorBoundary>
             {children}
           </ErrorBoundary>
@@ -173,6 +198,6 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function AuthAwareLayout({ children }: { children: React.ReactNode }) {
+export default function AuthAwareLayout({ children }: { children: ReactNode }) {
   return <ClientLayout>{children}</ClientLayout>;
 }
