@@ -2,6 +2,7 @@
 
 export const dynamic = 'force-dynamic'
 
+import Link from 'next/link'
 import { useMemo, useRef, useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../lib/auth-context'
 import { usePageHeader } from '../lib/header-context'
@@ -53,7 +54,7 @@ function bracketProgramsEqual(left: BracketProgramDefinition[], right: BracketPr
 
 
 export default function PlayersPage() {
-  const { isAuthenticated, isInitialized, token, user } = useAuth()
+  const { isUserAuthenticated, isAuthInitialized, authToken, currentUser } = useAuth()
   const { tournaments, fetchTournaments } = useTournaments()
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null)
   const [selectedSquadId, setSelectedSquadId] = useState<number | null>(() => {
@@ -101,7 +102,7 @@ export default function PlayersPage() {
 
   useEffect(() => {
     const runHistorySearch = async () => {
-      if (!token) {
+      if (!authToken) {
         setHistoryResults([])
         return
       }
@@ -137,7 +138,7 @@ export default function PlayersPage() {
     }
 
     void runHistorySearch()
-  }, [token, debouncedHistorySearchUsbc, debouncedHistorySearchFirstName, debouncedHistorySearchLastName])
+  }, [authToken, debouncedHistorySearchUsbc, debouncedHistorySearchFirstName, debouncedHistorySearchLastName])
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -219,7 +220,7 @@ export default function PlayersPage() {
   // Load entry fee from tournament bracket settings
   const lastEntryFeeFetchRef = useRef(0)
   const loadEntryFee = useCallback(async () => {
-    if (!token) {
+    if (!authToken) {
       return;
     }
     
@@ -256,7 +257,7 @@ export default function PlayersPage() {
       // nothing — squad fetch no longer gated on this
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token, loadSidePots]);
+  }, [authToken, loadSidePots]);
 
   // Load entry fee when tournament or auth changes
   useEffect(() => {
@@ -307,14 +308,14 @@ export default function PlayersPage() {
   // Debug authentication state
   useEffect(() => {
     logger.debug('Players page auth state', {
-      isAuthenticated,
-      isInitialized,
-      hasToken: !!token,
-      hasUser: !!user,
+      isAuthenticated: isUserAuthenticated,
+      isInitialized: isAuthInitialized,
+      hasToken: !!authToken,
+      hasUser: !!currentUser,
       tokenFromStorage: !!localStorage.getItem('token'),
       userIdFromStorage: !!localStorage.getItem('user_id')
     });
-  }, [isAuthenticated, isInitialized, token, user]);
+  }, [isUserAuthenticated, isAuthInitialized, authToken, currentUser]);
 
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null)
 
@@ -336,7 +337,7 @@ export default function PlayersPage() {
   } = usePlayers({
     selectedSquad,
     squads,
-    authToken: token,
+    authToken,
     entryFee,
     bracketPrograms: enabledBracketPrograms,
     getItem: (key: string) => localStorage.getItem(key),
@@ -536,7 +537,7 @@ export default function PlayersPage() {
     }
   }, [enabledBracketPrograms, entryFee, sidePots, getTournamentId, bulkSetPlayers, cancelPendingPatches])
 
-  const isDev = process.env.NODE_ENV === 'development' || !!user?.isAdmin
+  const isDev = process.env.NODE_ENV === 'development' || !!currentUser?.isAdmin
   const [isDeletingAll, setIsDeletingAll] = useState(false)
   const [deleteAllPlayersConfirmOpen, setDeleteAllPlayersConfirmOpen] = useState(false)
 
@@ -1054,14 +1055,14 @@ export default function PlayersPage() {
       }
     };
 
-    if (isInitialized && token) {
+    if (isAuthInitialized && authToken) {
       fetchSquadData();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isInitialized, token, getTournamentId, loadSidePots, entryFee]);
+  }, [isAuthInitialized, authToken, getTournamentId, loadSidePots, entryFee]);
 
   // Wait for auth initialization
-  if (!isInitialized) {
+  if (!isAuthInitialized) {
     return (
       <div className={styles.loadingScreen}>
         <div>Loading player management...</div>
@@ -1069,7 +1070,7 @@ export default function PlayersPage() {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!isUserAuthenticated) {
     return (
       <div className={styles.authRequired}>
         <div className={styles.authRequiredTitle}>Authentication Required</div>
@@ -1219,9 +1220,9 @@ export default function PlayersPage() {
             <div className={styles.noTournamentText}>
               Please load a tournament from the dashboard to manage players.
             </div>
-            <a href="/dashboard" className={styles.dashboardLink}>
+            <Link href="/dashboard" className={styles.dashboardLink}>
               Go to Dashboard
-            </a>
+            </Link>
           </div>
         ) : (
           <>

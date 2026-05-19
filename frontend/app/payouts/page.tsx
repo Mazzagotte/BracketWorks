@@ -44,7 +44,7 @@ type TournamentBootstrapResponse = {
 
 export default function PayoutsPage() {
   const { addToast } = useToast()
-  const { isAuthenticated, isInitialized } = useAuth()
+  const { isUserAuthenticated, isAuthInitialized } = useAuth()
   const { tournaments, fetchTournaments } = useTournaments()
   const { squads, fetchSquads } = useSquads()
 
@@ -111,7 +111,7 @@ export default function PayoutsPage() {
   }, [])
 
   useEffect(() => {
-    if (!isInitialized || !isAuthenticated) return
+    if (!isAuthInitialized || !isUserAuthenticated) return
 
     const hydrateFromBootstrap = async () => {
       const storedId = getSelectedTournamentId()
@@ -152,7 +152,7 @@ export default function PayoutsPage() {
     }
 
     void hydrateFromBootstrap()
-  }, [fetchSquads, isAuthenticated, isInitialized])
+  }, [fetchSquads, isUserAuthenticated, isAuthInitialized])
 
   useEffect(() => {
     if (tournaments.length > 0 && !selectedTournament) {
@@ -689,7 +689,7 @@ export default function PayoutsPage() {
 
   const hasStoredAuth = typeof window !== 'undefined' && storage.getItem('token') && storage.getItem('user_id')
 
-  if (!isInitialized) {
+  if (!isAuthInitialized) {
     return (
       <div className={styles.loadingRow}>
         <div className={styles.loadingSpinner} />
@@ -698,7 +698,7 @@ export default function PayoutsPage() {
     )
   }
 
-  if (!isAuthenticated && !hasStoredAuth) {
+  if (!isUserAuthenticated && !hasStoredAuth) {
     return (
       <div className={styles.emptyState}>
         <div className={styles.emptyTitle}>Please log in</div>

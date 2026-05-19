@@ -1340,7 +1340,6 @@ export default function TournamentDashboard() {
   usePageHeader({
     title: "Tournament Dashboard",
     subtitle: undefined,
-    centerContent: false,
     actions: headerActions
   });
 

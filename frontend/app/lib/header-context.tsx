@@ -1,63 +1,38 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 
-interface HeaderContextType {
+type HeaderProps = {
   title?: string;
   subtitle?: string;
-  actions?: React.ReactNode;
-  centerContent?: boolean;
-  showBreadcrumbs?: boolean;
-  breadcrumbs?: Array<{ label: string; href?: string }>;
-  setHeaderProps: (props: {
-    title?: string;
-    subtitle?: string;
-    actions?: React.ReactNode;
-    centerContent?: boolean;
-    showBreadcrumbs?: boolean;
-    breadcrumbs?: Array<{ label: string; href?: string }>;
-  }) => void;
-  clearHeaderProps: () => void;
+  actions?: ReactNode;
+};
+
+interface HeaderContextType extends HeaderProps {
+  setHeaderProps: (props: HeaderProps) => void;
 }
 
 const HeaderContext = createContext<HeaderContextType | undefined>(undefined);
 
-export function HeaderProvider({ children }: { children: React.ReactNode }) {
-  const [headerProps, setHeaderPropsState] = useState<Omit<HeaderContextType, 'setHeaderProps' | 'clearHeaderProps'>>({});
-  const [mounted, setMounted] = useState(false);
+export function HeaderProvider({ children }: { children: ReactNode }) {
+  const [headerProps, setHeaderPropsState] = useState<HeaderProps>({});
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const setHeaderProps = useCallback((props: Omit<HeaderContextType, 'setHeaderProps' | 'clearHeaderProps'>) => {
+  const setHeaderProps = useCallback((props: HeaderProps) => {
     setHeaderPropsState((prev) => {
-      const sameBreadcrumbs = JSON.stringify(prev.breadcrumbs || []) === JSON.stringify(props.breadcrumbs || []);
       const isSame =
         prev.title === props.title &&
         prev.subtitle === props.subtitle &&
-        prev.actions === props.actions &&
-        prev.centerContent === props.centerContent &&
-        prev.showBreadcrumbs === props.showBreadcrumbs &&
-        sameBreadcrumbs;
+        prev.actions === props.actions;
 
       if (isSame) return prev;
       return props;
     });
   }, []);
 
-  const clearHeaderProps = useCallback(() => {
-    setHeaderPropsState((prev) => {
-      const isEmpty = Object.keys(prev).length === 0;
-      return isEmpty ? prev : {};
-    });
-  }, []);
-
   return (
     <HeaderContext.Provider value={{
       ...headerProps,
-      setHeaderProps,
-      clearHeaderProps
+      setHeaderProps
     }}>
       {children}
     </HeaderContext.Provider>
@@ -76,10 +51,7 @@ export function useHeader() {
 export function usePageHeader(props: {
   title?: string;
   subtitle?: string;
-  actions?: React.ReactNode;
-  centerContent?: boolean;
-  showBreadcrumbs?: boolean;
-  breadcrumbs?: Array<{ label: string; href?: string }>;
+  actions?: ReactNode;
 }) {
   const { setHeaderProps } = useHeader();
 

@@ -292,7 +292,7 @@ export class ApiClient {
       if (appError.statusCode === 401) {
         if (typeof window !== 'undefined') {
           this.clearAuthStorage()
-          window.location.href = '/login'
+          window.dispatchEvent(new Event('auth-expired'))
         }
       }
 
@@ -412,7 +412,7 @@ export class ApiClient {
 
       if (response.status === 401 && typeof window !== 'undefined') {
         this.clearAuthStorage()
-        window.location.href = '/login'
+        window.dispatchEvent(new Event('auth-expired'))
       }
 
       if (useAuthFetchCache && response.ok) {

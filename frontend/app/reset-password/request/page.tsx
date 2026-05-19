@@ -1,5 +1,6 @@
 "use client";
 
+import Link from 'next/link';
 import { type FormEvent, useState, useEffect, useRef, useCallback, useMemo } from "react";
 
 import Image from "next/image";
@@ -268,12 +269,12 @@ export default function RequestResetPage() {
         </form>
 
         <div className="links-container">
-          <a href="/login" className="signup-link">
+          <Link href="/login" className="signup-link">
             Back to Login
-          </a>
-          <a href="/reset-password/verify" className="forgot-link">
+          </Link>
+          <Link href="/reset-password/verify" className="forgot-link">
             Have a Code?
-          </a>
+          </Link>
         </div>
 
         {/* Keyboard shortcuts help */}

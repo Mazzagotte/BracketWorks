@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../app/lib/auth-context';
 import { buildApiUrl } from '../app/lib/api';
@@ -22,7 +22,8 @@ interface SidebarProps {
 
 export default function Sidebar({ firstName, isMobile = false, isOpen = false, onClose }: SidebarProps) {
   const pathname = usePathname();
-  const { logout, currentUser } = useAuth();
+  const router = useRouter();
+  const { logoutUser, currentUser } = useAuth();
   const [tournamentId, setTournamentId] = useState<string | null>(null);
 
   const visibleLinks = currentUser?.isAdmin
@@ -77,8 +78,8 @@ export default function Sidebar({ firstName, isMobile = false, isOpen = false, o
 
   const handleLogout = () => {
     logger.userAction('User logged out');
-    logout();
-    window.location.href = '/login';
+    logoutUser();
+    router.push('/login');
   };
 
   const handleProtectedNavigation = (event: React.MouseEvent<HTMLAnchorElement>, targetPath: string) => {

@@ -1,5 +1,7 @@
 "use client";
 
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { type FormEvent, useState, useEffect, useRef, useCallback, useMemo } from "react";
 
 import Image from "next/image";
@@ -16,6 +18,7 @@ import { logger } from '../../lib/logger';
 import { getErrorMessage } from '../../lib/error-utils';
 
 export default function VerifyResetPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
@@ -141,7 +144,7 @@ export default function VerifyResetPage() {
       });
       
       setTimeout(() => {
-        window.location.href = result.redirectUrl;
+        router.push(result.redirectUrl);
       }, 2000);
       
     } catch (err: unknown) {
@@ -192,7 +195,7 @@ export default function VerifyResetPage() {
     } finally {
       setLoading(false);
     }
-  }, [addToast, code, connectionQuality, email, enqueueRetry, fetchWithRetry, formValues, isOnline, setFieldError, validateAll]);
+  }, [addToast, code, connectionQuality, email, enqueueRetry, fetchWithRetry, formValues, isOnline, router, setFieldError, validateAll]);
 
   const handleVerify = useCallback(async (e: FormEvent) => {
     e.preventDefault();
@@ -298,12 +301,12 @@ export default function VerifyResetPage() {
         </form>
 
         <div className="links-container">
-          <a href="/login" className="signup-link">
+          <Link href="/login" className="signup-link">
             Back to Login
-          </a>
-          <a href="/reset-password/request" className="forgot-link">
+          </Link>
+          <Link href="/reset-password/request" className="forgot-link">
             Request New Code
-          </a>
+          </Link>
         </div>
 
         {/* Keyboard shortcuts help */}

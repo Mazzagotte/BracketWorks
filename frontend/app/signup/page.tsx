@@ -311,7 +311,7 @@ export default function SignupPage() {
             <button
               type="button"
               className="signup-login-button"
-              onClick={() => window.location.href = "/login"}
+              onClick={() => router.push('/login')}
             >
               Already have an account? Sign in
             </button>

@@ -1,17 +1,33 @@
 import type { ReactNode } from 'react';
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './styles/main.css';
-import styles from './layout.module.css';
 
-import ModernHeader from './components/ModernHeader';
 import { ToastProvider } from './components/Toast';
-import { ErrorBoundary } from './components/ErrorBoundary';
 import { AuthProvider } from './lib/auth-context';
 import { HeaderProvider } from './lib/header-context';
-import { DevAuthStatus } from './components/DevAuthStatus';
-import { TimeSlotReminderModal } from './components/TimeSlotReminderModal';
 
 import AuthAwareLayout from '../components/AuthAwareLayout';
+
+const backendOrigin = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+const structuredData = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: 'BracketWorks',
+  url: 'https://bracketworks.app',
+  description: 'Professional bowling tournament management platform with smart brackets, live scoring, and automatic payouts',
+  applicationCategory: 'SportsApplication',
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'USD',
+  },
+  image: 'https://bracketworks.app/og-image.png',
+  author: {
+    '@type': 'Organization',
+    name: 'BracketWorks',
+    url: 'https://bracketworks.app',
+  },
+});
 
 export const metadata: Metadata = {
   title: 'BracketWorks - Professional Bowling Tournament Manager',
@@ -66,12 +82,19 @@ export const metadata: Metadata = {
   category: 'Sports',
 };
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  viewportFit: 'cover',
+  themeColor: 'var(--color-primary)',
+};
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes, viewport-fit=cover" />
-        <meta name="theme-color" content="var(--color-primary)" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="BracketWorks" />
@@ -82,8 +105,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <link rel="dns-prefetch" href="//fonts.googleapis.com" />
         
         {/* Preconnect to backend API */}
-        <link rel="preconnect" href={process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'} crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href={process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'} />
+        <link rel="preconnect" href={backendOrigin} crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href={backendOrigin} />
         
         <link rel="manifest" href="/manifest.json" />
         
@@ -91,25 +114,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              '@context': 'https://schema.org',
-              '@type': 'WebApplication',
-              name: 'BracketWorks',
-              url: 'https://bracketworks.app',
-              description: 'Professional bowling tournament management platform with smart brackets, live scoring, and automatic payouts',
-              applicationCategory: 'SportsApplication',
-              offers: {
-                '@type': 'Offer',
-                price: '0',
-                priceCurrency: 'USD',
-              },
-              image: 'https://bracketworks.app/og-image.png',
-              author: {
-                '@type': 'Organization',
-                name: 'BracketWorks',
-                url: 'https://bracketworks.app',
-              },
-            }),
+            __html: structuredData,
           }}
         />
       </head>

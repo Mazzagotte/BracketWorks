@@ -147,7 +147,7 @@ export interface BracketSettings {
 
 // Score related types
 export interface PendingScoreSave {
-  token: string;
+  authToken: string;
   data: {
     player_id: number;
     tournament_id: number;

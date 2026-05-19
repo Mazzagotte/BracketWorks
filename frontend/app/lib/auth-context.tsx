@@ -1,11 +1,9 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 
 import { logger } from './logger';
 import { API } from './api';
-
-
 
 interface User {
   id: string;
@@ -20,7 +18,6 @@ interface AuthSessionData {
 }
 
 interface AuthContextType {
-  // New descriptive names
   authToken: string | null;
   currentUser: User | null;
   isUserAuthenticated: boolean;
@@ -29,16 +26,6 @@ interface AuthContextType {
   logoutUser: () => void;
   updateUserData: (userData: Partial<User>) => void;
   clearUserAuth: () => void;
-  
-  // Backward compatibility properties (deprecated but functional)
-  token: string | null;
-  user: User | null;
-  isAuthenticated: boolean;
-  isInitialized: boolean;
-  login: (token: string, userId: string, userData?: Partial<User>, authSession?: AuthSessionData) => void;
-  logout: () => void;
-  updateUser: (userData: Partial<User>) => void;
-  clearAuth: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -48,6 +35,17 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
+  const clearAuthState = () => {
+    setAuthToken(null);
+    setCurrentUser(null);
+    localStorage.removeItem('token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('session_id');
+    localStorage.removeItem('user_id');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('is_admin');
+  };
+
   const getInitialAuthState = () => {
     if (typeof window === 'undefined') return { authToken: null, currentUser: null };
     
@@ -79,13 +77,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [currentUser, setCurrentUser] = useState<User | null>(initialAuthState.currentUser);
   const [isAuthInitialized, setIsAuthInitialized] = useState(false);
   const [isComponentMounted, setIsComponentMounted] = useState(false);
-
-  // Refs let the storage event handler always see current values without
-  // being listed as effect dependencies (avoids the re-render loop).
-  const authTokenRef = useRef(authToken);
-  const currentUserRef = useRef(currentUser);
-  useEffect(() => { authTokenRef.current = authToken; }, [authToken]);
-  useEffect(() => { currentUserRef.current = currentUser; }, [currentUser]);
 
   // Set mounted flag for hydration safety
   useEffect(() => {
@@ -124,9 +115,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
       handleStorageChange();
     };
 
+    const handleAuthExpired = () => {
+      if (!isComponentMounted) return;
+      logger.info('Handling auth-expired event');
+      clearAuthState();
+      window.dispatchEvent(new Event('auth-state-changed'));
+    };
+
     // Listen for storage changes
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('auth-state-changed', handleAuthChange);
+    window.addEventListener('auth-expired', handleAuthExpired);
     
     // Initial check
     handleStorageChange();
@@ -134,6 +133,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('auth-state-changed', handleAuthChange);
+      window.removeEventListener('auth-expired', handleAuthExpired);
     };
   }, [isComponentMounted, authToken, currentUser]);
 
@@ -146,12 +146,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       localStorage.setItem('user_id', currentUser.id);
       localStorage.setItem('is_admin', currentUser.isAdmin ? 'true' : 'false');
     } else {
-      localStorage.removeItem('token');
-      localStorage.removeItem('refresh_token');
-      localStorage.removeItem('session_id');
-      localStorage.removeItem('user_id');
-      localStorage.removeItem('userId'); // Handle inconsistent key usage
-      localStorage.removeItem('is_admin');
+      clearAuthState();
     }
   }, [authToken, currentUser, isComponentMounted]);
 
@@ -234,25 +229,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const authContextValue: AuthContextType = {
-    // New descriptive properties
     authToken,
     currentUser,
     isUserAuthenticated: !!(authToken && currentUser),
-    isAuthInitialized: isAuthInitialized, // Use the explicit state
+    isAuthInitialized,
     authenticateUser,
     logoutUser,
     updateUserData,
     clearUserAuth,
-    
-    // Backward compatibility properties
-    token: authToken,
-    user: currentUser,
-    isAuthenticated: !!(authToken && currentUser),
-    isInitialized: isComponentMounted,
-    login: authenticateUser,
-    logout: logoutUser,
-    updateUser: updateUserData,
-    clearAuth: clearUserAuth,
   };
 
   // Debug logging for auth state changes
@@ -286,108 +270,3 @@ export function useAuth(): AuthContextType {
   }
   return context;
 }
-
-export function useAuthToken(): string | null {
-  const { authToken } = useAuth();
-  return authToken;
-}
-
-// Hook to check if auth is still initializing
-export function useAuthInitialized(): boolean {
-  const [mounted, setMounted] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    // Check if localStorage is accessible (client-side)
-    try {
-      localStorage.getItem('test');
-      setIsInitialized(true);
-    } catch {
-      // Still server-side or localStorage not available
-      setTimeout(() => setIsInitialized(true), 100);
-    }
-  }, []);
-
-  return mounted && isInitialized;
-}
-
-export function useCurrentUser(): User | null {
-  const { currentUser } = useAuth();
-  return currentUser;
-}
-
-export function useIsAuthenticated(): boolean {
-  const { isUserAuthenticated } = useAuth();
-  return isUserAuthenticated;
-}
-
-// Utility function for making authenticated API calls
-export function useAuthenticatedFetch() {
-  const { authToken, logoutUser } = useAuth();
-
-  return async (url: string, options: RequestInit = {}) => {
-    if (!authToken) {
-      throw new Error('No authentication token available');
-    }
-
-    const headers = {
-      'Authorization': `Bearer ${authToken}`,
-      'Content-Type': 'application/json',
-      ...options.headers,
-    };
-
-    let response = await fetch(url, {
-      ...options,
-      headers,
-    });
-
-    if (response.status === 401) {
-      const refreshToken = typeof window !== 'undefined' ? localStorage.getItem('refresh_token') : null;
-      if (refreshToken) {
-        try {
-          const refreshResponse = await fetch(API('/api/v1/users/refresh'), {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ refresh_token: refreshToken }),
-          });
-
-          if (refreshResponse.ok) {
-            const refreshData = await refreshResponse.json();
-            if (refreshData?.access_token) {
-              localStorage.setItem('token', refreshData.access_token);
-              if (refreshData.refresh_token) {
-                localStorage.setItem('refresh_token', refreshData.refresh_token);
-              }
-              if (refreshData.session_id) {
-                localStorage.setItem('session_id', refreshData.session_id);
-              }
-
-              response = await fetch(url, {
-                ...options,
-                headers: {
-                  ...headers,
-                  Authorization: `Bearer ${refreshData.access_token}`,
-                },
-              });
-            }
-          }
-        } catch (error) {
-          logger.warn('Authenticated fetch refresh failed', { error: String(error) });
-        }
-      }
-    }
-
-    // Auto-logout on terminal 401 responses
-    if (response.status === 401) {
-      logoutUser();
-      throw new Error('Authentication expired');
-    }
-
-    return response;
-  };
-}
-
-// Backward compatibility exports for existing code
-export const useToken = useAuthToken;
-export const useUser = useCurrentUser;

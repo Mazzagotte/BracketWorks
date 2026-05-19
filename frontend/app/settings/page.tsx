@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { usePageHeader } from '../lib/header-context';
 import { useToast } from '../components/Toast';
@@ -55,7 +56,8 @@ function formatVerifiedDate(value: string | null | undefined): string {
 }
 
 export default function SettingsPage() {
-  const { updateUser, logout } = useAuth();
+  const router = useRouter();
+  const { updateUserData, logoutUser } = useAuth();
   const { addToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [savingProfile, setSavingProfile] = useState(false);
@@ -208,7 +210,7 @@ export default function SettingsPage() {
 
       if (updated.first_name) {
         localStorage.setItem('first_name', updated.first_name);
-        updateUser({ name: updated.first_name });
+        updateUserData({ name: updated.first_name });
       }
 
       const emailChanged = previousEmail !== (updated.email || '').trim().toLowerCase();
@@ -256,8 +258,8 @@ export default function SettingsPage() {
 
       if (logoutAfterPasswordChange) {
         addToast({ type: 'info', message: 'Signing out for security. Please log in with your new password.', duration: 3000 });
-        logout();
-        window.location.href = '/login';
+        logoutUser();
+        router.push('/login');
       }
     } catch (err) {
       addToast({ type: 'error', message: err instanceof Error ? err.message : 'Failed to update password', duration: 5000 });
@@ -274,8 +276,8 @@ export default function SettingsPage() {
       const activeSessionId = typeof window !== 'undefined' ? localStorage.getItem('session_id') : null;
       if (activeSessionId && activeSessionId === sessionId) {
         addToast({ type: 'info', message: 'Current session revoked. Please sign in again.', duration: 3000 });
-        logout();
-        window.location.href = '/login';
+        logoutUser();
+        router.push('/login');
         return;
       }
       await loadSessions();
