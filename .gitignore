@@ -1,6 +1,7 @@
 
 # Node
 node_modules/
+node_modules_stale_*/
 .next/
 out/
 npm-debug.log*
@@ -47,3 +48,4 @@ build/
 # Temporary files
 *.tmp
 *.temp
+frontend/node_modules_stale_*
