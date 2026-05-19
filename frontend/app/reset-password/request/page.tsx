@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { type FormEvent, useState, useEffect, useRef, useCallback, useMemo } from "react";
 
 import Image from "next/image";
 
@@ -162,7 +162,7 @@ export default function RequestResetPage() {
     }
   }, [addToast, connectionQuality, cooldownSeconds, email, enqueueRetry, fetchWithRetry, formValues, isOnline, startCooldown, validateAll]);
 
-  const handleRequest = useCallback(async (e: React.FormEvent) => {
+  const handleRequest = useCallback(async (e: FormEvent) => {
     e.preventDefault();
     await submitRequest();
   }, [submitRequest]);

@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { type FormEvent, useMemo, useState } from "react";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 import AuthFeedback from "../components/AuthFeedback";
 import PasswordStrengthPanel from "../components/PasswordStrengthPanel";
@@ -12,15 +13,13 @@ import {
   SignupPasswordFieldSection,
   SignupUsernameFieldSection,
 } from "../components/SignupFieldSections";
+import { useToast } from "../components/Toast";
 import { useSignupForm } from "../hooks/useSignupForm";
 import { getSignupValidationError, submitSignup } from "../lib/auth/signup";
 
-
-
-
-
-
 export default function SignupPage() {
+  const router = useRouter();
+  const { addToast } = useToast();
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
@@ -59,13 +58,7 @@ export default function SignupPage() {
     [passwordRequirementChecks]
   );
 
-  // Enhanced UX hooks
-  // Simple toast replacement
-  const addToast = (toast: { message: string; type?: string; duration?: number }) => {
-    // Could implement toast UI here if needed
-  };
-
-  const handleSignup = async (submitEvent: React.FormEvent) => {
+  const handleSignup = async (submitEvent: FormEvent) => {
     submitEvent.preventDefault();
     
     const validationError = getSignupValidationError({
@@ -113,8 +106,8 @@ export default function SignupPage() {
       resetForm();
 
       // Redirect to login after a delay
-      setTimeout(() => {
-        window.location.href = '/login?signup=success';
+      window.setTimeout(() => {
+        router.push('/login?signup=success');
       }, 2000);
 
     } catch (err: unknown) {

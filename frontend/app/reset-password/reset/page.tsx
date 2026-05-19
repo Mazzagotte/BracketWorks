@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { type FormEvent, useState, useEffect, useRef, useMemo, useCallback } from "react";
 
 import { useAuthFormShortcuts } from "../../hooks/useAuthFormShortcuts";
 import { useFieldValidation } from "../../hooks/useFieldValidation";
@@ -161,7 +161,7 @@ export default function ResetPasswordPage() {
     }
   }, [addToast, code, connectionQuality, email, enqueueRetry, fetchWithRetry, hasToken, isOnline, isPreview, newPassword, router]);
 
-  const handleReset = useCallback(async (e: React.FormEvent) => {
+  const handleReset = useCallback(async (e: FormEvent) => {
     e.preventDefault();
     await submitReset();
   }, [submitReset]);
