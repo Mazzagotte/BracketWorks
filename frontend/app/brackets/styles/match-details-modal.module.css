@@ -2,7 +2,6 @@
    MODAL BACKDROP & CONTAINER
    =================================== */
 
-.modalBackdrop {
   position: fixed;
   top: 0;
   left: 0;
@@ -13,7 +12,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 1200;
   padding: 1rem;
   animation: fadeIn 0.2s ease-out;
 }
