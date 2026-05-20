@@ -100,7 +100,7 @@ if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
 }
 
 if ($BackendMode -eq "docker" -and -not (Get-Command docker -ErrorAction SilentlyContinue)) {
-    Write-Host "Docker backend mode is selected but Docke5433r is not available." -ForegroundColor Red
+    Write-Host "Docker backend mode is selected but Docker is not available." -ForegroundColor Red
     Write-Host "Install or start Docker Desktop, or set BRACKETWORKS_BACKEND_MODE=local in .env." -ForegroundColor Yellow
     exit 1
 }
@@ -128,7 +128,7 @@ if ($BackendMode -eq "docker") {
     $dockerBuildArg = if ($DockerBuildMode -match "^(always|true|1)$") { " --build" } else { "" }
     $backendCmd = "Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned; " +
                   "cd '$ProjectRoot'; " +
-                  "docker compose up -d$dockerBuildArg db backend; " +
+                  "docker compose up -d$dockerBuildArg db redis backend; " +
                   "docker compose ps; " +
                   "Read-Host 'Press Enter to close'"
 } else {
