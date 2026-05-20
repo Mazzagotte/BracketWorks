@@ -5,6 +5,8 @@
 
 A comprehensive web application for managing tournament brackets, tracking player scores, calculating automated payouts, and generating detailed tournament reports.
 
+**Live app**: [https://bracketworks.app](https://bracketworks.app)
+
 ## Features
 
 ### Tournament Management
@@ -33,17 +35,18 @@ A comprehensive web application for managing tournament brackets, tracking playe
 
 ## Technology Stack
 
-- **Frontend**: Next.js 14 (TypeScript), Progressive Web App, Responsive Design
-- **Backend**: FastAPI (Python 3.13), SQLAlchemy ORM, Alembic Migrations
-- **Database**: PostgreSQL with optimized indexing
+- **Frontend**: Next.js 16 (TypeScript), Progressive Web App, Responsive Design
+- **Backend**: FastAPI (Python 3.11), SQLAlchemy ORM, Alembic Migrations
+- **Database**: PostgreSQL 16 with optimized indexing
+- **Cache / Rate Limiting**: Redis 7
 - **Deployment**: Docker containers for local and self-hosted environments
 - **Development**: Hot reload, comprehensive testing suite
 
 ## Quick Start
 
 ### Prerequisites
-- **Node.js** 22.19.0+
-- **Python** 3.13+
+- **Node.js** 20+
+- **Python** 3.11+
 - **Yarn** package manager
 - **PostgreSQL** (or use Docker setup)
 
@@ -53,8 +56,8 @@ A comprehensive web application for managing tournament brackets, tracking playe
 git clone <repository-url>
 cd BracketWorks
 
-# Start local database and backend with Docker
-docker compose up -d --build db backend
+# Start local database, Redis cache, and backend with Docker
+docker compose up -d --build db redis backend
 
 # Start the frontend locally
 cd frontend
@@ -65,6 +68,7 @@ yarn dev
 # Frontend: http://localhost:3000
 # Backend API: http://localhost:8000/docs
 # Database: localhost:5432
+# Redis: localhost:6379
 ```
 
 ### Docker Development Notes
@@ -77,7 +81,7 @@ postgresql://bracketworks:bracketworks@localhost:5432/bracketworks
 ```
 
 - The backend container now waits for Postgres and runs `alembic upgrade head` automatically on startup.
-- The PowerShell launcher [start_bracketworks.ps1](e:/BracketWorks/start_bracketworks.ps1) starts Docker `db` and `backend`, then launches the frontend against `http://localhost:8000`.
+- The PowerShell launcher [start_bracketworks.ps1](start_bracketworks.ps1) starts Docker `db`, `redis`, and `backend`, then launches the frontend against `http://localhost:8000`.
 - If you want the frontend in Docker too, run `docker compose up --build`, then open `http://localhost:3000`.
 
 ### Option 2: Manual Setup
@@ -116,6 +120,10 @@ yarn dev
 Create a `.env` file in the backend directory:
 
 ```bash
+# Environment
+ENVIRONMENT=development
+DEBUG=true
+
 # Database Configuration
 DATABASE_URL=postgresql://username:password@localhost:5432/bracketworks
 
@@ -130,13 +138,13 @@ CORS_ORIGINS=["http://localhost:3000","https://yourdomain.com"]
 # Optional: Logging Level
 LOG_LEVEL=INFO
 
-# Password reset email provider (Resend hosted templates)
+# Email provider (Resend hosted templates)
 RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxxx
 FROM_EMAIL=no-reply@bracketworks.app
 FROM_NAME=BracketWorks
 FRONTEND_URL=https://bracketworks.app
 
-# Optional: Cache Configuration
+# Cache / Rate Limiting (Redis)
 REDIS_URL=redis://localhost:6379
 
 # Rate limiting (per-minute defaults)
@@ -144,6 +152,9 @@ RATE_LIMIT_LOGIN_PER_MINUTE=10
 RATE_LIMIT_PASSWORD_RESET_PER_MINUTE=6
 RATE_LIMIT_PUBLIC_PER_MINUTE=120
 RATE_LIMIT_BRACKET_GENERATE_PER_MINUTE=20
+
+# Frontend (used by Docker compose)
+NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
 ```
 
 Rate limiting behavior:
@@ -161,6 +172,14 @@ BracketWorks/
 │   │   ├── payouts/         # Payout calculation and tracking
 │   │   ├── players/         # Player management
 │   │   ├── scores/          # Score entry and tracking
+│   │   ├── dashboard/       # Tournament dashboard
+│   │   ├── admin/           # Admin panel
+│   │   ├── settings/        # User and app settings
+│   │   ├── view/            # Public tournament view
+│   │   ├── login/           # Authentication
+│   │   ├── signup/          # New user registration
+│   │   ├── verify-email/    # Email verification flow
+│   │   ├── reset-password/  # Password reset flow
 │   │   └── components/      # Reusable UI components
 │   ├── types/               # TypeScript type definitions
 │   └── public/              # Static assets and PWA manifest
@@ -203,54 +222,80 @@ alembic downgrade -1
 
 ## Deployment
 
-The current setup is focused on local Docker and local PostgreSQL development.
+### Local Development
 
 ```bash
-# Start local services
-docker compose up -d --build db backend
+# Start all local services
+docker compose up -d --build
 
 # Stop local services
 docker compose down
 ```
 
-## Known Issues & Platform Notes
+### Production
 
-### Windows Development
-- **Next.js Production Builds**: May encounter symlink issues on Windows
-- **Workaround**: Use `yarn dev` for development; production builds work correctly in Linux/Docker environments
-- **PowerShell Scripts**: Included helper scripts for Windows development workflow
+The full stack runs as four Docker services: `db`, `redis`, `backend`, `frontend`. Set the following environment variables on your host before deploying:
 
-### Performance Considerations
+```bash
+ENVIRONMENT=production
+DEBUG=false
+SECRET_KEY=<64-char random string>          # openssl rand -hex 32
+DATABASE_URL=postgresql://user:pass@host:5432/bracketworks
+REDIS_URL=redis://redis:6379/0
+CORS_ORIGINS=https://bracketworks.app
+FRONTEND_URL=https://bracketworks.app
+RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxxx
+NEXT_PUBLIC_BACKEND_URL=https://bracketworks.app
+```
+
+Then start all services:
+
+```bash
+docker compose up -d --build
+```
+
+### Production Security Checklist
+
+- [ ] `SECRET_KEY` is a strong random value (never use the default)
+- [ ] `DEBUG=false` and `ENVIRONMENT=production`
+- [ ] `CORS_ORIGINS` is set to your domain only
+- [ ] Redis is running and `REDIS_URL` is set (required for distributed rate limiting)
+- [ ] `RESEND_API_KEY` is set (required for email verification and password reset)
+- [ ] API docs are disabled — set `docs_url=None` and `redoc_url=None` in `backend/app/main.py` for production if the interactive docs should not be publicly accessible
+- [ ] PostgreSQL is not exposed on a public port (`ports` entry for `db` removed or firewalled)
+
+## Performance Notes
+
 - **Large Tournaments**: Bracket generation optimized for tournaments up to 64 players
-- **Caching**: Bracket data cached to improve load times
+- **Caching**: Bracket data cached via Redis to improve load times
 - **Database Indexing**: Optimized queries for player lookup and tournament statistics
 
 ## API Documentation
 
-The FastAPI backend provides comprehensive API documentation:
+The FastAPI backend exposes interactive docs in development:
 - **Swagger UI**: http://localhost:8000/docs
 - **ReDoc**: http://localhost:8000/redoc
+
+> **Note**: Consider disabling these in production by setting `docs_url=None, redoc_url=None` on the `FastAPI(...)` constructor in `backend/app/main.py`.
 
 ### Key API Endpoints
 - `/api/v1/brackets/` - Bracket generation and management
 - `/api/v1/payouts/` - Payout calculations and history
 - `/api/v1/players/` - Player management and statistics
 - `/api/v1/scores/` - Score entry and match results
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+- `/api/v1/tournaments/` - Tournament and squad management
+- `/api/v1/squads/` - Squad group management
+- `/api/v1/bowlers/` - Bowler profile management
+- `/api/v1/admin/` - Admin audit and management tools
+- `/api/v1/health/` - Service health check
 
 ## Support
 
-For issues, feature requests, or questions:
-- **GitHub Issues**: Use the repository issue tracker
-- **Documentation**: Check the `/docs` directory for detailed guides
-- **API Reference**: Use the interactive API documentation
+For issues or questions, open an issue on the repository or reach out via [bracketworks.app](https://bracketworks.app).
+
+## License
+
+MIT
 
 ---
 
