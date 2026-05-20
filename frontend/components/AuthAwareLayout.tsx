@@ -183,7 +183,7 @@ function ClientLayout({ children }: { children: ReactNode }) {
 
       <main
         id="main-content"
-        className={`${styles.main} ${isMobile ? styles.mainMobile : styles.mainDesktop} ${isMobile && showAuthenticatedShell ? styles.mainMobileAuth : ''}`}
+        className={`${styles.main} ${isMobile ? styles.mainMobile : (showAuthenticatedShell ? styles.mainDesktop : styles.mainPublic)} ${isMobile && showAuthenticatedShell ? styles.mainMobileAuth : ''}`}
       >
         <div className={`${styles.contentCard} ${isMobile ? styles.contentCardMobile : ''} ${!showAuthenticatedShell ? styles.contentCardNoAuth : ''}`}>
           <ErrorBoundary>

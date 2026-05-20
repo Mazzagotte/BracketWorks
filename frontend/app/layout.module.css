@@ -86,6 +86,12 @@
   padding: var(--header-height) 24px 24px 24px;
 }
 
+.mainPublic {
+  margin-left: 0;
+  width: 100%;
+  padding: 0;
+}
+
 /* Must match Sidebar.module.css width breakpoints */
 @media (max-width: 1400px) and (min-width: 1101px) {
   .mainDesktop {

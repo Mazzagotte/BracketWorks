@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react'
 import { logger } from '../lib/logger'
 import { disableScroll, enableScroll } from '../utils/modalUtils'
-import CloseControl from '../../components/CloseControl'
 import styles from './BracketGenerationModal.module.css'
 
 /**
@@ -338,13 +337,6 @@ export default function BracketGenerationModal({
         className={styles.modalCard} 
         onClick={(event) => event.stopPropagation()}
       >
-        <CloseControl
-          onClick={handleCloseModal}
-          position="absolute"
-          size="sm"
-          label="Close bracket generation modal"
-          disabled={isGenerating}
-        />
         {/* CONFETTI CELEBRATION */}
         {showConfetti && (
           <div className={styles.confettiContainer}>
