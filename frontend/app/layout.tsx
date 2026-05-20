@@ -11,22 +11,44 @@ import AuthAwareLayout from '../components/AuthAwareLayout';
 const backendOrigin = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
 const structuredData = JSON.stringify({
   '@context': 'https://schema.org',
-  '@type': 'WebApplication',
-  name: 'BracketWorks',
-  url: 'https://bracketworks.app',
-  description: 'Professional bowling tournament management platform with smart brackets, live scoring, and automatic payouts',
-  applicationCategory: 'SportsApplication',
-  offers: {
-    '@type': 'Offer',
-    price: '0',
-    priceCurrency: 'USD',
-  },
-  image: 'https://bracketworks.app/og-image.png',
-  author: {
-    '@type': 'Organization',
-    name: 'BracketWorks',
-    url: 'https://bracketworks.app',
-  },
+  '@graph': [
+    {
+      '@type': 'Organization',
+      '@id': 'https://bracketworks.app/#organization',
+      name: 'BracketWorks',
+      url: 'https://bracketworks.app',
+      logo: 'https://bracketworks.app/icons/icon-192.png',
+    },
+    {
+      '@type': 'WebSite',
+      '@id': 'https://bracketworks.app/#website',
+      name: 'BracketWorks',
+      url: 'https://bracketworks.app',
+      publisher: {
+        '@id': 'https://bracketworks.app/#organization',
+      },
+    },
+    {
+      '@type': 'WebApplication',
+      '@id': 'https://bracketworks.app/#webapp',
+      name: 'BracketWorks',
+      url: 'https://bracketworks.app',
+      description: 'Professional bowling tournament management platform with smart brackets, live scoring, and automatic payouts',
+      applicationCategory: 'SportsApplication',
+      offers: {
+        '@type': 'Offer',
+        price: '0',
+        priceCurrency: 'USD',
+      },
+      image: 'https://bracketworks.app/og-image.png',
+      author: {
+        '@id': 'https://bracketworks.app/#organization',
+      },
+      isPartOf: {
+        '@id': 'https://bracketworks.app/#website',
+      },
+    },
+  ],
 });
 
 export const metadata: Metadata = {
