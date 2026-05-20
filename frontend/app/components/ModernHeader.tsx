@@ -1,6 +1,8 @@
 "use client";
 
 import { type ReactNode, useEffect, useState } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '../lib/auth-context';
 import { getActiveSquadLabel, getActiveTournamentName } from '../lib/selection-session';
@@ -70,49 +72,47 @@ export default function ModernHeader({
 
   return (
     <header className={styles.header}>
-      <div className={`${styles.inner} ${isMobile ? styles.innerMobile : ''}`}>
-        <div className={styles.layout}>
-          {/* Top row: title + user */}
-          <div className={styles.topRow}>
-            <div className={styles.titleArea}>
-              <h1 className={`${styles.title} ${isMobile ? styles.titleMobile : ''}`}>
-                {getPageTitle()}
-              </h1>
-              {subtitle && (
-                <p className={`${styles.subtitle} ${isMobile ? styles.subtitleMobile : ''}`}>
-                  {subtitle}
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Active tournament strip */}
-          {mounted && (
-            <div className={styles.tournamentStrip}>
-              <div className={styles.tournamentStripGroup}>
-                <span className={styles.tournamentStripLabel}>Active Tournament:</span>
-                {activeTournament
-                  ? <span className={styles.tournamentStripName}>{activeTournament}</span>
-                  : <span className={styles.tournamentStripNone}>No tournament selected</span>
-                }
-              </div>
-              {activeTournament && activeSquad && (
-                <>
-                  <span className={styles.tournamentStripDivider}>·</span>
-                  <div className={styles.tournamentStripGroup}>
-                    <span className={styles.tournamentStripLabel}>Squad:</span>
-                    <span className={styles.tournamentStripName}>{activeSquad}</span>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-
-          {/* Actions row - always rendered to maintain consistent 150px layout */}
-          <div className={styles.actions}>
-            {actions}
-          </div>
+      <div className={styles.brand}>
+        <Link href="/" className={styles.brandLink}>
+          <Image
+            src="/logo.svg"
+            alt="BracketWorks"
+            width={180}
+            height={180}
+            className={styles.brandLogo}
+            priority
+          />
+        </Link>
+      </div>
+      <div className={styles.content}>
+        <div className={styles.topRow}>
+          <h1 className={styles.title}>{getPageTitle()}</h1>
         </div>
+        {mounted && (
+          <div className={styles.tournamentStrip}>
+            <span className={styles.tournamentItem}>
+              <span className={styles.tournamentLabel}>Active Tournament:</span>
+              {activeTournament
+                ? <span className={styles.tournamentStripName}>{activeTournament}</span>
+                : <span className={styles.tournamentStripNone}>None selected</span>
+              }
+            </span>
+            {activeTournament && activeSquad && (
+              <span className={styles.tournamentItem}>
+                <span className={styles.tournamentLabel}>Squad:</span>
+                <span className={styles.tournamentStripName}>{activeSquad}</span>
+              </span>
+            )}
+          </div>
+        )}
+        {actions && (
+          <>
+            <div className={styles.divider} />
+            <div className={styles.bottomRow}>
+              {actions}
+            </div>
+          </>
+        )}
       </div>
     </header>
   );

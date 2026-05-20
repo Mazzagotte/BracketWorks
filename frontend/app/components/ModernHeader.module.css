@@ -1,175 +1,131 @@
 /* Modern Header Styles */
 
 .header {
-  background: var(--gradient-dark-complex);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: var(--header-height);
+  display: flex;
+  align-items: stretch;
+  z-index: 1100;
+  box-sizing: border-box;
   border-bottom: 3px solid var(--color-primary);
   box-shadow: 0 2px 12px var(--opacity-black-30);
-  padding: 20px 0;
-  min-height: 80px;
-  height: auto;
+}
+
+/* Brand / logo section — matches sidebar width */
+.brand {
+  width: 200px;
+  flex-shrink: 0;
   display: flex;
-  align-items: flex-start;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  width: calc(100% + 48px);
-  margin-left: -24px;
-  margin-right: -24px;
-  border-radius: 0;
-  margin-top: 0;
-  box-sizing: border-box;
-  overflow-x: hidden;
-  padding-left: max(0px, env(safe-area-inset-left));
-  padding-right: max(0px, env(safe-area-inset-right));
+  align-items: center;
+  justify-content: center;
+  background: var(--color-brand-ivory-light);
+  border-right: 3px solid var(--color-primary);
 }
 
-.inner {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 24px;
-  box-sizing: border-box;
-  width: 100%;
+.brandLink {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  opacity: 0.9;
+  transition: opacity 0.2s ease;
 }
 
-.innerMobile {
-  padding: 0 16px;
+.brandLink:hover {
+  opacity: 1;
 }
 
-.layout {
+.brandLogo {
+  height: 180px;
+  width: 180px;
+}
+
+/* Main content area */
+.content {
+  flex: 1;
+  background: var(--gradient-dark-complex);
   display: flex;
   flex-direction: column;
-  width: 100%;
+  justify-content: center;
+  padding: 10px 24px 10px 124px;
+  gap: 6px;
+  min-width: 0;
 }
 
-/* Top row */
 .topRow {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  width: 100%;
+  gap: 16px;
+  min-width: 0;
 }
 
-/* Left: title area */
-.titleArea {
+.divider {
+  width: 100%;
+  height: 1px;
+  background: var(--opacity-white-10);
+  flex-shrink: 0;
+}
+
+.bottomRow {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  flex: 1;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.greeting {
+  font-size: 13px;
+  color: var(--opacity-white-50);
+  font-weight: 400;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.greetingName {
+  color: var(--opacity-white-70);
+  font-weight: 600;
 }
 
 .title {
-  font-size: 24px;
+  font-size: 26px;
   font-weight: 700;
   margin: 0;
   background: linear-gradient(135deg, var(--color-white) 0%, var(--color-primary) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  letter-spacing: -0.4px;
+  letter-spacing: -0.3px;
   line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.titleMobile {
-  font-size: 20px;
-}
-
-.subtitle {
-  margin: 0;
-  font-size: 13px;
-  color: var(--opacity-white-70);
-  font-weight: 500;
-  line-height: 1.4;
-}
-
-.subtitleMobile {
-  font-size: 12px;
-}
-
-/* Right: user area */
-.userArea {
+.tournamentItem {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 6px;
 }
 
-.userAreaMobile {
-  gap: 8px;
-}
-
-.userInfo {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 1px;
-}
-
-.greetingText {
+.tournamentLabel {
   font-size: 11px;
-  color: var(--opacity-white-60);
+  color: var(--opacity-white-40);
   font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  white-space: nowrap;
 }
 
-.greetingTextMobile {
-  font-size: 10px;
-}
-
-.userNameText {
-  font-size: 13px;
-  color: var(--color-primary);
-  font-weight: 600;
-}
-
-.userNameTextMobile {
-  font-size: 12px;
-}
-
-.avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--color-white);
-  box-shadow: 0 3px 10px var(--color-border-hover);
-  transition: all 0.2s ease;
-}
-
-.avatar:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px var(--color-border-hover);
-}
-
-.avatarMobile {
-  width: 32px;
-  height: 32px;
-  font-size: 12px;
-}
-
-/* Actions section */
-.actions {
-  width: 100%;
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid var(--color-border-light);
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-/* Active tournament strip */
+/* Tournament strip */
 .tournamentStrip {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: 6px;
 }
 
 .tournamentStripGroup {
@@ -214,100 +170,24 @@
   font-size: 12px;
 }
 
-/* Proportional zoom for smaller desktop/laptop screens */
-@media (max-width: 1400px) and (min-width: 769px) {
-  .inner { zoom: 0.92; }
+/* Inline actions (page-specific buttons) */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }
+
+/* Responsive: match sidebar width at each breakpoint */
+@media (max-width: 1400px) and (min-width: 1101px) {
+  .brand { width: 180px; }
+}
+
 @media (max-width: 1100px) and (min-width: 769px) {
-  .inner { zoom: 0.85; }
-}
-@media (max-width: 900px) and (min-width: 769px) {
-  .inner { zoom: 0.78; }
+  .brand { width: 164px; }
 }
 
-/* Mobile: correct bleed for 16px main padding instead of 24px */
-@media (max-width: 768px) {
-  .header {
-    width: calc(100% + 32px);
-    margin-left: -16px;
-    margin-right: -16px;
-  }
-}
-
+/* Mobile: this header is hidden — mobile uses its own fixed bar */
 @media (max-width: 480px) {
-  .header {
-    position: static;  /* scroll with content on mobile */
-    /* undo the -16px bleed from the 768px rule — main padding is now 0 */
-    width: 100%;
-    margin-left: 0;
-    margin-right: 0;
-    padding: 10px 0 12px;
-    min-height: 0;
-  }
-
-  .title {
-    display: none;   /* page name already shown in the top fixed bar */
-  }
-
-  .tournamentStrip {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 6px;
-    margin-top: 0;
-  }
-
-  .tournamentStripGroup {
-    width: 100%;
-    gap: 6px;
-  }
-
-  .tournamentStripDivider {
-    display: none;
-  }
-
-  .tournamentStripLabel {
-    font-size: 10px;
-  }
-
-  .tournamentStripName {
-    font-size: 10px;
-    line-height: 1.1;
-    min-height: 15px;
-    padding: 0 7px;
-    border-radius: 14px;
-  }
-
-  .actions {
-    margin-top: 10px;
-    padding-top: 10px;
-    gap: 8px;
-    align-items: stretch;
-    justify-content: stretch;
-  }
-
-  /* Keep all header actions consistent on mobile regardless of page/module */
-  .actions :global(button),
-  .actions :global(a) {
-    min-height: 34px;
-    border-radius: 10px;
-    font-size: 12px;
-    font-weight: 700;
-    padding: 0 10px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    line-height: 1.1;
-    flex: 1 1 calc(50% - 4px);
-  }
-
-  .actions :global(button:disabled),
-  .actions :global(a[aria-disabled='true']) {
-    opacity: 0.55;
-  }
-
-  .actions :global(button:active),
-  .actions :global(a:active) {
-    transform: translateY(1px);
-  }
+  .header { display: none; }
 }

@@ -76,8 +76,8 @@ export const SortableHeader: React.FC<SortableHeaderProps> = ({
       title={
         isActive
           ? direction === 'asc'
-            ? 'Sorted ascending — click to sort descending'
-            : 'Sorted descending — click to clear sort'
+            ? 'Sorted ascending. Click to sort descending.'
+            : 'Sorted descending. Click to clear sort.'
           : `Click to sort by ${String(children)}`
       }
     >

@@ -30,22 +30,20 @@ import {
   setSelectedTournament,
 } from '../lib/selection-session';
 import CloseControl from '../../components/CloseControl';
+import ExplainDashboardModal from './ExplainDashboardModal';
 
 function get12hrTimes() {
-  const availableTimeSlots: string[] = [];
-  // First all AM times
-  for (let hour = 1; hour <= 12; hour++) {
-    for (let minutes = 0; minutes < 60; minutes += 30) {
-      availableTimeSlots.push(`${hour}:${minutes.toString().padStart(2, '0')} AM`);
+  const makeGroup = (period: 'AM' | 'PM') => {
+    const slots: string[] = [];
+    // 12:xx comes first in each period, then 1–11
+    for (const hour of [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]) {
+      for (let minutes = 0; minutes < 60; minutes += 30) {
+        slots.push(`${hour}:${minutes.toString().padStart(2, '0')} ${period}`);
+      }
     }
-  }
-  // Then all PM times
-  for (let hour = 1; hour <= 12; hour++) {
-    for (let minutes = 0; minutes < 60; minutes += 30) {
-      availableTimeSlots.push(`${hour}:${minutes.toString().padStart(2, '0')} PM`);
-    }
-  }
-  return availableTimeSlots;
+    return slots;
+  };
+  return { am: makeGroup('AM'), pm: makeGroup('PM') };
 }
 const availableTimeOptions = get12hrTimes();
 const BRACKET_SETTINGS_AUTOSAVE_DELAY_MS = 600;
@@ -189,7 +187,7 @@ function EditTournamentModal({ open, onClose, tournament, onSave, isMobile, isCr
   return (
     <div className="modal-overlay">
       <form
-        className={`modal-content ${isCreateMode ? mobileStyles.createTournamentModalContent : ''}`}
+        className={`modal-content ${mobileStyles.tournamentModalContent} ${isCreateMode ? mobileStyles.createTournamentModalContent : ''}`}
         onSubmit={async submitEvent => {
           submitEvent.preventDefault();
           setIsSaving(true);
@@ -266,8 +264,8 @@ function EditTournamentModal({ open, onClose, tournament, onSave, isMobile, isCr
         ) : (
           // Desktop Form Layout
           <>
-        <div className={`form-grid ${isCreateMode ? mobileStyles.createTournamentFormGrid : ''}`}>
-          <div>
+        <div className={mobileStyles.tournamentFormBody}>
+          <div className={mobileStyles.tournamentFormFields}>
             <FormField label="Name" required>
               <Input
                 value={tournamentForm.name}
@@ -283,66 +281,76 @@ function EditTournamentModal({ open, onClose, tournament, onSave, isMobile, isCr
                 placeholder="Tournament location"
               />
             </FormField>
-            <FormField label="Start Date">
-              <Input
-                type="date"
-                value={tournamentForm.start_date || ''}
-                onChange={changeEvent => setTournamentForm(f => ({ ...f, start_date: changeEvent.target.value }))}
-              />
-            </FormField>
-            <FormField label="End Date">
-              <Input
-                type="date"
-                value={tournamentForm.end_date || ''}
-                onChange={changeEvent => setTournamentForm(f => ({ ...f, end_date: changeEvent.target.value }))}
-              />
-            </FormField>
+            <div className={mobileStyles.tournamentDateRow}>
+              <FormField label="Start Date">
+                <Input
+                  type="date"
+                  value={tournamentForm.start_date || ''}
+                  onChange={changeEvent => setTournamentForm(f => ({ ...f, start_date: changeEvent.target.value }))}
+                />
+              </FormField>
+              <FormField label="End Date">
+                <Input
+                  type="date"
+                  value={tournamentForm.end_date || ''}
+                  onChange={changeEvent => setTournamentForm(f => ({ ...f, end_date: changeEvent.target.value }))}
+                />
+              </FormField>
+            </div>
           </div>
-          <div>
-            <h3>Squad Times by Day</h3>
-            {tournamentDays.length === 0 && <p className="text-secondary">Select start and end dates to add squad times.</p>}
+          <div className={mobileStyles.squadTimesSection}>
+            <h3 className={mobileStyles.squadTimesTitle}>Squad Times by Day</h3>
+            {tournamentDays.length === 0 && <p className={mobileStyles.noSquadDaysHint}>Set start and end dates to add squad times.</p>}
             {tournamentDays.map(date => (
-              <div key={date} className="squad-day">
-                <div className="squad-day-label">{date}</div>
-                {(tournamentForm.squad_times[date] || []).map((time, i) => {
-                  if (!timeSlotInputReferences[date]) timeSlotInputReferences[date] = [];
-                  return (
-                    <div key={i} className="squad-time-row">
-                      <select
-                        className="form-select"
-                        ref={el => { timeSlotInputReferences[date][i] = el as HTMLSelectElement | null; }}
-                        value={time}
-                        onChange={changeEvent => setTournamentForm(f => ({ ...f, squad_times: { ...f.squad_times, [date]: f.squad_times[date].map((t, j) => j === i ? changeEvent.target.value : t) } }))}
-                      >
-                        <option value="" disabled>Select time</option>
-                        {availableTimeOptions.map(timeOption => (
-                          <option key={timeOption} value={timeOption}>{timeOption}</option>
-                        ))}
-                      </select>
-                      <CloseControl
-                        onClick={() => setTournamentForm(f => ({ ...f, squad_times: { ...f.squad_times, [date]: f.squad_times[date].filter((_, j) => j !== i) } }))}
-                        label="Remove squad time"
-                        size="xs"
-                      />
-                    </div>
-                  );
-                })}
-                <EnhancedButton
-                  type="button"
-                  onClick={() => {
-                    const times = tournamentForm.squad_times[date] || [];
-                    // Only add if last is selected
-                    if (times.length === 0 || (times[times.length - 1] && times[times.length - 1] !== '')) {
-                      setTournamentForm(f => ({ ...f, squad_times: { ...f.squad_times, [date]: [...(f.squad_times[date] || []), ''] } }));
-                      setFocusedTimeSlot({ date, idx: (tournamentForm.squad_times[date]?.length || 0) });
-                    }
-                  }}
-                  variant="secondary"
-                  size="sm"
-                  disableSuccessState
-                >
-                  Add Time
-                </EnhancedButton>
+              <div key={date} className={mobileStyles.squadDay}>
+                <div className={mobileStyles.squadDayLabel}>{date}</div>
+                <div className={mobileStyles.squadTimeRow}>
+                  {(tournamentForm.squad_times[date] || []).map((time, i) => {
+                    if (!timeSlotInputReferences[date]) timeSlotInputReferences[date] = [];
+                    return (
+                      <div key={i} className={mobileStyles.squadTimeItem}>
+                        <select
+                          className="entries-select"
+                          ref={el => { timeSlotInputReferences[date][i] = el as HTMLSelectElement | null; }}
+                          value={time}
+                          onChange={changeEvent => setTournamentForm(f => ({ ...f, squad_times: { ...f.squad_times, [date]: f.squad_times[date].map((t, j) => j === i ? changeEvent.target.value : t) } }))}
+                        >
+                          <option value="" disabled>Select time</option>
+                          <optgroup label="AM">
+                            {availableTimeOptions.am.map(timeOption => (
+                              <option key={timeOption} value={timeOption}>{timeOption}</option>
+                            ))}
+                          </optgroup>
+                          <optgroup label="PM">
+                            {availableTimeOptions.pm.map(timeOption => (
+                              <option key={timeOption} value={timeOption}>{timeOption}</option>
+                            ))}
+                          </optgroup>
+                        </select>
+                        <CloseControl
+                          onClick={() => setTournamentForm(f => ({ ...f, squad_times: { ...f.squad_times, [date]: f.squad_times[date].filter((_, j) => j !== i) } }))}
+                          label="Remove squad time"
+                          size="xs"
+                        />
+                      </div>
+                    );
+                  })}
+                  <EnhancedButton
+                    type="button"
+                    onClick={() => {
+                      const times = tournamentForm.squad_times[date] || [];
+                      if (times.length === 0 || (times[times.length - 1] && times[times.length - 1] !== '')) {
+                        setTournamentForm(f => ({ ...f, squad_times: { ...f.squad_times, [date]: [...(f.squad_times[date] || []), ''] } }));
+                        setFocusedTimeSlot({ date, idx: (tournamentForm.squad_times[date]?.length || 0) });
+                      }
+                    }}
+                    variant="secondary"
+                    size="sm"
+                    disableSuccessState
+                  >
+                    + Add Time
+                  </EnhancedButton>
+                </div>
               </div>
             ))}
           </div>
@@ -395,6 +403,7 @@ export default function TournamentDashboard() {
   const [allTournaments, setAllTournaments] = useState<Tournament[]>([]);
   const [deleteConfirm, setDeleteConfirm] = useState<{id: number, name: string} | null>(null);
   const [shareQROpen, setShareQROpen] = useState(false);
+  const [isExplainModalOpen, setIsExplainModalOpen] = useState(false);
   
   // Enhanced UX components
   const { addToast } = useToast();
@@ -1157,6 +1166,7 @@ export default function TournamentDashboard() {
         if (res.ok) {
           savedTournament = await res.json();
           setTournament(savedTournament);
+          setSelectedTournament(savedTournament.id, savedTournament.name);
           if (!isOnlySquadTimesUpdate) {
             addToast({
               type: 'success',
@@ -1256,6 +1266,9 @@ export default function TournamentDashboard() {
     <div className={mobileStyles.headerActions}>
       {tournament ? (
         <>
+          <button className="ds-btn ds-btn-info ds-btn-sm" onClick={() => setIsExplainModalOpen(true)}>
+            Dashboard Guide
+          </button>
           <button className="ds-btn ds-btn-primary ds-btn-sm" onClick={() => { setCreateMode(false); setModalOpen(true); }}>
             Edit Tournament
           </button>
@@ -1403,6 +1416,10 @@ export default function TournamentDashboard() {
           onSave={handleSave}
           isMobile={isMobile}
           isCreateMode={createMode}
+        />
+        <ExplainDashboardModal
+          isOpen={isExplainModalOpen}
+          onClose={() => setIsExplainModalOpen(false)}
         />
         <main className="page-main">
 

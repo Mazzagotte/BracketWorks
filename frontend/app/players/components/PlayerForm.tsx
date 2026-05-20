@@ -142,7 +142,7 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
 
       {isDirty && (
         <div className={styles.unsavedBanner}>
-          Unsaved changes — submit the form or your data will be lost if you navigate away.
+          Unsaved changes: submit the form or your data will be lost if you navigate away.
         </div>
       )}
 

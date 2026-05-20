@@ -15,6 +15,7 @@ import { useToast } from '../components/Toast'
 import { getSelectedSquadId, getSelectedTournamentId } from '../lib/selection-session'
 import Link from 'next/link'
 import styles from './payouts.module.css'
+import ExplainPayoutsModal from './ExplainPayoutsModal'
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(Math.round(value))
@@ -59,6 +60,7 @@ export default function PayoutsPage() {
   const [isExportingPdf, setIsExportingPdf] = useState(false)
   const [isUnlocked, setIsUnlocked] = useState(false)
   const [isMobileView, setIsMobileView] = useState(false)
+  const [isPayoutsGuideOpen, setIsPayoutsGuideOpen] = useState(false)
 
   useEffect(() => {
     const checkMobile = () => setIsMobileView(window.innerWidth <= 900)
@@ -384,49 +386,246 @@ export default function PayoutsPage() {
     }
   }, [selectedTournament, entryData, scoreRows])
 
-  const buildExportRows = useCallback(() => {
-    return filteredWinners.map((row, index) => ({
-      Rank: index + 1,
-      Player: row.player_name,
-      'Total Won': Number(row.total_won),
-      'Payout Details': row.winnings
-        .map(w => `${w.bracket_name} - ${w.position} (${formatCurrency(w.payout_amount)})`)
-        .join(' | '),
-      Paid: paidKeys.has(String(row.player_id ?? row.player_name)) ? 'Yes' : 'No',
-    }))
-  }, [filteredWinners, paidKeys])
+  const sidePotByPlayer = useMemo(() => {
+    const map: Record<string, { name: string; pool: number }[]> = {}
+    for (const pot of sidePotAccounting.summaries) {
+      if (pot.winnerId != null) {
+        const k = String(pot.winnerId)
+        if (!map[k]) map[k] = []
+        map[k].push({ name: pot.name, pool: pot.pool })
+      }
+    }
+    return map
+  }, [sidePotAccounting.summaries])
 
   const buildExportFileName = useCallback((suffix: 'xlsx' | 'pdf') => {
-    const safeTournament = (selectedTournament?.name || 'payouts')
+    const safeTournament = (selectedTournament?.name || 'Tournament')
       .replace(/[^a-zA-Z0-9\-_ ]+/g, '')
       .trim()
-      .replace(/\s+/g, '_') || 'payouts'
-    const safeSquad = selectedSquad
-      ? `${selectedSquad.date || ''}_${selectedSquad.time || ''}`
-        .replace(/[^a-zA-Z0-9\-_ ]+/g, '')
-        .trim()
-        .replace(/\s+/g, '_')
-      : 'all_squads'
-    const dateStamp = new Date().toISOString().slice(0, 10)
-    return `${safeTournament}_${safeSquad}_payouts_${dateStamp}.${suffix}`
+      .replace(/\s+/g, '_') || 'Tournament'
+    const safeDate = selectedSquad?.date
+      ? selectedSquad.date.replace(/[^a-zA-Z0-9\-]/g, '')
+      : new Date().toISOString().slice(0, 10)
+    return `Payout_Distribution_${safeTournament}_${safeDate}.${suffix}`
   }, [selectedTournament, selectedSquad])
 
   const handleExportToExcel = useCallback(async () => {
-    const rows = buildExportRows()
-    if (rows.length === 0) {
+    if (filteredWinners.length === 0) {
       addToast({ type: 'warning', message: 'No payout rows to export.', duration: 3000 })
       return
     }
 
     setIsExportingExcel(true)
     try {
+      // Compute same derived data as the PDF export
+      const sidePotByPlayer: Record<string, { name: string; pool: number }[]> = {}
+      for (const pot of sidePotAccounting.summaries) {
+        if (pot.winnerId != null) {
+          const k = String(pot.winnerId)
+          if (!sidePotByPlayer[k]) sidePotByPlayer[k] = []
+          sidePotByPlayer[k].push({ name: pot.name, pool: pot.pool })
+        }
+      }
+
+      const rows = filteredWinners.map((winner, index) => {
+        const key = String(winner.player_id ?? winner.player_name)
+        const sidePotWins = sidePotByPlayer[String(winner.player_id)] ?? []
+        const sidePotTotal = sidePotWins.reduce((s, p) => s + p.pool, 0)
+        return {
+          rank: index + 1,
+          playerName: winner.player_name,
+          bracketTotal: Math.round(winner.total_won),
+          sidePotTotal: Math.round(sidePotTotal),
+          totalWon: Math.round(winner.total_won + sidePotTotal),
+          isPaid: paidKeys.has(key),
+        }
+      })
+
+      const hasSidePotCol = rows.some(r => r.sidePotTotal > 0)
+      const totalBracketsAmt = rows.reduce((s, r) => s + r.bracketTotal, 0)
+      const totalSidePotsAmt = rows.reduce((s, r) => s + r.sidePotTotal, 0)
+      const totalAll = totalBracketsAmt + totalSidePotsAmt
+      const paidCount = rows.filter(r => r.isPaid).length
+
+      const allBrackets = [
+        ...(payoutData?.scratch_brackets ?? []),
+        ...(payoutData?.handicap_brackets ?? []),
+      ]
+      const totalEntries = allBrackets.reduce((s, b) => s + b.bracket_size, 0)
+      const programs = [
+        ...(payoutData?.program_summaries ?? []).filter(p => p.total_brackets > 0).map(p => p.name),
+        ...sidePotAccounting.summaries.filter(s => s.pool > 0).map(s => s.name),
+      ].join(' / ') || 'N/A'
+
+      const tournamentName = selectedTournament?.name || 'Unknown Tournament'
+      const squadLabel = selectedSquad
+        ? `${selectedSquad.date || ''} — ${selectedSquad.time || ''}`.trim()
+        : 'All Squads'
+      const generatedAt = new Date().toLocaleString()
+
       const { Workbook } = await import('exceljs')
       const workbook = new Workbook()
-      const worksheet = workbook.addWorksheet('Payouts')
-      if (rows.length > 0) {
-        worksheet.columns = Object.keys(rows[0]).map(key => ({ header: key, key }))
-        worksheet.addRows(rows)
+      const ws = workbook.addWorksheet('Payouts')
+
+      // Brand colors (ARGB format)
+      const C_ORANGE = 'FFF07820'
+      const C_ORANGE_DK = 'FFB45309'
+      const C_INK = 'FF1F2937'
+      const C_MUTED = 'FF6B7280'
+      const C_LINE = 'FFE5E7EB'
+      const C_SOFT = 'FFF1F5F9'
+      const C_WHITE = 'FFFFFFFF'
+      const C_SUCCESS_BG = 'FFD1FAE5'
+      const C_SUCCESS_FG = 'FF166534'
+      const C_ALT = 'FFFAFAFA'
+
+      const numCols = hasSidePotCol ? 6 : 4
+      ws.getColumn(1).width = 6
+      ws.getColumn(2).width = 30
+      if (hasSidePotCol) {
+        ws.getColumn(3).width = 14
+        ws.getColumn(4).width = 14
+        ws.getColumn(5).width = 14
+        ws.getColumn(6).width = 10
+      } else {
+        ws.getColumn(3).width = 14
+        ws.getColumn(4).width = 10
       }
+
+      let r = 1
+      const merge = (row: number, c1: number, c2: number) => {
+        if (c2 > c1) ws.mergeCells(row, c1, row, c2)
+      }
+
+      // Title banner
+      merge(r, 1, numCols)
+      const titleCell = ws.getRow(r).getCell(1)
+      titleCell.value = 'BracketWorks  —  Payout Distribution'
+      titleCell.font = { name: 'Calibri', size: 14, bold: true, color: { argb: C_WHITE } }
+      titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C_ORANGE } }
+      titleCell.alignment = { horizontal: 'center', vertical: 'middle' }
+      ws.getRow(r).height = 28
+      r++
+
+      // Tournament name
+      merge(r, 1, numCols)
+      const nameCell = ws.getRow(r).getCell(1)
+      nameCell.value = tournamentName
+      nameCell.font = { name: 'Calibri', size: 12, bold: true, color: { argb: C_INK } }
+      nameCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C_SOFT } }
+      nameCell.alignment = { horizontal: 'center', vertical: 'middle' }
+      ws.getRow(r).height = 22
+      r++
+
+      // Squad label
+      merge(r, 1, numCols)
+      const squadCell = ws.getRow(r).getCell(1)
+      squadCell.value = squadLabel
+      squadCell.font = { name: 'Calibri', size: 10, color: { argb: C_MUTED } }
+      squadCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C_SOFT } }
+      squadCell.alignment = { horizontal: 'center', vertical: 'middle' }
+      ws.getRow(r).height = 18
+      r++
+
+      // Generated timestamp
+      merge(r, 1, numCols)
+      const genCell = ws.getRow(r).getCell(1)
+      genCell.value = `Generated: ${generatedAt}`
+      genCell.font = { name: 'Calibri', size: 9, italic: true, color: { argb: C_MUTED } }
+      genCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C_SOFT } }
+      genCell.alignment = { horizontal: 'center', vertical: 'middle' }
+      ws.getRow(r).height = 16
+      r++
+
+      // Spacer
+      ws.getRow(r).height = 6
+      r++
+
+      // Detail section
+      const detailData: [string, string][] = [
+        ['Programs', programs],
+        ['Total Brackets', String(allBrackets.length)],
+        ['Total Entries', String(totalEntries)],
+        ['Prize Pool', `$${totalAll.toLocaleString()}`],
+        ['Winners', String(rows.length)],
+        ['Total Payout', `$${totalAll.toLocaleString()}`],
+        ['Paid', `${paidCount} / ${rows.length}`],
+      ]
+      for (const [label, value] of detailData) {
+        merge(r, 1, 2)
+        merge(r, 3, numCols)
+        const lc = ws.getRow(r).getCell(1)
+        const vc = ws.getRow(r).getCell(3)
+        lc.value = label
+        lc.font = { name: 'Calibri', size: 9, bold: true, color: { argb: C_MUTED } }
+        lc.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C_SOFT } }
+        lc.alignment = { horizontal: 'right', vertical: 'middle' }
+        vc.value = value
+        vc.font = { name: 'Calibri', size: 10, color: { argb: C_INK } }
+        vc.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C_SOFT } }
+        vc.alignment = { horizontal: 'left', vertical: 'middle' }
+        ws.getRow(r).height = 18
+        r++
+      }
+
+      // Spacer
+      ws.getRow(r).height = 6
+      r++
+
+      // Table column headers (orange banner)
+      const headers = hasSidePotCol
+        ? ['#', 'Player Name', 'Brackets', 'Side Pots', 'Amount', 'Paid']
+        : ['#', 'Player Name', 'Amount', 'Paid']
+      const hRow = ws.getRow(r)
+      headers.forEach((h, i) => {
+        const cell = hRow.getCell(i + 1)
+        cell.value = h
+        cell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: C_WHITE } }
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C_ORANGE } }
+        cell.alignment = { horizontal: i === 1 ? 'left' : 'center', vertical: 'middle' }
+        cell.border = { bottom: { style: 'thin', color: { argb: C_ORANGE_DK } } }
+      })
+      hRow.height = 20
+      r++
+
+      // Data rows
+      const usdFmt = '$#,##0'
+      rows.forEach((row, idx) => {
+        const dRow = ws.getRow(r)
+        const rowBg = row.isPaid ? C_SUCCESS_BG : idx % 2 === 1 ? C_ALT : C_WHITE
+        const values: (string | number)[] = hasSidePotCol
+          ? [row.rank, row.playerName, row.bracketTotal, row.sidePotTotal, row.totalWon, row.isPaid ? 'Paid' : '']
+          : [row.rank, row.playerName, row.totalWon, row.isPaid ? 'Paid' : '']
+        values.forEach((v, i) => {
+          const cell = dRow.getCell(i + 1)
+          cell.value = v
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: rowBg } }
+          cell.border = { bottom: { style: 'hair', color: { argb: C_LINE } } }
+          const isCurrencyCol = hasSidePotCol ? (i >= 2 && i <= 4) : i === 2
+          if (isCurrencyCol && typeof v === 'number') {
+            cell.numFmt = usdFmt
+            cell.font = { name: 'Calibri', size: 10, color: { argb: C_INK } }
+            cell.alignment = { horizontal: 'right', vertical: 'middle' }
+          } else if ((hasSidePotCol && i === 5) || (!hasSidePotCol && i === 3)) {
+            cell.font = { name: 'Calibri', size: 10, bold: row.isPaid, color: { argb: row.isPaid ? C_SUCCESS_FG : C_MUTED } }
+            cell.alignment = { horizontal: 'center', vertical: 'middle' }
+          } else {
+            cell.font = { name: 'Calibri', size: 10, color: { argb: C_INK } }
+            cell.alignment = { horizontal: i === 1 ? 'left' : 'center', vertical: 'middle' }
+          }
+        })
+        dRow.height = 18
+        r++
+      })
+
+      // Footer
+      r++
+      merge(r, 1, numCols)
+      const footerCell = ws.getRow(r).getCell(1)
+      footerCell.value = 'BracketWorks  ·  bracketworks.app'
+      footerCell.font = { name: 'Calibri', size: 9, italic: true, color: { argb: C_MUTED } }
+      footerCell.alignment = { horizontal: 'center' }
+
       const xlsxBuffer = await workbook.xlsx.writeBuffer()
       const blob = new Blob([xlsxBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
       const url = URL.createObjectURL(blob)
@@ -449,7 +648,7 @@ export default function PayoutsPage() {
     } finally {
       setIsExportingExcel(false)
     }
-  }, [addToast, buildExportFileName, buildExportRows])
+  }, [addToast, buildExportFileName, filteredWinners, paidKeys, payoutData, selectedTournament, selectedSquad, sidePotAccounting])
 
   const handleExportToPdf = useCallback(() => {
     if (filteredWinners.length === 0) {
@@ -518,28 +717,18 @@ export default function PayoutsPage() {
         : 'All Squads'
       const generatedAt = new Date().toLocaleString()
       const paidStampDate = new Date().toLocaleDateString()
-      const logoUrl = `${window.location.origin}/logo.svg`
-      const printCssUrl = `${window.location.origin}/payouts-print.css`
+      const logoUrl = `${window.location.origin}/logo_no_text.svg`
       const useDoubleCol = rows.length > 20
 
-      // Build a single table's rows for a slice
       const buildTableRows = (slice: typeof rows) => {
         return slice.map(row => {
-          const entryTag = [
-            row.scratchCount > 0 ? `S×${row.scratchCount}` : '',
-            row.handicapCount > 0 ? `H×${row.handicapCount}` : '',
-            row.otherCount > 0 ? `O×${row.otherCount}` : '',
-          ].filter(Boolean).join(' ')
           return `<tr class="${row.isPaid ? 'isPaidRow' : ''}">
-            <td class="rankCol">${row.rank}</td>
-            <td>
-              <div class="playerName">${esc(row.playerName)}</div>
-              ${entryTag ? `<div class="entryTag">${entryTag}</div>` : ''}
-            </td>
-            ${hasSidePotCol ? `<td class="amtCol">${row.bracketTotal > 0 ? fmt(row.bracketTotal) : ''}</td>` : ''}
-            ${hasSidePotCol ? `<td class="amtCol">${row.sidePotTotal > 0 ? fmt(row.sidePotTotal) : ''}</td>` : ''}
-            <td class="amtCol bold">${fmt(row.totalWon)}</td>
-            <td class="sigCol">${row.isPaid ? `<div class="paidStamp">PAID ${esc(paidStampDate)}</div>` : '<div class="sigLine"></div>'}</td>
+            <td class="rank">${row.rank}</td>
+            <td class="player">${esc(row.playerName)}</td>
+            ${hasSidePotCol ? `<td class="amount">${row.bracketTotal > 0 ? fmt(row.bracketTotal) : ''}</td>` : ''}
+            ${hasSidePotCol ? `<td class="amount${row.sidePotTotal > 0 ? '' : ' empty-cell'}">${row.sidePotTotal > 0 ? fmt(row.sidePotTotal) : '&mdash;'}</td>` : ''}
+            <td class="amount">${fmt(row.totalWon)}</td>
+            <td class="signature-cell">${row.isPaid ? `<span class="paidStamp">PAID ${esc(paidStampDate)}</span>` : '<span class="signature-line"></span>'}</td>
           </tr>`
         }).join('')
       }
@@ -547,12 +736,12 @@ export default function PayoutsPage() {
       const buildTable = (slice: typeof rows) => `
         <table>
           <thead><tr>
-            <th class="rankCol">#</th>
+            <th class="rank">#</th>
             <th>Player Name</th>
-            ${hasSidePotCol ? '<th class="amtCol">Brackets</th>' : ''}
-            ${hasSidePotCol ? '<th class="amtCol">Side Pots</th>' : ''}
-            <th class="amtCol">Amount</th>
-            <th class="sigCol">Signature</th>
+            ${hasSidePotCol ? '<th class="amount">Brackets</th>' : ''}
+            ${hasSidePotCol ? '<th class="amount">Side Pots</th>' : ''}
+            <th class="amount">Amount</th>
+            <th class="signature-cell">Signature</th>
           </tr></thead>
           <tbody>${buildTableRows(slice)}</tbody>
         </table>`
@@ -562,38 +751,174 @@ export default function PayoutsPage() {
         const mid = Math.ceil(rows.length / 2)
         const leftRows = rows.slice(0, mid)
         const rightRows = rows.slice(mid)
-        mainSection = `
-          <div class="twoCol">
-            <div class="col">${buildTable(leftRows)}</div>
-            <div class="col">${buildTable(rightRows)}</div>
-          </div>`
+        mainSection = `<div class="twoCol">
+          <div class="col">${buildTable(leftRows)}</div>
+          <div class="col">${buildTable(rightRows)}</div>
+        </div>`
       } else {
         mainSection = buildTable(rows)
       }
 
+      const allBrackets = [
+        ...(payoutData?.scratch_brackets ?? []),
+        ...(payoutData?.handicap_brackets ?? []),
+      ]
+      const totalEntries = allBrackets.reduce((s, b) => s + b.bracket_size, 0)
+      const programs = [
+        ...(payoutData?.program_summaries ?? [])
+          .filter(p => p.total_brackets > 0)
+          .map(p => p.name),
+        ...sidePotAccounting.summaries
+          .filter(s => s.pool > 0)
+          .map(s => s.name),
+      ].join(' / ') || 'N/A'
+
+      const detailRows =
+        `<div class="detail-row detail-full"><span class="detail-label">Programs</span><span class="detail-value">${esc(programs)}</span></div>` +
+        [
+          ['Total Brackets', String(allBrackets.length)],
+          ['Total Entries', String(totalEntries)],
+          ['Prize Pool', esc(fmt(totalAll))],
+        ].map(([label, value]) =>
+          `<div class="detail-row"><span class="detail-label">${label}</span><span class="detail-value">${value}</span></div>`
+        ).join('')
+
+      const statCards = [
+        { label: 'Winners', value: String(rows.length) },
+        { label: 'Total Payout', value: fmt(totalAll) },
+        ...(hasSidePotCol ? [
+          { label: 'Brackets', value: fmt(totalBrackets) },
+          { label: 'Side Pots', value: fmt(totalSidePots) },
+        ] : []),
+        { label: 'Paid', value: `${paidCount} / ${rows.length}` },
+      ].map(({ label, value }) => `<div class="stat-card">
+          <div class="stat-label">${label}</div>
+          <div class="stat-value">${value}</div>
+        </div>`).join('')
+
+      const cssStr = (s: string) => s.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
+
       const html = `<!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8"/>
-  <title>Payout Distribution — ${esc(tournamentName)}</title>
-  <link rel="stylesheet" href="${esc(printCssUrl)}" />
+  <title>Payout Distribution - ${esc(tournamentName)}</title>
+  <style>
+    :root {
+      --bw-orange: #f07820;
+      --bw-orange-dark: #b45309;
+      --bw-ink: #1f2937;
+      --bw-muted: #6b7280;
+      --bw-line: #e5e7eb;
+      --bw-soft: #f8fafc;
+      --bw-success: #166534;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #f3f4f6; color: var(--bw-ink); font-family: Arial, Helvetica, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .page { width: 8.5in; min-height: 11in; margin: 24px auto; padding: 0.55in; background: #fff; box-shadow: 0 12px 36px rgba(15,23,42,0.12); position: relative; }
+    .brand-header { display: grid; grid-template-columns: 1fr auto; gap: 32px; align-items: center; padding-bottom: 20px; border-bottom: 4px solid var(--bw-orange); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .brand-left { display: flex; align-items: center; gap: 14px; }
+    .logo { width: 90px; height: auto; }
+    .brand-name { margin: 0; font-size: 24px; font-weight: 900; letter-spacing: -0.5px; }
+    .brand-tagline { margin: 4px 0 0; color: var(--bw-orange-dark); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.7px; }
+    .report-title { text-align: right; }
+    .report-title h1 { margin: 0; font-size: 26px; font-weight: 900; letter-spacing: -0.8px; }
+    .report-title p { margin: 5px 0 0; color: var(--bw-muted); font-size: 11px; }
+    .event-band { margin-top: 18px; padding: 13px 16px 0; border: 1px solid var(--bw-line); border-radius: 12px 12px 0 0; border-bottom: none; background: linear-gradient(90deg, rgba(240,120,32,0.08), rgba(240,120,32,0.02)), var(--bw-soft); display: grid; grid-template-columns: 1fr auto; gap: 18px; align-items: flex-start; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .event-band-inner { padding-bottom: 13px; }
+    .event-name { margin: 0; font-size: 17px; font-weight: 900; letter-spacing: -0.3px; }
+    .event-meta { margin: 3px 0 0; color: var(--bw-muted); font-size: 11.5px; }
+    .generated { color: var(--bw-muted); font-size: 10.5px; text-align: right; white-space: nowrap; line-height: 1.5; }
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 10px; margin-top: 14px; }
+    .stat-card { padding: 10px 13px; border: 1px solid var(--bw-line); border-radius: 12px; background: #fff; }
+    .stat-label { color: var(--bw-muted); font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.7px; }
+    .stat-value { margin-top: 3px; font-size: 18px; font-weight: 900; letter-spacing: -0.4px; }
+    table { width: 100%; margin-top: 16px; border-collapse: collapse; border-radius: 12px; border: 1px solid var(--bw-line); overflow: hidden; }
+    thead th { background: var(--bw-orange); color: #fff; font-size: 10px; text-transform: uppercase; letter-spacing: 0.65px; padding: 10px; text-align: left; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    thead th.amount, tbody td.amount { text-align: center; }
+    tbody td { padding: 12px 10px; border-bottom: 1px solid var(--bw-line); font-size: 12.5px; vertical-align: middle; }
+    tbody tr:nth-child(even) td { background: #fafafa; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    tbody tr:last-child td { border-bottom: none; }
+    .rank { width: 38px; color: var(--bw-muted); text-align: center; font-size: 11px; }
+    .player { font-weight: 800; }
+    .amount { width: 76px; font-weight: 700; }
+    .signature-cell { width: 220px; }
+    .empty-cell { color: #d1d5db; }
+    .signature-line { display: block; width: 100%; height: 22px; border-bottom: 1.5px solid #9ca3af; }
+    .paidStamp { color: var(--bw-success); font-weight: 800; font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .isPaidRow td { color: #9ca3af; }
+    .twoCol { display: flex; gap: 18px; align-items: flex-start; }
+    .twoCol .col { flex: 1; min-width: 0; }
+    .twoCol table { margin-top: 0; }
+    .details-band { border: 1px solid var(--bw-line); border-radius: 0 0 12px 12px; background: #fff; display: grid; grid-template-columns: repeat(3, 1fr); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .detail-row { display: flex; flex-direction: column; padding: 9px 16px; border-right: 1px solid var(--bw-line); border-top: 1px solid var(--bw-line); }
+    .detail-row:last-child { border-right: none; }
+    .detail-full { grid-column: 1 / -1; border-right: none; }
+    .detail-label { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; color: var(--bw-muted); }
+    .detail-value { margin-top: 3px; font-size: 13px; font-weight: 700; color: var(--bw-ink); }
+    .commissioner { margin-top: 32px; padding: 20px 20px 32px; border: 1px solid var(--bw-line); border-radius: 12px; break-inside: avoid; }
+    .commissioner-title { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.7px; color: var(--bw-orange-dark); margin: 0 0 18px; }
+    .commissioner-fields { display: grid; grid-template-columns: 1fr 200px; gap: 36px; }
+    .field-label { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; color: var(--bw-muted); margin-bottom: 12px; }
+    .field-line { border-bottom: 1.5px solid #9ca3af; height: 42px; }
+    .footer { position: absolute; left: 0.55in; right: 0.55in; bottom: 0.42in; padding-top: 10px; border-top: 1px solid var(--bw-line); color: var(--bw-muted); font-size: 10px; display: flex; justify-content: space-between; gap: 16px; }
+    .footer strong { color: var(--bw-ink); }
+    @page { size: letter; margin: 0.5in; }
+    @media print {
+      body { background: white; }
+      .page { width: auto; min-height: auto; margin: 0; padding: 0; box-shadow: none; }
+      .footer { position: static; margin-top: 24px; flex-direction: column; gap: 6px; }
+      table { font-size: 11px; }
+      tbody td { padding: 8px 8px; }
+      .stats { margin-top: 10px; }
+      .stat-card { padding: 7px 10px; }
+      .stat-value { font-size: 15px; }
+    }
+  </style>
 </head>
 <body>
-  <div class="header">
-    <img src="${esc(logoUrl)}" alt="BracketWorks" class="logo"/>
-    <div class="headerRight">
-      <h1>Payout Distribution</h1>
-      <p class="meta">${esc(tournamentName)} &mdash; ${esc(squadLabel)}</p>
-      <p class="meta">Generated: ${esc(generatedAt)}</p>
+  <main class="page">
+    <header class="brand-header">
+      <section class="brand-left">
+        <img src="${esc(logoUrl)}" alt="BracketWorks" class="logo" />
+        <div>
+          <h2 class="brand-name">BracketWorks</h2>
+          <p class="brand-tagline">Bowling Brackets &amp; Side Pots</p>
+        </div>
+      </section>
+      <section class="report-title">
+        <h1>Payout Distribution</h1>
+        <p>Official tournament payout sheet</p>
+      </section>
+    </header>
+    <section class="event-band">
+      <div class="event-band-inner">
+        <h2 class="event-name">${esc(tournamentName)}</h2>
+        <p class="event-meta">${esc(squadLabel)}</p>
+      </div>
+      <div class="generated">Generated<br />${esc(generatedAt)}</div>
+    </section>
+    <div class="details-band">${detailRows}</div>
+    <section class="stats">${statCards}</section>
+    ${mainSection}
+    <div class="commissioner">
+      <p class="commissioner-title">Commissioner Verification</p>
+      <div class="commissioner-fields">
+        <div>
+          <div class="field-label">Commissioner / Tournament Director Signature</div>
+          <div class="field-line"></div>
+        </div>
+        <div>
+          <div class="field-label">Date</div>
+          <div class="field-line"></div>
+        </div>
+      </div>
     </div>
-  </div>
-  <div class="summary">
-    <span><strong>${rows.length}</strong> winner${rows.length !== 1 ? 's' : ''}</span>
-    <span>Total: <strong>${esc(fmt(totalAll))}</strong></span>
-    ${hasSidePotCol ? `<span>Brackets: <strong>${esc(fmt(totalBrackets))}</strong></span><span>Side Pots: <strong>${esc(fmt(totalSidePots))}</strong></span>` : ''}
-    <span>Paid: <strong>${paidCount}/${rows.length}</strong></span>
-  </div>
-  ${mainSection}
+    <footer class="footer">
+      <span><strong>BracketWorks</strong> &bull; bracketworks.app</span>
+      <span>Generated by BracketWorks. Payout amounts are based on tournament settings and are subject to commissioner verification. BracketWorks does not collect entry fees, hold funds, distribute winnings, or determine prize structures.</span>
+    </footer>
+  </main>
 </body>
 </html>`
 
@@ -627,8 +952,13 @@ export default function PayoutsPage() {
 
       const printIframe = () => {
         iframe.contentWindow?.focus()
+        const originalTitle = document.title
+        document.title = buildExportFileName('pdf').replace('.pdf', '')
         iframe.contentWindow?.print()
-        setTimeout(cleanupIframe, 1000)
+        setTimeout(() => {
+          document.title = originalTitle
+          cleanupIframe()
+        }, 1000)
       }
 
       const stylesheet = iframeDoc.querySelector('link[rel="stylesheet"]')
@@ -653,10 +983,16 @@ export default function PayoutsPage() {
     } finally {
       setIsExportingPdf(false)
     }
-  }, [addToast, filteredWinners, selectedTournament, selectedSquad, paidKeys, sidePotAccounting])
+  }, [addToast, buildExportFileName, filteredWinners, selectedTournament, selectedSquad, paidKeys, sidePotAccounting, payoutData])
 
   const headerActions = useMemo(() => (
     <>
+      <button
+        className="ds-btn ds-btn-info ds-btn-sm"
+        onClick={() => setIsPayoutsGuideOpen(true)}
+      >
+        Payouts Guide
+      </button>
       <button
         className="ds-btn ds-btn-primary ds-btn-sm"
         onClick={handleExportToExcel}
@@ -853,7 +1189,6 @@ export default function PayoutsPage() {
                     <div className={styles.winnerInfo}>
                       <div className={styles.winnerName}>
                         {row.player_name}
-                        {row.winnings.some(w => w.split_pot) && <span className={styles.splitBadge}>Split</span>}
                         <button
                           className={styles.toggleDetailsBtn}
                           onClick={() => toggleExpanded(key)}
@@ -861,10 +1196,13 @@ export default function PayoutsPage() {
                         >
                           {expandedKeys.has(key) ? 'Hide' : 'Show'} {row.winnings.length} bracket{row.winnings.length !== 1 ? 's' : ''}
                         </button>
+                        {(sidePotByPlayer[String(row.player_id)] ?? []).map(sp => (
+                          <span key={sp.name} className={styles.sidePotPill}>{sp.name}</span>
+                        ))}
                       </div>
                       {expandedKeys.has(key) && (
                         <div className={styles.winnerMeta}>
-                          {row.winnings.map(w => `${w.bracket_name} – ${w.position} (${formatCurrency(w.payout_amount)})`).join(' · ')}
+                          {row.winnings.map(w => `${w.bracket_name}${w.split_pot ? ' (split)' : ''} – ${w.position} (${formatCurrency(w.payout_amount)})`).join(' · ')}
                         </div>
                       )}
                     </div>
@@ -886,48 +1224,12 @@ export default function PayoutsPage() {
           </div>
         )}
 
-        {!loading && sidePotAccounting.summaries.length > 0 && (
-          <div className={styles.tableCard}>
-            <div className={styles.tableCardHeader}>
-              <span>Side Pot Winners</span>
-              <span className={styles.headerPool}>{formatCurrency(sidePotAccounting.totalPool)} total</span>
-            </div>
-            <div className={styles.bracketGroup}>
-              {sidePotAccounting.summaries.map(pot => {
-                const hasWinner = Boolean(pot.winnerId)
-                const isPaid = sidePotPaidKeys.has(pot.key)
-
-                return (
-                  <div key={pot.key} className={`${styles.winnerRow} ${isPaid ? styles.isPaid : ''}`}>
-                    <div className={`${styles.placeBadge} ${styles.placeSP}`}>SP</div>
-                    <div className={styles.winnerInfo}>
-                      <div className={styles.winnerName}>
-                        {pot.winnerName ?? 'Pending scores'}
-                      </div>
-                      <div className={styles.winnerMeta}>{pot.name}</div>
-                    </div>
-                    <div className={styles.payoutCol}>
-                      <div className={styles.payoutAmount}>{formatCurrency(pot.pool)}</div>
-                    </div>
-                    {isPaid ? (
-                      <button className={styles.paidBadge} onClick={() => toggleSidePotPaid(pot.key)}>Paid</button>
-                    ) : (
-                      <button
-                        className={styles.markPaidBtn}
-                        onClick={() => toggleSidePotPaid(pot.key)}
-                        disabled={!hasWinner || pot.pool <= 0}
-                        title={!hasWinner ? 'Scores are required to auto-select winner' : undefined}
-                      >
-                        Mark Paid
-                      </button>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        )}
       </div>
+
+      <ExplainPayoutsModal
+        isOpen={isPayoutsGuideOpen}
+        onClose={() => setIsPayoutsGuideOpen(false)}
+      />
     </ErrorBoundary>
   )
 }

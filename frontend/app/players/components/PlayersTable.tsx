@@ -307,7 +307,7 @@ const PlayersTable = memo(({
           {selectedSquad && (
             <tr>
               <td colSpan={7 + bracketPrograms.length + enabledPots.length} className="squad-banner">
-                Showing players for: {selectedSquad.date} — {selectedSquad.time}
+                Showing players for: {selectedSquad.date} - {selectedSquad.time}
               </td>
             </tr>
           )}

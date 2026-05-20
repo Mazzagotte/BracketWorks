@@ -1,18 +1,18 @@
-@page {
+:root {
   --print-font-family: Arial, sans-serif;
   --print-text-primary: #111;
-  --print-text-muted: #888;
+  --print-text-muted: #999;
   --print-text-muted-strong: #777;
   --print-text-secondary: #666;
   --print-text-subtle: #444;
-  --print-text-faint: #999;
-  --print-text-disabled: #aaa;
+  --print-text-faint: #bbb;
+  --print-text-disabled: #ccc;
   --print-surface: #fff;
   --print-brand: #f07820;
   --print-brand-dark: #b45309;
   --print-success: #166534;
   --print-border: #e8e8e8;
-  --print-row-muted: #f3f3f3;
+  --print-row-muted: #fafafa;
 }
 
 @page {
@@ -21,9 +21,233 @@
 
   @bottom-center {
     content: "Page " counter(page) " of " counter(pages);
+    font-size: 8.5px;
+    color: #bbb;
+    font-family: Arial, sans-serif;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--print-font-family);
+  color: var(--print-text-primary);
+  margin: 0;
+  font-size: 11px;
+}
+
+/* ── Header ──────────────────────────────────────────────── */
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #e8e8e8;
+}
+
+.header::after {
+  content: '';
+  display: none;
+}
+
+.logo {
+  width: 84px;
+  height: auto;
+  opacity: 0.92;
+}
+
+.headerRight {
+  text-align: right;
+}
+
+h1 {
+  margin: 0 0 3px;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--print-text-primary);
+  letter-spacing: -0.01em;
+}
+
+.meta {
+  margin: 0;
+  font-size: 9px;
+  color: var(--print-text-muted);
+  line-height: 1.6;
+}
+
+/* ── Summary bar ─────────────────────────────────────────── */
+
+.summary {
+  margin: 0 0 14px;
+  font-size: 10.5px;
+  color: var(--print-text-subtle);
+  display: flex;
+  gap: 0;
+  border-top: 3px solid var(--print-brand);
+  border-bottom: 1px solid #e8e8e8;
+  padding: 5px 0;
+}
+
+.summary > span {
+  padding-right: 18px;
+}
+
+.summary strong {
+  color: var(--print-text-primary);
+  font-weight: 700;
+}
+
+/* ── Table ───────────────────────────────────────────────── */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  margin-bottom: 0;
+}
+
+th {
+  background: transparent;
+  color: var(--print-text-muted);
+  font-weight: 700;
+  padding: 5px 8px;
+  text-align: left;
+  font-size: 8.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-bottom: 1.5px solid var(--print-brand);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+td {
+  border-bottom: 1px solid var(--print-border);
+  padding: 8px 8px;
+  vertical-align: middle;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+/* ── Columns ─────────────────────────────────────────────── */
+
+.rankCol {
+  width: 28px;
+  color: var(--print-text-muted);
+  text-align: center;
+  font-size: 10px;
+}
+
+.amtCol {
+  width: 72px;
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.sigCol {
+  width: 190px;
+}
+
+/* ── Signature line ──────────────────────────────────────── */
+
+.sigLine {
+  border-bottom: 1px solid #aaa;
+  height: 26px;
+  margin-top: 2px;
+  margin-right: 4px;
+}
+
+/* ── Paid state ──────────────────────────────────────────── */
+
+.paidStamp {
+  color: var(--print-success);
+  font-weight: 700;
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+.isPaidRow td {
+  color: var(--print-text-faint);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* ── Typography ──────────────────────────────────────────── */
+
+.bold {
+  font-weight: 700;
+}
+
+.muted {
+  color: var(--print-text-disabled);
+  font-size: 10px;
+}
+
+.playerName {
+  font-weight: 600;
+}
+
+.breakdown {
+  font-size: 9px;
+  color: var(--print-text-muted-strong);
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+.sidePotBreakdown {
+  color: var(--print-brand-dark);
+}
+
+/* ── Two-column layout ───────────────────────────────────── */
+
+.twoCol {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.col {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── Section title ───────────────────────────────────────── */
+
+.sectionTitle {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--print-text-primary);
+  margin: 18px 0 6px;
+  padding-bottom: 3px;
+  border-bottom: 1.5px solid var(--print-brand);
+}
+
+/* ── Footer ──────────────────────────────────────────────── */
+
+.footer {
+  margin-top: 16px;
+  font-size: 9px;
+  color: var(--print-text-disabled);
+  text-align: center;
+}
+
+
+@page {
+  size: letter;
+  margin: 16mm 14mm 20mm;
+
+  @bottom-center {
+    content: "Page " counter(page) " of " counter(pages);
     font-size: 9px;
-    color: var(--print-text-muted);
-    font-family: var(--print-font-family);
+    color: #888;
+    font-family: Arial, sans-serif;
   }
 }
 
@@ -97,6 +321,8 @@ th {
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
 }
 
 td {
@@ -127,9 +353,10 @@ tr:last-child td {
 }
 
 .sigLine {
-  border-bottom: 1px solid var(--print-text-muted);
-  height: 16px;
+  border-bottom: 1.5px solid #777;
+  height: 28px;
   margin-top: 4px;
+  margin-right: 8px;
 }
 
 .paidStamp {
@@ -203,4 +430,6 @@ tr:last-child td {
 .isPaidRow td {
   background: var(--print-row-muted);
   color: var(--print-text-faint);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
 }

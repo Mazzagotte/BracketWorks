@@ -481,8 +481,8 @@ export default function BracketsPage() {
     if (!selectedTournament) return undefined
     return (
       <div className={styles.headerActions}>
-        <button onClick={() => setIsExplainModalOpen(true)} className={`ds-btn ds-btn-secondary ds-btn-sm ${styles.explainBtn}`}>
-          Explain Brackets
+        <button onClick={() => setIsExplainModalOpen(true)} className="ds-btn ds-btn-info ds-btn-sm">
+          Bracket Guide
         </button>
         <button onClick={handleGenerateBrackets} className={`ds-btn ds-btn-primary ds-btn-sm ${styles.generateBtn}`}>
           Generate Brackets

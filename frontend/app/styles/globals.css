@@ -345,6 +345,15 @@ nav a { text-decoration: none; }
   border-color: var(--color-primary);
   color: var(--color-primary);
 }
+.ds-btn-info {
+  background: #4F6BED;
+  color: #ffffff;
+  border: none;
+}
+.ds-btn-info:hover {
+  background: #3d57d4;
+  color: #ffffff;
+}
 
 /* Inputs / selects */
 .input,

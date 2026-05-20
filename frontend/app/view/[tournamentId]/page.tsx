@@ -332,7 +332,7 @@ function MatchCard({
         <span
           className={`${styles.matchName} ${onNameClick && match.playerA && match.playerA !== 'BYE' ? styles.matchNameClickable : ''}`}
           onClick={() => match.playerA && match.playerA !== 'BYE' && onNameClick?.(match.playerA)}
-        >{match.playerA || '—'}</span>
+        >{match.playerA || ''}</span>
         {match.scoreA != null && <span className={styles.matchScore}>{match.scoreA}</span>}
       </div>
       <div className={styles.vsRow}>vs</div>
@@ -340,7 +340,7 @@ function MatchCard({
         <span
           className={`${styles.matchName} ${onNameClick && match.playerB && match.playerB !== 'BYE' ? styles.matchNameClickable : ''}`}
           onClick={() => match.playerB && match.playerB !== 'BYE' && onNameClick?.(match.playerB)}
-        >{match.playerB === 'BYE' ? 'BYE' : (match.playerB || '—')}</span>
+        >{match.playerB === 'BYE' ? 'BYE' : (match.playerB || '')}</span>
         {match.scoreB != null && match.playerB !== 'BYE' && <span className={styles.matchScore}>{match.scoreB}</span>}
       </div>
       {match.split_pot && <div className={styles.matchBadge}>Split</div>}
@@ -985,7 +985,7 @@ function WinnersView({ winners }: { winners: Winner[] }) {
             .map((w, i) => (
               <div key={i} className={styles.winnerRow}>
                 <span className={styles.winnerPlace}>{placeLabel(w.place)}</span>
-                <span className={styles.winnerName}>{w.player_name || w.name || '—'}</span>
+                <span className={styles.winnerName}>{w.player_name || w.name || ''}</span>
               </div>
             ))}
         </div>
