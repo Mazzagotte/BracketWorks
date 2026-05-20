@@ -279,7 +279,7 @@ export default function ScoresPage() {
     paginationHook.goToPage(1)
   }, [searchFirstName, searchLastName, isMobile]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Stable reference for auto-save — only changes when scores actually change
+  // Stable reference for auto-save â€” only changes when scores actually change
   const autoSaveData = useMemo(
     () => ({ scores: players.map(player => player.scores).filter(Boolean) }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -393,7 +393,7 @@ export default function ScoresPage() {
       }
     })
 
-    // Single state update — no cascade
+    // Single state update â€” no cascade
     setPlayers(prev => prev.map(player => {
       const s = scoreMap[player.id]
       if (!s) return player
@@ -410,7 +410,7 @@ export default function ScoresPage() {
       }
     }))
 
-    // Persist to backend — fire-and-forget each save without touching React state
+    // Persist to backend â€” fire-and-forget each save without touching React state
     const squad = selectedSquadRef.current
     if (token && tournamentId && squad) {
       await Promise.allSettled(
@@ -833,7 +833,7 @@ export default function ScoresPage() {
         ? `/api/v1/bowlers?tournament_id=${tournamentId}&squad_id=${squadId}`
         : `/api/v1/bowlers?tournament_id=${tournamentId}`
       
-      // Fire bowlers and scores in parallel — scores don't depend on bowlers
+      // Fire bowlers and scores in parallel â€” scores don't depend on bowlers
       const scoresUrl = `/api/v1/scores/?tournament_id=${tournamentId}`
       const [bowlersResponse, scoresResponse] = await Promise.all([
         apiFetch(API(bowlersUrl), { headers: { Authorization: `Bearer ${token}` } }),
@@ -1270,7 +1270,7 @@ export default function ScoresPage() {
   }
 
   const getGameTotal = (scratchScore: number | undefined, handicap: number) => {
-    if (scratchScore === undefined || scratchScore === null) return '—'
+    if (scratchScore === undefined || scratchScore === null) return 'â€”'
     return scratchScore + handicap
   }
 
@@ -1278,10 +1278,47 @@ export default function ScoresPage() {
     const scores = player.scores || {}
     const games = [scores.game1_scratch, scores.game2_scratch, scores.game3_scratch]
     const played = games.filter(s => s !== undefined && s !== null)
-    if (played.length === 0) return '—'
+    if (played.length === 0) return 'â€”'
     const scratch = played.reduce((sum, s) => sum + (s || 0), 0)
     return scratch + (player.handicap * played.length)
   }
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent, playerId: number, field: string) => {
+    if (isScoresLocked) {
+      e.preventDefault()
+      return
+    }
+
+    if (e.key === 'Enter') {
+      e.preventDefault()
+
+      const currentPlayerIndex = paginationHook.paginatedItems.findIndex(playerItem => playerItem.id === playerId)
+      const fields = ['game1_scratch', 'game2_scratch', 'game3_scratch']
+      const currentFieldIndex = fields.indexOf(field)
+
+      let nextField: string | null = null
+      let nextPlayerId: number | null = null
+
+      if (currentFieldIndex < fields.length - 1) {
+        nextField = fields[currentFieldIndex + 1]
+        nextPlayerId = playerId
+      } else if (currentPlayerIndex >= 0 && currentPlayerIndex < paginationHook.paginatedItems.length - 1) {
+        nextField = fields[0]
+        nextPlayerId = paginationHook.paginatedItems[currentPlayerIndex + 1].id
+      }
+
+      if (!nextField || !nextPlayerId) return
+
+      const nextInput = document.querySelector(
+        `input[data-player="${nextPlayerId}"][data-field="${nextField}"]`
+      ) as HTMLInputElement | null
+
+      if (nextInput) {
+        nextInput.focus()
+        nextInput.select()
+      }
+    }
+  }, [isScoresLocked, paginationHook.paginatedItems])
 
   const rowStateCounts = useMemo(() => {
     const values = Object.values(rowSaveState)
@@ -1410,229 +1447,6 @@ export default function ScoresPage() {
     )
   }
 
-
-  const validateScore = (score: number | undefined) => {
-    if (score === undefined || score === null) return { isValid: true, message: '' }
-    if (score < 0) return { isValid: false, message: 'Score cannot be negative' }
-    if (score > 300) return { isValid: false, message: 'Score cannot exceed 300' }
-    return { isValid: true, message: '' }
-  }
-
-  const getScoreInputClass = (score: number | undefined) => {
-    const validation = validateScore(score)
-    if (!validation.isValid) return 'score-input entries-control invalid'
-    if (score === 300) return 'score-input entries-control perfect'
-    return 'score-input entries-control'
-  }
-
-  // Debounced save function
-  const debouncedSaves = new Map<string, NodeJS.Timeout>()
-  
-  const updateScore = async (playerId: number, field: string, value: number | undefined) => {
-    if (isScoresLocked) {
-      addToast({ message: 'Scores are locked. Unlock scores to edit.', type: 'warning', duration: 2500 })
-      return
-    }
-
-    const saveKey = `${playerId}-${field}`
-    
-    // Validate score range
-    if (value !== undefined && (value < 0 || value > 300)) {
-      addToast({
-        message: `Invalid score: ${value}. Scores must be between 0 and 300.`,
-        type: 'error',
-        duration: 4000
-      })
-      return
-    }
-    
-    // Update local state first for immediate UI feedback
-    setPlayers(prev => prev.map(player => {
-      if (player.id === playerId) {
-        const updatedPlayer = {
-          ...player,
-          scores: {
-            ...player.scores,
-            [field]: value
-          }
-        }
-        
-        // Auto-calculate totals when scratch scores are entered
-        // Use the player's handicap from the backend (already calculated with correct settings)
-        if (field.includes('scratch')) {
-          const gameNum = field.includes('game1') ? '1' : field.includes('game2') ? '2' : '3'
-          const scratchScore = value || 0
-          const handicap = player.handicap || 0  // Use stored handicap value
-          const totalScore = scratchScore + handicap
-          updatedPlayer.scores![`game${gameNum}_total` as keyof typeof updatedPlayer.scores] = totalScore
-        }
-        
-        return updatedPlayer
-      }
-      return player
-    }))
-
-    // Clear existing timeout for this field
-    const existingTimeout = debouncedSaves.get(saveKey)
-    if (existingTimeout) {
-      clearTimeout(existingTimeout)
-    }
-    
-    // Debounced save to backend (500ms delay)
-    const timeoutId = setTimeout(async () => {
-      try {
-        const token = localStorage.getItem('token')
-        const tournamentId = getSelectedTournamentId()
-        
-        if (!token || !tournamentId || !selectedSquadRef.current) {
-          return
-        }
-
-        const player = players.find(playerItem => playerItem.id === playerId)
-        if (!player) {
-          return
-        }
-
-        // Calculate the updated scores for API call
-        const updatedScores = { ...player.scores, [field]: value }
-        if (field.includes('scratch')) {
-          const gameNum = field.includes('game1') ? '1' : field.includes('game2') ? '2' : '3'
-          const scratchScore = value || 0
-          const handicap = player.handicap || 0  // Use stored handicap value
-          const totalScore = scratchScore + handicap
-          updatedScores[`game${gameNum}_with_handicap` as keyof typeof updatedScores] = totalScore
-        }
-
-        const scoreData = {
-          player_id: playerId,
-          tournament_id: parseInt(tournamentId),
-          squad_id: selectedSquadRef.current.id,
-          game1_scratch: updatedScores.game1_scratch,
-          game2_scratch: updatedScores.game2_scratch,
-          game3_scratch: updatedScores.game3_scratch
-          // Note: game totals are calculated by backend (scratch + handicap)
-        }
-
-        // Handle offline saves
-        if (!isOnline) {
-          setPendingSaves(prev => [...prev, { token, data: scoreData }])
-          // Store in localStorage as backup
-          localStorage.setItem(`pending_save_${Date.now()}`, JSON.stringify({ token, data: scoreData }))
-          return
-        }
-
-        const response = await apiFetch(API('/api/v1/scores/'), {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(scoreData)
-        })
-        
-        if (response.ok) {
-          // Show success toast for perfect games
-          if (value === 300) {
-            addToast({
-              message: `Perfect game! 300 scored by ${player.firstName} ${player.lastName}`,
-              type: 'success',
-              duration: 5000
-            })
-          } else if (value && value >= 250) {
-            // Show toast for high scores
-            addToast({
-              message: `� Excellent score: ${value} by ${player.firstName} ${player.lastName}`,
-              type: 'success',
-              duration: 3000
-            })
-          }
-        } else {
-          throw new Error(`Save failed: ${response.status}`)
-        }
-
-      } catch (error) {
-        logger.error('Failed to save score:', error)
-        
-        // Show error toast
-        const currentPlayer = players.find(playerItem => playerItem.id === playerId);
-        addToast({
-          message: `Failed to save score for ${currentPlayer?.firstName || 'player'} ${currentPlayer?.lastName || ''}. Please try again.`,
-          type: 'error',
-          duration: 5000
-        })
-      }
-      
-      debouncedSaves.delete(saveKey)
-    }, 500)
-    
-    debouncedSaves.set(saveKey, timeoutId)
-  }
-
-  const calculateTotalScratch = (player: Player) => {
-    const scores = player.scores || {}
-    return (scores.game1_scratch || 0) + (scores.game2_scratch || 0) + (scores.game3_scratch || 0)
-  }
-
-  const calculateTotalWithHandicap = (player: Player) => {
-    const scores = player.scores || {}
-    const scratch = (scores.game1_scratch || 0) + (scores.game2_scratch || 0) + (scores.game3_scratch || 0)
-    const gamesPlayed = [scores.game1_scratch, scores.game2_scratch, scores.game3_scratch].filter(s => s !== undefined && s !== null).length
-    return scratch + (player.handicap * gamesPlayed)
-  }
-
-  const getGameTotal = (scratchScore: number | undefined, handicap: number) => {
-    if (scratchScore === undefined || scratchScore === null) return ''
-    return scratchScore + handicap
-  }
-
-  const calculateDisplayTotal = (player: Player) => {
-    const scores = player.scores || {}
-    const games = [scores.game1_scratch, scores.game2_scratch, scores.game3_scratch]
-    const played = games.filter(s => s !== undefined && s !== null)
-    if (played.length === 0) return ''
-    const scratch = played.reduce((sum, s) => sum + (s || 0), 0)
-    return scratch + (player.handicap * played.length)
-  }
-
-  // Keyboard navigation helper
-  const handleKeyDown = (e: React.KeyboardEvent, playerId: number, field: string) => {
-    if (isScoresLocked) {
-      e.preventDefault()
-      return
-    }
-
-    if (e.key === 'Enter' || e.key === 'Tab') {
-      // Move to next input field
-      const currentPlayerIndex = players.findIndex(playerItem => playerItem.id === playerId)
-      const fields = ['game1_scratch', 'game2_scratch', 'game3_scratch']
-      const currentFieldIndex = fields.indexOf(field)
-      
-      if (e.key === 'Enter') {
-        e.preventDefault()
-        let nextField: string | null = null
-        let nextPlayerId: number | null = null
-        
-        if (currentFieldIndex < fields.length - 1) {
-          // Move to next field for same player
-          nextField = fields[currentFieldIndex + 1]
-          nextPlayerId = playerId
-        } else if (currentPlayerIndex < players.length - 1) {
-          // Move to first field of next player
-          nextField = fields[0]
-          nextPlayerId = players[currentPlayerIndex + 1].id
-        }
-        
-        if (nextField && nextPlayerId) {
-          const nextInput = document.querySelector(`input[data-player="${nextPlayerId}"][data-field="${nextField}"]`) as HTMLInputElement
-          if (nextInput) {
-            nextInput.focus()
-            nextInput.select()
-          }
-        }
-      }
-    }
-  }
-
   return (
     <ErrorBoundary>
       <>
@@ -1728,7 +1542,7 @@ export default function ScoresPage() {
                   <span className={styles.mobileScoresContextTitle}>{tournament.name}</span>
                   {selectedSquad && (
                     <span className={styles.mobileScoresContextMeta}>
-                      Squad: {selectedSquad.date} — {selectedSquad.time}
+                      Squad: {selectedSquad.date} â€” {selectedSquad.time}
                     </span>
                   )}
                 </div>
@@ -1736,7 +1550,7 @@ export default function ScoresPage() {
 
               {/* Save status bar */}
               <div className={styles.mobileSaveBar}>
-                {rowStateCounts.saving > 0 && <span>Saving {rowStateCounts.saving}…</span>}
+                {rowStateCounts.saving > 0 && <span>Saving {rowStateCounts.saving}â€¦</span>}
                 {rowStateCounts.saving === 0 && rowStateCounts.failed === 0 && <span>Auto-save on</span>}
                 {rowStateCounts.failed > 0 && <span>{rowStateCounts.failed} failed</span>}
                 {lastEdit && (
@@ -1772,12 +1586,12 @@ export default function ScoresPage() {
                   const isExpanded = !!mobileExpandedPlayers[player.id]
                   const saveState = rowSaveState[player.id] || 'idle'
                   const hasFailed = saveState === 'failed'
-                  const saveLabel = saveState === 'saving' ? 'Saving…' : saveState === 'saved' ? 'Saved ✓' : saveState === 'failed' ? 'Failed' : ''
+                  const saveLabel = saveState === 'saving' ? 'Savingâ€¦' : saveState === 'saved' ? 'Saved âœ“' : saveState === 'failed' ? 'Failed' : ''
                   const pilotClass = saveState === 'saving' ? styles.mobileSaveStateSaving : saveState === 'saved' ? styles.mobileSaveStateSaved : saveState === 'failed' ? styles.mobileSaveStateFailed : styles.mobileSaveStateIdle
 
                   return (
                     <div key={player.id} className={styles.mobileScoreCard}>
-                      {/* Card header — tap to expand */}
+                      {/* Card header â€” tap to expand */}
                       <button
                         className={styles.mobileScoreCardHeader}
                         onClick={() => setMobileExpandedPlayers(prev => ({ ...prev, [player.id]: !prev[player.id] }))}
@@ -1787,7 +1601,7 @@ export default function ScoresPage() {
                             {player.firstName} {player.lastName}
                           </div>
                           <div className={styles.mobileScoreMeta}>
-                            {player.lane ? `Lane ${player.lane} • ` : ''}Avg: {player.average} • HDCP: {player.handicap}
+                            {player.lane ? `Lane ${player.lane} â€¢ ` : ''}Avg: {player.average} â€¢ HDCP: {player.handicap}
                           </div>
                         </div>
                         <div className={styles.mobileScoreHeaderRight}>
@@ -1797,7 +1611,7 @@ export default function ScoresPage() {
                           <span className={styles.mobileScoreTotal}>
                             {calculateDisplayTotal(player)}
                           </span>
-                          <span className={styles.mobileExpandGlyph}>{isExpanded ? '▲' : '▼'}</span>
+                          <span className={styles.mobileExpandGlyph}>{isExpanded ? 'â–²' : 'â–¼'}</span>
                         </div>
                       </button>
 
@@ -1828,7 +1642,7 @@ export default function ScoresPage() {
                                     max="300"
                                     inputMode="numeric"
                                     disabled={isScoresLocked}
-                                    placeholder="—"
+                                    placeholder="â€”"
                                     data-mobile-player={player.id}
                                     data-mobile-field={`game${gameNum}_scratch`}
                                     className={styles.mobileScoreInput}
