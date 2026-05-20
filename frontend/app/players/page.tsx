@@ -20,6 +20,7 @@ import { apiClient, API, apiFetch } from '../lib/api'
 import { calculatePlayerTotalCost, calculateSidePotCost, defaultBracketPrograms, filterEntriesForDivision, getEnabledBracketPrograms, normalizeBracketPrograms, normalizeDivision, normalizePlayerBracketEntries, summarizeEntries } from '../lib/bracketPrograms'
 import styles from './entries.module.css'
 import CloseControl from '../../components/CloseControl'
+import ExplainEntriesModal from './ExplainEntriesModal'
 import { useToastHelpers } from '../components/Toast'
 import ImportLoadingModal from '../components/ImportLoadingModal'
 import { getSelectedSquadId, getSelectedTournamentId, setSelectedSquad } from '../lib/selection-session'
@@ -540,6 +541,7 @@ export default function PlayersPage() {
   const isDev = process.env.NODE_ENV === 'development' || !!currentUser?.isAdmin
   const [isDeletingAll, setIsDeletingAll] = useState(false)
   const [deleteAllPlayersConfirmOpen, setDeleteAllPlayersConfirmOpen] = useState(false)
+  const [isExplainModalOpen, setIsExplainModalOpen] = useState(false)
 
   // Import from Excel — file input ref lives here so the button can be in the header
   const importFileRef = useRef<HTMLInputElement | null>(null)
@@ -822,6 +824,9 @@ export default function PlayersPage() {
       }
 
       const result = await importPlayers(toImport)
+      if (result.successCount > 0) {
+        void loadPlayers()
+      }
       toast.success(
         `Added ${result.successCount} player${result.successCount !== 1 ? 's' : ''} successfully.` +
         (result.failedCount > 0 ? ` ${result.failedCount} failed.` : '') +
@@ -916,6 +921,13 @@ export default function PlayersPage() {
 
   const headerActions = useMemo(() => {
     const normalButtons = [
+      <button
+        key="guide"
+        className="ds-btn ds-btn-info ds-btn-sm"
+        onClick={() => setIsExplainModalOpen(true)}
+      >
+        Entries Guide
+      </button>,
       <button
         key="export"
         className="ds-btn ds-btn-primary ds-btn-sm"
@@ -1243,9 +1255,9 @@ export default function PlayersPage() {
 
                       {entryTotals.programSummaries.map(program => (
                         <div key={program.key} className={styles.statBox}>
-                          <div className={styles.statValue}>~{program.totalEntries}</div>
+                          <div className={styles.statValue}>{program.totalEntries}</div>
                           <div className={styles.statLabel}>{program.name}</div>
-                          <div className={styles.statDetail}>{program.expectedBrackets} bracket{program.expectedBrackets !== 1 ? 's' : ''}</div>
+                          <div className={styles.statDetail}>~{program.expectedBrackets} bracket{program.expectedBrackets !== 1 ? 's' : ''}</div>
                           {program.refunds > 0 && (
                             <div className={styles.statRefund}>~{program.refunds} refund{program.refunds !== 1 ? 's' : ''}</div>
                           )}
@@ -1380,6 +1392,10 @@ export default function PlayersPage() {
           </div>
         </div>
       )}
+      <ExplainEntriesModal
+        isOpen={isExplainModalOpen}
+        onClose={() => setIsExplainModalOpen(false)}
+      />
     </ErrorBoundary>
   )
 }

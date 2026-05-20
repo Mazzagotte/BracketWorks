@@ -26,6 +26,7 @@ import { logger } from '../lib/logger';
 import { handleTableArrowNavigation } from '../lib/tableKeyboard'
 import { getSelectedSquadId, getSelectedTournamentId, setSelectedSquad as persistSelectedSquad } from '../lib/selection-session'
 import { storage } from '../lib/storage'
+import ExplainScoresModal from './ExplainScoresModal'
 
 
 type TournamentBootstrapResponse = {
@@ -49,6 +50,7 @@ export default function ScoresPage() {
 
   const router = useRouter()
   const [showCalcPayoutsConfirm, setShowCalcPayoutsConfirm] = useState(false)
+  const [isScoresGuideOpen, setIsScoresGuideOpen] = useState(false)
   const [missingScoreNames, setMissingScoreNames] = useState<string[]>([])
   const [clearGameConfirm, setClearGameConfirm] = useState<2 | 3 | null>(null)
 
@@ -742,6 +744,13 @@ export default function ScoresPage() {
   const headerActions = useMemo(() => (
     <div className={styles.headerActions}>
       <button
+        className="ds-btn ds-btn-info ds-btn-sm"
+        onClick={() => setIsScoresGuideOpen(true)}
+      >
+        Scores Guide
+      </button>
+
+      <button
         className="ds-btn ds-btn-primary ds-btn-sm"
         onClick={handleExportScoresToExcel}
         disabled={isExporting || players.length === 0}
@@ -1382,7 +1391,7 @@ export default function ScoresPage() {
         description="Load a tournament from the dashboard to enter and manage scores. Once loaded, you'll be able to record game scores for each player across all rounds."
         cards={[
           { title: 'Enter Scores', text: 'Record game scores for each player per round directly in the score sheet' },
-          { title: 'Auto-Save', text: 'Scores are saved automatically as you type — no need to manually submit' },
+          { title: 'Auto-Save', text: 'Scores are saved automatically as you type. No need to manually submit.' },
           { title: 'Sort & Filter', text: 'Sort players by name, average, or score to quickly find and update entries' },
         ]}
       />
@@ -1399,6 +1408,190 @@ export default function ScoresPage() {
         ]}
       />
     )
+  }
+
+
+  const validateScore = (score: number | undefined) => {
+    if (score === undefined || score === null) return { isValid: true, message: '' }
+    if (score < 0) return { isValid: false, message: 'Score cannot be negative' }
+    if (score > 300) return { isValid: false, message: 'Score cannot exceed 300' }
+    return { isValid: true, message: '' }
+  }
+
+  const getScoreInputClass = (score: number | undefined) => {
+    const validation = validateScore(score)
+    if (!validation.isValid) return 'score-input entries-control invalid'
+    if (score === 300) return 'score-input entries-control perfect'
+    return 'score-input entries-control'
+  }
+
+  // Debounced save function
+  const debouncedSaves = new Map<string, NodeJS.Timeout>()
+  
+  const updateScore = async (playerId: number, field: string, value: number | undefined) => {
+    if (isScoresLocked) {
+      addToast({ message: 'Scores are locked. Unlock scores to edit.', type: 'warning', duration: 2500 })
+      return
+    }
+
+    const saveKey = `${playerId}-${field}`
+    
+    // Validate score range
+    if (value !== undefined && (value < 0 || value > 300)) {
+      addToast({
+        message: `Invalid score: ${value}. Scores must be between 0 and 300.`,
+        type: 'error',
+        duration: 4000
+      })
+      return
+    }
+    
+    // Update local state first for immediate UI feedback
+    setPlayers(prev => prev.map(player => {
+      if (player.id === playerId) {
+        const updatedPlayer = {
+          ...player,
+          scores: {
+            ...player.scores,
+            [field]: value
+          }
+        }
+        
+        // Auto-calculate totals when scratch scores are entered
+        // Use the player's handicap from the backend (already calculated with correct settings)
+        if (field.includes('scratch')) {
+          const gameNum = field.includes('game1') ? '1' : field.includes('game2') ? '2' : '3'
+          const scratchScore = value || 0
+          const handicap = player.handicap || 0  // Use stored handicap value
+          const totalScore = scratchScore + handicap
+          updatedPlayer.scores![`game${gameNum}_total` as keyof typeof updatedPlayer.scores] = totalScore
+        }
+        
+        return updatedPlayer
+      }
+      return player
+    }))
+
+    // Clear existing timeout for this field
+    const existingTimeout = debouncedSaves.get(saveKey)
+    if (existingTimeout) {
+      clearTimeout(existingTimeout)
+    }
+    
+    // Debounced save to backend (500ms delay)
+    const timeoutId = setTimeout(async () => {
+      try {
+        const token = localStorage.getItem('token')
+        const tournamentId = getSelectedTournamentId()
+        
+        if (!token || !tournamentId || !selectedSquadRef.current) {
+          return
+        }
+
+        const player = players.find(playerItem => playerItem.id === playerId)
+        if (!player) {
+          return
+        }
+
+        // Calculate the updated scores for API call
+        const updatedScores = { ...player.scores, [field]: value }
+        if (field.includes('scratch')) {
+          const gameNum = field.includes('game1') ? '1' : field.includes('game2') ? '2' : '3'
+          const scratchScore = value || 0
+          const handicap = player.handicap || 0  // Use stored handicap value
+          const totalScore = scratchScore + handicap
+          updatedScores[`game${gameNum}_with_handicap` as keyof typeof updatedScores] = totalScore
+        }
+
+        const scoreData = {
+          player_id: playerId,
+          tournament_id: parseInt(tournamentId),
+          squad_id: selectedSquadRef.current.id,
+          game1_scratch: updatedScores.game1_scratch,
+          game2_scratch: updatedScores.game2_scratch,
+          game3_scratch: updatedScores.game3_scratch
+          // Note: game totals are calculated by backend (scratch + handicap)
+        }
+
+        // Handle offline saves
+        if (!isOnline) {
+          setPendingSaves(prev => [...prev, { token, data: scoreData }])
+          // Store in localStorage as backup
+          localStorage.setItem(`pending_save_${Date.now()}`, JSON.stringify({ token, data: scoreData }))
+          return
+        }
+
+        const response = await apiFetch(API('/api/v1/scores/'), {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(scoreData)
+        })
+        
+        if (response.ok) {
+          // Show success toast for perfect games
+          if (value === 300) {
+            addToast({
+              message: `Perfect game! 300 scored by ${player.firstName} ${player.lastName}`,
+              type: 'success',
+              duration: 5000
+            })
+          } else if (value && value >= 250) {
+            // Show toast for high scores
+            addToast({
+              message: `� Excellent score: ${value} by ${player.firstName} ${player.lastName}`,
+              type: 'success',
+              duration: 3000
+            })
+          }
+        } else {
+          throw new Error(`Save failed: ${response.status}`)
+        }
+
+      } catch (error) {
+        logger.error('Failed to save score:', error)
+        
+        // Show error toast
+        const currentPlayer = players.find(playerItem => playerItem.id === playerId);
+        addToast({
+          message: `Failed to save score for ${currentPlayer?.firstName || 'player'} ${currentPlayer?.lastName || ''}. Please try again.`,
+          type: 'error',
+          duration: 5000
+        })
+      }
+      
+      debouncedSaves.delete(saveKey)
+    }, 500)
+    
+    debouncedSaves.set(saveKey, timeoutId)
+  }
+
+  const calculateTotalScratch = (player: Player) => {
+    const scores = player.scores || {}
+    return (scores.game1_scratch || 0) + (scores.game2_scratch || 0) + (scores.game3_scratch || 0)
+  }
+
+  const calculateTotalWithHandicap = (player: Player) => {
+    const scores = player.scores || {}
+    const scratch = (scores.game1_scratch || 0) + (scores.game2_scratch || 0) + (scores.game3_scratch || 0)
+    const gamesPlayed = [scores.game1_scratch, scores.game2_scratch, scores.game3_scratch].filter(s => s !== undefined && s !== null).length
+    return scratch + (player.handicap * gamesPlayed)
+  }
+
+  const getGameTotal = (scratchScore: number | undefined, handicap: number) => {
+    if (scratchScore === undefined || scratchScore === null) return ''
+    return scratchScore + handicap
+  }
+
+  const calculateDisplayTotal = (player: Player) => {
+    const scores = player.scores || {}
+    const games = [scores.game1_scratch, scores.game2_scratch, scores.game3_scratch]
+    const played = games.filter(s => s !== undefined && s !== null)
+    if (played.length === 0) return ''
+    const scratch = played.reduce((sum, s) => sum + (s || 0), 0)
+    return scratch + (player.handicap * played.length)
   }
 
   // Keyboard navigation helper
@@ -1496,7 +1689,7 @@ export default function ScoresPage() {
                   <h2 className="bw-scores-calc-title">All Scores Complete</h2>
                 </div>
                 <p className="bw-scores-calc-text">
-                  All {players.length} bowler{players.length !== 1 ? 's' : ''} have scores for all 3 games. Confirm these scores are final before calculating payouts — winners will be determined from these results.
+                  All {players.length} bowler{players.length !== 1 ? 's' : ''} have scores for all 3 games. Confirm these scores are final before calculating payouts. Winners will be determined from these results.
                 </p>
                 <div className="bw-scores-calc-actions">
                   <button
@@ -1838,7 +2031,7 @@ export default function ScoresPage() {
               {selectedSquad && (
                 <tr>
                   <td colSpan={12} className="squad-banner">
-                    Showing scores for: {selectedSquad.date} — {selectedSquad.time}
+                    Showing scores for: {selectedSquad.date} - {selectedSquad.time}
                   </td>
                 </tr>
               )}
@@ -1886,7 +2079,7 @@ export default function ScoresPage() {
                 <tr key={player.id} className={`scores-row ${index % 2 === 0 ? 'even' : 'odd'}`}>
                   <td className="scores-cell name">{player.firstName}</td>
                   <td className="scores-cell name">{player.lastName}</td>
-                  <td className={`scores-cell lane ${!player.lane ? 'lane-empty' : ''}`}>{player.lane || '—'}</td>
+                  <td className={`scores-cell lane ${!player.lane ? 'lane-empty' : ''}`}>{player.lane || ''}</td>
                   <td className="scores-cell average">{player.average}</td>
                   
                   {/* Game 1 Scratch */}
@@ -1896,7 +2089,7 @@ export default function ScoresPage() {
                         type="number"
                         min={0}
                         max={300}
-                        placeholder="—"
+                        placeholder=""
                         data-player={player.id}
                         data-field="game1_scratch"
                         value={player.scores?.game1_scratch ?? ''}
@@ -1922,7 +2115,7 @@ export default function ScoresPage() {
                         type="number"
                         min={0}
                         max={300}
-                        placeholder="—"
+                        placeholder=""
                         data-player={player.id}
                         data-field="game2_scratch"
                         value={player.scores?.game2_scratch ?? ''}
@@ -1948,7 +2141,7 @@ export default function ScoresPage() {
                         type="number"
                         min={0}
                         max={300}
-                        placeholder="—"
+                        placeholder=""
                         data-player={player.id}
                         data-field="game3_scratch"
                         value={player.scores?.game3_scratch ?? ''}
@@ -1969,7 +2162,7 @@ export default function ScoresPage() {
                   
                   {/* Total Scratch */}
                   <td className="scores-cell total-scratch">
-                    {calculateTotalScratch(player) || '—'}
+                    {calculateTotalScratch(player) || ''}
                   </td>
                   
                   {/* Total */}
@@ -2013,6 +2206,11 @@ export default function ScoresPage() {
         )}
         </div>
       )}
+
+      <ExplainScoresModal
+        isOpen={isScoresGuideOpen}
+        onClose={() => setIsScoresGuideOpen(false)}
+      />
     </>
     </ErrorBoundary>
   )

@@ -137,6 +137,14 @@ function ClientLayout({ children }: { children: ReactNode }) {
   return (
     <ErrorBoundary>
       {!isMobile && showAuthenticatedShell && (
+        <ModernHeader
+          title={headerContext.title}
+          subtitle={headerContext.subtitle}
+          actions={headerContext.actions}
+        />
+      )}
+
+      {!isMobile && showAuthenticatedShell && (
         <Sidebar
           firstName={firstName}
           isMobile={false}
@@ -177,14 +185,6 @@ function ClientLayout({ children }: { children: ReactNode }) {
         id="main-content"
         className={`${styles.main} ${isMobile ? styles.mainMobile : styles.mainDesktop} ${isMobile && showAuthenticatedShell ? styles.mainMobileAuth : ''}`}
       >
-        {mounted && showAuthenticatedShell && (
-          <ModernHeader
-            title={headerContext.title}
-            subtitle={headerContext.subtitle}
-            actions={headerContext.actions}
-          />
-        )}
-
         <div className={`${styles.contentCard} ${isMobile ? styles.contentCardMobile : ''} ${!showAuthenticatedShell ? styles.contentCardNoAuth : ''}`}>
           <ErrorBoundary>
             {children}

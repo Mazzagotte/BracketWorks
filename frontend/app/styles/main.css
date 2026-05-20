@@ -13,6 +13,8 @@
 @import './globals.css';
 
 :root {
+  --header-height: 200px;
+
   /* Active theme: core brand controls */
   --bw-orange: #ff7a00;
   --bw-orange-dark: #e55f00;

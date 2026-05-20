@@ -1544,7 +1544,6 @@
 .createTournamentModalContent {
   max-height: none;
   overflow-y: visible;
-  min-width: clamp(320px, calc(100vw - 32px), 720px);
 }
 
 /* Unify header bg with body — single card appearance */
@@ -1653,6 +1652,89 @@
 .headerDeleteBtn {
   background: var(--color-red-dark);
   border-color: var(--color-error-dark);
+}
+
+/* ── Edit / Create Tournament modal redesign ───────────────────── */
+.tournamentModalContent {
+  width: clamp(320px, calc(100vw - 32px), 520px);
+}
+
+.tournamentFormBody {
+  padding: 20px 24px 8px;
+}
+
+.tournamentFormFields {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tournamentFormFields :global(.form-field) {
+  margin-bottom: 0;
+}
+
+.tournamentDateRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.squadTimesSection {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--color-brand-border-faint);
+}
+
+.squadTimesTitle {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  margin: 0 0 10px;
+  color: var(--color-text-primary);
+}
+
+.noSquadDaysHint {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.squadDay {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--color-brand-border-faint);
+}
+
+.squadDay:last-child {
+  border-bottom: none;
+}
+
+.squadDayLabel {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  min-width: 88px;
+  padding-top: 5px;
+  flex-shrink: 0;
+}
+
+.squadTimeRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.squadTimeItem {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.squadTimeItem select {
+  width: 112px;
 }
 
 .headerDeleteBtn:hover {

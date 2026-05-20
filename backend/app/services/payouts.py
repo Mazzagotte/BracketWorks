@@ -351,10 +351,16 @@ def _calculate_single_bracket_payout(
     for winner in winners:
         position = winner.get('position', '')
         if is_split_pot and winner.get('split_pot'):
-            percentage    = 50
-            payout_amount = (prize_pool * Decimal('50') / Decimal('100')).quantize(
+            payout_1st = (prize_pool * Decimal(str(payout_percentages.get('1st', 0))) / Decimal('100')).quantize(
                 Decimal('0.01'), rounding=ROUND_HALF_UP
             )
+            payout_2nd = (prize_pool * Decimal(str(payout_percentages.get('2nd', 0))) / Decimal('100')).quantize(
+                Decimal('0.01'), rounding=ROUND_HALF_UP
+            )
+            payout_amount = ((payout_1st + payout_2nd) / Decimal('2')).quantize(
+                Decimal('0.01'), rounding=ROUND_HALF_UP
+            )
+            percentage = float((payout_amount / prize_pool * Decimal('100')).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP))
         else:
             percentage = payout_percentages.get(position.lower(), 0)
             if percentage <= 0:

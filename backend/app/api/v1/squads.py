@@ -140,7 +140,28 @@ def delete_tournament_squads(tournament_id: int, db: Session = Depends(deps.get_
         selected_squad_cleanup_count = db.query(models.SelectedSquad).filter(
             models.SelectedSquad.squad_id.in_(squad_ids)
         ).delete(synchronize_session=False)
-    
+
+        # Null out squad_id on any players that reference these squads
+        db.query(models.TournamentPlayer).filter(
+            models.TournamentPlayer.squad_id.in_(squad_ids)
+        ).update({"squad_id": None}, synchronize_session=False)
+
+        # Delete player scores for these squads (squad_id is NOT NULL on player_scores)
+        db.query(models.PlayerScore).filter(
+            models.PlayerScore.squad_id.in_(squad_ids)
+        ).delete(synchronize_session=False)
+
+        # Null out squad_id on snapshot/winner/payout tables (nullable FKs)
+        for model_cls in (
+            models.BracketSnapshot,
+            models.BracketWinner,
+            models.BracketPayout,
+            models.TournamentPayoutSummary,
+        ):
+            db.query(model_cls).filter(
+                model_cls.squad_id.in_(squad_ids)
+            ).update({"squad_id": None}, synchronize_session=False)
+
     # Delete all squads for this tournament
     deleted_count = db.query(models.Squad).filter(models.Squad.tournament_id == tournament_id).delete()
     db.commit()
@@ -162,7 +183,28 @@ def delete_squad(squad_id: int, db: Session = Depends(deps.get_db), user = Depen
     selected_squad_cleanup_count = db.query(models.SelectedSquad).filter(
         models.SelectedSquad.squad_id == squad_id
     ).delete()
-    
+
+    # Null out squad_id on any players that reference this squad
+    db.query(models.TournamentPlayer).filter(
+        models.TournamentPlayer.squad_id == squad_id
+    ).update({"squad_id": None}, synchronize_session=False)
+
+    # Delete player scores for this squad (squad_id is NOT NULL on player_scores)
+    db.query(models.PlayerScore).filter(
+        models.PlayerScore.squad_id == squad_id
+    ).delete(synchronize_session=False)
+
+    # Null out squad_id on snapshot/winner/payout tables (nullable FKs)
+    for model_cls in (
+        models.BracketSnapshot,
+        models.BracketWinner,
+        models.BracketPayout,
+        models.TournamentPayoutSummary,
+    ):
+        db.query(model_cls).filter(
+            model_cls.squad_id == squad_id
+        ).update({"squad_id": None}, synchronize_session=False)
+
     db.delete(obj)
     db.commit()
     
@@ -234,7 +276,23 @@ def sync_tournament_squads(tournament_id: int, body: SquadSyncRequest = SquadSyn
     errors = []
     
     try:
-        # Delete orphaned squads
+        # Create missing squads FIRST so we can reassign players when a time is edited
+        new_squads_by_date: Dict[str, List[models.Squad]] = {}
+        for date, time in sorted(squads_to_create, key=lambda squad: _squad_sort_key(squad[0], squad[1])):
+            try:
+                new_squad = models.Squad(
+                    tournament_id=tournament_id,
+                    date=date,
+                    time=time
+                )
+                db.add(new_squad)
+                db.flush()  # populate new_squad.id without committing
+                new_squads_by_date.setdefault(date, []).append(new_squad)
+                created_count += 1
+            except Exception as e:
+                errors.append(f"Failed to create squad ({date}, {time}): {str(e)}")
+
+        # Delete orphaned squads, reassigning players when a clear replacement exists
         if squads_to_delete:
             for squad in current_squads:
                 if (squad.date, squad.time) in squads_to_delete:
@@ -244,25 +302,52 @@ def sync_tournament_squads(tournament_id: int, body: SquadSyncRequest = SquadSyn
                             models.SelectedSquad.squad_id == squad.id
                         ).delete()
                         selected_squad_cleanup_count += selected_cleanup
-                        
+
+                        # If exactly one new squad exists on the same date, reassign players to it.
+                        # This preserves assignments when a squad time is edited rather than removed.
+                        replacement_squads = new_squads_by_date.get(squad.date, [])
+                        if len(replacement_squads) == 1:
+                            db.query(models.TournamentPlayer).filter(
+                                models.TournamentPlayer.squad_id == squad.id
+                            ).update({"squad_id": replacement_squads[0].id}, synchronize_session=False)
+                            # Reassign scores to the new squad too
+                            db.query(models.PlayerScore).filter(
+                                models.PlayerScore.squad_id == squad.id
+                            ).update({"squad_id": replacement_squads[0].id}, synchronize_session=False)
+                            # Reassign snapshot/winner/payout references to the new squad
+                            for model_cls in (
+                                models.BracketSnapshot,
+                                models.BracketWinner,
+                                models.BracketPayout,
+                                models.TournamentPayoutSummary,
+                            ):
+                                db.query(model_cls).filter(
+                                    model_cls.squad_id == squad.id
+                                ).update({"squad_id": replacement_squads[0].id}, synchronize_session=False)
+                        else:
+                            db.query(models.TournamentPlayer).filter(
+                                models.TournamentPlayer.squad_id == squad.id
+                            ).update({"squad_id": None}, synchronize_session=False)
+                            # No replacement — delete scores since squad_id is NOT NULL
+                            db.query(models.PlayerScore).filter(
+                                models.PlayerScore.squad_id == squad.id
+                            ).delete(synchronize_session=False)
+                            # Null out snapshot/winner/payout references (nullable FKs)
+                            for model_cls in (
+                                models.BracketSnapshot,
+                                models.BracketWinner,
+                                models.BracketPayout,
+                                models.TournamentPayoutSummary,
+                            ):
+                                db.query(model_cls).filter(
+                                    model_cls.squad_id == squad.id
+                                ).update({"squad_id": None}, synchronize_session=False)
+
                         db.delete(squad)
                         deleted_count += 1
                     except Exception as e:
                         errors.append(f"Failed to delete squad ({squad.date}, {squad.time}): {str(e)}")
-        
-        # Create missing squads
-        for date, time in sorted(squads_to_create, key=lambda squad: _squad_sort_key(squad[0], squad[1])):
-            try:
-                new_squad = models.Squad(
-                    tournament_id=tournament_id,
-                    date=date,
-                    time=time
-                )
-                db.add(new_squad)
-                created_count += 1
-            except Exception as e:
-                errors.append(f"Failed to create squad ({date}, {time}): {str(e)}")
-        
+
         db.commit()
         
     except Exception as e:

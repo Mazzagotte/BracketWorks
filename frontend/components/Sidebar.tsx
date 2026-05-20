@@ -1,14 +1,12 @@
 "use client";
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../app/lib/auth-context';
 import { buildApiUrl } from '../app/lib/api';
 import { logger } from '../app/lib/logger';
 import { shouldRequireTimeSlotBeforeLeavingDashboard, showSelectTimeSlotReminder } from '../app/lib/selection-session';
-import CloseControl from './CloseControl';
 import { navLinks } from './nav-links';
 import styles from './Sidebar.module.css';
 
@@ -102,24 +100,6 @@ export default function Sidebar({ firstName, isMobile = false, isOpen = false, o
 
   return (
     <aside className={sidebarClass}>
-      <div className={styles.brand}>
-        {isMobile && (
-          <CloseControl onClick={onClose} size="sm" className={styles.closeBtn} label="Close navigation" />
-        )}
-        <Link href="/" className={styles.logoLink} onClick={event => handleProtectedNavigation(event, '/')}>
-          <div className={styles.logoWrap}>
-            <Image
-              src="/logo.svg"
-              alt="BracketWorks Logo"
-              width={160}
-              height={160}
-              className={styles.logoImage}
-              priority
-            />
-          </div>
-        </Link>
-      </div>
-
       <div className={styles.welcome}>
         <span className={styles.welcomeText}>
           Welcome, {firstName || 'User'}

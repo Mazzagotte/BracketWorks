@@ -926,6 +926,19 @@
   flex-shrink: 0;
 }
 
+.sidePotPill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 700;
+  background: color-mix(in srgb, var(--color-brand-orange) 15%, transparent);
+  color: var(--color-primary);
+  padding: 2px 8px;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 .winnerMeta {
   font-size: 12px;
   color: var(--color-text-muted-medium);
