@@ -82,7 +82,7 @@ export default function HomePage() {
         <div className={styles.navInner}>
           <div className={styles.brand}>
             <Image
-              src="/logo.svg"
+              src="/logo_no_text.svg"
               alt="BracketWorks"
               width={138}
               height={40}
