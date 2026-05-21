@@ -11,12 +11,12 @@
   position: sticky;
   top: 0;
   z-index: 20;
-  padding: 20px 20px 0;
+  padding: 20px 0 0;
 }
 
 .navInner {
-  width: min(1240px, 100%);
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
   min-height: 84px;
   border-radius: 26px;
   border: 1px solid var(--opacity-white-20);
@@ -122,7 +122,7 @@
   min-height: calc(100svh - 104px);
   display: flex;
   align-items: center;
-  padding: 28px 20px 70px;
+  padding: 28px 0 70px;
   position: relative;
 }
 
@@ -138,8 +138,9 @@
 }
 
 .heroGrid {
-  width: min(1240px, 100%);
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
+  padding: 0 clamp(16px, 2.2vw, 30px);
   position: relative;
   z-index: 1;
   display: grid;
@@ -253,13 +254,15 @@
 
 .liveBadge {
   border-radius: 999px;
-  padding: 6px 12px;
-  background: color-mix(in srgb, var(--color-primary) 80%, white);
-  color: var(--color-dark-base);
+  padding: 8px 14px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 88%, white) 0%, var(--color-primary-hover) 100%);
+  color: var(--color-white);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 72%, white);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--color-primary) 34%, transparent);
   text-transform: uppercase;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 900;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
 }
 
 .tournamentMetaCard {
@@ -350,11 +353,56 @@
   color: color-mix(in srgb, var(--color-primary) 85%, white);
 }
 
+.bracketPreview {
+  margin-top: 16px;
+  border-radius: 16px;
+  border: 1px solid var(--opacity-white-20);
+  background: var(--opacity-white-06);
+  padding: 14px;
+}
+
+.bracketPreviewTitle {
+  margin: 0 0 10px;
+  color: var(--color-white);
+  font-size: 14px;
+  letter-spacing: 0.01em;
+}
+
+.bracketPreviewGrid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 0.8fr;
+  gap: 10px;
+}
+
+.bracketRound {
+  display: grid;
+  gap: 8px;
+}
+
+.roundLabel {
+  font-size: 10px;
+  color: var(--opacity-white-60);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 800;
+}
+
+.matchNode {
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 35%, var(--opacity-white-20));
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  color: var(--opacity-white-85);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+  padding: 8px 9px;
+}
+
 .features,
 .howItWorks,
 .ctaSection,
 .benefits {
-  padding: 76px 20px;
+  padding: 76px 0;
 }
 
 .features {
@@ -376,8 +424,9 @@
 }
 
 .sectionHeading {
-  width: min(1240px, 100%);
-  margin: 0 auto 30px;
+  width: 100%;
+  margin: 0 0 30px;
+  padding: 0 clamp(16px, 2.2vw, 30px);
   text-align: center;
 }
 
@@ -397,8 +446,9 @@
 }
 
 .featureGrid {
-  width: min(1240px, 100%);
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
+  padding: 0 clamp(16px, 2.2vw, 30px);
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 20px;
@@ -443,12 +493,12 @@
 }
 
 .stepsGrid {
-  width: min(1240px, 100%);
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
+  padding: 32px clamp(16px, 2.2vw, 30px);
   border-radius: 28px;
   border: 1px solid var(--opacity-white-20);
   background: var(--opacity-white-06);
-  padding: 32px;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 22px;
@@ -474,8 +524,9 @@
 }
 
 .ctaContent {
-  width: min(980px, 100%);
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
+  padding: 0 clamp(16px, 2.2vw, 30px);
   text-align: center;
 }
 
@@ -503,8 +554,9 @@
 }
 
 .benefitsList {
-  width: min(1040px, 100%);
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
+  padding: 0 clamp(16px, 2.2vw, 30px);
   display: grid;
   gap: 14px;
 }
@@ -642,6 +694,10 @@
   .heroStats,
   .featureGrid,
   .stepsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .bracketPreviewGrid {
     grid-template-columns: 1fr;
   }
 

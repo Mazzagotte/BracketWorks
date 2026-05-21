@@ -118,10 +118,10 @@ export default function HomePage() {
           <div className={styles.heroContent}>
             <p className={styles.kicker}>Bowling Tournament Operations</p>
             <h1 className={styles.heroTitle}>
-              Run Bowling Brackets Without The Spreadsheet Chaos
+              Run Bowling Brackets Without the Spreadsheet Chaos
             </h1>
             <p className={styles.heroSubtitle}>
-              BracketWorks helps tournament directors create brackets, manage side pots, enter scores, advance winners, and finalize payouts from one clean dashboard.
+              BracketWorks helps tournament directors create brackets, manage side pots, enter scores, advance winners, and finalize payouts from one clean app.
             </p>
             <div className={styles.heroCTA}>
               <Link href="/signup" className={`${styles.navBtn} ${styles.navBtnPrimary}`}>
@@ -148,7 +148,7 @@ export default function HomePage() {
           <div className={styles.heroPanel}>
             <div className={styles.panelHeaderRow}>
               <h2 className={styles.heroPanelTitle}>Live Tournament Board</h2>
-              <span className={styles.liveBadge}>Live Demo</span>
+              <span className={styles.liveBadge}>LIVE DEMO</span>
             </div>
 
             <div className={styles.tournamentMetaCard}>
@@ -184,6 +184,28 @@ export default function HomePage() {
                 <li>High Game side pot recalculated</li>
                 <li>Payout export ready for review</li>
               </ul>
+            </div>
+
+            <div className={styles.bracketPreview} aria-label="Bracket preview">
+              <h4 className={styles.bracketPreviewTitle}>Bracket Preview</h4>
+              <div className={styles.bracketPreviewGrid}>
+                <div className={styles.bracketRound}>
+                  <span className={styles.roundLabel}>R1</span>
+                  <div className={styles.matchNode}>Bowler A</div>
+                  <div className={styles.matchNode}>Bowler B</div>
+                  <div className={styles.matchNode}>Bowler C</div>
+                  <div className={styles.matchNode}>Bowler D</div>
+                </div>
+                <div className={styles.bracketRound}>
+                  <span className={styles.roundLabel}>R2</span>
+                  <div className={styles.matchNode}>Winner 1</div>
+                  <div className={styles.matchNode}>Winner 2</div>
+                </div>
+                <div className={styles.bracketRound}>
+                  <span className={styles.roundLabel}>Final</span>
+                  <div className={styles.matchNode}>Champion</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -224,20 +246,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="pricing" className={styles.ctaSection}>
-        <div className={styles.ctaContent}>
-          <h2>Ready To Make Tournament Day Easier?</h2>
-          <p>
-            Create your first event and run brackets, scores, side pots, and payouts from one place.
-          </p>
-          <div className={styles.ctaButtons}>
-            <Link href="/signup" className={`${styles.navBtn} ${styles.navBtnPrimary}`}>
-              Create Account
-            </Link>
-          </div>
-        </div>
-      </section>
-
       <section className={styles.benefits}>
         <div className={styles.sectionHeading}>
           <h2 className={styles.sectionTitle}>Why Organizers Choose BracketWorks</h2>
@@ -271,6 +279,20 @@ export default function HomePage() {
               From weekly league events to larger tournaments, the workflow remains consistent as event complexity increases.
             </p>
           </article>
+        </div>
+      </section>
+
+      <section id="pricing" className={styles.ctaSection}>
+        <div className={styles.ctaContent}>
+          <h2>Ready To Make Tournament Day Easier?</h2>
+          <p>
+            Create your first event and run brackets, scores, side pots, and payouts from one place.
+          </p>
+          <div className={styles.ctaButtons}>
+            <Link href="/signup" className={`${styles.navBtn} ${styles.navBtnPrimary}`}>
+              Create Account
+            </Link>
+          </div>
         </div>
       </section>
     </div>
