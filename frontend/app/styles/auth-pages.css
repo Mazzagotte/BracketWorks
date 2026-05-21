@@ -417,6 +417,31 @@ html:has(.signup-page-container) {
   margin-bottom: 32px !important;
 }
 
+.signup-logo-container {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 110px !important;
+  height: 110px !important;
+  margin: 0 auto 20px auto !important;
+  padding: 10px !important;
+  background: linear-gradient(135deg, var(--color-brand-border-faint) 0%, var(--color-brand-tint-mid) 35%, var(--color-warning-surface) 70%, var(--color-brand-tint) 100%) !important;
+  border-radius: 22px !important;
+  border: 1px solid var(--color-border-light) !important;
+  transition: all 0.3s ease !important;
+}
+
+.signup-logo-container:hover {
+  transform: translateY(-2px) scale(1.02) !important;
+  box-shadow: 0 8px 24px var(--color-border-light) !important;
+}
+
+.signup-logo-image {
+  width: 92px !important;
+  height: 92px !important;
+  object-fit: contain !important;
+}
+
 .logo-container {
   display: inline-flex !important;
   align-items: center !important;

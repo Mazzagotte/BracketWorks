@@ -127,8 +127,15 @@ export default function SignupPage() {
     <div className="signup-page-container">
       <div className="signup-card">
         <div className="signup-header-section">
-          <div className="logo-container">
-            <Image src="/logo.svg" alt="BracketWorks Logo" width={72} height={72} className="logo-image" priority />
+          <div className="signup-logo-container">
+            <Image
+              src="/logo_no_text.svg"
+              alt="BracketWorks Logo"
+              width={92}
+              height={92}
+              className="signup-logo-image"
+              priority
+            />
           </div>
           <h1 className="signup-title">Create Account</h1>
           <div className="signup-subtitle">Join BracketWorks today</div>
