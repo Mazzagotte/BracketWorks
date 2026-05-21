@@ -64,6 +64,20 @@ export function MobileNav({ isOpen, onClose, firstName, currentPage }: MobileNav
     return () => { document.body.style.overflow = 'auto'; };
   }, [isOpen]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const routesToPrefetch = new Set<string>([
+      ...visibleLinks.map(link => link.href),
+      '/settings',
+      '/dashboard',
+    ]);
+
+    routesToPrefetch.forEach(route => {
+      router.prefetch(route);
+    });
+  }, [isOpen, router, visibleLinks]);
+
   if (!isOpen) return null;
 
   return (

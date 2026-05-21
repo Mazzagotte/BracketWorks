@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-// ...existing code...
+import Image from 'next/image';
 import styles from './page.module.css';
 
 export const metadata: Metadata = {
@@ -24,165 +24,205 @@ export const metadata: Metadata = {
 };
 
 export default function HomePage() {
+  const features = [
+    {
+      title: 'Smart Bracket Engine',
+      body: 'Generate brackets instantly with clean seeding, bracket-aware progression, and support for the formats your tournaments already use.',
+      tag: 'Brackets',
+    },
+    {
+      title: 'Live Score Control',
+      body: 'Keep scores current as games finish and advance winners in real time, so bowlers and staff always see the latest board.',
+      tag: 'Scoring',
+    },
+    {
+      title: 'Automatic Payout Logic',
+      body: 'Calculate distributions from your configured prize pools without spreadsheets or manual math at the end of the night.',
+      tag: 'Payouts',
+    },
+    {
+      title: 'Tournament Audit Trail',
+      body: 'Track meaningful score and settings changes with a clear activity history built for transparency and confidence.',
+      tag: 'Integrity',
+    },
+    {
+      title: 'Built For Mobile Floors',
+      body: 'Run operations from desk, counter, or lanes with a touch-friendly interface that stays fast on phones and tablets.',
+      tag: 'Mobile',
+    },
+    {
+      title: 'League-Ready Workflow',
+      body: 'Move from setup to results using a connected workflow across tournament settings, entries, scoring, and payouts.',
+      tag: 'Workflow',
+    },
+  ];
+
+  const steps = [
+    {
+      title: 'Configure Tournament',
+      text: 'Create your event, define bracket size, and set fees and payout rules in a guided dashboard flow.',
+    },
+    {
+      title: 'Add Players And Squads',
+      text: 'Register bowlers quickly, keep squads organized, and prepare the event board before games begin.',
+    },
+    {
+      title: 'Run Live Scoring',
+      text: 'Enter scores, resolve outcomes, and keep bracket progression synchronized across every round.',
+    },
+    {
+      title: 'Finalize Results',
+      text: 'Generate payout outcomes and share polished tournament results with confidence.',
+    },
+  ];
+
   return (
     <div className={styles.container}>
-      {/* Hero Section */}
       <section className={styles.hero}>
-        <div className={styles.heroContent}>
-          <h1 className={styles.heroTitle}>
-            Professional Bowling Tournament Management Made Simple
-          </h1>
-          <p className={styles.heroSubtitle}>
-            Create tournament brackets, track live scores, calculate payouts automatically, and manage bowling leagues with our all-in-one platform
-          </p>
-          <div className={styles.heroCTA}>
-            <Link href="/signup" className={`${styles.button} ${styles.buttonPrimary}`}>
-              Start Your Tournament
-            </Link>
-            <Link href="/login" className={`${styles.button} ${styles.buttonSecondary}`}>
-              Sign In
-            </Link>
+        <div className={styles.heroGlow} aria-hidden="true" />
+        <div className={styles.heroGrid}>
+          <div className={styles.heroContent}>
+            <p className={styles.kicker}>Tournament Ops Platform</p>
+            <h1 className={styles.heroTitle}>
+              Tournament Operations, In One Interface
+            </h1>
+            <p className={styles.heroSubtitle}>
+              Configure events, manage entries, update scores, and finalize payouts without switching tools.
+            </p>
+            <div className={styles.heroCTA}>
+              <Link href="/signup" className="ds-btn ds-btn-primary ds-btn-lg">
+                Start Free
+              </Link>
+              <Link href="/login" className="ds-btn ds-btn-secondary ds-btn-lg">
+                Sign In
+              </Link>
+            </div>
+            <div className={styles.heroStats}>
+              <div className={styles.statCard}>
+                <span className={styles.statLabel}>Core Areas</span>
+                <span className={styles.statValue}>4</span>
+              </div>
+              <div className={styles.statCard}>
+                <span className={styles.statLabel}>Access</span>
+                <span className={styles.statValue}>Mobile And Desktop</span>
+              </div>
+              <div className={styles.statCard}>
+                <span className={styles.statLabel}>Workflow</span>
+                <span className={styles.statValue}>Setup To Closeout</span>
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.heroPanel}>
+            <div className={styles.heroPanelHeader}>
+              <Image
+                src="/logo.svg"
+                alt="BracketWorks"
+                width={96}
+                height={96}
+                className={styles.heroLogo}
+                priority
+              />
+              <div>
+                <h2 className={styles.heroPanelTitle}>BracketWorks</h2>
+                <p className={styles.heroPanelText}>Built for bowling tournament directors and staff.</p>
+              </div>
+            </div>
+            <ul className={styles.panelList}>
+              <li>Bracket creation with predictable progression</li>
+              <li>Score entry and winner advancement in real time</li>
+              <li>Payout calculations from configured event rules</li>
+              <li>Clear flow from tournament setup through final results</li>
+            </ul>
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
       <section className={styles.features}>
-        <div className={styles.featuresContainer}>
-          <h2 className={styles.sectionTitle}>Everything You Need for Bowling Tournaments</h2>
-          
-          <div className={styles.featureGrid}>
-            <div className={styles.featureCard}>
-              <div className={styles.featureIcon}>🎯</div>
-              <h3>Smart Bracket Generation</h3>
-              <p>
-                Automatically create tournament brackets with intelligent player seeding. Support both scratch and handicap tournaments for bowling competitions of any size.
-              </p>
-            </div>
+        <div className={styles.sectionHeading}>
+          <h2 className={styles.sectionTitle}>Everything You Need On Tournament Day</h2>
+          <p className={styles.sectionSubtitle}>
+            A single product surface for bracket setup, live operations, and payout finalization.
+          </p>
+        </div>
 
-            <div className={styles.featureCard}>
-              <div className={styles.featureIcon}>📊</div>
-              <h3>Live Score Tracking</h3>
-              <p>
-                Update scores in real-time with automatic winner advancement. Track player performance across multiple brackets in your bowling league with instant updates.
-              </p>
-            </div>
-
-            <div className={styles.featureCard}>
-              <div className={styles.featureIcon}>💰</div>
-              <h3>Automated Payout Calculator</h3>
-              <p>
-                Calculate payouts instantly based on customizable prize pools and entry fees. Manage house percentages transparently and distribute tournament winnings automatically.
-              </p>
-            </div>
-
-            <div className={styles.featureCard}>
-              <div className={styles.featureIcon}>📈</div>
-              <h3>Player Performance Analytics</h3>
-              <p>
-                Track detailed statistics on wins, losses, and earnings. Analyze player participation and tournament results to identify top performers in your bowling league.
-              </p>
-            </div>
-
-            <div className={styles.featureCard}>
-              <div className={styles.featureIcon}>📱</div>
-              <h3>Mobile-Optimized Design</h3>
-              <p>
-                Manage tournaments on any device with our responsive web application. Full PWA support lets you work offline and sync when reconnected.
-              </p>
-            </div>
-
-            <div className={styles.featureCard}>
-              <div className={styles.featureIcon}>🔐</div>
-              <h3>Secure & Reliable</h3>
-              <p>
-                Keep tournament data safe with enterprise-grade security. Complete audit trails of all scores, payouts, and tournament changes for transparency.
-              </p>
-            </div>
-          </div>
+        <div className={styles.featureGrid}>
+          {features.map(feature => (
+            <article key={feature.title} className={styles.featureCard}>
+              <span className={styles.featureTag}>{feature.tag}</span>
+              <h3>{feature.title}</h3>
+              <p>{feature.body}</p>
+            </article>
+          ))}
         </div>
       </section>
 
-      {/* How It Works Section */}
       <section className={styles.howItWorks}>
-        <div className={styles.howItWorksContainer}>
-          <h2 className={styles.sectionTitle}>How BracketWorks Simplifies Tournament Management</h2>
-          
-          <div className={styles.stepsGrid}>
-            <div className={styles.step}>
-              <div className={styles.stepNumber}>1</div>
-              <h3>Create Your Tournament</h3>
-              <p>Set up a new bowling tournament with custom brackets, entry fees, and prize pools in minutes</p>
-            </div>
+        <div className={styles.sectionHeading}>
+          <h2 className={styles.sectionTitle}>How It Works</h2>
+        </div>
 
-            <div className={styles.step}>
-              <div className={styles.stepNumber}>2</div>
-              <h3>Register Players</h3>
-              <p>Add bowlers to your tournament and organize them into squads and bracket groups</p>
-            </div>
-
-            <div className={styles.step}>
-              <div className={styles.stepNumber}>3</div>
-              <h3>Track Scores in Real-Time</h3>
-              <p>Update match scores as games are played. Our bracket management system automatically advances winners</p>
-            </div>
-
-            <div className={styles.step}>
-              <div className={styles.stepNumber}>4</div>
-              <h3>Calculate Payouts Instantly</h3>
-              <p>Generate comprehensive payout reports with automatic calculations based on your tournament rules</p>
-            </div>
-          </div>
+        <div className={styles.stepsGrid}>
+          {steps.map((step, index) => (
+            <article key={step.title} className={styles.step}>
+              <div className={styles.stepNumber}>{index + 1}</div>
+              <h3>{step.title}</h3>
+              <p>{step.text}</p>
+            </article>
+          ))}
         </div>
       </section>
 
-      {/* Benefits Section */}
       <section className={styles.benefits}>
-        <div className={styles.benefitsContainer}>
-          <h2 className={styles.sectionTitle}>Why Choose BracketWorks for Your Bowling League</h2>
-          
-          <div className={styles.benefitsList}>
-            <div className={styles.benefit}>
-              <h3>Save Time on Tournament Administration</h3>
-              <p>
-                Eliminate manual bracket creation and payout calculations. Automate the tedious aspects of tournament management and focus on the bowlers.
-              </p>
-            </div>
+        <div className={styles.sectionHeading}>
+          <h2 className={styles.sectionTitle}>Why Organizers Choose BracketWorks</h2>
+        </div>
 
-            <div className={styles.benefit}>
-              <h3>Reduce Errors in Scoring & Payouts</h3>
-              <p>
-                Our bracket management system ensures scores are tracked accurately and payouts calculated correctly every time. Complete audit trails provide transparency.
-              </p>
-            </div>
+        <div className={styles.benefitsList}>
+          <article className={styles.benefit}>
+            <h3>Reduce Administrative Overhead</h3>
+            <p>
+              Replace disconnected tools with one operational surface for tournament settings, brackets, scores, and payouts.
+            </p>
+          </article>
 
-            <div className={styles.benefit}>
-              <h3>Professional Tournament Experience</h3>
-              <p>
-                Give your bowlers a polished experience with instant access to tournament brackets, live scores, and payout results via our mobile-friendly platform.
-              </p>
-            </div>
+          <article className={styles.benefit}>
+            <h3>Cut Manual Errors</h3>
+            <p>
+              Structured workflows and automatic calculations help reduce scoring and payout mistakes during event operations.
+            </p>
+          </article>
 
-            <div className={styles.benefit}>
-              <h3>Scale from Small Leagues to Large Events</h3>
-              <p>
-                Whether you&apos;re running a casual bowling league or a major tournament, BracketWorks adapts to your needs with flexible bracket types and payout structures.
-              </p>
-            </div>
-          </div>
+          <article className={styles.benefit}>
+            <h3>Deliver A Professional Experience</h3>
+            <p>
+              Provide staff and bowlers with consistent, readable tournament data across desktop and mobile views.
+            </p>
+          </article>
+
+          <article className={styles.benefit}>
+            <h3>Scale With Your Events</h3>
+            <p>
+              From weekly league events to larger tournaments, the workflow remains consistent as event complexity increases.
+            </p>
+          </article>
         </div>
       </section>
 
-      {/* CTA Section */}
       <section className={styles.ctaSection}>
         <div className={styles.ctaContent}>
-          <h2>Ready to Simplify Your Bowling Tournament Management?</h2>
+          <h2>Ready To Run Your Next Tournament?</h2>
           <p>
-            Join tournament organizers who are already using BracketWorks to manage their bowling leagues and tournaments
+            Start with BracketWorks and move from setup to results in one connected workflow.
           </p>
-          <Link href="/signup" className={`${styles.button} ${styles.buttonPrimary} ${styles.buttonLarge}`}>
-            Create Your Free Account
-          </Link>
+          <div className={styles.ctaButtons}>
+            <Link href="/signup" className="ds-btn ds-btn-primary ds-btn-lg">
+              Create Your Account
+            </Link>
+            <Link href="/login" className="ds-btn ds-btn-secondary ds-btn-lg">
+              Return To Dashboard
+            </Link>
+          </div>
         </div>
       </section>
     </div>
