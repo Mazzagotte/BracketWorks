@@ -7,7 +7,7 @@ interface DelayedRouteFallbackProps {
   delayMs?: number;
 }
 
-export function DelayedRouteFallback({ children, delayMs = 180 }: DelayedRouteFallbackProps) {
+export function DelayedRouteFallback({ children, delayMs = 650 }: DelayedRouteFallbackProps) {
   const [showFallback, setShowFallback] = useState(false);
 
   useEffect(() => {

@@ -1397,6 +1397,8 @@ export default function ScoresPage() {
     return 'Ready'
   }, [rowSaveState])
 
+  const showInitialScoresLoad = isLoading && players.length === 0
+
   // Auth guards (after all hooks)
   if (!isAuthInitialized) {
     return (
@@ -1435,7 +1437,7 @@ export default function ScoresPage() {
     )
   }
 
-  if (!isLoading && typeof window !== 'undefined' && !getSelectedSquadId() && !selectedSquad) {
+  if (!showInitialScoresLoad && typeof window !== 'undefined' && !getSelectedSquadId() && !selectedSquad) {
     return (
       <NoTournamentState
         title="No Squad Selected"
@@ -1573,14 +1575,14 @@ export default function ScoresPage() {
             )}
 
             {/* Loading */}
-            {isLoading && (
+            {showInitialScoresLoad && (
               <div className={styles.mobileLoadingWrap}>
                 <Spinner size="lg" />
               </div>
             )}
 
             {/* Player score cards */}
-            {!isLoading && paginationHook.paginatedItems.length > 0 && (
+            {!showInitialScoresLoad && paginationHook.paginatedItems.length > 0 && (
               <div className={styles.mobileScoreList}>
                 {paginationHook.paginatedItems.map((player: Player) => {
                   const isExpanded = !!mobileExpandedPlayers[player.id]
@@ -1681,7 +1683,7 @@ export default function ScoresPage() {
             )}
 
             {/* Pagination */}
-            {!isLoading && paginationHook.totalPages > 1 && (
+            {!showInitialScoresLoad && paginationHook.totalPages > 1 && (
               <div className={styles.mobilePaginationWrap}>
                 <Pagination
                   currentPage={paginationHook.currentPage}
@@ -1698,7 +1700,7 @@ export default function ScoresPage() {
       <div className={styles.desktopContainer}>
 
           {/* No Tournament State - Desktop */}
-          {!tournament && !isLoading && (
+          {!tournament && !showInitialScoresLoad && (
             <div className={styles.noTournamentDesktop}>
               <h2 className={styles.noTournamentTitleDesktop}>No Tournament Loaded</h2>
               <p className={styles.noTournamentTextDesktop}>
@@ -1737,14 +1739,14 @@ export default function ScoresPage() {
           )}
 
           {/* Loading State */}
-          {isLoading && (
+          {showInitialScoresLoad && (
             <div className={styles.statusMessage}>
               Loading players and scores...
             </div>
           )}
 
           {/* No Players State */}
-          {!isLoading && players.length === 0 && tournament && (
+          {!showInitialScoresLoad && players.length === 0 && tournament && (
             <div className={styles.emptyScoresState}>
               <div className={styles.emptyScoresAccentGlow} aria-hidden="true" />
 
@@ -1797,13 +1799,13 @@ export default function ScoresPage() {
           )}
 
           {/* Mobile Scroll Hint */}
-          {!isLoading && players.length > 0 && (
+          {!showInitialScoresLoad && players.length > 0 && (
             <div className="mobile-scroll-hint">
               Scroll horizontally to see all score columns
             </div>
           )}
 
-          {!isLoading && players.length > 0 && (
+          {!showInitialScoresLoad && players.length > 0 && (
             <div className={styles.scoresSearchCard}>
               <h3 className={styles.scoresSearchTitle}>Scores Table Search</h3>
               <div className={styles.scoresSearchRow}>
@@ -1836,7 +1838,7 @@ export default function ScoresPage() {
           )}
 
           {/* Scores Table */}
-          {!isLoading && filteredPlayers.length > 0 && (
+          {!showInitialScoresLoad && filteredPlayers.length > 0 && (
             <div className="entries-container">
 
                 <table className="entries-table" aria-label="Player Scores" onKeyDownCapture={handleTableArrowNavigation}>
@@ -1990,7 +1992,7 @@ export default function ScoresPage() {
         </div>
         )}
 
-        {!isLoading && players.length > 0 && filteredPlayers.length === 0 && (
+        {!showInitialScoresLoad && players.length > 0 && filteredPlayers.length === 0 && (
           <div className={styles.statusMessage}>
             No players match the current first/last name search.
           </div>

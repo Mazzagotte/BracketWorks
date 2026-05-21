@@ -1116,6 +1116,8 @@ export default function PlayersPage() {
     )
   }
 
+  const showInitialPlayersLoad = isLoading && players.length === 0
+
   return (
     <ErrorBoundary>
       <div className={styles.pageContainer}>
@@ -1207,7 +1209,7 @@ export default function PlayersPage() {
 
         <PlayerForm
           onAddPlayer={addPlayer}
-          isLoading={isLoading}
+          isLoading={showInitialPlayersLoad}
           squads={squads}
           entryFee={entryFee}
           bracketPrograms={enabledBracketPrograms}
@@ -1215,7 +1217,7 @@ export default function PlayersPage() {
           prefillVersion={prefillVersion}
         />
 
-        {isLoading ? (
+        {showInitialPlayersLoad ? (
           <div className={styles.skeletonCard}>
             <div className={styles.skeletonText}>Loading players...</div>
             {[1, 2, 3, 4, 5].map(i => (

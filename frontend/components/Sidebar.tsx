@@ -40,6 +40,18 @@ export default function Sidebar({ firstName, isMobile = false, isOpen = false, o
     };
   }, []);
 
+  useEffect(() => {
+    const routesToPrefetch = new Set<string>([
+      ...visibleLinks.map(link => link.href),
+      '/settings',
+      '/dashboard',
+    ]);
+
+    routesToPrefetch.forEach(route => {
+      router.prefetch(route);
+    });
+  }, [router, visibleLinks]);
+
   const slugifyTournamentName = (name: string) => {
     return name
       .normalize('NFKD')
