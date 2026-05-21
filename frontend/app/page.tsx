@@ -198,12 +198,12 @@ export default function HomePage() {
                 </div>
                 <div className={styles.bracketRound}>
                   <span className={styles.roundLabel}>R2</span>
-                  <div className={styles.matchNode}>Winner 1</div>
-                  <div className={styles.matchNode}>Winner 2</div>
+                  <div className={`${styles.matchNode} ${styles.matchNodeWinner}`}>Winner 1</div>
+                  <div className={`${styles.matchNode} ${styles.matchNodeWinner}`}>Winner 2</div>
                 </div>
                 <div className={styles.bracketRound}>
                   <span className={styles.roundLabel}>Final</span>
-                  <div className={styles.matchNode}>Champion</div>
+                  <div className={`${styles.matchNode} ${styles.matchNodeChampion}`}>Champion</div>
                 </div>
               </div>
             </div>
