@@ -91,7 +91,7 @@ export default function HomePage() {
           <nav className={styles.navLinks} aria-label="Primary">
             <Link href="#features">Features</Link>
             <Link href="#how-it-works">How It Works</Link>
-            <Link href="#pricing">Pricing</Link>
+            <Link href="#pricing">Get Started</Link>
           </nav>
 
           <div className={styles.navActions}>
@@ -124,23 +124,30 @@ export default function HomePage() {
                 Sign In
               </Link>
             </div>
+            <p className={styles.heroCtaHelper}>No credit card required. Set up your first event in minutes.</p>
             <div className={styles.trustRow}>
               <span>Brackets</span>
               <span>Side Pots</span>
               <span>Scores</span>
               <span>Payouts</span>
             </div>
+            <div className={styles.proofRow}>
+              <span>Tournament setup: under 10 minutes</span>
+              <span>Exports generated in under 60 seconds</span>
+              <span>Built for desktop and lane-side mobile use</span>
+            </div>
           </div>
 
           <div className={styles.heroPanel}>
             <div className={styles.panelHeaderRow}>
               <h2 className={styles.heroPanelTitle}>Live Tournament Board</h2>
-              <span className={styles.liveBadge}>Live</span>
+              <span className={styles.liveBadge}>Live Demo</span>
             </div>
 
             <div className={styles.tournamentMetaCard}>
-              <h3 className={styles.tournamentName}>Brass Monkey Idaho State 2026</h3>
+              <h3 className={styles.tournamentName}>Idaho Scratch Classic</h3>
               <p className={styles.tournamentSquad}>Squad: 11:00 AM</p>
+              <p className={styles.demoNote}>Sample event data shown for product preview only.</p>
             </div>
 
             <div className={styles.heroStats}>

@@ -77,6 +77,8 @@
   color: var(--opacity-white-85);
   text-decoration: none;
   font-weight: 700;
+  border-radius: 8px;
+  padding: 6px 8px;
 }
 
 .navLinks a:hover {
@@ -103,6 +105,12 @@
 
 .navBtn:hover {
   transform: translateY(-1px);
+}
+
+.navBtn:focus-visible,
+.navLinks a:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-primary) 75%, white);
+  outline-offset: 2px;
 }
 
 .navBtnPrimary {
@@ -173,6 +181,13 @@
   max-width: 62ch;
 }
 
+.heroCtaHelper {
+  margin: 10px 0 0;
+  color: var(--opacity-white-60);
+  font-size: 13px;
+  font-weight: 600;
+}
+
 .heroCTA {
   margin-top: 28px;
   display: flex;
@@ -197,6 +212,24 @@
   border-radius: 999px;
   background: var(--color-primary);
   margin-right: 8px;
+}
+
+.proofRow {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.proofRow span {
+  border-radius: 10px;
+  border: 1px solid var(--opacity-white-20);
+  background: var(--opacity-white-06);
+  padding: 10px;
+  color: var(--opacity-white-70);
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 700;
 }
 
 .heroPanel {
@@ -257,6 +290,13 @@
   color: var(--opacity-white-70);
   font-size: 14px;
   font-weight: 700;
+}
+
+.demoNote {
+  margin: 8px 0 0;
+  color: var(--opacity-white-60);
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 .heroStats {
@@ -376,6 +416,12 @@
   border: 1px solid var(--opacity-white-20);
   background: var(--opacity-white-06);
   padding: 24px;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.featureCard:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--color-primary) 55%, var(--opacity-white-20));
 }
 
 .featureTag {
@@ -490,6 +536,48 @@
   line-height: 1.58;
 }
 
+.heroContent,
+.heroPanel,
+.featureCard,
+.step,
+.ctaContent {
+  animation: fadeUp 420ms ease both;
+}
+
+.heroPanel { animation-delay: 60ms; }
+.featureCard:nth-child(1) { animation-delay: 40ms; }
+.featureCard:nth-child(2) { animation-delay: 80ms; }
+.featureCard:nth-child(3) { animation-delay: 120ms; }
+.featureCard:nth-child(4) { animation-delay: 160ms; }
+.featureCard:nth-child(5) { animation-delay: 200ms; }
+.featureCard:nth-child(6) { animation-delay: 240ms; }
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heroContent,
+  .heroPanel,
+  .featureCard,
+  .step,
+  .ctaContent {
+    animation: none;
+  }
+
+  .featureCard,
+  .navBtn {
+    transition: none;
+  }
+}
+
 @media (max-width: 1080px) {
   .heroGrid {
     grid-template-columns: 1fr;
@@ -506,6 +594,10 @@
 
   .stepsGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .proofRow {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -529,7 +621,7 @@
   .howItWorks,
   .ctaSection,
   .benefits {
-    padding: 52px 14px;
+    padding: 44px 14px;
   }
 
   .navWrap {
@@ -567,5 +659,21 @@
 
   .heroTitle {
     max-width: none;
+    font-size: clamp(34px, 11vw, 48px);
+  }
+
+  .heroSubtitle {
+    font-size: 17px;
+    line-height: 1.55;
+  }
+
+  .sectionTitle {
+    font-size: clamp(30px, 9vw, 40px);
+  }
+
+  .featureCard,
+  .step,
+  .benefit {
+    padding: 18px;
   }
 }
