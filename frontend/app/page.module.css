@@ -36,17 +36,10 @@
   gap: 12px;
 }
 
-.brandMark {
-  width: 46px;
+.brandLogo {
+  width: auto;
   height: 36px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover));
-  color: var(--color-white);
-  display: grid;
-  place-items: center;
-  font-size: 24px;
-  font-weight: 900;
-  line-height: 1;
+  object-fit: contain;
 }
 
 .brandText strong {

@@ -81,7 +81,14 @@ export default function HomePage() {
       <header className={styles.navWrap}>
         <div className={styles.navInner}>
           <div className={styles.brand}>
-            <div className={styles.brandMark}>B</div>
+            <Image
+              src="/logo.svg"
+              alt="BracketWorks"
+              width={138}
+              height={40}
+              className={styles.brandLogo}
+              priority
+            />
             <div className={styles.brandText}>
               <strong>BracketWorks</strong>
               <span>Bowling Brackets And Side Pots</span>
