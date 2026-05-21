@@ -773,7 +773,7 @@
 
 @media (max-width: 720px) {
   .container {
-    padding-top: 102px;
+    padding-top: 184px;
   }
 
   .hero,
@@ -786,6 +786,17 @@
 
   .navWrap {
     padding: 12px 12px 0;
+  }
+
+  .navInner {
+    gap: 14px;
+    padding: 12px;
+    border-radius: 22px;
+  }
+
+  .brand {
+    width: 100%;
+    justify-content: center;
   }
 
   .navLinks {
@@ -806,6 +817,26 @@
     width: 100%;
   }
 
+  .heroContent {
+    text-align: center;
+  }
+
+  .heroSubtitle,
+  .heroCtaHelper,
+  .sectionSubtitle,
+  .ctaContent p {
+    max-width: none;
+  }
+
+  .trustRow {
+    justify-content: center;
+    gap: 12px 18px;
+  }
+
+  .proofRow span {
+    text-align: left;
+  }
+
   .heroStats,
   .featureGrid,
   .stepsGrid {
@@ -814,6 +845,10 @@
 
   .bracketPreviewGrid {
     grid-template-columns: 1fr;
+    min-width: 0;
+    width: 100%;
+    gap: 14px;
+    padding-bottom: 0;
   }
 
   .bracketRound:nth-child(2),
@@ -830,14 +865,7 @@
   }
 
   .bracketPreview {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .bracketPreviewGrid {
-    min-width: 620px;
-    width: max-content;
-    padding-bottom: 2px;
+    overflow-x: visible;
   }
 
   .panelHeaderRow {
@@ -863,5 +891,124 @@
   .step,
   .benefit {
     padding: 18px;
+  }
+}
+
+@media (max-width: 560px) {
+  .container {
+    padding-top: 170px;
+  }
+
+  .navWrap {
+    padding: 10px 10px 0;
+  }
+
+  .brand {
+    justify-content: flex-start;
+  }
+
+  .brandText strong {
+    font-size: 20px;
+  }
+
+  .brandText span {
+    font-size: 9px;
+    letter-spacing: 0.08em;
+  }
+
+  .navBtn {
+    min-height: 42px;
+    padding: 0 14px;
+  }
+
+  .hero {
+    padding-top: 22px;
+  }
+
+  .heroTitle {
+    margin-top: 14px;
+    font-size: clamp(30px, 10vw, 42px);
+  }
+
+  .heroSubtitle,
+  .sectionSubtitle,
+  .ctaContent p {
+    font-size: 16px;
+  }
+
+  .kicker,
+  .heroCtaHelper,
+  .proofRow span,
+  .demoNote,
+  .statLabel,
+  .activityList,
+  .featureCard p,
+  .step p,
+  .benefit p {
+    font-size: 12px;
+  }
+
+  .heroPanel,
+  .stepsGrid,
+  .bracketPreview {
+    padding: 16px;
+  }
+
+  .panelHeaderRow,
+  .tournamentMetaCard,
+  .activityCard,
+  .statCard {
+    padding: 12px;
+  }
+
+  .heroPanelTitle,
+  .sectionTitle,
+  .ctaContent h2 {
+    font-size: clamp(28px, 8vw, 34px);
+  }
+
+  .liveBadge {
+    font-size: 11px;
+    padding: 7px 12px;
+  }
+
+  .bracketRound {
+    justify-items: stretch;
+  }
+
+  .matchNode {
+    min-inline-size: 0;
+    max-inline-size: none;
+    white-space: normal;
+  }
+}
+
+@media (max-width: 400px) {
+  .container {
+    padding-top: 160px;
+  }
+
+  .brandText span {
+    display: none;
+  }
+
+  .hero,
+  .features,
+  .howItWorks,
+  .ctaSection,
+  .benefits {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .heroCTA,
+  .ctaButtons,
+  .navActions {
+    gap: 10px;
+  }
+
+  .trustRow {
+    gap: 10px 14px;
+    font-size: 14px;
   }
 }
