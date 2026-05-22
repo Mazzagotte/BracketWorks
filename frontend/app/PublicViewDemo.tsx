@@ -5,6 +5,22 @@ import styles from './page.module.css'
 
 type Tab = 'summary' | 'brackets' | 'sidepots'
 
+type MatchWinner = 'A' | 'B'
+
+type BracketMatch = {
+  playerA: string
+  scoreA: number
+  playerB: string
+  scoreB: number
+  winner: MatchWinner
+}
+
+type BracketRound = {
+  label: string
+  matchLabel: string
+  matches: BracketMatch[]
+}
+
 const SUMMARY_DATA = [
   { name: 'Alex Rivera',   g1: 15, g2: 15, won: 15 },
   { name: 'Jordan Marsh',  g1: 14, g2: 11, won: 11 },
@@ -14,20 +30,20 @@ const SUMMARY_DATA = [
   { name: 'Dakota Finn',   g1: 13, g2: 6,  won: 6  },
 ]
 
-const BRACKET_ROUNDS = [
+const BRACKET_ROUNDS: BracketRound[] = [
   {
     label: 'Round 1',
     matchLabel: 'Match',
     matches: [
-      { playerA: 'Alex Rivera',  scoreA: 246, playerB: 'Jordan Marsh',  scoreB: 198, winner: 'A' as const },
-      { playerA: 'Casey Kline',  scoreA: 223, playerB: 'Taylor Voss',   scoreB: 201, winner: 'A' as const },
+      { playerA: 'Alex Rivera',  scoreA: 246, playerB: 'Jordan Marsh',  scoreB: 198, winner: 'A' },
+      { playerA: 'Casey Kline',  scoreA: 223, playerB: 'Taylor Voss',   scoreB: 201, winner: 'A' },
     ],
   },
   {
     label: 'Final',
     matchLabel: 'Final',
     matches: [
-      { playerA: 'Alex Rivera', scoreA: 268, playerB: 'Casey Kline', scoreB: 245, winner: 'A' as const },
+      { playerA: 'Alex Rivera', scoreA: 268, playerB: 'Casey Kline', scoreB: 245, winner: 'A' },
     ],
   },
 ]
