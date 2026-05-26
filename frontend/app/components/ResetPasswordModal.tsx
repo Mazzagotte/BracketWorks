@@ -5,7 +5,6 @@ import { useCooldownTimer } from '../hooks/useCooldownTimer';
 import { PasswordResetRateLimitError, requestPasswordReset } from '../lib/auth/password-reset';
 import { logger } from '../lib/logger';
 import AuthFeedback from './AuthFeedback';
-import CloseControl from '../../components/CloseControl';
 import styles from './ResetPasswordModal.module.css';
 
 interface ResetPasswordModalProps {
@@ -32,7 +31,7 @@ export default function ResetPasswordModal({ isOpen, onClose, onSuccess }: Reset
   }, [isOpen]);
 
   const validateEmail = useCallback((value: string): string => {
-    if (!value.trim()) return 'Email is required';
+    if (!value.trim()) return 'Email address is required.';
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Please enter a valid email address';
     return '';
   }, []);
@@ -106,19 +105,13 @@ export default function ResetPasswordModal({ isOpen, onClose, onSuccess }: Reset
 
   const isValid = touched && !fieldError && email.trim();
   const submitDisabled = loading || !!fieldError || !email.trim() || cooldownSeconds > 0;
-  const submitHelper = cooldownSeconds > 0
-    ? `You can request another reset code in ${cooldownSeconds}s.`
-    : (!email.trim()
-      ? 'Enter your email to receive a password reset link.'
-      : (fieldError ? fieldError : 'A password reset link will be sent if the account exists.'));
 
   return (
     <div className={styles.overlay}>
       <div className={`surface-card surface-modalShell ${styles.modal}`}>
-        <CloseControl onClick={handleClose} position="absolute" size="sm" label="Close reset password modal" disabled={loading} />
         <div className={`surface-cardHeader ${styles.header}`}>
-          <h2 className={styles.title}>Reset Password</h2>
-          <p className={styles.subtitle}>Enter your email to receive a password reset link</p>
+          <h2 className={styles.title}>Reset your password</h2>
+          <p className={styles.subtitle}>Enter your email address and we'll send you a password reset link.</p>
         </div>
 
         <form onSubmit={handleSubmit} className={styles.body}>
@@ -141,7 +134,6 @@ export default function ResetPasswordModal({ isOpen, onClose, onSuccess }: Reset
               }`}
             />
             {fieldError && <div className="surface-authHint">{fieldError}</div>}
-            {isValid && <div className="surface-authHint surface-authHintSuccess">Valid email format</div>}
           </div>
 
           <div className={styles.buttons}>
@@ -152,12 +144,10 @@ export default function ResetPasswordModal({ isOpen, onClose, onSuccess }: Reset
             >
               {loading ? 'Sending...' : (cooldownSeconds > 0 ? `Retry in ${cooldownSeconds}s` : 'Send Reset Link')}
             </button>
-            <button type="button" onClick={handleClose} disabled={loading} className="surface-authButton surface-authButtonSecondary">
+            <button type="button" onClick={handleClose} disabled={loading} className={styles.cancelBtn}>
               {success ? 'Close' : 'Cancel'}
             </button>
           </div>
-
-          <div className={styles.submitHelper}>{submitHelper}</div>
         </form>
       </div>
     </div>

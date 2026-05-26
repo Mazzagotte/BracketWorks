@@ -306,12 +306,14 @@ export default function LoginPage() {
           </div>
         )}
 
+        {/* Card Header */}
+        <div className={styles.cardHeader}>
+          <h1 className={styles.cardTitle}>Welcome back</h1>
+          <p className={styles.cardSubtitle}>Log in to manage your tournaments, brackets, side pots, and payouts.</p>
+        </div>
+
         {/* Form */}
         <form id="login-form" onSubmit={handleLogin} className={styles.form}>
-          <div className={styles.formIntro}>
-            Log in to BracketWorks
-          </div>
-
           {error && (
             <div className={styles.errorBanner} role="alert" aria-live="polite">
               {error}
@@ -324,8 +326,8 @@ export default function LoginPage() {
               type="text"
               id="login-username"
               name="username"
-              aria-label="Username"
-              placeholder="Username"
+              aria-label="Email or Username"
+              placeholder="Email or Username"
               value={username}
               onChange={e => updateUsername(e.target.value)}
               autoComplete="username"
@@ -395,28 +397,32 @@ export default function LoginPage() {
             disabled={loginDelay > 0}
             aria-label={loading ? 'Logging in, please wait' : 'Log in to your account'}
           >
-            Login
+            Log In
           </LoadingButton>
         </form>
 
-        {/* Divider */}
-        <div className={styles.divider}>or</div>
-
-        {/* Secondary Actions */}
-        <div className={styles.actions}>
+        {/* Forgot Password */}
+        <div className={styles.forgotRow}>
           <button
-            onClick={() => setShowSignupModal(true)}
-            className={styles.createAccountBtn}
-            disabled={loading}
-          >
-            Create Account
-          </button>
-          <button
+            type="button"
             onClick={() => setShowResetPasswordModal(true)}
             className={styles.forgotLink}
             disabled={loading}
           >
-            Forgot Password?
+            Forgot your password?
+          </button>
+        </div>
+
+        {/* Sign Up Prompt */}
+        <div className={styles.signupPrompt}>
+          <span className={styles.signupPromptText}>New to BracketWorks?</span>
+          <button
+            type="button"
+            onClick={() => setShowSignupModal(true)}
+            className={styles.signupPromptLink}
+            disabled={loading}
+          >
+            Create a free account
           </button>
         </div>
       </div>

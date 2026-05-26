@@ -151,7 +151,7 @@ export default function SignupPage() {
               value: firstName,
               onChange: value => updateValue('firstName', value),
               inputClassName: `signup-input ${fieldValidity.firstName === true ? 'valid' : fieldValidity.firstName === false ? 'invalid' : ''}`,
-              validBadge: fieldValidity.firstName === true ? <span className="validation-check">Valid</span> : null,
+              validBadge: null,
               inputId: 'signup-firstname',
               inputName: 'firstName',
               placeholder: 'First Name',
@@ -162,7 +162,7 @@ export default function SignupPage() {
               value: lastName,
               onChange: value => updateValue('lastName', value),
               inputClassName: `signup-input ${fieldValidity.lastName === true ? 'valid' : fieldValidity.lastName === false ? 'invalid' : ''}`,
-              validBadge: fieldValidity.lastName === true ? <span className="validation-check">Valid</span> : null,
+              validBadge: null,
               inputId: 'signup-lastname',
               inputName: 'lastName',
               placeholder: 'Last Name',
@@ -184,7 +184,7 @@ export default function SignupPage() {
               fieldValidity.username === false ? 'invalid' : ''
             }`}
             checkingIndicator={<span className="validation-spinner">Checking</span>}
-            availableIndicator={<span className="validation-check">Valid</span>}
+            availableIndicator={null}
             takenIndicator={<span className="validation-error">Username taken</span>}
             inputId="signup-username"
             inputName="username"
@@ -220,7 +220,7 @@ export default function SignupPage() {
               className={`signup-input ${fieldValidity.email === true ? 'valid' : fieldValidity.email === false ? 'invalid' : ''}`}
               aria-label="Email"
             />
-            {fieldValidity.email === true && <span className="validation-check">Valid</span>}
+
           </div>
           
           <SignupPasswordFieldSection

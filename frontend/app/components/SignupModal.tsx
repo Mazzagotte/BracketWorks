@@ -138,7 +138,7 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
   return (
     <div className={styles.overlay}>
       <div className={`surface-card surface-modalShell ${styles.modal}`}>
-        <CloseControl onClick={onClose} position="absolute" size="sm" label="Close signup modal" disabled={false} />
+        <CloseControl onClick={onClose} position="absolute" size="sm" label="Close signup modal" disabled={false} className={styles.closeBtn} />
         {/* Header */}
         <div className={`surface-cardHeader ${styles.header}`}>
           <h2 className={styles.title}>Create Account</h2>
@@ -163,8 +163,8 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
                 clearTransientFeedback();
                 updateValue('firstName', value);
               },
-              inputClassName: `${inputClass(fieldValidity.firstName)} ${fieldValidity.firstName ? styles.inputWithIcon : ''}`,
-              validBadge: fieldValidity.firstName ? <span className={`${styles.checkIcon} surface-authValidationBadgeSuccess`}>Valid</span> : null,
+              inputClassName: inputClass(fieldValidity.firstName),
+              validBadge: null,
             }}
             lastName={{
               label: 'Last Name *',
@@ -173,8 +173,8 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
                 clearTransientFeedback();
                 updateValue('lastName', value);
               },
-              inputClassName: `${inputClass(fieldValidity.lastName)} ${fieldValidity.lastName ? styles.inputWithIcon : ''}`,
-              validBadge: fieldValidity.lastName ? <span className={`${styles.checkIcon} surface-authValidationBadgeSuccess`}>Valid</span> : null,
+              inputClassName: inputClass(fieldValidity.lastName),
+              validBadge: null,
             }}
           />
 
@@ -193,11 +193,14 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
               usernameAvailable === true ? 'surface-authInputValid' : ''
             }`}
             checkingIndicator={<span className={`${styles.checking} surface-authValidationBadgePending`}>Checking</span>}
-            availableIndicator={usernameAvailable === true && !checkingUsername ? <span className={`${styles.checkIcon} surface-authValidationBadgeSuccess`}>Valid</span> : null}
+            availableIndicator={null}
             takenIndicator={usernameAvailable === false && !checkingUsername ? <div className="surface-authHint">Username is taken</div> : null}
           />
           {usernameAvailable === true && !checkingUsername && (
             <div className="surface-authHint surface-authHintSuccess">Username available</div>
+          )}
+          {usernameAvailable === null && !checkingUsername && (
+            <p className={styles.fieldHint}>Use a unique name — not your email address</p>
           )}
 
           {/* Organization */}
@@ -226,9 +229,8 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
                 updateValue('email', e.target.value);
               }}
               required
-              className={`${inputClass(fieldValidity.email)} ${fieldValidity.email ? styles.inputWithIcon : ''}`}
+              className={inputClass(fieldValidity.email)}
             />
-            {fieldValidity.email && <span className={`${styles.checkIcon} surface-authValidationBadgeSuccess`}>Valid</span>}
           </div>
 
           <SignupPasswordFieldSection
@@ -330,13 +332,16 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
 
           {/* Buttons */}
           <div className={styles.buttons}>
-            <button type="submit" disabled={loading || !isFormReady} className="surface-authButton surface-authButtonPrimary">
+            <button type="submit" disabled={loading || !isFormReady} className={`surface-authButton surface-authButtonPrimary ${styles.submitBtn}`}>
               {loading ? 'Creating...' : 'Create Account'}
             </button>
-            <button type="button" onClick={onClose} disabled={loading} className="surface-authButton surface-authButtonSecondary">
-              Cancel
-            </button>
           </div>
+          <p className={styles.loginPrompt}>
+            Already have an account?{' '}
+            <button type="button" onClick={onClose} className={styles.loginLink}>
+              Log in
+            </button>
+          </p>
         </form>
       </div>
     </div>
