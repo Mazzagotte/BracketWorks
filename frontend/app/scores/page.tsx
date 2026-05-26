@@ -26,6 +26,7 @@ import { logger } from '../lib/logger';
 import { handleTableArrowNavigation } from '../lib/tableKeyboard'
 import { getSelectedSquadId, getSelectedTournamentId, setSelectedSquad as persistSelectedSquad } from '../lib/selection-session'
 import { storage } from '../lib/storage'
+import { getPayoutUnlockKey, getScoresLockKey } from '../lib/storageKeys'
 import ExplainScoresModal from './ExplainScoresModal'
 
 
@@ -81,23 +82,13 @@ export default function ScoresPage() {
   // Enhanced UX hooks
   const { addToast } = useToast()
 
-  const getScopedPayoutUnlockKey = useCallback((tournamentId: number | null, squadId: number | null) => {
-    if (!tournamentId) return null
-    return `payouts_unlocked_${tournamentId}_${squadId ?? 'all'}`
-  }, [])
-
-  const getScopedScoresLockKey = useCallback((tournamentId: number | null, squadId: number | null) => {
-    if (!tournamentId) return null
-    return `scores_locked_${tournamentId}_${squadId ?? 'all'}`
-  }, [])
-
   const unlockPayoutsAndGo = useCallback(() => {
     const tournamentId = tournament?.id ?? null
     const squadId = selectedSquad?.id ?? null
 
     if (tournamentId) {
-      const unlockKey = getScopedPayoutUnlockKey(tournamentId, squadId)
-      const lockKey = getScopedScoresLockKey(tournamentId, squadId)
+      const unlockKey = getPayoutUnlockKey(tournamentId, squadId)
+      const lockKey = getScoresLockKey(tournamentId, squadId)
       if (unlockKey) storage.setItem(unlockKey, '1')
       if (lockKey) storage.setItem(lockKey, '1')
       setIsScoresLocked(true)
@@ -105,15 +96,15 @@ export default function ScoresPage() {
 
     sessionStorage.setItem('payouts_unlocked', '1')
     router.push('/payouts')
-  }, [getScopedPayoutUnlockKey, getScopedScoresLockKey, router, selectedSquad, tournament])
+  }, [router, selectedSquad, tournament])
 
   const unlockScoresTable = useCallback(() => {
     const tournamentId = tournament?.id ?? null
     const squadId = selectedSquad?.id ?? null
     if (!tournamentId) return
 
-    const lockKey = getScopedScoresLockKey(tournamentId, squadId)
-    const payoutKey = getScopedPayoutUnlockKey(tournamentId, squadId)
+    const lockKey = getScoresLockKey(tournamentId, squadId)
+    const payoutKey = getPayoutUnlockKey(tournamentId, squadId)
 
     if (lockKey) storage.removeItem(lockKey)
     if (payoutKey) storage.removeItem(payoutKey)
@@ -125,7 +116,7 @@ export default function ScoresPage() {
       type: 'success',
       duration: 4000,
     })
-  }, [addToast, getScopedPayoutUnlockKey, getScopedScoresLockKey, selectedSquad, tournament])
+  }, [addToast, selectedSquad, tournament])
   
   // Styles moved to globals.css; no inline style injection
 
@@ -158,8 +149,8 @@ export default function ScoresPage() {
     }
 
     return [...players].sort((a, b) => {
-      let aValue: any;
-      let bValue: any;
+      let aValue: string | number;
+      let bValue: string | number;
 
       // Handle different column types
       switch (sortConfig.column) {
@@ -993,7 +984,7 @@ export default function ScoresPage() {
   useEffect(() => {
     const tournamentId = tournament?.id ?? null
     const squadId = selectedSquad?.id ?? null
-    const lockKey = getScopedScoresLockKey(tournamentId, squadId)
+    const lockKey = getScoresLockKey(tournamentId, squadId)
 
     if (!lockKey) {
       setIsScoresLocked(false)
@@ -1001,7 +992,7 @@ export default function ScoresPage() {
     }
 
     setIsScoresLocked(storage.getItem(lockKey) === '1')
-  }, [getScopedScoresLockKey, selectedSquad, tournament])
+  }, [selectedSquad, tournament])
 
   const validateScore = (score: number | undefined) => {
     if (score === undefined || score === null) return { isValid: true, message: '' }

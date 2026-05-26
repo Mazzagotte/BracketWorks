@@ -6,12 +6,11 @@ export const OptimizedTableRow = memo(({
   onClick, 
   className,
   ...props 
-}: { 
+}: {
   children: React.ReactNode;
   onClick?: () => void;
   className?: string;
-  [key: string]: any;
-}) => {
+} & React.HTMLAttributes<HTMLTableRowElement>) => {
   return (
     <tr 
       onClick={onClick}
@@ -37,8 +36,7 @@ export const OptimizedTableCell = memo(({
   isEditing?: boolean;
   onDoubleClick?: () => void;
   className?: string;
-  [key: string]: any;
-}) => {
+} & React.HTMLAttributes<HTMLTableCellElement>) => {
   return (
     <td
       onDoubleClick={onDoubleClick}

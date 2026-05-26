@@ -7,6 +7,7 @@ import { usePageHeader } from '../lib/header-context';
 import { useAuth } from '../lib/auth-context';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { getErrorMessage, getErrorContext } from '../lib/error-utils';
+import { storage } from '../lib/storage';
 import mobileStyles from './dashboard.module.css';
 import { ConfirmationDialog } from '../components/LazyComponents';
 import { MobileForm, MobileFormField } from '../../components/MobileForm';
@@ -378,8 +379,8 @@ export default function TournamentDashboard() {
 
   // Check if we have tokens in localStorage even if auth context isn't ready
   const hasStoredAuthTokens = typeof window !== 'undefined' && 
-    localStorage.getItem('token') && 
-    localStorage.getItem('user_id');
+    storage.getItem('token') && 
+    storage.getItem('user_id');
 
   // All hooks must be called before conditional returns (React rules of hooks)
   const [isAdmin, setIsAdmin] = useState(false);
@@ -482,7 +483,7 @@ export default function TournamentDashboard() {
       return;
     }
     
-    const token = localStorage.getItem('token');
+    const token = storage.getItem('token');
     if (!token) {
       setSaveStatus('error');
       setConfirmMsg('Please log in to save bracket settings.');
@@ -630,7 +631,7 @@ export default function TournamentDashboard() {
   }, []);
 
   const fetchBracketSettingsData = async (tournamentId: number): Promise<BracketSettings> => {
-    const token = localStorage.getItem('token');
+    const token = storage.getItem('token');
     if (!token) {
       return createDefaultBracketSettings(tournamentId);
     }
@@ -674,7 +675,7 @@ export default function TournamentDashboard() {
 
   const loadSidePots = (tournamentId: number) => {
     try {
-      const stored = localStorage.getItem(SIDE_POTS_STORAGE_KEY(tournamentId));
+      const stored = storage.getItem(SIDE_POTS_STORAGE_KEY(tournamentId));
       if (stored) {
         const parsed = JSON.parse(stored) as Partial<SidePotsSettings> & { pots?: Array<Partial<SidePot> & { entry_fee?: number }> };
         // Merge stored pots against current defaults so new pots always appear
@@ -691,7 +692,7 @@ export default function TournamentDashboard() {
         const merged: SidePotsSettings = { tournament_id: tournamentId, entry_fee, prize_amount, pots: mergedPots };
         setSidePots(merged);
         // Overwrite stale storage with the merged/clean shape
-        localStorage.setItem(SIDE_POTS_STORAGE_KEY(tournamentId), JSON.stringify(merged));
+        storage.setItem(SIDE_POTS_STORAGE_KEY(tournamentId), JSON.stringify(merged));
       } else {
         setSidePots(createDefaultSidePots(tournamentId));
       }
@@ -701,7 +702,7 @@ export default function TournamentDashboard() {
   };
 
   const saveSidePots = (next: SidePotsSettings) => {
-    localStorage.setItem(SIDE_POTS_STORAGE_KEY(next.tournament_id), JSON.stringify(next));
+    storage.setItem(SIDE_POTS_STORAGE_KEY(next.tournament_id), JSON.stringify(next));
     notifySettingsChanged();
   };
 
@@ -719,7 +720,7 @@ export default function TournamentDashboard() {
   const getOptionalBracketEntryCount = async (programKey: string) => {
     if (!tournament?.id) return 0;
 
-    const token = localStorage.getItem('token');
+    const token = storage.getItem('token');
     if (!token) return 0;
 
     const normalizedKey = programKey.trim().toLowerCase();
@@ -866,12 +867,12 @@ export default function TournamentDashboard() {
 
   // Fetch tournaments and restore last loaded tournament from backend on mount - OPTIMIZED
   useEffect(() => {
-    const adminFlag = localStorage.getItem('is_admin');
+    const adminFlag = storage.getItem('is_admin');
     setIsAdmin(adminFlag === '1' || adminFlag === 'true');
     
     // Batch read all localStorage data at once
     const lastTournamentId = getSelectedTournamentId();
-    const token = localStorage.getItem('token');
+    const token = storage.getItem('token');
 
     if (lastTournamentId && token) {
       const bootstrapStarted = performance.now();
@@ -991,7 +992,7 @@ export default function TournamentDashboard() {
     setSelectedTournament(t.id, t.name);
 
     // Load squads for this tournament
-    const token = localStorage.getItem('token');
+    const token = storage.getItem('token');
     if (token) {
       try {
         const bootstrap = await fetchTournamentBootstrap(t.id);
@@ -1081,7 +1082,7 @@ export default function TournamentDashboard() {
 
   // Save tournament handler with enhanced UX feedback
   const handleSave = async (tournamentFormData: TournamentForm) => {
-    const token = localStorage.getItem('token');
+    const token = storage.getItem('token');
     if (!token) {
       addToast({
         type: 'error',
@@ -1294,8 +1295,8 @@ export default function TournamentDashboard() {
                 onClick={async () => {
                   setSelectedSquadId(null);
                   clearSelectedSquad();
-                  const token = localStorage.getItem('token');
-                  const userId = localStorage.getItem('user_id');
+                  const token = storage.getItem('token');
+                  const userId = storage.getItem('user_id');
                   if (token && userId) {
                     await apiFetch(API('/api/v1/squads/select/'), {
                       method: 'DELETE',
@@ -1486,8 +1487,8 @@ export default function TournamentDashboard() {
                           setSelectedSquadId(squad.id);
                           setSelectedSquad(squad.id);
                           setActiveSquadLabel([squad.date, squad.time].filter(Boolean).join(' '));
-                          const token = localStorage.getItem('token');
-                          const userId = localStorage.getItem('user_id');
+                          const token = storage.getItem('token');
+                          const userId = storage.getItem('user_id');
                           if (token && userId) {
                             await apiFetch(API('/api/v1/squads/select/'), {
                               method: 'POST',
