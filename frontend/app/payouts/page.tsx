@@ -13,12 +13,11 @@ import { API, apiClient, apiFetch } from '../lib/api'
 import { logger } from '../lib/logger'
 import { useToast } from '../components/Toast'
 import { getSelectedSquadId, getSelectedTournamentId } from '../lib/selection-session'
+import { getPayoutUnlockKey } from '../lib/storageKeys'
 import Link from 'next/link'
 import styles from './payouts.module.css'
 import ExplainPayoutsModal from './ExplainPayoutsModal'
-
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(Math.round(value))
+import { formatCurrency } from '../lib/formatters'
 
 function placeBadgeClass(place: number) {
   if (place === 1) return `${styles.placeBadge} ${styles.place1}`
@@ -69,11 +68,6 @@ export default function PayoutsPage() {
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
-  const getPayoutUnlockKey = useCallback((tournamentId: number | null, squadId: number | null) => {
-    if (!tournamentId) return null
-    return `payouts_unlocked_${tournamentId}_${squadId ?? 'all'}`
-  }, [])
-
   // Payout access becomes persistent per tournament/squad after Calculate Payouts is confirmed.
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -93,7 +87,7 @@ export default function PayoutsPage() {
     }
 
     setIsUnlocked(storage.getItem(key) === '1')
-  }, [getPayoutUnlockKey, selectedSquad, selectedTournament])
+  }, [selectedSquad, selectedTournament])
 
   const toggleExpanded = useCallback((key: string) => {
     setExpandedKeys(prev => {
@@ -181,11 +175,17 @@ export default function PayoutsPage() {
     loadPayoutData()
     loadEntryData()
       // Load paid status from localStorage for this tournament
-      const stored = storage.getItem(`payouts_paid_${selectedTournament.id}`)
-      setPaidKeys(new Set(stored ? JSON.parse(stored) : []))
+      try {
+        const stored = storage.getItem(`payouts_paid_${selectedTournament.id}`)
+        setPaidKeys(new Set(stored ? JSON.parse(stored) : []))
 
-      const storedSidePotPaid = storage.getItem(`payouts_sidepot_paid_${selectedTournament.id}`)
-      setSidePotPaidKeys(new Set(storedSidePotPaid ? JSON.parse(storedSidePotPaid) : []))
+        const storedSidePotPaid = storage.getItem(`payouts_sidepot_paid_${selectedTournament.id}`)
+        setSidePotPaidKeys(new Set(storedSidePotPaid ? JSON.parse(storedSidePotPaid) : []))
+      } catch {
+        logger.error('Failed to parse paid keys from storage')
+        setPaidKeys(new Set())
+        setSidePotPaidKeys(new Set())
+      }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTournament, selectedSquad, isUnlocked])
 

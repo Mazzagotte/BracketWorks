@@ -43,7 +43,10 @@ def get_db():
         try:
             db.rollback()
         except Exception as rollback_error:
-            logger.error(f"Database rollback failed: {rollback_error}")
+            logger.error(
+                "Database rollback failed",
+                extra={"original_error": str(e), "rollback_error": str(rollback_error)},
+            )
         # Re-raise to let FastAPI handle the original error
         raise
     finally:

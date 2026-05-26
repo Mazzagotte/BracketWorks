@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { logger } from './logger';
 
 /**
  * Cached localStorage wrapper with debounced writes
@@ -35,7 +36,7 @@ class CachedStorage {
       }
       return liveValue
     } catch (error) {
-      console.error('localStorage.getItem failed:', error)
+      logger.error('localStorage.getItem failed', { error })
       return null
     }
   }
@@ -73,7 +74,7 @@ class CachedStorage {
     try {
       localStorage.removeItem(key)
     } catch (error) {
-      console.error('localStorage.removeItem failed:', error)
+      logger.error('localStorage.removeItem failed', { error })
     }
   }
 
@@ -103,7 +104,7 @@ class CachedStorage {
           localStorage.setItem(key, value)
         }
       } catch (error) {
-        console.error(`localStorage write failed for key "${key}":`, error)
+        logger.error(`localStorage write failed for key "${key}"`, { error })
       }
     }
     this.writeQueue.clear()

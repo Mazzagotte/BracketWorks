@@ -1,18 +1,10 @@
 import { StatCard, Grid } from '../../components/UI'
 import { PayoutSummary } from '../hooks/usePayouts'
+import { formatCurrency } from '../../lib/formatters'
 
 interface PayoutSummaryStatsProps {
   payoutData: PayoutSummary | null
   loading: boolean
-}
-
-const formatCurrency = (value: number): string => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(Math.round(value))
 }
 
 export function PayoutSummaryStats({ payoutData, loading }: PayoutSummaryStatsProps) {

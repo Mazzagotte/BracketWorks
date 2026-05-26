@@ -1,5 +1,6 @@
 import { Card } from '../../components/UI'
 import EnhancedButton from '../../components/EnhancedButton'
+import { formatCurrency } from '../../lib/formatters'
 
 export interface PlayerWinnings {
   player_name: string
@@ -27,15 +28,6 @@ interface PlayerPayoutCardProps {
   onTogglePaid: () => void
   onToggleExpand: () => void
   onCopyDetails: () => void
-}
-
-const formatCurrency = (value: number): string => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(Math.round(value))
 }
 
 const getRankBadge = (rank: number) => {
