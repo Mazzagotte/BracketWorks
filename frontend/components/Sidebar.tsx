@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../app/lib/auth-context';
 import { buildApiUrl } from '../app/lib/api';
 import { logger } from '../app/lib/logger';
@@ -24,9 +24,12 @@ export default function Sidebar({ firstName, isMobile = false, isOpen = false, o
   const { logoutUser, currentUser } = useAuth();
   const [tournamentId, setTournamentId] = useState<string | null>(null);
 
-  const visibleLinks = currentUser?.isAdmin
-    ? [...navLinks, { href: '/admin', label: 'Admin' }]
-    : navLinks;
+  const visibleLinks = useMemo(
+    () => currentUser?.isAdmin
+      ? [...navLinks, { href: '/admin', label: 'Admin' }]
+      : navLinks,
+    [currentUser?.isAdmin]
+  );
 
   useEffect(() => {
     const read = () =>

@@ -111,7 +111,7 @@ export default function ResetPasswordModal({ isOpen, onClose, onSuccess }: Reset
       <div className={`surface-card surface-modalShell ${styles.modal}`}>
         <div className={`surface-cardHeader ${styles.header}`}>
           <h2 className={styles.title}>Reset your password</h2>
-          <p className={styles.subtitle}>Enter your email address and we'll send you a password reset link.</p>
+          <p className={styles.subtitle}>Enter your email address and we&apos;ll send you a password reset link.</p>
         </div>
 
         <form onSubmit={handleSubmit} className={styles.body}>
