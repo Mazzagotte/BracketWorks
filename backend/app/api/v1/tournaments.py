@@ -1,5 +1,6 @@
 import logging
 from fastapi import APIRouter, HTTPException, Depends, Request, Query
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from ...core import models, schemas
 from ...api import deps
@@ -85,7 +86,38 @@ def list_tournaments(
         query = query.limit(limit)
 
     tournaments = query.all()
-    return [_tournament_to_dict(tournament) for tournament in tournaments]
+
+    if not tournaments:
+        return []
+
+    tournament_ids = [t.id for t in tournaments]
+
+    # Batch: entry count per tournament (one query, no N+1)
+    entry_counts: dict[int, int] = dict(
+        db.query(models.TournamentPlayer.tournament_id, func.count(models.TournamentPlayer.id))
+        .filter(models.TournamentPlayer.tournament_id.in_(tournament_ids))
+        .group_by(models.TournamentPlayer.tournament_id)
+        .all()
+    )
+
+    # Batch: which tournaments have bracket settings with bracket_size configured
+    brackets_configured_ids: set[int] = set(
+        row[0] for row in
+        db.query(models.TournamentBracketSettings.tournament_id)
+        .filter(
+            models.TournamentBracketSettings.tournament_id.in_(tournament_ids),
+            models.TournamentBracketSettings.bracket_size.isnot(None),
+        )
+        .all()
+    )
+
+    result = []
+    for t in tournaments:
+        d = _tournament_to_dict(t)
+        d['entry_count'] = entry_counts.get(t.id, 0)
+        d['brackets_configured'] = t.id in brackets_configured_ids
+        result.append(d)
+    return result
 
 
 @router.get("/bootstrap")

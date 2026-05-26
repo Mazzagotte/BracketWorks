@@ -353,22 +353,13 @@ export default function BracketGenerationModal({
         {currentPhase === 'loading' && (
           <div className={styles.loadingContent}>
             {/* Tournament Context Info */}
-            {(tournamentName || squadName || playerCount !== undefined) && (
+            {(tournamentName || squadName) && (
               <div className={styles.contextInfo}>
                 {tournamentName && (
-                  <p className={styles.contextText}>
-                    <span className={styles.contextLabel}>Tournament:</span> {tournamentName}
-                  </p>
+                  <p className={styles.contextTournament}>{tournamentName}</p>
                 )}
                 {squadName && (
-                  <p className={styles.contextText}>
-                    <span className={styles.contextLabel}>Squad:</span> {squadName}
-                  </p>
-                )}
-                {playerCount !== undefined && (
-                  <p className={styles.contextText}>
-                    <span className={styles.contextLabel}>Players:</span> {playerCount}
-                  </p>
+                  <p className={styles.contextSquad}>{squadName}</p>
                 )}
               </div>
             )}
@@ -387,10 +378,14 @@ export default function BracketGenerationModal({
             </div>
 
             {/* Main message */}
-            <h2 className={styles.mainMessage}>Generating Brackets...</h2>
+            <h2 className={styles.mainMessage}>Generating Brackets…</h2>
 
-            <p className={styles.generationLockNote}>
-              Please wait. Navigation is temporarily locked until generation completes.
+            <p className={styles.generationNote}>
+              Please wait while brackets are generated. Navigation will unlock automatically when setup is complete.
+            </p>
+
+            <p className={styles.generationWarning}>
+              Please keep this window open until generation finishes.
             </p>
 
           </div>
@@ -400,9 +395,10 @@ export default function BracketGenerationModal({
         {currentPhase === 'success' && (
           <div className={styles.successContent}>
             {/* Success message */}
-            <h2 className={styles.successMessage}>
-              Brackets Generated Successfully!
-            </h2>
+            <div className={styles.successHeader}>
+              <h2 className={styles.successMessage}>Brackets Generated</h2>
+              <p className={styles.successSubtitle}>Your tournament brackets are ready for review.</p>
+            </div>
 
             {/* Success Statistics */}
             <div className={styles.statsContainer}>
@@ -412,16 +408,16 @@ export default function BracketGenerationModal({
                   <>
                     {stats.programSummaries.map((program, index) => (
                       <div key={program.name} className={styles.statItem}>
-                        <span className={styles.statText}>
-                          {program.brackets_count} {program.name} Bracket{program.brackets_count !== 1 ? 's' : ''}
-                        </span>
+                        <span className={styles.statCount}>{program.brackets_count}</span>
+                        <span className={styles.statLabel}>{program.name} Bracket{program.brackets_count !== 1 ? 's' : ''}</span>
                       </div>
                     ))}
-                    <div className={styles.statItem}>
-                      <span className={styles.statText}>
-                        {stats.skippedPlayers} Refund{stats.skippedPlayers !== 1 ? 's' : ''} ({stats.refundBreakdownText})
-                      </span>
-                    </div>
+                    {stats.skippedPlayers > 0 && (
+                      <div className={styles.statItemRefund}>
+                        <div className={styles.refundTitle}>Refunds due to incomplete brackets</div>
+                        <div className={styles.refundDetail}>{stats.skippedPlayers} total — {stats.refundBreakdownText}</div>
+                      </div>
+                    )}
                   </>
                 )
               })()}

@@ -291,14 +291,26 @@
 .bracketNav {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 1.5rem;
-  padding: 1.25rem 1.5rem;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
   background: transparent;
-  position: relative;
-  overflow: hidden;
   max-width: 100%;
   margin: 0;
+}
+
+.navRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.navBtns {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
 }
 
 .bracketNavAccent {
@@ -356,12 +368,12 @@
 }
 
 .navTitle {
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   font-weight: 700;
   margin: 0;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .navTitleGradient {

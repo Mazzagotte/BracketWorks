@@ -1807,19 +1807,19 @@ export default function ScoresPage() {
 
           {!showInitialScoresLoad && players.length > 0 && (
             <div className={styles.scoresSearchCard}>
-              <h3 className={styles.scoresSearchTitle}>Scores Table Search</h3>
+              <h3 className={styles.scoresSearchTitle}>Search Scores</h3>
               <div className={styles.scoresSearchRow}>
                 <input
                   type="text"
                   className={styles.scoresSearchInput}
-                  placeholder="Search First Name"
+                  placeholder="First name"
                   value={searchFirstName}
                   onChange={(event) => setSearchFirstName(event.target.value)}
                 />
                 <input
                   type="text"
                   className={styles.scoresSearchInput}
-                  placeholder="Search Last Name"
+                  placeholder="Last name"
                   value={searchLastName}
                   onChange={(event) => setSearchLastName(event.target.value)}
                 />
@@ -1831,7 +1831,7 @@ export default function ScoresPage() {
                     setSearchLastName('')
                   }}
                 >
-                  Clear Search
+                  Clear
                 </button>
               </div>
             </div>
@@ -1839,6 +1839,16 @@ export default function ScoresPage() {
 
           {/* Scores Table */}
           {!showInitialScoresLoad && filteredPlayers.length > 0 && (
+            <>
+            {rowStateCounts.saving > 0 && (
+              <div className="table-save-status table-save-status--saving">Saving…</div>
+            )}
+            {rowStateCounts.saving === 0 && rowStateCounts.failed === 0 && Object.values(rowSaveState).some(s => s === 'saved') && (
+              <div className="table-save-status table-save-status--success">All scores saved</div>
+            )}
+            {rowStateCounts.failed > 0 && (
+              <div className="table-save-status table-save-status--error">Failed to save {rowStateCounts.failed} score{rowStateCounts.failed > 1 ? 's' : ''}</div>
+            )}
             <div className="entries-container">
 
                 <table className="entries-table" aria-label="Player Scores" onKeyDownCapture={handleTableArrowNavigation}>
@@ -1846,134 +1856,115 @@ export default function ScoresPage() {
             <thead>
               {selectedSquad && (
                 <tr>
-                  <td colSpan={12} className="squad-banner">
-                    Showing scores for: {selectedSquad.date} - {selectedSquad.time}
+                  <td colSpan={8} className="squad-banner">
+                    Scores · {selectedSquad.date} · {selectedSquad.time} Squad
                   </td>
                 </tr>
               )}
               <tr className="entries-header-row">
-                <SortableHeader column="firstName" sortConfig={sortConfig} onSort={handleSort} align="center" width="9%">
-                  First Name
+                <SortableHeader column="firstName" sortConfig={sortConfig} onSort={handleSort} width="14%">
+                  Bowler
                 </SortableHeader>
-                <SortableHeader column="lastName" sortConfig={sortConfig} onSort={handleSort} align="center" width="9%">
-                  Last Name
-                </SortableHeader>
-                <SortableHeader column="lane" sortConfig={sortConfig} onSort={handleSort} width="5%">
+                <SortableHeader column="lane" sortConfig={sortConfig} onSort={handleSort} width="6%">
                   Lane
                 </SortableHeader>
-                <SortableHeader column="average" sortConfig={sortConfig} onSort={handleSort} width="5%">
+                <SortableHeader column="average" sortConfig={sortConfig} onSort={handleSort} width="6%">
                   Avg
                 </SortableHeader>
-                <SortableHeader column="game1_scratch" sortConfig={sortConfig} onSort={handleSort} width="9%">
-                  Game 1<br/>Scratch
+                <SortableHeader column="game1_scratch" sortConfig={sortConfig} onSort={handleSort} width="12%">
+                  Game 1
                 </SortableHeader>
-                <SortableHeader column="game1_total" sortConfig={sortConfig} onSort={handleSort} width="9%">
-                  Game 1<br/>Total
+                <SortableHeader column="game2_scratch" sortConfig={sortConfig} onSort={handleSort} width="12%">
+                  Game 2
                 </SortableHeader>
-                <SortableHeader column="game2_scratch" sortConfig={sortConfig} onSort={handleSort} width="9%">
-                  Game 2<br/>Scratch
+                <SortableHeader column="game3_scratch" sortConfig={sortConfig} onSort={handleSort} width="12%">
+                  Game 3
                 </SortableHeader>
-                <SortableHeader column="game2_total" sortConfig={sortConfig} onSort={handleSort} width="9%">
-                  Game 2<br/>Total
+                <SortableHeader column="totalScratch" sortConfig={sortConfig} onSort={handleSort} width="10%">
+                  Scratch<br/>Total
                 </SortableHeader>
-                <SortableHeader column="game3_scratch" sortConfig={sortConfig} onSort={handleSort} width="9%">
-                  Game 3<br/>Scratch
-                </SortableHeader>
-                <SortableHeader column="game3_total" sortConfig={sortConfig} onSort={handleSort} width="9%">
-                  Game 3<br/>Total
-                </SortableHeader>
-                <SortableHeader column="totalScratch" sortConfig={sortConfig} onSort={handleSort} width="9%">
-                  Total<br/>Scratch
-                </SortableHeader>
-                <SortableHeader column="totalWithHandicap" sortConfig={sortConfig} onSort={handleSort} width="9%">
-                  Total
+                <SortableHeader column="totalWithHandicap" sortConfig={sortConfig} onSort={handleSort} width="10%">
+                  Final<br/>Total
                 </SortableHeader>
               </tr>
             </thead>
             <tbody>
               {paginationHook.paginatedItems.map((player: Player, index: number) => (
                 <tr key={player.id} className={`scores-row ${index % 2 === 0 ? 'even' : 'odd'}`}>
-                  <td className="scores-cell name">{player.firstName}</td>
-                  <td className="scores-cell name">{player.lastName}</td>
+                  <td className="scores-cell name">{player.firstName} {player.lastName}</td>
                   <td className={`scores-cell lane ${!player.lane ? 'lane-empty' : ''}`}>{player.lane || ''}</td>
                   <td className="scores-cell average">{player.average}</td>
                   
-                  {/* Game 1 Scratch */}
-                  <td className="scores-cell scratch-input">
-                    <div className="pos-relative inline-block">
-                      <input
-                        type="number"
-                        min={0}
-                        max={300}
-                        placeholder=""
-                        data-player={player.id}
-                        data-field="game1_scratch"
-                        value={player.scores?.game1_scratch ?? ''}
-                        onChange={changeEvent => updateScore(player.id, 'game1_scratch', changeEvent.target.value ? Number(changeEvent.target.value) : undefined)}
-                        onKeyDown={keyEvent => handleKeyDown(keyEvent, player.id, 'game1_scratch')}
-                        disabled={isScoresLocked}
-                        className={getScoreInputClass(player.scores?.game1_scratch)}
-                        onFocus={(changeEvent) => changeEvent.target.select()}
-                        title={!validateScore(player.scores?.game1_scratch).isValid ? validateScore(player.scores?.game1_scratch).message : ''}
-                      />
+                  {/* Game 1 */}
+                  <td className="scores-cell scores-cell--game">
+                    <div className="game-cell-wrap">
+                      <div className="pos-relative inline-block">
+                        <input
+                          type="number"
+                          min={0}
+                          max={300}
+                          placeholder=""
+                          data-player={player.id}
+                          data-field="game1_scratch"
+                          value={player.scores?.game1_scratch ?? ''}
+                          onChange={changeEvent => updateScore(player.id, 'game1_scratch', changeEvent.target.value ? Number(changeEvent.target.value) : undefined)}
+                          onKeyDown={keyEvent => handleKeyDown(keyEvent, player.id, 'game1_scratch')}
+                          disabled={isScoresLocked}
+                          className={getScoreInputClass(player.scores?.game1_scratch)}
+                          onFocus={(changeEvent) => changeEvent.target.select()}
+                          title={!validateScore(player.scores?.game1_scratch).isValid ? validateScore(player.scores?.game1_scratch).message : ''}
+                        />
+                      </div>
+                      <div className="game-hcap-total">{(() => { const t = getGameTotal(player.scores?.game1_scratch, player.handicap); return typeof t === 'number' ? `${t} total` : t; })()}</div>
                     </div>
                   </td>
                   
-                  {/* Game 1 Total */}
-                  <td className="scores-cell total">
-                    {getGameTotal(player.scores?.game1_scratch, player.handicap)}
-                  </td>
-                  
-                  {/* Game 2 Scratch */}
-                  <td className="scores-cell scratch-input">
-                    <div className="pos-relative inline-block">
-                      <input
-                        type="number"
-                        min={0}
-                        max={300}
-                        placeholder=""
-                        data-player={player.id}
-                        data-field="game2_scratch"
-                        value={player.scores?.game2_scratch ?? ''}
-                        onChange={changeEvent => updateScore(player.id, 'game2_scratch', changeEvent.target.value ? Number(changeEvent.target.value) : undefined)}
-                        onKeyDown={keyEvent => handleKeyDown(keyEvent, player.id, 'game2_scratch')}
-                        disabled={isScoresLocked}
-                        className={getScoreInputClass(player.scores?.game2_scratch)}
-                        onFocus={(changeEvent) => changeEvent.target.select()}
-                        title={!validateScore(player.scores?.game2_scratch).isValid ? validateScore(player.scores?.game2_scratch).message : ''}
-                      />
+                  {/* Game 2 */}
+                  <td className="scores-cell scores-cell--game">
+                    <div className="game-cell-wrap">
+                      <div className="pos-relative inline-block">
+                        <input
+                          type="number"
+                          min={0}
+                          max={300}
+                          placeholder=""
+                          data-player={player.id}
+                          data-field="game2_scratch"
+                          value={player.scores?.game2_scratch ?? ''}
+                          onChange={changeEvent => updateScore(player.id, 'game2_scratch', changeEvent.target.value ? Number(changeEvent.target.value) : undefined)}
+                          onKeyDown={keyEvent => handleKeyDown(keyEvent, player.id, 'game2_scratch')}
+                          disabled={isScoresLocked}
+                          className={getScoreInputClass(player.scores?.game2_scratch)}
+                          onFocus={(changeEvent) => changeEvent.target.select()}
+                          title={!validateScore(player.scores?.game2_scratch).isValid ? validateScore(player.scores?.game2_scratch).message : ''}
+                        />
+                      </div>
+                      <div className="game-hcap-total">{(() => { const t = getGameTotal(player.scores?.game2_scratch, player.handicap); return typeof t === 'number' ? `${t} total` : t; })()}</div>
                     </div>
                   </td>
                   
-                  {/* Game 2 Total */}
-                  <td className="scores-cell total">
-                    {getGameTotal(player.scores?.game2_scratch, player.handicap)}
-                  </td>
-                  
-                  {/* Game 3 Scratch */}
-                  <td className="scores-cell scratch-input">
-                    <div className="pos-relative inline-block">
-                      <input
-                        type="number"
-                        min={0}
-                        max={300}
-                        placeholder=""
-                        data-player={player.id}
-                        data-field="game3_scratch"
-                        value={player.scores?.game3_scratch ?? ''}
-                        onChange={changeEvent => updateScore(player.id, 'game3_scratch', changeEvent.target.value ? Number(changeEvent.target.value) : undefined)}
-                        onKeyDown={keyEvent => handleKeyDown(keyEvent, player.id, 'game3_scratch')}
-                        disabled={isScoresLocked}
-                        className={getScoreInputClass(player.scores?.game3_scratch)}
-                        onFocus={(changeEvent) => changeEvent.target.select()}
-                        title={!validateScore(player.scores?.game3_scratch).isValid ? validateScore(player.scores?.game3_scratch).message : ''}
-                      />
+                  {/* Game 3 */}
+                  <td className="scores-cell scores-cell--game">
+                    <div className="game-cell-wrap">
+                      <div className="pos-relative inline-block">
+                        <input
+                          type="number"
+                          min={0}
+                          max={300}
+                          placeholder=""
+                          data-player={player.id}
+                          data-field="game3_scratch"
+                          value={player.scores?.game3_scratch ?? ''}
+                          onChange={changeEvent => updateScore(player.id, 'game3_scratch', changeEvent.target.value ? Number(changeEvent.target.value) : undefined)}
+                          onKeyDown={keyEvent => handleKeyDown(keyEvent, player.id, 'game3_scratch')}
+                          disabled={isScoresLocked}
+                          className={getScoreInputClass(player.scores?.game3_scratch)}
+                          onFocus={(changeEvent) => changeEvent.target.select()}
+                          title={!validateScore(player.scores?.game3_scratch).isValid ? validateScore(player.scores?.game3_scratch).message : ''}
+                        />
+                      </div>
+                      <div className="game-hcap-total">{(() => { const t = getGameTotal(player.scores?.game3_scratch, player.handicap); return typeof t === 'number' ? `${t} total` : t; })()}</div>
                     </div>
-                  </td>
-                  
-                  {/* Game 3 Total */}
-                  <td className="scores-cell total">
-                    {getGameTotal(player.scores?.game3_scratch, player.handicap)}
                   </td>
                   
                   {/* Total Scratch */}
@@ -1990,6 +1981,7 @@ export default function ScoresPage() {
             </tbody>
           </table>
         </div>
+            </>
         )}
 
         {!showInitialScoresLoad && players.length > 0 && filteredPlayers.length === 0 && (

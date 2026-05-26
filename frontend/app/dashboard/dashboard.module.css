@@ -701,11 +701,19 @@
 
 .programCard {
   border: 1px solid var(--color-border-light);
+  border-left: 3px solid var(--color-border-light);
   border-radius: 12px;
   background: var(--color-surface-translucent);
   padding: 10px 12px;
   display: flex;
   align-items: center;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.programCardChecked {
+  border-color: var(--color-brand-orange);
+  border-left: 3px solid var(--color-brand-orange);
+  background: var(--color-brand-ivory-warm);
 }
 
 .programGrid {
@@ -751,7 +759,7 @@
 }
 
 .sectionTitle {
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--color-text-primary);
   margin: 0;
@@ -791,6 +799,12 @@
   outline: none;
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px var(--color-border-light);
+}
+
+.compactInputReadOnly {
+  background: var(--color-brand-ivory-soft) !important;
+  color: var(--color-text-muted-strong) !important;
+  cursor: default;
 }
 
 .compactInputWrapper {
@@ -1392,6 +1406,33 @@
   /* inherits fixed width from .squadSelectionCard */
 }
 
+.byeSettingsCard {
+  /* bye settings layout identifier — inherits from optionalBracketsCard */
+}
+
+.squadGroupLabel {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted-strong);
+  padding: 0 2px;
+  margin-top: 4px;
+}
+
+.squadGroupLabel:first-child {
+  margin-top: 0;
+}
+
+.squadNoActive {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  padding: 8px 10px;
+  background: var(--color-brand-ivory-soft);
+  border-radius: 8px;
+  text-align: center;
+}
+
 .squadGrid {
   display: grid;
   grid-template-columns: 1fr;
@@ -1542,14 +1583,18 @@
 }
 
 .createTournamentModalContent {
-  max-height: none;
-  overflow-y: visible;
+  display: flex;
+  flex-direction: column;
+  max-height: 86vh;
+  overflow: hidden;
 }
 
 /* Unify header bg with body — single card appearance */
 .createTournamentModalContent > h2,
 .createTournamentModalContent > button + h2 {
   background: var(--color-surface) !important;
+  border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
+  border-bottom: none !important;
 }
 
 .createTournamentFormGrid {
@@ -1659,7 +1704,18 @@
   width: clamp(320px, calc(100vw - 32px), 520px);
 }
 
+.tournamentContentWrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
 .tournamentFormBody {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
   padding: 20px 24px 8px;
 }
 
@@ -1700,9 +1756,9 @@
 
 .squadDay {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 8px 0;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 0;
   border-bottom: 1px solid var(--color-brand-border-faint);
 }
 
@@ -1713,28 +1769,135 @@
 .squadDayLabel {
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-text-secondary);
-  min-width: 88px;
-  padding-top: 5px;
-  flex-shrink: 0;
+  color: var(--color-text-primary);
 }
 
-.squadTimeRow {
+.squadTimesList {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.squadTimeEntry {
+  display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: space-between;
+  padding: 7px 12px;
+  border-radius: 6px;
+  background: var(--color-brand-ivory-soft);
+  border: 1px solid var(--color-brand-border-faint);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.squadTimeText {
   flex: 1;
 }
 
-.squadTimeItem {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+.squadTimeRemove {
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 0 0 12px;
+  font-size: 12px;
+  color: var(--color-text-muted-alt);
+  cursor: pointer;
+  font-weight: 500;
+  line-height: 1;
+  transition: color 0.15s ease;
 }
 
-.squadTimeItem select {
-  width: 112px;
+.squadTimeRemove:hover {
+  color: #d93939;
+  background: none !important;
+}
+
+.squadTimeAddRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.squadTimeSelect {
+  width: 130px;
+  flex-shrink: 0;
+}
+
+.squadTimeAddBtn {
+  flex: none;
+  padding: 5px 14px;
+  border-radius: 6px;
+  border: 1.5px solid var(--color-brand-border-mid) !important;
+  background: var(--color-surface) !important;
+  color: var(--color-text-muted-strong);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.squadTimeAddBtn:hover {
+  border-color: var(--color-brand-orange) !important;
+  color: var(--color-brand-orange);
+  background: var(--color-surface) !important;
+}
+
+.createTournamentSubtitle {
+  margin: 2px 0 0;
+  padding: 0 28px 12px;
+  font-size: 13px;
+  color: var(--color-text-muted-strong);
+  line-height: 1.45;
+}
+
+.tournamentDatesLabel {
+  margin: 4px 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--color-text-muted-alt);
+}
+
+.cancelBtn {
+  flex: 1;
+  padding: 9px 20px;
+  border-radius: 8px;
+  border: 1.5px solid var(--color-brand-orange);
+  background: transparent;
+  color: var(--color-brand-orange);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.cancelBtn:hover:not(:disabled) {
+  background: var(--color-brand-orange);
+  color: var(--color-white);
+}
+
+.cancelBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.closeBtn {
+  background: transparent !important;
+  color: var(--color-text-muted-alt) !important;
+  border-color: var(--color-brand-ivory-warm) !important;
+  box-shadow: none !important;
+}
+
+.closeBtn:hover:not(:disabled) {
+  background: var(--color-brand-ivory) !important;
+  color: var(--color-text-primary) !important;
+  box-shadow: none !important;
+  transform: none !important;
+  filter: none !important;
 }
 
 .headerDeleteBtn:hover {
@@ -1779,120 +1942,118 @@
   grid-column: 1 / -1;
   background: var(--color-brand-ivory-light);
   border-radius: 16px;
-  padding: 14px 20px 18px;
+  padding: 36px 32px 32px;
   text-align: center;
   box-shadow: 0 2px 8px var(--opacity-black-08);
   border: 1px solid var(--color-border-light);
   margin: 20px auto;
-  max-width: 800px;
-  width: fit-content;
+  max-width: 680px;
+  width: 100%;
   box-sizing: border-box;
 }
 
 .emptyStateTitle {
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 700;
   color: var(--color-text-primary);
-  margin-bottom: 12px;
+  margin: 0 0 10px;
   letter-spacing: -0.02em;
-  margin-top: 0;
   padding: 0;
 }
 
 .emptyStateText {
-  font-size: 16px;
+  font-size: 15px;
   color: var(--color-text-muted-strong);
-  max-width: 560px;
-  margin: 0 auto 20px;
+  max-width: 520px;
+  margin: 0 auto 24px;
   line-height: 1.6;
   padding: 0;
 }
 
 .emptyStateButtons {
   display: flex;
-  gap: 16px;
+  gap: 12px;
   justify-content: center;
   flex-wrap: wrap;
   padding: 0;
+  margin-bottom: 28px;
 }
 
 .emptyStatePrimaryBtn {
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
-  color: white;
-  border: none;
+  background: var(--color-brand-orange);
+  color: var(--color-white);
+  border: 2px solid var(--color-brand-orange);
   border-radius: var(--radius-lg);
-  padding: 14px 28px;
-  font-size: 16px;
-  font-weight: 600;
+  padding: 13px 28px;
+  font-size: 15px;
+  font-weight: 700;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  transition: all 0.2s ease;
-  box-shadow: var(--shadow-brand-sm);
+  gap: 8px;
+  transition: background 0.18s ease, box-shadow 0.18s ease, transform 0.14s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
 }
 
 .emptyStatePrimaryBtn:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-brand-md);
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.13);
 }
 
 .emptyStateSecondaryBtn {
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
-  color: white;
-  border: none;
+  background: var(--color-brand-ivory);
+  color: var(--color-brand-orange);
+  border: 2px solid var(--color-brand-orange);
   border-radius: var(--radius-lg);
-  padding: 14px 28px;
-  font-size: 16px;
-  font-weight: 600;
+  padding: 13px 28px;
+  font-size: 15px;
+  font-weight: 700;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  transition: all 0.2s ease;
-  box-shadow: var(--shadow-brand-sm);
+  gap: 8px;
+  transition: background 0.18s ease, box-shadow 0.18s ease, transform 0.14s ease;
 }
 
 .emptyStateSecondaryBtn:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-brand-md);
+  background: var(--color-brand-ivory-warm, #f5ede0);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.10);
 }
 
 .infoCards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-  margin-top: 16px;
-  max-width: 800px;
-  margin-left: auto;
-  margin-right: auto;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-top: 4px;
   padding: 0;
 }
 
 .infoCard {
   background: var(--color-brand-ivory);
-  border-radius: 12px;
-  padding: 20px;
+  border-radius: 10px;
+  padding: 18px 16px;
   text-align: left;
   border: 1px solid var(--color-border-light);
-  transition: all 0.2s ease;
+  transition: box-shadow 0.18s ease, transform 0.14s ease;
 }
 
 .infoCard:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px var(--color-border-light);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
 }
 
 .infoCardTitle {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 700;
   color: var(--color-text-primary);
-  margin-bottom: 4px;
-  margin-top: 0;
+  margin: 0 0 5px;
 }
 
 .infoCardText {
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--color-text-muted-alt);
   line-height: 1.5;
   margin: 0;
@@ -1928,30 +2089,49 @@
 }
 
 .modalCard {
-  background: linear-gradient(180deg, var(--color-brand-ivory-soft) 0%, var(--color-brand-ivory-light) 100%);
+  background: var(--color-brand-ivory-light);
   border-radius: 18px;
   padding: 0;
-  min-width: min(340px, 100%);
-  width: fit-content;
-  max-width: min(620px, 100%);
+  min-width: min(360px, 100%);
+  width: min(560px, calc(100vw - 32px));
   box-shadow: var(--shadow-xl);
   border: 1px solid var(--color-border-light);
   max-height: 86vh;
-  overflow-y: auto;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.modalHeader {
+  background: linear-gradient(180deg, var(--color-brand-ivory-warm) 0%, var(--color-brand-ivory) 100%);
+  border-bottom: 2px solid var(--color-primary);
+  border-radius: 18px 18px 0 0;
+  padding: 22px 56px 14px 28px;
+  flex-shrink: 0;
   position: relative;
 }
 
 .modalTitle {
   margin: 0;
-  padding: 24px 56px 18px 28px;
-  background: linear-gradient(180deg, var(--color-brand-ivory-warm) 0%, var(--color-brand-ivory) 100%);
-  border-bottom: 2px solid var(--color-primary);
-  border-radius: 18px 18px 0 0;
   color: var(--color-text-primary);
   font-size: 22px;
   line-height: 1.15;
   font-weight: 800;
   letter-spacing: -0.01em;
+}
+
+.modalSubtitle {
+  font-size: 13px;
+  color: var(--color-text-muted-strong);
+  margin: 4px 0 0;
+  font-weight: 400;
+}
+
+.modalScrollBody {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 .modalTitleDanger {
@@ -1980,82 +2160,121 @@
 
 .tournamentList {
   list-style: none;
-  padding: 10px 24px 4px;
-  margin: 8px 0 0;
+  padding: 12px 20px 8px;
+  margin: 0;
 }
 
 .tournamentItem {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 16px;
-  margin-bottom: 12px;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
   border-radius: 12px;
   background: var(--color-surface-translucent);
   border: 1px solid var(--color-border-soft);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.18s ease, border-color 0.18s ease, transform 0.14s ease;
+}
+
+.tournamentItem:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.09);
+  border-color: var(--color-brand-orange);
+}
+
+.tournamentInfo {
+  flex: 1;
+  min-width: 0;
 }
 
 .tournamentName {
-  font-weight: 700;
-  font-size: 18px;
+  display: block;
+  font-weight: 800;
+  font-size: 17px;
   line-height: 1.2;
   color: var(--color-text-primary);
   word-break: break-word;
 }
 
 .tournamentLocation {
-  font-size: 14px;
+  font-size: 13.5px;
+  font-weight: 600;
   color: var(--color-text-muted-alt);
-  margin-top: 4px;
+  margin-top: 3px;
 }
 
 .tournamentDate {
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--color-text-muted);
-  margin-top: 4px;
+  margin-top: 3px;
+}
+
+.tournamentMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.tournamentMeta span {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--color-text-muted-strong);
+  background: var(--color-brand-ivory-warm);
+  border: 1px solid var(--color-brand-border-faint);
+  border-radius: 20px;
+  padding: 2px 9px;
+  letter-spacing: 0.01em;
 }
 
 .tournamentActions {
   display: flex;
-  gap: 10px;
-  margin-top: 4px;
+  flex-direction: column;
+  gap: 7px;
+  flex-shrink: 0;
 }
 
 .loadBtn {
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
+  background: var(--color-brand-orange);
   color: white;
-  font-size: 14px;
-  padding: 10px 18px;
-  border-radius: 10px;
-  border: none;
+  font-size: 13px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 2px solid var(--color-brand-orange);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.14s ease, box-shadow 0.18s ease;
   font-weight: 700;
-  box-shadow: 0 4px 10px var(--color-border-light);
+  min-width: 72px;
+  text-align: center;
 }
 
 .loadBtn:hover {
-  filter: brightness(1.04);
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
   transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.13);
 }
 
 .deleteBtn {
-  background: var(--gradient-danger);
-  color: var(--color-white);
-  font-size: 14px;
-  padding: 10px 18px;
-  border-radius: 10px;
-  border: none;
+  background: transparent;
+  color: #b03030;
+  font-size: 13px;
+  padding: 7px 15px;
+  border-radius: 8px;
+  border: 1.5px solid #dba0a0;
   cursor: pointer;
-  transition: all 0.2s ease;
-  font-weight: 700;
-  box-shadow: var(--shadow-danger-sm);
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+  font-weight: 600;
+  min-width: 72px;
+  text-align: center;
 }
 
 .deleteBtn:hover {
-  filter: brightness(1.03);
-  transform: translateY(-1px);
+  background: #fdf0f0;
+  border-color: #c0392b;
+  color: #992222;
 }
 
 .loadBtn:focus-visible,
@@ -2069,8 +2288,7 @@
   justify-content: center;
   align-items: center;
   gap: 12px;
-  margin-top: 8px;
-  padding: 14px 28px 24px;
+  padding: 12px 20px 20px;
   border-top: 1px solid var(--color-border-soft);
 }
 
@@ -2111,17 +2329,17 @@
 
 @media (max-width: 480px) {
   .emptyState {
-    padding: 40px 24px;
-    margin: 20px 0;
+    padding: 28px 20px 24px;
+    margin: 12px 0;
   }
 
   .emptyStateTitle {
-    font-size: 22px;
+    font-size: 20px;
   }
 
   .emptyStateText {
     font-size: 14px;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
   }
 
   .emptyStatePrimaryBtn,
@@ -2132,7 +2350,7 @@
 
   .infoCards {
     grid-template-columns: 1fr;
-    margin-top: 32px;
+    margin-top: 20px;
   }
 
   .modalCard {
@@ -2345,7 +2563,7 @@
 
   .cardQuickStatsRow {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
     gap: 8px;
   }
 

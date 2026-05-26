@@ -26,6 +26,7 @@ interface BracketTreeViewProps {
   bracketType?: 'scratch' | 'handicap'
   searchTerm?: string
   statusFilter?: string
+  bracketTitle?: string
 }
 
 /**
@@ -38,7 +39,8 @@ const BracketTreeViewComponent = ({
   isMobile = false,
   bracketType = 'scratch',
   searchTerm = '',
-  statusFilter = 'all'
+  statusFilter = 'all',
+  bracketTitle,
 }: BracketTreeViewProps) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const cardRef = useRef<HTMLDivElement>(null)
@@ -133,32 +135,7 @@ const BracketTreeViewComponent = ({
     >
       {/* Card wrapper for the entire bracket */}
       <div ref={cardRef} className={styles.bracketCard}>
-        {/* Round Headers with Numbered Badges */}
-        <div className={styles.headerRow}>
-          {displayRounds.map((round, roundIndex) => {
-            const { completedMatches, totalMatches } = roundStats[roundIndex]
-            
-            return (
-              <div key={roundIndex} className={styles.roundHeader}>
-                <div className={styles.roundBadgeContainer}>
-                  <div className={`${styles.roundBadge} ${styles[`roundBadge${roundIndex + 1}`] || ''}`}>{roundIndex + 1}</div>
-                  <div className={styles.roundInfo}>
-                    <h3 className={styles.roundTitle}>{round.roundName || `Round ${roundIndex + 1}`}</h3>
-                    <span className={styles.roundProgress}>
-                      {completedMatches}/{totalMatches} Complete
-                    </span>
-                  </div>
-                </div>
-                <progress
-                  className={styles.progressMeter}
-                  value={completedMatches}
-                  max={totalMatches || 1}
-                  aria-label={`${round.roundName || `Round ${roundIndex + 1}`} completion`}
-                />
-              </div>
-            )
-          })}
-        </div>
+        {bracketTitle && <div className={styles.bracketTitle}>{bracketTitle}</div>}
 
         {/* Grid-based bracket layout */}
         <div className={styles.bracketGrid}>
@@ -193,17 +170,21 @@ const BracketTreeViewComponent = ({
                     className={`${styles.player} ${match.winner === 'A' ? styles.winner : ''} ${playerAHighlighted ? styles.highlightedPlayer : ''}`}
                     onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerA ? null : match.playerA)}
                   >
-                    <span className={styles.playerName}>{match.playerA || 'TBD'}</span>
+                    <span className={styles.playerName}>
+                      {match.playerA || 'TBD'}
+                    </span>
                     <span className={styles.playerScore}>
                       {scoreA !== undefined && scoreA !== null ? scoreA : '-'}
                     </span>
                   </div>
-                  <div className={styles.vsRow}>vs</div>
+                  <div className={styles.vsRow} />
                   <div 
                     className={`${styles.player} ${match.winner === 'B' ? styles.winner : ''} ${playerBHighlighted ? styles.highlightedPlayer : ''}`}
                     onClick={(e) => { e.stopPropagation(); setHighlightedPlayer(highlightedPlayer === match.playerB ? null : match.playerB); }}
                   >
-                    <span className={styles.playerName}>{match.playerB || 'TBD'}</span>
+                    <span className={styles.playerName}>
+                      {match.playerB || 'TBD'}
+                    </span>
                     <span className={styles.playerScore}>
                       {scoreB !== undefined && scoreB !== null ? scoreB : '-'}
                     </span>
@@ -244,17 +225,21 @@ const BracketTreeViewComponent = ({
                     className={`${styles.player} ${match.winner === 'A' ? styles.winner : ''} ${playerAHighlighted ? styles.highlightedPlayer : ''}`}
                     onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerA ? null : match.playerA)}
                   >
-                    <span className={styles.playerName}>{match.playerA || 'TBD'}</span>
+                    <span className={styles.playerName}>
+                      {match.playerA || 'TBD'}
+                    </span>
                     <span className={styles.playerScore}>
                       {scoreA !== undefined && scoreA !== null ? scoreA : '-'}
                     </span>
                   </div>
-                  <div className={styles.vsRow}>vs</div>
+                  <div className={styles.vsRow} />
                   <div 
                     className={`${styles.player} ${match.winner === 'B' ? styles.winner : ''} ${playerBHighlighted ? styles.highlightedPlayer : ''}`}
                     onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerB ? null : match.playerB)}
                   >
-                    <span className={styles.playerName}>{match.playerB || 'TBD'}</span>
+                    <span className={styles.playerName}>
+                      {match.playerB || 'TBD'}
+                    </span>
                     <span className={styles.playerScore}>
                       {scoreB !== undefined && scoreB !== null ? scoreB : '-'}
                     </span>
@@ -294,17 +279,27 @@ const BracketTreeViewComponent = ({
                   className={`${styles.player} ${match.winner === 'A' ? styles.winner : ''} ${playerAHighlighted ? styles.highlightedPlayer : ''}`}
                   onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerA ? null : match.playerA)}
                 >
-                  <span className={styles.playerName}>{match.playerA || 'TBD'}</span>
+                  <span className={styles.playerNameWrap}>
+                    <span className={styles.playerName}>
+                      {match.playerA || 'TBD'}
+                    </span>
+                    {match.winner === 'A' && <span className={styles.championLabel}>Champion</span>}
+                  </span>
                   <span className={styles.playerScore}>
                     {scoreA !== undefined && scoreA !== null ? scoreA : '-'}
                   </span>
                 </div>
-                <div className={styles.vsRow}>vs</div>
+                <div className={styles.vsRow} />
                 <div 
                   className={`${styles.player} ${match.winner === 'B' ? styles.winner : ''} ${playerBHighlighted ? styles.highlightedPlayer : ''}`}
                   onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerB ? null : match.playerB)}
                 >
-                  <span className={styles.playerName}>{match.playerB || 'TBD'}</span>
+                  <span className={styles.playerNameWrap}>
+                    <span className={styles.playerName}>
+                      {match.playerB || 'TBD'}
+                    </span>
+                    {match.winner === 'B' && <span className={styles.championLabel}>Champion</span>}
+                  </span>
                   <span className={styles.playerScore}>
                     {scoreB !== undefined && scoreB !== null ? scoreB : '-'}
                   </span>
