@@ -206,7 +206,7 @@ export function SignupPasswordFieldSection({
         />
         {mounted ? toggleButton : null}
       </div>
-      {value ? strengthMeter : null}
+      {value && showRequirements ? strengthMeter : null}
       {showRequirements ? requirementsPanel : null}
     </div>
   );
