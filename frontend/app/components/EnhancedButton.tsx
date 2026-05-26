@@ -1,16 +1,13 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, ButtonHTMLAttributes } from 'react';
 import styles from './EnhancedButton.module.css';
 
-interface ButtonProps {
+type ButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'> & {
   children: React.ReactNode;
   onClick?: () => Promise<void> | void;
   variant?: 'primary' | 'secondary' | 'danger' | 'success' | 'glass';
   size?: 'sm' | 'md' | 'lg';
-  disabled?: boolean;
-  className?: string;
-  type?: 'button' | 'submit' | 'reset';
   loading?: boolean;
   disableSuccessState?: boolean;
 }
@@ -24,7 +21,8 @@ export default function EnhancedButton({
   className = '',
   type = 'button',
   loading = false,
-  disableSuccessState = false
+  disableSuccessState = false,
+  ...rest
 }: ButtonProps) {
   const [buttonState, setButtonState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [ripples, setRipples] = useState<number[]>([]);
@@ -83,6 +81,7 @@ export default function EnhancedButton({
 
   return (
     <button
+      {...rest}
       ref={buttonRef}
       type={type}
       className={`${styles.btn} ${styles[variant]} ${styles[size]} ${stateClass} ${className}`}
