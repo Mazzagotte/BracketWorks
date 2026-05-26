@@ -600,7 +600,7 @@ export default function BracketsPage() {
               {/* Bracket Tabs */}
               <BracketTabs
                 tabs={[
-                  ...(bracketGroups.length > 1 ? [{ id: 'all', label: 'View All', count: filteredBracketItems.length }] : []),
+                  ...(bracketGroups.length > 1 ? [{ id: 'all', label: 'All Brackets', count: filteredBracketItems.length }] : []),
                   ...bracketGroups.map(group => ({ id: group.key, label: group.name, count: group.brackets.length })),
                 ]}
                 activeTab={activeTab}
@@ -627,41 +627,22 @@ export default function BracketsPage() {
                 <>
                   <div className={styles.controlDivider} />
                   <div className={styles.bracketNav}>
-
-                  <button
-                    onClick={() => setSelectedBracketIndex(Math.max(0, selectedBracketIndex - 1))}
-                    disabled={selectedBracketIndex === 0}
-                    className={styles.navBtn}
-                  >
-                    <span>Previous</span>
-                  </button>
-
-                  <div className={styles.navCenter}>
-                    <div className={styles.navTitleRow}>
-                      <h3 className={styles.navTitle}>
-                        <span className={styles.navTitleGradient}>Bracket {selectedBracketIndex + 1}</span>
-                        <span className={styles.navTitleOf}>of</span>
-                        <span className={styles.navTitleTotal}>{totalBrackets}</span>
-                      </h3>
-                    </div>
-
-                    <div className={styles.progressBarWrapper}>
-                      <progress
-                        className={`${styles.progressMeter} ${progressPercent === 100 ? styles.progressMeterComplete : ''}`}
-                        value={selectedBracketIndex + 1}
-                        max={totalBrackets}
-                      />
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => setSelectedBracketIndex(Math.min(totalBrackets - 1, selectedBracketIndex + 1))}
-                    disabled={selectedBracketIndex >= totalBrackets - 1}
-                    className={styles.navBtn}
-                  >
-                    <span>Next</span>
-                    <span>Next</span>
-                  </button>
+                    <div className={styles.navBtns}>
+                        <button
+                          onClick={() => setSelectedBracketIndex(Math.max(0, selectedBracketIndex - 1))}
+                          disabled={selectedBracketIndex === 0}
+                          className={styles.navBtn}
+                        >
+                          Previous
+                        </button>
+                        <button
+                          onClick={() => setSelectedBracketIndex(Math.min(totalBrackets - 1, selectedBracketIndex + 1))}
+                          disabled={selectedBracketIndex >= totalBrackets - 1}
+                          className={styles.navBtn}
+                        >
+                          Next
+                        </button>
+                      </div>
                   </div>
                 </>
               )
@@ -731,6 +712,7 @@ export default function BracketsPage() {
                     bracketType={activeBracketItem.group.scoring_mode === 'scratch' ? 'scratch' : 'handicap'}
                     searchTerm={searchTerm}
                     statusFilter="all"
+                    bracketTitle={`${activeBracketItem.group.scoring_mode === 'scratch' ? 'Scratch' : 'Handicap'} Bracket ${selectedBracketIndex + 1} of ${searchFilteredBracketItems.length}`}
                   />
                 </div>
               ) : (
@@ -745,6 +727,7 @@ export default function BracketsPage() {
                 bracketType={activeBracketItem?.group?.scoring_mode === 'scratch' ? 'scratch' : 'handicap'}
                 searchTerm={searchTerm}
                 statusFilter="all"
+                bracketTitle={activeBracketItem ? `${activeBracketItem.group.scoring_mode === 'scratch' ? 'Scratch' : 'Handicap'} Bracket ${selectedBracketIndex + 1} of ${searchFilteredBracketItems.length}` : undefined}
               />
             ) : (
               <div className={styles.noMatches}>

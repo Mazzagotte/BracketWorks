@@ -131,6 +131,18 @@ function getDatesBetween(startDate: string, endDate: string): string[] {
   return dateList;
 }
 
+function formatTournamentDay(isoDate: string): string {
+  const [year, month, day] = isoDate.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  return date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+}
+
+function formatLongDate(isoDate: string): string {
+  const [year, month, day] = isoDate.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+}
+
 function EditTournamentModal({ open, onClose, tournament, onSave, isMobile, isCreateMode }: {
   open: boolean;
   onClose: () => void;
@@ -148,14 +160,7 @@ function EditTournamentModal({ open, onClose, tournament, onSave, isMobile, isCr
   });
   const [isSaving, setIsSaving] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
-  // Track which input to focus (date, index)
-  const [focusedTimeSlot, setFocusedTimeSlot] = useState<{date: string, idx: number} | null>(null);
-  
-  // Memoize timeInputs to prevent recreation on every render
-  const timeSlotInputReferences = useMemo(() => {
-    const inputRefs: Record<string, Array<HTMLSelectElement | null>> = {};
-    return inputRefs;
-  }, []);
+  const [pendingTimes, setPendingTimes] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!open) return;
@@ -171,14 +176,6 @@ function EditTournamentModal({ open, onClose, tournament, onSave, isMobile, isCr
       setTournamentForm({ name: '', location: '', start_date: '', end_date: '', squad_times: {} });
     }
   }, [open, tournament]);
-
-  // Focus new time input when added
-  useEffect(() => {
-    if (focusedTimeSlot && timeSlotInputReferences[focusedTimeSlot.date]?.[focusedTimeSlot.idx]) {
-      timeSlotInputReferences[focusedTimeSlot.date][focusedTimeSlot.idx]?.focus();
-      setFocusedTimeSlot(null);
-    }
-  }, [focusedTimeSlot, timeSlotInputReferences]);
 
   if (!open) return null;
 
@@ -207,13 +204,14 @@ function EditTournamentModal({ open, onClose, tournament, onSave, isMobile, isCr
         {validationError && (
           <div className="error-message">{validationError}</div>
         )}
-        <CloseControl position="absolute" onClick={onClose} />
-        <h2>{isCreateMode ? 'Create Tournament' : 'Edit Tournament'}</h2>
-        <div>
+        <CloseControl position="absolute" onClick={onClose} className={mobileStyles.closeBtn} label="Close create tournament modal" title="Close" size="sm" />
+        <h2>{isCreateMode ? 'Create New Tournament' : 'Edit Tournament'}</h2>
+        {isCreateMode && <p className={mobileStyles.createTournamentSubtitle}>Set up the tournament details and add squad times for each day.</p>}
+        <div className={mobileStyles.tournamentContentWrapper}>
         {isMobile ? (
           // Mobile Form Layout
           <MobileForm
-            title={isCreateMode ? 'Create Tournament' : 'Edit Tournament'}
+            title={isCreateMode ? 'Create New Tournament' : 'Edit Tournament'}
             flat
             onSubmit={async (submitEvent) => {
               submitEvent.preventDefault();
@@ -228,7 +226,7 @@ function EditTournamentModal({ open, onClose, tournament, onSave, isMobile, isCr
               }
             }}
             isSubmitting={isSaving}
-            submitText={isSaving ? 'Saving...' : 'Save Tournament'}
+            submitText={isSaving ? 'Saving...' : (isCreateMode ? 'Create Tournament' : 'Save Tournament')}
           >
             <MobileFormField
               label="Tournament Name"
@@ -242,7 +240,7 @@ function EditTournamentModal({ open, onClose, tournament, onSave, isMobile, isCr
               label="Location"
               value={tournamentForm.location || ''}
               onChange={(value: string) => setTournamentForm(f => ({ ...f, location: value }))}
-              placeholder="Enter tournament location"
+              placeholder="Bowling center or event location"
             />
             
             <MobileFormField
@@ -266,7 +264,7 @@ function EditTournamentModal({ open, onClose, tournament, onSave, isMobile, isCr
           <>
         <div className={mobileStyles.tournamentFormBody}>
           <div className={mobileStyles.tournamentFormFields}>
-            <FormField label="Name" required>
+            <FormField label="Tournament Name" required>
               <Input
                 value={tournamentForm.name}
                 onChange={changeEvent => setTournamentForm(f => ({ ...f, name: changeEvent.target.value }))}
@@ -278,9 +276,10 @@ function EditTournamentModal({ open, onClose, tournament, onSave, isMobile, isCr
               <Input
                 value={tournamentForm.location || ''}
                 onChange={changeEvent => setTournamentForm(f => ({ ...f, location: changeEvent.target.value }))}
-                placeholder="Tournament location"
+                placeholder="Bowling center or event location"
               />
             </FormField>
+            <p className={mobileStyles.tournamentDatesLabel}>Tournament Dates</p>
             <div className={mobileStyles.tournamentDateRow}>
               <FormField label="Start Date">
                 <Input
@@ -299,57 +298,56 @@ function EditTournamentModal({ open, onClose, tournament, onSave, isMobile, isCr
             </div>
           </div>
           <div className={mobileStyles.squadTimesSection}>
-            <h3 className={mobileStyles.squadTimesTitle}>Squad Times by Day</h3>
-            {tournamentDays.length === 0 && <p className={mobileStyles.noSquadDaysHint}>Set start and end dates to add squad times.</p>}
+            <h3 className={mobileStyles.squadTimesTitle}>Squad Times</h3>
+            {tournamentDays.length === 0 && <p className={mobileStyles.noSquadDaysHint}>Select a start and end date to add squad times for each tournament day.</p>}
             {tournamentDays.map(date => (
               <div key={date} className={mobileStyles.squadDay}>
-                <div className={mobileStyles.squadDayLabel}>{date}</div>
-                <div className={mobileStyles.squadTimeRow}>
-                  {(tournamentForm.squad_times[date] || []).map((time, i) => {
-                    if (!timeSlotInputReferences[date]) timeSlotInputReferences[date] = [];
-                    return (
-                      <div key={i} className={mobileStyles.squadTimeItem}>
-                        <select
-                          className="entries-select"
-                          ref={el => { timeSlotInputReferences[date][i] = el as HTMLSelectElement | null; }}
-                          value={time}
-                          onChange={changeEvent => setTournamentForm(f => ({ ...f, squad_times: { ...f.squad_times, [date]: f.squad_times[date].map((t, j) => j === i ? changeEvent.target.value : t) } }))}
-                        >
-                          <option value="" disabled>Select time</option>
-                          <optgroup label="AM">
-                            {availableTimeOptions.am.map(timeOption => (
-                              <option key={timeOption} value={timeOption}>{timeOption}</option>
-                            ))}
-                          </optgroup>
-                          <optgroup label="PM">
-                            {availableTimeOptions.pm.map(timeOption => (
-                              <option key={timeOption} value={timeOption}>{timeOption}</option>
-                            ))}
-                          </optgroup>
-                        </select>
-                        <CloseControl
-                          onClick={() => setTournamentForm(f => ({ ...f, squad_times: { ...f.squad_times, [date]: f.squad_times[date].filter((_, j) => j !== i) } }))}
-                          label="Remove squad time"
-                          size="xs"
-                        />
-                      </div>
-                    );
-                  })}
-                  <EnhancedButton
-                    type="button"
-                    onClick={() => {
-                      const times = tournamentForm.squad_times[date] || [];
-                      if (times.length === 0 || (times[times.length - 1] && times[times.length - 1] !== '')) {
-                        setTournamentForm(f => ({ ...f, squad_times: { ...f.squad_times, [date]: [...(f.squad_times[date] || []), ''] } }));
-                        setFocusedTimeSlot({ date, idx: (tournamentForm.squad_times[date]?.length || 0) });
-                      }
-                    }}
-                    variant="secondary"
-                    size="sm"
-                    disableSuccessState
-                  >
-                    + Add Time
-                  </EnhancedButton>
+                <div className={mobileStyles.squadDayLabel}>{formatTournamentDay(date)}</div>
+                <div className={mobileStyles.squadTimesList}>
+                  {(tournamentForm.squad_times[date] || []).map((time, i) => (
+                    <div key={i} className={mobileStyles.squadTimeEntry}>
+                      <span className={mobileStyles.squadTimeText}>{time}</span>
+                      <button
+                        type="button"
+                        className={mobileStyles.squadTimeRemove}
+                        onClick={() => setTournamentForm(f => ({ ...f, squad_times: { ...f.squad_times, [date]: f.squad_times[date].filter((_, j) => j !== i) } }))}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                  <div className={mobileStyles.squadTimeAddRow}>
+                    <select
+                      className={`entries-select ${mobileStyles.squadTimeSelect}`}
+                      value={pendingTimes[date] || ''}
+                      onChange={e => setPendingTimes(p => ({ ...p, [date]: e.target.value }))}
+                    >
+                      <option value="" disabled>Select time</option>
+                      <optgroup label="AM">
+                        {availableTimeOptions.am.map(timeOption => (
+                          <option key={timeOption} value={timeOption}>{timeOption}</option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="PM">
+                        {availableTimeOptions.pm.map(timeOption => (
+                          <option key={timeOption} value={timeOption}>{timeOption}</option>
+                        ))}
+                      </optgroup>
+                    </select>
+                    <button
+                      type="button"
+                      className={mobileStyles.squadTimeAddBtn}
+                      onClick={() => {
+                        const pending = pendingTimes[date];
+                        if (pending) {
+                          setTournamentForm(f => ({ ...f, squad_times: { ...f.squad_times, [date]: [...(f.squad_times[date] || []), pending] } }));
+                          setPendingTimes(p => ({ ...p, [date]: '' }));
+                        }
+                      }}
+                    >
+                      + Add Squad Time
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -360,15 +358,9 @@ function EditTournamentModal({ open, onClose, tournament, onSave, isMobile, isCr
             type="submit"
             variant="primary"
             loading={isSaving}
+            style={{ minWidth: '224px' }}
           >
-            Save
-          </EnhancedButton>
-          <EnhancedButton
-            type="button"
-            variant="secondary"
-            onClick={onClose}
-          >
-            Cancel
+            {isCreateMode ? 'Create Tournament' : 'Save'}
           </EnhancedButton>
         </div>
         </>
@@ -1429,9 +1421,9 @@ export default function TournamentDashboard() {
             {/* Empty State - No Tournament Loaded */}
             {!tournament && (
               <div className={mobileStyles.emptyState}>
-                <h2 className={mobileStyles.emptyStateTitle}>Welcome to Tournament Dashboard</h2>
+                <h2 className={mobileStyles.emptyStateTitle}>Welcome to BracketWorks</h2>
                 <p className={mobileStyles.emptyStateText}>
-                  Get started by creating a new tournament or loading an existing one to manage brackets, squads, and settings.
+                  Create a new tournament or load an existing one to manage squads, brackets, scores, and payouts.
                 </p>
                 <div className={mobileStyles.emptyStateButtons}>
                   <button className={mobileStyles.emptyStatePrimaryBtn} onClick={() => { setCreateMode(true); setModalOpen(true); }}>
@@ -1444,16 +1436,16 @@ export default function TournamentDashboard() {
 
                 <div className={mobileStyles.infoCards}>
                   <div className={mobileStyles.infoCard}>
-                    <h3 className={mobileStyles.infoCardTitle}>Configure Settings</h3>
-                    <p className={mobileStyles.infoCardText}>Set up bracket sizes, prizes, and handicap rules</p>
+                    <h3 className={mobileStyles.infoCardTitle}>Set Up Brackets</h3>
+                    <p className={mobileStyles.infoCardText}>Configure bracket sizes, entry fees, prizes, and handicap rules.</p>
                   </div>
                   <div className={mobileStyles.infoCard}>
                     <h3 className={mobileStyles.infoCardTitle}>Manage Squads</h3>
-                    <p className={mobileStyles.infoCardText}>Create and organize multiple squads with dates and times</p>
+                    <p className={mobileStyles.infoCardText}>Create squad times and organize bowlers by date and time.</p>
                   </div>
                   <div className={mobileStyles.infoCard}>
-                    <h3 className={mobileStyles.infoCardTitle}>Track Results</h3>
-                    <p className={mobileStyles.infoCardText}>Generate brackets, enter scores, and manage payouts</p>
+                    <h3 className={mobileStyles.infoCardTitle}>Track Scores &amp; Payouts</h3>
+                    <p className={mobileStyles.infoCardText}>Enter scores, advance brackets, and review projected payouts.</p>
                   </div>
                 </div>
               </div>
@@ -1482,18 +1474,15 @@ export default function TournamentDashboard() {
 
                 {isCardExpanded('squadSelection') && (
                 <div id="dashboard-squad-selection-content" className={mobileStyles.squadGrid}>
-                  <div className={mobileStyles.cardQuickStats}>
-                    <span className={mobileStyles.cardPrimaryStat}>{selectedSquad ? [selectedSquad.date, selectedSquad.time].filter(Boolean).join(' ') : 'No squad selected'}</span>
-                    <span className={mobileStyles.cardSecondaryStat}>Active Squad</span>
-                  </div>
-                  {squads.map((squad) => {
-                    const isSelected = selectedSquadId === squad.id;
-                    
-                    return (
+                  {(() => {
+                    const activeSquad = squads.find(s => s.id === selectedSquadId);
+                    const otherSquads = squads.filter(s => s.id !== selectedSquadId);
+                    const renderPill = (squad: typeof squads[number], isActive: boolean) => (
                       <button
                         key={squad.id}
-                        className={`${mobileStyles.squadPillEnhanced} ${isSelected ? mobileStyles.selected : ''}`}
-                        onClick={async (changeEvent) => { changeEvent.preventDefault();
+                        className={`${mobileStyles.squadPillEnhanced} ${isActive ? mobileStyles.selected : ''}`}
+                        onClick={async (changeEvent) => {
+                          changeEvent.preventDefault();
                           setSelectedSquadId(squad.id);
                           setSelectedSquad(squad.id);
                           setActiveSquadLabel([squad.date, squad.time].filter(Boolean).join(' '));
@@ -1502,18 +1491,12 @@ export default function TournamentDashboard() {
                           if (token && userId) {
                             await apiFetch(API('/api/v1/squads/select/'), {
                               method: 'POST',
-                              headers: {
-                                'Content-Type': 'application/json',
-                                Authorization: `Bearer ${token}`
-                              },
-                              body: JSON.stringify({
-                                user_id: Number(userId),
-                                squad_id: squad.id
-                              })
+                              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                              body: JSON.stringify({ user_id: Number(userId), squad_id: squad.id })
                             });
                           }
                         }}
-                        aria-pressed={isSelected}
+                        aria-pressed={isActive}
                       >
                         <div className={mobileStyles.squadTime}>
                           <div className={mobileStyles.squadDate}>{squad.date}</div>
@@ -1521,7 +1504,22 @@ export default function TournamentDashboard() {
                         </div>
                       </button>
                     );
-                  })}
+                    return (
+                      <>
+                        <div className={mobileStyles.squadGroupLabel}>Active Squad</div>
+                        {activeSquad
+                          ? renderPill(activeSquad, true)
+                          : <div className={mobileStyles.squadNoActive}>No squad selected</div>
+                        }
+                        {otherSquads.length > 0 && (
+                          <>
+                            <div className={mobileStyles.squadGroupLabel}>Other Squads</div>
+                            {otherSquads.map(s => renderPill(s, false))}
+                          </>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
                 )}
               </div>
@@ -1550,23 +1548,13 @@ export default function TournamentDashboard() {
 
                 {isCardExpanded('bracketSettings') && (
                 <div id="dashboard-bracket-settings-content" className={mobileStyles.settingsContent}>
-                  <div className={mobileStyles.cardQuickStatsRow}>
-                    <div className={mobileStyles.cardQuickStatItem}>
-                      <span className={mobileStyles.cardPrimaryStat}>{formatCurrencyLabel(bracketSettings.default_entry_fee)}</span>
-                      <span className={mobileStyles.cardSecondaryStat}>Entry Fee</span>
-                    </div>
-                    <div className={mobileStyles.cardQuickStatItem}>
-                      <span className={mobileStyles.cardPrimaryStat}>{formatCurrencyLabel(computedHouseAmount)}</span>
-                      <span className={mobileStyles.cardSecondaryStat}>House (Auto)</span>
-                    </div>
-                  </div>
                   {/* Main Settings Grid */}
                   <div className={mobileStyles.settingsGrid}>
                     
                     {/* Left Column - Tournament Basics */}
                     <div className={mobileStyles.settingsColumn}>
                       <div className={mobileStyles.sectionHeader}>
-                        <h3 className={mobileStyles.sectionTitle}>Tournament</h3>
+                        <h3 className={mobileStyles.sectionTitle}>Tournament Setup</h3>
                       </div>
                       
                       <div className={mobileStyles.fieldGroup}>
@@ -1614,7 +1602,7 @@ export default function TournamentDashboard() {
                     {/* Right Column - Prize Structure */}
                     <div className={mobileStyles.settingsColumn}>
                       <div className={mobileStyles.sectionHeader}>
-                        <h3 className={mobileStyles.sectionTitle}>Prizes</h3>
+                        <h3 className={mobileStyles.sectionTitle}>Prize Breakdown</h3>
                       </div>
                       
                       <div className={mobileStyles.fieldGroup}>
@@ -1665,11 +1653,11 @@ export default function TournamentDashboard() {
                         </div>
 
                         <div className={mobileStyles.compactField}>
-                          <label className={mobileStyles.compactLabel}>House Take (Auto)</label>
+                          <label className={mobileStyles.compactLabel}>House Take</label>
                           <div className={mobileStyles.compactInputWrapper}>
                             <span className={mobileStyles.currencySymbol}>$</span>
                             <input
-                              className={mobileStyles.compactInput}
+                              className={`${mobileStyles.compactInput} ${mobileStyles.compactInputReadOnly}`}
                               type="text"
                               placeholder="0"
                               value={formatNumberInput(computedHouseAmount)}
@@ -1690,7 +1678,7 @@ export default function TournamentDashboard() {
                     
                     <div className={mobileStyles.handicapContainer}>
                       <div className={mobileStyles.handicapField}>
-                        <label className={mobileStyles.compactLabel}>Percentage</label>
+                        <label className={mobileStyles.compactLabel}>Handicap %</label>
                         <div className={mobileStyles.handicapPercentRow}>
                           <input
                             className={mobileStyles.compactInput}
@@ -1721,7 +1709,7 @@ export default function TournamentDashboard() {
                       <div className={mobileStyles.handicapSeparator}>of</div>
                       
                       <div className={mobileStyles.handicapField}>
-                        <label className={mobileStyles.compactLabel}>Base</label>
+                        <label className={mobileStyles.compactLabel}>Base Score</label>
                         <input
                           className={mobileStyles.compactInput}
                           type="number"
@@ -1752,8 +1740,87 @@ export default function TournamentDashboard() {
               </div>
             )}
 
+            {/* Side Pots Card */}
             {tournament && (
-              <div className={`${mobileStyles.bracketSettingsCard} ${mobileStyles.optionalBracketsCard}`}>
+              <div className={`${mobileStyles.bracketSettingsCard} ${mobileStyles.sidePotsCard}`}>
+                <button
+                  type="button"
+                  className={`${mobileStyles.settingsHeader} ${mobileStyles.settingsHeaderToggle}`}
+                  onClick={() => toggleCard('sidePots')}
+                  aria-expanded={isCardExpanded('sidePots')}
+                  aria-controls="dashboard-side-pots-content"
+                >
+                  <div className={mobileStyles.settingsTitleBlock}>
+                    <h2 className={mobileStyles.settingsTitle}>Side Pots</h2>
+                    <div className={mobileStyles.settingsMeta}>{enabledSidePotsCount} of {sidePots.pots.length} enabled</div>
+                  </div>
+                  {isMobile && (
+                    <span className={mobileStyles.cardExpandIcon} aria-hidden="true">
+                      {isCardExpanded('sidePots') ? '−' : '+'}
+                    </span>
+                  )}
+                </button>
+                {isCardExpanded('sidePots') && (
+                <div id="dashboard-side-pots-content" className={mobileStyles.settingsContent}>
+                  {/* Shared entry fee + prize */}
+                  <div className={mobileStyles.sidePotSharedFee}>
+                    <div className={mobileStyles.compactField}>
+                      <label className={mobileStyles.compactLabel}>Side Pot Entry</label>
+                      <div className={mobileStyles.compactInputWrapper}>
+                        <span className={mobileStyles.currencySymbol}>$</span>
+                        <input
+                          className={mobileStyles.compactInput}
+                          type="text"
+                          placeholder="0"
+                          value={formatNumberInput(sidePots.entry_fee)}
+                          onChange={e => {
+                            const next = { ...sidePots, entry_fee: parseCurrencyInput(e.target.value) };
+                            setSidePots(next);
+                            saveSidePots(next);
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <div className={mobileStyles.compactField}>
+                      <label className={mobileStyles.compactLabel}>Prize Amount</label>
+                      <div className={mobileStyles.compactInputWrapper}>
+                        <span className={mobileStyles.currencySymbol}>$</span>
+                        <input
+                          className={mobileStyles.compactInput}
+                          type="text"
+                          placeholder="0"
+                          value={formatNumberInput(sidePots.prize_amount)}
+                          onChange={e => {
+                            const next = { ...sidePots, prize_amount: parseCurrencyInput(e.target.value) };
+                            setSidePots(next);
+                            saveSidePots(next);
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Per-pot toggles */}
+                  {sidePots.pots.map(pot => (
+                    <div key={pot.key} className={`${mobileStyles.programCard} ${pot.enabled ? mobileStyles.programCardChecked : ''}`}>
+                      <label className={mobileStyles.checkboxLabel}>
+                        <input
+                          type="checkbox"
+                          className={mobileStyles.checkboxInput}
+                          checked={pot.enabled}
+                          onChange={e => updateSidePot(pot.key, { enabled: e.target.checked })}
+                        />
+                        <span>{pot.name}</span>
+                      </label>
+                    </div>
+                  ))}
+                </div>
+                )}
+              </div>
+            )}
+
+            {tournament && (
+              <div className={`${mobileStyles.bracketSettingsCard} ${mobileStyles.optionalBracketsCard} ${mobileStyles.byeSettingsCard}`}>
                 <button
                   type="button"
                   className={`${mobileStyles.settingsHeader} ${mobileStyles.settingsHeaderToggle}`}
@@ -1763,7 +1830,7 @@ export default function TournamentDashboard() {
                 >
                   <div className={mobileStyles.settingsTitleBlock}>
                     <h2 className={mobileStyles.settingsTitle}>Bye Settings</h2>
-                    <div className={mobileStyles.settingsMeta}>{enabledByeProgramsCount} programs allow byes</div>
+                    <div className={mobileStyles.settingsMeta}>{enabledByeProgramsCount} {enabledByeProgramsCount === 1 ? 'bye program' : 'bye programs'} enabled</div>
                   </div>
                   {isMobile && (
                     <span className={mobileStyles.cardExpandIcon} aria-hidden="true">
@@ -1782,7 +1849,7 @@ export default function TournamentDashboard() {
                         left.name.localeCompare(right.name, undefined, { sensitivity: 'base' })
                       )
                       const renderCard = (program: typeof visibleForByes[number]) => (
-                        <div key={`bye-${program.key}`} className={mobileStyles.programCard}>
+                        <div key={`bye-${program.key}`} className={`${mobileStyles.programCard} ${Boolean(program.allow_byes ?? bracketSettings.allow_byes ?? false) ? mobileStyles.programCardChecked : ''}`}>
                           <label className={mobileStyles.checkboxLabel}>
                             <input
                               type="checkbox"
@@ -1815,7 +1882,7 @@ export default function TournamentDashboard() {
                 >
                   <div className={mobileStyles.settingsTitleBlock}>
                     <h2 className={mobileStyles.settingsTitle}>Optional Brackets</h2>
-                    <div className={mobileStyles.settingsMeta}>{enabledOptionalProgramsCount} enabled</div>
+                    <div className={mobileStyles.settingsMeta}>{enabledOptionalProgramsCount} {enabledOptionalProgramsCount === 1 ? 'program' : 'programs'} enabled</div>
                   </div>
                   {isMobile && (
                     <span className={mobileStyles.cardExpandIcon} aria-hidden="true">
@@ -1834,7 +1901,7 @@ export default function TournamentDashboard() {
                         left.name.localeCompare(right.name, undefined, { sensitivity: 'base' })
                       )
                       const renderCard = (program: typeof optional[number]) => (
-                        <div key={program.key} className={mobileStyles.programCard}>
+                        <div key={program.key} className={`${mobileStyles.programCard} ${program.enabled ? mobileStyles.programCardChecked : ''}`}>
                           <label className={mobileStyles.checkboxLabel}>
                             <input
                               type="checkbox"
@@ -1856,95 +1923,6 @@ export default function TournamentDashboard() {
               </div>
             )}
 
-            {/* Side Pots Card */}
-            {tournament && (
-              <div className={`${mobileStyles.bracketSettingsCard} ${mobileStyles.sidePotsCard}`}>
-                <button
-                  type="button"
-                  className={`${mobileStyles.settingsHeader} ${mobileStyles.settingsHeaderToggle}`}
-                  onClick={() => toggleCard('sidePots')}
-                  aria-expanded={isCardExpanded('sidePots')}
-                  aria-controls="dashboard-side-pots-content"
-                >
-                  <div className={mobileStyles.settingsTitleBlock}>
-                    <h2 className={mobileStyles.settingsTitle}>Side Pots</h2>
-                    <div className={mobileStyles.settingsMeta}>{enabledSidePotsCount} of {sidePots.pots.length} enabled</div>
-                  </div>
-                  {isMobile && (
-                    <span className={mobileStyles.cardExpandIcon} aria-hidden="true">
-                      {isCardExpanded('sidePots') ? '−' : '+'}
-                    </span>
-                  )}
-                </button>
-                {isCardExpanded('sidePots') && (
-                <div id="dashboard-side-pots-content" className={mobileStyles.settingsContent}>
-                  <div className={mobileStyles.cardQuickStatsRow}>
-                    <div className={mobileStyles.cardQuickStatItem}>
-                      <span className={mobileStyles.cardPrimaryStat}>{formatCurrencyLabel(sidePots.entry_fee)}</span>
-                      <span className={mobileStyles.cardSecondaryStat}>Entry Fee</span>
-                    </div>
-                    <div className={mobileStyles.cardQuickStatItem}>
-                      <span className={mobileStyles.cardPrimaryStat}>{formatCurrencyLabel(sidePots.prize_amount)}</span>
-                      <span className={mobileStyles.cardSecondaryStat}>Prize</span>
-                    </div>
-                  </div>
-                  {/* Shared entry fee + prize */}
-                  <div className={mobileStyles.sidePotSharedFee}>
-                    <div className={mobileStyles.compactField}>
-                      <label className={mobileStyles.compactLabel}>Entry Fee</label>
-                      <div className={mobileStyles.compactInputWrapper}>
-                        <span className={mobileStyles.currencySymbol}>$</span>
-                        <input
-                          className={mobileStyles.compactInput}
-                          type="text"
-                          placeholder="0"
-                          value={formatNumberInput(sidePots.entry_fee)}
-                          onChange={e => {
-                            const next = { ...sidePots, entry_fee: parseCurrencyInput(e.target.value) };
-                            setSidePots(next);
-                            saveSidePots(next);
-                          }}
-                        />
-                      </div>
-                    </div>
-                    <div className={mobileStyles.compactField}>
-                      <label className={mobileStyles.compactLabel}>Prize</label>
-                      <div className={mobileStyles.compactInputWrapper}>
-                        <span className={mobileStyles.currencySymbol}>$</span>
-                        <input
-                          className={mobileStyles.compactInput}
-                          type="text"
-                          placeholder="0"
-                          value={formatNumberInput(sidePots.prize_amount)}
-                          onChange={e => {
-                            const next = { ...sidePots, prize_amount: parseCurrencyInput(e.target.value) };
-                            setSidePots(next);
-                            saveSidePots(next);
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Per-pot toggles */}
-                  {sidePots.pots.map(pot => (
-                    <div key={pot.key} className={mobileStyles.programCard}>
-                      <label className={mobileStyles.checkboxLabel}>
-                        <input
-                          type="checkbox"
-                          className={mobileStyles.checkboxInput}
-                          checked={pot.enabled}
-                          onChange={e => updateSidePot(pot.key, { enabled: e.target.checked })}
-                        />
-                        <span>{pot.name}</span>
-                      </label>
-                    </div>
-                  ))}
-                </div>
-                )}
-              </div>
-            )}
-
           </div>
           {/* End Main Content Container */}
           </div>
@@ -1953,48 +1931,66 @@ export default function TournamentDashboard() {
           {loadModalOpen && (
             <div className={mobileStyles.modalOverlay}>
               <div className={mobileStyles.modalCard}>
-                <h2 className={mobileStyles.modalTitle}>{isAdmin ? 'All Tournaments' : 'Your Tournaments'}</h2>
-                {isAdmin && (
-                  <div className={mobileStyles.adminBadge}>Admin: Viewing all tournaments</div>
-                )}
-                <CloseControl position="absolute" onClick={() => setLoadModalOpen(false)} />
-                {allTournaments.length === 0 ? (
-                  <div className={mobileStyles.emptyTournaments}>
-                    <div>No tournaments found.</div>
-                    <div className={mobileStyles.emptyTournamentsHint}>Create your first tournament to get started!</div>
-                  </div>
-                ) : (
-                  <>
-                    <ul className={mobileStyles.tournamentList}>
-                      {paginatedItems.map((t: Tournament) => (
-                        <li key={t.id} className={mobileStyles.tournamentItem}>
-                          <div>
-                            <span className={mobileStyles.tournamentName}>{t.name}</span>
-                            {t.location && <div className={mobileStyles.tournamentLocation}>{t.location}</div>}
-                            {t.start_date && (
-                              <div className={mobileStyles.tournamentDate}>
-                                {new Date(t.start_date).toLocaleDateString()}
-                                {t.end_date && t.end_date !== t.start_date && ` - ${new Date(t.end_date).toLocaleDateString()}`}
+                <div className={mobileStyles.modalHeader}>
+                  <h2 className={mobileStyles.modalTitle}>{isAdmin ? 'All Tournaments' : 'Your Tournaments'}</h2>
+                  <p className={mobileStyles.modalSubtitle}>Viewing all available tournaments</p>
+                  <CloseControl position="absolute" size="sm" label="Close load tournament modal" onClick={() => setLoadModalOpen(false)} />
+                </div>
+                <div className={mobileStyles.modalScrollBody}>
+                  {allTournaments.length === 0 ? (
+                    <div className={mobileStyles.emptyTournaments}>
+                      <div>No tournaments found.</div>
+                      <div className={mobileStyles.emptyTournamentsHint}>Create your first tournament to get started!</div>
+                    </div>
+                  ) : (
+                    <>
+                      <ul className={mobileStyles.tournamentList}>
+                        {paginatedItems.map((t: Tournament) => {
+                          const squadCount = t.squad_times
+                            ? Object.values(t.squad_times).reduce((s, arr) => s + arr.length, 0)
+                            : 0;
+                          const dayCount = t.squad_times ? Object.keys(t.squad_times).length : 0;
+                          return (
+                            <li key={t.id} className={mobileStyles.tournamentItem}>
+                              <div className={mobileStyles.tournamentInfo}>
+                                <span className={mobileStyles.tournamentName}>{t.name}</span>
+                                {t.location && <div className={mobileStyles.tournamentLocation}>{t.location}</div>}
+                                {t.start_date && (
+                                  <div className={mobileStyles.tournamentDate}>
+                                    {formatLongDate(t.start_date)}
+                                    {t.end_date && t.end_date !== t.start_date && ` – ${formatLongDate(t.end_date)}`}
+                                  </div>
+                                )}
+                                {(squadCount > 0 || (typeof t.entry_count === 'number' && t.entry_count > 0) || t.brackets_configured) && (
+                                  <div className={mobileStyles.tournamentMeta}>
+                                    {squadCount > 0 && <span>{squadCount} {squadCount === 1 ? 'Squad' : 'Squads'}</span>}
+                                    {dayCount > 1 && <span>{dayCount} Days</span>}
+                                    {typeof t.entry_count === 'number' && t.entry_count > 0 && (
+                                      <span>{t.entry_count} {t.entry_count === 1 ? 'Entry' : 'Entries'}</span>
+                                    )}
+                                    {t.brackets_configured && <span>Brackets Configured</span>}
+                                  </div>
+                                )}
                               </div>
-                            )}
-                          </div>
-                          <div className={mobileStyles.tournamentActions}>
-                            <button className={mobileStyles.loadBtn} onClick={() => handleLoadTournament(t)}>Load</button>
-                            <button className={mobileStyles.deleteBtn} onClick={() => setDeleteConfirm({id: t.id, name: t.name})}>Delete</button>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
+                              <div className={mobileStyles.tournamentActions}>
+                                <button className={mobileStyles.loadBtn} onClick={() => handleLoadTournament(t)}>Load</button>
+                                <button className={mobileStyles.deleteBtn} onClick={() => setDeleteConfirm({id: t.id, name: t.name})}>Delete</button>
+                              </div>
+                            </li>
+                          );
+                        })}
+                      </ul>
 
-                    {totalPages > 1 && (
-                      <div className={mobileStyles.paginationBar}>
-                        <EnhancedButton onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} variant="secondary" size="sm">Previous</EnhancedButton>
-                        <span className={mobileStyles.paginationText}>Page {currentPage} of {totalPages}</span>
-                        <EnhancedButton onClick={() => goToPage(currentPage + 1)} disabled={currentPage === totalPages} variant="secondary" size="sm">Next</EnhancedButton>
-                      </div>
-                    )}
-                  </>
-                )}
+                      {totalPages > 1 && (
+                        <div className={mobileStyles.paginationBar}>
+                          <EnhancedButton onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} variant="secondary" size="sm">Previous</EnhancedButton>
+                          <span className={mobileStyles.paginationText}>Page {currentPage} of {totalPages}</span>
+                          <EnhancedButton onClick={() => goToPage(currentPage + 1)} disabled={currentPage === totalPages} variant="secondary" size="sm">Next</EnhancedButton>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           )}

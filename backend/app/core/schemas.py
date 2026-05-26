@@ -241,6 +241,8 @@ class Tournament(TournamentBase):
 
     id: int
     user_id: int
+    entry_count: Optional[int] = None
+    brackets_configured: Optional[bool] = None
 
 
 class TournamentBracketSettingsBase(BaseModel):

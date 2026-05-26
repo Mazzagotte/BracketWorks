@@ -18,7 +18,7 @@ export function SearchFilter({
     <div className={styles.container}>
       <div className={styles.filterGroup}>
         <label className={styles.label}>
-          <span className={styles.labelText}>Search Players</span>
+          <span className={styles.labelText}>Search Bowlers</span>
           <div className={styles.searchWrapper}>
             <input
               type="text"
@@ -29,9 +29,9 @@ export function SearchFilter({
                   onSearchChange('')
                 }
               }}
-              placeholder="Search players across visible brackets..."
+              placeholder="Search by bowler name across visible brackets..."
               className={styles.searchInput}
-              aria-label="Search players"
+              aria-label="Search bowlers"
             />
           </div>
           {searchTerm && searchResultCount !== null && searchResultCount !== undefined && (

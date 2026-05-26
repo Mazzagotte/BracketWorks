@@ -1139,14 +1139,15 @@ export default function PlayersPage() {
               aria-expanded={!historySearchCollapsed}
               onClick={() => setHistorySearchCollapsed(previous => !previous)}
             >
-              <span>Bowler History Search</span>
+              <span>Find Existing Bowler</span>
               <span className={styles.formTitleExpandIcon}>{historySearchCollapsed ? '+' : '−'}</span>
             </button>
           ) : (
-            <h3 className={styles.formTitle}>Bowler History Search</h3>
+            <h3 className={styles.formTitle}>Find Existing Bowler</h3>
           )}
           {(!isMobileView || !historySearchCollapsed) && (
           <div className={styles.historyPanelBody}>
+            <p className={styles.historyHelperText}>Search by USBC number, first name, or last name to quickly fill prior bowler details.</p>
             <div className={styles.searchContainer}>
               <input
                 type="text"
@@ -1171,7 +1172,7 @@ export default function PlayersPage() {
               />
               <button
                 type="button"
-                className={styles.clearFilters}
+                className={styles.clearSearchBtn}
                 onClick={() => {
                   setHistorySearchUsbc('')
                   setHistorySearchFirstName('')
@@ -1185,9 +1186,7 @@ export default function PlayersPage() {
 
             {isHistorySearching ? (
               <p className={styles.historyMeta}>Searching bowler history...</p>
-            ) : historyResults.length === 0 ? (
-              <p className={styles.historyMeta}>Type USBC, first name, or last name to find prior bowlers.</p>
-            ) : (
+            ) : historyResults.length > 0 ? (
               <div className={styles.historyResultsList}>
                 {historyResults.map(profile => (
                   <button
@@ -1202,7 +1201,7 @@ export default function PlayersPage() {
                   </button>
                 ))}
               </div>
-            )}
+            ) : null}
           </div>
           )}
         </div>
@@ -1243,11 +1242,13 @@ export default function PlayersPage() {
             <div className={styles.entriesSectionWidth}>
               {getTournamentId() && players.length > 0 && (
                 <div className={styles.summaryCard}>
-                  <h3 className={styles.summaryTitle}>Tournament Summary</h3>
-                  <div className={styles.mobileSummaryChips}>
-                    <div className={styles.mobileSummaryChip}>Paid: {paymentSummary.paidCount}</div>
-                    <div className={styles.mobileSummaryChip}>Due: {paymentSummary.dueCount}</div>
-                    <div className={styles.mobileSummaryChip}>Outstanding: ${paymentSummary.outstandingAmount.toLocaleString()}</div>
+                  <div className={styles.summaryHeader}>
+                    <h3 className={styles.summaryTitle}>Tournament Summary</h3>
+                    <div className={styles.summaryPaymentStrip}>
+                      <span className={`${styles.summaryChip} ${styles.summaryChipPaid}`}>{paymentSummary.paidCount} Paid</span>
+                      <span className={`${styles.summaryChip} ${paymentSummary.dueCount > 0 ? styles.summaryChipDue : ''}`}>{paymentSummary.dueCount} Due</span>
+                      <span className={styles.summaryChip}>${paymentSummary.outstandingAmount.toLocaleString()} Outstanding</span>
+                    </div>
                   </div>
                   <div className={styles.summaryGrid}>
                     <div className={styles.statBox}>
@@ -1255,13 +1256,18 @@ export default function PlayersPage() {
                       <div className={styles.statLabel}>Players</div>
                     </div>
 
+                    <div className={`${styles.statBox} ${styles.statBoxRevenue}`}>
+                      <div className={styles.statValue}>${entryTotals.totalRevenue.toLocaleString()}</div>
+                      <div className={styles.statLabel}>Entry Total</div>
+                    </div>
+
                       {entryTotals.programSummaries.map(program => (
                         <div key={program.key} className={styles.statBox}>
                           <div className={styles.statValue}>{program.totalEntries}</div>
                           <div className={styles.statLabel}>{program.name}</div>
-                          <div className={styles.statDetail}>~{program.expectedBrackets} bracket{program.expectedBrackets !== 1 ? 's' : ''}</div>
+                          <div className={styles.statDetail}>Projected {program.expectedBrackets} bracket{program.expectedBrackets !== 1 ? 's' : ''}</div>
                           {program.refunds > 0 && (
-                            <div className={styles.statRefund}>~{program.refunds} refund{program.refunds !== 1 ? 's' : ''}</div>
+                            <div className={styles.statRefund}>Est. {program.refunds} refund{program.refunds !== 1 ? 's' : ''}</div>
                           )}
                         </div>
                       ))}
@@ -1271,15 +1277,11 @@ export default function PlayersPage() {
                           <div className={styles.statValue}>{pot.count}</div>
                           <div className={styles.statLabel}>{pot.name}</div>
                           {pot.fee > 0 && (
-                            <div className={styles.statDetail}>${(pot.count * pot.fee).toLocaleString()}</div>
+                            <div className={styles.statDetail}>Pot Total: ${(pot.count * pot.fee).toLocaleString()}</div>
                           )}
                         </div>
                       ))}
 
-                    <div className={`${styles.statBox} ${styles.statBoxRevenue}`}>
-                      <div className={styles.statValue}>${entryTotals.totalRevenue.toLocaleString()}</div>
-                      <div className={styles.statLabel}>Revenue</div>
-                    </div>
                   </div>
                 </div>
               )}
@@ -1292,11 +1294,11 @@ export default function PlayersPage() {
                     aria-expanded={!tableSearchCollapsed}
                     onClick={() => setTableSearchCollapsed(previous => !previous)}
                   >
-                    <span>Entries Table Search</span>
+                    <span>Search Entries</span>
                     <span className={styles.formTitleExpandIcon}>{tableSearchCollapsed ? '+' : '−'}</span>
                   </button>
                 ) : (
-                  <h3 className={styles.formTitle}>Entries Table Search</h3>
+                  <h3 className={styles.formTitle}>Search Entries</h3>
                 )}
                 {(!isMobileView || !tableSearchCollapsed) && (
                 <div className={styles.tableSearchPanelBody}>
@@ -1304,34 +1306,34 @@ export default function PlayersPage() {
                     <input
                       type="text"
                       className={styles.searchInput}
-                      placeholder="Search USBC #"
+                      placeholder="USBC #"
                       value={searchUsbc}
                       onChange={(event) => setSearchUsbc(event.target.value)}
                     />
                     <input
                       type="text"
                       className={styles.searchInput}
-                      placeholder="Search First Name"
+                      placeholder="First name"
                       value={searchFirstName}
                       onChange={(event) => setSearchFirstName(event.target.value)}
                     />
                     <input
                       type="text"
                       className={styles.searchInput}
-                      placeholder="Search Last Name"
+                      placeholder="Last name"
                       value={searchLastName}
                       onChange={(event) => setSearchLastName(event.target.value)}
                     />
                     <button
                       type="button"
-                      className={styles.clearFilters}
+                      className={styles.clearSearchBtn}
                       onClick={() => {
                         setSearchUsbc('')
                         setSearchFirstName('')
                         setSearchLastName('')
                       }}
                     >
-                      Clear Search
+                      Clear
                     </button>
                   </div>
                 </div>

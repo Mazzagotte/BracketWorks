@@ -7,10 +7,30 @@ import { divisionOptions, isProgramAllowedForDivision, normalizeDivision } from 
 import { SortableHeader, SortConfig } from '../../components/SortableHeader';
 import styles from '../entries.module.css';
 
+function abbreviateProgramName(name: string): string {
+  const map: [string, string][] = [
+    ['Reverse Scratch', 'Rev. Scratch'],
+    ['Reverse Handicap', 'Rev. Hcap'],
+    ["Women's Scratch", "Women's"],
+    ["Women's Handicap", "Women's Hcap"],
+    ['High Game Scratch', 'HG Scratch'],
+    ['High Game Handicap', 'HG Hcap'],
+    ['Seniors Scratch', 'Sr. Scratch'],
+    ['Seniors Handicap', 'Sr. Hcap'],
+    ['Juniors Scratch', 'Jr. Scratch'],
+    ['Juniors Handicap', 'Jr. Hcap'],
+  ];
+  for (const [from, to] of map) {
+    if (name.includes(from)) return name.replace(from, to);
+  }
+  return name;
+}
+
 const PlayersTable = memo(({ 
   players, 
   onUpdatePlayer,
   onDeletePlayer,
+  savingStatus,
   bracketPrograms,
   selectedSquad,
   sidePots,
@@ -22,6 +42,15 @@ const PlayersTable = memo(({
   const [sortConfig, setSortConfig] = useState<SortConfig>({ column: 'lane', direction: 'asc' });
   const [isMobileLayout, setIsMobileLayout] = useState(false);
   const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({});
+  const [editingRowId, setEditingRowId] = useState<number | null>(null);
+
+  const globalSaveStatus = useMemo(() => {
+    const values = Object.values(savingStatus);
+    if (values.some(v => v === 'saving')) return 'saving';
+    if (values.some(v => v === 'error')) return 'error';
+    if (values.some(v => v === 'success')) return 'success';
+    return 'idle';
+  }, [savingStatus]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -289,12 +318,20 @@ const PlayersTable = memo(({
   }
 
   return (
-    <div className={`entries-container ${isMobileLayout ? styles.mobileEntriesContainer : ''}`}>
+    <>
+      {globalSaveStatus !== 'idle' && (
+        <div className={`table-save-status table-save-status--${globalSaveStatus}`}>
+          {globalSaveStatus === 'saving' && 'Saving…'}
+          {globalSaveStatus === 'success' && 'All changes saved'}
+          {globalSaveStatus === 'error' && 'Failed to save — check your connection'}
+        </div>
+      )}
+      <div className={`entries-container ${isMobileLayout ? styles.mobileEntriesContainer : ''}`}>
       {isMobileLayout ? (
         <>
           {selectedSquad && (
             <div className={styles.mobileSquadBanner}>
-              Showing players for: {selectedSquad.date} — {selectedSquad.time}
+              Entries for {selectedSquad.date} · {selectedSquad.time} Squad
             </div>
           )}
           <div className={styles.mobilePlayersList}>
@@ -307,7 +344,7 @@ const PlayersTable = memo(({
           {selectedSquad && (
             <tr>
               <td colSpan={7 + bracketPrograms.length + enabledPots.length} className="squad-banner">
-                Showing players for: {selectedSquad.date} - {selectedSquad.time}
+                Entries for {selectedSquad.date} · {selectedSquad.time} Squad
               </td>
             </tr>
           )}
@@ -316,7 +353,7 @@ const PlayersTable = memo(({
               USBC
             </SortableHeader>
             <SortableHeader column="name" sortConfig={sortConfig} onSort={toggleSort} className="col-name">
-              Name
+              Bowler
             </SortableHeader>
             <SortableHeader column="division" sortConfig={sortConfig} onSort={toggleSort} className="col-division">
               Division
@@ -325,11 +362,11 @@ const PlayersTable = memo(({
               Lane
             </SortableHeader>
             <SortableHeader column="average" sortConfig={sortConfig} onSort={toggleSort} className="col-average">
-              Average
+              Avg
             </SortableHeader>
             {bracketPrograms.map(program => (
               <SortableHeader key={program.key} column={`bracket:${program.key}`} sortConfig={sortConfig} onSort={toggleSort} className="col-scratch">
-                {program.name}
+                <abbr title={program.name} style={{ textDecoration: 'none' }}>{abbreviateProgramName(program.name)}</abbr>
               </SortableHeader>
             ))}
             {enabledPots.map(pot => (
@@ -338,7 +375,7 @@ const PlayersTable = memo(({
               </th>
             ))}
             <SortableHeader column="cost" sortConfig={sortConfig} onSort={toggleSort} className="col-cost">
-              Cost / Status
+              Total / Status
             </SortableHeader>
             <th className="entries-header-cell col-actions">
               Actions
@@ -350,6 +387,7 @@ const PlayersTable = memo(({
             const totalEntries = Object.values(player.bracketEntries || {}).reduce((sum, count) => sum + Number(count || 0), 0)
             const needsEntryFee = totalEntries > 0 && player.totalCost <= 0
             const isPaid = !needsEntryFee && player.amountPaid >= player.totalCost
+            const isEditing = editingRowId === player.id
 
             return (
             <OptimizedTableRow 
@@ -358,40 +396,52 @@ const PlayersTable = memo(({
             >
               <OptimizedTableCell className="entries-cell medium col-usbc">
                 <div className="pos-relative flex-center">
+                  {isEditing ? (
                     <input
-                    className="entries-input entries-control"
-                    type="text"
-                    size={maxUsbcChars}
-                    value={player.usbc || ''}
-                    onChange={(changeEvent) => handleCellEdit(player.id, 'usbc', changeEvent.target.value)}
-                    placeholder="USBC #"
-                  />
+                      className="entries-input entries-control"
+                      type="text"
+                      size={maxUsbcChars}
+                      value={player.usbc || ''}
+                      onChange={(changeEvent) => handleCellEdit(player.id, 'usbc', changeEvent.target.value)}
+                      placeholder="USBC #"
+                    />
+                  ) : (
+                    <span className="cell-readonly-text">{player.usbc || <span className="cell-empty">—</span>}</span>
+                  )}
                 </div>
               </OptimizedTableCell>
 
               <OptimizedTableCell className="entries-cell col-name">
-                <div className="flex-center gap-3">
-                  <div className="pos-relative">
-                    <input
-                      className="entries-input entries-control"
-                      type="text"
-                      size={maxFirstNameChars}
-                      value={player.firstName}
-                      onChange={(changeEvent) => handleCellEdit(player.id, 'firstName', changeEvent.target.value)}
-                      placeholder="First"
-                    />
+                {isEditing ? (
+                  <div className="flex-center gap-3">
+                    <div className="pos-relative">
+                      <input
+                        className="entries-input entries-control"
+                        type="text"
+                        size={maxFirstNameChars}
+                        value={player.firstName}
+                        onChange={(changeEvent) => handleCellEdit(player.id, 'firstName', changeEvent.target.value)}
+                        placeholder="First"
+                      />
+                    </div>
+                    <div className="pos-relative">
+                      <input
+                        className="entries-input entries-control"
+                        type="text"
+                        size={maxLastNameChars}
+                        value={player.lastName}
+                        onChange={(changeEvent) => handleCellEdit(player.id, 'lastName', changeEvent.target.value)}
+                        placeholder="Last"
+                      />
+                    </div>
                   </div>
-                  <div className="pos-relative">
-                    <input
-                      className="entries-input entries-control"
-                      type="text"
-                      size={maxLastNameChars}
-                      value={player.lastName}
-                      onChange={(changeEvent) => handleCellEdit(player.id, 'lastName', changeEvent.target.value)}
-                      placeholder="Last"
-                    />
-                  </div>
-                </div>
+                ) : (
+                  <span className="cell-readonly-text cell-bowler-name">
+                    {player.firstName || player.lastName
+                      ? `${player.firstName || ''} ${player.lastName || ''}`.trim()
+                      : <span className="cell-empty">Unnamed</span>}
+                  </span>
+                )}
               </OptimizedTableCell>
 
               <OptimizedTableCell className="entries-cell col-division">
@@ -494,14 +544,24 @@ const PlayersTable = memo(({
               </OptimizedTableCell>
 
               <OptimizedTableCell className="entries-cell col-actions">
-                <button
-                  className="entries-delete-btn"
-                  onClick={() => onDeletePlayer(player.id)}
-                  aria-label={`Delete ${player.firstName} ${player.lastName}`.trim()}
-                  title="Delete player"
-                >
-                  <span className="entries-delete-icon" aria-hidden="true">{'\u{1F5D1}'}</span>
-                </button>
+                <div className="row-actions">
+                  <button
+                    className={`entries-edit-btn${isEditing ? ' entries-edit-btn--active' : ''}`}
+                    onClick={() => setEditingRowId(isEditing ? null : player.id)}
+                    aria-label={isEditing ? 'Done editing' : 'Edit bowler name and USBC'}
+                    title={isEditing ? 'Done editing' : 'Edit name / USBC'}
+                  >
+                    {isEditing ? '✕' : '✏'}
+                  </button>
+                  <button
+                    className="entries-delete-btn"
+                    onClick={() => onDeletePlayer(player.id)}
+                    aria-label={`Delete ${player.firstName} ${player.lastName}`.trim()}
+                    title="Delete player"
+                  >
+                    <span className="entries-delete-icon" aria-hidden="true">{'\u{1F5D1}'}</span>
+                  </button>
+                </div>
               </OptimizedTableCell>
             </OptimizedTableRow>
           )})}
@@ -509,6 +569,7 @@ const PlayersTable = memo(({
       </table>
       )}
     </div>
+    </>
   );
 });
 

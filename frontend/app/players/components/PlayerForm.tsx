@@ -87,6 +87,11 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
       return;
     }
 
+    if (formData.average < 0 || formData.average > 300) {
+      setSubmitError('Average must be between 0 and 300.');
+      return;
+    }
+
     setSubmitError(null);
 
     const totalCost = calculatePlayerTotalCost(
@@ -138,7 +143,7 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
 
   return (
     <div className={styles.formCard}>
-      <h3 className={styles.formTitle}>Add New Player</h3>
+      <h3 className={styles.formTitle}>Add Bowler</h3>
 
       {isDirty && (
         <div className={styles.unsavedBanner}>
@@ -149,6 +154,7 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
       {submitError && <div className="error-message">{submitError}</div>}
 
       <form onSubmit={handleSubmit}>
+        <p className={styles.formSectionLabel}>Player Information</p>
         <div className={styles.formGrid}>
           <div>
             <label className={styles.fieldLabel}>First Name *</label>
@@ -205,18 +211,6 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
           </div>
 
           <div>
-            <label className={styles.fieldLabel}>Lane</label>
-            <input
-              type="text"
-              value={formData.lane}
-              onChange={(e) => handleInputChange('lane', e.target.value)}
-              className={styles.fieldInput}
-              placeholder="Lane (e.g. A1)"
-              aria-label="Lane"
-            />
-          </div>
-
-          <div>
             <label className={styles.fieldLabel}>Division</label>
             <select
               value={formData.division}
@@ -230,49 +224,75 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
             </select>
           </div>
 
+          <div>
+            <label className={styles.fieldLabel}>Lane</label>
+            <input
+              type="text"
+              value={formData.lane}
+              onChange={(e) => handleInputChange('lane', e.target.value)}
+              className={styles.fieldInput}
+              placeholder="Lane (e.g. A1)"
+              aria-label="Lane"
+            />
+          </div>
+
         </div>
 
         <div className={styles.compactSection}>
           <div className={styles.compactSectionHeader}>
             <div>
-              <h4 className={styles.compactSectionTitle}>Entries & Payment</h4>
+              <h4 className={styles.compactSectionTitle}>Entries &amp; Payment</h4>
             </div>
             <div className={styles.compactSectionMeta}>
               <span className={styles.compactPill}>Total ${draftTotal.toFixed(2)}</span>
               <span className={`${styles.compactPill} ${styles.compactPillMuted}`}>
+                Paid ${formData.amountPaid.toFixed(2)}
+              </span>
+              <span className={`${styles.compactPill} ${styles.compactPillDue}`}>
                 Due ${balanceDue.toFixed(2)}
               </span>
             </div>
           </div>
 
-          <div className={styles.compactGrid}>
+          <div className={styles.entriesPaymentRow}>
+            <div className={styles.entriesCol}>
+              <p className={styles.entriesSubheading}>Bracket Entries</p>
+              <div className={styles.compactGrid}>
 
-          {bracketPrograms.map(program => (
-            <div key={program.key} className={styles.compactField}>
-              <label className={styles.fieldLabel}>{program.name}</label>
-              <input
-                type="number"
-                value={formData.bracketEntries[program.key] || 0}
-                onChange={(e) => handleBracketEntryChange(program.key, e.target.value)}
-                className={`${styles.fieldInput} ${styles.compactInput}`}
-                min="0"
-                disabled={!isProgramAllowedForDivision(program.division, formData.division)}
-              />
+              {bracketPrograms.map(program => (
+                <div key={program.key} className={styles.compactField}>
+                  <label className={styles.fieldLabel}>{program.name} Entries</label>
+                  <input
+                    type="number"
+                    value={formData.bracketEntries[program.key] || 0}
+                    onChange={(e) => handleBracketEntryChange(program.key, e.target.value)}
+                    className={`${styles.fieldInput} ${styles.compactInput}`}
+                    min="0"
+                    disabled={!isProgramAllowedForDivision(program.division, formData.division)}
+                  />
+                </div>
+              ))}
+
+              </div>
             </div>
-          ))}
 
-          <div className={styles.compactField}>
-            <label className={styles.fieldLabel}>Amount Paid</label>
-            <input
-              type="number"
-              value={formData.amountPaid}
-              onChange={(e) => handleInputChange('amountPaid', parseFloat(e.target.value) || 0)}
-              className={`${styles.fieldInput} ${styles.compactInput}`}
-              min="0"
-              step="0.01"
-            />
+            <div className={styles.paymentCol}>
+              <p className={styles.entriesSubheading}>Payment</p>
+              <div className={styles.compactGrid}>
+              <div className={styles.compactField}>
+                <label className={styles.fieldLabel}>Amount Paid</label>
+                <input
+                  type="number"
+                  value={formData.amountPaid}
+                  onChange={(e) => handleInputChange('amountPaid', parseFloat(e.target.value) || 0)}
+                  className={`${styles.fieldInput} ${styles.compactInput}`}
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+              </div>
+            </div>
           </div>
-        </div>
         </div>
 
         <div className={styles.formFooter}>
@@ -281,7 +301,7 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
             disabled={isLoading}
             className={styles.submitBtn}
           >
-            {isLoading ? 'Adding...' : 'Add Player'}
+            {isLoading ? 'Adding...' : 'Add Bowler'}
           </button>
         </div>
       </form>

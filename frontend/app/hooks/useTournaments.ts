@@ -13,6 +13,8 @@ export interface Tournament {
   start_date?: string
   end_date?: string
   squad_times?: Record<string, string[]>
+  entry_count?: number
+  brackets_configured?: boolean
 }
 
 export interface Squad {

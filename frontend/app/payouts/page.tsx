@@ -1078,11 +1078,11 @@ export default function PayoutsPage() {
           <div className={`surface-card ${styles.summaryCard}`}>
             <h3 className={`surface-cardHeader ${styles.summaryTitle}`}>Payout Summary</h3>
             <div className={styles.summaryGrid}>
-              <div className={styles.statBox}>
+              <div className={`${styles.statBox} ${styles.statBoxTotal}`}>
                 <div className={`${styles.statValue} ${styles.statValueGreen}`}>{formatCurrency(displayedTotalPrizePool)}</div>
-                <div className={styles.statLabel}>Total Prize Pool</div>
+                <div className={styles.statLabel}>Final Prize Pool</div>
                 {sidePotAccounting.totalPool > 0 && (
-                  <div className={styles.statDetail}>incl. {formatCurrency(sidePotAccounting.totalPool)} side pots</div>
+                  <div className={styles.statDetail}>Includes {formatCurrency(sidePotAccounting.totalPool)} in side pots</div>
                 )}
               </div>
               {programSummaries.map(program => (
@@ -1096,19 +1096,19 @@ export default function PayoutsPage() {
                 <div key={pot.key} className={styles.statBox}>
                   <div className={styles.statValue}>{formatCurrency(pot.pool)}</div>
                   <div className={styles.statLabel}>{pot.name} Pool</div>
-                  <div className={styles.statDetail}>{pot.entryCount} entr{pot.entryCount === 1 ? 'y' : 'ies'}</div>
+                  <div className={styles.statDetail}>{pot.entryCount} side pot entr{pot.entryCount === 1 ? 'y' : 'ies'}</div>
                 </div>
               ))}
               <div className={styles.statBox}>
                 <div className={styles.statValue}>{paidCount} / {totalUniqueWinners}</div>
-                <div className={styles.statLabel}>Paid Out</div>
+                <div className={styles.statLabel}>Marked Paid</div>
                 {totalUniqueWinners > 0 && (
                   <div className={styles.progressBarRow}>
                     <progress className={styles.progressMeter} value={paidCount} max={totalUniqueWinners} />
                   </div>
                 )}
                 {remainingAmount > 0 && (
-                  <div className={styles.remainingLabel}>{formatCurrency(remainingAmount)} remaining</div>
+                  <div className={styles.remainingLabel}>{formatCurrency(remainingAmount)} remaining to mark paid</div>
                 )}
               </div>
             </div>
@@ -1168,8 +1168,8 @@ export default function PayoutsPage() {
         {!loading && aggregatedWinners.length > 0 && (
           <div className={styles.tableCard}>
             <div className={styles.tableCardHeader}>
-              <span>Winners</span>
-              <span className={styles.headerPool}>{formatCurrency(displayedTotalPrizePool)} total</span>
+              <span>Payout Results</span>
+              <span className={styles.headerPool}>Total Payouts: {formatCurrency(displayedTotalPrizePool)}</span>
             </div>
             <div className={styles.bracketGroup}>
               {(filteredWinners.length === 0 ? (
@@ -1189,22 +1189,43 @@ export default function PayoutsPage() {
                     <div className={styles.winnerInfo}>
                       <div className={styles.winnerName}>
                         {row.player_name}
+                        <span className={styles.bracketCount}>{row.winnings.length} bracket{row.winnings.length !== 1 ? 's' : ''} won</span>
                         <button
                           className={styles.toggleDetailsBtn}
                           onClick={() => toggleExpanded(key)}
-                          aria-label={expandedKeys.has(key) ? 'Hide brackets' : 'Show brackets'}
+                          aria-label={expandedKeys.has(key) ? 'Hide details' : 'Show details'}
                         >
-                          {expandedKeys.has(key) ? 'Hide' : 'Show'} {row.winnings.length} bracket{row.winnings.length !== 1 ? 's' : ''}
+                          {expandedKeys.has(key) ? 'Hide details' : 'Show details'}
                         </button>
                         {(sidePotByPlayer[String(row.player_id)] ?? []).map(sp => (
                           <span key={sp.name} className={styles.sidePotPill}>{sp.name}</span>
                         ))}
                       </div>
-                      {expandedKeys.has(key) && (
-                        <div className={styles.winnerMeta}>
-                          {row.winnings.map(w => `${w.bracket_name}${w.split_pot ? ' (split)' : ''} – ${w.position} (${formatCurrency(w.payout_amount)})`).join(' · ')}
-                        </div>
-                      )}
+                      {expandedKeys.has(key) && (() => {
+                        const grouped: Record<string, typeof row.winnings> = {}
+                        for (const w of row.winnings) {
+                          const type = w.bracket_name.replace(/ Bracket \d+$/, '').trim()
+                          if (!grouped[type]) grouped[type] = []
+                          grouped[type].push(w)
+                        }
+                        return (
+                          <div className={styles.winnerMeta}>
+                            {Object.entries(grouped).map(([type, wins]) => (
+                              <div key={type} className={styles.winnerMetaGroup}>
+                                <div className={styles.winnerMetaGroupLabel}>{type}</div>
+                                {wins.map(w => {
+                                  const bracketShort = w.bracket_name.replace(/^.* (Bracket \d+)$/, '$1')
+                                  return (
+                                    <div key={w.bracket_name} className={styles.winnerMetaRow}>
+                                      {bracketShort} — {w.position} — {formatCurrency(w.payout_amount)}{w.split_pot ? ' (split)' : ''}
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            ))}
+                          </div>
+                        )
+                      })()}
                     </div>
                     <div className={styles.payoutCol}>
                       <div className={styles.payoutAmount}>{formatCurrency(row.total_won)}</div>

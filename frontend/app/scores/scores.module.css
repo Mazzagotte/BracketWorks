@@ -442,7 +442,7 @@
    ======================================== */
 
 .desktopContainer {
-  max-width: 1200px;
+  max-width: 960px;
   margin: 0 auto;
   padding: 2rem 1rem;
 }
@@ -635,8 +635,8 @@
 }
 
 .scoresSearchCard {
-  margin-bottom: 14px;
-  padding: 12px 14px;
+  margin-bottom: 10px;
+  padding: 8px 14px;
   border: 1px solid var(--color-border-light);
   border-radius: 14px;
   background: var(--color-brand-ivory-light);
@@ -676,18 +676,19 @@
 
 .scoresSearchClear {
   min-height: 38px;
-  border: 1px solid color-mix(in srgb, var(--color-primary) 28%, transparent);
+  border: none;
   border-radius: 10px;
-  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
-  color: var(--color-primary);
-  padding: 0 12px;
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
+  color: var(--color-white);
+  padding: 0 16px;
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
+  transition: opacity 0.15s ease;
 }
 
 .scoresSearchClear:hover {
-  background: color-mix(in srgb, var(--color-primary) 16%, transparent);
+  opacity: 0.9;
 }
 
 @media (max-width: 900px) {
