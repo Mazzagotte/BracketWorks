@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
   SignupConfirmPasswordFieldSection,
@@ -163,7 +164,17 @@ export default function SignupModal({ mode = 'modal', isOpen = false, onClose, o
         )}
         {/* Header */}
         <div className={`surface-cardHeader ${styles.header}`}>
-          <h2 className={styles.title}>Create Account</h2>
+          <div className={styles.brandRow}>
+            <Image
+              src="/logo_no_text.svg"
+              alt="BracketWorks logo"
+              width={34}
+              height={34}
+              className={styles.logoMark}
+              priority
+            />
+            <h2 className={styles.title}>Create Account</h2>
+          </div>
           <p className={styles.subtitle}>Join BracketWorks today</p>
         </div>
 
