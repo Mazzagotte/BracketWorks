@@ -5,14 +5,21 @@ import styles from './page.module.css';
 import { PublicViewDemo } from './PublicViewDemo';
 
 export const metadata: Metadata = {
-  title: 'BracketWorks - Professional Bowling Tournament Management Software',
-  description: 'Create tournament brackets, track live scores, and calculate payouts automatically. The #1 bowling tournament management platform for leagues and competitions.',
-  keywords: 'bowling tournament software, tournament bracket management, bowling league management, score tracking, payout calculator, tournament manager',
+  title: 'BracketWorks | Bowling Tournament Brackets, Scoring, and Payouts',
+  description: 'BracketWorks helps bowling tournament directors build brackets, enter live scores, and calculate payouts from one dashboard.',
+  alternates: {
+    canonical: 'https://bracketworks.app/',
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+  keywords: 'bowling tournament software, bowling brackets, live score tracking, bowling payouts, tournament director tools',
   openGraph: {
-    title: 'BracketWorks - Professional Bowling Tournament Manager',
-    description: 'Create smart tournament brackets, track live scores, and calculate payouts automatically for bowling tournaments',
+    title: 'BracketWorks | Bowling Tournament Brackets, Scoring, and Payouts',
+    description: 'Build brackets, track live scoring, and review payouts for bowling tournaments in one app.',
     type: 'website',
-    url: 'https://bracketworks.app',
+    url: 'https://bracketworks.app/',
     images: [
       {
         url: 'https://bracketworks.app/og-image.png',
