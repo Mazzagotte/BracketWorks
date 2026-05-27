@@ -23,6 +23,16 @@
   animation: fadeIn 0.2s ease-out;
 }
 
+/* Shared standalone route shell for /signup */
+.pageShell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 20px;
+  background: var(--gradient-dark-alt);
+}
+
 /* Modal card */
 .modal {
   max-width: 480px;
@@ -32,6 +42,10 @@
   animation: slideUp 0.3s ease-out;
   scrollbar-width: none;
   position: relative;
+}
+
+.pageCard {
+  max-height: calc(100vh - 48px);
 }
 
 .modal::-webkit-scrollbar {
@@ -261,6 +275,10 @@
 
 /* Responsive */
 @media (max-width: 480px) {
+  .pageShell {
+    padding: 16px;
+  }
+
   .modal {
     max-width: 100%;
     border-radius: 16px;

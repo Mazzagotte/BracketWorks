@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   SignupConfirmPasswordFieldSection,
   SignupNameFieldsSection,
@@ -16,12 +17,16 @@ import CloseControl from '../../components/CloseControl';
 import styles from './SignupModal.module.css';
 
 interface SignupModalProps {
-  isOpen: boolean;
-  onClose: () => void;
+  mode?: 'modal' | 'page';
+  isOpen?: boolean;
+  onClose?: () => void;
   onSuccess?: (message: string) => void;
 }
 
-export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalProps) {
+export default function SignupModal({ mode = 'modal', isOpen = false, onClose, onSuccess }: SignupModalProps) {
+  const router = useRouter();
+  const isPageMode = mode === 'page';
+  const shouldRender = isPageMode || isOpen;
   const successCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -45,9 +50,9 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
     values: { confirmPassword, email, firstName, lastName, organization, password, username },
   } = useSignupForm();
 
-  // Reset form when modal closes
+  // Reset ephemeral state only when the modal version closes.
   useEffect(() => {
-    if (!isOpen) {
+    if (!isPageMode && !isOpen) {
       if (successCloseTimerRef.current) {
         clearTimeout(successCloseTimerRef.current);
         successCloseTimerRef.current = null;
@@ -56,7 +61,7 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
       setError('');
       setSignupSuccess(false);
     }
-  }, [isOpen, resetForm]);
+  }, [isOpen, isPageMode, resetForm]);
 
   useEffect(() => {
     return () => {
@@ -90,7 +95,10 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
       setError(validationError);
       return;
     }
-    if (!isFormReady) { setError('Please complete all required fields'); return; }
+    if (!isFormReady) {
+      setError('Please complete all required fields');
+      return;
+    }
 
     setLoading(true);
     try {
@@ -108,7 +116,11 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
       setSignupSuccess(true);
       successCloseTimerRef.current = setTimeout(() => {
         onSuccess?.(successMessage);
-        onClose();
+        if (isPageMode) {
+          router.push('/login?signup=success');
+          return;
+        }
+        onClose?.();
       }, 650);
     } catch (err: unknown) {
       logger.error('Signup error', { error: err instanceof Error ? err.message : String(err) });
@@ -133,12 +145,22 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
   const inputClass = (valid: boolean, hasError?: boolean) =>
     `surface-authInput ${valid ? 'surface-authInputValid' : ''} ${hasError ? 'surface-authInputError' : ''}`;
 
-  if (!isOpen) return null;
+  const handleLoginIntent = () => {
+    if (isPageMode) {
+      router.push('/login');
+      return;
+    }
+    onClose?.();
+  };
+
+  if (!shouldRender) return null;
 
   return (
-    <div className={styles.overlay}>
-      <div className={`surface-card surface-modalShell ${styles.modal}`}>
-        <CloseControl onClick={onClose} position="absolute" size="sm" label="Close signup modal" disabled={false} className={styles.closeBtn} />
+    <div className={isPageMode ? styles.pageShell : styles.overlay}>
+      <div className={`surface-card surface-modalShell ${styles.modal} ${isPageMode ? styles.pageCard : ''}`}>
+        {!isPageMode && (
+          <CloseControl onClick={onClose || (() => undefined)} position="absolute" size="sm" label="Close signup modal" disabled={false} className={styles.closeBtn} />
+        )}
         {/* Header */}
         <div className={`surface-cardHeader ${styles.header}`}>
           <h2 className={styles.title}>Create Account</h2>
@@ -200,7 +222,7 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
             <div className="surface-authHint surface-authHintSuccess">Username available</div>
           )}
           {usernameAvailable === null && !checkingUsername && (
-            <p className={styles.fieldHint}>Use a unique name — not your email address</p>
+            <p className={styles.fieldHint}>Use a unique name - not your email address</p>
           )}
 
           {/* Organization */}
@@ -256,19 +278,19 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
                 type="button"
                 className={`${styles.passwordToggle} surface-authPasswordToggle`}
                 onClick={() => setShowPassword(!showPassword)}
-                aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? (
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-10-7-10-7a18.08 18.08 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 10 7 10 7a18.09 18.09 0 01-2.96 3.84M1 1l22 22"/>
+                    <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-10-7-10-7a18.08 18.08 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 10 7 10 7a18.09 18.09 0 01-2.96 3.84M1 1l22 22" />
                   </svg>
                 ) : (
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/>
-                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z" />
+                    <circle cx="12" cy="12" r="3" />
                   </svg>
                 )}
-                {showPassword ? "Hide" : "Show"}
+                {showPassword ? 'Hide' : 'Show'}
               </button>
             }
             strengthMeter={
@@ -310,19 +332,19 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
                 type="button"
                 className={`${styles.passwordToggle} surface-authPasswordToggle`}
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
               >
                 {showConfirmPassword ? (
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-10-7-10-7a18.08 18.08 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 10 7 10 7a18.09 18.09 0 01-2.96 3.84M1 1l22 22"/>
+                    <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-10-7-10-7a18.08 18.08 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 10 7 10 7a18.09 18.09 0 01-2.96 3.84M1 1l22 22" />
                   </svg>
                 ) : (
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/>
-                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z" />
+                    <circle cx="12" cy="12" r="3" />
                   </svg>
                 )}
-                {showConfirmPassword ? "Hide" : "Show"}
+                {showConfirmPassword ? 'Hide' : 'Show'}
               </button>
             }
             validIndicator={fieldValidity.confirmPassword ? <div className="surface-authHint surface-authHintSuccess">Passwords match</div> : null}
@@ -338,7 +360,7 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
           </div>
           <p className={styles.loginPrompt}>
             Already have an account?{' '}
-            <button type="button" onClick={onClose} className={styles.loginLink}>
+            <button type="button" onClick={handleLoginIntent} className={styles.loginLink}>
               Log in
             </button>
           </p>
