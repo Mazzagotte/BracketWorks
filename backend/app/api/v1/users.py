@@ -656,7 +656,8 @@ def signup(user: schemas.UserCreate, background_tasks: BackgroundTasks, db: Sess
     existing = db.query(models.User).filter(models.User.username == user.username).first()
     if existing:
         raise HTTPException(status_code=400, detail="Username already exists")
-    existing_email = db.query(models.User).filter(models.User.email == user.email).first()
+    normalized_email = user.email.strip().lower()
+    existing_email = db.query(models.User).filter(models.User.email == normalized_email).first()
     if existing_email:
         raise HTTPException(status_code=400, detail="Email already exists")
     # Hash password
@@ -664,7 +665,7 @@ def signup(user: schemas.UserCreate, background_tasks: BackgroundTasks, db: Sess
     # Create user
     db_user = models.User(
         username=user.username,
-        email=user.email,
+        email=normalized_email,
         first_name=user.first_name,
         last_name=user.last_name,
         organization=user.organization,
