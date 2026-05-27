@@ -70,7 +70,20 @@
 
 /* Header */
 .header {
-  padding: 28px 28px 20px;
+  padding: 22px 28px 14px;
+}
+
+.brandRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.logoMark {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
 }
 
 .title {
@@ -81,14 +94,15 @@
 }
 
 .subtitle {
-  margin: 6px 0 0;
+  margin: 4px 0 0;
   font-size: 14px;
   color: var(--color-text-muted-strong);
+  text-align: center;
 }
 
 /* Form body */
 .body {
-  padding: 24px 28px 28px;
+  padding: 20px 28px 24px;
 }
 
 /* Name row */
@@ -285,11 +299,11 @@
   }
 
   .header {
-    padding: 24px 20px 16px;
+    padding: 18px 20px 12px;
   }
 
   .body {
-    padding: 20px 20px 24px;
+    padding: 16px 20px 20px;
   }
 
   .nameRow {
