@@ -173,19 +173,22 @@ export default function LoginPage() {
         const newFailedAttempts = failedAttempts + 1;
         setFailedAttempts(newFailedAttempts);
 
-        let errorMessage = 'Login failed';
+        const backendDetail = typeof data?.detail === 'string' ? data.detail.trim() : '';
+        let errorMessage = backendDetail || 'Login failed';
         let delaySeconds = 0;
 
         if (res.status === 401) {
-          errorMessage = 'Invalid username or password';
+          if (!backendDetail) {
+            errorMessage = 'Invalid username or password';
+          }
           if (newFailedAttempts >= 2) {
             delaySeconds = Math.min(30, Math.pow(2, newFailedAttempts - 1) + (newFailedAttempts > 3 ? 10 : 0));
           }
         } else if (res.status === 429) {
-          errorMessage = 'Too many login attempts. Please try again later.';
+          if (!backendDetail) {
+            errorMessage = 'Too many login attempts. Please try again later.';
+          }
           delaySeconds = 60;
-        } else if (data.detail) {
-          errorMessage = data.detail;
         }
 
         if (delaySeconds > 0) {
@@ -236,10 +239,18 @@ export default function LoginPage() {
 
     } catch (err: unknown) {
       const error = err as Error;
-      const errorMsg = `Network error: ${error?.message || 'Please check your connection'}`;
+      const rawMessage = (error?.message || '').trim();
+      const isLikelyFetchError =
+        error instanceof TypeError ||
+        rawMessage.toLowerCase().includes('failed to fetch') ||
+        rawMessage.toLowerCase().includes('network');
+
+      const errorMsg = isLikelyFetchError
+        ? 'Unable to reach backend API. Verify backend is running on http://localhost:8000 and CORS allows http://localhost:3000.'
+        : `Login failed: ${rawMessage || 'Unexpected error'}`;
       setError(errorMsg);
       addToast({ type: 'error', message: errorMsg, duration: 6000 });
-      logger.error('Login failed', { error: error?.message, username });
+      logger.error('Login failed', { error: rawMessage || 'unknown', username });
     } finally {
       setLoading(false);
     }

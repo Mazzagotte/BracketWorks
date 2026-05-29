@@ -34,32 +34,32 @@ export const metadata: Metadata = {
 export default function HomePage() {
   const features = [
     {
-      icon: '🏆',
+      icon: 'BRK',
       title: 'Build Clean Brackets',
       body: 'Create tournament brackets quickly with predictable setup, round tracking, and clear winner advancement.',
     },
     {
-      icon: '💰',
+      icon: 'POT',
       title: 'Track Every Side Pot',
       body: 'Manage optional side action like high game, eliminator, brackets, and custom event pools from the same event dashboard.',
     },
     {
-      icon: '📊',
+      icon: 'SCR',
       title: 'Enter Scores Live',
       body: 'Enter scores as games finish and keep bracket progress updated throughout the tournament.',
     },
     {
-      icon: '💵',
+      icon: 'PAY',
       title: 'Review Payouts Clearly',
       body: 'Calculate projected payouts from your event settings, then review and export clean results for verification.',
     },
     {
-      icon: '📱',
+      icon: 'MOB',
       title: 'Use It From the Desk or Lanes',
       body: 'Run the event from the front desk, tournament office, counter, or lane-side on mobile.',
     },
     {
-      icon: '🔍',
+      icon: 'REV',
       title: 'Verify Every Result',
       body: 'Keep important score, bracket, and payout changes easier to review before final results are shared.',
     },
@@ -150,17 +150,17 @@ export default function HomePage() {
             </div>
             <div className={styles.proofRow}>
               <div className={styles.proofCard}>
-                <span className={styles.proofIcon}>⚡</span>
+                <span className={styles.proofIcon}>SETUP</span>
                 <strong className={styles.proofStat}>Under 10 min</strong>
                 <span className={styles.proofLabel}>Tournament setup</span>
               </div>
               <div className={styles.proofCard}>
-                <span className={styles.proofIcon}>📄</span>
+                <span className={styles.proofIcon}>EXPORT</span>
                 <strong className={styles.proofStat}>Under 60 sec</strong>
                 <span className={styles.proofLabel}>Export generated</span>
               </div>
               <div className={styles.proofCard}>
-                <span className={styles.proofIcon}>📱</span>
+                <span className={styles.proofIcon}>ACCESS</span>
                 <strong className={styles.proofStat}>Any device</strong>
                 <span className={styles.proofLabel}>Desktop &amp; lane-side mobile</span>
               </div>
@@ -300,7 +300,7 @@ export default function HomePage() {
 
         <div className={styles.benefitsList}>
           <article className={styles.benefit}>
-            <span className={styles.benefitIcon}>🗂️</span>
+            <span className={styles.benefitIcon}>ONE</span>
             <h3>One Place for Everything</h3>
             <p>
               Replace disconnected spreadsheets and manual tracking with one place for tournament settings, brackets, scores, side pots, and payouts.
@@ -308,7 +308,7 @@ export default function HomePage() {
           </article>
 
           <article className={styles.benefit}>
-            <span className={styles.benefitIcon}>🎯</span>
+            <span className={styles.benefitIcon}>GUARD</span>
             <h3>Fewer Mistakes</h3>
             <p>
               Structured score entry and automatic calculations help reduce bracket and payout mistakes during live event operations.
@@ -316,7 +316,7 @@ export default function HomePage() {
           </article>
 
           <article className={styles.benefit}>
-            <span className={styles.benefitIcon}>🏆</span>
+            <span className={styles.benefitIcon}>PRO</span>
             <h3>A Professional Experience</h3>
             <p>
               Give staff and bowlers consistent, readable tournament information across desktop and mobile views.
@@ -324,7 +324,7 @@ export default function HomePage() {
           </article>
 
           <article className={styles.benefit}>
-            <span className={styles.benefitIcon}>📈</span>
+            <span className={styles.benefitIcon}>GROW</span>
             <h3>Grows With Your Events</h3>
             <p>
               Use the same workflow for weekly events, local tournaments, and larger open events as your needs grow.
@@ -341,9 +341,9 @@ export default function HomePage() {
             Set up brackets, track scores, manage side pots, and review payouts — all from one clean tournament dashboard.
           </p>
           <div className={styles.ctaPills}>
-            <span className={styles.ctaPill}>✓ No credit card required</span>
-            <span className={styles.ctaPill}>✓ Up and running in minutes</span>
-            <span className={styles.ctaPill}>✓ Works on any device</span>
+            <span className={styles.ctaPill}>No credit card required</span>
+            <span className={styles.ctaPill}>Up and running in minutes</span>
+            <span className={styles.ctaPill}>Works on any device</span>
           </div>
           <div className={styles.ctaButtons}>
             <Link href="/signup" className={`${styles.navBtn} ${styles.navBtnPrimary}`}>

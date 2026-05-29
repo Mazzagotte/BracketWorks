@@ -13,7 +13,7 @@
 @import './globals.css';
 
 :root {
-  --header-height: 200px;
+  --header-height: 160px;
 
   /* Active theme: core brand controls */
   --bw-orange: #ff7a00;
@@ -135,4 +135,22 @@
   --ring-danger: 0 0 0 3px rgba(214, 69, 69, 0.35);
   --gradient-danger: linear-gradient(180deg, #e45757 0%, #d64545 100%);
   --gradient-danger-hover: linear-gradient(180deg, #dd4c4c 0%, #c83e3e 100%);
+}
+
+@media (max-width: 1400px) {
+  :root {
+    --header-height: 138px;
+  }
+}
+
+@media (max-width: 1100px) {
+  :root {
+    --header-height: 124px;
+  }
+}
+
+@media (max-width: 900px) and (min-width: 769px) {
+  :root {
+    --header-height: 112px;
+  }
 }

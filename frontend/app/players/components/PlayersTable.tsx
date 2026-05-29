@@ -321,7 +321,7 @@ const PlayersTable = memo(({
     <>
       {globalSaveStatus !== 'idle' && (
         <div className={`table-save-status table-save-status--${globalSaveStatus}`}>
-          {globalSaveStatus === 'saving' && 'Saving…'}
+          {globalSaveStatus === 'saving' && 'Saving...'}
           {globalSaveStatus === 'success' && 'All changes saved'}
           {globalSaveStatus === 'error' && 'Failed to save — check your connection'}
         </div>
@@ -365,12 +365,12 @@ const PlayersTable = memo(({
               Avg
             </SortableHeader>
             {bracketPrograms.map(program => (
-              <SortableHeader key={program.key} column={`bracket:${program.key}`} sortConfig={sortConfig} onSort={toggleSort} className="col-scratch">
-                <abbr title={program.name} style={{ textDecoration: 'none' }}>{abbreviateProgramName(program.name)}</abbr>
+              <SortableHeader key={`program-header-${program.key}`} column={`bracket:${program.key}`} sortConfig={sortConfig} onSort={toggleSort} className="col-scratch">
+                <abbr title={program.name} className={styles.programAbbr}>{abbreviateProgramName(program.name)}</abbr>
               </SortableHeader>
             ))}
             {enabledPots.map(pot => (
-              <th key={pot.key} className="entries-header-cell col-sidepot">
+              <th key={`sidepot-header-${pot.key}`} className="entries-header-cell col-sidepot">
                 {pot.name}
               </th>
             ))}
@@ -487,7 +487,7 @@ const PlayersTable = memo(({
               </OptimizedTableCell>
 
               {bracketPrograms.map(program => (
-                <OptimizedTableCell key={program.key} className="entries-cell col-scratch">
+                <OptimizedTableCell key={`program-cell-${player.id}-${program.key}`} className="entries-cell col-scratch">
                   <div className="flex-center">
                     <div className="pos-relative inline-block">
                       {(() => {
@@ -511,7 +511,7 @@ const PlayersTable = memo(({
               {enabledPots.map(pot => {
                 const checked = Boolean(player.sidePotEntries?.[pot.key])
                 return (
-                  <OptimizedTableCell key={pot.key} className="entries-cell entries-cell--sidepot col-sidepot">
+                  <OptimizedTableCell key={`sidepot-cell-${player.id}-${pot.key}`} className="entries-cell entries-cell--sidepot col-sidepot">
                     <div className="flex-center">
                       <input
                         type="checkbox"

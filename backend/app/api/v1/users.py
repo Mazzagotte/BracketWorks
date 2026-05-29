@@ -11,7 +11,6 @@ from ...services.email_service import (
     sendVerifyEmail,
     sendWelcomeEmail,
 )
-from passlib.hash import bcrypt
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
 import hashlib
@@ -34,6 +33,7 @@ _DUMMY_BCRYPT_HASH = "$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lh
 
 
 def _utcnow() -> datetime:
+    # Database columns use timezone-naive DateTime, so keep comparisons naive UTC.
     return datetime.utcnow()
 
 
@@ -156,16 +156,14 @@ def _register_failed_login(db: Session, username: str, source_ip_hash: str) -> N
 
 
 def _clear_failed_login_attempts(db: Session, username: str, source_ip_hash: str) -> None:
-    attempts = (
+    (
         db.query(models.LoginAttempt)
         .filter(
             models.LoginAttempt.username == username,
             models.LoginAttempt.source_ip_hash == source_ip_hash,
         )
-        .all()
+        .delete()
     )
-    for attempt in attempts:
-        db.delete(attempt)
     db.commit()
 
 

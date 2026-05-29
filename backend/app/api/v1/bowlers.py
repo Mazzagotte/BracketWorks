@@ -1,5 +1,5 @@
 
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 from typing import List
 
@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from ..deps import get_current_user, get_db
 from ...core import models, schemas
 from ...core.bracket_programs import normalize_bowler_bracket_entries, normalize_bracket_programs, normalize_division
+from ...services.payouts import reset_payouts_if_needed
 
 router = APIRouter()
 
@@ -240,8 +241,8 @@ def archive_bowler_profile(
         raise HTTPException(status_code=404, detail="Bowler profile not found")
 
     profile.is_active = False
-    profile.archived_at = datetime.utcnow()
-    profile.updated_at = datetime.utcnow()
+    profile.archived_at = datetime.now(timezone.utc)
+    profile.updated_at = datetime.now(timezone.utc)
     db.commit()
     return {"id": profile.id, "is_active": profile.is_active}
 
@@ -261,7 +262,7 @@ def reactivate_bowler_profile(
 
     profile.is_active = True
     profile.archived_at = None
-    profile.updated_at = datetime.utcnow()
+    profile.updated_at = datetime.now(timezone.utc)
     db.commit()
     return {"id": profile.id, "is_active": profile.is_active}
 
@@ -306,6 +307,8 @@ def create_bowler(player: schemas.PlayerCreate, db: Session = Depends(get_db), c
     db.add(obj)
     db.commit()
     db.refresh(obj)
+    reset_payouts_if_needed(db, obj.tournament_id, obj.squad_id)
+    db.commit()
     return obj
 
 
@@ -333,6 +336,8 @@ def bulk_update_bowlers(
         return {"updated": 0}
 
     count = 0
+    reset_tournament_id: int | None = None
+    reset_squad_id: int | None = None
     for item in updates:
         data = {k: v for k, v in item.model_dump(exclude_unset=True).items() if k != "id" and v is not None}
         if "division" in data:
@@ -346,6 +351,10 @@ def bulk_update_bowlers(
         ).first()
         if not bowler:
             continue
+
+        if reset_tournament_id is None:
+            reset_tournament_id = bowler.tournament_id
+            reset_squad_id = bowler.squad_id
 
         identity_changed = ("full_name" in data) or ("usbc_number" in data)
         profile_to_sync: models.BowlerProfileModel | None = None
@@ -365,7 +374,7 @@ def bulk_update_bowlers(
                     profile.first_name = first_name.strip() or profile.first_name or "Unknown"
                     profile.last_name = last_name.strip() or profile.last_name or "Bowler"
                     profile.usbc_number = desired_usbc
-                    profile.updated_at = datetime.utcnow()
+                    profile.updated_at = datetime.now(timezone.utc)
                     data.pop("full_name", None)
                     data["usbc_number"] = profile.usbc_number
                     data["bowler_profile_id"] = profile.id
@@ -394,6 +403,8 @@ def bulk_update_bowlers(
 
         count += 1
 
+    if count > 0 and reset_tournament_id is not None:
+        reset_payouts_if_needed(db, reset_tournament_id, reset_squad_id)
     db.commit()
     return {"updated": count}
 
@@ -435,7 +446,7 @@ def update_bowler(
                 profile.first_name = first_name.strip() or profile.first_name or "Unknown"
                 profile.last_name = last_name.strip() or profile.last_name or "Bowler"
                 profile.usbc_number = desired_usbc
-                profile.updated_at = datetime.utcnow()
+                profile.updated_at = datetime.now(timezone.utc)
                 update_data["bowler_profile_id"] = profile.id
                 update_data["usbc_number"] = profile.usbc_number
                 update_data.pop("full_name", None)
@@ -460,6 +471,8 @@ def update_bowler(
     if result.rowcount == 0:
         raise HTTPException(status_code=404, detail="Bowler not found or access denied")
 
+    reset_payouts_if_needed(db, bowler.tournament_id, bowler.squad_id)
+    db.commit()
     return {"id": bowler_id}
 
 @router.delete("/{bowler_id}")
@@ -471,7 +484,9 @@ def delete_bowler(bowler_id: int, db: Session = Depends(get_db), current_user: m
     if not bowler:
         raise HTTPException(status_code=404, detail="Bowler not found or access denied")
 
-    bowler_id = bowler.id
+    bowler_tournament_id = bowler.tournament_id
+    bowler_squad_id = bowler.squad_id
+    reset_payouts_if_needed(db, bowler_tournament_id, bowler_squad_id)
     # Delete FK-dependent records first
     db.query(models.BracketPayout).filter(models.BracketPayout.player_id == bowler_id).delete()
     db.query(models.BracketWinner).filter(models.BracketWinner.player_id == bowler_id).delete()
@@ -496,8 +511,8 @@ def delete_bowler(bowler_id: int, db: Session = Depends(get_db), current_user: m
             ).first()
             if profile:
                 profile.is_active = False
-                profile.archived_at = datetime.utcnow()
-                profile.updated_at = datetime.utcnow()
+                profile.archived_at = datetime.now(timezone.utc)
+                profile.updated_at = datetime.now(timezone.utc)
 
     db.commit()
     return {"message": "Bowler deleted successfully"}

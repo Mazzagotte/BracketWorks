@@ -56,15 +56,6 @@ export function MobileNav({ isOpen, onClose, firstName, currentPage }: MobileNav
   };
 
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'auto';
-    }
-    return () => { document.body.style.overflow = 'auto'; };
-  }, [isOpen]);
-
-  useEffect(() => {
     if (!isOpen) return;
 
     const routesToPrefetch = new Set<string>([

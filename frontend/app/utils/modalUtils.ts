@@ -4,6 +4,25 @@
  */
 
 let scrollBlockCount = 0
+const BODY_SCROLL_LOCK_CLASS = 'bw-scroll-lock'
+const BODY_TOUCH_LOCK_CLASS = 'bw-touch-lock'
+
+type BodyInteractionOptions = {
+  scrollLocked: boolean
+  touchLocked?: boolean
+}
+
+function applyBodyInteractionClasses({ scrollLocked, touchLocked = false }: BodyInteractionOptions): void {
+  if (typeof document === 'undefined') return
+
+  document.body.classList.toggle(BODY_SCROLL_LOCK_CLASS, scrollLocked)
+  document.body.classList.toggle(BODY_TOUCH_LOCK_CLASS, touchLocked)
+  document.documentElement.classList.toggle(BODY_TOUCH_LOCK_CLASS, touchLocked)
+}
+
+export function setBodyInteractionState(options: BodyInteractionOptions): void {
+  applyBodyInteractionClasses(options)
+}
 /**
  * Safely enable scrolling on document
  * - Resets document.body.overflow to 'auto'
@@ -14,7 +33,7 @@ export function enableScroll(): void {
   try {
     scrollBlockCount = Math.max(0, scrollBlockCount - 1)
     if (scrollBlockCount === 0) {
-      document.body.style.overflow = 'auto'
+      applyBodyInteractionClasses({ scrollLocked: false, touchLocked: false })
     }
   } catch (error) {
     console.error('Failed to enable scroll:', error)
@@ -30,7 +49,7 @@ export function disableScroll(): void {
   if (typeof document === 'undefined') return
   try {
     scrollBlockCount += 1
-    document.body.style.overflow = 'hidden'
+    applyBodyInteractionClasses({ scrollLocked: true, touchLocked: false })
   } catch (error) {
     console.error('Failed to disable scroll:', error)
   }
@@ -53,9 +72,7 @@ export function cleanupModalState(): void {
 export function resetScrollLocks(): void {
   scrollBlockCount = 0
   if (typeof document !== 'undefined') {
-    document.body.style.overflow = 'auto'
-    document.body.style.touchAction = 'pan-y pan-x'
-    ;(document.body.style as any).webkitOverflowScrolling = 'touch'
+    applyBodyInteractionClasses({ scrollLocked: false, touchLocked: false })
   }
 }
 

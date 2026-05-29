@@ -119,12 +119,12 @@ export function PublicViewDemo() {
       {tab === 'brackets' && (
         <div className={styles.pvBracketView}>
           <div className={styles.pvBracketNav}>
-            <button type="button" className={styles.pvBracketNavBtn} disabled>← Prev</button>
+            <button type="button" className={styles.pvBracketNavBtn} disabled>Prev</button>
             <div className={styles.pvBracketNavCenter}>
               <span className={styles.pvBracketNavTitle}>Bracket #1 — 4 Person</span>
               <span className={styles.pvBracketNavCount}>1 of 1</span>
             </div>
-            <button type="button" className={styles.pvBracketNavBtn} disabled>Next →</button>
+            <button type="button" className={styles.pvBracketNavBtn} disabled>Next</button>
           </div>
           <div className={styles.pvWinnerBanner}>
             <span className={styles.pvWinnerLabel}>Winner</span>

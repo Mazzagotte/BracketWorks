@@ -297,7 +297,7 @@
   font-size: 0.875rem;
   color: var(--color-gray-500);
   margin-bottom: 1rem;
-  font-family: var(--font-family-mono);
+  font-family: var(--font-family-primary);
 }
 
 .playerStats {

@@ -189,7 +189,7 @@ function AliveView({
     return rows.filter((row) => row.name.toLowerCase().includes(normalizedSearch))
   }, [rows, normalizedSearch])
 
-  // Always sorted: 1st/2nd desc → G2 desc → G1 desc → name asc
+  // Always sorted: 1st/2nd desc, then G2 desc, then G1 desc, then name asc
   const sortedRows = useMemo(() => {
     return [...filteredRows].sort((a, b) => {
       if (b.won !== a.won) return b.won - a.won
@@ -378,12 +378,19 @@ function BracketView({ group, highlightName, onNameClick }: {
   const winner = bracketWinner(bracket ?? { rounds: [] })
 
   useEffect(() => {
-    if (!canRenderTree) {
+    const resetTreeScale = () => {
       if (treeGridRef.current) {
-        treeGridRef.current.style.transform = ''
-        treeGridRef.current.style.transformOrigin = ''
+        treeGridRef.current.classList.remove(styles.bracketTreeGridScaled)
+        treeGridRef.current.style.removeProperty('--bw-view-tree-scale')
       }
-      if (treeWrapRef.current) treeWrapRef.current.style.height = ''
+      if (treeWrapRef.current) {
+        treeWrapRef.current.classList.remove(styles.bracketTreeWrapScaled)
+        treeWrapRef.current.style.removeProperty('--bw-view-tree-height')
+      }
+    }
+
+    if (!canRenderTree) {
+      resetTreeScale()
       return
     }
 
@@ -394,9 +401,7 @@ function BracketView({ group, highlightName, onNameClick }: {
 
       const isMobile = window.matchMedia('(max-width: 600px)').matches
       if (!isMobile) {
-        grid.style.transform = ''
-        grid.style.transformOrigin = ''
-        wrap.style.height = ''
+        resetTreeScale()
         return
       }
 
@@ -406,9 +411,14 @@ function BracketView({ group, highlightName, onNameClick }: {
       if (!availableWidth || !naturalWidth || !naturalHeight) return
 
       const nextScale = Math.min(1, availableWidth / naturalWidth)
-      grid.style.transform = nextScale < 1 ? `scale(${nextScale})` : ''
-      grid.style.transformOrigin = nextScale < 1 ? 'top left' : ''
-      wrap.style.height = nextScale < 1 ? `${Math.ceil(naturalHeight * nextScale)}px` : ''
+      if (nextScale < 1) {
+        grid.classList.add(styles.bracketTreeGridScaled)
+        wrap.classList.add(styles.bracketTreeWrapScaled)
+        grid.style.setProperty('--bw-view-tree-scale', String(nextScale))
+        wrap.style.setProperty('--bw-view-tree-height', `${Math.ceil(naturalHeight * nextScale)}px`)
+      } else {
+        resetTreeScale()
+      }
     }
 
     const raf = window.requestAnimationFrame(recalcTreeFit)
@@ -417,6 +427,7 @@ function BracketView({ group, highlightName, onNameClick }: {
     return () => {
       window.cancelAnimationFrame(raf)
       window.removeEventListener('resize', recalcTreeFit)
+      resetTreeScale()
     }
   }, [canRenderTree, activeBracket, treeColumns, totalRows])
 
@@ -1088,8 +1099,7 @@ export default function TournamentViewPage() {
     } else {
       const el = document.createElement('textarea')
       el.value = url
-      el.style.position = 'fixed'
-      el.style.opacity = '0'
+      el.className = 'bw-visually-hidden-fixed'
       document.body.appendChild(el)
       el.select()
       try { document.execCommand('copy') } catch {}

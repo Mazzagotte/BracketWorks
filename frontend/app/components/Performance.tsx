@@ -207,8 +207,8 @@ export function VirtualizedList<T>({
   }
 
   useLayoutEffect(() => {
-    if (outerRef.current) outerRef.current.style.height = `${containerHeight}px`;
-    if (innerRef.current) innerRef.current.style.height = `${totalHeight}px`;
+    if (outerRef.current) outerRef.current.style.setProperty('--bw-vlist-outer-height', `${containerHeight}px`);
+    if (innerRef.current) innerRef.current.style.setProperty('--bw-vlist-inner-height', `${totalHeight}px`);
   }, [containerHeight, totalHeight]);
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -218,7 +218,7 @@ export function VirtualizedList<T>({
   return (
     <div
       ref={outerRef}
-      className={`relative overflow-auto ${className}`}
+      className={`bw-vlist-outer relative overflow-auto ${className}`}
       onScroll={handleScroll}
     >
       <div ref={innerRef} className="bw-vlist-inner">
@@ -236,8 +236,8 @@ function VirtualItem({ offsetTop, itemHeight, children }: { offsetTop: number; i
   const ref = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
     if (ref.current) {
-      ref.current.style.top = `${offsetTop}px`;
-      ref.current.style.height = `${itemHeight}px`;
+      ref.current.style.setProperty('--bw-vlist-item-top', `${offsetTop}px`);
+      ref.current.style.setProperty('--bw-vlist-item-height', `${itemHeight}px`);
     }
   }, [offsetTop, itemHeight]);
   return <div ref={ref} className="bw-vlist-item">{children}</div>;

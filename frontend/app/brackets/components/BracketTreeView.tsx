@@ -83,12 +83,17 @@ const BracketTreeViewComponent = ({
 
     if (!container || !card) return
 
+    const resetTreeScale = () => {
+      container.classList.remove(styles.bracketTreeContainerScaled)
+      card.classList.remove(styles.bracketCardScaled)
+      container.style.removeProperty('--bw-tree-min-height')
+      card.style.removeProperty('--bw-tree-scale')
+      card.style.removeProperty('--bw-tree-card-width')
+    }
+
     const applyMobileFit = () => {
-      // Reset before measuring natural size
-      card.style.transform = ''
-      card.style.transformOrigin = ''
-      card.style.width = ''
-      container.style.minHeight = ''
+      // Reset before measuring natural size.
+      resetTreeScale()
 
       if (!isMobile) return
 
@@ -100,10 +105,11 @@ const BracketTreeViewComponent = ({
       if (naturalWidth <= availableWidth) return
 
       const nextScale = Math.max(0.6, Math.min(1, availableWidth / naturalWidth))
-      card.style.transform = `scale(${nextScale})`
-      card.style.transformOrigin = 'top left'
-      card.style.width = `${100 / nextScale}%`
-      container.style.minHeight = `${Math.ceil(naturalHeight * nextScale)}px`
+      container.classList.add(styles.bracketTreeContainerScaled)
+      card.classList.add(styles.bracketCardScaled)
+      container.style.setProperty('--bw-tree-min-height', `${Math.ceil(naturalHeight * nextScale)}px`)
+      card.style.setProperty('--bw-tree-scale', String(nextScale))
+      card.style.setProperty('--bw-tree-card-width', `${100 / nextScale}%`)
     }
 
     applyMobileFit()
@@ -111,12 +117,7 @@ const BracketTreeViewComponent = ({
 
     return () => {
       window.removeEventListener('resize', applyMobileFit)
-      if (container) container.style.minHeight = ''
-      if (card) {
-        card.style.transform = ''
-        card.style.transformOrigin = ''
-        card.style.width = ''
-      }
+      resetTreeScale()
     }
   }, [isMobile, rounds])
 

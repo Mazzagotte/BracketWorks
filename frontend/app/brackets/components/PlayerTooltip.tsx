@@ -103,11 +103,11 @@ export function PlayerTooltip({
     }
   }, [isVisible, position])
 
-  // Apply tooltip position imperatively to avoid style={{ }} prop
+  // Keep tooltip coordinates CSS-driven through custom properties.
   useEffect(() => {
     if (tooltipRef.current) {
-      tooltipRef.current.style.top = `${position.top}px`
-      tooltipRef.current.style.left = `${position.left}px`
+      tooltipRef.current.style.setProperty('--bw-tooltip-top', `${position.top}px`)
+      tooltipRef.current.style.setProperty('--bw-tooltip-left', `${position.left}px`)
     }
   }, [position.top, position.left])
 

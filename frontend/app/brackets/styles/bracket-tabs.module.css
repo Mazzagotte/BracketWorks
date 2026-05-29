@@ -55,13 +55,13 @@
 
 .tab.active {
   color: var(--color-white);
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
+  background: var(--color-primary);
   border-color: transparent;
   box-shadow: 0 2px 8px color-mix(in srgb, var(--color-primary) 30%, transparent);
 }
 
 .tab.active:hover {
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
+  background: var(--color-primary-hover);
 }
 
 .tabLabel {
@@ -94,7 +94,7 @@
   left: 0.5rem;
   width: calc((100% - 1rem) / 3);
   height: calc(100% - 1rem);
-  background: var(--gradient-brand-subtle);
+  background: var(--color-primary);
   border-radius: 8px;
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;

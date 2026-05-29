@@ -1,9 +1,12 @@
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Query
 from fastapi.responses import JSONResponse
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from typing import Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
+import hashlib
+import json
 import logging
 
 from ..deps import SessionLocal, get_db
@@ -31,6 +34,42 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+def _normalized_program_entry_counts(player: models.TournamentPlayer) -> dict[str, int]:
+    raw_entries = player.bracket_entries if isinstance(player.bracket_entries, dict) else {}
+    normalized: dict[str, int] = {}
+    for key, value in raw_entries.items():
+        try:
+            normalized[str(key)] = max(0, int(value or 0))
+        except (TypeError, ValueError):
+            normalized[str(key)] = 0
+
+    # Keep legacy top-level counts in the signature for compatibility.
+    normalized.setdefault("scratch", max(0, int(player.scratch_entries or 0)))
+    normalized.setdefault("handicap", max(0, int(player.handicap_entries or 0)))
+    return dict(sorted(normalized.items()))
+
+
+def _build_entries_signature(players: list[models.TournamentPlayer]) -> str:
+    signature_payload = [
+        {
+            "id": int(player.id),
+            "entries": _normalized_program_entry_counts(player),
+        }
+        for player in sorted(players, key=lambda p: p.id)
+    ]
+    raw = json.dumps(signature_payload, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
+def _current_entries_signature(db: Session, tournament_id: int, squad_id: Optional[int]) -> str:
+    players_query = db.query(models.TournamentPlayer).filter(
+        models.TournamentPlayer.tournament_id == tournament_id
+    )
+    if squad_id:
+        players_query = players_query.filter(models.TournamentPlayer.squad_id == squad_id)
+    return _build_entries_signature(players_query.all())
+
+
 def detect_bye_misconfiguration_errors(brackets_result: dict, bracket_size: int) -> list[str]:
     """Return user-facing errors when strict BYE program settings are likely misconfigured."""
     errors: list[str] = []
@@ -55,19 +94,16 @@ def detect_bye_misconfiguration_errors(brackets_result: dict, bracket_size: int)
     return errors
 
 class MatchScoreUpdate(BaseModel):
-    bracket_id: str  # Format: "scratch_1" or "handicap_2" 
+    bracket_id: str  # Format: "scratch_1" or "handicap_2"
     round_index: int
     match_index: int
     score_a: int
     score_b: int
-    
-    def __init__(self, **data):
-        # Validate scores
-        if 'score_a' in data:
-            data['score_a'] = BracketValidation.validate_score(data['score_a'])
-        if 'score_b' in data:
-            data['score_b'] = BracketValidation.validate_score(data['score_b'])
-        super().__init__(**data)
+
+    @field_validator("score_a", "score_b")
+    @classmethod
+    def validate_scores(cls, v: int) -> int:
+        return BracketValidation.validate_score(v)
 
 @router.get("/preview")
 def preview(bracket_size: int = 8):
@@ -337,6 +373,10 @@ def generate_tournament_brackets_endpoint(
             experimental_attempts=selected_attempts,
         )
 
+        # Persist a deterministic signature of per-player bracket entry counts
+        # so we can detect true entry changes later (not just player count changes).
+        brackets_result["entries_signature"] = _build_entries_signature(bowlers)
+
         bye_config_errors = detect_bye_misconfiguration_errors(
             brackets_result,
             bracket_settings.bracket_size,
@@ -363,7 +403,7 @@ def generate_tournament_brackets_endpoint(
         
         # Save the generated brackets to database
         try:
-            save_brackets_simple(db, tournament_id, squad_id, brackets_result)
+            save_brackets_simple(db, tournament_id, squad_id, brackets_result, player_count=len(bowlers))
             logger.info(f"Successfully saved brackets for tournament {tournament_id}, squad {squad_id}")
         except Exception as save_error:
             # Log the save error but don't fail the generation
@@ -459,7 +499,44 @@ def load_tournament_brackets(
         brackets_data = load_brackets_simple(db, tournament_id, squad_id, refresh_scores=refresh_scores)
         if not brackets_data:
             raise HTTPException(status_code=404, detail="No brackets found for this tournament/squad")
-        
+
+        # Detect entry mismatch since last generation.
+        # Prefer the entries_signature (captures entry-count edits), with a
+        # fallback to legacy player-count comparison for older snapshots.
+        player_count_at_generation = brackets_data.get('player_count_at_generation')
+        entries_signature_at_generation = brackets_data.get('entries_signature')
+        current_entries_signature = _current_entries_signature(db, tournament_id, squad_id)
+
+        # Backfill legacy snapshots once so future entry edits are detectable.
+        if not entries_signature_at_generation:
+            entries_signature_at_generation = current_entries_signature
+            brackets_data['entries_signature'] = entries_signature_at_generation
+            snapshot = db.query(models.SimpleBracket).filter(
+                models.SimpleBracket.tournament_id == tournament_id,
+                models.SimpleBracket.squad_id == squad_id if squad_id else models.SimpleBracket.squad_id.is_(None),
+                models.SimpleBracket.is_active == True,
+            ).first()
+            if snapshot and isinstance(snapshot.bracket_data, dict):
+                payload = dict(snapshot.bracket_data)
+                payload['entries_signature'] = entries_signature_at_generation
+                snapshot.bracket_data = payload
+                db.commit()
+
+        current_count_q = db.query(func.count(models.TournamentPlayer.id)).filter(
+            models.TournamentPlayer.tournament_id == tournament_id
+        )
+        if squad_id:
+            current_count_q = current_count_q.filter(models.TournamentPlayer.squad_id == squad_id)
+        current_player_count = current_count_q.scalar() or 0
+
+        if entries_signature_at_generation:
+            entries_mismatch = current_entries_signature != entries_signature_at_generation
+        else:
+            entries_mismatch = (
+                player_count_at_generation is not None
+                and current_player_count != player_count_at_generation
+            )
+
         logger.info(f"Loaded brackets for tournament {tournament_id} with refresh_scores={refresh_scores}")
         
         return {
@@ -467,6 +544,10 @@ def load_tournament_brackets(
             "tournament_name": tournament.name,
             "squad_id": squad_id,
             "bracket_size": brackets_data.get('bracket_size', 8),
+            "entries_mismatch": entries_mismatch,
+            "player_count_at_generation": player_count_at_generation,
+            "current_player_count": current_player_count,
+            "entries_signature_at_generation": entries_signature_at_generation,
             **brackets_data
         }
         
@@ -510,3 +591,65 @@ def check_brackets_exist(
         return {"exists": exists}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error checking brackets: {str(e)}")
+
+
+@router.get("/status/{tournament_id}")
+def bracket_status(
+    tournament_id: int,
+    squad_id: Optional[int] = None,
+    db: Session = Depends(get_db),
+):
+    """Lightweight bracket status check: existence and entry mismatch."""
+    try:
+        snapshot = db.query(models.SimpleBracket).filter(
+            models.SimpleBracket.tournament_id == tournament_id,
+            models.SimpleBracket.squad_id == squad_id if squad_id else models.SimpleBracket.squad_id.is_(None),
+            models.SimpleBracket.is_active == True,
+        ).first()
+
+        if not snapshot:
+            return {
+                "has_brackets": False,
+                "entries_mismatch": False,
+                "current_player_count": 0,
+                "player_count_at_generation": None,
+            }
+
+        count_q = db.query(func.count(models.TournamentPlayer.id)).filter(
+            models.TournamentPlayer.tournament_id == tournament_id
+        )
+        if squad_id:
+            count_q = count_q.filter(models.TournamentPlayer.squad_id == squad_id)
+        current_player_count = count_q.scalar() or 0
+
+        stored_entries_signature = None
+        if isinstance(snapshot.bracket_data, dict):
+            stored_entries_signature = snapshot.bracket_data.get("entries_signature")
+        current_entries_signature = _current_entries_signature(db, tournament_id, squad_id)
+
+        # Backfill missing signature for legacy snapshots.
+        if not stored_entries_signature:
+            stored_entries_signature = current_entries_signature
+            if isinstance(snapshot.bracket_data, dict):
+                payload = dict(snapshot.bracket_data)
+                payload['entries_signature'] = stored_entries_signature
+                snapshot.bracket_data = payload
+                db.commit()
+
+        if stored_entries_signature:
+            entries_mismatch = current_entries_signature != stored_entries_signature
+        else:
+            entries_mismatch = (
+                snapshot.player_count is not None
+                and current_player_count != snapshot.player_count
+            )
+
+        return {
+            "has_brackets": True,
+            "entries_mismatch": entries_mismatch,
+            "current_player_count": current_player_count,
+            "player_count_at_generation": snapshot.player_count,
+            "entries_signature_at_generation": stored_entries_signature,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error checking bracket status: {str(e)}")

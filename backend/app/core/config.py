@@ -1,71 +1,69 @@
 
 from pathlib import Path
 
-from dotenv import load_dotenv
-from pydantic import BaseModel
-import os
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-load_dotenv(Path(__file__).resolve().parents[3] / ".env", override=False)
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=str(Path(__file__).resolve().parents[3] / ".env"),
+        env_file_encoding="utf-8",
+        case_sensitive=True,
+        extra="ignore",
+    )
 
-class Settings(BaseModel):
     # Environment
-    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
-    DEBUG: bool = os.getenv("DEBUG", "true").lower() == "true"
-    
+    ENVIRONMENT: str = "development"
+    DEBUG: bool = True
+
     # API Settings
-    CORS_ORIGINS: str = os.getenv("CORS_ORIGINS", "http://localhost:3000")
+    CORS_ORIGINS: str = "http://localhost:3000"
     API_V1_STR: str = "/api/v1"
     PROJECT_NAME: str = "BracketWorks API"
-    
+
     # Database
-    DATABASE_URL: str = os.getenv(
-        "DATABASE_URL", 
-        "postgresql://bracketworks:bracketworks@localhost:5432/bracketworks"
-    )
-    DATABASE_POOL_SIZE: int = int(os.getenv("DATABASE_POOL_SIZE", "20"))  # Increased for dev
-    DATABASE_MAX_OVERFLOW: int = int(os.getenv("DATABASE_MAX_OVERFLOW", "30"))  # Increased for dev
-    
+    DATABASE_URL: str = "postgresql://bracketworks:bracketworks@localhost:5432/bracketworks"
+    DATABASE_POOL_SIZE: int = 20
+    DATABASE_MAX_OVERFLOW: int = 30
+
     # Security
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "change-me-in-production")
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "120"))
-    REFRESH_TOKEN_EXPIRE_DAYS: int = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "30"))
-    LOGIN_RATE_LIMIT_WINDOW_MINUTES: int = int(os.getenv("LOGIN_RATE_LIMIT_WINDOW_MINUTES", "15"))
-    LOGIN_RATE_LIMIT_ACCOUNT_THRESHOLD: int = int(os.getenv("LOGIN_RATE_LIMIT_ACCOUNT_THRESHOLD", "5"))
-    LOGIN_RATE_LIMIT_IP_HARD_CAP: int = int(os.getenv("LOGIN_RATE_LIMIT_IP_HARD_CAP", "25"))
-    LOGIN_RATE_LIMIT_BASE_BLOCK_SECONDS: int = int(os.getenv("LOGIN_RATE_LIMIT_BASE_BLOCK_SECONDS", "30"))
-    LOGIN_RATE_LIMIT_MAX_BLOCK_SECONDS: int = int(os.getenv("LOGIN_RATE_LIMIT_MAX_BLOCK_SECONDS", "900"))
-    
+    SECRET_KEY: str = "change-me-in-production"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 120
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 30
+    LOGIN_RATE_LIMIT_WINDOW_MINUTES: int = 15
+    LOGIN_RATE_LIMIT_ACCOUNT_THRESHOLD: int = 5
+    LOGIN_RATE_LIMIT_IP_HARD_CAP: int = 25
+    LOGIN_RATE_LIMIT_BASE_BLOCK_SECONDS: int = 30
+    LOGIN_RATE_LIMIT_MAX_BLOCK_SECONDS: int = 900
+
     # Email Settings
-    RESEND_API_KEY: str = os.getenv("RESEND_API_KEY", "")
-    FROM_EMAIL: str = os.getenv("FROM_EMAIL", "no-reply@bracketworks.app")
-    FROM_NAME: str = os.getenv("FROM_NAME", "BracketWorks")
-    FRONTEND_URL: str = os.getenv("FRONTEND_URL", "https://bracketworks.app")
-    
-    # Caching
-    CACHE_TTL_SECONDS: int = int(os.getenv("CACHE_TTL_SECONDS", "300"))
-    
+    RESEND_API_KEY: str = ""
+    FROM_EMAIL: str = "no-reply@bracketworks.app"
+    FROM_NAME: str = "BracketWorks"
+    FRONTEND_URL: str = "https://bracketworks.app"
+
     # Logging
-    LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
+    LOG_LEVEL: str = "INFO"
 
     # Distributed rate limiting
-    REDIS_URL: str = os.getenv("REDIS_URL", "")
-    RATE_LIMIT_KEY_PREFIX: str = os.getenv("RATE_LIMIT_KEY_PREFIX", "bracketworks:ratelimit")
-    RATE_LIMIT_LOGIN_PER_MINUTE: int = int(os.getenv("RATE_LIMIT_LOGIN_PER_MINUTE", "10"))
-    RATE_LIMIT_PASSWORD_RESET_PER_MINUTE: int = int(os.getenv("RATE_LIMIT_PASSWORD_RESET_PER_MINUTE", "6"))
-    RATE_LIMIT_PUBLIC_PER_MINUTE: int = int(os.getenv("RATE_LIMIT_PUBLIC_PER_MINUTE", "120"))
-    RATE_LIMIT_BRACKET_GENERATE_PER_MINUTE: int = int(os.getenv("RATE_LIMIT_BRACKET_GENERATE_PER_MINUTE", "20"))
+    REDIS_URL: str = ""
+    RATE_LIMIT_KEY_PREFIX: str = "bracketworks:ratelimit"
+    RATE_LIMIT_LOGIN_PER_MINUTE: int = 10
+    RATE_LIMIT_PASSWORD_RESET_PER_MINUTE: int = 6
+    RATE_LIMIT_PUBLIC_PER_MINUTE: int = 120
+    RATE_LIMIT_BRACKET_GENERATE_PER_MINUTE: int = 20
 
     # Experimental bracket optimizer
-    BRACKETS_EXPERIMENTAL_ENABLED: bool = os.getenv("BRACKETS_EXPERIMENTAL_ENABLED", "true").lower() == "true"
-    BRACKETS_EXPERIMENTAL_ATTEMPTS: int = int(os.getenv("BRACKETS_EXPERIMENTAL_ATTEMPTS", "64"))
-    
+    BRACKETS_EXPERIMENTAL_ENABLED: bool = True
+    BRACKETS_EXPERIMENTAL_ATTEMPTS: int = 64
+
     @property
     def is_production(self) -> bool:
         return self.ENVIRONMENT == "production"
-    
+
     @property
     def is_development(self) -> bool:
         return self.ENVIRONMENT == "development"
+
 
 settings = Settings()

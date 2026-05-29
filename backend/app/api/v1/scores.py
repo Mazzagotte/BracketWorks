@@ -9,6 +9,7 @@ import logging
 from app.api.deps import get_current_user, get_db
 from app.core.models import PlayerScore, TournamentBracketSettings, TournamentPlayer
 from app.core.idempotency import IdempotencyReplay, begin_request, complete_request, fail_request
+from app.services.payouts import reset_payouts_if_needed
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -172,6 +173,9 @@ def create_or_update_score(
         db.commit()
         score = result.scalars().one()
         logger.info(f"Upserted score for player {player.full_name}: G1={score.game1_total}, G2={score.game2_total}, G3={score.game3_total}")
+
+        reset_payouts_if_needed(db, score.tournament_id, score.squad_id)
+        db.commit()
 
         if idempotency_record:
             response_body = {

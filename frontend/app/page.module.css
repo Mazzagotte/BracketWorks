@@ -112,7 +112,7 @@
 }
 
 .navBtnPrimary {
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
+  background: var(--color-primary);
   color: var(--color-white);
   box-shadow: var(--shadow-brand-sm);
 }
@@ -232,9 +232,21 @@
 }
 
 .proofIcon {
-  font-size: 16px;
-  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 20px;
+  padding: 0 7px;
   margin-bottom: 4px;
+  border-radius: 999px;
+  border: 1px solid var(--opacity-white-20);
+  background: var(--opacity-white-08);
+  color: var(--color-primary);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1;
 }
 
 .proofStat {
@@ -614,7 +626,7 @@
   font-size: 12px;
   font-weight: 700;
   color: #fff;
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
+  background: var(--color-primary);
   border-radius: 8px;
   padding: 6px 12px;
   white-space: nowrap;
@@ -641,7 +653,7 @@
   background: transparent;
   border: 1px solid transparent;
   border-radius: 8px;
-  font-family: inherit;
+  font-family: var(--font-family-primary);
   text-align: center;
   transition: color 0.15s ease, background 0.15s ease;
 }
@@ -652,7 +664,7 @@
 
 .pvTabActive {
   color: var(--color-white);
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
+  background: var(--color-primary);
   border-color: var(--color-primary);
   font-weight: 700;
 }
@@ -898,7 +910,7 @@
   min-width: 60px;
   border: 1px solid rgba(255, 122, 0, 0.3);
   border-radius: 10px;
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
+  background: var(--color-primary);
   color: #fff;
   font-size: 12px;
   font-weight: 700;
@@ -906,7 +918,7 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-family: inherit;
+  font-family: var(--font-family-primary);
 }
 
 .pvBracketNavBtn:disabled {
@@ -1182,11 +1194,21 @@
 }
 
 .publicViewList li::before {
-  content: '✓';
+  content: 'READY';
   flex-shrink: 0;
-  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  border: 1px solid var(--opacity-white-20);
+  background: var(--opacity-white-06);
   color: var(--color-primary);
-  font-size: 13px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1;
   margin-top: 2px;
 }
 
@@ -1259,9 +1281,20 @@
 }
 
 .featureIcon {
-  font-size: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid var(--opacity-white-20);
+  background: var(--opacity-white-08);
+  color: var(--color-primary);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   line-height: 1;
-  display: block;
   margin-bottom: 14px;
 }
 
@@ -1454,7 +1487,20 @@
 }
 
 .benefitIcon {
-  font-size: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  width: fit-content;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid var(--opacity-white-20);
+  background: var(--opacity-white-08);
+  color: var(--color-primary);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   line-height: 1;
 }
 

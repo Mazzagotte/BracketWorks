@@ -9,6 +9,85 @@
 }
 
 /* ========================================
+   Entries Mismatch Warning Banner
+   ======================================== */
+
+.mismatchBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.95rem 1.1rem;
+  margin-bottom: 1.25rem;
+  background: var(--color-error-bg-light);
+  border: 1px solid var(--color-error-border-light);
+  border-left: 4px solid var(--color-error);
+  border-radius: 10px;
+  color: var(--color-text-primary);
+  box-shadow: 0 4px 14px var(--opacity-black-08);
+}
+
+.mismatchBannerText {
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.42;
+}
+
+.mismatchBannerText::before {
+  content: 'Important';
+  display: inline-block;
+  margin-right: 10px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--color-error);
+  background: var(--color-error-bg-light);
+  border: 1px solid var(--color-error-border-light);
+}
+
+.mismatchBannerButton {
+  border: none;
+  border-radius: 10px;
+  min-height: 42px;
+  padding: 0 18px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--color-white);
+  background: var(--color-error);
+  box-shadow: 0 4px 10px var(--opacity-black-18);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.mismatchBannerButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px var(--opacity-black-25);
+}
+
+.mismatchBannerButton:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 640px) {
+  .mismatchBanner {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 0.9rem;
+  }
+
+  .mismatchBannerText::before {
+    margin-bottom: 6px;
+  }
+
+  .mismatchBannerButton {
+    width: 100%;
+  }
+}
+
+/* ========================================
    Combined Control Panel (tabs + search + nav)
    ======================================== */
 
@@ -215,7 +294,7 @@
 
 .dashboardBtn {
   display: inline-block;
-  background: var(--gradient-brand);
+  background: var(--color-primary);
   color: var(--color-white);
   border: none;
   border-radius: 12px;
@@ -335,7 +414,7 @@
 }
 
 .navBtn:not(:disabled) {
-  background: var(--gradient-brand);
+  background: var(--color-primary);
   color: var(--color-white);
   cursor: pointer;
   box-shadow: var(--shadow-brand-sm);
@@ -347,7 +426,7 @@
 }
 
 .navBtn:disabled {
-  background: linear-gradient(135deg, var(--color-gray-100) 0%, var(--color-gray-200) 100%);
+  background: var(--color-gray-100);
   color: var(--color-gray-400);
   cursor: not-allowed;
 }
@@ -377,10 +456,7 @@
 }
 
 .navTitleGradient {
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--color-primary);
 }
 
 .navTitleOf {

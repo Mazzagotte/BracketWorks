@@ -15,6 +15,10 @@
   -webkit-overflow-scrolling: touch;
 }
 
+.bracketTreeContainerScaled {
+  min-height: var(--bw-tree-min-height, auto);
+}
+
 .emptyState {
   display: flex;
   align-items: center;
@@ -54,6 +58,12 @@
   padding: 1.25rem 1.5rem;
   max-width: none;
   width: 100%;
+}
+
+.bracketCardScaled {
+  transform: scale(var(--bw-tree-scale, 1));
+  transform-origin: top left;
+  width: var(--bw-tree-card-width, 100%);
 }
 
 /* ===================================
@@ -99,12 +109,10 @@
   font-size: 0.875rem;
   font-weight: 700;
   color: var(--color-white);
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
+  background: var(--color-primary);
   box-shadow: 0 1px 4px var(--color-border-hover);
   flex-shrink: 0;
 }
-
-/* All round badges use the same orange gradient */
 
 .roundInfo {
   display: flex;
@@ -142,12 +150,12 @@
 }
 
 .progressMeter::-webkit-progress-value {
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
+  background: var(--color-primary);
   border-radius: 3px;
 }
 
 .progressMeter::-moz-progress-bar {
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
+  background: var(--color-primary);
   border-radius: 3px;
 }
 
@@ -228,7 +236,7 @@
   padding: 2px 6px;
   border-radius: 4px;
   cursor: help;
-  background: var(--gradient-purple-tie);
+  background: var(--color-secondary);
   color: var(--color-white);
   text-shadow: 0 1px 2px var(--opacity-black-15);
   box-shadow: 0 1px 4px var(--opacity-black-30);
@@ -241,7 +249,7 @@
   padding: 2px 6px;
   border-radius: 4px;
   cursor: help;
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
+  background: var(--color-primary);
   color: var(--color-white);
   text-shadow: 0 1px 2px var(--opacity-black-15);
   box-shadow: 0 1px 4px var(--color-border-hover);
@@ -251,12 +259,12 @@
 .matchCard.finals {
   border: 2px solid var(--color-brand-gold-light) !important;
   border-top: 4px solid var(--color-brand-gold-light) !important;
-  background: linear-gradient(to bottom, var(--color-warning-tint) 0%, var(--color-brand-ivory-soft) 100%);
+  background: var(--color-warning-tint);
   box-shadow: 0 4px 20px var(--color-border-light), 0 0 0 1px color-mix(in srgb, var(--color-brand-gold-light) 30%, transparent);
 }
 
 .matchCard.finals .matchLabel {
-  background: linear-gradient(135deg, var(--color-border-light) 0%, var(--color-warning-tint) 100%);
+  background: var(--color-border-light);
   color: var(--color-brand-gold-dark);
   border-bottom-color: var(--color-border-light);
 }
@@ -374,14 +382,14 @@
 }
 
 .player.highlightedPlayer {
-  background: linear-gradient(to right, var(--color-border-light) 0%, var(--color-brand-ivory-soft) 100%);
+  background: var(--color-border-light);
   font-weight: 700;
   border-left: 4px solid var(--color-primary);
   padding-left: 8px;
 }
 
 .player.winner {
-  background: linear-gradient(to right, var(--color-green-light) 0%, var(--color-brand-ivory-soft) 100%);
+  background: var(--color-green-light);
   font-weight: 600;
   border-left: 4px solid var(--color-success);
   padding-left: 8px;

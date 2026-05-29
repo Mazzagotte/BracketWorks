@@ -796,85 +796,12 @@ export default function PayoutsPage() {
           <div class="stat-value">${value}</div>
         </div>`).join('')
 
-      const cssStr = (s: string) => s.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
-
       const html = `<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
   <title>Payout Distribution - ${esc(tournamentName)}</title>
-  <style>
-    :root {
-      --bw-orange: #f07820;
-      --bw-orange-dark: #b45309;
-      --bw-ink: #1f2937;
-      --bw-muted: #6b7280;
-      --bw-line: #e5e7eb;
-      --bw-soft: #f8fafc;
-      --bw-success: #166534;
-    }
-    * { box-sizing: border-box; }
-    body { margin: 0; background: #f3f4f6; color: var(--bw-ink); font-family: Arial, Helvetica, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .page { width: 8.5in; min-height: 11in; margin: 24px auto; padding: 0.55in; background: #fff; box-shadow: 0 12px 36px rgba(15,23,42,0.12); position: relative; }
-    .brand-header { display: grid; grid-template-columns: 1fr auto; gap: 32px; align-items: center; padding-bottom: 20px; border-bottom: 4px solid var(--bw-orange); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .brand-left { display: flex; align-items: center; gap: 14px; }
-    .logo { width: 90px; height: auto; }
-    .brand-name { margin: 0; font-size: 24px; font-weight: 900; letter-spacing: -0.5px; }
-    .brand-tagline { margin: 4px 0 0; color: var(--bw-orange-dark); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.7px; }
-    .report-title { text-align: right; }
-    .report-title h1 { margin: 0; font-size: 26px; font-weight: 900; letter-spacing: -0.8px; }
-    .report-title p { margin: 5px 0 0; color: var(--bw-muted); font-size: 11px; }
-    .event-band { margin-top: 18px; padding: 13px 16px 0; border: 1px solid var(--bw-line); border-radius: 12px 12px 0 0; border-bottom: none; background: linear-gradient(90deg, rgba(240,120,32,0.08), rgba(240,120,32,0.02)), var(--bw-soft); display: grid; grid-template-columns: 1fr auto; gap: 18px; align-items: flex-start; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .event-band-inner { padding-bottom: 13px; }
-    .event-name { margin: 0; font-size: 17px; font-weight: 900; letter-spacing: -0.3px; }
-    .event-meta { margin: 3px 0 0; color: var(--bw-muted); font-size: 11.5px; }
-    .generated { color: var(--bw-muted); font-size: 10.5px; text-align: right; white-space: nowrap; line-height: 1.5; }
-    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 10px; margin-top: 14px; }
-    .stat-card { padding: 10px 13px; border: 1px solid var(--bw-line); border-radius: 12px; background: #fff; }
-    .stat-label { color: var(--bw-muted); font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.7px; }
-    .stat-value { margin-top: 3px; font-size: 18px; font-weight: 900; letter-spacing: -0.4px; }
-    table { width: 100%; margin-top: 16px; border-collapse: collapse; border-radius: 12px; border: 1px solid var(--bw-line); overflow: hidden; }
-    thead th { background: var(--bw-orange); color: #fff; font-size: 10px; text-transform: uppercase; letter-spacing: 0.65px; padding: 10px; text-align: left; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    thead th.amount, tbody td.amount { text-align: center; }
-    tbody td { padding: 12px 10px; border-bottom: 1px solid var(--bw-line); font-size: 12.5px; vertical-align: middle; }
-    tbody tr:nth-child(even) td { background: #fafafa; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    tbody tr:last-child td { border-bottom: none; }
-    .rank { width: 38px; color: var(--bw-muted); text-align: center; font-size: 11px; }
-    .player { font-weight: 800; }
-    .amount { width: 76px; font-weight: 700; }
-    .signature-cell { width: 220px; }
-    .empty-cell { color: #d1d5db; }
-    .signature-line { display: block; width: 100%; height: 22px; border-bottom: 1.5px solid #9ca3af; }
-    .paidStamp { color: var(--bw-success); font-weight: 800; font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .isPaidRow td { color: #9ca3af; }
-    .twoCol { display: flex; gap: 18px; align-items: flex-start; }
-    .twoCol .col { flex: 1; min-width: 0; }
-    .twoCol table { margin-top: 0; }
-    .details-band { border: 1px solid var(--bw-line); border-radius: 0 0 12px 12px; background: #fff; display: grid; grid-template-columns: repeat(3, 1fr); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .detail-row { display: flex; flex-direction: column; padding: 9px 16px; border-right: 1px solid var(--bw-line); border-top: 1px solid var(--bw-line); }
-    .detail-row:last-child { border-right: none; }
-    .detail-full { grid-column: 1 / -1; border-right: none; }
-    .detail-label { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; color: var(--bw-muted); }
-    .detail-value { margin-top: 3px; font-size: 13px; font-weight: 700; color: var(--bw-ink); }
-    .commissioner { margin-top: 32px; padding: 20px 20px 32px; border: 1px solid var(--bw-line); border-radius: 12px; break-inside: avoid; }
-    .commissioner-title { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.7px; color: var(--bw-orange-dark); margin: 0 0 18px; }
-    .commissioner-fields { display: grid; grid-template-columns: 1fr 200px; gap: 36px; }
-    .field-label { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; color: var(--bw-muted); margin-bottom: 12px; }
-    .field-line { border-bottom: 1.5px solid #9ca3af; height: 42px; }
-    .footer { position: absolute; left: 0.55in; right: 0.55in; bottom: 0.42in; padding-top: 10px; border-top: 1px solid var(--bw-line); color: var(--bw-muted); font-size: 10px; display: flex; justify-content: space-between; gap: 16px; }
-    .footer strong { color: var(--bw-ink); }
-    @page { size: letter; margin: 0.5in; }
-    @media print {
-      body { background: white; }
-      .page { width: auto; min-height: auto; margin: 0; padding: 0; box-shadow: none; }
-      .footer { position: static; margin-top: 24px; flex-direction: column; gap: 6px; }
-      table { font-size: 11px; }
-      tbody td { padding: 8px 8px; }
-      .stats { margin-top: 10px; }
-      .stat-card { padding: 7px 10px; }
-      .stat-value { font-size: 15px; }
-    }
-  </style>
+  <link rel="stylesheet" href="/payouts-print.css" />
 </head>
 <body>
   <main class="page">
@@ -923,12 +850,9 @@ export default function PayoutsPage() {
 </html>`
 
       const iframe = document.createElement('iframe')
-    iframe.style.position = 'fixed'
-    iframe.style.width = '0'
-    iframe.style.height = '0'
-    iframe.style.border = 'none'
-    iframe.style.opacity = '0'
-    document.body.appendChild(iframe)
+      iframe.setAttribute('hidden', 'true')
+      iframe.setAttribute('aria-hidden', 'true')
+      document.body.appendChild(iframe)
 
       const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document
       if (!iframeDoc) {

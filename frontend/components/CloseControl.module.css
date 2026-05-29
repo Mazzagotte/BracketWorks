@@ -10,7 +10,7 @@
   padding: 0;
   border: 1px solid var(--color-border-light);
   border-radius: 10px;
-  background: var(--gradient-brand);
+  background: var(--color-primary);
   color: var(--color-white);
   box-shadow: 0 10px 22px var(--color-border-hover), 0 2px 5px var(--opacity-black-10);
   cursor: pointer;

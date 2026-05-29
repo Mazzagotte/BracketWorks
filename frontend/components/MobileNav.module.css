@@ -60,7 +60,7 @@
   padding: 0 16px;
   height: 52px;
   color: var(--color-white);
-  background: linear-gradient(135deg, var(--color-dark-lighter) 0%, var(--color-dark-elevated) 60%, var(--color-dark-base) 100%);
+  background: var(--color-dark-elevated);
   text-decoration: none;
   font-size: 16px;
   font-weight: 600;
@@ -73,7 +73,7 @@
 }
 
 .linkActive {
-  background: var(--gradient-brand);
+  background: var(--color-primary);
   color: var(--color-white);
 }
 
@@ -94,7 +94,7 @@
   justify-content: center;
   text-align: center;
   text-decoration: none;
-  background: linear-gradient(135deg, var(--color-dark-lighter) 0%, var(--color-dark-elevated) 60%, var(--color-dark-base) 100%);
+  background: var(--color-dark-elevated);
   color: var(--color-white);
   border: none;
   border-radius: 12px;
@@ -108,7 +108,7 @@
 }
 
 .settingsBtnActive {
-  background: linear-gradient(135deg, var(--color-dark-accent) 0%, var(--color-dark-lighter) 60%, var(--color-dark-elevated) 100%);
+  background: var(--color-dark-accent);
 }
 
 .logoutBtn {
@@ -119,7 +119,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
+  background: var(--color-primary);
   color: var(--color-white);
   border: none;
   border-radius: 12px;

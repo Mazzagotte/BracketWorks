@@ -30,6 +30,8 @@ export default function BracketsPage() {
   const [bracketGenerationPromise, setBracketGenerationPromise] = useState<Promise<BracketPreview> | null>(null)
   const [isExplainModalOpen, setIsExplainModalOpen] = useState(false)
   const [deleteBracketsConfirmOpen, setDeleteBracketsConfirmOpen] = useState(false)
+  const [entriesMismatchPromptOpen, setEntriesMismatchPromptOpen] = useState(false)
+  const [entriesMismatchPromptDismissedKey, setEntriesMismatchPromptDismissedKey] = useState<string | null>(null)
   const [isInitializing, setIsInitializing] = useState(true)
   
   // State for bracket display
@@ -53,6 +55,10 @@ export default function BracketsPage() {
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null)
   const [selectedSquad, setSelectedSquad] = useState<Squad | null>(null)
   const [selectedBracketIndex, setSelectedBracketIndex] = useState<number>(0) // Which bracket to display (0-based)
+  const entriesMismatchPromptKey = useMemo(
+    () => (selectedTournament && selectedSquad ? `${selectedTournament.id}:${selectedSquad.id}` : null),
+    [selectedTournament, selectedSquad],
+  )
 
   // Detect mobile viewport with debouncing to reduce unnecessary re-renders
   useEffect(() => {
@@ -222,7 +228,9 @@ export default function BracketsPage() {
             loadingRef.current = false;
             return;
           }
-          setLoadedBrackets(brackets);
+          if (brackets !== null) {
+            setLoadedBrackets(brackets);
+          }
           lastLoadedRef.current = { tournamentId: selectedTournament.id, squadId: selectedSquad.id };
           loadingRef.current = false;
         })
@@ -239,7 +247,7 @@ export default function BracketsPage() {
     // Auto-refresh interval - 15s when visible, 60s when hidden
     const getRefreshInterval = () => document.hidden ? 60000 : 15000;
     let intervalId = setInterval(() => {
-      if (isMounted) loadBrackets(true);
+      if (isMounted) loadBrackets(false);
     }, getRefreshInterval());
 
     // Handle visibility changes - adjust interval and reload if becoming visible
@@ -247,10 +255,10 @@ export default function BracketsPage() {
       if (!isMounted) return;
       clearInterval(intervalId);
       if (!document.hidden) {
-        loadBrackets(true); // Reload when becoming visible
+        loadBrackets(false); // Reload when becoming visible
       }
       intervalId = setInterval(() => {
-        if (isMounted) loadBrackets(true);
+        if (isMounted) loadBrackets(false);
       }, getRefreshInterval());
     };
 
@@ -258,7 +266,7 @@ export default function BracketsPage() {
     const handleFocus = () => {
       if (!isMounted) return;
       if (!document.hidden) {
-        loadBrackets(true);
+        loadBrackets(false);
       }
     };
 
@@ -438,6 +446,19 @@ export default function BracketsPage() {
   }, [searchFilteredBracketItems.length, selectedBracketIndex])
 
   useEffect(() => {
+    if (!entriesMismatchPromptKey || !loadedBrackets?.entries_mismatch) {
+      setEntriesMismatchPromptOpen(false)
+      return
+    }
+
+    if (entriesMismatchPromptDismissedKey === entriesMismatchPromptKey) {
+      return
+    }
+
+    setEntriesMismatchPromptOpen(true)
+  }, [loadedBrackets?.entries_mismatch, entriesMismatchPromptDismissedKey, entriesMismatchPromptKey])
+
+  useEffect(() => {
     if (!isMobile || mobileOpenBracketIndex === null) return
     if (mobileOpenBracketIndex >= searchFilteredBracketItems.length) {
       setMobileOpenBracketIndex(null)
@@ -545,6 +566,26 @@ export default function BracketsPage() {
         </Suspense>
       )}
 
+      <ActionConfirmDialog
+        open={entriesMismatchPromptOpen}
+        title="Brackets Are Out of Date"
+        message="Brackets out of date: Entries have changed. Regenerate brackets to ensure accurate results and payouts."
+        confirmLabel="Regenerate Brackets"
+        cancelLabel="Dismiss"
+        showCloseButton={false}
+        onCancel={() => {
+          setEntriesMismatchPromptOpen(false)
+          if (entriesMismatchPromptKey) {
+            setEntriesMismatchPromptDismissedKey(entriesMismatchPromptKey)
+          }
+        }}
+        onConfirm={() => {
+          setEntriesMismatchPromptOpen(false)
+          setEntriesMismatchPromptDismissedKey(null)
+          handleGenerateBrackets()
+        }}
+      />
+
       {/* Bracket content */}
       <div className={styles.pageContainer}>
         {/* Loading State */}
@@ -584,6 +625,17 @@ export default function BracketsPage() {
           />
         ) : (
           <>
+            {/* Entries mismatch warning */}
+            {loadedBrackets?.entries_mismatch && (
+              <div className={styles.mismatchBanner}>
+                <span className={styles.mismatchBannerText}>
+                  Brackets out of date: Entries have changed. Regenerate brackets to ensure accurate results and payouts.
+                </span>
+                <button onClick={handleGenerateBrackets} className={`${styles.mismatchBannerButton} ds-btn ds-btn-sm`}>
+                  Regenerate Brackets
+                </button>
+              </div>
+            )}
             {/* Combined Control Panel: Search + Tabs + Navigator */}
             <div className={styles.controlPanel}>
               {/* Search and Filter */}

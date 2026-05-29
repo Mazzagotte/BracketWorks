@@ -51,6 +51,7 @@ export default function ScoresPage() {
 
   const router = useRouter()
   const [showCalcPayoutsConfirm, setShowCalcPayoutsConfirm] = useState(false)
+  const [showBracketMismatchWarning, setShowBracketMismatchWarning] = useState(false)
   const [isScoresGuideOpen, setIsScoresGuideOpen] = useState(false)
   const [missingScoreNames, setMissingScoreNames] = useState<string[]>([])
   const [clearGameConfirm, setClearGameConfirm] = useState<2 | 3 | null>(null)
@@ -270,7 +271,7 @@ export default function ScoresPage() {
     paginationHook.goToPage(1)
   }, [searchFirstName, searchLastName, isMobile]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Stable reference for auto-save â€” only changes when scores actually change
+  // Stable reference for auto-save; only changes when scores actually change.
   const autoSaveData = useMemo(
     () => ({ scores: players.map(player => player.scores).filter(Boolean) }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -384,7 +385,7 @@ export default function ScoresPage() {
       }
     })
 
-    // Single state update â€” no cascade
+    // Single state update; no cascade.
     setPlayers(prev => prev.map(player => {
       const s = scoreMap[player.id]
       if (!s) return player
@@ -401,7 +402,7 @@ export default function ScoresPage() {
       }
     }))
 
-    // Persist to backend â€” fire-and-forget each save without touching React state
+    // Persist to backend; fire-and-forget each save without touching React state.
     const squad = selectedSquadRef.current
     if (token && tournamentId && squad) {
       await Promise.allSettled(
@@ -760,16 +761,7 @@ export default function ScoresPage() {
       {players.length > 0 && !isScoresLocked && (
         <button
           className="ds-btn ds-btn-success ds-btn-sm"
-          onClick={() => {
-            const missing = players
-              .filter(p => {
-                const s = p.scores
-                return !s || s.game1_scratch == null || s.game2_scratch == null || s.game3_scratch == null
-              })
-              .map(p => `${p.firstName} ${p.lastName}`.trim())
-            setMissingScoreNames(missing)
-            setShowCalcPayoutsConfirm(true)
-          }}
+          onClick={() => { void markScoresComplete() }}
         >
           Calculate Payouts
         </button>
@@ -824,7 +816,7 @@ export default function ScoresPage() {
         ? `/api/v1/bowlers?tournament_id=${tournamentId}&squad_id=${squadId}`
         : `/api/v1/bowlers?tournament_id=${tournamentId}`
       
-      // Fire bowlers and scores in parallel â€” scores don't depend on bowlers
+      // Fire bowlers and scores in parallel; scores don't depend on bowlers.
       const scoresUrl = `/api/v1/scores/?tournament_id=${tournamentId}`
       const [bowlersResponse, scoresResponse] = await Promise.all([
         apiFetch(API(bowlersUrl), { headers: { Authorization: `Bearer ${token}` } }),
@@ -1261,15 +1253,17 @@ export default function ScoresPage() {
   }
 
   const getGameTotal = (scratchScore: number | undefined, handicap: number) => {
-    if (scratchScore === undefined || scratchScore === null) return 'â€”'
-    return scratchScore + handicap
+    if (scratchScore === undefined || scratchScore === null) {
+      return handicap > 0 ? `+${handicap} handicap` : ''
+    }
+    return `${scratchScore + handicap} total`
   }
 
   const calculateDisplayTotal = (player: Player) => {
     const scores = player.scores || {}
     const games = [scores.game1_scratch, scores.game2_scratch, scores.game3_scratch]
     const played = games.filter(s => s !== undefined && s !== null)
-    if (played.length === 0) return 'â€”'
+    if (played.length === 0) return ''
     const scratch = played.reduce((sum, s) => sum + (s || 0), 0)
     return scratch + (player.handicap * played.length)
   }
@@ -1372,13 +1366,34 @@ export default function ScoresPage() {
     addToast({ message: 'All visible scores saved.', type: 'success', duration: 2500 })
   }, [addToast, markRowSaved, paginationHook.paginatedItems, sessionToken])
 
-  const markScoresComplete = useCallback(() => {
+  const markScoresComplete = useCallback(async () => {
+    const tournamentId = tournament?.id
+    const squadId = selectedSquad?.id ?? null
+
+    if (tournamentId) {
+      try {
+        const url = squadId
+          ? API(`/api/v1/brackets/status/${tournamentId}?squad_id=${squadId}`)
+          : API(`/api/v1/brackets/status/${tournamentId}`)
+        const resp = await apiFetch(url, { headers: { Authorization: `Bearer ${sessionToken}` } })
+        if (resp.ok) {
+          const statusData = await resp.json()
+          if (statusData.entries_mismatch) {
+            setShowBracketMismatchWarning(true)
+            return
+          }
+        }
+      } catch {
+        // non-blocking: fall through to normal flow
+      }
+    }
+
     const missing = players
       .filter(player => hasMissingScore(player))
       .map(player => `${player.firstName} ${player.lastName}`.trim())
     setMissingScoreNames(missing)
     setShowCalcPayoutsConfirm(true)
-  }, [hasMissingScore, players])
+  }, [hasMissingScore, players, tournament, selectedSquad, sessionToken])
 
   const getRowStateLabel = useCallback((playerId: number) => {
     const state = rowSaveState[playerId] || 'idle'
@@ -1460,11 +1475,10 @@ export default function ScoresPage() {
       {/* Calculate Payouts confirmation modal */}
       {showCalcPayoutsConfirm && (
         <div className="bw-scores-calc-overlay">
-          <div className="bw-scores-calc-modal">
-            <CloseControl onClick={() => setShowCalcPayoutsConfirm(false)} position="absolute" size="sm" label="Close payout confirmation dialog" />
+          <div className="bw-scores-calc-modal bw-scores-calc-modal-brand">
             {missingScoreNames.length > 0 ? (
               <>
-                <div className="bw-scores-calc-head">
+                <div className="bw-scores-calc-head bw-scores-calc-head-brand">
                   <h2 className="bw-scores-calc-title bw-scores-calc-title-warning">Missing Scores</h2>
                 </div>
                 <p className="bw-scores-calc-text bw-scores-calc-text-tight">
@@ -1477,13 +1491,13 @@ export default function ScoresPage() {
                 </div>
                 <div className="bw-scores-calc-actions">
                   <button
-                    className="ds-btn ds-btn-secondary ds-btn-sm"
+                    className="bw-scores-calc-btn bw-scores-calc-btn-secondary"
                     onClick={() => setShowCalcPayoutsConfirm(false)}
                   >
                     Go Back &amp; Enter Scores
                   </button>
                   <button
-                    className="ds-btn ds-btn-sm bw-scores-calc-btn-warning"
+                    className="bw-scores-calc-btn bw-scores-calc-btn-primary bw-scores-calc-btn-warning"
                     onClick={() => { setShowCalcPayoutsConfirm(false); unlockPayoutsAndGo() }}
                   >
                     Proceed Anyway
@@ -1492,7 +1506,7 @@ export default function ScoresPage() {
               </>
             ) : (
               <>
-                <div className="bw-scores-calc-head">
+                <div className="bw-scores-calc-head bw-scores-calc-head-brand">
                   <h2 className="bw-scores-calc-title">All Scores Complete</h2>
                 </div>
                 <p className="bw-scores-calc-text">
@@ -1500,13 +1514,13 @@ export default function ScoresPage() {
                 </p>
                 <div className="bw-scores-calc-actions">
                   <button
-                    className="ds-btn ds-btn-secondary ds-btn-sm"
+                    className="bw-scores-calc-btn bw-scores-calc-btn-secondary"
                     onClick={() => setShowCalcPayoutsConfirm(false)}
                   >
                     Cancel
                   </button>
                   <button
-                    className="ds-btn ds-btn-success ds-btn-sm"
+                    className="bw-scores-calc-btn bw-scores-calc-btn-primary"
                     onClick={() => { setShowCalcPayoutsConfirm(false); unlockPayoutsAndGo() }}
                   >
                     Confirm &amp; Calculate Payouts
@@ -1514,6 +1528,33 @@ export default function ScoresPage() {
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+      {/* Bracket mismatch warning modal */}
+      {showBracketMismatchWarning && (
+        <div className="bw-scores-calc-overlay">
+          <div className="bw-scores-calc-modal bw-scores-calc-modal-brand">
+            <div className="bw-scores-calc-head bw-scores-calc-head-brand">
+              <h2 className="bw-scores-calc-title bw-scores-calc-title-warning">Brackets Out of Date</h2>
+            </div>
+            <p className="bw-scores-calc-text">
+              Entries have changed since brackets were generated. Please go to the Brackets page and regenerate brackets before calculating payouts.
+            </p>
+            <div className="bw-scores-calc-actions">
+              <button
+                className="bw-scores-calc-btn bw-scores-calc-btn-secondary"
+                onClick={() => setShowBracketMismatchWarning(false)}
+              >
+                Go Back
+              </button>
+              <button
+                className="bw-scores-calc-btn bw-scores-calc-btn-primary"
+                onClick={() => { setShowBracketMismatchWarning(false); router.push('/brackets') }}
+              >
+                Go to Brackets
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -1535,7 +1576,7 @@ export default function ScoresPage() {
                   <span className={styles.mobileScoresContextTitle}>{tournament.name}</span>
                   {selectedSquad && (
                     <span className={styles.mobileScoresContextMeta}>
-                      Squad: {selectedSquad.date} â€” {selectedSquad.time}
+                      Squad: {selectedSquad.date} - {selectedSquad.time}
                     </span>
                   )}
                 </div>
@@ -1543,7 +1584,7 @@ export default function ScoresPage() {
 
               {/* Save status bar */}
               <div className={styles.mobileSaveBar}>
-                {rowStateCounts.saving > 0 && <span>Saving {rowStateCounts.saving}â€¦</span>}
+                {rowStateCounts.saving > 0 && <span>Saving {rowStateCounts.saving}...</span>}
                 {rowStateCounts.saving === 0 && rowStateCounts.failed === 0 && <span>Auto-save on</span>}
                 {rowStateCounts.failed > 0 && <span>{rowStateCounts.failed} failed</span>}
                 {lastEdit && (
@@ -1579,12 +1620,12 @@ export default function ScoresPage() {
                   const isExpanded = !!mobileExpandedPlayers[player.id]
                   const saveState = rowSaveState[player.id] || 'idle'
                   const hasFailed = saveState === 'failed'
-                  const saveLabel = saveState === 'saving' ? 'Savingâ€¦' : saveState === 'saved' ? 'Saved âœ“' : saveState === 'failed' ? 'Failed' : ''
+                  const saveLabel = saveState === 'saving' ? 'Saving...' : saveState === 'saved' ? 'Saved' : saveState === 'failed' ? 'Failed' : ''
                   const pilotClass = saveState === 'saving' ? styles.mobileSaveStateSaving : saveState === 'saved' ? styles.mobileSaveStateSaved : saveState === 'failed' ? styles.mobileSaveStateFailed : styles.mobileSaveStateIdle
 
                   return (
                     <div key={player.id} className={styles.mobileScoreCard}>
-                      {/* Card header â€” tap to expand */}
+                      {/* Card header; tap to expand */}
                       <button
                         className={styles.mobileScoreCardHeader}
                         onClick={() => setMobileExpandedPlayers(prev => ({ ...prev, [player.id]: !prev[player.id] }))}
@@ -1594,7 +1635,7 @@ export default function ScoresPage() {
                             {player.firstName} {player.lastName}
                           </div>
                           <div className={styles.mobileScoreMeta}>
-                            {player.lane ? `Lane ${player.lane} â€¢ ` : ''}Avg: {player.average} â€¢ HDCP: {player.handicap}
+                            {player.lane ? `Lane ${player.lane} | ` : ''}Avg: {player.average} | HDCP: {player.handicap}
                           </div>
                         </div>
                         <div className={styles.mobileScoreHeaderRight}>
@@ -1604,7 +1645,7 @@ export default function ScoresPage() {
                           <span className={styles.mobileScoreTotal}>
                             {calculateDisplayTotal(player)}
                           </span>
-                          <span className={styles.mobileExpandGlyph}>{isExpanded ? 'â–²' : 'â–¼'}</span>
+                          <span className={styles.mobileExpandGlyph}>{isExpanded ? '^' : 'v'}</span>
                         </div>
                       </button>
 
@@ -1635,7 +1676,7 @@ export default function ScoresPage() {
                                     max="300"
                                     inputMode="numeric"
                                     disabled={isScoresLocked}
-                                    placeholder="â€”"
+                                    placeholder=""
                                     data-mobile-player={player.id}
                                     data-mobile-field={`game${gameNum}_scratch`}
                                     className={styles.mobileScoreInput}
@@ -1648,9 +1689,7 @@ export default function ScoresPage() {
                                       }
                                     }}
                                   />
-                                  <span className={styles.mobileGameTotal}>
-                                    +{player.handicap} = {getGameTotal(scratch, player.handicap)}
-                                  </span>
+                                  <span className={styles.mobileGameTotal}>{getGameTotal(scratch, player.handicap)}</span>
                                 </div>
                               )
                             })}
@@ -1832,7 +1871,7 @@ export default function ScoresPage() {
           {!showInitialScoresLoad && filteredPlayers.length > 0 && (
             <>
             {rowStateCounts.saving > 0 && (
-              <div className="table-save-status table-save-status--saving">Saving…</div>
+              <div className="table-save-status table-save-status--saving">Saving...</div>
             )}
             {rowStateCounts.saving === 0 && rowStateCounts.failed === 0 && Object.values(rowSaveState).some(s => s === 'saved') && (
               <div className="table-save-status table-save-status--success">All scores saved</div>
@@ -1906,7 +1945,7 @@ export default function ScoresPage() {
                           title={!validateScore(player.scores?.game1_scratch).isValid ? validateScore(player.scores?.game1_scratch).message : ''}
                         />
                       </div>
-                      <div className="game-hcap-total">{(() => { const t = getGameTotal(player.scores?.game1_scratch, player.handicap); return typeof t === 'number' ? `${t} total` : t; })()}</div>
+                      <div className="game-hcap-total">{getGameTotal(player.scores?.game1_scratch, player.handicap)}</div>
                     </div>
                   </td>
                   
@@ -1930,7 +1969,7 @@ export default function ScoresPage() {
                           title={!validateScore(player.scores?.game2_scratch).isValid ? validateScore(player.scores?.game2_scratch).message : ''}
                         />
                       </div>
-                      <div className="game-hcap-total">{(() => { const t = getGameTotal(player.scores?.game2_scratch, player.handicap); return typeof t === 'number' ? `${t} total` : t; })()}</div>
+                      <div className="game-hcap-total">{getGameTotal(player.scores?.game2_scratch, player.handicap)}</div>
                     </div>
                   </td>
                   
@@ -1954,7 +1993,7 @@ export default function ScoresPage() {
                           title={!validateScore(player.scores?.game3_scratch).isValid ? validateScore(player.scores?.game3_scratch).message : ''}
                         />
                       </div>
-                      <div className="game-hcap-total">{(() => { const t = getGameTotal(player.scores?.game3_scratch, player.handicap); return typeof t === 'number' ? `${t} total` : t; })()}</div>
+                      <div className="game-hcap-total">{getGameTotal(player.scores?.game3_scratch, player.handicap)}</div>
                     </div>
                   </td>
                   

@@ -1,9 +1,9 @@
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, field_validator
 from typing import ClassVar, Optional
 import re
 
-class BracketValidation(BaseModel):
-    """Enhanced validation for bracket operations"""
+class BracketValidation:
+    """Validation helpers for bracket operations"""
     ALLOWED_BRACKET_SIZES: ClassVar[set[int]] = {8}
     
     @staticmethod
@@ -68,17 +68,19 @@ class TournamentCreateValidated(BaseModel):
     location: Optional[str] = None
     start_date: Optional[str] = None
     end_date: Optional[str] = None
-    
-    @validator('name')
-    def validate_name(cls, v):
+
+    @field_validator('name')
+    @classmethod
+    def validate_name(cls, v: str) -> str:
         if not v or len(v.strip()) < 2:
             raise ValueError("Tournament name must be at least 2 characters")
         if len(v) > 100:
             raise ValueError("Tournament name must be less than 100 characters")
         return v.strip()
-    
-    @validator('location')
-    def validate_location(cls, v):
+
+    @field_validator('location')
+    @classmethod
+    def validate_location(cls, v: Optional[str]) -> Optional[str]:
         if v and len(v) > 200:
             raise ValueError("Location must be less than 200 characters")
         return v.strip() if v else None

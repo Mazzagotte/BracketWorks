@@ -1,5 +1,4 @@
 
-import os
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -10,25 +9,16 @@ from app.core.rate_limit import RateLimiter
 
 app = FastAPI(title="BracketWorks API", version="0.0.1", redirect_slashes=False)
 
-# CORS origins - get from environment variable with fallback to local dev
-cors_origins_str = os.getenv("CORS_ORIGINS", "http://localhost:3000")
-origins = [origin.strip() for origin in cors_origins_str.split(",") if origin.strip()]
-
-# Add localhost patterns for development
+# Build CORS origins from settings, then add always-allowed dev/prod domains.
+origins = [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()]
 origins.extend([
     "http://localhost:3000",
     "http://localhost:8000",
     "http://127.0.0.1:3000",
     "http://127.0.0.1:8000",
-])
-
-# Always allow production domains
-origins.extend([
     "https://bracketworks.app",
     "https://www.bracketworks.app",
 ])
-
-# Remove duplicates while preserving order
 origins = list(dict.fromkeys(origins))
 
 app.add_middleware(

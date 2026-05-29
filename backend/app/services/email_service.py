@@ -13,20 +13,20 @@ RESET_PASSWORD_TEMPLATE_ID = "reset-password"
 RESET_PASSWORD_SUBJECT = "Reset your BracketWorks password"
 RESET_PASSWORD_SUPPORT_EMAIL = "support@bracketworks.app"
 RESET_PASSWORD_EXPIRATION_MINUTES = 10
-RESET_PASSWORD_FROM = "BracketWorks <no-reply@bracketworks.app>"
+RESET_PASSWORD_FROM = f"{settings.FROM_NAME} <{settings.FROM_EMAIL}>"
 VERIFY_EMAIL_TEMPLATE_ID = "verify-email"
 VERIFY_EMAIL_SUBJECT = "Verify your BracketWorks email"
 VERIFY_EMAIL_EXPIRATION_MINUTES = 30
-VERIFY_EMAIL_FROM = "BracketWorks <no-reply@bracketworks.app>"
+VERIFY_EMAIL_FROM = f"{settings.FROM_NAME} <{settings.FROM_EMAIL}>"
 WELCOME_EMAIL_TEMPLATE_ID = "welcome-email"
 WELCOME_EMAIL_SUBJECT = "Welcome to BracketWorks"
-WELCOME_EMAIL_FROM = "BracketWorks <no-reply@bracketworks.app>"
+WELCOME_EMAIL_FROM = f"{settings.FROM_NAME} <{settings.FROM_EMAIL}>"
 PASSWORD_CHANGE_TEMPLATE_ID = "password-change"
 PASSWORD_CHANGE_SUBJECT = "Your BracketWorks password was changed"
-PASSWORD_CHANGE_FROM = "BracketWorks <no-reply@bracketworks.app>"
+PASSWORD_CHANGE_FROM = f"{settings.FROM_NAME} <{settings.FROM_EMAIL}>"
 EMAIL_CHANGE_TEMPLATE_ID = "email-change"
 EMAIL_CHANGE_SUBJECT = "Your BracketWorks email was changed"
-EMAIL_CHANGE_FROM = "BracketWorks <no-reply@bracketworks.app>"
+EMAIL_CHANGE_FROM = f"{settings.FROM_NAME} <{settings.FROM_EMAIL}>"
 
 
 def _base_template_variables() -> dict[str, str]:

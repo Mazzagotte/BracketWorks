@@ -4,7 +4,7 @@ import { ApiError, handleApiError, shouldRetry } from './errors';
 // API Configuration and enhanced fetch utilities
 
 /**
- * Returns the backend base URL, upgrading http:// → https:// when the
+ * Returns the backend base URL, upgrading http:// to https:// when the
  * page itself is served over HTTPS to prevent mixed-content blocking.
  */
 function getBackendBaseUrl(): string {
