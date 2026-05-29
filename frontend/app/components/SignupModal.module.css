@@ -287,6 +287,43 @@
   color: var(--color-warning-amber);
 }
 
+/* Laptops: increase card width and spacing to avoid cramped form fields on
+   mid-size desktop screens while keeping comfortable line lengths. */
+@media (min-width: 1024px) and (max-width: 1440px) {
+  .pageShell {
+    padding: 36px 24px;
+  }
+
+  .modal {
+    max-width: 560px;
+    max-height: calc(100vh - 72px);
+  }
+
+  .pageCard {
+    max-height: calc(100vh - 72px);
+  }
+
+  .header {
+    padding: 24px 34px 14px;
+  }
+
+  .body {
+    padding: 22px 34px 28px;
+  }
+
+  .nameRow {
+    gap: 14px;
+  }
+
+  .title {
+    font-size: 24px;
+  }
+
+  .subtitle {
+    font-size: 15px;
+  }
+}
+
 /* Responsive */
 @media (max-width: 480px) {
   .pageShell {

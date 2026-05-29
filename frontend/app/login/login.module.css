@@ -525,6 +525,41 @@
   cursor: not-allowed;
 }
 
+/* Laptops: add breathing room and slightly larger auth surface without
+   stretching too wide on 13-15 inch displays. */
+@media (min-width: 1024px) and (max-width: 1440px) {
+  .page {
+    padding: 36px;
+  }
+
+  .card {
+    max-width: 460px;
+    padding: 22px 34px 32px;
+  }
+
+  .logoWrap {
+    width: 162px;
+    margin-bottom: 14px;
+  }
+
+  .cardTitle {
+    font-size: 28px;
+  }
+
+  .subtitle,
+  .cardSubtitle {
+    font-size: 15px;
+  }
+
+  .form {
+    --label-color: var(--color-text-muted-subtle);
+  }
+
+  .divider {
+    margin: 20px 0 18px;
+  }
+}
+
 /* Mobile phones — stop zooming, switch to padding-based adjustments */
 @media (max-width: 480px) {
   .card {
