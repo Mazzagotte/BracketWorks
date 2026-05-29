@@ -101,7 +101,7 @@ body {
   border: 1px solid var(--print-border);
   border-radius: 12px 12px 0 0;
   border-bottom: none;
-  background: linear-gradient(90deg, rgba(240, 120, 32, 0.08), rgba(240, 120, 32, 0.02)), var(--print-soft);
+  background: var(--print-soft);
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 18px;
