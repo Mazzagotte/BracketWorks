@@ -1,11 +1,11 @@
 .dialog {
-  border: none;
-  border-radius: var(--radius-xl, 16px);
+  border: 1px solid var(--popup-border-color);
+  border-radius: var(--radius-2xl, 20px);
   padding: 0;
   max-width: 400px;
   width: 92vw;
-  box-shadow: var(--shadow-modal);
-  background: var(--bw-card);
+  box-shadow: var(--popup-shadow-elevated);
+  background: var(--popup-surface);
   font-family: var(--font-family-primary);
 }
 
@@ -15,21 +15,21 @@
 }
 
 .content {
-  padding: 28px 24px 24px;
+  padding: 22px 22px 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 18px;
+  gap: 16px;
 }
 
 .mutedMicrocopy {
   font-size: var(--font-size-xs, 11px);
-  color: var(--bw-muted);
+  color: var(--popup-muted-text);
 }
 
 .outlinedPanel {
   background: var(--color-white);
-  border: 1.5px solid var(--bw-border);
+  border: 1.5px solid var(--popup-divider-color);
   border-radius: var(--radius-md, 8px);
 }
 
@@ -47,16 +47,16 @@
 }
 
 .title {
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   font-weight: var(--font-weight-bold, 700);
-  color: var(--bw-charcoal);
+  color: var(--color-text-primary);
   margin: 0 0 2px;
   line-height: 1.2;
 }
 
 .tournamentName {
   font-size: 0.95rem;
-  color: var(--bw-muted);
+  color: var(--popup-muted-text);
   margin: 0;
   white-space: nowrap;
   overflow: hidden;
@@ -106,7 +106,7 @@
 
 .qrWrapper {
   background: var(--color-white);
-  border: 2px solid var(--bw-border);
+  border: 2px solid var(--popup-divider-color);
   border-radius: var(--radius-lg, 12px);
   padding: 16px;
   display: flex;
@@ -137,7 +137,7 @@
   content: '';
   flex: 1;
   height: 1px;
-  background: var(--bw-border);
+  background: var(--popup-divider-color);
 }
 
 /* ── URL Row ─────────────────────────────────────── */
@@ -207,15 +207,20 @@
   font-size: 0.95rem;
   font-weight: 700;
   font-family: var(--font-family-primary);
-  color: var(--bw-charcoal);
+  color: var(--color-white);
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s, transform 0.1s;
+  background: var(--color-primary);
+  border: 1px solid var(--color-border-hover);
+  box-shadow: var(--shadow-btn);
 }
 
 .exportBtn:hover {
-  background: var(--bw-page-soft);
-  border-color: var(--bw-orange);
-  color: var(--bw-orange);
+  background: var(--color-primary-hover);
+  border-color: var(--color-border-hover);
+  color: var(--color-white);
+  box-shadow: var(--shadow-btn-hover);
+  transform: translateY(-1px);
 }
 
 .iconInline { vertical-align: middle; margin-right: 4px; }

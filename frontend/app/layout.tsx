@@ -56,7 +56,7 @@ export const metadata: Metadata = {
   description: 'Create and manage bowling tournaments with smart brackets, live scoring, and automatic payouts. Professional tournament management made simple.',
   metadataBase: new URL('https://bracketworks.app'),
   alternates: {
-    canonical: 'https://bracketworks.app',
+    canonical: 'https://bracketworks.app/',
   },
   icons: {
     icon: [
@@ -68,7 +68,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: 'website',
-    url: 'https://bracketworks.app',
+    url: 'https://bracketworks.app/',
     title: 'BracketWorks - Professional Bowling Tournament Manager',
     description: 'Create and manage bowling tournaments with smart brackets, live scoring, and automatic payouts.',
     siteName: 'BracketWorks',

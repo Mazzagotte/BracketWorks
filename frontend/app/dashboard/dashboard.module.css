@@ -1592,9 +1592,9 @@
 /* Unify header bg with body — single card appearance */
 .createTournamentModalContent > h2,
 .createTournamentModalContent > button + h2 {
-  background: var(--color-surface) !important;
+  background: var(--popup-header-surface) !important;
   border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
-  border-bottom: none !important;
+  border-bottom: 2px solid var(--color-primary) !important;
 }
 
 .createTournamentFormGrid {
@@ -1608,8 +1608,8 @@
 .createTournamentActionGroup {
   margin-top: 0;
   padding: 14px 24px;
-  background: var(--color-surface);
-  border-top: 1px solid var(--color-border-light);
+  background: var(--popup-footer-surface);
+  border-top: 1px solid var(--popup-divider-color);
   border-radius: 0 0 var(--radius-2xl) var(--radius-2xl);
 }
 
@@ -1706,6 +1706,9 @@
 /* ── Edit / Create Tournament modal redesign ───────────────────── */
 .tournamentModalContent {
   width: clamp(320px, calc(100vw - 32px), 520px);
+  background: var(--popup-surface);
+  border-color: var(--popup-border-color);
+  box-shadow: var(--popup-shadow-elevated);
 }
 
 .tournamentContentWrapper {
@@ -1742,7 +1745,7 @@
 .squadTimesSection {
   margin-top: 16px;
   padding-top: 14px;
-  border-top: 1px solid var(--color-brand-border-faint);
+  border-top: 1px solid var(--popup-divider-color);
 }
 
 .squadTimesTitle {
@@ -1763,7 +1766,7 @@
   flex-direction: column;
   gap: 6px;
   padding: 10px 0;
-  border-bottom: 1px solid var(--color-brand-border-faint);
+  border-bottom: 1px solid var(--popup-divider-color);
 }
 
 .squadDay:last-child {
@@ -1788,8 +1791,8 @@
   justify-content: space-between;
   padding: 7px 12px;
   border-radius: 6px;
-  background: var(--color-brand-ivory-soft);
-  border: 1px solid var(--color-brand-border-faint);
+  background: var(--popup-header-surface);
+  border: 1px solid var(--popup-divider-color);
   font-size: 13px;
   font-weight: 500;
   color: var(--color-text-primary);
@@ -1833,20 +1836,23 @@
   flex: none;
   padding: 5px 14px;
   border-radius: 6px;
-  border: 1.5px solid var(--color-brand-border-mid) !important;
-  background: var(--color-surface) !important;
-  color: var(--color-text-muted-strong);
+  border: 1.5px solid var(--color-border-hover) !important;
+  background: var(--color-primary) !important;
+  color: var(--color-white);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
-  transition: border-color 0.15s ease, color 0.15s ease;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s;
+  box-shadow: var(--shadow-btn);
 }
 
 .squadTimeAddBtn:hover {
-  border-color: var(--color-brand-orange) !important;
-  color: var(--color-brand-orange);
-  background: var(--color-surface) !important;
+  border-color: var(--color-border-hover) !important;
+  color: var(--color-white);
+  background: var(--color-primary-hover) !important;
+  box-shadow: var(--shadow-btn-hover);
+  transform: translateY(-1px);
 }
 
 .createTournamentSubtitle {
@@ -1890,18 +1896,16 @@
 }
 
 .closeBtn {
-  background: transparent !important;
-  color: var(--color-text-muted-alt) !important;
-  border-color: var(--color-brand-ivory-warm) !important;
-  box-shadow: none !important;
+  background: var(--color-primary) !important;
+  color: var(--color-white) !important;
+  border-color: var(--color-border-hover) !important;
+  box-shadow: var(--shadow-btn) !important;
 }
 
 .closeBtn:hover:not(:disabled) {
-  background: var(--color-brand-ivory) !important;
-  color: var(--color-text-primary) !important;
-  box-shadow: none !important;
-  transform: none !important;
-  filter: none !important;
+  background: var(--color-primary-hover) !important;
+  color: var(--color-white) !important;
+  box-shadow: var(--shadow-btn-hover) !important;
 }
 
 .headerDeleteBtn:hover {
