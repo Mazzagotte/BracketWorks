@@ -121,6 +121,15 @@
   --share-qr-code-bg: #ffffff;
   --share-qr-code-fg: #2b2b2b;
 
+  /* Shared popup system */
+  --popup-surface: var(--color-brand-ivory-light);
+  --popup-header-surface: var(--color-brand-ivory);
+  --popup-footer-surface: var(--color-brand-ivory);
+  --popup-border-color: var(--color-brand-border-mid);
+  --popup-divider-color: var(--color-brand-border-faint);
+  --popup-shadow-elevated: var(--shadow-modal);
+  --popup-muted-text: var(--color-text-muted-alt);
+
   /* Active theme: shared effects and gradients */
   --gradient-brand: linear-gradient(135deg, var(--bw-orange-light), var(--bw-orange), var(--bw-orange-dark));
   --gradient-brand-hover: linear-gradient(135deg, var(--bw-orange), var(--bw-orange-dark));

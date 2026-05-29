@@ -5,8 +5,8 @@ import styles from './page.module.css';
 import { PublicViewDemo } from './PublicViewDemo';
 
 export const metadata: Metadata = {
-  title: 'BracketWorks | Bowling Tournament Brackets, Scoring, and Payouts',
-  description: 'BracketWorks helps bowling tournament directors build brackets, enter live scores, and calculate payouts from one dashboard.',
+  title: 'Bowling Tournament Bracket Software | BracketWorks',
+  description: 'Run bowling brackets, side pots, live scoring, and payouts from one clean dashboard. Built for tournament directors. Start free with BracketWorks.',
   alternates: {
     canonical: 'https://bracketworks.app/',
   },
@@ -16,10 +16,11 @@ export const metadata: Metadata = {
   },
   keywords: 'bowling tournament software, bowling brackets, live score tracking, bowling payouts, tournament director tools',
   openGraph: {
-    title: 'BracketWorks | Bowling Tournament Brackets, Scoring, and Payouts',
-    description: 'Build brackets, track live scoring, and review payouts for bowling tournaments in one app.',
+    title: 'Bowling Tournament Bracket Software | BracketWorks',
+    description: 'Run bowling brackets, side pots, live scoring, and payouts from one clean dashboard. Built for tournament directors.',
     type: 'website',
     url: 'https://bracketworks.app/',
+    siteName: 'BracketWorks',
     images: [
       {
         url: 'https://bracketworks.app/og-image.png',
@@ -29,6 +30,21 @@ export const metadata: Metadata = {
       },
     ],
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Bowling Tournament Bracket Software | BracketWorks',
+    description: 'Run bowling brackets, side pots, live scoring, and payouts from one clean dashboard. Built for tournament directors.',
+  },
+};
+
+const homeSoftwareApplicationJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'BracketWorks',
+  applicationCategory: 'BusinessApplication',
+  operatingSystem: 'Web',
+  url: 'https://bracketworks.app/',
+  description: 'Bowling tournament software for managing brackets, side pots, live scoring, and payouts.',
 };
 
 export default function HomePage() {
@@ -86,6 +102,12 @@ export default function HomePage() {
 
   return (
     <div className={styles.container}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(homeSoftwareApplicationJsonLd),
+        }}
+      />
       <header className={styles.navWrap}>
         <div className={styles.navInner}>
           <div className={styles.brand}>
