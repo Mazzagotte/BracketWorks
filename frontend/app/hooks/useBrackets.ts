@@ -45,6 +45,9 @@ export interface BracketPreview {
   tournament_id?: number
   tournament_name?: string
   squad_id?: number
+  entries_mismatch?: boolean
+  player_count_at_generation?: number | null
+  current_player_count?: number
 }
 
 export interface BracketRound {

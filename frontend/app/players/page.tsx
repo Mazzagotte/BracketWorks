@@ -19,7 +19,6 @@ import { BracketProgramDefinition, BracketSettings, SidePotsSettings, Tournament
 import { apiClient, API, apiFetch } from '../lib/api'
 import { calculatePlayerTotalCost, calculateSidePotCost, defaultBracketPrograms, filterEntriesForDivision, getEnabledBracketPrograms, normalizeBracketPrograms, normalizeDivision, normalizePlayerBracketEntries, summarizeEntries } from '../lib/bracketPrograms'
 import styles from './entries.module.css'
-import CloseControl from '../../components/CloseControl'
 import ExplainEntriesModal from './ExplainEntriesModal'
 import { useToastHelpers } from '../components/Toast'
 import ImportLoadingModal from '../components/ImportLoadingModal'
@@ -443,7 +442,10 @@ export default function PlayersPage() {
       program_entry_counts: Record<string, number>
     }
 
-    const updates: UpdateRow[] = current.map(player => {
+    const updates: UpdateRow[] = current.flatMap(player => {
+      if (!Number.isFinite(player.id)) {
+        return []
+      }
       const rawProgramEntryCounts = Object.fromEntries(
         enabledBracketPrograms.map(program => [
           program.key,
@@ -455,13 +457,13 @@ export default function PlayersPage() {
         enabledBracketPrograms,
         normalizeDivision(player.division),
       )
-      return {
+      return [{
         id: player.id,
         average: Math.floor(Math.random() * 91) + 140,
         handicap_entries: programEntryCounts.handicap ?? 0,
         scratch_entries: programEntryCounts.scratch ?? 0,
         program_entry_counts: programEntryCounts,
-      }
+      }]
     })
 
     // Build a lookup for O(1) access in the state updater
@@ -1131,115 +1133,115 @@ export default function PlayersPage() {
           className="sr-only"
         />
 
-        <div className={styles.formCard}>
-          {isMobileView ? (
-            <button
-              type="button"
-              className={styles.formTitleToggle}
-              aria-expanded={!historySearchCollapsed}
-              onClick={() => setHistorySearchCollapsed(previous => !previous)}
-            >
-              <span>Find Existing Bowler</span>
-              <span className={styles.formTitleExpandIcon}>{historySearchCollapsed ? '+' : '−'}</span>
-            </button>
-          ) : (
-            <h3 className={styles.formTitle}>Find Existing Bowler</h3>
-          )}
-          {(!isMobileView || !historySearchCollapsed) && (
-          <div className={styles.historyPanelBody}>
-            <p className={styles.historyHelperText}>Search by USBC number, first name, or last name to quickly fill prior bowler details.</p>
-            <div className={styles.searchContainer}>
-              <input
-                type="text"
-                className={styles.searchInput}
-                placeholder="USBC #"
-                value={historySearchUsbc}
-                onChange={(event) => setHistorySearchUsbc(event.target.value)}
-              />
-              <input
-                type="text"
-                className={styles.searchInput}
-                placeholder="First Name"
-                value={historySearchFirstName}
-                onChange={(event) => setHistorySearchFirstName(event.target.value)}
-              />
-              <input
-                type="text"
-                className={styles.searchInput}
-                placeholder="Last Name"
-                value={historySearchLastName}
-                onChange={(event) => setHistorySearchLastName(event.target.value)}
-              />
+        <div className={styles.entriesSectionWidth}>
+          <div className={styles.formCard}>
+            {isMobileView ? (
               <button
                 type="button"
-                className={styles.clearSearchBtn}
-                onClick={() => {
-                  setHistorySearchUsbc('')
-                  setHistorySearchFirstName('')
-                  setHistorySearchLastName('')
-                  setHistoryResults([])
-                }}
+                className={styles.formTitleToggle}
+                aria-expanded={!historySearchCollapsed}
+                onClick={() => setHistorySearchCollapsed(previous => !previous)}
               >
-                Clear
+                <span>Find Existing Bowler</span>
+                <span className={styles.formTitleExpandIcon}>{historySearchCollapsed ? '+' : '−'}</span>
               </button>
-            </div>
-
-            {isHistorySearching ? (
-              <p className={styles.historyMeta}>Searching bowler history...</p>
-            ) : historyResults.length > 0 ? (
-              <div className={styles.historyResultsList}>
-                {historyResults.map(profile => (
-                  <button
-                    key={profile.id}
-                    type="button"
-                    className={styles.historyResultButton}
-                    onClick={() => handleUseHistoryResult(profile)}
-                  >
-                    <span className={styles.historyResultName}>{profile.first_name} {profile.last_name}</span>
-                    <span className={styles.historyResultUsbc}>{profile.usbc_number ? `USBC ${profile.usbc_number}` : 'No USBC on file'}</span>
-                    <span className={styles.historyResultAction}>Use in Add Form</span>
-                  </button>
-                ))}
+            ) : (
+              <h3 className={styles.formTitle}>Find Existing Bowler</h3>
+            )}
+            {(!isMobileView || !historySearchCollapsed) && (
+            <div className={styles.historyPanelBody}>
+              <p className={styles.historyHelperText}>Search by USBC number, first name, or last name to quickly fill prior bowler details.</p>
+              <div className={styles.searchContainer}>
+                <input
+                  type="text"
+                  className={styles.searchInput}
+                  placeholder="USBC #"
+                  value={historySearchUsbc}
+                  onChange={(event) => setHistorySearchUsbc(event.target.value)}
+                />
+                <input
+                  type="text"
+                  className={styles.searchInput}
+                  placeholder="First Name"
+                  value={historySearchFirstName}
+                  onChange={(event) => setHistorySearchFirstName(event.target.value)}
+                />
+                <input
+                  type="text"
+                  className={styles.searchInput}
+                  placeholder="Last Name"
+                  value={historySearchLastName}
+                  onChange={(event) => setHistorySearchLastName(event.target.value)}
+                />
+                <button
+                  type="button"
+                  className={styles.clearSearchBtn}
+                  onClick={() => {
+                    setHistorySearchUsbc('')
+                    setHistorySearchFirstName('')
+                    setHistorySearchLastName('')
+                    setHistoryResults([])
+                  }}
+                >
+                  Clear
+                </button>
               </div>
-            ) : null}
-          </div>
-          )}
-        </div>
 
-        <PlayerForm
-          onAddPlayer={addPlayer}
-          isLoading={showInitialPlayersLoad}
-          squads={squads}
-          entryFee={entryFee}
-          bracketPrograms={enabledBracketPrograms}
-          prefillDraft={prefillDraft}
-          prefillVersion={prefillVersion}
-        />
-
-        {showInitialPlayersLoad ? (
-          <div className={styles.skeletonCard}>
-            <div className={styles.skeletonText}>Loading players...</div>
-            {[1, 2, 3, 4, 5].map(i => (
-              <div key={i} className={styles.skeletonGrid}>
-                {[1, 2, 3, 4, 5, 6].map(j => (
-                  <div key={j} className={styles.skeletonItem} />
-                ))}
-              </div>
-            ))}
-          </div>
-        ) : !getTournamentId() ? (
-          <div className={styles.noTournament}>
-            <div className={styles.noTournamentTitle}>No Tournament Loaded</div>
-            <div className={styles.noTournamentText}>
-              Please load a tournament from the dashboard to manage players.
+              {isHistorySearching ? (
+                <p className={styles.historyMeta}>Searching bowler history...</p>
+              ) : historyResults.length > 0 ? (
+                <div className={styles.historyResultsList}>
+                  {historyResults.map(profile => (
+                    <button
+                      key={profile.id}
+                      type="button"
+                      className={styles.historyResultButton}
+                      onClick={() => handleUseHistoryResult(profile)}
+                    >
+                      <span className={styles.historyResultName}>{profile.first_name} {profile.last_name}</span>
+                      <span className={styles.historyResultUsbc}>{profile.usbc_number ? `USBC ${profile.usbc_number}` : 'No USBC on file'}</span>
+                      <span className={styles.historyResultAction}>Use in Add Form</span>
+                    </button>
+                  ))}
+                </div>
+              ) : null}
             </div>
-            <Link href="/dashboard" className={styles.dashboardLink}>
-              Go to Dashboard
-            </Link>
+            )}
           </div>
-        ) : (
-          <>
-            <div className={styles.entriesSectionWidth}>
+
+          <PlayerForm
+            onAddPlayer={addPlayer}
+            isLoading={showInitialPlayersLoad}
+            squads={squads}
+            entryFee={entryFee}
+            bracketPrograms={enabledBracketPrograms}
+            prefillDraft={prefillDraft}
+            prefillVersion={prefillVersion}
+          />
+
+          {showInitialPlayersLoad ? (
+            <div className={styles.skeletonCard}>
+              <div className={styles.skeletonText}>Loading players...</div>
+              {[1, 2, 3, 4, 5].map(i => (
+                <div key={i} className={styles.skeletonGrid}>
+                  {[1, 2, 3, 4, 5, 6].map(j => (
+                    <div key={j} className={styles.skeletonItem} />
+                  ))}
+                </div>
+              ))}
+            </div>
+          ) : !getTournamentId() ? (
+            <div className={styles.noTournament}>
+              <div className={styles.noTournamentTitle}>No Tournament Loaded</div>
+              <div className={styles.noTournamentText}>
+                Please load a tournament from the dashboard to manage players.
+              </div>
+              <Link href="/dashboard" className={styles.dashboardLink}>
+                Go to Dashboard
+              </Link>
+            </div>
+          ) : (
+            <>
               {getTournamentId() && players.length > 0 && (
                 <div className={styles.summaryCard}>
                   <div className={styles.summaryHeader}>
@@ -1352,9 +1354,9 @@ export default function PlayersPage() {
                   sidePots={sidePots}
                 />
               </div>
-            </div>
-          </>
-        )}
+            </>
+          )}
+        </div>
       </div>
 
       <ActionConfirmDialog
@@ -1373,7 +1375,6 @@ export default function PlayersPage() {
       {deleteConfirmId !== null && (
         <div className={styles.confirmOverlay}>
           <div className={styles.confirmDialog}>
-            <CloseControl onClick={() => setDeleteConfirmId(null)} position="absolute" size="sm" label="Close delete player dialog" />
             <h2 className={styles.confirmTitle}>Delete Player</h2>
             <p className={styles.confirmMessage}>Are you sure you want to delete this player? This cannot be undone.</p>
             <div className={styles.confirmButtons}>

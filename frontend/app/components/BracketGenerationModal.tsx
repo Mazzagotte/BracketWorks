@@ -378,7 +378,7 @@ export default function BracketGenerationModal({
             </div>
 
             {/* Main message */}
-            <h2 className={styles.mainMessage}>Generating Brackets…</h2>
+            <h2 className={styles.mainMessage}>Generating Brackets...</h2>
 
             <p className={styles.generationNote}>
               Please wait while brackets are generated. Navigation will unlock automatically when setup is complete.

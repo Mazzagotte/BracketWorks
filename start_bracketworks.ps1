@@ -114,6 +114,20 @@ if ($BackendMode -eq "local") {
         Write-Host "Python not found. Install Python 3.12+ or create backend/.venv first." -ForegroundColor Red
         exit 1
     }
+
+    # Avoid multiple local uvicorn instances fighting for port 8000.
+    $existingUvicorn = Get-CimInstance Win32_Process |
+        Where-Object { $_.CommandLine -match "uvicorn\s+app\.main:app" }
+    if ($existingUvicorn) {
+        Write-Host "Stopping existing local backend process(es)..." -ForegroundColor Yellow
+        $existingUvicorn | ForEach-Object {
+            try {
+                Stop-Process -Id $_.ProcessId -Force -ErrorAction Stop
+            } catch {
+                Write-Host "Could not stop process $($_.ProcessId): $($_.Exception.Message)" -ForegroundColor DarkYellow
+            }
+        }
+    }
 }
 
 Write-Host ""
@@ -139,6 +153,8 @@ if ($BackendMode -eq "docker") {
                   "`$env:SECRET_KEY='dev-secret-key-12345-not-for-production'; " +
                   "`$env:CORS_ORIGINS='http://localhost:3000,http://localhost:8000,http://127.0.0.1:3000'; " +
                   "cd '$BackendPath'; " +
+                  "Write-Host 'Running database migrations...' -ForegroundColor Yellow; " +
+                  "& '$PythonCmd' -m alembic upgrade heads; " +
                   "& '$PythonCmd' -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000; " +
                   "Read-Host 'Backend stopped. Press Enter to close'"
 }

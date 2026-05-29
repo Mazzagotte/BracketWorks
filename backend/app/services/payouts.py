@@ -209,6 +209,45 @@ def calculate_bracket_prize_pool(
     return total_pool.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
 
+def reset_payouts_if_needed(db, tournament_id: int, squad_id) -> None:
+    """
+    If payouts have been calculated for this tournament/squad, reset them to
+    an unfinalized/unpaid state. Called whenever entries or scores are mutated.
+    Does nothing if no payout summary exists (payouts were never calculated).
+    """
+    from sqlalchemy.orm import Session as _Session
+    from ..core.models import TournamentPayoutSummary, BracketPayout
+
+    squad_filter = (
+        TournamentPayoutSummary.squad_id == squad_id
+        if squad_id is not None
+        else TournamentPayoutSummary.squad_id.is_(None)
+    )
+    summary = db.query(TournamentPayoutSummary).filter(
+        TournamentPayoutSummary.tournament_id == tournament_id,
+        squad_filter,
+    ).first()
+
+    if not summary:
+        return
+
+    summary.is_finalized = False
+    summary.finalized_date = None
+
+    payout_squad_filter = (
+        BracketPayout.squad_id == squad_id
+        if squad_id is not None
+        else BracketPayout.squad_id.is_(None)
+    )
+    db.query(BracketPayout).filter(
+        BracketPayout.tournament_id == tournament_id,
+        payout_squad_filter,
+    ).update(
+        {"is_paid": False, "paid_date": None, "payment_method": None},
+        synchronize_session=False,
+    )
+
+
 def calculate_tournament_payouts(
     brackets_data: Dict[str, Any],
     entry_fees: Dict[str, float] = None,

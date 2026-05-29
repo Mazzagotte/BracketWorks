@@ -25,11 +25,44 @@ Match Structure in JSON:
 from sqlalchemy.orm import Session
 from typing import Dict, Any, Optional, List
 from datetime import datetime
+import hashlib
+import json
 import logging
 
-from ..core.models import SimpleBracket
+from ..core.models import SimpleBracket, TournamentPlayer
 
 logger = logging.getLogger(__name__)
+
+
+def _compute_entries_signature(db: Session, tournament_id: int, squad_id: Optional[int]) -> str:
+    players_query = db.query(TournamentPlayer).filter(
+        TournamentPlayer.tournament_id == tournament_id,
+    )
+    if squad_id:
+        players_query = players_query.filter(TournamentPlayer.squad_id == squad_id)
+
+    payload: list[dict[str, Any]] = []
+    for player in sorted(players_query.all(), key=lambda p: p.id):
+        raw_entries = player.bracket_entries if isinstance(player.bracket_entries, dict) else {}
+        normalized_entries: dict[str, int] = {}
+        for key, value in raw_entries.items():
+            try:
+                normalized_entries[str(key)] = max(0, int(value or 0))
+            except (TypeError, ValueError):
+                normalized_entries[str(key)] = 0
+
+        normalized_entries.setdefault('scratch', max(0, int(player.scratch_entries or 0)))
+        normalized_entries.setdefault('handicap', max(0, int(player.handicap_entries or 0)))
+
+        payload.append(
+            {
+                'id': int(player.id),
+                'entries': dict(sorted(normalized_entries.items())),
+            }
+        )
+
+    raw = json.dumps(payload, sort_keys=True, separators=(',', ':'))
+    return hashlib.sha256(raw.encode('utf-8')).hexdigest()
 
 
 def get_bracket_groups(bracket_data: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -63,14 +96,9 @@ def ensure_legacy_bracket_views(bracket_data: Dict[str, Any]) -> Dict[str, Any]:
                 group['key'] = 'reverse_scratch'
                 group['name'] = group.get('name', 'Reverse Scratch')
     bracket_data['bracket_groups'] = groups
-    bracket_data['scratch_brackets'] = next(
-        (group.get('brackets', []) for group in groups if group.get('key') == 'scratch'),
-        bracket_data.get('scratch_brackets', []),
-    )
-    bracket_data['handicap_brackets'] = next(
-        (group.get('brackets', []) for group in groups if group.get('key') == 'handicap'),
-        bracket_data.get('handicap_brackets', []),
-    )
+    groups_by_key = {group.get('key'): group for group in groups}
+    bracket_data['scratch_brackets'] = groups_by_key.get('scratch', {}).get('brackets', bracket_data.get('scratch_brackets', []))
+    bracket_data['handicap_brackets'] = groups_by_key.get('handicap', {}).get('brackets', bracket_data.get('handicap_brackets', []))
     return bracket_data
 
 
@@ -84,7 +112,8 @@ def save_brackets_simple(
     db: Session,
     tournament_id: int,
     squad_id: Optional[int],
-    brackets_data: Dict[str, Any]
+    brackets_data: Dict[str, Any],
+    player_count: Optional[int] = None,
 ) -> None:
     """
     Save generated brackets to database as JSON - much simpler than the relational approach.
@@ -94,6 +123,7 @@ def save_brackets_simple(
         tournament_id: ID of the tournament
         squad_id: ID of the squad (optional)
         brackets_data: The bracket data returned from generate_multiple_brackets()
+        player_count: Number of players at time of generation (for mismatch detection)
     """
     try:
         brackets_data = ensure_legacy_bracket_views(brackets_data.copy())
@@ -109,6 +139,21 @@ def save_brackets_simple(
                 logger.debug(f"  Sample first match being saved:")
                 logger.debug(f"     {first_match.get('playerA')} (scoreA={first_match.get('scoreA')}) vs {first_match.get('playerB')} (scoreB={first_match.get('scoreB')})")
         
+        # Preserve existing player_count if not explicitly provided (e.g. match score updates)
+        if player_count is None:
+            existing_count = db.query(SimpleBracket.player_count).filter(
+                SimpleBracket.tournament_id == tournament_id,
+                SimpleBracket.squad_id == squad_id if squad_id else SimpleBracket.squad_id.is_(None),
+                SimpleBracket.is_active == True,
+            ).first()
+            if existing_count is not None:
+                player_count = existing_count[0]
+
+        # Ensure every snapshot carries a deterministic entries signature so
+        # mismatch detection catches entry-count edits (not only player adds/removes).
+        if not brackets_data.get('entries_signature'):
+            brackets_data['entries_signature'] = _compute_entries_signature(db, tournament_id, squad_id)
+
         # Hard-delete any existing active brackets — inactive rows are never read
         # so there's no value in keeping them; this keeps the table lean.
         db.query(SimpleBracket).filter(
@@ -123,6 +168,7 @@ def save_brackets_simple(
             squad_id=squad_id,
             bracket_data=brackets_data,
             bracket_size=brackets_data.get('bracket_size', 8),
+            player_count=player_count,
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow(),
             is_active=True
@@ -218,7 +264,9 @@ def load_brackets_simple(
         
         # Log first match to verify scores are in loaded data
         bracket_data = ensure_legacy_bracket_views(bracket_record.bracket_data)
-        
+        # Include the stored player count so callers can detect entry changes.
+        bracket_data['player_count_at_generation'] = bracket_record.player_count
+
         # Refresh scores from database if requested
         if refresh_scores:
             logger.debug(f"  Refreshing scores from database...")

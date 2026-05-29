@@ -309,10 +309,7 @@ html:has(.login-page-container) {
   font-size: 28px !important;
   font-weight: 700 !important;
   margin: 0 0 8px 0 !important;
-  background: linear-gradient(135deg, var(--color-dark-base) 0%, var(--color-slate-700) 25%, var(--color-gray-600) 50%, var(--color-primary) 75%, var(--color-primary-hover) 100%) !important;
-  -webkit-background-clip: text !important;
-  -webkit-text-fill-color: transparent !important;
-  background-clip: text !important;
+  color: var(--color-text-primary) !important;
   letter-spacing: -0.5px !important;
   line-height: 1.2 !important;
   text-align: center !important;
@@ -469,10 +466,7 @@ html:has(.signup-page-container) {
   font-size: var(--font-size-5xl) !important;
   font-weight: var(--font-weight-bold) !important;
   margin: 0 0 8px 0 !important;
-  background: var(--gradient-brand) !important;
-  -webkit-background-clip: text !important;
-  -webkit-text-fill-color: transparent !important;
-  background-clip: text !important;
+  color: var(--color-text-primary) !important;
   letter-spacing: -0.5px !important;
   line-height: var(--line-height-tight) !important;
 }
@@ -598,7 +592,7 @@ html:has(.signup-page-container) {
   font-weight: var(--font-weight-semibold) !important;
   letter-spacing: 0.3px !important;
   color: var(--color-white) !important;
-  background: var(--gradient-gold) !important;
+  background: var(--color-primary) !important;
   border: none !important;
   border-radius: 12px !important;
   cursor: pointer !important;
@@ -616,7 +610,7 @@ html:has(.signup-page-container) {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent 0%, var(--opacity-white-20) 25%, var(--opacity-white-40) 50%, var(--opacity-white-20) 75%, transparent 100%);
+  background: var(--opacity-white-20);
   transition: left 0.5s ease;
 }
 
@@ -758,10 +752,6 @@ html:has(.signup-page-container) {
   font-size: var(--font-size-5xl);
   color: var(--color-dark-base);
   margin: 0 0 32px 0;
-  background: var(--gradient-brand);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
   letter-spacing: 0.5px;
 }
 
@@ -921,7 +911,7 @@ html:has(.signup-page-container) {
   transition: all 0.3s ease;
   letter-spacing: 0.5px;
   cursor: pointer;
-  background: var(--gradient-brand);
+  background: var(--color-primary);
   color: var(--color-white);
   box-shadow: 0 8px 24px var(--color-border-hover), 0 4px 12px var(--opacity-black-10);
 }
@@ -937,13 +927,13 @@ html:has(.signup-page-container) {
 }
 
 .submit-btn--loading {
-  background: linear-gradient(135deg, var(--color-warning-surface) 0%, var(--color-border-hover) 100%);
+  background: var(--color-warning-surface);
   color: var(--color-text-muted-alt);
   box-shadow: 0 4px 16px var(--color-border-light);
 }
 
 .submit-btn--success {
-  background: var(--gradient-green);
+  background: var(--color-success);
   color: var(--color-white);
   border: 2px solid var(--color-success-border);
   box-shadow: 0 8px 24px var(--color-success-border), 0 4px 12px var(--opacity-black-10);

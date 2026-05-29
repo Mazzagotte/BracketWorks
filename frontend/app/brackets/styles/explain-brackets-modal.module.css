@@ -50,12 +50,9 @@
 
 .header h2 {
   margin: 0;
-  font-size: 26px;
+  font-size: 1.25rem;
   font-weight: 700;
-  background: linear-gradient(135deg, var(--color-text-primary) 0%, var(--color-gray-700) 50%, var(--color-primary) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--color-text-primary);
   letter-spacing: -0.4px;
 }
 
@@ -105,7 +102,7 @@
 
 .section h3 {
   margin: 0 0 16px;
-  font-size: 18px;
+  font-size: 1.05rem;
   font-weight: 700;
   color: var(--color-gray-900);
   display: flex;
@@ -125,7 +122,7 @@
 
 .section p {
   margin: 0 0 14px;
-  font-size: 15px;
+  font-size: 0.95rem;
   line-height: 1.65;
   color: var(--color-dark-lighter);
 }
@@ -138,7 +135,7 @@
 
 .section li {
   margin-bottom: 8px;
-  font-size: 15px;
+  font-size: 0.95rem;
   line-height: 1.6;
 }
 
@@ -180,13 +177,13 @@
 
 .round strong {
   color: var(--color-gray-900);
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 0.95rem;
+  font-weight: 700;
 }
 
 .round span {
   color: var(--color-text-secondary);
-  font-size: 13px;
+  font-size: 0.9rem;
 }
 
 /* ── Tie rule cards ── */
@@ -211,8 +208,8 @@
 
 .tieHeader strong {
   color: var(--color-gray-900);
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 0.95rem;
+  font-weight: 700;
 }
 
 /* TIE badge — purple, visually distinct from brand orange */
@@ -221,7 +218,7 @@
   align-items: center;
   background: var(--gradient-purple-tie);
   color: var(--color-white);
-  font-size: 11px;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.6px;
   padding: 3px 9px;
@@ -235,7 +232,7 @@
   align-items: center;
   background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
   color: var(--color-white);
-  font-size: 11px;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.6px;
   padding: 3px 9px;
@@ -246,7 +243,7 @@
 
 .tieRule p {
   margin: 0 0 10px;
-  font-size: 15px;
+  font-size: 0.95rem;
   line-height: 1.65;
   color: var(--color-dark-lighter);
 }
@@ -263,7 +260,7 @@
   padding: 12px 16px;
   border-radius: 8px;
   margin-top: 12px;
-  font-size: 14px;
+  font-size: 0.95rem;
   line-height: 1.65;
   color: var(--color-dark-lighter);
 }
@@ -292,47 +289,15 @@
   color: var(--color-primary);
   display: block;
   margin-bottom: 6px;
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 0.95rem;
+  font-weight: 700;
 }
 
 .bracketType p {
   margin: 0;
-  font-size: 14px;
+  font-size: 0.95rem;
   line-height: 1.6;
   color: var(--color-text-secondary);
-}
-
-/* ── Footer ── */
-.footer {
-  padding: 16px 28px;
-  border-top: 1px solid var(--color-border-light);
-  display: flex;
-  justify-content: flex-end;
-  background: var(--color-warning-tint);
-}
-
-.closeButtonFooter {
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
-  color: var(--color-white);
-  border: none;
-  border-radius: 10px;
-  padding: 12px 32px;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 8px var(--color-border-hover);
-  font-family: var(--font-family-primary);
-}
-
-.closeButtonFooter:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 16px var(--color-border-hover);
-}
-
-.closeButtonFooter:active {
-  transform: translateY(0);
 }
 
 /* ── Mobile ── */
@@ -347,7 +312,7 @@
   }
 
   .header h2 {
-    font-size: 22px;
+    font-size: 1.125rem;
   }
 
   .content {
@@ -355,7 +320,7 @@
   }
 
   .section h3 {
-    font-size: 16px;
+    font-size: 1rem;
   }
 
   .roundStructure {
@@ -366,12 +331,5 @@
     min-width: 100%;
   }
 
-  .footer {
-    padding: 16px 20px;
-  }
-
-  .closeButtonFooter {
-    width: 100%;
-    text-align: center;
-  }
 }
+

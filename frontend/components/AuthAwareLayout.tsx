@@ -11,6 +11,7 @@ import { DevAuthStatus } from '../app/components/DevAuthStatus';
 import { TimeSlotReminderModal } from '../app/components/TimeSlotReminderModal';
 import { useAuth } from '../app/lib/auth-context';
 import { useHeader } from '../app/lib/header-context';
+import { resetScrollLocks, setBodyInteractionState } from '../app/utils/modalUtils';
 import styles from '../app/layout.module.css';
 
 const PUBLIC_ROUTES = new Set(['/', '/login', '/signup', '/verify-email']);
@@ -42,10 +43,7 @@ function ClientLayout({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     setMounted(true);
-    document.body.style.overflow = 'auto';
-    document.body.style.touchAction = 'pan-y pan-x';
-    (document.body.style as { webkitOverflowScrolling?: string }).webkitOverflowScrolling = 'touch';
-    document.documentElement.style.touchAction = 'pan-y pan-x';
+    resetScrollLocks();
 
     const checkMobile = () => {
       setIsMobile(window.innerWidth <= 480);
@@ -86,37 +84,26 @@ function ClientLayout({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (isPublicPath) {
-      document.body.style.overflow = 'auto';
-      document.body.style.touchAction = 'pan-y pan-x';
-      (document.body.style as { webkitOverflowScrolling?: string }).webkitOverflowScrolling = 'touch';
+      setBodyInteractionState({ scrollLocked: false, touchLocked: false });
       return () => {
-        document.body.style.overflow = 'auto';
-        document.body.style.touchAction = 'pan-y pan-x';
-        (document.body.style as { webkitOverflowScrolling?: string }).webkitOverflowScrolling = 'touch';
+        setBodyInteractionState({ scrollLocked: false, touchLocked: false });
       };
     }
 
     if (isMobile && sidebarOpen) {
-      document.body.style.overflow = 'hidden';
-      document.body.style.touchAction = 'none';
+      setBodyInteractionState({ scrollLocked: true, touchLocked: true });
     } else {
-      document.body.style.overflow = 'auto';
-      document.body.style.touchAction = 'pan-y pan-x';
-      (document.body.style as { webkitOverflowScrolling?: string }).webkitOverflowScrolling = 'touch';
+      setBodyInteractionState({ scrollLocked: false, touchLocked: false });
     }
 
     return () => {
-      document.body.style.overflow = 'auto';
-      document.body.style.touchAction = 'pan-y pan-x';
-      (document.body.style as { webkitOverflowScrolling?: string }).webkitOverflowScrolling = 'touch';
+      setBodyInteractionState({ scrollLocked: false, touchLocked: false });
     };
   }, [isMobile, isPublicPath, sidebarOpen]);
 
   useEffect(() => {
     return () => {
-      document.body.style.overflow = 'auto';
-      document.body.style.touchAction = 'pan-y pan-x';
-      (document.body.style as { webkitOverflowScrolling?: string }).webkitOverflowScrolling = 'touch';
+      setBodyInteractionState({ scrollLocked: false, touchLocked: false });
     };
   }, []);
 

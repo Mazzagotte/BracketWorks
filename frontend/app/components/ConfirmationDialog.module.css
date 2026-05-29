@@ -1,46 +1,96 @@
 .overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: var(--color-success-soft);
+  inset: 0;
+  background: var(--overlay-black);
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 20px;
   z-index: 1200;
+  backdrop-filter: blur(5px);
 }
+
 .dialog {
-  background: var(--color-white);
-  border: 1px solid var(--color-success-border);
+  background: var(--color-brand-ivory-light);
+  border: 1px solid var(--color-brand-border-mid);
   border-radius: 18px;
-  box-shadow: 0 2px 16px var(--opacity-black-12);
-  padding: 2rem 2.5rem;
-  min-width: 320px;
-  max-width: 90vw;
-  text-align: center;
+  box-shadow: var(--shadow-popup);
+  width: min(560px, 100%);
   position: relative;
+  overflow: hidden;
 }
+
+.header {
+  padding: 16px 72px 14px 24px;
+  border-bottom: 2px solid var(--color-primary);
+  background: var(--color-brand-ivory);
+}
+
+.body {
+  padding: 18px 24px 24px;
+}
+
 .title {
-  color: var(--color-success-text-deep);
-  font-size: 1.3rem;
-  margin-bottom: 0.5rem;
+  color: var(--color-text-primary);
+  margin: 0;
+  font-size: 1.25rem;
+  line-height: 1.2;
+  font-weight: 700;
 }
+
 .message {
-  color: var(--color-brand-charcoal);
-  margin-bottom: 1.5rem;
+  color: var(--color-text-primary);
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.45;
 }
+
+.actions {
+  margin-top: 22px;
+  display: flex;
+  justify-content: flex-end;
+}
+
 .okButton {
-  background: var(--gradient-success-btn);
+  background: var(--color-primary);
   color: var(--color-white);
   border: none;
-  border-radius: 24px;
-  padding: 0.7rem 2.2rem;
-  font-size: 1rem;
+  border-radius: 8px;
+  min-height: 44px;
+  padding: 10px 22px;
+  font-size: 0.95rem;
+  font-weight: 700;
   cursor: pointer;
-  box-shadow: var(--shadow-success-md);
-  transition: background 0.2s;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
 }
+
 .okButton:hover {
-  background: var(--gradient-success-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-brand-sm);
+}
+
+.okButton:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 640px) {
+  .header {
+    padding: 14px 64px 12px 18px;
+  }
+
+  .title {
+    font-size: 1.125rem;
+  }
+
+  .body {
+    padding: 16px 18px 18px;
+  }
+
+  .actions {
+    justify-content: stretch;
+  }
+
+  .okButton {
+    width: 100%;
+  }
 }

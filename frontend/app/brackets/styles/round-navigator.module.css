@@ -37,7 +37,7 @@
 }
 
 .roundButton.active {
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
+  background: var(--color-primary);
   border-color: var(--color-primary);
   color: var(--color-white);
   box-shadow: 0 1px 4px var(--color-border-hover);
@@ -50,7 +50,7 @@
 }
 
 .roundButton.completed.active {
-  background: linear-gradient(135deg, var(--color-success) 0%, var(--color-green-dark) 100%);
+  background: var(--color-success);
   color: var(--color-white);
 }
 

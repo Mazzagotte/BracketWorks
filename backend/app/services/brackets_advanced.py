@@ -45,16 +45,8 @@ def dedupe_by_id(entries: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
 
 
 def fisher_yates_shuffle(items: List[Any], rng: random.Random) -> List[Any]:
-    """
-    Fisher-Yates shuffle using provided RNG.
-    Returns a new shuffled list without modifying original.
-    """
-    shuffled = items.copy()
-    n = len(shuffled)
-    for i in range(n - 1, 0, -1):
-        j = rng.randint(0, i)
-        shuffled[i], shuffled[j] = shuffled[j], shuffled[i]
-    return shuffled
+    """Returns a new shuffled list without modifying original."""
+    return rng.sample(items, len(items))
 
 
 def normalize_pair(a: int, b: int) -> Tuple[int, int]:

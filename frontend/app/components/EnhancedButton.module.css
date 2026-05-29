@@ -34,7 +34,7 @@
    ======================================== */
 
 .primary {
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
+  background: var(--color-primary);
   color: var(--color-white);
   border: 1px solid var(--color-border-light);
   box-shadow: 0 4px 12px var(--color-border-hover), 0 2px 4px var(--opacity-black-10);
@@ -49,14 +49,14 @@
 }
 
 .success {
-  background: linear-gradient(135deg, var(--color-success) 0%, var(--color-green-dark) 100%);
+  background: var(--color-success);
   color: var(--color-white);
   border: 1px solid var(--color-success-border);
   box-shadow: var(--shadow-success-md);
 }
 
 .danger {
-  background: linear-gradient(135deg, var(--color-error) 0%, var(--color-red-dark) 100%);
+  background: var(--color-error);
   color: var(--color-white);
   border: 1px solid var(--color-error-border);
   box-shadow: var(--shadow-danger-sm);
@@ -87,13 +87,13 @@
    ======================================== */
 
 .stateSuccess {
-  background: linear-gradient(135deg, var(--color-success) 0%, var(--color-green-dark) 100%) !important;
+  background: var(--color-success) !important;
   border: 1px solid var(--color-success-border) !important;
   color: var(--color-white) !important;
 }
 
 .stateError {
-  background: linear-gradient(135deg, var(--color-error) 0%, var(--color-red-dark) 100%) !important;
+  background: var(--color-error) !important;
   border: 1px solid var(--color-error-border) !important;
   color: var(--color-white) !important;
 }
@@ -133,7 +133,7 @@
   opacity: 0;
   transition: opacity 0.3s;
   border-radius: 8px;
-  background: linear-gradient(to right, transparent, var(--color-border-light), transparent);
+  background: var(--opacity-white-10);
   pointer-events: none;
 }
 

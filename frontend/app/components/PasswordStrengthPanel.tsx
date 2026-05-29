@@ -32,6 +32,8 @@ export default function PasswordStrengthPanel({
   className = '',
 }: PasswordStrengthPanelProps) {
   const toneClassName = toneClassMap[tone];
+  const strengthWidthBucket = Math.max(10, Math.min(100, Math.round(strengthPercent / 10) * 10));
+  const strengthWidthClass = styles[`barW${strengthWidthBucket}` as keyof typeof styles] as string;
 
   return (
     <div className={`${styles.panel}${className ? ` ${className}` : ''}`}>
@@ -41,8 +43,7 @@ export default function PasswordStrengthPanel({
       </div>
       <div className={styles.meter}>
         <div
-          className={`${styles.bar} ${toneClassName}`}
-          style={{ width: `${Math.max(strengthPercent, 8)}%` }}
+          className={`${styles.bar} ${toneClassName} ${strengthWidthClass}`}
         ></div>
       </div>
       <div className={styles.requirements}>
@@ -52,7 +53,7 @@ export default function PasswordStrengthPanel({
             className={`${styles.requirementItem} ${requirement.met ? styles.requirementMet : styles.requirementPending}`}
           >
             <span className={styles.requirementIcon} aria-hidden="true">
-              {requirement.met ? '✓' : '○'}
+              {requirement.met ? 'OK' : 'NO'}
             </span>
             <span>{requirement.label}</span>
           </div>

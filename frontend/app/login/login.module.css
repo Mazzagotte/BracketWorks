@@ -69,10 +69,7 @@
   font-size: 28px;
   font-weight: 700;
   margin: 0 0 6px;
-  background: linear-gradient(135deg, var(--color-white) 0%, var(--color-brand-ivory-warm) 50%, var(--color-warning-amber) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--color-brand-ivory-warm);
   letter-spacing: -0.5px;
   line-height: 1.2;
 }
@@ -297,7 +294,7 @@
   font-weight: 600;
   letter-spacing: 0.3px;
   color: var(--color-white);
-  background: var(--gradient-brand-logo, linear-gradient(135deg, var(--color-brand-orange) 0%, var(--color-brand-orange-dark) 100%));
+  background: var(--color-brand-orange);
   border: none;
   border-radius: var(--radius-lg, 12px);
   cursor: pointer;

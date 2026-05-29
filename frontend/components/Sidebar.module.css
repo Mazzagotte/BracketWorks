@@ -2,7 +2,7 @@
 
 .sidebar {
   width: 200px;
-  background: var(--gradient-dark-complex);
+  background: var(--color-dark-base);
   height: calc(100vh - var(--header-height));
   position: fixed;
   left: 0;
@@ -125,14 +125,14 @@
 
 .navLinkActive {
   color: var(--color-brand-ivory, var(--color-brand-ivory));
-  background: linear-gradient(90deg, var(--color-border-hover) 0%, var(--color-border-light) 100%);
+  background: var(--color-border-light);
   font-weight: 600;
   border: 1px solid var(--color-border-hover);
   border-left: 3px solid var(--color-primary);
 }
 
 .navLinkActive:hover {
-  background: linear-gradient(90deg, var(--color-border-hover) 0%, var(--color-border-light) 100%);
+  background: var(--color-border-hover);
   border-left-color: var(--color-primary);
 }
 
@@ -159,7 +159,7 @@
   justify-content: center;
   text-align: center;
   text-decoration: none;
-  background: linear-gradient(135deg, var(--color-dark-lighter) 0%, var(--color-dark-elevated) 60%, var(--color-dark-base) 100%);
+  background: var(--color-dark-elevated);
   color: var(--color-white);
   font-weight: 700;
   font-size: 0.9rem;
@@ -180,7 +180,7 @@
 }
 
 .settingsBtnActive {
-  background: linear-gradient(135deg, var(--color-dark-accent) 0%, var(--color-dark-lighter) 60%, var(--color-dark-elevated) 100%);
+  background: var(--color-dark-accent);
 }
 
 .logoutBtn {
@@ -189,7 +189,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--gradient-brand-logo);
+  background: var(--color-primary);
   color: var(--color-brand-ivory, var(--color-brand-ivory));
   font-weight: 700;
   font-size: 0.9rem;

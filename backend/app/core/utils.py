@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from jose import JWTError, jwt
 from .config import settings
 
@@ -8,9 +8,8 @@ ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None):
     to_encode = data.copy()
-    
-    # Use current timestamp for better performance
-    now = datetime.utcnow()
+
+    now = datetime.now(timezone.utc)
     if expires_delta:
         expire = now + expires_delta
     else:

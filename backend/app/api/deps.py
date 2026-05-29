@@ -78,7 +78,7 @@ def get_current_user(
     
     user_id = payload["sub"]
     try:
-        user = db.query(models.User).filter(models.User.id == int(user_id)).first()
+        user = db.get(models.User, int(user_id))
     except Exception as e:
         raise HTTPException(status_code=500, detail="Database error")
     

@@ -30,7 +30,7 @@
 }
 
 .bracketTypeBadge {
-  background: var(--gradient-brand-subtle);
+  background: var(--color-primary);
   color: var(--color-white);
   padding: 0.375rem 0.75rem;
   border-radius: 6px;
@@ -78,7 +78,7 @@
 
 .progressBarFill {
   height: 100%;
-  background: var(--gradient-brand-subtle);
+  background: var(--color-primary);
   transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
@@ -93,22 +93,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    var(--opacity-white-30) 50%,
-    transparent 100%
-  );
-  animation: shimmer 2s infinite;
-}
-
-@keyframes shimmer {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(100%);
-  }
+  background: var(--opacity-white-12);
 }
 
 .progressBarText {
@@ -155,43 +140,43 @@
 /* Bracket Health Stats Color Schemes */
 .statCard.needingScores {
   border-color: var(--color-warning-amber);
-  background: linear-gradient(135deg, var(--color-warning-light-2) 0%, var(--color-brand-ivory-soft) 100%);
+  background: var(--color-warning-light-2);
 }
 
 .statCard.withIssues {
   border-color: var(--color-error);
-  background: linear-gradient(135deg, var(--color-error-border-light) 0%, var(--color-error-bg-light) 100%);
+  background: var(--color-error-bg-light);
 }
 
 .statCard.readyToPlay {
   border-color: var(--color-success);
-  background: linear-gradient(135deg, var(--color-green-light) 0%, var(--color-green-lighter) 100%);
+  background: var(--color-green-light);
 }
 
 .statCard.waiting {
   border-color: var(--color-gray-400);
-  background: linear-gradient(135deg, var(--color-gray-100) 0%, var(--color-gray-50) 100%);
+  background: var(--color-gray-100);
 }
 
 /* Old stat card styles - keep for compatibility */
 .statCard.completed {
   border-color: var(--color-success);
-  background: linear-gradient(135deg, var(--color-green-light) 0%, var(--color-green-lighter) 100%);
+  background: var(--color-green-light);
 }
 
 .statCard.inProgress {
   border-color: var(--color-warning-amber);
-  background: linear-gradient(135deg, var(--color-warning-light-2) 0%, var(--color-brand-ivory-soft) 100%);
+  background: var(--color-warning-light-2);
 }
 
 .statCard.pending {
   border-color: var(--color-gray-400);
-  background: linear-gradient(135deg, var(--color-gray-100) 0%, var(--color-gray-50) 100%);
+  background: var(--color-gray-100);
 }
 
 .statCard.players {
   border-color: var(--color-blue-primary);
-  background: var(--gradient-blue-light);
+  background: var(--color-blue-light);
 }
 
 .statValue {
@@ -304,7 +289,7 @@
 
 .progressBarFill {
   height: 100%;
-  background: var(--gradient-brand-subtle);
+  background: var(--color-primary);
   transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
@@ -349,7 +334,7 @@
 }
 
 .completionBadge {
-  background: linear-gradient(135deg, var(--color-success) 0%, var(--color-green-dark) 100%);
+  background: var(--color-success);
   color: var(--color-white);
   padding: 0.5rem;
   border-radius: 4px;
@@ -363,7 +348,7 @@
    =================================== */
 
 .currentRoundSection {
-  background: var(--gradient-purple-soft);
+  background: var(--color-dark-elevated);
   color: var(--color-white);
   padding: 1.25rem;
   border-radius: 10px;
@@ -396,7 +381,7 @@
    =================================== */
 
 .estimationSection {
-  background: var(--gradient-blue-light);
+  background: var(--color-blue-light);
   border: 2px solid var(--color-blue-primary);
   border-radius: 10px;
   padding: 1.25rem;
@@ -440,7 +425,7 @@
    =================================== */
 
 .completionBadge {
-  background: linear-gradient(135deg, var(--color-brand-gold-light) 0%, var(--color-warning-amber) 100%);
+  background: var(--color-brand-gold-light);
   color: var(--color-white);
   padding: 1.5rem;
   border-radius: 10px;

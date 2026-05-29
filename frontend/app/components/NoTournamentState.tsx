@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import { disableScroll, enableScroll } from '../utils/modalUtils'
 
 interface InfoCard {
   title: string
@@ -15,9 +16,10 @@ interface NoTournamentStateProps {
 
 export default function NoTournamentState({ title, description, cards }: NoTournamentStateProps) {
   useEffect(() => {
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = prev }
+    disableScroll()
+    return () => {
+      enableScroll()
+    }
   }, [])
 
   return (

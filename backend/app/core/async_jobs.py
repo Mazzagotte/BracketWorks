@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from threading import Lock
 from typing import Any, Callable
 import traceback
@@ -13,7 +13,7 @@ class JobRecord:
     job_id: str
     job_type: str
     status: str = "queued"
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     started_at: datetime | None = None
     completed_at: datetime | None = None
     result: dict[str, Any] | None = None
@@ -40,7 +40,7 @@ class AsyncJobStore:
         if not job:
             return
         job.status = "running"
-        job.started_at = datetime.utcnow()
+        job.started_at = datetime.now(timezone.utc)
         try:
             result = fn()
             job.status = "succeeded"
@@ -51,7 +51,7 @@ class AsyncJobStore:
             job.error = f"{exc}\n{traceback.format_exc()}"
             job.result = None
         finally:
-            job.completed_at = datetime.utcnow()
+            job.completed_at = datetime.now(timezone.utc)
 
 
 job_store = AsyncJobStore()

@@ -32,6 +32,7 @@ import {
 } from '../lib/selection-session';
 import CloseControl from '../../components/CloseControl';
 import ExplainDashboardModal from './ExplainDashboardModal';
+import { setBodyInteractionState } from '../utils/modalUtils';
 
 function get12hrTimes() {
   const makeGroup = (period: 'AM' | 'PM') => {
@@ -359,7 +360,7 @@ function EditTournamentModal({ open, onClose, tournament, onSave, isMobile, isCr
             type="submit"
             variant="primary"
             loading={isSaving}
-            style={{ minWidth: '224px' }}
+            className={mobileStyles.createTournamentPrimaryButton}
           >
             {isCreateMode ? 'Create Tournament' : 'Save'}
           </EnhancedButton>
@@ -848,11 +849,13 @@ export default function TournamentDashboard() {
   // Lock body scroll when no tournament is loaded
   useEffect(() => {
     if (!tournament) {
-      document.body.style.overflow = 'hidden'
+      setBodyInteractionState({ scrollLocked: true, touchLocked: false })
     } else {
-      document.body.style.overflow = ''
+      setBodyInteractionState({ scrollLocked: false, touchLocked: false })
     }
-    return () => { document.body.style.overflow = '' }
+    return () => {
+      setBodyInteractionState({ scrollLocked: false, touchLocked: false })
+    }
   }, [tournament])
 
   // Fallback: if auth isn't initialized after 3 seconds but we have tokens, show dashboard
