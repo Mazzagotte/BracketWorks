@@ -9,6 +9,8 @@ interface LogEntry {
   context?: LogContext;
 }
 
+const externalLogEndpoint = process.env.NEXT_PUBLIC_LOG_ENDPOINT?.trim();
+
 class Logger {
   private isDevelopment = process.env.NODE_ENV === 'development';
   private logs: LogEntry[] = [];
@@ -57,11 +59,12 @@ class Logger {
   }
 
   private sendToExternalLogger(entry: LogEntry) {
-    // Placeholder for external logging service
-    // Could integrate with services like LogRocket, Sentry, etc.
+    if (!externalLogEndpoint) {
+      return;
+    }
+
     try {
-      // Example: Send to backend logging endpoint
-      fetch('/api/logs', {
+      fetch(externalLogEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(entry)
