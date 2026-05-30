@@ -643,7 +643,7 @@ def reset_password(payload: schemas.PasswordResetConfirmRequest, db: Session = D
     email = user.email
     if payload.email and payload.email.lower().strip() != email.lower().strip():
         raise HTTPException(status_code=400, detail="Invalid or expired reset token")
-    user.password = bcrypt.hash(payload.new_password)
+    user.password = pwd_context.hash(payload.new_password)
     reset_record.used_at = _utcnow()
     db.commit()
     return {"message": "Password reset successful"}
@@ -659,7 +659,7 @@ def signup(user: schemas.UserCreate, background_tasks: BackgroundTasks, db: Sess
     if existing_email:
         raise HTTPException(status_code=400, detail="Email already exists")
     # Hash password
-    hashed_password = bcrypt.hash(user.password)
+    hashed_password = pwd_context.hash(user.password)
     # Create user
     db_user = models.User(
         username=user.username,
