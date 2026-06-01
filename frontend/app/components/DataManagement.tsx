@@ -92,6 +92,10 @@ export function useAutoSave<T>({
 class OfflineStorageManager {
   private storageKey: string;
 
+  private static isUnsynced(item: OfflineStoredItem<unknown>): boolean {
+    return !item.synced;
+  }
+
   constructor(storageKey: string) {
     this.storageKey = storageKey;
   }
@@ -116,7 +120,7 @@ class OfflineStorageManager {
     try {
       const offlineData = this.getOfflineData();
       const item = offlineData[key];
-      return item ? item.data : null;
+      return item ? (item.data as T) : null;
     } catch (error) {
       logger.error('Failed to retrieve offline data:', error);
       return null;
@@ -124,11 +128,11 @@ class OfflineStorageManager {
   }
 
   // Get all unsynced items
-  getUnsyncedItems(): Array<{ key: string; data: any; timestamp: string }> {
+  getUnsyncedItems(): Array<{ key: string; data: unknown; timestamp: string }> {
     try {
       const offlineData = this.getOfflineData();
       return Object.entries(offlineData)
-        .filter(([, item]) => !item.synced)
+        .filter(([, item]) => OfflineStorageManager.isUnsynced(item))
         .map(([key, item]) => ({
           key,
           data: item.data,
@@ -163,7 +167,7 @@ class OfflineStorageManager {
   }
 
   // Get raw offline data
-  private getOfflineData(): Record<string, any> {
+  private getOfflineData(): Record<string, OfflineStoredItem<unknown>> {
     try {
       const data = localStorage.getItem(this.storageKey);
       return data ? JSON.parse(data) : {};
@@ -176,10 +180,16 @@ class OfflineStorageManager {
 
 // Offline sync hook
 interface UseOfflineSyncOptions {
-  syncFunction: (data: any) => Promise<void>;
+  syncFunction: (data: unknown) => Promise<void>;
   storageKey?: string;
   syncInterval?: number;
 }
+
+type OfflineStoredItem<T> = {
+  data: T;
+  timestamp: string;
+  synced: boolean;
+};
 
 export function useOfflineSync({
   syncFunction,

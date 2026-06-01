@@ -199,9 +199,11 @@ export function VirtualizedList<T>({
 
   const visibleItems = [];
   for (let index = startIndex; index <= endIndex; index++) {
+    const item = items[index];
+    if (item === undefined) continue;
     visibleItems.push({
       index: index,
-      item: items[index],
+      item,
       offsetTop: index * itemHeight,
     });
   }

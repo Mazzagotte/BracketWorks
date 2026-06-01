@@ -1,11 +1,11 @@
 'use client';
 
-import type { KeyboardEventHandler, RefObject } from 'react';
+import type { KeyboardEventHandler, Ref } from 'react';
 
 type AuthValidatedInputFieldProps = {
   label: string;
   inputId: string;
-  inputRef?: RefObject<HTMLInputElement | null>;
+  inputRef?: Ref<HTMLInputElement>;
   type?: 'email' | 'text' | 'password';
   value: string;
   onChange: (value: string) => void;

@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef, useMemo, Fragment, useLayoutEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { buildApiUrl } from '../../lib/api'
+import { formatIsoDateShortWithWeekday } from '../../lib/formatters'
 import styles from './view.module.css'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -122,18 +123,39 @@ function computeAlive(bracketGroups: BracketGroup[]): AliveRow[] {
       if (rounds.length === 0) continue
 
       // After Game 1: advanced from round 0
-      for (const p of advancers_from(rounds[0])) { ensure(p); data[p].afterG1++ }
+      const firstRound = rounds[0]
+      if (firstRound) {
+        for (const p of advancers_from(firstRound)) {
+          ensure(p)
+          const row = data[p]
+          if (row) row.afterG1++
+        }
+      }
 
       // After Game 2: advanced from round 1 (if it exists)
-      if (rounds.length > 1) {
-        for (const p of advancers_from(rounds[1])) { ensure(p); data[p].afterG2++ }
+      const secondRound = rounds[1]
+      if (secondRound) {
+        for (const p of advancers_from(secondRound)) {
+          ensure(p)
+          const row = data[p]
+          if (row) row.afterG2++
+        }
       }
 
       // Won: appeared in the last round (finalists place 1st/2nd)
-      if (rounds.length >= 2) {
-        for (const m of rounds[rounds.length - 1].matches) {
-          if (m.playerA && m.playerA !== 'BYE') { ensure(m.playerA); data[m.playerA].won++ }
-          if (m.playerB && m.playerB !== 'BYE') { ensure(m.playerB); data[m.playerB].won++ }
+      const lastRound = rounds.at(-1)
+      if (rounds.length >= 2 && lastRound) {
+        for (const m of lastRound.matches) {
+          if (m.playerA && m.playerA !== 'BYE') {
+            ensure(m.playerA)
+            const row = data[m.playerA]
+            if (row) row.won++
+          }
+          if (m.playerB && m.playerB !== 'BYE') {
+            ensure(m.playerB)
+            const row = data[m.playerB]
+            if (row) row.won++
+          }
         }
       }
 
@@ -154,7 +176,7 @@ function computeAlive(bracketGroups: BracketGroup[]): AliveRow[] {
 }
 
 function formatSquad(s: Squad) {
-  const date = s.date ? new Date(s.date + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) : ''
+  const date = s.date ? formatIsoDateShortWithWeekday(s.date) : ''
   return `${date} ${s.time}`.trim()
 }
 
@@ -353,6 +375,7 @@ function bracketWinner(bracket: BracketData): string | null {
   const rounds = bracket.rounds ?? []
   if (rounds.length < 2) return null
   const lastRound = rounds[rounds.length - 1]
+  if (!lastRound) return null
   for (const m of lastRound.matches) {
     if (m.winner === 'A' && m.playerA && m.playerA !== 'BYE') return m.playerA
     if (m.winner === 'B' && m.playerB && m.playerB !== 'BYE') return m.playerB
@@ -378,13 +401,16 @@ function BracketView({ group, highlightName, onNameClick }: {
   const winner = bracketWinner(bracket ?? { rounds: [] })
 
   useEffect(() => {
+    const treeGridScaledClass = styles.bracketTreeGridScaled
+    const treeWrapScaledClass = styles.bracketTreeWrapScaled
+
     const resetTreeScale = () => {
       if (treeGridRef.current) {
-        treeGridRef.current.classList.remove(styles.bracketTreeGridScaled)
+        if (treeGridScaledClass) treeGridRef.current.classList.remove(treeGridScaledClass)
         treeGridRef.current.style.removeProperty('--bw-view-tree-scale')
       }
       if (treeWrapRef.current) {
-        treeWrapRef.current.classList.remove(styles.bracketTreeWrapScaled)
+        if (treeWrapScaledClass) treeWrapRef.current.classList.remove(treeWrapScaledClass)
         treeWrapRef.current.style.removeProperty('--bw-view-tree-height')
       }
     }
@@ -412,8 +438,8 @@ function BracketView({ group, highlightName, onNameClick }: {
 
       const nextScale = Math.min(1, availableWidth / naturalWidth)
       if (nextScale < 1) {
-        grid.classList.add(styles.bracketTreeGridScaled)
-        wrap.classList.add(styles.bracketTreeWrapScaled)
+        if (treeGridScaledClass) grid.classList.add(treeGridScaledClass)
+        if (treeWrapScaledClass) wrap.classList.add(treeWrapScaledClass)
         grid.style.setProperty('--bw-view-tree-scale', String(nextScale))
         wrap.style.setProperty('--bw-view-tree-height', `${Math.ceil(naturalHeight * nextScale)}px`)
       } else {
@@ -438,6 +464,7 @@ function BracketView({ group, highlightName, onNameClick }: {
     const nameL = highlightName.toLowerCase()
     for (let bi = 0; bi < group.brackets.length; bi++) {
       const b = group.brackets[bi]
+      if (!b) continue
       for (const r of (b.rounds ?? [])) {
         for (const m of r.matches) {
           if (
@@ -486,6 +513,9 @@ function BracketView({ group, highlightName, onNameClick }: {
     return Array.from({ length: end - start + 1 }, (_, i) => start + i)
   }, [totalBrackets, activeBracket])
 
+  const firstPillIndex = pillIndices[0] ?? 0
+  const lastPillIndex = pillIndices[pillIndices.length - 1] ?? 0
+
   return (
     <div className={styles.bracketView}>
       {/* Pill carousel */}
@@ -499,10 +529,10 @@ function BracketView({ group, highlightName, onNameClick }: {
             aria-label="Previous bracket"
           >Prev</button>
           <div className={styles.bracketPills}>
-            {pillIndices[0] > 0 && (
+            {firstPillIndex > 0 && (
               <>
                 <button type="button" className={styles.bracketPill} onClick={() => setActiveBracket(0)} aria-label="Bracket 1">1</button>
-                {pillIndices[0] > 1 && <span className={styles.bracketPillEllipsis}>...</span>}
+                {firstPillIndex > 1 && <span className={styles.bracketPillEllipsis}>...</span>}
               </>
             )}
             {pillIndices.map((i) => (
@@ -514,9 +544,9 @@ function BracketView({ group, highlightName, onNameClick }: {
                 aria-label={`Bracket ${i + 1}`}
               >{i + 1}</button>
             ))}
-            {pillIndices[pillIndices.length - 1] < totalBrackets - 1 && (
+            {lastPillIndex < totalBrackets - 1 && (
               <>
-                {pillIndices[pillIndices.length - 1] < totalBrackets - 2 && <span className={styles.bracketPillEllipsis}>...</span>}
+                {lastPillIndex < totalBrackets - 2 && <span className={styles.bracketPillEllipsis}>...</span>}
                 <button type="button" className={styles.bracketPill} onClick={() => setActiveBracket(totalBrackets - 1)} aria-label={`Bracket ${totalBrackets}`}>{totalBrackets}</button>
               </>
             )}
@@ -652,6 +682,7 @@ function BracketsTabView({ bracketGroups }: { bracketGroups: BracketGroup[] }) {
     const nameL = highlightName.toLowerCase()
     for (let gi = 0; gi < bracketGroups.length; gi++) {
       const grp = bracketGroups[gi]
+      if (!grp) continue
       for (const b of grp.brackets) {
         for (const r of (b.rounds ?? [])) {
           for (const m of r.matches) {
@@ -677,6 +708,13 @@ function BracketsTabView({ bracketGroups }: { bracketGroups: BracketGroup[] }) {
   }
 
   const group = bracketGroups[activeGroup] ?? bracketGroups[0]
+  if (!group) {
+    return (
+      <div className={styles.section}>
+        <p className={styles.emptyNote}>No brackets generated yet.</p>
+      </div>
+    )
+  }
 
   return (
     <div className={styles.section}>
@@ -717,7 +755,7 @@ function BracketsTabView({ bracketGroups }: { bracketGroups: BracketGroup[] }) {
             }
             const q = val.trim().toLowerCase()
             const matches = [...allNames].filter((n) => n.toLowerCase().includes(q))
-            setHighlightName(matches.length === 1 ? matches[0] : val.trim())
+            setHighlightName(matches.length === 1 ? (matches[0] ?? val.trim()) : val.trim())
           }}
         />
         {highlightName && (
@@ -1196,7 +1234,8 @@ export default function TournamentViewPage() {
   useEffect(() => {
     if (!tournament?.squads.length) return
     if (selectedSquadId != null && tournament.squads.some((s) => s.id === selectedSquadId)) return
-    setSelectedSquadId(tournament.squads[0].id)
+    const firstSquad = tournament.squads[0]
+    if (firstSquad) setSelectedSquadId(firstSquad.id)
   }, [tournament, selectedSquadId])
 
   // ── Data refresh (bowlers + brackets + winners) ────────────────────────────
@@ -1249,7 +1288,7 @@ export default function TournamentViewPage() {
           <div className={styles.headerTop}>
             {/* Left: logo + brand */}
             <div className={styles.brandCol}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
+              {/* eslint-disable-next-line @next/next/no-img-element -- static branding mark is intentionally rendered as plain img in the public header */}
               <img
                 src="/logo 2.svg"
                 alt="BracketWorks"

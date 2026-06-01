@@ -1,4 +1,6 @@
 import logging
+from datetime import datetime, timezone
+
 from fastapi import HTTPException, Depends
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import create_engine
@@ -9,6 +11,10 @@ from ..core import models, utils
 from ..core.config import settings
 
 logger = logging.getLogger(__name__)
+
+
+def _utcnow_naive() -> datetime:
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 _is_sqlite = settings.DATABASE_URL.startswith("sqlite")
 
@@ -67,7 +73,7 @@ def get_current_user(
     
     try:
         payload = utils.decode_access_token(token)
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=401, detail="Invalid token")
     
     if not payload:
@@ -75,15 +81,44 @@ def get_current_user(
     
     if "sub" not in payload:
         raise HTTPException(status_code=401, detail="Missing user id in token")
+
+    token_type = payload.get("type", "access")
+    if token_type != "access":
+        raise HTTPException(status_code=401, detail="Invalid token type")
+
+    sid = str(payload.get("sid") or "").strip()
+    if not sid:
+        raise HTTPException(status_code=401, detail="Missing session id in token")
     
     user_id = payload["sub"]
     try:
-        user = db.get(models.User, int(user_id))
-    except Exception as e:
+        user_id_int = int(user_id)
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid token subject")
+
+    auth_session = (
+        db.query(models.AuthSession)
+        .filter(
+            models.AuthSession.session_id == sid,
+            models.AuthSession.user_id == user_id_int,
+        )
+        .first()
+    )
+
+    if not auth_session:
+        raise HTTPException(status_code=401, detail="Session no longer valid")
+
+    now = _utcnow_naive()
+    if auth_session.is_revoked or auth_session.expires_at <= now:
+        raise HTTPException(status_code=401, detail="Session no longer valid")
+
+    try:
+        user = db.get(models.User, user_id_int)
+    except Exception:
         raise HTTPException(status_code=500, detail="Database error")
     
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=401, detail="User not found")
     
     return user
 

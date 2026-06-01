@@ -17,17 +17,17 @@ type NameFieldConfig = {
 };
 
 type NameFieldsSectionProps = {
-  containerClassName: string;
-  fieldClassName: string;
-  labelClassName: string;
+  containerClassName?: string;
+  fieldClassName?: string;
+  labelClassName?: string;
   firstName: NameFieldConfig;
   lastName: NameFieldConfig;
 };
 
 type UsernameFieldSectionProps = {
-  containerClassName: string;
-  labelClassName: string;
-  inputClassName: string;
+  containerClassName?: string;
+  labelClassName?: string;
+  inputClassName?: string;
   value: string;
   onChange: (value: string) => void;
   checking: boolean;
@@ -42,10 +42,10 @@ type UsernameFieldSectionProps = {
 };
 
 type PasswordSectionProps = {
-  containerClassName: string;
-  labelClassName: string;
-  wrapperClassName: string;
-  inputClassName: string;
+  containerClassName?: string;
+  labelClassName?: string;
+  wrapperClassName?: string;
+  inputClassName?: string;
   value: string;
   onChange: (value: string) => void;
   mounted: boolean;
@@ -66,10 +66,10 @@ type PasswordSectionProps = {
 };
 
 type ConfirmPasswordSectionProps = {
-  containerClassName: string;
-  labelClassName: string;
-  wrapperClassName: string;
-  inputClassName: string;
+  containerClassName?: string;
+  labelClassName?: string;
+  wrapperClassName?: string;
+  inputClassName?: string;
   value: string;
   onChange: (value: string) => void;
   mounted: boolean;

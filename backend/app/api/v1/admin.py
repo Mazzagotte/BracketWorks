@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from ..deps import get_db, require_admin_user
 from ...core import models
+from ...core.password_policy import PasswordPolicyError, validate_password_policy
 _pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__default_rounds=10)
 
 
@@ -1165,8 +1166,10 @@ def admin_reset_password(
     db: Session = Depends(get_db),
     admin: models.User = Depends(require_admin_user),
 ):
-    if len(payload.new_password) < 8:
-        raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
+    try:
+        validate_password_policy(payload.new_password)
+    except PasswordPolicyError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
 
     user = db.get(models.User, user_id)
     if not user:
@@ -1174,7 +1177,19 @@ def admin_reset_password(
     if user.id == admin.id:
         raise HTTPException(status_code=400, detail="Use the Settings page to change your own password")
 
+    now = datetime.utcnow()
     user.password = _pwd_context.hash(payload.new_password)
+    active_sessions = (
+        db.query(models.AuthSession)
+        .filter(
+            models.AuthSession.user_id == user.id,
+            models.AuthSession.is_revoked.is_(False),
+        )
+        .all()
+    )
+    for session in active_sessions:
+        session.is_revoked = True
+        session.revoked_at = now
 
     _write_admin_audit(
         db,

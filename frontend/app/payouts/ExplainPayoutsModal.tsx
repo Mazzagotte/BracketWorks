@@ -27,7 +27,6 @@ export default function ExplainPayoutsModal({ isOpen, onClose }: ExplainPayoutsM
       enableScroll()
       document.removeEventListener('keydown', handleEscape)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, onClose])
 
   if (!isOpen) return null

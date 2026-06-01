@@ -316,8 +316,10 @@ export function summarizeEntries(players: Player[], programs: BracketProgramDefi
 
   const totalEntries = programSummaries.reduce((sum, program) => sum + program.totalEntries, 0)
   const totalRevenue = players.reduce((sum, player) => {
-    const isPaid = player.amountPaid >= player.totalCost
-    return sum + (isPaid ? player.totalCost : 0)
+    const amountPaid = Number(player.amountPaid ?? 0)
+    const totalCost = Number(player.totalCost ?? 0)
+    const isPaid = amountPaid >= totalCost
+    return sum + (isPaid ? totalCost : 0)
   }, 0)
 
   return {

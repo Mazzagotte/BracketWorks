@@ -21,11 +21,15 @@ export function MobileBracketView({
 
   const onTouchStart = (e: React.TouchEvent) => {
     setTouchEnd(null);
-    setTouchStart(e.targetTouches[0].clientX);
+    const firstTouch = e.targetTouches[0];
+    if (!firstTouch) return;
+    setTouchStart(firstTouch.clientX);
   };
 
   const onTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX);
+    const firstTouch = e.targetTouches[0];
+    if (!firstTouch) return;
+    setTouchEnd(firstTouch.clientX);
   };
 
   const onTouchEnd = () => {

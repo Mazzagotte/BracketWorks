@@ -16,12 +16,32 @@ class Logger {
   private logs: LogEntry[] = [];
   private maxLogSize = 1000; // Keep last 1000 logs in memory
 
-  private log(level: LogLevel, message: string, context?: LogContext) {
+  private normalizeContext(context?: unknown): LogContext | undefined {
+    if (context === undefined) {
+      return undefined;
+    }
+
+    if (context && typeof context === 'object' && !Array.isArray(context)) {
+      return context as LogContext;
+    }
+
+    if (context instanceof Error) {
+      return {
+        error: context.message,
+        ...(context.stack ? { stack: context.stack } : {}),
+      };
+    }
+
+    return { value: context };
+  }
+
+  private log(level: LogLevel, message: string, context?: unknown) {
+    const normalizedContext = this.normalizeContext(context);
     const entry: LogEntry = {
       level,
       message,
       timestamp: new Date(),
-      context
+      context: normalizedContext
     };
 
     // Add to internal log storage
@@ -33,7 +53,7 @@ class Logger {
     // Console output in development
     if (this.isDevelopment) {
       const timestamp = entry.timestamp.toISOString();
-      const contextStr = context ? ` | Context: ${JSON.stringify(context)}` : '';
+      const contextStr = normalizedContext ? ` | Context: ${JSON.stringify(normalizedContext)}` : '';
       
       switch (level) {
         case 'debug':
@@ -76,19 +96,19 @@ class Logger {
     }
   }
 
-  debug(message: string, context?: LogContext) {
+  debug(message: string, context?: unknown) {
     this.log('debug', message, context);
   }
 
-  info(message: string, context?: LogContext) {
+  info(message: string, context?: unknown) {
     this.log('info', message, context);
   }
 
-  warn(message: string, context?: LogContext) {
+  warn(message: string, context?: unknown) {
     this.log('warn', message, context);
   }
 
-  error(message: string, context?: LogContext) {
+  error(message: string, context?: unknown) {
     this.log('error', message, context);
   }
 

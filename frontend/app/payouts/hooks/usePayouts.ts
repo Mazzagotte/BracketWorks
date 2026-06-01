@@ -183,10 +183,10 @@ export function usePayouts(tournamentId: number | null, selectedSquadId: number 
       })
 
       if (bowlerResponse.ok) {
-        const bowlers = await bowlerResponse.json()
+        const bowlers = await bowlerResponse.json() as Array<{ id: number; full_name: string }>
         setEntryData({
           tournament_info: { id: tournamentId, name: '', squad_id: null },
-          entries: bowlers.map((b: { id: number; full_name: string }) => ({
+          entries: bowlers.map((b): PlayerEntry => ({
             id: b.id,
             name: b.full_name,
             scratch_brackets_entered: 0,

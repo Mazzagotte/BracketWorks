@@ -155,6 +155,7 @@ export default function LoginPage() {
     try {
       const res = await fetch(API("/api/v1/users/login-json"), {
         method: "POST",
+        credentials: 'include',
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(loginData),
       });
@@ -220,7 +221,6 @@ export default function LoginPage() {
         name: data.first_name,
         isAdmin: Boolean(data.is_admin),
       }, {
-        refreshToken: data.refresh_token,
         sessionId: data.session_id,
       });
 

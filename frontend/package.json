@@ -7,7 +7,7 @@
     "dev": "next dev -p 3000 --webpack",
     "build": "next build",
     "start": "next start -p 3000",
-    "lint": "eslint . --ext .js,.jsx,.ts,.tsx --ignore-pattern node_modules --ignore-pattern .next --ignore-pattern node_modules_stale_* && npm run lint:ui-rules",
+    "lint": "eslint . --cache --cache-strategy content --cache-location .eslintcache --report-unused-disable-directives --ext .js,.jsx,.ts,.tsx --ignore-pattern node_modules --ignore-pattern .next --ignore-pattern node_modules_stale_* && npm run lint:ui-rules",
     "lint:ui-rules": "node ./scripts/enforce-ui-css-rules.mjs",
     "lint:ui-rules:full": "node ./scripts/enforce-ui-css-rules.mjs --full",
     "typecheck": "tsc --noEmit",

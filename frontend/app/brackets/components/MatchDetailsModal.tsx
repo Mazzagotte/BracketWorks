@@ -231,8 +231,8 @@ export function MatchDetailsModal({
         </div>
 
         {/* Upset Indicator */}
-        {((match.winner === 'A' && match.seedA !== null && match.seedB !== null && match.seedA > match.seedB) ||
-          (match.winner === 'B' && match.seedA !== null && match.seedB !== null && match.seedB > match.seedA)) && (
+        {((match.winner === 'A' && match.seedA != null && match.seedB != null && match.seedA > match.seedB) ||
+          (match.winner === 'B' && match.seedA != null && match.seedB != null && match.seedB > match.seedA)) && (
           <div className={styles.upsetAlert}>
             <strong>UPSET!</strong> Lower seed defeated higher seed
           </div>

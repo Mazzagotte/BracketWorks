@@ -32,6 +32,12 @@ export class ValidationError extends Error implements AppError {
   }
 }
 
+type ErrorWithStatus = Error & { status: number }
+
+function hasNumericStatus(error: Error): error is ErrorWithStatus {
+  return 'status' in error && typeof (error as Partial<ErrorWithStatus>).status === 'number'
+}
+
 export function handleApiError(error: unknown): AppError {
   if (error instanceof ApiError || error instanceof ValidationError) {
     return error
@@ -39,8 +45,8 @@ export function handleApiError(error: unknown): AppError {
 
   if (error instanceof Error) {
     // Check if it's a fetch error with status
-    if ('status' in error && typeof (error as any).status === 'number') {
-      return new ApiError(error.message, (error as any).status)
+    if (hasNumericStatus(error)) {
+      return new ApiError(error.message, error.status)
     }
     
     return new ApiError(error.message)

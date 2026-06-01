@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from 'react'
 import styles from '../styles/bracket-stats.module.css'
-import { TournamentRound, Match } from './BracketTreeView'
+import { TournamentRound } from './BracketTreeView'
 
 interface BracketStatsPanelProps {
   rounds: TournamentRound[]
@@ -79,13 +79,13 @@ export function BracketStatsPanel({
 
     // Estimate remaining players
     if (rounds.length > 0) {
-      const firstRoundMatches = rounds[0].matches.length
+      const firstRoundMatches = rounds[0]?.matches.length ?? 0
       const playersPerMatch = 2
       activePlayers = firstRoundMatches * playersPerMatch
       
       // Subtract players eliminated in completed rounds
       for (let i = 0; i < rounds.length; i++) {
-        const completedInRound = rounds[i].matches.filter(m => m.winner).length
+        const completedInRound = rounds[i]?.matches.filter(m => m.winner).length ?? 0
         if (i < currentRound) {
           activePlayers -= completedInRound
         }

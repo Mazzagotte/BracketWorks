@@ -10,11 +10,31 @@ import styles from './BracketGenerationModal.module.css'
  */
 type ModalPhase = 'loading' | 'success' | 'error'
 
+interface BracketGroupSummary {
+  name?: string
+  key?: string
+  brackets_count?: number
+  refund_entries?: number
+  entries_count?: number
+}
+
+interface BracketGenerationSummary {
+  group_summaries?: BracketGroupSummary[]
+  scratch_refund_entries?: number
+  handicap_refund_entries?: number
+}
+
+interface BracketGenerationResult {
+  summary?: BracketGenerationSummary
+  scratch_brackets?: unknown[]
+  handicap_brackets?: unknown[]
+}
+
 interface BracketGenerationModalProps {
   isOpen: boolean
   onClose: () => void
   onRegenerate: () => void
-  bracketGenerationPromise: Promise<any> | null
+  bracketGenerationPromise: Promise<BracketGenerationResult> | null
   tournamentName?: string
   squadName?: string
   playerCount?: number
@@ -70,7 +90,7 @@ export default function BracketGenerationModal({
   // State management
   const [currentPhase, setCurrentPhase] = useState<ModalPhase>('loading')
   const [errorMessage, setErrorMessage] = useState('')
-  const [bracketResult, setBracketResult] = useState<any>(null)
+  const [bracketResult, setBracketResult] = useState<BracketGenerationResult | null>(null)
   const [showTechnicalDetails, setShowTechnicalDetails] = useState(false)
   const [showConfetti, setShowConfetti] = useState(false)
   const isGenerating = currentPhase === 'loading'
@@ -204,7 +224,7 @@ export default function BracketGenerationModal({
           }
 
           logger.error('Bracket generation error', { error });
-          setErrorMessage(error.message || 'An unexpected error occurred')
+          setErrorMessage(error instanceof Error ? error.message : 'An unexpected error occurred')
           setCurrentPhase('error')
         })
 
@@ -212,7 +232,6 @@ export default function BracketGenerationModal({
         cancelled = true
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, bracketGenerationPromise, currentPhase])
 
   /**
@@ -249,7 +268,7 @@ export default function BracketGenerationModal({
     const summary = bracketResult.summary || {}
     const groupSummaries = Array.isArray(summary.group_summaries) ? summary.group_summaries : []
 
-    const programSummaries = groupSummaries.map((group: any) => ({
+    const programSummaries = groupSummaries.map((group: BracketGroupSummary) => ({
       name: String(group?.name || group?.key || 'Bracket Program'),
       brackets_count: Number(group?.brackets_count || 0),
       refund_entries: Number(group?.refund_entries || 0),
@@ -294,6 +313,11 @@ export default function BracketGenerationModal({
    * Parse error message and return user-friendly version
    */
   const parseErrorMessage = (error: string): { friendly: string, suggestion: string, technical: string } => {
+    const defaultMessage = ERROR_MESSAGES.default ?? {
+      friendly: 'Something went wrong while generating brackets.',
+      suggestion: 'Please try again. If this continues, contact support.',
+    }
+
     // Find matching error pattern
     for (const [pattern, messages] of Object.entries(ERROR_MESSAGES)) {
       if (pattern !== 'default' && error.toLowerCase().includes(pattern.toLowerCase())) {
@@ -307,8 +331,8 @@ export default function BracketGenerationModal({
     
     // Return default if no match found
     return {
-      friendly: ERROR_MESSAGES['default'].friendly,
-      suggestion: ERROR_MESSAGES['default'].suggestion,
+      friendly: defaultMessage.friendly,
+      suggestion: defaultMessage.suggestion,
       technical: error
     }
   }

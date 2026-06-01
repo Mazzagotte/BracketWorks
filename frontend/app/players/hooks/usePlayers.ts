@@ -141,8 +141,7 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
     }
   // bracketPrograms and entryFee are intentionally read via refs to avoid
   // re-fetching players when settings arrive after the initial load.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedSquad, squads, authToken, searchUsbc, searchFirstName, searchLastName]);
+  }, [selectedSquad, squads, authToken, getItem, searchUsbc, searchFirstName, searchLastName]);
 
   const addPlayer = useCallback(async (newPlayer: Omit<Player, 'id'>) => {
     if (!authToken) return;

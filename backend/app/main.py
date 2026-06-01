@@ -9,22 +9,20 @@ from app.core.rate_limit import RateLimiter
 
 app = FastAPI(title="BracketWorks API", version="0.0.1", redirect_slashes=False)
 
-# Build CORS origins from settings, then add always-allowed dev/prod domains.
-origins = [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()]
-origins.extend([
-    "http://localhost:3000",
-    "http://localhost:8000",
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:8000",
-    "https://bracketworks.app",
-    "https://www.bracketworks.app",
-])
-origins = list(dict.fromkeys(origins))
+def _split_csv(value: str) -> list[str]:
+    return [item.strip() for item in value.split(",") if item.strip()]
+
+
+origins = _split_csv(settings.CORS_ORIGINS)
+allow_origin_regex = None
+if settings.is_development:
+    origins = list(dict.fromkeys(origins + _split_csv(settings.DEV_CORS_ORIGINS)))
+    allow_origin_regex = r"https?://(localhost|127\\.0\\.0\\.1)(:\\d+)?"
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_origin_regex=r"https?://(localhost|127\\.0\\.0\\.1)(:\\d+)?",
+    allow_origin_regex=allow_origin_regex,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
@@ -37,13 +35,21 @@ rate_limiter = RateLimiter(
 
 
 def _extract_client_identifier(request: Request) -> str:
-    forwarded_for = request.headers.get("x-forwarded-for")
-    if forwarded_for:
-        ip = forwarded_for.split(",")[0].strip()
-    elif request.client:
-        ip = request.client.host
-    else:
-        ip = "unknown"
+    trusted_proxies = set(_split_csv(settings.TRUSTED_PROXY_IPS))
+    direct_client_ip = request.client.host if request.client else ""
+
+    use_forwarded_header = bool(direct_client_ip and direct_client_ip in trusted_proxies)
+    if use_forwarded_header:
+        forwarded_for = request.headers.get("x-forwarded-for")
+        if forwarded_for:
+            ip = forwarded_for.split(",")[0].strip()
+            return ip or direct_client_ip or "unknown"
+
+        real_ip = (request.headers.get("x-real-ip") or "").strip()
+        if real_ip:
+            return real_ip
+
+    ip = direct_client_ip if direct_client_ip else "unknown"
     return ip or "unknown"
 
 
@@ -100,6 +106,31 @@ async def rate_limit_middleware(request: Request, call_next):
     response.headers["X-RateLimit-Limit"] = str(result.limit)
     response.headers["X-RateLimit-Remaining"] = str(result.remaining)
     response.headers["X-RateLimit-Reset"] = str(result.retry_after_seconds)
+    return response
+
+
+@app.middleware("http")
+async def security_headers_middleware(request: Request, call_next):
+    response = await call_next(request)
+
+    if not settings.SECURITY_HEADERS_ENABLED:
+        return response
+
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    response.headers.setdefault(
+        "Permissions-Policy",
+        "camera=(), microphone=(), geolocation=(), payment=()",
+    )
+    response.headers.setdefault("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'; base-uri 'none'")
+
+    if settings.is_production:
+        response.headers.setdefault(
+            "Strict-Transport-Security",
+            f"max-age={settings.SECURITY_HEADERS_HSTS_MAX_AGE_SECONDS}; includeSubDomains",
+        )
+
     return response
 
 # Root endpoint for basic testing

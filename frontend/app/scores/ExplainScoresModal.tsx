@@ -27,7 +27,6 @@ export default function ExplainScoresModal({ isOpen, onClose }: ExplainScoresMod
       enableScroll()
       document.removeEventListener('keydown', handleEscape)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, onClose])
 
   if (!isOpen) return null

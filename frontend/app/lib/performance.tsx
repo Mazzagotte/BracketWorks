@@ -120,10 +120,12 @@ export const OptimizedInput = memo(({
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   className?: string;
   placeholder?: string;
-  type?: string;
+  type?: React.HTMLInputTypeAttribute;
   autoFocus?: boolean;
-  [key: string]: any;
-}) => {
+} & Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  'value' | 'onChange' | 'onBlur' | 'onKeyDown' | 'className' | 'placeholder' | 'type' | 'autoFocus'
+>) => {
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     onChange(e);
   }, [onChange]);
@@ -202,6 +204,7 @@ export function useIntersectionObserver(
 
     const observer = new IntersectionObserver(
       ([entry]) => {
+        if (!entry) return;
         setIsIntersecting(entry.isIntersecting);
       },
       options
