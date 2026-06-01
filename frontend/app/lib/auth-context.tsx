@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 
 import { logger } from './logger';
-import { API } from './api';
+import { API, getCsrfToken } from './api';
 
 interface User {
   id: string;
@@ -13,7 +13,6 @@ interface User {
 }
 
 interface AuthSessionData {
-  refreshToken?: string;
   sessionId?: string;
 }
 
@@ -39,7 +38,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setAuthToken(null);
     setCurrentUser(null);
     localStorage.removeItem('token');
-    localStorage.removeItem('refresh_token');
     localStorage.removeItem('session_id');
     localStorage.removeItem('user_id');
     localStorage.removeItem('userId');
@@ -159,9 +157,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     
     // Immediately save to localStorage
     localStorage.setItem('token', newAuthToken);
-    if (authSession?.refreshToken) {
-      localStorage.setItem('refresh_token', authSession.refreshToken);
-    }
     if (authSession?.sessionId) {
       localStorage.setItem('session_id', authSession.sessionId);
     }
@@ -186,16 +181,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const logoutUser = () => {
     const existingToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    const existingRefreshToken = typeof window !== 'undefined' ? localStorage.getItem('refresh_token') : null;
 
     if (existingToken) {
+      const csrfToken = getCsrfToken();
+      const logoutHeaders: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${existingToken}`,
+      };
+      if (csrfToken) {
+        logoutHeaders['x-csrf-token'] = csrfToken;
+      }
+
       fetch(API('/api/v1/users/logout'), {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${existingToken}`,
-        },
-        body: JSON.stringify({ refresh_token: existingRefreshToken, all_sessions: false }),
+        credentials: 'include',
+        headers: logoutHeaders,
+        body: JSON.stringify({ all_sessions: false }),
       }).catch((error) => {
         logger.warn('Backend logout failed', { error: String(error) });
       });
@@ -205,7 +206,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setCurrentUser(null);
     // Clear any other auth-related localStorage items
     localStorage.removeItem('token');
-    localStorage.removeItem('refresh_token');
     localStorage.removeItem('session_id');
     localStorage.removeItem('user_id');
     localStorage.removeItem('userId');

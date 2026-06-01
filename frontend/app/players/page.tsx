@@ -36,6 +36,7 @@ function bracketProgramsEqual(left: BracketProgramDefinition[], right: BracketPr
   for (let i = 0; i < left.length; i += 1) {
     const l = left[i]
     const r = right[i]
+    if (!l || !r) return false
     if (
       l.key !== r.key
       || l.name !== r.name
@@ -175,8 +176,7 @@ export default function PlayersPage() {
   // Load tournaments on mount
   useEffect(() => {
     fetchTournaments()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [fetchTournaments])
 
   // Auto-select tournament from localStorage
   useEffect(() => {
@@ -256,8 +256,7 @@ export default function PlayersPage() {
     } finally {
       // nothing — squad fetch no longer gated on this
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authToken, loadSidePots]);
+  }, [authToken, entryFee, getTournamentId, loadSidePots]);
 
   // Load entry fee when tournament or auth changes
   useEffect(() => {
@@ -303,7 +302,6 @@ export default function PlayersPage() {
       setSelectedSquad(selectedSquadId)
     }
   }, [selectedSquadId]);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
 
   // Debug authentication state
   useEffect(() => {
@@ -390,6 +388,7 @@ export default function PlayersPage() {
 
     if (field.startsWith('bracketEntry:')) {
       const programKey = field.split(':', 2)[1]
+      if (!programKey) return
       const existingPlayer = players.find(player => player.id === playerId)
       const nextBracketEntries = {
         ...(existingPlayer?.bracketEntries || {}),
@@ -402,6 +401,7 @@ export default function PlayersPage() {
       }
     } else if (field.startsWith('sidePot:')) {
       const potKey = field.split(':', 2)[1]
+      if (!potKey) return
       const existingPlayer = players.find(player => player.id === playerId)
       const nextSidePotEntries = {
         ...(existingPlayer?.sidePotEntries || {}),
@@ -598,7 +598,7 @@ export default function PlayersPage() {
       const parts = firstNameValue.split(/\s+/).filter(Boolean)
       if (parts.length <= 1) return firstNameValue.trim()
 
-      const trailingToken = parts[parts.length - 1]
+      const trailingToken = parts[parts.length - 1] ?? ''
       if (/^[a-z]\.??$/i.test(trailingToken)) {
         return parts.slice(0, -1).join(' ').trim()
       }
@@ -613,7 +613,7 @@ export default function PlayersPage() {
         .filter(Boolean)
 
       if (segments.length >= 2) {
-        const trailingSegment = segments[segments.length - 1].toLowerCase()
+        const trailingSegment = (segments[segments.length - 1] ?? '').toLowerCase()
         const hasTrailingSuffix = segments.length >= 3 && importedNameSuffixes.has(trailingSegment)
         const rawFirstName = (hasTrailingSuffix ? segments.slice(1, -1) : segments.slice(1)).join(' ').trim()
         return {
@@ -627,7 +627,7 @@ export default function PlayersPage() {
     if (parts.length === 0) return { firstName: '', lastName: '' }
     if (parts.length === 1) return { firstName: parts[0], lastName: '' }
 
-    const lastToken = parts[parts.length - 1].toLowerCase()
+    const lastToken = (parts[parts.length - 1] ?? '').toLowerCase()
     if (parts.length >= 3 && importedNameSuffixes.has(lastToken)) {
       return {
         firstName: parts.slice(0, -2).join(' ').trim(),
@@ -655,7 +655,7 @@ export default function PlayersPage() {
 
     const detectHeaderRowIndex = (rows: unknown[][]): number => {
       for (let index = 0; index < rows.length; index += 1) {
-        const normalizedCells = rows[index]
+        const normalizedCells = (rows[index] ?? [])
           .map(cell => normalizeHeader(String(cell || '')))
           .filter(Boolean)
         if (normalizedCells.length === 0) continue
@@ -703,8 +703,8 @@ export default function PlayersPage() {
       let lastName  = String(getValue(nr, ['lastname', 'last', 'surname', 'familyname', 'lname']) || '').trim()
       if ((!firstName || !lastName) && fullName) {
         const parsedName = parseImportedFullName(fullName)
-        firstName = firstName || parsedName.firstName
-        lastName  = lastName  || parsedName.lastName
+        firstName = firstName || parsedName.firstName || ''
+        lastName  = lastName  || parsedName.lastName || ''
       }
       if (!firstName || !lastName) {
         skippedRows.push({
@@ -893,7 +893,10 @@ export default function PlayersPage() {
       const workbook = new Workbook()
       const worksheet = workbook.addWorksheet('Entries')
       if (rows.length > 0) {
-        worksheet.columns = Object.keys(rows[0]).map(key => ({ header: key, key }))
+        const firstRow = rows[0]
+        if (firstRow) {
+          worksheet.columns = Object.keys(firstRow).map(key => ({ header: key, key }))
+        }
         worksheet.addRows(rows)
       }
 
@@ -1072,7 +1075,6 @@ export default function PlayersPage() {
     if (isAuthInitialized && authToken) {
       fetchSquadData();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthInitialized, authToken, getTournamentId, loadSidePots, entryFee]);
 
   // Wait for auth initialization

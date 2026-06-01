@@ -33,8 +33,18 @@ export function useUsernameAvailability(
 
     try {
       const response = await fetch(API(`/api/v1/users/check-username?username=${encodeURIComponent(value)}`));
-      const data = await response.json().catch(() => null);
-      setUsernameAvailable(typeof data?.available === 'boolean' ? data.available : null);
+      let data: unknown = null;
+      try {
+        data = await response.json();
+      } catch {
+        data = null;
+      }
+      if (data && typeof data === 'object' && 'available' in data) {
+        const available = (data as { available?: unknown }).available;
+        setUsernameAvailable(typeof available === 'boolean' ? available : null);
+      } else {
+        setUsernameAvailable(null);
+      }
     } catch {
       setUsernameAvailable(null);
     } finally {

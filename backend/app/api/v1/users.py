@@ -1,8 +1,9 @@
-from fastapi import BackgroundTasks, Request, status, APIRouter, Depends, HTTPException
+from fastapi import BackgroundTasks, Request, Response, status, APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from ...core import models, schemas
 from ...core.config import settings
+from ...core.password_policy import PasswordPolicyError, validate_password_policy
 from ..deps import get_db, get_current_user, require_admin_user
 from ...services.email_service import (
     sendEmailChangeEmail,
@@ -12,17 +13,16 @@ from ...services.email_service import (
     sendWelcomeEmail,
 )
 from passlib.context import CryptContext
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import hashlib
 import logging
 import secrets
 import uuid
 
-# Optimize bcrypt for faster verification (reduce rounds for development)
 pwd_context = CryptContext(
     schemes=["bcrypt"], 
     deprecated="auto",
-    bcrypt__default_rounds=10  # Reduced from default 12 for better performance
+    bcrypt__default_rounds=settings.PASSWORD_BCRYPT_ROUNDS,
 )
 
 logger = logging.getLogger(__name__)
@@ -34,7 +34,7 @@ _DUMMY_BCRYPT_HASH = "$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lh
 
 def _utcnow() -> datetime:
     # Database columns use timezone-naive DateTime, so keep comparisons naive UTC.
-    return datetime.utcnow()
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 def _hash_value(value: str) -> str:
@@ -44,6 +44,90 @@ def _hash_value(value: str) -> str:
 
 def _hash_refresh_token(token: str) -> str:
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+def _refresh_cookie_domain() -> str | None:
+    domain = settings.REFRESH_TOKEN_COOKIE_DOMAIN.strip()
+    return domain if domain else None
+
+
+def _csrf_cookie_domain() -> str | None:
+    domain = settings.CSRF_COOKIE_DOMAIN.strip()
+    return domain if domain else None
+
+
+def _set_auth_no_store(response: Response) -> None:
+    response.headers["Cache-Control"] = "no-store"
+    response.headers["Pragma"] = "no-cache"
+
+
+def _set_refresh_cookie(response: Response, refresh_token: str) -> None:
+    response.set_cookie(
+        key=settings.REFRESH_TOKEN_COOKIE_NAME,
+        value=refresh_token,
+        httponly=True,
+        secure=settings.REFRESH_TOKEN_COOKIE_SECURE,
+        samesite=settings.REFRESH_TOKEN_COOKIE_SAMESITE.lower(),
+        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
+        path=settings.REFRESH_TOKEN_COOKIE_PATH,
+        domain=_refresh_cookie_domain(),
+    )
+
+
+def _set_csrf_cookie(response: Response, csrf_token: str) -> None:
+    response.set_cookie(
+        key=settings.CSRF_COOKIE_NAME,
+        value=csrf_token,
+        httponly=False,
+        secure=settings.CSRF_COOKIE_SECURE,
+        samesite=settings.CSRF_COOKIE_SAMESITE.lower(),
+        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
+        path=settings.CSRF_COOKIE_PATH,
+        domain=_csrf_cookie_domain(),
+    )
+
+
+def _clear_refresh_cookie(response: Response) -> None:
+    response.delete_cookie(
+        key=settings.REFRESH_TOKEN_COOKIE_NAME,
+        path=settings.REFRESH_TOKEN_COOKIE_PATH,
+        domain=_refresh_cookie_domain(),
+        secure=settings.REFRESH_TOKEN_COOKIE_SECURE,
+        samesite=settings.REFRESH_TOKEN_COOKIE_SAMESITE.lower(),
+    )
+
+
+def _clear_csrf_cookie(response: Response) -> None:
+    response.delete_cookie(
+        key=settings.CSRF_COOKIE_NAME,
+        path=settings.CSRF_COOKIE_PATH,
+        domain=_csrf_cookie_domain(),
+        secure=settings.CSRF_COOKIE_SECURE,
+        samesite=settings.CSRF_COOKIE_SAMESITE.lower(),
+    )
+
+
+def _resolve_refresh_token(request: Request) -> str | None:
+    cookie_token = (request.cookies.get(settings.REFRESH_TOKEN_COOKIE_NAME) or "").strip()
+    return cookie_token or None
+
+
+def _issue_csrf_token() -> str:
+    return secrets.token_urlsafe(32)
+
+
+def _validate_csrf(request: Request) -> None:
+    if not settings.CSRF_PROTECT_REFRESH_AND_LOGOUT:
+        return
+
+    cookie_token = (request.cookies.get(settings.CSRF_COOKIE_NAME) or "").strip()
+    header_token = (request.headers.get(settings.CSRF_HEADER_NAME) or "").strip()
+
+    if not cookie_token or not header_token:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Missing CSRF token")
+
+    if not secrets.compare_digest(cookie_token, header_token):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid CSRF token")
 
 
 def _client_ip_hash(request: Request) -> str:
@@ -219,6 +303,22 @@ def _revoke_token_family(db: Session, token_family: str) -> int:
     return len(sessions)
 
 
+def _revoke_all_user_sessions(db: Session, user_id: int, now: datetime | None = None) -> int:
+    revoked_at = now or _utcnow()
+    sessions = (
+        db.query(models.AuthSession)
+        .filter(
+            models.AuthSession.user_id == user_id,
+            models.AuthSession.is_revoked.is_(False),
+        )
+        .all()
+    )
+    for session in sessions:
+        session.is_revoked = True
+        session.revoked_at = revoked_at
+    return len(sessions)
+
+
 def _authenticate_and_issue_tokens(username: str, password: str, db: Session, request: Request) -> schemas.TokenPairResponse:
     normalized_username = username.strip()
     source_ip_hash = _client_ip_hash(request)
@@ -244,7 +344,8 @@ def _authenticate_and_issue_tokens(username: str, password: str, db: Session, re
 
 
 @router.get("/me", response_model=schemas.UserOut)
-def get_my_account(current_user: models.User = Depends(get_current_user)):
+def get_my_account(response: Response, current_user: models.User = Depends(get_current_user)):
+    _set_auth_no_store(response)
     return current_user
 
 
@@ -328,7 +429,14 @@ def change_my_password(
     if pwd_context.verify(payload.new_password, current_user.password):
         raise HTTPException(status_code=400, detail="New password must be different from current password")
 
+    try:
+        validate_password_policy(payload.new_password)
+    except PasswordPolicyError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+    now = _utcnow()
     current_user.password = pwd_context.hash(payload.new_password)
+    _revoke_all_user_sessions(db, current_user.id, now)
     db.commit()
     background_tasks.add_task(sendPasswordChangeEmail, current_user.email, current_user.first_name)
 
@@ -337,29 +445,52 @@ def change_my_password(
 
 @router.post("/login", response_model=schemas.TokenPairResponse)
 def login(
+    response: Response,
     request: Request,
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
 ):
-    return _authenticate_and_issue_tokens(form_data.username, form_data.password, db, request)
+    tokens = _authenticate_and_issue_tokens(form_data.username, form_data.password, db, request)
+    _set_auth_no_store(response)
+    if tokens.refresh_token:
+        _set_refresh_cookie(response, tokens.refresh_token)
+        _set_csrf_cookie(response, _issue_csrf_token())
+    tokens.refresh_token = None
+    return tokens
 
 @router.post("/login-json", response_model=schemas.TokenPairResponse)
 def login_json(
+    response: Response,
     request: Request,
     login_data: schemas.LoginRequest,
     db: Session = Depends(get_db),
 ):
-    return _authenticate_and_issue_tokens(login_data.username, login_data.password, db, request)
+    tokens = _authenticate_and_issue_tokens(login_data.username, login_data.password, db, request)
+    _set_auth_no_store(response)
+    if tokens.refresh_token:
+        _set_refresh_cookie(response, tokens.refresh_token)
+        _set_csrf_cookie(response, _issue_csrf_token())
+    tokens.refresh_token = None
+    return tokens
 
 
 @router.post("/refresh", response_model=schemas.TokenPairResponse)
 def refresh_tokens(
+    response: Response,
     request: Request,
-    payload: schemas.RefreshTokenRequest,
+    _: schemas.RefreshTokenRequest,
     db: Session = Depends(get_db),
 ):
+    _set_auth_no_store(response)
+    _validate_csrf(request)
     now = _utcnow()
-    token_hash = _hash_refresh_token(payload.refresh_token)
+    refresh_token = _resolve_refresh_token(request)
+    if not refresh_token:
+        _clear_refresh_cookie(response)
+        _clear_csrf_cookie(response)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing refresh token")
+
+    token_hash = _hash_refresh_token(refresh_token)
 
     session = (
         db.query(models.AuthSession)
@@ -367,11 +498,15 @@ def refresh_tokens(
         .first()
     )
     if not session:
+        _clear_refresh_cookie(response)
+        _clear_csrf_cookie(response)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
 
     if session.is_revoked or session.expires_at <= now:
         if session.is_revoked:
             _revoke_token_family(db, session.token_family)
+        _clear_refresh_cookie(response)
+        _clear_csrf_cookie(response)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token is no longer valid")
 
     user = db.query(models.User).filter(models.User.id == session.user_id).first()
@@ -385,6 +520,10 @@ def refresh_tokens(
     refreshed = _issue_session_tokens(user=user, db=db, request=request, token_family=session.token_family)
     session.replaced_by_session_id = refreshed.session_id
     db.commit()
+    if refreshed.refresh_token:
+        _set_refresh_cookie(response, refreshed.refresh_token)
+        _set_csrf_cookie(response, _issue_csrf_token())
+    refreshed.refresh_token = None
     return refreshed
 
 
@@ -444,10 +583,14 @@ def revoke_single_session(
 
 @router.post("/logout", response_model=schemas.SessionRevokeResponse)
 def logout(
+    request: Request,
+    response: Response,
     payload: schemas.LogoutRequest,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
+    _set_auth_no_store(response)
+    _validate_csrf(request)
     now = _utcnow()
     revoked_sessions = 0
 
@@ -462,21 +605,25 @@ def logout(
             session.is_revoked = True
             session.revoked_at = now
         revoked_sessions = len(sessions)
-    elif payload.refresh_token:
-        token_hash = _hash_refresh_token(payload.refresh_token)
-        session = active_sessions.filter(models.AuthSession.refresh_token_hash == token_hash).first()
-        if session:
-            session.is_revoked = True
-            session.revoked_at = now
-            revoked_sessions = 1
     else:
-        session = active_sessions.order_by(models.AuthSession.last_seen_at.desc()).first()
-        if session:
-            session.is_revoked = True
-            session.revoked_at = now
-            revoked_sessions = 1
+        resolved_refresh = _resolve_refresh_token(request)
+        if resolved_refresh:
+            token_hash = _hash_refresh_token(resolved_refresh)
+            session = active_sessions.filter(models.AuthSession.refresh_token_hash == token_hash).first()
+            if session:
+                session.is_revoked = True
+                session.revoked_at = now
+                revoked_sessions = 1
+        else:
+            session = active_sessions.order_by(models.AuthSession.last_seen_at.desc()).first()
+            if session:
+                session.is_revoked = True
+                session.revoked_at = now
+                revoked_sessions = 1
 
     db.commit()
+    _clear_refresh_cookie(response)
+    _clear_csrf_cookie(response)
     return schemas.SessionRevokeResponse(revoked_sessions=revoked_sessions)
 
 
@@ -643,8 +790,16 @@ def reset_password(payload: schemas.PasswordResetConfirmRequest, db: Session = D
     email = user.email
     if payload.email and payload.email.lower().strip() != email.lower().strip():
         raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+
+    try:
+        validate_password_policy(payload.new_password)
+    except PasswordPolicyError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+    now = _utcnow()
     user.password = pwd_context.hash(payload.new_password)
-    reset_record.used_at = _utcnow()
+    reset_record.used_at = now
+    _revoke_all_user_sessions(db, user.id, now)
     db.commit()
     return {"message": "Password reset successful"}
 
@@ -658,6 +813,12 @@ def signup(user: schemas.UserCreate, background_tasks: BackgroundTasks, db: Sess
     existing_email = db.query(models.User).filter(models.User.email == normalized_email).first()
     if existing_email:
         raise HTTPException(status_code=400, detail="Email already exists")
+
+    try:
+        validate_password_policy(user.password)
+    except PasswordPolicyError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
     # Hash password
     hashed_password = pwd_context.hash(user.password)
     # Create user

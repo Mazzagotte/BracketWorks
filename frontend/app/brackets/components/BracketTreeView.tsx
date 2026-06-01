@@ -2,10 +2,11 @@
 
 import React, { useRef, useState, useMemo, useEffect } from 'react'
 import styles from '../styles/bracket-tree.module.css'
-import { BracketRound, Match as BaseMatch } from '../../hooks/useBrackets'
+import { Match as BaseMatch } from '../../hooks/useBrackets'
 
 // Extend Match to include additional fields used in display
-export interface Match extends BaseMatch {
+export interface Match extends Omit<BaseMatch, 'winner'> {
+  winner?: 'A' | 'B' | null;
   qualifying_score_a?: number;
   qualifying_score_b?: number;
   match_score_a?: number; // Legacy field name
@@ -13,7 +14,8 @@ export interface Match extends BaseMatch {
   matchStatus?: 'pending' | 'in_progress' | 'completed' | 'next_up' | 'tied' | 'both_advance';
 }
 
-export interface TournamentRound extends BracketRound {
+export interface TournamentRound {
+  name: string
   matches: Match[]
   isCompleted?: boolean
   roundNumber?: number
@@ -80,12 +82,14 @@ const BracketTreeViewComponent = ({
   useEffect(() => {
     const container = containerRef.current
     const card = cardRef.current
+    const treeContainerScaledClass = styles.bracketTreeContainerScaled
+    const cardScaledClass = styles.bracketCardScaled
 
     if (!container || !card) return
 
     const resetTreeScale = () => {
-      container.classList.remove(styles.bracketTreeContainerScaled)
-      card.classList.remove(styles.bracketCardScaled)
+      if (treeContainerScaledClass) container.classList.remove(treeContainerScaledClass)
+      if (cardScaledClass) card.classList.remove(cardScaledClass)
       container.style.removeProperty('--bw-tree-min-height')
       card.style.removeProperty('--bw-tree-scale')
       card.style.removeProperty('--bw-tree-card-width')
@@ -105,8 +109,8 @@ const BracketTreeViewComponent = ({
       if (naturalWidth <= availableWidth) return
 
       const nextScale = Math.max(0.6, Math.min(1, availableWidth / naturalWidth))
-      container.classList.add(styles.bracketTreeContainerScaled)
-      card.classList.add(styles.bracketCardScaled)
+      if (treeContainerScaledClass) container.classList.add(treeContainerScaledClass)
+      if (cardScaledClass) card.classList.add(cardScaledClass)
       container.style.setProperty('--bw-tree-min-height', `${Math.ceil(naturalHeight * nextScale)}px`)
       card.style.setProperty('--bw-tree-scale', String(nextScale))
       card.style.setProperty('--bw-tree-card-width', `${100 / nextScale}%`)
@@ -169,7 +173,7 @@ const BracketTreeViewComponent = ({
                   </div>
                   <div 
                     className={`${styles.player} ${match.winner === 'A' ? styles.winner : ''} ${playerAHighlighted ? styles.highlightedPlayer : ''}`}
-                    onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerA ? null : match.playerA)}
+                    onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerA ? null : (match.playerA ?? null))}
                   >
                     <span className={styles.playerName}>
                       {match.playerA || 'TBD'}
@@ -181,7 +185,7 @@ const BracketTreeViewComponent = ({
                   <div className={styles.vsRow} />
                   <div 
                     className={`${styles.player} ${match.winner === 'B' ? styles.winner : ''} ${playerBHighlighted ? styles.highlightedPlayer : ''}`}
-                    onClick={(e) => { e.stopPropagation(); setHighlightedPlayer(highlightedPlayer === match.playerB ? null : match.playerB); }}
+                    onClick={(e) => { e.stopPropagation(); setHighlightedPlayer(highlightedPlayer === match.playerB ? null : (match.playerB ?? null)); }}
                   >
                     <span className={styles.playerName}>
                       {match.playerB || 'TBD'}
@@ -224,7 +228,7 @@ const BracketTreeViewComponent = ({
                   </div>
                   <div 
                     className={`${styles.player} ${match.winner === 'A' ? styles.winner : ''} ${playerAHighlighted ? styles.highlightedPlayer : ''}`}
-                    onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerA ? null : match.playerA)}
+                    onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerA ? null : (match.playerA ?? null))}
                   >
                     <span className={styles.playerName}>
                       {match.playerA || 'TBD'}
@@ -236,7 +240,7 @@ const BracketTreeViewComponent = ({
                   <div className={styles.vsRow} />
                   <div 
                     className={`${styles.player} ${match.winner === 'B' ? styles.winner : ''} ${playerBHighlighted ? styles.highlightedPlayer : ''}`}
-                    onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerB ? null : match.playerB)}
+                    onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerB ? null : (match.playerB ?? null))}
                   >
                     <span className={styles.playerName}>
                       {match.playerB || 'TBD'}
@@ -278,7 +282,7 @@ const BracketTreeViewComponent = ({
                 </div>
                 <div 
                   className={`${styles.player} ${match.winner === 'A' ? styles.winner : ''} ${playerAHighlighted ? styles.highlightedPlayer : ''}`}
-                  onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerA ? null : match.playerA)}
+                  onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerA ? null : (match.playerA ?? null))}
                 >
                   <span className={styles.playerNameWrap}>
                     <span className={styles.playerName}>
@@ -293,7 +297,7 @@ const BracketTreeViewComponent = ({
                 <div className={styles.vsRow} />
                 <div 
                   className={`${styles.player} ${match.winner === 'B' ? styles.winner : ''} ${playerBHighlighted ? styles.highlightedPlayer : ''}`}
-                  onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerB ? null : match.playerB)}
+                  onClick={() => setHighlightedPlayer(highlightedPlayer === match.playerB ? null : (match.playerB ?? null))}
                 >
                   <span className={styles.playerNameWrap}>
                     <span className={styles.playerName}>
@@ -323,7 +327,7 @@ const BracketTreeViewComponent = ({
           ))}
 
           {/* Connectors R2 to R3 */}
-          {displayRounds[2]?.matches?.length > 0 && (
+          {(displayRounds[2]?.matches?.length ?? 0) > 0 && (
             <>
               <div
                 className={`${styles.connectorBracket} ${styles.connR2R3Bracket}`}

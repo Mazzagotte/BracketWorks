@@ -16,7 +16,7 @@ type PasswordStrengthPanelProps = {
   className?: string;
 };
 
-const toneClassMap: Record<PasswordStrengthTone, string> = {
+const toneClassMap: Record<PasswordStrengthTone, string | undefined> = {
   weak: styles.toneWeak,
   fair: styles.toneFair,
   good: styles.toneGood,
@@ -31,7 +31,7 @@ export default function PasswordStrengthPanel({
   title = 'Password Strength',
   className = '',
 }: PasswordStrengthPanelProps) {
-  const toneClassName = toneClassMap[tone];
+  const toneClassName = toneClassMap[tone] ?? '';
   const strengthWidthBucket = Math.max(10, Math.min(100, Math.round(strengthPercent / 10) * 10));
   const strengthWidthClass = styles[`barW${strengthWidthBucket}` as keyof typeof styles] as string;
 
@@ -53,7 +53,7 @@ export default function PasswordStrengthPanel({
             className={`${styles.requirementItem} ${requirement.met ? styles.requirementMet : styles.requirementPending}`}
           >
             <span className={styles.requirementIcon} aria-hidden="true">
-              {requirement.met ? 'OK' : 'NO'}
+              {requirement.met ? '✓' : '✕'}
             </span>
             <span>{requirement.label}</span>
           </div>

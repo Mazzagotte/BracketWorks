@@ -33,8 +33,33 @@ export const buildApiUrl = (endpointPath: string) => {
 // Backward compatibility - keeping API function
 export const API = buildApiUrl;
 
+function getCookieValue(name: string): string | null {
+  if (typeof document === 'undefined') {
+    return null;
+  }
+
+  const cookies = document.cookie ? document.cookie.split('; ') : [];
+  const prefix = `${encodeURIComponent(name)}=`;
+  for (const cookie of cookies) {
+    if (cookie.startsWith(prefix)) {
+      const raw = cookie.slice(prefix.length);
+      try {
+        return decodeURIComponent(raw);
+      } catch {
+        return raw;
+      }
+    }
+  }
+  return null;
+}
+
+export function getCsrfToken(): string | null {
+  const cookieName = process.env.NEXT_PUBLIC_CSRF_COOKIE_NAME || 'csrf_token';
+  return getCookieValue(cookieName);
+}
+
 // Request cache for GET requests
-const apiRequestCache = new Map<string, { data: any; timestamp: number; ttl: number }>();
+const apiRequestCache = new Map<string, { data: unknown; timestamp: number; ttl: number }>();
 const DEFAULT_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 const authFetchCache = new Map<string, { body: string; status: number; statusText: string; headers: [string, string][]; timestamp: number; ttl: number }>();
 const authFetchInFlight = new Map<string, Promise<Response>>();
@@ -70,7 +95,7 @@ export class ApiClient {
     const cached = apiRequestCache.get(key);
     if (cached && Date.now() - cached.timestamp < cached.ttl) {
       logger.debug('Cache hit', { key });
-      return cached.data;
+      return cached.data as T;
     }
     if (cached) {
       apiRequestCache.delete(key);
@@ -122,7 +147,6 @@ export class ApiClient {
       return;
     }
     localStorage.removeItem('token');
-    localStorage.removeItem('refresh_token');
     localStorage.removeItem('session_id');
     localStorage.removeItem('user_id');
     localStorage.removeItem('userId');
@@ -138,17 +162,21 @@ export class ApiClient {
       return this.refreshPromise;
     }
 
-    const refreshToken = localStorage.getItem('refresh_token');
-    if (!refreshToken) {
-      return null;
-    }
-
     this.refreshPromise = (async () => {
       try {
+        const csrfToken = getCsrfToken();
+        const refreshHeaders: Record<string, string> = {
+          'Content-Type': 'application/json',
+        };
+        if (csrfToken) {
+          refreshHeaders['x-csrf-token'] = csrfToken;
+        }
+
         const response = await fetch(`${this.backendBaseUrl}/api/v1/users/refresh`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ refresh_token: refreshToken }),
+          headers: refreshHeaders,
+          credentials: 'include',
+          body: JSON.stringify({}),
         });
 
         if (!response.ok) {
@@ -163,9 +191,6 @@ export class ApiClient {
         }
 
         localStorage.setItem('token', data.access_token);
-        if (data.refresh_token) {
-          localStorage.setItem('refresh_token', data.refresh_token);
-        }
         if (data.session_id) {
           localStorage.setItem('session_id', data.session_id);
         }

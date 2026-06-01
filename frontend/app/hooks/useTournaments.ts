@@ -167,8 +167,7 @@ export function useTournaments() {
 
   useEffect(() => {
     fetchTournaments()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [fetchTournaments])
 
   return {
     tournaments,
@@ -238,8 +237,7 @@ export function useSquads(tournamentId?: number) {
     if (tournamentId) {
       fetchSquads(tournamentId)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tournamentId])
+  }, [fetchSquads, tournamentId])
 
   return {
     squads,
@@ -256,7 +254,7 @@ export function usePlayers(tournamentId?: number, squadId?: number) {
   const [error, setError] = useState<string | null>(null)
   const { addToast } = useToast()
 
-  const fetchPlayers = async (tId?: number, sId?: number) => {
+  const fetchPlayers = useCallback(async (tId?: number, sId?: number) => {
     const id = tId || tournamentId
     if (!id) return
 
@@ -284,7 +282,7 @@ export function usePlayers(tournamentId?: number, squadId?: number) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [addToast, squadId, tournamentId])
 
   const addPlayer = async (player: Omit<Player, 'id'>) => {
     setLoading(true)
@@ -316,8 +314,7 @@ export function usePlayers(tournamentId?: number, squadId?: number) {
     if (tournamentId) {
       fetchPlayers(tournamentId, squadId)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tournamentId, squadId])
+  }, [fetchPlayers, squadId, tournamentId])
 
   return {
     players,

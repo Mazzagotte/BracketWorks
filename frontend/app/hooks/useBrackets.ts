@@ -288,7 +288,7 @@ export function useBracketSettings(tournamentId?: number) {
   const [error, setError] = useState<string | null>(null)
   const { addToast } = useToast()
 
-  const fetchSettings = async (tId?: number) => {
+  const fetchSettings = useCallback(async (tId?: number) => {
     const id = tId || tournamentId
     if (!id) return
 
@@ -307,7 +307,7 @@ export function useBracketSettings(tournamentId?: number) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [tournamentId])
 
   const updateSettings = async (updates: Partial<BracketSettings>) => {
     if (!tournamentId) return
@@ -378,8 +378,7 @@ export function useBracketSettings(tournamentId?: number) {
     if (tournamentId) {
       fetchSettings(tournamentId)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tournamentId])
+  }, [fetchSettings, tournamentId])
 
   return {
     settings,

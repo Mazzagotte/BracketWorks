@@ -31,7 +31,6 @@ export default function ExplainDashboardModal({ isOpen, onClose }: ExplainDashbo
       enableScroll()
       document.removeEventListener('keydown', handleEscape)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, onClose])
 
   if (!isOpen) return null

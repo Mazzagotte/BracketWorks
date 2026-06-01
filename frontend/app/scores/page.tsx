@@ -176,24 +176,24 @@ export default function ScoresPage() {
           bValue = b.scores?.game1_scratch || 0;
           break;
         case 'game1_total':
-          aValue = (a.scores?.game1_scratch || 0) + a.handicap;
-          bValue = (b.scores?.game1_scratch || 0) + b.handicap;
+          aValue = (a.scores?.game1_scratch || 0) + (a.handicap ?? 0);
+          bValue = (b.scores?.game1_scratch || 0) + (b.handicap ?? 0);
           break;
         case 'game2_scratch':
           aValue = a.scores?.game2_scratch || 0;
           bValue = b.scores?.game2_scratch || 0;
           break;
         case 'game2_total':
-          aValue = (a.scores?.game2_scratch || 0) + a.handicap;
-          bValue = (b.scores?.game2_scratch || 0) + b.handicap;
+          aValue = (a.scores?.game2_scratch || 0) + (a.handicap ?? 0);
+          bValue = (b.scores?.game2_scratch || 0) + (b.handicap ?? 0);
           break;
         case 'game3_scratch':
           aValue = a.scores?.game3_scratch || 0;
           bValue = b.scores?.game3_scratch || 0;
           break;
         case 'game3_total':
-          aValue = (a.scores?.game3_scratch || 0) + a.handicap;
-          bValue = (b.scores?.game3_scratch || 0) + b.handicap;
+          aValue = (a.scores?.game3_scratch || 0) + (a.handicap ?? 0);
+          bValue = (b.scores?.game3_scratch || 0) + (b.handicap ?? 0);
           break;
         case 'totalScratch':
           aValue = (a.scores?.game1_scratch || 0) + (a.scores?.game2_scratch || 0) + (a.scores?.game3_scratch || 0);
@@ -202,8 +202,8 @@ export default function ScoresPage() {
         case 'totalWithHandicap':
           const aScratch = (a.scores?.game1_scratch || 0) + (a.scores?.game2_scratch || 0) + (a.scores?.game3_scratch || 0);
           const bScratch = (b.scores?.game1_scratch || 0) + (b.scores?.game2_scratch || 0) + (b.scores?.game3_scratch || 0);
-          aValue = aScratch + (a.handicap * 3);
-          bValue = bScratch + (b.handicap * 3);
+          aValue = aScratch + ((a.handicap ?? 0) * 3);
+          bValue = bScratch + ((b.handicap ?? 0) * 3);
           break;
         default:
           aValue = 0;
@@ -266,15 +266,15 @@ export default function ScoresPage() {
     itemsPerPage: 50,
     resetOnItemsChange: false
   })
+  const { goToPage } = paginationHook
 
   useEffect(() => {
-    paginationHook.goToPage(1)
-  }, [searchFirstName, searchLastName, isMobile]) // eslint-disable-line react-hooks/exhaustive-deps
+    goToPage(1)
+  }, [goToPage, searchFirstName, searchLastName, isMobile])
 
   // Stable reference for auto-save; only changes when scores actually change.
   const autoSaveData = useMemo(
     () => ({ scores: players.map(player => player.scores).filter(Boolean) }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [players]
   )
 
@@ -424,7 +424,7 @@ export default function ScoresPage() {
         })
       )
     }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [sessionToken])
 
   const normalizeHeader = (h: string) => h.trim().toLowerCase().replace(/[_\s\-#]+/g, '')
 
@@ -474,7 +474,10 @@ export default function ScoresPage() {
       const workbook = new Workbook()
       const worksheet = workbook.addWorksheet('Scores')
       if (rows.length > 0) {
-        worksheet.columns = Object.keys(rows[0]).map(key => ({ header: key, key }))
+        const firstRow = rows[0]
+        if (firstRow) {
+          worksheet.columns = Object.keys(firstRow).map(key => ({ header: key, key }))
+        }
         worksheet.addRows(rows)
       }
 
@@ -714,7 +717,7 @@ export default function ScoresPage() {
       return
     }
 
-    addToast({ type: res.ok ? 'success' : 'error', message: body.message ?? body.detail, duration: 3000 })
+    addToast({ type: res.ok ? 'success' : 'error', message: body.message ?? body.detail ?? 'Request completed.', duration: 3000 })
     if (res.ok) {
       setPlayers(prev => prev.map(p => ({
         ...p,
@@ -732,81 +735,6 @@ export default function ScoresPage() {
   const devClearGame = useCallback((gameNumber: 2 | 3) => {
     setClearGameConfirm(gameNumber)
   }, [])
-
-  const headerActions = useMemo(() => (
-    <div className={styles.headerActions}>
-      <button
-        className="ds-btn ds-btn-info ds-btn-sm"
-        onClick={() => setIsScoresGuideOpen(true)}
-      >
-        Scores Guide
-      </button>
-
-      <button
-        className="ds-btn ds-btn-primary ds-btn-sm"
-        onClick={handleExportScoresToExcel}
-        disabled={isExporting || players.length === 0}
-      >
-        {isExporting ? 'Exporting...' : 'Export to Excel'}
-      </button>
-
-      <button
-        className="ds-btn ds-btn-primary ds-btn-sm"
-        onClick={() => importFileRef.current?.click()}
-        disabled={isImporting || players.length === 0 || isScoresLocked}
-      >
-        {isImporting ? 'Importing...' : 'Import from Excel'}
-      </button>
-
-      {players.length > 0 && !isScoresLocked && (
-        <button
-          className="ds-btn ds-btn-success ds-btn-sm"
-          onClick={() => { void markScoresComplete() }}
-        >
-          Calculate Payouts
-        </button>
-      )}
-
-      {players.length > 0 && isScoresLocked && (
-        <button
-          className="ds-btn ds-btn-destructive ds-btn-sm"
-          onClick={unlockScoresTable}
-        >
-          Unlock Scores
-        </button>
-      )}
-      
-      {pendingSaves.length > 0 && (
-        <EnhancedButton
-          onClick={async () => {
-            await processPendingSaves()
-            addToast({ 
-              message: 'Sync completed!', 
-              type: 'success', 
-              duration: 3000 
-            })
-          }}
-          variant="primary"
-          size="sm"
-        >
-          Sync Offline Scores ({pendingSaves.length})
-        </EnhancedButton>
-      )}
-
-      {(process.env.NODE_ENV === 'development' || !!currentUser?.isAdmin) && players.length > 0 && (
-        <div className={styles.devGroup}>
-          <button className={styles.devButton} onClick={handleRandomizeScores} disabled={isScoresLocked}>Randomize Scores</button>
-          <button className={styles.devButton} onClick={() => devClearGame(2)} disabled={isScoresLocked}>Clear Game 2</button>
-          <button className={styles.devButton} onClick={() => devClearGame(3)} disabled={isScoresLocked}>Clear Game 3</button>
-        </div>
-      )}
-    </div>
-  ), [players, handleRandomizeScores, devClearGame, pendingSaves.length, addToast, processPendingSaves, handleExportScoresToExcel, isExporting, isImporting, isScoresLocked, unlockScoresTable, currentUser])
-  usePageHeader({
-    title: 'Scores',
-    subtitle: undefined,
-    actions: headerActions
-  })
 
   // fetchPlayersWithScores must be defined before the useEffect that calls it
   // (and before any early-return guards) so the closure captures it properly.
@@ -904,7 +832,7 @@ export default function ScoresPage() {
     } finally {
       setIsLoading(false)
     }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [])
 
   // Fetch tournament, squad, and players data - OPTIMIZED WITH PARALLEL REQUESTS
   useEffect(() => {
@@ -944,7 +872,7 @@ export default function ScoresPage() {
           }
           // Final fallback: use the first available squad
           if (!squadToUse && squadsData.length > 0) {
-            squadToUse = squadsData[0]
+            squadToUse = squadsData[0] ?? null
           }
           setSelectedSquad(squadToUse)
           // Persist resolved squad to localStorage so guards and other pages see it consistently
@@ -970,8 +898,7 @@ export default function ScoresPage() {
       // No tournament loaded, stop loading immediately
       setIsLoading(false)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionToken])
+  }, [fetchPlayersWithScores, sessionToken])
 
   useEffect(() => {
     const tournamentId = tournament?.id ?? null
@@ -1024,11 +951,11 @@ export default function ScoresPage() {
     let nextPlayerId: number | null = null
 
     if (currentFieldIndex < fields.length - 1) {
-      nextField = fields[currentFieldIndex + 1]
+      nextField = fields[currentFieldIndex + 1] ?? null
       nextPlayerId = playerId
     } else if (currentPlayerIndex >= 0 && currentPlayerIndex < paginationHook.paginatedItems.length - 1) {
-      nextField = fields[0]
-      nextPlayerId = paginationHook.paginatedItems[currentPlayerIndex + 1].id
+      nextField = fields[0] ?? null
+      nextPlayerId = paginationHook.paginatedItems[currentPlayerIndex + 1]?.id ?? null
     }
 
     if (!nextField || !nextPlayerId) return
@@ -1064,7 +991,7 @@ export default function ScoresPage() {
     }
 
     if (trackHistory) {
-      const previousValue = playersRef.current.find(player => player.id === playerId)?.scores?.[field as keyof ScoreData] as number | undefined
+      const previousValue = (playersRef.current.find(player => player.id === playerId)?.scores as Record<string, number | undefined> | undefined)?.[field]
       setLastEdit({ playerId, field, previous: previousValue })
     }
 
@@ -1131,9 +1058,9 @@ export default function ScoresPage() {
           player_id: playerId,
           tournament_id: parseInt(tournamentId),
           squad_id: selectedSquadRef.current.id,
-          game1_scratch: updatedScores.game1_scratch,
-          game2_scratch: updatedScores.game2_scratch,
-          game3_scratch: updatedScores.game3_scratch
+          game1_scratch: updatedScores.game1_scratch ?? 0,
+          game2_scratch: updatedScores.game2_scratch ?? 0,
+          game3_scratch: updatedScores.game3_scratch ?? 0
         }
 
         if (!isOnline) {
@@ -1249,14 +1176,15 @@ export default function ScoresPage() {
     const scores = player.scores || {}
     const scratch = (scores.game1_scratch || 0) + (scores.game2_scratch || 0) + (scores.game3_scratch || 0)
     const gamesPlayed = [scores.game1_scratch, scores.game2_scratch, scores.game3_scratch].filter(s => s !== undefined && s !== null).length
-    return scratch + (player.handicap * gamesPlayed)
+    return scratch + ((player.handicap ?? 0) * gamesPlayed)
   }
 
-  const getGameTotal = (scratchScore: number | undefined, handicap: number) => {
+  const getGameTotal = (scratchScore: number | undefined, handicap: number | undefined) => {
+    const handicapValue = handicap ?? 0
     if (scratchScore === undefined || scratchScore === null) {
-      return handicap > 0 ? `+${handicap} handicap` : ''
+      return handicapValue > 0 ? `+${handicapValue} handicap` : ''
     }
-    return `${scratchScore + handicap} total`
+    return `${scratchScore + handicapValue} total`
   }
 
   const calculateDisplayTotal = (player: Player) => {
@@ -1265,7 +1193,7 @@ export default function ScoresPage() {
     const played = games.filter(s => s !== undefined && s !== null)
     if (played.length === 0) return ''
     const scratch = played.reduce((sum, s) => sum + (s || 0), 0)
-    return scratch + (player.handicap * played.length)
+    return scratch + ((player.handicap ?? 0) * played.length)
   }
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent, playerId: number, field: string) => {
@@ -1285,11 +1213,11 @@ export default function ScoresPage() {
       let nextPlayerId: number | null = null
 
       if (currentFieldIndex < fields.length - 1) {
-        nextField = fields[currentFieldIndex + 1]
+        nextField = fields[currentFieldIndex + 1] ?? null
         nextPlayerId = playerId
       } else if (currentPlayerIndex >= 0 && currentPlayerIndex < paginationHook.paginatedItems.length - 1) {
-        nextField = fields[0]
-        nextPlayerId = paginationHook.paginatedItems[currentPlayerIndex + 1].id
+        nextField = fields[0] ?? null
+        nextPlayerId = paginationHook.paginatedItems[currentPlayerIndex + 1]?.id ?? null
       }
 
       if (!nextField || !nextPlayerId) return
@@ -1394,6 +1322,82 @@ export default function ScoresPage() {
     setMissingScoreNames(missing)
     setShowCalcPayoutsConfirm(true)
   }, [hasMissingScore, players, tournament, selectedSquad, sessionToken])
+
+  const headerActions = useMemo(() => (
+    <div className={styles.headerActions}>
+      <button
+        className="ds-btn ds-btn-info ds-btn-sm"
+        onClick={() => setIsScoresGuideOpen(true)}
+      >
+        Scores Guide
+      </button>
+
+      <button
+        className="ds-btn ds-btn-primary ds-btn-sm"
+        onClick={handleExportScoresToExcel}
+        disabled={isExporting || players.length === 0}
+      >
+        {isExporting ? 'Exporting...' : 'Export to Excel'}
+      </button>
+
+      <button
+        className="ds-btn ds-btn-primary ds-btn-sm"
+        onClick={() => importFileRef.current?.click()}
+        disabled={isImporting || players.length === 0 || isScoresLocked}
+      >
+        {isImporting ? 'Importing...' : 'Import from Excel'}
+      </button>
+
+      {players.length > 0 && !isScoresLocked && (
+        <button
+          className="ds-btn ds-btn-success ds-btn-sm"
+          onClick={() => { void markScoresComplete() }}
+        >
+          Calculate Payouts
+        </button>
+      )}
+
+      {players.length > 0 && isScoresLocked && (
+        <button
+          className="ds-btn ds-btn-destructive ds-btn-sm"
+          onClick={unlockScoresTable}
+        >
+          Unlock Scores
+        </button>
+      )}
+      
+      {pendingSaves.length > 0 && (
+        <EnhancedButton
+          onClick={async () => {
+            await processPendingSaves()
+            addToast({ 
+              message: 'Sync completed!', 
+              type: 'success', 
+              duration: 3000 
+            })
+          }}
+          variant="primary"
+          size="sm"
+        >
+          Sync Offline Scores ({pendingSaves.length})
+        </EnhancedButton>
+      )}
+
+      {(process.env.NODE_ENV === 'development' || !!currentUser?.isAdmin) && players.length > 0 && (
+        <div className={styles.devGroup}>
+          <button className={styles.devButton} onClick={handleRandomizeScores} disabled={isScoresLocked}>Randomize Scores</button>
+          <button className={styles.devButton} onClick={() => devClearGame(2)} disabled={isScoresLocked}>Clear Game 2</button>
+          <button className={styles.devButton} onClick={() => devClearGame(3)} disabled={isScoresLocked}>Clear Game 3</button>
+        </div>
+      )}
+    </div>
+  ), [players, handleRandomizeScores, devClearGame, pendingSaves.length, addToast, processPendingSaves, handleExportScoresToExcel, isExporting, isImporting, isScoresLocked, unlockScoresTable, currentUser, markScoresComplete])
+
+  usePageHeader({
+    title: 'Scores',
+    subtitle: undefined,
+    actions: headerActions
+  })
 
   const getRowStateLabel = useCallback((playerId: number) => {
     const state = rowSaveState[playerId] || 'idle'

@@ -50,52 +50,46 @@ const homeSoftwareApplicationJsonLd = {
 export default function HomePage() {
   const features = [
     {
-      icon: 'BRK',
-      title: 'Build Clean Brackets',
+      title: 'Build clean brackets',
       body: 'Create tournament brackets quickly with predictable setup, round tracking, and clear winner advancement.',
     },
     {
-      icon: 'POT',
-      title: 'Track Every Side Pot',
+      title: 'Track every side pot',
       body: 'Manage optional side action like high game, eliminator, brackets, and custom event pools from the same event dashboard.',
     },
     {
-      icon: 'SCR',
-      title: 'Enter Scores Live',
+      title: 'Enter scores live',
       body: 'Enter scores as games finish and keep bracket progress updated throughout the tournament.',
     },
     {
-      icon: 'PAY',
-      title: 'Review Payouts Clearly',
+      title: 'Review payouts clearly',
       body: 'Calculate projected payouts from your event settings, then review and export clean results for verification.',
     },
     {
-      icon: 'MOB',
-      title: 'Use It From the Desk or Lanes',
+      title: 'Use it from the desk or lanes',
       body: 'Run the event from the front desk, tournament office, counter, or lane-side on mobile.',
     },
     {
-      icon: 'REV',
-      title: 'Verify Every Result',
+      title: 'Verify every result',
       body: 'Keep important score, bracket, and payout changes easier to review before final results are shared.',
     },
   ];
 
   const steps = [
     {
-      title: 'Build the Tournament',
+      title: 'Build the tournament',
       text: 'Set bracket sizes, squads, fees, prize rules, and event options before competition starts.',
     },
     {
-      title: 'Add Bowlers',
+      title: 'Add bowlers',
       text: 'Register players, assign squads, and organize entries so the event is ready to run.',
     },
     {
-      title: 'Run Tournament Play',
+      title: 'Run tournament play',
       text: 'Enter scores, advance winners, and keep staff aligned as games are completed.',
     },
     {
-      title: 'Finalize Results',
+      title: 'Finalize results',
       text: 'Review winners, verify payout totals, and export polished results for records or posting.',
     },
   ];
@@ -121,7 +115,7 @@ export default function HomePage() {
             />
             <div className={styles.brandText}>
               <strong>BracketWorks</strong>
-              <span>Bowling Brackets And Side Pots</span>
+              <span>Bowling brackets and side pots</span>
             </div>
           </div>
 
@@ -257,7 +251,7 @@ export default function HomePage() {
 
       <section id="features" className={styles.features}>
         <div className={styles.sectionHeading}>
-          <h2 className={styles.sectionTitle}>Built For The Way Bowling Tournaments Actually Run</h2>
+          <h2 className={styles.sectionTitle}>Built for the way bowling tournaments actually run</h2>
           <p className={styles.sectionSubtitle}>
             From setup to final payout review, BracketWorks keeps brackets, scores, side pots, and results connected so tournament staff can focus on running the event.
           </p>
@@ -266,7 +260,6 @@ export default function HomePage() {
         <div className={styles.featureGrid}>
           {features.map(feature => (
             <article key={feature.title} className={styles.featureCard}>
-              <span className={styles.featureIcon}>{feature.icon}</span>
               <h3>{feature.title}</h3>
               <p>{feature.body}</p>
             </article>
@@ -299,7 +292,7 @@ export default function HomePage() {
 
       <section id="how-it-works" className={styles.howItWorks}>
         <div className={styles.sectionHeading}>
-          <h2 className={styles.sectionTitle}>From Setup to Results in Four Steps</h2>
+          <h2 className={styles.sectionTitle}>From setup to results in four steps</h2>
           <p className={styles.sectionSubtitle}>Every tournament follows the same simple flow. No guesswork required.</p>
         </div>
 
@@ -316,38 +309,34 @@ export default function HomePage() {
 
       <section id="benefits" className={styles.benefits}>
         <div className={styles.sectionHeading}>
-          <h2 className={styles.sectionTitle}>Why Organizers Choose BracketWorks</h2>
+          <h2 className={styles.sectionTitle}>Why organizers choose BracketWorks</h2>
           <p className={styles.sectionSubtitle}>Less time managing tools. More time running a great event.</p>
         </div>
 
         <div className={styles.benefitsList}>
           <article className={styles.benefit}>
-            <span className={styles.benefitIcon}>ONE</span>
-            <h3>One Place for Everything</h3>
+            <h3>One place for everything</h3>
             <p>
               Replace disconnected spreadsheets and manual tracking with one place for tournament settings, brackets, scores, side pots, and payouts.
             </p>
           </article>
 
           <article className={styles.benefit}>
-            <span className={styles.benefitIcon}>GUARD</span>
-            <h3>Fewer Mistakes</h3>
+            <h3>Fewer mistakes</h3>
             <p>
               Structured score entry and automatic calculations help reduce bracket and payout mistakes during live event operations.
             </p>
           </article>
 
           <article className={styles.benefit}>
-            <span className={styles.benefitIcon}>PRO</span>
-            <h3>A Professional Experience</h3>
+            <h3>A professional experience</h3>
             <p>
               Give staff and bowlers consistent, readable tournament information across desktop and mobile views.
             </p>
           </article>
 
           <article className={styles.benefit}>
-            <span className={styles.benefitIcon}>GROW</span>
-            <h3>Grows With Your Events</h3>
+            <h3>Grows with your events</h3>
             <p>
               Use the same workflow for weekly events, local tournaments, and larger open events as your needs grow.
             </p>
@@ -358,7 +347,7 @@ export default function HomePage() {
       <section id="pricing" className={styles.ctaSection}>
         <div className={styles.ctaContent}>
           <span className={styles.ctaBadge}>Get Started Free</span>
-          <h2>Your Next Tournament<br />Starts Here</h2>
+          <h2>Your next tournament<br />starts here</h2>
           <p>
             Set up brackets, track scores, manage side pots, and review payouts — all from one clean tournament dashboard.
           </p>

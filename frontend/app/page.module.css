@@ -1,6 +1,13 @@
 .container {
   --page-gutter: clamp(16px, 2.2vw, 30px);
   --page-max-width: 1480px;
+  --fs-overline: 12px;
+  --fs-body-sm: 13px;
+  --fs-body-md: 15px;
+  --fs-body-lg: clamp(16px, 1.7vw, 18px);
+  --fs-display: clamp(36px, 5vw, 64px);
+  --fs-section-title: clamp(30px, 3.6vw, 44px);
+  --fs-card-title: clamp(20px, 2.1vw, 22px);
   width: 100%;
   overflow-x: hidden;
   padding-top: 112px;
@@ -157,7 +164,7 @@
 .kicker {
   margin: 0 0 6px;
   color: color-mix(in srgb, var(--color-primary) 85%, white);
-  font-size: 13px;
+  font-size: var(--fs-overline);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   font-weight: 800;
@@ -166,7 +173,7 @@
 .heroTitle {
   margin: 20px 0 22px;
   color: var(--color-white);
-  font-size: clamp(36px, 5.1vw, 66px);
+  font-size: var(--fs-display);
   line-height: 1.04;
   letter-spacing: -0.04em;
   max-width: 13ch;
@@ -175,7 +182,7 @@
 .heroSubtitle {
   margin: 0;
   color: var(--opacity-white-80);
-  font-size: clamp(16px, 1.8vw, 20px);
+  font-size: var(--fs-body-lg);
   line-height: 1.65;
   max-width: 52ch;
 }
@@ -183,7 +190,7 @@
 .heroCtaHelper {
   margin: 12px 0 0;
   color: var(--opacity-white-60);
-  font-size: 13px;
+  font-size: var(--fs-body-sm);
   font-weight: 600;
 }
 
@@ -269,6 +276,8 @@
   background: color-mix(in srgb, var(--color-dark-surface) 88%, transparent);
   padding: 22px;
   box-shadow: 0 32px 80px var(--opacity-black-50);
+  width: 80%;
+  justify-self: end;
 }
 
 .panelHeaderRow {
@@ -286,7 +295,7 @@
 .heroPanelTitle {
   margin: 0;
   color: var(--color-white);
-  font-size: 22px;
+  font-size: var(--fs-card-title);
 }
 
 .liveBadge {
@@ -313,7 +322,7 @@
 .tournamentName {
   margin: 0;
   color: var(--color-white);
-  font-size: 19px;
+  font-size: var(--fs-card-title);
   line-height: 1.25;
   letter-spacing: -0.02em;
 }
@@ -321,14 +330,14 @@
 .tournamentSquad {
   margin: 6px 0 0;
   color: var(--opacity-white-70);
-  font-size: 14px;
+  font-size: var(--fs-body-sm);
   font-weight: 700;
 }
 
 .demoNote {
   margin: 8px 0 0;
   color: var(--opacity-white-60);
-  font-size: 12px;
+  font-size: var(--fs-body-sm);
   line-height: 1.4;
 }
 
@@ -357,7 +366,7 @@
   display: block;
   margin-top: 6px;
   color: var(--opacity-white-60);
-  font-size: 13px;
+  font-size: var(--fs-body-sm);
   font-weight: 700;
 }
 
@@ -372,7 +381,7 @@
 .activityTitle {
   margin: 0;
   color: var(--color-white);
-  font-size: 16px;
+  font-size: var(--fs-body-md);
   letter-spacing: -0.01em;
 }
 
@@ -382,7 +391,7 @@
   display: grid;
   gap: 8px;
   color: var(--opacity-white-70);
-  font-size: 14px;
+  font-size: var(--fs-body-sm);
   line-height: 1.5;
 }
 
@@ -1170,7 +1179,7 @@
 .publicViewSubtitle {
   margin: 0;
   color: var(--opacity-white-65);
-  font-size: 17px;
+  font-size: var(--fs-body-lg);
   line-height: 1.6;
   max-width: 52ch;
 }
@@ -1189,7 +1198,7 @@
   align-items: flex-start;
   gap: 10px;
   color: var(--opacity-white-70);
-  font-size: 15px;
+  font-size: var(--fs-body-md);
   line-height: 1.5;
 }
 
@@ -1246,7 +1255,7 @@
 .sectionTitle {
   margin: 0;
   color: var(--color-white);
-  font-size: clamp(30px, 3.8vw, 46px);
+  font-size: var(--fs-section-title);
   letter-spacing: -0.04em;
 }
 
@@ -1254,7 +1263,7 @@
   margin: 12px auto 0;
   max-width: 72ch;
   color: var(--opacity-white-65);
-  font-size: 18px;
+  font-size: var(--fs-body-lg);
   line-height: 1.58;
 }
 
@@ -1280,28 +1289,10 @@
   border-color: color-mix(in srgb, var(--color-primary) 55%, var(--opacity-white-20));
 }
 
-.featureIcon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 24px;
-  padding: 0 8px;
-  border-radius: 999px;
-  border: 1px solid var(--opacity-white-20);
-  background: var(--opacity-white-08);
-  color: var(--color-primary);
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  line-height: 1;
-  margin-bottom: 14px;
-}
-
 .featureCard h3 {
   margin: 0 0 10px;
   color: var(--color-white);
-  font-size: 24px;
+  font-size: var(--fs-card-title);
 }
 
 .featureCard p {
@@ -1366,7 +1357,7 @@
 .step h3 {
   margin: 0 0 8px;
   color: var(--color-white);
-  font-size: 20px;
+  font-size: var(--fs-card-title);
   font-weight: 700;
   letter-spacing: -0.02em;
 }
@@ -1375,7 +1366,7 @@
   margin: 0;
   color: var(--opacity-white-65);
   line-height: 1.58;
-  font-size: 14px;
+  font-size: var(--fs-body-sm);
 }
 
 .ctaContent {
@@ -1422,7 +1413,7 @@
   margin: 16px auto 0;
   max-width: 54ch;
   color: var(--opacity-white-65);
-  font-size: 17px;
+  font-size: var(--fs-body-lg);
   line-height: 1.62;
 }
 
@@ -1486,28 +1477,10 @@
   border-color: color-mix(in srgb, var(--color-primary) 55%, var(--opacity-white-20));
 }
 
-.benefitIcon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 24px;
-  width: fit-content;
-  padding: 0 8px;
-  border-radius: 999px;
-  border: 1px solid var(--opacity-white-20);
-  background: var(--opacity-white-08);
-  color: var(--color-primary);
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  line-height: 1;
-}
-
 .benefit h3 {
   margin: 0;
   color: var(--color-white);
-  font-size: 22px;
+  font-size: var(--fs-card-title);
   font-weight: 700;
   letter-spacing: -0.02em;
 }
@@ -1565,6 +1538,11 @@
   .publicViewGrid {
     grid-template-columns: 1fr;
     gap: 26px;
+  }
+
+  .heroPanel {
+    width: 100%;
+    justify-self: stretch;
   }
 
   .hero {
@@ -1851,5 +1829,142 @@
   .trustRow {
     gap: 10px 14px;
     font-size: 14px;
+  }
+}
+
+@media (min-width: 1081px) {
+  .heroPanel {
+    width: 76%;
+    padding: 14px;
+  }
+
+  .panelHeaderRow {
+    padding: 9px 11px;
+    margin-bottom: 10px;
+  }
+
+  .heroPanelTitle {
+    font-size: 16px;
+  }
+
+  .liveBadge {
+    padding: 5px 10px;
+    font-size: 9px;
+  }
+
+  .tournamentMetaCard {
+    padding: 9px;
+    margin-bottom: 8px;
+  }
+
+  .tournamentName {
+    font-size: 16px;
+  }
+
+  .tournamentSquad {
+    margin-top: 3px;
+    font-size: 12px;
+  }
+
+  .demoNote {
+    margin-top: 4px;
+    font-size: 10px;
+  }
+
+  .heroStats {
+    gap: 8px;
+  }
+
+  .statCard {
+    padding: 9px;
+    border-radius: 12px;
+  }
+
+  .statValue {
+    font-size: clamp(18px, 1.9vw, 25px);
+  }
+
+  .statLabel {
+    margin-top: 3px;
+    font-size: 11px;
+  }
+
+  .activityCard {
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 12px;
+  }
+
+  .activityTitle {
+    font-size: 13px;
+  }
+
+  .activityList {
+    margin-top: 6px;
+    gap: 5px;
+    font-size: 11px;
+  }
+
+  .bracketPreview {
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 12px;
+  }
+
+  .bracketPreviewTitle {
+    margin-bottom: 6px;
+    font-size: 10px;
+  }
+
+  .bracketPreviewGrid {
+    gap: 14px;
+  }
+
+  .bracketRound {
+    gap: 6px;
+  }
+
+  .bracketRound:nth-child(2) {
+    padding-top: 16px;
+  }
+
+  .bracketRound:nth-child(3) {
+    padding-top: 48px;
+  }
+
+  .bracketRound:nth-child(2) .matchNode:nth-of-type(1) {
+    margin-bottom: 28px;
+  }
+
+  .matchNode {
+    font-size: 11px;
+    padding: 7px 10px;
+    min-height: 30px;
+  }
+
+  .matchNodeChampion::before {
+    width: 6px;
+    height: 6px;
+    margin-right: 6px;
+  }
+
+  .bracketRound:nth-child(1) .matchNode::after,
+  .bracketRound:nth-child(2) .matchNode::after {
+    right: -10px;
+    width: 10px;
+  }
+
+  .bracketRound:nth-child(1) .matchNode:nth-of-type(1)::before,
+  .bracketRound:nth-child(1) .matchNode:nth-of-type(3)::before,
+  .bracketRound:nth-child(2) .matchNode:nth-of-type(1)::before {
+    right: -20px;
+    width: 20px;
+    height: calc(100% + 6px);
+    background-size: 2px 100%, 12px 2px;
+    background-position: 8px 0, 8px 50%;
+  }
+
+  .bracketRound:nth-child(2) .matchNode:nth-of-type(1)::before {
+    height: calc(100% + 36px);
   }
 }

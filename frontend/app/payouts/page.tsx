@@ -17,7 +17,7 @@ import { getPayoutUnlockKey } from '../lib/storageKeys'
 import Link from 'next/link'
 import styles from './payouts.module.css'
 import ExplainPayoutsModal from './ExplainPayoutsModal'
-import { formatCurrency } from '../lib/formatters'
+import { formatCurrency, formatShortMonthDayYear } from '../lib/formatters'
 
 function placeBadgeClass(place: number) {
   if (place === 1) return `${styles.placeBadge} ${styles.place1}`
@@ -103,8 +103,7 @@ export default function PayoutsPage() {
 
   useEffect(() => {
     fetchTournaments()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [fetchTournaments])
 
   useEffect(() => {
     if (!isAuthInitialized || !isUserAuthenticated) return
@@ -133,7 +132,7 @@ export default function PayoutsPage() {
           const restored = (bootstrap.squads || []).find(s => s.id === restoredSelectedSquadId) || null
           setSelectedSquad(restored)
         } else if ((bootstrap.squads || []).length > 0) {
-          setSelectedSquad(bootstrap.squads[0])
+          setSelectedSquad(bootstrap.squads[0] ?? null)
         }
 
         logger.info('Payouts bootstrap load completed', {
@@ -159,14 +158,13 @@ export default function PayoutsPage() {
         fetchSquads(found.id)
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tournaments, selectedTournament])
+  }, [fetchSquads, selectedTournament, tournaments])
 
   useEffect(() => {
     if (squads.length > 0 && !selectedSquad) {
       const storedId = getSelectedSquadId()
       const found = storedId ? squads.find(s => s.id === parseInt(storedId)) : null
-      setSelectedSquad(found ?? squads[0])
+      setSelectedSquad(found ?? squads[0] ?? null)
     }
   }, [squads, selectedSquad])
 
@@ -186,8 +184,7 @@ export default function PayoutsPage() {
         setPaidKeys(new Set())
         setSidePotPaidKeys(new Set())
       }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedTournament, selectedSquad, isUnlocked])
+  }, [isUnlocked, loadEntryData, loadPayoutData, selectedSquad, selectedTournament])
 
   useEffect(() => {
     const loadScores = async () => {
@@ -716,7 +713,7 @@ export default function PayoutsPage() {
         ? `${selectedSquad.date || ''} \u2014 ${selectedSquad.time || ''}`.trim()
         : 'All Squads'
       const generatedAt = new Date().toLocaleString()
-      const paidStampDate = new Date().toLocaleDateString()
+      const paidStampDate = formatShortMonthDayYear(new Date())
       const logoUrl = `${window.location.origin}/logo_no_text.svg`
       const useDoubleCol = rows.length > 20
 
@@ -985,6 +982,8 @@ export default function PayoutsPage() {
       <NoTournamentState
         title="Payouts Not Yet Calculated"
         description="To view payout distribution, go to the Scores page and press the &quot;Calculate Payouts&quot; button. This ensures all scores are reviewed and finalized before payouts are determined."
+        actionHref="/scores"
+        actionLabel="Go to Scores"
         cards={[
           { title: 'Enter Scores First', text: 'Make sure all bowler game scores are entered on the Scores page before calculating payouts' },
           { title: 'Review & Confirm', text: 'The Calculate Payouts button checks for missing scores and asks you to confirm all scores are final' },

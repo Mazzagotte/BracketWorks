@@ -150,8 +150,7 @@ export default function BracketsPage() {
     } else {
       fetchTournaments()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [fetchSquads, fetchTournaments, loadSavedBrackets])
 
   // Auto-select tournament from localStorage and load squads in one operation
   useEffect(() => {
@@ -176,8 +175,7 @@ export default function BracketsPage() {
     } else if (tournaments.length > 0) {
       setIsInitializing(false)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tournaments, selectedTournament])
+  }, [fetchSquads, selectedTournament, tournaments])
 
   // If fetch completes with no tournaments, stop initializing
   useEffect(() => {
@@ -280,8 +278,7 @@ export default function BracketsPage() {
       window.removeEventListener('focus', handleFocus);
       loadingRef.current = false; // Reset loading state on cleanup
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedSquad, selectedTournament]);
+  }, [loadSavedBrackets, selectedSquad, selectedTournament]);
 
   // Start the bracket generation process
   const startBracketGeneration = useCallback(() => {

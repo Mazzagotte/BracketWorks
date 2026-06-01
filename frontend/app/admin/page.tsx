@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { usePageHeader } from "../lib/header-context";
 import { apiClient } from "../lib/api";
 import { useAuth } from "../lib/auth-context";
+import { formatShortMonthDayYear } from "../lib/formatters";
 import styles from "./admin.module.css";
 
 type OverviewResponse = {
@@ -375,6 +376,28 @@ export default function AdminPage() {
     await loadAuditLogs(manual);
   }, [activeTab, loadOverview, loadUsers, loadTournaments, loadTables, loadAuditLogs]);
 
+  const refreshAfterMutation = useCallback(async ({
+    overview = false,
+    users = false,
+    tournaments = false,
+    tables = false,
+    audit = false,
+  }: {
+    overview?: boolean;
+    users?: boolean;
+    tournaments?: boolean;
+    tables?: boolean;
+    audit?: boolean;
+  }) => {
+    const refreshTasks: Promise<unknown>[] = [];
+    if (overview) refreshTasks.push(loadOverview(false));
+    if (users) refreshTasks.push(loadUsers(false));
+    if (tournaments) refreshTasks.push(loadTournaments(false));
+    if (tables) refreshTasks.push(loadTables(false));
+    if (audit) refreshTasks.push(loadAuditLogs(false));
+    await Promise.allSettled(refreshTasks);
+  }, [loadOverview, loadUsers, loadTournaments, loadTables, loadAuditLogs]);
+
   const headerActions = useMemo(() => (
     <>
       <div className={styles.tabRow}>
@@ -416,8 +439,14 @@ export default function AdminPage() {
       router.replace("/dashboard");
       return;
     }
-    void loadOverview(false);
-  }, [isAuthInitialized, isUserAuthenticated, currentUser?.isAdmin, router, loadOverview]);
+  }, [isAuthInitialized, isUserAuthenticated, currentUser?.isAdmin, router]);
+
+  useEffect(() => {
+    if (!isAuthInitialized || !isUserAuthenticated || !currentUser?.isAdmin) return;
+    if (activeTab === "overview") {
+      void loadOverview(false);
+    }
+  }, [activeTab, isAuthInitialized, isUserAuthenticated, currentUser?.isAdmin, loadOverview]);
 
   useEffect(() => {
     if (!isAuthInitialized || !isUserAuthenticated || !currentUser?.isAdmin) return;
@@ -571,7 +600,7 @@ export default function AdminPage() {
                   </div>
                   <div className={styles.secondaryText}>
                     {user.created_at
-                      ? new Date(user.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                      ? formatShortMonthDayYear(new Date(user.created_at))
                       : "-"}
                   </div>
                 </div>
@@ -850,8 +879,7 @@ export default function AdminPage() {
                                   onClick={async () => {
                                     try {
                                       await apiClient.post(`/api/v1/admin/tournaments/${tournament.id}/unarchive`, {});
-                                      await loadTournaments(true);
-                                      await loadAuditLogs(false);
+                                      await refreshAfterMutation({ overview: true, tournaments: true, audit: true });
                                     } catch (err) {
                                       setError(err instanceof Error ? err.message : "Failed to unarchive tournament");
                                     }
@@ -1258,8 +1286,7 @@ export default function AdminPage() {
                       confirm_text: deleteUserConfirmText,
                     });
                     setDeleteUser(null);
-                    await loadUsers(true);
-                    await loadAuditLogs(false);
+                    await refreshAfterMutation({ overview: true, users: true, audit: true });
                   } catch (err) {
                     setDeleteUserError(err instanceof Error ? err.message : "Delete failed");
                   } finally {
@@ -1410,8 +1437,7 @@ export default function AdminPage() {
                   try {
                     await apiClient.post(`/api/v1/admin/tournaments/${archiveTournament.id}/archive`, { reason: archiveReason });
                     setArchiveTournament(null);
-                    await loadTournaments(true);
-                    await loadAuditLogs(false);
+                    await refreshAfterMutation({ overview: true, tournaments: true, audit: true });
                   } catch (err) {
                     setArchiveError(err instanceof Error ? err.message : "Failed to archive tournament");
                   } finally {
@@ -1480,8 +1506,7 @@ export default function AdminPage() {
                       confirm_text: deleteTournamentConfirmText,
                     });
                     setDeleteTournament(null);
-                    await loadTournaments(true);
-                    await loadAuditLogs(false);
+                    await refreshAfterMutation({ overview: true, tournaments: true, audit: true });
                   } catch (err) {
                     setDeleteTournamentError(err instanceof Error ? err.message : "Failed to delete tournament");
                   } finally {

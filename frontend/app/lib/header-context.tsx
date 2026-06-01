@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 type HeaderProps = {
   title?: string;
@@ -54,9 +54,13 @@ export function usePageHeader(props: {
   actions?: ReactNode;
 }) {
   const { setHeaderProps } = useHeader();
+  const headerPayload = useMemo(() => ({
+    title: props.title,
+    subtitle: props.subtitle,
+    actions: props.actions,
+  }), [props.actions, props.subtitle, props.title]);
 
   useEffect(() => {
-    setHeaderProps(props);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [props.title, props.subtitle, props.actions]);
+    setHeaderProps(headerPayload);
+  }, [headerPayload, setHeaderProps]);
 }

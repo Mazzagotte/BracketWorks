@@ -172,7 +172,7 @@ export function useNetworkRequest() {
   }, [measureConnectionQuality, processRetryQueue]);
 
   const fetchWithRetry = useCallback(
-    async (url: string, options: RequestInit, maxRetries = 3): Promise<Response> => {
+    async (url: string, options: RequestInit = {}, maxRetries = 3): Promise<Response> => {
       let lastError: unknown;
 
       for (let attempt = 1; attempt <= maxRetries; attempt += 1) {

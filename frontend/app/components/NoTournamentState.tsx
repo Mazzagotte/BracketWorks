@@ -12,9 +12,17 @@ interface NoTournamentStateProps {
   title?: string
   description?: string
   cards?: InfoCard[]
+  actionHref?: string
+  actionLabel?: string
 }
 
-export default function NoTournamentState({ title, description, cards }: NoTournamentStateProps) {
+export default function NoTournamentState({
+  title,
+  description,
+  cards,
+  actionHref = '/dashboard',
+  actionLabel = 'Go to Dashboard',
+}: NoTournamentStateProps) {
   useEffect(() => {
     disableScroll()
     return () => {
@@ -34,10 +42,10 @@ export default function NoTournamentState({ title, description, cards }: NoTourn
       </p>
 
       <a
-        href="/dashboard"
+        href={actionHref}
         className="bw-empty-dashboard-link"
       >
-        Go to Dashboard
+        {actionLabel}
       </a>
 
       {cards && cards.length > 0 && (

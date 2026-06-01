@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { usePageHeader } from '../lib/header-context';
 import { useToast } from '../components/Toast';
 import { apiClient } from '../lib/api';
@@ -109,7 +109,7 @@ export default function SettingsPage() {
     load();
   }, [addToast]);
 
-  const loadSessions = async () => {
+  const loadSessions = useCallback(async () => {
     setLoadingSessions(true);
     try {
       const payload = await apiClient.get<{ sessions: SessionInfo[] }>('/api/v1/users/sessions?include_revoked=false', false);
@@ -119,11 +119,11 @@ export default function SettingsPage() {
     } finally {
       setLoadingSessions(false);
     }
-  };
+  }, [addToast]);
 
   useEffect(() => {
     loadSessions();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [loadSessions]);
 
   const passwordStrengthPercent = useMemo(
     () => calculatePasswordStrengthPercent(passwordForm.new_password, 8),

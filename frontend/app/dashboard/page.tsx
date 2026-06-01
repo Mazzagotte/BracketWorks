@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useEffect, useState, useRef } from 'react';
+import { useMemo, useEffect, useState, useRef, useCallback } from 'react';
 import { Tournament, Squad, BracketSettings, TournamentForm, SidePotsSettings, SidePot } from '../lib/types';
 
 import { usePageHeader } from '../lib/header-context';
@@ -33,6 +33,7 @@ import {
 import CloseControl from '../../components/CloseControl';
 import ExplainDashboardModal from './ExplainDashboardModal';
 import { setBodyInteractionState } from '../utils/modalUtils';
+import { formatIsoDateFull, formatIsoDateLong } from '../lib/formatters';
 
 function get12hrTimes() {
   const makeGroup = (period: 'AM' | 'PM') => {
@@ -65,6 +66,19 @@ const formatNumberInput = (numericValue: number): string => {
 
 const formatCurrencyLabel = (numericValue: number): string => {
   return `$${Math.round(numericValue || 0).toLocaleString('en-US')}`;
+};
+
+const getErrorDetail = async (response: Response): Promise<string | null> => {
+  try {
+    const data: unknown = await response.json();
+    if (data && typeof data === 'object' && 'detail' in data) {
+      const detail = (data as { detail?: unknown }).detail;
+      return typeof detail === 'string' ? detail : null;
+    }
+  } catch {
+    return null;
+  }
+  return null;
 };
 
 const createDefaultBracketSettings = (tournamentId = 0): BracketSettings => ({
@@ -133,18 +147,6 @@ function getDatesBetween(startDate: string, endDate: string): string[] {
   return dateList;
 }
 
-function formatTournamentDay(isoDate: string): string {
-  const [year, month, day] = isoDate.split('-').map(Number);
-  const date = new Date(year, month - 1, day);
-  return date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-}
-
-function formatLongDate(isoDate: string): string {
-  const [year, month, day] = isoDate.split('-').map(Number);
-  const date = new Date(year, month - 1, day);
-  return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-}
-
 function EditTournamentModal({ open, onClose, tournament, onSave, isMobile, isCreateMode }: {
   open: boolean;
   onClose: () => void;
@@ -193,7 +195,6 @@ function EditTournamentModal({ open, onClose, tournament, onSave, isMobile, isCr
           setValidationError(null);
           try {
             // Debug: log form data
-            // eslint-disable-next-line no-console
             logger.debug('Submitting tournament form', { tournamentForm });
             await onSave(tournamentForm);
           } catch (err: unknown) {
@@ -304,7 +305,7 @@ function EditTournamentModal({ open, onClose, tournament, onSave, isMobile, isCr
             {tournamentDays.length === 0 && <p className={mobileStyles.noSquadDaysHint}>Select a start and end date to add squad times for each tournament day.</p>}
             {tournamentDays.map(date => (
               <div key={date} className={mobileStyles.squadDay}>
-                <div className={mobileStyles.squadDayLabel}>{formatTournamentDay(date)}</div>
+                <div className={mobileStyles.squadDayLabel}>{formatIsoDateFull(date)}</div>
                 <div className={mobileStyles.squadTimesList}>
                   {(tournamentForm.squad_times[date] || []).map((time, i) => (
                     <div key={i} className={mobileStyles.squadTimeEntry}>
@@ -312,7 +313,7 @@ function EditTournamentModal({ open, onClose, tournament, onSave, isMobile, isCr
                       <button
                         type="button"
                         className={mobileStyles.squadTimeRemove}
-                        onClick={() => setTournamentForm(f => ({ ...f, squad_times: { ...f.squad_times, [date]: f.squad_times[date].filter((_, j) => j !== i) } }))}
+                        onClick={() => setTournamentForm(f => ({ ...f, squad_times: { ...f.squad_times, [date]: (f.squad_times[date] ?? []).filter((_, j) => j !== i) } }))}
                       >
                         Remove
                       </button>
@@ -444,24 +445,25 @@ export default function TournamentDashboard() {
     setExpandedCards(isMobile ? collapsedMobileCards : expandedDesktopCards);
   }, [isMobile, tournament?.id]);
 
-  const calculateHouseAmount = (settings: Pick<BracketSettings, 'bracket_size' | 'default_entry_fee' | 'first_place_amount' | 'second_place_amount'>) => {
+  const calculateHouseAmount = useCallback((settings: Pick<BracketSettings, 'bracket_size' | 'default_entry_fee' | 'first_place_amount' | 'second_place_amount'>) => {
     const bracketSize = Number(settings.bracket_size ?? 0);
     const costPerBracket = Number(settings.default_entry_fee ?? 0);
     const firstPlace = Number(settings.first_place_amount ?? 0);
     const secondPlace = Number(settings.second_place_amount ?? 0);
     return (bracketSize * costPerBracket) - firstPlace - secondPlace;
-  };
+  }, []);
 
-  const applyAutoHouse = (prev: BracketSettings, patch: Partial<BracketSettings>): BracketSettings => {
+  const applyAutoHouse = useCallback((prev: BracketSettings, patch: Partial<BracketSettings>): BracketSettings => {
     const next = { ...prev, ...patch };
     return {
       ...next,
       house_fee_amount: calculateHouseAmount(next)
     };
-  };
+  }, [calculateHouseAmount]);
 
   const computedHouseAmount = useMemo(() => calculateHouseAmount(bracketSettings), [
-    bracketSettings
+    bracketSettings,
+    calculateHouseAmount,
   ]);
 
   // Track when component is mounted to prevent premature auto-saves
@@ -659,14 +661,14 @@ export default function TournamentDashboard() {
     return createDefaultBracketSettings(tournamentId);
   };
 
-  const fetchTournamentBootstrap = async (tournamentId: number): Promise<TournamentBootstrapResponse | null> => {
+  const fetchTournamentBootstrap = useCallback(async (tournamentId: number): Promise<TournamentBootstrapResponse | null> => {
     try {
       return await apiClient.get<TournamentBootstrapResponse>(`/api/v1/tournaments/bootstrap?tournament_id=${tournamentId}`, false);
     } catch (error) {
       logger.error('Failed to load tournament bootstrap data', { tournamentId, error: getErrorContext(error) });
       return null;
     }
-  };
+  }, []);
 
   // Load bracket settings
   const loadBracketSettings = async (tournamentId: number) => {
@@ -674,7 +676,7 @@ export default function TournamentDashboard() {
     setBracketSettings(prev => applyAutoHouse(prev, loaded));
   };
 
-  const loadSidePots = (tournamentId: number) => {
+  const loadSidePots = useCallback((tournamentId: number) => {
     try {
       const stored = storage.getItem(SIDE_POTS_STORAGE_KEY(tournamentId));
       if (stored) {
@@ -700,7 +702,7 @@ export default function TournamentDashboard() {
     } catch {
       setSidePots(createDefaultSidePots(tournamentId));
     }
-  };
+  }, []);
 
   const saveSidePots = (next: SidePotsSettings) => {
     storage.setItem(SIDE_POTS_STORAGE_KEY(next.tournament_id), JSON.stringify(next));
@@ -943,15 +945,34 @@ export default function TournamentDashboard() {
       clearSelectedSquad();
       clearSelectedTournament();
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [applyAutoHouse, fetchTournamentBootstrap, loadSidePots]);
 
   // Fetch tournaments when load modal opens
   useEffect(() => {
-    if (loadModalOpen) {
-      fetchAllTournaments();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loadModalOpen, isAdmin]);
+    if (!loadModalOpen) return;
+
+    const runFetch = async () => {
+      const path = isAdmin ? '/api/v1/tournaments/?all=1' : '/api/v1/tournaments/';
+      try {
+        const data = await apiClient.get<Tournament[]>(path);
+        setAllTournaments(data);
+        addToast({
+          type: 'success',
+          message: `Loaded ${data.length} tournaments`,
+          duration: 3000
+        });
+      } catch (error) {
+        logger.warn('Tournament fetch failed', error);
+        addToast({
+          type: 'error',
+          message: 'Failed to load tournaments. Please try again.',
+          duration: 5000
+        });
+      }
+    };
+
+    void runFetch();
+  }, [addToast, isAdmin, loadModalOpen]);
 
   // Mobile detection (phone only - tablets get desktop experience)
   useEffect(() => {
@@ -964,27 +985,6 @@ export default function TournamentDashboard() {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
-
-  // Fetch all tournaments for user when load modal opens
-  const fetchAllTournaments = async () => {
-    const path = isAdmin ? '/api/v1/tournaments/?all=1' : '/api/v1/tournaments/';
-    try {
-      const data = await apiClient.get<any[]>(path);
-      setAllTournaments(data);
-      addToast({
-        type: 'success',
-        message: `Loaded ${data.length} tournaments`,
-        duration: 3000
-      });
-    } catch (error) {
-      logger.warn('Tournament fetch failed', error);
-      addToast({
-        type: 'error',
-        message: 'Failed to load tournaments. Please try again.',
-        duration: 5000
-      });
-    }
-  };
 
   // Load selected tournament
   const handleLoadTournament = async (t: Tournament) => {
@@ -1137,17 +1137,19 @@ export default function TournamentDashboard() {
           savedTournament = await res.json();
           setTournament(savedTournament);
           // Auto-load the newly created tournament
-          setSelectedTournament(savedTournament.id, savedTournament.name);
-          loadBracketSettings(savedTournament.id);
-          loadSidePots(savedTournament.id);
+          if (savedTournament) {
+            setSelectedTournament(savedTournament.id, savedTournament.name);
+            loadBracketSettings(savedTournament.id);
+            loadSidePots(savedTournament.id);
+          }
           addToast({
             type: 'success',
             message: `Tournament "${tournamentFormData.name}" created successfully!`,
             duration: 4000
           });
         } else {
-          const errorData = await res.json().catch(() => null);
-          throw new Error(errorData?.detail || `Failed to create tournament: ${res.status}`);
+          const detail = await getErrorDetail(res);
+          throw new Error(detail || `Failed to create tournament: ${res.status}`);
         }
       } else if (tournament) {
         // Update existing tournament
@@ -1162,7 +1164,9 @@ export default function TournamentDashboard() {
         if (res.ok) {
           savedTournament = await res.json();
           setTournament(savedTournament);
-          setSelectedTournament(savedTournament.id, savedTournament.name);
+          if (savedTournament) {
+            setSelectedTournament(savedTournament.id, savedTournament.name);
+          }
           if (!isOnlySquadTimesUpdate) {
             addToast({
               type: 'success',
@@ -1171,8 +1175,8 @@ export default function TournamentDashboard() {
             });
           }
         } else {
-          const errorData = await res.json().catch(() => null);
-          throw new Error(errorData?.detail || `Failed to update tournament: ${res.status}`);
+          const detail = await getErrorDetail(res);
+          throw new Error(detail || `Failed to update tournament: ${res.status}`);
         }
       }
 
@@ -1211,11 +1215,11 @@ export default function TournamentDashboard() {
               }
             }
           } else {
-            const errorData = await syncRes.json().catch(() => null);
-            logger.warn('Squad sync failed', { status: syncRes.status, errorData });
+            const detail = await getErrorDetail(syncRes);
+            logger.warn('Squad sync failed', { status: syncRes.status, detail });
             addToast({
               type: 'warning',
-              message: `Squad sync failed: ${errorData?.detail || 'Unknown error'}. Please refresh the page.`,
+              message: `Squad sync failed: ${detail || 'Unknown error'}. Please refresh the page.`,
               duration: 6000
             });
           }
@@ -1260,11 +1264,11 @@ export default function TournamentDashboard() {
   // Set up page header with action buttons
   const headerActions = useMemo(() => (
     <div className={mobileStyles.headerActions}>
+      <button className="ds-btn ds-btn-info ds-btn-sm" onClick={() => setIsExplainModalOpen(true)}>
+        Dashboard Guide
+      </button>
       {tournament ? (
         <>
-          <button className="ds-btn ds-btn-info ds-btn-sm" onClick={() => setIsExplainModalOpen(true)}>
-            Dashboard Guide
-          </button>
           <button className="ds-btn ds-btn-primary ds-btn-sm" onClick={() => { setCreateMode(false); setModalOpen(true); }}>
             Edit Tournament
           </button>
@@ -1961,8 +1965,8 @@ export default function TournamentDashboard() {
                                 {t.location && <div className={mobileStyles.tournamentLocation}>{t.location}</div>}
                                 {t.start_date && (
                                   <div className={mobileStyles.tournamentDate}>
-                                    {formatLongDate(t.start_date)}
-                                    {t.end_date && t.end_date !== t.start_date && ` – ${formatLongDate(t.end_date)}`}
+                                    {formatIsoDateLong(t.start_date)}
+                                    {t.end_date && t.end_date !== t.start_date && ` – ${formatIsoDateLong(t.end_date)}`}
                                   </div>
                                 )}
                                 {(squadCount > 0 || (typeof t.entry_count === 'number' && t.entry_count > 0) || t.brackets_configured) && (

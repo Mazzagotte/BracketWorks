@@ -1,4 +1,12 @@
-from pydantic import AliasChoices, BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
+from pydantic import (
+    AliasChoices,
+    BaseModel,
+    ConfigDict,
+    EmailStr,
+    Field,
+    field_validator,
+    model_validator,
+)
 from datetime import datetime
 from typing import Dict, List, Optional
 
@@ -9,11 +17,20 @@ class BracketProgramDefinition(BaseModel):
     key: str
     name: str
     division: Optional[str] = "Any"
-    scoring_mode: str = Field(validation_alias=AliasChoices("scoring_mode", "scoringMode"))
-    entry_fee: Optional[float] = Field(default=None, validation_alias=AliasChoices("entry_fee", "entryFee"))
+    scoring_mode: str = Field(
+        validation_alias=AliasChoices("scoring_mode", "scoringMode")
+    )
+    entry_fee: Optional[float] = Field(
+        default=None, validation_alias=AliasChoices("entry_fee", "entryFee")
+    )
     enabled: bool = True
-    allow_byes: Optional[bool] = Field(default=False, validation_alias=AliasChoices("allow_byes", "allowByes"))
-    display_order: Optional[int] = Field(default=None, validation_alias=AliasChoices("display_order", "displayOrder"))
+    allow_byes: Optional[bool] = Field(
+        default=False, validation_alias=AliasChoices("allow_byes", "allowByes")
+    )
+    display_order: Optional[int] = Field(
+        default=None, validation_alias=AliasChoices("display_order", "displayOrder")
+    )
+
 
 class LoginRequest(BaseModel):
     username: str
@@ -23,7 +40,7 @@ class LoginRequest(BaseModel):
 
 class TokenPairResponse(BaseModel):
     access_token: str
-    refresh_token: str
+    refresh_token: Optional[str] = None
     token_type: str = "bearer"
     session_id: str
     user_id: int
@@ -34,11 +51,10 @@ class TokenPairResponse(BaseModel):
 
 
 class RefreshTokenRequest(BaseModel):
-    refresh_token: str
+    pass
 
 
 class LogoutRequest(BaseModel):
-    refresh_token: Optional[str] = None
     all_sessions: bool = False
 
 
@@ -65,33 +81,41 @@ class SessionListResponse(BaseModel):
 class SessionRevokeRequest(BaseModel):
     session_id: str
 
+
 class SelectedSquadBase(BaseModel):
     user_id: int
     squad_id: int
 
+
 class SelectedSquadCreate(SelectedSquadBase):
     pass
+
 
 class SelectedSquadOut(SelectedSquadBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
 
+
 class SelectedSquadDelete(BaseModel):
     user_id: int
+
 
 class SquadBase(BaseModel):
     tournament_id: int
     date: str
     time: str
 
+
 class SquadCreate(SquadBase):
     pass
+
 
 class Squad(SquadBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
+
 
 class UserCreate(BaseModel):
     first_name: str
@@ -100,6 +124,7 @@ class UserCreate(BaseModel):
     email: EmailStr
     organization: Optional[str] = None
     password: str
+
 
 class UserOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -110,7 +135,7 @@ class UserOut(BaseModel):
     username: str
     email: EmailStr
     organization: Optional[str] = None
-    is_admin: int
+    is_admin: bool
     email_verified: bool = False
     email_verified_at: Optional[datetime] = None
 
@@ -170,12 +195,23 @@ class PlayerBase(BaseModel):
     bowler_profile_id: int | None = None
     full_name: str = Field(validation_alias=AliasChoices("full_name", "name"))
     average: int | None = None
-    handicap_entry_count: int | None = Field(default=None, validation_alias=AliasChoices("handicap_entry_count", "handicap_entries"))
-    scratch_entry_count: int | None = Field(default=None, validation_alias=AliasChoices("scratch_entry_count", "scratch_entries"))
-    program_entry_counts: Dict[str, int] | None = Field(default=None, validation_alias=AliasChoices("program_entry_counts", "bracket_entries"))
+    handicap_entry_count: int | None = Field(
+        default=None,
+        validation_alias=AliasChoices("handicap_entry_count", "handicap_entries"),
+    )
+    scratch_entry_count: int | None = Field(
+        default=None,
+        validation_alias=AliasChoices("scratch_entry_count", "scratch_entries"),
+    )
+    program_entry_counts: Dict[str, int] | None = Field(
+        default=None,
+        validation_alias=AliasChoices("program_entry_counts", "bracket_entries"),
+    )
     lane: str | None = None
     division: str | None = None
-    usbc_number: str | None = Field(default=None, validation_alias=AliasChoices("usbc_number", "usbc"))
+    usbc_number: str | None = Field(
+        default=None, validation_alias=AliasChoices("usbc_number", "usbc")
+    )
     amount_paid: float | None = None
 
 
@@ -190,14 +226,27 @@ class PlayerUpdate(BaseModel):
     squad_id: int | None = None
     user_id: int | None = None
     bowler_profile_id: int | None = None
-    full_name: str | None = Field(default=None, validation_alias=AliasChoices("full_name", "name"))
+    full_name: str | None = Field(
+        default=None, validation_alias=AliasChoices("full_name", "name")
+    )
     average: int | None = None
-    handicap_entry_count: int | None = Field(default=None, validation_alias=AliasChoices("handicap_entry_count", "handicap_entries"))
-    scratch_entry_count: int | None = Field(default=None, validation_alias=AliasChoices("scratch_entry_count", "scratch_entries"))
-    program_entry_counts: Dict[str, int] | None = Field(default=None, validation_alias=AliasChoices("program_entry_counts", "bracket_entries"))
+    handicap_entry_count: int | None = Field(
+        default=None,
+        validation_alias=AliasChoices("handicap_entry_count", "handicap_entries"),
+    )
+    scratch_entry_count: int | None = Field(
+        default=None,
+        validation_alias=AliasChoices("scratch_entry_count", "scratch_entries"),
+    )
+    program_entry_counts: Dict[str, int] | None = Field(
+        default=None,
+        validation_alias=AliasChoices("program_entry_counts", "bracket_entries"),
+    )
     lane: str | None = None
     division: str | None = None
-    usbc_number: str | None = Field(default=None, validation_alias=AliasChoices("usbc_number", "usbc"))
+    usbc_number: str | None = Field(
+        default=None, validation_alias=AliasChoices("usbc_number", "usbc")
+    )
     amount_paid: float | None = None
 
 
@@ -223,18 +272,22 @@ class BowlerProfile(BowlerProfileBase):
     created_at: datetime
     updated_at: datetime
 
+
 class TournamentBase(BaseModel):
     name: str
     location: Optional[str] = None
     start_date: Optional[str] = None
     end_date: Optional[str] = None
-    squad_times: Dict[str, List[str]] = {}
+    squad_times: Dict[str, List[str]] = Field(default_factory=dict)
+
 
 class TournamentCreate(TournamentBase):
     pass  # user_id will be set from the authenticated user, not from request body
 
+
 class TournamentUpdate(TournamentBase):
     pass
+
 
 class Tournament(TournamentBase):
     model_config = ConfigDict(from_attributes=True)
@@ -250,23 +303,36 @@ class TournamentBracketSettingsBase(BaseModel):
 
     tournament_id: int
     bracket_size: Optional[int] = None
-    first_place_amount: Optional[float] = Field(default=None, validation_alias=AliasChoices("first_place_amount", "first_place"))
-    second_place_amount: Optional[float] = Field(default=None, validation_alias=AliasChoices("second_place_amount", "second_place"))
-    house_fee_amount: Optional[float] = Field(default=None, validation_alias=AliasChoices("house_fee_amount", "house_amount"))
-    default_entry_fee: Optional[float] = Field(default=None, validation_alias=AliasChoices("default_entry_fee", "cost_per_bracket"))
+    first_place_amount: Optional[float] = Field(
+        default=None, validation_alias=AliasChoices("first_place_amount", "first_place")
+    )
+    second_place_amount: Optional[float] = Field(
+        default=None,
+        validation_alias=AliasChoices("second_place_amount", "second_place"),
+    )
+    house_fee_amount: Optional[float] = Field(
+        default=None, validation_alias=AliasChoices("house_fee_amount", "house_amount")
+    )
+    default_entry_fee: Optional[float] = Field(
+        default=None,
+        validation_alias=AliasChoices("default_entry_fee", "cost_per_bracket"),
+    )
     bracket_programs: List[BracketProgramDefinition] | None = None
     handicap_percentage: Optional[float] = 80.0
     handicap_base: Optional[float] = 200.0
-    allow_byes: Optional[bool] = Field(default=False, validation_alias=AliasChoices("allow_byes", "allow_bye"))
+    allow_byes: Optional[bool] = Field(
+        default=False, validation_alias=AliasChoices("allow_byes", "allow_bye")
+    )
 
-    @field_validator('bracket_size')
+    @field_validator("bracket_size")
     @classmethod
     def validate_bracket_size(cls, value: Optional[int]) -> Optional[int]:
         if value is None:
             return value
         if value != 8:
-            raise ValueError('Bracket size must be 8 for three-game sets')
+            raise ValueError("Bracket size must be 8 for three-game sets")
         return value
+
 
 class TournamentBracketSettingsCreate(TournamentBracketSettingsBase):
     pass
@@ -276,23 +342,36 @@ class TournamentBracketSettingsUpdate(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     bracket_size: Optional[int] = None
-    first_place_amount: Optional[float] = Field(default=None, validation_alias=AliasChoices("first_place_amount", "first_place"))
-    second_place_amount: Optional[float] = Field(default=None, validation_alias=AliasChoices("second_place_amount", "second_place"))
-    house_fee_amount: Optional[float] = Field(default=None, validation_alias=AliasChoices("house_fee_amount", "house_amount"))
-    default_entry_fee: Optional[float] = Field(default=None, validation_alias=AliasChoices("default_entry_fee", "cost_per_bracket"))
+    first_place_amount: Optional[float] = Field(
+        default=None, validation_alias=AliasChoices("first_place_amount", "first_place")
+    )
+    second_place_amount: Optional[float] = Field(
+        default=None,
+        validation_alias=AliasChoices("second_place_amount", "second_place"),
+    )
+    house_fee_amount: Optional[float] = Field(
+        default=None, validation_alias=AliasChoices("house_fee_amount", "house_amount")
+    )
+    default_entry_fee: Optional[float] = Field(
+        default=None,
+        validation_alias=AliasChoices("default_entry_fee", "cost_per_bracket"),
+    )
     bracket_programs: List[BracketProgramDefinition] | None = None
     handicap_percentage: Optional[float] = None
     handicap_base: Optional[float] = None
-    allow_byes: Optional[bool] = Field(default=None, validation_alias=AliasChoices("allow_byes", "allow_bye"))
+    allow_byes: Optional[bool] = Field(
+        default=None, validation_alias=AliasChoices("allow_byes", "allow_bye")
+    )
 
-    @field_validator('bracket_size')
+    @field_validator("bracket_size")
     @classmethod
     def validate_bracket_size(cls, value: Optional[int]) -> Optional[int]:
         if value is None:
             return value
         if value != 8:
-            raise ValueError('Bracket size must be 8 for three-game sets')
+            raise ValueError("Bracket size must be 8 for three-game sets")
         return value
+
 
 class TournamentBracketSettings(TournamentBracketSettingsBase):
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)

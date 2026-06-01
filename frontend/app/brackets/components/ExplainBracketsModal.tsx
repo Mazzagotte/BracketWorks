@@ -34,7 +34,6 @@ export default function ExplainBracketsModal({ isOpen, onClose }: ExplainBracket
       enableScroll()
       document.removeEventListener('keydown', handleEscape)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, onClose])
 
   if (!isOpen) return null

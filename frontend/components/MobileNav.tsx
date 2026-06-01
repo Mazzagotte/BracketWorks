@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../app/lib/auth-context';
@@ -21,9 +21,12 @@ export function MobileNav({ isOpen, onClose, firstName, currentPage }: MobileNav
   const { logoutUser, currentUser } = useAuth();
   const [touchStartY, setTouchStartY] = useState<number | null>(null);
 
-  const visibleLinks = currentUser?.isAdmin
-    ? [...navLinks, { href: '/admin', label: 'Admin' }]
-    : navLinks;
+  const visibleLinks = useMemo(
+    () => (currentUser?.isAdmin
+      ? [...navLinks, { href: '/admin', label: 'Admin' }]
+      : navLinks),
+    [currentUser?.isAdmin]
+  );
 
   const handleLogout = () => {
     logger.userAction('User logged out via mobile nav');
@@ -43,12 +46,16 @@ export function MobileNav({ isOpen, onClose, firstName, currentPage }: MobileNav
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchStartY(e.touches[0].clientY);
+    const firstTouch = e.touches[0];
+    if (!firstTouch) return;
+    setTouchStartY(firstTouch.clientY);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (touchStartY === null) return;
-    const diff = touchStartY - e.touches[0].clientY;
+    const firstTouch = e.touches[0];
+    if (!firstTouch) return;
+    const diff = touchStartY - firstTouch.clientY;
     if (diff > 50) {
       onClose();
       setTouchStartY(null);

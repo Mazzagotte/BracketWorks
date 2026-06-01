@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { QRCodeCanvas } from "qrcode.react";
 import { useToast } from "./Toast";
 import CloseControl from "../../components/CloseControl";
@@ -78,7 +78,7 @@ export default function ShareQRModal({ open, onClose, tournamentId, tournamentNa
     if (e.target === dialogRef.current) onClose();
   };
 
-  const buildPosterCanvas = async (qrCanvas: HTMLCanvasElement | null) => {
+  const buildPosterCanvas = useCallback(async (qrCanvas: HTMLCanvasElement | null) => {
     const loadImage = (src: string) => new Promise<HTMLImageElement>((resolve, reject) => {
       const img = new Image();
       img.onload = () => resolve(img);
@@ -182,7 +182,7 @@ export default function ShareQRModal({ open, onClose, tournamentId, tournamentNa
         if (minLines.length <= 2) {
           bestLines = minLines;
         } else {
-          const first = minLines[0];
+          const first = minLines[0] ?? '';
           const secondRaw = minLines.slice(1).join(" ");
           const second = fitLineToWidth(secondRaw, titleMaxW);
           bestLines = [fitLineToWidth(first, titleMaxW), second];
@@ -225,7 +225,7 @@ export default function ShareQRModal({ open, onClose, tournamentId, tournamentNa
     }
 
     return off;
-  };
+  }, [addToast, templateSrc, tournamentName]);
 
   useEffect(() => {
     if (!open) return;
@@ -258,8 +258,7 @@ export default function ShareQRModal({ open, onClose, tournamentId, tournamentNa
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, tournamentName, publicUrl, templateSrc]);
+  }, [buildPosterCanvas, open]);
 
   const handleExportPng = async () => {
     const qrCanvas = canvasRef.current?.querySelector("canvas") as HTMLCanvasElement | null;
@@ -293,7 +292,7 @@ export default function ShareQRModal({ open, onClose, tournamentId, tournamentNa
         {/* QR Code */}
         <div className={styles.qrSection}>
           <div className={styles.posterPreview}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
+            {/* eslint-disable-next-line @next/next/no-img-element -- preview uses generated data URL/fallback template outside next/image optimization */}
             <img
               src={previewPosterSrc || templateSrc}
               alt="QR poster preview"

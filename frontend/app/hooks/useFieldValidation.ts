@@ -44,7 +44,7 @@ export function useFieldValidation<Fields extends FieldMap>(
     (values: Fields) => {
       const nextErrors = Object.keys(values).reduce((accumulator, key) => {
         const typedKey = key as keyof Fields;
-        accumulator[typedKey] = validateField(typedKey, values[typedKey], values);
+        accumulator[typedKey] = validateField(typedKey, values[typedKey] ?? '', values);
         return accumulator;
       }, {} as Record<keyof Fields, string>);
 
