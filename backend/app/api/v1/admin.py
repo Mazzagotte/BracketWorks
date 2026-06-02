@@ -23,6 +23,10 @@ class AdminUpdateUserPayload(BaseModel):
     organization: Optional[str] = None
 
 
+class AdminSetUserAdminPayload(BaseModel):
+    is_admin: bool
+
+
 class AdminResetPasswordPayload(BaseModel):
     new_password: str
 
@@ -1155,6 +1159,56 @@ def admin_update_user(
             "last_name": user.last_name,
             "email": user.email,
             "organization": user.organization,
+        },
+    }
+
+
+@router.post("/users/{user_id}/set-admin")
+def admin_set_user_admin(
+    user_id: int,
+    payload: AdminSetUserAdminPayload,
+    db: Session = Depends(get_db),
+    admin: models.User = Depends(require_admin_user),
+):
+    user = db.get(models.User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if user.id == admin.id:
+        raise HTTPException(status_code=400, detail="You cannot change your own admin privileges")
+
+    if user.is_admin == payload.is_admin:
+        return {
+            "ok": True,
+            "user": {
+                "id": user.id,
+                "is_admin": user.is_admin,
+            },
+        }
+
+    before_is_admin = bool(user.is_admin)
+    user.is_admin = payload.is_admin
+
+    _write_admin_audit(
+        db,
+        admin_user_id=admin.id,
+        action="user.set_admin",
+        target_type="user",
+        target_id=user_id,
+        details={
+            "username": user.username,
+            "email": user.email,
+            "before": {"is_admin": before_is_admin},
+            "after": {"is_admin": user.is_admin},
+        },
+    )
+
+    db.commit()
+    db.refresh(user)
+    return {
+        "ok": True,
+        "user": {
+            "id": user.id,
+            "is_admin": user.is_admin,
         },
     }
 
