@@ -5,8 +5,8 @@ import styles from './page.module.css';
 import { PublicViewDemo } from './PublicViewDemo';
 
 export const metadata: Metadata = {
-  title: 'Bowling Tournament Bracket Software | BracketWorks',
-  description: 'Run bowling brackets, side pots, live scoring, and payouts from one clean dashboard. Built for tournament directors. Start free with BracketWorks.',
+  title: 'Bowling Bracket Software for Tournaments | BracketWorks',
+  description: 'Run bowling brackets, side pots, live scoring, and payout review in one app. Built for tournament directors. Start free—no credit card required.',
   alternates: {
     canonical: 'https://bracketworks.app/',
   },
@@ -16,8 +16,8 @@ export const metadata: Metadata = {
   },
   keywords: 'bowling tournament software, bowling brackets, live score tracking, bowling payouts, tournament director tools',
   openGraph: {
-    title: 'Bowling Tournament Bracket Software | BracketWorks',
-    description: 'Run bowling brackets, side pots, live scoring, and payouts from one clean dashboard. Built for tournament directors.',
+    title: 'Bowling Bracket Software for Tournaments | BracketWorks',
+    description: 'Run bowling brackets, side pots, live scoring, and payout review in one app. Built for tournament directors.',
     type: 'website',
     url: 'https://bracketworks.app/',
     siteName: 'BracketWorks',
@@ -32,8 +32,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Bowling Tournament Bracket Software | BracketWorks',
-    description: 'Run bowling brackets, side pots, live scoring, and payouts from one clean dashboard. Built for tournament directors.',
+    title: 'Bowling Bracket Software for Tournaments | BracketWorks',
+    description: 'Run bowling brackets, side pots, live scoring, and payout review in one app. Built for tournament directors.',
   },
 };
 
@@ -45,6 +45,22 @@ const homeSoftwareApplicationJsonLd = {
   operatingSystem: 'Web',
   url: 'https://bracketworks.app/',
   description: 'Bowling tournament software for managing brackets, side pots, live scoring, and payouts.',
+};
+
+const websiteJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'BracketWorks',
+  alternateName: 'BracketWorks Bowling',
+  url: 'https://bracketworks.app/',
+};
+
+const organizationJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'BracketWorks',
+  url: 'https://bracketworks.app/',
+  logo: 'https://bracketworks.app/icons/icon-512.png',
 };
 
 export default function HomePage() {
@@ -99,6 +115,18 @@ export default function HomePage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
+          __html: JSON.stringify(websiteJsonLd),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(organizationJsonLd),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
           __html: JSON.stringify(homeSoftwareApplicationJsonLd),
         }}
       />
@@ -142,12 +170,12 @@ export default function HomePage() {
         <div className={styles.heroGlow} aria-hidden="true" />
         <div className={styles.heroGrid}>
           <div className={styles.heroContent}>
-            <p className={styles.kicker}>Bowling Tournament Operations</p>
+            <p className={styles.kicker}>Bowling Tournament Bracket Software</p>
             <h1 className={styles.heroTitle}>
               Smarter Brackets. Cleaner Payouts. Better Tournaments.
             </h1>
             <p className={styles.heroSubtitle}>
-              BracketWorks brings brackets, side pots, scoring, and payout review into one clean app for bowling tournament directors.
+              BracketWorks is bowling tournament bracket software that runs brackets, side pots, live scoring, and payout review in one clean app built for tournament directors.
             </p>
             <div className={styles.heroCTA}>
               <Link href="/signup" className={`${styles.navBtn} ${styles.navBtnPrimary}`}>
