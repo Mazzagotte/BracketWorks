@@ -227,6 +227,7 @@ export default function AdminPage() {
   const [deleteUserPreview, setDeleteUserPreview] = useState<DeletePreview | null>(null);
   const [deleteUserSaving, setDeleteUserSaving] = useState(false);
   const [deleteUserError, setDeleteUserError] = useState<string | null>(null);
+  const [adminRoleSavingUserId, setAdminRoleSavingUserId] = useState<number | null>(null);
 
   const [editTournament, setEditTournament] = useState<TournamentRow | null>(null);
   const [editTournamentName, setEditTournamentName] = useState("");
@@ -397,6 +398,26 @@ export default function AdminPage() {
     if (audit) refreshTasks.push(loadAuditLogs(false));
     await Promise.allSettled(refreshTasks);
   }, [loadOverview, loadUsers, loadTournaments, loadTables, loadAuditLogs]);
+
+  const handleToggleAdminRole = useCallback(async (user: UserRow) => {
+    const nextIsAdmin = !user.is_admin;
+    const promptText = nextIsAdmin
+      ? `Grant admin privileges to ${user.username}?`
+      : `Revoke admin privileges from ${user.username}?`;
+
+    if (!window.confirm(promptText)) return;
+
+    setAdminRoleSavingUserId(user.id);
+    setError(null);
+    try {
+      await apiClient.post(`/api/v1/admin/users/${user.id}/set-admin`, { is_admin: nextIsAdmin });
+      await refreshAfterMutation({ overview: true, users: true, audit: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update admin privileges");
+    } finally {
+      setAdminRoleSavingUserId(null);
+    }
+  }, [refreshAfterMutation]);
 
   const headerActions = useMemo(() => (
     <>
@@ -722,6 +743,22 @@ export default function AdminPage() {
                           >
                             Reset PW
                           </button>
+                          {user.id !== Number(currentUser?.id) && (
+                            <button
+                              type="button"
+                              className={`${styles.actionBtn} ${user.is_admin ? styles.actionBtnDanger : ""}`}
+                              disabled={adminRoleSavingUserId === user.id}
+                              onClick={() => {
+                                void handleToggleAdminRole(user);
+                              }}
+                            >
+                              {adminRoleSavingUserId === user.id
+                                ? "Saving..."
+                                : user.is_admin
+                                  ? "Revoke Admin"
+                                  : "Make Admin"}
+                            </button>
+                          )}
                           {user.id !== Number(currentUser?.id) && (
                             <button
                               type="button"
