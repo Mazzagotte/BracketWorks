@@ -534,7 +534,11 @@ export default function PlayersPage() {
 
     cancelPendingPatches()
     try {
-      await apiClient.bulkPatch('/api/v1/bowlers/bulk-update', updatesWithPaid)
+      const result = await apiClient.bulkPatch<{ updated?: number }>('/api/v1/bowlers/bulk-update', updatesWithPaid)
+      const updatedCount = typeof result?.updated === 'number' ? result.updated : updatesWithPaid.length
+      if (updatedCount < updatesWithPaid.length) {
+        throw new Error(`Only persisted ${updatedCount} of ${updatesWithPaid.length} randomized updates`)
+      }
     } catch (err) {
       logger.error('Bulk randomize failed', { error: err })
     }

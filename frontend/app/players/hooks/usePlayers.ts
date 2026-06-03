@@ -326,14 +326,28 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
       if (payload.length === 0) return;
 
       try {
-        await apiClient.bulkPatch('/api/v1/bowlers/bulk-update', payload);
+        const writeResults = await Promise.allSettled(payload.map(row => {
+          const { id: playerId, ...rowUpdates } = row;
+          return apiClient.patch(`/api/v1/bowlers/${playerId}`, rowUpdates);
+        }));
+
+        const failedWrites = writeResults.filter(
+          (result): result is PromiseRejectedResult => result.status === 'rejected'
+        );
+
+        if (failedWrites.length > 0) {
+          const firstReason = failedWrites[0]?.reason;
+          const firstMessage = firstReason instanceof Error ? firstReason.message : String(firstReason ?? 'Unknown error');
+          throw new Error(`Failed to persist ${failedWrites.length} of ${payload.length} player updates: ${firstMessage}`);
+        }
+
         payload.forEach(row => {
-          const key = `${row.id}-${Object.keys(snapshot[row.id] ?? {})[0] ?? 'field'}`;
+          const key = `${row.id}-${Object.keys(snapshot[String(row.id)] ?? {})[0] ?? 'field'}`;
           setSavingStatus(prev => ({ ...prev, [key]: 'success' }));
           setTimeout(() => setSavingStatus(prev => ({ ...prev, [key]: 'idle' })), 2000);
         });
       } catch (err: unknown) {
-        logger.error('Failed to bulk update players', { error: err });
+        logger.error('Failed to persist player updates', { error: err, updateCount: payload.length });
         payload.forEach(row => {
           setSavingStatus(prev => ({ ...prev, [`${row.id}-${firstField}`]: 'error' }));
         });
