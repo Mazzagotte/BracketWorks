@@ -16,13 +16,17 @@ interface AuthSessionData {
   sessionId?: string;
 }
 
+interface LogoutOptions {
+  fastRedirect?: boolean;
+}
+
 interface AuthContextType {
   authToken: string | null;
   currentUser: User | null;
   isUserAuthenticated: boolean;
   isAuthInitialized: boolean;
   authenticateUser: (authToken: string, userId: string, userData?: Partial<User>, authSession?: AuthSessionData) => void;
-  logoutUser: () => void;
+  logoutUser: (options?: LogoutOptions) => void;
   updateUserData: (userData: Partial<User>) => void;
   clearUserAuth: () => void;
 }
@@ -179,8 +183,32 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  const logoutUser = () => {
+  const clearPendingSaves = () => {
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('pending_save_')) {
+        localStorage.removeItem(key);
+      }
+    });
+  };
+
+  const logoutUser = (options?: LogoutOptions) => {
+    const fastRedirect = Boolean(options?.fastRedirect);
     const existingToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+
+    // Clear critical auth state first so redirects are immediate and deterministic.
+    setAuthToken(null);
+    setCurrentUser(null);
+    localStorage.removeItem('token');
+    localStorage.removeItem('session_id');
+    localStorage.removeItem('user_id');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('is_admin');
+    localStorage.removeItem('first_name');
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('auth-state-changed'));
+      window.dispatchEvent(new Event('storage'));
+    }
 
     if (existingToken) {
       const csrfToken = getCsrfToken();
@@ -195,6 +223,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       fetch(API('/api/v1/users/logout'), {
         method: 'POST',
         credentials: 'include',
+        keepalive: fastRedirect,
         headers: logoutHeaders,
         body: JSON.stringify({ all_sessions: false }),
       }).catch((error) => {
@@ -202,20 +231,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
       });
     }
 
-    setAuthToken(null);
-    setCurrentUser(null);
-    // Clear any other auth-related localStorage items
-    localStorage.removeItem('token');
-    localStorage.removeItem('session_id');
-    localStorage.removeItem('user_id');
-    localStorage.removeItem('userId');
-    localStorage.removeItem('is_admin');
-    // Clear any pending saves that might contain sensitive data
-    Object.keys(localStorage).forEach(key => {
-      if (key.startsWith('pending_save_')) {
-        localStorage.removeItem(key);
-      }
-    });
+    if (fastRedirect) {
+      window.setTimeout(() => {
+        try {
+          clearPendingSaves();
+        } catch (error) {
+          logger.warn('Deferred pending save cleanup failed', { error: String(error) });
+        }
+      }, 0);
+      return;
+    }
+
+    clearPendingSaves();
   };
 
   const updateUserData = (userData: Partial<User>) => {

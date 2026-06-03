@@ -1,7 +1,7 @@
 "use client";
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../app/lib/auth-context';
 import { buildApiUrl } from '../app/lib/api';
@@ -20,7 +20,6 @@ interface SidebarProps {
 
 export default function Sidebar({ firstName, isMobile = false, isOpen = false, onClose }: SidebarProps) {
   const pathname = usePathname();
-  const router = useRouter();
   const { logoutUser, currentUser } = useAuth();
   const [tournamentId, setTournamentId] = useState<string | null>(null);
 
@@ -42,18 +41,6 @@ export default function Sidebar({ firstName, isMobile = false, isOpen = false, o
       window.removeEventListener('storage', read);
     };
   }, []);
-
-  useEffect(() => {
-    const routesToPrefetch = new Set<string>([
-      ...visibleLinks.map(link => link.href),
-      '/settings',
-      '/dashboard',
-    ]);
-
-    routesToPrefetch.forEach(route => {
-      router.prefetch(route);
-    });
-  }, [router, visibleLinks]);
 
   const slugifyTournamentName = (name: string) => {
     return name
@@ -91,8 +78,8 @@ export default function Sidebar({ firstName, isMobile = false, isOpen = false, o
 
   const handleLogout = () => {
     logger.userAction('User logged out');
-    logoutUser();
-    window.location.assign('/login');
+    logoutUser({ fastRedirect: true });
+    window.location.replace('/login');
   };
 
   const handleProtectedNavigation = (event: React.MouseEvent<HTMLAnchorElement>, targetPath: string) => {
