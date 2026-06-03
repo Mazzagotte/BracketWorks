@@ -92,7 +92,7 @@ export default function Sidebar({ firstName, isMobile = false, isOpen = false, o
   const handleLogout = () => {
     logger.userAction('User logged out');
     logoutUser();
-    router.push('/login');
+    window.location.assign('/login');
   };
 
   const handleProtectedNavigation = (event: React.MouseEvent<HTMLAnchorElement>, targetPath: string) => {

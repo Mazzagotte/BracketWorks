@@ -31,7 +31,7 @@ export function MobileNav({ isOpen, onClose, firstName, currentPage }: MobileNav
   const handleLogout = () => {
     logger.userAction('User logged out via mobile nav');
     logoutUser();
-    router.push('/login');
+    window.location.assign('/login');
   };
 
   const handleProtectedNavigation = (event: React.MouseEvent<HTMLAnchorElement>, targetPath: string) => {
