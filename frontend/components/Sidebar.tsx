@@ -96,10 +96,19 @@ export default function Sidebar({ firstName, isMobile = false, isOpen = false, o
   };
 
   const handleProtectedNavigation = (event: React.MouseEvent<HTMLAnchorElement>, targetPath: string) => {
-    if (shouldRequireTimeSlotBeforeLeavingDashboard(pathname || '', targetPath)) {
-      event.preventDefault();
-      showSelectTimeSlotReminder();
-      return;
+    const currentPath = pathname || '';
+
+    // Only guard dashboard exits; fail open for legacy-state edge cases.
+    if (currentPath === '/dashboard') {
+      try {
+        if (shouldRequireTimeSlotBeforeLeavingDashboard(currentPath, targetPath)) {
+          event.preventDefault();
+          showSelectTimeSlotReminder();
+          return;
+        }
+      } catch (error) {
+        logger.warn('Dashboard navigation guard failed open', { currentPath, targetPath, error });
+      }
     }
 
     if (isMobile) {

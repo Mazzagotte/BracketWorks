@@ -36,10 +36,18 @@ export function MobileNav({ isOpen, onClose, firstName, currentPage }: MobileNav
 
   const handleProtectedNavigation = (event: React.MouseEvent<HTMLAnchorElement>, targetPath: string) => {
     const currentPath = `/${currentPage || ''}`.replace('//', '/');
-    if (shouldRequireTimeSlotBeforeLeavingDashboard(currentPath, targetPath)) {
-      event.preventDefault();
-      showSelectTimeSlotReminder();
-      return;
+
+    // Only guard dashboard exits; fail open for legacy-state edge cases.
+    if (currentPath === '/dashboard') {
+      try {
+        if (shouldRequireTimeSlotBeforeLeavingDashboard(currentPath, targetPath)) {
+          event.preventDefault();
+          showSelectTimeSlotReminder();
+          return;
+        }
+      } catch (error) {
+        logger.warn('Dashboard navigation guard failed open', { currentPath, targetPath, error });
+      }
     }
 
     onClose();
