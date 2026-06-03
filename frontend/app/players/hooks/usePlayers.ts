@@ -342,7 +342,7 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
         }
 
         payload.forEach(row => {
-          const key = `${row.id}-${Object.keys(snapshot[String(row.id)] ?? {})[0] ?? 'field'}`;
+          const key = `${row.id}-${Object.keys(snapshot[row.id] ?? {})[0] ?? 'field'}`;
           setSavingStatus(prev => ({ ...prev, [key]: 'success' }));
           setTimeout(() => setSavingStatus(prev => ({ ...prev, [key]: 'idle' })), 2000);
         });
