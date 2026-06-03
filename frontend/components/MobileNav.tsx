@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '../app/lib/auth-context';
 import { logger } from '../app/lib/logger';
 import { shouldRequireTimeSlotBeforeLeavingDashboard, showSelectTimeSlotReminder } from '../app/lib/selection-session';
@@ -17,7 +16,6 @@ interface MobileNavProps {
 }
 
 export function MobileNav({ isOpen, onClose, firstName, currentPage }: MobileNavProps) {
-  const router = useRouter();
   const { logoutUser, currentUser } = useAuth();
   const [touchStartY, setTouchStartY] = useState<number | null>(null);
 
@@ -30,8 +28,8 @@ export function MobileNav({ isOpen, onClose, firstName, currentPage }: MobileNav
 
   const handleLogout = () => {
     logger.userAction('User logged out via mobile nav');
-    logoutUser();
-    window.location.assign('/login');
+    logoutUser({ fastRedirect: true });
+    window.location.replace('/login');
   };
 
   const handleProtectedNavigation = (event: React.MouseEvent<HTMLAnchorElement>, targetPath: string) => {
@@ -69,20 +67,6 @@ export function MobileNav({ isOpen, onClose, firstName, currentPage }: MobileNav
       setTouchStartY(null);
     }
   };
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const routesToPrefetch = new Set<string>([
-      ...visibleLinks.map(link => link.href),
-      '/settings',
-      '/dashboard',
-    ]);
-
-    routesToPrefetch.forEach(route => {
-      router.prefetch(route);
-    });
-  }, [isOpen, router, visibleLinks]);
 
   if (!isOpen) return null;
 
