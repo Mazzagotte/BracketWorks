@@ -98,8 +98,18 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
       });
       
       if (!response.ok) {
+        let responseBody = ''
+        try {
+          responseBody = await response.text()
+        } catch {
+          responseBody = ''
+        }
         // If API fails, show empty players list
-        logger.warn('API not available, showing empty players list', { status: response.status });
+        logger.warn('API not available, showing empty players list', {
+          url: API(bowlersUrl),
+          status: response.status,
+          body: responseBody.slice(0, 500),
+        });
         setPlayers([]);
         return;
       }

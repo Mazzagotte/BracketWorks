@@ -8,7 +8,7 @@ import { HeaderProvider } from './lib/header-context';
 
 import AuthAwareLayout from '../components/AuthAwareLayout';
 
-const backendOrigin = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+const backendOrigin = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8001';
 const structuredData = JSON.stringify({
   '@context': 'https://schema.org',
   '@graph': [

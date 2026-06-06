@@ -246,7 +246,7 @@ export default function LoginPage() {
         rawMessage.toLowerCase().includes('network');
 
       const errorMsg = isLikelyFetchError
-        ? 'Unable to reach backend API. Verify backend is running on http://localhost:8000 and CORS allows http://localhost:3000.'
+        ? 'Unable to reach the API proxy. Verify Next.js is running and the backend is available.'
         : `Login failed: ${rawMessage || 'Unexpected error'}`;
       setError(errorMsg);
       addToast({ type: 'error', message: errorMsg, duration: 6000 });

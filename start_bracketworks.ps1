@@ -5,7 +5,7 @@ $BackendPath  = Join-Path $ProjectRoot "backend"
 $FrontendPath = Join-Path $ProjectRoot "frontend"
 $BackendPython = Join-Path $BackendPath ".venv\Scripts\python.exe"
 $Port         = 3000
-$BackendUrl   = "http://localhost:8000"
+$BackendUrl   = "http://localhost:8001"
 $EnvFile      = Join-Path $ProjectRoot ".env"
 
 if (Test-Path $EnvFile) {
@@ -22,11 +22,11 @@ if (Test-Path $EnvFile) {
     }
 }
 
-$dbUser = if ($env:POSTGRES_USER) { $env:POSTGRES_USER } else { "bracketworks" }
-$dbPassword = if ($env:POSTGRES_PASSWORD) { $env:POSTGRES_PASSWORD } else { "bracketworks" }
+$dbUser = if ($env:POSTGRES_USER) { $env:POSTGRES_USER } else { "postgres" }
+$dbPassword = if ($env:POSTGRES_PASSWORD) { $env:POSTGRES_PASSWORD } else { "mazzagotte" }
 $dbName = if ($env:POSTGRES_DB) { $env:POSTGRES_DB } else { "bracketworks" }
 $dbHost = if ($env:POSTGRES_HOST) { $env:POSTGRES_HOST } else { "localhost" }
-$dbPort = if ($env:POSTGRES_PORT) { $env:POSTGRES_PORT } else { "5432" }
+$dbPort = if ($env:POSTGRES_PORT) { $env:POSTGRES_PORT } else { "5433" }
 $DatabaseUrl = if ($env:DATABASE_URL) {
     $env:DATABASE_URL
 } else {
@@ -115,7 +115,21 @@ if ($BackendMode -eq "local") {
         exit 1
     }
 
-    # Avoid multiple local uvicorn instances fighting for port 8000.
+    # Avoid multiple local uvicorn instances fighting for port 8001.
+    $existingListeners = Get-NetTCPConnection -LocalPort 8001 -State Listen -ErrorAction SilentlyContinue
+    if ($existingListeners) {
+        Write-Host "Stopping anything listening on port 8001..." -ForegroundColor Yellow
+        $existingListeners |
+            Select-Object -ExpandProperty OwningProcess -Unique |
+            ForEach-Object {
+                try {
+                    Stop-Process -Id $_ -Force -ErrorAction Stop
+                } catch {
+                    Write-Host "Could not stop process $($_): $($_.Exception.Message)" -ForegroundColor DarkYellow
+                }
+            }
+    }
+
     $existingUvicorn = Get-CimInstance Win32_Process |
         Where-Object { $_.CommandLine -match "uvicorn\s+app\.main:app" }
     if ($existingUvicorn) {
@@ -151,11 +165,11 @@ if ($BackendMode -eq "docker") {
                   "`$env:ENVIRONMENT='development'; " +
                   "`$env:DEBUG='true'; " +
                   "`$env:SECRET_KEY='dev-secret-key-12345-not-for-production'; " +
-                  "`$env:CORS_ORIGINS='http://localhost:3000,http://localhost:8000,http://127.0.0.1:3000'; " +
+                  "`$env:CORS_ORIGINS='http://localhost:3000,http://localhost:8001,http://127.0.0.1:3000'; " +
                   "cd '$BackendPath'; " +
                   "Write-Host 'Running database migrations...' -ForegroundColor Yellow; " +
                   "& '$PythonCmd' -m alembic upgrade heads; " +
-                  "& '$PythonCmd' -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000; " +
+                  "& '$PythonCmd' -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8001; " +
                   "Read-Host 'Backend stopped. Press Enter to close'"
 }
 Start-Process powershell -ArgumentList "-NoExit", "-Command", $backendCmd

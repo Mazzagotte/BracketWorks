@@ -17,7 +17,7 @@ origins = _split_csv(settings.CORS_ORIGINS)
 allow_origin_regex = None
 if settings.is_development:
     origins = list(dict.fromkeys(origins + _split_csv(settings.DEV_CORS_ORIGINS)))
-    allow_origin_regex = r"https?://(localhost|127\\.0\\.0\\.1)(:\\d+)?"
+    allow_origin_regex = r"https?://(localhost|127\\.0\\.0\\.1|\\d{1,3}(?:\\.\\d{1,3}){3})(:\\d+)?"
 
 app.add_middleware(
     CORSMiddleware,

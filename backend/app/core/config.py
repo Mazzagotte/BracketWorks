@@ -25,7 +25,8 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "BracketWorks API"
 
     # Database
-    DATABASE_URL: str = "postgresql://bracketworks:bracketworks@localhost:5432/bracketworks"
+    # Local fallback matches the repository's default development database.
+    DATABASE_URL: str = "postgresql://postgres:mazzagotte@localhost:5433/bracketworks"
     DATABASE_POOL_SIZE: int = 20
     DATABASE_MAX_OVERFLOW: int = 30
 
@@ -40,7 +41,8 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_COOKIE_SECURE: bool = True
     CSRF_HEADER_NAME: str = "x-csrf-token"
     CSRF_COOKIE_NAME: str = "csrf_token"
-    CSRF_COOKIE_PATH: str = "/api/v1/users"
+    # Keep the CSRF token readable from frontend routes so refresh/logout can include it.
+    CSRF_COOKIE_PATH: str = "/"
     CSRF_COOKIE_DOMAIN: str = ""
     CSRF_COOKIE_SAMESITE: str = "lax"
     CSRF_COOKIE_SECURE: bool = True
