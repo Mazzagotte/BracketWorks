@@ -171,6 +171,11 @@ export default function PlayersPage() {
     return getSelectedTournamentId()
   }, []);
 
+  const getStorageItem = useCallback((key: string) => {
+    if (typeof window === 'undefined') return null
+    return localStorage.getItem(key)
+  }, [])
+
   // Load tournaments on mount
   useEffect(() => {
     fetchTournaments()
@@ -336,7 +341,7 @@ export default function PlayersPage() {
     authToken,
     entryFee,
     bracketPrograms: enabledBracketPrograms,
-    getItem: (key: string) => localStorage.getItem(key),
+    getItem: getStorageItem,
     searchUsbc: debouncedSearchUsbc,
     searchFirstName: debouncedSearchFirstName,
     searchLastName: debouncedSearchLastName,

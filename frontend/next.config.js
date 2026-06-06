@@ -1,6 +1,8 @@
 
 
 /** @type {import('next').NextConfig} */
+const backendUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8001';
+
 const nextConfig = {
   output: 'standalone',
 
@@ -11,6 +13,27 @@ const nextConfig = {
 
   experimental: {
     optimizePackageImports: ['@heroicons/react', 'date-fns', 'lodash'],
+  },
+
+  async rewrites() {
+    return [
+      {
+        source: '/api/v1/tournaments',
+        destination: `${backendUrl}/api/v1/tournaments/`,
+      },
+      {
+        source: '/api/v1/squads',
+        destination: `${backendUrl}/api/v1/squads/`,
+      },
+      {
+        source: '/api/v1/scores',
+        destination: `${backendUrl}/api/v1/scores/`,
+      },
+      {
+        source: '/api/:path*',
+        destination: `${backendUrl}/api/:path*`,
+      },
+    ];
   },
 
 };

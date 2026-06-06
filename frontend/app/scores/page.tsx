@@ -752,7 +752,31 @@ export default function ScoresPage() {
       ])
 
       if (!bowlersResponse.ok) {
-        logger.error(`Bowlers API returned ${bowlersResponse.status} for url: ${bowlersUrl}`)
+        let bowlersBody = ''
+        try {
+          bowlersBody = await bowlersResponse.text()
+        } catch {
+          bowlersBody = ''
+        }
+        logger.error('Bowlers API request failed', {
+          url: API(bowlersUrl),
+          status: bowlersResponse.status,
+          body: bowlersBody.slice(0, 500),
+        })
+      }
+
+      if (!scoresResponse.ok) {
+        let scoresBody = ''
+        try {
+          scoresBody = await scoresResponse.text()
+        } catch {
+          scoresBody = ''
+        }
+        logger.error('Scores API request failed', {
+          url: API(scoresUrl),
+          status: scoresResponse.status,
+          body: scoresBody.slice(0, 500),
+        })
       }
       
       let data = bowlersResponse.ok ? await bowlersResponse.json() : []
@@ -1095,6 +1119,18 @@ export default function ScoresPage() {
             })
           }
         } else {
+          let errorBody = ''
+          try {
+            errorBody = await response.text()
+          } catch {
+            errorBody = ''
+          }
+          logger.error('Score save request failed', {
+            url: API('/api/v1/scores/'),
+            playerId,
+            status: response.status,
+            body: errorBody.slice(0, 500),
+          })
           throw new Error(`Save failed: ${response.status}`)
         }
 
@@ -1153,7 +1189,21 @@ export default function ScoresPage() {
         })
       })
 
-      if (!response.ok) throw new Error(`Retry failed: ${response.status}`)
+      if (!response.ok) {
+        let errorBody = ''
+        try {
+          errorBody = await response.text()
+        } catch {
+          errorBody = ''
+        }
+        logger.error('Retry score save request failed', {
+          url: API('/api/v1/scores/'),
+          playerId: player.id,
+          status: response.status,
+          body: errorBody.slice(0, 500),
+        })
+        throw new Error(`Retry failed: ${response.status}`)
+      }
       markRowSaved(player.id)
     } catch (error) {
       setRowSaveState(prev => ({ ...prev, [player.id]: 'failed' }))

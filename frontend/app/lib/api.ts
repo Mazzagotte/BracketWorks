@@ -4,17 +4,19 @@ import { ApiError, handleApiError, shouldRetry } from './errors';
 // API Configuration and enhanced fetch utilities
 
 /**
- * Returns the backend base URL, upgrading http:// to https:// when the
- * page itself is served over HTTPS to prevent mixed-content blocking.
+ * Returns the backend base URL for server-side code.
+ *
+ * Client-side requests should go through the Next.js /api proxy so the
+ * browser stays same-origin and never depends on CORS for auth flows.
  */
 function getBackendBaseUrl(): string {
-  const configured = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
-  if (
-    typeof window !== 'undefined' &&
-    window.location.protocol === 'https:' &&
-    configured.startsWith('http://')
-  ) {
-    return configured.replace('http://', 'https://');
+  if (typeof window !== 'undefined') {
+    return '';
+  }
+
+  const configured = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8001';
+  if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/i.test(configured)) {
+    return configured;
   }
   return configured;
 }
@@ -324,7 +326,9 @@ export class ApiClient {
       // Surface a clearer message for browser-level fetch/CORS failures.
       if (!appError.statusCode && (error instanceof TypeError || appError.message.toLowerCase().includes('fetch'))) {
         throw new ApiError(
-          `Unable to reach the backend at ${this.backendBaseUrl}. Check that the API is running and that CORS allows the frontend origin.`,
+          this.backendBaseUrl
+            ? `Unable to reach the API at ${this.backendBaseUrl}. Check that the backend is running.`
+            : 'Unable to reach the API proxy. Check that Next.js is running and that the backend is available.',
           undefined,
           'NETWORK_ERROR'
         )
