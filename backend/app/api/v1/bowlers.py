@@ -16,6 +16,35 @@ from ...services.payouts import reset_payouts_if_needed
 router = APIRouter()
 
 
+def _user_can_manage_all(user: models.User) -> bool:
+    return bool(getattr(user, "is_admin", False))
+
+
+def _resolve_bowler_owner_id_for_tournament(
+    db: Session,
+    tournament_id: int,
+    current_user: models.User,
+) -> int:
+    if not _user_can_manage_all(current_user):
+        return current_user.id
+
+    tournament = db.query(models.Tournament).filter(models.Tournament.id == tournament_id).first()
+    if not tournament:
+        raise HTTPException(status_code=404, detail="Tournament not found")
+    return tournament.user_id
+
+
+def _get_accessible_bowler(
+    db: Session,
+    bowler_id: int,
+    current_user: models.User,
+) -> models.Bowler | None:
+    query = db.query(models.Bowler).filter(models.Bowler.id == bowler_id)
+    if not _user_can_manage_all(current_user):
+        query = query.filter(models.Bowler.user_id == current_user.id)
+    return query.first()
+
+
 def _normalize_usbc(value: str | None) -> str | None:
     normalized = (value or "").strip()
     return normalized or None
@@ -121,8 +150,9 @@ def list_bowlers(
     if squad_id:
         query = query.filter(models.Bowler.squad_id == squad_id)
 
-    # Filter by current user (users can only see their own players)
-    query = query.filter(models.Bowler.user_id == current_user.id)
+    # Non-admin users can only see their own players; admins can see all.
+    if not _user_can_manage_all(current_user):
+        query = query.filter(models.Bowler.user_id == current_user.id)
 
     # Hide archived profiles by default, but keep legacy rows that have no profile yet.
     query = query.filter(
@@ -268,9 +298,10 @@ def reactivate_bowler_profile(
 
 @router.post("")
 def create_bowler(player: schemas.PlayerCreate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    owner_user_id = _resolve_bowler_owner_id_for_tournament(db, player.tournament_id, current_user)
     profile = _resolve_or_create_bowler_profile(
         db=db,
-        user_id=current_user.id,
+        user_id=owner_user_id,
         full_name=player.full_name,
         usbc_number=player.usbc_number,
     )
@@ -287,7 +318,7 @@ def create_bowler(player: schemas.PlayerCreate, db: Session = Depends(get_db), c
     obj = models.TournamentPlayer(
         tournament_id=player.tournament_id,
         squad_id=player.squad_id,
-        user_id=current_user.id,
+        user_id=owner_user_id,
         bowler_profile_id=profile.id if profile else None,
         full_name=canonical_name,
         average=player.average,
@@ -345,10 +376,7 @@ def bulk_update_bowlers(
         if not data:
             continue
 
-        bowler = db.query(models.Bowler).filter(
-            models.Bowler.id == item.id,
-            models.Bowler.user_id == current_user.id,
-        ).first()
+        bowler = _get_accessible_bowler(db, item.id, current_user)
         if not bowler:
             continue
 
@@ -365,7 +393,7 @@ def bulk_update_bowlers(
             if desired_usbc:
                 profile = _resolve_or_create_bowler_profile(
                     db=db,
-                    user_id=current_user.id,
+                    user_id=bowler.user_id,
                     full_name=desired_full_name,
                     usbc_number=desired_usbc,
                 )
@@ -391,9 +419,11 @@ def bulk_update_bowlers(
                 data["handicap_pins"] = max(0, int((t_settings.handicap_base - data["average"]) * (t_settings.handicap_percentage / 100)))
 
         if data:
+            statement = sa_update(models.Bowler).where(models.Bowler.id == item.id)
+            if not _user_can_manage_all(current_user):
+                statement = statement.where(models.Bowler.user_id == current_user.id)
             db.execute(
-                sa_update(models.Bowler)
-                .where(models.Bowler.id == item.id, models.Bowler.user_id == current_user.id)
+                statement
                 .values(**data)
                 .execution_options(synchronize_session=False)
             )
@@ -423,10 +453,7 @@ def update_bowler(
     if not update_data:
         return {"id": bowler_id}
 
-    bowler = db.query(models.Bowler).filter(
-        models.Bowler.id == bowler_id,
-        models.Bowler.user_id == current_user.id,
-    ).first()
+    bowler = _get_accessible_bowler(db, bowler_id, current_user)
     if not bowler:
         raise HTTPException(status_code=404, detail="Bowler not found or access denied")
 
@@ -437,7 +464,7 @@ def update_bowler(
         if desired_usbc:
             profile = _resolve_or_create_bowler_profile(
                 db=db,
-                user_id=current_user.id,
+                user_id=bowler.user_id,
                 full_name=desired_full_name,
                 usbc_number=desired_usbc,
             )
@@ -461,11 +488,11 @@ def update_bowler(
         if t_settings and t_settings.handicap_percentage is not None and t_settings.handicap_base is not None:
             update_data["handicap_pins"] = max(0, int((t_settings.handicap_base - update_data["average"]) * (t_settings.handicap_percentage / 100)))
 
-    result = db.execute(
-        sa_update(models.Bowler)
-        .where(models.Bowler.id == bowler_id, models.Bowler.user_id == current_user.id)
-        .values(**update_data)
-    )
+    statement = sa_update(models.Bowler).where(models.Bowler.id == bowler_id)
+    if not _user_can_manage_all(current_user):
+        statement = statement.where(models.Bowler.user_id == current_user.id)
+
+    result = db.execute(statement.values(**update_data))
     db.commit()
 
     if result.rowcount == 0:
@@ -477,10 +504,7 @@ def update_bowler(
 
 @router.delete("/{bowler_id}")
 def delete_bowler(bowler_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    bowler = db.query(models.Bowler).filter(
-        models.Bowler.id == bowler_id,
-        models.Bowler.user_id == current_user.id
-    ).first()
+    bowler = _get_accessible_bowler(db, bowler_id, current_user)
     if not bowler:
         raise HTTPException(status_code=404, detail="Bowler not found or access denied")
 
@@ -501,13 +525,13 @@ def delete_bowler(bowler_id: int, db: Session = Depends(get_db), current_user: m
 
     if profile_id is not None:
         remaining = db.query(models.Bowler.id).filter(
-            models.Bowler.user_id == current_user.id,
+            models.Bowler.user_id == bowler.user_id,
             models.Bowler.bowler_profile_id == profile_id,
         ).first()
         if not remaining:
             profile = db.query(models.BowlerProfileModel).filter(
                 models.BowlerProfileModel.id == profile_id,
-                models.BowlerProfileModel.user_id == current_user.id,
+                models.BowlerProfileModel.user_id == bowler.user_id,
             ).first()
             if profile:
                 profile.is_active = False

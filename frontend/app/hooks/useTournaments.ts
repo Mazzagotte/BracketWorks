@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { apiClient } from '../lib/api'
 import { useToast } from '../components/Toast'
 import { Player } from '../lib/types'
+import { useAuth } from '../lib/auth-context'
 
 // Standardized hooks for tournament data
 
@@ -28,6 +29,7 @@ export interface Squad {
 const _cache = {
   tournaments: null as Tournament[] | null,
   tournamentsFetchedAt: 0,
+  tournamentsIsAdminScope: null as boolean | null,
   squads: new Map<number, Squad[]>(),
   squadsFetchedAt: new Map<number, number>(),
   inFlightTournaments: null as Promise<void> | null,
@@ -37,14 +39,21 @@ const _cache = {
 
 // Hook for managing tournaments with request deduplication
 export function useTournaments() {
+  const { currentUser } = useAuth()
   const [tournaments, setTournaments] = useState<Tournament[]>(() => _cache.tournaments ?? [])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { addToast } = useToast()
 
   const fetchTournaments = useCallback(async () => {
+    const isAdmin = Boolean(currentUser?.isAdmin)
+
     // Serve from cache if still fresh
-    if (_cache.tournaments && Date.now() - _cache.tournamentsFetchedAt < _cache.STALE_MS) {
+    if (
+      _cache.tournaments &&
+      _cache.tournamentsIsAdminScope === isAdmin &&
+      Date.now() - _cache.tournamentsFetchedAt < _cache.STALE_MS
+    ) {
       setTournaments(_cache.tournaments)
       return
     }
@@ -61,9 +70,11 @@ export function useTournaments() {
 
     const fetchPromise = (async () => {
       try {
-        const data = await apiClient.get<Tournament[]>('/api/v1/tournaments/')
+        const tournamentsPath = isAdmin ? '/api/v1/tournaments/?all=1' : '/api/v1/tournaments/'
+        const data = await apiClient.get<Tournament[]>(tournamentsPath)
         _cache.tournaments = data
         _cache.tournamentsFetchedAt = Date.now()
+        _cache.tournamentsIsAdminScope = isAdmin
         setTournaments(data)
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to fetch tournaments'
@@ -77,7 +88,7 @@ export function useTournaments() {
 
     _cache.inFlightTournaments = fetchPromise
     return fetchPromise
-  }, [addToast])
+  }, [addToast, currentUser?.isAdmin])
 
   const createTournament = async (tournament: Omit<Tournament, 'id'>) => {
     setLoading(true)
