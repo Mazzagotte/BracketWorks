@@ -94,7 +94,8 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
       const bowlersUrl = `/api/v1/bowlers?${params.toString()}`;
       
       const response = await apiFetch(API(bowlersUrl), {
-        headers: { Authorization: `Bearer ${authToken}` }
+        headers: { Authorization: `Bearer ${authToken}` },
+        cache: 'no-store',
       });
       
       if (!response.ok) {
