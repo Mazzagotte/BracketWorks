@@ -67,46 +67,46 @@ export default function HomePage() {
   const features = [
     {
       title: 'Build clean brackets',
-      body: 'Create tournament brackets quickly with predictable setup, round tracking, and clear winner advancement.',
+      body: 'Set up brackets fast with a flow that is easy to follow from opening round to final match.',
     },
     {
       title: 'Track every side pot',
-      body: 'Manage optional side action like high game, eliminator, brackets, and custom event pools from the same event dashboard.',
+      body: 'Run side action like high game, eliminator, and custom pots in the same place as your main event.',
     },
     {
       title: 'Enter scores live',
-      body: 'Enter scores as games finish and keep bracket progress updated throughout the tournament.',
+      body: 'Enter scores as games finish and keep the bracket board up to date in real time.',
     },
     {
       title: 'Review payouts clearly',
-      body: 'Calculate projected payouts from your event settings, then review and export clean results for verification.',
+      body: 'See payout totals clearly, double-check winners, and export clean results when you are ready.',
     },
     {
       title: 'Use it from the desk or lanes',
-      body: 'Run the event from the front desk, tournament office, counter, or lane-side on mobile.',
+      body: 'Run everything from the front desk or on your phone while you are out at the lanes.',
     },
     {
       title: 'Verify every result',
-      body: 'Keep important score, bracket, and payout changes easier to review before final results are shared.',
+      body: 'Spot-check score, bracket, and payout changes before posting final results.',
     },
   ];
 
   const steps = [
     {
       title: 'Build the tournament',
-      text: 'Set bracket sizes, squads, fees, prize rules, and event options before competition starts.',
+      text: 'Set your bracket size, squads, entry fees, and payout rules before play starts.',
     },
     {
       title: 'Add bowlers',
-      text: 'Register players, assign squads, and organize entries so the event is ready to run.',
+      text: 'Add entries, assign squads, and make sure everyone is in the right place.',
     },
     {
       title: 'Run tournament play',
-      text: 'Enter scores, advance winners, and keep staff aligned as games are completed.',
+      text: 'Enter scores, advance winners, and keep the event moving as games finish.',
     },
     {
       title: 'Finalize results',
-      text: 'Review winners, verify payout totals, and export polished results for records or posting.',
+      text: 'Confirm winners, review payouts, and export results for records or posting.',
     },
   ];
 
@@ -175,7 +175,7 @@ export default function HomePage() {
               Smarter Brackets. Cleaner Payouts. Better Tournaments.
             </h1>
             <p className={styles.heroSubtitle}>
-              BracketWorks is bowling tournament bracket software that runs brackets, side pots, live scoring, and payout review in one clean app built for tournament directors.
+              BracketWorks gives tournament directors one place to run brackets, side pots, live scoring, and payouts without juggling multiple tools.
             </p>
             <div className={styles.heroCTA}>
               <Link href="/signup" className={`${styles.navBtn} ${styles.navBtnPrimary}`}>
@@ -185,7 +185,7 @@ export default function HomePage() {
                 Sign In
               </Link>
             </div>
-            <p className={styles.heroCtaHelper}>No credit card required. Set up your first event in minutes.</p>
+            <p className={styles.heroCtaHelper}>No credit card required. You can be up and running in minutes.</p>
             <div className={styles.trustRow}>
               <span>Brackets</span>
               <span>Side Pots</span>
@@ -196,17 +196,17 @@ export default function HomePage() {
               <div className={styles.proofCard}>
                 <span className={styles.proofIcon}>SETUP</span>
                 <strong className={styles.proofStat}>Under 10 min</strong>
-                <span className={styles.proofLabel}>Tournament setup</span>
+                <span className={styles.proofLabel}>to set up a tournament</span>
               </div>
               <div className={styles.proofCard}>
                 <span className={styles.proofIcon}>EXPORT</span>
                 <strong className={styles.proofStat}>Under 60 sec</strong>
-                <span className={styles.proofLabel}>Export generated</span>
+                <span className={styles.proofLabel}>to generate an export</span>
               </div>
               <div className={styles.proofCard}>
                 <span className={styles.proofIcon}>ACCESS</span>
                 <strong className={styles.proofStat}>Any device</strong>
-                <span className={styles.proofLabel}>Desktop &amp; lane-side mobile</span>
+                <span className={styles.proofLabel}>desktop and lane-side mobile</span>
               </div>
             </div>
           </div>
@@ -304,7 +304,7 @@ export default function HomePage() {
             <p className={styles.kicker}>Public Tournament View</p>
             <h2 className={styles.publicViewTitle}>Bowlers Follow Along in Real Time</h2>
             <p className={styles.publicViewSubtitle}>
-              Share a live tournament link so bowlers can follow bracket standings, check scores after each game, and view side pot results from any device. No login required.
+              Share a live link so bowlers can follow standings, check scores after each game, and see side pot results from any device. No login needed.
             </p>
             <ul className={styles.publicViewList}>
               <li>Live bracket summary with win totals by game</li>
@@ -321,7 +321,7 @@ export default function HomePage() {
       <section id="how-it-works" className={styles.howItWorks}>
         <div className={styles.sectionHeading}>
           <h2 className={styles.sectionTitle}>From setup to results in four steps</h2>
-          <p className={styles.sectionSubtitle}>Every tournament follows the same simple flow. No guesswork required.</p>
+          <p className={styles.sectionSubtitle}>Every event follows the same straightforward flow, so your team always knows what is next.</p>
         </div>
 
         <div className={styles.stepsGrid}>
@@ -338,35 +338,35 @@ export default function HomePage() {
       <section id="benefits" className={styles.benefits}>
         <div className={styles.sectionHeading}>
           <h2 className={styles.sectionTitle}>Why organizers choose BracketWorks</h2>
-          <p className={styles.sectionSubtitle}>Less time managing tools. More time running a great event.</p>
+          <p className={styles.sectionSubtitle}>Spend less time fighting tools and more time running a smooth tournament.</p>
         </div>
 
         <div className={styles.benefitsList}>
           <article className={styles.benefit}>
             <h3>One place for everything</h3>
             <p>
-              Replace disconnected spreadsheets and manual tracking with one place for tournament settings, brackets, scores, side pots, and payouts.
+              Keep tournament settings, brackets, scores, side pots, and payouts together instead of spread across multiple sheets and apps.
             </p>
           </article>
 
           <article className={styles.benefit}>
             <h3>Fewer mistakes</h3>
             <p>
-              Structured score entry and automatic calculations help reduce bracket and payout mistakes during live event operations.
+              Structured score entry and automatic calculations help cut down on bracket and payout mistakes during live play.
             </p>
           </article>
 
           <article className={styles.benefit}>
             <h3>A professional experience</h3>
             <p>
-              Give staff and bowlers consistent, readable tournament information across desktop and mobile views.
+              Give staff and bowlers a clean, consistent view of tournament data on both desktop and mobile.
             </p>
           </article>
 
           <article className={styles.benefit}>
             <h3>Grows with your events</h3>
             <p>
-              Use the same workflow for weekly events, local tournaments, and larger open events as your needs grow.
+              Use the same workflow for weekly events, local tournaments, and bigger opens as your events grow.
             </p>
           </article>
         </div>
@@ -377,7 +377,7 @@ export default function HomePage() {
           <span className={styles.ctaBadge}>Get Started Free</span>
           <h2>Your next tournament<br />starts here</h2>
           <p>
-            Set up brackets, track scores, manage side pots, and review payouts — all from one clean tournament dashboard.
+            Set up brackets, track scores, manage side pots, and review payouts from one dashboard.
           </p>
           <div className={styles.ctaPills}>
             <span className={styles.ctaPill}>No credit card required</span>
@@ -392,7 +392,7 @@ export default function HomePage() {
               Sign In
             </Link>
           </div>
-          <p className={styles.ctaTrust}>Free to start. No commitment.</p>
+          <p className={styles.ctaTrust}>Free to start. Cancel anytime.</p>
         </div>
       </section>
     </div>

@@ -44,35 +44,36 @@ export default function ExplainPayoutsModal({ isOpen, onClose }: ExplainPayoutsM
           <section className={styles.section}>
             <h3>How Payouts Are Configured</h3>
             <p>
-              Payout amounts are set directly on the dashboard in Bracket Settings.
-              The 1st place and 2nd place dollar amounts are fixed values you enter,
-              and the house fee is the remainder of what was collected.
+              Payout values are set on the Dashboard under Bracket Settings.
+              You define fixed amounts for 1st and 2nd place,
+              and the house fee is whatever remains from total collected entry fees.
             </p>
           </section>
 
           <section className={styles.section}>
             <h3>Tied Finals (Split Pot)</h3>
             <p>
-              If two bowlers tie through all rounds of a bracket, the pot is split evenly between them.
-              Each player receives the 1st place prize plus the 2nd place prize divided by two.
-              For example, if 1st pays $8 and 2nd pays $6, each tied bowler receives $7.
+              If two bowlers stay tied through the finals, the pot is split evenly.
+              Each bowler gets half of the combined 1st and 2nd place payouts.
+              Example: if 1st is $8 and 2nd is $6, each bowler gets $7.
             </p>
           </section>
 
           <section className={styles.section}>
             <h3>Marking Winners as Paid</h3>
             <p>
-              Each winner row has a Paid button. Tap it to mark that bowler as paid and dim their row.
-              Paid status is saved locally on this device and persists until the tournament is cleared.
-              Tap Paid again to undo.
+              Each winner row includes a Paid button.
+              Click it to mark that bowler as paid and dim the row.
+              Paid status is saved locally on this device until that tournament is cleared.
+              Click Paid again to undo it.
             </p>
           </section>
 
           <section className={styles.section}>
             <h3>Exporting Results</h3>
             <p>
-              Use Export to Excel to download a spreadsheet of all winners and payout amounts.
-              Use Export to PDF to generate a print-ready payout sheet you can hand out or post at the desk.
+              Use Export to Excel for a spreadsheet of winners and payout amounts.
+              Use Export to PDF for a print-ready payout sheet you can hand out or post at the desk.
             </p>
           </section>
 
