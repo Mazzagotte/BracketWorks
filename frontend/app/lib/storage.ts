@@ -11,6 +11,10 @@ class CachedStorage {
   private writeTimeoutId: NodeJS.Timeout | null = null
   private readonly WRITE_DELAY = 300 // ms
 
+  private isAuthTokenKey(key: string): boolean {
+    return key === 'token'
+  }
+
   /**
    * Get item from cache or localStorage
    * Fast synchronous reads from memory cache
@@ -27,6 +31,16 @@ class CachedStorage {
     if (typeof window === 'undefined') return null
     
     try {
+      if (this.isAuthTokenKey(key)) {
+        const sessionValue = sessionStorage.getItem(key)
+        const localValue = localStorage.getItem(key)
+        const effectiveValue = sessionValue || localValue
+        if (this.cache.get(key) !== effectiveValue) {
+          this.cache.set(key, effectiveValue)
+        }
+        return effectiveValue
+      }
+
       // Always reconcile with localStorage so direct writes (outside this wrapper)
       // are visible across page transitions.
       const liveValue = localStorage.getItem(key)
@@ -72,6 +86,9 @@ class CachedStorage {
     if (typeof window === 'undefined') return
     
     try {
+      if (this.isAuthTokenKey(key)) {
+        sessionStorage.removeItem(key)
+      }
       localStorage.removeItem(key)
     } catch (error) {
       logger.error('localStorage.removeItem failed', { error })
@@ -98,6 +115,17 @@ class CachedStorage {
     
     for (const [key, value] of this.writeQueue.entries()) {
       try {
+        if (this.isAuthTokenKey(key)) {
+          if (value === null) {
+            sessionStorage.removeItem(key)
+          } else {
+            sessionStorage.setItem(key, value)
+            // Keep token out of persistent storage.
+            localStorage.removeItem(key)
+          }
+          continue
+        }
+
         if (value === null) {
           localStorage.removeItem(key)
         } else {
@@ -131,6 +159,9 @@ export function useClientStorage() {
   const getItem = useCallback((key: string) => {
     if (!isClient) return null;
     try {
+      if (key === 'token') {
+        return sessionStorage.getItem(key) || localStorage.getItem(key);
+      }
       return localStorage.getItem(key);
     } catch {
       return null;
@@ -140,6 +171,11 @@ export function useClientStorage() {
   const setItem = useCallback((key: string, value: string) => {
     if (!isClient) return;
     try {
+      if (key === 'token') {
+        sessionStorage.setItem(key, value);
+        localStorage.removeItem(key);
+        return;
+      }
       localStorage.setItem(key, value);
     } catch {
       // Silent fail
@@ -149,6 +185,9 @@ export function useClientStorage() {
   const removeItem = useCallback((key: string) => {
     if (!isClient) return;
     try {
+      if (key === 'token') {
+        sessionStorage.removeItem(key);
+      }
       localStorage.removeItem(key);
     } catch {
       // Silent fail
