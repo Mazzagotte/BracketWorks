@@ -144,11 +144,6 @@ export default function ExplainDashboardModal({ isOpen, onClose }: ExplainDashbo
           </section>
         </div>
 
-        <div className={styles.footer}>
-          <button className={styles.closeButtonFooter} onClick={onClose}>
-            Got it!
-          </button>
-        </div>
       </div>
     </div>
   )

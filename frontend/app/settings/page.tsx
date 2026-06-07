@@ -20,18 +20,6 @@ type AccountProfile = {
   email_verified_at?: string | null;
 };
 
-type SessionInfo = {
-  session_id: string;
-  issued_at: string;
-  last_seen_at: string;
-  expires_at: string;
-  is_revoked: boolean;
-  revoked_at?: string | null;
-  device_nickname?: string | null;
-  region_hint?: string | null;
-  risk_score?: number;
-};
-
 const emptyProfile: AccountProfile = {
   first_name: '',
   last_name: '',
@@ -64,9 +52,6 @@ export default function SettingsPage() {
   const [savingPassword, setSavingPassword] = useState(false);
   const [resendingVerification, setResendingVerification] = useState(false);
   const [profile, setProfile] = useState<AccountProfile>(emptyProfile);
-  const [sessions, setSessions] = useState<SessionInfo[]>([]);
-  const [loadingSessions, setLoadingSessions] = useState(false);
-  const [revokingSessionId, setRevokingSessionId] = useState<string | null>(null);
   const [showPasswords, setShowPasswords] = useState({
     current: false,
     next: false,
@@ -108,22 +93,6 @@ export default function SettingsPage() {
 
     load();
   }, [addToast]);
-
-  const loadSessions = useCallback(async () => {
-    setLoadingSessions(true);
-    try {
-      const payload = await apiClient.get<{ sessions: SessionInfo[] }>('/api/v1/users/sessions?include_revoked=false', false);
-      setSessions(payload.sessions || []);
-    } catch (err) {
-      addToast({ type: 'error', message: err instanceof Error ? err.message : 'Failed to load sessions', duration: 5000 });
-    } finally {
-      setLoadingSessions(false);
-    }
-  }, [addToast]);
-
-  useEffect(() => {
-    loadSessions();
-  }, [loadSessions]);
 
   const passwordStrengthPercent = useMemo(
     () => calculatePasswordStrengthPercent(passwordForm.new_password, 8),
@@ -265,26 +234,6 @@ export default function SettingsPage() {
       addToast({ type: 'error', message: err instanceof Error ? err.message : 'Failed to update password', duration: 5000 });
     } finally {
       setSavingPassword(false);
-    }
-  };
-
-  const revokeSession = async (sessionId: string) => {
-    setRevokingSessionId(sessionId);
-    try {
-      await apiClient.post('/api/v1/users/sessions/revoke', { session_id: sessionId });
-      addToast({ type: 'success', message: 'Session revoked.', duration: 2500 });
-      const activeSessionId = typeof window !== 'undefined' ? localStorage.getItem('session_id') : null;
-      if (activeSessionId && activeSessionId === sessionId) {
-        addToast({ type: 'info', message: 'Current session revoked. Please sign in again.', duration: 3000 });
-        logoutUser();
-        router.push('/login');
-        return;
-      }
-      await loadSessions();
-    } catch (err) {
-      addToast({ type: 'error', message: err instanceof Error ? err.message : 'Failed to revoke session', duration: 5000 });
-    } finally {
-      setRevokingSessionId(null);
     }
   };
 
@@ -488,37 +437,6 @@ export default function SettingsPage() {
             {savingPassword ? 'Updating...' : 'Update Password'}
           </button>
         </div>
-      </section>
-
-      <section className={styles.card}>
-        <h2 className={styles.cardTitle}>Active Sessions</h2>
-        {loadingSessions ? <div className={styles.sessionEmpty}>Loading sessions...</div> : null}
-        {!loadingSessions && sessions.length === 0 ? (
-          <div className={styles.sessionEmpty}>No active sessions found.</div>
-        ) : null}
-        {!loadingSessions && sessions.map(session => {
-          const localSessionId = typeof window !== 'undefined' ? localStorage.getItem('session_id') : null;
-          const isCurrent = localSessionId === session.session_id;
-          return (
-            <div className={styles.sessionRow} key={session.session_id}>
-              <div className={styles.sessionMeta}>
-                <div className={styles.sessionTitle}>
-                  {session.device_nickname || 'Unknown device'} {isCurrent ? '(This device)' : ''}
-                </div>
-                <div className={styles.sessionHint}>Region: {session.region_hint || 'unknown'} | Risk: {(session.risk_score ?? 0).toFixed(2)}</div>
-                <div className={styles.sessionHint}>Last seen: {new Date(session.last_seen_at).toLocaleString()}</div>
-              </div>
-              <button
-                type="button"
-                className="ds-btn ds-btn-outline ds-btn-sm"
-                onClick={() => revokeSession(session.session_id)}
-                disabled={revokingSessionId === session.session_id}
-              >
-                {revokingSessionId === session.session_id ? 'Revoking...' : 'Revoke'}
-              </button>
-            </div>
-          );
-        })}
       </section>
 
     </div>
