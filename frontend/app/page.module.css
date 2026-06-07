@@ -1202,25 +1202,6 @@
   line-height: 1.5;
 }
 
-.publicViewList li::before {
-  content: 'READY';
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 18px;
-  padding: 0 6px;
-  border-radius: 999px;
-  border: 1px solid var(--opacity-white-20);
-  background: var(--opacity-white-06);
-  color: var(--color-primary);
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  line-height: 1;
-  margin-top: 2px;
-}
-
 .ctaSection {
   position: relative;
   overflow: hidden;

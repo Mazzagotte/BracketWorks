@@ -94,11 +94,6 @@ export default function ExplainScoresModal({ isOpen, onClose }: ExplainScoresMod
 
         </div>
 
-        <div className={styles.footer}>
-          <button className={styles.closeButtonFooter} onClick={onClose}>
-            Got it!
-          </button>
-        </div>
       </div>
     </div>
   )

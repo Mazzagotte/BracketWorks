@@ -79,11 +79,6 @@ export default function ExplainPayoutsModal({ isOpen, onClose }: ExplainPayoutsM
 
         </div>
 
-        <div className={styles.footer}>
-          <button className={styles.closeButtonFooter} onClick={onClose}>
-            Got it!
-          </button>
-        </div>
       </div>
     </div>
   )

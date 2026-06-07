@@ -86,11 +86,6 @@ export default function ExplainEntriesModal({ isOpen, onClose }: ExplainEntriesM
           </section>
         </div>
 
-        <div className={styles.footer}>
-          <button className={styles.closeButtonFooter} onClick={onClose}>
-            Got it!
-          </button>
-        </div>
       </div>
     </div>
   )

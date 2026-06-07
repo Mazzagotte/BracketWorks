@@ -1,47 +1,47 @@
 
 # BracketWorks
 
-BracketWorks is a tournament management app built for running bowling bracket events. It handles everything from bracket generation to payout calculations so you can focus on running a great tournament instead of doing math on a notepad.
+BracketWorks is tournament software for running bowling bracket events. It handles bracket setup, live scoring, and payout review in one place, so you can spend less time managing spreadsheets and more time running the event.
 
-**Live app**: [https://bracketworks.app](https://bracketworks.app)
+Live app: [https://bracketworks.app](https://bracketworks.app)
 
 ---
 
 ## What it does
 
 ### Brackets
-Create and manage scratch and handicap brackets for any tournament size. Players are seeded automatically based on their scores, and the bracket advances winners round by round as scores come in. Multiple bracket types can run simultaneously within the same tournament.
+Set up and manage scratch and handicap brackets for your tournament. Brackets advance round by round as scores are entered, and you can run multiple bracket programs in the same event.
 
 ### Score Tracking
-Enter scores in real time during a tournament. The bracket updates automatically as each match is completed, and scores are saved so nothing gets lost if you close the tab or step away.
+Enter scores live while the tournament is in progress. Bracket state updates as results come in, and your work is saved so you can pick up where you left off.
 
 ### Payouts
-BracketWorks calculates payouts automatically based on the prize pool, entry fees, and your house percentage settings. View a full breakdown of who won what, and print or export the results when the tournament is done.
+BracketWorks calculates payouts from your event settings, including entry fees and prize splits. Review who won what, then export or print results when everything is finalized.
 
 ### Player Management
-Keep a roster of players across tournaments. Track each player's entries, wins, and earnings over time so you always have a record of who has bowled and how they performed.
+Keep a reusable player history across tournaments. Track entries, results, and payouts over time so you always have a clean event record.
 
 ### Public View
-Share a read-only link to your tournament so spectators and players can follow along without needing an account.
+Share a read-only tournament link so bowlers and spectators can follow standings and results without creating an account.
 
 ### Admin Controls
-Tournament directors get a full admin panel to manage entries, settings, users, and tournament archives all in one place.
+Directors and admins can manage tournaments, entries, settings, users, and archives from one central admin experience.
 
 ---
 
 ## Works on any device
 
-BracketWorks is a Progressive Web App — it works in any browser and can be installed on a phone or tablet like a native app. The layout adapts to small screens so you can run a tournament from the lanes without needing a laptop.
+BracketWorks is a Progressive Web App. It runs in modern browsers and can be installed on phones and tablets like an app. The UI is built to work at the desk or out at the lanes.
 
 ---
 
 ## Questions or feedback?
 
-Visit [bracketworks.app](https://bracketworks.app) or reach out through the app.
+Visit [bracketworks.app](https://bracketworks.app) or contact us through the app.
 
 ## Support
 
-For issues or questions, open an issue on the repository or reach out via [bracketworks.app](https://bracketworks.app).
+For issues or questions, open a repository issue or reach out through [bracketworks.app](https://bracketworks.app).
 
 ## License
 
@@ -49,4 +49,4 @@ MIT
 
 ---
 
-**BracketWorks** - Streamlining tournament management with intelligent automation and comprehensive tracking.
+BracketWorks helps tournament teams run cleaner events from setup to final payout.
