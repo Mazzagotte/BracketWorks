@@ -168,7 +168,12 @@ if ($BackendMode -eq "docker") {
                   "`$env:CORS_ORIGINS='http://localhost:3000,http://localhost:8001,http://127.0.0.1:3000'; " +
                   "cd '$BackendPath'; " +
                   "Write-Host 'Running database migrations...' -ForegroundColor Yellow; " +
-                  "& '$PythonCmd' -m alembic upgrade heads; " +
+                  "& '$PythonCmd' -m alembic upgrade head; " +
+                  "if (`$LASTEXITCODE -ne 0) { " +
+                  "  Write-Host 'Database migration failed. Backend will not start.' -ForegroundColor Red; " +
+                  "  Read-Host 'Press Enter to close'; " +
+                  "  exit `$LASTEXITCODE; " +
+                  "}; " +
                   "& '$PythonCmd' -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8001; " +
                   "Read-Host 'Backend stopped. Press Enter to close'"
 }

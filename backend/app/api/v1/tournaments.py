@@ -38,6 +38,56 @@ def _bracket_settings_to_dict(settings: models.TournamentBracketSettings | None)
         'allow_byes': settings.allow_byes,
     }
 
+
+def _hydrate_squads_from_legacy_squad_times(db: Session, tournament: models.Tournament) -> int:
+    if not tournament.squad_times:
+        return 0
+
+    try:
+        squad_times = json.loads(tournament.squad_times)
+    except json.JSONDecodeError:
+        logger.warning(
+            "Skipping squad hydration due to invalid squad_times JSON",
+            extra={"tournament_id": tournament.id},
+        )
+        return 0
+
+    if not isinstance(squad_times, dict):
+        return 0
+
+    existing = {
+        (str(row[0]), str(row[1]))
+        for row in db.query(models.Squad.date, models.Squad.time)
+        .filter(models.Squad.tournament_id == tournament.id)
+        .all()
+    }
+
+    created = 0
+    for date_value, times in squad_times.items():
+        date_text = str(date_value).strip()
+        if not date_text or not isinstance(times, list):
+            continue
+
+        for time_value in times:
+            if not isinstance(time_value, str):
+                continue
+            time_text = time_value.strip()
+            if not time_text:
+                continue
+
+            key = (date_text, time_text)
+            if key in existing:
+                continue
+
+            db.add(models.Squad(tournament_id=tournament.id, date=date_text, time=time_text))
+            existing.add(key)
+            created += 1
+
+    if created:
+        db.commit()
+
+    return created
+
 @router.post("/", response_model=schemas.Tournament)
 def create_tournament(
     tournament: schemas.TournamentCreate,
@@ -153,6 +203,13 @@ def get_tournament_bootstrap(
     squads = db.query(models.Squad).filter(
         models.Squad.tournament_id == tournament_id
     ).order_by(models.Squad.date.asc(), models.Squad.time.asc(), models.Squad.id.asc()).all()
+
+    if not squads:
+        hydrated = _hydrate_squads_from_legacy_squad_times(db, tournament)
+        if hydrated:
+            squads = db.query(models.Squad).filter(
+                models.Squad.tournament_id == tournament_id
+            ).order_by(models.Squad.date.asc(), models.Squad.time.asc(), models.Squad.id.asc()).all()
 
     squad_payload = [
         {
