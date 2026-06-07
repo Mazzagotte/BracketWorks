@@ -124,7 +124,7 @@ export default function Sidebar({ firstName, isMobile = false, isOpen = false, o
             <div key={link.href} className={styles.navItem}>
               <Link
                 href={link.href}
-                prefetch={true}
+                prefetch={false}
                 onClick={event => handleProtectedNavigation(event, link.href)}
                 className={`${styles.navLink} ${isActive ? styles.navLinkActive : ''}`}
               >
@@ -145,7 +145,7 @@ export default function Sidebar({ firstName, isMobile = false, isOpen = false, o
         )}
         <Link
           href="/settings"
-          prefetch={true}
+          prefetch={false}
           onClick={event => handleProtectedNavigation(event, '/settings')}
           className={`${styles.settingsBtn} ${pathname === '/settings' ? styles.settingsBtnActive : ''}`}
         >

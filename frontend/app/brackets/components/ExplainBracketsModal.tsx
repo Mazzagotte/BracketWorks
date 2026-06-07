@@ -50,8 +50,9 @@ export default function ExplainBracketsModal({ isOpen, onClose }: ExplainBracket
           <section className={styles.section}>
             <h3>Single-Elimination Tournament</h3>
             <p>
-              BracketWorks uses a single-elimination format, where the number of players defined on the dashboard determines the bracket structure.
-              For example, with 8 players, the bracket consists of three rounds. Winners advance to the next round, while losers are eliminated, with a few exceptions in the case of ties.
+              BracketWorks runs single-elimination brackets.
+              The bracket size you choose on the Dashboard determines the number of rounds.
+              With 8 players, there are three rounds. Winners move on and losers are out, except in special tie cases.
             </p>
             <div className={styles.roundStructure}>
               <div className={styles.round}>
@@ -72,7 +73,7 @@ export default function ExplainBracketsModal({ isOpen, onClose }: ExplainBracket
           <section className={styles.section}>
             <h3>Tie Resolution System</h3>
             <p>
-              BracketWorks features a unique tie handling system that gives players a second chance:
+              Tie handling gives bowlers a fair second chance:
             </p>
             
             <div className={styles.tieRule}>
@@ -81,13 +82,14 @@ export default function ExplainBracketsModal({ isOpen, onClose }: ExplainBracket
                 <strong>Round 1 &amp; 2 Ties: Both Players Advance</strong>
               </div>
               <p>
-                When two players tie in Round 1 or Round 2, both advance to the next round.
-                In that next round, their scores are compared against each other. The lower-scoring player is eliminated, and the higher-scoring player is declared the winner of the original tied match.
+                If two players tie in Round 1 or Round 2, both move to the next round.
+                Their next-round scores are then compared against each other.
+                Lower score is eliminated, and the higher score is treated as the winner of the original tied match.
               </p>
               <div className={styles.example}>
-                <strong>Example:</strong> Player A and Player B tie in Round 1 (both score 210), so both advance to Round 2.
+                <strong>Example:</strong> Player A and Player B tie in Round 1 at 210, so both advance.
                 In Round 2, Player A scores 220 and Player B scores 180.
-                Player B is eliminated, and Player A is declared the Round 1 winner and advances to the Finals.
+                Player B is eliminated, and Player A continues as the Round 1 winner.
               </div>
             </div>
 
@@ -97,14 +99,14 @@ export default function ExplainBracketsModal({ isOpen, onClose }: ExplainBracket
                 <strong>Cascading Ties: Carried Forward Until Resolved</strong>
               </div>
               <p>
-                If two players who tied in Round 1 are <em>also</em> tied in Round 2, both continue advancing to Round 3.
-                Their Round 3 scores then resolve all previous ties. The higher scorer wins, and the lower scorer is eliminated.
-                Tying across all three games is extremely unlikely, but if it happens, the pot is split.
+                If players tie in one round and then tie again in the next round, both keep advancing until the tie is broken.
+                The first round where scores differ resolves the carried tie.
+                If they tie all the way through finals, the pot is split.
               </p>
               <div className={styles.example}>
-                <strong>Example:</strong> Player A and Player B tie in both Round 1 and Round 2 (scores 210 and 215).
-                Both advance to the Finals. Player A scores 240 in Round 3, Player B scores 220.
-                Player A wins the bracket. Player B is eliminated.
+                <strong>Example:</strong> Player A and Player B tie in Round 1 and Round 2.
+                In finals, Player A shoots 240 and Player B shoots 220.
+                Player A wins the bracket, and Player B is eliminated.
               </div>
             </div>
 
@@ -114,7 +116,7 @@ export default function ExplainBracketsModal({ isOpen, onClose }: ExplainBracket
                 <strong>Finals Tie: Split Pot</strong>
               </div>
               <p>
-                If the Finals match ends in a tie (and there are no unresolved carry-over ties from earlier rounds), both finalists split the prize pot evenly.
+                If finals ends in a tie and there is no unresolved carry-over tie, both finalists split the prize pot evenly.
               </p>
             </div>
           </section>
@@ -125,24 +127,25 @@ export default function ExplainBracketsModal({ isOpen, onClose }: ExplainBracket
             <div className={styles.bracketType}>
               <strong>Scratch Brackets</strong>
               <p>
-                Players compete using their actual bowling scores without any adjustments. 
-                The player with the higher score wins each match.
+                Bowlers compete on raw game scores with no adjustments.
+                Higher score wins each match.
               </p>
             </div>
 
             <div className={styles.bracketType}>
               <strong>Handicap Brackets</strong>
               <p>
-                Scores are adjusted according to each player&apos;s average to level the playing field. Players with lower averages receive bonus pins, creating a more balanced competition.
+                Scores are adjusted by average to level the field.
+                Bowlers with lower averages receive bonus pins.
               </p>
             </div>
 
             <div className={styles.bracketType}>
               <strong>Reverse Brackets</strong>
               <p>
-                In a normal bracket, Game 1 decides Round 1, Game 2 decides Round 2, and Game 3 decides the Finals.
-                Reverse brackets flip that order: Game 3 decides Round 1, Game 2 decides Round 2, and Game 1 decides the Finals.
-                Reverse brackets are available in both Scratch and Handicap formats.
+                In a standard bracket, Game 1 decides Round 1, Game 2 decides Round 2, and Game 3 decides finals.
+                Reverse brackets flip that order: Game 3, then Game 2, then Game 1.
+                Reverse is available for both Scratch and Handicap formats.
               </p>
             </div>
           </section>
@@ -150,14 +153,15 @@ export default function ExplainBracketsModal({ isOpen, onClose }: ExplainBracket
           <section className={styles.section}>
             <h3>Match Progression</h3>
             <p>
-              Players are randomly placed into brackets. The system can optionally avoid rematches from previous tournaments if match history tracking is enabled.
-              Each match displays:
+              Bowlers are assigned to brackets at random.
+              If match history is enabled, BracketWorks can avoid recent rematches.
+              Each match card shows:
             </p>
             <ul>
-              <li><strong>Player names</strong> - Click to view player details</li>
-              <li><strong>Scores</strong> - Game scores for each player</li>
-              <li><strong>Status badges</strong> - TIE or SPLIT indicators when applicable</li>
-              <li><strong>Winner highlight</strong> - Green border around the winning player</li>
+              <li><strong>Player names</strong> - Click to view details</li>
+              <li><strong>Scores</strong> - Game scores for each bowler</li>
+              <li><strong>Status badges</strong> - TIE or SPLIT when needed</li>
+              <li><strong>Winner highlight</strong> - Green border around the winner</li>
             </ul>
           </section>
         </div>

@@ -47,40 +47,41 @@ export default function ExplainEntriesModal({ isOpen, onClose }: ExplainEntriesM
           <section className={styles.section}>
             <h3>History Search</h3>
             <p>
-              Search for bowlers who have entered previous tournaments by name or USBC number.
-              Selecting a result pre-fills the entry form with their saved information, so no need to re-enter their average or USBC number.
+              Look up bowlers from past tournaments by name or USBC number.
+              When you select a result, the form fills in automatically so you do not have to type everything again.
             </p>
           </section>
 
           <section className={styles.section}>
             <h3>Registering Bowlers</h3>
             <p>
-              Use the entry form to add bowlers to the selected squad. Each bowler is registered with their name, USBC number, and average.
-              The average is used to calculate handicap scores for any handicap bracket programs.
+              Use the entry form to add bowlers to the active squad.
+              Each entry includes name, USBC number, and average.
+              Average is used for handicap calculations in handicap programs.
             </p>
           </section>
 
           <section className={styles.section}>
             <h3>Bracket Entries</h3>
             <p>
-              For each bowler, select which bracket programs they are entering, for example Scratch, Handicap, Women&apos;s, Seniors, or Juniors.
-              Each enabled program shows its entry fee. The total cost for the bowler is calculated automatically.
+              For each bowler, choose the bracket programs they are entering, like Scratch, Handicap, Women&apos;s, Seniors, or Juniors.
+              Entry fees are shown per program, and the total is calculated automatically.
             </p>
           </section>
 
           <section className={styles.section}>
             <h3>Side Pot Entries</h3>
             <p>
-              If side pots are enabled on the Dashboard (e.g., High Game Scratch, High Series Handicap), you can opt each bowler in per pot.
-              Side pot entries are tracked separately from bracket entries and are paid out on the Payouts page.
+              If side pots are enabled on the Dashboard (for example High Game Scratch or High Series Handicap), you can opt each bowler in one pot at a time.
+              Side pots are tracked separately from bracket entries and paid out on the Payouts page.
             </p>
           </section>
 
           <section className={styles.section}>
             <h3>Tournament Summary</h3>
             <p>
-              The summary at the top of the entries list shows the total players, entries per program, and revenue collected for the squad.
-              The bracket count is an estimate, actual brackets may vary.
+              The summary at the top shows total bowlers, entries by program, and collected revenue for the squad.
+              Bracket count is an estimate and can change based on final entries.
             </p>
           </section>
         </div>
