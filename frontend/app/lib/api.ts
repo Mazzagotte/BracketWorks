@@ -127,6 +127,9 @@ export class ApiClient {
     const lowerUrl = url.toLowerCase();
     if (
       lowerUrl.includes('/api/v1/scores') ||
+      lowerUrl.includes('/api/v1/bowlers') ||
+      lowerUrl.includes('/api/v1/squads/') ||
+      lowerUrl.includes('/api/v1/brackets/status') ||
       lowerUrl.includes('/api/v1/brackets/generate-multiple') ||
       lowerUrl.includes('/api/v1/public/live')
     ) {
