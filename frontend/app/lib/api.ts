@@ -86,7 +86,12 @@ export class ApiClient {
     this.defaultRequestHeaders = {
       'Content-Type': 'application/json',
     };
-    this.getAuthToken = getAuthToken || (() => typeof window !== 'undefined' ? localStorage.getItem('token') : null);
+    this.getAuthToken = getAuthToken || (() => {
+      if (typeof window === 'undefined') {
+        return null;
+      }
+      return sessionStorage.getItem('token') || localStorage.getItem('token');
+    });
   }
 
   private getCacheKey(endpoint: string, options: RequestInit): string {
@@ -151,6 +156,7 @@ export class ApiClient {
     if (typeof window === 'undefined') {
       return;
     }
+    sessionStorage.removeItem('token');
     localStorage.removeItem('token');
     localStorage.removeItem('session_id');
     localStorage.removeItem('user_id');
@@ -195,7 +201,8 @@ export class ApiClient {
           return null;
         }
 
-        localStorage.setItem('token', data.access_token);
+        sessionStorage.setItem('token', data.access_token);
+        localStorage.removeItem('token');
         if (data.session_id) {
           localStorage.setItem('session_id', data.session_id);
         }

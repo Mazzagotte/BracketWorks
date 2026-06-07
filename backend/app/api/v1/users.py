@@ -56,6 +56,11 @@ def _csrf_cookie_domain() -> str | None:
     return domain if domain else None
 
 
+def _access_cookie_domain() -> str | None:
+    domain = settings.ACCESS_TOKEN_COOKIE_DOMAIN.strip()
+    return domain if domain else None
+
+
 def _set_auth_no_store(response: Response) -> None:
     response.headers["Cache-Control"] = "no-store"
     response.headers["Pragma"] = "no-cache"
@@ -71,6 +76,19 @@ def _set_refresh_cookie(response: Response, refresh_token: str) -> None:
         max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
         path=settings.REFRESH_TOKEN_COOKIE_PATH,
         domain=_refresh_cookie_domain(),
+    )
+
+
+def _set_access_cookie(response: Response, access_token: str) -> None:
+    response.set_cookie(
+        key=settings.ACCESS_TOKEN_COOKIE_NAME,
+        value=access_token,
+        httponly=True,
+        secure=settings.ACCESS_TOKEN_COOKIE_SECURE,
+        samesite=settings.ACCESS_TOKEN_COOKIE_SAMESITE.lower(),
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        path=settings.ACCESS_TOKEN_COOKIE_PATH,
+        domain=_access_cookie_domain(),
     )
 
 
@@ -97,6 +115,16 @@ def _clear_refresh_cookie(response: Response) -> None:
     )
 
 
+def _clear_access_cookie(response: Response) -> None:
+    response.delete_cookie(
+        key=settings.ACCESS_TOKEN_COOKIE_NAME,
+        path=settings.ACCESS_TOKEN_COOKIE_PATH,
+        domain=_access_cookie_domain(),
+        secure=settings.ACCESS_TOKEN_COOKIE_SECURE,
+        samesite=settings.ACCESS_TOKEN_COOKIE_SAMESITE.lower(),
+    )
+
+
 def _clear_csrf_cookie(response: Response) -> None:
     response.delete_cookie(
         key=settings.CSRF_COOKIE_NAME,
@@ -114,6 +142,10 @@ def _resolve_refresh_token(request: Request) -> str | None:
 
 def _issue_csrf_token() -> str:
     return secrets.token_urlsafe(32)
+
+
+def _normalize_username_for_auth(value: str) -> str:
+    return (value or "").strip().lower()
 
 
 def _validate_csrf(request: Request) -> None:
@@ -320,7 +352,7 @@ def _revoke_all_user_sessions(db: Session, user_id: int, now: datetime | None = 
 
 
 def _authenticate_and_issue_tokens(username: str, password: str, db: Session, request: Request) -> schemas.TokenPairResponse:
-    normalized_username = username.strip()
+    normalized_username = _normalize_username_for_auth(username)
     source_ip_hash = _client_ip_hash(request)
     _enforce_login_rate_limit(db, normalized_username, source_ip_hash)
 
@@ -452,6 +484,7 @@ def login(
 ):
     tokens = _authenticate_and_issue_tokens(form_data.username, form_data.password, db, request)
     _set_auth_no_store(response)
+    _set_access_cookie(response, tokens.access_token)
     if tokens.refresh_token:
         _set_refresh_cookie(response, tokens.refresh_token)
         _set_csrf_cookie(response, _issue_csrf_token())
@@ -467,6 +500,7 @@ def login_json(
 ):
     tokens = _authenticate_and_issue_tokens(login_data.username, login_data.password, db, request)
     _set_auth_no_store(response)
+    _set_access_cookie(response, tokens.access_token)
     if tokens.refresh_token:
         _set_refresh_cookie(response, tokens.refresh_token)
         _set_csrf_cookie(response, _issue_csrf_token())
@@ -486,6 +520,7 @@ def refresh_tokens(
     now = _utcnow()
     refresh_token = _resolve_refresh_token(request)
     if not refresh_token:
+        _clear_access_cookie(response)
         _clear_refresh_cookie(response)
         _clear_csrf_cookie(response)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing refresh token")
@@ -498,6 +533,7 @@ def refresh_tokens(
         .first()
     )
     if not session:
+        _clear_access_cookie(response)
         _clear_refresh_cookie(response)
         _clear_csrf_cookie(response)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
@@ -505,6 +541,7 @@ def refresh_tokens(
     if session.is_revoked or session.expires_at <= now:
         if session.is_revoked:
             _revoke_token_family(db, session.token_family)
+        _clear_access_cookie(response)
         _clear_refresh_cookie(response)
         _clear_csrf_cookie(response)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token is no longer valid")
@@ -520,6 +557,7 @@ def refresh_tokens(
     refreshed = _issue_session_tokens(user=user, db=db, request=request, token_family=session.token_family)
     session.replaced_by_session_id = refreshed.session_id
     db.commit()
+    _set_access_cookie(response, refreshed.access_token)
     if refreshed.refresh_token:
         _set_refresh_cookie(response, refreshed.refresh_token)
         _set_csrf_cookie(response, _issue_csrf_token())
@@ -622,6 +660,7 @@ def logout(
                 revoked_sessions = 1
 
     db.commit()
+    _clear_access_cookie(response)
     _clear_refresh_cookie(response)
     _clear_csrf_cookie(response)
     return schemas.SessionRevokeResponse(revoked_sessions=revoked_sessions)
@@ -806,7 +845,11 @@ def reset_password(payload: schemas.PasswordResetConfirmRequest, db: Session = D
 @router.post("/signup", response_model=schemas.UserOut)
 def signup(user: schemas.UserCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     # Check if user exists
-    existing = db.query(models.User).filter(models.User.username == user.username).first()
+    requested_username = (user.username or "").strip()
+    if len(requested_username) < 3:
+        raise HTTPException(status_code=400, detail="Username must be at least 3 characters")
+
+    existing = db.query(models.User).filter(models.User.username.ilike(requested_username)).first()
     if existing:
         raise HTTPException(status_code=400, detail="Username already exists")
     normalized_email = user.email.strip().lower()
@@ -823,7 +866,7 @@ def signup(user: schemas.UserCreate, background_tasks: BackgroundTasks, db: Sess
     hashed_password = pwd_context.hash(user.password)
     # Create user
     db_user = models.User(
-        username=user.username,
+        username=requested_username,
         email=normalized_email,
         first_name=user.first_name,
         last_name=user.last_name,
@@ -880,7 +923,7 @@ def check_username(username: str, db: Session = Depends(get_db)):
 
     existing = (
         db.query(models.User.id)
-        .filter(models.User.username == normalized_username)
+        .filter(models.User.username.ilike(normalized_username))
         .first()
     )
 

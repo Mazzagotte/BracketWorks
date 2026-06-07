@@ -41,7 +41,7 @@ type TournamentBootstrapResponse = {
 export default function ScoresPage() {
   // Authentication check - must be at the top
   const { isUserAuthenticated, isAuthInitialized, authToken, currentUser } = useAuth();
-  const storedAuthToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  const storedAuthToken = typeof window !== 'undefined' ? (sessionStorage.getItem('token') || localStorage.getItem('token')) : null;
   const sessionToken = authToken || storedAuthToken;
 
   // Check if we have tokens in localStorage even if auth context isn't ready

@@ -282,11 +282,11 @@ class TournamentBase(BaseModel):
 
 
 class TournamentCreate(TournamentBase):
-    pass  # user_id will be set from the authenticated user, not from request body
+    is_public: bool = False
 
 
 class TournamentUpdate(TournamentBase):
-    pass
+    is_public: Optional[bool] = None
 
 
 class Tournament(TournamentBase):
@@ -294,6 +294,7 @@ class Tournament(TournamentBase):
 
     id: int
     user_id: int
+    is_public: bool
     entry_count: Optional[int] = None
     brackets_configured: Optional[bool] = None
 

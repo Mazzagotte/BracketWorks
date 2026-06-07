@@ -313,7 +313,7 @@ export default function PlayersPage() {
       isInitialized: isAuthInitialized,
       hasToken: !!authToken,
       hasUser: !!currentUser,
-      tokenFromStorage: !!localStorage.getItem('token'),
+      tokenFromStorage: !!(sessionStorage.getItem('token') || localStorage.getItem('token')),
       userIdFromStorage: !!localStorage.getItem('user_id')
     });
   }, [isUserAuthenticated, isAuthInitialized, authToken, currentUser]);

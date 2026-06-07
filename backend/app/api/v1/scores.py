@@ -8,11 +8,22 @@ import logging
 
 from app.api.deps import get_current_user, get_db
 from app.core.models import PlayerScore, TournamentBracketSettings, TournamentPlayer
+from app.core.config import settings
+from app.core import models
 from app.core.idempotency import IdempotencyReplay, begin_request, complete_request, fail_request
 from app.services.payouts import reset_payouts_if_needed
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+
+def _verify_tournament_access(db: Session, tournament_id: int, current_user) -> models.Tournament:
+    tournament = db.query(models.Tournament).filter(models.Tournament.id == tournament_id).first()
+    if not tournament:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tournament not found")
+    if tournament.user_id != current_user.id and not getattr(current_user, "is_admin", False):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to access this tournament")
+    return tournament
 
 
 def calculate_handicap(average: int, handicap_base: float, handicap_percentage: float) -> int:
@@ -105,6 +116,13 @@ def get_scores(
 ):
     """Get scores with optional filtering"""
     query = db.query(PlayerScore)
+
+    if tournament_id:
+        _verify_tournament_access(db, tournament_id, current_user)
+    elif not getattr(current_user, "is_admin", False):
+        query = query.join(models.Tournament, models.Tournament.id == PlayerScore.tournament_id).filter(
+            models.Tournament.user_id == current_user.id
+        )
     
     if tournament_id:
         query = query.filter(PlayerScore.tournament_id == tournament_id)
@@ -128,6 +146,8 @@ def create_or_update_score(
     
     idempotency_record = None
     try:
+        _verify_tournament_access(db, score_data.tournament_id, current_user)
+
         if idempotency_key:
             replay_or_record = begin_request(
                 db,
@@ -146,6 +166,12 @@ def create_or_update_score(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Player not found"
+            )
+
+        if player.tournament_id != score_data.tournament_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Player does not belong to the provided tournament"
             )
 
         # Calculate handicap and game totals
@@ -234,6 +260,8 @@ def update_score(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Score not found"
             )
+
+        _verify_tournament_access(db, score.tournament_id, current_user)
         
         # Get player information
         player = db.query(TournamentPlayer).filter(TournamentPlayer.id == score.player_id).first()
@@ -317,6 +345,8 @@ def delete_score(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Score not found"
             )
+
+        _verify_tournament_access(db, score.tournament_id, current_user)
         
         db.delete(score)
         db.commit()
@@ -351,8 +381,13 @@ def dev_clear_game_scores(
     DEV ONLY — Null out all scores for a specific game number (2 or 3)
     across all players in the given tournament/squad.
     """
+    if not settings.is_development:
+        raise HTTPException(status_code=404, detail="Not found")
+
     if game_number not in (2, 3):
         raise HTTPException(status_code=400, detail="Only game 2 or game 3 can be cleared with this endpoint")
+
+    _verify_tournament_access(db, tournament_id, current_user)
 
     query = db.query(PlayerScore).filter(PlayerScore.tournament_id == tournament_id)
     if squad_id is not None:

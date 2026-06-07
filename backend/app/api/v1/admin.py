@@ -13,7 +13,13 @@ from sqlalchemy.orm import Session
 from ..deps import get_db, require_admin_user
 from ...core import models
 from ...core.password_policy import PasswordPolicyError, validate_password_policy
-_pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__default_rounds=10)
+from ...core.config import settings
+
+_pwd_context = CryptContext(
+    schemes=["bcrypt"],
+    deprecated="auto",
+    bcrypt__default_rounds=settings.PASSWORD_BCRYPT_ROUNDS,
+)
 
 
 class AdminUpdateUserPayload(BaseModel):
@@ -41,6 +47,7 @@ class AdminUpdateTournamentPayload(BaseModel):
     location: Optional[str] = None
     start_date: Optional[str] = None
     end_date: Optional[str] = None
+    is_public: Optional[bool] = None
 
 
 class AdminReassignTournamentPayload(BaseModel):
@@ -771,6 +778,7 @@ def admin_update_tournament(
         "location": tournament.location,
         "start_date": tournament.start_date,
         "end_date": tournament.end_date,
+        "is_public": tournament.is_public,
     }
 
     if payload.name is not None:
@@ -781,6 +789,8 @@ def admin_update_tournament(
         tournament.start_date = payload.start_date.strip() or None
     if payload.end_date is not None:
         tournament.end_date = payload.end_date.strip() or None
+    if payload.is_public is not None:
+        tournament.is_public = payload.is_public
 
     _write_admin_audit(
         db,
@@ -795,6 +805,7 @@ def admin_update_tournament(
                 "location": tournament.location,
                 "start_date": tournament.start_date,
                 "end_date": tournament.end_date,
+                "is_public": tournament.is_public,
             },
         },
     )
@@ -810,6 +821,7 @@ def admin_update_tournament(
             "location": tournament.location,
             "start_date": tournament.start_date,
             "end_date": tournament.end_date,
+            "is_public": tournament.is_public,
         },
     }
 

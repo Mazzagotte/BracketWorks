@@ -299,6 +299,7 @@ class Tournament(Base):
     start_date: Mapped[str | None] = mapped_column(String, nullable=True)
     end_date: Mapped[str | None] = mapped_column(String, nullable=True)
     squad_times: Mapped[str | None] = mapped_column(Text, nullable=True)
+    is_public: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, index=True)
     archived_at: Mapped[datetime | None] = mapped_column(
         DateTime, nullable=True, index=True
     )

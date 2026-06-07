@@ -60,6 +60,9 @@ def _route_rate_limit(path: str, method: str) -> tuple[str, int, int] | None:
     if path in {"/api/v1/users/login", "/api/v1/users/login-json"}:
         return ("auth-login", settings.RATE_LIMIT_LOGIN_PER_MINUTE, 60)
 
+    if path == "/api/v1/users/check-username":
+        return ("auth-username-check", settings.RATE_LIMIT_USERNAME_CHECK_PER_MINUTE, 60)
+
     if path in {"/api/v1/users/request-password-reset", "/api/v1/users/verify-reset-code", "/api/v1/users/reset-password", "/api/v1/users/request-email-verification", "/api/v1/users/verify-email"}:
         return ("auth-reset", settings.RATE_LIMIT_PASSWORD_RESET_PER_MINUTE, 60)
 

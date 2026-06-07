@@ -33,6 +33,11 @@ class Settings(BaseSettings):
     # Security
     SECRET_KEY: str = "change-me-in-production"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 120
+    ACCESS_TOKEN_COOKIE_NAME: str = "access_token"
+    ACCESS_TOKEN_COOKIE_PATH: str = "/api/v1"
+    ACCESS_TOKEN_COOKIE_DOMAIN: str = ""
+    ACCESS_TOKEN_COOKIE_SAMESITE: str = "lax"
+    ACCESS_TOKEN_COOKIE_SECURE: bool = True
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30
     REFRESH_TOKEN_COOKIE_NAME: str = "refresh_token"
     REFRESH_TOKEN_COOKIE_PATH: str = "/api/v1/users"
@@ -77,6 +82,7 @@ class Settings(BaseSettings):
     REDIS_URL: str = ""
     RATE_LIMIT_KEY_PREFIX: str = "bracketworks:ratelimit"
     RATE_LIMIT_LOGIN_PER_MINUTE: int = 10
+    RATE_LIMIT_USERNAME_CHECK_PER_MINUTE: int = 20
     RATE_LIMIT_PASSWORD_RESET_PER_MINUTE: int = 6
     RATE_LIMIT_PUBLIC_PER_MINUTE: int = 120
     RATE_LIMIT_BRACKET_GENERATE_PER_MINUTE: int = 20
@@ -124,6 +130,12 @@ class Settings(BaseSettings):
 
         if self.REFRESH_TOKEN_COOKIE_SAMESITE.lower() == "none" and not self.REFRESH_TOKEN_COOKIE_SECURE:
             raise ValueError("REFRESH_TOKEN_COOKIE_SECURE must be true when REFRESH_TOKEN_COOKIE_SAMESITE is 'none'")
+
+        if self.ACCESS_TOKEN_COOKIE_SAMESITE.lower() not in valid_samesite:
+            raise ValueError("ACCESS_TOKEN_COOKIE_SAMESITE must be one of: lax, strict, none")
+
+        if self.ACCESS_TOKEN_COOKIE_SAMESITE.lower() == "none" and not self.ACCESS_TOKEN_COOKIE_SECURE:
+            raise ValueError("ACCESS_TOKEN_COOKIE_SECURE must be true when ACCESS_TOKEN_COOKIE_SAMESITE is 'none'")
 
         if self.CSRF_COOKIE_SAMESITE.lower() not in valid_samesite:
             raise ValueError("CSRF_COOKIE_SAMESITE must be one of: lax, strict, none")

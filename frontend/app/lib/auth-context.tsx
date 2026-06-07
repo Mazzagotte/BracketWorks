@@ -41,6 +41,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const clearAuthState = () => {
     setAuthToken(null);
     setCurrentUser(null);
+    sessionStorage.removeItem('token');
     localStorage.removeItem('token');
     localStorage.removeItem('session_id');
     localStorage.removeItem('user_id');
@@ -52,7 +53,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (typeof window === 'undefined') return { authToken: null, currentUser: null };
     
     try {
-      const storedAuthToken = localStorage.getItem('token');
+      const storedAuthToken = sessionStorage.getItem('token') || localStorage.getItem('token');
       const storedUserId = localStorage.getItem('user_id');
       const storedFirstName = localStorage.getItem('first_name');
       const storedIsAdmin = localStorage.getItem('is_admin');
@@ -92,19 +93,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (!isComponentMounted) return;
       
       const storedToken = localStorage.getItem('token');
+      const sessionToken = sessionStorage.getItem('token');
+      const effectiveToken = sessionToken || storedToken;
       const storedUserId = localStorage.getItem('user_id');
       const storedFirstName = localStorage.getItem('first_name');
       const storedIsAdmin = localStorage.getItem('is_admin');
       
-      if (storedToken && storedUserId && (!authToken || !currentUser)) {
+      if (effectiveToken && storedUserId && (!authToken || !currentUser)) {
         logger.info('Restoring auth state from localStorage on storage change', { userId: storedUserId });
-        setAuthToken(storedToken);
+        setAuthToken(effectiveToken);
         setCurrentUser({ 
           id: storedUserId, 
           name: storedFirstName || undefined,
           isAdmin: storedIsAdmin === '1' || storedIsAdmin === 'true',
         });
-      } else if (!storedToken && (authToken || currentUser)) {
+      } else if (!effectiveToken && (authToken || currentUser)) {
         logger.info('Clearing auth state due to localStorage change');
         setAuthToken(null);
         setCurrentUser(null);
@@ -144,7 +147,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (!isComponentMounted) return; // Wait for hydration
 
     if (authToken && currentUser) {
-      localStorage.setItem('token', authToken);
+      sessionStorage.setItem('token', authToken);
+      localStorage.removeItem('token');
       localStorage.setItem('user_id', currentUser.id);
       localStorage.setItem('is_admin', currentUser.isAdmin ? 'true' : 'false');
     } else {
@@ -160,7 +164,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setCurrentUser({ id: userId, ...userData });
     
     // Immediately save to localStorage
-    localStorage.setItem('token', newAuthToken);
+    sessionStorage.setItem('token', newAuthToken);
+    localStorage.removeItem('token');
     if (authSession?.sessionId) {
       localStorage.setItem('session_id', authSession.sessionId);
     }
@@ -193,11 +198,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const logoutUser = (options?: LogoutOptions) => {
     const fastRedirect = Boolean(options?.fastRedirect);
-    const existingToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const existingToken = typeof window !== 'undefined' ? (sessionStorage.getItem('token') || localStorage.getItem('token')) : null;
 
     // Clear critical auth state first so redirects are immediate and deterministic.
     setAuthToken(null);
     setCurrentUser(null);
+    sessionStorage.removeItem('token');
     localStorage.removeItem('token');
     localStorage.removeItem('session_id');
     localStorage.removeItem('user_id');
