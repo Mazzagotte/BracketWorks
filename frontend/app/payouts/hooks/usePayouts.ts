@@ -110,7 +110,7 @@ export function usePayouts(tournamentId: number | null, selectedSquadId: number 
     setError(null)
 
     try {
-      const token = localStorage.getItem('token')
+      const token = sessionStorage.getItem('token') || localStorage.getItem('token')
       if (!token) {
         setError('Not authenticated')
         return
@@ -152,7 +152,7 @@ export function usePayouts(tournamentId: number | null, selectedSquadId: number 
     if (!tournamentId) return
 
     try {
-      const token = localStorage.getItem('token')
+      const token = sessionStorage.getItem('token') || localStorage.getItem('token')
       if (!token) return
 
       const squadParam = selectedSquadId ? `?squad_id=${selectedSquadId}` : ''

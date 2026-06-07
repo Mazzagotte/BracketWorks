@@ -157,7 +157,7 @@ export function DevAuthStatus() {
           <div className={styles.section}>
             <div className={styles.sectionTitle}>Local Storage</div>
             <div className={styles.meta}>
-              token: {typeof window !== 'undefined' && localStorage.getItem('token') ? 'Present' : 'Missing'}
+              token: {typeof window !== 'undefined' && (sessionStorage.getItem('token') || localStorage.getItem('token')) ? 'Present' : 'Missing'}
             </div>
             <div className={styles.meta}>
               user_id: {typeof window !== 'undefined' && localStorage.getItem('user_id') ? 'Present' : 'Missing'}

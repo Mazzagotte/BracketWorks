@@ -31,7 +31,7 @@ def _set_public_cache_headers(response: Response, *, max_age: int, stale_while_r
 
 def _get_tournament_or_404(db: Session, tournament_id: int) -> models.Tournament:
     tournament = db.query(models.Tournament).filter(models.Tournament.id == tournament_id).first()
-    if not tournament:
+    if not tournament or not getattr(tournament, "is_public", False):
         raise HTTPException(status_code=404, detail="Tournament not found")
     return tournament
 
@@ -43,7 +43,10 @@ def _get_tournament_by_name_or_404(db: Session, tournament_name: str) -> models.
 
     matches = (
         db.query(models.Tournament)
-        .filter(func.lower(models.Tournament.name) == name.lower())
+        .filter(
+            func.lower(models.Tournament.name) == name.lower(),
+            models.Tournament.is_public.is_(True),
+        )
         .order_by(models.Tournament.id.desc())
         .all()
     )
@@ -73,7 +76,12 @@ def _get_tournament_by_slug_or_404(db: Session, tournament_slug: str) -> models.
     if not slug:
         raise HTTPException(status_code=404, detail="Tournament not found")
 
-    candidates = db.query(models.Tournament).order_by(models.Tournament.id.desc()).all()
+    candidates = (
+        db.query(models.Tournament)
+        .filter(models.Tournament.is_public.is_(True))
+        .order_by(models.Tournament.id.desc())
+        .all()
+    )
     matches = [t for t in candidates if _slugify_tournament_name(t.name) == slug]
 
     if not matches:

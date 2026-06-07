@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime, timezone
 
-from fastapi import HTTPException, Depends
+from fastapi import HTTPException, Depends, Request
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
@@ -65,9 +65,13 @@ oauth2_scheme = OAuth2PasswordBearer(
 )
 
 def get_current_user(
+    request: Request,
     token: str | None = Depends(oauth2_scheme),
     db: Session = Depends(get_db),
 ):
+    if not token:
+        token = (request.cookies.get(settings.ACCESS_TOKEN_COOKIE_NAME) or "").strip() or None
+
     if not token:
         raise HTTPException(status_code=401, detail="Not authenticated")
     

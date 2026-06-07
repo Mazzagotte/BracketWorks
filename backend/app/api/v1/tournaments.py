@@ -51,6 +51,7 @@ def create_tournament(
             start_date=tournament.start_date,
             end_date=tournament.end_date,
             squad_times=json.dumps(tournament.squad_times),
+            is_public=tournament.is_public,
             user_id=user.id
         )
         db.add(db_tournament)
@@ -208,6 +209,8 @@ def get_tournament(
     t = db.query(models.Tournament).filter(models.Tournament.id == tournament_id).first()
     if not t:
         raise HTTPException(status_code=404, detail="Tournament not found")
+    if t.user_id != user.id and not getattr(user, 'is_admin', False):
+        raise HTTPException(status_code=403, detail="Not authorized to view this tournament")
     return _tournament_to_dict(t)
 
 @router.put("/{tournament_id}", response_model=schemas.Tournament)
@@ -231,6 +234,8 @@ def update_tournament(
         if tournament.end_date is not None:
             db_t.end_date = tournament.end_date
         db_t.squad_times = json.dumps(tournament.squad_times)
+        if tournament.is_public is not None:
+            db_t.is_public = tournament.is_public
         db.commit()
         db.refresh(db_t)
         # Parse squad_times before returning for API response
