@@ -1,16 +1,14 @@
 "use client";
 
 import { type ReactNode, useEffect, useRef, useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
-import Sidebar from './Sidebar';
 import { MobileNav } from './MobileNav';
-import ModernHeader from '../app/components/ModernHeader';
+import TopNav from '../app/components/TopNav';
 import { ErrorBoundary } from '../app/components/ErrorBoundary';
 import { DevAuthStatus } from '../app/components/DevAuthStatus';
 import { TimeSlotReminderModal } from '../app/components/TimeSlotReminderModal';
 import { useAuth } from '../app/lib/auth-context';
-import { useHeader } from '../app/lib/header-context';
 import { resetScrollLocks, setBodyInteractionState } from '../app/utils/modalUtils';
 import styles from '../app/layout.module.css';
 
@@ -29,17 +27,18 @@ function isPublicRoute(pathname: string): boolean {
 
 function ClientLayout({ children }: { children: ReactNode }) {
   const { isUserAuthenticated, currentUser, isAuthInitialized } = useAuth();
-  const headerContext = useHeader();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const [firstName, setFirstName] = useState<string | undefined>(undefined);
   const [isMobile, setIsMobile] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState('');
   const [mounted, setMounted] = useState(false);
   const wasAuthenticated = useRef(false);
   const currentPath = pathname || '/';
   const isPublicPath = isPublicRoute(currentPath);
+  const isEmbeddedModalRoute = searchParams.get('modal') === '1';
 
   useEffect(() => {
     setMounted(true);
@@ -90,7 +89,7 @@ function ClientLayout({ children }: { children: ReactNode }) {
       };
     }
 
-    if (isMobile && sidebarOpen) {
+    if (isMobile && mobileNavOpen) {
       setBodyInteractionState({ scrollLocked: true, touchLocked: true });
     } else {
       setBodyInteractionState({ scrollLocked: false, touchLocked: false });
@@ -99,7 +98,7 @@ function ClientLayout({ children }: { children: ReactNode }) {
     return () => {
       setBodyInteractionState({ scrollLocked: false, touchLocked: false });
     };
-  }, [isMobile, isPublicPath, sidebarOpen]);
+  }, [isMobile, isPublicPath, mobileNavOpen]);
 
   useEffect(() => {
     return () => {
@@ -107,7 +106,7 @@ function ClientLayout({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const showAuthenticatedShell = mounted && isAuthInitialized && isUserAuthenticated && !isPublicPath;
+  const showAuthenticatedShell = mounted && isAuthInitialized && isUserAuthenticated && !isPublicPath && !isEmbeddedModalRoute;
 
   if (!mounted) {
     return (
@@ -121,51 +120,40 @@ function ClientLayout({ children }: { children: ReactNode }) {
     );
   }
 
+  if (isEmbeddedModalRoute) {
+    return (
+      <ErrorBoundary>
+        <div id="main-content">
+          <ErrorBoundary>{children}</ErrorBoundary>
+        </div>
+      </ErrorBoundary>
+    );
+  }
+
   return (
     <ErrorBoundary>
+      {/* Unified top nav — desktop pill bar */}
       {!isMobile && showAuthenticatedShell && (
-        <ModernHeader
-          title={headerContext.title}
-          subtitle={headerContext.subtitle}
-          actions={headerContext.actions}
-        />
+        <TopNav firstName={firstName} />
       )}
 
-      {!isMobile && showAuthenticatedShell && (
-        <Sidebar
+      {/* Mobile top bar */}
+      {isMobile && showAuthenticatedShell && (
+        <TopNav
           firstName={firstName}
-          isMobile={false}
-          isOpen={true}
-          onToggle={() => setSidebarOpen(!sidebarOpen)}
-          onClose={() => setSidebarOpen(false)}
+          isMobile={true}
+          onMobileMenuOpen={() => setMobileNavOpen(true)}
         />
       )}
 
+      {/* Mobile slide-in nav drawer */}
       {isMobile && showAuthenticatedShell && (
         <MobileNav
-          isOpen={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
+          isOpen={mobileNavOpen}
+          onClose={() => setMobileNavOpen(false)}
           firstName={firstName}
           currentPage={currentPage}
         />
-      )}
-
-      {isMobile && showAuthenticatedShell && (
-        <header className={styles.mobileHeader}>
-          <button
-            onClick={() => setSidebarOpen(true)}
-            aria-label="Open navigation menu"
-            className={styles.hamburgerBtn}
-          >
-            ☰
-          </button>
-          <div className={styles.mobileHeaderCenter}>
-            <h1 className={styles.mobileHeaderTitle}>
-              {headerContext.title || currentPage.charAt(0).toUpperCase() + currentPage.slice(1)}
-            </h1>
-            <span className={styles.mobileHeaderBrand}>BracketWorks</span>
-          </div>
-        </header>
       )}
 
       <main

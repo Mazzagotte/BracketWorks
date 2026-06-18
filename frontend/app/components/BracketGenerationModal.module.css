@@ -616,3 +616,307 @@
     min-width: 420px;
   }
 }
+
+/* ===================================
+   Dashboard / Entries aligned polish
+   =================================== */
+
+.modalOverlay {
+  background: rgba(4, 5, 10, 0.76);
+  backdrop-filter: blur(6px);
+  animation: modalFadeIn 0.16s ease;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modalCard {
+  width: min(520px, calc(100vw - 32px));
+  min-width: 0;
+  max-width: 520px;
+  padding: 0;
+  overflow: hidden;
+  text-align: center;
+  color: rgba(241, 245, 249, 0.9);
+  background: rgba(20, 21, 30, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 3px solid rgba(255, 122, 0, 0.78);
+  border-radius: 24px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.52);
+  animation: modalScaleIn 0.16s ease;
+}
+
+@keyframes modalScaleIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.loadingContent,
+.successContent,
+.errorContent {
+  padding: 2.1rem 2rem 2rem;
+  gap: 0.9rem;
+}
+
+.contextInfo {
+  padding: 0.7rem 0.9rem;
+  background: rgba(255, 122, 0, 0.08);
+  border: 1px solid rgba(255, 146, 72, 0.28);
+  border-radius: 12px;
+}
+
+.contextTournament {
+  color: rgba(246, 249, 255, 0.94);
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.contextSquad {
+  color: rgba(180, 189, 205, 0.74);
+  font-size: 0.78rem;
+  font-weight: 650;
+  letter-spacing: 0;
+}
+
+.animationContainer {
+  width: 88px;
+  height: 88px;
+}
+
+.bowlingBall {
+  width: 70px;
+  height: 70px;
+}
+
+.ballBody {
+  width: 70px;
+  height: 70px;
+  background:
+    radial-gradient(circle at 32% 26%, rgba(255, 255, 255, 0.92), rgba(203, 213, 225, 0.86) 25%, rgba(88, 96, 110, 0.98) 64%, rgba(15, 18, 28, 1) 100%);
+  border: 2px solid rgba(226, 232, 240, 0.78);
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.38),
+    inset 3px 3px 10px rgba(255, 255, 255, 0.22),
+    inset -4px -5px 14px rgba(0, 0, 0, 0.52);
+}
+
+.fingerHole {
+  width: 9px;
+  height: 9px;
+  background: rgba(8, 9, 15, 0.92);
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.86);
+}
+
+.mainMessage,
+.successMessage,
+.errorMessage {
+  color: rgba(246, 249, 255, 0.95);
+  font-size: 1.12rem;
+  line-height: 1.2;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.generationNote,
+.successSubtitle,
+.errorSuggestion {
+  max-width: 390px;
+  color: rgba(180, 189, 205, 0.76);
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.generationWarning {
+  padding: 0.52rem 0.78rem;
+  color: rgba(255, 219, 190, 0.94);
+  background: rgba(255, 122, 0, 0.1);
+  border: 1px solid rgba(255, 146, 72, 0.3);
+  border-radius: 10px;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  font-weight: 750;
+  letter-spacing: 0;
+}
+
+.statsContainer {
+  gap: 0.55rem;
+  margin: 0;
+}
+
+.statItem,
+.statItemRefund {
+  padding: 0.72rem 0.85rem;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(226, 232, 240, 0.12);
+  border-radius: 12px;
+}
+
+.statCount {
+  color: #58e6a7;
+  font-size: 1rem;
+  letter-spacing: 0;
+}
+
+.statLabel,
+.refundTitle {
+  color: rgba(246, 249, 255, 0.92);
+  font-size: 0.84rem;
+  letter-spacing: 0;
+}
+
+.refundDetail {
+  color: rgba(180, 189, 205, 0.76);
+  font-size: 0.76rem;
+}
+
+.errorIcon {
+  width: 58px;
+  height: 58px;
+  background: rgba(127, 29, 29, 0.22);
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  box-shadow: none;
+}
+
+.errorIcon::before {
+  content: '!';
+  color: rgba(254, 202, 202, 0.96);
+  font-size: 1.7rem;
+  font-weight: 900;
+}
+
+.technicalDetailsContainer {
+  margin-top: 0.35rem;
+}
+
+.technicalDetailsToggle {
+  min-height: 32px;
+  border: 1px solid rgba(226, 232, 240, 0.16);
+  border-radius: 10px;
+  color: rgba(203, 213, 225, 0.86);
+  background: rgba(255, 255, 255, 0.025);
+  font-size: 0.78rem;
+  font-weight: 750;
+  letter-spacing: 0;
+}
+
+.technicalDetailsToggle:hover {
+  color: rgba(255, 219, 190, 0.98);
+  background: rgba(255, 122, 0, 0.1);
+  border-color: rgba(255, 146, 72, 0.35);
+}
+
+.technicalDetails {
+  color: rgba(254, 202, 202, 0.92);
+  background: rgba(8, 9, 15, 0.72);
+  border: 1px solid rgba(248, 113, 113, 0.22);
+  border-radius: 10px;
+  font-size: 0.78rem;
+}
+
+.buttonContainer {
+  gap: 0.65rem;
+  margin-top: 0.6rem;
+}
+
+.button {
+  min-width: 132px;
+  min-height: 36px;
+  padding: 0.42rem 0.8rem;
+  border-radius: 11px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  box-shadow: none;
+}
+
+.button:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.primaryButton {
+  color: rgba(255, 241, 229, 0.98);
+  background: rgba(255, 122, 0, 0.2);
+  border: 1px solid rgba(255, 146, 72, 0.34);
+  box-shadow: none;
+}
+
+.primaryButton:hover {
+  background: rgba(255, 122, 0, 0.3);
+  border-color: rgba(255, 168, 92, 0.48);
+  box-shadow: none;
+}
+
+.secondaryButton {
+  color: rgba(203, 213, 225, 0.86);
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(226, 232, 240, 0.16);
+}
+
+.secondaryButton:hover {
+  color: rgba(255, 219, 190, 0.98);
+  background: rgba(255, 122, 0, 0.1);
+  border-color: rgba(255, 146, 72, 0.35);
+}
+
+.statusIndicator {
+  width: min(280px, 100%);
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.statusIndicatorBar {
+  display: block;
+  width: 42%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(255, 122, 0, 0.56), rgba(255, 177, 89, 0.88));
+  box-shadow: none;
+}
+
+@media (max-width: 480px) {
+  .modalCard {
+    width: calc(100vw - 20px);
+    max-width: calc(100vw - 20px);
+    padding: 0;
+  }
+
+  .loadingContent,
+  .successContent,
+  .errorContent {
+    padding: 1.65rem 1.1rem 1.2rem;
+  }
+
+  .buttonContainer {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .button {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modalOverlay,
+  .modalCard,
+  .bowlingBall,
+  .confetti,
+  .statItem,
+  .statItemRefund,
+  .errorIcon {
+    animation: none;
+  }
+}

@@ -62,9 +62,10 @@ html:has(.login-page-container) {
   width: 100% !important;
   max-width: 400px !important;
   padding: 48px 32px !important;
-  background: var(--color-brand-ivory-light) !important;
+  background: rgba(255, 255, 255, 0.025) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
   border-radius: 24px !important;
-  box-shadow: 0 20px 60px var(--opacity-black-15) !important;
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.34) !important;
   animation: slideUp 0.6s ease-out !important;
   text-align: center !important;
 }
@@ -82,22 +83,22 @@ html:has(.login-page-container) {
   height: 80px !important;
   margin: 0 auto 24px auto !important;
   padding: 16px !important;
-  background: linear-gradient(135deg, var(--color-border-light) 0%, var(--color-warning-surface) 100%) !important;
+  background: linear-gradient(145deg, rgba(255, 122, 0, 0.16) 0%, rgba(255, 122, 0, 0.06) 100%) !important;
   border-radius: 20px !important;
-  border: 1px solid var(--color-brand-border-faint) !important;
+  border: 1px solid rgba(255, 122, 0, 0.35) !important;
 }
 
 .login-title {
   font-size: var(--font-size-6xl) !important;
   font-weight: var(--font-weight-bold) !important;
   margin: 0 0 12px 0 !important;
-  color: var(--color-brand-gold-dark) !important;
+  color: rgba(244, 239, 232, 0.94) !important;
   letter-spacing: -0.5px !important;
   line-height: var(--line-height-tight) !important;
 }
 
 .login-subtitle {
-  color: var(--color-gray-500) !important;
+  color: rgba(244, 239, 232, 0.62) !important;
   font-size: var(--font-size-xl) !important;
   font-weight: var(--font-weight-medium) !important;
   margin: 0 0 32px 0 !important;
@@ -119,7 +120,7 @@ html:has(.login-page-container) {
   display: block !important;
   font-size: var(--font-size-md) !important;
   font-weight: var(--font-weight-medium) !important;
-  color: var(--color-text-primary) !important;
+  color: rgba(244, 239, 232, 0.8) !important;
   margin-bottom: 8px !important;
 }
 
@@ -130,16 +131,16 @@ html:has(.login-page-container) {
   padding: 0 16px !important;
   font-size: var(--font-size-xl) !important;
   font-weight: var(--font-weight-normal) !important;
-  border: 1px solid var(--color-border-medium) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
   border-radius: 12px !important;
-  background: var(--color-white) !important;
+  background: rgba(0, 0, 0, 0.22) !important;
   transition: all 0.2s ease !important;
   outline: none !important;
   box-shadow: none !important;
   letter-spacing: 0.3px !important;
   box-sizing: border-box !important;
   font-family: var(--font-family-primary) !important;
-  color: var(--color-text-primary) !important;
+  color: #f4efe8 !important;
 }
 
 .password-input {
@@ -148,8 +149,8 @@ html:has(.login-page-container) {
 
 .login-input:focus,
 .password-input:focus {
-  border-color: var(--color-brand-gold) !important;
-  box-shadow: 0 0 0 3px var(--color-border-light) !important;
+  border-color: rgba(255, 122, 0, 0.75) !important;
+  box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.12) !important;
 }
 
 .login-input.error,
@@ -162,7 +163,7 @@ html:has(.login-page-container) {
 
 .login-input::placeholder,
 .password-input::placeholder {
-  color: var(--color-gray-400) !important;
+  color: rgba(244, 239, 232, 0.45) !important;
   font-weight: 400 !important;
 }
 
@@ -186,8 +187,8 @@ html:has(.login-page-container) {
 }
 
 .password-toggle:hover {
-  background: var(--color-gray-100) !important;
-  color: var(--color-gray-700) !important;
+  background: rgba(255, 122, 0, 0.08) !important;
+  color: #ff9b1f !important;
 }
 
 .error-container {

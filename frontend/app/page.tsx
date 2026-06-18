@@ -6,7 +6,7 @@ import { PublicViewDemo } from './PublicViewDemo';
 
 export const metadata: Metadata = {
   title: 'Bowling Bracket Software for Tournaments | BracketWorks',
-  description: 'Run bowling brackets, side pots, live scoring, and payout review in one app. Built for tournament directors. Start free—no credit card required.',
+  description: 'Run bowling brackets, side pots, live scoring, and payout review in one app. Built for tournament directors. Start free - no credit card required.',
   alternates: {
     canonical: 'https://bracketworks.app/',
   },
@@ -171,11 +171,9 @@ export default function HomePage() {
         <div className={styles.heroGrid}>
           <div className={styles.heroContent}>
             <p className={styles.kicker}>Bowling Tournament Bracket Software</p>
-            <h1 className={styles.heroTitle}>
-              Smarter Brackets. Cleaner Payouts. Better Tournaments.
-            </h1>
+            <h1 className={styles.heroTitle}>BracketWorks</h1>
             <p className={styles.heroSubtitle}>
-              BracketWorks gives tournament directors one place to run brackets, side pots, live scoring, and payouts without juggling multiple tools.
+              Bowling tournament software for running brackets, side pots, live scoring, and payout review from the same command-center dashboard.
             </p>
             <div className={styles.heroCTA}>
               <Link href="/signup" className={`${styles.navBtn} ${styles.navBtnPrimary}`}>

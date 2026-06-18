@@ -9,10 +9,10 @@
 }
 
 .card {
-  background-color: var(--color-brand-ivory-light);
-  border: 1px solid var(--color-border-light);
+  background-color: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-soft);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.3);
   padding: 0;
   margin: 0;
   overflow: hidden;
@@ -21,11 +21,11 @@
 .cardTitle {
   margin: 0;
   padding: 14px 20px;
-  background: var(--color-brand-ivory);
-  border-bottom: 3px solid var(--color-brand-orange);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.015));
+  border-bottom: 1px solid rgba(255, 122, 0, 0.35);
   font-size: 1rem;
   font-weight: 700;
-  color: var(--color-brand-charcoal-deep);
+  color: rgba(244, 239, 232, 0.9);
 }
 
 .optionRow {
@@ -35,7 +35,7 @@
   column-gap: 16px;
   row-gap: 8px;
   padding: 0.8rem 20px;
-  border-top: 1px solid var(--color-border-soft);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .optionRow:first-of-type {
@@ -50,23 +50,23 @@
 .optionTitle {
   font-size: 0.95rem;
   font-weight: 600;
-  color: var(--color-brand-charcoal-deep);
+  color: rgba(244, 239, 232, 0.88);
   line-height: 1.25;
 }
 
 .optionHint {
   margin-top: 4px;
   font-size: 0.85rem;
-  color: var(--color-text-muted);
+  color: rgba(244, 239, 232, 0.54);
   line-height: 1.35;
 }
 
 .input {
   width: 100%;
   max-width: 360px;
-  border: 1px solid var(--color-border-muted);
-  background: var(--color-surface);
-  color: var(--color-brand-charcoal-deep);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.22);
+  color: #f4efe8;
   border-radius: 10px;
   padding: 9px 12px;
   font-size: 0.9rem;
@@ -92,9 +92,9 @@
 }
 
 .visibilityBtn {
-  border: 1px solid var(--color-border-subtle);
-  background: var(--color-gray-100);
-  color: var(--color-secondary);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(0, 0, 0, 0.2);
+  color: rgba(244, 239, 232, 0.8);
   border-radius: 8px;
   padding: 7px 10px;
   font-size: 0.8rem;
@@ -116,7 +116,7 @@
   height: 6px;
   flex: 1;
   border-radius: 999px;
-  background: var(--color-overlay-soft);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .meterOn {

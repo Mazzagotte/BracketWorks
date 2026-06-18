@@ -574,3 +574,192 @@
   grid-column: 6;
   grid-row: 5 / 7;
 }
+
+/* Dashboard / Entries aligned polish */
+
+.bracketTreeContainer {
+  align-items: flex-start;
+}
+
+.bracketCard {
+  padding: 0.78rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid rgba(255, 146, 72, 0.24);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.025);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.3);
+}
+
+.bracketTitle {
+  padding: 0.1rem 0 0.58rem;
+  margin-bottom: 0.45rem;
+  color: rgba(246, 249, 255, 0.96);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.bracketGrid {
+  padding: 0.5rem 0;
+}
+
+.matchCard {
+  width: 268px;
+  min-height: 88px;
+  border: 1px solid rgba(226, 232, 240, 0.12);
+  border-radius: 14px;
+  background: rgba(8, 9, 15, 0.72);
+  box-shadow: none;
+}
+
+.matchCard:hover {
+  transform: none;
+  border-color: rgba(255, 146, 72, 0.28);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.24);
+}
+
+.matchCard.finals {
+  border: 1px solid rgba(255, 146, 72, 0.38) !important;
+  border-top: 1px solid rgba(255, 146, 72, 0.5) !important;
+  background: rgba(255, 122, 0, 0.075);
+  box-shadow: none;
+}
+
+.matchCard.finals .matchLabel {
+  color: rgba(255, 219, 190, 0.98);
+  background: rgba(255, 122, 0, 0.12);
+  border-bottom-color: rgba(255, 146, 72, 0.24);
+}
+
+.matchCard.completed {
+  border-color: rgba(45, 212, 136, 0.3);
+  border-left: 4px solid rgba(45, 212, 136, 0.62);
+}
+
+.matchCard.in_progress {
+  border-color: rgba(255, 146, 72, 0.35);
+  border-left: 4px solid rgba(255, 122, 0, 0.72);
+}
+
+.matchCard.next_up {
+  border-color: rgba(255, 146, 72, 0.24);
+  border-left: 3px solid rgba(255, 146, 72, 0.46);
+}
+
+.matchCard.pending {
+  border-color: rgba(226, 232, 240, 0.08);
+  border-left: 3px solid rgba(226, 232, 240, 0.12);
+  opacity: 0.68;
+}
+
+.matchCard.highlighted {
+  border-color: rgba(255, 146, 72, 0.58);
+  box-shadow: 0 0 0 1px rgba(255, 122, 0, 0.22), 0 10px 22px rgba(0, 0, 0, 0.24);
+}
+
+.matchLabel {
+  padding: 5px 10px;
+  color: rgba(255, 219, 190, 0.9);
+  background: rgba(255, 255, 255, 0.035);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.tieIndicator,
+.splitPotIndicator {
+  letter-spacing: 0;
+  box-shadow: none;
+}
+
+.vsRow {
+  background: rgba(255, 255, 255, 0.07);
+  margin: 0 10px;
+}
+
+.player {
+  min-height: 32px;
+  padding: 6px 10px;
+}
+
+.player:hover {
+  background: rgba(255, 122, 0, 0.08);
+}
+
+.player.highlightedPlayer {
+  background: rgba(255, 122, 0, 0.12);
+  border-left: 4px solid rgba(255, 122, 0, 0.72);
+}
+
+.player.winner {
+  background: rgba(45, 212, 136, 0.1);
+  border-left: 4px solid rgba(45, 212, 136, 0.62);
+}
+
+.playerName {
+  color: rgba(246, 249, 255, 0.9);
+  font-size: 0.8rem;
+  font-weight: 650;
+}
+
+.player.winner .playerName {
+  color: rgba(190, 255, 213, 0.96);
+}
+
+.playerScore {
+  color: rgba(203, 213, 225, 0.86);
+  font-size: 0.86rem;
+  letter-spacing: 0;
+}
+
+.player.winner .playerScore {
+  color: #58e6a7;
+  font-size: 0.9rem;
+  text-shadow: none;
+}
+
+.championLabel {
+  color: rgba(255, 219, 190, 0.92);
+  letter-spacing: 0;
+}
+
+.connectorBracket {
+  border-right-color: rgba(255, 146, 72, 0.34);
+  border-top-color: rgba(255, 146, 72, 0.34);
+  border-bottom-color: rgba(255, 146, 72, 0.34);
+}
+
+.connectorArm {
+  background: rgba(255, 146, 72, 0.34);
+}
+
+.emptyState {
+  min-height: 220px;
+  color: rgba(180, 189, 205, 0.78);
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+}
+
+@media (max-width: 1024px) {
+  .matchCard {
+    width: 220px;
+  }
+}
+
+@media (max-width: 480px) {
+  .bracketTreeContainer {
+    padding: 0;
+  }
+
+  .bracketCard {
+    padding: 0.68rem;
+  }
+
+  .matchCard {
+    width: 200px;
+  }
+}

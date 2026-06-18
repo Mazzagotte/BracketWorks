@@ -34,6 +34,8 @@ const PlayersTable = memo(({
   bracketPrograms,
   selectedSquad,
   sidePots,
+  hasActiveFilters = false,
+  onClearFilters,
 }: PlayersTableProps) => {
   const enabledPots = useMemo(
     () => (sidePots?.pots ?? []).filter(p => p.enabled),
@@ -42,7 +44,7 @@ const PlayersTable = memo(({
   const [sortConfig, setSortConfig] = useState<SortConfig>({ column: 'lane', direction: 'asc' });
   const [isMobileLayout, setIsMobileLayout] = useState(false);
   const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({});
-  const [editingRowId, setEditingRowId] = useState<number | null>(null);
+  const [, setEditingRowId] = useState<number | null>(null);
 
   const globalSaveStatus = useMemo(() => {
     const values = Object.values(savingStatus);
@@ -311,8 +313,22 @@ const PlayersTable = memo(({
 
   if (players.length === 0) {
     return (
-      <div className="entries-empty">
-        No players found. Add some players to get started.
+      <div className={styles.tableEmptyState}>
+        <div className={styles.tableEmptyTitle}>{hasActiveFilters ? 'No matching entries' : 'No entries yet'}</div>
+        <div className={styles.tableEmptyText}>
+          {hasActiveFilters
+            ? 'Try searching by USBC number, first name, or last name.'
+            : 'Add a bowler to begin building this squad.'}
+        </div>
+        {hasActiveFilters && onClearFilters && (
+          <button
+            type="button"
+            className={`${styles.clearSearchBtn} ${styles.tableEmptyClearBtn}`}
+            onClick={onClearFilters}
+          >
+            Clear Search
+          </button>
+        )}
       </div>
     );
   }
@@ -341,13 +357,6 @@ const PlayersTable = memo(({
       ) : (
       <table className="entries-table" onKeyDownCapture={handleTableArrowNavigation}>
         <thead>
-          {selectedSquad && (
-            <tr>
-              <td colSpan={7 + bracketPrograms.length + enabledPots.length} className="squad-banner">
-                Entries for {selectedSquad.date} · {selectedSquad.time} Squad
-              </td>
-            </tr>
-          )}
           <tr className="entries-header-row">
             <SortableHeader column="usbc" sortConfig={sortConfig} onSort={toggleSort} className="col-usbc">
               USBC
@@ -355,7 +364,7 @@ const PlayersTable = memo(({
             <SortableHeader column="name" sortConfig={sortConfig} onSort={toggleSort} className="col-name">
               Bowler
             </SortableHeader>
-            <SortableHeader column="division" sortConfig={sortConfig} onSort={toggleSort} className="col-division">
+            <SortableHeader column="division" sortConfig={sortConfig} onSort={toggleSort} className="col-division group-start">
               Division
             </SortableHeader>
             <SortableHeader column="lane" sortConfig={sortConfig} onSort={toggleSort} className="col-lane">
@@ -364,8 +373,8 @@ const PlayersTable = memo(({
             <SortableHeader column="average" sortConfig={sortConfig} onSort={toggleSort} className="col-average">
               Avg
             </SortableHeader>
-            {bracketPrograms.map(program => (
-              <SortableHeader key={`program-header-${program.key}`} column={`bracket:${program.key}`} sortConfig={sortConfig} onSort={toggleSort} className="col-scratch">
+            {bracketPrograms.map((program, programIndex) => (
+              <SortableHeader key={`program-header-${program.key}`} column={`bracket:${program.key}`} sortConfig={sortConfig} onSort={toggleSort} className={`col-scratch${programIndex === 0 ? ' group-start' : ''}`}>
                 <abbr title={program.name} className={styles.programAbbr}>{abbreviateProgramName(program.name)}</abbr>
               </SortableHeader>
             ))}
@@ -374,10 +383,13 @@ const PlayersTable = memo(({
                 {pot.name}
               </th>
             ))}
-            <SortableHeader column="cost" sortConfig={sortConfig} onSort={toggleSort} className="col-cost">
-              Total / Status
+            <SortableHeader column="cost" sortConfig={sortConfig} onSort={toggleSort} className="col-cost group-start">
+              Total
             </SortableHeader>
-            <th className="entries-header-cell col-actions">
+            <th className="entries-header-cell col-status">
+              Status
+            </th>
+            <th className="entries-header-cell col-actions group-start">
               Actions
             </th>
           </tr>
@@ -387,8 +399,8 @@ const PlayersTable = memo(({
             const totalEntries = Object.values(player.bracketEntries || {}).reduce((sum, count) => sum + Number(count || 0), 0)
             const needsEntryFee = totalEntries > 0 && player.totalCost <= 0
             const isPaid = !needsEntryFee && player.amountPaid >= player.totalCost
-            const isEditing = editingRowId === player.id
-
+            const isPartial = !needsEntryFee && !isPaid && player.amountPaid > 0
+            const isEditing = true
             return (
             <OptimizedTableRow 
               key={player.id}
@@ -444,7 +456,7 @@ const PlayersTable = memo(({
                 )}
               </OptimizedTableCell>
 
-              <OptimizedTableCell className="entries-cell col-division">
+              <OptimizedTableCell className="entries-cell col-division group-start">
                 <div className="flex-center">
                   <div className="pos-relative inline-block">
                     <select
@@ -486,8 +498,8 @@ const PlayersTable = memo(({
                 </div>
               </OptimizedTableCell>
 
-              {bracketPrograms.map(program => (
-                <OptimizedTableCell key={`program-cell-${player.id}-${program.key}`} className="entries-cell col-scratch">
+              {bracketPrograms.map((program, programIndex) => (
+                <OptimizedTableCell key={`program-cell-${player.id}-${program.key}`} className={`entries-cell col-scratch${programIndex === 0 ? ' group-start' : ''}`}>
                   <div className="flex-center">
                     <div className="pos-relative inline-block">
                       {(() => {
@@ -524,26 +536,35 @@ const PlayersTable = memo(({
                   </OptimizedTableCell>
                 )
               })}
-              <OptimizedTableCell className="entries-cell col-cost">
-                <div className="flex-center gap-6">
-                  <span className="entries-cost">
-                    ${player.totalCost.toFixed(2)}
-                  </span>
-                  <span 
-                    onClick={() => {
-                      if (needsEntryFee) return;
-                      const newPaidAmount = isPaid ? 0 : player.totalCost;
-                      handleCellEdit(player.id, 'amountPaid', newPaidAmount.toString());
-                    }}
-                    className={`payment-badge ${isPaid ? 'payment-badge--paid' : 'payment-badge--due'}`}
-                    title={needsEntryFee ? 'Set a bracket entry fee in tournament settings to calculate player cost.' : `Click to toggle payment status. Current: $${player.amountPaid.toFixed(2)}`}
-                  >
-                    {needsEntryFee ? 'SET FEE' : isPaid ? 'PAID' : 'DUE'}
-                  </span>
-                </div>
+              <OptimizedTableCell className="entries-cell col-cost group-start">
+                <span className="entries-cost">
+                  ${player.totalCost.toFixed(2)}
+                </span>
               </OptimizedTableCell>
 
-              <OptimizedTableCell className="entries-cell col-actions">
+              <OptimizedTableCell className="entries-cell col-status">
+                <span
+                  onClick={() => {
+                    if (needsEntryFee) return;
+                    const newPaidAmount = isPaid ? 0 : player.totalCost;
+                    handleCellEdit(player.id, 'amountPaid', newPaidAmount.toString());
+                  }}
+                  className={`payment-badge ${
+                    needsEntryFee
+                      ? 'payment-badge--error'
+                      : isPaid
+                        ? 'payment-badge--paid'
+                        : isPartial
+                          ? 'payment-badge--partial'
+                          : 'payment-badge--due'
+                  }`}
+                  title={needsEntryFee ? 'Set a bracket entry fee in tournament settings to calculate player cost.' : `Click to toggle payment status. Current: $${player.amountPaid.toFixed(2)}`}
+                >
+                  {needsEntryFee ? 'SET FEE' : isPaid ? 'PAID' : isPartial ? 'PARTIAL' : 'DUE'}
+                </span>
+              </OptimizedTableCell>
+
+              <OptimizedTableCell className="entries-cell col-actions group-start">
                 <div className="row-actions">
                   <button
                     className={`entries-edit-btn${isEditing ? ' entries-edit-btn--active' : ''}`}

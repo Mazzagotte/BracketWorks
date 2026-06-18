@@ -92,10 +92,10 @@
    ======================================== */
 
 .controlPanel {
-  background: var(--color-brand-ivory-light);
+  background: rgba(255, 255, 255, 0.025);
   border-radius: 14px;
-  border: 1px solid var(--color-border-light);
-  box-shadow: var(--shadow-soft);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.3);
   padding: 0;
   margin-bottom: 1.5rem;
   overflow: hidden;
@@ -103,7 +103,7 @@
 
 .controlDivider {
   height: 1px;
-  background: var(--color-border-light);
+  background: rgba(255, 255, 255, 0.08);
   margin: 0;
 }
 
@@ -476,9 +476,9 @@
 }
 
 .navBadgeScratch {
-  background: var(--color-brand-ivory-light);
-  color: var(--color-text-primary);
-  border: 1px solid var(--color-border-light);
+  background: rgba(255, 255, 255, 0.025);
+  color: rgba(244, 239, 232, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .navBadgeHandicap {
@@ -550,7 +550,7 @@
   left: 0;
   right: 0;
   height: 50%;
-  background: linear-gradient(180deg, var(--color-brand-ivory-light), transparent);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent);
   pointer-events: none;
 }
 
@@ -677,4 +677,335 @@
   font-size: 0.82rem;
   font-weight: 700;
   color: var(--color-text-primary);
+}
+
+/* ========================================
+   Dashboard / Entries aligned polish
+   ======================================== */
+
+.pageContainer {
+  max-width: 1280px;
+  padding: 0.75rem 1rem;
+  color: rgba(241, 245, 249, 0.9);
+}
+
+.quickActionsCard,
+.controlPanel,
+.emptyState,
+.loadingState,
+.authRequired {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.3);
+}
+
+.quickActionsCard {
+  margin-bottom: 0.95rem;
+  overflow: hidden;
+}
+
+.quickActionsTitle {
+  margin: 0;
+  padding: 0.68rem 0.9rem 0.58rem;
+  font-size: 1rem;
+  line-height: 1.2;
+  font-weight: 800;
+  color: rgba(246, 249, 255, 0.97);
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  letter-spacing: 0;
+}
+
+.quickActionsBody {
+  padding: 0.52rem 0.78rem 0.68rem;
+}
+
+.quickActionsRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.quickActionsGroupLeft,
+.quickActionsGroupRight {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.quickActionsRow :global(.ds-btn),
+.quickActionDangerBtn {
+  min-height: 36px;
+  border-radius: 11px;
+  padding: 0.42rem 0.78rem;
+  font-size: 0.78rem;
+  font-weight: 750;
+  line-height: 1.1;
+  letter-spacing: 0;
+  box-shadow: none;
+}
+
+.quickActionGuideBtn {
+  color: rgba(224, 231, 255, 0.98) !important;
+  background: rgba(79, 96, 230, 0.24) !important;
+  border: 1px solid rgba(129, 140, 248, 0.38) !important;
+}
+
+.quickActionGenerateBtn {
+  color: rgba(255, 241, 229, 0.98) !important;
+  background: rgba(255, 122, 0, 0.2) !important;
+  border: 1px solid rgba(255, 146, 72, 0.34) !important;
+}
+
+.quickActionGuideBtn:hover:not(:disabled) {
+  background: rgba(79, 96, 230, 0.34) !important;
+  border-color: rgba(165, 180, 252, 0.48) !important;
+}
+
+.quickActionGenerateBtn:hover:not(:disabled) {
+  background: rgba(255, 122, 0, 0.3) !important;
+  border-color: rgba(255, 168, 92, 0.48) !important;
+}
+
+.quickActionDangerBtn {
+  color: rgba(254, 202, 202, 0.96);
+  background: rgba(127, 29, 29, 0.14);
+  border: 1px solid rgba(248, 113, 113, 0.28);
+  cursor: pointer;
+}
+
+.quickActionDangerBtn:hover {
+  color: rgba(255, 226, 226, 1);
+  background: rgba(127, 29, 29, 0.24);
+  border-color: rgba(248, 113, 113, 0.42);
+}
+
+.controlPanel {
+  margin-bottom: 0.95rem;
+  overflow: hidden;
+}
+
+.controlDivider {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.bracketNav {
+  padding: 0.58rem 0.78rem;
+}
+
+.navBtn {
+  min-height: 32px;
+  padding: 0.42rem 0.75rem;
+  border: 1px solid rgba(226, 232, 240, 0.16);
+  border-radius: 10px;
+  font-size: 0.78rem;
+  font-weight: 750;
+  letter-spacing: 0;
+}
+
+.navBtn:not(:disabled) {
+  color: rgba(255, 219, 190, 0.96);
+  background: rgba(255, 122, 0, 0.1);
+  box-shadow: none;
+}
+
+.navBtn:not(:disabled):hover {
+  transform: none;
+  color: rgba(255, 238, 220, 1);
+  background: rgba(255, 122, 0, 0.18);
+  border-color: rgba(255, 168, 92, 0.48);
+  box-shadow: none;
+}
+
+.navBtn:disabled {
+  color: rgba(180, 189, 205, 0.42);
+  background: rgba(255, 255, 255, 0.025);
+  border-color: rgba(226, 232, 240, 0.08);
+}
+
+.mismatchBanner {
+  margin-bottom: 0.95rem;
+  color: rgba(254, 202, 202, 0.96);
+  background: rgba(127, 29, 29, 0.18);
+  border: 1px solid rgba(248, 113, 113, 0.28);
+  border-left: 4px solid rgba(248, 113, 113, 0.7);
+  border-radius: 16px;
+  box-shadow: none;
+}
+
+.mismatchBannerText {
+  font-size: 0.84rem;
+  color: rgba(254, 226, 226, 0.95);
+}
+
+.mismatchBannerText::before {
+  color: rgba(254, 202, 202, 0.96);
+  background: rgba(127, 29, 29, 0.22);
+  border-color: rgba(248, 113, 113, 0.28);
+  letter-spacing: 0;
+}
+
+.mismatchBannerButton {
+  min-height: 34px;
+  border-radius: 10px;
+  color: rgba(254, 226, 226, 0.98);
+  background: rgba(220, 38, 38, 0.28);
+  box-shadow: none;
+  letter-spacing: 0;
+}
+
+.mismatchBannerButton:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.emptyState,
+.loadingState,
+.authRequired,
+.noMatches {
+  color: rgba(180, 189, 205, 0.78);
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 220px;
+  padding: 2rem 1.25rem;
+  text-align: center;
+}
+
+.emptyTitle {
+  margin: 0 0 0.45rem;
+  color: rgba(246, 249, 255, 0.94);
+  font-size: 1.05rem;
+  line-height: 1.2;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.emptyMessage {
+  max-width: 520px;
+  margin: 0;
+  color: rgba(180, 189, 205, 0.76);
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.emptyActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+
+.emptyActions :global(.ds-btn) {
+  min-height: 36px;
+  border-radius: 11px;
+  font-size: 0.78rem;
+  font-weight: 750;
+  letter-spacing: 0;
+}
+
+.mobileBracketSectionTitle {
+  color: rgba(180, 189, 205, 0.76);
+  letter-spacing: 0;
+}
+
+.mobileBracketListItem {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(226, 232, 240, 0.12);
+  border-radius: 14px;
+  box-shadow: none;
+}
+
+.mobileBracketListTitle {
+  color: rgba(246, 249, 255, 0.94);
+}
+
+.mobileBracketListMode {
+  color: rgba(255, 219, 190, 0.96);
+  background: rgba(255, 122, 0, 0.11);
+  border-color: rgba(255, 146, 72, 0.28);
+}
+
+.mobileBracketListMeta,
+.mobileTreeTitle {
+  color: rgba(180, 189, 205, 0.76);
+}
+
+.mobileTreeBackBtn {
+  color: rgba(255, 219, 190, 0.96);
+  background: rgba(255, 122, 0, 0.1);
+  border-color: rgba(255, 146, 72, 0.35);
+}
+
+@media (max-width: 900px) {
+  .pageContainer {
+    padding: 0.65rem 0.75rem;
+  }
+
+  .quickActionsRow,
+  .quickActionsGroupLeft,
+  .quickActionsGroupRight {
+    width: 100%;
+  }
+
+  .quickActionsRow :global(.ds-btn),
+  .quickActionDangerBtn {
+    flex: 1 1 150px;
+  }
+}
+
+@media (max-width: 480px) {
+  .quickActionsRow :global(.ds-btn),
+  .quickActionDangerBtn {
+    flex-basis: 100%;
+    width: 100%;
+  }
+
+  .emptyActions,
+  .emptyActions :global(.ds-btn) {
+    width: 100%;
+  }
+}
+
+/* Page text normalization */
+.pageContainer {
+  color: var(--bw-text-body);
+  font-size: var(--bw-type-body);
+  line-height: 1.45;
+}
+
+.pageContainer :where(h1, h2, h3, h4) {
+  color: var(--bw-text-title);
+  letter-spacing: 0;
+}
+
+.pageContainer :where(.sectionTitle, .quickActionsTitle, .statusTitle, h2, h3) {
+  color: var(--bw-text-title);
+  font-size: var(--bw-type-card-title);
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.pageContainer :where(p, li, .statusText, .emptyText, .helperText) {
+  color: var(--bw-text-muted);
+  font-size: var(--bw-type-helper);
+  line-height: 1.45;
+  letter-spacing: 0;
+}
+
+.pageContainer :where(label, small) {
+  color: var(--bw-text-muted);
+  font-size: var(--bw-type-label);
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
 }

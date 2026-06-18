@@ -18,7 +18,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1200;
+  z-index: 2600;
   padding: 20px;
   animation: fadeIn 0.2s ease;
 }
@@ -331,5 +331,137 @@
     min-width: 100%;
   }
 
+}
+
+/* Shared modern guide modal polish */
+
+.overlay {
+  background: rgba(4, 5, 10, 0.76);
+  backdrop-filter: blur(6px);
+}
+
+.modal {
+  background: rgba(20, 21, 30, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 3px solid rgba(255, 122, 0, 0.78);
+  border-radius: 24px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.52);
+}
+
+.header {
+  padding: 0.9rem 3.8rem 0.78rem 1rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.header h2 {
+  color: rgba(246, 249, 255, 0.96);
+  font-size: 1rem;
+  line-height: 1.2;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.closeButton {
+  color: rgba(203, 213, 225, 0.86);
+  background: rgba(255, 255, 255, 0.045);
+  border-radius: 10px;
+}
+
+.closeButton:hover {
+  color: rgba(255, 219, 190, 0.98);
+  background: rgba(255, 122, 0, 0.14);
+  border-color: rgba(255, 146, 72, 0.28);
+}
+
+.content {
+  gap: 0.75rem;
+  padding: 0.9rem;
+}
+
+.content::-webkit-scrollbar-track {
+  background: rgba(8, 9, 15, 0.72);
+}
+
+.content::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.36);
+}
+
+.section {
+  margin-bottom: 1rem;
+}
+
+.section h3 {
+  margin-bottom: 0.55rem;
+  color: rgba(246, 249, 255, 0.95);
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.section h3::before {
+  background: rgba(255, 122, 0, 0.86);
+}
+
+.section p,
+.section ul,
+.section li,
+.tieRule p,
+.example,
+.bracketType p,
+.round span {
+  color: rgba(207, 216, 232, 0.86);
+  font-size: 0.84rem;
+}
+
+.section li strong,
+.bracketType strong,
+.tieHeader strong,
+.round strong,
+.example strong {
+  color: rgba(255, 219, 190, 0.96);
+}
+
+.round,
+.tieRule,
+.example,
+.bracketType {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(226, 232, 240, 0.12);
+  border-radius: 14px;
+}
+
+.example {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(226, 232, 240, 0.16);
+  border-left-color: rgba(255, 122, 0, 0.68);
+}
+
+.example strong {
+  color: rgba(255, 235, 218, 0.98);
+}
+
+.round::before {
+  background: rgba(255, 122, 0, 0.72);
+}
+
+.tieBadge,
+.splitBadge {
+  letter-spacing: 0;
+  box-shadow: none;
+}
+
+@media (max-width: 480px) {
+  .modal {
+    border-radius: 20px;
+  }
+
+  .header {
+    padding: 0.82rem 3.4rem 0.72rem 0.9rem;
+  }
+
+  .content {
+    padding: 0.72rem;
+  }
 }
 

@@ -68,6 +68,8 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
     entryFee,
   )
   const balanceDue = Math.max(0, draftTotal - formData.amountPaid)
+  const paidInFull = draftTotal > 0 && balanceDue <= 0.009
+  const hasRequiredNames = formData.firstName.trim().length > 0 && formData.lastName.trim().length > 0
 
   const isDirty = formData.firstName.trim() !== '' || formData.lastName.trim() !== '';
 
@@ -141,8 +143,14 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
     }))
   }
 
+  const handleBracketStep = (programKey: string, delta: number) => {
+    const current = formData.bracketEntries[programKey] || 0
+    const next = Math.max(0, current + delta)
+    handleBracketEntryChange(programKey, String(next))
+  }
+
   return (
-    <div className={styles.formCard}>
+    <div className={`${styles.formCard} ${styles.addBowlerCard}`}>
       <h3 className={styles.formTitle}>Add Bowler</h3>
 
       {isDirty && (
@@ -154,8 +162,8 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
       {submitError && <div className="error-message">{submitError}</div>}
 
       <form onSubmit={handleSubmit}>
-        <p className={styles.formSectionLabel}>Player Information</p>
-        <div className={styles.formGrid}>
+        <p className={styles.formSectionLabel}>PLAYER INFORMATION</p>
+        <div className={`${styles.formGrid} ${styles.playerInfoGrid}`}>
           <div>
             <label className={styles.fieldLabel}>First Name *</label>
             <input
@@ -243,15 +251,6 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
             <div>
               <h4 className={styles.compactSectionTitle}>Entries &amp; Payment</h4>
             </div>
-            <div className={styles.compactSectionMeta}>
-              <span className={styles.compactPill}>Total ${draftTotal.toFixed(2)}</span>
-              <span className={`${styles.compactPill} ${styles.compactPillMuted}`}>
-                Paid ${formData.amountPaid.toFixed(2)}
-              </span>
-              <span className={`${styles.compactPill} ${styles.compactPillDue}`}>
-                Due ${balanceDue.toFixed(2)}
-              </span>
-            </div>
           </div>
 
           <div className={styles.entriesPaymentRow}>
@@ -262,14 +261,34 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
               {bracketPrograms.map(program => (
                 <div key={program.key} className={styles.compactField}>
                   <label className={styles.fieldLabel}>{program.name} Entries</label>
-                  <input
-                    type="number"
-                    value={formData.bracketEntries[program.key] || 0}
-                    onChange={(e) => handleBracketEntryChange(program.key, e.target.value)}
-                    className={`${styles.fieldInput} ${styles.compactInput}`}
-                    min="0"
-                    disabled={!isProgramAllowedForDivision(program.division, formData.division)}
-                  />
+                  <div className={styles.stepperControl}>
+                    <button
+                      type="button"
+                      className={`${styles.stepperBtn} ${styles.stepperBtnMinus}`}
+                      onClick={() => handleBracketStep(program.key, -1)}
+                      disabled={!isProgramAllowedForDivision(program.division, formData.division) || (formData.bracketEntries[program.key] || 0) <= 0}
+                      aria-label={`Decrease ${program.name} entries`}
+                    >
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      value={formData.bracketEntries[program.key] || 0}
+                      onChange={(e) => handleBracketEntryChange(program.key, e.target.value)}
+                      className={`${styles.fieldInput} ${styles.compactInput}`}
+                      min="0"
+                      disabled={!isProgramAllowedForDivision(program.division, formData.division)}
+                    />
+                    <button
+                      type="button"
+                      className={`${styles.stepperBtn} ${styles.stepperBtnPlus}`}
+                      onClick={() => handleBracketStep(program.key, 1)}
+                      disabled={!isProgramAllowedForDivision(program.division, formData.division)}
+                      aria-label={`Increase ${program.name} entries`}
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
               ))}
 
@@ -277,9 +296,24 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
             </div>
 
             <div className={styles.paymentCol}>
-              <p className={styles.entriesSubheading}>Payment</p>
-              <div className={styles.compactGrid}>
-              <div className={styles.compactField}>
+              <p className={styles.entriesSubheading}>Payment Summary</p>
+              <div className={styles.paymentSummaryPanel}>
+                <div className={styles.paymentSummaryRows}>
+                  <div className={styles.paymentSummaryRow}>
+                    <span>Total</span>
+                    <span>${draftTotal.toFixed(2)}</span>
+                  </div>
+                  <div className={`${styles.paymentSummaryRow} ${paidInFull ? styles.paymentSummaryRowPaid : ''}`}>
+                    <span>Paid</span>
+                    <span>${formData.amountPaid.toFixed(2)}</span>
+                  </div>
+                  <div className={`${styles.paymentSummaryRow} ${balanceDue > 0.009 ? styles.paymentSummaryRowDue : ''}`}>
+                    <span>Due</span>
+                    <span>${balanceDue.toFixed(2)}</span>
+                  </div>
+                </div>
+
+                <div className={styles.compactField}>
                 <label className={styles.fieldLabel}>Amount Paid</label>
                 <input
                   type="number"
@@ -289,13 +323,16 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
                   min="0"
                   step="0.01"
                 />
-              </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
         <div className={styles.formFooter}>
+          <div className={`${styles.formStatusHint} ${hasRequiredNames ? styles.formStatusHintReady : styles.formStatusHintRequired}`}>
+            {hasRequiredNames ? 'Ready to add bowler.' : ''}
+          </div>
           <button
             type="submit"
             disabled={isLoading}

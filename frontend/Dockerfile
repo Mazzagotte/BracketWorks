@@ -1,12 +1,12 @@
 
 FROM node:20-alpine AS builder
 WORKDIR /app
-COPY package.json yarn.lock* ./
-RUN yarn install --frozen-lockfile
+COPY package.json package-lock.json ./
+RUN npm ci
 COPY . .
 ARG NEXT_PUBLIC_BACKEND_URL
 ENV NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL}
-RUN yarn build
+RUN npm run build
 
 FROM node:20-alpine AS runner
 WORKDIR /app

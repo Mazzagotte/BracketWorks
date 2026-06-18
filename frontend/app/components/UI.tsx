@@ -32,41 +32,6 @@ export const ContentWrapper: React.FC<ContentWrapperProps> = ({
   </div>
 )
 
-// Page Header Component
-interface PageHeaderProps {
-  title: string
-  subtitle?: string
-  actions?: React.ReactNode
-  centered?: boolean
-  className?: string
-}
-
-export const PageHeader: React.FC<PageHeaderProps> = ({ 
-  title, 
-  subtitle, 
-  actions, 
-  centered = true,
-  className = '' 
-}) => (
-  <div 
-    className={`bw-ui-ph-wrap ${centered ? 'bw-ui-ph-center' : ''} ${className}`}
-  >
-    <h1 className="bw-ui-ph-title">
-      {title}
-    </h1>
-    {subtitle && (
-      <p className="bw-ui-ph-subtitle">
-        {subtitle}
-      </p>
-    )}
-    {actions && (
-      <div className={`bw-ui-ph-actions ${centered ? 'bw-ui-ph-actions-center' : ''}`}>
-        {actions}
-      </div>
-    )}
-  </div>
-)
-
 // Section Header Component
 interface SectionHeaderProps {
   title: string
@@ -304,7 +269,6 @@ interface TableCellProps {
   header?: boolean
   align?: 'left' | 'center' | 'right'
   className?: string
-  style?: React.CSSProperties
   variant?: 'default' | 'compact' | 'comfortable'
   sortable?: boolean
   onSort?: () => void
@@ -316,7 +280,6 @@ export const TableCell: React.FC<TableCellProps> = ({
   header = false,
   align = 'left',
   className = '',
-  style: customStyle = {},
   variant = 'default',
   sortable = false,
   onSort,
@@ -330,7 +293,6 @@ export const TableCell: React.FC<TableCellProps> = ({
 
   return (
     <Component 
-      style={Object.keys(customStyle).length > 0 ? customStyle : undefined}
       className={`${baseClass} bw-ui-tc-${align} ${variantClass} ${sortableClass} ${className}`}
       onClick={handleClick}
     >

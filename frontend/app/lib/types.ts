@@ -10,6 +10,7 @@ export interface Tournament {
   squad_times?: Record<string, string[]>;
   entry_count?: number;
   brackets_configured?: boolean;
+  is_public?: boolean;
 }
 
 export interface Squad {

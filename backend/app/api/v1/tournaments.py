@@ -198,6 +198,7 @@ def get_tournament_bootstrap(
             'squads': [],
             'selected_squad': None,
             'bracket_settings': None,
+            'workflow_status': None,
         }
 
     squads = db.query(models.Squad).filter(
@@ -235,11 +236,38 @@ def get_tournament_bootstrap(
         models.TournamentBracketSettings.tournament_id == tournament_id
     ).first()
 
+    status_squad_id = selected_payload['squad_id'] if selected_payload else None
+
+    bracket_snapshot_query = db.query(models.SimpleBracket).filter(
+        models.SimpleBracket.tournament_id == tournament_id,
+        models.SimpleBracket.is_active == True,
+    )
+    if status_squad_id is not None:
+        bracket_snapshot_query = bracket_snapshot_query.filter(models.SimpleBracket.squad_id == status_squad_id)
+
+    has_generated_brackets = bracket_snapshot_query.first() is not None
+
+    payout_summary_query = db.query(models.TournamentPayoutSummary).filter(
+        models.TournamentPayoutSummary.tournament_id == tournament_id,
+    )
+    if status_squad_id is not None:
+        payout_summary_query = payout_summary_query.filter(models.TournamentPayoutSummary.squad_id == status_squad_id)
+
+    payout_summary = payout_summary_query.order_by(models.TournamentPayoutSummary.updated_at.desc()).first()
+    payouts_finalized = bool(payout_summary.is_finalized) if payout_summary else False
+
     result = {
         'tournament': _tournament_to_dict(tournament),
         'squads': squad_payload,
         'selected_squad': selected_payload,
         'bracket_settings': _bracket_settings_to_dict(settings),
+        'workflow_status': {
+            'status_squad_id': status_squad_id,
+            'has_generated_brackets': has_generated_brackets,
+            'payouts_finalized': payouts_finalized,
+            # Current score APIs do not enforce locking. We align UI lock state with finalized payouts.
+            'scores_locked': payouts_finalized,
+        },
     }
 
     logger.info(

@@ -35,7 +35,7 @@ export function MobileNav({ isOpen, onClose, firstName, currentPage }: MobileNav
   const handleProtectedNavigation = (event: React.MouseEvent<HTMLAnchorElement>, targetPath: string) => {
     const currentPath = `/${currentPage || ''}`.replace('//', '/');
 
-    // Only guard dashboard exits; fail open for legacy-state edge cases.
+    // Only guard dashboard exits; fail open if selection session state is incomplete.
     if (currentPath === '/dashboard') {
       try {
         if (shouldRequireTimeSlotBeforeLeavingDashboard(currentPath, targetPath)) {

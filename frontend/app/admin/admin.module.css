@@ -14,9 +14,9 @@
 /* ---- State / loading cards ---- */
 .stateCard {
   background-color: var(--color-brand-ivory-light);
-  border: 1px solid var(--color-border-light);
+  border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-soft);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
   padding: 28px;
   color: var(--color-text-primary);
   font-size: 15px;
@@ -664,4 +664,355 @@
   .toolbarRow {
     grid-template-columns: 1fr;
   }
+}
+
+/* ===================================================
+   Modern operations dashboard polish
+   =================================================== */
+
+.page {
+  gap: 0.95rem;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0.75rem 1rem 2rem;
+  color: rgba(241, 245, 249, 0.9);
+}
+
+.stateCard,
+.metricCard,
+.panel,
+.modal {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.3);
+  color: rgba(241, 245, 249, 0.9);
+}
+
+.stateCard {
+  padding: 1.4rem;
+}
+
+.errorBanner,
+.modalError,
+.warnText {
+  color: rgba(254, 202, 202, 0.96);
+  background: rgba(127, 29, 29, 0.18);
+  border: 1px solid rgba(248, 113, 113, 0.28);
+  border-radius: 14px;
+}
+
+.tabRow {
+  gap: 0.5rem;
+}
+
+.tabButton,
+.refreshButton,
+.actionBtn,
+.linkBtn,
+.tableListButton {
+  border: 1px solid rgba(226, 232, 240, 0.14);
+  background: rgba(255, 255, 255, 0.025);
+  color: rgba(203, 213, 225, 0.82);
+  box-shadow: none;
+  letter-spacing: 0;
+}
+
+.tabButton {
+  min-height: 34px;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.76rem;
+  font-weight: 750;
+}
+
+.refreshButton,
+.actionBtn,
+.linkBtn {
+  min-height: 30px;
+  border-radius: 10px;
+  font-size: 0.74rem;
+  font-weight: 750;
+}
+
+.tabButton:hover,
+.refreshButton:hover,
+.actionBtn:hover,
+.linkBtn:hover,
+.tableListButton:hover {
+  color: rgba(255, 219, 190, 0.98);
+  background: rgba(255, 122, 0, 0.1);
+  border-color: rgba(255, 146, 72, 0.35);
+}
+
+.tabButtonActive,
+.tabButtonActive:hover,
+.tableListButtonActive,
+.tableListButtonActive:hover {
+  color: rgba(255, 238, 220, 1);
+  background: rgba(255, 122, 0, 0.16);
+  border-color: rgba(255, 146, 72, 0.48);
+}
+
+.metricGrid {
+  gap: 0.6rem;
+}
+
+.metricCard {
+  padding: 0.9rem;
+}
+
+.metricLabel,
+.formLabel,
+.table th {
+  color: rgba(180, 189, 205, 0.76);
+  letter-spacing: 0;
+}
+
+.metricValue {
+  margin-top: 0.55rem;
+  color: rgba(246, 249, 255, 0.96);
+  font-size: 1.55rem;
+}
+
+.sectionStack,
+.twoColumnGrid,
+.databaseLayout {
+  gap: 0.95rem;
+}
+
+.panel {
+  overflow: hidden;
+}
+
+.panelHeader,
+.modalHeader {
+  padding: 0.68rem 0.9rem 0.58rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.panelTitle,
+.modalTitle,
+.primaryText {
+  color: rgba(246, 249, 255, 0.95);
+  font-weight: 800;
+}
+
+.panelTitle,
+.modalTitle {
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+.panelSubtle,
+.secondaryText,
+.detailNote,
+.emptyState {
+  color: rgba(180, 189, 205, 0.74);
+}
+
+.panelBody,
+.listStack,
+.tableList {
+  padding: 0.72rem 0.78rem;
+}
+
+.listStack,
+.tableList {
+  gap: 0.45rem;
+}
+
+.listRow,
+.detailCard,
+.userStatusPanel {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(226, 232, 240, 0.12);
+  border-radius: 14px;
+}
+
+.listRow:hover {
+  background: rgba(255, 122, 0, 0.07);
+}
+
+.valuePill,
+.statusPill {
+  color: rgba(255, 219, 190, 0.96);
+  background: rgba(255, 122, 0, 0.11);
+  border: 1px solid rgba(255, 146, 72, 0.28);
+  letter-spacing: 0;
+}
+
+.tableWrap {
+  max-height: 560px;
+}
+
+.table {
+  font-size: 0.78rem;
+}
+
+.table th,
+.table td {
+  padding: 0.58rem 0.72rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.055);
+}
+
+.table th {
+  background: rgba(255, 255, 255, 0.035);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.table tbody tr:hover {
+  background: rgba(255, 122, 0, 0.07);
+}
+
+.toolbarRow {
+  gap: 0.55rem;
+  padding: 0.62rem 0.78rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.toolbarInput,
+.toolbarSelect,
+.formInput {
+  min-height: 34px;
+  border: 1px solid rgba(226, 232, 240, 0.16);
+  border-radius: 10px;
+  background: rgba(8, 9, 15, 0.72);
+  color: rgba(246, 249, 255, 0.94);
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+
+.toolbarInput:focus,
+.toolbarSelect:focus,
+.formInput:focus {
+  border-color: rgba(255, 146, 72, 0.55);
+  box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.12);
+}
+
+.formInput::placeholder,
+.toolbarInput::placeholder {
+  color: rgba(180, 189, 205, 0.62);
+}
+
+.modalOverlay {
+  z-index: 1300;
+  background: rgba(4, 5, 10, 0.76);
+  backdrop-filter: blur(6px);
+}
+
+.modal {
+  max-width: 500px;
+}
+
+.modalClose {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  color: rgba(203, 213, 225, 0.86);
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.modalClose:hover {
+  color: rgba(255, 219, 190, 0.98);
+  background: rgba(255, 122, 0, 0.14);
+}
+
+.modalBody {
+  gap: 0.75rem;
+  padding: 1rem;
+}
+
+.modalFooter,
+.paginationRow {
+  padding: 0.72rem 0.9rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.actionBtnDanger {
+  color: rgba(254, 202, 202, 0.96);
+  border-color: rgba(248, 113, 113, 0.28);
+}
+
+.actionBtnDanger:hover {
+  color: rgba(254, 226, 226, 0.98);
+  background: rgba(127, 29, 29, 0.24);
+  border-color: rgba(248, 113, 113, 0.42);
+}
+
+.statusActive {
+  color: rgba(190, 255, 213, 0.96);
+  background: rgba(45, 212, 136, 0.12);
+  border-color: rgba(45, 212, 136, 0.35);
+}
+
+.statusDraft,
+.statusCompleted {
+  color: rgba(255, 219, 190, 0.96);
+  background: rgba(255, 122, 0, 0.11);
+  border-color: rgba(255, 146, 72, 0.28);
+}
+
+.statusArchived {
+  color: rgba(203, 213, 225, 0.72);
+  background: rgba(255, 255, 255, 0.045);
+  border-color: rgba(226, 232, 240, 0.12);
+}
+
+.detailGrid {
+  color: rgba(241, 245, 249, 0.86);
+}
+
+.checkboxRow {
+  color: rgba(203, 213, 225, 0.82);
+}
+
+@media (max-width: 960px) {
+  .page {
+    padding: 0.65rem 0.75rem 1.5rem;
+  }
+}
+
+/* Page text normalization */
+.page {
+  color: var(--bw-text-body);
+  font-size: var(--bw-type-body);
+  line-height: 1.45;
+}
+
+.page :where(h1, h2, h3, h4) {
+  color: var(--bw-text-title);
+  letter-spacing: 0;
+}
+
+.page :where(.panelTitle, .modalTitle, h2, h3) {
+  color: var(--bw-text-title);
+  font-size: var(--bw-type-card-title);
+  font-weight: 800;
+}
+
+.page :where(.panelSubtle, .secondaryText, .detailNote, p, li) {
+  color: var(--bw-text-muted);
+  font-size: var(--bw-type-helper);
+  line-height: 1.45;
+  letter-spacing: 0;
+}
+
+.page :where(.formLabel, label, small) {
+  color: var(--bw-text-muted);
+  font-size: var(--bw-type-label);
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.page :where(th) {
+  color: rgba(182, 191, 207, 0.86);
+  font-size: var(--bw-type-table-heading);
+  letter-spacing: 0;
+}
+
+.page :where(td) {
+  color: rgba(241, 245, 249, 0.9);
+  font-size: var(--bw-type-table);
 }

@@ -4,12 +4,15 @@ node_modules/
 node_modules_stale_*/
 .next/
 out/
+.eslintcache
+*.tsbuildinfo
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
 # Python
 __pycache__/
+.mypy_cache/
 *.pyc
 *.pyo
 *.pyd

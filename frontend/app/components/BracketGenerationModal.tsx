@@ -388,17 +388,8 @@ export default function BracketGenerationModal({
               </div>
             )}
 
-            {/* Bowling Ball Animation */}
-            <div className={styles.animationContainer}>
-              <div className={styles.bowlingBall}>
-                {/* Main ball body */}
-                <div className={styles.ballBody} />
-                
-                {/* Finger holes on the ball */}
-              <div className={`${styles.fingerHole} ${styles.fingerHole1}`} />
-                <div className={`${styles.fingerHole} ${styles.fingerHole2}`} />
-                <div className={`${styles.fingerHole} ${styles.fingerHole3}`} />
-              </div>
+            <div className={styles.statusIndicator} aria-hidden="true">
+              <span className={styles.statusIndicatorBar} />
             </div>
 
             {/* Main message */}

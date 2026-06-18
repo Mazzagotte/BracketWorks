@@ -39,6 +39,8 @@ export interface PlayersTableProps {
   bracketPrograms: BracketProgramDefinition[];
   selectedSquad?: Squad | null;
   sidePots?: SidePotsSettings | null;
+  hasActiveFilters?: boolean;
+  onClearFilters?: () => void;
 }
 
 export interface Squad {

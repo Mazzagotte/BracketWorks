@@ -1,8 +1,8 @@
 // Standardized hooks for bracket operations
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import { apiClient } from '../lib/api'
 import { useToast } from '../components/Toast'
-import { BracketData, BracketGroup, BracketSettings } from '../lib/types'
+import { BracketData, BracketGroup } from '../lib/types'
 
 export interface BracketPreview {
   size?: number
@@ -278,114 +278,5 @@ export function useBrackets() {
     deleteTournamentBrackets,
     clearPreview,
     setPreview
-  }
-}
-
-// Hook for bracket settings
-export function useBracketSettings(tournamentId?: number) {
-  const [settings, setSettings] = useState<BracketSettings | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const { addToast } = useToast()
-
-  const fetchSettings = useCallback(async (tId?: number) => {
-    const id = tId || tournamentId
-    if (!id) return
-
-    setLoading(true)
-    setError(null)
-    
-    try {
-      const data = await apiClient.get<BracketSettings>(`/api/v1/bracket-settings/${id}`)
-      setSettings(data)
-      return data
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch bracket settings'
-      setError(errorMessage)
-      // Settings not found is expected for new tournaments
-      return null
-    } finally {
-      setLoading(false)
-    }
-  }, [tournamentId])
-
-  const updateSettings = async (updates: Partial<BracketSettings>) => {
-    if (!tournamentId) return
-
-    setLoading(true)
-    setError(null)
-    
-    try {
-      const data = await apiClient.put<BracketSettings>(`/api/v1/bracket-settings/${settings?.id}`, updates)
-      setSettings(data)
-      
-      addToast({
-        type: 'success',
-        message: 'Bracket settings updated successfully',
-        duration: 3000
-      })
-      
-      return data
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to update bracket settings'
-      setError(errorMessage)
-      addToast({
-        type: 'error',
-        message: errorMessage,
-        duration: 5000
-      })
-      throw err
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const createSettings = async (settingsData: Omit<BracketSettings, 'id'>) => {
-    if (!tournamentId) return
-
-    setLoading(true)
-    setError(null)
-    
-    try {
-      const data = await apiClient.post<BracketSettings>('/api/v1/bracket-settings/', {
-        ...settingsData,
-        tournament_id: tournamentId
-      })
-      setSettings(data)
-      
-      addToast({
-        type: 'success',
-        message: 'Bracket settings created successfully',
-        duration: 3000
-      })
-      
-      return data
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to create bracket settings'
-      setError(errorMessage)
-      addToast({
-        type: 'error',
-        message: errorMessage,
-        duration: 5000
-      })
-      throw err
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    if (tournamentId) {
-      fetchSettings(tournamentId)
-    }
-  }, [fetchSettings, tournamentId])
-
-  return {
-    settings,
-    loading,
-    error,
-    fetchSettings,
-    updateSettings,
-    createSettings
   }
 }
