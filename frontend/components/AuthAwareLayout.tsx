@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { Suspense, type ReactNode, useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 import { MobileNav } from './MobileNav';
@@ -174,5 +174,17 @@ function ClientLayout({ children }: { children: ReactNode }) {
 }
 
 export default function AuthAwareLayout({ children }: { children: ReactNode }) {
-  return <ClientLayout>{children}</ClientLayout>;
+  return (
+    <Suspense
+      fallback={(
+        <ErrorBoundary>
+          <div id="main-content">
+            <ErrorBoundary>{children}</ErrorBoundary>
+          </div>
+        </ErrorBoundary>
+      )}
+    >
+      <ClientLayout>{children}</ClientLayout>
+    </Suspense>
+  );
 }
