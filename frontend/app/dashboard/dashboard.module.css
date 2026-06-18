@@ -3406,8 +3406,6 @@
     padding: 32px;
   }
 }
-    height: 100dvh;
-    min-height: 100dvh;
 /* Header Action Buttons */
 .headerActions {
   display: flex;
@@ -3416,8 +3414,6 @@
   flex-wrap: wrap;
   width: 100%;
 }
-    overflow: hidden;
-
 .devButton {
   font-size: 0.75rem;
   font-weight: 700;
