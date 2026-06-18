@@ -30,6 +30,6 @@
     "typescript": "^5.5.4"
   },
   "overrides": {
-    "tmp": "0.2.6"
+    "tmp": "0.2.7"
   }
 }
