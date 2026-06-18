@@ -1,8 +1,9 @@
 'use client'
 
 import React from 'react'
+import { createPortal } from 'react-dom'
 import CloseControl from '../../components/CloseControl'
-import styles from '../brackets/styles/explain-brackets-modal.module.css'
+import styles from './ExplainEntriesModal.module.css'
 import { disableScroll, enableScroll } from '../utils/modalUtils'
 
 interface ExplainEntriesModalProps {
@@ -35,12 +36,15 @@ export default function ExplainEntriesModal({ isOpen, onClose }: ExplainEntriesM
 
   if (!isOpen) return null
 
-  return (
-    <div className={styles.overlay}>
-      <div className={styles.modal}>
+  const modalContent = (
+    <div className={styles.overlay} onClick={onClose}>
+      <div className={styles.modal} onClick={(event) => event.stopPropagation()}>
         <div className={styles.header}>
-          <h2>How Entries Work</h2>
-          <CloseControl onClick={onClose} label="Close modal" />
+          <div>
+            <p className={styles.kicker}>Entries Guide</p>
+            <h2>How Entries Work</h2>
+          </div>
+          <CloseControl onClick={onClose} position="absolute" size="sm" label="Close modal" className={styles.closeButton} />
         </div>
 
         <div className={styles.content}>
@@ -89,4 +93,7 @@ export default function ExplainEntriesModal({ isOpen, onClose }: ExplainEntriesM
       </div>
     </div>
   )
+
+  if (typeof document === 'undefined') return null
+  return createPortal(modalContent, document.body)
 }

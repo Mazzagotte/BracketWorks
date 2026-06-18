@@ -12,6 +12,9 @@ interface Squad {
   id: number
   date: string
   time: string
+  has_brackets?: boolean
+  bracket_group_count?: number
+  bracket_count?: number
 }
 
 interface TournamentInfo {
@@ -19,6 +22,10 @@ interface TournamentInfo {
   name: string
   location?: string
   squads: Squad[]
+}
+
+const getPreferredPublicSquadId = (squads: Squad[]) => {
+  return squads.find((s) => s.has_brackets)?.id ?? squads[0]?.id ?? null
 }
 
 interface AliveRow {
@@ -1084,8 +1091,8 @@ export default function TournamentViewPage() {
     const bySlugPath = `/api/v1/public/tournament/by-slug/${encodeURIComponent(ref)}`
 
     const pathsToTry = looksNumeric
-      ? [byIdPath, bySlugPath, byNamePath]
-      : [bySlugPath, byNamePath, byIdPath]
+      ? [byIdPath]
+      : [bySlugPath, byNamePath]
 
     let res: Response | null = null
     for (const path of pathsToTry) {
@@ -1096,7 +1103,7 @@ export default function TournamentViewPage() {
       }
     }
 
-    if (!res) throw new Error('Tournament not found')
+    if (!res) throw new Error('Tournament not found or public view is not enabled')
 
     const info = await res.json() as TournamentInfo
     setResolvedTournamentId(info.id)
@@ -1168,7 +1175,12 @@ export default function TournamentViewPage() {
       if (!cached?.tournament) return
 
       setTournament(cached.tournament)
-      setSelectedSquadId(cached.selectedSquadId ?? cached.tournament.squads[0]?.id ?? null)
+      const cachedSquad = cached.tournament.squads.find((s) => s.id === cached.selectedSquadId)
+      setSelectedSquadId(
+        cachedSquad?.has_brackets === false
+          ? getPreferredPublicSquadId(cached.tournament.squads)
+          : cached.selectedSquadId ?? getPreferredPublicSquadId(cached.tournament.squads)
+      )
       setResolvedTournamentId(cached.resolvedTournamentId ?? null)
       setBracketGroups(Array.isArray(cached.bracketGroups) ? cached.bracketGroups : [])
       setWinners(Array.isArray(cached.winners) ? cached.winners : [])
@@ -1224,8 +1236,7 @@ export default function TournamentViewPage() {
     fetchTournamentInfo()
       .then((info) => {
         setTournament(info)
-        const firstSquad = info.squads[0]?.id ?? null
-        setSelectedSquadId(firstSquad)
+        setSelectedSquadId(getPreferredPublicSquadId(info.squads))
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false))
@@ -1234,8 +1245,7 @@ export default function TournamentViewPage() {
   useEffect(() => {
     if (!tournament?.squads.length) return
     if (selectedSquadId != null && tournament.squads.some((s) => s.id === selectedSquadId)) return
-    const firstSquad = tournament.squads[0]
-    if (firstSquad) setSelectedSquadId(firstSquad.id)
+    setSelectedSquadId(getPreferredPublicSquadId(tournament.squads))
   }, [tournament, selectedSquadId])
 
   // ── Data refresh (bowlers + brackets + winners) ────────────────────────────
@@ -1250,6 +1260,12 @@ export default function TournamentViewPage() {
         fetchWinners(resolvedTournamentId, selectedSquadId),
         fetchScores(resolvedTournamentId, selectedSquadId),
       ])
+      const selectedSquad = tournament?.squads.find((s) => s.id === selectedSquadId)
+      const preferredSquadId = tournament ? getPreferredPublicSquadId(tournament.squads) : null
+      if (bg.length === 0 && selectedSquad?.has_brackets === false && preferredSquadId && preferredSquadId !== selectedSquadId) {
+        setSelectedSquadId(preferredSquadId)
+        return
+      }
       setBracketGroups(bg)
       setWinners(w)
       setScoreRows(sr)
@@ -1258,7 +1274,7 @@ export default function TournamentViewPage() {
       setIsRefreshing(false)
       refreshInFlightRef.current = false
     }
-  }, [resolvedTournamentId, selectedSquadId, fetchBrackets, fetchWinners, fetchScores])
+  }, [resolvedTournamentId, selectedSquadId, tournament, fetchBrackets, fetchWinners, fetchScores])
 
   useEffect(() => {
     refresh()

@@ -30,14 +30,5 @@
       "type": "image/svg+xml",
       "purpose": "any"
     }
-  ],
-  "screenshots": [
-    {
-      "src": "/screenshots/mobile-dashboard.png",
-      "sizes": "390x844",
-      "type": "image/png",
-      "platform": "narrow",
-      "label": "Mobile Dashboard View"
-    }
   ]
 }

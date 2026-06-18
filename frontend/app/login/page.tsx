@@ -290,7 +290,7 @@ export default function LoginPage() {
         {/* Header */}
         <div className={styles.logoWrap}>
           <Image
-            src="/logo.svg"
+            src="/logo%202.svg"
             alt="BracketWorks Logo"
             width={220}
             height={220}

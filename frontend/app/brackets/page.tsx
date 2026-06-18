@@ -13,6 +13,7 @@ import { logger } from '../lib/logger'
 import { storage } from '../lib/storage'
 import { cleanupModalState, resetScrollLocks } from '../utils/modalUtils'
 import { getBracketGroups } from '../lib/bracketPrograms'
+import { setSelectedSquad as persistSelectedSquad, setActiveSquadLabel } from '../lib/selection-session'
 import { BracketTabs } from './components/BracketTabs'
 import { SearchFilter } from './components/SearchFilter'
 import { EmptyBracketState } from './components/EmptyBracketState'
@@ -184,15 +185,18 @@ export default function BracketsPage() {
     }
   }, [tournamentsLoading, tournaments.length])
 
-  // Auto-select squad from localStorage only (no fallback to first squad)
+  // Auto-select saved squad, or fall back to the first squad for a loaded tournament.
   useEffect(() => {
     if (squads.length > 0 && !selectedSquad) {
       const storedSquadId = storage.getItem('selected_squad_id')
-      if (storedSquadId) {
-        const squadToSelect = squads.find(s => s.id === parseInt(storedSquadId))
-        if (squadToSelect) {
-          setSelectedSquad(squadToSelect)
-        }
+      const squadToSelect = storedSquadId
+        ? squads.find(s => s.id === parseInt(storedSquadId))
+        : null
+      const fallbackSquad = squadToSelect ?? squads[0] ?? null
+      if (fallbackSquad) {
+        setSelectedSquad(fallbackSquad)
+        persistSelectedSquad(fallbackSquad.id)
+        setActiveSquadLabel([fallbackSquad.date, fallbackSquad.time].filter(Boolean).join(' '))
       }
     }
   }, [squads, selectedSquad])
@@ -494,20 +498,27 @@ export default function BracketsPage() {
   const { isUserAuthenticated, isAuthInitialized, currentUser } = useAuth()
   const isDev = process.env.NODE_ENV === 'development' || !!currentUser?.isAdmin
 
-  // Memoize the Generate Brackets button to prevent infinite re-renders
-  const generateBracketsButton = useMemo(() => {
+  const bracketsQuickActions = useMemo(() => {
     if (!selectedTournament) return undefined
     return (
-      <div className={styles.headerActions}>
-        <button onClick={() => setIsExplainModalOpen(true)} className="ds-btn ds-btn-info ds-btn-sm">
-          Bracket Guide
-        </button>
-        <button onClick={handleGenerateBrackets} className={`ds-btn ds-btn-primary ds-btn-sm ${styles.generateBtn}`}>
-          Generate Brackets
-        </button>
+      <div className={styles.quickActionsRow}>
+        <div className={styles.quickActionsGroupLeft}>
+          <button
+            onClick={() => setIsExplainModalOpen(true)}
+            className={`ds-btn ds-btn-info ds-btn-sm ${styles.quickActionGuideBtn}`}
+          >
+            Bracket Guide
+          </button>
+          <button
+            onClick={handleGenerateBrackets}
+            className={`ds-btn ds-btn-primary ds-btn-sm ${styles.quickActionGenerateBtn}`}
+          >
+            Generate Brackets
+          </button>
+        </div>
         {isDev && (
-          <div className={styles.devGroup}>
-            <button onClick={handleDeleteAllBrackets} className={styles.devButton}>
+          <div className={styles.quickActionsGroupRight}>
+            <button onClick={handleDeleteAllBrackets} className={styles.quickActionDangerBtn}>
               Delete All Brackets
             </button>
           </div>
@@ -520,7 +531,7 @@ export default function BracketsPage() {
   usePageHeader({
     title: 'Bracket View',
     subtitle: undefined,
-    actions: generateBracketsButton
+    actions: undefined
   })
 
   // Check if we have tokens in localStorage
@@ -585,6 +596,15 @@ export default function BracketsPage() {
 
       {/* Bracket content */}
       <div className={styles.pageContainer}>
+        {bracketsQuickActions && (
+          <div className={styles.quickActionsCard}>
+            <h2 className={styles.quickActionsTitle}>Quick Actions</h2>
+            <div className={styles.quickActionsBody}>
+              {bracketsQuickActions}
+            </div>
+          </div>
+        )}
+
         {/* Loading State */}
         {isInitializing ? (
           <div className={styles.loadingState}>

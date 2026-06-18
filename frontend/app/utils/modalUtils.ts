@@ -83,7 +83,7 @@ export function resetScrollLocks(): void {
 export function clearStrayOverlays(): void {
   if (typeof document === 'undefined') return
   
-  const overlaySelectors = ['.modal-overlay', '.modalOverlay', '.overlay', '.modalBackdrop']
+  const overlaySelectors = ['.modal-overlay', '.modalOverlay', '.modalBackdrop']
   overlaySelectors.forEach((selector) => {
     document.querySelectorAll<HTMLElement>(selector).forEach((el) => {
       // Check if the element is actually a modal overlay (has fixed positioning and high z-index)

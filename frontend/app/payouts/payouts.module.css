@@ -16,15 +16,19 @@
   padding: 0;
   margin-bottom: 1.5rem;
   overflow: hidden;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 22px;
 }
 
 .summaryTitle {
   font-size: 1rem;
   font-weight: 700;
-  color: var(--color-text-primary);
+  color: rgba(244, 239, 232, 0.88);
   margin: 0;
   padding: 14px 24px;
-  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.015));
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   text-transform: none;
   letter-spacing: normal;
 }
@@ -50,33 +54,23 @@
   min-width: 156px;
   width: fit-content;
   flex: 0 0 auto;
-  border: 1px solid var(--color-border-muted);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
-  background: var(--color-surface-glass);
-  box-shadow: var(--shadow-inset-white-sm);
-}
-
-.statBoxTotal {
-  border-color: var(--color-brand-border-mid);
-  background: color-mix(in srgb, var(--color-success-soft) 60%, var(--color-surface-glass));
-  box-shadow: var(--shadow-inset-white-sm), 0 2px 8px color-mix(in srgb, var(--color-green-dark) 12%, transparent);
+  background: rgba(0, 0, 0, 0.2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
 }
 
 .statValue {
   font-size: 2rem;
   font-weight: 800;
   line-height: 1;
-  color: var(--color-text-primary);
-}
-
-.statValueGreen {
-  color: var(--color-green-dark);
+  color: rgba(244, 239, 232, 0.94);
 }
 
 .statLabel {
   font-size: 0.75rem;
   font-weight: 700;
-  color: var(--color-text-muted-strong);
+  color: rgba(244, 239, 232, 0.58);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -99,11 +93,11 @@
   border: none;
   border-radius: 99px;
   overflow: hidden;
-  background: var(--opacity-black-10);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .progressMeter::-webkit-progress-bar {
-  background: var(--opacity-black-10);
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 99px;
 }
 
@@ -1342,4 +1336,473 @@
     justify-content: center;
     width: 100%;
   }
+}
+
+/* =============================================
+   DASHBOARD / ENTRIES ALIGNED POLISH
+   ============================================= */
+
+.pageContainer {
+  max-width: 1280px;
+  padding: 0.75rem 1rem;
+  color: rgba(241, 245, 249, 0.9);
+}
+
+.quickActionsCard,
+.summaryCard,
+.tableCard,
+.searchStandalone {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.3);
+}
+
+.quickActionsCard {
+  margin-bottom: 0.95rem;
+  overflow: hidden;
+}
+
+.quickActionsTitle {
+  margin: 0;
+  padding: 0.68rem 0.9rem 0.58rem;
+  font-size: 1rem;
+  line-height: 1.2;
+  font-weight: 800;
+  color: rgba(246, 249, 255, 0.97);
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  letter-spacing: 0;
+}
+
+.quickActionsBody {
+  padding: 0.52rem 0.78rem 0.68rem;
+}
+
+.quickActionsRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.quickActionsGroupLeft,
+.quickActionsGroupRight {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.quickActionsRow :global(.ds-btn) {
+  min-height: 36px;
+  border-radius: 11px;
+  padding: 0.42rem 0.78rem;
+  font-size: 0.78rem;
+  font-weight: 750;
+  line-height: 1.1;
+  letter-spacing: 0;
+  box-shadow: none;
+}
+
+.quickActionGuideBtn {
+  color: rgba(224, 231, 255, 0.98) !important;
+  background: rgba(79, 96, 230, 0.24) !important;
+  border: 1px solid rgba(129, 140, 248, 0.38) !important;
+}
+
+.quickActionGuideBtn:hover:not(:disabled) {
+  background: rgba(79, 96, 230, 0.34) !important;
+  border-color: rgba(165, 180, 252, 0.48) !important;
+}
+
+.quickActionFileBtn {
+  color: rgba(255, 241, 229, 0.98) !important;
+  background: rgba(255, 122, 0, 0.2) !important;
+  border: 1px solid rgba(255, 146, 72, 0.34) !important;
+}
+
+.quickActionFileBtn:hover:not(:disabled) {
+  background: rgba(255, 122, 0, 0.3) !important;
+  border-color: rgba(255, 168, 92, 0.48) !important;
+}
+
+.summaryCard {
+  margin-bottom: 0.95rem;
+  overflow: hidden;
+}
+
+.summaryTitle,
+.tableCardHeader {
+  padding: 0.68rem 0.9rem 0.58rem;
+  font-size: 1rem;
+  line-height: 1.2;
+  font-weight: 800;
+  color: rgba(246, 249, 255, 0.96);
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  letter-spacing: 0;
+}
+
+.summaryGrid {
+  gap: 8px;
+  padding: 12px;
+}
+
+.statBox {
+  min-width: 132px;
+  min-height: 84px;
+  padding: 14px 12px;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(226, 232, 240, 0.12);
+  border-radius: 14px;
+  box-shadow: none;
+}
+
+.statValue {
+  font-size: 1.35rem;
+  color: rgba(246, 249, 255, 0.94);
+}
+
+.statLabel {
+  font-size: 0.68rem;
+  color: rgba(180, 189, 205, 0.76);
+  letter-spacing: 0;
+}
+
+.statDetail,
+.remainingLabel {
+  font-size: 0.7rem;
+  color: rgba(180, 189, 205, 0.72);
+}
+
+.progressBarRow {
+  margin-top: 4px;
+}
+
+.progressMeter::-webkit-progress-value {
+  background: #58e6a7;
+}
+
+.progressMeter::-moz-progress-bar {
+  background: #58e6a7;
+}
+
+.searchStandalone {
+  margin-bottom: 0.72rem;
+  padding: 0.62rem 0.78rem;
+}
+
+.searchInput {
+  min-height: 32px;
+  padding: 0 0.75rem;
+  border: 1px solid rgba(226, 232, 240, 0.16);
+  border-radius: 10px;
+  background: rgba(8, 9, 15, 0.72);
+  color: rgba(246, 249, 255, 0.94);
+  font-size: 0.84rem;
+  font-weight: 650;
+}
+
+.searchInput:focus {
+  border-color: rgba(255, 146, 72, 0.55);
+  box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.12);
+}
+
+.searchInput::placeholder {
+  color: rgba(180, 189, 205, 0.66);
+}
+
+.tableCard {
+  margin-bottom: 0;
+  overflow: hidden;
+}
+
+.headerPool {
+  font-size: 0.82rem;
+  color: #58e6a7;
+}
+
+.winnerRow {
+  gap: 12px;
+  padding: 0.58rem 0.78rem;
+  background: rgba(255, 255, 255, 0.018);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.055);
+}
+
+.winnerRow:hover {
+  background: rgba(255, 122, 0, 0.07);
+}
+
+.winnerRow.firstPlace {
+  background: rgba(255, 122, 0, 0.075);
+}
+
+.winnerRow.firstPlace:hover {
+  background: rgba(255, 122, 0, 0.1);
+}
+
+.winnerRow.isPaid {
+  opacity: 0.55;
+}
+
+.winnerRow.isPaid:hover {
+  background: rgba(255, 122, 0, 0.07);
+}
+
+.placeBadge {
+  width: 30px;
+  height: 30px;
+  font-size: 0.78rem;
+}
+
+.place1 {
+  color: rgba(255, 219, 190, 0.98);
+  background: rgba(255, 122, 0, 0.16);
+  border: 1px solid rgba(255, 122, 0, 0.28);
+}
+
+.place2 {
+  color: rgba(224, 231, 255, 0.95);
+  background: rgba(148, 163, 184, 0.18);
+  border: 1px solid rgba(148, 163, 184, 0.24);
+}
+
+.place3 {
+  color: rgba(255, 231, 213, 0.95);
+  background: rgba(194, 91, 21, 0.18);
+  border: 1px solid rgba(255, 146, 72, 0.22);
+}
+
+.placeOther {
+  color: rgba(203, 213, 225, 0.85);
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(226, 232, 240, 0.12);
+}
+
+.winnerName {
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 0.78rem;
+  line-height: 1.2;
+  font-weight: 750;
+  color: rgba(246, 249, 255, 0.94);
+}
+
+.bracketCount,
+.winnerMeta,
+.winnerMetaRow,
+.payoutPct {
+  color: rgba(180, 189, 205, 0.76);
+}
+
+.bracketCount {
+  font-size: 0.72rem;
+}
+
+.winnerMeta {
+  font-size: 0.74rem;
+  gap: 5px;
+}
+
+.winnerMetaGroupLabel {
+  font-size: 0.68rem;
+  color: rgba(180, 189, 205, 0.76);
+  letter-spacing: 0;
+}
+
+.winnerMetaRow {
+  font-size: 0.73rem;
+}
+
+.toggleDetailsBtn,
+.sidePotPill {
+  min-height: 22px;
+  padding: 0 0.5rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  letter-spacing: 0;
+}
+
+.toggleDetailsBtn {
+  color: rgba(203, 213, 225, 0.8);
+  border-color: rgba(226, 232, 240, 0.16);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.toggleDetailsBtn:hover {
+  color: rgba(255, 219, 190, 0.98);
+  border-color: rgba(255, 146, 72, 0.36);
+}
+
+.sidePotPill {
+  color: rgba(255, 219, 190, 0.96);
+  background: rgba(255, 122, 0, 0.11);
+  border: 1px solid rgba(255, 146, 72, 0.28);
+}
+
+.payoutAmount {
+  font-size: 0.95rem;
+  color: #58e6a7;
+}
+
+.firstPlace .payoutAmount {
+  font-size: 1rem;
+}
+
+.payoutPct {
+  font-size: 0.7rem;
+}
+
+.paidBadge,
+.markPaidBtn {
+  min-height: 28px;
+  padding: 0 0.65rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.markPaidBtn {
+  color: rgba(255, 219, 190, 0.96);
+  background: rgba(255, 122, 0, 0.1);
+  border: 1px solid rgba(255, 146, 72, 0.35);
+}
+
+.markPaidBtn:hover {
+  color: rgba(255, 238, 220, 1);
+  background: rgba(255, 122, 0, 0.18);
+  border-color: rgba(255, 168, 92, 0.48);
+}
+
+.paidBadge {
+  color: rgba(190, 255, 213, 0.96);
+  background: rgba(45, 212, 136, 0.12);
+  border: 1px solid rgba(45, 212, 136, 0.35);
+}
+
+.errorBanner {
+  margin-bottom: 0.95rem;
+  color: rgba(254, 202, 202, 0.96);
+  background: rgba(127, 29, 29, 0.18);
+  border: 1px solid rgba(248, 113, 113, 0.28);
+  border-left: 4px solid rgba(248, 113, 113, 0.7);
+}
+
+.loadingRow,
+.emptyState {
+  color: rgba(180, 189, 205, 0.78);
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+}
+
+.emptyTitle {
+  margin: 0 0 0.45rem;
+  color: rgba(246, 249, 255, 0.94);
+}
+
+.emptyMessage {
+  margin: 0;
+  color: rgba(180, 189, 205, 0.76);
+}
+
+.emptyActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+
+.emptyActions :global(.ds-btn) {
+  min-height: 36px;
+  border-radius: 11px;
+  font-size: 0.78rem;
+  font-weight: 750;
+  letter-spacing: 0;
+}
+
+@media (max-width: 900px) {
+  .pageContainer {
+    padding: 0.65rem 0.75rem;
+  }
+
+  .quickActionsRow,
+  .quickActionsGroupLeft,
+  .quickActionsGroupRight {
+    width: 100%;
+  }
+
+  .quickActionsRow :global(.ds-btn) {
+    flex: 1 1 150px;
+  }
+
+  .summaryGrid {
+    padding: 10px;
+  }
+
+  .statBox {
+    min-width: 112px;
+    min-height: 76px;
+    padding: 12px 10px;
+  }
+
+  .winnerRow {
+    padding: 0.55rem 0.68rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .quickActionsRow :global(.ds-btn) {
+    flex-basis: 100%;
+  }
+
+  .emptyActions {
+    width: 100%;
+  }
+
+  .emptyActions :global(.ds-btn) {
+    width: 100%;
+  }
+
+  .statBox {
+    min-width: 0;
+  }
+}
+
+/* Page text normalization */
+.pageContainer {
+  color: var(--bw-text-body);
+  font-size: var(--bw-type-body);
+  line-height: 1.45;
+}
+
+.pageContainer :where(h1, h2, h3, h4) {
+  color: var(--bw-text-title);
+  letter-spacing: 0;
+}
+
+.pageContainer :where(.summaryTitle, .tableCardHeader, .bracketTitleText, h2, h3) {
+  color: var(--bw-text-title);
+  font-size: var(--bw-type-card-title);
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.pageContainer :where(p, li, .bracketMeta, .statDetail, .emptyText) {
+  color: var(--bw-text-muted);
+  font-size: var(--bw-type-helper);
+  line-height: 1.45;
+}
+
+.pageContainer :where(label, small, .statLabel) {
+  color: var(--bw-text-muted);
+  font-size: var(--bw-type-label);
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
 }

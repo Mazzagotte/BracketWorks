@@ -47,6 +47,13 @@ const alignClass: Record<string, string> = {
   right: 'bw-sortable-header-align-right',
 };
 
+const widthClass: Record<string, string> = {
+  '6%': 'bw-sortable-header-w-6',
+  '10%': 'bw-sortable-header-w-10',
+  '12%': 'bw-sortable-header-w-12',
+  '14%': 'bw-sortable-header-w-14',
+};
+
 export const SortableHeader: React.FC<SortableHeaderProps> = ({
   column,
   children,
@@ -64,13 +71,13 @@ export const SortableHeader: React.FC<SortableHeaderProps> = ({
     'entries-header-cell',
     'bw-sortable-header',
     isActive ? 'bw-sortable-header-active' : '',
+    width ? widthClass[width] ?? '' : '',
     className ?? '',
   ].filter(Boolean).join(' ');
 
   return (
     <th
       className={thClass}
-      style={width ? { width } : undefined}
       onClick={() => onSort(column)}
       aria-sort={ariaSort}
       title={

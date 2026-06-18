@@ -11,6 +11,7 @@ interface ShareQRModalProps {
   onClose: () => void;
   tournamentId: number;
   tournamentName: string;
+  publicUrl?: string;
 }
 
 const TEMPLATE_LAYOUT = {
@@ -38,7 +39,7 @@ function slugify(name: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-export default function ShareQRModal({ open, onClose, tournamentId, tournamentName }: ShareQRModalProps) {
+export default function ShareQRModal({ open, onClose, tournamentId, tournamentName, publicUrl: providedPublicUrl }: ShareQRModalProps) {
   const { addToast } = useToast();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -47,9 +48,9 @@ export default function ShareQRModal({ open, onClose, tournamentId, tournamentNa
   const templateSrc = "/qr-poster-template.png";
 
   const slug = slugify(tournamentName);
-  const publicUrl = typeof window !== "undefined"
+  const publicUrl = providedPublicUrl || (typeof window !== "undefined"
     ? `${window.location.origin}/view/${slug}`
-    : `/view/${slug}`;
+    : `/view/${slug}`);
   const qrBackgroundColor = typeof window !== "undefined" ? readRootCssVar("--share-qr-code-bg") : "";
   const qrForegroundColor = typeof window !== "undefined" ? readRootCssVar("--share-qr-code-fg") : "";
 

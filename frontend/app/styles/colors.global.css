@@ -106,8 +106,8 @@
   --gradient-ivory: linear-gradient(145deg, var(--color-brand-ivory-light) 0%, var(--color-brand-ivory) 100%);
   --gradient-blue: linear-gradient(135deg, var(--color-blue-primary) 0%, var(--color-blue-dark) 100%);
   --gradient-blue-light: linear-gradient(135deg, var(--color-blue-light) 0%, var(--color-blue-lighter) 100%);
-  --gradient-purple: linear-gradient(135deg, var(--color-purple-primary) 0%, var(--color-purple-dark) 100%);
-  --gradient-purple-tie: linear-gradient(135deg, var(--color-purple-primary) 0%, var(--color-purple-dark) 100%);
+  --gradient-purple: linear-gradient(135deg, var(--color-brand-orange) 0%, var(--color-brand-orange-dark) 100%);
+  --gradient-purple-tie: linear-gradient(135deg, var(--color-brand-orange) 0%, var(--color-warning) 100%);
   --gradient-green: linear-gradient(135deg, var(--color-green-light) 0%, var(--color-green-lighter) 100%);
   --gradient-green-progress: linear-gradient(90deg, var(--color-success) 0%, var(--color-green-dark) 100%);
   --gradient-gray: linear-gradient(135deg, var(--color-gray-100) 0%, var(--color-gray-200) 100%);
@@ -176,7 +176,7 @@
   --ring-success: 0 0 0 3px rgba(47, 191, 113, 0.1);
 
   /* Gradient additions */
-  --gradient-purple-soft: linear-gradient(135deg, var(--color-purple-light) 0%, var(--color-purple-accent) 100%);
+  --gradient-purple-soft: linear-gradient(135deg, var(--color-brand-orange-light) 0%, var(--color-warning-amber) 100%);
   --gradient-enhanced-card: linear-gradient(135deg, var(--color-dark-surface) 0%, var(--color-dark-base) 100%);
   --gradient-skeleton: linear-gradient(90deg, var(--color-skeleton-base) 25%, var(--color-skeleton-highlight) 50%, var(--color-skeleton-base) 75%);
   --gradient-strength-weak: linear-gradient(90deg, var(--color-error), var(--color-error-light));
@@ -244,7 +244,6 @@
   /* ── Layout ──────────────────────────────────────────────── */
   --container-max-width: 1200px;
   --content-max-width:   1200px;
-  --sidebar-width:       260px;
 
   /* ── Touch Targets ───────────────────────────────────────── */
   --touch-target-min:         44px;

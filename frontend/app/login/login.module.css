@@ -610,3 +610,300 @@
     width: 90px;
   }
 }
+
+/* Dashboard-aligned auth polish */
+.page {
+  background:
+    linear-gradient(135deg, rgba(255, 122, 0, 0.08), transparent 34%),
+    linear-gradient(225deg, rgba(245, 158, 11, 0.07), transparent 30%),
+    var(--color-brand-charcoal-deep);
+  color: var(--color-text-primary);
+}
+
+.page::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.035) 0,
+      rgba(255, 255, 255, 0.035) 1px,
+      transparent 1px,
+      transparent 128px
+    );
+  opacity: 0.22;
+}
+
+.card {
+  max-width: 430px;
+  padding: 20px 28px 26px;
+  background: rgba(18, 17, 23, 0.86);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(226, 232, 240, 0.14);
+  border-radius: 24px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.46), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, rgba(255, 122, 0, 0.9), rgba(245, 158, 11, 0.85), transparent);
+}
+
+.logoWrap {
+  width: 132px;
+  margin-bottom: 14px;
+}
+
+.logoImage {
+  filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.38));
+}
+
+.cardHeader {
+  margin-bottom: 20px;
+}
+
+.cardTitle,
+.successModalTitle {
+  color: var(--color-text-primary);
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.12;
+  letter-spacing: 0;
+}
+
+.cardSubtitle,
+.successModalText {
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.inputGroup,
+.passwordWrap {
+  margin-bottom: 12px;
+}
+
+.input {
+  height: 42px;
+  padding: 0 14px;
+  color: rgba(245, 248, 255, 0.96);
+  background: rgba(12, 13, 20, 0.9);
+  border: 1px solid rgba(226, 232, 240, 0.16);
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.input:focus {
+  background: rgba(12, 13, 20, 0.96);
+  border-color: rgba(255, 122, 0, 0.85);
+  box-shadow: 0 0 0 1px rgba(255, 122, 0, 0.45), 0 0 0 4px rgba(255, 122, 0, 0.12);
+}
+
+.input::placeholder {
+  color: rgba(180, 189, 205, 0.72);
+}
+
+.passwordWrap .input {
+  padding-right: 126px;
+  color: rgba(245, 248, 255, 0.96);
+  background: rgba(12, 13, 20, 0.9);
+  border-color: rgba(226, 232, 240, 0.16);
+}
+
+.input:-webkit-autofill,
+.input:-webkit-autofill:hover,
+.input:-webkit-autofill:focus,
+.passwordWrap .input:-webkit-autofill,
+.passwordWrap .input:-webkit-autofill:hover,
+.passwordWrap .input:-webkit-autofill:focus {
+  -webkit-text-fill-color: rgba(245, 248, 255, 0.96);
+  caret-color: rgba(245, 248, 255, 0.96);
+  border-color: rgba(226, 232, 240, 0.16);
+  box-shadow: 0 0 0 1000px rgba(12, 13, 20, 0.96) inset;
+  transition: background-color 9999s ease-out;
+}
+
+.passwordToggle {
+  right: 10px;
+  height: 42px;
+  color: rgba(180, 189, 205, 0.82);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+
+.passwordToggle:hover {
+  color: rgba(255, 190, 141, 0.98);
+}
+
+.loginBtn,
+.resetSubmitButton,
+.successModalButton {
+  min-height: 42px;
+  height: 42px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 122, 0, 0.28);
+  background: var(--color-brand-orange);
+  box-shadow: 0 10px 24px rgba(255, 122, 0, 0.26);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.loginBtn:hover:not(:disabled),
+.resetSubmitButton:hover:not(:disabled),
+.successModalButton:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  box-shadow: 0 12px 28px rgba(255, 122, 0, 0.32);
+}
+
+.errorBanner,
+.sessionExpiredBanner,
+.delayWarning,
+.attemptsInfo,
+.infoBanner,
+.successBanner,
+.capsLockWarning,
+.successModalCountdown {
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.errorBanner,
+.delayWarning {
+  background: rgba(64, 21, 24, 0.72);
+  border-color: rgba(239, 100, 97, 0.38);
+  color: rgba(255, 205, 205, 0.96);
+}
+
+.sessionExpiredBanner,
+.attemptsInfo,
+.infoBanner,
+.capsLockWarning {
+  background: rgba(255, 122, 0, 0.1);
+  border-color: rgba(255, 122, 0, 0.34);
+  color: rgba(255, 202, 159, 0.96);
+}
+
+.successBanner,
+.successModalCountdown {
+  background: rgba(45, 212, 136, 0.1);
+  border: 1px solid rgba(45, 212, 136, 0.32);
+  color: rgba(176, 245, 214, 0.95);
+}
+
+.forgotRow {
+  margin-top: 10px;
+}
+
+.forgotLink,
+.signupPromptText {
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.forgotLink:hover,
+.signupPromptLink:hover {
+  color: rgba(255, 190, 141, 0.98);
+}
+
+.signupPrompt {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(226, 232, 240, 0.12);
+}
+
+.signupPromptLink {
+  color: rgba(246, 249, 255, 0.94);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration-color: rgba(255, 122, 0, 0.52);
+}
+
+.createAccountBtn {
+  color: rgba(246, 249, 255, 0.94);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(226, 232, 240, 0.16);
+  box-shadow: none;
+}
+
+.createAccountBtn:hover {
+  color: rgba(255, 232, 212, 0.98);
+  background: rgba(255, 122, 0, 0.08);
+  border-color: rgba(255, 122, 0, 0.34);
+}
+
+.formIntro {
+  color: var(--color-text-secondary);
+}
+
+.successModalOverlay {
+  background: rgba(6, 8, 14, 0.78);
+  backdrop-filter: blur(10px) saturate(120%);
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
+}
+
+.successModalCard {
+  background: rgba(18, 17, 23, 0.92);
+  border: 1px solid rgba(226, 232, 240, 0.14);
+  border-radius: 24px;
+}
+
+@media (min-width: 1024px) and (max-width: 1440px) {
+  .card {
+    max-width: 450px;
+    padding: 22px 30px 28px;
+  }
+
+  .logoWrap {
+    width: 140px;
+  }
+
+  .cardTitle {
+    font-size: 25px;
+  }
+}
+
+@media (max-width: 480px) {
+  .card {
+    padding: 18px 18px 22px;
+    border-radius: 20px;
+  }
+
+  .logoWrap {
+    width: 112px;
+  }
+
+  .passwordWrap .input {
+    padding-right: 112px;
+  }
+
+  .passwordToggle {
+    font-size: 9px;
+  }
+}
+
+/* Match app background and remove login-specific motion */
+.page {
+  background: var(--color-background);
+}
+
+.page::before {
+  content: none;
+}
+
+.card,
+.successModalCard {
+  animation: none;
+}
+
+.card.loading {
+  transform: none;
+}

@@ -1949,3 +1949,491 @@
     height: calc(100% + 36px);
   }
 }
+
+/* Final cascade: align the public landing page with the current app UI. */
+.container {
+  --page-max-width: 1320px;
+  --page-gutter: clamp(16px, 3%, 28px);
+  --landing-panel: rgba(18, 17, 23, 0.82);
+  --landing-panel-strong: rgba(18, 17, 23, 0.94);
+  --landing-border: rgba(226, 232, 240, 0.14);
+  --landing-border-warm: rgba(255, 122, 0, 0.34);
+  --landing-shadow: 0 12px 30px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --fs-overline: 10px;
+  --fs-body-sm: 12px;
+  --fs-body-md: 13px;
+  --fs-body-lg: 15px;
+  --fs-display: 56px;
+  --fs-section-title: 34px;
+  --fs-card-title: 18px;
+  min-height: 100svh;
+  padding-top: var(--header-height, 64px);
+  color: var(--color-text-primary);
+  background:
+    linear-gradient(180deg, rgba(15, 15, 23, 0.96) 0%, rgba(17, 17, 25, 1) 44%, rgba(15, 15, 23, 1) 100%),
+    var(--color-background);
+}
+
+.heroGlow {
+  display: none;
+}
+
+.navWrap {
+  padding: 0;
+}
+
+.navInner {
+  width: 100%;
+  min-height: var(--header-height, 64px);
+  border-radius: 0;
+  border: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(15, 15, 23, 0.92);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03), 0 4px 24px rgba(0, 0, 0, 0.4);
+  padding: 0 24px;
+  gap: 14px;
+}
+
+.brandLogo {
+  height: 32px;
+}
+
+.brandText strong {
+  color: var(--color-primary);
+  font-size: 15px;
+  letter-spacing: 0;
+}
+
+.brandText span {
+  color: rgba(255, 178, 104, 0.84);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+
+.navLinks {
+  flex: 1;
+  justify-content: center;
+  gap: 2px;
+}
+
+.navLinks a {
+  padding: 7px 16px;
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.56);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.navLinks a:hover {
+  color: rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.navBtn {
+  min-height: 36px;
+  border-radius: var(--radius-lg);
+  padding: 0 14px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.navBtnPrimary {
+  background: var(--color-primary);
+  border: 2px solid var(--color-primary);
+  box-shadow: var(--shadow-btn);
+}
+
+.navBtnPrimary:hover {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+  box-shadow: var(--shadow-btn-hover);
+}
+
+.navBtnSecondary {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.84);
+}
+
+.hero {
+  min-height: calc(100svh - var(--header-height, 64px));
+  padding: 22px 0 42px;
+  align-items: center;
+}
+
+.heroGrid {
+  width: fit-content;
+  max-width: min(100%, var(--page-max-width));
+  grid-template-columns: minmax(0, max-content) minmax(0, max-content);
+  justify-content: center;
+  gap: 28px;
+  align-items: center;
+}
+
+.heroContent,
+.heroPanel,
+.featureCard,
+.step,
+.benefit,
+.ctaContent,
+.publicViewPanel {
+  background: var(--landing-panel);
+  border: 1px solid var(--landing-border);
+  box-shadow: var(--landing-shadow);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.heroContent {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: fit-content;
+  max-width: min(100%, 620px);
+  box-sizing: border-box;
+  justify-self: start;
+  border-radius: 24px;
+  padding: 28px;
+}
+
+.kicker {
+  color: var(--color-text-secondary);
+  font-size: var(--fs-overline);
+  letter-spacing: 0.14em;
+  margin-bottom: 8px;
+}
+
+.heroTitle,
+.sectionTitle,
+.publicViewTitle,
+.ctaContent h2,
+.featureCard h3,
+.benefit h3,
+.step h3,
+.heroPanelTitle,
+.tournamentName {
+  letter-spacing: 0;
+}
+
+.heroTitle {
+  max-width: none;
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: var(--fs-display);
+  line-height: 1;
+}
+
+.heroSubtitle {
+  max-width: 58ch;
+  margin-top: 14px;
+  color: var(--color-text-secondary);
+  font-size: var(--fs-body-lg);
+  line-height: 1.5;
+}
+
+.heroCTA {
+  margin-top: 24px;
+}
+
+.heroCtaHelper {
+  color: rgba(157, 166, 184, 0.72);
+}
+
+.trustRow {
+  gap: 8px;
+  margin-top: 28px;
+}
+
+.trustRow span,
+.ctaPill {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 122, 0, 0.22);
+  background: rgba(255, 122, 0, 0.1);
+  color: rgba(255, 224, 198, 0.92);
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.trustRow span::before {
+  display: none;
+}
+
+.proofRow {
+  gap: 10px;
+}
+
+.proofCard,
+.statCard,
+.activityCard,
+.tournamentMetaCard,
+.bracketPreview,
+.panelHeaderRow {
+  border-color: rgba(226, 232, 240, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.proofCard {
+  border-radius: 16px;
+}
+
+.proofIcon {
+  border-color: rgba(255, 122, 0, 0.22);
+  background: rgba(255, 122, 0, 0.1);
+  color: var(--color-primary);
+}
+
+.heroPanel {
+  width: fit-content;
+  max-width: min(100%, 660px);
+  box-sizing: border-box;
+  justify-self: start;
+  align-self: center;
+  border-radius: 24px;
+  padding: 16px;
+  border-color: rgba(255, 122, 0, 0.2);
+  background: var(--landing-panel-strong);
+}
+
+.panelHeaderRow {
+  border-radius: 18px;
+  border-bottom: 3px solid rgba(255, 122, 0, 0.65);
+}
+
+.heroPanelTitle {
+  font-size: 16px;
+}
+
+.liveBadge,
+.stepBadge,
+.ctaBadge {
+  color: var(--color-white);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-orange-dark) 100%);
+  border-color: rgba(255, 122, 0, 0.48);
+  box-shadow: 0 0 0 1px rgba(255, 122, 0, 0.12), 0 10px 24px rgba(255, 122, 0, 0.18);
+  letter-spacing: 0.08em;
+}
+
+.tournamentName,
+.statValue,
+.activityTitle,
+.sectionTitle,
+.publicViewTitle,
+.ctaContent h2,
+.featureCard h3,
+.step h3,
+.benefit h3 {
+  color: var(--color-text-primary);
+}
+
+.tournamentSquad,
+.demoNote,
+.statLabel,
+.activityList,
+.sectionSubtitle,
+.publicViewSubtitle,
+.publicViewList li,
+.featureCard p,
+.step p,
+.benefit p,
+.ctaContent p {
+  color: var(--color-text-secondary);
+}
+
+.features,
+.howItWorks,
+.publicViewSection,
+.benefits,
+.ctaSection {
+  padding: 58px 0;
+  background: transparent;
+}
+
+.features,
+.howItWorks,
+.publicViewSection,
+.benefits {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.featureGrid,
+.stepsGrid,
+.benefitsList {
+  gap: 14px;
+}
+
+.featureCard,
+.step,
+.benefit {
+  border-radius: 24px;
+  padding: 18px;
+}
+
+.featureCard:hover,
+.step:hover,
+.benefit:hover {
+  border-color: var(--landing-border-warm);
+  background: rgba(24, 22, 29, 0.9);
+}
+
+.step:not(:last-child)::after {
+  color: rgba(255, 122, 0, 0.56);
+}
+
+.publicViewGrid {
+  gap: 18px;
+}
+
+.publicViewContent {
+  min-height: 100%;
+  justify-content: center;
+  border-radius: 24px;
+  padding: 28px;
+  background: var(--landing-panel);
+  border: 1px solid var(--landing-border);
+  box-shadow: var(--landing-shadow);
+}
+
+.publicViewList li::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  margin-top: 7px;
+  border-radius: 999px;
+  background: var(--color-primary);
+  flex: 0 0 auto;
+}
+
+.ctaSection {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 0;
+}
+
+.ctaSection::before {
+  display: none;
+}
+
+.ctaContent {
+  width: min(100% - (var(--page-gutter) * 2), 760px);
+  border-radius: 24px;
+  border-color: rgba(255, 122, 0, 0.24);
+}
+
+@media (max-width: 1280px) {
+  .container {
+    --fs-display: 46px;
+    --fs-section-title: 30px;
+  }
+
+  .heroGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .heroContent,
+  .heroPanel {
+    width: 100%;
+    justify-self: stretch;
+  }
+
+  .heroContent {
+    min-height: auto;
+  }
+}
+
+@media (max-width: 820px) {
+  .navInner {
+    min-height: auto;
+    padding: 10px 14px;
+  }
+}
+
+@media (max-width: 720px) {
+  .container {
+    --fs-display: 38px;
+    --fs-section-title: 28px;
+    padding-top: 126px;
+  }
+
+  .hero,
+  .features,
+  .howItWorks,
+  .publicViewSection,
+  .ctaSection,
+  .benefits {
+    padding: 28px 0;
+  }
+
+  .heroGrid,
+  .publicViewGrid,
+  .sectionHeading,
+  .featureGrid,
+  .stepsGrid,
+  .benefitsList {
+    padding-inline: var(--page-gutter);
+  }
+
+  .heroContent,
+  .publicViewContent,
+  .ctaContent {
+    padding: 20px;
+    text-align: left;
+  }
+
+  .heroCTA,
+  .ctaButtons,
+  .navActions {
+    align-items: stretch;
+  }
+
+  .trustRow {
+    justify-content: flex-start;
+  }
+
+  .panelHeaderRow {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+@media (max-width: 560px) {
+  .container {
+    --fs-display: 34px;
+    --fs-section-title: 26px;
+    padding-top: 118px;
+  }
+
+  .brandText span {
+    display: none;
+  }
+
+  .brand {
+    width: auto;
+    justify-content: flex-start;
+  }
+
+  .navActions {
+    width: auto;
+    margin-left: auto;
+  }
+
+  .navBtn {
+    min-height: 34px;
+    padding: 0 10px;
+  }
+
+  .heroContent,
+  .heroPanel,
+  .featureCard,
+  .step,
+  .benefit,
+  .publicViewContent,
+  .ctaContent {
+    border-radius: 18px;
+  }
+}

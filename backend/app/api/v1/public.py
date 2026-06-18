@@ -97,6 +97,30 @@ def _get_tournament_by_slug_or_404(db: Session, tournament_slug: str) -> models.
     return matches[0]
 
 
+def _format_public_squads(db: Session, tournament_id: int, squads: list[models.TournamentSquad]) -> list[dict]:
+    formatted_squads = []
+
+    for squad in squads:
+        bracket_data = load_brackets_simple(db, tournament_id, squad.id)
+        bracket_groups = bracket_data.get("bracket_groups", []) if isinstance(bracket_data, dict) else []
+        bracket_count = sum(
+            len(group.get("brackets", []) or [])
+            for group in bracket_groups
+            if isinstance(group, dict)
+        )
+
+        formatted_squads.append({
+            "id": squad.id,
+            "date": squad.date,
+            "time": squad.time,
+            "has_brackets": bracket_count > 0,
+            "bracket_group_count": len(bracket_groups),
+            "bracket_count": bracket_count,
+        })
+
+    return formatted_squads
+
+
 @router.get("/tournament/{tournament_id}")
 def get_public_tournament_info(
     tournament_id: int,
@@ -116,10 +140,7 @@ def get_public_tournament_info(
         "id": tournament.id,
         "name": tournament.name,
         "location": tournament.location,
-        "squads": [
-            {"id": s.id, "date": s.date, "time": s.time}
-            for s in squads
-        ],
+        "squads": _format_public_squads(db, tournament.id, squads),
     }
 
 
@@ -142,10 +163,7 @@ def get_public_tournament_info_by_name(
         "id": tournament.id,
         "name": tournament.name,
         "location": tournament.location,
-        "squads": [
-            {"id": s.id, "date": s.date, "time": s.time}
-            for s in squads
-        ],
+        "squads": _format_public_squads(db, tournament.id, squads),
     }
 
 
@@ -168,10 +186,7 @@ def get_public_tournament_info_by_slug(
         "id": tournament.id,
         "name": tournament.name,
         "location": tournament.location,
-        "squads": [
-            {"id": s.id, "date": s.date, "time": s.time}
-            for s in squads
-        ],
+        "squads": _format_public_squads(db, tournament.id, squads),
     }
 
 

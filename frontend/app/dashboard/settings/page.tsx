@@ -1,0 +1,736 @@
+"use client";
+
+import { useMemo, useEffect, useState, useRef, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Tournament, BracketSettings, SidePotsSettings, SidePot } from '../../lib/types';
+
+import { useAuth } from '../../lib/auth-context';
+import { ErrorBoundary } from '../../components/ErrorBoundary';
+import { getErrorMessage, getErrorContext } from '../../lib/error-utils';
+import { storage } from '../../lib/storage';
+import dashboardStyles from '../dashboard.module.css';
+import { useToast } from '../../components/Toast';
+import { API, apiClient, apiFetch } from '../../lib/api';
+import { logger } from '../../lib/logger';
+import { defaultBracketPrograms, normalizeBracketPrograms } from '../../lib/bracketPrograms';
+import { setBodyInteractionState } from '../../utils/modalUtils';
+import { formatIsoDateFull } from '../../lib/formatters';
+
+const createDefaultBracketSettings = (tournamentId = 0): BracketSettings => ({
+  tournament_id: tournamentId,
+  bracket_size: 8,
+  first_place_amount: 0,
+  second_place_amount: 0,
+  house_fee_amount: 0,
+  default_entry_fee: 0,
+  bracket_programs: defaultBracketPrograms,
+  handicap_percentage: 80,
+  handicap_base: 200,
+  allow_byes: false,
+});
+
+const DEFAULT_SIDE_POTS: SidePot[] = [
+  { key: 'high_game_scratch', name: 'High Game Scratch', enabled: false },
+  { key: 'high_series_scratch', name: 'High Series Scratch', enabled: false },
+  { key: 'high_game_handicap', name: 'High Game Handicap', enabled: false },
+  { key: 'high_series_handicap', name: 'High Series Handicap', enabled: false },
+];
+
+const createDefaultSidePots = (tournamentId = 0): SidePotsSettings => ({
+  tournament_id: tournamentId,
+  entry_fee: 0,
+  prize_amount: 0,
+  pots: DEFAULT_SIDE_POTS.map(p => ({ ...p })),
+});
+
+const SIDE_POTS_STORAGE_KEY = (tournamentId: number) => `sidePots_${tournamentId}`;
+
+const parseCurrencyInput = (userInput: string): number => {
+  const cleanedNumericString = userInput.replace(/[^0-9]/g, '');
+  const parsedValue = parseInt(cleanedNumericString);
+  return isNaN(parsedValue) ? 0 : parsedValue;
+};
+
+const formatNumberInput = (numericValue: number): string => {
+  return numericValue === 0 ? '' : Math.round(numericValue).toLocaleString('en-US');
+};
+
+const cloneValue = <T,>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
+
+type DashboardCardKey = 'bracketSettings' | 'sidePots' | 'bracketPrograms';
+
+const expandedDesktopCards: Record<DashboardCardKey, boolean> = {
+  bracketSettings: true,
+  sidePots: true,
+  bracketPrograms: true,
+};
+
+export default function TournamentSettingsPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const isModalView = searchParams.get('modal') === '1';
+  const { isUserAuthenticated, isAuthInitialized } = useAuth();
+  const hasStoredAuthTokens = typeof window !== 'undefined'
+    && Boolean(storage.getItem('token'))
+    && Boolean(storage.getItem('user_id'));
+  const { addToast } = useToast();
+
+  const [tournament, setTournament] = useState<Tournament | null>(null);
+  const [bracketSettings, setBracketSettings] = useState<BracketSettings>(createDefaultBracketSettings());
+  const [sidePots, setSidePots] = useState<SidePotsSettings>(createDefaultSidePots());
+  const [savedBracketSettings, setSavedBracketSettings] = useState<BracketSettings | null>(null);
+  const [savedSidePots, setSavedSidePots] = useState<SidePotsSettings | null>(null);
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
+  const [cardExpanded, setCardExpanded] = useState<Record<DashboardCardKey, boolean>>(expandedDesktopCards);
+  const [isMobile, setIsMobile] = useState(false);
+
+  const bracketSettingsRef = useRef<BracketSettings>(bracketSettings);
+
+  const computedHouseAmount = useMemo(() => {
+    const totalCost = bracketSettings.bracket_size * bracketSettings.default_entry_fee;
+    return Math.max(0, totalCost - bracketSettings.first_place_amount - bracketSettings.second_place_amount);
+  }, [bracketSettings]);
+
+  const BRACKET_SETTINGS_AUTOSAVE_DELAY_MS = 600;
+  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const hasUnsavedChanges = useMemo(() => {
+    if (!isModalView || !savedBracketSettings || !savedSidePots) return false;
+    return (
+      JSON.stringify(bracketSettings) !== JSON.stringify(savedBracketSettings)
+      || JSON.stringify(sidePots) !== JSON.stringify(savedSidePots)
+    );
+  }, [isModalView, bracketSettings, sidePots, savedBracketSettings, savedSidePots]);
+
+  const resolveSaveMode = useCallback(
+    (mode: 'immediate' | 'none' | 'autosave'): 'immediate' | 'none' | 'autosave' => (
+      isModalView ? 'none' : mode
+    ),
+    [isModalView],
+  );
+
+  const applyAutoHouse = useCallback((previous: BracketSettings, updates: Partial<BracketSettings>): BracketSettings => {
+    const next = { ...previous, ...updates };
+    const totalCost = next.bracket_size * next.default_entry_fee;
+    const prizeSum = next.first_place_amount + next.second_place_amount;
+    next.house_fee_amount = Math.max(0, totalCost - prizeSum);
+    return next;
+  }, []);
+
+  const persistBracketSettings = useCallback(
+    async (settingsToSave: BracketSettings) => {
+      if (!tournament) return;
+      const token = storage.getItem('token');
+      if (!token) return;
+
+      await apiFetch(API(`/api/v1/bracket-settings/${tournament.id}`), {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(settingsToSave),
+      });
+    },
+    [tournament],
+  );
+
+  const saveBracketSettingsImmediately = useCallback(() => {
+    if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+    if (isModalView || !tournament) return;
+
+    void persistBracketSettings(bracketSettingsRef.current).catch((err: unknown) => {
+      logger.error('Failed to save bracket settings', getErrorContext(err));
+    });
+  }, [isModalView, persistBracketSettings, tournament]);
+
+  const updateBracketSettings = useCallback(
+    (updater: (prev: BracketSettings) => BracketSettings, mode: 'immediate' | 'none' | 'autosave' = 'autosave') => {
+      setBracketSettings(prev => {
+        const next = updater(prev);
+        bracketSettingsRef.current = next;
+        if (mode === 'immediate') {
+          saveBracketSettingsImmediately();
+        } else if (mode === 'autosave') {
+          if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+          autosaveTimerRef.current = setTimeout(saveBracketSettingsImmediately, BRACKET_SETTINGS_AUTOSAVE_DELAY_MS);
+        }
+        return next;
+      });
+    },
+    [saveBracketSettingsImmediately],
+  );
+
+  const saveSidePots = useCallback(
+    (nextSidePots: SidePotsSettings) => {
+      if (!tournament) return;
+      const token = storage.getItem('token');
+      if (!token) return;
+
+      const key = SIDE_POTS_STORAGE_KEY(tournament.id);
+      storage.setItem(key, JSON.stringify(nextSidePots));
+    },
+    [tournament],
+  );
+
+  const updateSidePot = useCallback(
+    (potKey: string, updates: Partial<SidePot>) => {
+      setSidePots(prev => {
+        const nextPots = prev.pots.map(pot => (pot.key === potKey ? { ...pot, ...updates } : pot));
+        const next = { ...prev, pots: nextPots };
+        if (!isModalView) {
+          saveSidePots(next);
+        }
+        return next;
+      });
+    },
+    [isModalView, saveSidePots],
+  );
+
+  const toggleCard = (cardKey: DashboardCardKey) => {
+    setCardExpanded(prev => ({ ...prev, [cardKey]: !prev[cardKey] }));
+  };
+
+  const isCardExpanded = (cardKey: DashboardCardKey): boolean => cardExpanded[cardKey] ?? expandedDesktopCards[cardKey] ?? false;
+
+  const handleOptionalBracketToggle = async (programKey: string, enabled: boolean) => {
+    applyAutoHouse(bracketSettings, {});
+    if (!enabled) {
+      try {
+        const existingEntries = 0; // Would implement in real scenario
+        if (existingEntries > 0) {
+          addToast({
+            type: 'warning',
+            message: `Cannot disable ${programKey}: has existing entries`,
+            duration: 4000,
+          });
+          return;
+        }
+      } catch (error) {
+        logger.error('Failed to verify optional bracket entries', { programKey, error: getErrorContext(error) });
+        return;
+      }
+    }
+
+    updateBracketSettings(
+      previous => {
+        const normalizedPrograms = normalizeBracketPrograms(previous.bracket_programs, previous.default_entry_fee);
+        const nextPrograms = normalizedPrograms.map(program =>
+          program.key === programKey ? { ...program, enabled } : program,
+        );
+        return { ...previous, bracket_programs: nextPrograms };
+      },
+      resolveSaveMode('immediate'),
+    );
+  };
+
+  const handleByeProgramToggle = (programKey: string, allowByes: boolean) => {
+    updateBracketSettings(previous => {
+      const normalizedPrograms = normalizeBracketPrograms(previous.bracket_programs, previous.default_entry_fee);
+      const nextPrograms = normalizedPrograms.map(program =>
+        program.key === programKey ? { ...program, allow_byes: allowByes } : program,
+      );
+
+      const nextAllowByes = nextPrograms.some(program => {
+        const isAlwaysVisible = program.key === 'handicap' || program.key === 'scratch';
+        return Boolean(program.allow_byes) && (isAlwaysVisible || Boolean(program.enabled));
+      });
+
+      return {
+        ...previous,
+        bracket_programs: nextPrograms,
+        allow_byes: nextAllowByes,
+      };
+    }, resolveSaveMode('immediate'));
+  };
+
+  const handleSaveSettings = useCallback(async () => {
+    if (!isModalView || !hasUnsavedChanges) return;
+
+    setIsSavingSettings(true);
+    try {
+      await persistBracketSettings(bracketSettings);
+      saveSidePots(sidePots);
+
+      setSavedBracketSettings(cloneValue(bracketSettings));
+      setSavedSidePots(cloneValue(sidePots));
+
+      addToast({
+        type: 'success',
+        message: 'Tournament settings saved',
+        duration: 2800,
+      });
+    } catch (error) {
+      logger.error('Failed to save settings from modal', getErrorContext(error));
+      addToast({
+        type: 'error',
+        message: 'Failed to save settings',
+        duration: 4200,
+      });
+    } finally {
+      setIsSavingSettings(false);
+    }
+  }, [isModalView, hasUnsavedChanges, persistBracketSettings, bracketSettings, saveSidePots, sidePots, addToast]);
+
+  const handleCancelSettings = useCallback(() => {
+    if (!isModalView || !savedBracketSettings || !savedSidePots) return;
+    if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+
+    const resetBracketSettings = cloneValue(savedBracketSettings);
+    setBracketSettings(resetBracketSettings);
+    bracketSettingsRef.current = resetBracketSettings;
+    setSidePots(cloneValue(savedSidePots));
+  }, [isModalView, savedBracketSettings, savedSidePots]);
+
+  useEffect(() => {
+    setBodyInteractionState({ scrollLocked: false, touchLocked: false });
+  }, []);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 480);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  useEffect(() => {
+    bracketSettingsRef.current = bracketSettings;
+  }, [bracketSettings]);
+
+  useEffect(() => {
+    const tournamentId = searchParams.get('tournament_id');
+    if (!tournamentId) {
+      router.push('/');
+      return;
+    }
+
+    const token = storage.getItem('token');
+    if (!token) return;
+
+    const fetchTournament = async () => {
+      try {
+        const data = await apiClient.get<Tournament>(`/api/v1/tournaments/${tournamentId}`);
+        setTournament(data);
+
+        const settingsData = await apiClient.get<BracketSettings>(`/api/v1/bracket-settings/${tournamentId}`);
+        if (settingsData) {
+          const normalizedBracketSettings = {
+            ...createDefaultBracketSettings(Number(tournamentId)),
+            ...settingsData,
+            bracket_programs: normalizeBracketPrograms(settingsData.bracket_programs, settingsData.default_entry_fee),
+          };
+
+          setBracketSettings(normalizedBracketSettings);
+          setSavedBracketSettings(cloneValue(normalizedBracketSettings));
+        }
+
+        const key = SIDE_POTS_STORAGE_KEY(Number(tournamentId));
+        const storedSidePots = storage.getItem(key);
+        const loadedSidePots = storedSidePots
+          ? JSON.parse(storedSidePots) as SidePotsSettings
+          : createDefaultSidePots(Number(tournamentId));
+
+        setSidePots(loadedSidePots);
+        setSavedSidePots(cloneValue(loadedSidePots));
+      } catch (error) {
+        logger.error('Failed to load tournament settings', { tournamentId, error: getErrorContext(error) });
+        addToast({
+          type: 'error',
+          message: 'Failed to load tournament settings',
+          duration: 5000,
+        });
+      }
+    };
+
+    fetchTournament();
+  }, [searchParams, router, addToast]);
+
+  if (!isAuthInitialized) {
+    return <div className={dashboardStyles.settingsPageState}>Loading...</div>;
+  }
+
+  if (!isUserAuthenticated && !hasStoredAuthTokens) {
+    return <div className={dashboardStyles.settingsPageState}>Please log in</div>;
+  }
+
+  if (!tournament) {
+    return <div className={dashboardStyles.settingsPageState}>Loading tournament...</div>;
+  }
+
+  const enabledOptionalProgramsCount = normalizeBracketPrograms(bracketSettings.bracket_programs, bracketSettings.default_entry_fee)
+    .filter(program => program.key !== 'handicap' && program.key !== 'scratch' && program.key !== 'reverse' && Boolean(program.enabled)).length;
+  const enabledByeProgramsCount = normalizeBracketPrograms(bracketSettings.bracket_programs, bracketSettings.default_entry_fee)
+    .filter(program => (program.key === 'handicap' || program.key === 'scratch' || Boolean(program.enabled)) && Boolean(program.allow_byes ?? bracketSettings.allow_byes ?? false)).length;
+  const enabledSidePotsCount = sidePots.pots.filter(pot => pot.enabled).length;
+  const projectedPayout = bracketSettings.first_place_amount + bracketSettings.second_place_amount;
+
+  return (
+    <ErrorBoundary>
+      <main className={isModalView ? dashboardStyles.settingsPageShellModal : dashboardStyles.settingsPageShell}>
+        <div className={dashboardStyles.settingsPageHeader}>
+          {!isModalView && (
+            <button
+              onClick={() => router.back()}
+              className={dashboardStyles.settingsBackButton}
+            >
+              ← Back to Dashboard
+            </button>
+          )}
+          <h1 className={`${dashboardStyles.settingsPageTitle} ${isModalView ? dashboardStyles.settingsPageTitleModal : ''}`}>
+            Tournament Settings
+          </h1>
+          <p className={dashboardStyles.settingsPageSubtitle}>
+            {tournament.name} • {tournament.start_date ? formatIsoDateFull(tournament.start_date) : 'Date pending'}
+          </p>
+          <div className={dashboardStyles.settingsSummaryRow}>
+            <span className={dashboardStyles.settingsSummaryPill}>Bracket Size: {bracketSettings.bracket_size}</span>
+            <span className={dashboardStyles.settingsSummaryPill}>Entry: ${formatNumberInput(bracketSettings.default_entry_fee) || '0'}</span>
+            <span className={dashboardStyles.settingsSummaryPill}>Side Pots: {enabledSidePotsCount} / {sidePots.pots.length}</span>
+            <span className={dashboardStyles.settingsSummaryPill}>Optional: {enabledOptionalProgramsCount}</span>
+            <span className={dashboardStyles.settingsSummaryPill}>Bye Rules: {enabledByeProgramsCount}</span>
+          </div>
+        </div>
+
+        <section className={isModalView ? dashboardStyles.settingsModalGrid : `${dashboardStyles.advancedGrid} ${dashboardStyles.settingsPageGrid}`}>
+          
+          {/* Bracket Settings Card */}
+          <div className={`${dashboardStyles.bracketSettingsCard} ${dashboardStyles.mainBracketSettingsCard}`}>
+            <button
+              type="button"
+              className={`${dashboardStyles.settingsHeader} ${dashboardStyles.settingsHeaderToggle}`}
+              onClick={() => toggleCard('bracketSettings')}
+              aria-expanded={isCardExpanded('bracketSettings')}
+            >
+              <div className={dashboardStyles.settingsTitleBlock}>
+                <h2 className={dashboardStyles.settingsTitle}>Bracket Settings</h2>
+                <div className={dashboardStyles.settingsMeta}>Configure bracket size, entry fee, and prize split.</div>
+              </div>
+              {isMobile && (
+                <span className={dashboardStyles.cardExpandIcon} aria-hidden="true">
+                  {isCardExpanded('bracketSettings') ? '−' : '+'}
+                </span>
+              )}
+            </button>
+
+            {isCardExpanded('bracketSettings') && (
+              <div className={dashboardStyles.settingsContent}>
+                <div className={dashboardStyles.settingsGrid}>
+                  <div className={dashboardStyles.settingsColumn}>
+                    <div className={dashboardStyles.sectionHeader}>
+                      <h3 className={dashboardStyles.sectionTitle}>Tournament Setup</h3>
+                    </div>
+                    <div className={dashboardStyles.fieldGroup}>
+                      <div className={dashboardStyles.compactField}>
+                        <label className={dashboardStyles.compactLabel}>Bracket Size</label>
+                        <select
+                          className={dashboardStyles.compactSelect}
+                          value={bracketSettings.bracket_size}
+                          onChange={e => {
+                            updateBracketSettings(
+                              previous => applyAutoHouse(previous, { bracket_size: parseInt(e.target.value) }),
+                              resolveSaveMode('immediate'),
+                            );
+                          }}
+                        >
+                          <option value={8}>8 Players</option>
+                        </select>
+                      </div>
+                      <div className={dashboardStyles.compactField}>
+                        <label className={dashboardStyles.compactLabel}>Entry Fee</label>
+                        <div className={dashboardStyles.compactInputWrapper}>
+                          <span className={dashboardStyles.currencySymbol}>$</span>
+                          <input
+                            className={dashboardStyles.compactInput}
+                            type="text"
+                            placeholder="0"
+                            value={formatNumberInput(bracketSettings.default_entry_fee)}
+                            onChange={e => {
+                              updateBracketSettings(
+                                previous => applyAutoHouse(previous, { default_entry_fee: parseCurrencyInput(e.target.value) }),
+                                'none',
+                              );
+                            }}
+                            onBlur={() => {
+                              if (!isModalView) saveBracketSettingsImmediately();
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className={dashboardStyles.settingsColumn}>
+                    <div className={dashboardStyles.sectionHeader}>
+                      <h3 className={dashboardStyles.sectionTitle}>Prize Breakdown</h3>
+                    </div>
+                    <div className={dashboardStyles.fieldGroup}>
+                      <div className={dashboardStyles.compactField}>
+                        <label className={dashboardStyles.compactLabel}>1st Place</label>
+                        <div className={dashboardStyles.compactInputWrapper}>
+                          <span className={dashboardStyles.currencySymbol}>$</span>
+                          <input
+                            className={dashboardStyles.compactInput}
+                            type="text"
+                            placeholder="0"
+                            value={formatNumberInput(bracketSettings.first_place_amount)}
+                            onChange={e => {
+                              updateBracketSettings(
+                                previous => applyAutoHouse(previous, { first_place_amount: parseCurrencyInput(e.target.value) }),
+                                'none',
+                              );
+                            }}
+                            onBlur={() => {
+                              if (!isModalView) saveBracketSettingsImmediately();
+                            }}
+                          />
+                        </div>
+                      </div>
+                      <div className={dashboardStyles.compactField}>
+                        <label className={dashboardStyles.compactLabel}>2nd Place</label>
+                        <div className={dashboardStyles.compactInputWrapper}>
+                          <span className={dashboardStyles.currencySymbol}>$</span>
+                          <input
+                            className={dashboardStyles.compactInput}
+                            type="text"
+                            placeholder="0"
+                            value={formatNumberInput(bracketSettings.second_place_amount)}
+                            onChange={e => {
+                              updateBracketSettings(
+                                previous => applyAutoHouse(previous, { second_place_amount: parseCurrencyInput(e.target.value) }),
+                                'none',
+                              );
+                            }}
+                            onBlur={() => {
+                              if (!isModalView) saveBracketSettingsImmediately();
+                            }}
+                          />
+                        </div>
+                      </div>
+                      <div className={dashboardStyles.compactField}>
+                        <label className={dashboardStyles.compactLabel}>House Take</label>
+                        <div className={dashboardStyles.compactInputWrapper}>
+                          <span className={dashboardStyles.currencySymbol}>$</span>
+                          <input
+                            className={`${dashboardStyles.compactInput} ${dashboardStyles.compactInputReadOnly}`}
+                            type="text"
+                            placeholder="0"
+                            value={formatNumberInput(computedHouseAmount)}
+                            readOnly
+                          />
+                        </div>
+                        <p className={dashboardStyles.settingsFieldHint}>Calculated automatically from bracket size, entry fee, and prize split.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className={dashboardStyles.settingsCalculatedSummary}>
+                  <div className={dashboardStyles.settingsCalculatedSummaryRow}>
+                    <span>Total Projected Payout</span>
+                    <strong>${formatNumberInput(projectedPayout) || '0'}</strong>
+                  </div>
+                  <div className={dashboardStyles.settingsCalculatedSummaryRow}>
+                    <span>Prize Split</span>
+                    <strong>
+                      1st ${formatNumberInput(bracketSettings.first_place_amount) || '0'} / 2nd ${formatNumberInput(bracketSettings.second_place_amount) || '0'}
+                    </strong>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Side Pots Card */}
+          <div className={`${dashboardStyles.bracketSettingsCard} ${dashboardStyles.sidePotsCard}`}>
+            <button
+              type="button"
+              className={`${dashboardStyles.settingsHeader} ${dashboardStyles.settingsHeaderToggle}`}
+              onClick={() => toggleCard('sidePots')}
+              aria-expanded={isCardExpanded('sidePots')}
+            >
+              <div className={dashboardStyles.settingsTitleBlock}>
+                <h2 className={dashboardStyles.settingsTitle}>Side Pots</h2>
+                <div className={dashboardStyles.settingsMeta}>Set side pot pricing and enabled side pot games.</div>
+              </div>
+              {isMobile && (
+                <span className={dashboardStyles.cardExpandIcon} aria-hidden="true">
+                  {isCardExpanded('sidePots') ? '−' : '+'}
+                </span>
+              )}
+            </button>
+            {isCardExpanded('sidePots') && (
+              <div className={dashboardStyles.settingsContent}>
+                <div className={dashboardStyles.sectionHeader}>
+                  <h3 className={dashboardStyles.sectionTitle}>Default Side Pot Pricing</h3>
+                </div>
+                <div className={dashboardStyles.sidePotSharedFee}>
+                  <div className={dashboardStyles.compactField}>
+                    <label className={dashboardStyles.compactLabel}>Entry Fee</label>
+                    <div className={dashboardStyles.compactInputWrapper}>
+                      <span className={dashboardStyles.currencySymbol}>$</span>
+                      <input
+                        className={dashboardStyles.compactInput}
+                        type="text"
+                        placeholder="0"
+                        value={formatNumberInput(sidePots.entry_fee)}
+                        onChange={e => {
+                          const next = { ...sidePots, entry_fee: parseCurrencyInput(e.target.value) };
+                          setSidePots(next);
+                          if (!isModalView) saveSidePots(next);
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div className={dashboardStyles.compactField}>
+                    <label className={dashboardStyles.compactLabel}>Prize Amount</label>
+                    <div className={dashboardStyles.compactInputWrapper}>
+                      <span className={dashboardStyles.currencySymbol}>$</span>
+                      <input
+                        className={dashboardStyles.compactInput}
+                        type="text"
+                        placeholder="0"
+                        value={formatNumberInput(sidePots.prize_amount)}
+                        onChange={e => {
+                          const next = { ...sidePots, prize_amount: parseCurrencyInput(e.target.value) };
+                          setSidePots(next);
+                          if (!isModalView) saveSidePots(next);
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className={dashboardStyles.sectionHeader}>
+                  <h3 className={dashboardStyles.sectionTitle}>Enabled Side Pots</h3>
+                </div>
+                <p className={dashboardStyles.settingsSectionHint}>
+                  Toggle individual programs to include them in side pots.
+                </p>
+
+                {sidePots.pots.map(pot => (
+                  <div key={pot.key} className={`${dashboardStyles.programCard} ${pot.enabled ? dashboardStyles.programCardChecked : ''}`}>
+                    <label className={dashboardStyles.checkboxLabel}>
+                      <input
+                        type="checkbox"
+                        className={dashboardStyles.checkboxInput}
+                        checked={pot.enabled}
+                        onChange={e => updateSidePot(pot.key, { enabled: e.target.checked })}
+                      />
+                      <span>{pot.name}</span>
+                    </label>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Bracket Programs Card */}
+          <div className={`${dashboardStyles.bracketSettingsCard} ${dashboardStyles.programsSettingsCard}`}>
+            <button
+              type="button"
+              className={`${dashboardStyles.settingsHeader} ${dashboardStyles.settingsHeaderToggle}`}
+              onClick={() => toggleCard('bracketPrograms')}
+              aria-expanded={isCardExpanded('bracketPrograms')}
+            >
+              <div className={dashboardStyles.settingsTitleBlock}>
+                <h2 className={dashboardStyles.settingsTitle}>Bracket Programs</h2>
+                <div className={dashboardStyles.settingsMeta}>Choose bye rules and optional bracket programs.</div>
+              </div>
+              {isMobile && (
+                <span className={dashboardStyles.cardExpandIcon} aria-hidden="true">
+                  {isCardExpanded('bracketPrograms') ? '−' : '+'}
+                </span>
+              )}
+            </button>
+
+            {isCardExpanded('bracketPrograms') && (
+              <div className={dashboardStyles.settingsContent}>
+                <div className={dashboardStyles.settingsProgramsGrid}>
+                  <section className={dashboardStyles.settingsProgramsColumn}>
+                    <div className={dashboardStyles.sectionHeader}>
+                      <h3 className={dashboardStyles.sectionTitle}>Bye Settings</h3>
+                    </div>
+                    <p className={dashboardStyles.settingsSectionHint}>Choose which bracket types use byes.</p>
+                    <div className={dashboardStyles.programList}>
+                      {normalizeBracketPrograms(bracketSettings.bracket_programs, bracketSettings.default_entry_fee)
+                        .filter(program => program.key === 'handicap' || program.key === 'scratch' || Boolean(program.enabled))
+                        .sort((a, b) => a.name.localeCompare(b.name))
+                        .map(program => (
+                          <div key={`bye-${program.key}`} className={`${dashboardStyles.programCard} ${Boolean(program.allow_byes ?? bracketSettings.allow_byes) ? dashboardStyles.programCardChecked : ''}`}>
+                            <label className={dashboardStyles.checkboxLabel}>
+                              <input
+                                type="checkbox"
+                                className={dashboardStyles.checkboxInput}
+                                checked={Boolean(program.allow_byes ?? bracketSettings.allow_byes)}
+                                onChange={e => handleByeProgramToggle(program.key, e.target.checked)}
+                              />
+                              <span>{program.name}</span>
+                            </label>
+                          </div>
+                        ))}
+                    </div>
+                  </section>
+
+                  <section className={`${dashboardStyles.settingsProgramsColumn} ${dashboardStyles.settingsProgramsColumnSecondary}`}>
+                    <div className={dashboardStyles.sectionHeader}>
+                      <h3 className={dashboardStyles.sectionTitle}>Optional Brackets</h3>
+                    </div>
+                    <p className={dashboardStyles.settingsSectionHint}>Enable extra bracket programs for divisions or groups.</p>
+                    <div className={`${dashboardStyles.programList} ${dashboardStyles.programListTwoColumn}`}>
+                      {normalizeBracketPrograms(bracketSettings.bracket_programs, bracketSettings.default_entry_fee)
+                        .filter(program => program.key !== 'handicap' && program.key !== 'scratch' && program.key !== 'reverse')
+                        .sort((a, b) => a.name.localeCompare(b.name))
+                        .map(program => (
+                          <div key={program.key} className={`${dashboardStyles.programCard} ${program.enabled ? dashboardStyles.programCardChecked : ''}`}>
+                            <label className={dashboardStyles.checkboxLabel}>
+                              <input
+                                type="checkbox"
+                                className={dashboardStyles.checkboxInput}
+                                checked={program.enabled ?? false}
+                                onChange={e => {
+                                  void handleOptionalBracketToggle(program.key, e.target.checked);
+                                }}
+                              />
+                              <span>{program.name}</span>
+                            </label>
+                          </div>
+                        ))}
+                    </div>
+                  </section>
+                </div>
+              </div>
+            )}
+          </div>
+
+        </section>
+
+        {isModalView && (
+          <footer className={dashboardStyles.settingsModalFooter}>
+            <div className={`${dashboardStyles.settingsModalFooterStatus} ${hasUnsavedChanges ? dashboardStyles.settingsModalFooterStatusUnsaved : dashboardStyles.settingsModalFooterStatusSaved}`}>
+              {hasUnsavedChanges ? 'Unsaved changes' : 'All changes saved'}
+            </div>
+            <div className={dashboardStyles.settingsModalFooterActions}>
+              <button
+                type="button"
+                className={dashboardStyles.settingsFooterCancelButton}
+                onClick={handleCancelSettings}
+                disabled={!hasUnsavedChanges || isSavingSettings}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={`${dashboardStyles.settingsFooterSaveButton} ${hasUnsavedChanges ? dashboardStyles.settingsFooterSaveButtonActive : dashboardStyles.settingsFooterSaveButtonIdle}`}
+                onClick={() => { void handleSaveSettings(); }}
+                disabled={!hasUnsavedChanges || isSavingSettings}
+              >
+                {isSavingSettings ? 'Saving...' : 'Save Settings'}
+              </button>
+            </div>
+          </footer>
+        )}
+      </main>
+    </ErrorBoundary>
+  );
+}

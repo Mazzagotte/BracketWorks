@@ -1,0 +1,482 @@
+/* TopNav: unified app navigation bar. */
+
+/* ── Desktop bar ────────────────────────────────────────────── */
+
+.topNav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: var(--header-height);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  z-index: 1100;
+  padding: 0 24px;
+  background: rgba(15, 15, 23, 0.92);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03), 0 4px 24px rgba(0, 0, 0, 0.4);
+  box-sizing: border-box;
+}
+
+/* ── Logo ───────────────────────────────────────────────────── */
+
+.logoLink {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  flex-shrink: 0;
+  margin-right: 0;
+  opacity: 1;
+  transition: opacity 0.15s ease;
+}
+
+.tournamentContext {
+  min-width: 180px;
+  max-width: 300px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2px;
+  padding: 6px 14px;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.9);
+  flex-shrink: 1;
+}
+
+.tournamentContextName,
+.squadContextName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tournamentContextName {
+  font-size: 13px;
+  line-height: 1.25;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.tournamentContextEmpty .tournamentContextName {
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.squadContextName {
+  font-size: 11px;
+  line-height: 1.25;
+  font-weight: 600;
+  color: rgba(255, 178, 104, 0.9);
+}
+
+.logoLink:hover {
+  opacity: 0.85;
+  text-decoration: none;
+}
+
+.logoIcon {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+}
+
+.logoText {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-primary);
+  white-space: nowrap;
+  letter-spacing: -0.2px;
+}
+
+/* ── Nav pills ──────────────────────────────────────────────── */
+
+.navPills {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  justify-content: center;
+}
+
+.navPill {
+  padding: 7px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.5);
+  text-decoration: none;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+  cursor: pointer;
+}
+
+.navPill:hover {
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.06);
+  text-decoration: none;
+}
+
+.navPillActive {
+  color: #ffffff;
+  background: rgba(255, 122, 0, 0.16);
+  border-color: rgba(255, 122, 0, 0.38);
+  font-weight: 700;
+  box-shadow: 0 0 0 1px rgba(255, 122, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.navPillActive:hover {
+  background: rgba(255, 122, 0, 0.22);
+  border-color: rgba(255, 122, 0, 0.5);
+}
+
+/* ── Right zone ─────────────────────────────────────────────── */
+
+.rightZone {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  margin-left: 0;
+}
+
+.publicActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tournamentBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-primary);
+  background: rgba(255, 122, 0, 0.1);
+  border: 1px solid rgba(255, 122, 0, 0.22);
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.avatarChip {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 0.04em;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.publicViewButton {
+  padding: 8px 14px;
+  border-radius: var(--radius-lg);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-white);
+  background: var(--color-brand-orange);
+  border: 2px solid var(--color-brand-orange);
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.14s ease, box-shadow 0.18s ease;
+  white-space: nowrap;
+}
+
+.publicViewButton:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.13);
+}
+
+.publicViewButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+  transform: none;
+  box-shadow: none;
+}
+
+.shareQrButton {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-lg);
+  color: rgba(255, 241, 229, 0.98);
+  background: rgba(255, 122, 0, 0.14);
+  border: 1px solid rgba(255, 146, 72, 0.3);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.14s ease;
+}
+
+.shareQrButton:hover:not(:disabled) {
+  background: rgba(255, 122, 0, 0.22);
+  border-color: rgba(255, 146, 72, 0.42);
+  transform: translateY(-1px);
+}
+
+.shareQrButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+  transform: none;
+}
+
+.externalMark {
+  margin-left: 3px;
+  font-size: 11px;
+  line-height: 1;
+  color: currentColor;
+}
+
+.userMenu {
+  position: relative;
+}
+
+.userMenuTrigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 3px 8px 3px 3px;
+  color: rgba(255, 255, 255, 0.78);
+  cursor: pointer;
+}
+
+.userMenuTrigger:hover {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.userMenuCaret {
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid rgba(255, 255, 255, 0.58);
+  line-height: 1;
+}
+
+.userMenuPanel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 190px;
+  display: grid;
+  gap: 2px;
+  padding: 8px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(17, 18, 26, 0.98);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.45);
+  z-index: 1200;
+}
+
+.userMenuHeader {
+  padding: 7px 8px;
+  margin-bottom: 2px;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.userMenuDivider {
+  height: 1px;
+  margin: 4px 2px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.userMenuItem,
+.userMenuItemButton {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.84);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.userMenuItem:hover,
+.userMenuItemButton:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.95);
+  text-decoration: none;
+}
+
+.userMenuItemButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.userMenuItemDanger {
+  color: rgba(251, 113, 133, 0.94);
+}
+
+.userMenuItemDanger:hover {
+  background: rgba(251, 113, 133, 0.12);
+  color: rgba(252, 165, 165, 1);
+}
+
+/* ── Mobile bar ─────────────────────────────────────────────── */
+
+.topNavMobile {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 1100;
+  padding: 0 16px;
+  background: rgba(15, 15, 23, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03), 0 4px 16px rgba(0, 0, 0, 0.4);
+  box-sizing: border-box;
+}
+
+.hamburgerBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s ease;
+}
+
+.hamburgerBtn:active {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.hamburgerLine {
+  display: block;
+  width: 16px;
+  height: 1.5px;
+  background: rgba(255, 255, 255, 0.65);
+  border-radius: 2px;
+}
+
+.mobileBrand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  flex: 1;
+  min-width: 0;
+}
+
+.mobileLogoIcon {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.mobileBrandText {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mobileTournamentBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-primary);
+  background: rgba(255, 122, 0, 0.1);
+  border: 1px solid rgba(255, 122, 0, 0.22);
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+@media (max-width: 1380px) {
+  .tournamentContext {
+    max-width: 230px;
+  }
+}
+
+@media (max-width: 1160px) {
+  .logoText {
+    display: none;
+  }
+
+  .logoLink {
+    margin-right: 0;
+  }
+
+  .tournamentContext {
+    min-width: 150px;
+    max-width: 190px;
+    padding-inline: 10px;
+  }
+
+  .navPill {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .publicViewButton {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  .shareQrButton {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+@media (max-width: 980px) {
+  .tournamentContext {
+    display: none;
+  }
+
+  .navPills {
+    justify-content: flex-start;
+  }
+}

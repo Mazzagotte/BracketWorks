@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Tournament, Squad, Player, ScoreData, PendingScoreSave } from '../lib/types'
 import { SortConfig, SortableScoreColumn } from './types'
-import { SortableHeader } from './components/SortableHeader'
+import { SortableHeader } from '../components/SortableHeader'
 
 import Link from 'next/link'
 
@@ -45,8 +45,8 @@ export default function ScoresPage() {
   const sessionToken = authToken || storedAuthToken;
 
   // Check if we have tokens in localStorage even if auth context isn't ready
-  const hasStoredAuth = typeof window !== 'undefined' && 
-    sessionToken && 
+  const hasStoredAuth = typeof window !== 'undefined' &&
+    sessionToken &&
     localStorage.getItem('user_id');
 
   const router = useRouter()
@@ -73,7 +73,7 @@ export default function ScoresPage() {
   const [lastEdit, setLastEdit] = useState<{ playerId: number; field: string; previous: number | undefined } | null>(null)
   const importFileRef = useRef<HTMLInputElement | null>(null)
   const debouncedSavesRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
-  
+
   // Sorting state
   const [sortConfig, setSortConfig] = useState<SortConfig>({
     column: null,
@@ -118,7 +118,7 @@ export default function ScoresPage() {
       duration: 4000,
     })
   }, [addToast, selectedSquad, tournament])
-  
+
   // Styles moved to globals.css; no inline style injection
 
   // Sorting functionality
@@ -126,7 +126,7 @@ export default function ScoresPage() {
     setSortConfig(currentSort => {
       if (currentSort.column === column) {
         // Toggle direction: asc -> desc -> null (remove sort)
-        const newDirection = 
+        const newDirection =
           currentSort.direction === 'asc' ? 'desc' :
           currentSort.direction === 'desc' ? null : 'asc';
         return {
@@ -259,7 +259,7 @@ export default function ScoresPage() {
   const mobilePlayers = filteredPlayers
 
   const visiblePlayers = isMobile ? mobilePlayers : filteredPlayers
-  
+
   // Pagination for large player lists (use sorted players)
   const paginationHook = usePagination({
     items: visiblePlayers,
@@ -292,7 +292,7 @@ export default function ScoresPage() {
   const processPendingSaves = useCallback(async () => {
     const saves = [...pendingSaves]
     setPendingSaves([])
-    
+
     for (const saveData of saves) {
       try {
         const response = await apiFetch(API('/api/v1/scores/'), {
@@ -303,7 +303,7 @@ export default function ScoresPage() {
           },
           body: JSON.stringify(saveData.data)
         })
-        
+
         if (!response.ok) {
           // Re-queue failed saves
           setPendingSaves(prev => [...prev, saveData])
@@ -313,7 +313,7 @@ export default function ScoresPage() {
         setPendingSaves(prev => [...prev, saveData])
       }
     }
-    
+
     if (pendingSaves.length === 0) {
       addToast({
         message: 'All offline scores have been synchronized!',
@@ -332,7 +332,7 @@ export default function ScoresPage() {
         processPendingSaves()
       }
     }
-    
+
     const handleOffline = () => {
       setIsOnline(false)
       addToast({
@@ -341,13 +341,13 @@ export default function ScoresPage() {
         duration: 5000
       })
     }
-    
+
     window.addEventListener('online', handleOnline)
     window.addEventListener('offline', handleOffline)
-    
+
     // Check initial status
     setIsOnline(navigator.onLine)
-    
+
     return () => {
       window.removeEventListener('online', handleOnline)
       window.removeEventListener('offline', handleOffline)
@@ -740,10 +740,10 @@ export default function ScoresPage() {
   // (and before any early-return guards) so the closure captures it properly.
   const fetchPlayersWithScores = useCallback(async (tournamentId: string, squadId: number | null, token: string) => {
     try {
-      const bowlersUrl = squadId 
+      const bowlersUrl = squadId
         ? `/api/v1/bowlers?tournament_id=${tournamentId}&squad_id=${squadId}`
         : `/api/v1/bowlers?tournament_id=${tournamentId}`
-      
+
       // Fire bowlers and scores in parallel; scores don't depend on bowlers.
       const scoresUrl = `/api/v1/scores/?tournament_id=${tournamentId}`
       const [bowlersResponse, scoresResponse] = await Promise.all([
@@ -778,7 +778,7 @@ export default function ScoresPage() {
           body: scoresBody.slice(0, 500),
         })
       }
-      
+
       let data = bowlersResponse.ok ? await bowlersResponse.json() : []
 
       // Fallback: if squad-filtered fetch returns no results, load all tournament players.
@@ -791,9 +791,9 @@ export default function ScoresPage() {
           data = await fallbackResponse.json()
         }
       }
-      
+
       const scoresData = scoresResponse.ok ? await scoresResponse.json() : []
-      
+
       // Create a lookup map for scores by player_id
       const scoresMap = new Map()
       scoresData.forEach((score: ScoreData) => {
@@ -806,7 +806,7 @@ export default function ScoresPage() {
           game3_with_handicap: score.game3_with_handicap
         })
       })
-      
+
       // Transform API player data to match the local score-entry structure
       const transformedData = (data || []).map((playerRecord: Player & { full_name?: string; handicap_pins?: number }) => {
         const fullName = playerRecord.fullName || playerRecord.full_name || ''
@@ -819,7 +819,7 @@ export default function ScoresPage() {
           game3_scratch: undefined,
           game3_with_handicap: undefined
         }
-        
+
         return {
           id: playerRecord.id,
           firstName: nameParts[0] || '',
@@ -830,7 +830,7 @@ export default function ScoresPage() {
           scores: existingScores
         }
       })
-      
+
       // Sort players by lane (players with lanes first, sorted numerically, then players without lanes)
       const sortedData = transformedData.sort((a: Player, b: Player) => {
         // If both have lanes, sort numerically
@@ -848,7 +848,7 @@ export default function ScoresPage() {
         // If neither has a lane, maintain original order (sort by name as fallback)
         return a.lastName.localeCompare(b.lastName)
       })
-      
+
       setPlayers(sortedData)
     } catch (err) {
       logger.error('Error fetching players:', err)
@@ -868,7 +868,7 @@ export default function ScoresPage() {
         token: sessionToken,
       };
     })();
-    
+
     if (lastTournamentId && token) {
       setIsLoading(true)
       const bootstrapStarted = performance.now()
@@ -1373,17 +1373,18 @@ export default function ScoresPage() {
     setShowCalcPayoutsConfirm(true)
   }, [hasMissingScore, players, tournament, selectedSquad, sessionToken])
 
-  const headerActions = useMemo(() => (
-    <div className={styles.headerActions}>
+  const scoresQuickActions = useMemo(() => (
+    <div className={styles.quickActionsRow}>
+      <div className={styles.quickActionsGroupLeft}>
       <button
-        className="ds-btn ds-btn-info ds-btn-sm"
+        className={`ds-btn ds-btn-info ds-btn-sm ${styles.quickActionGuideBtn}`}
         onClick={() => setIsScoresGuideOpen(true)}
       >
         Scores Guide
       </button>
 
       <button
-        className="ds-btn ds-btn-primary ds-btn-sm"
+        className={`ds-btn ds-btn-primary ds-btn-sm ${styles.quickActionFileBtn}`}
         onClick={handleExportScoresToExcel}
         disabled={isExporting || players.length === 0}
       >
@@ -1391,7 +1392,7 @@ export default function ScoresPage() {
       </button>
 
       <button
-        className="ds-btn ds-btn-primary ds-btn-sm"
+        className={`ds-btn ds-btn-primary ds-btn-sm ${styles.quickActionFileBtn}`}
         onClick={() => importFileRef.current?.click()}
         disabled={isImporting || players.length === 0 || isScoresLocked}
       >
@@ -1400,7 +1401,7 @@ export default function ScoresPage() {
 
       {players.length > 0 && !isScoresLocked && (
         <button
-          className="ds-btn ds-btn-success ds-btn-sm"
+          className={`ds-btn ds-btn-success ds-btn-sm ${styles.quickActionSuccessBtn}`}
           onClick={() => { void markScoresComplete() }}
         >
           Calculate Payouts
@@ -1409,44 +1410,48 @@ export default function ScoresPage() {
 
       {players.length > 0 && isScoresLocked && (
         <button
-          className="ds-btn ds-btn-destructive ds-btn-sm"
+          className={`ds-btn ds-btn-destructive ds-btn-sm ${styles.quickActionDangerBtn}`}
           onClick={unlockScoresTable}
         >
           Unlock Scores
         </button>
       )}
-      
-      {pendingSaves.length > 0 && (
-        <EnhancedButton
-          onClick={async () => {
-            await processPendingSaves()
-            addToast({ 
-              message: 'Sync completed!', 
-              type: 'success', 
-              duration: 3000 
-            })
-          }}
-          variant="primary"
-          size="sm"
-        >
-          Sync Offline Scores ({pendingSaves.length})
-        </EnhancedButton>
-      )}
+      </div>
 
-      {(process.env.NODE_ENV === 'development' || !!currentUser?.isAdmin) && players.length > 0 && (
-        <div className={styles.devGroup}>
-          <button className={styles.devButton} onClick={handleRandomizeScores} disabled={isScoresLocked}>Randomize Scores</button>
-          <button className={styles.devButton} onClick={() => devClearGame(2)} disabled={isScoresLocked}>Clear Game 2</button>
-          <button className={styles.devButton} onClick={() => devClearGame(3)} disabled={isScoresLocked}>Clear Game 3</button>
-        </div>
-      )}
+      <div className={styles.quickActionsGroupRight}>
+        {pendingSaves.length > 0 && (
+          <EnhancedButton
+            onClick={async () => {
+              await processPendingSaves()
+              addToast({
+                message: 'Sync completed!',
+                type: 'success',
+                duration: 3000
+              })
+            }}
+            variant="primary"
+            size="sm"
+            className={styles.quickActionFileBtn}
+          >
+            Sync Offline Scores ({pendingSaves.length})
+          </EnhancedButton>
+        )}
+
+        {(process.env.NODE_ENV === 'development' || !!currentUser?.isAdmin) && players.length > 0 && (
+          <>
+            <button className={`${styles.devButton} ${styles.quickActionDevBtn}`} onClick={handleRandomizeScores} disabled={isScoresLocked}>Randomize Scores</button>
+            <button className={`${styles.devButton} ${styles.quickActionDevBtn}`} onClick={() => devClearGame(2)} disabled={isScoresLocked}>Clear Game 2</button>
+            <button className={`${styles.devButton} ${styles.quickActionDevBtn}`} onClick={() => devClearGame(3)} disabled={isScoresLocked}>Clear Game 3</button>
+          </>
+        )}
+      </div>
     </div>
   ), [players, handleRandomizeScores, devClearGame, pendingSaves.length, addToast, processPendingSaves, handleExportScoresToExcel, isExporting, isImporting, isScoresLocked, unlockScoresTable, currentUser, markScoresComplete])
 
   usePageHeader({
     title: 'Scores',
     subtitle: undefined,
-    actions: headerActions
+    actions: undefined
   })
 
   const getRowStateLabel = useCallback((playerId: number) => {
@@ -1647,6 +1652,15 @@ export default function ScoresPage() {
               </div>
             </div>
 
+            {tournament && (
+              <div className={`${styles.quickActionsCard} ${styles.mobileQuickActionsCard}`}>
+                <h2 className={styles.quickActionsTitle}>Quick Actions</h2>
+                <div className={styles.quickActionsBody}>
+                  {scoresQuickActions}
+                </div>
+              </div>
+            )}
+
             {/* No tournament state */}
             {!tournament && !isLoading && (
               <div className={styles.noTournamentMobile}>
@@ -1806,7 +1820,7 @@ export default function ScoresPage() {
               </div>
             </div>
           )}
-        
+
           {/* Offline Indicator */}
           {!isOnline && (
             <div className="notification notification-warning">
@@ -1826,6 +1840,15 @@ export default function ScoresPage() {
           {showInitialScoresLoad && (
             <div className={styles.statusMessage}>
               Loading players and scores...
+            </div>
+          )}
+
+          {tournament && (
+            <div className={styles.quickActionsCard}>
+              <h2 className={styles.quickActionsTitle}>Quick Actions</h2>
+              <div className={styles.quickActionsBody}>
+                {scoresQuickActions}
+              </div>
             </div>
           )}
 
@@ -1925,14 +1948,15 @@ export default function ScoresPage() {
           {!showInitialScoresLoad && filteredPlayers.length > 0 && (
             <>
             {rowStateCounts.saving > 0 && (
-              <div className="table-save-status table-save-status--saving">Saving...</div>
+              <div className={`table-save-status table-save-status--saving ${styles.tableSaveStatus}`}>Saving...</div>
             )}
             {rowStateCounts.saving === 0 && rowStateCounts.failed === 0 && Object.values(rowSaveState).some(s => s === 'saved') && (
-              <div className="table-save-status table-save-status--success">All scores saved</div>
+              <div className={`table-save-status table-save-status--success ${styles.tableSaveStatus}`}>All scores saved</div>
             )}
             {rowStateCounts.failed > 0 && (
-              <div className="table-save-status table-save-status--error">Failed to save {rowStateCounts.failed} score{rowStateCounts.failed > 1 ? 's' : ''}</div>
+              <div className={`table-save-status table-save-status--error ${styles.tableSaveStatus}`}>Failed to save {rowStateCounts.failed} score{rowStateCounts.failed > 1 ? 's' : ''}</div>
             )}
+            <div className={styles.tableCard}>
             <div className="entries-container">
 
                 <table className="entries-table" aria-label="Player Scores" onKeyDownCapture={handleTableArrowNavigation}>
@@ -1978,7 +2002,7 @@ export default function ScoresPage() {
                   <td className="scores-cell name">{player.firstName} {player.lastName}</td>
                   <td className={`scores-cell lane ${!player.lane ? 'lane-empty' : ''}`}>{player.lane || ''}</td>
                   <td className="scores-cell average">{player.average}</td>
-                  
+
                   {/* Game 1 */}
                   <td className="scores-cell scores-cell--game">
                     <div className="game-cell-wrap">
@@ -2002,7 +2026,7 @@ export default function ScoresPage() {
                       <div className="game-hcap-total">{getGameTotal(player.scores?.game1_scratch, player.handicap)}</div>
                     </div>
                   </td>
-                  
+
                   {/* Game 2 */}
                   <td className="scores-cell scores-cell--game">
                     <div className="game-cell-wrap">
@@ -2026,7 +2050,7 @@ export default function ScoresPage() {
                       <div className="game-hcap-total">{getGameTotal(player.scores?.game2_scratch, player.handicap)}</div>
                     </div>
                   </td>
-                  
+
                   {/* Game 3 */}
                   <td className="scores-cell scores-cell--game">
                     <div className="game-cell-wrap">
@@ -2050,12 +2074,12 @@ export default function ScoresPage() {
                       <div className="game-hcap-total">{getGameTotal(player.scores?.game3_scratch, player.handicap)}</div>
                     </div>
                   </td>
-                  
+
                   {/* Total Scratch */}
                   <td className="scores-cell total-scratch">
                     {calculateTotalScratch(player) || ''}
                   </td>
-                  
+
                   {/* Total */}
                   <td className="scores-cell total-final">
                     {calculateDisplayTotal(player)}
@@ -2064,6 +2088,7 @@ export default function ScoresPage() {
               ))}
             </tbody>
           </table>
+        </div>
         </div>
             </>
         )}
@@ -2084,7 +2109,7 @@ export default function ScoresPage() {
                 {filteredPlayers.length} players
               </span>
             </div>
-            
+
             <Pagination
               currentPage={paginationHook.currentPage}
               totalPages={paginationHook.totalPages}
@@ -2107,10 +2132,3 @@ export default function ScoresPage() {
     </ErrorBoundary>
   )
 }
-
-
-
-
-
-
-

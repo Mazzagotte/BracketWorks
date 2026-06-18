@@ -19,6 +19,8 @@
   justify-content: center;
   z-index: 1200;
   padding: max(20px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom));
+  background: rgba(7, 8, 13, 0.86);
+  backdrop-filter: blur(12px) saturate(120%);
   overflow-y: auto;
   animation: fadeIn 0.2s ease-out;
 }
@@ -42,6 +44,9 @@
   animation: slideUp 0.3s ease-out;
   scrollbar-width: none;
   position: relative;
+  background: rgba(19, 19, 27, 0.98) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.55) !important;
 }
 
 .pageCard {
@@ -71,6 +76,8 @@
 /* Header */
 .header {
   padding: 22px 28px 14px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.018)) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
 .brandRow {
@@ -103,6 +110,39 @@
 /* Form body */
 .body {
   padding: 20px 28px 24px;
+  background: rgba(19, 19, 27, 0.98);
+}
+
+.modal :global(.surface-authInput),
+.modal :global(.surface-authInputValid) {
+  background: rgba(8, 9, 15, 0.9) !important;
+  color: #f4efe8;
+}
+
+.modal :global(.surface-authInput:-webkit-autofill),
+.modal :global(.surface-authInput:-webkit-autofill:hover),
+.modal :global(.surface-authInput:-webkit-autofill:focus),
+.modal :global(.surface-authInputValid:-webkit-autofill),
+.modal :global(.surface-authInputValid:-webkit-autofill:hover),
+.modal :global(.surface-authInputValid:-webkit-autofill:focus) {
+  -webkit-text-fill-color: #f4efe8;
+  caret-color: #f4efe8;
+  box-shadow: 0 0 0 1000px rgba(8, 9, 15, 0.96) inset;
+  transition: background-color 9999s ease-out;
+}
+
+.modal :global(.surface-authInputValid) {
+  border-color: rgba(45, 212, 136, 0.55) !important;
+}
+
+.modal :global(.surface-authLabel) {
+  color: rgba(244, 239, 232, 0.9);
+}
+
+.modal :global(.surface-authHint),
+.modal :global(.surface-authHintSuccess) {
+  position: relative;
+  z-index: 1;
 }
 
 /* Name row */

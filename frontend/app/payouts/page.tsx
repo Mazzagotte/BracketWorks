@@ -906,35 +906,39 @@ export default function PayoutsPage() {
     }
   }, [addToast, buildExportFileName, filteredWinners, selectedTournament, selectedSquad, paidKeys, sidePotAccounting, payoutData])
 
-  const headerActions = useMemo(() => (
-    <>
-      <button
-        className="ds-btn ds-btn-info ds-btn-sm"
-        onClick={() => setIsPayoutsGuideOpen(true)}
-      >
-        Payouts Guide
-      </button>
-      <button
-        className="ds-btn ds-btn-primary ds-btn-sm"
-        onClick={handleExportToExcel}
-        disabled={loading || isExportingExcel || filteredWinners.length === 0}
-      >
-        {isExportingExcel ? 'Exporting...' : isMobileView ? 'Excel' : 'Export to Excel'}
-      </button>
-      <button
-        className="ds-btn ds-btn-primary ds-btn-sm"
-        onClick={handleExportToPdf}
-        disabled={loading || isExportingPdf || filteredWinners.length === 0}
-      >
-        {isExportingPdf ? 'Exporting...' : isMobileView ? 'PDF' : 'Export to PDF'}
-      </button>
-    </>
+  const payoutsQuickActions = useMemo(() => (
+    <div className={styles.quickActionsRow}>
+      <div className={styles.quickActionsGroupLeft}>
+        <button
+          className={`ds-btn ds-btn-info ds-btn-sm ${styles.quickActionGuideBtn}`}
+          onClick={() => setIsPayoutsGuideOpen(true)}
+        >
+          Payouts Guide
+        </button>
+      </div>
+      <div className={styles.quickActionsGroupRight}>
+        <button
+          className={`ds-btn ds-btn-primary ds-btn-sm ${styles.quickActionFileBtn}`}
+          onClick={handleExportToExcel}
+          disabled={loading || isExportingExcel || filteredWinners.length === 0}
+        >
+          {isExportingExcel ? 'Exporting...' : isMobileView ? 'Excel' : 'Export to Excel'}
+        </button>
+        <button
+          className={`ds-btn ds-btn-primary ds-btn-sm ${styles.quickActionFileBtn}`}
+          onClick={handleExportToPdf}
+          disabled={loading || isExportingPdf || filteredWinners.length === 0}
+        >
+          {isExportingPdf ? 'Exporting...' : isMobileView ? 'PDF' : 'Export to PDF'}
+        </button>
+      </div>
+    </div>
   ), [filteredWinners.length, handleExportToExcel, handleExportToPdf, isExportingExcel, isExportingPdf, isMobileView, loading])
 
   usePageHeader({
     title: 'Payout Distribution',
     subtitle: undefined,
-    actions: headerActions,
+    actions: undefined,
   })
 
   const programSummaries = useMemo(
@@ -996,13 +1000,20 @@ export default function PayoutsPage() {
   return (
     <ErrorBoundary>
       <div className={styles.pageContainer}>
+        <div className={styles.quickActionsCard}>
+          <h2 className={styles.quickActionsTitle}>Quick Actions</h2>
+          <div className={styles.quickActionsBody}>
+            {payoutsQuickActions}
+          </div>
+        </div>
+
         {/* Summary card */}
         {payoutData && (
           <div className={`surface-card ${styles.summaryCard}`}>
             <h3 className={`surface-cardHeader ${styles.summaryTitle}`}>Payout Summary</h3>
             <div className={styles.summaryGrid}>
-              <div className={`${styles.statBox} ${styles.statBoxTotal}`}>
-                <div className={`${styles.statValue} ${styles.statValueGreen}`}>{formatCurrency(displayedTotalPrizePool)}</div>
+              <div className={styles.statBox}>
+                <div className={styles.statValue}>{formatCurrency(displayedTotalPrizePool)}</div>
                 <div className={styles.statLabel}>Final Prize Pool</div>
                 {sidePotAccounting.totalPool > 0 && (
                   <div className={styles.statDetail}>Includes {formatCurrency(sidePotAccounting.totalPool)} in side pots</div>
@@ -1067,22 +1078,20 @@ export default function PayoutsPage() {
           </div>
         )}
         {!loading && selectedTournament && aggregatedWinners.length === 0 && !loading && (
-          <div className="bw-empty-wrap">
-            <div className="bw-payout-empty-card">
-              <h2 className="bw-payout-empty-title">
-                No Payouts Calculated Yet
-              </h2>
-              <p className="bw-payout-empty-text">
-                Complete brackets first, then return here to review and mark payouts.
-              </p>
-              <div className="bw-payout-empty-actions">
-                <Link href="/brackets" className="ds-btn ds-btn-primary ds-btn-md">
-                  Go to Brackets
-                </Link>
-                <Link href="/dashboard" className="ds-btn ds-btn-secondary ds-btn-md">
-                  Back to Dashboard
-                </Link>
-              </div>
+          <div className={styles.emptyState}>
+            <h2 className={styles.emptyTitle}>
+              No Payouts Calculated Yet
+            </h2>
+            <p className={styles.emptyMessage}>
+              Complete brackets first, then return here to review and mark payouts.
+            </p>
+            <div className={styles.emptyActions}>
+              <Link href="/brackets" className="ds-btn ds-btn-primary ds-btn-md">
+                Go to Brackets
+              </Link>
+              <Link href="/dashboard" className="ds-btn ds-btn-secondary ds-btn-md">
+                Back to Dashboard
+              </Link>
             </div>
           </div>
         )}
