@@ -1,0 +1,87 @@
+.pageShell {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.pageShellModal {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: none;
+  min-height: 100%;
+  margin: 0;
+  padding: 4px 6px 8px;
+}
+
+.pageShellModal .pageHeader,
+.pageShellModal .pageTitle,
+.pageShellModal .pageSubtitle {
+  text-align: center;
+}
+
+.pageHeader {
+  margin-bottom: 24px;
+}
+
+.pageShellModal .pageHeader {
+  margin-bottom: 20px;
+}
+
+.pageState {
+  padding: 40px;
+  text-align: center;
+  color: var(--bw-text-muted);
+  font-size: 14px;
+}
+
+.backButton {
+  margin-bottom: 16px;
+  padding: 10px 16px;
+  border: 1px solid var(--bw-border-accent);
+  border-radius: 999px;
+  background: var(--color-primary);
+  color: var(--color-white);
+  box-shadow: var(--bw-shadow-accent);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.backButton:hover {
+  background: var(--color-primary-hover);
+}
+
+.pageTitle {
+  margin: 16px 0 8px;
+  color: var(--bw-text-title);
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.pageTitleModal {
+  margin: 0 0 8px;
+  font-size: 24px;
+}
+
+.pageSubtitle {
+  color: var(--bw-text-muted);
+  font-size: 14px;
+}
+
+.pageGrid {
+  gap: 20px;
+}
+
+@media (max-width: 980px) {
+  .pageShellModal {
+    width: 100%;
+    margin: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .pageShell {
+    padding: var(--bw-page-gutter-mobile);
+  }
+}

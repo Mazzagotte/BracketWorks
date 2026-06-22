@@ -69,7 +69,10 @@ def _route_rate_limit(path: str, method: str) -> tuple[str, int, int] | None:
     if path.startswith("/api/v1/public"):
         return ("public-read", settings.RATE_LIMIT_PUBLIC_PER_MINUTE, 60)
 
-    if path == "/api/v1/brackets/generate-multiple":
+    if path in {
+        "/api/v1/brackets/generate-multiple",
+        "/api/v1/brackets/generate-multiple-async",
+    }:
         return ("bracket-generate", settings.RATE_LIMIT_BRACKET_GENERATE_PER_MINUTE, 60)
 
     return None

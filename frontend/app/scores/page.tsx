@@ -18,6 +18,12 @@ import CloseControl from '../../components/CloseControl'
 import { MobileLayout } from '../../components/MobileLayout'
 import { Spinner } from '../components/LoadingComponents'
 import styles from './scores.module.css'
+import cardStyles from '../styles/cards.module.css'
+import buttonStyles from '../styles/buttons.module.css'
+import formStyles from '../styles/forms.module.css'
+import shellStyles from '../styles/page-shell.module.css'
+import tableStyles from '../styles/tables.module.css'
+import toolbarStyles from '../styles/toolbars.module.css'
 import { useToast } from '../components/Toast'
 import { usePagination, Pagination } from '../components/Performance'
 import { useAutoSave } from '../components/DataManagement'
@@ -1374,17 +1380,17 @@ export default function ScoresPage() {
   }, [hasMissingScore, players, tournament, selectedSquad, sessionToken])
 
   const scoresQuickActions = useMemo(() => (
-    <div className={styles.quickActionsRow}>
-      <div className={styles.quickActionsGroupLeft}>
+    <div className={cardStyles.quickActionsRow}>
+      <div className={cardStyles.quickActionsGroupLeft}>
       <button
-        className={`ds-btn ds-btn-info ds-btn-sm ${styles.quickActionGuideBtn}`}
+        className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
         onClick={() => setIsScoresGuideOpen(true)}
       >
         Scores Guide
       </button>
 
       <button
-        className={`ds-btn ds-btn-primary ds-btn-sm ${styles.quickActionFileBtn}`}
+        className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
         onClick={handleExportScoresToExcel}
         disabled={isExporting || players.length === 0}
       >
@@ -1392,7 +1398,7 @@ export default function ScoresPage() {
       </button>
 
       <button
-        className={`ds-btn ds-btn-primary ds-btn-sm ${styles.quickActionFileBtn}`}
+        className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
         onClick={() => importFileRef.current?.click()}
         disabled={isImporting || players.length === 0 || isScoresLocked}
       >
@@ -1401,7 +1407,7 @@ export default function ScoresPage() {
 
       {players.length > 0 && !isScoresLocked && (
         <button
-          className={`ds-btn ds-btn-success ds-btn-sm ${styles.quickActionSuccessBtn}`}
+          className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
           onClick={() => { void markScoresComplete() }}
         >
           Calculate Payouts
@@ -1410,7 +1416,7 @@ export default function ScoresPage() {
 
       {players.length > 0 && isScoresLocked && (
         <button
-          className={`ds-btn ds-btn-destructive ds-btn-sm ${styles.quickActionDangerBtn}`}
+          className={`${buttonStyles.button} ${buttonStyles.danger} ${buttonStyles.small} ${styles.quickActionDangerBtn}`}
           onClick={unlockScoresTable}
         >
           Unlock Scores
@@ -1418,7 +1424,7 @@ export default function ScoresPage() {
       )}
       </div>
 
-      <div className={styles.quickActionsGroupRight}>
+      <div className={cardStyles.quickActionsGroupRight}>
         {pendingSaves.length > 0 && (
           <EnhancedButton
             onClick={async () => {
@@ -1431,7 +1437,7 @@ export default function ScoresPage() {
             }}
             variant="primary"
             size="sm"
-            className={styles.quickActionFileBtn}
+            className={`${cardStyles.quickActionControl} ${buttonStyles.quickAction}`}
           >
             Sync Offline Scores ({pendingSaves.length})
           </EnhancedButton>
@@ -1439,9 +1445,9 @@ export default function ScoresPage() {
 
         {(process.env.NODE_ENV === 'development' || !!currentUser?.isAdmin) && players.length > 0 && (
           <>
-            <button className={`${styles.devButton} ${styles.quickActionDevBtn}`} onClick={handleRandomizeScores} disabled={isScoresLocked}>Randomize Scores</button>
-            <button className={`${styles.devButton} ${styles.quickActionDevBtn}`} onClick={() => devClearGame(2)} disabled={isScoresLocked}>Clear Game 2</button>
-            <button className={`${styles.devButton} ${styles.quickActionDevBtn}`} onClick={() => devClearGame(3)} disabled={isScoresLocked}>Clear Game 3</button>
+            <button className={`${cardStyles.quickActionControl} ${styles.devButton} ${styles.quickActionDevBtn}`} onClick={handleRandomizeScores} disabled={isScoresLocked}>Randomize Scores</button>
+            <button className={`${cardStyles.quickActionControl} ${styles.devButton} ${styles.quickActionDevBtn}`} onClick={() => devClearGame(2)} disabled={isScoresLocked}>Clear Game 2</button>
+            <button className={`${cardStyles.quickActionControl} ${styles.devButton} ${styles.quickActionDevBtn}`} onClick={() => devClearGame(3)} disabled={isScoresLocked}>Clear Game 3</button>
           </>
         )}
       </div>
@@ -1653,9 +1659,9 @@ export default function ScoresPage() {
             </div>
 
             {tournament && (
-              <div className={`${styles.quickActionsCard} ${styles.mobileQuickActionsCard}`}>
-                <h2 className={styles.quickActionsTitle}>Quick Actions</h2>
-                <div className={styles.quickActionsBody}>
+              <div className={`${cardStyles.card} ${cardStyles.accentCard} ${cardStyles.quickActionsCard} ${styles.mobileQuickActionsCard}`}>
+                <h2 className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${cardStyles.quickActionsTitle}`}>Quick Actions</h2>
+                <div className={cardStyles.quickActionsBody}>
                   {scoresQuickActions}
                 </div>
               </div>
@@ -1663,7 +1669,7 @@ export default function ScoresPage() {
 
             {/* No tournament state */}
             {!tournament && !isLoading && (
-              <div className={styles.noTournamentMobile}>
+              <div className={`${cardStyles.card} ${cardStyles.emptyStateCard} ${styles.noTournamentMobile}`}>
                 <h2 className={styles.noTournamentTitleMobile}>No Tournament Loaded</h2>
                 <p className={styles.noTournamentTextMobile}>
                   Load a tournament from the dashboard to start entering scores
@@ -1795,11 +1801,11 @@ export default function ScoresPage() {
         </MobileLayout>
       ) : (
         // Desktop Layout
-      <div className={styles.desktopContainer}>
+      <div className={`${shellStyles.page} ${styles.desktopContainer}`}>
 
           {/* No Tournament State - Desktop */}
           {!tournament && !showInitialScoresLoad && (
-            <div className={styles.noTournamentDesktop}>
+            <div className={`${cardStyles.card} ${cardStyles.emptyStateCard} ${styles.noTournamentDesktop}`}>
               <h2 className={styles.noTournamentTitleDesktop}>No Tournament Loaded</h2>
               <p className={styles.noTournamentTextDesktop}>
                 You need to load a tournament from the dashboard before you can enter scores. Once loaded, you&apos;ll be able to enter and manage scores for all players.
@@ -1844,9 +1850,9 @@ export default function ScoresPage() {
           )}
 
           {tournament && (
-            <div className={styles.quickActionsCard}>
-              <h2 className={styles.quickActionsTitle}>Quick Actions</h2>
-              <div className={styles.quickActionsBody}>
+            <div className={`${cardStyles.card} ${cardStyles.accentCard} ${cardStyles.quickActionsCard}`}>
+              <h2 className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${cardStyles.quickActionsTitle}`}>Quick Actions</h2>
+              <div className={cardStyles.quickActionsBody}>
                 {scoresQuickActions}
               </div>
             </div>
@@ -1854,7 +1860,7 @@ export default function ScoresPage() {
 
           {/* No Players State */}
           {!showInitialScoresLoad && players.length === 0 && tournament && (
-            <div className={styles.emptyScoresState}>
+            <div className={`${cardStyles.card} ${cardStyles.accentCard} ${styles.emptyScoresState}`}>
               <div className={styles.emptyScoresAccentGlow} aria-hidden="true" />
 
               <div className={styles.emptyScoresBadge}>Tournament Ready</div>
@@ -1880,24 +1886,24 @@ export default function ScoresPage() {
               </div>
 
               <div className={styles.emptyScoresActions}>
-                <Link href="/players" className={`${styles.emptyScoresPrimaryAction} ds-btn ds-btn-primary ds-btn-md`}>
+                <Link href="/players" className={`${styles.emptyScoresPrimaryAction} ${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.medium}`}>
                   Go To Entries
                 </Link>
-                <Link href="/dashboard" className={`${styles.emptyScoresSecondaryAction} ds-btn ds-btn-secondary ds-btn-md`}>
+                <Link href="/dashboard" className={`${styles.emptyScoresSecondaryAction} ${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.medium}`}>
                   Back To Dashboard
                 </Link>
               </div>
 
               <div className={styles.emptyScoresFeaturesGrid}>
-                <div className={styles.emptyScoresFeatureCard}>
+                <div className={`${cardStyles.panel} ${styles.emptyScoresFeatureCard}`}>
                   <h3>Load Entries</h3>
                   <p>Add bowlers in Entries for the selected tournament and squad before entering any scores.</p>
                 </div>
-                <div className={styles.emptyScoresFeatureCard}>
+                <div className={`${cardStyles.panel} ${styles.emptyScoresFeatureCard}`}>
                   <h3>Enter Game Scores</h3>
                   <p>Capture game-by-game scratch scores and let handicap totals calculate automatically.</p>
                 </div>
-                <div className={styles.emptyScoresFeatureCard}>
+                <div className={`${cardStyles.panel} ${styles.emptyScoresFeatureCard}`}>
                   <h3>Track Results</h3>
                   <p>Sort and review totals quickly to prepare clean bracket seeding and payouts.</p>
                 </div>
@@ -1913,19 +1919,19 @@ export default function ScoresPage() {
           )}
 
           {!showInitialScoresLoad && players.length > 0 && (
-            <div className={styles.scoresSearchCard}>
-              <h3 className={styles.scoresSearchTitle}>Search Scores</h3>
-              <div className={styles.scoresSearchRow}>
+            <div className={`${cardStyles.card} ${cardStyles.accentCard} ${styles.scoresSearchCard}`}>
+              <h3 className={`${cardStyles.cardTitle} ${cardStyles.cardTitleCompact} ${styles.scoresSearchTitle}`}>Search Scores</h3>
+              <div className={`${toolbarStyles.toolbar} ${toolbarStyles.group} ${styles.scoresSearchRow}`}>
                 <input
                   type="text"
-                  className={styles.scoresSearchInput}
+                  className={`${formStyles.search} ${formStyles.compactControl} ${toolbarStyles.grow} ${styles.scoresSearchInput}`}
                   placeholder="First name"
                   value={searchFirstName}
                   onChange={(event) => setSearchFirstName(event.target.value)}
                 />
                 <input
                   type="text"
-                  className={styles.scoresSearchInput}
+                  className={`${formStyles.search} ${formStyles.compactControl} ${toolbarStyles.grow} ${styles.scoresSearchInput}`}
                   placeholder="Last name"
                   value={searchLastName}
                   onChange={(event) => setSearchLastName(event.target.value)}
@@ -1956,10 +1962,10 @@ export default function ScoresPage() {
             {rowStateCounts.failed > 0 && (
               <div className={`table-save-status table-save-status--error ${styles.tableSaveStatus}`}>Failed to save {rowStateCounts.failed} score{rowStateCounts.failed > 1 ? 's' : ''}</div>
             )}
-            <div className={styles.tableCard}>
+            <div className={`${cardStyles.card} ${cardStyles.accentCard} ${styles.tableCard}`}>
             <div className="entries-container">
 
-                <table className="entries-table" aria-label="Player Scores" onKeyDownCapture={handleTableArrowNavigation}>
+                <table className={`${tableStyles.table} entries-table`} aria-label="Player Scores" onKeyDownCapture={handleTableArrowNavigation}>
 
             <thead>
               {selectedSquad && (

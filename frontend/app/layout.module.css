@@ -78,8 +78,8 @@
   flex-shrink: 0;
 }
 
-.pageActions :global(.ds-btn) {
-  border-radius: 999px;
+.pageActions :where(button, a) {
+  border-radius: var(--radius-md);
   min-height: 34px;
   padding: 0.42rem 0.82rem;
 }

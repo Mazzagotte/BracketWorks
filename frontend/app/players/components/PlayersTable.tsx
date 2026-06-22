@@ -6,6 +6,9 @@ import { handleTableArrowNavigation } from '../../lib/tableKeyboard';
 import { divisionOptions, isProgramAllowedForDivision, normalizeDivision } from '../../lib/bracketPrograms';
 import { SortableHeader, SortConfig } from '../../components/SortableHeader';
 import styles from '../entries.module.css';
+import tableStyles from '../../styles/tables.module.css';
+import badgeStyles from '../../styles/badges.module.css';
+import iconButtonStyles from '../../styles/icon-buttons.module.css';
 
 function abbreviateProgramName(name: string): string {
   const map: [string, string][] = [
@@ -170,10 +173,10 @@ const PlayersTable = memo(({
         ? styles.mobilePlayerCardPaid
         : styles.mobilePlayerCardDue;
     const statusPillClass = needsEntryFee
-      ? styles.mobileStatusPillSetFee
+      ? badgeStyles.warning
       : isPaid
-        ? styles.mobileStatusPillPaid
-        : styles.mobileStatusPillDue;
+        ? badgeStyles.success
+        : badgeStyles.danger;
 
     return (
       <article key={player.id} className={`${styles.mobilePlayerCard} ${cardStatusClass}`}>
@@ -191,7 +194,7 @@ const PlayersTable = memo(({
 
             <div className={styles.mobilePlayerTotals}>
               <span className={styles.mobilePlayerCost}>${player.totalCost.toFixed(2)}</span>
-              <span className={`${styles.mobileStatusPill} ${statusPillClass}`}>
+              <span className={`${badgeStyles.badge} ${badgeStyles.compact} ${statusPillClass}`}>
                 {needsEntryFee ? 'SET FEE' : isPaid ? 'PAID' : 'DUE'}
               </span>
             </div>
@@ -355,7 +358,7 @@ const PlayersTable = memo(({
           </div>
         </>
       ) : (
-      <table className="entries-table" onKeyDownCapture={handleTableArrowNavigation}>
+      <table className={`${tableStyles.table} entries-table`} onKeyDownCapture={handleTableArrowNavigation}>
         <thead>
           <tr className="entries-header-row">
             <SortableHeader column="usbc" sortConfig={sortConfig} onSort={toggleSort} className="col-usbc">
@@ -383,13 +386,13 @@ const PlayersTable = memo(({
                 {pot.name}
               </th>
             ))}
-            <SortableHeader column="cost" sortConfig={sortConfig} onSort={toggleSort} className="col-cost group-start">
+            <SortableHeader column="cost" sortConfig={sortConfig} onSort={toggleSort} className={`${tableStyles.numericCell} col-cost group-start`}>
               Total
             </SortableHeader>
-            <th className="entries-header-cell col-status">
+            <th className={`${tableStyles.statusCell} entries-header-cell col-status`}>
               Status
             </th>
-            <th className="entries-header-cell col-actions group-start">
+            <th className={`${tableStyles.actionCell} entries-header-cell col-actions group-start`}>
               Actions
             </th>
           </tr>
@@ -536,27 +539,27 @@ const PlayersTable = memo(({
                   </OptimizedTableCell>
                 )
               })}
-              <OptimizedTableCell className="entries-cell col-cost group-start">
+              <OptimizedTableCell className={`${tableStyles.numericCell} entries-cell col-cost group-start`}>
                 <span className="entries-cost">
                   ${player.totalCost.toFixed(2)}
                 </span>
               </OptimizedTableCell>
 
-              <OptimizedTableCell className="entries-cell col-status">
+              <OptimizedTableCell className={`${tableStyles.statusCell} entries-cell col-status`}>
                 <span
                   onClick={() => {
                     if (needsEntryFee) return;
                     const newPaidAmount = isPaid ? 0 : player.totalCost;
                     handleCellEdit(player.id, 'amountPaid', newPaidAmount.toString());
                   }}
-                  className={`payment-badge ${
+                  className={`${badgeStyles.badge} ${badgeStyles.compact} ${
                     needsEntryFee
-                      ? 'payment-badge--error'
+                      ? badgeStyles.warning
                       : isPaid
-                        ? 'payment-badge--paid'
+                        ? badgeStyles.success
                         : isPartial
-                          ? 'payment-badge--partial'
-                          : 'payment-badge--due'
+                          ? badgeStyles.accent
+                          : badgeStyles.danger
                   }`}
                   title={needsEntryFee ? 'Set a bracket entry fee in tournament settings to calculate player cost.' : `Click to toggle payment status. Current: $${player.amountPaid.toFixed(2)}`}
                 >
@@ -564,10 +567,10 @@ const PlayersTable = memo(({
                 </span>
               </OptimizedTableCell>
 
-              <OptimizedTableCell className="entries-cell col-actions group-start">
-                <div className="row-actions">
+              <OptimizedTableCell className={`${tableStyles.actionCell} entries-cell col-actions group-start`}>
+                <div className={tableStyles.rowActions}>
                   <button
-                    className={`entries-edit-btn${isEditing ? ' entries-edit-btn--active' : ''}`}
+                    className={`${iconButtonStyles.iconButton} entries-edit-btn${isEditing ? ' entries-edit-btn--active' : ''}`}
                     onClick={() => setEditingRowId(isEditing ? null : player.id)}
                     aria-label={isEditing ? 'Done editing' : 'Edit bowler name and USBC'}
                     title={isEditing ? 'Done editing' : 'Edit name / USBC'}
@@ -575,7 +578,7 @@ const PlayersTable = memo(({
                     {isEditing ? '✕' : '✏'}
                   </button>
                   <button
-                    className="entries-delete-btn"
+                    className={`${iconButtonStyles.iconButton} ${iconButtonStyles.danger} entries-delete-btn`}
                     onClick={() => onDeletePlayer(player.id)}
                     aria-label={`Delete ${player.firstName} ${player.lastName}`.trim()}
                     title="Delete player"

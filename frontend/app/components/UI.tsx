@@ -1,5 +1,6 @@
 import React from 'react'
 import { handleTableArrowNavigation } from '../lib/tableKeyboard'
+import buttonStyles from '../styles/buttons.module.css'
 
 // Page Container Component
 interface PageContainerProps {
@@ -178,17 +179,33 @@ export const Button: React.FC<ButtonProps> = ({
   className = '',
   type = 'button',
   icon,
-}) => (
-  <button
-    type={type}
-    onClick={onClick}
-    disabled={disabled}
-    className={`ds-btn ds-btn-${variant} ds-btn-${size} ${fullWidth ? 'bw-btn-full' : ''} ${className}`}
-  >
-    {icon}
-    {children}
-  </button>
-)
+}) => {
+  const variantClass = {
+    primary: buttonStyles.primary,
+    secondary: buttonStyles.secondary,
+    success: buttonStyles.success,
+    warning: buttonStyles.primary,
+    error: buttonStyles.danger,
+    danger: buttonStyles.danger,
+  }[variant]
+  const sizeClass = {
+    sm: buttonStyles.small,
+    md: buttonStyles.medium,
+    lg: buttonStyles.large,
+  }[size]
+
+  return (
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      className={`${buttonStyles.button} ${variantClass} ${sizeClass} ${fullWidth ? buttonStyles.fullWidth : ''} ${className}`}
+    >
+      {icon}
+      {children}
+    </button>
+  )
+}
 
 // Table Component
 // Table Components with enhanced styling

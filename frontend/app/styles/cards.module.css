@@ -1,0 +1,219 @@
+.card {
+  background: var(--bw-surface-card);
+  border: 1px solid var(--bw-border-card);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--bw-shadow-card);
+}
+
+.panel {
+  background: var(--bw-surface-panel);
+  border: 1px solid var(--bw-border-subtle);
+  border-radius: var(--radius-xl);
+}
+
+.cardHeader {
+  background: var(--bw-surface-panel);
+  border-bottom: 1px solid var(--bw-border-subtle);
+}
+
+.cardHeaderDense {
+  padding: 0.68rem 0.9rem 0.58rem;
+  font-size: 1rem;
+  line-height: 1.2;
+  font-weight: 800;
+  color: rgba(246, 249, 255, 0.96);
+  letter-spacing: 0;
+}
+
+.cardTitle {
+  margin: 0;
+  color: var(--bw-text-title);
+  font-size: var(--bw-type-card-title);
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+
+.cardTitleCompact {
+  font-size: 0.9rem;
+}
+
+.cardHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.accentCard {
+  background: var(--bw-surface-card);
+  border-color: var(--bw-border-card);
+  box-shadow: inset 3px 0 0 var(--color-primary), var(--bw-shadow-card);
+}
+
+.accentRail {
+  border-left: var(--bw-accent-rail);
+}
+
+.statTile {
+  background: var(--bw-surface-panel);
+  border: 1px solid var(--bw-border-card);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--bw-shadow-card);
+}
+
+.statTileCompact {
+  min-width: 132px;
+  min-height: 84px;
+  padding: 14px 12px;
+  gap: 4px;
+  border-radius: 14px;
+}
+
+.statValue {
+  font-size: 1.35rem;
+  font-weight: 800;
+  line-height: 1;
+  color: rgba(246, 249, 255, 0.94);
+}
+
+.statLabel {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: rgba(180, 189, 205, 0.76);
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.statDetail {
+  font-size: 0.7rem;
+  color: rgba(180, 189, 205, 0.72);
+}
+
+.accentSurface {
+  background: var(--bw-surface-panel);
+  border-color: var(--bw-border-accent);
+}
+
+.mutedSurface {
+  background: var(--bw-surface-card-strong);
+  border-color: var(--bw-border-subtle);
+}
+
+.emptyStateCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  color: rgba(180, 189, 205, 0.78);
+}
+
+.emptyActions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.statePanel {
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-xl);
+}
+
+.dangerPanel {
+  background: rgba(127, 29, 29, 0.18);
+  border-color: rgba(248, 113, 113, 0.28);
+  border-left: 4px solid rgba(248, 113, 113, 0.7);
+  color: rgba(254, 202, 202, 0.96);
+}
+
+.warningPanel {
+  background: rgba(255, 122, 0, 0.1);
+  border-color: rgba(255, 146, 72, 0.32);
+  border-left: var(--bw-accent-rail);
+  color: rgba(255, 219, 190, 0.96);
+}
+
+.successPanel {
+  background: rgba(45, 212, 136, 0.12);
+  border-color: rgba(45, 212, 136, 0.35);
+  color: rgba(190, 255, 213, 0.96);
+}
+
+.quickActionsCard {
+  margin-bottom: 0.95rem;
+  overflow: hidden;
+  border-radius: 24px;
+}
+
+.quickActionsTitle {
+  margin: 0;
+}
+
+.quickActionsBody {
+  padding: 0.52rem 0.78rem 0.68rem;
+}
+
+.quickActionsRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.quickActionsGroupLeft,
+.quickActionsGroupRight {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.quickActionsRow :where(button, a),
+.quickActionControl {
+  min-height: 36px;
+  border-radius: 11px;
+  padding: 0.42rem 0.78rem;
+  font-size: 0.78rem;
+  font-weight: 750;
+  line-height: 1.1;
+  letter-spacing: 0;
+  box-shadow: none;
+}
+
+@media (max-width: 900px) {
+  .quickActionsRow,
+  .quickActionsGroupLeft,
+  .quickActionsGroupRight {
+    width: 100%;
+  }
+
+  .quickActionsGroupRight {
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 640px) {
+  .quickActionsGroupLeft,
+  .quickActionsGroupRight {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.52rem;
+  }
+
+  .quickActionsRow :where(button, a),
+  .quickActionControl {
+    width: 100%;
+  }
+
+  .emptyActions,
+  .emptyActions :where(button, a) {
+    width: 100%;
+  }
+}

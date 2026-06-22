@@ -16,14 +16,19 @@ import { getSelectedSquadId, getSelectedTournamentId } from '../lib/selection-se
 import { getPayoutUnlockKey } from '../lib/storageKeys'
 import Link from 'next/link'
 import styles from './payouts.module.css'
+import cardStyles from '../styles/cards.module.css'
+import buttonStyles from '../styles/buttons.module.css'
+import badgeStyles from '../styles/badges.module.css'
+import formStyles from '../styles/forms.module.css'
+import shellStyles from '../styles/page-shell.module.css'
 import ExplainPayoutsModal from './ExplainPayoutsModal'
 import { formatCurrency, formatShortMonthDayYear } from '../lib/formatters'
 
 function placeBadgeClass(place: number) {
-  if (place === 1) return `${styles.placeBadge} ${styles.place1}`
-  if (place === 2) return `${styles.placeBadge} ${styles.place2}`
-  if (place === 3) return `${styles.placeBadge} ${styles.place3}`
-  return `${styles.placeBadge} ${styles.placeOther}`
+  if (place === 1) return `${badgeStyles.badge} ${badgeStyles.placement} ${badgeStyles.placeFirst} ${styles.placementBadge}`
+  if (place === 2) return `${badgeStyles.badge} ${badgeStyles.placement} ${badgeStyles.placeSecond} ${styles.placementBadge}`
+  if (place === 3) return `${badgeStyles.badge} ${badgeStyles.placement} ${badgeStyles.placeThird} ${styles.placementBadge}`
+  return `${badgeStyles.badge} ${badgeStyles.placement} ${badgeStyles.muted} ${styles.placementBadge}`
 }
 
 interface ScoreRow {
@@ -907,25 +912,25 @@ export default function PayoutsPage() {
   }, [addToast, buildExportFileName, filteredWinners, selectedTournament, selectedSquad, paidKeys, sidePotAccounting, payoutData])
 
   const payoutsQuickActions = useMemo(() => (
-    <div className={styles.quickActionsRow}>
-      <div className={styles.quickActionsGroupLeft}>
+    <div className={cardStyles.quickActionsRow}>
+      <div className={cardStyles.quickActionsGroupLeft}>
         <button
-          className={`ds-btn ds-btn-info ds-btn-sm ${styles.quickActionGuideBtn}`}
+          className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
           onClick={() => setIsPayoutsGuideOpen(true)}
         >
           Payouts Guide
         </button>
       </div>
-      <div className={styles.quickActionsGroupRight}>
+      <div className={cardStyles.quickActionsGroupRight}>
         <button
-          className={`ds-btn ds-btn-primary ds-btn-sm ${styles.quickActionFileBtn}`}
+          className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
           onClick={handleExportToExcel}
           disabled={loading || isExportingExcel || filteredWinners.length === 0}
         >
           {isExportingExcel ? 'Exporting...' : isMobileView ? 'Excel' : 'Export to Excel'}
         </button>
         <button
-          className={`ds-btn ds-btn-primary ds-btn-sm ${styles.quickActionFileBtn}`}
+          className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
           onClick={handleExportToPdf}
           disabled={loading || isExportingPdf || filteredWinners.length === 0}
         >
@@ -961,7 +966,7 @@ export default function PayoutsPage() {
 
   if (!isUserAuthenticated && !hasStoredAuth) {
     return (
-      <div className={styles.emptyState}>
+      <div className={`${cardStyles.card} ${cardStyles.emptyStateCard} ${styles.emptyState}`}>
         <div className={styles.emptyTitle}>Please log in</div>
         <div className={styles.emptyMessage}>Sign in to view payout information.</div>
       </div>
@@ -999,67 +1004,67 @@ export default function PayoutsPage() {
 
   return (
     <ErrorBoundary>
-      <div className={styles.pageContainer}>
-        <div className={styles.quickActionsCard}>
-          <h2 className={styles.quickActionsTitle}>Quick Actions</h2>
-          <div className={styles.quickActionsBody}>
+      <div className={`${shellStyles.page} ${styles.pageContainer}`}>
+        <div className={`${cardStyles.card} ${cardStyles.accentCard} ${cardStyles.quickActionsCard}`}>
+          <h2 className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${cardStyles.quickActionsTitle}`}>Quick Actions</h2>
+          <div className={cardStyles.quickActionsBody}>
             {payoutsQuickActions}
           </div>
         </div>
 
         {/* Summary card */}
         {payoutData && (
-          <div className={`surface-card ${styles.summaryCard}`}>
-            <h3 className={`surface-cardHeader ${styles.summaryTitle}`}>Payout Summary</h3>
+          <div className={`${cardStyles.card} ${cardStyles.accentCard} surface-card ${styles.summaryCard}`}>
+            <h3 className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${cardStyles.cardTitle} surface-cardHeader ${styles.summaryTitle}`}>Payout Summary</h3>
             <div className={styles.summaryGrid}>
-              <div className={styles.statBox}>
-                <div className={styles.statValue}>{formatCurrency(displayedTotalPrizePool)}</div>
-                <div className={styles.statLabel}>Final Prize Pool</div>
+              <div className={`${cardStyles.statTile} ${cardStyles.statTileCompact} ${styles.statBox}`}>
+                <div className={`${cardStyles.statValue} ${styles.statValue}`}>{formatCurrency(displayedTotalPrizePool)}</div>
+                <div className={`${cardStyles.statLabel} ${styles.statLabel}`}>Final Prize Pool</div>
                 {sidePotAccounting.totalPool > 0 && (
-                  <div className={styles.statDetail}>Includes {formatCurrency(sidePotAccounting.totalPool)} in side pots</div>
+                  <div className={`${cardStyles.statDetail} ${styles.statDetail}`}>Includes {formatCurrency(sidePotAccounting.totalPool)} in side pots</div>
                 )}
               </div>
               {programSummaries.map(program => (
-                <div key={program.key} className={styles.statBox}>
-                  <div className={styles.statValue}>{formatCurrency(program.total_prize_pool)}</div>
-                  <div className={styles.statLabel}>{program.name} Pool</div>
-                  <div className={styles.statDetail}>{program.total_brackets} bracket{program.total_brackets !== 1 ? 's' : ''}</div>
+                <div key={program.key} className={`${cardStyles.statTile} ${cardStyles.statTileCompact} ${styles.statBox}`}>
+                  <div className={`${cardStyles.statValue} ${styles.statValue}`}>{formatCurrency(program.total_prize_pool)}</div>
+                  <div className={`${cardStyles.statLabel} ${styles.statLabel}`}>{program.name} Pool</div>
+                  <div className={`${cardStyles.statDetail} ${styles.statDetail}`}>{program.total_brackets} bracket{program.total_brackets !== 1 ? 's' : ''}</div>
                 </div>
               ))}
               {sidePotAccounting.summaries.map(pot => (
-                <div key={pot.key} className={styles.statBox}>
-                  <div className={styles.statValue}>{formatCurrency(pot.pool)}</div>
-                  <div className={styles.statLabel}>{pot.name} Pool</div>
-                  <div className={styles.statDetail}>{pot.entryCount} side pot entr{pot.entryCount === 1 ? 'y' : 'ies'}</div>
+                <div key={pot.key} className={`${cardStyles.statTile} ${cardStyles.statTileCompact} ${styles.statBox}`}>
+                  <div className={`${cardStyles.statValue} ${styles.statValue}`}>{formatCurrency(pot.pool)}</div>
+                  <div className={`${cardStyles.statLabel} ${styles.statLabel}`}>{pot.name} Pool</div>
+                  <div className={`${cardStyles.statDetail} ${styles.statDetail}`}>{pot.entryCount} side pot entr{pot.entryCount === 1 ? 'y' : 'ies'}</div>
                 </div>
               ))}
-              <div className={styles.statBox}>
-                <div className={styles.statValue}>{paidCount} / {totalUniqueWinners}</div>
-                <div className={styles.statLabel}>Marked Paid</div>
+              <div className={`${cardStyles.statTile} ${cardStyles.statTileCompact} ${styles.statBox}`}>
+                <div className={`${cardStyles.statValue} ${styles.statValue}`}>{paidCount} / {totalUniqueWinners}</div>
+                <div className={`${cardStyles.statLabel} ${styles.statLabel}`}>Marked Paid</div>
                 {totalUniqueWinners > 0 && (
                   <div className={styles.progressBarRow}>
                     <progress className={styles.progressMeter} value={paidCount} max={totalUniqueWinners} />
                   </div>
                 )}
                 {remainingAmount > 0 && (
-                  <div className={styles.remainingLabel}>{formatCurrency(remainingAmount)} remaining to mark paid</div>
+                  <div className={`${cardStyles.statDetail} ${styles.remainingLabel}`}>{formatCurrency(remainingAmount)} remaining to mark paid</div>
                 )}
               </div>
             </div>
           </div>
         )}
 
-        {error && <div className={styles.errorBanner}>{error}</div>}
+        {error && <div className={`${cardStyles.statePanel} ${cardStyles.dangerPanel} ${styles.errorBanner}`}>{error}</div>}
 
         {/* Search */}
         {payoutData && aggregatedWinners.length > 0 && (
-          <div className={styles.searchStandalone}>
+          <div className={`${formStyles.searchBar} ${formStyles.searchBarCompact} ${styles.searchStandalone}`}>
             <input
               type="text"
               placeholder="Search by player name..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className={styles.searchInput}
+              className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput}`}
             />
           </div>
         )}
@@ -1072,24 +1077,24 @@ export default function PayoutsPage() {
           </div>
         )}
         {!loading && !selectedTournament && (
-          <div className={styles.emptyState}>
+          <div className={`${cardStyles.card} ${cardStyles.emptyStateCard} ${styles.emptyState}`}>
             <div className={styles.emptyTitle}>No Tournament Loaded</div>
             <div className={styles.emptyMessage}>Load a tournament from the dashboard to view payout information.</div>
           </div>
         )}
         {!loading && selectedTournament && aggregatedWinners.length === 0 && !loading && (
-          <div className={styles.emptyState}>
+          <div className={`${cardStyles.card} ${cardStyles.emptyStateCard} ${styles.emptyState}`}>
             <h2 className={styles.emptyTitle}>
               No Payouts Calculated Yet
             </h2>
             <p className={styles.emptyMessage}>
               Complete brackets first, then return here to review and mark payouts.
             </p>
-            <div className={styles.emptyActions}>
-              <Link href="/brackets" className="ds-btn ds-btn-primary ds-btn-md">
+            <div className={cardStyles.emptyActions}>
+              <Link href="/brackets" className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.medium}`}>
                 Go to Brackets
               </Link>
-              <Link href="/dashboard" className="ds-btn ds-btn-secondary ds-btn-md">
+              <Link href="/dashboard" className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.medium}`}>
                 Back to Dashboard
               </Link>
             </div>
@@ -1098,14 +1103,14 @@ export default function PayoutsPage() {
 
         {/* Single condensed winners card */}
         {!loading && aggregatedWinners.length > 0 && (
-          <div className={styles.tableCard}>
-            <div className={styles.tableCardHeader}>
+          <div className={`${cardStyles.card} ${cardStyles.accentCard} ${styles.tableCard}`}>
+            <div className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${cardStyles.cardHeaderRow} ${styles.tableCardHeader}`}>
               <span>Payout Results</span>
               <span className={styles.headerPool}>Total Payouts: {formatCurrency(displayedTotalPrizePool)}</span>
             </div>
             <div className={styles.bracketGroup}>
               {(filteredWinners.length === 0 ? (
-                <div className={styles.emptyState}>
+                <div className={`${cardStyles.card} ${cardStyles.emptyStateCard} ${styles.emptyState}`}>
                   <div className={styles.emptyTitle}>No results</div>
                   <div className={styles.emptyMessage}>No players match your search.</div>
                 </div>
@@ -1166,7 +1171,7 @@ export default function PayoutsPage() {
                       )}
                     </div>
                     {isPaid ? (
-                      <button className={styles.paidBadge} onClick={() => togglePaid(key)}>Paid</button>
+                      <button className={`${badgeStyles.badge} ${badgeStyles.success} ${styles.paidBadge}`} onClick={() => togglePaid(key)}>Paid</button>
                     ) : (
                       <button className={styles.markPaidBtn} onClick={() => togglePaid(key)}>Mark Paid</button>
                     )}

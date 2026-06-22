@@ -201,7 +201,7 @@ def generate_tournament_brackets_endpoint(
     squad_id: Optional[int] = None,
     force_regenerate: bool = Query(False, description="Force regeneration even if brackets exist"),
     use_experimental: Optional[bool] = Query(None, description="Override experimental optimizer feature flag"),
-    experimental_attempts: Optional[int] = Query(None, ge=1, le=500, description="Experimental optimizer seed attempts"),
+    experimental_attempts: Optional[int] = Query(None, ge=1, le=8, description="Experimental optimizer seed attempts"),
     seed: Optional[int] = Query(None, description="Optional deterministic seed for bracket generation"),
     idempotency_key: Optional[str] = Header(None, alias="Idempotency-Key"),
     db: Session = Depends(get_db),
@@ -444,6 +444,11 @@ def generate_tournament_brackets_endpoint(
             db.commit()
         raise
     except Exception as e:
+        logger.exception(
+            "Unexpected bracket generation failure for tournament %s squad %s",
+            tournament_id,
+            squad_id,
+        )
         if 'idempotency_record' in locals() and idempotency_record is not None:
             fail_request(db, idempotency_record)
             db.commit()
@@ -457,7 +462,7 @@ def generate_tournament_brackets_async(
     squad_id: Optional[int] = None,
     force_regenerate: bool = Query(False),
     use_experimental: Optional[bool] = Query(None),
-    experimental_attempts: Optional[int] = Query(None, ge=1, le=500),
+    experimental_attempts: Optional[int] = Query(None, ge=1, le=8),
     seed: Optional[int] = Query(None),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),

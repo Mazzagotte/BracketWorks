@@ -27,7 +27,7 @@ from .brackets_advanced import create_brackets_with_history
 class ExperimentalConfig:
     """Tuning knobs for experimental multi-start selection."""
 
-    attempts: int = 64
+    attempts: int = 4
     seed_step: int = 7919
 
     # Scoring weights (higher is better total score).
@@ -82,6 +82,22 @@ def _extract_first_round_pairs(brackets: List[Dict[str, Any]]) -> Set[Tuple[int,
                 continue
             pairs.add((min(a, b), max(a, b)))
     return pairs
+
+
+def _count_first_round_pairs(brackets: List[Dict[str, Any]]) -> int:
+    """Count real-player first-round matches, including repeated pairings."""
+    pair_count = 0
+    for bracket in brackets:
+        rounds = bracket.get("rounds") or []
+        if not rounds:
+            continue
+        for match in rounds[0].get("matches") or []:
+            a = match.get("playerA_id")
+            b = match.get("playerB_id")
+            if a is None or b is None or a == b:
+                continue
+            pair_count += 1
+    return pair_count
 
 
 def _refund_distribution(leftovers: List[Dict[str, Any]]) -> Counter:
@@ -206,7 +222,9 @@ def generate_brackets_experimental(
     best_feasible_in_tier: Optional[Tuple[int, CandidateScore, List[Dict[str, Any]], List[Dict[str, Any]]]] = None
     best_any_in_tier: Optional[Tuple[int, CandidateScore, List[Dict[str, Any]], List[Dict[str, Any]]]] = None
 
+    attempts_evaluated = 0
     for i in range(max(1, config.attempts)):
+        attempts_evaluated += 1
         candidate_seed = base_seed + (i * config.seed_step)
 
         brackets, leftovers = create_brackets_with_history(
@@ -241,6 +259,15 @@ def generate_brackets_experimental(
                 if best_feasible_in_tier is None or candidate_score.score > best_feasible_in_tier[1].score:
                     best_feasible_in_tier = (candidate_seed, candidate_score, brackets, leftovers)
 
+        # Nothing can improve once every entry is placed, refund fairness is
+        # satisfied, and every real first-round matchup is unique.
+        if (
+            candidate_score.placed_entries == total_entries
+            and candidate_score.feasible_under_cap
+            and candidate_score.unique_pairs == _count_first_round_pairs(brackets)
+        ):
+            break
+
     # Hard cap policy (#2): pick cap-feasible in best placement tier when possible.
     chosen = best_feasible_in_tier if best_feasible_in_tier is not None else best_any_in_tier
     assert chosen is not None
@@ -252,5 +279,5 @@ def generate_brackets_experimental(
         leftovers=best_leftovers,
         selected_seed=best_seed,
         selected=best_score,
-        attempts_evaluated=max(1, config.attempts),
+        attempts_evaluated=attempts_evaluated,
     )

@@ -1,31 +1,3 @@
-.overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 1200;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  background: var(--overlay-black);
-  backdrop-filter: blur(5px);
-}
-
-.dialog {
-  position: relative;
-  width: min(680px, 100%);
-  background: var(--popup-surface);
-  border: 1px solid var(--popup-border-color);
-  border-radius: var(--radius-2xl);
-  box-shadow: var(--popup-shadow-elevated);
-  overflow: hidden;
-}
-
-.header {
-  padding: 16px 72px 14px 24px;
-  border-bottom: 2px solid var(--color-primary);
-  background: var(--popup-header-surface);
-}
-
 .title {
   margin: 0;
   color: var(--color-text-primary);
@@ -75,26 +47,7 @@
   transform: translateY(0);
 }
 
-.confirmButton {
-  min-width: 108px;
-  background: var(--color-primary);
-}
-
-.cancelButton {
-  min-width: 108px;
-  background: var(--popup-header-surface);
-  border: 1px solid var(--popup-border-color);
-  color: var(--color-text-primary);
-}
-
-.cancelButton:hover {
-  background: var(--popup-footer-surface);
-}
-
 @media (max-width: 640px) {
-  .header {
-    padding: 14px 64px 12px 18px;
-  }
 
   .title {
     font-size: 1.125rem;
@@ -121,25 +74,6 @@
 }
 
 /* Modern dark confirmation modal polish */
-.overlay {
-  background: rgba(4, 5, 10, 0.76);
-  backdrop-filter: blur(6px);
-}
-
-.dialog {
-  color: rgba(241, 245, 249, 0.9);
-  background: rgba(20, 21, 30, 0.98);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-top: 3px solid rgba(255, 122, 0, 0.78);
-  border-radius: 24px;
-  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.52);
-}
-
-.header {
-  padding: 0.9rem 3.8rem 0.78rem 1rem;
-  background: rgba(255, 255, 255, 0.02);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
 
 .title {
   color: rgba(246, 249, 255, 0.96);
@@ -178,20 +112,4 @@
   transform: none;
   filter: brightness(1.06);
   box-shadow: none;
-}
-
-.confirmButton {
-  color: rgba(255, 241, 229, 0.98);
-  background: rgba(255, 122, 0, 0.2);
-  border: 1px solid rgba(255, 146, 72, 0.34);
-}
-
-.cancelButton {
-  color: rgba(203, 213, 225, 0.86);
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(226, 232, 240, 0.16);
-}
-
-.cancelButton:hover {
-  background: rgba(255, 255, 255, 0.05);
 }

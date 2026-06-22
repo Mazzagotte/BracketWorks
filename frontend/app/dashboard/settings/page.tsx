@@ -9,6 +9,7 @@ import { ErrorBoundary } from '../../components/ErrorBoundary';
 import { getErrorMessage, getErrorContext } from '../../lib/error-utils';
 import { storage } from '../../lib/storage';
 import dashboardStyles from '../dashboard.module.css';
+import pageStyles from './dashboard-settings-page.module.css';
 import { useToast } from '../../components/Toast';
 import { API, apiClient, apiFetch } from '../../lib/api';
 import { logger } from '../../lib/logger';
@@ -348,52 +349,40 @@ export default function TournamentSettingsPage() {
   }, [searchParams, router, addToast]);
 
   if (!isAuthInitialized) {
-    return <div className={dashboardStyles.settingsPageState}>Loading...</div>;
+    return <div className={pageStyles.pageState}>Loading...</div>;
   }
 
   if (!isUserAuthenticated && !hasStoredAuthTokens) {
-    return <div className={dashboardStyles.settingsPageState}>Please log in</div>;
+    return <div className={pageStyles.pageState}>Please log in</div>;
   }
 
   if (!tournament) {
-    return <div className={dashboardStyles.settingsPageState}>Loading tournament...</div>;
+    return <div className={pageStyles.pageState}>Loading tournament...</div>;
   }
 
-  const enabledOptionalProgramsCount = normalizeBracketPrograms(bracketSettings.bracket_programs, bracketSettings.default_entry_fee)
-    .filter(program => program.key !== 'handicap' && program.key !== 'scratch' && program.key !== 'reverse' && Boolean(program.enabled)).length;
-  const enabledByeProgramsCount = normalizeBracketPrograms(bracketSettings.bracket_programs, bracketSettings.default_entry_fee)
-    .filter(program => (program.key === 'handicap' || program.key === 'scratch' || Boolean(program.enabled)) && Boolean(program.allow_byes ?? bracketSettings.allow_byes ?? false)).length;
-  const enabledSidePotsCount = sidePots.pots.filter(pot => pot.enabled).length;
   const projectedPayout = bracketSettings.first_place_amount + bracketSettings.second_place_amount;
 
   return (
     <ErrorBoundary>
-      <main className={isModalView ? dashboardStyles.settingsPageShellModal : dashboardStyles.settingsPageShell}>
-        <div className={dashboardStyles.settingsPageHeader}>
+      <main className={isModalView ? pageStyles.pageShellModal : pageStyles.pageShell}>
+        <div className={pageStyles.pageHeader}>
           {!isModalView && (
             <button
               onClick={() => router.back()}
-              className={dashboardStyles.settingsBackButton}
+              className={pageStyles.backButton}
             >
               ← Back to Dashboard
             </button>
           )}
-          <h1 className={`${dashboardStyles.settingsPageTitle} ${isModalView ? dashboardStyles.settingsPageTitleModal : ''}`}>
+          <h1 className={`${pageStyles.pageTitle} ${isModalView ? pageStyles.pageTitleModal : ''}`}>
             Tournament Settings
           </h1>
-          <p className={dashboardStyles.settingsPageSubtitle}>
+          <p className={pageStyles.pageSubtitle}>
             {tournament.name} • {tournament.start_date ? formatIsoDateFull(tournament.start_date) : 'Date pending'}
           </p>
-          <div className={dashboardStyles.settingsSummaryRow}>
-            <span className={dashboardStyles.settingsSummaryPill}>Bracket Size: {bracketSettings.bracket_size}</span>
-            <span className={dashboardStyles.settingsSummaryPill}>Entry: ${formatNumberInput(bracketSettings.default_entry_fee) || '0'}</span>
-            <span className={dashboardStyles.settingsSummaryPill}>Side Pots: {enabledSidePotsCount} / {sidePots.pots.length}</span>
-            <span className={dashboardStyles.settingsSummaryPill}>Optional: {enabledOptionalProgramsCount}</span>
-            <span className={dashboardStyles.settingsSummaryPill}>Bye Rules: {enabledByeProgramsCount}</span>
-          </div>
         </div>
 
-        <section className={isModalView ? dashboardStyles.settingsModalGrid : `${dashboardStyles.advancedGrid} ${dashboardStyles.settingsPageGrid}`}>
+        <section className={isModalView ? dashboardStyles.settingsModalGrid : `${dashboardStyles.advancedGrid} ${pageStyles.pageGrid}`}>
           
           {/* Bracket Settings Card */}
           <div className={`${dashboardStyles.bracketSettingsCard} ${dashboardStyles.mainBracketSettingsCard}`}>

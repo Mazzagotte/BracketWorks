@@ -7,6 +7,7 @@ import { usePageHeader } from "../lib/header-context";
 import { apiClient } from "../lib/api";
 import { useAuth } from "../lib/auth-context";
 import { formatShortMonthDayYear } from "../lib/formatters";
+import buttonStyles from "../styles/buttons.module.css";
 import styles from "./admin.module.css";
 
 type OverviewResponse = {
@@ -1189,10 +1190,10 @@ export default function AdminPage() {
               </div>
             </div>
             <div className={styles.modalFooter}>
-              <button type="button" className="ds-btn ds-btn-secondary ds-btn-sm" onClick={() => setEditUser(null)}>Cancel</button>
+              <button type="button" className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.small}`} onClick={() => setEditUser(null)}>Cancel</button>
               <button
                 type="button"
-                className="ds-btn ds-btn-primary ds-btn-sm"
+                className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`}
                 disabled={editSaving}
                 onClick={async () => {
                   setEditSaving(true);
@@ -1243,10 +1244,10 @@ export default function AdminPage() {
               </div>
             </div>
             <div className={styles.modalFooter}>
-              <button type="button" className="ds-btn ds-btn-secondary ds-btn-sm" onClick={() => setResetUser(null)}>Cancel</button>
+              <button type="button" className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.small}`} onClick={() => setResetUser(null)}>Cancel</button>
               <button
                 type="button"
-                className="ds-btn ds-btn-primary ds-btn-sm"
+                className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`}
                 disabled={resetSaving || resetPassword.length < 8}
                 onClick={async () => {
                   setResetSaving(true);
@@ -1308,10 +1309,10 @@ export default function AdminPage() {
               </div>
             </div>
             <div className={styles.modalFooter}>
-              <button type="button" className="ds-btn ds-btn-secondary ds-btn-sm" onClick={() => setDeleteUser(null)}>Cancel</button>
+              <button type="button" className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.small}`} onClick={() => setDeleteUser(null)}>Cancel</button>
               <button
                 type="button"
-                className="ds-btn ds-btn-danger ds-btn-sm"
+                className={`${buttonStyles.button} ${buttonStyles.danger} ${buttonStyles.small}`}
                 disabled={deleteUserSaving || !deleteUserReason.trim() || deleteUserConfirmText.trim().toUpperCase() !== "DELETE"}
                 onClick={async () => {
                   if (!deleteUser) return;
@@ -1365,10 +1366,10 @@ export default function AdminPage() {
               </div>
             </div>
             <div className={styles.modalFooter}>
-              <button type="button" className="ds-btn ds-btn-secondary ds-btn-sm" onClick={() => setEditTournament(null)}>Cancel</button>
+              <button type="button" className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.small}`} onClick={() => setEditTournament(null)}>Cancel</button>
               <button
                 type="button"
-                className="ds-btn ds-btn-primary ds-btn-sm"
+                className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`}
                 disabled={editTournamentSaving}
                 onClick={async () => {
                   setEditTournamentSaving(true);
@@ -1419,10 +1420,10 @@ export default function AdminPage() {
               </div>
             </div>
             <div className={styles.modalFooter}>
-              <button type="button" className="ds-btn ds-btn-secondary ds-btn-sm" onClick={() => setReassignTournament(null)}>Cancel</button>
+              <button type="button" className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.small}`} onClick={() => setReassignTournament(null)}>Cancel</button>
               <button
                 type="button"
-                className="ds-btn ds-btn-primary ds-btn-sm"
+                className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`}
                 disabled={reassignSaving || !reassignUserId}
                 onClick={async () => {
                   setReassignSaving(true);
@@ -1463,10 +1464,10 @@ export default function AdminPage() {
               </div>
             </div>
             <div className={styles.modalFooter}>
-              <button type="button" className="ds-btn ds-btn-secondary ds-btn-sm" onClick={() => setArchiveTournament(null)}>Cancel</button>
+              <button type="button" className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.small}`} onClick={() => setArchiveTournament(null)}>Cancel</button>
               <button
                 type="button"
-                className="ds-btn ds-btn-primary ds-btn-sm"
+                className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`}
                 disabled={archiveSaving}
                 onClick={async () => {
                   setArchiveSaving(true);
@@ -1527,10 +1528,10 @@ export default function AdminPage() {
               </label>
             </div>
             <div className={styles.modalFooter}>
-              <button type="button" className="ds-btn ds-btn-secondary ds-btn-sm" onClick={() => setDeleteTournament(null)}>Cancel</button>
+              <button type="button" className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.small}`} onClick={() => setDeleteTournament(null)}>Cancel</button>
               <button
                 type="button"
-                className="ds-btn ds-btn-danger ds-btn-sm"
+                className={`${buttonStyles.button} ${buttonStyles.danger} ${buttonStyles.small}`}
                 disabled={deleteTournamentSaving || !deleteTournamentReason.trim() || deleteTournamentConfirmText.trim().toUpperCase() !== "DELETE"}
                 onClick={async () => {
                   if (!deleteTournament) return;

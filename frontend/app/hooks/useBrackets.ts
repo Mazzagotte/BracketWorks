@@ -4,6 +4,34 @@ import { apiClient } from '../lib/api'
 import { useToast } from '../components/Toast'
 import { BracketData, BracketGroup } from '../lib/types'
 
+type BracketGenerationJob = {
+  job_id: string
+  status: 'queued' | 'running' | 'succeeded' | 'failed'
+  result?: BracketPreview | null
+  error?: string | null
+}
+
+const BRACKET_JOB_POLL_INTERVAL_MS = 750
+const BRACKET_JOB_TIMEOUT_MS = 5 * 60 * 1000
+
+const waitForBracketJob = async (jobId: string): Promise<BracketPreview> => {
+  const deadline = Date.now() + BRACKET_JOB_TIMEOUT_MS
+
+  while (Date.now() < deadline) {
+    const job = await apiClient.get<BracketGenerationJob>(`/api/v1/brackets/jobs/${jobId}`, false)
+
+    if (job.status === 'succeeded' && job.result) return job.result
+    if (job.status === 'failed') {
+      const message = job.error?.split('\n', 1)[0] || 'Bracket generation failed'
+      throw new Error(message)
+    }
+
+    await new Promise(resolve => window.setTimeout(resolve, BRACKET_JOB_POLL_INTERVAL_MS))
+  }
+
+  throw new Error('Bracket generation timed out. Please try again.')
+}
+
 export interface BracketPreview {
   size?: number
   rounds?: BracketRound[]  // Optional - for single bracket preview
@@ -132,16 +160,26 @@ export function useBrackets() {
       const squadParam = squadId ? `&squad_id=${squadId}` : ''
       const forceParam = effectiveForceRegenerate ? '&force_regenerate=true' : ''
       const attemptsRaw = process.env.NEXT_PUBLIC_BRACKETS_EXPERIMENTAL_ATTEMPTS
-      const attempts = attemptsRaw && /^\d+$/.test(attemptsRaw) ? Number(attemptsRaw) : undefined
+      const attempts = attemptsRaw && /^\d+$/.test(attemptsRaw)
+        ? Math.min(8, Math.max(1, Number(attemptsRaw)))
+        : undefined
 
       const experimentalParam = experimentalEnabled ? '&use_experimental=true' : ''
       const attemptsParam = experimentalEnabled && attempts ? `&experimental_attempts=${attempts}` : ''
 
-      const url = `/api/v1/brackets/generate-multiple?tournament_id=${tournamentId}${squadParam}${forceParam}${experimentalParam}${attemptsParam}`
-      const data = await apiClient.get<BracketPreview>(
-        url,
-        !effectiveForceRegenerate  // useCache = false when forcing regeneration
-      )
+      let data: BracketPreview
+      if (experimentalEnabled) {
+        const job = await apiClient.post<BracketGenerationJob>(
+          `/api/v1/brackets/generate-multiple-async?tournament_id=${tournamentId}${squadParam}${forceParam}${experimentalParam}${attemptsParam}`
+        )
+        data = await waitForBracketJob(job.job_id)
+      } else {
+        const url = `/api/v1/brackets/generate-multiple?tournament_id=${tournamentId}${squadParam}${forceParam}`
+        data = await apiClient.get<BracketPreview>(
+          url,
+          !effectiveForceRegenerate
+        )
+      }
       setPreview(data)
 
       if ((data as BracketPreview & { no_players?: boolean }).no_players) {
