@@ -9,6 +9,8 @@ import { ErrorBoundary } from '../components/ErrorBoundary';
 import { getErrorMessage, getErrorContext } from '../lib/error-utils';
 import { storage } from '../lib/storage';
 import mobileStyles from './dashboard.module.css';
+import cardStyles from '../styles/cards.module.css';
+import shellStyles from '../styles/page-shell.module.css';
 import { ConfirmationDialog } from '../components/LazyComponents';
 import { API, apiClient, apiFetch } from '../lib/api';
 import { logger } from '../lib/logger';
@@ -1506,29 +1508,6 @@ export default function TournamentDashboard() {
   const scoresLocked = workflowStatus?.scores_locked ?? payoutsFinalized;
   const payoutsNotFinalizedCount = loadedEntries > 0 && !payoutsFinalized ? 1 : 0;
   const bracketsNotGeneratedCount = hasGeneratedBrackets ? 0 : 1;
-  const commissionerNeedsAttention = [
-    {
-      key: 'brackets',
-      label: 'Brackets not generated',
-      count: bracketsNotGeneratedCount,
-      onClick: () => router.push('/brackets'),
-      isPriority: true,
-    },
-    {
-      key: 'averages',
-      label: `${missingAveragesCount} missing average${missingAveragesCount === 1 ? '' : 's'}`,
-      count: missingAveragesCount,
-      onClick: () => router.push('/players'),
-      isPriority: false,
-    },
-    {
-      key: 'payouts',
-      label: 'Payouts not finalized',
-      count: payoutsNotFinalizedCount,
-      onClick: () => router.push('/payouts'),
-      isPriority: false,
-    },
-  ].filter(item => item.count > 0);
   const commissionerQuickActions = [
     {
       key: 'new-tournament',
@@ -1861,7 +1840,7 @@ export default function TournamentDashboard() {
         />
         <main className="page-main">
 
-          <div className={mobileStyles.contentContainer}>
+          <div className={`${shellStyles.content} ${mobileStyles.contentContainer}`}>
             <div className={mobileStyles.cardsContainer}>
 
             {/* Empty State - No Tournament Loaded */}
@@ -1899,8 +1878,8 @@ export default function TournamentDashboard() {
 
             {tournament && (
               <>
-                <section className={mobileStyles.commandCenterGrid}>
-                  <article className={`${mobileStyles.liveBoardCard} ${mobileStyles.gridHero}`}>
+                <section className={`${shellStyles.section} ${mobileStyles.commandCenterGrid}`}>
+                  <article className={`${cardStyles.card} ${cardStyles.accentCard} ${mobileStyles.liveBoardCard} ${mobileStyles.gridHero}`}>
                     <div className={mobileStyles.heroTopRow}>
                       <div>
                         <div className={mobileStyles.heroKicker}>Tournament Overview</div>
@@ -1912,54 +1891,54 @@ export default function TournamentDashboard() {
 
                     <div className={mobileStyles.heroMiddleRow}>
                       <div className={mobileStyles.heroMetaRow}>
-                        <span className={mobileStyles.heroMetaPill}>{tournament.start_date ? formatIsoDateFull(tournament.start_date) : 'Date pending'}</span>
-                        <span className={mobileStyles.heroMetaPill}>{activeSquad ? `Active Squad: ${activeSquad.time}` : 'Active Squad: pending'}</span>
-                        <span className={mobileStyles.heroMetaPill}>Squads: {squads.length}</span>
+                        <span className={`${cardStyles.panel} ${mobileStyles.heroMetaPill}`}>{tournament.start_date ? formatIsoDateFull(tournament.start_date) : 'Date pending'}</span>
+                        <span className={`${cardStyles.panel} ${mobileStyles.heroMetaPill}`}>{activeSquad ? `Active Squad: ${activeSquad.time}` : 'Active Squad: pending'}</span>
+                        <span className={`${cardStyles.panel} ${mobileStyles.heroMetaPill}`}>Squads: {squads.length}</span>
                       </div>
                     </div>
 
                     <div className={mobileStyles.heroBottomRow}>
                       <div className={mobileStyles.bracketPreview}>
-                        <div className={mobileStyles.bracketRound}>
+                        <div className={`${cardStyles.panel} ${mobileStyles.bracketRound}`}>
                           <div className={mobileStyles.bracketRoundTitle}>Bracket &amp; Rules</div>
                           <div className={mobileStyles.bracketMatchStack}>
-                            <div className={mobileStyles.bracketMatch}>
+                            <div className={`${cardStyles.panel} ${mobileStyles.bracketMatch}`}>
                               <span>Bracket Size</span>
                               <span>{bracketSettings.bracket_size} Players</span>
                             </div>
-                            <div className={mobileStyles.bracketMatch}>
+                            <div className={`${cardStyles.panel} ${mobileStyles.bracketMatch}`}>
                               <span>Entry Fee</span>
                               <span>{formatUsd(bracketSettings.default_entry_fee)}</span>
                             </div>
-                            <div className={mobileStyles.bracketMatch}>
+                            <div className={`${cardStyles.panel} ${mobileStyles.bracketMatch}`}>
                               <span>Handicap</span>
                               <span>{bracketSettings.handicap_percentage}% / {bracketSettings.handicap_base}</span>
                             </div>
                             <div className={mobileStyles.bracketSubsection}>Enabled Programs</div>
-                            <div className={mobileStyles.bracketMatch}>
+                            <div className={`${cardStyles.panel} ${mobileStyles.bracketMatch}`}>
                               <span>Bye Settings</span>
                               <span>{bracketSettings.allow_byes ? 'Enabled' : 'Disabled'}</span>
                             </div>
-                            <div className={mobileStyles.bracketMatch}>
+                            <div className={`${cardStyles.panel} ${mobileStyles.bracketMatch}`}>
                               <span>Side Pots</span>
                               <span>{enabledSidePotsCount > 0 ? 'Enabled' : 'Disabled'}</span>
                             </div>
-                            <div className={mobileStyles.bracketMatch}>
+                            <div className={`${cardStyles.panel} ${mobileStyles.bracketMatch}`}>
                               <span>Additional Brackets</span>
                               <span>{optionalProgramsSummary}</span>
                             </div>
                           </div>
                         </div>
 
-                        <div className={`${mobileStyles.bracketRound} ${mobileStyles.prizeBreakdownCard}`}>
+                        <div className={`${cardStyles.panel} ${mobileStyles.bracketRound} ${mobileStyles.prizeBreakdownCard}`}>
                           <div className={mobileStyles.bracketRoundTitle}>Prize Breakdown</div>
                           <div className={mobileStyles.prizeSectionTitle}>Payout Split</div>
                           <div className={mobileStyles.bracketMatchStack}>
-                            <div className={mobileStyles.bracketMatch}>
+                            <div className={`${cardStyles.panel} ${mobileStyles.bracketMatch}`}>
                               <span>1st Place</span>
                               <span>{formatUsd(bracketSettings.first_place_amount)}</span>
                             </div>
-                            <div className={mobileStyles.bracketMatch}>
+                            <div className={`${cardStyles.panel} ${mobileStyles.bracketMatch}`}>
                               <span>2nd Place</span>
                               <span>{formatUsd(bracketSettings.second_place_amount)}</span>
                             </div>
@@ -1967,23 +1946,23 @@ export default function TournamentDashboard() {
 
                           <div className={mobileStyles.prizeSectionTitle}>Calculation</div>
                           <div className={mobileStyles.bracketMatchStack}>
-                            <div className={mobileStyles.bracketMatch}>
+                            <div className={`${cardStyles.panel} ${mobileStyles.bracketMatch}`}>
                               <span>Bracket Entries</span>
                               <span>{bracketEntriesForPayout}</span>
                             </div>
-                            <div className={mobileStyles.bracketMatch}>
+                            <div className={`${cardStyles.panel} ${mobileStyles.bracketMatch}`}>
                               <span>Entry Fee</span>
                               <span>{formatUsd(bracketSettings.default_entry_fee)}</span>
                             </div>
-                            <div className={mobileStyles.bracketMatch}>
+                            <div className={`${cardStyles.panel} ${mobileStyles.bracketMatch}`}>
                               <span>Gross Collected</span>
                               <span>{formatUsd(grossCollected)}</span>
                             </div>
-                            <div className={mobileStyles.bracketMatch}>
+                            <div className={`${cardStyles.panel} ${mobileStyles.bracketMatch}`}>
                               <span>House Fee</span>
                               <span>{formatUsd(houseRetained)}</span>
                             </div>
-                            <div className={mobileStyles.bracketMatch}>
+                            <div className={`${cardStyles.panel} ${mobileStyles.bracketMatch}`}>
                               <span>Prize Pool</span>
                               <span>{formatUsd(tournamentProjectedPayout)}</span>
                             </div>
@@ -2002,7 +1981,7 @@ export default function TournamentDashboard() {
                     </div>
                   </article>
 
-                  <aside className={`${mobileStyles.squadRailCard} ${mobileStyles.gridTools} ${mobileStyles.commissionerPanel}`}>
+                  <aside className={`${cardStyles.card} ${cardStyles.accentCard} ${mobileStyles.squadRailCard} ${mobileStyles.gridTools} ${mobileStyles.commissionerPanel}`}>
                     <div className={mobileStyles.commissionerSectionTitle}>Quick Actions</div>
                     <div className={mobileStyles.squadRailList}>
                       {commissionerQuickActions.map(action => (
@@ -2017,29 +1996,6 @@ export default function TournamentDashboard() {
                         </button>
                       ))}
                     </div>
-
-                    <div className={mobileStyles.commissionerSectionHeader}>
-                      <div className={mobileStyles.commissionerSectionTitle}>Needs Attention</div>
-                    </div>
-                    {commissionerNeedsAttention.length > 0 ? (
-                      <div className={mobileStyles.squadRailList}>
-                        {commissionerNeedsAttention.map(item => (
-                          <button
-                            key={item.key}
-                            className={`${mobileStyles.commissionerAttentionRow} ${item.isPriority ? mobileStyles.commissionerAttentionPriority : ''}`}
-                            onClick={item.onClick}
-                          >
-                            <span className={mobileStyles.commissionerAttentionLabel}>
-                              {item.isPriority && <span className={mobileStyles.commissionerPriorityDot} aria-hidden="true" />}
-                              {item.label}
-                            </span>
-                            <span className={mobileStyles.commissionerReviewIndicator}>Review ›</span>
-                          </button>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className={mobileStyles.squadRailEmpty}>No open issues.</div>
-                    )}
 
                     <div className={mobileStyles.commissionerSectionTitle}>Admin Tools</div>
                     <div className={mobileStyles.squadRailList}>
@@ -2070,13 +2026,13 @@ export default function TournamentDashboard() {
                     </div>
                   </aside>
 
-                  <article className={`${mobileStyles.gridSummary} ${mobileStyles.entriesOverviewCard}`}>
+                  <article className={`${cardStyles.card} ${cardStyles.accentCard} ${mobileStyles.gridSummary} ${mobileStyles.entriesOverviewCard}`}>
                     <div className={mobileStyles.entriesOverviewHeader}>Entries Overview</div>
                     <div ref={summaryCardsBandRef} className={mobileStyles.summaryCardsBand}>
                       {tournamentSummaryCards.map(card => (
                         <div
                           key={card.key}
-                          className={mobileStyles.statTile}
+                          className={`${cardStyles.statTile} ${mobileStyles.statTile}`}
                         >
                           {card.status && (
                             <div className={mobileStyles.statStatusRow}>
@@ -2241,9 +2197,9 @@ export default function TournamentDashboard() {
 
                       {totalPages > 1 && (
                         <div className={mobileStyles.paginationBar}>
-                          <EnhancedButton onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} variant="secondary" size="sm">Previous</EnhancedButton>
+                          <EnhancedButton onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} variant="primary" size="sm">Previous</EnhancedButton>
                           <span className={mobileStyles.paginationText}>Page {currentPage} of {totalPages}</span>
-                          <EnhancedButton onClick={() => goToPage(currentPage + 1)} disabled={currentPage === totalPages} variant="secondary" size="sm">Next</EnhancedButton>
+                          <EnhancedButton onClick={() => goToPage(currentPage + 1)} disabled={currentPage === totalPages} variant="primary" size="sm">Next</EnhancedButton>
                         </div>
                       )}
                     </>
@@ -2265,7 +2221,7 @@ export default function TournamentDashboard() {
               </p>
               <div className={mobileStyles.deleteConfirmActions}>
                 <EnhancedButton onClick={() => handleDeleteTournament(deleteConfirm.id)} variant="danger" size="md">Delete</EnhancedButton>
-                <EnhancedButton onClick={() => setDeleteConfirm(null)} variant="secondary" size="md">Cancel</EnhancedButton>
+                <EnhancedButton onClick={() => setDeleteConfirm(null)} variant="primary" size="md">Cancel</EnhancedButton>
               </div>
             </div>
           </div>

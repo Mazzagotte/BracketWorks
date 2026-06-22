@@ -4,6 +4,7 @@ import React from 'react'
 import { createPortal } from 'react-dom'
 import CloseControl from '../../components/CloseControl'
 import styles from '../brackets/styles/explain-brackets-modal.module.css'
+import modalStyles from '../styles/modals.module.css'
 import { disableScroll, enableScroll } from '../utils/modalUtils'
 
 interface ExplainDashboardModalProps {
@@ -37,14 +38,14 @@ export default function ExplainDashboardModal({ isOpen, onClose }: ExplainDashbo
   if (!isOpen) return null
 
   const modalContent = (
-    <div className={styles.overlay} onClick={onClose}>
-      <div className={styles.modal} onClick={(event) => event.stopPropagation()}>
-        <div className={styles.header}>
+    <div className={modalStyles.overlay} onClick={onClose}>
+      <div className={modalStyles.modal} onClick={(event) => event.stopPropagation()}>
+        <div className={modalStyles.header}>
           <h2>How the Dashboard Works</h2>
-          <CloseControl onClick={onClose} label="Close modal" />
+          <CloseControl onClick={onClose} position="absolute" label="Close modal" className={modalStyles.closeButton} />
         </div>
 
-        <div className={styles.content}>
+        <div className={`${modalStyles.content} ${styles.content}`}>
           <section className={styles.section}>
             <h3>Share QR</h3>
             <p>

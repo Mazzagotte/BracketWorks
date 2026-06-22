@@ -20,6 +20,9 @@ import { EmptyBracketState } from './components/EmptyBracketState'
 import ExplainBracketsModal from './components/ExplainBracketsModal'
 import NoTournamentState from '../components/NoTournamentState'
 import styles from './brackets.module.css'
+import cardStyles from '../styles/cards.module.css'
+import buttonStyles from '../styles/buttons.module.css'
+import shellStyles from '../styles/page-shell.module.css'
 
 // Lazy load heavy components for better initial load performance
 const BracketGenerationModal = lazy(() => import('../components/BracketGenerationModal'))
@@ -501,24 +504,24 @@ export default function BracketsPage() {
   const bracketsQuickActions = useMemo(() => {
     if (!selectedTournament) return undefined
     return (
-      <div className={styles.quickActionsRow}>
-        <div className={styles.quickActionsGroupLeft}>
+      <div className={cardStyles.quickActionsRow}>
+        <div className={cardStyles.quickActionsGroupLeft}>
           <button
             onClick={() => setIsExplainModalOpen(true)}
-            className={`ds-btn ds-btn-info ds-btn-sm ${styles.quickActionGuideBtn}`}
+            className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
           >
             Bracket Guide
           </button>
           <button
             onClick={handleGenerateBrackets}
-            className={`ds-btn ds-btn-primary ds-btn-sm ${styles.quickActionGenerateBtn}`}
+            className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
           >
             Generate Brackets
           </button>
         </div>
         {isDev && (
-          <div className={styles.quickActionsGroupRight}>
-            <button onClick={handleDeleteAllBrackets} className={styles.quickActionDangerBtn}>
+          <div className={cardStyles.quickActionsGroupRight}>
+            <button onClick={handleDeleteAllBrackets} className={`${cardStyles.quickActionControl} ${styles.quickActionDangerBtn}`}>
               Delete All Brackets
             </button>
           </div>
@@ -595,11 +598,11 @@ export default function BracketsPage() {
       />
 
       {/* Bracket content */}
-      <div className={styles.pageContainer}>
+      <div className={`${shellStyles.page} ${styles.pageContainer}`}>
         {bracketsQuickActions && (
-          <div className={styles.quickActionsCard}>
-            <h2 className={styles.quickActionsTitle}>Quick Actions</h2>
-            <div className={styles.quickActionsBody}>
+          <div className={`${cardStyles.card} ${cardStyles.accentCard} ${cardStyles.quickActionsCard}`}>
+            <h2 className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${cardStyles.quickActionsTitle}`}>Quick Actions</h2>
+            <div className={cardStyles.quickActionsBody}>
               {bracketsQuickActions}
             </div>
           </div>
@@ -644,17 +647,17 @@ export default function BracketsPage() {
           <>
             {/* Entries mismatch warning */}
             {loadedBrackets?.entries_mismatch && (
-              <div className={styles.mismatchBanner}>
+              <div className={`${cardStyles.panel} ${cardStyles.statePanel} ${cardStyles.dangerPanel} ${styles.mismatchBanner}`}>
                 <span className={styles.mismatchBannerText}>
                   Brackets out of date: Entries have changed. Regenerate brackets to ensure accurate results and payouts.
                 </span>
-                <button onClick={handleGenerateBrackets} className={`${styles.mismatchBannerButton} ds-btn ds-btn-sm`}>
+                <button onClick={handleGenerateBrackets} className={`${styles.mismatchBannerButton} ${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`}>
                   Regenerate Brackets
                 </button>
               </div>
             )}
             {/* Combined Control Panel: Search + Tabs + Navigator */}
-            <div className={styles.controlPanel}>
+            <div className={`${cardStyles.card} ${cardStyles.accentCard} ${styles.controlPanel}`}>
               {/* Search and Filter */}
               <SearchFilter
                 searchTerm={searchTerm}
@@ -722,7 +725,7 @@ export default function BracketsPage() {
             <Suspense fallback={<div className={styles.loadingState}><div>Loading...</div></div>}>
             {isMobile ? (
               searchFilteredBracketItems.length === 0 ? (
-                <div className={styles.noMatches}>
+                <div className={`${cardStyles.card} ${styles.noMatches}`}>
                   <p>No brackets contain that player name.</p>
                 </div>
               ) : mobileOpenBracketIndex === null ? (
@@ -742,7 +745,7 @@ export default function BracketsPage() {
                           return (
                             <button
                               key={`${section.key}-${index}`}
-                              className={styles.mobileBracketListItem}
+                              className={`${cardStyles.panel} ${styles.mobileBracketListItem}`}
                               onClick={() => {
                                 setSelectedBracketIndex(index)
                                 setMobileOpenBracketIndex(index)
@@ -785,7 +788,7 @@ export default function BracketsPage() {
                   />
                 </div>
               ) : (
-                <div className={styles.noMatches}>
+                <div className={`${cardStyles.card} ${styles.noMatches}`}>
                   <p>No bracket selected.</p>
                 </div>
               )
@@ -799,7 +802,7 @@ export default function BracketsPage() {
                 bracketTitle={activeBracketItem ? `${activeBracketItem.group.scoring_mode === 'scratch' ? 'Scratch' : 'Handicap'} Bracket ${selectedBracketIndex + 1} of ${searchFilteredBracketItems.length}` : undefined}
               />
             ) : (
-              <div className={styles.noMatches}>
+              <div className={`${cardStyles.card} ${styles.noMatches}`}>
                 <p>No matches found for the selected filters.</p>
               </div>
             )}

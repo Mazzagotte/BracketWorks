@@ -24,14 +24,6 @@
    Header Action Buttons
    ======================================== */
 
-.headerActions {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  flex-wrap: wrap;
-  width: 100%;
-}
-
 .devButton {
   font-size: 0.75rem;
   font-weight: 700;
@@ -51,13 +43,6 @@
   color: var(--color-primary);
 }
 
-.devGroup {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  margin-left: auto;
-}
-
 /* ========================================
    Page Container
    ======================================== */
@@ -74,12 +59,6 @@
 
 .noTournamentMobile,
 .noTournamentDesktop {
-  background-color: rgba(255, 255, 255, 0.025);
-  border-radius: var(--radius-xl);
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 14px 20px 18px;
-  text-align: center;
   margin-bottom: 24px;
 }
 
@@ -396,14 +375,6 @@
    Header Action Buttons
    ======================================== */
 
-.headerActions {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  flex-wrap: wrap;
-  width: 100%;
-}
-
 .devButton {
   font-size: 0.75rem;
   font-weight: 700;
@@ -428,12 +399,6 @@
     width: 100%;
     max-width: none;
     min-height: var(--touch-target-comfortable);
-  }
-
-  .devGroup {
-    width: 100%;
-    margin-left: 0;
-    flex-wrap: wrap;
   }
 }
 
@@ -566,19 +531,10 @@
    ======================================== */
 
 .tableCard {
-  background: var(--color-brand-ivory-light);
   border-radius: 16px;
   padding: 24px;
-  box-shadow: 0 4px 20px var(--opacity-black-08);
-  border: 1px solid var(--color-border-light);
   overflow: hidden;
   margin-bottom: 0;
-}
-
-.tableWrapper {
-  overflow-x: auto;
-  border-radius: 12px;
-  border: 1px solid var(--color-gray-200);
 }
 
 .table {
@@ -586,20 +542,6 @@
   border-collapse: collapse;
   font-size: 13px;
   background-color: var(--color-white);
-}
-
-.squadRow td {
-  background-color: var(--color-blue-light);
-  color: var(--color-blue-primary);
-  text-align: center;
-  font-size: 13px;
-  font-weight: 600;
-  padding: 10px;
-}
-
-.tableHeaderRow {
-  background-color: var(--color-gray-50);
-  border-bottom: 2px solid var(--color-gray-200);
 }
 
 /* ========================================
@@ -637,10 +579,7 @@
 .scoresSearchCard {
   margin-bottom: 10px;
   padding: 8px 14px;
-  border: 1px solid var(--color-border-light);
   border-radius: 14px;
-  background: var(--color-brand-ivory-light);
-  box-shadow: 0 2px 8px var(--opacity-black-06);
 }
 
 .scoresSearchTitle {
@@ -743,28 +682,6 @@
   color: var(--color-text-muted-alt);
 }
 
-.mobileGameSelector {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 6px;
-}
-
-.mobileGameSelectorBtn {
-  min-height: 30px;
-  border-radius: 10px;
-  border: 1px solid var(--color-border-light);
-  background: var(--color-white);
-  color: var(--color-text-primary);
-  font-size: 0.74rem;
-  font-weight: 700;
-}
-
-.mobileGameSelectorBtnActive {
-  border-color: color-mix(in srgb, var(--color-primary) 42%, transparent);
-  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
-  color: var(--color-primary);
-}
-
 .mobileSaveBar {
   display: flex;
   align-items: center;
@@ -783,51 +700,6 @@
   padding: 0 10px;
   font-size: 0.69rem;
   font-weight: 700;
-}
-
-.mobileFilterToggle {
-  min-height: 32px;
-  border-radius: 10px;
-  border: 1px solid var(--color-border-light);
-  background: var(--color-white);
-  color: var(--color-text-primary);
-  font-size: 0.78rem;
-  font-weight: 700;
-}
-
-.mobileFilterDrawer {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.mobileFilterChips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-}
-
-.mobileFilterChip {
-  min-height: 24px;
-  border-radius: 999px;
-  border: 1px solid var(--color-border-light);
-  background: var(--color-white);
-  padding: 0 10px;
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: var(--color-text-primary);
-}
-
-.mobileFilterChipActive {
-  border-color: color-mix(in srgb, var(--color-primary) 36%, transparent);
-  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
-  color: var(--color-primary);
-}
-
-.mobileSearchInputs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
 }
 
 .mobileLoadingWrap {
@@ -1018,46 +890,7 @@
   padding: 4px 0 2px;
 }
 
-.mobileBottomActions {
-  position: fixed;
-  left: 8px;
-  right: 8px;
-  bottom: 8px;
-  z-index: 30;
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 5px;
-  padding: 6px;
-  border-radius: 12px;
-  border: 1px solid var(--color-border-light);
-  background: color-mix(in srgb, var(--color-white) 94%, var(--color-brand-ivory-light) 6%);
-  box-shadow: 0 -2px 12px var(--opacity-black-12);
-}
-
-.mobileBottomBtn,
-.mobileBottomBtnSecondary {
-  min-height: 34px;
-  border-radius: 10px;
-  font-size: 0.69rem;
-  font-weight: 700;
-}
-
-.mobileBottomBtn {
-  border: 1px solid color-mix(in srgb, var(--color-primary) 35%, transparent);
-  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
-  color: var(--color-primary);
-}
-
-.mobileBottomBtnSecondary {
-  border: 1px solid var(--color-border-light);
-  background: var(--color-white);
-  color: var(--color-text-primary);
-}
-
 @media (max-width: 560px) {
-  .mobileSearchInputs {
-    grid-template-columns: 1fr;
-  }
 
   .mobileGameInputGrid {
     grid-template-columns: 1fr;
@@ -1070,92 +903,9 @@
   padding: 0.75rem 1rem;
 }
 
-.quickActionsCard,
 .scoresSearchCard,
 .tableCard {
   border-radius: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.025);
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.3);
-}
-
-.quickActionsCard {
-  margin-bottom: 0.95rem;
-  overflow: hidden;
-}
-
-.quickActionsTitle {
-  margin: 0;
-  padding: 0.68rem 0.9rem 0.58rem;
-  font-size: 1rem;
-  line-height: 1.2;
-  font-weight: 800;
-  color: rgba(246, 249, 255, 0.97);
-  background: rgba(255, 255, 255, 0.02);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.quickActionsBody {
-  padding: 0.52rem 0.78rem 0.68rem;
-}
-
-.quickActionsRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.7rem;
-  flex-wrap: wrap;
-}
-
-.quickActionsGroupLeft,
-.quickActionsGroupRight {
-  display: flex;
-  align-items: center;
-  gap: 0.62rem;
-  flex-wrap: wrap;
-}
-
-.quickActionsRow :global(.ds-btn),
-.quickActionsRow .devButton {
-  min-height: 36px;
-  border-radius: 11px;
-  padding: 0.42rem 0.78rem;
-  font-size: 0.78rem;
-  font-weight: 700;
-  box-shadow: none;
-}
-
-.quickActionGuideBtn {
-  border: 1px solid rgba(114, 165, 255, 0.35) !important;
-  background: rgba(48, 87, 148, 0.28) !important;
-  color: rgba(217, 231, 255, 0.94) !important;
-}
-
-.quickActionGuideBtn:hover:not(:disabled) {
-  border-color: rgba(132, 179, 255, 0.52) !important;
-  background: rgba(53, 96, 161, 0.35) !important;
-}
-
-.quickActionFileBtn {
-  border: 1px solid rgba(255, 146, 72, 0.35) !important;
-  background: rgba(255, 122, 0, 0.14) !important;
-  color: rgba(255, 219, 190, 0.96) !important;
-}
-
-.quickActionFileBtn:hover:not(:disabled) {
-  border-color: rgba(255, 166, 102, 0.5) !important;
-  background: rgba(255, 122, 0, 0.2) !important;
-}
-
-.quickActionSuccessBtn {
-  border: 1px solid rgba(74, 222, 128, 0.34) !important;
-  background: rgba(22, 163, 74, 0.18) !important;
-  color: rgba(190, 255, 213, 0.96) !important;
-}
-
-.quickActionSuccessBtn:hover:not(:disabled) {
-  border-color: rgba(74, 222, 128, 0.5) !important;
-  background: rgba(22, 163, 74, 0.26) !important;
 }
 
 .quickActionDevBtn {
@@ -1350,20 +1100,6 @@
 }
 
 @media (max-width: 900px) {
-  .quickActionsRow,
-  .quickActionsGroupLeft,
-  .quickActionsGroupRight {
-    align-items: stretch;
-    flex-direction: column;
-    width: 100%;
-  }
-
-  .quickActionsRow :global(.ds-btn),
-  .quickActionsRow .devButton {
-    width: 100%;
-    min-height: 40px;
-  }
-
   .scoresSearchRow {
     grid-template-columns: 1fr;
   }
@@ -1375,7 +1111,6 @@
   color: rgba(241, 245, 249, 0.9);
 }
 
-.quickActionsTitle,
 .scoresSearchTitle,
 .noTournamentTitleMobile,
 .noTournamentTitleDesktop,
@@ -1385,11 +1120,6 @@
   color: rgba(246, 249, 255, 0.96);
   font-weight: 800;
   letter-spacing: 0;
-}
-
-.quickActionsTitle {
-  font-size: 1rem;
-  line-height: 1.2;
 }
 
 .scoresSearchTitle {
@@ -1448,13 +1178,6 @@
   color: rgba(180, 189, 205, 0.76);
   font-size: 0.82rem;
   line-height: 1.45;
-}
-
-.quickActionsRow :global(.ds-btn),
-.quickActionsRow .devButton {
-  font-size: 0.78rem;
-  line-height: 1.1;
-  letter-spacing: 0;
 }
 
 .scoresSearchInput {
@@ -1591,8 +1314,8 @@
   letter-spacing: 0;
 }
 
-.desktopContainer :where(.quickActionsTitle, .scoresSearchTitle, .emptyScoresTitle, h2, h3),
-.mobileScoresPage :where(.quickActionsTitle, .scoresSearchTitle, .emptyScoresTitle, h2, h3) {
+.desktopContainer :where(.scoresSearchTitle, .emptyScoresTitle, h2, h3),
+.mobileScoresPage :where(.scoresSearchTitle, .emptyScoresTitle, h2, h3) {
   color: var(--bw-text-title);
   font-size: var(--bw-type-card-title);
   font-weight: 800;

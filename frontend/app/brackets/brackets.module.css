@@ -17,14 +17,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.95rem 1.1rem;
   margin-bottom: 1.25rem;
-  background: var(--color-error-bg-light);
-  border: 1px solid var(--color-error-border-light);
-  border-left: 4px solid var(--color-error);
-  border-radius: 10px;
-  color: var(--color-text-primary);
-  box-shadow: 0 4px 14px var(--opacity-black-08);
 }
 
 .mismatchBannerText {
@@ -92,10 +85,7 @@
    ======================================== */
 
 .controlPanel {
-  background: rgba(255, 255, 255, 0.025);
   border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.3);
   padding: 0;
   margin-bottom: 1.5rem;
   overflow: hidden;
@@ -110,13 +100,6 @@
 /* ========================================
    Header Action Buttons
    ======================================== */
-
-.headerActions {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  width: 100%;
-}
 
 .devButton {
   font-size: 0.75rem;
@@ -137,65 +120,12 @@
   color: var(--color-brand-orange);
 }
 
-.devGroup {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  margin-left: auto;
-}
-
 @media (max-width: 480px) {
   .devButton {
     width: 100%;
     max-width: none;
     min-height: var(--touch-target-comfortable);
   }
-
-  .devGroup {
-    width: 100%;
-    margin-left: 0;
-    flex-wrap: wrap;
-  }
-}
-
-.explainBtn {
-  background-color: transparent;
-  color: var(--color-primary);
-  border: 2px solid var(--color-primary);
-  border-radius: 8px;
-  padding: 10px 20px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.2s ease;
-}
-
-.explainBtn:hover {
-  background-color: var(--color-border-light);
-  border-color: var(--color-primary-hover);
-  color: var(--color-primary-hover);
-}
-
-.generateBtn {
-  background-color: var(--color-primary);
-  color: var(--color-white);
-  border: none;
-  border-radius: 8px;
-  padding: 10px 20px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.2s ease;
-}
-
-.generateBtn:hover {
-  background-color: var(--color-primary-hover);
 }
 
 /* ========================================
@@ -224,26 +154,12 @@
    Main Content Wrapper
    ======================================== */
 
-.contentWrapper {
-  position: relative;
-}
-
-.contentWrapperDesktop {
-  padding: 1rem;
-  font-family: var(--font-family-primary);
-}
-
-.contentWrapperMobile {
-  padding: 0.5rem;
-  font-family: var(--font-family-primary);
-}
-
 /* ========================================
    No Tournament State
    ======================================== */
 
 .noTournament {
-  background: var(--gradient-gray-light);
+  background: var(--color-surface);
   border-radius: 20px;
   text-align: center;
   box-shadow: var(--shadow-hover);
@@ -320,48 +236,6 @@
 }
 
 /* Info Cards Grid */
-.infoCards {
-  gap: 16px;
-  margin: 48px auto 0;
-  max-width: 800px;
-  display: grid;
-}
-
-.infoCardsDesktop {
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-}
-
-.infoCardsMobile {
-  grid-template-columns: 1fr;
-}
-
-.infoCard {
-  background: var(--color-surface);
-  border-radius: 12px;
-  padding: 20px;
-  text-align: left;
-  border: 1px solid var(--color-border);
-  transition: all 0.2s ease;
-}
-
-.infoCard:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-hover);
-}
-
-.infoCardTitle {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin-bottom: 4px;
-}
-
-.infoCardText {
-  font-size: 13px;
-  color: var(--color-text-secondary);
-  line-height: 1.5;
-  margin: 0;
-}
 
 /* ========================================
    Bracket Navigator
@@ -378,27 +252,11 @@
   margin: 0;
 }
 
-.navRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
 .navBtns {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   flex-shrink: 0;
-}
-
-.bracketNavAccent {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, var(--color-primary), var(--color-primary-hover));
 }
 
 .navBtn {
@@ -431,84 +289,7 @@
   cursor: not-allowed;
 }
 
-.navCenter {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  min-width: 0;
-}
-
-.navTitleRow {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.navTitle {
-  font-size: 1.1rem;
-  font-weight: 700;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.navTitleGradient {
-  color: var(--color-primary);
-}
-
-.navTitleOf {
-  color: var(--color-gray-400);
-  font-weight: 400;
-}
-
-.navTitleTotal {
-  color: var(--color-text-secondary);
-}
-
-.navBadge {
-  padding: 0.375rem 0.875rem;
-  border-radius: 6px;
-  font-size: 0.8125rem;
-  font-weight: 600;
-}
-
-.navBadgeScratch {
-  background: rgba(255, 255, 255, 0.025);
-  color: rgba(244, 239, 232, 0.88);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.navBadgeHandicap {
-  background: var(--gradient-yellow-light);
-  color: var(--color-warning-text-deep);
-  border: 1px solid var(--color-warning-light-2);
-}
-
-.navBadgeComplete {
-  background: var(--gradient-green);
-  color: var(--color-success-text-deep);
-  border: 1px solid var(--color-green-pale);
-}
-
-.navBadgeProgress {
-  background: var(--color-surface-hover);
-  color: var(--color-text-secondary);
-  border: 1px solid var(--color-border-light);
-}
-
 /* Progress Bar */
-.progressBarWrapper {
-  width: 100%;
-  height: 8px;
-  background: var(--color-border-light);
-  border-radius: 4px;
-  overflow: hidden;
-  position: relative;
-  box-shadow: var(--shadow-inset);
-}
 
 .progressMeter {
   width: 100%;
@@ -525,49 +306,20 @@
 }
 
 .progressMeter::-webkit-progress-value {
-  background: var(--gradient-brand);
+  background: var(--color-primary);
   box-shadow: var(--shadow-brand-sm);
   transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .progressMeter::-moz-progress-bar {
-  background: var(--gradient-brand);
+  background: var(--color-primary);
   box-shadow: var(--shadow-brand-sm);
   transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.progressMeterComplete::-webkit-progress-value {
-  background: var(--gradient-green-progress);
-}
-
-.progressMeterComplete::-moz-progress-bar {
-  background: var(--gradient-green-progress);
-}
-
-.progressBarSheen {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 50%;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent);
-  pointer-events: none;
-}
-
-.navArrow {
-  font-size: 1.125rem;
 }
 
 /* ========================================
    Stats Loading Fallback
    ======================================== */
-
-.statsLoading {
-  padding: 1rem;
-  text-align: center;
-  color: var(--color-text-secondary);
-  font-size: 0.875rem;
-}
 
 /* ========================================
    No Matches Found
@@ -689,86 +441,11 @@
   color: rgba(241, 245, 249, 0.9);
 }
 
-.quickActionsCard,
 .controlPanel,
 .emptyState,
 .loadingState,
 .authRequired {
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 24px;
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.3);
-}
-
-.quickActionsCard {
-  margin-bottom: 0.95rem;
-  overflow: hidden;
-}
-
-.quickActionsTitle {
-  margin: 0;
-  padding: 0.68rem 0.9rem 0.58rem;
-  font-size: 1rem;
-  line-height: 1.2;
-  font-weight: 800;
-  color: rgba(246, 249, 255, 0.97);
-  background: rgba(255, 255, 255, 0.02);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  letter-spacing: 0;
-}
-
-.quickActionsBody {
-  padding: 0.52rem 0.78rem 0.68rem;
-}
-
-.quickActionsRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.65rem;
-  flex-wrap: wrap;
-}
-
-.quickActionsGroupLeft,
-.quickActionsGroupRight {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  flex-wrap: wrap;
-}
-
-.quickActionsRow :global(.ds-btn),
-.quickActionDangerBtn {
-  min-height: 36px;
-  border-radius: 11px;
-  padding: 0.42rem 0.78rem;
-  font-size: 0.78rem;
-  font-weight: 750;
-  line-height: 1.1;
-  letter-spacing: 0;
-  box-shadow: none;
-}
-
-.quickActionGuideBtn {
-  color: rgba(224, 231, 255, 0.98) !important;
-  background: rgba(79, 96, 230, 0.24) !important;
-  border: 1px solid rgba(129, 140, 248, 0.38) !important;
-}
-
-.quickActionGenerateBtn {
-  color: rgba(255, 241, 229, 0.98) !important;
-  background: rgba(255, 122, 0, 0.2) !important;
-  border: 1px solid rgba(255, 146, 72, 0.34) !important;
-}
-
-.quickActionGuideBtn:hover:not(:disabled) {
-  background: rgba(79, 96, 230, 0.34) !important;
-  border-color: rgba(165, 180, 252, 0.48) !important;
-}
-
-.quickActionGenerateBtn:hover:not(:disabled) {
-  background: rgba(255, 122, 0, 0.3) !important;
-  border-color: rgba(255, 168, 92, 0.48) !important;
 }
 
 .quickActionDangerBtn {
@@ -829,11 +506,6 @@
 
 .mismatchBanner {
   margin-bottom: 0.95rem;
-  color: rgba(254, 202, 202, 0.96);
-  background: rgba(127, 29, 29, 0.18);
-  border: 1px solid rgba(248, 113, 113, 0.28);
-  border-left: 4px solid rgba(248, 113, 113, 0.7);
-  border-radius: 16px;
   box-shadow: none;
 }
 
@@ -897,30 +569,12 @@
   line-height: 1.5;
 }
 
-.emptyActions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.65rem;
-  margin-top: 1rem;
-}
-
-.emptyActions :global(.ds-btn) {
-  min-height: 36px;
-  border-radius: 11px;
-  font-size: 0.78rem;
-  font-weight: 750;
-  letter-spacing: 0;
-}
-
 .mobileBracketSectionTitle {
   color: rgba(180, 189, 205, 0.76);
   letter-spacing: 0;
 }
 
 .mobileBracketListItem {
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(226, 232, 240, 0.12);
   border-radius: 14px;
   box-shadow: none;
 }
@@ -951,29 +605,6 @@
     padding: 0.65rem 0.75rem;
   }
 
-  .quickActionsRow,
-  .quickActionsGroupLeft,
-  .quickActionsGroupRight {
-    width: 100%;
-  }
-
-  .quickActionsRow :global(.ds-btn),
-  .quickActionDangerBtn {
-    flex: 1 1 150px;
-  }
-}
-
-@media (max-width: 480px) {
-  .quickActionsRow :global(.ds-btn),
-  .quickActionDangerBtn {
-    flex-basis: 100%;
-    width: 100%;
-  }
-
-  .emptyActions,
-  .emptyActions :global(.ds-btn) {
-    width: 100%;
-  }
 }
 
 /* Page text normalization */
@@ -988,7 +619,7 @@
   letter-spacing: 0;
 }
 
-.pageContainer :where(.sectionTitle, .quickActionsTitle, .statusTitle, h2, h3) {
+.pageContainer :where(.sectionTitle, .statusTitle, h2, h3) {
   color: var(--bw-text-title);
   font-size: var(--bw-type-card-title);
   font-weight: 800;

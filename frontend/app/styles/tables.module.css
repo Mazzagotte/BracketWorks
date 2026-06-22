@@ -1,0 +1,72 @@
+.tableShell {
+  background: var(--bw-surface-card);
+  border: 1px solid var(--bw-border-card);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--bw-shadow-card);
+  overflow: hidden;
+}
+
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--bw-surface-card-strong);
+}
+
+.headerCell {
+  background: var(--bw-surface-panel);
+  border-bottom: 1px solid var(--bw-border-subtle);
+  color: var(--bw-text-muted);
+  font-size: var(--bw-type-table-heading);
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.cell {
+  border-bottom: 1px solid rgba(226, 232, 240, 0.08);
+  color: var(--bw-text-body);
+  font-size: var(--bw-type-table);
+}
+
+.rowHover {
+  transition: background-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.rowHover:hover {
+  box-shadow: inset 2px 0 0 var(--color-primary);
+}
+
+.numericCell {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.statusCell {
+  min-width: 88px;
+  text-align: center;
+}
+
+.actionCell {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.rowActions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.38rem;
+  white-space: nowrap;
+}
+
+.sortableHeader {
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.18s ease, background-color 0.18s ease;
+}
+
+.sortableHeader:hover {
+  color: var(--bw-text-title);
+  background: color-mix(in srgb, var(--color-primary) 7%, var(--bw-surface-panel));
+}

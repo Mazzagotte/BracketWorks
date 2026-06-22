@@ -13,11 +13,11 @@
   gap: 14px;
   z-index: 1100;
   padding: 0 24px;
-  background: rgba(15, 15, 23, 0.92);
+  background: var(--bw-surface-card-strong);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03), 0 4px 24px rgba(0, 0, 0, 0.4);
+  border-bottom: 1px solid var(--bw-border-subtle);
+  box-shadow: var(--bw-shadow-card);
   box-sizing: border-box;
 }
 
@@ -41,9 +41,9 @@
   grid-template-columns: minmax(0, 1fr);
   gap: 2px;
   padding: 6px 14px;
-  border-left: 1px solid rgba(255, 255, 255, 0.08);
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.9);
+  border-left: 1px solid var(--bw-border-subtle);
+  border-right: 1px solid var(--bw-border-subtle);
+  color: var(--bw-text-body);
   flex-shrink: 1;
 }
 
@@ -59,19 +59,19 @@
   font-size: 13px;
   line-height: 1.25;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.92);
+  color: var(--bw-text-title);
 }
 
 .tournamentContextEmpty .tournamentContextName {
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.42);
+  color: var(--bw-text-faint);
 }
 
 .squadContextName {
   font-size: 11px;
   line-height: 1.25;
   font-weight: 600;
-  color: rgba(255, 178, 104, 0.9);
+  color: var(--bw-text-accent);
 }
 
 .logoLink:hover {
@@ -90,7 +90,7 @@
   font-weight: 700;
   color: var(--color-primary);
   white-space: nowrap;
-  letter-spacing: -0.2px;
+  letter-spacing: 0;
 }
 
 /* ── Nav pills ──────────────────────────────────────────────── */
@@ -106,10 +106,10 @@
 
 .navPill {
   padding: 7px 16px;
-  border-radius: 999px;
+  border-radius: var(--radius-md);
   font-size: 13px;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--bw-text-muted);
   text-decoration: none;
   border: 1px solid transparent;
   white-space: nowrap;
@@ -118,22 +118,36 @@
 }
 
 .navPill:hover {
-  color: rgba(255, 255, 255, 0.85);
-  background: rgba(255, 255, 255, 0.06);
+  color: var(--bw-text-title);
+  background: var(--bw-surface-panel);
   text-decoration: none;
 }
 
 .navPillActive {
-  color: #ffffff;
-  background: rgba(255, 122, 0, 0.16);
-  border-color: rgba(255, 122, 0, 0.38);
+  color: var(--color-white);
+  background: var(--color-primary);
+  background-image: none;
+  border-color: var(--bw-border-accent);
   font-weight: 700;
-  box-shadow: 0 0 0 1px rgba(255, 122, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  box-shadow: none;
 }
 
 .navPillActive:hover {
-  background: rgba(255, 122, 0, 0.22);
-  border-color: rgba(255, 122, 0, 0.5);
+  background: var(--color-primary-hover);
+  border-color: var(--bw-border-accent);
+}
+
+.logoLink:focus-visible,
+.navPill:focus-visible,
+.publicViewButton:focus-visible,
+.shareQrButton:focus-visible,
+.userMenuTrigger:focus-visible,
+.userMenuItem:focus-visible,
+.userMenuItemButton:focus-visible,
+.hamburgerBtn:focus-visible,
+.mobileBrand:focus-visible {
+  outline: none;
+  box-shadow: var(--bw-focus-ring);
 }
 
 /* ── Right zone ─────────────────────────────────────────────── */
@@ -156,12 +170,12 @@
   display: inline-flex;
   align-items: center;
   padding: 4px 12px;
-  border-radius: 999px;
+  border-radius: var(--radius-md);
   font-size: 12px;
   font-weight: 600;
   color: var(--color-primary);
-  background: rgba(255, 122, 0, 0.1);
-  border: 1px solid rgba(255, 122, 0, 0.22);
+  background: var(--bw-surface-hover-warm);
+  border: 1px solid var(--bw-border-accent);
   max-width: 180px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -171,37 +185,29 @@
 .avatarChip {
   width: 32px;
   height: 32px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  color: rgba(255, 255, 255, 0.9);
+  border-radius: var(--radius-md);
+  background: var(--bw-surface-panel-strong);
+  border: 1px solid var(--bw-border-subtle);
+  color: var(--bw-text-title);
   font-size: 12px;
   font-weight: 700;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  letter-spacing: 0.04em;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  letter-spacing: 0;
 }
 
 .publicViewButton {
   padding: 8px 14px;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   font-size: 12px;
-  font-weight: 700;
-  color: var(--color-white);
-  background: var(--color-brand-orange);
-  border: 2px solid var(--color-brand-orange);
-  cursor: pointer;
   transition: background 0.18s ease, border-color 0.18s ease, transform 0.14s ease, box-shadow 0.18s ease;
   white-space: nowrap;
 }
 
 .publicViewButton:hover:not(:disabled) {
-  background: var(--color-primary-hover);
-  border-color: var(--color-primary-hover);
   transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.13);
+  box-shadow: var(--bw-shadow-accent);
 }
 
 .publicViewButton:disabled {
@@ -214,23 +220,14 @@
 .shareQrButton {
   width: 34px;
   height: 34px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-lg);
-  color: rgba(255, 241, 229, 0.98);
-  background: rgba(255, 122, 0, 0.14);
-  border: 1px solid rgba(255, 146, 72, 0.3);
+  border-radius: var(--radius-md);
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0;
-  cursor: pointer;
   transition: background 0.18s ease, border-color 0.18s ease, transform 0.14s ease;
 }
 
 .shareQrButton:hover:not(:disabled) {
-  background: rgba(255, 122, 0, 0.22);
-  border-color: rgba(255, 146, 72, 0.42);
   transform: translateY(-1px);
 }
 
@@ -255,17 +252,17 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.03);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--bw-border-subtle);
+  background: var(--bw-surface-panel);
   padding: 3px 8px 3px 3px;
-  color: rgba(255, 255, 255, 0.78);
+  color: var(--bw-text-body);
   cursor: pointer;
 }
 
 .userMenuTrigger:hover {
-  border-color: rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--bw-border-accent);
+  background: var(--bw-surface-panel-strong);
 }
 
 .userMenuCaret {
@@ -273,7 +270,7 @@
   height: 0;
   border-left: 4px solid transparent;
   border-right: 4px solid transparent;
-  border-top: 5px solid rgba(255, 255, 255, 0.58);
+  border-top: 5px solid var(--bw-text-muted);
   line-height: 1;
 }
 
@@ -285,10 +282,10 @@
   display: grid;
   gap: 2px;
   padding: 8px;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(17, 18, 26, 0.98);
-  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.45);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--bw-border-accent);
+  background: var(--bw-surface-card-strong);
+  box-shadow: var(--bw-shadow-card);
   z-index: 1200;
 }
 
@@ -297,14 +294,14 @@
   margin-bottom: 2px;
   font-size: 12px;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.9);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--bw-text-title);
+  border-bottom: 1px solid var(--bw-border-subtle);
 }
 
 .userMenuDivider {
   height: 1px;
   margin: 4px 2px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--bw-border-subtle);
 }
 
 .userMenuItem,
@@ -313,10 +310,10 @@
   width: 100%;
   text-align: left;
   padding: 8px 10px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   border: none;
   background: transparent;
-  color: rgba(255, 255, 255, 0.84);
+  color: var(--bw-text-body);
   font-size: 12px;
   font-weight: 600;
   text-decoration: none;
@@ -325,8 +322,8 @@
 
 .userMenuItem:hover,
 .userMenuItemButton:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.95);
+  background: var(--bw-surface-hover-warm);
+  color: var(--bw-text-title);
   text-decoration: none;
 }
 
@@ -336,12 +333,12 @@
 }
 
 .userMenuItemDanger {
-  color: rgba(251, 113, 133, 0.94);
+  color: var(--bw-text-danger);
 }
 
 .userMenuItemDanger:hover {
-  background: rgba(251, 113, 133, 0.12);
-  color: rgba(252, 165, 165, 1);
+  background: color-mix(in srgb, var(--bw-text-danger) 12%, transparent);
+  color: var(--bw-text-danger);
 }
 
 /* ── Mobile bar ─────────────────────────────────────────────── */
@@ -357,39 +354,33 @@
   gap: 12px;
   z-index: 1100;
   padding: 0 16px;
-  background: rgba(15, 15, 23, 0.95);
+  background: var(--bw-surface-card-strong);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03), 0 4px 16px rgba(0, 0, 0, 0.4);
+  border-bottom: 1px solid var(--bw-border-subtle);
+  box-shadow: var(--bw-shadow-card);
   box-sizing: border-box;
 }
 
 .hamburgerBtn {
-  display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
   gap: 4px;
   width: 40px;
   height: 40px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  cursor: pointer;
+  border-radius: var(--radius-md);
   flex-shrink: 0;
   transition: background 0.15s ease;
 }
 
 .hamburgerBtn:active {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--bw-surface-hover-warm);
 }
 
 .hamburgerLine {
   display: block;
   width: 16px;
   height: 1.5px;
-  background: rgba(255, 255, 255, 0.65);
+  background: var(--bw-text-body);
   border-radius: 2px;
 }
 
@@ -421,12 +412,12 @@
   display: inline-flex;
   align-items: center;
   padding: 3px 10px;
-  border-radius: 999px;
+  border-radius: var(--radius-md);
   font-size: 11px;
   font-weight: 600;
   color: var(--color-primary);
-  background: rgba(255, 122, 0, 0.1);
-  border: 1px solid rgba(255, 122, 0, 0.22);
+  background: var(--bw-surface-hover-warm);
+  border: 1px solid var(--bw-border-accent);
   max-width: 120px;
   overflow: hidden;
   text-overflow: ellipsis;

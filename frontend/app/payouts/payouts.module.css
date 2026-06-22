@@ -16,8 +16,6 @@
   padding: 0;
   margin-bottom: 1.5rem;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 22px;
 }
 
@@ -27,8 +25,6 @@
   color: rgba(244, 239, 232, 0.88);
   margin: 0;
   padding: 14px 24px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.015));
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   text-transform: none;
   letter-spacing: normal;
 }
@@ -54,10 +50,7 @@
   min-width: 156px;
   width: fit-content;
   flex: 0 0 auto;
-  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
-  background: rgba(0, 0, 0, 0.2);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
 }
 
 .statValue {
@@ -117,14 +110,6 @@
   margin-top: 4px;
 }
 
-.summaryDisclaimer {
-  margin: 0;
-  padding: 8px 24px 14px;
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-  text-align: center;
-}
-
 @media (max-width: 900px) {
   .summaryGrid {
     justify-content: center;
@@ -175,10 +160,7 @@
    ============================================= */
 
 .tableCard {
-  background-color: var(--color-brand-ivory-light);
   border-radius: 16px;
-  box-shadow: 0 2px 8px var(--opacity-black-08);
-  border: 1px solid var(--color-border-light);
   overflow: hidden;
   margin-bottom: 1.5rem;
 }
@@ -189,8 +171,6 @@
   color: var(--color-text-primary);
   margin: 0;
   padding: 14px 24px;
-  background: var(--color-brand-ivory);
-  border-bottom: 3px solid var(--color-primary);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -214,47 +194,10 @@
 }
 
 /* Sub-header separating individual brackets within a type section */
-.bracketSubHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 20px;
-  background: var(--color-warning-tint);
-  border-bottom: 1px solid var(--color-border-light);
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--color-text-muted-alt);
-}
-
-.bracketSubHeader span:last-child {
-  color: var(--color-green-dark);
-  font-weight: 700;
-}
 
 /* =============================================
    CONTROL BAR
    ============================================= */
-
-.controlBar {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  margin-bottom: 20px;
-  gap: 10px;
-}
-
-.selectors {
-  display: flex;
-  flex: 1;
-  gap: 12px;
-  flex-wrap: wrap;
-  min-width: 0;
-}
-
-.selectionField {
-  flex: 1;
-  min-width: 180px;
-}
 
 .fieldLabel {
   display: block;
@@ -264,36 +207,6 @@
   color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.06em;
-}
-
-.fieldSelect {
-  width: 100%;
-  padding: 9px 12px;
-  border-radius: 10px;
-  border: 1.5px solid var(--color-border-light);
-  font-size: 14px;
-  font-weight: 500;
-  background: var(--color-brand-ivory-soft);
-  color: var(--color-text-primary);
-  cursor: pointer;
-  transition: border-color 0.15s, box-shadow 0.15s;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2394a3b8' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  padding-right: 32px;
-}
-
-.fieldSelect:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: var(--ring-warning);
-  background-color: var(--color-white);
-}
-
-.fieldSelect:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
 }
 
 .actions {
@@ -331,39 +244,6 @@
   box-shadow: none;
 }
 
-.saveBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 9px 18px;
-  background: var(--color-white);
-  color: var(--color-text-primary);
-  border: 1.5px solid var(--color-gray-200);
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
-  white-space: nowrap;
-}
-
-.saveBtn:hover:not(:disabled) {
-  background: var(--color-gray-50);
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-}
-
-.saveBtn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.lastCalcLabel {
-  font-size: 12px;
-  color: var(--color-text-secondary);
-  white-space: nowrap;
-}
-
 /* =============================================
    SPINNER
    ============================================= */
@@ -394,12 +274,6 @@
    ============================================= */
 
 .errorBanner {
-  background: var(--color-error-bg-light);
-  color: var(--color-red-dark);
-  border: 1px solid var(--color-error-border-light);
-  border-left: 4px solid var(--color-red-dark);
-  border-radius: 10px;
-  padding: 12px 16px;
   font-size: 14px;
   margin-bottom: 16px;
 }
@@ -413,12 +287,6 @@
 /* =============================================
    SEARCH BAR
    ============================================= */
-
-.searchBar {
-  padding: 14px 20px;
-  border-bottom: 1px solid var(--color-border-light);
-  background: var(--color-warning-tint);
-}
 
 .searchInput {
   width: 100%;
@@ -466,18 +334,6 @@
   animation: spin 0.7s linear infinite;
 }
 
-.emptyState {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 64px 24px;
-  text-align: center;
-  background: var(--color-brand-ivory-light);
-  border: 1px solid var(--color-border-light);
-  border-radius: 16px;
-}
-
 .emptyTitle {
   font-size: 17px;
   font-weight: 700;
@@ -492,216 +348,6 @@
   line-height: 1.6;
 }
 
-.emptyPayoutState {
-  position: relative;
-  background: var(--color-brand-ivory-light);
-  border: 1px solid color-mix(in srgb, var(--color-brand-orange) 20%, transparent);
-  border-radius: 20px;
-  padding: 2.15rem;
-  box-shadow: 0 12px 30px var(--opacity-black-10);
-  overflow: hidden;
-}
-
-.emptyPayoutState::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  height: 4px;
-  background: var(--color-primary);
-  opacity: 0.85;
-}
-
-.emptyPayoutAccentGlow {
-  position: absolute;
-  width: 260px;
-  height: 260px;
-  right: -90px;
-  top: -90px;
-  border-radius: 50%;
-  background: radial-gradient(circle, color-mix(in srgb, var(--color-brand-orange) 22%, transparent) 0%, transparent 70%);
-  pointer-events: none;
-}
-
-.emptyPayoutBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.45rem 0.75rem;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--color-brand-orange) 10%, transparent);
-  color: var(--color-primary);
-  border: 1px solid color-mix(in srgb, var(--color-brand-orange) 25%, transparent);
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-white) 35%, transparent);
-}
-
-.emptyPayoutHeroRow {
-  margin-top: 1rem;
-  display: grid;
-  grid-template-columns: 104px 1fr;
-  gap: 1.25rem;
-  align-items: start;
-}
-
-.emptyPayoutIconContainer {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.emptyPayoutIcon {
-  width: 92px;
-  height: 92px;
-  border-radius: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-white);
-  background: var(--color-primary);
-  box-shadow: 0 8px 18px color-mix(in srgb, var(--color-primary) 35%, transparent);
-}
-
-.emptyPayoutIconSvg {
-  width: 52px;
-  height: 52px;
-}
-
-.emptyPayoutTitle {
-  margin: 0;
-  color: var(--color-brand-charcoal-deep);
-  font-size: clamp(1.6rem, 2.8vw, 2.2rem);
-  line-height: 1.15;
-  letter-spacing: -0.02em;
-}
-
-.emptyPayoutText {
-  margin: 0.65rem 0 0;
-  color: color-mix(in srgb, var(--color-brand-charcoal-deep) 62%, transparent);
-  font-size: 1.02rem;
-  line-height: 1.6;
-  max-width: 65ch;
-}
-
-.emptyPayoutActions {
-  margin-top: 1.65rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  align-items: center;
-}
-
-.emptyPayoutPrimaryAction {
-  display: inline-flex;
-  align-items: center;
-  min-height: 46px;
-  border-radius: 12px;
-  box-shadow: var(--shadow-brand-sm);
-}
-
-.emptyPayoutSecondaryAction {
-  color: var(--color-brand-charcoal-deep);
-  text-decoration: none;
-  border: 1px solid color-mix(in srgb, var(--color-brand-orange) 24%, transparent);
-  background: color-mix(in srgb, var(--color-brand-ivory-light) 85%, var(--color-white));
-  border-radius: 10px;
-  padding: 0.65rem 0.95rem;
-  font-weight: 600;
-  transition: all 0.2s ease;
-}
-
-.emptyPayoutSecondaryAction:hover {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
-}
-
-.emptyPayoutFeaturesGrid {
-  margin-top: 1.85rem;
-  display: grid;
-  gap: 0.9rem;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.emptyPayoutFeatureCard {
-  border-radius: 12px;
-  border: 1px solid color-mix(in srgb, var(--color-brand-orange) 16%, transparent);
-  background: color-mix(in srgb, var(--color-brand-ivory-light) 85%, var(--color-white));
-  padding: 1rem;
-}
-
-.emptyPayoutFeatureCard h3 {
-  margin: 0;
-  color: var(--color-brand-charcoal-deep);
-  font-size: 0.95rem;
-  letter-spacing: -0.01em;
-}
-
-.emptyPayoutFeatureCard p {
-  margin: 0.35rem 0 0;
-  color: color-mix(in srgb, var(--color-brand-charcoal-deep) 58%, transparent);
-  font-size: 0.87rem;
-  line-height: 1.5;
-}
-
-@media (max-width: 900px) {
-  .emptyPayoutFeaturesGrid {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 640px) {
-  .emptyPayoutState {
-    padding: 1.15rem;
-  }
-
-  .emptyPayoutHeroRow {
-    grid-template-columns: 1fr;
-    gap: 0.85rem;
-    text-align: left;
-  }
-
-  .emptyPayoutIconContainer {
-    justify-content: flex-start;
-  }
-
-  .emptyPayoutIcon {
-    width: 76px;
-    height: 76px;
-    border-radius: 16px;
-  }
-
-  .emptyPayoutIconSvg {
-    width: 44px;
-    height: 44px;
-  }
-
-  .emptyPayoutText {
-    font-size: 0.94rem;
-  }
-
-  .emptyPayoutActions {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .emptyPayoutPrimaryAction,
-  .emptyPayoutSecondaryAction {
-    justify-content: center;
-    width: 100%;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .emptyPayoutSecondaryAction {
-    transition: none;
-  }
-}
-
 /* =============================================
    BRACKET GROUP
    ============================================= */
@@ -710,87 +356,17 @@
   background: transparent;
 }
 
-.bracketHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-  padding: 16px 20px;
-  background: var(--color-warning-tint);
-  border-bottom: 1px solid var(--color-border-light);
-}
-
 .bracketTitle {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.bracketIcon {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  flex-shrink: 0;
-}
-
 .bracketIcon.scratch  { background: var(--color-brand-ivory-soft); }
 .bracketIcon.handicap { background: var(--color-green-light); }
 
-.bracketTitleText {
-  font-weight: 700;
-  font-size: 15px;
-  color: var(--color-text-primary);
-}
-
-.bracketTypeBadge {
-  font-size: 10px;
-  font-weight: 700;
-  padding: 3px 9px;
-  border-radius: 20px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
 .bracketTypeBadge.scratch  { background: var(--color-border-light); color: var(--color-primary); }
 .bracketTypeBadge.handicap { background: var(--color-success-soft); color: var(--color-green-dark); }
-
-.bracketMeta {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.metaStat {
-  text-align: right;
-}
-
-.metaStatValue {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-gray-600);
-}
-
-.metaStatLabel {
-  font-size: 11px;
-  color: var(--color-text-secondary);
-}
-
-.prizeAmount {
-  font-size: 22px;
-  font-weight: 800;
-  color: var(--color-green-dark);
-}
-
-.prizeLabel {
-  font-size: 11px;
-  color: var(--color-text-secondary);
-  font-weight: 500;
-}
 
 /* =============================================
    WINNER ROW — base
@@ -854,25 +430,6 @@
   background: var(--color-success-soft);
 }
 
-.showEntriesBtn {
-  display: block;
-  width: 100%;
-  padding: 12px;
-  background: var(--color-warning-tint);
-  border: none;
-  border-top: 1px dashed var(--color-border-light);
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-text-muted);
-  cursor: pointer;
-  transition: color 0.15s, background 0.15s;
-}
-
-.showEntriesBtn:hover {
-  color: var(--color-primary);
-  background: var(--color-warning-surface);
-}
-
 /* 1st place gets a subtle gold tint */
 .winnerRow.firstPlace {
   background: var(--color-yellow-light);
@@ -880,28 +437,6 @@
 .winnerRow.firstPlace:hover {
   background: var(--color-brand-gold-lighter);
 }
-
-/* =============================================
-   PLACE BADGE
-   ============================================= */
-
-.placeBadge {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  font-size: 14px;
-  flex-shrink: 0;
-}
-
-.place1     { background: var(--color-warning-light-2); color: var(--color-yellow-dark); }
-.place2     { background: var(--color-gray-300); color: var(--color-gray-700); }
-.place3     { background: var(--color-orange-deep); color: var(--color-white); }
-.placeOther { background: var(--color-border-light); color: var(--color-text-muted-medium); }
-.placeSP    { background: var(--color-primary); color: var(--color-white); font-size: 11px; letter-spacing: 0.03em; }
 
 /* =============================================
    WINNER INFO
@@ -1032,44 +567,9 @@
   margin-top: 1px;
 }
 
-.sidePotPicker {
-  flex: 0 1 260px;
-  min-width: 180px;
-}
-
-.sidePotWinnerSelect {
-  width: 100%;
-  padding: 8px 10px;
-  border-radius: 10px;
-  border: 1.5px solid var(--color-border-light);
-  background: var(--color-brand-ivory-soft);
-  color: var(--color-text-primary);
-  font-size: 13px;
-  font-weight: 500;
-}
-
-.sidePotWinnerSelect:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--color-border-light);
-}
-
 /* =============================================
    ENTRIES TABLE
    ============================================= */
-
-.entriesTableCard {
-  background: var(--color-brand-ivory-light);
-  border: 1px solid var(--color-border-light);
-  border-radius: 16px;
-  overflow: hidden;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 2px 8px var(--opacity-black-08);
-}
-
-.tableWrapper {
-  overflow-x: auto;
-}
 
 .entriesTable {
   width: 100%;
@@ -1117,56 +617,6 @@
   background: var(--color-green-lighter);
 }
 
-.colCenter { text-align: center !important; }
-.colRight  { text-align: right !important; }
-
-.playerCell {
-  font-weight: 700;
-  font-size: 15px;
-  color: var(--color-text-primary);
-  white-space: nowrap;
-}
-
-.bracketCountCell {
-  text-align: center;
-  font-weight: 600;
-}
-
-.winningsCell {
-  font-weight: 800;
-  font-size: 15px;
-  color: var(--color-green-dark);
-  text-align: right;
-}
-
-.winningsCellEmpty {
-  color: var(--color-text-muted-overlay);
-  text-align: right;
-}
-
-.placementChips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  background: var(--color-border-light);
-  color: var(--color-text-muted-alt);
-  font-size: 11px;
-  font-weight: 600;
-  padding: 3px 9px;
-  border-radius: 20px;
-  white-space: nowrap;
-}
-
-.chip.place1chip { background: var(--color-yellow-light); color: var(--color-yellow-dark); }
-.chip.place2chip { background: var(--color-gray-50); color: var(--color-gray-600); }
-.chip.place3chip { background: var(--color-brand-ivory-soft); color: var(--color-orange-deep); }
-
 /* =============================================
    PAGINATION
    ============================================= */
@@ -1179,51 +629,9 @@
   padding: 16px 0 4px;
 }
 
-.pageBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border: 1.5px solid var(--color-border-light);
-  border-radius: 10px;
-  background: var(--color-brand-ivory-soft);
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-text-muted-strong);
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
-}
-
-.pageBtn:hover:not(:disabled) {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-  background: var(--color-warning-surface);
-}
-
-.pageBtn:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-}
-
-.pageLabel {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-gray-500);
-  min-width: 60px;
-  text-align: center;
-}
-
 /* =============================================
    SUMMARY ROW (entries tab footer)
    ============================================= */
-
-.tableSummaryRow td {
-  background: var(--color-gray-50) !important;
-  border-top: 2px solid var(--color-gray-200) !important;
-  font-weight: 700;
-  font-size: 13px;
-  color: var(--color-text-primary);
-}
 
 @media (max-width: 900px) {
   .pageContainer {
@@ -1260,11 +668,8 @@
     padding: 10px 12px;
   }
 
-  .placeBadge {
+  .placementBadge {
     grid-area: badge;
-    width: 30px;
-    height: 30px;
-    font-size: 12px;
   }
 
   .winnerInfo {
@@ -1348,101 +753,14 @@
   color: rgba(241, 245, 249, 0.9);
 }
 
-.quickActionsCard,
 .summaryCard,
-.tableCard,
-.searchStandalone {
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+.tableCard {
   border-radius: 24px;
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.3);
-}
-
-.quickActionsCard {
-  margin-bottom: 0.95rem;
-  overflow: hidden;
-}
-
-.quickActionsTitle {
-  margin: 0;
-  padding: 0.68rem 0.9rem 0.58rem;
-  font-size: 1rem;
-  line-height: 1.2;
-  font-weight: 800;
-  color: rgba(246, 249, 255, 0.97);
-  background: rgba(255, 255, 255, 0.02);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  letter-spacing: 0;
-}
-
-.quickActionsBody {
-  padding: 0.52rem 0.78rem 0.68rem;
-}
-
-.quickActionsRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.65rem;
-  flex-wrap: wrap;
-}
-
-.quickActionsGroupLeft,
-.quickActionsGroupRight {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  flex-wrap: wrap;
-}
-
-.quickActionsRow :global(.ds-btn) {
-  min-height: 36px;
-  border-radius: 11px;
-  padding: 0.42rem 0.78rem;
-  font-size: 0.78rem;
-  font-weight: 750;
-  line-height: 1.1;
-  letter-spacing: 0;
-  box-shadow: none;
-}
-
-.quickActionGuideBtn {
-  color: rgba(224, 231, 255, 0.98) !important;
-  background: rgba(79, 96, 230, 0.24) !important;
-  border: 1px solid rgba(129, 140, 248, 0.38) !important;
-}
-
-.quickActionGuideBtn:hover:not(:disabled) {
-  background: rgba(79, 96, 230, 0.34) !important;
-  border-color: rgba(165, 180, 252, 0.48) !important;
-}
-
-.quickActionFileBtn {
-  color: rgba(255, 241, 229, 0.98) !important;
-  background: rgba(255, 122, 0, 0.2) !important;
-  border: 1px solid rgba(255, 146, 72, 0.34) !important;
-}
-
-.quickActionFileBtn:hover:not(:disabled) {
-  background: rgba(255, 122, 0, 0.3) !important;
-  border-color: rgba(255, 168, 92, 0.48) !important;
 }
 
 .summaryCard {
   margin-bottom: 0.95rem;
   overflow: hidden;
-}
-
-.summaryTitle,
-.tableCardHeader {
-  padding: 0.68rem 0.9rem 0.58rem;
-  font-size: 1rem;
-  line-height: 1.2;
-  font-weight: 800;
-  color: rgba(246, 249, 255, 0.96);
-  background: rgba(255, 255, 255, 0.02);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  letter-spacing: 0;
 }
 
 .summaryGrid {
@@ -1451,31 +769,7 @@
 }
 
 .statBox {
-  min-width: 132px;
-  min-height: 84px;
-  padding: 14px 12px;
-  gap: 4px;
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(226, 232, 240, 0.12);
-  border-radius: 14px;
   box-shadow: none;
-}
-
-.statValue {
-  font-size: 1.35rem;
-  color: rgba(246, 249, 255, 0.94);
-}
-
-.statLabel {
-  font-size: 0.68rem;
-  color: rgba(180, 189, 205, 0.76);
-  letter-spacing: 0;
-}
-
-.statDetail,
-.remainingLabel {
-  font-size: 0.7rem;
-  color: rgba(180, 189, 205, 0.72);
 }
 
 .progressBarRow {
@@ -1550,36 +844,6 @@
 
 .winnerRow.isPaid:hover {
   background: rgba(255, 122, 0, 0.07);
-}
-
-.placeBadge {
-  width: 30px;
-  height: 30px;
-  font-size: 0.78rem;
-}
-
-.place1 {
-  color: rgba(255, 219, 190, 0.98);
-  background: rgba(255, 122, 0, 0.16);
-  border: 1px solid rgba(255, 122, 0, 0.28);
-}
-
-.place2 {
-  color: rgba(224, 231, 255, 0.95);
-  background: rgba(148, 163, 184, 0.18);
-  border: 1px solid rgba(148, 163, 184, 0.24);
-}
-
-.place3 {
-  color: rgba(255, 231, 213, 0.95);
-  background: rgba(194, 91, 21, 0.18);
-  border: 1px solid rgba(255, 146, 72, 0.22);
-}
-
-.placeOther {
-  color: rgba(203, 213, 225, 0.85);
-  background: rgba(255, 255, 255, 0.045);
-  border: 1px solid rgba(226, 232, 240, 0.12);
 }
 
 .winnerName {
@@ -1686,18 +950,16 @@
 
 .errorBanner {
   margin-bottom: 0.95rem;
-  color: rgba(254, 202, 202, 0.96);
-  background: rgba(127, 29, 29, 0.18);
-  border: 1px solid rgba(248, 113, 113, 0.28);
-  border-left: 4px solid rgba(248, 113, 113, 0.7);
 }
 
 .loadingRow,
 .emptyState {
-  color: rgba(180, 189, 205, 0.78);
+  border-radius: 18px;
+}
+
+.loadingRow {
   background: rgba(255, 255, 255, 0.025);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 18px;
 }
 
 .emptyTitle {
@@ -1710,35 +972,9 @@
   color: rgba(180, 189, 205, 0.76);
 }
 
-.emptyActions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.65rem;
-  margin-top: 1rem;
-}
-
-.emptyActions :global(.ds-btn) {
-  min-height: 36px;
-  border-radius: 11px;
-  font-size: 0.78rem;
-  font-weight: 750;
-  letter-spacing: 0;
-}
-
 @media (max-width: 900px) {
   .pageContainer {
     padding: 0.65rem 0.75rem;
-  }
-
-  .quickActionsRow,
-  .quickActionsGroupLeft,
-  .quickActionsGroupRight {
-    width: 100%;
-  }
-
-  .quickActionsRow :global(.ds-btn) {
-    flex: 1 1 150px;
   }
 
   .summaryGrid {
@@ -1757,18 +993,6 @@
 }
 
 @media (max-width: 480px) {
-  .quickActionsRow :global(.ds-btn) {
-    flex-basis: 100%;
-  }
-
-  .emptyActions {
-    width: 100%;
-  }
-
-  .emptyActions :global(.ds-btn) {
-    width: 100%;
-  }
-
   .statBox {
     min-width: 0;
   }

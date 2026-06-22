@@ -201,33 +201,52 @@ def generate_tournament_brackets(
         }
 
         if use_experimental_optimizer:
-            cfg = ExperimentalConfig(
-                attempts=max(1, int(experimental_attempts or 64)),
-            )
-            exp_result = generate_brackets_experimental(
-                entries=entries,
-                bracket_size=bracket_size,
-                bracket_type=program["name"],
-                history_set=history_set,
-                seed=seed,
-                allow_single_bye_per_bracket=bool(program.get("allow_byes", False)),
-                config=cfg,
-            )
-            brackets = exp_result.brackets
-            leftover_players = exp_result.leftovers
-            group_debug = {
-                "mode": "experimental",
-                "attempts": exp_result.attempts_evaluated,
-                "selected_seed": exp_result.selected_seed,
-                "placed_entries": exp_result.selected.placed_entries,
-                "refunded_entries": exp_result.selected.refunded_entries,
-                "unique_pairs": exp_result.selected.unique_pairs,
-                "max_refunds_single_player": exp_result.selected.max_refunds_single_player,
-                "refund_variance": exp_result.selected.refund_variance,
-                "cap_violations": exp_result.selected.cap_violations,
-                "cap_feasible": exp_result.selected.feasible_under_cap,
-                "score": exp_result.selected.score,
-            }
+            try:
+                cfg = ExperimentalConfig(
+                    attempts=max(1, int(experimental_attempts or 4)),
+                )
+                exp_result = generate_brackets_experimental(
+                    entries=entries,
+                    bracket_size=bracket_size,
+                    bracket_type=program["name"],
+                    history_set=history_set,
+                    seed=seed,
+                    allow_single_bye_per_bracket=bool(program.get("allow_byes", False)),
+                    config=cfg,
+                )
+                brackets = exp_result.brackets
+                leftover_players = exp_result.leftovers
+                group_debug = {
+                    "mode": "experimental",
+                    "attempts": exp_result.attempts_evaluated,
+                    "selected_seed": exp_result.selected_seed,
+                    "placed_entries": exp_result.selected.placed_entries,
+                    "refunded_entries": exp_result.selected.refunded_entries,
+                    "unique_pairs": exp_result.selected.unique_pairs,
+                    "max_refunds_single_player": exp_result.selected.max_refunds_single_player,
+                    "refund_variance": exp_result.selected.refund_variance,
+                    "cap_violations": exp_result.selected.cap_violations,
+                    "cap_feasible": exp_result.selected.feasible_under_cap,
+                    "score": exp_result.selected.score,
+                }
+            except Exception as error:
+                logger.exception(
+                    "Experimental bracket optimizer failed for %s; using standard generation",
+                    program["key"],
+                )
+                brackets, leftover_players = create_brackets_with_history(
+                    entries,
+                    bracket_size,
+                    program["name"],
+                    history_set,
+                    seed,
+                    allow_single_bye_per_bracket=bool(program.get("allow_byes", False)),
+                )
+                group_debug = {
+                    "mode": "standard_fallback",
+                    "attempts": 0,
+                    "fallback_reason": str(error),
+                }
         else:
             brackets, leftover_players = create_brackets_with_history(
                 entries,

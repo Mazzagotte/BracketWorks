@@ -8,6 +8,7 @@ import { apiClient } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { calculatePasswordStrengthPercent, getPasswordRequirementChecks, hasStrongPassword } from '../lib/auth/validation';
 import PasswordStrengthPanel from '../components/PasswordStrengthPanel';
+import buttonStyles from '../styles/buttons.module.css';
 import styles from './settings.module.css';
 
 type AccountProfile = {
@@ -312,7 +313,7 @@ export default function SettingsPage() {
             {!profile.email_verified ? (
               <button
                 type="button"
-                className="ds-btn ds-btn-outline ds-btn-sm"
+                className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.small}`}
                 onClick={resendVerificationEmail}
                 disabled={resendingVerification}
               >
@@ -335,7 +336,7 @@ export default function SettingsPage() {
         </div>
 
         <div className={styles.actionRow}>
-          <button type="button" className="ds-btn ds-btn-primary ds-btn-sm" onClick={saveProfile} disabled={savingProfile}>
+          <button type="button" className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`} onClick={saveProfile} disabled={savingProfile}>
             {savingProfile ? 'Saving...' : 'Save Profile'}
           </button>
         </div>
@@ -433,7 +434,7 @@ export default function SettingsPage() {
         </div>
 
         <div className={styles.actionRow}>
-          <button type="button" className="ds-btn ds-btn-primary ds-btn-sm" onClick={updatePassword} disabled={savingPassword}>
+          <button type="button" className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`} onClick={updatePassword} disabled={savingPassword}>
             {savingPassword ? 'Updating...' : 'Update Password'}
           </button>
         </div>

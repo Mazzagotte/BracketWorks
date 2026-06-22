@@ -15,6 +15,8 @@ import {
 import { navLinks } from '../../components/nav-links';
 import ShareQRModal from './ShareQRModal';
 import { useToastHelpers } from './Toast';
+import buttonStyles from '../styles/buttons.module.css';
+import iconButtonStyles from '../styles/icon-buttons.module.css';
 import styles from './TopNav.module.css';
 
 interface TopNavProps {
@@ -150,7 +152,7 @@ export default function TopNav({ firstName, onMobileMenuOpen, isMobile = false }
         <button
           onClick={onMobileMenuOpen}
           aria-label="Open navigation menu"
-          className={styles.hamburgerBtn}
+          className={`${iconButtonStyles.iconButton} ${styles.hamburgerBtn}`}
         >
           <span className={styles.hamburgerLine} />
           <span className={styles.hamburgerLine} />
@@ -225,7 +227,7 @@ export default function TopNav({ firstName, onMobileMenuOpen, isMobile = false }
       <div className={styles.rightZone}>
         <div className={styles.publicActions}>
         <button
-          className={styles.publicViewButton}
+          className={`${buttonStyles.button} ${buttonStyles.primary} ${styles.publicViewButton}`}
           onClick={openBowlerView}
           disabled={!tournamentId}
         >
@@ -233,7 +235,7 @@ export default function TopNav({ firstName, onMobileMenuOpen, isMobile = false }
         </button>
 
           <button
-            className={styles.shareQrButton}
+            className={`${iconButtonStyles.iconButton} ${styles.shareQrButton}`}
             onClick={openShareQR}
             disabled={!tournamentId || !activeTournament || isPreparingShare}
             aria-label="Share live view QR code"

@@ -89,7 +89,7 @@ class Settings(BaseSettings):
 
     # Experimental bracket optimizer
     BRACKETS_EXPERIMENTAL_ENABLED: bool = True
-    BRACKETS_EXPERIMENTAL_ATTEMPTS: int = 64
+    BRACKETS_EXPERIMENTAL_ATTEMPTS: int = 4
 
     @property
     def is_production(self) -> bool:

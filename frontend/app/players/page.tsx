@@ -17,6 +17,12 @@ import { BracketProgramDefinition, BracketSettings, SidePotsSettings, Tournament
 import { apiClient, API, apiFetch } from '../lib/api'
 import { calculatePlayerTotalCost, calculateSidePotCost, defaultBracketPrograms, filterEntriesForDivision, getEnabledBracketPrograms, normalizeBracketPrograms, normalizeDivision, normalizePlayerBracketEntries, summarizeEntries } from '../lib/bracketPrograms'
 import styles from './entries.module.css'
+import cardStyles from '../styles/cards.module.css'
+import buttonStyles from '../styles/buttons.module.css'
+import badgeStyles from '../styles/badges.module.css'
+import formStyles from '../styles/forms.module.css'
+import shellStyles from '../styles/page-shell.module.css'
+import toolbarStyles from '../styles/toolbars.module.css'
 import ExplainEntriesModal from './ExplainEntriesModal'
 import { useToastHelpers } from '../components/Toast'
 import ImportLoadingModal from '../components/ImportLoadingModal'
@@ -1143,7 +1149,7 @@ export default function PlayersPage() {
 
   return (
     <ErrorBoundary>
-      <div className={styles.pageContainer}>
+      <div className={`${shellStyles.page} ${styles.pageContainer}`}>
         <ImportLoadingModal isOpen={isImporting} fileName={importFileName} />
         {/* Hidden file input for Excel import — triggered by header button */}
         <input
@@ -1154,27 +1160,27 @@ export default function PlayersPage() {
           className="sr-only"
         />
 
-        <div className={styles.entriesSectionWidth}>
-          <div className={`${styles.formCard} ${styles.quickActionsCard}`}>
-            <h3 className={styles.formTitle}>Quick Actions</h3>
-            <div className={styles.quickActionsBody}>
-              <div className={styles.quickActionsRow}>
-                <div className={styles.quickActionsGroupLeft}>
+        <div className={`${shellStyles.section} ${styles.entriesSectionWidth}`}>
+          <div className={`${cardStyles.card} ${cardStyles.accentCard} ${cardStyles.quickActionsCard} ${styles.formCard}`}>
+            <h3 className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${cardStyles.quickActionsTitle} ${styles.formTitle}`}>Quick Actions</h3>
+            <div className={cardStyles.quickActionsBody}>
+              <div className={cardStyles.quickActionsRow}>
+                <div className={cardStyles.quickActionsGroupLeft}>
                 <button
-                  className={`ds-btn ds-btn-info ds-btn-sm ${styles.quickActionGuideBtn}`}
+                  className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
                   onClick={() => setIsExplainModalOpen(true)}
                 >
                   Entries Guide
                 </button>
                 <button
-                  className={`ds-btn ds-btn-primary ds-btn-sm ${styles.quickActionFileBtn}`}
+                  className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
                   onClick={handleExportToExcel}
                   disabled={players.length === 0}
                 >
                   Export to Excel
                 </button>
                 <button
-                  className={`ds-btn ds-btn-primary ds-btn-sm ${styles.quickActionFileBtn}`}
+                  className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
                   onClick={() => importFileRef.current?.click()}
                   disabled={isImporting}
                 >
@@ -1182,9 +1188,9 @@ export default function PlayersPage() {
                 </button>
                 </div>
                 {isDev && players.length > 0 && (
-                  <div className={styles.quickActionsGroupRight}>
-                    <button className={`${styles.devButton} ${styles.quickActionDevBtn}`} onClick={handleRandomize}>Randomize Data</button>
-                    <button className={`${styles.devButton} ${styles.quickActionDangerBtn}`} onClick={handleDeleteAllPlayers} disabled={isDeletingAll}>{isDeletingAll ? 'Deleting...' : 'Delete All'}</button>
+                  <div className={cardStyles.quickActionsGroupRight}>
+                    <button className={`${cardStyles.quickActionControl} ${styles.devButton} ${styles.quickActionDevBtn}`} onClick={handleRandomize}>Randomize Data</button>
+                    <button className={`${cardStyles.quickActionControl} ${styles.devButton} ${styles.quickActionDangerBtn}`} onClick={handleDeleteAllPlayers} disabled={isDeletingAll}>{isDeletingAll ? 'Deleting...' : 'Delete All'}</button>
                   </div>
                 )}
               </div>
@@ -1192,11 +1198,11 @@ export default function PlayersPage() {
           </div>
 
           <div className={styles.entryWorkflowLayout}>
-              <div className={`${styles.formCard} ${styles.findBowlerCard}`}>
+              <div className={`${cardStyles.card} ${cardStyles.accentCard} ${styles.formCard} ${styles.findBowlerCard}`}>
             {isMobileView ? (
               <button
                 type="button"
-                className={styles.formTitleToggle}
+                className={`${cardStyles.cardHeader} ${styles.formTitleToggle}`}
                 aria-expanded={!historySearchCollapsed}
                 onClick={() => setHistorySearchCollapsed(previous => !previous)}
               >
@@ -1204,28 +1210,28 @@ export default function PlayersPage() {
                 <span className={styles.formTitleExpandIcon}>{historySearchCollapsed ? '+' : '−'}</span>
               </button>
             ) : (
-              <h3 className={styles.formTitle}>Find Existing Bowler</h3>
+              <h3 className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${styles.formTitle}`}>Find Existing Bowler</h3>
             )}
             {(!isMobileView || !historySearchCollapsed) && (
             <div className={styles.historyPanelBody}>
-              <div className={`${styles.searchContainer} ${styles.findBowlerSearchRow}`}>
+              <div className={`${toolbarStyles.toolbar} ${styles.searchContainer} ${styles.findBowlerSearchRow}`}>
                 <input
                   type="text"
-                  className={`${styles.searchInput} ${styles.findBowlerInput}`}
+                  className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput} ${styles.findBowlerInput}`}
                   placeholder="USBC #"
                   value={historySearchUsbc}
                   onChange={(event) => setHistorySearchUsbc(event.target.value)}
                 />
                 <input
                   type="text"
-                  className={`${styles.searchInput} ${styles.findBowlerInput}`}
+                  className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput} ${styles.findBowlerInput}`}
                   placeholder="First Name"
                   value={historySearchFirstName}
                   onChange={(event) => setHistorySearchFirstName(event.target.value)}
                 />
                 <input
                   type="text"
-                  className={`${styles.searchInput} ${styles.findBowlerInput}`}
+                  className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput} ${styles.findBowlerInput}`}
                   placeholder="Last Name"
                   value={historySearchLastName}
                   onChange={(event) => setHistorySearchLastName(event.target.value)}
@@ -1291,7 +1297,7 @@ export default function PlayersPage() {
           </div>
 
           {showInitialPlayersLoad ? (
-            <div className={styles.skeletonCard}>
+            <div className={`${cardStyles.card} ${styles.skeletonCard}`}>
               <div className={styles.skeletonText}>Loading players...</div>
               {[1, 2, 3, 4, 5].map(i => (
                 <div key={i} className={styles.skeletonGrid}>
@@ -1302,7 +1308,7 @@ export default function PlayersPage() {
               ))}
             </div>
           ) : !getTournamentId() ? (
-            <div className={styles.noTournament}>
+            <div className={`${cardStyles.card} ${cardStyles.emptyStateCard} ${styles.noTournament}`}>
               <div className={styles.noTournamentTitle}>No Tournament Loaded</div>
               <div className={styles.noTournamentText}>
                 Please load a tournament from the dashboard to manage players.
@@ -1314,35 +1320,35 @@ export default function PlayersPage() {
           ) : (
             <>
               {getTournamentId() && players.length > 0 && (
-                <div className={styles.summaryCard}>
-                  <div className={styles.summaryHeader}>
-                    <div className={styles.summaryTitleWrap}>
-                      <h3 className={styles.summaryTitle}>Tournament Summary</h3>
+                <div className={`${cardStyles.card} ${cardStyles.accentCard} ${styles.summaryCard}`}>
+                  <div className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${styles.summaryHeader}`}>
+                    <div className={`${cardStyles.cardHeaderRow} ${styles.summaryTitleWrap}`}>
+                      <h3 className={`${cardStyles.cardTitle} ${styles.summaryTitle}`}>Tournament Summary</h3>
                       <p className={styles.summarySubtitle}>Live totals for entries, revenue, and active pots.</p>
                     </div>
                     <div className={styles.summaryPaymentStrip}>
-                      <span className={`${styles.summaryChip} ${styles.summaryChipPaid}`}>{paymentSummary.paidCount} Paid</span>
-                      <span className={`${styles.summaryChip} ${paymentSummary.dueCount > 0 ? styles.summaryChipDue : ''}`}>{paymentSummary.dueCount} Due</span>
-                      <span className={`${styles.summaryChip} ${styles.summaryChipOutstanding} ${paymentSummary.outstandingAmount > 0 ? styles.summaryChipOutstandingActive : ''}`}>${paymentSummary.outstandingAmount.toLocaleString()} Outstanding</span>
+                      <span className={`${badgeStyles.badge} ${badgeStyles.success}`}>{paymentSummary.paidCount} Paid</span>
+                      <span className={`${badgeStyles.badge} ${paymentSummary.dueCount > 0 ? badgeStyles.warning : badgeStyles.muted}`}>{paymentSummary.dueCount} Due</span>
+                      <span className={`${badgeStyles.badge} ${paymentSummary.outstandingAmount > 0 ? badgeStyles.accent : badgeStyles.muted}`}>${paymentSummary.outstandingAmount.toLocaleString()} Outstanding</span>
                     </div>
                   </div>
                   <div className={styles.summaryGrid}>
-                    <div className={styles.statBox}>
-                      <div className={styles.statValue}>{entryTotals.totalEntries}</div>
-                      <div className={styles.statLabel}>Total Entries</div>
+                    <div className={`${cardStyles.statTile} ${cardStyles.statTileCompact} ${styles.statBox}`}>
+                      <div className={`${cardStyles.statValue} ${styles.statValue}`}>{entryTotals.totalEntries}</div>
+                      <div className={`${cardStyles.statLabel} ${styles.statLabel}`}>Total Entries</div>
                     </div>
 
-                    <div className={styles.statBox}>
-                      <div className={styles.statValue}>${entryTotals.totalRevenue.toLocaleString()}</div>
-                      <div className={styles.statLabel}>Entry Revenue</div>
-                      <div className={styles.statDetail}>{entryTotals.totalEntries} entries × ${Number(entryFee).toLocaleString()}</div>
+                    <div className={`${cardStyles.statTile} ${cardStyles.statTileCompact} ${styles.statBox}`}>
+                      <div className={`${cardStyles.statValue} ${styles.statValue}`}>${entryTotals.totalRevenue.toLocaleString()}</div>
+                      <div className={`${cardStyles.statLabel} ${styles.statLabel}`}>Entry Revenue</div>
+                      <div className={`${cardStyles.statDetail} ${styles.statDetail}`}>{entryTotals.totalEntries} entries × ${Number(entryFee).toLocaleString()}</div>
                     </div>
 
                       {orderedProgramSummaries.map(program => (
-                        <div key={program.key} className={styles.statBox}>
-                          <div className={styles.statValue}>{program.totalEntries}</div>
-                          <div className={styles.statLabel}>{program.key === 'handicap' ? 'Handicap' : program.key === 'scratch' ? 'Scratch' : program.key === 'reverse_scratch' ? 'Reverse Scratch' : program.key === 'womens_scratch' ? 'Women\'s Scratch' : program.name}</div>
-                          <div className={styles.statDetail}>Projected {program.expectedBrackets} brackets</div>
+                        <div key={program.key} className={`${cardStyles.statTile} ${cardStyles.statTileCompact} ${styles.statBox}`}>
+                          <div className={`${cardStyles.statValue} ${styles.statValue}`}>{program.totalEntries}</div>
+                          <div className={`${cardStyles.statLabel} ${styles.statLabel}`}>{program.key === 'handicap' ? 'Handicap' : program.key === 'scratch' ? 'Scratch' : program.key === 'reverse_scratch' ? 'Reverse Scratch' : program.key === 'womens_scratch' ? 'Women\'s Scratch' : program.name}</div>
+                          <div className={`${cardStyles.statDetail} ${styles.statDetail}`}>Projected {program.expectedBrackets} brackets</div>
                           {program.refunds > 0 && (
                             <div className={styles.statRefund}>{program.refunds} overflow entries</div>
                           )}
@@ -1350,11 +1356,11 @@ export default function PlayersPage() {
                       ))}
 
                       {sidePotSummaries.map(pot => (
-                        <div key={pot.key} className={styles.statBox}>
-                          <div className={styles.statValue}>{pot.count}</div>
-                          <div className={styles.statLabel}>{pot.name}</div>
+                        <div key={pot.key} className={`${cardStyles.statTile} ${cardStyles.statTileCompact} ${styles.statBox}`}>
+                          <div className={`${cardStyles.statValue} ${styles.statValue}`}>{pot.count}</div>
+                          <div className={`${cardStyles.statLabel} ${styles.statLabel}`}>{pot.name}</div>
                           {pot.fee > 0 && (
-                            <div className={styles.statDetail}>Pot Total: ${(pot.count * pot.fee).toLocaleString()}</div>
+                            <div className={`${cardStyles.statDetail} ${styles.statDetail}`}>Pot Total: ${(pot.count * pot.fee).toLocaleString()}</div>
                           )}
                         </div>
                       ))}
@@ -1363,11 +1369,11 @@ export default function PlayersPage() {
                 </div>
               )}
 
-              <div className={`${styles.formCard} ${styles.standaloneEntrySearchCard}`}>
+              <div className={`${cardStyles.card} ${cardStyles.accentCard} ${styles.formCard} ${styles.standaloneEntrySearchCard}`}>
                 {isMobileView ? (
                   <button
                     type="button"
-                    className={styles.formTitleToggle}
+                    className={`${cardStyles.cardHeader} ${styles.formTitleToggle}`}
                     aria-expanded={!tableSearchCollapsed}
                     onClick={() => setTableSearchCollapsed(previous => !previous)}
                   >
@@ -1375,29 +1381,29 @@ export default function PlayersPage() {
                     <span className={styles.formTitleExpandIcon}>{tableSearchCollapsed ? '+' : '−'}</span>
                   </button>
                 ) : (
-                  <h3 className={styles.formTitle}>Find Entry</h3>
+                  <h3 className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${styles.formTitle}`}>Find Entry</h3>
                 )}
                 {(!isMobileView || !tableSearchCollapsed) && (
                 <div className={styles.tableSearchPanelBody}>
                   <p className={styles.findEntryHelperText}>Search by USBC number, first name, or last name.</p>
-                  <div className={`${styles.searchContainer} ${styles.searchContainerSticky}`}>
+                  <div className={`${toolbarStyles.toolbar} ${styles.searchContainer} ${styles.searchContainerSticky}`}>
                     <input
                       type="text"
-                      className={styles.searchInput}
+                      className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput}`}
                       placeholder="USBC #"
                       value={searchUsbc}
                       onChange={(event) => setSearchUsbc(event.target.value)}
                     />
                     <input
                       type="text"
-                      className={styles.searchInput}
+                      className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput}`}
                       placeholder="First name"
                       value={searchFirstName}
                       onChange={(event) => setSearchFirstName(event.target.value)}
                     />
                     <input
                       type="text"
-                      className={styles.searchInput}
+                      className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput}`}
                       placeholder="Last name"
                       value={searchLastName}
                       onChange={(event) => setSearchLastName(event.target.value)}
@@ -1419,18 +1425,18 @@ export default function PlayersPage() {
                 )}
               </div>
 
-              <div className={styles.tableCard}>
-                <div className={styles.entriesTableHeader}>
+              <div className={`${cardStyles.card} ${cardStyles.accentCard} ${styles.tableCard}`}>
+                <div className={`${cardStyles.cardHeader} ${styles.entriesTableHeader}`}>
                   <div className={styles.entriesTableHeaderCopy}>
-                    <h3 className={styles.entriesTableTitle}>Entries</h3>
+                    <h3 className={`${cardStyles.cardTitle} ${styles.entriesTableTitle}`}>Entries</h3>
                     <p className={styles.entriesTableSubtitle}>{entriesTableSubtitle}</p>
                   </div>
                 </div>
-                <div className={styles.entriesSearchDock}>
+                <div className={`${cardStyles.cardHeader} ${styles.entriesSearchDock}`}>
                   {isMobileView ? (
                     <button
                       type="button"
-                      className={`${styles.formTitleToggle} ${styles.entriesSearchToggle}`}
+                      className={`${cardStyles.cardHeader} ${styles.formTitleToggle} ${styles.entriesSearchToggle}`}
                       aria-expanded={!tableSearchCollapsed}
                       onClick={() => setTableSearchCollapsed(previous => !previous)}
                     >
@@ -1448,24 +1454,24 @@ export default function PlayersPage() {
                       {isMobileView && (
                         <p className={styles.findEntryHelperText}>Search by USBC number, first name, or last name.</p>
                       )}
-                      <div className={`${styles.searchContainer} ${styles.searchContainerSticky}`}>
+                      <div className={`${toolbarStyles.toolbar} ${styles.searchContainer} ${styles.searchContainerSticky}`}>
                         <input
                           type="text"
-                          className={styles.searchInput}
+                          className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput}`}
                           placeholder="USBC #"
                           value={searchUsbc}
                           onChange={(event) => setSearchUsbc(event.target.value)}
                         />
                         <input
                           type="text"
-                          className={styles.searchInput}
+                          className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput}`}
                           placeholder="First name"
                           value={searchFirstName}
                           onChange={(event) => setSearchFirstName(event.target.value)}
                         />
                         <input
                           type="text"
-                          className={styles.searchInput}
+                          className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput}`}
                           placeholder="Last name"
                           value={searchLastName}
                           onChange={(event) => setSearchLastName(event.target.value)}
@@ -1521,31 +1527,19 @@ export default function PlayersPage() {
         }}
       />
 
-      {deleteConfirmId !== null && (
-        <div className={styles.confirmOverlay}>
-          <div className={styles.confirmDialog}>
-            <h2 className={styles.confirmTitle}>Delete Player</h2>
-            <p className={styles.confirmMessage}>Are you sure you want to delete this player? This cannot be undone.</p>
-            <div className={styles.confirmButtons}>
-              <button
-                className={styles.confirmCancel}
-                onClick={() => setDeleteConfirmId(null)}
-              >
-                Cancel
-              </button>
-              <button
-                className={styles.confirmDelete}
-                onClick={() => {
-                  deletePlayer(deleteConfirmId!)
-                  setDeleteConfirmId(null)
-                }}
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ActionConfirmDialog
+        open={deleteConfirmId !== null}
+        title="Delete Player?"
+        message="Delete this player? This cannot be undone."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        onCancel={() => setDeleteConfirmId(null)}
+        onConfirm={() => {
+          if (deleteConfirmId === null) return
+          deletePlayer(deleteConfirmId)
+          setDeleteConfirmId(null)
+        }}
+      />
       <ExplainEntriesModal
         isOpen={isExplainModalOpen}
         onClose={() => setIsExplainModalOpen(false)}

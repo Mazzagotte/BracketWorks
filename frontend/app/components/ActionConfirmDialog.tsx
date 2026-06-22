@@ -1,5 +1,7 @@
 import CloseControl from '../../components/CloseControl';
 import styles from './ActionConfirmDialog.module.css';
+import modalStyles from '../styles/modals.module.css';
+import buttonStyles from '../styles/buttons.module.css';
 
 interface ActionConfirmDialogProps {
   open: boolean;
@@ -25,21 +27,21 @@ export default function ActionConfirmDialog({
   if (!open) return null;
 
   return (
-    <div className={styles.overlay}>
-      <div className={`surface-card ${styles.dialog}`} role="dialog" aria-modal="true" aria-label={title}>
+    <div className={modalStyles.overlay}>
+      <div className={`${modalStyles.modal} ${modalStyles.compactModal}`} role="dialog" aria-modal="true" aria-label={title}>
         {showCloseButton && (
           <CloseControl onClick={onCancel} position="absolute" size="sm" label="Close confirmation dialog" />
         )}
-        <div className={styles.header}>
+        <div className={modalStyles.header}>
           <h2 className={styles.title}>{title}</h2>
         </div>
         <div className={styles.body}>
           <p className={styles.message}>{message}</p>
           <div className={styles.actions}>
-            <button type="button" className={`${styles.actionButton} ${styles.cancelButton}`} onClick={onCancel}>
+            <button type="button" className={`${buttonStyles.button} ${buttonStyles.secondary} ${styles.actionButton}`} onClick={onCancel}>
               {cancelLabel}
             </button>
-            <button type="button" className={`${styles.actionButton} ${styles.confirmButton}`} onClick={onConfirm}>
+            <button type="button" className={`${buttonStyles.button} ${buttonStyles.danger} ${styles.actionButton}`} onClick={onConfirm}>
               {confirmLabel}
             </button>
           </div>

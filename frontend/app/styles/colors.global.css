@@ -6,13 +6,30 @@
 
 :root {
   /* Primary Brand Colors - Orange (from logo brackets & ball) */
-  --color-primary: var(--bw-orange, #F07820);
-  --color-primary-hover: var(--bw-orange-dark, #F49040);
+  --color-primary: var(--bw-orange, #FF7A00);
+  --color-primary-hover: var(--bw-orange-dark, #E55F00);
+
+  /* Shared UI theme tokens */
+  --bw-surface-card: rgba(18, 17, 23, 0.8);
+  --bw-surface-card-strong: rgba(14, 16, 24, 0.88);
+  --bw-surface-panel: rgba(255, 255, 255, 0.03);
+  --bw-surface-panel-strong: rgba(255, 255, 255, 0.06);
+  --bw-border-subtle: rgba(226, 232, 240, 0.14);
+  --bw-border-card: color-mix(in srgb, var(--color-primary) 24%, rgba(226, 232, 240, 0.74));
+  --bw-border-accent: color-mix(in srgb, var(--color-primary) 34%, rgba(226, 232, 240, 0.7));
+  --bw-shadow-card: 0 12px 30px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --bw-shadow-accent: 0 10px 22px color-mix(in srgb, var(--color-primary) 24%, transparent);
+  --bw-accent-rail: 3px solid var(--color-primary);
+  --bw-focus-ring: 0 0 0 1px color-mix(in srgb, var(--color-primary) 45%, transparent), 0 0 0 4px color-mix(in srgb, var(--color-primary) 12%, transparent);
+  --bw-page-gutter: 1rem;
+  --bw-page-gutter-mobile: 0.5rem;
+  --bw-stack-gap: 0.75rem;
+  --bw-control-gap: 0.55rem;
 
   /* Logo Brand Palette */
-  --color-brand-orange:        var(--bw-orange, #F07820);   /* brackets / ball / subtitle text */
-  --color-brand-orange-light:  var(--bw-orange-light, #F49040);   /* hover / highlight */
-  --color-brand-orange-dark:   var(--bw-orange-dark, #D4580A);   /* pin stripes / ball shadow / deep accent */
+  --color-brand-orange:        var(--bw-orange, #FF7A00);   /* brackets / ball / subtitle text */
+  --color-brand-orange-light:  var(--bw-orange-light, #FFB347);   /* hover / highlight */
+  --color-brand-orange-dark:   var(--bw-orange-dark, #E55F00);   /* pin stripes / ball shadow / deep accent */
   --color-brand-charcoal:      var(--bw-charcoal, #333333);   /* BracketWorks wordmark */
   --color-brand-charcoal-deep: #1A1A1A;   /* darkest shadow */
   --color-brand-ivory:         var(--bw-ivory, #F0E0C0);   /* pin bodies */
@@ -24,7 +41,7 @@
   
   /* State Colors */
   --color-success: #2FBF71;
-  --color-warning: #F2A900;
+  --color-warning: var(--color-primary);
   --color-error: #D64545;
   --color-disabled: #E3E0DC;
   
@@ -42,25 +59,20 @@
   /* Blue Colors (kept for backward compatibility) */
   --color-blue-primary: #3b82f6;
   --color-blue-dark: #2563eb;
-  --color-blue-deeper: #1e40af;
   --color-blue-light: #dbeafe;
   --color-blue-lighter: #bfdbfe;
-  --color-blue-pale: #93c5fd;
 
   /* Purple Colors (kept for backward compatibility) */
   --color-purple-primary: #8b5cf6;
   --color-purple-dark: #7c3aed;
   --color-purple-light: #667eea;
-  --color-purple-accent: #764ba2;
 
   /* Green Colors */
   --color-green-primary: #2FBF71;
   --color-green-secondary: #22c55e;
   --color-green-dark: #059669;
-  --color-green-deeper: #065f46;
   --color-green-light: #d1fae5;
   --color-green-lighter: #a7f3d0;
-  --color-green-pale: #6ee7b7;
 
   /* Pink Colors (kept for backward compatibility) */
   --color-pink-primary: #ec4899;
@@ -92,7 +104,6 @@
   --color-dark-lighter: #3a3a3a;
   --color-dark-accent: #484848;
   --color-dark-glass: rgba(35, 43, 54, 0.85);
-  --color-dark-glass-strong: rgba(35, 43, 54, 0.95);
 
   /* Utility */
   --color-white: #FAFAF9;
@@ -100,26 +111,17 @@
 
   /* Gradients */
   --gradient-brand: linear-gradient(135deg, var(--color-brand-orange) 0%, var(--color-brand-orange-dark) 100%);
-  --gradient-brand-logo: linear-gradient(135deg, var(--color-brand-orange) 0%, var(--color-brand-orange-dark) 100%);
-  --gradient-brand-subtle: linear-gradient(135deg, var(--color-brand-orange-light) 0%, var(--color-warning) 100%);
-  --gradient-gold: linear-gradient(135deg, var(--color-warning) 0%, var(--color-brand-orange) 100%);
   --gradient-ivory: linear-gradient(145deg, var(--color-brand-ivory-light) 0%, var(--color-brand-ivory) 100%);
   --gradient-blue: linear-gradient(135deg, var(--color-blue-primary) 0%, var(--color-blue-dark) 100%);
-  --gradient-blue-light: linear-gradient(135deg, var(--color-blue-light) 0%, var(--color-blue-lighter) 100%);
   --gradient-purple: linear-gradient(135deg, var(--color-brand-orange) 0%, var(--color-brand-orange-dark) 100%);
   --gradient-purple-tie: linear-gradient(135deg, var(--color-brand-orange) 0%, var(--color-warning) 100%);
   --gradient-green: linear-gradient(135deg, var(--color-green-light) 0%, var(--color-green-lighter) 100%);
   --gradient-green-progress: linear-gradient(90deg, var(--color-success) 0%, var(--color-green-dark) 100%);
   --gradient-gray: linear-gradient(135deg, var(--color-gray-100) 0%, var(--color-gray-200) 100%);
-  --gradient-gray-light: linear-gradient(135deg, var(--color-white) 0%, var(--color-gray-50) 100%);
   --gradient-dark: linear-gradient(145deg, var(--color-secondary) 0%, var(--color-secondary-hover) 100%);
-  --gradient-dark-complex: linear-gradient(135deg, var(--color-dark-base) 0%, var(--color-dark-surface) 25%, var(--color-dark-elevated) 50%, var(--color-dark-lighter) 75%, var(--color-dark-accent) 100%);
-  --gradient-rainbow: linear-gradient(90deg, var(--color-blue-primary), var(--color-purple-primary), var(--color-pink-primary), var(--color-primary));
-  --gradient-yellow-light: linear-gradient(135deg, var(--color-yellow-light) 0%, var(--color-warning) 100%);
 
   /* Extended Blues */
   --color-blue-accent: #4f8cff;
-  --color-blue-medium: #3b7df8;
   --color-blue-light-2: #60a5fa;
 
   /* Extended Greens */
@@ -131,15 +133,13 @@
   --color-error-light: #f87171;
 
   /* Extended Yellows / Amber */
-  --color-warning-amber: #f59e0b;
-  --color-warning-light-2: #fbbf24;
-  --color-warning-deep: #ff9800;
-  --color-yellow-highlight: #ffca4a;
-  --color-orange-deep: #ff6f00;
+  --color-warning-amber: var(--color-primary);
+  --color-warning-light-2: color-mix(in srgb, var(--color-primary) 72%, white);
+  --color-warning-deep: var(--color-primary-hover);
+  --color-orange-deep: var(--color-primary-hover);
 
   /* Bowling ball decorative */
   --color-bowling-ball: #1a1a1a;
-  --color-bowling-ball-shadow: #333333;
 
   /* Notification / semantic text */
   --color-success-text-deep: #065f46;
@@ -171,52 +171,25 @@
 
   /* Focus rings */
   --ring-blue: 0 0 0 3px rgba(59, 130, 246, 0.1);
-  --ring-primary: 0 0 0 2px rgba(249, 115, 22, 0.5);
   --ring-error: 0 0 0 3px rgba(214, 69, 69, 0.1);
   --ring-success: 0 0 0 3px rgba(47, 191, 113, 0.1);
 
   /* Gradient additions */
-  --gradient-purple-soft: linear-gradient(135deg, var(--color-brand-orange-light) 0%, var(--color-warning-amber) 100%);
-  --gradient-enhanced-card: linear-gradient(135deg, var(--color-dark-surface) 0%, var(--color-dark-base) 100%);
   --gradient-skeleton: linear-gradient(90deg, var(--color-skeleton-base) 25%, var(--color-skeleton-highlight) 50%, var(--color-skeleton-base) 75%);
-  --gradient-strength-weak: linear-gradient(90deg, var(--color-error), var(--color-error-light));
-  --gradient-strength-fair: linear-gradient(90deg, var(--color-warning-amber), var(--color-warning-light-2));
-  --gradient-strength-good: linear-gradient(90deg, var(--color-blue-primary), var(--color-blue-light-2));
-  --gradient-strength-strong: linear-gradient(90deg, var(--color-success), var(--color-green-light-2));
-  --gradient-progress: linear-gradient(90deg, var(--color-warning), var(--color-warning-deep));
-  --gradient-success-btn: linear-gradient(135deg, var(--color-success) 0%, var(--color-green-dark) 100%);
-  --gradient-error-btn: linear-gradient(135deg, var(--color-error) 0%, var(--color-red-dark) 100%);
 
   /* Design system button hover gradients */
   --gradient-brand-hover: linear-gradient(135deg, var(--color-primary-hover) 0%, #C25515 100%);
-  --gradient-success-hover: linear-gradient(135deg, #27a860 0%, #048a55 100%);
-  --gradient-warning-hover: linear-gradient(135deg, #d49200 0%, #bf5915 100%);
-  --gradient-error-hover: linear-gradient(135deg, #b83c3c 0%, #9e2e2e 100%);
-  --gradient-destructive-hover: linear-gradient(135deg, var(--color-error) 0%, #b83c3c 100%);
-  --gradient-warning-base: linear-gradient(135deg, var(--color-warning) 0%, var(--color-primary-hover) 100%);
-  --gradient-bowling-ball: linear-gradient(135deg, var(--color-warning) 0%, var(--color-warning-deep) 50%, var(--color-orange-deep) 100%);
 
   /* Shadows */
   --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.5);
-  --shadow-blue-sm: 0 2px 8px rgba(59, 130, 246, 0.3);
-  --shadow-blue-md: 0 4px 12px rgba(59, 130, 246, 0.4);
   --shadow-brand-sm: 0 2px 8px rgba(249, 115, 22, 0.3);
   --shadow-brand-md: 0 4px 12px rgba(249, 115, 22, 0.4);
   --shadow-brand-glow: 0 0 20px rgba(251, 130, 60, 0.5);
-  --shadow-purple-sm: 0 2px 8px rgba(139, 92, 246, 0.3);
   --shadow-green-sm: 0 2px 4px rgba(47, 191, 113, 0.3);
   --shadow-inset: inset 0 1px 3px rgba(0, 0, 0, 0.1);
 
   /* Opacity Levels */
-  --opacity-subtle: 0.05;
-  --opacity-light: 0.1;
-  --opacity-medium: 0.2;
-  --opacity-strong: 0.3;
-  --opacity-very-strong: 0.5;
-  --opacity-mostly-opaque: 0.75;
-  --opacity-almost-solid: 0.9;
 
   /* ── Spacing Scale ───────────────────────────────────────── */
   --spacing-xs:   4px;
@@ -225,10 +198,8 @@
   --spacing-lg:   24px;
   --spacing-xl:   32px;
   --spacing-2xl:  48px;
-  --spacing-3xl:  64px;
 
   /* ── Border Radius ───────────────────────────────────────── */
-  --radius-xs:    4px;
   --radius-sm:    6px;
   --radius-md:    8px;
   --radius-lg:    12px;
@@ -237,9 +208,7 @@
   --radius-full:  9999px;
 
   /* ── Shadows ─────────────────────────────────────────────── */
-  --shadow-xl:         0 25px 50px -12px rgba(0, 0, 0, 0.25);
   --shadow-card:       0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px 0 rgba(0, 0, 0, 0.04);
-  --shadow-card-hover: 0 4px 16px rgba(0, 0, 0, 0.10), 0 2px 6px rgba(0, 0, 0, 0.06);
 
   /* ── Layout ──────────────────────────────────────────────── */
   --container-max-width: 1200px;
@@ -267,8 +236,6 @@
   /* ── Extended Ivory / Warm Surfaces ─────────────────────── */
   --color-brand-ivory-soft:    var(--bw-ivory-soft, #fffef7);
   --color-brand-ivory-warm:    #f2e3c6;
-  --color-brand-text-warm:     #9e5a1e;
-  --color-surface-hover-warm:  var(--bw-surface-hover-warm, #fff8f2);
   --color-white-glass:         rgba(255, 255, 255, 0.35);
   --color-surface-translucent: rgba(255, 255, 255, 0.58);
   --color-surface-translucent-strong: rgba(255, 255, 255, 0.80);
@@ -287,10 +254,9 @@
   --color-blue-accent-border-strong: rgba(59, 130, 246, 0.50);
 
   /* ── Warning / Info State Tokens ────────────────────────── */
-  --color-warning-surface: rgba(242, 169, 0, 0.08);
+  --color-warning-surface: color-mix(in srgb, var(--color-primary) 8%, transparent);
   --color-warning-text:    #92400e;
   --color-info-bg:         rgba(59, 130, 246, 0.08);
-  --color-info-bg-light:   rgba(59, 130, 246, 0.04);
   --color-info-text:       #1e40af;
 
   /* ── Extended Error Tokens ───────────────────────────────── */
@@ -303,7 +269,7 @@
   --color-success-border: rgba(47, 191, 113, 0.30);
 
   /* ── Focus Rings ─────────────────────────────────────────── */
-  --ring-warning: 0 0 0 3px rgba(240, 165, 0, 0.12);
+  --ring-warning: 0 0 0 3px color-mix(in srgb, var(--color-primary) 12%, transparent);
 
   /* ── Danger Shadow ───────────────────────────────────────── */
   --shadow-danger-sm: 0 4px 10px rgba(205, 66, 66, 0.24);
@@ -312,37 +278,14 @@
   /* ── entries.module.css Extended Tokens ─────────────────── */
   --opacity-black-12: rgba(0, 0, 0, 0.12);
   --overlay-black:    rgba(0, 0, 0, 0.45);
-
-  --shadow-overlay:       0 8px 32px rgba(0, 0, 0, 0.5);
   --shadow-popup:         0 8px 32px rgba(0, 0, 0, 0.12);
-  --shadow-inset-white-sm: inset 0 1px 0 rgba(255, 255, 255, 0.4);
-  --shadow-gray-sm:       0 4px 8px rgba(107, 114, 128, 0.2);
-  --shadow-gray-md:       0 4px 16px rgba(107, 114, 128, 0.15);
-  --shadow-gray-hover:    0 6px 20px rgba(107, 114, 128, 0.25);
-  --shadow-gray-xs:       0 2px 8px rgba(107, 114, 128, 0.2);
   --shadow-error-sm:      0 4px 8px rgba(239, 68, 68, 0.2);
-  --shadow-green-md:      0 4px 16px rgba(34, 197, 94, 0.25);
-  --shadow-green-hover:   0 6px 20px rgba(34, 197, 94, 0.35);
-  --shadow-green-xs:      0 2px 8px rgba(34, 197, 94, 0.3);
-
-  --ring-blue-md:    0 0 0 4px rgba(59, 130, 246, 0.2);
   --ring-brand-base: 0 0 0 3px rgba(244, 124, 32, 0.1);
   --ring-brand-sm:   0 0 0 3px rgba(240, 120, 32, 0.12);
-
-  --color-green-600:       #16a34a;
-  --color-green-700:       #15803d;
-  --color-slate-700:       #2d3748;
-  --color-header-warm:     #e8d0a8;
   --color-orange-light:    #fb923c;
-  --color-red-medium:      #e74c3c;
   --color-brand-deep-text: #A94F12;
   --color-error-bg-light:     #fef2f2;
   --color-error-border-light: #fecaca;
-
-  --color-green-border:         rgba(34, 197, 94, 0.3);
-  --color-error-shadow:         rgba(214, 69, 69, 0.2);
-  --color-gray-border-light:    rgba(107, 114, 128, 0.3);
-  --color-brand-soft:           rgba(240, 120, 32, 0.16);
   --color-brand-tint:           rgba(240, 120, 32, 0.04);
   --color-brand-tint-mid:       rgba(240, 120, 32, 0.12);
   --color-brand-tint-soft:      rgba(244, 124, 32, 0.05);
@@ -350,10 +293,8 @@
   --color-brand-border-mid:     rgba(240, 120, 32, 0.3);
   --color-brand-bg-subtle:      rgba(249, 115, 22, 0.1);
   --color-brand-border-strong:  rgba(249, 115, 22, 0.35);
-  --color-surface-glass:        rgba(255, 255, 255, 0.52);
   --color-white-ultra-soft:     rgba(255, 255, 255, 0.08);
   --color-white-muted:          rgba(255, 255, 255, 0.6);
-  --color-white-muted-strong:   rgba(255, 255, 255, 0.7);
   --color-warning-tint:         rgba(240, 165, 0, 0.05);
   --color-text-muted-overlay:   rgba(26, 26, 26, 0.2);
   --color-border-medium:        rgba(26, 26, 26, 0.25);
@@ -368,10 +309,6 @@
   --btn-height-sm:   32px;
   --btn-height-lg:   48px;
   --card-padding:    var(--spacing-lg);
-  --card-padding-sm: var(--spacing-md);
-  --card-radius:     var(--radius-lg);
-  --card-shadow:     var(--shadow-card);
-  --card-border:     1px solid var(--color-gray-200);
 
   /* ── Surface / Background ────────────────────────────────── */
   --color-surface:    var(--bw-card, var(--color-dark-surface));
