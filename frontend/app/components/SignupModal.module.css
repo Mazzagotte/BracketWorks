@@ -388,3 +388,153 @@
     gap: 16px;
   }
 }
+
+/* New UI alignment */
+.modal {
+  background: var(--bw-surface-card) !important;
+  border: 1px solid var(--bw-border-card) !important;
+  border-left: var(--bw-accent-rail) !important;
+  border-radius: var(--radius-2xl);
+  box-shadow: none !important;
+  color: var(--bw-text-body);
+}
+
+.header {
+  padding: 24px 28px 18px;
+  background: var(--bw-surface-panel) !important;
+  border-bottom: 1px solid var(--bw-border-subtle) !important;
+}
+
+.brandRow {
+  justify-content: flex-start;
+  padding-right: 42px;
+}
+
+.title {
+  color: var(--bw-text-title);
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.subtitle {
+  color: var(--bw-text-muted);
+  text-align: left;
+  margin-left: 44px;
+}
+
+.body {
+  background: var(--bw-surface-card);
+  padding: 22px 28px 26px;
+}
+
+.closeBtn {
+  top: 16px !important;
+  right: 16px !important;
+  width: 34px !important;
+  height: 34px !important;
+  color: var(--bw-text-muted) !important;
+  background: var(--bw-surface-panel) !important;
+  border: 1px solid var(--bw-border-subtle) !important;
+  border-radius: var(--radius-md) !important;
+}
+
+.closeBtn:hover {
+  color: var(--bw-text-accent) !important;
+  background: color-mix(in srgb, var(--color-primary) 10%, var(--bw-surface-panel)) !important;
+  border-color: var(--bw-border-accent) !important;
+}
+
+.modal :global(.surface-authLabel) {
+  color: var(--bw-text-body);
+  font-size: var(--bw-type-label);
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.modal :global(.surface-authInput),
+.modal :global(.surface-authInputValid) {
+  min-height: 46px;
+  background: var(--bw-surface-card-strong) !important;
+  border: 1px solid var(--bw-border-subtle) !important;
+  border-radius: var(--radius-md);
+  color: var(--bw-text-title);
+  box-shadow: none !important;
+}
+
+.modal :global(.surface-authInput:focus) {
+  background: var(--bw-surface-card-strong) !important;
+  border-color: var(--bw-border-accent) !important;
+  box-shadow: var(--bw-focus-ring) !important;
+}
+
+.modal :global(.surface-authInputValid) {
+  border-color: rgba(45, 212, 136, 0.55) !important;
+}
+
+.modal :global(.surface-authInputError) {
+  border-color: rgba(255, 122, 0, 0.92) !important;
+  box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.12) !important;
+}
+
+.modal :global(.surface-authInput::placeholder) {
+  color: var(--bw-text-faint);
+}
+
+.fieldHint,
+.loginPrompt {
+  color: var(--bw-text-muted);
+}
+
+.passwordToggle {
+  color: var(--bw-text-muted);
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.passwordToggle:hover {
+  color: var(--bw-text-accent);
+}
+
+.submitBtn {
+  min-height: 44px;
+  color: var(--color-white) !important;
+  background: var(--color-primary) !important;
+  border: 1px solid var(--bw-border-accent) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: none !important;
+  font-weight: 800;
+}
+
+.submitBtn:hover:not(:disabled) {
+  background: var(--color-primary-hover) !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.submitBtn:disabled {
+  color: var(--bw-text-faint) !important;
+  background: var(--bw-surface-panel) !important;
+  border-color: var(--bw-border-subtle) !important;
+  opacity: 1;
+}
+
+.loginLink {
+  color: var(--bw-text-accent);
+  font-weight: 800;
+}
+
+.loginLink:hover {
+  color: var(--color-primary-hover);
+}
+
+@media (max-width: 480px) {
+  .brandRow {
+    justify-content: flex-start;
+  }
+
+  .subtitle {
+    margin-left: 44px;
+  }
+}
