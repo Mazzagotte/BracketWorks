@@ -21,6 +21,7 @@ import { usePagination } from '../components/Performance';
 import { FormField, Input, Select } from '../components/UI';
 import ShareQRModal from '../components/ShareQRModal';
 import ActionConfirmDialog from '../components/ActionConfirmDialog';
+import NoTournamentState from '../components/NoTournamentState';
 import {
   clearSelectedSquad,
   clearSelectedTournament,
@@ -1845,35 +1846,19 @@ export default function TournamentDashboard() {
 
             {/* Empty State - No Tournament Loaded */}
             {!tournament && (
-              <div className={mobileStyles.emptyState}>
-                <h2 className={mobileStyles.emptyStateTitle}>Welcome to BracketWorks</h2>
-                <p className={mobileStyles.emptyStateText}>
-                  Create a new tournament or load an existing one to manage squads, brackets, scores, and payouts.
-                </p>
-                <div className={mobileStyles.emptyStateButtons}>
-                  <button className={mobileStyles.emptyStatePrimaryBtn} onClick={() => { setCreateMode(true); setModalOpen(true); }}>
-                    Create New Tournament
-                  </button>
-                  <button className={mobileStyles.emptyStateSecondaryBtn} onClick={() => setLoadModalOpen(true)}>
-                    Load Existing Tournament
-                  </button>
-                </div>
-
-                <div className={mobileStyles.infoCards}>
-                  <div className={mobileStyles.infoCard}>
-                    <h3 className={mobileStyles.infoCardTitle}>Set Up Brackets</h3>
-                    <p className={mobileStyles.infoCardText}>Configure bracket sizes, entry fees, prizes, and handicap rules.</p>
-                  </div>
-                  <div className={mobileStyles.infoCard}>
-                    <h3 className={mobileStyles.infoCardTitle}>Manage Squads</h3>
-                    <p className={mobileStyles.infoCardText}>Create squad times and organize bowlers by date and time.</p>
-                  </div>
-                  <div className={mobileStyles.infoCard}>
-                    <h3 className={mobileStyles.infoCardTitle}>Track Scores &amp; Payouts</h3>
-                    <p className={mobileStyles.infoCardText}>Enter scores, advance brackets, and review projected payouts.</p>
-                  </div>
-                </div>
-              </div>
+              <NoTournamentState
+                title="Welcome to BracketWorks"
+                description="Create a new tournament or load an existing one to open the command center for squads, entries, brackets, scores, and payouts."
+                actions={[
+                  { label: 'Create Tournament', onClick: () => { setCreateMode(true); setModalOpen(true); }, variant: 'primary' },
+                  { label: 'Load Tournament', onClick: () => setLoadModalOpen(true), variant: 'secondary' },
+                ]}
+                cards={[
+                  { title: 'Tournament Setup', text: 'Configure squads, bracket programs, entry fees, side pots, and payout rules before play starts.' },
+                  { title: 'Live Operations', text: 'Manage entries, generate brackets, enter scores, and keep the tournament moving from one dashboard.' },
+                  { title: 'Final Review', text: 'Review winners, projected payouts, exports, and public live-view links when the event wraps.' },
+                ]}
+              />
             )}
 
             {tournament && (

@@ -470,16 +470,16 @@ export default function PayoutsPage() {
       const ws = workbook.addWorksheet('Payouts')
 
       // Brand colors (ARGB format)
-      const C_ORANGE = 'FFF07820'
-      const C_ORANGE_DK = 'FFB45309'
-      const C_INK = 'FF1F2937'
-      const C_MUTED = 'FF6B7280'
-      const C_LINE = 'FFE5E7EB'
-      const C_SOFT = 'FFF1F5F9'
+      const C_ORANGE = 'FFFF7A00'
+      const C_ORANGE_DK = 'FF9A4A00'
+      const C_INK = 'FF111827'
+      const C_MUTED = 'FF4B5563'
+      const C_LINE = 'FFD6DAE1'
+      const C_SOFT = 'FFF7F8FA'
       const C_WHITE = 'FFFFFFFF'
-      const C_SUCCESS_BG = 'FFD1FAE5'
       const C_SUCCESS_FG = 'FF166534'
       const C_ALT = 'FFFAFAFA'
+      const C_PAID_SOFT = 'FFF8FAFC'
 
       const numCols = hasSidePotCol ? 6 : 4
       ws.getColumn(1).width = 6
@@ -499,13 +499,22 @@ export default function PayoutsPage() {
         if (c2 > c1) ws.mergeCells(row, c1, row, c2)
       }
 
+      const orangeRailBorder = {
+        left: { style: 'medium' as const, color: { argb: C_ORANGE } },
+        bottom: { style: 'thin' as const, color: { argb: C_LINE } },
+      }
+
       // Title banner
       merge(r, 1, numCols)
       const titleCell = ws.getRow(r).getCell(1)
-      titleCell.value = 'BracketWorks  —  Payout Distribution'
-      titleCell.font = { name: 'Calibri', size: 14, bold: true, color: { argb: C_WHITE } }
-      titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C_ORANGE } }
-      titleCell.alignment = { horizontal: 'center', vertical: 'middle' }
+      titleCell.value = 'BracketWorks - Payout Distribution'
+      titleCell.font = { name: 'Calibri', size: 14, bold: true, color: { argb: C_INK } }
+      titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C_WHITE } }
+      titleCell.alignment = { horizontal: 'left', vertical: 'middle' }
+      titleCell.border = {
+        left: { style: 'medium', color: { argb: C_ORANGE } },
+        bottom: { style: 'medium', color: { argb: C_ORANGE } },
+      }
       ws.getRow(r).height = 28
       r++
 
@@ -515,7 +524,8 @@ export default function PayoutsPage() {
       nameCell.value = tournamentName
       nameCell.font = { name: 'Calibri', size: 12, bold: true, color: { argb: C_INK } }
       nameCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C_SOFT } }
-      nameCell.alignment = { horizontal: 'center', vertical: 'middle' }
+      nameCell.alignment = { horizontal: 'left', vertical: 'middle' }
+      nameCell.border = orangeRailBorder
       ws.getRow(r).height = 22
       r++
 
@@ -525,7 +535,8 @@ export default function PayoutsPage() {
       squadCell.value = squadLabel
       squadCell.font = { name: 'Calibri', size: 10, color: { argb: C_MUTED } }
       squadCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C_SOFT } }
-      squadCell.alignment = { horizontal: 'center', vertical: 'middle' }
+      squadCell.alignment = { horizontal: 'left', vertical: 'middle' }
+      squadCell.border = orangeRailBorder
       ws.getRow(r).height = 18
       r++
 
@@ -535,7 +546,8 @@ export default function PayoutsPage() {
       genCell.value = `Generated: ${generatedAt}`
       genCell.font = { name: 'Calibri', size: 9, italic: true, color: { argb: C_MUTED } }
       genCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C_SOFT } }
-      genCell.alignment = { horizontal: 'center', vertical: 'middle' }
+      genCell.alignment = { horizontal: 'left', vertical: 'middle' }
+      genCell.border = orangeRailBorder
       ws.getRow(r).height = 16
       r++
 
@@ -562,10 +574,15 @@ export default function PayoutsPage() {
         lc.font = { name: 'Calibri', size: 9, bold: true, color: { argb: C_MUTED } }
         lc.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C_SOFT } }
         lc.alignment = { horizontal: 'right', vertical: 'middle' }
+        lc.border = {
+          left: { style: 'medium', color: { argb: C_ORANGE } },
+          bottom: { style: 'hair', color: { argb: C_LINE } },
+        }
         vc.value = value
         vc.font = { name: 'Calibri', size: 10, color: { argb: C_INK } }
         vc.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C_SOFT } }
         vc.alignment = { horizontal: 'left', vertical: 'middle' }
+        vc.border = { bottom: { style: 'hair', color: { argb: C_LINE } } }
         ws.getRow(r).height = 18
         r++
       }
@@ -574,7 +591,7 @@ export default function PayoutsPage() {
       ws.getRow(r).height = 6
       r++
 
-      // Table column headers (orange banner)
+      // Table column headers
       const headers = hasSidePotCol
         ? ['#', 'Player Name', 'Brackets', 'Side Pots', 'Amount', 'Paid']
         : ['#', 'Player Name', 'Amount', 'Paid']
@@ -582,10 +599,13 @@ export default function PayoutsPage() {
       headers.forEach((h, i) => {
         const cell = hRow.getCell(i + 1)
         cell.value = h
-        cell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: C_WHITE } }
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C_ORANGE } }
+        cell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: C_ORANGE_DK } }
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C_WHITE } }
         cell.alignment = { horizontal: i === 1 ? 'left' : 'center', vertical: 'middle' }
-        cell.border = { bottom: { style: 'thin', color: { argb: C_ORANGE_DK } } }
+        cell.border = {
+          bottom: { style: 'medium', color: { argb: C_ORANGE } },
+          ...(i === 0 ? { left: { style: 'medium' as const, color: { argb: C_ORANGE } } } : {}),
+        }
       })
       hRow.height = 20
       r++
@@ -594,7 +614,7 @@ export default function PayoutsPage() {
       const usdFmt = '$#,##0'
       rows.forEach((row, idx) => {
         const dRow = ws.getRow(r)
-        const rowBg = row.isPaid ? C_SUCCESS_BG : idx % 2 === 1 ? C_ALT : C_WHITE
+        const rowBg = row.isPaid ? C_PAID_SOFT : idx % 2 === 1 ? C_ALT : C_WHITE
         const values: (string | number)[] = hasSidePotCol
           ? [row.rank, row.playerName, row.bracketTotal, row.sidePotTotal, row.totalWon, row.isPaid ? 'Paid' : '']
           : [row.rank, row.playerName, row.totalWon, row.isPaid ? 'Paid' : '']
@@ -602,7 +622,10 @@ export default function PayoutsPage() {
           const cell = dRow.getCell(i + 1)
           cell.value = v
           cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: rowBg } }
-          cell.border = { bottom: { style: 'hair', color: { argb: C_LINE } } }
+          cell.border = {
+            bottom: { style: 'hair', color: { argb: C_LINE } },
+            ...(i === 0 ? { left: { style: 'medium' as const, color: { argb: C_ORANGE } } } : {}),
+          }
           const isCurrencyCol = hasSidePotCol ? (i >= 2 && i <= 4) : i === 2
           if (isCurrencyCol && typeof v === 'number') {
             cell.numFmt = usdFmt
@@ -1077,10 +1100,14 @@ export default function PayoutsPage() {
           </div>
         )}
         {!loading && !selectedTournament && (
-          <div className={`${cardStyles.card} ${cardStyles.emptyStateCard} ${styles.emptyState}`}>
-            <div className={styles.emptyTitle}>No Tournament Loaded</div>
-            <div className={styles.emptyMessage}>Load a tournament from the dashboard to view payout information.</div>
-          </div>
+          <NoTournamentState
+            description="Load a tournament from the dashboard to review prize pools, winners, payment status, and payout exports."
+            cards={[
+              { title: 'Prize Pools', text: 'Review bracket and side-pot prize pools once tournament results are ready.' },
+              { title: 'Winner Review', text: 'See winners by bracket program with payout amounts grouped for quick review.' },
+              { title: 'Payment Tracking', text: 'Mark winners as paid and export payout records for tournament staff.' },
+            ]}
+          />
         )}
         {!loading && selectedTournament && aggregatedWinners.length === 0 && !loading && (
           <div className={`${cardStyles.card} ${cardStyles.emptyStateCard} ${styles.emptyState}`}>

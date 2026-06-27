@@ -1030,3 +1030,73 @@
   letter-spacing: 0;
   text-transform: uppercase;
 }
+
+/* Payout results table alignment */
+.tableCard {
+  background: var(--bw-surface-card);
+  border-color: var(--bw-border-card);
+  box-shadow: none;
+}
+
+.tableCardHeader {
+  background: var(--bw-surface-panel);
+  border-bottom: 1px solid var(--bw-border-subtle);
+}
+
+.headerPool {
+  color: var(--bw-text-accent);
+}
+
+.bracketGroup {
+  background: transparent;
+}
+
+.winnerRow {
+  background: var(--bw-surface-panel);
+  border-bottom-color: rgba(226, 232, 240, 0.08);
+}
+
+.winnerRow:hover,
+.winnerRow.firstPlace:hover,
+.winnerRow.isPaid:hover {
+  background: color-mix(in srgb, var(--color-primary) 7%, var(--bw-surface-panel));
+}
+
+.winnerRow.firstPlace {
+  background: color-mix(in srgb, var(--color-primary) 8%, var(--bw-surface-panel));
+}
+
+.winnerName,
+.payoutAmount {
+  color: var(--bw-text-title);
+}
+
+.firstPlace .payoutAmount,
+.payoutPct {
+  color: var(--bw-text-accent);
+}
+
+.winnerMeta,
+.winnerMetaRow,
+.winnerMetaGroupLabel {
+  color: var(--bw-text-muted);
+}
+
+.paidBadge {
+  background: rgba(45, 212, 136, 0.12);
+  border-color: rgba(45, 212, 136, 0.35);
+  color: rgba(190, 255, 213, 0.96);
+}
+
+.markPaidBtn {
+  background: var(--color-primary);
+  border-color: var(--bw-border-accent);
+  color: var(--color-white);
+  box-shadow: none;
+}
+
+.markPaidBtn:hover {
+  background: var(--color-primary-hover);
+  border-color: var(--bw-border-accent);
+  box-shadow: none;
+}

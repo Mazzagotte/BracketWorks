@@ -28,6 +28,13 @@
   --bw-ivory: #1e1e2a;
   --bw-ivory-light: #16161f;
   --bw-ivory-soft: #1a1a26;
+  --bw-surface-card: #191923;
+  --bw-surface-card-strong: #1d1d28;
+  --bw-surface-panel: rgba(255, 255, 255, 0.06);
+  --bw-surface-panel-strong: rgba(255, 255, 255, 0.1);
+  --bw-border-subtle: rgba(226, 232, 240, 0.18);
+  --bw-border-card: color-mix(in srgb, var(--color-primary) 18%, rgba(226, 232, 240, 0.78));
+  --bw-shadow-card: none;
   --bw-surface-hover-warm: rgba(255, 122, 0, 0.06);
   --bw-pin-shadow: rgba(0, 0, 0, 0.5);
   --bw-font-family-primary: 'Inter', 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;

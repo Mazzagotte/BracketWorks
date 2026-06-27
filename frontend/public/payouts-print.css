@@ -1,15 +1,18 @@
 ﻿:root {
   --print-font-family: Arial, sans-serif;
-  --print-text-primary: #1f2937;
-  --print-text-secondary: #6b7280;
+  --print-text-primary: #111827;
+  --print-text-secondary: #4b5563;
   --print-text-faint: #9ca3af;
-  --print-border: #e5e7eb;
+  --print-border: #d6dae1;
   --print-surface: #fff;
-  --print-soft: #f8fafc;
-  --print-page-bg: #f3f4f6;
-  --print-brand: #f07820;
-  --print-brand-dark: #b45309;
+  --print-soft: #f7f8fa;
+  --print-page-bg: #0b0b12;
+  --print-brand: #ff7a00;
+  --print-brand-dark: #9a4a00;
   --print-success: #166534;
+  --preview-surface: #191923;
+  --preview-panel: #1d1d28;
+  --preview-border: color-mix(in srgb, var(--print-brand) 18%, rgba(226, 232, 240, 0.78));
 }
 
 @page {
@@ -26,8 +29,6 @@ body {
   background: var(--print-page-bg);
   color: var(--print-text-primary);
   font-family: var(--print-font-family);
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
 }
 
 .page {
@@ -36,7 +37,7 @@ body {
   margin: 24px auto;
   padding: 0.55in;
   background: var(--print-surface);
-  box-shadow: 0 12px 36px rgba(15, 23, 42, 0.12);
+  border: 1px solid var(--preview-border);
   position: relative;
 }
 
@@ -46,9 +47,7 @@ body {
   gap: 32px;
   align-items: center;
   padding-bottom: 20px;
-  border-bottom: 4px solid var(--print-brand);
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
+  border-bottom: 3px solid var(--print-brand);
 }
 
 .brand-left {
@@ -71,7 +70,7 @@ body {
 
 .brand-tagline {
   margin: 4px 0 0;
-  color: var(--print-brand-dark);
+  color: var(--print-brand);
   font-size: 10px;
   font-weight: 800;
   text-transform: uppercase;
@@ -97,8 +96,9 @@ body {
 
 .event-band {
   margin-top: 18px;
-  padding: 13px 16px 0;
+  padding: 13px 16px 0 14px;
   border: 1px solid var(--print-border);
+  border-left: 4px solid var(--print-brand);
   border-radius: 12px 12px 0 0;
   border-bottom: none;
   background: var(--print-soft);
@@ -106,8 +106,6 @@ body {
   grid-template-columns: 1fr auto;
   gap: 18px;
   align-items: flex-start;
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
 }
 
 .event-band-inner {
@@ -137,12 +135,11 @@ body {
 
 .details-band {
   border: 1px solid var(--print-border);
+  border-left: 4px solid var(--print-brand);
   border-radius: 0 0 12px 12px;
   background: var(--print-surface);
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
 }
 
 .detail-row {
@@ -185,8 +182,9 @@ body {
 }
 
 .stat-card {
-  padding: 10px 13px;
+  padding: 10px 13px 10px 12px;
   border: 1px solid var(--print-border);
+  border-left: 4px solid var(--print-brand);
   border-radius: 12px;
   background: var(--print-surface);
 }
@@ -216,15 +214,14 @@ table {
 }
 
 thead th {
-  background: var(--print-brand);
-  color: #fff;
+  background: var(--print-surface);
+  color: var(--print-brand-dark);
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.65px;
   padding: 10px;
   text-align: left;
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
+  border-bottom: 2px solid var(--print-brand);
 }
 
 thead th.amount,
@@ -240,9 +237,7 @@ tbody td {
 }
 
 tbody tr:nth-child(even) td {
-  background: #fafafa;
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
+  background: #f9fafb;
 }
 
 tbody tr:last-child td {
@@ -286,8 +281,6 @@ tbody tr:last-child td {
   font-size: 10px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
 }
 
 .isPaidRow td {
@@ -313,6 +306,7 @@ tbody tr:last-child td {
   margin-top: 32px;
   padding: 20px 20px 32px;
   border: 1px solid var(--print-border);
+  border-left: 4px solid var(--print-brand);
   border-radius: 12px;
   break-inside: avoid;
 }
@@ -374,7 +368,7 @@ tbody tr:last-child td {
     min-height: auto;
     margin: 0;
     padding: 0;
-    box-shadow: none;
+    border: 0;
   }
 
   .footer {
@@ -402,5 +396,34 @@ tbody tr:last-child td {
 
   .stat-value {
     font-size: 15px;
+  }
+}
+
+@media screen {
+  :root {
+    --print-text-primary: #f4f5f8;
+    --print-text-secondary: #a7adbd;
+    --print-text-faint: #777f90;
+    --print-border: rgba(226, 232, 240, 0.18);
+    --print-surface: var(--preview-surface);
+    --print-soft: var(--preview-panel);
+    --print-brand-dark: #ffb56b;
+    --print-success: #86efac;
+  }
+
+  body {
+    padding: 24px;
+  }
+
+  .logo {
+    filter: drop-shadow(0 0 10px rgba(255, 122, 0, 0.16));
+  }
+
+  thead th {
+    background: var(--preview-panel);
+  }
+
+  tbody tr:nth-child(even) td {
+    background: rgba(255, 255, 255, 0.025);
   }
 }

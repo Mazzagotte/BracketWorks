@@ -85,3 +85,29 @@
     padding: var(--bw-page-gutter-mobile);
   }
 }
+
+/* Shared UI token alignment */
+.pageShell,
+.pageShellModal {
+  color: var(--bw-text-body);
+}
+
+.backButton {
+  border-radius: var(--radius-md);
+  box-shadow: none;
+}
+
+.pageHeader {
+  color: var(--bw-text-body);
+}
+
+.pageTitle {
+  color: var(--bw-text-title);
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.pageSubtitle,
+.pageState {
+  color: var(--bw-text-muted);
+}

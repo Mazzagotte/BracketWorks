@@ -2730,3 +2730,95 @@
     border-bottom: none;
   }
 }
+
+/* Shared UI token alignment for public live view */
+.page {
+  --public-bg: var(--color-background);
+  --public-surface: var(--bw-surface-card);
+  --public-surface-soft: var(--bw-surface-panel);
+  --public-surface-raised: var(--bw-surface-card-strong);
+  --public-border: var(--bw-border-card);
+  --public-border-strong: var(--bw-border-accent);
+  --public-text: var(--bw-text-title);
+  --public-muted: var(--bw-text-muted);
+  --public-dim: var(--bw-text-faint);
+  --public-orange: var(--color-primary);
+  --public-orange-soft: color-mix(in srgb, var(--color-primary) 9%, var(--bw-surface-panel));
+  background: var(--color-background);
+}
+
+.header,
+.tableWrap,
+.groupSection,
+.sidePotSection,
+.winnerCard,
+.aliveControls,
+.bracketSearchRow,
+.sidePotRefreshRow {
+  background: var(--bw-surface-card);
+  border-color: var(--bw-border-card);
+  box-shadow: none;
+}
+
+.header {
+  border-bottom-color: var(--bw-border-subtle);
+}
+
+.brandCol {
+  border-right-color: var(--bw-border-subtle);
+}
+
+.squadSelect,
+.tabsTrack,
+.searchInput,
+.bracketSearchInput {
+  background: var(--bw-surface-card-strong);
+  border-color: var(--bw-border-subtle);
+  color: var(--bw-text-title);
+  box-shadow: none;
+}
+
+.squadSelect:focus,
+.searchInput:focus,
+.bracketSearchInput:focus {
+  border-color: var(--bw-border-accent);
+  box-shadow: var(--bw-focus-ring);
+}
+
+.tabActive,
+.shareBtn,
+.refreshBtn:hover:not(:disabled) {
+  background: var(--color-primary);
+  border-color: var(--bw-border-accent);
+  color: var(--color-white);
+  box-shadow: none;
+}
+
+.shareBtn:hover {
+  background: var(--color-primary-hover);
+  border-color: var(--bw-border-accent);
+}
+
+.refreshBtn {
+  background: var(--bw-surface-panel);
+  border-color: var(--bw-border-subtle);
+  color: var(--bw-text-body);
+  box-shadow: none;
+}
+
+.table thead th {
+  background: var(--bw-surface-panel);
+  border-bottom-color: var(--bw-border-subtle);
+}
+
+.table td {
+  border-bottom-color: rgba(226, 232, 240, 0.08);
+}
+
+.tableRow:nth-child(even) {
+  background: transparent;
+}
+
+.tableRow:hover {
+  background: color-mix(in srgb, var(--color-primary) 7%, transparent);
+}
