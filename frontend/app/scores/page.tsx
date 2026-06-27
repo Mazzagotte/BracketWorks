@@ -1669,15 +1669,14 @@ export default function ScoresPage() {
 
             {/* No tournament state */}
             {!tournament && !isLoading && (
-              <div className={`${cardStyles.card} ${cardStyles.emptyStateCard} ${styles.noTournamentMobile}`}>
-                <h2 className={styles.noTournamentTitleMobile}>No Tournament Loaded</h2>
-                <p className={styles.noTournamentTextMobile}>
-                  Load a tournament from the dashboard to start entering scores
-                </p>
-                <Link href="/dashboard" className={styles.dashboardBtnMobile}>
-                  Go to Dashboard
-                </Link>
-              </div>
+              <NoTournamentState
+                description="Load a tournament from the dashboard to enter game scores, review totals, and prepare payout calculations."
+                cards={[
+                  { title: 'Score Entry', text: 'Record each bowler\'s game scores with totals calculated as you work.' },
+                  { title: 'Auto-Save', text: 'Changes save in the background so live scoring stays focused and fast.' },
+                  { title: 'Payout Ready', text: 'Use completed scores to unlock payout review when the squad is finalized.' },
+                ]}
+              />
             )}
 
             {/* Loading */}
@@ -1805,26 +1804,14 @@ export default function ScoresPage() {
 
           {/* No Tournament State - Desktop */}
           {!tournament && !showInitialScoresLoad && (
-            <div className={`${cardStyles.card} ${cardStyles.emptyStateCard} ${styles.noTournamentDesktop}`}>
-              <h2 className={styles.noTournamentTitleDesktop}>No Tournament Loaded</h2>
-              <p className={styles.noTournamentTextDesktop}>
-                You need to load a tournament from the dashboard before you can enter scores. Once loaded, you&apos;ll be able to enter and manage scores for all players.
-              </p>
-              <Link href="/dashboard" className={styles.dashboardBtnDesktop}>
-                Go to Dashboard
-              </Link>
-
-              <div className={styles.quickInfo}>
-                <h3 className={styles.quickInfoTitle}>What you can do with Scores:</h3>
-                <ul className={styles.quickInfoList}>
-                  <li>Enter scratch scores for each game</li>
-                  <li>Automatic handicap calculation</li>
-                  <li>Real-time totals and rankings</li>
-                  <li>Auto-save as you type</li>
-                  <li>Export scores to CSV</li>
-                </ul>
-              </div>
-            </div>
+            <NoTournamentState
+              description="Load a tournament from the dashboard before entering scores. Once loaded, this page becomes the live scoring workspace for the selected squad."
+              cards={[
+                { title: 'Enter Games', text: 'Record scratch scores for each game and review handicap-adjusted totals.' },
+                { title: 'Live Save Status', text: 'See when rows are saving, saved, or need attention during score entry.' },
+                { title: 'Calculate Payouts', text: 'Finalize scores and move directly into payout review when the squad is complete.' },
+              ]}
+            />
           )}
 
           {/* Offline Indicator */}

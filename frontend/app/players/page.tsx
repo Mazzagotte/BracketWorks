@@ -1308,15 +1308,14 @@ export default function PlayersPage() {
               ))}
             </div>
           ) : !getTournamentId() ? (
-            <div className={`${cardStyles.card} ${cardStyles.emptyStateCard} ${styles.noTournament}`}>
-              <div className={styles.noTournamentTitle}>No Tournament Loaded</div>
-              <div className={styles.noTournamentText}>
-                Please load a tournament from the dashboard to manage players.
-              </div>
-              <Link href="/dashboard" className={styles.dashboardLink}>
-                Go to Dashboard
-              </Link>
-            </div>
+            <NoTournamentState
+              description="Load a tournament from the dashboard to manage entries, add bowlers, assign squads, and track fees."
+              cards={[
+                { title: 'Add Bowlers', text: 'Register players with averages, lanes, squads, and bracket program entries.' },
+                { title: 'Track Revenue', text: 'Review paid entries, outstanding fees, side pots, and projected bracket counts.' },
+                { title: 'Import & Export', text: 'Bring in entries from Excel or export the current roster when staff need a copy.' },
+              ]}
+            />
           ) : (
             <>
               {getTournamentId() && players.length > 0 && (

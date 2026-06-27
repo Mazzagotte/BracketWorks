@@ -2,7 +2,7 @@
   border: 1px solid var(--popup-border-color);
   border-radius: var(--radius-2xl, 20px);
   padding: 0;
-  max-width: 400px;
+  max-width: 460px;
   width: 92vw;
   box-shadow: var(--popup-shadow-elevated);
   background: var(--popup-surface);
@@ -95,13 +95,20 @@
 .posterPreview {
   position: relative;
   width: 100%;
-  max-width: 360px;
+  max-width: 340px;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border: 1px solid var(--bw-border-card);
+  border-radius: var(--radius-lg, 12px);
+  background: #ffffff;
 }
 
-.posterImage {
-  display: block;
-  width: 100%;
-  height: auto;
+.posterFrame {
+  width: 1080px;
+  height: 1350px;
+  transform: scale(0.3148148);
+  transform-origin: top left;
+  pointer-events: none;
 }
 
 .qrWrapper {

@@ -2178,128 +2178,6 @@
   }
 }
 
-/* Empty State */
-.emptyState {
-  grid-column: 1 / -1;
-  background: rgba(18, 17, 23, 0.8);
-  border-radius: 24px;
-  padding: 36px 32px 32px;
-  text-align: center;
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  margin: 20px auto;
-  max-width: 680px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.emptyStateTitle {
-  font-size: 26px;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  margin: 0 0 10px;
-  letter-spacing: -0.02em;
-  padding: 0;
-}
-
-.emptyStateText {
-  font-size: 15px;
-  color: var(--color-text-muted-strong);
-  max-width: 520px;
-  margin: 0 auto 24px;
-  line-height: 1.6;
-  padding: 0;
-}
-
-.emptyStateButtons {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-  flex-wrap: wrap;
-  padding: 0;
-  margin-bottom: 28px;
-}
-
-.emptyStatePrimaryBtn {
-  background: var(--color-brand-orange);
-  color: var(--color-white);
-  border: 2px solid var(--color-brand-orange);
-  border-radius: var(--radius-lg);
-  padding: 13px 28px;
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  transition: background 0.18s ease, box-shadow 0.18s ease, transform 0.14s ease;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
-}
-
-.emptyStatePrimaryBtn:hover {
-  background: var(--color-primary-hover);
-  border-color: var(--color-primary-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(0,0,0,0.13);
-}
-
-.emptyStateSecondaryBtn {
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--color-brand-orange);
-  border: 1px solid rgba(255, 122, 0, 0.28);
-  border-radius: var(--radius-lg);
-  padding: 13px 28px;
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  transition: background 0.18s ease, box-shadow 0.18s ease, transform 0.14s ease;
-}
-
-.emptyStateSecondaryBtn:hover {
-  background: rgba(255, 122, 0, 0.08);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(0,0,0,0.18);
-}
-
-.infoCards {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
-  margin-top: 4px;
-  padding: 0;
-}
-
-.infoCard {
-  background: rgba(255, 255, 255, 0.04);
-  border-radius: 14px;
-  padding: 18px 16px;
-  text-align: left;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  transition: box-shadow 0.18s ease, transform 0.14s ease;
-}
-
-.infoCard:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
-}
-
-.infoCardTitle {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  margin: 0 0 5px;
-}
-
-.infoCardText {
-  font-size: 12.5px;
-  color: var(--color-text-muted-alt);
-  line-height: 1.5;
-  margin: 0;
-}
-
 /* Content container */
 .contentContainer {
   max-width: 1600px;
@@ -2726,31 +2604,6 @@
 }
 
 @media (max-width: 480px) {
-  .emptyState {
-    padding: 28px 20px 24px;
-    margin: 12px 0;
-  }
-
-  .emptyStateTitle {
-    font-size: 20px;
-  }
-
-  .emptyStateText {
-    font-size: 14px;
-    margin-bottom: 20px;
-  }
-
-  .emptyStatePrimaryBtn,
-  .emptyStateSecondaryBtn {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .infoCards {
-    grid-template-columns: 1fr;
-    margin-top: 20px;
-  }
-
   .modalCard {
     min-width: unset;
     margin: 0;
@@ -2902,11 +2755,6 @@
 
   /* Squad grid breathing room */
 
-  /* Empty state: stack action buttons */
-  .emptyStateButtons {
-    flex-direction: column;
-    gap: 10px;
-  }
 }
 
   .settingsHeaderToggle {
@@ -3346,8 +3194,6 @@
 .settingsFooterSaveButton,
 .tournamentCancelButton,
 .tournamentSaveButton,
-.emptyStatePrimaryBtn,
-.emptyStateSecondaryBtn,
 .loadBtn {
   color: var(--color-white);
   border-color: color-mix(in srgb, var(--color-primary) 46%, rgba(255, 255, 255, 0.24));
@@ -3362,8 +3208,6 @@
 .settingsFooterSaveButton:hover:not(:disabled),
 .tournamentCancelButton:hover:not(:disabled),
 .tournamentSaveButton:hover:not(:disabled),
-.emptyStatePrimaryBtn:hover,
-.emptyStateSecondaryBtn:hover,
 .loadBtn:hover {
   border-color: color-mix(in srgb, var(--color-primary) 52%, white);
   background: var(--color-primary-hover);
@@ -3446,8 +3290,6 @@
 .settingsFooterSaveButton,
 .tournamentCancelButton,
 .tournamentSaveButton,
-.emptyStatePrimaryBtn,
-.emptyStateSecondaryBtn,
 .loadBtn {
   background: var(--dash-accent) !important;
   border-color: var(--dash-accent-border) !important;
@@ -3463,9 +3305,120 @@
 .settingsFooterSaveButton:hover:not(:disabled),
 .tournamentCancelButton:hover:not(:disabled),
 .tournamentSaveButton:hover:not(:disabled),
-.emptyStatePrimaryBtn:hover,
-.emptyStateSecondaryBtn:hover,
 .loadBtn:hover {
   background: var(--dash-accent-strong) !important;
   border-color: color-mix(in srgb, var(--color-primary) 52%, white) !important;
+}
+
+/* Modal and selector alignment with shared UI tokens */
+.modalOverlay,
+.modalOverlay.settingsModalOverlay {
+  background: rgba(4, 5, 10, 0.82);
+  backdrop-filter: blur(8px);
+}
+
+.modalCard,
+.modalCard.settingsModalCard,
+.tournamentSelectorCard,
+.squadChangeModalCard {
+  background: var(--bw-surface-card) !important;
+  border: 1px solid var(--bw-border-card) !important;
+  border-left: var(--bw-accent-rail) !important;
+  border-radius: var(--radius-2xl);
+  box-shadow: none !important;
+}
+
+.modalHeader {
+  background: var(--bw-surface-panel) !important;
+  border-bottom: 1px solid var(--bw-border-subtle) !important;
+}
+
+.modalTitle {
+  color: var(--bw-text-title);
+}
+
+.modalSubtitle,
+.emptyTournaments,
+.emptyTournamentsHint,
+.paginationText {
+  color: var(--bw-text-muted);
+}
+
+.settingsModalFrame {
+  background: var(--bw-surface-card-strong) !important;
+  border: 1px solid var(--bw-border-subtle) !important;
+  border-radius: var(--radius-xl);
+}
+
+.tournamentItem,
+.squadChangeItem {
+  background: var(--bw-surface-panel) !important;
+  border-color: var(--bw-border-subtle) !important;
+  box-shadow: none !important;
+}
+
+.tournamentItem:hover,
+.squadChangeItem:hover {
+  background: color-mix(in srgb, var(--color-primary) 8%, var(--bw-surface-panel)) !important;
+  border-color: var(--bw-border-accent) !important;
+  box-shadow: none !important;
+  transform: none;
+}
+
+.tournamentItemActive,
+.squadChangeItemSelected {
+  background: color-mix(in srgb, var(--color-primary) 10%, var(--bw-surface-panel)) !important;
+  border-color: var(--bw-border-accent) !important;
+}
+
+.tournamentName,
+.squadChangeItemLabel {
+  color: var(--bw-text-title);
+}
+
+.tournamentLocation,
+.tournamentDate,
+.squadChangeItemMeta {
+  color: var(--bw-text-muted);
+}
+
+.tournamentMeta span,
+.tournamentActiveBadge,
+.squadChangeItemStatus {
+  background: color-mix(in srgb, var(--color-primary) 10%, var(--bw-surface-panel));
+  border-color: var(--bw-border-accent);
+  color: var(--bw-text-accent);
+}
+
+.loadBtn,
+.loadBtn:hover {
+  border-color: var(--bw-border-accent) !important;
+  box-shadow: none !important;
+  transform: none;
+}
+
+.deleteBtn {
+  background: var(--bw-surface-panel);
+  border-color: rgba(248, 113, 113, 0.34);
+  color: rgba(254, 202, 202, 0.96);
+  box-shadow: none;
+}
+
+.deleteBtn:hover {
+  background: rgba(127, 29, 29, 0.22);
+  border-color: rgba(248, 113, 113, 0.48);
+}
+
+.paginationBar {
+  border-top-color: var(--bw-border-subtle);
+}
+
+.squadRailPill,
+.toolAction,
+.toolsFooterButton,
+.settingsFooterCancelButton,
+.settingsFooterSaveButton,
+.tournamentCancelButton,
+.tournamentSaveButton {
+  box-shadow: none !important;
 }

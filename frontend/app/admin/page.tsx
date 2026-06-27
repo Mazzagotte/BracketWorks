@@ -420,8 +420,8 @@ export default function AdminPage() {
     }
   }, [refreshAfterMutation]);
 
-  const headerActions = useMemo(() => (
-    <>
+  const adminTabs = useMemo(() => (
+    <nav className={styles.adminNav} aria-label="Admin sections">
       <div className={styles.tabRow}>
         {(["overview", "users", "tournaments", "database", "audit"] as AdminTab[]).map((tab) => (
           <button
@@ -434,6 +434,11 @@ export default function AdminPage() {
           </button>
         ))}
       </div>
+    </nav>
+  ), [activeTab]);
+
+  const headerActions = useMemo(() => (
+    <>
       <button
         type="button"
         className={styles.refreshButton}
@@ -443,7 +448,7 @@ export default function AdminPage() {
         {refreshing ? "Refreshing..." : "Refresh"}
       </button>
     </>
-  ), [activeTab, refreshing, loadActiveTab]);
+  ), [refreshing, loadActiveTab]);
 
   usePageHeader({
     title: "Admin Console",
@@ -555,6 +560,8 @@ export default function AdminPage() {
   return (
     <div className={styles.page}>
       {error && <div className={styles.errorBanner}>{error}</div>}
+
+      {adminTabs}
 
       {activeTab === "overview" && (
         <div className={styles.sectionStack}>

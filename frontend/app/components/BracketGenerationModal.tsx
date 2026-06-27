@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { logger } from '../lib/logger'
 import { disableScroll, enableScroll } from '../utils/modalUtils'
+import buttonStyles from '../styles/buttons.module.css'
 import styles from './BracketGenerationModal.module.css'
 
 /**
@@ -430,7 +431,7 @@ export default function BracketGenerationModal({
                     {stats.skippedPlayers > 0 && (
                       <div className={styles.statItemRefund}>
                         <div className={styles.refundTitle}>Refunds due to incomplete brackets</div>
-                        <div className={styles.refundDetail}>{stats.skippedPlayers} total — {stats.refundBreakdownText}</div>
+                        <div className={styles.refundDetail}>{stats.skippedPlayers} total - {stats.refundBreakdownText}</div>
                       </div>
                     )}
                   </>
@@ -442,13 +443,13 @@ export default function BracketGenerationModal({
             <div className={styles.buttonContainer}>
               <button
                 onClick={handleRegenerateClick}
-                className={`surface-primaryCta ${styles.button} ${styles.primaryButton}`}
+                className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.medium} ${styles.button} ${styles.primaryButton}`}
               >
                 Regenerate Brackets
               </button>
               <button
                 onClick={handleCloseModal}
-                className={`${styles.button} ${styles.secondaryButton}`}
+                className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.medium} ${styles.button} ${styles.secondaryButton}`}
               >
                 Close
               </button>
@@ -498,13 +499,13 @@ export default function BracketGenerationModal({
             <div className={styles.buttonContainer}>
               <button
                 onClick={handleRegenerateClick}
-                className={`surface-primaryCta ${styles.button} ${styles.primaryButton}`}
+                className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.medium} ${styles.button} ${styles.primaryButton}`}
               >
                 Retry
               </button>
               <button
                 onClick={handleCloseModal}
-                className={`${styles.button} ${styles.secondaryButton}`}
+                className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.medium} ${styles.button} ${styles.secondaryButton}`}
               >
                 Close
               </button>
