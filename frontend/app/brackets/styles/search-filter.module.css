@@ -161,7 +161,7 @@
 .labelText {
   font-size: 0.72rem;
   font-weight: 800;
-  color: rgba(180, 189, 205, 0.76);
+  color: var(--bw-text-muted);
   letter-spacing: 0;
   text-transform: uppercase;
 }
@@ -169,50 +169,50 @@
 .searchInput {
   min-height: 32px;
   padding: 0 0.75rem;
-  border: 1px solid rgba(226, 232, 240, 0.16);
+  border: 1px solid var(--bw-border-subtle);
   border-radius: 10px;
-  background: rgba(8, 9, 15, 0.72);
-  color: rgba(246, 249, 255, 0.94);
+  background: color-mix(in srgb, var(--bw-surface-card) 84%, transparent);
+  color: var(--bw-text-title);
   font-size: 0.84rem;
   font-weight: 650;
 }
 
 .searchInput:focus {
-  border-color: rgba(255, 146, 72, 0.55);
-  box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.12);
+  border-color: var(--bw-border-accent);
+  box-shadow: var(--bw-focus-ring);
 }
 
 .searchInput::placeholder {
-  color: rgba(180, 189, 205, 0.66);
+  color: var(--bw-text-faint);
 }
 
 .resultCount {
   margin-top: 0;
-  color: rgba(255, 219, 190, 0.9);
+  color: var(--bw-text-accent);
   font-size: 0.72rem;
 }
 
 .resultCountEmpty {
-  color: rgba(254, 202, 202, 0.9);
+  color: var(--bw-text-danger);
 }
 
 .clearButton {
   min-height: 32px;
   margin-top: 1.45rem;
   padding: 0 0.7rem;
-  border: 1px solid rgba(226, 232, 240, 0.16);
+  border: 1px solid var(--bw-border-subtle);
   border-radius: 10px;
-  color: rgba(203, 213, 225, 0.86);
-  background: rgba(255, 255, 255, 0.025);
+  color: var(--bw-text-body);
+  background: var(--bw-surface-panel);
   font-size: 0.78rem;
   font-weight: 750;
   letter-spacing: 0;
 }
 
 .clearButton:hover {
-  color: rgba(255, 219, 190, 0.98);
-  background: rgba(255, 122, 0, 0.1);
-  border-color: rgba(255, 146, 72, 0.35);
+  color: var(--bw-text-accent);
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  border-color: var(--bw-border-accent);
 }
 
 .clearIcon {

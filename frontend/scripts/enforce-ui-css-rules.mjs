@@ -18,6 +18,7 @@ const emojiRegex = /[\u{1F300}-\u{1FAFF}]/u;
 const uiSymbolRegex = /[✓✔▲▼►▶◀◁←→↑↓⊕…⋯]/u;
 const uiSymbolEntityRegex = /&#(?:10003|10004);/;
 const fontFamilyLiteralRegex = /\bfont-family\s*:\s*(?!var\(|inherit\b|initial\b|unset\b)/;
+const transitionAllRegex = /\btransition\s*:\s*all\b/i;
 
 const violations = [];
 
@@ -62,6 +63,10 @@ function checkLine(filePath, lineNumber, line) {
     !line.includes('--print-font-family')
   ) {
     addViolation(filePath, lineNumber, 'use-shared-font-tokens', line);
+  }
+
+  if ((ext === '.css' || ext === '.scss') && transitionAllRegex.test(line)) {
+    addViolation(filePath, lineNumber, 'no-transition-all', line);
   }
 
   if (ext === '.ts' || ext === '.tsx' || ext === '.js' || ext === '.jsx') {

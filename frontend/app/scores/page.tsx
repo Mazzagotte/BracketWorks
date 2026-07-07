@@ -23,11 +23,11 @@ import buttonStyles from '../styles/buttons.module.css'
 import formStyles from '../styles/forms.module.css'
 import shellStyles from '../styles/page-shell.module.css'
 import tableStyles from '../styles/tables.module.css'
-import toolbarStyles from '../styles/toolbars.module.css'
 import { useToast } from '../components/Toast'
 import { usePagination, Pagination } from '../components/Performance'
 import { useAutoSave } from '../components/DataManagement'
 import NoTournamentState from '../components/NoTournamentState'
+import { DataTableToolbar, QuickActions } from '../components/primitives'
 import { logger } from '../lib/logger';
 import { handleTableArrowNavigation } from '../lib/tableKeyboard'
 import { getSelectedSquadId, getSelectedTournamentId, setSelectedSquad as persistSelectedSquad } from '../lib/selection-session'
@@ -1380,78 +1380,81 @@ export default function ScoresPage() {
   }, [hasMissingScore, players, tournament, selectedSquad, sessionToken])
 
   const scoresQuickActions = useMemo(() => (
-    <div className={cardStyles.quickActionsRow}>
-      <div className={cardStyles.quickActionsGroupLeft}>
-      <button
-        className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
-        onClick={() => setIsScoresGuideOpen(true)}
-      >
-        Scores Guide
-      </button>
-
-      <button
-        className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
-        onClick={handleExportScoresToExcel}
-        disabled={isExporting || players.length === 0}
-      >
-        {isExporting ? 'Exporting...' : 'Export to Excel'}
-      </button>
-
-      <button
-        className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
-        onClick={() => importFileRef.current?.click()}
-        disabled={isImporting || players.length === 0 || isScoresLocked}
-      >
-        {isImporting ? 'Importing...' : 'Import from Excel'}
-      </button>
-
-      {players.length > 0 && !isScoresLocked && (
-        <button
-          className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
-          onClick={() => { void markScoresComplete() }}
-        >
-          Calculate Payouts
-        </button>
-      )}
-
-      {players.length > 0 && isScoresLocked && (
-        <button
-          className={`${buttonStyles.button} ${buttonStyles.danger} ${buttonStyles.small} ${styles.quickActionDangerBtn}`}
-          onClick={unlockScoresTable}
-        >
-          Unlock Scores
-        </button>
-      )}
-      </div>
-
-      <div className={cardStyles.quickActionsGroupRight}>
-        {pendingSaves.length > 0 && (
-          <EnhancedButton
-            onClick={async () => {
-              await processPendingSaves()
-              addToast({
-                message: 'Sync completed!',
-                type: 'success',
-                duration: 3000
-              })
-            }}
-            variant="primary"
-            size="sm"
-            className={`${cardStyles.quickActionControl} ${buttonStyles.quickAction}`}
+    <QuickActions
+      left={(
+        <>
+          <button
+            className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
+            onClick={() => setIsScoresGuideOpen(true)}
           >
-            Sync Offline Scores ({pendingSaves.length})
-          </EnhancedButton>
-        )}
+            Scores Guide
+          </button>
 
-        {(process.env.NODE_ENV === 'development' || !!currentUser?.isAdmin) && players.length > 0 && (
-          <>
-            <button className={`${cardStyles.quickActionControl} ${styles.devButton} ${styles.quickActionDevBtn}`} onClick={handleRandomizeScores} disabled={isScoresLocked}>Randomize Scores</button>
-            <button className={`${cardStyles.quickActionControl} ${styles.devButton} ${styles.quickActionDevBtn}`} onClick={() => devClearGame(2)} disabled={isScoresLocked}>Clear Game 2</button>
-            <button className={`${cardStyles.quickActionControl} ${styles.devButton} ${styles.quickActionDevBtn}`} onClick={() => devClearGame(3)} disabled={isScoresLocked}>Clear Game 3</button>
-          </>
-        )}
-      </div>
-    </div>
+          <button
+            className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
+            onClick={handleExportScoresToExcel}
+            disabled={isExporting || players.length === 0}
+          >
+            {isExporting ? 'Exporting...' : 'Export to Excel'}
+          </button>
+
+          <button
+            className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
+            onClick={() => importFileRef.current?.click()}
+            disabled={isImporting || players.length === 0 || isScoresLocked}
+          >
+            {isImporting ? 'Importing...' : 'Import from Excel'}
+          </button>
+
+          {players.length > 0 && !isScoresLocked && (
+            <button
+              className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
+              onClick={() => { void markScoresComplete() }}
+            >
+              Calculate Payouts
+            </button>
+          )}
+
+          {players.length > 0 && isScoresLocked && (
+            <button
+              className={`${buttonStyles.button} ${buttonStyles.danger} ${buttonStyles.small} ${styles.quickActionDangerBtn}`}
+              onClick={unlockScoresTable}
+            >
+              Unlock Scores
+            </button>
+          )}
+        </>
+      )}
+      right={(
+        <>
+          {pendingSaves.length > 0 && (
+            <EnhancedButton
+              onClick={async () => {
+                await processPendingSaves()
+                addToast({
+                  message: 'Sync completed!',
+                  type: 'success',
+                  duration: 3000
+                })
+              }}
+              variant="primary"
+              size="sm"
+              className={`${cardStyles.quickActionControl} ${buttonStyles.quickAction}`}
+            >
+              Sync Offline Scores ({pendingSaves.length})
+            </EnhancedButton>
+          )}
+
+          {(process.env.NODE_ENV === 'development' || !!currentUser?.isAdmin) && players.length > 0 && (
+            <>
+              <button className={`${cardStyles.quickActionControl} ${styles.devButton} ${styles.quickActionDevBtn}`} onClick={handleRandomizeScores} disabled={isScoresLocked}>Randomize Scores</button>
+              <button className={`${cardStyles.quickActionControl} ${styles.devButton} ${styles.quickActionDevBtn}`} onClick={() => devClearGame(2)} disabled={isScoresLocked}>Clear Game 2</button>
+              <button className={`${cardStyles.quickActionControl} ${styles.devButton} ${styles.quickActionDevBtn}`} onClick={() => devClearGame(3)} disabled={isScoresLocked}>Clear Game 3</button>
+            </>
+          )}
+        </>
+      )}
+    />
   ), [players, handleRandomizeScores, devClearGame, pendingSaves.length, addToast, processPendingSaves, handleExportScoresToExcel, isExporting, isImporting, isScoresLocked, unlockScoresTable, currentUser, markScoresComplete])
 
   usePageHeader({
@@ -1908,31 +1911,39 @@ export default function ScoresPage() {
           {!showInitialScoresLoad && players.length > 0 && (
             <div className={`${cardStyles.card} ${cardStyles.accentCard} ${styles.scoresSearchCard}`}>
               <h3 className={`${cardStyles.cardTitle} ${cardStyles.cardTitleCompact} ${styles.scoresSearchTitle}`}>Search Scores</h3>
-              <div className={`${toolbarStyles.toolbar} ${toolbarStyles.group} ${styles.scoresSearchRow}`}>
-                <input
-                  type="text"
-                  className={`${formStyles.search} ${formStyles.compactControl} ${toolbarStyles.grow} ${styles.scoresSearchInput}`}
-                  placeholder="First name"
-                  value={searchFirstName}
-                  onChange={(event) => setSearchFirstName(event.target.value)}
+              <div className={styles.scoresSearchRow}>
+                <DataTableToolbar
+                  left={(
+                    <>
+                      <input
+                        type="text"
+                        className={`${formStyles.search} ${formStyles.compactControl} ${styles.scoresSearchInput}`}
+                        placeholder="First name"
+                        value={searchFirstName}
+                        onChange={(event) => setSearchFirstName(event.target.value)}
+                      />
+                      <input
+                        type="text"
+                        className={`${formStyles.search} ${formStyles.compactControl} ${styles.scoresSearchInput}`}
+                        placeholder="Last name"
+                        value={searchLastName}
+                        onChange={(event) => setSearchLastName(event.target.value)}
+                      />
+                    </>
+                  )}
+                  right={(
+                    <button
+                      type="button"
+                      className={styles.scoresSearchClear}
+                      onClick={() => {
+                        setSearchFirstName('')
+                        setSearchLastName('')
+                      }}
+                    >
+                      Clear
+                    </button>
+                  )}
                 />
-                <input
-                  type="text"
-                  className={`${formStyles.search} ${formStyles.compactControl} ${toolbarStyles.grow} ${styles.scoresSearchInput}`}
-                  placeholder="Last name"
-                  value={searchLastName}
-                  onChange={(event) => setSearchLastName(event.target.value)}
-                />
-                <button
-                  type="button"
-                  className={styles.scoresSearchClear}
-                  onClick={() => {
-                    setSearchFirstName('')
-                    setSearchLastName('')
-                  }}
-                >
-                  Clear
-                </button>
               </div>
             </div>
           )}

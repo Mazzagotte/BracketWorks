@@ -650,7 +650,7 @@
     z-index: 10;
     padding: 8px 0 0;
     margin-top: 0.25rem;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, var(--color-brand-ivory-light) 28%);
+    background: linear-gradient(180deg, transparent 0%, var(--color-brand-ivory-light) 28%);
   }
 
   .submitBtn {
@@ -710,43 +710,43 @@
   font-size: 0.75rem;
   font-weight: 600;
   margin-bottom: 0.28rem;
-  color: rgba(220, 224, 233, 0.86);
+  color: var(--bw-text-body);
 }
 
 .fieldInput {
   width: 100%;
   padding: 0.45rem 0.6rem;
-  border: 1px solid rgba(156, 163, 175, 0.3);
+  border: 1px solid var(--bw-border-subtle);
   border-radius: 0.55rem;
   font-size: 0.8125rem;
   box-sizing: border-box;
   height: 38px;
   line-height: 1.2;
-  background: rgba(12, 13, 19, 0.9);
-  color: rgba(245, 248, 255, 0.95);
+  background: var(--bw-surface-card-strong);
+  color: var(--bw-text-title);
   transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
 .fieldInput:focus {
   outline: none;
-  border-color: #ff7a00;
-  box-shadow: 0 0 0 1px rgba(255, 122, 0, 0.45), 0 0 0 4px rgba(255, 122, 0, 0.12);
-  background: rgba(11, 12, 18, 0.96);
+  border-color: var(--color-primary);
+  box-shadow: var(--bw-focus-ring);
+  background: var(--bw-surface-card);
 }
 
 .compactSection {
   margin-bottom: 0.6rem;
   padding: 0.9rem;
-  background: linear-gradient(165deg, rgba(17, 17, 25, 0.92) 0%, rgba(13, 14, 21, 0.86) 100%);
-  border: 1px solid rgba(170, 176, 190, 0.26);
+  background: linear-gradient(165deg, color-mix(in srgb, var(--bw-surface-card-strong) 96%, transparent) 0%, color-mix(in srgb, var(--bw-surface-card) 92%, transparent) 100%);
+  border: 1px solid var(--bw-border-subtle);
   border-radius: 18px;
-  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.24);
+  box-shadow: var(--bw-shadow-card);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .compactSection:hover {
-  border-color: rgba(193, 200, 214, 0.42);
-  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.28);
+  border-color: var(--bw-border-card);
+  box-shadow: 0 16px 30px var(--opacity-black-30);
 }
 
 .compactSectionHeader {
@@ -763,7 +763,7 @@
   font-weight: 700;
   line-height: 1.1;
   letter-spacing: 0.02em;
-  color: rgba(246, 249, 255, 0.96);
+  color: var(--bw-text-title);
 }
 
 .compactGrid {
@@ -803,9 +803,9 @@
 .stepperBtn {
   height: 36px;
   border-radius: 10px;
-  border: 1px solid rgba(156, 163, 175, 0.32);
-  background: rgba(18, 20, 28, 0.92);
-  color: rgba(221, 226, 236, 0.9);
+  border: 1px solid var(--bw-border-subtle);
+  background: var(--bw-surface-card-strong);
+  color: var(--bw-text-body);
   font-size: 1.15rem;
   font-weight: 700;
   line-height: 1;
@@ -814,15 +814,15 @@
 }
 
 .stepperBtn:hover:not(:disabled) {
-  border-color: rgba(199, 206, 220, 0.45);
-  color: rgba(245, 249, 255, 0.97);
+  border-color: var(--bw-border-card);
+  color: var(--bw-text-title);
   transform: translateY(-1px);
 }
 
 .stepperBtn:focus-visible {
   outline: none;
-  border-color: #ff7a00;
-  box-shadow: 0 0 0 1px rgba(255, 122, 0, 0.45), 0 0 0 4px rgba(255, 122, 0, 0.12);
+  border-color: var(--color-primary);
+  box-shadow: var(--bw-focus-ring);
 }
 
 .stepperBtn:disabled {
@@ -831,29 +831,29 @@
 }
 
 .stepperBtnMinus {
-  background: rgba(17, 19, 27, 0.94);
-  color: rgba(210, 216, 229, 0.9);
+  background: var(--bw-surface-card);
+  color: var(--bw-text-body);
 }
 
 .stepperBtnPlus {
-  background: linear-gradient(140deg, rgba(255, 138, 30, 0.22) 0%, rgba(255, 122, 0, 0.22) 100%), rgba(18, 20, 28, 0.92);
-  border-color: rgba(255, 133, 40, 0.46);
-  color: rgba(255, 186, 130, 0.98);
+  background: linear-gradient(140deg, color-mix(in srgb, var(--color-primary) 22%, transparent) 0%, color-mix(in srgb, var(--color-primary) 18%, transparent) 100%), var(--bw-surface-card-strong);
+  border-color: var(--bw-border-accent);
+  color: var(--bw-text-accent);
 }
 
 .stepperBtnMinus:hover:not(:disabled) {
-  border-color: rgba(255, 122, 0, 0.55);
-  color: rgba(255, 178, 118, 0.98);
+  border-color: var(--bw-border-accent);
+  color: var(--bw-text-accent);
 }
 
 .stepperBtnPlus:hover:not(:disabled) {
-  border-color: rgba(255, 148, 63, 0.66);
-  color: rgba(255, 199, 147, 1);
+  border-color: color-mix(in srgb, var(--color-primary) 52%, white);
+  color: var(--bw-text-title);
 }
 
 .submitBtn {
-  background: linear-gradient(140deg, #ff9a3d 0%, #ff7a00 52%, #e55b00 100%);
-  color: white;
+  background: var(--gradient-brand);
+  color: var(--color-white);
   padding: 0.75rem 1.5rem;
   border: none;
   border-radius: 12px;
@@ -861,13 +861,13 @@
   font-weight: 700;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
-  box-shadow: 0 9px 22px rgba(255, 122, 0, 0.32), 0 0 0 1px rgba(255, 165, 86, 0.22) inset;
+  box-shadow: var(--bw-shadow-accent), inset 0 0 0 1px color-mix(in srgb, var(--color-primary) 24%, white);
 }
 
 .submitBtn:hover:not(:disabled) {
   filter: brightness(1.05);
   transform: translateY(-1px);
-  box-shadow: 0 12px 24px rgba(255, 122, 0, 0.4), 0 0 0 1px rgba(255, 165, 86, 0.28) inset;
+  box-shadow: 0 12px 24px color-mix(in srgb, var(--color-primary) 28%, transparent), inset 0 0 0 1px color-mix(in srgb, var(--color-primary) 30%, white);
 }
 
 .submitBtn:disabled {
@@ -887,15 +887,15 @@
   margin-right: auto;
   font-size: 0.78rem;
   font-weight: 600;
-  color: rgba(170, 178, 194, 0.82);
+  color: var(--bw-text-muted);
 }
 
 .formStatusHintRequired {
-  color: rgba(178, 186, 201, 0.78);
+  color: var(--bw-text-faint);
 }
 
 .formStatusHintReady {
-  color: rgba(156, 225, 179, 0.88);
+  color: var(--bw-text-success);
 }
 
 @media (max-width: 820px) {
@@ -961,7 +961,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(198, 204, 218, 0.76);
+  color: var(--bw-text-muted);
 }
 
 .playerInfoGrid {
@@ -976,13 +976,13 @@
 }
 
 .findBowlerInput::placeholder {
-  color: rgba(186, 194, 210, 0.82);
+  color: var(--bw-text-faint);
 }
 
 .paymentSummaryPanel {
-  border: 1px solid rgba(164, 171, 186, 0.24);
+  border: 1px solid var(--bw-border-subtle);
   border-radius: 14px;
-  background: rgba(13, 14, 20, 0.78);
+  background: color-mix(in srgb, var(--bw-surface-card) 88%, transparent);
   padding: 0.65rem;
 }
 
@@ -996,29 +996,29 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border: 1px solid rgba(152, 160, 175, 0.28);
+  border: 1px solid var(--bw-border-subtle);
   border-radius: 999px;
   padding: 0.3rem 0.62rem;
-  background: rgba(21, 23, 31, 0.82);
-  color: rgba(226, 231, 240, 0.9);
+  background: var(--bw-surface-card-strong);
+  color: var(--bw-text-body);
   font-size: 0.78rem;
   font-weight: 650;
 }
 
 .paymentSummaryRowPaid {
-  border-color: rgba(70, 176, 109, 0.42);
-  color: rgba(146, 240, 176, 0.95);
+  border-color: var(--color-success-border);
+  color: var(--bw-text-success);
 }
 
 .paymentSummaryRowDue {
-  border-color: rgba(255, 122, 0, 0.45);
-  color: rgba(255, 169, 102, 0.98);
+  border-color: var(--bw-border-accent);
+  color: var(--bw-text-accent);
 }
 
 .searchActionBtn {
-  background: linear-gradient(135deg, #ff8a1e 0%, #ff7a00 56%, #e05e00 100%);
-  color: #ffffff;
-  border: 1px solid rgba(255, 153, 70, 0.45);
+  background: var(--gradient-brand);
+  color: var(--color-white);
+  border: 1px solid var(--bw-border-accent);
   border-radius: 10px;
   min-height: 40px;
   padding: 0.52rem 0.95rem;
@@ -1027,13 +1027,13 @@
   white-space: nowrap;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
-  box-shadow: 0 7px 17px rgba(255, 122, 0, 0.3);
+  box-shadow: var(--bw-shadow-accent);
 }
 
 .searchActionBtn:hover:not(:disabled) {
   transform: translateY(-1px);
   filter: brightness(1.05);
-  box-shadow: 0 10px 20px rgba(255, 122, 0, 0.36);
+  box-shadow: 0 10px 20px color-mix(in srgb, var(--color-primary) 24%, transparent);
 }
 
 .searchActionBtn:disabled {
@@ -1043,9 +1043,9 @@
 }
 
 .clearSearchBtn {
-  background: rgba(11, 13, 20, 0.62);
-  color: rgba(180, 188, 204, 0.84);
-  border: 1px solid rgba(136, 145, 160, 0.28);
+  background: color-mix(in srgb, var(--entries-panel-deep) 62%, transparent);
+  color: var(--entries-text-body);
+  border: 1px solid color-mix(in srgb, var(--entries-border-soft) 70%, transparent);
   border-radius: 10px;
   min-height: 40px;
   padding: 0.52rem 0.95rem;
@@ -1057,9 +1057,9 @@
 
 .clearSearchBtn:hover:not(:disabled),
 .clearSearchBtnActive {
-  border-color: rgba(206, 212, 223, 0.52);
-  color: rgba(238, 242, 250, 0.95);
-  background: rgba(18, 20, 29, 0.86);
+  border-color: color-mix(in srgb, var(--entries-border-strong) 78%, transparent);
+  color: var(--entries-text-title);
+  background: color-mix(in srgb, var(--entries-panel-deep) 86%, transparent);
 }
 
 .clearSearchBtn:disabled {
@@ -1374,6 +1374,20 @@
   --entries-panel-strong: var(--bw-surface-panel-strong);
   --entries-panel-deep: var(--bw-surface-card-strong);
   --entries-orange-ring: var(--bw-focus-ring);
+  --entries-text-title: var(--bw-text-title);
+  --entries-text-body: var(--bw-text-body);
+  --entries-text-muted: var(--bw-text-muted);
+  --entries-text-faint: var(--bw-text-faint);
+  --entries-text-accent: var(--bw-text-accent);
+  --entries-surface-faint: color-mix(in srgb, var(--bw-surface-panel) 68%, transparent);
+  --entries-surface-soft: color-mix(in srgb, var(--bw-surface-panel-strong) 78%, transparent);
+  --entries-surface-deep-soft: color-mix(in srgb, var(--bw-surface-card) 74%, transparent);
+  --entries-border-soft: color-mix(in srgb, var(--bw-border-subtle) 68%, transparent);
+  --entries-border-strong: var(--bw-border-card);
+  --entries-accent-bg: color-mix(in srgb, var(--color-primary) 7%, transparent);
+  --entries-accent-bg-strong: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  --entries-accent-border-strong: color-mix(in srgb, var(--color-primary) 42%, transparent);
+  --entries-accent-border-solid: color-mix(in srgb, var(--color-primary) 85%, transparent);
   width: 100%;
   max-width: min(1680px, 100%);
   margin: 0 auto;
@@ -1396,11 +1410,48 @@
   -webkit-backdrop-filter: blur(18px);
 }
 
+.formCard,
+.summaryCard {
+  border-color: var(--entries-border-strong);
+  box-shadow: var(--entries-shadow);
+}
+
+.tableCard,
+.skeletonCard {
+  border-color: var(--entries-border);
+  box-shadow: none;
+}
+
+.formCard,
+.summaryCard,
+.tableCard,
+.findBowlerCard,
+.addBowlerCard {
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+.formCard:hover,
+.summaryCard:hover,
+.tableCard:hover,
+.findBowlerCard:hover,
+.addBowlerCard:hover {
+  transform: translateY(-1px);
+  border-color: var(--entries-border-strong);
+}
+
 .formTitle,
 .formTitleToggle,
 .summaryHeader {
   background: var(--entries-panel);
   border-bottom: 1px solid var(--entries-border);
+}
+
+.formTitle,
+.formTitleToggle,
+.summaryHeader,
+.entriesTableHeader {
+  padding-top: 12px;
+  padding-bottom: 10px;
 }
 
 .summaryCard,
@@ -1413,6 +1464,14 @@
 .historyPanelBody,
 .tableSearchPanelBody {
   background: transparent;
+}
+
+.summaryGrid,
+.tableCard .tableSearchPanelBody,
+.findBowlerCard .historyPanelBody,
+.addBowlerCard form {
+  padding-left: 14px;
+  padding-right: 14px;
 }
 
 .searchContainer {
@@ -1430,13 +1489,13 @@
 
 .searchInput::placeholder,
 .fieldInput::placeholder {
-  color: rgba(180, 189, 205, 0.72);
+  color: var(--entries-text-muted);
 }
 
 .searchInput:focus,
 .fieldInput:focus,
 .fieldSelect:focus {
-  border-color: rgba(255, 122, 0, 0.85);
+  border-color: var(--entries-accent-border-solid);
   box-shadow: var(--entries-orange-ring);
 }
 
@@ -1462,15 +1521,15 @@
 }
 
 .tableCard :global(.players-table-row) {
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--entries-surface-faint);
 }
 
 .tableCard :global(.players-table-row:nth-child(even)) {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--entries-surface-soft);
 }
 
 .tableCard :global(.players-table-row:hover) {
-  background: rgba(255, 255, 255, 0.08) !important;
+  background: color-mix(in srgb, var(--bw-surface-panel-strong) 88%, transparent) !important;
 }
 
 @media (max-width: 900px) {
@@ -1495,18 +1554,35 @@
 .findBowlerCard {
   max-width: none;
   margin-bottom: 1.1rem;
+  border: 1px solid var(--entries-border);
+  background: var(--entries-surface);
 }
 
 .addBowlerCard {
   max-width: none;
+  border: 1px solid var(--entries-border-strong);
+  background: var(--entries-surface);
 }
 
 .findBowlerCard .formTitle,
 .addBowlerCard .formTitle {
-  color: rgba(246, 249, 255, 0.96);
+  color: var(--entries-text-title);
   border-bottom: 1px solid var(--entries-border);
   background: var(--entries-panel);
   padding-bottom: 0.48rem;
+}
+
+.findBowlerCard .formTitle::before,
+.addBowlerCard .formTitle::before,
+.entriesTableTitle::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-primary) 76%, transparent);
+  vertical-align: middle;
 }
 
 .findBowlerCard .historyPanelBody {
@@ -1515,7 +1591,7 @@
 }
 
 .findBowlerCard .historyHelperText {
-  color: rgba(190, 197, 212, 0.8);
+  color: var(--entries-text-muted);
 }
 
 .findBowlerCard .findBowlerSearchRow {
@@ -1524,13 +1600,13 @@
 
 .addBowlerCard .formSubtitle {
   padding: 0.42rem 1rem 0.12rem;
-  color: rgba(198, 205, 219, 0.78);
+  color: var(--entries-text-muted);
 }
 
 .addBowlerCard .formSectionLabel {
   margin: 0 0 0.55rem;
   letter-spacing: 0.1em;
-  color: rgba(176, 184, 201, 0.78);
+  color: var(--entries-text-faint);
 }
 
 .addBowlerCard .formGrid {
@@ -1542,12 +1618,12 @@
 .findBowlerCard .searchInput {
   background: var(--entries-panel-deep);
   border: 1px solid var(--entries-border);
-  color: rgba(245, 248, 255, 0.95);
+  color: var(--entries-text-title);
 }
 
 .addBowlerCard .fieldInput:focus,
 .findBowlerCard .searchInput:focus {
-  border-color: rgba(255, 122, 0, 0.85);
+  border-color: var(--entries-accent-border-solid);
   box-shadow: var(--entries-orange-ring);
 }
 
@@ -1571,14 +1647,14 @@
 }
 
 .addBowlerCard .stepperBtn {
-  background: rgba(255, 255, 255, 0.035);
+  background: var(--entries-surface-soft);
   border-color: var(--entries-border);
 }
 
 .addBowlerCard .stepperBtn:hover:not(:disabled),
 .addBowlerCard .stepperBtn:focus-visible {
-  border-color: #ff7a00;
-  color: rgba(255, 181, 120, 1);
+  border-color: var(--entries-accent-border-solid);
+  color: var(--entries-text-accent);
 }
 
 .findBowlerCard .searchActionBtn {
@@ -1592,20 +1668,20 @@
   background: var(--color-primary-hover);
   border-color: var(--color-primary-hover);
   transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.13);
+  box-shadow: 0 4px 14px var(--opacity-black-16);
 }
 
 .findBowlerCard .clearSearchBtn {
-  background: rgba(13, 15, 22, 0.62);
-  border-color: rgba(226, 232, 240, 0.18);
-  color: rgba(226, 232, 240, 0.82);
+  background: var(--entries-surface-deep-soft);
+  border-color: var(--entries-border-soft);
+  color: var(--entries-text-body);
 }
 
 .findBowlerCard .clearSearchBtn:hover:not(:disabled),
 .findBowlerCard .clearSearchBtnActive {
-  border-color: rgba(255, 122, 0, 0.42);
-  color: rgba(255, 232, 212, 0.94);
-  background: rgba(255, 122, 0, 0.07);
+  border-color: var(--entries-accent-border-strong);
+  color: var(--entries-text-title);
+  background: var(--entries-accent-bg);
 }
 
 @media (max-width: 900px) {
@@ -1646,7 +1722,7 @@
 .summaryTitle {
   padding: 0;
   margin: 0;
-  color: rgba(244, 247, 255, 0.97);
+  color: var(--entries-text-title);
   font-size: 1.01rem;
   font-weight: 700;
   letter-spacing: 0.01em;
@@ -1654,7 +1730,7 @@
 
 .summarySubtitle {
   margin: 0;
-  color: rgba(191, 199, 214, 0.74);
+  color: var(--entries-text-muted);
   font-size: 0.75rem;
   letter-spacing: 0.02em;
 }
@@ -1678,9 +1754,9 @@
 }
 
 .statRefund {
-  background: rgba(255, 122, 0, 0.08);
-  border: 1px solid rgba(255, 122, 0, 0.42);
-  color: rgba(255, 188, 136, 0.95);
+  background: var(--entries-accent-bg-strong);
+  border: 1px solid var(--entries-accent-border-strong);
+  color: var(--entries-text-accent);
 }
 
 @media (max-width: 900px) {
@@ -1719,7 +1795,7 @@
 /* Search Entries + Entries Table command-center polish */
 .tableCard .formTitle,
 .tableCard .formTitleToggle {
-  color: rgba(246, 249, 255, 0.96);
+  color: var(--entries-text-title);
   background: var(--entries-panel);
   border-bottom: 1px solid var(--entries-border);
 }
@@ -1734,7 +1810,7 @@
   background: var(--entries-panel);
   border: 1px solid var(--entries-border);
   border-radius: 14px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  box-shadow: inset 0 1px 0 var(--entries-panel-strong);
 }
 
 .searchContainerSticky {
@@ -1746,29 +1822,29 @@
 .tableSearchPanelBody .searchInput {
   background: var(--entries-panel-deep);
   border: 1px solid var(--entries-border);
-  color: rgba(245, 248, 255, 0.95);
+  color: var(--entries-text-title);
 }
 
 .tableSearchPanelBody .searchInput::placeholder {
-  color: rgba(180, 189, 205, 0.78);
+  color: var(--entries-text-muted);
 }
 
 .tableSearchPanelBody .searchInput:focus {
-  border-color: rgba(255, 122, 0, 0.85);
+  border-color: var(--entries-accent-border-solid);
   box-shadow: var(--entries-orange-ring);
 }
 
 .tableSearchPanelBody .clearSearchBtn {
-  background: rgba(13, 16, 24, 0.72);
-  border-color: rgba(136, 145, 160, 0.32);
-  color: rgba(194, 203, 218, 0.88);
+  background: var(--entries-surface-deep-soft);
+  border-color: var(--entries-border-soft);
+  color: var(--entries-text-body);
 }
 
 .tableSearchPanelBody .clearSearchBtn:hover:not(:disabled),
 .tableSearchPanelBody .clearSearchBtnActive {
-  border-color: rgba(206, 212, 223, 0.52);
-  color: rgba(242, 246, 255, 0.97);
-  background: rgba(19, 21, 31, 0.9);
+  border-color: var(--entries-border-strong);
+  color: var(--entries-text-title);
+  background: color-mix(in srgb, var(--entries-panel-deep) 92%, transparent);
 }
 
 .tableCard :global(.entries-container) {
@@ -1792,7 +1868,7 @@
 
 .tableCard :global(.entries-header-cell) {
   background: var(--entries-panel);
-  color: rgba(182, 191, 207, 0.9);
+  color: var(--entries-text-body);
   font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -1801,35 +1877,35 @@
 }
 
 .tableCard :global(.entries-cell) {
-  border-bottom: 1px solid rgba(226, 232, 240, 0.08);
+  border-bottom: 1px solid color-mix(in srgb, var(--entries-border) 66%, transparent);
 }
 
 .tableCard :global(.players-table-row) {
-  background: rgba(255, 255, 255, 0.018);
+  background: color-mix(in srgb, var(--entries-panel) 60%, transparent);
   transition: background-color 0.18s ease, box-shadow 0.18s ease;
 }
 
 .tableCard :global(.players-table-row:nth-child(even)) {
-  background: rgba(255, 255, 255, 0.038);
+  background: color-mix(in srgb, var(--entries-panel-strong) 68%, transparent);
 }
 
 .tableCard :global(.players-table-row:hover) {
-  background: rgba(255, 122, 0, 0.05) !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  background: color-mix(in srgb, var(--color-primary) 5%, transparent) !important;
+  box-shadow: inset 0 1px 0 var(--entries-panel-strong);
 }
 
 .tableCard :global(.entries-input.entries-control),
 .tableCard :global(.entries-select.entries-control) {
-  background: rgba(11, 13, 20, 0.9);
-  color: rgba(243, 247, 255, 0.96);
-  border: 1px solid rgba(141, 151, 170, 0.34);
+  background: color-mix(in srgb, var(--entries-panel-deep) 92%, transparent);
+  color: var(--entries-text-title);
+  border: 1px solid var(--entries-border-soft);
   border-radius: 9px;
 }
 
 .tableCard :global(.entries-input.entries-control:focus),
 .tableCard :global(.entries-select.entries-control:focus) {
-  border-color: #ff7a00;
-  box-shadow: 0 0 0 1px rgba(255, 122, 0, 0.45), 0 0 0 4px rgba(255, 122, 0, 0.1);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-primary) 45%, transparent), 0 0 0 4px color-mix(in srgb, var(--color-primary) 10%, transparent);
 }
 
 @media (max-width: 900px) {
@@ -1856,7 +1932,7 @@
   max-width: 1500px;
   margin: 0 auto;
   padding: 1.1rem 1.15rem 1.4rem;
-  background: #111119;
+  background: var(--bw-page);
 }
 
 .entriesSectionWidth {
@@ -1882,35 +1958,35 @@
   padding: 0.86rem 1rem 0.72rem;
   font-size: 1rem;
   font-weight: 800;
-  color: rgba(246, 249, 255, 0.97);
-  background: rgba(255, 255, 255, 0.02);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--bw-text-title);
+  background: var(--bw-surface-panel);
+  border-bottom: 1px solid var(--bw-border-subtle);
 }
 
 .quickActionDevBtn {
   border-style: dashed;
-  border-color: rgba(157, 166, 183, 0.36);
-  color: rgba(194, 203, 218, 0.9);
-  background: rgba(16, 18, 26, 0.7);
+  border-color: color-mix(in srgb, var(--entries-border-soft) 84%, transparent);
+  color: var(--entries-text-body);
+  background: color-mix(in srgb, var(--entries-panel-deep) 70%, transparent);
 }
 
 .quickActionDevBtn:hover:not(:disabled) {
-  border-color: rgba(188, 196, 211, 0.46);
-  color: rgba(230, 236, 247, 0.95);
-  background: rgba(22, 24, 34, 0.84);
+  border-color: color-mix(in srgb, var(--entries-border-strong) 68%, transparent);
+  color: var(--entries-text-title);
+  background: color-mix(in srgb, var(--entries-panel-deep) 84%, transparent);
 }
 
 .quickActionDangerBtn {
   border-style: solid;
-  border-color: rgba(209, 95, 95, 0.36);
-  color: rgba(239, 168, 168, 0.9);
-  background: rgba(45, 18, 20, 0.6);
+  border-color: color-mix(in srgb, var(--color-error) 40%, transparent);
+  color: color-mix(in srgb, var(--color-error) 38%, var(--bw-text-title));
+  background: color-mix(in srgb, var(--color-error-darker) 22%, transparent);
 }
 
 .quickActionDangerBtn:hover:not(:disabled) {
-  border-color: rgba(234, 116, 116, 0.56);
-  color: rgba(255, 197, 197, 0.95);
-  background: rgba(62, 24, 27, 0.8);
+  border-color: color-mix(in srgb, var(--color-error) 58%, transparent);
+  color: color-mix(in srgb, var(--color-error) 22%, var(--bw-text-title));
+  background: color-mix(in srgb, var(--color-error-darker) 30%, transparent);
 }
 
 .findBowlerCard {
@@ -1924,7 +2000,7 @@
 .findBowlerCard .historyHelperText {
   margin: 0 0 0.48rem;
   font-size: 0.82rem;
-  color: rgba(184, 193, 208, 0.82);
+  color: var(--entries-text-muted);
 }
 
 .findBowlerCard .searchContainer {
@@ -1946,18 +2022,18 @@
   min-height: 42px;
   padding: 0.68rem 0.82rem;
   border-radius: 11px;
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: rgba(244, 247, 255, 0.95);
+  background: var(--opacity-black-20);
+  border: 1px solid var(--bw-border-subtle);
+  color: var(--entries-text-title);
 }
 
 .findBowlerCard .searchInput::placeholder {
-  color: rgba(169, 178, 195, 0.72);
+  color: var(--entries-text-muted);
 }
 
 .findBowlerCard .searchInput:focus {
-  border-color: #ff7a00;
-  box-shadow: 0 0 0 1px rgba(255, 122, 0, 0.44), 0 0 0 4px rgba(255, 122, 0, 0.1);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-primary) 44%, transparent), 0 0 0 4px color-mix(in srgb, var(--color-primary) 10%, transparent);
 }
 
 .findBowlerCard .searchActionBtn,
@@ -1969,33 +2045,33 @@
 }
 
 .findBowlerCard .searchActionBtn {
-  background: linear-gradient(135deg, #ff8a1e 0%, #ff7a00 56%, #df5b00 100%);
-  border: 1px solid rgba(255, 152, 78, 0.46);
-  color: #fff;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 68%, white) 0%, var(--color-primary) 56%, color-mix(in srgb, var(--color-primary-hover) 86%, black) 100%);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 46%, white);
+  color: var(--color-white);
 }
 
 .findBowlerCard .searchActionBtn:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 9px 20px rgba(255, 122, 0, 0.34);
+  box-shadow: 0 9px 20px color-mix(in srgb, var(--color-primary) 34%, transparent);
 }
 
 .findBowlerCard .clearSearchBtn {
-  background: rgba(13, 16, 24, 0.72);
-  border: 1px solid rgba(138, 148, 164, 0.32);
-  color: rgba(191, 201, 217, 0.86);
+  background: color-mix(in srgb, var(--entries-panel-deep) 72%, transparent);
+  border: 1px solid var(--entries-border-soft);
+  color: var(--entries-text-body);
 }
 
 .findBowlerCard .clearSearchBtn:hover:not(:disabled),
 .findBowlerCard .clearSearchBtnActive {
-  border-color: rgba(197, 205, 219, 0.48);
-  color: rgba(235, 241, 250, 0.96);
-  background: rgba(18, 21, 30, 0.9);
+  border-color: var(--entries-border-strong);
+  color: var(--entries-text-title);
+  background: color-mix(in srgb, var(--entries-panel-deep) 90%, transparent);
 }
 
 .addBowlerCard .formSubtitle {
   margin: 0;
   padding: 0.48rem 1rem 0.12rem;
-  color: rgba(185, 194, 209, 0.78);
+  color: var(--entries-text-muted);
   font-size: 0.79rem;
 }
 
@@ -2008,7 +2084,7 @@
   font-size: 0.72rem;
   letter-spacing: 0.09em;
   font-weight: 800;
-  color: rgba(176, 185, 200, 0.8);
+  color: var(--entries-text-faint);
 }
 
 .addBowlerCard .formGrid {
@@ -2021,7 +2097,7 @@
   margin-bottom: 0.33rem;
   font-size: 0.74rem;
   font-weight: 700;
-  color: rgba(202, 210, 224, 0.86);
+  color: var(--entries-text-body);
 }
 
 .addBowlerCard .fieldInput,
@@ -2029,19 +2105,19 @@
   min-height: 42px;
   padding: 0.62rem 0.78rem;
   border-radius: 11px;
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: rgba(245, 248, 255, 0.96);
+  background: color-mix(in srgb, var(--entries-panel-deep) 76%, transparent);
+  border: 1px solid color-mix(in srgb, var(--entries-border-soft) 80%, transparent);
+  color: var(--entries-text-title);
 }
 
 .addBowlerCard .fieldInput::placeholder {
-  color: rgba(168, 177, 194, 0.7);
+  color: var(--entries-text-muted);
 }
 
 .addBowlerCard .fieldInput:focus,
 .addBowlerCard .fieldSelect:focus {
-  border-color: #ff7a00;
-  box-shadow: 0 0 0 1px rgba(255, 122, 0, 0.45), 0 0 0 4px rgba(255, 122, 0, 0.12);
+  border-color: color-mix(in srgb, var(--color-primary) 72%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-primary) 45%, transparent), 0 0 0 4px color-mix(in srgb, var(--color-primary) 12%, transparent);
 }
 
 .addBowlerCard .compactSection {
@@ -2054,7 +2130,7 @@
 .addBowlerCard .compactSectionTitle {
   font-size: 0.95rem;
   font-weight: 700;
-  color: rgba(244, 247, 255, 0.96);
+  color: var(--entries-text-title);
 }
 
 .addBowlerCard .entriesPaymentRow {
@@ -2069,7 +2145,7 @@
   font-size: 0.7rem;
   font-weight: 800;
   letter-spacing: 0.09em;
-  color: rgba(176, 185, 199, 0.8);
+  color: var(--entries-text-muted);
 }
 
 .addBowlerCard .compactGrid {
@@ -2087,8 +2163,8 @@
   gap: 0.56rem;
   padding: 0.3rem 0.42rem;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--entries-border);
+  background: var(--entries-surface-faint);
 }
 
 .addBowlerCard .compactField .fieldLabel {
@@ -2114,27 +2190,27 @@
 }
 
 .addBowlerCard .stepperBtn {
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(13, 15, 23, 0.9);
-  color: rgba(214, 222, 235, 0.92);
+  border: 1px solid var(--entries-border-soft);
+  background: color-mix(in srgb, var(--entries-panel-deep) 90%, transparent);
+  color: var(--entries-text-body);
   font-size: 0.92rem;
 }
 
 .addBowlerCard .stepperBtnMinus:hover:not(:disabled) {
-  border-color: rgba(255, 148, 63, 0.5);
-  color: rgba(255, 196, 146, 0.98);
-  background: rgba(18, 20, 29, 0.94);
+  border-color: color-mix(in srgb, var(--color-primary) 50%, white);
+  color: var(--entries-text-accent);
+  background: color-mix(in srgb, var(--entries-panel-deep) 94%, transparent);
 }
 
 .addBowlerCard .stepperBtnPlus {
-  border-color: rgba(255, 152, 78, 0.5);
-  background: linear-gradient(140deg, rgba(255, 138, 30, 0.24) 0%, rgba(255, 122, 0, 0.2) 100%), rgba(14, 16, 24, 0.92);
-  color: rgba(255, 193, 142, 0.98);
+  border-color: color-mix(in srgb, var(--color-primary) 50%, white);
+  background: linear-gradient(140deg, color-mix(in srgb, var(--color-primary) 24%, transparent) 0%, color-mix(in srgb, var(--color-primary) 20%, transparent) 100%), color-mix(in srgb, var(--entries-panel-deep) 92%, transparent);
+  color: var(--entries-text-accent);
 }
 
 .addBowlerCard .stepperBtnPlus:hover:not(:disabled) {
-  border-color: rgba(255, 165, 96, 0.62);
-  color: rgba(255, 214, 172, 1);
+  border-color: color-mix(in srgb, var(--color-primary) 62%, white);
+  color: var(--entries-text-title);
 }
 
 .addBowlerCard .stepperBtn:disabled {
@@ -2151,8 +2227,8 @@
 }
 
 .addBowlerCard .paymentSummaryPanel {
-  background: rgba(12, 14, 21, 0.84);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: color-mix(in srgb, var(--entries-panel-deep) 84%, transparent);
+  border: 1px solid var(--entries-border);
   border-radius: 17px;
   padding: 0.82rem;
 }
@@ -2166,23 +2242,23 @@
   min-height: 34px;
   padding: 0 0.72rem;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.025);
-  color: rgba(219, 226, 238, 0.9);
+  border: 1px solid var(--entries-border);
+  background: var(--entries-surface-faint);
+  color: var(--entries-text-body);
   font-size: 0.79rem;
   font-weight: 700;
 }
 
 .addBowlerCard .paymentSummaryRowPaid {
-  border-color: rgba(87, 176, 143, 0.42);
-  color: rgba(174, 243, 219, 0.95);
-  background: rgba(18, 33, 30, 0.76);
+  border-color: var(--color-success-border);
+  color: var(--bw-text-success);
+  background: color-mix(in srgb, var(--color-success) 12%, transparent);
 }
 
 .addBowlerCard .paymentSummaryRowDue {
-  border-color: rgba(255, 136, 49, 0.48);
-  color: rgba(255, 190, 141, 0.96);
-  background: rgba(41, 27, 20, 0.78);
+  border-color: color-mix(in srgb, var(--color-primary) 48%, transparent);
+  color: var(--entries-text-accent);
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
 }
 
 .addBowlerCard .formFooter {
@@ -2192,11 +2268,11 @@
 
 .addBowlerCard .formStatusHint {
   font-size: 0.79rem;
-  color: rgba(177, 186, 201, 0.8);
+  color: var(--entries-text-muted);
 }
 
 .addBowlerCard .formStatusHintReady {
-  color: rgba(160, 228, 183, 0.9);
+  color: var(--bw-text-success);
 }
 
 .addBowlerCard .submitBtn {
@@ -2205,8 +2281,8 @@
   border-radius: 13px;
   font-size: 0.9rem;
   font-weight: 800;
-  background: linear-gradient(140deg, #ff9a3d 0%, #ff7a00 52%, #e55b00 100%);
-  box-shadow: 0 10px 24px rgba(255, 122, 0, 0.34), 0 0 0 1px rgba(255, 167, 90, 0.24) inset;
+  background: linear-gradient(140deg, color-mix(in srgb, var(--color-primary) 68%, white) 0%, var(--color-primary) 52%, color-mix(in srgb, var(--color-primary-hover) 92%, black) 100%);
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--color-primary) 34%, transparent), 0 0 0 1px color-mix(in srgb, var(--color-primary) 24%, white) inset;
 }
 
 .addBowlerCard .submitBtn:hover:not(:disabled) {
@@ -2290,7 +2366,7 @@
 .findEntryHelperText {
   margin: 0 0 0.58rem;
   font-size: 0.78rem;
-  color: rgba(190, 197, 212, 0.78);
+  color: var(--entries-text-muted);
 }
 
 .entriesTableHeader {
@@ -2309,7 +2385,7 @@
 
 .entriesTableTitle {
   margin: 0;
-  color: rgba(246, 249, 255, 0.96);
+  color: var(--entries-text-title);
   font-size: 1rem;
   font-weight: 800;
   letter-spacing: 0.01em;
@@ -2317,13 +2393,13 @@
 
 .entriesTableSubtitle {
   margin: 0.2rem 0 0;
-  color: rgba(190, 197, 212, 0.72);
+  color: var(--entries-text-muted);
   font-size: 0.78rem;
 }
 
 .entriesSearchDock {
   border-bottom: 1px solid var(--entries-border);
-  background: rgba(255, 255, 255, 0.018);
+  background: color-mix(in srgb, var(--opacity-white-04) 45%, transparent);
 }
 
 .entriesSearchLabelRow {
@@ -2336,7 +2412,7 @@
 .entriesSearchTitle {
   margin: 0;
   flex: 0 0 auto;
-  color: rgba(246, 249, 255, 0.94);
+  color: var(--entries-text-title);
   font-size: 0.88rem;
   font-weight: 800;
   letter-spacing: 0.01em;
@@ -2350,7 +2426,7 @@
   border-radius: 0;
   border-bottom: 1px solid var(--entries-border);
   background: transparent;
-  color: rgba(246, 249, 255, 0.94);
+  color: var(--entries-text-title);
 }
 
 .tableEmptyState {
@@ -2360,18 +2436,20 @@
   border: 1px solid var(--entries-border);
   background: var(--entries-panel);
   text-align: center;
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--entries-border) 84%, transparent);
 }
 
 .tableEmptyTitle {
   margin: 0;
-  color: rgba(246, 249, 255, 0.9);
+  color: color-mix(in srgb, var(--entries-text-title) 92%, transparent);
   font-size: 0.94rem;
   font-weight: 800;
 }
 
 .tableEmptyText {
   margin: 0.42rem 0 0;
-  color: rgba(190, 197, 212, 0.72);
+  color: var(--entries-text-muted);
   font-size: 0.78rem;
 }
 
@@ -2399,15 +2477,15 @@
   border-radius: 11px;
   background: var(--entries-panel-deep);
   border: 1px solid var(--entries-border);
-  color: rgba(245, 248, 255, 0.95);
+  color: var(--entries-text-title);
 }
 
 .tableCard .searchContainerSticky .searchInput::placeholder {
-  color: rgba(180, 189, 205, 0.72);
+  color: var(--entries-text-muted);
 }
 
 .tableCard .searchContainerSticky .searchInput:focus {
-  border-color: rgba(255, 122, 0, 0.85);
+  border-color: color-mix(in srgb, var(--color-primary) 85%, transparent);
   box-shadow: var(--entries-orange-ring);
 }
 
@@ -2415,16 +2493,16 @@
   min-height: 42px;
   padding: 0.52rem 0.9rem;
   border-radius: 11px;
-  background: rgba(13, 16, 24, 0.72);
-  border: 1px solid rgba(226, 232, 240, 0.18);
-  color: rgba(226, 232, 240, 0.82);
+  background: color-mix(in srgb, var(--entries-panel-deep) 72%, transparent);
+  border: 1px solid color-mix(in srgb, var(--entries-border) 90%, transparent);
+  color: var(--entries-text-body);
 }
 
 .tableCard .searchContainerSticky .clearSearchBtn:hover:not(:disabled),
 .tableCard .searchContainerSticky .clearSearchBtnActive {
-  border-color: rgba(255, 122, 0, 0.45);
-  color: rgba(255, 232, 212, 0.94);
-  background: rgba(255, 122, 0, 0.07);
+  border-color: var(--entries-accent-border);
+  color: var(--entries-text-accent);
+  background: color-mix(in srgb, var(--color-primary) 7%, transparent);
 }
 
 .tableCard .searchContainerSticky .clearSearchBtn:disabled {
@@ -2461,7 +2539,7 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
   font-weight: 800;
-  color: rgba(182, 191, 207, 0.86);
+  color: var(--entries-text-body);
   background: var(--entries-panel);
   border-bottom: 1px solid var(--entries-border);
 }
@@ -2472,24 +2550,24 @@
 }
 
 .tableCard :global(.bw-sortable-header .bw-sort-icon) {
-  color: rgba(182, 191, 207, 0.42);
+  color: var(--entries-text-faint);
 }
 
 .tableCard :global(.bw-sortable-header-active .bw-sort-icon),
 .tableCard :global(.bw-sortable-header-active .bw-sortable-header-text) {
-  color: rgba(255, 155, 31, 0.95);
+  color: var(--entries-text-accent);
 }
 
 .tableCard :global(.entries-header-cell.group-start),
 .tableCard :global(.entries-cell.group-start) {
-  border-left: 1px solid rgba(226, 232, 240, 0.08);
+  border-left: 1px solid var(--entries-border-soft);
 }
 
 .tableCard :global(.entries-cell) {
   padding: 0.48rem 0.52rem;
   font-size: 0.78rem;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.07);
-  background: rgba(255, 255, 255, 0.012);
+  border-bottom: 1px solid color-mix(in srgb, var(--entries-border) 72%, transparent);
+  background: color-mix(in srgb, var(--opacity-white-04) 30%, transparent);
   text-align: center;
 }
 
@@ -2499,24 +2577,24 @@
 }
 
 .tableCard :global(.players-table-row:nth-child(even) .entries-cell) {
-  background: rgba(255, 255, 255, 0.025);
+  background: color-mix(in srgb, var(--opacity-white-04) 62%, transparent);
 }
 
 .tableCard :global(.players-table-row:hover .entries-cell) {
-  background: rgba(255, 122, 0, 0.045) !important;
-  box-shadow: inset 2px 0 0 rgba(255, 122, 0, 0.65);
+  background: color-mix(in srgb, var(--color-primary) 4.5%, transparent) !important;
+  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--color-primary) 65%, transparent);
 }
 
 .tableCard :global(.players-table-row:nth-child(odd) .entries-cell.col-name) {
-  background: rgba(255, 255, 255, 0.012) !important;
+  background: color-mix(in srgb, var(--opacity-white-04) 30%, transparent) !important;
 }
 
 .tableCard :global(.players-table-row:nth-child(even) .entries-cell.col-name) {
-  background: rgba(255, 255, 255, 0.025) !important;
+  background: color-mix(in srgb, var(--opacity-white-04) 62%, transparent) !important;
 }
 
 .tableCard :global(.players-table-row:hover .entries-cell.col-name) {
-  background: rgba(255, 122, 0, 0.045) !important;
+  background: color-mix(in srgb, var(--color-primary) 4.5%, transparent) !important;
 }
 
 .tableCard :global(.entries-cell.col-usbc) {
@@ -2534,8 +2612,8 @@
   padding: 0 8px;
   border: 1px solid var(--entries-border);
   border-radius: 9px;
-  background: rgba(12, 13, 20, 0.9);
-  color: rgba(226, 232, 240, 0.84);
+  background: color-mix(in srgb, var(--entries-panel-deep) 90%, transparent);
+  color: var(--entries-text-body);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 12px;
   line-height: 1;
@@ -2557,8 +2635,8 @@
   padding: 0 10px;
   border: 1px solid var(--entries-border);
   border-radius: 9px;
-  background: rgba(12, 13, 20, 0.9);
-  color: rgba(246, 249, 255, 0.94);
+  background: color-mix(in srgb, var(--entries-panel-deep) 90%, transparent);
+  color: var(--entries-text-title);
   font-weight: 750;
   line-height: 1.1;
   text-align: center;
@@ -2580,7 +2658,7 @@
 
 .tableCard :global(.entries-cell.col-usbc .cell-empty),
 .tableCard :global(.entries-cell.col-name .cell-empty) {
-  color: rgba(180, 189, 205, 0.56);
+  color: color-mix(in srgb, var(--entries-text-muted) 78%, transparent);
   font-style: normal;
 }
 
@@ -2593,14 +2671,14 @@
   font-size: 12px;
   text-align: center;
   font-variant-numeric: tabular-nums;
-  background: rgba(12, 13, 20, 0.9);
+  background: color-mix(in srgb, var(--entries-panel-deep) 90%, transparent);
   border: 1px solid var(--entries-border);
-  color: rgba(245, 248, 255, 0.95);
+  color: var(--entries-text-title);
 }
 
 .tableCard :global(.entries-input.entries-control:focus),
 .tableCard :global(.entries-select.entries-control:focus) {
-  border-color: rgba(255, 122, 0, 0.85);
+  border-color: color-mix(in srgb, var(--color-primary) 85%, transparent);
   box-shadow: var(--entries-orange-ring);
 }
 
@@ -2627,7 +2705,7 @@
   display: inline-block;
   min-width: 68px;
   text-align: right;
-  color: rgba(246, 249, 255, 0.92);
+  color: color-mix(in srgb, var(--entries-text-title) 95%, transparent);
   font-size: 0.8rem;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
@@ -2649,9 +2727,9 @@
 
 .tableCard :global(.entries-edit-btn:hover),
 .tableCard :global(.entries-edit-btn--active) {
-  border-color: rgba(255, 122, 0, 0.45);
-  background: rgba(255, 122, 0, 0.08);
-  color: #ff9b1f;
+  border-color: var(--entries-accent-border);
+  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  color: var(--entries-text-accent);
 }
 
 /* Content-fit table sizing */
@@ -2745,7 +2823,7 @@
 
 .tableCard :global(.entries-header-cell) {
   border-radius: 0 !important;
-  background: rgba(255, 255, 255, 0.025);
+  background: color-mix(in srgb, var(--opacity-white-04) 62%, transparent);
 }
 
 .tableCard :global(.entries-header-row),
@@ -2769,7 +2847,7 @@
 }
 
 .tableCard :global(.players-table-row:nth-child(even) .entries-cell) {
-  background: rgba(255, 255, 255, 0.018);
+  background: color-mix(in srgb, var(--opacity-white-04) 45%, transparent);
 }
 
 .tableCard :global(.entries-cell.col-usbc .cell-readonly-text),
@@ -2778,16 +2856,16 @@
   padding: 0 8px;
   border: 1px solid var(--entries-border);
   border-radius: 9px;
-  background: rgba(12, 13, 20, 0.9);
+  background: color-mix(in srgb, var(--entries-panel-deep) 90%, transparent);
 }
 
 .tableCard :global(.entries-cell.col-usbc .cell-readonly-text) {
-  color: rgba(226, 232, 240, 0.78);
+  color: color-mix(in srgb, var(--entries-text-body) 92%, transparent);
 }
 
 .tableCard :global(.entries-cell .cell-bowler-name) {
   padding: 0 10px;
-  color: rgba(246, 249, 255, 0.9);
+  color: color-mix(in srgb, var(--entries-text-title) 92%, transparent);
 }
 
 /* Dashboard typography and control-height polish */
@@ -3086,26 +3164,26 @@
 
 /* Keep row striping visually consistent across all columns, including bowler pills */
 .tableCard :global(.players-table-row:nth-child(odd) .entries-cell) {
-  background: rgba(255, 255, 255, 0.012);
+  background: color-mix(in srgb, var(--opacity-white-04) 30%, transparent);
 }
 
 .tableCard :global(.players-table-row:nth-child(even) .entries-cell) {
-  background: rgba(255, 255, 255, 0.03);
+  background: color-mix(in srgb, var(--opacity-white-04) 75%, transparent);
 }
 
 .tableCard :global(.players-table-row:nth-child(odd) .entries-cell.col-usbc .cell-readonly-text),
 .tableCard :global(.players-table-row:nth-child(odd) .entries-cell .cell-bowler-name) {
-  background: rgba(11, 13, 20, 0.88);
+  background: color-mix(in srgb, var(--entries-panel-deep) 88%, transparent);
 }
 
 .tableCard :global(.players-table-row:nth-child(even) .entries-cell.col-usbc .cell-readonly-text),
 .tableCard :global(.players-table-row:nth-child(even) .entries-cell .cell-bowler-name) {
-  background: rgba(16, 18, 27, 0.9);
+  background: color-mix(in srgb, var(--entries-panel-deep) 90%, var(--bw-surface-panel));
 }
 
 .tableCard :global(.players-table-row:hover .entries-cell.col-usbc .cell-readonly-text),
 .tableCard :global(.players-table-row:hover .entries-cell .cell-bowler-name) {
-  background: rgba(27, 22, 18, 0.9);
+  background: color-mix(in srgb, var(--entries-panel-deep) 78%, color-mix(in srgb, var(--color-primary) 10%, transparent));
 }
 
 .tableCard :global(.players-table-row) {
@@ -3118,6 +3196,22 @@
   }
 }
 
+
+  .formCard,
+  .summaryCard,
+  .tableCard,
+  .findBowlerCard,
+  .addBowlerCard {
+    transform: none;
+  }
+
+  .summaryGrid,
+  .tableCard .tableSearchPanelBody,
+  .findBowlerCard .historyPanelBody,
+  .addBowlerCard form {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
 @media (max-width: 900px) {
   .entriesTableHeader {
     flex-direction: column;
@@ -3173,12 +3267,13 @@
 }
 
 .tableCard :global(.entries-header-cell) {
-  color: rgba(182, 191, 207, 0.86);
+  color: var(--entries-text-body);
   font-size: var(--bw-type-table-heading);
   letter-spacing: 0;
 }
 
 .tableCard :global(.entries-cell) {
-  color: rgba(241, 245, 249, 0.9);
+  color: color-mix(in srgb, var(--entries-text-title) 92%, transparent);
   font-size: var(--bw-type-table);
 }
+

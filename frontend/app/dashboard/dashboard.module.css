@@ -1,9 +1,30 @@
 /* Mobile-Friendly Dashboard Styles */
 
 .commandCenterGrid {
-  --dash-surface: rgba(18, 17, 23, 0.8);
-  --dash-border: rgba(226, 232, 240, 0.14);
-  --dash-shadow: 0 12px 30px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --dash-surface: color-mix(in srgb, var(--bw-surface-card) 88%, transparent);
+  --dash-border: var(--bw-border-subtle);
+  --dash-shadow: var(--bw-shadow-card);
+  --dash-border-faint: color-mix(in srgb, var(--bw-border-subtle) 55%, transparent);
+  --dash-border-soft: color-mix(in srgb, var(--bw-border-subtle) 72%, transparent);
+  --dash-surface-soft: color-mix(in srgb, var(--bw-surface-panel) 78%, transparent);
+  --dash-surface-strong: color-mix(in srgb, var(--bw-surface-panel-strong) 82%, transparent);
+  --dash-surface-deep: color-mix(in srgb, var(--bw-surface-card) 84%, transparent);
+  --dash-input-surface: color-mix(in srgb, var(--bw-surface-card) 72%, var(--bw-surface-panel));
+  --dash-input-surface-disabled: color-mix(in srgb, var(--bw-surface-card-strong) 68%, transparent);
+  --dash-text-title: var(--bw-text-title);
+  --dash-text-body: var(--bw-text-body);
+  --dash-text-muted: var(--bw-text-muted);
+  --dash-text-faint: var(--bw-text-faint);
+  --dash-text-accent: var(--bw-text-accent);
+  --dash-text-success: var(--bw-text-success);
+  --dash-accent-soft: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  --dash-accent-panel: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  --dash-accent-border: color-mix(in srgb, var(--color-primary) 28%, transparent);
+  --dash-accent-border-strong: color-mix(in srgb, var(--color-primary) 62%, transparent);
+  --dash-success-soft: color-mix(in srgb, var(--color-success) 10%, transparent);
+  --dash-success-border: var(--color-success-border);
+  --dash-danger-soft: var(--color-error-bg-soft);
+  --dash-danger-border: var(--color-error-border);
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: 14px;
@@ -88,12 +109,42 @@
   padding: 24px;
 }
 
+.liveBoardCard,
+.entriesOverviewCard {
+  border-color: var(--bw-border-card);
+}
+
+.toolsCard,
+.squadRailCard,
+.statTile {
+  border-color: var(--bw-border-subtle);
+}
+
+.liveBoardCard,
+.toolsCard,
+.squadRailCard,
+.statTile,
+.entriesOverviewCard {
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+.liveBoardCard:hover,
+.toolsCard:hover,
+.squadRailCard:hover,
+.entriesOverviewCard:hover {
+  transform: translateY(-1px);
+  border-color: var(--bw-border-card);
+  box-shadow: var(--bw-shadow-card);
+}
+
 .heroTopRow {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 18px;
   margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid color-mix(in srgb, var(--bw-border-subtle) 72%, transparent);
 }
 
 .heroKicker,
@@ -142,7 +193,7 @@
   letter-spacing: 0.1em;
   color: var(--color-white);
   background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-orange-dark) 100%);
-  box-shadow: 0 0 0 1px rgba(255, 122, 0, 0.18), 0 10px 24px rgba(255, 122, 0, 0.18);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-primary) 24%, transparent), var(--bw-shadow-accent);
 }
 
 .heroMiddleRow {
@@ -153,6 +204,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 14px;
+  padding-top: 2px;
 }
 
 .heroMetaRow {
@@ -167,12 +219,23 @@
   align-items: center;
   padding: 7px 11px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--bw-surface-panel);
+  border: 1px solid var(--bw-border-subtle);
   color: var(--color-text-primary);
   font-size: 11px;
   line-height: 1.35;
   font-weight: 600;
+}
+
+.heroMetaPill:first-child {
+  border-color: color-mix(in srgb, var(--color-primary) 28%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+}
+
+.entriesOverviewCard .entriesOverviewHeader,
+.toolsCard .sectionKicker,
+.squadRailCard .sectionKicker {
+  color: var(--dash-text-faint);
 }
 
 .bracketPreview {
@@ -187,16 +250,44 @@
   min-height: 166px;
   padding: 12px;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(226, 232, 240, 0.12);
+  background: var(--bw-surface-panel);
+  border: 1px solid var(--bw-border-subtle);
 }
 
 .prizeBreakdownCard {
   min-height: auto;
 }
 
-.bracketRound::after {
-  display: none;
+.statTile:nth-child(1) {
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--color-primary) 62%, transparent), inset 0 1px 0 var(--bw-surface-panel), var(--bw-shadow-card);
+}
+
+.statTile:nth-child(2) {
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--color-success) 62%, transparent), inset 0 1px 0 var(--bw-surface-panel), var(--bw-shadow-card);
+}
+
+.modalScrollBody.settingsModalScrollBody .bracketSettingsCard {
+  border-color: var(--dash-border-soft);
+}
+
+@media (max-width: 900px) {
+  .liveBoardCard,
+  .toolsCard,
+  .squadRailCard,
+  .entriesOverviewCard,
+  .statTile {
+    border-radius: 18px;
+  }
+
+  .liveBoardCard,
+  .toolsCard,
+  .entriesOverviewCard {
+    padding: 14px;
+  }
+
+  .heroTopRow {
+    padding-bottom: 8px;
+  }
 }
 
 .bracketRound:last-child::after {
@@ -224,8 +315,8 @@
   gap: 8px;
   padding: 8px 10px;
   border-radius: 14px;
-  background: rgba(0, 0, 0, 0.18);
-  border: 1px solid rgba(226, 232, 240, 0.1);
+  background: var(--opacity-black-18);
+  border: 1px solid color-mix(in srgb, var(--bw-border-subtle) 84%, transparent);
   color: var(--color-text-primary);
   font-size: 11px;
   line-height: 1.35;
@@ -267,15 +358,15 @@
 
 .heroWarningStripWarning {
   border-radius: 12px;
-  border: 1px solid rgba(255, 122, 0, 0.22);
-  background: linear-gradient(180deg, rgba(255, 122, 0, 0.09), rgba(255, 122, 0, 0.06));
-  color: rgb(253, 224, 71);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 24%, var(--bw-border-subtle));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-primary) 10%, transparent), color-mix(in srgb, var(--color-primary) 6%, transparent));
+  color: var(--bw-text-accent);
 }
 
 .heroWarningStripInfo {
-  border: 1px solid rgba(123, 152, 255, 0.2);
-  background: linear-gradient(180deg, rgba(123, 152, 255, 0.1), rgba(123, 152, 255, 0.05));
-  color: rgba(229, 237, 255, 0.94);
+  border: 1px solid color-mix(in srgb, var(--bw-text-muted) 28%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bw-surface-panel-strong) 90%, transparent), color-mix(in srgb, var(--bw-surface-panel) 92%, transparent));
+  color: var(--bw-text-title);
 }
 
 .heroWarningIcon {
@@ -291,15 +382,15 @@
 }
 
 .heroWarningIconWarning {
-  background: rgba(255, 122, 0, 0.18);
-  color: rgb(253, 224, 71);
-  border: 1px solid rgba(255, 122, 0, 0.24);
+  background: color-mix(in srgb, var(--color-primary) 18%, transparent);
+  color: var(--bw-text-accent);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 26%, transparent);
 }
 
 .heroWarningIconInfo {
-  background: rgba(123, 152, 255, 0.18);
-  color: rgba(229, 237, 255, 0.96);
-  border: 1px solid rgba(123, 152, 255, 0.25);
+  background: var(--bw-surface-panel-strong);
+  color: var(--bw-text-title);
+  border: 1px solid var(--bw-border-subtle);
 }
 
 .squadRail {
@@ -356,19 +447,19 @@
 }
 
 .commissionerActionIndicatorAccent {
-  color: rgba(255, 122, 0, 0.86);
+  color: var(--bw-text-accent);
 }
 
 .commissionerActionDisabled {
   cursor: not-allowed;
   opacity: 0.6;
-  border-color: rgba(226, 232, 240, 0.12);
-  background: rgba(255, 255, 255, 0.02);
+  border-color: var(--bw-border-subtle);
+  background: var(--bw-surface-panel);
 }
 
 .commissionerActionDisabled:hover {
-  border-color: rgba(226, 232, 240, 0.12);
-  background: rgba(255, 255, 255, 0.02);
+  border-color: var(--bw-border-subtle);
+  background: var(--bw-surface-panel);
 }
 
 .commissionerActionDisabled .commissionerActionIndicator {
@@ -382,26 +473,26 @@
 .commissionerAdminRow {
   padding: 10px 12px;
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.018);
-  border-color: rgba(226, 232, 240, 0.1);
-  color: rgba(226, 232, 240, 0.88);
+  background: var(--bw-surface-panel);
+  border-color: var(--bw-border-subtle);
+  color: var(--bw-text-body);
   font-size: 12px;
   font-weight: 500;
 }
 
 .commissionerAdminIndicator {
-  color: rgba(226, 232, 240, 0.52);
+  color: var(--bw-text-faint);
   font-size: 12px;
 }
 
 .commissionerAdminRow:hover {
-  border-color: rgba(255, 122, 0, 0.24);
-  background: rgba(255, 122, 0, 0.07);
+  border-color: color-mix(in srgb, var(--color-primary) 24%, var(--bw-border-subtle));
+  background: color-mix(in srgb, var(--color-primary) 7%, transparent);
   color: var(--color-text-primary);
 }
 
 .commissionerAdminRow:hover .commissionerAdminIndicator {
-  color: rgba(255, 122, 0, 0.82);
+  color: var(--bw-text-accent);
 }
 
 .squadRailPill {
@@ -411,8 +502,8 @@
   gap: 10px;
   padding: 10px 12px;
   border-radius: 14px;
-  border: 1px solid rgba(226, 232, 240, 0.13);
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--bw-border-subtle);
+  background: var(--bw-surface-panel);
   color: var(--color-text-primary);
   font-size: 12px;
   line-height: 1.35;
@@ -422,8 +513,8 @@
 }
 
 .squadRailPill:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(226, 232, 240, 0.2);
+  background: var(--bw-surface-panel-strong);
+  border-color: var(--bw-border-card);
 }
 
 .statTile {
@@ -435,9 +526,9 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  background: rgba(18, 17, 23, 0.78);
-  border: 1px solid rgba(226, 232, 240, 0.16);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  background: color-mix(in srgb, var(--bw-surface-card-strong) 90%, transparent);
+  border: 1px solid var(--bw-border-subtle);
+  box-shadow: inset 0 1px 0 var(--bw-surface-panel), var(--bw-shadow-card);
   transition: transform 0.18s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -445,14 +536,14 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(140deg, rgba(255, 255, 255, 0.06), transparent 55%);
+  background: linear-gradient(140deg, var(--bw-surface-panel-strong), transparent 55%);
   pointer-events: none;
 }
 
 .statTile:hover {
   transform: translateY(-1px);
-  border-color: rgba(226, 232, 240, 0.3);
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  border-color: var(--bw-border-card);
+  box-shadow: inset 0 1px 0 var(--bw-surface-panel-strong), var(--bw-shadow-card);
 }
 
 @media (max-width: 1200px) {
@@ -491,24 +582,24 @@
   letter-spacing: 0.08em;
   border-radius: 999px;
   padding: 4px 9px;
-  border: 1px solid rgba(148, 163, 184, 0.3);
+  border: 1px solid var(--bw-border-subtle);
   color: var(--color-text-secondary);
-  background: rgba(15, 23, 42, 0.56);
+  background: var(--bw-surface-panel);
 }
 
 .statStatusBadgeActive {
-  color: rgba(226, 232, 240, 0.95);
+  color: var(--bw-text-title);
 }
 
 .statStatusBadgeMuted {
-  color: rgba(148, 163, 184, 0.92);
-  border-color: rgba(148, 163, 184, 0.26);
+  color: var(--bw-text-muted);
+  border-color: var(--bw-border-subtle);
 }
 
 .statStatusBadgeAccent {
-  color: rgba(255, 208, 136, 0.95);
-  border-color: rgba(251, 191, 36, 0.36);
-  background: rgba(251, 191, 36, 0.1);
+  color: var(--bw-text-accent);
+  border-color: color-mix(in srgb, var(--color-primary) 24%, var(--bw-border-subtle));
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
 }
 
 .statLabel {
@@ -543,7 +634,7 @@
   margin-top: 3px;
   font-size: 11px;
   line-height: 1.32;
-  color: rgba(148, 163, 184, 0.88);
+  color: var(--dash-text-muted);
 }
 
 .advancedGrid {
@@ -575,14 +666,14 @@
 .advancedGrid .optionalBracketsCard,
 .advancedGrid .byeSettingsCard,
 .advancedGrid .sidePotsCard {
-  background: rgba(255, 255, 255, 0.025);
-  border-color: rgba(255, 255, 255, 0.05);
+  background: var(--dash-surface-soft);
+  border-color: var(--dash-border-faint);
   border-radius: 20px;
 }
 
 .advancedGrid .settingsHeader {
   padding: 14px 18px 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--dash-border-faint);
 }
 
 .advancedGrid .settingsTitle {
@@ -615,8 +706,8 @@
 .advancedGrid .programCard {
   padding: 8px 10px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--dash-surface-strong);
+  border: 1px solid var(--dash-border-faint);
 }
 
 .advancedGrid .compactLabel {
@@ -632,8 +723,8 @@
 .advancedGrid .compactSelect,
 .advancedGrid .compactInput {
   font-size: 13px;
-  border-color: rgba(255, 255, 255, 0.06);
-  background: rgba(255, 255, 255, 0.025);
+  border-color: var(--dash-border-faint);
+  background: var(--dash-surface-soft);
   color: var(--color-text-primary);
 }
 
@@ -696,9 +787,9 @@
   max-width: 460px;
   min-width: 0;
   border-radius: 22px;
-  background: rgba(18, 17, 23, 0.78);
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  background: var(--dash-surface-deep);
+  border: 1px solid var(--dash-border);
+  box-shadow: 0 10px 26px var(--opacity-black-30), inset 0 1px 0 var(--bw-surface-panel);
 }
 
 .settingsModalGrid .mainBracketSettingsCard,
@@ -715,7 +806,7 @@
 
 .settingsModalGrid .settingsHeader {
   padding: 14px 16px 10px;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+  border-bottom: 1px solid var(--dash-border-soft);
 }
 
 .settingsModalGrid .settingsTitle {
@@ -725,7 +816,7 @@
 
 .settingsModalGrid .settingsMeta {
   font-size: 12px;
-  color: rgba(148, 163, 184, 0.95);
+  color: var(--dash-text-muted);
 }
 
 .settingsModalGrid .settingsTitleBlock {
@@ -751,7 +842,7 @@
 .settingsSectionHint {
   margin: -2px 0 6px;
   font-size: 12px;
-  color: rgba(148, 163, 184, 0.85);
+  color: var(--dash-text-muted);
   line-height: 1.4;
 }
 
@@ -759,7 +850,7 @@
   margin: 4px 0 0;
   font-size: 11px;
   line-height: 1.35;
-  color: rgba(148, 163, 184, 0.88);
+  color: var(--dash-text-muted);
 }
 
 .settingsModalGrid .fieldGroup {
@@ -789,61 +880,61 @@
 .settingsModalGrid .compactSelect,
 .settingsModalGrid .compactInput {
   min-height: 38px;
-  background: rgba(15, 23, 42, 0.62);
-  border: 1px solid rgba(148, 163, 184, 0.28);
-  color: rgba(241, 245, 249, 0.98);
+  background: var(--dash-input-surface);
+  border: 1px solid var(--dash-border-soft);
+  color: var(--dash-text-title);
   border-radius: 9px;
 }
 
 .settingsModalGrid .compactSelect:focus,
 .settingsModalGrid .compactInput:focus {
-  border-color: rgba(255, 122, 0, 0.85);
-  box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.2);
+  border-color: var(--dash-accent-border-strong);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 20%, transparent);
 }
 
 .settingsModalGrid .compactInputReadOnly {
-  background: rgba(30, 41, 59, 0.5) !important;
-  color: rgba(203, 213, 225, 0.92) !important;
-  border-color: rgba(148, 163, 184, 0.2) !important;
+  background: var(--dash-input-surface-disabled) !important;
+  color: var(--dash-text-body) !important;
+  border-color: var(--dash-border) !important;
 }
 
 .settingsModalGrid .compactInput:disabled,
 .settingsModalGrid .compactSelect:disabled {
   opacity: 0.62;
   cursor: not-allowed;
-  background: rgba(30, 41, 59, 0.44);
-  color: rgba(148, 163, 184, 0.9);
-  border-color: rgba(148, 163, 184, 0.22);
+  background: var(--dash-input-surface-disabled);
+  color: var(--dash-text-muted);
+  border-color: var(--dash-border);
 }
 
 .settingsModalGrid .compactLabel {
-  color: rgba(203, 213, 225, 0.96);
+  color: var(--dash-text-body);
   font-size: 12px;
 }
 
 .settingsModalGrid .currencySymbol {
-  color: rgba(148, 163, 184, 0.92);
+  color: var(--dash-text-muted);
 }
 
 .settingsModalGrid .programCard {
-  border: 1px solid rgba(148, 163, 184, 0.22);
-  border-left: 1px solid rgba(148, 163, 184, 0.22);
+  border: 1px solid var(--dash-border);
+  border-left: 1px solid var(--dash-border);
   border-radius: 12px;
-  background: rgba(15, 23, 42, 0.42);
+  background: var(--dash-input-surface-disabled);
   padding: 8px 10px;
 }
 
 .settingsModalGrid .programCardChecked {
-  border-color: rgba(255, 122, 0, 0.62);
-  border-left: 1px solid rgba(255, 122, 0, 0.62);
-  background: rgba(255, 122, 0, 0.08);
+  border-color: var(--dash-accent-border-strong);
+  border-left: 1px solid var(--dash-accent-border-strong);
+  background: var(--dash-accent-soft);
 }
 
 .settingsModalGrid .checkboxLabel {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: rgba(241, 245, 249, 0.98);
+  color: var(--dash-text-title);
   font-size: 13px;
   font-weight: 600;
 }
@@ -853,8 +944,8 @@
   width: 18px;
   height: 18px;
   border-radius: 6px;
-  border: 1px solid rgba(148, 163, 184, 0.45);
-  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid var(--dash-border-soft);
+  background: var(--dash-input-surface);
   display: inline-grid;
   place-content: center;
   margin: 0;
@@ -867,12 +958,12 @@
   transform: scale(0);
   transition: transform 120ms ease-in-out;
   clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
-  background: rgba(255, 122, 0, 0.98);
+  background: color-mix(in srgb, var(--color-primary) 98%, transparent);
 }
 
 .settingsModalGrid .checkboxInput:checked {
-  background: rgba(255, 122, 0, 0.12);
-  border-color: rgba(255, 122, 0, 0.78);
+  background: var(--dash-accent-panel);
+  border-color: color-mix(in srgb, var(--color-primary) 78%, transparent);
 }
 
 .settingsModalGrid .checkboxInput:checked::after {
@@ -885,7 +976,7 @@
   gap: 10px;
   padding-bottom: 8px;
   margin-bottom: 2px;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.28);
+  border-bottom: 1px solid var(--dash-border-soft);
 }
 
 .settingsModalGrid .sidePotSharedFee .compactInputWrapper {
@@ -903,13 +994,13 @@
 }
 
 .settingsProgramsColumnSecondary {
-  border-left: 1px solid rgba(148, 163, 184, 0.2);
+  border-left: 1px solid var(--dash-border);
   padding-left: 12px;
 }
 
 .settingsCalculatedSummary {
   margin-top: 8px;
-  border-top: 1px solid rgba(148, 163, 184, 0.2);
+  border-top: 1px solid var(--dash-border);
   padding-top: 10px;
   display: grid;
   gap: 6px;
@@ -921,11 +1012,11 @@
   align-items: center;
   gap: 10px;
   font-size: 12px;
-  color: rgba(148, 163, 184, 0.92);
+  color: var(--dash-text-muted);
 }
 
 .settingsCalculatedSummaryRow strong {
-  color: rgba(226, 232, 240, 0.98);
+  color: var(--dash-text-title);
   font-size: 12px;
   font-weight: 700;
 }
@@ -952,23 +1043,23 @@
   z-index: 4;
   margin-top: auto;
   padding: 12px 10px 6px;
-  border-top: 1px solid rgba(148, 163, 184, 0.18);
-  background: linear-gradient(180deg, rgba(8, 10, 18, 0.76), rgba(8, 10, 18, 0.94));
+  border-top: 1px solid var(--dash-border);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bw-surface-card) 76%, transparent), color-mix(in srgb, var(--bw-surface-card) 94%, transparent));
   backdrop-filter: blur(10px);
 }
 
 .settingsModalFooterStatus {
   font-size: 13px;
-  color: rgba(203, 213, 225, 0.95);
+  color: var(--dash-text-body);
   font-weight: 600;
 }
 
 .settingsModalFooterStatusSaved {
-  color: rgba(148, 163, 184, 0.92);
+  color: var(--dash-text-muted);
 }
 
 .settingsModalFooterStatusUnsaved {
-  color: rgba(255, 208, 158, 0.96);
+  color: var(--dash-text-accent);
 }
 
 .settingsModalFooterActions {
@@ -987,28 +1078,28 @@
 }
 
 .settingsFooterCancelButton {
-  background: rgba(15, 23, 42, 0.62);
-  color: rgba(241, 245, 249, 0.96);
-  border: 1px solid rgba(148, 163, 184, 0.34);
+  background: var(--dash-input-surface);
+  color: var(--dash-text-title);
+  border: 1px solid var(--dash-border-soft);
 }
 
 .settingsFooterSaveButton {
-  background: rgba(30, 41, 59, 0.72);
-  color: #fff;
-  border: 1px solid rgba(148, 163, 184, 0.32);
+  background: var(--dash-input-surface-disabled);
+  color: var(--color-white);
+  border: 1px solid var(--dash-border-soft);
   box-shadow: none;
 }
 
 .settingsFooterSaveButtonActive {
-  background: linear-gradient(135deg, rgba(255, 122, 0, 0.95), rgba(245, 158, 11, 0.95));
-  border-color: rgba(255, 191, 128, 0.34);
-  box-shadow: 0 8px 20px rgba(255, 122, 0, 0.24);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 95%, transparent), color-mix(in srgb, var(--color-primary) 72%, var(--color-warning) 28%));
+  border-color: color-mix(in srgb, var(--bw-text-accent) 34%, transparent);
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--color-primary) 24%, transparent);
 }
 
 .settingsFooterSaveButtonIdle {
-  background: rgba(30, 41, 59, 0.72);
-  border-color: rgba(148, 163, 184, 0.3);
-  color: rgba(203, 213, 225, 0.9);
+  background: var(--dash-input-surface-disabled);
+  border-color: var(--dash-border-soft);
+  color: var(--dash-text-body);
 }
 
 .settingsFooterCancelButton:disabled,
@@ -1270,11 +1361,11 @@
 }
 
 .bracketSettingsCard {
-  background: rgba(18, 17, 23, 0.78);
+  background: color-mix(in srgb, var(--bw-surface-card) 78%, transparent);
   border-radius: 24px;
   padding: 0;
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 12px 36px var(--opacity-black-35), inset 0 1px 0 var(--opacity-white-04);
+  border: 1px solid var(--opacity-white-08);
   position: relative;
   overflow: hidden;
   flex: 0 0 auto;
@@ -1377,8 +1468,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 20px 24px 16px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.02) 100%);
-  border-bottom: 1px solid rgba(255, 122, 0, 0.22);
+  background: linear-gradient(180deg, var(--opacity-white-04) 0%, color-mix(in srgb, var(--opacity-white-04) 50%, transparent) 100%);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-primary) 22%, transparent);
   border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   gap: 10px;
 }
@@ -1446,10 +1537,10 @@
 }
 
 .programCard {
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-left: 3px solid rgba(255, 122, 0, 0.32);
+  border: 1px solid var(--opacity-white-08);
+  border-left: 3px solid color-mix(in srgb, var(--color-primary) 32%, transparent);
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.03);
+  background: color-mix(in srgb, var(--opacity-white-06) 50%, transparent);
   padding: 10px 12px;
   display: flex;
   align-items: center;
@@ -1457,9 +1548,9 @@
 }
 
 .programCardChecked {
-  border-color: rgba(255, 122, 0, 0.32);
+  border-color: color-mix(in srgb, var(--color-primary) 32%, transparent);
   border-left: 3px solid var(--color-brand-orange);
-  background: rgba(255, 122, 0, 0.08);
+  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
 }
 
 .sectionHeader {
@@ -1515,8 +1606,8 @@
 }
 
 .compactInputReadOnly {
-  background: rgba(0, 0, 0, 0.18) !important;
-  color: rgba(244, 239, 232, 0.58) !important;
+  background: var(--opacity-black-18) !important;
+  color: color-mix(in srgb, var(--bw-text-title) 58%, transparent) !important;
   cursor: default;
 }
 
@@ -1599,7 +1690,7 @@
 .fieldLabel {
   font-size: 14px;
   font-weight: 600;
-  color: rgba(244, 239, 232, 0.72);
+  color: color-mix(in srgb, var(--bw-text-title) 72%, transparent);
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -1813,9 +1904,9 @@
   min-width: min(420px, 100%);
   max-height: min(96vh, 1060px);
   border-radius: 28px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02) 28%, rgba(15, 17, 28, 0.94) 100%);
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+  border: 1px solid var(--dash-border);
+  background: linear-gradient(180deg, var(--bw-surface-panel-strong), color-mix(in srgb, var(--bw-surface-panel) 40%, transparent) 28%, color-mix(in srgb, var(--bw-surface-card) 94%, transparent) 100%);
+  box-shadow: 0 30px 80px color-mix(in srgb, black 50%, transparent), 0 0 0 1px var(--bw-surface-panel) inset;
 }
 
 .tournamentContentWrapper {
@@ -1855,18 +1946,18 @@
 .tournamentInput {
   width: 100%;
   border-radius: 12px;
-  border: 1px solid rgba(226, 232, 240, 0.16) !important;
-  background: rgba(15, 19, 30, 0.68) !important;
+  border: 1px solid var(--dash-border-soft) !important;
+  background: var(--dash-input-surface) !important;
   color: var(--color-text-primary) !important;
 }
 
 .tournamentInput::placeholder {
-  color: rgba(148, 163, 184, 0.8);
+  color: var(--dash-text-muted);
 }
 
 .tournamentInput:focus {
-  border-color: rgba(255, 122, 0, 0.55) !important;
-  box-shadow: 0 0 0 2px rgba(255, 122, 0, 0.18), 0 0 0 1px rgba(255, 122, 0, 0.1) inset !important;
+  border-color: var(--dash-accent-border-strong) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 18%, transparent), 0 0 0 1px color-mix(in srgb, var(--color-primary) 10%, transparent) inset !important;
   outline: none;
 }
 
@@ -1888,7 +1979,7 @@
 .squadTimesSection {
   margin-top: 18px;
   padding-top: 14px;
-  border-top: 1px solid rgba(226, 232, 240, 0.12);
+  border-top: 1px solid var(--dash-border);
 }
 
 .squadTimesHeadingRow {
@@ -1910,10 +2001,10 @@
   font-size: 11px;
   font-weight: 700;
   color: var(--color-text-secondary);
-  border: 1px solid rgba(148, 163, 184, 0.28);
+  border: 1px solid var(--dash-border-soft);
   border-radius: 999px;
   padding: 3px 9px;
-  background: rgba(15, 23, 42, 0.55);
+  background: var(--dash-input-surface);
 }
 
 .noSquadDaysHint {
@@ -1927,7 +2018,7 @@
   flex-direction: column;
   gap: 8px;
   padding: 12px 0;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.1);
+  border-bottom: 1px solid color-mix(in srgb, var(--dash-border) 70%, transparent);
 }
 
 .squadDay:last-child {
@@ -1952,8 +2043,8 @@
   justify-content: space-between;
   padding: 10px 12px;
   border-radius: 12px;
-  background: rgba(15, 19, 30, 0.62);
-  border: 1px solid rgba(226, 232, 240, 0.14);
+  background: var(--dash-input-surface);
+  border: 1px solid var(--dash-border);
   font-size: 13px;
   font-weight: 600;
   color: var(--color-text-primary);
@@ -1964,12 +2055,12 @@
 }
 
 .squadTimeRemove {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(148, 163, 184, 0.3);
+  background: color-mix(in srgb, var(--bw-surface-panel) 70%, transparent);
+  border: 1px solid var(--dash-border-soft);
   border-radius: 9px;
   padding: 5px 10px;
   font-size: 11px;
-  color: rgba(226, 232, 240, 0.85);
+  color: var(--dash-text-body);
   cursor: pointer;
   font-weight: 700;
   line-height: 1.1;
@@ -1977,9 +2068,9 @@
 }
 
 .squadTimeRemove:hover {
-  color: rgba(255, 187, 133, 1);
-  border-color: rgba(255, 122, 0, 0.52);
-  background: rgba(255, 122, 0, 0.1);
+  color: var(--bw-text-accent);
+  border-color: color-mix(in srgb, var(--color-primary) 52%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
 }
 
 .squadTimeAddRow {
@@ -2001,22 +2092,22 @@
   min-height: 40px;
   padding: 0 14px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 166, 92, 0.42) !important;
-  background: linear-gradient(135deg, rgba(255, 122, 0, 0.95), rgba(245, 158, 11, 0.95)) !important;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 42%, white) !important;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 95%, transparent), color-mix(in srgb, var(--color-primary) 72%, var(--color-warning) 28%)) !important;
   color: var(--color-white);
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
   transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s;
-  box-shadow: 0 10px 22px rgba(255, 122, 0, 0.22);
+  box-shadow: 0 10px 22px color-mix(in srgb, var(--color-primary) 22%, transparent);
 }
 
 .squadTimeAddBtn:hover {
-  border-color: rgba(255, 200, 140, 0.52) !important;
+  border-color: color-mix(in srgb, var(--bw-text-accent) 52%, transparent) !important;
   color: var(--color-white);
-  background: linear-gradient(135deg, rgba(255, 135, 18, 0.98), rgba(251, 174, 35, 0.96)) !important;
-  box-shadow: 0 12px 26px rgba(255, 122, 0, 0.28);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 88%, white), color-mix(in srgb, var(--color-warning) 80%, var(--color-primary) 20%)) !important;
+  box-shadow: 0 12px 26px color-mix(in srgb, var(--color-primary) 28%, transparent);
   transform: translateY(-1px);
 }
 
@@ -2028,8 +2119,8 @@
   justify-content: space-between;
   gap: 14px;
   padding: 12px 20px;
-  border-top: 1px solid rgba(226, 232, 240, 0.13);
-  background: linear-gradient(180deg, rgba(8, 10, 18, 0.9), rgba(8, 10, 18, 0.98));
+  border-top: 1px solid color-mix(in srgb, var(--dash-border) 76%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bw-surface-card) 90%, transparent), color-mix(in srgb, var(--bw-surface-card) 98%, transparent));
   backdrop-filter: blur(8px);
   z-index: 2;
 }
@@ -2040,11 +2131,11 @@
 }
 
 .tournamentSaveStatusSaved {
-  color: rgba(148, 163, 184, 0.9);
+  color: var(--dash-text-muted);
 }
 
 .tournamentSaveStatusDirty {
-  color: rgba(255, 122, 0, 0.9);
+  color: var(--bw-text-accent);
 }
 
 .tournamentModalFooterActions {
@@ -2057,9 +2148,9 @@
   min-height: 40px;
   padding: 0 14px;
   border-radius: 10px;
-  border: 1px solid rgba(148, 163, 184, 0.36);
-  background: rgba(15, 23, 42, 0.65);
-  color: rgba(226, 232, 240, 0.94);
+  border: 1px solid var(--dash-border-soft);
+  background: var(--dash-input-surface);
+  color: var(--dash-text-title);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -2067,35 +2158,35 @@
 }
 
 .tournamentCancelButton:hover:not(:disabled) {
-  border-color: rgba(255, 122, 0, 0.4);
-  background: rgba(255, 122, 0, 0.12);
+  border-color: color-mix(in srgb, var(--color-primary) 40%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
 }
 
 .tournamentSaveButton {
   min-height: 40px;
   padding: 0 16px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 166, 92, 0.42);
-  background: linear-gradient(135deg, rgba(255, 122, 0, 0.95), rgba(245, 158, 11, 0.95));
+  border: 1px solid color-mix(in srgb, var(--color-primary) 42%, white);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 95%, transparent), color-mix(in srgb, var(--color-primary) 72%, var(--color-warning) 28%));
   color: var(--color-white);
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
   transition: border-color 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
-  box-shadow: 0 10px 22px rgba(255, 122, 0, 0.24);
+  box-shadow: 0 10px 22px color-mix(in srgb, var(--color-primary) 24%, transparent);
 }
 
 .tournamentSaveButton:disabled {
   cursor: not-allowed;
   opacity: 0.5;
   box-shadow: none;
-  border-color: rgba(148, 163, 184, 0.32);
-  background: rgba(71, 85, 105, 0.45);
+  border-color: color-mix(in srgb, var(--bw-border-subtle) 76%, transparent);
+  background: color-mix(in srgb, var(--bw-surface-card-strong) 72%, transparent);
 }
 
 .tournamentSaveButton:hover:not(:disabled) {
-  border-color: rgba(255, 200, 140, 0.52);
-  box-shadow: 0 12px 26px rgba(255, 122, 0, 0.28);
+  border-color: color-mix(in srgb, var(--bw-text-accent) 52%, transparent);
+  box-shadow: 0 12px 26px color-mix(in srgb, var(--color-primary) 28%, transparent);
 }
 
 .cancelBtn {
@@ -2212,18 +2303,18 @@
 
 .modalOverlay.settingsModalOverlay {
   padding: 6px;
-  background: rgba(6, 8, 14, 0.78);
+  background: color-mix(in srgb, var(--bw-page) 78%, transparent);
   backdrop-filter: blur(10px) saturate(120%);
 }
 
 .modalCard {
-  background: rgba(18, 17, 23, 0.92);
+  background: color-mix(in srgb, var(--bw-surface-card) 92%, transparent);
   border-radius: 24px;
   padding: 0;
   min-width: min(360px, 100%);
   width: min(560px, calc(100vw - 32px));
-  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 24px 70px var(--opacity-black-50);
+  border: 1px solid var(--dash-border);
   max-height: 86vh;
   overflow: hidden;
   position: relative;
@@ -2236,17 +2327,17 @@
   min-width: min(420px, 100%);
   max-height: min(98vh, 1160px);
   border-radius: 30px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.01) 24%, rgba(15, 17, 28, 0.96) 100%);
-  box-shadow: 0 34px 90px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+  border: 1px solid var(--dash-border);
+  background: linear-gradient(180deg, var(--bw-surface-panel-strong), color-mix(in srgb, var(--bw-surface-panel) 24%, transparent) 24%, color-mix(in srgb, var(--bw-surface-card) 96%, transparent) 100%);
+  box-shadow: 0 34px 90px var(--opacity-black-60), 0 0 0 1px var(--bw-surface-panel) inset;
 }
 
 .tournamentSelectorCard {
   width: min(640px, calc(100vw - 28px));
   max-height: min(82vh, 760px);
-  border-color: rgba(255, 255, 255, 0.12);
-  background: rgba(18, 17, 23, 0.97);
-  box-shadow: 0 34px 90px rgba(0, 0, 0, 0.55);
+  border-color: var(--dash-border-soft);
+  background: color-mix(in srgb, var(--bw-surface-card) 97%, transparent);
+  box-shadow: 0 34px 90px var(--opacity-black-60);
 }
 
 .squadChangeModalCard {
@@ -2254,8 +2345,8 @@
 }
 
 .modalHeader {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.03) 100%);
-  border-bottom: 1px solid rgba(255, 122, 0, 0.18);
+  background: linear-gradient(180deg, var(--bw-surface-panel-strong) 0%, var(--bw-surface-panel) 100%);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-primary) 18%, transparent);
   border-radius: 24px 24px 0 0;
   padding: 22px 56px 14px 28px;
   flex-shrink: 0;
@@ -2293,9 +2384,9 @@
   justify-content: space-between;
   gap: 14px;
   padding: 12px 14px;
-  border: 1px solid rgba(226, 232, 240, 0.12);
+  border: 1px solid var(--bw-border-subtle);
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.03);
+  background: color-mix(in srgb, var(--opacity-white-06) 50%, transparent);
   color: var(--color-text-primary);
   text-align: left;
   cursor: pointer;
@@ -2303,14 +2394,14 @@
 }
 
 .squadChangeItem:hover {
-  border-color: rgba(255, 122, 0, 0.28);
-  background: rgba(255, 122, 0, 0.08);
+  border-color: color-mix(in srgb, var(--color-primary) 28%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
   transform: translateY(-1px);
 }
 
 .squadChangeItemSelected {
-  border-color: rgba(255, 122, 0, 0.4);
-  background: rgba(255, 122, 0, 0.12);
+  border-color: color-mix(in srgb, var(--color-primary) 40%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
 }
 
 .squadChangeItemMain {
@@ -2321,7 +2412,7 @@
 }
 
 .squadChangeItemLabel {
-  color: rgba(246, 249, 255, 0.94);
+  color: var(--bw-text-title);
   font-size: 14px;
   font-weight: 700;
   line-height: 1.25;
@@ -2335,7 +2426,7 @@
 
 .squadChangeItemStatus {
   flex: 0 0 auto;
-  color: rgba(255, 190, 141, 0.96);
+  color: var(--bw-text-accent);
   font-size: 11px;
   font-weight: 800;
   text-transform: uppercase;
@@ -2360,7 +2451,7 @@
   min-height: 700px;
   border: none;
   border-radius: 20px;
-  background: rgba(7, 9, 15, 0.68);
+  background: color-mix(in srgb, var(--bw-page) 68%, transparent);
 }
 
 .modalTitleDanger {
@@ -2394,21 +2485,21 @@
   padding: 16px;
   margin-bottom: 12px;
   border-radius: 16px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.025));
-  border: 1px solid rgba(226, 232, 240, 0.12);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035), 0 10px 22px rgba(0, 0, 0, 0.22);
+  background: linear-gradient(180deg, var(--bw-surface-panel-strong), color-mix(in srgb, var(--bw-surface-panel-strong) 56%, transparent));
+  border: 1px solid var(--bw-border-subtle);
+  box-shadow: inset 0 1px 0 var(--opacity-white-04), 0 10px 22px var(--opacity-black-25);
   transition: box-shadow 0.18s ease, border-color 0.18s ease, transform 0.14s ease;
 }
 
 .tournamentItem:hover {
   transform: translateY(-1px);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045), 0 14px 28px rgba(0, 0, 0, 0.3);
-  border-color: rgba(255, 122, 0, 0.32);
+  box-shadow: inset 0 1px 0 var(--opacity-white-04), 0 14px 28px var(--opacity-black-30);
+  border-color: color-mix(in srgb, var(--color-primary) 32%, transparent);
 }
 
 .tournamentItemActive {
-  border-color: rgba(255, 122, 0, 0.38);
-  background: linear-gradient(180deg, rgba(255, 122, 0, 0.08), rgba(255, 255, 255, 0.025));
+  border-color: color-mix(in srgb, var(--color-primary) 38%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-primary) 8%, transparent), color-mix(in srgb, var(--opacity-white-04) 50%, transparent));
 }
 
 .tournamentInfo {
@@ -2434,10 +2525,10 @@
 
 .tournamentActiveBadge {
   flex: 0 0 auto;
-  border: 1px solid rgba(255, 122, 0, 0.34);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 34%, transparent);
   border-radius: 999px;
   padding: 3px 8px;
-  background: rgba(255, 122, 0, 0.12);
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
   color: var(--color-primary);
   font-size: 10px;
   font-weight: 800;
@@ -2449,13 +2540,13 @@
 .tournamentLocation {
   font-size: 13.5px;
   font-weight: 600;
-  color: rgba(226, 232, 240, 0.7);
+  color: color-mix(in srgb, var(--bw-text-title) 70%, transparent);
   margin-top: 6px;
 }
 
 .tournamentDate {
   font-size: 12.5px;
-  color: rgba(180, 189, 205, 0.72);
+  color: var(--bw-text-muted);
   margin-top: 4px;
 }
 
@@ -2470,8 +2561,8 @@
   font-size: 11px;
   font-weight: 700;
   color: var(--color-primary);
-  background: rgba(255, 122, 0, 0.1);
-  border: 1px solid rgba(255, 122, 0, 0.22);
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 22%, transparent);
   border-radius: 20px;
   padding: 3px 9px;
   letter-spacing: 0;
@@ -2491,29 +2582,29 @@
   font-size: 13px;
   padding: 9px 18px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 166, 92, 0.42);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 42%, var(--bw-text-title));
   cursor: pointer;
   transition: background 0.18s ease, border-color 0.18s ease, transform 0.14s ease, box-shadow 0.18s ease;
   font-weight: 700;
   min-width: 78px;
   text-align: center;
-  box-shadow: 0 10px 22px rgba(255, 122, 0, 0.22);
+  box-shadow: var(--bw-shadow-accent);
 }
 
 .loadBtn:hover {
   background: var(--color-primary-hover);
-  border-color: rgba(255, 200, 140, 0.52);
+  border-color: color-mix(in srgb, var(--color-primary) 52%, var(--bw-text-title));
   transform: translateY(-1px);
-  box-shadow: 0 12px 26px rgba(255, 122, 0, 0.28);
+  box-shadow: var(--shadow-btn-hover);
 }
 
 .deleteBtn {
-  background: rgba(255, 255, 255, 0.02);
-  color: rgba(255, 185, 185, 0.86);
+  background: var(--bw-surface-panel);
+  color: color-mix(in srgb, var(--color-error) 72%, var(--bw-text-title));
   font-size: 12px;
   padding: 8px 16px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 150, 150, 0.36);
+  border: 1px solid color-mix(in srgb, var(--color-error) 40%, transparent);
   cursor: pointer;
   transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
   font-weight: 700;
@@ -2522,9 +2613,9 @@
 }
 
 .deleteBtn:hover {
-  background: rgba(239, 68, 68, 0.12);
-  border-color: rgba(255, 150, 150, 0.58);
-  color: rgba(255, 220, 220, 0.98);
+  background: color-mix(in srgb, var(--color-error) 14%, transparent);
+  border-color: color-mix(in srgb, var(--color-error) 58%, transparent);
+  color: color-mix(in srgb, var(--color-error) 28%, var(--bw-text-title));
 }
 
 .loadBtn:focus-visible,
@@ -2539,7 +2630,7 @@
   align-items: center;
   gap: 12px;
   padding: 12px 20px 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--opacity-white-06);
 }
 
 .paginationText {
@@ -2865,18 +2956,18 @@
 }
 
 .settingsModalCloseButton {
-  background: rgba(15, 23, 42, 0.8) !important;
-  color: rgba(241, 245, 249, 0.92) !important;
-  border: 1px solid rgba(148, 163, 184, 0.35) !important;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2) !important;
+  background: color-mix(in srgb, var(--bw-page) 80%, transparent) !important;
+  color: color-mix(in srgb, var(--bw-text-title) 92%, transparent) !important;
+  border: 1px solid color-mix(in srgb, var(--bw-text-muted) 35%, transparent) !important;
+  box-shadow: 0 3px 8px var(--opacity-black-20) !important;
 }
 
 .settingsModalCloseButton:hover,
 .settingsModalCloseButton:focus-visible {
-  background: rgba(255, 122, 0, 0.16) !important;
-  color: rgba(255, 218, 170, 1) !important;
-  border-color: rgba(255, 122, 0, 0.5) !important;
-  box-shadow: 0 4px 10px rgba(255, 122, 0, 0.12) !important;
+  background: color-mix(in srgb, var(--color-primary) 16%, transparent) !important;
+  color: color-mix(in srgb, var(--bw-text-accent) 92%, var(--bw-text-title)) !important;
+  border-color: color-mix(in srgb, var(--color-primary) 50%, transparent) !important;
+  box-shadow: 0 4px 10px color-mix(in srgb, var(--color-primary) 12%, transparent) !important;
 }
 
 /* Page text normalization */
@@ -2920,17 +3011,17 @@
 
 /* Dashboard orange hierarchy pass */
 .commandCenterGrid {
-  --dash-accent: #ff7a00;
-  --dash-accent-soft: rgba(255, 122, 0, 0.11);
-  --dash-accent-border: rgba(255, 122, 0, 0.32);
-  --dash-accent-glow: rgba(255, 122, 0, 0.16);
+  --dash-accent: var(--color-primary);
+  --dash-accent-soft: color-mix(in srgb, var(--color-primary) 11%, transparent);
+  --dash-accent-border: color-mix(in srgb, var(--color-primary) 32%, transparent);
+  --dash-accent-glow: color-mix(in srgb, var(--color-primary) 16%, transparent);
 }
 
 .liveBoardCard,
 .entriesOverviewCard,
 .squadRailCard,
 .statTile {
-  border-color: rgba(226, 232, 240, 0.13);
+  border-color: color-mix(in srgb, var(--bw-border-subtle) 74%, transparent);
 }
 
 .liveBoardCard::before,
@@ -2940,7 +3031,7 @@
   position: absolute;
   inset: 0 auto 0 0;
   width: 3px;
-  background: linear-gradient(180deg, rgba(255, 122, 0, 0.86), rgba(255, 122, 0, 0.12));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-primary) 86%, transparent), color-mix(in srgb, var(--color-primary) 12%, transparent));
   opacity: 0.85;
   pointer-events: none;
 }
@@ -2952,11 +3043,11 @@
 }
 
 .liveBoardCard {
-  border-color: rgba(255, 122, 0, 0.22);
+  border-color: color-mix(in srgb, var(--color-primary) 22%, transparent);
   box-shadow:
     var(--dash-shadow),
-    0 0 0 1px rgba(255, 122, 0, 0.06),
-    0 18px 46px rgba(255, 122, 0, 0.07);
+    0 0 0 1px color-mix(in srgb, var(--color-primary) 6%, transparent),
+    0 18px 46px color-mix(in srgb, var(--color-primary) 7%, transparent);
 }
 
 .heroKicker,
@@ -2973,7 +3064,7 @@
 }
 
 .heroTitle {
-  text-shadow: 0 0 32px rgba(255, 122, 0, 0.08);
+  text-shadow: 0 0 32px color-mix(in srgb, var(--color-primary) 8%, transparent);
 }
 
 .heroMetaPill,
@@ -2981,21 +3072,21 @@
 .heroEntriesCompact,
 .bracketRound,
 .bracketMatch {
-  border-color: rgba(255, 122, 0, 0.13);
+  border-color: color-mix(in srgb, var(--color-primary) 13%, transparent);
 }
 
 .heroMetaPill:first-child,
 .snapshotPill:first-child,
 .bracketRound:first-child {
-  border-color: rgba(255, 122, 0, 0.28);
-  background: rgba(255, 122, 0, 0.065);
+  border-color: color-mix(in srgb, var(--color-primary) 28%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 6.5%, transparent);
 }
 
 .heroEntriesValue,
 .snapshotPillValue,
 .bracketRoundMeta,
 .statValue {
-  color: rgba(246, 249, 255, 0.96);
+  color: var(--bw-text-title);
 }
 
 .heroEntriesCard .heroEntriesValue,
@@ -3006,41 +3097,41 @@
 }
 
 .liveBadge {
-  background: linear-gradient(135deg, #ff7a00 0%, #d95d00 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, color-mix(in srgb, var(--color-primary-hover) 88%, black) 100%);
   box-shadow:
-    0 0 0 1px rgba(255, 122, 0, 0.18),
-    0 10px 26px rgba(255, 122, 0, 0.2);
+    0 0 0 1px color-mix(in srgb, var(--color-primary) 18%, transparent),
+    0 10px 26px color-mix(in srgb, var(--color-primary) 20%, transparent);
 }
 
 .squadRailPill,
 .commissionerAttentionRow {
-  border-color: rgba(226, 232, 240, 0.12);
-  background: rgba(255, 255, 255, 0.026);
+  border-color: color-mix(in srgb, var(--bw-border-subtle) 70%, transparent);
+  background: color-mix(in srgb, var(--bw-surface-panel) 86%, transparent);
 }
 
 .squadRailPill:hover,
 .commissionerAttentionRow:hover {
   border-color: var(--dash-accent-border);
   background: var(--dash-accent-soft);
-  box-shadow: inset 3px 0 0 rgba(255, 122, 0, 0.55);
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--color-primary) 55%, transparent);
 }
 
 .commissionerPanel .squadRailList:first-of-type .squadRailPill:first-child {
   border-color: var(--dash-accent-border);
-  background: linear-gradient(180deg, rgba(255, 122, 0, 0.17), rgba(255, 122, 0, 0.1));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-primary) 17%, transparent), color-mix(in srgb, var(--color-primary) 10%, transparent));
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    0 10px 24px rgba(255, 122, 0, 0.12);
+    inset 0 1px 0 color-mix(in srgb, white 6%, transparent),
+    0 10px 24px color-mix(in srgb, var(--color-primary) 12%, transparent);
 }
 
 .commissionerPanel .squadRailList:first-of-type .squadRailPill:first-child:hover {
-  background: linear-gradient(180deg, rgba(255, 122, 0, 0.22), rgba(255, 122, 0, 0.13));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-primary) 22%, transparent), color-mix(in srgb, var(--color-primary) 13%, transparent));
 }
 
 .commissionerAdminRow:nth-child(3),
 .commissionerAdminRow:nth-child(4),
 .commissionerAdminRow:nth-child(5) {
-  border-color: rgba(255, 122, 0, 0.18);
+  border-color: color-mix(in srgb, var(--color-primary) 18%, transparent);
 }
 
 .commissionerAdminRow:nth-child(3) .commissionerAdminIndicator,
@@ -3063,7 +3154,7 @@
 }
 
 .statTile::before {
-  background: radial-gradient(circle at 16px 0, rgba(255, 122, 0, 0.16), transparent 92px);
+  background: radial-gradient(circle at 16px 0, color-mix(in srgb, var(--color-primary) 16%, transparent), transparent 92px);
   opacity: 1;
 }
 
@@ -3072,47 +3163,47 @@
   position: absolute;
   inset: 0 0 auto;
   height: 2px;
-  background: linear-gradient(90deg, rgba(255, 122, 0, 0.54), transparent 70%);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--color-primary) 54%, transparent), transparent 70%);
   opacity: 0.65;
   pointer-events: none;
 }
 
 .statStatusBadgeAccent {
-  color: #ffd08a;
-  border-color: rgba(255, 122, 0, 0.34);
-  background: rgba(255, 122, 0, 0.1);
+  color: color-mix(in srgb, var(--bw-text-accent) 84%, white);
+  border-color: color-mix(in srgb, var(--color-primary) 34%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
 }
 
 /* Reduced orange pass: no orange gradients or orange setup cards */
 .liveBoardCard::before,
 .entriesOverviewCard::before,
 .squadRailCard::before {
-  background: rgba(255, 122, 0, 0.42);
+  background: color-mix(in srgb, var(--color-primary) 42%, transparent);
 }
 
 .liveBoardCard {
-  border-color: rgba(226, 232, 240, 0.14);
+  border-color: color-mix(in srgb, var(--bw-border-subtle) 78%, transparent);
   box-shadow: var(--dash-shadow);
 }
 
 .heroMetaPill:first-child,
 .snapshotPill:first-child,
 .bracketRound:first-child {
-  border-color: rgba(226, 232, 240, 0.12);
-  background: rgba(255, 255, 255, 0.03);
+  border-color: color-mix(in srgb, var(--bw-border-subtle) 70%, transparent);
+  background: color-mix(in srgb, var(--bw-surface-panel) 92%, transparent);
 }
 
 .liveBadge {
   color: var(--color-primary);
-  background: rgba(255, 122, 0, 0.14);
-  border: 1px solid rgba(255, 122, 0, 0.28);
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 28%, transparent);
   box-shadow: none;
 }
 
 .commissionerPanel .squadRailList:first-of-type .squadRailPill:first-child,
 .commissionerPanel .squadRailList:first-of-type .squadRailPill:first-child:hover {
-  background: rgba(255, 255, 255, 0.035);
-  box-shadow: inset 3px 0 0 rgba(255, 122, 0, 0.5);
+  background: color-mix(in srgb, var(--bw-surface-panel) 88%, transparent);
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--color-primary) 50%, transparent);
 }
 
 .statTile::before {
@@ -3120,11 +3211,11 @@
 }
 
 .statTile::after {
-  background: rgba(255, 122, 0, 0.38);
+  background: color-mix(in srgb, var(--color-primary) 38%, transparent);
 }
 
 .entriesOverviewCard .entriesOverviewHeader {
-  color: rgba(246, 249, 255, 0.94);
+  color: var(--bw-text-title);
 }
 
 .entriesOverviewCard .statLabel {
@@ -3136,7 +3227,7 @@
 .entriesOverviewCard .summaryCardsBand .statTile:first-child,
 .entriesOverviewCard .summaryCardsBand .statTile:nth-child(2) {
   background: var(--dash-surface);
-  border-color: rgba(226, 232, 240, 0.13);
+  border-color: color-mix(in srgb, var(--bw-border-subtle) 74%, transparent);
   box-shadow: var(--dash-shadow);
 }
 
@@ -3145,7 +3236,7 @@
 }
 
 .entriesOverviewCard .statTile::after {
-  background: rgba(255, 122, 0, 0.22);
+  background: color-mix(in srgb, var(--color-primary) 22%, transparent);
 }
 
 .entriesOverviewCard .statValue,
@@ -3162,7 +3253,7 @@
 .entriesOverviewCard .statStatusBadgeActive,
 .entriesOverviewCard .statStatusBadgeAccent,
 .entriesOverviewCard .statStatusBadgeMuted {
-  color: rgba(246, 249, 255, 0.94);
+  color: var(--bw-text-title);
 }
 
 .entriesOverviewCard .statCaption,
@@ -3171,7 +3262,7 @@
 }
 
 .bracketPreview .bracketRoundTitle {
-  color: rgba(246, 249, 255, 0.94);
+  color: var(--bw-text-title);
 }
 
 .bracketPreview .bracketMatch span:first-child,
@@ -3183,7 +3274,7 @@
 .bracketPreview .bracketMatch span:last-child,
 .bracketPreview .bracketRoundMeta,
 .bracketPreview .prizeRowWithHint small {
-  color: rgba(246, 249, 255, 0.94);
+  color: var(--bw-text-title);
 }
 
 /* Unified dashboard button treatment */
@@ -3196,7 +3287,7 @@
 .tournamentSaveButton,
 .loadBtn {
   color: var(--color-white);
-  border-color: color-mix(in srgb, var(--color-primary) 46%, rgba(255, 255, 255, 0.24));
+  border-color: color-mix(in srgb, var(--color-primary) 46%, var(--opacity-white-25));
   background: var(--color-primary);
   box-shadow: 0 10px 22px color-mix(in srgb, var(--color-primary) 24%, transparent);
 }
@@ -3220,9 +3311,9 @@
 .tournamentCancelButton:disabled,
 .tournamentSaveButton:disabled,
 .commissionerActionDisabled {
-  background: rgba(71, 85, 105, 0.45) !important;
-  border-color: rgba(148, 163, 184, 0.32) !important;
-  color: rgba(203, 213, 225, 0.9) !important;
+  background: color-mix(in srgb, var(--bw-surface-card-strong) 72%, transparent) !important;
+  border-color: color-mix(in srgb, var(--bw-border-subtle) 76%, transparent) !important;
+  color: var(--bw-text-body) !important;
   box-shadow: none !important;
 }
 
@@ -3313,7 +3404,7 @@
 /* Modal and selector alignment with shared UI tokens */
 .modalOverlay,
 .modalOverlay.settingsModalOverlay {
-  background: rgba(4, 5, 10, 0.82);
+  background: color-mix(in srgb, var(--bw-page) 82%, transparent);
   backdrop-filter: blur(8px);
 }
 
@@ -3399,14 +3490,14 @@
 
 .deleteBtn {
   background: var(--bw-surface-panel);
-  border-color: rgba(248, 113, 113, 0.34);
-  color: rgba(254, 202, 202, 0.96);
+  border-color: color-mix(in srgb, var(--color-error) 34%, transparent);
+  color: color-mix(in srgb, var(--color-error) 24%, var(--bw-text-title));
   box-shadow: none;
 }
 
 .deleteBtn:hover {
-  background: rgba(127, 29, 29, 0.22);
-  border-color: rgba(248, 113, 113, 0.48);
+  background: color-mix(in srgb, var(--color-error-darker) 22%, transparent);
+  border-color: color-mix(in srgb, var(--color-error) 48%, transparent);
 }
 
 .paginationBar {
@@ -3422,3 +3513,4 @@
 .tournamentSaveButton {
   box-shadow: none !important;
 }
+

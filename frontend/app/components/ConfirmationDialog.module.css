@@ -72,7 +72,7 @@
 }
 
 .title {
-  color: rgba(246, 249, 255, 0.96);
+  color: var(--bw-text-title);
   font-size: 1rem;
   line-height: 1.2;
   font-weight: 800;
@@ -80,7 +80,7 @@
 }
 
 .message {
-  color: rgba(180, 189, 205, 0.78);
+  color: var(--bw-text-muted);
   font-size: 0.86rem;
 }
 
@@ -92,9 +92,9 @@
   min-height: 36px;
   border-radius: 11px;
   padding: 0.42rem 0.9rem;
-  color: rgba(255, 241, 229, 0.98);
-  background: rgba(255, 122, 0, 0.2);
-  border: 1px solid rgba(255, 146, 72, 0.34);
+  color: var(--bw-text-title);
+  background: color-mix(in srgb, var(--color-primary) 20%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 34%, transparent);
   font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: 0;

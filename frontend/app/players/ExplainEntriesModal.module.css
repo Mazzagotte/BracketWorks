@@ -9,25 +9,25 @@
 }
 
 .content::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.48);
+  background: color-mix(in srgb, var(--bw-surface-card) 62%, transparent);
 }
 
 .content::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.36);
+  background: color-mix(in srgb, var(--bw-text-muted) 36%, transparent);
   border-radius: 999px;
 }
 
 .content::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.56);
+  background: color-mix(in srgb, var(--bw-text-muted) 56%, transparent);
 }
 
 .section {
   min-width: 0;
   padding: 14px 16px;
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  border: 1px solid var(--bw-border-subtle);
   border-radius: 20px;
-  background: rgba(18, 17, 23, 0.78);
-  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  background: color-mix(in srgb, var(--bw-surface-card) 84%, transparent);
+  box-shadow: 0 10px 26px color-mix(in srgb, black 28%, transparent), inset 0 1px 0 var(--bw-surface-panel);
 }
 
 .section h3 {
@@ -35,7 +35,7 @@
   align-items: center;
   gap: 8px;
   margin: 0 0 8px;
-  color: rgba(241, 245, 249, 0.98);
+  color: var(--bw-text-title);
   font-size: 14px;
   font-weight: 700;
   line-height: 1.2;
@@ -48,13 +48,13 @@
   width: 7px;
   height: 7px;
   border-radius: 999px;
-  background: rgba(255, 122, 0, 0.92);
-  box-shadow: 0 0 0 4px rgba(255, 122, 0, 0.14);
+  background: color-mix(in srgb, var(--color-primary) 92%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-primary) 14%, transparent);
 }
 
 .section p {
   margin: 0;
-  color: rgba(148, 163, 184, 0.94);
+  color: var(--bw-text-muted);
   font-size: 13px;
   font-weight: 400;
   line-height: 1.5;
@@ -74,16 +74,16 @@
 }
 
 .section {
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(226, 232, 240, 0.12);
+  background: var(--bw-surface-panel);
+  border: 1px solid var(--bw-border-subtle);
   border-radius: 14px;
   box-shadow: none;
 }
 
 .section h3 {
-  color: rgba(246, 249, 255, 0.95);
+  color: var(--bw-text-title);
 }
 
 .section p {
-  color: rgba(180, 189, 205, 0.78);
+  color: var(--bw-text-muted);
 }

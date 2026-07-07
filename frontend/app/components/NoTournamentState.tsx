@@ -7,6 +7,7 @@ import buttonStyles from '../styles/buttons.module.css'
 import cardStyles from '../styles/cards.module.css'
 import shellStyles from '../styles/page-shell.module.css'
 import styles from './NoTournamentState.module.css'
+import { Card, CardBody, SectionHeader } from './primitives'
 
 interface InfoCard {
   title: string
@@ -48,52 +49,54 @@ export default function NoTournamentState({
 
   return (
     <div className={`${shellStyles.page} ${styles.wrap}`}>
-      <section className={`${cardStyles.card} ${cardStyles.accentCard} ${styles.card}`}>
-        <p className={styles.kicker}>Tournament workspace</p>
-        <h2 className={styles.title}>
-          {title ?? 'No Tournament Loaded'}
-        </h2>
+      <Card variant="primary" interactive className={`${cardStyles.accentCard} ${styles.card}`}>
+        <CardBody>
+          <p className={styles.kicker}>Tournament workspace</p>
 
-        <p className={styles.description}>
-          {description ?? 'Load or create a tournament from the dashboard to unlock this workspace.'}
-        </p>
+          <SectionHeader
+            title={title ?? 'No Tournament Loaded'}
+            subtitle={description ?? 'Load or create a tournament from the dashboard to unlock this workspace.'}
+            className={styles.sectionHeader}
+            actions={(
+              <div className={styles.actions}>
+                {renderedActions.map((action) => {
+                  const variantClass = action.variant === 'secondary' ? buttonStyles.secondary : buttonStyles.primary
+                  const className = `${buttonStyles.button} ${buttonStyles.medium} ${variantClass} ${styles.action}`
 
-        <div className={styles.actions}>
-          {renderedActions.map((action) => {
-            const variantClass = action.variant === 'secondary' ? buttonStyles.secondary : buttonStyles.primary
-            const className = `${buttonStyles.button} ${buttonStyles.medium} ${variantClass} ${styles.action}`
+                  if (action.href) {
+                    return (
+                      <Link key={action.label} href={action.href} className={className}>
+                        {action.label}
+                      </Link>
+                    )
+                  }
 
-            if (action.href) {
-              return (
-                <Link key={action.label} href={action.href} className={className}>
-                  {action.label}
-                </Link>
-              )
-            }
-
-            return (
-              <button key={action.label} type="button" onClick={action.onClick} className={className}>
-                {action.label}
-              </button>
-            )
-          })}
-        </div>
-
-        {cards && cards.length > 0 && (
-          <div className={styles.grid}>
-            {cards.map((card, i) => (
-              <div key={i} className={`${cardStyles.panel} ${styles.gridCard}`}>
-                <h3 className={styles.gridCardTitle}>
-                  {card.title}
-                </h3>
-                <p className={styles.gridCardText}>
-                  {card.text}
-                </p>
+                  return (
+                    <button key={action.label} type="button" onClick={action.onClick} className={className}>
+                      {action.label}
+                    </button>
+                  )
+                })}
               </div>
-            ))}
-          </div>
-        )}
-      </section>
+            )}
+          />
+
+          {cards && cards.length > 0 && (
+            <div className={styles.grid}>
+              {cards.map((card, i) => (
+                <div key={i} className={`${cardStyles.panel} ${styles.gridCard}`}>
+                  <h3 className={styles.gridCardTitle}>
+                    {card.title}
+                  </h3>
+                  <p className={styles.gridCardText}>
+                    {card.text}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardBody>
+      </Card>
     </div>
   )
 }

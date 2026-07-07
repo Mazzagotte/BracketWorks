@@ -13,6 +13,21 @@
   justify-content: center;
   touch-action: pan-x pan-y;
   -webkit-overflow-scrolling: touch;
+  --tree-card-border: var(--bw-border-subtle);
+  --tree-card-border-accent: color-mix(in srgb, var(--color-primary) 24%, transparent);
+  --tree-card-border-strong: color-mix(in srgb, var(--color-primary) 38%, transparent);
+  --tree-card-surface: var(--bw-surface-card);
+  --tree-card-surface-soft: color-mix(in srgb, var(--bw-surface-card) 84%, transparent);
+  --tree-card-panel: var(--bw-surface-panel);
+  --tree-card-panel-strong: var(--bw-surface-panel-strong);
+  --tree-card-shadow: var(--bw-shadow-card);
+  --tree-title: var(--bw-text-title);
+  --tree-text: var(--bw-text-body);
+  --tree-text-muted: var(--bw-text-muted);
+  --tree-text-accent: var(--bw-text-accent);
+  --tree-text-success: var(--bw-text-success);
+  --tree-danger-border: var(--color-error-border);
+  --tree-success-border: var(--color-success-border);
 }
 
 .bracketTreeContainerScaled {
@@ -583,18 +598,18 @@
 
 .bracketCard {
   padding: 0.78rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-top: 1px solid rgba(255, 146, 72, 0.24);
+  border: 1px solid var(--tree-card-border);
+  border-top: 1px solid var(--tree-card-border-accent);
   border-radius: 24px;
-  background: rgba(255, 255, 255, 0.025);
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.3);
+  background: var(--tree-card-panel);
+  box-shadow: var(--tree-card-shadow);
 }
 
 .bracketTitle {
   padding: 0.1rem 0 0.58rem;
   margin-bottom: 0.45rem;
-  color: rgba(246, 249, 255, 0.96);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--tree-title);
+  border-bottom: 1px solid var(--tree-card-border);
   font-size: 0.82rem;
   font-weight: 800;
   letter-spacing: 0;
@@ -608,62 +623,62 @@
 .matchCard {
   width: 268px;
   min-height: 88px;
-  border: 1px solid rgba(226, 232, 240, 0.12);
+  border: 1px solid var(--tree-card-border);
   border-radius: 14px;
-  background: rgba(8, 9, 15, 0.72);
+  background: var(--tree-card-surface-soft);
   box-shadow: none;
 }
 
 .matchCard:hover {
   transform: none;
-  border-color: rgba(255, 146, 72, 0.28);
-  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.24);
+  border-color: var(--tree-card-border-accent);
+  box-shadow: 0 10px 22px color-mix(in srgb, black 24%, transparent);
 }
 
 .matchCard.finals {
-  border: 1px solid rgba(255, 146, 72, 0.38) !important;
-  border-top: 1px solid rgba(255, 146, 72, 0.5) !important;
-  background: rgba(255, 122, 0, 0.075);
+  border: 1px solid var(--tree-card-border-strong) !important;
+  border-top: 1px solid color-mix(in srgb, var(--color-primary) 50%, transparent) !important;
+  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
   box-shadow: none;
 }
 
 .matchCard.finals .matchLabel {
-  color: rgba(255, 219, 190, 0.98);
-  background: rgba(255, 122, 0, 0.12);
-  border-bottom-color: rgba(255, 146, 72, 0.24);
+  color: var(--tree-text-accent);
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  border-bottom-color: var(--tree-card-border-accent);
 }
 
 .matchCard.completed {
-  border-color: rgba(45, 212, 136, 0.3);
-  border-left: 4px solid rgba(45, 212, 136, 0.62);
+  border-color: var(--tree-success-border);
+  border-left: 4px solid color-mix(in srgb, var(--color-success) 62%, transparent);
 }
 
 .matchCard.in_progress {
-  border-color: rgba(255, 146, 72, 0.35);
-  border-left: 4px solid rgba(255, 122, 0, 0.72);
+  border-color: var(--tree-card-border-strong);
+  border-left: 4px solid color-mix(in srgb, var(--color-primary) 72%, transparent);
 }
 
 .matchCard.next_up {
-  border-color: rgba(255, 146, 72, 0.24);
-  border-left: 3px solid rgba(255, 146, 72, 0.46);
+  border-color: var(--tree-card-border-accent);
+  border-left: 3px solid color-mix(in srgb, var(--color-primary) 46%, transparent);
 }
 
 .matchCard.pending {
-  border-color: rgba(226, 232, 240, 0.08);
-  border-left: 3px solid rgba(226, 232, 240, 0.12);
+  border-color: color-mix(in srgb, var(--tree-card-border) 72%, transparent);
+  border-left: 3px solid var(--tree-card-border);
   opacity: 0.68;
 }
 
 .matchCard.highlighted {
-  border-color: rgba(255, 146, 72, 0.58);
-  box-shadow: 0 0 0 1px rgba(255, 122, 0, 0.22), 0 10px 22px rgba(0, 0, 0, 0.24);
+  border-color: color-mix(in srgb, var(--color-primary) 58%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-primary) 22%, transparent), 0 10px 22px color-mix(in srgb, black 24%, transparent);
 }
 
 .matchLabel {
   padding: 5px 10px;
-  color: rgba(255, 219, 190, 0.9);
-  background: rgba(255, 255, 255, 0.035);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--tree-text-accent);
+  background: var(--tree-card-panel-strong);
+  border-bottom: 1px solid var(--tree-card-border);
   font-size: 0.68rem;
   font-weight: 800;
   letter-spacing: 0;
@@ -676,7 +691,7 @@
 }
 
 .vsRow {
-  background: rgba(255, 255, 255, 0.07);
+  background: color-mix(in srgb, var(--tree-card-panel-strong) 90%, transparent);
   margin: 0 10px;
 }
 
@@ -686,61 +701,61 @@
 }
 
 .player:hover {
-  background: rgba(255, 122, 0, 0.08);
+  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
 }
 
 .player.highlightedPlayer {
-  background: rgba(255, 122, 0, 0.12);
-  border-left: 4px solid rgba(255, 122, 0, 0.72);
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  border-left: 4px solid color-mix(in srgb, var(--color-primary) 72%, transparent);
 }
 
 .player.winner {
-  background: rgba(45, 212, 136, 0.1);
-  border-left: 4px solid rgba(45, 212, 136, 0.62);
+  background: color-mix(in srgb, var(--color-success) 10%, transparent);
+  border-left: 4px solid color-mix(in srgb, var(--color-success) 62%, transparent);
 }
 
 .playerName {
-  color: rgba(246, 249, 255, 0.9);
+  color: var(--tree-title);
   font-size: 0.8rem;
   font-weight: 650;
 }
 
 .player.winner .playerName {
-  color: rgba(190, 255, 213, 0.96);
+  color: var(--tree-text-success);
 }
 
 .playerScore {
-  color: rgba(203, 213, 225, 0.86);
+  color: var(--tree-text);
   font-size: 0.86rem;
   letter-spacing: 0;
 }
 
 .player.winner .playerScore {
-  color: #58e6a7;
+  color: var(--tree-text-success);
   font-size: 0.9rem;
   text-shadow: none;
 }
 
 .championLabel {
-  color: rgba(255, 219, 190, 0.92);
+  color: var(--tree-text-accent);
   letter-spacing: 0;
 }
 
 .connectorBracket {
-  border-right-color: rgba(255, 146, 72, 0.34);
-  border-top-color: rgba(255, 146, 72, 0.34);
-  border-bottom-color: rgba(255, 146, 72, 0.34);
+  border-right-color: color-mix(in srgb, var(--color-primary) 34%, transparent);
+  border-top-color: color-mix(in srgb, var(--color-primary) 34%, transparent);
+  border-bottom-color: color-mix(in srgb, var(--color-primary) 34%, transparent);
 }
 
 .connectorArm {
-  background: rgba(255, 146, 72, 0.34);
+  background: color-mix(in srgb, var(--color-primary) 34%, transparent);
 }
 
 .emptyState {
   min-height: 220px;
-  color: rgba(180, 189, 205, 0.78);
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--tree-text-muted);
+  background: var(--tree-card-panel);
+  border: 1px solid var(--tree-card-border);
   border-radius: 24px;
 }
 

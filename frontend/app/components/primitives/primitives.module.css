@@ -1,0 +1,237 @@
+.card {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-2xl-soft);
+  background: var(--surface-primary);
+  color: var(--text-secondary);
+  transition: transform var(--motion-duration-base) var(--motion-ease-standard), border-color var(--motion-duration-base) var(--motion-ease-standard), box-shadow var(--motion-duration-base) var(--motion-ease-standard), background-color var(--motion-duration-base) var(--motion-ease-standard);
+}
+
+.cardPrimary {
+  background: var(--surface-primary);
+  border-color: var(--border-strong);
+  box-shadow: var(--elevation-3);
+}
+
+.cardSecondary {
+  background: var(--surface-secondary);
+  border-color: var(--border-subtle);
+  box-shadow: var(--elevation-0);
+}
+
+.cardUtility {
+  background: var(--surface-utility);
+  border-color: color-mix(in srgb, var(--border-subtle) 68%, transparent);
+  box-shadow: var(--elevation-0);
+}
+
+.cardInteractive:hover {
+  transform: translateY(-1px);
+  border-color: var(--border-strong);
+  box-shadow: var(--elevation-3);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-4) var(--space-3);
+  border-bottom: 1px solid color-mix(in srgb, var(--border-subtle) 76%, transparent);
+  background: var(--surface-secondary);
+}
+
+.cardBody {
+  padding: var(--space-4);
+}
+
+.cardFooter {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid color-mix(in srgb, var(--border-subtle) 70%, transparent);
+  background: color-mix(in srgb, var(--surface-secondary) 82%, transparent);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.sectionTitle {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--bw-type-card-title);
+  line-height: 1.2;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.sectionSubtitle {
+  margin: var(--space-1) 0 0;
+  color: var(--text-muted);
+  font-size: var(--bw-type-helper);
+  line-height: 1.45;
+}
+
+.emptyState {
+  border: 1px dashed color-mix(in srgb, var(--border-subtle) 84%, transparent);
+  border-radius: var(--radius-xl-soft);
+  background: color-mix(in srgb, var(--surface-utility) 88%, transparent);
+  color: var(--text-muted);
+  text-align: center;
+  padding: var(--space-8) var(--space-6);
+}
+
+.emptyStateTitle {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--bw-type-card-title);
+  line-height: 1.2;
+  font-weight: 800;
+}
+
+.emptyStateDescription {
+  margin: var(--space-2) 0 0;
+  color: var(--text-muted);
+  font-size: var(--bw-type-helper);
+  line-height: 1.45;
+}
+
+.emptyStateActions {
+  margin-top: var(--space-4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 22px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-secondary);
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.statusNeutral {
+  color: var(--text-secondary);
+  background: color-mix(in srgb, var(--surface-secondary) 90%, transparent);
+  border-color: color-mix(in srgb, var(--border-subtle) 88%, transparent);
+}
+
+.statusInfo {
+  color: var(--bw-text-accent);
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 36%, transparent);
+}
+
+.statusSuccess {
+  color: var(--bw-text-success);
+  background: var(--color-success-soft);
+  border-color: var(--color-success-border);
+}
+
+.statusWarning {
+  color: var(--bw-text-accent);
+  background: color-mix(in srgb, var(--color-warning) 18%, transparent);
+  border-color: color-mix(in srgb, var(--color-warning) 44%, transparent);
+}
+
+.statusDanger {
+  color: var(--bw-text-danger);
+  background: var(--color-error-bg-soft);
+  border-color: var(--color-error-border);
+}
+
+.dataTableToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 84%, transparent);
+  border-radius: var(--radius-l);
+  background: color-mix(in srgb, var(--surface-secondary) 86%, transparent);
+}
+
+.dataTableToolbarLeft,
+.dataTableToolbarRight {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.dataTableToolbarLeft {
+  flex: 1;
+}
+
+.dataTableToolbarRight {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.quickActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 80%, transparent);
+  border-radius: var(--radius-l);
+  background: color-mix(in srgb, var(--surface-secondary) 84%, transparent);
+}
+
+.quickActionsGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+  .card {
+    border-radius: var(--radius-xl-soft);
+  }
+
+  .cardHeader,
+  .cardBody,
+  .cardFooter {
+    padding-left: var(--space-3);
+    padding-right: var(--space-3);
+  }
+
+  .emptyState {
+    padding: var(--space-6) var(--space-4);
+  }
+
+  .dataTableToolbar,
+  .quickActions {
+    padding-left: var(--space-3);
+    padding-right: var(--space-3);
+  }
+
+  .dataTableToolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dataTableToolbarRight {
+    justify-content: flex-start;
+  }
+}

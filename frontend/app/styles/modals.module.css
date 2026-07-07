@@ -22,7 +22,7 @@
   align-items: center;
   justify-content: center;
   padding: 10px;
-  background: rgba(6, 8, 14, 0.82);
+  background: color-mix(in srgb, var(--bw-page) 84%, transparent);
   backdrop-filter: blur(10px) saturate(120%);
   -webkit-backdrop-filter: blur(10px) saturate(120%);
   animation: modalFadeIn 0.2s ease;
@@ -38,7 +38,7 @@
   border: 1px solid var(--bw-border-card);
   border-radius: 24px;
   background: var(--bw-surface-card);
-  box-shadow: 0 34px 90px rgba(0, 0, 0, 0.55);
+  box-shadow: var(--shadow-modal);
   animation: modalSlideUp 0.24s ease;
 }
 

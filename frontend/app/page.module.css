@@ -8,6 +8,50 @@
   --fs-display: clamp(36px, 5vw, 64px);
   --fs-section-title: clamp(30px, 3.6vw, 44px);
   --fs-card-title: clamp(20px, 2.1vw, 22px);
+  --landing-proof-stat: var(--color-white);
+  --landing-proof-label: var(--opacity-white-50);
+  --landing-share-shadow: 0 2px 8px color-mix(in srgb, var(--color-primary) 35%, transparent);
+  --landing-live-dot-ring: 0 0 0 3px color-mix(in srgb, var(--color-success) 25%, transparent);
+  --landing-refresh-bg: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  --landing-refresh-border: color-mix(in srgb, var(--color-primary) 25%, transparent);
+  --landing-public-table-bg: var(--color-white);
+  --landing-public-table-head-bg: color-mix(in srgb, var(--color-brand-ivory-light) 88%, var(--color-white));
+  --landing-public-table-rule: color-mix(in srgb, black 8%, transparent);
+  --landing-public-table-rule-soft: color-mix(in srgb, black 7%, transparent);
+  --landing-public-table-rule-faint: color-mix(in srgb, black 6%, transparent);
+  --landing-public-head-text: color-mix(in srgb, var(--color-brand-charcoal-deep) 62%, transparent);
+  --landing-public-title-text: var(--color-brand-charcoal-deep);
+  --landing-public-score-success: color-mix(in srgb, var(--color-success) 78%, black);
+  --landing-public-score-muted: color-mix(in srgb, var(--color-brand-charcoal-deep) 35%, transparent);
+  --landing-public-label-muted: color-mix(in srgb, var(--color-brand-charcoal-deep) 53%, transparent);
+  --landing-podium-first-bg: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  --landing-podium-place-muted: var(--color-gray-400);
+  --landing-podium-place-second: color-mix(in srgb, var(--bw-text-muted) 74%, white);
+  --landing-podium-place-third: color-mix(in srgb, var(--color-primary-hover) 68%, var(--color-warning) 32%);
+  --landing-winner-bg: linear-gradient(135deg, color-mix(in srgb, var(--color-success) 18%, white) 0%, var(--color-brand-ivory-soft) 100%);
+  --landing-winner-border: var(--color-success);
+  --landing-winner-shadow: 0 1px 6px color-mix(in srgb, var(--color-success) 25%, transparent);
+  --landing-winner-text: color-mix(in srgb, var(--color-success) 78%, black);
+  --landing-round-bg: color-mix(in srgb, var(--color-primary) 5%, transparent);
+  --landing-round-border: color-mix(in srgb, var(--color-primary) 20%, transparent);
+  --landing-round-border-strong: color-mix(in srgb, var(--color-primary) 45%, transparent);
+  --landing-round-shadow: 0 2px 8px color-mix(in srgb, black 8%, transparent);
+  --landing-round-label-bg: color-mix(in srgb, var(--color-white) 65%, var(--color-brand-ivory-soft));
+  --landing-match-surface: var(--color-brand-ivory-soft);
+  --landing-match-complete-border: var(--color-success-border);
+  --landing-match-complete-rail: var(--color-success);
+  --landing-match-finals-rail: color-mix(in srgb, var(--color-primary) 58%, white);
+  --landing-match-finals-bg: linear-gradient(to bottom, var(--opacity-white-06) 0%, var(--color-brand-ivory-soft) 100%);
+  --landing-match-label-bg: linear-gradient(180deg, var(--opacity-white-08) 0%, color-mix(in srgb, var(--color-primary) 5%, transparent) 100%);
+  --landing-match-margin-bg: color-mix(in srgb, var(--color-success) 8%, transparent);
+  --landing-vs-bg: color-mix(in srgb, var(--color-warning) 4%, transparent);
+  --landing-vs-text: var(--color-gray-400);
+  --landing-match-text: color-mix(in srgb, var(--color-brand-charcoal-deep) 82%, black 18%);
+  --landing-match-score: color-mix(in srgb, var(--color-brand-charcoal-deep) 88%, white 12%);
+  --landing-warm-subtitle: color-mix(in srgb, var(--color-primary) 84%, white);
+  --landing-nav-link: color-mix(in srgb, white 56%, transparent);
+  --landing-nav-link-hover: color-mix(in srgb, white 88%, transparent);
+  --landing-panel-border-soft: color-mix(in srgb, white 6%, transparent);
   width: 100%;
   overflow-x: hidden;
   padding-top: 112px;
@@ -144,14 +188,16 @@
   right: -100px;
   width: 480px;
   height: 480px;
-  border-radius: 50%;
   background: radial-gradient(circle, color-mix(in srgb, var(--color-primary) 32%, transparent), transparent 68%);
   pointer-events: none;
 }
-
 .heroGrid {
-  width: min(100%, var(--page-max-width));
-  margin: 0 auto;
+  border-color: var(--landing-border-subtle);
+}
+
+.proofIcon {
+  border-color: color-mix(in srgb, var(--color-primary) 22%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
   padding: 0 var(--page-gutter);
   position: relative;
   z-index: 1;
@@ -257,14 +303,14 @@
 }
 
 .proofStat {
-  color: #fff;
+  color: var(--landing-proof-stat);
   font-size: 13px;
   font-weight: 800;
   line-height: 1.2;
 }
 
 .proofLabel {
-  color: var(--opacity-white-50, rgba(255,255,255,0.55));
+  color: var(--landing-proof-label);
   font-size: 11px;
   font-weight: 500;
   line-height: 1.4;
@@ -634,12 +680,12 @@
 .pvShareBtn {
   font-size: 12px;
   font-weight: 700;
-  color: #fff;
+  color: var(--color-white);
   background: var(--color-primary);
   border-radius: 8px;
   padding: 6px 12px;
   white-space: nowrap;
-  box-shadow: 0 2px 8px rgba(255, 122, 0, 0.35);
+  box-shadow: var(--landing-share-shadow);
 }
 
 .pvTabs {
@@ -701,7 +747,7 @@
   height: 8px;
   border-radius: 999px;
   background: var(--color-success);
-  box-shadow: 0 0 0 3px rgba(47, 191, 113, 0.25);
+  box-shadow: var(--landing-live-dot-ring);
   flex-shrink: 0;
 }
 
@@ -709,23 +755,23 @@
   font-size: 11px;
   font-weight: 700;
   color: var(--color-primary);
-  background: rgba(255, 122, 0, 0.1);
+  background: var(--landing-refresh-bg);
   border-radius: 6px;
   padding: 4px 10px;
-  border: 1px solid rgba(255, 122, 0, 0.25);
+  border: 1px solid var(--landing-refresh-border);
 }
 
 /* Table uses a light cream background to match the real app */
 .pvTable {
-  background: #ffffff;
+  background: var(--landing-public-table-bg);
 }
 
 .pvTableHead {
   display: grid;
   grid-template-columns: 1fr repeat(3, 72px);
   padding: 8px 16px;
-  border-bottom: 2px solid rgba(0, 0, 0, 0.08);
-  background: #FAF4E8;
+  border-bottom: 2px solid var(--landing-public-table-rule);
+  background: var(--landing-public-table-head-bg);
   gap: 8px;
 }
 
@@ -733,7 +779,7 @@
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.06em;
-  color: #666;
+  color: var(--landing-public-head-text);
   text-align: right;
 }
 
@@ -745,25 +791,25 @@
   display: grid;
   grid-template-columns: 1fr repeat(3, 72px);
   padding: 9px 16px;
-  border-bottom: 1px solid rgba(0,0,0,0.07);
+  border-bottom: 1px solid var(--landing-public-table-rule-soft);
   gap: 8px;
-  align-items: center;
+.tournamentMetaCard,
+.bracketPreview,
+.panelHeaderRow {
+  border-color: var(--landing-border-subtle);
+  background: var(--landing-panel-soft);
 }
-
-.pvTableRow:last-child {
-  border-bottom: none;
-}
-
 .pvBowlerName {
   font-size: 14px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--landing-public-title-text);
 }
 
-.pvScore {
+  border-color: color-mix(in srgb, var(--color-primary) 22%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
   font-size: 14px;
   font-weight: 700;
-  color: #2e9e5b;
+  color: var(--landing-public-score-success);
   text-align: right;
 }
 
@@ -777,7 +823,7 @@
 .pvScoreElim {
   font-size: 14px;
   font-weight: 700;
-  color: #aaa;
+  color: var(--landing-public-score-muted);
   text-align: right;
 }
 
@@ -790,7 +836,7 @@
 }
 
 .pvSidePotSection {
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--landing-public-table-rule);
   border-radius: 12px;
   overflow: hidden;
 }
@@ -801,21 +847,21 @@
   font-weight: 800;
   letter-spacing: 0.07em;
   text-transform: uppercase;
-  color: #333;
-  background: #FAF4E8;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  color: var(--landing-public-title-text);
+  background: var(--landing-public-table-head-bg);
+  border-bottom: 1px solid var(--landing-public-table-rule);
   border-left: 3px solid var(--color-primary);
 }
 
 .pvSidePotGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  background: #ffffff;
+  background: var(--landing-public-table-bg);
 }
 
 .pvSidePotCard {
   padding: 12px;
-  border-right: 1px solid rgba(0, 0, 0, 0.06);
+  border-right: 1px solid var(--landing-public-table-rule-faint);
 }
 
 .pvSidePotCard:last-child {
@@ -827,10 +873,10 @@
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.07em;
-  color: #888;
+  color: var(--landing-public-label-muted);
   margin-bottom: 8px;
   padding-bottom: 6px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+  border-bottom: 1px solid var(--landing-public-table-rule-soft);
 }
 
 .pvSidePotPodium {
@@ -851,7 +897,7 @@
 }
 
 .pvSidePotPodiumFirst {
-  background: rgba(255, 120, 32, 0.08);
+  background: var(--landing-podium-first-bg);
 }
 
 .pvSidePotPodiumPlace {
@@ -859,7 +905,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  color: #999;
+  color: var(--landing-podium-place-muted);
   min-width: 22px;
   flex-shrink: 0;
 }
@@ -868,14 +914,14 @@
   color: var(--color-primary);
 }
 
-.pvSidePotPodium li:nth-child(2) .pvSidePotPodiumPlace { color: #94a3b8; }
-.pvSidePotPodium li:nth-child(3) .pvSidePotPodiumPlace { color: #b87333; }
+.pvSidePotPodium li:nth-child(2) .pvSidePotPodiumPlace { color: var(--landing-podium-place-second); }
+.pvSidePotPodium li:nth-child(3) .pvSidePotPodiumPlace { color: var(--landing-podium-place-third); }
 
 .pvSidePotPodiumName {
   flex: 1;
   font-size: 11px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--landing-public-title-text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -896,14 +942,14 @@
 }
 
 .pvSidePotPodiumRow:not(.pvSidePotPodiumFirst) .pvSidePotPodiumScore {
-  color: #999;
+  color: var(--landing-podium-place-muted);
   font-weight: 600;
   font-size: 11px;
 }
 
 /* Bracket view */
 .pvBracketView {
-  background: #ffffff;
+  background: var(--landing-public-table-bg);
   padding: 12px 16px 16px;
 }
 
@@ -917,10 +963,10 @@
 .pvBracketNavBtn {
   height: 30px;
   min-width: 60px;
-  border: 1px solid rgba(255, 122, 0, 0.3);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 30%, transparent);
   border-radius: 10px;
   background: var(--color-primary);
-  color: #fff;
+  color: var(--color-white);
   font-size: 12px;
   font-weight: 700;
   display: inline-flex;
@@ -955,7 +1001,7 @@
 
 .pvBracketNavCount {
   font-size: 12px;
-  color: #999;
+  color: var(--landing-podium-place-muted);
   white-space: nowrap;
 }
 
@@ -965,10 +1011,10 @@
   gap: 10px;
   padding: 8px 14px;
   margin-bottom: 12px;
-  background: linear-gradient(135deg, #d1fae5 0%, #fffef7 100%);
-  border: 1px solid #2FBF71;
+  background: var(--landing-winner-bg);
+  border: 1px solid var(--landing-winner-border);
   border-radius: 10px;
-  box-shadow: 0 1px 6px rgba(47, 191, 113, 0.25);
+  box-shadow: var(--landing-winner-shadow);
 }
 
 .pvWinnerLabel {
@@ -976,14 +1022,14 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #059669;
+  color: var(--landing-winner-text);
   white-space: nowrap;
 }
 
 .pvWinnerName {
   font-size: 14px;
   font-weight: 800;
-  color: #059669;
+  color: var(--landing-winner-text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1003,11 +1049,11 @@
   gap: 0;
   min-width: 180px;
   flex-shrink: 0;
-  background: rgba(240, 165, 0, 0.05);
-  border: 1px solid rgba(255, 122, 0, 0.2);
-  border-top: 3px solid rgba(255, 122, 0, 0.45);
+  background: var(--landing-round-bg);
+  border: 1px solid var(--landing-round-border);
+  border-top: 3px solid var(--landing-round-border-strong);
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--landing-round-shadow);
   padding: 10px;
 }
 
@@ -1022,8 +1068,8 @@
   justify-content: center;
   min-height: 36px;
   border-radius: 9px;
-  border: 1px solid rgba(255, 122, 0, 0.2);
-  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid var(--landing-round-border);
+  background: var(--landing-round-label-bg);
   margin-bottom: 0.7rem;
 }
 
@@ -1067,22 +1113,22 @@
 }
 
 .pvMatchCard {
-  background: #fffef7;
-  border: 1.5px solid rgba(255, 122, 0, 0.2);
+  background: var(--landing-match-surface);
+  border: 1.5px solid var(--landing-round-border);
   border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+  box-shadow: 0 2px 8px var(--landing-public-table-rule-soft);
   position: relative;
 }
 
 .pvMatchComplete {
-  border-color: rgba(47, 191, 113, 0.30);
-  border-left: 4px solid #2FBF71;
+  border-color: var(--landing-match-complete-border);
+  border-left: 4px solid var(--landing-match-complete-rail);
 }
 
 .pvMatchCardFinals {
-  border-top: 3px solid #F49040;
-  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.06) 0%, #fffef7 100%);
+  border-top: 3px solid var(--landing-match-finals-rail);
+  background: var(--landing-match-finals-bg);
 }
 
 .pvMatchLabelRow {
@@ -1091,8 +1137,8 @@
   justify-content: flex-start;
   min-height: 30px;
   padding: 6px 11px;
-  border-bottom: 1px solid rgba(255, 122, 0, 0.12);
-  background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(240,165,0,0.05) 100%);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-primary) 12%, transparent);
+  background: var(--landing-match-label-bg);
 }
 
 .pvMatchLabel {
@@ -1107,8 +1153,8 @@
   font-size: 0.62rem;
   font-weight: 700;
   letter-spacing: 0.04em;
-  color: #2FBF71;
-  background: rgba(47, 191, 113, 0.08);
+  color: var(--landing-winner-text);
+  background: var(--landing-match-margin-bg);
   border-radius: 999px;
   padding: 1px 6px;
   margin-left: auto;
@@ -1120,14 +1166,14 @@
   align-items: center;
   justify-content: center;
   min-height: 17px;
-  border-top: 1px solid rgba(255, 122, 0, 0.1);
-  border-bottom: 1px solid rgba(255, 122, 0, 0.1);
-  background: rgba(240, 165, 0, 0.04);
+  border-top: 1px solid color-mix(in srgb, var(--color-primary) 10%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-primary) 10%, transparent);
+  background: var(--landing-vs-bg);
   font-size: 0.48rem;
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: #aaa;
+  color: var(--landing-vs-text);
 }
 
 .pvMatchPlayer {
@@ -1137,16 +1183,16 @@
   padding: 9px 11px;
   font-size: 0.84rem;
   font-weight: 600;
-  color: #333;
+  color: var(--landing-match-text);
   gap: 8px;
   min-height: 40px;
 }
 
 .pvMatchWinner {
   font-weight: 700;
-  color: #059669;
-  background: linear-gradient(to right, #d1fae5 0%, #fffef7 100%);
-  border-left: 4px solid #2FBF71;
+  color: var(--landing-winner-text);
+  background: linear-gradient(to right, color-mix(in srgb, var(--color-success) 18%, white) 0%, var(--color-brand-ivory-soft) 100%);
+  border-left: 4px solid var(--landing-match-complete-rail);
   padding-left: 6px;
 }
 
@@ -1154,7 +1200,7 @@
   font-variant-numeric: tabular-nums;
   font-weight: 800;
   font-size: 0.9rem;
-  color: #3a3a3a;
+  color: var(--landing-match-score);
   white-space: nowrap;
   min-width: 34px;
   text-align: right;
@@ -1363,7 +1409,7 @@
   backdrop-filter: blur(16px);
   box-shadow:
     0 0 80px -16px color-mix(in srgb, var(--color-primary) 35%, transparent),
-    0 28px 60px rgba(0, 0, 0, 0.42),
+    0 28px 60px color-mix(in srgb, black 42%, transparent),
     inset 0 1px 0 var(--opacity-white-08);
 }
 
@@ -1961,6 +2007,9 @@
   --landing-border: var(--bw-border-card);
   --landing-border-subtle: var(--bw-border-subtle);
   --landing-border-warm: var(--bw-border-accent);
+  --landing-card-primary: var(--bw-surface-card);
+  --landing-card-secondary: var(--bw-surface-panel);
+  --landing-card-utility: color-mix(in srgb, var(--bw-surface-panel) 72%, transparent);
   --landing-shadow: none;
   --fs-overline: 10px;
   --fs-body-sm: 12px;
@@ -2006,7 +2055,7 @@
 }
 
 .brandText span {
-  color: rgba(255, 178, 104, 0.84);
+  color: var(--landing-warm-subtitle);
   font-size: 10px;
   letter-spacing: 0.08em;
 }
@@ -2020,15 +2069,15 @@
 .navLinks a {
   padding: 7px 16px;
   border-radius: 999px;
-  color: rgba(255, 255, 255, 0.56);
+  color: var(--landing-nav-link);
   font-size: 13px;
   font-weight: 500;
   letter-spacing: 0;
 }
 
 .navLinks a:hover {
-  color: rgba(255, 255, 255, 0.88);
-  background: rgba(255, 255, 255, 0.06);
+  color: var(--landing-nav-link-hover);
+  background: var(--landing-panel-border-soft);
 }
 
 .navBtn {
@@ -2080,11 +2129,12 @@
 .benefit,
 .ctaContent,
 .publicViewPanel {
-  background: var(--landing-panel);
+  background: var(--landing-card-primary);
   border: 1px solid var(--landing-border);
   box-shadow: var(--landing-shadow);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
 }
 
 .heroContent {
@@ -2139,7 +2189,7 @@
 }
 
 .heroCtaHelper {
-  color: rgba(157, 166, 184, 0.72);
+  color: var(--bw-text-faint);
 }
 
 .trustRow {
@@ -2153,9 +2203,9 @@
   display: inline-flex;
   align-items: center;
   border-radius: 999px;
-  border: 1px solid rgba(255, 122, 0, 0.22);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 22%, transparent);
   background: color-mix(in srgb, var(--color-primary) 10%, var(--landing-panel-soft));
-  color: rgba(255, 224, 198, 0.92);
+  color: color-mix(in srgb, var(--bw-text-accent) 92%, white);
   padding: 0 12px;
   font-size: 12px;
   font-weight: 700;
@@ -2171,13 +2221,16 @@
 
 .proofCard,
 .statCard,
-.activityCard,
 .tournamentMetaCard,
 .bracketPreview,
 .panelHeaderRow {
-  border-color: rgba(226, 232, 240, 0.14);
-  background: var(--landing-panel-soft);
-  box-shadow: none;
+  border-color: var(--landing-border-subtle);
+  background: var(--landing-card-secondary);
+}
+
+.proofIcon {
+  border-color: color-mix(in srgb, var(--color-primary) 22%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
 }
 
 .proofCard {
@@ -2185,8 +2238,8 @@
 }
 
 .proofIcon {
-  border-color: rgba(255, 122, 0, 0.22);
-  background: rgba(255, 122, 0, 0.1);
+  border-color: color-mix(in srgb, var(--color-primary) 22%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
   color: var(--color-primary);
 }
 
@@ -2204,7 +2257,7 @@
 
 .panelHeaderRow {
   border-radius: 18px;
-  border-bottom: 3px solid rgba(255, 122, 0, 0.65);
+  border-bottom: 3px solid color-mix(in srgb, var(--color-primary) 65%, transparent);
 }
 
 .heroPanelTitle {
@@ -2260,7 +2313,7 @@
 .howItWorks,
 .publicViewSection,
 .benefits {
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--landing-panel-border-soft);
 }
 
 .sectionHeading,
@@ -2283,17 +2336,20 @@
 .benefit {
   border-radius: 24px;
   padding: 18px;
+  background: var(--landing-card-utility);
 }
 
 .featureCard:hover,
 .step:hover,
 .benefit:hover {
+  transform: translateY(-1px);
   border-color: var(--landing-border-warm);
-  background: var(--landing-panel-strong);
+  background: var(--landing-card-secondary);
+  box-shadow: var(--bw-shadow-card);
 }
 
 .step:not(:last-child)::after {
-  color: rgba(255, 122, 0, 0.56);
+  color: color-mix(in srgb, var(--color-primary) 56%, transparent);
 }
 
 .publicViewGrid {
@@ -2324,7 +2380,7 @@
 }
 
 .ctaSection {
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--landing-panel-border-soft);
   border-bottom: 0;
 }
 

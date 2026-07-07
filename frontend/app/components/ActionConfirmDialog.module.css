@@ -76,7 +76,7 @@
 /* Modern dark confirmation modal polish */
 
 .title {
-  color: rgba(246, 249, 255, 0.96);
+  color: var(--bw-text-title);
   font-size: 1rem;
   line-height: 1.2;
   font-weight: 800;
@@ -89,7 +89,7 @@
 }
 
 .message {
-  color: rgba(180, 189, 205, 0.78);
+  color: var(--bw-text-muted);
   font-size: 0.86rem;
 }
 

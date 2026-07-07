@@ -7,6 +7,7 @@ import { usePageHeader } from "../lib/header-context";
 import { apiClient } from "../lib/api";
 import { useAuth } from "../lib/auth-context";
 import { formatShortMonthDayYear } from "../lib/formatters";
+import { DataTableToolbar } from "../components/primitives";
 import buttonStyles from "../styles/buttons.module.css";
 import styles from "./admin.module.css";
 
@@ -645,32 +646,37 @@ export default function AdminPage() {
             <h3 className={styles.panelTitle}>Users</h3>
             <span className={styles.panelSubtle}>{usersResponse.total} total</span>
           </div>
-          <div className={styles.toolbarRow}>
-            <input
-              type="text"
-              className={styles.toolbarInput}
-              value={usersSearch}
-              onChange={(event) => {
-                setUsersSearch(event.target.value);
-                setUsersPage(1);
-              }}
-              placeholder="Search name, username, email, organization"
-            />
-            <select
-              className={styles.toolbarSelect}
-              value={usersSort}
-              onChange={(event) => {
-                setUsersSort(event.target.value);
-                setUsersPage(1);
-              }}
-            >
-              <option value="id_asc">Sort: Oldest</option>
-              <option value="id_desc">Sort: Newest</option>
-              <option value="name_asc">Sort: Name A-Z</option>
-              <option value="name_desc">Sort: Name Z-A</option>
-              <option value="tournaments_desc">Sort: Most tournaments</option>
-            </select>
-          </div>
+          <DataTableToolbar
+            className={styles.toolbarRow}
+            left={(
+              <input
+                type="text"
+                className={styles.toolbarInput}
+                value={usersSearch}
+                onChange={(event) => {
+                  setUsersSearch(event.target.value);
+                  setUsersPage(1);
+                }}
+                placeholder="Search name, username, email, organization"
+              />
+            )}
+            right={(
+              <select
+                className={styles.toolbarSelect}
+                value={usersSort}
+                onChange={(event) => {
+                  setUsersSort(event.target.value);
+                  setUsersPage(1);
+                }}
+              >
+                <option value="id_asc">Sort: Oldest</option>
+                <option value="id_desc">Sort: Newest</option>
+                <option value="name_asc">Sort: Name A-Z</option>
+                <option value="name_desc">Sort: Name Z-A</option>
+                <option value="tournaments_desc">Sort: Most tournaments</option>
+              </select>
+            )}
+          />
           <div className={styles.tableWrap}>
             <table className={styles.table}>
               <thead>
@@ -818,43 +824,50 @@ export default function AdminPage() {
             <span className={styles.panelSubtle}>{tournamentsResponse.total} total</span>
           </div>
 
-          <div className={styles.toolbarRow}>
-            <input
-              type="text"
-              className={styles.toolbarInput}
-              value={tournamentSearch}
-              onChange={(event) => {
-                setTournamentSearch(event.target.value);
-                setTournamentPage(1);
-              }}
-              placeholder="Search name, owner, location"
-            />
-            <select
-              className={styles.toolbarSelect}
-              value={tournamentActivityFilter}
-              onChange={(event) => {
-                setTournamentActivityFilter(event.target.value as "all" | "has_entries" | "no_entries");
-                setTournamentPage(1);
-              }}
-            >
-              <option value="all">All activity</option>
-              <option value="has_entries">Has entries</option>
-              <option value="no_entries">No entries</option>
-            </select>
-            <select
-              className={styles.toolbarSelect}
-              value={tournamentSort}
-              onChange={(event) => {
-                setTournamentSort(event.target.value as "newest" | "entries_desc" | "owner_asc" | "oldest");
-                setTournamentPage(1);
-              }}
-            >
-              <option value="newest">Sort: Newest</option>
-              <option value="oldest">Sort: Oldest</option>
-              <option value="entries_desc">Sort: Most entries</option>
-              <option value="owner_asc">Sort: Owner A-Z</option>
-            </select>
-          </div>
+          <DataTableToolbar
+            className={styles.toolbarRow}
+            left={(
+              <input
+                type="text"
+                className={styles.toolbarInput}
+                value={tournamentSearch}
+                onChange={(event) => {
+                  setTournamentSearch(event.target.value);
+                  setTournamentPage(1);
+                }}
+                placeholder="Search name, owner, location"
+              />
+            )}
+            right={(
+              <>
+                <select
+                  className={styles.toolbarSelect}
+                  value={tournamentActivityFilter}
+                  onChange={(event) => {
+                    setTournamentActivityFilter(event.target.value as "all" | "has_entries" | "no_entries");
+                    setTournamentPage(1);
+                  }}
+                >
+                  <option value="all">All activity</option>
+                  <option value="has_entries">Has entries</option>
+                  <option value="no_entries">No entries</option>
+                </select>
+                <select
+                  className={styles.toolbarSelect}
+                  value={tournamentSort}
+                  onChange={(event) => {
+                    setTournamentSort(event.target.value as "newest" | "entries_desc" | "owner_asc" | "oldest");
+                    setTournamentPage(1);
+                  }}
+                >
+                  <option value="newest">Sort: Newest</option>
+                  <option value="oldest">Sort: Oldest</option>
+                  <option value="entries_desc">Sort: Most entries</option>
+                  <option value="owner_asc">Sort: Owner A-Z</option>
+                </select>
+              </>
+            )}
+          />
 
           <div className={styles.tableWrap}>
             <table className={styles.table}>
@@ -1032,23 +1045,28 @@ export default function AdminPage() {
             <h3 className={styles.panelTitle}>Database Tables</h3>
             <span className={styles.panelSubtle}>{tablesResponse.total_tables} shown</span>
           </div>
-          <div className={styles.toolbarRow}>
-            <input
-              type="text"
-              className={styles.toolbarInput}
-              value={tableSearch}
-              onChange={(event) => setTableSearch(event.target.value)}
-              placeholder="Search table names"
-            />
-            <label className={styles.checkboxRow}>
+          <DataTableToolbar
+            className={styles.toolbarRow}
+            left={(
               <input
-                type="checkbox"
-                checked={tableIncludeCounts}
-                onChange={(event) => setTableIncludeCounts(event.target.checked)}
+                type="text"
+                className={styles.toolbarInput}
+                value={tableSearch}
+                onChange={(event) => setTableSearch(event.target.value)}
+                placeholder="Search table names"
               />
-              <span>Include row counts (uses estimates on Postgres)</span>
-            </label>
-          </div>
+            )}
+            right={(
+              <label className={styles.checkboxRow}>
+                <input
+                  type="checkbox"
+                  checked={tableIncludeCounts}
+                  onChange={(event) => setTableIncludeCounts(event.target.checked)}
+                />
+                <span>Include row counts (uses estimates on Postgres)</span>
+              </label>
+            )}
+          />
           <div className={styles.tableWrap}>
             <table className={styles.table}>
               <thead>
@@ -1086,38 +1104,45 @@ export default function AdminPage() {
             <h3 className={styles.panelTitle}>Audit Log</h3>
             <span className={styles.panelSubtle}>{auditResponse.total} entries</span>
           </div>
-          <div className={styles.toolbarRow}>
-            <input
-              type="text"
-              className={styles.toolbarInput}
-              value={auditSearch}
-              onChange={(event) => {
-                setAuditSearch(event.target.value);
-                setAuditPage(1);
-              }}
-              placeholder="Search action, reason, target"
-            />
-            <input
-              type="text"
-              className={styles.toolbarInput}
-              value={auditAction}
-              onChange={(event) => {
-                setAuditAction(event.target.value);
-                setAuditPage(1);
-              }}
-              placeholder="Action (example: tournament.delete)"
-            />
-            <input
-              type="text"
-              className={styles.toolbarInput}
-              value={auditTargetType}
-              onChange={(event) => {
-                setAuditTargetType(event.target.value);
-                setAuditPage(1);
-              }}
-              placeholder="Target type (user, tournament)"
-            />
-          </div>
+          <DataTableToolbar
+            className={styles.toolbarRow}
+            left={(
+              <input
+                type="text"
+                className={styles.toolbarInput}
+                value={auditSearch}
+                onChange={(event) => {
+                  setAuditSearch(event.target.value);
+                  setAuditPage(1);
+                }}
+                placeholder="Search action, reason, target"
+              />
+            )}
+            right={(
+              <>
+                <input
+                  type="text"
+                  className={styles.toolbarInput}
+                  value={auditAction}
+                  onChange={(event) => {
+                    setAuditAction(event.target.value);
+                    setAuditPage(1);
+                  }}
+                  placeholder="Action (example: tournament.delete)"
+                />
+                <input
+                  type="text"
+                  className={styles.toolbarInput}
+                  value={auditTargetType}
+                  onChange={(event) => {
+                    setAuditTargetType(event.target.value);
+                    setAuditPage(1);
+                  }}
+                  placeholder="Target type (user, tournament)"
+                />
+              </>
+            )}
+          />
           <div className={styles.tableWrap}>
             <table className={styles.table}>
               <thead>

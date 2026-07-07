@@ -2202,6 +2202,10 @@
   margin-bottom: 12px;
   padding: 12px;
   border: 1px solid var(--public-border);
+
+.aliveToolbar {
+  width: 100%;
+}
   border-radius: 8px;
   background: var(--public-surface);
   box-shadow: 0 16px 36px rgba(0, 0, 0, 0.18);
@@ -2734,8 +2738,11 @@
 /* Shared UI token alignment for public live view */
 .page {
   --public-bg: var(--color-background);
-  --public-surface: var(--bw-surface-card);
-  --public-surface-soft: var(--bw-surface-panel);
+  --public-card-primary: var(--bw-surface-card);
+  --public-card-secondary: var(--bw-surface-panel);
+  --public-card-utility: color-mix(in srgb, var(--bw-surface-panel) 72%, transparent);
+  --public-surface: var(--public-card-primary);
+  --public-surface-soft: var(--public-card-secondary);
   --public-surface-raised: var(--bw-surface-card-strong);
   --public-border: var(--bw-border-card);
   --public-border-strong: var(--bw-border-accent);
@@ -2755,9 +2762,30 @@
 .aliveControls,
 .bracketSearchRow,
 .sidePotRefreshRow {
-  background: var(--bw-surface-card);
-  border-color: var(--bw-border-card);
+  background: var(--public-card-primary);
+  border-color: var(--public-border);
   box-shadow: none;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+.groupSection,
+.sidePotSection,
+.winnerCard,
+.aliveControls,
+.bracketSearchRow,
+.sidePotRefreshRow {
+  background: var(--public-card-secondary);
+  border-color: var(--bw-border-subtle);
+}
+
+.groupSection:hover,
+.sidePotSection:hover,
+.winnerCard:hover,
+.aliveControls:hover,
+.tableWrap:hover {
+  transform: translateY(-1px);
+  border-color: var(--public-border);
+  box-shadow: var(--bw-shadow-card);
 }
 
 .header {
@@ -2800,7 +2828,7 @@
 }
 
 .refreshBtn {
-  background: var(--bw-surface-panel);
+  background: var(--public-card-secondary);
   border-color: var(--bw-border-subtle);
   color: var(--bw-text-body);
   box-shadow: none;
@@ -2812,7 +2840,7 @@
 }
 
 .table td {
-  border-bottom-color: rgba(226, 232, 240, 0.08);
+  border-bottom-color: color-mix(in srgb, var(--bw-border-subtle) 52%, transparent);
 }
 
 .tableRow:nth-child(even) {
@@ -2820,5 +2848,13 @@
 }
 
 .tableRow:hover {
-  background: color-mix(in srgb, var(--color-primary) 7%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 10%, var(--public-card-secondary));
+}
+
+.emptyNote {
+  color: var(--public-muted);
+  border: 1px dashed color-mix(in srgb, var(--bw-border-subtle) 84%, transparent);
+  background: color-mix(in srgb, var(--public-card-utility) 88%, transparent);
+  border-radius: 14px;
+  padding: 12px 14px;
 }

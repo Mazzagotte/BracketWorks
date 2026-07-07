@@ -125,8 +125,8 @@
 }
 
 .quickAction:disabled {
-  background: rgba(71, 85, 105, 0.45) !important;
-  border-color: rgba(148, 163, 184, 0.32) !important;
-  color: rgba(203, 213, 225, 0.9) !important;
+  background: color-mix(in srgb, var(--bw-surface-card-strong) 72%, transparent) !important;
+  border-color: color-mix(in srgb, var(--bw-border-subtle) 76%, transparent) !important;
+  color: var(--bw-text-body) !important;
   box-shadow: none !important;
 }

@@ -27,13 +27,13 @@
    =================================== */
 
 .tab {
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: var(--bw-surface-panel);
+  border: 1px solid var(--bw-border-subtle);
   padding: 0.5rem 1rem;
   border-radius: 20px;
   font-weight: 600;
   font-size: 0.875rem;
-  color: rgba(244, 239, 232, 0.64);
+  color: var(--bw-text-muted);
   cursor: pointer;
   transition: all 0.18s ease;
   display: flex;
@@ -48,20 +48,20 @@
 }
 
 .tab:hover {
-  border-color: rgba(255, 122, 0, 0.45);
-  color: #ff9b1f;
-  background: rgba(255, 122, 0, 0.08);
+  border-color: var(--bw-border-accent);
+  color: var(--bw-text-accent);
+  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
 }
 
 .tab.active {
-  color: #ffb259;
-  background: rgba(255, 122, 0, 0.08);
-  border-color: rgba(255, 122, 0, 0.5);
-  box-shadow: 0 0 0 1px rgba(255, 122, 0, 0.35);
+  color: var(--bw-text-accent);
+  background: color-mix(in srgb, var(--color-primary) 9%, transparent);
+  border-color: var(--bw-border-accent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-primary) 30%, transparent);
 }
 
 .tab.active:hover {
-  background: rgba(255, 122, 0, 0.12);
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
 }
 
 .tabLabel {
@@ -80,8 +80,8 @@
 }
 
 .tab:not(.active) .tabCount {
-  background: rgba(255, 122, 0, 0.12);
-  color: #ff9b1f;
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  color: var(--bw-text-accent);
 }
 
 /* ===================================
@@ -172,37 +172,37 @@
   min-height: 32px;
   padding: 0.38rem 0.72rem;
   border-radius: 999px;
-  color: rgba(203, 213, 225, 0.8);
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(226, 232, 240, 0.14);
+  color: var(--bw-text-body);
+  background: var(--bw-surface-panel);
+  border: 1px solid var(--bw-border-subtle);
   font-size: 0.76rem;
   font-weight: 750;
   letter-spacing: 0;
 }
 
 .tab:hover {
-  color: rgba(255, 219, 190, 0.98);
-  background: rgba(255, 122, 0, 0.1);
-  border-color: rgba(255, 146, 72, 0.35);
+  color: var(--bw-text-accent);
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  border-color: var(--bw-border-accent);
 }
 
 .tab.active {
-  color: rgba(255, 238, 220, 1);
-  background: rgba(255, 122, 0, 0.16);
-  border-color: rgba(255, 146, 72, 0.48);
+  color: var(--bw-text-title);
+  background: color-mix(in srgb, var(--color-primary) 16%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 48%, white);
   box-shadow: none;
 }
 
 .tab.active:hover {
-  background: rgba(255, 122, 0, 0.2);
+  background: color-mix(in srgb, var(--color-primary) 20%, transparent);
 }
 
 .tabCount,
 .tab:not(.active) .tabCount {
   min-width: 1.35rem;
   padding: 0.1rem 0.42rem;
-  color: rgba(246, 249, 255, 0.9);
-  background: rgba(255, 255, 255, 0.08);
+  color: var(--bw-text-title);
+  background: var(--bw-surface-panel-strong);
   font-size: 0.68rem;
   letter-spacing: 0;
 }

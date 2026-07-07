@@ -25,7 +25,7 @@
 }
 
 .danger:hover:not(:disabled) {
-  border-color: rgba(248, 113, 113, 0.42);
-  background: rgba(127, 29, 29, 0.18);
-  color: rgba(254, 202, 202, 0.96);
+  border-color: var(--color-error-border);
+  background: var(--color-error-bg-soft);
+  color: var(--bw-text-danger);
 }

@@ -93,7 +93,7 @@
 
 .controlDivider {
   height: 1px;
-  background: rgba(255, 255, 255, 0.08);
+  background: color-mix(in srgb, var(--bw-border-subtle) 68%, transparent);
   margin: 0;
 }
 
@@ -355,7 +355,7 @@
 .pageContainer {
   max-width: 1280px;
   padding: 0.75rem 1rem;
-  color: rgba(241, 245, 249, 0.9);
+  color: var(--bw-text-body);
 }
 
 .controlPanel,
@@ -366,25 +366,26 @@
 }
 
 .quickActionDangerBtn {
-  color: rgba(254, 202, 202, 0.96);
-  background: rgba(127, 29, 29, 0.14);
-  border: 1px solid rgba(248, 113, 113, 0.28);
+  color: var(--bw-text-danger);
+  background: var(--color-error-bg-soft);
+  border: 1px solid var(--color-error-border);
   cursor: pointer;
 }
 
 .quickActionDangerBtn:hover {
-  color: rgba(255, 226, 226, 1);
-  background: rgba(127, 29, 29, 0.24);
-  border-color: rgba(248, 113, 113, 0.42);
+  color: var(--bw-text-title);
+  background: color-mix(in srgb, var(--color-error) 16%, transparent);
+  border-color: color-mix(in srgb, var(--color-error) 36%, transparent);
 }
 
 .controlPanel {
   margin-bottom: 0.95rem;
   overflow: hidden;
+  background: var(--bw-surface-panel-strong);
 }
 
 .controlDivider {
-  background: rgba(255, 255, 255, 0.08);
+  background: color-mix(in srgb, var(--bw-border-subtle) 68%, transparent);
 }
 
 .bracketNav {
@@ -394,7 +395,7 @@
 .navBtn {
   min-height: 32px;
   padding: 0.42rem 0.75rem;
-  border: 1px solid rgba(226, 232, 240, 0.16);
+  border: 1px solid var(--bw-border-subtle);
   border-radius: 10px;
   font-size: 0.78rem;
   font-weight: 750;
@@ -402,23 +403,23 @@
 }
 
 .navBtn:not(:disabled) {
-  color: rgba(255, 219, 190, 0.96);
-  background: rgba(255, 122, 0, 0.1);
+  color: var(--bw-text-accent);
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
   box-shadow: none;
 }
 
 .navBtn:not(:disabled):hover {
   transform: none;
-  color: rgba(255, 238, 220, 1);
-  background: rgba(255, 122, 0, 0.18);
-  border-color: rgba(255, 168, 92, 0.48);
+  color: var(--bw-text-title);
+  background: color-mix(in srgb, var(--color-primary) 16%, transparent);
+  border-color: var(--bw-border-accent);
   box-shadow: none;
 }
 
 .navBtn:disabled {
-  color: rgba(180, 189, 205, 0.42);
-  background: rgba(255, 255, 255, 0.025);
-  border-color: rgba(226, 232, 240, 0.08);
+  color: var(--bw-text-faint);
+  background: var(--bw-surface-panel);
+  border-color: color-mix(in srgb, var(--bw-border-subtle) 62%, transparent);
 }
 
 .mismatchBanner {
@@ -428,21 +429,21 @@
 
 .mismatchBannerText {
   font-size: 0.84rem;
-  color: rgba(254, 226, 226, 0.95);
+  color: var(--bw-text-title);
 }
 
 .mismatchBannerText::before {
-  color: rgba(254, 202, 202, 0.96);
-  background: rgba(127, 29, 29, 0.22);
-  border-color: rgba(248, 113, 113, 0.28);
+  color: var(--bw-text-danger);
+  background: color-mix(in srgb, var(--color-error) 22%, transparent);
+  border-color: var(--color-error-border);
   letter-spacing: 0;
 }
 
 .mismatchBannerButton {
   min-height: 34px;
   border-radius: 10px;
-  color: rgba(254, 226, 226, 0.98);
-  background: rgba(220, 38, 38, 0.28);
+  color: var(--bw-text-title);
+  background: color-mix(in srgb, var(--color-error) 28%, transparent);
   box-shadow: none;
   letter-spacing: 0;
 }
@@ -456,7 +457,7 @@
 .loadingState,
 .authRequired,
 .noMatches {
-  color: rgba(180, 189, 205, 0.78);
+  color: var(--bw-text-muted);
 }
 
 .emptyState {
@@ -471,7 +472,7 @@
 
 .emptyTitle {
   margin: 0 0 0.45rem;
-  color: rgba(246, 249, 255, 0.94);
+  color: var(--bw-text-title);
   font-size: 1.05rem;
   line-height: 1.2;
   font-weight: 800;
@@ -481,13 +482,13 @@
 .emptyMessage {
   max-width: 520px;
   margin: 0;
-  color: rgba(180, 189, 205, 0.76);
+  color: var(--bw-text-muted);
   font-size: 0.86rem;
   line-height: 1.5;
 }
 
 .mobileBracketSectionTitle {
-  color: rgba(180, 189, 205, 0.76);
+  color: var(--bw-text-muted);
   letter-spacing: 0;
 }
 
@@ -497,24 +498,24 @@
 }
 
 .mobileBracketListTitle {
-  color: rgba(246, 249, 255, 0.94);
+  color: var(--bw-text-title);
 }
 
 .mobileBracketListMode {
-  color: rgba(255, 219, 190, 0.96);
-  background: rgba(255, 122, 0, 0.11);
-  border-color: rgba(255, 146, 72, 0.28);
+  color: var(--bw-text-accent);
+  background: color-mix(in srgb, var(--color-primary) 11%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 28%, transparent);
 }
 
 .mobileBracketListMeta,
 .mobileTreeTitle {
-  color: rgba(180, 189, 205, 0.76);
+  color: var(--bw-text-muted);
 }
 
 .mobileTreeBackBtn {
-  color: rgba(255, 219, 190, 0.96);
-  background: rgba(255, 122, 0, 0.1);
-  border-color: rgba(255, 146, 72, 0.35);
+  color: var(--bw-text-accent);
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 35%, transparent);
 }
 
 @media (max-width: 900px) {
