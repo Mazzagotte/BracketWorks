@@ -19,7 +19,7 @@
   justify-content: center;
   z-index: 1200;
   padding: max(20px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom));
-  background: rgba(7, 8, 13, 0.86);
+  background: color-mix(in srgb, var(--bw-page) 86%, transparent);
   backdrop-filter: blur(12px) saturate(120%);
   overflow-y: auto;
   animation: fadeIn 0.2s ease-out;
@@ -44,9 +44,9 @@
   animation: slideUp 0.3s ease-out;
   scrollbar-width: none;
   position: relative;
-  background: rgba(19, 19, 27, 0.98) !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.55) !important;
+  background: color-mix(in srgb, var(--bw-surface-card) 96%, transparent) !important;
+  border: 1px solid var(--bw-border-subtle) !important;
+  box-shadow: var(--shadow-modal) !important;
 }
 
 .pageCard {
@@ -76,8 +76,8 @@
 /* Header */
 .header {
   padding: 22px 28px 14px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.018)) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: linear-gradient(180deg, var(--bw-surface-panel-strong), color-mix(in srgb, var(--bw-surface-panel) 42%, transparent)) !important;
+  border-bottom: 1px solid var(--bw-border-subtle) !important;
 }
 
 .brandRow {
@@ -110,13 +110,13 @@
 /* Form body */
 .body {
   padding: 20px 28px 24px;
-  background: rgba(19, 19, 27, 0.98);
+  background: color-mix(in srgb, var(--bw-surface-card) 96%, transparent);
 }
 
 .modal :global(.surface-authInput),
 .modal :global(.surface-authInputValid) {
-  background: rgba(8, 9, 15, 0.9) !important;
-  color: #f4efe8;
+  background: color-mix(in srgb, var(--bw-surface-card-strong) 92%, transparent) !important;
+  color: var(--bw-text-title);
 }
 
 .modal :global(.surface-authInput:-webkit-autofill),
@@ -125,18 +125,18 @@
 .modal :global(.surface-authInputValid:-webkit-autofill),
 .modal :global(.surface-authInputValid:-webkit-autofill:hover),
 .modal :global(.surface-authInputValid:-webkit-autofill:focus) {
-  -webkit-text-fill-color: #f4efe8;
-  caret-color: #f4efe8;
-  box-shadow: 0 0 0 1000px rgba(8, 9, 15, 0.96) inset;
+  -webkit-text-fill-color: var(--bw-text-title);
+  caret-color: var(--bw-text-title);
+  box-shadow: 0 0 0 1000px color-mix(in srgb, var(--bw-surface-card) 96%, transparent) inset;
   transition: background-color 9999s ease-out;
 }
 
 .modal :global(.surface-authInputValid) {
-  border-color: rgba(45, 212, 136, 0.55) !important;
+  border-color: var(--color-success-border) !important;
 }
 
 .modal :global(.surface-authLabel) {
-  color: rgba(244, 239, 232, 0.9);
+  color: var(--bw-text-body);
 }
 
 .modal :global(.surface-authHint),
@@ -469,12 +469,12 @@
 }
 
 .modal :global(.surface-authInputValid) {
-  border-color: rgba(45, 212, 136, 0.55) !important;
+  border-color: var(--color-success-border) !important;
 }
 
 .modal :global(.surface-authInputError) {
-  border-color: rgba(255, 122, 0, 0.92) !important;
-  box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.12) !important;
+  border-color: color-mix(in srgb, var(--color-primary) 92%, transparent) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 12%, transparent) !important;
 }
 
 .modal :global(.surface-authInput::placeholder) {

@@ -8,6 +8,7 @@ import { apiClient } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { calculatePasswordStrengthPercent, getPasswordRequirementChecks, hasStrongPassword } from '../lib/auth/validation';
 import PasswordStrengthPanel from '../components/PasswordStrengthPanel';
+import { Card, CardBody, CardHeader, QuickActions, SectionHeader } from '../components/primitives';
 import buttonStyles from '../styles/buttons.module.css';
 import styles from './settings.module.css';
 
@@ -244,8 +245,11 @@ export default function SettingsPage() {
 
   return (
     <div className={styles.pageContainer}>
-      <section className={styles.card}>
-        <h2 className={styles.cardTitle}>Profile</h2>
+      <Card className={styles.card} variant="primary" interactive>
+        <CardHeader className={styles.cardTitleWrap}>
+          <SectionHeader title="Profile" className={styles.cardTitleSectionHeader} />
+        </CardHeader>
+        <CardBody>
         <div className={styles.optionRow}>
           <div className={styles.optionText}>
             <div className={styles.optionTitle}>First Name</div>
@@ -335,15 +339,23 @@ export default function SettingsPage() {
           />
         </div>
 
-        <div className={styles.actionRow}>
-          <button type="button" className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`} onClick={saveProfile} disabled={savingProfile}>
-            {savingProfile ? 'Saving...' : 'Save Profile'}
-          </button>
-        </div>
-      </section>
+        <QuickActions
+          className={styles.actionRow}
+          left={<span className={styles.inlineMeta}>Update your profile details and verification settings.</span>}
+          right={(
+            <button type="button" className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`} onClick={saveProfile} disabled={savingProfile}>
+              {savingProfile ? 'Saving...' : 'Save Profile'}
+            </button>
+          )}
+        />
+        </CardBody>
+      </Card>
 
-      <section className={styles.card}>
-        <h2 className={styles.cardTitle}>Security</h2>
+      <Card className={styles.card} variant="primary" interactive>
+        <CardHeader className={styles.cardTitleWrap}>
+          <SectionHeader title="Security" className={styles.cardTitleSectionHeader} />
+        </CardHeader>
+        <CardBody>
 
         <div className={styles.optionRow}>
           <div className={styles.optionText}>
@@ -433,12 +445,17 @@ export default function SettingsPage() {
           </label>
         </div>
 
-        <div className={styles.actionRow}>
-          <button type="button" className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`} onClick={updatePassword} disabled={savingPassword}>
-            {savingPassword ? 'Updating...' : 'Update Password'}
-          </button>
-        </div>
-      </section>
+        <QuickActions
+          className={styles.actionRow}
+          left={<span className={styles.inlineMeta}>Use a strong password and optional device sign-out.</span>}
+          right={(
+            <button type="button" className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`} onClick={updatePassword} disabled={savingPassword}>
+              {savingPassword ? 'Updating...' : 'Update Password'}
+            </button>
+          )}
+        />
+        </CardBody>
+      </Card>
 
     </div>
   );

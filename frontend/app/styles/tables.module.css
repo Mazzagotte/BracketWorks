@@ -24,7 +24,7 @@
 }
 
 .cell {
-  border-bottom: 1px solid rgba(226, 232, 240, 0.08);
+  border-bottom: 1px solid color-mix(in srgb, var(--bw-border-subtle) 72%, transparent);
   color: var(--bw-text-body);
   font-size: var(--bw-type-table);
 }

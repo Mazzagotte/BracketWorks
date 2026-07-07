@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef, useMemo, Fragment, useLayoutE
 import { useParams } from 'next/navigation'
 import { buildApiUrl } from '../../lib/api'
 import { formatIsoDateShortWithWeekday } from '../../lib/formatters'
+import { DataTableToolbar } from '../../components/primitives'
 import styles from './view.module.css'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -241,32 +242,38 @@ function AliveView({
   return (
     <>
       <div className={styles.aliveControls}>
-        <div className={styles.searchRow}>
-          <input
-            className={styles.searchInput}
-            type="search"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Find bowler"
-            aria-label="Find bowler"
-          />
-          <span className={styles.countBadge}>{sortedRows.length} shown</span>
-        </div>
-
-        <div className={styles.refreshRow}>
-          <span className={styles.refreshMeta}>
-            Last updated {lastRefresh.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' })}
-          </span>
-          <span className={styles.liveStatus}>
-            <LiveDot />
-            Auto-refresh on
-          </span>
-          <div className={styles.refreshActions}>
-            <button className={styles.refreshBtn} onClick={onRefreshNow} disabled={!canRefresh || isRefreshing} type="button">
-              {isRefreshing ? 'Refreshing...' : 'Refresh Now'}
-            </button>
-          </div>
-        </div>
+        <DataTableToolbar
+          className={styles.aliveToolbar}
+          left={(
+            <div className={styles.searchRow}>
+              <input
+                className={styles.searchInput}
+                type="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Find bowler"
+                aria-label="Find bowler"
+              />
+              <span className={styles.countBadge}>{sortedRows.length} shown</span>
+            </div>
+          )}
+          right={(
+            <div className={styles.refreshRow}>
+              <span className={styles.refreshMeta}>
+                Last updated {lastRefresh.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' })}
+              </span>
+              <span className={styles.liveStatus}>
+                <LiveDot />
+                Auto-refresh on
+              </span>
+              <div className={styles.refreshActions}>
+                <button className={styles.refreshBtn} onClick={onRefreshNow} disabled={!canRefresh || isRefreshing} type="button">
+                  {isRefreshing ? 'Refreshing...' : 'Refresh Now'}
+                </button>
+              </div>
+            </div>
+          )}
+        />
       </div>
 
       {sortedRows.length === 0 ? (

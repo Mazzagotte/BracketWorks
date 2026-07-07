@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
+import { Card, CardBody } from './components/primitives';
 import styles from './page.module.css';
 import { PublicViewDemo } from './PublicViewDemo';
 
@@ -285,10 +286,12 @@ export default function HomePage() {
 
         <div className={styles.featureGrid}>
           {features.map(feature => (
-            <article key={feature.title} className={styles.featureCard}>
-              <h3>{feature.title}</h3>
-              <p>{feature.body}</p>
-            </article>
+            <Card key={feature.title} className={styles.featureCard} variant="utility" interactive>
+              <CardBody>
+                <h3>{feature.title}</h3>
+                <p>{feature.body}</p>
+              </CardBody>
+            </Card>
           ))}
         </div>
       </section>

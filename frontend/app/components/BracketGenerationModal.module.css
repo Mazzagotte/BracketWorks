@@ -180,8 +180,8 @@
 .confetti:nth-child(6n+2) { background-color: var(--color-warning-amber); }
 .confetti:nth-child(6n+3) { background-color: var(--color-green-secondary); }
 .confetti:nth-child(6n+4) { background-color: var(--color-blue-primary); }
-.confetti:nth-child(6n+5) { background-color: var(--color-purple-primary); }
-.confetti:nth-child(6n+6) { background-color: var(--color-pink-primary); }
+.confetti:nth-child(6n+5) { background-color: color-mix(in srgb, var(--color-primary) 52%, var(--color-blue-primary)); }
+.confetti:nth-child(6n+6) { background-color: color-mix(in srgb, var(--color-primary) 68%, var(--color-warning-light-2)); }
 
 /* Confetti positions & animation delays (50 particles) */
 .confetti:nth-child(1)  { left:  8%; animation-delay: 0.12s; }
@@ -622,7 +622,7 @@
    =================================== */
 
 .modalOverlay {
-  background: rgba(4, 5, 10, 0.82);
+  background: color-mix(in srgb, var(--bw-page) 82%, transparent);
   backdrop-filter: blur(8px);
   animation: modalFadeIn 0.16s ease;
 }
@@ -701,19 +701,19 @@
   width: 70px;
   height: 70px;
   background:
-    radial-gradient(circle at 32% 26%, rgba(255, 255, 255, 0.92), rgba(203, 213, 225, 0.86) 25%, rgba(88, 96, 110, 0.98) 64%, rgba(15, 18, 28, 1) 100%);
-  border: 2px solid rgba(226, 232, 240, 0.78);
+    radial-gradient(circle at 32% 26%, color-mix(in srgb, white 92%, transparent), color-mix(in srgb, var(--bw-text-body) 86%, transparent) 25%, color-mix(in srgb, var(--bw-text-faint) 98%, transparent) 64%, color-mix(in srgb, var(--bw-page) 100%, black) 100%);
+  border: 2px solid color-mix(in srgb, var(--bw-text-body) 78%, transparent);
   box-shadow:
-    0 12px 28px rgba(0, 0, 0, 0.38),
-    inset 3px 3px 10px rgba(255, 255, 255, 0.22),
-    inset -4px -5px 14px rgba(0, 0, 0, 0.52);
+    0 12px 28px color-mix(in srgb, black 38%, transparent),
+    inset 3px 3px 10px color-mix(in srgb, white 22%, transparent),
+    inset -4px -5px 14px color-mix(in srgb, black 52%, transparent);
 }
 
 .fingerHole {
   width: 9px;
   height: 9px;
-  background: rgba(8, 9, 15, 0.92);
-  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.86);
+  background: color-mix(in srgb, var(--bw-page) 92%, black);
+  box-shadow: inset 1px 1px 2px color-mix(in srgb, black 86%, transparent);
 }
 
 .mainMessage,
@@ -782,13 +782,13 @@
   width: 58px;
   height: 58px;
   background: var(--color-error-bg);
-  border: 1px solid rgba(248, 113, 113, 0.35);
+  border: 1px solid var(--color-error-border);
   box-shadow: none;
 }
 
 .errorIcon::before {
   content: '!';
-  color: rgba(254, 202, 202, 0.96);
+  color: var(--bw-text-danger);
   font-size: 1.7rem;
   font-weight: 900;
 }
@@ -815,9 +815,9 @@
 }
 
 .technicalDetails {
-  color: rgba(254, 202, 202, 0.92);
+  color: var(--bw-text-danger);
   background: var(--bw-surface-card-strong);
-  border: 1px solid rgba(248, 113, 113, 0.22);
+  border: 1px solid color-mix(in srgb, var(--color-error) 22%, transparent);
   border-radius: var(--radius-lg);
   font-size: 0.78rem;
 }

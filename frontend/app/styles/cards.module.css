@@ -21,7 +21,7 @@
   font-size: 1rem;
   line-height: 1.2;
   font-weight: 800;
-  color: rgba(246, 249, 255, 0.96);
+  color: var(--bw-text-title);
   letter-spacing: 0;
 }
 
@@ -75,20 +75,20 @@
   font-size: 1.35rem;
   font-weight: 800;
   line-height: 1;
-  color: rgba(246, 249, 255, 0.94);
+  color: var(--bw-text-title);
 }
 
 .statLabel {
   font-size: 0.68rem;
   font-weight: 800;
-  color: rgba(180, 189, 205, 0.76);
+  color: var(--bw-text-muted);
   letter-spacing: 0;
   text-transform: uppercase;
 }
 
 .statDetail {
   font-size: 0.7rem;
-  color: rgba(180, 189, 205, 0.72);
+  color: var(--bw-text-muted);
 }
 
 .accentSurface {
@@ -108,7 +108,7 @@
   justify-content: center;
   padding: 2.5rem 1.5rem;
   text-align: center;
-  color: rgba(180, 189, 205, 0.78);
+  color: var(--bw-text-muted);
 }
 
 .emptyActions {
@@ -126,23 +126,23 @@
 }
 
 .dangerPanel {
-  background: rgba(127, 29, 29, 0.18);
-  border-color: rgba(248, 113, 113, 0.28);
-  border-left: 4px solid rgba(248, 113, 113, 0.7);
-  color: rgba(254, 202, 202, 0.96);
+  background: var(--color-error-bg-soft);
+  border-color: var(--color-error-border);
+  border-left: 4px solid var(--color-error);
+  color: var(--bw-text-danger);
 }
 
 .warningPanel {
-  background: rgba(255, 122, 0, 0.1);
-  border-color: rgba(255, 146, 72, 0.32);
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 26%, var(--bw-border-subtle));
   border-left: var(--bw-accent-rail);
-  color: rgba(255, 219, 190, 0.96);
+  color: var(--bw-text-accent);
 }
 
 .successPanel {
-  background: rgba(45, 212, 136, 0.12);
-  border-color: rgba(45, 212, 136, 0.35);
-  color: rgba(190, 255, 213, 0.96);
+  background: var(--color-success-soft);
+  border-color: var(--color-success-border);
+  color: var(--bw-text-success);
 }
 
 .quickActionsCard {
@@ -187,6 +187,141 @@
   box-shadow: none;
 }
 
+/* Unified card system: hierarchy, anatomy, states, and interactions */
+.cardPrimary,
+.cardSecondary,
+.cardUtility {
+  border-radius: 24px;
+  border: 1px solid var(--bw-border-subtle);
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+.cardPrimary {
+  background: var(--bw-surface-card);
+  border-color: var(--bw-border-card);
+  box-shadow: var(--bw-shadow-card);
+}
+
+.cardSecondary {
+  background: var(--bw-surface-panel);
+  border-color: var(--bw-border-subtle);
+  box-shadow: none;
+}
+
+.cardUtility {
+  background: color-mix(in srgb, var(--bw-surface-panel) 70%, transparent);
+  border-color: color-mix(in srgb, var(--bw-border-subtle) 65%, transparent);
+  box-shadow: none;
+}
+
+.cardInteractive:hover {
+  transform: translateY(-1px);
+  border-color: var(--bw-border-card);
+  box-shadow: var(--bw-shadow-card);
+}
+
+.cardInteractive:focus-visible {
+  outline: none;
+  border-color: var(--bw-border-accent);
+  box-shadow: var(--bw-focus-ring);
+}
+
+.cardHeaderSection,
+.cardBodySection,
+.cardFooterSection {
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.cardHeaderSection {
+  padding-top: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid color-mix(in srgb, var(--bw-border-subtle) 76%, transparent);
+  background: var(--bw-surface-panel);
+}
+
+.cardBodySection {
+  padding-top: 14px;
+  padding-bottom: 14px;
+}
+
+.cardFooterSection {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  border-top: 1px solid color-mix(in srgb, var(--bw-border-subtle) 70%, transparent);
+  background: color-mix(in srgb, var(--bw-surface-panel) 75%, transparent);
+}
+
+.cardEyebrow {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--bw-text-faint);
+}
+
+.cardMeta {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--bw-text-muted);
+}
+
+.cardMetric {
+  color: var(--bw-text-title);
+  font-size: clamp(20px, 2vw, 28px);
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.cardAccentInfo {
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--color-primary) 62%, transparent);
+}
+
+.cardAccentSuccess {
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--color-success) 62%, transparent);
+}
+
+.cardAccentWarning {
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--color-warning) 62%, transparent);
+}
+
+.cardAccentDanger {
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--color-error) 62%, transparent);
+}
+
+.cardStateLoading {
+  position: relative;
+  overflow: hidden;
+}
+
+.cardStateLoading::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 0%, color-mix(in srgb, var(--bw-surface-panel-strong) 70%, transparent) 42%, transparent 72%);
+  transform: translateX(-100%);
+  animation: cardShimmer 1.45s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.cardStateError {
+  background: var(--color-error-bg-soft);
+  border-color: var(--color-error-border);
+}
+
+.cardStateEmpty {
+  background: color-mix(in srgb, var(--bw-surface-panel) 84%, transparent);
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--bw-border-subtle) 82%, transparent);
+}
+
+@keyframes cardShimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+
 @media (max-width: 900px) {
   .quickActionsRow,
   .quickActionsGroupLeft,
@@ -200,6 +335,38 @@
 }
 
 @media (max-width: 640px) {
+  .cardPrimary,
+  .cardSecondary,
+  .cardUtility {
+    border-radius: 18px;
+  }
+
+  .cardHeaderSection,
+  .cardBodySection,
+  .cardFooterSection {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .cardHeaderSection {
+    padding-top: 11px;
+    padding-bottom: 10px;
+  }
+
+  .cardBodySection {
+    padding-top: 11px;
+    padding-bottom: 11px;
+  }
+
+  .cardFooterSection {
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  .cardMetric {
+    font-size: clamp(18px, 5vw, 22px);
+  }
+
   .quickActionsGroupLeft,
   .quickActionsGroupRight {
     display: grid;

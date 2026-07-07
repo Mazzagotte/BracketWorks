@@ -89,27 +89,27 @@
 
 /* Modern dark reminder modal polish */
 .overlay {
-  background: rgba(4, 5, 10, 0.76);
+  background: color-mix(in srgb, var(--bw-page) 76%, transparent);
   backdrop-filter: blur(6px);
 }
 
 .modal {
-  color: rgba(241, 245, 249, 0.9);
-  background: rgba(20, 21, 30, 0.98);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-top: 3px solid rgba(255, 122, 0, 0.78);
+  color: var(--bw-text-body);
+  background: color-mix(in srgb, var(--bw-surface-card-strong) 96%, transparent);
+  border: 1px solid var(--bw-border-subtle);
+  border-top: 3px solid color-mix(in srgb, var(--color-primary) 78%, transparent);
   border-radius: 24px;
-  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.52);
+  box-shadow: 0 24px 70px color-mix(in srgb, black 52%, transparent);
 }
 
 .header {
   padding: 0.9rem 1rem 0.78rem;
-  background: rgba(255, 255, 255, 0.02);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--bw-surface-panel);
+  border-bottom: 1px solid var(--bw-border-subtle);
 }
 
 .title {
-  color: rgba(246, 249, 255, 0.96);
+  color: var(--bw-text-title);
   font-size: 1rem;
   line-height: 1.2;
   font-weight: 800;
@@ -118,7 +118,7 @@
 
 .body {
   padding: 1rem;
-  color: rgba(180, 189, 205, 0.78);
+  color: var(--bw-text-muted);
 }
 
 .message {
@@ -133,9 +133,9 @@
   min-height: 36px;
   border-radius: 11px;
   padding: 0.42rem 0.9rem;
-  color: rgba(255, 241, 229, 0.98);
-  background: rgba(255, 122, 0, 0.2);
-  border: 1px solid rgba(255, 146, 72, 0.34);
+  color: var(--bw-text-title);
+  background: color-mix(in srgb, var(--color-primary) 20%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 34%, transparent);
   font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: 0;

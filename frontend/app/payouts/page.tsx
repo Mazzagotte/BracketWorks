@@ -22,6 +22,7 @@ import badgeStyles from '../styles/badges.module.css'
 import formStyles from '../styles/forms.module.css'
 import shellStyles from '../styles/page-shell.module.css'
 import ExplainPayoutsModal from './ExplainPayoutsModal'
+import { DataTableToolbar, QuickActions } from '../components/primitives'
 import { formatCurrency, formatShortMonthDayYear } from '../lib/formatters'
 
 function placeBadgeClass(place: number) {
@@ -935,32 +936,34 @@ export default function PayoutsPage() {
   }, [addToast, buildExportFileName, filteredWinners, selectedTournament, selectedSquad, paidKeys, sidePotAccounting, payoutData])
 
   const payoutsQuickActions = useMemo(() => (
-    <div className={cardStyles.quickActionsRow}>
-      <div className={cardStyles.quickActionsGroupLeft}>
+    <QuickActions
+      left={(
         <button
           className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
           onClick={() => setIsPayoutsGuideOpen(true)}
         >
           Payouts Guide
         </button>
-      </div>
-      <div className={cardStyles.quickActionsGroupRight}>
-        <button
-          className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
-          onClick={handleExportToExcel}
-          disabled={loading || isExportingExcel || filteredWinners.length === 0}
-        >
-          {isExportingExcel ? 'Exporting...' : isMobileView ? 'Excel' : 'Export to Excel'}
-        </button>
-        <button
-          className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
-          onClick={handleExportToPdf}
-          disabled={loading || isExportingPdf || filteredWinners.length === 0}
-        >
-          {isExportingPdf ? 'Exporting...' : isMobileView ? 'PDF' : 'Export to PDF'}
-        </button>
-      </div>
-    </div>
+      )}
+      right={(
+        <>
+          <button
+            className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
+            onClick={handleExportToExcel}
+            disabled={loading || isExportingExcel || filteredWinners.length === 0}
+          >
+            {isExportingExcel ? 'Exporting...' : isMobileView ? 'Excel' : 'Export to Excel'}
+          </button>
+          <button
+            className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
+            onClick={handleExportToPdf}
+            disabled={loading || isExportingPdf || filteredWinners.length === 0}
+          >
+            {isExportingPdf ? 'Exporting...' : isMobileView ? 'PDF' : 'Export to PDF'}
+          </button>
+        </>
+      )}
+    />
   ), [filteredWinners.length, handleExportToExcel, handleExportToPdf, isExportingExcel, isExportingPdf, isMobileView, loading])
 
   usePageHeader({
@@ -1081,15 +1084,27 @@ export default function PayoutsPage() {
 
         {/* Search */}
         {payoutData && aggregatedWinners.length > 0 && (
-          <div className={`${formStyles.searchBar} ${formStyles.searchBarCompact} ${styles.searchStandalone}`}>
-            <input
-              type="text"
-              placeholder="Search by player name..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput}`}
-            />
-          </div>
+          <DataTableToolbar
+            className={styles.searchStandalone}
+            left={(
+              <input
+                type="text"
+                placeholder="Search by player name..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput}`}
+              />
+            )}
+            right={searchQuery.trim().length > 0 ? (
+              <button
+                type="button"
+                className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary}`}
+                onClick={() => setSearchQuery('')}
+              >
+                Clear
+              </button>
+            ) : null}
+          />
         )}
 
         {/* Loading / empty states */}

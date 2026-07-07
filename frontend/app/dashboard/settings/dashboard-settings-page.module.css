@@ -90,6 +90,9 @@
 .pageShell,
 .pageShellModal {
   color: var(--bw-text-body);
+  --settings-card-primary: var(--bw-surface-card);
+  --settings-card-secondary: var(--bw-surface-panel);
+  --settings-card-utility: color-mix(in srgb, var(--bw-surface-panel) 72%, transparent);
 }
 
 .backButton {
@@ -107,7 +110,23 @@
   letter-spacing: 0;
 }
 
-.pageSubtitle,
-.pageState {
+.pageSubtitle {
   color: var(--bw-text-muted);
+}
+
+.pageState {
+  max-width: 640px;
+  margin: 0 auto;
+  border: 1px dashed color-mix(in srgb, var(--bw-border-subtle) 84%, transparent);
+  background: color-mix(in srgb, var(--settings-card-utility) 88%, transparent);
+  border-radius: 16px;
+  color: var(--bw-text-muted);
+}
+
+.pageHeader {
+  background: var(--settings-card-primary);
+  border: 1px solid var(--bw-border-card);
+  border-radius: 20px;
+  padding: 14px 16px;
+  box-shadow: var(--bw-shadow-card);
 }

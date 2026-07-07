@@ -9,20 +9,28 @@
 }
 
 .card {
-  background-color: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: var(--bw-surface-card);
+  border: 1px solid var(--bw-border-card);
   border-radius: var(--radius-xl);
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--bw-shadow-card);
   padding: 0;
   margin: 0;
   overflow: hidden;
 }
 
+.cardTitleWrap {
+  padding: 0;
+}
+
+.cardTitleSectionHeader {
+  margin-bottom: 0;
+}
+
 .cardTitle {
   margin: 0;
   padding: 14px 20px;
-  background: rgba(255, 255, 255, 0.025);
-  border-bottom: 1px solid color-mix(in srgb, var(--color-primary) 42%, transparent);
+  background: var(--bw-surface-panel);
+  border-bottom: 1px solid var(--bw-border-card);
   font-size: 1rem;
   font-weight: 700;
   color: var(--color-text-primary);
@@ -35,7 +43,7 @@
   column-gap: 16px;
   row-gap: 8px;
   padding: 0.8rem 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--bw-border-subtle);
 }
 
 .optionRow:first-of-type {
@@ -64,8 +72,8 @@
 .input {
   width: 100%;
   max-width: 360px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid var(--bw-border-subtle);
+  background: var(--bw-surface-panel-strong);
   color: var(--color-text-primary);
   border-radius: 10px;
   padding: 9px 12px;
@@ -76,7 +84,7 @@
 .staticValue {
   font-size: 0.9rem;
   font-weight: 600;
-  color: var(--color-gray-700);
+  color: var(--bw-text-body);
 }
 
 .passwordFieldWrap {
@@ -92,8 +100,8 @@
 }
 
 .visibilityBtn {
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--bw-border-subtle);
+  background: var(--bw-surface-panel);
   color: var(--color-text-primary);
   border-radius: 8px;
   padding: 7px 10px;
@@ -116,7 +124,7 @@
   height: 6px;
   flex: 1;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--bw-surface-panel-strong);
 }
 
 .meterOn {
@@ -183,6 +191,13 @@
   justify-content: flex-end;
   margin-top: 0.85rem;
   padding: 0 20px 18px;
+  margin-top: 10px;
+}
+
+.inlineMeta {
+  color: var(--bw-text-muted);
+  font-size: var(--bw-type-helper);
+  line-height: 1.45;
 }
 
 .sessionRow {

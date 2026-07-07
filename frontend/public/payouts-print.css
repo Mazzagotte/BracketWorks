@@ -1,18 +1,18 @@
-﻿:root {
+:root {
   --print-font-family: Arial, sans-serif;
-  --print-text-primary: #111827;
-  --print-text-secondary: #4b5563;
-  --print-text-faint: #9ca3af;
-  --print-border: #d6dae1;
-  --print-surface: #fff;
-  --print-soft: #f7f8fa;
-  --print-page-bg: #0b0b12;
-  --print-brand: #ff7a00;
-  --print-brand-dark: #9a4a00;
-  --print-success: #166534;
-  --preview-surface: #191923;
-  --preview-panel: #1d1d28;
-  --preview-border: color-mix(in srgb, var(--print-brand) 18%, rgba(226, 232, 240, 0.78));
+  --print-text-primary: var(--bw-text-title);
+  --print-text-secondary: var(--bw-text-body);
+  --print-text-faint: var(--bw-text-muted);
+  --print-border: var(--bw-border-subtle);
+  --print-surface: var(--bw-surface-card);
+  --print-soft: var(--bw-surface-panel);
+  --print-page-bg: var(--bw-page);
+  --print-brand: var(--color-primary);
+  --print-brand-dark: var(--color-primary-hover);
+  --print-success: var(--color-success);
+  --preview-surface: var(--bw-surface-card);
+  --preview-panel: var(--bw-surface-card-strong);
+  --preview-border: color-mix(in srgb, var(--print-brand) 18%, var(--bw-border-subtle));
 }
 
 @page {
@@ -237,7 +237,7 @@ tbody td {
 }
 
 tbody tr:nth-child(even) td {
-  background: #f9fafb;
+  background: var(--bw-surface-card-strong);
 }
 
 tbody tr:last-child td {
@@ -265,7 +265,7 @@ tbody tr:last-child td {
 }
 
 .empty-cell {
-  color: #d1d5db;
+  color: var(--bw-text-muted);
 }
 
 .signature-line {
@@ -360,7 +360,7 @@ tbody tr:last-child td {
 
 @media print {
   body {
-    background: #fff;
+    background: var(--bw-surface-card);
   }
 
   .page {
@@ -401,14 +401,14 @@ tbody tr:last-child td {
 
 @media screen {
   :root {
-    --print-text-primary: #f4f5f8;
-    --print-text-secondary: #a7adbd;
-    --print-text-faint: #777f90;
-    --print-border: rgba(226, 232, 240, 0.18);
+    --print-text-primary: var(--bw-text-title);
+    --print-text-secondary: var(--bw-text-body);
+    --print-text-faint: var(--bw-text-muted);
+    --print-border: color-mix(in srgb, var(--bw-border-subtle) 150%, transparent);
     --print-surface: var(--preview-surface);
     --print-soft: var(--preview-panel);
-    --print-brand-dark: #ffb56b;
-    --print-success: #86efac;
+    --print-brand-dark: var(--bw-text-accent);
+    --print-success: var(--bw-text-success);
   }
 
   body {
@@ -416,7 +416,7 @@ tbody tr:last-child td {
   }
 
   .logo {
-    filter: drop-shadow(0 0 10px rgba(255, 122, 0, 0.16));
+    filter: drop-shadow(0 0 10px color-mix(in srgb, var(--print-brand) 16%, transparent));
   }
 
   thead th {
@@ -424,6 +424,7 @@ tbody tr:last-child td {
   }
 
   tbody tr:nth-child(even) td {
-    background: rgba(255, 255, 255, 0.025);
+    background: color-mix(in srgb, var(--opacity-white-04) 62%, transparent);
   }
 }
+

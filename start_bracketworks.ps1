@@ -8,6 +8,85 @@ $Port         = 3000
 $BackendUrl   = "http://localhost:8001"
 $EnvFile      = Join-Path $ProjectRoot ".env"
 
+function Get-EnvStringOrDefault {
+    param(
+        [Parameter(Mandatory = $true)][string]$Name,
+        [Parameter(Mandatory = $true)][string]$Default
+    )
+
+    $value = [System.Environment]::GetEnvironmentVariable($Name, "Process")
+    if ([string]::IsNullOrWhiteSpace($value)) {
+        return $Default
+    }
+
+    return $value
+}
+
+function Get-EnvBoolOrDefault {
+    param(
+        [Parameter(Mandatory = $true)][string]$Name,
+        [Parameter(Mandatory = $true)][bool]$Default
+    )
+
+    $value = [System.Environment]::GetEnvironmentVariable($Name, "Process")
+    if ([string]::IsNullOrWhiteSpace($value)) {
+        return $Default
+    }
+
+    return $value -match "^(1|true|yes)$"
+}
+
+function Get-EnvIntOrDefault {
+    param(
+        [Parameter(Mandatory = $true)][string]$Name,
+        [Parameter(Mandatory = $true)][int]$Default
+    )
+
+    $value = [System.Environment]::GetEnvironmentVariable($Name, "Process")
+    $parsed = 0
+    if ([int]::TryParse($value, [ref]$parsed)) {
+        return $parsed
+    }
+
+    return $Default
+}
+
+function Wait-ForHttpReady {
+    param(
+        [Parameter(Mandatory = $true)][string]$Name,
+        [Parameter(Mandatory = $true)][string]$Url,
+        [Parameter(Mandatory = $true)][int]$Retries,
+        [Parameter(Mandatory = $true)][int]$DelayMs
+    )
+
+    Write-Host "Waiting for $Name to be ready..." -ForegroundColor Yellow
+
+    for ($i = 0; $i -lt $Retries; $i++) {
+        Start-Sleep -Milliseconds $DelayMs
+        try {
+            $null = Invoke-WebRequest -Uri $Url -TimeoutSec 1 -UseBasicParsing -ErrorAction Stop
+            Write-Host "$Name ready: $Url" -ForegroundColor Green
+            return $true
+        } catch {}
+    }
+
+    Write-Host "$Name not ready yet. Continuing startup (it may still be booting)." -ForegroundColor Yellow
+    return $false
+}
+
+function Test-FileNewerThan {
+    param(
+        [Parameter(Mandatory = $true)][string]$CandidatePath,
+        [Parameter(Mandatory = $true)][string]$ReferencePath
+    )
+
+    if (-not (Test-Path $CandidatePath) -or -not (Test-Path $ReferencePath)) {
+        return $false
+    }
+
+    return (Get-Item $CandidatePath).LastWriteTimeUtc -gt (Get-Item $ReferencePath).LastWriteTimeUtc
+}
+
 if (Test-Path $EnvFile) {
     Get-Content $EnvFile | ForEach-Object {
         $line = $_.Trim()
@@ -22,11 +101,11 @@ if (Test-Path $EnvFile) {
     }
 }
 
-$dbUser = if ($env:POSTGRES_USER) { $env:POSTGRES_USER } else { "postgres" }
-$dbPassword = if ($env:POSTGRES_PASSWORD) { $env:POSTGRES_PASSWORD } else { "mazzagotte" }
-$dbName = if ($env:POSTGRES_DB) { $env:POSTGRES_DB } else { "bracketworks" }
-$dbHost = if ($env:POSTGRES_HOST) { $env:POSTGRES_HOST } else { "localhost" }
-$dbPort = if ($env:POSTGRES_PORT) { $env:POSTGRES_PORT } else { "5433" }
+$dbUser = Get-EnvStringOrDefault -Name "POSTGRES_USER" -Default "postgres"
+$dbPassword = Get-EnvStringOrDefault -Name "POSTGRES_PASSWORD" -Default "mazzagotte"
+$dbName = Get-EnvStringOrDefault -Name "POSTGRES_DB" -Default "bracketworks"
+$dbHost = Get-EnvStringOrDefault -Name "POSTGRES_HOST" -Default "localhost"
+$dbPort = Get-EnvStringOrDefault -Name "POSTGRES_PORT" -Default "5433"
 $DatabaseUrl = if ($env:DATABASE_URL) {
     $env:DATABASE_URL
 } else {
@@ -41,47 +120,29 @@ $BackendMode = if ($env:BRACKETWORKS_BACKEND_MODE) {
     "local"
 }
 
-$DockerBuildMode = if ($env:BRACKETWORKS_DOCKER_BUILD) {
-    $env:BRACKETWORKS_DOCKER_BUILD.ToLowerInvariant()
-} else {
-    "never"
+$DockerBuildMode = Get-EnvStringOrDefault -Name "BRACKETWORKS_DOCKER_BUILD" -Default "never"
+$DockerBuildMode = $DockerBuildMode.ToLowerInvariant()
+
+$AutoMode = Get-EnvBoolOrDefault -Name "BRACKETWORKS_AUTO" -Default $true
+$FastStart = Get-EnvBoolOrDefault -Name "BRACKETWORKS_FAST_START" -Default $false
+
+$WaitForFrontend = Get-EnvBoolOrDefault -Name "BRACKETWORKS_WAIT_FOR_FRONTEND" -Default $true
+$WaitForBackend = Get-EnvBoolOrDefault -Name "BRACKETWORKS_WAIT_FOR_BACKEND" -Default $true
+$SkipMigrations = Get-EnvBoolOrDefault -Name "BRACKETWORKS_SKIP_MIGRATIONS" -Default $false
+$FrontendInstallMode = Get-EnvStringOrDefault -Name "BRACKETWORKS_FRONTEND_INSTALL_MODE" -Default "auto"
+$FrontendInstallMode = $FrontendInstallMode.ToLowerInvariant()
+
+if ($FastStart) {
+    $WaitForFrontend = $false
+    $WaitForBackend = $false
+    $SkipMigrations = $true
+    $FrontendInstallMode = "auto"
 }
 
-$WaitForFrontend = if ($env:BRACKETWORKS_WAIT_FOR_FRONTEND) {
-    $env:BRACKETWORKS_WAIT_FOR_FRONTEND -match "^(1|true|yes)$"
-} else {
-    $true
-}
-
-$WaitForBackend = if ($env:BRACKETWORKS_WAIT_FOR_BACKEND) {
-    $env:BRACKETWORKS_WAIT_FOR_BACKEND -match "^(1|true|yes)$"
-} else {
-    $true
-}
-
-$BackendWaitRetries = if ($env:BRACKETWORKS_BACKEND_WAIT_RETRIES) {
-    [int]$env:BRACKETWORKS_BACKEND_WAIT_RETRIES
-} else {
-    40
-}
-
-$BackendWaitDelayMs = if ($env:BRACKETWORKS_BACKEND_WAIT_DELAY_MS) {
-    [int]$env:BRACKETWORKS_BACKEND_WAIT_DELAY_MS
-} else {
-    500
-}
-
-$FrontendWaitRetries = if ($env:BRACKETWORKS_FRONTEND_WAIT_RETRIES) {
-    [int]$env:BRACKETWORKS_FRONTEND_WAIT_RETRIES
-} else {
-    60
-}
-
-$FrontendWaitDelayMs = if ($env:BRACKETWORKS_FRONTEND_WAIT_DELAY_MS) {
-    [int]$env:BRACKETWORKS_FRONTEND_WAIT_DELAY_MS
-} else {
-    500
-}
+$BackendWaitRetries = Get-EnvIntOrDefault -Name "BRACKETWORKS_BACKEND_WAIT_RETRIES" -Default 40
+$BackendWaitDelayMs = Get-EnvIntOrDefault -Name "BRACKETWORKS_BACKEND_WAIT_DELAY_MS" -Default 500
+$FrontendWaitRetries = Get-EnvIntOrDefault -Name "BRACKETWORKS_FRONTEND_WAIT_RETRIES" -Default 60
+$FrontendWaitDelayMs = Get-EnvIntOrDefault -Name "BRACKETWORKS_FRONTEND_WAIT_DELAY_MS" -Default 500
 
 $BackendHealthUrl = "$BackendUrl/health"
 $FrontendHealthUrl = "http://localhost:$Port/login"
@@ -90,11 +151,11 @@ $RepoNodePath = Join-Path $ProjectRoot ".tools\node-v22.22.3-win-x64"
 # Ensure Node.js is in PATH
 if (Test-Path (Join-Path $RepoNodePath "node.exe")) {
     $env:PATH = "$RepoNodePath;$env:PATH"
-} elseif (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
+} elseif (-not (Get-Command npm.cmd -ErrorAction SilentlyContinue)) {
     $env:PATH = "C:\Program Files\nodejs;$env:PATH"
 }
 
-if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
+if (-not (Get-Command npm.cmd -ErrorAction SilentlyContinue)) {
     Write-Host "npm not found. Install Node.js with npm support." -ForegroundColor Red
     exit 1
 }
@@ -106,14 +167,30 @@ if ($BackendMode -eq "docker" -and -not (Get-Command docker -ErrorAction Silentl
 }
 
 if ($BackendMode -eq "local") {
+    $createdBackendVenv = $false
+
     if (Test-Path $BackendPython) {
         $PythonCmd = $BackendPython
     } elseif (Get-Command python -ErrorAction SilentlyContinue) {
-        $PythonCmd = "python"
+        Write-Host "backend/.venv not found. Creating local virtual environment..." -ForegroundColor Yellow
+        Push-Location $BackendPath
+        try {
+            & python -m venv .venv
+            if ($LASTEXITCODE -ne 0 -or -not (Test-Path $BackendPython)) {
+                Write-Host "Failed to create backend virtual environment at backend/.venv." -ForegroundColor Red
+                exit 1
+            }
+            $createdBackendVenv = $true
+            $PythonCmd = $BackendPython
+        } finally {
+            Pop-Location
+        }
     } else {
         Write-Host "Python not found. Install Python 3.12+ or create backend/.venv first." -ForegroundColor Red
         exit 1
     }
+
+    $env:BRACKETWORKS_CREATED_BACKEND_VENV = if ($createdBackendVenv) { "true" } else { "false" }
 
     # Avoid multiple local uvicorn instances fighting for port 8001.
     $existingListeners = Get-NetTCPConnection -LocalPort 8001 -State Listen -ErrorAction SilentlyContinue
@@ -130,18 +207,6 @@ if ($BackendMode -eq "local") {
             }
     }
 
-    $existingUvicorn = Get-CimInstance Win32_Process |
-        Where-Object { $_.CommandLine -match "uvicorn\s+app\.main:app" }
-    if ($existingUvicorn) {
-        Write-Host "Stopping existing local backend process(es)..." -ForegroundColor Yellow
-        $existingUvicorn | ForEach-Object {
-            try {
-                Stop-Process -Id $_.ProcessId -Force -ErrorAction Stop
-            } catch {
-                Write-Host "Could not stop process $($_.ProcessId): $($_.Exception.Message)" -ForegroundColor DarkYellow
-            }
-        }
-    }
 }
 
 Write-Host ""
@@ -150,16 +215,56 @@ Write-Host "  Frontend : http://localhost:$Port" -ForegroundColor Green
 Write-Host "  Backend  : $BackendUrl" -ForegroundColor Yellow
 Write-Host "  Database : $DatabaseUrl" -ForegroundColor Yellow
 Write-Host "  Mode     : $BackendMode" -ForegroundColor Yellow
+Write-Host "  Auto     : $(if ($AutoMode) { 'on' } else { 'off' })" -ForegroundColor Yellow
+Write-Host "  Fast     : $(if ($FastStart) { 'on' } else { 'off' })" -ForegroundColor Yellow
+Write-Host "  Migrate  : $(if ($SkipMigrations) { 'skip' } else { 'apply' })" -ForegroundColor Yellow
+Write-Host "  FE deps  : $FrontendInstallMode" -ForegroundColor Yellow
 Write-Host ""
 
 if ($BackendMode -eq "docker") {
     $dockerBuildArg = if ($DockerBuildMode -match "^(always|true|1)$") { " --build" } else { "" }
+    $dockerTailCmd = if ($AutoMode) { "" } else { "; Read-Host 'Press Enter to close'" }
     $backendCmd = "Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned; " +
                   "cd '$ProjectRoot'; " +
                   "docker compose up -d$dockerBuildArg db redis backend; " +
-                  "docker compose ps; " +
-                  "Read-Host 'Press Enter to close'"
+                  "docker compose ps" +
+                  $dockerTailCmd
 } else {
+    $backendReqPath = Join-Path $BackendPath "requirements.txt"
+    $backendStampPath = Join-Path $BackendPath ".venv\.bw-backend-install-stamp"
+    $backendInstallNeeded = $false
+    if ($env:BRACKETWORKS_CREATED_BACKEND_VENV -eq "true") {
+        $backendInstallNeeded = $true
+    } elseif (-not (Test-Path $backendStampPath)) {
+        $backendInstallNeeded = $true
+    } elseif (Test-FileNewerThan -CandidatePath $backendReqPath -ReferencePath $backendStampPath) {
+        $backendInstallNeeded = $true
+    }
+
+    $backendDepsCmd =
+        "if ('$backendInstallNeeded' -eq 'True') { " +
+        "  Write-Host 'Installing backend dependencies...' -ForegroundColor Yellow; " +
+        "  & '$PythonCmd' -m pip install --upgrade pip; " +
+        "  if (`$LASTEXITCODE -ne 0) { Write-Host 'Failed to upgrade pip.' -ForegroundColor Red; exit `$LASTEXITCODE }; " +
+        "  & '$PythonCmd' -m pip install -r requirements.txt; " +
+        "  if (`$LASTEXITCODE -ne 0) { Write-Host 'Backend dependency install failed.' -ForegroundColor Red; exit `$LASTEXITCODE }; " +
+        "  Set-Content -Path '.\\.venv\\.bw-backend-install-stamp' -Value (Get-Date).ToString('O') -Encoding UTF8; " +
+        "} else { " +
+        "  Write-Host 'Backend dependencies are up to date. Skipping install.' -ForegroundColor DarkGreen; " +
+        "}; "
+
+    $migrationCmd = if ($SkipMigrations) {
+        "Write-Host 'Skipping database migrations (BRACKETWORKS_SKIP_MIGRATIONS=true).' -ForegroundColor Yellow; "
+    } else {
+        "Write-Host 'Running database migrations...' -ForegroundColor Yellow; " +
+        "& '$PythonCmd' -m alembic upgrade head; " +
+        "if (`$LASTEXITCODE -ne 0) { " +
+        "  Write-Host 'Database migration failed. Backend will not start.' -ForegroundColor Red; " +
+        "  Read-Host 'Press Enter to close'; " +
+        "  exit `$LASTEXITCODE; " +
+        "}; "
+    }
+
     $backendCmd = "Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned; " +
                   "`$env:DATABASE_URL='$DatabaseUrl'; " +
                   "`$env:ENVIRONMENT='development'; " +
@@ -167,66 +272,64 @@ if ($BackendMode -eq "docker") {
                   "`$env:SECRET_KEY='dev-secret-key-12345-not-for-production'; " +
                   "`$env:CORS_ORIGINS='http://localhost:3000,http://localhost:8001,http://127.0.0.1:3000'; " +
                   "cd '$BackendPath'; " +
-                  "Write-Host 'Running database migrations...' -ForegroundColor Yellow; " +
-                  "& '$PythonCmd' -m alembic upgrade head; " +
-                  "if (`$LASTEXITCODE -ne 0) { " +
-                  "  Write-Host 'Database migration failed. Backend will not start.' -ForegroundColor Red; " +
-                  "  Read-Host 'Press Enter to close'; " +
-                  "  exit `$LASTEXITCODE; " +
-                  "}; " +
-                  "& '$PythonCmd' -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8001; " +
-                  "Read-Host 'Backend stopped. Press Enter to close'"
+                  $backendDepsCmd +
+                  $migrationCmd +
+                  "& '$PythonCmd' -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8001"
 }
-Start-Process powershell -ArgumentList "-NoExit", "-Command", $backendCmd
+$backendWindowArgs = if ($AutoMode) { @("-Command", $backendCmd) } else { @("-NoExit", "-Command", $backendCmd) }
+Start-Process powershell -ArgumentList $backendWindowArgs
 
 # Start frontend in a new window
-$frontendStartCmd = "npm.cmd run dev"
-$frontendInstallCmd = "npm.cmd ci"
+$frontendStartCmd = "if (Test-Path '.\\node_modules\\next\\dist\\bin\\next') { node .\\node_modules\\next\\dist\\bin\\next dev -p $Port --webpack } else { npm.cmd run dev }"
+$frontendInstallCmdPrimary = "npm.cmd ci --no-audit --no-fund"
+$frontendInstallCmdRetry = "npm.cmd install --include=dev --no-audit --no-fund"
 
 $cmd = "Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned; " +
     "`$env:PATH='$env:PATH'; " +
        "cd '$FrontendPath'; " +
        "`$env:NEXT_PUBLIC_BACKEND_URL='$BackendUrl'; " +
-       "if (-not (Test-Path '.\\node_modules\\.bin\\next.cmd')) { " +
-       "Write-Host 'Next.js binary missing. Installing frontend dependencies...' -ForegroundColor Yellow; " +
-       "$frontendInstallCmd; " +
-       "if (`$LASTEXITCODE -ne 0) { Write-Host 'Frontend dependency install failed.' -ForegroundColor Red; Read-Host 'Press Enter to close'; exit 1 } " +
-       "}; " +
-    "$frontendStartCmd; " +
-       "Read-Host 'Press Enter to close'"
-Start-Process powershell -ArgumentList "-NoExit", "-Command", $cmd
+         "`$lockPath = '.\\package-lock.json'; " +
+         "`$stampPath = '.\\node_modules\\.bw-install-stamp'; " +
+         "`$nextPath = '.\\node_modules\\next\\dist\\bin\\next'; " +
+         "`$installNeeded = `$false; " +
+         "switch ('$FrontendInstallMode') { " +
+         "  'always' { `$installNeeded = `$true } " +
+         "  'never'  { `$installNeeded = `$false } " +
+         "  default { " +
+         "    if (-not (Test-Path `$nextPath)) { `$installNeeded = `$true } " +
+         "    elseif ((Test-Path `$lockPath) -and (-not (Test-Path `$stampPath))) { `$installNeeded = `$true } " +
+         "    elseif ((Test-Path `$lockPath) -and (Test-Path `$stampPath) -and ((Get-Item `$lockPath).LastWriteTimeUtc -gt (Get-Item `$stampPath).LastWriteTimeUtc)) { `$installNeeded = `$true } " +
+         "  } " +
+         "}; " +
+         "if ((-not `$installNeeded) -and (-not (Test-Path `$nextPath))) { " +
+         "  Write-Host 'Next.js binary is missing and install mode is never. Set BRACKETWORKS_FRONTEND_INSTALL_MODE=auto or always.' -ForegroundColor Red; " +
+         "  Read-Host 'Press Enter to close'; " +
+         "  exit 1; " +
+         "}; " +
+         "if (`$installNeeded) { " +
+         "Write-Host 'Installing frontend dependencies...' -ForegroundColor Yellow; " +
+         "$frontendInstallCmdPrimary; " +
+         "if (`$LASTEXITCODE -ne 0) { " +
+         "  Write-Host 'Frontend dependency install failed. Retrying after cleaning Next.js artifacts...' -ForegroundColor Yellow; " +
+         "  if (Test-Path '.\\node_modules\\next') { Remove-Item -LiteralPath '.\\node_modules\\next' -Recurse -Force -ErrorAction SilentlyContinue }; " +
+         "  if (Test-Path '.\\node_modules') { Get-ChildItem '.\\node_modules' -Filter '.next-*' -Force -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue }; " +
+         "  $frontendInstallCmdRetry; " +
+         "  if (`$LASTEXITCODE -ne 0) { Write-Host 'Frontend dependency install failed.' -ForegroundColor Red; Read-Host 'Press Enter to close'; exit 1 } " +
+         "}; " +
+         "if (-not (Test-Path `$nextPath)) { Write-Host 'Next.js runtime binary is still missing after install.' -ForegroundColor Red; Read-Host 'Press Enter to close'; exit 1 }; " +
+         "if (-not (Test-Path '.\\node_modules')) { New-Item -ItemType Directory -Path '.\\node_modules' -Force | Out-Null }; " +
+         "Set-Content -Path `$stampPath -Value (Get-Date).ToString('O') -Encoding UTF8; " +
+         "} else { Write-Host 'Frontend dependencies are up to date. Skipping install.' -ForegroundColor DarkGreen }; " +
+        "$frontendStartCmd"
+$frontendWindowArgs = if ($AutoMode) { @("-Command", $cmd) } else { @("-NoExit", "-Command", $cmd) }
+Start-Process powershell -ArgumentList $frontendWindowArgs
 
 if ($WaitForBackend) {
-    Write-Host "Waiting for backend to be ready..." -ForegroundColor Yellow
-    $backendReady = $false
-    for ($i = 0; $i -lt $BackendWaitRetries; $i++) {
-        Start-Sleep -Milliseconds $BackendWaitDelayMs
-        try {
-            $null = Invoke-WebRequest -Uri $BackendHealthUrl -TimeoutSec 1 -UseBasicParsing -ErrorAction Stop
-            $backendReady = $true
-            break
-        } catch {}
-    }
-
-    if ($backendReady) {
-        Write-Host "Backend ready: $BackendHealthUrl" -ForegroundColor Green
-    } else {
-        Write-Host "Backend not ready yet. Continuing startup (it may still be booting)." -ForegroundColor Yellow
-    }
+    Wait-ForHttpReady -Name "Backend" -Url $BackendHealthUrl -Retries $BackendWaitRetries -DelayMs $BackendWaitDelayMs | Out-Null
 }
 
 if ($WaitForFrontend) {
-    Write-Host "Waiting for frontend to be ready..." -ForegroundColor Yellow
-    $frontendReady = $false
-    for ($i = 0; $i -lt $FrontendWaitRetries; $i++) {
-        Start-Sleep -Milliseconds $FrontendWaitDelayMs
-        try {
-            $null = Invoke-WebRequest -Uri $FrontendHealthUrl -TimeoutSec 1 -UseBasicParsing -ErrorAction Stop
-            $frontendReady = $true
-            break
-        } catch {}
-    }
-
+    $frontendReady = Wait-ForHttpReady -Name "Frontend" -Url $FrontendHealthUrl -Retries $FrontendWaitRetries -DelayMs $FrontendWaitDelayMs
     if ($frontendReady) {
         Write-Host "Ready! Opening http://localhost:$Port" -ForegroundColor Green
     } else {

@@ -239,11 +239,11 @@
 }
 
 .content::-webkit-scrollbar-track {
-  background: rgba(8, 9, 15, 0.72);
+  background: color-mix(in srgb, var(--bw-surface-card) 84%, transparent);
 }
 
 .content::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.36);
+  background: color-mix(in srgb, var(--bw-text-muted) 36%, transparent);
 }
 
 .section {
@@ -252,14 +252,14 @@
 
 .section h3 {
   margin-bottom: 0.55rem;
-  color: rgba(246, 249, 255, 0.95);
+  color: var(--bw-text-title);
   font-size: 0.9rem;
   font-weight: 800;
   letter-spacing: 0;
 }
 
 .section h3::before {
-  background: rgba(255, 122, 0, 0.86);
+  background: color-mix(in srgb, var(--color-primary) 86%, transparent);
 }
 
 .section p,
@@ -269,7 +269,7 @@
 .example,
 .bracketType p,
 .round span {
-  color: rgba(207, 216, 232, 0.86);
+  color: var(--bw-text-body);
   font-size: 0.84rem;
 }
 
@@ -278,30 +278,30 @@
 .tieHeader strong,
 .round strong,
 .example strong {
-  color: rgba(255, 219, 190, 0.96);
+  color: var(--bw-text-accent);
 }
 
 .round,
 .tieRule,
 .example,
 .bracketType {
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(226, 232, 240, 0.12);
+  background: var(--bw-surface-panel);
+  border: 1px solid var(--bw-border-subtle);
   border-radius: 14px;
 }
 
 .example {
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(226, 232, 240, 0.16);
-  border-left-color: rgba(255, 122, 0, 0.68);
+  background: var(--bw-surface-panel-strong);
+  border-color: var(--bw-border-card);
+  border-left-color: color-mix(in srgb, var(--color-primary) 68%, transparent);
 }
 
 .example strong {
-  color: rgba(255, 235, 218, 0.98);
+  color: var(--bw-text-title);
 }
 
 .round::before {
-  background: rgba(255, 122, 0, 0.72);
+  background: color-mix(in srgb, var(--color-primary) 72%, transparent);
 }
 
 .tieBadge,

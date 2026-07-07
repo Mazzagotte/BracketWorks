@@ -14,9 +14,9 @@
 /* ---- State / loading cards ---- */
 .stateCard {
   background-color: var(--color-brand-ivory-light);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--bw-border-subtle);
   border-radius: var(--radius-xl);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--bw-shadow-card);
   padding: 28px;
   color: var(--color-text-primary);
   font-size: 15px;
@@ -108,66 +108,66 @@
 .sectionStack {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-}
+    background-color: var(--bw-surface-card);
+    border: 1px solid var(--bw-border-subtle);
 
-.metricGrid {
+    box-shadow: var(--bw-shadow-card);
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
   gap: 14px;
 }
 
-.twoColumnGrid,
-.databaseLayout {
+    background-color: var(--bw-surface-card);
+    border: 1px solid var(--bw-border-card);
   display: grid;
-  grid-template-columns: 1.1fr 1fr;
+    box-shadow: var(--bw-shadow-card);
   gap: 20px;
 }
 
 /* ---- Metric cards ---- */
-.metricCard {
+    color: var(--bw-text-title);
   padding: 18px 20px;
   background-color: var(--color-brand-ivory-light);
   border: 1px solid var(--color-border-light);
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-soft);
-}
+    background-color: var(--bw-surface-card);
+    border: 1px solid var(--bw-border-card);
 
-/* Tone classes kept for backward compat but all use same base now */
+    box-shadow: var(--bw-shadow-card);
 .toneOrange,
 .toneBlue,
 .toneGreen,
 .toneGold,
 .toneRed,
-.toneSlate {}
-
+    background: var(--bw-surface-panel);
+    border-bottom: 3px solid var(--color-primary);
 .metricLabel {
   color: var(--color-text-secondary);
   font-size: 11px;
   font-weight: 800;
-  letter-spacing: 0.07em;
+    color: var(--bw-text-title);
   text-transform: uppercase;
 }
 
 .metricValue {
-  margin-top: 10px;
-  color: var(--color-brand-charcoal-deep);
+    background: var(--admin-surface-soft);
+    border: 1px solid var(--admin-border-soft);
   font-size: 28px;
   font-weight: 800;
   line-height: 1;
 }
-
+    background: var(--admin-accent-soft);
 /* ---- Panels (cards with header strip) ---- */
 .panel {
   background-color: var(--color-brand-ivory-light);
   border: 1px solid var(--color-border-light);
-  border-radius: var(--radius-xl);
+    color: var(--bw-text-title);
   box-shadow: var(--shadow-soft);
   overflow: hidden;
 }
 
-.panelHeader {
-  display: flex;
+    background: var(--admin-accent-soft);
+    color: var(--bw-text-accent);
   align-items: baseline;
   justify-content: space-between;
   gap: 12px;
@@ -683,18 +683,45 @@
   max-width: 1280px;
   margin: 0 auto;
   padding: 0.75rem 1rem 2rem;
-  color: rgba(241, 245, 249, 0.9);
+  color: var(--bw-text-body);
+  --admin-surface-soft: var(--bw-surface-panel);
+  --admin-border-soft: var(--bw-border-subtle);
+  --admin-accent-soft: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  --admin-accent-border: var(--bw-border-accent);
+  --admin-card-primary: var(--bw-surface-card);
+  --admin-card-secondary: var(--bw-surface-panel);
+  --admin-card-utility: color-mix(in srgb, var(--bw-surface-panel) 72%, transparent);
 }
 
 .stateCard,
 .metricCard,
 .panel,
 .modal {
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--bw-border-subtle);
   border-radius: 24px;
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.3);
-  color: rgba(241, 245, 249, 0.9);
+  box-shadow: none;
+  color: var(--bw-text-body);
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+.stateCard,
+.panel,
+.modal {
+  background: var(--admin-card-primary);
+  border-color: var(--bw-border-card);
+  box-shadow: var(--bw-shadow-card);
+}
+
+.metricCard {
+  background: var(--admin-card-secondary);
+}
+
+.stateCard:hover,
+.panel:hover,
+.modal:hover,
+.metricCard:hover {
+  transform: translateY(-1px);
+  border-color: var(--bw-border-card);
 }
 
 .stateCard {
@@ -704,9 +731,9 @@
 .errorBanner,
 .modalError,
 .warnText {
-  color: rgba(254, 202, 202, 0.96);
-  background: rgba(127, 29, 29, 0.18);
-  border: 1px solid rgba(248, 113, 113, 0.28);
+  color: var(--bw-text-danger);
+  background: var(--color-error-bg-soft);
+  border: 1px solid var(--color-error-border);
   border-radius: 14px;
 }
 
@@ -719,9 +746,9 @@
 .actionBtn,
 .linkBtn,
 .tableListButton {
-  border: 1px solid rgba(226, 232, 240, 0.14);
-  background: rgba(255, 255, 255, 0.025);
-  color: rgba(203, 213, 225, 0.82);
+  border: 1px solid var(--bw-border-subtle);
+  background: var(--bw-surface-panel);
+  color: var(--bw-text-body);
   box-shadow: none;
   letter-spacing: 0;
 }
@@ -747,18 +774,18 @@
 .actionBtn:hover,
 .linkBtn:hover,
 .tableListButton:hover {
-  color: rgba(255, 219, 190, 0.98);
-  background: rgba(255, 122, 0, 0.1);
-  border-color: rgba(255, 146, 72, 0.35);
+  color: var(--bw-text-accent);
+  background: var(--admin-accent-soft);
+  border-color: var(--admin-accent-border);
 }
 
 .tabButtonActive,
 .tabButtonActive:hover,
 .tableListButtonActive,
 .tableListButtonActive:hover {
-  color: rgba(255, 238, 220, 1);
-  background: rgba(255, 122, 0, 0.16);
-  border-color: rgba(255, 146, 72, 0.48);
+  color: var(--bw-text-title);
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
+  border-color: var(--admin-accent-border);
 }
 
 .metricGrid {
@@ -772,13 +799,13 @@
 .metricLabel,
 .formLabel,
 .table th {
-  color: rgba(180, 189, 205, 0.76);
+  color: var(--bw-text-muted);
   letter-spacing: 0;
 }
 
 .metricValue {
   margin-top: 0.55rem;
-  color: rgba(246, 249, 255, 0.96);
+  color: var(--bw-text-title);
   font-size: 1.55rem;
 }
 
@@ -794,15 +821,15 @@
 
 .panelHeader,
 .modalHeader {
-  padding: 0.68rem 0.9rem 0.58rem;
-  background: rgba(255, 255, 255, 0.02);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 12px 14px 10px;
+  background: var(--bw-surface-panel);
+  border-bottom: 1px solid var(--bw-border-subtle);
 }
 
 .panelTitle,
 .modalTitle,
 .primaryText {
-  color: rgba(246, 249, 255, 0.95);
+  color: var(--bw-text-title);
   font-weight: 800;
 }
 
@@ -816,13 +843,13 @@
 .secondaryText,
 .detailNote,
 .emptyState {
-  color: rgba(180, 189, 205, 0.74);
+  color: var(--bw-text-muted);
 }
 
 .panelBody,
 .listStack,
 .tableList {
-  padding: 0.72rem 0.78rem;
+  padding: 12px 14px;
 }
 
 .listStack,
@@ -833,20 +860,20 @@
 .listRow,
 .detailCard,
 .userStatusPanel {
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(226, 232, 240, 0.12);
+  background: var(--admin-card-utility);
+  border: 1px solid var(--bw-border-subtle);
   border-radius: 14px;
 }
 
 .listRow:hover {
-  background: rgba(255, 122, 0, 0.07);
+  background: color-mix(in srgb, var(--color-primary) 7%, transparent);
 }
 
 .valuePill,
 .statusPill {
-  color: rgba(255, 219, 190, 0.96);
-  background: rgba(255, 122, 0, 0.11);
-  border: 1px solid rgba(255, 146, 72, 0.28);
+  color: var(--bw-text-accent);
+  background: color-mix(in srgb, var(--color-primary) 11%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 28%, transparent);
   letter-spacing: 0;
 }
 
@@ -861,32 +888,39 @@
 .table th,
 .table td {
   padding: 0.58rem 0.72rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.055);
+  border-bottom: 1px solid color-mix(in srgb, var(--bw-border-subtle) 50%, transparent);
 }
 
 .table th {
-  background: rgba(255, 255, 255, 0.035);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--bw-surface-panel-strong);
+  border-bottom: 1px solid var(--bw-border-subtle);
+}
+
+.emptyState {
+  border: 1px dashed color-mix(in srgb, var(--bw-border-subtle) 84%, transparent);
+  background: color-mix(in srgb, var(--bw-surface-panel) 82%, transparent);
+  border-radius: 14px;
+  padding: 14px;
 }
 
 .table tbody tr:hover {
-  background: rgba(255, 122, 0, 0.07);
+  background: color-mix(in srgb, var(--color-primary) 7%, transparent);
 }
 
 .toolbarRow {
   gap: 0.55rem;
   padding: 0.62rem 0.78rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--bw-border-subtle);
 }
 
 .toolbarInput,
 .toolbarSelect,
 .formInput {
   min-height: 34px;
-  border: 1px solid rgba(226, 232, 240, 0.16);
+  border: 1px solid var(--bw-border-subtle);
   border-radius: 10px;
-  background: rgba(8, 9, 15, 0.72);
-  color: rgba(246, 249, 255, 0.94);
+  background: color-mix(in srgb, var(--bw-surface-card) 84%, transparent);
+  color: var(--bw-text-title);
   font-size: 0.82rem;
   font-weight: 650;
 }
@@ -894,18 +928,18 @@
 .toolbarInput:focus,
 .toolbarSelect:focus,
 .formInput:focus {
-  border-color: rgba(255, 146, 72, 0.55);
-  box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.12);
+  border-color: var(--bw-border-accent);
+  box-shadow: var(--bw-focus-ring);
 }
 
 .formInput::placeholder,
 .toolbarInput::placeholder {
-  color: rgba(180, 189, 205, 0.62);
+  color: var(--bw-text-faint);
 }
 
 .modalOverlay {
   z-index: 1300;
-  background: rgba(4, 5, 10, 0.76);
+  background: color-mix(in srgb, var(--bw-page) 76%, transparent);
   backdrop-filter: blur(6px);
 }
 
@@ -917,13 +951,13 @@
   width: 32px;
   height: 32px;
   border-radius: 10px;
-  color: rgba(203, 213, 225, 0.86);
-  background: rgba(255, 255, 255, 0.045);
+  color: var(--bw-text-body);
+  background: var(--bw-surface-panel-strong);
 }
 
 .modalClose:hover {
-  color: rgba(255, 219, 190, 0.98);
-  background: rgba(255, 122, 0, 0.14);
+  color: var(--bw-text-accent);
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
 }
 
 .modalBody {
@@ -934,48 +968,66 @@
 .modalFooter,
 .paginationRow {
   padding: 0.72rem 0.9rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--bw-border-subtle);
 }
 
 .actionBtnDanger {
-  color: rgba(254, 202, 202, 0.96);
-  border-color: rgba(248, 113, 113, 0.28);
+  color: var(--bw-text-danger);
+  border-color: var(--color-error-border);
 }
 
 .actionBtnDanger:hover {
-  color: rgba(254, 226, 226, 0.98);
-  background: rgba(127, 29, 29, 0.24);
-  border-color: rgba(248, 113, 113, 0.42);
+  color: var(--bw-text-title);
+  background: color-mix(in srgb, var(--color-error) 24%, transparent);
+  border-color: color-mix(in srgb, var(--color-error) 42%, transparent);
 }
 
 .statusActive {
-  color: rgba(190, 255, 213, 0.96);
-  background: rgba(45, 212, 136, 0.12);
-  border-color: rgba(45, 212, 136, 0.35);
+  color: var(--bw-text-success);
+  background: var(--color-success-soft);
+  border-color: var(--color-success-border);
 }
 
 .statusDraft,
 .statusCompleted {
-  color: rgba(255, 219, 190, 0.96);
-  background: rgba(255, 122, 0, 0.11);
-  border-color: rgba(255, 146, 72, 0.28);
+  color: var(--bw-text-accent);
+  background: color-mix(in srgb, var(--color-primary) 11%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 28%, transparent);
 }
 
 .statusArchived {
-  color: rgba(203, 213, 225, 0.72);
-  background: rgba(255, 255, 255, 0.045);
-  border-color: rgba(226, 232, 240, 0.12);
+  color: var(--bw-text-muted);
+  background: var(--bw-surface-panel-strong);
+  border-color: var(--bw-border-subtle);
 }
 
 .detailGrid {
-  color: rgba(241, 245, 249, 0.86);
+  color: var(--bw-text-body);
 }
 
 .checkboxRow {
-  color: rgba(203, 213, 225, 0.82);
+  color: var(--bw-text-body);
 }
 
 @media (max-width: 960px) {
+  .stateCard,
+  .metricCard,
+  .panel,
+  .modal {
+    border-radius: 18px;
+  }
+
+  .panelHeader,
+  .modalHeader {
+    padding: 10px 12px 9px;
+  }
+
+  .panelBody,
+  .listStack,
+  .tableList {
+    padding: 10px 12px;
+  }
+
   .page {
     padding: 0.65rem 0.75rem 1.5rem;
   }
@@ -1015,13 +1067,13 @@
 }
 
 .page :where(th) {
-  color: rgba(182, 191, 207, 0.86);
+  color: var(--bw-text-body);
   font-size: var(--bw-type-table-heading);
   letter-spacing: 0;
 }
 
 .page :where(td) {
-  color: rgba(241, 245, 249, 0.9);
+  color: var(--bw-text-title);
   font-size: var(--bw-type-table);
 }
 
@@ -1115,7 +1167,7 @@
 }
 
 .table td {
-  border-bottom-color: rgba(226, 232, 240, 0.08);
+  border-bottom-color: color-mix(in srgb, var(--bw-border-subtle) 66%, transparent);
 }
 
 .table tbody tr:hover {
@@ -1138,7 +1190,7 @@
 }
 
 .modalOverlay {
-  background: rgba(4, 5, 10, 0.82);
+  background: color-mix(in srgb, var(--bw-page) 82%, transparent);
   backdrop-filter: blur(8px);
 }
 
@@ -1152,4 +1204,26 @@
   background: color-mix(in srgb, var(--color-primary) 10%, var(--bw-surface-panel));
   border-color: var(--bw-border-accent);
   color: var(--bw-text-accent);
+}
+
+/* Primitive consistency overrides */
+.panel,
+.tableWrap,
+.detailCard,
+.modal {
+  border-radius: var(--radius-2xl-soft);
+}
+
+.toolbarRow {
+  border-radius: var(--radius-l);
+  gap: var(--space-3);
+}
+
+.toolbarRow > div {
+  min-width: 0;
+}
+
+.toolbarInput,
+.toolbarSelect {
+  border-radius: var(--radius-md);
 }

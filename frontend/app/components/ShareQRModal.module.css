@@ -100,7 +100,7 @@
   overflow: hidden;
   border: 1px solid var(--bw-border-card);
   border-radius: var(--radius-lg, 12px);
-  background: #ffffff;
+  background: var(--color-white);
 }
 
 .posterFrame {
@@ -244,16 +244,16 @@
 
 .dialog {
   max-width: 430px;
-  color: rgba(241, 245, 249, 0.9);
-  background: rgba(20, 21, 30, 0.98);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-top: 3px solid rgba(255, 122, 0, 0.78);
+  color: var(--bw-text-body);
+  background: color-mix(in srgb, var(--bw-surface-card-strong) 96%, transparent);
+  border: 1px solid var(--bw-border-subtle);
+  border-top: 3px solid color-mix(in srgb, var(--color-primary) 78%, transparent);
   border-radius: 24px;
-  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.52);
+  box-shadow: 0 24px 70px color-mix(in srgb, black 52%, transparent);
 }
 
 .dialog::backdrop {
-  background: rgba(4, 5, 10, 0.76);
+  background: color-mix(in srgb, var(--bw-page) 76%, transparent);
   backdrop-filter: blur(6px);
 }
 
@@ -263,7 +263,7 @@
 }
 
 .title {
-  color: rgba(246, 249, 255, 0.96);
+  color: var(--bw-text-title);
   font-size: 1.12rem;
   font-weight: 800;
   letter-spacing: 0;
@@ -272,56 +272,56 @@
 .tournamentName,
 .mutedMicrocopy,
 .hint {
-  color: rgba(180, 189, 205, 0.76);
+  color: var(--bw-text-muted);
 }
 
 .closeBtn {
   width: 32px;
   height: 32px;
   border-radius: 10px;
-  color: rgba(203, 213, 225, 0.86);
-  background: rgba(255, 255, 255, 0.045);
+  color: var(--bw-text-body);
+  background: var(--bw-surface-panel-strong);
 }
 
 .closeBtn:hover {
-  color: rgba(255, 219, 190, 0.98);
-  background: rgba(255, 122, 0, 0.14);
+  color: var(--bw-text-accent);
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
 }
 
 .outlinedPanel {
-  background: rgba(8, 9, 15, 0.72);
-  border: 1px solid rgba(226, 232, 240, 0.14);
+  background: color-mix(in srgb, var(--bw-surface-card) 84%, transparent);
+  border: 1px solid var(--bw-border-subtle);
   border-radius: 12px;
 }
 
 .qrWrapper {
-  background: #ffffff;
-  border-color: rgba(255, 255, 255, 0.18);
+  background: var(--color-white);
+  border-color: color-mix(in srgb, white 18%, transparent);
   box-shadow: none;
 }
 
 .qrLabel,
 .divider {
-  color: rgba(180, 189, 205, 0.72);
+  color: var(--bw-text-muted);
   letter-spacing: 0;
 }
 
 .divider::before,
 .divider::after {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--bw-surface-panel-strong);
 }
 
 .urlRow {
-  background: rgba(8, 9, 15, 0.72);
+  background: color-mix(in srgb, var(--bw-surface-card) 84%, transparent);
 }
 
 .copyBtn,
 .exportBtn {
   min-height: 34px;
   border-radius: 10px;
-  color: rgba(255, 241, 229, 0.98);
-  background: rgba(255, 122, 0, 0.2);
-  border: 1px solid rgba(255, 146, 72, 0.34);
+  color: var(--bw-text-title);
+  background: color-mix(in srgb, var(--color-primary) 20%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 34%, transparent);
   box-shadow: none;
   letter-spacing: 0;
 }
@@ -329,14 +329,14 @@
 .copyBtn:hover,
 .exportBtn:hover {
   transform: none;
-  color: rgba(255, 238, 220, 1);
-  background: rgba(255, 122, 0, 0.3);
-  border-color: rgba(255, 168, 92, 0.48);
+  color: var(--color-white);
+  background: color-mix(in srgb, var(--color-primary) 30%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 48%, white);
   box-shadow: none;
 }
 
 .copyBtnSuccess {
-  color: rgba(190, 255, 213, 0.96) !important;
-  background: rgba(45, 212, 136, 0.16) !important;
-  border-color: rgba(45, 212, 136, 0.38) !important;
+  color: var(--bw-text-success) !important;
+  background: color-mix(in srgb, var(--color-success) 16%, transparent) !important;
+  border-color: color-mix(in srgb, var(--color-success) 38%, transparent) !important;
 }

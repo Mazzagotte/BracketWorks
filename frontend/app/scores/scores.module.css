@@ -714,36 +714,98 @@
 .desktopContainer {
   max-width: 1280px;
   padding: 0.75rem 1rem;
+  --scores-card-primary: var(--bw-surface-card);
+  --scores-card-secondary: var(--bw-surface-panel);
+  --scores-card-utility: color-mix(in srgb, var(--bw-surface-panel) 72%, transparent);
+  --scores-dev-border: var(--bw-border-subtle);
+  --scores-dev-text: var(--bw-text-body);
+  --scores-dev-bg: color-mix(in srgb, var(--bw-surface-card) 82%, transparent);
+  --scores-dev-hover-border: var(--bw-border-card);
+  --scores-dev-hover-text: var(--bw-text-title);
+  --scores-dev-hover-bg: color-mix(in srgb, var(--bw-surface-card-strong) 88%, transparent);
+  --scores-danger-border: var(--color-error-border);
+  --scores-danger-text: var(--bw-text-danger);
+  --scores-danger-bg: color-mix(in srgb, var(--color-error) 12%, transparent);
+  --scores-danger-hover-border: color-mix(in srgb, var(--color-error) 36%, transparent);
+  --scores-danger-hover-text: var(--bw-text-title);
+  --scores-danger-hover-bg: color-mix(in srgb, var(--color-error) 18%, transparent);
+  --scores-search-title: var(--bw-text-title);
+  --scores-search-input-bg: color-mix(in srgb, var(--bw-surface-card) 84%, transparent);
+  --scores-search-input-border: var(--bw-border-subtle);
+  --scores-search-placeholder: var(--bw-text-faint);
+  --scores-clear-border: color-mix(in srgb, var(--color-primary) 34%, transparent);
+  --scores-clear-bg: color-mix(in srgb, var(--color-primary) 14%, transparent);
+  --scores-clear-text: var(--bw-text-accent);
+  --scores-head-bg: color-mix(in srgb, var(--bw-surface-panel-strong) 55%, transparent);
+  --scores-head-rule: color-mix(in srgb, var(--bw-border-subtle) 74%, transparent);
+  --scores-head-text: var(--bw-text-body);
+  --scores-cell-rule: color-mix(in srgb, var(--bw-border-subtle) 45%, transparent);
+  --scores-row-even: color-mix(in srgb, var(--bw-surface-panel) 72%, transparent);
+  --scores-row-odd: color-mix(in srgb, var(--bw-surface-panel-strong) 78%, transparent);
+  --scores-row-hover: color-mix(in srgb, var(--color-primary) 7%, transparent);
+  --scores-squad-banner-bg: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  --scores-squad-banner-border: color-mix(in srgb, var(--color-primary) 18%, transparent);
+  --scores-squad-banner-text: var(--bw-text-accent);
+  --scores-input-bg: color-mix(in srgb, var(--bw-surface-card) 86%, transparent);
+  --scores-input-border: var(--bw-border-subtle);
+  --scores-input-text: var(--bw-text-title);
+  --scores-input-focus-border: color-mix(in srgb, var(--color-primary) 72%, transparent);
+  --scores-input-focus-ring: 0 0 0 3px color-mix(in srgb, var(--color-primary) 12%, transparent);
+  --scores-input-invalid-border: color-mix(in srgb, var(--color-error) 60%, transparent);
+  --scores-input-invalid-bg: color-mix(in srgb, var(--color-error) 16%, transparent);
+  --scores-input-invalid-text: color-mix(in srgb, var(--color-error) 46%, white);
+  --scores-input-perfect-border: color-mix(in srgb, var(--color-success) 52%, transparent);
+  --scores-input-perfect-bg: color-mix(in srgb, var(--color-success) 12%, transparent);
+  --scores-input-perfect-text: var(--bw-text-success);
+  --scores-total-muted: var(--bw-text-muted);
 }
 
 .scoresSearchCard,
 .tableCard {
   border-radius: 24px;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+.scoresSearchCard {
+  background: var(--scores-card-primary);
+  border-color: var(--bw-border-card);
+  box-shadow: var(--bw-shadow-card);
+}
+
+.tableCard {
+  background: var(--scores-card-secondary);
+  border-color: var(--bw-border-subtle);
+}
+
+.scoresSearchCard:hover,
+.tableCard:hover {
+  transform: translateY(-1px);
+  border-color: var(--bw-border-card);
 }
 
 .quickActionDevBtn {
   border-style: dashed;
-  border-color: rgba(157, 166, 183, 0.36);
-  color: rgba(194, 203, 218, 0.9);
-  background: rgba(16, 18, 26, 0.7);
+  border-color: var(--scores-dev-border);
+  color: var(--scores-dev-text);
+  background: var(--scores-dev-bg);
 }
 
 .quickActionDevBtn:hover:not(:disabled) {
-  border-color: rgba(188, 196, 211, 0.46);
-  color: rgba(230, 236, 247, 0.95);
-  background: rgba(22, 24, 34, 0.84);
+  border-color: var(--scores-dev-hover-border);
+  color: var(--scores-dev-hover-text);
+  background: var(--scores-dev-hover-bg);
 }
 
 .quickActionDangerBtn {
-  border: 1px solid rgba(209, 95, 95, 0.36) !important;
-  color: rgba(239, 168, 168, 0.9) !important;
-  background: rgba(45, 18, 20, 0.6) !important;
+  border: 1px solid var(--scores-danger-border) !important;
+  color: var(--scores-danger-text) !important;
+  background: var(--scores-danger-bg) !important;
 }
 
 .quickActionDangerBtn:hover:not(:disabled) {
-  border-color: rgba(234, 116, 116, 0.56) !important;
-  color: rgba(255, 197, 197, 0.95) !important;
-  background: rgba(62, 24, 27, 0.8) !important;
+  border-color: var(--scores-danger-hover-border) !important;
+  color: var(--scores-danger-hover-text) !important;
+  background: var(--scores-danger-hover-bg) !important;
 }
 
 .scoresSearchCard {
@@ -753,27 +815,27 @@
 
 .scoresSearchTitle {
   margin: 0 0 0.46rem;
-  color: rgba(246, 249, 255, 0.94);
+  color: var(--scores-search-title);
   font-size: 0.85rem;
   line-height: 1.2;
 }
 
 .scoresSearchInput {
   min-height: 32px;
-  border-color: rgba(226, 232, 240, 0.16);
-  background: rgba(8, 9, 15, 0.72);
-  color: rgba(246, 249, 255, 0.94);
+  border-color: var(--scores-search-input-border);
+  background: var(--scores-search-input-bg);
+  color: var(--scores-search-title);
 }
 
 .scoresSearchInput::placeholder {
-  color: rgba(180, 189, 205, 0.66);
+  color: var(--scores-search-placeholder);
 }
 
 .scoresSearchClear {
   min-height: 32px;
-  border: 1px solid rgba(255, 146, 72, 0.35);
-  background: rgba(255, 122, 0, 0.14);
-  color: rgba(255, 219, 190, 0.96);
+  border: 1px solid var(--scores-clear-border);
+  background: var(--scores-clear-bg);
+  color: var(--scores-clear-text);
 }
 
 .tableCard {
@@ -801,13 +863,13 @@
 }
 
 .tableCard :global(.entries-header-row) {
-  background: rgba(255, 255, 255, 0.035);
+  background: var(--scores-head-bg);
 }
 
 .tableCard :global(.entries-header-cell) {
   padding: 0.5rem 0.42rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
-  color: rgba(205, 214, 228, 0.92);
+  border-bottom: 1px solid var(--scores-head-rule);
+  color: var(--scores-head-text);
   font-size: 0.72rem;
   font-weight: 800;
   text-transform: uppercase;
@@ -816,15 +878,15 @@
 
 .tableCard :global(.scores-cell) {
   padding: 0.34rem 0.42rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.055);
-  color: rgba(241, 245, 249, 0.9);
+  border-bottom: 1px solid var(--scores-cell-rule);
+  color: var(--bw-text-body);
   text-align: center;
 }
 
 .tableCard :global(.scores-cell.name) {
   text-align: center;
   font-weight: 700;
-  color: rgba(246, 249, 255, 0.96);
+  color: var(--bw-text-title);
 }
 
 .tableCard :global(.scores-cell.lane),
@@ -833,22 +895,22 @@
 }
 
 .tableCard :global(.scores-row.even .scores-cell) {
-  background: rgba(255, 255, 255, 0.018);
+  background: color-mix(in srgb, var(--scores-card-utility) 88%, transparent);
 }
 
 .tableCard :global(.scores-row.odd .scores-cell) {
-  background: rgba(255, 255, 255, 0.03);
+  background: color-mix(in srgb, var(--bw-surface-panel-strong) 78%, transparent);
 }
 
 .tableCard :global(.scores-row:hover .scores-cell) {
-  background: rgba(255, 122, 0, 0.07);
+  background: var(--scores-row-hover);
 }
 
 .tableCard :global(.squad-banner) {
   padding: 0.5rem 0.86rem;
-  background: rgba(255, 122, 0, 0.1);
-  border-bottom: 1px solid rgba(255, 122, 0, 0.18);
-  color: rgba(255, 219, 190, 0.96);
+  background: var(--scores-squad-banner-bg);
+  border-bottom: 1px solid var(--scores-squad-banner-border);
+  color: var(--scores-squad-banner-text);
   font-size: 0.78rem;
   font-weight: 800;
 }
@@ -860,9 +922,9 @@
   width: 58px;
   min-height: 28px;
   border-radius: 9px;
-  border: 1px solid rgba(226, 232, 240, 0.16);
-  background: rgba(8, 9, 15, 0.76);
-  color: rgba(246, 249, 255, 0.96);
+  border: 1px solid var(--scores-input-border);
+  background: var(--scores-input-bg);
+  color: var(--scores-input-text);
   font-size: 0.86rem;
   font-weight: 700;
   text-align: center;
@@ -872,21 +934,21 @@
 .tableCard :global(.score-input-valid:focus),
 .tableCard :global(.score-input-warning:focus),
 .tableCard :global(.score-input-error:focus) {
-  border-color: rgba(255, 122, 0, 0.75);
-  box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.12);
+  border-color: var(--scores-input-focus-border);
+  box-shadow: var(--scores-input-focus-ring);
   outline: none;
 }
 
 .tableCard :global(.score-input.invalid) {
-  border-color: rgba(239, 100, 97, 0.68);
-  background: rgba(64, 21, 24, 0.72);
-  color: rgba(255, 205, 205, 0.96);
+  border-color: var(--scores-input-invalid-border);
+  background: var(--scores-input-invalid-bg);
+  color: var(--scores-input-invalid-text);
 }
 
 .tableCard :global(.score-input.perfect) {
-  border-color: rgba(45, 212, 136, 0.58);
-  background: rgba(45, 212, 136, 0.12);
-  color: rgba(190, 255, 213, 0.96);
+  border-color: var(--scores-input-perfect-border);
+  background: var(--scores-input-perfect-bg);
+  color: var(--scores-input-perfect-text);
 }
 
 .tableCard :global(.game-cell-wrap) {
@@ -898,7 +960,7 @@
 
 .tableCard :global(.game-hcap-total) {
   min-width: 30px;
-  color: rgba(180, 189, 205, 0.76);
+  color: var(--scores-total-muted);
   font-size: 0.76rem;
   font-weight: 700;
 }
@@ -912,7 +974,19 @@
   margin-bottom: 0;
 }
 
+.emptyScoresCard,
+.emptyScoresFeatureCard,
+.mobileScoresEmptyCard {
+  border: 1px dashed color-mix(in srgb, var(--bw-border-subtle) 84%, transparent);
+  background: color-mix(in srgb, var(--bw-surface-panel) 82%, transparent);
+}
+
 @media (max-width: 900px) {
+  .scoresSearchCard,
+  .tableCard {
+    border-radius: 18px;
+  }
+
   .scoresSearchRow {
     grid-template-columns: 1fr;
   }
@@ -921,14 +995,14 @@
 /* Scores text normalization to match Entries */
 .desktopContainer,
 .mobileScoresPage {
-  color: rgba(241, 245, 249, 0.9);
+  color: var(--bw-text-body);
 }
 
 .scoresSearchTitle,
 .emptyScoresTitle,
 .mobileScoresContextTitle,
 .mobileScoreName {
-  color: rgba(246, 249, 255, 0.96);
+  color: var(--bw-text-title);
   font-weight: 800;
   letter-spacing: 0;
 }
@@ -947,14 +1021,14 @@
 .mobileScoresContextMeta,
 .mobileScoreMeta,
 .mobileGameTotal {
-  color: rgba(180, 189, 205, 0.76);
+  color: var(--bw-text-muted);
   font-size: 0.78rem;
   line-height: 1.45;
   letter-spacing: 0;
 }
 
 .emptyScoresFeatureCard h3 {
-  color: rgba(246, 249, 255, 0.94);
+  color: var(--bw-text-title);
   font-size: 0.86rem;
   line-height: 1.2;
   font-weight: 800;
@@ -962,7 +1036,7 @@
 }
 
 .emptyScoresFeatureCard p {
-  color: rgba(180, 189, 205, 0.76);
+  color: var(--bw-text-muted);
   font-size: 0.78rem;
   line-height: 1.45;
 }
@@ -980,7 +1054,7 @@
 .statusMessage,
 .paginationInfo,
 .paginationInfo span {
-  color: rgba(180, 189, 205, 0.76);
+  color: var(--bw-text-muted);
   font-size: 0.82rem;
   line-height: 1.45;
 }
@@ -1000,7 +1074,7 @@
 .tableCard :global(.entries-header-cell) {
   font-size: 0.64rem;
   line-height: 1;
-  color: rgba(182, 191, 207, 0.86);
+  color: var(--bw-text-body);
   letter-spacing: 0;
 }
 
@@ -1010,23 +1084,23 @@
 }
 
 .tableCard :global(.bw-sortable-header .bw-sort-icon) {
-  color: rgba(182, 191, 207, 0.42);
+  color: color-mix(in srgb, var(--bw-text-body) 42%, transparent);
 }
 
 .tableCard :global(.bw-sortable-header-active .bw-sort-icon),
 .tableCard :global(.bw-sortable-header-active .bw-sortable-header-text) {
-  color: rgba(255, 155, 31, 0.95);
+  color: color-mix(in srgb, var(--color-primary) 72%, white);
 }
 
 .tableCard :global(.scores-cell) {
-  color: rgba(241, 245, 249, 0.9);
+  color: var(--bw-text-body);
   font-size: 0.78rem;
   line-height: 1.2;
   font-weight: 650;
 }
 
 .tableCard :global(.scores-cell.name) {
-  color: rgba(246, 249, 255, 0.94);
+  color: var(--bw-text-title);
   font-size: 0.78rem;
   font-weight: 750;
 }
@@ -1040,7 +1114,7 @@
 
 .tableCard :global(.total-scratch),
 .tableCard :global(.total-final) {
-  color: rgba(246, 249, 255, 0.92);
+  color: var(--bw-text-title);
   font-size: 0.8rem;
   font-weight: 800;
 }
@@ -1060,7 +1134,7 @@
 }
 
 .tableCard :global(.game-hcap-total) {
-  color: rgba(180, 189, 205, 0.76);
+  color: var(--bw-text-muted);
   font-size: 0.76rem;
   line-height: 1;
   font-weight: 700;
@@ -1078,7 +1152,7 @@
 }
 
 .mobileScoreTotal {
-  color: rgba(246, 249, 255, 0.94);
+  color: var(--bw-text-title);
   font-size: 0.82rem;
   line-height: 1;
   font-weight: 800;
@@ -1086,14 +1160,14 @@
 }
 
 .mobileScoreInput {
-  color: rgba(246, 249, 255, 0.96);
+  color: var(--bw-text-title);
   font-size: 0.9rem;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
 
 .mobileExpandGlyph {
-  color: rgba(255, 155, 31, 0.95);
+  color: color-mix(in srgb, var(--color-primary) 72%, white);
   font-size: 0.92rem;
   line-height: 1;
 }
@@ -1140,4 +1214,21 @@
   font-size: var(--bw-type-label);
   font-weight: 800;
   letter-spacing: 0;
+}
+
+/* Primitive consistency overrides */
+.scoresSearchCard,
+.emptyScoresState,
+.tableCard,
+.mobileQuickActionsCard {
+  border-radius: var(--radius-2xl-soft);
+}
+
+.scoresSearchRow {
+  margin-top: var(--space-2);
+}
+
+.scoresSearchInput,
+.scoresSearchClear {
+  border-radius: var(--radius-md);
 }
