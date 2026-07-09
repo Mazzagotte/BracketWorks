@@ -937,6 +937,8 @@ input[type='number'] { appearance: textfield; -moz-appearance: textfield; }
   .scores-table th,
   .scores-table td { padding: var(--spacing-sm) var(--spacing-xs); font-size: var(--font-size-xs); }
   .scores-table input { width: 50px; font-size: var(--font-size-xs); }
+  .entry-input { min-width: 64px; max-width: none; }
+  .entries-table { min-width: 620px; }
   .mobile-scroll-hint { display: block; }
   .mobile-only { display: block; }
   .desktop-only { display: none; }
@@ -1148,6 +1150,20 @@ input[type='number'] { appearance: textfield; -moz-appearance: textfield; }
 }
 
 @media (max-width: 640px) {
+  .entry-form {
+    justify-content: stretch;
+    align-items: stretch;
+  }
+
+  .entry-input {
+    min-width: 0;
+    max-width: none;
+  }
+
+  .entries-table {
+    min-width: 680px;
+  }
+
   .bw-scores-calc-modal-brand .bw-scores-calc-title {
     font-size: 1.2rem;
   }

@@ -74,6 +74,12 @@
 }
 
 @media (max-width: 980px) {
+  .pageShell {
+    max-width: none;
+    margin: 0;
+    padding: 16px 12px;
+  }
+
   .pageShellModal {
     width: 100%;
     margin: 0;
@@ -82,7 +88,44 @@
 
 @media (max-width: 640px) {
   .pageShell {
-    padding: var(--bw-page-gutter-mobile);
+    padding: 10px;
+  }
+
+  .pageHeader {
+    border-radius: 14px;
+    padding: 10px 12px;
+  }
+
+  .pageTitle {
+    font-size: 1.25rem;
+  }
+}
+
+@media (max-width: 390px) {
+  .pageShell {
+    padding: 8px;
+  }
+
+  .pageHeader {
+    padding: 8px 10px;
+    border-radius: 12px;
+  }
+
+  .pageTitle {
+    font-size: 1.08rem;
+    margin: 10px 0 6px;
+  }
+
+  .pageSubtitle {
+    font-size: 0.78rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .backButton {
+    min-height: 36px;
+    font-size: 0.78rem;
+    padding: 8px 12px;
   }
 }
 

@@ -457,11 +457,17 @@
    Mobile Scores UX
    ======================================== */
 
+.mobileScoresLayoutShell {
+  background: var(--bw-surface-panel, color-mix(in srgb, var(--color-brand-charcoal-deep) 92%, black 8%));
+}
+
 .mobileScoresPage {
   display: flex;
   flex-direction: column;
   gap: 6px;
   padding-bottom: 6px;
+  background: var(--bw-surface-panel, color-mix(in srgb, var(--color-brand-charcoal-deep) 92%, black 8%));
+  border-radius: 14px;
 }
 
 .mobileScoresToolbarSticky {
@@ -760,6 +766,81 @@
   --scores-total-muted: var(--bw-text-muted);
 }
 
+/* ========================================
+   Mobile Optimization Pass
+   ======================================== */
+
+@media (max-width: 900px) {
+  .desktopContainer {
+    max-width: none;
+    margin: 0;
+    padding: 0.75rem 0.55rem;
+  }
+
+  .tableCard {
+    border-radius: 12px;
+    padding: 12px;
+  }
+
+  .paginationWrapper {
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .desktopContainer {
+    padding: 0.55rem 0.3rem;
+  }
+
+  .tableCard {
+    border-radius: 10px;
+    padding: 8px;
+  }
+
+  .paginationWrapper {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .paginationInfo {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 390px) {
+  .desktopContainer {
+    padding: 0.5rem 0.2rem;
+  }
+
+  .scoresSearchCard {
+    padding: 0.55rem 0.6rem;
+  }
+
+  .scoresSearchTitle {
+    font-size: 0.8rem;
+  }
+
+  .tableCard {
+    padding: 6px;
+  }
+
+  .mobileScoreName {
+    font-size: 0.82rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .tableCard {
+    padding: 4px;
+  }
+
+  .mobileScoreInput {
+    min-height: 32px;
+    font-size: 0.9rem;
+  }
+}
+
 .scoresSearchCard,
 .tableCard {
   border-radius: 24px;
@@ -840,6 +921,37 @@
 
 .scoresSearchInput::placeholder {
   color: var(--scores-search-placeholder);
+}
+
+/* Final mobile compaction pass */
+@media (max-width: 900px) {
+  .emptyScoresFeaturesGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.42rem;
+  }
+
+  .scoresSearchCard {
+    padding: 0.52rem 0.62rem;
+  }
+
+  .tableCard {
+    padding: 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .emptyScoresFeaturesGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .emptyScoresState {
+    padding: 0.84rem;
+  }
+
+  .emptyScoresActions {
+    margin-top: 0.66rem;
+    gap: 0.5rem;
+  }
 }
 
 .scoresSearchClear {
@@ -1242,4 +1354,278 @@
 .scoresSearchInput,
 .scoresSearchClear {
   border-radius: var(--radius-md);
+}
+
+/* Final color alignment pass for mobile Scores UI */
+@media (max-width: 900px) {
+  .mobileScoresPage {
+    background: var(--bw-surface-panel, color-mix(in srgb, var(--color-brand-charcoal-deep) 92%, black 8%));
+    margin-left: calc(-1 * var(--space-3, 12px));
+    margin-right: calc(-1 * var(--space-3, 12px));
+    padding-left: var(--space-3, 12px);
+    padding-right: var(--space-3, 12px);
+    border-radius: 0;
+    min-height: 100dvh;
+  }
+
+  .mobileScoresToolbarSticky {
+    background: var(--bw-surface-card-strong);
+    border: 1px solid var(--bw-border-card);
+    box-shadow: var(--bw-shadow-card);
+  }
+
+  .mobileScoresContextTitle {
+    color: var(--bw-text-title);
+  }
+
+  .mobileScoresContextMeta,
+  .mobileSaveBar {
+    color: var(--bw-text-muted);
+  }
+
+  .mobileUndoBtn {
+    border-color: var(--bw-border-card);
+    background: var(--bw-surface-panel);
+    color: var(--bw-text-title);
+  }
+
+  .mobileScoreCard {
+    border: 1px solid var(--bw-border-card);
+    background: var(--bw-surface-card);
+    box-shadow: var(--bw-shadow-card);
+  }
+
+  .mobileScoreCardHeader {
+    background: var(--bw-surface-panel-strong);
+  }
+
+  .mobileScoreName,
+  .mobileScoreTotal {
+    color: var(--bw-text-title);
+  }
+
+  .mobileScoreMeta,
+  .mobileGameTotal {
+    color: color-mix(in srgb, var(--bw-text-muted) 90%, white 10%);
+  }
+
+  .mobileExpandGlyph {
+    color: var(--bw-text-accent);
+  }
+
+  .mobileSaveStateIdle {
+    background: var(--bw-surface-panel-strong);
+    border-color: var(--bw-border-card);
+    color: var(--bw-text-body);
+  }
+
+  .mobileSaveStateSaving {
+    background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+    border-color: color-mix(in srgb, var(--color-primary) 34%, transparent);
+    color: var(--bw-text-accent);
+  }
+
+  .mobileSaveStateSaved {
+    background: var(--color-success-soft);
+    border-color: var(--color-success-border);
+    color: var(--bw-text-success);
+  }
+
+  .mobileSaveStateFailed {
+    background: color-mix(in srgb, var(--color-error) 12%, transparent);
+    border-color: var(--color-error-border);
+    color: var(--bw-text-danger);
+  }
+
+  .mobileScoreCardBody {
+    border-top: 1px solid var(--bw-border-card);
+    background: var(--bw-surface-panel);
+  }
+
+  .mobileContextChip {
+    border-color: var(--bw-border-card);
+    background: var(--bw-surface-panel-strong);
+    color: var(--bw-text-body);
+  }
+
+  .mobileGameInputField > span:first-child {
+    color: var(--bw-text-muted);
+  }
+
+  .mobileScoreInput {
+    border-color: var(--scores-input-border);
+    background: var(--scores-input-bg);
+    color: var(--scores-input-text);
+  }
+
+  .mobileRetryBtn {
+    border-color: var(--color-error-border);
+    background: color-mix(in srgb, var(--color-error) 12%, transparent);
+    color: var(--bw-text-danger);
+  }
+
+  .mobileQuickActionsCard {
+    margin-bottom: 0.4rem;
+  }
+
+  .mobileQuickActionsCard > h2 {
+    padding-top: 0.52rem;
+    padding-bottom: 0.48rem;
+    padding-left: 0.72rem;
+    padding-right: 0.72rem;
+    font-size: 0.92rem;
+    line-height: 1.1;
+  }
+
+  .mobileQuickActionsCard > div {
+    padding-top: 0.42rem;
+    padding-bottom: 0.48rem;
+    padding-left: 0.62rem;
+    padding-right: 0.62rem;
+  }
+
+  .mobileQuickActionsCard :where(button, a) {
+    min-height: 32px;
+    padding: 0.36rem 0.62rem;
+    border-radius: 10px;
+    font-size: 0.76rem;
+    font-weight: 800;
+    line-height: 1.1;
+  }
+
+  .mobileQuickActionsCard [class*='quickActions'] {
+    gap: 0.44rem;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mobileQuickActionsCard [class*='quickActionsGroup'] {
+    gap: 0.4rem;
+    display: grid;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .mobileQuickActionsCard [class*='quickActions'] > [class*='quickActionsGroup']:first-child {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mobileQuickActionsCard [class*='quickActions'] > [class*='quickActionsGroup']:last-child {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .mobileQuickActionsCard [class*='quickActionsGroup'] > :where(button, a) {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .mobileQuickActionsCard [class*='quickActionsGroup'] > :not(button):not(a) {
+    grid-column: 1 / -1;
+  }
+
+  .mobileQuickActionsCard .quickActionAdminLabel {
+    display: block;
+    width: 100%;
+    margin-right: 0;
+    margin-bottom: 0.1rem;
+    grid-column: 1 / -1;
+  }
+
+  .mobileQuickActionsCard [class*='quickActions'] > [class*='quickActionsGroup']:last-child > :where(button, a):not(.quickActionAdminBtn) {
+    grid-column: 1 / -1;
+  }
+
+  .mobileQuickActionsCard .quickActionAdminBtn {
+    grid-column: auto;
+  }
+
+  .mobileQuickActionsCard :where(span, small) {
+    font-size: 0.68rem;
+  }
+
+  .quickActionAdminLabel {
+    margin-right: 0.12rem;
+    font-size: 0.66rem;
+    letter-spacing: 0.04em;
+  }
+}
+
+@media (max-width: 390px) {
+  .mobileQuickActionsCard > h2 {
+    padding-left: 0.62rem;
+    padding-right: 0.62rem;
+    font-size: 0.86rem;
+  }
+
+  .mobileQuickActionsCard > div {
+    padding-left: 0.52rem;
+    padding-right: 0.52rem;
+  }
+
+  .mobileQuickActionsCard :where(button, a) {
+    min-height: 30px;
+    padding: 0.32rem 0.52rem;
+    font-size: 0.72rem;
+  }
+}
+
+/* Focused Scores color pass */
+.desktopContainer {
+  --scores-card-primary: color-mix(in srgb, var(--bw-surface-card) 90%, transparent);
+  --scores-card-secondary: color-mix(in srgb, var(--bw-surface-panel) 88%, transparent);
+  --scores-card-utility: color-mix(in srgb, var(--bw-surface-panel-strong) 76%, transparent);
+  --scores-row-even: color-mix(in srgb, var(--bw-surface-panel) 78%, transparent);
+  --scores-row-odd: color-mix(in srgb, var(--bw-surface-panel-strong) 86%, transparent);
+  --scores-row-hover: color-mix(in srgb, var(--color-primary) 9%, transparent);
+  --scores-squad-banner-bg: color-mix(in srgb, var(--color-primary) 12%, var(--bw-surface-panel));
+  --scores-squad-banner-border: color-mix(in srgb, var(--color-primary) 30%, transparent);
+  --scores-input-border: color-mix(in srgb, var(--bw-border-subtle) 92%, transparent);
+}
+
+.tableCard :global(.score-input-valid) {
+  border-color: color-mix(in srgb, var(--color-success) 54%, transparent);
+  background: color-mix(in srgb, var(--color-success) 12%, transparent);
+  color: var(--bw-text-success);
+}
+
+.tableCard :global(.score-input-warning) {
+  border-color: color-mix(in srgb, var(--color-primary) 56%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
+  color: var(--bw-text-accent);
+}
+
+.tableCard :global(.score-input-error) {
+  border-color: color-mix(in srgb, var(--color-error) 62%, transparent);
+  background: color-mix(in srgb, var(--color-error) 13%, transparent);
+  color: var(--bw-text-danger);
+}
+
+.tableCard :global(.score-input-valid:focus) {
+  border-color: color-mix(in srgb, var(--color-success) 66%, transparent);
+}
+
+.tableCard :global(.score-input-warning:focus) {
+  border-color: color-mix(in srgb, var(--color-primary) 70%, transparent);
+}
+
+.tableCard :global(.score-input-error:focus) {
+  border-color: color-mix(in srgb, var(--color-error) 70%, transparent);
+}
+
+.mobileSaveStatePill {
+  border-width: 1px;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-white) 12%, transparent);
+}
+
+.mobileSaveStateSaving {
+  color: color-mix(in srgb, var(--color-primary) 78%, white);
+}
+
+.mobileSaveStateSaved {
+  color: color-mix(in srgb, var(--color-success) 82%, white);
+}
+
+.mobileSaveStateFailed {
+  color: color-mix(in srgb, var(--color-error) 82%, white);
 }
