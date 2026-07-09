@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import { buildApiUrl } from '../../lib/api'
 import { formatIsoDateShortWithWeekday } from '../../lib/formatters'
 import { DataTableToolbar } from '../../components/primitives'
+import TournamentDirectory from '../TournamentDirectory'
 import styles from './view.module.css'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -1296,10 +1297,19 @@ export default function TournamentViewPage() {
   // ─── Render ────────────────────────────────────────────────────────────────
 
   if (error && !tournament) {
+    let attemptedRef = (tournamentRef ?? '').trim()
+    try {
+      attemptedRef = decodeURIComponent(attemptedRef)
+    } catch {
+      // Keep raw fallback value when decode fails.
+    }
+
     return (
-      <div className={styles.errorScreen}>
-        <p>{error}</p>
-      </div>
+      <TournamentDirectory
+        title="Tournament Not Found"
+        subtitle="That public view link is unavailable. Try one of the active tournaments below."
+        notFoundRef={attemptedRef}
+      />
     )
   }
 

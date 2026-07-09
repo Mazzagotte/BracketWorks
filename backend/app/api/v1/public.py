@@ -121,6 +121,57 @@ def _format_public_squads(db: Session, tournament_id: int, squads: list[models.T
     return formatted_squads
 
 
+@router.get("/tournaments")
+def list_public_tournaments(
+    response: Response,
+    limit: int = Query(100, ge=1, le=500),
+    db: Session = Depends(get_db),
+):
+    """Directory of public tournaments for the /view landing page."""
+    tournaments = (
+        db.query(models.Tournament)
+        .filter(
+            models.Tournament.is_public.is_(True),
+            models.Tournament.archived_at.is_(None),
+        )
+        .order_by(models.Tournament.id.desc())
+        .limit(limit)
+        .all()
+    )
+
+    tournament_ids = [t.id for t in tournaments]
+    squad_count_by_tournament: dict[int, int] = {}
+    if tournament_ids:
+        squad_counts = (
+            db.query(
+                models.TournamentSquad.tournament_id,
+                func.count(models.TournamentSquad.id),
+            )
+            .filter(models.TournamentSquad.tournament_id.in_(tournament_ids))
+            .group_by(models.TournamentSquad.tournament_id)
+            .all()
+        )
+        squad_count_by_tournament = {int(tid): int(count) for tid, count in squad_counts}
+
+    _set_public_cache_headers(response, max_age=60, stale_while_revalidate=300)
+
+    return {
+        "tournaments": [
+            {
+                "id": t.id,
+                "name": t.name,
+                "slug": _slugify_tournament_name(t.name),
+                "location": t.location,
+                "start_date": t.start_date,
+                "end_date": t.end_date,
+                "squad_count": squad_count_by_tournament.get(t.id, 0),
+                "public_url": f"/view/{_slugify_tournament_name(t.name)}",
+            }
+            for t in tournaments
+        ]
+    }
+
+
 @router.get("/tournament/{tournament_id}")
 def get_public_tournament_info(
     tournament_id: int,

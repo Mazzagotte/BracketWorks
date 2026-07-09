@@ -1,0 +1,211 @@
+.wrap {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  min-height: calc(100dvh - var(--header-height));
+  color: var(--color-text-primary);
+}
+
+.fullBleedHeaderInner {
+  max-width: none;
+  width: 100%;
+  padding: 0;
+}
+
+.fullBleedHeaderTop {
+  width: 100%;
+  gap: 0;
+}
+
+.fullBleedTournamentCol {
+  padding: 0 22px;
+}
+
+.notFoundBanner {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 45%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 16%, transparent);
+  color: var(--color-white);
+}
+
+.stateText,
+.stateError {
+  margin: 14px 0 0;
+  color: var(--color-gray-200);
+}
+
+.stateError {
+  color: var(--color-danger, #f87171);
+}
+
+.section {
+  margin-top: 0;
+  border: 1px solid var(--opacity-white-08);
+  border-left: 0;
+  border-right: 0;
+  border-radius: 0;
+  background: linear-gradient(165deg, color-mix(in srgb, var(--color-dark-surface) 88%, #000 12%) 0%, var(--color-dark-base) 100%);
+  padding: 14px 0;
+}
+
+.section + .section {
+  border-top: 0;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-200);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: var(--font-weight-bold);
+}
+
+.sectionCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 26px;
+  padding: 0 8px;
+  border-radius: var(--radius-full);
+  background: var(--opacity-white-08);
+  border: 1px solid var(--opacity-white-12);
+  color: var(--color-white);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 10px;
+}
+
+.card {
+  border: 1px solid var(--opacity-white-10);
+  border-radius: 12px;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--color-dark-surface) 86%, #000 14%) 0%, var(--color-dark-base) 100%);
+  overflow: hidden;
+}
+
+.cardLink {
+  display: block;
+  min-height: var(--touch-target-comfortable);
+  padding: 13px;
+  text-decoration: none;
+  color: inherit;
+  transition: background var(--motion-duration-base) var(--motion-ease-standard), border-color var(--motion-duration-base) var(--motion-ease-standard);
+}
+
+.cardLink:hover,
+.cardLink:focus-visible {
+  background: color-mix(in srgb, var(--color-primary) 11%, transparent);
+}
+
+.cardTitle {
+  font-size: 1rem;
+  font-weight: var(--font-weight-bold);
+  line-height: 1.25;
+  color: var(--color-white);
+}
+
+.metaRow {
+  margin-top: 7px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-300);
+}
+
+.metaRow > span:last-child {
+  flex-shrink: 0;
+  border: 1px solid var(--opacity-white-10);
+  border-radius: var(--radius-full);
+  padding: 2px 7px;
+  color: var(--color-gray-200);
+}
+
+.metaDate {
+  margin-top: 8px;
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-400);
+}
+
+.openHint {
+  margin-top: 10px;
+  font-size: var(--font-size-sm);
+  color: var(--color-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.emptySection {
+  margin: 4px 0 0;
+  font-size: var(--font-size-base);
+  color: var(--color-gray-300);
+}
+
+@media (max-width: 700px) {
+  .wrap {
+    padding: 10px 10px 40px;
+    min-height: auto;
+  }
+
+  .fullBleedHeaderInner {
+    padding: 0 var(--spacing-md);
+  }
+
+  .fullBleedTournamentCol {
+    padding: 0;
+  }
+
+  .section {
+    margin-top: 10px;
+    border-left: 1px solid var(--opacity-white-08);
+    border-right: 1px solid var(--opacity-white-08);
+    padding: 10px;
+    border-radius: 12px;
+  }
+
+  .section + .section {
+    border-top: 1px solid var(--opacity-white-08);
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .cardLink {
+    padding: 12px;
+  }
+
+  .cardTitle {
+    font-size: 0.95rem;
+  }
+
+  .metaRow {
+    font-size: 0.8rem;
+  }
+
+  .metaDate,
+  .openHint {
+    font-size: 0.78rem;
+  }
+}
