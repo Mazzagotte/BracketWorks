@@ -170,7 +170,7 @@ export default function TournamentDirectory({
       <section className={styles.wrap}>
         {attemptedLabel ? (
           <p className={styles.notFoundBanner}>
-            We could not find a public tournament for "{attemptedLabel}".
+            We could not find a public tournament for &quot;{attemptedLabel}&quot;.
           </p>
         ) : null}
 
