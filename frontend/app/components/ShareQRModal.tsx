@@ -50,15 +50,15 @@ export default function ShareQRModal({
   const [copied, setCopied] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState("");
   const [exportingMode, setExportingMode] = useState<PosterMode | null>(null);
-  const qrRenderSize = 400;
-  const qrLogoSize = 192;
+  const qrImageSize = 498;
+  const qrRenderSize = qrImageSize;
+  const qrBadgeSize = 180;
+  const qrLogoSize = 176;
 
   const slug = slugify(tournamentName);
   const publicUrl = providedPublicUrl || (typeof window !== "undefined"
     ? `${window.location.origin}/view/${slug}`
     : `/view/${slug}`);
-  const qrBackgroundColor = typeof window !== "undefined" ? readRootCssVar("--share-qr-code-bg") : "#ffffff";
-  const qrForegroundColor = typeof window !== "undefined" ? readRootCssVar("--share-qr-code-fg") : "#000000";
   const generatedDate = new Date().toLocaleDateString();
 
   useEffect(() => {
@@ -150,9 +150,9 @@ export default function ShareQRModal({
           <section style="padding:42px 50px 30px;display:flex;flex-direction:column;align-items:center;gap:26px;flex:1;">
             <div style="width:596px;height:596px;border:0.75px solid rgba(45,57,74,0.65);border-radius:28px;display:flex;align-items:center;justify-content:center;background:linear-gradient(165deg,#121b27 0%,#111827 100%);box-shadow:inset 0 0 0 1px rgba(255,255,255,0.02);">
               <div style="width:534px;height:534px;border-radius:18px;background:#ffffff;display:flex;align-items:center;justify-content:center;position:relative;">
-                <img src="${safeQrSrc}" alt="" style="display:block;width:498px;height:498px;" />
-                <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:236px;height:236px;border-radius:32px;background:#ffffff;border:1px solid #e2e8f0;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(15,23,42,0.14);">
-                  <img src="/logo.svg" alt="" style="display:block;width:224px;height:224px;" />
+                <img src="${safeQrSrc}" alt="" style="display:block;width:${qrImageSize}px;height:${qrImageSize}px;" />
+                <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:${qrBadgeSize}px;height:${qrBadgeSize}px;border-radius:28px;background:#ffffff;display:flex;align-items:center;justify-content:center;">
+                  <img src="/logo.svg" alt="" style="display:block;width:${qrLogoSize}px;height:${qrLogoSize}px;" />
                 </div>
               </div>
             </div>
@@ -393,7 +393,6 @@ export default function ShareQRModal({
         img.src = qrDataUrl;
       });
 
-      const qrImageSize = 498;
       const qrImageX = Math.round((W - qrImageSize) / 2);
       const qrImageY = qrInnerY + Math.round((qrInnerSize - qrImageSize) / 2);
       ctx.drawImage(qrImage, qrImageX, qrImageY, qrImageSize, qrImageSize);
@@ -407,21 +406,16 @@ export default function ShareQRModal({
           img.src = "/logo.svg";
         });
 
-        const logoBadgeSize = 236;
-        const logoBadgeX = Math.round(W / 2 - logoBadgeSize / 2);
-        const logoBadgeY = Math.round(qrImageY + qrImageSize / 2 - logoBadgeSize / 2);
-        const logoBadgeRadius = 32;
-        roundRect(logoBadgeX, logoBadgeY, logoBadgeSize, logoBadgeSize, logoBadgeRadius);
+        const logoBadgeX = Math.round(W / 2 - qrBadgeSize / 2);
+        const logoBadgeY = Math.round(qrImageY + qrImageSize / 2 - qrBadgeSize / 2);
+        const logoBadgeRadius = 28;
+        roundRect(logoBadgeX, logoBadgeY, qrBadgeSize, qrBadgeSize, logoBadgeRadius);
         ctx.fillStyle = "#ffffff";
         ctx.fill();
-        ctx.strokeStyle = "#e2e8f0";
-        ctx.lineWidth = 1;
-        ctx.stroke();
 
-        const logoSize = 224;
-        const logoX = Math.round(W / 2 - logoSize / 2);
-        const logoY = Math.round(qrImageY + qrImageSize / 2 - logoSize / 2);
-        ctx.drawImage(logoImage, logoX, logoY, logoSize, logoSize);
+        const logoX = Math.round(W / 2 - qrLogoSize / 2);
+        const logoY = Math.round(qrImageY + qrImageSize / 2 - qrLogoSize / 2);
+        ctx.drawImage(logoImage, logoX, logoY, qrLogoSize, qrLogoSize);
       } catch {
         // Keep export resilient if logo cannot be loaded.
       }
@@ -555,14 +549,14 @@ export default function ShareQRModal({
           <QRCodeCanvas
             value={publicUrl}
             size={qrRenderSize}
-            bgColor={qrBackgroundColor}
-            fgColor={qrForegroundColor}
+            bgColor="#ffffff"
+            fgColor="#111111"
             level="H"
             includeMargin
             imageSettings={{
               src: "/logo.svg",
-              width: qrLogoSize,
-              height: qrLogoSize,
+              width: qrBadgeSize,
+              height: qrBadgeSize,
               excavate: true,
             }}
           />
