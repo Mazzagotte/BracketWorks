@@ -13,11 +13,11 @@ export function SectionHeader({ title, subtitle, actions, className }: SectionHe
 
   return (
     <header className={rootClass}>
-      <div>
+      <div className={styles.sectionHeaderText}>
         <h2 className={styles.sectionTitle}>{title}</h2>
         {subtitle ? <p className={styles.sectionSubtitle}>{subtitle}</p> : null}
       </div>
-      {actions}
+      {actions ? <div className={styles.sectionHeaderActions}>{actions}</div> : null}
     </header>
   );
 }

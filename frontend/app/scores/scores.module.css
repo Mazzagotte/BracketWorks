@@ -24,7 +24,7 @@
    Header Action Buttons
    ======================================== */
 
-.devButton {
+.adminButton {
   font-size: 0.75rem;
   font-weight: 700;
   padding: 6px 14px;
@@ -37,7 +37,7 @@
   text-transform: uppercase;
 }
 
-.devButton:hover {
+.adminButton:hover {
   background: var(--color-border-light);
   border-color: var(--color-primary);
   color: var(--color-primary);
@@ -302,7 +302,7 @@
    Header Action Buttons
    ======================================== */
 
-.devButton {
+.adminButton {
   font-size: 0.75rem;
   font-weight: 700;
   padding: 6px 14px;
@@ -315,14 +315,14 @@
   text-transform: uppercase;
 }
 
-.devButton:hover {
+.adminButton:hover {
   background: var(--color-border-light);
   border-color: var(--color-primary);
   color: var(--color-primary);
 }
 
 @media (max-width: 480px) {
-  .devButton {
+  .adminButton {
     width: 100%;
     max-width: none;
     min-height: var(--touch-target-comfortable);
@@ -783,17 +783,28 @@
   border-color: var(--bw-border-card);
 }
 
-.quickActionDevBtn {
+.quickActionAdminBtn {
   border-style: dashed;
   border-color: var(--scores-dev-border);
   color: var(--scores-dev-text);
   background: var(--scores-dev-bg);
 }
 
-.quickActionDevBtn:hover:not(:disabled) {
+.quickActionAdminBtn:hover:not(:disabled) {
   border-color: var(--scores-dev-hover-border);
   color: var(--scores-dev-hover-text);
   background: var(--scores-dev-hover-bg);
+}
+
+.quickActionAdminLabel {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 0.25rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--scores-dev-text);
 }
 
 .quickActionDangerBtn {

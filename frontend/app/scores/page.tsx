@@ -704,41 +704,69 @@ export default function ScoresPage() {
       return
     }
 
-    const params = new URLSearchParams({ tournament_id: String(tournament?.id) })
-    if (selectedSquad) params.set('squad_id', String(selectedSquad.id))
-    const res = await apiFetch(API(`/api/v1/scores/dev/clear-game/${gameNumber}?${params}`), {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
-    })
-
-    let body: { message?: string; detail?: string } = {}
-    try {
-      body = await res.json()
-    } catch {
-      // Best-effort parse only.
-    }
-
-    if (res.status === 401) {
-      addToast({ type: 'error', message: 'Unauthorized. Please sign in again.', duration: 4000 })
+    const squadId = selectedSquad?.id ?? getSelectedSquadId()
+    if (!squadId) {
+      addToast({ type: 'error', message: 'No squad selected.', duration: 3000 })
       return
     }
 
-    addToast({ type: res.ok ? 'success' : 'error', message: body.message ?? body.detail ?? 'Request completed.', duration: 3000 })
-    if (res.ok) {
-      setPlayers(prev => prev.map(p => ({
-        ...p,
-        scores: p.scores
+    const playersWithScores = players.filter(player => player.scores)
+    if (playersWithScores.length === 0) {
+      addToast({ type: 'warning', message: `No Game ${gameNumber} scores found to clear.`, duration: 3000 })
+      return
+    }
+
+    const clearResults = await Promise.allSettled(
+      playersWithScores.map(player => apiFetch(API('/api/v1/scores/'), {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          player_id: player.id,
+          tournament_id: tournament.id,
+          squad_id: squadId,
+          game1_scratch: player.scores?.game1_scratch,
+          game2_scratch: gameNumber === 2 ? undefined : player.scores?.game2_scratch,
+          game3_scratch: gameNumber === 3 ? undefined : player.scores?.game3_scratch,
+        }),
+      })),
+    )
+
+    const successful = clearResults.filter(
+      result => result.status === 'fulfilled' && result.value.ok,
+    ).length
+
+    if (successful > 0) {
+      setPlayers(prev => prev.map(player => ({
+        ...player,
+        scores: player.scores
           ? {
-              ...p.scores,
+              ...player.scores,
               [`game${gameNumber}_scratch`]: undefined,
               [`game${gameNumber}_with_handicap`]: undefined,
             }
-          : p.scores,
+          : player.scores,
       })))
     }
-  }, [tournament, selectedSquad, addToast, sessionToken])
 
-  const devClearGame = useCallback((gameNumber: 2 | 3) => {
+    const failed = playersWithScores.length - successful
+    if (failed > 0 && successful === 0) {
+      addToast({ type: 'error', message: `Failed to clear Game ${gameNumber} scores.`, duration: 4000 })
+      return
+    }
+
+    addToast({
+      type: failed > 0 ? 'warning' : 'success',
+      message: failed > 0
+        ? `Cleared Game ${gameNumber} for ${successful} players. ${failed} failed.`
+        : `Cleared Game ${gameNumber} scores for ${successful} players.`,
+      duration: 3500,
+    })
+  }, [tournament, selectedSquad, addToast, sessionToken, players])
+
+  const requestClearGame = useCallback((gameNumber: 2 | 3) => {
     setClearGameConfirm(gameNumber)
   }, [])
 
@@ -1447,15 +1475,16 @@ export default function ScoresPage() {
 
           {(process.env.NODE_ENV === 'development' || !!currentUser?.isAdmin) && players.length > 0 && (
             <>
-              <button className={`${cardStyles.quickActionControl} ${styles.devButton} ${styles.quickActionDevBtn}`} onClick={handleRandomizeScores} disabled={isScoresLocked}>Randomize Scores</button>
-              <button className={`${cardStyles.quickActionControl} ${styles.devButton} ${styles.quickActionDevBtn}`} onClick={() => devClearGame(2)} disabled={isScoresLocked}>Clear Game 2</button>
-              <button className={`${cardStyles.quickActionControl} ${styles.devButton} ${styles.quickActionDevBtn}`} onClick={() => devClearGame(3)} disabled={isScoresLocked}>Clear Game 3</button>
+              <span className={styles.quickActionAdminLabel}>Admin tools</span>
+              <button className={`${cardStyles.quickActionControl} ${styles.adminButton} ${styles.quickActionAdminBtn}`} onClick={handleRandomizeScores} disabled={isScoresLocked}>Randomize Scores</button>
+              <button className={`${cardStyles.quickActionControl} ${styles.adminButton} ${styles.quickActionAdminBtn}`} onClick={() => requestClearGame(2)} disabled={isScoresLocked}>Clear Game 2</button>
+              <button className={`${cardStyles.quickActionControl} ${styles.adminButton} ${styles.quickActionAdminBtn}`} onClick={() => requestClearGame(3)} disabled={isScoresLocked}>Clear Game 3</button>
             </>
           )}
         </>
       )}
     />
-  ), [players, handleRandomizeScores, devClearGame, pendingSaves.length, addToast, processPendingSaves, handleExportScoresToExcel, isExporting, isImporting, isScoresLocked, unlockScoresTable, currentUser, markScoresComplete])
+  ), [players, handleRandomizeScores, requestClearGame, pendingSaves.length, addToast, processPendingSaves, handleExportScoresToExcel, isExporting, isImporting, isScoresLocked, unlockScoresTable, currentUser, markScoresComplete])
 
   usePageHeader({
     title: 'Scores',

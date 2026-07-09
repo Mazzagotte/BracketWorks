@@ -56,8 +56,6 @@ const formatNumberInput = (numericValue: number): string => {
   return numericValue === 0 ? '' : Math.round(numericValue).toLocaleString('en-US');
 };
 
-const cloneValue = <T,>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
-
 type DashboardCardKey = 'bracketSettings' | 'sidePots' | 'bracketPrograms';
 
 const expandedDesktopCards: Record<DashboardCardKey, boolean> = {
@@ -79,9 +77,6 @@ export default function TournamentSettingsPage() {
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [bracketSettings, setBracketSettings] = useState<BracketSettings>(createDefaultBracketSettings());
   const [sidePots, setSidePots] = useState<SidePotsSettings>(createDefaultSidePots());
-  const [savedBracketSettings, setSavedBracketSettings] = useState<BracketSettings | null>(null);
-  const [savedSidePots, setSavedSidePots] = useState<SidePotsSettings | null>(null);
-  const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [cardExpanded, setCardExpanded] = useState<Record<DashboardCardKey, boolean>>(expandedDesktopCards);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -94,21 +89,6 @@ export default function TournamentSettingsPage() {
 
   const BRACKET_SETTINGS_AUTOSAVE_DELAY_MS = 600;
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const hasUnsavedChanges = useMemo(() => {
-    if (!isModalView || !savedBracketSettings || !savedSidePots) return false;
-    return (
-      JSON.stringify(bracketSettings) !== JSON.stringify(savedBracketSettings)
-      || JSON.stringify(sidePots) !== JSON.stringify(savedSidePots)
-    );
-  }, [isModalView, bracketSettings, sidePots, savedBracketSettings, savedSidePots]);
-
-  const resolveSaveMode = useCallback(
-    (mode: 'immediate' | 'none' | 'autosave'): 'immediate' | 'none' | 'autosave' => (
-      isModalView ? 'none' : mode
-    ),
-    [isModalView],
-  );
 
   const applyAutoHouse = useCallback((previous: BracketSettings, updates: Partial<BracketSettings>): BracketSettings => {
     const next = { ...previous, ...updates };
@@ -138,12 +118,12 @@ export default function TournamentSettingsPage() {
 
   const saveBracketSettingsImmediately = useCallback(() => {
     if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
-    if (isModalView || !tournament) return;
+    if (!tournament) return;
 
     void persistBracketSettings(bracketSettingsRef.current).catch((err: unknown) => {
       logger.error('Failed to save bracket settings', getErrorContext(err));
     });
-  }, [isModalView, persistBracketSettings, tournament]);
+  }, [persistBracketSettings, tournament]);
 
   const updateBracketSettings = useCallback(
     (updater: (prev: BracketSettings) => BracketSettings, mode: 'immediate' | 'none' | 'autosave' = 'autosave') => {
@@ -179,13 +159,11 @@ export default function TournamentSettingsPage() {
       setSidePots(prev => {
         const nextPots = prev.pots.map(pot => (pot.key === potKey ? { ...pot, ...updates } : pot));
         const next = { ...prev, pots: nextPots };
-        if (!isModalView) {
-          saveSidePots(next);
-        }
+        saveSidePots(next);
         return next;
       });
     },
-    [isModalView, saveSidePots],
+    [saveSidePots],
   );
 
   const toggleCard = (cardKey: DashboardCardKey) => {
@@ -221,7 +199,7 @@ export default function TournamentSettingsPage() {
         );
         return { ...previous, bracket_programs: nextPrograms };
       },
-      resolveSaveMode('immediate'),
+      'immediate',
     );
   };
 
@@ -242,46 +220,8 @@ export default function TournamentSettingsPage() {
         bracket_programs: nextPrograms,
         allow_byes: nextAllowByes,
       };
-    }, resolveSaveMode('immediate'));
+    }, 'immediate');
   };
-
-  const handleSaveSettings = useCallback(async () => {
-    if (!isModalView || !hasUnsavedChanges) return;
-
-    setIsSavingSettings(true);
-    try {
-      await persistBracketSettings(bracketSettings);
-      saveSidePots(sidePots);
-
-      setSavedBracketSettings(cloneValue(bracketSettings));
-      setSavedSidePots(cloneValue(sidePots));
-
-      addToast({
-        type: 'success',
-        message: 'Tournament settings saved',
-        duration: 2800,
-      });
-    } catch (error) {
-      logger.error('Failed to save settings from modal', getErrorContext(error));
-      addToast({
-        type: 'error',
-        message: 'Failed to save settings',
-        duration: 4200,
-      });
-    } finally {
-      setIsSavingSettings(false);
-    }
-  }, [isModalView, hasUnsavedChanges, persistBracketSettings, bracketSettings, saveSidePots, sidePots, addToast]);
-
-  const handleCancelSettings = useCallback(() => {
-    if (!isModalView || !savedBracketSettings || !savedSidePots) return;
-    if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
-
-    const resetBracketSettings = cloneValue(savedBracketSettings);
-    setBracketSettings(resetBracketSettings);
-    bracketSettingsRef.current = resetBracketSettings;
-    setSidePots(cloneValue(savedSidePots));
-  }, [isModalView, savedBracketSettings, savedSidePots]);
 
   useEffect(() => {
     setBodyInteractionState({ scrollLocked: false, touchLocked: false });
@@ -324,7 +264,6 @@ export default function TournamentSettingsPage() {
           };
 
           setBracketSettings(normalizedBracketSettings);
-          setSavedBracketSettings(cloneValue(normalizedBracketSettings));
         }
 
         const key = SIDE_POTS_STORAGE_KEY(Number(tournamentId));
@@ -334,7 +273,6 @@ export default function TournamentSettingsPage() {
           : createDefaultSidePots(Number(tournamentId));
 
         setSidePots(loadedSidePots);
-        setSavedSidePots(cloneValue(loadedSidePots));
       } catch (error) {
         logger.error('Failed to load tournament settings', { tournamentId, error: getErrorContext(error) });
         addToast({
@@ -419,7 +357,7 @@ export default function TournamentSettingsPage() {
                           onChange={e => {
                             updateBracketSettings(
                               previous => applyAutoHouse(previous, { bracket_size: parseInt(e.target.value) }),
-                              resolveSaveMode('immediate'),
+                              'immediate',
                             );
                           }}
                         >
@@ -442,7 +380,7 @@ export default function TournamentSettingsPage() {
                               );
                             }}
                             onBlur={() => {
-                              if (!isModalView) saveBracketSettingsImmediately();
+                              saveBracketSettingsImmediately();
                             }}
                           />
                         </div>
@@ -471,7 +409,7 @@ export default function TournamentSettingsPage() {
                               );
                             }}
                             onBlur={() => {
-                              if (!isModalView) saveBracketSettingsImmediately();
+                              saveBracketSettingsImmediately();
                             }}
                           />
                         </div>
@@ -492,7 +430,7 @@ export default function TournamentSettingsPage() {
                               );
                             }}
                             onBlur={() => {
-                              if (!isModalView) saveBracketSettingsImmediately();
+                              saveBracketSettingsImmediately();
                             }}
                           />
                         </div>
@@ -566,7 +504,7 @@ export default function TournamentSettingsPage() {
                         onChange={e => {
                           const next = { ...sidePots, entry_fee: parseCurrencyInput(e.target.value) };
                           setSidePots(next);
-                          if (!isModalView) saveSidePots(next);
+                          saveSidePots(next);
                         }}
                       />
                     </div>
@@ -583,7 +521,7 @@ export default function TournamentSettingsPage() {
                         onChange={e => {
                           const next = { ...sidePots, prize_amount: parseCurrencyInput(e.target.value) };
                           setSidePots(next);
-                          if (!isModalView) saveSidePots(next);
+                          saveSidePots(next);
                         }}
                       />
                     </div>
@@ -693,32 +631,6 @@ export default function TournamentSettingsPage() {
           </div>
 
         </section>
-
-        {isModalView && (
-          <footer className={dashboardStyles.settingsModalFooter}>
-            <div className={`${dashboardStyles.settingsModalFooterStatus} ${hasUnsavedChanges ? dashboardStyles.settingsModalFooterStatusUnsaved : dashboardStyles.settingsModalFooterStatusSaved}`}>
-              {hasUnsavedChanges ? 'Unsaved changes' : 'All changes saved'}
-            </div>
-            <div className={dashboardStyles.settingsModalFooterActions}>
-              <button
-                type="button"
-                className={dashboardStyles.settingsFooterCancelButton}
-                onClick={handleCancelSettings}
-                disabled={!hasUnsavedChanges || isSavingSettings}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className={`${dashboardStyles.settingsFooterSaveButton} ${hasUnsavedChanges ? dashboardStyles.settingsFooterSaveButtonActive : dashboardStyles.settingsFooterSaveButtonIdle}`}
-                onClick={() => { void handleSaveSettings(); }}
-                disabled={!hasUnsavedChanges || isSavingSettings}
-              >
-                {isSavingSettings ? 'Saving...' : 'Save Settings'}
-              </button>
-            </div>
-          </footer>
-        )}
       </main>
     </ErrorBoundary>
   );

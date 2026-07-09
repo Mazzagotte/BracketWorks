@@ -73,6 +73,7 @@ export class ApiClient {
   private defaultRequestHeaders: Record<string, string>;
   private getAuthToken: () => string | null;
   private refreshPromise: Promise<string | null> | null = null;
+  private lastRefreshOutcome: 'none' | 'transient-failure' | 'terminal-expired' = 'none';
 
   private generateIdempotencyKey(): string {
     if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -175,6 +176,7 @@ export class ApiClient {
 
     this.refreshPromise = (async () => {
       try {
+        this.lastRefreshOutcome = 'none';
         const csrfToken = getCsrfToken();
         const refreshHeaders: Record<string, string> = {
           'Content-Type': 'application/json',
@@ -191,13 +193,21 @@ export class ApiClient {
         });
 
         if (!response.ok) {
-          this.clearAuthStorage();
+          if (response.status === 401 || response.status === 403) {
+            // Confirmed server-side session expiry/timeout.
+            this.lastRefreshOutcome = 'terminal-expired';
+            this.clearAuthStorage();
+            window.dispatchEvent(new Event('auth-expired'));
+          } else {
+            // Transient outage or backend issue should not log user out.
+            this.lastRefreshOutcome = 'transient-failure';
+          }
           return null;
         }
 
         const data = await response.json();
         if (!data?.access_token) {
-          this.clearAuthStorage();
+          this.lastRefreshOutcome = 'transient-failure';
           return null;
         }
 
@@ -208,10 +218,11 @@ export class ApiClient {
         }
         window.dispatchEvent(new Event('auth-state-changed'));
         window.dispatchEvent(new Event('storage'));
+        this.lastRefreshOutcome = 'none';
         return data.access_token as string;
       } catch (error) {
         logger.warn('Access token refresh failed', { error: String(error) });
-        this.clearAuthStorage();
+        this.lastRefreshOutcome = 'transient-failure';
         return null;
       } finally {
         this.refreshPromise = null;
@@ -325,14 +336,6 @@ export class ApiClient {
         duration 
       })
       
-      // Handle auth errors automatically
-      if (appError.statusCode === 401) {
-        if (typeof window !== 'undefined') {
-          this.clearAuthStorage()
-          window.dispatchEvent(new Event('auth-expired'))
-        }
-      }
-
       // Surface a clearer message for browser-level fetch/CORS failures.
       if (!appError.statusCode && (error instanceof TypeError || appError.message.toLowerCase().includes('fetch'))) {
         throw new ApiError(
@@ -447,11 +450,6 @@ export class ApiClient {
             },
           })
         }
-      }
-
-      if (response.status === 401 && typeof window !== 'undefined') {
-        this.clearAuthStorage()
-        window.dispatchEvent(new Event('auth-expired'))
       }
 
       if (useAuthFetchCache && response.ok) {
