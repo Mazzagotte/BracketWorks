@@ -126,8 +126,9 @@
 
 .summaryGrid {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(170px, 220px));
   align-items: stretch;
+  justify-content: center;
   gap: 8px;
   padding: 10px;
 }
@@ -152,18 +153,6 @@
   margin-top: 2px;
 }
 
-@media (max-width: 1400px) {
-  .summaryGrid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 1024px) {
-  .summaryGrid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
 @media (max-width: 900px) {
   .summaryCard {
     margin: 0 0 1.2rem;
@@ -183,7 +172,7 @@
   }
 
   .summaryGrid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 8px;
     padding: 10px 12px 12px;
   }
@@ -221,12 +210,6 @@
     font-size: 0.6rem;
     padding: 2px 7px;
     white-space: normal;
-  }
-}
-
-@media (max-width: 768px) {
-  .summaryGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -778,7 +761,8 @@
 }
 
 .compactField .fieldLabel {
-  display: block;
+  display: flex;
+  align-items: center;
   width: 100%;
   text-align: left;
   white-space: normal;
@@ -1896,16 +1880,13 @@
 
 .tableCard :global(.entries-input.entries-control),
 .tableCard :global(.entries-select.entries-control) {
-  background: color-mix(in srgb, var(--entries-panel-deep) 92%, transparent);
-  color: var(--entries-text-title);
-  border: 1px solid var(--entries-border-soft);
-  border-radius: 9px;
-}
-
-.tableCard :global(.entries-input.entries-control:focus),
-.tableCard :global(.entries-select.entries-control:focus) {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-primary) 45%, transparent), 0 0 0 4px color-mix(in srgb, var(--color-primary) 10%, transparent);
+  --bw-form-bg: color-mix(in srgb, var(--entries-panel-deep) 92%, transparent);
+  --bw-form-text: var(--entries-text-title);
+  --bw-form-radius: 9px;
+  --bw-form-border-default: var(--entries-border-soft);
+  --bw-form-border-hover: color-mix(in srgb, var(--entries-border) 112%, transparent);
+  --bw-form-border-focus: color-mix(in srgb, var(--color-primary) 85%, transparent);
+  --bw-form-focus-ring: 0 0 0 1px color-mix(in srgb, var(--color-primary) 45%, transparent), 0 0 0 4px color-mix(in srgb, var(--color-primary) 10%, transparent);
 }
 
 @media (max-width: 900px) {
@@ -2173,6 +2154,7 @@
   line-height: 1.15;
   flex: 0 1 220px;
   min-width: 120px;
+  text-align: center;
 }
 
 .addBowlerCard .stepperControl {
@@ -2338,7 +2320,7 @@
   }
 
   .addBowlerCard .compactField {
-    align-items: flex-start;
+    align-items: center;
     flex-direction: column;
     gap: 0.35rem;
     padding: 0.38rem 0.46rem;
@@ -2666,20 +2648,10 @@
 .tableCard :global(.entries-select.entries-control) {
   height: 28px;
   min-height: 28px;
-  border-radius: 9px;
   padding: 0 8px;
   font-size: 12px;
   text-align: center;
   font-variant-numeric: tabular-nums;
-  background: color-mix(in srgb, var(--entries-panel-deep) 90%, transparent);
-  border: 1px solid var(--entries-border);
-  color: var(--entries-text-title);
-}
-
-.tableCard :global(.entries-input.entries-control:focus),
-.tableCard :global(.entries-select.entries-control:focus) {
-  border-color: color-mix(in srgb, var(--color-primary) 85%, transparent);
-  box-shadow: var(--entries-orange-ring);
 }
 
 .tableCard :global(.entries-cell.col-division .entries-control) {
@@ -3074,6 +3046,14 @@
   padding-top: 0;
   padding-bottom: 0;
   line-height: 1.15;
+}
+
+.tableCard :global(.entries-input.entries-control:disabled),
+.tableCard :global(.entries-select.entries-control:disabled) {
+  background: color-mix(in srgb, var(--entries-panel-deep) 88%, black 12%);
+  color: var(--entries-text-muted);
+  border-color: var(--entries-border);
+  opacity: 1;
 }
 
 .tableCard :global(.players-table-row) {

@@ -743,6 +743,12 @@ html:has(.signup-page-container) {
   border: 1px solid var(--color-border-light);
   box-shadow: 0 20px 60px var(--opacity-black-20), 0 8px 32px var(--color-border-light);
   border-radius: 24px;
+  --bw-form-bg: var(--color-surface-translucent-strong);
+  --bw-form-radius: 14px;
+  --bw-form-border-default: var(--color-border-muted);
+  --bw-form-border-hover: var(--color-border-hover);
+  --bw-form-border-focus: var(--color-border-hover);
+  --bw-form-focus-ring: 0 4px 16px var(--color-brand-border-faint);
 }
 
 .reset-password-title {
@@ -772,13 +778,9 @@ html:has(.signup-page-container) {
 .form-input {
   width: 100%;
   padding: 16px 18px;
-  border-radius: 14px;
-  border: 2px solid var(--color-border-muted);
   font-size: var(--font-size-xl);
-  background: var(--color-surface-translucent-strong);
   backdrop-filter: blur(8px);
-  transition: all 0.2s ease;
-  outline: none;
+  transition: background-color 0.2s ease;
   font-weight: var(--font-weight-medium);
   letter-spacing: 0.3px;
   box-sizing: border-box;
@@ -793,8 +795,6 @@ html:has(.signup-page-container) {
 }
 
 .form-input:focus {
-  border: 2px solid var(--color-border-hover);
-  box-shadow: 0 4px 16px var(--color-brand-border-faint);
   background: var(--color-white);
 }
 

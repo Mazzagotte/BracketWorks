@@ -1922,6 +1922,14 @@
   overflow-y: auto;
   min-height: 0;
   padding: 18px 24px 14px;
+  --bw-form-bg: var(--opacity-black-20);
+  --bw-form-text: var(--color-text-primary);
+  --bw-form-placeholder: var(--dash-text-muted);
+  --bw-form-radius: 11px;
+  --bw-form-border-default: var(--bw-border-subtle);
+  --bw-form-border-hover: color-mix(in srgb, var(--bw-border-subtle) 132%, transparent);
+  --bw-form-border-focus: var(--color-primary);
+  --bw-form-focus-ring: 0 0 0 1px color-mix(in srgb, var(--color-primary) 44%, transparent), 0 0 0 4px color-mix(in srgb, var(--color-primary) 10%, transparent);
 }
 
 .tournamentSectionLabel {
@@ -1945,20 +1953,6 @@
 
 .tournamentInput {
   width: 100%;
-  border-radius: 12px;
-  border: 1px solid var(--dash-border-soft) !important;
-  background: var(--dash-input-surface) !important;
-  color: var(--color-text-primary) !important;
-}
-
-.tournamentInput::placeholder {
-  color: var(--dash-text-muted);
-}
-
-.tournamentInput:focus {
-  border-color: var(--dash-accent-border-strong) !important;
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 18%, transparent), 0 0 0 1px color-mix(in srgb, var(--color-primary) 10%, transparent) inset !important;
-  outline: none;
 }
 
 .tournamentDateInput {

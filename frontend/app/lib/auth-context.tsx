@@ -54,7 +54,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     
     try {
       const storedAuthToken = sessionStorage.getItem('token') || localStorage.getItem('token');
-      const storedUserId = localStorage.getItem('user_id');
+      const storedUserId = localStorage.getItem('user_id') || localStorage.getItem('userId');
       const storedFirstName = localStorage.getItem('first_name');
       const storedIsAdmin = localStorage.getItem('is_admin');
       
@@ -95,7 +95,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const storedToken = localStorage.getItem('token');
       const sessionToken = sessionStorage.getItem('token');
       const effectiveToken = sessionToken || storedToken;
-      const storedUserId = localStorage.getItem('user_id');
+      const storedUserId = localStorage.getItem('user_id') || localStorage.getItem('userId');
       const storedFirstName = localStorage.getItem('first_name');
       const storedIsAdmin = localStorage.getItem('is_admin');
       
@@ -151,7 +151,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       localStorage.removeItem('token');
       localStorage.setItem('user_id', currentUser.id);
       localStorage.setItem('is_admin', currentUser.isAdmin ? 'true' : 'false');
-    } else {
+    } else if (!authToken && !currentUser) {
       clearAuthState();
     }
   }, [authToken, currentUser, isComponentMounted]);

@@ -14,6 +14,8 @@ interface ShareQRModalProps {
   publicUrl?: string;
 }
 
+type PosterMode = "social" | "print";
+
 function readRootCssVar(name: string) {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 }
@@ -23,7 +25,7 @@ function escapeHtml(value: string) {
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
+    .replace(/\"/g, "&quot;")
     .replace(/'/g, "&#39;");
 }
 
@@ -35,30 +37,75 @@ function slugify(name: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-export default function ShareQRModal({ open, onClose, tournamentId, tournamentName, publicUrl: providedPublicUrl }: ShareQRModalProps) {
+export default function ShareQRModal({
+  open,
+  onClose,
+  tournamentId: _tournamentId,
+  tournamentName,
+  publicUrl: providedPublicUrl,
+}: ShareQRModalProps) {
   const { addToast } = useToast();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState("");
+  const [exportingMode, setExportingMode] = useState<PosterMode | null>(null);
+  const qrRenderSize = 400;
+  const qrLogoSize = 192;
 
   const slug = slugify(tournamentName);
   const publicUrl = providedPublicUrl || (typeof window !== "undefined"
     ? `${window.location.origin}/view/${slug}`
     : `/view/${slug}`);
-  const qrBackgroundColor = typeof window !== "undefined" ? readRootCssVar("--share-qr-code-bg") : "";
-  const qrForegroundColor = typeof window !== "undefined" ? readRootCssVar("--share-qr-code-fg") : "";
+  const qrBackgroundColor = typeof window !== "undefined" ? readRootCssVar("--share-qr-code-bg") : "#ffffff";
+  const qrForegroundColor = typeof window !== "undefined" ? readRootCssVar("--share-qr-code-fg") : "#000000";
   const generatedDate = new Date().toLocaleDateString();
 
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
+
     if (open) {
-      dialog.showModal();
+      if (!dialog.open) dialog.showModal();
     } else {
-      dialog.close();
+      if (dialog.open) dialog.close();
     }
   }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    let cancelled = false;
+    let attempts = 0;
+    const maxAttempts = 40;
+    const retryDelayMs = 50;
+
+    const readQrCanvas = () => {
+      if (cancelled) return;
+
+      const qrCanvas = canvasRef.current?.querySelector("canvas") as HTMLCanvasElement | null;
+      if (qrCanvas) {
+        try {
+          setQrDataUrl(qrCanvas.toDataURL("image/png"));
+          return;
+        } catch {
+          // Canvas may not be ready yet; retry until maxAttempts.
+        }
+      }
+
+      attempts += 1;
+      if (attempts < maxAttempts) {
+        window.setTimeout(readQrCanvas, retryDelayMs);
+      }
+    };
+
+    setQrDataUrl("");
+    readQrCanvas();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, publicUrl]);
 
   const handleCopy = async () => {
     try {
@@ -77,75 +124,60 @@ export default function ShareQRModal({ open, onClose, tournamentId, tournamentNa
 
   const buildPosterHtml = useCallback((qrImageSrc: string) => {
     const safeTournamentName = escapeHtml(tournamentName);
-    const safePublicUrl = escapeHtml(publicUrl);
     const safeDate = escapeHtml(generatedDate);
     const safeQrSrc = escapeHtml(qrImageSrc);
 
     return `
-      <div xmlns="http://www.w3.org/1999/xhtml" style="width:1080px;height:1350px;background:#ffffff;color:#111827;font-family:Inter,Arial,sans-serif;box-sizing:border-box;padding:64px;">
-        <div style="height:100%;border:1px solid #d6dae1;border-left:12px solid #ff7a00;border-radius:32px;box-sizing:border-box;display:flex;flex-direction:column;overflow:hidden;">
-          <header style="padding:48px 54px 34px;border-bottom:4px solid #ff7a00;display:flex;justify-content:space-between;gap:40px;align-items:flex-start;">
+      <div xmlns="http://www.w3.org/1999/xhtml" style="width:1080px;height:1350px;background:#0d1218;color:#e8edf3;font-family:'Segoe UI',Inter,Arial,sans-serif;box-sizing:border-box;padding:56px;">
+        <div style="height:100%;border:1px solid #2a3342;border-radius:34px;box-sizing:border-box;display:flex;flex-direction:column;overflow:hidden;background:linear-gradient(170deg,#111925 0%,#0e141d 55%,#0b1017 100%);box-shadow:0 30px 70px rgba(0,0,0,0.38);">
+          <header style="padding:44px 50px 28px;border-bottom:1px solid #283243;display:flex;justify-content:space-between;gap:30px;align-items:flex-start;background:linear-gradient(180deg,rgba(255,122,0,0.14) 0%,rgba(255,122,0,0.03) 100%);">
             <div>
-              <div style="color:#ff7a00;font-size:38px;font-weight:900;letter-spacing:0;">BracketWorks</div>
-              <div style="margin-top:10px;color:#4b5563;font-size:20px;font-weight:900;text-transform:uppercase;letter-spacing:1.4px;">Live Tournament Board</div>
+              <div style="display:inline-block;padding:6px 12px;border-radius:999px;border:1px solid rgba(255,122,0,0.45);background:rgba(255,122,0,0.18);color:#ffd7b1;font-size:16px;font-weight:800;letter-spacing:0.7px;text-transform:uppercase;">BracketWorks Live</div>
+              <div style="margin-top:16px;color:#ffffff;font-size:50px;font-weight:900;letter-spacing:0.2px;line-height:1;">Scan For Live Results</div>
+              <div style="margin-top:8px;color:#aab6c7;font-size:20px;font-weight:600;">Real-time brackets, entries, and standings</div>
             </div>
-            <div style="text-align:right;color:#4b5563;font-size:18px;line-height:1.35;padding-top:4px;">
-              <div style="font-size:24px;font-weight:900;color:#111827;">Scan to view</div>
-              <div>Generated ${safeDate}</div>
+            <div style="text-align:right;color:#9fb0c6;font-size:18px;line-height:1.35;padding-top:2px;">
+              <div style="font-size:16px;font-weight:700;color:#d9e3ef;text-transform:uppercase;letter-spacing:1px;">Generated</div>
+              <div style="margin-top:4px;font-size:26px;font-weight:800;color:#ffffff;">${safeDate}</div>
             </div>
           </header>
-          <section style="padding:48px 54px 42px;background:#f7f8fa;border-bottom:1px solid #d6dae1;">
-            <div style="font-size:18px;font-weight:900;color:#4b5563;text-transform:uppercase;letter-spacing:1.4px;">Tournament</div>
-            <h1 style="margin:14px 0 0;font-size:64px;line-height:1.02;font-weight:900;letter-spacing:0;color:#111827;">${safeTournamentName}</h1>
+
+          <section style="padding:34px 50px 30px;border-bottom:1px solid #222d3d;background:rgba(255,255,255,0.02);">
+            <div style="font-size:15px;font-weight:800;color:#8ea2bb;text-transform:uppercase;letter-spacing:1.1px;">Featured Tournament</div>
+            <h1 style="margin:12px 0 0;font-size:58px;line-height:1.03;font-weight:900;letter-spacing:0;color:#ffffff;">${safeTournamentName}</h1>
           </section>
-          <section style="padding:52px 54px 38px;display:flex;flex-direction:column;align-items:center;gap:34px;flex:1;">
-            <div style="width:620px;height:620px;border:1px solid #d6dae1;border-left:10px solid #ff7a00;border-radius:30px;display:flex;align-items:center;justify-content:center;background:#ffffff;">
-              <img src="${safeQrSrc}" alt="" style="display:block;width:500px;height:500px;" />
+
+          <section style="padding:42px 50px 30px;display:flex;flex-direction:column;align-items:center;gap:26px;flex:1;">
+            <div style="width:596px;height:596px;border:0.75px solid rgba(45,57,74,0.65);border-radius:28px;display:flex;align-items:center;justify-content:center;background:linear-gradient(165deg,#121b27 0%,#111827 100%);box-shadow:inset 0 0 0 1px rgba(255,255,255,0.02);">
+              <div style="width:534px;height:534px;border-radius:18px;background:#ffffff;display:flex;align-items:center;justify-content:center;position:relative;">
+                <img src="${safeQrSrc}" alt="" style="display:block;width:498px;height:498px;" />
+                <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:236px;height:236px;border-radius:32px;background:#ffffff;border:1px solid #e2e8f0;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(15,23,42,0.14);">
+                  <img src="/logo.svg" alt="" style="display:block;width:224px;height:224px;" />
+                </div>
+              </div>
             </div>
-            <div style="width:100%;border:1px solid #d6dae1;border-left:10px solid #ff7a00;border-radius:24px;padding:28px 32px;box-sizing:border-box;background:#ffffff;">
-              <div style="font-size:17px;font-weight:900;color:#4b5563;text-transform:uppercase;letter-spacing:1.2px;">Live Link</div>
-              <div style="margin-top:12px;font-size:27px;line-height:1.24;font-weight:800;color:#111827;word-break:break-all;">${safePublicUrl}</div>
+
+            <div style="font-size:24px;line-height:1.3;color:#d6deea;text-align:center;font-weight:700;max-width:840px;">
+              Use your phone camera to open the live board instantly.
+            </div>
+
+            <div style="font-size:18px;line-height:1.35;color:#9fb2c8;text-align:center;max-width:840px;">
+              If scanning is unavailable, open <strong style="color:#ffffff;">bracketworks.app/view</strong> in your browser.
             </div>
           </section>
-          <footer style="padding:30px 54px;border-top:1px solid #d6dae1;color:#4b5563;font-size:20px;line-height:1.35;display:flex;justify-content:space-between;gap:30px;">
-            <strong style="color:#111827;font-size:22px;">bracketworks.app</strong>
-            <span style="text-align:right;">No login required. Bowlers can view live brackets and scores from any device.</span>
+
+          <footer style="padding:24px 50px;border-top:1px solid #283447;color:#9db0c6;font-size:19px;line-height:1.35;display:flex;justify-content:space-between;gap:30px;background:rgba(0,0,0,0.16);">
+            <strong style="color:#ffffff;font-size:21px;">bracketworks.app</strong>
+            <span style="text-align:right;max-width:640px;">No login required. Share this code at check-in so bowlers can follow every update.</span>
           </footer>
         </div>
       </div>
     `;
-  }, [generatedDate, publicUrl, tournamentName]);
+  }, [generatedDate, tournamentName]);
 
-  useEffect(() => {
-    if (!open) return;
-    let cancelled = false;
-    let attempts = 0;
-    const maxAttempts = 40;
-    const retryDelayMs = 50;
+  const handleExportPng = async (mode: PosterMode) => {
+    if (exportingMode) return;
 
-    const readQrCanvas = () => {
-      if (cancelled) return;
-      const qrCanvas = canvasRef.current?.querySelector("canvas") as HTMLCanvasElement | null;
-      if (qrCanvas) {
-        setQrDataUrl(qrCanvas.toDataURL("image/png"));
-        return;
-      }
-
-      attempts += 1;
-      if (attempts < maxAttempts) {
-        window.setTimeout(readQrCanvas, retryDelayMs);
-      }
-    };
-
-    setQrDataUrl("");
-    readQrCanvas();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [open, publicUrl]);
-
-  const handleExportPng = async () => {
     if (!qrDataUrl) {
       addToast({ type: "error", message: "Could not generate QR image.", duration: 3000 });
       return;
@@ -153,39 +185,296 @@ export default function ShareQRModal({ open, onClose, tournamentId, tournamentNa
 
     const W = 1080;
     const H = 1350;
-    const svg = `
-      <svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
-        <foreignObject width="100%" height="100%">${buildPosterHtml(qrDataUrl)}</foreignObject>
-      </svg>
-    `;
-    const svgBlob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
-    const svgUrl = URL.createObjectURL(svgBlob);
+    setExportingMode(mode);
+
+    const isPrintMode = mode === "print";
+    const palette = {
+      pageBg: isPrintMode ? "#ffffff" : "#0d1218",
+      shellBorder: isPrintMode ? "#d6dee8" : "#2a3342",
+      shellGradientStart: isPrintMode ? "#ffffff" : "#111925",
+      shellGradientMid: isPrintMode ? "#f8fbff" : "#0e141d",
+      shellGradientEnd: isPrintMode ? "#eef3f9" : "#0b1017",
+      headerGradientStart: isPrintMode ? "rgba(255,122,0,0.12)" : "rgba(255,122,0,0.16)",
+      headerGradientEnd: isPrintMode ? "rgba(255,122,0,0.02)" : "rgba(255,122,0,0.03)",
+      headerDivider: isPrintMode ? "#d9e2ee" : "#283243",
+      accentBg: isPrintMode ? "rgba(255,122,0,0.14)" : "rgba(255,122,0,0.18)",
+      accentBorder: isPrintMode ? "rgba(255,122,0,0.45)" : "rgba(255,122,0,0.45)",
+      accentText: isPrintMode ? "#8f4500" : "#ffd7b1",
+      titleText: isPrintMode ? "#0f172a" : "#ffffff",
+      bodyText: isPrintMode ? "#334155" : "#aab6c7",
+      metaLabel: isPrintMode ? "#475569" : "#d9e3ef",
+      sectionBg: isPrintMode ? "rgba(15,23,42,0.02)" : "rgba(255,255,255,0.02)",
+      sectionDivider: isPrintMode ? "#d9e3ee" : "#222d3d",
+      sectionLabel: isPrintMode ? "#64748b" : "#8ea2bb",
+      qrOuterStart: isPrintMode ? "#f3f6fb" : "#121b27",
+      qrOuterEnd: isPrintMode ? "#eef2f7" : "#111827",
+      qrOuterBorder: isPrintMode ? "#cfd8e4" : "#2d394a",
+      calloutStrong: isPrintMode ? "#1e293b" : "#d6deea",
+      calloutSoft: isPrintMode ? "#475569" : "#9fb2c8",
+      footerBg: isPrintMode ? "rgba(15,23,42,0.04)" : "rgba(0,0,0,0.16)",
+      footerDivider: isPrintMode ? "#d0d9e5" : "#283447",
+      footerStrong: isPrintMode ? "#0f172a" : "#ffffff",
+      footerText: isPrintMode ? "#475569" : "#9db0c6",
+    };
 
     try {
-      const img = new Image();
-      const loaded = new Promise<void>((resolve, reject) => {
-        img.onload = () => resolve();
-        img.onerror = () => reject(new Error("Could not render poster image."));
-      });
-      img.src = svgUrl;
-      await loaded;
-
       const canvas = document.createElement("canvas");
       canvas.width = W * 2;
       canvas.height = H * 2;
+
       const ctx = canvas.getContext("2d");
       if (!ctx) throw new Error("Could not create export canvas.");
       ctx.scale(2, 2);
-      ctx.drawImage(img, 0, 0, W, H);
 
-      const a = document.createElement("a");
-      a.download = `${slug}-live-poster.png`;
-      a.href = canvas.toDataURL("image/png");
-      a.click();
+      const roundRect = (x: number, y: number, width: number, height: number, radius: number) => {
+        const r = Math.min(radius, width / 2, height / 2);
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + width, y, x + width, y + height, r);
+        ctx.arcTo(x + width, y + height, x, y + height, r);
+        ctx.arcTo(x, y + height, x, y, r);
+        ctx.arcTo(x, y, x + width, y, r);
+        ctx.closePath();
+      };
+
+      const drawWrappedText = (
+        text: string,
+        maxWidth: number,
+        maxLines: number,
+        x: number,
+        y: number,
+        lineHeight: number,
+      ) => {
+        const words = text.trim().split(/\s+/).filter(Boolean);
+        const lines: string[] = [];
+        let current = "";
+
+        for (const word of words) {
+          const candidate = current ? `${current} ${word}` : word;
+          if (ctx.measureText(candidate).width <= maxWidth) {
+            current = candidate;
+            continue;
+          }
+
+          if (current) {
+            lines.push(current);
+            current = word;
+          } else {
+            lines.push(word);
+            current = "";
+          }
+
+          if (lines.length >= maxLines) break;
+        }
+
+        if (lines.length < maxLines && current) lines.push(current);
+
+        if (lines.length > maxLines) lines.length = maxLines;
+        if (words.length && lines.length === maxLines) {
+          const builtWords = lines.join(" ").split(/\s+/).length;
+          if (builtWords < words.length) {
+            let last = lines[maxLines - 1] || "";
+            while (last.length > 0 && ctx.measureText(`${last}...`).width > maxWidth) {
+              last = last.slice(0, -1).trimEnd();
+            }
+            lines[maxLines - 1] = `${last}...`;
+          }
+        }
+
+        lines.forEach((line, index) => {
+          ctx.fillText(line, x, y + index * lineHeight);
+        });
+      };
+
+      ctx.fillStyle = palette.pageBg;
+      ctx.fillRect(0, 0, W, H);
+
+      const shellX = 56;
+      const shellY = 56;
+      const shellW = W - 112;
+      const shellH = H - 112;
+      const shellGradient = ctx.createLinearGradient(shellX, shellY, shellX + shellW, shellY + shellH);
+      shellGradient.addColorStop(0, palette.shellGradientStart);
+      shellGradient.addColorStop(0.55, palette.shellGradientMid);
+      shellGradient.addColorStop(1, palette.shellGradientEnd);
+      roundRect(shellX, shellY, shellW, shellH, 34);
+      ctx.fillStyle = shellGradient;
+      ctx.fill();
+      ctx.strokeStyle = palette.shellBorder;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      const headerH = 226;
+      const headerGradient = ctx.createLinearGradient(shellX, shellY, shellX, shellY + headerH);
+      headerGradient.addColorStop(0, palette.headerGradientStart);
+      headerGradient.addColorStop(1, palette.headerGradientEnd);
+      roundRect(shellX, shellY, shellW, headerH, 34);
+      ctx.fillStyle = headerGradient;
+      ctx.fill();
+
+      ctx.strokeStyle = palette.headerDivider;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(shellX, shellY + headerH);
+      ctx.lineTo(shellX + shellW, shellY + headerH);
+      ctx.stroke();
+
+      roundRect(shellX + 50, shellY + 32, 252, 36, 18);
+      ctx.fillStyle = palette.accentBg;
+      ctx.fill();
+      ctx.strokeStyle = palette.accentBorder;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      ctx.fillStyle = palette.accentText;
+      ctx.font = '800 16px "Segoe UI", Inter, Arial, sans-serif';
+      ctx.textAlign = "left";
+      ctx.fillText("BRACKETWORKS LIVE", shellX + 65, shellY + 57);
+
+      ctx.fillStyle = palette.titleText;
+      ctx.font = '900 48px "Segoe UI", Inter, Arial, sans-serif';
+      ctx.fillText("Scan For Live Results", shellX + 50, shellY + 118);
+
+      ctx.fillStyle = palette.bodyText;
+      ctx.font = '600 20px "Segoe UI", Inter, Arial, sans-serif';
+      ctx.fillText("Real-time brackets, entries, and standings", shellX + 50, shellY + 154);
+
+      ctx.textAlign = "right";
+      ctx.fillStyle = palette.metaLabel;
+      ctx.font = '700 16px "Segoe UI", Inter, Arial, sans-serif';
+      ctx.fillText("GENERATED", shellX + shellW - 50, shellY + 52);
+      ctx.fillStyle = palette.titleText;
+      ctx.font = '800 26px "Segoe UI", Inter, Arial, sans-serif';
+      ctx.fillText(generatedDate, shellX + shellW - 50, shellY + 86);
+
+      const tournamentY = shellY + headerH;
+      const tournamentH = 184;
+      ctx.fillStyle = palette.sectionBg;
+      ctx.fillRect(shellX, tournamentY, shellW, tournamentH);
+      ctx.strokeStyle = palette.sectionDivider;
+      ctx.beginPath();
+      ctx.moveTo(shellX, tournamentY + tournamentH);
+      ctx.lineTo(shellX + shellW, tournamentY + tournamentH);
+      ctx.stroke();
+
+      ctx.textAlign = "left";
+      ctx.fillStyle = palette.sectionLabel;
+      ctx.font = '800 15px "Segoe UI", Inter, Arial, sans-serif';
+      ctx.fillText("FEATURED TOURNAMENT", shellX + 50, tournamentY + 48);
+
+      ctx.fillStyle = palette.titleText;
+      ctx.font = '900 58px "Segoe UI", Inter, Arial, sans-serif';
+      drawWrappedText(tournamentName || "Tournament", shellW - 100, 2, shellX + 50, tournamentY + 114, 62);
+
+      const qrOuterSize = 596;
+      const qrOuterX = Math.round((W - qrOuterSize) / 2);
+      const qrOuterY = tournamentY + tournamentH + 42;
+      const qrGradient = ctx.createLinearGradient(qrOuterX, qrOuterY, qrOuterX, qrOuterY + qrOuterSize);
+      qrGradient.addColorStop(0, palette.qrOuterStart);
+      qrGradient.addColorStop(1, palette.qrOuterEnd);
+      roundRect(qrOuterX, qrOuterY, qrOuterSize, qrOuterSize, 28);
+      ctx.fillStyle = qrGradient;
+      ctx.fill();
+      ctx.strokeStyle = palette.qrOuterBorder;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      const qrInnerSize = 534;
+      const qrInnerX = Math.round((W - qrInnerSize) / 2);
+      const qrInnerY = qrOuterY + Math.round((qrOuterSize - qrInnerSize) / 2);
+      roundRect(qrInnerX, qrInnerY, qrInnerSize, qrInnerSize, 18);
+      ctx.fillStyle = "#ffffff";
+      ctx.fill();
+
+      const qrImage = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error("Could not render QR image."));
+        img.src = qrDataUrl;
+      });
+
+      const qrImageSize = 498;
+      const qrImageX = Math.round((W - qrImageSize) / 2);
+      const qrImageY = qrInnerY + Math.round((qrInnerSize - qrImageSize) / 2);
+      ctx.drawImage(qrImage, qrImageX, qrImageY, qrImageSize, qrImageSize);
+
+      // Explicit overlay keeps the logo visibly centered in the poster output.
+      try {
+        const logoImage = await new Promise<HTMLImageElement>((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => resolve(img);
+          img.onerror = () => reject(new Error("Logo image failed to load."));
+          img.src = "/logo.svg";
+        });
+
+        const logoBadgeSize = 236;
+        const logoBadgeX = Math.round(W / 2 - logoBadgeSize / 2);
+        const logoBadgeY = Math.round(qrImageY + qrImageSize / 2 - logoBadgeSize / 2);
+        const logoBadgeRadius = 32;
+        roundRect(logoBadgeX, logoBadgeY, logoBadgeSize, logoBadgeSize, logoBadgeRadius);
+        ctx.fillStyle = "#ffffff";
+        ctx.fill();
+        ctx.strokeStyle = "#e2e8f0";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        const logoSize = 224;
+        const logoX = Math.round(W / 2 - logoSize / 2);
+        const logoY = Math.round(qrImageY + qrImageSize / 2 - logoSize / 2);
+        ctx.drawImage(logoImage, logoX, logoY, logoSize, logoSize);
+      } catch {
+        // Keep export resilient if logo cannot be loaded.
+      }
+
+      const footerH = 106;
+      const footerY = shellY + shellH - footerH;
+      const primaryCalloutY = footerY - 38;
+      const secondaryCalloutY = footerY - 10;
+
+      ctx.textAlign = "center";
+      ctx.fillStyle = palette.calloutStrong;
+      ctx.font = '700 24px "Segoe UI", Inter, Arial, sans-serif';
+      ctx.fillText("Use your phone camera to open the live board instantly.", W / 2, primaryCalloutY);
+
+      ctx.fillStyle = palette.calloutSoft;
+      ctx.font = '600 19px "Segoe UI", Inter, Arial, sans-serif';
+      ctx.fillText("If scanning is unavailable, open bracketworks.app/view in your browser.", W / 2, secondaryCalloutY);
+
+      ctx.fillStyle = palette.footerBg;
+      ctx.fillRect(shellX, footerY, shellW, footerH);
+      ctx.strokeStyle = palette.footerDivider;
+      ctx.beginPath();
+      ctx.moveTo(shellX, footerY);
+      ctx.lineTo(shellX + shellW, footerY);
+      ctx.stroke();
+
+      ctx.textAlign = "left";
+      ctx.fillStyle = palette.footerStrong;
+      ctx.font = '700 21px "Segoe UI", Inter, Arial, sans-serif';
+      ctx.fillText("bracketworks.app", shellX + 50, footerY + 66);
+
+      ctx.textAlign = "right";
+      ctx.fillStyle = palette.footerText;
+      ctx.font = '600 18px "Segoe UI", Inter, Arial, sans-serif';
+      ctx.fillText("No login required. Share this code at check-in so bowlers can follow every update.", shellX + shellW - 50, footerY + 66);
+
+      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
+      if (!blob) throw new Error("Could not generate PNG file.");
+
+      const pngUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.download = `${slug}-live-poster-${mode}.png`;
+      link.href = pngUrl;
+      link.click();
+      URL.revokeObjectURL(pngUrl);
     } catch (err) {
-      addToast({ type: "error", message: err instanceof Error ? err.message : "Failed to export poster.", duration: 3000 });
+      addToast({
+        type: "error",
+        message: err instanceof Error ? err.message : "Failed to export poster.",
+        duration: 3000,
+      });
     } finally {
-      URL.revokeObjectURL(svgUrl);
+      setExportingMode(null);
     }
   };
 
@@ -194,7 +483,6 @@ export default function ShareQRModal({ open, onClose, tournamentId, tournamentNa
   return (
     <dialog ref={dialogRef} className={styles.dialog} onClick={handleBackdropClick}>
       <div className={styles.content}>
-        {/* Header */}
         <div className={styles.header}>
           <div className={styles.headerText}>
             <h2 className={styles.title}>Share Live Bracket</h2>
@@ -203,7 +491,6 @@ export default function ShareQRModal({ open, onClose, tournamentId, tournamentNa
           <CloseControl onClick={onClose} size="sm" />
         </div>
 
-        {/* QR Code */}
         <div className={styles.qrSection}>
           <div className={styles.posterPreview}>
             <div
@@ -217,10 +504,8 @@ export default function ShareQRModal({ open, onClose, tournamentId, tournamentNa
           <p className={`${styles.qrLabel} ${styles.mutedMicrocopy}`}>Live poster preview</p>
         </div>
 
-        {/* Divider */}
         <div className={`${styles.divider} ${styles.mutedMicrocopy}`}><span>or share the link</span></div>
 
-        {/* URL row */}
         <div className={`${styles.urlRow} ${styles.outlinedPanel}`}>
           <span className={`${styles.urlText} ${styles.mutedMicrocopy}`}>{publicUrl}</span>
           <button
@@ -228,36 +513,56 @@ export default function ShareQRModal({ open, onClose, tournamentId, tournamentNa
             onClick={handleCopy}
           >
             {copied ? (
-              <><svg width="13" height="13" viewBox="0 0 13 13" fill="none" className={styles.iconInline}><path d="M1.5 7L5 10.5L11.5 2.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>Copied!</>
+              <>
+                <svg width="13" height="13" viewBox="0 0 13 13" fill="none" className={styles.iconInline}>
+                  <path d="M1.5 7L5 10.5L11.5 2.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Copied!
+              </>
             ) : "Copy link"}
           </button>
         </div>
 
-        {/* Actions */}
         <div className={styles.actions}>
-          <button className={`${styles.exportBtn} ${styles.outlinedPanel}`} onClick={handleExportPng}>
+          <button
+            className={`${styles.exportBtn} ${styles.outlinedPanel}`}
+            onClick={() => { void handleExportPng("social"); }}
+            disabled={Boolean(exportingMode)}
+            aria-busy={exportingMode === "social"}
+          >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className={styles.iconNoShrink}>
-              <path d="M7 1v8M4 6l3 3 3-3M2 11h10" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M7 1v8M4 6l3 3 3-3M2 11h10" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            Download PNG
+            {exportingMode === "social" ? "Exporting..." : "Social PNG"}
+          </button>
+
+          <button
+            className={`${styles.exportBtn} ${styles.outlinedPanel}`}
+            onClick={() => { void handleExportPng("print"); }}
+            disabled={Boolean(exportingMode)}
+            aria-busy={exportingMode === "print"}
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className={styles.iconNoShrink}>
+              <path d="M7 1v8M4 6l3 3 3-3M2 11h10" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            {exportingMode === "print" ? "Exporting..." : "Print PNG"}
           </button>
         </div>
 
-        {/* Footer */}
         <p className={`${styles.hint} ${styles.mutedMicrocopy}`}>No login required - bowlers can view scores from any device.</p>
 
-        {/* Hidden canvas used to produce the QR image for the HTML poster export */}
         <div ref={canvasRef} hidden>
           <QRCodeCanvas
             value={publicUrl}
-            size={400}
+            size={qrRenderSize}
             bgColor={qrBackgroundColor}
             fgColor={qrForegroundColor}
             level="H"
+            includeMargin
             imageSettings={{
               src: "/logo.svg",
-              width: 116,
-              height: 116,
+              width: qrLogoSize,
+              height: qrLogoSize,
               excavate: true,
             }}
           />
