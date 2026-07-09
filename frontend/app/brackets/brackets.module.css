@@ -218,6 +218,54 @@
   background: transparent;
 }
 
+/* ========================================
+   Mobile Optimization Pass
+   ======================================== */
+
+@media (max-width: 900px) {
+  .pageContainer {
+    max-width: none;
+    margin: 0;
+    padding: 0.8rem 0.5rem 1rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .pageContainer {
+    padding: 0.6rem 0.3rem 0.9rem;
+  }
+
+  .controlPanel {
+    margin-bottom: 1rem;
+    border-radius: 12px;
+  }
+}
+
+@media (max-width: 390px) {
+  .pageContainer {
+    padding: 0.5rem 0.2rem 0.8rem;
+  }
+
+  .mismatchBannerText {
+    font-size: 0.78rem;
+    line-height: 1.35;
+  }
+
+  .mismatchBannerButton {
+    min-height: 40px;
+    padding: 0 12px;
+    font-size: 0.78rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .navBtn {
+    min-height: 36px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.78rem;
+  }
+}
+
 .progressMeter::-webkit-progress-bar {
   background: transparent;
 }
@@ -557,4 +605,32 @@
   font-weight: 800;
   letter-spacing: 0;
   text-transform: uppercase;
+}
+
+/* Final mobile compaction pass */
+@media (max-width: 900px) {
+  .mobileBracketSectionList {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.44rem;
+  }
+
+  .mobileBracketListItem {
+    padding: 0.52rem;
+  }
+
+  .mobileBracketListTitle {
+    font-size: 0.84rem;
+  }
+
+  .mobileBracketListMeta {
+    margin-top: 0.28rem;
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 560px) {
+  .mobileBracketSectionList {
+    grid-template-columns: 1fr;
+  }
 }

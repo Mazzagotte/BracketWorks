@@ -12,6 +12,7 @@ interface MobileLayoutProps {
   headerActions?: React.ReactNode;
   fullWidth?: boolean;
   padding?: 'none' | 'small' | 'medium' | 'large';
+  className?: string;
 }
 
 export function MobileLayout({
@@ -22,7 +23,8 @@ export function MobileLayout({
   onBack,
   headerActions,
   fullWidth = false,
-  padding = 'medium'
+  padding = 'medium',
+  className
 }: MobileLayoutProps) {
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -61,7 +63,7 @@ export function MobileLayout({
   }[padding];
 
   return (
-    <div className={styles.mobileLayout}>
+    <div className={className ? `${styles.mobileLayout} ${className}` : styles.mobileLayout}>
       {hasHeader && (
         <header className={`${styles.mobileHeader} ${isScrolled ? styles.mobileHeaderScrolled : ''}`}>
           <div className={styles.mobileHeaderContent}>

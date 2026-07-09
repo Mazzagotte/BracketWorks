@@ -100,6 +100,29 @@
   }
 }
 
+@media (max-width: 640px) {
+  .pageHeader {
+    align-items: stretch;
+  }
+
+  .pageTitle {
+    width: 100%;
+    font-size: 1.2rem;
+  }
+
+  .pageActions {
+    width: 100%;
+    margin-left: 0;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .pageActions :where(button, a) {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 /* Page content container */
 .contentCard {
   max-width: 1600px;

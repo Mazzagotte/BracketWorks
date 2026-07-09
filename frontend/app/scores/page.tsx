@@ -1663,7 +1663,7 @@ export default function ScoresPage() {
         className="sr-only"
       />
       {isMobile ? (
-        <MobileLayout padding="small">
+        <MobileLayout padding="small" className={styles.mobileScoresLayoutShell}>
           <div className={styles.mobileScoresPage}>
             {/* Sticky toolbar */}
             <div className={styles.mobileScoresToolbarSticky}>

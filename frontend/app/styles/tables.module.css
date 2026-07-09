@@ -70,3 +70,25 @@
   color: var(--bw-text-title);
   background: color-mix(in srgb, var(--color-primary) 7%, var(--bw-surface-panel));
 }
+
+@media (max-width: 640px) {
+  .rowActions {
+    gap: 0.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .statusCell {
+    min-width: 64px;
+  }
+
+  .actionCell {
+    white-space: normal;
+  }
+
+  .rowActions {
+    white-space: normal;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+}

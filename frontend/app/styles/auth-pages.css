@@ -284,7 +284,7 @@ html:has(.login-page-container) {
   }
 
   .enhanced-card {
-    padding: 40px 24px !important;
+    padding: 24px max(16px, env(safe-area-inset-right)) 24px max(16px, env(safe-area-inset-left)) !important;
     max-width: 100% !important;
   }
 

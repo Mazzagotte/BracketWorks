@@ -206,22 +206,22 @@ const PlayersTable = memo(({
         {isExpanded && (
           <div id={`mobile-player-details-${player.id}`} className={styles.mobilePlayerDetails}>
             <div className={styles.mobilePlayerFieldGrid}>
-              <label className={styles.mobilePlayerField}>
+              <label className={`${styles.mobilePlayerField} ${styles.mobileFieldUsbc}`}>
                 <span>USBC</span>
                 <input className="entries-input entries-control" type="text" value={player.usbc || ''} onChange={event => handleCellEdit(player.id, 'usbc', event.target.value)} />
               </label>
 
-              <label className={styles.mobilePlayerField}>
+              <label className={`${styles.mobilePlayerField} ${styles.mobileFieldFirstName}`}>
                 <span>First Name</span>
                 <input className="entries-input entries-control" type="text" value={player.firstName || ''} onChange={event => handleCellEdit(player.id, 'firstName', event.target.value)} />
               </label>
 
-              <label className={styles.mobilePlayerField}>
+              <label className={`${styles.mobilePlayerField} ${styles.mobileFieldLastName}`}>
                 <span>Last Name</span>
                 <input className="entries-input entries-control" type="text" value={player.lastName || ''} onChange={event => handleCellEdit(player.id, 'lastName', event.target.value)} />
               </label>
 
-              <label className={styles.mobilePlayerField}>
+              <label className={`${styles.mobilePlayerField} ${styles.mobileFieldDivision}`}>
                 <span>Division</span>
                 <select className="entries-select entries-control" value={normalizeDivision(player.division)} onChange={event => handleCellEdit(player.id, 'division', event.target.value)}>
                   {divisionOptions.map(option => (
@@ -230,12 +230,12 @@ const PlayersTable = memo(({
                 </select>
               </label>
 
-              <label className={styles.mobilePlayerField}>
+              <label className={`${styles.mobilePlayerField} ${styles.mobileFieldLane}`}>
                 <span>Lane</span>
                 <input className="entries-input entries-control" type="text" value={player.lane || ''} onChange={event => handleCellEdit(player.id, 'lane', event.target.value)} />
               </label>
 
-              <label className={styles.mobilePlayerField}>
+              <label className={`${styles.mobilePlayerField} ${styles.mobileFieldAverage}`}>
                 <span>Average</span>
                 <input className="entries-input entries-control" type="text" value={player.average} onChange={event => handleCellEdit(player.id, 'average', event.target.value)} />
               </label>
@@ -251,7 +251,7 @@ const PlayersTable = memo(({
 
                     return (
                       <label key={program.key} className={styles.mobilePlayerField}>
-                        <span>{program.name}</span>
+                        <span title={program.name}>{abbreviateProgramName(program.name)}</span>
                         <input
                           className="entries-input entries-control"
                           type="text"

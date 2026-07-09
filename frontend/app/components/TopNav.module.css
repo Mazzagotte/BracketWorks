@@ -471,3 +471,70 @@
     justify-content: flex-start;
   }
 }
+
+/* Final mobile header fit pass */
+@media (max-width: 480px) {
+  .topNavMobile {
+    gap: 8px;
+    padding: 0 10px;
+  }
+
+  .hamburgerBtn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .mobileBrand {
+    gap: 6px;
+  }
+
+  .mobileLogoIcon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .mobileBrandText {
+    font-size: 13px;
+    max-width: 34vw;
+  }
+
+  .mobileTournamentBadge {
+    max-width: 42vw;
+    min-width: 0;
+    padding: 2px 8px;
+    font-size: 10px;
+    line-height: 1.1;
+  }
+}
+
+@media (max-width: 390px) {
+  .topNavMobile {
+    gap: 6px;
+    padding: 0 8px;
+  }
+
+  .mobileBrandText {
+    max-width: 28vw;
+    font-size: 12px;
+  }
+
+  .mobileTournamentBadge {
+    max-width: 44vw;
+    padding: 2px 7px;
+    font-size: 9.5px;
+  }
+}
+
+@media (max-width: 360px) {
+  .mobileBrandText {
+    display: none;
+  }
+
+  .mobileBrand {
+    flex: 0 1 auto;
+  }
+
+  .mobileTournamentBadge {
+    max-width: 56vw;
+  }
+}

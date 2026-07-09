@@ -1154,3 +1154,109 @@
 .searchStandalone {
   margin-bottom: var(--space-4);
 }
+
+/* ========================================
+   Mobile Optimization Pass
+   ======================================== */
+
+@media (max-width: 900px) {
+  .pageContainer {
+    max-width: none;
+    margin: 0;
+    padding: 0.75rem 0.5rem 1rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .pageContainer {
+    padding: 0.55rem 0.3rem 0.9rem;
+  }
+
+  .summaryTitle,
+  .tableCardHeader {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+}
+
+@media (max-width: 390px) {
+  .pageContainer {
+    padding: 0.5rem 0.2rem 0.75rem;
+  }
+
+  .winnerName {
+    font-size: 0.74rem;
+  }
+
+  .payoutAmount,
+  .firstPlace .payoutAmount {
+    font-size: 0.92rem;
+  }
+
+  .summaryTitle,
+  .tableCardHeader {
+    font-size: 0.84rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .winnerRow {
+    padding: 0.45rem 0.55rem;
+  }
+
+  .paidBadge,
+  .markPaidBtn {
+    min-height: 26px;
+    font-size: 0.68rem;
+  }
+}
+
+/* Final mobile compaction pass */
+@media (max-width: 900px) {
+  .summaryGrid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.44rem;
+  }
+
+  .statBox {
+    min-height: 64px;
+    min-width: 0;
+    width: 100%;
+    padding: 0.46rem 0.42rem;
+    gap: 0.1rem;
+  }
+
+  .statValue {
+    font-size: 1.1rem;
+  }
+
+  .statLabel,
+  .statDetail,
+  .remainingLabel {
+    font-size: 0.62rem;
+    line-height: 1.12;
+  }
+}
+
+@media (max-width: 640px) {
+  .summaryGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .winnerRow {
+    padding: 0.5rem 0.56rem;
+    gap: 0.5rem;
+  }
+}
+
+@media (max-width: 390px) {
+  .summaryGrid {
+    gap: 0.34rem;
+  }
+
+  .statBox {
+    min-height: 58px;
+    padding: 0.4rem 0.34rem;
+  }
+}
