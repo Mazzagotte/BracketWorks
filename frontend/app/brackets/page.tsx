@@ -10,6 +10,7 @@ import { useTournaments, useSquads } from '../hooks/useTournaments'
 import { useToast } from '../components/Toast'
 import { Tournament, Squad, BracketResponse } from '../lib/types'
 import { logger } from '../lib/logger'
+import { isPhoneViewport } from '../lib/responsive'
 import { storage } from '../lib/storage'
 import { cleanupModalState, resetScrollLocks } from '../utils/modalUtils'
 import { getBracketGroups } from '../lib/bracketPrograms'
@@ -37,6 +38,7 @@ export default function BracketsPage() {
   const [entriesMismatchPromptOpen, setEntriesMismatchPromptOpen] = useState(false)
   const [entriesMismatchPromptDismissedKey, setEntriesMismatchPromptDismissedKey] = useState<string | null>(null)
   const [isInitializing, setIsInitializing] = useState(true)
+  const [selectionRefreshKey, setSelectionRefreshKey] = useState(0)
   
   // State for bracket display
   const [activeTab, setActiveTab] = useState('all')
@@ -48,6 +50,22 @@ export default function BracketsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [isMobile, setIsMobile] = useState(false)
   const [loadedBrackets, setLoadedBrackets] = useState<BracketPreview | null>(null)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+
+    const refreshSelection = () => {
+      setSelectionRefreshKey(previous => previous + 1)
+    }
+
+    window.addEventListener('tournament-changed', refreshSelection)
+    window.addEventListener('squad-changed', refreshSelection)
+
+    return () => {
+      window.removeEventListener('tournament-changed', refreshSelection)
+      window.removeEventListener('squad-changed', refreshSelection)
+    }
+  }, [])
   
   // Hooks for data fetching
   const { generateTournamentBrackets, loadSavedBrackets, deleteTournamentBrackets } = useBrackets()
@@ -67,7 +85,7 @@ export default function BracketsPage() {
   // Detect mobile viewport with debouncing to reduce unnecessary re-renders
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 480) // Phone only - tablets get desktop experience
+      setIsMobile(isPhoneViewport()) // Phone-only alternate bracket flow; larger handsets stay in the wider compact layout
     }
     
     checkMobile()
@@ -179,7 +197,7 @@ export default function BracketsPage() {
     } else if (tournaments.length > 0) {
       setIsInitializing(false)
     }
-  }, [fetchSquads, selectedTournament, tournaments])
+  }, [fetchSquads, selectedTournament, tournaments, selectionRefreshKey])
 
   // If fetch completes with no tournaments, stop initializing
   useEffect(() => {
@@ -504,8 +522,8 @@ export default function BracketsPage() {
   const bracketsQuickActions = useMemo(() => {
     if (!selectedTournament) return undefined
     return (
-      <div className={cardStyles.quickActionsRow}>
-        <div className={cardStyles.quickActionsGroupLeft}>
+      <div className={`${cardStyles.quickActionsRow} ${styles.bracketsQuickActionsRow}`}>
+        <div className={`${cardStyles.quickActionsGroupLeft} ${styles.bracketsQuickActionsGroupLeft}`}>
           <button
             onClick={() => setIsExplainModalOpen(true)}
             className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
@@ -520,7 +538,7 @@ export default function BracketsPage() {
           </button>
         </div>
         {isDev && (
-          <div className={cardStyles.quickActionsGroupRight}>
+          <div className={`${cardStyles.quickActionsGroupRight} ${styles.bracketsQuickActionsGroupRight}`}>
             <button onClick={handleDeleteAllBrackets} className={`${cardStyles.quickActionControl} ${styles.quickActionDangerBtn}`}>
               Delete All Brackets
             </button>
@@ -616,19 +634,20 @@ export default function BracketsPage() {
         ) : /* No Tournament Loaded State */
         !selectedTournament ? (
           <NoTournamentState
-            description="Load a tournament from the dashboard to generate and manage brackets. Once loaded, you'll be able to create brackets, track matches, and manage tournament progress."
+            title="Bracket Engine Ready"
+            description="Load a tournament to generate bracket trees, manage match progress, and keep rounds moving cleanly."
             cards={[
-              { title: 'Generate Brackets', text: 'Automatically create single or double elimination brackets from your player list' },
-              { title: 'Track Matches', text: 'View match-ups, update winners, and follow tournament progress in real-time' },
-              { title: 'Multiple Views', text: 'Separate scratch and handicap brackets, with mobile-friendly navigation' },
+              { title: 'Generate the Tree', text: 'Build single or double elimination brackets directly from your tournament entries.' },
+              { title: 'Advance Winners', text: 'Track matchups, update winners, and view round progression in real time.' },
+              { title: 'Switch Modes Easily', text: 'Move between scratch and handicap views with navigation built for desk and mobile.' },
             ]}
           />
         ) : !selectedSquad ? (
           <NoTournamentState
-            title="No Squad Selected"
-            description="Select a squad from the dashboard to generate and view brackets for that session."
+            title="Brackets Need a Squad"
+            description="Select a squad from the dashboard to generate and manage brackets for that session."
             cards={[
-              { title: 'Select a Squad', text: 'Choose a squad from the dashboard to generate and view its brackets' },
+              { title: 'Choose a Session', text: 'Pick the correct squad first, then generate and manage its bracket rounds.' },
             ]}
           />
         ) : (

@@ -479,8 +479,11 @@ const PlayersTable = memo(({
                 <div className="flex-center">
                   <div className="pos-relative inline-block">
                     <input
-                      className="entries-input entries-control w-65"
+                      className="entries-input entries-control"
                       type="text"
+                      inputMode="numeric"
+                      size={3}
+                      maxLength={3}
                       value={player.lane?.toString() || ''}
                       onChange={(changeEvent) => handleCellEdit(player.id, 'lane', changeEvent.target.value)}
                     />
@@ -492,8 +495,11 @@ const PlayersTable = memo(({
                 <div className="flex-center">
                   <div className="pos-relative inline-block">
                     <input
-                      className="entries-input entries-control w-65"
+                      className="entries-input entries-control"
                       type="text"
+                      inputMode="numeric"
+                      size={3}
+                      maxLength={3}
                       value={player.average}
                       onChange={(changeEvent) => handleCellEdit(player.id, 'average', changeEvent.target.value)}
                     />
@@ -510,8 +516,11 @@ const PlayersTable = memo(({
                         const visibleValue = isAllowed ? (player.bracketEntries?.[program.key] || 0) : 0
                         return (
                       <input
-                        className="entries-input entries-control w-65"
+                        className="entries-input entries-control"
                         type="text"
+                        inputMode="numeric"
+                        size={3}
+                        maxLength={3}
                         value={visibleValue}
                         onChange={(changeEvent) => handleBracketEntryEdit(player.id, program.key, changeEvent.target.value)}
                         disabled={!isAllowed}

@@ -338,7 +338,7 @@ export default function LoginPage() {
               id="login-username"
               name="username"
               aria-label="Email or Username"
-              placeholder="Email or Username"
+              placeholder="Email or username"
               value={username}
               onChange={e => updateUsername(e.target.value)}
               autoComplete="username"
@@ -354,7 +354,7 @@ export default function LoginPage() {
               id="login-password"
               name="password"
               aria-label="Password"
-              placeholder="Password"
+              placeholder="Enter your password"
               value={password}
               onChange={e => updatePassword(e.target.value)}
               onKeyDown={handleKeyDown}
@@ -410,6 +410,7 @@ export default function LoginPage() {
           >
             Log In
           </LoadingButton>
+          <p className={styles.submitHelper}>Use the same account you used to create tournaments.</p>
         </form>
 
         {/* Forgot Password */}

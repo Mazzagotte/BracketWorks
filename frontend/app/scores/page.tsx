@@ -57,6 +57,7 @@ export default function ScoresPage() {
 
   const router = useRouter()
   const [showCalcPayoutsConfirm, setShowCalcPayoutsConfirm] = useState(false)
+  const [selectionRefreshKey, setSelectionRefreshKey] = useState(0)
   const [showBracketMismatchWarning, setShowBracketMismatchWarning] = useState(false)
   const [isScoresGuideOpen, setIsScoresGuideOpen] = useState(false)
   const [missingScoreNames, setMissingScoreNames] = useState<string[]>([])
@@ -79,6 +80,22 @@ export default function ScoresPage() {
   const [lastEdit, setLastEdit] = useState<{ playerId: number; field: string; previous: number | undefined } | null>(null)
   const importFileRef = useRef<HTMLInputElement | null>(null)
   const debouncedSavesRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+
+    const refreshSelection = () => {
+      setSelectionRefreshKey(previous => previous + 1)
+    }
+
+    window.addEventListener('tournament-changed', refreshSelection)
+    window.addEventListener('squad-changed', refreshSelection)
+
+    return () => {
+      window.removeEventListener('tournament-changed', refreshSelection)
+      window.removeEventListener('squad-changed', refreshSelection)
+    }
+  }, [])
 
   // Sorting state
   const [sortConfig, setSortConfig] = useState<SortConfig>({
@@ -379,7 +396,18 @@ export default function ScoresPage() {
   const handleRandomizeScores = useCallback(async () => {
     const token = sessionToken
     const tournamentId = getSelectedTournamentId()
+    const squadId = selectedSquadRef.current?.id ?? getSelectedSquadId()
     const currentPlayers = playersRef.current
+
+    if (!token || !tournamentId) {
+      addToast({ message: 'Missing auth or tournament context. Unable to randomize scores.', type: 'error', duration: 4000 })
+      return
+    }
+
+    if (!squadId) {
+      addToast({ message: 'Select a squad before randomizing scores.', type: 'warning', duration: 3500 })
+      return
+    }
 
     // Build random scores for every player
     const scoreMap: Record<number, { g1: number; g2: number; g3: number }> = {}
@@ -409,28 +437,41 @@ export default function ScoresPage() {
     }))
 
     // Persist to backend; fire-and-forget each save without touching React state.
-    const squad = selectedSquadRef.current
-    if (token && tournamentId && squad) {
-      await Promise.allSettled(
-        currentPlayers.map(player => {
-          const s = scoreMap[player.id]
-          if (!s) return Promise.resolve()
-          return apiFetch(API('/api/v1/scores/'), {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              player_id: player.id,
-              tournament_id: parseInt(tournamentId),
-              squad_id: squad.id,
-              game1_scratch: s.g1,
-              game2_scratch: s.g2,
-              game3_scratch: s.g3,
-            }),
-          })
+    const results = await Promise.allSettled(
+      currentPlayers.map(player => {
+        const s = scoreMap[player.id]
+        if (!s) return Promise.resolve(new Response(null, { status: 204 }))
+        return apiFetch(API('/api/v1/scores/'), {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            player_id: player.id,
+            tournament_id: parseInt(tournamentId, 10),
+            squad_id: squadId,
+            game1_scratch: s.g1,
+            game2_scratch: s.g2,
+            game3_scratch: s.g3,
+          }),
         })
-      )
+      })
+    )
+
+    const successful = results.filter(result => result.status === 'fulfilled' && result.value.ok).length
+    const failed = currentPlayers.length - successful
+
+    if (failed > 0 && successful === 0) {
+      addToast({ message: 'Randomize failed to save to database.', type: 'error', duration: 4500 })
+      return
     }
-  }, [sessionToken])
+
+    addToast({
+      message: failed > 0
+        ? `Randomized ${successful} players. ${failed} failed to save.`
+        : `Randomized and saved ${successful} players.`,
+      type: failed > 0 ? 'warning' : 'success',
+      duration: 3500,
+    })
+  }, [sessionToken, addToast])
 
   const normalizeHeader = (h: string) => h.trim().toLowerCase().replace(/[_\s\-#]+/g, '')
 
@@ -727,9 +768,9 @@ export default function ScoresPage() {
           player_id: player.id,
           tournament_id: tournament.id,
           squad_id: squadId,
-          game1_scratch: player.scores?.game1_scratch,
-          game2_scratch: gameNumber === 2 ? undefined : player.scores?.game2_scratch,
-          game3_scratch: gameNumber === 3 ? undefined : player.scores?.game3_scratch,
+          game1_scratch: player.scores?.game1_scratch ?? null,
+          game2_scratch: gameNumber === 2 ? null : (player.scores?.game2_scratch ?? null),
+          game3_scratch: gameNumber === 3 ? null : (player.scores?.game3_scratch ?? null),
         }),
       })),
     )
@@ -956,7 +997,7 @@ export default function ScoresPage() {
       // No tournament loaded, stop loading immediately
       setIsLoading(false)
     }
-  }, [fetchPlayersWithScores, sessionToken])
+  }, [fetchPlayersWithScores, sessionToken, selectionRefreshKey])
 
   useEffect(() => {
     const tournamentId = tournament?.id ?? null
@@ -1530,11 +1571,12 @@ export default function ScoresPage() {
   if (typeof window !== 'undefined' && !getSelectedTournamentId()) {
     return (
       <NoTournamentState
-        description="Load a tournament from the dashboard to enter and manage scores. Once loaded, you'll be able to record game scores for each player across all rounds."
+        title="Scoring Console Waiting"
+        description="Load a tournament to start entering game scores, validating round totals, and keeping standings current."
         cards={[
-          { title: 'Enter Scores', text: 'Record game scores for each player per round directly in the score sheet' },
-          { title: 'Auto-Save', text: 'Scores are saved automatically as you type. No need to manually submit.' },
-          { title: 'Sort & Filter', text: 'Sort players by name, average, or score to quickly find and update entries' },
+          { title: 'Capture Results Fast', text: 'Record each game directly in the score sheet for fast lane-side updates.' },
+          { title: 'Stay Continuously Saved', text: 'Edits save as you type, so your progress stays protected between updates.' },
+          { title: 'Find Bowlers Quickly', text: 'Sort and filter by name, average, or score to correct and confirm entries quickly.' },
         ]}
       />
     )
@@ -1543,10 +1585,10 @@ export default function ScoresPage() {
   if (!showInitialScoresLoad && typeof window !== 'undefined' && !getSelectedSquadId() && !selectedSquad) {
     return (
       <NoTournamentState
-        title="No Squad Selected"
-        description="Select a squad from the dashboard to enter and manage scores for that session."
+        title="Scores Need a Squad"
+        description="Select a squad from the dashboard to open scoring for that session."
         cards={[
-          { title: 'Select a Squad', text: 'Choose a squad from the dashboard to view and enter scores for its players' },
+          { title: 'Open the Right Session', text: 'Choose the squad first, then enter game-by-game scores for its bowlers.' },
         ]}
       />
     )

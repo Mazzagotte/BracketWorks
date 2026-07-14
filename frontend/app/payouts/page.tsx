@@ -55,6 +55,7 @@ export default function PayoutsPage() {
   const { squads, fetchSquads } = useSquads()
 
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null)
+  const [selectionRefreshKey, setSelectionRefreshKey] = useState(0)
   const [selectedSquad, setSelectedSquad] = useState<Squad | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [paidKeys, setPaidKeys] = useState<Set<string>>(new Set())
@@ -66,6 +67,22 @@ export default function PayoutsPage() {
   const [isUnlocked, setIsUnlocked] = useState(false)
   const [isMobileView, setIsMobileView] = useState(false)
   const [isPayoutsGuideOpen, setIsPayoutsGuideOpen] = useState(false)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+
+    const refreshSelection = () => {
+      setSelectionRefreshKey(previous => previous + 1)
+    }
+
+    window.addEventListener('tournament-changed', refreshSelection)
+    window.addEventListener('squad-changed', refreshSelection)
+
+    return () => {
+      window.removeEventListener('tournament-changed', refreshSelection)
+      window.removeEventListener('squad-changed', refreshSelection)
+    }
+  }, [])
 
   useEffect(() => {
     const checkMobile = () => setIsMobileView(window.innerWidth <= 900)
@@ -153,7 +170,7 @@ export default function PayoutsPage() {
     }
 
     void hydrateFromBootstrap()
-  }, [fetchSquads, isUserAuthenticated, isAuthInitialized])
+  }, [fetchSquads, isUserAuthenticated, isAuthInitialized, selectionRefreshKey])
 
   useEffect(() => {
     if (tournaments.length > 0 && !selectedTournament) {
@@ -164,7 +181,7 @@ export default function PayoutsPage() {
         fetchSquads(found.id)
       }
     }
-  }, [fetchSquads, selectedTournament, tournaments])
+  }, [fetchSquads, selectedTournament, tournaments, selectionRefreshKey])
 
   useEffect(() => {
     if (squads.length > 0 && !selectedSquad) {
@@ -1002,11 +1019,12 @@ export default function PayoutsPage() {
   if (typeof window !== 'undefined' && !getSelectedTournamentId()) {
     return (
       <NoTournamentState
-        description="Load a tournament from the dashboard to view payout distribution. Once loaded, you&apos;ll be able to see prize pools, track winners, and mark payouts as complete."
+        title="Payout Desk Waiting"
+        description="Load a tournament to review prize pools, verify winners, and track payout completion."
         cards={[
-          { title: 'Prize Pool', text: 'View total scratch and handicap prize pools calculated from paid bracket entries' },
-          { title: 'Winner Tracking', text: 'See which players won, what position they finished, and how much they earned' },
-          { title: 'Mark as Paid', text: 'Track which winners have been paid out to stay organized during payout distribution' },
+          { title: 'Review Prize Pools', text: 'See scratch and handicap totals calculated from paid bracket entries.' },
+          { title: 'Confirm Winners', text: 'Validate placements and earnings before payments are distributed.' },
+          { title: 'Track Completion', text: 'Mark payouts as paid so end-of-day settlement stays clean and auditable.' },
         ]}
       />
     )
@@ -1016,13 +1034,13 @@ export default function PayoutsPage() {
     return (
       <NoTournamentState
         title="Payouts Not Yet Calculated"
-        description="To view payout distribution, go to the Scores page and press the &quot;Calculate Payouts&quot; button. This ensures all scores are reviewed and finalized before payouts are determined."
+        description="Go to Scores and run Calculate Payouts after score review. This locks in final results before distribution."
         actionHref="/scores"
-        actionLabel="Go to Scores"
+        actionLabel="Open Scores"
         cards={[
-          { title: 'Enter Scores First', text: 'Make sure all bowler game scores are entered on the Scores page before calculating payouts' },
-          { title: 'Review & Confirm', text: 'The Calculate Payouts button checks for missing scores and asks you to confirm all scores are final' },
-          { title: 'Payout Distribution', text: 'Once confirmed, you will be brought here to view winners, prize pools, and mark payouts as complete' },
+          { title: 'Finalize Scoring', text: 'Ensure every bowler score is entered and verified before payout calculation.' },
+          { title: 'Run Calculation', text: 'Calculate Payouts checks for gaps and confirms readiness before processing.' },
+          { title: 'Distribute & Close', text: 'Return here to review winners, publish totals, and mark payouts complete.' },
         ]}
       />
     )

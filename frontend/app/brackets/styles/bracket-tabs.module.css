@@ -207,6 +207,29 @@
   letter-spacing: 0;
 }
 
+@media (max-width: 640px) {
+  .tabsContainer {
+    padding: 0.5rem 0.68rem;
+  }
+
+  .tabsList {
+    gap: 0.38rem;
+  }
+
+  .tab {
+    min-height: 30px;
+    padding: 0.32rem 0.62rem;
+    font-size: 0.72rem;
+  }
+
+  .tabCount,
+  .tab:not(.active) .tabCount {
+    min-width: 1.2rem;
+    padding: 0.08rem 0.34rem;
+    font-size: 0.62rem;
+  }
+}
+
 @media (max-width: 480px) {
   .tabsContainer {
     padding: 0.5rem 0.68rem;

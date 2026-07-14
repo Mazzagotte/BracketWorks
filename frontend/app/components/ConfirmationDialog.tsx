@@ -23,7 +23,7 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({ open, message, 
         <div className={styles.body}>
           <p className={styles.message}>{message}</p>
           <div className={styles.actions}>
-            <button className={`${buttonStyles.button} ${buttonStyles.primary} ${styles.okButton}`} onClick={onClose}>OK</button>
+            <button className={`${buttonStyles.button} ${buttonStyles.primary} ${styles.okButton}`} onClick={onClose}>Close</button>
           </div>
         </div>
       </div>

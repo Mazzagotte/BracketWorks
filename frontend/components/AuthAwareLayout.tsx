@@ -9,6 +9,7 @@ import { ErrorBoundary } from '../app/components/ErrorBoundary';
 import { DevAuthStatus } from '../app/components/DevAuthStatus';
 import { TimeSlotReminderModal } from '../app/components/TimeSlotReminderModal';
 import { useAuth } from '../app/lib/auth-context';
+import { isHandheldViewport } from '../app/lib/responsive';
 import { resetScrollLocks, setBodyInteractionState } from '../app/utils/modalUtils';
 import styles from '../app/layout.module.css';
 
@@ -45,7 +46,7 @@ function ClientLayout({ children }: { children: ReactNode }) {
     resetScrollLocks();
 
     const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 480);
+      setIsMobile(isHandheldViewport());
     };
 
     checkMobile();
@@ -107,6 +108,16 @@ function ClientLayout({ children }: { children: ReactNode }) {
   }, []);
 
   const showAuthenticatedShell = mounted && isAuthInitialized && isUserAuthenticated && !isPublicPath && !isEmbeddedModalRoute;
+  const mainLayoutClass = isPublicPath
+    ? styles.mainPublic
+    : isMobile
+      ? styles.mainMobile
+      : showAuthenticatedShell
+        ? styles.mainDesktop
+        : styles.mainPublic;
+  const contentCardClass = isPublicPath
+    ? `${styles.contentCard} ${styles.contentCardNoAuth}`
+    : `${styles.contentCard} ${isMobile ? styles.contentCardMobile : ''} ${!showAuthenticatedShell ? styles.contentCardNoAuth : ''}`;
 
   if (!mounted) {
     return (
@@ -158,9 +169,9 @@ function ClientLayout({ children }: { children: ReactNode }) {
 
       <main
         id="main-content"
-        className={`${styles.main} ${isMobile ? styles.mainMobile : (showAuthenticatedShell ? styles.mainDesktop : styles.mainPublic)} ${isMobile && showAuthenticatedShell ? styles.mainMobileAuth : ''}`}
+        className={`${styles.main} ${mainLayoutClass} ${isMobile && showAuthenticatedShell ? styles.mainMobileAuth : ''}`}
       >
-        <div className={`${styles.contentCard} ${isMobile ? styles.contentCardMobile : ''} ${!showAuthenticatedShell ? styles.contentCardNoAuth : ''}`}>
+        <div className={contentCardClass}>
           <ErrorBoundary>
             {children}
           </ErrorBoundary>

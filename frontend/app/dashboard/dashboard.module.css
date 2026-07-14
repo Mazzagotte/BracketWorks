@@ -26,10 +26,22 @@
   --dash-danger-soft: var(--color-error-bg-soft);
   --dash-danger-border: var(--color-error-border);
   display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-columns: auto auto;
   gap: 14px;
-  align-items: stretch;
+  align-items: start;
+  justify-content: center;
   margin-bottom: 24px;
+}
+
+.dashboardOverviewStack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.dashboardOverviewStack .commandCenterGrid {
+  margin-bottom: 0;
 }
 
 .commandCenterGrid > article,
@@ -44,15 +56,21 @@
 }
 
 .gridHero {
-  grid-column: span 8;
+  grid-column: 1;
+  width: fit-content;
+  justify-self: center;
 }
 
 .gridTools {
-  grid-column: span 4;
+  grid-column: 2;
+  align-self: start;
+  justify-self: center;
 }
 
 .gridSummary {
   grid-column: 1 / -1;
+  width: fit-content;
+  justify-self: center;
 }
 
 .entriesOverviewCard {
@@ -63,6 +81,22 @@
   -webkit-backdrop-filter: blur(18px);
   border: 1px solid var(--dash-border);
   box-shadow: var(--dash-shadow);
+  width: fit-content;
+}
+
+.entriesOverviewStandalone {
+  --dash-surface: color-mix(in srgb, var(--bw-surface-card) 88%, transparent);
+  --dash-border: var(--bw-border-subtle);
+  --dash-shadow: var(--bw-shadow-card);
+  --dash-card-bg: var(--bw-surface-card);
+  --dash-card-border: var(--bw-border-card);
+  --dash-accent-border: var(--bw-border-accent);
+  margin: 0 auto 24px;
+}
+
+.entriesOverviewSection {
+  display: flex;
+  justify-content: center;
 }
 
 .entriesOverviewHeader {
@@ -240,9 +274,12 @@
 
 .bracketPreview {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(2, auto);
   gap: 10px;
   margin-bottom: 0;
+  width: fit-content;
+  max-width: 1000px;
+  justify-content: start;
 }
 
 .bracketRound {
@@ -423,6 +460,9 @@
   display: grid;
   gap: 10px;
   align-content: start;
+  width: 100%;
+  max-width: 440px;
+  justify-self: center;
 }
 
 .commissionerPanel .squadRailList {
@@ -639,9 +679,11 @@
 
 .advancedGrid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(2, auto);
   gap: 16px;
   align-items: start;
+  width: fit-content;
+  margin: 0 auto;
 }
 
 .advancedGrid > :global(.squadSelectionCard),
@@ -650,14 +692,14 @@
 .advancedGrid > :global(.optionalBracketsCard),
 .advancedGrid > :global(.byeSettingsCard),
 .advancedGrid > :global(.sidePotsCard) {
-  width: 100%;
+  width: fit-content;
   min-width: 0;
   max-width: none;
 }
 
 .advancedGrid > :global(.squadSelectionCard),
 .advancedGrid > :global(.mainBracketSettingsCard) {
-  grid-column: span 2;
+  grid-column: 1 / -1;
 }
 
 .advancedGrid .bracketSettingsCard,
@@ -767,7 +809,7 @@
 /* Tournament Settings modal polish */
 .settingsModalGrid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(200px, 420px));
+  grid-template-columns: repeat(3, auto);
   align-items: start;
   width: fit-content;
   max-width: 100%;
@@ -783,8 +825,8 @@
 .settingsModalGrid .sidePotsCard {
   display: flex;
   flex-direction: column;
-  width: 100%;
-  max-width: 460px;
+  width: fit-content;
+  max-width: none;
   min-width: 0;
   border-radius: 22px;
   background: var(--dash-surface-deep);
@@ -799,8 +841,8 @@
 
 .programsSettingsCard {
   grid-column: auto;
-  max-width: 420px;
-  justify-self: stretch;
+  max-width: none;
+  justify-self: start;
   min-height: 0;
 }
 
@@ -944,8 +986,8 @@
   width: 18px;
   height: 18px;
   border-radius: 6px;
-  border: 1px solid var(--dash-border-soft);
-  background: var(--dash-input-surface);
+  border: 1px solid color-mix(in srgb, var(--bw-border-subtle) 96%, transparent);
+  background: color-mix(in srgb, var(--bw-surface-panel) 96%, transparent);
   display: inline-grid;
   place-content: center;
   margin: 0;
@@ -962,8 +1004,8 @@
 }
 
 .settingsModalGrid .checkboxInput:checked {
-  background: var(--dash-accent-panel);
-  border-color: color-mix(in srgb, var(--color-primary) 78%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 68%, transparent);
 }
 
 .settingsModalGrid .checkboxInput:checked::after {
@@ -1671,11 +1713,41 @@
 }
 
 .checkboxInput {
+  appearance: none;
   width: 18px;
   height: 18px;
-  accent-color: var(--color-primary);
+  border-radius: 6px;
+  border: 1px solid color-mix(in srgb, var(--bw-border-subtle) 96%, transparent);
+  background: color-mix(in srgb, var(--bw-surface-panel) 96%, transparent);
+  display: inline-grid;
+  place-content: center;
+  margin: 0;
   cursor: pointer;
   flex-shrink: 0;
+}
+
+.checkboxInput::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  transform: scale(0);
+  transition: transform 120ms ease-in-out;
+  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+  background: color-mix(in srgb, var(--color-primary) 98%, transparent);
+}
+
+.checkboxInput:checked {
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 68%, transparent);
+}
+
+.checkboxInput:checked::after {
+  transform: scale(1);
+}
+
+.checkboxInput:focus-visible {
+  outline: none;
+  box-shadow: var(--bw-focus-ring);
 }
 
 /* Calculation Summary Styles */
@@ -1921,7 +1993,7 @@
   flex: 1;
   overflow-y: auto;
   min-height: 0;
-  padding: 18px 24px 14px;
+  padding: 14px 24px 12px;
   --bw-form-bg: var(--opacity-black-20);
   --bw-form-text: var(--color-text-primary);
   --bw-form-placeholder: var(--dash-text-muted);
@@ -1933,7 +2005,7 @@
 }
 
 .tournamentSectionLabel {
-  margin: 6px 0 10px;
+  margin: 4px 0 8px;
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
@@ -1944,7 +2016,7 @@
 .tournamentFormFields {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .tournamentFormFields :global(.form-field) {
@@ -1967,12 +2039,12 @@
 .tournamentDateRow {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 14px;
 }
 
 .squadTimesSection {
-  margin-top: 18px;
-  padding-top: 14px;
+  margin-top: 14px;
+  padding-top: 10px;
   border-top: 1px solid var(--dash-border);
 }
 
@@ -1981,7 +2053,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .squadTimesTitle {
@@ -2010,8 +2082,8 @@
 .squadDay {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 12px 0;
+  gap: 6px;
+  padding: 10px 0;
   border-bottom: 1px solid color-mix(in srgb, var(--dash-border) 70%, transparent);
 }
 
@@ -2028,14 +2100,14 @@
 .squadTimesList {
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 6px;
 }
 
 .squadTimeEntry {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 12px;
+  padding: 9px 12px;
   border-radius: 12px;
   background: var(--dash-input-surface);
   border: 1px solid var(--dash-border);
@@ -2071,7 +2143,7 @@
   display: flex;
   align-items: stretch;
   gap: 10px;
-  margin-top: 8px;
+  margin-top: 6px;
 }
 
 .squadTimeSelect {
@@ -2112,7 +2184,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-  padding: 12px 20px;
+  padding: 10px 20px;
   border-top: 1px solid color-mix(in srgb, var(--dash-border) 76%, transparent);
   background: linear-gradient(180deg, color-mix(in srgb, var(--bw-surface-card) 90%, transparent), color-mix(in srgb, var(--bw-surface-card) 98%, transparent));
   backdrop-filter: blur(8px);
@@ -2916,11 +2988,16 @@
 @media (max-width: 1200px) {
 
   .bracketPreview {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(280px, 1fr));
   }
 }
 
 @media (max-width: 768px) {
+  .dashboardOverviewStack {
+    gap: 12px;
+    align-items: stretch;
+  }
+
   .commandCenterGrid {
     grid-template-columns: 1fr;
     gap: 12px;
@@ -2928,8 +3005,29 @@
   }
 
   .gridHero,
-  .gridTools {
+  .gridTools,
+  .gridSummary {
     grid-column: 1 / -1;
+  }
+
+  .gridHero {
+    width: 100%;
+    justify-self: stretch;
+  }
+
+  .commissionerPanel {
+    max-width: none;
+    justify-self: stretch;
+  }
+
+  .gridSummary,
+  .entriesOverviewCard {
+    width: 100%;
+    justify-self: stretch;
+  }
+
+  .entriesOverviewStandalone {
+    margin: 0 0 24px;
   }
 }
 
@@ -2946,6 +3044,7 @@
 
   .bracketPreview {
     grid-template-columns: 1fr;
+    max-width: none;
   }
 }
 
@@ -2962,18 +3061,18 @@
 }
 
 .settingsModalCloseButton {
-  background: color-mix(in srgb, var(--bw-page) 80%, transparent) !important;
-  color: color-mix(in srgb, var(--bw-text-title) 92%, transparent) !important;
-  border: 1px solid color-mix(in srgb, var(--bw-text-muted) 35%, transparent) !important;
-  box-shadow: 0 3px 8px var(--opacity-black-20) !important;
+  background: color-mix(in srgb, var(--bw-surface-panel) 92%, transparent) !important;
+  color: color-mix(in srgb, var(--bw-text-title) 88%, transparent) !important;
+  border: 1px solid color-mix(in srgb, var(--bw-border-subtle) 78%, transparent) !important;
+  box-shadow: none !important;
 }
 
 .settingsModalCloseButton:hover,
 .settingsModalCloseButton:focus-visible {
-  background: color-mix(in srgb, var(--color-primary) 16%, transparent) !important;
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent) !important;
   color: color-mix(in srgb, var(--bw-text-accent) 92%, var(--bw-text-title)) !important;
-  border-color: color-mix(in srgb, var(--color-primary) 50%, transparent) !important;
-  box-shadow: 0 4px 10px color-mix(in srgb, var(--color-primary) 12%, transparent) !important;
+  border-color: color-mix(in srgb, var(--color-primary) 34%, transparent) !important;
+  box-shadow: none !important;
 }
 
 /* Page text normalization */
@@ -3235,6 +3334,13 @@
   background: var(--dash-surface);
   border-color: color-mix(in srgb, var(--bw-border-subtle) 74%, transparent);
   box-shadow: var(--dash-shadow);
+  display: inline-grid;
+  width: max-content;
+  min-width: 0;
+  max-width: none;
+  justify-self: start;
+  padding-left: 12px;
+  padding-right: 12px;
 }
 
 .entriesOverviewCard .statTile::before {
@@ -3418,40 +3524,168 @@
 .modalCard.settingsModalCard,
 .tournamentSelectorCard,
 .squadChangeModalCard {
-  background: var(--bw-surface-card) !important;
-  border: 1px solid var(--bw-border-card) !important;
+  background: color-mix(in srgb, var(--bw-surface-card) 96%, transparent) !important;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 22%, transparent) !important;
   border-left: var(--bw-accent-rail) !important;
   border-radius: var(--radius-2xl);
-  box-shadow: none !important;
+  box-shadow: 0 18px 38px var(--opacity-black-30) !important;
 }
 
 .modalHeader {
-  background: var(--bw-surface-panel) !important;
-  border-bottom: 1px solid var(--bw-border-subtle) !important;
+  background: color-mix(in srgb, var(--bw-surface-card) 92%, transparent) !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--bw-border-subtle) 82%, transparent) !important;
+  padding: 24px 60px 18px 28px;
 }
 
 .modalTitle {
   color: var(--bw-text-title);
+  font-size: 26px;
+  letter-spacing: -0.03em;
 }
 
 .modalSubtitle,
 .emptyTournaments,
 .emptyTournamentsHint,
 .paginationText {
-  color: var(--bw-text-muted);
+  color: var(--bw-text-faint);
 }
 
 .settingsModalFrame {
-  background: var(--bw-surface-card-strong) !important;
-  border: 1px solid var(--bw-border-subtle) !important;
+  background: color-mix(in srgb, var(--bw-surface-card) 88%, transparent) !important;
+  border: 1px solid color-mix(in srgb, var(--bw-border-subtle) 82%, transparent) !important;
   border-radius: var(--radius-xl);
+}
+
+.tournamentModalContent {
+  border-color: color-mix(in srgb, var(--color-primary) 22%, transparent) !important;
+  background: color-mix(in srgb, var(--bw-surface-card) 96%, transparent) !important;
+  box-shadow: 0 18px 38px var(--opacity-black-30) !important;
+}
+
+.tournamentFormBody {
+  padding: 22px 28px 18px;
+}
+
+.tournamentSectionLabel {
+  color: var(--bw-text-accent);
+  letter-spacing: 0.11em;
+}
+
+.tournamentInput,
+.squadTimeSelect,
+.squadTimeAddRow :global(select) {
+  min-height: 48px;
+  border-radius: 12px !important;
+  border: 1px solid color-mix(in srgb, var(--bw-border-subtle) 92%, transparent) !important;
+  background: color-mix(in srgb, var(--bw-surface-panel) 94%, transparent) !important;
+  color: var(--bw-text-title) !important;
+  box-shadow: none !important;
+}
+
+.advancedGrid .compactSelect,
+.advancedGrid .compactInput,
+.settingsModalGrid .compactSelect,
+.settingsModalGrid .compactInput {
+  min-height: 48px;
+  border-radius: 12px !important;
+  border: 1px solid color-mix(in srgb, var(--bw-border-subtle) 92%, transparent) !important;
+  background: color-mix(in srgb, var(--bw-surface-panel) 94%, transparent) !important;
+  color: var(--bw-text-title) !important;
+  font-size: 16px;
+  font-weight: 500;
+  padding: 0 16px;
+  box-shadow: none !important;
+}
+
+.advancedGrid .compactSelect,
+.settingsModalGrid .compactSelect {
+  color-scheme: dark;
+}
+
+.advancedGrid .compactInputWrapper,
+.settingsModalGrid .compactInputWrapper {
+  width: 100%;
+}
+
+.advancedGrid .compactInputWrapper .compactInput,
+.settingsModalGrid .compactInputWrapper .compactInput {
+  padding-left: 36px;
+}
+
+.advancedGrid .currencySymbol,
+.settingsModalGrid .currencySymbol {
+  left: 14px;
+  color: var(--bw-text-faint);
+}
+
+.tournamentInput:focus,
+.squadTimeSelect:focus,
+.squadTimeAddRow :global(select):focus {
+  border-color: color-mix(in srgb, var(--color-primary) 75%, transparent) !important;
+  box-shadow: var(--bw-focus-ring) !important;
+}
+
+.advancedGrid .compactSelect:focus,
+.advancedGrid .compactInput:focus,
+.settingsModalGrid .compactSelect:focus,
+.settingsModalGrid .compactInput:focus {
+  border-color: color-mix(in srgb, var(--color-primary) 75%, transparent) !important;
+  box-shadow: var(--bw-focus-ring) !important;
+}
+
+.squadTimesTitle,
+.squadDayLabel {
+  color: var(--bw-text-title);
+}
+
+.squadTimesCount {
+  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 18%, transparent);
+  color: var(--bw-text-accent);
+}
+
+.squadTimeEntry {
+  background: color-mix(in srgb, var(--bw-surface-panel) 92%, transparent);
+  border-color: color-mix(in srgb, var(--bw-border-subtle) 82%, transparent);
+}
+
+.squadTimeRemove,
+.tournamentCancelButton {
+  background: color-mix(in srgb, var(--bw-surface-panel) 92%, transparent) !important;
+  border-color: color-mix(in srgb, var(--bw-border-subtle) 86%, transparent) !important;
+  color: var(--bw-text-title) !important;
+  border-radius: 12px !important;
+}
+
+.squadTimeRemove:hover,
+.tournamentCancelButton:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent) !important;
+  border-color: color-mix(in srgb, var(--color-primary) 42%, transparent) !important;
+}
+
+.squadTimeAddBtn,
+.tournamentSaveButton {
+  border-radius: 12px !important;
+  border-color: color-mix(in srgb, var(--color-primary) 42%, transparent) !important;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 95%, transparent), color-mix(in srgb, var(--color-primary) 72%, var(--color-warning) 28%)) !important;
+  box-shadow: 0 10px 22px color-mix(in srgb, var(--color-primary) 24%, transparent) !important;
+}
+
+.squadChangeModalCard {
+  max-width: 560px;
+}
+
+.squadChangeList {
+  padding: 18px 20px 20px;
+  gap: 10px;
 }
 
 .tournamentItem,
 .squadChangeItem {
-  background: var(--bw-surface-panel) !important;
-  border-color: var(--bw-border-subtle) !important;
+  background: color-mix(in srgb, var(--bw-surface-panel) 94%, transparent) !important;
+  border-color: color-mix(in srgb, var(--bw-border-subtle) 86%, transparent) !important;
   box-shadow: none !important;
+  border-radius: 16px;
 }
 
 .tournamentItem:hover,
@@ -3466,6 +3700,10 @@
 .squadChangeItemSelected {
   background: color-mix(in srgb, var(--color-primary) 10%, var(--bw-surface-panel)) !important;
   border-color: var(--bw-border-accent) !important;
+}
+
+.squadChangeItemSelected {
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--color-primary) 52%, transparent) !important;
 }
 
 .tournamentName,
@@ -3485,6 +3723,29 @@
   background: color-mix(in srgb, var(--color-primary) 10%, var(--bw-surface-panel));
   border-color: var(--bw-border-accent);
   color: var(--bw-text-accent);
+}
+
+.squadChangeItemStatus {
+  border-radius: 999px;
+  padding: 4px 9px;
+  border: 1px solid var(--bw-border-accent);
+  font-size: 10px;
+  letter-spacing: 0.02em;
+}
+
+.squadChangeItem:not(.squadChangeItemSelected) .squadChangeItemStatus {
+  background: color-mix(in srgb, var(--bw-surface-panel) 94%, transparent);
+  border-color: color-mix(in srgb, var(--bw-border-subtle) 86%, transparent);
+  color: var(--bw-text-muted);
+}
+
+.squadChangeItemEmpty .squadChangeItemMeta {
+  color: color-mix(in srgb, var(--bw-text-muted) 82%, transparent);
+}
+
+.squadChangeItemEmpty:not(.squadChangeItemSelected) {
+  border-color: color-mix(in srgb, var(--bw-border-subtle) 72%, transparent) !important;
+  background: color-mix(in srgb, var(--bw-surface-panel) 88%, transparent) !important;
 }
 
 .loadBtn,
@@ -3518,5 +3779,705 @@
 .tournamentCancelButton,
 .tournamentSaveButton {
   box-shadow: none !important;
+}
+
+/* Final dashboard hierarchy pass */
+.heroStatusChipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: -2px;
+}
+
+.heroStatusChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--bw-border-subtle);
+  background: var(--bw-surface-panel);
+  color: var(--bw-text-body);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background-color 0.18s ease;
+}
+
+.heroStatusChip strong {
+  color: var(--bw-text-title);
+  font-weight: 800;
+}
+
+.heroStatusChipInfo {
+  border-color: color-mix(in srgb, var(--bw-text-muted) 30%, transparent);
+}
+
+.heroStatusChipGood {
+  border-color: color-mix(in srgb, var(--color-success) 34%, transparent);
+  background: color-mix(in srgb, var(--color-success) 10%, transparent);
+}
+
+.heroStatusChipWarn {
+  border-color: color-mix(in srgb, var(--color-primary) 34%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+}
+
+.heroStatusChip:hover {
+  border-color: var(--bw-border-card);
+}
+
+.commissionerSectionTitleDanger {
+  margin-top: 8px;
+  color: color-mix(in srgb, var(--color-error) 72%, var(--bw-text-muted));
+}
+
+.commissionerActionPrimary {
+  border-color: color-mix(in srgb, var(--color-primary) 52%, transparent) !important;
+  background: color-mix(in srgb, var(--color-primary) 16%, var(--bw-surface-panel)) !important;
+  color: var(--bw-text-title) !important;
+}
+
+.commissionerActionPrimary .commissionerActionIndicator {
+  color: var(--bw-text-accent) !important;
+}
+
+.commissionerActionPrimary:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 70%, transparent) !important;
+  background: color-mix(in srgb, var(--color-primary) 22%, var(--bw-surface-panel)) !important;
+}
+
+.commissionerDangerRow {
+  border-color: color-mix(in srgb, var(--color-error) 42%, var(--bw-border-subtle)) !important;
+  background: color-mix(in srgb, var(--color-error) 10%, var(--bw-surface-panel)) !important;
+  color: color-mix(in srgb, var(--color-error) 82%, var(--bw-text-title)) !important;
+}
+
+.commissionerDangerRow:hover {
+  border-color: color-mix(in srgb, var(--color-error) 66%, var(--bw-border-subtle)) !important;
+  background: color-mix(in srgb, var(--color-error) 14%, var(--bw-surface-panel)) !important;
+}
+
+.commissionerDangerIndicator {
+  color: color-mix(in srgb, var(--color-error) 74%, var(--bw-text-accent));
+}
+
+.entriesHealthStrip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0 0 10px;
+}
+
+.entriesHealthItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 9px;
+  border-radius: 12px;
+  border: 1px solid var(--bw-border-subtle);
+  background: var(--bw-surface-panel);
+  color: var(--bw-text-body);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background-color 0.18s ease;
+}
+
+.entriesHealthItem strong {
+  color: var(--bw-text-title);
+  font-weight: 800;
+}
+
+.entriesHealthItemWarn {
+  border-color: color-mix(in srgb, var(--color-primary) 34%, var(--bw-border-subtle));
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+}
+
+.entriesHealthItem:hover {
+  border-color: var(--bw-border-card);
+}
+
+.statTileActionable {
+  cursor: pointer;
+}
+
+.statTileActionable:focus-visible {
+  outline: none;
+  border-color: var(--bw-border-accent);
+  box-shadow: var(--bw-focus-ring);
+}
+
+@media (max-width: 900px) {
+  .entriesHealthStrip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .entriesHealthStrip {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Final tournament overview hierarchy and responsiveness pass */
+.heroTitle {
+  font-size: clamp(1.55rem, 2vw, 1.9rem);
+  letter-spacing: 0.01em;
+}
+
+.heroActiveBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.22rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 158, 66, 0.46);
+  background: rgba(255, 158, 66, 0.18);
+  color: rgba(255, 213, 172, 0.96);
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.heroMetaCompact,
+.heroSummaryLine {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+  color: rgba(233, 228, 219, 0.8);
+  font-size: 0.8rem;
+}
+
+.heroSummaryLine {
+  margin-top: 0.35rem;
+  color: rgba(255, 211, 174, 0.88);
+}
+
+.heroStatusChip {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.bracketInfoGrid {
+  display: grid;
+  gap: 0.38rem;
+}
+
+.bracketInfoRow {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.9fr) minmax(0, 1.1fr);
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.42rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.055);
+}
+
+.bracketInfoRow:last-child {
+  border-bottom: none;
+}
+
+.bracketInfoLabel {
+  font-size: 0.73rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(221, 214, 202, 0.86);
+}
+
+.bracketInfoValue {
+  justify-self: end;
+  text-align: right;
+  font-size: 0.88rem;
+  color: rgba(255, 247, 236, 0.95);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.bracketInfoValueStrong {
+  font-weight: 700;
+}
+
+.bracketInfoValueNegative {
+  color: rgba(238, 178, 167, 0.93);
+}
+
+.bracketInfoValueWrap {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.statusBadge {
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.14rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.statusBadgeEnabled {
+  background: rgba(96, 188, 124, 0.2);
+  border: 1px solid rgba(96, 188, 124, 0.45);
+  color: rgba(187, 244, 206, 0.95);
+}
+
+.statusBadgeDisabled {
+  background: rgba(124, 130, 141, 0.14);
+  border: 1px solid rgba(132, 138, 149, 0.34);
+  color: rgba(212, 217, 224, 0.84);
+}
+
+.prizePoolHero {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 0.38rem;
+  padding: 0.34rem 0;
+  border-radius: 0;
+  border: none;
+  background: transparent;
+}
+
+.prizePoolLabel {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0.01em;
+  color: rgba(232, 223, 211, 0.9);
+}
+
+.prizePoolValue {
+  font-size: 1.08rem;
+  color: rgba(255, 236, 215, 0.98);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.prizeSectionLabel {
+  margin: 0.2rem 0 0.1rem;
+  font-size: 0.74rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(214, 206, 193, 0.74);
+  font-weight: 700;
+}
+
+.prizeSectionLabelSpaced {
+  margin-top: 0.52rem;
+}
+
+.prizeSectionGroup {
+  display: grid;
+  gap: 0;
+}
+
+.prizeSectionGroup .bracketInfoRow {
+  padding: 0.5rem 0;
+}
+
+.prizeBreakdownCard .bracketInfoLabel {
+  text-transform: none;
+  letter-spacing: 0.01em;
+  font-size: 0.83rem;
+  color: rgba(228, 219, 206, 0.9);
+}
+
+.progressCard {
+  display: grid;
+  gap: 0.6rem;
+  padding: 0.8rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(22, 24, 30, 0.72);
+}
+
+.progressCardTitle {
+  font-size: 0.84rem;
+  text-transform: uppercase;
+  letter-spacing: 0.11em;
+  color: rgba(255, 212, 173, 0.9);
+  font-weight: 700;
+}
+
+.progressRows {
+  display: grid;
+  gap: 0;
+}
+
+.progressRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.84rem;
+  color: rgba(232, 226, 214, 0.87);
+  min-height: 34px;
+  align-items: center;
+  padding: 0.12rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.progressRow:last-of-type {
+  border-bottom: none;
+}
+
+.progressBarLabel {
+  margin-top: 0.35rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(214, 206, 193, 0.84);
+}
+
+.progressRow strong {
+  color: rgba(255, 248, 238, 0.97);
+  font-weight: 700;
+}
+
+.progressBarTrack {
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  margin: 0.3rem 0 0.45rem;
+}
+
+.progressBarFill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(255, 146, 37, 0.95), rgba(255, 184, 108, 0.93));
+  transition: width 180ms ease;
+}
+
+.progressPrimaryAction {
+  border-color: rgba(255, 148, 38, 0.46);
+  background: linear-gradient(135deg, rgba(255, 149, 40, 0.94), rgba(246, 132, 18, 0.94));
+  color: rgba(35, 18, 8, 0.95);
+  justify-self: end;
+  width: auto;
+  min-width: 148px;
+  padding-left: 14px;
+  padding-right: 14px;
+}
+
+.progressPrimaryAction:hover:not(:disabled),
+.progressPrimaryAction:focus-visible:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 18px rgba(249, 133, 21, 0.25);
+}
+
+.commissionerActionSecondary {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.moreActionsMenu {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 0.15rem;
+  padding: 0.45rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(18, 20, 26, 0.75);
+}
+
+.moreActionItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem;
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  background: rgba(30, 34, 42, 0.9);
+  color: rgba(245, 241, 233, 0.95);
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.52rem 0.62rem;
+  cursor: pointer;
+  transition: border-color 140ms ease, background 140ms ease;
+}
+
+.moreActionItem:hover:not(:disabled),
+.moreActionItem:focus-visible:not(:disabled) {
+  border-color: rgba(255, 171, 89, 0.55);
+  background: rgba(38, 42, 51, 0.97);
+}
+
+.moreActionItemDanger {
+  border-color: rgba(231, 98, 76, 0.46);
+  background: rgba(75, 31, 27, 0.58);
+  color: rgba(255, 218, 213, 0.96);
+}
+
+.moreActionItemDanger:hover:not(:disabled),
+.moreActionItemDanger:focus-visible:not(:disabled) {
+  border-color: rgba(241, 126, 106, 0.7);
+  background: rgba(95, 38, 33, 0.7);
+}
+
+.moreActionIndicator {
+  font-size: 0.92rem;
+  line-height: 1;
+}
+
+.summaryCardsBand {
+  display: grid;
+  grid-template-columns: repeat(6, auto);
+  gap: 0.62rem;
+  align-items: stretch;
+  width: fit-content;
+  justify-content: start;
+}
+
+.summaryCard {
+  min-height: 132px;
+  height: 100%;
+}
+
+.summaryCardActionable {
+  justify-content: flex-start;
+}
+
+.summaryCardActionable:hover,
+.summaryCardActionable:focus-visible {
+  border-color: rgba(255, 170, 90, 0.44);
+}
+
+.summaryCardActionable:focus-visible,
+.squadRailPill:focus-visible,
+.moreActionItem:focus-visible,
+.progressPrimaryAction:focus-visible {
+  outline: 2px solid rgba(255, 171, 89, 0.78);
+  outline-offset: 2px;
+}
+
+/* Final action rail hierarchy pass */
+.commissionerPanel .squadRailPill.commissionerActionSecondary,
+.commissionerPanel .squadRailPill.commissionerAdminRow,
+.commissionerPanel .squadRailPill.moreActionsToggle {
+  background: color-mix(in srgb, var(--bw-surface-panel) 88%, transparent) !important;
+  border-color: color-mix(in srgb, var(--bw-border-subtle) 92%, transparent) !important;
+  color: var(--bw-text-title) !important;
+  box-shadow: none !important;
+}
+
+.commissionerPanel .squadRailPill.commissionerActionSecondary:hover,
+.commissionerPanel .squadRailPill.commissionerAdminRow:hover,
+.commissionerPanel .squadRailPill.moreActionsToggle:hover {
+  background: color-mix(in srgb, var(--bw-surface-panel-strong) 92%, transparent) !important;
+  border-color: color-mix(in srgb, var(--bw-border-card) 86%, transparent) !important;
+}
+
+.commissionerPanel .squadRailPill.commissionerActionPrimary {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 96%, transparent), color-mix(in srgb, var(--color-primary) 78%, var(--color-warning) 22%)) !important;
+  border-color: color-mix(in srgb, var(--color-primary) 56%, white) !important;
+  color: var(--color-white) !important;
+}
+
+.commissionerPanel .squadRailPill.commissionerActionPrimary:hover {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 90%, white), color-mix(in srgb, var(--color-primary) 82%, var(--color-warning) 18%)) !important;
+}
+
+.commissionerPanel .squadRailPill.moreActionsToggle {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.moreActionsMenu {
+  gap: 0.25rem;
+  margin-top: 0.1rem;
+  padding: 0.34rem;
+  border-radius: 10px;
+  border-color: color-mix(in srgb, var(--bw-border-subtle) 88%, transparent);
+  background: color-mix(in srgb, var(--bw-surface-panel) 92%, transparent);
+}
+
+.moreActionItem {
+  padding: 0.42rem 0.55rem;
+  font-size: 0.8rem;
+  border-color: color-mix(in srgb, var(--bw-border-subtle) 88%, transparent);
+  background: color-mix(in srgb, var(--bw-surface-card) 92%, transparent);
+  color: var(--bw-text-title);
+}
+
+.moreActionItem:hover:not(:disabled),
+.moreActionItem:focus-visible:not(:disabled) {
+  background: color-mix(in srgb, var(--bw-surface-panel-strong) 94%, transparent);
+  border-color: var(--bw-border-card);
+}
+
+.moreActionItemDanger {
+  background: color-mix(in srgb, var(--color-error) 12%, var(--bw-surface-card) 88%) !important;
+  border-color: color-mix(in srgb, var(--color-error) 34%, transparent) !important;
+  color: color-mix(in srgb, var(--color-error) 78%, var(--bw-text-title)) !important;
+}
+
+.moreActionItemDanger:hover:not(:disabled),
+.moreActionItemDanger:focus-visible:not(:disabled) {
+  background: color-mix(in srgb, var(--color-error) 16%, var(--bw-surface-card) 84%) !important;
+}
+
+.commissionerPanel .commissionerAdminRow {
+  padding-top: 0.58rem;
+  padding-bottom: 0.58rem;
+  font-size: 0.84rem;
+}
+
+.commissionerPanel .commissionerActionSecondary {
+  font-size: 0.84rem;
+}
+
+.commissionerPanel .squadRailPill.moreActionInlineDanger {
+  background: color-mix(in srgb, var(--color-error) 12%, var(--bw-surface-panel) 88%) !important;
+  border-color: color-mix(in srgb, var(--color-error) 34%, transparent) !important;
+  color: color-mix(in srgb, var(--color-error) 78%, var(--bw-text-title)) !important;
+  box-shadow: none !important;
+}
+
+.commissionerPanel .squadRailPill.moreActionInlineDanger:hover {
+  background: color-mix(in srgb, var(--color-error) 16%, var(--bw-surface-panel) 84%) !important;
+  border-color: color-mix(in srgb, var(--color-error) 48%, transparent) !important;
+}
+
+.summaryCardActionable:active,
+.squadRailPill:active,
+.moreActionItem:active,
+.progressPrimaryAction:active {
+  transform: translateY(0);
+}
+
+.heroStatusChipPending {
+  border-color: rgba(148, 156, 170, 0.42);
+  background: rgba(105, 112, 122, 0.14);
+  color: rgba(231, 227, 218, 0.9);
+}
+
+.heroStatusChipActive {
+  border-color: rgba(232, 154, 79, 0.44);
+  background: rgba(185, 118, 55, 0.16);
+  color: rgba(247, 225, 201, 0.95);
+}
+
+.heroStatusChipComplete {
+  border-color: rgba(101, 170, 121, 0.44);
+  background: rgba(78, 132, 93, 0.18);
+  color: rgba(210, 238, 217, 0.94);
+}
+
+.heroStatusChipAlert {
+  border-color: rgba(199, 138, 72, 0.48);
+  background: rgba(124, 78, 43, 0.22);
+  color: rgba(253, 227, 197, 0.96);
+}
+
+.heroStatusAlertIcon {
+  width: 15px;
+  height: 15px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 800;
+  color: rgba(35, 18, 8, 0.95);
+  background: rgba(235, 170, 101, 0.9);
+  border: 1px solid rgba(255, 210, 164, 0.82);
+}
+
+.additionalBracketsRow {
+  gap: 0.32rem;
+}
+
+.bracketRulesCard .bracketInfoLabel {
+  text-transform: none;
+  letter-spacing: 0.01em;
+  font-size: 0.84rem;
+  color: rgba(226, 218, 205, 0.9);
+}
+
+.bracketRulesCard .bracketInfoRow {
+  min-height: 38px;
+  padding: 0.5rem 0;
+  border-bottom-color: rgba(255, 255, 255, 0.05);
+}
+
+.bracketRulesCard .bracketInfoValue {
+  font-weight: 600;
+}
+
+.bracketRulesCard .statusBadge {
+  min-height: 24px;
+}
+
+@media (max-width: 1320px) {
+  .summaryCardsBand {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 960px) {
+  .summaryCardsBand {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .additionalBracketsRow {
+    grid-template-columns: 1fr;
+  }
+
+  .additionalBracketsRow .bracketInfoValue {
+    justify-self: start;
+    text-align: left;
+  }
+
+  .bracketInfoRow {
+    grid-template-columns: 1fr;
+    gap: 0.3rem;
+  }
+
+  .bracketInfoValue,
+  .statusBadge {
+    justify-self: start;
+    text-align: left;
+  }
+}
+
+@media (max-width: 1100px) {
+  .bracketRulesCard .additionalBracketsRow {
+    grid-template-columns: 1fr;
+  }
+
+  .bracketRulesCard .additionalBracketsRow .bracketInfoValue {
+    justify-self: start;
+    text-align: left;
+  }
+}
+
+@media (max-width: 640px) {
+  .summaryCardsBand {
+    grid-template-columns: 1fr;
+  }
+
+  .summaryCard {
+    min-height: 118px;
+  }
+
+  .heroMetaCompact,
+  .heroSummaryLine {
+    gap: 0.3rem;
+    font-size: 0.76rem;
+  }
+
+  .progressCard {
+    padding: 0.68rem;
+  }
+
+  .progressPrimaryAction {
+    justify-self: stretch;
+    width: 100%;
+  }
 }
 

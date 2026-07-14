@@ -214,6 +214,8 @@ export default function SignupModal({ mode = 'modal', isOpen = false, onClose, o
           <SignupUsernameFieldSection
             containerClassName={styles.field}
             labelClassName="surface-authLabel"
+            placeholder="Pick a unique username"
+            ariaLabel="Username"
             value={username}
             onChange={value => {
               clearTransientFeedback();
@@ -233,7 +235,7 @@ export default function SignupModal({ mode = 'modal', isOpen = false, onClose, o
             <div className="surface-authHint surface-authHintSuccess">Username available</div>
           )}
           {usernameAvailable === null && !checkingUsername && (
-            <p className={styles.fieldHint}>Use a unique name - not your email address</p>
+            <p className={styles.fieldHint}>Use a unique name. Do not use your email address.</p>
           )}
 
           {/* Organization */}
@@ -246,7 +248,7 @@ export default function SignupModal({ mode = 'modal', isOpen = false, onClose, o
                 clearTransientFeedback();
                 updateValue('organization', e.target.value);
               }}
-              placeholder="Organization name"
+              placeholder="League, center, or event name"
               className="surface-authInput"
             />
           </div>
@@ -261,6 +263,7 @@ export default function SignupModal({ mode = 'modal', isOpen = false, onClose, o
                 clearTransientFeedback();
                 updateValue('email', e.target.value);
               }}
+              placeholder="you@example.com"
               required
               className={inputClass(fieldValidity.email)}
             />
@@ -369,6 +372,7 @@ export default function SignupModal({ mode = 'modal', isOpen = false, onClose, o
               {loading ? 'Creating...' : 'Create Account'}
             </button>
           </div>
+          <p className={styles.submitHelper}>All fields marked * are required.</p>
           <p className={styles.loginPrompt}>
             Already have an account?{' '}
             <button type="button" onClick={handleLoginIntent} className={styles.loginLink}>

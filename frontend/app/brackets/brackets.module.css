@@ -97,6 +97,46 @@
   margin: 0;
 }
 
+.bracketsQuickActionsRow {
+  gap: 0.5rem;
+}
+
+@media (max-width: 640px) {
+  .bracketsQuickActionsRow {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 0.44rem;
+  }
+
+  .bracketsQuickActionsGroupLeft {
+    display: grid;
+    grid-column: 1 / span 2;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.44rem;
+    width: 100%;
+  }
+
+  .bracketsQuickActionsGroupRight {
+    display: grid;
+    grid-column: 3;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.44rem;
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .bracketsQuickActionsRow :where(button, a) {
+    width: 100%;
+    min-height: 32px;
+    justify-content: center;
+    padding: 0.34rem 0.46rem;
+    font-size: 0.72rem;
+    line-height: 1.1;
+    text-align: center;
+  }
+}
+
 /* ========================================
    Header Action Buttons
    ======================================== */
@@ -232,12 +272,28 @@
 
 @media (max-width: 640px) {
   .pageContainer {
-    padding: 0.6rem 0.3rem 0.9rem;
+    padding: 0.46rem 0.18rem 0.82rem;
   }
 
   .controlPanel {
-    margin-bottom: 1rem;
+    margin-bottom: 0.78rem;
     border-radius: 12px;
+  }
+
+  .bracketNav {
+    padding: 0.42rem 0.58rem;
+    justify-content: flex-end;
+  }
+
+  .navBtns {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .navBtn {
+    min-height: 30px;
+    padding: 0.32rem 0.62rem;
+    font-size: 0.72rem;
   }
 }
 
@@ -571,6 +627,64 @@
     padding: 0.65rem 0.75rem;
   }
 
+  .mobileBracketList {
+    gap: 0.72rem;
+  }
+
+  .mobileBracketSection {
+    gap: 0.44rem;
+  }
+
+  .mobileBracketSectionTitle {
+    padding-inline: 0.16rem;
+    font-size: 0.72rem;
+  }
+
+  .mobileBracketSectionList {
+    gap: 0.44rem;
+  }
+
+  .mobileBracketListItem {
+    padding: 0.62rem 0.68rem;
+    border-radius: 16px;
+  }
+
+  .mobileBracketListTitle {
+    font-size: 0.82rem;
+    line-height: 1.15;
+  }
+
+  .mobileBracketListMode {
+    padding: 0.2rem 0.45rem;
+    font-size: 0.64rem;
+  }
+
+  .mobileBracketListMeta {
+    margin-top: 0.24rem;
+    font-size: 0.68rem;
+    line-height: 1.3;
+  }
+
+  .mobileTreeViewWrap {
+    gap: 0.55rem;
+  }
+
+  .mobileTreeHeader {
+    gap: 0.35rem;
+    padding-inline: 0.12rem;
+  }
+
+  .mobileTreeBackBtn {
+    min-height: 32px;
+    padding: 0.32rem 0.7rem;
+    font-size: 0.72rem;
+  }
+
+  .mobileTreeTitle {
+    font-size: 0.74rem;
+    line-height: 1.25;
+  }
+
 }
 
 /* Page text normalization */
@@ -632,5 +746,68 @@
 @media (max-width: 560px) {
   .mobileBracketSectionList {
     grid-template-columns: 1fr;
+  }
+
+  .pageContainer {
+    padding: 0.56rem 0.45rem 0.9rem;
+  }
+
+  .controlPanel {
+    margin-bottom: 0.72rem;
+    border-radius: 14px;
+  }
+
+  .mobileBracketList {
+    gap: 0.62rem;
+  }
+
+  .mobileBracketListItem {
+    padding: 0.58rem 0.62rem;
+  }
+
+  .mobileBracketListTitleRow {
+    gap: 0.5rem;
+  }
+
+  .mobileBracketListTitle {
+    font-size: 0.8rem;
+  }
+
+  .mobileBracketListMeta {
+    font-size: 0.66rem;
+  }
+
+  .mobileTreeBackBtn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 390px) {
+  .pageContainer {
+    padding: 0.48rem 0.35rem 0.82rem;
+  }
+
+  .mobileBracketSectionTitle {
+    font-size: 0.68rem;
+  }
+
+  .mobileBracketListItem {
+    padding: 0.52rem 0.56rem;
+    border-radius: 14px;
+  }
+
+  .mobileBracketListTitle {
+    font-size: 0.76rem;
+  }
+
+  .mobileBracketListMode {
+    padding: 0.18rem 0.4rem;
+    font-size: 0.6rem;
+  }
+
+  .mobileBracketListMeta,
+  .mobileTreeTitle {
+    font-size: 0.64rem;
   }
 }

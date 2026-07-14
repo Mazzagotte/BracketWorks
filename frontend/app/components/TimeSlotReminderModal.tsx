@@ -41,7 +41,7 @@ export function TimeSlotReminderModal() {
           </p>
           <div className={styles.actions}>
             <button type="button" className={`surface-primaryCta ${styles.primaryButton}`} onClick={() => setOpen(false)}>
-              Got it
+              Close
             </button>
           </div>
         </div>

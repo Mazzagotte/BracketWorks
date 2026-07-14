@@ -14,6 +14,40 @@
   padding: 4px 6px 8px;
 }
 
+.embeddedShell {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  color: var(--bw-text-body);
+  --settings-card-primary: var(--bw-surface-card);
+  --settings-card-secondary: var(--bw-surface-panel);
+  --settings-card-utility: color-mix(in srgb, var(--bw-surface-panel) 72%, transparent);
+  --dash-surface: color-mix(in srgb, var(--bw-surface-card) 88%, transparent);
+  --dash-border: var(--bw-border-subtle);
+  --dash-shadow: var(--bw-shadow-card);
+  --dash-border-faint: color-mix(in srgb, var(--bw-border-subtle) 55%, transparent);
+  --dash-border-soft: color-mix(in srgb, var(--bw-border-subtle) 72%, transparent);
+  --dash-surface-soft: color-mix(in srgb, var(--bw-surface-panel) 78%, transparent);
+  --dash-surface-strong: color-mix(in srgb, var(--bw-surface-panel-strong) 82%, transparent);
+  --dash-surface-deep: color-mix(in srgb, var(--bw-surface-card) 84%, transparent);
+  --dash-input-surface: color-mix(in srgb, var(--bw-surface-card) 72%, var(--bw-surface-panel));
+  --dash-input-surface-disabled: color-mix(in srgb, var(--bw-surface-card-strong) 68%, transparent);
+  --dash-text-title: var(--bw-text-title);
+  --dash-text-body: var(--bw-text-body);
+  --dash-text-muted: var(--bw-text-muted);
+  --dash-text-faint: var(--bw-text-faint);
+  --dash-text-accent: var(--bw-text-accent);
+  --dash-text-success: var(--bw-text-success);
+  --dash-accent-soft: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  --dash-accent-panel: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  --dash-accent-border: color-mix(in srgb, var(--color-primary) 28%, transparent);
+  --dash-accent-border-strong: color-mix(in srgb, var(--color-primary) 62%, transparent);
+  --dash-success-soft: color-mix(in srgb, var(--color-success) 10%, transparent);
+  --dash-success-border: var(--color-success-border);
+  --dash-danger-soft: var(--color-error-bg-soft);
+  --dash-danger-border: var(--color-error-border);
+}
+
 .pageShellModal .pageHeader,
 .pageShellModal .pageTitle,
 .pageShellModal .pageSubtitle {

@@ -106,3 +106,23 @@
   filter: brightness(1.06);
   box-shadow: none;
 }
+
+@media (max-width: 640px) {
+  .body {
+    padding: 0.82rem;
+  }
+
+  .message {
+    font-size: 0.82rem;
+    line-height: 1.45;
+  }
+
+  .actions {
+    margin-top: 0.82rem;
+  }
+
+  .okButton {
+    min-height: 40px;
+    font-size: 0.76rem;
+  }
+}
