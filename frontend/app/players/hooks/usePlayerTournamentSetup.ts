@@ -130,7 +130,13 @@ export function usePlayerTournamentSetup({
         )
 
         const selectedData = bootstrap?.selected_squad ?? null
-        const squadsData = bootstrap?.squads ?? []
+        const squadsData = (bootstrap?.squads ?? []).map(squad => ({
+          id: squad.id,
+          name: squad.name ?? '',
+          tournament_id: squad.tournament_id,
+          date: squad.date,
+          time: squad.time,
+        }))
 
         if (bootstrap?.tournament) {
           setSelectedTournament(bootstrap.tournament)
