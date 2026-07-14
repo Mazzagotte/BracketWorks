@@ -1772,7 +1772,7 @@ export default function TournamentDashboard() {
     return `${Math.round((count / statsEntrySummary.totalEntries) * 100)}% of entries`;
   }, [statsEntrySummary.totalEntries]);
 
-  const tournamentSummaryCards = useMemo(() => {
+  const tournamentSummaryCards = useMemo<Array<{ key: string; label: string; value: string; helperPrimary?: string; helperSecondary?: string; accent?: boolean; href: string }>>(() => {
     const handicapCount = entriesProgramCountByKey.handicap ?? 0;
     const scratchCount = entriesProgramCountByKey.scratch ?? 0;
     const reverseScratchCount = entriesProgramCountByKey.reverse_scratch ?? 0;

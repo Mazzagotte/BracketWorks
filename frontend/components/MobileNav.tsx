@@ -135,7 +135,7 @@ export function MobileNav({ isOpen, onClose, firstName, currentPage }: MobileNav
         onClose={() => setIsShareQROpen(false)}
         tournamentId={Number.parseInt(tournamentId || '0', 10)}
         tournamentName={activeTournament || 'Tournament'}
-        publicUrl={sharePublicUrl}
+        publicUrl={sharePublicUrl ?? undefined}
       />
 
       <div
