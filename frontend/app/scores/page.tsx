@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Tournament, Squad, Player, ScoreData, PendingScoreSave } from '../lib/types'
+import { Tournament, Squad, Player, ScoreData, TournamentBootstrapResponse } from '../lib/types'
 import { SortConfig, SortableScoreColumn } from './types'
 import { SortableHeader } from '../components/SortableHeader'
 
@@ -34,14 +34,18 @@ import { getSelectedSquadId, getSelectedTournamentId, setSelectedSquad as persis
 import { storage } from '../lib/storage'
 import { getPayoutUnlockKey, getScoresLockKey } from '../lib/storageKeys'
 import ExplainScoresModal from './ExplainScoresModal'
-
-
-type TournamentBootstrapResponse = {
-  tournament: Tournament | null;
-  squads: Squad[];
-  selected_squad: { squad_id: number } | null;
-};
-
+import {
+  buildScoresExcelBuffer,
+  calculateDisplayTotal,
+  calculateTotalScratch,
+  calculateTotalWithHandicap,
+  getGameTotal,
+  normalizeHeader,
+  parsePlayerId,
+  parseScoreNumber,
+  parseScoresExcelFile,
+} from './utils/scoreUtils'
+import { useOfflineScoreSync } from './hooks/useOfflineScoreSync'
 
 
 export default function ScoresPage() {
@@ -67,8 +71,6 @@ export default function ScoresPage() {
   const [tournament, setTournament] = useState<Tournament | null>(null)
   const [selectedSquad, setSelectedSquad] = useState<Squad | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [isOnline, setIsOnline] = useState(true)
-  const [pendingSaves, setPendingSaves] = useState<PendingScoreSave[]>([])
   const [isMobile, setIsMobile] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
@@ -105,6 +107,7 @@ export default function ScoresPage() {
 
   // Enhanced UX hooks
   const { addToast } = useToast()
+  const { isOnline, pendingSaves, setPendingSaves, processPendingSaves } = useOfflineScoreSync({ addToast })
 
   const unlockPayoutsAndGo = useCallback(() => {
     const tournamentId = tournament?.id ?? null
@@ -312,71 +315,6 @@ export default function ScoresPage() {
     delay: 2000
   })
 
-  const processPendingSaves = useCallback(async () => {
-    const saves = [...pendingSaves]
-    setPendingSaves([])
-
-    for (const saveData of saves) {
-      try {
-        const response = await apiFetch(API('/api/v1/scores/'), {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${saveData.authToken}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(saveData.data)
-        })
-
-        if (!response.ok) {
-          // Re-queue failed saves
-          setPendingSaves(prev => [...prev, saveData])
-        }
-      } catch (error) {
-        // Re-queue failed saves
-        setPendingSaves(prev => [...prev, saveData])
-      }
-    }
-
-    if (pendingSaves.length === 0) {
-      addToast({
-        message: 'All offline scores have been synchronized!',
-        type: 'success',
-        duration: 3000
-      })
-    }
-  }, [pendingSaves, addToast])
-
-  // Online/offline detection
-  useEffect(() => {
-    const handleOnline = () => {
-      setIsOnline(true)
-      // Process pending saves when back online
-      if (pendingSaves.length > 0) {
-        processPendingSaves()
-      }
-    }
-
-    const handleOffline = () => {
-      setIsOnline(false)
-      addToast({
-        message: 'You are offline. Scores will be saved when connection is restored.',
-        type: 'warning',
-        duration: 5000
-      })
-    }
-
-    window.addEventListener('online', handleOnline)
-    window.addEventListener('offline', handleOffline)
-
-    // Check initial status
-    setIsOnline(navigator.onLine)
-
-    return () => {
-      window.removeEventListener('online', handleOnline)
-      window.removeEventListener('offline', handleOffline)
-    }
-  }, [pendingSaves, addToast, processPendingSaves])
-
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth <= 900);
     checkMobile();
@@ -473,28 +411,6 @@ export default function ScoresPage() {
     })
   }, [sessionToken, addToast])
 
-  const normalizeHeader = (h: string) => h.trim().toLowerCase().replace(/[_\s\-#]+/g, '')
-
-  const parseScoreNumber = (value: unknown): number | undefined => {
-    if (value === null || value === undefined) return undefined
-    const raw = String(value).trim()
-    if (raw === '') return undefined
-    const parsed = Number(raw)
-    if (!Number.isFinite(parsed)) return undefined
-    const rounded = Math.round(parsed)
-    if (rounded < 0 || rounded > 300) return undefined
-    return rounded
-  }
-
-  const parsePlayerId = (value: unknown): number | undefined => {
-    if (value === null || value === undefined) return undefined
-    const raw = String(value).trim()
-    if (raw === '') return undefined
-    const parsed = Number(raw)
-    if (!Number.isInteger(parsed) || parsed <= 0) return undefined
-    return parsed
-  }
-
   const handleExportScoresToExcel = useCallback(async () => {
     if (players.length === 0) {
       addToast({ message: 'No scores to export.', type: 'warning', duration: 3000 })
@@ -503,50 +419,15 @@ export default function ScoresPage() {
 
     setIsExporting(true)
     try {
-      const { Workbook } = await import('exceljs')
-      const rows = sortedPlayers.map(player => ({
-        'Player ID': player.id,
-        'First Name': player.firstName || '',
-        'Last Name': player.lastName || '',
-        'Lane': player.lane || '',
-        'Average': Number(player.average || 0),
-        'Handicap': Number(player.handicap || 0),
-        'Game 1 Scratch': player.scores?.game1_scratch ?? '',
-        'Game 2 Scratch': player.scores?.game2_scratch ?? '',
-        'Game 3 Scratch': player.scores?.game3_scratch ?? '',
-        'Total Scratch': calculateTotalScratch(player),
-        'Total With Handicap': calculateDisplayTotal(player),
-      }))
-
-      const workbook = new Workbook()
-      const worksheet = workbook.addWorksheet('Scores')
-      if (rows.length > 0) {
-        const firstRow = rows[0]
-        if (firstRow) {
-          worksheet.columns = Object.keys(firstRow).map(key => ({ header: key, key }))
-        }
-        worksheet.addRows(rows)
-      }
-
-      const safeTournament = (tournament?.name || 'scores')
-        .replace(/[^a-zA-Z0-9\-_ ]+/g, '')
-        .trim()
-        .replace(/\s+/g, '_') || 'scores'
-      const safeSquad = selectedSquad
-        ? `${selectedSquad.date || ''}_${selectedSquad.time || ''}`.replace(/[^a-zA-Z0-9\-_ ]+/g, '').trim().replace(/\s+/g, '_')
-        : 'all_squads'
-      const dateStamp = new Date().toISOString().slice(0, 10)
-      const fileName = `${safeTournament}_${safeSquad}_scores_${dateStamp}.xlsx`
-
-      const xlsxBuffer = await workbook.xlsx.writeBuffer()
-      const blob = new Blob([xlsxBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+      const { buffer, fileName, rowCount } = await buildScoresExcelBuffer(sortedPlayers, tournament, selectedSquad)
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
       a.download = fileName
       a.click()
       URL.revokeObjectURL(url)
-      addToast({ message: `Exported ${rows.length} score row${rows.length !== 1 ? 's' : ''}.`, type: 'success', duration: 3000 })
+      addToast({ message: `Exported ${rowCount} score row${rowCount !== 1 ? 's' : ''}.`, type: 'success', duration: 3000 })
     } catch (err) {
       addToast({ message: `Failed to export Excel file: ${err instanceof Error ? err.message : 'Unknown error'}`, type: 'error', duration: 5000 })
     } finally {
@@ -574,65 +455,11 @@ export default function ScoresPage() {
         return
       }
 
-      const { Workbook } = await import('exceljs')
-      const buffer = await file.arrayBuffer()
-      const workbook = new Workbook()
-      await workbook.xlsx.load(buffer)
-      const worksheet = workbook.worksheets[0]
-      if (!worksheet) {
-        addToast({ message: 'Excel file has no sheets.', type: 'error', duration: 4000 })
-        return
-      }
-      const headers: string[] = []
-      const rawRows: Record<string, unknown>[] = []
-      worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
-        const cells = (row.values as unknown[]).slice(1)
-        if (rowNumber === 1) {
-          cells.forEach(cell => headers.push(String(cell ?? '')))
-        } else {
-          const obj: Record<string, unknown> = {}
-          headers.forEach((header, i) => { obj[header] = cells[i] ?? '' })
-          rawRows.push(obj)
-        }
-      })
-      if (rawRows.length === 0) {
+      const parsedRows = await parseScoresExcelFile(file)
+      if (parsedRows.length === 0) {
         addToast({ message: 'No score rows found in file.', type: 'warning', duration: 3000 })
         return
       }
-
-      type ImportRow = {
-        playerId?: number
-        firstName: string
-        lastName: string
-        game1_scratch?: number
-        game2_scratch?: number
-        game3_scratch?: number
-      }
-
-      const parsedRows: ImportRow[] = rawRows.map(rawRow => {
-        const normalized: Record<string, unknown> = {}
-        for (const [key, value] of Object.entries(rawRow)) {
-          normalized[normalizeHeader(key)] = value
-        }
-
-        const fullName = String(normalized.name || normalized.bowlername || '').trim()
-        let firstName = String(normalized.firstname || normalized.first || '').trim()
-        let lastName = String(normalized.lastname || normalized.last || '').trim()
-        if ((!firstName || !lastName) && fullName) {
-          const parts = fullName.split(/\s+/).filter(Boolean)
-          firstName = firstName || parts[0] || ''
-          lastName = lastName || parts.slice(1).join(' ')
-        }
-
-        return {
-          playerId: parsePlayerId(normalized.playerid || normalized.id || normalized.bowlerid),
-          firstName,
-          lastName,
-          game1_scratch: parseScoreNumber(normalized.game1scratch),
-          game2_scratch: parseScoreNumber(normalized.game2scratch),
-          game3_scratch: parseScoreNumber(normalized.game3scratch),
-        }
-      })
 
       const byId = new Map(playersRef.current.map(player => [player.id, player]))
       const byName = new Map(
@@ -1291,35 +1118,6 @@ export default function ScoresPage() {
     void updateScore(lastEdit.playerId, lastEdit.field, lastEdit.previous, { trackHistory: false, moveNextOnMobile: false })
     setLastEdit(null)
   }, [lastEdit, updateScore])
-
-  const calculateTotalScratch = (player: Player) => {
-    const scores = player.scores || {}
-    return (scores.game1_scratch || 0) + (scores.game2_scratch || 0) + (scores.game3_scratch || 0)
-  }
-
-  const calculateTotalWithHandicap = (player: Player) => {
-    const scores = player.scores || {}
-    const scratch = (scores.game1_scratch || 0) + (scores.game2_scratch || 0) + (scores.game3_scratch || 0)
-    const gamesPlayed = [scores.game1_scratch, scores.game2_scratch, scores.game3_scratch].filter(s => s !== undefined && s !== null).length
-    return scratch + ((player.handicap ?? 0) * gamesPlayed)
-  }
-
-  const getGameTotal = (scratchScore: number | undefined, handicap: number | undefined) => {
-    const handicapValue = handicap ?? 0
-    if (scratchScore === undefined || scratchScore === null) {
-      return handicapValue > 0 ? `+${handicapValue} handicap` : ''
-    }
-    return `${scratchScore + handicapValue} total`
-  }
-
-  const calculateDisplayTotal = (player: Player) => {
-    const scores = player.scores || {}
-    const games = [scores.game1_scratch, scores.game2_scratch, scores.game3_scratch]
-    const played = games.filter(s => s !== undefined && s !== null)
-    if (played.length === 0) return ''
-    const scratch = played.reduce((sum, s) => sum + (s || 0), 0)
-    return scratch + ((player.handicap ?? 0) * played.length)
-  }
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent, playerId: number, field: string) => {
     if (isScoresLocked) {

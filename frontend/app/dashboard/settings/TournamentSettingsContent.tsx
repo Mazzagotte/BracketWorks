@@ -15,6 +15,7 @@ import { isHandheldViewport } from '../../lib/responsive';
 import { defaultBracketPrograms, normalizeBracketPrograms } from '../../lib/bracketPrograms';
 import { formatIsoDateFull } from '../../lib/formatters';
 import { getErrorContext } from '../../lib/error-utils';
+import { BRACKET_SETTINGS_AUTOSAVE_DELAY_MS, getSidePotsStorageKey } from '../../lib/dashboard-settings';
 
 const createDefaultBracketSettings = (tournamentId = 0): BracketSettings => ({
   tournament_id: tournamentId,
@@ -42,8 +43,6 @@ const createDefaultSidePots = (tournamentId = 0): SidePotsSettings => ({
   prize_amount: 0,
   pots: DEFAULT_SIDE_POTS.map(p => ({ ...p })),
 });
-
-const SIDE_POTS_STORAGE_KEY = (tournamentId: number) => `sidePots_${tournamentId}`;
 
 const parseCurrencyInput = (userInput: string): number => {
   const cleanedNumericString = userInput.replace(/[^0-9]/g, '');
@@ -95,8 +94,6 @@ export function TournamentSettingsContent({ tournamentId, layout = 'page' }: Tou
   }, [bracketSettings]);
 
   const projectedPayout = bracketSettings.first_place_amount + bracketSettings.second_place_amount;
-  const BRACKET_SETTINGS_AUTOSAVE_DELAY_MS = 600;
-
   const applyAutoHouse = useCallback((previous: BracketSettings, updates: Partial<BracketSettings>): BracketSettings => {
     const next = { ...previous, ...updates };
     const totalCost = next.bracket_size * next.default_entry_fee;
@@ -150,7 +147,7 @@ export function TournamentSettingsContent({ tournamentId, layout = 'page' }: Tou
 
   const saveSidePots = useCallback(
     (nextSidePots: SidePotsSettings) => {
-      const key = SIDE_POTS_STORAGE_KEY(tournamentId);
+      const key = getSidePotsStorageKey(tournamentId);
       storage.setItem(key, JSON.stringify(nextSidePots));
     },
     [tournamentId],
@@ -252,7 +249,7 @@ export function TournamentSettingsContent({ tournamentId, layout = 'page' }: Tou
           setBracketSettings(normalizedBracketSettings);
         }
 
-        const key = SIDE_POTS_STORAGE_KEY(tournamentId);
+        const key = getSidePotsStorageKey(tournamentId);
         const storedSidePots = storage.getItem(key);
         const loadedSidePots = storedSidePots
           ? JSON.parse(storedSidePots) as SidePotsSettings

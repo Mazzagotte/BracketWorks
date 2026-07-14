@@ -2,12 +2,13 @@
 
 import { useMemo, useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Tournament, Squad, BracketSettings, TournamentForm, SidePotsSettings, SidePot, Player } from '../lib/types';
+import { Tournament, Squad, BracketSettings, TournamentForm, SidePotsSettings, SidePot, Player, DashboardTournamentBootstrapResponse } from '../lib/types';
 
 import { useAuth } from '../lib/auth-context';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { getErrorMessage, getErrorContext } from '../lib/error-utils';
 import { storage } from '../lib/storage';
+import { BRACKET_SETTINGS_AUTOSAVE_DELAY_MS, getSidePotsStorageKey } from '../lib/dashboard-settings';
 import mobileStyles from './dashboard.module.css';
 import cardStyles from '../styles/cards.module.css';
 import shellStyles from '../styles/page-shell.module.css';
@@ -18,15 +19,12 @@ import { defaultBracketPrograms, normalizeBracketPrograms, summarizeEntries } fr
 import EnhancedButton from '../components/EnhancedButton';
 import { useToast } from '../components/Toast';
 import { usePagination } from '../components/Performance';
-import { FormField, Input, Select } from '../components/UI';
+import { Select } from '../components/UI';
 import ShareQRModal from '../components/ShareQRModal';
 import ActionConfirmDialog from '../components/ActionConfirmDialog';
 import NoTournamentState from '../components/NoTournamentState';
 import {
-  clearSelectedSquad,
   clearSelectedTournament,
-  getSelectedSquadId,
-  getSelectedTournamentId,
   notifySettingsChanged,
   setActiveSquadLabel,
   setSelectedSquad,
@@ -37,39 +35,17 @@ import ExplainDashboardModal from './ExplainDashboardModal';
 import { TournamentSettingsContent } from './settings/TournamentSettingsContent';
 import { setBodyInteractionState } from '../utils/modalUtils';
 import { formatIsoDateFull, formatIsoDateLong } from '../lib/formatters';
-
-function get12hrTimes() {
-  const makeGroup = (period: 'AM' | 'PM') => {
-    const slots: string[] = [];
-    // 12:xx comes first in each period, then 1–11
-    for (const hour of [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]) {
-      for (let minutes = 0; minutes < 60; minutes += 30) {
-        slots.push(`${hour}:${minutes.toString().padStart(2, '0')} ${period}`);
-      }
-    }
-    return slots;
-  };
-  return { am: makeGroup('AM'), pm: makeGroup('PM') };
-}
-const availableTimeOptions = get12hrTimes();
-const BRACKET_SETTINGS_AUTOSAVE_DELAY_MS = 600;
-// Show all AM and PM times
-
-const parseCurrencyInput = (userInput: string): number => {
-  // Remove all non-numeric characters
-  const cleanedNumericString = userInput.replace(/[^0-9]/g, '');
-  const parsedValue = parseInt(cleanedNumericString);
-  return isNaN(parsedValue) ? 0 : parsedValue;
-};
-
-const formatNumberInput = (numericValue: number): string => {
-  // Format for input display with commas but no $ symbol
-  return numericValue === 0 ? '' : Math.round(numericValue).toLocaleString('en-US');
-};
-
-const formatCurrencyLabel = (numericValue: number): string => {
-  return `$${Math.round(numericValue || 0).toLocaleString('en-US')}`;
-};
+import { EditTournamentModal } from './components/EditTournamentModal';
+import { normalizeSquadTimes } from './utils/tournamentForm';
+import { createDefaultSidePots, hydrateStoredSidePots } from './utils/sidePots';
+import { useTournamentOrchestration } from './hooks/useTournamentOrchestration';
+import {
+  applyAutoHouse,
+  calculateHouseAmount,
+  createDefaultBracketSettings,
+  normalizeLoadedBracketSettings,
+  validateBracketSettingsSplit,
+} from './utils/bracketSettings';
 
 const getErrorDetail = async (response: Response): Promise<string | null> => {
   try {
@@ -82,48 +58,6 @@ const getErrorDetail = async (response: Response): Promise<string | null> => {
     return null;
   }
   return null;
-};
-
-const createDefaultBracketSettings = (tournamentId = 0): BracketSettings => ({
-  tournament_id: tournamentId,
-  bracket_size: 8,
-  first_place_amount: 0,
-  second_place_amount: 0,
-  house_fee_amount: 0,
-  default_entry_fee: 0,
-  bracket_programs: defaultBracketPrograms,
-  handicap_percentage: 80,
-  handicap_base: 200,
-  allow_byes: false,
-})
-
-const DEFAULT_SIDE_POTS: SidePot[] = [
-  { key: 'high_game_scratch', name: 'High Game Scratch', enabled: false },
-  { key: 'high_series_scratch', name: 'High Series Scratch', enabled: false },
-  { key: 'high_game_handicap', name: 'High Game Handicap', enabled: false },
-  { key: 'high_series_handicap', name: 'High Series Handicap', enabled: false },
-]
-
-const createDefaultSidePots = (tournamentId = 0): SidePotsSettings => ({
-  tournament_id: tournamentId,
-  entry_fee: 0,
-  prize_amount: 0,
-  pots: DEFAULT_SIDE_POTS.map(p => ({ ...p })),
-})
-
-const SIDE_POTS_STORAGE_KEY = (tournamentId: number) => `sidePots_${tournamentId}`
-
-type TournamentBootstrapResponse = {
-  tournament: Tournament | null;
-  squads: Squad[];
-  selected_squad: { squad_id: number } | null;
-  bracket_settings: Partial<BracketSettings> | null;
-  workflow_status: {
-    status_squad_id: number | null;
-    has_generated_brackets: boolean;
-    payouts_finalized: boolean;
-    scores_locked: boolean;
-  } | null;
 };
 
 type DashboardCardKey = 'squadSelection' | 'bracketSettings' | 'byeSettings' | 'optionalBrackets' | 'sidePots';
@@ -144,271 +78,6 @@ const expandedDesktopCards: Record<DashboardCardKey, boolean> = {
   sidePots: true,
 };
 
-function getDatesBetween(startDate: string, endDate: string): string[] {
-  if (!startDate || !endDate) return [];
-  const dateList = [];
-  let currentDate = new Date(startDate);
-  const finalDate = new Date(endDate);
-  while (currentDate <= finalDate) {
-    dateList.push(currentDate.toISOString().slice(0, 10));
-    currentDate.setDate(currentDate.getDate() + 1);
-  }
-  return dateList;
-}
-
-function normalizeSquadTimes(squadTimes?: Record<string, string[]>): Record<string, string[]> {
-  return Object.fromEntries(
-    Object.entries(squadTimes || {})
-      .map(([date, times]) => [date, [...(times || [])].filter(Boolean).sort()] as [string, string[]])
-      .filter(([, times]) => times.length > 0)
-      .sort(([left], [right]) => left.localeCompare(right))
-  );
-}
-
-function normalizeTournamentForm(form: TournamentForm): TournamentForm {
-  return {
-    name: form.name || '',
-    location: form.location || '',
-    start_date: form.start_date || '',
-    end_date: form.end_date || '',
-    squad_times: normalizeSquadTimes(form.squad_times),
-  };
-}
-
-function EditTournamentModal({ open, onClose, tournament, onSave, isCreateMode }: {
-  open: boolean;
-  onClose: () => void;
-  tournament: Tournament | null;
-  onSave: (tournamentData: TournamentForm) => void;
-  isCreateMode: boolean;
-}) {
-  const [tournamentForm, setTournamentForm] = useState<TournamentForm>({
-    name: '',
-    location: '',
-    start_date: '',
-    end_date: '',
-    squad_times: {}
-  });
-  const [isSaving, setIsSaving] = useState(false);
-  const [validationError, setValidationError] = useState<string | null>(null);
-  const [pendingTimes, setPendingTimes] = useState<Record<string, string>>({});
-  const [savedSnapshot, setSavedSnapshot] = useState<TournamentForm>(normalizeTournamentForm({
-    name: '',
-    location: '',
-    start_date: '',
-    end_date: '',
-    squad_times: {},
-  }));
-
-  const buildInitialForm = useCallback((): TournamentForm => {
-    if (tournament) {
-      return normalizeTournamentForm({
-        name: tournament.name || '',
-        location: tournament.location || '',
-        start_date: tournament.start_date || '',
-        end_date: tournament.end_date || '',
-        squad_times: tournament.squad_times || {},
-      });
-    }
-
-    return normalizeTournamentForm({
-      name: '',
-      location: '',
-      start_date: '',
-      end_date: '',
-      squad_times: {},
-    });
-  }, [tournament]);
-
-  useEffect(() => {
-    if (!open) return;
-    const initial = buildInitialForm();
-    setTournamentForm(initial);
-    setSavedSnapshot(initial);
-    setPendingTimes({});
-    setValidationError(null);
-  }, [open, buildInitialForm]);
-
-  if (!open) return null;
-
-  const tournamentDays = getDatesBetween(tournamentForm.start_date || '', tournamentForm.end_date || '');
-  const hasUnsavedChanges = JSON.stringify(normalizeTournamentForm(tournamentForm)) !== JSON.stringify(savedSnapshot);
-  const totalSquadTimesAdded = Object.values(tournamentForm.squad_times || {}).reduce((sum, times) => sum + (times?.length || 0), 0);
-  const canSave = hasUnsavedChanges && !isSaving && Boolean(tournamentForm.name?.trim());
-
-  const handleCancel = () => {
-    setTournamentForm(savedSnapshot);
-    setValidationError(null);
-    onClose();
-  };
-
-  return (
-    <div className={`${mobileStyles.modalOverlay} ${mobileStyles.settingsModalOverlay}`}>
-      <form
-        className={`${mobileStyles.modalCard} ${mobileStyles.tournamentModalContent} ${isCreateMode ? mobileStyles.createTournamentModalContent : ''}`}
-        onSubmit={async submitEvent => {
-          submitEvent.preventDefault();
-          if (!hasUnsavedChanges) return;
-          setIsSaving(true);
-          setValidationError(null);
-          try {
-            await onSave(tournamentForm);
-            const normalized = normalizeTournamentForm(tournamentForm);
-            setSavedSnapshot(normalized);
-          } catch (err: unknown) {
-            setValidationError(getErrorMessage(err) || 'Failed to save.');
-          } finally {
-            setIsSaving(false);
-          }
-        }}
-      >
-        {validationError && (
-          <div className="error-message">{validationError}</div>
-        )}
-        <CloseControl
-          position="absolute"
-          onClick={onClose}
-          className={`${mobileStyles.closeBtn} ${mobileStyles.settingsModalCloseButton}`}
-          label="Close create tournament modal"
-          title="Close"
-          size="sm"
-        />
-        <div className={mobileStyles.modalHeader}>
-          <h2 className={mobileStyles.modalTitle}>{isCreateMode ? 'Create New Tournament' : 'Edit Tournament'}</h2>
-          <p className={mobileStyles.modalSubtitle}>
-            {isCreateMode
-              ? 'Set up tournament details, dates, and squad times.'
-              : 'Update tournament details, dates, and squad times.'}
-          </p>
-        </div>
-        <div className={mobileStyles.tournamentContentWrapper}>
-        <div className={mobileStyles.tournamentFormBody}>
-          <p className={mobileStyles.tournamentSectionLabel}>Tournament Details</p>
-          <div className={mobileStyles.tournamentFormFields}>
-            <FormField label="Tournament Name" required>
-              <Input
-                value={tournamentForm.name}
-                onChange={changeEvent => setTournamentForm(f => ({ ...f, name: changeEvent.target.value }))}
-                placeholder="Tournament name"
-                className={mobileStyles.tournamentInput}
-                required
-              />
-            </FormField>
-            <FormField label="Location">
-              <Input
-                value={tournamentForm.location || ''}
-                onChange={changeEvent => setTournamentForm(f => ({ ...f, location: changeEvent.target.value }))}
-                placeholder="Bowling center or event location"
-                className={mobileStyles.tournamentInput}
-              />
-            </FormField>
-            <p className={mobileStyles.tournamentSectionLabel}>Tournament Dates</p>
-            <div className={mobileStyles.tournamentDateRow}>
-              <FormField label="Start Date">
-                <Input
-                  type="date"
-                  value={tournamentForm.start_date || ''}
-                  onChange={changeEvent => setTournamentForm(f => ({ ...f, start_date: changeEvent.target.value }))}
-                  className={`${mobileStyles.tournamentInput} ${mobileStyles.tournamentDateInput}`}
-                />
-              </FormField>
-              <FormField label="End Date">
-                <Input
-                  type="date"
-                  value={tournamentForm.end_date || ''}
-                  onChange={changeEvent => setTournamentForm(f => ({ ...f, end_date: changeEvent.target.value }))}
-                  className={`${mobileStyles.tournamentInput} ${mobileStyles.tournamentDateInput}`}
-                />
-              </FormField>
-            </div>
-          </div>
-          <div className={mobileStyles.squadTimesSection}>
-            <div className={mobileStyles.squadTimesHeadingRow}>
-              <h3 className={mobileStyles.squadTimesTitle}>Squad Times</h3>
-              <span className={mobileStyles.squadTimesCount}>{totalSquadTimesAdded} added</span>
-            </div>
-            {tournamentDays.length === 0 && <p className={mobileStyles.noSquadDaysHint}>Select a start and end date to add squad times for each tournament day.</p>}
-            {tournamentDays.map(date => (
-              <div key={date} className={mobileStyles.squadDay}>
-                <div className={mobileStyles.squadDayLabel}>{formatIsoDateFull(date)}</div>
-                <div className={mobileStyles.squadTimesList}>
-                  {(tournamentForm.squad_times[date] || []).map((time, i) => (
-                    <div key={i} className={mobileStyles.squadTimeEntry}>
-                      <span className={mobileStyles.squadTimeText}>{time}</span>
-                      <button
-                        type="button"
-                        className={mobileStyles.squadTimeRemove}
-                        onClick={() => setTournamentForm(f => ({ ...f, squad_times: { ...f.squad_times, [date]: (f.squad_times[date] ?? []).filter((_, j) => j !== i) } }))}
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  ))}
-                  <div className={mobileStyles.squadTimeAddRow}>
-                    <select
-                      className={`entries-select ${mobileStyles.squadTimeSelect} ${mobileStyles.tournamentInput}`}
-                      value={pendingTimes[date] || ''}
-                      onChange={e => setPendingTimes(p => ({ ...p, [date]: e.target.value }))}
-                    >
-                      <option value="" disabled>Select time</option>
-                      <optgroup label="AM">
-                        {availableTimeOptions.am.map(timeOption => (
-                          <option key={timeOption} value={timeOption}>{timeOption}</option>
-                        ))}
-                      </optgroup>
-                      <optgroup label="PM">
-                        {availableTimeOptions.pm.map(timeOption => (
-                          <option key={timeOption} value={timeOption}>{timeOption}</option>
-                        ))}
-                      </optgroup>
-                    </select>
-                    <button
-                      type="button"
-                      className={mobileStyles.squadTimeAddBtn}
-                      onClick={() => {
-                        const pending = pendingTimes[date];
-                        if (pending) {
-                          setTournamentForm(f => ({ ...f, squad_times: { ...f.squad_times, [date]: [...(f.squad_times[date] || []), pending] } }));
-                          setPendingTimes(p => ({ ...p, [date]: '' }));
-                        }
-                      }}
-                    >
-                      + Add Squad Time
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className={mobileStyles.tournamentModalFooter}>
-          <div className={`${mobileStyles.tournamentSaveStatus} ${hasUnsavedChanges ? mobileStyles.tournamentSaveStatusDirty : mobileStyles.tournamentSaveStatusSaved}`}>
-            {hasUnsavedChanges ? 'Unsaved changes' : 'All changes saved'}
-          </div>
-          <div className={mobileStyles.tournamentModalFooterActions}>
-            <button
-              type="button"
-              className={mobileStyles.tournamentCancelButton}
-              onClick={handleCancel}
-              disabled={isSaving}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className={mobileStyles.tournamentSaveButton}
-              disabled={!canSave}
-            >
-              {isSaving ? 'Saving...' : (isCreateMode ? 'Create Tournament' : 'Save Changes')}
-            </button>
-          </div>
-        </div>
-        </div>
-      </form>
-    </div>
-  );
-}
-
 export default function TournamentDashboard() {
   // Authentication check - must be at the top
   const { isUserAuthenticated, isAuthInitialized } = useAuth();
@@ -422,7 +91,7 @@ export default function TournamentDashboard() {
   // All hooks must be called before conditional returns (React rules of hooks)
   const [isAdmin, setIsAdmin] = useState(false);
   const [tournament, setTournament] = useState<Tournament | null>(null);
-  const [workflowStatus, setWorkflowStatus] = useState<TournamentBootstrapResponse['workflow_status']>(null);
+  const [workflowStatus, setWorkflowStatus] = useState<DashboardTournamentBootstrapResponse['workflow_status']>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [createMode, setCreateMode] = useState(false);
   const [selectedSquadId, setSelectedSquadId] = useState<number | null>(null);
@@ -486,25 +155,8 @@ export default function TournamentDashboard() {
     setExpandedCards(isMobile ? collapsedMobileCards : expandedDesktopCards);
   }, [isMobile, tournament?.id]);
 
-  const calculateHouseAmount = useCallback((settings: Pick<BracketSettings, 'bracket_size' | 'default_entry_fee' | 'first_place_amount' | 'second_place_amount'>) => {
-    const bracketSize = Number(settings.bracket_size ?? 0);
-    const costPerBracket = Number(settings.default_entry_fee ?? 0);
-    const firstPlace = Number(settings.first_place_amount ?? 0);
-    const secondPlace = Number(settings.second_place_amount ?? 0);
-    return (bracketSize * costPerBracket) - firstPlace - secondPlace;
-  }, []);
-
-  const applyAutoHouse = useCallback((prev: BracketSettings, patch: Partial<BracketSettings>): BracketSettings => {
-    const next = { ...prev, ...patch };
-    return {
-      ...next,
-      house_fee_amount: calculateHouseAmount(next)
-    };
-  }, [calculateHouseAmount]);
-
   const computedHouseAmount = useMemo(() => calculateHouseAmount(bracketSettings), [
     bracketSettings,
-    calculateHouseAmount,
   ]);
 
   // Track when component is mounted to prevent premature auto-saves
@@ -515,23 +167,25 @@ export default function TournamentDashboard() {
     };
   }, []);
 
+  const showBracketSettingsSaveProblem = useCallback((message: string) => {
+    setSaveStatus('error');
+    setConfirmMsg(message);
+    setConfirmOpen(true);
+  }, []);
+
   // Save bracket settings
   const saveBracketSettings = async () => {
     // Prevent save if not mounted or missing tournament
     if (!isMountedRef.current || !tournament?.id) {
       if (tournament?.id) {
-        setSaveStatus('error');
-        setConfirmMsg('Please load a tournament first before saving bracket settings.');
-        setConfirmOpen(true);
+        showBracketSettingsSaveProblem('Please load a tournament first before saving bracket settings.');
       }
       return;
     }
     
     const token = storage.getItem('token');
     if (!token) {
-      setSaveStatus('error');
-      setConfirmMsg('Please log in to save bracket settings.');
-      setConfirmOpen(true);
+      showBracketSettingsSaveProblem('Please log in to save bracket settings.');
       return;
     }
 
@@ -539,40 +193,33 @@ export default function TournamentDashboard() {
     setSaveStatus('saving');
     const latestSettings = bracketSettingsRef.current;
 
-    // Enforce prize split integrity: 1st + 2nd + House must equal bracket_size * entry_fee
-    const bracketSize = Number(latestSettings.bracket_size ?? 0);
-    const costPerBracket = Number(latestSettings.default_entry_fee ?? 0);
-    const firstPlace = Number(latestSettings.first_place_amount ?? 0);
-    const secondPlace = Number(latestSettings.second_place_amount ?? 0);
-    const normalizedPrograms = normalizeBracketPrograms(latestSettings.bracket_programs, costPerBracket)
-    const houseAmount = calculateHouseAmount(latestSettings);
-    const expectedTotal = bracketSize * costPerBracket;
-    const actualTotal = firstPlace + secondPlace + houseAmount;
-
-    if (houseAmount < 0) {
+    const splitValidation = validateBracketSettingsSplit(latestSettings);
+    if (!splitValidation.ok && !splitValidation.validationKey) {
       setSaveStatus('error');
       addToast({
         type: 'warning',
-        message: 'Prize split invalid: 1st + 2nd cannot exceed Bracket Size x Entry Fee.',
+        message: splitValidation.message,
         duration: 6000
       });
       return;
     }
 
-    if (Math.abs(actualTotal - expectedTotal) > 0.009) {
+    if (!splitValidation.ok && splitValidation.validationKey) {
       setSaveStatus('error');
-      const validationKey = `${expectedTotal.toFixed(2)}|${actualTotal.toFixed(2)}`;
-      if (lastPrizeValidationKeyRef.current !== validationKey) {
+      if (lastPrizeValidationKeyRef.current !== splitValidation.validationKey) {
         addToast({
           type: 'warning',
-          message: `Prize split mismatch: 1st + 2nd + House ($${actualTotal.toFixed(2)}) must equal Bracket Size x Entry Fee ($${expectedTotal.toFixed(2)}).`,
+          message: splitValidation.message,
           duration: 6000
         });
-        lastPrizeValidationKeyRef.current = validationKey;
+        lastPrizeValidationKeyRef.current = splitValidation.validationKey;
       }
       return;
     }
     lastPrizeValidationKeyRef.current = '';
+
+    const normalizedPrograms = normalizeBracketPrograms(latestSettings.bracket_programs, Number(latestSettings.default_entry_fee ?? 0))
+    const houseAmount = splitValidation.houseAmount;
 
     try {
       const data = await apiClient.post<BracketSettings>('/api/v1/bracket-settings/', {
@@ -683,13 +330,7 @@ export default function TournamentDashboard() {
     try {
       const settings = await apiClient.get<BracketSettings>(`/api/v1/bracket-settings/${tournamentId}`, false);
       if (settings) {
-        return {
-          ...settings,
-          bracket_size: 8,
-          bracket_programs: normalizeBracketPrograms(settings.bracket_programs, settings.default_entry_fee),
-          handicap_percentage: settings.handicap_percentage ?? 80,
-          handicap_base: settings.handicap_base ?? 200,
-        };
+        return normalizeLoadedBracketSettings(settings, tournamentId);
       }
     } catch (error: unknown) {
       if (getErrorMessage(error).includes('404')) {
@@ -702,15 +343,6 @@ export default function TournamentDashboard() {
     return createDefaultBracketSettings(tournamentId);
   };
 
-  const fetchTournamentBootstrap = useCallback(async (tournamentId: number): Promise<TournamentBootstrapResponse | null> => {
-    try {
-      return await apiClient.get<TournamentBootstrapResponse>(`/api/v1/tournaments/bootstrap?tournament_id=${tournamentId}`, false);
-    } catch (error) {
-      logger.error('Failed to load tournament bootstrap data', { tournamentId, error: getErrorContext(error) });
-      return null;
-    }
-  }, []);
-
   // Load bracket settings
   const loadBracketSettings = async (tournamentId: number) => {
     const loaded = await fetchBracketSettingsData(tournamentId);
@@ -719,24 +351,11 @@ export default function TournamentDashboard() {
 
   const loadSidePots = useCallback((tournamentId: number) => {
     try {
-      const stored = storage.getItem(SIDE_POTS_STORAGE_KEY(tournamentId));
+      const stored = storage.getItem(getSidePotsStorageKey(tournamentId));
       if (stored) {
-        const parsed = JSON.parse(stored) as Partial<SidePotsSettings> & { pots?: Array<Partial<SidePot> & { entry_fee?: number }> };
-        // Merge stored pots against current defaults so new pots always appear
-        // and old per-pot entry_fee fields are ignored
-        const mergedPots = DEFAULT_SIDE_POTS.map(defaultPot => {
-          const savedPot = parsed.pots?.find(p => p.key === defaultPot.key);
-          return savedPot
-            ? { key: defaultPot.key, name: defaultPot.name, enabled: savedPot.enabled ?? false }
-            : { ...defaultPot };
-        });
-        // Top-level fields
-        const entry_fee = typeof parsed.entry_fee === 'number' && !isNaN(parsed.entry_fee) ? parsed.entry_fee : 0;
-        const prize_amount = typeof parsed.prize_amount === 'number' && !isNaN(parsed.prize_amount) ? parsed.prize_amount : 0;
-        const merged: SidePotsSettings = { tournament_id: tournamentId, entry_fee, prize_amount, pots: mergedPots };
+        const merged = hydrateStoredSidePots(stored, tournamentId);
         setSidePots(merged);
-        // Overwrite stale storage with the merged/clean shape
-        storage.setItem(SIDE_POTS_STORAGE_KEY(tournamentId), JSON.stringify(merged));
+        storage.setItem(getSidePotsStorageKey(tournamentId), JSON.stringify(merged));
       } else {
         setSidePots(createDefaultSidePots(tournamentId));
       }
@@ -746,7 +365,7 @@ export default function TournamentDashboard() {
   }, []);
 
   const saveSidePots = (next: SidePotsSettings) => {
-    storage.setItem(SIDE_POTS_STORAGE_KEY(next.tournament_id), JSON.stringify(next));
+    storage.setItem(getSidePotsStorageKey(next.tournament_id), JSON.stringify(next));
     notifySettingsChanged();
   };
 
@@ -832,6 +451,22 @@ export default function TournamentDashboard() {
       setSummaryPlayers([]);
     }
   }, []);
+
+  const { handleLoadTournament, handleUnloadTournament: unloadTournament } = useTournamentOrchestration({
+    tournament,
+    addToast,
+    setTournament,
+    setWorkflowStatus,
+    setSquads,
+    setSelectedSquadId,
+    setSquadEntryCounts,
+    setSummaryPlayers,
+    setBracketSettings,
+    setSidePots,
+    setLoadModalOpen,
+    loadSidePots,
+    loadSquadEntryCounts,
+  });
 
   const updateSidePot = (key: string, patch: Partial<SidePot>) => {
     setSidePots(prev => {
@@ -994,89 +629,11 @@ export default function TournamentDashboard() {
     return () => clearTimeout(timer);
   }, [isAuthInitialized, hasStoredAuthTokens]);
 
-  // Fetch tournaments and restore last loaded tournament from backend on mount - OPTIMIZED
+  // Read admin flag once on mount for tournament listing scope
   useEffect(() => {
     const adminFlag = storage.getItem('is_admin');
     setIsAdmin(adminFlag === '1' || adminFlag === 'true');
-    
-    // Batch read all localStorage data at once
-    const lastTournamentId = getSelectedTournamentId();
-    const token = storage.getItem('token');
-
-    if (lastTournamentId && token) {
-      const bootstrapStarted = performance.now();
-      fetchTournamentBootstrap(Number(lastTournamentId))
-        .then(bootstrap => {
-          const tournamentData = bootstrap?.tournament ?? null;
-          const squadsData = bootstrap?.squads ?? [];
-          const selectedSquadData = bootstrap?.selected_squad ?? null;
-          const loadedBracketSettings = bootstrap?.bracket_settings
-            ? {
-                ...createDefaultBracketSettings(Number(lastTournamentId)),
-                ...bootstrap.bracket_settings,
-                bracket_size: 8,
-                bracket_programs: normalizeBracketPrograms(
-                  bootstrap.bracket_settings.bracket_programs,
-                  bootstrap.bracket_settings.default_entry_fee,
-                ),
-                handicap_percentage: bootstrap.bracket_settings.handicap_percentage ?? 80,
-                handicap_base: bootstrap.bracket_settings.handicap_base ?? 200,
-              }
-            : createDefaultBracketSettings(Number(lastTournamentId));
-
-          const storedSelectedSquadId = getSelectedSquadId();
-          const restoredSelectedSquadId = selectedSquadData?.squad_id
-            ?? (storedSelectedSquadId ? Number(storedSelectedSquadId) : null)
-            ?? squadsData[0]?.id
-            ?? null;
-
-          // Set tournament and related state from the same startup batch.
-          if (tournamentData && tournamentData.id) {
-            setTournament(tournamentData);
-            setWorkflowStatus(bootstrap?.workflow_status ?? null);
-            setSelectedTournament(tournamentData.id, tournamentData.name);
-            setBracketSettings(prev => applyAutoHouse(prev, loadedBracketSettings));
-            loadSidePots(tournamentData.id);
-            void loadSquadEntryCounts(tournamentData.id, squadsData);
-          } else {
-            // Tournament no longer accessible — clear stale localStorage
-            clearSelectedTournament({ clearSquad: true });
-            setSquadEntryCounts({});
-            setWorkflowStatus(null);
-          }
-          
-          // Set squads data
-          setSquads(squadsData);
-          
-          // Set selected squad
-          if (restoredSelectedSquadId && squadsData.some((squad: Squad) => squad.id === restoredSelectedSquadId)) {
-            const restoredSquad = squadsData.find((squad: Squad) => squad.id === restoredSelectedSquadId) || null;
-            setSelectedSquadId(restoredSelectedSquadId);
-            setSelectedSquad(restoredSelectedSquadId);
-            setActiveSquadLabel(restoredSquad ? [restoredSquad.date, restoredSquad.time].filter(Boolean).join(' ') : '');
-          } else {
-            setSelectedSquadId(null);
-            clearSelectedSquad();
-          }
-
-          logger.info('Dashboard bootstrap load completed', {
-            tournamentId: Number(lastTournamentId),
-            durationMs: Math.round((performance.now() - bootstrapStarted) * 100) / 100,
-            squadsCount: squadsData.length,
-            hasSelectedSquad: Boolean(selectedSquadData?.squad_id),
-            hasBracketSettings: Boolean(bootstrap?.bracket_settings),
-          });
-        })
-        .catch(error => {
-          logger.error('Error loading initial dashboard data:', error);
-        });
-    } else {
-      // No stored tournament — clear any stale header strip data
-      clearSelectedSquad();
-      clearSelectedTournament();
-      setWorkflowStatus(null);
-    }
-  }, [applyAutoHouse, fetchTournamentBootstrap, loadSidePots, loadSquadEntryCounts]);
+  }, []);
 
   // Fetch tournaments when load modal opens
   useEffect(() => {
@@ -1117,95 +674,10 @@ export default function TournamentDashboard() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Load selected tournament
-  const handleLoadTournament = async (t: Tournament) => {
-    setTournament(t);
-    setWorkflowStatus(null);
-    setLoadModalOpen(false);
-    loadSidePots(t.id);
-    // Optionally, persist tournament id to localStorage for reload (not the full object)
-    setSelectedTournament(t.id, t.name);
-
-    // Load squads for this tournament
-    const token = storage.getItem('token');
-    if (token) {
-      try {
-        const bootstrap = await fetchTournamentBootstrap(t.id);
-        if (!bootstrap || !bootstrap.tournament) {
-          throw new Error('Tournament bootstrap payload missing');
-        }
-
-        const loadedBracketSettings = bootstrap.bracket_settings
-          ? {
-              ...createDefaultBracketSettings(t.id),
-              ...bootstrap.bracket_settings,
-              bracket_size: 8,
-              bracket_programs: normalizeBracketPrograms(
-                bootstrap.bracket_settings.bracket_programs,
-                bootstrap.bracket_settings.default_entry_fee,
-              ),
-              handicap_percentage: bootstrap.bracket_settings.handicap_percentage ?? 80,
-              handicap_base: bootstrap.bracket_settings.handicap_base ?? 200,
-            }
-          : createDefaultBracketSettings(t.id);
-        const squadsData = bootstrap.squads || [];
-        const selectedSquadData = bootstrap.selected_squad;
-
-        setTournament(bootstrap.tournament);
-        setWorkflowStatus(bootstrap.workflow_status ?? null);
-        setSelectedTournament(bootstrap.tournament.id, bootstrap.tournament.name);
-
-        setBracketSettings(prev => applyAutoHouse(prev, loadedBracketSettings));
-        setSquads(squadsData);
-        void loadSquadEntryCounts(t.id, squadsData);
-        
-          const storedSelectedSquadId = getSelectedSquadId();
-          const restoredSelectedSquadId = selectedSquadData?.squad_id
-          ?? (storedSelectedSquadId ? Number(storedSelectedSquadId) : null)
-          ?? squadsData[0]?.id
-          ?? null;
-
-        if (restoredSelectedSquadId && squadsData.some(squad => squad.id === restoredSelectedSquadId)) {
-          const restoredSquad = squadsData.find(squad => squad.id === restoredSelectedSquadId) || null;
-          setSelectedSquadId(restoredSelectedSquadId);
-          setSelectedSquad(restoredSelectedSquadId);
-          setActiveSquadLabel(restoredSquad ? [restoredSquad.date, restoredSquad.time].filter(Boolean).join(' ') : '');
-        } else {
-          setSelectedSquadId(null);
-          clearSelectedSquad();
-        }
-      } catch (error) {
-        logger.error('Error loading squads for tournament', { tournamentId: t.id, error });
-        setWorkflowStatus(null);
-        setSquads([]);
-        setSquadEntryCounts({});
-        addToast({
-          type: 'error',
-          message: 'Failed to load squads for this tournament',
-          duration: 5000
-        });
-      }
-    }
-  };
-
   const handleUnloadTournament = () => {
-    const unloadedName = tournament?.name || 'Tournament';
-    setTournament(null);
-    setWorkflowStatus(null);
-    setSquads([]);
-    setSquadEntryCounts({});
-    setSummaryPlayers([]);
-    setSelectedSquadId(null);
-    setBracketSettings(createDefaultBracketSettings());
-    setSidePots(createDefaultSidePots());
+    unloadTournament();
     setSettingsModalOpen(false);
     setSquadModalOpen(false);
-    clearSelectedTournament({ clearSquad: true });
-    addToast({
-      type: 'success',
-      message: `${unloadedName} unloaded`,
-      duration: 3000,
-    });
   };
 
   const handleChangeTournament = () => {
@@ -1283,14 +755,6 @@ export default function TournamentDashboard() {
       });
       return;
     }
-
-    const normalizeSquadTimes = (squadTimes?: Record<string, string[]>) =>
-      Object.fromEntries(
-        Object.entries(squadTimes || {})
-          .map(([date, times]) => [date, (times || []).filter(Boolean)] as [string, string[]])
-          .filter(([, times]) => times.length > 0)
-          .sort(([left], [right]) => left.localeCompare(right))
-      );
 
     const isOnlySquadTimesUpdate = !!tournament && !createMode && (() => {
       const original = {

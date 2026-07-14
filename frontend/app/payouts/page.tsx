@@ -7,13 +7,9 @@ import { ErrorBoundary } from '../components/ErrorBoundary'
 import { useTournaments, useSquads } from '../hooks/useTournaments'
 import { SidePotsSettings, Tournament, Squad } from '../lib/types'
 import { usePayouts } from './hooks/usePayouts'
+import { usePayoutSetup, ScoreRow } from './hooks/usePayoutSetup'
 import NoTournamentState from '../components/NoTournamentState'
 import { storage } from '../lib/storage'
-import { API, apiClient, apiFetch } from '../lib/api'
-import { logger } from '../lib/logger'
-import { useToast } from '../components/Toast'
-import { getSelectedSquadId, getSelectedTournamentId } from '../lib/selection-session'
-import { getPayoutUnlockKey } from '../lib/storageKeys'
 import Link from 'next/link'
 import styles from './payouts.module.css'
 import cardStyles from '../styles/cards.module.css'
@@ -22,30 +18,21 @@ import badgeStyles from '../styles/badges.module.css'
 import formStyles from '../styles/forms.module.css'
 import shellStyles from '../styles/page-shell.module.css'
 import ExplainPayoutsModal from './ExplainPayoutsModal'
+import { useToast } from '../components/Toast'
 import { DataTableToolbar, QuickActions } from '../components/primitives'
 import { formatCurrency, formatShortMonthDayYear } from '../lib/formatters'
+import { logger } from '../lib/logger'
+import { getSelectedTournamentId } from '../lib/selection-session'
+import { getPayoutUnlockKey } from '../lib/storageKeys'
+import { buildPayoutExcelBuffer } from './utils/payoutExcelExport'
+import { AggregatedWinner, buildPayoutExportRows, buildSidePotByPlayer } from './utils/payoutExportRows'
+import { buildPayoutPdfHtml } from './utils/payoutPdfExport'
 
 function placeBadgeClass(place: number) {
   if (place === 1) return `${badgeStyles.badge} ${badgeStyles.placement} ${badgeStyles.placeFirst} ${styles.placementBadge}`
   if (place === 2) return `${badgeStyles.badge} ${badgeStyles.placement} ${badgeStyles.placeSecond} ${styles.placementBadge}`
   if (place === 3) return `${badgeStyles.badge} ${badgeStyles.placement} ${badgeStyles.placeThird} ${styles.placementBadge}`
   return `${badgeStyles.badge} ${badgeStyles.placement} ${badgeStyles.muted} ${styles.placementBadge}`
-}
-
-interface ScoreRow {
-  player_id: number
-  game1_scratch?: number | null
-  game2_scratch?: number | null
-  game3_scratch?: number | null
-  game1_with_handicap?: number | null
-  game2_with_handicap?: number | null
-  game3_with_handicap?: number | null
-}
-
-type TournamentBootstrapResponse = {
-  tournament: Tournament | null;
-  squads: Squad[];
-  selected_squad: { squad_id: number } | null;
 }
 
 export default function PayoutsPage() {
@@ -124,124 +111,39 @@ export default function PayoutsPage() {
   const { payoutData, entryData, loading, error, loadPayoutData, loadEntryData } =
     usePayouts(selectedTournament?.id ?? null, selectedSquad?.id ?? null)
 
+  usePayoutSetup({
+    isAuthInitialized,
+    isUserAuthenticated,
+    isUnlocked,
+    selectionRefreshKey,
+    selectedTournament,
+    selectedSquad,
+    fetchSquads,
+    setSelectedTournament,
+    setSelectedSquad,
+    setScoreRows,
+  })
+
   useEffect(() => {
     fetchTournaments()
   }, [fetchTournaments])
 
   useEffect(() => {
-    if (!isAuthInitialized || !isUserAuthenticated) return
-
-    const hydrateFromBootstrap = async () => {
-      const storedId = getSelectedTournamentId()
-      if (!storedId) return
-      const bootstrapStarted = performance.now()
-
-      try {
-        const bootstrap = await apiClient.get<TournamentBootstrapResponse>(
-          `/api/v1/tournaments/bootstrap?tournament_id=${storedId}`,
-          false,
-        )
-
-        if (!bootstrap?.tournament) return
-
-        setSelectedTournament(bootstrap.tournament)
-        fetchSquads(bootstrap.tournament.id)
-
-        const storedSquadId = getSelectedSquadId()
-        const restoredSelectedSquadId = bootstrap.selected_squad?.squad_id
-          ?? (storedSquadId ? Number(storedSquadId) : null)
-
-        if (restoredSelectedSquadId) {
-          const restored = (bootstrap.squads || []).find(s => s.id === restoredSelectedSquadId) || null
-          setSelectedSquad(restored)
-        } else if ((bootstrap.squads || []).length > 0) {
-          setSelectedSquad(bootstrap.squads[0] ?? null)
-        }
-
-        logger.info('Payouts bootstrap load completed', {
-          tournamentId: Number(storedId),
-          durationMs: Math.round((performance.now() - bootstrapStarted) * 100) / 100,
-          squadsCount: (bootstrap.squads || []).length,
-          hasSelectedSquad: Boolean(bootstrap.selected_squad?.squad_id),
-        })
-      } catch {
-        // Fallback to existing tournament/squad initialization flow.
-      }
-    }
-
-    void hydrateFromBootstrap()
-  }, [fetchSquads, isUserAuthenticated, isAuthInitialized, selectionRefreshKey])
-
-  useEffect(() => {
-    if (tournaments.length > 0 && !selectedTournament) {
-      const storedId = getSelectedTournamentId()
-      const found = storedId ? tournaments.find(t => t.id === parseInt(storedId)) : null
-      if (found) {
-        setSelectedTournament(found)
-        fetchSquads(found.id)
-      }
-    }
-  }, [fetchSquads, selectedTournament, tournaments, selectionRefreshKey])
-
-  useEffect(() => {
-    if (squads.length > 0 && !selectedSquad) {
-      const storedId = getSelectedSquadId()
-      const found = storedId ? squads.find(s => s.id === parseInt(storedId)) : null
-      setSelectedSquad(found ?? squads[0] ?? null)
-    }
-  }, [squads, selectedSquad])
-
-  useEffect(() => {
     if (!selectedTournament || !isUnlocked) return
     loadPayoutData()
     loadEntryData()
-      // Load paid status from localStorage for this tournament
-      try {
-        const stored = storage.getItem(`payouts_paid_${selectedTournament.id}`)
-        setPaidKeys(new Set(stored ? JSON.parse(stored) : []))
+    try {
+      const stored = storage.getItem(`payouts_paid_${selectedTournament.id}`)
+      setPaidKeys(new Set(stored ? JSON.parse(stored) : []))
 
-        const storedSidePotPaid = storage.getItem(`payouts_sidepot_paid_${selectedTournament.id}`)
-        setSidePotPaidKeys(new Set(storedSidePotPaid ? JSON.parse(storedSidePotPaid) : []))
-      } catch {
-        logger.error('Failed to parse paid keys from storage')
-        setPaidKeys(new Set())
-        setSidePotPaidKeys(new Set())
-      }
-  }, [isUnlocked, loadEntryData, loadPayoutData, selectedSquad, selectedTournament])
-
-  useEffect(() => {
-    const loadScores = async () => {
-      if (!selectedTournament || !isUnlocked) {
-        setScoreRows([])
-        return
-      }
-
-      const token = storage.getItem('token')
-      if (!token) {
-        setScoreRows([])
-        return
-      }
-
-      const params = new URLSearchParams({ tournament_id: String(selectedTournament.id) })
-      if (selectedSquad?.id) params.set('squad_id', String(selectedSquad.id))
-
-      try {
-        const response = await apiFetch(API(`/api/v1/scores/?${params.toString()}`), {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        if (!response.ok) {
-          setScoreRows([])
-          return
-        }
-        const data = await response.json()
-        setScoreRows(Array.isArray(data) ? data : [])
-      } catch {
-        setScoreRows([])
-      }
+      const storedSidePotPaid = storage.getItem(`payouts_sidepot_paid_${selectedTournament.id}`)
+      setSidePotPaidKeys(new Set(storedSidePotPaid ? JSON.parse(storedSidePotPaid) : []))
+    } catch {
+      logger.error('Failed to parse paid keys from storage')
+      setPaidKeys(new Set())
+      setSidePotPaidKeys(new Set())
     }
-
-    loadScores()
-  }, [selectedTournament, selectedSquad, isUnlocked])
+  }, [isUnlocked, loadEntryData, loadPayoutData, selectedSquad, selectedTournament])
 
   const togglePaid = useCallback((key: string) => {
     if (!selectedTournament) return
@@ -272,7 +174,7 @@ export default function PayoutsPage() {
   }, [selectedTournament, loadPayoutData, loadEntryData])
 
   // Aggregate winners across brackets to compute paid stats
-  const aggregatedWinners = useMemo(() => {
+  const aggregatedWinners = useMemo<AggregatedWinner[]>(() => {
     const allWinners = payoutData?.winners_by_bracket ?? []
     const byPlayer: Record<string, {
       player_id: number
@@ -407,15 +309,7 @@ export default function PayoutsPage() {
   }, [selectedTournament, entryData, scoreRows])
 
   const sidePotByPlayer = useMemo(() => {
-    const map: Record<string, { name: string; pool: number }[]> = {}
-    for (const pot of sidePotAccounting.summaries) {
-      if (pot.winnerId != null) {
-        const k = String(pot.winnerId)
-        if (!map[k]) map[k] = []
-        map[k].push({ name: pot.name, pool: pot.pool })
-      }
-    }
-    return map
+    return buildSidePotByPlayer(sidePotAccounting.summaries)
   }, [sidePotAccounting.summaries])
 
   const buildExportFileName = useCallback((suffix: 'xlsx' | 'pdf') => {
@@ -437,35 +331,7 @@ export default function PayoutsPage() {
 
     setIsExportingExcel(true)
     try {
-      // Compute same derived data as the PDF export
-      const sidePotByPlayer: Record<string, { name: string; pool: number }[]> = {}
-      for (const pot of sidePotAccounting.summaries) {
-        if (pot.winnerId != null) {
-          const k = String(pot.winnerId)
-          if (!sidePotByPlayer[k]) sidePotByPlayer[k] = []
-          sidePotByPlayer[k].push({ name: pot.name, pool: pot.pool })
-        }
-      }
-
-      const rows = filteredWinners.map((winner, index) => {
-        const key = String(winner.player_id ?? winner.player_name)
-        const sidePotWins = sidePotByPlayer[String(winner.player_id)] ?? []
-        const sidePotTotal = sidePotWins.reduce((s, p) => s + p.pool, 0)
-        return {
-          rank: index + 1,
-          playerName: winner.player_name,
-          bracketTotal: Math.round(winner.total_won),
-          sidePotTotal: Math.round(sidePotTotal),
-          totalWon: Math.round(winner.total_won + sidePotTotal),
-          isPaid: paidKeys.has(key),
-        }
-      })
-
-      const hasSidePotCol = rows.some(r => r.sidePotTotal > 0)
-      const totalBracketsAmt = rows.reduce((s, r) => s + r.bracketTotal, 0)
-      const totalSidePotsAmt = rows.reduce((s, r) => s + r.sidePotTotal, 0)
-      const totalAll = totalBracketsAmt + totalSidePotsAmt
-      const paidCount = rows.filter(r => r.isPaid).length
+      const rows = buildPayoutExportRows(filteredWinners, sidePotByPlayer, paidKeys)
 
       const allBrackets = [
         ...(payoutData?.scratch_brackets ?? []),
@@ -482,194 +348,15 @@ export default function PayoutsPage() {
         ? `${selectedSquad.date || ''} — ${selectedSquad.time || ''}`.trim()
         : 'All Squads'
       const generatedAt = new Date().toLocaleString()
-
-      const { Workbook } = await import('exceljs')
-      const workbook = new Workbook()
-      const ws = workbook.addWorksheet('Payouts')
-
-      // Brand colors (ARGB format)
-      const C_ORANGE = 'FFFF7A00'
-      const C_ORANGE_DK = 'FF9A4A00'
-      const C_INK = 'FF111827'
-      const C_MUTED = 'FF4B5563'
-      const C_LINE = 'FFD6DAE1'
-      const C_SOFT = 'FFF7F8FA'
-      const C_WHITE = 'FFFFFFFF'
-      const C_SUCCESS_FG = 'FF166534'
-      const C_ALT = 'FFFAFAFA'
-      const C_PAID_SOFT = 'FFF8FAFC'
-
-      const numCols = hasSidePotCol ? 6 : 4
-      ws.getColumn(1).width = 6
-      ws.getColumn(2).width = 30
-      if (hasSidePotCol) {
-        ws.getColumn(3).width = 14
-        ws.getColumn(4).width = 14
-        ws.getColumn(5).width = 14
-        ws.getColumn(6).width = 10
-      } else {
-        ws.getColumn(3).width = 14
-        ws.getColumn(4).width = 10
-      }
-
-      let r = 1
-      const merge = (row: number, c1: number, c2: number) => {
-        if (c2 > c1) ws.mergeCells(row, c1, row, c2)
-      }
-
-      const orangeRailBorder = {
-        left: { style: 'medium' as const, color: { argb: C_ORANGE } },
-        bottom: { style: 'thin' as const, color: { argb: C_LINE } },
-      }
-
-      // Title banner
-      merge(r, 1, numCols)
-      const titleCell = ws.getRow(r).getCell(1)
-      titleCell.value = 'BracketWorks - Payout Distribution'
-      titleCell.font = { name: 'Calibri', size: 14, bold: true, color: { argb: C_INK } }
-      titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C_WHITE } }
-      titleCell.alignment = { horizontal: 'left', vertical: 'middle' }
-      titleCell.border = {
-        left: { style: 'medium', color: { argb: C_ORANGE } },
-        bottom: { style: 'medium', color: { argb: C_ORANGE } },
-      }
-      ws.getRow(r).height = 28
-      r++
-
-      // Tournament name
-      merge(r, 1, numCols)
-      const nameCell = ws.getRow(r).getCell(1)
-      nameCell.value = tournamentName
-      nameCell.font = { name: 'Calibri', size: 12, bold: true, color: { argb: C_INK } }
-      nameCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C_SOFT } }
-      nameCell.alignment = { horizontal: 'left', vertical: 'middle' }
-      nameCell.border = orangeRailBorder
-      ws.getRow(r).height = 22
-      r++
-
-      // Squad label
-      merge(r, 1, numCols)
-      const squadCell = ws.getRow(r).getCell(1)
-      squadCell.value = squadLabel
-      squadCell.font = { name: 'Calibri', size: 10, color: { argb: C_MUTED } }
-      squadCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C_SOFT } }
-      squadCell.alignment = { horizontal: 'left', vertical: 'middle' }
-      squadCell.border = orangeRailBorder
-      ws.getRow(r).height = 18
-      r++
-
-      // Generated timestamp
-      merge(r, 1, numCols)
-      const genCell = ws.getRow(r).getCell(1)
-      genCell.value = `Generated: ${generatedAt}`
-      genCell.font = { name: 'Calibri', size: 9, italic: true, color: { argb: C_MUTED } }
-      genCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C_SOFT } }
-      genCell.alignment = { horizontal: 'left', vertical: 'middle' }
-      genCell.border = orangeRailBorder
-      ws.getRow(r).height = 16
-      r++
-
-      // Spacer
-      ws.getRow(r).height = 6
-      r++
-
-      // Detail section
-      const detailData: [string, string][] = [
-        ['Programs', programs],
-        ['Total Brackets', String(allBrackets.length)],
-        ['Total Entries', String(totalEntries)],
-        ['Prize Pool', `$${totalAll.toLocaleString()}`],
-        ['Winners', String(rows.length)],
-        ['Total Payout', `$${totalAll.toLocaleString()}`],
-        ['Paid', `${paidCount} / ${rows.length}`],
-      ]
-      for (const [label, value] of detailData) {
-        merge(r, 1, 2)
-        merge(r, 3, numCols)
-        const lc = ws.getRow(r).getCell(1)
-        const vc = ws.getRow(r).getCell(3)
-        lc.value = label
-        lc.font = { name: 'Calibri', size: 9, bold: true, color: { argb: C_MUTED } }
-        lc.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C_SOFT } }
-        lc.alignment = { horizontal: 'right', vertical: 'middle' }
-        lc.border = {
-          left: { style: 'medium', color: { argb: C_ORANGE } },
-          bottom: { style: 'hair', color: { argb: C_LINE } },
-        }
-        vc.value = value
-        vc.font = { name: 'Calibri', size: 10, color: { argb: C_INK } }
-        vc.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C_SOFT } }
-        vc.alignment = { horizontal: 'left', vertical: 'middle' }
-        vc.border = { bottom: { style: 'hair', color: { argb: C_LINE } } }
-        ws.getRow(r).height = 18
-        r++
-      }
-
-      // Spacer
-      ws.getRow(r).height = 6
-      r++
-
-      // Table column headers
-      const headers = hasSidePotCol
-        ? ['#', 'Player Name', 'Brackets', 'Side Pots', 'Amount', 'Paid']
-        : ['#', 'Player Name', 'Amount', 'Paid']
-      const hRow = ws.getRow(r)
-      headers.forEach((h, i) => {
-        const cell = hRow.getCell(i + 1)
-        cell.value = h
-        cell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: C_ORANGE_DK } }
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C_WHITE } }
-        cell.alignment = { horizontal: i === 1 ? 'left' : 'center', vertical: 'middle' }
-        cell.border = {
-          bottom: { style: 'medium', color: { argb: C_ORANGE } },
-          ...(i === 0 ? { left: { style: 'medium' as const, color: { argb: C_ORANGE } } } : {}),
-        }
+      const xlsxBuffer = await buildPayoutExcelBuffer({
+        rows,
+        programs,
+        totalBrackets: allBrackets.length,
+        totalEntries,
+        tournamentName,
+        squadLabel,
+        generatedAt,
       })
-      hRow.height = 20
-      r++
-
-      // Data rows
-      const usdFmt = '$#,##0'
-      rows.forEach((row, idx) => {
-        const dRow = ws.getRow(r)
-        const rowBg = row.isPaid ? C_PAID_SOFT : idx % 2 === 1 ? C_ALT : C_WHITE
-        const values: (string | number)[] = hasSidePotCol
-          ? [row.rank, row.playerName, row.bracketTotal, row.sidePotTotal, row.totalWon, row.isPaid ? 'Paid' : '']
-          : [row.rank, row.playerName, row.totalWon, row.isPaid ? 'Paid' : '']
-        values.forEach((v, i) => {
-          const cell = dRow.getCell(i + 1)
-          cell.value = v
-          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: rowBg } }
-          cell.border = {
-            bottom: { style: 'hair', color: { argb: C_LINE } },
-            ...(i === 0 ? { left: { style: 'medium' as const, color: { argb: C_ORANGE } } } : {}),
-          }
-          const isCurrencyCol = hasSidePotCol ? (i >= 2 && i <= 4) : i === 2
-          if (isCurrencyCol && typeof v === 'number') {
-            cell.numFmt = usdFmt
-            cell.font = { name: 'Calibri', size: 10, color: { argb: C_INK } }
-            cell.alignment = { horizontal: 'right', vertical: 'middle' }
-          } else if ((hasSidePotCol && i === 5) || (!hasSidePotCol && i === 3)) {
-            cell.font = { name: 'Calibri', size: 10, bold: row.isPaid, color: { argb: row.isPaid ? C_SUCCESS_FG : C_MUTED } }
-            cell.alignment = { horizontal: 'center', vertical: 'middle' }
-          } else {
-            cell.font = { name: 'Calibri', size: 10, color: { argb: C_INK } }
-            cell.alignment = { horizontal: i === 1 ? 'left' : 'center', vertical: 'middle' }
-          }
-        })
-        dRow.height = 18
-        r++
-      })
-
-      // Footer
-      r++
-      merge(r, 1, numCols)
-      const footerCell = ws.getRow(r).getCell(1)
-      footerCell.value = 'BracketWorks  ·  bracketworks.app'
-      footerCell.font = { name: 'Calibri', size: 9, italic: true, color: { argb: C_MUTED } }
-      footerCell.alignment = { horizontal: 'center' }
-
-      const xlsxBuffer = await workbook.xlsx.writeBuffer()
       const blob = new Blob([xlsxBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -691,7 +378,7 @@ export default function PayoutsPage() {
     } finally {
       setIsExportingExcel(false)
     }
-  }, [addToast, buildExportFileName, filteredWinners, paidKeys, payoutData, selectedTournament, selectedSquad, sidePotAccounting])
+  }, [addToast, buildExportFileName, filteredWinners, paidKeys, payoutData, selectedTournament, selectedSquad, sidePotAccounting, sidePotByPlayer])
 
   const handleExportToPdf = useCallback(() => {
     if (filteredWinners.length === 0) {
@@ -701,58 +388,7 @@ export default function PayoutsPage() {
 
     setIsExportingPdf(true)
     try {
-      const esc = (value: string) =>
-        String(value)
-          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;').replace(/'/g, '&#39;')
-
-      const fmt = (value: number) => {
-        const rounded = Math.round(Number(value) || 0)
-        return new Intl.NumberFormat('en-US', {
-          style: 'currency', currency: 'USD',
-          minimumFractionDigits: 0, maximumFractionDigits: 0,
-        }).format(rounded)
-      }
-
-      // Build side-pot winner lookup: playerId -> side pot winnings
-      const sidePotByPlayer: Record<string, { name: string; pool: number }[]> = {}
-      for (const pot of sidePotAccounting.summaries) {
-        if (pot.winnerId != null) {
-          const k = String(pot.winnerId)
-          if (!sidePotByPlayer[k]) sidePotByPlayer[k] = []
-          sidePotByPlayer[k].push({ name: pot.name, pool: pot.pool })
-        }
-      }
-
-      // Enrich rows with totals, counts, side pots, and paid status
-      const rows = filteredWinners.map((winner, index) => {
-        const key = String(winner.player_id ?? winner.player_name)
-        const sidePotWins = sidePotByPlayer[String(winner.player_id)] ?? []
-        const sidePotTotal = sidePotWins.reduce((s, p) => s + p.pool, 0)
-        const scratchWins = winner.winnings.filter(w => w.bracket_name?.toLowerCase().includes('scratch'))
-        const handicapWins = winner.winnings.filter(w => w.bracket_name?.toLowerCase().includes('handicap'))
-        const otherWins = winner.winnings.filter(w =>
-          !w.bracket_name?.toLowerCase().includes('scratch') &&
-          !w.bracket_name?.toLowerCase().includes('handicap')
-        )
-        return {
-          rank: index + 1,
-          playerName: winner.player_name,
-          bracketTotal: winner.total_won,
-          sidePotTotal,
-          totalWon: winner.total_won + sidePotTotal,
-          scratchCount: scratchWins.length,
-          handicapCount: handicapWins.length,
-          otherCount: otherWins.length,
-          isPaid: paidKeys.has(key),
-        }
-      })
-
-      const hasSidePotCol = rows.some(r => r.sidePotTotal > 0)
-      const totalBrackets = rows.reduce((s, r) => s + r.bracketTotal, 0)
-      const totalSidePots = rows.reduce((s, r) => s + r.sidePotTotal, 0)
-      const totalAll = totalBrackets + totalSidePots
-      const paidCount = rows.filter(r => r.isPaid).length
+      const rows = buildPayoutExportRows(filteredWinners, sidePotByPlayer, paidKeys)
 
       const tournamentName = selectedTournament?.name || 'Unknown Tournament'
       const squadLabel = selectedSquad
@@ -761,46 +397,6 @@ export default function PayoutsPage() {
       const generatedAt = new Date().toLocaleString()
       const paidStampDate = formatShortMonthDayYear(new Date())
       const logoUrl = `${window.location.origin}/logo_no_text.svg`
-      const useDoubleCol = rows.length > 20
-
-      const buildTableRows = (slice: typeof rows) => {
-        return slice.map(row => {
-          return `<tr class="${row.isPaid ? 'isPaidRow' : ''}">
-            <td class="rank">${row.rank}</td>
-            <td class="player">${esc(row.playerName)}</td>
-            ${hasSidePotCol ? `<td class="amount">${row.bracketTotal > 0 ? fmt(row.bracketTotal) : ''}</td>` : ''}
-            ${hasSidePotCol ? `<td class="amount${row.sidePotTotal > 0 ? '' : ' empty-cell'}">${row.sidePotTotal > 0 ? fmt(row.sidePotTotal) : '&mdash;'}</td>` : ''}
-            <td class="amount">${fmt(row.totalWon)}</td>
-            <td class="signature-cell">${row.isPaid ? `<span class="paidStamp">PAID ${esc(paidStampDate)}</span>` : '<span class="signature-line"></span>'}</td>
-          </tr>`
-        }).join('')
-      }
-
-      const buildTable = (slice: typeof rows) => `
-        <table>
-          <thead><tr>
-            <th class="rank">#</th>
-            <th>Player Name</th>
-            ${hasSidePotCol ? '<th class="amount">Brackets</th>' : ''}
-            ${hasSidePotCol ? '<th class="amount">Side Pots</th>' : ''}
-            <th class="amount">Amount</th>
-            <th class="signature-cell">Signature</th>
-          </tr></thead>
-          <tbody>${buildTableRows(slice)}</tbody>
-        </table>`
-
-      let mainSection: string
-      if (useDoubleCol) {
-        const mid = Math.ceil(rows.length / 2)
-        const leftRows = rows.slice(0, mid)
-        const rightRows = rows.slice(mid)
-        mainSection = `<div class="twoCol">
-          <div class="col">${buildTable(leftRows)}</div>
-          <div class="col">${buildTable(rightRows)}</div>
-        </div>`
-      } else {
-        mainSection = buildTable(rows)
-      }
 
       const allBrackets = [
         ...(payoutData?.scratch_brackets ?? []),
@@ -816,81 +412,17 @@ export default function PayoutsPage() {
           .map(s => s.name),
       ].join(' / ') || 'N/A'
 
-      const detailRows =
-        `<div class="detail-row detail-full"><span class="detail-label">Programs</span><span class="detail-value">${esc(programs)}</span></div>` +
-        [
-          ['Total Brackets', String(allBrackets.length)],
-          ['Total Entries', String(totalEntries)],
-          ['Prize Pool', esc(fmt(totalAll))],
-        ].map(([label, value]) =>
-          `<div class="detail-row"><span class="detail-label">${label}</span><span class="detail-value">${value}</span></div>`
-        ).join('')
-
-      const statCards = [
-        { label: 'Winners', value: String(rows.length) },
-        { label: 'Total Payout', value: fmt(totalAll) },
-        ...(hasSidePotCol ? [
-          { label: 'Brackets', value: fmt(totalBrackets) },
-          { label: 'Side Pots', value: fmt(totalSidePots) },
-        ] : []),
-        { label: 'Paid', value: `${paidCount} / ${rows.length}` },
-      ].map(({ label, value }) => `<div class="stat-card">
-          <div class="stat-label">${label}</div>
-          <div class="stat-value">${value}</div>
-        </div>`).join('')
-
-      const html = `<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8"/>
-  <title>Payout Distribution - ${esc(tournamentName)}</title>
-  <link rel="stylesheet" href="/payouts-print.css" />
-</head>
-<body>
-  <main class="page">
-    <header class="brand-header">
-      <section class="brand-left">
-        <img src="${esc(logoUrl)}" alt="BracketWorks" class="logo" />
-        <div>
-          <h2 class="brand-name">BracketWorks</h2>
-          <p class="brand-tagline">Bowling Brackets &amp; Side Pots</p>
-        </div>
-      </section>
-      <section class="report-title">
-        <h1>Payout Distribution</h1>
-        <p>Official tournament payout sheet</p>
-      </section>
-    </header>
-    <section class="event-band">
-      <div class="event-band-inner">
-        <h2 class="event-name">${esc(tournamentName)}</h2>
-        <p class="event-meta">${esc(squadLabel)}</p>
-      </div>
-      <div class="generated">Generated<br />${esc(generatedAt)}</div>
-    </section>
-    <div class="details-band">${detailRows}</div>
-    <section class="stats">${statCards}</section>
-    ${mainSection}
-    <div class="commissioner">
-      <p class="commissioner-title">Commissioner Verification</p>
-      <div class="commissioner-fields">
-        <div>
-          <div class="field-label">Commissioner / Tournament Director Signature</div>
-          <div class="field-line"></div>
-        </div>
-        <div>
-          <div class="field-label">Date</div>
-          <div class="field-line"></div>
-        </div>
-      </div>
-    </div>
-    <footer class="footer">
-      <span><strong>BracketWorks</strong> &bull; bracketworks.app</span>
-      <span>Generated by BracketWorks. Payout amounts are based on tournament settings and are subject to commissioner verification. BracketWorks does not collect entry fees, hold funds, distribute winnings, or determine prize structures.</span>
-    </footer>
-  </main>
-</body>
-</html>`
+      const html = buildPayoutPdfHtml({
+        rows,
+        tournamentName,
+        squadLabel,
+        generatedAt,
+        paidStampDate,
+        logoUrl,
+        programs,
+        totalBrackets: allBrackets.length,
+        totalEntries,
+      })
 
       const iframe = document.createElement('iframe')
       iframe.setAttribute('hidden', 'true')
@@ -950,7 +482,7 @@ export default function PayoutsPage() {
     } finally {
       setIsExportingPdf(false)
     }
-  }, [addToast, buildExportFileName, filteredWinners, selectedTournament, selectedSquad, paidKeys, sidePotAccounting, payoutData])
+  }, [addToast, buildExportFileName, filteredWinners, selectedTournament, selectedSquad, paidKeys, sidePotAccounting, payoutData, sidePotByPlayer])
 
   const payoutsQuickActions = useMemo(() => (
     <QuickActions

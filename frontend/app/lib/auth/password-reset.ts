@@ -39,6 +39,11 @@ export type CompletePasswordResetResult = {
   successMessage: string;
 };
 
+const NEUTRAL_PASSWORD_RESET_RESPONSE: PasswordResetRequestResult = {
+  cooldownSeconds: 30,
+  successMessage: 'If an account exists for this email, a password reset link has been sent.',
+};
+
 async function parseJsonResponse(response: Response) {
   const text = await response.text();
 
@@ -68,16 +73,10 @@ export async function requestPasswordReset(
     }
 
     // Return the same neutral success response for non-429 failures to avoid account enumeration.
-    return {
-      cooldownSeconds: 30,
-      successMessage: 'If an account exists for this email, a password reset link has been sent.',
-    };
+    return NEUTRAL_PASSWORD_RESET_RESPONSE;
   }
 
-  return {
-    cooldownSeconds: 30,
-    successMessage: 'If an account exists for this email, a password reset link has been sent.',
-  };
+  return NEUTRAL_PASSWORD_RESET_RESPONSE;
 }
 
 export async function verifyResetCode(

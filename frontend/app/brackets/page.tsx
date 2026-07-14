@@ -9,7 +9,6 @@ import { useBrackets, BracketPreview } from '../hooks/useBrackets'
 import { useTournaments, useSquads } from '../hooks/useTournaments'
 import { useToast } from '../components/Toast'
 import { Tournament, Squad, BracketResponse } from '../lib/types'
-import { logger } from '../lib/logger'
 import { isPhoneViewport } from '../lib/responsive'
 import { storage } from '../lib/storage'
 import { cleanupModalState, resetScrollLocks } from '../utils/modalUtils'
@@ -19,6 +18,8 @@ import { BracketTabs } from './components/BracketTabs'
 import { SearchFilter } from './components/SearchFilter'
 import { EmptyBracketState } from './components/EmptyBracketState'
 import ExplainBracketsModal from './components/ExplainBracketsModal'
+import { useBracketLoader } from './hooks/useBracketLoader'
+import { useBracketGenerationFlow } from './hooks/useBracketGenerationFlow'
 import NoTournamentState from '../components/NoTournamentState'
 import styles from './brackets.module.css'
 import cardStyles from '../styles/cards.module.css'
@@ -30,9 +31,17 @@ const BracketGenerationModal = lazy(() => import('../components/BracketGeneratio
 const BracketTreeView = lazy(() => import('./components/BracketTreeView').then(mod => ({ default: mod.BracketTreeView })))
 
 export default function BracketsPage() {
+  const { addToast } = useToast()
+  const { tournaments, fetchTournaments, loading: tournamentsLoading } = useTournaments()
+  const { squads, fetchSquads } = useSquads()
+
+  // State for selected entities
+  const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null)
+  const [selectedSquad, setSelectedSquad] = useState<Squad | null>(null)
+  const [selectedBracketIndex, setSelectedBracketIndex] = useState<number>(0)
+  const lastLoadedRef = useRef<{ tournamentId: number; squadId: number } | null>(null)
+
   // State for modal and generation
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [bracketGenerationPromise, setBracketGenerationPromise] = useState<Promise<BracketPreview> | null>(null)
   const [isExplainModalOpen, setIsExplainModalOpen] = useState(false)
   const [deleteBracketsConfirmOpen, setDeleteBracketsConfirmOpen] = useState(false)
   const [entriesMismatchPromptOpen, setEntriesMismatchPromptOpen] = useState(false)
@@ -45,8 +54,6 @@ export default function BracketsPage() {
   const [mobileOpenBracketIndex, setMobileOpenBracketIndex] = useState<number | null>(null)
   
   // Ref to prevent infinite loop in useEffect
-  const loadingRef = useRef(false)
-  const lastLoadedRef = useRef<{tournamentId: number, squadId: number} | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [isMobile, setIsMobile] = useState(false)
   const [loadedBrackets, setLoadedBrackets] = useState<BracketPreview | null>(null)
@@ -69,14 +76,29 @@ export default function BracketsPage() {
   
   // Hooks for data fetching
   const { generateTournamentBrackets, loadSavedBrackets, deleteTournamentBrackets } = useBrackets()
-  const { tournaments, fetchTournaments, loading: tournamentsLoading } = useTournaments()
-  const { squads, fetchSquads } = useSquads()
-  const { addToast } = useToast()
-  
-  // State for selected entities
-  const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null)
-  const [selectedSquad, setSelectedSquad] = useState<Squad | null>(null)
-  const [selectedBracketIndex, setSelectedBracketIndex] = useState<number>(0) // Which bracket to display (0-based)
+
+  const { reloadAfterGeneration } = useBracketLoader({
+    selectedTournament,
+    selectedSquad,
+    loadSavedBrackets,
+    setLoadedBrackets,
+  })
+
+  const {
+    isModalOpen,
+    bracketGenerationPromise,
+    handleGenerateBrackets,
+    handleModalClose,
+    handleRegenerate,
+    resetGenerationModalState,
+  } = useBracketGenerationFlow({
+    selectedTournament,
+    selectedSquad,
+    generateTournamentBrackets,
+    addToast,
+    reloadAfterGeneration,
+  })
+
   const entriesMismatchPromptKey = useMemo(
     () => (selectedTournament && selectedSquad ? `${selectedTournament.id}:${selectedSquad.id}` : null),
     [selectedTournament, selectedSquad],
@@ -110,12 +132,11 @@ export default function BracketsPage() {
     resetScrollLocks();
 
     return () => {
-      setIsModalOpen(false);
+      resetGenerationModalState();
       setIsExplainModalOpen(false);
-      setBracketGenerationPromise(null);
       cleanupModalState();
     };
-  }, []);
+  }, [resetGenerationModalState]);
 
   // Safety: whenever both modals are closed, ensure document state is restored
   useEffect(() => {
@@ -221,171 +242,6 @@ export default function BracketsPage() {
       }
     }
   }, [squads, selectedSquad])
-
-  // Unified bracket loading and auto-refresh with smart visibility/focus handling
-  useEffect(() => {
-    if (!selectedSquad || !selectedTournament) return;
-
-    // Flag to track if component is still mounted
-    let isMounted = true;
-
-    // Centralized bracket loading function
-    const loadBrackets = (skipIfSame = false) => {
-      // Skip if component unmounted
-      if (!isMounted) return;
-      
-      // Skip if already loading
-      if (loadingRef.current) return;
-      
-      // Skip if we're already showing the right brackets
-      if (skipIfSame && 
-          lastLoadedRef.current?.tournamentId === selectedTournament.id && 
-          lastLoadedRef.current?.squadId === selectedSquad.id) {
-        return;
-      }
-
-      loadingRef.current = true;
-      loadSavedBrackets(selectedTournament.id, selectedSquad.id)
-        .then(brackets => {
-          if (!isMounted) {
-            loadingRef.current = false;
-            return;
-          }
-          if (brackets !== null) {
-            setLoadedBrackets(brackets);
-          }
-          lastLoadedRef.current = { tournamentId: selectedTournament.id, squadId: selectedSquad.id };
-          loadingRef.current = false;
-        })
-        .catch(() => {
-          if (isMounted) {
-            loadingRef.current = false;
-          }
-        });
-    };
-
-    // Initial load when tournament/squad changes — skip if prefetch already populated this pair
-    loadBrackets(true);
-
-    // Auto-refresh interval - 15s when visible, 60s when hidden
-    const getRefreshInterval = () => document.hidden ? 60000 : 15000;
-    let intervalId = setInterval(() => {
-      if (isMounted) loadBrackets(false);
-    }, getRefreshInterval());
-
-    // Handle visibility changes - adjust interval and reload if becoming visible
-    const handleVisibilityChange = () => {
-      if (!isMounted) return;
-      clearInterval(intervalId);
-      if (!document.hidden) {
-        loadBrackets(false); // Reload when becoming visible
-      }
-      intervalId = setInterval(() => {
-        if (isMounted) loadBrackets(false);
-      }, getRefreshInterval());
-    };
-
-    // Handle focus - reload to get latest data
-    const handleFocus = () => {
-      if (!isMounted) return;
-      if (!document.hidden) {
-        loadBrackets(false);
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', handleFocus);
-    
-    return () => {
-      isMounted = false;
-      clearInterval(intervalId);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleFocus);
-      loadingRef.current = false; // Reset loading state on cleanup
-    };
-  }, [loadSavedBrackets, selectedSquad, selectedTournament]);
-
-  // Start the bracket generation process
-  const startBracketGeneration = useCallback(() => {
-    if (!selectedTournament || !selectedSquad) return;
-    
-    // Create the promise for bracket generation
-    const generationPromise = generateTournamentBrackets(
-      selectedTournament.id,
-      selectedSquad.id,
-      8, // Default bracket size
-      true, // Save to database
-      true // Force regenerate to see debug output
-    )
-      .then((result) => {
-        // Success - toast will be shown by modal
-        addToast({
-          type: 'success',
-          message: 'Brackets generated successfully!',
-          duration: 5000
-        })
-        return result
-      })
-      .catch((error) => {
-        // Error - will be handled by modal
-        logger.error('Bracket generation failed', { error });
-        throw error
-      })
-    
-    // Set the promise and open modal
-    setBracketGenerationPromise(generationPromise)
-    setIsModalOpen(true)
-  }, [selectedTournament, selectedSquad, generateTournamentBrackets, addToast])
-
-  // Handle generate brackets action
-  const handleGenerateBrackets = useCallback(() => {
-    // Validation: Check for tournament selection
-    if (!selectedTournament) {
-      addToast({
-        type: 'error',
-        message: 'Please select a tournament first',
-        duration: 5000
-      })
-      return
-    }
-
-    // Validation: Check for squad selection
-    if (!selectedSquad) {
-      addToast({
-        type: 'error',
-        message: 'Please select a squad first',
-        duration: 5000
-      })
-      return
-    }
-
-    // Start bracket generation
-    startBracketGeneration()
-  }, [selectedTournament, selectedSquad, addToast, startBracketGeneration])
-
-  // Handle modal close
-  const handleModalClose = useCallback(() => {
-    setIsModalOpen(false)
-    setBracketGenerationPromise(null)
-    
-    // Reload brackets after generation
-    if (selectedSquad && selectedTournament) {
-      loadingRef.current = false // Reset the loading ref
-      lastLoadedRef.current = null // Reset the last loaded ref to force reload
-      loadSavedBrackets(selectedTournament.id, selectedSquad.id).then(brackets => {
-        if (brackets) {
-          setLoadedBrackets(brackets)
-          lastLoadedRef.current = { tournamentId: selectedTournament.id, squadId: selectedSquad.id }
-        }
-      })
-    }
-  }, [selectedSquad, selectedTournament, loadSavedBrackets])
-
-  // Handle regenerate action from modal
-  const handleRegenerate = useCallback(() => {
-    // Restart the generation process
-    startBracketGeneration()
-  }, [startBracketGeneration])
 
   const executeDeleteAllBrackets = useCallback(async () => {
     if (!selectedTournament || !selectedSquad) return

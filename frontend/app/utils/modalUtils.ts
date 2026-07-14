@@ -80,20 +80,3 @@ export function resetScrollLocks(): void {
  * Remove any stray modal overlays that might have been left mounted by other pages/components.
  * Targets common overlay class names used in this app.
  */
-export function clearStrayOverlays(): void {
-  if (typeof document === 'undefined') return
-  
-  const overlaySelectors = ['.modal-overlay', '.modalOverlay', '.modalBackdrop']
-  overlaySelectors.forEach((selector) => {
-    document.querySelectorAll<HTMLElement>(selector).forEach((el) => {
-      // Check if the element is actually a modal overlay (has fixed positioning and high z-index)
-      const styles = window.getComputedStyle(el)
-      const isOverlay = styles.position === 'fixed' && parseInt(styles.zIndex) > 100
-      
-      if (isOverlay) {
-        // Remove it completely from the DOM
-        el.remove()
-      }
-    })
-  })
-}
