@@ -7,8 +7,10 @@ $BackendPython = Join-Path $BackendPath ".venv\Scripts\python.exe"
 $Port         = 3000
 $BackendUrl   = "http://localhost:8001"
 $EnvFile      = Join-Path $ProjectRoot ".env"
+$PowerShellPolicyCmd = "Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned"
+$ClosePromptCmd = "Read-Host 'Press Enter to close'"
 
-function Get-EnvStringOrDefault {
+function Get-EnvValueOrDefault {
     param(
         [Parameter(Mandatory = $true)][string]$Name,
         [Parameter(Mandatory = $true)][string]$Default
@@ -28,7 +30,7 @@ function Get-EnvBoolOrDefault {
         [Parameter(Mandatory = $true)][bool]$Default
     )
 
-    $value = [System.Environment]::GetEnvironmentVariable($Name, "Process")
+    $value = Get-EnvValueOrDefault -Name $Name -Default ""
     if ([string]::IsNullOrWhiteSpace($value)) {
         return $Default
     }
@@ -42,7 +44,7 @@ function Get-EnvIntOrDefault {
         [Parameter(Mandatory = $true)][int]$Default
     )
 
-    $value = [System.Environment]::GetEnvironmentVariable($Name, "Process")
+    $value = Get-EnvValueOrDefault -Name $Name -Default ""
     $parsed = 0
     if ([int]::TryParse($value, [ref]$parsed)) {
         return $parsed
@@ -101,11 +103,11 @@ if (Test-Path $EnvFile) {
     }
 }
 
-$dbUser = Get-EnvStringOrDefault -Name "POSTGRES_USER" -Default "postgres"
-$dbPassword = Get-EnvStringOrDefault -Name "POSTGRES_PASSWORD" -Default "mazzagotte"
-$dbName = Get-EnvStringOrDefault -Name "POSTGRES_DB" -Default "bracketworks"
-$dbHost = Get-EnvStringOrDefault -Name "POSTGRES_HOST" -Default "localhost"
-$dbPort = Get-EnvStringOrDefault -Name "POSTGRES_PORT" -Default "5433"
+$dbUser = Get-EnvValueOrDefault -Name "POSTGRES_USER" -Default "postgres"
+$dbPassword = Get-EnvValueOrDefault -Name "POSTGRES_PASSWORD" -Default "mazzagotte"
+$dbName = Get-EnvValueOrDefault -Name "POSTGRES_DB" -Default "bracketworks"
+$dbHost = Get-EnvValueOrDefault -Name "POSTGRES_HOST" -Default "localhost"
+$dbPort = Get-EnvValueOrDefault -Name "POSTGRES_PORT" -Default "5433"
 $DatabaseUrl = if ($env:DATABASE_URL) {
     $env:DATABASE_URL
 } else {
@@ -120,7 +122,7 @@ $BackendMode = if ($env:BRACKETWORKS_BACKEND_MODE) {
     "local"
 }
 
-$DockerBuildMode = Get-EnvStringOrDefault -Name "BRACKETWORKS_DOCKER_BUILD" -Default "never"
+$DockerBuildMode = Get-EnvValueOrDefault -Name "BRACKETWORKS_DOCKER_BUILD" -Default "never"
 $DockerBuildMode = $DockerBuildMode.ToLowerInvariant()
 
 $AutoMode = Get-EnvBoolOrDefault -Name "BRACKETWORKS_AUTO" -Default $true
@@ -129,7 +131,7 @@ $FastStart = Get-EnvBoolOrDefault -Name "BRACKETWORKS_FAST_START" -Default $fals
 $WaitForFrontend = Get-EnvBoolOrDefault -Name "BRACKETWORKS_WAIT_FOR_FRONTEND" -Default $true
 $WaitForBackend = Get-EnvBoolOrDefault -Name "BRACKETWORKS_WAIT_FOR_BACKEND" -Default $true
 $SkipMigrations = Get-EnvBoolOrDefault -Name "BRACKETWORKS_SKIP_MIGRATIONS" -Default $false
-$FrontendInstallMode = Get-EnvStringOrDefault -Name "BRACKETWORKS_FRONTEND_INSTALL_MODE" -Default "auto"
+$FrontendInstallMode = Get-EnvValueOrDefault -Name "BRACKETWORKS_FRONTEND_INSTALL_MODE" -Default "auto"
 $FrontendInstallMode = $FrontendInstallMode.ToLowerInvariant()
 
 if ($FastStart) {
@@ -223,8 +225,8 @@ Write-Host ""
 
 if ($BackendMode -eq "docker") {
     $dockerBuildArg = if ($DockerBuildMode -match "^(always|true|1)$") { " --build" } else { "" }
-    $dockerTailCmd = if ($AutoMode) { "" } else { "; Read-Host 'Press Enter to close'" }
-    $backendCmd = "Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned; " +
+    $dockerTailCmd = if ($AutoMode) { "" } else { "; $ClosePromptCmd" }
+    $backendCmd = "$PowerShellPolicyCmd; " +
                   "cd '$ProjectRoot'; " +
                   "docker compose up -d$dockerBuildArg db redis backend; " +
                   "docker compose ps" +
@@ -260,12 +262,12 @@ if ($BackendMode -eq "docker") {
         "& '$PythonCmd' -m alembic upgrade head; " +
         "if (`$LASTEXITCODE -ne 0) { " +
         "  Write-Host 'Database migration failed. Backend will not start.' -ForegroundColor Red; " +
-        "  Read-Host 'Press Enter to close'; " +
+        "  $ClosePromptCmd; " +
         "  exit `$LASTEXITCODE; " +
         "}; "
     }
 
-    $backendCmd = "Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned; " +
+    $backendCmd = "$PowerShellPolicyCmd; " +
                   "`$env:DATABASE_URL='$DatabaseUrl'; " +
                   "`$env:ENVIRONMENT='development'; " +
                   "`$env:DEBUG='true'; " +
@@ -284,42 +286,42 @@ $frontendStartCmd = "if (Test-Path '.\\node_modules\\next\\dist\\bin\\next') { n
 $frontendInstallCmdPrimary = "npm.cmd ci --no-audit --no-fund"
 $frontendInstallCmdRetry = "npm.cmd install --include=dev --no-audit --no-fund"
 
-$cmd = "Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned; " +
+$cmd = "$PowerShellPolicyCmd; " +
     "`$env:PATH='$env:PATH'; " +
-       "cd '$FrontendPath'; " +
-       "`$env:NEXT_PUBLIC_BACKEND_URL='$BackendUrl'; " +
-         "`$lockPath = '.\\package-lock.json'; " +
-         "`$stampPath = '.\\node_modules\\.bw-install-stamp'; " +
-         "`$nextPath = '.\\node_modules\\next\\dist\\bin\\next'; " +
-         "`$installNeeded = `$false; " +
-         "switch ('$FrontendInstallMode') { " +
-         "  'always' { `$installNeeded = `$true } " +
-         "  'never'  { `$installNeeded = `$false } " +
-         "  default { " +
-         "    if (-not (Test-Path `$nextPath)) { `$installNeeded = `$true } " +
-         "    elseif ((Test-Path `$lockPath) -and (-not (Test-Path `$stampPath))) { `$installNeeded = `$true } " +
-         "    elseif ((Test-Path `$lockPath) -and (Test-Path `$stampPath) -and ((Get-Item `$lockPath).LastWriteTimeUtc -gt (Get-Item `$stampPath).LastWriteTimeUtc)) { `$installNeeded = `$true } " +
-         "  } " +
-         "}; " +
-         "if ((-not `$installNeeded) -and (-not (Test-Path `$nextPath))) { " +
-         "  Write-Host 'Next.js binary is missing and install mode is never. Set BRACKETWORKS_FRONTEND_INSTALL_MODE=auto or always.' -ForegroundColor Red; " +
-         "  Read-Host 'Press Enter to close'; " +
-         "  exit 1; " +
-         "}; " +
-         "if (`$installNeeded) { " +
-         "Write-Host 'Installing frontend dependencies...' -ForegroundColor Yellow; " +
-         "$frontendInstallCmdPrimary; " +
-         "if (`$LASTEXITCODE -ne 0) { " +
-         "  Write-Host 'Frontend dependency install failed. Retrying after cleaning Next.js artifacts...' -ForegroundColor Yellow; " +
-         "  if (Test-Path '.\\node_modules\\next') { Remove-Item -LiteralPath '.\\node_modules\\next' -Recurse -Force -ErrorAction SilentlyContinue }; " +
-         "  if (Test-Path '.\\node_modules') { Get-ChildItem '.\\node_modules' -Filter '.next-*' -Force -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue }; " +
-         "  $frontendInstallCmdRetry; " +
-         "  if (`$LASTEXITCODE -ne 0) { Write-Host 'Frontend dependency install failed.' -ForegroundColor Red; Read-Host 'Press Enter to close'; exit 1 } " +
-         "}; " +
-         "if (-not (Test-Path `$nextPath)) { Write-Host 'Next.js runtime binary is still missing after install.' -ForegroundColor Red; Read-Host 'Press Enter to close'; exit 1 }; " +
-         "if (-not (Test-Path '.\\node_modules')) { New-Item -ItemType Directory -Path '.\\node_modules' -Force | Out-Null }; " +
-         "Set-Content -Path `$stampPath -Value (Get-Date).ToString('O') -Encoding UTF8; " +
-         "} else { Write-Host 'Frontend dependencies are up to date. Skipping install.' -ForegroundColor DarkGreen }; " +
+    "cd '$FrontendPath'; " +
+    "`$env:NEXT_PUBLIC_BACKEND_URL='$BackendUrl'; " +
+    "`$lockPath = '.\\package-lock.json'; " +
+    "`$stampPath = '.\\node_modules\\.bw-install-stamp'; " +
+    "`$nextPath = '.\\node_modules\\next\\dist\\bin\\next'; " +
+    "`$installNeeded = `$false; " +
+    "switch ('$FrontendInstallMode') { " +
+    "  'always' { `$installNeeded = `$true } " +
+    "  'never'  { `$installNeeded = `$false } " +
+    "  default { " +
+    "    if (-not (Test-Path `$nextPath)) { `$installNeeded = `$true } " +
+    "    elseif ((Test-Path `$lockPath) -and (-not (Test-Path `$stampPath))) { `$installNeeded = `$true } " +
+    "    elseif ((Test-Path `$lockPath) -and (Test-Path `$stampPath) -and ((Get-Item `$lockPath).LastWriteTimeUtc -gt (Get-Item `$stampPath).LastWriteTimeUtc)) { `$installNeeded = `$true } " +
+    "  } " +
+    "}; " +
+    "if ((-not `$installNeeded) -and (-not (Test-Path `$nextPath))) { " +
+    "  Write-Host 'Next.js binary is missing and install mode is never. Set BRACKETWORKS_FRONTEND_INSTALL_MODE=auto or always.' -ForegroundColor Red; " +
+    "  $ClosePromptCmd; " +
+    "  exit 1; " +
+    "}; " +
+    "if (`$installNeeded) { " +
+    "Write-Host 'Installing frontend dependencies...' -ForegroundColor Yellow; " +
+    "$frontendInstallCmdPrimary; " +
+    "if (`$LASTEXITCODE -ne 0) { " +
+    "  Write-Host 'Frontend dependency install failed. Retrying after cleaning Next.js artifacts...' -ForegroundColor Yellow; " +
+    "  if (Test-Path '.\\node_modules\\next') { Remove-Item -LiteralPath '.\\node_modules\\next' -Recurse -Force -ErrorAction SilentlyContinue }; " +
+    "  if (Test-Path '.\\node_modules') { Get-ChildItem '.\\node_modules' -Filter '.next-*' -Force -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue }; " +
+    "  $frontendInstallCmdRetry; " +
+    "  if (`$LASTEXITCODE -ne 0) { Write-Host 'Frontend dependency install failed.' -ForegroundColor Red; $ClosePromptCmd; exit 1 } " +
+    "}; " +
+    "if (-not (Test-Path `$nextPath)) { Write-Host 'Next.js runtime binary is still missing after install.' -ForegroundColor Red; $ClosePromptCmd; exit 1 }; " +
+    "if (-not (Test-Path '.\\node_modules')) { New-Item -ItemType Directory -Path '.\\node_modules' -Force | Out-Null }; " +
+    "Set-Content -Path `$stampPath -Value (Get-Date).ToString('O') -Encoding UTF8; " +
+    "} else { Write-Host 'Frontend dependencies are up to date. Skipping install.' -ForegroundColor DarkGreen }; " +
         "$frontendStartCmd"
 $frontendWindowArgs = if ($AutoMode) { @("-Command", $cmd) } else { @("-NoExit", "-Command", $cmd) }
 Start-Process powershell -ArgumentList $frontendWindowArgs

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useCooldownTimer } from '../hooks/useCooldownTimer';
 import { PasswordResetRateLimitError, requestPasswordReset } from '../lib/auth/password-reset';
+import { getEmailValidationError } from '../lib/auth/validation';
 import { logger } from '../lib/logger';
 import AuthFeedback from './AuthFeedback';
 import styles from './ResetPasswordModal.module.css';
@@ -31,9 +32,11 @@ export default function ResetPasswordModal({ isOpen, onClose, onSuccess }: Reset
   }, [isOpen]);
 
   const validateEmail = useCallback((value: string): string => {
-    if (!value.trim()) return 'Email address is required.';
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Please enter a valid email address';
-    return '';
+    return getEmailValidationError(
+      value,
+      'Email address is required.',
+      'Please enter a valid email address'
+    );
   }, []);
 
   const handleChange = (value: string) => {

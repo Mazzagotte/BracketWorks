@@ -7,13 +7,18 @@ import { usePageHeader } from '../lib/header-context'
 import { ErrorBoundary } from '../components/ErrorBoundary'
 import ActionConfirmDialog from '../components/ActionConfirmDialog'
 import { usePlayers } from './hooks/usePlayers'
+import { useBowlerHistorySearch } from './hooks/useBowlerHistorySearch'
+import { usePlayerSidePots } from './hooks/usePlayerSidePots'
+import { usePlayerTournamentSetup } from './hooks/usePlayerTournamentSetup'
+import { buildImportIdentity, buildEntriesExcelBuffer, ImportablePlayer, parseExcelPlayers } from './utils/importPlayers'
 import { useTournaments } from '../hooks/useTournaments'
+import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import PlayersTable from './components/PlayersTable'
 import PlayerForm from './components/PlayerForm'
 import NoTournamentState from '../components/NoTournamentState'
 import { logger } from '../lib/logger'
 import { Squad, Player, PlayerFormPrefillDraft } from './types'
-import { BracketProgramDefinition, BracketSettings, SidePotsSettings, Tournament } from '../lib/types'
+import { BracketProgramDefinition, Tournament } from '../lib/types'
 import { apiClient, API, apiFetch } from '../lib/api'
 import { calculatePlayerTotalCost, calculateSidePotCost, defaultBracketPrograms, filterEntriesForDivision, getEnabledBracketPrograms, normalizeBracketPrograms, normalizeDivision, normalizePlayerBracketEntries, summarizeEntries } from '../lib/bracketPrograms'
 import styles from './entries.module.css'
@@ -28,15 +33,6 @@ import { useToastHelpers } from '../components/Toast'
 import ImportLoadingModal from '../components/ImportLoadingModal'
 import { getSelectedSquadId, getSelectedTournamentId, setSelectedSquad } from '../lib/selection-session'
 import { resetScrollLocks, setBodyInteractionState } from '../utils/modalUtils'
-
-type TournamentBootstrapResponse = {
-  tournament: Tournament | null;
-  squads: Squad[];
-  selected_squad: { squad_id: number } | null;
-  bracket_settings: Partial<BracketSettings> | null;
-}
-
-const ENTRY_FEE_REFETCH_COOLDOWN_MS = 30_000
 
 function bracketProgramsEqual(left: BracketProgramDefinition[], right: BracketProgramDefinition[]): boolean {
   if (left.length !== right.length) return false
@@ -75,15 +71,6 @@ export default function PlayersPage() {
   const [entryFee, setEntryFee] = useState<number>(25) // Default $25, will be loaded from tournament settings
   const [bracketSize, setBracketSize] = useState<number>(8) // Default 8, will be loaded from tournament settings
   const [bracketPrograms, setBracketPrograms] = useState<BracketProgramDefinition[]>(defaultBracketPrograms)
-  const [sidePots, setSidePots] = useState<SidePotsSettings | null>(null)
-  const [historySearchUsbc, setHistorySearchUsbc] = useState('')
-  const [historySearchFirstName, setHistorySearchFirstName] = useState('')
-  const [historySearchLastName, setHistorySearchLastName] = useState('')
-  const [debouncedHistorySearchUsbc, setDebouncedHistorySearchUsbc] = useState('')
-  const [debouncedHistorySearchFirstName, setDebouncedHistorySearchFirstName] = useState('')
-  const [debouncedHistorySearchLastName, setDebouncedHistorySearchLastName] = useState('')
-  const [historyResults, setHistoryResults] = useState<Array<{ id: number; first_name: string; last_name: string; usbc_number?: string | null }>>([])
-  const [isHistorySearching, setIsHistorySearching] = useState(false)
   const [prefillDraft, setPrefillDraft] = useState<PlayerFormPrefillDraft | null>(null)
   const [prefillVersion, setPrefillVersion] = useState(0)
   const [searchUsbc, setSearchUsbc] = useState('')
@@ -92,12 +79,24 @@ export default function PlayersPage() {
   const [isMobileView, setIsMobileView] = useState(false)
   const [historySearchCollapsed, setHistorySearchCollapsed] = useState(false)
   const [tableSearchCollapsed, setTableSearchCollapsed] = useState(false)
-  const [debouncedSearchUsbc, setDebouncedSearchUsbc] = useState('')
-  const [debouncedSearchFirstName, setDebouncedSearchFirstName] = useState('')
-  const [debouncedSearchLastName, setDebouncedSearchLastName] = useState('')
-  // Per-player side pot entries: { [playerId]: { [potKey]: boolean } } — localStorage only
-  const [sidePotEntriesMap, setSidePotEntriesMap] = useState<Record<number, Record<string, boolean>>>({})
+  const debouncedSearchUsbc = useDebouncedValue(searchUsbc, 300)
+  const debouncedSearchFirstName = useDebouncedValue(searchFirstName, 300)
+  const debouncedSearchLastName = useDebouncedValue(searchLastName, 300)
   const enabledBracketPrograms = useMemo(() => getEnabledBracketPrograms(bracketPrograms), [bracketPrograms])
+  const {
+    historySearchUsbc,
+    setHistorySearchUsbc,
+    historySearchFirstName,
+    setHistorySearchFirstName,
+    historySearchLastName,
+    setHistorySearchLastName,
+    historyResults,
+    setHistoryResults,
+    isHistorySearching,
+    hasHistorySearchInput,
+    triggerHistorySearch,
+    clearHistorySearch,
+  } = useBowlerHistorySearch(authToken)
 
   useEffect(() => {
     resetScrollLocks()
@@ -107,64 +106,6 @@ export default function PlayersPage() {
       setBodyInteractionState({ scrollLocked: false, touchLocked: false })
     }
   }, [])
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setDebouncedHistorySearchUsbc(historySearchUsbc)
-      setDebouncedHistorySearchFirstName(historySearchFirstName)
-      setDebouncedHistorySearchLastName(historySearchLastName)
-    }, 300)
-    return () => window.clearTimeout(timer)
-  }, [historySearchUsbc, historySearchFirstName, historySearchLastName])
-
-  useEffect(() => {
-    const runHistorySearch = async () => {
-      if (!authToken) {
-        setHistoryResults([])
-        return
-      }
-
-      const hasSearch = Boolean(
-        debouncedHistorySearchUsbc.trim()
-        || debouncedHistorySearchFirstName.trim()
-        || debouncedHistorySearchLastName.trim()
-      )
-      if (!hasSearch) {
-        setHistoryResults([])
-        return
-      }
-
-      setIsHistorySearching(true)
-      try {
-        const params = new URLSearchParams()
-        if (debouncedHistorySearchUsbc.trim()) params.set('usbc_number', debouncedHistorySearchUsbc.trim())
-        if (debouncedHistorySearchFirstName.trim()) params.set('first_name', debouncedHistorySearchFirstName.trim())
-        if (debouncedHistorySearchLastName.trim()) params.set('last_name', debouncedHistorySearchLastName.trim())
-        params.set('limit', '25')
-
-        const data = await apiClient.get<Array<{ id: number; first_name: string; last_name: string; usbc_number?: string | null }>>(
-          `/api/v1/bowlers/profiles?${params.toString()}`
-        )
-        setHistoryResults(Array.isArray(data) ? data : [])
-      } catch (error) {
-        logger.error('Failed to search bowler history', { error })
-        setHistoryResults([])
-      } finally {
-        setIsHistorySearching(false)
-      }
-    }
-
-    void runHistorySearch()
-  }, [authToken, debouncedHistorySearchUsbc, debouncedHistorySearchFirstName, debouncedHistorySearchLastName])
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setDebouncedSearchUsbc(searchUsbc)
-      setDebouncedSearchFirstName(searchFirstName)
-      setDebouncedSearchLastName(searchLastName)
-    }, 300)
-    return () => window.clearTimeout(timer)
-  }, [searchUsbc, searchFirstName, searchLastName])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -228,100 +169,6 @@ export default function PlayersPage() {
     }
   }, [tournaments, selectedTournament, selectionRefreshKey])
 
-  // Load side pots settings from localStorage for the given tournament
-  const loadSidePots = useCallback((tournamentId: string | null) => {
-    if (!tournamentId) { setSidePots(null); setSidePotEntriesMap({}); return }
-    try {
-      const raw = localStorage.getItem(`sidePots_${tournamentId}`)
-      if (raw) {
-        const parsed = JSON.parse(raw) as SidePotsSettings
-        setSidePots(parsed)
-      } else {
-        setSidePots(null)
-      }
-    } catch {
-      setSidePots(null)
-    }
-    try {
-      const rawEntries = localStorage.getItem(`sidePotEntries_${tournamentId}`)
-      if (rawEntries) {
-        setSidePotEntriesMap(JSON.parse(rawEntries) as Record<number, Record<string, boolean>>)
-      } else {
-        setSidePotEntriesMap({})
-      }
-    } catch {
-      setSidePotEntriesMap({})
-    }
-  }, [])
-
-  // Load entry fee from tournament bracket settings
-  const lastEntryFeeFetchRef = useRef(0)
-  const loadEntryFee = useCallback(async () => {
-    if (!authToken) {
-      return;
-    }
-    
-    const tournamentId = getTournamentId();
-    
-    if (!tournamentId) {
-      return;
-    }
-
-    loadSidePots(tournamentId);
-    
-    try {
-      lastEntryFeeFetchRef.current = Date.now()
-      const settings = await apiClient.get<BracketSettings>(`/api/v1/bracket-settings/${tournamentId}`);
-      const nextEntryFee = typeof settings?.default_entry_fee === 'number' ? settings.default_entry_fee : null
-      const nextPrograms = normalizeBracketPrograms(settings?.bracket_programs, nextEntryFee ?? entryFee)
-      
-      if (nextEntryFee != null) {
-        setEntryFee(prev => {
-          if (prev === nextEntryFee) return prev
-          logger.info(`Loaded entry fee from tournament settings: $${nextEntryFee}`)
-          return nextEntryFee
-        })
-      }
-      setBracketPrograms(prev => (bracketProgramsEqual(prev, nextPrograms) ? prev : nextPrograms))
-      if (settings && typeof settings.bracket_size === 'number') {
-        setBracketSize(settings.bracket_size);
-      }
-    } catch (error) {
-      logger.warn('Failed to load bracket settings, using default entry fee:', error);
-      const fallbackPrograms = normalizeBracketPrograms(undefined, entryFee)
-      setBracketPrograms(prev => (bracketProgramsEqual(prev, fallbackPrograms) ? prev : fallbackPrograms))
-    }
-  }, [authToken, entryFee, getTournamentId, loadSidePots]);
-
-  // Load entry fee when tournament or auth changes
-  useEffect(() => {
-    loadEntryFee();
-  }, [loadEntryFee]);
-
-  // Reload entry fee when page becomes visible (handles navigation back from Dashboard)
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (!document.hidden && Date.now() - lastEntryFeeFetchRef.current > ENTRY_FEE_REFETCH_COOLDOWN_MS) {
-        loadEntryFee();
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [loadEntryFee]);
-
-  // Reload when window regains focus (e.g. alt-tab back from another app)
-  useEffect(() => {
-    const handleFocus = () => {
-      if (Date.now() - lastEntryFeeFetchRef.current > ENTRY_FEE_REFETCH_COOLDOWN_MS) {
-        loadEntryFee();
-      }
-    };
-
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, [loadEntryFee]);
-
   // Use loaded squad if available, otherwise a minimal placeholder so usePlayers
   // can begin fetching immediately without waiting for the squads API response.
   const selectedSquad = useMemo(
@@ -377,18 +224,39 @@ export default function PlayersPage() {
     searchLastName: debouncedSearchLastName,
   })
 
+  const {
+    sidePots,
+    players,
+    loadSidePots,
+    persistPlayerSidePotEntries,
+    mergeAndPersistSidePotEntries,
+  } = usePlayerSidePots(rawPlayers)
+
+  const { loadEntryFee } = usePlayerTournamentSetup({
+    isAuthInitialized,
+    authToken,
+    selectionRefreshKey,
+    entryFee,
+    getTournamentId,
+    loadSidePots,
+    bracketProgramsEqual,
+    setSelectedTournament,
+    setEntryFee,
+    setBracketPrograms,
+    setBracketSize,
+    setSelectedSquadId,
+    setSquads,
+  })
+
   const handleUseHistoryResult = useCallback((profile: { first_name: string; last_name: string; usbc_number?: string | null }) => {
     setPrefillDraft({
       firstName: profile.first_name,
       lastName: profile.last_name,
       usbc: profile.usbc_number || '',
     })
-    setHistorySearchUsbc('')
-    setHistorySearchFirstName('')
-    setHistorySearchLastName('')
-    setHistoryResults([])
+    clearHistorySearch()
     setPrefillVersion(prev => prev + 1)
-  }, [])
+  }, [clearHistorySearch])
 
   useEffect(() => {
     const handleSettingsChanged = () => {
@@ -400,20 +268,6 @@ export default function PlayersPage() {
     window.addEventListener('settings-changed', handleSettingsChanged)
     return () => window.removeEventListener('settings-changed', handleSettingsChanged)
   }, [cancelPendingPatches, loadEntryFee, loadPlayers])
-
-  // Merge side pot entries (localStorage) into players (API)
-  const players = useMemo(
-    () => rawPlayers.map(p => {
-      const sidePotEntries = sidePotEntriesMap[p.id] ?? {}
-      const sidePotCost = calculateSidePotCost(sidePotEntries, sidePots)
-      return {
-        ...p,
-        sidePotEntries,
-        totalCost: p.totalCost + sidePotCost,
-      }
-    }),
-    [rawPlayers, sidePotEntriesMap, sidePots]
-  )
 
   const hasActiveEntryFilters = Boolean(searchUsbc.trim() || searchFirstName.trim() || searchLastName.trim())
 
@@ -463,13 +317,7 @@ export default function PlayersPage() {
       }
       // Persist to localStorage
       const tournamentId = getTournamentId()
-      if (tournamentId) {
-        setSidePotEntriesMap(prev => {
-          const next = { ...prev, [playerId]: nextSidePotEntries }
-          localStorage.setItem(`sidePotEntries_${tournamentId}`, JSON.stringify(next))
-          return next
-        })
-      }
+      persistPlayerSidePotEntries(tournamentId, playerId, nextSidePotEntries)
       // No API call — side pot entries are localStorage only
       return
     } else {
@@ -477,7 +325,7 @@ export default function PlayersPage() {
     }
 
     updatePlayer(playerId, updates);
-  }, [players, updatePlayer, getTournamentId]);
+  }, [players, updatePlayer, getTournamentId, persistPlayerSidePotEntries]);
 
   // Stable ref so handleRandomize never needs players in its dep array
   const playersRef = useRef<typeof players>([])
@@ -551,16 +399,7 @@ export default function PlayersPage() {
 
     // Persist randomized side pot entries to localStorage (same behavior as manual toggles)
     const tournamentId = getTournamentId()
-    setSidePotEntriesMap(prev => {
-      const next = { ...prev }
-      randomizedSidePotEntries.forEach((entries, playerId) => {
-        next[playerId] = entries
-      })
-      if (tournamentId) {
-        localStorage.setItem(`sidePotEntries_${tournamentId}`, JSON.stringify(next))
-      }
-      return next
-    })
+    mergeAndPersistSidePotEntries(tournamentId, randomizedSidePotEntries)
 
     bulkSetPlayers(prev => prev.map(player => {
       const u = updateMap.get(player.id)
@@ -596,7 +435,7 @@ export default function PlayersPage() {
     } catch (err) {
       logger.error('Bulk randomize failed', { error: err })
     }
-  }, [enabledBracketPrograms, entryFee, sidePots, getTournamentId, bulkSetPlayers, cancelPendingPatches])
+  }, [enabledBracketPrograms, entryFee, sidePots, getTournamentId, bulkSetPlayers, cancelPendingPatches, mergeAndPersistSidePotEntries])
 
   const isDev = process.env.NODE_ENV === 'development' || !!currentUser?.isAdmin
   const [isDeletingAll, setIsDeletingAll] = useState(false)
@@ -608,193 +447,6 @@ export default function PlayersPage() {
   const [isImporting, setIsImporting] = useState(false)
   const [importFileName, setImportFileName] = useState<string | undefined>(undefined)
   const toast = useToastHelpers()
-
-  const parseNumber = (value: unknown, fallback = 0) => {
-    const parsed = Number(value)
-    return Number.isFinite(parsed) ? parsed : fallback
-  }
-
-  const getValue = (row: Record<string, unknown>, keys: string[]) => {
-    for (const key of keys) {
-      if (row[key] !== undefined && row[key] !== null && String(row[key]).trim() !== '') return row[key]
-    }
-    return undefined
-  }
-
-  const normalizeHeader = (h: string) => h.trim().toLowerCase().replace(/[_\s\-#]+/g, '')
-
-  const buildImportIdentity = (firstName: string, lastName: string, usbc: string) => {
-    const normalizedUsbc = String(usbc || '').trim().toLowerCase()
-    if (normalizedUsbc) {
-      return `usbc:${normalizedUsbc}`
-    }
-    return `name:${`${firstName} ${lastName}`.trim().toLowerCase()}`
-  }
-
-  type ImportablePlayer = Omit<Player, 'id'> & {
-    sourceRow: number
-    normalizedName: string
-    importKey: string
-  }
-
-  type SkippedImportRow = {
-    row: number
-    reason: string
-    name?: string
-  }
-
-  const importedNameSuffixes = new Set([
-    'jr', 'jr.', 'sr', 'sr.', 'ii', 'iii', 'iv', 'v',
-    'md', 'm.d.', 'phd', 'ph.d.', 'dds', 'dmd', 'esq', 'esquire'
-  ])
-
-  const parseImportedFullName = (fullName: string) => {
-    const trimmed = fullName.trim()
-    if (!trimmed) return { firstName: '', lastName: '' }
-
-    const stripTrailingMiddleInitial = (firstNameValue: string) => {
-      const parts = firstNameValue.split(/\s+/).filter(Boolean)
-      if (parts.length <= 1) return firstNameValue.trim()
-
-      const trailingToken = parts[parts.length - 1] ?? ''
-      if (/^[a-z]\.??$/i.test(trailingToken)) {
-        return parts.slice(0, -1).join(' ').trim()
-      }
-
-      return firstNameValue.trim()
-    }
-
-    if (trimmed.includes(',')) {
-      const segments = trimmed
-        .split(',')
-        .map(segment => segment.trim())
-        .filter(Boolean)
-
-      if (segments.length >= 2) {
-        const trailingSegment = (segments[segments.length - 1] ?? '').toLowerCase()
-        const hasTrailingSuffix = segments.length >= 3 && importedNameSuffixes.has(trailingSegment)
-        const rawFirstName = (hasTrailingSuffix ? segments.slice(1, -1) : segments.slice(1)).join(' ').trim()
-        return {
-          firstName: stripTrailingMiddleInitial(rawFirstName),
-          lastName: [segments[0], ...(hasTrailingSuffix ? [segments[segments.length - 1]] : [])].join(' ').trim(),
-        }
-      }
-    }
-
-    const parts = trimmed.split(/\s+/).filter(Boolean)
-    if (parts.length === 0) return { firstName: '', lastName: '' }
-    if (parts.length === 1) return { firstName: parts[0], lastName: '' }
-
-    const lastToken = (parts[parts.length - 1] ?? '').toLowerCase()
-    if (parts.length >= 3 && importedNameSuffixes.has(lastToken)) {
-      return {
-        firstName: parts.slice(0, -2).join(' ').trim(),
-        lastName: parts.slice(-2).join(' ').trim(),
-      }
-    }
-
-    return {
-      firstName: parts[0] || '',
-      lastName: parts.slice(1).join(' ').trim(),
-    }
-  }
-
-  const parseExcelPlayers = async (file: File): Promise<{ players: ImportablePlayer[]; skippedRows: SkippedImportRow[] }> => {
-    const { Workbook } = await import('exceljs')
-    const buffer = await file.arrayBuffer()
-    const workbook = new Workbook()
-    await workbook.xlsx.load(buffer)
-    const worksheet = workbook.worksheets[0]
-    if (!worksheet) return { players: [], skippedRows: [{ row: 1, reason: 'No worksheet found' }] }
-    const sheetRows: unknown[][] = []
-    worksheet.eachRow({ includeEmpty: true }, (row) => {
-      sheetRows.push((row.values as unknown[]).slice(1).map(v => v === null || v === undefined ? '' : v))
-    })
-
-    const detectHeaderRowIndex = (rows: unknown[][]): number => {
-      for (let index = 0; index < rows.length; index += 1) {
-        const normalizedCells = (rows[index] ?? [])
-          .map(cell => normalizeHeader(String(cell || '')))
-          .filter(Boolean)
-        if (normalizedCells.length === 0) continue
-
-        const hasName = normalizedCells.includes('name') || normalizedCells.includes('bowlername')
-        const hasSplitName = normalizedCells.includes('firstname') || normalizedCells.includes('lastname')
-        const hasAvg = normalizedCells.includes('avg') || normalizedCells.includes('average')
-
-        if ((hasName || hasSplitName) && hasAvg) {
-          return index
-        }
-      }
-      return -1
-    }
-
-    const headerRowIndex = detectHeaderRowIndex(sheetRows)
-    if (headerRowIndex < 0) {
-      return {
-        players: [],
-        skippedRows: [{ row: 1, reason: 'Could not detect header row (expected Name/First/Last and Avg columns)' }],
-      }
-    }
-
-    const headerCells = (sheetRows[headerRowIndex] || []).map(cell => normalizeHeader(String(cell || '')))
-    const players: ImportablePlayer[] = []
-    const skippedRows: SkippedImportRow[] = []
-
-    for (let rowIndex = headerRowIndex + 1; rowIndex < sheetRows.length; rowIndex += 1) {
-      const sourceRow = rowIndex + 1
-      const sourceCells = sheetRows[rowIndex] || []
-
-      // Skip fully blank rows quickly.
-      if (sourceCells.every(cell => String(cell ?? '').trim() === '')) {
-        continue
-      }
-
-      const nr: Record<string, unknown> = {}
-      for (let colIndex = 0; colIndex < headerCells.length; colIndex += 1) {
-        const key = headerCells[colIndex]
-        if (!key) continue
-        nr[key] = sourceCells[colIndex]
-      }
-      const fullName = String(getValue(nr, ['name', 'bowlername']) || '').trim()
-      let firstName = String(getValue(nr, ['firstname', 'first', 'givenname', 'fname']) || '').trim()
-      let lastName  = String(getValue(nr, ['lastname', 'last', 'surname', 'familyname', 'lname']) || '').trim()
-      if ((!firstName || !lastName) && fullName) {
-        const parsedName = parseImportedFullName(fullName)
-        firstName = firstName || parsedName.firstName || ''
-        lastName  = lastName  || parsedName.lastName || ''
-      }
-      if (!firstName || !lastName) {
-        skippedRows.push({
-          row: sourceRow,
-          reason: 'Missing first or last name',
-          name: fullName || `${firstName} ${lastName}`.trim() || undefined,
-        })
-        continue
-      }
-      const handicap = Math.max(0, Math.floor(parseNumber(getValue(nr, ['handicap', 'handicapentries', 'handicapbrackets']), 0)))
-      const scratch  = Math.max(0, Math.floor(parseNumber(getValue(nr, ['scratch',  'scratchentries',  'scratchbrackets']),  0)))
-      const bracketEntries = normalizePlayerBracketEntries(undefined, handicap, scratch)
-      const normalizedName = `${firstName} ${lastName}`.trim().toLowerCase()
-      const usbc = String(getValue(nr, ['usbc', 'usbcnumber', 'nationalid']) || '').trim()
-      const importKey = buildImportIdentity(firstName, lastName, usbc)
-      players.push({
-        firstName, lastName,
-        usbc,
-        average:    Math.max(0, Math.floor(parseNumber(getValue(nr, ['average', 'avg']), 150))),
-        handicap, scratch,
-        bracketEntries,
-        lane:       String(getValue(nr, ['lane']) || 'A1').trim() || 'A1',
-        amountPaid: Math.max(0, parseNumber(getValue(nr, ['amountpaid', 'paid', 'payment']), 0)),
-        totalCost: calculatePlayerTotalCost(bracketEntries, bracketPrograms, entryFee),
-        sourceRow,
-        normalizedName,
-        importKey,
-      })
-    }
-
-    return { players, skippedRows }
-  }
 
   const executeDeleteAllPlayers = useCallback(async () => {
     setIsDeletingAll(true)
@@ -818,7 +470,7 @@ export default function PlayersPage() {
     setImportFileName(file.name)
     setIsImporting(true)
     try {
-      const { players: imported, skippedRows } = await parseExcelPlayers(file)
+      const { players: imported, skippedRows } = await parseExcelPlayers(file, enabledBracketPrograms, entryFee)
       const logSkippedRows = () => {
         if (skippedRows.length === 0) return
         const onlyFileDuplicates = skippedRows.every(row => row.reason.startsWith('Duplicate within file'))
@@ -918,58 +570,14 @@ export default function PlayersPage() {
     }
 
     try {
-      const { Workbook } = await import('exceljs')
-      const enabledSidePots = (sidePots?.pots ?? []).filter(pot => pot.enabled)
-      const rows = players.map(player => {
-        const row: Record<string, string | number> = {
-          'USBC': player.usbc || '',
-          'First Name': player.firstName || '',
-          'Last Name': player.lastName || '',
-          'Division': normalizeDivision(player.division),
-          'Lane': player.lane?.toString() || '',
-          'Average': Number(player.average || 0),
-        }
-
-        enabledBracketPrograms.forEach(program => {
-          row[program.name] = Number(player.bracketEntries?.[program.key] || 0)
-        })
-
-        enabledSidePots.forEach(pot => {
-          row[pot.name] = player.sidePotEntries?.[pot.key] ? 'Yes' : 'No'
-        })
-
-        const totalEntries = Object.values(player.bracketEntries || {}).reduce((sum, count) => sum + Number(count || 0), 0)
-        const needsEntryFee = totalEntries > 0 && player.totalCost <= 0
-        const isPaid = !needsEntryFee && player.amountPaid >= player.totalCost
-
-        row['Total Cost'] = Number(player.totalCost || 0)
-        row['Status'] = needsEntryFee ? 'SET FEE' : (isPaid ? 'PAID' : 'DUE')
-        row['Amount Paid'] = Number(player.amountPaid || 0)
-        return row
-      })
-
-      const workbook = new Workbook()
-      const worksheet = workbook.addWorksheet('Entries')
-      if (rows.length > 0) {
-        const firstRow = rows[0]
-        if (firstRow) {
-          worksheet.columns = Object.keys(firstRow).map(key => ({ header: key, key }))
-        }
-        worksheet.addRows(rows)
-      }
-
-      const safeTournament = (selectedTournament?.name || 'entries')
-        .replace(/[^a-zA-Z0-9\-_ ]+/g, '')
-        .trim()
-        .replace(/\s+/g, '_') || 'entries'
-      const safeSquad = selectedSquad
-        ? `${selectedSquad.date || ''}_${selectedSquad.time || ''}`.replace(/[^a-zA-Z0-9\-_ ]+/g, '').trim().replace(/\s+/g, '_')
-        : 'all_squads'
-      const dateStamp = new Date().toISOString().slice(0, 10)
-      const fileName = `${safeTournament}_${safeSquad}_entries_${dateStamp}.xlsx`
-
-      const xlsxBuffer = await workbook.xlsx.writeBuffer()
-      const blob = new Blob([xlsxBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+      const { buffer, fileName } = await buildEntriesExcelBuffer(
+        players,
+        enabledBracketPrograms,
+        sidePots,
+        selectedTournament,
+        selectedSquad,
+      )
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
@@ -1045,75 +653,6 @@ export default function PlayersPage() {
     }
   }, [players])
 
-  // Fetch squad data (similar to scores page) - OPTIMIZED WITH PARALLEL REQUESTS
-  useEffect(() => {
-    const fetchSquadData = async () => {
-      const bootstrapStarted = performance.now();
-      try {
-        const lastTournamentId = getTournamentId();
-
-        if (!lastTournamentId) {
-          return;
-        }
-
-        const bootstrap = await apiClient.get<TournamentBootstrapResponse>(
-          `/api/v1/tournaments/bootstrap?tournament_id=${lastTournamentId}`,
-          false,
-        );
-        const selectedData = bootstrap?.selected_squad ?? null;
-        const squadsData = bootstrap?.squads ?? [];
-
-        if (bootstrap?.tournament) {
-          setSelectedTournament(bootstrap.tournament);
-        }
-
-        if (bootstrap?.bracket_settings) {
-          const settings = bootstrap.bracket_settings;
-          const nextEntryFee = typeof settings.default_entry_fee === 'number' ? settings.default_entry_fee : null;
-          const normalizedPrograms = normalizeBracketPrograms(settings.bracket_programs, nextEntryFee ?? entryFee);
-
-          if (nextEntryFee != null) {
-            setEntryFee(prev => (prev === nextEntryFee ? prev : nextEntryFee));
-          }
-          setBracketPrograms(prev => (bracketProgramsEqual(prev, normalizedPrograms) ? prev : normalizedPrograms));
-          if (typeof settings.bracket_size === 'number') {
-            setBracketSize(settings.bracket_size);
-          }
-        }
-
-        loadSidePots(lastTournamentId);
-
-        const storedSelectedSquadId = getSelectedSquadId();
-        const restoredSelectedSquadId = selectedData?.squad_id
-          ?? (storedSelectedSquadId ? Number(storedSelectedSquadId) : null);
-        
-        // Set selected squad ID
-        if (restoredSelectedSquadId && squadsData.some((squad: Squad) => squad.id === restoredSelectedSquadId)) {
-          setSelectedSquadId(restoredSelectedSquadId);
-        } else {
-          setSelectedSquadId(null);
-        }
-        
-        // Set all squads
-        setSquads(squadsData);
-
-        logger.info('Players bootstrap load completed', {
-          tournamentId: Number(lastTournamentId),
-          durationMs: Math.round((performance.now() - bootstrapStarted) * 100) / 100,
-          squadsCount: squadsData.length,
-          hasSelectedSquad: Boolean(selectedData?.squad_id),
-          hasBracketSettings: Boolean(bootstrap?.bracket_settings),
-        });
-      } catch (error) {
-        logger.error('Error fetching squad data:', error);
-      }
-    };
-
-    if (isAuthInitialized && authToken) {
-      fetchSquadData();
-    }
-  }, [isAuthInitialized, authToken, getTournamentId, loadSidePots, entryFee, selectionRefreshKey]);
-
   // Wait for auth initialization
   if (!isAuthInitialized) {
     return (
@@ -1159,12 +698,6 @@ export default function PlayersPage() {
   }
 
   const showInitialPlayersLoad = isLoading && players.length === 0
-  const hasHistorySearchInput = Boolean(
-    historySearchUsbc.trim()
-    || historySearchFirstName.trim()
-    || historySearchLastName.trim()
-  )
-
   return (
     <ErrorBoundary>
       <div className={`${shellStyles.page} ${styles.pageContainer}`}>
@@ -1257,11 +790,7 @@ export default function PlayersPage() {
                 <button
                   type="button"
                   className={styles.searchActionBtn}
-                  onClick={() => {
-                    setDebouncedHistorySearchUsbc(historySearchUsbc.trim())
-                    setDebouncedHistorySearchFirstName(historySearchFirstName.trim())
-                    setDebouncedHistorySearchLastName(historySearchLastName.trim())
-                  }}
+                  onClick={triggerHistorySearch}
                   disabled={!hasHistorySearchInput}
                 >
                   Find Bowler
@@ -1269,12 +798,7 @@ export default function PlayersPage() {
                 <button
                   type="button"
                   className={`${styles.clearSearchBtn} ${hasHistorySearchInput ? styles.clearSearchBtnActive : ''}`}
-                  onClick={() => {
-                    setHistorySearchUsbc('')
-                    setHistorySearchFirstName('')
-                    setHistorySearchLastName('')
-                    setHistoryResults([])
-                  }}
+                  onClick={clearHistorySearch}
                   disabled={!hasHistorySearchInput}
                 >
                   Clear

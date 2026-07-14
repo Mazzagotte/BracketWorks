@@ -15,6 +15,10 @@ type PasswordValidationOptions = {
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const usernameRegex = /^[a-zA-Z0-9_]+$/;
 
+export function getRequiredFieldError(value: string, requiredMessage: string): string {
+  return value.trim() ? "" : requiredMessage;
+}
+
 export function isValidEmail(value: string): boolean {
   return emailRegex.test(value.trim());
 }
@@ -24,7 +28,8 @@ export function getEmailValidationError(
   requiredMessage = "Email is required",
   invalidMessage = "Please enter a valid email address"
 ): string {
-  if (!value.trim()) return requiredMessage;
+  const requiredError = getRequiredFieldError(value, requiredMessage);
+  if (requiredError) return requiredError;
   return isValidEmail(value) ? "" : invalidMessage;
 }
 
@@ -72,7 +77,11 @@ export function calculatePasswordStrengthPercent(password: string, minLength = 6
 
 export function getPasswordValidationError(
   value: string,
-  options: PasswordValidationOptions = {}
+  options: {
+    minLength?: number;
+    requiredMessage?: string;
+    unmetMessage?: string;
+  } = {}
 ): string {
   const {
     minLength = 6,
@@ -85,8 +94,10 @@ export function getPasswordValidationError(
 }
 
 export function getResetCodeValidationError(value: string): string {
+  const requiredError = getRequiredFieldError(value, "Reset code is required");
+  if (requiredError) return requiredError;
+
   const trimmedValue = value.trim();
-  if (!trimmedValue) return "Reset code is required";
   if (trimmedValue.length < 4) return "Reset code is too short";
   if (trimmedValue.length > 10) return "Reset code is too long";
   return "";

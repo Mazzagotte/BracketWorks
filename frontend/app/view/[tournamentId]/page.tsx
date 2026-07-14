@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import { buildApiUrl } from '../../lib/api'
 import { formatIsoDateShortWithWeekday } from '../../lib/formatters'
 import { BW_BREAKPOINTS, matchesMaxWidth } from '../../lib/responsive'
+import { getSidePotsStorageKey } from '../../lib/dashboard-settings'
 import { DataTableToolbar } from '../../components/primitives'
 import TournamentDirectory from '../TournamentDirectory'
 import styles from './view.module.css'
@@ -883,7 +884,7 @@ function SidePotsLeaderboard({ scoreRows, tournamentId, lastRefresh, isRefreshin
       return
     }
 
-    const settingsKey = `sidePots_${tournamentId}`
+    const settingsKey = getSidePotsStorageKey(tournamentId)
     const entriesKey = `sidePotEntries_${tournamentId}`
     const rawSettings = localStorage.getItem(settingsKey)
     const rawEntries = localStorage.getItem(entriesKey)

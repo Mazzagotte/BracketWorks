@@ -20,18 +20,6 @@ export class ApiError extends Error implements AppError {
   }
 }
 
-export class ValidationError extends Error implements AppError {
-  public code: string = 'VALIDATION_ERROR'
-  public statusCode: number = 400
-  public details?: unknown
-
-  constructor(message: string, details?: unknown) {
-    super(message)
-    this.name = 'ValidationError'
-    this.details = details
-  }
-}
-
 type ErrorWithStatus = Error & { status: number }
 
 function hasNumericStatus(error: Error): error is ErrorWithStatus {
@@ -39,7 +27,7 @@ function hasNumericStatus(error: Error): error is ErrorWithStatus {
 }
 
 export function handleApiError(error: unknown): AppError {
-  if (error instanceof ApiError || error instanceof ValidationError) {
+  if (error instanceof ApiError) {
     return error
   }
 
@@ -57,11 +45,6 @@ export function handleApiError(error: unknown): AppError {
   }
 
   return new ApiError('An unexpected error occurred')
-}
-
-export function getErrorMessage(error: unknown): string {
-  const appError = handleApiError(error)
-  return appError.message
 }
 
 export function isNetworkError(error: unknown): boolean {

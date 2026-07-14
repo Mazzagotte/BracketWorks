@@ -13,6 +13,24 @@ export interface Tournament {
   is_public?: boolean;
 }
 
+export interface TournamentWorkflowStatus {
+  status_squad_id: number | null;
+  has_generated_brackets: boolean;
+  payouts_finalized: boolean;
+  scores_locked: boolean;
+}
+
+export interface TournamentBootstrapResponse {
+  tournament: Tournament | null;
+  squads: Squad[];
+  selected_squad: { squad_id: number } | null;
+  bracket_settings: Partial<BracketSettings> | null;
+}
+
+export interface DashboardTournamentBootstrapResponse extends TournamentBootstrapResponse {
+  workflow_status: TournamentWorkflowStatus | null;
+}
+
 export interface Squad {
   id: number;
   name?: string;

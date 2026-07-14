@@ -1,6 +1,6 @@
 import { API } from '../api';
 import { getErrorMessage } from '../error-utils';
-import { getEmailValidationError, hasStrongPassword } from './validation';
+import { getEmailValidationError, getRequiredFieldError, hasStrongPassword } from './validation';
 
 export type SignupPayload = {
   firstName: string;
@@ -22,9 +22,15 @@ type SignupValidationPayload = SignupPayload & {
 };
 
 export function getSignupValidationError(payload: SignupValidationPayload): string {
-  if (!payload.firstName.trim()) return 'First name is required';
-  if (!payload.lastName.trim()) return 'Last name is required';
-  if (!payload.username.trim()) return 'Username is required';
+  const firstNameError = getRequiredFieldError(payload.firstName, 'First name is required');
+  if (firstNameError) return firstNameError;
+
+  const lastNameError = getRequiredFieldError(payload.lastName, 'Last name is required');
+  if (lastNameError) return lastNameError;
+
+  const usernameError = getRequiredFieldError(payload.username, 'Username is required');
+  if (usernameError) return usernameError;
+
   if (!payload.email.trim()) return 'Email is required';
   if (!payload.password.trim()) return 'Password is required';
   if (!hasStrongPassword(payload.password)) {
@@ -43,16 +49,22 @@ export function getSignupValidationError(payload: SignupValidationPayload): stri
 }
 
 export async function submitSignup(payload: SignupPayload): Promise<SignupResult> {
+  const firstName = payload.firstName.trim();
+  const lastName = payload.lastName.trim();
+  const username = payload.username.trim();
+  const organization = payload.organization.trim();
+  const email = payload.email.trim();
+
   try {
     const response = await fetch(API('/api/v1/users/signup'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        first_name: payload.firstName.trim(),
-        last_name: payload.lastName.trim(),
-        username: payload.username.trim(),
-        organization: payload.organization.trim() || undefined,
-        email: payload.email.trim(),
+        first_name: firstName,
+        last_name: lastName,
+        username,
+        organization: organization || undefined,
+        email,
         password: payload.password,
       }),
     });
@@ -66,7 +78,7 @@ export async function submitSignup(payload: SignupPayload): Promise<SignupResult
     }
 
     return {
-      successMessage: `Welcome ${payload.firstName}! Your account is ready. Check your email for your welcome message and verification link.`,
+      successMessage: `Welcome ${firstName}! Your account is ready. Check your email for your welcome message and verification link.`,
     };
   } catch (error) {
     if (error instanceof Error && error.message) {
