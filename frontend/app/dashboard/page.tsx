@@ -194,25 +194,17 @@ export default function TournamentDashboard() {
     const latestSettings = bracketSettingsRef.current;
 
     const splitValidation = validateBracketSettingsSplit(latestSettings);
-    if (!splitValidation.ok && !splitValidation.validationKey) {
+    if (!splitValidation.ok) {
       setSaveStatus('error');
-      addToast({
-        type: 'warning',
-        message: splitValidation.message,
-        duration: 6000
-      });
-      return;
-    }
-
-    if (!splitValidation.ok && splitValidation.validationKey) {
-      setSaveStatus('error');
-      if (lastPrizeValidationKeyRef.current !== splitValidation.validationKey) {
+      if (!splitValidation.validationKey || lastPrizeValidationKeyRef.current !== splitValidation.validationKey) {
         addToast({
           type: 'warning',
           message: splitValidation.message,
           duration: 6000
         });
-        lastPrizeValidationKeyRef.current = splitValidation.validationKey;
+        if (splitValidation.validationKey) {
+          lastPrizeValidationKeyRef.current = splitValidation.validationKey;
+        }
       }
       return;
     }
@@ -1870,7 +1862,6 @@ export default function TournamentDashboard() {
     </ErrorBoundary>
   );
 }
-
 
 
 

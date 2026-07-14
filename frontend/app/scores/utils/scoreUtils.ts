@@ -1,4 +1,4 @@
-import { Player, Squad, Tournament } from '../lib/types'
+import { Player, Squad, Tournament } from '../../lib/types'
 
 // ─── Excel helpers ────────────────────────────────────────────────────────────
 
