@@ -649,35 +649,107 @@
 
 .pvHeader {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: space-between;
-  gap: 12px;
-  padding: 12px 16px;
+  gap: 16px;
+  padding: 12px 14px;
   border-bottom: 3px solid var(--color-primary);
   background: linear-gradient(135deg, var(--color-dark-base) 0%, var(--color-dark-surface) 100%);
+}
+
+.pvBrandCol {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  padding-right: 14px;
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.pvBrandLogo {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 .pvTournamentInfo {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
 }
 
 .pvPublicBadge {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 800;
-  letter-spacing: 0.08em;
-  color: var(--color-primary);
+  letter-spacing: 0.07em;
+  color: rgba(244, 239, 232, 0.68);
+  white-space: nowrap;
 }
 
 .pvTournamentName {
   margin: 0;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
-  color: var(--opacity-white-80);
+  color: rgba(244, 239, 232, 0.96);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pvControlsPanel {
+  flex: 1.15;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+}
+
+.pvControlsTopRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pvSquadSelector {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.pvSquadLabel {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(188, 198, 214, 0.86);
+  white-space: nowrap;
+}
+
+.pvSquadSelect {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(244, 239, 232, 0.96);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .pvShareBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
   font-size: 12px;
   font-weight: 700;
   color: var(--color-white);
@@ -692,10 +764,10 @@
   display: flex;
   gap: 4px;
   padding: 3px;
-  margin: 10px 16px;
+  margin: 0;
   border-radius: 14px;
-  background: var(--opacity-white-04);
-  border: 1px solid var(--opacity-white-08);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .pvTab {
@@ -703,7 +775,7 @@
   padding: 7px 10px;
   font-size: 13px;
   font-weight: 600;
-  color: var(--opacity-white-40);
+  color: rgba(188, 198, 214, 0.78);
   cursor: pointer;
   background: transparent;
   border: 1px solid transparent;
@@ -714,7 +786,7 @@
 }
 
 .pvTab:hover {
-  color: var(--opacity-white-85);
+  color: rgba(244, 239, 232, 0.9);
 }
 
 .pvTabActive {
@@ -729,16 +801,67 @@
   align-items: center;
   gap: 10px;
   padding: 8px 16px;
-  border-bottom: 1px solid var(--opacity-white-08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pvSummaryControls {
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin: 10px 16px 0;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.pvSearchRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+}
+
+.pvSearchInput {
+  flex: 1;
+  max-width: 240px;
+  height: 34px;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(238, 244, 252, 0.92);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 0 10px;
+}
+
+.pvSearchInput::placeholder {
+  color: rgba(173, 187, 208, 0.86);
+}
+
+.pvSummaryCount {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(173, 187, 208, 0.86);
+}
+
+.pvRefreshMeta {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(173, 187, 208, 0.8);
+  margin-left: auto;
 }
 
 .pvLiveGroup {
-  flex: 1;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
   font-size: 11px;
-  color: var(--opacity-white-50);
+  color: rgba(173, 187, 208, 0.86);
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.035);
 }
 
 .pvLiveDot {
@@ -754,24 +877,29 @@
 .pvRefreshBtn {
   font-size: 11px;
   font-weight: 700;
-  color: var(--color-primary);
-  background: var(--landing-refresh-bg);
-  border-radius: 6px;
-  padding: 4px 10px;
-  border: 1px solid var(--landing-refresh-border);
+  color: rgba(244, 239, 232, 0.95);
+  background: rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
+  padding: 6px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
 }
 
-/* Table uses a light cream background to match the real app */
+/* Summary table mirrors the live /view dark style */
 .pvTable {
-  background: var(--landing-public-table-bg);
+  background: rgba(14, 17, 25, 0.92);
+  margin: 12px 16px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  overflow: hidden;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .pvTableHead {
   display: grid;
   grid-template-columns: 1fr repeat(3, 72px);
-  padding: 8px 16px;
-  border-bottom: 2px solid var(--landing-public-table-rule);
-  background: var(--landing-public-table-head-bg);
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
   gap: 8px;
 }
 
@@ -779,7 +907,7 @@
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.06em;
-  color: var(--landing-public-head-text);
+  color: rgba(188, 198, 214, 0.88);
   text-align: right;
 }
 
@@ -791,25 +919,29 @@
   display: grid;
   grid-template-columns: 1fr repeat(3, 72px);
   padding: 9px 16px;
-  border-bottom: 1px solid var(--landing-public-table-rule-soft);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   gap: 8px;
-.tournamentMetaCard,
-.bracketPreview,
-.panelHeaderRow {
-  border-color: var(--landing-border-subtle);
-  background: var(--landing-panel-soft);
+  background: transparent;
 }
+
+.pvTableRow:nth-child(even) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.pvTableRow:hover {
+  background: rgba(255, 122, 0, 0.08);
+}
+
 .pvBowlerName {
   font-size: 14px;
   font-weight: 600;
-  color: var(--landing-public-title-text);
+  color: rgba(236, 243, 252, 0.92);
 }
 
-  border-color: color-mix(in srgb, var(--color-primary) 22%, transparent);
-  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+.pvScore {
   font-size: 14px;
   font-weight: 700;
-  color: var(--landing-public-score-success);
+  color: rgba(201, 225, 213, 0.9);
   text-align: right;
 }
 
@@ -823,7 +955,7 @@
 .pvScoreElim {
   font-size: 14px;
   font-weight: 700;
-  color: var(--landing-public-score-muted);
+  color: rgba(138, 153, 176, 0.85);
   text-align: right;
 }
 
@@ -832,11 +964,11 @@
   padding: 12px 16px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
 
 .pvSidePotSection {
-  border: 1px solid var(--landing-public-table-rule);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   overflow: hidden;
 }
@@ -847,21 +979,21 @@
   font-weight: 800;
   letter-spacing: 0.07em;
   text-transform: uppercase;
-  color: var(--landing-public-title-text);
-  background: var(--landing-public-table-head-bg);
-  border-bottom: 1px solid var(--landing-public-table-rule);
+  color: rgba(236, 243, 252, 0.92);
+  background: rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   border-left: 3px solid var(--color-primary);
 }
 
 .pvSidePotGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  background: var(--landing-public-table-bg);
+  background: rgba(14, 17, 25, 0.92);
 }
 
 .pvSidePotCard {
   padding: 12px;
-  border-right: 1px solid var(--landing-public-table-rule-faint);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .pvSidePotCard:last-child {
@@ -873,10 +1005,10 @@
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.07em;
-  color: var(--landing-public-label-muted);
+  color: rgba(188, 198, 214, 0.86);
   margin-bottom: 8px;
   padding-bottom: 6px;
-  border-bottom: 1px solid var(--landing-public-table-rule-soft);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .pvSidePotPodium {
@@ -897,7 +1029,7 @@
 }
 
 .pvSidePotPodiumFirst {
-  background: var(--landing-podium-first-bg);
+  background: rgba(255, 122, 0, 0.1);
 }
 
 .pvSidePotPodiumPlace {
@@ -905,7 +1037,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  color: var(--landing-podium-place-muted);
+  color: rgba(160, 173, 193, 0.86);
   min-width: 22px;
   flex-shrink: 0;
 }
@@ -914,14 +1046,14 @@
   color: var(--color-primary);
 }
 
-.pvSidePotPodium li:nth-child(2) .pvSidePotPodiumPlace { color: var(--landing-podium-place-second); }
-.pvSidePotPodium li:nth-child(3) .pvSidePotPodiumPlace { color: var(--landing-podium-place-third); }
+.pvSidePotPodium li:nth-child(2) .pvSidePotPodiumPlace { color: rgba(189, 201, 222, 0.8); }
+.pvSidePotPodium li:nth-child(3) .pvSidePotPodiumPlace { color: rgba(207, 181, 146, 0.82); }
 
 .pvSidePotPodiumName {
   flex: 1;
   font-size: 11px;
   font-weight: 600;
-  color: var(--landing-public-title-text);
+  color: rgba(236, 243, 252, 0.92);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -942,15 +1074,19 @@
 }
 
 .pvSidePotPodiumRow:not(.pvSidePotPodiumFirst) .pvSidePotPodiumScore {
-  color: var(--landing-podium-place-muted);
+  color: rgba(173, 187, 208, 0.86);
   font-weight: 600;
   font-size: 11px;
 }
 
 /* Bracket view */
 .pvBracketView {
-  background: var(--landing-public-table-bg);
+  --pvBracketScale: 0.75;
+  background: rgba(14, 17, 25, 0.92);
   padding: 12px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .pvBracketNav {
@@ -1001,7 +1137,7 @@
 
 .pvBracketNavCount {
   font-size: 12px;
-  color: var(--landing-podium-place-muted);
+  color: rgba(173, 187, 208, 0.86);
   white-space: nowrap;
 }
 
@@ -1011,10 +1147,10 @@
   gap: 10px;
   padding: 8px 14px;
   margin-bottom: 12px;
-  background: var(--landing-winner-bg);
-  border: 1px solid var(--landing-winner-border);
+  background: rgba(69, 212, 131, 0.12);
+  border: 1px solid rgba(69, 212, 131, 0.34);
   border-radius: 10px;
-  box-shadow: var(--landing-winner-shadow);
+  box-shadow: none;
 }
 
 .pvWinnerLabel {
@@ -1022,14 +1158,14 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--landing-winner-text);
+  color: rgba(198, 248, 220, 0.8);
   white-space: nowrap;
 }
 
 .pvWinnerName {
   font-size: 14px;
   font-weight: 800;
-  color: var(--landing-winner-text);
+  color: #d8ffe7;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1037,28 +1173,41 @@
 
 .pvBracketRounds {
   display: flex;
-  gap: 10px;
-  align-items: center;
-  overflow-x: auto;
+  gap: calc(10px * var(--pvBracketScale));
+  align-items: flex-start;
+  max-height: min(52vh, 360px);
+  overflow: auto;
+  overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+  padding-right: 4px;
+}
+
+.pvBracketRounds::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.pvBracketRounds::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
 }
 
 .pvBracketRound {
   display: flex;
   flex-direction: column;
   gap: 0;
-  min-width: 180px;
+  min-width: calc(192px * var(--pvBracketScale));
   flex-shrink: 0;
-  background: var(--landing-round-bg);
-  border: 1px solid var(--landing-round-border);
-  border-top: 3px solid var(--landing-round-border-strong);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 3px solid rgba(255, 122, 0, 0.45);
   border-radius: 12px;
-  box-shadow: var(--landing-round-shadow);
-  padding: 10px;
+  box-shadow: none;
+  padding: calc(10px * var(--pvBracketScale));
 }
 
 .pvRoundLabel {
-  font-size: 0.75rem;
+  font-size: calc(0.75rem * var(--pvBracketScale));
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -1066,36 +1215,61 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 36px;
+  min-height: calc(36px * var(--pvBracketScale));
   border-radius: 9px;
-  border: 1px solid var(--landing-round-border);
-  background: var(--landing-round-label-bg);
-  margin-bottom: 0.7rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.045);
+  margin-bottom: calc(0.7rem * var(--pvBracketScale));
 }
 
 .pvRoundMatches {
   display: flex;
   flex-direction: column;
+  gap: calc(10px * var(--pvBracketScale));
+}
+
+.pvRoundMatchesR1 {
   gap: 10px;
 }
 
+.pvRoundMatchesR2 {
+  padding-top: calc(68px * var(--pvBracketScale));
+  gap: calc(146px * var(--pvBracketScale));
+}
+
+.pvRoundMatchesR3 {
+  padding-top: calc(206px * var(--pvBracketScale));
+  gap: 0;
+}
+
 .pvBracketConnector {
-  align-self: stretch;
+  --pv-tree-base-offset: calc((10px + 36px + 0.7rem) * var(--pvBracketScale));
+  align-self: flex-start;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  /* Push bracket down to match rounds: top-padding + label-height + label-margin */
-  padding-top: calc(10px + 36px + 0.7rem);
-  padding-bottom: 10px;
+  width: calc(16px * var(--pvBracketScale));
+  padding-top: var(--pv-tree-base-offset);
+  gap: calc(10px * var(--pvBracketScale));
   overflow: visible;
 }
 
+.pvBracketConnectorR2 {
+  padding-top: calc(var(--pv-tree-base-offset) + (68px * var(--pvBracketScale)));
+  gap: calc(146px * var(--pvBracketScale));
+}
+
+.pvBracketConnectorFinal {
+  padding-top: calc(var(--pv-tree-base-offset) + (206px * var(--pvBracketScale)));
+}
+
 .pvConnBracket {
-  flex: 1;
-  width: 16px;
-  border-top: 2px solid var(--color-border-hover);
-  border-right: 2px solid var(--color-border-hover);
-  border-bottom: 2px solid var(--color-border-hover);
+  flex: 0 0 auto;
+  width: calc(16px * var(--pvBracketScale));
+  height: calc(140px * var(--pvBracketScale));
+  border-top: 2px solid rgba(255, 122, 0, 0.34);
+  border-right: 2px solid rgba(255, 122, 0, 0.34);
+  border-bottom: 2px solid rgba(255, 122, 0, 0.34);
   border-top-right-radius: 8px;
   border-bottom-right-radius: 8px;
   position: relative;
@@ -1106,39 +1280,43 @@
   position: absolute;
   top: 50%;
   left: 100%;
-  width: 16px;
+  width: calc(16px * var(--pvBracketScale));
   height: 2px;
-  background: var(--color-border-hover);
+  background: rgba(255, 122, 0, 0.34);
   transform: translateY(-50%);
 }
 
+.pvBracketConnectorFinal .pvConnBracket {
+  height: calc(274px * var(--pvBracketScale));
+}
+
 .pvMatchCard {
-  background: var(--landing-match-surface);
-  border: 1.5px solid var(--landing-round-border);
+  background: rgba(12, 12, 18, 0.78);
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
   border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 2px 8px var(--landing-public-table-rule-soft);
+  box-shadow: none;
   position: relative;
 }
 
 .pvMatchComplete {
-  border-color: var(--landing-match-complete-border);
-  border-left: 4px solid var(--landing-match-complete-rail);
+  border-color: rgba(69, 212, 131, 0.34);
+  border-left: 4px solid rgba(69, 212, 131, 0.9);
 }
 
 .pvMatchCardFinals {
-  border-top: 3px solid var(--landing-match-finals-rail);
-  background: var(--landing-match-finals-bg);
+  border-top: 3px solid rgba(255, 122, 0, 0.45);
+  background: rgba(12, 12, 18, 0.82);
 }
 
 .pvMatchLabelRow {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  min-height: 30px;
-  padding: 6px 11px;
-  border-bottom: 1px solid color-mix(in srgb, var(--color-primary) 12%, transparent);
-  background: var(--landing-match-label-bg);
+  min-height: calc(30px * var(--pvBracketScale));
+  padding: calc(6px * var(--pvBracketScale)) calc(11px * var(--pvBracketScale));
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.035);
 }
 
 .pvMatchLabel {
@@ -1150,13 +1328,13 @@
 }
 
 .pvMatchMargin {
-  font-size: 0.62rem;
+  font-size: calc(0.62rem * var(--pvBracketScale));
   font-weight: 700;
   letter-spacing: 0.04em;
-  color: var(--landing-winner-text);
-  background: var(--landing-match-margin-bg);
+  color: rgba(255, 216, 184, 0.92);
+  background: rgba(255, 122, 0, 0.12);
   border-radius: 999px;
-  padding: 1px 6px;
+  padding: calc(1px * var(--pvBracketScale)) calc(6px * var(--pvBracketScale));
   margin-left: auto;
   white-space: nowrap;
 }
@@ -1165,45 +1343,116 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 17px;
-  border-top: 1px solid color-mix(in srgb, var(--color-primary) 10%, transparent);
-  border-bottom: 1px solid color-mix(in srgb, var(--color-primary) 10%, transparent);
-  background: var(--landing-vs-bg);
-  font-size: 0.48rem;
+  min-height: calc(17px * var(--pvBracketScale));
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.025);
+  font-size: calc(0.48rem * var(--pvBracketScale));
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--landing-vs-text);
+  color: rgba(160, 173, 193, 0.78);
 }
 
 .pvMatchPlayer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 9px 11px;
-  font-size: 0.84rem;
+  padding: calc(9px * var(--pvBracketScale)) calc(11px * var(--pvBracketScale));
+  font-size: calc(0.84rem * var(--pvBracketScale));
   font-weight: 600;
-  color: var(--landing-match-text);
-  gap: 8px;
-  min-height: 40px;
+  color: rgba(236, 243, 252, 0.92);
+  gap: calc(8px * var(--pvBracketScale));
+  min-height: calc(40px * var(--pvBracketScale));
 }
 
 .pvMatchWinner {
   font-weight: 700;
-  color: var(--landing-winner-text);
-  background: linear-gradient(to right, color-mix(in srgb, var(--color-success) 18%, white) 0%, var(--color-brand-ivory-soft) 100%);
-  border-left: 4px solid var(--landing-match-complete-rail);
+  color: #d8ffe7;
+  background: rgba(69, 212, 131, 0.1);
+  border-left: 4px solid rgba(69, 212, 131, 0.9);
   padding-left: 6px;
 }
 
 .pvMatchScore {
   font-variant-numeric: tabular-nums;
   font-weight: 800;
-  font-size: 0.9rem;
-  color: var(--landing-match-score);
+  font-size: calc(0.9rem * var(--pvBracketScale));
+  color: rgba(236, 243, 252, 0.92);
   white-space: nowrap;
-  min-width: 34px;
+  min-width: calc(34px * var(--pvBracketScale));
   text-align: right;
+}
+
+@media (max-width: 980px) {
+  .pvHeader {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .pvBrandCol {
+    border-right: none;
+    padding-right: 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .pvControlsTopRow {
+    flex-wrap: wrap;
+  }
+
+  .pvRefreshMeta {
+    margin-left: 0;
+  }
+
+  .pvRefreshRow {
+    flex-wrap: wrap;
+  }
+
+  .pvRoundMatchesR2,
+  .pvRoundMatchesR3 {
+    padding-top: 0;
+    gap: 10px;
+  }
+
+  .pvBracketConnectorR2,
+  .pvBracketConnectorFinal {
+    padding-top: var(--pv-tree-base-offset);
+    gap: 10px;
+  }
+
+  .pvConnBracket,
+  .pvBracketConnectorFinal .pvConnBracket {
+    height: 140px;
+  }
+}
+
+@media (max-width: 720px) {
+  .pvSearchRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .pvSearchInput {
+    max-width: none;
+  }
+
+  .pvTabs {
+    margin-top: 2px;
+  }
+
+  .pvSidePotGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .pvSidePotCard {
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .pvSidePotCard:last-child {
+    border-bottom: none;
+  }
 }
 
 /* ── Copy side ── */
@@ -1560,13 +1809,7 @@
   }
 }
 
-@media (max-width: 1080px) {
-  .heroGrid,
-  .publicViewGrid {
-    grid-template-columns: 1fr;
-    gap: 26px;
-  }
-
+@media (max-width: 1024px) {
   .heroPanel {
     width: 100%;
     justify-self: stretch;
@@ -1606,6 +1849,12 @@
 @media (max-width: 720px) {
   .container {
     padding-top: 184px;
+  }
+
+  .heroGrid,
+  .publicViewGrid {
+    grid-template-columns: 1fr;
+    gap: 26px;
   }
 
   .hero,
@@ -2000,6 +2249,7 @@
 .container {
   --page-max-width: 100%;
   --page-gutter: clamp(16px, 2.2vw, 32px);
+  --landing-page-bg: var(--bw-app-bg);
   --landing-panel: var(--bw-surface-card);
   --landing-panel-strong: var(--bw-surface-card-strong);
   --landing-panel-soft: var(--bw-surface-panel);
@@ -2021,7 +2271,7 @@
   min-height: 100svh;
   padding-top: var(--header-height, 64px);
   color: var(--color-text-primary);
-  background: var(--color-background);
+  background: var(--landing-page-bg);
 }
 
 .heroGlow {
@@ -2038,7 +2288,7 @@
   border-radius: 0;
   border: 0;
   border-bottom: 1px solid var(--landing-border-subtle);
-  background: var(--landing-panel-strong);
+  background: var(--landing-page-bg);
   box-shadow: none;
   padding: 0 24px;
   gap: 14px;
@@ -2114,6 +2364,7 @@
 }
 
 .heroGrid {
+  display: grid;
   width: 100%;
   max-width: none;
   grid-template-columns: minmax(0, 1fr) minmax(420px, 0.74fr);
@@ -2394,14 +2645,10 @@
   border-color: var(--landing-border);
 }
 
-@media (max-width: 1280px) {
+@media (max-width: 1024px) {
   .container {
     --fs-display: 46px;
     --fs-section-title: 30px;
-  }
-
-  .heroGrid {
-    grid-template-columns: 1fr;
   }
 
   .heroContent,
@@ -2427,6 +2674,11 @@
     --fs-display: 38px;
     --fs-section-title: 28px;
     padding-top: 126px;
+  }
+
+  .heroGrid,
+  .publicViewGrid {
+    grid-template-columns: 1fr;
   }
 
   .hero,

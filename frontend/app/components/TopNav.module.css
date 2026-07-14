@@ -425,6 +425,31 @@
   flex-shrink: 0;
 }
 
+@media (max-width: 640px) {
+  .topNavMobile {
+    gap: 10px;
+    padding: 0 12px;
+  }
+
+  .mobileBrand {
+    gap: 7px;
+    flex: 1 1 auto;
+  }
+
+  .mobileBrandText {
+    font-size: 13px;
+    max-width: 30vw;
+  }
+
+  .mobileTournamentBadge {
+    max-width: min(34vw, 180px);
+    min-width: 0;
+    padding: 3px 9px;
+    font-size: 10.5px;
+    line-height: 1.1;
+  }
+}
+
 @media (max-width: 1380px) {
   .tournamentContext {
     max-width: 230px;

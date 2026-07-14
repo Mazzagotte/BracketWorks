@@ -1,7 +1,7 @@
 .shell {
   min-height: 100vh;
   padding: 0 0 var(--spacing-xl);
-  background: var(--color-dark-base);
+  background: var(--bw-app-bg);
 }
 
 .inner {

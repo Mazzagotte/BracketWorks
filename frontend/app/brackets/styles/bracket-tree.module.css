@@ -765,16 +765,140 @@
   }
 }
 
+@media (max-width: 640px) {
+  .bracketTreeContainer {
+    justify-content: flex-start;
+  }
+
+  .bracketCard {
+    padding-top: 0.44rem;
+    padding-bottom: 0.44rem;
+    padding-left: 0.44rem;
+    padding-right: 0.64rem;
+    border-radius: 16px;
+  }
+
+  .bracketTitle {
+    padding-bottom: 0.36rem;
+    margin-bottom: 0.28rem;
+    font-size: 0.7rem;
+  }
+
+  .headerRow {
+    gap: 0.62rem;
+    margin-bottom: 0.72rem;
+  }
+
+  .roundHeader {
+    padding: 0.42rem 0.58rem;
+  }
+
+  .roundBadgeContainer {
+    gap: 0.36rem;
+    margin-bottom: 0.36rem;
+  }
+
+  .roundBadge {
+    width: 24px;
+    height: 24px;
+    font-size: 0.74rem;
+  }
+
+  .roundTitle {
+    font-size: 0.72rem;
+  }
+
+  .roundProgress {
+    font-size: 0.6rem;
+  }
+
+  .bracketGrid {
+    padding: 0.35rem 0;
+  }
+
+  .matchCard {
+    width: 176px;
+    min-height: 78px;
+    border-radius: 12px;
+  }
+
+  .matchLabel {
+    padding: 4px 8px;
+    font-size: 0.62rem;
+  }
+
+  .player {
+    grid-template-columns: 1fr 42px;
+    min-height: 28px;
+    padding: 5px 8px;
+  }
+
+  .playerName {
+    font-size: 0.72rem;
+  }
+
+  .playerScore {
+    font-size: 0.76rem;
+  }
+
+  .player.winner .playerScore {
+    font-size: 0.8rem;
+  }
+
+  .championLabel {
+    font-size: 0.54rem;
+  }
+
+  .connectorBracket {
+    min-width: 20px;
+    border-right-width: 3px;
+    border-top-width: 3px;
+    border-bottom-width: 3px;
+  }
+
+  .connectorArm {
+    min-width: 28px;
+    height: 3px;
+  }
+}
+
 @media (max-width: 480px) {
   .bracketTreeContainer {
     padding: 0;
   }
 
   .bracketCard {
-    padding: 0.68rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    padding-left: 0.5rem;
+    padding-right: 0.68rem;
+    border-radius: 16px;
   }
 
   .matchCard {
-    width: 200px;
+    width: 168px;
+    min-height: 72px;
+  }
+
+  .player {
+    grid-template-columns: 1fr 38px;
+    min-height: 26px;
+    padding: 4px 7px;
+  }
+
+  .playerName {
+    font-size: 0.68rem;
+  }
+
+  .playerScore {
+    font-size: 0.72rem;
+  }
+
+  .connectorBracket {
+    min-width: 16px;
+  }
+
+  .connectorArm {
+    min-width: 22px;
   }
 }

@@ -27,7 +27,7 @@
 }
 
 body:has(.login-page-container) {
-  background: var(--color-dark-elevated) !important;
+  background: var(--bw-app-bg) !important;
   margin: 0 !important;
   padding: 0 !important;
   overflow: hidden !important;
@@ -45,7 +45,7 @@ html:has(.login-page-container) {
   align-items: center !important;
   justify-content: center !important;
   padding: 24px !important;
-  background: var(--color-dark-elevated) !important;
+  background: var(--bw-app-bg) !important;
   position: fixed !important;
   top: 0 !important;
   left: 0 !important;
@@ -338,7 +338,7 @@ html:has(.login-page-container) {
 }
 
 body:has(.signup-page-container) {
-  background: var(--gradient-dark) !important;
+  background: var(--bw-app-bg) !important;
   overflow: hidden !important;
   height: 100vh !important;
   margin: 0 !important;
@@ -357,7 +357,7 @@ html:has(.signup-page-container) {
   align-items: center !important;
   justify-content: center !important;
   padding: 24px !important;
-  background: var(--gradient-dark-alt) !important;
+  background: var(--bw-app-bg) !important;
   position: fixed !important;
   top: 0 !important;
   left: 0 !important;
@@ -718,6 +718,186 @@ html:has(.signup-page-container) {
   }
 }
 
+/* Final reset page polish (request + verify routes) */
+.login-page-container .enhanced-card {
+  max-width: 460px !important;
+  padding: 34px 30px 28px !important;
+  background: var(--bw-surface-card) !important;
+  border: 1px solid var(--bw-border-card) !important;
+  border-left: var(--bw-accent-rail) !important;
+  border-radius: var(--radius-2xl) !important;
+  box-shadow: none !important;
+  background-image: none !important;
+}
+
+.login-page-container .auth-brand-title {
+  color: var(--bw-text-title) !important;
+  font-size: 30px !important;
+}
+
+.login-page-container .auth-page-heading {
+  color: var(--bw-text-title) !important;
+}
+
+.login-page-container .login-subtitle {
+  color: var(--bw-text-muted) !important;
+  margin-bottom: 22px !important;
+}
+
+.login-page-container .login-input,
+.login-page-container .password-input {
+  min-height: 48px !important;
+  border: 1px solid var(--bw-border-subtle) !important;
+  border-radius: var(--radius-md) !important;
+  background: var(--bw-surface-card-strong) !important;
+  color: var(--bw-text-title) !important;
+}
+
+.login-page-container .login-input:focus,
+.login-page-container .password-input:focus {
+  border-color: color-mix(in srgb, var(--color-primary) 70%, white) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 24%, transparent) !important;
+  transform: none !important;
+}
+
+.login-page-container .login-input::placeholder,
+.login-page-container .password-input::placeholder {
+  color: var(--bw-text-faint) !important;
+}
+
+.login-page-container .login-button {
+  min-height: 48px !important;
+  height: 48px !important;
+  border: 1px solid var(--bw-border-accent) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: none !important;
+}
+
+.login-page-container .login-button:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.login-page-container .login-button:disabled {
+  color: color-mix(in srgb, var(--bw-text-muted) 92%, white) !important;
+  background: color-mix(in srgb, var(--bw-surface-panel) 88%, transparent) !important;
+  border-color: color-mix(in srgb, var(--bw-border-subtle) 110%, transparent) !important;
+  opacity: 1 !important;
+}
+
+.login-page-container .links-container {
+  margin-top: 12px !important;
+  gap: 8px !important;
+}
+
+.login-page-container .signup-link,
+.login-page-container .forgot-link {
+  min-height: 42px !important;
+  border-radius: var(--radius-md) !important;
+}
+
+/* Width parity with signup shell/card breakpoints for reset request+verify pages */
+.login-page-container {
+  padding: 24px 20px !important;
+}
+
+.login-page-container .enhanced-card {
+  width: 100% !important;
+  max-width: 480px !important;
+}
+
+@media (min-width: 1024px) and (max-width: 1440px) {
+  .login-page-container {
+    padding: 36px 24px !important;
+  }
+
+  .login-page-container .enhanced-card {
+    max-width: 560px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-page-container {
+    padding: 16px !important;
+  }
+
+  .login-page-container .enhanced-card {
+    max-width: 100% !important;
+    border-radius: 16px !important;
+  }
+}
+
+/* Internal rhythm parity with signup for reset request+verify pages */
+.login-page-container .enhanced-card {
+  padding: 20px 28px 26px !important;
+}
+
+.login-page-container .header-section {
+  margin-bottom: 12px !important;
+}
+
+.login-page-container .input-container,
+.login-page-container .password-container {
+  margin-bottom: 18px !important;
+}
+
+@media (min-width: 1024px) and (max-width: 1440px) {
+  .login-page-container .enhanced-card {
+    padding: 24px 34px 28px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-page-container .enhanced-card {
+    padding: 18px 20px 20px !important;
+  }
+}
+
+/* Final type hierarchy parity with signup */
+.login-page-container .auth-brand-title {
+  font-size: 1.3rem !important;
+  line-height: 1.15 !important;
+  font-weight: 800 !important;
+  letter-spacing: 0 !important;
+  margin-bottom: 4px !important;
+}
+
+.login-page-container .auth-page-heading {
+  font-size: 1.05rem !important;
+  line-height: 1.25 !important;
+  font-weight: 700 !important;
+  margin: 8px 0 6px !important;
+}
+
+.login-page-container .login-subtitle {
+  font-size: 14px !important;
+  line-height: 1.35 !important;
+}
+
+@media (min-width: 1024px) and (max-width: 1440px) {
+  .login-page-container .auth-brand-title {
+    font-size: 1.35rem !important;
+  }
+
+  .login-page-container .auth-page-heading {
+    font-size: 1.1rem !important;
+  }
+
+  .login-page-container .login-subtitle {
+    font-size: 15px !important;
+  }
+}
+
+/* Final action typography parity */
+.login-page-container .login-button,
+.login-page-container .signup-link,
+.login-page-container .forgot-link {
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+  letter-spacing: 0.01em !important;
+}
+
 /* ========================================================================== */
 /* Reset password pages                                                        */
 /* ========================================================================== */
@@ -727,8 +907,8 @@ html:has(.signup-page-container) {
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background: var(--gradient-dark-subtle);
-  background-image: radial-gradient(circle at 20% 80%, var(--color-border-light) 0%, transparent 50%), radial-gradient(circle at 80% 20%, var(--color-info-bg) 0%, transparent 50%), radial-gradient(circle at 40% 40%, var(--opacity-white-04) 0%, transparent 50%);
+  background: var(--bw-app-bg);
+  background-image: none;
   font-family: var(--font-family-primary);
 }
 

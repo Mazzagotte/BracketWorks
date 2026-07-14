@@ -145,7 +145,7 @@ export function SignupUsernameFieldSection({
 }: UsernameFieldSectionProps) {
   return (
     <div className={containerClassName}>
-      <label htmlFor={inputId} className={labelClassName}>Username:</label>
+      <label htmlFor={inputId} className={labelClassName}>Username *</label>
       <input
         type="text"
         id={inputId}
@@ -188,7 +188,7 @@ export function SignupPasswordFieldSection({
 }: PasswordSectionProps) {
   return (
     <div className={containerClassName}>
-      <label htmlFor={inputId} className={labelClassName}>Password:</label>
+      <label htmlFor={inputId} className={labelClassName}>Password *</label>
       <div className={wrapperClassName}>
         <input
           type={mounted && showPassword ? 'text' : 'password'}
@@ -232,7 +232,7 @@ export function SignupConfirmPasswordFieldSection({
 }: ConfirmPasswordSectionProps) {
   return (
     <div className={containerClassName}>
-      <label htmlFor={inputId} className={labelClassName}>Confirm Password:</label>
+      <label htmlFor={inputId} className={labelClassName}>Confirm Password *</label>
       <div className={wrapperClassName}>
         <input
           type={mounted && showPassword ? 'text' : 'password'}

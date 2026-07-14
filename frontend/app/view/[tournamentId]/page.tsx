@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef, useMemo, Fragment, useLayoutE
 import { useParams } from 'next/navigation'
 import { buildApiUrl } from '../../lib/api'
 import { formatIsoDateShortWithWeekday } from '../../lib/formatters'
+import { BW_BREAKPOINTS, matchesMaxWidth } from '../../lib/responsive'
 import { DataTableToolbar } from '../../components/primitives'
 import TournamentDirectory from '../TournamentDirectory'
 import styles from './view.module.css'
@@ -265,7 +266,7 @@ function AliveView({
               </span>
               <span className={styles.liveStatus}>
                 <LiveDot />
-                Auto-refresh on
+                <span className={styles.liveStatusText}>Auto-refresh on</span>
               </span>
               <div className={styles.refreshActions}>
                 <button className={styles.refreshBtn} onClick={onRefreshNow} disabled={!canRefresh || isRefreshing} type="button">
@@ -440,7 +441,7 @@ function BracketView({ group, highlightName, onNameClick }: {
       const grid = treeGridRef.current
       if (!wrap || !grid) return
 
-      const isMobile = window.matchMedia('(max-width: 600px)').matches
+      const isMobile = matchesMaxWidth(BW_BREAKPOINTS.handheldMax)
       if (!isMobile) {
         resetTreeScale()
         return
@@ -1389,47 +1390,49 @@ export default function TournamentViewPage() {
 
       {/* Content */}
       <main className={styles.main}>
-        {loading && !resolvedTournamentId ? (
-          <div className={styles.section}>
-            <div className={styles.loadingScreen}>
-              <div className={styles.spinner} />
-              <p>Loading tournament...</p>
+        <div className={styles.contentShell}>
+          {loading && !resolvedTournamentId ? (
+            <div className={styles.section}>
+              <div className={styles.loadingScreen}>
+                <div className={styles.spinner} />
+                <p>Loading tournament...</p>
+              </div>
             </div>
-          </div>
-        ) : (
+          ) : (
 
-          <>
-            {/* ── Alive tab ── */}
-            {tab === 'alive' && (
-              <div className={styles.section}>
-                <AliveView
-                  bracketGroups={bracketGroups}
-                  lastRefresh={lastRefresh}
-                  isRefreshing={isRefreshing}
-                  canRefresh={Boolean(resolvedTournamentId)}
-                  onRefreshNow={() => { void refresh() }}
-                />
-              </div>
-            )}
+            <>
+              {/* ── Alive tab ── */}
+              {tab === 'alive' && (
+                <div className={styles.section}>
+                  <AliveView
+                    bracketGroups={bracketGroups}
+                    lastRefresh={lastRefresh}
+                    isRefreshing={isRefreshing}
+                    canRefresh={Boolean(resolvedTournamentId)}
+                    onRefreshNow={() => { void refresh() }}
+                  />
+                </div>
+              )}
 
-            {/* ── Brackets tab ── */}
-            {tab === 'brackets' && (
-              <BracketsTabView bracketGroups={bracketGroups} />
-            )}
+              {/* ── Brackets tab ── */}
+              {tab === 'brackets' && (
+                <BracketsTabView bracketGroups={bracketGroups} />
+              )}
 
-            {/* ── Side Pots tab ── */}
-            {tab === 'sidePots' && (
-              <div className={styles.section}>
-                <SidePotsLeaderboard
-                  scoreRows={scoreRows}
-                  tournamentId={resolvedTournamentId}
-                  lastRefresh={lastRefresh}
-                  isRefreshing={isRefreshing}
-                />
-              </div>
-            )}
-          </>
-        )}
+              {/* ── Side Pots tab ── */}
+              {tab === 'sidePots' && (
+                <div className={styles.section}>
+                  <SidePotsLeaderboard
+                    scoreRows={scoreRows}
+                    tournamentId={resolvedTournamentId}
+                    lastRefresh={lastRefresh}
+                    isRefreshing={isRefreshing}
+                  />
+                </div>
+              )}
+            </>
+          )}
+        </div>
 
       </main>
 

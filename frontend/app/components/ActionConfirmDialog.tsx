@@ -18,7 +18,7 @@ export default function ActionConfirmDialog({
   open,
   title,
   message,
-  confirmLabel = 'Continue',
+  confirmLabel = 'Confirm',
   cancelLabel = 'Cancel',
   showCloseButton = false,
   onConfirm,

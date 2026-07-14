@@ -148,6 +148,7 @@ export default function ResetPasswordModal({ isOpen, onClose, onSuccess }: Reset
               {success ? 'Close' : 'Cancel'}
             </button>
           </div>
+          <p className={styles.submitHelper}>Use the email linked to your BracketWorks account.</p>
         </form>
       </div>
     </div>

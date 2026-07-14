@@ -141,6 +141,8 @@ def list_public_tournaments(
 
     tournament_ids = [t.id for t in tournaments]
     squad_count_by_tournament: dict[int, int] = {}
+    bracket_stats_by_tournament: dict[int, tuple[Optional[object], int]] = {}
+    score_stats_by_tournament: dict[int, tuple[int, int, int, int, int, int, int]] = {}
     if tournament_ids:
         squad_counts = (
             db.query(
@@ -152,6 +154,49 @@ def list_public_tournaments(
             .all()
         )
         squad_count_by_tournament = {int(tid): int(count) for tid, count in squad_counts}
+
+        bracket_stats = (
+            db.query(
+                models.BracketSnapshot.tournament_id,
+                func.max(models.BracketSnapshot.updated_at),
+                func.count(models.BracketSnapshot.id),
+            )
+            .filter(models.BracketSnapshot.tournament_id.in_(tournament_ids))
+            .group_by(models.BracketSnapshot.tournament_id)
+            .all()
+        )
+        bracket_stats_by_tournament = {
+            int(tid): (updated_at, int(count))
+            for tid, updated_at, count in bracket_stats
+        }
+
+        score_stats = (
+            db.query(
+                models.PlayerScore.tournament_id,
+                func.count(models.PlayerScore.id),
+                func.coalesce(func.sum(models.PlayerScore.game1_scratch), 0),
+                func.coalesce(func.sum(models.PlayerScore.game2_scratch), 0),
+                func.coalesce(func.sum(models.PlayerScore.game3_scratch), 0),
+                func.coalesce(func.sum(models.PlayerScore.game1_with_handicap), 0),
+                func.coalesce(func.sum(models.PlayerScore.game2_with_handicap), 0),
+                func.coalesce(func.sum(models.PlayerScore.game3_with_handicap), 0),
+            )
+            .filter(models.PlayerScore.tournament_id.in_(tournament_ids))
+            .group_by(models.PlayerScore.tournament_id)
+            .all()
+        )
+        score_stats_by_tournament = {
+            int(tid): (
+                int(score_count),
+                int(g1_s),
+                int(g2_s),
+                int(g3_s),
+                int(g1_h),
+                int(g2_h),
+                int(g3_h),
+            )
+            for tid, score_count, g1_s, g2_s, g3_s, g1_h, g2_h, g3_h in score_stats
+        }
 
     _set_public_cache_headers(response, max_age=60, stale_while_revalidate=300)
 
@@ -166,6 +211,22 @@ def list_public_tournaments(
                 "end_date": t.end_date,
                 "squad_count": squad_count_by_tournament.get(t.id, 0),
                 "public_url": f"/view/{_slugify_tournament_name(t.name)}",
+                "last_activity_at": (
+                    bracket_stats_by_tournament.get(t.id, (None, 0))[0].isoformat()
+                    if bracket_stats_by_tournament.get(t.id, (None, 0))[0] is not None
+                    else None
+                ),
+                "live_fingerprint": (
+                    f"b:{bracket_stats_by_tournament.get(t.id, (None, 0))[1]}:"
+                    f"{int(bracket_stats_by_tournament.get(t.id, (None, 0))[0].timestamp()) if bracket_stats_by_tournament.get(t.id, (None, 0))[0] is not None else 0}|"
+                    f"s:{score_stats_by_tournament.get(t.id, (0, 0, 0, 0, 0, 0, 0))[0]}:"
+                    f"{score_stats_by_tournament.get(t.id, (0, 0, 0, 0, 0, 0, 0))[1]}:"
+                    f"{score_stats_by_tournament.get(t.id, (0, 0, 0, 0, 0, 0, 0))[2]}:"
+                    f"{score_stats_by_tournament.get(t.id, (0, 0, 0, 0, 0, 0, 0))[3]}:"
+                    f"{score_stats_by_tournament.get(t.id, (0, 0, 0, 0, 0, 0, 0))[4]}:"
+                    f"{score_stats_by_tournament.get(t.id, (0, 0, 0, 0, 0, 0, 0))[5]}:"
+                    f"{score_stats_by_tournament.get(t.id, (0, 0, 0, 0, 0, 0, 0))[6]}"
+                ),
             }
             for t in tournaments
         ]

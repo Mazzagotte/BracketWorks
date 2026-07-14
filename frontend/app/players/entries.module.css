@@ -1558,31 +1558,6 @@
   gap: 10px;
 }
 
-.tableCard :global(.entries-table) {
-  border-radius: 16px;
-  overflow: hidden;
-}
-
-.tableCard :global(.entries-header-row) {
-  border-bottom: 1px solid var(--entries-border);
-}
-
-.tableCard :global(.entries-header-cell) {
-  background: var(--entries-panel);
-}
-
-.tableCard :global(.players-table-row) {
-  background: var(--entries-surface-faint);
-}
-
-.tableCard :global(.players-table-row:nth-child(even)) {
-  background: var(--entries-surface-soft);
-}
-
-.tableCard :global(.players-table-row:hover) {
-  background: color-mix(in srgb, var(--bw-surface-panel-strong) 88%, transparent) !important;
-}
-
 @media (max-width: 900px) {
   .formCard,
   .summaryCard,
@@ -1625,7 +1600,8 @@
 
 .findBowlerCard .formTitle::before,
 .addBowlerCard .formTitle::before,
-.entriesTableTitle::before {
+.entriesTableTitle::before,
+.summaryTitle::before {
   content: '';
   display: inline-block;
   width: 6px;
@@ -1766,8 +1742,11 @@
 .summaryTitleWrap {
   display: flex;
   flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
   gap: 0.14rem;
   min-width: 0;
+  text-align: left;
 }
 
 .summaryTitle {
@@ -1843,108 +1822,6 @@
   }
 }
 
-/* Search Entries + Entries Table command-center polish */
-.tableCard .formTitle,
-.tableCard .formTitleToggle {
-  color: var(--entries-text-title);
-  background: var(--entries-panel);
-  border-bottom: 1px solid var(--entries-border);
-}
-
-.tableSearchPanelBody {
-  padding: 0.75rem 0.88rem 0.9rem;
-}
-
-.tableSearchPanelBody .searchContainer {
-  margin: 0;
-  padding: 0.62rem;
-  background: var(--entries-panel);
-  border: 1px solid var(--entries-border);
-  border-radius: 14px;
-  box-shadow: inset 0 1px 0 var(--entries-panel-strong);
-}
-
-.searchContainerSticky {
-  position: sticky;
-  top: calc(var(--header-height) + 8px);
-  z-index: 10;
-}
-
-.tableSearchPanelBody .searchInput {
-  background: var(--entries-panel-deep);
-  border: 1px solid var(--entries-border);
-  color: var(--entries-text-title);
-}
-
-.tableSearchPanelBody .searchInput::placeholder {
-  color: var(--entries-text-muted);
-}
-
-.tableSearchPanelBody .searchInput:focus {
-  border-color: var(--entries-accent-border-solid);
-  box-shadow: var(--entries-orange-ring);
-}
-
-.tableSearchPanelBody .clearSearchBtn {
-  background: var(--entries-surface-deep-soft);
-  border-color: var(--entries-border-soft);
-  color: var(--entries-text-body);
-}
-
-.tableSearchPanelBody .clearSearchBtn:hover:not(:disabled),
-.tableSearchPanelBody .clearSearchBtnActive {
-  border-color: var(--entries-border-strong);
-  color: var(--entries-text-title);
-  background: color-mix(in srgb, var(--entries-panel-deep) 92%, transparent);
-}
-
-.tableCard :global(.entries-container) {
-  padding: 0 0.6rem 0.75rem;
-}
-
-.tableCard :global(.entries-table) {
-  width: 100%;
-  min-width: 980px;
-  border-collapse: separate;
-  border-spacing: 0;
-  border: 1px solid var(--entries-border);
-  border-radius: 14px;
-  overflow: hidden;
-  background: var(--entries-panel-deep);
-}
-
-.tableCard :global(.entries-header-row) {
-  border-bottom: 1px solid var(--entries-border);
-}
-
-.tableCard :global(.entries-header-cell) {
-  background: var(--entries-panel);
-  color: var(--entries-text-body);
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  border-bottom: 1px solid var(--entries-border);
-}
-
-.tableCard :global(.entries-cell) {
-  border-bottom: 1px solid color-mix(in srgb, var(--entries-border) 66%, transparent);
-}
-
-.tableCard :global(.players-table-row) {
-  background: color-mix(in srgb, var(--entries-panel) 60%, transparent);
-  transition: background-color 0.18s ease, box-shadow 0.18s ease;
-}
-
-.tableCard :global(.players-table-row:nth-child(even)) {
-  background: color-mix(in srgb, var(--entries-panel-strong) 68%, transparent);
-}
-
-.tableCard :global(.players-table-row:hover) {
-  background: color-mix(in srgb, var(--color-primary) 5%, transparent) !important;
-  box-shadow: inset 0 1px 0 var(--entries-panel-strong);
-}
-
 .tableCard :global(.entries-input.entries-control),
 .tableCard :global(.entries-select.entries-control) {
   --bw-form-bg: color-mix(in srgb, var(--entries-panel-deep) 92%, transparent);
@@ -1956,24 +1833,6 @@
   --bw-form-focus-ring: 0 0 0 1px color-mix(in srgb, var(--color-primary) 45%, transparent), 0 0 0 4px color-mix(in srgb, var(--color-primary) 10%, transparent);
 }
 
-@media (max-width: 900px) {
-  .searchContainerSticky {
-    position: static;
-  }
-
-  .tableSearchPanelBody {
-    padding: 0.66rem 0.72rem 0.8rem;
-  }
-
-  .tableSearchPanelBody .searchContainer {
-    padding: 0.58rem;
-  }
-
-  .tableCard :global(.entries-container) {
-    padding: 0 0.44rem 0.68rem;
-  }
-}
-
 /* Final Add Bowler workflow refinement */
 .pageContainer {
   width: 100%;
@@ -1983,8 +1842,9 @@
   background: var(--bw-page);
 }
 
-.entriesSectionWidth {
-  width: 100%;
+.pageContainer .entriesSectionWidth {
+  width: fit-content;
+  min-width: 0;
   max-width: 100%;
   margin: 0 auto;
 }
@@ -1992,6 +1852,8 @@
 .entryWorkflowLayout {
   display: grid;
   gap: 1rem;
+  width: fit-content;
+  max-width: 100%;
 }
 
 .formCard,
@@ -2061,12 +1923,17 @@
 
 .findBowlerCard .findBowlerSearchRow {
   display: grid;
-  grid-template-columns: 220px 1fr 1fr auto auto;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  grid-template-columns: minmax(0, 0.75fr) minmax(0, 1fr) minmax(0, 1fr) auto auto;
   gap: 0.75rem;
   align-items: center;
 }
 
 .findBowlerCard .searchInput {
+  width: 100%;
+  min-width: 0;
   min-height: 42px;
   padding: 0.68rem 0.82rem;
   border-radius: 11px;
@@ -2546,12 +2413,16 @@
   top: auto;
   z-index: auto;
   display: grid;
-  grid-template-columns: 220px 1fr 1fr auto;
+  width: fit-content;
+  max-width: 100%;
+  grid-template-columns: minmax(9ch, 10ch) minmax(12ch, 14ch) minmax(12ch, 14ch) auto;
   gap: 12px;
   align-items: center;
 }
 
 .tableCard .searchContainerSticky .searchInput {
+  width: 100%;
+  min-width: 0;
   min-height: 42px;
   padding: 0.68rem 0.82rem;
   border-radius: 11px;
@@ -2591,6 +2462,7 @@
 }
 
 .tableCard :global(.entries-container) {
+  width: fit-content;
   max-width: 100%;
   overflow-x: auto;
   overflow-y: hidden;
@@ -2598,8 +2470,8 @@
 }
 
 .tableCard :global(.entries-table) {
-  width: 100%;
-  min-width: 1180px;
+  width: max-content;
+  min-width: 0;
   border-collapse: separate;
   border-spacing: 0;
   border: 1px solid var(--entries-border);
@@ -2678,7 +2550,6 @@
 }
 
 .tableCard :global(.entries-cell.col-usbc) {
-  min-width: 116px;
   font-variant-numeric: tabular-nums;
 }
 
@@ -2687,7 +2558,6 @@
   align-items: center;
   justify-content: center;
   min-height: 28px;
-  min-width: 82px;
   max-width: 100%;
   padding: 0 8px;
   border: 1px solid var(--entries-border);
@@ -2702,8 +2572,6 @@
 .tableCard :global(.entries-cell.col-name),
 .tableCard :global(.entries-header-cell.col-name) {
   text-align: center;
-  min-width: 170px;
-  width: 170px;
 }
 
 .tableCard :global(.entries-cell .cell-bowler-name) {
@@ -2728,12 +2596,7 @@
 
 .tableCard :global(.entries-cell.col-name .entries-input.entries-control) {
   text-align: center;
-  min-width: 68px;
   max-width: 92px;
-}
-
-.tableCard :global(.entries-cell.col-usbc .entries-input.entries-control) {
-  min-width: 82px;
 }
 
 .tableCard :global(.entries-cell.col-usbc .cell-empty),
@@ -2742,53 +2605,17 @@
   font-style: normal;
 }
 
-.tableCard :global(.entries-input.entries-control),
-.tableCard :global(.entries-select.entries-control) {
-  height: 28px;
-  min-height: 28px;
-  padding: 0 8px;
-  font-size: 12px;
-  text-align: center;
-  font-variant-numeric: tabular-nums;
-}
-
-.tableCard :global(.entries-cell.col-division .entries-control) {
-  width: 80px;
-}
-
-.tableCard :global(.entries-cell.col-lane .entries-control),
-.tableCard :global(.entries-cell.col-average .entries-control),
-.tableCard :global(.entries-cell.col-scratch .entries-control) {
-  width: 52px;
-}
-
-.tableCard :global(.entries-header-cell.col-cost),
-.tableCard :global(.entries-cell.col-cost) {
-  min-width: 74px;
-}
-
 .tableCard :global(.entries-cell.col-cost) {
   text-align: right;
 }
 
 .tableCard :global(.entries-cost) {
   display: inline-block;
-  min-width: 68px;
   text-align: right;
   color: color-mix(in srgb, var(--entries-text-title) 95%, transparent);
   font-size: 0.8rem;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
-}
-
-.tableCard :global(.entries-header-cell.col-status),
-.tableCard :global(.entries-cell.col-status) {
-  min-width: 88px;
-}
-
-.tableCard :global(.entries-header-cell.col-actions),
-.tableCard :global(.entries-cell.col-actions) {
-  min-width: 82px;
 }
 
 .tableCard :global(.entries-edit-btn) {
@@ -2805,7 +2632,7 @@
 /* Content-fit table sizing */
 .tableCard :global(.entries-table) {
   width: max-content;
-  min-width: 100%;
+  min-width: 0;
   table-layout: auto;
 }
 
@@ -2816,23 +2643,41 @@
   white-space: nowrap;
 }
 
-.tableCard :global(.entries-cell.col-usbc),
-.tableCard :global(.entries-cell.col-name),
-.tableCard :global(.entries-header-cell.col-name),
-.tableCard :global(.entries-header-cell.col-cost),
-.tableCard :global(.entries-cell.col-cost),
-.tableCard :global(.entries-header-cell.col-status),
-.tableCard :global(.entries-cell.col-status),
-.tableCard :global(.entries-header-cell.col-actions),
-.tableCard :global(.entries-cell.col-actions) {
-  width: auto;
-  min-width: max-content;
-}
-
 .tableCard :global(.entries-cell.col-usbc .cell-readonly-text),
 .tableCard :global(.entries-cell .cell-bowler-name),
 .tableCard :global(.entries-cost) {
   min-width: 0;
+}
+
+.tableCard :global(.entries-cell.col-usbc),
+.tableCard :global(.entries-header-cell.col-usbc) {
+  min-width: 116px;
+}
+
+.tableCard :global(.entries-cell.col-name),
+.tableCard :global(.entries-header-cell.col-name) {
+  width: 170px;
+  min-width: 170px;
+}
+
+.tableCard :global(.entries-header-cell.col-cost),
+.tableCard :global(.entries-cell.col-cost) {
+  min-width: 74px;
+}
+
+.tableCard :global(.entries-header-cell.col-status),
+.tableCard :global(.entries-cell.col-status) {
+  min-width: 88px;
+}
+
+.tableCard :global(.entries-header-cell.col-actions),
+.tableCard :global(.entries-cell.col-actions) {
+  min-width: 82px;
+}
+
+.tableCard :global(.entries-header-cell.col-sidepot),
+.tableCard :global(.entries-cell.col-sidepot) {
+  min-width: 56px;
 }
 
 .tableCard :global(.entries-input.entries-control),
@@ -2855,18 +2700,42 @@
 .tableCard :global(.entries-cell.col-lane .entries-control),
 .tableCard :global(.entries-cell.col-average .entries-control),
 .tableCard :global(.entries-cell.col-scratch .entries-control) {
-  width: 3.25rem;
-  min-width: 3.25rem;
+  width: fit-content;
+  min-width: calc(3ch + 0.7rem);
 }
 
 .tableCard :global(.entries-cell.col-division .entries-control) {
-  width: 5rem;
+  width: fit-content;
   min-width: 5rem;
+}
+
+.tableCard :global(.entries-header-cell.col-lane),
+.tableCard :global(.entries-cell.col-lane),
+.tableCard :global(.entries-header-cell.col-average),
+.tableCard :global(.entries-cell.col-average) {
+  width: calc(3ch + 1.1rem);
+  min-width: calc(3ch + 1.1rem);
+}
+
+.tableCard :global(.entries-header-cell.col-scratch),
+.tableCard :global(.entries-cell.col-scratch) {
+  width: calc(3ch + 1.1rem);
+  min-width: calc(3ch + 1.1rem);
+}
+
+.tableCard :global(.entries-header-cell.col-lane),
+.tableCard :global(.entries-header-cell.col-average),
+.tableCard :global(.entries-header-cell.col-scratch) {
+  white-space: normal;
+  line-height: 1.12;
 }
 
 /* Flatten the Entries card: one main card, not cards inside cards */
 .tableCard {
   border-radius: 24px !important;
+  width: fit-content;
+  min-width: 0;
+  max-width: 100%;
   overflow: hidden !important;
 }
 
@@ -2884,11 +2753,32 @@
   overflow: visible !important;
 }
 
+.tableCard :global(.entries-table thead) {
+  display: table-header-group;
+  width: auto;
+}
+
+.tableCard :global(.entries-table tbody) {
+  display: table-row-group;
+  width: auto;
+}
+
+.tableCard :global(.entries-table tr) {
+  display: table-row;
+  width: auto;
+  table-layout: auto;
+}
+
 .tableCard :global(.entries-table thead),
 .tableCard :global(.entries-table tbody),
 .tableCard :global(.entries-table tr) {
   border-radius: 0 !important;
   overflow: visible !important;
+}
+
+.tableCard :global(.entries-table th),
+.tableCard :global(.entries-table td) {
+  min-width: 0;
 }
 
 .tableCard :global(.entries-header-cell) {
@@ -2920,21 +2810,11 @@
   background: color-mix(in srgb, var(--opacity-white-04) 45%, transparent);
 }
 
-.tableCard :global(.entries-cell.col-usbc .cell-readonly-text),
-.tableCard :global(.entries-cell .cell-bowler-name) {
-  min-height: 28px;
-  padding: 0 8px;
-  border: 1px solid var(--entries-border);
-  border-radius: 9px;
-  background: color-mix(in srgb, var(--entries-panel-deep) 90%, transparent);
-}
-
 .tableCard :global(.entries-cell.col-usbc .cell-readonly-text) {
   color: color-mix(in srgb, var(--entries-text-body) 92%, transparent);
 }
 
 .tableCard :global(.entries-cell .cell-bowler-name) {
-  padding: 0 10px;
   color: color-mix(in srgb, var(--entries-text-title) 92%, transparent);
 }
 
@@ -3018,13 +2898,7 @@
 }
 
 .tableCard :global(.players-table-row) {
-  height: 46px;
-}
-
-.statRefund {
   font-size: 12px;
-  line-height: 1.35;
-  font-weight: 500;
 }
 
 .entriesSearchTitle {
@@ -3143,6 +3017,10 @@
   height: 32px;
   padding-top: 0;
   padding-bottom: 0;
+  padding-left: 8px;
+  padding-right: 8px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
   line-height: 1.15;
 }
 
@@ -3270,7 +3148,8 @@
 
 @media (max-width: 1100px) {
   .tableCard .searchContainerSticky {
-    grid-template-columns: minmax(140px, 0.9fr) 1fr 1fr auto;
+    width: 100%;
+    grid-template-columns: minmax(9ch, 10ch) minmax(10ch, 1fr) minmax(10ch, 1fr) auto;
   }
 }
 
@@ -3291,6 +3170,12 @@
     padding-right: 10px;
   }
 @media (max-width: 900px) {
+  .pageContainer .entriesSectionWidth,
+  .tableCard {
+    width: 100%;
+    max-width: 100%;
+  }
+
   .entriesTableHeader {
     flex-direction: column;
     gap: 0.6rem;
@@ -3882,6 +3767,95 @@
 
   .mobilePlayerCost {
     font-size: 0.72rem;
+  }
+}
+
+/* Final desktop clamp: Find Entry row fills card width, but does not determine it. */
+@media (min-width: 901px) {
+  .tableCard .searchContainerSticky {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 0.75fr) minmax(0, 1fr) minmax(0, 1fr) auto;
+    justify-content: stretch;
+  }
+
+  .tableCard .searchContainerSticky .searchInput {
+    width: 100% !important;
+    min-width: 0;
+  }
+
+  .tableCard .searchContainerSticky .clearSearchBtn {
+    width: auto;
+    white-space: nowrap;
+  }
+}
+
+/* Desktop: Entries summary cards should fit content, not stretch full-row columns. */
+@media (min-width: 901px) {
+  .entryWorkflowLayout {
+    width: 100%;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .tableCard {
+    width: fit-content;
+    max-width: 100%;
+  }
+
+  .quickActionsCard,
+  .findBowlerCard,
+  .addBowlerCard {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .summaryCard .summaryHeader {
+    justify-content: flex-start;
+    padding-left: 0.86rem !important;
+    padding-right: 0.86rem !important;
+  }
+
+  .summaryCard .summaryHeader .summaryTitleWrap {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    align-items: flex-start !important;
+    text-align: left !important;
+  }
+
+  .summaryCard .summaryHeader .summarySubtitle {
+    text-align: left !important;
+  }
+
+  .summaryCard .summaryHeader .summaryPaymentStrip {
+    margin-left: auto;
+  }
+
+  .summaryCard {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .summaryGrid {
+    width: 100%;
+    max-width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .summaryGrid .statBox {
+    width: fit-content;
+    min-width: 0;
+    max-width: 100%;
+    flex: 0 0 auto;
   }
 }
 

@@ -32,7 +32,7 @@
   align-items: center;
   justify-content: center;
   padding: 24px 20px;
-  background: var(--gradient-dark-alt);
+  background: var(--bw-app-bg);
 }
 
 /* Modal card */
@@ -44,7 +44,7 @@
   animation: slideUp 0.3s ease-out;
   scrollbar-width: none;
   position: relative;
-  background: color-mix(in srgb, var(--bw-surface-card) 96%, transparent) !important;
+  background: var(--bw-surface-card) !important;
   border: 1px solid var(--bw-border-subtle) !important;
   box-shadow: var(--shadow-modal) !important;
 }
@@ -76,7 +76,7 @@
 /* Header */
 .header {
   padding: 22px 28px 14px;
-  background: linear-gradient(180deg, var(--bw-surface-panel-strong), color-mix(in srgb, var(--bw-surface-panel) 42%, transparent)) !important;
+  background: var(--bw-surface-card) !important;
   border-bottom: 1px solid var(--bw-border-subtle) !important;
 }
 
@@ -110,7 +110,7 @@
 /* Form body */
 .body {
   padding: 20px 28px 24px;
-  background: color-mix(in srgb, var(--bw-surface-card) 96%, transparent);
+  background: var(--bw-surface-card);
 }
 
 .modal :global(.surface-authInput),
@@ -535,6 +535,139 @@
   }
 
   .subtitle {
-    margin-left: 44px;
+    margin-left: 42px;
   }
+}
+
+/* Final signup polish overrides */
+.nameRow {
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.field {
+  margin-bottom: 18px;
+}
+
+.fieldHint {
+  margin-top: 8px;
+  color: var(--bw-text-muted);
+}
+
+.body > :global(.surface-authHint),
+.body > :global(.surface-authHintSuccess) {
+  margin-top: -8px;
+  margin-bottom: 12px;
+}
+
+.modal :global(.surface-authLabel) {
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.modal :global(.surface-authInput),
+.modal :global(.surface-authInputValid) {
+  min-height: 48px;
+}
+
+.modal :global(.surface-authInput:focus) {
+  border-color: color-mix(in srgb, var(--color-primary) 70%, white) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 24%, transparent) !important;
+}
+
+.passwordToggle {
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  min-width: 62px;
+  height: 34px;
+  justify-content: center;
+  background: var(--bw-surface-panel);
+  border: 1px solid var(--bw-border-subtle);
+  border-radius: 8px;
+  font-size: 11px;
+  padding: 0 8px;
+}
+
+.passwordToggle:hover {
+  border-color: var(--bw-border-accent);
+  background: color-mix(in srgb, var(--color-primary) 8%, var(--bw-surface-panel));
+}
+
+.passwordToggle:focus-visible {
+  outline: 2px solid var(--bw-border-accent);
+  outline-offset: 1px;
+}
+
+.checking {
+  right: 10px;
+  bottom: 13px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.submitBtn {
+  min-height: 48px;
+  font-size: 14px;
+  letter-spacing: 0.01em;
+}
+
+.submitBtn:disabled {
+  color: color-mix(in srgb, var(--bw-text-muted) 92%, white) !important;
+  background: color-mix(in srgb, var(--bw-surface-panel) 88%, transparent) !important;
+  border-color: color-mix(in srgb, var(--bw-border-subtle) 110%, transparent) !important;
+}
+
+.submitHelper {
+  margin: 10px 0 0;
+  text-align: center;
+  font-size: 12px;
+  color: var(--bw-text-faint);
+}
+
+/* Header rhythm alignment */
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 20px 28px 12px;
+}
+
+.brandRow {
+  align-items: center;
+  gap: 12px;
+}
+
+.logoMark {
+  width: 32px;
+  height: 32px;
+}
+
+.title {
+  font-size: 1.3rem;
+  line-height: 1.15;
+}
+
+.subtitle {
+  margin: 0 0 0 44px;
+  line-height: 1.35;
+}
+
+/* Final action typography parity */
+.submitBtn,
+.cancelBtn {
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  line-height: 1;
+}
+
+.loginPrompt,
+.loginLink {
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.loginLink {
+  font-weight: 700;
 }

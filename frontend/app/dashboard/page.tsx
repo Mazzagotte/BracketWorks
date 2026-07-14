@@ -34,6 +34,7 @@ import {
 } from '../lib/selection-session';
 import CloseControl from '../../components/CloseControl';
 import ExplainDashboardModal from './ExplainDashboardModal';
+import { TournamentSettingsContent } from './settings/TournamentSettingsContent';
 import { setBodyInteractionState } from '../utils/modalUtils';
 import { formatIsoDateFull, formatIsoDateLong } from '../lib/formatters';
 
@@ -438,6 +439,7 @@ export default function TournamentDashboard() {
   const [deleteConfirm, setDeleteConfirm] = useState<{id: number, name: string} | null>(null);
   const [shareQROpen, setShareQROpen] = useState(false);
   const [isExplainModalOpen, setIsExplainModalOpen] = useState(false);
+  const [scoreProgress, setScoreProgress] = useState({ completed: 0, entered: 0, total: 0, percent: 0, loading: false });
   
   // Enhanced UX components
   const { addToast } = useToast();
@@ -1476,16 +1478,6 @@ export default function TournamentDashboard() {
     bracketSettings.bracket_size,
     bracketSettings.default_entry_fee,
   ), [statsSummaryPlayers, enabledBracketProgramsForSummary, bracketSettings.bracket_size, bracketSettings.default_entry_fee]);
-  const statsSidePotSummaries = useMemo(() => {
-    return sidePots.pots
-      .filter(pot => pot.enabled)
-      .map(pot => ({
-        key: pot.key,
-        name: pot.name,
-        count: statsSummaryPlayers.filter(player => Number(player.programEntryCounts?.[pot.key] || 0) > 0).length,
-        fee: sidePots.entry_fee,
-      }));
-  }, [sidePots.pots, sidePots.entry_fee, statsSummaryPlayers]);
   const entrySummary = useMemo(() => summarizeEntries(
     summaryPlayers,
     enabledBracketProgramsForSummary,
@@ -1509,38 +1501,7 @@ export default function TournamentDashboard() {
   const scoresLocked = workflowStatus?.scores_locked ?? payoutsFinalized;
   const payoutsNotFinalizedCount = loadedEntries > 0 && !payoutsFinalized ? 1 : 0;
   const bracketsNotGeneratedCount = hasGeneratedBrackets ? 0 : 1;
-  const commissionerQuickActions = [
-    {
-      key: 'new-tournament',
-      label: 'New Tournament',
-      indicator: '+',
-      onClick: () => {
-        setCreateMode(true);
-        setModalOpen(true);
-      },
-      disabled: false,
-      accent: true,
-    },
-    {
-      key: 'add-player',
-      label: 'Add Player',
-      indicator: '+',
-      onClick: () => router.push('/players'),
-      disabled: false,
-      accent: true,
-    },
-    ...(!hasGeneratedBrackets
-      ? [
-          {
-            key: 'generate-brackets',
-            label: 'Generate Brackets',
-            indicator: '›',
-            onClick: () => router.push('/brackets'),
-            disabled: false,
-            accent: true,
-          },
-        ]
-      : []),
+  const continueTournamentActions = [
     {
       key: 'enter-scores',
       label: 'Enter Scores',
@@ -1553,6 +1514,14 @@ export default function TournamentDashboard() {
       accent: false,
     },
     {
+      key: 'add-player',
+      label: 'Add Player',
+      indicator: '›',
+      onClick: () => router.push('/players'),
+      disabled: false,
+      accent: false,
+    },
+    {
       key: 'view-payouts',
       label: 'View Payouts',
       indicator: '›',
@@ -1561,12 +1530,71 @@ export default function TournamentDashboard() {
       accent: false,
     },
   ];
+  const contextPrimaryAction = useMemo(() => {
+    if (loadedEntries <= 0) {
+      return { key: 'add-player', label: 'Add Players', onClick: () => router.push('/players'), disabled: false };
+    }
+
+    if (!hasGeneratedBrackets) {
+      return { key: 'generate-brackets', label: 'Generate Brackets', onClick: () => router.push('/brackets'), disabled: false };
+    }
+
+    if (!scoresLocked && scoreProgress.percent < 100) {
+      return { key: 'enter-scores', label: 'Enter Scores', onClick: () => router.push('/scores'), disabled: false };
+    }
+
+    return { key: 'view-payouts', label: 'View Payouts', onClick: () => router.push('/payouts'), disabled: false };
+  }, [loadedEntries, hasGeneratedBrackets, scoresLocked, scoreProgress.percent, router]);
+
+  const primaryContinueActionKey = contextPrimaryAction.key === 'generate-brackets' ? 'enter-scores' : contextPrimaryAction.key;
+
+  const manageSetupActions = [
+    {
+      key: 'edit-tournament',
+      label: 'Edit Tournament',
+      onClick: () => {
+        setCreateMode(false);
+        setModalOpen(true);
+      },
+      disabled: false,
+    },
+    { key: 'tournament-settings', label: 'Tournament Settings', onClick: () => setSettingsModalOpen(true), disabled: false },
+    { key: 'change-squad', label: 'Change Squad', onClick: handleOpenSquadSelector, disabled: squads.length === 0 },
+  ];
+  const moreActions = [
+    {
+      key: 'new-tournament',
+      label: 'New Tournament',
+      onClick: () => {
+        setCreateMode(true);
+        setModalOpen(true);
+      },
+      disabled: false,
+      variant: 'default' as const,
+    },
+    {
+      key: 'change-tournament',
+      label: 'Change Tournament',
+      onClick: () => {
+        handleChangeTournament();
+      },
+      disabled: false,
+      variant: 'default' as const,
+    },
+    {
+      key: 'unload-tournament',
+      label: 'Unload Tournament',
+      onClick: () => {
+        handleUnloadTournament();
+      },
+      disabled: false,
+      variant: 'destructive' as const,
+    },
+  ];
   const activeSquadLabel = activeSquad ? [activeSquad.date, activeSquad.time].filter(Boolean).join(' ') : 'No squad selected';
-  const openIssuesCount = [
+  const dataIssuesCount = [
     missingAveragesCount > 0,
     unpaidEntriesCount > 0,
-    bracketsNotGeneratedCount > 0,
-    payoutsNotFinalizedCount > 0,
     duplicatePlayersCount > 0,
   ].filter(Boolean).length;
   const setupChecklist = [
@@ -1590,15 +1618,43 @@ export default function TournamentDashboard() {
   const optionalProgramsSummary = optionalProgramNames.length === 0
     ? 'None enabled'
     : optionalProgramNames.length <= 2
-      ? optionalProgramNames.join(', ')
-      : `${optionalProgramNames.slice(0, 2).join(', ')} +${optionalProgramNames.length - 2} more`;
+      ? optionalProgramNames.join(' · ')
+      : `${optionalProgramNames.slice(0, 2).join(' · ')} +${optionalProgramNames.length - 2} more`;
   const blockerSummary = setupBlockers.map(item => `${item.count} ${item.label}`).join(' | ');
   const usdFormatter = useMemo(
     () => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }),
     [],
   );
   const formatUsd = useCallback((amount: number) => usdFormatter.format(Math.max(0, Number(amount || 0))), [usdFormatter]);
-  const summaryCardsBandRef = useRef<HTMLDivElement | null>(null);
+  const bracketsGenerated = hasGeneratedBrackets === true;
+  const payoutsCalculated = payoutsFinalized || scoresLocked;
+
+  const scoreStatusLabel = useMemo(() => {
+    if (scoreProgress.loading) return 'Checking...';
+    if (scoresLocked) return 'Locked';
+    if (scoreProgress.entered > 0) return 'In Progress';
+    return 'None';
+  }, [scoreProgress.entered, scoreProgress.loading, scoresLocked]);
+
+  const bracketsStatusLabel = useMemo(() => {
+    if (bracketsGenerated) return 'Generated';
+    return loadedEntries > 0 ? 'Not Generated' : 'Pending';
+  }, [bracketsGenerated, loadedEntries]);
+
+  const payoutWorkflowStatusLabel = useMemo(() => {
+    if (payoutsFinalized) return 'Finalized';
+    if (!hasGeneratedBrackets) return 'Pending';
+    if (scoreProgress.percent >= 100) return 'Ready for Payouts';
+    return 'Pending';
+  }, [payoutsFinalized, hasGeneratedBrackets, scoreProgress.percent]);
+
+  const payoutStatusLabel = payoutWorkflowStatusLabel;
+  const payoutsChipStatusLabel = payoutsCalculated ? 'Calculated' : 'Not Calculated';
+
+  const openIssuesLabel = dataIssuesCount === 1
+    ? '1 Open Issue'
+    : `${dataIssuesCount} Open Issues`;
+
   const statusNarrative = useMemo(() => {
     if (isEntryDataSyncing) {
       return {
@@ -1627,7 +1683,7 @@ export default function TournamentDashboard() {
       };
     }
 
-    if (openIssuesCount === 0 && !setupIncomplete) {
+    if (dataIssuesCount === 0 && !setupIncomplete) {
       return {
         tone: 'info',
         icon: 'i',
@@ -1642,115 +1698,205 @@ export default function TournamentDashboard() {
       warningText: 'Review tournament setup details before generating brackets.',
       nextStepText: 'Review setup status and continue workflow.',
     };
-  }, [isEntryDataSyncing, hasSetupBlockers, blockerSummary, bracketsNotGeneratedCount, openIssuesCount, setupIncomplete]);
+  }, [isEntryDataSyncing, hasSetupBlockers, blockerSummary, bracketsNotGeneratedCount, dataIssuesCount, setupIncomplete]);
+  const heroStatusChips = useMemo(() => ([
+    {
+      key: 'brackets',
+      label: 'Brackets',
+      value: bracketsStatusLabel,
+      tone: bracketsStatusLabel === 'Generated' ? 'complete' : (loadedEntries > 0 ? 'active' : 'pending'),
+    },
+    {
+      key: 'scores',
+      label: 'Scores',
+      value: scoreStatusLabel,
+      tone: scoreStatusLabel === 'None'
+        ? 'pending'
+        : scoreStatusLabel === 'Locked'
+          ? 'complete'
+          : scoreStatusLabel === 'Checking...' || scoreStatusLabel === 'In Progress'
+          ? 'active'
+          : 'pending',
+    },
+    {
+      key: 'payouts',
+      label: 'Payouts',
+      value: payoutsChipStatusLabel,
+      tone: payoutsCalculated ? 'complete' : 'pending',
+    },
+    {
+      key: 'issues',
+      label: openIssuesLabel,
+      value: '',
+      tone: dataIssuesCount > 0 ? 'alert' : 'pending',
+      showAlertIcon: dataIssuesCount > 0,
+    },
+  ]), [bracketsStatusLabel, loadedEntries, scoreStatusLabel, payoutsChipStatusLabel, payoutsCalculated, dataIssuesCount, openIssuesLabel]);
+  const healthStripItems = useMemo(() => ([
+    {
+      key: 'averages',
+      label: 'Missing Averages',
+      value: missingAveragesCount,
+      href: '/players',
+    },
+    {
+      key: 'payments',
+      label: 'Unpaid Entries',
+      value: unpaidEntriesCount,
+      href: '/players',
+    },
+    {
+      key: 'bracket-status',
+      label: 'Brackets',
+      value: hasGeneratedBrackets ? 'Ready' : 'Not Generated',
+      href: '/brackets',
+    },
+    {
+      key: 'payout-status',
+      label: 'Payouts',
+      value: payoutsFinalized ? 'Finalized' : 'Pending',
+      href: '/payouts',
+    },
+  ]), [missingAveragesCount, unpaidEntriesCount, hasGeneratedBrackets, payoutsFinalized]);
   const showHeroStatusStrip = statusNarrative.tone === 'warning' || isEntryDataSyncing;
-  const tournamentSummaryCards = useMemo(() => {
-    const knownProgramLabels: Record<string, string> = {
-      handicap: 'Handicap',
-      scratch: 'Scratch',
-      reverse_scratch: 'Reverse Scratch',
-      womens_scratch: 'Women\'s Scratch',
-    };
-    const programOrder: Record<string, number> = {
-      handicap: 0,
-      scratch: 1,
-      reverse_scratch: 2,
-      womens_scratch: 3,
-    };
-
-    const normalizeProgramLabel = (programKey: string, fallbackName: string) => {
-      return knownProgramLabels[programKey] ?? fallbackName;
-    };
-    const orderedProgramSummaries = [...statsEntrySummary.programSummaries].sort((a, b) => {
-      const aOrder = programOrder[a.key] ?? Number.MAX_SAFE_INTEGER;
-      const bOrder = programOrder[b.key] ?? Number.MAX_SAFE_INTEGER;
-      if (aOrder !== bOrder) {
-        return aOrder - bOrder;
-      }
-      return a.name.localeCompare(b.name);
+  const entriesProgramCountByKey = useMemo(() => {
+    const byKey: Record<string, number> = {};
+    statsEntrySummary.programSummaries.forEach(program => {
+      byKey[program.key] = program.totalEntries;
     });
+    return byKey;
+  }, [statsEntrySummary.programSummaries]);
 
-    const cards: Array<{
-      key: string;
-      label: string;
-      value: string;
-      helperPrimary?: string;
-      helperSecondary?: string;
-      status?: string;
-      accent?: boolean;
-    }> = [
+  const percentOfTotalEntries = useCallback((count: number) => {
+    if (statsEntrySummary.totalEntries <= 0) return null;
+    return `${Math.round((count / statsEntrySummary.totalEntries) * 100)}% of entries`;
+  }, [statsEntrySummary.totalEntries]);
+
+  const tournamentSummaryCards = useMemo(() => {
+    const handicapCount = entriesProgramCountByKey.handicap ?? 0;
+    const scratchCount = entriesProgramCountByKey.scratch ?? 0;
+    const reverseScratchCount = entriesProgramCountByKey.reverse_scratch ?? 0;
+    const womensScratchCount = entriesProgramCountByKey.womens_scratch ?? 0;
+
+    return [
       {
-        key: 'summary-players',
+        key: 'summary-total-entries',
         label: 'Total Entries',
         value: `${statsEntrySummary.totalEntries}`,
+        helperPrimary: loadedEntries > 0 ? `${loadedEntries} players` : undefined,
+        href: '/players',
       },
       {
-        key: 'summary-entry-total',
+        key: 'summary-entry-revenue',
         label: 'Entry Revenue',
         value: formatUsd(statsEntrySummary.totalRevenue),
+        href: '/players',
       },
-      ...orderedProgramSummaries.map(program => ({
-        key: `program-${program.key}`,
-        label: normalizeProgramLabel(program.key, program.name),
-        value: `${program.totalEntries}`,
-      })),
-      ...statsSidePotSummaries.map(pot => ({
-        key: `sidepot-${pot.key}`,
-        label: pot.name,
-        value: `${pot.count}`,
-        helperPrimary: pot.fee > 0 ? `Pot Total: ${formatUsd(pot.count * pot.fee)}` : undefined,
-      })),
+      {
+        key: 'summary-handicap',
+        label: 'Handicap',
+        value: `${handicapCount}`,
+        helperPrimary: percentOfTotalEntries(handicapCount) ?? undefined,
+        href: '/players',
+      },
+      {
+        key: 'summary-scratch',
+        label: 'Scratch',
+        value: `${scratchCount}`,
+        helperPrimary: percentOfTotalEntries(scratchCount) ?? undefined,
+        href: '/players',
+      },
+      {
+        key: 'summary-reverse-scratch',
+        label: 'Reverse Scratch',
+        value: `${reverseScratchCount}`,
+        helperPrimary: percentOfTotalEntries(reverseScratchCount) ?? undefined,
+        href: '/players',
+      },
+      {
+        key: 'summary-womens-scratch',
+        label: "Women's Scratch",
+        value: `${womensScratchCount}`,
+        helperPrimary: percentOfTotalEntries(womensScratchCount) ?? undefined,
+        href: '/players',
+      },
     ];
-
-    return cards;
-  }, [statsEntrySummary, statsSidePotSummaries, formatUsd]);
+  }, [entriesProgramCountByKey, formatUsd, loadedEntries, percentOfTotalEntries, statsEntrySummary.totalEntries, statsEntrySummary.totalRevenue]);
 
   useEffect(() => {
-    const container = summaryCardsBandRef.current;
-    if (!container) {
-      return;
-    }
+    let isCancelled = false;
 
-    let rafId = 0;
-    const measureAndApplyTallestHeight = () => {
-      cancelAnimationFrame(rafId);
-      rafId = requestAnimationFrame(() => {
-        const cards = Array.from(container.children).filter(
-          (child): child is HTMLElement => child instanceof HTMLElement,
-        );
+    const loadScoreProgress = async () => {
+      const tournamentId = tournament?.id;
+      if (!tournamentId) {
+        if (!isCancelled) {
+          setScoreProgress({ completed: 0, entered: 0, total: 0, percent: 0, loading: false });
+        }
+        return;
+      }
 
-        if (cards.length === 0) {
-          container.style.removeProperty('--entries-overview-card-height');
-          return;
+      const token = storage.getItem('token');
+      if (!token) {
+        if (!isCancelled) {
+          setScoreProgress({ completed: 0, entered: 0, total: Math.max(loadedEntries, statsSummaryPlayers.length), percent: 0, loading: false });
+        }
+        return;
+      }
+
+      if (!isCancelled) {
+        setScoreProgress(previous => ({ ...previous, loading: true }));
+      }
+
+      try {
+        const params = new URLSearchParams({ tournament_id: String(tournamentId) });
+        if (selectedSquadId) {
+          params.set('squad_id', String(selectedSquadId));
         }
 
-        container.style.setProperty('--entries-overview-card-height', 'auto');
-        const tallestHeight = Math.max(...cards.map(card => card.offsetHeight));
-        container.style.setProperty('--entries-overview-card-height', `${tallestHeight}px`);
-      });
+        const response = await apiFetch(API(`/api/v1/scores/?${params.toString()}`), {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Unable to load scores progress: ${response.status}`);
+        }
+
+        const rows = await response.json() as Array<{
+          player_id: number;
+          game1_scratch?: number | null;
+          game2_scratch?: number | null;
+          game3_scratch?: number | null;
+        }>;
+
+        const completed = rows.filter(row =>
+          row.game1_scratch != null && row.game2_scratch != null && row.game3_scratch != null
+        ).length;
+        const entered = rows.filter(row =>
+          row.game1_scratch != null || row.game2_scratch != null || row.game3_scratch != null
+        ).length;
+        const total = Math.max(statsSummaryPlayers.length, loadedEntries, rows.length);
+        const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+        if (!isCancelled) {
+          setScoreProgress({ completed, entered, total, percent, loading: false });
+        }
+      } catch (error) {
+        logger.warn('Dashboard score progress load failed', { error: getErrorContext(error) });
+        if (!isCancelled) {
+          const total = Math.max(statsSummaryPlayers.length, loadedEntries);
+          setScoreProgress({ completed: 0, entered: 0, total, percent: 0, loading: false });
+        }
+      }
     };
 
-    measureAndApplyTallestHeight();
-
-    const resizeObserver = new ResizeObserver(() => {
-      measureAndApplyTallestHeight();
-    });
-
-    resizeObserver.observe(container);
-    Array.from(container.children).forEach(child => {
-      if (child instanceof HTMLElement) {
-        resizeObserver.observe(child);
-      }
-    });
-
-    window.addEventListener('resize', measureAndApplyTallestHeight);
+    void loadScoreProgress();
 
     return () => {
-      cancelAnimationFrame(rafId);
-      window.removeEventListener('resize', measureAndApplyTallestHeight);
-      resizeObserver.disconnect();
+      isCancelled = true;
     };
-  }, [tournamentSummaryCards]);
+  }, [loadedEntries, selectedSquadId, statsSummaryPlayers.length, tournament?.id]);
 
   useEffect(() => {
     if (selectedSquadId !== null) {
@@ -1847,22 +1993,23 @@ export default function TournamentDashboard() {
             {/* Empty State - No Tournament Loaded */}
             {!tournament && (
               <NoTournamentState
-                title="Welcome to BracketWorks"
-                description="Create a new tournament or load an existing one to open the command center for squads, entries, brackets, scores, and payouts."
+                title="Command Center Ready"
+                description="Create a new tournament or load an existing one to activate your full tournament command center."
                 actions={[
                   { label: 'Create Tournament', onClick: () => { setCreateMode(true); setModalOpen(true); }, variant: 'primary' },
                   { label: 'Load Tournament', onClick: () => setLoadModalOpen(true), variant: 'secondary' },
                 ]}
                 cards={[
-                  { title: 'Tournament Setup', text: 'Configure squads, bracket programs, entry fees, side pots, and payout rules before play starts.' },
-                  { title: 'Live Operations', text: 'Manage entries, generate brackets, enter scores, and keep the tournament moving from one dashboard.' },
-                  { title: 'Final Review', text: 'Review winners, projected payouts, exports, and public live-view links when the event wraps.' },
+                  { title: 'Build the Event', text: 'Set squads, bracket programs, entry pricing, side pots, and payout logic before lanes go live.' },
+                  { title: 'Run It Live', text: 'Manage entries, generate brackets, and enter scores from one control surface during play.' },
+                  { title: 'Close with Confidence', text: 'Review outcomes, payouts, exports, and public links when the tournament is complete.' },
                 ]}
               />
             )}
 
             {tournament && (
               <>
+                <div className={mobileStyles.dashboardOverviewStack}>
                 <section className={`${shellStyles.section} ${mobileStyles.commandCenterGrid}`}>
                   <article className={`${cardStyles.card} ${cardStyles.accentCard} ${mobileStyles.liveBoardCard} ${mobileStyles.gridHero}`}>
                     <div className={mobileStyles.heroTopRow}>
@@ -1871,85 +2018,128 @@ export default function TournamentDashboard() {
                         <div className={mobileStyles.heroTitleRow}>
                           <h2 className={mobileStyles.heroTitle}>{tournament.name}</h2>
                         </div>
+                        <div className={mobileStyles.heroMetaCompact}>
+                          <span>{tournament.start_date ? formatIsoDateFull(tournament.start_date) : 'Date pending'}</span>
+                          <span aria-hidden="true">•</span>
+                          <span>{activeSquad ? `Active Squad: ${activeSquad.time}` : 'Active Squad: pending'}</span>
+                          <span aria-hidden="true">•</span>
+                          <span>{`Squads: ${squads.length}`}</span>
+                        </div>
+                        {(loadedEntries > 0 || statsEntrySummary.totalEntries > 0) && (
+                          <div className={mobileStyles.heroSummaryLine}>
+                            <span>{`${loadedEntries} players`}</span>
+                            <span aria-hidden="true">•</span>
+                            <span>{`${statsEntrySummary.totalEntries} entries`}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
 
                     <div className={mobileStyles.heroMiddleRow}>
-                      <div className={mobileStyles.heroMetaRow}>
-                        <span className={`${cardStyles.panel} ${mobileStyles.heroMetaPill}`}>{tournament.start_date ? formatIsoDateFull(tournament.start_date) : 'Date pending'}</span>
-                        <span className={`${cardStyles.panel} ${mobileStyles.heroMetaPill}`}>{activeSquad ? `Active Squad: ${activeSquad.time}` : 'Active Squad: pending'}</span>
-                        <span className={`${cardStyles.panel} ${mobileStyles.heroMetaPill}`}>Squads: {squads.length}</span>
+                      <div className={mobileStyles.heroStatusChipRow}>
+                        {heroStatusChips.map(chip => (
+                          <button
+                            key={chip.key}
+                            type="button"
+                            className={`${mobileStyles.heroStatusChip} ${
+                              chip.tone === 'alert'
+                                ? mobileStyles.heroStatusChipAlert
+                                : chip.tone === 'active'
+                                  ? mobileStyles.heroStatusChipActive
+                                  : chip.tone === 'complete'
+                                    ? mobileStyles.heroStatusChipComplete
+                                    : mobileStyles.heroStatusChipPending
+                            }`}
+                            onClick={() => {
+                              if (chip.key === 'issues') {
+                                router.push('/players');
+                                return;
+                              }
+                              if (chip.key === 'brackets') {
+                                router.push('/brackets');
+                                return;
+                              }
+                              if (chip.key === 'scores') {
+                                router.push('/scores');
+                                return;
+                              }
+                              if (chip.key === 'payouts') {
+                                router.push('/payouts');
+                              }
+                            }}
+                          >
+                            {chip.showAlertIcon ? <span className={mobileStyles.heroStatusAlertIcon} aria-hidden="true">!</span> : null}
+                            <span>{chip.label}</span>
+                            {chip.value ? <strong>{chip.value}</strong> : null}
+                          </button>
+                        ))}
                       </div>
                     </div>
 
                     <div className={mobileStyles.heroBottomRow}>
                       <div className={mobileStyles.bracketPreview}>
-                        <div className={`${cardStyles.panel} ${mobileStyles.bracketRound}`}>
+                        <div className={`${cardStyles.panel} ${mobileStyles.bracketRound} ${mobileStyles.bracketRulesCard}`}>
                           <div className={mobileStyles.bracketRoundTitle}>Bracket &amp; Rules</div>
-                          <div className={mobileStyles.bracketMatchStack}>
-                            <div className={`${cardStyles.panel} ${mobileStyles.bracketMatch}`}>
-                              <span>Bracket Size</span>
-                              <span>{bracketSettings.bracket_size} Players</span>
+                          <div className={mobileStyles.bracketInfoGrid}>
+                            <div className={mobileStyles.bracketInfoRow}>
+                              <span className={mobileStyles.bracketInfoLabel}>Bracket Size</span>
+                              <span className={mobileStyles.bracketInfoValue}>{bracketSettings.bracket_size} Players</span>
                             </div>
-                            <div className={`${cardStyles.panel} ${mobileStyles.bracketMatch}`}>
-                              <span>Entry Fee</span>
-                              <span>{formatUsd(bracketSettings.default_entry_fee)}</span>
+                            <div className={mobileStyles.bracketInfoRow}>
+                              <span className={mobileStyles.bracketInfoLabel}>Entry Fee</span>
+                              <span className={`${mobileStyles.bracketInfoValue} ${mobileStyles.bracketInfoValueStrong}`}>{formatUsd(bracketSettings.default_entry_fee)}</span>
                             </div>
-                            <div className={`${cardStyles.panel} ${mobileStyles.bracketMatch}`}>
-                              <span>Handicap</span>
-                              <span>{bracketSettings.handicap_percentage}% / {bracketSettings.handicap_base}</span>
+                            <div className={mobileStyles.bracketInfoRow}>
+                              <span className={mobileStyles.bracketInfoLabel}>Handicap</span>
+                              <span className={`${mobileStyles.bracketInfoValue} ${mobileStyles.bracketInfoValueStrong}`}>{bracketSettings.handicap_percentage}% / {bracketSettings.handicap_base}</span>
                             </div>
-                            <div className={mobileStyles.bracketSubsection}>Enabled Programs</div>
-                            <div className={`${cardStyles.panel} ${mobileStyles.bracketMatch}`}>
-                              <span>Bye Settings</span>
-                              <span>{bracketSettings.allow_byes ? 'Enabled' : 'Disabled'}</span>
+                            <div className={mobileStyles.bracketInfoRow}>
+                              <span className={mobileStyles.bracketInfoLabel}>Bye Settings</span>
+                              <span className={`${mobileStyles.statusBadge} ${bracketSettings.allow_byes ? mobileStyles.statusBadgeEnabled : mobileStyles.statusBadgeDisabled}`}>
+                                {bracketSettings.allow_byes ? 'Enabled' : 'Disabled'}
+                              </span>
                             </div>
-                            <div className={`${cardStyles.panel} ${mobileStyles.bracketMatch}`}>
-                              <span>Side Pots</span>
-                              <span>{enabledSidePotsCount > 0 ? 'Enabled' : 'Disabled'}</span>
+                            <div className={mobileStyles.bracketInfoRow}>
+                              <span className={mobileStyles.bracketInfoLabel}>Side Pots</span>
+                              <span className={`${mobileStyles.statusBadge} ${enabledSidePotsCount > 0 ? mobileStyles.statusBadgeEnabled : mobileStyles.statusBadgeDisabled}`}>
+                                {enabledSidePotsCount > 0 ? 'Enabled' : 'Disabled'}
+                              </span>
                             </div>
-                            <div className={`${cardStyles.panel} ${mobileStyles.bracketMatch}`}>
-                              <span>Additional Brackets</span>
-                              <span>{optionalProgramsSummary}</span>
+                            <div className={`${mobileStyles.bracketInfoRow} ${mobileStyles.additionalBracketsRow}`}>
+                              <span className={mobileStyles.bracketInfoLabel}>Additional Brackets</span>
+                              <span className={`${mobileStyles.bracketInfoValue} ${mobileStyles.bracketInfoValueWrap}`}>{optionalProgramsSummary}</span>
                             </div>
                           </div>
                         </div>
 
                         <div className={`${cardStyles.panel} ${mobileStyles.bracketRound} ${mobileStyles.prizeBreakdownCard}`}>
                           <div className={mobileStyles.bracketRoundTitle}>Prize Breakdown</div>
-                          <div className={mobileStyles.prizeSectionTitle}>Payout Split</div>
-                          <div className={mobileStyles.bracketMatchStack}>
-                            <div className={`${cardStyles.panel} ${mobileStyles.bracketMatch}`}>
-                              <span>1st Place</span>
-                              <span>{formatUsd(bracketSettings.first_place_amount)}</span>
+                          <div className={mobileStyles.prizePoolHero}>
+                            <span className={mobileStyles.prizePoolLabel}>Prize Pool</span>
+                            <strong className={mobileStyles.prizePoolValue}>{formatUsd(tournamentProjectedPayout)}</strong>
+                          </div>
+
+                          <div className={mobileStyles.prizeSectionLabel}>Net Calculation</div>
+                          <div className={mobileStyles.prizeSectionGroup}>
+                            <div className={mobileStyles.bracketInfoRow}>
+                              <span className={mobileStyles.bracketInfoLabel}>Gross Collected</span>
+                              <span className={mobileStyles.bracketInfoValue}>{formatUsd(grossCollected)}</span>
                             </div>
-                            <div className={`${cardStyles.panel} ${mobileStyles.bracketMatch}`}>
-                              <span>2nd Place</span>
-                              <span>{formatUsd(bracketSettings.second_place_amount)}</span>
+                            <div className={mobileStyles.bracketInfoRow}>
+                              <span className={mobileStyles.bracketInfoLabel}>House Fee</span>
+                              <span className={`${mobileStyles.bracketInfoValue} ${mobileStyles.bracketInfoValueNegative}`}>-{formatUsd(houseRetained)}</span>
                             </div>
                           </div>
 
-                          <div className={mobileStyles.prizeSectionTitle}>Calculation</div>
-                          <div className={mobileStyles.bracketMatchStack}>
-                            <div className={`${cardStyles.panel} ${mobileStyles.bracketMatch}`}>
-                              <span>Bracket Entries</span>
-                              <span>{bracketEntriesForPayout}</span>
+                          <div className={`${mobileStyles.prizeSectionLabel} ${mobileStyles.prizeSectionLabelSpaced}`}>Payout Split</div>
+                          <div className={mobileStyles.prizeSectionGroup}>
+                            <div className={mobileStyles.bracketInfoRow}>
+                              <span className={mobileStyles.bracketInfoLabel}>1st Place</span>
+                              <span className={mobileStyles.bracketInfoValue}>{formatUsd(bracketSettings.first_place_amount)}</span>
                             </div>
-                            <div className={`${cardStyles.panel} ${mobileStyles.bracketMatch}`}>
-                              <span>Entry Fee</span>
-                              <span>{formatUsd(bracketSettings.default_entry_fee)}</span>
-                            </div>
-                            <div className={`${cardStyles.panel} ${mobileStyles.bracketMatch}`}>
-                              <span>Gross Collected</span>
-                              <span>{formatUsd(grossCollected)}</span>
-                            </div>
-                            <div className={`${cardStyles.panel} ${mobileStyles.bracketMatch}`}>
-                              <span>House Fee</span>
-                              <span>{formatUsd(houseRetained)}</span>
-                            </div>
-                            <div className={`${cardStyles.panel} ${mobileStyles.bracketMatch}`}>
-                              <span>Prize Pool</span>
-                              <span>{formatUsd(tournamentProjectedPayout)}</span>
+                            <div className={mobileStyles.bracketInfoRow}>
+                              <span className={mobileStyles.bracketInfoLabel}>2nd Place</span>
+                              <span className={mobileStyles.bracketInfoValue}>{formatUsd(bracketSettings.second_place_amount)}</span>
                             </div>
                           </div>
                         </div>
@@ -1967,12 +2157,12 @@ export default function TournamentDashboard() {
                   </article>
 
                   <aside className={`${cardStyles.card} ${cardStyles.accentCard} ${mobileStyles.squadRailCard} ${mobileStyles.gridTools} ${mobileStyles.commissionerPanel}`}>
-                    <div className={mobileStyles.commissionerSectionTitle}>Quick Actions</div>
+                    <div className={mobileStyles.commissionerSectionTitle}>Continue Tournament</div>
                     <div className={mobileStyles.squadRailList}>
-                      {commissionerQuickActions.map(action => (
+                      {continueTournamentActions.map(action => (
                         <button
                           key={action.key}
-                          className={`${mobileStyles.squadRailPill} ${action.disabled ? mobileStyles.commissionerActionDisabled : ''}`}
+                          className={`${mobileStyles.squadRailPill} ${action.key === primaryContinueActionKey ? mobileStyles.commissionerActionPrimary : mobileStyles.commissionerActionSecondary} ${action.disabled ? mobileStyles.commissionerActionDisabled : ''}`}
                           onClick={action.onClick}
                           disabled={action.disabled}
                         >
@@ -1982,24 +2172,11 @@ export default function TournamentDashboard() {
                       ))}
                     </div>
 
-                    <div className={mobileStyles.commissionerSectionTitle}>Admin Tools</div>
+                    <div className={mobileStyles.commissionerSectionTitle}>Manage Tournament</div>
                     <div className={mobileStyles.squadRailList}>
-                      {[
-                        {
-                          label: 'Edit Tournament',
-                          onClick: () => {
-                            setCreateMode(false);
-                            setModalOpen(true);
-                          },
-                          disabled: false,
-                        },
-                        { label: 'Tournament Settings', onClick: () => setSettingsModalOpen(true), disabled: false },
-                        { label: 'Unload Tournament', onClick: handleUnloadTournament, disabled: false },
-                        { label: 'Change Tournament', onClick: handleChangeTournament, disabled: false },
-                        { label: 'Change Squad', onClick: handleOpenSquadSelector, disabled: squads.length === 0 },
-                      ].map(item => (
+                      {manageSetupActions.map(item => (
                         <button
-                          key={item.label}
+                          key={item.key}
                           className={`${mobileStyles.squadRailPill} ${mobileStyles.commissionerAdminRow} ${item.disabled ? mobileStyles.commissionerActionDisabled : ''}`}
                           onClick={item.onClick}
                           disabled={item.disabled}
@@ -2009,41 +2186,51 @@ export default function TournamentDashboard() {
                         </button>
                       ))}
                     </div>
+
+                    <div className={mobileStyles.commissionerSectionTitle}>More Actions</div>
+                    <div className={mobileStyles.squadRailList}>
+                      {moreActions.map(item => (
+                        <button
+                          key={item.key}
+                          type="button"
+                          className={`${mobileStyles.squadRailPill} ${item.variant === 'destructive' ? mobileStyles.moreActionInlineDanger : mobileStyles.commissionerActionSecondary}`}
+                          onClick={item.onClick}
+                          disabled={item.disabled}
+                        >
+                          <span>{item.label}</span>
+                          <span className={mobileStyles.commissionerActionIndicator}>{item.variant === 'destructive' ? '!' : '›'}</span>
+                        </button>
+                      ))}
+                    </div>
                   </aside>
 
-                  <article className={`${cardStyles.card} ${cardStyles.accentCard} ${mobileStyles.gridSummary} ${mobileStyles.entriesOverviewCard}`}>
+                </section>
+
+                <section className={`${shellStyles.section} ${mobileStyles.entriesOverviewSection}`}>
+                  <article className={`${cardStyles.card} ${cardStyles.accentCard} ${mobileStyles.entriesOverviewCard} ${mobileStyles.entriesOverviewStandalone}`}>
                     <div className={mobileStyles.entriesOverviewHeader}>Entries Overview</div>
-                    <div ref={summaryCardsBandRef} className={mobileStyles.summaryCardsBand}>
+                    <div className={mobileStyles.summaryCardsBand}>
                       {tournamentSummaryCards.map(card => (
-                        <div
+                        <button
                           key={card.key}
-                          className={`${cardStyles.statTile} ${mobileStyles.statTile}`}
+                          type="button"
+                          className={`${cardStyles.statTile} ${mobileStyles.statTile} ${card.href ? mobileStyles.statTileActionable : ''}`}
+                          onClick={() => {
+                            if (card.href) {
+                              router.push(card.href);
+                            }
+                          }}
                         >
-                          {card.status && (
-                            <div className={mobileStyles.statStatusRow}>
-                              <span
-                                className={`${mobileStyles.statStatusBadge} ${
-                                  card.status === 'Disabled'
-                                    ? mobileStyles.statStatusBadgeMuted
-                                    : card.status === 'Projected'
-                                      ? mobileStyles.statStatusBadgeAccent
-                                      : mobileStyles.statStatusBadgeActive
-                                }`}
-                              >
-                                {card.status}
-                              </span>
-                            </div>
-                          )}
                           <div className={mobileStyles.statLabel}>{card.label}</div>
                           <div className={`${mobileStyles.statValue} ${card.accent ? mobileStyles.statValueAccent : ''}`}>{card.value}</div>
                           {card.helperPrimary && <div className={mobileStyles.statCaption}>{card.helperPrimary}</div>}
                           {card.helperSecondary && <div className={mobileStyles.statCaptionMuted}>{card.helperSecondary}</div>}
-                        </div>
+                        </button>
                       ))}
                     </div>
                   </article>
-
                 </section>
+                </div>
               </>
             )}
 
@@ -2062,12 +2249,12 @@ export default function TournamentDashboard() {
                   label="Close tournament settings modal"
                   onClick={() => setSettingsModalOpen(false)}
                 />
+                <div className={mobileStyles.modalHeader}>
+                  <h2 className={mobileStyles.modalTitle}>Tournament Settings</h2>
+                  <p className={mobileStyles.modalSubtitle}>Update bracket rules, pricing, side pots, and other tournament setup details.</p>
+                </div>
                 <div className={`${mobileStyles.modalScrollBody} ${mobileStyles.settingsModalScrollBody}`}>
-                  <iframe
-                    title="Tournament Settings"
-                    src={`/dashboard/settings?tournament_id=${tournament.id}&modal=1`}
-                    className={mobileStyles.settingsModalFrame}
-                  />
+                  <TournamentSettingsContent tournamentId={tournament.id} layout="embedded-modal" />
                 </div>
               </div>
             </div>
@@ -2083,7 +2270,11 @@ export default function TournamentDashboard() {
                   <CloseControl position="absolute" size="sm" label="Close change squad modal" onClick={() => setSquadModalOpen(false)} />
                 </div>
                 <div className={mobileStyles.squadChangeList}>
-                  {squads.map(squad => {
+                  {[...squads].sort((left, right) => {
+                    const leftSelected = left.id === selectedSquadId ? 1 : 0;
+                    const rightSelected = right.id === selectedSquadId ? 1 : 0;
+                    return rightSelected - leftSelected;
+                  }).map(squad => {
                     const label = [squad.date ? formatIsoDateLong(squad.date) : '', squad.time].filter(Boolean).join(' - ');
                     const isSelected = squad.id === selectedSquadId;
                     const entries = squadEntryCounts[squad.id] ?? 0;
@@ -2091,14 +2282,14 @@ export default function TournamentDashboard() {
                       <button
                         key={squad.id}
                         type="button"
-                        className={`${mobileStyles.squadChangeItem} ${isSelected ? mobileStyles.squadChangeItemSelected : ''}`}
+                        className={`${mobileStyles.squadChangeItem} ${isSelected ? mobileStyles.squadChangeItemSelected : ''} ${entries === 0 ? mobileStyles.squadChangeItemEmpty : ''}`}
                         onClick={() => handleSelectSquad(squad)}
                       >
                         <span className={mobileStyles.squadChangeItemMain}>
                           <span className={mobileStyles.squadChangeItemLabel}>{label || `Squad ${squad.id}`}</span>
-                          <span className={mobileStyles.squadChangeItemMeta}>{entries} {entries === 1 ? 'entry' : 'entries'}</span>
+                          <span className={mobileStyles.squadChangeItemMeta}>{entries} {entries === 1 ? 'entry' : 'entries'}{isSelected ? ' • Active squad' : ''}</span>
                         </span>
-                        <span className={mobileStyles.squadChangeItemStatus}>{isSelected ? 'Active' : 'Select'}</span>
+                        <span className={mobileStyles.squadChangeItemStatus}>{isSelected ? 'Current' : 'Make Active'}</span>
                       </button>
                     );
                   })}

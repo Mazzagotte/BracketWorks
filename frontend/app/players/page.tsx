@@ -65,6 +65,7 @@ export default function PlayersPage() {
   const { isUserAuthenticated, isAuthInitialized, authToken, currentUser } = useAuth()
   const { tournaments, fetchTournaments } = useTournaments()
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null)
+  const [selectionRefreshKey, setSelectionRefreshKey] = useState(0)
   const [selectedSquadId, setSelectedSquadId] = useState<number | null>(() => {
     if (typeof window === 'undefined') return null
     const id = getSelectedSquadId()
@@ -180,6 +181,22 @@ export default function PlayersPage() {
     mediaQuery.addEventListener('change', syncMobileState)
     return () => mediaQuery.removeEventListener('change', syncMobileState)
   }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+
+    const refreshSelection = () => {
+      setSelectionRefreshKey(previous => previous + 1)
+    }
+
+    window.addEventListener('tournament-changed', refreshSelection)
+    window.addEventListener('squad-changed', refreshSelection)
+
+    return () => {
+      window.removeEventListener('tournament-changed', refreshSelection)
+      window.removeEventListener('squad-changed', refreshSelection)
+    }
+  }, [])
   
 
 
@@ -209,7 +226,7 @@ export default function PlayersPage() {
         }
       }
     }
-  }, [tournaments, selectedTournament])
+  }, [tournaments, selectedTournament, selectionRefreshKey])
 
   // Load side pots settings from localStorage for the given tournament
   const loadSidePots = useCallback((tournamentId: string | null) => {
@@ -1095,7 +1112,7 @@ export default function PlayersPage() {
     if (isAuthInitialized && authToken) {
       fetchSquadData();
     }
-  }, [isAuthInitialized, authToken, getTournamentId, loadSidePots, entryFee]);
+  }, [isAuthInitialized, authToken, getTournamentId, loadSidePots, entryFee, selectionRefreshKey]);
 
   // Wait for auth initialization
   if (!isAuthInitialized) {
@@ -1118,11 +1135,12 @@ export default function PlayersPage() {
   if (typeof window !== 'undefined' && !getSelectedTournamentId()) {
     return (
       <NoTournamentState
-        description="Load a tournament from the dashboard to manage player entries. Once loaded, you'll be able to add players, set entry fees, and track registrations."
+        title="Entries Board Standing By"
+        description="Load a tournament to start rostering bowlers, assigning entry types, and tracking registration flow."
         cards={[
-          { title: 'Add Players', text: 'Register bowlers with their name, average, and entry type for scratch or handicap brackets' },
-          { title: 'Track Entries', text: 'Monitor scratch and handicap entries, expected brackets, and revenue per squad' },
-          { title: 'Manage Fees', text: 'Set entry fees that automatically calculate total costs for each player' },
+          { title: 'Build the Roster', text: 'Add bowlers with averages, divisions, and entry type so each squad has clean participant data.' },
+          { title: 'Track Entry Mix', text: 'Monitor scratch vs handicap participation and projected bracket volume per squad.' },
+          { title: 'Keep Fees Aligned', text: 'Use consistent entry settings so totals and expected revenue stay accurate.' },
         ]}
       />
     )
@@ -1131,10 +1149,10 @@ export default function PlayersPage() {
   if (typeof window !== 'undefined' && !getSelectedSquadId()) {
     return (
       <NoTournamentState
-        title="No Squad Selected"
-        description="Select a squad from the dashboard to manage player entries for that session."
+        title="Entries Need a Squad"
+        description="Choose a squad from the dashboard to open the player list for that session."
         cards={[
-          { title: 'Select a Squad', text: 'Choose a squad from the dashboard to view and manage its player entries' },
+          { title: 'Pick a Session', text: 'Select the correct squad first, then add and manage entries for that lineup.' },
         ]}
       />
     )

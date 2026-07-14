@@ -19,9 +19,17 @@
 }
 
 .mainPublic {
+  margin-top: 0;
+  height: 100dvh;
+  max-height: 100dvh;
+  min-height: 100dvh;
   margin-left: 0;
   width: 100%;
   padding: 0;
+  background: var(--bw-app-bg);
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 
 .mainMobile {
