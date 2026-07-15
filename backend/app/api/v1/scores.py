@@ -62,13 +62,22 @@ def get_handicap_for_bowler(
 def calculate_game_totals(score_data, handicap: int) -> dict:
     """Calculate game totals by adding handicap to scratch scores"""
     totals = {}
-    
-    if hasattr(score_data, 'game1_scratch') and score_data.game1_scratch is not None:
-        totals['game1_with_handicap'] = score_data.game1_scratch + handicap
-    if hasattr(score_data, 'game2_scratch') and score_data.game2_scratch is not None:
-        totals['game2_with_handicap'] = score_data.game2_scratch + handicap
-    if hasattr(score_data, 'game3_scratch') and score_data.game3_scratch is not None:
-        totals['game3_with_handicap'] = score_data.game3_scratch + handicap
+
+    provided_fields = getattr(score_data, 'model_fields_set', set())
+
+    for game_number in (1, 2, 3):
+        scratch_field = f'game{game_number}_scratch'
+        total_field = f'game{game_number}_with_handicap'
+
+        # Only touch totals for fields explicitly provided in the payload.
+        # This preserves partial updates and ensures explicit null clears totals.
+        if scratch_field not in provided_fields:
+            continue
+
+        scratch_value = getattr(score_data, scratch_field, None)
+        totals[total_field] = (
+            (scratch_value + handicap) if scratch_value is not None else None
+        )
     
     return totals
 

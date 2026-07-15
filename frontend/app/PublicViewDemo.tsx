@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import styles from './page.module.css'
+import buttonStyles from './styles/buttons.module.css'
 
 type Tab = 'summary' | 'brackets' | 'sidepots'
 
@@ -97,21 +98,21 @@ export function PublicViewDemo() {
 
           <div className={styles.pvTabs}>
             <button
-              className={`${styles.pvTab} ${tab === 'summary' ? styles.pvTabActive : ''}`}
+              className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.pvTab} ${tab === 'summary' ? styles.pvTabActive : ''}`}
               onClick={() => setTab('summary')}
               type="button"
             >
               Bracket Summary
             </button>
             <button
-              className={`${styles.pvTab} ${tab === 'brackets' ? styles.pvTabActive : ''}`}
+              className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.pvTab} ${tab === 'brackets' ? styles.pvTabActive : ''}`}
               onClick={() => setTab('brackets')}
               type="button"
             >
               Brackets
             </button>
             <button
-              className={`${styles.pvTab} ${tab === 'sidepots' ? styles.pvTabActive : ''}`}
+              className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.pvTab} ${tab === 'sidepots' ? styles.pvTabActive : ''}`}
               onClick={() => setTab('sidepots')}
               type="button"
             >
@@ -157,12 +158,12 @@ export function PublicViewDemo() {
       {tab === 'brackets' && (
         <div className={styles.pvBracketView}>
           <div className={styles.pvBracketNav}>
-            <button type="button" className={styles.pvBracketNavBtn} disabled>Prev</button>
+            <button type="button" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.pvBracketNavBtn}`} disabled>Prev</button>
             <div className={styles.pvBracketNavCenter}>
               <span className={styles.pvBracketNavTitle}>Bracket #1 — 4 Person</span>
               <span className={styles.pvBracketNavCount}>1 of 1</span>
             </div>
-            <button type="button" className={styles.pvBracketNavBtn} disabled>Next</button>
+            <button type="button" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.pvBracketNavBtn}`} disabled>Next</button>
           </div>
           <div className={styles.pvWinnerBanner}>
             <span className={styles.pvWinnerLabel}>Winner</span>

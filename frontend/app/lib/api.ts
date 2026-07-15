@@ -1,5 +1,5 @@
 import { logger } from './logger'
-import { ApiError, handleApiError, shouldRetry } from './errors';
+import { ApiError, handleApiError, isAuthError, shouldRetry } from './errors';
 
 // API Configuration and enhanced fetch utilities
 
@@ -306,12 +306,18 @@ export class ApiClient {
           logger.debug('Failed to parse error response as JSON', { endpoint, status: response.status })
         }
         
-        logger.error('API request failed', { 
-          endpoint, 
-          status: response.status, 
+        const logContext = {
+          endpoint,
+          status: response.status,
           error: errorMessage,
-          duration
-        })
+          duration,
+        }
+
+        if (response.status === 401 || response.status === 403) {
+          logger.warn('API request unauthorized', logContext)
+        } else {
+          logger.error('API request failed', logContext)
+        }
         
         throw new ApiError(errorMessage, response.status, undefined, errorDetails)
       }
@@ -329,12 +335,18 @@ export class ApiClient {
       const duration = Date.now() - startTime
       const appError = handleApiError(error)
       
-      logger.error('API request error', { 
-        endpoint, 
-        error: appError.message, 
+      const logContext = {
+        endpoint,
+        error: appError.message,
         statusCode: appError.statusCode,
-        duration 
-      })
+        duration,
+      }
+
+      if (isAuthError(appError)) {
+        logger.warn('API request auth error', logContext)
+      } else {
+        logger.error('API request error', logContext)
+      }
       
       // Surface a clearer message for browser-level fetch/CORS failures.
       if (!appError.statusCode && (error instanceof TypeError || appError.message.toLowerCase().includes('fetch'))) {

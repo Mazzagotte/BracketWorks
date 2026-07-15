@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef, type CSSProperties } from 'react'
 import { useAuth } from '../lib/auth-context'
 import { usePageHeader } from '../lib/header-context'
 import { ErrorBoundary } from '../components/ErrorBoundary'
@@ -19,7 +19,8 @@ import formStyles from '../styles/forms.module.css'
 import shellStyles from '../styles/page-shell.module.css'
 import ExplainPayoutsModal from './ExplainPayoutsModal'
 import { useToast } from '../components/Toast'
-import { DataTableToolbar, QuickActions } from '../components/primitives'
+import { QuickActions, SearchPanel } from '../components/primitives'
+import primitiveStyles from '../components/primitives/primitives.module.css'
 import { formatCurrency, formatShortMonthDayYear } from '../lib/formatters'
 import { logger } from '../lib/logger'
 import { getSelectedTournamentId } from '../lib/selection-session'
@@ -44,7 +45,8 @@ export default function PayoutsPage() {
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null)
   const [selectionRefreshKey, setSelectionRefreshKey] = useState(0)
   const [selectedSquad, setSelectedSquad] = useState<Squad | null>(null)
-  const [searchQuery, setSearchQuery] = useState('')
+  const [searchFirstName, setSearchFirstName] = useState('')
+  const [searchLastName, setSearchLastName] = useState('')
   const [paidKeys, setPaidKeys] = useState<Set<string>>(new Set())
   const [sidePotPaidKeys, setSidePotPaidKeys] = useState<Set<string>>(new Set())
   const [scoreRows, setScoreRows] = useState<ScoreRow[]>([])
@@ -54,6 +56,8 @@ export default function PayoutsPage() {
   const [isUnlocked, setIsUnlocked] = useState(false)
   const [isMobileView, setIsMobileView] = useState(false)
   const [isPayoutsGuideOpen, setIsPayoutsGuideOpen] = useState(false)
+  const [desktopTableCardWidth, setDesktopTableCardWidth] = useState<number | null>(null)
+  const tableCardRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined
@@ -200,11 +204,19 @@ export default function PayoutsPage() {
     return { totalUniqueWinners, paidCount, remainingAmount }
   }, [aggregatedWinners, paidKeys])
 
-  const filteredWinners = useMemo(() =>
-    aggregatedWinners.filter(w =>
-      !searchQuery || w.player_name.toLowerCase().includes(searchQuery.toLowerCase())
-    ), [aggregatedWinners, searchQuery]
-  )
+  const filteredWinners = useMemo(() => {
+    const firstNameTerm = searchFirstName.trim().toLowerCase()
+    const lastNameTerm = searchLastName.trim().toLowerCase()
+    const hasSearch = Boolean(firstNameTerm || lastNameTerm)
+    if (!hasSearch) return aggregatedWinners
+
+    return aggregatedWinners.filter(w => {
+      const normalized = w.player_name.toLowerCase()
+      const firstMatches = !firstNameTerm || normalized.includes(firstNameTerm)
+      const lastMatches = !lastNameTerm || normalized.includes(lastNameTerm)
+      return firstMatches && lastMatches
+    })
+  }, [aggregatedWinners, searchFirstName, searchLastName])
 
   const sidePotAccounting = useMemo(() => {
     const toNum = (value: unknown): number | null => (typeof value === 'number' && Number.isFinite(value) ? value : null)
@@ -515,6 +527,48 @@ export default function PayoutsPage() {
     />
   ), [filteredWinners.length, handleExportToExcel, handleExportToPdf, isExportingExcel, isExportingPdf, isMobileView, loading])
 
+  useEffect(() => {
+    if (isMobileView) {
+      setDesktopTableCardWidth(null)
+      return undefined
+    }
+
+    const tableCard = tableCardRef.current
+    if (!tableCard) {
+      setDesktopTableCardWidth(null)
+      return undefined
+    }
+
+    const publishWidth = () => {
+      const nextWidth = tableCard.getBoundingClientRect().width
+      setDesktopTableCardWidth(Number.isFinite(nextWidth) && nextWidth > 0 ? Math.ceil(nextWidth) : null)
+    }
+
+    publishWidth()
+
+    let observer: ResizeObserver | null = null
+    if (typeof ResizeObserver !== 'undefined') {
+      observer = new ResizeObserver(publishWidth)
+      observer.observe(tableCard)
+    }
+
+    window.addEventListener('resize', publishWidth)
+
+    return () => {
+      window.removeEventListener('resize', publishWidth)
+      if (observer) observer.disconnect()
+    }
+  }, [isMobileView, filteredWinners.length, loading])
+
+  const desktopTableDrivenCardStyle = useMemo<CSSProperties | undefined>(() => {
+    if (isMobileView || !desktopTableCardWidth) return undefined
+    return {
+      width: '100%',
+      maxWidth: `${desktopTableCardWidth}px`,
+      marginInline: 'auto',
+    }
+  }, [desktopTableCardWidth, isMobileView])
+
   usePageHeader({
     title: 'Payout Distribution',
     subtitle: undefined,
@@ -581,7 +635,7 @@ export default function PayoutsPage() {
   return (
     <ErrorBoundary>
       <div className={`${shellStyles.page} ${styles.pageContainer}`}>
-        <div className={`${cardStyles.card} ${cardStyles.accentCard} ${cardStyles.quickActionsCard}`}>
+        <div className={`${cardStyles.card} ${cardStyles.accentCard} ${cardStyles.quickActionsCard}`} style={desktopTableDrivenCardStyle}>
           <h2 className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${cardStyles.quickActionsTitle}`}>Quick Actions</h2>
           <div className={cardStyles.quickActionsBody}>
             {payoutsQuickActions}
@@ -634,27 +688,49 @@ export default function PayoutsPage() {
 
         {/* Search */}
         {payoutData && aggregatedWinners.length > 0 && (
-          <DataTableToolbar
-            className={styles.searchStandalone}
-            left={(
-              <input
-                type="text"
-                placeholder="Search by player name..."
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput}`}
-              />
-            )}
-            right={searchQuery.trim().length > 0 ? (
-              <button
-                type="button"
-                className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary}`}
-                onClick={() => setSearchQuery('')}
-              >
-                Clear
-              </button>
-            ) : null}
-          />
+          <div style={desktopTableDrivenCardStyle}>
+            {(() => {
+              const hasSearch = searchFirstName.trim().length > 0 || searchLastName.trim().length > 0
+              return (
+            <SearchPanel
+              className={styles.searchStandalone}
+              title="Search Payouts"
+              useToolbar={false}
+              left={(
+                <>
+                  <input
+                    type="text"
+                    placeholder="First name"
+                    value={searchFirstName}
+                    onChange={e => setSearchFirstName(e.target.value)}
+                    className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput} ${primitiveStyles.searchPanelInput}`}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Last name"
+                    value={searchLastName}
+                    onChange={e => setSearchLastName(e.target.value)}
+                    className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput} ${primitiveStyles.searchPanelInput}`}
+                  />
+                </>
+              )}
+              right={(
+                <button
+                  type="button"
+                  className={primitiveStyles.searchPanelClearButton}
+                  onClick={() => {
+                    setSearchFirstName('')
+                    setSearchLastName('')
+                  }}
+                  disabled={!hasSearch}
+                >
+                  Clear
+                </button>
+              )}
+            />
+              )
+            })()}
+          </div>
         )}
 
         {/* Loading / empty states */}
@@ -695,7 +771,7 @@ export default function PayoutsPage() {
 
         {/* Single condensed winners card */}
         {!loading && aggregatedWinners.length > 0 && (
-          <div className={`${cardStyles.card} ${cardStyles.accentCard} ${styles.tableCard}`}>
+          <div ref={tableCardRef} className={`${cardStyles.card} ${cardStyles.accentCard} ${styles.tableCard}`}>
             <div className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${cardStyles.cardHeaderRow} ${styles.tableCardHeader}`}>
               <span>Payout Results</span>
               <span className={styles.headerPool}>Total Payouts: {formatCurrency(displayedTotalPrizePool)}</span>
@@ -765,7 +841,7 @@ export default function PayoutsPage() {
                     {isPaid ? (
                       <button className={`${badgeStyles.badge} ${badgeStyles.success} ${styles.paidBadge}`} onClick={() => togglePaid(key)}>Paid</button>
                     ) : (
-                      <button className={styles.markPaidBtn} onClick={() => togglePaid(key)}>Mark Paid</button>
+                      <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.primary} ${styles.markPaidBtn}`} onClick={() => togglePaid(key)}>Mark Paid</button>
                     )}
                   </div>
                 )

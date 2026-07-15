@@ -75,7 +75,7 @@ export function usePlayerSidePots(rawPlayers: Player[]) {
 
   const players = useMemo(
     () => rawPlayers.map(player => {
-      const sidePotEntries = sidePotEntriesMap[player.id] ?? {}
+      const sidePotEntries = sidePotEntriesMap[player.id] ?? player.sidePotEntries ?? {}
       const sidePotCost = calculateSidePotCost(sidePotEntries, sidePots)
       return {
         ...player,

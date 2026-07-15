@@ -10,6 +10,7 @@ import {
   SignupUsernameFieldSection,
 } from './SignupFieldSections';
 import AuthFeedback from './AuthFeedback';
+import buttonStyles from '../styles/buttons.module.css';
 import PasswordStrengthPanel from './PasswordStrengthPanel';
 import { useSignupForm } from '../hooks/useSignupForm';
 import { getSignupValidationError, submitSignup } from '../lib/auth/signup';
@@ -375,7 +376,7 @@ export default function SignupModal({ mode = 'modal', isOpen = false, onClose, o
           <p className={styles.submitHelper}>All fields marked * are required.</p>
           <p className={styles.loginPrompt}>
             Already have an account?{' '}
-            <button type="button" onClick={handleLoginIntent} className={styles.loginLink}>
+            <button type="button" onClick={handleLoginIntent} className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.loginLink}`}>
               Log in
             </button>
           </p>

@@ -185,6 +185,7 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
         handicap: newPlayer.handicap,
         scratch: newPlayer.scratch,
         bracketEntries: newPlayer.bracketEntries,
+        sidePotEntries: newPlayer.sidePotEntries || {},
         lane: newPlayer.lane,
         totalCost: newPlayer.totalCost,
         amountPaid: newPlayer.amountPaid

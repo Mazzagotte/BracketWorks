@@ -9,6 +9,7 @@ import styles from '../entries.module.css';
 import tableStyles from '../../styles/tables.module.css';
 import badgeStyles from '../../styles/badges.module.css';
 import iconButtonStyles from '../../styles/icon-buttons.module.css';
+import buttonStyles from '../../styles/buttons.module.css';
 
 function abbreviateProgramName(name: string): string {
   const map: [string, string][] = [
@@ -161,10 +162,11 @@ const PlayersTable = memo(({
     setExpandedRows(previous => ({ ...previous, [playerId]: !previous[playerId] }));
   };
 
-  const renderMobileCard = (player: typeof players[number]) => {
+  const renderMobileCard = (player: typeof players[number], rowIndex: number) => {
     const totalEntries = Object.values(player.bracketEntries || {}).reduce((sum, count) => sum + Number(count || 0), 0);
     const needsEntryFee = totalEntries > 0 && player.totalCost <= 0;
-    const isPaid = !needsEntryFee && player.amountPaid >= player.totalCost;
+    const hasPayableAmount = player.totalCost > 0;
+    const isPaid = hasPayableAmount && !needsEntryFee && player.amountPaid >= player.totalCost;
     const isExpanded = Boolean(expandedRows[player.id]);
     const playerName = `${player.firstName || ''} ${player.lastName || ''}`.trim() || 'Unnamed Player';
     const cardStatusClass = needsEntryFee
@@ -179,7 +181,7 @@ const PlayersTable = memo(({
         : badgeStyles.danger;
 
     return (
-      <article key={player.id} className={`${styles.mobilePlayerCard} ${cardStatusClass}`}>
+      <article key={`${player.id}-${rowIndex}`} className={`${styles.mobilePlayerCard} ${cardStatusClass}`}>
         <button
           type="button"
           className={styles.mobilePlayerHeader}
@@ -292,11 +294,11 @@ const PlayersTable = memo(({
                 type="button"
                 className={styles.mobilePlayerActionBtn}
                 onClick={() => {
-                  if (needsEntryFee) return;
+                  if (needsEntryFee || !hasPayableAmount) return;
                   const newPaidAmount = isPaid ? 0 : player.totalCost;
                   handleCellEdit(player.id, 'amountPaid', newPaidAmount.toString());
                 }}
-                disabled={needsEntryFee}
+                disabled={needsEntryFee || !hasPayableAmount}
               >
                 {isPaid ? 'Mark Due' : 'Mark Paid'}
               </button>
@@ -326,7 +328,7 @@ const PlayersTable = memo(({
         {hasActiveFilters && onClearFilters && (
           <button
             type="button"
-            className={`${styles.clearSearchBtn} ${styles.tableEmptyClearBtn}`}
+            className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.clearSearchBtn} ${styles.tableEmptyClearBtn}`}
             onClick={onClearFilters}
           >
             Clear Search
@@ -354,7 +356,7 @@ const PlayersTable = memo(({
             </div>
           )}
           <div className={styles.mobilePlayersList}>
-            {sortedPlayers.map(player => renderMobileCard(player))}
+            {sortedPlayers.map((player, rowIndex) => renderMobileCard(player, rowIndex))}
           </div>
         </>
       ) : (
@@ -398,15 +400,16 @@ const PlayersTable = memo(({
           </tr>
         </thead>
         <tbody>
-          {sortedPlayers.map((player) => {
+          {sortedPlayers.map((player, rowIndex) => {
             const totalEntries = Object.values(player.bracketEntries || {}).reduce((sum, count) => sum + Number(count || 0), 0)
             const needsEntryFee = totalEntries > 0 && player.totalCost <= 0
-            const isPaid = !needsEntryFee && player.amountPaid >= player.totalCost
-            const isPartial = !needsEntryFee && !isPaid && player.amountPaid > 0
+            const hasPayableAmount = player.totalCost > 0
+            const isPaid = hasPayableAmount && !needsEntryFee && player.amountPaid >= player.totalCost
+            const isPartial = hasPayableAmount && !needsEntryFee && !isPaid && player.amountPaid > 0
             const isEditing = true
             return (
             <OptimizedTableRow 
-              key={player.id}
+              key={`${player.id}-${rowIndex}`}
               className="players-table-row"
             >
               <OptimizedTableCell className="entries-cell medium col-usbc">
@@ -557,7 +560,7 @@ const PlayersTable = memo(({
               <OptimizedTableCell className={`${tableStyles.statusCell} entries-cell col-status`}>
                 <span
                   onClick={() => {
-                    if (needsEntryFee) return;
+                    if (needsEntryFee || !hasPayableAmount) return;
                     const newPaidAmount = isPaid ? 0 : player.totalCost;
                     handleCellEdit(player.id, 'amountPaid', newPaidAmount.toString());
                   }}

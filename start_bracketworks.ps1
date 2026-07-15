@@ -1,5 +1,4 @@
 # BracketWorks Development Launcher
-
 $ProjectRoot  = $PSScriptRoot
 $BackendPath  = Join-Path $ProjectRoot "backend"
 $FrontendPath = Join-Path $ProjectRoot "frontend"
@@ -13,7 +12,7 @@ $ClosePromptCmd = "Read-Host 'Press Enter to close'"
 function Get-EnvValueOrDefault {
     param(
         [Parameter(Mandatory = $true)][string]$Name,
-        [Parameter(Mandatory = $true)][string]$Default
+        [Parameter(Mandatory = $true)][AllowEmptyString()][string]$Default
     )
 
     $value = [System.Environment]::GetEnvironmentVariable($Name, "Process")
@@ -53,6 +52,38 @@ function Get-EnvIntOrDefault {
     return $Default
 }
 
+function ConvertFrom-EnvAssignment {
+    param(
+        [Parameter(Mandatory = $true)][string]$Line
+    )
+
+    $normalized = $Line.Trim()
+    if (-not $normalized -or $normalized.StartsWith("#")) {
+        return $null
+    }
+
+    if ($normalized -match '^\s*export\s+') {
+        $normalized = $normalized -replace '^\s*export\s+', ''
+    }
+
+    $parts = $normalized -split "=", 2
+    if ($parts.Count -ne 2) {
+        return $null
+    }
+
+    $key = $parts[0].Trim()
+    if ([string]::IsNullOrWhiteSpace($key)) {
+        return $null
+    }
+
+    $rawValue = $parts[1].Trim()
+    if (($rawValue.StartsWith('"') -and $rawValue.EndsWith('"')) -or ($rawValue.StartsWith("'") -and $rawValue.EndsWith("'"))) {
+        $rawValue = $rawValue.Substring(1, $rawValue.Length - 2)
+    }
+
+    return @{ Name = $key; Value = $rawValue }
+}
+
 function Wait-ForHttpReady {
     param(
         [Parameter(Mandatory = $true)][string]$Name,
@@ -63,16 +94,22 @@ function Wait-ForHttpReady {
 
     Write-Host "Waiting for $Name to be ready..." -ForegroundColor Yellow
 
+    $lastError = $null
     for ($i = 0; $i -lt $Retries; $i++) {
         Start-Sleep -Milliseconds $DelayMs
         try {
             $null = Invoke-WebRequest -Uri $Url -TimeoutSec 1 -UseBasicParsing -ErrorAction Stop
             Write-Host "$Name ready: $Url" -ForegroundColor Green
             return $true
-        } catch {}
+        } catch {
+            $lastError = $_.Exception.Message
+        }
     }
 
     Write-Host "$Name not ready yet. Continuing startup (it may still be booting)." -ForegroundColor Yellow
+    if ($lastError) {
+        Write-Host "Last $Name check error: $lastError" -ForegroundColor DarkYellow
+    }
     return $false
 }
 
@@ -91,14 +128,9 @@ function Test-FileNewerThan {
 
 if (Test-Path $EnvFile) {
     Get-Content $EnvFile | ForEach-Object {
-        $line = $_.Trim()
-        if (-not $line -or $line.StartsWith("#")) {
-            return
-        }
-
-        $parts = $line -split "=", 2
-        if ($parts.Count -eq 2) {
-            [System.Environment]::SetEnvironmentVariable($parts[0].Trim(), $parts[1].Trim(), "Process")
+        $assignment = ConvertFrom-EnvAssignment -Line $_
+        if ($assignment) {
+            [System.Environment]::SetEnvironmentVariable($assignment.Name, $assignment.Value, "Process")
         }
     }
 }
@@ -133,6 +165,17 @@ $WaitForBackend = Get-EnvBoolOrDefault -Name "BRACKETWORKS_WAIT_FOR_BACKEND" -De
 $SkipMigrations = Get-EnvBoolOrDefault -Name "BRACKETWORKS_SKIP_MIGRATIONS" -Default $false
 $FrontendInstallMode = Get-EnvValueOrDefault -Name "BRACKETWORKS_FRONTEND_INSTALL_MODE" -Default "auto"
 $FrontendInstallMode = $FrontendInstallMode.ToLowerInvariant()
+$KillPort8001 = Get-EnvBoolOrDefault -Name "BRACKETWORKS_KILL_PORT_8001" -Default $true
+
+if ($BackendMode -notin @("local", "docker")) {
+    Write-Host "Invalid BRACKETWORKS_BACKEND_MODE '$BackendMode'. Use 'local' or 'docker'." -ForegroundColor Red
+    exit 1
+}
+
+if ($FrontendInstallMode -notin @("auto", "always", "never")) {
+    Write-Host "Invalid BRACKETWORKS_FRONTEND_INSTALL_MODE '$FrontendInstallMode'. Use 'auto', 'always', or 'never'." -ForegroundColor Red
+    exit 1
+}
 
 if ($FastStart) {
     $WaitForFrontend = $false
@@ -197,16 +240,22 @@ if ($BackendMode -eq "local") {
     # Avoid multiple local uvicorn instances fighting for port 8001.
     $existingListeners = Get-NetTCPConnection -LocalPort 8001 -State Listen -ErrorAction SilentlyContinue
     if ($existingListeners) {
-        Write-Host "Stopping anything listening on port 8001..." -ForegroundColor Yellow
-        $existingListeners |
-            Select-Object -ExpandProperty OwningProcess -Unique |
-            ForEach-Object {
-                try {
-                    Stop-Process -Id $_ -Force -ErrorAction Stop
-                } catch {
-                    Write-Host "Could not stop process $($_): $($_.Exception.Message)" -ForegroundColor DarkYellow
+        if ($KillPort8001) {
+            Write-Host "Stopping anything listening on port 8001 (set BRACKETWORKS_KILL_PORT_8001=false to disable)..." -ForegroundColor Yellow
+            $existingListeners |
+                Select-Object -ExpandProperty OwningProcess -Unique |
+                ForEach-Object {
+                    try {
+                        Stop-Process -Id $_ -Force -ErrorAction Stop
+                    } catch {
+                        Write-Host "Could not stop process $($_): $($_.Exception.Message)" -ForegroundColor DarkYellow
+                    }
                 }
-            }
+        } else {
+            $pids = ($existingListeners | Select-Object -ExpandProperty OwningProcess -Unique) -join ", "
+            Write-Host "Port 8001 is already in use by PID(s): $pids" -ForegroundColor Yellow
+            Write-Host "Set BRACKETWORKS_KILL_PORT_8001=true to auto-stop conflicting listeners." -ForegroundColor Yellow
+        }
     }
 
 }
@@ -233,26 +282,54 @@ if ($BackendMode -eq "docker") {
                   $dockerTailCmd
 } else {
     $backendReqPath = Join-Path $BackendPath "requirements.txt"
-    $backendStampPath = Join-Path $BackendPath ".venv\.bw-backend-install-stamp"
+    $backendStatePath = Join-Path $BackendPath ".venv\.bw-backend-install-state.json"
+    $backendReqHash = ""
     $backendInstallNeeded = $false
+    $backendInstallReason = ""
+
+    if (-not (Test-Path $backendReqPath)) {
+        Write-Host "Backend requirements file not found at $backendReqPath" -ForegroundColor Red
+        exit 1
+    }
+
+    $backendReqHash = (Get-FileHash -Path $backendReqPath -Algorithm SHA256).Hash
+
     if ($env:BRACKETWORKS_CREATED_BACKEND_VENV -eq "true") {
         $backendInstallNeeded = $true
-    } elseif (-not (Test-Path $backendStampPath)) {
+        $backendInstallReason = "new virtual environment"
+    } elseif (-not (Test-Path $backendStatePath)) {
         $backendInstallNeeded = $true
-    } elseif (Test-FileNewerThan -CandidatePath $backendReqPath -ReferencePath $backendStampPath) {
-        $backendInstallNeeded = $true
+        $backendInstallReason = "dependency state file missing"
+    } else {
+        try {
+            $backendState = Get-Content -Path $backendStatePath -Raw | ConvertFrom-Json
+            if (-not $backendState.RequirementsHash) {
+                $backendInstallNeeded = $true
+                $backendInstallReason = "dependency state missing requirements hash"
+            } elseif ($backendState.RequirementsHash -ne $backendReqHash) {
+                $backendInstallNeeded = $true
+                $backendInstallReason = "requirements changed"
+            } elseif ($backendState.PythonPath -and $backendState.PythonPath -ne $PythonCmd) {
+                $backendInstallNeeded = $true
+                $backendInstallReason = "python executable changed"
+            }
+        } catch {
+            $backendInstallNeeded = $true
+            $backendInstallReason = "dependency state unreadable"
+        }
     }
 
     $backendDepsCmd =
         "if ('$backendInstallNeeded' -eq 'True') { " +
-        "  Write-Host 'Installing backend dependencies...' -ForegroundColor Yellow; " +
+        "  Write-Host 'Installing backend dependencies ($backendInstallReason)...' -ForegroundColor Yellow; " +
         "  & '$PythonCmd' -m pip install --upgrade pip; " +
         "  if (`$LASTEXITCODE -ne 0) { Write-Host 'Failed to upgrade pip.' -ForegroundColor Red; exit `$LASTEXITCODE }; " +
         "  & '$PythonCmd' -m pip install -r requirements.txt; " +
         "  if (`$LASTEXITCODE -ne 0) { Write-Host 'Backend dependency install failed.' -ForegroundColor Red; exit `$LASTEXITCODE }; " +
-        "  Set-Content -Path '.\\.venv\\.bw-backend-install-stamp' -Value (Get-Date).ToString('O') -Encoding UTF8; " +
+        "  `$backendStateJson = @{ InstalledAt = (Get-Date).ToString('O'); RequirementsHash = '$backendReqHash'; PythonPath = '$PythonCmd' } | ConvertTo-Json -Compress; " +
+        "  Set-Content -Path '.\\.venv\\.bw-backend-install-state.json' -Value `$backendStateJson -Encoding UTF8; " +
         "} else { " +
-        "  Write-Host 'Backend dependencies are up to date. Skipping install.' -ForegroundColor DarkGreen; " +
+        "  Write-Host 'Backend dependencies match requirements hash. Skipping install.' -ForegroundColor DarkGreen; " +
         "}; "
 
     $migrationCmd = if ($SkipMigrations) {

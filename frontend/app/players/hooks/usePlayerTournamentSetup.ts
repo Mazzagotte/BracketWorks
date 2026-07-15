@@ -1,6 +1,7 @@
 import { Dispatch, SetStateAction, useCallback, useEffect, useRef } from 'react'
 
 import { apiClient } from '../../lib/api'
+import { isAuthError } from '../../lib/errors'
 import { logger } from '../../lib/logger'
 import { getSelectedSquadId } from '../../lib/selection-session'
 import { BracketProgramDefinition, BracketSettings, Tournament, TournamentBootstrapResponse } from '../../lib/types'
@@ -115,6 +116,15 @@ export function usePlayerTournamentSetup({
   }, [loadEntryFee])
 
   useEffect(() => {
+    const handleSettingsChanged = () => {
+      void loadEntryFee()
+    }
+
+    window.addEventListener('settings-changed', handleSettingsChanged)
+    return () => window.removeEventListener('settings-changed', handleSettingsChanged)
+  }, [loadEntryFee])
+
+  useEffect(() => {
     const fetchSquadData = async () => {
       const bootstrapStarted = performance.now()
 
@@ -179,7 +189,13 @@ export function usePlayerTournamentSetup({
           hasBracketSettings: Boolean(bootstrap?.bracket_settings),
         })
       } catch (error) {
-        logger.error('Error fetching squad data:', error)
+        if (isAuthError(error)) {
+          logger.warn('Players bootstrap skipped due to expired session', {
+            reason: error instanceof Error ? error.message : String(error),
+          })
+        } else {
+          logger.error('Error fetching squad data:', error)
+        }
       }
     }
 

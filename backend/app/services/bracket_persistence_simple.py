@@ -528,9 +528,9 @@ def hydrate_brackets_with_scores(
 
     scores_map_total = {
         score.bowler_id: {
-            "game1": score.game1_total,
-            "game2": score.game2_total,
-            "game3": score.game3_total,
+            "game1": score.game1_total if score.game1_scratch is not None else None,
+            "game2": score.game2_total if score.game2_scratch is not None else None,
+            "game3": score.game3_total if score.game3_scratch is not None else None,
         }
         for score in score_records
     }
@@ -550,18 +550,60 @@ def hydrate_brackets_with_scores(
             total.get("game3"),
         )
 
-    # Build a name -> bowler_id lookup from all round-1 matches across all brackets.
-    # This lets us resolve player IDs in round 2+ slots that only have player names
-    # (which happens when advance_winner_to_next_round didn't propagate IDs).
+    def normalize_player_name(value: Optional[str]) -> str:
+        return " ".join((value or "").strip().lower().split())
+
+    def resolve_scoring_behavior(group: Dict[str, Any]) -> tuple[bool, bool]:
+        """Return (use_scratch, use_reverse) from canonical group key first."""
+        group_key = str(group.get("key") or "").strip().lower()
+        scoring_mode = str(group.get("scoring_mode") or "").strip().lower()
+
+        if group_key == "reverse_handicap":
+            return False, True
+        if group_key in ("reverse_scratch", "reverse"):
+            return True, True
+
+        if group_key == "handicap" or group_key.endswith("_handicap"):
+            return False, False
+        if group_key == "scratch" or group_key.endswith("_scratch"):
+            return True, False
+
+        use_scratch = scoring_mode in ("scratch", "reverse_scratch", "reverse")
+        use_reverse = scoring_mode in (
+            "reverse_scratch",
+            "reverse_handicap",
+            "reverse",
+        )
+        return use_scratch, use_reverse
+
+    # Build a name -> bowler_id lookup from tournament players first,
+    # then supplement with round-1 matches. This helps resolve IDs in
+    # later rounds and prevents stale score carry-over when IDs are missing.
     name_to_id: Dict[str, int] = {}
+
+    players_query = db.query(TournamentPlayer).filter(
+        TournamentPlayer.tournament_id == tournament_id
+    )
+    if squad_id:
+        players_query = players_query.filter(TournamentPlayer.squad_id == squad_id)
+
+    for player in players_query.all():
+        normalized_name = normalize_player_name(player.full_name)
+        if normalized_name:
+            name_to_id[normalized_name] = int(player.id)
+
     for group, _, bracket in iter_group_brackets(bracket_data):
         rounds = bracket.get("rounds", [])
         if rounds:
             for m in rounds[0].get("matches", []):
                 if m.get("playerA") and m.get("playerA_id"):
-                    name_to_id[m["playerA"]] = m["playerA_id"]
+                    normalized_name = normalize_player_name(m["playerA"])
+                    if normalized_name:
+                        name_to_id[normalized_name] = m["playerA_id"]
                 if m.get("playerB") and m.get("playerB_id"):
-                    name_to_id[m["playerB"]] = m["playerB_id"]
+                    normalized_name = normalize_player_name(m["playerB"])
+                    if normalized_name:
+                        name_to_id[normalized_name] = m["playerB_id"]
 
     # Helper function to update match scores
     def update_match_scores(
@@ -576,15 +618,25 @@ def hydrate_brackets_with_scores(
 
         # Fall back to name lookup for round 2+ slots where IDs weren't propagated
         if not player_a_id and match.get("playerA"):
-            player_a_id = name_to_id.get(match["playerA"])
+            player_a_id = name_to_id.get(normalize_player_name(match["playerA"]))
             if player_a_id:
                 match["playerA_id"] = player_a_id
         if not player_b_id and match.get("playerB"):
-            player_b_id = name_to_id.get(match["playerB"])
+            player_b_id = name_to_id.get(normalize_player_name(match["playerB"]))
             if player_b_id:
                 match["playerB_id"] = player_b_id
 
         if not player_a_id or not player_b_id:
+            # If we cannot resolve both players to score-table IDs, clear any
+            # stale persisted match score so brackets never show phantom values.
+            match["scoreA"] = None
+            match["scoreB"] = None
+            match["winner"] = None
+            match["status"] = "pending"
+            match["both_advance"] = False
+            match["split_pot"] = False
+            match["eliminated_player"] = None
+            match["elimination_notes"] = None
             return
 
         # Determine which game to use based on round.
@@ -670,9 +722,7 @@ def hydrate_brackets_with_scores(
 
     # Update brackets - use_scratch selects scratch vs total scores; use_reverse inverts round→game mapping
     for group, _, bracket in iter_group_brackets(bracket_data):
-        scoring_mode = str(group.get("scoring_mode") or "").lower()
-        use_scratch = scoring_mode in ("scratch", "reverse_scratch", "reverse")
-        use_reverse = scoring_mode in ("reverse_scratch", "reverse_handicap", "reverse")
+        use_scratch, use_reverse = resolve_scoring_behavior(group)
         for round_num, round_data in enumerate(bracket.get("rounds", [])):
             for match in round_data.get("matches", []):
                 update_match_scores(
@@ -737,12 +787,11 @@ def hydrate_brackets_with_scores(
                     )
 
     for group, _, bracket in iter_group_brackets(bracket_data):
-        scoring_mode = str(group.get("scoring_mode") or "").lower()
+        use_scratch, use_reverse = resolve_scoring_behavior(group)
         propagate_and_rehydrate(
             bracket,
-            use_scratch=scoring_mode in ("scratch", "reverse_scratch", "reverse"),
-            use_reverse=scoring_mode
-            in ("reverse_scratch", "reverse_handicap", "reverse"),
+            use_scratch=use_scratch,
+            use_reverse=use_reverse,
         )
 
     # RESOLVE TIES FROM PREVIOUS ROUNDS
@@ -844,9 +893,7 @@ def hydrate_brackets_with_scores(
                 )
 
     for group, _, bracket in iter_group_brackets(bracket_data):
-        scoring_mode = str(group.get("scoring_mode") or "").lower()
-        use_scratch = scoring_mode in ("scratch", "reverse_scratch", "reverse")
-        use_reverse = scoring_mode in ("reverse_scratch", "reverse_handicap", "reverse")
+        use_scratch, use_reverse = resolve_scoring_behavior(group)
         rounds = bracket.get("rounds", [])
         total_rounds = len(rounds)
 
@@ -867,12 +914,11 @@ def hydrate_brackets_with_scores(
 
     # Re-run propagation after tie resolution so newly-resolved winners fill next-round slots.
     for group, _, bracket in iter_group_brackets(bracket_data):
-        scoring_mode = str(group.get("scoring_mode") or "").lower()
+        use_scratch, use_reverse = resolve_scoring_behavior(group)
         propagate_and_rehydrate(
             bracket,
-            use_scratch=scoring_mode in ("scratch", "reverse_scratch", "reverse"),
-            use_reverse=scoring_mode
-            in ("reverse_scratch", "reverse_handicap", "reverse"),
+            use_scratch=use_scratch,
+            use_reverse=use_reverse,
         )
 
     return bracket_data

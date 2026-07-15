@@ -1,59 +1,81 @@
 import React from 'react';
+import { SearchPanel } from '../../components/primitives';
+import primitiveStyles from '../../components/primitives/primitives.module.css';
 import styles from '../styles/search-filter.module.css';
 
 export interface SearchFilterProps {
-  searchTerm: string;
-  onSearchChange: (term: string) => void;
+  firstName: string;
+  lastName: string;
+  onFirstNameChange: (value: string) => void;
+  onLastNameChange: (value: string) => void;
   onClearFilters: () => void;
   searchResultCount?: number | null;
 }
 
 export function SearchFilter({
-  searchTerm,
-  onSearchChange,
+  firstName,
+  lastName,
+  onFirstNameChange,
+  onLastNameChange,
   onClearFilters,
   searchResultCount,
 }: SearchFilterProps) {
+  const hasSearch = firstName.trim().length > 0 || lastName.trim().length > 0;
+
   return (
-    <div className={styles.container}>
-      <div className={styles.filterGroup}>
-        <label className={styles.label}>
-          <span className={styles.labelText}>Search Bowlers</span>
-          <div className={styles.searchWrapper}>
+    <SearchPanel
+      className={styles.container}
+      title="Search Bowlers"
+      useToolbar={false}
+      left={(
+        <div className={styles.searchFieldStack}>
+          <div className={styles.searchInputsRow}>
             <input
               type="text"
-              value={searchTerm}
-              onChange={(e) => onSearchChange(e.target.value)}
+              value={firstName}
+              onChange={(e) => onFirstNameChange(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Escape' && searchTerm) {
-                  onSearchChange('')
+                if (e.key === 'Escape' && hasSearch) {
+                  onClearFilters()
                 }
               }}
-              placeholder="Search by bowler name across visible brackets..."
-              className={styles.searchInput}
-              aria-label="Search bowlers"
+              placeholder="First name"
+              className={`${styles.searchInput} ${primitiveStyles.searchPanelInput}`}
+              aria-label="Search by first name"
+            />
+            <input
+              type="text"
+              value={lastName}
+              onChange={(e) => onLastNameChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape' && hasSearch) {
+                  onClearFilters()
+                }
+              }}
+              placeholder="Last name"
+              className={`${styles.searchInput} ${primitiveStyles.searchPanelInput}`}
+              aria-label="Search by last name"
             />
           </div>
-          {searchTerm && searchResultCount !== null && searchResultCount !== undefined && (
+          {hasSearch && searchResultCount !== null && searchResultCount !== undefined && (
             <span className={`${styles.resultCount} ${searchResultCount === 0 ? styles.resultCountEmpty : ''}`}>
               {searchResultCount === 0
-                ? 'No brackets match this player search'
-                : `${searchResultCount} bracket${searchResultCount !== 1 ? 's' : ''} match this player search`}
+                ? 'No brackets match this name search'
+                : `${searchResultCount} bracket${searchResultCount !== 1 ? 's' : ''} match this name search`}
             </span>
           )}
-        </label>
-
-        {searchTerm && (
-          <button
-            onClick={onClearFilters}
-            className={styles.clearButton}
-            aria-label="Clear search"
-          >
-            <span className={styles.clearIcon}>x</span>
-            <span>Clear Search</span>
-          </button>
-        )}
-      </div>
-    </div>
+        </div>
+      )}
+      right={(
+        <button
+          onClick={onClearFilters}
+          className={`${primitiveStyles.searchPanelClearButton} ${styles.clearButton}`}
+          aria-label="Clear search"
+          disabled={!hasSearch}
+        >
+          Clear
+        </button>
+      )}
+    />
   );
 }

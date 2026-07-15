@@ -89,21 +89,22 @@
 .small {
   min-height: var(--btn-height-sm);
   height: var(--btn-height-sm);
-  padding: 0 var(--spacing-md);
+  padding: 0 var(--btn-padding-x-sm);
   font-size: var(--font-size-sm);
 }
 
 .medium {
   min-height: var(--btn-height);
   height: var(--btn-height);
-  padding: 0 var(--spacing-lg);
+  padding: 0 var(--btn-padding-x);
+  font-size: var(--font-size-sm);
 }
 
 .large {
   min-height: var(--btn-height-lg);
   height: var(--btn-height-lg);
-  padding: 0 var(--spacing-xl);
-  font-size: var(--font-size-lg);
+  padding: 0 var(--btn-padding-x-lg);
+  font-size: var(--font-size-sm);
 }
 
 .fullWidth {

@@ -29,6 +29,7 @@ interface BracketTreeViewProps {
   searchTerm?: string
   statusFilter?: string
   bracketTitle?: string
+  onCardWidthChange?: (width: number | null) => void
 }
 
 /**
@@ -43,6 +44,7 @@ const BracketTreeViewComponent = ({
   searchTerm = '',
   statusFilter = 'all',
   bracketTitle,
+  onCardWidthChange,
 }: BracketTreeViewProps) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const cardRef = useRef<HTMLDivElement>(null)
@@ -55,7 +57,17 @@ const BracketTreeViewComponent = ({
 
   const isPlayerHighlighted = (name: string | undefined): boolean => {
     if (!name) return false
-    if (searchTerm) return name.toLowerCase().includes(searchTerm.toLowerCase())
+    if (searchTerm) {
+      const normalizedName = name.toLowerCase()
+      const terms = searchTerm
+        .toLowerCase()
+        .split(/\s+/)
+        .map(term => term.trim())
+        .filter(Boolean)
+
+      if (terms.length === 0) return false
+      return terms.every(term => normalizedName.includes(term))
+    }
     return highlightedPlayer === name
   }
 
@@ -106,8 +118,8 @@ const BracketTreeViewComponent = ({
 
       if (naturalWidth <= availableWidth) return
 
-      const reservedRightGutter = 12
-      const fittedWidth = Math.max(availableWidth - reservedRightGutter, availableWidth * 0.75)
+      const reservedRightGutter = isMobile ? 0 : 12
+      const fittedWidth = Math.max(availableWidth - reservedRightGutter, availableWidth * (isMobile ? 0.9 : 0.75))
       const nextScale = Math.min(1, fittedWidth / naturalWidth)
       if (treeContainerScaledClass) container.classList.add(treeContainerScaledClass)
       if (cardScaledClass) card.classList.add(cardScaledClass)
@@ -124,6 +136,39 @@ const BracketTreeViewComponent = ({
       resetTreeScale()
     }
   }, [isMobile, rounds])
+
+  useEffect(() => {
+    if (!onCardWidthChange) return undefined
+
+    const card = cardRef.current
+    if (!card) {
+      onCardWidthChange(null)
+      return undefined
+    }
+
+    const publishCardWidth = () => {
+      const nextWidth = card.getBoundingClientRect().width
+      onCardWidthChange(Number.isFinite(nextWidth) && nextWidth > 0 ? Math.ceil(nextWidth) : null)
+    }
+
+    publishCardWidth()
+
+    let observer: ResizeObserver | null = null
+    if (typeof ResizeObserver !== 'undefined') {
+      observer = new ResizeObserver(() => {
+        publishCardWidth()
+      })
+      observer.observe(card)
+    }
+
+    window.addEventListener('resize', publishCardWidth)
+
+    return () => {
+      window.removeEventListener('resize', publishCardWidth)
+      if (observer) observer.disconnect()
+      onCardWidthChange(null)
+    }
+  }, [onCardWidthChange, rounds])
 
   if (!rounds || rounds.length === 0) {
     return (
@@ -148,9 +193,9 @@ const BracketTreeViewComponent = ({
           {displayRounds[0]?.matches.map((match, matchIndex) => {
             const status = match.matchStatus || getMatchStatus(match)
 
-            // Handle both old (match_score_a) and new (scoreA) field names for backwards compatibility
-            const scoreA = match.scoreA ?? match.match_score_a;
-            const scoreB = match.scoreB ?? match.match_score_b;
+            // Prefer canonical fields; only use legacy fields when canonical keys are absent.
+            const scoreA = match.scoreA !== undefined ? match.scoreA : match.match_score_a;
+            const scoreB = match.scoreB !== undefined ? match.scoreB : match.match_score_b;
 
             const isInPath = isPlayerHighlighted(match.playerA) || isPlayerHighlighted(match.playerB)
             const playerAHighlighted = isPlayerHighlighted(match.playerA)
@@ -203,9 +248,9 @@ const BracketTreeViewComponent = ({
           {displayRounds[1]?.matches.map((match, matchIndex) => {
             const status = match.matchStatus || getMatchStatus(match)
 
-            // Handle both old (match_score_a) and new (scoreA) field names for backwards compatibility
-            const scoreA = match.scoreA ?? match.match_score_a;
-            const scoreB = match.scoreB ?? match.match_score_b;
+            // Prefer canonical fields; only use legacy fields when canonical keys are absent.
+            const scoreA = match.scoreA !== undefined ? match.scoreA : match.match_score_a;
+            const scoreB = match.scoreB !== undefined ? match.scoreB : match.match_score_b;
 
             const isInPath = isPlayerHighlighted(match.playerA) || isPlayerHighlighted(match.playerB)
             const playerAHighlighted = isPlayerHighlighted(match.playerA)
@@ -258,9 +303,9 @@ const BracketTreeViewComponent = ({
           {displayRounds[2]?.matches.map((match, matchIndex) => {
             const status = match.matchStatus || getMatchStatus(match)
 
-            // Handle both old (match_score_a) and new (scoreA) field names for backwards compatibility
-            const scoreA = match.scoreA ?? match.match_score_a;
-            const scoreB = match.scoreB ?? match.match_score_b;
+            // Prefer canonical fields; only use legacy fields when canonical keys are absent.
+            const scoreA = match.scoreA !== undefined ? match.scoreA : match.match_score_a;
+            const scoreB = match.scoreB !== undefined ? match.scoreB : match.match_score_b;
 
             const isInPath = isPlayerHighlighted(match.playerA) || isPlayerHighlighted(match.playerB)
             const playerAHighlighted = isPlayerHighlighted(match.playerA)

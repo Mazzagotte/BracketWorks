@@ -1200,7 +1200,7 @@ export default function AdminPage() {
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Edit {editUser.username}</h3>
-              <button type="button" className={styles.modalClose} onClick={() => setEditUser(null)}>X</button>
+              <button type="button" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.modalClose}`} onClick={() => setEditUser(null)}>X</button>
             </div>
             <div className={styles.modalBody}>
               {editError && <div className={styles.modalError}>{editError}</div>}
@@ -1259,7 +1259,7 @@ export default function AdminPage() {
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Reset password for {resetUser.username}</h3>
-              <button type="button" className={styles.modalClose} onClick={() => setResetUser(null)}>X</button>
+              <button type="button" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.modalClose}`} onClick={() => setResetUser(null)}>X</button>
             </div>
             <div className={styles.modalBody}>
               {resetError && <div className={styles.modalError}>{resetError}</div>}
@@ -1307,7 +1307,7 @@ export default function AdminPage() {
           <div className={styles.modal} onClick={(event) => event.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Delete user {deleteUser.username}</h3>
-              <button type="button" className={styles.modalClose} onClick={() => setDeleteUser(null)}>X</button>
+              <button type="button" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.modalClose}`} onClick={() => setDeleteUser(null)}>X</button>
             </div>
             <div className={styles.modalBody}>
               {deleteUserError && <div className={styles.modalError}>{deleteUserError}</div>}
@@ -1376,7 +1376,7 @@ export default function AdminPage() {
           <div className={styles.modal} onClick={(event) => event.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Edit Tournament #{editTournament.id}</h3>
-              <button type="button" className={styles.modalClose} onClick={() => setEditTournament(null)}>X</button>
+              <button type="button" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.modalClose}`} onClick={() => setEditTournament(null)}>X</button>
             </div>
             <div className={styles.modalBody}>
               {editTournamentError && <div className={styles.modalError}>{editTournamentError}</div>}
@@ -1435,7 +1435,7 @@ export default function AdminPage() {
           <div className={styles.modal} onClick={(event) => event.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Reassign Tournament #{reassignTournament.id}</h3>
-              <button type="button" className={styles.modalClose} onClick={() => setReassignTournament(null)}>X</button>
+              <button type="button" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.modalClose}`} onClick={() => setReassignTournament(null)}>X</button>
             </div>
             <div className={styles.modalBody}>
               {reassignError && <div className={styles.modalError}>{reassignError}</div>}
@@ -1486,7 +1486,7 @@ export default function AdminPage() {
           <div className={styles.modal} onClick={(event) => event.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Archive Tournament #{archiveTournament.id}</h3>
-              <button type="button" className={styles.modalClose} onClick={() => setArchiveTournament(null)}>X</button>
+              <button type="button" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.modalClose}`} onClick={() => setArchiveTournament(null)}>X</button>
             </div>
             <div className={styles.modalBody}>
               {archiveError && <div className={styles.modalError}>{archiveError}</div>}
@@ -1527,7 +1527,7 @@ export default function AdminPage() {
           <div className={styles.modal} onClick={(event) => event.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Delete Tournament #{deleteTournament.id}</h3>
-              <button type="button" className={styles.modalClose} onClick={() => setDeleteTournament(null)}>X</button>
+              <button type="button" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.modalClose}`} onClick={() => setDeleteTournament(null)}>X</button>
             </div>
             <div className={styles.modalBody}>
               {deleteTournamentError && <div className={styles.modalError}>{deleteTournamentError}</div>}

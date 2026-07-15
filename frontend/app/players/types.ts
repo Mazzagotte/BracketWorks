@@ -57,6 +57,7 @@ export interface PlayerFormProps {
   squads: Squad[];
   entryFee: number;
   bracketPrograms: BracketProgramDefinition[];
+  sidePots?: SidePotsSettings | null;
   prefillDraft?: PlayerFormPrefillDraft | null;
   prefillVersion?: number;
 }
