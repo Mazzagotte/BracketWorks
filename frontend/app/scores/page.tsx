@@ -27,7 +27,7 @@ import { useToast } from '../components/Toast'
 import { usePagination, Pagination } from '../components/Performance'
 import { useAutoSave } from '../components/DataManagement'
 import NoTournamentState from '../components/NoTournamentState'
-import { DataTableToolbar, QuickActions } from '../components/primitives'
+import { QuickActions, SearchPanel } from '../components/primitives'
 import { logger } from '../lib/logger';
 import { handleTableArrowNavigation } from '../lib/tableKeyboard'
 import { getSelectedSquadId, getSelectedTournamentId, setSelectedSquad as persistSelectedSquad } from '../lib/selection-session'
@@ -80,8 +80,11 @@ export default function ScoresPage() {
   const [mobileExpandedPlayers, setMobileExpandedPlayers] = useState<Record<number, boolean>>({})
   const [rowSaveState, setRowSaveState] = useState<Record<number, 'idle' | 'saving' | 'saved' | 'failed'>>({})
   const [lastEdit, setLastEdit] = useState<{ playerId: number; field: string; previous: number | undefined } | null>(null)
+  const [desktopTableDrivenWidth, setDesktopTableDrivenWidth] = useState<number | null>(null)
   const importFileRef = useRef<HTMLInputElement | null>(null)
   const debouncedSavesRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
+  const desktopContainerRef = useRef<HTMLDivElement | null>(null)
+  const desktopScoresTableRef = useRef<HTMLTableElement | null>(null)
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined
@@ -321,6 +324,46 @@ export default function ScoresPage() {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+
+    const syncTableDrivenWidth = () => {
+      const container = desktopContainerRef.current
+      const table = desktopScoresTableRef.current
+
+      if (!container || !table || isMobile) {
+        setDesktopTableDrivenWidth(null)
+        return
+      }
+
+      const nextWidth = Math.max(0, Math.floor(Math.min(table.scrollWidth, container.clientWidth)))
+      setDesktopTableDrivenWidth(previous => (previous === nextWidth ? previous : nextWidth))
+    }
+
+    syncTableDrivenWidth()
+
+    const observer = new ResizeObserver(() => {
+      syncTableDrivenWidth()
+    })
+
+    if (desktopContainerRef.current) observer.observe(desktopContainerRef.current)
+    if (desktopScoresTableRef.current) observer.observe(desktopScoresTableRef.current)
+    window.addEventListener('resize', syncTableDrivenWidth)
+
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('resize', syncTableDrivenWidth)
+    }
+  }, [isMobile, filteredPlayers.length, paginationHook.currentPage, players.length, selectedSquad?.id])
+
+  const desktopTableDrivenCardStyle = useMemo(() => {
+    if (!desktopTableDrivenWidth || isMobile) return undefined
+    return {
+      width: `${desktopTableDrivenWidth}px`,
+      maxWidth: '100%',
+    }
+  }, [desktopTableDrivenWidth, isMobile])
 
   // Stable ref so handleRandomizeScores never needs players in its dep array
   const playersRef = useRef(players)
@@ -647,7 +690,9 @@ export default function ScoresPage() {
         : `/api/v1/bowlers?tournament_id=${tournamentId}`
 
       // Fire bowlers and scores in parallel; scores don't depend on bowlers.
-      const scoresUrl = `/api/v1/scores/?tournament_id=${tournamentId}`
+      const scoresUrl = squadId
+        ? `/api/v1/scores/?tournament_id=${tournamentId}&squad_id=${squadId}`
+        : `/api/v1/scores/?tournament_id=${tournamentId}`
       const [bowlersResponse, scoresResponse] = await Promise.all([
         apiFetch(API(bowlersUrl), { headers: { Authorization: `Bearer ${token}` } }),
         apiFetch(API(scoresUrl), { headers: { Authorization: `Bearer ${token}` } }),
@@ -1284,7 +1329,7 @@ export default function ScoresPage() {
 
           {players.length > 0 && isScoresLocked && (
             <button
-              className={`${buttonStyles.button} ${buttonStyles.danger} ${buttonStyles.small} ${styles.quickActionDangerBtn}`}
+              className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
               onClick={unlockScoresTable}
             >
               Unlock Scores
@@ -1525,7 +1570,7 @@ export default function ScoresPage() {
                 {rowStateCounts.saving === 0 && rowStateCounts.failed === 0 && <span>Auto-save on</span>}
                 {rowStateCounts.failed > 0 && <span>{rowStateCounts.failed} failed</span>}
                 {lastEdit && (
-                  <button className={styles.mobileUndoBtn} onClick={undoLastEdit}>Undo</button>
+                  <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.mobileUndoBtn}`} onClick={undoLastEdit}>Undo</button>
                 )}
               </div>
             </div>
@@ -1571,9 +1616,18 @@ export default function ScoresPage() {
                   return (
                     <div key={player.id} className={styles.mobileScoreCard}>
                       {/* Card header; tap to expand */}
-                      <button
+                      <div
                         className={styles.mobileScoreCardHeader}
+                        role="button"
+                        tabIndex={0}
+                        aria-expanded={isExpanded}
                         onClick={() => setMobileExpandedPlayers(prev => ({ ...prev, [player.id]: !prev[player.id] }))}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault()
+                            setMobileExpandedPlayers(prev => ({ ...prev, [player.id]: !prev[player.id] }))
+                          }
+                        }}
                       >
                         <div className={styles.mobileScoreIdentity}>
                           <div className={styles.mobileScoreName}>
@@ -1592,7 +1646,7 @@ export default function ScoresPage() {
                           </span>
                           <span className={styles.mobileExpandGlyph}>{isExpanded ? '^' : 'v'}</span>
                         </div>
-                      </button>
+                      </div>
 
                       {/* Expanded body */}
                       {isExpanded && (
@@ -1672,7 +1726,7 @@ export default function ScoresPage() {
         </MobileLayout>
       ) : (
         // Desktop Layout
-      <div className={`${shellStyles.page} ${styles.desktopContainer}`}>
+      <div ref={desktopContainerRef} className={`${shellStyles.page} ${styles.desktopContainer}`}>
 
           {/* No Tournament State - Desktop */}
           {!tournament && !showInitialScoresLoad && (
@@ -1709,13 +1763,14 @@ export default function ScoresPage() {
           )}
 
           {tournament && (
-            <div className={`${cardStyles.card} ${cardStyles.accentCard} ${cardStyles.quickActionsCard}`}>
+            <>
+            <div style={desktopTableDrivenCardStyle} className={`${cardStyles.card} ${cardStyles.accentCard} ${cardStyles.quickActionsCard} ${styles.desktopWidthLockedCard}`}>
               <h2 className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${cardStyles.quickActionsTitle}`}>Quick Actions</h2>
               <div className={cardStyles.quickActionsBody}>
                 {scoresQuickActions}
               </div>
             </div>
-          )}
+
 
           {/* No Players State */}
           {!showInitialScoresLoad && players.length === 0 && tournament && (
@@ -1778,42 +1833,42 @@ export default function ScoresPage() {
           )}
 
           {!showInitialScoresLoad && players.length > 0 && (
-            <div className={`${cardStyles.card} ${cardStyles.accentCard} ${styles.scoresSearchCard}`}>
-              <h3 className={`${cardStyles.cardTitle} ${cardStyles.cardTitleCompact} ${styles.scoresSearchTitle}`}>Search Scores</h3>
-              <div className={styles.scoresSearchRow}>
-                <DataTableToolbar
-                  left={(
-                    <>
-                      <input
-                        type="text"
-                        className={`${formStyles.search} ${formStyles.compactControl} ${styles.scoresSearchInput}`}
-                        placeholder="First name"
-                        value={searchFirstName}
-                        onChange={(event) => setSearchFirstName(event.target.value)}
-                      />
-                      <input
-                        type="text"
-                        className={`${formStyles.search} ${formStyles.compactControl} ${styles.scoresSearchInput}`}
-                        placeholder="Last name"
-                        value={searchLastName}
-                        onChange={(event) => setSearchLastName(event.target.value)}
-                      />
-                    </>
-                  )}
-                  right={(
-                    <button
-                      type="button"
-                      className={styles.scoresSearchClear}
-                      onClick={() => {
-                        setSearchFirstName('')
-                        setSearchLastName('')
-                      }}
-                    >
-                      Clear
-                    </button>
-                  )}
-                />
-              </div>
+            <div style={desktopTableDrivenCardStyle} className={styles.desktopWidthLockedCard}>
+              <SearchPanel
+                className={styles.scoresSearchCard}
+                title="Search Scores"
+                useToolbar={false}
+                left={(
+                  <>
+                    <input
+                      type="text"
+                      className={`${formStyles.search} ${formStyles.compactControl} ${styles.scoresSearchInput}`}
+                      placeholder="First name"
+                      value={searchFirstName}
+                      onChange={(event) => setSearchFirstName(event.target.value)}
+                    />
+                    <input
+                      type="text"
+                      className={`${formStyles.search} ${formStyles.compactControl} ${styles.scoresSearchInput}`}
+                      placeholder="Last name"
+                      value={searchLastName}
+                      onChange={(event) => setSearchLastName(event.target.value)}
+                    />
+                  </>
+                )}
+                right={(
+                  <button
+                    type="button"
+                    className={styles.scoresSearchClear}
+                    onClick={() => {
+                      setSearchFirstName('')
+                      setSearchLastName('')
+                    }}
+                  >
+                    Clear
+                  </button>
+                )}
+              />
             </div>
           )}
 
@@ -1829,10 +1884,10 @@ export default function ScoresPage() {
             {rowStateCounts.failed > 0 && (
               <div className={`table-save-status table-save-status--error ${styles.tableSaveStatus}`}>Failed to save {rowStateCounts.failed} score{rowStateCounts.failed > 1 ? 's' : ''}</div>
             )}
-            <div className={`${cardStyles.card} ${cardStyles.accentCard} ${styles.tableCard}`}>
+            <div style={desktopTableDrivenCardStyle} className={`${cardStyles.card} ${cardStyles.accentCard} ${styles.tableCard} ${styles.desktopWidthLockedCard}`}>
             <div className="entries-container">
 
-                <table className={`${tableStyles.table} entries-table`} aria-label="Player Scores" onKeyDownCapture={handleTableArrowNavigation}>
+              <table ref={desktopScoresTableRef} className={`${tableStyles.table} entries-table`} aria-label="Player Scores" onKeyDownCapture={handleTableArrowNavigation}>
 
             <thead>
               {selectedSquad && (
@@ -1843,28 +1898,28 @@ export default function ScoresPage() {
                 </tr>
               )}
               <tr className="entries-header-row">
-                <SortableHeader column="firstName" sortConfig={sortConfig} onSort={handleSort} width="14%">
+                <SortableHeader column="firstName" sortConfig={sortConfig} onSort={handleSort}>
                   Bowler
                 </SortableHeader>
-                <SortableHeader column="lane" sortConfig={sortConfig} onSort={handleSort} width="6%">
+                <SortableHeader column="lane" sortConfig={sortConfig} onSort={handleSort}>
                   Lane
                 </SortableHeader>
-                <SortableHeader column="average" sortConfig={sortConfig} onSort={handleSort} width="6%">
+                <SortableHeader column="average" sortConfig={sortConfig} onSort={handleSort}>
                   Avg
                 </SortableHeader>
-                <SortableHeader column="game1_scratch" sortConfig={sortConfig} onSort={handleSort} width="12%">
+                <SortableHeader column="game1_scratch" sortConfig={sortConfig} onSort={handleSort}>
                   Game 1
                 </SortableHeader>
-                <SortableHeader column="game2_scratch" sortConfig={sortConfig} onSort={handleSort} width="12%">
+                <SortableHeader column="game2_scratch" sortConfig={sortConfig} onSort={handleSort}>
                   Game 2
                 </SortableHeader>
-                <SortableHeader column="game3_scratch" sortConfig={sortConfig} onSort={handleSort} width="12%">
+                <SortableHeader column="game3_scratch" sortConfig={sortConfig} onSort={handleSort}>
                   Game 3
                 </SortableHeader>
-                <SortableHeader column="totalScratch" sortConfig={sortConfig} onSort={handleSort} width="10%">
+                <SortableHeader column="totalScratch" sortConfig={sortConfig} onSort={handleSort}>
                   Scratch<br/>Total
                 </SortableHeader>
-                <SortableHeader column="totalWithHandicap" sortConfig={sortConfig} onSort={handleSort} width="10%">
+                <SortableHeader column="totalWithHandicap" sortConfig={sortConfig} onSort={handleSort}>
                   Final<br/>Total
                 </SortableHeader>
               </tr>
@@ -1965,6 +2020,8 @@ export default function ScoresPage() {
         </div>
             </>
         )}
+          </>
+          )}
 
         {!showInitialScoresLoad && players.length > 0 && filteredPlayers.length === 0 && (
           <div className={styles.statusMessage}>

@@ -79,6 +79,7 @@
   transform: scale(var(--bw-tree-scale, 1));
   transform-origin: top left;
   width: var(--bw-tree-card-width, 100%);
+  max-width: none;
 }
 
 /* ===================================
@@ -598,6 +599,9 @@
 
 .bracketCard {
   padding: 0.78rem;
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: auto;
   border: 1px solid var(--tree-card-border);
   border-top: 1px solid var(--tree-card-border-accent);
   border-radius: 24px;
@@ -617,11 +621,14 @@
 }
 
 .bracketGrid {
+  width: max-content;
+  justify-content: start;
   padding: 0.5rem 0;
 }
 
 .matchCard {
-  width: 268px;
+  width: fit-content;
+  max-width: 268px;
   min-height: 88px;
   border: 1px solid var(--tree-card-border);
   border-radius: 14px;
@@ -742,12 +749,14 @@
 }
 
 .connectorBracket {
+  min-width: 22px;
   border-right-color: color-mix(in srgb, var(--color-primary) 34%, transparent);
   border-top-color: color-mix(in srgb, var(--color-primary) 34%, transparent);
   border-bottom-color: color-mix(in srgb, var(--color-primary) 34%, transparent);
 }
 
 .connectorArm {
+  min-width: 30px;
   background: color-mix(in srgb, var(--color-primary) 34%, transparent);
 }
 
@@ -761,12 +770,15 @@
 
 @media (max-width: 1024px) {
   .matchCard {
-    width: 220px;
+    width: fit-content;
+    min-width: 196px;
+    max-width: 220px;
   }
 }
 
 @media (max-width: 640px) {
   .bracketTreeContainer {
+    overflow-x: hidden;
     justify-content: flex-start;
   }
 
@@ -817,7 +829,9 @@
   }
 
   .matchCard {
-    width: 176px;
+    width: fit-content;
+    min-width: 160px;
+    max-width: 176px;
     min-height: 78px;
     border-radius: 12px;
   }
@@ -865,6 +879,7 @@
 @media (max-width: 480px) {
   .bracketTreeContainer {
     padding: 0;
+    overflow-x: hidden;
   }
 
   .bracketCard {
@@ -876,7 +891,9 @@
   }
 
   .matchCard {
-    width: 168px;
+    width: fit-content;
+    min-width: 152px;
+    max-width: 168px;
     min-height: 72px;
   }
 
@@ -901,4 +918,10 @@
   .connectorArm {
     min-width: 22px;
   }
+}
+
+/* Final scale lock: keep full bracket width inside the scaled card wrapper. */
+.bracketCard.bracketCardScaled {
+  width: var(--bw-tree-card-width, 100%) !important;
+  max-width: none !important;
 }

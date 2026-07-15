@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect, ButtonHTMLAttributes } from 'react';
 import styles from './EnhancedButton.module.css';
+import buttonStyles from '../styles/buttons.module.css';
 
 type ButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'> & {
   children: React.ReactNode;
@@ -79,12 +80,26 @@ export default function EnhancedButton({
     currentState === 'loading' ? styles.stateLoading :
     '';
 
+  const variantClass = {
+    primary: buttonStyles.primary,
+    secondary: buttonStyles.secondary,
+    danger: buttonStyles.danger,
+    success: buttonStyles.success,
+    glass: buttonStyles.secondary,
+  }[variant];
+
+  const sizeClass = {
+    sm: buttonStyles.small,
+    md: buttonStyles.medium,
+    lg: buttonStyles.large,
+  }[size];
+
   return (
     <button
       {...rest}
       ref={buttonRef}
       type={type}
-      className={`${styles.btn} ${styles[variant]} ${styles[size]} ${stateClass} ${className}`}
+      className={`${buttonStyles.button} ${variantClass} ${sizeClass} ${styles.btn} ${stateClass} ${className}`}
       onClick={handleClick}
       disabled={isDisabled}
     >

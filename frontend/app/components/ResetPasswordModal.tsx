@@ -7,6 +7,7 @@ import { getEmailValidationError } from '../lib/auth/validation';
 import { logger } from '../lib/logger';
 import AuthFeedback from './AuthFeedback';
 import styles from './ResetPasswordModal.module.css';
+import buttonStyles from '../styles/buttons.module.css';
 
 interface ResetPasswordModalProps {
   isOpen: boolean;
@@ -147,7 +148,12 @@ export default function ResetPasswordModal({ isOpen, onClose, onSuccess }: Reset
             >
               {loading ? 'Sending...' : (cooldownSeconds > 0 ? `Retry in ${cooldownSeconds}s` : 'Send Reset Link')}
             </button>
-            <button type="button" onClick={handleClose} disabled={loading} className={styles.cancelBtn}>
+            <button
+              type="button"
+              onClick={handleClose}
+              disabled={loading}
+              className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.cancelBtn}`}
+            >
               {success ? 'Close' : 'Cancel'}
             </button>
           </div>

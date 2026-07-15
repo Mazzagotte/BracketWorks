@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense, type CSSProperties } from 'react'
 import { useAuth } from '../lib/auth-context'
 import { usePageHeader } from '../lib/header-context'
 import { ErrorBoundary } from '../components/ErrorBoundary'
@@ -54,9 +54,11 @@ export default function BracketsPage() {
   const [mobileOpenBracketIndex, setMobileOpenBracketIndex] = useState<number | null>(null)
   
   // Ref to prevent infinite loop in useEffect
-  const [searchTerm, setSearchTerm] = useState('')
+  const [searchFirstName, setSearchFirstName] = useState('')
+  const [searchLastName, setSearchLastName] = useState('')
   const [isMobile, setIsMobile] = useState(false)
   const [loadedBrackets, setLoadedBrackets] = useState<BracketPreview | null>(null)
+  const [desktopBracketCardWidth, setDesktopBracketCardWidth] = useState<number | null>(null)
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined
@@ -285,18 +287,24 @@ export default function BracketsPage() {
   }, [activeTab, bracketGroups])
 
   const searchFilteredBracketItems = useMemo(() => {
-    const term = searchTerm.trim().toLowerCase()
-    if (!term) return filteredBracketItems
+    const firstNameTerm = searchFirstName.trim().toLowerCase()
+    const lastNameTerm = searchLastName.trim().toLowerCase()
+    const hasSearch = Boolean(firstNameTerm || lastNameTerm)
+    if (!hasSearch) return filteredBracketItems
+
+    const matchesName = (name?: string) => {
+      const normalized = (name || '').toLowerCase()
+      const firstMatches = !firstNameTerm || normalized.includes(firstNameTerm)
+      const lastMatches = !lastNameTerm || normalized.includes(lastNameTerm)
+      return firstMatches && lastMatches
+    }
 
     return filteredBracketItems.filter(({ bracket }) =>
       (bracket.rounds || []).some(round =>
-        round.matches.some(match =>
-          (match.playerA || '').toLowerCase().includes(term) ||
-          (match.playerB || '').toLowerCase().includes(term)
-        )
+        round.matches.some(match => matchesName(match.playerA) || matchesName(match.playerB))
       )
     )
-  }, [filteredBracketItems, searchTerm])
+  }, [filteredBracketItems, searchFirstName, searchLastName])
 
   const mobileBracketSections = useMemo(() => {
     const grouped = new Map<string, { key: string; name: string; items: Array<{ item: typeof searchFilteredBracketItems[number]; index: number }> }>()
@@ -363,15 +371,38 @@ export default function BracketsPage() {
 
   // Handle search and filter
   const handleClearFilters = useCallback(() => {
-    setSearchTerm('')
+    setSearchFirstName('')
+    setSearchLastName('')
   }, [])
 
+  const bracketSearchTerm = useMemo(() => {
+    return [searchFirstName.trim(), searchLastName.trim()].filter(Boolean).join(' ').trim()
+  }, [searchFirstName, searchLastName])
+
   const searchResultCount = useMemo(() => {
-    if (!searchTerm) return null
+    if (!bracketSearchTerm) return null
     return searchFilteredBracketItems.length
-  }, [searchFilteredBracketItems.length, searchTerm])
+  }, [searchFilteredBracketItems.length, bracketSearchTerm])
 
   const handleCloseExplainModal = useCallback(() => setIsExplainModalOpen(false), [])
+
+  const handleBracketCardWidthChange = useCallback((width: number | null) => {
+    setDesktopBracketCardWidth(previousWidth => {
+      if (width === null && previousWidth === null) return previousWidth
+      if (width !== null && previousWidth !== null && Math.abs(previousWidth - width) < 1) return previousWidth
+      return width
+    })
+  }, [])
+
+  const desktopBracketDrivenCardStyle = useMemo<CSSProperties | undefined>(() => {
+    if (isMobile || !desktopBracketCardWidth) return undefined
+    return {
+      width: '100%',
+      maxWidth: `${desktopBracketCardWidth}px`,
+      marginInline: 'auto',
+    }
+  }, [desktopBracketCardWidth, isMobile])
+
   const { isUserAuthenticated, isAuthInitialized, currentUser } = useAuth()
   const isDev = process.env.NODE_ENV === 'development' || !!currentUser?.isAdmin
 
@@ -474,7 +505,7 @@ export default function BracketsPage() {
       {/* Bracket content */}
       <div className={`${shellStyles.page} ${styles.pageContainer}`}>
         {bracketsQuickActions && (
-          <div className={`${cardStyles.card} ${cardStyles.accentCard} ${cardStyles.quickActionsCard}`}>
+          <div className={`${cardStyles.card} ${cardStyles.accentCard} ${cardStyles.quickActionsCard}`} style={desktopBracketDrivenCardStyle}>
             <h2 className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${cardStyles.quickActionsTitle}`}>Quick Actions</h2>
             <div className={cardStyles.quickActionsBody}>
               {bracketsQuickActions}
@@ -531,19 +562,20 @@ export default function BracketsPage() {
                 </button>
               </div>
             )}
-            {/* Combined Control Panel: Search + Tabs + Navigator */}
-            <div className={`${cardStyles.card} ${cardStyles.accentCard} ${styles.controlPanel}`}>
-              {/* Search and Filter */}
+            {/* Search + Filter (standalone card) */}
+            <div style={desktopBracketDrivenCardStyle}>
               <SearchFilter
-                searchTerm={searchTerm}
-                onSearchChange={setSearchTerm}
+                firstName={searchFirstName}
+                lastName={searchLastName}
+                onFirstNameChange={setSearchFirstName}
+                onLastNameChange={setSearchLastName}
                 onClearFilters={handleClearFilters}
                 searchResultCount={searchResultCount}
               />
+            </div>
 
-              {/* Divider */}
-              <div className={styles.controlDivider} />
-
+            {/* Bracket Tabs + Navigator card */}
+            <div className={`${cardStyles.card} ${cardStyles.accentCard} ${styles.controlPanel}`} style={desktopBracketDrivenCardStyle}>
               {/* Bracket Tabs */}
               <BracketTabs
                 tabs={[
@@ -574,6 +606,12 @@ export default function BracketsPage() {
                 <>
                   <div className={styles.controlDivider} />
                   <div className={styles.bracketNav}>
+                    <div className={styles.navMeta}>
+                      <span className={styles.navMetaPrimary}>
+                        Bracket {selectedBracketIndex + 1} of {totalBrackets}
+                      </span>
+                      <span className={styles.navMetaSecondary}>{progressPercent}% complete</span>
+                    </div>
                     <div className={styles.navBtns}>
                         <button
                           onClick={() => setSelectedBracketIndex(Math.max(0, selectedBracketIndex - 1))}
@@ -657,7 +695,7 @@ export default function BracketsPage() {
                     rounds={rounds}
                     isMobile={true}
                     bracketType={activeBracketItem.group.scoring_mode === 'scratch' ? 'scratch' : 'handicap'}
-                    searchTerm={searchTerm}
+                    searchTerm={bracketSearchTerm}
                     statusFilter="all"
                     bracketTitle={`${activeBracketItem.group.scoring_mode === 'scratch' ? 'Scratch' : 'Handicap'} Bracket ${selectedBracketIndex + 1} of ${searchFilteredBracketItems.length}`}
                   />
@@ -672,9 +710,10 @@ export default function BracketsPage() {
                 rounds={rounds}
                 isMobile={false}
                 bracketType={activeBracketItem?.group?.scoring_mode === 'scratch' ? 'scratch' : 'handicap'}
-                searchTerm={searchTerm}
+                searchTerm={bracketSearchTerm}
                 statusFilter="all"
                 bracketTitle={activeBracketItem ? `${activeBracketItem.group.scoring_mode === 'scratch' ? 'Scratch' : 'Handicap'} Bracket ${selectedBracketIndex + 1} of ${searchFilteredBracketItems.length}` : undefined}
+                onCardWidthChange={handleBracketCardWidthChange}
               />
             ) : (
               <div className={`${cardStyles.card} ${styles.noMatches}`}>

@@ -30,6 +30,14 @@ const nextConfig = {
         destination: `${backendUrl}/api/v1/scores/`,
       },
       {
+        source: '/api/v1/bracket-settings',
+        destination: `${backendUrl}/api/v1/bracket-settings/`,
+      },
+      {
+        source: '/api/v1/bracket-settings/:path*',
+        destination: `${backendUrl}/api/v1/bracket-settings/:path*`,
+      },
+      {
         source: '/api/:path*',
         destination: `${backendUrl}/api/:path*`,
       },

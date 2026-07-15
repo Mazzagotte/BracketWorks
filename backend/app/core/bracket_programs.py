@@ -150,6 +150,24 @@ DEFAULT_BRACKET_PROGRAM_BY_KEY = {
 }
 
 
+def _canonical_scoring_mode_for_key(program_key: str) -> str | None:
+    """Return canonical scoring_mode for known program keys."""
+    key = str(program_key or "").strip().lower().replace(" ", "-")
+    if not key:
+        return None
+
+    defaults = DEFAULT_BRACKET_PROGRAM_BY_KEY.get(key)
+    if defaults and defaults.get("scoring_mode"):
+        return str(defaults["scoring_mode"]).strip().lower() or None
+
+    if key.endswith("_handicap") or key == "handicap":
+        return "handicap"
+    if key.endswith("_scratch") or key == "scratch":
+        return "scratch"
+
+    return None
+
+
 def normalize_bracket_programs(
     bracket_programs: Iterable[Mapping[str, Any]] | None,
     default_entry_fee: float | None = None,
@@ -199,12 +217,15 @@ def normalize_bracket_programs(
                     or "Any"
                 ).strip()
                 or "Any",
-                "scoring_mode": str(
-                    (aliased_defaults or {}).get("scoring_mode")
-                    or program.get("scoring_mode")
+                "scoring_mode": (
+                    _canonical_scoring_mode_for_key(raw_key)
+                    or str(
+                        (aliased_defaults or {}).get("scoring_mode")
+                        or program.get("scoring_mode")
+                        or raw_key
+                    ).strip().lower()
                     or raw_key
-                ).strip().lower()
-                or raw_key,
+                ),
                 "entry_fee": _coerce_float(program.get("entry_fee"), default_entry_fee),
                 "enabled": True if raw_key in REQUIRED_BRACKET_PROGRAM_KEYS else bool(program.get("enabled", False)),
                 "allow_byes": bool(

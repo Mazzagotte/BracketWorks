@@ -145,6 +145,14 @@ export const defaultBracketPrograms: BracketProgramDefinition[] = [
   },
 ]
 
+export function getBracketProgramLabel(program: Pick<BracketProgramDefinition, 'key' | 'name'>): string {
+  if (program.key === 'handicap') return 'Handicap'
+  if (program.key === 'scratch') return 'Scratch'
+  if (program.key === 'reverse_scratch') return 'Reverse Scratch'
+  if (program.key === 'womens_scratch') return "Women's Scratch"
+  return program.name
+}
+
 function getDefaultBracketProgram(key: string): BracketProgramDefinition | undefined {
   return defaultBracketPrograms.find(program => program.key === key)
 }

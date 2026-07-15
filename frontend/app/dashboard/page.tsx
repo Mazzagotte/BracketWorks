@@ -12,10 +12,11 @@ import { BRACKET_SETTINGS_AUTOSAVE_DELAY_MS, getSidePotsStorageKey } from '../li
 import mobileStyles from './dashboard.module.css';
 import cardStyles from '../styles/cards.module.css';
 import shellStyles from '../styles/page-shell.module.css';
+import buttonStyles from '../styles/buttons.module.css';
 import { ConfirmationDialog } from '../components/LazyComponents';
 import { API, apiClient, apiFetch } from '../lib/api';
 import { logger } from '../lib/logger';
-import { defaultBracketPrograms, normalizeBracketPrograms, summarizeEntries } from '../lib/bracketPrograms';
+import { defaultBracketPrograms, getBracketProgramLabel, normalizeBracketPrograms, summarizeEntries } from '../lib/bracketPrograms';
 import EnhancedButton from '../components/EnhancedButton';
 import { useToast } from '../components/Toast';
 import { usePagination } from '../components/Performance';
@@ -213,12 +214,25 @@ export default function TournamentDashboard() {
     const houseAmount = splitValidation.houseAmount;
 
     try {
-      const data = await apiClient.post<BracketSettings>('/api/v1/bracket-settings/', {
+      const payload = {
         ...latestSettings,
         bracket_programs: normalizedPrograms,
         house_fee_amount: houseAmount,
         tournament_id: tournament.id
-      });
+      };
+
+      let data: BracketSettings;
+      try {
+        data = await apiClient.post<BracketSettings>('/api/v1/bracket-settings', payload);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message.toLowerCase() : '';
+        const isNotFound = message.includes('404') || message.includes('not found');
+        if (!isNotFound) {
+          throw error;
+        }
+
+        data = await apiClient.post<BracketSettings>('/api/v1/bracket-settings/', payload);
+      }
       
       // Check if it was a create or update operation
       const isUpdate = data.id && latestSettings.id;
@@ -442,6 +456,26 @@ export default function TournamentDashboard() {
       setSummaryPlayers([]);
     }
   }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleSettingsChanged = () => {
+      const tournamentId = tournament?.id;
+      if (!tournamentId) {
+        return;
+      }
+
+      void loadBracketSettings(tournamentId);
+      loadSidePots(tournamentId);
+      void loadSquadEntryCounts(tournamentId, squads);
+    };
+
+    window.addEventListener('settings-changed', handleSettingsChanged);
+    return () => {
+      window.removeEventListener('settings-changed', handleSettingsChanged);
+    };
+  }, [loadSidePots, loadSquadEntryCounts, loadBracketSettings, squads, tournament?.id]);
 
   const { handleLoadTournament, handleUnloadTournament: unloadTournament } = useTournamentOrchestration({
     tournament,
@@ -1106,10 +1140,6 @@ export default function TournamentDashboard() {
   const payoutStatusLabel = payoutWorkflowStatusLabel;
   const payoutsChipStatusLabel = payoutsCalculated ? 'Calculated' : 'Not Calculated';
 
-  const openIssuesLabel = dataIssuesCount === 1
-    ? '1 Open Issue'
-    : `${dataIssuesCount} Open Issues`;
-
   const statusNarrative = useMemo(() => {
     if (isEntryDataSyncing) {
       return {
@@ -1179,14 +1209,7 @@ export default function TournamentDashboard() {
       value: payoutsChipStatusLabel,
       tone: payoutsCalculated ? 'complete' : 'pending',
     },
-    {
-      key: 'issues',
-      label: openIssuesLabel,
-      value: '',
-      tone: dataIssuesCount > 0 ? 'alert' : 'pending',
-      showAlertIcon: dataIssuesCount > 0,
-    },
-  ]), [bracketsStatusLabel, loadedEntries, scoreStatusLabel, payoutsChipStatusLabel, payoutsCalculated, dataIssuesCount, openIssuesLabel]);
+  ]), [bracketsStatusLabel, loadedEntries, scoreStatusLabel, payoutsChipStatusLabel, payoutsCalculated]);
   const healthStripItems = useMemo(() => ([
     {
       key: 'averages',
@@ -1214,12 +1237,22 @@ export default function TournamentDashboard() {
     },
   ]), [missingAveragesCount, unpaidEntriesCount, hasGeneratedBrackets, payoutsFinalized]);
   const showHeroStatusStrip = statusNarrative.tone === 'warning' || isEntryDataSyncing;
-  const entriesProgramCountByKey = useMemo(() => {
-    const byKey: Record<string, number> = {};
-    statsEntrySummary.programSummaries.forEach(program => {
-      byKey[program.key] = program.totalEntries;
+  const orderedStatsProgramSummaries = useMemo(() => {
+    const programOrder: Record<string, number> = {
+      handicap: 0,
+      scratch: 1,
+      reverse_scratch: 2,
+      womens_scratch: 3,
+    };
+
+    return [...statsEntrySummary.programSummaries].sort((a, b) => {
+      const aOrder = programOrder[a.key] ?? Number.MAX_SAFE_INTEGER;
+      const bOrder = programOrder[b.key] ?? Number.MAX_SAFE_INTEGER;
+      if (aOrder !== bOrder) {
+        return aOrder - bOrder;
+      }
+      return a.name.localeCompare(b.name);
     });
-    return byKey;
   }, [statsEntrySummary.programSummaries]);
 
   const percentOfTotalEntries = useCallback((count: number) => {
@@ -1228,10 +1261,17 @@ export default function TournamentDashboard() {
   }, [statsEntrySummary.totalEntries]);
 
   const tournamentSummaryCards = useMemo<Array<{ key: string; label: string; value: string; helperPrimary?: string; helperSecondary?: string; accent?: boolean; href: string }>>(() => {
-    const handicapCount = entriesProgramCountByKey.handicap ?? 0;
-    const scratchCount = entriesProgramCountByKey.scratch ?? 0;
-    const reverseScratchCount = entriesProgramCountByKey.reverse_scratch ?? 0;
-    const womensScratchCount = entriesProgramCountByKey.womens_scratch ?? 0;
+    const programCards = orderedStatsProgramSummaries.map(program => {
+      const label = getBracketProgramLabel(program);
+
+      return {
+        key: `summary-${program.key}`,
+        label,
+        value: `${program.totalEntries}`,
+        helperPrimary: percentOfTotalEntries(program.totalEntries) ?? undefined,
+        href: '/players',
+      };
+    });
 
     return [
       {
@@ -1247,36 +1287,9 @@ export default function TournamentDashboard() {
         value: formatUsd(statsEntrySummary.totalRevenue),
         href: '/players',
       },
-      {
-        key: 'summary-handicap',
-        label: 'Handicap',
-        value: `${handicapCount}`,
-        helperPrimary: percentOfTotalEntries(handicapCount) ?? undefined,
-        href: '/players',
-      },
-      {
-        key: 'summary-scratch',
-        label: 'Scratch',
-        value: `${scratchCount}`,
-        helperPrimary: percentOfTotalEntries(scratchCount) ?? undefined,
-        href: '/players',
-      },
-      {
-        key: 'summary-reverse-scratch',
-        label: 'Reverse Scratch',
-        value: `${reverseScratchCount}`,
-        helperPrimary: percentOfTotalEntries(reverseScratchCount) ?? undefined,
-        href: '/players',
-      },
-      {
-        key: 'summary-womens-scratch',
-        label: "Women's Scratch",
-        value: `${womensScratchCount}`,
-        helperPrimary: percentOfTotalEntries(womensScratchCount) ?? undefined,
-        href: '/players',
-      },
+      ...programCards,
     ];
-  }, [entriesProgramCountByKey, formatUsd, loadedEntries, percentOfTotalEntries, statsEntrySummary.totalEntries, statsEntrySummary.totalRevenue]);
+  }, [formatUsd, loadedEntries, orderedStatsProgramSummaries, percentOfTotalEntries, statsEntrySummary.totalEntries, statsEntrySummary.totalRevenue]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -1506,10 +1519,6 @@ export default function TournamentDashboard() {
                                     : mobileStyles.heroStatusChipPending
                             }`}
                             onClick={() => {
-                              if (chip.key === 'issues') {
-                                router.push('/players');
-                                return;
-                              }
                               if (chip.key === 'brackets') {
                                 router.push('/brackets');
                                 return;
@@ -1711,6 +1720,15 @@ export default function TournamentDashboard() {
                 <div className={`${mobileStyles.modalScrollBody} ${mobileStyles.settingsModalScrollBody}`}>
                   <TournamentSettingsContent tournamentId={tournament.id} layout="embedded-modal" />
                 </div>
+                <div className={mobileStyles.settingsModalCloseFooter}>
+                  <button
+                    type="button"
+                    className={mobileStyles.settingsModalCloseFooterButton}
+                    onClick={() => setSettingsModalOpen(false)}
+                  >
+                    Close Settings
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -1816,10 +1834,10 @@ export default function TournamentDashboard() {
                                 )}
                               </div>
                               <div className={mobileStyles.tournamentActions}>
-                                <button className={mobileStyles.loadBtn} onClick={() => handleLoadTournament(t)}>
+                                <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.primary} ${mobileStyles.loadBtn}`} onClick={() => handleLoadTournament(t)}>
                                   {isActiveTournament ? 'Reload' : 'Load'}
                                 </button>
-                                <button className={mobileStyles.deleteBtn} onClick={() => setDeleteConfirm({id: t.id, name: t.name})}>Delete</button>
+                                <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.danger} ${mobileStyles.deleteBtn}`} onClick={() => setDeleteConfirm({id: t.id, name: t.name})}>Delete</button>
                               </div>
                             </li>
                           );

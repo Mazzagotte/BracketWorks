@@ -121,8 +121,11 @@
   --input-height: 40px;
   --input-height-lg: 48px;
   --btn-height-sm: 32px;
-  --btn-height: 40px;
-  --btn-height-lg: 48px;
+  --btn-height: 32px;
+  --btn-height-lg: 32px;
+  --btn-padding-x-sm: 12px;
+  --btn-padding-x: 12px;
+  --btn-padding-x-lg: 12px;
 
   /* Active theme: opacity helpers used across global and module CSS */
   --opacity-white-10: rgba(241, 238, 233, 0.1);

@@ -20,17 +20,17 @@ import { logger } from '../lib/logger'
 import { Squad, Player, PlayerFormPrefillDraft } from './types'
 import { BracketProgramDefinition, Tournament } from '../lib/types'
 import { apiClient, API, apiFetch } from '../lib/api'
-import { calculatePlayerTotalCost, calculateSidePotCost, defaultBracketPrograms, filterEntriesForDivision, getEnabledBracketPrograms, normalizeBracketPrograms, normalizeDivision, normalizePlayerBracketEntries, summarizeEntries } from '../lib/bracketPrograms'
+import { calculatePlayerTotalCost, calculateSidePotCost, defaultBracketPrograms, filterEntriesForDivision, getBracketProgramLabel, getEnabledBracketPrograms, normalizeBracketPrograms, normalizeDivision, normalizePlayerBracketEntries, summarizeEntries } from '../lib/bracketPrograms'
 import styles from './entries.module.css'
 import cardStyles from '../styles/cards.module.css'
 import buttonStyles from '../styles/buttons.module.css'
 import badgeStyles from '../styles/badges.module.css'
 import formStyles from '../styles/forms.module.css'
 import shellStyles from '../styles/page-shell.module.css'
-import toolbarStyles from '../styles/toolbars.module.css'
 import ExplainEntriesModal from './ExplainEntriesModal'
 import { useToastHelpers } from '../components/Toast'
 import ImportLoadingModal from '../components/ImportLoadingModal'
+import primitiveStyles from '../components/primitives/primitives.module.css'
 import { getSelectedSquadId, getSelectedTournamentId, setSelectedSquad } from '../lib/selection-session'
 import { resetScrollLocks, setBodyInteractionState } from '../utils/modalUtils'
 
@@ -765,44 +765,48 @@ export default function PlayersPage() {
             )}
             {(!isMobileView || !historySearchCollapsed) && (
             <div className={styles.historyPanelBody}>
-              <div className={`${toolbarStyles.toolbar} ${styles.searchContainer} ${styles.findBowlerSearchRow}`}>
-                <input
-                  type="text"
-                  className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput} ${styles.findBowlerInput}`}
-                  placeholder="USBC #"
-                  value={historySearchUsbc}
-                  onChange={(event) => setHistorySearchUsbc(event.target.value)}
-                />
-                <input
-                  type="text"
-                  className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput} ${styles.findBowlerInput}`}
-                  placeholder="First Name"
-                  value={historySearchFirstName}
-                  onChange={(event) => setHistorySearchFirstName(event.target.value)}
-                />
-                <input
-                  type="text"
-                  className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput} ${styles.findBowlerInput}`}
-                  placeholder="Last Name"
-                  value={historySearchLastName}
-                  onChange={(event) => setHistorySearchLastName(event.target.value)}
-                />
-                <button
-                  type="button"
-                  className={styles.searchActionBtn}
-                  onClick={triggerHistorySearch}
-                  disabled={!hasHistorySearchInput}
-                >
-                  Find Bowler
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.clearSearchBtn} ${hasHistorySearchInput ? styles.clearSearchBtnActive : ''}`}
-                  onClick={clearHistorySearch}
-                  disabled={!hasHistorySearchInput}
-                >
-                  Clear
-                </button>
+              <div className={primitiveStyles.searchPanelContentRow}>
+                <div className={primitiveStyles.searchPanelContentLeft}>
+                  <input
+                    type="text"
+                    className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput} ${styles.findBowlerInput} ${primitiveStyles.searchPanelInput}`}
+                    placeholder="USBC #"
+                    value={historySearchUsbc}
+                    onChange={(event) => setHistorySearchUsbc(event.target.value)}
+                  />
+                  <input
+                    type="text"
+                    className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput} ${styles.findBowlerInput} ${primitiveStyles.searchPanelInput}`}
+                    placeholder="First name"
+                    value={historySearchFirstName}
+                    onChange={(event) => setHistorySearchFirstName(event.target.value)}
+                  />
+                  <input
+                    type="text"
+                    className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput} ${styles.findBowlerInput} ${primitiveStyles.searchPanelInput}`}
+                    placeholder="Last name"
+                    value={historySearchLastName}
+                    onChange={(event) => setHistorySearchLastName(event.target.value)}
+                  />
+                </div>
+                <div className={primitiveStyles.searchPanelContentRight}>
+                  <button
+                    type="button"
+                    className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction} ${styles.searchActionBtn}`}
+                    onClick={triggerHistorySearch}
+                    disabled={!hasHistorySearchInput}
+                  >
+                    Find Bowler
+                  </button>
+                  <button
+                    type="button"
+                    className={`${primitiveStyles.searchPanelClearButton} ${styles.clearSearchBtn} ${hasHistorySearchInput ? styles.clearSearchBtnActive : ''}`}
+                    onClick={clearHistorySearch}
+                    disabled={!hasHistorySearchInput}
+                  >
+                    Clear
+                  </button>
+                </div>
               </div>
 
               {isHistorySearching ? (
@@ -833,6 +837,7 @@ export default function PlayersPage() {
                 squads={squads}
                 entryFee={entryFee}
                 bracketPrograms={enabledBracketPrograms}
+                sidePots={sidePots}
                 prefillDraft={prefillDraft}
                 prefillVersion={prefillVersion}
               />
@@ -888,7 +893,7 @@ export default function PlayersPage() {
                       {orderedProgramSummaries.map(program => (
                         <div key={program.key} className={`${cardStyles.statTile} ${cardStyles.statTileCompact} ${styles.statBox}`}>
                           <div className={`${cardStyles.statValue} ${styles.statValue}`}>{program.totalEntries}</div>
-                          <div className={`${cardStyles.statLabel} ${styles.statLabel}`}>{program.key === 'handicap' ? 'Handicap' : program.key === 'scratch' ? 'Scratch' : program.key === 'reverse_scratch' ? 'Reverse Scratch' : program.key === 'womens_scratch' ? 'Women\'s Scratch' : program.name}</div>
+                          <div className={`${cardStyles.statLabel} ${styles.statLabel}`}>{getBracketProgramLabel(program)}</div>
                           <div className={`${cardStyles.statDetail} ${styles.statDetail}`}>Projected {program.expectedBrackets} brackets</div>
                           {program.refunds > 0 && (
                             <div className={styles.statRefund}>{program.refunds} overflow entries</div>
@@ -927,40 +932,44 @@ export default function PlayersPage() {
                 {(!isMobileView || !tableSearchCollapsed) && (
                 <div className={styles.tableSearchPanelBody}>
                   <p className={styles.findEntryHelperText}>Search by USBC number, first name, or last name.</p>
-                  <div className={`${toolbarStyles.toolbar} ${styles.searchContainer} ${styles.searchContainerSticky}`}>
-                    <input
-                      type="text"
-                      className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput}`}
-                      placeholder="USBC #"
-                      value={searchUsbc}
-                      onChange={(event) => setSearchUsbc(event.target.value)}
-                    />
-                    <input
-                      type="text"
-                      className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput}`}
-                      placeholder="First name"
-                      value={searchFirstName}
-                      onChange={(event) => setSearchFirstName(event.target.value)}
-                    />
-                    <input
-                      type="text"
-                      className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput}`}
-                      placeholder="Last name"
-                      value={searchLastName}
-                      onChange={(event) => setSearchLastName(event.target.value)}
-                    />
-                    <button
-                      type="button"
-                      className={`${styles.clearSearchBtn} ${hasActiveEntryFilters ? styles.clearSearchBtnActive : ''}`}
-                      onClick={() => {
-                        setSearchUsbc('')
-                        setSearchFirstName('')
-                        setSearchLastName('')
-                      }}
-                      disabled={!hasActiveEntryFilters}
-                    >
-                      Clear
-                    </button>
+                  <div className={primitiveStyles.searchPanelContentRow}>
+                    <div className={primitiveStyles.searchPanelContentLeft}>
+                      <input
+                        type="text"
+                        className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput} ${primitiveStyles.searchPanelInput}`}
+                        placeholder="USBC #"
+                        value={searchUsbc}
+                        onChange={(event) => setSearchUsbc(event.target.value)}
+                      />
+                      <input
+                        type="text"
+                        className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput} ${primitiveStyles.searchPanelInput}`}
+                        placeholder="First name"
+                        value={searchFirstName}
+                        onChange={(event) => setSearchFirstName(event.target.value)}
+                      />
+                      <input
+                        type="text"
+                        className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput} ${primitiveStyles.searchPanelInput}`}
+                        placeholder="Last name"
+                        value={searchLastName}
+                        onChange={(event) => setSearchLastName(event.target.value)}
+                      />
+                    </div>
+                    <div className={primitiveStyles.searchPanelContentRight}>
+                      <button
+                        type="button"
+                        className={`${primitiveStyles.searchPanelClearButton} ${styles.clearSearchBtn} ${hasActiveEntryFilters ? styles.clearSearchBtnActive : ''}`}
+                        onClick={() => {
+                          setSearchUsbc('')
+                          setSearchFirstName('')
+                          setSearchLastName('')
+                        }}
+                        disabled={!hasActiveEntryFilters}
+                      >
+                        Clear
+                      </button>
+                    </div>
                   </div>
                 </div>
                 )}
@@ -972,66 +981,6 @@ export default function PlayersPage() {
                     <h3 className={`${cardStyles.cardTitle} ${styles.entriesTableTitle}`}>Entries</h3>
                     <p className={styles.entriesTableSubtitle}>{entriesTableSubtitle}</p>
                   </div>
-                </div>
-                <div className={`${cardStyles.cardHeader} ${styles.entriesSearchDock}`}>
-                  {isMobileView ? (
-                    <button
-                      type="button"
-                      className={`${cardStyles.cardHeader} ${styles.formTitleToggle} ${styles.entriesSearchToggle}`}
-                      aria-expanded={!tableSearchCollapsed}
-                      onClick={() => setTableSearchCollapsed(previous => !previous)}
-                    >
-                      <span>Find Entry</span>
-                      <span className={styles.formTitleExpandIcon}>{tableSearchCollapsed ? '+' : '-'}</span>
-                    </button>
-                  ) : (
-                    <div className={styles.entriesSearchLabelRow}>
-                      <h3 className={styles.entriesSearchTitle}>Find Entry</h3>
-                      <p className={styles.findEntryHelperText}>Search by USBC number, first name, or last name.</p>
-                    </div>
-                  )}
-                  {(!isMobileView || !tableSearchCollapsed) && (
-                    <div className={styles.tableSearchPanelBody}>
-                      {isMobileView && (
-                        <p className={styles.findEntryHelperText}>Search by USBC number, first name, or last name.</p>
-                      )}
-                      <div className={`${toolbarStyles.toolbar} ${styles.searchContainer} ${styles.searchContainerSticky}`}>
-                        <input
-                          type="text"
-                          className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput}`}
-                          placeholder="USBC #"
-                          value={searchUsbc}
-                          onChange={(event) => setSearchUsbc(event.target.value)}
-                        />
-                        <input
-                          type="text"
-                          className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput}`}
-                          placeholder="First name"
-                          value={searchFirstName}
-                          onChange={(event) => setSearchFirstName(event.target.value)}
-                        />
-                        <input
-                          type="text"
-                          className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput}`}
-                          placeholder="Last name"
-                          value={searchLastName}
-                          onChange={(event) => setSearchLastName(event.target.value)}
-                        />
-                        <button
-                          type="button"
-                          className={`${styles.clearSearchBtn} ${hasActiveEntryFilters ? styles.clearSearchBtnActive : ''}`}
-                          onClick={() => {
-                            setSearchUsbc('')
-                            setSearchFirstName('')
-                            setSearchLastName('')
-                          }}
-                          disabled={!hasActiveEntryFilters}
-                        >
-                          Clear
-                        </button>
-                      </div>
-                    </div>
-                  )}
                 </div>
                 <PlayersTable
                   players={players}

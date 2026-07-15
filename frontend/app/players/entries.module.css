@@ -413,10 +413,10 @@
 }
 
 .historyResultButton {
-  border: 1px solid var(--color-gray-300) !important;
-  background: var(--color-gray-50) !important;
+  border: 1px solid color-mix(in srgb, var(--bw-border-subtle) 96%, transparent) !important;
+  background: color-mix(in srgb, var(--bw-surface-panel) 92%, transparent) !important;
   background-image: none !important;
-  color: var(--color-text-primary) !important;
+  color: var(--bw-text-title) !important;
   border-radius: 10px;
   padding: 12px 14px;
   display: flex;
@@ -430,8 +430,8 @@
 }
 
 .historyResultButton:hover {
-  border-color: var(--color-primary);
-  box-shadow: var(--ring-brand-sm), 0 3px 10px var(--opacity-black-10);
+  border-color: color-mix(in srgb, var(--color-primary) 70%, transparent);
+  box-shadow: var(--ring-brand-sm), 0 3px 10px var(--opacity-black-35);
   transform: translateY(-1px);
 }
 
@@ -443,27 +443,27 @@
 .historyResultName {
   font-size: 1rem;
   font-weight: 700;
-  color: var(--color-text-primary) !important;
+  color: var(--bw-text-title) !important;
 }
 
 .historyResultUsbc {
   font-size: 0.84rem;
-  color: var(--color-gray-500) !important;
+  color: color-mix(in srgb, var(--bw-text-body) 74%, transparent) !important;
   font-weight: 600;
 }
 
 .historyResultAction {
   font-size: 0.8rem;
-  color: var(--color-gray-900) !important;
+  color: color-mix(in srgb, var(--bw-text-accent) 92%, transparent) !important;
   font-weight: 600;
   margin-top: 2px;
 }
 
 /* Extra specificity to beat generic button rules from global stylesheets. */
 .historyResultsList .historyResultButton {
-  background-color: var(--color-gray-50) !important;
-  border-color: var(--color-gray-300) !important;
-  color: var(--color-text-primary) !important;
+  background-color: color-mix(in srgb, var(--bw-surface-panel) 92%, transparent) !important;
+  border-color: color-mix(in srgb, var(--bw-border-subtle) 96%, transparent) !important;
+  color: var(--bw-text-title) !important;
 }
 
 .historyMeta {
@@ -526,9 +526,10 @@
 
   .clearSearchBtn {
     width: 100%;
-    min-height: 44px;
-    padding: 12px 16px;
-    font-size: 15px;
+    min-height: var(--btn-height);
+    height: var(--btn-height);
+    padding: 0 var(--btn-padding-x);
+    font-size: var(--font-size-sm);
     border-radius: 10px;
     font-weight: 700;
   }
@@ -637,8 +638,9 @@
   }
 
   .submitBtn {
-    min-height: 48px;
-    font-size: 15px;
+    min-height: var(--btn-height);
+    height: var(--btn-height);
+    font-size: var(--font-size-sm);
   }
 
   .historyPanelBody {
@@ -809,7 +811,8 @@
   }
 
   .submitBtn {
-    min-height: 46px;
+    min-height: var(--btn-height);
+    height: var(--btn-height);
     font-size: 0.8rem;
   }
 }
@@ -902,27 +905,15 @@
 }
 
 .submitBtn {
-  background: var(--gradient-brand);
-  color: var(--color-white);
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 12px;
-  font-size: 0.875rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
-  box-shadow: var(--bw-shadow-accent), inset 0 0 0 1px color-mix(in srgb, var(--color-primary) 24%, white);
+  white-space: nowrap;
 }
 
 .submitBtn:hover:not(:disabled) {
-  filter: brightness(1.05);
-  transform: translateY(-1px);
-  box-shadow: 0 12px 24px color-mix(in srgb, var(--color-primary) 28%, transparent), inset 0 0 0 1px color-mix(in srgb, var(--color-primary) 30%, white);
+  transform: none;
 }
 
 .submitBtn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .formFooter {
@@ -1066,55 +1057,28 @@
 }
 
 .searchActionBtn {
-  background: var(--gradient-brand);
-  color: var(--color-white);
-  border: 1px solid var(--bw-border-accent);
-  border-radius: 10px;
-  min-height: 40px;
-  padding: 0.52rem 0.95rem;
-  font-size: 0.82rem;
-  font-weight: 700;
   white-space: nowrap;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
-  box-shadow: var(--bw-shadow-accent);
 }
 
 .searchActionBtn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  filter: brightness(1.05);
-  box-shadow: 0 10px 20px color-mix(in srgb, var(--color-primary) 24%, transparent);
+  transform: none;
 }
 
 .searchActionBtn:disabled {
   opacity: 0.45;
-  cursor: not-allowed;
-  box-shadow: none;
 }
 
 .clearSearchBtn {
-  background: color-mix(in srgb, var(--entries-panel-deep) 62%, transparent);
-  color: var(--entries-text-body);
-  border: 1px solid color-mix(in srgb, var(--entries-border-soft) 70%, transparent);
-  border-radius: 10px;
-  min-height: 40px;
-  padding: 0.52rem 0.95rem;
-  font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+  white-space: nowrap;
 }
 
 .clearSearchBtn:hover:not(:disabled),
 .clearSearchBtnActive {
-  border-color: color-mix(in srgb, var(--entries-border-strong) 78%, transparent);
-  color: var(--entries-text-title);
-  background: color-mix(in srgb, var(--entries-panel-deep) 86%, transparent);
+  filter: brightness(0.98);
 }
 
 .clearSearchBtn:disabled {
   opacity: 0.35;
-  cursor: not-allowed;
 }
 
 @media (max-width: 900px) {
@@ -1134,8 +1098,6 @@
   .searchActionBtn,
   .clearSearchBtn {
     width: 100%;
-    min-height: 44px;
-    font-size: 0.92rem;
   }
 }
 
@@ -1352,6 +1314,39 @@
   font-size: 13px;
   font-weight: 600;
   color: var(--entries-text-title);
+}
+.mobileSidePotToggle input[type='checkbox'] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 5px;
+  border: 1px solid color-mix(in srgb, var(--bw-border-subtle) 96%, transparent);
+  background: color-mix(in srgb, var(--bw-surface-panel) 94%, transparent);
+  display: inline-grid;
+  place-content: center;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+.mobileSidePotToggle input[type='checkbox']::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  transform: scale(0);
+  transition: transform 120ms ease-in-out;
+  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+  background: color-mix(in srgb, var(--color-primary) 98%, transparent);
+}
+.mobileSidePotToggle input[type='checkbox']:checked {
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 68%, transparent);
+}
+.mobileSidePotToggle input[type='checkbox']:checked::after {
+  transform: scale(1);
+}
+.mobileSidePotToggle input[type='checkbox']:focus-visible {
+  outline: none;
+  box-shadow: var(--bw-focus-ring);
 }
 
 @media (max-width: 900px) {
@@ -1602,14 +1597,7 @@
 .addBowlerCard .formTitle::before,
 .entriesTableTitle::before,
 .summaryTitle::before {
-  content: '';
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  margin-right: 8px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--color-primary) 76%, transparent);
-  vertical-align: middle;
+  content: none;
 }
 
 .findBowlerCard .historyPanelBody {
@@ -1953,34 +1941,25 @@
 
 .findBowlerCard .searchActionBtn,
 .findBowlerCard .clearSearchBtn {
-  min-height: 42px;
-  border-radius: 11px;
-  padding: 0.52rem 0.9rem;
-  font-size: 0.8rem;
+  min-height: var(--btn-height);
+  height: var(--btn-height);
 }
 
 .findBowlerCard .searchActionBtn {
-  background: linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 68%, white) 0%, var(--color-primary) 56%, color-mix(in srgb, var(--color-primary-hover) 86%, black) 100%);
-  border: 1px solid color-mix(in srgb, var(--color-primary) 46%, white);
-  color: var(--color-white);
+  white-space: nowrap;
 }
 
 .findBowlerCard .searchActionBtn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 9px 20px color-mix(in srgb, var(--color-primary) 34%, transparent);
+  transform: none;
 }
 
 .findBowlerCard .clearSearchBtn {
-  background: color-mix(in srgb, var(--entries-panel-deep) 72%, transparent);
-  border: 1px solid var(--entries-border-soft);
-  color: var(--entries-text-body);
+  white-space: nowrap;
 }
 
 .findBowlerCard .clearSearchBtn:hover:not(:disabled),
 .findBowlerCard .clearSearchBtnActive {
-  border-color: var(--entries-border-strong);
-  color: var(--entries-text-title);
-  background: color-mix(in srgb, var(--entries-panel-deep) 90%, transparent);
+  filter: brightness(0.98);
 }
 
 .addBowlerCard .formSubtitle {
@@ -2069,6 +2048,65 @@
   gap: 0.42rem 0.56rem;
   justify-content: stretch;
   width: 100%;
+}
+
+.addBowlerSidePotGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.4rem 0.56rem;
+}
+
+.addBowlerSidePotOption {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.46rem;
+  min-height: 30px;
+  padding: 0.28rem 0.46rem;
+  border-radius: 10px;
+  border: 1px solid var(--entries-border);
+  background: var(--entries-surface-faint);
+  color: var(--entries-text-title);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.addBowlerSidePotCheckbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 5px;
+  border: 1px solid color-mix(in srgb, var(--bw-border-subtle) 96%, transparent);
+  background: color-mix(in srgb, var(--bw-surface-panel) 94%, transparent);
+  display: inline-grid;
+  place-content: center;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.addBowlerSidePotCheckbox::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  transform: scale(0);
+  transition: transform 120ms ease-in-out;
+  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+  background: color-mix(in srgb, var(--color-primary) 98%, transparent);
+}
+
+.addBowlerSidePotCheckbox:checked {
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 68%, transparent);
+}
+
+.addBowlerSidePotCheckbox:checked::after {
+  transform: scale(1);
+}
+
+.addBowlerSidePotCheckbox:focus-visible {
+  outline: none;
+  box-shadow: var(--bw-focus-ring);
 }
 
 .addBowlerCard .compactField {
@@ -2177,6 +2215,50 @@
   background: color-mix(in srgb, var(--color-primary) 12%, transparent);
 }
 
+.addBowlerCard .paymentSummaryPanel .compactField {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 34px;
+  padding: 0 0.72rem;
+  border-radius: 999px;
+  border: 1px solid var(--entries-border);
+  background: var(--entries-surface-faint);
+  gap: 0.5rem;
+}
+
+.addBowlerCard .paymentSummaryPanel .compactField .fieldLabel {
+  margin: 0;
+  font-size: 0.79rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  line-height: 1.2;
+  color: var(--entries-text-body);
+}
+
+.addBowlerCard .paymentSummaryPanel .compactInput {
+  width: 84px;
+  max-width: 84px;
+  margin: 0;
+  min-height: 26px;
+  padding: 0 0.45rem;
+  border: 1px solid var(--entries-border-soft);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--entries-panel-deep) 90%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-white) 10%, transparent);
+  text-align: right;
+  font-size: 0.79rem;
+  font-weight: 700;
+  color: var(--entries-text-body);
+}
+
+.addBowlerCard .paymentSummaryPanel .compactInput:focus {
+  outline: none;
+  border-color: var(--entries-accent-border-solid);
+  box-shadow: var(--bw-focus-ring);
+}
+
 .addBowlerCard .formFooter {
   margin-top: 0.25rem;
   gap: 0.9rem;
@@ -2192,18 +2274,13 @@
 }
 
 .addBowlerCard .submitBtn {
-  min-height: 46px;
-  padding: 0.72rem 1.25rem;
-  border-radius: 13px;
-  font-size: 0.9rem;
-  font-weight: 800;
-  background: linear-gradient(140deg, color-mix(in srgb, var(--color-primary) 68%, white) 0%, var(--color-primary) 52%, color-mix(in srgb, var(--color-primary-hover) 92%, black) 100%);
-  box-shadow: 0 10px 24px color-mix(in srgb, var(--color-primary) 34%, transparent), 0 0 0 1px color-mix(in srgb, var(--color-primary) 24%, white) inset;
+  min-height: var(--btn-height);
+  height: var(--btn-height);
+  white-space: nowrap;
 }
 
 .addBowlerCard .submitBtn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  filter: brightness(1.04);
+  transform: none;
 }
 
 @media (max-width: 1180px) {
@@ -2303,17 +2380,199 @@
   .addBowlerCard .compactInput {
     min-height: 28px;
   }
+
+  .addBowlerCard .paymentSummaryPanel .compactField {
+    padding-left: 0.72rem;
+    padding-right: 0.72rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .addBowlerCard form {
+    padding: 0.5rem 0.72rem 0.86rem;
+  }
+
+  .addBowlerCard .formGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.62rem 0.64rem;
+  }
+
+  .addBowlerCard .compactSection {
+    padding: 0.72rem;
+    border-radius: 14px;
+    margin-bottom: 0.72rem;
+  }
+
+  .addBowlerCard .entriesCol .compactGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.32rem;
+  }
+
+  .addBowlerCard .compactField {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 0.34rem;
+    padding: 0.42rem 0.42rem;
+    border-radius: 10px;
+  }
+
+  .addBowlerCard .entriesCol .compactField {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 0.2rem;
+    padding: 0.32rem 0.36rem;
+    border-radius: 9px;
+  }
+
+  .addBowlerCard .entriesCol .compactField .fieldLabel {
+    font-size: 0.58rem;
+    letter-spacing: 0.05em;
+    line-height: 1.1;
+    text-transform: uppercase;
+    min-width: 0;
+    margin-right: 0;
+    text-align: left;
+    font-weight: 600;
+    color: var(--entries-text-muted);
+  }
+
+  .addBowlerCard .compactField .fieldLabel {
+    text-align: left;
+    min-width: 0;
+    font-size: 0.62rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .addBowlerCard .stepperControl {
+    margin-left: 0;
+    max-width: none;
+    width: 100%;
+    grid-template-columns: 28px minmax(44px, 1fr) 28px;
+    gap: 0.26rem;
+  }
+
+  .addBowlerCard .entriesCol .stepperControl {
+    margin-left: 0;
+    width: 100%;
+    max-width: none;
+    grid-template-columns: 26px minmax(36px, 54px) 26px;
+    gap: 0.2rem;
+    justify-content: start;
+  }
+
+  .addBowlerCard .entriesCol .stepperBtn,
+  .addBowlerCard .entriesCol .compactInput {
+    min-height: 24px;
+    border-radius: 6px;
+  }
+
+  .addBowlerCard .entriesCol .compactInput {
+    font-size: 0.72rem;
+    padding: 0.1rem 0.2rem;
+  }
+
+  .addBowlerCard .compactInput {
+    max-width: none;
+    width: 100%;
+    font-size: 0.73rem;
+  }
+
+  .addBowlerCard .stepperBtn,
+  .addBowlerCard .compactInput {
+    min-height: 28px;
+    border-radius: 7px;
+  }
+
+  .addBowlerCard .paymentSummaryPanel .compactField {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    min-height: 34px;
+    padding: 0 0.72rem;
+    gap: 0.5rem;
+    border-radius: 999px;
+  }
+
+  .addBowlerCard .paymentSummaryPanel .compactInput {
+    width: 84px !important;
+    max-width: 84px !important;
+    min-height: 26px !important;
+    padding: 0 0.45rem !important;
+    text-align: right !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .addBowlerCard .formGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .addBowlerCard .entriesCol .compactGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.28rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .addBowlerCard .entriesCol .compactGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .pageContainer {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  .pageContainer .entriesSectionWidth,
+  .entryWorkflowLayout {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  .findBowlerCard,
+  .addBowlerCard,
+  .summaryCard,
+  .tableCard,
+  .formCard {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0;
+  }
+
+  .tableCard,
+  .tableCard .tableSearchPanelBody,
+  .tableCard .entriesTableContainer,
+  .mobileEntriesContainer,
+  .mobilePlayersList,
+  .mobilePlayerCard,
+  .entriesTableWrap {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+  }
 }
 
 /* Entries table refinement: Find Entry + command-center table hierarchy */
 .standaloneEntrySearchCard {
-  display: none;
+  display: block;
+  margin-bottom: 0.82rem;
 }
 
 .findEntryHelperText {
   margin: 0 0 0.58rem;
   font-size: 0.78rem;
   color: var(--entries-text-muted);
+}
+
+@media (max-width: 640px) {
+  .standaloneEntrySearchCard {
+    margin-bottom: 0.68rem;
+  }
 }
 
 .entriesTableHeader {
@@ -2880,7 +3139,8 @@
 .searchActionBtn,
 .clearSearchBtn,
 .submitBtn {
-  min-height: 40px;
+  min-height: var(--btn-height);
+  height: var(--btn-height);
   font-size: 13px;
   line-height: 1.2;
   font-weight: 600;
@@ -3624,10 +3884,11 @@
     font-size: 0.58rem;
     line-height: 1.12;
   }
-
   .mobilePlayerField input,
   .mobilePlayerField select {
     min-height: 33px;
+    width: 100%;
+    min-width: 0;
   }
 }
 
@@ -3649,6 +3910,16 @@
 
   .mobilePlayerDetails {
     padding: 0.36rem;
+  }
+
+  .mobilePlayerField {
+    min-width: 0;
+  }
+
+  .mobilePlayerField input,
+  .mobilePlayerField select {
+    width: 100%;
+    min-width: 0;
   }
 }
 
@@ -3858,4 +4129,34 @@
     flex: 0 0 auto;
   }
 }
+
+  /* Final lock: expanded mobile player-card fields must stay two-column and non-overlapping. */
+  @media (max-width: 900px) {
+    .mobilePlayerFieldGrid,
+    .mobileProgramGrid {
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      gap: 0.34rem !important;
+    }
+
+    .mobileFieldFirstName,
+    .mobileFieldLastName,
+    .mobileFieldUsbc,
+    .mobileFieldDivision,
+    .mobileFieldLane,
+    .mobileFieldAverage {
+      grid-column: span 1 !important;
+    }
+
+    .mobilePlayerField,
+    .mobilePlayerField > span {
+      min-width: 0;
+    }
+
+    .mobilePlayerField :where(input, select) {
+      width: 100% !important;
+      min-width: 0 !important;
+      max-width: 100% !important;
+      box-sizing: border-box;
+    }
+  }
 

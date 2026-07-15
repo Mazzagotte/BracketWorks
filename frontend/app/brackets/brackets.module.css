@@ -201,12 +201,43 @@
 .bracketNav {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: 0.5rem;
   padding: 0.625rem 1.25rem;
   background: transparent;
   max-width: 100%;
   margin: 0;
+}
+
+.navMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.52rem;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.navMetaPrimary {
+  color: var(--bw-text-title);
+  font-size: 0.78rem;
+  font-weight: 760;
+  line-height: 1.15;
+}
+
+.navMetaSecondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 22px;
+  padding: 0 0.5rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 32%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  color: var(--bw-text-accent);
+  font-size: 0.68rem;
+  font-weight: 760;
+  letter-spacing: 0;
+  white-space: nowrap;
 }
 
 .navBtns {
@@ -282,12 +313,22 @@
 
   .bracketNav {
     padding: 0.42rem 0.58rem;
-    justify-content: flex-end;
+    justify-content: space-between;
   }
 
   .navBtns {
-    width: 100%;
+    width: auto;
     justify-content: flex-end;
+  }
+
+  .navMetaPrimary {
+    font-size: 0.72rem;
+  }
+
+  .navMetaSecondary {
+    min-height: 20px;
+    padding: 0 0.42rem;
+    font-size: 0.62rem;
   }
 
   .navBtn {

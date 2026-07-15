@@ -906,6 +906,80 @@
 }
 
 .settingsModalGrid .mainBracketSettingsCard .settingsColumn,
+
+  .settingsModalGrid .mainBracketSettingsCard .settingsGrid {
+    gap: 10px;
+  }
+
+  .settingsModalGrid .mainBracketSettingsCard .settingsColumn {
+    background: color-mix(in srgb, var(--bw-surface-panel) 88%, transparent);
+    border: 1px solid color-mix(in srgb, var(--bw-border-subtle) 86%, transparent);
+    border-radius: 12px;
+    padding: 8px 9px;
+  }
+
+  .settingsModalGrid .mainBracketSettingsCard .sectionHeader,
+  .settingsModalGrid .sidePotsCard .sectionHeader,
+  .settingsModalGrid .programsSettingsCard .sectionHeader {
+    border-bottom: none;
+    margin-bottom: 4px;
+    padding: 0;
+  }
+
+  .settingsModalGrid .mainBracketSettingsCard .sectionTitle,
+  .settingsModalGrid .sidePotsCard .sectionTitle,
+  .settingsModalGrid .programsSettingsCard .sectionTitle {
+    font-size: 12px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--bw-text-muted) 88%, transparent);
+  }
+
+  .settingsModalGrid .mainBracketSettingsCard .fieldGroup,
+  .settingsModalGrid .sidePotsCard .fieldGroup {
+    gap: 7px;
+  }
+
+  .settingsModalGrid .compactField {
+    background: color-mix(in srgb, var(--bw-surface-card) 92%, transparent);
+    border: 1px solid color-mix(in srgb, var(--bw-border-subtle) 82%, transparent);
+    border-radius: 10px;
+    padding: 7px;
+    gap: 5px;
+  }
+
+  .settingsModalGrid .compactLabel {
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .settingsModalGrid .compactSelect,
+  .settingsModalGrid .compactInput {
+    min-height: 40px;
+    border-radius: 9px;
+    background: color-mix(in srgb, var(--bw-surface-panel) 94%, transparent);
+    border-color: color-mix(in srgb, var(--bw-border-subtle) 92%, transparent);
+  }
+
+  .settingsModalGrid .settingsCalculatedSummary {
+    margin-top: 6px;
+    padding-top: 8px;
+    border-top-color: color-mix(in srgb, var(--bw-border-subtle) 82%, transparent);
+    gap: 5px;
+  }
+
+  .settingsModalGrid .settingsCalculatedSummaryRow {
+    background: color-mix(in srgb, var(--bw-surface-panel) 88%, transparent);
+    border: 1px solid color-mix(in srgb, var(--bw-border-subtle) 82%, transparent);
+    border-radius: 9px;
+    padding: 6px 8px;
+    font-size: 11px;
+  }
+
+  .settingsModalGrid .settingsCalculatedSummaryRow strong {
+    font-size: 11px;
+  }
 .settingsModalGrid .mainBracketSettingsCard .settingsSection,
 .settingsModalGrid .mainBracketSettingsCard .sectionHeader,
 .settingsModalGrid .mainBracketSettingsCard .fieldGroup {
@@ -3075,6 +3149,27 @@
   box-shadow: none !important;
 }
 
+.settingsModalCloseFooter {
+  display: none;
+}
+
+.settingsModalCloseFooterButton {
+  border: 1px solid color-mix(in srgb, var(--bw-border-subtle) 88%, transparent);
+  background: color-mix(in srgb, var(--bw-surface-panel) 92%, transparent);
+  color: var(--bw-text-title);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.settingsModalCloseFooterButton:hover,
+.settingsModalCloseFooterButton:focus-visible {
+  border-color: color-mix(in srgb, var(--color-primary) 34%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+}
+
 /* Page text normalization */
 .contentContainer,
 .mobileContainer,
@@ -4458,17 +4553,99 @@
 
 @media (max-width: 640px) {
   .summaryCardsBand {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: 1fr;
+    align-items: stretch;
   }
 
   .summaryCard {
-    min-height: 118px;
+    min-height: 112px;
+    width: 100%;
+    height: 100%;
+  }
+
+  .summaryCardsBand .statTile {
+    width: 100%;
+    height: 100%;
+    border-radius: 12px;
+    padding: 10px 8px;
+    background: color-mix(in srgb, var(--bw-surface-panel) 90%, transparent);
+    border-color: color-mix(in srgb, var(--bw-border-subtle) 86%, transparent);
+  }
+
+  .summaryCardsBand .statTile .statLabel {
+    font-size: 0.6rem;
+    letter-spacing: 0.08em;
+  }
+
+  .summaryCardsBand .statTile .statValue {
+    font-size: 1.6rem;
+    line-height: 1.02;
+  }
+
+  .summaryCardsBand .statTile .statCaption,
+  .summaryCardsBand .statTile .statCaptionMuted {
+    font-size: 0.65rem;
+    line-height: 1.25;
   }
 
   .heroMetaCompact,
   .heroSummaryLine {
     gap: 0.3rem;
     font-size: 0.76rem;
+  }
+
+  .bracketInfoRow {
+    grid-template-columns: minmax(104px, 0.95fr) minmax(0, 1.05fr);
+    gap: 0.5rem;
+    padding: 0.48rem 0.58rem;
+    border: 1px solid color-mix(in srgb, var(--bw-border-subtle) 88%, transparent);
+    border-radius: 11px;
+    background: color-mix(in srgb, var(--bw-surface-panel) 90%, transparent);
+  }
+
+  .bracketInfoValue,
+  .statusBadge {
+    justify-self: end;
+    text-align: right;
+  }
+
+  .bracketInfoLabel {
+    font-size: 0.67rem;
+    letter-spacing: 0.07em;
+    color: color-mix(in srgb, var(--bw-text-muted) 84%, transparent);
+  }
+
+  .bracketInfoValue {
+    font-size: 0.84rem;
+  }
+
+  .prizeSectionGroup {
+    gap: 0.42rem;
+  }
+
+  .prizeSectionGroup .bracketInfoRow {
+    border-color: color-mix(in srgb, var(--bw-border-card) 70%, transparent);
+    background: color-mix(in srgb, var(--bw-surface-panel-strong) 90%, transparent);
+  }
+
+  .commissionerPanel .squadRailPill {
+    border-radius: 10px;
+    padding: 0.5rem 0.6rem;
+    min-height: 36px;
+    background: color-mix(in srgb, var(--bw-surface-panel) 90%, transparent) !important;
+    border-color: color-mix(in srgb, var(--bw-border-subtle) 88%, transparent) !important;
+  }
+
+  .commissionerPanel .commissionerSectionTitle {
+    margin-top: 2px;
+    margin-bottom: 2px;
+    font-size: 0.58rem;
+    letter-spacing: 0.1em;
+  }
+
+  .commissionerPanel .squadRailList {
+    gap: 0.35rem;
   }
 
   .progressCard {
@@ -4478,6 +4655,379 @@
   .progressPrimaryAction {
     justify-self: stretch;
     width: 100%;
+  }
+}
+
+@media (max-width: 420px) {
+  .summaryCardsBand {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+
+  .summaryCard {
+    min-height: 108px;
+  }
+
+  .bracketInfoRow {
+    grid-template-columns: 1fr;
+    gap: 0.3rem;
+  }
+
+  .bracketInfoValue,
+  .statusBadge {
+    justify-self: start;
+    text-align: left;
+  }
+}
+
+@media (max-width: 400px) {
+  .bracketRulesCard .bracketInfoGrid {
+    gap: 0.22rem;
+  }
+
+  .bracketRulesCard .bracketInfoRow {
+    grid-template-columns: minmax(108px, 0.92fr) minmax(0, 1.08fr);
+    align-items: center;
+    min-height: 40px;
+    padding: 0.34rem 0.54rem;
+    gap: 0.22rem;
+    border-radius: 12px;
+  }
+
+  .bracketRulesCard .bracketInfoLabel {
+    font-size: 0.74rem;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+
+  .bracketRulesCard .bracketInfoValue {
+    justify-self: end;
+    text-align: right;
+    font-size: 0.9rem;
+    line-height: 1.15;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .bracketRulesCard .statusBadge {
+    justify-self: end;
+    text-align: right;
+    min-height: 22px;
+    padding: 0.06rem 0.5rem;
+    font-size: 0.66rem;
+    line-height: 1.15;
+    white-space: nowrap;
+  }
+
+  .bracketRulesCard .additionalBracketsRow {
+    grid-template-columns: minmax(108px, 0.92fr) minmax(0, 1.08fr);
+  }
+
+  .prizeBreakdownCard .bracketInfoRow {
+    grid-template-columns: minmax(108px, 0.92fr) minmax(0, 1.08fr);
+    align-items: center;
+    min-height: 40px;
+    padding: 0.34rem 0.54rem;
+    gap: 0.22rem;
+    border-radius: 12px;
+  }
+
+  .prizeBreakdownCard .bracketInfoLabel {
+    font-size: 0.74rem;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+
+  .prizeBreakdownCard .bracketInfoValue {
+    justify-self: end;
+    text-align: right;
+    font-size: 0.9rem;
+    line-height: 1.15;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .prizeBreakdownCard .prizeSectionGroup {
+    gap: 0.2rem;
+  }
+}
+
+@media (max-width: 330px) {
+  .summaryCardsBand {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Final safety override for Entries Overview tile layout */
+@media (max-width: 1024px) {
+  .summaryCardsBand {
+    display: grid !important;
+    width: 100% !important;
+    justify-content: stretch !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .summaryCardsBand > .statTile,
+  .summaryCardsBand > .summaryCard {
+    min-width: 0 !important;
+    max-width: none !important;
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 330px) {
+  .summaryCardsBand {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Phone-first settings modal pass */
+@media (max-width: 640px) {
+  .modalOverlay.settingsModalOverlay {
+    padding: 0;
+    backdrop-filter: blur(8px) saturate(110%);
+  }
+
+  .modalCard.settingsModalCard {
+    width: 100vw;
+    min-width: 0;
+    max-height: 100dvh;
+    height: 100dvh;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+    border-bottom: none;
+  }
+
+  .modalHeader {
+    border-radius: 0;
+    padding: 14px 44px 10px 14px;
+  }
+
+  .modalTitle {
+    font-size: 18px;
+  }
+
+  .modalSubtitle {
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
+  .modalScrollBody.settingsModalScrollBody {
+    padding: 10px 10px 72px;
+  }
+
+  .settingsModalCloseFooter {
+    display: flex;
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    padding: 8px 10px 10px;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--bw-surface-card) 68%, transparent), color-mix(in srgb, var(--bw-surface-card) 96%, transparent));
+    backdrop-filter: blur(8px);
+  }
+
+  .settingsModalCloseFooterButton {
+    width: 100%;
+    min-height: 42px;
+    font-size: 14px;
+  }
+
+  .settingsModalGrid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    width: 100% !important;
+    margin: 0 !important;
+  }
+
+  .settingsModalGrid .bracketSettingsCard,
+  .settingsModalGrid .mainBracketSettingsCard,
+  .settingsModalGrid .optionalBracketsCard,
+  .settingsModalGrid .byeSettingsCard,
+  .settingsModalGrid .sidePotsCard {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    min-height: 0 !important;
+    border-radius: 16px;
+  }
+
+  .settingsModalGrid .settingsHeader {
+    padding: 10px 12px 8px;
+  }
+
+  .settingsModalGrid .settingsTitle {
+    font-size: 16px;
+  }
+
+  .settingsModalGrid .settingsMeta,
+  .settingsSectionHint,
+  .settingsFieldHint {
+    font-size: 11px;
+    line-height: 1.35;
+  }
+
+  .settingsModalGrid .settingsContent {
+    padding: 10px 12px 12px;
+    gap: 8px;
+  }
+
+  .settingsModalGrid .sectionHeader {
+    margin-bottom: 4px;
+  }
+
+  .settingsModalGrid .sectionTitle {
+    font-size: 13px;
+  }
+
+  .settingsModalGrid .mainBracketSettingsCard .settingsGrid,
+  .settingsModalGrid .sidePotSharedFee,
+  .settingsModalGrid .byeSettingsCard .programList,
+  .settingsProgramsGrid,
+  .programListTwoColumn {
+    grid-template-columns: 1fr !important;
+  }
+
+  .settingsModalGrid .fieldGroup,
+  .settingsModalGrid .settingsProgramsGrid {
+    gap: 8px;
+  }
+
+  .settingsModalGrid .compactSelect,
+  .settingsModalGrid .compactInput {
+    min-height: 42px;
+    font-size: 16px;
+    border-radius: 10px;
+  }
+
+  .settingsModalGrid .compactLabel {
+    font-size: 11px;
+  }
+
+  .settingsModalGrid .programCard {
+    padding: 8px 10px;
+    border-radius: 10px;
+  }
+
+  .settingsModalGrid .checkboxLabel {
+    font-size: 12px;
+    gap: 8px;
+  }
+
+  .settingsModalGrid .checkboxInput {
+    width: 16px;
+    height: 16px;
+    border-radius: 5px;
+  }
+
+  .settingsModalFooter {
+    position: sticky;
+    bottom: 0;
+    gap: 8px;
+    padding: 10px 8px 8px;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--bw-surface-card) 66%, transparent), color-mix(in srgb, var(--bw-surface-card) 96%, transparent));
+  }
+
+  .settingsModalFooterActions {
+    gap: 8px;
+  }
+
+  .settingsFooterCancelButton,
+  .settingsFooterSaveButton {
+    min-width: 0;
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 420px) {
+  .settingsModalGrid .settingsTitle {
+    font-size: 15px;
+  }
+
+  .settingsModalGrid .compactSelect,
+  .settingsModalGrid .compactInput {
+    font-size: 15px;
+  }
+
+  .settingsModalGrid .settingsHeader {
+    padding: 9px 10px 7px;
+  }
+
+  .settingsModalGrid .settingsContent {
+    padding: 9px 10px 10px;
+  }
+}
+
+/* Mobile/tablet dashboard layout stabilization */
+@media (max-width: 1024px) {
+  .commandCenterGrid {
+    grid-template-columns: 1fr;
+    justify-content: stretch;
+    gap: 12px;
+  }
+
+  .gridHero,
+  .gridTools,
+  .gridSummary {
+    grid-column: 1 / -1;
+    width: 100%;
+    max-width: none;
+    justify-self: stretch;
+  }
+
+  .liveBoardCard,
+  .squadRailCard,
+  .entriesOverviewCard,
+  .entriesOverviewStandalone,
+  .commissionerPanel {
+    width: 100%;
+    max-width: none;
+    justify-self: stretch;
+    box-sizing: border-box;
+  }
+
+  .bracketPreview {
+    grid-template-columns: 1fr;
+    width: 100%;
+    max-width: none;
+  }
+
+  .bracketRound {
+    min-width: 0;
+  }
+
+  .summaryCardsBand {
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .summaryCardsBand .statTile {
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .summaryCardsBand {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .summaryCardsBand .statTile {
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+  }
+}
+
+@media (max-width: 330px) {
+  .summaryCardsBand {
+    grid-template-columns: 1fr;
   }
 }
 

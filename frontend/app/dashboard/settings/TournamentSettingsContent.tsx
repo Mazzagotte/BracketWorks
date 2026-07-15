@@ -9,13 +9,14 @@ import { storage } from '../../lib/storage';
 import dashboardStyles from '../dashboard.module.css';
 import pageStyles from './dashboard-settings-page.module.css';
 import { useToast } from '../../components/Toast';
-import { API, apiClient, apiFetch } from '../../lib/api';
+import { apiClient } from '../../lib/api';
 import { logger } from '../../lib/logger';
 import { isHandheldViewport } from '../../lib/responsive';
 import { defaultBracketPrograms, normalizeBracketPrograms } from '../../lib/bracketPrograms';
 import { formatIsoDateFull } from '../../lib/formatters';
 import { getErrorContext } from '../../lib/error-utils';
 import { BRACKET_SETTINGS_AUTOSAVE_DELAY_MS, getSidePotsStorageKey } from '../../lib/dashboard-settings';
+import { notifySettingsChanged } from '../../lib/selection-session';
 
 const createDefaultBracketSettings = (tournamentId = 0): BracketSettings => ({
   tournament_id: tournamentId,
@@ -104,17 +105,27 @@ export function TournamentSettingsContent({ tournamentId, layout = 'page' }: Tou
 
   const persistBracketSettings = useCallback(
     async (settingsToSave: BracketSettings) => {
-      const token = storage.getItem('token');
-      if (!token) return;
+      const payload = {
+        ...settingsToSave,
+        tournament_id: tournamentId,
+        bracket_programs: normalizeBracketPrograms(settingsToSave.bracket_programs, settingsToSave.default_entry_fee),
+      };
 
-      await apiFetch(API(`/api/v1/bracket-settings/${tournamentId}`), {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(settingsToSave),
-      });
+      try {
+        await apiClient.post<BracketSettings>('/api/v1/bracket-settings', payload);
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message.toLowerCase() : '';
+        const isNotFound = message.includes('404') || message.includes('not found');
+        if (!isNotFound) {
+          throw err;
+        }
+
+        // Fallback for slash-sensitive backend routes while local rewrites are reloading.
+        await apiClient.post<BracketSettings>('/api/v1/bracket-settings/', payload);
+      }
+
+      apiClient.clearCacheEntry(`/api/v1/bracket-settings/${tournamentId}`);
+      notifySettingsChanged();
     },
     [tournamentId],
   );
@@ -125,8 +136,13 @@ export function TournamentSettingsContent({ tournamentId, layout = 'page' }: Tou
 
     void persistBracketSettings(bracketSettingsRef.current).catch((err: unknown) => {
       logger.error('Failed to save bracket settings', getErrorContext(err));
+      addToast({
+        type: 'error',
+        message: 'Failed to save tournament settings changes.',
+        duration: 5000,
+      });
     });
-  }, [persistBracketSettings, tournamentId]);
+  }, [addToast, persistBracketSettings, tournamentId]);
 
   const updateBracketSettings = useCallback(
     (updater: (prev: BracketSettings) => BracketSettings, mode: 'immediate' | 'none' | 'autosave' = 'autosave') => {
@@ -149,6 +165,8 @@ export function TournamentSettingsContent({ tournamentId, layout = 'page' }: Tou
     (nextSidePots: SidePotsSettings) => {
       const key = getSidePotsStorageKey(tournamentId);
       storage.setItem(key, JSON.stringify(nextSidePots));
+      // Defer cross-component refresh event until after current render completes.
+      setTimeout(() => notifySettingsChanged(), 0);
     },
     [tournamentId],
   );
@@ -238,7 +256,7 @@ export function TournamentSettingsContent({ tournamentId, layout = 'page' }: Tou
         const data = await apiClient.get<Tournament>(`/api/v1/tournaments/${tournamentId}`);
         setTournament(data);
 
-        const settingsData = await apiClient.get<BracketSettings>(`/api/v1/bracket-settings/${tournamentId}`);
+        const settingsData = await apiClient.get<BracketSettings>(`/api/v1/bracket-settings/${tournamentId}`, false);
         if (settingsData) {
           const normalizedBracketSettings = {
             ...createDefaultBracketSettings(tournamentId),

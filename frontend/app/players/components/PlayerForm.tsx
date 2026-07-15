@@ -5,7 +5,7 @@ import styles from '../entries.module.css';
 import buttonStyles from '../../styles/buttons.module.css';
 import cardStyles from '../../styles/cards.module.css';
 import formStyles from '../../styles/forms.module.css';
-import { calculatePlayerTotalCost, divisionOptions, filterEntriesForDivision, isProgramAllowedForDivision, normalizeDivision, normalizePlayerBracketEntries } from '../../lib/bracketPrograms';
+import { calculatePlayerTotalCost, calculateSidePotCost, divisionOptions, filterEntriesForDivision, isProgramAllowedForDivision, normalizeDivision, normalizePlayerBracketEntries } from '../../lib/bracketPrograms';
 
 type PlayerFormState = {
   firstName: string;
@@ -15,6 +15,7 @@ type PlayerFormState = {
   handicap: number;
   scratch: number;
   bracketEntries: Record<string, number>;
+  sidePotEntries: Record<string, boolean>;
   division: string;
   lane: string;
   amountPaid: number;
@@ -28,15 +29,17 @@ const EMPTY_FORM: PlayerFormState = {
   handicap: 0,
   scratch: 0,
   bracketEntries: { handicap: 0, scratch: 0 },
+  sidePotEntries: {},
   division: 'Mens',
   lane: 'A1',
   amountPaid: 0
 };
 
-const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketPrograms, prefillDraft, prefillVersion }: PlayerFormProps) => {
+const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketPrograms, sidePots, prefillDraft, prefillVersion }: PlayerFormProps) => {
   const [formData, setFormData] = useState<PlayerFormState>({ ...EMPTY_FORM });
   const [submitError, setSubmitError] = useState<string | null>(null);
   const averageInputRef = useRef<HTMLInputElement | null>(null)
+  const enabledSidePots = (sidePots?.pots ?? []).filter(pot => pot.enabled)
 
   useEffect(() => {
     if (!prefillDraft) return
@@ -65,11 +68,13 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
     }, 0)
   }, [prefillDraft, prefillVersion, bracketPrograms])
 
-  const draftTotal = calculatePlayerTotalCost(
+  const bracketDraftTotal = calculatePlayerTotalCost(
     normalizePlayerBracketEntries(formData.bracketEntries, formData.handicap, formData.scratch),
     bracketPrograms,
     entryFee,
   )
+  const sidePotDraftTotal = calculateSidePotCost(formData.sidePotEntries, sidePots)
+  const draftTotal = bracketDraftTotal + sidePotDraftTotal
   const balanceDue = Math.max(0, draftTotal - formData.amountPaid)
   const paidInFull = draftTotal > 0 && balanceDue <= 0.009
   const hasRequiredNames = formData.firstName.trim().length > 0 && formData.lastName.trim().length > 0
@@ -104,10 +109,17 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
       bracketPrograms,
       entryFee,
     );
+    const amountPaidOnSubmit = draftTotal;
+
+    const nextSidePotEntries = Object.fromEntries(
+      enabledSidePots.map(pot => [pot.key, Boolean(formData.sidePotEntries[pot.key])]),
+    );
 
     onAddPlayer({
       ...formData,
       bracketEntries: normalizePlayerBracketEntries(formData.bracketEntries, formData.handicap, formData.scratch),
+      sidePotEntries: nextSidePotEntries,
+      amountPaid: amountPaidOnSubmit,
       firstName: formData.firstName.trim(),
       lastName: formData.lastName.trim(),
       totalCost
@@ -150,6 +162,16 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
     const current = formData.bracketEntries[programKey] || 0
     const next = Math.max(0, current + delta)
     handleBracketEntryChange(programKey, String(next))
+  }
+
+  const handleSidePotToggle = (potKey: string) => {
+    setFormData(prev => ({
+      ...prev,
+      sidePotEntries: {
+        ...prev.sidePotEntries,
+        [potKey]: !Boolean(prev.sidePotEntries[potKey]),
+      },
+    }))
   }
 
   return (
@@ -296,6 +318,28 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
               ))}
 
               </div>
+
+              {enabledSidePots.length > 0 && (
+                <>
+                  <p className={styles.entriesSubheading}>Side Pot Entries</p>
+                  <div className={styles.addBowlerSidePotGrid}>
+                    {enabledSidePots.map(pot => {
+                      const checked = Boolean(formData.sidePotEntries[pot.key])
+                      return (
+                        <label key={pot.key} className={styles.addBowlerSidePotOption}>
+                          <input
+                            type="checkbox"
+                            className={styles.addBowlerSidePotCheckbox}
+                            checked={checked}
+                            onChange={() => handleSidePotToggle(pot.key)}
+                          />
+                          <span>{pot.name}</span>
+                        </label>
+                      )
+                    })}
+                  </div>
+                </>
+              )}
             </div>
 
             <div className={styles.paymentCol}>
@@ -339,7 +383,7 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
           <button
             type="submit"
             disabled={isLoading}
-            className={`${buttonStyles.button} ${buttonStyles.primary} ${styles.submitBtn}`}
+            className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.primary} ${styles.submitBtn}`}
           >
             {isLoading ? 'Adding...' : 'Add Bowler'}
           </button>

@@ -220,6 +220,176 @@
   flex-wrap: wrap;
 }
 
+.searchPanel {
+  margin-bottom: 0.72rem;
+  padding: 0;
+  transition: transform var(--motion-duration-base) var(--motion-ease-standard), border-color var(--motion-duration-base) var(--motion-ease-standard), box-shadow var(--motion-duration-base) var(--motion-ease-standard);
+}
+
+.searchPanel:hover {
+  transform: translateY(-1px);
+  border-color: var(--border-strong);
+}
+
+.searchPanelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.searchPanelTitle {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  line-height: 1.2;
+  font-weight: 800;
+}
+
+.searchPanelSubtitle {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.searchPanelBody {
+  padding: 0.62rem 0.78rem;
+}
+
+.searchPanelContentRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.searchPanelContentLeft,
+.searchPanelContentRight {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.searchPanelContentLeft {
+  flex: 1;
+}
+
+.searchPanelContentLeft > * {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.searchPanelContentRight {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.searchPanelToolbar {
+  width: 100%;
+  min-height: 32px;
+  padding: 0.36rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-l);
+  background: color-mix(in srgb, var(--surface-secondary) 86%, transparent);
+}
+
+.searchPanelToolbar .dataTableToolbarLeft,
+.searchPanelToolbar .dataTableToolbarRight {
+  min-width: 0;
+}
+
+.searchPanelToolbar .dataTableToolbarLeft {
+  width: 100%;
+}
+
+.searchPanelToolbar .dataTableToolbarLeft > * {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.searchPanelInput {
+  width: 100%;
+  min-height: 32px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-m);
+  background: color-mix(in srgb, var(--surface-primary) 84%, transparent);
+  color: var(--text-primary);
+  font-size: 0.84rem;
+  font-weight: 650;
+}
+
+.searchPanelInput::placeholder {
+  color: var(--text-faint);
+}
+
+.searchPanelInput:focus {
+  border-color: var(--border-accent);
+  box-shadow: var(--ring-brand-base);
+}
+
+.searchPanelClearButton {
+  min-height: 32px;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 34%, transparent);
+  border-radius: var(--radius-m);
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
+  color: var(--text-accent);
+  padding: 0 0.78rem;
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.searchPanelClearButton:hover:not(:disabled) {
+  border-color: var(--border-accent);
+  background: color-mix(in srgb, var(--color-primary) 20%, transparent);
+}
+
+@media (max-width: 900px) {
+  .searchPanelBody {
+    padding: 0.52rem 0.62rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .searchPanel {
+    margin-bottom: 0.6rem;
+    border-radius: var(--radius-xl-soft);
+  }
+
+  .searchPanelBody {
+    padding: 0.48rem 0.58rem;
+  }
+
+  .searchPanelTitle {
+    font-size: 0.8rem;
+  }
+
+  .searchPanelSubtitle {
+    font-size: 0.72rem;
+  }
+
+  .searchPanelToolbar {
+    padding: 0.34rem;
+  }
+
+  .searchPanelInput,
+  .searchPanelClearButton {
+    min-height: 30px;
+  }
+
+  .searchPanelContentRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .searchPanelContentRight {
+    justify-content: flex-start;
+  }
+}
+
 @media (max-width: 640px) {
   .card {
     border-radius: var(--radius-xl-soft);

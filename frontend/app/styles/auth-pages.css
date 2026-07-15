@@ -205,11 +205,12 @@ html:has(.login-page-container) {
 
 .login-button {
   width: 100% !important;
-  height: 48px !important;
+  min-height: var(--btn-height) !important;
+  height: var(--btn-height) !important;
   margin-top: 10px !important;
-  padding: 0 24px !important;
-  font-size: var(--font-size-xl) !important;
-  font-weight: var(--font-weight-semibold) !important;
+  padding: 0 var(--btn-padding-x) !important;
+  font-size: var(--font-size-sm) !important;
+  font-weight: 800 !important;
   letter-spacing: 0.3px !important;
   color: var(--color-white) !important;
   background: var(--color-brand-gold) !important;
@@ -245,9 +246,10 @@ html:has(.login-page-container) {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  padding: 12px 24px !important;
-  font-size: var(--font-size-md) !important;
-  font-weight: var(--font-weight-medium) !important;
+  min-height: var(--btn-height) !important;
+  padding: 0 var(--btn-padding-x) !important;
+  font-size: var(--font-size-sm) !important;
+  font-weight: 800 !important;
   text-decoration: none !important;
   border-radius: 12px !important;
   transition: all 0.2s ease !important;

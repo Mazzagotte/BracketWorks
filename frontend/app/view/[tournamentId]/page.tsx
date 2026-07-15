@@ -7,6 +7,7 @@ import { formatIsoDateShortWithWeekday } from '../../lib/formatters'
 import { BW_BREAKPOINTS, matchesMaxWidth } from '../../lib/responsive'
 import { getSidePotsStorageKey } from '../../lib/dashboard-settings'
 import { DataTableToolbar } from '../../components/primitives'
+import buttonStyles from '../../styles/buttons.module.css'
 import TournamentDirectory from '../TournamentDirectory'
 import styles from './view.module.css'
 
@@ -270,7 +271,7 @@ function AliveView({
                 <span className={styles.liveStatusText}>Auto-refresh on</span>
               </span>
               <div className={styles.refreshActions}>
-                <button className={styles.refreshBtn} onClick={onRefreshNow} disabled={!canRefresh || isRefreshing} type="button">
+                <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.primary} ${styles.refreshBtn}`} onClick={onRefreshNow} disabled={!canRefresh || isRefreshing} type="button">
                   {isRefreshing ? 'Refreshing...' : 'Refresh Now'}
                 </button>
               </div>
@@ -540,7 +541,7 @@ function BracketView({ group, highlightName, onNameClick }: {
         <div className={styles.bracketPillsNav}>
           <button
             type="button"
-            className={styles.bracketPillsArrow}
+            className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.bracketPillsArrow}`}
             disabled={activeBracket === 0}
             onClick={() => setActiveBracket((prev) => Math.max(0, prev - 1))}
             aria-label="Previous bracket"
@@ -548,7 +549,7 @@ function BracketView({ group, highlightName, onNameClick }: {
           <div className={styles.bracketPills}>
             {firstPillIndex > 0 && (
               <>
-                <button type="button" className={styles.bracketPill} onClick={() => setActiveBracket(0)} aria-label="Bracket 1">1</button>
+                <button type="button" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.bracketPill}`} onClick={() => setActiveBracket(0)} aria-label="Bracket 1">1</button>
                 {firstPillIndex > 1 && <span className={styles.bracketPillEllipsis}>...</span>}
               </>
             )}
@@ -556,7 +557,7 @@ function BracketView({ group, highlightName, onNameClick }: {
               <button
                 key={i}
                 type="button"
-                className={`${styles.bracketPill} ${activeBracket === i ? styles.bracketPillActive : ''}`}
+                className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.bracketPill} ${activeBracket === i ? styles.bracketPillActive : ''}`}
                 onClick={() => setActiveBracket(i)}
                 aria-label={`Bracket ${i + 1}`}
               >{i + 1}</button>
@@ -564,13 +565,13 @@ function BracketView({ group, highlightName, onNameClick }: {
             {lastPillIndex < totalBrackets - 1 && (
               <>
                 {lastPillIndex < totalBrackets - 2 && <span className={styles.bracketPillEllipsis}>...</span>}
-                <button type="button" className={styles.bracketPill} onClick={() => setActiveBracket(totalBrackets - 1)} aria-label={`Bracket ${totalBrackets}`}>{totalBrackets}</button>
+                <button type="button" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.bracketPill}`} onClick={() => setActiveBracket(totalBrackets - 1)} aria-label={`Bracket ${totalBrackets}`}>{totalBrackets}</button>
               </>
             )}
           </div>
           <button
             type="button"
-            className={styles.bracketPillsArrow}
+            className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.bracketPillsArrow}`}
             disabled={activeBracket === totalBrackets - 1}
             onClick={() => setActiveBracket((prev) => Math.min(totalBrackets - 1, prev + 1))}
             aria-label="Next bracket"

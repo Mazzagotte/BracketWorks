@@ -5,81 +5,12 @@
 .btn {
   position: relative;
   overflow: hidden;
-  font-weight: 600;
   transition: all 0.3s ease;
-  cursor: pointer;
-  border-radius: 12px;
   outline: none;
 }
 
 .btn:focus {
   box-shadow: 0 0 0 2px var(--color-white), var(--ring-warning);
-}
-
-.btn:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-/* ========================================
-   Sizes
-   ======================================== */
-
-.sm { padding: 0.5rem 1rem; font-size: 0.875rem; }
-.md { padding: 0.75rem 1.5rem; font-size: 1rem; }
-.lg { padding: 1rem 2rem; font-size: 1.125rem; }
-
-/* ========================================
-   Variants
-   ======================================== */
-
-.primary {
-  background: var(--color-primary);
-  color: var(--color-white);
-  border: 1px solid var(--color-border-light);
-  box-shadow: 0 4px 12px var(--color-border-hover), 0 2px 4px var(--opacity-black-10);
-}
-
-.secondary {
-  background: transparent;
-  border: 2px solid var(--color-primary);
-  color: var(--color-primary);
-  font-weight: 700;
-  box-shadow: none;
-}
-
-.success {
-  background: var(--color-success);
-  color: var(--color-white);
-  border: 1px solid var(--color-success-border);
-  box-shadow: var(--shadow-success-md);
-}
-
-.danger {
-  background: var(--color-error);
-  color: var(--color-white);
-  border: 1px solid var(--color-error-border);
-  box-shadow: var(--shadow-danger-sm);
-}
-
-.glass {
-  background: var(--opacity-white-10);
-  backdrop-filter: blur(12px);
-  border: 1px solid var(--color-border-hover);
-  color: var(--color-gray-700);
-  box-shadow: 0 4px 12px var(--opacity-black-10);
-}
-
-/* ========================================
-   Active States (hover / press)
-   ======================================== */
-
-.btn:not(:disabled):hover {
-  transform: scale(1.05);
-}
-
-.btn:not(:disabled):active {
-  transform: scale(0.95);
 }
 
 /* ========================================

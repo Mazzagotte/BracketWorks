@@ -183,11 +183,19 @@ main h6,
   font-size: var(--bw-type-title-md);
 }
 
-main button:not([aria-label*='Close']):not([aria-label*='close']),
-.page-main button:not([aria-label*='Close']):not([aria-label*='close']) {
-  font-size: var(--bw-type-body);
-  font-weight: 700;
-  line-height: 1.2;
+/* App-wide button sizing source of truth (colors remain component-specific) */
+main button:not([class*='iconButton']):not([class*='stepperBtn']):not([class*='modalClose']):not([class*='closeButton']):not([class*='statTile']):not([class*='statCard']):not([aria-label*='Close']):not([aria-label*='close']),
+.page-main button:not([class*='iconButton']):not([class*='stepperBtn']):not([class*='modalClose']):not([class*='closeButton']):not([class*='statTile']):not([class*='statCard']):not([aria-label*='Close']):not([aria-label*='close']) {
+  min-height: var(--btn-height) !important;
+  height: var(--btn-height) !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  padding-left: var(--btn-padding-x) !important;
+  padding-right: var(--btn-padding-x) !important;
+  border-radius: var(--radius-md) !important;
+  font-size: var(--font-size-sm) !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
 }
 
 /* Layout */
@@ -662,10 +670,41 @@ input[type='number'] { appearance: textfield; -moz-appearance: textfield; }
 .entries-cell--sidepot { text-align: center; }
 
 .sidepot-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-grid;
+  place-content: center;
   width: 18px;
   height: 18px;
+  border-radius: 5px;
+  border: 1px solid color-mix(in srgb, var(--bw-border-subtle) 98%, transparent);
+  background: color-mix(in srgb, var(--bw-surface-panel) 94%, transparent);
   cursor: pointer;
-  accent-color: var(--color-primary);
+  transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sidepot-checkbox::after {
+  content: '';
+  width: 9px;
+  height: 9px;
+  transform: scale(0);
+  transition: transform 120ms ease-in-out;
+  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+  background: color-mix(in srgb, var(--color-primary) 98%, transparent);
+}
+
+.sidepot-checkbox:checked {
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 68%, transparent);
+}
+
+.sidepot-checkbox:checked::after {
+  transform: scale(1);
+}
+
+.sidepot-checkbox:focus-visible {
+  outline: none;
+  box-shadow: var(--bw-focus-ring);
 }
 .entries-header-cell.col-division { width: 84px; }
 .entries-header-cell.col-cost { width: 108px; }
