@@ -1532,7 +1532,7 @@ export default function TournamentDashboard() {
                               }
                             }}
                           >
-                            {chip.showAlertIcon ? <span className={mobileStyles.heroStatusAlertIcon} aria-hidden="true">!</span> : null}
+                            {chip.tone === 'alert' ? <span className={mobileStyles.heroStatusAlertIcon} aria-hidden="true">!</span> : null}
                             <span>{chip.label}</span>
                             {chip.value ? <strong>{chip.value}</strong> : null}
                           </button>
