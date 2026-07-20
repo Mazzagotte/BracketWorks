@@ -9,12 +9,12 @@
   Component layout/details stay in *.module.css files.
 */
 
+@import './colors.global.css';
+@import './globals.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import './colors.global.css';
-@import './globals.css';
 
 :root {
   --header-height: 64px;

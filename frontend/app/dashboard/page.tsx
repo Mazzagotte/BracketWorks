@@ -1184,7 +1184,7 @@ export default function TournamentDashboard() {
       nextStepText: 'Review setup status and continue workflow.',
     };
   }, [isEntryDataSyncing, hasSetupBlockers, blockerSummary, bracketsNotGeneratedCount, dataIssuesCount, setupIncomplete]);
-  const heroStatusChips = useMemo(() => ([
+  const heroStatusChips = useMemo<Array<{ key: string; label: string; value: string; tone: string; showAlertIcon?: boolean }>>(() => ([
     {
       key: 'brackets',
       label: 'Brackets',
@@ -1879,7 +1879,6 @@ export default function TournamentDashboard() {
     </ErrorBoundary>
   );
 }
-
 
 
 
