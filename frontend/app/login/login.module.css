@@ -218,7 +218,7 @@
   color: var(--bw-login-text);
   font-size: 16px;
   padding: 0 14px 0 42px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.1s ease, color 0.1s ease;
   box-sizing: border-box;
 }
 
@@ -232,18 +232,30 @@
   box-shadow: 0 0 0 3px rgba(255, 106, 0, 0.18);
 }
 
-.input:-webkit-autofill,
-.input:-webkit-autofill:hover,
-.input:-webkit-autofill:focus,
-.input:-webkit-autofill:active {
+.input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 30px var(--bw-login-input) inset !important;
+  -webkit-text-fill-color: var(--bw-login-text) !important;
+  border-color: var(--bw-login-input-border) !important;
+  -webkit-transition: background-color 5000s ease-in-out 0s !important;
+  transition: background-color 5000s ease-in-out 0s !important;
+}
+
+.input:-webkit-autofill:hover {
   -webkit-box-shadow: 0 0 0 30px var(--bw-login-input) inset !important;
   -webkit-text-fill-color: var(--bw-login-text) !important;
   border-color: var(--bw-login-input-border) !important;
 }
 
 .input:-webkit-autofill:focus {
-  border-color: var(--bw-login-orange) !important;
   -webkit-box-shadow: 0 0 0 30px var(--bw-login-input) inset, 0 0 0 3px rgba(255, 106, 0, 0.18) !important;
+  -webkit-text-fill-color: var(--bw-login-text) !important;
+  border-color: var(--bw-login-orange) !important;
+}
+
+.input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px var(--bw-login-input) inset !important;
+  -webkit-text-fill-color: var(--bw-login-text) !important;
+  border-color: var(--bw-login-input-border) !important;
 }
 
 .passwordField .input {
