@@ -43,6 +43,10 @@ build/
 *.swp
 *.swo
 
+# Dev/tooling artifacts
+.dev/
+.tools/
+
 # Testing
 .coverage
 .pytest_cache/
