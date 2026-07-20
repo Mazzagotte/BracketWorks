@@ -4,40 +4,35 @@ export default function BracketVisualization() {
       viewBox="0 0 28 28"
       className="w-full h-full"
       aria-hidden="true"
-      fill="none"
+      fill="currentColor"
       xmlns="http://www.w3.org/2000/svg"
     >
-      {/* Left vertical line */}
-      <line x1="4" y1="6" x2="4" y2="22" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      {/* Left side brackets */}
+      <path d="M6 8C6 8 4 8 4 10V18C4 20 6 20 6 20" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
       
-      {/* Left top horizontal */}
-      <line x1="4" y1="6" x2="8" y2="6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      {/* Right side brackets */}
+      <path d="M22 8C22 8 24 8 24 10V18C24 20 22 20 22 20" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
       
-      {/* Left bottom horizontal */}
-      <line x1="4" y1="22" x2="8" y2="22" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      {/* Top-left entry */}
+      <rect x="8" y="6" width="4" height="3" rx="0.5" fill="currentColor" opacity="0.7" />
       
-      {/* Middle vertical line */}
-      <line x1="14" y1="10" x2="14" y2="18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      {/* Top-middle entry */}
+      <rect x="12" y="5" width="4" height="3" rx="0.5" fill="currentColor" />
       
-      {/* Connectors to middle */}
-      <line x1="8" y1="6" x2="11" y2="6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <line x1="11" y1="6" x2="11" y2="10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <line x1="11" y1="10" x2="14" y2="10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      {/* Top-right entry */}
+      <rect x="16" y="6" width="4" height="3" rx="0.5" fill="currentColor" opacity="0.7" />
       
-      <line x1="8" y1="22" x2="11" y2="22" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <line x1="11" y1="22" x2="11" y2="18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <line x1="11" y1="18" x2="14" y2="18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      {/* Winner circle in center */}
+      <circle cx="14" cy="14" r="3.5" fill="currentColor" opacity="0.9" />
       
-      {/* Right vertical line */}
-      <line x1="24" y1="12" x2="24" y2="16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      {/* Bottom-left entry */}
+      <rect x="8" y="19" width="4" height="3" rx="0.5" fill="currentColor" opacity="0.7" />
       
-      {/* Connector from middle to right */}
-      <line x1="14" y1="10" x2="18" y2="10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <line x1="18" y1="10" x2="18" y2="14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <line x1="18" y1="14" x2="24" y2="14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      {/* Bottom-middle entry */}
+      <rect x="12" y="20" width="4" height="3" rx="0.5" fill="currentColor" />
       
-      <line x1="14" y1="18" x2="18" y2="18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <line x1="18" y1="18" x2="18" y2="14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      {/* Bottom-right entry */}
+      <rect x="16" y="19" width="4" height="3" rx="0.5" fill="currentColor" opacity="0.7" />
     </svg>
   );
 }
