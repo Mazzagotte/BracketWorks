@@ -1,0 +1,32 @@
+/* BracketWorks Landing Page - Global Design System */
+
+:root {
+  --bw-page-bg: #09090C;
+  --bw-section-bg: #0D0E12;
+  --bw-card-bg: #151519;
+  --bw-panel-bg: #111216;
+  
+  --bw-border-default: rgba(255, 255, 255, 0.10);
+  --bw-border-elevated: rgba(255, 255, 255, 0.14);
+  --bw-border-orange: rgba(255, 122, 0, 0.45);
+  
+  --bw-orange: #FF7A00;
+  --bw-orange-hover: #FF8A1F;
+  --bw-orange-dark: #D95F00;
+  
+  --bw-text-primary: #F4F4F5;
+  --bw-text-secondary: #A1A1AA;
+  --bw-text-muted: #71717A;
+  
+  --bw-success: #4ADE80;
+  --bw-warning: #F59E0B;
+  --bw-error: #EF4444;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
