@@ -4,35 +4,32 @@ export default function BracketVisualization() {
       viewBox="0 0 28 28"
       className="w-full h-full"
       aria-hidden="true"
-      fill="currentColor"
+      fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
       {/* Left side brackets */}
-      <path d="M6 8C6 8 4 8 4 10V18C4 20 6 20 6 20" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M6 8C6 8 4 8 4 10V18C4 20 6 20 6 20" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
       
       {/* Right side brackets */}
-      <path d="M22 8C22 8 24 8 24 10V18C24 20 22 20 22 20" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M22 8C22 8 24 8 24 10V18C24 20 22 20 22 20" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
       
-      {/* Top-left entry */}
-      <rect x="8" y="6" width="4" height="3" rx="0.5" fill="currentColor" opacity="0.7" />
+      {/* Top connector line */}
+      <line x1="6" y1="10" x2="10" y2="10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
       
-      {/* Top-middle entry */}
-      <rect x="12" y="5" width="4" height="3" rx="0.5" fill="currentColor" />
+      {/* Bottom connector line */}
+      <line x1="6" y1="18" x2="10" y2="18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
       
-      {/* Top-right entry */}
-      <rect x="16" y="6" width="4" height="3" rx="0.5" fill="currentColor" opacity="0.7" />
+      {/* Center vertical line */}
+      <line x1="14" y1="9" x2="14" y2="19" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
       
-      {/* Winner circle in center */}
-      <circle cx="14" cy="14" r="3.5" fill="currentColor" opacity="0.9" />
+      {/* Top to center */}
+      <line x1="10" y1="10" x2="12" y2="10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <line x1="12" y1="10" x2="12" y2="14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <line x1="12" y1="14" x2="14" y2="14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
       
-      {/* Bottom-left entry */}
-      <rect x="8" y="19" width="4" height="3" rx="0.5" fill="currentColor" opacity="0.7" />
-      
-      {/* Bottom-middle entry */}
-      <rect x="12" y="20" width="4" height="3" rx="0.5" fill="currentColor" />
-      
-      {/* Bottom-right entry */}
-      <rect x="16" y="19" width="4" height="3" rx="0.5" fill="currentColor" opacity="0.7" />
+      {/* Bottom to center */}
+      <line x1="10" y1="18" x2="12" y2="18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <line x1="12" y1="18" x2="12" y2="14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
     </svg>
   );
 }
