@@ -3,10 +3,7 @@
 import Link from 'next/link';
 import { type FormEvent, useState, useEffect, useRef, useCallback, useMemo } from "react";
 
-import Image from "next/image";
-
 import AuthFeedback from "../../components/AuthFeedback";
-import AuthValidatedInputField from "../../components/AuthValidatedInputField";
 import { useAuthFormShortcuts } from "../../hooks/useAuthFormShortcuts";
 import { useCooldownTimer } from "../../hooks/useCooldownTimer";
 import { useFieldValidation } from "../../hooks/useFieldValidation";
@@ -188,22 +185,21 @@ export default function RequestResetPage() {
   });
 
   return (
-    <div className="login-page-container">
-      {/* Connection Status Indicator */}
+    <div className="rp-req-page">
+      {/* Connection Status Banner */}
       {showConnectionStatus && (
-        <div className={`connection-status ${isOnline ? connectionQuality : 'offline'}`} role="alert" aria-live="polite">
-          <div className="connection-content">
-            <span className="connection-text">
-              {!isOnline ? 'No internet connection' : 
-               connectionQuality === 'slow' ? 'Slow connection detected' : 
-               'Poor connection quality'}
-            </span>
-            {!isOnline && pendingRetryCount > 0 && (
-              <span className="retry-info">Will retry when connected</span>
-            )}
-          </div>
+        <div className="rp-req-connection" role="alert" aria-live="polite">
+          <span>
+            {!isOnline
+              ? 'No internet connection'
+              : connectionQuality === 'slow'
+              ? 'Slow connection detected'
+              : 'Poor connection quality'}
+          </span>
+          {!isOnline && pendingRetryCount > 0 && (
+            <span className="rp-req-retry-info">Will retry when connected</span>
+          )}
           <CloseControl
-            className="connection-close"
             onClick={dismissConnectionStatus}
             label="Dismiss connection status"
             size="xs"
@@ -211,89 +207,119 @@ export default function RequestResetPage() {
         </div>
       )}
 
-      <div className="enhanced-card">
-        <div className="header-section">
-          <div className="auth-logo-section">
-            <Image 
-              src="/logo.svg" 
-              alt="BracketWorks Logo" 
-              width={72}
-              height={72}
-              className="auth-logo-img"
-            />
+      <div className="rp-req-card">
+        {/* Key icon */}
+        <div className="rp-req-icon-wrap">
+          <div className="rp-req-icon-box">
+            <svg
+              width="36"
+              height="36"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#FF6A00"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="7.5" cy="15.5" r="5.5" />
+              <path d="M21 2l-9.6 9.6" />
+              <path d="M15.5 7.5l3 3L22 7l-3-3" />
+            </svg>
           </div>
-          <h1 className="auth-brand-title">BracketWorks</h1>
-          <h2 className="auth-page-heading">Reset Password</h2>
-          <div className="login-subtitle">Enter your email address and we&apos;ll send you a reset code.</div>
         </div>
 
-        <form onSubmit={handleRequest} className="login-form">
-          <AuthValidatedInputField
-            label="Email Address"
-            inputId="reset-email"
-            inputRef={emailRef}
-            type="email"
-            value={email}
-            onChange={(nextValue) => {
-              setEmail(nextValue);
-              handleFieldChange('email', nextValue, { email: nextValue });
-            }}
-            onBlur={(nextValue) => handleFieldBlur('email', nextValue, { email: nextValue })}
-            className={`login-input ${fieldErrors.email ? 'error' : ''} ${
-              fieldTouched.email && !fieldErrors.email && email.trim() ? 'success' : ''
-            }`}
-            placeholder="Enter your email address"
-            autoComplete="email"
-            disabled={loading}
-            errorMessage={fieldErrors.email}
-            successMessage={!fieldErrors.email && fieldTouched.email && email.trim() ? 'Valid email format' : ''}
-            errorId="email-error"
-            successId="email-help"
-          />
+        <h1 className="rp-req-title">Reset your password</h1>
+        <p className="rp-req-subtitle">
+          Enter the email connected to your BracketWorks account.<br />
+          We&apos;ll send you a secure link to create a new password.
+        </p>
 
-          <AuthFeedback
-            success={success}
-            error={error}
-            successClassName="success-message"
-            errorClassName="error-container"
-            wrapErrorInSpan={true}
-          />
+        <form onSubmit={handleRequest} className="rp-req-form" noValidate>
+          <div>
+            <label htmlFor="reset-email" className="rp-req-label">
+              Email address<span className="rp-req-required" aria-hidden="true"> *</span>
+            </label>
+            <div className="rp-req-input-wrap">
+              <input
+                ref={emailRef}
+                id="reset-email"
+                type="email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  handleFieldChange('email', e.target.value, { email: e.target.value });
+                }}
+                onBlur={(e) => handleFieldBlur('email', e.target.value, { email: e.target.value })}
+                className={`rp-req-input${fieldErrors.email ? ' is-error' : ''}`}
+                placeholder="name@example.com"
+                autoComplete="email"
+                disabled={loading}
+                required
+                aria-describedby={fieldErrors.email ? 'email-error' : 'email-hint'}
+                aria-invalid={Boolean(fieldErrors.email)}
+              />
+              <span className="rp-req-input-icon" aria-hidden="true">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect width="20" height="16" x="2" y="4" rx="2" />
+                  <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                </svg>
+              </span>
+            </div>
+            {fieldErrors.email ? (
+              <p id="email-error" className="rp-req-field-error" role="alert">
+                {fieldErrors.email}
+              </p>
+            ) : (
+              <p id="email-hint" className="rp-req-hint">
+                Enter the email used for your BracketWorks account.
+              </p>
+            )}
+          </div>
+
+          <div className="rp-req-feedback">
+            <AuthFeedback
+              success={success}
+              error={error}
+              successClassName="success-message"
+              errorClassName="error-container"
+              wrapErrorInSpan={true}
+            />
+          </div>
 
           <button
             type="submit"
-            className={`login-button ${loading ? 'loading' : ''}`}
+            className="rp-req-submit"
             disabled={loading || !!fieldErrors.email || !email.trim() || isValidating || cooldownSeconds > 0}
           >
-            {loading ? 'Sending reset code...' : cooldownSeconds > 0 ? `Retry in ${cooldownSeconds}s` : 'Send Reset Code'}
+            {loading
+              ? 'Sending\u2026'
+              : cooldownSeconds > 0
+              ? `Retry in ${cooldownSeconds}s`
+              : 'Send Reset Link'}
           </button>
         </form>
 
-        <div className="links-container">
-          <Link href="/login" className="signup-link">
-            Back to Login
-          </Link>
-          <Link href="/reset-password/verify" className="forgot-link">
-            Have a Code?
-          </Link>
+        <div className="rp-req-back-wrap">
+          <span className="rp-req-back-line" />
+          <Link href="/login" className="rp-req-back-link">← Back to Log In</Link>
+          <span className="rp-req-back-line" />
         </div>
 
-        {/* Keyboard shortcuts help */}
-        <div className="keyboard-shortcuts" aria-label="Keyboard shortcuts">
-          <details className="shortcuts-details">
-            <summary className="shortcuts-summary">Keyboard Shortcuts</summary>
-            <div className="shortcuts-content">
-              <div className="shortcut-item">
-                <kbd>Ctrl</kbd> + <kbd>Enter</kbd> Submit form
-              </div>
-              <div className="shortcut-item">
-                <kbd>Ctrl</kbd> + <kbd>Esc</kbd> Clear errors
-              </div>
-            </div>
-          </details>
-        </div>
+        <p className="rp-req-support">
+          Need help?{' '}
+          <Link href="/login" className="rp-req-support-link">Contact Support</Link>
+        </p>
       </div>
     </div>
   );
 }
-
-

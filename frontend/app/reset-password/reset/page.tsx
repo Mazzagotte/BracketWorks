@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from 'next/link';
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState, useEffect, useRef, useMemo, useCallback } from "react";
@@ -14,8 +13,9 @@ import { getPasswordRequirementChecks, getPasswordValidationError } from "../../
 import PasswordStrengthPanel from "../../components/PasswordStrengthPanel";
 import { useToast } from "../../components/Toast";
 import { logger } from '../../lib/logger';
-import { getErrorMessage as getUtilErrorMessage, getErrorContext } from '../../lib/error-utils';
+import { getErrorMessage, getErrorContext } from '../../lib/error-utils';
 import loginStyles from "../../login/login.module.css";
+import "../styles/reset-password.css";
 
 export default function ResetPasswordPage() {
   const [error, setError] = useState("");
@@ -133,7 +133,7 @@ export default function ResetPasswordPage() {
 
       logger.error('Reset password error:', getErrorContext(err));
       const networkError = describeNetworkRequestError(err, connectionQuality);
-      const errorMessage = networkError.message || getUtilErrorMessage(err);
+      const errorMessage = networkError.message || getErrorMessage(err);
       setError(errorMessage || 'Failed to reset password. Please try again.');
       
       addToast({
@@ -206,147 +206,196 @@ export default function ResetPasswordPage() {
   });
 
   return (
-    <div className={loginStyles.page}>
-      <div className={`${loginStyles.card} ${loginStyles.resetCard}`}>
-        <div className={loginStyles.logoWrap}>
-          <Image
-            src="/logo.svg"
-            alt="BracketWorks Logo"
-            width={220}
-            height={220}
-            className={loginStyles.logoImage}
-            priority
-          />
-        </div>
-
-        <form onSubmit={handleReset} className={loginStyles.form}>
-          <div className={loginStyles.formIntro}>
-            {isPreview
-              ? 'Development preview mode for the reset password email landing page.'
-              : hasToken
-              ? 'Create a new secure password for your account.'
-              : 'This reset link is missing or invalid. Request a new password reset email.'}
-          </div>
-
-          {isPreview ? (
-            <div className={loginStyles.sessionExpiredBanner} role="status" aria-live="polite">
-              Preview token detected. You can inspect the real page layout here, but submitting is disabled.
-            </div>
-          ) : null}
-
-          {error ? (
-            <div className={loginStyles.errorBanner} role="alert" aria-live="polite">
-              {error}
-            </div>
-          ) : null}
-
-          {hasToken ? (
-            <>
-              <div className={loginStyles.passwordWrap}>
-                <input
-                  ref={passwordRef}
-                  type={mounted && showNewPassword ? 'text' : 'password'}
-                  aria-label="New Password"
-                  placeholder="New Password"
-                  value={newPassword}
-                  onChange={event => {
-                    const nextValue = event.target.value;
-                    const nextValues = { ...formValues, newPassword: nextValue };
-                    setFieldValue('newPassword', nextValue);
-                    handleFieldChange('newPassword', nextValue, nextValues);
-                    if (confirmPassword) {
-                      handleFieldChange('confirmPassword', confirmPassword, nextValues);
-                    }
-                  }}
-                  onBlur={event => handleFieldBlur('newPassword', event.target.value, { ...formValues, newPassword: event.target.value })}
-                  onKeyDown={changeEvent => {
-                    if (changeEvent.key === 'Enter' && passwordStrength >= 50) {
-                      changeEvent.preventDefault();
-                      confirmPasswordRef.current?.focus();
-                    }
-                  }}
-                  autoComplete="new-password"
-                  required
-                  className={`${loginStyles.input} ${fieldErrors.newPassword ? loginStyles.inputError : ''}`}
-                />
-                {mounted ? (
-                  <button
-                    type="button"
-                    onClick={() => setShowNewPassword(!showNewPassword)}
-                    className={loginStyles.passwordToggle}
-                    aria-label={showNewPassword ? 'Hide new password' : 'Show new password'}
-                  >
-                    {showNewPassword ? 'Hide' : 'Show'}
-                  </button>
-                ) : null}
+    <>
+      {!hasToken ? (
+        <div className="rp-req-page">
+          <div className="rp-req-card">
+            {/* Key icon */}
+            <div className="rp-req-icon-wrap">
+              <div className="rp-req-icon-box">
+                <svg
+                  width="48"
+                  height="48"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#FF6A00"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="7.5" cy="15.5" r="5.5" />
+                  <path d="M21 2l-9.6 9.6" />
+                  <path d="M15.5 7.5l3 3L22 7l-3-3" />
+                </svg>
               </div>
+            </div>
 
-              {Boolean(newPassword) ? (
-                <PasswordStrengthPanel
-                  strengthText={strengthText}
-                  strengthPercent={passwordStrength}
-                  tone={strengthTone}
-                  requirements={requirementItems}
-                />
-              ) : null}
+            <h1 className="rp-req-title">This reset link is missing or invalid.</h1>
+            <p className="rp-req-subtitle">Request a new password reset email.</p>
 
-              <div className={loginStyles.passwordWrap}>
-                <input
-                  ref={confirmPasswordRef}
-                  type={mounted && showConfirmPassword ? 'text' : 'password'}
-                  aria-label="Confirm New Password"
-                  placeholder="Confirm New Password"
-                  value={confirmPassword}
-                  onChange={event => {
-                    const nextValue = event.target.value;
-                    setFieldValue('confirmPassword', nextValue);
-                    handleFieldChange('confirmPassword', nextValue, { ...formValues, confirmPassword: nextValue });
-                  }}
-                  onBlur={event => handleFieldBlur('confirmPassword', event.target.value, { ...formValues, confirmPassword: event.target.value })}
-                  onKeyDown={changeEvent => {
-                    if (changeEvent.key === 'Enter' && passwordsMatch && passwordStrength >= 50) {
-                      changeEvent.preventDefault();
-                      void submitReset();
-                    }
-                  }}
-                  autoComplete="new-password"
-                  required
-                  className={`${loginStyles.input} ${fieldErrors.confirmPassword ? loginStyles.inputError : ''}`}
-                />
-                {mounted ? (
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className={loginStyles.passwordToggle}
-                    aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
-                  >
-                    {showConfirmPassword ? 'Hide' : 'Show'}
-                  </button>
-                ) : null}
-              </div>
-
-              <button
-                type="submit"
-                disabled={isPreview || loading || !hasToken || passwordStrength < 50 || !passwordsMatch || Object.values(fieldErrors).some(Boolean)}
-                className={`${loginStyles.resetSubmitButton} surface-authButton surface-authButtonPrimary`}
-              >
-                {isPreview ? 'Preview Only' : loading ? 'Resetting Password...' : 'Reset Password'}
-              </button>
-            </>
-          ) : (
-            <div className={loginStyles.actions}>
-              <Link href="/reset-password/request" className={loginStyles.createAccountBtn}>
+            <div className="rp-error-actions">
+              <Link href="/reset-password/request" className="rp-error-action-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="4" width="20" height="16" rx="2" />
+                  <path d="M22 4l-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 4" />
+                </svg>
                 Request New Reset Link
               </Link>
-            </div>
-          )}
 
-          <div className={loginStyles.actions}>
-            <Link href="/login" className={loginStyles.forgotLink}>Back to Login</Link>
+              <Link href="/login" className="rp-error-action-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="19" y1="12" x2="5" y2="12" />
+                  <polyline points="12 19 5 12 12 5" />
+                </svg>
+                Back to Login
+              </Link>
+            </div>
           </div>
-        </form>
-      </div>
-    </div>
+        </div>
+      ) : (
+        <div className={loginStyles.page}>
+          <div className={`${loginStyles.card} ${loginStyles.resetCard}`}>
+            <div className="rp-req-icon-wrap">
+              <div className="rp-req-icon-box">
+                <svg
+                  width="36"
+                  height="36"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#FF6A00"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="7.5" cy="15.5" r="5.5" />
+                  <path d="M21 2l-9.6 9.6" />
+                  <path d="M15.5 7.5l3 3L22 7l-3-3" />
+                </svg>
+              </div>
+            </div>
+
+            <form onSubmit={handleReset} className={loginStyles.form}>
+              <div className={loginStyles.formIntro}>
+                {isPreview
+                  ? 'Development preview mode for the reset password email landing page.'
+                  : 'Create a new secure password for your account.'}
+              </div>
+
+              {isPreview ? (
+                <div className={loginStyles.sessionExpiredBanner} role="status" aria-live="polite">
+                  Preview token detected. You can inspect the real page layout here, but submitting is disabled.
+                </div>
+              ) : null}
+
+              {error ? (
+                <div className={loginStyles.errorBanner} role="alert" aria-live="polite">
+                  {error}
+                </div>
+              ) : null}
+
+              <>
+                <div className={loginStyles.passwordWrap}>
+                  <input
+                    ref={passwordRef}
+                    type={mounted && showNewPassword ? 'text' : 'password'}
+                    aria-label="New Password"
+                    placeholder="New Password"
+                    value={newPassword}
+                    onChange={event => {
+                      const nextValue = event.target.value;
+                      const nextValues = { ...formValues, newPassword: nextValue };
+                      setFieldValue('newPassword', nextValue);
+                      handleFieldChange('newPassword', nextValue, nextValues);
+                      if (confirmPassword) {
+                        handleFieldChange('confirmPassword', confirmPassword, nextValues);
+                      }
+                    }}
+                    onBlur={event => handleFieldBlur('newPassword', event.target.value, { ...formValues, newPassword: event.target.value })}
+                    onKeyDown={changeEvent => {
+                      if (changeEvent.key === 'Enter' && passwordStrength >= 50) {
+                        changeEvent.preventDefault();
+                        confirmPasswordRef.current?.focus();
+                      }
+                    }}
+                    autoComplete="new-password"
+                    required
+                    className={`${loginStyles.input} ${fieldErrors.newPassword ? loginStyles.inputError : ''}`}
+                  />
+                  {mounted ? (
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className={loginStyles.passwordToggle}
+                      aria-label={showNewPassword ? 'Hide new password' : 'Show new password'}
+                    >
+                      {showNewPassword ? 'Hide' : 'Show'}
+                    </button>
+                  ) : null}
+                </div>
+
+                {Boolean(newPassword) ? (
+                  <PasswordStrengthPanel
+                    strengthText={strengthText}
+                    strengthPercent={passwordStrength}
+                    tone={strengthTone}
+                    requirements={requirementItems}
+                  />
+                ) : null}
+
+                <div className={loginStyles.passwordWrap}>
+                  <input
+                    ref={confirmPasswordRef}
+                    type={mounted && showConfirmPassword ? 'text' : 'password'}
+                    aria-label="Confirm New Password"
+                    placeholder="Confirm New Password"
+                    value={confirmPassword}
+                    onChange={event => {
+                      const nextValue = event.target.value;
+                      setFieldValue('confirmPassword', nextValue);
+                      handleFieldChange('confirmPassword', nextValue, { ...formValues, confirmPassword: nextValue });
+                    }}
+                    onBlur={event => handleFieldBlur('confirmPassword', event.target.value, { ...formValues, confirmPassword: event.target.value })}
+                    onKeyDown={changeEvent => {
+                      if (changeEvent.key === 'Enter' && passwordsMatch && passwordStrength >= 50) {
+                        changeEvent.preventDefault();
+                        void submitReset();
+                      }
+                    }}
+                    autoComplete="new-password"
+                    required
+                    className={`${loginStyles.input} ${fieldErrors.confirmPassword ? loginStyles.inputError : ''}`}
+                  />
+                  {mounted ? (
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className={loginStyles.passwordToggle}
+                      aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+                    >
+                      {showConfirmPassword ? 'Hide' : 'Show'}
+                    </button>
+                  ) : null}
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isPreview || loading || !hasToken || passwordStrength < 50 || !passwordsMatch || Object.values(fieldErrors).some(Boolean)}
+                  className={`${loginStyles.resetSubmitButton} surface-authButton surface-authButtonPrimary`}
+                >
+                  {isPreview ? 'Preview Only' : loading ? 'Resetting Password...' : 'Reset Password'}
+                </button>
+              </>
+
+              <div className={loginStyles.actions}>
+                <Link href="/login" className={loginStyles.forgotLink}>Back to Login</Link>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 

@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import type { Metadata } from 'next';
 
 import '../styles/auth.css';
+import './styles/reset-password.css';
 
 export const metadata: Metadata = {
   robots: {

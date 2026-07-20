@@ -3,15 +3,9 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import {
-  SignupConfirmPasswordFieldSection,
-  SignupNameFieldsSection,
-  SignupPasswordFieldSection,
-  SignupUsernameFieldSection,
-} from './SignupFieldSections';
 import AuthFeedback from './AuthFeedback';
-import buttonStyles from '../styles/buttons.module.css';
 import PasswordStrengthPanel from './PasswordStrengthPanel';
+import PasswordVisibilityToggle from './PasswordVisibilityToggle';
 import { useSignupForm } from '../hooks/useSignupForm';
 import { getSignupValidationError, submitSignup } from '../lib/auth/signup';
 import { logger } from '../lib/logger';
@@ -165,18 +159,20 @@ export default function SignupModal({ mode = 'modal', isOpen = false, onClose, o
         )}
         {/* Header */}
         <div className={`surface-cardHeader ${styles.header}`}>
-          <div className={styles.brandRow}>
+          <div className={styles.headerContent}>
             <Image
-              src="/logo_no_text.svg"
-              alt="BracketWorks logo"
-              width={34}
-              height={34}
-              className={styles.logoMark}
+              src="/BW Logo No Text.png"
+              alt="BracketWorks"
+              width={40}
+              height={40}
+              className={styles.logoIcon}
               priority
             />
-            <h2 className={styles.title}>Create Account</h2>
+            <div>
+              <h2 className={styles.title}>Create your account</h2>
+              <p className={styles.subtitle}>Create your account to build brackets, manage side pots, and publish live results.</p>
+            </div>
           </div>
-          <p className={styles.subtitle}>Join BracketWorks today</p>
         </div>
 
         {/* Form */}
@@ -186,200 +182,230 @@ export default function SignupModal({ mode = 'modal', isOpen = false, onClose, o
             error={error}
           />
 
-          <SignupNameFieldsSection
-            containerClassName={styles.nameRow}
-            fieldClassName={styles.fieldRelative}
-            labelClassName="surface-authLabel"
-            firstName={{
-              label: 'First Name *',
-              value: firstName,
-              onChange: value => {
-                clearTransientFeedback();
-                updateValue('firstName', value);
-              },
-              inputClassName: inputClass(fieldValidity.firstName),
-              validBadge: null,
-            }}
-            lastName={{
-              label: 'Last Name *',
-              value: lastName,
-              onChange: value => {
-                clearTransientFeedback();
-                updateValue('lastName', value);
-              },
-              inputClassName: inputClass(fieldValidity.lastName),
-              validBadge: null,
-            }}
-          />
+          {/* Your Information Section */}
+          <h3 className={styles.sectionHeader}>YOUR INFORMATION</h3>
 
-          <SignupUsernameFieldSection
-            containerClassName={styles.field}
-            labelClassName="surface-authLabel"
-            placeholder="Pick a unique username"
-            ariaLabel="Username"
-            value={username}
-            onChange={value => {
-              clearTransientFeedback();
-              updateValue('username', value);
-            }}
-            checking={checkingUsername}
-            availability={usernameAvailable}
-            inputClassName={`surface-authInput ${styles.inputWithIcon} ${
-              usernameAvailable === false ? 'surface-authInputError' :
-              usernameAvailable === true ? 'surface-authInputValid' : ''
-            }`}
-            checkingIndicator={<span className={`${styles.checking} surface-authValidationBadgePending`}>Checking</span>}
-            availableIndicator={null}
-            takenIndicator={usernameAvailable === false && !checkingUsername ? <div className="surface-authHint">Username is taken</div> : null}
-          />
-          {usernameAvailable === true && !checkingUsername && (
-            <div className="surface-authHint surface-authHintSuccess">Username available</div>
-          )}
-          {usernameAvailable === null && !checkingUsername && (
-            <p className={styles.fieldHint}>Use a unique name. Do not use your email address.</p>
-          )}
+          {/* Name Fields - Two Columns */}
+          <div className={styles.nameRow}>
+            <div className={styles.field}>
+              <label className="surface-authLabel">First name *</label>
+              <div className={styles.inputWrapper}>
+                <svg className={styles.fieldIcon} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" />
+                </svg>
+                <input
+                  type="text"
+                  value={firstName}
+                  onChange={e => {
+                    clearTransientFeedback();
+                    updateValue('firstName', e.target.value);
+                  }}
+                  placeholder="First name"
+                  required
+                  className={inputClass(fieldValidity.firstName)}
+                />
+              </div>
+            </div>
+            <div className={styles.field}>
+              <label className="surface-authLabel">Last name *</label>
+              <div className={styles.inputWrapper}>
+                <svg className={styles.fieldIcon} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" />
+                </svg>
+                <input
+                  type="text"
+                  value={lastName}
+                  onChange={e => {
+                    clearTransientFeedback();
+                    updateValue('lastName', e.target.value);
+                  }}
+                  placeholder="Last name"
+                  required
+                  className={inputClass(fieldValidity.lastName)}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Username */}
+          <div className={styles.field}>
+            <label className="surface-authLabel">Username *</label>
+            <div className={styles.inputWrapper}>
+              <svg className={styles.fieldIcon} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" />
+              </svg>
+              <input
+                type="text"
+                value={username}
+                onChange={e => {
+                  clearTransientFeedback();
+                  updateValue('username', e.target.value);
+                }}
+                placeholder="Choose a unique username"
+                className={`${inputClass(
+                  usernameAvailable === true ? true : usernameAvailable === false ? false : fieldValidity.username
+                )}`}
+              />
+            </div>
+            <p className={styles.fieldHint}>Choose a unique username. Do not use your email address.</p>
+            {usernameAvailable === false && !checkingUsername && (
+              <div className="surface-authHint">Username is taken</div>
+            )}
+            {checkingUsername && (
+              <div className={`${styles.checking} surface-authValidationBadgePending`}>Checking</div>
+            )}
+          </div>
 
           {/* Organization */}
           <div className={styles.field}>
             <label className="surface-authLabel">Organization (optional)</label>
-            <input
-              type="text"
-              value={organization}
-              onChange={e => {
-                clearTransientFeedback();
-                updateValue('organization', e.target.value);
-              }}
-              placeholder="League, center, or event name"
-              className="surface-authInput"
-            />
+            <div className={styles.inputWrapper}>
+              <svg className={styles.fieldIcon} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16M9 21h6M9 17h6M9 13h6"></path>
+              </svg>
+              <input
+                type="text"
+                value={organization}
+                onChange={e => {
+                  clearTransientFeedback();
+                  updateValue('organization', e.target.value);
+                }}
+                placeholder="League, center, association, or event name"
+              />
+            </div>
+            <p className={styles.fieldHint}>Optional — bowling center, league, association, or event name.</p>
           </div>
+
+          {/* Account Security Section */}
+          <h3 className={styles.sectionHeader}>ACCOUNT SECURITY</h3>
 
           {/* Email */}
           <div className={styles.field}>
-            <label className="surface-authLabel">Email *</label>
-            <input
-              type="email"
-              value={email}
-              onChange={e => {
-                clearTransientFeedback();
-                updateValue('email', e.target.value);
-              }}
-              placeholder="you@example.com"
-              required
-              className={inputClass(fieldValidity.email)}
-            />
+            <label className="surface-authLabel">Email address *</label>
+            <div className={styles.inputWrapper}>
+              <svg className={styles.fieldIcon} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+              </svg>
+              <input
+                type="email"
+                value={email}
+                onChange={e => {
+                  clearTransientFeedback();
+                  updateValue('email', e.target.value);
+                }}
+                placeholder="you@example.com"
+                required
+                className={inputClass(fieldValidity.email)}
+              />
+            </div>
           </div>
 
-          <SignupPasswordFieldSection
-            containerClassName={styles.field}
-            labelClassName="surface-authLabel"
-            wrapperClassName={styles.passwordWrap}
-            inputClassName={`${inputClass(fieldValidity.password)} ${styles.inputWithToggle}`}
-            value={password}
-            onChange={value => {
-              clearTransientFeedback();
-              updateValue('password', value);
-            }}
-            mounted={mounted}
-            showPassword={showPassword}
-            onToggleVisibility={() => setShowPassword(!showPassword)}
-            onFocus={() => setShowPasswordRequirements(true)}
-            onBlur={() => setShowPasswordRequirements(false)}
-            showRequirements={showPasswordRequirements}
-            passwordStrength={passwordStrength}
-            passwordRequirementChecks={passwordRequirementChecks}
-            toggleButton={
-              <button
-                type="button"
-                className={`${styles.passwordToggle} surface-authPasswordToggle`}
-                onClick={() => setShowPassword(!showPassword)}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-              >
-                {showPassword ? (
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-10-7-10-7a18.08 18.08 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 10 7 10 7a18.09 18.09 0 01-2.96 3.84M1 1l22 22" />
+          {/* Password Fields - Two Columns */}
+          <div className={styles.passwordRow}>
+            <div className={styles.field}>
+              <label className="surface-authLabel">Password *</label>
+              <div className={styles.passwordField}>
+                <div className={styles.inputWrapper}>
+                  <svg className={styles.fieldIcon} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                   </svg>
-                ) : (
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z" />
-                    <circle cx="12" cy="12" r="3" />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={e => {
+                      clearTransientFeedback();
+                      updateValue('password', e.target.value);
+                    }}
+                    placeholder="Enter your password"
+                    required
+                    className={inputClass(fieldValidity.password)}
+                  />
+                </div>
+                <PasswordVisibilityToggle
+                  isVisible={showPassword}
+                  onToggle={() => setShowPassword(!showPassword)}
+                  showText={false}
+                  variant="compact"
+                  disabled={loading}
+                />
+              </div>
+            </div>
+            <div className={styles.field}>
+              <label className="surface-authLabel">Confirm password *</label>
+              <div className={styles.passwordField}>
+                <div className={styles.inputWrapper}>
+                  <svg className={styles.fieldIcon} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                   </svg>
-                )}
-                {showPassword ? 'Hide' : 'Show'}
-              </button>
-            }
-            strengthMeter={
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={e => {
+                      clearTransientFeedback();
+                      updateValue('confirmPassword', e.target.value);
+                    }}
+                    placeholder="Confirm your password"
+                    required
+                    className={`${inputClass(fieldValidity.confirmPassword)}`}
+                  />
+                </div>
+                <PasswordVisibilityToggle
+                  isVisible={showConfirmPassword}
+                  onToggle={() => setShowConfirmPassword(!showConfirmPassword)}
+                  showText={false}
+                  variant="compact"
+                  disabled={loading}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Password Requirements and Strength */}
+          {showPasswordRequirements && (
+            <div className={styles.passwordRequirements}>
               <PasswordStrengthPanel
                 strengthText={getStrengthText()}
                 strengthPercent={passwordStrengthPercent}
                 tone={strengthTone}
                 requirements={[
-                  { met: passwordRequirementChecks.minLength, label: 'At least 6 characters' },
+                  { met: passwordRequirementChecks.minLength, label: 'At least 8 characters with a number or symbol.' },
                   { met: passwordRequirementChecks.lower, label: 'Lowercase letter' },
                   { met: passwordRequirementChecks.upper, label: 'Uppercase letter' },
                   { met: passwordRequirementChecks.number, label: 'Number' },
                   { met: passwordRequirementChecks.special, label: 'Special character' },
                 ]}
               />
-            }
-            requirementsPanel={null}
-            placeholder="Min 6 characters"
-          />
+            </div>
+          )}
+          {!showPasswordRequirements && password && (
+            <p className={styles.fieldHint}>Use at least 8 characters with a number or symbol.</p>
+          )}
 
-          <SignupConfirmPasswordFieldSection
-            containerClassName={styles.field}
-            labelClassName="surface-authLabel"
-            wrapperClassName={styles.passwordWrap}
-            inputClassName={`surface-authInput ${styles.inputWithToggle} ${
-              confirmPassword && !fieldValidity.confirmPassword ? 'surface-authInputError' :
-              fieldValidity.confirmPassword ? 'surface-authInputValid' : ''
-            }`}
-            value={confirmPassword}
-            onChange={value => {
-              clearTransientFeedback();
-              updateValue('confirmPassword', value);
-            }}
-            mounted={mounted}
-            showPassword={showConfirmPassword}
-            onToggleVisibility={() => setShowConfirmPassword(!showConfirmPassword)}
-            toggleButton={
-              <button
-                type="button"
-                className={`${styles.passwordToggle} surface-authPasswordToggle`}
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
-              >
-                {showConfirmPassword ? (
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-10-7-10-7a18.08 18.08 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 10 7 10 7a18.09 18.09 0 01-2.96 3.84M1 1l22 22" />
-                  </svg>
-                ) : (
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z" />
-                    <circle cx="12" cy="12" r="3" />
-                  </svg>
-                )}
-                {showConfirmPassword ? 'Hide' : 'Show'}
+          {/* Button */}
+          <button type="submit" disabled={loading || !isFormReady} className={`surface-authButton surface-authButtonPrimary ${styles.submitBtn}`}>
+            {loading ? 'Creating...' : 'Create Account'}
+          </button>
+
+          {/* Footer */}
+          <div className={styles.footer}>
+            <p className={styles.tosText}>
+              By creating an account, you agree to our{' '}
+              <a href="/terms" className={styles.tosLink}>Terms of Service</a>
+              {' '}and{' '}
+              <a href="/privacy" className={styles.tosLink}>Privacy Policy</a>.
+            </p>
+            <div className={styles.divider}>OR</div>
+            <p className={styles.loginPrompt}>
+              Already have an account?{' '}
+              <button type="button" onClick={handleLoginIntent} className={styles.loginLink}>
+                Log in
               </button>
-            }
-            validIndicator={fieldValidity.confirmPassword ? <div className="surface-authHint surface-authHintSuccess">Passwords match</div> : null}
-            invalidIndicator={confirmPassword && !fieldValidity.confirmPassword ? <div className="surface-authHint">Passwords don&apos;t match</div> : null}
-            placeholder="Confirm your password"
-          />
-
-          {/* Buttons */}
-          <div className={styles.buttons}>
-            <button type="submit" disabled={loading || !isFormReady} className={`surface-authButton surface-authButtonPrimary ${styles.submitBtn}`}>
-              {loading ? 'Creating...' : 'Create Account'}
-            </button>
+            </p>
           </div>
-          <p className={styles.submitHelper}>All fields marked * are required.</p>
-          <p className={styles.loginPrompt}>
-            Already have an account?{' '}
-            <button type="button" onClick={handleLoginIntent} className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.loginLink}`}>
-              Log in
-            </button>
-          </p>
         </form>
       </div>
     </div>

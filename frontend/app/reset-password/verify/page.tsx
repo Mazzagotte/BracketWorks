@@ -2,13 +2,9 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { type FormEvent, useState, useEffect, useRef, useCallback, useMemo } from "react";
-
-import Image from "next/image";
+import { type FormEvent, useState, useRef, useCallback, useMemo } from "react";
 
 import AuthFeedback from "../../components/AuthFeedback";
-import AuthValidatedInputField from "../../components/AuthValidatedInputField";
-import { useAuthFormShortcuts } from "../../hooks/useAuthFormShortcuts";
 import { useFieldValidation } from "../../hooks/useFieldValidation";
 import { describeNetworkRequestError, useNetworkRequest } from "../../hooks/useNetworkRequest";
 import { PasswordResetApiError, verifyResetCode } from "../../lib/auth/password-reset";
@@ -24,10 +20,8 @@ export default function VerifyResetPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  const formValues = useMemo(() => ({ email, code }), [code, email]);
-  
   const [isValidating, setIsValidating] = useState(false);
+  const formValues = useMemo(() => ({ email, code }), [code, email]);
   
   // Refs for form fields
   const emailRef = useRef<HTMLInputElement>(null);
@@ -39,18 +33,14 @@ export default function VerifyResetPage() {
     enqueueRetry,
     fetchWithRetry,
     isOnline,
-    pendingRetryCount,
-    showConnectionStatus,
   } = useNetworkRequest();
   const {
     fieldErrors,
-    fieldTouched,
     handleFieldBlur,
     handleFieldChange,
     resetValidation,
     setFieldError,
     validateAll,
-    validateSingle,
   } = useFieldValidation(formValues, (fieldName, value) => {
     switch (fieldName) {
       case 'email':
@@ -62,36 +52,11 @@ export default function VerifyResetPage() {
     }
   });
 
-  useEffect(() => {
-    // Set mounted immediately to prevent hydration issues
-    setMounted(true);
-  }, []);
-
   const clearVerificationFeedback = useCallback(() => {
     setError('');
     resetValidation();
     emailRef.current?.focus();
   }, [resetValidation]);
-
-  useAuthFormShortcuts({
-    enableEscape: Boolean(error || Object.values(fieldErrors).some(Boolean)),
-    onEscape: clearVerificationFeedback,
-    onKeyDown: event => {
-      if (event.altKey && event.key.toLowerCase() === 'e') {
-        event.preventDefault();
-        emailRef.current?.focus();
-        return true;
-      }
-
-      if (event.altKey && event.key.toLowerCase() === 'c') {
-        event.preventDefault();
-        codeRef.current?.focus();
-        return true;
-      }
-
-      return false;
-    },
-  });
 
   const submitVerification = useCallback(async () => {
     // Clear previous errors
@@ -203,126 +168,165 @@ export default function VerifyResetPage() {
   }, [submitVerification]);
 
   return (
-    <div className="login-page-container">
-      {/* Connection Status Bar */}
-      {!isOnline && (
-        <div className="connection-status offline">
-          <span>No internet connection - requests will be retried automatically</span>
-          {pendingRetryCount > 0 && <span className="retry-info">Waiting to retry</span>}
+    <div className="rp-req-page">
+      <div className="rp-req-card">
+        {/* Shield with lock icon */}
+        <div className="rp-req-icon-wrap">
+          <div className="rp-req-icon-box">
+            <svg
+              width="48"
+              height="48"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#FF6A00"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              {/* Shield outline */}
+              <path d="M12 1L3 5v7c0 5.55 4.91 10.74 9 11.9c4.09-1.16 9-6.35 9-11.9V5l-9-4z" />
+              {/* Lock */}
+              <rect x="8" y="11" width="8" height="6" rx="1" />
+              <path d="M10 11V9a2 2 0 0 1 4 0v2" />
+              <circle cx="12" cy="14" r="0.5" fill="#FF6A00" />
+            </svg>
+          </div>
         </div>
-      )}
-      
-      {isOnline && showConnectionStatus && connectionQuality !== 'good' && (
-        <div className={`connection-status ${connectionQuality}`}>
-          <span>
-            {connectionQuality === 'slow' && 'Slow connection detected'}
-            {connectionQuality === 'poor' && 'Poor connection detected'}
-          </span>
-        </div>
-      )}
 
-      <div className="enhanced-card">
-        <div className="header-section">
-          <div className="auth-logo-section">
-            <Image 
-              src="/logo.svg" 
-              alt="BracketWorks Logo" 
-              width={72}
-              height={72}
-              className="auth-logo-img"
+        <h1 className="rp-req-title">Verify Reset Code</h1>
+        <p className="rp-req-subtitle">
+          Enter your email address and the reset code we sent you.<br />
+          Check your inbox for the verification code.
+        </p>
+
+        <form onSubmit={handleVerify} className="rp-req-form" noValidate>
+          {/* Email Field */}
+          <div>
+            <label htmlFor="reset-email" className="rp-req-label">
+              Email address<span className="rp-req-required" aria-hidden="true"> *</span>
+            </label>
+            <div className="rp-req-input-wrap">
+              <input
+                ref={emailRef}
+                id="reset-email"
+                type="email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  handleFieldChange('email', e.target.value, { ...formValues, email: e.target.value });
+                }}
+                onBlur={(e) => handleFieldBlur('email', e.target.value, { ...formValues, email: e.target.value })}
+                className={`rp-req-input${fieldErrors.email ? ' is-error' : ''}`}
+                placeholder="name@example.com"
+                autoComplete="email"
+                disabled={loading}
+                required
+                aria-describedby={fieldErrors.email ? 'email-error' : undefined}
+                aria-invalid={Boolean(fieldErrors.email)}
+              />
+              <span className="rp-req-input-icon" aria-hidden="true">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect width="20" height="16" x="2" y="4" rx="2" />
+                  <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                </svg>
+              </span>
+            </div>
+            {fieldErrors.email && (
+              <p id="email-error" className="rp-req-field-error" role="alert">
+                {fieldErrors.email}
+              </p>
+            )}
+          </div>
+
+          {/* Reset Code Field */}
+          <div>
+            <label htmlFor="reset-code" className="rp-req-label">
+              Reset code<span className="rp-req-required" aria-hidden="true"> *</span>
+            </label>
+            <div className="rp-req-input-wrap">
+              <input
+                ref={codeRef}
+                id="reset-code"
+                type="text"
+                value={code}
+                onChange={(e) => {
+                  setCode(e.target.value);
+                  handleFieldChange('code', e.target.value, { ...formValues, code: e.target.value });
+                }}
+                onBlur={(e) => handleFieldBlur('code', e.target.value, { ...formValues, code: e.target.value })}
+                className={`rp-req-input${fieldErrors.code ? ' is-error' : ''}`}
+                placeholder="000000"
+                disabled={loading}
+                required
+                aria-describedby={fieldErrors.code ? 'code-error' : undefined}
+                aria-invalid={Boolean(fieldErrors.code)}
+              />
+              <span className="rp-req-input-icon" aria-hidden="true">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                  <path d="M7 14a6 6 0 0 0-6 6v3h18v-3a6 6 0 0 0-6-6H7z" />
+                </svg>
+              </span>
+            </div>
+            {fieldErrors.code && (
+              <p id="code-error" className="rp-req-field-error" role="alert">
+                {fieldErrors.code}
+              </p>
+            )}
+          </div>
+
+          <div className="rp-req-feedback">
+            <AuthFeedback
+              success={success}
+              error={error}
+              successClassName="success-message"
+              errorClassName="error-container"
+              wrapErrorInSpan={true}
             />
           </div>
-          <h1 className="auth-brand-title">BracketWorks</h1>
-          <h2 className="auth-page-heading">Verify Reset Code</h2>
-          <div className="login-subtitle">Enter your email address and the reset code we sent you.</div>
-        </div>
-
-        <form onSubmit={handleVerify} className="login-form">
-          <AuthValidatedInputField
-            label="Email Address"
-            inputId="reset-email"
-            inputRef={emailRef}
-            type="email"
-            value={email}
-            onChange={(nextValue) => {
-              setEmail(nextValue);
-              handleFieldChange('email', nextValue, { ...formValues, email: nextValue });
-            }}
-            onBlur={(nextValue) => handleFieldBlur('email', nextValue, { ...formValues, email: nextValue })}
-            className={`login-input ${fieldErrors.email ? 'error' : ''} ${
-              fieldTouched.email && !fieldErrors.email && email.trim() ? 'success' : ''
-            }`}
-            placeholder="Enter your email address"
-            autoComplete="email"
-            disabled={loading}
-            errorMessage={fieldErrors.email}
-            successMessage={!fieldErrors.email && fieldTouched.email && email.trim() ? 'Valid email format' : ''}
-            errorId="email-error"
-            successId="email-help"
-          />
-
-          <AuthValidatedInputField
-            label="Reset Code"
-            inputId="reset-code"
-            inputRef={codeRef}
-            type="text"
-            value={code}
-            onChange={(nextValue) => {
-              setCode(nextValue);
-              handleFieldChange('code', nextValue, { ...formValues, code: nextValue });
-            }}
-            onBlur={(nextValue) => handleFieldBlur('code', nextValue, { ...formValues, code: nextValue })}
-            className={`login-input ${fieldErrors.code ? 'error' : ''} ${
-              fieldTouched.code && !fieldErrors.code && code.trim() ? 'success' : ''
-            }`}
-            placeholder="Enter your reset code"
-            disabled={loading}
-            errorMessage={fieldErrors.code}
-            successMessage={!fieldErrors.code && fieldTouched.code && code.trim() ? 'Valid reset code format' : ''}
-            errorId="code-error"
-            successId="code-help"
-          />
-
-          <AuthFeedback
-            success={success}
-            error={error}
-            successClassName="success-message"
-            errorClassName="error-container"
-            wrapErrorInSpan={true}
-          />
 
           <button
             type="submit"
-            className={`login-button ${loading ? 'loading' : ''}`}
+            className="rp-req-submit"
             disabled={loading || !!fieldErrors.email || !!fieldErrors.code || !email.trim() || !code.trim() || isValidating}
           >
-            {loading ? 'Verifying code...' : 'Verify Code'}
+            {loading ? 'Verifying...' : 'Verify Code'}
           </button>
-        </form>
 
-        <div className="links-container">
-          <Link href="/login" className="signup-link">
-            Back to Login
-          </Link>
-          <Link href="/reset-password/request" className="forgot-link">
+          <Link href="/reset-password/request" className="rp-error-action-link">
             Request New Code
           </Link>
+        </form>
+
+        <div className="rp-req-back-wrap">
+          <span className="rp-req-back-line" />
+          <Link href="/login" className="rp-req-back-link">← Back to Log In</Link>
+          <span className="rp-req-back-line" />
         </div>
 
-        {/* Keyboard shortcuts help */}
-        <div className="keyboard-shortcuts" aria-label="Keyboard shortcuts">
-          <details className="shortcuts-details">
-            <summary className="shortcuts-summary">Keyboard Shortcuts</summary>
-            <div className="shortcuts-content">
-              <div className="shortcut-item">
-                <kbd>Ctrl</kbd> + <kbd>Enter</kbd> Submit form
-              </div>
-              <div className="shortcut-item">
-                <kbd>Ctrl</kbd> + <kbd>Esc</kbd> Clear errors
-              </div>
-            </div>
-          </details>
-        </div>
+        <p className="rp-req-support">
+          Need help?{' '}
+          <Link href="/login" className="rp-req-support-link">Contact Support</Link>
+        </p>
       </div>
     </div>
   );
