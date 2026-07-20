@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
-  return NextResponse.redirect(new URL('/icons/icon-192.png', request.url), 307);
+  return NextResponse.redirect(new URL('/icons/android-chrome-192x192.png', request.url), 307);
 }
