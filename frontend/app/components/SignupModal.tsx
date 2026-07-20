@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
-import Image from 'next/image';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import { Building2, Lock, Mail, User } from 'lucide-react';
 import AuthFeedback from './AuthFeedback';
 import PasswordStrengthPanel from './PasswordStrengthPanel';
 import PasswordVisibilityToggle from './PasswordVisibilityToggle';
@@ -141,13 +142,13 @@ export default function SignupModal({ mode = 'modal', isOpen = false, onClose, o
   const inputClass = (valid: boolean, hasError?: boolean) =>
     `surface-authInput ${valid ? 'surface-authInputValid' : ''} ${hasError ? 'surface-authInputError' : ''}`;
 
-  const handleLoginIntent = () => {
+  const handleLoginIntent = useCallback(() => {
     if (isPageMode) {
       router.push('/login');
       return;
     }
     onClose?.();
-  };
+  }, [isPageMode, router, onClose]);
 
   if (!shouldRender) return null;
 
@@ -190,9 +191,7 @@ export default function SignupModal({ mode = 'modal', isOpen = false, onClose, o
             <div className={styles.field}>
               <label className="surface-authLabel">First name *</label>
               <div className={styles.inputWrapper}>
-                <svg className={styles.fieldIcon} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" />
-                </svg>
+                <User size={18} className={styles.fieldIcon} strokeWidth={2} aria-hidden="true" />
                 <input
                   type="text"
                   value={firstName}
@@ -209,9 +208,7 @@ export default function SignupModal({ mode = 'modal', isOpen = false, onClose, o
             <div className={styles.field}>
               <label className="surface-authLabel">Last name *</label>
               <div className={styles.inputWrapper}>
-                <svg className={styles.fieldIcon} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" />
-                </svg>
+                <User size={18} className={styles.fieldIcon} strokeWidth={2} aria-hidden="true" />
                 <input
                   type="text"
                   value={lastName}
@@ -231,9 +228,7 @@ export default function SignupModal({ mode = 'modal', isOpen = false, onClose, o
           <div className={styles.field}>
             <label className="surface-authLabel">Username *</label>
             <div className={styles.inputWrapper}>
-              <svg className={styles.fieldIcon} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" />
-              </svg>
+              <User size={18} className={styles.fieldIcon} strokeWidth={2} aria-hidden="true" />
               <input
                 type="text"
                 value={username}
@@ -260,10 +255,7 @@ export default function SignupModal({ mode = 'modal', isOpen = false, onClose, o
           <div className={styles.field}>
             <label className="surface-authLabel">Organization (optional)</label>
             <div className={styles.inputWrapper}>
-              <svg className={styles.fieldIcon} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
-                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16M9 21h6M9 17h6M9 13h6"></path>
-              </svg>
+              <Building2 size={18} className={styles.fieldIcon} strokeWidth={2} aria-hidden="true" />
               <input
                 type="text"
                 value={organization}
@@ -284,10 +276,7 @@ export default function SignupModal({ mode = 'modal', isOpen = false, onClose, o
           <div className={styles.field}>
             <label className="surface-authLabel">Email address *</label>
             <div className={styles.inputWrapper}>
-              <svg className={styles.fieldIcon} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                <rect x="2" y="4" width="20" height="16" rx="2"></rect>
-                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
-              </svg>
+              <Mail size={18} className={styles.fieldIcon} strokeWidth={2} aria-hidden="true" />
               <input
                 type="email"
                 value={email}
@@ -308,10 +297,7 @@ export default function SignupModal({ mode = 'modal', isOpen = false, onClose, o
               <label className="surface-authLabel">Password *</label>
               <div className={styles.passwordField}>
                 <div className={styles.inputWrapper}>
-                  <svg className={styles.fieldIcon} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                  </svg>
+                    <Lock size={18} className={styles.fieldIcon} strokeWidth={2} aria-hidden="true" />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     value={password}
@@ -337,10 +323,7 @@ export default function SignupModal({ mode = 'modal', isOpen = false, onClose, o
               <label className="surface-authLabel">Confirm password *</label>
               <div className={styles.passwordField}>
                 <div className={styles.inputWrapper}>
-                  <svg className={styles.fieldIcon} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                  </svg>
+                    <Lock size={18} className={styles.fieldIcon} strokeWidth={2} aria-hidden="true" />
                   <input
                     type={showConfirmPassword ? 'text' : 'password'}
                     value={confirmPassword}

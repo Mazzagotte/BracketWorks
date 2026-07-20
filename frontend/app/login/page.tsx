@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useEffect, useRef, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { BarChart3, ClipboardList, GitFork, Lock, User } from "lucide-react";
@@ -93,15 +93,14 @@ export default function LoginPage() {
     }
   }, []);
 
-  const dismissResetSuccessModal = () => {
+  const dismissResetSuccessModal = useCallback(() => {
     closeModal('resetSuccess');
-
     const params = new URLSearchParams(window.location.search);
     params.delete('reset');
     const nextSearch = params.toString();
     const nextUrl = `${window.location.pathname}${nextSearch ? `?${nextSearch}` : ''}`;
     window.history.replaceState({}, '', nextUrl);
-  };
+  }, [closeModal]);
 
   useEffect(() => {
     if (!modals.resetSuccess || resetSuccessCountdown !== 0) {
@@ -149,12 +148,8 @@ export default function LoginPage() {
       });
 
       const text = await res.text();
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch {
-        data = { raw: text };
-      }
+      let data: Record<string, unknown>;
+      try { data = JSON.parse(text); } catch { data = { raw: text }; }
 
       logger.debug('Login response received', { userId: data.user_id });
 

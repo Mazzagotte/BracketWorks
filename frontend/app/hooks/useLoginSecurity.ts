@@ -1,11 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-
-
-
-
-
 export interface LoginSecurityState {
   failedAttempts: number;
   loginDelay: number;

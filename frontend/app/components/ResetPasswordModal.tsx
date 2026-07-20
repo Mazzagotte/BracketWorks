@@ -143,7 +143,7 @@ export default function ResetPasswordModal({ isOpen, onClose, onSuccess }: Reset
 
           <button
             type="submit"
-            disabled={form.loading || !!form.fieldError || !form.email.trim() || cooldownSeconds > 0}
+            disabled={submitDisabled}
             className={styles.submitBtn}
           >
             {form.loading ? 'Sending…' : (cooldownSeconds > 0 ? `Retry in ${cooldownSeconds}s` : 'Send Reset Link')}
@@ -155,7 +155,6 @@ export default function ResetPasswordModal({ isOpen, onClose, onSuccess }: Reset
               type="button"
               onClick={handleClose}
               className={styles.backLink}
-              style={{ background: 'none', border: 'none', padding: '8px 0', cursor: 'pointer', font: 'inherit' }}
             >
               ← Back to Log In
             </button>
@@ -168,7 +167,6 @@ export default function ResetPasswordModal({ isOpen, onClose, onSuccess }: Reset
               type="button"
               onClick={handleClose}
               className={styles.supportLink}
-              style={{ background: 'none', border: 'none', padding: '0', cursor: 'pointer', font: 'inherit' }}
             >
               Contact Support
             </button>
