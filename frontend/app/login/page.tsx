@@ -14,6 +14,7 @@ import { useLoginSecurity } from "../hooks/useLoginSecurity";
 import { useAuth } from "../lib/auth-context";
 import { logger } from "../lib/logger";
 import FeatureIconCard from "../components/FeatureIconCard";
+import BracketVisualization from "../components/BracketVisualization";
 import SignupModal from "../components/SignupModal";
 import ResetPasswordModal from "../components/ResetPasswordModal";
 import PasswordVisibilityToggle from "../components/PasswordVisibilityToggle";
@@ -229,21 +230,15 @@ export default function LoginPage() {
 
       <div className={styles.shell}>
         <section className={styles.brandPanel} aria-hidden="true">
-          <div className={styles.brandLogo}>
+          <div className={styles.brandTop}>
             <Image
-              src="/BW Logo No Text.svg"
-              alt="BracketWorks icon"
-              width={52}
-              height={52}
-              className={styles.brandLogoIcon}
+              src="/BW Banner.svg"
+              alt="BracketWorks"
+              width={520}
+              height={120}
+              className={styles.bannerImage}
               priority
             />
-            <div className={styles.brandLogoText}>
-              <span className={styles.brandLogoName}>
-                BRACKET<span className={styles.brandLogoOrange}>WORKS</span>
-              </span>
-              <span className={styles.brandLogoTagline}>BOWLING TOURNAMENT MANAGEMENT</span>
-            </div>
           </div>
 
           <h2 className={styles.brandHeadline}>
@@ -257,9 +252,15 @@ export default function LoginPage() {
           </p>
 
           <ul className={styles.featureList}>
-            {featureCards.map(({ icon, label, title, description }) => (
+            {featureCards.map(({ icon, label, title, description }, index) => (
               <li key={label} className={styles.featureItem}>
-                <FeatureIconCard icon={icon} label={label} />
+                {index === 1 ? (
+                  <div className={`group relative grid h-14 w-14 place-items-center rounded-xl border border-[#34343A] bg-[#17171B] text-[#FF7A00] shadow-[0_10px_18px_rgba(0,0,0,0.42),0_0_0_1px_rgba(255,255,255,0.02)_inset] transition-all duration-200 ease-out before:pointer-events-none before:absolute before:inset-[1px] before:rounded-[11px] before:bg-[linear-gradient(180deg,rgba(255,255,255,0.12)_0%,rgba(255,255,255,0)_38%)] before:content-[''] hover:-translate-y-0.5 hover:border-[#5A4130]`}>
+                    <BracketVisualization />
+                  </div>
+                ) : (
+                  <FeatureIconCard icon={icon} label={label} />
+                )}
                 <span>
                   <strong>{title}</strong>
                   <small>{description}</small>
