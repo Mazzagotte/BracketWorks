@@ -3,7 +3,7 @@
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { BadgeDollarSign, BarChart3, Lock, Trophy, User } from "lucide-react";
+import { BarChart3, ClipboardList, Lock, User, Workflow } from "lucide-react";
 
 import styles from "./login.module.css";
 
@@ -25,22 +25,22 @@ import { parseLoginError, parseNetworkError, getLoginErrorDuration } from "../li
 
 const featureCards = [
   {
-    icon: Trophy,
-    label: 'Build Brackets',
-    title: 'Build Brackets',
-    description: 'Create and customize brackets in seconds.',
+    icon: ClipboardList,
+    label: 'Organize Your Tournament',
+    title: 'Organize Your Tournament',
+    description: 'Manage entries, squads, divisions, formats, and bowler information.',
   },
   {
-    icon: BadgeDollarSign,
-    label: 'Manage Side Pots',
-    title: 'Manage Side Pots',
-    description: 'Collect entries, track payouts, and stay organized.',
+    icon: Workflow,
+    label: 'Run Brackets & Side Pots',
+    title: 'Run Brackets & Side Pots',
+    description: 'Generate brackets, track participation, advance winners, and calculate payouts.',
   },
   {
     icon: BarChart3,
-    label: 'Live Results',
-    title: 'Live Results',
-    description: 'Enter scores and publish results in real time.',
+    label: 'Publish Live Results',
+    title: 'Publish Live Results',
+    description: 'Enter scores and share standings, brackets, and tournament updates in real time.',
   },
 ] as const;
 
@@ -229,18 +229,32 @@ export default function LoginPage() {
 
       <div className={styles.shell}>
         <section className={styles.brandPanel} aria-hidden="true">
-          <div className={styles.brandTop}>
+          <div className={styles.brandLogo}>
             <Image
-              src="/BW%20Banner.svg"
-              alt="BracketWorks"
-              width={520}
-              height={120}
-              className={styles.bannerImage}
+              src="/BW Logo No Text.svg"
+              alt="BracketWorks icon"
+              width={52}
+              height={52}
+              className={styles.brandLogoIcon}
               priority
             />
+            <div className={styles.brandLogoText}>
+              <span className={styles.brandLogoName}>
+                BRACKET<span className={styles.brandLogoOrange}>WORKS</span>
+              </span>
+              <span className={styles.brandLogoTagline}>BOWLING TOURNAMENT MANAGEMENT</span>
+            </div>
           </div>
 
-          <h2 className={styles.brandHeadline}>Run tournaments without spreadsheet chaos.</h2>
+          <h2 className={styles.brandHeadline}>
+            Run Your Tournament<br />
+            Without the <span className={styles.brandHeadlineOrange}>Spreadsheet Chaos.</span>
+          </h2>
+
+          <p className={styles.brandDescription}>
+            Manage entries, brackets, side pots, scores, standings,
+            and payouts from one organized workspace.
+          </p>
 
           <ul className={styles.featureList}>
             {featureCards.map(({ icon, label, title, description }) => (
