@@ -176,23 +176,31 @@ export default function LoginPage() {
       }
 
       // Success
+      if (typeof data.access_token !== 'string' || typeof data.user_id !== 'string') {
+        addToast({ type: 'error', message: 'Login failed: unexpected server response.', duration: 6000 });
+        setError('Unexpected server response.');
+        setLoginFailed(true);
+        return;
+      }
+
       setFailedAttempts(0);
       clearLoginDelay();
       setLoginFailed(false);
       setError('');
       localStorage.setItem('last_username', username.trim());
 
-      const displayName = data.first_name || username;
+      const firstName = typeof data.first_name === 'string' ? data.first_name : undefined;
+      const displayName = firstName || username;
 
       authenticateUser(data.access_token, data.user_id, {
-        name: data.first_name,
+        name: firstName,
         isAdmin: Boolean(data.is_admin),
       }, {
-        sessionId: data.session_id,
+        sessionId: typeof data.session_id === 'string' ? data.session_id : undefined,
       });
 
-      if (data.first_name) {
-        localStorage.setItem('first_name', data.first_name);
+      if (firstName) {
+        localStorage.setItem('first_name', firstName);
       }
       localStorage.setItem('is_admin', data.is_admin ? 'true' : 'false');
 
