@@ -51,4 +51,6 @@ build/
 # Temporary files
 *.tmp
 *.temp
+*.docx
+*.doc
 frontend/node_modules_stale_*

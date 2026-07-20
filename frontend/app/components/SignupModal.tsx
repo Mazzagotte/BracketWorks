@@ -161,7 +161,7 @@ export default function SignupModal({ mode = 'modal', isOpen = false, onClose, o
         <div className={`surface-cardHeader ${styles.header}`}>
           <div className={styles.headerContent}>
             <Image
-              src="/BW Logo No Text.png"
+              src="/BW Logo No Text.svg"
               alt="BracketWorks"
               width={40}
               height={40}
