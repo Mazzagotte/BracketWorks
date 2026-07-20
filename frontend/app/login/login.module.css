@@ -71,43 +71,16 @@
   animation: panelReveal 0.45s ease-out;
 }
 
-/* Logo lockup */
-.brandLogo {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 36px;
+/* Logo banner */
+.brandTop {
+  max-width: 480px;
+  margin-bottom: 32px;
 }
 
-.brandLogoIcon {
-  flex-shrink: 0;
+.bannerImage {
+  width: 100%;
+  height: auto;
   display: block;
-}
-
-.brandLogoText {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.brandLogoName {
-  font-size: 26px;
-  font-weight: 900;
-  letter-spacing: 0.04em;
-  line-height: 1;
-  color: var(--bw-login-text);
-}
-
-.brandLogoOrange {
-  color: var(--bw-login-orange);
-}
-
-.brandLogoTagline {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.18em;
-  color: var(--bw-login-text-muted);
-  text-transform: uppercase;
 }
 
 /* Headline & description */
