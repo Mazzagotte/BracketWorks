@@ -17,7 +17,7 @@ const structuredData = JSON.stringify({
       '@id': 'https://bracketworks.app/#organization',
       name: 'BracketWorks',
       url: 'https://bracketworks.app',
-      logo: 'https://bracketworks.app/icons/android-chrome-192x192.png',
+      logo: 'https://bracketworks.app/icons/icon-192.png',
     },
     {
       '@type': 'WebSite',
