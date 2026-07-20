@@ -3,7 +3,7 @@
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { BarChart3, ClipboardList, Lock, User, Workflow } from "lucide-react";
+import { BarChart3, ClipboardList, GitFork, Lock, User } from "lucide-react";
 
 import styles from "./login.module.css";
 
@@ -14,7 +14,6 @@ import { useLoginSecurity } from "../hooks/useLoginSecurity";
 import { useAuth } from "../lib/auth-context";
 import { logger } from "../lib/logger";
 import FeatureIconCard from "../components/FeatureIconCard";
-import BracketVisualization from "../components/BracketVisualization";
 import SignupModal from "../components/SignupModal";
 import ResetPasswordModal from "../components/ResetPasswordModal";
 import PasswordVisibilityToggle from "../components/PasswordVisibilityToggle";
@@ -32,7 +31,7 @@ const featureCards = [
     description: 'Manage entries, squads, divisions, formats, and bowler information.',
   },
   {
-    icon: Workflow,
+    icon: GitFork,
     label: 'Run Brackets & Side Pots',
     title: 'Run Brackets & Side Pots',
     description: 'Generate brackets, track participation, advance winners, and calculate payouts.',
@@ -252,15 +251,9 @@ export default function LoginPage() {
           </p>
 
           <ul className={styles.featureList}>
-            {featureCards.map(({ icon, label, title, description }, index) => (
+            {featureCards.map(({ icon, label, title, description }) => (
               <li key={label} className={styles.featureItem}>
-                {index === 1 ? (
-                  <div className={`group relative grid h-14 w-14 place-items-center rounded-xl border border-[#34343A] bg-[#17171B] text-[#FF7A00] shadow-[0_10px_18px_rgba(0,0,0,0.42),0_0_0_1px_rgba(255,255,255,0.02)_inset] transition-all duration-200 ease-out before:pointer-events-none before:absolute before:inset-[1px] before:rounded-[11px] before:bg-[linear-gradient(180deg,rgba(255,255,255,0.12)_0%,rgba(255,255,255,0)_38%)] before:content-[''] hover:-translate-y-0.5 hover:border-[#5A4130]`}>
-                    <BracketVisualization />
-                  </div>
-                ) : (
-                  <FeatureIconCard icon={icon} label={label} />
-                )}
+                <FeatureIconCard icon={icon} label={label} />
                 <span>
                   <strong>{title}</strong>
                   <small>{description}</small>
