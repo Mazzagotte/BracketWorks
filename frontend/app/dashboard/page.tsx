@@ -1,7 +1,24 @@
 "use client";
 
-import { useMemo, useEffect, useState, useRef, useCallback } from 'react';
+import { useMemo, useEffect, useState, useRef, useCallback, type CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
+import {
+  ArrowRight,
+  Calendar,
+  CircleDollarSign,
+  ClipboardList,
+  Clock,
+  Cog,
+  LogOut,
+  PencilLine,
+  PlusCircle,
+  Repeat,
+  Settings2,
+  Trophy,
+  UserPlus,
+  Users,
+  type LucideIcon,
+} from 'lucide-react';
 import { Tournament, Squad, BracketSettings, TournamentForm, SidePotsSettings, SidePot, Player, DashboardTournamentBootstrapResponse } from '../lib/types';
 
 import { useAuth } from '../lib/auth-context';
@@ -10,13 +27,12 @@ import { getErrorMessage, getErrorContext } from '../lib/error-utils';
 import { storage } from '../lib/storage';
 import { BRACKET_SETTINGS_AUTOSAVE_DELAY_MS, getSidePotsStorageKey } from '../lib/dashboard-settings';
 import mobileStyles from './dashboard.module.css';
-import cardStyles from '../styles/cards.module.css';
 import shellStyles from '../styles/page-shell.module.css';
 import buttonStyles from '../styles/buttons.module.css';
 import { ConfirmationDialog } from '../components/LazyComponents';
 import { API, apiClient, apiFetch } from '../lib/api';
 import { logger } from '../lib/logger';
-import { defaultBracketPrograms, getBracketProgramLabel, normalizeBracketPrograms, summarizeEntries } from '../lib/bracketPrograms';
+import { defaultBracketPrograms, normalizeBracketPrograms, summarizeEntries } from '../lib/bracketPrograms';
 import EnhancedButton from '../components/EnhancedButton';
 import { useToast } from '../components/Toast';
 import { usePagination } from '../components/Performance';
@@ -63,6 +79,15 @@ const getErrorDetail = async (response: Response): Promise<string | null> => {
 
 type DashboardCardKey = 'squadSelection' | 'bracketSettings' | 'byeSettings' | 'optionalBrackets' | 'sidePots';
 
+type WorkflowStep = {
+  key: string;
+  step: string;
+  label: string;
+  status: string;
+  done: boolean;
+  active?: boolean;
+};
+
 const collapsedMobileCards: Record<DashboardCardKey, boolean> = {
   squadSelection: false,
   bracketSettings: false,
@@ -77,6 +102,19 @@ const expandedDesktopCards: Record<DashboardCardKey, boolean> = {
   byeSettings: true,
   optionalBrackets: true,
   sidePots: true,
+};
+
+const dashboardActionIcons: Record<string, LucideIcon> = {
+  'add-player': UserPlus,
+  'view-payouts': Trophy,
+  'change-squad': Users,
+  'edit-tournament': PencilLine,
+  'tournament-settings': Settings2,
+  'new-tournament': PlusCircle,
+  'change-tournament': Repeat,
+  'unload-tournament': LogOut,
+  'enter-scores': ClipboardList,
+  'generate-brackets': ClipboardList,
 };
 
 export default function TournamentDashboard() {
@@ -1036,6 +1074,7 @@ export default function TournamentDashboard() {
   }, [loadedEntries, hasGeneratedBrackets, scoresLocked, scoreProgress.percent, router]);
 
   const primaryContinueActionKey = contextPrimaryAction.key === 'generate-brackets' ? 'enter-scores' : contextPrimaryAction.key;
+  const ContinueActionIcon = dashboardActionIcons[contextPrimaryAction.key] ?? ArrowRight;
 
   const manageSetupActions = [
     {
@@ -1115,20 +1154,12 @@ export default function TournamentDashboard() {
     [],
   );
   const formatUsd = useCallback((amount: number) => usdFormatter.format(Math.max(0, Number(amount || 0))), [usdFormatter]);
-  const bracketsGenerated = hasGeneratedBrackets === true;
-  const payoutsCalculated = payoutsFinalized || scoresLocked;
-
   const scoreStatusLabel = useMemo(() => {
     if (scoreProgress.loading) return 'Checking...';
     if (scoresLocked) return 'Locked';
     if (scoreProgress.entered > 0) return 'In Progress';
     return 'None';
   }, [scoreProgress.entered, scoreProgress.loading, scoresLocked]);
-
-  const bracketsStatusLabel = useMemo(() => {
-    if (bracketsGenerated) return 'Generated';
-    return loadedEntries > 0 ? 'Not Generated' : 'Pending';
-  }, [bracketsGenerated, loadedEntries]);
 
   const payoutWorkflowStatusLabel = useMemo(() => {
     if (payoutsFinalized) return 'Finalized';
@@ -1138,7 +1169,16 @@ export default function TournamentDashboard() {
   }, [payoutsFinalized, hasGeneratedBrackets, scoreProgress.percent]);
 
   const payoutStatusLabel = payoutWorkflowStatusLabel;
-  const payoutsChipStatusLabel = payoutsCalculated ? 'Calculated' : 'Not Calculated';
+  const totalScoresTarget = Math.max(scoreProgress.total, loadedEntries);
+  const scoreProgressText = scoreProgress.loading
+    ? 'Checking score progress...'
+    : `${scoreProgress.completed} of ${totalScoresTarget} players fully scored`;
+  const payoutPercent = grossCollected > 0
+    ? Math.round((tournamentProjectedPayout / grossCollected) * 100)
+    : 0;
+  const payoutRingStyle = useMemo(() => ({
+    ['--dashboard-payout-percent' as string]: `${Math.max(0, Math.min(100, payoutPercent))}%`,
+  } as CSSProperties), [payoutPercent]);
 
   const statusNarrative = useMemo(() => {
     if (isEntryDataSyncing) {
@@ -1184,59 +1224,13 @@ export default function TournamentDashboard() {
       nextStepText: 'Review setup status and continue workflow.',
     };
   }, [isEntryDataSyncing, hasSetupBlockers, blockerSummary, bracketsNotGeneratedCount, dataIssuesCount, setupIncomplete]);
-  const heroStatusChips = useMemo<Array<{ key: string; label: string; value: string; tone: string; showAlertIcon?: boolean }>>(() => ([
-    {
-      key: 'brackets',
-      label: 'Brackets',
-      value: bracketsStatusLabel,
-      tone: bracketsStatusLabel === 'Generated' ? 'complete' : (loadedEntries > 0 ? 'active' : 'pending'),
-    },
-    {
-      key: 'scores',
-      label: 'Scores',
-      value: scoreStatusLabel,
-      tone: scoreStatusLabel === 'None'
-        ? 'pending'
-        : scoreStatusLabel === 'Locked'
-          ? 'complete'
-          : scoreStatusLabel === 'Checking...' || scoreStatusLabel === 'In Progress'
-          ? 'active'
-          : 'pending',
-    },
-    {
-      key: 'payouts',
-      label: 'Payouts',
-      value: payoutsChipStatusLabel,
-      tone: payoutsCalculated ? 'complete' : 'pending',
-    },
-  ]), [bracketsStatusLabel, loadedEntries, scoreStatusLabel, payoutsChipStatusLabel, payoutsCalculated]);
-  const healthStripItems = useMemo(() => ([
-    {
-      key: 'averages',
-      label: 'Missing Averages',
-      value: missingAveragesCount,
-      href: '/players',
-    },
-    {
-      key: 'payments',
-      label: 'Unpaid Entries',
-      value: unpaidEntriesCount,
-      href: '/players',
-    },
-    {
-      key: 'bracket-status',
-      label: 'Brackets',
-      value: hasGeneratedBrackets ? 'Ready' : 'Not Generated',
-      href: '/brackets',
-    },
-    {
-      key: 'payout-status',
-      label: 'Payouts',
-      value: payoutsFinalized ? 'Finalized' : 'Pending',
-      href: '/payouts',
-    },
-  ]), [missingAveragesCount, unpaidEntriesCount, hasGeneratedBrackets, payoutsFinalized]);
-  const showHeroStatusStrip = statusNarrative.tone === 'warning' || isEntryDataSyncing;
+  const workflowSteps: WorkflowStep[] = [
+    { key: 'setup', step: '1', label: 'Setup', status: setupIncomplete ? 'In Progress' : 'Completed', done: !setupIncomplete },
+    { key: 'entries', step: '2', label: 'Entries', status: loadedEntries > 0 ? 'Completed' : 'Pending', done: loadedEntries > 0 },
+    { key: 'brackets', step: '3', label: 'Brackets', status: hasGeneratedBrackets ? 'Completed' : 'Pending', done: hasGeneratedBrackets },
+    { key: 'scores', step: '4', label: 'Scores', status: scoreStatusLabel, done: scoresLocked, active: !scoresLocked && scoreProgress.entered > 0 },
+    { key: 'payouts', step: '5', label: 'Payouts', status: payoutStatusLabel, done: payoutsFinalized },
+  ];
   const orderedStatsProgramSummaries = useMemo(() => {
     const programOrder: Record<string, number> = {
       handicap: 0,
@@ -1254,42 +1248,16 @@ export default function TournamentDashboard() {
       return a.name.localeCompare(b.name);
     });
   }, [statsEntrySummary.programSummaries]);
-
-  const percentOfTotalEntries = useCallback((count: number) => {
-    if (statsEntrySummary.totalEntries <= 0) return null;
-    return `${Math.round((count / statsEntrySummary.totalEntries) * 100)}% of entries`;
-  }, [statsEntrySummary.totalEntries]);
-
-  const tournamentSummaryCards = useMemo<Array<{ key: string; label: string; value: string; helperPrimary?: string; helperSecondary?: string; accent?: boolean; href: string }>>(() => {
-    const programCards = orderedStatsProgramSummaries.map(program => {
-      const label = getBracketProgramLabel(program);
-
-      return {
-        key: `summary-${program.key}`,
-        label,
-        value: `${program.totalEntries}`,
-        helperPrimary: percentOfTotalEntries(program.totalEntries) ?? undefined,
-        href: '/players',
-      };
-    });
-
-    return [
-      {
-        key: 'summary-total-entries',
-        label: 'Total Entries',
-        value: `${statsEntrySummary.totalEntries}`,
-        helperPrimary: loadedEntries > 0 ? `${loadedEntries} players` : undefined,
-        href: '/players',
-      },
-      {
-        key: 'summary-entry-revenue',
-        label: 'Entry Revenue',
-        value: formatUsd(statsEntrySummary.totalRevenue),
-        href: '/players',
-      },
-      ...programCards,
-    ];
-  }, [formatUsd, loadedEntries, orderedStatsProgramSummaries, percentOfTotalEntries, statsEntrySummary.totalEntries, statsEntrySummary.totalRevenue]);
+  const handicapSummary = orderedStatsProgramSummaries.find(program => program.key === 'handicap');
+  const scratchSummary = orderedStatsProgramSummaries.find(program => program.key === 'scratch');
+  const handicapEntries = handicapSummary?.totalEntries ?? 0;
+  const scratchEntries = scratchSummary?.totalEntries ?? 0;
+  const handicapSplitPercent = statsEntrySummary.totalEntries > 0
+    ? Math.round((handicapEntries / statsEntrySummary.totalEntries) * 100)
+    : 0;
+  const scratchSplitPercent = statsEntrySummary.totalEntries > 0
+    ? Math.round((scratchEntries / statsEntrySummary.totalEntries) * 100)
+    : 0;
 
   useEffect(() => {
     let isCancelled = false;
@@ -1477,223 +1445,259 @@ export default function TournamentDashboard() {
 
             {tournament && (
               <>
-                <div className={mobileStyles.dashboardOverviewStack}>
-                <section className={`${shellStyles.section} ${mobileStyles.commandCenterGrid}`}>
-                  <article className={`${cardStyles.card} ${cardStyles.accentCard} ${mobileStyles.liveBoardCard} ${mobileStyles.gridHero}`}>
-                    <div className={mobileStyles.heroTopRow}>
+                <div className={mobileStyles.dashboardBoard}>
+                  <section className={mobileStyles.dashboardHeaderCard}>
+                    <div className={mobileStyles.dashboardHeaderTop}>
                       <div>
-                        <div className={mobileStyles.heroKicker}>Tournament Overview</div>
-                        <div className={mobileStyles.heroTitleRow}>
-                          <h2 className={mobileStyles.heroTitle}>{tournament.name}</h2>
+                        <h2 className={mobileStyles.dashboardTournamentName}>{tournament.name}</h2>
+                        <div className={mobileStyles.dashboardTournamentMeta}>
+                          <span><Calendar className={mobileStyles.dashboardMetaIcon} aria-hidden="true" />{tournament.start_date ? formatIsoDateFull(tournament.start_date) : 'Date pending'}</span>
+                          <span><Clock className={mobileStyles.dashboardMetaIcon} aria-hidden="true" />{activeSquad ? activeSquad.time : 'Squad time pending'}</span>
+                          <span><Users className={mobileStyles.dashboardMetaIcon} aria-hidden="true" />{loadedEntries} players</span>
+                          <span><ClipboardList className={mobileStyles.dashboardMetaIcon} aria-hidden="true" />{statsEntrySummary.totalEntries} entries</span>
                         </div>
-                        <div className={mobileStyles.heroMetaCompact}>
-                          <span>{tournament.start_date ? formatIsoDateFull(tournament.start_date) : 'Date pending'}</span>
-                          <span aria-hidden="true">•</span>
-                          <span>{activeSquad ? `Active Squad: ${activeSquad.time}` : 'Active Squad: pending'}</span>
-                          <span aria-hidden="true">•</span>
-                          <span>{`Squads: ${squads.length}`}</span>
-                        </div>
-                        {(loadedEntries > 0 || statsEntrySummary.totalEntries > 0) && (
-                          <div className={mobileStyles.heroSummaryLine}>
-                            <span>{`${loadedEntries} players`}</span>
-                            <span aria-hidden="true">•</span>
-                            <span>{`${statsEntrySummary.totalEntries} entries`}</span>
-                          </div>
-                        )}
                       </div>
                     </div>
 
-                    <div className={mobileStyles.heroMiddleRow}>
-                      <div className={mobileStyles.heroStatusChipRow}>
-                        {heroStatusChips.map(chip => (
-                          <button
-                            key={chip.key}
-                            type="button"
-                            className={`${mobileStyles.heroStatusChip} ${
-                              chip.tone === 'alert'
-                                ? mobileStyles.heroStatusChipAlert
-                                : chip.tone === 'active'
-                                  ? mobileStyles.heroStatusChipActive
-                                  : chip.tone === 'complete'
-                                    ? mobileStyles.heroStatusChipComplete
-                                    : mobileStyles.heroStatusChipPending
+                    <div className={mobileStyles.workflowRail}>
+                      {workflowSteps.map((step, index) => (
+                        <div key={step.key} className={mobileStyles.workflowItem}>
+                          <div
+                            className={`${mobileStyles.workflowDot} ${
+                              step.done
+                                ? mobileStyles.workflowDotDone
+                                : step.active
+                                  ? mobileStyles.workflowDotActive
+                                  : mobileStyles.workflowDotPending
                             }`}
-                            onClick={() => {
-                              if (chip.key === 'brackets') {
-                                router.push('/brackets');
-                                return;
-                              }
-                              if (chip.key === 'scores') {
-                                router.push('/scores');
-                                return;
-                              }
-                              if (chip.key === 'payouts') {
-                                router.push('/payouts');
-                              }
-                            }}
                           >
-                            {chip.showAlertIcon ? <span className={mobileStyles.heroStatusAlertIcon} aria-hidden="true">!</span> : null}
-                            <span>{chip.label}</span>
-                            {chip.value ? <strong>{chip.value}</strong> : null}
-                          </button>
-                        ))}
+                            {step.done ? '✓' : step.step}
+                          </div>
+                          <div className={mobileStyles.workflowText}>
+                            <strong>{step.label}</strong>
+                            <span>{step.status}</span>
+                          </div>
+                          {index < workflowSteps.length - 1 ? <div className={mobileStyles.workflowConnector} /> : null}
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+
+                  <section className={mobileStyles.dashboardGrid}>
+                    <div className={mobileStyles.dashboardMainColumn}>
+                      <div className={mobileStyles.kpiGrid}>
+                        <article className={mobileStyles.kpiCard}>
+                          <div className={mobileStyles.kpiCardBody}>
+                            <span className={mobileStyles.kpiIconBadge}>
+                              <Users className={mobileStyles.kpiIcon} aria-hidden="true" />
+                            </span>
+                            <div className={mobileStyles.kpiCopy}>
+                              <p className={mobileStyles.kpiLabel}>Players</p>
+                              <p className={mobileStyles.kpiValue}>{loadedEntries}</p>
+                              <p className={mobileStyles.kpiDetail}>{activeSquadLabel}</p>
+                            </div>
+                          </div>
+                        </article>
+                        <article className={mobileStyles.kpiCard}>
+                          <div className={mobileStyles.kpiCardBody}>
+                            <span className={mobileStyles.kpiIconBadge}>
+                              <ClipboardList className={mobileStyles.kpiIcon} aria-hidden="true" />
+                            </span>
+                            <div className={mobileStyles.kpiCopy}>
+                              <p className={mobileStyles.kpiLabel}>Total Entries</p>
+                              <p className={mobileStyles.kpiValue}>{statsEntrySummary.totalEntries}</p>
+                              <p className={mobileStyles.kpiDetail}>{loadedEntries > 0 ? `${Math.round(statsEntrySummary.totalEntries / loadedEntries)} avg. entries per player` : 'No player data yet'}</p>
+                            </div>
+                          </div>
+                        </article>
+                        <article className={mobileStyles.kpiCard}>
+                          <div className={mobileStyles.kpiCardBody}>
+                            <span className={mobileStyles.kpiIconBadge}>
+                              <CircleDollarSign className={mobileStyles.kpiIcon} aria-hidden="true" />
+                            </span>
+                            <div className={mobileStyles.kpiCopy}>
+                              <p className={mobileStyles.kpiLabel}>Entry Revenue</p>
+                              <p className={mobileStyles.kpiValue}>{formatUsd(statsEntrySummary.totalRevenue)}</p>
+                              <p className={mobileStyles.kpiDetail}>From {statsEntrySummary.totalEntries} entries</p>
+                            </div>
+                          </div>
+                        </article>
+                        <article className={mobileStyles.kpiCard}>
+                          <div className={mobileStyles.kpiCardBody}>
+                            <span className={mobileStyles.kpiIconBadge}>
+                              <Trophy className={mobileStyles.kpiIcon} aria-hidden="true" />
+                            </span>
+                            <div className={mobileStyles.kpiCopy}>
+                              <p className={mobileStyles.kpiLabel}>Prize Pool</p>
+                              <p className={mobileStyles.kpiValue}>{formatUsd(tournamentProjectedPayout)}</p>
+                              <p className={mobileStyles.kpiDetail}>After house fee</p>
+                            </div>
+                          </div>
+                        </article>
                       </div>
+
+                      <div className={mobileStyles.dashboardPanelsGrid}>
+                        <article className={mobileStyles.dashboardPanel}>
+                          <h3 className={mobileStyles.dashboardPanelHeading}>
+                            <Settings2 className={mobileStyles.dashboardPanelIcon} aria-hidden="true" />
+                            <span className={mobileStyles.dashboardPanelTitle}>Tournament Setup</span>
+                          </h3>
+                          <div className={mobileStyles.dashboardDataRows}>
+                            <div><span>Bracket Size</span><strong>{bracketSettings.bracket_size} Players</strong></div>
+                            <div><span>Entry Fee</span><strong>{formatUsd(bracketSettings.default_entry_fee)}</strong></div>
+                            <div><span>Handicap</span><strong>{bracketSettings.handicap_percentage}% / {bracketSettings.handicap_base}</strong></div>
+                            <div><span>Bye Settings</span><span className={`${mobileStyles.statusBadge} ${bracketSettings.allow_byes ? mobileStyles.statusBadgeEnabled : mobileStyles.statusBadgeDisabled}`}>{bracketSettings.allow_byes ? 'Enabled' : 'Disabled'}</span></div>
+                            <div><span>Side Pots</span><span className={`${mobileStyles.statusBadge} ${enabledSidePotsCount > 0 ? mobileStyles.statusBadgeEnabled : mobileStyles.statusBadgeDisabled}`}>{enabledSidePotsCount > 0 ? 'Enabled' : 'Disabled'}</span></div>
+                            <div><span>Additional Brackets</span><strong>{optionalProgramsSummary}</strong></div>
+                          </div>
+                        </article>
+
+                        <article className={mobileStyles.dashboardPanel}>
+                          <h3 className={mobileStyles.dashboardPanelHeading}>
+                            <CircleDollarSign className={mobileStyles.dashboardPanelIcon} aria-hidden="true" />
+                            <span className={mobileStyles.dashboardPanelTitle}>Financial Summary</span>
+                          </h3>
+                          <div className={mobileStyles.dashboardDataRows}>
+                            <div><span>Gross Collected</span><strong>{formatUsd(grossCollected)}</strong></div>
+                            <div><span>House Fee</span><strong className={mobileStyles.dashboardDangerText}>-{formatUsd(houseRetained)}</strong></div>
+                          </div>
+                          <div className={mobileStyles.financialHeroBlock}>
+                            <p className={mobileStyles.dashboardPanelEyebrow}>Prize Pool</p>
+                            <p className={mobileStyles.financialHeroValue}>{formatUsd(tournamentProjectedPayout)}</p>
+                            <p className={mobileStyles.kpiDetail}>Available for payout</p>
+                          </div>
+                          <div>
+                            <p className={`${mobileStyles.dashboardPanelEyebrow} ${mobileStyles.financialSplitSection}`}>Payout Split</p>
+                            <div className={mobileStyles.dashboardDataRows}>
+                              <div><span>1st Place</span><strong>{formatUsd(bracketSettings.first_place_amount)}</strong></div>
+                              <div><span>2nd Place</span><strong>{formatUsd(bracketSettings.second_place_amount)}</strong></div>
+                            </div>
+                          </div>
+                        </article>
+                      </div>
+
+                      <article className={mobileStyles.dashboardPanel}>
+                        <h3 className={mobileStyles.dashboardPanelHeading}>
+                          <ClipboardList className={mobileStyles.dashboardPanelIcon} aria-hidden="true" />
+                          <span className={mobileStyles.dashboardPanelTitle}>Entry Breakdown</span>
+                        </h3>
+                        <div className={mobileStyles.entryBreakdownHeader}>
+                          <div className={mobileStyles.entryBreakdownStat}>
+                            <span className={mobileStyles.entryBreakdownLabelHandicap}>Handicap</span>
+                            <strong>{handicapEntries}</strong>
+                            <small>{handicapSplitPercent}% of entries</small>
+                          </div>
+                          <div className={`${mobileStyles.entryBreakdownStat} ${mobileStyles.entryBreakdownStatRight}`}>
+                            <span className={mobileStyles.entryBreakdownLabelScratch}>Scratch</span>
+                            <strong>{scratchEntries}</strong>
+                            <small>{scratchSplitPercent}% of entries</small>
+                          </div>
+                        </div>
+                        <div className={mobileStyles.entryBreakdownBar} aria-hidden="true">
+                          <div className={mobileStyles.entryBreakdownSegmentHandicap} style={{ width: `${handicapSplitPercent}%` }} />
+                          <div className={mobileStyles.entryBreakdownSegmentScratch} style={{ width: `${scratchSplitPercent}%` }} />
+                        </div>
+                      </article>
                     </div>
 
-                    <div className={mobileStyles.heroBottomRow}>
-                      <div className={mobileStyles.bracketPreview}>
-                        <div className={`${cardStyles.panel} ${mobileStyles.bracketRound} ${mobileStyles.bracketRulesCard}`}>
-                          <div className={mobileStyles.bracketRoundTitle}>Bracket &amp; Rules</div>
-                          <div className={mobileStyles.bracketInfoGrid}>
-                            <div className={mobileStyles.bracketInfoRow}>
-                              <span className={mobileStyles.bracketInfoLabel}>Bracket Size</span>
-                              <span className={mobileStyles.bracketInfoValue}>{bracketSettings.bracket_size} Players</span>
-                            </div>
-                            <div className={mobileStyles.bracketInfoRow}>
-                              <span className={mobileStyles.bracketInfoLabel}>Entry Fee</span>
-                              <span className={`${mobileStyles.bracketInfoValue} ${mobileStyles.bracketInfoValueStrong}`}>{formatUsd(bracketSettings.default_entry_fee)}</span>
-                            </div>
-                            <div className={mobileStyles.bracketInfoRow}>
-                              <span className={mobileStyles.bracketInfoLabel}>Handicap</span>
-                              <span className={`${mobileStyles.bracketInfoValue} ${mobileStyles.bracketInfoValueStrong}`}>{bracketSettings.handicap_percentage}% / {bracketSettings.handicap_base}</span>
-                            </div>
-                            <div className={mobileStyles.bracketInfoRow}>
-                              <span className={mobileStyles.bracketInfoLabel}>Bye Settings</span>
-                              <span className={`${mobileStyles.statusBadge} ${bracketSettings.allow_byes ? mobileStyles.statusBadgeEnabled : mobileStyles.statusBadgeDisabled}`}>
-                                {bracketSettings.allow_byes ? 'Enabled' : 'Disabled'}
+                    <aside className={mobileStyles.dashboardSideColumn}>
+                      <article className={`${mobileStyles.dashboardPanel} ${mobileStyles.combinedSideCard}`}>
+
+                        {/* Continue Tournament */}
+                        <div className={mobileStyles.sideCardSection}>
+                          <p className={mobileStyles.sideCardSectionLabel}>Continue Tournament</p>
+                          <div className={mobileStyles.continuePanelBody}>
+                            <div className={mobileStyles.continuePanelStatus}>
+                              <span className={mobileStyles.continuePanelIconWrap}>
+                                <ContinueActionIcon className={mobileStyles.continuePanelIcon} aria-hidden="true" />
                               </span>
+                              <div>
+                                <p className={mobileStyles.sideCardLead}>{scoreStatusLabel === 'In Progress' ? 'Scores are in progress' : 'Next workflow action ready'}</p>
+                                <p className={mobileStyles.sideCardMeta}>{scoreProgressText}</p>
+                              </div>
                             </div>
-                            <div className={mobileStyles.bracketInfoRow}>
-                              <span className={mobileStyles.bracketInfoLabel}>Side Pots</span>
-                              <span className={`${mobileStyles.statusBadge} ${enabledSidePotsCount > 0 ? mobileStyles.statusBadgeEnabled : mobileStyles.statusBadgeDisabled}`}>
-                                {enabledSidePotsCount > 0 ? 'Enabled' : 'Disabled'}
-                              </span>
-                            </div>
-                            <div className={`${mobileStyles.bracketInfoRow} ${mobileStyles.additionalBracketsRow}`}>
-                              <span className={mobileStyles.bracketInfoLabel}>Additional Brackets</span>
-                              <span className={`${mobileStyles.bracketInfoValue} ${mobileStyles.bracketInfoValueWrap}`}>{optionalProgramsSummary}</span>
-                            </div>
+                            <button
+                              type="button"
+                              className={`${buttonStyles.button} ${buttonStyles.primary} ${mobileStyles.sideCardPrimaryButton}`}
+                              onClick={contextPrimaryAction.onClick}
+                              disabled={contextPrimaryAction.disabled}
+                            >
+                              {contextPrimaryAction.label}
+                            </button>
                           </div>
                         </div>
 
-                        <div className={`${cardStyles.panel} ${mobileStyles.bracketRound} ${mobileStyles.prizeBreakdownCard}`}>
-                          <div className={mobileStyles.bracketRoundTitle}>Prize Breakdown</div>
-                          <div className={mobileStyles.prizePoolHero}>
-                            <span className={mobileStyles.prizePoolLabel}>Prize Pool</span>
-                            <strong className={mobileStyles.prizePoolValue}>{formatUsd(tournamentProjectedPayout)}</strong>
-                          </div>
-
-                          <div className={mobileStyles.prizeSectionLabel}>Net Calculation</div>
-                          <div className={mobileStyles.prizeSectionGroup}>
-                            <div className={mobileStyles.bracketInfoRow}>
-                              <span className={mobileStyles.bracketInfoLabel}>Gross Collected</span>
-                              <span className={mobileStyles.bracketInfoValue}>{formatUsd(grossCollected)}</span>
-                            </div>
-                            <div className={mobileStyles.bracketInfoRow}>
-                              <span className={mobileStyles.bracketInfoLabel}>House Fee</span>
-                              <span className={`${mobileStyles.bracketInfoValue} ${mobileStyles.bracketInfoValueNegative}`}>-{formatUsd(houseRetained)}</span>
-                            </div>
-                          </div>
-
-                          <div className={`${mobileStyles.prizeSectionLabel} ${mobileStyles.prizeSectionLabelSpaced}`}>Payout Split</div>
-                          <div className={mobileStyles.prizeSectionGroup}>
-                            <div className={mobileStyles.bracketInfoRow}>
-                              <span className={mobileStyles.bracketInfoLabel}>1st Place</span>
-                              <span className={mobileStyles.bracketInfoValue}>{formatUsd(bracketSettings.first_place_amount)}</span>
-                            </div>
-                            <div className={mobileStyles.bracketInfoRow}>
-                              <span className={mobileStyles.bracketInfoLabel}>2nd Place</span>
-                              <span className={mobileStyles.bracketInfoValue}>{formatUsd(bracketSettings.second_place_amount)}</span>
-                            </div>
+                        {/* Quick Actions */}
+                        <div className={mobileStyles.sideCardSection}>
+                          <p className={mobileStyles.sideCardSectionLabel}>Quick Actions</p>
+                          <div className={mobileStyles.sideActionList}>
+                            {continueTournamentActions.filter(action => action.key !== primaryContinueActionKey).map(action => {
+                              const ActionIcon = dashboardActionIcons[action.key] ?? ArrowRight;
+                              return (
+                                <button
+                                  key={action.key}
+                                  type="button"
+                                  className={mobileStyles.sideActionButton}
+                                  onClick={action.onClick}
+                                  disabled={action.disabled}
+                                >
+                                  <span className={mobileStyles.sideActionButtonLabel}>
+                                    <ActionIcon className={mobileStyles.sideActionIcon} aria-hidden="true" />
+                                    <span>{action.label}</span>
+                                  </span>
+                                  <span>{action.indicator}</span>
+                                </button>
+                              );
+                            })}
                           </div>
                         </div>
-                      </div>
 
-                      <div className={mobileStyles.heroActionRail}>
-                        {showHeroStatusStrip && (
-                          <div className={`${mobileStyles.heroWarningStrip} ${statusNarrative.tone === 'warning' ? mobileStyles.heroWarningStripWarning : mobileStyles.heroWarningStripInfo}`}>
-                            <span className={`${mobileStyles.heroWarningIcon} ${statusNarrative.tone === 'warning' ? mobileStyles.heroWarningIconWarning : mobileStyles.heroWarningIconInfo}`}>{statusNarrative.icon}</span>
-                            <span>{statusNarrative.warningText}</span>
+                        {/* Tournament Management */}
+                        <div className={mobileStyles.sideCardSection}>
+                          <p className={mobileStyles.sideCardSectionLabel}>Tournament Management</p>
+                          <div className={mobileStyles.sideActionList}>
+                            {manageSetupActions.map(item => {
+                              const ActionIcon = dashboardActionIcons[item.key] ?? ArrowRight;
+                              return (
+                                <button
+                                  key={item.key}
+                                  type="button"
+                                  className={mobileStyles.sideActionButton}
+                                  onClick={item.onClick}
+                                  disabled={item.disabled}
+                                >
+                                  <span className={mobileStyles.sideActionButtonLabel}>
+                                    <ActionIcon className={mobileStyles.sideActionIcon} aria-hidden="true" />
+                                    <span>{item.label}</span>
+                                  </span>
+                                  <span>›</span>
+                                </button>
+                              );
+                            })}
+                            {moreActions.map(item => {
+                              const ActionIcon = dashboardActionIcons[item.key] ?? ArrowRight;
+                              return (
+                                <button
+                                  key={item.key}
+                                  type="button"
+                                  className={`${mobileStyles.sideActionButton} ${item.variant === 'destructive' ? mobileStyles.sideActionButtonDanger : ''}`}
+                                  onClick={item.onClick}
+                                  disabled={item.disabled}
+                                >
+                                  <span className={mobileStyles.sideActionButtonLabel}>
+                                    <ActionIcon className={mobileStyles.sideActionIcon} aria-hidden="true" />
+                                    <span>{item.label}</span>
+                                  </span>
+                                  <span>{item.variant === 'destructive' ? '!' : '›'}</span>
+                                </button>
+                              );
+                            })}
                           </div>
-                        )}
-                      </div>
-                    </div>
-                  </article>
+                        </div>
 
-                  <aside className={`${cardStyles.card} ${cardStyles.accentCard} ${mobileStyles.squadRailCard} ${mobileStyles.gridTools} ${mobileStyles.commissionerPanel}`}>
-                    <div className={mobileStyles.commissionerSectionTitle}>Continue Tournament</div>
-                    <div className={mobileStyles.squadRailList}>
-                      {continueTournamentActions.map(action => (
-                        <button
-                          key={action.key}
-                          className={`${mobileStyles.squadRailPill} ${action.key === primaryContinueActionKey ? mobileStyles.commissionerActionPrimary : mobileStyles.commissionerActionSecondary} ${action.disabled ? mobileStyles.commissionerActionDisabled : ''}`}
-                          onClick={action.onClick}
-                          disabled={action.disabled}
-                        >
-                          <span>{action.label}</span>
-                          <span className={`${mobileStyles.commissionerActionIndicator} ${action.accent && !action.disabled ? mobileStyles.commissionerActionIndicatorAccent : ''}`}>{action.indicator}</span>
-                        </button>
-                      ))}
-                    </div>
-
-                    <div className={mobileStyles.commissionerSectionTitle}>Manage Tournament</div>
-                    <div className={mobileStyles.squadRailList}>
-                      {manageSetupActions.map(item => (
-                        <button
-                          key={item.key}
-                          className={`${mobileStyles.squadRailPill} ${mobileStyles.commissionerAdminRow} ${item.disabled ? mobileStyles.commissionerActionDisabled : ''}`}
-                          onClick={item.onClick}
-                          disabled={item.disabled}
-                        >
-                          <span>{item.label}</span>
-                          <span className={`${mobileStyles.commissionerActionIndicator} ${mobileStyles.commissionerAdminIndicator}`}>›</span>
-                        </button>
-                      ))}
-                    </div>
-
-                    <div className={mobileStyles.commissionerSectionTitle}>More Actions</div>
-                    <div className={mobileStyles.squadRailList}>
-                      {moreActions.map(item => (
-                        <button
-                          key={item.key}
-                          type="button"
-                          className={`${mobileStyles.squadRailPill} ${item.variant === 'destructive' ? mobileStyles.moreActionInlineDanger : mobileStyles.commissionerActionSecondary}`}
-                          onClick={item.onClick}
-                          disabled={item.disabled}
-                        >
-                          <span>{item.label}</span>
-                          <span className={mobileStyles.commissionerActionIndicator}>{item.variant === 'destructive' ? '!' : '›'}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </aside>
-
-                </section>
-
-                <section className={`${shellStyles.section} ${mobileStyles.entriesOverviewSection}`}>
-                  <article className={`${cardStyles.card} ${cardStyles.accentCard} ${mobileStyles.entriesOverviewCard} ${mobileStyles.entriesOverviewStandalone}`}>
-                    <div className={mobileStyles.entriesOverviewHeader}>Entries Overview</div>
-                    <div className={mobileStyles.summaryCardsBand}>
-                      {tournamentSummaryCards.map(card => (
-                        <button
-                          key={card.key}
-                          type="button"
-                          className={`${cardStyles.statTile} ${mobileStyles.statTile} ${card.href ? mobileStyles.statTileActionable : ''}`}
-                          onClick={() => {
-                            if (card.href) {
-                              router.push(card.href);
-                            }
-                          }}
-                        >
-                          <div className={mobileStyles.statLabel}>{card.label}</div>
-                          <div className={`${mobileStyles.statValue} ${card.accent ? mobileStyles.statValueAccent : ''}`}>{card.value}</div>
-                          {card.helperPrimary && <div className={mobileStyles.statCaption}>{card.helperPrimary}</div>}
-                          {card.helperSecondary && <div className={mobileStyles.statCaptionMuted}>{card.helperSecondary}</div>}
-                        </button>
-                      ))}
-                    </div>
-                  </article>
-                </section>
+                      </article>
+                    </aside>
+                  </section>
                 </div>
               </>
             )}

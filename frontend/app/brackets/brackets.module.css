@@ -534,15 +534,22 @@
 }
 
 .bracketNav {
-  padding: 0.58rem 0.78rem;
+  padding: 0.52rem 0.72rem;
+  align-items: center;
+  border-top: 1px solid color-mix(in srgb, var(--bw-border-subtle) 58%, transparent);
+}
+
+.navMeta {
+  align-items: center;
+  gap: 0.42rem;
 }
 
 .navBtn {
   min-height: 32px;
-  padding: 0.42rem 0.75rem;
+  padding: 0.36rem 0.68rem;
   border: 1px solid var(--bw-border-subtle);
   border-radius: 10px;
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   font-weight: 750;
   letter-spacing: 0;
 }
@@ -657,6 +664,137 @@
   color: var(--bw-text-muted);
 }
 
+.bracketsHeroCard {
+  margin-bottom: 0.74rem;
+  padding: 0.84rem 0.92rem;
+}
+
+.bracketsHeroTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.72rem;
+}
+
+.bracketsHeroTitle {
+  margin: 0;
+  font-size: clamp(1.22rem, 2vw, 1.62rem);
+  font-weight: 850;
+  line-height: 1.06;
+}
+
+.bracketsHeroSubtitle {
+  margin: 0.22rem 0 0;
+  font-size: 0.78rem;
+  color: var(--bw-text-muted);
+}
+
+.bracketsHeroActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.bracketsTopRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+  gap: 0.74rem;
+  margin-bottom: 0.74rem;
+}
+
+.bracketsTopRow :where(.quickActionsCard) {
+  margin-bottom: 0;
+}
+
+.bracketsQuickActionsRow {
+  align-items: center;
+  gap: 0.42rem;
+}
+
+.bracketsQuickActionsGroupLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.42rem;
+  flex-wrap: wrap;
+}
+
+.bracketsQuickActionsRow :where(button, a) {
+  min-height: 31px;
+  border-radius: 9px;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.72rem;
+  font-weight: 760;
+}
+
+.bracketsQuickActionsGroupRight {
+  margin-left: auto;
+}
+
+.bracketStatsCard {
+  padding: 0.56rem 0.62rem;
+}
+
+.bracketStatsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.38rem;
+}
+
+.bracketStatsGrid > div {
+  padding: 0.36rem 0.42rem;
+  border-radius: 10px;
+  background: var(--bw-surface-panel);
+  border: 1px solid color-mix(in srgb, var(--bw-border-subtle) 70%, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: 0.14rem;
+}
+
+.bracketStatsGrid span {
+  color: var(--bw-text-muted);
+  font-size: 0.62rem;
+  font-weight: 750;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.bracketStatsGrid strong {
+  color: var(--bw-text-title);
+  font-size: 0.78rem;
+  line-height: 1.2;
+}
+
+.bracketStatusGood {
+  color: var(--bw-text-accent);
+}
+
+.bracketSelectLabel {
+  color: var(--bw-text-muted);
+  font-size: 0.62rem;
+  font-weight: 760;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.bracketSelectControl {
+  min-width: 206px;
+  min-height: 31px;
+  border-radius: 9px;
+  border: 1px solid var(--bw-border-subtle);
+  padding: 0.26rem 0.56rem;
+  font-size: 0.72rem;
+  font-weight: 720;
+  color: var(--bw-text-title);
+  background: var(--bw-surface-panel);
+}
+
+.bracketSelectControl:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--color-primary) 55%, transparent);
+  outline-offset: 1px;
+}
+
 .mobileTreeBackBtn {
   color: var(--bw-text-accent);
   background: color-mix(in srgb, var(--color-primary) 10%, transparent);
@@ -666,6 +804,62 @@
 @media (max-width: 900px) {
   .pageContainer {
     padding: 0.65rem 0.75rem;
+  }
+
+  .bracketsHeroCard {
+    margin-bottom: 0.72rem;
+    padding: 0.72rem 0.72rem;
+  }
+
+  .bracketsHeroTop {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.58rem;
+  }
+
+  .bracketsHeroSubtitle {
+    font-size: 0.78rem;
+  }
+
+  .bracketsHeroActions {
+    justify-content: flex-start;
+  }
+
+  .bracketsTopRow {
+    grid-template-columns: 1fr;
+    gap: 0.6rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .bracketStatsCard {
+    padding: 0.52rem 0.54rem;
+  }
+
+  .bracketStatsGrid {
+    gap: 0.34rem;
+  }
+
+  .bracketStatsGrid > div {
+    padding: 0.34rem 0.38rem;
+  }
+
+  .bracketSelectControl {
+    min-width: 0;
+    width: min(100%, 250px);
+  }
+
+  .bracketsQuickActionsRow {
+    gap: 0.34rem;
+  }
+
+  .bracketsQuickActionsGroupLeft {
+    gap: 0.34rem;
+  }
+
+  .bracketsQuickActionsRow :where(button, a) {
+    min-height: 30px;
+    padding: 0.26rem 0.54rem;
+    font-size: 0.68rem;
   }
 
   .mobileBracketList {
@@ -789,6 +983,46 @@
     grid-template-columns: 1fr;
   }
 
+  .bracketsHeroCard {
+    padding: 0.64rem 0.64rem;
+  }
+
+  .bracketsHeroTitle {
+    font-size: 1.16rem;
+  }
+
+  .bracketsHeroSubtitle {
+    margin-top: 0.26rem;
+    font-size: 0.74rem;
+  }
+
+  .bracketsHeroActions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.36rem;
+  }
+
+  .bracketsHeroActions :where(button, a) {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .bracketStatsGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .bracketSelectControl {
+    width: 100%;
+    font-size: 0.7rem;
+  }
+
+  .navBtn {
+    min-height: 30px;
+    padding: 0.3rem 0.56rem;
+    font-size: 0.68rem;
+  }
+
   .pageContainer {
     padding: 0.56rem 0.45rem 0.9rem;
   }
@@ -827,6 +1061,18 @@
 @media (max-width: 390px) {
   .pageContainer {
     padding: 0.48rem 0.35rem 0.82rem;
+  }
+
+  .bracketsHeroTitle {
+    font-size: 1.06rem;
+  }
+
+  .bracketsHeroActions {
+    grid-template-columns: 1fr;
+  }
+
+  .bracketStatsGrid {
+    grid-template-columns: 1fr;
   }
 
   .mobileBracketSectionTitle {

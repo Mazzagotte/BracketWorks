@@ -2409,6 +2409,676 @@
   }
 }
 
+
+/* Dashboard board refresh */
+.dashboardBoard {
+  width: min(1320px, 100%);
+  margin: 0 auto 18px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  align-items: start;
+  gap: 14px;
+  padding: 8px;
+  border-radius: 24px;
+}
+
+.dashboardHeaderCard,
+.dashboardPanel,
+.kpiCard {
+  border: 1px solid var(--bw-border-card);
+  background: color-mix(in srgb, var(--bw-surface-card) 90%, transparent);
+  box-shadow: var(--bw-shadow-card);
+  border-radius: 20px;
+}
+
+.dashboardHeaderCard {
+  padding: 18px 20px;
+  display: grid;
+  gap: 14px;
+}
+
+.dashboardHeaderTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  border-bottom: 1px solid color-mix(in srgb, var(--bw-border-subtle) 82%, transparent);
+  padding-bottom: 12px;
+}
+
+.dashboardTournamentName {
+  margin: 0;
+  font-size: clamp(28px, 3.2vw, 50px);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: var(--bw-text-title);
+}
+
+.dashboardTournamentMeta {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  font-size: 13px;
+  color: var(--bw-text-muted);
+}
+
+.dashboardTournamentMeta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.dashboardMetaIcon {
+  width: 13px;
+  height: 13px;
+  color: var(--color-primary);
+  stroke-width: 2.1;
+  flex-shrink: 0;
+}
+
+.dashboardHeaderActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.workflowRail {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding-bottom: 2px;
+}
+
+.workflowItem {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.workflowDot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex: none;
+}
+
+.workflowDotDone {
+  color: var(--bw-text-success);
+  border: 1px solid var(--color-success-border);
+  background: var(--color-success-soft);
+}
+
+.workflowDotActive {
+  color: var(--bw-text-accent);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 60%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 18%, transparent);
+}
+
+.workflowDotPending {
+  color: var(--bw-text-muted);
+  border: 1px solid var(--bw-border-subtle);
+  background: color-mix(in srgb, var(--bw-surface-panel) 94%, transparent);
+}
+
+.workflowText {
+  display: grid;
+  line-height: 1.2;
+}
+
+.workflowText strong {
+  font-size: 13px;
+  color: var(--bw-text-title);
+}
+
+.workflowText span {
+  font-size: 12px;
+  color: var(--bw-text-muted);
+}
+
+.workflowConnector {
+  height: 1px;
+  width: 32px;
+  background: color-mix(in srgb, var(--bw-border-subtle) 80%, transparent);
+}
+
+.dashboardGrid {
+  display: contents;
+}
+
+.dashboardMainColumn {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.dashboardSideColumn {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.kpiCard {
+  padding: 13px 16px;
+  min-height: 82px;
+}
+
+.kpiCardBody {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  height: 100%;
+}
+
+.kpiIconBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.kpiCopy {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 0;
+}
+
+.kpiIcon {
+  width: 26px;
+  height: 26px;
+  color: var(--color-primary);
+  stroke-width: 2;
+}
+
+.kpiLabel {
+  margin: 0;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--bw-text-muted);
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.kpiValue {
+  margin: 4px 0 0;
+  font-size: clamp(20px, 1.7vw, 24px);
+  line-height: 1;
+  color: var(--bw-text-title);
+  letter-spacing: -0.02em;
+  font-weight: 800;
+}
+
+.kpiDetail {
+  margin: 6px 0 0;
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--bw-text-muted);
+}
+
+.dashboardPanelsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.dashboardPanel {
+  padding: 14px;
+}
+
+.continuePanel {
+  border-color: color-mix(in srgb, var(--color-primary) 44%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-primary) 28%, transparent), var(--bw-shadow-card);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--color-primary) 10%, transparent), transparent 48%),
+    color-mix(in srgb, var(--bw-surface-card) 94%, transparent);
+}
+
+.dashboardPanelTitle {
+  margin: 0;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--bw-text-accent);
+}
+
+.dashboardPanelHeading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px;
+}
+
+.dashboardPanelIcon {
+  width: 16px;
+  height: 16px;
+  color: var(--color-primary);
+  stroke-width: 2.15;
+  flex-shrink: 0;
+}
+
+.dashboardDataRows {
+  display: grid;
+  gap: 8px;
+}
+
+.dashboardDataRows > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  border-bottom: 1px solid color-mix(in srgb, var(--bw-border-subtle) 75%, transparent);
+  padding-bottom: 6px;
+}
+
+.dashboardDataRows > div:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.dashboardDataRows span {
+  font-size: 13px;
+  color: var(--bw-text-muted);
+}
+
+.dashboardDataRows strong {
+  font-size: 13px;
+  color: var(--bw-text-title);
+  text-align: right;
+}
+
+.dashboardDangerText {
+  color: var(--bw-text-danger) !important;
+}
+
+.financialFeatureRow {
+  margin: 12px 0 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.financialGrid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px 18px;
+  align-items: start;
+  margin-top: 2px;
+}
+
+.financialLeftCol {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.financialRightCol {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  min-width: 120px;
+}
+
+.financialHeroBlock {
+  min-width: 0;
+}
+
+.dashboardPanelEyebrow {
+  margin: 0;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--bw-text-accent);
+  font-weight: 800;
+}
+
+.financialSplitSection {
+  margin-bottom: 8px;
+  display: block;
+}
+
+.financialHeroValue {
+  margin: 4px 0 2px;
+  font-size: 38px;
+  line-height: 1;
+  color: var(--bw-text-title);
+  letter-spacing: -0.03em;
+}
+
+.payoutProgressWrap {
+  display: grid;
+  justify-items: center;
+  min-width: 128px;
+}
+
+.payoutDonut {
+  --dashboard-payout-percent: 0%;
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  background:
+    conic-gradient(
+      color-mix(in srgb, var(--color-success) 90%, transparent) 0 var(--dashboard-payout-percent),
+      color-mix(in srgb, var(--bw-surface-panel) 96%, transparent) var(--dashboard-payout-percent) 100%
+    );
+  display: grid;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--bw-border-subtle) 85%, transparent);
+}
+
+.payoutDonutInner {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--bw-surface-card) 98%, black 2%);
+  border: 1px solid color-mix(in srgb, var(--bw-border-subtle) 80%, transparent);
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 8px;
+}
+
+.payoutDonutInner strong {
+  color: var(--bw-text-title);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.payoutDonutInner span {
+  color: var(--bw-text-muted);
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.entryBreakdownHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-end;
+  margin-bottom: 12px;
+}
+
+.entryBreakdownStat {
+  display: grid;
+  gap: 2px;
+}
+
+.entryBreakdownStatRight {
+  justify-items: end;
+  text-align: right;
+}
+
+.entryBreakdownStat strong {
+  font-size: 48px;
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+  color: var(--bw-text-title);
+}
+
+.entryBreakdownStat small {
+  font-size: 12px;
+  color: var(--bw-text-muted);
+}
+
+.entryBreakdownLabelHandicap,
+.entryBreakdownLabelScratch {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.entryBreakdownLabelHandicap {
+  color: color-mix(in srgb, var(--color-success) 88%, white 12%);
+}
+
+.entryBreakdownLabelScratch {
+  color: var(--color-primary);
+}
+
+.entryBreakdownBar {
+  width: 100%;
+  height: 16px;
+  border-radius: 999px;
+  overflow: hidden;
+  display: flex;
+  border: 1px solid var(--bw-border-subtle);
+  background: color-mix(in srgb, var(--bw-surface-panel) 92%, transparent);
+}
+
+.entryBreakdownSegmentHandicap,
+.entryBreakdownSegmentScratch {
+  height: 100%;
+}
+
+.entryBreakdownSegmentHandicap {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--color-success) 82%, transparent), color-mix(in srgb, var(--color-success) 60%, var(--color-primary) 40%));
+}
+
+.entryBreakdownSegmentScratch {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--color-primary) 88%, transparent), color-mix(in srgb, var(--color-primary-hover) 92%, transparent));
+}
+
+.combinedSideCard {
+  padding: 0;
+  overflow: hidden;
+}
+
+.sideCardSection {
+  padding: 14px 16px;
+}
+
+.sideCardSection + .sideCardSection {
+  border-top: 1px solid var(--bw-border-subtle);
+}
+
+.sideCardSectionLabel {
+  margin: 0 0 10px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--bw-text-accent);
+}
+
+.combinedSideCard .continuePanelBody {
+  margin-top: 0;
+}
+
+.sideCardLead {
+  margin: 0;
+  color: var(--bw-text-title);
+  font-weight: 700;
+}
+
+.continuePanelStatus {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+}
+
+.continuePanelBody {
+  margin-top: 10px;
+  padding: 14px 14px 16px;
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 36%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-primary) 8%, transparent), color-mix(in srgb, var(--bw-surface-panel) 92%, transparent));
+}
+
+.continuePanelIconWrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 28%, transparent);
+}
+
+.continuePanelIcon {
+  width: 22px;
+  height: 22px;
+  stroke-width: 2.1;
+}
+
+.sideCardMeta,
+.sideCardHint {
+  margin: 6px 0 0;
+  color: var(--bw-text-muted);
+  font-size: 12px;
+}
+
+.continuePanel .sideCardHint {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid color-mix(in srgb, var(--bw-border-subtle) 78%, transparent);
+}
+
+.sideCardPrimaryButton {
+  margin-top: 14px;
+  width: 100%;
+}
+
+.sideActionList {
+  display: grid;
+  gap: 6px;
+}
+
+.sideActionButton {
+  border: 1px solid var(--bw-border-subtle);
+  background: color-mix(in srgb, var(--bw-surface-panel) 90%, transparent);
+  color: var(--bw-text-title);
+  border-radius: 12px;
+  min-height: 40px;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: border-color 0.16s ease, background-color 0.16s ease, transform 0.16s ease;
+}
+
+.sideActionButtonLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.sideActionIcon {
+  width: 16px;
+  height: 16px;
+  color: var(--color-primary);
+  stroke-width: 2.05;
+  flex-shrink: 0;
+}
+
+.sideActionButton:hover {
+  border-color: var(--bw-border-accent);
+  background: color-mix(in srgb, var(--bw-surface-panel-strong) 92%, transparent);
+  transform: translateY(-1px);
+}
+
+.sideActionButton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.sideActionButtonDanger {
+  color: var(--bw-text-danger);
+  border-color: var(--color-error-border);
+  background: var(--color-error-bg-soft);
+}
+
+@media (max-width: 1180px) {
+  .dashboardBoard {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboardSideColumn {
+    grid-column: 1;
+    grid-row: auto;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .kpiGrid,
+  .dashboardPanelsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboardSideColumn {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboardBoard {
+    padding: 0;
+    background: transparent;
+  }
+
+  .dashboardHeaderCard,
+  .dashboardPanel,
+  .kpiCard {
+    border-radius: 16px;
+  }
+
+  .dashboardHeaderTop {
+    flex-direction: column;
+  }
+
+  .kpiGrid,
+  .dashboardPanelsGrid,
+  .entrySplitRow {
+    grid-template-columns: 1fr;
+  }
+
+  .workflowText strong {
+    font-size: 12px;
+  }
+
+  .financialFeatureRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .financialGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .financialRightCol {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 12px;
+  }
+}
+
 /* Content container */
 .contentContainer {
   max-width: 1600px;

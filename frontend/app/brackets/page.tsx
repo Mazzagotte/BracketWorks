@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense, type CSSProperties } from 'react'
 import { useAuth } from '../lib/auth-context'
 import { usePageHeader } from '../lib/header-context'
@@ -386,6 +387,28 @@ export default function BracketsPage() {
 
   const handleCloseExplainModal = useCallback(() => setIsExplainModalOpen(false), [])
 
+  const handlePrintBracket = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      window.print()
+    }
+  }, [])
+
+  const handleExportBracket = useCallback(() => {
+    addToast({
+      type: 'info',
+      message: 'Bracket export workflow is being finalized. Use browser print for now.',
+      duration: 3500,
+    })
+  }, [addToast])
+
+  const handlePublishBracket = useCallback(() => {
+    addToast({
+      type: 'info',
+      message: 'Bracket publishing is coming next. QR and public links will be enabled here.',
+      duration: 3500,
+    })
+  }, [addToast])
+
   const handleBracketCardWidthChange = useCallback((width: number | null) => {
     setDesktopBracketCardWidth(previousWidth => {
       if (width === null && previousWidth === null) return previousWidth
@@ -405,6 +428,8 @@ export default function BracketsPage() {
 
   const { isUserAuthenticated, isAuthInitialized, currentUser } = useAuth()
   const isDev = process.env.NODE_ENV === 'development' || !!currentUser?.isAdmin
+  const totalBracketCount = useMemo(() => bracketGroups.reduce((sum, group) => sum + group.brackets.length, 0), [bracketGroups])
+  const totalPlayersAtGeneration = loadedBrackets?.current_player_count ?? loadedBrackets?.player_count_at_generation ?? 0
 
   const bracketsQuickActions = useMemo(() => {
     if (!selectedTournament) return undefined
@@ -418,10 +443,22 @@ export default function BracketsPage() {
             Bracket Guide
           </button>
           <button
-            onClick={handleGenerateBrackets}
+            onClick={handlePrintBracket}
             className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
           >
-            Generate Brackets
+            Print Bracket
+          </button>
+          <button
+            onClick={handleExportBracket}
+            className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
+          >
+            Export Bracket
+          </button>
+          <button
+            onClick={handlePublishBracket}
+            className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
+          >
+            Publish Bracket
           </button>
         </div>
         {isDev && (
@@ -433,7 +470,7 @@ export default function BracketsPage() {
         )}
       </div>
     )
-  }, [selectedTournament, handleGenerateBrackets, setIsExplainModalOpen, isDev, handleDeleteAllBrackets])
+  }, [selectedTournament, handleDeleteAllBrackets, handleExportBracket, handlePrintBracket, handlePublishBracket, isDev, setIsExplainModalOpen])
 
   // Set page header with actions
   usePageHeader({
@@ -504,13 +541,61 @@ export default function BracketsPage() {
 
       {/* Bracket content */}
       <div className={`${shellStyles.page} ${styles.pageContainer}`}>
-        {bracketsQuickActions && (
-          <div className={`${cardStyles.card} ${cardStyles.accentCard} ${cardStyles.quickActionsCard}`} style={desktopBracketDrivenCardStyle}>
-            <h2 className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${cardStyles.quickActionsTitle}`}>Quick Actions</h2>
-            <div className={cardStyles.quickActionsBody}>
-              {bracketsQuickActions}
+        <section className={`${cardStyles.card} ${cardStyles.accentCard} ${styles.bracketsHeroCard}`}>
+          <div className={styles.bracketsHeroTop}>
+            <div>
+              <h1 className={styles.bracketsHeroTitle}>Brackets</h1>
+              <p className={styles.bracketsHeroSubtitle}>View and manage tournament brackets.</p>
             </div>
+            {selectedTournament && (
+              <div className={styles.bracketsHeroActions}>
+                <Link href="/dashboard" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary}`}>
+                  Bracket Settings
+                </Link>
+                <button
+                  type="button"
+                  onClick={handleGenerateBrackets}
+                  className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.primary}`}
+                >
+                  Regenerate Brackets
+                </button>
+              </div>
+            )}
           </div>
+        </section>
+
+        {selectedTournament && (
+          <section className={styles.bracketsTopRow}>
+            {bracketsQuickActions && (
+              <div className={`${cardStyles.card} ${cardStyles.accentCard} ${cardStyles.quickActionsCard}`} style={desktopBracketDrivenCardStyle}>
+                <h2 className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${cardStyles.quickActionsTitle}`}>Quick Actions</h2>
+                <div className={cardStyles.quickActionsBody}>
+                  {bracketsQuickActions}
+                </div>
+              </div>
+            )}
+
+            <article className={`${cardStyles.card} ${cardStyles.accentCard} ${styles.bracketStatsCard}`}>
+              <div className={styles.bracketStatsGrid}>
+                <div>
+                  <span>Format</span>
+                  <strong>Single Elimination</strong>
+                </div>
+                <div>
+                  <span>Players</span>
+                  <strong>{totalPlayersAtGeneration}</strong>
+                </div>
+                <div>
+                  <span>Brackets</span>
+                  <strong>{totalBracketCount}</strong>
+                </div>
+                <div>
+                  <span>Status</span>
+                  <strong className={styles.bracketStatusGood}>{totalBracketCount > 0 ? 'Generated' : 'Pending'}</strong>
+                </div>
+              </div>
+            </article>
+          </section>
         )}
 
         {/* Loading State */}
@@ -607,9 +692,19 @@ export default function BracketsPage() {
                   <div className={styles.controlDivider} />
                   <div className={styles.bracketNav}>
                     <div className={styles.navMeta}>
-                      <span className={styles.navMetaPrimary}>
-                        Bracket {selectedBracketIndex + 1} of {totalBrackets}
-                      </span>
+                      <label className={styles.bracketSelectLabel} htmlFor="bracket-select-desktop">Bracket</label>
+                      <select
+                        id="bracket-select-desktop"
+                        className={styles.bracketSelectControl}
+                        value={selectedBracketIndex}
+                        onChange={(event) => setSelectedBracketIndex(Number(event.target.value))}
+                      >
+                        {searchFilteredBracketItems.map((item, index) => (
+                          <option key={`${item.group.key}-${index}`} value={index}>
+                            {`${item.group.name} ${index + 1} of ${totalBrackets}`}
+                          </option>
+                        ))}
+                      </select>
                       <span className={styles.navMetaSecondary}>{progressPercent}% complete</span>
                     </div>
                     <div className={styles.navBtns}>

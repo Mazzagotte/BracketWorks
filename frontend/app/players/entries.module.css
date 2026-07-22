@@ -22,6 +22,53 @@
   padding: 2rem 1rem;
 }
 
+.entriesHeroCard {
+  margin: 0 0 0.75rem;
+  border-radius: 22px;
+  padding: 0.9rem 1rem;
+}
+
+.entriesHeroTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.entriesHeroTitle {
+  margin: 0;
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  line-height: 1.06;
+  letter-spacing: -0.02em;
+  color: var(--bw-text-title);
+  font-weight: 800;
+}
+
+.entriesHeroSubtitle {
+  margin: 0.3rem 0 0;
+  color: var(--bw-text-muted);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.entriesHeroChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.36rem;
+  justify-content: flex-end;
+}
+
+.entriesTopRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.7rem;
+  margin-bottom: 0.72rem;
+}
+
+.entriesTopRow > * {
+  margin-bottom: 0;
+}
+
 .loadingScreen {
   display: flex;
   align-items: center;
@@ -96,6 +143,10 @@
   overflow: hidden;
 }
 
+.summaryCard {
+  margin-bottom: 0.72rem;
+}
+
 .summaryHeader {
   display: flex;
   align-items: center;
@@ -106,6 +157,10 @@
   background: var(--color-brand-ivory);
   border-bottom: 3px solid var(--color-primary);
   border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+
+.summaryHeader {
+  border-bottom-width: 1px;
 }
 
 .summaryTitle {
@@ -154,6 +209,19 @@
 }
 
 @media (max-width: 900px) {
+  .entriesHeroTop {
+    flex-direction: column;
+    gap: 0.62rem;
+  }
+
+  .entriesHeroChips {
+    justify-content: flex-start;
+  }
+
+  .entriesTopRow {
+    grid-template-columns: 1fr;
+  }
+
   .summaryCard {
     margin: 0 0 1.2rem;
   }
@@ -245,6 +313,14 @@
 }
 
 @media (max-width: 480px) {
+  .entriesHeroCard {
+    padding: 0.82rem 0.8rem;
+  }
+
+  .entriesHeroSubtitle {
+    font-size: 0.78rem;
+  }
+
   .summaryCard {
     margin: 0 0 1rem;
   }
@@ -4159,4 +4235,110 @@
       box-sizing: border-box;
     }
   }
+
+/* Final Entries parity pass */
+.entriesTopRow {
+  align-items: stretch;
+}
+
+.entriesTopRow .quickActionsCard,
+.entriesTopRow .standaloneEntrySearchCard {
+  margin-bottom: 0;
+}
+
+.entriesTopRow .quickActionsCard .quickActionsBody {
+  padding: 0.58rem 0.78rem 0.66rem;
+}
+
+.entriesTopRow .quickActionsCard .quickActionsRow {
+  gap: 0.48rem;
+}
+
+.entriesTopRow .quickActionsCard .quickActionsGroupLeft,
+.entriesTopRow .quickActionsCard .quickActionsGroupRight {
+  gap: 0.44rem;
+}
+
+.entriesTopRow .quickActionsCard :where(button, a) {
+  min-height: 34px;
+  border-radius: 10px;
+  padding: 0.4rem 0.7rem;
+  font-size: 0.74rem;
+  line-height: 1.05;
+}
+
+.quickActionAdminRow {
+  margin-top: 0.5rem;
+  padding-top: 0.46rem;
+  border-top: 1px solid color-mix(in srgb, var(--entries-border-soft) 88%, transparent);
+  display: flex;
+  align-items: center;
+}
+
+.quickActionAdminLabel {
+  color: var(--entries-text-faint);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.entriesTopRow .standaloneEntrySearchCard .tableSearchPanelBody {
+  padding: 0.58rem 0.78rem 0.66rem;
+}
+
+.entriesTopRow .standaloneEntrySearchCard .findEntryHelperText {
+  margin: 0 0 0.44rem;
+}
+
+.entriesTopRow .standaloneEntrySearchCard :global(.searchPanelContentRow) {
+  gap: 0.5rem;
+}
+
+.tableCard :global(.entries-table) {
+  border-radius: 14px;
+}
+
+.tableCard :global(.entries-header-cell) {
+  background: color-mix(in srgb, var(--entries-panel) 94%, transparent);
+  border-bottom-color: color-mix(in srgb, var(--entries-border-soft) 92%, transparent);
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+}
+
+.tableCard :global(.entries-cell) {
+  font-size: 0.74rem;
+  line-height: 1.15;
+}
+
+.tableCard :global(.players-table-row) {
+  height: 40px;
+}
+
+@media (max-width: 900px) {
+  .entriesHeroCard {
+    margin-bottom: 0.62rem;
+  }
+
+  .entriesTopRow {
+    gap: 0.56rem;
+  }
+
+  .entriesTopRow .quickActionsCard .quickActionsBody,
+  .entriesTopRow .standaloneEntrySearchCard .tableSearchPanelBody {
+    padding: 0.52rem 0.66rem 0.62rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .entriesTopRow .quickActionsCard :where(button, a) {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .entriesTopRow .quickActionsCard .quickActionsGroupLeft,
+  .entriesTopRow .quickActionsCard .quickActionsGroupRight {
+    width: 100%;
+  }
+}
 

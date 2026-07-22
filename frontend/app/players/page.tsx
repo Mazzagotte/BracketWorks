@@ -712,39 +712,174 @@ export default function PlayersPage() {
         />
 
         <div className={`${shellStyles.section} ${styles.entriesSectionWidth}`}>
-          <div className={`${cardStyles.card} ${cardStyles.accentCard} ${cardStyles.quickActionsCard} ${styles.formCard}`}>
-            <h3 className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${cardStyles.quickActionsTitle} ${styles.formTitle}`}>Quick Actions</h3>
-            <div className={cardStyles.quickActionsBody}>
-              <div className={cardStyles.quickActionsRow}>
-                <div className={cardStyles.quickActionsGroupLeft}>
-                <button
-                  className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
-                  onClick={() => setIsExplainModalOpen(true)}
-                >
-                  Entries Guide
-                </button>
-                <button
-                  className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
-                  onClick={handleExportToExcel}
-                  disabled={players.length === 0}
-                >
-                  Export to Excel
-                </button>
-                <button
-                  className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
-                  onClick={() => importFileRef.current?.click()}
-                  disabled={isImporting}
-                >
-                  {isImporting ? 'Importing...' : 'Import from Excel'}
-                </button>
+          <section className={`${cardStyles.card} ${cardStyles.accentCard} ${styles.entriesHeroCard}`}>
+            <div className={styles.entriesHeroTop}>
+              <div>
+                <h2 className={styles.entriesHeroTitle}>Entries</h2>
+                <p className={styles.entriesHeroSubtitle}>Manage bowler registration, entry mix, and revenue for the active squad.</p>
+              </div>
+              <div className={styles.entriesHeroChips}>
+                <span className={`${badgeStyles.badge} ${badgeStyles.success}`}>{entryTotals.totalPlayers} Players</span>
+                <span className={`${badgeStyles.badge} ${badgeStyles.info}`}>{entryTotals.totalEntries} Entries</span>
+                <span className={`${badgeStyles.badge} ${paymentSummary.outstandingAmount > 0 ? badgeStyles.warning : badgeStyles.muted}`}>{paymentSummary.paidCount} Paid</span>
+                <span className={`${badgeStyles.badge} ${paymentSummary.outstandingAmount > 0 ? badgeStyles.accent : badgeStyles.muted}`}>${paymentSummary.outstandingAmount.toLocaleString()} Outstanding</span>
+              </div>
+            </div>
+          </section>
+
+          {getTournamentId() && (
+            <div className={`${cardStyles.card} ${cardStyles.accentCard} ${styles.summaryCard}`}>
+              <div className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${styles.summaryHeader}`}>
+                <div className={`${cardStyles.cardHeaderRow} ${styles.summaryTitleWrap}`}>
+                  <h3 className={`${cardStyles.cardTitle} ${styles.summaryTitle}`}>Tournament Summary</h3>
+                  <p className={styles.summarySubtitle}>Live totals for entries, revenue, and active pots.</p>
+                </div>
+                <div className={styles.summaryPaymentStrip}>
+                  <span className={`${badgeStyles.badge} ${badgeStyles.success}`}>{paymentSummary.paidCount} Paid</span>
+                  <span className={`${badgeStyles.badge} ${paymentSummary.dueCount > 0 ? badgeStyles.warning : badgeStyles.muted}`}>{paymentSummary.dueCount} Due</span>
+                  <span className={`${badgeStyles.badge} ${paymentSummary.outstandingAmount > 0 ? badgeStyles.accent : badgeStyles.muted}`}>${paymentSummary.outstandingAmount.toLocaleString()} Outstanding</span>
+                </div>
+              </div>
+              <div className={styles.summaryGrid}>
+                <div className={`${cardStyles.statTile} ${cardStyles.statTileCompact} ${styles.statBox}`}>
+                  <div className={`${cardStyles.statValue} ${styles.statValue}`}>{entryTotals.totalEntries}</div>
+                  <div className={`${cardStyles.statLabel} ${styles.statLabel}`}>Total Entries</div>
+                </div>
+
+                <div className={`${cardStyles.statTile} ${cardStyles.statTileCompact} ${styles.statBox}`}>
+                  <div className={`${cardStyles.statValue} ${styles.statValue}`}>${entryTotals.totalRevenue.toLocaleString()}</div>
+                  <div className={`${cardStyles.statLabel} ${styles.statLabel}`}>Entry Revenue</div>
+                  <div className={`${cardStyles.statDetail} ${styles.statDetail}`}>{entryTotals.totalEntries} entries × ${Number(entryFee).toLocaleString()}</div>
+                </div>
+
+                  {orderedProgramSummaries.map(program => (
+                    <div key={program.key} className={`${cardStyles.statTile} ${cardStyles.statTileCompact} ${styles.statBox}`}>
+                      <div className={`${cardStyles.statValue} ${styles.statValue}`}>{program.totalEntries}</div>
+                      <div className={`${cardStyles.statLabel} ${styles.statLabel}`}>{getBracketProgramLabel(program)}</div>
+                      <div className={`${cardStyles.statDetail} ${styles.statDetail}`}>Projected {program.expectedBrackets} brackets</div>
+                      {program.refunds > 0 && (
+                        <div className={styles.statRefund}>{program.refunds} overflow entries</div>
+                      )}
+                    </div>
+                  ))}
+
+                  {sidePotSummaries.map(pot => (
+                    <div key={pot.key} className={`${cardStyles.statTile} ${cardStyles.statTileCompact} ${styles.statBox}`}>
+                      <div className={`${cardStyles.statValue} ${styles.statValue}`}>{pot.count}</div>
+                      <div className={`${cardStyles.statLabel} ${styles.statLabel}`}>{pot.name}</div>
+                      {pot.fee > 0 && (
+                        <div className={`${cardStyles.statDetail} ${styles.statDetail}`}>Pot Total: ${(pot.count * pot.fee).toLocaleString()}</div>
+                      )}
+                    </div>
+                  ))}
+
+              </div>
+            </div>
+          )}
+
+          <div className={styles.entriesTopRow}>
+            <div className={`${cardStyles.card} ${cardStyles.accentCard} ${cardStyles.quickActionsCard} ${styles.formCard}`}>
+              <h3 className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${cardStyles.quickActionsTitle} ${styles.formTitle}`}>Quick Actions</h3>
+              <div className={cardStyles.quickActionsBody}>
+                <div className={cardStyles.quickActionsRow}>
+                  <div className={cardStyles.quickActionsGroupLeft}>
+                  <button
+                    className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
+                    onClick={() => setIsExplainModalOpen(true)}
+                  >
+                    Entries Guide
+                  </button>
+                  <button
+                    className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
+                    onClick={handleExportToExcel}
+                    disabled={players.length === 0}
+                  >
+                    Export to Excel
+                  </button>
+                  <button
+                    className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
+                    onClick={() => importFileRef.current?.click()}
+                    disabled={isImporting}
+                  >
+                    {isImporting ? 'Importing...' : 'Import from Excel'}
+                  </button>
+                  <Link href="/payouts" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}>
+                    Calculate Payouts
+                  </Link>
+                  </div>
+                  {isDev && players.length > 0 && (
+                    <div className={cardStyles.quickActionsGroupRight}>
+                      <button className={`${cardStyles.quickActionControl} ${styles.devButton} ${styles.quickActionDevBtn}`} onClick={handleRandomize}>Randomize Data</button>
+                      <button className={`${cardStyles.quickActionControl} ${styles.devButton} ${styles.quickActionDangerBtn}`} onClick={handleDeleteAllPlayers} disabled={isDeletingAll}>{isDeletingAll ? 'Deleting...' : 'Delete All'}</button>
+                    </div>
+                  )}
                 </div>
                 {isDev && players.length > 0 && (
-                  <div className={cardStyles.quickActionsGroupRight}>
-                    <button className={`${cardStyles.quickActionControl} ${styles.devButton} ${styles.quickActionDevBtn}`} onClick={handleRandomize}>Randomize Data</button>
-                    <button className={`${cardStyles.quickActionControl} ${styles.devButton} ${styles.quickActionDangerBtn}`} onClick={handleDeleteAllPlayers} disabled={isDeletingAll}>{isDeletingAll ? 'Deleting...' : 'Delete All'}</button>
+                  <div className={styles.quickActionAdminRow}>
+                    <span className={styles.quickActionAdminLabel}>Admin Tools</span>
                   </div>
                 )}
               </div>
+            </div>
+
+            <div className={`${cardStyles.card} ${cardStyles.accentCard} ${styles.formCard} ${styles.standaloneEntrySearchCard}`}>
+              {isMobileView ? (
+                <button
+                  type="button"
+                  className={`${cardStyles.cardHeader} ${styles.formTitleToggle}`}
+                  aria-expanded={!tableSearchCollapsed}
+                  onClick={() => setTableSearchCollapsed(previous => !previous)}
+                >
+                  <span>Find Entry</span>
+                  <span className={styles.formTitleExpandIcon}>{tableSearchCollapsed ? '+' : '−'}</span>
+                </button>
+              ) : (
+                <h3 className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${styles.formTitle}`}>Find Entry</h3>
+              )}
+              {(!isMobileView || !tableSearchCollapsed) && (
+              <div className={styles.tableSearchPanelBody}>
+                <p className={styles.findEntryHelperText}>Search by USBC number, first name, or last name.</p>
+                <div className={primitiveStyles.searchPanelContentRow}>
+                  <div className={primitiveStyles.searchPanelContentLeft}>
+                    <input
+                      type="text"
+                      className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput} ${primitiveStyles.searchPanelInput}`}
+                      placeholder="USBC #"
+                      value={searchUsbc}
+                      onChange={(event) => setSearchUsbc(event.target.value)}
+                    />
+                    <input
+                      type="text"
+                      className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput} ${primitiveStyles.searchPanelInput}`}
+                      placeholder="First name"
+                      value={searchFirstName}
+                      onChange={(event) => setSearchFirstName(event.target.value)}
+                    />
+                    <input
+                      type="text"
+                      className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput} ${primitiveStyles.searchPanelInput}`}
+                      placeholder="Last name"
+                      value={searchLastName}
+                      onChange={(event) => setSearchLastName(event.target.value)}
+                    />
+                  </div>
+                  <div className={primitiveStyles.searchPanelContentRight}>
+                    <button
+                      type="button"
+                      className={`${primitiveStyles.searchPanelClearButton} ${styles.clearSearchBtn} ${hasActiveEntryFilters ? styles.clearSearchBtnActive : ''}`}
+                      onClick={() => {
+                        setSearchUsbc('')
+                        setSearchFirstName('')
+                        setSearchLastName('')
+                      }}
+                      disabled={!hasActiveEntryFilters}
+                    >
+                      Clear
+                    </button>
+                  </div>
+                </div>
+              </div>
+              )}
             </div>
           </div>
 
@@ -865,116 +1000,6 @@ export default function PlayersPage() {
             />
           ) : (
             <>
-              {getTournamentId() && players.length > 0 && (
-                <div className={`${cardStyles.card} ${cardStyles.accentCard} ${styles.summaryCard}`}>
-                  <div className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${styles.summaryHeader}`}>
-                    <div className={`${cardStyles.cardHeaderRow} ${styles.summaryTitleWrap}`}>
-                      <h3 className={`${cardStyles.cardTitle} ${styles.summaryTitle}`}>Tournament Summary</h3>
-                      <p className={styles.summarySubtitle}>Live totals for entries, revenue, and active pots.</p>
-                    </div>
-                    <div className={styles.summaryPaymentStrip}>
-                      <span className={`${badgeStyles.badge} ${badgeStyles.success}`}>{paymentSummary.paidCount} Paid</span>
-                      <span className={`${badgeStyles.badge} ${paymentSummary.dueCount > 0 ? badgeStyles.warning : badgeStyles.muted}`}>{paymentSummary.dueCount} Due</span>
-                      <span className={`${badgeStyles.badge} ${paymentSummary.outstandingAmount > 0 ? badgeStyles.accent : badgeStyles.muted}`}>${paymentSummary.outstandingAmount.toLocaleString()} Outstanding</span>
-                    </div>
-                  </div>
-                  <div className={styles.summaryGrid}>
-                    <div className={`${cardStyles.statTile} ${cardStyles.statTileCompact} ${styles.statBox}`}>
-                      <div className={`${cardStyles.statValue} ${styles.statValue}`}>{entryTotals.totalEntries}</div>
-                      <div className={`${cardStyles.statLabel} ${styles.statLabel}`}>Total Entries</div>
-                    </div>
-
-                    <div className={`${cardStyles.statTile} ${cardStyles.statTileCompact} ${styles.statBox}`}>
-                      <div className={`${cardStyles.statValue} ${styles.statValue}`}>${entryTotals.totalRevenue.toLocaleString()}</div>
-                      <div className={`${cardStyles.statLabel} ${styles.statLabel}`}>Entry Revenue</div>
-                      <div className={`${cardStyles.statDetail} ${styles.statDetail}`}>{entryTotals.totalEntries} entries × ${Number(entryFee).toLocaleString()}</div>
-                    </div>
-
-                      {orderedProgramSummaries.map(program => (
-                        <div key={program.key} className={`${cardStyles.statTile} ${cardStyles.statTileCompact} ${styles.statBox}`}>
-                          <div className={`${cardStyles.statValue} ${styles.statValue}`}>{program.totalEntries}</div>
-                          <div className={`${cardStyles.statLabel} ${styles.statLabel}`}>{getBracketProgramLabel(program)}</div>
-                          <div className={`${cardStyles.statDetail} ${styles.statDetail}`}>Projected {program.expectedBrackets} brackets</div>
-                          {program.refunds > 0 && (
-                            <div className={styles.statRefund}>{program.refunds} overflow entries</div>
-                          )}
-                        </div>
-                      ))}
-
-                      {sidePotSummaries.map(pot => (
-                        <div key={pot.key} className={`${cardStyles.statTile} ${cardStyles.statTileCompact} ${styles.statBox}`}>
-                          <div className={`${cardStyles.statValue} ${styles.statValue}`}>{pot.count}</div>
-                          <div className={`${cardStyles.statLabel} ${styles.statLabel}`}>{pot.name}</div>
-                          {pot.fee > 0 && (
-                            <div className={`${cardStyles.statDetail} ${styles.statDetail}`}>Pot Total: ${(pot.count * pot.fee).toLocaleString()}</div>
-                          )}
-                        </div>
-                      ))}
-
-                  </div>
-                </div>
-              )}
-
-              <div className={`${cardStyles.card} ${cardStyles.accentCard} ${styles.formCard} ${styles.standaloneEntrySearchCard}`}>
-                {isMobileView ? (
-                  <button
-                    type="button"
-                    className={`${cardStyles.cardHeader} ${styles.formTitleToggle}`}
-                    aria-expanded={!tableSearchCollapsed}
-                    onClick={() => setTableSearchCollapsed(previous => !previous)}
-                  >
-                    <span>Find Entry</span>
-                    <span className={styles.formTitleExpandIcon}>{tableSearchCollapsed ? '+' : '−'}</span>
-                  </button>
-                ) : (
-                  <h3 className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${styles.formTitle}`}>Find Entry</h3>
-                )}
-                {(!isMobileView || !tableSearchCollapsed) && (
-                <div className={styles.tableSearchPanelBody}>
-                  <p className={styles.findEntryHelperText}>Search by USBC number, first name, or last name.</p>
-                  <div className={primitiveStyles.searchPanelContentRow}>
-                    <div className={primitiveStyles.searchPanelContentLeft}>
-                      <input
-                        type="text"
-                        className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput} ${primitiveStyles.searchPanelInput}`}
-                        placeholder="USBC #"
-                        value={searchUsbc}
-                        onChange={(event) => setSearchUsbc(event.target.value)}
-                      />
-                      <input
-                        type="text"
-                        className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput} ${primitiveStyles.searchPanelInput}`}
-                        placeholder="First name"
-                        value={searchFirstName}
-                        onChange={(event) => setSearchFirstName(event.target.value)}
-                      />
-                      <input
-                        type="text"
-                        className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput} ${primitiveStyles.searchPanelInput}`}
-                        placeholder="Last name"
-                        value={searchLastName}
-                        onChange={(event) => setSearchLastName(event.target.value)}
-                      />
-                    </div>
-                    <div className={primitiveStyles.searchPanelContentRight}>
-                      <button
-                        type="button"
-                        className={`${primitiveStyles.searchPanelClearButton} ${styles.clearSearchBtn} ${hasActiveEntryFilters ? styles.clearSearchBtnActive : ''}`}
-                        onClick={() => {
-                          setSearchUsbc('')
-                          setSearchFirstName('')
-                          setSearchLastName('')
-                        }}
-                        disabled={!hasActiveEntryFilters}
-                      >
-                        Clear
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                )}
-              </div>
-
               <div className={`${cardStyles.card} ${cardStyles.accentCard} ${styles.tableCard}`}>
                 <div className={`${cardStyles.cardHeader} ${styles.entriesTableHeader}`}>
                   <div className={styles.entriesTableHeaderCopy}>

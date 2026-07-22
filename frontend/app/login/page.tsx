@@ -175,8 +175,16 @@ export default function LoginPage() {
         return;
       }
 
+      const accessToken = typeof data.access_token === 'string' ? data.access_token : null;
+      const userId =
+        typeof data.user_id === 'string'
+          ? data.user_id
+          : typeof data.user_id === 'number'
+            ? String(data.user_id)
+            : null;
+
       // Success
-      if (typeof data.access_token !== 'string' || typeof data.user_id !== 'string') {
+      if (!accessToken || !userId) {
         addToast({ type: 'error', message: 'Login failed: unexpected server response.', duration: 6000 });
         setError('Unexpected server response.');
         setLoginFailed(true);
@@ -192,7 +200,7 @@ export default function LoginPage() {
       const firstName = typeof data.first_name === 'string' ? data.first_name : undefined;
       const displayName = firstName || username;
 
-      authenticateUser(data.access_token, data.user_id, {
+      authenticateUser(accessToken, userId, {
         name: firstName,
         isAdmin: Boolean(data.is_admin),
       }, {
@@ -204,7 +212,7 @@ export default function LoginPage() {
       }
       localStorage.setItem('is_admin', data.is_admin ? 'true' : 'false');
 
-      logger.userAction('User logged in', { userId: data.user_id, name: displayName });
+      logger.userAction('User logged in', { userId, name: displayName });
 
       window.dispatchEvent(new Event('auth-state-changed'));
       window.dispatchEvent(new Event('storage'));
