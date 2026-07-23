@@ -144,9 +144,6 @@ function ClientLayout({ children }: { children: ReactNode }) {
 
   return (
     <ErrorBoundary>
-      {/* Development notice banner - render first so it appears above nav */}
-      {showAuthenticatedShell && <DevNoticeBanner />}
-
       {/* Unified top nav — desktop pill bar */}
       {!isMobile && showAuthenticatedShell && (
         <TopNav firstName={firstName} />
@@ -170,6 +167,9 @@ function ClientLayout({ children }: { children: ReactNode }) {
           currentPage={currentPage}
         />
       )}
+
+      {/* Development notice banner - render after nav */}
+      {showAuthenticatedShell && <DevNoticeBanner />}
 
       <main
         id="main-content"

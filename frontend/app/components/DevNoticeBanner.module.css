@@ -6,8 +6,6 @@
   padding: 9px 12px;
   border-radius: 10px;
   margin: 10px 10px 10px 10px;
-  position: relative;
-  z-index: 100;
 }
 
 /* -- Default state -------------------------------------------------------- */
