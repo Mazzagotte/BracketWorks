@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AlertTriangle, Info, X } from 'lucide-react';
 import DevNoticeModal from './DevNoticeModal';
 import styles from './DevNoticeBanner.module.css';
@@ -24,6 +24,11 @@ export default function DevNoticeBanner() {
   const [state, setState] = useState<BannerState>(getInitialState);
   const [noticeOpen, setNoticeOpen] = useState(false);
   const [noticeMode, setNoticeMode] = useState<'view-only' | 'require-acceptance'>('view-only');
+
+  useEffect(() => {
+    const initialState = getInitialState();
+    setState(initialState);
+  }, []);
 
   const handleDismiss = () => {
     sessionStorage.setItem(DISMISSED_KEY, '1');
