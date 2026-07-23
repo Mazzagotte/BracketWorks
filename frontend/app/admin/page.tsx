@@ -1404,7 +1404,7 @@ export default function AdminPage() {
                       </div>
                     </div>
                     <ul className={styles.changesList}>
-                      {entry.changes.map((change, idx) => (
+                      {entry.changes.map((change: string, idx: number) => (
                         <li key={idx}>{change}</li>
                       ))}
                     </ul>
