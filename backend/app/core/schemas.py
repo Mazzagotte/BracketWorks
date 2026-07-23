@@ -61,6 +61,16 @@ class DevNoticeAcceptResponse(BaseModel):
     version: str
 
 
+class ChangelogEntry(BaseModel):
+    date: str
+    version: str
+    changes: List[str]
+
+
+class ChangelogResponse(BaseModel):
+    entries: List[ChangelogEntry]
+
+
 class RefreshTokenRequest(BaseModel):
     pass
 

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import DevNoticeModal from './DevNoticeModal';
+import ChangelogModal from './ChangelogModal';
 import styles from './DevNoticeBanner.module.css';
 
 export const CURRENT_NOTICE_VERSION = '1.0';
@@ -22,6 +23,7 @@ export default function DevNoticeBanner() {
   const [state, setState] = useState<BannerState>(getInitialState);
   const [noticeOpen, setNoticeOpen] = useState(false);
   const [noticeMode, setNoticeMode] = useState<'view-only' | 'require-acceptance'>('view-only');
+  const [changelogOpen, setChangelogOpen] = useState(false);
 
   useEffect(() => {
     const initialState = getInitialState();
@@ -56,6 +58,10 @@ export default function DevNoticeBanner() {
             <button className={styles.viewLink} onClick={handleViewNotice}>
               View notice
             </button>
+            {' • '}
+            <button className={styles.viewLink} onClick={() => setChangelogOpen(true)}>
+              What's new
+            </button>
           </p>
         </div>
       )}
@@ -72,6 +78,8 @@ export default function DevNoticeBanner() {
           </button>
         </div>
       )}
+
+      <ChangelogModal isOpen={changelogOpen} onClose={() => setChangelogOpen(false)} />
 
       <DevNoticeModal
         isOpen={noticeOpen}

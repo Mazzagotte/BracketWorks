@@ -528,6 +528,24 @@ def accept_dev_notice(
     return schemas.DevNoticeAcceptResponse(accepted=True, version=payload.version)
 
 
+@router.get("/changelog", response_model=schemas.ChangelogResponse)
+def get_changelog():
+    """Get changelog/what's new for the application"""
+    changelog_entries = [
+        schemas.ChangelogEntry(
+            date="2026-07-23",
+            version="1.0",
+            changes=[
+                "Initial release of BracketWorks",
+                "Tournament bracket management system",
+                "Score tracking and payouts",
+                "Development preview - verify all data before publishing"
+            ]
+        )
+    ]
+    return schemas.ChangelogResponse(entries=changelog_entries)
+
+
 @router.post("/refresh", response_model=schemas.TokenPairResponse)
 def refresh_tokens(
     response: Response,
