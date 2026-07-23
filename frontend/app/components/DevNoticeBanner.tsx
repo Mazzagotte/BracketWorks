@@ -60,7 +60,7 @@ export default function DevNoticeBanner() {
             </button>
             {' • '}
             <button className={styles.viewLink} onClick={() => setChangelogOpen(true)}>
-              What's new
+              What&apos;s new
             </button>
           </p>
         </div>
