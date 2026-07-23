@@ -8,14 +8,12 @@ import styles from './DevNoticeBanner.module.css';
 export const CURRENT_NOTICE_VERSION = '1.0';
 
 const DISMISSED_KEY = 'dev_notice_banner_dismissed';
-const HIDDEN_KEY = 'dev_notice_banner_hidden';
 const ACCEPTED_VERSION_KEY = 'dev_notice_version_accepted';
 
-type BannerState = 'default' | 'dismissed' | 'update-required' | 'hidden';
+type BannerState = 'default' | 'dismissed' | 'update-required';
 
 function getInitialState(): BannerState {
   if (typeof window === 'undefined') return 'default';
-  if (sessionStorage.getItem(HIDDEN_KEY) === '1') return 'hidden';
   const accepted = localStorage.getItem(ACCEPTED_VERSION_KEY);
   if (accepted !== CURRENT_NOTICE_VERSION) return 'update-required';
   if (sessionStorage.getItem(DISMISSED_KEY) === '1') return 'dismissed';
@@ -27,8 +25,6 @@ export default function DevNoticeBanner() {
   const [noticeOpen, setNoticeOpen] = useState(false);
   const [noticeMode, setNoticeMode] = useState<'view-only' | 'require-acceptance'>('view-only');
 
-  if (state === 'hidden') return null;
-
   const handleDismiss = () => {
     sessionStorage.setItem(DISMISSED_KEY, '1');
     setState('dismissed');
@@ -37,11 +33,6 @@ export default function DevNoticeBanner() {
   const handleUndo = () => {
     sessionStorage.removeItem(DISMISSED_KEY);
     setState('default');
-  };
-
-  const handleHide = () => {
-    sessionStorage.setItem(HIDDEN_KEY, '1');
-    setState('hidden');
   };
 
   const handleReviewNow = () => {
@@ -88,9 +79,6 @@ export default function DevNoticeBanner() {
           </p>
           <button className={styles.undoBtn} onClick={handleUndo}>
             Undo
-          </button>
-          <button className={styles.hideBtn} onClick={handleHide} aria-label="Hide banner">
-            <X size={13} aria-hidden="true" />
           </button>
         </div>
       )}
