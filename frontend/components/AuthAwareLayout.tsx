@@ -168,17 +168,17 @@ function ClientLayout({ children }: { children: ReactNode }) {
         />
       )}
 
-      {/* Development notice banner - render after nav */}
-      {showAuthenticatedShell && (
-        <div style={{ width: '100%', boxSizing: 'border-box' }}>
-          <DevNoticeBanner />
-        </div>
-      )}
-
       <main
         id="main-content"
         className={`${styles.main} ${mainLayoutClass} ${isMobile && showAuthenticatedShell ? styles.mainMobileAuth : ''}`}
       >
+        {/* Development notice banner - render at top of main content */}
+        {showAuthenticatedShell && (
+          <div style={{ width: '100%', boxSizing: 'border-box' }}>
+            <DevNoticeBanner />
+          </div>
+        )}
+
         <div className={contentCardClass}>
           <ErrorBoundary>
             {children}
