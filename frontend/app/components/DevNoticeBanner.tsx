@@ -30,6 +30,11 @@ export default function DevNoticeBanner() {
     setState(initialState);
   }, []);
 
+  // Only show banner in development environment
+  if (process.env.NODE_ENV !== 'development') {
+    return null;
+  }
+
   const handleDismiss = () => {
     sessionStorage.setItem(DISMISSED_KEY, '1');
     setState('dismissed');
