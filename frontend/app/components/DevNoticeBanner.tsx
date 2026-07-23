@@ -1,22 +1,20 @@
 ﻿'use client';
 
 import { useState, useEffect } from 'react';
-import { AlertTriangle, Info, X } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import DevNoticeModal from './DevNoticeModal';
 import styles from './DevNoticeBanner.module.css';
 
 export const CURRENT_NOTICE_VERSION = '1.0';
 
-const DISMISSED_KEY = 'dev_notice_banner_dismissed';
 const ACCEPTED_VERSION_KEY = 'dev_notice_version_accepted';
 
-type BannerState = 'default' | 'dismissed' | 'update-required';
+type BannerState = 'default' | 'update-required';
 
 function getInitialState(): BannerState {
   if (typeof window === 'undefined') return 'default';
   const accepted = localStorage.getItem(ACCEPTED_VERSION_KEY);
   if (accepted !== CURRENT_NOTICE_VERSION) return 'update-required';
-  if (sessionStorage.getItem(DISMISSED_KEY) === '1') return 'dismissed';
   return 'default';
 }
 
@@ -29,16 +27,6 @@ export default function DevNoticeBanner() {
     const initialState = getInitialState();
     setState(initialState);
   }, []);
-
-  const handleDismiss = () => {
-    sessionStorage.setItem(DISMISSED_KEY, '1');
-    setState('dismissed');
-  };
-
-  const handleUndo = () => {
-    sessionStorage.removeItem(DISMISSED_KEY);
-    setState('default');
-  };
 
   const handleReviewNow = () => {
     setNoticeMode('require-acceptance');
@@ -69,22 +57,6 @@ export default function DevNoticeBanner() {
               View notice
             </button>
           </p>
-          <button className={styles.dismissBtn} onClick={handleDismiss}>
-            Dismiss <X size={12} aria-hidden="true" />
-          </button>
-        </div>
-      )}
-
-      {state === 'dismissed' && (
-        <div className={`${styles.banner} ${styles.bannerDismissed}`} role="status">
-          <Info size={15} className={styles.iconMuted} aria-hidden="true" />
-          <p className={styles.text}>
-            <strong className={styles.labelMuted}>Development Preview</strong>{' '}
-            You&apos;ve dismissed this message for this session.
-          </p>
-          <button className={styles.undoBtn} onClick={handleUndo}>
-            Undo
-          </button>
         </div>
       )}
 
