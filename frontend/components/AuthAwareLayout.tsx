@@ -168,12 +168,8 @@ function ClientLayout({ children }: { children: ReactNode }) {
         />
       )}
 
-      {/* Development notice banner */}
-      {showAuthenticatedShell && (
-        <div style={{ paddingInline: '10px', marginTop: '8px' }}>
-          <DevNoticeBanner />
-        </div>
-      )}
+      {/* Development notice banner - only show when authenticated */}
+      {showAuthenticatedShell && <DevNoticeBanner />}
 
       <main
         id="main-content"
