@@ -79,7 +79,7 @@ export default function ChangelogModal({ isOpen, onClose }: ChangelogModalProps)
           <div className={styles.headerContent}>
             <BookOpen size={18} className={styles.icon} aria-hidden="true" />
             <h2 id="changelog-title" className={styles.title}>
-              What's New
+              What&apos;s New
             </h2>
           </div>
           <button
