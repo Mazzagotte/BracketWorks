@@ -48,6 +48,17 @@ class TokenPairResponse(BaseModel):
     first_name: Optional[str] = None
     challenge_required: bool = False
     challenge_type: Optional[str] = None
+    dev_notice_required: bool = False
+    dev_notice_version: str = "1.0"
+
+
+class DevNoticeAcceptRequest(BaseModel):
+    version: str
+
+
+class DevNoticeAcceptResponse(BaseModel):
+    accepted: bool
+    version: str
 
 
 class RefreshTokenRequest(BaseModel):

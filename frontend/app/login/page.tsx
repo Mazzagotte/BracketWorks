@@ -22,6 +22,7 @@ import { useAuthModals } from "../hooks/useAuthModals";
 import { useAuthQueryParams } from "../hooks/useAuthQueryParams";
 import { useResetSuccessCountdown } from "../hooks/useResetSuccessCountdown";
 import { parseLoginError, parseNetworkError, getLoginErrorDuration } from "../lib/auth/login-error-handler";
+import DevNoticeModal from "../components/DevNoticeModal";
 
 const featureCards = [
   {
@@ -53,6 +54,8 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [loginFailed, setLoginFailed] = useState(false);
+  const [devNoticeOpen, setDevNoticeOpen] = useState(false);
+  const [devNoticeVersion, setDevNoticeVersion] = useState('1.0');
 
   const { addToast } = useToast();
   const { modals, openModal, closeModal } = useAuthModals();
@@ -218,7 +221,15 @@ export default function LoginPage() {
       window.dispatchEvent(new Event('storage'));
 
       addToast({ type: 'success', message: `Welcome back, ${displayName}!`, duration: 3000 });
-      router.push('/dashboard');
+
+      const noticeRequired = Boolean(data.dev_notice_required);
+      if (noticeRequired) {
+        const version = typeof data.dev_notice_version === 'string' ? data.dev_notice_version : '1.0';
+        setDevNoticeVersion(version);
+        setDevNoticeOpen(true);
+      } else {
+        router.push('/dashboard');
+      }
 
     } catch (err: unknown) {
       const errorMsg = parseNetworkError(err);
@@ -232,6 +243,17 @@ export default function LoginPage() {
 
   return (
     <div className={styles.page}>
+      <DevNoticeModal
+        isOpen={devNoticeOpen}
+        mode="require-acceptance"
+        noticeVersion={devNoticeVersion}
+        onAccepted={() => {
+          localStorage.setItem('dev_notice_version_accepted', devNoticeVersion);
+          setDevNoticeOpen(false);
+          router.push('/dashboard');
+        }}
+        onLogout={() => { setDevNoticeOpen(false); router.push('/login'); }}
+      />
       <ResetSuccessModal
         isOpen={modals.resetSuccess}
         countdown={resetSuccessCountdown}

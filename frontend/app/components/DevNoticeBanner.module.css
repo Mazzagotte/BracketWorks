@@ -1,0 +1,164 @@
+﻿/* -- Shared banner shell -------------------------------------------------- */
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+/* -- Default state -------------------------------------------------------- */
+.bannerDefault {
+  background: rgba(255, 106, 0, 0.07);
+  border: 1px solid rgba(255, 106, 0, 0.32);
+}
+
+.icon {
+  flex-shrink: 0;
+  color: #FF6A00;
+}
+
+.label {
+  color: #FF6A00;
+}
+
+/* -- Dismissed state ------------------------------------------------------ */
+.bannerDismissed {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid #2e2e36;
+}
+
+.iconMuted {
+  flex-shrink: 0;
+  color: #6B6B72;
+}
+
+.labelMuted {
+  color: #A1A1AA;
+}
+
+/* -- Update-required state ------------------------------------------------ */
+.bannerUpdate {
+  background: rgba(220, 38, 38, 0.07);
+  border: 1px solid rgba(220, 38, 38, 0.35);
+}
+
+.iconAlert {
+  flex-shrink: 0;
+  color: #ef4444;
+}
+
+.labelAlert {
+  color: #ef4444;
+}
+
+/* -- Shared text ---------------------------------------------------------- */
+.text {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 13px;
+  color: #C4C4CC;
+  line-height: 1.45;
+}
+
+.viewLink {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #FF6A00;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.viewLink:hover {
+  color: #ff8533;
+}
+
+/* -- Buttons -------------------------------------------------------------- */
+.dismissBtn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  background: transparent;
+  border: 1px solid #3a3a42;
+  border-radius: 7px;
+  color: #A1A1AA;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.dismissBtn:hover {
+  border-color: #FF6A00;
+  color: #FF6A00;
+}
+
+.undoBtn {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  padding: 0 6px;
+  color: #FF6A00;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.undoBtn:hover {
+  color: #ff8533;
+}
+
+.hideBtn {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  padding: 4px;
+  color: #6B6B72;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+
+.hideBtn:hover {
+  color: #A1A1AA;
+}
+
+.reviewBtn {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  background: #ef4444;
+  border: none;
+  border-radius: 7px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.reviewBtn:hover {
+  background: #dc2626;
+}
+
+/* -- Footer note ---------------------------------------------------------- */
+.footerNote {
+  margin: -4px 0 10px;
+  font-size: 12px;
+  color: #52525B;
+  line-height: 1.45;
+}

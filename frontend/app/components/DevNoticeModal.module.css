@@ -1,0 +1,243 @@
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  animation: fadeIn 0.2s ease;
+}
+
+.modal {
+  position: relative;
+  width: min(540px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  border-radius: 20px;
+  background: #151519;
+  border: 2px solid #FF6A00;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.6);
+  animation: slideUp 0.28s ease;
+  scrollbar-width: none;
+}
+
+.modal::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── Header ─────────────────────────────────────── */
+.header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 22px 22px 16px;
+  background: #1a1a1f;
+  border-bottom: 1px solid #2a2a30;
+}
+
+.warningIcon {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 106, 0, 0.12);
+  border: 1px solid rgba(255, 106, 0, 0.3);
+  border-radius: 10px;
+  color: #FF6A00;
+  margin-top: 2px;
+}
+
+.headerText {}
+
+.kicker {
+  margin: 0 0 4px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #FF6A00;
+}
+
+.title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 800;
+  color: #F4F4F5;
+  line-height: 1.2;
+}
+
+/* ── Body ─────────────────────────────────────────── */
+.body {
+  padding: 18px 22px 20px;
+}
+
+.bodyText {
+  margin: 0 0 12px;
+  font-size: 13.5px;
+  color: #A1A1AA;
+  line-height: 1.6;
+}
+
+.bodyText:last-of-type {
+  margin-bottom: 0;
+}
+
+.sectionLabel {
+  margin: 16px 0 8px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #FF6A00;
+}
+
+.checkList {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.checkItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  color: #C4C4CC;
+  line-height: 1.45;
+}
+
+.checkIcon {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  color: #22C55E;
+}
+
+/* ── Acknowledgment ─────────────────────────────── */
+.acknowledgment {
+  margin: 16px 0 0;
+  padding: 14px 16px;
+  background: rgba(255, 106, 0, 0.06);
+  border: 1px solid rgba(255, 106, 0, 0.22);
+  border-radius: 10px;
+}
+
+.checkboxRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkboxInput {
+  flex-shrink: 0;
+  width: 17px;
+  height: 17px;
+  margin-top: 2px;
+  accent-color: #FF6A00;
+  cursor: pointer;
+}
+
+.checkboxLabel {
+  font-size: 13px;
+  color: #D4D4D8;
+  line-height: 1.55;
+}
+
+/* ── Footer ─────────────────────────────────────── */
+.footer {
+  display: flex;
+  gap: 10px;
+  padding: 0 22px 20px;
+  flex-direction: row-reverse;
+}
+
+.agreeButton {
+  flex: 1;
+  min-height: 42px;
+  border: none;
+  border-radius: 10px;
+  background: #FF6A00;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s, opacity 0.18s;
+}
+
+.agreeButton:hover:not(:disabled) {
+  background: #ff7a20;
+}
+
+.agreeButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.cancelButton {
+  flex: 1;
+  min-height: 42px;
+  border: 1px solid #3a3a42;
+  border-radius: 10px;
+  background: transparent;
+  color: #A1A1AA;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.18s, color 0.18s;
+}
+
+.cancelButton:hover {
+  border-color: #FF6A00;
+  color: #FF6A00;
+}
+
+.closeButton {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid #3a3a42;
+  border-radius: 10px;
+  background: transparent;
+  color: #A1A1AA;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.18s, color 0.18s;
+}
+
+.closeButton:hover {
+  border-color: #FF6A00;
+  color: #FF6A00;
+}
+
+.footerHint {
+  padding: 0 22px 14px;
+  text-align: center;
+  font-size: 12px;
+  color: #6B6B72;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}

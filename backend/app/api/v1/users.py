@@ -29,6 +29,8 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+DEV_NOTICE_VERSION = "1.0"
+
 _DUMMY_BCRYPT_HASH = "$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"
 
 
@@ -310,6 +312,7 @@ def _issue_session_tokens(user: models.User, db: Session, request: Request, toke
     db.commit()
 
     access_token = create_access_token({"sub": str(user.id), "sid": session_id})
+    dev_notice_required = user.dev_notice_version_accepted != DEV_NOTICE_VERSION
     return schemas.TokenPairResponse(
         access_token=access_token,
         refresh_token=refresh_token,
@@ -318,6 +321,8 @@ def _issue_session_tokens(user: models.User, db: Session, request: Request, toke
         user_id=user.id,
         is_admin=user.is_admin,
         first_name=user.first_name,
+        dev_notice_required=dev_notice_required,
+        dev_notice_version=DEV_NOTICE_VERSION,
     )
 
 
@@ -506,6 +511,21 @@ def login_json(
         _set_csrf_cookie(response, _issue_csrf_token())
     tokens.refresh_token = None
     return tokens
+
+
+@router.post("/dev-notice/accept", response_model=schemas.DevNoticeAcceptResponse)
+def accept_dev_notice(
+    payload: schemas.DevNoticeAcceptRequest,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    if payload.version != DEV_NOTICE_VERSION:
+        raise HTTPException(status_code=400, detail="Unknown notice version")
+    current_user.dev_notice_version_accepted = payload.version
+    current_user.dev_notice_accepted_at = _utcnow()
+    db.commit()
+    logger.info("Dev notice accepted", extra={"user_id": current_user.id, "version": payload.version})
+    return schemas.DevNoticeAcceptResponse(accepted=True, version=payload.version)
 
 
 @router.post("/refresh", response_model=schemas.TokenPairResponse)

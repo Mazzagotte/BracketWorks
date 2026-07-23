@@ -62,6 +62,12 @@ class User(Base):
     email_verified_at: Mapped[datetime | None] = mapped_column(
         DateTime, nullable=True, index=True
     )
+    dev_notice_version_accepted: Mapped[str | None] = mapped_column(
+        String(10), nullable=True
+    )
+    dev_notice_accepted_at: Mapped[datetime | None] = mapped_column(
+        DateTime, nullable=True
+    )
 
     @property
     def email_verified(self) -> bool:
