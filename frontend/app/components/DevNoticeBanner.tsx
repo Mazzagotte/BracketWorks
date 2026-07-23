@@ -27,11 +27,8 @@ export default function DevNoticeBanner() {
 
   useEffect(() => {
     const initialState = getInitialState();
-    console.log('DevNoticeBanner mounted, state:', initialState);
     setState(initialState);
   }, []);
-
-  console.log('DevNoticeBanner rendering with state:', state);
 
   const handleDismiss = () => {
     sessionStorage.setItem(DISMISSED_KEY, '1');
