@@ -169,7 +169,11 @@ function ClientLayout({ children }: { children: ReactNode }) {
       )}
 
       {/* Development notice banner - render after nav */}
-      {showAuthenticatedShell && <DevNoticeBanner />}
+      {showAuthenticatedShell && (
+        <div style={{ width: '100%', boxSizing: 'border-box' }}>
+          <DevNoticeBanner />
+        </div>
+      )}
 
       <main
         id="main-content"
