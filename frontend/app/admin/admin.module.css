@@ -1178,7 +1178,6 @@
   margin-bottom: 6px;
   color: var(--bw-text-primary);
 }
-}
 
 .page :where(.formLabel, label, small) {
   color: var(--bw-text-muted);
