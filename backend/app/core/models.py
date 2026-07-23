@@ -538,6 +538,23 @@ class BracketSnapshot(Base):
     is_active = synonym("is_current")
 
 
+class Changelog(Base):
+    __tablename__ = "changelog"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    version: Mapped[str] = mapped_column(String(20), nullable=False, unique=True, index=True)
+    date: Mapped[str] = mapped_column(String(10), nullable=False)
+    changes: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(timezone.utc)
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+
 SelectedSquad = UserSquadSelection
 Squad = TournamentSquad
 Bowler = TournamentPlayer

@@ -529,19 +529,22 @@ def accept_dev_notice(
 
 
 @router.get("/changelog", response_model=schemas.ChangelogResponse)
-def get_changelog():
+def get_changelog(db: Session = Depends(get_db)):
     """Get changelog/what's new for the application"""
+    entries = db.query(models.Changelog).order_by(models.Changelog.version.desc()).all()
+    
+    # If no entries in DB, return empty response
+    if not entries:
+        return schemas.ChangelogResponse(entries=[])
+    
+    # Convert to response schema
     changelog_entries = [
         schemas.ChangelogEntry(
-            date="2026-07-23",
-            version="1.0",
-            changes=[
-                "Initial release of BracketWorks",
-                "Tournament bracket management system",
-                "Score tracking and payouts",
-                "Development preview - verify all data before publishing"
-            ]
+            date=entry.date,
+            version=entry.version,
+            changes=entry.changes
         )
+        for entry in entries
     ]
     return schemas.ChangelogResponse(entries=changelog_entries)
 
