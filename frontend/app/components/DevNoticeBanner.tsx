@@ -108,12 +108,6 @@ export default function DevNoticeBanner() {
         </div>
       )}
 
-      {state === 'default' && (
-        <p className={styles.footerNote}>
-          You can review the full Development Notice anytime from the banner or from Settings &gt; Legal.
-        </p>
-      )}
-
       <DevNoticeModal
         isOpen={noticeOpen}
         mode={noticeMode}

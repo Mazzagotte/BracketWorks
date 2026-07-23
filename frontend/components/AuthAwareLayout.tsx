@@ -8,6 +8,7 @@ import TopNav from '../app/components/TopNav';
 import { ErrorBoundary } from '../app/components/ErrorBoundary';
 import { DevAuthStatus } from '../app/components/DevAuthStatus';
 import { TimeSlotReminderModal } from '../app/components/TimeSlotReminderModal';
+import DevNoticeBanner from '../app/components/DevNoticeBanner';
 import { useAuth } from '../app/lib/auth-context';
 import { isHandheldViewport } from '../app/lib/responsive';
 import { resetScrollLocks, setBodyInteractionState } from '../app/utils/modalUtils';
@@ -165,6 +166,13 @@ function ClientLayout({ children }: { children: ReactNode }) {
           firstName={firstName}
           currentPage={currentPage}
         />
+      )}
+
+      {/* Development notice banner */}
+      {showAuthenticatedShell && (
+        <div style={{ paddingInline: '10px', marginTop: '8px' }}>
+          <DevNoticeBanner />
+        </div>
       )}
 
       <main

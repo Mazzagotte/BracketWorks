@@ -154,11 +154,3 @@
 .reviewBtn:hover {
   background: #dc2626;
 }
-
-/* -- Footer note ---------------------------------------------------------- */
-.footerNote {
-  margin: -4px 0 10px;
-  font-size: 12px;
-  color: #52525B;
-  line-height: 1.45;
-}

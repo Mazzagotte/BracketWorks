@@ -56,7 +56,6 @@ import { EditTournamentModal } from './components/EditTournamentModal';
 import { normalizeSquadTimes } from './utils/tournamentForm';
 import { createDefaultSidePots, hydrateStoredSidePots } from './utils/sidePots';
 import { useTournamentOrchestration } from './hooks/useTournamentOrchestration';
-import DevNoticeBanner from '../components/DevNoticeBanner';
 import {
   applyAutoHouse,
   calculateHouseAmount,
@@ -1426,7 +1425,6 @@ export default function TournamentDashboard() {
 
           <div className={`${shellStyles.content} ${mobileStyles.contentContainer}`}>
             <div className={mobileStyles.cardsContainer}>
-            <DevNoticeBanner />
 
             {/* Empty State - No Tournament Loaded */}
             {!tournament && (
