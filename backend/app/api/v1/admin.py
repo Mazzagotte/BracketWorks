@@ -64,6 +64,17 @@ class AdminDeleteTournamentPayload(BaseModel):
     confirm_text: Optional[str] = None
 
 
+class AdminCreateChangelogPayload(BaseModel):
+    version: str
+    date: str
+    changes: list[str]
+
+
+class AdminUpdateChangelogPayload(BaseModel):
+    date: Optional[str] = None
+    changes: Optional[list[str]] = None
+
+
 router = APIRouter()
 
 
@@ -1341,3 +1352,137 @@ def admin_delete_user_legacy(
         status_code=400,
         detail="Legacy delete route is disabled. Use POST /api/v1/admin/users/{user_id}/delete with reason and confirm_text.",
     )
+
+
+@router.get("/changelog")
+def admin_get_changelog(
+    db: Session = Depends(get_db),
+    admin: models.User = Depends(require_admin_user),
+):
+    """Get all changelog entries"""
+    entries = db.query(models.Changelog).order_by(models.Changelog.version.desc()).all()
+    return {
+        "entries": [
+            {
+                "id": entry.id,
+                "version": entry.version,
+                "date": entry.date,
+                "changes": entry.changes,
+                "created_at": entry.created_at.isoformat() if entry.created_at else None,
+                "updated_at": entry.updated_at.isoformat() if entry.updated_at else None,
+            }
+            for entry in entries
+        ]
+    }
+
+
+@router.post("/changelog")
+def admin_create_changelog(
+    payload: AdminCreateChangelogPayload,
+    db: Session = Depends(get_db),
+    admin: models.User = Depends(require_admin_user),
+):
+    """Create a new changelog entry"""
+    # Check if version already exists
+    existing = db.query(models.Changelog).filter(models.Changelog.version == payload.version).first()
+    if existing:
+        raise HTTPException(status_code=409, detail="Version already exists")
+
+    entry = models.Changelog(
+        version=payload.version.strip(),
+        date=payload.date.strip(),
+        changes=payload.changes,
+    )
+    db.add(entry)
+    
+    _write_admin_audit(
+        db,
+        admin_user_id=admin.id,
+        action="changelog.create",
+        target_type="changelog",
+        target_id=str(entry.version),
+        details={"version": entry.version, "date": entry.date, "changes": entry.changes},
+    )
+    
+    db.commit()
+    db.refresh(entry)
+    return {
+        "ok": True,
+        "entry": {
+            "id": entry.id,
+            "version": entry.version,
+            "date": entry.date,
+            "changes": entry.changes,
+            "created_at": entry.created_at.isoformat() if entry.created_at else None,
+        },
+    }
+
+
+@router.put("/changelog/{version}")
+def admin_update_changelog(
+    version: str,
+    payload: AdminUpdateChangelogPayload,
+    db: Session = Depends(get_db),
+    admin: models.User = Depends(require_admin_user),
+):
+    """Update a changelog entry"""
+    entry = db.query(models.Changelog).filter(models.Changelog.version == version).first()
+    if not entry:
+        raise HTTPException(status_code=404, detail="Changelog entry not found")
+
+    before = {
+        "date": entry.date,
+        "changes": entry.changes,
+    }
+
+    if payload.date is not None:
+        entry.date = payload.date.strip()
+    if payload.changes is not None:
+        entry.changes = payload.changes
+
+    _write_admin_audit(
+        db,
+        admin_user_id=admin.id,
+        action="changelog.update",
+        target_type="changelog",
+        target_id=version,
+        details={"before": before, "after": {"date": entry.date, "changes": entry.changes}},
+    )
+
+    db.commit()
+    db.refresh(entry)
+    return {
+        "ok": True,
+        "entry": {
+            "id": entry.id,
+            "version": entry.version,
+            "date": entry.date,
+            "changes": entry.changes,
+            "updated_at": entry.updated_at.isoformat() if entry.updated_at else None,
+        },
+    }
+
+
+@router.delete("/changelog/{version}")
+def admin_delete_changelog(
+    version: str,
+    db: Session = Depends(get_db),
+    admin: models.User = Depends(require_admin_user),
+):
+    """Delete a changelog entry"""
+    entry = db.query(models.Changelog).filter(models.Changelog.version == version).first()
+    if not entry:
+        raise HTTPException(status_code=404, detail="Changelog entry not found")
+
+    _write_admin_audit(
+        db,
+        admin_user_id=admin.id,
+        action="changelog.delete",
+        target_type="changelog",
+        target_id=version,
+        details={"version": entry.version, "date": entry.date, "changes": entry.changes},
+    )
+
+    db.delete(entry)
+    db.commit()
+    return {"ok": True}

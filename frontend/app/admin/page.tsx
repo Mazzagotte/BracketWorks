@@ -134,7 +134,7 @@ type DeletePreview = {
   score_count?: number;
 };
 
-type AdminTab = "overview" | "users" | "tournaments" | "database" | "audit";
+type AdminTab = "overview" | "users" | "tournaments" | "database" | "audit" | "changelog";
 
 const TAB_LABELS: Record<AdminTab, string> = {
   overview: "Overview",
@@ -142,6 +142,7 @@ const TAB_LABELS: Record<AdminTab, string> = {
   tournaments: "Tournaments",
   database: "Database",
   audit: "Audit",
+  changelog: "Changelog",
 };
 
 function buildQuery(params: Record<string, string | number | boolean | null | undefined>) {
@@ -206,6 +207,16 @@ export default function AdminPage() {
   const [auditAction, setAuditAction] = useState("");
   const [auditTargetType, setAuditTargetType] = useState("");
   const [auditPage, setAuditPage] = useState(1);
+
+  const [changelogEntries, setChangelogEntries] = useState<Array<any>>([]);
+  const [changelogLoading, setChangelogLoading] = useState(false);
+  const [changelogLoaded, setChangelogLoaded] = useState(false);
+  const [changelogError, setChangelogError] = useState<string | null>(null);
+  const [changelogForm, setChangelogForm] = useState({ version: "", date: "", changes: "" });
+  const [changelogFormError, setChangelogFormError] = useState<string | null>(null);
+  const [changelogFormSaving, setChangelogFormSaving] = useState(false);
+  const [editingChangelogVersion, setEditingChangelogVersion] = useState<string | null>(null);
+  const [deletingChangelogVersion, setDeletingChangelogVersion] = useState<string | null>(null);
 
   const [refreshing, setRefreshing] = useState(false);
 
@@ -359,6 +370,23 @@ export default function AdminPage() {
     }
   }, [currentUser?.isAdmin, auditPage, auditSearch, auditAction, auditTargetType]);
 
+  const loadChangelog = useCallback(async (manual = false) => {
+    if (!currentUser?.isAdmin) return;
+    if (manual) setRefreshing(true);
+    setChangelogLoading(true);
+    setChangelogError(null);
+    try {
+      const data = await apiClient.get<{ entries: Array<any> }>("/api/v1/admin/changelog", false);
+      setChangelogEntries(data.entries);
+      setChangelogLoaded(true);
+    } catch (err) {
+      setChangelogError(err instanceof Error ? err.message : "Failed to load changelog");
+    } finally {
+      setChangelogLoading(false);
+      if (manual) setRefreshing(false);
+    }
+  }, [currentUser?.isAdmin]);
+
   const loadActiveTab = useCallback(async (manual = false) => {
     if (activeTab === "overview") {
       await loadOverview(manual);
@@ -376,8 +404,12 @@ export default function AdminPage() {
       await loadTables(manual);
       return;
     }
+    if (activeTab === "changelog") {
+      await loadChangelog(manual);
+      return;
+    }
     await loadAuditLogs(manual);
-  }, [activeTab, loadOverview, loadUsers, loadTournaments, loadTables, loadAuditLogs]);
+  }, [activeTab, loadOverview, loadUsers, loadTournaments, loadTables, loadChangelog, loadAuditLogs]);
 
   const refreshAfterMutation = useCallback(async ({
     overview = false,
@@ -385,12 +417,14 @@ export default function AdminPage() {
     tournaments = false,
     tables = false,
     audit = false,
+    changelog = false,
   }: {
     overview?: boolean;
     users?: boolean;
     tournaments?: boolean;
     tables?: boolean;
     audit?: boolean;
+    changelog?: boolean;
   }) => {
     const refreshTasks: Promise<unknown>[] = [];
     if (overview) refreshTasks.push(loadOverview(false));
@@ -398,8 +432,9 @@ export default function AdminPage() {
     if (tournaments) refreshTasks.push(loadTournaments(false));
     if (tables) refreshTasks.push(loadTables(false));
     if (audit) refreshTasks.push(loadAuditLogs(false));
+    if (changelog) refreshTasks.push(loadChangelog(false));
     await Promise.allSettled(refreshTasks);
-  }, [loadOverview, loadUsers, loadTournaments, loadTables, loadAuditLogs]);
+  }, [loadOverview, loadUsers, loadTournaments, loadTables, loadAuditLogs, loadChangelog]);
 
   const handleToggleAdminRole = useCallback(async (user: UserRow) => {
     const nextIsAdmin = !user.is_admin;
@@ -421,10 +456,81 @@ export default function AdminPage() {
     }
   }, [refreshAfterMutation]);
 
+  const handleChangelogCreateOrUpdate = useCallback(async () => {
+    if (!changelogForm.version.trim() || !changelogForm.date.trim() || !changelogForm.changes.trim()) {
+      setChangelogFormError("All fields are required");
+      return;
+    }
+
+    const changes = changelogForm.changes
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
+
+    if (changes.length === 0) {
+      setChangelogFormError("Changes list cannot be empty");
+      return;
+    }
+
+    setChangelogFormSaving(true);
+    setChangelogFormError(null);
+    try {
+      if (editingChangelogVersion) {
+        await apiClient.put(`/api/v1/admin/changelog/${editingChangelogVersion}`, {
+          date: changelogForm.date.trim(),
+          changes,
+        });
+      } else {
+        await apiClient.post("/api/v1/admin/changelog", {
+          version: changelogForm.version.trim(),
+          date: changelogForm.date.trim(),
+          changes,
+        });
+      }
+      setChangelogForm({ version: "", date: "", changes: "" });
+      setEditingChangelogVersion(null);
+      await refreshAfterMutation({ changelog: true });
+    } catch (err) {
+      setChangelogFormError(err instanceof Error ? err.message : "Failed to save changelog entry");
+    } finally {
+      setChangelogFormSaving(false);
+    }
+  }, [changelogForm, editingChangelogVersion, refreshAfterMutation]);
+
+  const handleChangelogDelete = useCallback(async (version: string) => {
+    if (!window.confirm(`Delete changelog entry for version ${version}?`)) return;
+
+    setDeletingChangelogVersion(version);
+    setChangelogError(null);
+    try {
+      await apiClient.delete(`/api/v1/admin/changelog/${version}`);
+      await refreshAfterMutation({ changelog: true });
+    } catch (err) {
+      setChangelogError(err instanceof Error ? err.message : "Failed to delete changelog entry");
+    } finally {
+      setDeletingChangelogVersion(null);
+    }
+  }, [refreshAfterMutation]);
+
+  const handleChangelogEdit = useCallback((entry: any) => {
+    setEditingChangelogVersion(entry.version);
+    setChangelogForm({
+      version: entry.version,
+      date: entry.date,
+      changes: entry.changes.join("\n"),
+    });
+  }, []);
+
+  const handleChangelogCancel = useCallback(() => {
+    setEditingChangelogVersion(null);
+    setChangelogForm({ version: "", date: "", changes: "" });
+    setChangelogFormError(null);
+  }, []);
+
   const adminTabs = useMemo(() => (
     <nav className={styles.adminNav} aria-label="Admin sections">
       <div className={styles.tabRow}>
-        {(["overview", "users", "tournaments", "database", "audit"] as AdminTab[]).map((tab) => (
+        {(["overview", "users", "tournaments", "database", "audit", "changelog"] as AdminTab[]).map((tab) => (
           <button
             key={tab}
             type="button"
@@ -503,6 +609,13 @@ export default function AdminPage() {
       void loadAuditLogs(false);
     }
   }, [activeTab, isAuthInitialized, isUserAuthenticated, currentUser?.isAdmin, loadAuditLogs]);
+
+  useEffect(() => {
+    if (!isAuthInitialized || !isUserAuthenticated || !currentUser?.isAdmin) return;
+    if (activeTab === "changelog") {
+      void loadChangelog(false);
+    }
+  }, [activeTab, isAuthInitialized, isUserAuthenticated, currentUser?.isAdmin, loadChangelog]);
 
   useEffect(() => {
     if (!deleteUser) return;
@@ -1191,6 +1304,114 @@ export default function AdminPage() {
             >
               Next
             </button>
+          </div>
+        </section>
+      )}
+
+      {activeTab === "changelog" && (
+        <section className={styles.panel}>
+          <div className={styles.panelHeader}>
+            <h3 className={styles.panelTitle}>{editingChangelogVersion ? "Edit Changelog Entry" : "Manage Changelog"}</h3>
+            {!editingChangelogVersion && <span className={styles.panelSubtle}>{changelogEntries.length} versions</span>}
+          </div>
+
+          {changelogError && <div className={styles.modalError}>{changelogError}</div>}
+
+          <div className={styles.formSection}>
+            <div className={styles.formRow}>
+              <label className={styles.formLabel}>Version</label>
+              <input
+                className={styles.formInput}
+                type="text"
+                value={changelogForm.version}
+                onChange={(e) => setChangelogForm({ ...changelogForm, version: e.target.value })}
+                disabled={!!editingChangelogVersion}
+                placeholder="1.0"
+              />
+            </div>
+            <div className={styles.formRow}>
+              <label className={styles.formLabel}>Date (YYYY-MM-DD)</label>
+              <input
+                className={styles.formInput}
+                type="text"
+                value={changelogForm.date}
+                onChange={(e) => setChangelogForm({ ...changelogForm, date: e.target.value })}
+                placeholder="2026-07-23"
+              />
+            </div>
+            <div className={styles.formRow}>
+              <label className={styles.formLabel}>Changes (one per line)</label>
+              <textarea
+                className={styles.formTextarea}
+                value={changelogForm.changes}
+                onChange={(e) => setChangelogForm({ ...changelogForm, changes: e.target.value })}
+                placeholder="Feature A&#10;Bug fix B&#10;Improvement C"
+                rows={5}
+              />
+            </div>
+            {changelogFormError && <div className={styles.modalError}>{changelogFormError}</div>}
+            <div className={styles.formRow}>
+              <button
+                type="button"
+                className={`${buttonStyles.button} ${buttonStyles.primary}`}
+                disabled={changelogFormSaving}
+                onClick={handleChangelogCreateOrUpdate}
+              >
+                {changelogFormSaving ? "Saving..." : editingChangelogVersion ? "Update Entry" : "Create Entry"}
+              </button>
+              {editingChangelogVersion && (
+                <button
+                  type="button"
+                  className={`${buttonStyles.button} ${buttonStyles.secondary}`}
+                  onClick={handleChangelogCancel}
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className={styles.changelogList}>
+            {changelogLoading ? (
+              <div className={styles.placeholder}>Loading changelog...</div>
+            ) : changelogEntries.length === 0 ? (
+              <div className={styles.placeholder}>No changelog entries yet</div>
+            ) : (
+              <>
+                {changelogEntries.map((entry) => (
+                  <div key={entry.id} className={styles.changelogEntry}>
+                    <div className={styles.changelogHeader}>
+                      <div>
+                        <div className={styles.changelogVersion}>v{entry.version}</div>
+                        <div className={styles.changelogDate}>{entry.date}</div>
+                      </div>
+                      <div className={styles.changelogActions}>
+                        <button
+                          type="button"
+                          className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary}`}
+                          onClick={() => handleChangelogEdit(entry)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.danger}`}
+                          disabled={deletingChangelogVersion === entry.version}
+                          onClick={() => handleChangelogDelete(entry.version)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                    <ul className={styles.changesList}>
+                      {entry.changes.map((change, idx) => (
+                        <li key={idx}>{change}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </>
+            )}
           </div>
         </section>
       )}

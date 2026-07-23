@@ -1056,6 +1056,130 @@
   letter-spacing: 0;
 }
 
+/* ---- Changelog section ---- */
+.formSection {
+  border: 1px solid var(--bw-border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  background-color: var(--color-brand-ivory-light);
+  margin-bottom: 24px;
+}
+
+.formRow {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.formRow:last-child {
+  margin-bottom: 0;
+}
+
+.formLabel {
+  color: var(--bw-text-title);
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.formInput,
+.formTextarea {
+  background-color: var(--color-surface);
+  border: 1px solid var(--bw-border-subtle);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--bw-text-primary);
+}
+
+.formInput:focus,
+.formTextarea:focus {
+  outline: 1px solid var(--color-orange-primary);
+  outline-offset: 0;
+}
+
+.formInput:disabled {
+  background-color: var(--bw-border-subtle);
+  color: var(--bw-text-muted);
+  cursor: not-allowed;
+}
+
+.formTextarea {
+  resize: vertical;
+  font-size: 13px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.formRow:has(.formInput, .formTextarea) + .formRow {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  align-items: center;
+}
+
+.changelogList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.placeholder {
+  padding: 32px 20px;
+  text-align: center;
+  color: var(--bw-text-muted);
+  font-size: 14px;
+}
+
+.changelogEntry {
+  border: 1px solid var(--bw-border-subtle);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  background-color: var(--color-brand-ivory-light);
+}
+
+.changelogHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.changelogVersion {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--bw-text-title);
+  margin-bottom: 2px;
+}
+
+.changelogDate {
+  font-size: 13px;
+  color: var(--bw-text-muted);
+}
+
+.changelogActions {
+  display: flex;
+  gap: 8px;
+}
+
+.changesList {
+  margin: 0;
+  padding-left: 20px;
+  list-style-type: disc;
+  color: var(--bw-text-primary);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.changesList li {
+  margin-bottom: 6px;
+  color: var(--bw-text-primary);
+}
+}
+
 .page :where(.formLabel, label, small) {
   color: var(--bw-text-muted);
   font-size: var(--bw-type-label);
