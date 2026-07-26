@@ -4,6 +4,7 @@ import { useMemo, useEffect, useState, useRef, useCallback, type CSSProperties }
 import { useRouter } from 'next/navigation';
 import {
   ArrowRight,
+  Braces,
   Calendar,
   CircleDollarSign,
   ClipboardList,
@@ -106,6 +107,8 @@ const expandedDesktopCards: Record<DashboardCardKey, boolean> = {
 
 const dashboardActionIcons: Record<string, LucideIcon> = {
   'add-player': UserPlus,
+  'add-scores': ClipboardList,
+  'view-brackets': Braces,
   'view-payouts': Trophy,
   'change-squad': Users,
   'edit-tournament': PencilLine,
@@ -1049,11 +1052,19 @@ export default function TournamentDashboard() {
       accent: false,
     },
     {
-      key: 'view-payouts',
-      label: 'View Payouts',
+      key: 'add-scores',
+      label: 'Add Scores',
       indicator: '›',
-      onClick: () => router.push('/payouts'),
-      disabled: false,
+      onClick: () => router.push('/scores'),
+      disabled: !hasGeneratedBrackets || scoresLocked,
+      accent: false,
+    },
+    {
+      key: 'view-brackets',
+      label: 'View Brackets',
+      indicator: '›',
+      onClick: () => router.push('/brackets'),
+      disabled: !hasGeneratedBrackets,
       accent: false,
     },
   ];
@@ -1563,8 +1574,10 @@ export default function TournamentDashboard() {
                           </div>
                           <div className={mobileStyles.financialHeroBlock}>
                             <p className={mobileStyles.dashboardPanelEyebrow}>Prize Pool</p>
-                            <p className={mobileStyles.financialHeroValue}>{formatUsd(tournamentProjectedPayout)}</p>
-                            <p className={mobileStyles.kpiDetail}>Available for payout</p>
+                            <div className={mobileStyles.financialHeroValueContainer}>
+                              <p className={mobileStyles.financialHeroValue}>{formatUsd(tournamentProjectedPayout)}</p>
+                              <p className={mobileStyles.kpiDetail}>Available for payout</p>
+                            </div>
                           </div>
                           <div>
                             <p className={`${mobileStyles.dashboardPanelEyebrow} ${mobileStyles.financialSplitSection}`}>Payout Split</p>
@@ -1581,21 +1594,21 @@ export default function TournamentDashboard() {
                           <ClipboardList className={mobileStyles.dashboardPanelIcon} aria-hidden="true" />
                           <span className={mobileStyles.dashboardPanelTitle}>Entry Breakdown</span>
                         </h3>
-                        <div className={mobileStyles.entryBreakdownHeader}>
+                        <div className={mobileStyles.entryBreakdownTotal}>
+                          <p className={mobileStyles.dashboardPanelEyebrow}>Bracket Entries</p>
+                          <p className={mobileStyles.entryBreakdownTotalValue}>{statsEntrySummary.totalEntries}</p>
+                        </div>
+                        <div className={mobileStyles.entryBreakdownCards}>
                           <div className={mobileStyles.entryBreakdownStat}>
                             <span className={mobileStyles.entryBreakdownLabelHandicap}>Handicap</span>
                             <strong>{handicapEntries}</strong>
                             <small>{handicapSplitPercent}% of entries</small>
                           </div>
-                          <div className={`${mobileStyles.entryBreakdownStat} ${mobileStyles.entryBreakdownStatRight}`}>
+                          <div className={mobileStyles.entryBreakdownStat}>
                             <span className={mobileStyles.entryBreakdownLabelScratch}>Scratch</span>
                             <strong>{scratchEntries}</strong>
                             <small>{scratchSplitPercent}% of entries</small>
                           </div>
-                        </div>
-                        <div className={mobileStyles.entryBreakdownBar} aria-hidden="true">
-                          <div className={mobileStyles.entryBreakdownSegmentHandicap} style={{ width: `${handicapSplitPercent}%` }} />
-                          <div className={mobileStyles.entryBreakdownSegmentScratch} style={{ width: `${scratchSplitPercent}%` }} />
                         </div>
                       </article>
                     </div>
