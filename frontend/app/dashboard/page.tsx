@@ -1594,10 +1594,6 @@ export default function TournamentDashboard() {
                           <ClipboardList className={mobileStyles.dashboardPanelIcon} aria-hidden="true" />
                           <span className={mobileStyles.dashboardPanelTitle}>Entry Breakdown</span>
                         </h3>
-                        <div className={mobileStyles.entryBreakdownTotal}>
-                          <p className={mobileStyles.dashboardPanelEyebrow}>Bracket Entries</p>
-                          <p className={mobileStyles.entryBreakdownTotalValue}>{statsEntrySummary.totalEntries}</p>
-                        </div>
                         <div className={mobileStyles.entryBreakdownCards}>
                           <div className={mobileStyles.entryBreakdownStat}>
                             <span className={mobileStyles.entryBreakdownLabelHandicap}>Handicap</span>
