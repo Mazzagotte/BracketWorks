@@ -437,7 +437,7 @@
 .player.winner .playerScore {
   color: var(--color-green-dark);
   font-size: 1rem;
-  text-shadow: 0 0 12px var(--color-success-border);
+  text-shadow: none;
 }
 
 .winnerCheck {

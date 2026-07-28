@@ -21,6 +21,9 @@ interface PlayerApiResponse {
   amount_paid?: number;
 }
 
+type PlayerPatchValue = string | number | null | Record<string, number>;
+type PlayerPatch = Record<string, PlayerPatchValue>;
+
 interface UsePlayersOptions {
   selectedSquad: Squad | null;
   squads: Squad[];
@@ -51,7 +54,7 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
   // Pending debounce timers per player: playerId -> timeout handle
   const patchTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
   // Latest pending patch payload per player — so the debounced call always sends the freshest values
-  const pendingPatches = useRef<Record<number, Record<string, any>>>({});
+  const pendingPatches = useRef<Record<number, PlayerPatch>>({});
   // Single shared timer for flushing all pending patches as one bulk request
   const bulkFlushTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -274,7 +277,7 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
     }
 
     // Build the API payload for this update
-    const playerData: Record<string, any> = {};
+    const playerData: PlayerPatch = {};
 
     const currentPlayer = playersRef.current.find(player => player.id === id)
     const nextDivision = 'division' in updates

@@ -121,19 +121,6 @@ class Logger {
     this.info(`User action: ${action}`, context);
   }
 
-  performanceMetric(name: string, value: number, unit = 'ms') {
-    this.info(`Performance: ${name} = ${value}${unit}`, { metric: name, value, unit });
-  }
-
-  // Get recent logs for debugging
-  getRecentLogs(count = 50): LogEntry[] {
-    return this.logs.slice(-count);
-  }
-
-  // Clear logs (useful for testing)
-  clearLogs() {
-    this.logs = [];
-  }
 }
 
 // Create singleton instance
@@ -141,42 +128,3 @@ export const logger = new Logger();
 
 // Export type for external use
 export type { LogLevel, LogEntry };
-
-// Convenience function for conditional logging
-export function logIf(condition: boolean, level: LogLevel, message: string, context?: LogContext) {
-  if (condition) {
-    logger[level](message, context);
-  }
-}
-
-// Development-only logging
-export function devLog(message: string, context?: LogContext) {
-  if (process.env.NODE_ENV === 'development') {
-    logger.debug(message, context);
-  }
-}
-
-// Error wrapper for async operations
-export async function loggedOperation<T>(
-  operation: () => Promise<T>,
-  operationName: string,
-  context?: LogContext
-): Promise<T> {
-  const startTime = Date.now();
-  logger.info(`Starting: ${operationName}`, context);
-  
-  try {
-    const result = await operation();
-    const duration = Date.now() - startTime;
-    logger.info(`Completed: ${operationName}`, { ...context || {}, duration });
-    return result;
-  } catch (error) {
-    const duration = Date.now() - startTime;
-    logger.error(`Failed: ${operationName}`, { 
-      ...context || {}, 
-      duration, 
-      error: error instanceof Error ? error.message : String(error) 
-    });
-    throw error;
-  }
-}

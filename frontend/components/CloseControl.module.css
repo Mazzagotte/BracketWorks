@@ -8,30 +8,32 @@
   width: var(--close-size);
   height: var(--close-size);
   padding: 0;
-  border: 1px solid var(--color-border-light);
+  border: 1px solid var(--color-border-primary);
   border-radius: 10px;
-  background: var(--color-primary);
-  color: var(--color-white);
-  box-shadow: 0 10px 22px var(--color-border-hover), 0 2px 5px var(--opacity-black-10);
+  background: var(--color-surface-secondary);
+  color: var(--color-text-secondary);
+  box-shadow: none;
   cursor: pointer;
-  transition: transform 0.14s ease, box-shadow 0.14s ease, filter 0.14s ease;
+  transition: background-color 0.14s ease, border-color 0.14s ease, color 0.14s ease, transform 0.14s ease;
   flex-shrink: 0;
 }
 
 .root:hover {
-  filter: saturate(1.05) brightness(1.02);
-  box-shadow: 0 14px 26px var(--color-border-hover), 0 3px 8px var(--opacity-black-10);
-  transform: translateY(-1px);
+  background: var(--color-surface-hover);
+  border-color: var(--color-accent-border);
+  color: var(--color-text-primary);
 }
 
 .root:active {
   transform: translateY(1px);
-  box-shadow: 0 7px 16px var(--color-border-light), 0 2px 5px var(--opacity-black-08);
+  background: var(--color-bg-secondary);
+  box-shadow: none;
 }
 
 .root:focus-visible {
-  outline: 3px solid var(--color-border-light);
-  outline-offset: 3px;
+  outline: 2px solid var(--color-accent-primary);
+  outline-offset: 2px;
+  box-shadow: none;
 }
 
 .inline {
@@ -55,7 +57,7 @@
   --close-size: 26px;
   --close-icon-size: 11px;
   border-radius: 8px;
-  box-shadow: 0 6px 14px var(--color-border-light), 0 2px 4px var(--opacity-black-10);
+  box-shadow: none;
 }
 
 .icon {

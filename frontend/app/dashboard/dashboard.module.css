@@ -4006,7 +4006,7 @@
 }
 
 .heroTitle {
-  text-shadow: 0 0 32px color-mix(in srgb, var(--color-primary) 8%, transparent);
+  text-shadow: none;
 }
 
 .heroMetaPill,

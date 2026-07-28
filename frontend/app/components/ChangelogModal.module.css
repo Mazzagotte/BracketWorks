@@ -53,23 +53,6 @@
   color: #FFFFFF;
 }
 
-.closeBtn {
-  background: none;
-  border: none;
-  color: #6B6B72;
-  cursor: pointer;
-  padding: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  transition: color 0.15s;
-}
-
-.closeBtn:hover {
-  color: #A1A1AA;
-}
-
 .body {
   flex: 1;
   overflow-y: auto;

@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { BookOpen, X } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
+import CloseControl from '../../components/CloseControl';
 import { API } from '../lib/api';
 import type { ChangelogEntry } from '../lib/types';
 import styles from './ChangelogModal.module.css';
@@ -77,13 +78,11 @@ export default function ChangelogModal({ isOpen, onClose }: ChangelogModalProps)
               What&apos;s New
             </h2>
           </div>
-          <button
-            className={styles.closeBtn}
+          <CloseControl
             onClick={onClose}
-            aria-label="Close changelog"
-          >
-            <X size={16} aria-hidden="true" />
-          </button>
+            label="Close changelog"
+            size="xs"
+          />
         </div>
 
         {/* Body */}

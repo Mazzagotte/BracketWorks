@@ -7,7 +7,7 @@ import buttonStyles from '../styles/buttons.module.css';
 type ButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'> & {
   children: React.ReactNode;
   onClick?: () => Promise<void> | void;
-  variant?: 'primary' | 'secondary' | 'danger' | 'success' | 'glass';
+  variant?: 'primary' | 'secondary' | 'danger' | 'success' | 'outline' | 'ghost' | 'glass';
   size?: 'sm' | 'md' | 'lg';
   loading?: boolean;
   disableSuccessState?: boolean;
@@ -85,6 +85,8 @@ export default function EnhancedButton({
     secondary: buttonStyles.secondary,
     danger: buttonStyles.danger,
     success: buttonStyles.success,
+    outline: buttonStyles.outline,
+    ghost: buttonStyles.ghost,
     glass: buttonStyles.secondary,
   }[variant];
 

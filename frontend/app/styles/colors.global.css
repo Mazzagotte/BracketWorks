@@ -183,9 +183,9 @@
   /* Shadows */
   --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
-  --shadow-brand-sm: 0 2px 8px rgba(249, 115, 22, 0.3);
-  --shadow-brand-md: 0 4px 12px rgba(249, 115, 22, 0.4);
-  --shadow-brand-glow: 0 0 20px rgba(251, 130, 60, 0.5);
+  --shadow-brand-sm: none;
+  --shadow-brand-md: none;
+  --shadow-brand-glow: none;
   --shadow-green-sm: 0 2px 4px rgba(47, 191, 113, 0.3);
   --shadow-inset: inset 0 1px 3px rgba(0, 0, 0, 0.1);
 

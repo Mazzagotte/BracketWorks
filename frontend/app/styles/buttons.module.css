@@ -2,18 +2,25 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--spacing-sm);
+  gap: 8px;
   min-height: var(--btn-height);
-  padding: 0 var(--spacing-lg);
+  padding: 0 var(--btn-padding-x);
   border-radius: var(--radius-md);
   border: 1px solid transparent;
-  font-weight: 800;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
   line-height: 1;
   white-space: nowrap;
   text-decoration: none;
   cursor: pointer;
   user-select: none;
-  transition: background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+  transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.button > svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
 }
 
 .button:hover {
@@ -25,35 +32,42 @@
 }
 
 .button:focus-visible {
-  outline: none;
-  box-shadow: var(--bw-focus-ring);
+  outline: 2px solid var(--color-accent-primary);
+  outline-offset: 2px;
+  box-shadow: none;
 }
 
 .button:disabled {
   cursor: not-allowed;
-  opacity: 0.55;
+  background: var(--color-surface-secondary);
+  border-color: var(--color-border-subtle);
+  color: var(--color-text-disabled);
+  opacity: 1;
   transform: none;
+  box-shadow: none;
 }
 
 .primary {
-  background: var(--color-primary);
-  border-color: var(--bw-border-accent);
-  color: var(--color-white);
-  box-shadow: var(--bw-shadow-accent);
+  background: var(--color-accent-primary);
+  border-color: var(--color-accent-primary);
+  color: var(--color-text-primary);
+  box-shadow: none;
 }
 
 .primary:hover:not(:disabled) {
-  background: var(--color-primary-hover);
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
 }
 
 .secondary {
-  background: var(--bw-surface-panel);
-  border-color: var(--bw-border-subtle);
-  color: var(--bw-text-body);
+  background: var(--color-surface-secondary);
+  border-color: var(--color-border-primary);
+  color: var(--color-text-primary);
 }
 
 .secondary:hover:not(:disabled) {
-  border-color: var(--bw-border-accent);
+  background: var(--color-surface-hover);
+  border-color: var(--color-border-primary);
 }
 
 .danger {
@@ -63,7 +77,35 @@
 }
 
 .danger:hover:not(:disabled) {
-  background: var(--color-error-darker);
+  background: color-mix(in srgb, var(--color-danger) 86%, black);
+}
+
+.outline {
+  background: transparent;
+  border-color: var(--color-border-primary);
+  color: var(--color-text-primary);
+}
+
+.outline:hover:not(:disabled) {
+  background: var(--color-surface-hover);
+  border-color: var(--color-accent-border);
+}
+
+.ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--color-text-secondary);
+}
+
+.ghost:hover:not(:disabled) {
+  background: var(--color-surface-hover);
+  color: var(--color-text-primary);
+}
+
+.iconOnly {
+  width: var(--btn-height);
+  min-width: var(--btn-height);
+  padding: 0;
 }
 
 .success {
@@ -115,14 +157,14 @@
   color: var(--color-white) !important;
   border-color: var(--bw-border-accent) !important;
   background: var(--color-primary) !important;
-  box-shadow: 0 10px 22px color-mix(in srgb, var(--color-primary) 24%, transparent) !important;
+  box-shadow: none !important;
 }
 
 .quickAction:hover:not(:disabled) {
   color: var(--color-white) !important;
-  border-color: color-mix(in srgb, var(--color-primary) 52%, white) !important;
+  border-color: var(--color-accent-primary) !important;
   background: var(--color-primary-hover) !important;
-  box-shadow: 0 12px 26px color-mix(in srgb, var(--color-primary) 30%, transparent) !important;
+  box-shadow: none !important;
 }
 
 .quickAction:disabled {

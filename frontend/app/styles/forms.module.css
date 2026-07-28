@@ -18,8 +18,9 @@
 .select:focus,
 .search:focus {
   border-color: var(--color-primary);
-  box-shadow: var(--bw-focus-ring);
-  outline: none;
+  outline: 2px solid var(--color-accent-muted);
+  outline-offset: 1px;
+  box-shadow: none;
 }
 
 .fieldLabel {

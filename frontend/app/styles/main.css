@@ -19,37 +19,62 @@
 :root {
   --header-height: 64px;
 
-  /* Active theme: core brand controls */
-  --bw-orange: #FF6A00;
-  --bw-orange-dark: #FF7A00;
-  --bw-orange-light: #FF8C33;
-  --bw-charcoal: #F4F4F5;
-  --bw-muted: #A1A1AA;
-  --bw-card: #151519;
-  --bw-app-bg: #09090C;
-  --bw-page: #09090C;
-  --bw-page-soft: #101014;
-  --bw-border: #34343A;
-  --bw-ivory: #151519;
-  --bw-ivory-light: #151519;
-  --bw-ivory-soft: #101014;
-  --bw-surface-card: #151519;
-  --bw-surface-card-strong: #151519;
-  --bw-surface-panel: #151519;
-  --bw-surface-panel-strong: #101014;
-  --bw-border-subtle: #34343A;
-  --bw-border-card: #34343A;
-  --bw-border-accent: #34343A;
+  /* Canonical BracketWorks color system */
+  --color-bg-primary: #09090c;
+  --color-bg-secondary: #111119;
+  --color-surface-primary: #18181f;
+  --color-surface-secondary: #202028;
+  --color-surface-hover: #24242d;
+  --color-border-primary: #2a2a33;
+  --color-border-subtle: #22222a;
+  --color-accent-primary: #ff7a00;
+  --color-accent-hover: #e96f00;
+  --color-accent-active: #d96600;
+  --color-accent-muted: rgba(255, 122, 0, 0.1);
+  --color-accent-border: rgba(255, 122, 0, 0.35);
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #a1a1aa;
+  --color-text-muted: #71717a;
+  --color-text-disabled: #52525b;
+  --color-success: #22c55e;
+  --color-success-muted: rgba(34, 197, 94, 0.12);
+  --color-warning: #f59e0b;
+  --color-warning-muted: rgba(245, 158, 11, 0.12);
+  --color-danger: #ef4444;
+  --color-danger-muted: rgba(239, 68, 68, 0.12);
+  --color-info: #3b82f6;
+  --color-info-muted: rgba(59, 130, 246, 0.12);
+
+  /* Compatibility aliases for existing component modules */
+  --bw-orange: var(--color-accent-primary);
+  --bw-orange-dark: var(--color-accent-hover);
+  --bw-orange-light: var(--color-accent-primary);
+  --bw-charcoal: var(--color-text-primary);
+  --bw-muted: var(--color-text-secondary);
+  --bw-card: var(--color-surface-primary);
+  --bw-app-bg: var(--color-bg-primary);
+  --bw-page: var(--color-bg-primary);
+  --bw-page-soft: var(--color-bg-secondary);
+  --bw-border: var(--color-border-primary);
+  --bw-ivory: var(--color-surface-primary);
+  --bw-ivory-light: var(--color-surface-primary);
+  --bw-ivory-soft: var(--color-bg-secondary);
+  --bw-surface-card: var(--color-surface-primary);
+  --bw-surface-card-strong: var(--color-surface-primary);
+  --bw-surface-panel: var(--color-surface-secondary);
+  --bw-surface-panel-strong: var(--color-surface-hover);
+  --bw-border-subtle: var(--color-border-subtle);
+  --bw-border-card: var(--color-border-primary);
+  --bw-border-accent: var(--color-accent-border);
   --bw-shadow-card: none;
-  --bw-surface-hover-warm: rgba(255, 106, 0, 0.08);
+  --bw-surface-hover-warm: var(--color-surface-hover);
   --bw-pin-shadow: rgba(0, 0, 0, 0.5);
   --bw-font-family-primary: 'Inter', 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
   --bw-font-family-mono: 'Courier New', Monaco, monospace;
 
   /* Active theme: semantic aliases used throughout the app */
-  --color-surface-hover: rgba(255, 106, 0, 0.08);
-  --color-border-light: #34343A;
-  --color-border-hover: #FF7A00;
+  --color-border-light: var(--color-border-subtle);
+  --color-border-hover: var(--color-border-primary);
   --color-orange: var(--bw-orange);
   --color-orange-hover: var(--bw-orange-dark);
   --color-orange-dark: var(--bw-orange-dark);
@@ -67,13 +92,13 @@
   --font-size-4xl: 24px;
   --font-size-5xl: 28px;
   --font-size-6xl: 34px;
-  --bw-text-title: #F4F4F5;
-  --bw-text-body: #F4F4F5;
-  --bw-text-muted: #A1A1AA;
-  --bw-text-faint: #7D7D86;
-  --bw-text-accent: #FF6A00;
-  --bw-text-success: #92b28d;
-  --bw-text-danger: #d17d70;
+  --bw-text-title: var(--color-text-primary);
+  --bw-text-body: var(--color-text-secondary);
+  --bw-text-muted: var(--color-text-secondary);
+  --bw-text-faint: var(--color-text-muted);
+  --bw-text-accent: var(--color-accent-primary);
+  --bw-text-success: var(--color-success);
+  --bw-text-danger: var(--color-danger);
   --bw-type-page-title: 1rem;
   --bw-type-card-title: 0.94rem;
   --bw-type-section-title: 0.86rem;
@@ -192,15 +217,15 @@
   --popup-muted-text: var(--color-text-muted-alt);
 
   /* Active theme: shared effects and gradients */
-  --gradient-brand: linear-gradient(135deg, #FF7A00 0%, #FF6A00 55%, #D65700 100%);
-  --gradient-brand-hover: linear-gradient(135deg, #FF8A1F 0%, #FF7A00 100%);
+  --gradient-brand: var(--color-accent-primary);
+  --gradient-brand-hover: var(--color-accent-hover);
   --gradient-dark-alt: linear-gradient(145deg, var(--color-dark-surface) 0%, var(--color-dark-base) 100%);
   --gradient-dark-subtle: linear-gradient(145deg, var(--color-dark-elevated) 0%, var(--color-dark-base) 100%);
   --shadow-soft: 0 2px 12px rgba(0, 0, 0, 0.3);
   --shadow-hover: 0 6px 20px rgba(0, 0, 0, 0.45);
   --shadow-modal: 0 24px 64px rgba(0, 0, 0, 0.65);
-  --shadow-btn: 0 1px 3px rgba(255, 106, 0, 0.22);
-  --shadow-btn-hover: 0 4px 10px rgba(255, 106, 0, 0.3);
+  --shadow-btn: none;
+  --shadow-btn-hover: none;
   --elevation-0: none;
   --elevation-1: 0 1px 2px rgba(0, 0, 0, 0.22);
   --elevation-2: 0 6px 16px rgba(0, 0, 0, 0.24);
@@ -213,7 +238,7 @@
   --motion-ease-emphasized: cubic-bezier(0.2, 0, 0, 1.15);
   --motion-ease-decelerate: cubic-bezier(0, 0, 0.2, 1);
   --motion-ease-accelerate: cubic-bezier(0.4, 0, 1, 1);
-  --ring-brand: 0 0 0 3px rgba(255, 106, 0, 0.18);
+  --ring-brand: 0 0 0 2px var(--color-accent-muted);
   --ring-danger: 0 0 0 3px rgba(214, 69, 69, 0.35);
   --gradient-danger: linear-gradient(180deg, #e45757 0%, #d64545 100%);
   --gradient-danger-hover: linear-gradient(180deg, #dd4c4c 0%, #c83e3e 100%);
@@ -232,24 +257,64 @@
   --focus-ring: var(--bw-focus-ring);
 
   /* Warm semantic bridge tokens for legacy CSS */
-  --color-primary: var(--bw-orange);
-  --color-primary-hover: var(--bw-orange-dark);
-  --color-text-primary: var(--bw-text-title);
-  --color-text-secondary: var(--bw-text-muted);
-  --color-background: var(--bw-page);
-  --color-success: #2FBF71;
-  --color-success-border: rgba(114, 144, 122, 0.32);
-  --color-warning: var(--color-primary);
-  --color-error: #b66a5f;
-  --color-error-darker: #8d4f46;
-  --bw-shadow-card: 0 12px 28px rgba(0, 0, 0, 0.24);
-  --bw-shadow-accent: 0 10px 18px rgba(255, 106, 0, 0.18);
-  --bw-focus-ring: 0 0 0 1px rgba(255, 106, 0, 0.45), 0 0 0 4px rgba(255, 106, 0, 0.16);
+  --color-primary: var(--color-accent-primary);
+  --color-primary-hover: var(--color-accent-hover);
+  --color-background: var(--color-bg-primary);
+  --color-surface: var(--color-surface-primary);
+  --color-border: var(--color-border-primary);
+  --color-success-border: var(--color-success);
+  --color-success-soft: var(--color-success-muted);
+  --color-error: var(--color-danger);
+  --color-error-darker: var(--color-danger);
+  --color-error-bg: var(--color-danger-muted);
+  --color-error-bg-soft: var(--color-danger-muted);
+  --color-error-border: var(--color-danger);
+  --color-info-bg: var(--color-info-muted);
+  --color-warning-surface: var(--color-warning-muted);
+  --bw-shadow-card: none;
+  --bw-shadow-accent: none;
+  --bw-focus-ring: 0 0 0 2px var(--color-accent-muted);
 }
 
 /* Single-source app background: one texture layer for all pages */
 body {
   background-color: var(--color-background);
+}
+
+/* Shared color behavior for native controls and common application surfaces. */
+:where(.card, .panel, .modal, [role='dialog']) {
+  background-color: var(--color-surface-primary);
+  border-color: var(--color-border-primary);
+}
+
+:where(input, select, textarea) {
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  border-color: var(--color-border-primary);
+}
+
+:where(input, textarea)::placeholder {
+  color: var(--color-text-muted);
+  opacity: 1;
+}
+
+:where(input, select, textarea):focus {
+  border-color: var(--color-accent-primary);
+  outline: 2px solid var(--color-accent-muted);
+  outline-offset: 1px;
+  box-shadow: none;
+}
+
+:where(button, input, select, textarea):disabled {
+  color: var(--color-text-disabled);
+  border-color: var(--color-border-subtle);
+  box-shadow: none;
+}
+
+:where(a, button, [role='button'], [tabindex]:not([tabindex='-1'])):focus-visible {
+  outline: 2px solid var(--color-accent-primary);
+  outline-offset: 2px;
+  box-shadow: none;
 }
 
 @media (max-width: 1400px) {
