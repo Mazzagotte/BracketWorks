@@ -140,7 +140,7 @@
   position: relative;
   overflow: hidden;
   border-radius: 24px;
-  padding: 24px;
+  padding: var(--space-card-y) var(--space-card-x);
 }
 
 .liveBoardCard,
@@ -2432,9 +2432,9 @@
 }
 
 .dashboardHeaderCard {
-  padding: 18px 20px;
+  padding: 14px 16px;
   display: grid;
-  gap: 14px;
+  gap: 12px;
 }
 
 .dashboardHeaderTop {
@@ -2443,19 +2443,19 @@
   align-items: flex-start;
   gap: 12px;
   border-bottom: 1px solid color-mix(in srgb, var(--bw-border-subtle) 82%, transparent);
-  padding-bottom: 12px;
+  padding-bottom: 10px;
 }
 
 .dashboardTournamentName {
   margin: 0;
-  font-size: clamp(28px, 3.2vw, 50px);
-  line-height: 1.05;
+  font-size: clamp(24px, 2.4vw, 36px);
+  line-height: 1.1;
   letter-spacing: -0.03em;
   color: var(--bw-text-title);
 }
 
 .dashboardTournamentMeta {
-  margin-top: 8px;
+  margin-top: 6px;
   display: flex;
   flex-wrap: wrap;
   gap: 8px 18px;
@@ -2488,12 +2488,14 @@
   display: flex;
   align-items: center;
   gap: 0;
-  padding-bottom: 2px;
+  overflow-x: auto;
+  padding: 0 0 2px;
+  scrollbar-width: thin;
 }
 
 .workflowItem {
   flex: 1;
-  min-width: 0;
+  min-width: max-content;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -2544,10 +2546,29 @@
   color: var(--bw-text-muted);
 }
 
+.workflowItemActive .workflowText strong {
+  color: var(--bw-text-accent);
+}
+
+.workflowItemPending .workflowText strong,
+.workflowItemPending .workflowText span {
+  color: var(--bw-text-muted);
+}
+
 .workflowConnector {
   height: 1px;
-  width: 32px;
+  min-width: 48px;
+  flex: 1;
+  margin: 0 12px;
   background: color-mix(in srgb, var(--bw-border-subtle) 80%, transparent);
+}
+
+.workflowConnectorDone {
+  background: color-mix(in srgb, var(--color-success-border) 85%, transparent);
+}
+
+.workflowConnectorActive {
+  background: color-mix(in srgb, var(--color-primary) 70%, transparent);
 }
 
 .dashboardGrid {
@@ -2571,66 +2592,78 @@
 .kpiGrid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
+  align-items: stretch;
+  gap: 12px;
 }
 
 .kpiCard {
-  padding: 13px 16px;
-  min-height: 82px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--bw-surface-panel) 70%, transparent);
+  box-shadow: none;
 }
 
 .kpiCardBody {
-  display: flex;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: auto minmax(0, auto);
+  justify-content: center;
+  align-items: center;
   gap: 12px;
   height: 100%;
 }
 
 .kpiIconBadge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
   flex-shrink: 0;
-  margin-top: 2px;
+  border: 1px solid var(--bw-border-subtle);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--bw-surface-card) 76%, transparent);
 }
 
 .kpiCopy {
   min-width: 0;
-  display: grid;
-  align-content: start;
-  gap: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 
 .kpiIcon {
-  width: 26px;
-  height: 26px;
+  width: 29px;
+  height: 29px;
   color: var(--color-primary);
-  stroke-width: 2;
+  stroke-width: 1.8;
 }
 
 .kpiLabel {
-  margin: 0;
-  font-size: 10px;
+  margin: 6px 0 0;
+  font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 0.09em;
-  color: var(--bw-text-muted);
-  font-weight: 700;
+  letter-spacing: 0.045em;
+  color: var(--bw-text-body);
+  font-weight: 800;
   line-height: 1.1;
 }
 
 .kpiValue {
-  margin: 4px 0 0;
-  font-size: clamp(20px, 1.7vw, 24px);
-  line-height: 1;
+  margin: 0;
+  font-size: clamp(28px, 2.1vw, 34px);
+  line-height: 0.95;
   color: var(--bw-text-title);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.035em;
   font-weight: 800;
 }
 
 .kpiDetail {
-  margin: 0;
+  width: 100%;
+  margin: 5px 0 0;
+  padding-top: 6px;
+  border-top: 1px solid color-mix(in srgb, var(--bw-border-subtle) 72%, transparent);
   font-size: 11px;
-  line-height: 1.3;
+  line-height: 1.25;
   color: var(--bw-text-muted);
   white-space: nowrap;
 }
@@ -2643,6 +2676,14 @@
 
 .dashboardPanel {
   padding: 14px;
+}
+
+.summaryDetailPanel {
+  padding: 14px 16px;
+}
+
+.summaryDetailPanel .dashboardDataRows {
+  gap: 10px;
 }
 
 .continuePanel {
@@ -2741,15 +2782,17 @@
 
 .financialHeroBlock {
   min-width: 0;
-  padding: 8px 0;
-  margin: 8px 0;
-  text-align: center;
+  padding: 10px 0;
+  margin: 10px 0 0;
+  text-align: left;
+  border-top: 1px solid color-mix(in srgb, var(--bw-border-subtle) 75%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--bw-border-subtle) 75%, transparent);
 }
 
 .financialHeroValueContainer {
   display: flex;
   align-items: baseline;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 8px;
 }
 
@@ -2763,10 +2806,8 @@
 }
 
 .financialSplitSection {
-  margin: 16px 0 8px;
+  margin: 10px 0 8px;
   display: block;
-  padding-top: 12px;
-  border-top: 1px solid color-mix(in srgb, var(--bw-border-subtle) 50%, transparent);
 }
 
 .financialHeroValue {
@@ -2876,7 +2917,7 @@
 }
 
 .sideCardSection {
-  padding: 14px 16px;
+  padding: 10px 12px;
 }
 
 .sideCardSection + .sideCardSection {
@@ -2884,7 +2925,7 @@
 }
 
 .sideCardSectionLabel {
-  margin: 0 0 10px;
+  margin: 0 0 8px;
   font-size: 11px;
   font-weight: 800;
   text-transform: uppercase;
@@ -2906,21 +2947,21 @@
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: start;
-  gap: 12px;
+  gap: 10px;
 }
 
 .continuePanelBody {
-  margin-top: 10px;
-  padding: 14px 14px 16px;
-  border-radius: 18px;
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 14px;
   border: 1px solid color-mix(in srgb, var(--color-primary) 36%, transparent);
   background: linear-gradient(180deg, color-mix(in srgb, var(--color-primary) 8%, transparent), color-mix(in srgb, var(--bw-surface-panel) 92%, transparent));
 }
 
 .continuePanelIconWrap {
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2937,7 +2978,7 @@
 
 .sideCardMeta,
 .sideCardHint {
-  margin: 6px 0 0;
+  margin: 4px 0 0;
   color: var(--bw-text-muted);
   font-size: 12px;
 }
@@ -2949,13 +2990,14 @@
 }
 
 .sideCardPrimaryButton {
-  margin-top: 14px;
+  margin-top: 10px;
   width: 100%;
+  min-height: 38px;
 }
 
 .sideActionList {
   display: grid;
-  gap: 6px;
+  gap: 5px;
 }
 
 .sideActionButton {
@@ -2963,8 +3005,8 @@
   background: color-mix(in srgb, var(--bw-surface-panel) 90%, transparent);
   color: var(--bw-text-title);
   border-radius: 12px;
-  min-height: 40px;
-  padding: 8px 10px;
+  min-height: 38px;
+  padding: 6px 10px;
   font-size: 13px;
   font-weight: 600;
   display: flex;
@@ -3005,6 +3047,41 @@
   color: var(--bw-text-danger);
   border-color: var(--color-error-border);
   background: var(--color-error-bg-soft);
+}
+
+.dangerZoneSection {
+  background: color-mix(in srgb, var(--color-error-bg-soft) 34%, transparent);
+}
+
+.dangerZoneSection .sideCardSectionLabel {
+  color: var(--bw-text-danger);
+}
+
+.scoreProgressBar {
+  display: block;
+  width: 100%;
+  height: 5px;
+  margin-top: 8px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 999px;
+  background: var(--bw-border-subtle);
+  accent-color: var(--color-primary);
+}
+
+.scoreProgressBar::-webkit-progress-bar {
+  border-radius: 999px;
+  background: var(--bw-border-subtle);
+}
+
+.scoreProgressBar::-webkit-progress-value {
+  border-radius: 999px;
+  background: var(--color-primary);
+}
+
+.scoreProgressBar::-moz-progress-bar {
+  border-radius: 999px;
+  background: var(--color-primary);
 }
 
 @media (max-width: 1180px) {
@@ -3473,15 +3550,15 @@
 .deleteConfirmText {
   font-size: 16px;
   margin: 0;
-  padding: 24px 28px;
+  padding: var(--space-card-y) var(--space-card-x);
   color: var(--color-text-primary);
 }
 
 .deleteConfirmActions {
   display: flex;
-  gap: 16px;
+  gap: var(--space-stack);
   justify-content: flex-end;
-  padding: 0 28px 24px;
+  padding: 0 var(--space-card-x) var(--space-card-y);
 }
 
 /* Loading states */
@@ -4294,7 +4371,7 @@
 .modalHeader {
   background: color-mix(in srgb, var(--bw-surface-card) 92%, transparent) !important;
   border-bottom: 1px solid color-mix(in srgb, var(--bw-border-subtle) 82%, transparent) !important;
-  padding: 24px 60px 18px 28px;
+  padding: var(--space-card-y) 52px var(--space-card-compact-y) var(--space-card-x);
 }
 
 .modalTitle {

@@ -240,3 +240,8 @@ export interface PerformanceMetrics {
 export interface ErrorDetails {
   [key: string]: unknown;
 }
+export interface ChangelogEntry {
+  date: string;
+  version: string;
+  changes: string[];
+}

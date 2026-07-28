@@ -2,11 +2,13 @@
 
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ClipboardList, History, Info, Plus } from "lucide-react";
 
 import { usePageHeader } from "../lib/header-context";
 import { apiClient } from "../lib/api";
 import { useAuth } from "../lib/auth-context";
 import { formatShortMonthDayYear } from "../lib/formatters";
+import type { ChangelogEntry } from "../lib/types";
 import { DataTableToolbar } from "../components/primitives";
 import buttonStyles from "../styles/buttons.module.css";
 import styles from "./admin.module.css";
@@ -136,6 +138,24 @@ type DeletePreview = {
 
 type AdminTab = "overview" | "users" | "tournaments" | "database" | "audit" | "changelog";
 
+type ChangelogFormState = {
+  version: string;
+  date: string;
+  changes: string;
+};
+
+type AdminChangelogEntry = ChangelogEntry & {
+  id: number;
+  created_at: string | null;
+  updated_at: string | null;
+};
+
+const EMPTY_CHANGELOG_FORM: ChangelogFormState = {
+  version: "",
+  date: "",
+  changes: "",
+};
+
 const TAB_LABELS: Record<AdminTab, string> = {
   overview: "Overview",
   users: "Users",
@@ -208,13 +228,14 @@ export default function AdminPage() {
   const [auditTargetType, setAuditTargetType] = useState("");
   const [auditPage, setAuditPage] = useState(1);
 
-  const [changelogEntries, setChangelogEntries] = useState<Array<any>>([]);
+  const [changelogEntries, setChangelogEntries] = useState<AdminChangelogEntry[]>([]);
   const [changelogLoading, setChangelogLoading] = useState(false);
   const [changelogLoaded, setChangelogLoaded] = useState(false);
   const [changelogError, setChangelogError] = useState<string | null>(null);
-  const [changelogForm, setChangelogForm] = useState({ version: "", date: "", changes: "" });
+  const [changelogForm, setChangelogForm] = useState<ChangelogFormState>(EMPTY_CHANGELOG_FORM);
   const [changelogFormError, setChangelogFormError] = useState<string | null>(null);
   const [changelogFormSaving, setChangelogFormSaving] = useState(false);
+  const [showChangelogHistory, setShowChangelogHistory] = useState(false);
   const [editingChangelogVersion, setEditingChangelogVersion] = useState<string | null>(null);
   const [deletingChangelogVersion, setDeletingChangelogVersion] = useState<string | null>(null);
 
@@ -376,7 +397,7 @@ export default function AdminPage() {
     setChangelogLoading(true);
     setChangelogError(null);
     try {
-      const data = await apiClient.get<{ entries: Array<any> }>("/api/v1/admin/changelog", false);
+      const data = await apiClient.get<{ entries: AdminChangelogEntry[] }>("/api/v1/admin/changelog", false);
       setChangelogEntries(data.entries);
       setChangelogLoaded(true);
     } catch (err) {
@@ -487,7 +508,7 @@ export default function AdminPage() {
           changes,
         });
       }
-      setChangelogForm({ version: "", date: "", changes: "" });
+      setChangelogForm(EMPTY_CHANGELOG_FORM);
       setEditingChangelogVersion(null);
       await refreshAfterMutation({ changelog: true });
     } catch (err) {
@@ -512,7 +533,7 @@ export default function AdminPage() {
     }
   }, [refreshAfterMutation]);
 
-  const handleChangelogEdit = useCallback((entry: any) => {
+  const handleChangelogEdit = useCallback((entry: AdminChangelogEntry) => {
     setEditingChangelogVersion(entry.version);
     setChangelogForm({
       version: entry.version,
@@ -523,7 +544,7 @@ export default function AdminPage() {
 
   const handleChangelogCancel = useCallback(() => {
     setEditingChangelogVersion(null);
-    setChangelogForm({ version: "", date: "", changes: "" });
+    setChangelogForm(EMPTY_CHANGELOG_FORM);
     setChangelogFormError(null);
   }, []);
 
@@ -1309,18 +1330,31 @@ export default function AdminPage() {
       )}
 
       {activeTab === "changelog" && (
-        <section className={styles.panel}>
-          <div className={styles.panelHeader}>
-            <h3 className={styles.panelTitle}>{editingChangelogVersion ? "Edit Changelog Entry" : "Manage Changelog"}</h3>
-            {!editingChangelogVersion && <span className={styles.panelSubtle}>{changelogEntries.length} versions</span>}
+        <section className={`${styles.panel} ${styles.changelogPanel}`}>
+          <div className={styles.changelogPanelHeader}>
+            <span className={styles.changelogHeaderIcon}><ClipboardList aria-hidden="true" /></span>
+            <div className={styles.changelogHeaderCopy}>
+              <h3 className={styles.panelTitle}>{editingChangelogVersion ? "Edit Changelog Entry" : "Manage Changelog"}</h3>
+              <p>Create or update changelog entries to keep users informed about new features and updates.</p>
+            </div>
+            <button
+              type="button"
+              className={styles.historyButton}
+              onClick={() => setShowChangelogHistory((current) => !current)}
+              aria-expanded={showChangelogHistory}
+            >
+              <History aria-hidden="true" />
+              {showChangelogHistory ? "Hide History" : "View History"}
+            </button>
           </div>
 
           {changelogError && <div className={styles.modalError}>{changelogError}</div>}
 
-          <div className={styles.formSection}>
-            <div className={styles.formRow}>
-              <label className={styles.formLabel}>Version</label>
+          <div className={styles.changelogFormSection}>
+            <div className={styles.changelogFormRow}>
+              <label className={styles.formLabel} htmlFor="changelog-version">Version <span aria-hidden="true">*</span></label>
               <input
+                id="changelog-version"
                 className={styles.formInput}
                 type="text"
                 value={changelogForm.version}
@@ -1328,35 +1362,41 @@ export default function AdminPage() {
                 disabled={!!editingChangelogVersion}
                 placeholder="1.0"
               />
+              <p className={styles.formHelper}>The version number for this changelog entry.</p>
             </div>
-            <div className={styles.formRow}>
-              <label className={styles.formLabel}>Date (YYYY-MM-DD)</label>
+            <div className={styles.changelogFormRow}>
+              <label className={styles.formLabel} htmlFor="changelog-date">Date (YYYY-MM-DD) <span aria-hidden="true">*</span></label>
               <input
+                id="changelog-date"
                 className={styles.formInput}
-                type="text"
+                type="date"
                 value={changelogForm.date}
                 onChange={(e) => setChangelogForm({ ...changelogForm, date: e.target.value })}
                 placeholder="2026-07-23"
               />
+              <p className={styles.formHelper}>The date this version is being released.</p>
             </div>
-            <div className={styles.formRow}>
-              <label className={styles.formLabel}>Changes (one per line)</label>
+            <div className={styles.changelogFormRow}>
+              <label className={styles.formLabel} htmlFor="changelog-changes">Changes (one per line) <span aria-hidden="true">*</span></label>
               <textarea
+                id="changelog-changes"
                 className={styles.formTextarea}
                 value={changelogForm.changes}
                 onChange={(e) => setChangelogForm({ ...changelogForm, changes: e.target.value })}
                 placeholder="Feature A&#10;Bug fix B&#10;Improvement C"
                 rows={5}
               />
+              <p className={styles.formHelper}>List each change on a new line. These will be displayed to users.</p>
             </div>
             {changelogFormError && <div className={styles.modalError}>{changelogFormError}</div>}
-            <div className={styles.formRow}>
+            <div className={styles.changelogFormActions}>
               <button
                 type="button"
                 className={`${buttonStyles.button} ${buttonStyles.primary}`}
                 disabled={changelogFormSaving}
                 onClick={handleChangelogCreateOrUpdate}
               >
+                {!changelogFormSaving && <Plus aria-hidden="true" />}
                 {changelogFormSaving ? "Saving..." : editingChangelogVersion ? "Update Entry" : "Create Entry"}
               </button>
               {editingChangelogVersion && (
@@ -1371,7 +1411,9 @@ export default function AdminPage() {
             </div>
           </div>
 
-          <div className={styles.changelogList}>
+          {showChangelogHistory && <div className={styles.changelogHistory}>
+            <div className={styles.changelogHistoryTitle}>Changelog History <span>{changelogEntries.length} versions</span></div>
+            <div className={styles.changelogList}>
             {changelogLoading ? (
               <div className={styles.placeholder}>Loading changelog...</div>
             ) : changelogEntries.length === 0 ? (
@@ -1412,7 +1454,14 @@ export default function AdminPage() {
                 ))}
               </>
             )}
+            </div>
           </div>
+          }
+
+          <footer className={styles.changelogTip}>
+            <Info aria-hidden="true" />
+            <p><strong>Tip:</strong> Keep changelogs clear and concise. Focus on important updates that impact your users.</p>
+          </footer>
         </section>
       )}
 

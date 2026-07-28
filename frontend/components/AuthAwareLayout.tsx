@@ -174,7 +174,7 @@ function ClientLayout({ children }: { children: ReactNode }) {
       >
         {/* Development notice banner - render at top of main content */}
         {showAuthenticatedShell && (
-          <div style={{ maxWidth: '1600px', margin: '20px auto 0 auto', boxSizing: 'border-box', width: '100%' }}>
+          <div className={styles.devNoticeWrap}>
             <DevNoticeBanner />
           </div>
         )}

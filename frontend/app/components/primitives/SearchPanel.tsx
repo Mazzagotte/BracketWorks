@@ -4,13 +4,14 @@ import styles from './primitives.module.css';
 import cardStyles from '../../styles/cards.module.css';
 
 interface SearchPanelProps {
-  title?: string;
+  title?: React.ReactNode;
   subtitle?: string;
   left?: React.ReactNode;
   right?: React.ReactNode;
   className?: string;
   toolbarClassName?: string;
   useToolbar?: boolean;
+  accented?: boolean;
 }
 
 export function SearchPanel({
@@ -21,10 +22,14 @@ export function SearchPanel({
   className,
   toolbarClassName,
   useToolbar = true,
+  accented = true,
 }: SearchPanelProps) {
+  const cardClass = accented
+    ? `${cardStyles.card} ${cardStyles.accentCard}`
+    : cardStyles.card;
   const rootClass = className
-    ? `${cardStyles.card} ${cardStyles.accentCard} ${styles.searchPanel} ${className}`
-    : `${cardStyles.card} ${cardStyles.accentCard} ${styles.searchPanel}`;
+    ? `${cardClass} ${styles.searchPanel} ${className}`
+    : `${cardClass} ${styles.searchPanel}`;
   const composedToolbarClass = toolbarClassName
     ? `${styles.searchPanelToolbar} ${toolbarClassName}`
     : styles.searchPanelToolbar;

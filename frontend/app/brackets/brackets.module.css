@@ -355,6 +355,482 @@
   }
 }
 
+/* Entries, Scores, and Dashboard alignment */
+.pageContainer {
+  width: 100%;
+  max-width: min(1600px, 100%);
+  padding: 8px;
+}
+
+.bracketsHeroCard,
+.bracketsQuickActionsCard,
+.bracketStatsCard,
+.controlPanel {
+  border: 1px solid var(--bw-border-card);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--bw-surface-card) 94%, transparent);
+  box-shadow: var(--bw-shadow-card);
+}
+
+.bracketsHeroCard {
+  padding: 14px 16px;
+  border-left: 4px solid var(--color-primary);
+}
+
+.bracketsHeroTitle {
+  font-size: clamp(24px, 2.4vw, 34px);
+}
+
+.bracketsHeroSubtitle {
+  margin-top: 4px;
+  font-size: 12px;
+}
+
+.bracketsHeroActions :where(button, a) {
+  min-height: 38px;
+  gap: 8px;
+  border-radius: 8px;
+}
+
+.bracketsHeroActions svg {
+  width: 16px;
+  height: 16px;
+}
+
+.bracketsTopRow {
+  grid-template-columns: minmax(0, 1.2fr) minmax(420px, 1fr);
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.bracketsQuickActionsTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 16px 4px;
+  border: 0;
+  background: transparent;
+  color: var(--bw-text-title);
+  font-size: var(--bw-type-card-title);
+}
+
+.bracketsQuickActionsTitle svg {
+  width: 18px;
+  height: 18px;
+  color: var(--bw-text-accent);
+}
+
+.bracketsQuickActionsCard > :last-child {
+  padding: 6px 16px 14px;
+}
+
+.bracketsQuickActionsRow,
+.bracketsQuickActionsGroupLeft,
+.bracketsQuickActionsGroupRight {
+  gap: 10px;
+}
+
+.bracketsQuickActionsGroupLeft {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.bracketsQuickActionsRow :where(button, a) {
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 12px;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.bracketsQuickActionsRow svg {
+  width: 16px;
+  height: 16px;
+}
+
+.bracketsQuickActionsGroupLeft > :first-child {
+  box-shadow: 0 4px 10px color-mix(in srgb, var(--color-primary) 14%, transparent) !important;
+}
+
+.bracketsQuickActionsGroupRight {
+  margin-left: 0;
+}
+
+.quickActionDangerBtn {
+  color: var(--bw-text-danger);
+  border: 1px solid var(--color-error-border);
+  background: var(--color-error-bg-soft);
+}
+
+.bracketStatsCard {
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+}
+
+.bracketStatsGrid {
+  width: 100%;
+  grid-template-columns: 1.25fr repeat(3, minmax(0, 1fr));
+  gap: 0;
+}
+
+.bracketStatsGrid > div {
+  min-height: 52px;
+  padding: 4px 16px;
+  justify-content: center;
+  gap: 5px;
+  border: 0;
+  border-right: 1px solid var(--bw-border-subtle);
+  border-radius: 0;
+  background: transparent;
+}
+
+.bracketStatsGrid > div:last-child {
+  border-right: 0;
+}
+
+.bracketStatsGrid span {
+  font-size: 11px;
+  text-transform: none;
+}
+
+.bracketStatsGrid strong {
+  font-size: 16px;
+}
+
+.bracketStatusGood {
+  width: fit-content;
+  padding: 4px 8px;
+  border: 1px solid var(--color-success-border);
+  border-radius: 7px;
+  color: var(--bw-text-success);
+  background: var(--color-success-soft);
+  font-size: 11px !important;
+}
+
+.bracketSearchWrap {
+  width: 100%;
+}
+
+.controlPanel {
+  width: 100%;
+  margin-bottom: 14px;
+  display: grid;
+  grid-template-columns: minmax(0, auto) minmax(420px, 1fr);
+  align-items: center;
+  overflow: hidden;
+}
+
+.bracketNav {
+  justify-content: flex-end;
+  padding: 10px 16px;
+}
+
+.navMeta {
+  flex-wrap: nowrap;
+}
+
+.bracketSelectControl {
+  min-width: 240px;
+  min-height: 38px;
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
+.navBtns {
+  gap: 10px;
+}
+
+.navBtn {
+  min-height: 38px;
+  padding: 8px 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 8px;
+}
+
+.navBtn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.navBtns .navBtn:last-child:not(:disabled) {
+  color: var(--color-white);
+  border-color: var(--bw-border-accent);
+  background: var(--color-primary);
+}
+
+@media (max-width: 1100px) {
+  .bracketsTopRow {
+    grid-template-columns: 1fr;
+  }
+
+  .controlPanel {
+    grid-template-columns: 1fr;
+  }
+
+  .bracketNav {
+    border-top: 1px solid var(--bw-border-subtle);
+  }
+}
+
+@media (max-width: 700px) {
+  .pageContainer {
+    padding: 8px;
+  }
+
+  .bracketsHeroCard {
+    padding: 14px 16px;
+  }
+
+  .bracketsQuickActionsGroupLeft {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .bracketsQuickActionsRow {
+    display: flex;
+  }
+
+  .bracketsQuickActionsGroupRight {
+    width: 100%;
+  }
+
+  .bracketStatsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .bracketStatsGrid > div:nth-child(2) {
+    border-right: 0;
+  }
+
+  .bracketStatsGrid > div {
+    padding-block: 8px;
+  }
+
+  .bracketNav {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .navMeta,
+  .navBtns {
+    width: 100%;
+  }
+
+  .bracketSelectControl {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .navBtns .navBtn {
+    flex: 1;
+  }
+}
+
+/* Reference composition pass */
+.bracketsHeroCard {
+  border-top: 0;
+  border-right: 0;
+  border-bottom: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.bracketsQuickActionsCard {
+  border-left: 1px solid var(--bw-border-card);
+}
+
+.bracketsQuickActionsTitle {
+  color: var(--bw-text-title);
+}
+
+.bracketsQuickActionsRow {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+.bracketsQuickActionsGroupLeft {
+  width: 100%;
+}
+
+.bracketsQuickActionsGroupLeft > :where(button, a) {
+  box-shadow: 0 4px 10px color-mix(in srgb, var(--color-primary) 14%, transparent) !important;
+}
+
+.bracketsQuickActionsGroupLeft > :where(button, a):hover:not(:disabled) {
+  box-shadow: 0 6px 14px color-mix(in srgb, var(--color-primary) 18%, transparent) !important;
+}
+
+.bracketsQuickActionsGroupRight {
+  width: 100%;
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+}
+
+.quickActionAdminLabel {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--bw-text-body);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.quickActionAdminLabel::after {
+  content: '';
+  height: 1px;
+  flex: 1;
+  background: var(--bw-border-subtle);
+}
+
+.bracketsQuickActionsGroupRight .quickActionDangerBtn {
+  width: auto;
+  min-height: 36px;
+  padding: 7px 10px;
+}
+
+.bracketWorkspaceCard {
+  position: relative;
+  width: 100%;
+  overflow: visible;
+  border: 1px solid var(--bw-border-card);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--bw-surface-card) 94%, transparent);
+  box-shadow: var(--bw-shadow-card);
+}
+
+.bracketWorkspaceCard .controlPanel {
+  margin: 0;
+  border: 0;
+  border-bottom: 1px solid var(--bw-border-subtle);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.bracketSearchRow {
+  grid-column: 1 / -1;
+  padding: 0.62rem 0.78rem;
+  border-top: 1px solid var(--bw-border-subtle);
+}
+
+.bracketWorkspaceStage {
+  padding: 14px 16px 0;
+}
+
+.bracketWorkspaceStage > :first-child {
+  width: 100%;
+}
+
+.bracketWorkspaceFooter {
+  min-height: 54px;
+  padding: 10px 16px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 14px;
+  color: var(--bw-text-muted);
+  font-size: 11px;
+}
+
+.bracketWorkspaceFooter > :nth-child(2) {
+  text-align: center;
+  justify-self: end;
+}
+
+.viewOptions {
+  position: relative;
+  justify-self: end;
+}
+
+.viewOptions summary {
+  min-height: 38px;
+  padding: 8px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--bw-border-subtle);
+  border-radius: 8px;
+  color: var(--bw-text-body);
+  background: color-mix(in srgb, var(--bw-surface-panel) 82%, transparent);
+  cursor: pointer;
+  list-style: none;
+  white-space: nowrap;
+}
+
+.viewOptions summary::-webkit-details-marker {
+  display: none;
+}
+
+.viewOptions summary svg {
+  width: 15px;
+  height: 15px;
+}
+
+.viewOptions[open] summary {
+  color: var(--bw-text-title);
+  border-color: var(--bw-border-accent);
+}
+
+.viewOptionsPanel {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  z-index: 20;
+  width: min(520px, calc(100vw - 48px));
+}
+
+.viewOptionsPanel > div {
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .bracketWorkspaceStage {
+    padding: 10px 10px 0;
+  }
+
+  .bracketWorkspaceFooter {
+    grid-template-columns: 1fr auto;
+  }
+
+  .bracketWorkspaceFooter > :nth-child(2) {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .bracketWorkspaceFooter {
+    grid-template-columns: 1fr;
+  }
+
+  .viewOptions {
+    width: 100%;
+    justify-self: stretch;
+  }
+
+  .viewOptions summary {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .viewOptionsPanel {
+    right: auto;
+    left: 0;
+    width: 100%;
+  }
+}
+
 @media (max-width: 360px) {
   .navBtn {
     min-height: 36px;
@@ -541,11 +1017,49 @@
 
 .navMeta {
   align-items: center;
+  gap: 0.62rem;
+}
+
+.bracketPicker {
+  display: flex;
+  align-items: center;
   gap: 0.42rem;
+  min-width: 0;
+}
+
+.bracketProgress {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.25rem;
+  min-width: 94px;
+}
+
+.bracketProgressMeter {
+  width: 100%;
+  height: 3px;
+  appearance: none;
+  overflow: hidden;
+  border: 0;
+  border-radius: 999px;
+  background: var(--bw-border-subtle);
+}
+
+.bracketProgressMeter::-webkit-progress-bar {
+  background: var(--bw-border-subtle);
+}
+
+.bracketProgressMeter::-webkit-progress-value {
+  background: var(--color-primary);
+}
+
+.bracketProgressMeter::-moz-progress-bar {
+  background: var(--color-primary);
 }
 
 .navBtn {
-  min-height: 32px;
+  min-width: 112px;
+  min-height: 38px;
   padding: 0.36rem 0.68rem;
   border: 1px solid var(--bw-border-subtle);
   border-radius: 10px;
@@ -699,12 +1213,15 @@
 
 .bracketsTopRow {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+  grid-template-columns: minmax(0, 1fr) minmax(500px, 0.72fr);
+  align-items: start;
   gap: 0.74rem;
   margin-bottom: 0.74rem;
 }
 
-.bracketsTopRow :where(.quickActionsCard) {
+.bracketsTopRow :where(.quickActionsCard),
+.bracketStatsCard {
+  align-self: start;
   margin-bottom: 0;
 }
 
@@ -714,10 +1231,17 @@
 }
 
 .bracketsQuickActionsGroupLeft {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: center;
   gap: 0.42rem;
-  flex-wrap: wrap;
+  width: 100%;
+}
+
+.bracketsQuickActionsGroupLeft > :where(button, a) {
+  width: 100%;
+  justify-content: center;
+  white-space: nowrap;
 }
 
 .bracketsQuickActionsRow :where(button, a) {
@@ -733,41 +1257,76 @@
 }
 
 .bracketStatsCard {
-  padding: 0.56rem 0.62rem;
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.bracketStatsTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.48rem;
+  margin: 0;
+  padding: 0.64rem 0.78rem;
+  border-bottom: 1px solid var(--bw-border-subtle);
+  color: var(--bw-text-title);
+  font-size: 0.82rem;
+  line-height: 1.1;
+}
+
+.bracketStatsTitle svg {
+  width: 16px;
+  height: 16px;
+  color: var(--bw-text-accent);
 }
 
 .bracketStatsGrid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.38rem;
+  grid-template-columns: minmax(130px, 1.45fr) repeat(3, minmax(82px, 1fr));
+  align-items: start;
+  padding: 0.64rem 0.78rem;
 }
 
 .bracketStatsGrid > div {
-  padding: 0.36rem 0.42rem;
-  border-radius: 10px;
-  background: var(--bw-surface-panel);
-  border: 1px solid color-mix(in srgb, var(--bw-border-subtle) 70%, transparent);
+  min-width: 0;
+  min-height: 0;
+  padding: 0.1rem 0.72rem;
+  border-left: 1px solid var(--bw-border-subtle);
   display: flex;
   flex-direction: column;
-  gap: 0.14rem;
+  justify-content: center;
+  gap: 0.24rem;
+}
+
+.bracketStatsGrid > div:first-child {
+  padding-left: 0;
+  border-left: 0;
 }
 
 .bracketStatsGrid span {
   color: var(--bw-text-muted);
-  font-size: 0.62rem;
-  font-weight: 750;
-  letter-spacing: 0;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
 .bracketStatsGrid strong {
   color: var(--bw-text-title);
-  font-size: 0.78rem;
-  line-height: 1.2;
+  font-size: 0.9rem;
+  line-height: 1.15;
 }
 
 .bracketStatusGood {
-  color: var(--bw-text-accent);
+  width: fit-content;
+  padding: 0.22rem 0.48rem;
+  border: 1px solid color-mix(in srgb, var(--color-success) 35%, transparent);
+  border-radius: 8px;
+  color: var(--color-success);
+  background: color-mix(in srgb, var(--color-success) 10%, transparent);
+  font-size: 0.7rem !important;
 }
 
 .bracketSelectLabel {
@@ -780,7 +1339,7 @@
 
 .bracketSelectControl {
   min-width: 206px;
-  min-height: 31px;
+  min-height: 38px;
   border-radius: 9px;
   border: 1px solid var(--bw-border-subtle);
   padding: 0.26rem 0.56rem;
@@ -832,15 +1391,16 @@
   }
 
   .bracketStatsCard {
-    padding: 0.52rem 0.54rem;
+    padding: 0;
   }
 
   .bracketStatsGrid {
-    gap: 0.34rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0;
   }
 
   .bracketStatsGrid > div {
-    padding: 0.34rem 0.38rem;
+    padding: 0.42rem 0.6rem;
   }
 
   .bracketSelectControl {
@@ -853,6 +1413,7 @@
   }
 
   .bracketsQuickActionsGroupLeft {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.34rem;
   }
 
@@ -978,7 +1539,21 @@
   }
 }
 
+@media (max-width: 700px) {
+  .bracketPicker {
+    width: 100%;
+  }
+
+  .bracketProgress {
+    flex: 1;
+  }
+}
+
 @media (max-width: 560px) {
+  .bracketsQuickActionsGroupLeft {
+    grid-template-columns: 1fr;
+  }
+
   .mobileBracketSectionList {
     grid-template-columns: 1fr;
   }

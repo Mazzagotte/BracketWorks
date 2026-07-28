@@ -15,7 +15,7 @@
 .mainDesktop {
   margin-left: 0;
   width: 100%;
-  padding: 0 28px 28px 28px;
+  padding: 0 var(--space-page-x) var(--space-page-y);
 }
 
 .mainPublic {
@@ -138,6 +138,14 @@
   box-sizing: border-box;
 }
 
+.devNoticeWrap {
+  width: 100%;
+  max-width: 1600px;
+  margin: 20px auto 0;
+  padding-inline: 1rem;
+  box-sizing: border-box;
+}
+
 /* Proportional zoom for smaller desktop/laptop screens */
 @media (max-width: 1400px) and (min-width: 769px) {
   .contentCard { zoom: 0.93; }
@@ -151,6 +159,12 @@
 
 .contentCardMobile {
   padding: 4px;
+}
+
+@media (max-width: 640px) {
+  .devNoticeWrap {
+    padding-inline: 0.42rem;
+  }
 }
 
 .contentCardNoAuth {

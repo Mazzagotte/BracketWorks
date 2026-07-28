@@ -336,6 +336,7 @@ main button:not([class*='iconButton']):not([class*='stepperBtn']):not([class*='m
 }
 
 .page-main :where(th, .entries-header-cell, .scores-header-cell) {
+  padding: var(--space-table-y) var(--space-table-x);
   color: var(--bw-text-body);
   font-size: var(--bw-type-table-heading);
   font-weight: 800;
@@ -344,6 +345,7 @@ main button:not([class*='iconButton']):not([class*='stepperBtn']):not([class*='m
 }
 
 .page-main :where(td, .entries-cell, .scores-cell) {
+  padding: var(--space-table-y) var(--space-table-x);
   color: color-mix(in srgb, var(--bw-text-title) 92%, transparent);
   font-size: var(--bw-type-table);
   line-height: 1.2;

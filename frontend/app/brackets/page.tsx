@@ -1,7 +1,7 @@
 'use client'
 
-import Link from 'next/link'
-import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense, type CSSProperties } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from 'react'
+import { BookOpen, ChevronLeft, ChevronRight, GitFork, RefreshCw, Trash2, Zap } from 'lucide-react'
 import { useAuth } from '../lib/auth-context'
 import { usePageHeader } from '../lib/header-context'
 import { ErrorBoundary } from '../components/ErrorBoundary'
@@ -59,7 +59,6 @@ export default function BracketsPage() {
   const [searchLastName, setSearchLastName] = useState('')
   const [isMobile, setIsMobile] = useState(false)
   const [loadedBrackets, setLoadedBrackets] = useState<BracketPreview | null>(null)
-  const [desktopBracketCardWidth, setDesktopBracketCardWidth] = useState<number | null>(null)
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined
@@ -387,45 +386,6 @@ export default function BracketsPage() {
 
   const handleCloseExplainModal = useCallback(() => setIsExplainModalOpen(false), [])
 
-  const handlePrintBracket = useCallback(() => {
-    if (typeof window !== 'undefined') {
-      window.print()
-    }
-  }, [])
-
-  const handleExportBracket = useCallback(() => {
-    addToast({
-      type: 'info',
-      message: 'Bracket export workflow is being finalized. Use browser print for now.',
-      duration: 3500,
-    })
-  }, [addToast])
-
-  const handlePublishBracket = useCallback(() => {
-    addToast({
-      type: 'info',
-      message: 'Bracket publishing is coming next. QR and public links will be enabled here.',
-      duration: 3500,
-    })
-  }, [addToast])
-
-  const handleBracketCardWidthChange = useCallback((width: number | null) => {
-    setDesktopBracketCardWidth(previousWidth => {
-      if (width === null && previousWidth === null) return previousWidth
-      if (width !== null && previousWidth !== null && Math.abs(previousWidth - width) < 1) return previousWidth
-      return width
-    })
-  }, [])
-
-  const desktopBracketDrivenCardStyle = useMemo<CSSProperties | undefined>(() => {
-    if (isMobile || !desktopBracketCardWidth) return undefined
-    return {
-      width: '100%',
-      maxWidth: `${desktopBracketCardWidth}px`,
-      marginInline: 'auto',
-    }
-  }, [desktopBracketCardWidth, isMobile])
-
   const { isUserAuthenticated, isAuthInitialized, currentUser } = useAuth()
   const isDev = process.env.NODE_ENV === 'development' || !!currentUser?.isAdmin
   const totalBracketCount = useMemo(() => bracketGroups.reduce((sum, group) => sum + group.brackets.length, 0), [bracketGroups])
@@ -440,37 +400,30 @@ export default function BracketsPage() {
             onClick={() => setIsExplainModalOpen(true)}
             className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
           >
+            <BookOpen aria-hidden="true" />
             Bracket Guide
           </button>
           <button
-            onClick={handlePrintBracket}
+            type="button"
+            onClick={handleGenerateBrackets}
             className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
           >
-            Print Bracket
-          </button>
-          <button
-            onClick={handleExportBracket}
-            className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
-          >
-            Export Bracket
-          </button>
-          <button
-            onClick={handlePublishBracket}
-            className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
-          >
-            Publish Bracket
+            <RefreshCw aria-hidden="true" />
+            {totalBracketCount > 0 ? 'Regenerate Brackets' : 'Generate Brackets'}
           </button>
         </div>
         {isDev && (
           <div className={`${cardStyles.quickActionsGroupRight} ${styles.bracketsQuickActionsGroupRight}`}>
+            <div className={styles.quickActionAdminLabel}>Admin Tools</div>
             <button onClick={handleDeleteAllBrackets} className={`${cardStyles.quickActionControl} ${styles.quickActionDangerBtn}`}>
+              <Trash2 aria-hidden="true" />
               Delete All Brackets
             </button>
           </div>
         )}
       </div>
     )
-  }, [selectedTournament, handleDeleteAllBrackets, handleExportBracket, handlePrintBracket, handlePublishBracket, isDev, setIsExplainModalOpen])
+  }, [selectedTournament, handleDeleteAllBrackets, handleGenerateBrackets, isDev, setIsExplainModalOpen, totalBracketCount])
 
   // Set page header with actions
   usePageHeader({
@@ -541,41 +494,25 @@ export default function BracketsPage() {
 
       {/* Bracket content */}
       <div className={`${shellStyles.page} ${styles.pageContainer}`}>
-        <section className={`${cardStyles.card} ${cardStyles.accentCard} ${styles.bracketsHeroCard}`}>
-          <div className={styles.bracketsHeroTop}>
-            <div>
-              <h1 className={styles.bracketsHeroTitle}>Brackets</h1>
-              <p className={styles.bracketsHeroSubtitle}>View and manage tournament brackets.</p>
-            </div>
-            {selectedTournament && (
-              <div className={styles.bracketsHeroActions}>
-                <Link href="/dashboard" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary}`}>
-                  Bracket Settings
-                </Link>
-                <button
-                  type="button"
-                  onClick={handleGenerateBrackets}
-                  className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.primary}`}
-                >
-                  Regenerate Brackets
-                </button>
-              </div>
-            )}
-          </div>
-        </section>
-
         {selectedTournament && (
           <section className={styles.bracketsTopRow}>
             {bracketsQuickActions && (
-              <div className={`${cardStyles.card} ${cardStyles.accentCard} ${cardStyles.quickActionsCard}`} style={desktopBracketDrivenCardStyle}>
-                <h2 className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${cardStyles.quickActionsTitle}`}>Quick Actions</h2>
+              <div className={`${cardStyles.card} ${cardStyles.quickActionsCard} ${styles.bracketsQuickActionsCard}`}>
+                <h2 className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${cardStyles.quickActionsTitle} ${styles.bracketsQuickActionsTitle}`}>
+                  <Zap aria-hidden="true" />
+                  Quick Actions
+                </h2>
                 <div className={cardStyles.quickActionsBody}>
                   {bracketsQuickActions}
                 </div>
               </div>
             )}
 
-            <article className={`${cardStyles.card} ${cardStyles.accentCard} ${styles.bracketStatsCard}`}>
+            <article className={`${cardStyles.card} ${styles.bracketStatsCard}`}>
+              <h2 className={styles.bracketStatsTitle}>
+                <GitFork aria-hidden="true" />
+                Bracket Summary
+              </h2>
               <div className={styles.bracketStatsGrid}>
                 <div>
                   <span>Format</span>
@@ -647,20 +584,9 @@ export default function BracketsPage() {
                 </button>
               </div>
             )}
-            {/* Search + Filter (standalone card) */}
-            <div style={desktopBracketDrivenCardStyle}>
-              <SearchFilter
-                firstName={searchFirstName}
-                lastName={searchLastName}
-                onFirstNameChange={setSearchFirstName}
-                onLastNameChange={setSearchLastName}
-                onClearFilters={handleClearFilters}
-                searchResultCount={searchResultCount}
-              />
-            </div>
-
-            {/* Bracket Tabs + Navigator card */}
-            <div className={`${cardStyles.card} ${cardStyles.accentCard} ${styles.controlPanel}`} style={desktopBracketDrivenCardStyle}>
+            <section className={styles.bracketWorkspaceCard}>
+              {/* Bracket Tabs + Navigator */}
+              <div className={styles.controlPanel}>
               {/* Bracket Tabs */}
               <BracketTabs
                 tabs={[
@@ -689,23 +615,32 @@ export default function BracketsPage() {
               
               return (
                 <>
-                  <div className={styles.controlDivider} />
                   <div className={styles.bracketNav}>
                     <div className={styles.navMeta}>
-                      <label className={styles.bracketSelectLabel} htmlFor="bracket-select-desktop">Bracket</label>
-                      <select
-                        id="bracket-select-desktop"
-                        className={styles.bracketSelectControl}
-                        value={selectedBracketIndex}
-                        onChange={(event) => setSelectedBracketIndex(Number(event.target.value))}
-                      >
-                        {searchFilteredBracketItems.map((item, index) => (
-                          <option key={`${item.group.key}-${index}`} value={index}>
-                            {`${item.group.name} ${index + 1} of ${totalBrackets}`}
-                          </option>
-                        ))}
-                      </select>
-                      <span className={styles.navMetaSecondary}>{progressPercent}% complete</span>
+                      <div className={styles.bracketPicker}>
+                        <label className={styles.bracketSelectLabel} htmlFor="bracket-select-desktop">Bracket</label>
+                        <select
+                          id="bracket-select-desktop"
+                          className={styles.bracketSelectControl}
+                          value={selectedBracketIndex}
+                          onChange={(event) => setSelectedBracketIndex(Number(event.target.value))}
+                        >
+                          {searchFilteredBracketItems.map((item, index) => (
+                            <option key={`${item.group.key}-${index}`} value={index}>
+                              {`${item.group.name} ${index + 1} of ${totalBrackets}`}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className={styles.bracketProgress}>
+                        <span className={styles.navMetaSecondary}>{progressPercent}% complete</span>
+                        <progress
+                          className={styles.bracketProgressMeter}
+                          value={progressPercent}
+                          max={100}
+                          aria-label={`${progressPercent}% of matches complete`}
+                        />
+                      </div>
                     </div>
                     <div className={styles.navBtns}>
                         <button
@@ -713,6 +648,7 @@ export default function BracketsPage() {
                           disabled={selectedBracketIndex === 0}
                           className={styles.navBtn}
                         >
+                          <ChevronLeft aria-hidden="true" />
                           Previous
                         </button>
                         <button
@@ -721,16 +657,28 @@ export default function BracketsPage() {
                           className={styles.navBtn}
                         >
                           Next
+                          <ChevronRight aria-hidden="true" />
                         </button>
                       </div>
                   </div>
                 </>
               )
             })()}
-            </div>{/* end controlPanel */}
+              <div className={styles.bracketSearchRow}>
+                <SearchFilter
+                  firstName={searchFirstName}
+                  lastName={searchLastName}
+                  onFirstNameChange={setSearchFirstName}
+                  onLastNameChange={setSearchLastName}
+                  onClearFilters={handleClearFilters}
+                  searchResultCount={searchResultCount}
+                />
+              </div>
+              </div>{/* end controlPanel */}
 
-            {/* Bracket Display */}
-            <Suspense fallback={<div className={styles.loadingState}><div>Loading...</div></div>}>
+              {/* Bracket Display */}
+              <div className={styles.bracketWorkspaceStage}>
+              <Suspense fallback={<div className={styles.loadingState}><div>Loading...</div></div>}>
             {isMobile ? (
               searchFilteredBracketItems.length === 0 ? (
                 <div className={`${cardStyles.card} ${styles.noMatches}`}>
@@ -808,14 +756,20 @@ export default function BracketsPage() {
                 searchTerm={bracketSearchTerm}
                 statusFilter="all"
                 bracketTitle={activeBracketItem ? `${activeBracketItem.group.scoring_mode === 'scratch' ? 'Scratch' : 'Handicap'} Bracket ${selectedBracketIndex + 1} of ${searchFilteredBracketItems.length}` : undefined}
-                onCardWidthChange={handleBracketCardWidthChange}
               />
             ) : (
               <div className={`${cardStyles.card} ${styles.noMatches}`}>
                 <p>No matches found for the selected filters.</p>
               </div>
             )}
-            </Suspense>
+              </Suspense>
+              </div>
+
+              <footer className={styles.bracketWorkspaceFooter}>
+                <span>Brackets auto-update as scores change.</span>
+                <span>{totalBracketCount} brackets generated for {totalPlayersAtGeneration} players.</span>
+              </footer>
+            </section>
           </>
         )
         )}

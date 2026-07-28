@@ -1,6 +1,5 @@
 'use client'
 
-import Link from 'next/link'
 import { useMemo, useRef, useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../lib/auth-context'
 import { usePageHeader } from '../lib/header-context'
@@ -33,6 +32,7 @@ import ImportLoadingModal from '../components/ImportLoadingModal'
 import primitiveStyles from '../components/primitives/primitives.module.css'
 import { getSelectedSquadId, getSelectedTournamentId, setSelectedSquad } from '../lib/selection-session'
 import { resetScrollLocks, setBodyInteractionState } from '../utils/modalUtils'
+import { BookOpen, ChartNoAxesCombined, CircleCheck, CircleDollarSign, Clock3, FileSpreadsheet, Layers3, ListChecks, RefreshCcw, Search as SearchIcon, Shuffle, Trash2, Trophy, Upload, UserRound, UsersRound, WalletCards, Zap } from 'lucide-react'
 
 function bracketProgramsEqual(left: BracketProgramDefinition[], right: BracketProgramDefinition[]): boolean {
   if (left.length !== right.length) return false
@@ -78,6 +78,7 @@ export default function PlayersPage() {
   const [searchLastName, setSearchLastName] = useState('')
   const [isMobileView, setIsMobileView] = useState(false)
   const [historySearchCollapsed, setHistorySearchCollapsed] = useState(false)
+  const [hasSubmittedHistorySearch, setHasSubmittedHistorySearch] = useState(false)
   const [tableSearchCollapsed, setTableSearchCollapsed] = useState(false)
   const debouncedSearchUsbc = useDebouncedValue(searchUsbc, 300)
   const debouncedSearchFirstName = useDebouncedValue(searchFirstName, 300)
@@ -270,6 +271,12 @@ export default function PlayersPage() {
   }, [cancelPendingPatches, loadEntryFee, loadPlayers])
 
   const hasActiveEntryFilters = Boolean(searchUsbc.trim() || searchFirstName.trim() || searchLastName.trim())
+  const handleEntrySearchSubmit = useCallback((event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setSearchUsbc(current => current.trim())
+    setSearchFirstName(current => current.trim())
+    setSearchLastName(current => current.trim())
+  }, [])
 
   const formatSquadDateLabel = useCallback((isoDate?: string) => {
     if (!isoDate) return 'Date pending'
@@ -712,64 +719,69 @@ export default function PlayersPage() {
         />
 
         <div className={`${shellStyles.section} ${styles.entriesSectionWidth}`}>
-          <section className={`${cardStyles.card} ${cardStyles.accentCard} ${styles.entriesHeroCard}`}>
-            <div className={styles.entriesHeroTop}>
-              <div>
-                <h2 className={styles.entriesHeroTitle}>Entries</h2>
-                <p className={styles.entriesHeroSubtitle}>Manage bowler registration, entry mix, and revenue for the active squad.</p>
-              </div>
-              <div className={styles.entriesHeroChips}>
-                <span className={`${badgeStyles.badge} ${badgeStyles.success}`}>{entryTotals.totalPlayers} Players</span>
-                <span className={`${badgeStyles.badge} ${badgeStyles.info}`}>{entryTotals.totalEntries} Entries</span>
-                <span className={`${badgeStyles.badge} ${paymentSummary.outstandingAmount > 0 ? badgeStyles.warning : badgeStyles.muted}`}>{paymentSummary.paidCount} Paid</span>
-                <span className={`${badgeStyles.badge} ${paymentSummary.outstandingAmount > 0 ? badgeStyles.accent : badgeStyles.muted}`}>${paymentSummary.outstandingAmount.toLocaleString()} Outstanding</span>
-              </div>
-            </div>
-          </section>
-
           {getTournamentId() && (
-            <div className={`${cardStyles.card} ${cardStyles.accentCard} ${styles.summaryCard}`}>
+            <div className={`${cardStyles.card} ${styles.summaryCard}`}>
               <div className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${styles.summaryHeader}`}>
                 <div className={`${cardStyles.cardHeaderRow} ${styles.summaryTitleWrap}`}>
-                  <h3 className={`${cardStyles.cardTitle} ${styles.summaryTitle}`}>Tournament Summary</h3>
+                  <h3 className={`${cardStyles.cardTitle} ${styles.summaryTitle}`}>
+                    <ChartNoAxesCombined aria-hidden="true" />
+                    Tournament Summary
+                  </h3>
                   <p className={styles.summarySubtitle}>Live totals for entries, revenue, and active pots.</p>
                 </div>
                 <div className={styles.summaryPaymentStrip}>
-                  <span className={`${badgeStyles.badge} ${badgeStyles.success}`}>{paymentSummary.paidCount} Paid</span>
-                  <span className={`${badgeStyles.badge} ${paymentSummary.dueCount > 0 ? badgeStyles.warning : badgeStyles.muted}`}>{paymentSummary.dueCount} Due</span>
-                  <span className={`${badgeStyles.badge} ${paymentSummary.outstandingAmount > 0 ? badgeStyles.accent : badgeStyles.muted}`}>${paymentSummary.outstandingAmount.toLocaleString()} Outstanding</span>
+                  <span className={`${badgeStyles.badge} ${badgeStyles.success}`}><CircleCheck aria-hidden="true" />{paymentSummary.paidCount} Paid</span>
+                  <span className={`${badgeStyles.badge} ${paymentSummary.dueCount > 0 ? badgeStyles.warning : badgeStyles.muted}`}><Clock3 aria-hidden="true" />{paymentSummary.dueCount} Due</span>
+                  <span className={`${badgeStyles.badge} ${paymentSummary.outstandingAmount > 0 ? badgeStyles.accent : badgeStyles.muted}`}><WalletCards aria-hidden="true" />${paymentSummary.outstandingAmount.toLocaleString()} Outstanding</span>
                 </div>
               </div>
               <div className={styles.summaryGrid}>
                 <div className={`${cardStyles.statTile} ${cardStyles.statTileCompact} ${styles.statBox}`}>
-                  <div className={`${cardStyles.statValue} ${styles.statValue}`}>{entryTotals.totalEntries}</div>
-                  <div className={`${cardStyles.statLabel} ${styles.statLabel}`}>Total Entries</div>
+                  <span className={styles.statIconRing}><UsersRound className={styles.statIcon} aria-hidden="true" /></span>
+                  <div className={styles.statCopy}>
+                    <div className={`${cardStyles.statValue} ${styles.statValue}`}>{entryTotals.totalEntries}</div>
+                    <div className={`${cardStyles.statLabel} ${styles.statLabel}`}>Total Entries</div>
+                    <div className={`${cardStyles.statDetail} ${styles.statDetail}`}>{entryTotals.totalPlayers} players</div>
+                  </div>
                 </div>
 
                 <div className={`${cardStyles.statTile} ${cardStyles.statTileCompact} ${styles.statBox}`}>
-                  <div className={`${cardStyles.statValue} ${styles.statValue}`}>${entryTotals.totalRevenue.toLocaleString()}</div>
-                  <div className={`${cardStyles.statLabel} ${styles.statLabel}`}>Entry Revenue</div>
-                  <div className={`${cardStyles.statDetail} ${styles.statDetail}`}>{entryTotals.totalEntries} entries × ${Number(entryFee).toLocaleString()}</div>
+                  <span className={styles.statIconRing}><CircleDollarSign className={styles.statIcon} aria-hidden="true" /></span>
+                  <div className={styles.statCopy}>
+                    <div className={`${cardStyles.statValue} ${styles.statValue}`}>${entryTotals.totalRevenue.toLocaleString()}</div>
+                    <div className={`${cardStyles.statLabel} ${styles.statLabel}`}>Entry Revenue</div>
+                    <div className={`${cardStyles.statDetail} ${styles.statDetail}`}>{entryTotals.totalEntries} entries × ${Number(entryFee).toLocaleString()}</div>
+                  </div>
                 </div>
 
-                  {orderedProgramSummaries.map(program => (
+                  {orderedProgramSummaries.map((program, programIndex) => (
                     <div key={program.key} className={`${cardStyles.statTile} ${cardStyles.statTileCompact} ${styles.statBox}`}>
-                      <div className={`${cardStyles.statValue} ${styles.statValue}`}>{program.totalEntries}</div>
-                      <div className={`${cardStyles.statLabel} ${styles.statLabel}`}>{getBracketProgramLabel(program)}</div>
-                      <div className={`${cardStyles.statDetail} ${styles.statDetail}`}>Projected {program.expectedBrackets} brackets</div>
-                      {program.refunds > 0 && (
-                        <div className={styles.statRefund}>{program.refunds} overflow entries</div>
-                      )}
+                      <span className={styles.statIconRing}>
+                        {programIndex === 0
+                          ? <Layers3 className={styles.statIcon} aria-hidden="true" />
+                          : <Trophy className={styles.statIcon} aria-hidden="true" />}
+                      </span>
+                      <div className={styles.statCopy}>
+                        <div className={`${cardStyles.statValue} ${styles.statValue}`}>{program.totalEntries}</div>
+                        <div className={`${cardStyles.statLabel} ${styles.statLabel}`}>{getBracketProgramLabel(program)}</div>
+                        <div className={`${cardStyles.statDetail} ${styles.statDetail}`}>Projected {program.expectedBrackets} brackets</div>
+                        {program.refunds > 0 && (
+                          <div className={styles.statRefund}>{program.refunds} overflow entries</div>
+                        )}
+                      </div>
                     </div>
                   ))}
 
                   {sidePotSummaries.map(pot => (
                     <div key={pot.key} className={`${cardStyles.statTile} ${cardStyles.statTileCompact} ${styles.statBox}`}>
-                      <div className={`${cardStyles.statValue} ${styles.statValue}`}>{pot.count}</div>
-                      <div className={`${cardStyles.statLabel} ${styles.statLabel}`}>{pot.name}</div>
-                      {pot.fee > 0 && (
-                        <div className={`${cardStyles.statDetail} ${styles.statDetail}`}>Pot Total: ${(pot.count * pot.fee).toLocaleString()}</div>
-                      )}
+                      <span className={styles.statIconRing}><Trophy className={styles.statIcon} aria-hidden="true" /></span>
+                      <div className={styles.statCopy}>
+                        <div className={`${cardStyles.statValue} ${styles.statValue}`}>{pot.count}</div>
+                        <div className={`${cardStyles.statLabel} ${styles.statLabel}`}>{pot.name}</div>
+                        {pot.fee > 0 && (
+                          <div className={`${cardStyles.statDetail} ${styles.statDetail}`}>Pot Total: ${(pot.count * pot.fee).toLocaleString()}</div>
+                        )}
+                      </div>
                     </div>
                   ))}
 
@@ -778,15 +790,18 @@ export default function PlayersPage() {
           )}
 
           <div className={styles.entriesTopRow}>
-            <div className={`${cardStyles.card} ${cardStyles.accentCard} ${cardStyles.quickActionsCard} ${styles.formCard}`}>
-              <h3 className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${cardStyles.quickActionsTitle} ${styles.formTitle}`}>Quick Actions</h3>
-              <div className={cardStyles.quickActionsBody}>
-                <div className={cardStyles.quickActionsRow}>
-                  <div className={cardStyles.quickActionsGroupLeft}>
+            <div className={`${cardStyles.card} ${cardStyles.quickActionsCard} ${styles.formCard}`}>
+              <h3 className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${cardStyles.quickActionsTitle} ${styles.formTitle} ${styles.quickActionsHeading}`}>
+                <Zap aria-hidden="true" />
+                Quick Actions
+              </h3>
+              <div className={`${cardStyles.quickActionsBody} ${styles.quickActionsBody}`}>
+                <div className={`${cardStyles.quickActionsRow} ${styles.quickActionsPrimaryRow}`}>
                   <button
                     className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
                     onClick={() => setIsExplainModalOpen(true)}
                   >
+                    <BookOpen aria-hidden="true" />
                     Entries Guide
                   </button>
                   <button
@@ -794,6 +809,7 @@ export default function PlayersPage() {
                     onClick={handleExportToExcel}
                     disabled={players.length === 0}
                   >
+                    <FileSpreadsheet aria-hidden="true" />
                     Export to Excel
                   </button>
                   <button
@@ -801,181 +817,246 @@ export default function PlayersPage() {
                     onClick={() => importFileRef.current?.click()}
                     disabled={isImporting}
                   >
+                    <Upload aria-hidden="true" />
                     {isImporting ? 'Importing...' : 'Import from Excel'}
                   </button>
-                  <Link href="/payouts" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}>
-                    Calculate Payouts
-                  </Link>
-                  </div>
-                  {isDev && players.length > 0 && (
-                    <div className={cardStyles.quickActionsGroupRight}>
-                      <button className={`${cardStyles.quickActionControl} ${styles.devButton} ${styles.quickActionDevBtn}`} onClick={handleRandomize}>Randomize Data</button>
-                      <button className={`${cardStyles.quickActionControl} ${styles.devButton} ${styles.quickActionDangerBtn}`} onClick={handleDeleteAllPlayers} disabled={isDeletingAll}>{isDeletingAll ? 'Deleting...' : 'Delete All'}</button>
-                    </div>
-                  )}
                 </div>
                 {isDev && players.length > 0 && (
-                  <div className={styles.quickActionAdminRow}>
-                    <span className={styles.quickActionAdminLabel}>Admin Tools</span>
+                  <div className={styles.quickActionAdminSection}>
+                    <div className={styles.quickActionAdminRow}>
+                      <span className={styles.quickActionAdminLabel}>Admin Tools</span>
+                    </div>
+                    <div className={styles.quickActionAdminControls}>
+                      <button className={`${cardStyles.quickActionControl} ${styles.devButton} ${styles.quickActionDevBtn}`} onClick={handleRandomize}>
+                        <Shuffle aria-hidden="true" />
+                        Randomize Entries
+                      </button>
+                      <button className={`${cardStyles.quickActionControl} ${styles.devButton} ${styles.quickActionDangerBtn}`} onClick={handleDeleteAllPlayers} disabled={isDeletingAll}>
+                        <Trash2 aria-hidden="true" />
+                        {isDeletingAll ? 'Deleting...' : 'Delete All Entries'}
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
             </div>
 
-            <div className={`${cardStyles.card} ${cardStyles.accentCard} ${styles.formCard} ${styles.standaloneEntrySearchCard}`}>
+            <div className={`${cardStyles.card} ${styles.formCard} ${styles.findBowlerCard}`}>
               {isMobileView ? (
                 <button
                   type="button"
                   className={`${cardStyles.cardHeader} ${styles.formTitleToggle}`}
-                  aria-expanded={!tableSearchCollapsed}
-                  onClick={() => setTableSearchCollapsed(previous => !previous)}
+                  aria-expanded={!historySearchCollapsed}
+                  onClick={() => setHistorySearchCollapsed(previous => !previous)}
                 >
-                  <span>Find Entry</span>
-                  <span className={styles.formTitleExpandIcon}>{tableSearchCollapsed ? '+' : '−'}</span>
+                  <span className={styles.findBowlerHeading}>
+                    <SearchIcon aria-hidden="true" />
+                    Find Existing Bowler
+                  </span>
+                  <span className={styles.formTitleExpandIcon}>{historySearchCollapsed ? '+' : '−'}</span>
                 </button>
               ) : (
-                <h3 className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${styles.formTitle}`}>Find Entry</h3>
+                <div className={styles.findBowlerHeader}>
+                  <h3 className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${styles.formTitle} ${styles.findBowlerHeading}`}>
+                    <SearchIcon aria-hidden="true" />
+                    Find Existing Bowler
+                  </h3>
+                  <p className={styles.findBowlerSubtitle}>Reuse a bowler profile from a previous tournament.</p>
+                </div>
               )}
-              {(!isMobileView || !tableSearchCollapsed) && (
-              <div className={styles.tableSearchPanelBody}>
-                <p className={styles.findEntryHelperText}>Search by USBC number, first name, or last name.</p>
+              {(!isMobileView || !historySearchCollapsed) && (
+              <div className={styles.historyPanelBody}>
                 <div className={primitiveStyles.searchPanelContentRow}>
                   <div className={primitiveStyles.searchPanelContentLeft}>
-                    <input
-                      type="text"
-                      className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput} ${primitiveStyles.searchPanelInput}`}
-                      placeholder="USBC #"
-                      value={searchUsbc}
-                      onChange={(event) => setSearchUsbc(event.target.value)}
-                    />
-                    <input
-                      type="text"
-                      className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput} ${primitiveStyles.searchPanelInput}`}
-                      placeholder="First name"
-                      value={searchFirstName}
-                      onChange={(event) => setSearchFirstName(event.target.value)}
-                    />
-                    <input
-                      type="text"
-                      className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput} ${primitiveStyles.searchPanelInput}`}
-                      placeholder="Last name"
-                      value={searchLastName}
-                      onChange={(event) => setSearchLastName(event.target.value)}
-                    />
+                    <label className={styles.findBowlerInputWrap}>
+                      <UserRound aria-hidden="true" />
+                      <input
+                        type="text"
+                        className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput} ${styles.findBowlerInput} ${primitiveStyles.searchPanelInput}`}
+                        placeholder="USBC #"
+                        aria-label="USBC number"
+                        value={historySearchUsbc}
+                        onChange={(event) => {
+                          setHistorySearchUsbc(event.target.value)
+                          setHasSubmittedHistorySearch(false)
+                        }}
+                      />
+                    </label>
+                    <label className={styles.findBowlerInputWrap}>
+                      <UserRound aria-hidden="true" />
+                      <input
+                        type="text"
+                        className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput} ${styles.findBowlerInput} ${primitiveStyles.searchPanelInput}`}
+                        placeholder="First name"
+                        aria-label="First name"
+                        value={historySearchFirstName}
+                        onChange={(event) => {
+                          setHistorySearchFirstName(event.target.value)
+                          setHasSubmittedHistorySearch(false)
+                        }}
+                      />
+                    </label>
+                    <label className={styles.findBowlerInputWrap}>
+                      <UserRound aria-hidden="true" />
+                      <input
+                        type="text"
+                        className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput} ${styles.findBowlerInput} ${primitiveStyles.searchPanelInput}`}
+                        placeholder="Last name"
+                        aria-label="Last name"
+                        value={historySearchLastName}
+                        onChange={(event) => {
+                          setHistorySearchLastName(event.target.value)
+                          setHasSubmittedHistorySearch(false)
+                        }}
+                      />
+                    </label>
                   </div>
                   <div className={primitiveStyles.searchPanelContentRight}>
                     <button
                       type="button"
-                      className={`${primitiveStyles.searchPanelClearButton} ${styles.clearSearchBtn} ${hasActiveEntryFilters ? styles.clearSearchBtnActive : ''}`}
+                      className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction} ${styles.searchActionBtn}`}
                       onClick={() => {
-                        setSearchUsbc('')
-                        setSearchFirstName('')
-                        setSearchLastName('')
+                        setHasSubmittedHistorySearch(true)
+                        triggerHistorySearch()
                       }}
-                      disabled={!hasActiveEntryFilters}
+                      disabled={!hasHistorySearchInput}
                     >
+                      <SearchIcon aria-hidden="true" />
+                      Find Bowler
+                    </button>
+                    <button
+                      type="button"
+                      className={`${primitiveStyles.searchPanelClearButton} ${styles.clearSearchBtn} ${hasHistorySearchInput ? styles.clearSearchBtnActive : ''}`}
+                      onClick={() => {
+                        setHasSubmittedHistorySearch(false)
+                        clearHistorySearch()
+                      }}
+                      disabled={!hasHistorySearchInput}
+                    >
+                      <RefreshCcw aria-hidden="true" />
                       Clear
                     </button>
                   </div>
                 </div>
+
+                {isHistorySearching ? (
+                  <p className={styles.historyMeta}>Searching bowler history...</p>
+                ) : historyResults.length > 0 ? (
+                  <div className={styles.historyResults}>
+                    <p className={styles.historyMeta}>{historyResults.length} {historyResults.length === 1 ? 'bowler' : 'bowlers'} found</p>
+                    <div className={styles.historyResultsList}>
+                      {historyResults.map(profile => (
+                        <button
+                          key={profile.id}
+                          type="button"
+                          className={styles.historyResultButton}
+                          onClick={() => handleUseHistoryResult(profile)}
+                        >
+                          <span className={styles.historyResultName}>{profile.first_name} {profile.last_name}</span>
+                          <span className={styles.historyResultUsbc}>{profile.usbc_number ? `USBC ${profile.usbc_number}` : 'No USBC on file'}</span>
+                          <span className={styles.historyResultAction}>Use Bowler</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : hasSubmittedHistorySearch && hasHistorySearchInput ? (
+                  <p className={styles.historyMeta}>No matching bowlers found.</p>
+                ) : null}
               </div>
               )}
             </div>
           </div>
 
           <div className={styles.entryWorkflowLayout}>
-              <div className={`${cardStyles.card} ${cardStyles.accentCard} ${styles.formCard} ${styles.findBowlerCard}`}>
-            {isMobileView ? (
-              <button
-                type="button"
-                className={`${cardStyles.cardHeader} ${styles.formTitleToggle}`}
-                aria-expanded={!historySearchCollapsed}
-                onClick={() => setHistorySearchCollapsed(previous => !previous)}
-              >
-                <span>Find Existing Bowler</span>
-                <span className={styles.formTitleExpandIcon}>{historySearchCollapsed ? '+' : '−'}</span>
-              </button>
-            ) : (
-              <h3 className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${styles.formTitle}`}>Find Existing Bowler</h3>
-            )}
-            {(!isMobileView || !historySearchCollapsed) && (
-            <div className={styles.historyPanelBody}>
-              <div className={primitiveStyles.searchPanelContentRow}>
-                <div className={primitiveStyles.searchPanelContentLeft}>
-                  <input
-                    type="text"
-                    className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput} ${styles.findBowlerInput} ${primitiveStyles.searchPanelInput}`}
-                    placeholder="USBC #"
-                    value={historySearchUsbc}
-                    onChange={(event) => setHistorySearchUsbc(event.target.value)}
-                  />
-                  <input
-                    type="text"
-                    className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput} ${styles.findBowlerInput} ${primitiveStyles.searchPanelInput}`}
-                    placeholder="First name"
-                    value={historySearchFirstName}
-                    onChange={(event) => setHistorySearchFirstName(event.target.value)}
-                  />
-                  <input
-                    type="text"
-                    className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput} ${styles.findBowlerInput} ${primitiveStyles.searchPanelInput}`}
-                    placeholder="Last name"
-                    value={historySearchLastName}
-                    onChange={(event) => setHistorySearchLastName(event.target.value)}
-                  />
-                </div>
-                <div className={primitiveStyles.searchPanelContentRight}>
-                  <button
-                    type="button"
-                    className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction} ${styles.searchActionBtn}`}
-                    onClick={triggerHistorySearch}
-                    disabled={!hasHistorySearchInput}
-                  >
-                    Find Bowler
-                  </button>
-                  <button
-                    type="button"
-                    className={`${primitiveStyles.searchPanelClearButton} ${styles.clearSearchBtn} ${hasHistorySearchInput ? styles.clearSearchBtnActive : ''}`}
-                    onClick={clearHistorySearch}
-                    disabled={!hasHistorySearchInput}
-                  >
-                    Clear
-                  </button>
-                </div>
-              </div>
-
-              {isHistorySearching ? (
-                <p className={styles.historyMeta}>Searching bowler history...</p>
-              ) : historyResults.length > 0 ? (
-                <div className={styles.historyResultsList}>
-                  {historyResults.map(profile => (
-                    <button
-                      key={profile.id}
-                      type="button"
-                      className={styles.historyResultButton}
-                      onClick={() => handleUseHistoryResult(profile)}
-                    >
-                      <span className={styles.historyResultName}>{profile.first_name} {profile.last_name}</span>
-                      <span className={styles.historyResultUsbc}>{profile.usbc_number ? `USBC ${profile.usbc_number}` : 'No USBC on file'}</span>
-                      <span className={styles.historyResultAction}>Use in Add Form</span>
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-            )}
-              </div>
-
               <PlayerForm
                 onAddPlayer={addPlayer}
                 isLoading={showInitialPlayersLoad}
                 squads={squads}
+                selectedSquad={selectedSquad}
+                tournamentName={selectedTournament?.name}
+                existingPlayers={players}
                 entryFee={entryFee}
                 bracketPrograms={enabledBracketPrograms}
                 sidePots={sidePots}
                 prefillDraft={prefillDraft}
                 prefillVersion={prefillVersion}
               />
+
+              <div className={`${cardStyles.card} ${styles.formCard} ${styles.standaloneEntrySearchCard}`}>
+                {isMobileView ? (
+                  <button
+                    type="button"
+                    className={`${cardStyles.cardHeader} ${styles.formTitleToggle}`}
+                    aria-expanded={!tableSearchCollapsed}
+                    onClick={() => setTableSearchCollapsed(previous => !previous)}
+                  >
+                    <span className={styles.entrySearchHeading}>
+                      <SearchIcon aria-hidden="true" />
+                      Search Entries
+                    </span>
+                    <span className={styles.formTitleExpandIcon}>{tableSearchCollapsed ? '+' : '−'}</span>
+                  </button>
+                ) : (
+                  <h3 className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${styles.formTitle} ${styles.entrySearchHeading}`}>
+                    <SearchIcon aria-hidden="true" />
+                    Search Entries
+                  </h3>
+                )}
+                {(!isMobileView || !tableSearchCollapsed) && (
+                <div className={styles.tableSearchPanelBody}>
+                  <form className={`${primitiveStyles.searchPanelContentRow} ${styles.entrySearchForm}`} onSubmit={handleEntrySearchSubmit}>
+                    <div className={primitiveStyles.searchPanelContentLeft}>
+                      <input
+                        type="text"
+                        className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput} ${primitiveStyles.searchPanelInput}`}
+                        placeholder="USBC #"
+                        value={searchUsbc}
+                        onChange={(event) => setSearchUsbc(event.target.value)}
+                      />
+                      <input
+                        type="text"
+                        className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput} ${primitiveStyles.searchPanelInput}`}
+                        placeholder="First name"
+                        value={searchFirstName}
+                        onChange={(event) => setSearchFirstName(event.target.value)}
+                      />
+                      <input
+                        type="text"
+                        className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput} ${primitiveStyles.searchPanelInput}`}
+                        placeholder="Last name"
+                        value={searchLastName}
+                        onChange={(event) => setSearchLastName(event.target.value)}
+                      />
+                    </div>
+                    <div className={primitiveStyles.searchPanelContentRight}>
+                      <button
+                        type="submit"
+                        className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction} ${styles.searchActionBtn}`}
+                      >
+                        Search
+                      </button>
+                      <button
+                        type="button"
+                        className={`${primitiveStyles.searchPanelClearButton} ${styles.clearSearchBtn} ${hasActiveEntryFilters ? styles.clearSearchBtnActive : ''}`}
+                        onClick={() => {
+                          setSearchUsbc('')
+                          setSearchFirstName('')
+                          setSearchLastName('')
+                        }}
+                        disabled={!hasActiveEntryFilters}
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  </form>
+                  {hasActiveEntryFilters && (
+                    <p className={styles.entrySearchResults} aria-live="polite">
+                      {players.length} {players.length === 1 ? 'entry' : 'entries'} found
+                    </p>
+                  )}
+                </div>
+                )}
+              </div>
           </div>
 
           {showInitialPlayersLoad ? (
@@ -1000,10 +1081,10 @@ export default function PlayersPage() {
             />
           ) : (
             <>
-              <div className={`${cardStyles.card} ${cardStyles.accentCard} ${styles.tableCard}`}>
+              <div className={`${cardStyles.card} ${styles.tableCard}`}>
                 <div className={`${cardStyles.cardHeader} ${styles.entriesTableHeader}`}>
                   <div className={styles.entriesTableHeaderCopy}>
-                    <h3 className={`${cardStyles.cardTitle} ${styles.entriesTableTitle}`}>Entries</h3>
+                    <h3 className={`${cardStyles.cardTitle} ${styles.entriesTableTitle}`}><ListChecks aria-hidden="true" />Entries</h3>
                     <p className={styles.entriesTableSubtitle}>{entriesTableSubtitle}</p>
                   </div>
                 </div>

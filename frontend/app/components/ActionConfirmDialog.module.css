@@ -84,7 +84,7 @@
 }
 
 .body {
-  padding: 1rem;
+  padding: var(--space-card-x);
   background: transparent;
 }
 
@@ -94,12 +94,12 @@
 }
 
 .actions {
-  margin-top: 1rem;
-  gap: 0.65rem;
+  margin-top: var(--space-section);
+  gap: var(--space-stack);
 }
 
 .actionButton {
-  min-height: 36px;
+  min-height: var(--control-height);
   border-radius: 11px;
   padding: 0.42rem 0.8rem;
   font-size: 0.78rem;

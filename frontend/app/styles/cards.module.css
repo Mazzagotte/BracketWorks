@@ -17,7 +17,7 @@
 }
 
 .cardHeaderDense {
-  padding: 0.68rem 0.9rem 0.58rem;
+  padding: var(--space-card-small-y) var(--space-card-x);
   font-size: 1rem;
   line-height: 1.2;
   font-weight: 800;
@@ -65,8 +65,8 @@
 
 .statTileCompact {
   min-width: 132px;
-  min-height: 84px;
-  padding: 14px 12px;
+  min-height: 0;
+  padding: var(--space-card-compact-y) var(--space-card-compact-x);
   gap: 4px;
   border-radius: 14px;
 }
@@ -121,7 +121,7 @@
 }
 
 .statePanel {
-  padding: 0.85rem 1rem;
+  padding: var(--space-card-small-y) var(--space-card-small-x);
   border-radius: var(--radius-xl);
 }
 
@@ -146,7 +146,7 @@
 }
 
 .quickActionsCard {
-  margin-bottom: 0.95rem;
+  margin-bottom: var(--space-section);
   overflow: hidden;
   border-radius: 24px;
 }
@@ -156,14 +156,14 @@
 }
 
 .quickActionsBody {
-  padding: 0.52rem 0.78rem 0.68rem;
+  padding: var(--space-card-small-y) var(--space-card-small-x);
 }
 
 .quickActionsRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.65rem;
+  gap: var(--space-stack);
   flex-wrap: wrap;
 }
 
@@ -171,13 +171,13 @@
 .quickActionsGroupRight {
   display: flex;
   align-items: center;
-  gap: 0.55rem;
+  gap: var(--space-stack);
   flex-wrap: wrap;
 }
 
 .quickActionsRow :where(button, a),
 .quickActionControl {
-  min-height: 36px;
+  min-height: var(--control-height);
   border-radius: 11px;
   padding: 0.42rem 0.78rem;
   font-size: 0.78rem;
@@ -229,25 +229,25 @@
 .cardHeaderSection,
 .cardBodySection,
 .cardFooterSection {
-  padding-left: 16px;
-  padding-right: 16px;
+  padding-left: var(--space-card-x);
+  padding-right: var(--space-card-x);
 }
 
 .cardHeaderSection {
-  padding-top: 14px;
-  padding-bottom: 12px;
+  padding-top: var(--space-card-y);
+  padding-bottom: var(--space-card-compact-y);
   border-bottom: 1px solid color-mix(in srgb, var(--bw-border-subtle) 76%, transparent);
   background: var(--bw-surface-panel);
 }
 
 .cardBodySection {
-  padding-top: 14px;
-  padding-bottom: 14px;
+  padding-top: var(--space-card-y);
+  padding-bottom: var(--space-card-y);
 }
 
 .cardFooterSection {
-  padding-top: 12px;
-  padding-bottom: 12px;
+  padding-top: var(--space-card-compact-y);
+  padding-bottom: var(--space-card-compact-y);
   border-top: 1px solid color-mix(in srgb, var(--bw-border-subtle) 70%, transparent);
   background: color-mix(in srgb, var(--bw-surface-panel) 75%, transparent);
 }

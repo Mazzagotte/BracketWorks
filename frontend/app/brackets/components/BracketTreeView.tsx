@@ -187,6 +187,22 @@ const BracketTreeViewComponent = ({
       <div ref={cardRef} className={styles.bracketCard}>
         {bracketTitle && <div className={styles.bracketTitle}>{bracketTitle}</div>}
 
+        <div className={styles.headerRow} aria-label="Bracket rounds">
+          {displayRounds.map((round, roundIndex) => {
+            const fallbackTitles = ['Round 1', 'Semifinals', 'Final']
+            const title = round.roundName || round.name || fallbackTitles[roundIndex]
+            const stats = roundStats[roundIndex]
+            return (
+              <div className={styles.roundHeader} key={`${title}-${roundIndex}`}>
+                <span className={styles.roundTitle}>{title}</span>
+                <span className={styles.roundProgress}>
+                  {round.matches.length * 2} players · {stats?.completedMatches ?? 0} of {stats?.totalMatches ?? round.matches.length} complete
+                </span>
+              </div>
+            )
+          })}
+        </div>
+
         {/* Grid-based bracket layout */}
         <div className={styles.bracketGrid}>
           {/* Round 1 - 4 matches */}
@@ -382,6 +398,10 @@ const BracketTreeViewComponent = ({
               />
             </>
           )}
+        </div>
+        <div className={styles.bracketLegend} aria-label="Bracket status legend">
+          <span><i className={styles.legendWinner} aria-hidden="true" />Winner</span>
+          <span><i className={styles.legendPending} aria-hidden="true" />Pending</span>
         </div>
       </div>
     </div>

@@ -7,6 +7,7 @@ import { SortConfig, SortableScoreColumn } from './types'
 import { SortableHeader } from '../components/SortableHeader'
 
 import Link from 'next/link'
+import { RefreshCcw, Search, UserRound, Zap } from 'lucide-react'
 
 import { useAuth } from '../lib/auth-context'
 import { ErrorBoundary } from '../components/ErrorBoundary'
@@ -80,11 +81,8 @@ export default function ScoresPage() {
   const [mobileExpandedPlayers, setMobileExpandedPlayers] = useState<Record<number, boolean>>({})
   const [rowSaveState, setRowSaveState] = useState<Record<number, 'idle' | 'saving' | 'saved' | 'failed'>>({})
   const [lastEdit, setLastEdit] = useState<{ playerId: number; field: string; previous: number | undefined } | null>(null)
-  const [desktopTableDrivenWidth, setDesktopTableDrivenWidth] = useState<number | null>(null)
   const importFileRef = useRef<HTMLInputElement | null>(null)
   const debouncedSavesRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
-  const desktopContainerRef = useRef<HTMLDivElement | null>(null)
-  const desktopScoresTableRef = useRef<HTMLTableElement | null>(null)
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined
@@ -324,46 +322,6 @@ export default function ScoresPage() {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return undefined
-
-    const syncTableDrivenWidth = () => {
-      const container = desktopContainerRef.current
-      const table = desktopScoresTableRef.current
-
-      if (!container || !table || isMobile) {
-        setDesktopTableDrivenWidth(null)
-        return
-      }
-
-      const nextWidth = Math.max(0, Math.floor(Math.min(table.scrollWidth, container.clientWidth)))
-      setDesktopTableDrivenWidth(previous => (previous === nextWidth ? previous : nextWidth))
-    }
-
-    syncTableDrivenWidth()
-
-    const observer = new ResizeObserver(() => {
-      syncTableDrivenWidth()
-    })
-
-    if (desktopContainerRef.current) observer.observe(desktopContainerRef.current)
-    if (desktopScoresTableRef.current) observer.observe(desktopScoresTableRef.current)
-    window.addEventListener('resize', syncTableDrivenWidth)
-
-    return () => {
-      observer.disconnect()
-      window.removeEventListener('resize', syncTableDrivenWidth)
-    }
-  }, [isMobile, filteredPlayers.length, paginationHook.currentPage, players.length, selectedSquad?.id])
-
-  const desktopTableDrivenCardStyle = useMemo(() => {
-    if (!desktopTableDrivenWidth || isMobile) return undefined
-    return {
-      width: `${desktopTableDrivenWidth}px`,
-      maxWidth: '100%',
-    }
-  }, [desktopTableDrivenWidth, isMobile])
 
   // Stable ref so handleRandomizeScores never needs players in its dep array
   const playersRef = useRef(players)
@@ -1209,6 +1167,15 @@ export default function ScoresPage() {
     }
   }, [rowSaveState])
 
+  const completedScoreCount = useMemo(
+    () => players.filter(player => !hasMissingScore(player)).length,
+    [hasMissingScore, players],
+  )
+
+  const scoreCompletionPercent = players.length > 0
+    ? Math.round((completedScoreCount / players.length) * 100)
+    : 0
+
   const saveAllVisibleScores = useCallback(async () => {
     const token = sessionToken
     const tournamentId = getSelectedTournamentId()
@@ -1376,13 +1343,18 @@ export default function ScoresPage() {
     actions: undefined
   })
 
-  const getRowStateLabel = useCallback((playerId: number) => {
-    const state = rowSaveState[playerId] || 'idle'
-    if (state === 'saving') return 'Saving'
-    if (state === 'saved') return 'Saved'
-    if (state === 'failed') return 'Failed'
-    return 'Ready'
-  }, [rowSaveState])
+  const getPlayerScoreStatus = useCallback((player: Player) => {
+    const gameScores = [
+      player.scores?.game1_scratch,
+      player.scores?.game2_scratch,
+      player.scores?.game3_scratch,
+    ]
+    const enteredGames = gameScores.filter(score => score != null).length
+
+    if (enteredGames === gameScores.length) return { label: 'Complete', tone: 'complete' }
+    if (enteredGames > 0) return { label: 'In Progress', tone: 'progress' }
+    return { label: 'Not Started', tone: 'pending' }
+  }, [])
 
   const showInitialScoresLoad = isLoading && players.length === 0
 
@@ -1576,7 +1548,7 @@ export default function ScoresPage() {
             </div>
 
             {tournament && (
-              <div className={`${cardStyles.card} ${cardStyles.accentCard} ${cardStyles.quickActionsCard} ${styles.mobileQuickActionsCard}`}>
+              <div className={`${cardStyles.card} ${cardStyles.quickActionsCard} ${styles.mobileQuickActionsCard}`}>
                 <h2 className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${cardStyles.quickActionsTitle}`}>Quick Actions</h2>
                 <div className={cardStyles.quickActionsBody}>
                   {scoresQuickActions}
@@ -1726,7 +1698,7 @@ export default function ScoresPage() {
         </MobileLayout>
       ) : (
         // Desktop Layout
-      <div ref={desktopContainerRef} className={`${shellStyles.page} ${styles.desktopContainer}`}>
+      <div className={`${shellStyles.page} ${styles.desktopContainer}`}>
 
           {/* No Tournament State - Desktop */}
           {!tournament && !showInitialScoresLoad && (
@@ -1764,8 +1736,11 @@ export default function ScoresPage() {
 
           {tournament && (
             <>
-            <div style={desktopTableDrivenCardStyle} className={`${cardStyles.card} ${cardStyles.accentCard} ${cardStyles.quickActionsCard} ${styles.desktopWidthLockedCard}`}>
-              <h2 className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${cardStyles.quickActionsTitle}`}>Quick Actions</h2>
+            <div className={`${cardStyles.card} ${cardStyles.quickActionsCard} ${styles.scoresQuickActionsCard} ${styles.desktopWidthLockedCard}`}>
+              <h2 className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${cardStyles.quickActionsTitle} ${styles.scoresQuickActionsTitle}`}>
+                <Zap aria-hidden="true" />
+                Quick Actions
+              </h2>
               <div className={cardStyles.quickActionsBody}>
                 {scoresQuickActions}
               </div>
@@ -1774,7 +1749,7 @@ export default function ScoresPage() {
 
           {/* No Players State */}
           {!showInitialScoresLoad && players.length === 0 && tournament && (
-            <div className={`${cardStyles.card} ${cardStyles.accentCard} ${styles.emptyScoresState}`}>
+            <div className={`${cardStyles.card} ${styles.emptyScoresState}`}>
               <div className={styles.emptyScoresAccentGlow} aria-hidden="true" />
 
               <div className={styles.emptyScoresBadge}>Tournament Ready</div>
@@ -1833,27 +1808,41 @@ export default function ScoresPage() {
           )}
 
           {!showInitialScoresLoad && players.length > 0 && (
-            <div style={desktopTableDrivenCardStyle} className={styles.desktopWidthLockedCard}>
+            <div className={styles.desktopWidthLockedCard}>
               <SearchPanel
                 className={styles.scoresSearchCard}
-                title="Search Scores"
+                title={(
+                  <span className={styles.scoresSearchHeading}>
+                    <Search aria-hidden="true" />
+                    Search Scores
+                  </span>
+                )}
                 useToolbar={false}
+                accented={false}
                 left={(
                   <>
-                    <input
-                      type="text"
-                      className={`${formStyles.search} ${formStyles.compactControl} ${styles.scoresSearchInput}`}
-                      placeholder="First name"
-                      value={searchFirstName}
-                      onChange={(event) => setSearchFirstName(event.target.value)}
-                    />
-                    <input
-                      type="text"
-                      className={`${formStyles.search} ${formStyles.compactControl} ${styles.scoresSearchInput}`}
-                      placeholder="Last name"
-                      value={searchLastName}
-                      onChange={(event) => setSearchLastName(event.target.value)}
-                    />
+                    <label className={styles.scoresSearchInputWrap}>
+                      <UserRound aria-hidden="true" />
+                      <input
+                        type="text"
+                        className={`${formStyles.search} ${formStyles.compactControl} ${styles.scoresSearchInput}`}
+                        placeholder="First name"
+                        aria-label="First name"
+                        value={searchFirstName}
+                        onChange={(event) => setSearchFirstName(event.target.value)}
+                      />
+                    </label>
+                    <label className={styles.scoresSearchInputWrap}>
+                      <UserRound aria-hidden="true" />
+                      <input
+                        type="text"
+                        className={`${formStyles.search} ${formStyles.compactControl} ${styles.scoresSearchInput}`}
+                        placeholder="Last name"
+                        aria-label="Last name"
+                        value={searchLastName}
+                        onChange={(event) => setSearchLastName(event.target.value)}
+                      />
+                    </label>
                   </>
                 )}
                 right={(
@@ -1865,6 +1854,7 @@ export default function ScoresPage() {
                       setSearchLastName('')
                     }}
                   >
+                    <RefreshCcw aria-hidden="true" />
                     Clear
                   </button>
                 )}
@@ -1884,44 +1874,57 @@ export default function ScoresPage() {
             {rowStateCounts.failed > 0 && (
               <div className={`table-save-status table-save-status--error ${styles.tableSaveStatus}`}>Failed to save {rowStateCounts.failed} score{rowStateCounts.failed > 1 ? 's' : ''}</div>
             )}
-            <div style={desktopTableDrivenCardStyle} className={`${cardStyles.card} ${cardStyles.accentCard} ${styles.tableCard} ${styles.desktopWidthLockedCard}`}>
+            <div className={`${cardStyles.card} ${styles.tableCard} ${isScoresLocked ? styles.scoresTableLocked : ''} ${styles.desktopWidthLockedCard}`}>
             <div className="entries-container">
 
-              <table ref={desktopScoresTableRef} className={`${tableStyles.table} entries-table`} aria-label="Player Scores" onKeyDownCapture={handleTableArrowNavigation}>
+              <table className={`${tableStyles.table} entries-table`} aria-label="Player Scores" onKeyDownCapture={handleTableArrowNavigation}>
 
             <thead>
               {selectedSquad && (
                 <tr>
-                  <td colSpan={8} className="squad-banner">
-                    Scores · {selectedSquad.date} · {selectedSquad.time} Squad
+                  <td colSpan={12} className="squad-banner">
+                    <div className={styles.scoresTableBanner}>
+                      <div>
+                        <strong>Scores</strong>
+                        <span>{selectedSquad.date} · {selectedSquad.time} Squad</span>
+                      </div>
+                      <div className={styles.scoresTableProgress}>
+                        <span>{completedScoreCount} of {players.length} scored</span>
+                        <progress value={scoreCompletionPercent} max="100" aria-label={`${scoreCompletionPercent}% of players fully scored`} />
+                        <small>{scoreCompletionPercent}% complete</small>
+                      </div>
+                    </div>
                   </td>
                 </tr>
               )}
-              <tr className="entries-header-row">
-                <SortableHeader column="firstName" sortConfig={sortConfig} onSort={handleSort}>
+              <tr className={`entries-header-row ${styles.scoresGroupHeaderRow}`}>
+                <SortableHeader column="firstName" sortConfig={sortConfig} onSort={handleSort} rowSpan={2} className={styles.stickyBowlerHeader}>
                   Bowler
                 </SortableHeader>
-                <SortableHeader column="lane" sortConfig={sortConfig} onSort={handleSort}>
+                <SortableHeader column="lane" sortConfig={sortConfig} onSort={handleSort} rowSpan={2} className={styles.stickyLaneHeader}>
                   Lane
                 </SortableHeader>
-                <SortableHeader column="average" sortConfig={sortConfig} onSort={handleSort}>
+                <SortableHeader column="average" sortConfig={sortConfig} onSort={handleSort} rowSpan={2} className={styles.stickyAverageHeader}>
                   Avg
                 </SortableHeader>
-                <SortableHeader column="game1_scratch" sortConfig={sortConfig} onSort={handleSort}>
-                  Game 1
-                </SortableHeader>
-                <SortableHeader column="game2_scratch" sortConfig={sortConfig} onSort={handleSort}>
-                  Game 2
-                </SortableHeader>
-                <SortableHeader column="game3_scratch" sortConfig={sortConfig} onSort={handleSort}>
-                  Game 3
-                </SortableHeader>
-                <SortableHeader column="totalScratch" sortConfig={sortConfig} onSort={handleSort}>
+                <th colSpan={2} scope="colgroup" className={`entries-header-cell ${styles.gameGroupHeader}`}>Game 1</th>
+                <th colSpan={2} scope="colgroup" className={`entries-header-cell ${styles.gameGroupHeader}`}>Game 2</th>
+                <th colSpan={2} scope="colgroup" className={`entries-header-cell ${styles.gameGroupHeader}`}>Game 3</th>
+                <SortableHeader column="totalScratch" sortConfig={sortConfig} onSort={handleSort} rowSpan={2} className={styles.totalColumnHeader}>
                   Scratch<br/>Total
                 </SortableHeader>
-                <SortableHeader column="totalWithHandicap" sortConfig={sortConfig} onSort={handleSort}>
+                <SortableHeader column="totalWithHandicap" sortConfig={sortConfig} onSort={handleSort} rowSpan={2} className={styles.finalColumnHeader}>
                   Final<br/>Total
                 </SortableHeader>
+                <th rowSpan={2} scope="col" className={`entries-header-cell ${styles.statusColumnHeader}`}>Status</th>
+              </tr>
+              <tr className={`entries-header-row ${styles.scoresSubHeaderRow}`}>
+                <SortableHeader column="game1_scratch" sortConfig={sortConfig} onSort={handleSort}>Scratch</SortableHeader>
+                <SortableHeader column="game1_total" sortConfig={sortConfig} onSort={handleSort}>Total</SortableHeader>
+                <SortableHeader column="game2_scratch" sortConfig={sortConfig} onSort={handleSort}>Scratch</SortableHeader>
+                <SortableHeader column="game2_total" sortConfig={sortConfig} onSort={handleSort}>Total</SortableHeader>
+                <SortableHeader column="game3_scratch" sortConfig={sortConfig} onSort={handleSort}>Scratch</SortableHeader>
+                <SortableHeader column="game3_total" sortConfig={sortConfig} onSort={handleSort}>Total</SortableHeader>
               </tr>
             </thead>
             <tbody>
@@ -1932,14 +1935,13 @@ export default function ScoresPage() {
                   <td className="scores-cell average">{player.average}</td>
 
                   {/* Game 1 */}
-                  <td className="scores-cell scores-cell--game">
-                    <div className="game-cell-wrap">
+                  <td className={`scores-cell scores-cell--game ${styles.editableScoreCell}`}>
                       <div className="pos-relative inline-block">
                         <input
                           type="number"
                           min={0}
                           max={300}
-                          placeholder=""
+                          placeholder="—"
                           data-player={player.id}
                           data-field="game1_scratch"
                           value={player.scores?.game1_scratch ?? ''}
@@ -1951,19 +1953,19 @@ export default function ScoresPage() {
                           title={!validateScore(player.scores?.game1_scratch).isValid ? validateScore(player.scores?.game1_scratch).message : ''}
                         />
                       </div>
-                      <div className="game-hcap-total">{getGameTotal(player.scores?.game1_scratch, player.handicap)}</div>
-                    </div>
+                  </td>
+                  <td className={`scores-cell ${styles.calculatedScoreCell}`}>
+                    {player.scores?.game1_scratch == null ? '—' : getGameTotal(player.scores.game1_scratch, player.handicap)}
                   </td>
 
                   {/* Game 2 */}
-                  <td className="scores-cell scores-cell--game">
-                    <div className="game-cell-wrap">
+                  <td className={`scores-cell scores-cell--game ${styles.editableScoreCell}`}>
                       <div className="pos-relative inline-block">
                         <input
                           type="number"
                           min={0}
                           max={300}
-                          placeholder=""
+                          placeholder="—"
                           data-player={player.id}
                           data-field="game2_scratch"
                           value={player.scores?.game2_scratch ?? ''}
@@ -1975,19 +1977,19 @@ export default function ScoresPage() {
                           title={!validateScore(player.scores?.game2_scratch).isValid ? validateScore(player.scores?.game2_scratch).message : ''}
                         />
                       </div>
-                      <div className="game-hcap-total">{getGameTotal(player.scores?.game2_scratch, player.handicap)}</div>
-                    </div>
+                  </td>
+                  <td className={`scores-cell ${styles.calculatedScoreCell}`}>
+                    {player.scores?.game2_scratch == null ? '—' : getGameTotal(player.scores.game2_scratch, player.handicap)}
                   </td>
 
                   {/* Game 3 */}
-                  <td className="scores-cell scores-cell--game">
-                    <div className="game-cell-wrap">
+                  <td className={`scores-cell scores-cell--game ${styles.editableScoreCell}`}>
                       <div className="pos-relative inline-block">
                         <input
                           type="number"
                           min={0}
                           max={300}
-                          placeholder=""
+                          placeholder="—"
                           data-player={player.id}
                           data-field="game3_scratch"
                           value={player.scores?.game3_scratch ?? ''}
@@ -1999,8 +2001,9 @@ export default function ScoresPage() {
                           title={!validateScore(player.scores?.game3_scratch).isValid ? validateScore(player.scores?.game3_scratch).message : ''}
                         />
                       </div>
-                      <div className="game-hcap-total">{getGameTotal(player.scores?.game3_scratch, player.handicap)}</div>
-                    </div>
+                  </td>
+                  <td className={`scores-cell ${styles.calculatedScoreCell}`}>
+                    {player.scores?.game3_scratch == null ? '—' : getGameTotal(player.scores.game3_scratch, player.handicap)}
                   </td>
 
                   {/* Total Scratch */}
@@ -2012,24 +2015,31 @@ export default function ScoresPage() {
                   <td className="scores-cell total-final">
                     {calculateDisplayTotal(player)}
                   </td>
+                  <td className={`scores-cell ${styles.scoreStatusCell}`}>
+                    {(() => {
+                      const scoreStatus = getPlayerScoreStatus(player)
+                      const saveState = rowSaveState[player.id] || 'idle'
+                      return (
+                        <>
+                          {saveState !== 'saving' && saveState !== 'failed' && (
+                            <span className={`${styles.scoreStatusBadge} ${styles[`scoreStatusBadge_${scoreStatus.tone}`]}`}>
+                              {scoreStatus.label}
+                            </span>
+                          )}
+                          {(saveState === 'saving' || saveState === 'failed') && (
+                            <span className={`${styles.rowSaveState} ${styles[`rowSaveState_${saveState}`]}`}>
+                              {saveState === 'saving' ? 'Saving…' : 'Save Failed'}
+                            </span>
+                          )}
+                        </>
+                      )
+                    })()}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        </div>
-            </>
-        )}
-          </>
-          )}
-
-        {!showInitialScoresLoad && players.length > 0 && filteredPlayers.length === 0 && (
-          <div className={styles.statusMessage}>
-            No players match the current first/last name search.
-          </div>
-        )}
-
-        {/* Pagination Controls */}
         {paginationHook.totalPages > 1 && (
           <div className={styles.paginationWrapper}>
             <div className={styles.paginationInfo}>
@@ -2044,13 +2054,25 @@ export default function ScoresPage() {
               currentPage={paginationHook.currentPage}
               totalPages={paginationHook.totalPages}
               onPageChange={paginationHook.goToPage}
-              itemsPerPage={20}
+              itemsPerPage={50}
               totalItems={filteredPlayers.length}
               showItemCount={false}
               showPageSize={false}
             />
           </div>
         )}
+        </div>
+            </>
+        )}
+          </>
+          )}
+
+        {!showInitialScoresLoad && players.length > 0 && filteredPlayers.length === 0 && (
+          <div className={styles.statusMessage}>
+            No players match the current first/last name search.
+          </div>
+        )}
+
         </div>
       )}
 

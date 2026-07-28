@@ -16,6 +16,9 @@ export interface SortableHeaderProps {
   width?: string;
   /** Extra CSS class(es) appended to the <th> — use for column-specific sizing classes */
   className?: string;
+  rowSpan?: number;
+  colSpan?: number;
+  scope?: 'col' | 'colgroup' | 'row';
 }
 
 const SortIcon = ({ direction }: { direction: SortDirection }) => {
@@ -62,6 +65,9 @@ export const SortableHeader: React.FC<SortableHeaderProps> = ({
   align = 'center',
   width,
   className,
+  rowSpan,
+  colSpan,
+  scope = 'col',
 }) => {
   const isActive = sortConfig.column === column;
   const direction = isActive ? sortConfig.direction : null;
@@ -78,6 +84,9 @@ export const SortableHeader: React.FC<SortableHeaderProps> = ({
   return (
     <th
       className={thClass}
+      rowSpan={rowSpan}
+      colSpan={colSpan}
+      scope={scope}
       onClick={() => onSort(column)}
       aria-sort={ariaSort}
       title={

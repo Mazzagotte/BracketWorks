@@ -169,9 +169,9 @@
 }
 
 .tab {
-  min-height: 32px;
-  padding: 0.38rem 0.72rem;
-  border-radius: 999px;
+  min-height: 38px;
+  padding: 0.42rem 0.78rem;
+  border-radius: 9px;
   color: var(--bw-text-body);
   background: var(--bw-surface-panel);
   border: 1px solid var(--bw-border-subtle);
@@ -199,8 +199,8 @@
 
 .tabCount,
 .tab:not(.active) .tabCount {
-  min-width: 1.35rem;
-  padding: 0.1rem 0.42rem;
+  min-width: 1.25rem;
+  padding: 0.08rem 0.36rem;
   color: var(--bw-text-title);
   background: var(--bw-surface-panel-strong);
   font-size: 0.68rem;

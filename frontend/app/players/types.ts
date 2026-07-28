@@ -52,9 +52,12 @@ export interface Squad {
 }
 
 export interface PlayerFormProps {
-  onAddPlayer: (player: Omit<Player, 'id'>) => Promise<void> | void;
+  onAddPlayer: (player: Omit<Player, 'id'>) => Promise<boolean | void> | boolean | void;
   isLoading: boolean;
   squads: Squad[];
+  selectedSquad?: Squad | null;
+  tournamentName?: string;
+  existingPlayers?: Player[];
   entryFee: number;
   bracketPrograms: BracketProgramDefinition[];
   sidePots?: SidePotsSettings | null;

@@ -10,6 +10,7 @@ import tableStyles from '../../styles/tables.module.css';
 import badgeStyles from '../../styles/badges.module.css';
 import iconButtonStyles from '../../styles/icon-buttons.module.css';
 import buttonStyles from '../../styles/buttons.module.css';
+import { Check, ChevronLeft, ChevronRight, Pencil, Trash2 } from 'lucide-react';
 
 function abbreviateProgramName(name: string): string {
   const map: [string, string][] = [
@@ -48,7 +49,9 @@ const PlayersTable = memo(({
   const [sortConfig, setSortConfig] = useState<SortConfig>({ column: 'lane', direction: 'asc' });
   const [isMobileLayout, setIsMobileLayout] = useState(false);
   const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({});
-  const [, setEditingRowId] = useState<number | null>(null);
+  const [editingRowId, setEditingRowId] = useState<number | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   const globalSaveStatus = useMemo(() => {
     const values = Object.values(savingStatus);
@@ -119,6 +122,18 @@ const PlayersTable = memo(({
       return sortConfig.direction === 'asc' ? comparison : -comparison;
     });
   }, [players, sortConfig]);
+
+  const totalPages = Math.max(1, Math.ceil(sortedPlayers.length / pageSize));
+  const pageStart = (currentPage - 1) * pageSize;
+  const paginatedPlayers = sortedPlayers.slice(pageStart, pageStart + pageSize);
+
+  useEffect(() => {
+    setCurrentPage(current => Math.min(current, totalPages));
+  }, [totalPages]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [players.length, pageSize]);
 
   const toggleSort = (column: string) => {
     setSortConfig(current => {
@@ -356,7 +371,7 @@ const PlayersTable = memo(({
             </div>
           )}
           <div className={styles.mobilePlayersList}>
-            {sortedPlayers.map((player, rowIndex) => renderMobileCard(player, rowIndex))}
+            {paginatedPlayers.map((player, rowIndex) => renderMobileCard(player, pageStart + rowIndex))}
           </div>
         </>
       ) : (
@@ -400,17 +415,17 @@ const PlayersTable = memo(({
           </tr>
         </thead>
         <tbody>
-          {sortedPlayers.map((player, rowIndex) => {
+          {paginatedPlayers.map((player, rowIndex) => {
             const totalEntries = Object.values(player.bracketEntries || {}).reduce((sum, count) => sum + Number(count || 0), 0)
             const needsEntryFee = totalEntries > 0 && player.totalCost <= 0
             const hasPayableAmount = player.totalCost > 0
             const isPaid = hasPayableAmount && !needsEntryFee && player.amountPaid >= player.totalCost
             const isPartial = hasPayableAmount && !needsEntryFee && !isPaid && player.amountPaid > 0
-            const isEditing = true
+            const isEditing = editingRowId === player.id
             return (
             <OptimizedTableRow 
               key={`${player.id}-${rowIndex}`}
-              className="players-table-row"
+              className={`players-table-row${isEditing ? ' entries-row--editing' : ''}`}
             >
               <OptimizedTableCell className="entries-cell medium col-usbc">
                 <div className="pos-relative flex-center">
@@ -464,7 +479,7 @@ const PlayersTable = memo(({
 
               <OptimizedTableCell className="entries-cell col-division group-start">
                 <div className="flex-center">
-                  <div className="pos-relative inline-block">
+                  {isEditing ? <div className="pos-relative inline-block">
                     <select
                       className="entries-select entries-control w-85"
                       value={normalizeDivision(player.division)}
@@ -474,13 +489,13 @@ const PlayersTable = memo(({
                         <option key={option} value={option}>{option}</option>
                       ))}
                     </select>
-                  </div>
+                  </div> : <span className="cell-readonly-text">{normalizeDivision(player.division)}</span>}
                 </div>
               </OptimizedTableCell>
 
               <OptimizedTableCell className="entries-cell col-lane">
                 <div className="flex-center">
-                  <div className="pos-relative inline-block">
+                  {isEditing ? <div className="pos-relative inline-block">
                     <input
                       className="entries-input entries-control"
                       type="text"
@@ -490,13 +505,13 @@ const PlayersTable = memo(({
                       value={player.lane?.toString() || ''}
                       onChange={(changeEvent) => handleCellEdit(player.id, 'lane', changeEvent.target.value)}
                     />
-                  </div>
+                  </div> : <span className="cell-readonly-text numeric-readonly">{player.lane || '—'}</span>}
                 </div>
               </OptimizedTableCell>
 
               <OptimizedTableCell className="entries-cell col-average">
                 <div className="flex-center">
-                  <div className="pos-relative inline-block">
+                  {isEditing ? <div className="pos-relative inline-block">
                     <input
                       className="entries-input entries-control"
                       type="text"
@@ -506,7 +521,7 @@ const PlayersTable = memo(({
                       value={player.average}
                       onChange={(changeEvent) => handleCellEdit(player.id, 'average', changeEvent.target.value)}
                     />
-                  </div>
+                  </div> : <span className="cell-readonly-text numeric-readonly">{player.average}</span>}
                 </div>
               </OptimizedTableCell>
 
@@ -517,17 +532,19 @@ const PlayersTable = memo(({
                       {(() => {
                         const isAllowed = isProgramAllowedForDivision(program.division, player.division)
                         const visibleValue = isAllowed ? (player.bracketEntries?.[program.key] || 0) : 0
-                        return (
-                      <input
-                        className="entries-input entries-control"
-                        type="text"
-                        inputMode="numeric"
-                        size={3}
-                        maxLength={3}
-                        value={visibleValue}
-                        onChange={(changeEvent) => handleBracketEntryEdit(player.id, program.key, changeEvent.target.value)}
-                        disabled={!isAllowed}
-                      />
+                        return isEditing ? (
+                          <input
+                            className="entries-input entries-control"
+                            type="text"
+                            inputMode="numeric"
+                            size={3}
+                            maxLength={3}
+                            value={visibleValue}
+                            onChange={(changeEvent) => handleBracketEntryEdit(player.id, program.key, changeEvent.target.value)}
+                            disabled={!isAllowed}
+                          />
+                        ) : (
+                          <span className="cell-readonly-text numeric-readonly">{visibleValue}</span>
                         )
                       })()}
                     </div>
@@ -540,13 +557,13 @@ const PlayersTable = memo(({
                 return (
                   <OptimizedTableCell key={`sidepot-cell-${player.id}-${pot.key}`} className="entries-cell entries-cell--sidepot col-sidepot">
                     <div className="flex-center">
-                      <input
+                      {isEditing ? <input
                         type="checkbox"
                         className="sidepot-checkbox"
                         checked={checked}
                         onChange={() => handleSidePotToggle(player.id, pot.key, checked)}
                         aria-label={`${pot.name} for ${player.firstName} ${player.lastName}`}
-                      />
+                      /> : <span className="cell-readonly-text">{checked ? 'Yes' : '—'}</span>}
                     </div>
                   </OptimizedTableCell>
                 )
@@ -580,14 +597,14 @@ const PlayersTable = memo(({
               </OptimizedTableCell>
 
               <OptimizedTableCell className={`${tableStyles.actionCell} entries-cell col-actions group-start`}>
-                <div className={tableStyles.rowActions}>
+                <div className={`${tableStyles.rowActions} ${styles.tableRowActions}`}>
                   <button
                     className={`${iconButtonStyles.iconButton} entries-edit-btn${isEditing ? ' entries-edit-btn--active' : ''}`}
                     onClick={() => setEditingRowId(isEditing ? null : player.id)}
                     aria-label={isEditing ? 'Done editing' : 'Edit bowler name and USBC'}
                     title={isEditing ? 'Done editing' : 'Edit name / USBC'}
                   >
-                    {isEditing ? '✕' : '✏'}
+                    {isEditing ? <Check aria-hidden="true" /> : <Pencil aria-hidden="true" />}
                   </button>
                   <button
                     className={`${iconButtonStyles.iconButton} ${iconButtonStyles.danger} entries-delete-btn`}
@@ -595,7 +612,7 @@ const PlayersTable = memo(({
                     aria-label={`Delete ${player.firstName} ${player.lastName}`.trim()}
                     title="Delete player"
                   >
-                    <span className="entries-delete-icon" aria-hidden="true">{'\u{1F5D1}'}</span>
+                    <Trash2 className="entries-delete-icon" aria-hidden="true" />
                   </button>
                 </div>
               </OptimizedTableCell>
@@ -604,6 +621,28 @@ const PlayersTable = memo(({
         </tbody>
       </table>
       )}
+      <div className={styles.tablePagination}>
+        <span className={styles.tablePaginationSummary}>
+          Showing {sortedPlayers.length === 0 ? 0 : pageStart + 1} to {Math.min(pageStart + pageSize, sortedPlayers.length)} of {sortedPlayers.length} entries
+        </span>
+        <div className={styles.tablePaginationControls}>
+          <button type="button" onClick={() => setCurrentPage(page => Math.max(1, page - 1))} disabled={currentPage === 1} aria-label="Previous page">
+            <ChevronLeft aria-hidden="true" />
+          </button>
+          <span>{currentPage} / {totalPages}</span>
+          <button type="button" onClick={() => setCurrentPage(page => Math.min(totalPages, page + 1))} disabled={currentPage === totalPages} aria-label="Next page">
+            <ChevronRight aria-hidden="true" />
+          </button>
+        </div>
+        <label className={styles.tablePageSize}>
+          Rows per page
+          <select value={pageSize} onChange={(event) => setPageSize(Number(event.target.value))}>
+            <option value={10}>10</option>
+            <option value={25}>25</option>
+            <option value={50}>50</option>
+          </select>
+        </label>
+      </div>
     </div>
     </>
   );

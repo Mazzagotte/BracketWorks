@@ -620,16 +620,66 @@
   text-transform: none;
 }
 
+.headerRow {
+  grid-template-columns: 184px 52px 184px 52px 184px;
+  gap: 0;
+  margin: 0 0 0.35rem;
+}
+
+.roundHeader:nth-child(1) {
+  grid-column: 1;
+}
+
+.roundHeader:nth-child(2) {
+  grid-column: 3;
+}
+
+.roundHeader:nth-child(3) {
+  grid-column: 5;
+}
+
+.roundHeader {
+  padding: 0.32rem 0.45rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.roundHeader:hover {
+  box-shadow: none;
+}
+
+.roundTitle,
+.roundProgress {
+  display: block;
+}
+
+.roundTitle {
+  color: var(--tree-title);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.roundProgress {
+  margin-top: 0.16rem;
+  color: var(--tree-text-muted);
+  font-size: 0.6rem;
+}
+
 .bracketGrid {
   width: max-content;
   justify-content: start;
-  padding: 0.5rem 0;
+  padding: 0.2rem 0;
 }
 
 .matchCard {
-  width: fit-content;
-  max-width: 268px;
-  min-height: 88px;
+  width: 184px;
+  max-width: none;
+  min-height: 82px;
+  box-sizing: border-box;
   border: 1px solid var(--tree-card-border);
   border-radius: 14px;
   background: var(--tree-card-surface-soft);
@@ -657,7 +707,6 @@
 
 .matchCard.completed {
   border-color: var(--tree-success-border);
-  border-left: 4px solid color-mix(in srgb, var(--color-success) 62%, transparent);
 }
 
 .matchCard.in_progress {
@@ -705,6 +754,7 @@
 .player {
   min-height: 32px;
   padding: 6px 10px;
+  grid-template-columns: minmax(0, 1fr) 44px;
 }
 
 .player:hover {
@@ -718,7 +768,6 @@
 
 .player.winner {
   background: color-mix(in srgb, var(--color-success) 10%, transparent);
-  border-left: 4px solid color-mix(in srgb, var(--color-success) 62%, transparent);
 }
 
 .playerName {
@@ -735,6 +784,8 @@
   color: var(--tree-text);
   font-size: 0.86rem;
   letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
 }
 
 .player.winner .playerScore {
@@ -750,14 +801,49 @@
 
 .connectorBracket {
   min-width: 22px;
-  border-right-color: color-mix(in srgb, var(--color-primary) 34%, transparent);
-  border-top-color: color-mix(in srgb, var(--color-primary) 34%, transparent);
-  border-bottom-color: color-mix(in srgb, var(--color-primary) 34%, transparent);
+  border-right: 2px solid color-mix(in srgb, var(--color-primary) 58%, transparent);
+  border-top: 2px solid color-mix(in srgb, var(--color-primary) 58%, transparent);
+  border-bottom: 2px solid color-mix(in srgb, var(--color-primary) 58%, transparent);
 }
 
 .connectorArm {
   min-width: 30px;
-  background: color-mix(in srgb, var(--color-primary) 34%, transparent);
+  height: 2px;
+  background: color-mix(in srgb, var(--color-primary) 58%, transparent);
+}
+
+.bracketLegend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 0.45rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid var(--tree-card-border);
+  color: var(--tree-text-muted);
+  font-size: 0.62rem;
+}
+
+.bracketLegend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.34rem;
+}
+
+.bracketLegend i {
+  width: 8px;
+  height: 8px;
+  border-radius: 3px;
+}
+
+.legendWinner {
+  background: color-mix(in srgb, var(--color-success) 52%, transparent);
+  border: 1px solid var(--tree-success-border);
+}
+
+.legendPending {
+  background: var(--tree-card-surface-soft);
+  border: 1px solid var(--tree-card-border);
 }
 
 .emptyState {

@@ -7,8 +7,8 @@
 .page {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  padding-bottom: 32px;
+  gap: var(--space-section);
+  padding-bottom: var(--space-page-y);
 }
 
 /* ---- State / loading cards ---- */
@@ -17,7 +17,7 @@
   border: 1px solid var(--bw-border-subtle);
   border-radius: var(--radius-xl);
   box-shadow: var(--bw-shadow-card);
-  padding: 28px;
+  padding: var(--space-card-y) var(--space-card-x);
   color: var(--color-text-primary);
   font-size: 15px;
   font-weight: 600;
@@ -423,7 +423,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  padding: var(--space-page-y) var(--space-page-x);
 }
 
 .modal {
@@ -1056,15 +1056,6 @@
   letter-spacing: 0;
 }
 
-/* ---- Changelog section ---- */
-.formSection {
-  border: 1px solid var(--bw-border-subtle);
-  border-radius: var(--radius-lg);
-  padding: 20px;
-  background-color: var(--color-brand-ivory-light);
-  margin-bottom: 24px;
-}
-
 .formRow {
   margin-bottom: 16px;
   display: flex;
@@ -1122,8 +1113,8 @@
 .changelogList {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  max-height: 600px;
+  gap: var(--space-stack);
+  max-height: 420px;
   overflow-y: auto;
 }
 
@@ -1136,9 +1127,9 @@
 
 .changelogEntry {
   border: 1px solid var(--bw-border-subtle);
-  border-radius: var(--radius-md);
-  padding: 16px;
-  background-color: var(--color-brand-ivory-light);
+  border-radius: 10px;
+  padding: var(--space-card-small-y) var(--space-card-small-x);
+  background: var(--bw-surface-panel);
 }
 
 .changelogHeader {
@@ -1177,6 +1168,210 @@
 .changesList li {
   margin-bottom: 6px;
   color: var(--bw-text-primary);
+}
+
+/* Reference-aligned Manage Changelog workspace */
+.changelogPanel {
+  overflow: hidden;
+  border-radius: 18px;
+}
+
+.changelogPanelHeader {
+  padding: var(--space-card-y) var(--space-card-x);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-stack);
+}
+
+.changelogHeaderIcon {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  color: var(--bw-text-accent);
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+}
+
+.changelogHeaderIcon svg {
+  width: 21px;
+  height: 21px;
+}
+
+.changelogHeaderCopy {
+  min-width: 0;
+}
+
+.changelogHeaderCopy .panelTitle {
+  color: var(--bw-text-title);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.changelogHeaderCopy p {
+  margin: 0.22rem 0 0;
+  color: var(--bw-text-muted);
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+
+.historyButton {
+  min-height: var(--control-height);
+  padding: 0 var(--space-card-small-x);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border: 0;
+  border-radius: 9px;
+  color: var(--bw-text-accent);
+  background: transparent;
+  font-size: 0.76rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.historyButton:hover {
+  background: color-mix(in srgb, var(--color-primary) 9%, transparent);
+}
+
+.historyButton svg {
+  width: 16px;
+  height: 16px;
+  color: var(--bw-text-muted);
+}
+
+.changelogFormSection {
+  padding: var(--space-card-y) var(--space-card-x) 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-section);
+  border-top: 1px solid var(--bw-border-subtle);
+}
+
+.changelogFormRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.42rem;
+}
+
+.changelogFormRow .formLabel {
+  margin: 0;
+  color: var(--bw-text-title);
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.changelogFormRow .formLabel span {
+  color: var(--bw-text-danger);
+}
+
+.changelogFormRow .formInput,
+.changelogFormRow .formTextarea {
+  width: 100%;
+  min-height: var(--control-height);
+  padding: 0.5rem 0.72rem;
+  border-radius: 9px;
+  color: var(--bw-text-title);
+  background: var(--bw-surface-panel-strong);
+}
+
+.changelogFormRow .formTextarea {
+  min-height: 112px;
+  line-height: 1.45;
+  resize: vertical;
+}
+
+.formHelper {
+  margin: 0;
+  color: var(--bw-text-muted);
+  font-size: 0.68rem;
+  line-height: 1.3;
+}
+
+.changelogFormActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-stack);
+  padding-top: 0.1rem;
+}
+
+.changelogFormActions button {
+  gap: 0.42rem;
+}
+
+.changelogFormActions svg {
+  width: 16px;
+  height: 16px;
+}
+
+.changelogHistory {
+  padding: 0 var(--space-card-x) var(--space-card-y);
+  border-top: 1px solid var(--bw-border-subtle);
+}
+
+.changelogHistoryTitle {
+  padding: var(--space-card-compact-y) 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-stack);
+  color: var(--bw-text-title);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.changelogHistoryTitle span {
+  color: var(--bw-text-muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.changelogTip {
+  padding: var(--space-card-small-y) var(--space-card-x);
+  display: flex;
+  align-items: center;
+  gap: 0.62rem;
+  border-top: 1px solid var(--bw-border-subtle);
+  background: color-mix(in srgb, var(--bw-surface-panel) 74%, transparent);
+}
+
+.changelogTip svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  color: var(--bw-text-accent);
+}
+
+.changelogTip p {
+  margin: 0;
+  color: var(--bw-text-muted);
+  font-size: 0.7rem;
+}
+
+.changelogTip strong {
+  color: var(--bw-text-accent);
+}
+
+@media (max-width: 640px) {
+  .changelogPanelHeader {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .historyButton {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+
+  .changelogFormActions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .changelogFormActions button {
+    width: 100%;
+  }
 }
 
 .page :where(.formLabel, label, small) {

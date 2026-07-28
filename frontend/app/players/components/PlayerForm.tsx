@@ -6,6 +6,7 @@ import buttonStyles from '../../styles/buttons.module.css';
 import cardStyles from '../../styles/cards.module.css';
 import formStyles from '../../styles/forms.module.css';
 import { calculatePlayerTotalCost, calculateSidePotCost, divisionOptions, filterEntriesForDivision, isProgramAllowedForDivision, normalizeDivision, normalizePlayerBracketEntries } from '../../lib/bracketPrograms';
+import { CalendarDays, ChevronDown, ChevronUp, CircleDollarSign, Info, Target, Ticket, Trophy, UserRound, UserPlus } from 'lucide-react';
 
 type PlayerFormState = {
   firstName: string;
@@ -35,14 +36,20 @@ const EMPTY_FORM: PlayerFormState = {
   amountPaid: 0
 };
 
-const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketPrograms, sidePots, prefillDraft, prefillVersion }: PlayerFormProps) => {
+const PlayerForm = memo(({ onAddPlayer, isLoading, squads, selectedSquad, tournamentName, existingPlayers = [], entryFee, bracketPrograms, sidePots, prefillDraft, prefillVersion }: PlayerFormProps) => {
   const [formData, setFormData] = useState<PlayerFormState>({ ...EMPTY_FORM });
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isMobileLayout, setIsMobileLayout] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const firstNameInputRef = useRef<HTMLInputElement | null>(null)
   const averageInputRef = useRef<HTMLInputElement | null>(null)
   const enabledSidePots = (sidePots?.pots ?? []).filter(pot => pot.enabled)
 
   useEffect(() => {
     if (!prefillDraft) return
+    setIsCollapsed(false)
+    setSuccessMessage(null)
 
     setFormData(prev => {
       const nextDivision = prefillDraft.division ? normalizeDivision(prefillDraft.division) : prev.division
@@ -78,8 +85,23 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
   const balanceDue = Math.max(0, draftTotal - formData.amountPaid)
   const paidInFull = draftTotal > 0 && balanceDue <= 0.009
   const hasRequiredNames = formData.firstName.trim().length > 0 && formData.lastName.trim().length > 0
+  const normalizedUsbc = formData.usbc.trim().toLocaleLowerCase()
+  const hasDuplicateUsbc = normalizedUsbc.length > 0 && existingPlayers.some(
+    player => (player.usbc || '').trim().toLocaleLowerCase() === normalizedUsbc,
+  )
+  const selectedSquadLabel = selectedSquad
+    ? [selectedSquad.date, selectedSquad.time ? `${selectedSquad.time} Squad` : selectedSquad.name].filter(Boolean).join(' · ')
+    : 'No active squad'
 
   const isDirty = formData.firstName.trim() !== '' || formData.lastName.trim() !== '';
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 900px)')
+    const syncLayout = () => setIsMobileLayout(mediaQuery.matches)
+    syncLayout()
+    mediaQuery.addEventListener('change', syncLayout)
+    return () => mediaQuery.removeEventListener('change', syncLayout)
+  }, [])
 
   // Warn if browser is closed/refreshed with unsaved data
   useEffect(() => {
@@ -89,7 +111,7 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
     return () => window.removeEventListener('beforeunload', handler);
   }, [isDirty]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.firstName.trim() || !formData.lastName.trim()) {
@@ -102,20 +124,27 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
       return;
     }
 
+    if (hasDuplicateUsbc) {
+      setSubmitError('This USBC number already exists in the active squad.');
+      return;
+    }
+
     setSubmitError(null);
+    setSuccessMessage(null);
 
     const totalCost = calculatePlayerTotalCost(
       normalizePlayerBracketEntries(formData.bracketEntries, formData.handicap, formData.scratch),
       bracketPrograms,
       entryFee,
     );
-    const amountPaidOnSubmit = draftTotal;
+    const amountPaidOnSubmit = Math.max(0, Math.min(formData.amountPaid, draftTotal));
 
     const nextSidePotEntries = Object.fromEntries(
       enabledSidePots.map(pot => [pot.key, Boolean(formData.sidePotEntries[pot.key])]),
     );
 
-    onAddPlayer({
+    const bowlerName = `${formData.firstName.trim()} ${formData.lastName.trim()}`
+    const wasAdded = await onAddPlayer({
       ...formData,
       bracketEntries: normalizePlayerBracketEntries(formData.bracketEntries, formData.handicap, formData.scratch),
       sidePotEntries: nextSidePotEntries,
@@ -125,10 +154,19 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
       totalCost
     });
 
+    if (wasAdded === false) return
     setFormData({ ...EMPTY_FORM });
+    setSuccessMessage(`${bowlerName} added.`)
+    if (isMobileLayout) setIsCollapsed(true)
+    window.setTimeout(() => {
+      if (!isMobileLayout) {
+        firstNameInputRef.current?.focus()
+      }
+    }, 0)
   };
 
   const handleInputChange = (field: string, value: string | number) => {
+    setSuccessMessage(null)
     setFormData(prev => {
       if (field !== 'division') {
         return { ...prev, [field]: value }
@@ -174,24 +212,59 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
     }))
   }
 
-  return (
-    <div className={`${cardStyles.card} ${cardStyles.accentCard} ${styles.formCard} ${styles.addBowlerCard}`}>
-      <h3 className={`${cardStyles.cardHeader} ${styles.formTitle}`}>Add Bowler</h3>
+  const handleCancel = () => {
+    setFormData({ ...EMPTY_FORM })
+    setSubmitError(null)
+    setSuccessMessage(null)
+    setIsCollapsed(false)
+    window.setTimeout(() => firstNameInputRef.current?.focus(), 0)
+  }
 
-      {isDirty && (
-        <div className={styles.unsavedBanner}>
-          Unsaved changes: submit the form or your data will be lost if you navigate away.
+  return (
+    <div className={`${cardStyles.card} ${styles.formCard} ${styles.addBowlerCard}`}>
+      <div className={styles.addBowlerHeader}>
+        <h3 className={`${cardStyles.cardHeader} ${styles.formTitle} ${styles.addBowlerTitle}`}>
+          <UserPlus aria-hidden="true" />
+          Add Bowler
+        </h3>
+        <p className={styles.addBowlerSubtitle}>Register a bowler for the active squad.</p>
+        {isMobileLayout && (
+          <button
+            type="button"
+            className={styles.addBowlerCollapseButton}
+            onClick={() => setIsCollapsed(current => !current)}
+            aria-expanded={!isCollapsed}
+          >
+            {isCollapsed ? 'Add another bowler' : 'Collapse'}
+            {isCollapsed ? <ChevronDown aria-hidden="true" /> : <ChevronUp aria-hidden="true" />}
+          </button>
+        )}
+      </div>
+
+      <div className={styles.addBowlerContextStrip}>
+        <div className={styles.addBowlerContextItem}>
+          <CalendarDays aria-hidden="true" />
+          <span><small>Active Squad</small><strong>{selectedSquadLabel}</strong></span>
         </div>
-      )}
+        <div className={styles.addBowlerContextItem}>
+          <Trophy aria-hidden="true" />
+          <span><small>Tournament</small><strong>{tournamentName || 'Tournament pending'}</strong></span>
+        </div>
+      </div>
 
       {submitError && <div className="error-message">{submitError}</div>}
+      {successMessage && <div className={styles.addBowlerSuccess} role="status">{successMessage}</div>}
 
-      <form onSubmit={handleSubmit}>
-        <p className={styles.formSectionLabel}>PLAYER INFORMATION</p>
-        <div className={`${styles.formGrid} ${styles.playerInfoGrid}`}>
+      <form onSubmit={handleSubmit} hidden={isCollapsed}>
+        <section className={styles.addBowlerFormSection}>
+          <h4 className={styles.addBowlerSectionTitle}><UserRound aria-hidden="true" />Bowler Information</h4>
+          <div className={`${styles.formGrid} ${styles.playerInfoGrid}`}>
           <div>
-            <label className={`${formStyles.fieldLabel} ${styles.fieldLabel}`}>First Name *</label>
+            <label className={`${formStyles.fieldLabel} ${styles.fieldLabel}`}>
+              First Name <span className={styles.requiredIndicator}>Required</span>
+            </label>
             <input
+              ref={firstNameInputRef}
               type="text"
               value={formData.firstName}
               onChange={(e) => handleInputChange('firstName', e.target.value)}
@@ -200,10 +273,13 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
               aria-label="First Name"
               required
             />
+            {isDirty && !formData.firstName.trim() && <p className={styles.fieldValidation}>First name is required.</p>}
           </div>
 
           <div>
-            <label className={`${formStyles.fieldLabel} ${styles.fieldLabel}`}>Last Name *</label>
+            <label className={`${formStyles.fieldLabel} ${styles.fieldLabel}`}>
+              Last Name <span className={styles.requiredIndicator}>Required</span>
+            </label>
             <input
               type="text"
               value={formData.lastName}
@@ -213,6 +289,7 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
               aria-label="Last Name"
               required
             />
+            {isDirty && !formData.lastName.trim() && <p className={styles.fieldValidation}>Last name is required.</p>}
           </div>
 
           <div>
@@ -226,8 +303,14 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
               placeholder="USBC Number"
               aria-label="USBC Number"
             />
+            {hasDuplicateUsbc && <p className={styles.fieldValidation}>Already entered in this squad.</p>}
           </div>
+          </div>
+        </section>
 
+        <section className={styles.addBowlerFormSection}>
+          <h4 className={styles.addBowlerSectionTitle}><Target aria-hidden="true" />Tournament Assignment</h4>
+          <div className={`${styles.formGrid} ${styles.placementGrid}`}>
           <div>
             <label className={`${formStyles.fieldLabel} ${styles.fieldLabel}`}>Average</label>
             <input
@@ -269,12 +352,13 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
             />
           </div>
 
-        </div>
+          </div>
+        </section>
 
         <div className={`${cardStyles.panel} ${styles.compactSection}`}>
           <div className={styles.compactSectionHeader}>
             <div>
-              <h4 className={styles.compactSectionTitle}>Entries &amp; Payment</h4>
+              <h4 className={styles.compactSectionTitle}><Ticket aria-hidden="true" />Entries &amp; Payment</h4>
             </div>
           </div>
 
@@ -283,9 +367,15 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
               <p className={styles.entriesSubheading}>Bracket Entries</p>
               <div className={styles.compactGrid}>
 
-              {bracketPrograms.map(program => (
-                <div key={program.key} className={styles.compactField}>
-                  <label className={`${formStyles.fieldLabel} ${styles.fieldLabel}`}>{program.name} Entries</label>
+              {bracketPrograms.map(program => {
+                const programFee = Number(program.entry_fee ?? entryFee)
+                const programQuantity = formData.bracketEntries[program.key] || 0
+                return (
+                <div key={program.key} className={`${styles.compactField} ${styles.entryProgramCard}`}>
+                  <div className={styles.entryProgramHeader}>
+                    <label className={`${formStyles.fieldLabel} ${styles.fieldLabel}`}>{program.name} Entries</label>
+                    <span>${programFee.toFixed(2)} each</span>
+                  </div>
                   <div className={styles.stepperControl}>
                     <button
                       type="button"
@@ -298,7 +388,7 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
                     </button>
                     <input
                       type="number"
-                      value={formData.bracketEntries[program.key] || 0}
+                      value={programQuantity}
                       onChange={(e) => handleBracketEntryChange(program.key, e.target.value)}
                       className={`${formStyles.field} ${styles.fieldInput} ${styles.compactInput}`}
                       min="0"
@@ -314,10 +404,15 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
                       +
                     </button>
                   </div>
+                  <div className={styles.entryProgramSubtotal}>
+                    <span>Subtotal</span>
+                    <strong>${(programQuantity * programFee).toFixed(2)}</strong>
+                  </div>
                 </div>
-              ))}
+              )})}
 
               </div>
+              <p className={styles.entryFeeNote}><Info aria-hidden="true" />Entry fees are calculated automatically based on quantity.</p>
 
               {enabledSidePots.length > 0 && (
                 <>
@@ -343,33 +438,49 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
             </div>
 
             <div className={styles.paymentCol}>
-              <p className={styles.entriesSubheading}>Payment Summary</p>
+              <p className={`${styles.entriesSubheading} ${styles.paymentSummaryTitle}`}><CircleDollarSign aria-hidden="true" />Payment Summary</p>
               <div className={`${cardStyles.panel} ${styles.paymentSummaryPanel}`}>
+                <label className={styles.paidInFullControl}>
+                  <input
+                    type="checkbox"
+                    checked={paidInFull}
+                    disabled={draftTotal <= 0}
+                    onChange={(event) => handleInputChange('amountPaid', event.target.checked ? draftTotal : 0)}
+                  />
+                  <span>
+                    <strong>Paid in Full</strong>
+                    <small>Set Amount Paid equal to Entry Total.</small>
+                  </span>
+                </label>
                 <div className={styles.paymentSummaryRows}>
                   <div className={styles.paymentSummaryRow}>
-                    <span>Total</span>
+                    <span>Entry Total</span>
                     <span>${draftTotal.toFixed(2)}</span>
                   </div>
                   <div className={`${styles.paymentSummaryRow} ${paidInFull ? styles.paymentSummaryRowPaid : ''}`}>
-                    <span>Paid</span>
+                    <span>Amount Paid</span>
                     <span>${formData.amountPaid.toFixed(2)}</span>
                   </div>
                   <div className={`${styles.paymentSummaryRow} ${balanceDue > 0.009 ? styles.paymentSummaryRowDue : ''}`}>
-                    <span>Due</span>
+                    <span>Balance Due</span>
                     <span>${balanceDue.toFixed(2)}</span>
                   </div>
                 </div>
 
                 <div className={styles.compactField}>
                 <label className={`${formStyles.fieldLabel} ${styles.fieldLabel}`}>Amount Paid</label>
-                <input
-                  type="number"
-                  value={formData.amountPaid}
-                  onChange={(e) => handleInputChange('amountPaid', parseFloat(e.target.value) || 0)}
-                  className={`${formStyles.field} ${styles.fieldInput} ${styles.compactInput}`}
-                  min="0"
-                  step="0.01"
-                />
+                <div className={styles.currencyInputWrap}>
+                  <span aria-hidden="true">$</span>
+                  <input
+                    type="number"
+                    value={formData.amountPaid}
+                    onChange={(e) => handleInputChange('amountPaid', parseFloat(e.target.value) || 0)}
+                    className={`${formStyles.field} ${styles.fieldInput} ${styles.compactInput}`}
+                    min="0"
+                    max={draftTotal}
+                    step="0.01"
+                  />
+                </div>
                 </div>
               </div>
             </div>
@@ -377,14 +488,22 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, entryFee, bracketProg
         </div>
 
         <div className={styles.formFooter}>
+          <button
+            type="button"
+            className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.cancelBtn}`}
+            onClick={handleCancel}
+          >
+            Cancel
+          </button>
           <div className={`${styles.formStatusHint} ${hasRequiredNames ? styles.formStatusHintReady : styles.formStatusHintRequired}`}>
-            {hasRequiredNames ? 'Ready to add bowler.' : ''}
+            {isDirty && !hasRequiredNames ? 'First and last name are required.' : ''}
           </div>
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || !hasRequiredNames}
             className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.primary} ${styles.submitBtn}`}
           >
+            <UserPlus aria-hidden="true" />
             {isLoading ? 'Adding...' : 'Add Bowler'}
           </button>
         </div>

@@ -929,6 +929,41 @@
   color: var(--scores-search-placeholder);
 }
 
+.scoresSearchHeading {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.scoresSearchHeading svg {
+  width: 18px;
+  height: 18px;
+  color: var(--bw-text-accent);
+}
+
+.scoresSearchInputWrap {
+  position: relative;
+  display: block;
+  min-width: 0;
+}
+
+.scoresSearchInputWrap > svg {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  z-index: 1;
+  width: 16px;
+  height: 16px;
+  translate: 0 -50%;
+  color: var(--bw-text-faint);
+  pointer-events: none;
+}
+
+.scoresSearchInputWrap .scoresSearchInput {
+  width: 100%;
+  padding-left: 36px;
+}
+
 /* Final mobile compaction pass */
 @media (max-width: 900px) {
   .emptyScoresFeaturesGrid {
@@ -968,12 +1003,13 @@
 }
 
 .desktopContainer {
-  width: fit-content;
+  width: 100%;
   max-width: min(1600px, 100%);
   margin: 0 auto;
 }
 
 .desktopWidthLockedCard {
+  width: 100%;
   max-width: 100%;
   margin-left: auto;
   margin-right: auto;
@@ -997,8 +1033,8 @@
 }
 
 .tableCard :global(.entries-table) {
-  width: max-content;
-  min-width: 0;
+  width: 100%;
+  min-width: 980px;
   border-collapse: separate;
   border-spacing: 0;
   background: transparent;
@@ -1636,6 +1672,474 @@
 .mobileSaveStatePill {
   border-width: 1px;
   box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-white) 12%, transparent);
+}
+
+/* Entries and Dashboard alignment */
+@media (min-width: 901px) {
+  .desktopContainer {
+    padding: 8px;
+  }
+
+  .scoresQuickActionsCard,
+  .scoresSearchCard,
+  .tableCard {
+    border: 1px solid var(--bw-border-card);
+    border-radius: 18px;
+    background: color-mix(in srgb, var(--bw-surface-card) 94%, transparent);
+    box-shadow: var(--bw-shadow-card);
+  }
+
+  .scoresQuickActionsCard {
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+
+  .scoresQuickActionsTitle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 16px 4px;
+    border: 0;
+    background: transparent;
+    color: var(--bw-text-title);
+    font-size: var(--bw-type-card-title);
+  }
+
+  .scoresQuickActionsTitle svg {
+    width: 18px;
+    height: 18px;
+    color: var(--bw-text-accent);
+  }
+
+  .scoresQuickActionsCard > :last-child {
+    padding: 6px 16px 14px;
+  }
+
+  .scoresQuickActionsCard :global([class*='quickActions']) {
+    gap: 10px;
+  }
+
+  .scoresQuickActionsCard :global([class*='quickActionsGroup']) {
+    gap: 10px;
+  }
+
+  .scoresQuickActionsCard :global([class*='quickActionsGroup']):first-child {
+    flex: 1 1 100%;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+
+  .scoresQuickActionsCard :global([class*='quickActionsGroup']):first-child > :where(button, a) {
+    width: 100%;
+    min-height: 38px;
+    justify-content: center;
+    box-shadow: 0 4px 10px color-mix(in srgb, var(--color-primary) 14%, transparent) !important;
+  }
+
+  .scoresQuickActionsCard :global([class*='quickActionsGroup']):first-child > :where(button, a):hover:not(:disabled) {
+    box-shadow: 0 6px 14px color-mix(in srgb, var(--color-primary) 18%, transparent) !important;
+  }
+
+  .scoresQuickActionsCard :global([class*='quickActionsGroup']):last-child {
+    flex: 1 1 100%;
+    margin-top: 10px;
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  .scoresQuickActionsCard .quickActionAdminLabel {
+    display: flex;
+    flex: 1 1 100%;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    font-size: 10px;
+    color: var(--bw-text-body);
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  .scoresQuickActionsCard .quickActionAdminLabel::after {
+    content: '';
+    height: 1px;
+    flex: 1;
+    background: var(--bw-border-subtle);
+  }
+
+  .scoresQuickActionsCard .quickActionAdminBtn {
+    min-height: 36px;
+    padding: 7px 10px;
+    border: 1px solid var(--bw-border-subtle);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--bw-surface-panel) 78%, transparent);
+    color: var(--bw-text-title);
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  .scoresQuickActionsCard .quickActionAdminBtn:hover:not(:disabled) {
+    border-color: var(--bw-border-accent);
+    background: color-mix(in srgb, var(--color-primary) 7%, var(--bw-surface-panel));
+    color: var(--bw-text-title);
+  }
+
+  .scoresSearchCard {
+    margin-bottom: 12px;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .scoresSearchCard :global([class*='searchPanelHeader']) {
+    padding: 14px 16px 4px;
+    border: 0;
+    background: transparent;
+  }
+
+  .scoresSearchCard :global([class*='searchPanelBody']) {
+    padding: 6px 16px 14px;
+  }
+
+  .scoresSearchCard :global([class*='searchPanelContentRow']),
+  .scoresSearchCard :global([class*='searchPanelContentLeft']),
+  .scoresSearchCard :global([class*='searchPanelContentRight']) {
+    gap: 10px;
+  }
+
+  .scoresSearchInput,
+  .scoresSearchClear {
+    min-height: 38px;
+    height: 38px;
+  }
+
+  .scoresSearchClear {
+    padding-inline: 12px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .scoresSearchClear svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .tableCard {
+    background: color-mix(in srgb, var(--bw-surface-card) 96%, transparent);
+  }
+
+  .tableCard :global(.squad-banner) {
+    padding: 14px 16px;
+    background: transparent;
+    border-bottom: 1px solid var(--bw-border-subtle);
+    color: var(--bw-text-accent);
+    font-size: var(--bw-type-card-title);
+  }
+
+  .tableCard :global(.entries-header-cell) {
+    height: auto;
+    padding: 10px 12px;
+    border-right: 1px solid color-mix(in srgb, var(--bw-border-subtle) 48%, transparent);
+    background: color-mix(in srgb, var(--bw-surface-panel) 84%, transparent);
+  }
+
+  .tableCard :global(.scores-cell) {
+    height: auto;
+    padding: 6px 12px;
+    border-right: 1px solid color-mix(in srgb, var(--bw-border-subtle) 42%, transparent);
+  }
+
+  .tableCard :global(.entries-header-cell:last-child),
+  .tableCard :global(.scores-cell:last-child) {
+    border-right: 0;
+  }
+
+  .tableCard :global(.score-input),
+  .tableCard :global(.score-input-valid),
+  .tableCard :global(.score-input-warning),
+  .tableCard :global(.score-input-error) {
+    min-height: 32px;
+    height: 32px;
+    border-radius: 7px;
+  }
+
+  .paginationWrapper {
+    margin-top: 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--bw-border-card);
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--bw-surface-card) 94%, transparent);
+  }
+}
+
+/* Scores table hierarchy and workflow states */
+@media (min-width: 901px) {
+  .tableCard :global(.entries-table) {
+    min-width: 1280px;
+  }
+
+  .scoresTableBanner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .scoresTableBanner > div:first-child {
+    display: grid;
+    gap: 3px;
+  }
+
+  .scoresTableBanner strong {
+    color: var(--bw-text-title);
+    font-size: 16px;
+  }
+
+  .scoresTableBanner > div:first-child span {
+    color: var(--bw-text-muted);
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .scoresTableProgress {
+    min-width: 220px;
+    display: grid;
+    grid-template-columns: auto minmax(80px, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    color: var(--bw-text-body);
+    font-size: 11px;
+  }
+
+  .scoresTableProgress progress {
+    width: 100%;
+    height: 5px;
+    overflow: hidden;
+    border: 0;
+    border-radius: 999px;
+    background: var(--bw-border-subtle);
+    accent-color: var(--color-primary);
+  }
+
+  .scoresTableProgress progress::-webkit-progress-bar {
+    border-radius: 999px;
+    background: var(--bw-border-subtle);
+  }
+
+  .scoresTableProgress progress::-webkit-progress-value,
+  .scoresTableProgress progress::-moz-progress-bar {
+    border-radius: 999px;
+    background: var(--color-primary);
+  }
+
+  .scoresTableProgress small {
+    color: var(--bw-text-muted);
+    font-size: 10px;
+    white-space: nowrap;
+  }
+
+  .scoresGroupHeaderRow :global(.entries-header-cell) {
+    border-bottom-color: color-mix(in srgb, var(--bw-border-subtle) 82%, transparent);
+  }
+
+  .scoresSubHeaderRow :global(.entries-header-cell) {
+    padding-block: 7px;
+    color: var(--bw-text-muted);
+    font-size: 9px;
+  }
+
+  .gameGroupHeader {
+    border-left: 1px solid var(--bw-border-card) !important;
+    color: var(--bw-text-title) !important;
+    letter-spacing: 0.06em !important;
+  }
+
+  .tableCard :global(.scores-cell--game) {
+    border-left: 1px solid var(--bw-border-card);
+  }
+
+  .editableScoreCell {
+    background: color-mix(in srgb, var(--bw-surface-panel) 48%, transparent) !important;
+  }
+
+  .calculatedScoreCell {
+    min-width: 62px;
+    color: var(--bw-text-muted) !important;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .tableCard :global(.scores-row:focus-within .scores-cell) {
+    background: color-mix(in srgb, var(--color-primary) 8%, var(--bw-surface-card)) !important;
+  }
+
+  .tableCard :global(.scores-row:focus-within) .editableScoreCell {
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-primary) 34%, transparent);
+  }
+
+  .tableCard :global(.scores-cell.name),
+  .stickyBowlerHeader {
+    position: sticky;
+    left: 0;
+    width: 190px;
+    min-width: 190px;
+  }
+
+  .tableCard :global(.scores-cell.lane),
+  .stickyLaneHeader {
+    position: sticky;
+    left: 190px;
+    width: 72px;
+    min-width: 72px;
+  }
+
+  .tableCard :global(.scores-cell.average),
+  .stickyAverageHeader {
+    position: sticky;
+    left: 262px;
+    width: 72px;
+    min-width: 72px;
+    border-right: 1px solid var(--bw-border-card) !important;
+  }
+
+  .stickyBowlerHeader,
+  .stickyLaneHeader,
+  .stickyAverageHeader {
+    z-index: 7 !important;
+    background: var(--bw-surface-panel-strong) !important;
+  }
+
+  .tableCard :global(.scores-cell.name),
+  .tableCard :global(.scores-cell.lane),
+  .tableCard :global(.scores-cell.average) {
+    z-index: 3;
+    background: var(--bw-surface-card) !important;
+  }
+
+  .tableCard :global(.scores-row.even .scores-cell.name),
+  .tableCard :global(.scores-row.even .scores-cell.lane),
+  .tableCard :global(.scores-row.even .scores-cell.average) {
+    background: var(--bw-surface-panel) !important;
+  }
+
+  .totalColumnHeader,
+  .finalColumnHeader {
+    min-width: 92px;
+    border-left: 1px solid var(--bw-border-card) !important;
+  }
+
+  .finalColumnHeader,
+  .tableCard :global(.total-final) {
+    background: color-mix(in srgb, var(--color-primary) 7%, var(--bw-surface-panel)) !important;
+  }
+
+  .tableCard :global(.total-scratch),
+  .tableCard :global(.total-final) {
+    min-width: 92px;
+    border-left: 1px solid var(--bw-border-card);
+    text-align: center;
+  }
+
+  .tableCard :global(.total-final) {
+    color: var(--bw-text-title);
+    font-size: 14px;
+  }
+
+  .statusColumnHeader,
+  .scoreStatusCell {
+    width: 138px;
+    min-width: 138px;
+  }
+
+  .scoreStatusCell {
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .scoreStatusBadge,
+  .rowSaveState {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  .scoreStatusBadge {
+    min-height: 22px;
+    padding: 4px 8px;
+    border: 1px solid var(--bw-border-subtle);
+    font-size: 9px;
+    text-transform: uppercase;
+  }
+
+  .scoreStatusBadge_complete {
+    color: var(--bw-text-success);
+    border-color: var(--color-success-border);
+    background: var(--color-success-soft);
+  }
+
+  .scoreStatusBadge_progress {
+    color: var(--bw-text-accent);
+    border-color: var(--bw-border-accent);
+    background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  }
+
+  .scoreStatusBadge_pending {
+    color: var(--bw-text-muted);
+    background: color-mix(in srgb, var(--bw-surface-panel) 80%, transparent);
+  }
+
+  .rowSaveState {
+    margin-left: 5px;
+    color: var(--bw-text-muted);
+    font-size: 9px;
+  }
+
+  .rowSaveState_saving {
+    color: var(--bw-text-accent);
+  }
+
+  .rowSaveState_saved {
+    color: var(--bw-text-success);
+  }
+
+  .rowSaveState_failed {
+    color: var(--bw-text-danger);
+  }
+
+  .scoresTableLocked :global(.score-input),
+  .scoresTableLocked :global(.score-input-valid),
+  .scoresTableLocked :global(.score-input-warning),
+  .scoresTableLocked :global(.score-input-error) {
+    cursor: not-allowed;
+    border-color: var(--bw-border-subtle);
+    background: color-mix(in srgb, var(--bw-surface-panel) 72%, transparent);
+    color: var(--bw-text-muted);
+    box-shadow: none;
+  }
+
+  .scoresTableLocked .scoresTableBanner::after {
+    content: 'Scores locked';
+    padding: 4px 8px;
+    border: 1px solid var(--bw-border-subtle);
+    border-radius: 999px;
+    color: var(--bw-text-muted);
+    background: var(--bw-surface-panel);
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+
+  .tableCard .paginationWrapper {
+    margin: 0;
+    padding: 10px 12px;
+    border: 0;
+    border-top: 1px solid var(--bw-border-subtle);
+    border-radius: 0;
+    background: color-mix(in srgb, var(--bw-surface-panel) 40%, transparent);
+  }
 }
 
 .mobileSaveStateSaving {

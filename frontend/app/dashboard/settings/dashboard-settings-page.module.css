@@ -1,5 +1,5 @@
 .pageShell {
-  padding: 24px;
+  padding: var(--space-page-y) var(--space-page-x);
   max-width: 1200px;
   margin: 0 auto;
 }

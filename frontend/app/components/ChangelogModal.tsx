@@ -3,13 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { BookOpen, X } from 'lucide-react';
 import { API } from '../lib/api';
+import type { ChangelogEntry } from '../lib/types';
 import styles from './ChangelogModal.module.css';
-
-interface ChangelogEntry {
-  date: string;
-  version: string;
-  changes: string[];
-}
 
 export interface ChangelogModalProps {
   isOpen: boolean;

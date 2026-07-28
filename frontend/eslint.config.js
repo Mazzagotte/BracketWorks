@@ -3,8 +3,7 @@ const nextConfig = require('eslint-config-next/core-web-vitals');
 
 const REACT_VERSION = '18.3.1';
 
-// Replace the babel parser (element 0) with @typescript-eslint/parser which is
-// compatible with ESLint v10's scopeManager.addGlobals API requirement.
+// Replace the Babel parser (element 0) with the project's TypeScript parser.
 const patchedNextConfig = nextConfig.map((entry, index) => {
   if (index === 0) {
     return {

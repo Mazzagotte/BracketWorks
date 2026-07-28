@@ -67,7 +67,7 @@
 /* Modern dark confirmation modal polish */
 
 .body {
-  padding: 1rem;
+  padding: var(--space-card-x);
   background: transparent;
 }
 
@@ -85,11 +85,11 @@
 }
 
 .actions {
-  margin-top: 1rem;
+  margin-top: var(--space-section);
 }
 
 .okButton {
-  min-height: 36px;
+  min-height: var(--control-height);
   border-radius: 11px;
   padding: 0.42rem 0.9rem;
   color: var(--bw-text-title);

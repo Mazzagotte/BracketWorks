@@ -1199,6 +1199,296 @@
   }
 }
 
+/* Unified tournament workspace composition */
+.pageContainer.pageContainer {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0.78rem 1rem 1.1rem;
+}
+
+.quickActionsCard {
+  margin-bottom: 0.72rem;
+  overflow: hidden;
+  border-radius: 18px;
+  border: 1px solid var(--bw-border-card);
+  background: var(--bw-surface-card);
+}
+
+.quickActionsCard > h2,
+.summaryHeader,
+.tableCardHeader {
+  min-height: 42px;
+  padding: 0.62rem 0.78rem;
+  display: flex;
+  align-items: center;
+  gap: 0.48rem;
+  border-bottom: 1px solid var(--bw-border-subtle);
+  background: transparent;
+}
+
+.quickActionsCard > h2 svg,
+.summaryTitle svg,
+.sectionTitle svg {
+  width: 16px;
+  height: 16px;
+  color: var(--bw-text-accent);
+}
+
+.quickActionsCard > :last-child {
+  padding: 0.58rem 0.78rem 0.68rem;
+}
+
+.quickActionsContent {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: 0.52rem;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.quickActionsContent > div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.52rem;
+}
+
+.quickActionsContent > div:first-child {
+  grid-template-columns: 1fr;
+}
+
+.quickActionsContent button {
+  width: 100%;
+  min-height: 38px;
+  justify-content: center;
+  gap: 0.48rem;
+  border-radius: 9px;
+  box-shadow: none;
+}
+
+.quickActionsContent button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.summaryCard {
+  margin-bottom: 0.72rem;
+  border-radius: 18px;
+  box-shadow: none;
+}
+
+.summaryHeader {
+  justify-content: space-between;
+}
+
+.summaryTitleWrap {
+  display: block;
+}
+
+.summaryTitle {
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.48rem;
+  border: 0;
+  background: transparent;
+}
+
+.summarySubtitle {
+  margin: 0.22rem 0 0;
+  color: var(--bw-text-muted);
+  font-size: 0.68rem;
+  line-height: 1.25;
+}
+
+.summaryPaymentStrip {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.42rem;
+  flex-wrap: wrap;
+}
+
+.summaryPaymentStrip > span {
+  min-height: 28px;
+  padding: 0.28rem 0.58rem;
+  gap: 0.34rem;
+}
+
+.summaryPaymentStrip svg {
+  width: 14px;
+  height: 14px;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  align-items: stretch;
+  gap: 0.52rem;
+  padding: 0.68rem 0.78rem 0.78rem;
+}
+
+.statBox {
+  width: 100%;
+  min-width: 0;
+  min-height: 88px;
+  padding: 0.68rem 0.78rem;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0.72rem;
+  text-align: left;
+  border-radius: 12px;
+}
+
+.statIconRing {
+  width: 48px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 24%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-primary) 9%, transparent);
+}
+
+.statIcon {
+  width: 26px;
+  height: 26px;
+  color: var(--bw-text-accent);
+}
+
+.statContent {
+  min-width: 0;
+}
+
+.statValue {
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.statLabel {
+  margin-top: 0.24rem;
+  font-size: 0.67rem;
+}
+
+.statDetail,
+.remainingLabel {
+  margin-top: 0.2rem;
+  font-size: 0.66rem;
+}
+
+.progressBarRow {
+  width: 100%;
+  margin-top: 0.36rem;
+}
+
+.searchStandalone {
+  margin-bottom: 0.72rem;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 18px;
+}
+
+.sectionTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.48rem;
+}
+
+.searchInput {
+  min-height: 38px;
+}
+
+.tableCard {
+  border-radius: 18px;
+}
+
+.tableCardHeader {
+  min-height: 44px;
+}
+
+.headerPool {
+  padding: 0.24rem 0.58rem;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 26%, transparent);
+  border-radius: 8px;
+  color: var(--bw-text-accent);
+  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+}
+
+.winnerRow {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 110px 126px;
+  align-items: center;
+  gap: 0.7rem;
+  min-height: 48px;
+  padding: 0.44rem 0.78rem;
+}
+
+.winnerName {
+  font-size: 0.78rem;
+}
+
+.payoutCol {
+  min-width: 0;
+}
+
+.payoutAmount,
+.firstPlace .payoutAmount {
+  font-size: 0.88rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.paidBadge,
+.markPaidBtn {
+  width: 100%;
+  min-height: 30px;
+  justify-content: center;
+  border-radius: 8px;
+}
+
+@media (max-width: 900px) {
+  .winnerRow {
+    grid-template-columns: 34px minmax(0, 1fr) 90px 108px;
+  }
+}
+
+@media (max-width: 640px) {
+  .pageContainer.pageContainer {
+    padding: 0.58rem 0.42rem 0.9rem;
+  }
+
+  .quickActionsContent {
+    grid-template-columns: 1fr;
+  }
+
+  .summaryGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .summaryHeader {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .summaryPaymentStrip {
+    justify-content: flex-start;
+  }
+
+  .winnerRow {
+    grid-template-columns: 30px minmax(0, 1fr);
+    grid-template-areas:
+      'badge info'
+      'amount action';
+  }
+}
+
 @media (max-width: 360px) {
   .winnerRow {
     padding: 0.45rem 0.55rem;

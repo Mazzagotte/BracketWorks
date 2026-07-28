@@ -155,7 +155,7 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
   }, [selectedSquad, squads, authToken, getItem, searchUsbc, searchFirstName, searchLastName]);
 
   const addPlayer = useCallback(async (newPlayer: Omit<Player, 'id'>) => {
-    if (!authToken) return;
+    if (!authToken) return false;
 
     try {
       const playerData = {
@@ -191,9 +191,11 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
         amountPaid: newPlayer.amountPaid
       };
       setPlayers(prev => [...prev, transformedPlayer]);
+      return true;
     } catch (err: unknown) {
       logger.error('Failed to add player', { error: err });
       toast.error(`Failed to add player: ${err instanceof Error ? err.message : 'Unknown error'}`, 'Add Player');
+      return false;
     }
   }, [authToken, selectedSquad, getItem, toast]);
 
