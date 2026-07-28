@@ -307,8 +307,8 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
       playerData.full_name = `${merged.firstName || ''} ${merged.lastName || ''}`.trim();
     }
 
-    if ('usbc' in updates) playerData.usbc_number = updates.usbc;
-    if ('average' in updates) playerData.average = updates.average;
+    if ('usbc' in updates) playerData.usbc_number = updates.usbc ?? '';
+    if ('average' in updates) playerData.average = updates.average ?? 0;
     if ('handicap' in updates || 'scratch' in updates || 'bracketEntries' in updates || 'division' in updates) {
       playerData.handicap_entry_count = nextBracketEntries.handicap ?? 0
       playerData.scratch_entry_count = nextBracketEntries.scratch ?? 0
@@ -316,7 +316,7 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
     }
     if ('lane' in updates) playerData.lane = String(updates.lane ?? '');
     if ('division' in updates) playerData.division = normalizeDivision(updates.division);
-    if ('amountPaid' in updates) playerData.amount_paid = updates.amountPaid;
+    if ('amountPaid' in updates) playerData.amount_paid = updates.amountPaid ?? 0;
 
     // Merge into the pending patch for this player so the debounced call always
     // sends ALL accumulated changes, not just the latest single field
