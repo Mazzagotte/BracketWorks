@@ -5499,29 +5499,29 @@
 /* Tournament and squad selection modals */
 .tournamentSelectorCard,
 .squadChangeModalCard {
-  width: min(1120px, calc(100vw - 40px));
-  max-height: min(88vh, 820px);
+  width: min(980px, calc(100vw - 40px));
+  max-height: min(88vh, 760px);
 }
 
 .tournamentSelectorHeader,
 .squadChangeHeader {
-  padding: 38px 86px 30px 38px;
+  padding: 30px 76px 24px 30px;
   border-bottom: 0 !important;
 }
 
 .tournamentSelectorHeader .modalTitle,
 .squadChangeHeader .modalTitle {
-  font-size: clamp(30px, 3vw, 42px);
+  font-size: clamp(28px, 3vw, 36px);
 }
 
 .tournamentSelectorHeader .modalSubtitle,
 .squadChangeHeader .modalSubtitle {
-  margin-top: 12px;
-  font-size: 22px;
+  margin-top: 8px;
+  font-size: 17px;
 }
 
 .tournamentSelectorCard .modalScrollBody {
-  padding: 0 36px 34px;
+  padding: 0 28px 28px;
 }
 
 .tournamentSelectorCard .tournamentList {
@@ -5532,16 +5532,16 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 24px 36px;
-  min-height: 290px;
-  padding: 32px;
-  border-radius: 26px;
+  gap: 20px 28px;
+  min-height: 220px;
+  padding: 26px;
+  border-radius: 20px;
 }
 
 .tournamentSelectorCard .tournamentInfo {
   display: flex;
   align-items: flex-start;
-  gap: 24px;
+  gap: 18px;
 }
 
 .tournamentDetails {
@@ -5552,9 +5552,9 @@
 .squadChangeIcon {
   display: grid;
   place-items: center;
-  flex: 0 0 76px;
-  width: 76px;
-  height: 76px;
+  flex: 0 0 64px;
+  width: 64px;
+  height: 64px;
   border: 1px solid var(--bw-border-subtle);
   border-radius: 50%;
   color: var(--bw-text-accent);
@@ -5562,39 +5562,39 @@
 
 .tournamentIcon svg,
 .squadChangeIcon svg {
-  width: 36px;
-  height: 36px;
+  width: 30px;
+  height: 30px;
 }
 
 .tournamentSelectorCard .tournamentName {
-  font-size: clamp(22px, 2.2vw, 30px);
+  font-size: clamp(21px, 2.2vw, 27px);
 }
 
 .tournamentSelectorCard .tournamentLocation {
-  margin-top: 14px;
-  font-size: 20px;
+  margin-top: 10px;
+  font-size: 17px;
   font-weight: 500;
 }
 
 .tournamentSelectorCard .tournamentDate {
-  margin-top: 16px;
-  font-size: 18px;
+  margin-top: 11px;
+  font-size: 15px;
 }
 
 .tournamentSelectorCard .tournamentMeta {
-  gap: 12px;
-  margin-top: 24px;
+  gap: 8px;
+  margin-top: 18px;
 }
 
 .tournamentSelectorCard .tournamentMeta span {
-  padding: 9px 13px;
+  padding: 7px 11px;
   border-radius: 10px;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 500;
 }
 
 .tournamentSelectorCard .tournamentActions {
-  gap: 18px;
+  gap: 12px;
 }
 
 .tournamentSelectorCard .loadBtn,
@@ -5603,13 +5603,13 @@
   align-items: center;
   justify-content: center;
   gap: 11px;
-  min-width: 164px;
-  min-height: 66px;
-  padding: 14px 24px;
+  min-width: 142px;
+  min-height: 54px;
+  padding: 12px 20px;
   border-radius: 12px;
   background: transparent !important;
   box-shadow: none !important;
-  font-size: 18px;
+  font-size: 15px;
 }
 
 .tournamentSelectorCard .loadBtn {
@@ -5623,33 +5623,33 @@
 }
 
 .squadChangeModalCard .squadChangeList {
-  padding: 28px 38px 38px;
+  padding: 22px 28px 28px;
 }
 
 .squadChangeModalCard .squadChangeItem {
   display: flex;
   align-items: center;
-  gap: 28px;
-  min-height: 150px;
-  padding: 28px 32px;
-  border-radius: 24px;
+  gap: 20px;
+  min-height: 124px;
+  padding: 22px 24px;
+  border-radius: 18px;
   text-align: left;
 }
 
 .squadChangeIcon {
-  flex-basis: 78px;
-  width: 78px;
-  height: 78px;
-  border-radius: 16px;
+  flex-basis: 64px;
+  width: 64px;
+  height: 64px;
+  border-radius: 14px;
 }
 
 .squadChangeModalCard .squadChangeItemLabel {
-  font-size: clamp(22px, 2.5vw, 30px);
+  font-size: clamp(20px, 2.5vw, 26px);
 }
 
 .squadChangeModalCard .squadChangeItemMeta {
-  margin-top: 12px;
-  font-size: 19px;
+  margin-top: 8px;
+  font-size: 16px;
 }
 
 .squadChangeItemMeta b {
@@ -5658,10 +5658,10 @@
 }
 
 .squadChangeModalCard .squadChangeItemStatus {
-  min-width: 184px;
-  padding: 20px 24px;
-  border-radius: 16px;
-  font-size: 19px;
+  min-width: 150px;
+  padding: 16px 20px;
+  border-radius: 13px;
+  font-size: 16px;
   text-align: center;
   text-transform: uppercase;
 }
@@ -5725,23 +5725,23 @@
 
 /* Edit tournament modal */
 .tournamentModalContent {
-  width: min(1080px, calc(100vw - 28px));
-  max-height: min(96vh, 1180px);
+  width: min(960px, calc(100vw - 28px));
+  max-height: min(94vh, 980px);
   border-radius: 24px;
 }
 
 .tournamentModalContent > .modalHeader {
-  padding: 42px 88px 30px 42px;
+  padding: 30px 78px 24px 32px;
   border-bottom: 1px solid var(--bw-border-subtle) !important;
 }
 
 .tournamentModalContent > .modalHeader .modalTitle {
-  font-size: clamp(30px, 3vw, 42px);
+  font-size: clamp(28px, 3vw, 36px);
 }
 
 .tournamentModalContent > .modalHeader .modalSubtitle {
-  margin-top: 12px;
-  font-size: 20px;
+  margin-top: 8px;
+  font-size: 16px;
 }
 
 .tournamentModalContent .tournamentFormBody {
@@ -5751,26 +5751,26 @@
 .tournamentModalContent .tournamentSectionLabel {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   margin: 0;
-  padding: 38px 42px 20px;
-  font-size: 17px;
+  padding: 28px 32px 16px;
+  font-size: 15px;
   font-weight: 800;
   text-transform: uppercase;
 }
 
 .tournamentModalContent .tournamentSectionLabel svg,
 .tournamentModalContent .squadTimesTitle svg {
-  width: 25px;
-  height: 25px;
+  width: 22px;
+  height: 22px;
 }
 
 .tournamentModalContent .tournamentFormFields {
-  gap: 24px;
+  gap: 18px;
 }
 
 .tournamentModalContent .tournamentFormFields > :global(.form-field) {
-  margin: 0 42px;
+  margin: 0 32px;
 }
 
 .tournamentModalContent .tournamentFormFields > .tournamentSectionLabel {
@@ -5779,15 +5779,15 @@
 }
 
 .tournamentModalContent .tournamentInput {
-  min-height: 62px;
-  padding-inline: 22px;
-  border-radius: 14px !important;
-  font-size: 19px;
+  min-height: 54px;
+  padding-inline: 18px;
+  border-radius: 12px !important;
+  font-size: 16px;
 }
 
 .tournamentModalContent .tournamentDateRow {
-  gap: 38px;
-  padding: 0 42px 36px;
+  gap: 24px;
+  padding: 0 32px 28px;
 }
 
 .tournamentModalContent .tournamentDateRow > :global(.form-field) {
@@ -5796,20 +5796,20 @@
 
 .tournamentModalContent .squadTimesSection {
   margin-top: 0;
-  padding: 30px 42px 40px;
+  padding: 24px 32px 30px;
   border-top: 1px solid var(--bw-border-subtle);
 }
 
 .tournamentModalContent .squadTimesHeadingRow {
-  margin-bottom: 22px;
+  margin-bottom: 16px;
 }
 
 .tournamentModalContent .squadTimesTitle {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 11px;
   color: var(--bw-text-accent);
-  font-size: 18px;
+  font-size: 15px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
@@ -5832,24 +5832,24 @@
 .tournamentModalContent .squadTimeEntry {
   display: flex;
   align-items: center;
-  gap: 20px;
-  min-height: 112px;
-  padding: 20px 24px;
-  border-radius: 16px;
+  gap: 16px;
+  min-height: 90px;
+  padding: 16px 18px;
+  border-radius: 14px;
 }
 
 .squadTimeIcon {
   display: grid;
   place-items: center;
-  flex: 0 0 48px;
-  width: 48px;
-  height: 48px;
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
   color: var(--bw-text-accent);
 }
 
 .squadTimeIcon svg {
-  width: 30px;
-  height: 30px;
+  width: 25px;
+  height: 25px;
 }
 
 .squadTimeDetails {
@@ -5861,19 +5861,19 @@
 
 .squadTimeDetails strong {
   color: var(--bw-text-title);
-  font-size: 18px;
+  font-size: 16px;
 }
 
 .tournamentModalContent .squadTimeText {
   color: var(--bw-text-muted);
-  font-size: 17px;
+  font-size: 15px;
 }
 
 .tournamentModalContent .squadTimeRemove {
   display: grid;
   place-items: center;
-  min-width: 54px;
-  min-height: 54px;
+  min-width: 46px;
+  min-height: 46px;
   padding: 0;
   color: var(--color-error) !important;
 }
@@ -5902,7 +5902,7 @@
 }
 
 .tournamentModalContent .tournamentModalFooter {
-  padding: 22px 42px;
+  padding: 16px 32px;
   background: color-mix(in srgb, var(--bw-surface-card) 98%, transparent);
 }
 
@@ -5910,7 +5910,7 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .tournamentModalContent .tournamentSaveStatus svg {
@@ -5920,9 +5920,9 @@
 
 .tournamentModalContent .tournamentCancelButton,
 .tournamentModalContent .tournamentSaveButton {
-  min-height: 58px;
-  padding: 0 28px;
-  font-size: 17px;
+  min-height: 50px;
+  padding: 0 22px;
+  font-size: 15px;
 }
 
 @media (max-width: 720px) {

@@ -574,3 +574,96 @@
     flex-direction: column;
   }
 }
+
+/* Compact spacing pass */
+.dialog {
+  width: min(880px, calc(100vw - 32px));
+  max-width: 880px;
+  max-height: min(92vh, 820px);
+}
+
+.header {
+  gap: 14px;
+  padding: 24px 28px;
+}
+
+.headerIcon {
+  flex-basis: 50px;
+  width: 50px;
+  height: 50px;
+  border-radius: 13px;
+}
+
+.headerIcon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.title {
+  font-size: clamp(24px, 3.5vw, 32px);
+}
+
+.tournamentName {
+  margin-top: 5px;
+  font-size: 14px;
+}
+
+.bodyGrid {
+  grid-template-columns: minmax(300px, 0.9fr) minmax(340px, 1.1fr);
+}
+
+.qrSection {
+  gap: 11px;
+  padding: 22px 28px 26px;
+}
+
+.posterPreview {
+  max-width: 300px;
+  border-radius: 15px;
+}
+
+.posterFrame {
+  transform: scale(0.2777778);
+}
+
+.sharePanel {
+  gap: 20px;
+  padding: 28px;
+}
+
+.shareTitle {
+  font-size: 19px;
+}
+
+.shareDescription {
+  margin-top: 6px;
+  font-size: 14px;
+}
+
+.urlRow {
+  gap: 10px;
+  padding: 13px;
+  border-radius: 12px;
+}
+
+.copyBtn {
+  min-height: 44px;
+}
+
+.exportSection {
+  padding-top: 18px;
+}
+
+.exportBtn {
+  min-height: 46px;
+}
+
+.hint {
+  padding: 13px;
+}
+
+@media (max-width: 760px) {
+  .bodyGrid {
+    grid-template-columns: 1fr;
+  }
+}
