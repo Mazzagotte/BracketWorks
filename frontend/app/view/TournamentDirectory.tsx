@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Activity, ArrowRight, Calendar, MapPin, Radio, Trophy, Users } from 'lucide-react'
 import { buildApiUrl } from '../lib/api'
 import styles from './tournament-directory.module.css'
 import viewStyles from './[tournamentId]/view.module.css'
@@ -230,14 +231,17 @@ export default function TournamentDirectory({
         return (
           <li key={tournament.id} className={styles.card}>
             <Link href={href} className={styles.cardLink}>
-              <div className={styles.cardTitle}>{tournament.name}</div>
-              <div className={styles.metaRow}>
-                {tournament.location ? <span>{tournament.location}</span> : <span>Location TBD</span>}
-                {typeof tournament.squad_count === 'number' ? <span>{tournament.squad_count} squads</span> : null}
+              <div className={styles.cardTop}>
+                <span className={styles.cardIcon} aria-hidden="true"><Trophy /></span>
+                <div className={styles.cardTitle}>{tournament.name}</div>
+                {recentlyUpdated ? <div className={styles.updatedPill}><Radio aria-hidden="true" />Live update</div> : null}
               </div>
-              {dateRange ? <div className={styles.metaDate}>{dateRange}</div> : null}
-              {recentlyUpdated ? <div className={styles.updatedPill}>Updated just now</div> : null}
-              <div className={styles.openHint}>Open live view</div>
+              <div className={styles.metaRow}>
+                <span><MapPin aria-hidden="true" />{tournament.location || 'Location TBD'}</span>
+                {typeof tournament.squad_count === 'number' ? <span><Users aria-hidden="true" />{tournament.squad_count} squads</span> : null}
+              </div>
+              {dateRange ? <div className={styles.metaDate}><Calendar aria-hidden="true" />{dateRange}</div> : null}
+              <div className={styles.openHint}>Open Live View <ArrowRight aria-hidden="true" /></div>
             </Link>
           </li>
         )
@@ -283,7 +287,7 @@ export default function TournamentDirectory({
       <section className={styles.wrap}>
         <div className={styles.heroShell}>
           <div className={styles.heroContent}>
-            <p className={styles.heroEyebrow}>Public Tournament Directory</p>
+            <p className={styles.heroEyebrow}><Activity aria-hidden="true" />Public Tournament Directory</p>
             <h2 className={styles.heroTitle}>Open current brackets, scores, and side pots without signing in.</h2>
             <p className={styles.heroBody}>Use this directory to jump into any active public tournament page. Share a direct link with bowlers so they can follow results live from the concourse or their phone.</p>
           </div>

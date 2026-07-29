@@ -840,7 +840,6 @@
   flex-shrink: 0;
   background: var(--color-warning-tint);
   border: 1px solid var(--color-border-light);
-  border-top: 3px solid var(--color-border-hover);
   border-radius: 12px;
   box-shadow: 0 2px 8px var(--opacity-black-08);
   padding: 0.75rem 0.75rem 0.8rem;
@@ -886,7 +885,6 @@
 }
 
 .finalsCard {
-  border-top: 3px solid var(--color-brand-gold-light);
   background: linear-gradient(to bottom, var(--opacity-white-06) 0%, var(--color-brand-ivory-soft) 100%);
   box-shadow:
     0 4px 16px var(--color-border-light),
@@ -906,7 +904,7 @@
 }
 
 .matchInProgress {
-  border-left: 4px solid var(--color-primary);
+  border-color: var(--color-primary);
 }
 
 .matchPending {
@@ -914,7 +912,6 @@
 }
 
 .matchNextUp {
-  border-left: 3px solid var(--color-border-hover);
 }
 .matchBye { opacity: 0.6; }
 
@@ -1101,7 +1098,6 @@
   padding: 11px 16px 10px 14px;
   background: var(--color-brand-ivory-light);
   border-bottom: 1px solid var(--color-border);
-  border-left: 3px solid var(--color-primary);
 }
 
 .sidePotGrid {
@@ -3237,4 +3233,235 @@
 .main,
 .section {
   background: var(--public-bg);
+}
+
+/* Live public workspace theme */
+@media (min-width: 769px) {
+  .header {
+    padding-top: 30px;
+  }
+
+  .headerInner {
+    max-width: 1320px;
+    padding: 0 28px;
+  }
+
+  .headerTop {
+    gap: 26px;
+    padding: 24px 28px;
+    border: 1px solid var(--bw-border-card);
+    border-radius: 24px;
+    background: var(--bw-surface-card);
+    box-shadow: none;
+  }
+
+  .brandCol {
+    padding-right: 26px;
+  }
+
+  .main {
+    max-width: 1320px;
+    padding: 22px 28px 50px;
+  }
+
+  .contentShell {
+    padding: 22px;
+    border: 1px solid var(--bw-border-card);
+    border-radius: 24px;
+    background: var(--bw-surface-card);
+    box-shadow: none;
+  }
+}
+
+.brandLogo {
+  max-height: 68px;
+}
+
+.brandEyebrow {
+  color: var(--bw-text-accent);
+  font-size: 12px;
+}
+
+.brandSubline,
+.tournamentLocation {
+  color: var(--bw-text-muted);
+}
+
+.tournamentName {
+  color: var(--bw-text-title);
+  font-size: clamp(20px, 2vw, 30px);
+}
+
+.controlsPanel {
+  gap: 12px;
+}
+
+.squadSelect {
+  min-height: 44px;
+  padding-inline: 15px;
+  border-radius: 11px;
+  background: var(--bw-surface-panel);
+}
+
+.tabsTrack {
+  height: 44px;
+  gap: 6px;
+  padding: 4px;
+  border: 1px solid var(--bw-border-subtle);
+  border-radius: 12px;
+  background: var(--bw-surface-panel);
+}
+
+.tab {
+  min-height: 34px;
+  padding-inline: 18px;
+  border-radius: 9px;
+  font-size: 13px;
+}
+
+.tabActive {
+  color: var(--bw-text-title);
+  border: 1px solid var(--bw-border-accent);
+  background: color-mix(in srgb, var(--color-primary) 12%, var(--bw-surface-panel));
+}
+
+.shareBtn {
+  min-height: 44px;
+  padding-inline: 18px;
+  border: 1px solid var(--bw-border-accent);
+  border-radius: 11px;
+  background: transparent;
+  color: var(--bw-text-accent);
+}
+
+.shareBtn:hover {
+  background: color-mix(in srgb, var(--color-primary) 10%, var(--bw-surface-panel));
+  color: var(--bw-text-title);
+}
+
+.aliveControls,
+.bracketSearchRow,
+.sidePotRefreshRow {
+  padding: 16px;
+  border: 1px solid var(--bw-border-subtle);
+  border-radius: 16px;
+  background: var(--bw-surface-panel);
+}
+
+.searchInput,
+.bracketSearchInput {
+  min-height: 46px;
+  padding-inline: 16px;
+  border-radius: 11px;
+}
+
+.refreshBtn,
+.bracketSearchClear {
+  min-height: 42px;
+  border: 1px solid var(--bw-border-subtle);
+  border-radius: 10px;
+  background: var(--bw-surface-card-strong);
+}
+
+.tableWrap,
+.groupSection,
+.sidePotSection,
+.winnerCard {
+  border-color: var(--bw-border-subtle);
+  border-radius: 18px;
+  background: var(--bw-surface-panel);
+  box-shadow: none;
+}
+
+.table thead th {
+  padding: 14px 16px;
+  background: var(--bw-surface-card-strong);
+}
+
+.table td {
+  padding: 14px 16px;
+}
+
+.groupTitle,
+.sidePotSectionTitle {
+  padding: 18px 20px;
+  background: var(--bw-surface-card-strong);
+  font-size: 16px;
+}
+
+.bracketView {
+  padding: 18px;
+}
+
+.bracketGroupTabs {
+  gap: 8px;
+  padding: 5px;
+  border-radius: 12px;
+  background: var(--bw-surface-panel);
+}
+
+.bracketGroupTab,
+.bracketPill,
+.bracketPillsArrow {
+  min-height: 38px;
+  border-radius: 9px;
+}
+
+.bracketGroupTabActive,
+.bracketPillActive {
+  color: var(--bw-text-title);
+  border-color: var(--bw-border-accent);
+  background: color-mix(in srgb, var(--color-primary) 12%, var(--bw-surface-panel));
+}
+
+.bracketRound,
+.matchCard,
+.roundLabel {
+  border-radius: 12px;
+}
+
+.matchCard {
+  background: var(--bw-surface-card-strong);
+}
+
+.sidePotCard {
+  padding: 20px;
+  background: var(--bw-surface-card-strong);
+}
+
+.emptyNote {
+  padding: 48px 24px;
+  border-style: solid;
+  border-radius: 16px;
+  background: var(--bw-surface-panel);
+}
+
+@media (max-width: 768px) {
+  .header {
+    position: static;
+    border-bottom: 1px solid var(--bw-border-subtle);
+  }
+
+  .headerTop {
+    padding: 14px 0;
+  }
+
+  .tabsTrack {
+    height: 40px;
+  }
+
+  .main {
+    padding: 14px 10px 34px;
+  }
+
+  .contentShell {
+    padding: 0;
+  }
+
+  .tableWrap,
+  .groupSection,
+  .sidePotSection,
+  .winnerCard {
+    border-radius: 14px;
+  }
 }

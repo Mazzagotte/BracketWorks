@@ -37,7 +37,6 @@
   text-align: center;
   animation: slideIn 0.3s ease;
   position: relative;
-  border-top: 4px solid var(--color-primary);
 }
 
 @keyframes slideIn {
@@ -642,7 +641,6 @@
   color: var(--bw-text-body);
   background: var(--bw-surface-card);
   border: 1px solid var(--bw-border-card);
-  border-left: var(--bw-accent-rail);
   border-radius: var(--radius-2xl);
   box-shadow: none;
   animation: modalScaleIn 0.16s ease;
@@ -933,5 +931,262 @@
   .errorIcon,
   .statusIndicatorBar {
     animation: none;
+  }
+}
+
+/* Shared large-modal treatment */
+.modalCard {
+  width: min(820px, calc(100vw - 32px));
+  max-width: 820px;
+  border: 1px solid var(--bw-border-card);
+  border-radius: 24px;
+  text-align: left;
+}
+
+.loadingContent,
+.successContent,
+.errorContent {
+  position: relative;
+  align-items: stretch;
+  gap: 22px;
+  padding: 42px;
+}
+
+.phaseHeader,
+.successHeader {
+  text-align: left;
+}
+
+.phaseIcon,
+.errorIcon {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border: 1px solid var(--bw-border-accent);
+  border-radius: 18px;
+  color: var(--bw-text-accent);
+  background: color-mix(in srgb, var(--color-primary) 8%, var(--bw-surface-panel));
+}
+
+.phaseIcon svg,
+.errorIcon svg {
+  width: 36px;
+  height: 36px;
+}
+
+.successHeader .phaseIcon {
+  margin-bottom: 22px;
+}
+
+.successPhaseIcon {
+  color: var(--color-success);
+  border-color: color-mix(in srgb, var(--color-success) 35%, transparent);
+  background: color-mix(in srgb, var(--color-success) 8%, var(--bw-surface-panel));
+}
+
+.mainMessage,
+.successMessage,
+.errorMessage {
+  font-size: clamp(28px, 4vw, 38px);
+  letter-spacing: -0.03em;
+}
+
+.generationNote,
+.successSubtitle,
+.errorSuggestion {
+  max-width: 620px;
+  margin-top: 10px;
+  font-size: 17px;
+}
+
+.contextInfo {
+  display: grid;
+  gap: 10px;
+  padding: 22px 24px;
+  border-color: var(--bw-border-card);
+  border-radius: 16px;
+}
+
+.contextTournament,
+.contextSquad {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.contextTournament {
+  font-size: 20px;
+}
+
+.contextSquad {
+  margin-top: 0;
+  font-size: 16px;
+}
+
+.contextTournament svg,
+.contextSquad svg {
+  width: 22px;
+  height: 22px;
+  color: var(--bw-text-accent);
+}
+
+.statusIndicator {
+  width: 100%;
+  height: 7px;
+}
+
+.generationWarning {
+  padding: 14px 18px;
+  border-radius: 12px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.statsContainer {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.statItem,
+.statItemRefund {
+  min-height: 90px;
+  padding: 20px;
+  border-radius: 16px;
+}
+
+.statItem {
+  align-items: center;
+}
+
+.statCount {
+  min-width: 42px;
+  font-size: 30px;
+  text-align: left;
+}
+
+.statLabel,
+.refundTitle {
+  font-size: 15px;
+}
+
+.statItemRefund {
+  grid-column: 1 / -1;
+  justify-content: center;
+}
+
+.errorIcon {
+  width: 72px;
+  height: 72px;
+  color: var(--bw-text-danger);
+  border-color: var(--color-error-border);
+  background: var(--color-error-bg);
+}
+
+.errorIcon::before {
+  content: none;
+}
+
+.technicalDetailsContainer {
+  max-width: none;
+}
+
+.technicalDetailsToggle {
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 10px;
+}
+
+.buttonContainer {
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 6px;
+  padding-top: 22px;
+  border-top: 1px solid var(--bw-border-subtle);
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-width: 160px;
+  min-height: 54px;
+  padding: 0 22px;
+  border-radius: 12px;
+  font-size: 15px;
+}
+
+.button svg {
+  width: 19px;
+  height: 19px;
+}
+
+.closeButton {
+  position: absolute;
+  top: 30px;
+  right: 30px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  padding: 0;
+  border: 1px solid var(--bw-border-subtle);
+  border-radius: 14px;
+  color: var(--bw-text-title);
+  background: var(--bw-surface-panel);
+  cursor: pointer;
+}
+
+.closeButton:hover {
+  border-color: var(--bw-border-accent);
+  color: var(--bw-text-accent);
+}
+
+.closeButton svg {
+  width: 28px;
+  height: 28px;
+}
+
+@media (max-width: 600px) {
+  .modalCard {
+    width: calc(100vw - 20px);
+    max-width: calc(100vw - 20px);
+  }
+
+  .loadingContent,
+  .successContent,
+  .errorContent {
+    padding: 26px 20px 20px;
+  }
+
+  .closeButton {
+    top: 20px;
+    right: 20px;
+    width: 46px;
+    height: 46px;
+  }
+
+  .successHeader,
+  .errorContent {
+    padding-right: 48px;
+  }
+
+  .statsContainer {
+    grid-template-columns: 1fr;
+  }
+
+  .statItemRefund {
+    grid-column: auto;
+  }
+
+  .buttonContainer {
+    flex-direction: column-reverse;
+  }
+
+  .button {
+    width: 100%;
   }
 }

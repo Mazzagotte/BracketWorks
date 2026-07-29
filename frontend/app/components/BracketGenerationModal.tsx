@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import { Braces, CircleCheck, RefreshCw, TriangleAlert, Trophy, Users, X } from 'lucide-react'
 import { logger } from '../lib/logger'
 import { disableScroll, enableScroll } from '../utils/modalUtils'
 import buttonStyles from '../styles/buttons.module.css'
@@ -377,14 +378,22 @@ export default function BracketGenerationModal({
         {/* LOADING PHASE */}
         {currentPhase === 'loading' && (
           <div className={styles.loadingContent}>
+            <div className={styles.phaseIcon} aria-hidden="true"><Braces /></div>
+            <div className={styles.phaseHeader}>
+              <h2 className={styles.mainMessage}>Generating Brackets</h2>
+              <p className={styles.generationNote}>
+                Building tournament brackets and assigning entries.
+              </p>
+            </div>
+
             {/* Tournament Context Info */}
             {(tournamentName || squadName) && (
               <div className={styles.contextInfo}>
                 {tournamentName && (
-                  <p className={styles.contextTournament}>{tournamentName}</p>
+                  <p className={styles.contextTournament}><Trophy aria-hidden="true" />{tournamentName}</p>
                 )}
                 {squadName && (
-                  <p className={styles.contextSquad}>{squadName}</p>
+                  <p className={styles.contextSquad}><Users aria-hidden="true" />{squadName}{typeof playerCount === 'number' ? ` • ${playerCount} entries` : ''}</p>
                 )}
               </div>
             )}
@@ -392,13 +401,6 @@ export default function BracketGenerationModal({
             <div className={styles.statusIndicator} aria-hidden="true">
               <span className={styles.statusIndicatorBar} />
             </div>
-
-            {/* Main message */}
-            <h2 className={styles.mainMessage}>Generating Brackets...</h2>
-
-            <p className={styles.generationNote}>
-              Please wait while brackets are generated. Navigation will unlock automatically when setup is complete.
-            </p>
 
             <p className={styles.generationWarning}>
               Please keep this window open until generation finishes.
@@ -410,8 +412,10 @@ export default function BracketGenerationModal({
         {/* SUCCESS PHASE */}
         {currentPhase === 'success' && (
           <div className={styles.successContent}>
+            <button type="button" className={styles.closeButton} onClick={handleCloseModal} aria-label="Close bracket generation results"><X /></button>
             {/* Success message */}
             <div className={styles.successHeader}>
+              <div className={`${styles.phaseIcon} ${styles.successPhaseIcon}`} aria-hidden="true"><CircleCheck /></div>
               <h2 className={styles.successMessage}>Brackets Generated</h2>
               <p className={styles.successSubtitle}>Your tournament brackets are ready for review.</p>
             </div>
@@ -445,7 +449,7 @@ export default function BracketGenerationModal({
                 onClick={handleRegenerateClick}
                 className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.medium} ${styles.button} ${styles.primaryButton}`}
               >
-                Regenerate Brackets
+                <RefreshCw aria-hidden="true" /> Regenerate Brackets
               </button>
               <button
                 onClick={handleCloseModal}
@@ -460,8 +464,9 @@ export default function BracketGenerationModal({
         {/* ERROR PHASE */}
         {currentPhase === 'error' && (
           <div className={styles.errorContent}>
+            <button type="button" className={styles.closeButton} onClick={handleCloseModal} aria-label="Close bracket generation error"><X /></button>
             {/* Error Icon */}
-            <div className={styles.errorIcon}></div>
+            <div className={styles.errorIcon}><TriangleAlert aria-hidden="true" /></div>
 
             {(() => {
               const parsedError = parseErrorMessage(errorMessage)
@@ -501,7 +506,7 @@ export default function BracketGenerationModal({
                 onClick={handleRegenerateClick}
                 className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.medium} ${styles.button} ${styles.primaryButton}`}
               >
-                Retry
+                <RefreshCw aria-hidden="true" /> Retry
               </button>
               <button
                 onClick={handleCloseModal}

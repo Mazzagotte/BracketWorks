@@ -1042,7 +1042,6 @@
 
 .settingsModalGrid .programCardChecked {
   border-color: var(--dash-accent-border-strong);
-  border-left: 1px solid var(--dash-accent-border-strong);
   background: var(--dash-accent-soft);
 }
 
@@ -1654,7 +1653,6 @@
 
 .programCard {
   border: 1px solid var(--opacity-white-08);
-  border-left: 3px solid color-mix(in srgb, var(--color-primary) 32%, transparent);
   border-radius: 12px;
   background: color-mix(in srgb, var(--opacity-white-06) 50%, transparent);
   padding: 10px 12px;
@@ -1665,7 +1663,6 @@
 
 .programCardChecked {
   border-color: color-mix(in srgb, var(--color-primary) 32%, transparent);
-  border-left: 3px solid var(--color-brand-orange);
   background: color-mix(in srgb, var(--color-primary) 8%, transparent);
 }
 
@@ -3695,8 +3692,6 @@
   /* Section headers: left accent bar for visual hierarchy */
   .sectionHeader {
     border-bottom: none;
-    border-left: 3px solid var(--color-primary);
-    padding-left: 10px;
     margin-bottom: 12px;
   }
 
@@ -4363,7 +4358,6 @@
 .squadChangeModalCard {
   background: color-mix(in srgb, var(--bw-surface-card) 96%, transparent) !important;
   border: 1px solid color-mix(in srgb, var(--color-primary) 22%, transparent) !important;
-  border-left: var(--bw-accent-rail) !important;
   border-radius: var(--radius-2xl);
   box-shadow: 0 18px 38px var(--opacity-black-30) !important;
 }
@@ -5499,6 +5493,479 @@
 @media (max-width: 330px) {
   .summaryCardsBand {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Tournament and squad selection modals */
+.tournamentSelectorCard,
+.squadChangeModalCard {
+  width: min(1120px, calc(100vw - 40px));
+  max-height: min(88vh, 820px);
+}
+
+.tournamentSelectorHeader,
+.squadChangeHeader {
+  padding: 38px 86px 30px 38px;
+  border-bottom: 0 !important;
+}
+
+.tournamentSelectorHeader .modalTitle,
+.squadChangeHeader .modalTitle {
+  font-size: clamp(30px, 3vw, 42px);
+}
+
+.tournamentSelectorHeader .modalSubtitle,
+.squadChangeHeader .modalSubtitle {
+  margin-top: 12px;
+  font-size: 22px;
+}
+
+.tournamentSelectorCard .modalScrollBody {
+  padding: 0 36px 34px;
+}
+
+.tournamentSelectorCard .tournamentList {
+  padding: 12px 0 0;
+}
+
+.tournamentSelectorCard .tournamentItem {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 24px 36px;
+  min-height: 290px;
+  padding: 32px;
+  border-radius: 26px;
+}
+
+.tournamentSelectorCard .tournamentInfo {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.tournamentDetails {
+  min-width: 0;
+}
+
+.tournamentIcon,
+.squadChangeIcon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 76px;
+  width: 76px;
+  height: 76px;
+  border: 1px solid var(--bw-border-subtle);
+  border-radius: 50%;
+  color: var(--bw-text-accent);
+}
+
+.tournamentIcon svg,
+.squadChangeIcon svg {
+  width: 36px;
+  height: 36px;
+}
+
+.tournamentSelectorCard .tournamentName {
+  font-size: clamp(22px, 2.2vw, 30px);
+}
+
+.tournamentSelectorCard .tournamentLocation {
+  margin-top: 14px;
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.tournamentSelectorCard .tournamentDate {
+  margin-top: 16px;
+  font-size: 18px;
+}
+
+.tournamentSelectorCard .tournamentMeta {
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.tournamentSelectorCard .tournamentMeta span {
+  padding: 9px 13px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.tournamentSelectorCard .tournamentActions {
+  gap: 18px;
+}
+
+.tournamentSelectorCard .loadBtn,
+.tournamentSelectorCard .deleteBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 11px;
+  min-width: 164px;
+  min-height: 66px;
+  padding: 14px 24px;
+  border-radius: 12px;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-size: 18px;
+}
+
+.tournamentSelectorCard .loadBtn {
+  border-color: var(--bw-border-subtle) !important;
+  color: var(--bw-text-title) !important;
+}
+
+.tournamentSelectorCard .deleteBtn {
+  border-color: color-mix(in srgb, var(--color-error) 60%, transparent);
+  color: var(--color-error);
+}
+
+.squadChangeModalCard .squadChangeList {
+  padding: 28px 38px 38px;
+}
+
+.squadChangeModalCard .squadChangeItem {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  min-height: 150px;
+  padding: 28px 32px;
+  border-radius: 24px;
+  text-align: left;
+}
+
+.squadChangeIcon {
+  flex-basis: 78px;
+  width: 78px;
+  height: 78px;
+  border-radius: 16px;
+}
+
+.squadChangeModalCard .squadChangeItemLabel {
+  font-size: clamp(22px, 2.5vw, 30px);
+}
+
+.squadChangeModalCard .squadChangeItemMeta {
+  margin-top: 12px;
+  font-size: 19px;
+}
+
+.squadChangeItemMeta b {
+  padding: 0 8px;
+  color: var(--bw-text-accent);
+}
+
+.squadChangeModalCard .squadChangeItemStatus {
+  min-width: 184px;
+  padding: 20px 24px;
+  border-radius: 16px;
+  font-size: 19px;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+@media (max-width: 720px) {
+  .tournamentSelectorHeader,
+  .squadChangeHeader {
+    padding: 24px 58px 20px 22px;
+  }
+
+  .tournamentSelectorHeader .modalSubtitle,
+  .squadChangeHeader .modalSubtitle {
+    font-size: 16px;
+  }
+
+  .tournamentSelectorCard .modalScrollBody {
+    padding: 0 14px 18px;
+  }
+
+  .tournamentSelectorCard .tournamentItem {
+    grid-template-columns: 1fr;
+    min-height: 0;
+    padding: 22px;
+  }
+
+  .tournamentIcon,
+  .squadChangeIcon {
+    flex-basis: 58px;
+    width: 58px;
+    height: 58px;
+  }
+
+  .tournamentSelectorCard .tournamentActions {
+    flex-direction: row;
+  }
+
+  .tournamentSelectorCard .loadBtn,
+  .tournamentSelectorCard .deleteBtn {
+    flex: 1;
+    min-width: 0;
+    min-height: 50px;
+    font-size: 15px;
+  }
+
+  .squadChangeModalCard .squadChangeList {
+    padding: 14px;
+  }
+
+  .squadChangeModalCard .squadChangeItem {
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .squadChangeModalCard .squadChangeItemStatus {
+    width: 100%;
+    min-width: 0;
+    padding: 13px;
+  }
+}
+
+/* Edit tournament modal */
+.tournamentModalContent {
+  width: min(1080px, calc(100vw - 28px));
+  max-height: min(96vh, 1180px);
+  border-radius: 24px;
+}
+
+.tournamentModalContent > .modalHeader {
+  padding: 42px 88px 30px 42px;
+  border-bottom: 1px solid var(--bw-border-subtle) !important;
+}
+
+.tournamentModalContent > .modalHeader .modalTitle {
+  font-size: clamp(30px, 3vw, 42px);
+}
+
+.tournamentModalContent > .modalHeader .modalSubtitle {
+  margin-top: 12px;
+  font-size: 20px;
+}
+
+.tournamentModalContent .tournamentFormBody {
+  padding: 0;
+}
+
+.tournamentModalContent .tournamentSectionLabel {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 0;
+  padding: 38px 42px 20px;
+  font-size: 17px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.tournamentModalContent .tournamentSectionLabel svg,
+.tournamentModalContent .squadTimesTitle svg {
+  width: 25px;
+  height: 25px;
+}
+
+.tournamentModalContent .tournamentFormFields {
+  gap: 24px;
+}
+
+.tournamentModalContent .tournamentFormFields > :global(.form-field) {
+  margin: 0 42px;
+}
+
+.tournamentModalContent .tournamentFormFields > .tournamentSectionLabel {
+  margin-top: 12px;
+  border-top: 1px solid var(--bw-border-subtle);
+}
+
+.tournamentModalContent .tournamentInput {
+  min-height: 62px;
+  padding-inline: 22px;
+  border-radius: 14px !important;
+  font-size: 19px;
+}
+
+.tournamentModalContent .tournamentDateRow {
+  gap: 38px;
+  padding: 0 42px 36px;
+}
+
+.tournamentModalContent .tournamentDateRow > :global(.form-field) {
+  margin: 0;
+}
+
+.tournamentModalContent .squadTimesSection {
+  margin-top: 0;
+  padding: 30px 42px 40px;
+  border-top: 1px solid var(--bw-border-subtle);
+}
+
+.tournamentModalContent .squadTimesHeadingRow {
+  margin-bottom: 22px;
+}
+
+.tournamentModalContent .squadTimesTitle {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--bw-text-accent);
+  font-size: 18px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.tournamentModalContent .squadDay {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.tournamentModalContent .squadDayLabel {
+  margin-bottom: 12px;
+  font-size: 16px;
+}
+
+.tournamentModalContent .squadTimesList {
+  gap: 12px;
+}
+
+.tournamentModalContent .squadTimeEntry {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  min-height: 112px;
+  padding: 20px 24px;
+  border-radius: 16px;
+}
+
+.squadTimeIcon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 48px;
+  width: 48px;
+  height: 48px;
+  color: var(--bw-text-accent);
+}
+
+.squadTimeIcon svg {
+  width: 30px;
+  height: 30px;
+}
+
+.squadTimeDetails {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.squadTimeDetails strong {
+  color: var(--bw-text-title);
+  font-size: 18px;
+}
+
+.tournamentModalContent .squadTimeText {
+  color: var(--bw-text-muted);
+  font-size: 17px;
+}
+
+.tournamentModalContent .squadTimeRemove {
+  display: grid;
+  place-items: center;
+  min-width: 54px;
+  min-height: 54px;
+  padding: 0;
+  color: var(--color-error) !important;
+}
+
+.tournamentModalContent .squadTimeRemove svg {
+  width: 24px;
+  height: 24px;
+}
+
+.tournamentModalContent .squadTimeAddRow {
+  gap: 12px;
+}
+
+.tournamentModalContent .squadTimeAddBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 52px;
+  padding: 0 20px;
+}
+
+.tournamentModalContent .squadTimeAddBtn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.tournamentModalContent .tournamentModalFooter {
+  padding: 22px 42px;
+  background: color-mix(in srgb, var(--bw-surface-card) 98%, transparent);
+}
+
+.tournamentModalContent .tournamentSaveStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+}
+
+.tournamentModalContent .tournamentSaveStatus svg {
+  width: 21px;
+  height: 21px;
+}
+
+.tournamentModalContent .tournamentCancelButton,
+.tournamentModalContent .tournamentSaveButton {
+  min-height: 58px;
+  padding: 0 28px;
+  font-size: 17px;
+}
+
+@media (max-width: 720px) {
+  .tournamentModalContent > .modalHeader {
+    padding: 26px 62px 22px 24px;
+  }
+
+  .tournamentModalContent > .modalHeader .modalSubtitle {
+    font-size: 16px;
+  }
+
+  .tournamentModalContent .tournamentSectionLabel {
+    padding: 28px 20px 16px;
+  }
+
+  .tournamentModalContent .tournamentFormFields > :global(.form-field) {
+    margin-inline: 20px;
+  }
+
+  .tournamentModalContent .tournamentDateRow {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding: 0 20px 28px;
+  }
+
+  .tournamentModalContent .squadTimesSection {
+    padding: 26px 20px;
+  }
+
+  .tournamentModalContent .tournamentModalFooter {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 18px 20px;
+  }
+
+  .tournamentModalContent .tournamentModalFooterActions {
+    width: 100%;
+  }
+
+  .tournamentModalContent .tournamentCancelButton,
+  .tournamentModalContent .tournamentSaveButton {
+    flex: 1;
+    padding-inline: 12px;
   }
 }
 

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { QRCodeCanvas } from "qrcode.react";
+import { Check, Copy, Download, QrCode, Share2 } from "lucide-react";
 import { useToast } from "./Toast";
 import CloseControl from "../../components/CloseControl";
 import styles from "./ShareQRModal.module.css";
@@ -478,72 +479,73 @@ export default function ShareQRModal({
     <dialog ref={dialogRef} className={styles.dialog} onClick={handleBackdropClick}>
       <div className={styles.content}>
         <div className={styles.header}>
+          <span className={styles.headerIcon} aria-hidden="true"><Share2 /></span>
           <div className={styles.headerText}>
-            <h2 className={styles.title}>Share Live Bracket</h2>
-            <p className={styles.tournamentName}>{tournamentName}</p>
+            <h2 className={styles.title}>Share Live View</h2>
+            <p className={styles.tournamentName}>Share live brackets, scores, and standings for {tournamentName}.</p>
           </div>
           <CloseControl onClick={onClose} size="sm" />
         </div>
 
-        <div className={styles.qrSection}>
-          <div className={styles.posterPreview}>
-            <div
-              className={styles.posterFrame}
-              aria-label="QR poster preview"
-              dangerouslySetInnerHTML={{
-                __html: buildPosterHtml(qrDataUrl || "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="),
-              }}
-            />
+        <div className={styles.bodyGrid}>
+          <div className={styles.qrSection}>
+            <div className={styles.sectionHeading}><QrCode aria-hidden="true" /><span>Live Poster Preview</span></div>
+            <div className={styles.posterPreview}>
+              <div
+                className={styles.posterFrame}
+                aria-label="QR poster preview"
+                dangerouslySetInnerHTML={{
+                  __html: buildPosterHtml(qrDataUrl || "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="),
+                }}
+              />
+            </div>
+            <p className={`${styles.qrLabel} ${styles.mutedMicrocopy}`}>Scan to open the public live board</p>
           </div>
-          <p className={`${styles.qrLabel} ${styles.mutedMicrocopy}`}>Live poster preview</p>
+
+          <div className={styles.sharePanel}>
+            <div>
+              <p className={styles.shareTitle}>Share the live link</p>
+              <p className={styles.shareDescription}>Anyone with this link can follow the tournament. No account is required.</p>
+            </div>
+
+            <div className={`${styles.urlRow} ${styles.outlinedPanel}`}>
+              <span className={`${styles.urlText} ${styles.mutedMicrocopy}`}>{publicUrl}</span>
+              <button
+                className={`${styles.copyBtn} ${copied ? styles.copyBtnSuccess : ""}`}
+                onClick={handleCopy}
+              >
+                {copied ? <><Check aria-hidden="true" />Copied!</> : <><Copy aria-hidden="true" />Copy Link</>}
+              </button>
+            </div>
+
+            <div className={styles.exportSection}>
+              <p className={styles.exportLabel}>Download poster</p>
+              <div className={styles.actions}>
+                <button
+                  className={`${styles.exportBtn} ${styles.outlinedPanel}`}
+                  onClick={() => { void handleExportPng("social"); }}
+                  disabled={Boolean(exportingMode)}
+                  aria-busy={exportingMode === "social"}
+                >
+                  <Download aria-hidden="true" />
+                  {exportingMode === "social" ? "Exporting..." : "Social PNG"}
+                </button>
+
+                <button
+                  className={`${styles.exportBtn} ${styles.outlinedPanel}`}
+                  onClick={() => { void handleExportPng("print"); }}
+                  disabled={Boolean(exportingMode)}
+                  aria-busy={exportingMode === "print"}
+                >
+                  <Download aria-hidden="true" />
+                  {exportingMode === "print" ? "Exporting..." : "Print PNG"}
+                </button>
+              </div>
+            </div>
+
+            <p className={`${styles.hint} ${styles.mutedMicrocopy}`}>Display the poster at check-in so bowlers can scan it from any device.</p>
+          </div>
         </div>
-
-        <div className={`${styles.divider} ${styles.mutedMicrocopy}`}><span>or share the link</span></div>
-
-        <div className={`${styles.urlRow} ${styles.outlinedPanel}`}>
-          <span className={`${styles.urlText} ${styles.mutedMicrocopy}`}>{publicUrl}</span>
-          <button
-            className={`${styles.copyBtn} ${copied ? styles.copyBtnSuccess : ""}`}
-            onClick={handleCopy}
-          >
-            {copied ? (
-              <>
-                <svg width="13" height="13" viewBox="0 0 13 13" fill="none" className={styles.iconInline}>
-                  <path d="M1.5 7L5 10.5L11.5 2.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                Copied!
-              </>
-            ) : "Copy link"}
-          </button>
-        </div>
-
-        <div className={styles.actions}>
-          <button
-            className={`${styles.exportBtn} ${styles.outlinedPanel}`}
-            onClick={() => { void handleExportPng("social"); }}
-            disabled={Boolean(exportingMode)}
-            aria-busy={exportingMode === "social"}
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className={styles.iconNoShrink}>
-              <path d="M7 1v8M4 6l3 3 3-3M2 11h10" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            {exportingMode === "social" ? "Exporting..." : "Social PNG"}
-          </button>
-
-          <button
-            className={`${styles.exportBtn} ${styles.outlinedPanel}`}
-            onClick={() => { void handleExportPng("print"); }}
-            disabled={Boolean(exportingMode)}
-            aria-busy={exportingMode === "print"}
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className={styles.iconNoShrink}>
-              <path d="M7 1v8M4 6l3 3 3-3M2 11h10" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            {exportingMode === "print" ? "Exporting..." : "Print PNG"}
-          </button>
-        </div>
-
-        <p className={`${styles.hint} ${styles.mutedMicrocopy}`}>No login required - bowlers can view scores from any device.</p>
 
         <div ref={canvasRef} hidden>
           <QRCodeCanvas

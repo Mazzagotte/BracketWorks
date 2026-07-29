@@ -298,7 +298,6 @@
 
 .matchCard.in_progress {
   border-color: var(--color-border-hover);
-  border-left: 4px solid var(--color-primary);
   border-width: 1.5px;
   border-left-width: 4px;
   animation: pulseMatch 2s ease-in-out infinite;
@@ -400,7 +399,6 @@
 .player.highlightedPlayer {
   background: var(--color-border-light);
   font-weight: 700;
-  border-left: 4px solid var(--color-primary);
   padding-left: 8px;
 }
 
@@ -711,12 +709,10 @@
 
 .matchCard.in_progress {
   border-color: var(--tree-card-border-strong);
-  border-left: 4px solid color-mix(in srgb, var(--color-primary) 72%, transparent);
 }
 
 .matchCard.next_up {
   border-color: var(--tree-card-border-accent);
-  border-left: 3px solid color-mix(in srgb, var(--color-primary) 46%, transparent);
 }
 
 .matchCard.pending {
@@ -763,7 +759,6 @@
 
 .player.highlightedPlayer {
   background: color-mix(in srgb, var(--color-primary) 12%, transparent);
-  border-left: 4px solid color-mix(in srgb, var(--color-primary) 72%, transparent);
 }
 
 .player.winner {

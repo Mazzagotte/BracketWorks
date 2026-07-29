@@ -3,6 +3,17 @@
 import { useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import {
+  ArrowRight,
+  Braces,
+  CircleDashed,
+  ClipboardList,
+  LayoutDashboard,
+  Trophy,
+  Users,
+  WalletCards,
+  type LucideIcon,
+} from 'lucide-react'
 import { disableScroll, enableScroll } from '../utils/modalUtils'
 import buttonStyles from '../styles/buttons.module.css'
 import shellStyles from '../styles/page-shell.module.css'
@@ -33,6 +44,7 @@ interface NoTournamentStateProps {
 interface WorkspaceMeta {
   label: string
   helper: string
+  icon: LucideIcon
 }
 
 function getWorkspaceMeta(pathname: string): WorkspaceMeta {
@@ -40,6 +52,7 @@ function getWorkspaceMeta(pathname: string): WorkspaceMeta {
     return {
       label: 'Dashboard Workspace',
       helper: 'Set up tournament details, squads, and system-wide settings before play starts.',
+      icon: LayoutDashboard,
     }
   }
 
@@ -47,6 +60,7 @@ function getWorkspaceMeta(pathname: string): WorkspaceMeta {
     return {
       label: 'Entries Workspace',
       helper: 'Manage bowlers, entry types, and registration details for each squad.',
+      icon: Users,
     }
   }
 
@@ -54,6 +68,7 @@ function getWorkspaceMeta(pathname: string): WorkspaceMeta {
     return {
       label: 'Scores Workspace',
       helper: 'Capture game scores quickly and keep standings ready for bracket progression.',
+      icon: ClipboardList,
     }
   }
 
@@ -61,6 +76,7 @@ function getWorkspaceMeta(pathname: string): WorkspaceMeta {
     return {
       label: 'Brackets Workspace',
       helper: 'Generate bracket trees and track winners with clear round-by-round progress.',
+      icon: Braces,
     }
   }
 
@@ -68,12 +84,14 @@ function getWorkspaceMeta(pathname: string): WorkspaceMeta {
     return {
       label: 'Payouts Workspace',
       helper: 'Review winners, prize pools, and payout completion in one organized view.',
+      icon: WalletCards,
     }
   }
 
   return {
     label: 'Tournament Workspace',
     helper: 'Load a tournament to unlock all operational tools in this workspace.',
+    icon: Trophy,
   }
 }
 
@@ -95,19 +113,20 @@ export default function NoTournamentState({
   }, [])
 
   const workspaceMeta = getWorkspaceMeta(pathname)
+  const WorkspaceIcon = workspaceMeta.icon
   const renderedActions = actions ?? [{ label: actionLabel, href: actionHref, variant: 'primary' as const }]
 
   return (
     <div className={`${shellStyles.page} ${styles.wrap}`}>
       <Card variant="primary" className={styles.card}>
         <CardBody>
-          <div className={styles.topRow}>
-            <p className={styles.workspaceLabel}>{workspaceMeta.label}</p>
-            <span className={styles.statusPill}>Awaiting tournament</span>
-          </div>
-
           <div className={styles.heroRow}>
+            <div className={styles.heroIcon} aria-hidden="true"><WorkspaceIcon /></div>
             <div className={styles.heroText}>
+              <div className={styles.topRow}>
+                <p className={styles.workspaceLabel}>{workspaceMeta.label}</p>
+                <span className={styles.statusPill}><CircleDashed aria-hidden="true" />Awaiting tournament</span>
+              </div>
               <h2 className={styles.title}>{title ?? 'No Tournament Loaded'}</h2>
               <p className={styles.description}>
                 {description ?? 'Load or create a tournament from the dashboard to unlock this workspace.'}
@@ -123,14 +142,14 @@ export default function NoTournamentState({
                 if (action.href) {
                   return (
                     <Link key={action.label} href={action.href} className={className}>
-                      {action.label}
+                      {action.label}<ArrowRight aria-hidden="true" />
                     </Link>
                   )
                 }
 
                 return (
                   <button key={action.label} type="button" onClick={action.onClick} className={className}>
-                    {action.label}
+                    {action.label}<ArrowRight aria-hidden="true" />
                   </button>
                 )
               })}

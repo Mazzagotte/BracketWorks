@@ -98,7 +98,6 @@ body {
   margin-top: 18px;
   padding: 13px 16px 0 14px;
   border: 1px solid var(--print-border);
-  border-left: 4px solid var(--print-brand);
   border-radius: 12px 12px 0 0;
   border-bottom: none;
   background: var(--print-soft);
@@ -135,7 +134,6 @@ body {
 
 .details-band {
   border: 1px solid var(--print-border);
-  border-left: 4px solid var(--print-brand);
   border-radius: 0 0 12px 12px;
   background: var(--print-surface);
   display: grid;
@@ -184,7 +182,6 @@ body {
 .stat-card {
   padding: 10px 13px 10px 12px;
   border: 1px solid var(--print-border);
-  border-left: 4px solid var(--print-brand);
   border-radius: 12px;
   background: var(--print-surface);
 }
@@ -306,7 +303,6 @@ tbody tr:last-child td {
   margin-top: 32px;
   padding: 20px 20px 32px;
   border: 1px solid var(--print-border);
-  border-left: 4px solid var(--print-brand);
   border-radius: 12px;
   break-inside: avoid;
 }

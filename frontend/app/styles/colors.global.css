@@ -19,7 +19,7 @@
   --bw-border-accent: color-mix(in srgb, var(--color-primary) 34%, rgba(226, 232, 240, 0.7));
   --bw-shadow-card: 0 12px 30px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.04);
   --bw-shadow-accent: 0 10px 22px color-mix(in srgb, var(--color-primary) 24%, transparent);
-  --bw-accent-rail: 3px solid var(--color-primary);
+  --bw-accent-rail: none;
   --bw-focus-ring: 0 0 0 1px color-mix(in srgb, var(--color-primary) 45%, transparent), 0 0 0 4px color-mix(in srgb, var(--color-primary) 12%, transparent);
   --bw-page-gutter: 1rem;
   --bw-page-gutter-mobile: 0.5rem;

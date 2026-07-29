@@ -12,8 +12,10 @@ import {
   Cog,
   LogOut,
   PencilLine,
+  RefreshCw,
   Repeat,
   Settings2,
+  Trash2,
   Trophy,
   UserPlus,
   Users,
@@ -1766,9 +1768,9 @@ export default function TournamentDashboard() {
           {squadModalOpen && tournament && (
             <div className={`${mobileStyles.modalOverlay} ${mobileStyles.modalOverlayTop}`}>
               <div className={`${mobileStyles.modalCard} ${mobileStyles.squadChangeModalCard}`}>
-                <div className={mobileStyles.modalHeader}>
+                <div className={`${mobileStyles.modalHeader} ${mobileStyles.squadChangeHeader}`}>
                   <h2 className={mobileStyles.modalTitle}>Change Squad</h2>
-                  <p className={mobileStyles.modalSubtitle}>Select the active squad for {tournament.name}</p>
+                  <p className={mobileStyles.modalSubtitle}>Select the date and time for {tournament.name}</p>
                   <CloseControl position="absolute" size="sm" label="Close change squad modal" onClick={() => setSquadModalOpen(false)} />
                 </div>
                 <div className={mobileStyles.squadChangeList}>
@@ -1787,11 +1789,12 @@ export default function TournamentDashboard() {
                         className={`${mobileStyles.squadChangeItem} ${isSelected ? mobileStyles.squadChangeItemSelected : ''} ${entries === 0 ? mobileStyles.squadChangeItemEmpty : ''}`}
                         onClick={() => handleSelectSquad(squad)}
                       >
+                        <span className={mobileStyles.squadChangeIcon} aria-hidden="true"><Calendar /></span>
                         <span className={mobileStyles.squadChangeItemMain}>
                           <span className={mobileStyles.squadChangeItemLabel}>{label || `Squad ${squad.id}`}</span>
-                          <span className={mobileStyles.squadChangeItemMeta}>{entries} {entries === 1 ? 'entry' : 'entries'}{isSelected ? ' • Active squad' : ''}</span>
+                          <span className={mobileStyles.squadChangeItemMeta}>{entries} {entries === 1 ? 'entry' : 'entries'} <b aria-hidden="true">•</b> {isSelected ? 'Active squad' : '1 squad available'}</span>
                         </span>
-                        <span className={mobileStyles.squadChangeItemStatus}>{isSelected ? 'Current' : 'Make Active'}</span>
+                        <span className={mobileStyles.squadChangeItemStatus}>{isSelected ? 'Current' : 'Confirm'}</span>
                       </button>
                     );
                   })}
@@ -1804,7 +1807,7 @@ export default function TournamentDashboard() {
           {loadModalOpen && (
             <div className={mobileStyles.modalOverlay}>
               <div className={`${mobileStyles.modalCard} ${mobileStyles.tournamentSelectorCard}`}>
-                <div className={mobileStyles.modalHeader}>
+                <div className={`${mobileStyles.modalHeader} ${mobileStyles.tournamentSelectorHeader}`}>
                   <h2 className={mobileStyles.modalTitle}>{isAdmin ? 'All Tournaments' : 'Your Tournaments'}</h2>
                   <p className={mobileStyles.modalSubtitle}>
                     {allTournaments.length > 0
@@ -1840,6 +1843,8 @@ export default function TournamentDashboard() {
                               className={`${mobileStyles.tournamentItem} ${isActiveTournament ? mobileStyles.tournamentItemActive : ''}`}
                             >
                               <div className={mobileStyles.tournamentInfo}>
+                                <span className={mobileStyles.tournamentIcon} aria-hidden="true"><Trophy /></span>
+                                <div className={mobileStyles.tournamentDetails}>
                                 <div className={mobileStyles.tournamentNameRow}>
                                   <span className={mobileStyles.tournamentName}>{t.name}</span>
                                   {isActiveTournament && <span className={mobileStyles.tournamentActiveBadge}>Active</span>}
@@ -1861,12 +1866,14 @@ export default function TournamentDashboard() {
                                     {t.brackets_configured && <span>Brackets Configured</span>}
                                   </div>
                                 )}
+                                </div>
                               </div>
                               <div className={mobileStyles.tournamentActions}>
                                 <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.primary} ${mobileStyles.loadBtn}`} onClick={() => handleLoadTournament(t)}>
+                                  <RefreshCw aria-hidden="true" />
                                   {isActiveTournament ? 'Reload' : 'Load'}
                                 </button>
-                                <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.danger} ${mobileStyles.deleteBtn}`} onClick={() => setDeleteConfirm({id: t.id, name: t.name})}>Delete</button>
+                                <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.danger} ${mobileStyles.deleteBtn}`} onClick={() => setDeleteConfirm({id: t.id, name: t.name})}><Trash2 aria-hidden="true" />Delete</button>
                               </div>
                             </li>
                           );

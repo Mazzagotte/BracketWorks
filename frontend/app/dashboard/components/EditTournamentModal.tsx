@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Calendar, CheckCircle2, Clock3, Plus, Trash2, Trophy } from 'lucide-react';
 
 import { Tournament, TournamentForm } from '../../lib/types';
 import { getErrorMessage } from '../../lib/error-utils';
@@ -152,7 +153,7 @@ export function EditTournamentModal({
         </div>
         <div className={mobileStyles.tournamentContentWrapper}>
           <div className={mobileStyles.tournamentFormBody}>
-            <p className={mobileStyles.tournamentSectionLabel}>Tournament Details</p>
+            <p className={mobileStyles.tournamentSectionLabel}><Trophy aria-hidden="true" />Tournament Details</p>
             <div className={mobileStyles.tournamentFormFields}>
               <FormField label="Tournament Name" required>
                 <Input
@@ -171,7 +172,7 @@ export function EditTournamentModal({
                   className={mobileStyles.tournamentInput}
                 />
               </FormField>
-              <p className={mobileStyles.tournamentSectionLabel}>Tournament Dates</p>
+              <p className={mobileStyles.tournamentSectionLabel}><Calendar aria-hidden="true" />Tournament Dates</p>
               <div className={mobileStyles.tournamentDateRow}>
                 <FormField label="Start Date">
                   <Input
@@ -193,7 +194,7 @@ export function EditTournamentModal({
             </div>
             <div className={mobileStyles.squadTimesSection}>
               <div className={mobileStyles.squadTimesHeadingRow}>
-                <h3 className={mobileStyles.squadTimesTitle}>Squad Times</h3>
+                <h3 className={mobileStyles.squadTimesTitle}><Clock3 aria-hidden="true" />Squad Times</h3>
                 <span className={mobileStyles.squadTimesCount}>{totalSquadTimesAdded} added</span>
               </div>
               {tournamentDays.length === 0 && <p className={mobileStyles.noSquadDaysHint}>Select a start and end date to add squad times for each tournament day.</p>}
@@ -203,13 +204,18 @@ export function EditTournamentModal({
                   <div className={mobileStyles.squadTimesList}>
                     {(tournamentForm.squad_times[date] || []).map((time, i) => (
                       <div key={i} className={mobileStyles.squadTimeEntry}>
-                        <span className={mobileStyles.squadTimeText}>{time}</span>
+                        <span className={mobileStyles.squadTimeIcon} aria-hidden="true"><Clock3 /></span>
+                        <span className={mobileStyles.squadTimeDetails}>
+                          <strong>{formatIsoDateFull(date)}</strong>
+                          <span className={mobileStyles.squadTimeText}>{time}</span>
+                        </span>
                         <button
                           type="button"
                           className={mobileStyles.squadTimeRemove}
+                          aria-label={`Remove ${time} squad time on ${formatIsoDateFull(date)}`}
                           onClick={() => setTournamentForm(form => ({ ...form, squad_times: { ...form.squad_times, [date]: (form.squad_times[date] ?? []).filter((_, j) => j !== i) } }))}
                         >
-                          Remove
+                          <Trash2 aria-hidden="true" />
                         </button>
                       </div>
                     ))}
@@ -242,7 +248,7 @@ export function EditTournamentModal({
                           }
                         }}
                       >
-                        + Add Squad Time
+                        <Plus aria-hidden="true" /> Add Time
                       </button>
                     </div>
                   </div>
@@ -252,7 +258,7 @@ export function EditTournamentModal({
           </div>
           <div className={mobileStyles.tournamentModalFooter}>
             <div className={`${mobileStyles.tournamentSaveStatus} ${hasUnsavedChanges ? mobileStyles.tournamentSaveStatusDirty : mobileStyles.tournamentSaveStatusSaved}`}>
-              {hasUnsavedChanges ? 'Unsaved changes' : 'All changes saved'}
+              <CheckCircle2 aria-hidden="true" /> {hasUnsavedChanges ? 'Unsaved changes' : 'All changes saved'}
             </div>
             <div className={mobileStyles.tournamentModalFooterActions}>
               <button
