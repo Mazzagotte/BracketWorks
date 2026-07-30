@@ -54,7 +54,7 @@ const organizationJsonLd = {
   '@type': 'Organization',
   name: 'BracketWorks',
   url: 'https://bracketworks.app/',
-  logo: 'https://bracketworks.app/BW Logo No Text.svg',
+  logo: 'https://bracketworks.app/logo_no_text.svg',
   description: 'Bowling tournament management software for tournament directors',
 };
 

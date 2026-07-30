@@ -163,7 +163,7 @@ $FastStart = Get-EnvBoolOrDefault -Name "BRACKETWORKS_FAST_START" -Default $fals
 $WaitForFrontend = Get-EnvBoolOrDefault -Name "BRACKETWORKS_WAIT_FOR_FRONTEND" -Default $true
 $WaitForBackend = Get-EnvBoolOrDefault -Name "BRACKETWORKS_WAIT_FOR_BACKEND" -Default $true
 $SkipMigrations = Get-EnvBoolOrDefault -Name "BRACKETWORKS_SKIP_MIGRATIONS" -Default $false
-$FrontendInstallMode = Get-EnvValueOrDefault -Name "BRACKETWORKS_FRONTEND_INSTALL_MODE" -Default "auto"
+$FrontendInstallMode = Get-EnvValueOrDefault -Name "BRACKETWORKS_FRONTEND_INSTALL_MODE" -Default "never"
 $FrontendInstallMode = $FrontendInstallMode.ToLowerInvariant()
 $KillPort8001 = Get-EnvBoolOrDefault -Name "BRACKETWORKS_KILL_PORT_8001" -Default $true
 
@@ -181,7 +181,7 @@ if ($FastStart) {
     $WaitForFrontend = $false
     $WaitForBackend = $false
     $SkipMigrations = $true
-    $FrontendInstallMode = "auto"
+    $FrontendInstallMode = "never"
 }
 
 $BackendWaitRetries = Get-EnvIntOrDefault -Name "BRACKETWORKS_BACKEND_WAIT_RETRIES" -Default 40
@@ -202,6 +202,22 @@ if (Test-Path (Join-Path $RepoNodePath "node.exe")) {
 
 if (-not (Get-Command npm.cmd -ErrorAction SilentlyContinue)) {
     Write-Host "npm not found. Install Node.js with npm support." -ForegroundColor Red
+    exit 1
+}
+
+$FrontendNextPath = Join-Path $FrontendPath "node_modules\next\dist\bin\next"
+
+if ($FrontendInstallMode -eq "never" -and -not (Test-Path $FrontendNextPath)) {
+    Write-Host ""
+    Write-Host "Frontend dependencies are not installed." -ForegroundColor Red
+    Write-Host "Normal startup does not install packages." -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "Run this one-time setup command, then start BracketWorks again:" -ForegroundColor Yellow
+    Write-Host "  cd `"$FrontendPath`"" -ForegroundColor Cyan
+    Write-Host "  npm.cmd ci --no-audit --no-fund" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "To explicitly let the launcher install packages instead, set:" -ForegroundColor DarkYellow
+    Write-Host "  BRACKETWORKS_FRONTEND_INSTALL_MODE=auto" -ForegroundColor DarkYellow
     exit 1
 }
 
@@ -362,22 +378,38 @@ Start-Process powershell -ArgumentList $backendWindowArgs
 $frontendStartCmd = "if (Test-Path '.\\node_modules\\next\\dist\\bin\\next') { node .\\node_modules\\next\\dist\\bin\\next dev -p $Port --webpack } else { npm.cmd run dev }"
 $frontendInstallCmdPrimary = "npm.cmd ci --no-audit --no-fund"
 $frontendInstallCmdRetry = "npm.cmd install --include=dev --no-audit --no-fund"
+$frontendLockPath = Join-Path $FrontendPath "package-lock.json"
+$frontendPackagePath = Join-Path $FrontendPath "package.json"
+$frontendDependencyManifestPath = if (Test-Path $frontendLockPath) { $frontendLockPath } else { $frontendPackagePath }
+
+if (-not (Test-Path $frontendDependencyManifestPath)) {
+    Write-Host "Frontend dependency manifest not found." -ForegroundColor Red
+    exit 1
+}
+
+$frontendDependencyHash = (Get-FileHash -Path $frontendDependencyManifestPath -Algorithm SHA256).Hash
 
 $cmd = "$PowerShellPolicyCmd; " +
     "`$env:PATH='$env:PATH'; " +
     "cd '$FrontendPath'; " +
     "`$env:NEXT_PUBLIC_BACKEND_URL='$BackendUrl'; " +
-    "`$lockPath = '.\\package-lock.json'; " +
-    "`$stampPath = '.\\node_modules\\.bw-install-stamp'; " +
+    "`$statePath = '.\\node_modules\\.bw-frontend-install-state.json'; " +
     "`$nextPath = '.\\node_modules\\next\\dist\\bin\\next'; " +
     "`$installNeeded = `$false; " +
+    "`$installReason = ''; " +
     "switch ('$FrontendInstallMode') { " +
-    "  'always' { `$installNeeded = `$true } " +
+    "  'always' { `$installNeeded = `$true; `$installReason = 'install mode is always' } " +
     "  'never'  { `$installNeeded = `$false } " +
     "  default { " +
-    "    if (-not (Test-Path `$nextPath)) { `$installNeeded = `$true } " +
-    "    elseif ((Test-Path `$lockPath) -and (-not (Test-Path `$stampPath))) { `$installNeeded = `$true } " +
-    "    elseif ((Test-Path `$lockPath) -and (Test-Path `$stampPath) -and ((Get-Item `$lockPath).LastWriteTimeUtc -gt (Get-Item `$stampPath).LastWriteTimeUtc)) { `$installNeeded = `$true } " +
+    "    if (-not (Test-Path `$nextPath)) { `$installNeeded = `$true; `$installReason = 'Next.js runtime is missing' } " +
+    "    elseif (-not (Test-Path `$statePath)) { `$installNeeded = `$true; `$installReason = 'dependency state file is missing' } " +
+    "    else { " +
+    "      try { " +
+    "        `$frontendState = Get-Content -Path `$statePath -Raw | ConvertFrom-Json; " +
+    "        if (-not `$frontendState.DependencyHash) { `$installNeeded = `$true; `$installReason = 'dependency state is incomplete' } " +
+    "        elseif (`$frontendState.DependencyHash -ne '$frontendDependencyHash') { `$installNeeded = `$true; `$installReason = 'package lock contents changed' } " +
+    "      } catch { `$installNeeded = `$true; `$installReason = 'dependency state is unreadable' } " +
+    "    } " +
     "  } " +
     "}; " +
     "if ((-not `$installNeeded) -and (-not (Test-Path `$nextPath))) { " +
@@ -386,7 +418,7 @@ $cmd = "$PowerShellPolicyCmd; " +
     "  exit 1; " +
     "}; " +
     "if (`$installNeeded) { " +
-    "Write-Host 'Installing frontend dependencies...' -ForegroundColor Yellow; " +
+    "Write-Host `"Installing frontend dependencies (`$installReason)...`" -ForegroundColor Yellow; " +
     "$frontendInstallCmdPrimary; " +
     "if (`$LASTEXITCODE -ne 0) { " +
     "  Write-Host 'Frontend dependency install failed. Retrying after cleaning Next.js artifacts...' -ForegroundColor Yellow; " +
@@ -397,8 +429,9 @@ $cmd = "$PowerShellPolicyCmd; " +
     "}; " +
     "if (-not (Test-Path `$nextPath)) { Write-Host 'Next.js runtime binary is still missing after install.' -ForegroundColor Red; $ClosePromptCmd; exit 1 }; " +
     "if (-not (Test-Path '.\\node_modules')) { New-Item -ItemType Directory -Path '.\\node_modules' -Force | Out-Null }; " +
-    "Set-Content -Path `$stampPath -Value (Get-Date).ToString('O') -Encoding UTF8; " +
-    "} else { Write-Host 'Frontend dependencies are up to date. Skipping install.' -ForegroundColor DarkGreen }; " +
+    "`$frontendStateJson = @{ InstalledAt = (Get-Date).ToString('O'); DependencyHash = '$frontendDependencyHash'; Manifest = '$(Split-Path -Leaf $frontendDependencyManifestPath)' } | ConvertTo-Json -Compress; " +
+    "Set-Content -Path `$statePath -Value `$frontendStateJson -Encoding UTF8; " +
+    "} else { Write-Host 'Frontend dependencies match the package lock hash. Skipping install.' -ForegroundColor DarkGreen }; " +
         "$frontendStartCmd"
 $frontendWindowArgs = if ($AutoMode) { @("-Command", $cmd) } else { @("-NoExit", "-Command", $cmd) }
 Start-Process powershell -ArgumentList $frontendWindowArgs

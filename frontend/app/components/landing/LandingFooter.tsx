@@ -12,7 +12,7 @@ export function LandingFooter() {
           <div>
             <div className={styles.footerBrand}>
               <Image
-                src="/BW Logo No Text.svg"
+                src="/logo_no_text.svg"
                 alt="BracketWorks"
                 width={28}
                 height={28}

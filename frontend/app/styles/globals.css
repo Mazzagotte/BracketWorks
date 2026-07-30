@@ -184,8 +184,8 @@ main h6,
 }
 
 /* App-wide button sizing source of truth (colors remain component-specific) */
-main button:not([class*='iconButton']):not([class*='stepperBtn']):not([class*='modalClose']):not([class*='closeButton']):not([class*='statTile']):not([class*='statCard']):not([aria-label*='Close']):not([aria-label*='close']),
-.page-main button:not([class*='iconButton']):not([class*='stepperBtn']):not([class*='modalClose']):not([class*='closeButton']):not([class*='statTile']):not([class*='statCard']):not([aria-label*='Close']):not([aria-label*='close']) {
+main button:not([class*='iconButton']):not([class*='stepperBtn']):not([class*='modalClose']):not([class*='closeButton']):not([class*='statTile']):not([class*='statCard']):not([class*='squadChangeItem']):not([class*='settingsHeader']):not([aria-label*='Close']):not([aria-label*='close']),
+.page-main button:not([class*='iconButton']):not([class*='stepperBtn']):not([class*='modalClose']):not([class*='closeButton']):not([class*='statTile']):not([class*='statCard']):not([class*='squadChangeItem']):not([class*='settingsHeader']):not([aria-label*='Close']):not([aria-label*='close']) {
   min-height: var(--btn-height) !important;
   height: var(--btn-height) !important;
   padding-top: 0 !important;

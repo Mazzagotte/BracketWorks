@@ -1212,32 +1212,15 @@ export default function TournamentDashboard() {
     { key: 'payouts', step: '5', label: 'Payouts', status: payoutStatusLabel, done: payoutsFinalized },
   ];
   const orderedStatsProgramSummaries = useMemo(() => {
-    const programOrder: Record<string, number> = {
-      handicap: 0,
-      scratch: 1,
-      reverse_scratch: 2,
-      womens_scratch: 3,
-    };
-
     return [...statsEntrySummary.programSummaries].sort((a, b) => {
-      const aOrder = programOrder[a.key] ?? Number.MAX_SAFE_INTEGER;
-      const bOrder = programOrder[b.key] ?? Number.MAX_SAFE_INTEGER;
+      const aOrder = a.display_order ?? Number.MAX_SAFE_INTEGER;
+      const bOrder = b.display_order ?? Number.MAX_SAFE_INTEGER;
       if (aOrder !== bOrder) {
         return aOrder - bOrder;
       }
       return a.name.localeCompare(b.name);
     });
   }, [statsEntrySummary.programSummaries]);
-  const handicapSummary = orderedStatsProgramSummaries.find(program => program.key === 'handicap');
-  const scratchSummary = orderedStatsProgramSummaries.find(program => program.key === 'scratch');
-  const handicapEntries = handicapSummary?.totalEntries ?? 0;
-  const scratchEntries = scratchSummary?.totalEntries ?? 0;
-  const handicapSplitPercent = statsEntrySummary.totalEntries > 0
-    ? Math.round((handicapEntries / statsEntrySummary.totalEntries) * 100)
-    : 0;
-  const scratchSplitPercent = statsEntrySummary.totalEntries > 0
-    ? Math.round((scratchEntries / statsEntrySummary.totalEntries) * 100)
-    : 0;
 
   useEffect(() => {
     let isCancelled = false;
@@ -1582,16 +1565,26 @@ export default function TournamentDashboard() {
                           <span className={mobileStyles.dashboardPanelTitle}>Entry Breakdown</span>
                         </h3>
                         <div className={mobileStyles.entryBreakdownCards}>
-                          <div className={mobileStyles.entryBreakdownStat}>
-                            <span className={mobileStyles.entryBreakdownLabelHandicap}>Handicap</span>
-                            <strong>{handicapEntries}</strong>
-                            <small>{handicapSplitPercent}% of entries</small>
-                          </div>
-                          <div className={mobileStyles.entryBreakdownStat}>
-                            <span className={mobileStyles.entryBreakdownLabelScratch}>Scratch</span>
-                            <strong>{scratchEntries}</strong>
-                            <small>{scratchSplitPercent}% of entries</small>
-                          </div>
+                          {orderedStatsProgramSummaries.map(program => {
+                            const percentage = statsEntrySummary.totalEntries > 0
+                              ? Math.round((program.totalEntries / statsEntrySummary.totalEntries) * 100)
+                              : 0;
+                            const labelClass = program.key === 'handicap'
+                              ? mobileStyles.entryBreakdownLabelHandicap
+                              : program.key === 'scratch'
+                                ? mobileStyles.entryBreakdownLabelScratch
+                                : mobileStyles.entryBreakdownLabelOptional;
+
+                            return (
+                              <div className={mobileStyles.entryBreakdownStat} key={program.key}>
+                                <span className={labelClass}>{program.name}</span>
+                                <strong>{program.totalEntries}</strong>
+                                <small>
+                                  {percentage}% · {program.expectedBrackets} {program.expectedBrackets === 1 ? 'bracket' : 'brackets'}
+                                </small>
+                              </div>
+                            );
+                          })}
                         </div>
                       </article>
                     </div>
@@ -1745,7 +1738,10 @@ export default function TournamentDashboard() {
                   onClick={() => setSettingsModalOpen(false)}
                 />
                 <div className={mobileStyles.modalHeader}>
-                  <h2 className={mobileStyles.modalTitle}>Tournament Settings</h2>
+                  <h2 className={`${mobileStyles.modalTitle} ${mobileStyles.settingsModalTitle}`}>
+                    <Settings2 aria-hidden="true" />
+                    <span>Tournament Settings</span>
+                  </h2>
                   <p className={mobileStyles.modalSubtitle}>Update bracket rules, pricing, side pots, and other tournament setup details.</p>
                 </div>
                 <div className={`${mobileStyles.modalScrollBody} ${mobileStyles.settingsModalScrollBody}`}>
@@ -1779,7 +1775,8 @@ export default function TournamentDashboard() {
                     const rightSelected = right.id === selectedSquadId ? 1 : 0;
                     return rightSelected - leftSelected;
                   }).map(squad => {
-                    const label = [squad.date ? formatIsoDateLong(squad.date) : '', squad.time].filter(Boolean).join(' - ');
+                    const dateLabel = squad.date ? formatIsoDateLong(squad.date) : '';
+                    const timeLabel = squad.time || '';
                     const isSelected = squad.id === selectedSquadId;
                     const entries = squadEntryCounts[squad.id] ?? 0;
                     return (
@@ -1791,7 +1788,15 @@ export default function TournamentDashboard() {
                       >
                         <span className={mobileStyles.squadChangeIcon} aria-hidden="true"><Calendar /></span>
                         <span className={mobileStyles.squadChangeItemMain}>
-                          <span className={mobileStyles.squadChangeItemLabel}>{label || `Squad ${squad.id}`}</span>
+                          <span className={mobileStyles.squadChangeItemLabel}>
+                            {dateLabel || timeLabel ? (
+                              <>
+                                {dateLabel && <span>{dateLabel}</span>}
+                                {dateLabel && timeLabel && <b aria-hidden="true">•</b>}
+                                {timeLabel && <span>{timeLabel}</span>}
+                              </>
+                            ) : `Squad ${squad.id}`}
+                          </span>
                           <span className={mobileStyles.squadChangeItemMeta}>{entries} {entries === 1 ? 'entry' : 'entries'} <b aria-hidden="true">•</b> {isSelected ? 'Active squad' : '1 squad available'}</span>
                         </span>
                         <span className={mobileStyles.squadChangeItemStatus}>{isSelected ? 'Current' : 'Confirm'}</span>

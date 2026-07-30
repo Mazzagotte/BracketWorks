@@ -2,6 +2,7 @@
 
 import { useMemo, useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { CircleDollarSign, GitFork, SlidersHorizontal } from 'lucide-react';
 import { Tournament, BracketSettings, SidePotsSettings, SidePot } from '../../lib/types';
 import { useAuth } from '../../lib/auth-context';
 import { ErrorBoundary } from '../../components/ErrorBoundary';
@@ -341,8 +342,13 @@ export function TournamentSettingsContent({ tournamentId, layout = 'page' }: Tou
             aria-expanded={isCardExpanded('bracketSettings')}
           >
             <div className={dashboardStyles.settingsTitleBlock}>
-              <h2 className={dashboardStyles.settingsTitle}>Bracket Settings</h2>
-              <div className={dashboardStyles.settingsMeta}>Configure bracket size, entry fee, and prize split.</div>
+              <span className={dashboardStyles.settingsHeaderIcon} aria-hidden="true">
+                <SlidersHorizontal />
+              </span>
+              <div className={dashboardStyles.settingsTitleCopy}>
+                <h2 className={dashboardStyles.settingsTitle}>Bracket Settings</h2>
+                <div className={dashboardStyles.settingsMeta}>Configure bracket size, entry fee, and prize split.</div>
+              </div>
             </div>
             {isMobile && (
               <span className={dashboardStyles.cardExpandIcon} aria-hidden="true">
@@ -445,24 +451,14 @@ export function TournamentSettingsContent({ tournamentId, layout = 'page' }: Tou
                         />
                       </div>
                     </div>
-                    <div className={dashboardStyles.compactField}>
-                      <label className={dashboardStyles.compactLabel}>House Take</label>
-                      <div className={dashboardStyles.compactInputWrapper}>
-                        <span className={dashboardStyles.currencySymbol}>$</span>
-                        <input
-                          className={`${dashboardStyles.compactInput} ${dashboardStyles.compactInputReadOnly}`}
-                          type="text"
-                          placeholder="0"
-                          value={formatNumberInput(computedHouseAmount)}
-                          readOnly
-                        />
-                      </div>
-                      <p className={dashboardStyles.settingsFieldHint}>Calculated automatically from bracket size, entry fee, and prize split.</p>
-                    </div>
                   </div>
                 </div>
               </div>
               <div className={dashboardStyles.settingsCalculatedSummary}>
+                <div className={dashboardStyles.settingsCalculatedSummaryRow}>
+                  <span>House Take <small>(auto-calculated)</small></span>
+                  <strong>${formatNumberInput(computedHouseAmount) || '0'}</strong>
+                </div>
                 <div className={dashboardStyles.settingsCalculatedSummaryRow}>
                   <span>Total Projected Payout</span>
                   <strong>${formatNumberInput(projectedPayout) || '0'}</strong>
@@ -486,8 +482,13 @@ export function TournamentSettingsContent({ tournamentId, layout = 'page' }: Tou
             aria-expanded={isCardExpanded('sidePots')}
           >
             <div className={dashboardStyles.settingsTitleBlock}>
-              <h2 className={dashboardStyles.settingsTitle}>Side Pots</h2>
-              <div className={dashboardStyles.settingsMeta}>Set side pot pricing and enabled side pot games.</div>
+              <span className={dashboardStyles.settingsHeaderIcon} aria-hidden="true">
+                <CircleDollarSign />
+              </span>
+              <div className={dashboardStyles.settingsTitleCopy}>
+                <h2 className={dashboardStyles.settingsTitle}>Side Pots</h2>
+                <div className={dashboardStyles.settingsMeta}>Set side pot pricing and enabled side pot games.</div>
+              </div>
             </div>
             {isMobile && (
               <span className={dashboardStyles.cardExpandIcon} aria-hidden="true">
@@ -569,8 +570,13 @@ export function TournamentSettingsContent({ tournamentId, layout = 'page' }: Tou
             aria-expanded={isCardExpanded('bracketPrograms')}
           >
             <div className={dashboardStyles.settingsTitleBlock}>
-              <h2 className={dashboardStyles.settingsTitle}>Bracket Programs</h2>
-              <div className={dashboardStyles.settingsMeta}>Choose bye rules and optional bracket programs.</div>
+              <span className={dashboardStyles.settingsHeaderIcon} aria-hidden="true">
+                <GitFork />
+              </span>
+              <div className={dashboardStyles.settingsTitleCopy}>
+                <h2 className={dashboardStyles.settingsTitle}>Bracket Programs</h2>
+                <div className={dashboardStyles.settingsMeta}>Choose bye rules and optional bracket programs.</div>
+              </div>
             </div>
             {isMobile && (
               <span className={dashboardStyles.cardExpandIcon} aria-hidden="true">

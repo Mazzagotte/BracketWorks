@@ -1326,7 +1326,7 @@ export default function TournamentViewPage() {
             <div className={styles.brandCol}>
               {/* eslint-disable-next-line @next/next/no-img-element -- static branding mark is intentionally rendered as plain img in the public header */}
               <img
-                src="/logo 2.svg"
+                src="/logo_no_text.svg"
                 alt="BracketWorks"
                 className={styles.brandLogo}
               />

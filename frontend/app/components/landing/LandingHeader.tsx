@@ -8,7 +8,7 @@ export function LandingHeader() {
       <div className={styles.headerInner}>
         <Link href="/" className={styles.logo}>
           <Image
-            src="/BW Logo No Text.svg"
+            src="/logo_no_text.svg"
             alt="BracketWorks"
             width={32}
             height={32}

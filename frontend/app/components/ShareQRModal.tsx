@@ -153,7 +153,7 @@ export default function ShareQRModal({
               <div style="width:534px;height:534px;border-radius:18px;background:#ffffff;display:flex;align-items:center;justify-content:center;position:relative;">
                 <img src="${safeQrSrc}" alt="" style="display:block;width:${qrImageSize}px;height:${qrImageSize}px;" />
                 <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:${qrBadgeSize}px;height:${qrBadgeSize}px;border-radius:28px;background:#ffffff;display:flex;align-items:center;justify-content:center;">
-                  <img src="/logo.svg" alt="" style="display:block;width:${qrLogoSize}px;height:${qrLogoSize}px;" />
+                  <img src="/logo_no_text.svg" alt="" style="display:block;width:${qrLogoSize}px;height:${qrLogoSize}px;" />
                 </div>
               </div>
             </div>
@@ -404,7 +404,7 @@ export default function ShareQRModal({
           const img = new Image();
           img.onload = () => resolve(img);
           img.onerror = () => reject(new Error("Logo image failed to load."));
-          img.src = "/logo.svg";
+          img.src = "/logo_no_text.svg";
         });
 
         const logoBadgeX = Math.round(W / 2 - qrBadgeSize / 2);
@@ -556,7 +556,7 @@ export default function ShareQRModal({
             level="H"
             includeMargin
             imageSettings={{
-              src: "/logo.svg",
+              src: "/logo_no_text.svg",
               width: qrBadgeSize,
               height: qrBadgeSize,
               excavate: true,
