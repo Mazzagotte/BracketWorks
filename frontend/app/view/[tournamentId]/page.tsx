@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef, useMemo, Fragment, useLayoutEffect } from 'react'
 import { useParams } from 'next/navigation'
+import { Award, CalendarDays, Info, RefreshCw, Search, Share2, Trophy, UserRound } from 'lucide-react'
 import { buildApiUrl } from '../../lib/api'
 import { formatIsoDateShortWithWeekday } from '../../lib/formatters'
 import { BW_BREAKPOINTS, matchesMaxWidth } from '../../lib/responsive'
@@ -194,10 +195,6 @@ function formatSquad(s: Squad) {
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
-function LiveDot() {
-  return <span className={styles.liveDot} aria-label="Live" />
-}
-
 function AliveView({
   bracketGroups,
   lastRefresh,
@@ -250,32 +247,22 @@ function AliveView({
           className={styles.aliveToolbar}
           left={(
             <div className={styles.searchRow}>
-              <input
-                className={styles.searchInput}
-                type="search"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Find bowler"
-                aria-label="Find bowler"
-              />
-              <span className={styles.countBadge}>{sortedRows.length} shown</span>
+              <label className={styles.searchField}>
+                <Search aria-hidden="true" />
+                <input
+                  className={styles.searchInput}
+                  type="search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Find bowler..."
+                  aria-label="Find bowler"
+                />
+              </label>
+              <span className={styles.countBadge}>{sortedRows.length} bowlers shown</span>
             </div>
           )}
           right={(
-            <div className={styles.refreshRow}>
-              <span className={styles.refreshMeta}>
-                Last updated {lastRefresh.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' })}
-              </span>
-              <span className={styles.liveStatus}>
-                <LiveDot />
-                <span className={styles.liveStatusText}>Auto-refresh on</span>
-              </span>
-              <div className={styles.refreshActions}>
-                <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.primary} ${styles.refreshBtn}`} onClick={onRefreshNow} disabled={!canRefresh || isRefreshing} type="button">
-                  {isRefreshing ? 'Refreshing...' : 'Refresh Now'}
-                </button>
-              </div>
-            </div>
+            <LiveRefreshControls lastRefresh={lastRefresh} isRefreshing={isRefreshing} canRefresh={canRefresh} onRefreshNow={onRefreshNow} />
           )}
         />
       </div>
@@ -287,6 +274,7 @@ function AliveView({
           <table className={styles.table}>
             <thead>
               <tr>
+                <th className={styles.rankColumn}>#</th>
                 <th>Bowler</th>
                 <th className={styles.thCenter}>
                   <span className={styles.thFull}>After Game 1</span>
@@ -296,12 +284,15 @@ function AliveView({
                   <span className={styles.thFull}>After Game 2</span>
                   <span className={styles.thShort}>G2</span>
                 </th>
-                <th className={styles.thCenter}>1st/2nd</th>
+                <th className={styles.thCenter}>
+                  <span className={styles.finalHeading}>1st/2nd <Info aria-hidden="true" /></span>
+                </th>
               </tr>
             </thead>
             <tbody>
-              {sortedRows.map((row) => (
+              {sortedRows.map((row, index) => (
                 <tr key={row.name} className={styles.tableRow}>
+                  <td className={styles.rankColumn}>{index + 1}</td>
                   <td className={styles.tdName}>{row.name}</td>
                   <td className={styles.tdCenter}>
                     <span className={row.afterG1 > 0 ? styles.aliveNum : styles.elimNum}>{row.afterG1}</span>
@@ -319,6 +310,36 @@ function AliveView({
         </div>
       )}
     </>
+  )
+}
+
+function LiveRefreshControls({
+  lastRefresh,
+  isRefreshing,
+  canRefresh,
+  onRefreshNow,
+}: {
+  lastRefresh: Date
+  isRefreshing: boolean
+  canRefresh: boolean
+  onRefreshNow: () => void
+}) {
+  return (
+    <div className={styles.refreshRow}>
+      <span className={styles.refreshMeta}>
+        Last updated {lastRefresh.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' })}
+      </span>
+      <span className={styles.liveStatus}>
+        <RefreshCw className={isRefreshing ? styles.refreshSpin : ''} aria-hidden="true" />
+        <span className={styles.liveStatusText}>Auto-refresh on</span>
+      </span>
+      <div className={styles.refreshActions}>
+        <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.primary} ${styles.refreshBtn}`} onClick={onRefreshNow} disabled={!canRefresh || isRefreshing} type="button">
+          <RefreshCw aria-hidden="true" />
+          {isRefreshing ? 'Refreshing...' : 'Refresh Now'}
+        </button>
+      </div>
+    </div>
   )
 }
 
@@ -685,7 +706,19 @@ function BracketView({ group, highlightName, onNameClick }: {
   )
 }
 
-function BracketsTabView({ bracketGroups }: { bracketGroups: BracketGroup[] }) {
+function BracketsTabView({
+  bracketGroups,
+  lastRefresh,
+  isRefreshing,
+  canRefresh,
+  onRefreshNow,
+}: {
+  bracketGroups: BracketGroup[]
+  lastRefresh: Date
+  isRefreshing: boolean
+  canRefresh: boolean
+  onRefreshNow: () => void
+}) {
   const [activeGroup, setActiveGroup] = useState(0)
   const [bracketSearch, setBracketSearch] = useState('')
   const [highlightName, setHighlightName] = useState('')
@@ -736,6 +769,7 @@ function BracketsTabView({ bracketGroups }: { bracketGroups: BracketGroup[] }) {
 
   return (
     <div className={styles.section}>
+      <div className={styles.bracketControlsPanel}>
       {/* Group tabs */}
       {bracketGroups.length > 1 && (
         <div className={styles.bracketGroupTabs}>
@@ -749,6 +783,14 @@ function BracketsTabView({ bracketGroups }: { bracketGroups: BracketGroup[] }) {
           ))}
         </div>
       )}
+
+      <div className={styles.bracketLiveControls}>
+        <DataTableToolbar
+          className={styles.aliveToolbar}
+          left={<span className={styles.countBadge}>{group.brackets.length} {group.brackets.length === 1 ? 'bracket' : 'brackets'} in this program</span>}
+          right={<LiveRefreshControls lastRefresh={lastRefresh} isRefreshing={isRefreshing} canRefresh={canRefresh} onRefreshNow={onRefreshNow} />}
+        />
+      </div>
 
       {/* Bowler search / jump */}
       <div className={styles.bracketSearchRow}>
@@ -784,6 +826,7 @@ function BracketsTabView({ bracketGroups }: { bracketGroups: BracketGroup[] }) {
             aria-label="Clear highlight"
           >✕</button>
         )}
+      </div>
       </div>
 
       {group.brackets.length === 0 ? (
@@ -856,17 +899,20 @@ function getSeriesTopN(rows: PublicScoreRow[], mode: 'scratch' | 'handicap', n: 
   return candidates.slice(0, n)
 }
 
-function SidePotsLeaderboard({ scoreRows, tournamentId, lastRefresh, isRefreshing }: {
+function SidePotsLeaderboard({ scoreRows, tournamentId, lastRefresh, isRefreshing, canRefresh, onRefreshNow }: {
   scoreRows: PublicScoreRow[]
   tournamentId: number | null
-  lastRefresh: Date | null
+  lastRefresh: Date
   isRefreshing: boolean
+  canRefresh: boolean
+  onRefreshNow: () => void
 }) {
   const [settingsRefreshKey, setSettingsRefreshKey] = useState(0)
   const [enabledSidePotKeys, setEnabledSidePotKeys] = useState<Set<string>>(new Set())
   const [sidePotEntriesMap, setSidePotEntriesMap] = useState<SidePotEntriesByPlayer>({})
   const [hasSidePotSettings, setHasSidePotSettings] = useState(false)
   const [hasSidePotEntriesMap, setHasSidePotEntriesMap] = useState(false)
+  const [activeSidePotMode, setActiveSidePotMode] = useState<'scratch' | 'handicap'>('scratch')
 
   useEffect(() => {
     const handleSettingsChanged = () => {
@@ -948,19 +994,48 @@ function SidePotsLeaderboard({ scoreRows, tournamentId, lastRefresh, isRefreshin
     return <p className={styles.emptyNote}>No side pots are enabled for this tournament.</p>
   }
 
-  const showHighGameScratch = !hasSidePotSettings || enabledSidePotKeys.has('high_game_scratch')
-  const showHighSeriesScratch = !hasSidePotSettings || enabledSidePotKeys.has('high_series_scratch')
-  const showHighGameHandicap = !hasSidePotSettings || enabledSidePotKeys.has('high_game_handicap')
-  const showHighSeriesHandicap = !hasSidePotSettings || enabledSidePotKeys.has('high_series_handicap')
+  const hasScratchData = scoreRows.some(row =>
+    row.game1_scratch != null || row.game2_scratch != null || row.game3_scratch != null
+  )
+  const hasHandicapData = scoreRows.some(row =>
+    row.game1_with_handicap != null || row.game2_with_handicap != null || row.game3_with_handicap != null
+  )
+
+  const showHighGameScratch = hasSidePotSettings
+    ? enabledSidePotKeys.has('high_game_scratch')
+    : hasScratchData
+  const showHighSeriesScratch = hasSidePotSettings
+    ? enabledSidePotKeys.has('high_series_scratch')
+    : hasScratchData
+  const showHighGameHandicap = hasSidePotSettings
+    ? enabledSidePotKeys.has('high_game_handicap')
+    : hasHandicapData
+  const showHighSeriesHandicap = hasSidePotSettings
+    ? enabledSidePotKeys.has('high_series_handicap')
+    : hasHandicapData
 
   const showScratchSection = showHighGameScratch || showHighSeriesScratch
   const showHandicapSection = showHighGameHandicap || showHighSeriesHandicap
+  const availableSidePotModes = [
+    ...(showScratchSection ? [{ key: 'scratch' as const, label: 'Scratch' }] : []),
+    ...(showHandicapSection ? [{ key: 'handicap' as const, label: 'Handicap' }] : []),
+  ]
+
+  if (availableSidePotModes.length === 0) {
+    return <p className={styles.emptyNote}>No side-pot score programs are available for this squad yet.</p>
+  }
+
+  const displayedSidePotMode = activeSidePotMode === 'scratch' && !showScratchSection
+    ? 'handicap'
+    : activeSidePotMode === 'handicap' && !showHandicapSection
+      ? 'scratch'
+      : activeSidePotMode
 
   const placeLabel = (i: number) => i === 0 ? '1st' : i === 1 ? '2nd' : '3rd'
 
-  const renderCard = (label: string, leaders: Leader[]) => (
+  const renderCard = (label: string, leaders: Leader[], modeLabel: string) => (
     <div key={label} className={styles.sidePotCard}>
-      <div className={styles.sidePotCardLabel}>{label}</div>
+      <div className={styles.sidePotCardLabel}><Trophy aria-hidden="true" /><span>{label}</span></div>
       {leaders.length === 0 ? (
         <div className={styles.sidePotPending}>Pending</div>
       ) : (
@@ -974,6 +1049,7 @@ function SidePotsLeaderboard({ scoreRows, tournamentId, lastRefresh, isRefreshin
           ))}
         </ol>
       )}
+      <div className={styles.sidePotCardFooter}>Top 3 scores <span>•</span> {modeLabel}</div>
     </div>
   )
 
@@ -983,40 +1059,50 @@ function SidePotsLeaderboard({ scoreRows, tournamentId, lastRefresh, isRefreshin
     { label: 'Game 3', scratchField: 'game3_scratch' as const, handicapField: 'game3_with_handicap' as const },
   ]
 
-  const lastRefreshLabel = lastRefresh
-    ? lastRefresh.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-    : null
-
   return (
     <div className={styles.sidePotLeaderboard}>
-      <div className={styles.sidePotRefreshRow}>
-        <span className={`${styles.liveDot} ${isRefreshing ? styles.liveDotRefreshing : ''}`} />
-        <span className={styles.sidePotRefreshMeta}>
-          {isRefreshing ? 'Refreshing...' : lastRefreshLabel ? `Updated ${lastRefreshLabel}` : 'Live'}
-        </span>
+      <div className={styles.sidePotLiveControls}>
+        <DataTableToolbar
+          className={styles.aliveToolbar}
+          left={<span className={styles.countBadge}>{availableSidePotModes.length} {availableSidePotModes.length === 1 ? 'program' : 'programs'} available</span>}
+          right={<LiveRefreshControls lastRefresh={lastRefresh} isRefreshing={isRefreshing} canRefresh={canRefresh} onRefreshNow={onRefreshNow} />}
+        />
       </div>
-      {showScratchSection && (
-        <div className={styles.sidePotSection}>
-          <div className={styles.sidePotSectionTitle}>Scratch</div>
+
+      <div className={styles.sidePotSection}>
+        <div className={styles.sidePotModeTabs} role="tablist" aria-label="Side pot program">
+          {availableSidePotModes.map(mode => (
+            <button
+              key={mode.key}
+              type="button"
+              role="tab"
+              aria-selected={displayedSidePotMode === mode.key}
+              className={`${styles.sidePotModeTab} ${displayedSidePotMode === mode.key ? styles.sidePotModeTabActive : ''}`}
+              onClick={() => setActiveSidePotMode(mode.key)}
+            >
+              {mode.key === 'scratch' ? <Award aria-hidden="true" /> : <UserRound aria-hidden="true" />}
+              {mode.label}
+            </button>
+          ))}
+        </div>
+
+        {displayedSidePotMode === 'scratch' && showScratchSection && (
           <div className={styles.sidePotGrid}>
             {showHighGameScratch && gameCategories.map(c =>
-              renderCard(c.label, getTopN(scoreRows, c.scratchField, 3, highGameScratchEligible))
+              renderCard(c.label, getTopN(scoreRows, c.scratchField, 3, highGameScratchEligible), 'Scratch')
             )}
-            {showHighSeriesScratch && renderCard('Series', getSeriesTopN(scoreRows, 'scratch', 3, highSeriesScratchEligible))}
+            {showHighSeriesScratch && renderCard('Series', getSeriesTopN(scoreRows, 'scratch', 3, highSeriesScratchEligible), 'Scratch')}
           </div>
-        </div>
-      )}
-      {showHandicapSection && (
-        <div className={styles.sidePotSection}>
-          <div className={styles.sidePotSectionTitle}>Handicap</div>
+        )}
+        {displayedSidePotMode === 'handicap' && showHandicapSection && (
           <div className={styles.sidePotGrid}>
             {showHighGameHandicap && gameCategories.map(c =>
-              renderCard(c.label, getTopN(scoreRows, c.handicapField, 3, highGameHandicapEligible))
+              renderCard(c.label, getTopN(scoreRows, c.handicapField, 3, highGameHandicapEligible), 'Handicap')
             )}
-            {showHighSeriesHandicap && renderCard('Series', getSeriesTopN(scoreRows, 'handicap', 3, highSeriesHandicapEligible))}
+            {showHighSeriesHandicap && renderCard('Series', getSeriesTopN(scoreRows, 'handicap', 3, highSeriesHandicapEligible), 'Handicap')}
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }
@@ -1084,7 +1170,7 @@ export default function TournamentViewPage() {
   const refreshInFlightRef = useRef(false)
 
   // Persist tab preference to localStorage across sessions
-    const [copied, setCopied] = useState(false)
+  const [copied, setCopied] = useState(false)
   useEffect(() => {
     try { localStorage.setItem('bw-view-tab', tab) } catch {}
   }, [tab])
@@ -1346,15 +1432,18 @@ export default function TournamentViewPage() {
                 {tournament && tournament.squads.length > 1 && (
                   <div className={styles.squadSelector}>
                     <label className={styles.squadLabel}>Squad</label>
-                    <select
-                      className={styles.squadSelect}
-                      value={selectedSquadId ?? ''}
-                      onChange={(e) => setSelectedSquadId(Number(e.target.value))}
-                    >
-                      {tournament.squads.map((s) => (
-                        <option key={s.id} value={s.id}>{formatSquad(s)}</option>
-                      ))}
-                    </select>
+                    <span className={styles.squadSelectWrap}>
+                      <CalendarDays aria-hidden="true" />
+                      <select
+                        className={styles.squadSelect}
+                        value={selectedSquadId ?? ''}
+                        onChange={(e) => setSelectedSquadId(Number(e.target.value))}
+                      >
+                        {tournament.squads.map((s) => (
+                          <option key={s.id} value={s.id}>{formatSquad(s)}</option>
+                        ))}
+                      </select>
+                    </span>
                   </div>
                 )}
 
@@ -1365,7 +1454,8 @@ export default function TournamentViewPage() {
                   title="Copy link to share with bowlers"
                 >
                   <span className={styles.shareBtnIcon} aria-hidden="true">↗</span>
-                  <span>{copied ? 'Link Copied' : 'Share View'}</span>
+                  <Share2 className={styles.shareBtnSvg} aria-hidden="true" />
+                  <span>{copied ? 'Link Copied' : 'Share Live View'}</span>
                 </button>
               </div>
 
@@ -1378,8 +1468,8 @@ export default function TournamentViewPage() {
                       onClick={() => setTab(t)}
                     >
                       {t === 'alive' && <><span className={styles.thFull}>Bracket Summary</span><span className={styles.thShort}>Summary</span></>}
-                      {t === 'brackets' && 'Brackets'}
-                      {t === 'sidePots' && <><span className={styles.thFull}>Side Pots</span><span className={styles.thShort}>Side Pots</span></>}
+                      {t === 'brackets' && <span>Brackets</span>}
+                      {t === 'sidePots' && <span>Side Pots</span>}
                     </button>
                   ))}
                 </div>
@@ -1418,7 +1508,13 @@ export default function TournamentViewPage() {
 
               {/* ── Brackets tab ── */}
               {tab === 'brackets' && (
-                <BracketsTabView bracketGroups={bracketGroups} />
+                <BracketsTabView
+                  bracketGroups={bracketGroups}
+                  lastRefresh={lastRefresh}
+                  isRefreshing={isRefreshing}
+                  canRefresh={Boolean(resolvedTournamentId)}
+                  onRefreshNow={() => { void refresh() }}
+                />
               )}
 
               {/* ── Side Pots tab ── */}
@@ -1429,6 +1525,8 @@ export default function TournamentViewPage() {
                     tournamentId={resolvedTournamentId}
                     lastRefresh={lastRefresh}
                     isRefreshing={isRefreshing}
+                    canRefresh={Boolean(resolvedTournamentId)}
+                    onRefreshNow={() => { void refresh() }}
                   />
                 </div>
               )}

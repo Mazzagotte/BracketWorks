@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import NextImage from "next/image";
 import { QRCodeCanvas } from "qrcode.react";
-import { Check, Copy, Download, QrCode, Share2 } from "lucide-react";
+import { Check, Copy, Download, Image as ImageIcon, Info, Link2, Share2 } from "lucide-react";
 import { useToast } from "./Toast";
 import CloseControl from "../../components/CloseControl";
 import styles from "./ShareQRModal.module.css";
@@ -16,19 +17,6 @@ interface ShareQRModalProps {
 }
 
 type PosterMode = "social" | "print";
-
-function readRootCssVar(name: string) {
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-}
-
-function escapeHtml(value: string) {
-  return String(value)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/\"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
 
 function slugify(name: string): string {
   return name
@@ -47,21 +35,19 @@ export default function ShareQRModal({
 }: ShareQRModalProps) {
   const { addToast } = useToast();
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const canvasRef = useRef<HTMLDivElement>(null);
+  const qrCanvasRef = useRef<HTMLCanvasElement>(null);
   const [copied, setCopied] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState("");
+  const [posterPreviewUrl, setPosterPreviewUrl] = useState("");
+  const [posterPreviewError, setPosterPreviewError] = useState("");
   const [exportingMode, setExportingMode] = useState<PosterMode | null>(null);
-  const qrImageSize = 498;
+  const qrImageSize = 620;
   const qrRenderSize = qrImageSize;
-  const qrBadgeSize = 180;
-  const qrLogoSize = 176;
 
   const slug = slugify(tournamentName);
   const publicUrl = providedPublicUrl || (typeof window !== "undefined"
     ? `${window.location.origin}/view/${slug}`
     : `/view/${slug}`);
-  const generatedDate = new Date().toLocaleDateString();
-
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
@@ -84,7 +70,7 @@ export default function ShareQRModal({
     const readQrCanvas = () => {
       if (cancelled) return;
 
-      const qrCanvas = canvasRef.current?.querySelector("canvas") as HTMLCanvasElement | null;
+      const qrCanvas = qrCanvasRef.current;
       if (qrCanvas) {
         try {
           setQrDataUrl(qrCanvas.toDataURL("image/png"));
@@ -97,10 +83,14 @@ export default function ShareQRModal({
       attempts += 1;
       if (attempts < maxAttempts) {
         window.setTimeout(readQrCanvas, retryDelayMs);
+      } else {
+        setPosterPreviewError("The QR canvas did not become ready.");
       }
     };
 
     setQrDataUrl("");
+    setPosterPreviewUrl("");
+    setPosterPreviewError("");
     readQrCanvas();
 
     return () => {
@@ -123,61 +113,8 @@ export default function ShareQRModal({
     if (e.target === dialogRef.current) onClose();
   };
 
-  const buildPosterHtml = useCallback((qrImageSrc: string) => {
-    const safeTournamentName = escapeHtml(tournamentName);
-    const safeDate = escapeHtml(generatedDate);
-    const safeQrSrc = escapeHtml(qrImageSrc);
-
-    return `
-      <div xmlns="http://www.w3.org/1999/xhtml" style="width:1080px;height:1350px;background:#0d1218;color:#e8edf3;font-family:'Segoe UI',Inter,Arial,sans-serif;box-sizing:border-box;padding:56px;">
-        <div style="height:100%;border:1px solid #2a3342;border-radius:34px;box-sizing:border-box;display:flex;flex-direction:column;overflow:hidden;background:linear-gradient(170deg,#111925 0%,#0e141d 55%,#0b1017 100%);box-shadow:0 30px 70px rgba(0,0,0,0.38);">
-          <header style="padding:44px 50px 28px;border-bottom:1px solid #283243;display:flex;justify-content:space-between;gap:30px;align-items:flex-start;background:linear-gradient(180deg,rgba(255,122,0,0.14) 0%,rgba(255,122,0,0.03) 100%);">
-            <div>
-              <div style="display:inline-block;padding:6px 12px;border-radius:999px;border:1px solid rgba(255,122,0,0.45);background:rgba(255,122,0,0.18);color:#ffd7b1;font-size:16px;font-weight:800;letter-spacing:0.7px;text-transform:uppercase;">BracketWorks Live</div>
-              <div style="margin-top:16px;color:#ffffff;font-size:50px;font-weight:900;letter-spacing:0.2px;line-height:1;">Scan For Live Results</div>
-              <div style="margin-top:8px;color:#aab6c7;font-size:20px;font-weight:600;">Real-time brackets, entries, and standings</div>
-            </div>
-            <div style="text-align:right;color:#9fb0c6;font-size:18px;line-height:1.35;padding-top:2px;">
-              <div style="font-size:16px;font-weight:700;color:#d9e3ef;text-transform:uppercase;letter-spacing:1px;">Generated</div>
-              <div style="margin-top:4px;font-size:26px;font-weight:800;color:#ffffff;">${safeDate}</div>
-            </div>
-          </header>
-
-          <section style="padding:34px 50px 30px;border-bottom:1px solid #222d3d;background:rgba(255,255,255,0.02);">
-            <div style="font-size:15px;font-weight:800;color:#8ea2bb;text-transform:uppercase;letter-spacing:1.1px;">Featured Tournament</div>
-            <h1 style="margin:12px 0 0;font-size:58px;line-height:1.03;font-weight:900;letter-spacing:0;color:#ffffff;">${safeTournamentName}</h1>
-          </section>
-
-          <section style="padding:42px 50px 30px;display:flex;flex-direction:column;align-items:center;gap:26px;flex:1;">
-            <div style="width:596px;height:596px;border:0.75px solid rgba(45,57,74,0.65);border-radius:28px;display:flex;align-items:center;justify-content:center;background:linear-gradient(165deg,#121b27 0%,#111827 100%);box-shadow:inset 0 0 0 1px rgba(255,255,255,0.02);">
-              <div style="width:534px;height:534px;border-radius:18px;background:#ffffff;display:flex;align-items:center;justify-content:center;position:relative;">
-                <img src="${safeQrSrc}" alt="" style="display:block;width:${qrImageSize}px;height:${qrImageSize}px;" />
-                <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:${qrBadgeSize}px;height:${qrBadgeSize}px;border-radius:28px;background:#ffffff;display:flex;align-items:center;justify-content:center;">
-                  <img src="/logo_no_text.svg" alt="" style="display:block;width:${qrLogoSize}px;height:${qrLogoSize}px;" />
-                </div>
-              </div>
-            </div>
-
-            <div style="font-size:24px;line-height:1.3;color:#d6deea;text-align:center;font-weight:700;max-width:840px;">
-              Use your phone camera to open the live board instantly.
-            </div>
-
-            <div style="font-size:18px;line-height:1.35;color:#9fb2c8;text-align:center;max-width:840px;">
-              If scanning is unavailable, open <strong style="color:#ffffff;">bracketworks.app/view</strong> in your browser.
-            </div>
-          </section>
-
-          <footer style="padding:24px 50px;border-top:1px solid #283447;color:#9db0c6;font-size:19px;line-height:1.35;display:flex;justify-content:space-between;gap:30px;background:rgba(0,0,0,0.16);">
-            <strong style="color:#ffffff;font-size:21px;">bracketworks.app</strong>
-            <span style="text-align:right;max-width:640px;">No login required. Share this code at check-in so bowlers can follow every update.</span>
-          </footer>
-        </div>
-      </div>
-    `;
-  }, [generatedDate, tournamentName]);
-
-  const handleExportPng = async (mode: PosterMode) => {
-    if (exportingMode) return;
+  const handleExportPng = async (mode: PosterMode, shouldDownload = true) => {
+    if (shouldDownload && exportingMode) return;
 
     if (!qrDataUrl) {
       addToast({ type: "error", message: "Could not generate QR image.", duration: 3000 });
@@ -185,47 +122,53 @@ export default function ShareQRModal({
     }
 
     const W = 1080;
-    const H = 1350;
-    setExportingMode(mode);
+    const H = 1620;
+    if (shouldDownload) {
+      setExportingMode(mode);
+    } else {
+      setPosterPreviewError("");
+    }
 
     const isPrintMode = mode === "print";
     const palette = {
-      pageBg: isPrintMode ? "#ffffff" : "#0d1218",
-      shellBorder: isPrintMode ? "#d6dee8" : "#2a3342",
-      shellGradientStart: isPrintMode ? "#ffffff" : "#111925",
-      shellGradientMid: isPrintMode ? "#f8fbff" : "#0e141d",
-      shellGradientEnd: isPrintMode ? "#eef3f9" : "#0b1017",
-      headerGradientStart: isPrintMode ? "rgba(255,122,0,0.12)" : "rgba(255,122,0,0.16)",
-      headerGradientEnd: isPrintMode ? "rgba(255,122,0,0.02)" : "rgba(255,122,0,0.03)",
-      headerDivider: isPrintMode ? "#d9e2ee" : "#283243",
-      accentBg: isPrintMode ? "rgba(255,122,0,0.14)" : "rgba(255,122,0,0.18)",
-      accentBorder: isPrintMode ? "rgba(255,122,0,0.45)" : "rgba(255,122,0,0.45)",
-      accentText: isPrintMode ? "#8f4500" : "#ffd7b1",
-      titleText: isPrintMode ? "#0f172a" : "#ffffff",
-      bodyText: isPrintMode ? "#334155" : "#aab6c7",
-      metaLabel: isPrintMode ? "#475569" : "#d9e3ef",
-      sectionBg: isPrintMode ? "rgba(15,23,42,0.02)" : "rgba(255,255,255,0.02)",
-      sectionDivider: isPrintMode ? "#d9e3ee" : "#222d3d",
-      sectionLabel: isPrintMode ? "#64748b" : "#8ea2bb",
-      qrOuterStart: isPrintMode ? "#f3f6fb" : "#121b27",
-      qrOuterEnd: isPrintMode ? "#eef2f7" : "#111827",
-      qrOuterBorder: isPrintMode ? "#cfd8e4" : "#2d394a",
-      calloutStrong: isPrintMode ? "#1e293b" : "#d6deea",
-      calloutSoft: isPrintMode ? "#475569" : "#9fb2c8",
-      footerBg: isPrintMode ? "rgba(15,23,42,0.04)" : "rgba(0,0,0,0.16)",
-      footerDivider: isPrintMode ? "#d0d9e5" : "#283447",
-      footerStrong: isPrintMode ? "#0f172a" : "#ffffff",
-      footerText: isPrintMode ? "#475569" : "#9db0c6",
+      pageBg: isPrintMode ? "#ffffff" : "#09090c",
+      shellBorder: isPrintMode ? "#d4d4d8" : "#2a2a33",
+      shellGradientStart: isPrintMode ? "#ffffff" : "#18181f",
+      shellGradientMid: isPrintMode ? "#fafafa" : "#18181f",
+      shellGradientEnd: isPrintMode ? "#f4f4f5" : "#18181f",
+      headerGradientStart: isPrintMode ? "#ffffff" : "#18181f",
+      headerGradientEnd: isPrintMode ? "#fafafa" : "#18181f",
+      headerDivider: isPrintMode ? "#d4d4d8" : "#2a2a33",
+      accentBg: isPrintMode ? "#f4f4f5" : "#202028",
+      accentBorder: isPrintMode ? "#d4d4d8" : "#2a2a33",
+      accentText: "#ff7a00",
+      titleText: isPrintMode ? "#18181b" : "#ffffff",
+      bodyText: isPrintMode ? "#52525b" : "#a1a1aa",
+      metaLabel: isPrintMode ? "#71717a" : "#a1a1aa",
+      sectionBg: isPrintMode ? "#f4f4f5" : "#202028",
+      sectionDivider: isPrintMode ? "#d4d4d8" : "#2a2a33",
+      sectionLabel: "#ff7a00",
+      mainBg: isPrintMode ? "#ffffff" : "#111119",
+      qrOuterStart: isPrintMode ? "#f4f4f5" : "#202028",
+      qrOuterEnd: isPrintMode ? "#e4e4e7" : "#202028",
+      qrOuterBorder: isPrintMode ? "#d4d4d8" : "#2a2a33",
+      calloutStrong: isPrintMode ? "#18181b" : "#ffffff",
+      calloutSoft: isPrintMode ? "#52525b" : "#a1a1aa",
+      footerBg: isPrintMode ? "#f4f4f5" : "#111119",
+      footerDivider: isPrintMode ? "#d4d4d8" : "#2a2a33",
+      footerStrong: "#ff7a00",
+      footerText: isPrintMode ? "#52525b" : "#a1a1aa",
     };
 
     try {
+      const exportScale = mode === "print" ? 2 : 1;
       const canvas = document.createElement("canvas");
-      canvas.width = W * 2;
-      canvas.height = H * 2;
+      canvas.width = W * exportScale;
+      canvas.height = H * exportScale;
 
       const ctx = canvas.getContext("2d");
       if (!ctx) throw new Error("Could not create export canvas.");
-      ctx.scale(2, 2);
+      ctx.scale(exportScale, exportScale);
 
       const roundRect = (x: number, y: number, width: number, height: number, radius: number) => {
         const r = Math.min(radius, width / 2, height / 2);
@@ -287,171 +230,175 @@ export default function ShareQRModal({
         });
       };
 
+      const loadImage = (src: string, timeoutMs = 5000) => new Promise<HTMLImageElement>((resolve, reject) => {
+        const img = new Image();
+        const timeoutId = window.setTimeout(() => {
+          img.src = "";
+          reject(new Error("Image loading timed out."));
+        }, timeoutMs);
+        img.onload = () => {
+          window.clearTimeout(timeoutId);
+          resolve(img);
+        };
+        img.onerror = () => {
+          window.clearTimeout(timeoutId);
+          reject(new Error("Could not load poster image asset."));
+        };
+        img.src = src;
+      });
+
+      const qrImage = await loadImage(qrDataUrl);
+      let logoImage: HTMLImageElement | null = null;
+      try {
+        logoImage = await loadImage("/logo_no_text.svg", 1500);
+      } catch {
+        // The poster remains usable if the decorative logo cannot be decoded.
+      }
+
+      const displayUrl = publicUrl.replace(/^https?:\/\//i, "");
+      const [displayHost = "", ...displayPathParts] = displayUrl.split("/");
+      const displayPath = displayPathParts.length ? `/${displayPathParts.join("/")}` : "";
+      const orange = "#ff7a00";
+      const shellX = 28;
+      const shellY = 28;
+      const shellW = W - 56;
+      const shellH = H - 56;
+
       ctx.fillStyle = palette.pageBg;
       ctx.fillRect(0, 0, W, H);
-
-      const shellX = 56;
-      const shellY = 56;
-      const shellW = W - 112;
-      const shellH = H - 112;
-      const shellGradient = ctx.createLinearGradient(shellX, shellY, shellX + shellW, shellY + shellH);
-      shellGradient.addColorStop(0, palette.shellGradientStart);
-      shellGradient.addColorStop(0.55, palette.shellGradientMid);
-      shellGradient.addColorStop(1, palette.shellGradientEnd);
-      roundRect(shellX, shellY, shellW, shellH, 34);
-      ctx.fillStyle = shellGradient;
+      roundRect(shellX, shellY, shellW, shellH, 30);
+      ctx.fillStyle = isPrintMode ? "#ffffff" : "#0d0d12";
       ctx.fill();
       ctx.strokeStyle = palette.shellBorder;
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      const headerH = 226;
-      const headerGradient = ctx.createLinearGradient(shellX, shellY, shellX, shellY + headerH);
-      headerGradient.addColorStop(0, palette.headerGradientStart);
-      headerGradient.addColorStop(1, palette.headerGradientEnd);
-      roundRect(shellX, shellY, shellW, headerH, 34);
-      ctx.fillStyle = headerGradient;
-      ctx.fill();
+      ctx.save();
+      roundRect(shellX, shellY, shellW, shellH, 30);
+      ctx.clip();
 
-      ctx.strokeStyle = palette.headerDivider;
+      ctx.strokeStyle = orange;
       ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(shellX, shellY + headerH);
-      ctx.lineTo(shellX + shellW, shellY + headerH);
+      ctx.moveTo(58, 104);
+      ctx.lineTo(245, 104);
+      ctx.moveTo(835, 104);
+      ctx.lineTo(1022, 104);
       ctx.stroke();
 
-      roundRect(shellX + 50, shellY + 32, 252, 36, 18);
-      ctx.fillStyle = palette.accentBg;
-      ctx.fill();
-      ctx.strokeStyle = palette.accentBorder;
-      ctx.lineWidth = 1;
-      ctx.stroke();
-
-      ctx.fillStyle = palette.accentText;
-      ctx.font = '800 16px "Segoe UI", Inter, Arial, sans-serif';
-      ctx.textAlign = "left";
-      ctx.fillText("BRACKETWORKS LIVE", shellX + 65, shellY + 57);
-
-      ctx.fillStyle = palette.titleText;
-      ctx.font = '900 48px "Segoe UI", Inter, Arial, sans-serif';
-      ctx.fillText("Scan For Live Results", shellX + 50, shellY + 118);
-
-      ctx.fillStyle = palette.bodyText;
-      ctx.font = '600 20px "Segoe UI", Inter, Arial, sans-serif';
-      ctx.fillText("Real-time brackets, entries, and standings", shellX + 50, shellY + 154);
-
-      ctx.textAlign = "right";
-      ctx.fillStyle = palette.metaLabel;
-      ctx.font = '700 16px "Segoe UI", Inter, Arial, sans-serif';
-      ctx.fillText("GENERATED", shellX + shellW - 50, shellY + 52);
-      ctx.fillStyle = palette.titleText;
-      ctx.font = '800 26px "Segoe UI", Inter, Arial, sans-serif';
-      ctx.fillText(generatedDate, shellX + shellW - 50, shellY + 86);
-
-      const tournamentY = shellY + headerH;
-      const tournamentH = 184;
-      ctx.fillStyle = palette.sectionBg;
-      ctx.fillRect(shellX, tournamentY, shellW, tournamentH);
-      ctx.strokeStyle = palette.sectionDivider;
-      ctx.beginPath();
-      ctx.moveTo(shellX, tournamentY + tournamentH);
-      ctx.lineTo(shellX + shellW, tournamentY + tournamentH);
-      ctx.stroke();
-
-      ctx.textAlign = "left";
-      ctx.fillStyle = palette.sectionLabel;
-      ctx.font = '800 15px "Segoe UI", Inter, Arial, sans-serif';
-      ctx.fillText("FEATURED TOURNAMENT", shellX + 50, tournamentY + 48);
-
-      ctx.fillStyle = palette.titleText;
-      ctx.font = '900 58px "Segoe UI", Inter, Arial, sans-serif';
-      drawWrappedText(tournamentName || "Tournament", shellW - 100, 2, shellX + 50, tournamentY + 114, 62);
-
-      const qrOuterSize = 596;
-      const qrOuterX = Math.round((W - qrOuterSize) / 2);
-      const qrOuterY = tournamentY + tournamentH + 42;
-      const qrGradient = ctx.createLinearGradient(qrOuterX, qrOuterY, qrOuterX, qrOuterY + qrOuterSize);
-      qrGradient.addColorStop(0, palette.qrOuterStart);
-      qrGradient.addColorStop(1, palette.qrOuterEnd);
-      roundRect(qrOuterX, qrOuterY, qrOuterSize, qrOuterSize, 28);
-      ctx.fillStyle = qrGradient;
-      ctx.fill();
-      ctx.strokeStyle = palette.qrOuterBorder;
-      ctx.lineWidth = 1;
-      ctx.stroke();
-
-      const qrInnerSize = 534;
-      const qrInnerX = Math.round((W - qrInnerSize) / 2);
-      const qrInnerY = qrOuterY + Math.round((qrOuterSize - qrInnerSize) / 2);
-      roundRect(qrInnerX, qrInnerY, qrInnerSize, qrInnerSize, 18);
-      ctx.fillStyle = "#ffffff";
-      ctx.fill();
-
-      const qrImage = await new Promise<HTMLImageElement>((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => resolve(img);
-        img.onerror = () => reject(new Error("Could not render QR image."));
-        img.src = qrDataUrl;
-      });
-
-      const qrImageX = Math.round((W - qrImageSize) / 2);
-      const qrImageY = qrInnerY + Math.round((qrInnerSize - qrImageSize) / 2);
-      ctx.drawImage(qrImage, qrImageX, qrImageY, qrImageSize, qrImageSize);
-
-      // Explicit overlay keeps the logo visibly centered in the poster output.
-      try {
-        const logoImage = await new Promise<HTMLImageElement>((resolve, reject) => {
-          const img = new Image();
-          img.onload = () => resolve(img);
-          img.onerror = () => reject(new Error("Logo image failed to load."));
-          img.src = "/logo_no_text.svg";
-        });
-
-        const logoBadgeX = Math.round(W / 2 - qrBadgeSize / 2);
-        const logoBadgeY = Math.round(qrImageY + qrImageSize / 2 - qrBadgeSize / 2);
-        const logoBadgeRadius = 28;
-        roundRect(logoBadgeX, logoBadgeY, qrBadgeSize, qrBadgeSize, logoBadgeRadius);
-        ctx.fillStyle = "#ffffff";
-        ctx.fill();
-
-        const logoX = Math.round(W / 2 - qrLogoSize / 2);
-        const logoY = Math.round(qrImageY + qrImageSize / 2 - qrLogoSize / 2);
-        ctx.drawImage(logoImage, logoX, logoY, qrLogoSize, qrLogoSize);
-      } catch {
-        // Keep export resilient if logo cannot be loaded.
+      if (logoImage) {
+        ctx.drawImage(logoImage, 274, 54, 100, 100);
       }
-
-      const footerH = 106;
-      const footerY = shellY + shellH - footerH;
-      const primaryCalloutY = footerY - 38;
-      const secondaryCalloutY = footerY - 10;
+      ctx.textAlign = "left";
+      ctx.fillStyle = palette.titleText;
+      ctx.font = '800 42px Inter, "Segoe UI", Arial, sans-serif';
+      ctx.fillText("BRACKETWORKS", 395, 119);
+      const brandWidth = ctx.measureText("BRACKETWORKS").width;
+      ctx.fillStyle = orange;
+      ctx.fillText(" LIVE", 395 + brandWidth, 119);
 
       ctx.textAlign = "center";
-      ctx.fillStyle = palette.calloutStrong;
-      ctx.font = '700 24px "Segoe UI", Inter, Arial, sans-serif';
-      ctx.fillText("Use your phone camera to open the live board instantly.", W / 2, primaryCalloutY);
+      ctx.fillStyle = palette.titleText;
+      ctx.font = '900 92px Inter, "Segoe UI", Arial, sans-serif';
+      ctx.fillText("SCAN FOR", W / 2, 270);
+      ctx.fillStyle = orange;
+      ctx.font = '900 104px Inter, "Segoe UI", Arial, sans-serif';
+      ctx.fillText("LIVE RESULTS", W / 2, 378);
 
-      ctx.fillStyle = palette.calloutSoft;
-      ctx.font = '600 19px "Segoe UI", Inter, Arial, sans-serif';
-      ctx.fillText("If scanning is unavailable, open bracketworks.app/view in your browser.", W / 2, secondaryCalloutY);
-
-      ctx.fillStyle = palette.footerBg;
-      ctx.fillRect(shellX, footerY, shellW, footerH);
-      ctx.strokeStyle = palette.footerDivider;
+      ctx.strokeStyle = orange;
       ctx.beginPath();
-      ctx.moveTo(shellX, footerY);
-      ctx.lineTo(shellX + shellW, footerY);
+      ctx.moveTo(92, 440);
+      ctx.lineTo(500, 440);
+      ctx.moveTo(580, 440);
+      ctx.lineTo(988, 440);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(W / 2, 440, 8, 0, Math.PI * 2);
+      ctx.fillStyle = orange;
+      ctx.fill();
+
+      ctx.fillStyle = palette.titleText;
+      ctx.font = '800 49px Inter, "Segoe UI", Arial, sans-serif';
+      drawWrappedText(tournamentName || "Tournament", 920, 2, W / 2, 520, 55);
+
+      const qrOuterSize = 674;
+      const qrOuterX = Math.round((W - qrOuterSize) / 2);
+      const qrOuterY = 608;
+      roundRect(qrOuterX, qrOuterY, qrOuterSize, qrOuterSize, 28);
+      ctx.fillStyle = isPrintMode ? "#f4f4f5" : "#18181f";
+      ctx.fill();
+      ctx.strokeStyle = orange;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.drawImage(qrImage, Math.round((W - qrImageSize) / 2), qrOuterY + 27, qrImageSize, qrImageSize);
+
+      const calloutX = 218;
+      const calloutY = 1310;
+      const calloutW = 644;
+      const calloutH = 92;
+      roundRect(calloutX, calloutY, calloutW, calloutH, 14);
+      ctx.fillStyle = isPrintMode ? "#f4f4f5" : "#18181f";
+      ctx.fill();
+      ctx.strokeStyle = palette.shellBorder;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      const iconX = calloutX + 16;
+      const iconY = calloutY + 17;
+      roundRect(iconX, iconY, 58, 58, 12);
+      ctx.fillStyle = isPrintMode ? "rgba(255,122,0,0.08)" : "rgba(255,122,0,0.10)";
+      ctx.fill();
+      ctx.strokeStyle = "rgba(255,122,0,0.35)";
+      ctx.stroke();
+      roundRect(iconX + 13, iconY + 17, 32, 24, 5);
+      ctx.strokeStyle = orange;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(iconX + 29, iconY + 29, 7, 0, Math.PI * 2);
       ctx.stroke();
 
       ctx.textAlign = "left";
-      ctx.fillStyle = palette.footerStrong;
-      ctx.font = '700 21px "Segoe UI", Inter, Arial, sans-serif';
-      ctx.fillText("bracketworks.app", shellX + 50, footerY + 66);
+      ctx.fillStyle = palette.titleText;
+      ctx.font = '800 28px Inter, "Segoe UI", Arial, sans-serif';
+      ctx.fillText("Scan with your phone camera", calloutX + 92, calloutY + 39);
+      ctx.fillStyle = palette.bodyText;
+      ctx.font = '500 18px Inter, "Segoe UI", Arial, sans-serif';
+      ctx.fillText("Open the live board instantly · No login required", calloutX + 92, calloutY + 67);
 
-      ctx.textAlign = "right";
-      ctx.fillStyle = palette.footerText;
-      ctx.font = '600 18px "Segoe UI", Inter, Arial, sans-serif';
-      ctx.fillText("No login required. Share this code at check-in so bowlers can follow every update.", shellX + shellW - 50, footerY + 66);
+      ctx.strokeStyle = orange;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(58, 1445);
+      ctx.lineTo(1022, 1445);
+      ctx.stroke();
+
+      ctx.textAlign = "center";
+      ctx.font = '700 29px Inter, "Segoe UI", Arial, sans-serif';
+      const fullUrlWidth = ctx.measureText(`${displayHost}${displayPath}`).width;
+      const hostWidth = ctx.measureText(displayHost).width;
+      const urlX = (W - fullUrlWidth) / 2;
+      ctx.textAlign = "left";
+      ctx.fillStyle = orange;
+      ctx.fillText(displayHost, urlX, 1500);
+      ctx.fillStyle = palette.titleText;
+      ctx.fillText(displayPath, urlX + hostWidth, 1500);
+
+      ctx.textAlign = "center";
+      ctx.fillStyle = palette.bodyText;
+      ctx.font = '700 18px Inter, "Segoe UI", Arial, sans-serif';
+      ctx.fillText("LIVE BRACKETS   •   ENTRIES   •   STANDINGS", W / 2, 1550);
+
+      ctx.restore();
+      roundRect(shellX, shellY, shellW, shellH, 30);
+      ctx.strokeStyle = palette.shellBorder;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      if (!shouldDownload) {
+        setPosterPreviewUrl(canvas.toDataURL("image/png"));
+        return;
+      }
 
       const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
       if (!blob) throw new Error("Could not generate PNG file.");
@@ -463,15 +410,25 @@ export default function ShareQRModal({
       link.click();
       URL.revokeObjectURL(pngUrl);
     } catch (err) {
+      if (!shouldDownload) {
+        setPosterPreviewError(err instanceof Error ? err.message : "Failed to generate poster preview.");
+      }
       addToast({
         type: "error",
         message: err instanceof Error ? err.message : "Failed to export poster.",
         duration: 3000,
       });
     } finally {
-      setExportingMode(null);
+      if (shouldDownload) setExportingMode(null);
     }
   };
+
+  useEffect(() => {
+    if (!open || !qrDataUrl) return;
+    void handleExportPng("social", false);
+    // The QR data URL changes whenever the tournament-specific poster inputs change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, qrDataUrl]);
 
   if (!open) return null;
 
@@ -489,23 +446,31 @@ export default function ShareQRModal({
 
         <div className={styles.bodyGrid}>
           <div className={styles.qrSection}>
-            <div className={styles.sectionHeading}><QrCode aria-hidden="true" /><span>Live Poster Preview</span></div>
-            <div className={styles.posterPreview}>
-              <div
-                className={styles.posterFrame}
-                aria-label="QR poster preview"
-                dangerouslySetInnerHTML={{
-                  __html: buildPosterHtml(qrDataUrl || "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="),
-                }}
-              />
+            <div className={styles.sectionHeading}><ImageIcon aria-hidden="true" /><span>Poster Preview</span></div>
+            <div className={styles.previewCard}>
+              <div className={styles.posterPreview}>
+                {posterPreviewUrl
+                  ? <NextImage className={styles.posterImage} src={posterPreviewUrl} alt={`Live results poster for ${tournamentName}`} width={1080} height={1620} unoptimized />
+                  : posterPreviewError
+                    ? (
+                      <span className={styles.posterLoading}>
+                        <strong>Poster preview unavailable</strong>
+                        <small>{posterPreviewError}</small>
+                        <button type="button" onClick={() => { void handleExportPng("social", false); }}>Retry</button>
+                      </span>
+                    )
+                    : <span className={styles.posterLoading}>Generating poster…</span>}
+              </div>
             </div>
-            <p className={`${styles.qrLabel} ${styles.mutedMicrocopy}`}>Scan to open the public live board</p>
           </div>
 
           <div className={styles.sharePanel}>
-            <div>
-              <p className={styles.shareTitle}>Share the live link</p>
-              <p className={styles.shareDescription}>Anyone with this link can follow the tournament. No account is required.</p>
+            <div className={styles.panelSectionHeading}>
+              <Link2 aria-hidden="true" />
+              <div>
+                <p className={styles.shareTitle}>Share live link</p>
+                <p className={styles.shareDescription}>Anyone with this link can follow the tournament. No account is required.</p>
+              </div>
             </div>
 
             <div className={`${styles.urlRow} ${styles.outlinedPanel}`}>
@@ -519,7 +484,13 @@ export default function ShareQRModal({
             </div>
 
             <div className={styles.exportSection}>
-              <p className={styles.exportLabel}>Download poster</p>
+              <div className={styles.panelSectionHeading}>
+                <Download aria-hidden="true" />
+                <div>
+                  <p className={styles.shareTitle}>Download poster</p>
+                  <p className={styles.shareDescription}>Use these images to share the live results.</p>
+                </div>
+              </div>
               <div className={styles.actions}>
                 <button
                   className={`${styles.exportBtn} ${styles.outlinedPanel}`}
@@ -528,7 +499,10 @@ export default function ShareQRModal({
                   aria-busy={exportingMode === "social"}
                 >
                   <Download aria-hidden="true" />
-                  {exportingMode === "social" ? "Exporting..." : "Social PNG"}
+                  <span>
+                    <strong>{exportingMode === "social" ? "Exporting..." : "Social PNG"}</strong>
+                    <small>1080 × 1620</small>
+                  </span>
                 </button>
 
                 <button
@@ -538,29 +512,30 @@ export default function ShareQRModal({
                   aria-busy={exportingMode === "print"}
                 >
                   <Download aria-hidden="true" />
-                  {exportingMode === "print" ? "Exporting..." : "Print PNG"}
+                  <span>
+                    <strong>{exportingMode === "print" ? "Exporting..." : "Print PNG"}</strong>
+                    <small>High-resolution</small>
+                  </span>
                 </button>
               </div>
             </div>
 
-            <p className={`${styles.hint} ${styles.mutedMicrocopy}`}>Display the poster at check-in so bowlers can scan it from any device.</p>
+            <p className={`${styles.hint} ${styles.mutedMicrocopy}`}>
+              <Info aria-hidden="true" />
+              <span>Display the poster at check-in so bowlers can scan it from any device.</span>
+            </p>
           </div>
         </div>
 
-        <div ref={canvasRef} hidden>
+        <div className={styles.qrGenerator} aria-hidden="true">
           <QRCodeCanvas
+            ref={qrCanvasRef}
             value={publicUrl}
             size={qrRenderSize}
             bgColor="#ffffff"
             fgColor="#111111"
             level="H"
             includeMargin
-            imageSettings={{
-              src: "/logo_no_text.svg",
-              width: qrBadgeSize,
-              height: qrBadgeSize,
-              excavate: true,
-            }}
           />
         </div>
       </div>

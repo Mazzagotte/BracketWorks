@@ -575,6 +575,330 @@
   }
 }
 
+/* Reference-aligned Share Live View composition */
+.dialog {
+  width: min(1180px, calc(100vw - 40px));
+  max-width: 1180px;
+  max-height: min(94vh, 920px);
+  border-radius: 20px;
+  background: var(--bw-surface-card);
+}
+
+.header {
+  padding: 28px 32px;
+}
+
+.headerIcon {
+  flex-basis: 56px;
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+}
+
+.headerIcon svg {
+  width: 27px;
+  height: 27px;
+}
+
+.title {
+  font-size: 28px;
+}
+
+.tournamentName {
+  margin-top: 6px;
+  font-size: 14px;
+}
+
+.bodyGrid {
+  grid-template-columns: 430px minmax(0, 1fr);
+}
+
+.qrSection {
+  align-items: stretch;
+  gap: 16px;
+  padding: 26px 28px 30px;
+}
+
+.sectionHeading {
+  font-size: 13px;
+}
+
+.sectionHeading svg {
+  width: 20px;
+  height: 20px;
+}
+
+.previewCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.posterPreview {
+  max-width: 330px;
+  border: 0;
+  border-radius: 0;
+  box-shadow: 0 14px 34px var(--opacity-black-30);
+}
+
+.posterImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.posterLoading {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  gap: 8px;
+  place-items: center;
+  align-content: center;
+  padding: 20px;
+  color: var(--bw-text-muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+.posterLoading strong {
+  color: var(--bw-text-title);
+  font-size: 13px;
+}
+
+.posterLoading small {
+  max-width: 220px;
+  color: var(--bw-text-muted);
+  line-height: 1.4;
+}
+
+.posterLoading button {
+  margin-top: 4px;
+  padding: 7px 12px;
+  color: var(--bw-text-title);
+  background: color-mix(in srgb, var(--color-primary) 16%, var(--bw-surface-panel));
+  border: 1px solid var(--bw-border-accent);
+  border-radius: 8px;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+
+.qrGenerator {
+  position: fixed;
+  top: 0;
+  left: -10000px;
+  width: 620px;
+  height: 620px;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.posterFrame {
+  transform: scale(0.3055556);
+}
+
+.qrLabel {
+  margin: 0;
+  font-size: 12px;
+}
+
+.sharePanel {
+  gap: 24px;
+  padding: 38px 34px 32px;
+}
+
+.panelSectionHeading {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.panelSectionHeading > svg {
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
+  margin-top: 1px;
+  color: var(--bw-text-accent);
+  stroke-width: 2;
+}
+
+.sharePanel > .panelSectionHeading {
+  justify-content: center;
+}
+
+.shareTitle {
+  font-size: 22px;
+}
+
+.shareDescription {
+  margin-top: 8px;
+  font-size: 14px;
+}
+
+.urlRow {
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  padding: 8px;
+  border-radius: 14px;
+}
+
+.urlText {
+  min-width: 0;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+.copyBtn {
+  flex: 0 0 auto;
+  min-width: 158px;
+  min-height: 54px;
+  padding-inline: 20px;
+  color: var(--color-white);
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  font-size: 14px;
+}
+
+.copyBtn:hover {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+
+.exportSection {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-top: 26px;
+}
+
+.exportSection .panelSectionHeading {
+  justify-content: center;
+}
+
+.actions {
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.exportBtn {
+  flex: 0 0 auto;
+  width: fit-content;
+  min-height: 86px;
+  gap: 14px;
+  padding: 14px 20px;
+  border-radius: 14px;
+}
+
+.exportBtn > svg {
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+}
+
+.exportBtn > span {
+  display: grid;
+  gap: 5px;
+  text-align: left;
+}
+
+.exportBtn strong {
+  color: var(--bw-text-title);
+  font-size: 14px;
+}
+
+.exportBtn small {
+  color: var(--bw-text-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.hint {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 70px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  font-size: 13px;
+}
+
+.hint svg {
+  flex: 0 0 22px;
+  width: 22px;
+  height: 22px;
+  color: var(--bw-text-muted);
+}
+
+@media (max-width: 900px) {
+  .dialog {
+    width: calc(100vw - 24px);
+  }
+
+  .bodyGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .qrSection {
+    border-right: 0;
+    border-bottom: 1px solid var(--bw-border-subtle);
+  }
+
+  .previewCard {
+    width: min(100%, 390px);
+    align-self: center;
+  }
+}
+
+@media (max-width: 560px) {
+  .header {
+    padding: 20px 18px;
+  }
+
+  .title {
+    font-size: 22px;
+  }
+
+  .qrSection,
+  .sharePanel {
+    padding: 22px 18px;
+  }
+
+  .posterPreview {
+    max-width: 260px;
+  }
+
+  .posterFrame {
+    transform: scale(0.2407407);
+  }
+
+  .urlRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .urlText {
+    padding: 6px 2px;
+  }
+
+  .copyBtn {
+    width: 100%;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+}
+
 /* Compact spacing pass */
 .dialog {
   width: min(880px, calc(100vw - 32px));
@@ -665,5 +989,267 @@
 @media (max-width: 760px) {
   .bodyGrid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Current BracketWorks share dialog */
+.dialog {
+  width: min(900px, calc(100vw - 32px));
+  max-width: 900px;
+  max-height: min(92vh, 820px);
+  overflow: hidden;
+  color: var(--bw-text-body);
+  background: var(--bw-surface-card);
+  border: 1px solid var(--bw-border-card);
+  border-radius: 20px;
+  box-shadow: 0 24px 72px var(--opacity-black-60);
+}
+
+.dialog::backdrop {
+  background: color-mix(in srgb, var(--bw-page) 78%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.content {
+  padding: 0;
+  gap: 0;
+  align-items: stretch;
+}
+
+.header {
+  align-items: center;
+  gap: 14px;
+  padding: 22px 24px;
+  border-bottom: 1px solid var(--bw-border-subtle);
+}
+
+.headerIcon {
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--bw-border-accent);
+  border-radius: 12px;
+  color: var(--bw-text-accent);
+  background: color-mix(in srgb, var(--color-primary) 8%, var(--bw-surface-panel));
+}
+
+.headerIcon svg {
+  width: 21px;
+  height: 21px;
+}
+
+.title {
+  margin: 0;
+  color: var(--bw-text-title);
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.tournamentName {
+  max-width: 680px;
+  margin: 4px 0 0;
+  color: var(--bw-text-muted);
+  font-size: 13px;
+  line-height: 1.45;
+  white-space: normal;
+}
+
+.bodyGrid {
+  display: grid;
+  grid-template-columns: minmax(310px, 360px) minmax(0, 1fr);
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.qrSection {
+  justify-content: flex-start;
+  gap: 12px;
+  padding: 22px 24px 24px;
+  border-right: 1px solid var(--bw-border-subtle);
+  background: var(--bw-surface-panel);
+}
+
+.sectionHeading {
+  gap: 8px;
+  color: var(--bw-text-accent);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.sectionHeading svg {
+  width: 17px;
+  height: 17px;
+}
+
+.posterPreview {
+  width: 100%;
+  max-width: 280px;
+  aspect-ratio: 2 / 3;
+  border: 1px solid var(--bw-border-card);
+  border-radius: 14px;
+  background: var(--bw-page);
+  box-shadow: 0 14px 32px var(--opacity-black-30);
+}
+
+.posterFrame {
+  width: 1080px;
+  height: 1620px;
+  transform: scale(0.2592593);
+}
+
+.qrLabel {
+  color: var(--bw-text-faint);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.sharePanel {
+  gap: 20px;
+  min-width: 0;
+  padding: 28px;
+  background: var(--bw-surface-card);
+}
+
+.shareTitle {
+  margin: 0;
+  color: var(--bw-text-title);
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.shareDescription {
+  margin: 6px 0 0;
+  color: var(--bw-text-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.outlinedPanel {
+  background: var(--bw-surface-panel);
+  border: 1px solid var(--bw-border-subtle);
+  border-radius: 12px;
+}
+
+.urlRow {
+  gap: 10px;
+  padding: 12px;
+}
+
+.urlText {
+  padding: 3px 2px;
+  color: var(--bw-text-body);
+  font-size: 12px;
+}
+
+.copyBtn {
+  min-height: 42px;
+  border: 1px solid var(--bw-border-accent);
+  border-radius: 10px;
+  color: var(--bw-text-title);
+  background: color-mix(in srgb, var(--color-primary) 16%, var(--bw-surface-panel));
+  box-shadow: none;
+  font-size: 13px;
+}
+
+.copyBtn:hover {
+  transform: none;
+  color: var(--color-white);
+  background: color-mix(in srgb, var(--color-primary) 26%, var(--bw-surface-panel));
+  border-color: color-mix(in srgb, var(--color-primary) 58%, transparent);
+  box-shadow: none;
+}
+
+.exportSection {
+  padding-top: 18px;
+  border-top: 1px solid var(--bw-border-subtle);
+}
+
+.exportLabel {
+  margin: 0 0 10px;
+  color: var(--bw-text-title);
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.actions {
+  gap: 10px;
+}
+
+.exportBtn {
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid var(--bw-border-subtle);
+  border-radius: 10px;
+  color: var(--bw-text-title);
+  background: var(--bw-surface-panel);
+  box-shadow: none;
+  font-size: 13px;
+}
+
+.exportBtn:hover {
+  transform: none;
+  color: var(--bw-text-title);
+  background: var(--bw-surface-panel-strong);
+  border-color: var(--bw-border-accent);
+  box-shadow: none;
+}
+
+.hint {
+  margin-top: auto;
+  padding: 12px 14px;
+  color: var(--bw-text-muted);
+  background: var(--bw-surface-panel);
+  border: 1px solid var(--bw-border-subtle);
+  border-radius: 10px;
+  font-size: 11px;
+  line-height: 1.45;
+  text-align: left;
+}
+
+@media (max-width: 760px) {
+  .dialog {
+    width: calc(100vw - 20px);
+    max-height: 94vh;
+    border-radius: 16px;
+  }
+
+  .header {
+    padding: 18px;
+  }
+
+  .bodyGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .qrSection {
+    padding: 20px 18px;
+    border-right: 0;
+    border-bottom: 1px solid var(--bw-border-subtle);
+  }
+
+  .posterPreview {
+    max-width: 260px;
+  }
+
+  .posterFrame {
+    transform: scale(0.2407407);
+  }
+
+  .sharePanel {
+    padding: 22px 18px;
+  }
+}
+
+@media (max-width: 440px) {
+  .headerIcon {
+    display: none;
+  }
+
+  .actions {
+    flex-direction: column;
   }
 }
