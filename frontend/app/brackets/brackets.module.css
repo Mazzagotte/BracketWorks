@@ -1229,7 +1229,7 @@
   gap: 0.42rem;
 }
 
-.bracketsQuickActionsGroupLeft {
+.bracketsQuickActionsRow .bracketsQuickActionsGroupLeft {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: center;
@@ -1549,8 +1549,15 @@
 }
 
 @media (max-width: 560px) {
-  .bracketsQuickActionsGroupLeft {
-    grid-template-columns: 1fr;
+  .bracketsQuickActionsRow .bracketsQuickActionsGroupLeft {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .bracketsQuickActionsGroupLeft > :where(button, a) {
+    min-width: 0;
+    padding-inline: 0.35rem;
+    white-space: normal;
+    line-height: 1.15;
   }
 
   .mobileBracketSectionList {

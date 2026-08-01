@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Braces, CircleCheck, RefreshCw, TriangleAlert, Trophy, Users, X } from 'lucide-react'
+import { Eye, Info, RefreshCw, TriangleAlert, Trophy, Users, X } from 'lucide-react'
 import { logger } from '../lib/logger'
 import { disableScroll, enableScroll } from '../utils/modalUtils'
 import buttonStyles from '../styles/buttons.module.css'
@@ -360,7 +360,7 @@ export default function BracketGenerationModal({
       }}
     >
       <div 
-        className={styles.modalCard} 
+        className={`${styles.modalCard} ${currentPhase === 'success' ? styles.successModalCard : ''}`}
         onClick={(event) => event.stopPropagation()}
       >
         {/* CONFETTI CELEBRATION */}
@@ -378,11 +378,10 @@ export default function BracketGenerationModal({
         {/* LOADING PHASE */}
         {currentPhase === 'loading' && (
           <div className={styles.loadingContent}>
-            <div className={styles.phaseIcon} aria-hidden="true"><Braces /></div>
             <div className={styles.phaseHeader}>
               <h2 className={styles.mainMessage}>Generating Brackets</h2>
               <p className={styles.generationNote}>
-                Building tournament brackets and assigning entries.
+                Creating brackets and assigning entries for:
               </p>
             </div>
 
@@ -402,9 +401,10 @@ export default function BracketGenerationModal({
               <span className={styles.statusIndicatorBar} />
             </div>
 
-            <p className={styles.generationWarning}>
-              Please keep this window open until generation finishes.
-            </p>
+            <div className={styles.generationWarning}>
+              <Info aria-hidden="true" />
+              <p>Please keep this window open while your brackets are generated.</p>
+            </div>
 
           </div>
         )}
@@ -415,7 +415,6 @@ export default function BracketGenerationModal({
             <button type="button" className={styles.closeButton} onClick={handleCloseModal} aria-label="Close bracket generation results"><X /></button>
             {/* Success message */}
             <div className={styles.successHeader}>
-              <div className={`${styles.phaseIcon} ${styles.successPhaseIcon}`} aria-hidden="true"><CircleCheck /></div>
               <h2 className={styles.successMessage}>Brackets Generated</h2>
               <p className={styles.successSubtitle}>Your tournament brackets are ready for review.</p>
             </div>
@@ -427,20 +426,35 @@ export default function BracketGenerationModal({
                 return (
                   <>
                     {stats.programSummaries.map((program, index) => (
-                      <div key={program.name} className={styles.statItem}>
-                        <span className={styles.statCount}>{program.brackets_count}</span>
+                        <div key={program.name} className={styles.statItem}>
+                          <div className={styles.statValueRow}>
+                            <span className={styles.statCount}>{program.brackets_count}</span>
+                          </div>
                         <span className={styles.statLabel}>{program.name} Bracket{program.brackets_count !== 1 ? 's' : ''}</span>
                       </div>
                     ))}
                     {stats.skippedPlayers > 0 && (
                       <div className={styles.statItemRefund}>
-                        <div className={styles.refundTitle}>Refunds due to incomplete brackets</div>
-                        <div className={styles.refundDetail}>{stats.skippedPlayers} total - {stats.refundBreakdownText}</div>
+                        <div className={styles.refundIcon}><TriangleAlert aria-hidden="true" /></div>
+                        <div className={styles.refundContent}>
+                          <div className={styles.refundTitle}>{stats.skippedPlayers} Refund{stats.skippedPlayers !== 1 ? 's' : ''} Required</div>
+                          <div className={styles.refundDetail}>These entries could not be placed into complete brackets.</div>
+                          <div className={styles.refundChips}>
+                            {stats.programSummaries.filter(program => program.refund_entries > 0).map(program => (
+                              <span key={program.name}>{program.refund_entries} {program.name}</span>
+                            ))}
+                          </div>
+                        </div>
                       </div>
                     )}
                   </>
                 )
               })()}
+            </div>
+
+            <div className={styles.regenerationNotice}>
+              <Info aria-hidden="true" />
+              <p>Regenerating will create a new bracket arrangement and may change the current matchups.</p>
             </div>
 
             {/* Action buttons */}
@@ -455,7 +469,7 @@ export default function BracketGenerationModal({
                 onClick={handleCloseModal}
                 className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.medium} ${styles.button} ${styles.secondaryButton}`}
               >
-                Close
+                <Eye aria-hidden="true" /> Review Brackets
               </button>
             </div>
           </div>

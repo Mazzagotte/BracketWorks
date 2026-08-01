@@ -254,6 +254,7 @@ def get_tournament_bootstrap(
         payout_summary_query = payout_summary_query.filter(models.TournamentPayoutSummary.squad_id == status_squad_id)
 
     payout_summary = payout_summary_query.order_by(models.TournamentPayoutSummary.updated_at.desc()).first()
+    has_payout_summary = payout_summary is not None
     payouts_finalized = bool(payout_summary.is_finalized) if payout_summary else False
 
     result = {
@@ -264,6 +265,7 @@ def get_tournament_bootstrap(
         'workflow_status': {
             'status_squad_id': status_squad_id,
             'has_generated_brackets': has_generated_brackets,
+            'has_payout_summary': has_payout_summary,
             'payouts_finalized': payouts_finalized,
             # Current score APIs do not enforce locking. We align UI lock state with finalized payouts.
             'scores_locked': payouts_finalized,

@@ -16,6 +16,7 @@ export interface Tournament {
 export interface TournamentWorkflowStatus {
   status_squad_id: number | null;
   has_generated_brackets: boolean;
+  has_payout_summary: boolean;
   payouts_finalized: boolean;
   scores_locked: boolean;
 }

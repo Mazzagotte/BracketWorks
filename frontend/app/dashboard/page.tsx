@@ -110,6 +110,8 @@ const dashboardActionIcons: Record<string, LucideIcon> = {
   'add-player': UserPlus,
   'view-brackets': Braces,
   'view-payouts': Trophy,
+  'calculate-payouts': CircleDollarSign,
+  'finalize-payouts': Trophy,
   'change-squad': Users,
   'edit-tournament': PencilLine,
   'tournament-settings': Settings2,
@@ -1026,41 +1028,83 @@ export default function TournamentDashboard() {
     return Array.from(nameCounts.values()).filter(count => count > 1).length;
   }, [summaryPlayers]);
   const hasGeneratedBrackets = workflowStatus?.has_generated_brackets ?? Boolean(tournament?.brackets_configured);
+  const hasPayoutSummary = workflowStatus?.has_payout_summary ?? false;
   const payoutsFinalized = workflowStatus?.payouts_finalized ?? false;
   const scoresLocked = workflowStatus?.scores_locked ?? payoutsFinalized;
   const payoutsNotFinalizedCount = loadedEntries > 0 && !payoutsFinalized ? 1 : 0;
   const bracketsNotGeneratedCount = hasGeneratedBrackets ? 0 : 1;
+  const workflowSetupBlockers = [
+    { label: 'missing averages', count: missingAveragesCount },
+    { label: 'unpaid entries', count: unpaidEntriesCount },
+    { label: 'duplicate players', count: duplicatePlayersCount },
+  ].filter(item => item.count > 0);
+  const hasWorkflowSetupBlockers = workflowSetupBlockers.length > 0;
+  const workflowBlockerSummary = workflowSetupBlockers.map(item => `${item.count} ${item.label}`).join(' | ');
   const continueTournamentActions = [
-    {
+    !hasGeneratedBrackets ? {
       key: 'add-player',
       label: 'Add Player',
       indicator: '›',
       onClick: () => router.push('/players'),
       disabled: false,
-    },
-    {
+    } : null,
+    hasGeneratedBrackets ? {
       key: 'view-brackets',
       label: 'View Brackets',
       indicator: '›',
       onClick: () => router.push('/brackets'),
-      disabled: !hasGeneratedBrackets,
-    },
-  ];
+      disabled: false,
+    } : null,
+  ].filter((action): action is NonNullable<typeof action> => action !== null);
   const contextPrimaryAction = useMemo(() => {
+    if (payoutsFinalized) {
+      return { key: 'view-payouts', label: 'View Final Results', message: 'Tournament complete. Payouts are finalized and scores are locked.', onClick: () => router.push('/payouts'), disabled: false, showScoreProgress: false };
+    }
+
+    if (hasGeneratedBrackets) {
+      if (scoreProgress.percent < 100) {
+        return { key: 'enter-scores', label: scoreProgress.entered > 0 ? 'Continue Score Entry' : 'Enter Scores', message: scoreProgress.entered > 0 ? 'Scoring is in progress.' : 'Brackets are ready for score entry.', onClick: () => router.push('/scores'), disabled: false, showScoreProgress: true };
+      }
+
+      if (!hasPayoutSummary) {
+        return { key: 'calculate-payouts', label: 'Calculate Payouts', message: 'All scores are complete. Calculate and review tournament payouts.', onClick: () => router.push('/payouts'), disabled: false, showScoreProgress: false };
+      }
+
+      return { key: 'finalize-payouts', label: 'Review and Finalize Payouts', message: 'Payouts have been calculated and are ready for final review.', onClick: () => router.push('/payouts'), disabled: false, showScoreProgress: false };
+    }
+
+    if (squads.length === 0) {
+      return {
+        key: 'edit-tournament',
+        label: 'Complete Tournament Setup',
+        message: 'Add at least one squad before adding entries.',
+        onClick: () => { setCreateMode(false); setModalOpen(true); },
+        disabled: false,
+        showScoreProgress: false,
+      };
+    }
+
+    if (bracketSettings.bracket_size <= 0) {
+      return {
+        key: 'tournament-settings',
+        label: 'Complete Bracket Setup',
+        message: 'Choose a valid bracket size and confirm tournament settings.',
+        onClick: () => setSettingsModalOpen(true),
+        disabled: false,
+        showScoreProgress: false,
+      };
+    }
+
     if (loadedEntries <= 0) {
-      return { key: 'add-player', label: 'Add Players', onClick: () => router.push('/players'), disabled: false };
+      return { key: 'add-player', label: 'Add Players', message: 'Add tournament entries before generating brackets.', onClick: () => router.push('/players'), disabled: false, showScoreProgress: false };
     }
 
-    if (!hasGeneratedBrackets) {
-      return { key: 'generate-brackets', label: 'Generate Brackets', onClick: () => router.push('/brackets'), disabled: false };
+    if (hasWorkflowSetupBlockers) {
+      return { key: 'add-player', label: 'Review Entries', message: `Resolve entry issues before generating brackets: ${workflowBlockerSummary}.`, onClick: () => router.push('/players'), disabled: false, showScoreProgress: false };
     }
 
-    if (!scoresLocked && scoreProgress.percent < 100) {
-      return { key: 'enter-scores', label: 'Enter Scores', onClick: () => router.push('/scores'), disabled: false };
-    }
-
-    return { key: 'view-payouts', label: 'View Payouts', onClick: () => router.push('/payouts'), disabled: false };
-  }, [loadedEntries, hasGeneratedBrackets, scoresLocked, scoreProgress.percent, router]);
+    return { key: 'generate-brackets', label: 'Generate Brackets', message: 'Setup and entries are ready. Generate brackets to begin play.', onClick: () => router.push('/brackets'), disabled: false, showScoreProgress: false };
+  }, [squads.length, bracketSettings.bracket_size, loadedEntries, hasWorkflowSetupBlockers, workflowBlockerSummary, hasGeneratedBrackets, scoreProgress.percent, scoreProgress.entered, hasPayoutSummary, payoutsFinalized, router]);
 
   const ContinueActionIcon = dashboardActionIcons[contextPrimaryAction.key] ?? ArrowRight;
 
@@ -1592,23 +1636,25 @@ export default function TournamentDashboard() {
                     <aside className={mobileStyles.dashboardSideColumn}>
                       <article className={`${mobileStyles.dashboardPanel} ${mobileStyles.combinedSideCard}`}>
 
-                        {/* Continue Tournament */}
+                        {/* Tournament next step */}
                         <div className={mobileStyles.sideCardSection}>
-                          <p className={mobileStyles.sideCardSectionLabel}>Continue Tournament</p>
+                          <p className={mobileStyles.sideCardSectionLabel}>Tournament Next Step</p>
                           <div className={mobileStyles.continuePanelBody}>
                             <div className={mobileStyles.continuePanelStatus}>
                               <span className={mobileStyles.continuePanelIconWrap}>
                                 <ContinueActionIcon className={mobileStyles.continuePanelIcon} aria-hidden="true" />
                               </span>
                               <div>
-                                <p className={mobileStyles.sideCardLead}>{scoreStatusLabel === 'In Progress' ? 'Scores are in progress' : 'Next workflow action ready'}</p>
-                                <p className={mobileStyles.sideCardMeta}>{scoreProgressText}</p>
-                                <progress
-                                  className={mobileStyles.scoreProgressBar}
-                                  value={scoreProgress.percent}
-                                  max="100"
-                                  aria-label={`${scoreProgress.percent}% of players fully scored`}
-                                />
+                                <p className={mobileStyles.sideCardLead}>{contextPrimaryAction.label}</p>
+                                <p className={mobileStyles.sideCardMeta}>{contextPrimaryAction.showScoreProgress ? scoreProgressText : contextPrimaryAction.message}</p>
+                                {contextPrimaryAction.showScoreProgress && (
+                                  <progress
+                                    className={mobileStyles.scoreProgressBar}
+                                    value={scoreProgress.percent}
+                                    max="100"
+                                    aria-label={`${scoreProgress.percent}% of players fully scored`}
+                                  />
+                                )}
                               </div>
                             </div>
                             <button

@@ -1,5 +1,5 @@
 # BracketWorks Development Launcher
-$ProjectRoot  = $PSScriptRooth
+$ProjectRoot  = $PSScriptRoot
 $BackendPath  = Join-Path $ProjectRoot "backend"
 $FrontendPath = Join-Path $ProjectRoot "frontend"
 $BackendPython = Join-Path $BackendPath ".venv\Scripts\python.exe"

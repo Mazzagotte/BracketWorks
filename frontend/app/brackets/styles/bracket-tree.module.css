@@ -1006,3 +1006,44 @@
   width: var(--bw-tree-card-width, 100%) !important;
   max-width: none !important;
 }
+
+/* Fill the desktop workspace while keeping cards and connector tracks on one grid. */
+.desktop .bracketCard:not(.bracketCardScaled) {
+  width: 100%;
+}
+
+.desktop .headerRow,
+.desktop .bracketGrid {
+  width: 100%;
+  grid-template-columns:
+    minmax(184px, 1fr)
+    minmax(22px, 0.22fr)
+    minmax(30px, 0.3fr)
+    minmax(184px, 1fr)
+    minmax(22px, 0.22fr)
+    minmax(30px, 0.3fr)
+    minmax(184px, 1fr)
+    0
+    0;
+}
+
+.desktop .matchCard {
+  width: 100%;
+}
+
+.desktop .roundHeader:nth-child(1) {
+  grid-column: 1;
+}
+
+.desktop .roundHeader:nth-child(2) {
+  grid-column: 4;
+}
+
+.desktop .roundHeader:nth-child(3) {
+  grid-column: 7;
+}
+
+.desktop .connectorBracket,
+.desktop .connectorArm {
+  width: 100%;
+}
