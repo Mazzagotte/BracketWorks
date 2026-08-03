@@ -71,7 +71,16 @@
   background: color-mix(in srgb, var(--color-primary) 7%, var(--bw-surface-panel));
 }
 
-@media (max-width: 640px) {
+@media (max-width: 767px) {
+  .tableShell {
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+  }
+
+  .table {
+    min-width: 640px;
+  }
+
   .rowActions {
     gap: 0.25rem;
   }

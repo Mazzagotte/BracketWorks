@@ -233,6 +233,93 @@ class AdminAuditLog(Base):
     )
 
 
+class AdminUserReview(Base):
+    __tablename__ = "admin_user_reviews"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("users.id"), nullable=False, index=True
+    )
+    admin_user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("users.id"), nullable=False, index=True
+    )
+    kind: Mapped[str] = mapped_column(String(20), nullable=False, index=True)
+    category: Mapped[str] = mapped_column(String(40), nullable=False, index=True)
+    note: Mapped[str] = mapped_column(Text, nullable=False)
+    is_resolved: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, index=True
+    )
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    resolved_by_user_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("users.id"), nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), index=True
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+
+class AdminTournamentNote(Base):
+    __tablename__ = "admin_tournament_notes"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tournament_id: Mapped[int] = mapped_column(Integer, ForeignKey("tournaments.id"), nullable=False, index=True)
+    admin_user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    category: Mapped[str] = mapped_column(String(40), nullable=False, index=True)
+    note: Mapped[str] = mapped_column(Text, nullable=False)
+    is_resolved: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, index=True)
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    resolved_by_user_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), index=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+
+class AdminAnnouncement(Base):
+    __tablename__ = "admin_announcements"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    title: Mapped[str] = mapped_column(String(160), nullable=False)
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    audience_type: Mapped[str] = mapped_column(String(30), nullable=False, default="all", index=True)
+    audience_user_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="draft", index=True)
+    requires_acknowledgment: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    starts_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, index=True)
+    ends_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, index=True)
+    created_by_user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), index=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+
+class UserAcknowledgment(Base):
+    __tablename__ = "user_acknowledgments"
+    __table_args__ = (UniqueConstraint("user_id", "content_type", "content_id", "version", name="uq_user_ack_content_version"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    content_type: Mapped[str] = mapped_column(String(40), nullable=False, index=True)
+    content_id: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
+    version: Mapped[str] = mapped_column(String(40), nullable=False)
+    acknowledged_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), index=True)
+
+
+class LegalDisclosureAcceptance(Base):
+    __tablename__ = "legal_disclosure_acceptances"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    disclosure_version: Mapped[str] = mapped_column(String(40), nullable=False, index=True)
+    disclosure_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    accepted_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, index=True)
+    next_required_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, index=True)
+    acceptance_source: Mapped[str] = mapped_column(String(40), nullable=False, default="required_modal")
+
+
 class BowlerProfile(Base):
     __tablename__ = "bowler_profiles"
 

@@ -11,6 +11,9 @@ import PasswordStrengthPanel from '../components/PasswordStrengthPanel';
 import { Card, CardBody, CardHeader, QuickActions, SectionHeader } from '../components/primitives';
 import buttonStyles from '../styles/buttons.module.css';
 import styles from './settings.module.css';
+import Link from 'next/link';
+import { openOnboarding } from '../lib/onboarding';
+import { openLegalDisclosure } from '../lib/legalDisclosure';
 
 type AccountProfile = {
   first_name: string;
@@ -54,6 +57,7 @@ export default function SettingsPage() {
   const [savingPassword, setSavingPassword] = useState(false);
   const [resendingVerification, setResendingVerification] = useState(false);
   const [profile, setProfile] = useState<AccountProfile>(emptyProfile);
+  const [savedProfile, setSavedProfile] = useState<AccountProfile>(emptyProfile);
   const [showPasswords, setShowPasswords] = useState({
     current: false,
     next: false,
@@ -66,6 +70,17 @@ export default function SettingsPage() {
     confirm_password: '',
   });
   const verifiedOnLabel = formatVerifiedDate(profile.email_verified_at);
+  const profileErrors = useMemo(() => ({
+    username: profile.username.trim() ? '' : 'Username is required.',
+    email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profile.email.trim()) ? '' : 'Enter a valid email address.',
+  }), [profile.email, profile.username]);
+  const profileIsValid = !profileErrors.username && !profileErrors.email;
+  const profileIsDirty = JSON.stringify(profile) !== JSON.stringify(savedProfile);
+  const passwordIsComplete = Boolean(
+    passwordForm.current_password && passwordForm.new_password && passwordForm.confirm_password
+  );
+  const passwordsMatch = !passwordForm.confirm_password || passwordForm.new_password === passwordForm.confirm_password;
+  const passwordCanSubmit = passwordIsComplete && passwordsMatch && hasStrongPassword(passwordForm.new_password, 8);
 
   usePageHeader({
     title: 'Settings',
@@ -77,7 +92,7 @@ export default function SettingsPage() {
     const load = async () => {
       try {
         const me = await apiClient.get<AccountProfile & { id: number; is_admin: boolean }>('/api/v1/users/me', false);
-        setProfile({
+        const loadedProfile = {
           first_name: me.first_name || '',
           last_name: me.last_name || '',
           username: me.username || '',
@@ -85,7 +100,9 @@ export default function SettingsPage() {
           organization: me.organization || '',
           email_verified: Boolean(me.email_verified),
           email_verified_at: me.email_verified_at || null,
-        });
+        };
+        setProfile(loadedProfile);
+        setSavedProfile(loadedProfile);
       } catch (err) {
         addToast({ type: 'error', message: err instanceof Error ? err.message : 'Failed to load account settings', duration: 5000 });
       } finally {
@@ -153,8 +170,8 @@ export default function SettingsPage() {
   };
 
   const saveProfile = async () => {
-    if (!profile.username.trim()) {
-      addToast({ type: 'warning', message: 'Username is required.', duration: 3000 });
+    if (!profileIsValid) {
+      addToast({ type: 'warning', message: profileErrors.username || profileErrors.email, duration: 3000 });
       return;
     }
 
@@ -169,7 +186,7 @@ export default function SettingsPage() {
         organization: profile.organization.trim() || null,
       });
 
-      setProfile({
+      const saved = {
         first_name: updated.first_name || '',
         last_name: updated.last_name || '',
         username: updated.username || '',
@@ -177,7 +194,9 @@ export default function SettingsPage() {
         organization: updated.organization || '',
         email_verified: Boolean(updated.email_verified),
         email_verified_at: updated.email_verified_at || null,
-      });
+      };
+      setProfile(saved);
+      setSavedProfile(saved);
 
       if (updated.first_name) {
         localStorage.setItem('first_name', updated.first_name);
@@ -240,14 +259,25 @@ export default function SettingsPage() {
   };
 
   if (loading) {
-    return <div className={styles.pageContainer}>Loading account settings...</div>;
+    return <div className={styles.loadingState} role="status">Loading account settings...</div>;
   }
 
   return (
     <div className={styles.pageContainer}>
-      <Card className={styles.card} variant="primary" interactive>
+      <header className={styles.settingsIntro}>
+        <p className={styles.eyebrow}>Account preferences</p>
+        <h1>Settings</h1>
+        <p>Manage your BracketWorks account, security, help resources, and legal information. Tournament configuration remains with each tournament.</p>
+      </header>
+      <div className={styles.settingsLayout}>
+        <nav className={styles.sectionNav} aria-label="Settings sections">
+          <a href="#account">Account</a><a href="#security">Security</a><a href="#help">Help</a><a href="#legal">Legal</a>
+        </nav>
+        <main className={styles.settingsContent}>
+      <section id="account" className={styles.settingsSection}>
+      <Card className={styles.card} variant="primary">
         <CardHeader className={styles.cardTitleWrap}>
-          <SectionHeader title="Profile" className={styles.cardTitleSectionHeader} />
+          <SectionHeader title="Account" subtitle="Profile, verification, and organization" className={styles.cardTitleSectionHeader} />
         </CardHeader>
         <CardBody>
         <div className={styles.optionRow}>
@@ -256,6 +286,7 @@ export default function SettingsPage() {
           </div>
           <input
             className={styles.input}
+            aria-label="First name"
             value={profile.first_name}
             onChange={e => handleProfileChange('first_name', e.target.value)}
             placeholder="First name"
@@ -268,6 +299,7 @@ export default function SettingsPage() {
           </div>
           <input
             className={styles.input}
+            aria-label="Last name"
             value={profile.last_name}
             onChange={e => handleProfileChange('last_name', e.target.value)}
             placeholder="Last name"
@@ -280,10 +312,13 @@ export default function SettingsPage() {
           </div>
           <input
             className={styles.input}
+            aria-label="Username"
             value={profile.username}
             onChange={e => handleProfileChange('username', e.target.value)}
             placeholder="Username"
+            aria-invalid={Boolean(profileErrors.username)}
           />
+          {profileErrors.username && <span className={styles.fieldError}>{profileErrors.username}</span>}
         </div>
 
         <div className={styles.optionRow}>
@@ -292,11 +327,14 @@ export default function SettingsPage() {
           </div>
           <input
             className={styles.input}
+            aria-label="Email"
             type="email"
             value={profile.email}
             onChange={e => handleProfileChange('email', e.target.value)}
             placeholder="Email"
+            aria-invalid={Boolean(profileErrors.email)}
           />
+          {profileErrors.email && <span className={styles.fieldError}>{profileErrors.email}</span>}
         </div>
 
         <div className={styles.optionRow}>
@@ -333,6 +371,7 @@ export default function SettingsPage() {
           </div>
           <input
             className={styles.input}
+            aria-label="Organization"
             value={profile.organization}
             onChange={e => handleProfileChange('organization', e.target.value)}
             placeholder="Organization"
@@ -343,15 +382,17 @@ export default function SettingsPage() {
           className={styles.actionRow}
           left={<span className={styles.inlineMeta}>Update your profile details and verification settings.</span>}
           right={(
-            <button type="button" className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`} onClick={saveProfile} disabled={savingProfile}>
+            <button type="button" className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`} onClick={saveProfile} disabled={savingProfile || !profileIsValid || !profileIsDirty}>
               {savingProfile ? 'Saving...' : 'Save Profile'}
             </button>
           )}
         />
         </CardBody>
       </Card>
+      </section>
 
-      <Card className={styles.card} variant="primary" interactive>
+      <section id="security" className={styles.settingsSection}>
+      <Card className={styles.card} variant="primary">
         <CardHeader className={styles.cardTitleWrap}>
           <SectionHeader title="Security" className={styles.cardTitleSectionHeader} />
         </CardHeader>
@@ -364,6 +405,7 @@ export default function SettingsPage() {
           <div className={styles.passwordFieldWrap}>
             <input
               className={styles.input}
+              aria-label="Current password"
               type={showPasswords.current ? 'text' : 'password'}
               value={passwordForm.current_password}
               onChange={e => setPasswordForm(prev => ({ ...prev, current_password: e.target.value }))}
@@ -372,6 +414,7 @@ export default function SettingsPage() {
             <button
               type="button"
               className={styles.visibilityBtn}
+              aria-label={`${showPasswords.current ? 'Hide' : 'Show'} current password`}
               onClick={() => setShowPasswords(prev => ({ ...prev, current: !prev.current }))}
             >
               {showPasswords.current ? 'Hide' : 'Show'}
@@ -386,6 +429,7 @@ export default function SettingsPage() {
           <div className={styles.passwordFieldWrap}>
             <input
               className={styles.input}
+              aria-label="New password"
               type={showPasswords.next ? 'text' : 'password'}
               value={passwordForm.new_password}
               onChange={e => setPasswordForm(prev => ({ ...prev, new_password: e.target.value }))}
@@ -394,6 +438,7 @@ export default function SettingsPage() {
             <button
               type="button"
               className={styles.visibilityBtn}
+              aria-label={`${showPasswords.next ? 'Hide' : 'Show'} new password`}
               onClick={() => setShowPasswords(prev => ({ ...prev, next: !prev.next }))}
             >
               {showPasswords.next ? 'Hide' : 'Show'}
@@ -416,6 +461,8 @@ export default function SettingsPage() {
           <div className={styles.passwordFieldWrap}>
             <input
               className={styles.input}
+              aria-label="Confirm new password"
+              aria-invalid={!passwordsMatch}
               type={showPasswords.confirm ? 'text' : 'password'}
               value={passwordForm.confirm_password}
               onChange={e => setPasswordForm(prev => ({ ...prev, confirm_password: e.target.value }))}
@@ -424,11 +471,13 @@ export default function SettingsPage() {
             <button
               type="button"
               className={styles.visibilityBtn}
+              aria-label={`${showPasswords.confirm ? 'Hide' : 'Show'} password confirmation`}
               onClick={() => setShowPasswords(prev => ({ ...prev, confirm: !prev.confirm }))}
             >
               {showPasswords.confirm ? 'Hide' : 'Show'}
             </button>
           </div>
+          {!passwordsMatch && <span className={styles.fieldError}>New password and confirmation do not match.</span>}
         </div>
 
         <div className={styles.optionRow}>
@@ -449,13 +498,50 @@ export default function SettingsPage() {
           className={styles.actionRow}
           left={<span className={styles.inlineMeta}>Use a strong password and optional device sign-out.</span>}
           right={(
-            <button type="button" className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`} onClick={updatePassword} disabled={savingPassword}>
+            <button type="button" className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`} onClick={updatePassword} disabled={savingPassword || !passwordCanSubmit}>
               {savingPassword ? 'Updating...' : 'Update Password'}
             </button>
           )}
         />
         </CardBody>
       </Card>
+      </section>
+
+      <section id="help" className={styles.settingsSection}>
+      <Card className={styles.card} variant="primary">
+        <CardHeader className={styles.cardTitleWrap}>
+          <SectionHeader title="Help and Onboarding" className={styles.cardTitleSectionHeader} />
+        </CardHeader>
+        <CardBody>
+          <div className={styles.helpBlock}>
+            <div><div className={styles.optionTitle}>Getting Started</div><div className={styles.optionHint}>Review the complete tournament workflow or reopen the welcome message at any time.</div></div>
+            <div className={styles.helpActions}>
+              <Link href="/help/getting-started" className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.small}`}>Open Guide</Link>
+              <button type="button" className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`} onClick={openOnboarding}>Show Welcome Message</button>
+            </div>
+          </div>
+        </CardBody>
+      </Card>
+      </section>
+
+      <section id="legal" className={styles.settingsSection}>
+        <Card className={styles.card} variant="primary">
+          <CardHeader className={styles.cardTitleWrap}>
+            <SectionHeader title="Legal" subtitle="BracketWorks policies and acceptable use" className={styles.cardTitleSectionHeader} />
+          </CardHeader>
+          <CardBody>
+            <div className={styles.legalLinks}>
+              <button type="button" onClick={openLegalDisclosure}>Periodic Use Disclosure<span>Review the disclosure and your current acceptance period.</span></button>
+              <Link href="/terms">Terms of Service<span>Terms governing your BracketWorks account.</span></Link>
+              <Link href="/privacy">Privacy Policy<span>How account and tournament data is handled.</span></Link>
+              <Link href="/acceptable-use">Acceptable Use<span>Permitted and prohibited use of the service.</span></Link>
+            </div>
+          </CardBody>
+        </Card>
+      </section>
+
+        </main>
+      </div>
 
     </div>
   );

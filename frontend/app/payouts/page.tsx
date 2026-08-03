@@ -29,6 +29,7 @@ import { getPayoutUnlockKey } from '../lib/storageKeys'
 import { buildPayoutExcelBuffer } from './utils/payoutExcelExport'
 import { AggregatedWinner, buildPayoutExportRows, buildSidePotByPlayer } from './utils/payoutExportRows'
 import { buildPayoutPdfHtml } from './utils/payoutPdfExport'
+import { isPhoneWidth } from '../lib/responsive'
 
 function placeBadgeClass(place: number) {
   if (place === 1) return `${badgeStyles.badge} ${badgeStyles.placement} ${badgeStyles.placeFirst} ${styles.placementBadge}`
@@ -75,7 +76,7 @@ export default function PayoutsPage() {
   }, [])
 
   useEffect(() => {
-    const checkMobile = () => setIsMobileView(window.innerWidth <= 900)
+    const checkMobile = () => setIsMobileView(isPhoneWidth(window.innerWidth))
     checkMobile()
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)

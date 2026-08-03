@@ -1,9 +1,0 @@
-export { LandingHeader } from './LandingHeader';
-export { HeroSection } from './HeroSection';
-export { FeaturesSection } from './FeaturesSection';
-export { LiveViewSection } from './LiveViewSection';
-export { WorkflowSection } from './WorkflowSection';
-export { BenefitsSection } from './BenefitsSection';
-export { TournamentCentralIntegration } from './TournamentCentralIntegration';
-export { FinalCtaSection } from './FinalCtaSection';
-export { LandingFooter } from './LandingFooter';

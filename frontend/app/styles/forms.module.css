@@ -71,6 +71,24 @@
   gap: var(--space-stack);
 }
 
+@media (max-width: 767px) {
+  .controlRow {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .controlRow > * {
+    width: 100%;
+  }
+
+  .field,
+  .select,
+  .search {
+    min-height: 40px;
+  }
+}
+
 @media (max-width: 390px) {
   .field,
   .select,

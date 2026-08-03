@@ -10,6 +10,7 @@
     "lint": "eslint . --cache --cache-strategy content --cache-location .eslintcache --report-unused-disable-directives && npm run lint:ui-rules",
     "lint:ui-rules": "node ./scripts/enforce-ui-css-rules.mjs",
     "lint:ui-rules:full": "node ./scripts/enforce-ui-css-rules.mjs --full",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "browserslist:update": "npx.cmd update-browserslist-db@latest"
   },
@@ -23,15 +24,19 @@
     "styled-jsx": "^5.1.7"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^7.0.0",
+    "@testing-library/react": "^16.3.2",
     "@types/node": "^20.12.12",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.2.12",
+    "jsdom": "^26.1.0",
     "postcss": "^8.5.22",
     "tailwindcss": "^3.4.17",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "vitest": "^3.2.4"
   },
   "overrides": {
     "tmp": "0.2.7",

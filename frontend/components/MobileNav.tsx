@@ -11,6 +11,7 @@ import ShareQRModal from '../app/components/ShareQRModal';
 import { useToastHelpers } from '../app/components/Toast';
 import { navLinks } from './nav-links';
 import styles from './MobileNav.module.css';
+import { openOnboarding } from '../app/lib/onboarding';
 
 interface MobileNavProps {
   isOpen: boolean;
@@ -219,6 +220,20 @@ export function MobileNav({ isOpen, onClose, firstName, currentPage }: MobileNav
               >
                 Settings
               </Link>
+              <Link
+                href="/help/getting-started"
+                onClick={event => handleProtectedNavigation(event, '/help/getting-started')}
+                className={styles.settingsBtn}
+              >
+                Getting Started
+              </Link>
+              <button
+                type="button"
+                className={styles.settingsBtn}
+                onClick={() => { onClose(); openOnboarding(); }}
+              >
+                Show Welcome Guide
+              </button>
               <button onClick={handleLogout} className={styles.logoutBtn} aria-label="Logout">
                 Logout
               </button>

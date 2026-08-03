@@ -86,7 +86,7 @@ export default function ResetPasswordModal({ isOpen, onClose, onSuccess }: Reset
                 height="36"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="#FF6A00"
+                stroke="currentColor"
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -156,7 +156,7 @@ export default function ResetPasswordModal({ isOpen, onClose, onSuccess }: Reset
               onClick={handleClose}
               className={styles.backLink}
             >
-              ← Back to Log In
+              Back to Log In
             </button>
             <span className={styles.backLine} />
           </div>

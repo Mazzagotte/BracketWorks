@@ -216,7 +216,7 @@ export default function RequestResetPage() {
               height="36"
               viewBox="0 0 24 24"
               fill="none"
-              stroke="#FF6A00"
+              stroke="currentColor"
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -311,7 +311,7 @@ export default function RequestResetPage() {
 
         <div className="rp-req-back-wrap">
           <span className="rp-req-back-line" />
-          <Link href="/login" className="rp-req-back-link">← Back to Log In</Link>
+          <Link href="/login" className="rp-req-back-link">Back to Log In</Link>
           <span className="rp-req-back-line" />
         </div>
 

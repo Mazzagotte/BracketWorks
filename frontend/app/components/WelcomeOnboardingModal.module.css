@@ -1,0 +1,18 @@
+.content { display: grid; gap: 14px; }
+.content > p { margin: 0; color: var(--bw-text-muted); line-height: 1.55; }
+.firstStep { display: flex; gap: 12px; padding: 14px; border: 1px solid var(--bw-border-card); border-radius: var(--radius-lg); background: var(--bw-surface-panel); }
+.stepNumber { display: grid; place-items: center; flex: 0 0 32px; height: 32px; border-radius: 50%; background: var(--color-primary); color: var(--color-white); font-weight: 800; }
+.firstStep strong, .firstStep div span { display: block; }
+.firstStep strong { color: var(--bw-text-title); }
+.firstStep div span { margin-top: 3px; color: var(--bw-text-muted); font-size: 0.86rem; line-height: 1.4; }
+.workflow { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.workflow button { display: grid; justify-items: center; gap: 3px; min-width: 0; min-height: 48px; padding: 5px 3px; border: 1px solid var(--bw-border-subtle); border-radius: 9px; color: var(--bw-text-muted); background: var(--bw-surface-panel-strong); cursor: pointer; font: inherit; font-size: 0.66rem; font-weight: 700; }
+.workflow button span { display: grid; place-items: center; width: 19px; height: 19px; border-radius: 50%; background: var(--bw-surface-panel); color: var(--bw-text-body); font-size: 0.62rem; }
+.workflow button:hover { border-color: var(--bw-border-accent); color: var(--bw-text-title); }
+.workflow button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.workflow .workflowActive { border-color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 12%, var(--bw-surface-panel-strong)); color: var(--bw-text-title); }
+.workflow .workflowActive span { background: var(--color-primary); color: var(--color-white); }
+.actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.actions a { text-decoration: none; }
+.reopenNote { margin: -2px 0 0 !important; text-align: center; color: var(--bw-text-muted) !important; font-size: 0.76rem; }
+@media (max-width: 520px) { .workflow { grid-template-columns: repeat(4, minmax(0, 1fr)); } .actions { grid-template-columns: 1fr; } .actions > * { width: 100%; min-height: 40px; } }

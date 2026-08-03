@@ -32,6 +32,7 @@ import ImportLoadingModal from '../components/ImportLoadingModal'
 import primitiveStyles from '../components/primitives/primitives.module.css'
 import { getSelectedSquadId, getSelectedTournamentId, setSelectedSquad } from '../lib/selection-session'
 import { resetScrollLocks, setBodyInteractionState } from '../utils/modalUtils'
+import { MOBILE_VIEWPORT_QUERY } from '../lib/responsive'
 import { BookOpen, ChartNoAxesCombined, CircleCheck, CircleDollarSign, Clock3, FileSpreadsheet, Layers3, ListChecks, RefreshCcw, Search as SearchIcon, Shuffle, Trash2, Trophy, Upload, UserRound, UsersRound, WalletCards, Zap } from 'lucide-react'
 
 function bracketProgramsEqual(left: BracketProgramDefinition[], right: BracketProgramDefinition[]): boolean {
@@ -111,7 +112,7 @@ export default function PlayersPage() {
   useEffect(() => {
     if (typeof window === 'undefined') return
 
-    const mediaQuery = window.matchMedia('(max-width: 900px)')
+    const mediaQuery = window.matchMedia(MOBILE_VIEWPORT_QUERY)
     const syncMobileState = () => {
       const mobile = mediaQuery.matches
       setIsMobileView(mobile)

@@ -18,6 +18,7 @@ import { useToastHelpers } from './Toast';
 import buttonStyles from '../styles/buttons.module.css';
 import iconButtonStyles from '../styles/icon-buttons.module.css';
 import styles from './TopNav.module.css';
+import { openOnboarding } from '../lib/onboarding';
 
 interface TopNavProps {
   firstName?: string;
@@ -271,6 +272,23 @@ export default function TopNav({ firstName, onMobileMenuOpen, isMobile = false }
               >
                 Settings
               </Link>
+
+              <Link
+                href="/help/getting-started"
+                className={styles.userMenuItem}
+                onClick={() => setIsUserMenuOpen(false)}
+                role="menuitem"
+              >
+                Getting Started
+              </Link>
+
+              <button
+                className={styles.userMenuItemButton}
+                onClick={() => { setIsUserMenuOpen(false); openOnboarding(); }}
+                role="menuitem"
+              >
+                Show Welcome Guide
+              </button>
 
               {currentUser?.isAdmin && (
                 <Link

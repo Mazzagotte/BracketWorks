@@ -10,6 +10,7 @@ import { useAuth } from "../lib/auth-context";
 import { formatShortMonthDayYear } from "../lib/formatters";
 import type { ChangelogEntry } from "../lib/types";
 import { DataTableToolbar } from "../components/primitives";
+import { useToastHelpers } from "../components/Toast";
 import buttonStyles from "../styles/buttons.module.css";
 import styles from "./admin.module.css";
 
@@ -23,6 +24,12 @@ type OverviewResponse = {
     total_scores: number;
     total_snapshots: number;
     total_payouts: number;
+    unverified_users?: number;
+    users_never_signed_in?: number;
+    open_user_reviews?: number;
+    open_tournament_notes?: number;
+    active_announcements?: number;
+    failed_operations?: number;
   };
   top_operators: Array<{
     id: number;
@@ -59,6 +66,21 @@ type UserRow = {
   last_login_at: string | null;
   tournament_count: number;
   profile_count: number;
+  created_at: string | null;
+  max_risk_score: number;
+  active_session_count: number;
+  failed_login_count: number;
+  open_review_count: number;
+  dev_notice_version_accepted: string | null;
+  dev_notice_accepted_at: string | null;
+};
+
+type UserReviewDetail = {
+  user: UserRow & { name: string };
+  sessions: Array<{ id: number; issued_at: string | null; last_seen_at: string | null; expires_at: string | null; is_revoked: boolean; revoked_at: string | null; region_hint: string | null; device_nickname: string | null; risk_score: number }>;
+  login_attempts: Array<{ id: number; failed_count: number; window_start: string | null; blocked_until: string | null; updated_at: string | null }>;
+  reviews: Array<{ id: number; kind: "flag" | "note"; category: string; note: string; is_resolved: boolean; admin_username: string; created_at: string | null; resolved_at: string | null }>;
+  acknowledgments: Array<{ id: number; content_type: string; content_id: string; version: string; acknowledged_at: string | null }>;
 };
 
 type UsersResponse = {
@@ -85,7 +107,13 @@ type TournamentRow = {
   score_count: number;
   payout_count: number;
   snapshot_count: number;
+  status: "current" | "upcoming" | "completed" | "archived";
+  open_note_count: number;
+  last_activity_at: string | null;
+  last_admin_change_at: string | null;
 };
+
+type TournamentNote = { id: number; category: string; note: string; is_resolved: boolean; admin_username: string; created_at: string | null; resolved_at: string | null };
 
 type TournamentsResponse = {
   tournaments: TournamentRow[];
@@ -136,7 +164,10 @@ type DeletePreview = {
   score_count?: number;
 };
 
-type AdminTab = "overview" | "users" | "tournaments" | "database" | "audit" | "changelog";
+type AdminTab = "overview" | "users" | "tournaments" | "operations" | "announcements" | "database" | "audit" | "changelog";
+
+type AdminAnnouncement = { id: number; title: string; message: string; audience_type: "all" | "admins" | "user"; audience_user_id: number | null; status: "draft" | "active" | "archived"; requires_acknowledgment: boolean; starts_at: string | null; ends_at: string | null; acknowledgment_count: number };
+type AdminOperation = { job_id: string; job_type: string; status: string; created_at: string; started_at: string | null; completed_at: string | null; error: string | null };
 
 type ChangelogFormState = {
   version: string;
@@ -163,6 +194,8 @@ const TAB_LABELS: Record<AdminTab, string> = {
   database: "Database",
   audit: "Audit",
   changelog: "Changelog",
+  operations: "Operations",
+  announcements: "Announcements",
 };
 
 function buildQuery(params: Record<string, string | number | boolean | null | undefined>) {
@@ -190,6 +223,8 @@ function formatAdminTimestamp(value: string | null, emptyLabel = "Never") {
 export default function AdminPage() {
   const router = useRouter();
   const { currentUser, isUserAuthenticated, isAuthInitialized } = useAuth();
+  const { success: showSuccess } = useToastHelpers();
+  const isDevelopment = process.env.NODE_ENV !== "production";
 
   const [activeTab, setActiveTab] = useState<AdminTab>("overview");
   const [error, setError] = useState<string | null>(null);
@@ -204,6 +239,18 @@ export default function AdminPage() {
   const [usersSearch, setUsersSearch] = useState("");
   const [usersSort, setUsersSort] = useState("id_asc");
   const [usersPage, setUsersPage] = useState(1);
+  const [usersPageSize, setUsersPageSize] = useState(25);
+  const [usersVerification, setUsersVerification] = useState("all");
+  const [usersActivity, setUsersActivity] = useState("all");
+  const [usersReview, setUsersReview] = useState("all");
+  const [reviewUser, setReviewUser] = useState<UserRow | null>(null);
+  const [reviewDetail, setReviewDetail] = useState<UserReviewDetail | null>(null);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
+  const [reviewKind, setReviewKind] = useState<"flag" | "note">("note");
+  const [reviewCategory, setReviewCategory] = useState("general");
+  const [reviewNote, setReviewNote] = useState("");
+  const [reviewSaving, setReviewSaving] = useState(false);
 
   const [tournamentsResponse, setTournamentsResponse] = useState<TournamentsResponse>({ tournaments: [], page: 1, page_size: 25, total: 0, total_pages: 1 });
   const [tournamentsLoading, setTournamentsLoading] = useState(false);
@@ -213,6 +260,11 @@ export default function AdminPage() {
   const [tournamentSort, setTournamentSort] = useState<"newest" | "entries_desc" | "owner_asc" | "oldest">("newest");
   const [tournamentPage, setTournamentPage] = useState(1);
   const [expandedTournamentIds, setExpandedTournamentIds] = useState<number[]>([]);
+  const [noteTournament, setNoteTournament] = useState<TournamentRow | null>(null);
+  const [tournamentNotes, setTournamentNotes] = useState<TournamentNote[]>([]);
+  const [tournamentNotesLoading, setTournamentNotesLoading] = useState(false);
+  const [tournamentNoteCategory, setTournamentNoteCategory] = useState("general");
+  const [tournamentNoteText, setTournamentNoteText] = useState("");
 
   const [tablesResponse, setTablesResponse] = useState<TablesResponse>({ tables: [], include_counts: false, total_tables: 0 });
   const [tablesLoading, setTablesLoading] = useState(false);
@@ -226,6 +278,9 @@ export default function AdminPage() {
   const [auditSearch, setAuditSearch] = useState("");
   const [auditAction, setAuditAction] = useState("");
   const [auditTargetType, setAuditTargetType] = useState("");
+  const [auditAdminUserId, setAuditAdminUserId] = useState("");
+  const [auditDateFrom, setAuditDateFrom] = useState("");
+  const [auditDateTo, setAuditDateTo] = useState("");
   const [auditPage, setAuditPage] = useState(1);
 
   const [changelogEntries, setChangelogEntries] = useState<AdminChangelogEntry[]>([]);
@@ -240,6 +295,18 @@ export default function AdminPage() {
   const [deletingChangelogVersion, setDeletingChangelogVersion] = useState<string | null>(null);
 
   const [refreshing, setRefreshing] = useState(false);
+  const [announcements, setAnnouncements] = useState<AdminAnnouncement[]>([]);
+  const [announcementsLoading, setAnnouncementsLoading] = useState(false);
+  const [announcementTitle, setAnnouncementTitle] = useState("");
+  const [announcementMessage, setAnnouncementMessage] = useState("");
+  const [announcementAudience, setAnnouncementAudience] = useState<"all" | "admins" | "user">("all");
+  const [announcementUserId, setAnnouncementUserId] = useState("");
+  const [announcementStatus, setAnnouncementStatus] = useState<"draft" | "active" | "archived">("draft");
+  const [announcementRequiresAck, setAnnouncementRequiresAck] = useState(false);
+  const [announcementSaving, setAnnouncementSaving] = useState(false);
+  const [operations, setOperations] = useState<AdminOperation[]>([]);
+  const [operationsLoading, setOperationsLoading] = useState(false);
+  const [operationsNote, setOperationsNote] = useState("");
 
   const [editUser, setEditUser] = useState<UserRow | null>(null);
   const [editFirstName, setEditFirstName] = useState("");
@@ -312,7 +379,7 @@ export default function AdminPage() {
     setUsersLoading(true);
     setError(null);
     try {
-      const query = buildQuery({ page: usersPage, page_size: 25, search: usersSearch, sort: usersSort });
+      const query = buildQuery({ page: usersPage, page_size: usersPageSize, search: usersSearch, sort: usersSort, verification: usersVerification, activity: usersActivity, review: usersReview });
       const data = await apiClient.get<UsersResponse>(`/api/v1/admin/users${query}`, false);
       setUsersResponse(data);
       setUsersLoaded(true);
@@ -322,7 +389,77 @@ export default function AdminPage() {
       setUsersLoading(false);
       if (manual) setRefreshing(false);
     }
-  }, [currentUser?.isAdmin, usersPage, usersSearch, usersSort]);
+  }, [currentUser?.isAdmin, usersPage, usersPageSize, usersSearch, usersSort, usersVerification, usersActivity, usersReview]);
+
+  const loadUserReview = useCallback(async (user: UserRow) => {
+    setReviewUser(user);
+    setReviewDetail(null);
+    setReviewError(null);
+    setReviewLoading(true);
+    try {
+      const detail = await apiClient.get<UserReviewDetail>(`/api/v1/admin/users/${user.id}/review`, false);
+      setReviewDetail(detail);
+    } catch (err) {
+      setReviewError(err instanceof Error ? err.message : "Failed to load account review");
+    } finally {
+      setReviewLoading(false);
+    }
+  }, []);
+
+  const saveUserReview = useCallback(async () => {
+    if (!reviewUser || !reviewNote.trim()) return;
+    setReviewSaving(true);
+    setReviewError(null);
+    try {
+      await apiClient.post(`/api/v1/admin/users/${reviewUser.id}/reviews`, { kind: reviewKind, category: reviewCategory, note: reviewNote.trim() });
+      setReviewNote("");
+      await Promise.all([loadUserReview(reviewUser), loadUsers(false)]);
+      showSuccess(`${reviewKind === "flag" ? "Review flag" : "Internal note"} added for ${reviewUser.username}.`);
+    } catch (err) {
+      setReviewError(err instanceof Error ? err.message : "Failed to save account review");
+    } finally {
+      setReviewSaving(false);
+    }
+  }, [loadUserReview, loadUsers, reviewCategory, reviewKind, reviewNote, reviewUser, showSuccess]);
+
+  const resolveUserReview = useCallback(async (reviewId: number, resolved: boolean) => {
+    if (!reviewUser) return;
+    setReviewError(null);
+    try {
+      await apiClient.patch(`/api/v1/admin/user-reviews/${reviewId}`, { resolved });
+      await Promise.all([loadUserReview(reviewUser), loadUsers(false)]);
+      showSuccess(`Review item ${resolved ? "resolved" : "reopened"}.`);
+    } catch (err) {
+      setReviewError(err instanceof Error ? err.message : "Failed to update review item");
+    }
+  }, [loadUserReview, loadUsers, reviewUser, showSuccess]);
+
+  const exportUsersCsv = useCallback(() => {
+    const headers = ["ID", "Name", "Username", "Email", "Organization", "Verified", "Created", "Last login", "Tournaments", "Profiles", "Open reviews", "Failed logins"];
+    const escape = (value: string | number | null | undefined) => `"${String(value ?? "").replace(/"/g, '""')}"`;
+    const rows = usersResponse.users.map((user) => [user.id, `${user.first_name} ${user.last_name}`.trim(), user.username, user.email, user.organization, user.email_verified ? "Yes" : "No", user.created_at, user.last_login_at, user.tournament_count, user.profile_count, user.open_review_count, user.failed_login_count]);
+    const blob = new Blob([[headers, ...rows].map(row => row.map(escape).join(",")).join("\r\n")], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `bracketworks-admin-users-page-${usersResponse.page}.csv`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }, [usersResponse]);
+
+  const exportAuditCsv = useCallback(() => {
+    const escape = (value: unknown) => `"${String(value ?? "").replace(/"/g, '""')}"`;
+    const rows = auditResponse.logs.map(log => [log.created_at, log.admin_name || log.admin_username, log.action, log.target_type, log.target_id, log.reason, JSON.stringify(log.details || {})]);
+    const csv = [["When", "Administrator", "Action", "Target type", "Target ID", "Reason", "Details"], ...rows].map(row => row.map(escape).join(",")).join("\r\n");
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" })); const anchor = document.createElement("a"); anchor.href = url; anchor.download = `bracketworks-admin-audit-page-${auditResponse.page}.csv`; anchor.click(); URL.revokeObjectURL(url);
+  }, [auditResponse]);
+
+  const exportTournamentsCsv = useCallback(() => {
+    const escape = (value: unknown) => `"${String(value ?? "").replace(/"/g, '""')}"`;
+    const rows = tournamentsResponse.tournaments.map(item => [item.id, item.name, item.owner_name || item.owner_username, item.owner_email, item.location, item.start_date, item.end_date, item.status, item.squad_count, item.entry_count, item.score_count, item.payout_count, item.open_note_count, item.last_activity_at]);
+    const csv = [["ID", "Tournament", "Owner", "Owner email", "Location", "Start", "End", "Status", "Squads", "Entries", "Scores", "Payouts", "Open notes", "Last activity"], ...rows].map(row => row.map(escape).join(",")).join("\r\n");
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" })); const anchor = document.createElement("a"); anchor.href = url; anchor.download = `bracketworks-admin-tournaments-page-${tournamentsResponse.page}.csv`; anchor.click(); URL.revokeObjectURL(url);
+  }, [tournamentsResponse]);
 
   const loadTournaments = useCallback(async (manual = false) => {
     if (!currentUser?.isAdmin) return;
@@ -348,6 +485,25 @@ export default function AdminPage() {
       if (manual) setRefreshing(false);
     }
   }, [currentUser?.isAdmin, tournamentPage, tournamentSearch, tournamentActivityFilter, tournamentSort]);
+
+  const loadTournamentNotes = useCallback(async (tournament: TournamentRow) => {
+    setNoteTournament(tournament); setTournamentNotesLoading(true); setError(null);
+    try { const data = await apiClient.get<{ notes: TournamentNote[] }>(`/api/v1/admin/tournaments/${tournament.id}/notes`, false); setTournamentNotes(data.notes); }
+    catch (err) { setError(err instanceof Error ? err.message : "Failed to load tournament notes"); }
+    finally { setTournamentNotesLoading(false); }
+  }, []);
+
+  const saveTournamentNote = useCallback(async () => {
+    if (!noteTournament || !tournamentNoteText.trim()) return;
+    await apiClient.post(`/api/v1/admin/tournaments/${noteTournament.id}/notes`, { category: tournamentNoteCategory, note: tournamentNoteText.trim() });
+    setTournamentNoteText(""); await Promise.all([loadTournamentNotes(noteTournament), loadTournaments(false)]); showSuccess("Tournament note added.");
+  }, [loadTournamentNotes, loadTournaments, noteTournament, showSuccess, tournamentNoteCategory, tournamentNoteText]);
+
+  const resolveTournamentNote = useCallback(async (noteId: number, resolved: boolean) => {
+    if (!noteTournament) return;
+    await apiClient.patch(`/api/v1/admin/tournament-notes/${noteId}`, { resolved });
+    await Promise.all([loadTournamentNotes(noteTournament), loadTournaments(false)]); showSuccess(`Tournament note ${resolved ? "resolved" : "reopened"}.`);
+  }, [loadTournamentNotes, loadTournaments, noteTournament, showSuccess]);
 
   const loadTables = useCallback(async (manual = false) => {
     if (!currentUser?.isAdmin) return;
@@ -379,6 +535,9 @@ export default function AdminPage() {
         search: auditSearch,
         action: auditAction,
         target_type: auditTargetType,
+        admin_user_id: auditAdminUserId,
+        date_from: auditDateFrom,
+        date_to: auditDateTo,
       });
       const data = await apiClient.get<AuditLogsResponse>(`/api/v1/admin/audit-logs${query}`, false);
       setAuditResponse(data);
@@ -389,7 +548,7 @@ export default function AdminPage() {
       setAuditLoading(false);
       if (manual) setRefreshing(false);
     }
-  }, [currentUser?.isAdmin, auditPage, auditSearch, auditAction, auditTargetType]);
+  }, [currentUser?.isAdmin, auditPage, auditSearch, auditAction, auditTargetType, auditAdminUserId, auditDateFrom, auditDateTo]);
 
   const loadChangelog = useCallback(async (manual = false) => {
     if (!currentUser?.isAdmin) return;
@@ -407,6 +566,42 @@ export default function AdminPage() {
       if (manual) setRefreshing(false);
     }
   }, [currentUser?.isAdmin]);
+
+  const loadAnnouncements = useCallback(async (manual = false) => {
+    if (!currentUser?.isAdmin) return;
+    if (manual) setRefreshing(true);
+    setAnnouncementsLoading(true); setError(null);
+    try { const data = await apiClient.get<{ announcements: AdminAnnouncement[] }>("/api/v1/admin/announcements", false); setAnnouncements(data.announcements); }
+    catch (err) { setError(err instanceof Error ? err.message : "Failed to load announcements"); }
+    finally { setAnnouncementsLoading(false); if (manual) setRefreshing(false); }
+  }, [currentUser?.isAdmin]);
+
+  const loadOperations = useCallback(async (manual = false) => {
+    if (!currentUser?.isAdmin) return;
+    if (manual) setRefreshing(true);
+    setOperationsLoading(true); setError(null);
+    try { const data = await apiClient.get<{ operations: AdminOperation[]; note: string }>("/api/v1/admin/operations", false); setOperations(data.operations); setOperationsNote(data.note); }
+    catch (err) { setError(err instanceof Error ? err.message : "Failed to load operations"); }
+    finally { setOperationsLoading(false); if (manual) setRefreshing(false); }
+  }, [currentUser?.isAdmin]);
+
+  const saveAnnouncement = useCallback(async () => {
+    if (!announcementTitle.trim() || !announcementMessage.trim()) return;
+    setAnnouncementSaving(true); setError(null);
+    try {
+      await apiClient.post("/api/v1/admin/announcements", { title: announcementTitle.trim(), message: announcementMessage.trim(), audience_type: announcementAudience, audience_user_id: announcementAudience === "user" ? Number(announcementUserId) : null, status: announcementStatus, requires_acknowledgment: announcementRequiresAck, starts_at: null, ends_at: null });
+      setAnnouncementTitle(""); setAnnouncementMessage(""); setAnnouncementStatus("draft"); setAnnouncementRequiresAck(false);
+      await loadAnnouncements(false); showSuccess("Announcement saved.");
+    } catch (err) { setError(err instanceof Error ? err.message : "Failed to save announcement"); }
+    finally { setAnnouncementSaving(false); }
+  }, [announcementAudience, announcementMessage, announcementRequiresAck, announcementStatus, announcementTitle, announcementUserId, loadAnnouncements, showSuccess]);
+
+  const updateAnnouncementStatus = useCallback(async (announcement: AdminAnnouncement, status: AdminAnnouncement["status"]) => {
+    try {
+      await apiClient.patch(`/api/v1/admin/announcements/${announcement.id}`, { ...announcement, status });
+      await loadAnnouncements(false); showSuccess(`Announcement ${status}.`);
+    } catch (err) { setError(err instanceof Error ? err.message : "Failed to update announcement"); }
+  }, [loadAnnouncements, showSuccess]);
 
   const loadActiveTab = useCallback(async (manual = false) => {
     if (activeTab === "overview") {
@@ -429,8 +624,10 @@ export default function AdminPage() {
       await loadChangelog(manual);
       return;
     }
+    if (activeTab === "announcements") { await loadAnnouncements(manual); return; }
+    if (activeTab === "operations") { await loadOperations(manual); return; }
     await loadAuditLogs(manual);
-  }, [activeTab, loadOverview, loadUsers, loadTournaments, loadTables, loadChangelog, loadAuditLogs]);
+  }, [activeTab, loadOverview, loadUsers, loadTournaments, loadTables, loadChangelog, loadAuditLogs, loadAnnouncements, loadOperations]);
 
   const refreshAfterMutation = useCallback(async ({
     overview = false,
@@ -470,12 +667,13 @@ export default function AdminPage() {
     try {
       await apiClient.post(`/api/v1/admin/users/${user.id}/set-admin`, { is_admin: nextIsAdmin });
       await refreshAfterMutation({ overview: true, users: true, audit: true });
+      showSuccess(`${user.username} ${nextIsAdmin ? "is now an administrator" : "is no longer an administrator"}.`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update admin privileges");
     } finally {
       setAdminRoleSavingUserId(null);
     }
-  }, [refreshAfterMutation]);
+  }, [refreshAfterMutation, showSuccess]);
 
   const handleChangelogCreateOrUpdate = useCallback(async () => {
     if (!changelogForm.version.trim() || !changelogForm.date.trim() || !changelogForm.changes.trim()) {
@@ -511,12 +709,13 @@ export default function AdminPage() {
       setChangelogForm(EMPTY_CHANGELOG_FORM);
       setEditingChangelogVersion(null);
       await refreshAfterMutation({ changelog: true });
+      showSuccess(`Changelog entry ${editingChangelogVersion ? "updated" : "created"}.`);
     } catch (err) {
       setChangelogFormError(err instanceof Error ? err.message : "Failed to save changelog entry");
     } finally {
       setChangelogFormSaving(false);
     }
-  }, [changelogForm, editingChangelogVersion, refreshAfterMutation]);
+  }, [changelogForm, editingChangelogVersion, refreshAfterMutation, showSuccess]);
 
   const handleChangelogDelete = useCallback(async (version: string) => {
     if (!window.confirm(`Delete changelog entry for version ${version}?`)) return;
@@ -526,12 +725,13 @@ export default function AdminPage() {
     try {
       await apiClient.delete(`/api/v1/admin/changelog/${version}`);
       await refreshAfterMutation({ changelog: true });
+      showSuccess(`Changelog ${version} deleted.`);
     } catch (err) {
       setChangelogError(err instanceof Error ? err.message : "Failed to delete changelog entry");
     } finally {
       setDeletingChangelogVersion(null);
     }
-  }, [refreshAfterMutation]);
+  }, [refreshAfterMutation, showSuccess]);
 
   const handleChangelogEdit = useCallback((entry: AdminChangelogEntry) => {
     setEditingChangelogVersion(entry.version);
@@ -551,7 +751,7 @@ export default function AdminPage() {
   const adminTabs = useMemo(() => (
     <nav className={styles.adminNav} aria-label="Admin sections">
       <div className={styles.tabRow}>
-        {(["overview", "users", "tournaments", "database", "audit", "changelog"] as AdminTab[]).map((tab) => (
+        {(["overview", "users", "tournaments", "announcements", "operations", "audit", "changelog", ...(isDevelopment ? ["database" as AdminTab] : [])] as AdminTab[]).map((tab) => (
           <button
             key={tab}
             type="button"
@@ -563,7 +763,7 @@ export default function AdminPage() {
         ))}
       </div>
     </nav>
-  ), [activeTab]);
+  ), [activeTab, isDevelopment]);
 
   const headerActions = useMemo(() => (
     <>
@@ -639,6 +839,12 @@ export default function AdminPage() {
   }, [activeTab, isAuthInitialized, isUserAuthenticated, currentUser?.isAdmin, loadChangelog]);
 
   useEffect(() => {
+    if (!isAuthInitialized || !isUserAuthenticated || !currentUser?.isAdmin) return;
+    if (activeTab === "announcements") void loadAnnouncements(false);
+    if (activeTab === "operations") void loadOperations(false);
+  }, [activeTab, isAuthInitialized, isUserAuthenticated, currentUser?.isAdmin, loadAnnouncements, loadOperations]);
+
+  useEffect(() => {
     if (!deleteUser) return;
     let isMounted = true;
     setDeleteUserPreview(null);
@@ -681,6 +887,10 @@ export default function AdminPage() {
       { label: "Tournaments", value: overview.metrics.total_tournaments.toLocaleString(), tone: "blue" },
       { label: "Entries", value: overview.metrics.total_entries.toLocaleString(), tone: "green" },
       { label: "Bracket Snapshots", value: overview.metrics.total_snapshots.toLocaleString(), tone: "slate" },
+      { label: "Unverified Users", value: (overview.metrics.unverified_users ?? 0).toLocaleString(), tone: "gold" },
+      { label: "Open Reviews", value: (overview.metrics.open_user_reviews ?? 0).toLocaleString(), tone: "red" },
+      { label: "Tournament Notes", value: (overview.metrics.open_tournament_notes ?? 0).toLocaleString(), tone: "gold" },
+      { label: "Failed Operations", value: (overview.metrics.failed_operations ?? 0).toLocaleString(), tone: "red" },
     ];
   }, [overview]);
 
@@ -694,7 +904,7 @@ export default function AdminPage() {
 
   return (
     <div className={styles.page}>
-      {error && <div className={styles.errorBanner}>{error}</div>}
+      {error && <div className={styles.errorBanner} role="alert">{error}</div>}
 
       {adminTabs}
 
@@ -786,6 +996,7 @@ export default function AdminPage() {
               <input
                 type="text"
                 className={styles.toolbarInput}
+                aria-label="Search users"
                 value={usersSearch}
                 onChange={(event) => {
                   setUsersSearch(event.target.value);
@@ -795,20 +1006,24 @@ export default function AdminPage() {
               />
             )}
             right={(
-              <select
-                className={styles.toolbarSelect}
-                value={usersSort}
-                onChange={(event) => {
-                  setUsersSort(event.target.value);
-                  setUsersPage(1);
-                }}
-              >
-                <option value="id_asc">Sort: Oldest</option>
-                <option value="id_desc">Sort: Newest</option>
-                <option value="name_asc">Sort: Name A-Z</option>
-                <option value="name_desc">Sort: Name Z-A</option>
-                <option value="tournaments_desc">Sort: Most tournaments</option>
-              </select>
+              <>
+                <select className={styles.toolbarSelect} aria-label="Filter users by verification" value={usersVerification} onChange={(event) => { setUsersVerification(event.target.value); setUsersPage(1); }}>
+                  <option value="all">All verification</option><option value="verified">Verified</option><option value="unverified">Unverified</option>
+                </select>
+                <select className={styles.toolbarSelect} aria-label="Filter users by activity" value={usersActivity} onChange={(event) => { setUsersActivity(event.target.value); setUsersPage(1); }}>
+                  <option value="all">All activity</option><option value="active">Active in 90 days</option><option value="inactive">Inactive 90+ days</option><option value="never">Never signed in</option>
+                </select>
+                <select className={styles.toolbarSelect} aria-label="Filter users by review status" value={usersReview} onChange={(event) => { setUsersReview(event.target.value); setUsersPage(1); }}>
+                  <option value="all">All reviews</option><option value="flagged">Needs review</option><option value="clear">No open reviews</option>
+                </select>
+                <select className={styles.toolbarSelect} aria-label="Sort users" value={usersSort} onChange={(event) => { setUsersSort(event.target.value); setUsersPage(1); }}>
+                  <option value="id_asc">Sort: Oldest</option><option value="id_desc">Sort: Newest ID</option><option value="created_desc">Sort: Newest signup</option><option value="last_login_desc">Sort: Recent login</option><option value="name_asc">Sort: Name A-Z</option><option value="name_desc">Sort: Name Z-A</option><option value="tournaments_desc">Sort: Most tournaments</option><option value="reviews_desc">Sort: Review items</option>
+                </select>
+                <select className={styles.toolbarSelect} aria-label="Users per page" value={usersPageSize} onChange={(event) => { setUsersPageSize(Number(event.target.value)); setUsersPage(1); }}>
+                  <option value={10}>10 per page</option><option value={25}>25 per page</option><option value={50}>50 per page</option><option value={100}>100 per page</option>
+                </select>
+                <button type="button" className={styles.actionBtn} onClick={exportUsersCsv} disabled={usersResponse.users.length === 0}>Export CSV</button>
+              </>
             )}
           />
           <div className={styles.tableWrap}>
@@ -820,17 +1035,18 @@ export default function AdminPage() {
                   <th>Email</th>
                   <th>Status</th>
                   <th>Organization</th>
-                  <th>Admin</th>
+                  <th>Role</th>
                   <th>Tournaments</th>
                   <th>Bowler Profiles</th>
+                  <th>Review</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {usersLoading ? (
-                  <tr><td colSpan={9}>Loading users...</td></tr>
+                  <tr><td className={styles.tableState} colSpan={10}><span role="status">Loading users…</span></td></tr>
                 ) : usersResponse.users.length === 0 ? (
-                  <tr><td colSpan={9}>No users match the current filters.</td></tr>
+                  <tr><td className={styles.tableState} colSpan={10}><strong>No users found</strong><span>Try changing the search or filter options.</span></td></tr>
                 ) : (
                   usersResponse.users.map((user) => (
                     <tr key={user.id}>
@@ -855,16 +1071,22 @@ export default function AdminPage() {
                               <div>
                                 <strong>Last login:</strong> {formatAdminTimestamp(user.last_login_at)}
                               </div>
+                              <div><strong>Created:</strong> {formatAdminTimestamp(user.created_at, "Unknown")}</div>
+                              <div><strong>Active sessions:</strong> {user.active_session_count}</div>
+                              <div><strong>Failed logins:</strong> {user.failed_login_count}</div>
+                              <div><strong>Development notice:</strong> {user.dev_notice_version_accepted || "Not acknowledged"}</div>
                             </div>
                           </div>
                         </details>
                       </td>
                       <td>{user.organization || "-"}</td>
-                      <td>{user.is_admin ? "Yes" : "-"}</td>
+                      <td>{user.is_admin ? "Administrator" : "User"}</td>
                       <td>{user.tournament_count}</td>
                       <td>{user.profile_count}</td>
+                      <td><span className={`${styles.statusPill} ${user.open_review_count > 0 ? styles.statusDraft : styles.statusActive}`}>{user.open_review_count > 0 ? `${user.open_review_count} open` : "Clear"}</span></td>
                       <td>
                         <div className={styles.rowActions}>
+                          <button type="button" className={styles.actionBtn} onClick={() => { void loadUserReview(user); }}>Review</button>
                           <button
                             type="button"
                             className={styles.actionBtn}
@@ -903,8 +1125,8 @@ export default function AdminPage() {
                               {adminRoleSavingUserId === user.id
                                 ? "Saving..."
                                 : user.is_admin
-                                  ? "Revoke Admin"
-                                  : "Make Admin"}
+                                  ? "Change to User"
+                                  : "Promote to Admin"}
                             </button>
                           )}
                           {user.id !== Number(currentUser?.id) && (
@@ -964,6 +1186,7 @@ export default function AdminPage() {
               <input
                 type="text"
                 className={styles.toolbarInput}
+                aria-label="Search tournaments"
                 value={tournamentSearch}
                 onChange={(event) => {
                   setTournamentSearch(event.target.value);
@@ -976,6 +1199,7 @@ export default function AdminPage() {
               <>
                 <select
                   className={styles.toolbarSelect}
+                  aria-label="Filter tournaments by activity"
                   value={tournamentActivityFilter}
                   onChange={(event) => {
                     setTournamentActivityFilter(event.target.value as "all" | "has_entries" | "no_entries");
@@ -988,6 +1212,7 @@ export default function AdminPage() {
                 </select>
                 <select
                   className={styles.toolbarSelect}
+                  aria-label="Sort tournaments"
                   value={tournamentSort}
                   onChange={(event) => {
                     setTournamentSort(event.target.value as "newest" | "entries_desc" | "owner_asc" | "oldest");
@@ -999,6 +1224,7 @@ export default function AdminPage() {
                   <option value="entries_desc">Sort: Most entries</option>
                   <option value="owner_asc">Sort: Owner A-Z</option>
                 </select>
+                <button type="button" className={styles.actionBtn} onClick={exportTournamentsCsv} disabled={tournamentsResponse.tournaments.length === 0}>Export CSV</button>
               </>
             )}
           />
@@ -1015,14 +1241,16 @@ export default function AdminPage() {
                   <th>End</th>
                   <th>Squads</th>
                   <th>Entries</th>
+                  <th>Status</th>
+                  <th>Notes</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {tournamentsLoading ? (
-                  <tr><td colSpan={9}>Loading tournaments...</td></tr>
+                  <tr><td className={styles.tableState} colSpan={11}><span role="status">Loading tournaments…</span></td></tr>
                 ) : tournamentsResponse.tournaments.length === 0 ? (
-                  <tr><td colSpan={9}>No tournaments match the current filters.</td></tr>
+                  <tr><td className={styles.tableState} colSpan={11}><strong>No tournaments found</strong><span>Try changing the search, activity, or sort options.</span></td></tr>
                 ) : (
                   tournamentsResponse.tournaments.map((tournament) => {
                     const expanded = expandedTournamentIds.includes(tournament.id);
@@ -1037,8 +1265,17 @@ export default function AdminPage() {
                           <td>{tournament.end_date || "-"}</td>
                           <td>{tournament.squad_count}</td>
                           <td>{tournament.entry_count}</td>
+                          <td><span className={`${styles.statusPill} ${tournament.status === "current" ? styles.statusActive : styles.statusDraft}`}>{tournament.status}</span></td>
+                          <td><span className={`${styles.statusPill} ${tournament.open_note_count > 0 ? styles.statusDraft : styles.statusActive}`}>{tournament.open_note_count > 0 ? `${tournament.open_note_count} open` : "Clear"}</span></td>
                           <td>
                             <div className={styles.rowActions}>
+                              <button
+                                type="button"
+                                className={styles.actionBtn}
+                                onClick={() => { void loadTournamentNotes(tournament); }}
+                              >
+                                Notes
+                              </button>
                               <button
                                 type="button"
                                 className={styles.actionBtn}
@@ -1072,6 +1309,7 @@ export default function AdminPage() {
                                     try {
                                       await apiClient.post(`/api/v1/admin/tournaments/${tournament.id}/unarchive`, {});
                                       await refreshAfterMutation({ overview: true, tournaments: true, audit: true });
+                                      showSuccess(`${tournament.name} was unarchived.`);
                                     } catch (err) {
                                       setError(err instanceof Error ? err.message : "Failed to unarchive tournament");
                                     }
@@ -1123,21 +1361,21 @@ export default function AdminPage() {
                         </tr>
                         {expanded && (
                           <tr>
-                            <td colSpan={9}>
+                            <td colSpan={11}>
                               <div className={styles.detailCard}>
                                 <div className={styles.detailGrid}>
                                   <div><strong>Scores:</strong> {tournament.score_count}</div>
                                   <div><strong>Payouts:</strong> {tournament.payout_count}</div>
                                   <div><strong>Snapshots:</strong> {tournament.snapshot_count}</div>
                                   <div><strong>Owner Email:</strong> {tournament.owner_email}</div>
+                                  <div><strong>Last bracket activity:</strong> {formatAdminTimestamp(tournament.last_activity_at, "None")}</div>
+                                  <div><strong>Last admin change:</strong> {formatAdminTimestamp(tournament.last_admin_change_at, "None")}</div>
                                 </div>
                                 {tournament.archive_reason && (
                                   <div className={styles.detailNote}>Archive reason: {tournament.archive_reason}</div>
                                 )}
                                 <div className={styles.detailLinks}>
                                   <a className={styles.linkBtn} href={`/view/${tournament.id}`} target="_blank" rel="noreferrer">Open Bowler View</a>
-                                  <a className={styles.linkBtn} href="/scores" target="_blank" rel="noreferrer">Open Scores Page</a>
-                                  <a className={styles.linkBtn} href="/players" target="_blank" rel="noreferrer">Open Players Page</a>
                                 </div>
                               </div>
                             </td>
@@ -1185,6 +1423,7 @@ export default function AdminPage() {
               <input
                 type="text"
                 className={styles.toolbarInput}
+                aria-label="Search database tables"
                 value={tableSearch}
                 onChange={(event) => setTableSearch(event.target.value)}
                 placeholder="Search table names"
@@ -1213,9 +1452,9 @@ export default function AdminPage() {
               </thead>
               <tbody>
                 {tablesLoading ? (
-                  <tr><td colSpan={4}>Loading tables...</td></tr>
+                  <tr><td className={styles.tableState} colSpan={4}><span role="status">Loading database tables…</span></td></tr>
                 ) : tablesResponse.tables.length === 0 ? (
-                  <tr><td colSpan={4}>No tables found.</td></tr>
+                  <tr><td className={styles.tableState} colSpan={4}><strong>No database tables found</strong><span>Clear the table-name search and try again.</span></td></tr>
                 ) : (
                   tablesResponse.tables.map((table) => (
                     <tr key={table.name}>
@@ -1244,6 +1483,7 @@ export default function AdminPage() {
               <input
                 type="text"
                 className={styles.toolbarInput}
+                aria-label="Search audit log"
                 value={auditSearch}
                 onChange={(event) => {
                   setAuditSearch(event.target.value);
@@ -1257,6 +1497,7 @@ export default function AdminPage() {
                 <input
                   type="text"
                   className={styles.toolbarInput}
+                  aria-label="Filter audit log by action"
                   value={auditAction}
                   onChange={(event) => {
                     setAuditAction(event.target.value);
@@ -1267,6 +1508,7 @@ export default function AdminPage() {
                 <input
                   type="text"
                   className={styles.toolbarInput}
+                  aria-label="Filter audit log by target type"
                   value={auditTargetType}
                   onChange={(event) => {
                     setAuditTargetType(event.target.value);
@@ -1274,6 +1516,10 @@ export default function AdminPage() {
                   }}
                   placeholder="Target type (user, tournament)"
                 />
+                <select className={styles.toolbarSelect} aria-label="Filter audit log by administrator" value={auditAdminUserId} onChange={event => { setAuditAdminUserId(event.target.value); setAuditPage(1); }}><option value="">All administrators</option>{usersResponse.users.filter(user => user.is_admin).map(user => <option value={user.id} key={user.id}>{user.first_name} {user.last_name} (@{user.username})</option>)}</select>
+                <input type="date" className={styles.toolbarInput} aria-label="Audit start date" value={auditDateFrom} onChange={event => { setAuditDateFrom(event.target.value); setAuditPage(1); }} />
+                <input type="date" className={styles.toolbarInput} aria-label="Audit end date" value={auditDateTo} onChange={event => { setAuditDateTo(event.target.value); setAuditPage(1); }} />
+                <button type="button" className={styles.actionBtn} onClick={exportAuditCsv} disabled={auditResponse.logs.length === 0}>Export CSV</button>
               </>
             )}
           />
@@ -1286,13 +1532,14 @@ export default function AdminPage() {
                   <th>Action</th>
                   <th>Target</th>
                   <th>Reason</th>
+                  <th>Details</th>
                 </tr>
               </thead>
               <tbody>
                 {auditLoading ? (
-                  <tr><td colSpan={5}>Loading audit logs...</td></tr>
+                  <tr><td className={styles.tableState} colSpan={6}><span role="status">Loading audit log…</span></td></tr>
                 ) : auditResponse.logs.length === 0 ? (
-                  <tr><td colSpan={5}>No audit log entries found.</td></tr>
+                  <tr><td className={styles.tableState} colSpan={6}><strong>No audit entries found</strong><span>Try clearing or broadening the audit filters.</span></td></tr>
                 ) : (
                   auditResponse.logs.map((log) => (
                     <tr key={log.id}>
@@ -1301,6 +1548,7 @@ export default function AdminPage() {
                       <td>{log.action}</td>
                       <td>{log.target_type || "-"}{log.target_id ? ` #${log.target_id}` : ""}</td>
                       <td>{log.reason || "-"}</td>
+                      <td>{log.details ? <details className={styles.auditDetails}><summary>View</summary><pre>{JSON.stringify(log.details, null, 2)}</pre></details> : "-"}</td>
                     </tr>
                   ))
                 )}
@@ -1348,7 +1596,7 @@ export default function AdminPage() {
             </button>
           </div>
 
-          {changelogError && <div className={styles.modalError}>{changelogError}</div>}
+          {changelogError && <div className={styles.modalError} role="alert">{changelogError}</div>}
 
           <div className={styles.changelogFormSection}>
             <div className={styles.changelogFormRow}>
@@ -1388,7 +1636,7 @@ export default function AdminPage() {
               />
               <p className={styles.formHelper}>List each change on a new line. These will be displayed to users.</p>
             </div>
-            {changelogFormError && <div className={styles.modalError}>{changelogFormError}</div>}
+            {changelogFormError && <div className={styles.modalError} role="alert">{changelogFormError}</div>}
             <div className={styles.changelogFormActions}>
               <button
                 type="button"
@@ -1465,15 +1713,109 @@ export default function AdminPage() {
         </section>
       )}
 
+      {activeTab === "announcements" && (
+        <div className={styles.sectionStack}>
+          <section className={styles.panel}>
+            <div className={styles.panelHeader}><div><h3 className={styles.panelTitle}>Create Announcement</h3><span className={styles.panelSubtle}>Publish an in-app pop-up without changing user access.</span></div></div>
+            <div className={styles.panelBody}>
+              <div className={styles.formRow}><label className={styles.formLabel} htmlFor="announcement-title">Title</label><input id="announcement-title" className={styles.formInput} value={announcementTitle} onChange={event => setAnnouncementTitle(event.target.value)} maxLength={160} /></div>
+              <div className={styles.formRow}><label className={styles.formLabel} htmlFor="announcement-message">Message</label><textarea id="announcement-message" className={styles.formTextarea} value={announcementMessage} onChange={event => setAnnouncementMessage(event.target.value)} /></div>
+              <div className={styles.announcementOptions}>
+                <div className={styles.formRow}><label className={styles.formLabel}>Audience</label><select className={styles.formInput} value={announcementAudience} onChange={event => setAnnouncementAudience(event.target.value as "all" | "admins" | "user")}><option value="all">All users</option><option value="admins">Administrators</option><option value="user">Specific user</option></select></div>
+                {announcementAudience === "user" && <div className={styles.formRow}><label className={styles.formLabel}>User</label><select className={styles.formInput} value={announcementUserId} onChange={event => setAnnouncementUserId(event.target.value)}><option value="">Select user</option>{usersResponse.users.map(user => <option value={user.id} key={user.id}>{user.first_name} {user.last_name} (@{user.username})</option>)}</select></div>}
+                <div className={styles.formRow}><label className={styles.formLabel}>Initial status</label><select className={styles.formInput} value={announcementStatus} onChange={event => setAnnouncementStatus(event.target.value as "draft" | "active" | "archived")}><option value="draft">Draft</option><option value="active">Active</option></select></div>
+              </div>
+              <label className={styles.checkboxRow}><input type="checkbox" checked={announcementRequiresAck} onChange={event => setAnnouncementRequiresAck(event.target.checked)} /><span>Require explicit acknowledgment</span></label>
+              <div className={styles.changelogFormActions}><button type="button" className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`} disabled={announcementSaving || !announcementTitle.trim() || !announcementMessage.trim() || (announcementAudience === "user" && !announcementUserId)} onClick={() => { void saveAnnouncement(); }}>{announcementSaving ? "Saving…" : "Save Announcement"}</button></div>
+            </div>
+          </section>
+          <section className={styles.panel}>
+            <div className={styles.panelHeader}><h3 className={styles.panelTitle}>Announcement History</h3><span className={styles.panelSubtle}>{announcements.length} total</span></div>
+            {announcementsLoading ? <div className={styles.placeholder} role="status">Loading announcements…</div> : announcements.length === 0 ? <div className={styles.placeholder}>No announcements have been created.</div> : <div className={styles.announcementList}>{announcements.map(item => <article className={styles.announcementCard} key={item.id}><div className={styles.announcementCardHeader}><div><span className={`${styles.statusPill} ${item.status === "active" ? styles.statusActive : styles.statusDraft}`}>{item.status}</span><strong>{item.title}</strong></div><span>{item.acknowledgment_count} acknowledged</span></div><p>{item.message}</p><div className={styles.announcementCardFooter}><span>Audience: {item.audience_type}{item.requires_acknowledgment ? " · acknowledgment required" : ""}</span><div className={styles.rowActions}>{item.status !== "active" && <button className={styles.actionBtn} type="button" onClick={() => { void updateAnnouncementStatus(item, "active"); }}>Publish</button>}{item.status !== "archived" && <button className={styles.actionBtn} type="button" onClick={() => { void updateAnnouncementStatus(item, "archived"); }}>Archive</button>}</div></div></article>)}</div>}
+          </section>
+        </div>
+      )}
+
+      {activeTab === "operations" && (
+        <section className={styles.panel}>
+          <div className={styles.panelHeader}><div><h3 className={styles.panelTitle}>System Operations</h3><span className={styles.panelSubtle}>Background bracket generation and payout jobs currently observable by the backend</span></div></div>
+          {operationsNote && <div className={styles.operationNote}>{operationsNote}</div>}
+          <div className={styles.tableWrap}><table className={styles.table}><thead><tr><th>Created</th><th>Type</th><th>Status</th><th>Started</th><th>Completed</th><th>Error</th></tr></thead><tbody>{operationsLoading ? <tr><td className={styles.tableState} colSpan={6}><span role="status">Loading operations…</span></td></tr> : operations.length === 0 ? <tr><td className={styles.tableState} colSpan={6}><strong>No recorded operations</strong><span>No background jobs are retained by this backend process.</span></td></tr> : operations.map(operation => <tr key={operation.job_id}><td>{formatAdminTimestamp(operation.created_at, "-")}</td><td>{operation.job_type}</td><td><span className={`${styles.statusPill} ${operation.status === "failed" ? styles.statusDraft : operation.status === "succeeded" ? styles.statusActive : ""}`}>{operation.status}</span></td><td>{formatAdminTimestamp(operation.started_at, "-")}</td><td>{formatAdminTimestamp(operation.completed_at, "-")}</td><td>{operation.error || "-"}</td></tr>)}</tbody></table></div>
+        </section>
+      )}
+
+      {noteTournament && (
+        <div className={styles.modalOverlay} onClick={() => setNoteTournament(null)}>
+          <div className={`${styles.modal} ${styles.reviewModal}`} role="dialog" aria-modal="true" aria-label={`Administrative notes for ${noteTournament.name}`} onClick={event => event.stopPropagation()}>
+            <div className={styles.modalHeader}><div><h3 className={styles.modalTitle}>Tournament Notes: {noteTournament.name}</h3><div className={styles.secondaryText}>Internal administrator context only</div></div><button type="button" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.modalClose}`} aria-label="Close tournament notes" onClick={() => setNoteTournament(null)}>×</button></div>
+            <div className={styles.modalBody}>
+              <section className={styles.reviewSection}><h4>Add note</h4><div className={styles.reviewFormGrid}><select className={styles.formInput} value={tournamentNoteCategory} onChange={event => setTournamentNoteCategory(event.target.value)}><option value="general">General</option><option value="data">Data issue</option><option value="ownership">Ownership question</option><option value="results">Results review</option><option value="support">Support follow-up</option></select></div><textarea className={styles.formTextarea} value={tournamentNoteText} onChange={event => setTournamentNoteText(event.target.value)} placeholder="Add factual context for other administrators…" maxLength={2000} /><div className={styles.reviewFormActions}><button type="button" className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`} disabled={!tournamentNoteText.trim()} onClick={() => { void saveTournamentNote(); }}>Add Note</button></div></section>
+              <section className={styles.reviewSection}><h4>Note history</h4>{tournamentNotesLoading ? <div className={styles.reviewEmpty}>Loading notes…</div> : tournamentNotes.length === 0 ? <div className={styles.reviewEmpty}>No internal notes have been added.</div> : <div className={styles.reviewList}>{tournamentNotes.map(note => <article className={styles.reviewItem} key={note.id}><div className={styles.reviewItemHeader}><span className={`${styles.statusPill} ${note.is_resolved ? styles.statusActive : styles.statusDraft}`}>{note.is_resolved ? "Resolved" : "Open"}</span><strong>{note.category}</strong><span>{formatAdminTimestamp(note.created_at, "")}</span></div><p>{note.note}</p><div className={styles.reviewItemFooter}><span>Added by @{note.admin_username}</span><button type="button" className={styles.actionBtn} onClick={() => { void resolveTournamentNote(note.id, !note.is_resolved); }}>{note.is_resolved ? "Reopen" : "Resolve"}</button></div></article>)}</div>}</section>
+            </div>
+            <div className={styles.modalFooter}><button type="button" className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.small}`} onClick={() => setNoteTournament(null)}>Close</button></div>
+          </div>
+        </div>
+      )}
+
+      {reviewUser && (
+        <div className={styles.modalOverlay} onClick={() => setReviewUser(null)}>
+          <div className={`${styles.modal} ${styles.reviewModal}`} role="dialog" aria-modal="true" aria-label={`Review account ${reviewUser.username}`} onClick={(event) => event.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <div><h3 className={styles.modalTitle}>Account Review: {reviewUser.username}</h3><div className={styles.secondaryText}>Observation and internal notes only—this does not change account access.</div></div>
+              <button type="button" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.modalClose}`} aria-label="Close account review" onClick={() => setReviewUser(null)}>×</button>
+            </div>
+            <div className={styles.modalBody}>
+              {reviewError && <div className={styles.modalError} role="alert">{reviewError}</div>}
+              {reviewLoading ? <div className={styles.placeholder} role="status">Loading account activity…</div> : reviewDetail ? (
+                <div className={styles.reviewLayout}>
+                  <section className={styles.reviewSection}>
+                    <h4>Account details</h4>
+                    <div className={styles.detailGrid}>
+                      <div><strong>Name:</strong> {reviewDetail.user.name}</div><div><strong>Email:</strong> {reviewDetail.user.email}</div>
+                      <div><strong>Created:</strong> {formatAdminTimestamp(reviewDetail.user.created_at, "Unknown")}</div><div><strong>Last login:</strong> {formatAdminTimestamp(reviewUser.last_login_at)}</div>
+                      <div><strong>Verification:</strong> {reviewDetail.user.email_verified ? formatAdminTimestamp(reviewDetail.user.email_verified_at, "Verified") : "Unverified"}</div>
+                      <div><strong>Development notice:</strong> {reviewDetail.user.dev_notice_version_accepted || "Not acknowledged"}</div>
+                      <div><strong>Active sessions:</strong> {reviewUser.active_session_count}</div><div><strong>Failed logins:</strong> {reviewUser.failed_login_count}</div>
+                    </div>
+                  </section>
+                  <section className={styles.reviewSection}>
+                    <h4>Add internal review item</h4>
+                    <div className={styles.reviewFormGrid}>
+                      <select className={styles.formInput} aria-label="Review item type" value={reviewKind} onChange={(event) => setReviewKind(event.target.value as "flag" | "note")}><option value="note">Internal note</option><option value="flag">Flag for review</option></select>
+                      <select className={styles.formInput} aria-label="Review category" value={reviewCategory} onChange={(event) => setReviewCategory(event.target.value)}><option value="general">General</option><option value="verification">Verification</option><option value="inactive">Inactive</option><option value="duplicate">Possible duplicate</option><option value="suspicious">Suspicious activity</option><option value="fake">Potentially fake</option></select>
+                    </div>
+                    <textarea className={styles.formTextarea} value={reviewNote} onChange={(event) => setReviewNote(event.target.value)} placeholder="Add factual context for other administrators…" maxLength={2000} />
+                    <div className={styles.reviewFormActions}><span>{reviewNote.length}/2000</span><button type="button" className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`} disabled={reviewSaving || !reviewNote.trim()} onClick={() => { void saveUserReview(); }}>{reviewSaving ? "Saving…" : reviewKind === "flag" ? "Add Flag" : "Add Note"}</button></div>
+                  </section>
+                  <section className={styles.reviewSection}>
+                    <h4>Review history</h4>
+                    {reviewDetail.reviews.length === 0 ? <div className={styles.reviewEmpty}>No flags or internal notes have been added.</div> : <div className={styles.reviewList}>{reviewDetail.reviews.map(item => <article key={item.id} className={styles.reviewItem}><div className={styles.reviewItemHeader}><span className={`${styles.statusPill} ${item.is_resolved ? styles.statusActive : styles.statusDraft}`}>{item.is_resolved ? "Resolved" : item.kind === "flag" ? "Open flag" : "Open note"}</span><strong>{item.category.replace(/_/g, " ")}</strong><span>{formatAdminTimestamp(item.created_at, "")}</span></div><p>{item.note}</p><div className={styles.reviewItemFooter}><span>Added by @{item.admin_username}</span><button type="button" className={styles.actionBtn} onClick={() => { void resolveUserReview(item.id, !item.is_resolved); }}>{item.is_resolved ? "Reopen" : "Resolve"}</button></div></article>)}</div>}
+                  </section>
+                  <section className={styles.reviewSection}>
+                    <h4>Recent login activity</h4>
+                    {reviewDetail.sessions.length === 0 ? <div className={styles.reviewEmpty}>No authenticated sessions recorded.</div> : <div className={styles.activityList}>{reviewDetail.sessions.map(session => <div key={session.id} className={styles.activityRow}><div><strong>{session.device_nickname || "Browser session"}</strong><span>{session.region_hint || "Region unavailable"}</span></div><div><span>Last seen {formatAdminTimestamp(session.last_seen_at, "Unknown")}</span><span>Risk {session.risk_score.toFixed(2)} · {session.is_revoked ? "Revoked" : "Active"}</span></div></div>)}</div>}
+                  </section>
+                  <section className={styles.reviewSection}>
+                    <h4>Acknowledgment history</h4>
+                    {reviewDetail.acknowledgments.length === 0 ? <div className={styles.reviewEmpty}>No server-recorded acknowledgments.</div> : <div className={styles.activityList}>{reviewDetail.acknowledgments.map(item => <div key={item.id} className={styles.activityRow}><div><strong>{item.content_type.replace(/_/g, " ")}</strong><span>{item.content_id} · version {item.version}</span></div><div><span>{formatAdminTimestamp(item.acknowledged_at, "Unknown")}</span></div></div>)}</div>}
+                  </section>
+                </div>
+              ) : null}
+            </div>
+            <div className={styles.modalFooter}><button type="button" className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.small}`} onClick={() => setReviewUser(null)}>Close</button></div>
+          </div>
+        </div>
+      )}
+
       {editUser && (
         <div className={styles.modalOverlay} onClick={() => setEditUser(null)}>
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+          <div className={styles.modal} role="dialog" aria-modal="true" aria-label={`Edit user ${editUser.username}`} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Edit {editUser.username}</h3>
               <button type="button" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.modalClose}`} onClick={() => setEditUser(null)}>X</button>
             </div>
             <div className={styles.modalBody}>
-              {editError && <div className={styles.modalError}>{editError}</div>}
+              {editError && <div className={styles.modalError} role="alert">{editError}</div>}
               <div className={styles.formRow}>
                 <label className={styles.formLabel}>First name</label>
                 <input className={styles.formInput} value={editFirstName} onChange={(e) => setEditFirstName(e.target.value)} />
@@ -1510,6 +1852,7 @@ export default function AdminPage() {
                     setEditUser(null);
                     await loadUsers(true);
                     await loadAuditLogs(false);
+                    showSuccess(`${editUser.username} was updated.`);
                   } catch (err) {
                     setEditError(err instanceof Error ? err.message : "Save failed");
                   } finally {
@@ -1526,13 +1869,13 @@ export default function AdminPage() {
 
       {resetUser && (
         <div className={styles.modalOverlay} onClick={() => setResetUser(null)}>
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+          <div className={styles.modal} role="dialog" aria-modal="true" aria-label={`Reset password for ${resetUser.username}`} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Reset password for {resetUser.username}</h3>
               <button type="button" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.modalClose}`} onClick={() => setResetUser(null)}>X</button>
             </div>
             <div className={styles.modalBody}>
-              {resetError && <div className={styles.modalError}>{resetError}</div>}
+              {resetError && <div className={styles.modalError} role="alert">{resetError}</div>}
               <div className={styles.formRow}>
                 <label className={styles.formLabel}>New password</label>
                 <input
@@ -1558,6 +1901,7 @@ export default function AdminPage() {
                     await apiClient.post(`/api/v1/admin/users/${resetUser.id}/reset-password`, { new_password: resetPassword });
                     setResetUser(null);
                     await loadAuditLogs(false);
+                    showSuccess(`Password reset for ${resetUser.username}.`);
                   } catch (err) {
                     setResetError(err instanceof Error ? err.message : "Reset failed");
                   } finally {
@@ -1574,13 +1918,13 @@ export default function AdminPage() {
 
       {deleteUser && (
         <div className={styles.modalOverlay} onClick={() => setDeleteUser(null)}>
-          <div className={styles.modal} onClick={(event) => event.stopPropagation()}>
+          <div className={styles.modal} role="dialog" aria-modal="true" aria-label={`Delete user ${deleteUser.username}`} onClick={(event) => event.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Delete user {deleteUser.username}</h3>
               <button type="button" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.modalClose}`} onClick={() => setDeleteUser(null)}>X</button>
             </div>
             <div className={styles.modalBody}>
-              {deleteUserError && <div className={styles.modalError}>{deleteUserError}</div>}
+              {deleteUserError && <div className={styles.modalError} role="alert">{deleteUserError}</div>}
               <div className={styles.detailCard}>
                 <div className={styles.detailNote}>This action is permanent. Type DELETE to confirm.</div>
                 {deleteUserPreview && (
@@ -1627,6 +1971,7 @@ export default function AdminPage() {
                     });
                     setDeleteUser(null);
                     await refreshAfterMutation({ overview: true, users: true, audit: true });
+                    showSuccess(`${deleteUser.username} was deleted.`);
                   } catch (err) {
                     setDeleteUserError(err instanceof Error ? err.message : "Delete failed");
                   } finally {
@@ -1643,13 +1988,13 @@ export default function AdminPage() {
 
       {editTournament && (
         <div className={styles.modalOverlay} onClick={() => setEditTournament(null)}>
-          <div className={styles.modal} onClick={(event) => event.stopPropagation()}>
+          <div className={styles.modal} role="dialog" aria-modal="true" aria-label={`Edit tournament ${editTournament.name}`} onClick={(event) => event.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Edit Tournament #{editTournament.id}</h3>
               <button type="button" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.modalClose}`} onClick={() => setEditTournament(null)}>X</button>
             </div>
             <div className={styles.modalBody}>
-              {editTournamentError && <div className={styles.modalError}>{editTournamentError}</div>}
+              {editTournamentError && <div className={styles.modalError} role="alert">{editTournamentError}</div>}
               <div className={styles.formRow}>
                 <label className={styles.formLabel}>Name</label>
                 <input className={styles.formInput} value={editTournamentName} onChange={(event) => setEditTournamentName(event.target.value)} />
@@ -1686,6 +2031,7 @@ export default function AdminPage() {
                     setEditTournament(null);
                     await loadTournaments(true);
                     await loadAuditLogs(false);
+                    showSuccess(`${editTournament.name} was updated.`);
                   } catch (err) {
                     setEditTournamentError(err instanceof Error ? err.message : "Failed to update tournament");
                   } finally {
@@ -1702,13 +2048,13 @@ export default function AdminPage() {
 
       {reassignTournament && (
         <div className={styles.modalOverlay} onClick={() => setReassignTournament(null)}>
-          <div className={styles.modal} onClick={(event) => event.stopPropagation()}>
+          <div className={styles.modal} role="dialog" aria-modal="true" aria-label={`Reassign tournament ${reassignTournament.name}`} onClick={(event) => event.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Reassign Tournament #{reassignTournament.id}</h3>
               <button type="button" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.modalClose}`} onClick={() => setReassignTournament(null)}>X</button>
             </div>
             <div className={styles.modalBody}>
-              {reassignError && <div className={styles.modalError}>{reassignError}</div>}
+              {reassignError && <div className={styles.modalError} role="alert">{reassignError}</div>}
               <div className={styles.formRow}>
                 <label className={styles.formLabel}>New owner</label>
                 <select className={styles.formInput} value={reassignUserId} onChange={(event) => setReassignUserId(event.target.value)}>
@@ -1737,6 +2083,7 @@ export default function AdminPage() {
                     setReassignTournament(null);
                     await loadTournaments(true);
                     await loadAuditLogs(false);
+                    showSuccess(`${reassignTournament.name} was reassigned.`);
                   } catch (err) {
                     setReassignError(err instanceof Error ? err.message : "Failed to reassign tournament");
                   } finally {
@@ -1753,13 +2100,13 @@ export default function AdminPage() {
 
       {archiveTournament && (
         <div className={styles.modalOverlay} onClick={() => setArchiveTournament(null)}>
-          <div className={styles.modal} onClick={(event) => event.stopPropagation()}>
+          <div className={styles.modal} role="dialog" aria-modal="true" aria-label={`Archive tournament ${archiveTournament.name}`} onClick={(event) => event.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Archive Tournament #{archiveTournament.id}</h3>
               <button type="button" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.modalClose}`} onClick={() => setArchiveTournament(null)}>X</button>
             </div>
             <div className={styles.modalBody}>
-              {archiveError && <div className={styles.modalError}>{archiveError}</div>}
+              {archiveError && <div className={styles.modalError} role="alert">{archiveError}</div>}
               <div className={styles.formRow}>
                 <label className={styles.formLabel}>Reason (optional)</label>
                 <input className={styles.formInput} value={archiveReason} onChange={(event) => setArchiveReason(event.target.value)} placeholder="Example: merged into Spring Open 2026" />
@@ -1778,6 +2125,7 @@ export default function AdminPage() {
                     await apiClient.post(`/api/v1/admin/tournaments/${archiveTournament.id}/archive`, { reason: archiveReason });
                     setArchiveTournament(null);
                     await refreshAfterMutation({ overview: true, tournaments: true, audit: true });
+                    showSuccess(`${archiveTournament.name} was archived.`);
                   } catch (err) {
                     setArchiveError(err instanceof Error ? err.message : "Failed to archive tournament");
                   } finally {
@@ -1794,13 +2142,13 @@ export default function AdminPage() {
 
       {deleteTournament && (
         <div className={styles.modalOverlay} onClick={() => setDeleteTournament(null)}>
-          <div className={styles.modal} onClick={(event) => event.stopPropagation()}>
+          <div className={styles.modal} role="dialog" aria-modal="true" aria-label={`Delete tournament ${deleteTournament.name}`} onClick={(event) => event.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Delete Tournament #{deleteTournament.id}</h3>
               <button type="button" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.modalClose}`} onClick={() => setDeleteTournament(null)}>X</button>
             </div>
             <div className={styles.modalBody}>
-              {deleteTournamentError && <div className={styles.modalError}>{deleteTournamentError}</div>}
+              {deleteTournamentError && <div className={styles.modalError} role="alert">{deleteTournamentError}</div>}
               <div className={styles.detailCard}>
                 <div className={styles.detailNote}>This action is permanent. Type DELETE to confirm.</div>
                 {deleteTournamentPreview && (
@@ -1847,6 +2195,7 @@ export default function AdminPage() {
                     });
                     setDeleteTournament(null);
                     await refreshAfterMutation({ overview: true, tournaments: true, audit: true });
+                    showSuccess(`${deleteTournament.name} was deleted.`);
                   } catch (err) {
                     setDeleteTournamentError(err instanceof Error ? err.message : "Failed to delete tournament");
                   } finally {

@@ -11,6 +11,7 @@ import { DataTableToolbar } from '../../components/primitives'
 import buttonStyles from '../../styles/buttons.module.css'
 import TournamentDirectory from '../TournamentDirectory'
 import styles from './view.module.css'
+import { SAMPLE_BOWLER_NAMES, SAMPLE_TOURNAMENT } from '../../demo/sample-tournament'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -110,6 +111,111 @@ interface PublicViewCache {
 
 type Tab = 'alive' | 'brackets' | 'sidePots'
 
+const DEMO_TOURNAMENT_ID = -101
+const DEMO_TOURNAMENT: TournamentInfo = {
+  id: DEMO_TOURNAMENT_ID,
+  name: SAMPLE_TOURNAMENT.name,
+  location: SAMPLE_TOURNAMENT.location,
+  squads: [
+    { id: 101, date: SAMPLE_TOURNAMENT.date, time: SAMPLE_TOURNAMENT.squads[0], has_brackets: true, bracket_group_count: 3, bracket_count: 9 },
+    { id: 102, date: SAMPLE_TOURNAMENT.date, time: SAMPLE_TOURNAMENT.squads[1], has_brackets: false, bracket_group_count: 0, bracket_count: 0 },
+  ],
+}
+
+function createDemoEightPlayerBracket(title: string, players: readonly string[], baseScore: number): BracketData {
+  const player = (index: number) => players[index] ?? 'BYE'
+  return {
+    title,
+    rounds: [
+      { name: 'Round 1', matches: [
+        { playerA: player(0), playerB: player(1), scoreA: baseScore + 18, scoreB: baseScore + 3, winner: 'A' },
+        { playerA: player(2), playerB: player(3), scoreA: baseScore + 14, scoreB: baseScore + 6, winner: 'A' },
+        { playerA: player(4), playerB: player(5), scoreA: baseScore + 21, scoreB: baseScore + 9, winner: 'A' },
+        { playerA: player(6), playerB: player(7), scoreA: baseScore + 16, scoreB: baseScore + 5, winner: 'A' },
+      ] },
+      { name: 'Semifinal', matches: [
+        { playerA: player(0), playerB: player(2), scoreA: baseScore + 24, scoreB: baseScore + 17, winner: 'A' },
+        { playerA: player(4), playerB: player(6), scoreA: baseScore + 26, scoreB: baseScore + 20, winner: 'A' },
+      ] },
+      { name: 'Final', matches: [
+        { playerA: player(0), playerB: player(4), scoreA: baseScore + 29, scoreB: baseScore + 23, winner: 'A' },
+      ] },
+    ],
+  }
+}
+
+const DEMO_BRACKET_GROUPS: BracketGroup[] = [{
+  key: 'handicap', name: 'Handicap', brackets: [
+    { title: 'Handicap 1', rounds: [
+      { name: 'Round 1', matches: [
+        { playerA: 'Harry Bowler', playerB: 'Ron Pinsley', scoreA: 226, scoreB: 191, winner: 'A' },
+        { playerA: 'Princess Layne', playerB: 'Han Bowl-o', scoreA: 219, scoreB: 204, winner: 'A' },
+        { playerA: 'Pin Diesel', playerB: 'Forrest Gutter', scoreA: 214, scoreB: 188, winner: 'A' },
+        { playerA: 'Bowl Malone', playerB: 'Jack Spare-row', scoreA: 207, scoreB: 199, winner: 'A' },
+      ] },
+      { name: 'Semifinal', matches: [
+        { playerA: 'Harry Bowler', playerB: 'Princess Layne', scoreA: 224, scoreB: 211, winner: 'A' },
+        { playerA: 'Pin Diesel', playerB: 'Bowl Malone', scoreA: 218, scoreB: 205, winner: 'A' },
+      ] },
+      { name: 'Final', matches: [{ playerA: 'Harry Bowler', playerB: 'Pin Diesel', scoreA: 231, scoreB: 220, winner: 'A' }] },
+    ] },
+    createDemoEightPlayerBracket('Handicap 2', ['Pin Diesel', 'Forrest Gutter', 'Bowl Malone', 'Jack Spare-row', 'Hermione Spareger', 'Darth Striker', 'Sparelock Holmes', 'Taylor Split'], 190),
+    createDemoEightPlayerBracket('Handicap 3', ['Luke Pinwalker', 'Indiana Bowls', 'Obi-Wan Can-Bowl-Me', 'Marty McSpare', 'Doc Bowl', 'Rocky Ballboa', 'Bruno Pins', 'Ariana Gutter'], 193),
+    createDemoEightPlayerBracket('Handicap 4', ['Tony Striker', 'Peter Parker-Pins', 'Diana Princepin', 'Wade Wilsonball', 'Bruce Bannerlane', 'Clark Pin', 'Billie Bowl-Ish', 'Katy Spare-y'], 196),
+  ],
+}, {
+  key: 'scratch', name: 'Scratch', brackets: [{ title: 'Scratch 1', rounds: [
+    { name: 'Round 1', matches: [{ playerA: 'Hermione Spareger', playerB: 'Darth Striker', scoreA: 203, scoreB: 198, winner: 'A' }, { playerA: 'Sparelock Holmes', playerB: 'Taylor Split', scoreA: 201, scoreB: 195, winner: 'A' }] },
+    { name: 'Final', matches: [{ playerA: 'Hermione Spareger', playerB: 'Sparelock Holmes', scoreA: 224, scoreB: 210, winner: 'A' }] },
+  ] }, { title: 'Scratch 2', rounds: [
+    { name: 'Round 1', matches: [{ playerA: 'Doc Bowl', playerB: 'Rocky Ballboa', scoreA: 205, scoreB: 193, winner: 'A' }, { playerA: 'Bruno Pins', playerB: 'Ariana Gutter', scoreA: 202, scoreB: 197, winner: 'A' }] },
+    { name: 'Final', matches: [{ playerA: 'Doc Bowl', playerB: 'Bruno Pins', scoreA: 220, scoreB: 213, winner: 'A' }] },
+  ] }, { title: 'Scratch 3', rounds: [
+    { name: 'Round 1', matches: [{ playerA: 'Billie Bowl-Ish', playerB: 'Katy Spare-y', scoreA: 211, scoreB: 202, winner: 'A' }, { playerA: 'Ed Sheerpin', playerB: 'Elton Pin', scoreA: 207, scoreB: 198, winner: 'A' }] },
+    { name: 'Final', matches: [{ playerA: 'Billie Bowl-Ish', playerB: 'Ed Sheerpin', scoreA: 218, scoreB: 209, winner: 'A' }] },
+  ] }],
+}, {
+  key: 'reverse_scratch', name: 'Reverse Scratch', brackets: [{ title: 'Reverse Scratch 1', rounds: [
+    { name: 'Round 1', matches: [{ playerA: 'Ron Pinsley', playerB: 'Han Bowl-o', scoreA: 191, scoreB: 204, winner: 'A' }, { playerA: 'Forrest Gutter', playerB: 'Jack Spare-row', scoreA: 188, scoreB: 199, winner: 'A' }] },
+    { name: 'Final', matches: [{ playerA: 'Forrest Gutter', playerB: 'Ron Pinsley', scoreA: 187, scoreB: 193, winner: 'A' }] },
+  ] }, { title: 'Reverse Scratch 2', rounds: [
+    { name: 'Round 1', matches: [{ playerA: 'Bruce Bannerlane', playerB: 'Clark Pin', scoreA: 194, scoreB: 207, winner: 'A' }, { playerA: 'Miley Strikrus', playerB: 'Selena Bowlmez', scoreA: 189, scoreB: 201, winner: 'A' }] },
+    { name: 'Final', matches: [{ playerA: 'Miley Strikrus', playerB: 'Bruce Bannerlane', scoreA: 186, scoreB: 192, winner: 'A' }] },
+  ] }],
+}]
+const DEMO_WINNERS: Winner[] = [
+  { player_name: 'Harry Bowler', place: 1, bracket_name: 'Handicap 1', bracket_group: 'Handicap' },
+  { player_name: 'Pin Diesel', place: 2, bracket_name: 'Handicap 1', bracket_group: 'Handicap' },
+  { player_name: 'Pin Diesel', place: 1, bracket_name: 'Handicap 2', bracket_group: 'Handicap' },
+  { player_name: 'Hermione Spareger', place: 2, bracket_name: 'Handicap 2', bracket_group: 'Handicap' },
+  { player_name: 'Hermione Spareger', place: 1, bracket_name: 'Scratch 1', bracket_group: 'Scratch' },
+  { player_name: 'Luke Pinwalker', place: 1, bracket_name: 'Handicap 3', bracket_group: 'Handicap' },
+  { player_name: 'Doc Bowl', place: 2, bracket_name: 'Handicap 3', bracket_group: 'Handicap' },
+  { player_name: 'Doc Bowl', place: 1, bracket_name: 'Scratch 2', bracket_group: 'Scratch' },
+  { player_name: 'Tony Striker', place: 1, bracket_name: 'Handicap 4', bracket_group: 'Handicap' },
+  { player_name: 'Bruce Bannerlane', place: 2, bracket_name: 'Handicap 4', bracket_group: 'Handicap' },
+  { player_name: 'Billie Bowl-Ish', place: 1, bracket_name: 'Scratch 3', bracket_group: 'Scratch' },
+  { player_name: 'Forrest Gutter', place: 1, bracket_name: 'Reverse Scratch 1', bracket_group: 'Reverse Scratch' },
+  { player_name: 'Miley Strikrus', place: 1, bracket_name: 'Reverse Scratch 2', bracket_group: 'Reverse Scratch' },
+]
+const DEMO_SCORES: PublicScoreRow[] = SAMPLE_BOWLER_NAMES.map((playerName, index) => {
+  const isComplete = index < 21
+  const game1 = 168 + ((index * 11) % 58)
+  const game2 = 171 + ((index * 17) % 57)
+  const game3 = 166 + ((index * 23) % 63)
+  const handicap = 10 + (index % 8)
+  return {
+    player_id: index + 1,
+    player_name: playerName,
+    game1_scratch: isComplete ? game1 : null,
+    game2_scratch: isComplete ? game2 : null,
+    game3_scratch: isComplete ? game3 : null,
+    game1_with_handicap: isComplete ? game1 + handicap : null,
+    game2_with_handicap: isComplete ? game2 + handicap : null,
+    game3_with_handicap: isComplete ? game3 + handicap : null,
+  }
+})
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function computeAlive(bracketGroups: BracketGroup[]): AliveRow[] {
@@ -179,7 +285,14 @@ function computeAlive(bracketGroups: BracketGroup[]): AliveRow[] {
   }
 
   return Object.entries(data)
-    .map(([name, stats]) => ({ name, ...stats }))
+    .map(([name, stats]) => ({
+      name,
+      ...stats,
+      // A later result cannot exist without advancement in the preceding
+      // column. Keep the public summary internally consistent even when an
+      // imported or shortened bracket omits an intermediate round.
+      won: stats.afterG2 === 0 ? 0 : Math.min(stats.won, stats.afterG2),
+    }))
     .sort((a, b) => {
       if (b.won !== a.won) return b.won - a.won
       if (b.afterG2 !== a.afterG2) return b.afterG2 - a.afterG2
@@ -464,7 +577,7 @@ function BracketView({ group, highlightName, onNameClick }: {
       const grid = treeGridRef.current
       if (!wrap || !grid) return
 
-      const isMobile = matchesMaxWidth(BW_BREAKPOINTS.handheldMax)
+      const isMobile = matchesMaxWidth(BW_BREAKPOINTS.mobileMax)
       if (!isMobile) {
         resetTreeScale()
         return
@@ -1152,6 +1265,7 @@ function WinnersView({ winners }: { winners: Winner[] }) {
 export default function TournamentViewPage() {
   const params = useParams()
   const tournamentRef = params?.tournamentId as string
+  const isDemoTournament = (tournamentRef ?? '').trim().toLowerCase() === 'demo'
   const cacheKey = `bw-public-view:${(tournamentRef ?? '').trim().toLowerCase()}`
 
   const [tab, setTab] = useState<Tab>('alive')
@@ -1169,6 +1283,27 @@ export default function TournamentViewPage() {
   const refreshTimer = useRef<ReturnType<typeof setInterval> | null>(null)
   const refreshInFlightRef = useRef(false)
 
+  useLayoutEffect(() => {
+    const previousHtmlOverflowX = document.documentElement.style.overflowX
+    const previousBodyOverflowX = document.body.style.overflowX
+    const isEmbeddedLiveView = new URLSearchParams(window.location.search).get('modal') === '1'
+    document.documentElement.style.overflowX = 'hidden'
+    document.body.style.overflowX = 'hidden'
+    if (isEmbeddedLiveView) {
+      document.documentElement.classList.add('bw-live-view-embedded')
+      document.body.classList.add('bw-live-view-embedded')
+    }
+
+    return () => {
+      document.documentElement.style.overflowX = previousHtmlOverflowX
+      document.body.style.overflowX = previousBodyOverflowX
+      if (isEmbeddedLiveView) {
+        document.documentElement.classList.remove('bw-live-view-embedded')
+        document.body.classList.remove('bw-live-view-embedded')
+      }
+    }
+  }, [])
+
   // Persist tab preference to localStorage across sessions
   const [copied, setCopied] = useState(false)
   useEffect(() => {
@@ -1180,6 +1315,10 @@ export default function TournamentViewPage() {
   const looksNumeric = /^\d+$/.test((tournamentRef ?? '').trim())
 
   const fetchTournamentInfo = useCallback(async () => {
+    if (isDemoTournament) {
+      setResolvedTournamentId(DEMO_TOURNAMENT_ID)
+      return DEMO_TOURNAMENT
+    }
     const ref = decodeURIComponent((tournamentRef ?? '').trim())
     if (!ref) throw new Error('Tournament not found')
 
@@ -1205,9 +1344,10 @@ export default function TournamentViewPage() {
     const info = await res.json() as TournamentInfo
     setResolvedTournamentId(info.id)
     return info
-  }, [tournamentRef, looksNumeric])
+  }, [tournamentRef, looksNumeric, isDemoTournament])
 
   const fetchBrackets = useCallback(async (resolvedId: number, squadId: number | null) => {
+    if (resolvedId === DEMO_TOURNAMENT_ID) return squadId === 102 ? [] : DEMO_BRACKET_GROUPS
     const qs = squadId ? `?squad_id=${squadId}` : ''
     const res = await fetch(buildApiUrl(`/api/v1/public/tournament/${resolvedId}/brackets${qs}`))
     if (!res.ok) return []
@@ -1216,6 +1356,7 @@ export default function TournamentViewPage() {
   }, [])
 
   const fetchWinners = useCallback(async (resolvedId: number, squadId: number | null) => {
+    if (resolvedId === DEMO_TOURNAMENT_ID) return squadId === 102 ? [] : DEMO_WINNERS
     const qs = squadId ? `?squad_id=${squadId}` : ''
     const res = await fetch(buildApiUrl(`/api/v1/public/tournament/${resolvedId}/winners${qs}`))
     if (!res.ok) return []
@@ -1224,6 +1365,7 @@ export default function TournamentViewPage() {
   }, [])
 
   const fetchScores = useCallback(async (resolvedId: number, squadId: number | null) => {
+    if (resolvedId === DEMO_TOURNAMENT_ID) return squadId === 102 ? [] : DEMO_SCORES
     const qs = squadId ? `?squad_id=${squadId}` : ''
     const res = await fetch(buildApiUrl(`/api/v1/public/tournament/${resolvedId}/scores${qs}`))
     if (!res.ok) return []
@@ -1395,7 +1537,6 @@ export default function TournamentViewPage() {
 
     return (
       <TournamentDirectory
-        title="Tournament Not Found"
         subtitle="That public view link is unavailable. Try one of the active tournaments below."
         notFoundRef={attemptedRef}
       />

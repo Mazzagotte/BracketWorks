@@ -1,4 +1,4 @@
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 import math
 from typing import Any, Optional
@@ -7,13 +7,14 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from passlib.context import CryptContext
 from pydantic import BaseModel
-from sqlalchemy import MetaData, Table, asc, delete, desc, func, inspect, or_, select, text
+from sqlalchemy import MetaData, String, Table, asc, delete, desc, func, inspect, or_, select, text
 from sqlalchemy.orm import Session
 
 from ..deps import get_db, require_admin_user
 from ...core import models
 from ...core.password_policy import PasswordPolicyError, validate_password_policy
 from ...core.config import settings
+from ...core.async_jobs import job_store, to_dict as job_to_dict
 
 _pwd_context = CryptContext(
     schemes=["bcrypt"],
@@ -75,6 +76,32 @@ class AdminUpdateChangelogPayload(BaseModel):
     changes: Optional[list[str]] = None
 
 
+class AdminUserReviewPayload(BaseModel):
+    kind: str
+    category: str
+    note: str
+
+
+class AdminResolveUserReviewPayload(BaseModel):
+    resolved: bool = True
+
+
+class AdminTournamentNotePayload(BaseModel):
+    category: str
+    note: str
+
+
+class AdminAnnouncementPayload(BaseModel):
+    title: str
+    message: str
+    audience_type: str = "all"
+    audience_user_id: Optional[int] = None
+    status: str = "draft"
+    requires_acknowledgment: bool = False
+    starts_at: Optional[datetime] = None
+    ends_at: Optional[datetime] = None
+
+
 router = APIRouter()
 
 
@@ -92,18 +119,6 @@ def _serialize_value(value: Any):
 
     if isinstance(value, bool | int | str):
         return value
-
-
-def _serialize_utc_timestamp(value: datetime | None) -> str | None:
-    if value is None:
-        return None
-
-    if value.tzinfo is None:
-        value = value.replace(tzinfo=UTC)
-    else:
-        value = value.astimezone(UTC)
-
-    return value.isoformat()
 
     if isinstance(value, float):
         return value if math.isfinite(value) else None
@@ -129,6 +144,18 @@ def _serialize_utc_timestamp(value: datetime | None) -> str | None:
     return str(value)
 
 
+def _serialize_utc_timestamp(value: datetime | None) -> str | None:
+    if value is None:
+        return None
+
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=UTC)
+    else:
+        value = value.astimezone(UTC)
+
+    return value.isoformat()
+
+
 def _get_reflected_table(db: Session, table_name: str):
     metadata = MetaData()
     try:
@@ -139,6 +166,14 @@ def _get_reflected_table(db: Session, table_name: str):
 
 def _total_pages(total: int, page_size: int) -> int:
     return max(1, math.ceil(total / page_size)) if total > 0 else 1
+
+
+def _tournament_status(start_date: str | None, end_date: str | None, archived_at: datetime | None) -> str:
+    if archived_at: return "archived"
+    today = date.today().isoformat()
+    if start_date and len(start_date) >= 10 and start_date[:10] > today: return "upcoming"
+    if end_date and len(end_date) >= 10 and end_date[:10] < today: return "completed"
+    return "current"
 
 
 def _write_admin_audit(
@@ -214,10 +249,12 @@ def _get_tournament_delete_impact(db: Session, tournament_id: int) -> dict[str, 
         "payout_summaries": db.scalar(select(func.count()).select_from(models.TournamentPayoutSummary).where(models.TournamentPayoutSummary.tournament_id == tournament_id)) or 0,
         "first_round_history": db.scalar(select(func.count()).select_from(models.FirstRoundMatchupHistory).where(models.FirstRoundMatchupHistory.tournament_id == tournament_id)) or 0,
         "bracket_settings": db.scalar(select(func.count()).select_from(models.TournamentBracketSettings).where(models.TournamentBracketSettings.tournament_id == tournament_id)) or 0,
+        "admin_notes": db.scalar(select(func.count()).select_from(models.AdminTournamentNote).where(models.AdminTournamentNote.tournament_id == tournament_id)) or 0,
     }
 
 
 def _hard_delete_tournament(db: Session, tournament_id: int) -> None:
+    db.execute(delete(models.AdminTournamentNote).where(models.AdminTournamentNote.tournament_id == tournament_id))
     db.execute(delete(models.BracketPayout).where(models.BracketPayout.tournament_id == tournament_id))
     db.execute(delete(models.BracketWinner).where(models.BracketWinner.tournament_id == tournament_id))
     db.execute(delete(models.TournamentPayoutSummary).where(models.TournamentPayoutSummary.tournament_id == tournament_id))
@@ -297,6 +334,7 @@ def _get_user_delete_impact(db: Session, user_id: int) -> dict[str, int]:
         "password_reset_tokens": db.scalar(select(func.count()).select_from(models.PasswordResetToken).where(models.PasswordResetToken.user_id == user_id)) or 0,
         "email_verification_tokens": db.scalar(select(func.count()).select_from(models.EmailVerificationToken).where(models.EmailVerificationToken.user_id == user_id)) or 0,
         "admin_audit_logs_authored": db.scalar(select(func.count()).select_from(models.AdminAuditLog).where(models.AdminAuditLog.admin_user_id == user_id)) or 0,
+        "admin_user_reviews": db.scalar(select(func.count()).select_from(models.AdminUserReview).where(or_(models.AdminUserReview.user_id == user_id, models.AdminUserReview.admin_user_id == user_id, models.AdminUserReview.resolved_by_user_id == user_id))) or 0,
         "bowler_profiles": db.scalar(select(func.count()).select_from(models.BowlerProfile).where(models.BowlerProfile.user_id == user_id)) or 0,
         "tournament_players": len(player_ids),
         "player_scores": player_score_count,
@@ -362,6 +400,11 @@ def _hard_delete_user(db: Session, user_id: int) -> dict[str, int]:
     db.execute(delete(models.IdempotencyKey).where(models.IdempotencyKey.user_id == user_id))
     db.execute(delete(models.PasswordResetToken).where(models.PasswordResetToken.user_id == user_id))
     db.execute(delete(models.EmailVerificationToken).where(models.EmailVerificationToken.user_id == user_id))
+    db.execute(delete(models.UserAcknowledgment).where(models.UserAcknowledgment.user_id == user_id))
+    db.execute(delete(models.AdminTournamentNote).where(or_(models.AdminTournamentNote.admin_user_id == user_id, models.AdminTournamentNote.resolved_by_user_id == user_id)))
+    db.execute(delete(models.AdminAnnouncement).where(models.AdminAnnouncement.created_by_user_id == user_id))
+    db.execute(models.AdminAnnouncement.__table__.update().where(models.AdminAnnouncement.audience_user_id == user_id).values(audience_user_id=None, audience_type="all"))
+    db.execute(delete(models.AdminUserReview).where(or_(models.AdminUserReview.user_id == user_id, models.AdminUserReview.admin_user_id == user_id, models.AdminUserReview.resolved_by_user_id == user_id)))
     db.execute(delete(models.AdminAuditLog).where(models.AdminAuditLog.admin_user_id == user_id))
     db.execute(delete(models.BowlerProfile).where(models.BowlerProfile.user_id == user_id))
     db.execute(delete(models.User).where(models.User.id == user_id))
@@ -376,6 +419,13 @@ def get_admin_overview(
 ):
     total_users = db.scalar(select(func.count()).select_from(models.User)) or 0
     admin_users = db.scalar(select(func.count()).select_from(models.User).where(models.User.is_admin.is_(True))) or 0
+    unverified_users = db.scalar(select(func.count()).select_from(models.User).where(models.User.email_verified_at.is_(None))) or 0
+    users_never_signed_in = db.scalar(select(func.count()).select_from(models.User).where(~select(models.AuthSession.id).where(models.AuthSession.user_id == models.User.id).exists())) or 0
+    open_user_reviews = db.scalar(select(func.count()).select_from(models.AdminUserReview).where(models.AdminUserReview.is_resolved.is_(False))) or 0
+    open_tournament_notes = db.scalar(select(func.count()).select_from(models.AdminTournamentNote).where(models.AdminTournamentNote.is_resolved.is_(False))) or 0
+    active_announcements = db.scalar(select(func.count()).select_from(models.AdminAnnouncement).where(models.AdminAnnouncement.status == "active")) or 0
+    recent_jobs = [job_to_dict(job) for job in job_store.list_recent(100)]
+    failed_operations = sum(1 for job in recent_jobs if job["status"] == "failed")
     total_tournaments = db.scalar(select(func.count()).select_from(models.Tournament)) or 0
     total_squads = db.scalar(select(func.count()).select_from(models.TournamentSquad)) or 0
     total_entries = db.scalar(select(func.count()).select_from(models.TournamentPlayer)) or 0
@@ -460,6 +510,12 @@ def get_admin_overview(
         "metrics": {
             "total_users": total_users,
             "admin_users": admin_users,
+            "unverified_users": unverified_users,
+            "users_never_signed_in": users_never_signed_in,
+            "open_user_reviews": open_user_reviews,
+            "open_tournament_notes": open_tournament_notes,
+            "active_announcements": active_announcements,
+            "failed_operations": failed_operations,
             "total_tournaments": total_tournaments,
             "total_squads": total_squads,
             "total_entries": total_entries,
@@ -482,11 +538,47 @@ def get_admin_users(
     page_size: int = Query(default=25, ge=5, le=200),
     search: Optional[str] = Query(default=None),
     sort: str = Query(default="id_asc"),
+    verification: str = Query(default="all"),
+    activity: str = Query(default="all"),
+    review: str = Query(default="all"),
     db: Session = Depends(get_db),
     _admin: models.User = Depends(require_admin_user),
 ):
     normalized_search = (search or "").strip()
     like = f"%{normalized_search}%"
+    inactive_cutoff = datetime.now(UTC).replace(tzinfo=None) - timedelta(days=90)
+    last_login_expr = (
+        select(func.max(models.AuthSession.last_seen_at))
+        .where(models.AuthSession.user_id == models.User.id)
+        .correlate(models.User)
+        .scalar_subquery()
+    )
+    max_risk_expr = (
+        select(func.coalesce(func.max(models.AuthSession.risk_score), 0.0))
+        .where(models.AuthSession.user_id == models.User.id)
+        .correlate(models.User)
+        .scalar_subquery()
+    )
+    active_session_count_expr = (
+        select(func.count())
+        .select_from(models.AuthSession)
+        .where(models.AuthSession.user_id == models.User.id, models.AuthSession.is_revoked.is_(False))
+        .correlate(models.User)
+        .scalar_subquery()
+    )
+    failed_login_count_expr = (
+        select(func.coalesce(func.sum(models.LoginAttempt.failed_count), 0))
+        .where(models.LoginAttempt.username == models.User.username)
+        .correlate(models.User)
+        .scalar_subquery()
+    )
+    open_review_count_expr = (
+        select(func.count())
+        .select_from(models.AdminUserReview)
+        .where(models.AdminUserReview.user_id == models.User.id, models.AdminUserReview.is_resolved.is_(False))
+        .correlate(models.User)
+        .scalar_subquery()
+    )
 
     total_query = select(func.count()).select_from(models.User)
     if normalized_search:
@@ -500,18 +592,28 @@ def get_admin_users(
             )
         )
 
+    if verification == "verified":
+        total_query = total_query.where(models.User.email_verified_at.is_not(None))
+    elif verification == "unverified":
+        total_query = total_query.where(models.User.email_verified_at.is_(None))
+
+    if activity == "active":
+        total_query = total_query.where(last_login_expr >= inactive_cutoff)
+    elif activity == "inactive":
+        total_query = total_query.where(last_login_expr.is_not(None), last_login_expr < inactive_cutoff)
+    elif activity == "never":
+        total_query = total_query.where(last_login_expr.is_(None))
+
+    if review == "flagged":
+        total_query = total_query.where(open_review_count_expr > 0)
+    elif review == "clear":
+        total_query = total_query.where(open_review_count_expr == 0)
+
     total = db.scalar(total_query) or 0
     offset = (page - 1) * page_size
 
     tournament_count_expr = func.count(func.distinct(models.Tournament.id))
     profile_count_expr = func.count(func.distinct(models.BowlerProfile.id))
-    last_login_expr = (
-        select(func.max(models.AuthSession.last_seen_at))
-        .where(models.AuthSession.user_id == models.User.id)
-        .correlate(models.User)
-        .scalar_subquery()
-    )
-
     query = (
         select(
             models.User.id,
@@ -521,8 +623,15 @@ def get_admin_users(
             models.User.last_name,
             models.User.organization,
             models.User.is_admin,
+            models.User.created_at,
             models.User.email_verified_at,
             last_login_expr.label("last_login_at"),
+            max_risk_expr.label("max_risk_score"),
+            active_session_count_expr.label("active_session_count"),
+            failed_login_count_expr.label("failed_login_count"),
+            open_review_count_expr.label("open_review_count"),
+            models.User.dev_notice_version_accepted,
+            models.User.dev_notice_accepted_at,
             tournament_count_expr.label("tournament_count"),
             profile_count_expr.label("profile_count"),
         )
@@ -536,7 +645,10 @@ def get_admin_users(
             models.User.last_name,
             models.User.organization,
             models.User.is_admin,
+            models.User.created_at,
             models.User.email_verified_at,
+            models.User.dev_notice_version_accepted,
+            models.User.dev_notice_accepted_at,
         )
     )
 
@@ -551,6 +663,23 @@ def get_admin_users(
             )
         )
 
+    if verification == "verified":
+        query = query.where(models.User.email_verified_at.is_not(None))
+    elif verification == "unverified":
+        query = query.where(models.User.email_verified_at.is_(None))
+
+    if activity == "active":
+        query = query.where(last_login_expr >= inactive_cutoff)
+    elif activity == "inactive":
+        query = query.where(last_login_expr.is_not(None), last_login_expr < inactive_cutoff)
+    elif activity == "never":
+        query = query.where(last_login_expr.is_(None))
+
+    if review == "flagged":
+        query = query.where(open_review_count_expr > 0)
+    elif review == "clear":
+        query = query.where(open_review_count_expr == 0)
+
     if sort == "id_desc":
         query = query.order_by(models.User.id.desc())
     elif sort == "name_asc":
@@ -559,6 +688,12 @@ def get_admin_users(
         query = query.order_by(models.User.first_name.desc(), models.User.last_name.desc(), models.User.id.desc())
     elif sort == "tournaments_desc":
         query = query.order_by(desc(tournament_count_expr), models.User.id.asc())
+    elif sort == "last_login_desc":
+        query = query.order_by(last_login_expr.desc().nullslast(), models.User.id.desc())
+    elif sort == "created_desc":
+        query = query.order_by(models.User.created_at.desc(), models.User.id.desc())
+    elif sort == "reviews_desc":
+        query = query.order_by(open_review_count_expr.desc(), models.User.id.asc())
     else:
         query = query.order_by(models.User.id.asc())
 
@@ -576,11 +711,18 @@ def get_admin_users(
                 "last_name": row.last_name,
                 "organization": row.organization,
                 "is_admin": row.is_admin,
+                "created_at": _serialize_utc_timestamp(row.created_at),
                 "email_verified": row.email_verified_at is not None,
                 "email_verified_at": _serialize_utc_timestamp(row.email_verified_at),
                 "last_login_at": _serialize_utc_timestamp(row.last_login_at),
                 "tournament_count": row.tournament_count,
                 "profile_count": row.profile_count,
+                "max_risk_score": float(row.max_risk_score or 0),
+                "active_session_count": row.active_session_count,
+                "failed_login_count": row.failed_login_count,
+                "open_review_count": row.open_review_count,
+                "dev_notice_version_accepted": row.dev_notice_version_accepted,
+                "dev_notice_accepted_at": _serialize_utc_timestamp(row.dev_notice_accepted_at),
             }
             for row in rows
         ],
@@ -633,6 +775,9 @@ def get_admin_tournaments(
     offset = (page - 1) * page_size
 
     entry_count_expr = func.count(func.distinct(models.TournamentPlayer.id))
+    open_note_count_expr = select(func.count()).select_from(models.AdminTournamentNote).where(models.AdminTournamentNote.tournament_id == models.Tournament.id, models.AdminTournamentNote.is_resolved.is_(False)).correlate(models.Tournament).scalar_subquery()
+    last_bracket_activity_expr = select(func.max(models.BracketSnapshot.updated_at)).where(models.BracketSnapshot.tournament_id == models.Tournament.id).correlate(models.Tournament).scalar_subquery()
+    last_admin_change_expr = select(func.max(models.AdminAuditLog.created_at)).where(models.AdminAuditLog.target_type == "tournament", models.AdminAuditLog.target_id == func.cast(models.Tournament.id, String)).correlate(models.Tournament).scalar_subquery()
 
     query = (
         select(
@@ -652,6 +797,9 @@ def get_admin_tournaments(
             func.count(func.distinct(models.PlayerScore.id)).label("score_count"),
             func.count(func.distinct(models.BracketPayout.id)).label("payout_count"),
             func.count(func.distinct(models.BracketSnapshot.id)).label("snapshot_count"),
+            open_note_count_expr.label("open_note_count"),
+            last_bracket_activity_expr.label("last_activity_at"),
+            last_admin_change_expr.label("last_admin_change_at"),
         )
         .join(models.User, models.User.id == models.Tournament.user_id)
         .outerjoin(models.TournamentPlayer, models.TournamentPlayer.tournament_id == models.Tournament.id)
@@ -710,6 +858,10 @@ def get_admin_tournaments(
                 "score_count": row.score_count,
                 "payout_count": row.payout_count,
                 "snapshot_count": row.snapshot_count,
+                "status": _tournament_status(row.start_date, row.end_date, row.archived_at),
+                "open_note_count": row.open_note_count,
+                "last_activity_at": _serialize_utc_timestamp(row.last_activity_at),
+                "last_admin_change_at": _serialize_utc_timestamp(row.last_admin_change_at),
             }
             for row in rows
         ],
@@ -1050,6 +1202,9 @@ def get_admin_audit_logs(
     action: Optional[str] = Query(default=None),
     target_type: Optional[str] = Query(default=None),
     search: Optional[str] = Query(default=None),
+    admin_user_id: Optional[int] = Query(default=None),
+    date_from: Optional[date] = Query(default=None),
+    date_to: Optional[date] = Query(default=None),
     db: Session = Depends(get_db),
     _admin: models.User = Depends(require_admin_user),
 ):
@@ -1058,9 +1213,15 @@ def get_admin_audit_logs(
 
     filters = []
     if action:
-        filters.append(models.AdminAuditLog.action == action)
+        filters.append(models.AdminAuditLog.action.ilike(f"%{action.strip()}%"))
     if target_type:
-        filters.append(models.AdminAuditLog.target_type == target_type)
+        filters.append(models.AdminAuditLog.target_type.ilike(f"%{target_type.strip()}%"))
+    if admin_user_id:
+        filters.append(models.AdminAuditLog.admin_user_id == admin_user_id)
+    if date_from:
+        filters.append(models.AdminAuditLog.created_at >= datetime.combine(date_from, datetime.min.time()))
+    if date_to:
+        filters.append(models.AdminAuditLog.created_at < datetime.combine(date_to + timedelta(days=1), datetime.min.time()))
     if normalized_search:
         filters.append(
             or_(
@@ -1121,6 +1282,222 @@ def get_admin_audit_logs(
         "total": total,
         "total_pages": _total_pages(total, page_size),
     }
+
+
+@router.get("/users/{user_id}/review")
+def admin_get_user_review(
+    user_id: int,
+    db: Session = Depends(get_db),
+    _admin: models.User = Depends(require_admin_user),
+):
+    user = db.get(models.User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    sessions = db.execute(
+        select(models.AuthSession)
+        .where(models.AuthSession.user_id == user_id)
+        .order_by(models.AuthSession.last_seen_at.desc())
+        .limit(20)
+    ).scalars().all()
+    login_attempts = db.execute(
+        select(models.LoginAttempt)
+        .where(models.LoginAttempt.username == user.username)
+        .order_by(models.LoginAttempt.updated_at.desc())
+        .limit(20)
+    ).scalars().all()
+    review_rows = db.execute(
+        select(
+            models.AdminUserReview,
+            models.User.username.label("admin_username"),
+        )
+        .join(models.User, models.User.id == models.AdminUserReview.admin_user_id)
+        .where(models.AdminUserReview.user_id == user_id)
+        .order_by(models.AdminUserReview.created_at.desc(), models.AdminUserReview.id.desc())
+    ).all()
+    acknowledgments = db.execute(select(models.UserAcknowledgment).where(models.UserAcknowledgment.user_id == user_id).order_by(models.UserAcknowledgment.acknowledged_at.desc())).scalars().all()
+
+    return {
+        "user": {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "name": f"{user.first_name} {user.last_name}".strip(),
+            "organization": user.organization,
+            "is_admin": user.is_admin,
+            "created_at": _serialize_utc_timestamp(user.created_at),
+            "email_verified": user.email_verified,
+            "email_verified_at": _serialize_utc_timestamp(user.email_verified_at),
+            "dev_notice_version_accepted": user.dev_notice_version_accepted,
+            "dev_notice_accepted_at": _serialize_utc_timestamp(user.dev_notice_accepted_at),
+        },
+        "sessions": [
+            {
+                "id": session.id,
+                "issued_at": _serialize_utc_timestamp(session.issued_at),
+                "last_seen_at": _serialize_utc_timestamp(session.last_seen_at),
+                "expires_at": _serialize_utc_timestamp(session.expires_at),
+                "is_revoked": session.is_revoked,
+                "revoked_at": _serialize_utc_timestamp(session.revoked_at),
+                "region_hint": session.region_hint,
+                "device_nickname": session.device_nickname,
+                "risk_score": float(session.risk_score or 0),
+            }
+            for session in sessions
+        ],
+        "login_attempts": [
+            {
+                "id": attempt.id,
+                "failed_count": attempt.failed_count,
+                "window_start": _serialize_utc_timestamp(attempt.window_start),
+                "blocked_until": _serialize_utc_timestamp(attempt.blocked_until),
+                "updated_at": _serialize_utc_timestamp(attempt.updated_at),
+            }
+            for attempt in login_attempts
+        ],
+        "reviews": [
+            {
+                "id": review.id,
+                "kind": review.kind,
+                "category": review.category,
+                "note": review.note,
+                "is_resolved": review.is_resolved,
+                "admin_username": admin_username,
+                "created_at": _serialize_utc_timestamp(review.created_at),
+                "resolved_at": _serialize_utc_timestamp(review.resolved_at),
+            }
+            for review, admin_username in review_rows
+        ],
+        "acknowledgments": [{"id": item.id, "content_type": item.content_type, "content_id": item.content_id, "version": item.version, "acknowledged_at": _serialize_utc_timestamp(item.acknowledged_at)} for item in acknowledgments],
+    }
+
+
+@router.post("/users/{user_id}/reviews")
+def admin_create_user_review(
+    user_id: int,
+    payload: AdminUserReviewPayload,
+    db: Session = Depends(get_db),
+    admin: models.User = Depends(require_admin_user),
+):
+    user = db.get(models.User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    kind = payload.kind.strip().lower()
+    category = payload.category.strip().lower()
+    note = payload.note.strip()
+    if kind not in {"flag", "note"}:
+        raise HTTPException(status_code=400, detail="Review kind must be flag or note")
+    if category not in {"general", "verification", "inactive", "duplicate", "suspicious", "fake"}:
+        raise HTTPException(status_code=400, detail="Invalid review category")
+    if not note:
+        raise HTTPException(status_code=400, detail="Review note is required")
+    if len(note) > 2000:
+        raise HTTPException(status_code=400, detail="Review note is too long")
+
+    review = models.AdminUserReview(
+        user_id=user_id,
+        admin_user_id=admin.id,
+        kind=kind,
+        category=category,
+        note=note,
+    )
+    db.add(review)
+    db.flush()
+    _write_admin_audit(db, admin.id, f"user.review.{kind}.create", "user", user_id, details={"review_id": review.id, "category": category})
+    db.commit()
+    return {"ok": True, "review_id": review.id}
+
+
+@router.patch("/user-reviews/{review_id}")
+def admin_resolve_user_review(
+    review_id: int,
+    payload: AdminResolveUserReviewPayload,
+    db: Session = Depends(get_db),
+    admin: models.User = Depends(require_admin_user),
+):
+    review = db.get(models.AdminUserReview, review_id)
+    if not review:
+        raise HTTPException(status_code=404, detail="Review item not found")
+    review.is_resolved = payload.resolved
+    review.resolved_at = datetime.now(UTC).replace(tzinfo=None) if payload.resolved else None
+    review.resolved_by_user_id = admin.id if payload.resolved else None
+    _write_admin_audit(db, admin.id, "user.review.resolve" if payload.resolved else "user.review.reopen", "user", review.user_id, details={"review_id": review.id})
+    db.commit()
+    return {"ok": True}
+
+
+@router.get("/tournaments/{tournament_id}/notes")
+def admin_get_tournament_notes(tournament_id: int, db: Session = Depends(get_db), _admin: models.User = Depends(require_admin_user)):
+    if not db.get(models.Tournament, tournament_id):
+        raise HTTPException(status_code=404, detail="Tournament not found")
+    rows = db.execute(select(models.AdminTournamentNote, models.User.username).join(models.User, models.User.id == models.AdminTournamentNote.admin_user_id).where(models.AdminTournamentNote.tournament_id == tournament_id).order_by(models.AdminTournamentNote.created_at.desc())).all()
+    return {"notes": [{"id": note.id, "category": note.category, "note": note.note, "is_resolved": note.is_resolved, "admin_username": username, "created_at": _serialize_utc_timestamp(note.created_at), "resolved_at": _serialize_utc_timestamp(note.resolved_at)} for note, username in rows]}
+
+
+@router.post("/tournaments/{tournament_id}/notes")
+def admin_create_tournament_note(tournament_id: int, payload: AdminTournamentNotePayload, db: Session = Depends(get_db), admin: models.User = Depends(require_admin_user)):
+    if not db.get(models.Tournament, tournament_id):
+        raise HTTPException(status_code=404, detail="Tournament not found")
+    category, note_text = payload.category.strip().lower(), payload.note.strip()
+    if category not in {"general", "data", "ownership", "results", "support"} or not note_text:
+        raise HTTPException(status_code=400, detail="A valid category and note are required")
+    note = models.AdminTournamentNote(tournament_id=tournament_id, admin_user_id=admin.id, category=category, note=note_text[:2000])
+    db.add(note); db.flush()
+    _write_admin_audit(db, admin.id, "tournament.note.create", "tournament", tournament_id, details={"note_id": note.id, "category": category})
+    db.commit()
+    return {"ok": True, "note_id": note.id}
+
+
+@router.patch("/tournament-notes/{note_id}")
+def admin_resolve_tournament_note(note_id: int, payload: AdminResolveUserReviewPayload, db: Session = Depends(get_db), admin: models.User = Depends(require_admin_user)):
+    note = db.get(models.AdminTournamentNote, note_id)
+    if not note: raise HTTPException(status_code=404, detail="Tournament note not found")
+    note.is_resolved = payload.resolved
+    note.resolved_at = datetime.now(UTC).replace(tzinfo=None) if payload.resolved else None
+    note.resolved_by_user_id = admin.id if payload.resolved else None
+    _write_admin_audit(db, admin.id, "tournament.note.resolve" if payload.resolved else "tournament.note.reopen", "tournament", note.tournament_id, details={"note_id": note.id})
+    db.commit()
+    return {"ok": True}
+
+
+def _serialize_announcement(db: Session, announcement: models.AdminAnnouncement) -> dict:
+    acknowledgments = db.scalar(select(func.count()).select_from(models.UserAcknowledgment).where(models.UserAcknowledgment.content_type == "announcement", models.UserAcknowledgment.content_id == str(announcement.id))) or 0
+    return {"id": announcement.id, "title": announcement.title, "message": announcement.message, "audience_type": announcement.audience_type, "audience_user_id": announcement.audience_user_id, "status": announcement.status, "requires_acknowledgment": announcement.requires_acknowledgment, "starts_at": _serialize_utc_timestamp(announcement.starts_at), "ends_at": _serialize_utc_timestamp(announcement.ends_at), "created_at": _serialize_utc_timestamp(announcement.created_at), "updated_at": _serialize_utc_timestamp(announcement.updated_at), "acknowledgment_count": acknowledgments}
+
+
+@router.get("/announcements")
+def admin_list_announcements(db: Session = Depends(get_db), _admin: models.User = Depends(require_admin_user)):
+    entries = db.execute(select(models.AdminAnnouncement).order_by(models.AdminAnnouncement.created_at.desc())).scalars().all()
+    return {"announcements": [_serialize_announcement(db, entry) for entry in entries]}
+
+
+@router.post("/announcements")
+def admin_create_announcement(payload: AdminAnnouncementPayload, db: Session = Depends(get_db), admin: models.User = Depends(require_admin_user)):
+    if payload.audience_type not in {"all", "admins", "user"} or payload.status not in {"draft", "active", "archived"}:
+        raise HTTPException(status_code=400, detail="Invalid announcement audience or status")
+    if payload.audience_type == "user" and not payload.audience_user_id:
+        raise HTTPException(status_code=400, detail="A user is required for this audience")
+    entry = models.AdminAnnouncement(title=payload.title.strip()[:160], message=payload.message.strip(), audience_type=payload.audience_type, audience_user_id=payload.audience_user_id, status=payload.status, requires_acknowledgment=payload.requires_acknowledgment, starts_at=payload.starts_at, ends_at=payload.ends_at, created_by_user_id=admin.id)
+    if not entry.title or not entry.message: raise HTTPException(status_code=400, detail="Title and message are required")
+    db.add(entry); db.flush(); _write_admin_audit(db, admin.id, "announcement.create", "announcement", entry.id, details={"audience": entry.audience_type, "status": entry.status}); db.commit(); db.refresh(entry)
+    return _serialize_announcement(db, entry)
+
+
+@router.patch("/announcements/{announcement_id}")
+def admin_update_announcement(announcement_id: int, payload: AdminAnnouncementPayload, db: Session = Depends(get_db), admin: models.User = Depends(require_admin_user)):
+    entry = db.get(models.AdminAnnouncement, announcement_id)
+    if not entry: raise HTTPException(status_code=404, detail="Announcement not found")
+    if payload.audience_type not in {"all", "admins", "user"} or payload.status not in {"draft", "active", "archived"}: raise HTTPException(status_code=400, detail="Invalid announcement audience or status")
+    entry.title, entry.message, entry.audience_type, entry.audience_user_id, entry.status, entry.requires_acknowledgment, entry.starts_at, entry.ends_at = payload.title.strip()[:160], payload.message.strip(), payload.audience_type, payload.audience_user_id, payload.status, payload.requires_acknowledgment, payload.starts_at, payload.ends_at
+    _write_admin_audit(db, admin.id, "announcement.update", "announcement", entry.id, details={"audience": entry.audience_type, "status": entry.status}); db.commit(); db.refresh(entry)
+    return _serialize_announcement(db, entry)
+
+
+@router.get("/operations")
+def admin_operations(_admin: models.User = Depends(require_admin_user)):
+    jobs = [job_to_dict(job) for job in job_store.list_recent(100)]
+    return {"operations": jobs, "summary": {"failed": sum(1 for job in jobs if job["status"] == "failed"), "running": sum(1 for job in jobs if job["status"] in {"queued", "running"}), "succeeded": sum(1 for job in jobs if job["status"] == "succeeded")}, "note": "Operations are retained for the lifetime of the current backend process."}
 
 
 @router.patch("/users/{user_id}")

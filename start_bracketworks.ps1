@@ -375,7 +375,15 @@ $backendWindowArgs = if ($AutoMode) { @("-Command", $backendCmd) } else { @("-No
 Start-Process powershell -ArgumentList $backendWindowArgs
 
 # Start frontend in a new window
-$frontendStartCmd = "if (Test-Path '.\\node_modules\\next\\dist\\bin\\next') { node .\\node_modules\\next\\dist\\bin\\next dev -p $Port --webpack } else { npm.cmd run dev }"
+$frontendStartCmd =
+    "if (Test-Path '.\\node_modules\\next\\dist\\bin\\next') { node .\\node_modules\\next\\dist\\bin\\next dev -p $Port --webpack } else { npm.cmd run dev }; " +
+    "`$frontendExitCode = `$LASTEXITCODE; " +
+    "if (`$frontendExitCode -ne 0) { " +
+    "  Write-Host ''; " +
+    "  Write-Host `"Frontend exited with code `$frontendExitCode.`" -ForegroundColor Red; " +
+    "  $ClosePromptCmd; " +
+    "  exit `$frontendExitCode; " +
+    "}"
 $frontendInstallCmdPrimary = "npm.cmd ci --no-audit --no-fund"
 $frontendInstallCmdRetry = "npm.cmd install --include=dev --no-audit --no-fund"
 $frontendLockPath = Join-Path $FrontendPath "package-lock.json"
@@ -433,8 +441,20 @@ $cmd = "$PowerShellPolicyCmd; " +
     "Set-Content -Path `$statePath -Value `$frontendStateJson -Encoding UTF8; " +
     "} else { Write-Host 'Frontend dependencies match the package lock hash. Skipping install.' -ForegroundColor DarkGreen }; " +
         "$frontendStartCmd"
-$frontendWindowArgs = if ($AutoMode) { @("-Command", $cmd) } else { @("-NoExit", "-Command", $cmd) }
-Start-Process powershell -ArgumentList $frontendWindowArgs
+$frontendAlreadyReady = $false
+try {
+    $frontendProbe = Invoke-WebRequest -Uri $FrontendHealthUrl -TimeoutSec 2 -UseBasicParsing -ErrorAction Stop
+    $frontendAlreadyReady = $frontendProbe.StatusCode -ge 200 -and $frontendProbe.StatusCode -lt 500
+} catch {
+    $frontendAlreadyReady = $false
+}
+
+if ($frontendAlreadyReady) {
+    Write-Host "Frontend is already running at http://localhost:$Port. Reusing it." -ForegroundColor Green
+} else {
+    $frontendWindowArgs = if ($AutoMode) { @("-Command", $cmd) } else { @("-NoExit", "-Command", $cmd) }
+    Start-Process powershell -ArgumentList $frontendWindowArgs
+}
 
 if ($WaitForBackend) {
     Wait-ForHttpReady -Name "Backend" -Url $BackendHealthUrl -Retries $BackendWaitRetries -DelayMs $BackendWaitDelayMs | Out-Null

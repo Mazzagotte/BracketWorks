@@ -36,6 +36,7 @@ type SetSidePots = Dispatch<SetStateAction<SidePotsSettings>>;
 type SetLoadModalOpen = Dispatch<SetStateAction<boolean>>;
 
 type UseTournamentOrchestrationArgs = {
+  enabled?: boolean;
   tournament: Tournament | null;
   addToast: AddToast;
   setTournament: SetTournament;
@@ -52,6 +53,7 @@ type UseTournamentOrchestrationArgs = {
 };
 
 export function useTournamentOrchestration({
+  enabled = true,
   tournament,
   addToast,
   setTournament,
@@ -98,6 +100,7 @@ export function useTournamentOrchestration({
   }, [setSelectedSquadId]);
 
   useEffect(() => {
+    if (!enabled) return;
     const lastTournamentId = getSelectedTournamentId();
     const token = storage.getItem('token');
 
@@ -147,6 +150,7 @@ export function useTournamentOrchestration({
         logger.error('Error loading initial dashboard data:', error);
       });
   }, [
+    enabled,
     fetchTournamentBootstrap,
     loadSidePots,
     loadSquadEntryCounts,

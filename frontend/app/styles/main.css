@@ -317,20 +317,57 @@ body {
   box-shadow: none;
 }
 
-@media (max-width: 1400px) {
+@media (max-width: 767px) {
   :root {
+    --space-page-x: 12px;
+    --space-page-y: 12px;
+    --bw-page-gutter: 12px;
+    --bw-page-gutter-mobile: 12px;
+    --bw-stack-gap: 12px;
+    --space-stack: 12px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  :root {
+    --space-page-x: 20px;
+    --space-page-y: 20px;
+    --bw-page-gutter: 20px;
+    --bw-stack-gap: 16px;
     --header-height: 64px;
   }
 }
 
-@media (max-width: 1100px) {
+@media (min-width: 1024px) and (max-width: 1279px) {
   :root {
-    --header-height: 64px;
+    --space-page-x: 24px;
+    --space-page-y: 20px;
+    --bw-page-gutter: 24px;
+    --bw-stack-gap: 16px;
   }
 }
 
-@media (max-width: 900px) and (min-width: 769px) {
+@media (min-width: 1280px) {
   :root {
-    --header-height: 64px;
+    --space-page-x: 28px;
+    --space-page-y: 24px;
+    --bw-page-gutter: 28px;
+    --bw-stack-gap: 16px;
   }
+}
+
+/* The homepage phone embeds the real Live View in a fixed-height viewport.
+   Keep native vertical scrolling while removing only the scrollbar chrome. */
+html.bw-live-view-embedded,
+body.bw-live-view-embedded {
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html.bw-live-view-embedded::-webkit-scrollbar,
+body.bw-live-view-embedded::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
 }

@@ -1,4 +1,4 @@
-﻿/* ============================================================
+/* ============================================================
   Public Live View - Base Shell and Layout
   ============================================================ */
 .page {
@@ -74,8 +74,7 @@
   .sidePotSection,
   .tableWrap,
   .winnerCard,
-  .bracketSearchRow,
-  .sidePotRefreshRow {
+  .bracketSearchRow {
     border-radius: 18px;
   }
 
@@ -178,31 +177,6 @@
 }
 
 /* Right column: tournament name + location */
-.tournamentCol {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.tournamentName {
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-bold);
-  line-height: 1.15;
-  margin: 0;
-  letter-spacing: -0.01em;
-  color: var(--color-white);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.tournamentLocation {
-  font-size: 13px;
-  color: var(--color-gray-300);
-  margin: 0;
-}
 
 /* Squad selector + tabs — now the centre column of headerTop */
 .controlsPanel {
@@ -454,14 +428,6 @@
   letter-spacing: 0.01em;
 }
 
-.liveDot {
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  background: var(--color-success);
-  box-shadow: 0 0 0 4px var(--color-success-border);
-}
-
 .refreshActions {
   margin-left: auto;
   display: inline-flex;
@@ -498,30 +464,6 @@
   white-space: nowrap;
 }
 
-.thSortable {
-  cursor: pointer;
-  user-select: none;
-}
-
-.thSortable:hover {
-  color: var(--color-primary);
-}
-
-.sortNeutral,
-.sortActive {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 1rem;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-}
-
-.sortNeutral { opacity: 0.4; }
-.sortActive  { color: var(--color-primary); }
-
 .tableRow {
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   transition: background 0.15s ease;
@@ -535,56 +477,10 @@
   vertical-align: middle;
 }
 
-.tdLane {
-  font-weight: var(--font-weight-bold);
-  font-size: var(--font-size-sm);
-  color: var(--color-primary);
-  width: 60px;
-  white-space: nowrap;
-}
-
 .tdName {
   font-weight: var(--font-weight-medium);
   min-width: 130px;
 }
-
-.tdDiv {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-  width: 60px;
-}
-
-.tdAvg {
-  text-align: center;
-  font-variant-numeric: tabular-nums;
-  width: 50px;
-  color: var(--bw-charcoal);
-}
-
-.tdEntries {
-  min-width: 80px;
-}
-
-.entryPills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--spacing-xs);
-}
-
-.entryPill {
-  display: inline-block;
-  padding: 2px 7px;
-  background: rgba(255, 122, 0, 0.08);
-  border: 1px solid rgba(255, 122, 0, 0.35);
-  border-radius: var(--radius-full);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  color: #ffb259;
-  white-space: nowrap;
-  text-transform: capitalize;
-}
-
-.noEntries { font-size: var(--font-size-sm); color: var(--color-gray-300); }
 
 /* ============================================================
   Brackets Tab
@@ -615,70 +511,6 @@
   border-radius: 0;
   box-shadow: none;
   padding: 0.65rem 0.85rem 0.9rem;
-}
-
-.bracketNavigator {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 10px;
-  width: 100%;
-  white-space: nowrap;
-}
-
-.bracketNavBtn {
-  height: 40px;
-  min-width: 138px;
-  border: 1px solid transparent;
-  border-radius: 12px;
-  background: var(--color-primary);
-  color: var(--color-white);
-  font-size: 1.02rem;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  cursor: pointer;
-  transition: filter 0.15s ease, opacity 0.15s ease;
-  box-shadow: 0 2px 8px var(--color-border-hover);
-}
-
-.bracketNavBtn:hover:not(:disabled) {
-  filter: brightness(1.03);
-}
-
-.bracketNavBtn:disabled {
-  opacity: 0.45;
-  cursor: default;
-}
-
-.bracketNavCenter {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-}
-
-.bracketNavTitleRow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-  white-space: nowrap;
-}
-
-.bracketNavTitle {
-  font-size: clamp(1.05rem, 1.7vw, 1.35rem);
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  color: var(--color-primary);
-}
-
-.bracketNavCount {
-  font-size: clamp(1rem, 1.6vw, 1.2rem);
-  font-weight: 500;
-  color: var(--color-text-secondary);
 }
 
 
@@ -1088,18 +920,6 @@
   box-shadow: var(--shadow-soft);
 }
 
-.sidePotSectionTitle {
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-bold);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--color-text-primary);
-  margin: 0;
-  padding: 11px 16px 10px 14px;
-  background: var(--color-brand-ivory-light);
-  border-bottom: 1px solid var(--color-border);
-}
-
 .sidePotGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
@@ -1196,79 +1016,10 @@
   font-size: var(--font-size-sm);
 }
 
-.sidePotRefreshRow {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 4px 0 2px;
-}
-
-.sidePotRefreshMeta {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-secondary);
-}
-
 .sidePotPending {
   font-size: var(--font-size-sm);
   color: var(--color-gray-400);
   font-style: italic;
-}
-
-
-.footer {
-  background: var(--color-brand-ivory-light);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
-  padding: 12px var(--spacing-md);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--spacing-md);
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-  margin-top: var(--spacing-xl);
-}
-
-.footerBrand {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  min-width: 0;
-}
-
-.footerLogoWrap {
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 12px;
-  background: var(--gradient-ivory);
-  border: 1px solid var(--color-border-light);
-  flex-shrink: 0;
-}
-
-.footerLogo {
-  width: 24px;
-  height: 24px;
-}
-
-.footerText {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.footerTitle {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
-}
-
-.footerMeta {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
 }
 
 .refreshBtn {
@@ -1298,8 +1049,7 @@
   text-align: center;
 }
 
-.loadingScreen,
-.errorScreen {
+.loadingScreen {
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
@@ -1367,15 +1117,6 @@
     height: 32px;
     padding: 0 8px;
     font-size: 12px;
-  }
-  .bracketNavBtn {
-    min-height: 32px;
-    height: 32px;
-    min-width: 96px;
-    padding: 0 10px;
-    border-radius: 8px;
-    font-size: 12px;
-    gap: 4px;
   }
   .groupTitle {
     font-size: 1.45rem;
@@ -1525,28 +1266,17 @@
 
   .aliveControls,
   .bracketSearchRow,
-  .sidePotRefreshRow,
   .bracketView {
     padding: 10px;
   }
 
-  .groupTitle,
-  .sidePotSectionTitle {
+  .groupTitle {
     padding: 10px 12px;
     font-size: 0.86rem;
   }
 
   .sidePotLeaderboard {
     gap: 10px;
-  }
-
-  .sidePotRefreshRow {
-    padding: 9px 10px;
-  }
-
-  .sidePotSectionTitle {
-    padding: 9px 12px 8px;
-    font-size: 0.78rem;
   }
 
   .sidePotGrid {
@@ -1780,44 +1510,6 @@
   .shareBtn span:not(.shareBtnIcon) { display: none; }
 
   /* Bracket navigation */
-  .bracketNavigator {
-    gap: 8px;
-    margin-bottom: 8px;
-  }
-  .bracketNavBtn {
-    min-width: 84px;
-    min-height: 28px !important;
-    height: 28px !important;
-    line-height: 1 !important;
-    padding: 0 6px !important;
-    font-size: 9px !important;
-    font-weight: 600;
-    letter-spacing: 0.01em;
-    border-radius: 6px;
-    gap: 4px;
-    border: 1px solid var(--color-border-light);
-    background: var(--color-surface);
-    color: var(--color-text-secondary);
-    box-shadow: none;
-  }
-  .bracketNavBtn span {
-    line-height: 1;
-  }
-  .bracketNavBtn:hover:not(:disabled) {
-    border-color: var(--color-primary);
-    color: var(--color-primary);
-    background: var(--color-brand-ivory-light);
-    filter: none;
-  }
-  .bracketNavBtn:disabled {
-    opacity: 0.4;
-    border-color: var(--color-border-light);
-    background: var(--color-surface);
-    color: var(--color-text-secondary);
-  }
-  .bracketNavTitle { font-size: 1.1rem; }
-  .bracketNavCount { font-size: 0.95rem; }
-  .bracketNavTitleRow { gap: 6px; }
 
   /* Bracket pill nav */
   .bracketPillsArrow { min-width: 3rem; height: 30px; font-size: 10px; }
@@ -1842,13 +1534,9 @@
   .winnersGrid { grid-template-columns: 1fr; }
 
   /* Side Pots leaderboard — stack cards vertically so names aren't truncated */
-  .sidePotGrid { grid-template-columns: 1fr; }
   .sidePotCard { padding: 12px 14px; border-right: none; border-bottom: 1px solid var(--color-border); }
-  .sidePotCard:last-child { border-bottom: none; }
 
   /* Footer */
-  .footer { flex-direction: column; align-items: stretch; }
-  .footerBrand { align-items: flex-start; }
   .refreshBtn { width: 100%; }
 }
 
@@ -2042,7 +1730,6 @@
 .table thead th,
 .roundLabel,
 .matchLabel,
-.sidePotSectionTitle,
 .sidePotCardLabel,
 .bracketWinnerLabel {
   letter-spacing: 0;
@@ -2055,9 +1742,7 @@
 .groupSection,
 .winnerCard,
 .sidePotSection,
-.footer,
-.loadingScreen,
-.errorScreen {
+.loadingScreen {
   border-color: rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.025);
   box-shadow: 0 14px 30px rgba(0, 0, 0, 0.3);
@@ -2088,8 +1773,7 @@
 .bracketPill,
 .bracketPillsArrow,
 .bracketSearchClear,
-.refreshBtn,
-.bracketNavBtn {
+.refreshBtn {
   border: 1px solid rgba(226, 232, 240, 0.14);
   background: rgba(255, 255, 255, 0.025);
   color: rgba(203, 213, 225, 0.82);
@@ -2102,8 +1786,7 @@
 .bracketPill:hover,
 .bracketPillsArrow:hover:not(:disabled),
 .bracketSearchClear:hover,
-.refreshBtn:hover,
-.bracketNavBtn:hover:not(:disabled) {
+.refreshBtn:hover {
   color: rgba(255, 219, 190, 0.98);
   background: rgba(255, 122, 0, 0.1);
   border-color: rgba(255, 146, 72, 0.35);
@@ -2126,15 +1809,13 @@
 
 .tableWrap,
 .groupSection,
-.sidePotSection,
-.footer {
+.sidePotSection {
   border-radius: 24px;
   overflow: hidden;
 }
 
 .table thead th,
-.groupTitle,
-.sidePotSectionTitle {
+.groupTitle {
   background: rgba(255, 255, 255, 0.02);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   color: rgba(180, 189, 205, 0.76);
@@ -2156,13 +1837,10 @@
 }
 
 .table td,
-.tdAvg,
 .tdCenter,
 .countBadge,
 .refreshMeta,
 .liveStatus,
-.bracketNavCount,
-.footerMeta,
 .emptyNote {
   color: rgba(180, 189, 205, 0.78);
 }
@@ -2170,8 +1848,7 @@
 .tdName,
 .matchName,
 .winnerName,
-.sidePotPodiumName,
-.footerTitle {
+.sidePotPodiumName {
   color: rgba(246, 249, 255, 0.92);
 }
 
@@ -2181,14 +1858,10 @@
   color: #58e6a7;
 }
 
-.tdLane,
-.sortActive,
-.bracketNavTitle,
 .winnerCardTitle {
   color: rgba(255, 219, 190, 0.96);
 }
 
-.entryPill,
 .matchMargin {
   color: rgba(255, 219, 190, 0.96);
   background: rgba(255, 122, 0, 0.11);
@@ -2270,11 +1943,6 @@
 .sidePotCard,
 .sidePotCardLabel {
   border-color: rgba(255, 255, 255, 0.08);
-}
-
-.footerLogoWrap {
-  background: rgba(255, 122, 0, 0.1);
-  border-color: rgba(255, 146, 72, 0.28);
 }
 
 @media (max-width: 480px) {
@@ -2503,8 +2171,7 @@
 }
 
 .aliveControls,
-.bracketSearchRow,
-.sidePotRefreshRow {
+.bracketSearchRow {
   margin-bottom: 12px;
   padding: 12px;
   border: 1px solid var(--public-border);
@@ -2551,15 +2218,9 @@
 
 .countBadge,
 .refreshMeta,
-.liveStatus,
-.sidePotRefreshMeta {
+.liveStatus {
   color: var(--public-muted);
   font-size: 0.78rem;
-}
-
-.liveDot {
-  background: var(--public-green);
-  box-shadow: 0 0 0 4px rgba(69, 212, 131, 0.13);
 }
 
 .refreshBtn {
@@ -2627,8 +2288,7 @@
   font-weight: 800;
 }
 
-.tdCenter,
-.tdAvg {
+.tdCenter {
   color: var(--public-muted);
 }
 
@@ -2706,8 +2366,7 @@
   overflow: hidden;
 }
 
-.groupTitle,
-.sidePotSectionTitle {
+.groupTitle {
   padding: 12px 14px;
   border-bottom: 1px solid var(--public-border);
   background: rgba(255, 255, 255, 0.035);
@@ -2874,11 +2533,6 @@
   gap: 12px;
 }
 
-.sidePotRefreshRow {
-  margin-bottom: 0;
-  box-shadow: none;
-}
-
 .sidePotSection {
   overflow: hidden;
 }
@@ -2932,8 +2586,7 @@
   text-align: center;
 }
 
-.loadingScreen,
-.errorScreen {
+.loadingScreen {
   min-height: 50dvh;
   color: var(--public-muted);
 }
@@ -3212,8 +2865,6 @@
 }
 
 .tdName,
-.tdDiv,
-.tdAvg,
 .tdCenter {
   color: rgba(236, 243, 252, 0.92);
 }
@@ -3282,14 +2933,8 @@
   font-size: 12px;
 }
 
-.brandSubline,
-.tournamentLocation {
+.brandSubline {
   color: var(--bw-text-muted);
-}
-
-.tournamentName {
-  color: var(--bw-text-title);
-  font-size: clamp(20px, 2vw, 30px);
 }
 
 .controlsPanel {
@@ -3340,8 +2985,7 @@
 }
 
 .aliveControls,
-.bracketSearchRow,
-.sidePotRefreshRow {
+.bracketSearchRow {
   padding: 16px;
   border: 1px solid var(--bw-border-subtle);
   border-radius: 16px;
@@ -3382,8 +3026,7 @@
   padding: 14px 16px;
 }
 
-.groupTitle,
-.sidePotSectionTitle {
+.groupTitle {
   padding: 18px 20px;
   background: var(--bw-surface-card-strong);
   font-size: 16px;
@@ -3464,6 +3107,305 @@
   .winnerCard {
     border-radius: 14px;
   }
+}
+
+/* Final breakpoint enforcement. Keep this last so legacy live-view rules cannot
+   reintroduce pre-standard spacing or shrink-to-fit behavior. */
+
+@media (max-width: 767px) {
+  .page { --live-space-md: 12px; --live-space-lg: 12px; border: 0; border-radius: 0; }
+  .tableWrap,
+  .bracketPills,
+  .bracketGroupTabs { max-width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; }
+  .sidePotModeTab { flex: 1 0 140px; min-width: 140px; min-height: 38px; }
+
+}
+
+/* Bracket Summary has only five compact columns and should fit the phone
+   viewport. Bracket trees retain their own bounded horizontal scrolling. */
+@media (max-width: 767px) {
+  .section .tableWrap {
+    overflow-x: hidden;
+  }
+
+  .section .table {
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+  }
+
+  .section .rankColumn {
+    width: 38px;
+  }
+
+  .section .thCenter,
+  .section .tdCenter {
+    width: 58px;
+  }
+
+  .section .tdName {
+    width: auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+
+
+/* Compact layered header for phone layouts. */
+@media (max-width: 767px) {
+  .header { padding: 0 !important; }
+
+  .headerTop {
+    min-height: 0 !important;
+    gap: 7px !important;
+    padding: 8px 10px !important;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--bw-surface-card) 72%, transparent), transparent) !important;
+  }
+
+  .brandCol {
+    display: grid !important;
+    grid-template-columns: 44px minmax(0, 1fr) !important;
+    align-items: center !important;
+    gap: 9px !important;
+    padding: 0 0 8px !important;
+    border-bottom: 1px solid var(--bw-border-subtle) !important;
+  }
+
+  .brandLogo { width: 44px !important; height: 44px !important; }
+  .brandText { min-width: 0; }
+  .brandEyebrow::before { font-size: 17px !important; line-height: 1; }
+  .brandEyebrow::after { margin-top: 2px; font-size: 9px !important; letter-spacing: .05em; }
+  .brandSubline {
+    margin-top: 5px !important;
+    overflow: visible !important;
+    color: var(--bw-text-title);
+    font-size: 13px !important;
+    line-height: 1.2;
+    text-overflow: clip;
+    white-space: normal !important;
+  }
+
+  .controlsPanel { gap: 7px !important; }
+  .controlsTopRow {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    align-items: end !important;
+    gap: 6px !important;
+  }
+
+  .squadSelector { display: block !important; min-width: 0; }
+  .squadLabel { display: none; }
+  .squadSelect { min-height: 36px !important; padding-right: 28px; }
+  .shareBtn {
+    width: auto !important;
+    min-height: 36px !important;
+    padding: 0 12px !important;
+    gap: 7px;
+    border-radius: 9px;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  .tabsTrack { min-height: 36px !important; border-radius: 8px !important; }
+  .tab,
+  .tabActive { min-height: 36px !important; font-size: 10px; }
+
+  .aliveControls { padding: 8px !important; }
+  .aliveToolbar {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 7px 10px !important;
+    padding: 0 !important;
+  }
+  .aliveToolbar :global(.dataTableToolbarLeft),
+  .aliveToolbar :global(.dataTableToolbarRight),
+  .aliveToolbar .searchRow,
+  .aliveToolbar .refreshRow { display: contents !important; }
+  .aliveToolbar .searchField { grid-row: 1; grid-column: 1 / -1; }
+  .aliveToolbar .searchInput { min-height: 40px; padding-left: 42px; }
+  .aliveToolbar .searchField > svg { left: 13px; width: 18px; height: 18px; }
+  .aliveToolbar .countBadge,
+  .aliveToolbar .refreshMeta { display: none; }
+  .aliveToolbar .liveStatus { grid-row: 2; grid-column: 1; min-height: 34px; padding-inline: 10px; }
+  .aliveToolbar .refreshActions { grid-row: 2; grid-column: 2; }
+  .aliveToolbar .refreshBtn { min-height: 34px; padding-inline: 12px; font-size: 11px; }
+  .aliveToolbar .refreshBtn > svg { width: 15px; height: 15px; }
+
+  .aliveControls .aliveToolbar {
+    display: grid !important;
+    width: 100%;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px !important;
+  }
+  .aliveControls .aliveToolbar :global(.dataTableToolbarLeft),
+  .aliveControls .aliveToolbar :global(.dataTableToolbarRight) {
+    display: block !important;
+    width: 100%;
+  }
+  .aliveControls .aliveToolbar .searchRow { display: block !important; width: 100%; }
+  .aliveControls .aliveToolbar .searchField { width: 100%; }
+  .aliveControls .aliveToolbar .refreshRow {
+    display: grid !important;
+    width: 100%;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+  .aliveControls .aliveToolbar .liveStatus { width: 100%; grid-row: 1; grid-column: 1; }
+  .aliveControls .aliveToolbar .refreshActions { grid-row: 1; grid-column: 2; }
+
+  .bracketControlsPanel { grid-template-columns: minmax(0, 1fr) !important; }
+  .bracketControlsPanel .bracketGroupTabs { grid-row: 1 !important; grid-column: 1 !important; }
+  .bracketControlsPanel .bracketSearchRow { width: 100%; grid-row: 2 !important; grid-column: 1 !important; }
+  .bracketControlsPanel .bracketLiveControls { width: 100%; grid-row: 3 !important; grid-column: 1 !important; }
+  .bracketSearchInput { width: 100% !important; min-height: 40px !important; }
+
+  .bracketLiveControls .aliveToolbar,
+  .sidePotLiveControls .aliveToolbar { display: block !important; width: 100%; }
+  .bracketLiveControls .aliveToolbar :global(.dataTableToolbarLeft),
+  .sidePotLiveControls .aliveToolbar :global(.dataTableToolbarLeft) { display: none !important; }
+  .bracketLiveControls .aliveToolbar :global(.dataTableToolbarRight),
+  .sidePotLiveControls .aliveToolbar :global(.dataTableToolbarRight) { display: block !important; width: 100%; }
+  .bracketLiveControls .refreshRow,
+  .sidePotLiveControls .refreshRow {
+    display: grid !important;
+    width: 100%;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+  .bracketLiveControls .liveStatus,
+  .sidePotLiveControls .liveStatus { width: 100%; grid-row: 1; grid-column: 1; }
+  .bracketLiveControls .refreshActions,
+  .sidePotLiveControls .refreshActions { grid-row: 1; grid-column: 2; }
+}
+
+@media (max-width: 420px) {
+  .brandCol { grid-template-columns: 40px minmax(0, 1fr) !important; gap: 8px !important; }
+  .brandLogo { width: 40px !important; height: 40px !important; }
+  .brandEyebrow::before { font-size: 16px !important; }
+  .brandSubline { font-size: 12px !important; }
+  .shareBtn { width: 36px !important; padding: 0 !important; }
+  .shareBtn span:last-child { display: none !important; }
+}
+
+/* Canonical live-view responsive system: mobile <768, tablet 768-1023,
+   desktop 1024-1279, large desktop 1280+, XL refinement 1440+. */
+.page {
+  --live-page-padding: 24px;
+  --live-card-gap: 16px;
+}
+
+.contentShell,
+.headerInner {
+  width: 100%;
+  max-width: 1400px;
+  margin-inline: auto;
+}
+
+.shareBtn,
+.tab,
+.tabActive,
+.squadSelect,
+.sidePotModeTab,
+.bracketPill,
+.bracketPillsArrow {
+  min-height: 38px;
+}
+
+.tableWrap,
+.bracketTreeWrap,
+.bracketPills,
+.bracketGroupTabs {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-gutter: stable;
+}
+
+@media (min-width: 1440px) {
+  .contentShell,
+  .headerInner {
+    max-width: 1440px;
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .page { --live-page-padding: 24px; }
+  .main { padding: 24px; }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .page {
+    --live-page-padding: 20px;
+    --live-card-gap: 16px;
+  }
+
+  .headerTop {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .controlsPanel { width: 100%; }
+  .controlsTopRow { justify-content: space-between; }
+  .main { padding: 20px; }
+
+  .bracketControlsPanel { grid-template-columns: 1fr; }
+  .bracketControlsPanel .bracketGroupTabs,
+  .bracketControlsPanel .bracketSearchRow,
+  .bracketControlsPanel .bracketLiveControls { grid-column: 1; grid-row: auto; }
+
+  .sidePotGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+}
+
+@media (max-width: 767px) {
+  .page {
+    --live-page-padding: 12px;
+    --live-card-gap: 12px;
+    --live-space-md: 12px;
+    --live-space-lg: 12px;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .brandCol { min-width: 0; }
+  .brandEyebrow { font-size: 13px; }
+  .brandSep { display: none; }
+
+  .controlsPanel,
+  .controlsTopRow,
+  .squadSelector,
+  .squadSelectWrap,
+  .squadSelect,
+  .shareBtn,
+  .searchField,
+  .searchInput { width: 100%; min-width: 0; }
+
+  .shareBtn { justify-content: center; }
+  .tab,
+  .tabActive { min-width: 0; min-height: 40px; padding-inline: 8px; }
+  .section { min-width: 0; }
+  .aliveControls,
+  .bracketControlsPanel,
+  .bracketView,
+  .sidePotSection,
+  .sidePotCard { padding: 12px; }
+
+  .bracketControlsPanel { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .bracketControlsPanel .bracketGroupTabs,
+  .bracketControlsPanel .bracketSearchRow,
+  .bracketControlsPanel .bracketLiveControls { grid-column: 1; grid-row: auto; }
+  .bracketTreeGrid,
+  .bracketTreeGridScaled { min-width: 760px; transform: none !important; transform-origin: top left; }
+
+  .bracketPillsNav { min-width: 0; }
+  .bracketPills { justify-content: flex-start; }
+  .sidePotModeTabs { display: flex; width: 100%; overflow-x: auto; }
+  .sidePotModeTab { flex: 1 0 140px; min-width: 140px; }
 }
 
 /* Reference-aligned public tournament view */
@@ -3885,128 +3827,6 @@
   font-weight: 900;
 }
 
-.publicFooter {
-  margin-top: 4px;
-  border-top: 1px solid var(--bw-border-subtle);
-  background: var(--bw-surface-card);
-}
-
-.publicFooterInner {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  min-height: 96px;
-  padding: 18px 28px;
-}
-
-.publicFooterIcon {
-  display: grid;
-  width: 48px;
-  height: 48px;
-  flex: 0 0 48px;
-  place-items: center;
-  border: 1px solid var(--bw-border-accent);
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--color-primary) 9%, var(--bw-surface-panel));
-  color: var(--bw-text-accent);
-}
-
-.publicFooterIcon svg {
-  width: 22px;
-  height: 22px;
-}
-
-.publicFooterText {
-  display: grid;
-  gap: 4px;
-}
-
-.publicFooterText strong {
-  color: var(--bw-text-title);
-  font-size: 14px;
-  font-weight: 800;
-  line-height: 1.3;
-}
-
-.publicFooterText span {
-  color: var(--bw-text-muted);
-  font-size: 12px;
-  line-height: 1.4;
-}
-
-.qrToggleBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  min-height: 54px;
-  margin-left: auto;
-  padding: 0 22px;
-  border: 1px solid var(--bw-border-card);
-  border-radius: 12px;
-  background: var(--bw-surface-panel);
-  color: var(--bw-text-title);
-  cursor: pointer;
-  font: inherit;
-  font-weight: 900;
-}
-
-.qrToggleBtn svg {
-  width: 23px;
-  height: 23px;
-  color: var(--bw-text-accent);
-}
-
-.qrOverlay {
-  position: fixed;
-  z-index: 1000;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  padding: 20px;
-  background: rgba(0, 0, 0, 0.72);
-  backdrop-filter: blur(7px);
-}
-
-.qrDialog {
-  position: relative;
-  display: grid;
-  gap: 14px;
-  justify-items: center;
-  padding: 28px;
-  border: 1px solid var(--bw-border-card);
-  border-radius: 18px;
-  background: var(--bw-surface-card);
-  color: var(--bw-text-title);
-}
-
-.qrDialog canvas {
-  border-radius: 12px;
-}
-
-.qrDialog > span {
-  color: var(--bw-text-muted);
-}
-
-.qrCloseBtn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  display: grid;
-  width: 34px;
-  height: 34px;
-  place-items: center;
-  border: 1px solid var(--bw-border-subtle);
-  border-radius: 9px;
-  background: var(--bw-surface-panel);
-  color: var(--bw-text-title);
-  cursor: pointer;
-}
-
-.qrCloseBtn svg {
-  width: 18px;
-  height: 18px;
-}
-
 @media (max-width: 980px) {
   .page {
     border: 0;
@@ -4110,18 +3930,6 @@
   .rankColumn {
     width: 38px;
   }
-
-  .publicFooterInner {
-    align-items: flex-start;
-    padding: 20px;
-    flex-wrap: wrap;
-  }
-
-  .qrToggleBtn {
-    width: 100%;
-    justify-content: center;
-    margin-left: 0;
-  }
 }
 
 /* Reference-aligned side-pot leaderboard */
@@ -4130,61 +3938,12 @@
   gap: 18px;
 }
 
-.sidePotRefreshRow {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  margin: 0;
-  padding: 16px 18px;
-  border: 1px solid var(--bw-border-card);
-  border-radius: 14px;
-  background: var(--bw-surface-card);
-}
-
-.sidePotLiveBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  min-height: 42px;
-  padding: 0 14px;
-  border: 1px solid color-mix(in srgb, var(--color-success) 34%, transparent);
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--color-success) 10%, transparent);
-  color: color-mix(in srgb, var(--color-success) 70%, white 30%);
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.sidePotLiveBadge svg {
-  width: 18px;
-  height: 18px;
-}
-
 .refreshSpin {
   animation: publicRefreshSpin 0.85s linear infinite;
 }
 
 @keyframes publicRefreshSpin {
   to { transform: rotate(360deg); }
-}
-
-.sidePotRefreshMeta {
-  color: var(--bw-text-muted);
-  font-size: 12px;
-}
-
-.sidePotAutoNote {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-left: auto;
-  color: var(--bw-text-muted);
-  font-size: 12px;
-}
-
-.sidePotAutoNote svg {
-  width: 16px;
-  height: 16px;
 }
 
 .sidePotSection {
@@ -4366,15 +4125,6 @@
 }
 
 @media (max-width: 640px) {
-  .sidePotRefreshRow {
-    align-items: flex-start;
-    flex-wrap: wrap;
-  }
-
-  .sidePotAutoNote {
-    width: 100%;
-    margin-left: 0;
-  }
 
   .sidePotModeTabs {
     display: flex;
@@ -4490,5 +4240,101 @@
   .refreshRow,
   .sidePotGrid {
     gap: var(--live-space-md);
+  }
+}
+
+@media (max-width: 767px) {
+  .headerTop { grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 12px; }
+  .brandLogo { width: 44px; height: 44px; }
+  .brandEyebrow,
+  .brandEyebrow::before { font-size: 13px; }
+  .brandSubline { overflow: hidden; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+  .controlsTopRow,
+  .squadSelector,
+  .aliveToolbar,
+  .aliveToolbar > div,
+  .searchRow,
+  .refreshRow { align-items: stretch; flex-direction: column; }
+  .controlsPanel,
+  .squadSelectWrap,
+  .squadSelect,
+  .shareBtn,
+  .searchField,
+  .searchInput { width: 100%; min-width: 0; }
+  .shareBtn { min-height: 38px; justify-content: center; }
+  .tabsTrack { display: grid; width: 100%; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .tab,
+  .tabActive { min-width: 0; min-height: 40px !important; padding-inline: 8px; }
+  .main { padding: 12px; }
+  .tableWrap,
+  .bracketTreeWrap,
+  .bracketPills,
+  .bracketGroupTabs { max-width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; }
+  .table { min-width: 620px; font-size: 13px; }
+  .table thead th,
+  .table td { height: 44px; padding-inline: 10px; }
+  .table .thFull { display: none; }
+  .table .thShort { display: inline; }
+  .bracketTreeWrap { width: 100%; height: auto !important; }
+  .bracketTreeGrid,
+  .bracketTreeGridScaled { min-width: 760px; transform: none !important; }
+  .sidePotGrid { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+}
+
+/* Keep the production bracket canvas fitted to the phone viewport. The tree is
+   measured and scaled by BracketView; these final declarations prevent older
+   mobile overflow rules from disabling that shared behavior. */
+@media (max-width: 767px) {
+  .bracketTreeWrap {
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .bracketTreeWrapScaled {
+    height: var(--bw-view-tree-height, auto) !important;
+  }
+
+  .bracketTreeGrid,
+  .bracketTreeGridScaled {
+    min-width: 760px;
+  }
+
+  .bracketTreeGridScaled {
+    transform: scale(var(--bw-view-tree-scale, 1)) !important;
+    transform-origin: top left;
+  }
+
+  .sidePotLeaderboard,
+  .sidePotSection,
+  .sidePotGrid,
+  .sidePotCard {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .sidePotModeTabs {
+    display: grid;
+    width: 100%;
+    max-width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow: hidden;
+  }
+
+  .sidePotModeTab {
+    width: 100%;
+    min-width: 0;
+    padding-inline: 10px;
+    justify-content: center;
+  }
+
+  .sidePotGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sidePotPodiumRow {
+    min-width: 0;
+    grid-template-columns: 42px minmax(0, 1fr) auto;
   }
 }

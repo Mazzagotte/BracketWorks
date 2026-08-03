@@ -6,6 +6,7 @@ import CloseControl from '../../components/CloseControl'
 import styles from '../brackets/styles/explain-brackets-modal.module.css'
 import modalStyles from '../styles/modals.module.css'
 import { disableScroll, enableScroll } from '../utils/modalUtils'
+import HelpGuideFooter from '../components/HelpGuideFooter'
 
 interface ExplainPayoutsModalProps {
   isOpen: boolean
@@ -37,7 +38,7 @@ export default function ExplainPayoutsModal({ isOpen, onClose }: ExplainPayoutsM
     <div className={modalStyles.overlay} onClick={onClose}>
       <div className={modalStyles.modal} onClick={(event) => event.stopPropagation()}>
         <div className={modalStyles.header}>
-          <h2>Payouts Guide</h2>
+          <div><p className={modalStyles.kicker}>BracketWorks Help</p><h2>Payouts Overview</h2></div>
           <CloseControl onClick={onClose} position="absolute" label="Close modal" className={modalStyles.closeButton} />
         </div>
 
@@ -51,7 +52,6 @@ export default function ExplainPayoutsModal({ isOpen, onClose }: ExplainPayoutsM
               and the house fee is whatever remains from total collected entry fees.
             </p>
           </section>
-
           <section className={styles.section}>
             <h3>Tied Finals (Split Pot)</h3>
             <p>
@@ -78,6 +78,7 @@ export default function ExplainPayoutsModal({ isOpen, onClose }: ExplainPayoutsM
               Use Export to PDF for a print-ready payout sheet you can hand out or post at the desk.
             </p>
           </section>
+          <HelpGuideFooter section="payouts" />
 
         </div>
 

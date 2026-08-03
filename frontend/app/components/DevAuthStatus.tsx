@@ -1,6 +1,7 @@
 'use client';
 
 import { useAuth } from '../lib/auth-context';
+import styles from './DevAuthStatus.module.css';
 
 export function DevAuthStatus() {
   const { isUserAuthenticated, currentUser, isAuthInitialized } = useAuth();
@@ -10,25 +11,12 @@ export function DevAuthStatus() {
   }
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        bottom: 8,
-        right: 8,
-        padding: '4px 8px',
-        background: 'rgba(0,0,0,0.6)',
-        color: '#fff',
-        fontSize: 11,
-        borderRadius: 4,
-        zIndex: 9999,
-        pointerEvents: 'none',
-      }}
-    >
+    <div className={styles.status}>
       {isAuthInitialized
         ? isUserAuthenticated
           ? `Auth: ${currentUser?.name ?? currentUser?.id ?? 'user'}`
           : 'Auth: none'
-        : 'Auth: …'}
+        : 'Auth: ...'}
     </div>
   );
 }

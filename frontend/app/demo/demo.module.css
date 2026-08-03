@@ -1,0 +1,75 @@
+.page {
+  min-height: 100vh;
+  padding: 20px;
+  background: var(--bw-page);
+  color: var(--bw-text-body);
+}
+
+.shell {
+  width: min(100%, 1440px);
+  margin: 0 auto;
+}
+
+.demoSurface {
+  width: 100%;
+  color: var(--bw-text-body);
+}
+
+.embedded {
+  font-size: inherit;
+}
+
+.frameSurface {
+  position: relative;
+}
+
+.frameLoading {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--bw-surface-card);
+  color: var(--bw-text-muted);
+  font-size: 12px;
+}
+
+.dashboardFrame {
+  width: 100%;
+  height: 720px;
+  display: block;
+  border: 0;
+  background: var(--bw-page);
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
+.dashboardFrame[data-loaded="true"] {
+  opacity: 1;
+}
+
+.backRow {
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.backRow a {
+  color: var(--bw-text-accent);
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.backRow span {
+  color: var(--bw-text-muted);
+  font-size: 12px;
+}
+
+@media (max-width: 767px) {
+  .page {
+    padding: 12px;
+  }
+
+}

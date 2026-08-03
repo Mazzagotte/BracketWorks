@@ -6682,3 +6682,34 @@
   }
 }
 
+@media (min-width: 768px) and (max-width: 1023px) {
+  .entriesTopRow,
+  .summaryGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+}
+
+@media (max-width: 767px) {
+  .pageContainer { gap: 12px; }
+  .entriesTopRow,
+  .summaryGrid,
+  .formGrid,
+  .playerInfoGrid,
+  .compactGrid,
+  .addBowlerSidePotGrid,
+  .entriesPaymentRow { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+
+  .entriesTopRow > *,
+  .entriesSectionWidth { min-width: 0; width: 100%; max-width: 100%; }
+
+  .entrySearchForm,
+  .findBowlerSearchRow,
+  .mobilePlayerActionsRow { align-items: stretch; flex-direction: column; gap: 12px; }
+
+  .entrySearchForm :where(button, input),
+  .findBowlerSearchRow :where(button, input),
+  .mobilePlayerActionsRow button { width: 100%; min-height: 40px; }
+
+  .entriesTableHeader { align-items: stretch; flex-direction: column; gap: 12px; }
+  .entriesTableHeaderCopy,
+  .entriesSearchDock { width: 100%; }
+}
+

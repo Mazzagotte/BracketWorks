@@ -6,6 +6,7 @@ import CloseControl from '../../components/CloseControl'
 import styles from './ExplainEntriesModal.module.css'
 import modalStyles from '../styles/modals.module.css'
 import { disableScroll, enableScroll } from '../utils/modalUtils'
+import HelpGuideFooter from '../components/HelpGuideFooter'
 
 interface ExplainEntriesModalProps {
   isOpen: boolean
@@ -42,8 +43,8 @@ export default function ExplainEntriesModal({ isOpen, onClose }: ExplainEntriesM
       <div className={modalStyles.modal} onClick={(event) => event.stopPropagation()}>
         <div className={modalStyles.header}>
           <div>
-            <p className={modalStyles.kicker}>Entries Guide</p>
-            <h2>How Entries Work</h2>
+            <p className={modalStyles.kicker}>BracketWorks Help</p>
+            <h2>Entries Overview</h2>
           </div>
           <CloseControl onClick={onClose} position="absolute" size="sm" label="Close modal" className={modalStyles.closeButton} />
         </div>
@@ -56,7 +57,6 @@ export default function ExplainEntriesModal({ isOpen, onClose }: ExplainEntriesM
               When you select a result, the form fills in automatically so you do not have to type everything again.
             </p>
           </section>
-
           <section className={styles.section}>
             <h3>Registering Bowlers</h3>
             <p>
@@ -89,6 +89,7 @@ export default function ExplainEntriesModal({ isOpen, onClose }: ExplainEntriesM
               Bracket count is an estimate and can change based on final entries.
             </p>
           </section>
+          <HelpGuideFooter section="entries" />
         </div>
 
       </div>

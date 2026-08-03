@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useEffect, useState, useRef, useCallback, type CSSProperties } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   ArrowRight,
   Braces,
@@ -33,6 +33,7 @@ import shellStyles from '../styles/page-shell.module.css';
 import buttonStyles from '../styles/buttons.module.css';
 import { ConfirmationDialog } from '../components/LazyComponents';
 import { API, apiClient, apiFetch } from '../lib/api';
+import { isPhoneWidth } from '../lib/responsive';
 import { logger } from '../lib/logger';
 import { defaultBracketPrograms, normalizeBracketPrograms, summarizeEntries } from '../lib/bracketPrograms';
 import EnhancedButton from '../components/EnhancedButton';
@@ -56,6 +57,7 @@ import { setBodyInteractionState } from '../utils/modalUtils';
 import { formatIsoDateFull, formatIsoDateLong } from '../lib/formatters';
 import { EditTournamentModal } from './components/EditTournamentModal';
 import { normalizeSquadTimes } from './utils/tournamentForm';
+import { SAMPLE_BOWLER_NAMES, SAMPLE_TOURNAMENT } from '../demo/sample-tournament';
 import { createDefaultSidePots, hydrateStoredSidePots } from './utils/sidePots';
 import { useTournamentOrchestration } from './hooks/useTournamentOrchestration';
 import {
@@ -121,7 +123,29 @@ const dashboardActionIcons: Record<string, LucideIcon> = {
   'generate-brackets': ClipboardList,
 };
 
+const DEMO_DASHBOARD_TOURNAMENT: Tournament = { id: 900001, name: SAMPLE_TOURNAMENT.name, location: SAMPLE_TOURNAMENT.location, start_date: SAMPLE_TOURNAMENT.date, end_date: SAMPLE_TOURNAMENT.date, entry_count: 32, brackets_configured: true, is_public: true };
+const DEMO_DASHBOARD_SQUADS: Squad[] = [
+  { id: 900101, tournament_id: 900001, date: SAMPLE_TOURNAMENT.date, time: SAMPLE_TOURNAMENT.squads[0] },
+  { id: 900102, tournament_id: 900001, date: SAMPLE_TOURNAMENT.date, time: SAMPLE_TOURNAMENT.squads[1] },
+];
+const DEMO_DASHBOARD_PLAYERS: Player[] = Array.from({ length: 32 }, (_, index) => {
+  const programEntryCounts = { handicap: 1, scratch: index < 24 ? 1 : 0, reverse_scratch: index < 16 ? 1 : 0 };
+  const totalCost = Object.values(programEntryCounts).reduce((sum, count) => sum + count, 0) * 12;
+  const [firstName = 'Sample', ...lastNameParts] = (SAMPLE_BOWLER_NAMES[index] ?? `Sample Bowler ${index + 1}`).split(' ');
+  return { id: 910000 + index, firstName, lastName: lastNameParts.join(' '), average: 172 + (index % 35), division: 'Open', amountPaid: totalCost, totalCost, programEntryCounts, squad: DEMO_DASHBOARD_SQUADS[0]! };
+});
+const DEMO_DASHBOARD_BRACKET_SETTINGS: BracketSettings = {
+  ...createDefaultBracketSettings(900001), bracket_size: 8, default_entry_fee: 12, first_place_amount: 60, second_place_amount: 24, house_fee_amount: 12, handicap_percentage: 90, handicap_base: 220, allow_byes: true,
+  bracket_programs: defaultBracketPrograms.map(program => ({ ...program, entry_fee: 12, enabled: program.key === 'handicap' || program.key === 'scratch' || program.key === 'reverse_scratch' })),
+};
+const DEMO_DASHBOARD_SIDE_POTS: SidePotsSettings = {
+  ...createDefaultSidePots(900001), entry_fee: 10, prize_amount: 150,
+  pots: createDefaultSidePots(900001).pots.map(pot => ({ ...pot, enabled: true })),
+};
+
 export default function TournamentDashboard() {
+  const pathname = usePathname();
+  const isDemoDashboard = pathname === '/demo/dashboard';
   // Authentication check - must be at the top
   const { isUserAuthenticated, isAuthInitialized } = useAuth();
   const [showDashboard, setShowDashboard] = useState(false);
@@ -133,14 +157,14 @@ export default function TournamentDashboard() {
 
   // All hooks must be called before conditional returns (React rules of hooks)
   const [isAdmin, setIsAdmin] = useState(false);
-  const [tournament, setTournament] = useState<Tournament | null>(null);
-  const [workflowStatus, setWorkflowStatus] = useState<DashboardTournamentBootstrapResponse['workflow_status']>(null);
+  const [tournament, setTournament] = useState<Tournament | null>(() => isDemoDashboard ? DEMO_DASHBOARD_TOURNAMENT : null);
+  const [workflowStatus, setWorkflowStatus] = useState<DashboardTournamentBootstrapResponse['workflow_status']>(() => isDemoDashboard ? ({ status_squad_id: 900101, has_generated_brackets: true, has_payout_summary: false, payouts_finalized: false, scores_locked: false }) : null);
   const [modalOpen, setModalOpen] = useState(false);
   const [createMode, setCreateMode] = useState(false);
-  const [selectedSquadId, setSelectedSquadId] = useState<number | null>(null);
-  const [squads, setSquads] = useState<Squad[]>([]);
-  const [squadEntryCounts, setSquadEntryCounts] = useState<Record<number, number>>({});
-  const [summaryPlayers, setSummaryPlayers] = useState<Player[]>([]);
+  const [selectedSquadId, setSelectedSquadId] = useState<number | null>(() => isDemoDashboard ? 900101 : null);
+  const [squads, setSquads] = useState<Squad[]>(() => isDemoDashboard ? DEMO_DASHBOARD_SQUADS : []);
+  const [squadEntryCounts, setSquadEntryCounts] = useState<Record<number, number>>(() => isDemoDashboard ? ({ 900101: 32, 900102: 0 }) : ({} as Record<number, number>));
+  const [summaryPlayers, setSummaryPlayers] = useState<Player[]>(() => isDemoDashboard ? DEMO_DASHBOARD_PLAYERS : []);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmMsg, setConfirmMsg] = useState('');
   const [optionalToggleConfirm, setOptionalToggleConfirm] = useState<{ programKey: string; programName: string; existingEntries: number } | null>(null);
@@ -151,7 +175,7 @@ export default function TournamentDashboard() {
   const [deleteConfirm, setDeleteConfirm] = useState<{id: number, name: string} | null>(null);
   const [shareQROpen, setShareQROpen] = useState(false);
   const [isExplainModalOpen, setIsExplainModalOpen] = useState(false);
-  const [scoreProgress, setScoreProgress] = useState({ completed: 0, entered: 0, total: 0, percent: 0, loading: false });
+  const [scoreProgress, setScoreProgress] = useState(() => isDemoDashboard ? ({ completed: 21, entered: 21, total: 32, percent: 66, loading: false }) : ({ completed: 0, entered: 0, total: 0, percent: 0, loading: false }));
   
   // Enhanced UX components
   const { addToast } = useToast();
@@ -163,9 +187,7 @@ export default function TournamentDashboard() {
 
   
   // Bracket settings state
-  const [bracketSettings, setBracketSettings] = useState<BracketSettings>({
-    ...createDefaultBracketSettings(),
-  });
+  const [bracketSettings, setBracketSettings] = useState<BracketSettings>(() => isDemoDashboard ? DEMO_DASHBOARD_BRACKET_SETTINGS : ({ ...createDefaultBracketSettings() }));
   const [savingBracketSettings, setSavingBracketSettings] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved' | 'error'>('saved');
   const [lastSavedTime, setLastSavedTime] = useState<Date | null>(null);
@@ -176,7 +198,7 @@ export default function TournamentDashboard() {
   const bracketSettingsRef = useRef<BracketSettings>(bracketSettings);
 
   // Side pots state
-  const [sidePots, setSidePots] = useState<SidePotsSettings>(createDefaultSidePots());
+  const [sidePots, setSidePots] = useState<SidePotsSettings>(() => isDemoDashboard ? DEMO_DASHBOARD_SIDE_POTS : createDefaultSidePots());
 
   // Mobile detection state
   const [isMobile, setIsMobile] = useState(false);
@@ -520,6 +542,7 @@ export default function TournamentDashboard() {
   }, [loadSidePots, loadSquadEntryCounts, loadBracketSettings, squads, tournament?.id]);
 
   const { handleLoadTournament, handleUnloadTournament: unloadTournament } = useTournamentOrchestration({
+    enabled: !isDemoDashboard,
     tournament,
     addToast,
     setTournament,
@@ -729,11 +752,11 @@ export default function TournamentDashboard() {
     void runFetch();
   }, [addToast, isAdmin, loadModalOpen]);
 
-  // Mobile detection (phone only - tablets get desktop experience)
+  // Mobile detection; tablets retain the wider layout inside the drawer shell.
   useEffect(() => {
     const checkMobile = () => {
       const width = window.innerWidth;
-      setIsMobile(width <= 480);
+      setIsMobile(isPhoneWidth(width));
     };
     
     checkMobile();
@@ -990,10 +1013,6 @@ export default function TournamentDashboard() {
   const hasLivePlayerData = summaryPlayers.length > 0;
   const isSquadDataSyncing = squads.length > 0 && Object.keys(squadEntryCounts).length === 0;
   const isEntryDataSyncing = isSquadDataSyncing || (!hasLivePlayerData && loadedEntries > 0);
-  const tournamentProjectedPayout = Math.max(0, bracketSettings.first_place_amount + bracketSettings.second_place_amount);
-  const bracketEntriesForPayout = Math.max(0, Number(bracketSettings.bracket_size || 0));
-  const grossCollected = Math.max(0, bracketEntriesForPayout * Number(bracketSettings.default_entry_fee || 0));
-  const houseRetained = Math.max(0, Number(bracketSettings.house_fee_amount || 0));
   const normalizedPrograms = normalizeBracketPrograms(bracketSettings.bracket_programs, bracketSettings.default_entry_fee);
   const enabledBracketProgramsForSummary = normalizedPrograms.filter(program =>
     program.key === 'handicap' || program.key === 'scratch' || Boolean(program.enabled)
@@ -1015,6 +1034,10 @@ export default function TournamentDashboard() {
     bracketSettings.bracket_size,
     bracketSettings.default_entry_fee,
   ), [summaryPlayers, enabledBracketProgramsForSummary, bracketSettings.bracket_size, bracketSettings.default_entry_fee]);
+  const expectedBracketCount = entrySummary.programSummaries.reduce((sum, program) => sum + program.expectedBrackets, 0);
+  const grossCollected = Math.max(0, entrySummary.totalRevenue);
+  const houseRetained = Math.max(0, expectedBracketCount * Number(bracketSettings.house_fee_amount || 0));
+  const tournamentProjectedPayout = Math.max(0, grossCollected - houseRetained);
   const bracketsSold = entrySummary.totalEntries;
   const unpaidEntriesCount = summaryPlayers.filter(player => Number(player.totalCost || 0) - Number(player.amountPaid || 0) > 0.01).length;
   const missingAveragesCount = summaryPlayers.filter(player => Number(player.average || 0) <= 0).length;
@@ -1270,6 +1293,10 @@ export default function TournamentDashboard() {
     let isCancelled = false;
 
     const loadScoreProgress = async () => {
+      if (isDemoDashboard) {
+        if (!isCancelled) setScoreProgress({ completed: 21, entered: 21, total: 32, percent: 66, loading: false });
+        return;
+      }
       const tournamentId = tournament?.id;
       if (!tournamentId) {
         if (!isCancelled) {
@@ -1339,7 +1366,7 @@ export default function TournamentDashboard() {
     return () => {
       isCancelled = true;
     };
-  }, [loadedEntries, selectedSquadId, statsSummaryPlayers.length, tournament?.id]);
+  }, [isDemoDashboard, loadedEntries, selectedSquadId, statsSummaryPlayers.length, tournament?.id]);
 
   useEffect(() => {
     if (selectedSquadId !== null) {
@@ -1359,13 +1386,17 @@ export default function TournamentDashboard() {
     };
 
     window.addEventListener('bw:new-tournament', handleNewTournament as EventListener);
+    if (sessionStorage.getItem('bracketworks-start-create-tournament') === 'true') {
+      sessionStorage.removeItem('bracketworks-start-create-tournament');
+      handleNewTournament();
+    }
     return () => {
       window.removeEventListener('bw:new-tournament', handleNewTournament as EventListener);
     };
   }, []);
 
   // All hooks are declared above — conditional returns are safe below this line
-  if (!isAuthInitialized && !showDashboard) {
+  if (!isDemoDashboard && !isAuthInitialized && !showDashboard) {
     return (
       <div className={mobileStyles.loadingScreen}>
         <div className={mobileStyles.loadingContent}>Loading tournament dashboard...</div>
@@ -1373,7 +1404,7 @@ export default function TournamentDashboard() {
     );
   }
 
-  if (!isUserAuthenticated && !hasStoredAuthTokens) {
+  if (!isDemoDashboard && !isUserAuthenticated && !hasStoredAuthTokens) {
     return (
       <div className={mobileStyles.loadingScreen}>
         <div className={mobileStyles.loadingContent}>Please log in to access the tournament dashboard</div>
@@ -1381,7 +1412,7 @@ export default function TournamentDashboard() {
     );
   }
 
-  if (!isUserAuthenticated && hasStoredAuthTokens) {
+  if (!isDemoDashboard && !isUserAuthenticated && hasStoredAuthTokens) {
     return (
       <div className={mobileStyles.loadingScreen}>
         <div className={mobileStyles.loadingContent}>Loading tournament dashboard...</div>

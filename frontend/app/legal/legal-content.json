@@ -1,0 +1,873 @@
+{
+  "terms": {
+    "title": "Terms Of Service",
+    "version": "2.4",
+    "intro": [
+      "Effective Date: [Insert Date]",
+      "Draft Version: 2.4",
+      "These Terms of Service (“Terms”) govern access to and use of the BracketWorks website, web application, Bowler View, shared tournament pages, reports, exports, and related services (collectively, the “Services”).",
+      "These Terms are entered into between you and [Insert Exact Legal Entity Name], an Idaho [limited liability company or other entity type] (“BracketWorks,” “we,” “us,” or “our”)."
+    ],
+    "sections": [
+      {
+        "heading": "1. ACCEPTANCE OF TERMS",
+        "paragraphs": [
+          "By creating an account, purchasing a subscription, accessing, or using the Services, you agree to these Terms. If you do not agree, do not use the Services.",
+          "These Terms apply to tournament operators, administrators, bowling center staff, organization users, and individuals accessing Bowler View or shared tournament pages."
+        ]
+      },
+      {
+        "heading": "2. ELIGIBILITY",
+        "paragraphs": [
+          "You must be legally capable of entering into a binding agreement to create an operator or administrator account.",
+          "The Services are not intended to allow children under 13 to create accounts. An adult tournament operator may enter limited tournament information concerning junior bowlers only when the operator has appropriate authority and any consent required by law."
+        ]
+      },
+      {
+        "heading": "3. BETA AND EARLY ACCESS",
+        "paragraphs": [
+          "BracketWorks may make features available during beta, pilot, preview, or early-access periods. During those periods, features, interfaces, pricing, data structures, and functionality may change, be restricted, moved to a paid plan, or discontinued.",
+          "Beta and early-access features may contain errors or operate unexpectedly. BracketWorks does not guarantee uptime, data integrity, feature availability, or uninterrupted access for beta or early-access features."
+        ]
+      },
+      {
+        "heading": "4. DESCRIPTION OF THE SERVICES",
+        "paragraphs": [
+          "BracketWorks is a cloud-hosted bowling tournament management application. It may allow tournament operators to:",
+          "a. create and manage tournaments;",
+          "b. register bowlers and assign squads;",
+          "c. generate and manage brackets;",
+          "d. enter scores and advance participants;",
+          "e. configure side pots and prize structures;",
+          "f. calculate potential payouts;",
+          "g. generate reports and exports; and",
+          "h. publish read-only tournament views.",
+          "BracketWorks provides software only. BracketWorks does not operate tournaments, collect tournament entry fees, hold prize funds, distribute payouts, determine winners, independently verify scores, or resolve tournament disputes."
+        ]
+      },
+      {
+        "heading": "5. ACCOUNTS, ORGANIZATIONS, AND AUTHORIZED USERS",
+        "paragraphs": [
+          "Users must provide accurate account information and keep it current.",
+          "Users are responsible for protecting login credentials and may not share credentials or permit unauthorized access.",
+          "An organization may designate one or more account administrators. Organization administrators may invite or remove users, assign roles, manage tournaments, and control organization settings.",
+          "When an account is created or used on behalf of a bowling center, association, employer, or other organization, the organization may control tournaments and records created for that organization.",
+          "BracketWorks may reasonably assist with transferring organization control after verifying authority. BracketWorks is not responsible for internal ownership or employment disputes.",
+          "Users must promptly notify BracketWorks of suspected unauthorized access, compromised credentials, or account-security issues."
+        ]
+      },
+      {
+        "heading": "6. SERVICE COMMUNICATIONS",
+        "paragraphs": [
+          "You agree that BracketWorks may send transactional and service-related communications concerning account verification, password changes, security notices, subscriptions, billing, tournament activity, support, product changes, and legal updates.",
+          "These communications are part of the Services and may not always be optional. Marketing communications, if any, will be handled separately and may be subject to additional consent or opt-out rights."
+        ]
+      },
+      {
+        "heading": "7. ACCEPTABLE USE AND TOURNAMENT INTEGRITY",
+        "paragraphs": [
+          "You may use BracketWorks only for lawful purposes. You may not:",
+          "a. enter false, inaccurate, or misleading bowler, score, financial, payout, or tournament information;",
+          "b. manipulate bracket results, seedings, score entries, payouts, or advancement contrary to actual tournament outcomes;",
+          "c. engage in collusion, fraud, match fixing, score manipulation, or prearranged results;",
+          "d. use BracketWorks for a tournament not determined by bona fide competition;",
+          "e. gain or attempt to gain unauthorized access to an account, system, or data;",
+          "f. scrape, overload, disrupt, probe, or interfere with the Services;",
+          "g. reverse engineer, decompile, disassemble, or attempt to extract source code;",
+          "h. introduce malware, harmful code, or automated abuse;",
+          "i. impersonate another person or organization; or",
+          "j. use BracketWorks in violation of applicable law."
+        ]
+      },
+      {
+        "heading": "8. TOURNAMENT OPERATOR RESPONSIBILITY",
+        "paragraphs": [
+          "Tournament operators are solely responsible for organizing, administering, and supervising tournaments they create or manage.",
+          "Operator responsibilities include:",
+          "a. establishing and communicating rules;",
+          "b. confirming participant eligibility;",
+          "c. entering accurate tournament and participant information;",
+          "d. verifying scores and bracket advancement;",
+          "e. configuring side pots and prize structures;",
+          "f. verifying payout calculations before funds are distributed;",
+          "g. communicating corrections and final results;",
+          "h. handling protests, disputes, refunds, and participant claims;",
+          "i. obtaining required permissions and consents; and",
+          "j. complying with applicable laws and regulations.",
+          "BracketWorks does not certify, approve, audit, supervise, or guarantee any tournament, format, score, result, prize structure, or payout."
+        ]
+      },
+      {
+        "heading": "9. CUSTOMER AND TOURNAMENT DATA",
+        "paragraphs": [
+          "As between BracketWorks and the operator, the operator retains its rights in tournament, participant, score, entry, payout, and other information submitted to the Services (“Operator Data”).",
+          "The operator grants BracketWorks a limited, nonexclusive right to host, store, process, reproduce, transmit, display, back up, and otherwise use Operator Data only as reasonably necessary to:",
+          "a. provide and operate the Services;",
+          "b. publish views enabled by the operator;",
+          "c. provide support;",
+          "d. secure and maintain the Services;",
+          "e. investigate abuse or errors;",
+          "f. improve the Services using aggregated or deidentified information; and",
+          "g. comply with legal obligations.",
+          "The operator represents that it has the authority and required consent to submit and use Operator Data.",
+          "BracketWorks does not claim ownership of Operator Data merely because it is entered into the Services."
+        ]
+      },
+      {
+        "heading": "10. PUBLIC AND SHARED TOURNAMENT VIEWS",
+        "paragraphs": [
+          "Operators may enable public or shared views that display brackets, scores, standings, results, participant names, or payout-related information.",
+          "Anyone with access to the public page or shared link may be able to view that information. Operators are responsible for choosing what information is published and for ensuring that they have authority to publish it.",
+          "Operators should use additional care when publishing information about minors and should avoid displaying unnecessary personal information."
+        ]
+      },
+      {
+        "heading": "11. ENTRY FEES, PRIZE FUNDS, AND PAYOUTS",
+        "paragraphs": [
+          "BracketWorks calculates payout amounts using operator-configured settings and entered tournament information.",
+          "Unless a separate written agreement expressly states otherwise, BracketWorks does not collect, hold, escrow, transmit, or distribute tournament entry fees or prize funds.",
+          "Operators must verify payout calculations before distributing prizes. Reports, exports, and calculations are not guaranteed to be accurate, final, complete, or suitable for tax, accounting, legal, or regulatory purposes."
+        ]
+      },
+      {
+        "heading": "12. TOURNAMENT DISPUTES",
+        "paragraphs": [
+          "Disputes involving tournament rules, scores, eligibility, brackets, entry fees, refunds, payouts, or final results are exclusively between the participant and tournament operator.",
+          "BracketWorks is not a party to the tournament and has no authority to decide such disputes."
+        ]
+      },
+      {
+        "heading": "13. GAMBLING, GAMING, AND PRIZE-CONTEST COMPLIANCE",
+        "paragraphs": [
+          "Entry-fee tournaments involving cash or prizes may be regulated by federal, state, local, tribal, or other laws concerning gambling, gaming, contests, sweepstakes, lotteries, taxes, consumer protection, or prize distribution.",
+          "BracketWorks does not determine whether a tournament is lawful.",
+          "By using BracketWorks for a tournament involving entry fees, prizes, or payouts, the operator represents that:",
+          "a. the tournament and prize structure are lawful in all applicable jurisdictions;",
+          "b. required permits, approvals, or licenses have been obtained;",
+          "c. tournament rules have been properly established and communicated; and",
+          "d. BracketWorks will not be used for illegal gambling or unlawful prize activity."
+        ]
+      },
+      {
+        "heading": "14. SUBSCRIPTIONS, RENEWALS, AND CANCELLATION",
+        "paragraphs": [
+          "Certain features may require a paid subscription.",
+          "Subscription pricing, billing intervals, included features, limits, renewal terms, and trial terms will be disclosed at checkout or within the Services.",
+          "Unless otherwise disclosed, subscriptions automatically renew for successive billing periods until cancelled.",
+          "Cancellation prevents the subscription from renewing for another billing period. Unless otherwise stated at checkout, access to paid features continues through the end of the current paid billing period.",
+          "Users may cancel through the account or billing settings or by contacting support when self-service cancellation is unavailable.",
+          "Unless required by law or expressly stated otherwise, fees already paid are non-refundable and no prorated refunds or credits are provided.",
+          "If payment fails, BracketWorks may retry the payment, request updated billing information, limit paid features, or suspend the subscription.",
+          "BracketWorks may change pricing or included features after providing notice required by law or the applicable subscription terms."
+        ]
+      },
+      {
+        "heading": "15. THIRD-PARTY SERVICES AND PAYMENT PROCESSING",
+        "paragraphs": [
+          "BracketWorks may use third-party providers for hosting, infrastructure, databases, authentication, email delivery, analytics, error monitoring, security, customer support, and payment processing.",
+          "These providers may process limited information as necessary to provide services to BracketWorks.",
+          "Payment processors handle full payment-card information. BracketWorks may receive limited billing information such as customer name, billing email, transaction status, plan, card brand, expiration information, last four digits, invoices, and payment history.",
+          "Third-party services are governed by their own terms and privacy policies."
+        ]
+      },
+      {
+        "heading": "16. SUPPORT ACCESS AND SECURITY REVIEW",
+        "paragraphs": [
+          "Authorized BracketWorks personnel may access limited account, billing, technical, and tournament information when reasonably necessary to:",
+          "a. provide requested support;",
+          "b. troubleshoot issues;",
+          "c. maintain security;",
+          "d. investigate suspicious activity or abuse;",
+          "e. enforce these Terms;",
+          "f. comply with law; or",
+          "g. operate and improve the Services.",
+          "Access should be limited to personnel with a legitimate business need."
+        ]
+      },
+      {
+        "heading": "17. SERVICE AVAILABILITY, MAINTENANCE, AND CHANGES",
+        "paragraphs": [
+          "BracketWorks may update, modify, suspend, or discontinue features.",
+          "BracketWorks does not guarantee uninterrupted operation, error-free performance, availability of a specific feature, or compatibility with every device, browser, network, or configuration.",
+          "BracketWorks may perform scheduled or emergency maintenance."
+        ]
+      },
+      {
+        "heading": "18. DATA EXPORT AFTER CANCELLATION OR TERMINATION",
+        "paragraphs": [
+          "Where technically available, and unless access is terminated for unlawful activity, fraud, security risk, or abuse, BracketWorks may provide a limited period of [30 days recommended; confirm before publication] after subscription expiration or cancellation for the operator to export available tournament data.",
+          "After that period, BracketWorks may delete or deidentify data in accordance with the Privacy Policy, backup practices, and legal obligations.",
+          "Operators are responsible for maintaining any independent records required for tournament, business, tax, accounting, association, or legal purposes."
+        ]
+      },
+      {
+        "heading": "19. PRIVACY, CORRECTION, AND PUBLIC-VIEW REQUESTS",
+        "paragraphs": [
+          "BracketWorks may review, restrict, correct, unpublish, or remove information from a public or shared tournament view when reasonably necessary to address:",
+          "a. privacy or safety concerns;",
+          "b. information concerning a minor;",
+          "c. impersonation or unauthorized publication;",
+          "d. legal or regulatory obligations;",
+          "e. security incidents; or",
+          "f. obvious data-entry errors.",
+          "BracketWorks may refer disputes concerning tournament rules, score accuracy, eligibility, advancement, payouts, or final results to the applicable tournament operator.",
+          "Requests may be submitted to support@bracketworks.app. BracketWorks may require reasonable verification of identity, parental authority, organizational authority, or account ownership before taking action."
+        ]
+      },
+      {
+        "heading": "20. SECURITY INCIDENTS",
+        "paragraphs": [
+          "If BracketWorks identifies a security incident involving personal information, BracketWorks will investigate the incident, take reasonable containment and remediation measures, preserve appropriate records, and provide notices to affected users, customers, service providers, or government authorities when required by applicable law.",
+          "BracketWorks does not guarantee that every attempted attack, unauthorized access event, or security issue will be prevented."
+        ]
+      },
+      {
+        "heading": "21. TAXES ON BRACKETWORKS SUBSCRIPTIONS",
+        "paragraphs": [
+          "Unless expressly stated otherwise, subscription prices do not include sales, use, excise, value-added, or similar transaction taxes.",
+          "Customers are responsible for taxes associated with their purchase, except taxes based on BracketWorks’ net income. BracketWorks may calculate, collect, and remit applicable taxes when required by law."
+        ]
+      },
+      {
+        "heading": "22. DELETION, UNPUBLISHING, AND TOURNAMENT-HISTORY INTEGRITY",
+        "paragraphs": [
+          "Account deletion, tournament deletion, removal from public view, and deletion of personal information are separate actions.",
+          "BracketWorks may unpublish a tournament or remove personal information from public view without immediately deleting all related private records.",
+          "BracketWorks may retain limited records when reasonably necessary to:",
+          "a. maintain security and audit trails;",
+          "b. investigate fraud or abuse;",
+          "c. address payout or participant disputes;",
+          "d. comply with accounting, tax, legal, or regulatory requirements;",
+          "e. preserve legal acceptance records; or",
+          "f. enforce agreements.",
+          "Where appropriate, BracketWorks may deidentify or restrict access to retained records instead of keeping them publicly available."
+        ]
+      },
+      {
+        "heading": "23. ACCESSIBILITY",
+        "paragraphs": [
+          "BracketWorks aims to provide a usable interface and welcomes reports of accessibility barriers.",
+          "BracketWorks does not warrant that every feature complies with the Americans with Disabilities Act, Section 508, WCAG, or every other accessibility standard.",
+          "Accessibility concerns may be reported to support@bracketworks.app."
+        ]
+      },
+      {
+        "heading": "24. INTELLECTUAL PROPERTY",
+        "paragraphs": [
+          "BracketWorks and its licensors own the Services, including the software, code, design, workflows, documentation, trademarks, logos, reports, layouts, and related materials, excluding Operator Data.",
+          "These Terms grant only a limited, nonexclusive, nontransferable, revocable right to access and use the Services in accordance with these Terms."
+        ]
+      },
+      {
+        "heading": "25. FEEDBACK",
+        "paragraphs": [
+          "If you submit ideas, feature requests, bug reports, or other feedback, you grant BracketWorks the right to use, implement, modify, and commercialize that feedback without compensation, attribution, restriction, or obligation."
+        ]
+      },
+      {
+        "heading": "26. SUSPENSION AND TERMINATION",
+        "paragraphs": [
+          "BracketWorks may suspend, restrict, or terminate access when it reasonably believes that a user:",
+          "a. violated these Terms;",
+          "b. failed to pay required fees;",
+          "c. created legal, security, or operational risk;",
+          "d. manipulated tournament data;",
+          "e. engaged in fraud or abuse;",
+          "f. used the Services for unlawful activity; or",
+          "g. exposed BracketWorks or others to potential harm.",
+          "Where practical, BracketWorks may provide notice and an opportunity to cure. Immediate action may be taken for fraud, security threats, unlawful activity, or serious abuse."
+        ]
+      },
+      {
+        "heading": "27. DISCLAIMER OF WARRANTIES",
+        "paragraphs": [
+          "THE SERVICES ARE PROVIDED “AS IS” AND “AS AVAILABLE” WITHOUT WARRANTIES OF ANY KIND, WHETHER EXPRESS, IMPLIED, OR STATUTORY.",
+          "TO THE MAXIMUM EXTENT PERMITTED BY LAW, BRACKETWORKS DISCLAIMS WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, NON-INFRINGEMENT, ACCURACY, AVAILABILITY, SECURITY, AND ERROR-FREE OPERATION."
+        ]
+      },
+      {
+        "heading": "28. LIMITATION OF LIABILITY",
+        "paragraphs": [
+          "TO THE MAXIMUM EXTENT PERMITTED BY LAW, BRACKETWORKS WILL NOT BE LIABLE FOR INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, EXEMPLARY, OR PUNITIVE DAMAGES, INCLUDING LOST PROFITS, LOST REVENUE, LOST DATA, LOSS OF GOODWILL, TOURNAMENT DISPUTES, PAYOUT DISPUTES, LOST PRIZE FUNDS, OR BUSINESS INTERRUPTION.",
+          "TO THE MAXIMUM EXTENT PERMITTED BY LAW, BRACKETWORKS’ TOTAL LIABILITY FOR ANY CLAIM ARISING OUT OF OR RELATED TO THE SERVICES WILL NOT EXCEED THE GREATER OF:",
+          "a. one hundred dollars ($100.00); or",
+          "b. the amount paid to BracketWorks by the claiming user during the three months before the event giving rise to the claim."
+        ]
+      },
+      {
+        "heading": "29. INDEMNIFICATION",
+        "paragraphs": [
+          "To the extent permitted by law, you agree to indemnify, defend, and hold harmless BracketWorks and its owners, officers, employees, contractors, and agents from third-party claims, damages, liabilities, fines, penalties, costs, and expenses, including reasonable attorneys’ fees, arising from:",
+          "a. your use of the Services;",
+          "b. your violation of these Terms;",
+          "c. your violation of law;",
+          "d. your tournament operations;",
+          "e. participant claims or payout disputes; or",
+          "f. information you submit to the Services."
+        ]
+      },
+      {
+        "heading": "30. GOVERNING LAW AND DISPUTE RESOLUTION",
+        "paragraphs": [
+          "These Terms are governed by the laws of the State of Idaho, without regard to conflict-of-law rules, unless applicable law requires otherwise.",
+          "The parties will first attempt to resolve disputes through good-faith negotiation for at least thirty days after written notice.",
+          "If BracketWorks adopts arbitration, the final published terms must specify the arbitration provider, applicable rules, filing-fee allocation, hearing location or remote-hearing process, small-claims exception, class-action waiver, notice procedure, and any opt-out right.",
+          "If no enforceable arbitration agreement applies, each party agrees that any legal action arising out of or relating to the Services will be brought exclusively in the state or federal courts located in [Insert Idaho County], Idaho, and each party consents to personal jurisdiction and venue in those courts."
+        ]
+      },
+      {
+        "heading": "31. CHANGES TO THESE TERMS",
+        "paragraphs": [
+          "BracketWorks may update these Terms.",
+          "For material changes, BracketWorks may provide notice through the Services, email, or another reasonable method and may require renewed acceptance.",
+          "Changes that materially reduce user rights or increase obligations will take effect prospectively after the stated notice period, except where immediate changes are required by law or security concerns."
+        ]
+      },
+      {
+        "heading": "32. GENERAL TERMS",
+        "paragraphs": [
+          "If any provision is unenforceable, the remaining provisions remain effective.",
+          "Failure to enforce a provision is not a waiver.",
+          "Users may not assign these Terms without BracketWorks’ written consent. BracketWorks may assign these Terms in connection with a merger, acquisition, reorganization, or sale of assets.",
+          "These Terms, the Privacy Policy, Tournament Operator Terms, applicable order forms, and any signed written agreements constitute the complete agreement concerning the Services."
+        ]
+      },
+      {
+        "heading": "33. CONTACT",
+        "paragraphs": [
+          "Support: support@bracketworks.app",
+          "Privacy: support@bracketworks.app",
+          "Legal notices: [Insert Legal Notice Email]",
+          "Mailing address: [Insert Legal Mailing Address]"
+        ]
+      }
+    ]
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "version": "2.4",
+    "intro": [
+      "Effective Date: [Insert Date]",
+      "Draft Version: 2.4",
+      "This Privacy Policy describes how [Insert Exact Legal Entity Name], operating as BracketWorks, collects, uses, stores, shares, and protects information when users access the BracketWorks website, application, Bowler View, shared tournament pages, reports, exports, and related services."
+    ],
+    "sections": [
+      {
+        "heading": "1. ROLES AND RESPONSIBILITY",
+        "paragraphs": [
+          "BracketWorks provides a cloud-hosted tournament management platform.",
+          "Tournament operators decide what bowler and tournament information is entered and are responsible for ensuring that they have authority and any consent required to enter, use, and publish that information.",
+          "BracketWorks processes information to operate, maintain, secure, support, and improve the Services.",
+          "Depending on the context and applicable law, BracketWorks may act as a business, controller, processor, or service provider."
+        ]
+      },
+      {
+        "heading": "2. INFORMATION WE COLLECT",
+        "paragraphs": [
+          "2.1 Account and Organization Information",
+          "BracketWorks may collect:",
+          "a. names;",
+          "b. email addresses;",
+          "c. usernames;",
+          "d. hashed passwords;",
+          "e. organization or bowling-center information;",
+          "f. roles and permissions;",
+          "g. account preferences;",
+          "h. subscription status;",
+          "i. acceptance records; and",
+          "j. account activity.",
+          "2.2 Tournament and Participant Information",
+          "Operators may enter:",
+          "a. bowler names;",
+          "b. USBC or other membership numbers;",
+          "c. squad assignments;",
+          "d. tournament participation;",
+          "e. entry-fee records;",
+          "f. scores;",
+          "g. bracket results;",
+          "h. side-pot information;",
+          "i. payout amounts;",
+          "j. division or eligibility information; and",
+          "k. related tournament records.",
+          "Operators should avoid entering unnecessary sensitive information.",
+          "2.4 Billing Information",
+          "Payment processors may collect payment-card and billing information.",
+          "BracketWorks may receive limited information such as:",
+          "a. billing name and email;",
+          "b. subscription plan;",
+          "c. transaction and payment status;",
+          "d. card brand;",
+          "e. expiration information;",
+          "f. last four digits;",
+          "g. invoices; and",
+          "h. payment history.",
+          "BracketWorks does not store full payment-card numbers.",
+          "2.4 Technical, Security, and Usage Information",
+          "BracketWorks may automatically collect:",
+          "a. IP address;",
+          "b. browser type;",
+          "c. device type;",
+          "d. operating system;",
+          "e. pages and features used;",
+          "f. timestamps;",
+          "g. session information;",
+          "h. error and performance data;",
+          "i. login and security events;",
+          "j. audit logs;",
+          "k. referral information; and",
+          "l. approximate location derived from IP address.",
+          "2.5 Communications and Support",
+          "BracketWorks may retain support requests, emails, feedback, bug reports, and other communications."
+        ]
+      },
+      {
+        "heading": "3. HOW WE USE INFORMATION",
+        "paragraphs": [
+          "BracketWorks may use information to:",
+          "a. provide tournament, bracket, score, side-pot, payout, report, export, and Bowler View features;",
+          "b. authenticate users;",
+          "c. manage accounts, organizations, roles, permissions, and subscriptions;",
+          "d. process billing and maintain records;",
+          "e. send service-related communications;",
+          "f. provide customer support;",
+          "g. troubleshoot errors;",
+          "h. monitor security and prevent abuse;",
+          "i. investigate suspicious activity;",
+          "j. protect tournament integrity;",
+          "k. maintain logs and backups;",
+          "l. improve features and usability;",
+          "m. analyze performance and usage;",
+          "n. enforce agreements; and",
+          "o. comply with legal, accounting, tax, and regulatory obligations.",
+          "BracketWorks does not sell bowler personal information.",
+          "BracketWorks does not use bowler data for third-party targeted advertising."
+        ]
+      },
+      {
+        "heading": "4. COOKIES, LOCAL STORAGE, AND ANALYTICS",
+        "paragraphs": [
+          "BracketWorks may use cookies, local storage, and similar technologies for:",
+          "a. authentication;",
+          "b. session management;",
+          "c. security;",
+          "d. fraud prevention;",
+          "e. preferences;",
+          "f. performance;",
+          "g. error diagnosis; and",
+          "h. analytics.",
+          "Blocking necessary cookies may prevent login or other core functionality.",
+          "BracketWorks may use first-party or privacy-conscious analytics tools. Before publication, BracketWorks should identify the actual analytics provider and determine whether any consent control is required."
+        ]
+      },
+      {
+        "heading": "5. HOW WE SHARE INFORMATION",
+        "paragraphs": [
+          "BracketWorks may share limited information with service providers that support:",
+          "a. cloud hosting;",
+          "b. databases;",
+          "c. authentication;",
+          "d. email delivery;",
+          "e. payment processing;",
+          "f. analytics;",
+          "g. error monitoring;",
+          "h. security;",
+          "i. customer support; and",
+          "j. infrastructure operations.",
+          "These providers may process information only as needed to provide their services, subject to applicable agreements and law.",
+          "BracketWorks may also disclose information:",
+          "a. when required by law or legal process;",
+          "b. to respond to lawful government requests;",
+          "c. to protect users, BracketWorks, or the public;",
+          "d. to investigate fraud, abuse, or security threats;",
+          "e. in connection with a merger, financing, acquisition, reorganization, bankruptcy, or sale of assets; or",
+          "f. with the user’s direction or consent."
+        ]
+      },
+      {
+        "heading": "6. PUBLIC AND SHARED TOURNAMENT INFORMATION",
+        "paragraphs": [
+          "Operators may publish or share tournament pages displaying names, brackets, scores, standings, results, or payout-related information.",
+          "Anyone with access to those pages or links may be able to view and further share the displayed information.",
+          "Operators control whether these views are enabled and are responsible for having authority to publish the information."
+        ]
+      },
+      {
+        "heading": "7. DATA STORAGE AND SECURITY",
+        "paragraphs": [
+          "BracketWorks stores information using cloud infrastructure and service providers selected to operate the Services.",
+          "BracketWorks uses reasonable administrative, technical, and organizational safeguards designed to protect information. No system can be guaranteed completely secure.",
+          "Operators are responsible for strong passwords, limiting staff access, removing former users, verifying information, and maintaining independent records when appropriate."
+        ]
+      },
+      {
+        "heading": "8. SUPPORT AND ADMINISTRATIVE ACCESS",
+        "paragraphs": [
+          "Authorized BracketWorks personnel may access limited account, billing, technical, and tournament information when reasonably necessary for support, security, troubleshooting, abuse investigation, legal compliance, service operations, or improvement.",
+          "Access should be limited to personnel with a legitimate business need."
+        ]
+      },
+      {
+        "heading": "9. DATA RETENTION, DELETION, EXPORTS, AND BACKUPS",
+        "paragraphs": [
+          "BracketWorks retains information for as long as reasonably necessary to provide the Services, maintain records, comply with legal obligations, resolve disputes, enforce agreements, protect security, and prevent fraud.",
+          "BracketWorks should maintain an internal retention schedule. The following starting periods are recommended and must be confirmed against actual technical and legal requirements before publication:",
+          "a. active account information — while the account remains active;",
+          "b. cancelled account information — through the applicable export and closure period;",
+          "c. tournament records — until deleted by an authorized operator, closed under the account-retention process, or retained for a documented legal or operational reason;",
+          "d. support communications — approximately two to three years;",
+          "e. authentication, security, and audit logs — approximately twelve months, subject to security needs;",
+          "f. billing, tax, and transaction records — for the period required by applicable accounting and tax rules;",
+          "g. legal acceptance records — for the life of the account and an additional reasonable limitations period; and",
+          "h. backups — approximately thirty to ninety days through routine rotation, unless a legal hold or security investigation requires longer retention.",
+          "These periods may differ when required by law, contract, fraud prevention, security, litigation hold, or operational necessity.",
+          "Operators may be able to export or delete certain records through the Services.",
+          "Deletion may not immediately remove information from backups, logs, audit records, invoices, fraud-prevention records, legal holds, or disaster-recovery systems.",
+          "Backup copies may remain for a limited period before routine deletion or overwriting."
+        ]
+      },
+      {
+        "heading": "10. CHILDREN AND JUNIOR BOWLERS",
+        "paragraphs": [
+          "BracketWorks does not knowingly permit children under 13 to create operator or administrator accounts.",
+          "Adult tournament operators may enter limited tournament information concerning junior bowlers only when they have appropriate authority and any parental consent required by law.",
+          "Operators should avoid entering unnecessary contact information, birth dates, addresses, or other sensitive information concerning minors.",
+          "Operators should use additional care before publishing a junior bowler’s full name, membership number, payout information, or other information in a public view.",
+          "A parent or legal guardian seeking access, correction, or deletion of information concerning a child may contact the tournament operator and BracketWorks.",
+          "BracketWorks may remove or restrict junior-bowler information when reasonably necessary to comply with law or protect a child’s privacy."
+        ]
+      },
+      {
+        "heading": "11. PRIVACY, CORRECTION, AND PUBLIC-RESULT REQUESTS",
+        "paragraphs": [
+          "Individuals may contact BracketWorks regarding inaccurate, unauthorized, unsafe, or overly exposed information in a public or shared tournament view.",
+          "BracketWorks may:",
+          "a. direct tournament-result disputes to the operator;",
+          "b. temporarily restrict or unpublish disputed information;",
+          "c. correct obvious platform or data-entry errors;",
+          "d. remove information concerning a minor when reasonably necessary;",
+          "e. request proof of identity, parental authority, or organizational authority; or",
+          "f. preserve private records while removing information from public display.",
+          "BracketWorks is not required to adjudicate tournament disputes merely because information is displayed through the Services."
+        ]
+      },
+      {
+        "heading": "12. PRIVACY RIGHTS AND REQUESTS",
+        "paragraphs": [
+          "Depending on location, individuals may have rights to request:",
+          "a. access;",
+          "b. correction;",
+          "c. deletion;",
+          "d. portability;",
+          "e. limitation of processing;",
+          "f. objection; or",
+          "g. information about data practices.",
+          "Bowlers should generally contact the tournament operator first because the operator determines what tournament information is entered or published.",
+          "Individuals may also contact BracketWorks at support@bracketworks.app.",
+          "BracketWorks may need to verify identity and authority before fulfilling a request."
+        ]
+      },
+      {
+        "heading": "13. STATE PRIVACY NOTICES",
+        "paragraphs": [
+          "Certain U.S. state privacy laws may provide additional rights.",
+          "BracketWorks does not sell personal information and does not process bowler information for third-party targeted advertising.",
+          "Before publication, BracketWorks should confirm whether it meets any statutory applicability thresholds and whether state-specific notices or appeal procedures are required."
+        ]
+      },
+      {
+        "heading": "14. INTERNATIONAL USE",
+        "paragraphs": [
+          "BracketWorks is intended primarily for use in the United States unless otherwise agreed in writing.",
+          "Users outside the United States understand that information may be processed in the United States and other locations where BracketWorks or its service providers operate."
+        ]
+      },
+      {
+        "heading": "15. EMAIL COMMUNICATIONS",
+        "paragraphs": [
+          "BracketWorks may send transactional and service-related emails concerning accounts, security, subscriptions, support, tournaments, and legal notices.",
+          "Marketing emails, if any, will include legally required opt-out methods."
+        ]
+      },
+      {
+        "heading": "16. SECURITY INCIDENT RESPONSE",
+        "paragraphs": [
+          "If BracketWorks identifies a security incident involving personal information, BracketWorks will investigate, contain, document, and remediate the incident as reasonably appropriate.",
+          "BracketWorks will provide notices to affected individuals, customers, service providers, or authorities when required by applicable law."
+        ]
+      },
+      {
+        "heading": "17. CHANGES TO THIS PRIVACY POLICY",
+        "paragraphs": [
+          "BracketWorks may update this Privacy Policy.",
+          "The current version will identify its effective date and version number.",
+          "BracketWorks may provide additional notice for material changes."
+        ]
+      },
+      {
+        "heading": "18. CONTACT",
+        "paragraphs": [
+          "Privacy questions and requests:",
+          "support@bracketworks.app",
+          "Legal entity:",
+          "[Insert Exact Legal Entity Name]",
+          "Mailing address:",
+          "[Insert Legal Mailing Address]"
+        ]
+      }
+    ]
+  },
+  "operatorTerms": {
+    "title": "Tournament Operator Terms",
+    "version": "2.4",
+    "intro": [
+      "Effective Date: [Insert Date]",
+      "Draft Version: 2.4",
+      "These Tournament Operator Terms apply to any individual, bowling center, tournament director, association, organization, or other entity that creates, manages, administers, publishes, or operates a tournament through BracketWorks (“Operator”).",
+      "These Tournament Operator Terms supplement the Terms of Service."
+    ],
+    "sections": [
+      {
+        "heading": "1. OPERATOR AUTHORITY",
+        "paragraphs": [
+          "Operator represents that it has authority to:",
+          "a. create and manage tournaments;",
+          "b. enter participant information;",
+          "c. configure entry fees and prize structures;",
+          "d. publish tournament views;",
+          "e. manage staff access; and",
+          "f. administer tournament operations.",
+          "If Operator acts for an organization, Operator represents that it is authorized to bind or act for that organization."
+        ]
+      },
+      {
+        "heading": "2. ACCESS GRANT",
+        "paragraphs": [
+          "Subject to these terms and payment of applicable fees, BracketWorks grants Operator a limited, nonexclusive, nontransferable, revocable right to access and use BracketWorks for Operator’s own authorized tournament administration."
+        ]
+      },
+      {
+        "heading": "3. ORGANIZATION AND STAFF ACCOUNTS",
+        "paragraphs": [
+          "Operator is responsible for:",
+          "a. designating authorized users;",
+          "b. assigning appropriate roles;",
+          "c. removing access when staff leave or no longer require access;",
+          "d. preventing shared credentials;",
+          "e. monitoring staff activity; and",
+          "f. notifying BracketWorks of unauthorized access.",
+          "The organization, rather than an individual staff member, may control tournaments and records created on its behalf."
+        ]
+      },
+      {
+        "heading": "4. RESTRICTIONS",
+        "paragraphs": [
+          "Operator may not:",
+          "a. sell, resell, sublicense, rent, lease, or commercially exploit access without written permission;",
+          "b. copy, modify, reverse engineer, decompile, disassemble, scrape, or attempt to extract source code or underlying data structures;",
+          "c. remove proprietary notices or platform attribution;",
+          "d. provide outsourced tournament-management services to unrelated third parties unless expressly permitted;",
+          "e. use BracketWorks for illegal gambling, fraud, collusion, score manipulation, or unlawful prize activity; or",
+          "f. violate applicable law."
+        ]
+      },
+      {
+        "heading": "5. OPERATOR RESPONSIBILITIES",
+        "paragraphs": [
+          "Operator is solely responsible for:",
+          "a. accuracy of bowler, score, bracket, side-pot, entry-fee, payout, and tournament information;",
+          "b. confirming bona fide competition;",
+          "c. creating and enforcing tournament rules;",
+          "d. confirming participant eligibility;",
+          "e. establishing protest and dispute procedures;",
+          "f. collecting entry fees;",
+          "g. distributing prizes or refunds;",
+          "h. verifying calculations;",
+          "i. maintaining required records;",
+          "j. obtaining permissions and consents;",
+          "k. compliance with law; and",
+          "l. managing staff security."
+        ]
+      },
+      {
+        "heading": "6. OPERATOR DATA",
+        "paragraphs": [
+          "Operator retains its rights in Operator Data.",
+          "Operator grants BracketWorks the limited rights described in the Terms of Service to process Operator Data for providing, supporting, securing, and improving the Services.",
+          "Operator represents that it has authority to submit, process, and publish Operator Data."
+        ]
+      },
+      {
+        "heading": "7. JUNIOR BOWLERS",
+        "paragraphs": [
+          "When entering information concerning junior bowlers, Operator must:",
+          "a. obtain any consent required by law;",
+          "b. avoid collecting unnecessary information;",
+          "c. limit access to authorized users;",
+          "d. carefully evaluate what information is publicly displayed;",
+          "e. respond to parent or guardian requests; and",
+          "f. comply with applicable child-privacy requirements.",
+          "Unless specifically authorized and reasonably necessary, Operator should not publicly display a junior bowler’s birth date, address, email address, phone number, full membership number, detailed payout information, or information identifying whether the bowler is under 13.",
+          "Operator should use available privacy controls, abbreviated names, or restricted views when appropriate."
+        ]
+      },
+      {
+        "heading": "8. FINANCIAL AND REGULATORY COMPLIANCE",
+        "paragraphs": [
+          "BracketWorks is a software tool and does not provide legal, financial, accounting, tax, regulatory, gambling, or gaming advice.",
+          "Operator is solely responsible for determining whether any tournament, entry fee, prize structure, payout procedure, or tax practice is lawful."
+        ]
+      },
+      {
+        "heading": "9. GAMBLING AND GAMING COMPLIANCE",
+        "paragraphs": [
+          "Operator agrees not to use BracketWorks for illegal gambling or unlawful prize activity."
+        ]
+      },
+      {
+        "heading": "10. SUBSCRIPTIONS AND BILLING",
+        "paragraphs": [
+          "Operator access may require a paid subscription.",
+          "Plans, fees, renewal terms, cancellation options, limits, and support levels will be disclosed at checkout or within the Services.",
+          "Unless otherwise stated:",
+          "a. subscriptions automatically renew;",
+          "b. cancellation prevents the next renewal;",
+          "c. paid access continues through the current billing period;",
+          "d. paid fees are non-refundable; and",
+          "e. failed payments may result in restricted or suspended access.",
+          "Displayed subscription prices do not include applicable sales, use, excise, or similar taxes unless expressly stated. Operator is responsible for applicable transaction taxes, and BracketWorks may collect and remit those taxes when required by law."
+        ]
+      },
+      {
+        "heading": "11. DATA EXPORTS, RECORDS, AND BACKUPS",
+        "paragraphs": [
+          "Where available, Operator may export certain tournament data.",
+          "Operator must maintain any independent accounting, payout, tax, association, or legal records required for its operations.",
+          "BracketWorks may retain backups, logs, invoices, security records, or legally required records as described in the Privacy Policy."
+        ]
+      },
+      {
+        "heading": "12. TOURNAMENT DISPUTES AND PARTICIPANT CLAIMS",
+        "paragraphs": [
+          "Operator is solely responsible for participant communications, score protests, eligibility challenges, bracket challenges, refunds, prize disputes, payout disputes, corrections, and final decisions.",
+          "BracketWorks is not responsible for resolving or paying participant claims."
+        ]
+      },
+      {
+        "heading": "13. CUSTOMER REFERENCES AND LOGOS",
+        "paragraphs": [
+          "BracketWorks may identify Operator as a customer or use Operator’s name or logo in marketing materials only after obtaining Operator’s prior written or electronic consent.",
+          "Operator may withdraw permission for future use by written notice. Removal from already printed or completed materials may not be immediate."
+        ]
+      },
+      {
+        "heading": "14. CONFIDENTIALITY",
+        "paragraphs": [
+          "Operator must protect nonpublic technical, pricing, roadmap, documentation, security, and business information provided by BracketWorks.",
+          "This obligation does not apply to information that is public through no breach, independently developed, rightfully received from another source, or required to be disclosed by law."
+        ]
+      },
+      {
+        "heading": "15. SUSPENSION AND TERMINATION",
+        "paragraphs": [
+          "BracketWorks may suspend or terminate Operator access for violation, nonpayment, security risk, fraud, unlawful activity, misuse, data manipulation, or material legal risk.",
+          "Where practical, BracketWorks may provide notice and an opportunity to cure. Immediate action may be taken for serious security, fraud, abuse, or legal concerns."
+        ]
+      },
+      {
+        "heading": "16. POST-TERMINATION EXPORT",
+        "paragraphs": [
+          "Unless access is terminated for fraud, unlawful activity, abuse, or security risk, Operator may be provided a limited period of [30 days recommended; confirm before publication] to export available data.",
+          "BracketWorks does not guarantee indefinite data availability after termination."
+        ]
+      },
+      {
+        "heading": "17. DELETION, UNPUBLISHING, AND RECORD RETENTION",
+        "paragraphs": [
+          "Operator acknowledges that deleting an account, deleting a tournament, removing personal information, and unpublishing a public view are separate actions.",
+          "BracketWorks may retain restricted records for security, audit, fraud prevention, participant disputes, legal obligations, accounting, tax, or enforcement purposes while removing those records from public access.",
+          "Operator must not use deletion requests to conceal fraud, manipulate tournament history, avoid payout obligations, or interfere with a legitimate investigation."
+        ]
+      },
+      {
+        "heading": "18. DISCLAIMER OF WARRANTIES",
+        "paragraphs": [
+          "THE SERVICES ARE PROVIDED “AS IS” AND “AS AVAILABLE” WITHOUT WARRANTIES OF ANY KIND.",
+          "BRACKETWORKS DOES NOT WARRANT THAT THE SERVICES WILL MEET OPERATOR’S REQUIREMENTS, OPERATE WITHOUT INTERRUPTION, BE ERROR-FREE, OR PRODUCE ACCURATE TOURNAMENT, SCORE, BRACKET, SIDE-POT, OR PAYOUT RESULTS."
+        ]
+      },
+      {
+        "heading": "19. LIMITATION OF LIABILITY",
+        "paragraphs": [
+          "TO THE MAXIMUM EXTENT PERMITTED BY LAW, BRACKETWORKS WILL NOT BE LIABLE FOR INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, EXEMPLARY, OR PUNITIVE DAMAGES, INCLUDING LOST PROFITS, LOST DATA, TOURNAMENT DISPUTES, PAYOUT DISPUTES, LOST PRIZE FUNDS, OR BUSINESS INTERRUPTION.",
+          "TO THE MAXIMUM EXTENT PERMITTED BY LAW, BRACKETWORKS’ TOTAL LIABILITY TO OPERATOR WILL NOT EXCEED THE GREATER OF:",
+          "a. one hundred dollars ($100.00); or",
+          "b. the subscription fees paid by Operator during the three months before the event giving rise to the claim."
+        ]
+      },
+      {
+        "heading": "20. INDEMNIFICATION",
+        "paragraphs": [
+          "To the extent permitted by law, Operator agrees to indemnify, defend, and hold harmless BracketWorks and its owners, officers, employees, contractors, and agents from third-party claims, damages, liabilities, fines, penalties, costs, and expenses, including reasonable attorneys’ fees, arising from:",
+          "a. Operator’s use of BracketWorks;",
+          "b. tournament operations;",
+          "c. participant claims;",
+          "d. payout disputes;",
+          "e. gambling or gaming compliance;",
+          "f. Operator Data;",
+          "g. violation of these terms; or",
+          "h. violation of law."
+        ]
+      },
+      {
+        "heading": "21. GOVERNING LAW AND DISPUTE RESOLUTION",
+        "paragraphs": [
+          "These Tournament Operator Terms are governed by Idaho law unless applicable law or a signed agreement requires otherwise."
+        ]
+      },
+      {
+        "heading": "22. ENTIRE AGREEMENT",
+        "paragraphs": [
+          "These Tournament Operator Terms, the Terms of Service, Privacy Policy, applicable order forms, accepted checkout terms, and signed written agreements constitute the agreement governing Operator’s use of BracketWorks."
+        ]
+      },
+      {
+        "heading": "23. OPERATOR ACKNOWLEDGMENT",
+        "paragraphs": [
+          "By creating, managing, or publishing a tournament through BracketWorks, Operator acknowledges that it has read, understands, and agrees to these Tournament Operator Terms.",
+          "For online acceptance, BracketWorks should record:",
+          "a. accepting user;",
+          "b. organization;",
+          "c. date and time;",
+          "d. accepted version; and",
+          "e. acceptance source.",
+          "A separate signature should be used only when BracketWorks requires a signed commercial or enterprise agreement."
+        ]
+      }
+    ]
+  },
+  "acceptableUse": {
+    "title": "Acceptable Use",
+    "version": "2.4",
+    "intro": [
+      "This policy is section 7 of the BracketWorks Terms of Service."
+    ],
+    "sections": [
+      {
+        "heading": "7. ACCEPTABLE USE AND TOURNAMENT INTEGRITY",
+        "paragraphs": [
+          "You may use BracketWorks only for lawful purposes. You may not:",
+          "a. enter false, inaccurate, or misleading bowler, score, financial, payout, or tournament information;",
+          "b. manipulate bracket results, seedings, score entries, payouts, or advancement contrary to actual tournament outcomes;",
+          "c. engage in collusion, fraud, match fixing, score manipulation, or prearranged results;",
+          "d. use BracketWorks for a tournament not determined by bona fide competition;",
+          "e. gain or attempt to gain unauthorized access to an account, system, or data;",
+          "f. scrape, overload, disrupt, probe, or interfere with the Services;",
+          "g. reverse engineer, decompile, disassemble, or attempt to extract source code;",
+          "h. introduce malware, harmful code, or automated abuse;",
+          "i. impersonate another person or organization; or",
+          "j. use BracketWorks in violation of applicable law."
+        ]
+      }
+    ]
+  }
+}

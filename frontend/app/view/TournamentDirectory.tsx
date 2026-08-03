@@ -1,11 +1,11 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Activity, ArrowRight, Calendar, MapPin, Radio, Trophy, Users } from 'lucide-react'
+import { ArrowRight, Calendar, CalendarDays, Globe2, MapPin, Radio, RefreshCw, Search, Trophy, Users, Zap } from 'lucide-react'
 import { buildApiUrl } from '../lib/api'
 import styles from './tournament-directory.module.css'
-import viewStyles from './[tournamentId]/view.module.css'
 
 const DIRECTORY_POLL_INTERVAL_MS = 15000
 const HEARTBEAT_PULSE_MS = 3200
@@ -27,6 +27,8 @@ interface PublicTournamentSummary {
 interface PublicTournamentDirectoryResponse {
   tournaments?: PublicTournamentSummary[]
 }
+
+type DirectoryFilter = 'all' | 'current' | 'upcoming'
 
 function parseDateOnly(value?: string | null) {
   if (!value) return null
@@ -62,11 +64,9 @@ function isCurrentTournament(tournament: PublicTournamentSummary, today = startO
 }
 
 export default function TournamentDirectory({
-  title = 'Live Tournament Directory',
   subtitle = 'Select a tournament to open the live public view.',
   notFoundRef,
 }: {
-  title?: string
   subtitle?: string
   notFoundRef?: string
 }) {
@@ -77,6 +77,8 @@ export default function TournamentDirectory({
   const [heartbeatActive, setHeartbeatActive] = useState(false)
   const [lastCheckedAt, setLastCheckedAt] = useState<Date | null>(null)
   const [recentUpdates, setRecentUpdates] = useState<Record<number, number>>({})
+  const [query, setQuery] = useState('')
+  const [filter, setFilter] = useState<DirectoryFilter>('all')
   const previousFingerprintRef = useRef<Record<number, string>>({})
   const heartbeatTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -215,11 +217,17 @@ export default function TournamentDirectory({
 
   const totalTournamentCount = grouped.current.length + grouped.upcoming.length
 
-  const heartbeatLabel = heartbeatActive
-    ? 'Live update detected'
-    : isPolling
-      ? 'Checking for updates...'
-      : 'Heartbeat monitor active'
+  const filteredGrouped = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase()
+    const matches = (tournament: PublicTournamentSummary) => !normalizedQuery ||
+      tournament.name.toLowerCase().includes(normalizedQuery) ||
+      (tournament.location ?? '').toLowerCase().includes(normalizedQuery)
+
+    return {
+      current: filter === 'upcoming' ? [] : grouped.current.filter(matches),
+      upcoming: filter === 'current' ? [] : grouped.upcoming.filter(matches),
+    }
+  }, [filter, grouped, query])
 
   const renderTournamentList = (items: PublicTournamentSummary[]) => (
     <ul className={styles.grid}>
@@ -231,16 +239,18 @@ export default function TournamentDirectory({
         return (
           <li key={tournament.id} className={styles.card}>
             <Link href={href} className={styles.cardLink}>
-              <div className={styles.cardTop}>
-                <span className={styles.cardIcon} aria-hidden="true"><Trophy /></span>
-                <div className={styles.cardTitle}>{tournament.name}</div>
-                {recentlyUpdated ? <div className={styles.updatedPill}><Radio aria-hidden="true" />Live update</div> : null}
+              <span className={styles.cardIcon} aria-hidden="true"><Trophy /></span>
+              <div className={styles.cardContent}>
+                <div className={styles.cardTop}>
+                  <div className={styles.cardTitle}>{tournament.name}</div>
+                  {recentlyUpdated ? <div className={styles.updatedPill}><Radio aria-hidden="true" />Live update</div> : null}
+                </div>
+                <div className={styles.metaRow}>
+                  <span><MapPin aria-hidden="true" />{tournament.location || 'Location TBD'}</span>
+                  {typeof tournament.squad_count === 'number' ? <span><Users aria-hidden="true" />{tournament.squad_count} squads</span> : null}
+                </div>
+                {dateRange ? <div className={styles.metaDate}><Calendar aria-hidden="true" />{dateRange}</div> : null}
               </div>
-              <div className={styles.metaRow}>
-                <span><MapPin aria-hidden="true" />{tournament.location || 'Location TBD'}</span>
-                {typeof tournament.squad_count === 'number' ? <span><Users aria-hidden="true" />{tournament.squad_count} squads</span> : null}
-              </div>
-              {dateRange ? <div className={styles.metaDate}><Calendar aria-hidden="true" />{dateRange}</div> : null}
               <div className={styles.openHint}>Open Live View <ArrowRight aria-hidden="true" /></div>
             </Link>
           </li>
@@ -250,60 +260,51 @@ export default function TournamentDirectory({
   )
 
   return (
-    <div className={viewStyles.page}>
-      <header className={viewStyles.header}>
-        <div className={`${viewStyles.headerInner} ${styles.fullBleedHeaderInner}`}>
-          <div className={`${viewStyles.headerTop} ${styles.fullBleedHeaderTop}`}>
-            <div className={viewStyles.brandCol}>
-              {/* eslint-disable-next-line @next/next/no-img-element -- static branding mark is intentionally rendered as plain img in the public header */}
-              <img
-                src="/logo_no_text.svg"
-                alt="BracketWorks"
-                className={viewStyles.brandLogo}
-              />
-              <div className={viewStyles.brandText}>
-                <p className={viewStyles.brandEyebrow}>BracketWorks · Public Tournament Directory</p>
-                <p className={viewStyles.brandSubline}>Browse live public tournaments</p>
-              </div>
-            </div>
-
-            <div className={`${viewStyles.tournamentCol} ${styles.fullBleedTournamentCol}`}>
-              <h1 className={viewStyles.tournamentName}>{title}</h1>
-              <p className={viewStyles.tournamentLocation}>{subtitle}</p>
-              <div className={styles.heartbeatRow} aria-live="polite">
-                <span className={`${styles.heartbeatDot} ${heartbeatActive ? styles.heartbeatDotActive : ''}`} />
-                <span className={styles.heartbeatText}>{heartbeatLabel}</span>
-                {lastCheckedAt ? (
-                  <span className={styles.heartbeatTime}>
-                    Last check {lastCheckedAt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' })}
-                  </span>
-                ) : null}
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <section className={styles.wrap}>
+    <div className={styles.page}>
+      <main className={styles.wrap}>
         <div className={styles.heroShell}>
           <div className={styles.heroContent}>
-            <p className={styles.heroEyebrow}><Activity aria-hidden="true" />Public Tournament Directory</p>
-            <h2 className={styles.heroTitle}>Open current brackets, scores, and side pots without signing in.</h2>
+            <div className={styles.brandLockup}>
+              <Image src="/logo_no_text.svg" alt="BracketWorks" width={46} height={46} className={styles.brandLogo} priority />
+              <div>
+                <p className={styles.brandName}>BracketWorks</p>
+                <h1 className={styles.heroEyebrow}>Public Tournament Directory</h1>
+              </div>
+            </div>
+            <p className={styles.heroSubtitle}>{subtitle}</p>
             <p className={styles.heroBody}>Use this directory to jump into any active public tournament page. Share a direct link with bowlers so they can follow results live from the concourse or their phone.</p>
           </div>
           <div className={styles.heroStats}>
             <div className={styles.statCard}>
+              <span className={styles.statIcon}><Globe2 aria-hidden="true" /></span>
               <span className={styles.statValue}>{totalTournamentCount}</span>
               <span className={styles.statLabel}>Public tournaments</span>
             </div>
             <div className={styles.statCard}>
+              <span className={styles.statIcon}><Zap aria-hidden="true" /></span>
               <span className={styles.statValue}>{grouped.current.length}</span>
               <span className={styles.statLabel}>Current</span>
             </div>
             <div className={styles.statCard}>
+              <span className={styles.statIcon}><CalendarDays aria-hidden="true" /></span>
               <span className={styles.statValue}>{grouped.upcoming.length}</span>
               <span className={styles.statLabel}>Upcoming</span>
             </div>
+          </div>
+        </div>
+
+        <div className={styles.toolbar}>
+          <label className={styles.searchBox}>
+            <Search aria-hidden="true" />
+            <span className={styles.srOnly}>Search tournaments</span>
+            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search tournaments..." />
+          </label>
+          <div className={styles.filters} aria-label="Filter tournaments">
+            {(['all', 'current', 'upcoming'] as const).map((value) => (
+              <button key={value} type="button" className={filter === value ? styles.filterActive : ''} onClick={() => setFilter(value)}>
+                {value.charAt(0).toUpperCase() + value.slice(1)}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -317,32 +318,36 @@ export default function TournamentDirectory({
           <p className={styles.stateText}>Loading tournaments...</p>
         ) : error ? (
           <p className={styles.stateError}>{error}</p>
-        ) : tournaments.length === 0 ? (
-          <p className={styles.stateText}>No public tournaments are available right now.</p>
         ) : (
           <>
-            <div className={styles.section}>
+            <div className={`${styles.section} ${filter === 'upcoming' ? styles.sectionHidden : ''}`}>
               <div className={styles.sectionHeader}>
-                <h2 className={styles.sectionTitle}>Current Tournaments</h2>
-                <span className={styles.sectionCount}>{grouped.current.length}</span>
+                <h2 className={styles.sectionTitle}><span className={styles.sectionIcon}><Trophy /></span>Current Tournaments</h2>
+                <span className={styles.sectionCount}>{filteredGrouped.current.length}</span>
               </div>
-              {grouped.current.length > 0 ? renderTournamentList(grouped.current) : (
-                <p className={styles.emptySection}>No current tournaments.</p>
+              {filteredGrouped.current.length > 0 ? renderTournamentList(filteredGrouped.current) : (
+                <p className={styles.emptySection}><Trophy aria-hidden="true" />No current tournaments found.</p>
               )}
             </div>
 
-            <div className={styles.section}>
+            <div className={`${styles.section} ${filter === 'current' ? styles.sectionHidden : ''}`}>
               <div className={styles.sectionHeader}>
-                <h2 className={styles.sectionTitle}>Upcoming Tournaments</h2>
-                <span className={styles.sectionCount}>{grouped.upcoming.length}</span>
+                <h2 className={styles.sectionTitle}><span className={styles.sectionIcon}><CalendarDays /></span>Upcoming Tournaments</h2>
+                <span className={styles.sectionCount}>{filteredGrouped.upcoming.length}</span>
               </div>
-              {grouped.upcoming.length > 0 ? renderTournamentList(grouped.upcoming) : (
-                <p className={styles.emptySection}>No upcoming tournaments.</p>
+              {filteredGrouped.upcoming.length > 0 ? renderTournamentList(filteredGrouped.upcoming) : (
+                <p className={styles.emptySection}><CalendarDays aria-hidden="true" />No upcoming tournaments.</p>
               )}
             </div>
           </>
         )}
-      </section>
+        {lastCheckedAt ? (
+          <button className={styles.lastChecked} type="button" onClick={() => void loadDirectory(true)} disabled={isPolling}>
+            <RefreshCw aria-hidden="true" className={isPolling ? styles.spinning : heartbeatActive ? styles.heartbeatDotActive : ''} />
+            Last refreshed {lastCheckedAt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+          </button>
+        ) : null}
+      </main>
     </div>
   )
 }

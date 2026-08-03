@@ -178,7 +178,7 @@ export default function VerifyResetPage() {
               height="48"
               viewBox="0 0 24 24"
               fill="none"
-              stroke="#FF6A00"
+              stroke="currentColor"
               strokeWidth="1.5"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -189,7 +189,7 @@ export default function VerifyResetPage() {
               {/* Lock */}
               <rect x="8" y="11" width="8" height="6" rx="1" />
               <path d="M10 11V9a2 2 0 0 1 4 0v2" />
-              <circle cx="12" cy="14" r="0.5" fill="#FF6A00" />
+              <circle cx="12" cy="14" r="0.5" fill="currentColor" />
             </svg>
           </div>
         </div>
@@ -319,7 +319,7 @@ export default function VerifyResetPage() {
 
         <div className="rp-req-back-wrap">
           <span className="rp-req-back-line" />
-          <Link href="/login" className="rp-req-back-link">← Back to Log In</Link>
+          <Link href="/login" className="rp-req-back-link">Back to Log In</Link>
           <span className="rp-req-back-line" />
         </div>
 

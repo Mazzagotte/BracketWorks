@@ -9,12 +9,19 @@ import { ErrorBoundary } from '../app/components/ErrorBoundary';
 import { DevAuthStatus } from '../app/components/DevAuthStatus';
 import { TimeSlotReminderModal } from '../app/components/TimeSlotReminderModal';
 import DevNoticeBanner from '../app/components/DevNoticeBanner';
+import MobileCompatibilityNotice, { useMobileCompatibilityNotice } from '../app/components/MobileCompatibilityNotice';
+import WelcomeOnboardingModal from '../app/components/WelcomeOnboardingModal';
+import AnnouncementNotice from '../app/components/AnnouncementNotice';
+import LegalDisclosureModal from '../app/components/LegalDisclosureModal';
 import { useAuth } from '../app/lib/auth-context';
-import { isHandheldViewport } from '../app/lib/responsive';
+import { usesNavigationDrawerViewport } from '../app/lib/responsive';
 import { resetScrollLocks, setBodyInteractionState } from '../app/utils/modalUtils';
 import styles from '../app/layout.module.css';
 
-const PUBLIC_ROUTES = new Set(['/', '/login', '/signup', '/verify-email']);
+const PUBLIC_ROUTES = new Set([
+  '/', '/login', '/signup', '/verify-email',
+  '/terms', '/privacy', '/operator-terms', '/acceptable-use',
+]);
 
 function isPublicRoute(pathname: string): boolean {
   if (PUBLIC_ROUTES.has(pathname)) {
@@ -24,30 +31,38 @@ function isPublicRoute(pathname: string): boolean {
   return pathname === '/reset-password'
     || pathname.startsWith('/reset-password/')
     || pathname === '/view'
-    || pathname.startsWith('/view/');
+    || pathname.startsWith('/view/')
+    || pathname === '/demo'
+    || pathname.startsWith('/demo/');
 }
 
 function ClientLayout({ children }: { children: ReactNode }) {
-  const { isUserAuthenticated, currentUser, isAuthInitialized } = useAuth();
+  const { isUserAuthenticated, currentUser, isAuthInitialized, logoutUser } = useAuth();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
   const [firstName, setFirstName] = useState<string | undefined>(undefined);
   const [isMobile, setIsMobile] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [announcementOpen, setAnnouncementOpen] = useState(false);
+  const [legalBlocked, setLegalBlocked] = useState(true);
   const [currentPage, setCurrentPage] = useState('');
   const [mounted, setMounted] = useState(false);
   const wasAuthenticated = useRef(false);
   const currentPath = pathname || '/';
   const isPublicPath = isPublicRoute(currentPath);
   const isEmbeddedModalRoute = searchParams.get('modal') === '1';
+  const mobileCompatibilityNotice = useMobileCompatibilityNotice(currentPath);
+  const shouldHoldProtectedContent = !isPublicPath
+    && !isEmbeddedModalRoute
+    && (!isAuthInitialized || !isUserAuthenticated || legalBlocked);
 
   useEffect(() => {
     setMounted(true);
     resetScrollLocks();
 
     const checkMobile = () => {
-      setIsMobile(isHandheldViewport());
+      setIsMobile(usesNavigationDrawerViewport());
     };
 
     checkMobile();
@@ -62,6 +77,8 @@ function ClientLayout({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (isUserAuthenticated) {
       wasAuthenticated.current = true;
+    } else {
+      setLegalBlocked(true);
     }
   }, [isUserAuthenticated]);
 
@@ -91,7 +108,7 @@ function ClientLayout({ children }: { children: ReactNode }) {
       };
     }
 
-    if (isMobile && mobileNavOpen) {
+    if (mobileCompatibilityNotice.isOpen || (isMobile && mobileNavOpen)) {
       setBodyInteractionState({ scrollLocked: true, touchLocked: true });
     } else {
       setBodyInteractionState({ scrollLocked: false, touchLocked: false });
@@ -100,7 +117,7 @@ function ClientLayout({ children }: { children: ReactNode }) {
     return () => {
       setBodyInteractionState({ scrollLocked: false, touchLocked: false });
     };
-  }, [isMobile, isPublicPath, mobileNavOpen]);
+  }, [isMobile, isPublicPath, mobileCompatibilityNotice.isOpen, mobileNavOpen]);
 
   useEffect(() => {
     return () => {
@@ -125,7 +142,9 @@ function ClientLayout({ children }: { children: ReactNode }) {
       <ErrorBoundary>
         <div id="main-content">
           <ErrorBoundary>
-            {children}
+            {isPublicPath || isEmbeddedModalRoute ? children : (
+              <div className={styles.gateLoading} role="status">Checking account requirements...</div>
+            )}
           </ErrorBoundary>
         </div>
       </ErrorBoundary>
@@ -173,7 +192,7 @@ function ClientLayout({ children }: { children: ReactNode }) {
         className={`${styles.main} ${mainLayoutClass} ${isMobile && showAuthenticatedShell ? styles.mainMobileAuth : ''}`}
       >
         {/* Development notice banner - render at top of main content */}
-        {showAuthenticatedShell && (
+        {showAuthenticatedShell && !legalBlocked && (
           <div className={styles.devNoticeWrap}>
             <DevNoticeBanner />
           </div>
@@ -181,13 +200,32 @@ function ClientLayout({ children }: { children: ReactNode }) {
 
         <div className={contentCardClass}>
           <ErrorBoundary>
-            {children}
+            {shouldHoldProtectedContent ? (
+              <div className={styles.gateLoading} role="status">Checking account requirements...</div>
+            ) : children}
           </ErrorBoundary>
         </div>
       </main>
 
-      <DevAuthStatus />
-      <TimeSlotReminderModal />
+      {!legalBlocked && <DevAuthStatus />}
+      {!legalBlocked && <TimeSlotReminderModal />}
+      <WelcomeOnboardingModal
+        enabled={showAuthenticatedShell && !legalBlocked && !mobileCompatibilityNotice.isOpen && !announcementOpen}
+        userId={currentUser?.id}
+      />
+      <AnnouncementNotice enabled={showAuthenticatedShell && !legalBlocked && !mobileCompatibilityNotice.isOpen} onVisibilityChange={setAnnouncementOpen} />
+      <MobileCompatibilityNotice
+        open={showAuthenticatedShell && !legalBlocked && mobileCompatibilityNotice.isOpen}
+        onContinue={mobileCompatibilityNotice.dismiss}
+      />
+      <LegalDisclosureModal
+        enabled={showAuthenticatedShell}
+        onBlockingChange={setLegalBlocked}
+        onLogout={() => {
+          logoutUser();
+          router.push('/login');
+        }}
+      />
     </ErrorBoundary>
   );
 }

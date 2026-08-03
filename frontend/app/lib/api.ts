@@ -313,7 +313,7 @@ export class ApiClient {
           duration,
         }
 
-        if (response.status === 401 || response.status === 403) {
+        if (response.status === 401 || response.status === 403 || response.status === 428) {
           logger.warn('API request unauthorized', logContext)
         } else {
           logger.error('API request failed', logContext)

@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 from app.api.v1 import admin, health, bowlers, brackets, tournaments, users, squads, bracket_settings, scores, payouts, public
 from app.core.config import settings
 from app.core.rate_limit import RateLimiter
+from app.core import legal_disclosure, utils
 
 app = FastAPI(title="BracketWorks API", version="0.0.1", redirect_slashes=False)
 
@@ -32,6 +33,70 @@ rate_limiter = RateLimiter(
     redis_url=settings.REDIS_URL or None,
     key_prefix=settings.RATE_LIMIT_KEY_PREFIX,
 )
+
+LEGAL_GATE_EXACT_EXEMPTIONS = {
+    "/api/v1/users/login",
+    "/api/v1/users/login-json",
+    "/api/v1/users/signup",
+    "/api/v1/users/refresh",
+    "/api/v1/users/logout",
+    "/api/v1/users/request-password-reset",
+    "/api/v1/users/verify-reset-code",
+    "/api/v1/users/reset-password",
+    "/api/v1/users/request-email-verification",
+    "/api/v1/users/verify-email",
+    "/api/v1/users/check-username",
+    "/api/v1/users/dev-notice/accept",
+    "/api/v1/users/legal-disclosure/status",
+    "/api/v1/users/legal-disclosure/accept",
+}
+
+
+def _legal_gate_exempt(path: str) -> bool:
+    return (
+        path in LEGAL_GATE_EXACT_EXEMPTIONS
+        or path.startswith("/api/v1/public")
+        or path.startswith("/api/v1/health")
+        or not path.startswith("/api/v1/")
+    )
+
+
+@app.middleware("http")
+async def legal_disclosure_gate(request: Request, call_next):
+    if request.method == "OPTIONS" or _legal_gate_exempt(request.url.path):
+        return await call_next(request)
+
+    token = (request.headers.get("Authorization") or "").removeprefix("Bearer ").strip()
+    if not token:
+        token = (request.cookies.get(settings.ACCESS_TOKEN_COOKIE_NAME) or "").strip()
+    if not token:
+        return await call_next(request)
+
+    try:
+        payload = utils.decode_access_token(token)
+        user_id = int(payload["sub"])
+    except Exception:
+        return await call_next(request)
+
+    # Imported lazily to avoid coupling application startup to the database session factory.
+    from app.api.deps import SessionLocal
+
+    db = SessionLocal()
+    try:
+        now = users._utcnow()
+        if legal_disclosure.acceptance_required(db, user_id, now):
+            return JSONResponse(
+                status_code=428,
+                content={
+                    "detail": "Current legal disclosure acceptance is required.",
+                    "code": "legal_disclosure_required",
+                    "version": legal_disclosure.VERSION,
+                },
+            )
+    finally:
+        db.close()
+
+    return await call_next(request)
 
 
 def _extract_client_identifier(request: Request) -> str:

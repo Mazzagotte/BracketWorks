@@ -6,6 +6,7 @@ import CloseControl from '../../../components/CloseControl'
 import styles from '../styles/explain-brackets-modal.module.css'
 import modalStyles from '../../styles/modals.module.css'
 import { disableScroll, enableScroll } from '../../utils/modalUtils'
+import HelpGuideFooter from '../../components/HelpGuideFooter'
 
 interface ExplainBracketsModalProps {
   isOpen: boolean
@@ -44,7 +45,7 @@ export default function ExplainBracketsModal({ isOpen, onClose }: ExplainBracket
     <div className={modalStyles.overlay} onClick={onClose}>
       <div className={modalStyles.modal} onClick={(event) => event.stopPropagation()}>
         <div className={modalStyles.header}>
-          <h2>How Brackets Work</h2>
+          <div><p className={modalStyles.kicker}>BracketWorks Help</p><h2>Brackets Overview</h2></div>
           <CloseControl onClick={onClose} position="absolute" label="Close modal" className={modalStyles.closeButton} />
         </div>
 
@@ -71,7 +72,6 @@ export default function ExplainBracketsModal({ isOpen, onClose }: ExplainBracket
               </div>
             </div>
           </section>
-
           <section className={styles.section}>
             <h3>Tie Resolution System</h3>
             <p>
@@ -166,6 +166,7 @@ export default function ExplainBracketsModal({ isOpen, onClose }: ExplainBracket
               <li><strong>Winner highlight</strong> - Green border around the winner</li>
             </ul>
           </section>
+          <HelpGuideFooter section="brackets" />
         </div>
 
       </div>

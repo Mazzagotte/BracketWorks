@@ -89,12 +89,14 @@ export default function LoginPage() {
 
     usernameInputRef.current?.focus();
 
-    // Open reset success modal if redirected
+  }, []);
+
+  useEffect(() => {
     if (queryParams.resetSuccess) {
       openModal('resetSuccess');
       resetCountdown();
     }
-  }, []);
+  }, [openModal, queryParams.resetSuccess, resetCountdown]);
 
   const dismissResetSuccessModal = useCallback(() => {
     closeModal('resetSuccess');
@@ -111,7 +113,7 @@ export default function LoginPage() {
     }
 
     dismissResetSuccessModal();
-  }, [resetSuccessCountdown, modals.resetSuccess]);
+  }, [dismissResetSuccessModal, resetSuccessCountdown, modals.resetSuccess]);
 
   const updateFieldValue = (value: string, setter: (value: string) => void) => {
     setter(value);

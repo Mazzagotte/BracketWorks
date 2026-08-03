@@ -6,6 +6,7 @@ import CloseControl from '../../components/CloseControl'
 import styles from '../brackets/styles/explain-brackets-modal.module.css'
 import modalStyles from '../styles/modals.module.css'
 import { disableScroll, enableScroll } from '../utils/modalUtils'
+import HelpGuideFooter from '../components/HelpGuideFooter'
 
 interface ExplainDashboardModalProps {
   isOpen: boolean
@@ -41,16 +42,16 @@ export default function ExplainDashboardModal({ isOpen, onClose }: ExplainDashbo
     <div className={modalStyles.overlay} onClick={onClose}>
       <div className={modalStyles.modal} onClick={(event) => event.stopPropagation()}>
         <div className={modalStyles.header}>
-          <h2>How the Dashboard Works</h2>
+          <div><p className={modalStyles.kicker}>BracketWorks Help</p><h2>Dashboard Overview</h2></div>
           <CloseControl onClick={onClose} position="absolute" label="Close modal" className={modalStyles.closeButton} />
         </div>
 
         <div className={`${modalStyles.content} ${styles.content}`}>
           <section className={styles.section}>
-            <h3>Share QR</h3>
+            <h3>Where the Workflow Begins</h3>
             <p>
-              Generate a QR code bowlers can scan to open the live public scoreboard for the current tournament.
-              It works well on a flyer or at the front desk so everyone can follow along.
+              The Dashboard is the home for an event. It shows the active tournament and squad, summarizes progress,
+              and provides access to tournament details, squad times, settings, and public sharing.
             </p>
           </section>
 
@@ -144,6 +145,7 @@ export default function ExplainDashboardModal({ isOpen, onClose }: ExplainDashbo
               You can manage side pot payouts on the Payouts page.
             </p>
           </section>
+          <HelpGuideFooter section="setup" />
         </div>
 
       </div>

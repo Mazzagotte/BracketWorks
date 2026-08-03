@@ -33,6 +33,7 @@ import { logger } from '../lib/logger';
 import { handleTableArrowNavigation } from '../lib/tableKeyboard'
 import { getSelectedSquadId, getSelectedTournamentId, setSelectedSquad as persistSelectedSquad } from '../lib/selection-session'
 import { storage } from '../lib/storage'
+import { isPhoneWidth } from '../lib/responsive'
 import { getPayoutUnlockKey, getScoresLockKey } from '../lib/storageKeys'
 import ExplainScoresModal from './ExplainScoresModal'
 import {
@@ -317,7 +318,7 @@ export default function ScoresPage() {
   })
 
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth <= 900);
+    const checkMobile = () => setIsMobile(isPhoneWidth(window.innerWidth));
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);

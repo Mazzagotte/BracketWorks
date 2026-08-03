@@ -35,6 +35,10 @@ class AsyncJobStore:
         with self._lock:
             return self._jobs.get(job_id)
 
+    def list_recent(self, limit: int = 100) -> list[JobRecord]:
+        with self._lock:
+            return sorted(self._jobs.values(), key=lambda job: job.created_at, reverse=True)[:limit]
+
     def run(self, job_id: str, fn: Callable[[], dict[str, Any]]) -> None:
         job = self.get(job_id)
         if not job:

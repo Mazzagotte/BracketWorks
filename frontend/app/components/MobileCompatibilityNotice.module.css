@@ -1,0 +1,22 @@
+.content {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+.content p {
+  margin: 0;
+  color: var(--bw-text-muted);
+  font-size: var(--bw-type-body);
+  line-height: 1.55;
+}
+
+.content .liveViewNote {
+  color: var(--bw-text-title);
+  font-weight: var(--font-weight-semibold);
+}
+
+.continueButton {
+  min-height: 40px;
+  margin-top: var(--space-1);
+}

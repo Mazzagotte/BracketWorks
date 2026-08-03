@@ -61,6 +61,21 @@ class DevNoticeAcceptResponse(BaseModel):
     version: str
 
 
+class LegalDisclosureAcceptRequest(BaseModel):
+    version: str
+
+
+class LegalDisclosureStatus(BaseModel):
+    required: bool
+    version: str
+    title: str
+    effective_date: str
+    body: List[str]
+    acknowledgment: str
+    accepted_at: Optional[datetime] = None
+    next_required_at: Optional[datetime] = None
+
+
 class ChangelogEntry(BaseModel):
     date: str
     version: str

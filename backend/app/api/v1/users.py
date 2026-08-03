@@ -1,9 +1,12 @@
 from fastapi import BackgroundTasks, Request, Response, status, APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from sqlalchemy import or_, select
+from pydantic import BaseModel
 from ...core import models, schemas
 from ...core.config import settings
 from ...core.password_policy import PasswordPolicyError, validate_password_policy
+from ...core import legal_disclosure
 from ..deps import get_db, get_current_user, require_admin_user
 from ...services.email_service import (
     sendEmailChangeEmail,
@@ -30,6 +33,13 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 DEV_NOTICE_VERSION = "1.0"
+
+
+class AcknowledgmentPayload(BaseModel):
+    content_type: str
+    content_id: str
+    version: str
+
 
 _DUMMY_BCRYPT_HASH = "$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"
 
@@ -523,9 +533,94 @@ def accept_dev_notice(
         raise HTTPException(status_code=400, detail="Unknown notice version")
     current_user.dev_notice_version_accepted = payload.version
     current_user.dev_notice_accepted_at = _utcnow()
+    existing = db.scalar(select(models.UserAcknowledgment).where(models.UserAcknowledgment.user_id == current_user.id, models.UserAcknowledgment.content_type == "development_notice", models.UserAcknowledgment.content_id == "default", models.UserAcknowledgment.version == payload.version))
+    if not existing:
+        db.add(models.UserAcknowledgment(user_id=current_user.id, content_type="development_notice", content_id="default", version=payload.version))
     db.commit()
     logger.info("Dev notice accepted", extra={"user_id": current_user.id, "version": payload.version})
     return schemas.DevNoticeAcceptResponse(accepted=True, version=payload.version)
+
+
+@router.get("/legal-disclosure/status", response_model=schemas.LegalDisclosureStatus)
+def legal_disclosure_status(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    now = _utcnow()
+    acceptance = legal_disclosure.latest_acceptance(db, current_user.id)
+    required = acceptance is None or acceptance.next_required_at <= now
+    return schemas.LegalDisclosureStatus(
+        required=required,
+        version=legal_disclosure.VERSION,
+        title=legal_disclosure.TITLE,
+        effective_date=legal_disclosure.EFFECTIVE_DATE,
+        body=list(legal_disclosure.BODY),
+        acknowledgment=legal_disclosure.ACKNOWLEDGMENT,
+        accepted_at=acceptance.accepted_at if acceptance else None,
+        next_required_at=acceptance.next_required_at if acceptance else None,
+    )
+
+
+@router.post("/legal-disclosure/accept", response_model=schemas.LegalDisclosureStatus)
+def accept_legal_disclosure(
+    payload: schemas.LegalDisclosureAcceptRequest,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    if payload.version != legal_disclosure.VERSION:
+        raise HTTPException(status_code=409, detail="The disclosure has changed. Review the current version before accepting.")
+
+    now = _utcnow()
+    next_required_at = now + timedelta(days=30)
+    db.add(models.LegalDisclosureAcceptance(
+        user_id=current_user.id,
+        disclosure_version=legal_disclosure.VERSION,
+        disclosure_hash=legal_disclosure.content_hash(),
+        accepted_at=now,
+        next_required_at=next_required_at,
+        acceptance_source="required_modal",
+    ))
+    db.commit()
+    logger.info("Legal disclosure accepted", extra={
+        "user_id": current_user.id,
+        "version": legal_disclosure.VERSION,
+        "next_required_at": next_required_at.isoformat(),
+    })
+    return schemas.LegalDisclosureStatus(
+        required=False,
+        version=legal_disclosure.VERSION,
+        title=legal_disclosure.TITLE,
+        effective_date=legal_disclosure.EFFECTIVE_DATE,
+        body=list(legal_disclosure.BODY),
+        acknowledgment=legal_disclosure.ACKNOWLEDGMENT,
+        accepted_at=now,
+        next_required_at=next_required_at,
+    )
+
+
+@router.post("/acknowledgments")
+def acknowledge_content(payload: AcknowledgmentPayload, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    content_type, content_id, version = payload.content_type.strip().lower(), payload.content_id.strip(), payload.version.strip()
+    if content_type not in {"welcome", "announcement", "legal", "instruction"} or not content_id or not version:
+        raise HTTPException(status_code=400, detail="Invalid acknowledgment")
+    if content_type == "announcement":
+        announcement = db.get(models.AdminAnnouncement, int(content_id) if content_id.isdigit() else -1)
+        if not announcement: raise HTTPException(status_code=404, detail="Announcement not found")
+    existing = db.scalar(select(models.UserAcknowledgment).where(models.UserAcknowledgment.user_id == current_user.id, models.UserAcknowledgment.content_type == content_type, models.UserAcknowledgment.content_id == content_id, models.UserAcknowledgment.version == version))
+    if not existing:
+        db.add(models.UserAcknowledgment(user_id=current_user.id, content_type=content_type, content_id=content_id, version=version)); db.commit()
+    return {"acknowledged": True}
+
+
+@router.get("/announcements/active")
+def get_active_announcements(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    now = _utcnow()
+    audience_filters = [models.AdminAnnouncement.audience_type == "all", (models.AdminAnnouncement.audience_type == "user") & (models.AdminAnnouncement.audience_user_id == current_user.id)]
+    if current_user.is_admin:
+        audience_filters.append(models.AdminAnnouncement.audience_type == "admins")
+    entries = db.execute(select(models.AdminAnnouncement).where(models.AdminAnnouncement.status == "active", or_(models.AdminAnnouncement.starts_at.is_(None), models.AdminAnnouncement.starts_at <= now), or_(models.AdminAnnouncement.ends_at.is_(None), models.AdminAnnouncement.ends_at >= now), or_(*audience_filters)).order_by(models.AdminAnnouncement.created_at.asc())).scalars().all()
+    acknowledged_versions = set(db.execute(select(models.UserAcknowledgment.content_id, models.UserAcknowledgment.version).where(models.UserAcknowledgment.user_id == current_user.id, models.UserAcknowledgment.content_type == "announcement")).all())
+    return {"announcements": [{"id": entry.id, "title": entry.title, "message": entry.message, "requires_acknowledgment": entry.requires_acknowledgment, "version": entry.updated_at.isoformat(), "acknowledged": False} for entry in entries if (str(entry.id), entry.updated_at.isoformat()) not in acknowledged_versions]}
 
 
 @router.get("/changelog", response_model=schemas.ChangelogResponse)
