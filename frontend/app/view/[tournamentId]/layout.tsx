@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 
-export async function generateMetadata({ params }: LayoutProps<'/view/[tournamentId]'>): Promise<Metadata> {
+export async function generateMetadata(
+  { params }: { params: Promise<{ tournamentId: string }> }
+): Promise<Metadata> {
   const { tournamentId } = await params;
   return {
     title: 'Tournament View | BracketWorks',
