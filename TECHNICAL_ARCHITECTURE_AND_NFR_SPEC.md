@@ -25,7 +25,7 @@ BracketWorks is a web platform for running bowling tournaments with bracket gene
 ## 2) Architecture Overview
 
 ### Frontend
-- Stack: **Next.js 16.2.6**, React 18, TypeScript
+- Stack: **Next.js 15.5.4**, React 18, TypeScript
 - Pattern: App Router with domain-driven route groups (brackets, payouts, players, scores, admin, auth)
 - Integration: Environment-driven API base URL via `NEXT_PUBLIC_BACKEND_URL`
 - Public content: Landing page with hero section, feature grid, workflow steps, benefits, and CTAs
@@ -37,7 +37,7 @@ BracketWorks is a web platform for running bowling tournaments with bracket gene
 
 ### Backend
 - Stack: **FastAPI 0.136.1**, SQLAlchemy 2.0.35, Alembic 1.16.5
-- Runtime: **Python 3.11-slim** (Docker), Python 3.11+ (local)
+- Runtime: **Python 3.13+** (current local environment), Python 3.12+ recommended for the container setup
 - API routes: `/api/v1` — health, admin, bowlers, brackets, tournaments, users, squads, bracket_settings, scores, payouts, public
 - Cross-cutting:
   - CORS policy by environment with localhost + production domain support
@@ -68,14 +68,14 @@ BracketWorks is a web platform for running bowling tournaments with bracket gene
 ### Local Development
 - Docker Compose: `db` (postgres:16), `redis` (redis:7-alpine), `backend` (port 8000), `frontend` (port 3000, optional)
 - Recommended mode: containers for DB + Redis + backend, frontend runs locally via `npm run dev`
-- Start script: `start_bracketworks.ps1` launches Docker services then local frontend dev server
+- Start script: `start_bracketworks.ps1` launches the local services and the frontend/backend process flow for development
 - Backend auto-runs `alembic upgrade head` on startup
 
 ### Production (Railway)
 - **4-service topology**: PostgreSQL plugin, Redis plugin, Backend (FastAPI, port 8000), Frontend (Next.js, port 3000)
 - **Custom domains** via Cloudflare: `bracketworks.app` (frontend), `api.bracketworks.app` (backend)
 - **TLS**: automatic HTTPS at Railway/Cloudflare edge
-- **Deployment**: auto-build on push to `main`; backend runs migrations before serving; automatic rollback on health check failure
+- **Deployment**: auto-build on push to the default branch; backend runs migrations before serving; automatic rollback on health check failure
 
 ### Environment Variables
 | Scope | Required Variables |

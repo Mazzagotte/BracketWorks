@@ -12,6 +12,14 @@ Live app: [https://bracketworks.app](https://bracketworks.app)
 ### Brackets
 Set up and manage scratch and handicap brackets for your tournament. Brackets advance round by round as scores are entered, and you can run multiple bracket programs in the same event.
 
+## Local development
+
+- Backend: `cd backend && python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000`
+- Frontend: `cd frontend && npm run dev`
+- Or use the launcher: `./start_bracketworks.ps1`
+
+The local stack uses Docker Compose for PostgreSQL and Redis, while the frontend and backend can also be run directly for local development.
+
 ### Score Tracking
 Enter scores live while the tournament is in progress. Bracket state updates as results come in, and your work is saved so you can pick up where you left off.
 

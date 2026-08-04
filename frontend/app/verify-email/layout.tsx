@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import type { Metadata } from 'next';
 
 import '../styles/auth.css';
+import PageLayoutShell from '../components/layout/PageLayoutShell';
 
 export const metadata: Metadata = {
   robots: {
@@ -11,5 +12,5 @@ export const metadata: Metadata = {
 };
 
 export default function VerifyEmailLayout({ children }: { children: ReactNode }) {
-  return children;
+  return <PageLayoutShell>{children}</PageLayoutShell>;
 }

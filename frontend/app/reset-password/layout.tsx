@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 
 import '../styles/auth.css';
 import './styles/reset-password.css';
+import PageLayoutShell from '../components/layout/PageLayoutShell';
 
 export const metadata: Metadata = {
   robots: {
@@ -12,5 +13,5 @@ export const metadata: Metadata = {
 };
 
 export default function ResetPasswordLayout({ children }: { children: ReactNode }) {
-  return children;
+  return <PageLayoutShell>{children}</PageLayoutShell>;
 }
