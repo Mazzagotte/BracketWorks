@@ -266,14 +266,14 @@ export default function SettingsPage() {
     <div className={styles.pageContainer}>
       <header className={styles.settingsIntro}>
         <p className={styles.eyebrow}>Account preferences</p>
-        <h1>Settings</h1>
+        <h2>Account settings</h2>
         <p>Manage your BracketWorks account, security, help resources, and legal information. Tournament configuration remains with each tournament.</p>
       </header>
       <div className={styles.settingsLayout}>
         <nav className={styles.sectionNav} aria-label="Settings sections">
           <a href="#account">Account</a><a href="#security">Security</a><a href="#help">Help</a><a href="#legal">Legal</a>
         </nav>
-        <main className={styles.settingsContent}>
+        <div className={styles.settingsContent}>
       <section id="account" className={styles.settingsSection}>
       <Card className={styles.card} variant="primary">
         <CardHeader className={styles.cardTitleWrap}>
@@ -540,7 +540,7 @@ export default function SettingsPage() {
         </Card>
       </section>
 
-        </main>
+        </div>
       </div>
 
     </div>

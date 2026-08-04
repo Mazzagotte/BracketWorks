@@ -427,7 +427,7 @@ export default function BracketsPage() {
 
   // Set page header with actions
   usePageHeader({
-    title: 'Bracket View',
+    title: 'Brackets',
     subtitle: undefined,
     actions: undefined
   })
@@ -441,7 +441,7 @@ export default function BracketsPage() {
   if (!isAuthInitialized) {
     return (
       <div className={styles.loadingState}>
-        <div>Loading...</div>
+        <div role="status">Loading brackets...</div>
       </div>
     )
   }
@@ -459,7 +459,7 @@ export default function BracketsPage() {
     <ErrorBoundary>
       {/* Bracket Generation Modal - only load when needed */}
       {isModalOpen && (
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense fallback={<div role="status">Loading bracket tools...</div>}>
           <BracketGenerationModal
             isOpen={isModalOpen}
             onClose={handleModalClose}
@@ -538,7 +538,7 @@ export default function BracketsPage() {
         {/* Loading State */}
         {isInitializing ? (
           <div className={styles.loadingState}>
-            <div>Loading...</div>
+            <div role="status">Loading brackets...</div>
           </div>
         ) : /* No Tournament Loaded State */
         !selectedTournament ? (
@@ -678,7 +678,7 @@ export default function BracketsPage() {
 
               {/* Bracket Display */}
               <div className={styles.bracketWorkspaceStage}>
-              <Suspense fallback={<div className={styles.loadingState}><div>Loading...</div></div>}>
+              <Suspense fallback={<div className={styles.loadingState} role="status"><div>Loading bracket view...</div></div>}>
             {isMobile ? (
               searchFilteredBracketItems.length === 0 ? (
                 <div className={`${cardStyles.card} ${styles.noMatches}`}>

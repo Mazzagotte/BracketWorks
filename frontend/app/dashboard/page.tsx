@@ -24,6 +24,7 @@ import {
 import { Tournament, Squad, BracketSettings, TournamentForm, SidePotsSettings, SidePot, Player, DashboardTournamentBootstrapResponse } from '../lib/types';
 
 import { useAuth } from '../lib/auth-context';
+import { usePageHeader } from '../lib/header-context';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { getErrorMessage, getErrorContext } from '../lib/error-utils';
 import { storage } from '../lib/storage';
@@ -144,6 +145,7 @@ const DEMO_DASHBOARD_SIDE_POTS: SidePotsSettings = {
 };
 
 export default function TournamentDashboard() {
+  usePageHeader({ title: 'Dashboard', subtitle: undefined, actions: undefined });
   const pathname = usePathname();
   const isDemoDashboard = pathname === '/demo/dashboard';
   // Authentication check - must be at the top
@@ -1399,7 +1401,7 @@ export default function TournamentDashboard() {
   if (!isDemoDashboard && !isAuthInitialized && !showDashboard) {
     return (
       <div className={mobileStyles.loadingScreen}>
-        <div className={mobileStyles.loadingContent}>Loading tournament dashboard...</div>
+        <div className={mobileStyles.loadingContent} role="status">Loading dashboard...</div>
       </div>
     );
   }
@@ -1415,7 +1417,7 @@ export default function TournamentDashboard() {
   if (!isDemoDashboard && !isUserAuthenticated && hasStoredAuthTokens) {
     return (
       <div className={mobileStyles.loadingScreen}>
-        <div className={mobileStyles.loadingContent}>Loading tournament dashboard...</div>
+        <div className={mobileStyles.loadingContent} role="status">Loading dashboard...</div>
       </div>
     );
   }
@@ -1459,7 +1461,7 @@ export default function TournamentDashboard() {
           isOpen={isExplainModalOpen}
           onClose={() => setIsExplainModalOpen(false)}
         />
-        <main className="page-main">
+        <div className="page-main">
 
           <div className={`${shellStyles.content} ${mobileStyles.contentContainer}`}>
             <div className={mobileStyles.cardsContainer}>
@@ -1975,7 +1977,7 @@ export default function TournamentDashboard() {
               </div>
             </div>
           )}
-        </main>
+        </div>
 
         {/* Delete Confirmation Modal */}
         {deleteConfirm && (

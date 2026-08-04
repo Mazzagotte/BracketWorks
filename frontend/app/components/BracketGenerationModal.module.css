@@ -26,7 +26,7 @@
   }
 }
 
-/* Modal Card - The white container in the center */
+/* Modal Card - The var(--color-white) container in the center */
 .modalCard {
   background-color: var(--color-brand-ivory-light);
   border-radius: 16px;
@@ -699,19 +699,19 @@
   width: 70px;
   height: 70px;
   background:
-    radial-gradient(circle at 32% 26%, color-mix(in srgb, white 92%, transparent), color-mix(in srgb, var(--bw-text-body) 86%, transparent) 25%, color-mix(in srgb, var(--bw-text-faint) 98%, transparent) 64%, color-mix(in srgb, var(--bw-page) 100%, black) 100%);
+    radial-gradient(circle at 32% 26%, color-mix(in srgb, var(--color-white) 92%, transparent), color-mix(in srgb, var(--bw-text-body) 86%, transparent) 25%, color-mix(in srgb, var(--bw-text-faint) 98%, transparent) 64%, color-mix(in srgb, var(--bw-page) 100%, var(--color-black)) 100%);
   border: 2px solid color-mix(in srgb, var(--bw-text-body) 78%, transparent);
   box-shadow:
-    0 12px 28px color-mix(in srgb, black 38%, transparent),
-    inset 3px 3px 10px color-mix(in srgb, white 22%, transparent),
-    inset -4px -5px 14px color-mix(in srgb, black 52%, transparent);
+    0 12px 28px color-mix(in srgb, var(--color-black) 38%, transparent),
+    inset 3px 3px 10px color-mix(in srgb, var(--color-white) 22%, transparent),
+    inset -4px -5px 14px color-mix(in srgb, var(--color-black) 52%, transparent);
 }
 
 .fingerHole {
   width: 9px;
   height: 9px;
-  background: color-mix(in srgb, var(--bw-page) 92%, black);
-  box-shadow: inset 1px 1px 2px color-mix(in srgb, black 86%, transparent);
+  background: color-mix(in srgb, var(--bw-page) 92%, var(--color-black));
+  box-shadow: inset 1px 1px 2px color-mix(in srgb, var(--color-black) 86%, transparent);
 }
 
 .mainMessage,
@@ -941,7 +941,7 @@
   border: 1px solid var(--bw-border-card);
   border-radius: 20px;
   text-align: left;
-  background: linear-gradient(145deg, color-mix(in srgb, var(--bw-surface-card) 98%, black), color-mix(in srgb, var(--bw-surface-panel) 94%, black));
+  background: linear-gradient(145deg, color-mix(in srgb, var(--bw-surface-card) 98%, var(--color-black)), color-mix(in srgb, var(--bw-surface-panel) 94%, var(--color-black)));
 }
 
 .loadingContent,

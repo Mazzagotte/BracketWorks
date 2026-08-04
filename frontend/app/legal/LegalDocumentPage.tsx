@@ -45,7 +45,7 @@ export default function LegalDocumentPage({ documentKey }: { documentKey: LegalD
   const introParagraphs = document.intro.filter(paragraph => !paragraph.startsWith('Effective Date:') && !paragraph.startsWith('Draft Version:'));
 
   return (
-    <main className={styles.page}>
+    <div className={styles.page}>
       <header className={styles.header}>
         <Link href="/" className={styles.brand} aria-label="BracketWorks homepage">
           <Image src="/logo_no_text.svg" alt="" width={36} height={36} priority />
@@ -115,6 +115,6 @@ export default function LegalDocumentPage({ documentKey }: { documentKey: LegalD
         </nav>
         <div className={styles.footerBottom}><span>© {new Date().getFullYear()} BracketWorks. All rights reserved.</span><span>Legal draft v{document.version}</span></div>
       </footer>
-    </main>
+    </div>
   );
 }

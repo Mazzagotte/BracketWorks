@@ -1812,7 +1812,7 @@ export default function AdminPage() {
           <div className={styles.modal} role="dialog" aria-modal="true" aria-label={`Edit user ${editUser.username}`} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Edit {editUser.username}</h3>
-              <button type="button" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.modalClose}`} onClick={() => setEditUser(null)}>X</button>
+              <button type="button" aria-label="Close edit user dialog" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.modalClose}`} onClick={() => setEditUser(null)}>X</button>
             </div>
             <div className={styles.modalBody}>
               {editError && <div className={styles.modalError} role="alert">{editError}</div>}
@@ -1872,7 +1872,7 @@ export default function AdminPage() {
           <div className={styles.modal} role="dialog" aria-modal="true" aria-label={`Reset password for ${resetUser.username}`} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Reset password for {resetUser.username}</h3>
-              <button type="button" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.modalClose}`} onClick={() => setResetUser(null)}>X</button>
+              <button type="button" aria-label="Close password reset dialog" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.modalClose}`} onClick={() => setResetUser(null)}>X</button>
             </div>
             <div className={styles.modalBody}>
               {resetError && <div className={styles.modalError} role="alert">{resetError}</div>}
@@ -1921,7 +1921,7 @@ export default function AdminPage() {
           <div className={styles.modal} role="dialog" aria-modal="true" aria-label={`Delete user ${deleteUser.username}`} onClick={(event) => event.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Delete user {deleteUser.username}</h3>
-              <button type="button" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.modalClose}`} onClick={() => setDeleteUser(null)}>X</button>
+              <button type="button" aria-label="Close delete user dialog" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.modalClose}`} onClick={() => setDeleteUser(null)}>X</button>
             </div>
             <div className={styles.modalBody}>
               {deleteUserError && <div className={styles.modalError} role="alert">{deleteUserError}</div>}
@@ -1991,7 +1991,7 @@ export default function AdminPage() {
           <div className={styles.modal} role="dialog" aria-modal="true" aria-label={`Edit tournament ${editTournament.name}`} onClick={(event) => event.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Edit Tournament #{editTournament.id}</h3>
-              <button type="button" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.modalClose}`} onClick={() => setEditTournament(null)}>X</button>
+              <button type="button" aria-label="Close edit tournament dialog" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.modalClose}`} onClick={() => setEditTournament(null)}>X</button>
             </div>
             <div className={styles.modalBody}>
               {editTournamentError && <div className={styles.modalError} role="alert">{editTournamentError}</div>}
@@ -2051,7 +2051,7 @@ export default function AdminPage() {
           <div className={styles.modal} role="dialog" aria-modal="true" aria-label={`Reassign tournament ${reassignTournament.name}`} onClick={(event) => event.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Reassign Tournament #{reassignTournament.id}</h3>
-              <button type="button" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.modalClose}`} onClick={() => setReassignTournament(null)}>X</button>
+              <button type="button" aria-label="Close reassign tournament dialog" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.modalClose}`} onClick={() => setReassignTournament(null)}>X</button>
             </div>
             <div className={styles.modalBody}>
               {reassignError && <div className={styles.modalError} role="alert">{reassignError}</div>}
@@ -2103,7 +2103,7 @@ export default function AdminPage() {
           <div className={styles.modal} role="dialog" aria-modal="true" aria-label={`Archive tournament ${archiveTournament.name}`} onClick={(event) => event.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Archive Tournament #{archiveTournament.id}</h3>
-              <button type="button" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.modalClose}`} onClick={() => setArchiveTournament(null)}>X</button>
+              <button type="button" aria-label="Close archive tournament dialog" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.modalClose}`} onClick={() => setArchiveTournament(null)}>X</button>
             </div>
             <div className={styles.modalBody}>
               {archiveError && <div className={styles.modalError} role="alert">{archiveError}</div>}
@@ -2145,7 +2145,7 @@ export default function AdminPage() {
           <div className={styles.modal} role="dialog" aria-modal="true" aria-label={`Delete tournament ${deleteTournament.name}`} onClick={(event) => event.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Delete Tournament #{deleteTournament.id}</h3>
-              <button type="button" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.modalClose}`} onClick={() => setDeleteTournament(null)}>X</button>
+              <button type="button" aria-label="Close delete tournament dialog" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.modalClose}`} onClick={() => setDeleteTournament(null)}>X</button>
             </div>
             <div className={styles.modalBody}>
               {deleteTournamentError && <div className={styles.modalError} role="alert">{deleteTournamentError}</div>}

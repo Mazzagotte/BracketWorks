@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { logger } from './logger';
+import { getMemoryAccessToken } from './api';
 
 /**
  * Cached localStorage wrapper with debounced writes
@@ -20,6 +21,7 @@ class CachedStorage {
    * Fast synchronous reads from memory cache
    */
   getItem(key: string): string | null {
+    if (this.isAuthTokenKey(key)) return getMemoryAccessToken()
     // If there is a pending debounced write, return it immediately so listeners
     // (e.g., header reacting to custom events) see the latest value.
     if (this.writeQueue.has(key)) {

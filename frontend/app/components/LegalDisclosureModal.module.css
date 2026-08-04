@@ -1,5 +1,5 @@
-.overlay { position: fixed; inset: 0; z-index: 10020; display: grid; place-items: center; padding: 12px; background: rgb(0 0 0 / 72%); }
-.modal { width: min(100%, 650px); max-height: min(760px, calc(100vh - 24px)); overflow: hidden; display: flex; flex-direction: column; border: 1px solid var(--bw-border-card); border-radius: var(--radius-xl); background: var(--bw-surface-card); color: var(--bw-text-body); box-shadow: var(--bw-shadow-modal); }
+.overlay { position: fixed; inset: 0; z-index: 10020; display: grid; place-items: center; padding: 12px; background: color-mix(in srgb, var(--color-black) 72%, transparent); }
+.modal { width: min(100%, 650px); max-height: min(760px, calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom))); overflow: hidden; display: flex; flex-direction: column; border: 1px solid var(--bw-border-card); border-radius: var(--radius-xl); background: var(--bw-surface-card); color: var(--bw-text-body); box-shadow: var(--bw-shadow-modal); }
 .header { display: flex; align-items: center; gap: 12px; padding: 16px 18px; border-bottom: 1px solid var(--bw-border-accent); background: var(--bw-surface-panel); }
 .header p { margin: 0 0 2px; color: var(--bw-text-accent); font-size: .66rem; font-weight: 850; letter-spacing: .05em; text-transform: uppercase; }
 .header h2 { margin: 0; color: var(--bw-text-title); font-size: 1.15rem; }

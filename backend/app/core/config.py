@@ -26,7 +26,7 @@ class Settings(BaseSettings):
 
     # Database
     # Local fallback matches the repository's default development database.
-    DATABASE_URL: str = "postgresql://postgres:mazzagotte@localhost:5433/bracketworks"
+    DATABASE_URL: str = "postgresql://bracketworks:bracketworks@localhost:5432/bracketworks"
     DATABASE_POOL_SIZE: int = 20
     DATABASE_MAX_OVERFLOW: int = 30
 
@@ -145,6 +145,9 @@ class Settings(BaseSettings):
 
         if self.PASSWORD_BCRYPT_ROUNDS < 12:
             raise ValueError("PASSWORD_BCRYPT_ROUNDS must be >= 12 in production")
+
+        if not self.REDIS_URL.strip():
+            raise ValueError("REDIS_URL is required in production so security rate limits are shared")
 
         return self
 

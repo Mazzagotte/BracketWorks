@@ -1,5 +1,5 @@
 .mobileLayout {
-  min-height: 100vh;
+  min-height: 100dvh;
   background: var(--color-gray-50);
   position: relative;
 }
@@ -44,7 +44,7 @@
   align-items: center;
   justify-content: center;
   min-width: 56px;
-  height: 40px;
+  height: 44px;
   padding: 0 12px;
   border-radius: 999px;
   border: none;

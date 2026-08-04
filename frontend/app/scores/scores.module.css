@@ -469,7 +469,7 @@
    ======================================== */
 
 .mobileScoresLayoutShell {
-  background: var(--bw-surface-panel, color-mix(in srgb, var(--color-brand-charcoal-deep) 92%, black 8%));
+  background: var(--bw-surface-panel, color-mix(in srgb, var(--color-brand-charcoal-deep) 92%, var(--color-black) 8%));
 }
 
 .mobileScoresPage {
@@ -477,7 +477,7 @@
   flex-direction: column;
   gap: 6px;
   padding-bottom: 6px;
-  background: var(--bw-surface-panel, color-mix(in srgb, var(--color-brand-charcoal-deep) 92%, black 8%));
+  background: var(--bw-surface-panel, color-mix(in srgb, var(--color-brand-charcoal-deep) 92%, var(--color-black) 8%));
   border-radius: 14px;
 }
 
@@ -777,7 +777,7 @@
   --scores-input-focus-ring: 0 0 0 3px color-mix(in srgb, var(--color-primary) 12%, transparent);
   --scores-input-invalid-border: color-mix(in srgb, var(--color-error) 60%, transparent);
   --scores-input-invalid-bg: color-mix(in srgb, var(--color-error) 16%, transparent);
-  --scores-input-invalid-text: color-mix(in srgb, var(--color-error) 46%, white);
+  --scores-input-invalid-text: color-mix(in srgb, var(--color-error) 46%, var(--color-white));
   --scores-input-perfect-border: color-mix(in srgb, var(--color-success) 52%, transparent);
   --scores-input-perfect-bg: color-mix(in srgb, var(--color-success) 12%, transparent);
   --scores-input-perfect-text: var(--bw-text-success);
@@ -1268,7 +1268,7 @@
 
 .tableCard :global(.bw-sortable-header-active .bw-sort-icon),
 .tableCard :global(.bw-sortable-header-active .bw-sortable-header-text) {
-  color: color-mix(in srgb, var(--color-primary) 72%, white);
+  color: color-mix(in srgb, var(--color-primary) 72%, var(--color-white));
 }
 
 .tableCard :global(.scores-cell) {
@@ -1346,7 +1346,7 @@
 }
 
 .mobileExpandGlyph {
-  color: color-mix(in srgb, var(--color-primary) 72%, white);
+  color: color-mix(in srgb, var(--color-primary) 72%, var(--color-white));
   font-size: 0.92rem;
   line-height: 1;
 }
@@ -1415,7 +1415,7 @@
 /* Final color alignment pass for mobile Scores UI */
 @media (max-width: 900px) {
   .mobileScoresPage {
-    background: var(--bw-surface-panel, color-mix(in srgb, var(--color-brand-charcoal-deep) 92%, black 8%));
+    background: var(--bw-surface-panel, color-mix(in srgb, var(--color-brand-charcoal-deep) 92%, var(--color-black) 8%));
     margin-left: calc(-1 * var(--space-3, 12px));
     margin-right: calc(-1 * var(--space-3, 12px));
     padding-left: var(--space-3, 12px);
@@ -1462,7 +1462,7 @@
 
   .mobileScoreMeta,
   .mobileGameTotal {
-    color: color-mix(in srgb, var(--bw-text-muted) 90%, white 10%);
+    color: color-mix(in srgb, var(--bw-text-muted) 90%, var(--color-white) 10%);
   }
 
   .mobileExpandGlyph {
@@ -2160,15 +2160,15 @@
 }
 
 .mobileSaveStateSaving {
-  color: color-mix(in srgb, var(--color-primary) 78%, white);
+  color: color-mix(in srgb, var(--color-primary) 78%, var(--color-white));
 }
 
 .mobileSaveStateSaved {
-  color: color-mix(in srgb, var(--color-success) 82%, white);
+  color: color-mix(in srgb, var(--color-success) 82%, var(--color-white));
 }
 
 .mobileSaveStateFailed {
-  color: color-mix(in srgb, var(--color-error) 82%, white);
+  color: color-mix(in srgb, var(--color-error) 82%, var(--color-white));
 }
 
 /* Final row-density override for phone score list */

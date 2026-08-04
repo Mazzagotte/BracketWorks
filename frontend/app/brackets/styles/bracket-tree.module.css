@@ -687,7 +687,7 @@
 .matchCard:hover {
   transform: none;
   border-color: var(--tree-card-border-accent);
-  box-shadow: 0 10px 22px color-mix(in srgb, black 24%, transparent);
+  box-shadow: 0 10px 22px color-mix(in srgb, var(--color-black) 24%, transparent);
 }
 
 .matchCard.finals {
@@ -723,7 +723,7 @@
 
 .matchCard.highlighted {
   border-color: color-mix(in srgb, var(--color-primary) 58%, transparent);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-primary) 22%, transparent), 0 10px 22px color-mix(in srgb, black 24%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-primary) 22%, transparent), 0 10px 22px color-mix(in srgb, var(--color-black) 24%, transparent);
 }
 
 .matchLabel {

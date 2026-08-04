@@ -159,7 +159,7 @@ def get_tournament_winners_endpoint(
         raise
     except Exception as e:
         logger.error(f"Error getting tournament winners: {e}")
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Unable to load payout winners")
 
 
 # ---------------------------------------------------------------------------
@@ -329,7 +329,7 @@ def get_live_entry_analysis(
         raise
     except Exception as e:
         logger.error(f"Error in live entry analysis: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Unable to analyze payout entries")
 
 
 # ---------------------------------------------------------------------------
@@ -476,14 +476,24 @@ def save_tournament_payouts_async(
     scratch_fee: Optional[float] = Query(None),
     handicap_fee: Optional[float] = Query(None),
     house_percentage: float = Query(0.0),
+    db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
     """Queue payout save and return a job handle for polling."""
-    job = job_store.create("payouts.save")
+    _verify_tournament_access(db, tournament_id, current_user)
+    job = job_store.create(
+        "payouts.save",
+        owner_user_id=current_user.id,
+        tournament_id=tournament_id,
+    )
+    actor_user_id = current_user.id
 
     def _run_job() -> dict:
         db = SessionLocal()
         try:
+            actor_user = db.query(models.User).filter(models.User.id == actor_user_id).first()
+            if not actor_user:
+                raise RuntimeError("Job owner no longer exists")
             return save_tournament_payouts_endpoint(
                 tournament_id=tournament_id,
                 squad_id=squad_id,
@@ -492,7 +502,7 @@ def save_tournament_payouts_async(
                 house_percentage=house_percentage,
                 idempotency_key=None,
                 db=db,
-                current_user=current_user,
+                current_user=actor_user,
             )
         finally:
             db.close()
@@ -502,9 +512,14 @@ def save_tournament_payouts_async(
 
 
 @router.get("/jobs/{job_id}")
-def get_payout_job_status(job_id: str):
+def get_payout_job_status(
+    job_id: str,
+    current_user: models.User = Depends(get_current_user),
+):
     job = job_store.get(job_id)
     if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    if job.owner_user_id != current_user.id and not getattr(current_user, "is_admin", False):
         raise HTTPException(status_code=404, detail="Job not found")
     return to_dict(job)
 
@@ -588,7 +603,7 @@ def get_payout_history_endpoint(
         raise
     except Exception as e:
         logger.error(f"Error getting payout history: {e}")
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Unable to load payout history")
 
 
 # ---------------------------------------------------------------------------

@@ -6,5 +6,5 @@ import styles from './demo.module.css';
 export const metadata: Metadata = { title: 'Tournament Dashboard | BracketWorks', description: 'Explore The Famous Frames Invitational tournament dashboard in BracketWorks.', robots: { index: true, follow: true } };
 
 export default function DemoPage() {
-  return <main className={styles.page}><div className={styles.shell}><div className={styles.backRow}><Link href="/">← BracketWorks home</Link><span>The Famous Frames Invitational</span></div><DemoDashboard /></div></main>;
+  return <div className={styles.page}><div className={styles.shell}><div className={styles.backRow}><Link href="/">Back to BracketWorks home</Link><span>The Famous Frames Invitational</span></div><DemoDashboard /></div></div>;
 }

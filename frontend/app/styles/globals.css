@@ -2027,7 +2027,7 @@ input[type='number'] { appearance: textfield; -moz-appearance: textfield; }
   :root {
     --bw-border-subtle: color-mix(in srgb, var(--bw-text-title) 34%, transparent);
     --bw-text-muted: color-mix(in srgb, var(--bw-text-title) 78%, var(--bw-text-muted));
-    --bw-focus-ring: 0 0 0 2px color-mix(in srgb, var(--color-primary) 60%, white), 0 0 0 5px color-mix(in srgb, var(--color-primary) 28%, transparent);
+    --bw-focus-ring: 0 0 0 2px color-mix(in srgb, var(--color-primary) 60%, var(--color-white)), 0 0 0 5px color-mix(in srgb, var(--color-primary) 28%, transparent);
   }
 
   .card,

@@ -1,6 +1,16 @@
 import { logger } from './logger'
 import { ApiError, handleApiError, isAuthError, shouldRetry } from './errors';
 
+let memoryAccessToken: string | null = null;
+
+export function getMemoryAccessToken(): string | null {
+  return memoryAccessToken;
+}
+
+export function setMemoryAccessToken(token: string | null): void {
+  memoryAccessToken = token;
+}
+
 // API Configuration and enhanced fetch utilities
 
 /**
@@ -87,12 +97,7 @@ export class ApiClient {
     this.defaultRequestHeaders = {
       'Content-Type': 'application/json',
     };
-    this.getAuthToken = getAuthToken || (() => {
-      if (typeof window === 'undefined') {
-        return null;
-      }
-      return sessionStorage.getItem('token') || localStorage.getItem('token');
-    });
+    this.getAuthToken = getAuthToken || getMemoryAccessToken;
   }
 
   private getCacheKey(endpoint: string, options: RequestInit): string {
@@ -154,6 +159,7 @@ export class ApiClient {
   }
 
   private clearAuthStorage(): void {
+    setMemoryAccessToken(null);
     if (typeof window === 'undefined') {
       return;
     }
@@ -211,8 +217,7 @@ export class ApiClient {
           return null;
         }
 
-        sessionStorage.setItem('token', data.access_token);
-        localStorage.removeItem('token');
+        setMemoryAccessToken(data.access_token);
         if (data.session_id) {
           localStorage.setItem('session_id', data.session_id);
         }
@@ -263,6 +268,10 @@ export class ApiClient {
     const requestHeaders = config.headers as Record<string, string>;
     if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) && !requestHeaders['Idempotency-Key']) {
       requestHeaders['Idempotency-Key'] = this.generateIdempotencyKey();
+    }
+    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) && !requestHeaders['x-csrf-token']) {
+      const csrfToken = getCsrfToken();
+      if (csrfToken) requestHeaders['x-csrf-token'] = csrfToken;
     }
 
     // Add auth token if available
@@ -429,6 +438,10 @@ export class ApiClient {
     if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) && !baseHeaders['Idempotency-Key']) {
       baseHeaders['Idempotency-Key'] = this.generateIdempotencyKey()
     }
+    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) && !baseHeaders['x-csrf-token']) {
+      const csrfToken = getCsrfToken()
+      if (csrfToken) baseHeaders['x-csrf-token'] = csrfToken
+    }
     const useAuthFetchCache = this.shouldUseAuthFetchCache(method, url, config)
     const cacheKey = this.getAuthFetchCacheKey(url, method, baseHeaders)
 
@@ -490,6 +503,10 @@ export class ApiClient {
     }
 
     return fetchPromise
+  }
+
+  async restoreSession(): Promise<string | null> {
+    return this.refreshAccessToken();
   }
 
   // Clear cache

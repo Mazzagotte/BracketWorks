@@ -27,7 +27,7 @@
   border: 1px solid var(--bw-border-subtle);
   border-radius: 20px;
   background: color-mix(in srgb, var(--bw-surface-card) 84%, transparent);
-  box-shadow: 0 10px 26px color-mix(in srgb, black 28%, transparent), inset 0 1px 0 var(--bw-surface-panel);
+  box-shadow: 0 10px 26px color-mix(in srgb, var(--color-black) 28%, transparent), inset 0 1px 0 var(--bw-surface-panel);
 }
 
 .section h3 {

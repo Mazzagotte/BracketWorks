@@ -18,6 +18,10 @@ interface ShareQRModalProps {
 
 type PosterMode = "social" | "print";
 
+function readColorToken(token: string): string {
+  return window.getComputedStyle(document.documentElement).getPropertyValue(token).trim();
+}
+
 function slugify(name: string): string {
   return name
     .toLowerCase()
@@ -41,6 +45,7 @@ export default function ShareQRModal({
   const [posterPreviewUrl, setPosterPreviewUrl] = useState("");
   const [posterPreviewError, setPosterPreviewError] = useState("");
   const [exportingMode, setExportingMode] = useState<PosterMode | null>(null);
+  const [qrColors, setQrColors] = useState<{ background: string; foreground: string } | null>(null);
   const qrImageSize = 620;
   const qrRenderSize = qrImageSize;
 
@@ -48,6 +53,13 @@ export default function ShareQRModal({
   const publicUrl = providedPublicUrl || (typeof window !== "undefined"
     ? `${window.location.origin}/view/${slug}`
     : `/view/${slug}`);
+  useEffect(() => {
+    setQrColors({
+      background: readColorToken("--color-text-primary"),
+      foreground: readColorToken("--color-black"),
+    });
+  }, []);
+
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
@@ -130,34 +142,35 @@ export default function ShareQRModal({
     }
 
     const isPrintMode = mode === "print";
+    const color = readColorToken;
     const palette = {
-      pageBg: isPrintMode ? "#ffffff" : "#09090c",
-      shellBorder: isPrintMode ? "#d4d4d8" : "#2a2a33",
-      shellGradientStart: isPrintMode ? "#ffffff" : "#18181f",
-      shellGradientMid: isPrintMode ? "#fafafa" : "#18181f",
-      shellGradientEnd: isPrintMode ? "#f4f4f5" : "#18181f",
-      headerGradientStart: isPrintMode ? "#ffffff" : "#18181f",
-      headerGradientEnd: isPrintMode ? "#fafafa" : "#18181f",
-      headerDivider: isPrintMode ? "#d4d4d8" : "#2a2a33",
-      accentBg: isPrintMode ? "#f4f4f5" : "#202028",
-      accentBorder: isPrintMode ? "#d4d4d8" : "#2a2a33",
-      accentText: "#ff7a00",
-      titleText: isPrintMode ? "#18181b" : "#ffffff",
-      bodyText: isPrintMode ? "#52525b" : "#a1a1aa",
-      metaLabel: isPrintMode ? "#71717a" : "#a1a1aa",
-      sectionBg: isPrintMode ? "#f4f4f5" : "#202028",
-      sectionDivider: isPrintMode ? "#d4d4d8" : "#2a2a33",
-      sectionLabel: "#ff7a00",
-      mainBg: isPrintMode ? "#ffffff" : "#111119",
-      qrOuterStart: isPrintMode ? "#f4f4f5" : "#202028",
-      qrOuterEnd: isPrintMode ? "#e4e4e7" : "#202028",
-      qrOuterBorder: isPrintMode ? "#d4d4d8" : "#2a2a33",
-      calloutStrong: isPrintMode ? "#18181b" : "#ffffff",
-      calloutSoft: isPrintMode ? "#52525b" : "#a1a1aa",
-      footerBg: isPrintMode ? "#f4f4f5" : "#111119",
-      footerDivider: isPrintMode ? "#d4d4d8" : "#2a2a33",
-      footerStrong: "#ff7a00",
-      footerText: isPrintMode ? "#52525b" : "#a1a1aa",
+      pageBg: color(isPrintMode ? "--color-text-primary" : "--color-bg-primary"),
+      shellBorder: color(isPrintMode ? "--color-gray-300" : "--color-border-primary"),
+      shellGradientStart: color(isPrintMode ? "--color-text-primary" : "--color-surface-primary"),
+      shellGradientMid: color(isPrintMode ? "--color-gray-50" : "--color-surface-primary"),
+      shellGradientEnd: color(isPrintMode ? "--color-gray-100" : "--color-surface-primary"),
+      headerGradientStart: color(isPrintMode ? "--color-text-primary" : "--color-surface-primary"),
+      headerGradientEnd: color(isPrintMode ? "--color-gray-50" : "--color-surface-primary"),
+      headerDivider: color(isPrintMode ? "--color-gray-300" : "--color-border-primary"),
+      accentBg: color(isPrintMode ? "--color-gray-100" : "--color-surface-secondary"),
+      accentBorder: color(isPrintMode ? "--color-gray-300" : "--color-border-primary"),
+      accentText: color("--color-primary"),
+      titleText: color(isPrintMode ? "--color-surface-primary" : "--color-text-primary"),
+      bodyText: color(isPrintMode ? "--color-text-disabled" : "--color-text-secondary"),
+      metaLabel: color(isPrintMode ? "--color-text-muted" : "--color-text-secondary"),
+      sectionBg: color(isPrintMode ? "--color-gray-100" : "--color-surface-secondary"),
+      sectionDivider: color(isPrintMode ? "--color-gray-300" : "--color-border-primary"),
+      sectionLabel: color("--color-primary"),
+      mainBg: color(isPrintMode ? "--color-text-primary" : "--color-bg-secondary"),
+      qrOuterStart: color(isPrintMode ? "--color-gray-100" : "--color-surface-secondary"),
+      qrOuterEnd: color(isPrintMode ? "--color-gray-200" : "--color-surface-secondary"),
+      qrOuterBorder: color(isPrintMode ? "--color-gray-300" : "--color-border-primary"),
+      calloutStrong: color(isPrintMode ? "--color-surface-primary" : "--color-text-primary"),
+      calloutSoft: color(isPrintMode ? "--color-text-disabled" : "--color-text-secondary"),
+      footerBg: color(isPrintMode ? "--color-gray-100" : "--color-bg-secondary"),
+      footerDivider: color(isPrintMode ? "--color-gray-300" : "--color-border-primary"),
+      footerStrong: color("--color-primary"),
+      footerText: color(isPrintMode ? "--color-text-disabled" : "--color-text-secondary"),
     };
 
     try {
@@ -258,7 +271,7 @@ export default function ShareQRModal({
       const displayUrl = publicUrl.replace(/^https?:\/\//i, "");
       const [displayHost = "", ...displayPathParts] = displayUrl.split("/");
       const displayPath = displayPathParts.length ? `/${displayPathParts.join("/")}` : "";
-      const orange = "#ff7a00";
+      const orange = palette.accentText;
       const shellX = 28;
       const shellY = 28;
       const shellW = W - 56;
@@ -267,7 +280,7 @@ export default function ShareQRModal({
       ctx.fillStyle = palette.pageBg;
       ctx.fillRect(0, 0, W, H);
       roundRect(shellX, shellY, shellW, shellH, 30);
-      ctx.fillStyle = isPrintMode ? "#ffffff" : "#0d0d12";
+      ctx.fillStyle = color(isPrintMode ? "--color-text-primary" : "--color-bg-primary");
       ctx.fill();
       ctx.strokeStyle = palette.shellBorder;
       ctx.lineWidth = 2;
@@ -325,7 +338,7 @@ export default function ShareQRModal({
       const qrOuterX = Math.round((W - qrOuterSize) / 2);
       const qrOuterY = 608;
       roundRect(qrOuterX, qrOuterY, qrOuterSize, qrOuterSize, 28);
-      ctx.fillStyle = isPrintMode ? "#f4f4f5" : "#18181f";
+      ctx.fillStyle = color(isPrintMode ? "--color-gray-100" : "--color-surface-primary");
       ctx.fill();
       ctx.strokeStyle = orange;
       ctx.lineWidth = 2;
@@ -337,7 +350,7 @@ export default function ShareQRModal({
       const calloutW = 644;
       const calloutH = 92;
       roundRect(calloutX, calloutY, calloutW, calloutH, 14);
-      ctx.fillStyle = isPrintMode ? "#f4f4f5" : "#18181f";
+      ctx.fillStyle = color(isPrintMode ? "--color-gray-100" : "--color-surface-primary");
       ctx.fill();
       ctx.strokeStyle = palette.shellBorder;
       ctx.lineWidth = 1;
@@ -346,9 +359,9 @@ export default function ShareQRModal({
       const iconX = calloutX + 16;
       const iconY = calloutY + 17;
       roundRect(iconX, iconY, 58, 58, 12);
-      ctx.fillStyle = isPrintMode ? "rgba(255,122,0,0.08)" : "rgba(255,122,0,0.10)";
+      ctx.fillStyle = color(isPrintMode ? "--bw-poster-accent-soft" : "--bw-poster-accent-muted");
       ctx.fill();
-      ctx.strokeStyle = "rgba(255,122,0,0.35)";
+      ctx.strokeStyle = color("--bw-poster-accent-border");
       ctx.stroke();
       roundRect(iconX + 13, iconY + 17, 32, 24, 5);
       ctx.strokeStyle = orange;
@@ -528,15 +541,15 @@ export default function ShareQRModal({
         </div>
 
         <div className={styles.qrGenerator} aria-hidden="true">
-          <QRCodeCanvas
+          {qrColors && <QRCodeCanvas
             ref={qrCanvasRef}
             value={publicUrl}
             size={qrRenderSize}
-            bgColor="#ffffff"
-            fgColor="#111111"
+            bgColor={qrColors.background}
+            fgColor={qrColors.foreground}
             level="H"
             includeMargin
-          />
+          />}
         </div>
       </div>
     </dialog>

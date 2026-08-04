@@ -270,7 +270,7 @@ def sync_tournament_squads(tournament_id: int, body: SquadSyncRequest = SquadSyn
             try:
                 squad_times_data = json.loads(tournament.squad_times)
             except json.JSONDecodeError as e:
-                raise HTTPException(status_code=400, detail=f"Invalid squad_times format in DB: {str(e)}")
+                raise HTTPException(status_code=400, detail="Invalid squad time configuration")
     
     # Build expected set from squad_times_data
     try:
@@ -286,14 +286,14 @@ def sync_tournament_squads(tournament_id: int, body: SquadSyncRequest = SquadSyn
                 if isinstance(time, str) and time.strip():
                     expected_squads.add((date, time.strip()))
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=f"Invalid squad_times format: {str(e)}")
+        raise HTTPException(status_code=400, detail="Invalid squad time format")
     
     # Get current squad records from database
     try:
         current_squads = db.query(models.Squad).filter(models.Squad.tournament_id == tournament_id).all()
         current_squads_set: Set[Tuple[str, str]] = {(squad.date, squad.time) for squad in current_squads}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Database error retrieving squads: {str(e)}")
+        raise HTTPException(status_code=500, detail="Unable to retrieve squads")
     
     # Find squads to create and delete
     squads_to_create = expected_squads - current_squads_set
@@ -381,7 +381,7 @@ def sync_tournament_squads(tournament_id: int, body: SquadSyncRequest = SquadSyn
         
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Database transaction failed: {str(e)}")
+        raise HTTPException(status_code=500, detail="Unable to synchronize squads")
     
     response_data = {
         "message": f"Squad sync completed for tournament {tournament_id}",

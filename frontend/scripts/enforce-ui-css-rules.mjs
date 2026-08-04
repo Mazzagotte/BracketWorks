@@ -10,6 +10,12 @@ const isFullMode = process.argv.includes('--full');
 const allowedExtensions = new Set(['.ts', '.tsx', '.js', '.jsx', '.css', '.scss']);
 
 const colorLiteralRegex = /(?<!&)#(?:[0-9a-fA-F]{3,8})\b|(?:rgb|hsl)a?\s*\(/;
+const namedColorLiteralRegex = /(?<![-\w])(?:black|white)(?![-\w])/i;
+const colorTokenFiles = new Set([
+  'app/styles/colors.global.css',
+  'app/styles/main.css',
+  'app/styles/landing-global.css',
+]);
 const inlineStyleRegex = /\bstyle\s*=\s*\{\{/;
 const inlineHtmlStyleAttrRegex = /\bstyle\s*=\s*["'`]/;
 const cssTextAssignmentRegex = /\.style\.cssText\s*=/;
@@ -48,6 +54,14 @@ function checkLine(filePath, lineNumber, line) {
   const ext = path.extname(filePath);
   const codeLine = line.replace(/\/\/.*$/, '');
 
+  if (
+    !colorTokenFiles.has(filePath) &&
+    (colorLiteralRegex.test(codeLine) ||
+      ((ext === '.css' || ext === '.scss') && namedColorLiteralRegex.test(codeLine)))
+  ) {
+    addViolation(filePath, lineNumber, 'use-shared-color-tokens', line);
+  }
+
   if (emojiRegex.test(line)) {
     addViolation(filePath, lineNumber, 'no-emoji', line);
   }
@@ -70,10 +84,6 @@ function checkLine(filePath, lineNumber, line) {
   }
 
   if (ext === '.ts' || ext === '.tsx' || ext === '.js' || ext === '.jsx') {
-    if (colorLiteralRegex.test(codeLine)) {
-      addViolation(filePath, lineNumber, 'no-color-literals-in-code', line);
-    }
-
     if (inlineStyleRegex.test(codeLine)) {
       addViolation(filePath, lineNumber, 'no-inline-jsx-style', line);
     }

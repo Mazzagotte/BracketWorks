@@ -10,32 +10,32 @@
 
 /* -- Default state -------------------------------------------------------- */
 .bannerDefault {
-  background: rgba(255, 106, 0, 0.15);
-  border: 1px solid rgba(255, 106, 0, 0.5);
+  background: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 50%, transparent);
 }
 
 .icon {
   flex-shrink: 0;
-  color: #FF6A00;
+  color: var(--color-primary);
 }
 
 .label {
-  color: #FF6A00;
+  color: var(--color-primary);
 }
 
 /* -- Update-required state ------------------------------------------------ */
 .bannerUpdate {
-  background: rgba(220, 38, 38, 0.07);
-  border: 1px solid rgba(220, 38, 38, 0.35);
+  background: color-mix(in srgb, var(--color-danger) 7%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-danger) 35%, transparent);
 }
 
 .iconAlert {
   flex-shrink: 0;
-  color: #ef4444;
+  color: var(--color-danger);
 }
 
 .labelAlert {
-  color: #ef4444;
+  color: var(--color-danger);
 }
 
 /* -- Shared text ---------------------------------------------------------- */
@@ -44,7 +44,7 @@
   min-width: 0;
   margin: 0;
   font-size: 13px;
-  color: #FFFFFF;
+  color: var(--color-text-primary);
   line-height: 1.45;
 }
 
@@ -52,7 +52,7 @@
   background: none;
   border: none;
   padding: 0;
-  color: #FF6A00;
+  color: var(--color-primary);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -61,17 +61,17 @@
 }
 
 .viewLink:hover {
-  color: #ff8533;
+  color: var(--color-primary);
 }
 
 /* -- Buttons -------------------------------------------------------------- */
 .reviewBtn {
   flex-shrink: 0;
   padding: 6px 12px;
-  background: #ef4444;
+  background: var(--color-danger);
   border: none;
   border-radius: 7px;
-  color: #fff;
+  color: var(--color-text-primary);
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
@@ -80,5 +80,5 @@
 }
 
 .reviewBtn:hover {
-  background: #dc2626;
+  background: var(--color-danger);
 }

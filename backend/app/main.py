@@ -26,12 +26,19 @@ app.add_middleware(
     allow_origin_regex=allow_origin_regex,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=["*"],
+    allow_headers=[
+        "Accept",
+        "Authorization",
+        "Content-Type",
+        "Idempotency-Key",
+        settings.CSRF_HEADER_NAME,
+    ],
 )
 
 rate_limiter = RateLimiter(
     redis_url=settings.REDIS_URL or None,
     key_prefix=settings.RATE_LIMIT_KEY_PREFIX,
+    require_redis=settings.is_production,
 )
 
 LEGAL_GATE_EXACT_EXEMPTIONS = {
@@ -139,6 +146,9 @@ def _route_rate_limit(path: str, method: str) -> tuple[str, int, int] | None:
         "/api/v1/brackets/generate-multiple-async",
     }:
         return ("bracket-generate", settings.RATE_LIMIT_BRACKET_GENERATE_PER_MINUTE, 60)
+
+    if path.startswith("/api/v1/payouts/save/") and path.endswith("/async"):
+        return ("background-job", settings.RATE_LIMIT_BRACKET_GENERATE_PER_MINUTE, 60)
 
     return None
 

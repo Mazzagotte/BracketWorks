@@ -1973,7 +1973,7 @@
 .squadPillEnhanced.selected {
   background: var(--color-primary);
   border-color: var(--color-primary);
-  color: white;
+  color: var(--color-white);
   font-weight: 600;
   box-shadow: 0 4px 12px var(--color-border-hover);
   outline: 1px solid var(--color-white-glass);
@@ -1981,7 +1981,7 @@
 
 .squadPillEnhanced.selected .squadDate,
 .squadPillEnhanced.selected .squadTimeSlot {
-  color: white;
+  color: var(--color-white);
 }
 
 .squadPillEnhanced.selected:hover {
@@ -2049,7 +2049,7 @@
   border-radius: 28px;
   border: 1px solid var(--dash-border);
   background: linear-gradient(180deg, var(--bw-surface-panel-strong), color-mix(in srgb, var(--bw-surface-panel) 40%, transparent) 28%, color-mix(in srgb, var(--bw-surface-card) 94%, transparent) 100%);
-  box-shadow: 0 30px 80px color-mix(in srgb, black 50%, transparent), 0 0 0 1px var(--bw-surface-panel) inset;
+  box-shadow: 0 30px 80px color-mix(in srgb, var(--color-black) 50%, transparent), 0 0 0 1px var(--bw-surface-panel) inset;
 }
 
 .tournamentContentWrapper {
@@ -2229,7 +2229,7 @@
   min-height: 40px;
   padding: 0 14px;
   border-radius: 10px;
-  border: 1px solid color-mix(in srgb, var(--color-primary) 42%, white) !important;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 42%, var(--color-white)) !important;
   background: linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 95%, transparent), color-mix(in srgb, var(--color-primary) 72%, var(--color-warning) 28%)) !important;
   color: var(--color-white);
   font-size: 13px;
@@ -2243,7 +2243,7 @@
 .squadTimeAddBtn:hover {
   border-color: color-mix(in srgb, var(--bw-text-accent) 52%, transparent) !important;
   color: var(--color-white);
-  background: linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 88%, white), color-mix(in srgb, var(--color-warning) 80%, var(--color-primary) 20%)) !important;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 88%, var(--color-white)), color-mix(in srgb, var(--color-warning) 80%, var(--color-primary) 20%)) !important;
   box-shadow: 0 12px 26px color-mix(in srgb, var(--color-primary) 28%, transparent);
   transform: translateY(-1px);
 }
@@ -2303,7 +2303,7 @@
   min-height: 40px;
   padding: 0 16px;
   border-radius: 10px;
-  border: 1px solid color-mix(in srgb, var(--color-primary) 42%, white);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 42%, var(--color-white));
   background: linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 95%, transparent), color-mix(in srgb, var(--color-primary) 72%, var(--color-warning) 28%));
   color: var(--color-white);
   font-size: 13px;
@@ -2842,7 +2842,7 @@
   width: 68px;
   height: 68px;
   border-radius: 50%;
-  background: color-mix(in srgb, var(--bw-surface-card) 98%, black 2%);
+  background: color-mix(in srgb, var(--bw-surface-card) 98%, var(--color-black) 2%);
   border: 1px solid color-mix(in srgb, var(--bw-border-subtle) 80%, transparent);
   display: grid;
   place-items: center;
@@ -2904,7 +2904,7 @@
 }
 
 .entryBreakdownLabelHandicap {
-  color: color-mix(in srgb, var(--color-success) 88%, white 12%);
+  color: color-mix(in srgb, var(--color-success) 88%, var(--color-white) 12%);
 }
 
 .entryBreakdownLabelScratch {
@@ -2912,7 +2912,7 @@
 }
 
 .entryBreakdownLabelOptional {
-  color: color-mix(in srgb, var(--color-info) 78%, white 22%);
+  color: color-mix(in srgb, var(--color-info) 78%, var(--color-white) 22%);
 }
 
 .combinedSideCard {
@@ -3464,7 +3464,7 @@
 
 .loadBtn {
   background: var(--color-brand-orange);
-  color: white;
+  color: var(--color-white);
   font-size: 13px;
   padding: 9px 18px;
   border-radius: 10px;
@@ -4041,7 +4041,7 @@
 }
 
 .liveBadge {
-  background: linear-gradient(135deg, var(--color-primary) 0%, color-mix(in srgb, var(--color-primary-hover) 88%, black) 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, color-mix(in srgb, var(--color-primary-hover) 88%, var(--color-black)) 100%);
   box-shadow:
     0 0 0 1px color-mix(in srgb, var(--color-primary) 18%, transparent),
     0 10px 26px color-mix(in srgb, var(--color-primary) 20%, transparent);
@@ -4064,7 +4064,7 @@
   border-color: var(--dash-accent-border);
   background: linear-gradient(180deg, color-mix(in srgb, var(--color-primary) 17%, transparent), color-mix(in srgb, var(--color-primary) 10%, transparent));
   box-shadow:
-    inset 0 1px 0 color-mix(in srgb, white 6%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--color-white) 6%, transparent),
     0 10px 24px color-mix(in srgb, var(--color-primary) 12%, transparent);
 }
 
@@ -4090,7 +4090,7 @@
 
 .commissionerAdminRow:hover .commissionerAdminIndicator,
 .squadRailPill:hover .commissionerActionIndicator {
-  color: color-mix(in srgb, var(--color-primary) 72%, white);
+  color: color-mix(in srgb, var(--color-primary) 72%, var(--color-white));
 }
 
 .statTile {
@@ -4113,7 +4113,7 @@
 }
 
 .statStatusBadgeAccent {
-  color: color-mix(in srgb, var(--bw-text-accent) 84%, white);
+  color: color-mix(in srgb, var(--bw-text-accent) 84%, var(--color-white));
   border-color: color-mix(in srgb, var(--color-primary) 34%, transparent);
   background: color-mix(in srgb, var(--color-primary) 10%, transparent);
 }
@@ -4251,7 +4251,7 @@
 .tournamentCancelButton:hover:not(:disabled),
 .tournamentSaveButton:hover:not(:disabled),
 .loadBtn:hover {
-  border-color: color-mix(in srgb, var(--color-primary) 52%, white);
+  border-color: color-mix(in srgb, var(--color-primary) 52%, var(--color-white));
   background: var(--color-primary-hover);
   box-shadow: 0 12px 26px color-mix(in srgb, var(--color-primary) 30%, transparent);
 }
@@ -4271,7 +4271,7 @@
 /* Dashboard tokenized color layer (no gradients) */
 .commandCenterGrid {
   --dash-accent: var(--color-primary);
-  --dash-accent-strong: color-mix(in srgb, var(--color-primary) 82%, white);
+  --dash-accent-strong: color-mix(in srgb, var(--color-primary) 82%, var(--color-white));
   --dash-accent-soft: color-mix(in srgb, var(--color-primary) 10%, transparent);
   --dash-accent-muted: color-mix(in srgb, var(--color-primary) 16%, transparent);
   --dash-accent-border: var(--bw-border-accent);
@@ -4349,7 +4349,7 @@
 .tournamentSaveButton:hover:not(:disabled),
 .loadBtn:hover {
   background: var(--dash-accent-strong) !important;
-  border-color: color-mix(in srgb, var(--color-primary) 52%, white) !important;
+  border-color: color-mix(in srgb, var(--color-primary) 52%, var(--color-white)) !important;
 }
 
 /* Modal and selector alignment with shared UI tokens */
@@ -4771,9 +4771,9 @@
   justify-content: center;
   padding: 0.22rem 0.6rem;
   border-radius: 999px;
-  border: 1px solid rgba(255, 158, 66, 0.46);
-  background: rgba(255, 158, 66, 0.18);
-  color: rgba(255, 213, 172, 0.96);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 46%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 18%, transparent);
+  color: color-mix(in srgb, var(--color-text-secondary) 96%, transparent);
   font-size: 0.66rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -4786,17 +4786,17 @@
   flex-wrap: wrap;
   gap: 0.45rem;
   align-items: center;
-  color: rgba(233, 228, 219, 0.8);
+  color: color-mix(in srgb, var(--color-text-primary) 80%, transparent);
   font-size: 0.8rem;
 }
 
 .heroSummaryLine {
   margin-top: 0.35rem;
-  color: rgba(255, 211, 174, 0.88);
+  color: color-mix(in srgb, var(--color-text-secondary) 88%, transparent);
 }
 
 .heroStatusChip {
-  border-color: rgba(255, 255, 255, 0.12);
+  border-color: color-mix(in srgb, var(--color-text-primary) 12%, transparent);
 }
 
 .bracketInfoGrid {
@@ -4810,7 +4810,7 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.42rem 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.055);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-text-primary) 5.5%, transparent);
 }
 
 .bracketInfoRow:last-child {
@@ -4821,14 +4821,14 @@
   font-size: 0.73rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(221, 214, 202, 0.86);
+  color: color-mix(in srgb, var(--color-text-primary) 86%, transparent);
 }
 
 .bracketInfoValue {
   justify-self: end;
   text-align: right;
   font-size: 0.88rem;
-  color: rgba(255, 247, 236, 0.95);
+  color: color-mix(in srgb, var(--color-text-primary) 95%, transparent);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
@@ -4838,7 +4838,7 @@
 }
 
 .bracketInfoValueNegative {
-  color: rgba(238, 178, 167, 0.93);
+  color: color-mix(in srgb, var(--color-text-secondary) 93%, transparent);
 }
 
 .bracketInfoValueWrap {
@@ -4859,14 +4859,14 @@
 }
 
 .statusBadgeEnabled {
-  background: rgba(96, 188, 124, 0.2);
-  border: 1px solid rgba(96, 188, 124, 0.45);
+  background: color-mix(in srgb, var(--color-success) 20%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-success) 45%, transparent);
   color: var(--bw-text-title);
 }
 
 .statusBadgeDisabled {
-  background: rgba(124, 130, 141, 0.14);
-  border: 1px solid rgba(132, 138, 149, 0.34);
+  background: color-mix(in srgb, var(--color-black) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-text-primary) 34%, transparent);
   color: var(--bw-text-title);
 }
 
@@ -4886,12 +4886,12 @@
   font-weight: 600;
   text-transform: none;
   letter-spacing: 0.01em;
-  color: rgba(232, 223, 211, 0.9);
+  color: color-mix(in srgb, var(--color-text-primary) 90%, transparent);
 }
 
 .prizePoolValue {
   font-size: 1.08rem;
-  color: rgba(255, 236, 215, 0.98);
+  color: color-mix(in srgb, var(--color-text-secondary) 98%, transparent);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
@@ -4901,7 +4901,7 @@
   font-size: 0.74rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(214, 206, 193, 0.74);
+  color: color-mix(in srgb, var(--color-text-primary) 74%, transparent);
   font-weight: 700;
 }
 
@@ -4922,7 +4922,7 @@
   text-transform: none;
   letter-spacing: 0.01em;
   font-size: 0.83rem;
-  color: rgba(228, 219, 206, 0.9);
+  color: color-mix(in srgb, var(--color-text-primary) 90%, transparent);
 }
 
 .progressCard {
@@ -4930,15 +4930,15 @@
   gap: 0.6rem;
   padding: 0.8rem;
   border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(22, 24, 30, 0.72);
+  border: 1px solid color-mix(in srgb, var(--color-text-primary) 8%, transparent);
+  background: color-mix(in srgb, var(--color-black) 72%, transparent);
 }
 
 .progressCardTitle {
   font-size: 0.84rem;
   text-transform: uppercase;
   letter-spacing: 0.11em;
-  color: rgba(255, 212, 173, 0.9);
+  color: color-mix(in srgb, var(--color-text-secondary) 90%, transparent);
   font-weight: 700;
 }
 
@@ -4952,11 +4952,11 @@
   justify-content: space-between;
   gap: 0.75rem;
   font-size: 0.84rem;
-  color: rgba(232, 226, 214, 0.87);
+  color: color-mix(in srgb, var(--color-text-primary) 87%, transparent);
   min-height: 34px;
   align-items: center;
   padding: 0.12rem 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-text-primary) 7%, transparent);
 }
 
 .progressRow:last-of-type {
@@ -4968,18 +4968,18 @@
   font-size: 0.72rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(214, 206, 193, 0.84);
+  color: color-mix(in srgb, var(--color-text-primary) 84%, transparent);
 }
 
 .progressRow strong {
-  color: rgba(255, 248, 238, 0.97);
+  color: color-mix(in srgb, var(--color-text-primary) 97%, transparent);
   font-weight: 700;
 }
 
 .progressBarTrack {
   height: 7px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.1);
+  background: color-mix(in srgb, var(--color-text-primary) 10%, transparent);
   overflow: hidden;
   margin: 0.3rem 0 0.45rem;
 }
@@ -4987,14 +4987,14 @@
 .progressBarFill {
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, rgba(255, 146, 37, 0.95), rgba(255, 184, 108, 0.93));
+  background: linear-gradient(90deg, color-mix(in srgb, var(--color-primary) 95%, transparent), color-mix(in srgb, var(--color-primary) 93%, transparent));
   transition: width 180ms ease;
 }
 
 .progressPrimaryAction {
-  border-color: rgba(255, 148, 38, 0.46);
-  background: linear-gradient(135deg, rgba(255, 149, 40, 0.94), rgba(246, 132, 18, 0.94));
-  color: rgba(35, 18, 8, 0.95);
+  border-color: color-mix(in srgb, var(--color-primary) 46%, transparent);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 94%, transparent), color-mix(in srgb, var(--color-primary) 94%, transparent));
+  color: color-mix(in srgb, var(--color-danger) 95%, transparent);
   justify-self: end;
   width: auto;
   min-width: 148px;
@@ -5005,11 +5005,11 @@
 .progressPrimaryAction:hover:not(:disabled),
 .progressPrimaryAction:focus-visible:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 10px 18px rgba(249, 133, 21, 0.25);
+  box-shadow: 0 10px 18px color-mix(in srgb, var(--color-primary) 25%, transparent);
 }
 
 .commissionerActionSecondary {
-  border-color: rgba(255, 255, 255, 0.12);
+  border-color: color-mix(in srgb, var(--color-text-primary) 12%, transparent);
 }
 
 .moreActionsMenu {
@@ -5018,8 +5018,8 @@
   margin-top: 0.15rem;
   padding: 0.45rem;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(18, 20, 26, 0.75);
+  border: 1px solid color-mix(in srgb, var(--color-text-primary) 8%, transparent);
+  background: color-mix(in srgb, var(--color-black) 75%, transparent);
 }
 
 .moreActionItem {
@@ -5028,10 +5028,10 @@
   justify-content: space-between;
   gap: 0.55rem;
   width: 100%;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid color-mix(in srgb, var(--color-text-primary) 10%, transparent);
   border-radius: 10px;
-  background: rgba(30, 34, 42, 0.9);
-  color: rgba(245, 241, 233, 0.95);
+  background: color-mix(in srgb, var(--color-black) 90%, transparent);
+  color: color-mix(in srgb, var(--color-text-primary) 95%, transparent);
   font-size: 0.82rem;
   font-weight: 600;
   padding: 0.52rem 0.62rem;
@@ -5041,20 +5041,20 @@
 
 .moreActionItem:hover:not(:disabled),
 .moreActionItem:focus-visible:not(:disabled) {
-  border-color: rgba(255, 171, 89, 0.55);
-  background: rgba(38, 42, 51, 0.97);
+  border-color: color-mix(in srgb, var(--color-primary) 55%, transparent);
+  background: color-mix(in srgb, var(--color-black) 97%, transparent);
 }
 
 .moreActionItemDanger {
-  border-color: rgba(231, 98, 76, 0.46);
-  background: rgba(75, 31, 27, 0.58);
-  color: rgba(255, 218, 213, 0.96);
+  border-color: color-mix(in srgb, var(--color-primary) 46%, transparent);
+  background: color-mix(in srgb, var(--color-danger) 58%, transparent);
+  color: color-mix(in srgb, var(--color-text-secondary) 96%, transparent);
 }
 
 .moreActionItemDanger:hover:not(:disabled),
 .moreActionItemDanger:focus-visible:not(:disabled) {
-  border-color: rgba(241, 126, 106, 0.7);
-  background: rgba(95, 38, 33, 0.7);
+  border-color: color-mix(in srgb, var(--color-primary) 70%, transparent);
+  background: color-mix(in srgb, var(--color-danger) 70%, transparent);
 }
 
 .moreActionIndicator {
@@ -5082,14 +5082,14 @@
 
 .summaryCardActionable:hover,
 .summaryCardActionable:focus-visible {
-  border-color: rgba(255, 170, 90, 0.44);
+  border-color: color-mix(in srgb, var(--color-primary) 44%, transparent);
 }
 
 .summaryCardActionable:focus-visible,
 .squadRailPill:focus-visible,
 .moreActionItem:focus-visible,
 .progressPrimaryAction:focus-visible {
-  outline: 2px solid rgba(255, 171, 89, 0.78);
+  outline: 2px solid color-mix(in srgb, var(--color-primary) 78%, transparent);
   outline-offset: 2px;
 }
 
@@ -5112,12 +5112,12 @@
 
 .commissionerPanel .squadRailPill.commissionerActionPrimary {
   background: linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 96%, transparent), color-mix(in srgb, var(--color-primary) 78%, var(--color-warning) 22%)) !important;
-  border-color: color-mix(in srgb, var(--color-primary) 56%, white) !important;
+  border-color: color-mix(in srgb, var(--color-primary) 56%, var(--color-white)) !important;
   color: var(--color-white) !important;
 }
 
 .commissionerPanel .squadRailPill.commissionerActionPrimary:hover {
-  background: linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 90%, white), color-mix(in srgb, var(--color-primary) 82%, var(--color-warning) 18%)) !important;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 90%, var(--color-white)), color-mix(in srgb, var(--color-primary) 82%, var(--color-warning) 18%)) !important;
 }
 
 .commissionerPanel .squadRailPill.moreActionsToggle {
@@ -5189,27 +5189,27 @@
 }
 
 .heroStatusChipPending {
-  border-color: rgba(148, 156, 170, 0.42);
-  background: rgba(105, 112, 122, 0.14);
-  color: rgba(231, 227, 218, 0.9);
+  border-color: color-mix(in srgb, var(--color-text-primary) 42%, transparent);
+  background: color-mix(in srgb, var(--color-black) 14%, transparent);
+  color: color-mix(in srgb, var(--color-text-primary) 90%, transparent);
 }
 
 .heroStatusChipActive {
-  border-color: rgba(232, 154, 79, 0.44);
-  background: rgba(185, 118, 55, 0.16);
-  color: rgba(247, 225, 201, 0.95);
+  border-color: color-mix(in srgb, var(--color-primary) 44%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 16%, transparent);
+  color: color-mix(in srgb, var(--color-text-secondary) 95%, transparent);
 }
 
 .heroStatusChipComplete {
-  border-color: rgba(101, 170, 121, 0.44);
-  background: rgba(78, 132, 93, 0.18);
-  color: rgba(210, 238, 217, 0.94);
+  border-color: color-mix(in srgb, var(--color-success) 44%, transparent);
+  background: color-mix(in srgb, var(--color-success) 18%, transparent);
+  color: color-mix(in srgb, var(--color-text-secondary) 94%, transparent);
 }
 
 .heroStatusChipAlert {
-  border-color: rgba(199, 138, 72, 0.48);
-  background: rgba(124, 78, 43, 0.22);
-  color: rgba(253, 227, 197, 0.96);
+  border-color: color-mix(in srgb, var(--color-primary) 48%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 22%, transparent);
+  color: color-mix(in srgb, var(--color-text-secondary) 96%, transparent);
 }
 
 .heroStatusAlertIcon {
@@ -5221,9 +5221,9 @@
   justify-content: center;
   font-size: 10px;
   font-weight: 800;
-  color: rgba(35, 18, 8, 0.95);
-  background: rgba(235, 170, 101, 0.9);
-  border: 1px solid rgba(255, 210, 164, 0.82);
+  color: color-mix(in srgb, var(--color-danger) 95%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 90%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-text-secondary) 82%, transparent);
 }
 
 .additionalBracketsRow {
@@ -5234,13 +5234,13 @@
   text-transform: none;
   letter-spacing: 0.01em;
   font-size: 0.84rem;
-  color: rgba(226, 218, 205, 0.9);
+  color: color-mix(in srgb, var(--color-text-primary) 90%, transparent);
 }
 
 .bracketRulesCard .bracketInfoRow {
   min-height: 38px;
   padding: 0.5rem 0;
-  border-bottom-color: rgba(255, 255, 255, 0.05);
+  border-bottom-color: color-mix(in srgb, var(--color-text-primary) 5%, transparent);
 }
 
 .bracketRulesCard .bracketInfoValue {
@@ -5565,10 +5565,10 @@
   place-items: center;
   width: 32px;
   height: 32px;
-  border: 1px solid #3f3f46;
+  border: 1px solid var(--color-border-primary);
   border-radius: 9px;
   color: var(--color-primary);
-  background: #18181e;
+  background: var(--color-surface-primary);
 }
 
 .settingsModalGrid .settingsHeaderIcon svg {
@@ -5581,7 +5581,7 @@
   .modalOverlay.settingsModalOverlay {
     z-index: 1300;
     padding: 20px;
-    background: rgba(9, 9, 12, 0.82);
+    background: color-mix(in srgb, var(--color-black) 82%, transparent);
     backdrop-filter: blur(8px);
   }
 
@@ -5589,32 +5589,32 @@
     width: min(1200px, calc(100vw - 40px));
     max-height: min(86vh, 740px);
     min-width: 0;
-    border: 1px solid #34343a !important;
+    border: 1px solid var(--color-border-primary) !important;
     border-radius: 18px;
-    background: #151519 !important;
-    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.48) !important;
+    background: var(--color-bg-primary) !important;
+    box-shadow: 0 24px 64px color-mix(in srgb, var(--color-black) 48%, transparent) !important;
   }
 
   .settingsModalCard > .modalHeader {
     padding: 20px 60px 16px 22px;
-    background: #18181e !important;
-    border-bottom: 1px solid #2a2a30 !important;
+    background: var(--color-surface-primary) !important;
+    border-bottom: 1px solid var(--color-border-primary) !important;
   }
 
   .settingsModalCard > .modalHeader .modalTitle {
-    color: #f4f4f5;
+    color: var(--color-text-primary);
     font-size: 26px;
   }
 
   .settingsModalCard > .modalHeader .modalSubtitle {
     margin-top: 5px;
-    color: #a1a1aa;
+    color: var(--color-text-secondary);
     font-size: 14px;
   }
 
   .modalScrollBody.settingsModalScrollBody {
     padding: 10px;
-    background: #151519;
+    background: var(--color-bg-primary);
   }
 
   .settingsModalGrid {
@@ -5633,31 +5633,31 @@
     height: fit-content;
     min-height: 0 !important;
     align-self: start;
-    border: 1px solid #34343a;
+    border: 1px solid var(--color-border-primary);
     border-radius: 14px;
-    background: #1c1c22;
+    background: var(--color-surface-primary);
     box-shadow: none;
   }
 
   .settingsModalGrid .settingsHeader {
     padding: 8px 10px;
-    background: #202027;
-    border-bottom-color: #34343a;
+    background: var(--color-surface-primary);
+    border-bottom-color: var(--color-border-primary);
   }
 
   .settingsModalGrid .settingsHeader:hover {
-    background: #24242b;
+    background: var(--color-surface-primary);
   }
 
   .settingsModalGrid .settingsTitle {
-    color: #f4f4f5;
+    color: var(--color-text-primary);
     font-size: 16px;
   }
 
   .settingsModalGrid .settingsMeta,
   .settingsSectionHint,
   .settingsFieldHint {
-    color: #a1a1aa;
+    color: var(--color-text-secondary);
   }
 
   .settingsModalGrid .settingsContent {
@@ -5668,8 +5668,8 @@
   .settingsModalGrid .compactField,
   .settingsModalGrid .programCard,
   .settingsModalGrid .settingsCalculatedSummaryRow {
-    border-color: #34343a;
-    background: #202027;
+    border-color: var(--color-border-primary);
+    background: var(--color-surface-primary);
   }
 
   .settingsModalGrid .mainBracketSettingsCard .settingsColumn {
@@ -5696,20 +5696,20 @@
   .settingsModalGrid .compactSelect,
   .settingsModalGrid .compactInput {
     min-height: 32px;
-    color: #f4f4f5;
-    background: #151519;
-    border-color: #3f3f46;
+    color: var(--color-text-primary);
+    background: var(--color-bg-primary);
+    border-color: var(--color-border-primary);
   }
 
   .settingsModalGrid .compactSelect:focus,
   .settingsModalGrid .compactInput:focus {
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(255, 106, 0, 0.12);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 12%, transparent);
   }
 
   .settingsModalGrid .programCardChecked {
-    border-color: color-mix(in srgb, var(--color-primary) 62%, #34343a);
-    background: #2a211b;
+    border-color: color-mix(in srgb, var(--color-primary) 62%, var(--color-border-primary));
+    background: var(--color-border-primary);
   }
 
   .settingsModalGrid .programCard {
@@ -5727,31 +5727,31 @@
   }
 
   .settingsModalGrid .checkboxInput {
-    background: #151519;
-    border-color: #52525b;
+    background: var(--color-bg-primary);
+    border-color: var(--color-text-disabled);
   }
 
   .settingsModalGrid .checkboxInput:checked {
-    background: #2a211b;
+    background: var(--color-border-primary);
     border-color: var(--color-primary);
   }
 
   .settingsModalFooter {
     padding: 8px 2px 0;
-    border-top-color: #34343a;
-    background: #151519;
+    border-top-color: var(--color-border-primary);
+    background: var(--color-bg-primary);
     backdrop-filter: none;
   }
 
   .settingsFooterCancelButton {
-    color: #f4f4f5;
-    background: #25252b;
-    border-color: #3f3f46;
+    color: var(--color-text-primary);
+    background: var(--color-surface-primary);
+    border-color: var(--color-border-primary);
   }
 
   .settingsFooterCancelButton:hover:not(:disabled) {
-    background: #2f2f36;
-    border-color: #52525b;
+    background: var(--color-border-primary);
+    border-color: var(--color-text-disabled);
   }
 
   .settingsFooterSaveButtonActive {
@@ -6377,14 +6377,14 @@
 .tournamentSelectorCard {
   width: min(560px, calc(100vw - 32px));
   max-width: 560px;
-  background: #151519 !important;
-  border-color: #34343a !important;
+  background: var(--color-bg-primary) !important;
+  border-color: var(--color-border-primary) !important;
 }
 
 .tournamentSelectorCard .tournamentSelectorHeader {
   padding: 20px 58px 16px 22px;
-  background: #18181e !important;
-  border-bottom: 1px solid #2a2a30 !important;
+  background: var(--color-surface-primary) !important;
+  border-bottom: 1px solid var(--color-border-primary) !important;
 }
 
 .tournamentSelectorCard .tournamentSelectorHeader .modalTitle {
@@ -6410,17 +6410,17 @@
   min-height: 148px;
   padding: 16px;
   border-radius: 14px;
-  background: #1c1c22 !important;
-  border-color: #34343a !important;
+  background: var(--color-surface-primary) !important;
+  border-color: var(--color-border-primary) !important;
 }
 
 .tournamentSelectorCard .tournamentItem:hover {
-  background: #202027 !important;
-  border-color: #52525b !important;
+  background: var(--color-surface-primary) !important;
+  border-color: var(--color-text-disabled) !important;
 }
 
 .tournamentSelectorCard .tournamentItemActive {
-  background: #202027 !important;
+  background: var(--color-surface-primary) !important;
   border-color: var(--color-primary) !important;
 }
 
@@ -6432,8 +6432,8 @@
   flex-basis: 48px;
   width: 48px;
   height: 48px;
-  background: #18181e;
-  border-color: #3f3f46;
+  background: var(--color-surface-primary);
+  border-color: var(--color-border-primary);
   color: var(--color-primary);
 }
 
@@ -6464,14 +6464,14 @@
 .tournamentSelectorCard .tournamentMeta span {
   padding: 5px 8px;
   font-size: 11px;
-  color: #d4d4d8;
-  background: #25252b;
-  border-color: #3f3f46;
+  color: var(--color-text-primary);
+  background: var(--color-surface-primary);
+  border-color: var(--color-border-primary);
 }
 
 .tournamentSelectorCard .tournamentActiveBadge {
   color: var(--color-primary);
-  background: #2a211b;
+  background: var(--color-border-primary);
   border-color: color-mix(in srgb, var(--color-primary) 58%, transparent);
 }
 
@@ -6488,25 +6488,25 @@
 }
 
 .tournamentSelectorCard .loadBtn {
-  color: #f4f4f5 !important;
-  background: #25252b !important;
-  border-color: #3f3f46 !important;
+  color: var(--color-text-primary) !important;
+  background: var(--color-surface-primary) !important;
+  border-color: var(--color-border-primary) !important;
 }
 
 .tournamentSelectorCard .loadBtn:hover {
-  background: #2f2f36 !important;
-  border-color: #52525b !important;
+  background: var(--color-border-primary) !important;
+  border-color: var(--color-text-disabled) !important;
 }
 
 .tournamentSelectorCard .deleteBtn {
-  color: #f87171 !important;
-  background: rgba(127, 29, 29, 0.12) !important;
-  border-color: rgba(239, 68, 68, 0.62) !important;
+  color: var(--color-primary) !important;
+  background: color-mix(in srgb, var(--color-danger) 12%, transparent) !important;
+  border-color: color-mix(in srgb, var(--color-danger) 62%, transparent) !important;
 }
 
 .tournamentSelectorCard .deleteBtn:hover {
-  background: rgba(127, 29, 29, 0.24) !important;
-  border-color: #ef4444 !important;
+  background: color-mix(in srgb, var(--color-danger) 24%, transparent) !important;
+  border-color: var(--color-danger) !important;
 }
 
 .squadChangeModalCard {

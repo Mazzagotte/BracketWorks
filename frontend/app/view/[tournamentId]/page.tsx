@@ -1622,7 +1622,7 @@ export default function TournamentViewPage() {
       </header>
 
       {/* Content */}
-      <main className={styles.main}>
+      <div className={styles.main}>
         <div className={styles.contentShell}>
           {loading && !resolvedTournamentId ? (
             <div className={styles.section}>
@@ -1675,7 +1675,7 @@ export default function TournamentViewPage() {
           )}
         </div>
 
-      </main>
+      </div>
 
     </div>
   )

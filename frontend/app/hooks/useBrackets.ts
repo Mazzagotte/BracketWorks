@@ -175,10 +175,7 @@ export function useBrackets() {
         data = await waitForBracketJob(job.job_id)
       } else {
         const url = `/api/v1/brackets/generate-multiple?tournament_id=${tournamentId}${squadParam}${forceParam}`
-        data = await apiClient.get<BracketPreview>(
-          url,
-          !effectiveForceRegenerate
-        )
+        data = await apiClient.post<BracketPreview>(url)
       }
       setPreview(data)
 

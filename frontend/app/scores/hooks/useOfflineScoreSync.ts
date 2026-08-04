@@ -31,7 +31,6 @@ export function useOfflineScoreSync({ addToast }: UseOfflineScoreSyncArgs): UseO
         const response = await apiFetch(API('/api/v1/scores/'), {
           method: 'POST',
           headers: {
-            Authorization: `Bearer ${saveData.authToken}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(saveData.data),

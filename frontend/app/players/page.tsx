@@ -192,7 +192,7 @@ export default function PlayersPage() {
       isInitialized: isAuthInitialized,
       hasToken: !!authToken,
       hasUser: !!currentUser,
-      tokenFromStorage: !!(sessionStorage.getItem('token') || localStorage.getItem('token')),
+      tokenFromStorage: !!authToken,
       userIdFromStorage: !!localStorage.getItem('user_id')
     });
   }, [isUserAuthenticated, isAuthInitialized, authToken, currentUser]);
@@ -665,7 +665,7 @@ export default function PlayersPage() {
   if (!isAuthInitialized) {
     return (
       <div className={styles.loadingScreen}>
-        <div>Loading player management...</div>
+        <div role="status">Loading entries...</div>
       </div>
     );
   }
@@ -1062,7 +1062,7 @@ export default function PlayersPage() {
 
           {showInitialPlayersLoad ? (
             <div className={`${cardStyles.card} ${styles.skeletonCard}`}>
-              <div className={styles.skeletonText}>Loading players...</div>
+              <div className={styles.skeletonText} role="status">Loading entries...</div>
               {[1, 2, 3, 4, 5].map(i => (
                 <div key={i} className={styles.skeletonGrid}>
                   {[1, 2, 3, 4, 5, 6].map(j => (

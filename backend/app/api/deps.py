@@ -1,4 +1,5 @@
 import logging
+import secrets
 from datetime import datetime, timezone
 
 from fastapi import HTTPException, Depends, Request
@@ -69,8 +70,16 @@ def get_current_user(
     token: str | None = Depends(oauth2_scheme),
     db: Session = Depends(get_db),
 ):
+    authenticated_by_cookie = False
     if not token:
         token = (request.cookies.get(settings.ACCESS_TOKEN_COOKIE_NAME) or "").strip() or None
+        authenticated_by_cookie = bool(token)
+
+    if authenticated_by_cookie and request.method.upper() in {"POST", "PUT", "PATCH", "DELETE"}:
+        csrf_cookie = (request.cookies.get(settings.CSRF_COOKIE_NAME) or "").strip()
+        csrf_header = (request.headers.get(settings.CSRF_HEADER_NAME) or "").strip()
+        if not csrf_cookie or not csrf_header or not secrets.compare_digest(csrf_cookie, csrf_header):
+            raise HTTPException(status_code=403, detail="Invalid CSRF token")
 
     if not token:
         raise HTTPException(status_code=401, detail="Not authenticated")

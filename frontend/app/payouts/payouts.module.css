@@ -964,7 +964,7 @@
 .markPaidBtn:hover {
   color: var(--bw-text-title);
   background: color-mix(in srgb, var(--color-primary) 18%, transparent);
-  border-color: color-mix(in srgb, var(--color-primary) 48%, white);
+  border-color: color-mix(in srgb, var(--color-primary) 48%, var(--color-white));
 }
 
 .paidBadge {

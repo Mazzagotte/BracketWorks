@@ -652,9 +652,9 @@ export function TournamentSettingsContent({ tournamentId, layout = 'page' }: Tou
       {isEmbeddedModal ? (
         content
       ) : (
-        <main className={shellClassName}>
+        <div className={shellClassName}>
           {content}
-        </main>
+        </div>
       )}
     </ErrorBoundary>
   );

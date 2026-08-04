@@ -13,10 +13,10 @@
 @media (min-width: 769px) {
   .contentShell {
     padding: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid color-mix(in srgb, var(--color-text-primary) 8%, transparent);
     border-radius: 24px;
     background: var(--bw-app-bg);
-    box-shadow: 0 22px 54px rgba(0, 0, 0, 0.24);
+    box-shadow: 0 22px 54px color-mix(in srgb, var(--color-black) 24%, transparent);
   }
 }
 
@@ -37,10 +37,10 @@
   .headerTop {
     min-height: 0;
     padding: 18px 22px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid color-mix(in srgb, var(--color-text-primary) 8%, transparent);
     border-radius: 22px;
     background: var(--bw-app-bg);
-    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.22);
+    box-shadow: 0 18px 42px color-mix(in srgb, var(--color-black) 22%, transparent);
   }
 
   .brandCol {
@@ -84,13 +84,13 @@
   }
 
   .tableWrap {
-    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 18px 42px color-mix(in srgb, var(--color-black) 20%, transparent);
   }
 
   .groupSection,
   .sidePotSection,
   .winnerCard {
-    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.16);
+    box-shadow: 0 16px 36px color-mix(in srgb, var(--color-black) 16%, transparent);
   }
 }
 
@@ -256,8 +256,8 @@
   gap: 4px;
   padding: 3px;
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: color-mix(in srgb, var(--color-text-primary) 3%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-text-primary) 6%, transparent);
   box-sizing: border-box;
 }
 
@@ -419,8 +419,8 @@
   color: var(--color-text-secondary);
   padding: 3px 9px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid color-mix(in srgb, var(--color-text-primary) 8%, transparent);
+  background: color-mix(in srgb, var(--color-text-primary) 3%, transparent);
 }
 
 .liveStatusText {
@@ -439,9 +439,9 @@
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   border-radius: var(--radius-lg);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(16, 17, 25, 0.86);
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.3);
+  border: 1px solid color-mix(in srgb, var(--color-text-primary) 10%, transparent);
+  background: color-mix(in srgb, var(--color-black) 86%, transparent);
+  box-shadow: 0 14px 30px color-mix(in srgb, var(--color-black) 30%, transparent);
   overflow: hidden;
 }
 
@@ -452,25 +452,25 @@
 }
 
 .table thead th {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.015));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-text-primary) 3.5%, transparent), color-mix(in srgb, var(--color-text-primary) 1.5%, transparent));
   padding: 12px 10px;
   text-align: left;
   font-weight: var(--font-weight-bold);
   font-size: var(--font-size-xs);
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: rgba(244, 239, 232, 0.58);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: color-mix(in srgb, var(--color-text-primary) 58%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-text-primary) 8%, transparent);
   white-space: nowrap;
 }
 
 .tableRow {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-text-primary) 8%, transparent);
   transition: background 0.15s ease;
 }
 
 .tableRow:last-child { border-bottom: none; }
-.tableRow:hover { background: rgba(255, 122, 0, 0.045); }
+.tableRow:hover { background: color-mix(in srgb, var(--color-primary) 4.5%, transparent); }
 
 .table td {
   padding: 12px 10px;
@@ -487,8 +487,8 @@
   ============================================================ */
 .groupSection {
   margin-bottom: 24px;
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: color-mix(in srgb, var(--color-text-primary) 2.5%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-text-primary) 10%, transparent);
   border-radius: 14px;
   box-shadow: none;
   overflow: hidden;
@@ -497,11 +497,11 @@
 .groupTitle {
   font-size: clamp(1.2rem, 1.7vw, 1.5rem);
   font-weight: var(--font-weight-bold);
-  color: rgba(244, 239, 232, 0.9);
+  color: color-mix(in srgb, var(--color-text-primary) 90%, transparent);
   margin: 0;
   padding: 0.95rem 1rem 0.8rem;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.015));
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-text-primary) 3.5%, transparent), color-mix(in srgb, var(--color-text-primary) 1.5%, transparent));
+  border-bottom: 1px solid color-mix(in srgb, var(--color-text-primary) 8%, transparent);
   letter-spacing: -0.02em;
 }
 
@@ -984,8 +984,8 @@
 }
 
 /* 2nd is silver, 3rd is bronze */
-.sidePotPodium li:nth-child(2) .sidePotPodiumPlace { color: #94a3b8; }
-.sidePotPodium li:nth-child(3) .sidePotPodiumPlace { color: #b87333; }
+.sidePotPodium li:nth-child(2) .sidePotPodiumPlace { color: var(--color-text-secondary); }
+.sidePotPodium li:nth-child(3) .sidePotPodiumPlace { color: var(--color-primary); }
 
 .sidePotPodiumName {
   flex: 1;
@@ -1297,7 +1297,7 @@
     padding-bottom: 5px;
     font-size: 0.62rem;
     line-height: 1;
-    color: color-mix(in srgb, var(--public-muted) 82%, white 18%);
+    color: color-mix(in srgb, var(--public-muted) 82%, var(--color-white) 18%);
   }
 
   .sidePotPodium {
@@ -1716,13 +1716,13 @@
 /* ── Modern public operations polish ───────────────────────────────────────── */
 
 .page {
-  color: rgba(241, 245, 249, 0.9);
+  color: color-mix(in srgb, var(--color-text-primary) 90%, transparent);
 }
 
 .header {
-  background: rgba(13, 15, 23, 0.96);
-  border-bottom: 1px solid rgba(255, 122, 0, 0.38);
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.3);
+  background: color-mix(in srgb, var(--color-black) 96%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-primary) 38%, transparent);
+  box-shadow: 0 14px 30px color-mix(in srgb, var(--color-black) 30%, transparent);
 }
 
 .brandEyebrow,
@@ -1743,9 +1743,9 @@
 .winnerCard,
 .sidePotSection,
 .loadingScreen {
-  border-color: rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.025);
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.3);
+  border-color: color-mix(in srgb, var(--color-text-primary) 10%, transparent);
+  background: color-mix(in srgb, var(--color-text-primary) 2.5%, transparent);
+  box-shadow: 0 14px 30px color-mix(in srgb, var(--color-black) 30%, transparent);
 }
 
 .main {
@@ -1755,17 +1755,17 @@
 .squadSelect,
 .searchInput,
 .bracketSearchInput {
-  border: 1px solid rgba(226, 232, 240, 0.16);
-  background: rgba(8, 9, 15, 0.72);
-  color: rgba(246, 249, 255, 0.94);
+  border: 1px solid color-mix(in srgb, var(--color-text-primary) 16%, transparent);
+  background: color-mix(in srgb, var(--color-black) 72%, transparent);
+  color: color-mix(in srgb, var(--color-text-primary) 94%, transparent);
   font-weight: 650;
 }
 
 .squadSelect:focus,
 .searchInput:focus,
 .bracketSearchInput:focus {
-  border-color: rgba(255, 146, 72, 0.55);
-  box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.12);
+  border-color: color-mix(in srgb, var(--color-primary) 55%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 12%, transparent);
 }
 
 .tab,
@@ -1774,9 +1774,9 @@
 .bracketPillsArrow,
 .bracketSearchClear,
 .refreshBtn {
-  border: 1px solid rgba(226, 232, 240, 0.14);
-  background: rgba(255, 255, 255, 0.025);
-  color: rgba(203, 213, 225, 0.82);
+  border: 1px solid color-mix(in srgb, var(--color-text-primary) 14%, transparent);
+  background: color-mix(in srgb, var(--color-text-primary) 2.5%, transparent);
+  color: color-mix(in srgb, var(--color-text-primary) 82%, transparent);
   box-shadow: none;
   letter-spacing: 0;
 }
@@ -1787,9 +1787,9 @@
 .bracketPillsArrow:hover:not(:disabled),
 .bracketSearchClear:hover,
 .refreshBtn:hover {
-  color: rgba(255, 219, 190, 0.98);
-  background: rgba(255, 122, 0, 0.1);
-  border-color: rgba(255, 146, 72, 0.35);
+  color: color-mix(in srgb, var(--color-text-secondary) 98%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 35%, transparent);
   transform: none;
   filter: none;
 }
@@ -1798,13 +1798,13 @@
 .bracketGroupTabActive,
 .bracketPillActive,
 .shareBtn {
-  color: rgba(255, 238, 220, 1);
-  background: rgba(255, 122, 0, 0.16);
-  border-color: rgba(255, 146, 72, 0.48);
+  color: color-mix(in srgb, var(--color-text-secondary) 100%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 16%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 48%, transparent);
 }
 
 .shareBtn:hover {
-  background: rgba(255, 122, 0, 0.24);
+  background: color-mix(in srgb, var(--color-primary) 24%, transparent);
 }
 
 .tableWrap,
@@ -1816,24 +1816,24 @@
 
 .table thead th,
 .groupTitle {
-  background: rgba(255, 255, 255, 0.02);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  color: rgba(180, 189, 205, 0.76);
+  background: color-mix(in srgb, var(--color-text-primary) 2%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-text-primary) 8%, transparent);
+  color: color-mix(in srgb, var(--color-text-secondary) 76%, transparent);
 }
 
 .groupTitle {
-  color: rgba(246, 249, 255, 0.96);
+  color: color-mix(in srgb, var(--color-text-primary) 96%, transparent);
   font-size: 1rem;
   line-height: 1.2;
   font-weight: 800;
 }
 
 .tableRow {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.055);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-text-primary) 5.5%, transparent);
 }
 
 .tableRow:hover {
-  background: rgba(255, 122, 0, 0.07);
+  background: color-mix(in srgb, var(--color-primary) 7%, transparent);
 }
 
 .table td,
@@ -1842,66 +1842,66 @@
 .refreshMeta,
 .liveStatus,
 .emptyNote {
-  color: rgba(180, 189, 205, 0.78);
+  color: color-mix(in srgb, var(--color-text-secondary) 78%, transparent);
 }
 
 .tdName,
 .matchName,
 .winnerName,
 .sidePotPodiumName {
-  color: rgba(246, 249, 255, 0.92);
+  color: color-mix(in srgb, var(--color-text-primary) 92%, transparent);
 }
 
 .aliveNum,
 .wonNum,
 .sidePotPodiumScore {
-  color: #58e6a7;
+  color: var(--color-success);
 }
 
 .winnerCardTitle {
-  color: rgba(255, 219, 190, 0.96);
+  color: color-mix(in srgb, var(--color-text-secondary) 96%, transparent);
 }
 
 .matchMargin {
-  color: rgba(255, 219, 190, 0.96);
-  background: rgba(255, 122, 0, 0.11);
-  border: 1px solid rgba(255, 146, 72, 0.28);
+  color: color-mix(in srgb, var(--color-text-secondary) 96%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 11%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 28%, transparent);
 }
 
 .bracketRound,
 .matchCard,
 .winnerCard,
 .sidePotCard {
-  background: rgba(8, 9, 15, 0.72);
-  border: 1px solid rgba(226, 232, 240, 0.12);
+  background: color-mix(in srgb, var(--color-black) 72%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-text-primary) 12%, transparent);
   box-shadow: none;
 }
 
 .bracketRound {
-  border-top-color: rgba(255, 146, 72, 0.28);
+  border-top-color: color-mix(in srgb, var(--color-primary) 28%, transparent);
 }
 
 .roundLabel,
 .matchLabelRow,
 .vsRow {
-  background: rgba(255, 255, 255, 0.035);
-  border-color: rgba(255, 255, 255, 0.08);
+  background: color-mix(in srgb, var(--color-text-primary) 3.5%, transparent);
+  border-color: color-mix(in srgb, var(--color-text-primary) 8%, transparent);
 }
 
 .roundLabel,
 .matchLabel {
-  color: rgba(255, 219, 190, 0.9);
+  color: color-mix(in srgb, var(--color-text-secondary) 90%, transparent);
 }
 
 .matchCard:hover {
   transform: none;
-  border-color: rgba(255, 146, 72, 0.28);
-  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.24);
+  border-color: color-mix(in srgb, var(--color-primary) 28%, transparent);
+  box-shadow: 0 10px 22px color-mix(in srgb, var(--color-black) 24%, transparent);
 }
 
 .finalsCard {
-  background: rgba(255, 122, 0, 0.075);
-  border-color: rgba(255, 146, 72, 0.38);
+  background: color-mix(in srgb, var(--color-primary) 7.5%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 38%, transparent);
   box-shadow: none;
 }
 
@@ -1909,51 +1909,51 @@
 .autoWin,
 .bracketWinnerBanner,
 .matchSlotHighlight {
-  color: rgba(190, 255, 213, 0.96);
-  background: rgba(45, 212, 136, 0.1);
-  border-color: rgba(45, 212, 136, 0.35);
+  color: color-mix(in srgb, var(--color-success) 96%, transparent);
+  background: color-mix(in srgb, var(--color-success) 10%, transparent);
+  border-color: color-mix(in srgb, var(--color-success) 35%, transparent);
 }
 
 .matchComplete {
-  border-color: rgba(45, 212, 136, 0.3);
+  border-color: color-mix(in srgb, var(--color-success) 30%, transparent);
 }
 
 .matchInProgress,
 .matchNextUp {
-  border-left-color: rgba(255, 122, 0, 0.72);
+  border-left-color: color-mix(in srgb, var(--color-primary) 72%, transparent);
 }
 
 .matchScore {
-  color: rgba(203, 213, 225, 0.88);
+  color: color-mix(in srgb, var(--color-text-primary) 88%, transparent);
 }
 
 .connectorBracket {
-  border-right-color: rgba(255, 146, 72, 0.34);
-  border-top-color: rgba(255, 146, 72, 0.34);
-  border-bottom-color: rgba(255, 146, 72, 0.34);
+  border-right-color: color-mix(in srgb, var(--color-primary) 34%, transparent);
+  border-top-color: color-mix(in srgb, var(--color-primary) 34%, transparent);
+  border-bottom-color: color-mix(in srgb, var(--color-primary) 34%, transparent);
   filter: none;
 }
 
 .connectorArm {
-  border-top-color: rgba(255, 146, 72, 0.34);
+  border-top-color: color-mix(in srgb, var(--color-primary) 34%, transparent);
   filter: none;
 }
 
 .winnerRow,
 .sidePotCard,
 .sidePotCardLabel {
-  border-color: rgba(255, 255, 255, 0.08);
+  border-color: color-mix(in srgb, var(--color-text-primary) 8%, transparent);
 }
 
 @media (max-width: 480px) {
   .header {
-    border-bottom-color: rgba(255, 122, 0, 0.3);
+    border-bottom-color: color-mix(in srgb, var(--color-primary) 30%, transparent);
   }
 
   .refreshBtn {
-    color: rgba(255, 238, 220, 1);
-    background: rgba(255, 122, 0, 0.16);
-    border-color: rgba(255, 146, 72, 0.48);
+    color: color-mix(in srgb, var(--color-text-secondary) 100%, transparent);
+    background: color-mix(in srgb, var(--color-primary) 16%, transparent);
+    border-color: color-mix(in srgb, var(--color-primary) 48%, transparent);
   }
 }
 
@@ -1991,13 +1991,13 @@
 }
 
 .page :where(th) {
-  color: rgba(182, 191, 207, 0.86);
+  color: color-mix(in srgb, var(--color-text-secondary) 86%, transparent);
   font-size: var(--bw-type-table-heading);
   letter-spacing: 0;
 }
 
 .page :where(td) {
-  color: rgba(241, 245, 249, 0.9);
+  color: color-mix(in srgb, var(--color-text-primary) 90%, transparent);
   font-size: var(--bw-type-table);
 }
 
@@ -2010,9 +2010,9 @@
   position: sticky;
   top: 0;
   z-index: 50;
-  background: rgba(15, 15, 22, 0.94);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.28);
+  background: color-mix(in srgb, var(--color-black) 94%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-text-primary) 8%, transparent);
+  box-shadow: 0 16px 42px color-mix(in srgb, var(--color-black) 28%, transparent);
   backdrop-filter: blur(18px);
 }
 
@@ -2053,7 +2053,7 @@
 }
 
 .brandSep {
-  color: rgba(255, 122, 0, 0.75);
+  color: color-mix(in srgb, var(--color-primary) 75%, transparent);
   opacity: 1;
 }
 
@@ -2090,16 +2090,16 @@
   min-height: 38px;
   border-radius: 8px;
   border-color: var(--public-border);
-  background: rgba(12, 12, 18, 0.72);
+  background: color-mix(in srgb, var(--color-black) 72%, transparent);
   color: var(--public-text);
   font-size: 0.82rem;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-text-primary) 3.5%, transparent);
 }
 
 .squadSelect:hover,
 .squadSelect:focus {
   border-color: var(--public-border-strong);
-  background: rgba(18, 18, 25, 0.92);
+  background: color-mix(in srgb, var(--color-black) 92%, transparent);
 }
 
 .tabsTrack {
@@ -2108,7 +2108,7 @@
   padding: 3px;
   border-radius: 8px;
   border-color: var(--public-border);
-  background: rgba(10, 10, 16, 0.72);
+  background: color-mix(in srgb, var(--color-black) 72%, transparent);
 }
 
 .tab {
@@ -2121,14 +2121,14 @@
 
 .tab:hover {
   color: var(--public-text);
-  background: rgba(255, 255, 255, 0.045);
+  background: color-mix(in srgb, var(--color-text-primary) 4.5%, transparent);
 }
 
 .tabActive {
-  color: #fff4e8;
-  border-color: rgba(255, 122, 0, 0.55);
-  background: rgba(255, 122, 0, 0.18);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  color: var(--color-text-secondary);
+  border-color: color-mix(in srgb, var(--color-primary) 55%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 18%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-text-primary) 8%, transparent);
 }
 
 .shareBtn,
@@ -2144,21 +2144,21 @@
 .shareBtn {
   height: 38px;
   min-height: 38px;
-  border-color: rgba(255, 122, 0, 0.42);
-  background: linear-gradient(180deg, rgba(255, 139, 24, 0.95), rgba(232, 98, 0, 0.95));
-  box-shadow: 0 10px 24px rgba(255, 122, 0, 0.2);
-  color: #fff7ef;
+  border-color: color-mix(in srgb, var(--color-primary) 42%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-primary) 95%, transparent), color-mix(in srgb, var(--color-primary) 95%, transparent));
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--color-primary) 20%, transparent);
+  color: var(--color-text-primary);
 }
 
 .shareBtn:hover {
-  background: linear-gradient(180deg, #ff962a, #f06c00);
-  border-color: rgba(255, 173, 86, 0.72);
+  background: linear-gradient(180deg, var(--color-primary), var(--color-primary));
+  border-color: color-mix(in srgb, var(--color-primary) 72%, transparent);
 }
 
 .shareBtnCopied {
-  border-color: rgba(69, 212, 131, 0.55);
-  background: rgba(30, 120, 75, 0.36);
-  color: #c6f8dc;
+  border-color: color-mix(in srgb, var(--color-success) 55%, transparent);
+  background: color-mix(in srgb, var(--color-success) 36%, transparent);
+  color: var(--color-success);
 }
 
 .main {
@@ -2177,7 +2177,7 @@
   border: 1px solid var(--public-border);
   border-radius: 8px;
   background: var(--public-surface);
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 16px 36px color-mix(in srgb, var(--color-black) 18%, transparent);
 }
 
 .aliveToolbar {
@@ -2199,7 +2199,7 @@
   min-height: 38px;
   border-radius: 8px;
   border-color: var(--public-border);
-  background: rgba(10, 10, 16, 0.72);
+  background: color-mix(in srgb, var(--color-black) 72%, transparent);
   color: var(--public-text);
   font-size: 0.86rem;
   font-weight: 700;
@@ -2213,7 +2213,7 @@
 .searchInput:focus,
 .bracketSearchInput:focus {
   border-color: var(--public-border-strong);
-  box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.12);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 12%, transparent);
 }
 
 .countBadge,
@@ -2227,14 +2227,14 @@
   min-height: 34px;
   padding: 0 12px;
   border-color: var(--public-border);
-  background: rgba(255, 255, 255, 0.045);
+  background: color-mix(in srgb, var(--color-text-primary) 4.5%, transparent);
   color: var(--public-text);
 }
 
 .refreshBtn:hover:not(:disabled) {
   border-color: var(--public-border-strong);
   background: var(--public-orange-soft);
-  color: #ffd8b8;
+  color: var(--color-text-secondary);
 }
 
 .tableWrap,
@@ -2244,7 +2244,7 @@
   border: 1px solid var(--public-border);
   border-radius: 8px;
   background: var(--public-surface);
-  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 18px 44px color-mix(in srgb, var(--color-black) 20%, transparent);
 }
 
 .tableWrap {
@@ -2258,8 +2258,8 @@
 
 .table thead th {
   padding: 10px 12px;
-  background: rgba(255, 255, 255, 0.035);
-  color: rgba(182, 191, 207, 0.88);
+  background: color-mix(in srgb, var(--color-text-primary) 3.5%, transparent);
+  color: color-mix(in srgb, var(--color-text-secondary) 88%, transparent);
   border-bottom-color: var(--public-border);
   font-size: var(--bw-type-table-heading);
   letter-spacing: 0.01em;
@@ -2267,7 +2267,7 @@
 
 .table td {
   padding: 10px 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.055);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-text-primary) 5.5%, transparent);
 }
 
 .tableRow {
@@ -2275,11 +2275,11 @@
 }
 
 .tableRow:nth-child(even) {
-  background: rgba(255, 255, 255, 0.025);
+  background: color-mix(in srgb, var(--color-text-primary) 2.5%, transparent);
 }
 
 .tableRow:hover {
-  background: rgba(255, 122, 0, 0.055);
+  background: color-mix(in srgb, var(--color-primary) 5.5%, transparent);
 }
 
 .tdName {
@@ -2298,11 +2298,11 @@
 }
 
 .wonNum {
-  color: #ffbb78;
+  color: var(--color-primary);
 }
 
 .elimNum {
-  color: rgba(164, 171, 185, 0.45);
+  color: color-mix(in srgb, var(--color-text-primary) 45%, transparent);
 }
 
 .bracketGroupTabs {
@@ -2312,7 +2312,7 @@
   padding: 4px;
   border: 1px solid var(--public-border);
   border-radius: 8px;
-  background: rgba(10, 10, 16, 0.68);
+  background: color-mix(in srgb, var(--color-black) 68%, transparent);
   overflow-x: auto;
 }
 
@@ -2328,13 +2328,13 @@
 
 .bracketGroupTab:hover {
   color: var(--public-text);
-  background: rgba(255, 255, 255, 0.045);
+  background: color-mix(in srgb, var(--color-text-primary) 4.5%, transparent);
 }
 
 .bracketGroupTabActive {
-  color: #fff4e8;
-  border-color: rgba(255, 122, 0, 0.52);
-  background: rgba(255, 122, 0, 0.16);
+  color: var(--color-text-secondary);
+  border-color: color-mix(in srgb, var(--color-primary) 52%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 16%, transparent);
 }
 
 .bracketSearchRow {
@@ -2352,7 +2352,7 @@
   width: 38px;
   height: 38px;
   border: 1px solid var(--public-border);
-  background: rgba(255, 255, 255, 0.045);
+  background: color-mix(in srgb, var(--color-text-primary) 4.5%, transparent);
   color: var(--public-muted);
   cursor: pointer;
 }
@@ -2369,7 +2369,7 @@
 .groupTitle {
   padding: 12px 14px;
   border-bottom: 1px solid var(--public-border);
-  background: rgba(255, 255, 255, 0.035);
+  background: color-mix(in srgb, var(--color-text-primary) 3.5%, transparent);
   color: var(--public-text);
   font-size: 0.9rem;
   letter-spacing: 0;
@@ -2389,21 +2389,21 @@
   height: 32px;
   min-height: 32px;
   border-color: var(--public-border);
-  background: rgba(255, 255, 255, 0.045);
+  background: color-mix(in srgb, var(--color-text-primary) 4.5%, transparent);
   color: var(--public-muted);
 }
 
 .bracketPillsArrow:hover:not(:disabled),
 .bracketPill:hover {
   border-color: var(--public-border-strong);
-  background: rgba(255, 122, 0, 0.1);
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
   color: var(--public-text);
 }
 
 .bracketPillActive {
-  color: #fff4e8;
-  border-color: rgba(255, 122, 0, 0.55);
-  background: rgba(255, 122, 0, 0.18);
+  color: var(--color-text-secondary);
+  border-color: color-mix(in srgb, var(--color-primary) 55%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 18%, transparent);
 }
 
 .bracketWinnerBanner {
@@ -2412,17 +2412,17 @@
   gap: 10px;
   margin-bottom: 12px;
   padding: 10px 12px;
-  border: 1px solid rgba(69, 212, 131, 0.32);
+  border: 1px solid color-mix(in srgb, var(--color-success) 32%, transparent);
   border-radius: 8px;
-  background: rgba(69, 212, 131, 0.095);
+  background: color-mix(in srgb, var(--color-success) 9.5%, transparent);
 }
 
 .bracketWinnerLabel {
-  color: rgba(198, 248, 220, 0.72);
+  color: color-mix(in srgb, var(--color-success) 72%, transparent);
 }
 
 .bracketWinnerName {
-  color: #d8ffe7;
+  color: var(--color-success);
   font-weight: 900;
 }
 
@@ -2433,7 +2433,7 @@
 .bracketRound {
   border-radius: 8px;
   border-color: var(--public-border);
-  border-top-color: rgba(255, 122, 0, 0.45);
+  border-top-color: color-mix(in srgb, var(--color-primary) 45%, transparent);
   background: var(--public-surface-soft);
   box-shadow: none;
 }
@@ -2442,27 +2442,27 @@
   min-height: 32px;
   border-radius: 6px;
   border-color: var(--public-border);
-  background: rgba(255, 255, 255, 0.045);
-  color: #ffd8b8;
+  background: color-mix(in srgb, var(--color-text-primary) 4.5%, transparent);
+  color: var(--color-text-secondary);
 }
 
 .matchCard {
   border-radius: 8px;
   border: 1px solid var(--public-border);
-  background: rgba(12, 12, 18, 0.78);
+  background: color-mix(in srgb, var(--color-black) 78%, transparent);
   box-shadow: none;
 }
 
 .matchCard:hover {
-  border-color: rgba(255, 122, 0, 0.34);
-  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.22);
+  border-color: color-mix(in srgb, var(--color-primary) 34%, transparent);
+  box-shadow: 0 14px 28px color-mix(in srgb, var(--color-black) 22%, transparent);
 }
 
 .matchLabelRow {
   min-height: 28px;
   padding: 6px 10px;
   border-bottom-color: var(--public-border);
-  background: rgba(255, 255, 255, 0.035);
+  background: color-mix(in srgb, var(--color-text-primary) 3.5%, transparent);
 }
 
 .matchLabel {
@@ -2489,29 +2489,29 @@
 .vsRow {
   min-height: 16px;
   border-color: var(--public-border);
-  background: rgba(255, 255, 255, 0.025);
+  background: color-mix(in srgb, var(--color-text-primary) 2.5%, transparent);
   color: var(--public-dim);
 }
 
 .winner,
 .autoWin {
-  color: #d8ffe7;
-  background: rgba(69, 212, 131, 0.1);
+  color: var(--color-success);
+  background: color-mix(in srgb, var(--color-success) 10%, transparent);
   border-left-color: var(--public-green);
 }
 
 .matchComplete {
-  border-color: rgba(69, 212, 131, 0.3);
+  border-color: color-mix(in srgb, var(--color-success) 30%, transparent);
 }
 
 .matchInProgress,
 .matchNextUp {
-  border-left-color: rgba(255, 122, 0, 0.74);
+  border-left-color: color-mix(in srgb, var(--color-primary) 74%, transparent);
 }
 
 .matchBadge {
-  background: rgba(255, 122, 0, 0.18);
-  color: #ffd8b8;
+  background: color-mix(in srgb, var(--color-primary) 18%, transparent);
+  color: var(--color-text-secondary);
 }
 
 .connectorBracket,
@@ -2520,13 +2520,13 @@
 }
 
 .connectorBracket {
-  border-right-color: rgba(255, 122, 0, 0.32);
-  border-top-color: rgba(255, 122, 0, 0.32);
-  border-bottom-color: rgba(255, 122, 0, 0.32);
+  border-right-color: color-mix(in srgb, var(--color-primary) 32%, transparent);
+  border-top-color: color-mix(in srgb, var(--color-primary) 32%, transparent);
+  border-bottom-color: color-mix(in srgb, var(--color-primary) 32%, transparent);
 }
 
 .connectorArm {
-  border-top-color: rgba(255, 122, 0, 0.32);
+  border-top-color: color-mix(in srgb, var(--color-primary) 32%, transparent);
 }
 
 .sidePotLeaderboard {
@@ -2545,7 +2545,7 @@
   min-height: 132px;
   padding: 14px;
   border-color: var(--public-border);
-  background: rgba(255, 255, 255, 0.018);
+  background: color-mix(in srgb, var(--color-text-primary) 1.8%, transparent);
 }
 
 .sidePotCardLabel {
@@ -2560,7 +2560,7 @@
 }
 
 .sidePotPodiumFirst {
-  background: rgba(255, 122, 0, 0.095);
+  background: color-mix(in srgb, var(--color-primary) 9.5%, transparent);
 }
 
 .sidePotPodiumName {
@@ -2568,7 +2568,7 @@
 }
 
 .sidePotPodiumScore {
-  color: #ffbb78;
+  color: var(--color-primary);
 }
 
 .sidePotPending,
@@ -2582,7 +2582,7 @@
   border: 1px solid var(--public-border);
   border-radius: 8px;
   background: var(--public-surface);
-  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 18px 44px color-mix(in srgb, var(--color-black) 18%, transparent);
   text-align: center;
 }
 
@@ -2592,7 +2592,7 @@
 }
 
 .spinner {
-  border-color: rgba(255, 255, 255, 0.14);
+  border-color: color-mix(in srgb, var(--color-text-primary) 14%, transparent);
   border-top-color: var(--public-orange);
 }
 
@@ -2731,8 +2731,8 @@
 }
 
 .tableWrap {
-  background: rgba(14, 17, 25, 0.92);
-  border-color: rgba(255, 255, 255, 0.1);
+  background: color-mix(in srgb, var(--color-black) 92%, transparent);
+  border-color: color-mix(in srgb, var(--color-text-primary) 10%, transparent);
 }
 
 .page .table {
@@ -2741,15 +2741,15 @@
 
 .page .table tbody tr td {
   background: transparent !important;
-  color: rgba(238, 244, 252, 0.92);
+  color: color-mix(in srgb, var(--color-text-primary) 92%, transparent);
 }
 
 .page .table tbody tr:nth-child(even) td {
-  background: rgba(255, 255, 255, 0.02) !important;
+  background: color-mix(in srgb, var(--color-text-primary) 2%, transparent) !important;
 }
 
 .page .table tbody tr:hover td {
-  background: rgba(255, 122, 0, 0.08) !important;
+  background: color-mix(in srgb, var(--color-primary) 8%, transparent) !important;
 }
 
 :is(
@@ -2846,27 +2846,27 @@
 }
 
 .table thead th {
-  background: rgba(255, 255, 255, 0.04);
-  border-bottom-color: rgba(255, 255, 255, 0.08);
-  color: rgba(188, 198, 214, 0.88);
+  background: color-mix(in srgb, var(--color-text-primary) 4%, transparent);
+  border-bottom-color: color-mix(in srgb, var(--color-text-primary) 8%, transparent);
+  color: color-mix(in srgb, var(--color-text-secondary) 88%, transparent);
 }
 
 .table td {
-  border-bottom-color: rgba(255, 255, 255, 0.06);
-  color: rgba(238, 244, 252, 0.92);
+  border-bottom-color: color-mix(in srgb, var(--color-text-primary) 6%, transparent);
+  color: color-mix(in srgb, var(--color-text-primary) 92%, transparent);
 }
 
 .tableRow:nth-child(even) {
-  background: rgba(255, 255, 255, 0.02);
+  background: color-mix(in srgb, var(--color-text-primary) 2%, transparent);
 }
 
 .tableRow:hover {
-  background: rgba(255, 122, 0, 0.08);
+  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
 }
 
 .tdName,
 .tdCenter {
-  color: rgba(236, 243, 252, 0.92);
+  color: color-mix(in srgb, var(--color-text-primary) 92%, transparent);
 }
 
 .emptyNote {

@@ -12,7 +12,7 @@ import { RefreshCcw, Search, UserRound, Zap } from 'lucide-react'
 import { useAuth } from '../lib/auth-context'
 import { ErrorBoundary } from '../components/ErrorBoundary'
 import ActionConfirmDialog from '../components/ActionConfirmDialog'
-import { API, apiClient, apiFetch } from '../lib/api'
+import { API, apiClient, apiFetch, getMemoryAccessToken } from '../lib/api'
 import { usePageHeader } from '../lib/header-context'
 import EnhancedButton from '../components/EnhancedButton'
 import CloseControl from '../../components/CloseControl'
@@ -37,6 +37,7 @@ import { isPhoneWidth } from '../lib/responsive'
 import { getPayoutUnlockKey, getScoresLockKey } from '../lib/storageKeys'
 import ExplainScoresModal from './ExplainScoresModal'
 import {
+  buildSafeFileName,
   buildScoresExcelBuffer,
   calculateDisplayTotal,
   calculateTotalScratch,
@@ -48,12 +49,14 @@ import {
   parseScoresExcelFile,
 } from './utils/scoreUtils'
 import { useOfflineScoreSync } from './hooks/useOfflineScoreSync'
+import { buildScoresPdfHtml } from './utils/scoresPdfExport'
+import { printHtmlDocument } from '../lib/printExport'
 
 
 export default function ScoresPage() {
   // Authentication check - must be at the top
   const { isUserAuthenticated, isAuthInitialized, authToken, currentUser } = useAuth();
-  const storedAuthToken = typeof window !== 'undefined' ? (sessionStorage.getItem('token') || localStorage.getItem('token')) : null;
+  const storedAuthToken = getMemoryAccessToken();
   const sessionToken = authToken || storedAuthToken;
 
   // Check if we have tokens in localStorage even if auth context isn't ready
@@ -76,6 +79,7 @@ export default function ScoresPage() {
   const [isMobile, setIsMobile] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
+  const [isExportingPdf, setIsExportingPdf] = useState(false)
   const [isScoresLocked, setIsScoresLocked] = useState(false)
   const [searchFirstName, setSearchFirstName] = useState('')
   const [searchLastName, setSearchLastName] = useState('')
@@ -436,6 +440,38 @@ export default function ScoresPage() {
       setIsExporting(false)
     }
   }, [players.length, sortedPlayers, tournament, selectedSquad, addToast])
+
+  const handleExportScoresToPdf = useCallback(() => {
+    if (sortedPlayers.length === 0) {
+      addToast({ message: 'No scores to export.', type: 'warning', duration: 3000 })
+      return
+    }
+
+    setIsExportingPdf(true)
+    try {
+      const squadLabel = selectedSquad
+        ? [selectedSquad.name, selectedSquad.date, selectedSquad.time].filter(Boolean).join(' | ')
+        : 'All Squads'
+      const html = buildScoresPdfHtml({
+        players: sortedPlayers,
+        tournamentName: tournament?.name || 'Tournament',
+        squadLabel,
+        location: tournament?.location || '',
+        generatedAt: new Date().toLocaleString(),
+        logoUrl: `${window.location.origin}/logo_no_text.svg`,
+        scoresLocked: isScoresLocked,
+      })
+      printHtmlDocument({
+        html,
+        documentTitle: buildSafeFileName(tournament?.name, selectedSquad, 'scores').replace(/\.xlsx$/, ''),
+      })
+      addToast({ message: `Prepared ${sortedPlayers.length} score rows for PDF export.`, type: 'success', duration: 3000 })
+    } catch (err) {
+      addToast({ message: `Failed to export PDF: ${err instanceof Error ? err.message : 'Unknown error'}`, type: 'error', duration: 5000 })
+    } finally {
+      setIsExportingPdf(false)
+    }
+  }, [addToast, isScoresLocked, selectedSquad, sortedPlayers, tournament])
 
   const handleImportScoresFileSelected = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (isScoresLocked) {
@@ -994,8 +1030,9 @@ export default function ScoresPage() {
         }
 
         if (!isOnline) {
-          setPendingSaves(prev => [...prev, { authToken: token, data: scoreData }])
-          localStorage.setItem(`pending_save_${Date.now()}`, JSON.stringify({ authToken: token, data: scoreData }))
+          const pendingSave = { data: scoreData }
+          setPendingSaves(prev => [...prev, pendingSave])
+          localStorage.setItem(`pending_save_${Date.now()}`, JSON.stringify(pendingSave))
           setRowSaveState(prev => ({ ...prev, [playerId]: 'failed' }))
           return
         }
@@ -1280,6 +1317,14 @@ export default function ScoresPage() {
 
           <button
             className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
+            onClick={handleExportScoresToPdf}
+            disabled={isExportingPdf || players.length === 0}
+          >
+            {isExportingPdf ? 'Preparing...' : 'Export to PDF'}
+          </button>
+
+          <button
+            className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
             onClick={() => importFileRef.current?.click()}
             disabled={isImporting || players.length === 0 || isScoresLocked}
           >
@@ -1336,7 +1381,7 @@ export default function ScoresPage() {
         </>
       )}
     />
-  ), [players, handleRandomizeScores, requestClearGame, pendingSaves.length, addToast, processPendingSaves, handleExportScoresToExcel, isExporting, isImporting, isScoresLocked, unlockScoresTable, currentUser, markScoresComplete])
+  ), [players, handleRandomizeScores, requestClearGame, pendingSaves.length, addToast, processPendingSaves, handleExportScoresToExcel, handleExportScoresToPdf, isExporting, isExportingPdf, isImporting, isScoresLocked, unlockScoresTable, currentUser, markScoresComplete])
 
   usePageHeader({
     title: 'Scores',
@@ -1363,7 +1408,7 @@ export default function ScoresPage() {
   if (!isAuthInitialized) {
     return (
       <div className={styles.loadingState}>
-        <div>Loading score management...</div>
+        <div role="status">Loading scores...</div>
       </div>
     )
   }
@@ -1379,7 +1424,7 @@ export default function ScoresPage() {
   if (!isUserAuthenticated && hasStoredAuth) {
     return (
       <div className={styles.authRequired}>
-        <div>Loading score management...</div>
+        <div role="status">Loading scores...</div>
       </div>
     )
   }
@@ -1731,7 +1776,7 @@ export default function ScoresPage() {
           {/* Loading State */}
           {showInitialScoresLoad && (
             <div className={styles.statusMessage}>
-              Loading players and scores...
+              <span role="status">Loading players and scores...</span>
             </div>
           )}
 

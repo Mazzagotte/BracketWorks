@@ -92,11 +92,11 @@ export function MobileLayout({
         </header>
       )}
 
-      <main
+      <div
         className={`${styles.mobileMain} ${fullWidth ? styles.fullWidth : ''} ${mainPadClass} ${hasHeader ? mainHeaderPadClass : ''}`}
       >
         {children}
-      </main>
+      </div>
     </div>
   );
 }

@@ -9,7 +9,7 @@ from app.api import deps
 from app.api.v1 import users as users_module
 from app.core import models
 from app.core.config import settings
-from app.main import app
+from app.main import app, rate_limiter
 
 
 engine = create_engine(
@@ -55,10 +55,12 @@ def _make_client() -> tuple[TestClient, Callable[[], None]]:
     original_refresh_secure = settings.REFRESH_TOKEN_COOKIE_SECURE
     original_csrf_secure = settings.CSRF_COOKIE_SECURE
     original_csrf_toggle = settings.CSRF_PROTECT_REFRESH_AND_LOGOUT
+    original_require_redis = rate_limiter._require_redis
 
     settings.REFRESH_TOKEN_COOKIE_SECURE = False
     settings.CSRF_COOKIE_SECURE = False
     settings.CSRF_PROTECT_REFRESH_AND_LOGOUT = True
+    rate_limiter._require_redis = False
 
     client = TestClient(app)
 
@@ -68,6 +70,7 @@ def _make_client() -> tuple[TestClient, Callable[[], None]]:
         settings.REFRESH_TOKEN_COOKIE_SECURE = original_refresh_secure
         settings.CSRF_COOKIE_SECURE = original_csrf_secure
         settings.CSRF_PROTECT_REFRESH_AND_LOGOUT = original_csrf_toggle
+        rate_limiter._require_redis = original_require_redis
         models.Base.metadata.drop_all(bind=engine)
 
     return client, cleanup

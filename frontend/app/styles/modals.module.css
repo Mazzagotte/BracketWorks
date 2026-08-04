@@ -99,7 +99,7 @@
     max-height: calc(100dvh - max(14px, env(safe-area-inset-top)) - env(safe-area-inset-bottom));
     border-radius: 18px;
     border: 1px solid var(--bw-border-card);
-    box-shadow: 0 16px 34px color-mix(in srgb, black 34%, transparent);
+    box-shadow: 0 16px 34px color-mix(in srgb, var(--color-black) 34%, transparent);
   }
 
   .compactModal {

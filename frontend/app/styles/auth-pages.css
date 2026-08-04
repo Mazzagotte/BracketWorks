@@ -31,16 +31,16 @@ body:has(.login-page-container) {
   margin: 0 !important;
   padding: 0 !important;
   overflow: hidden !important;
-  height: 100vh !important;
+  height: 100dvh !important;
 }
 
 html:has(.login-page-container) {
   overflow: hidden !important;
-  height: 100vh !important;
+  height: 100dvh !important;
 }
 
 .login-page-container {
-  min-height: 100vh !important;
+  min-height: 100dvh !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -169,8 +169,8 @@ html:has(.login-page-container) {
   right: 14px !important;
   top: 50% !important;
   transform: translateY(-50%) !important;
-  width: 32px !important;
-  height: 32px !important;
+  width: 44px !important;
+  height: 44px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -196,7 +196,7 @@ html:has(.login-page-container) {
   margin-top: 20px !important;
   padding: 16px 20px !important;
   background: var(--color-green-primary) !important;
-  color: white !important;
+  color: var(--color-white) !important;
   border-radius: 12px !important;
   font-size: var(--font-size-lg) !important;
   font-weight: var(--font-weight-semibold) !important;
@@ -282,7 +282,7 @@ html:has(.login-page-container) {
 
 @media (max-width: 480px) {
   .login-page-container {
-    padding: 16px !important;
+    padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)) !important;
   }
 
   .enhanced-card {
@@ -342,19 +342,19 @@ html:has(.login-page-container) {
 body:has(.signup-page-container) {
   background: var(--bw-app-bg) !important;
   overflow: hidden !important;
-  height: 100vh !important;
+  height: 100dvh !important;
   margin: 0 !important;
   padding: 0 !important;
 }
 
 html:has(.signup-page-container) {
   overflow: hidden !important;
-  height: 100vh !important;
+  height: 100dvh !important;
 }
 
 .signup-page-container {
-  min-height: 100vh !important;
-  max-height: 100vh !important;
+  min-height: 100dvh !important;
+  max-height: 100dvh !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -386,7 +386,7 @@ html:has(.signup-page-container) {
   z-index: 1 !important;
   width: 100% !important;
   max-width: 520px !important;
-  max-height: calc(100vh - 48px) !important;
+  max-height: calc(100dvh - 48px) !important;
   padding: 40px !important;
   background: var(--color-brand-ivory-light) !important;
   backdrop-filter: none !important;
@@ -557,7 +557,7 @@ html:has(.signup-page-container) {
   top: 50% !important;
   transform: translateY(-50%) !important;
   min-width: 116px !important;
-  height: 32px !important;
+  min-height: 44px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -690,13 +690,13 @@ html:has(.signup-page-container) {
 
 @media (max-width: 480px) {
   .signup-page-container {
-    padding: 16px !important;
+    padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)) !important;
   }
 
   .signup-card {
     padding: 32px 24px !important;
     max-width: 100% !important;
-    max-height: calc(100vh - 32px) !important;
+    max-height: calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
   }
 
   .signup-title {
@@ -757,7 +757,7 @@ html:has(.signup-page-container) {
 
 .login-page-container .login-input:focus,
 .login-page-container .password-input:focus {
-  border-color: color-mix(in srgb, var(--color-primary) 70%, white) !important;
+  border-color: color-mix(in srgb, var(--color-primary) 70%, var(--color-white)) !important;
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 24%, transparent) !important;
   transform: none !important;
 }
@@ -781,7 +781,7 @@ html:has(.signup-page-container) {
 }
 
 .login-page-container .login-button:disabled {
-  color: color-mix(in srgb, var(--bw-text-muted) 92%, white) !important;
+  color: color-mix(in srgb, var(--bw-text-muted) 92%, var(--color-white)) !important;
   background: color-mix(in srgb, var(--bw-surface-panel) 88%, transparent) !important;
   border-color: color-mix(in srgb, var(--bw-border-subtle) 110%, transparent) !important;
   opacity: 1 !important;
@@ -908,7 +908,7 @@ html:has(.signup-page-container) {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
+  min-height: 100dvh;
   background: var(--bw-app-bg);
   background-image: none;
   font-family: var(--font-family-primary);

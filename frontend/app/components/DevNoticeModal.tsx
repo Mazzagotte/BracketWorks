@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { AlertTriangle, CheckCircle2, Lock } from 'lucide-react';
-import { API } from '../lib/api';
+import { API, getMemoryAccessToken } from '../lib/api';
 import styles from './DevNoticeModal.module.css';
 
 export interface DevNoticeModalProps {
@@ -61,7 +61,7 @@ export default function DevNoticeModal({
     if (!acknowledged || submitting) return;
     setSubmitting(true);
     try {
-      const token = sessionStorage.getItem('token') || localStorage.getItem('token');
+      const token = getMemoryAccessToken();
       await fetch(API('/api/v1/users/dev-notice/accept'), {
         method: 'POST',
         credentials: 'include',

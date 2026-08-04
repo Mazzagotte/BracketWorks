@@ -29,6 +29,7 @@ import { getPayoutUnlockKey } from '../lib/storageKeys'
 import { buildPayoutExcelBuffer } from './utils/payoutExcelExport'
 import { AggregatedWinner, buildPayoutExportRows, buildSidePotByPlayer } from './utils/payoutExportRows'
 import { buildPayoutPdfHtml } from './utils/payoutPdfExport'
+import { printHtmlDocument } from '../lib/printExport'
 import { isPhoneWidth } from '../lib/responsive'
 
 function placeBadgeClass(place: number) {
@@ -436,49 +437,10 @@ export default function PayoutsPage() {
         totalEntries,
       })
 
-      const iframe = document.createElement('iframe')
-      iframe.setAttribute('hidden', 'true')
-      iframe.setAttribute('aria-hidden', 'true')
-      document.body.appendChild(iframe)
-
-      const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document
-      if (!iframeDoc) {
-        document.body.removeChild(iframe)
-        addToast({ type: 'error', message: 'Failed to prepare print document.', duration: 5000 })
-        return
-      }
-
-      iframeDoc.open()
-      iframeDoc.write(html)
-      iframeDoc.close()
-
-      let cleanedUp = false
-      const cleanupIframe = () => {
-        if (cleanedUp) return
-        cleanedUp = true
-        if (iframe.parentNode) {
-          document.body.removeChild(iframe)
-        }
-      }
-
-      const printIframe = () => {
-        iframe.contentWindow?.focus()
-        const originalTitle = document.title
-        document.title = buildExportFileName('pdf').replace('.pdf', '')
-        iframe.contentWindow?.print()
-        setTimeout(() => {
-          document.title = originalTitle
-          cleanupIframe()
-        }, 1000)
-      }
-
-      const stylesheet = iframeDoc.querySelector('link[rel="stylesheet"]')
-      if (stylesheet) {
-        stylesheet.addEventListener('load', printIframe, { once: true })
-        stylesheet.addEventListener('error', printIframe, { once: true })
-      } else {
-        printIframe()
-      }
+      printHtmlDocument({
+        html,
+        documentTitle: buildExportFileName('pdf').replace('.pdf', ''),
+      })
 
       addToast({
         type: 'success',
@@ -532,7 +494,7 @@ export default function PayoutsPage() {
   ), [filteredWinners.length, handleExportToExcel, handleExportToPdf, isExportingExcel, isExportingPdf, isMobileView, loading])
 
   usePageHeader({
-    title: 'Payout Distribution',
+    title: 'Payouts',
     subtitle: undefined,
     actions: undefined,
   })
@@ -550,7 +512,7 @@ export default function PayoutsPage() {
     return (
       <div className={styles.loadingRow}>
         <div className={styles.loadingSpinner} />
-        <span>Loading...</span>
+        <span role="status">Loading payouts...</span>
       </div>
     )
   }

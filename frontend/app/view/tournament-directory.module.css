@@ -15,7 +15,7 @@
   border: 1px solid var(--bw-border-subtle);
   border-radius: 22px;
   background: color-mix(in srgb, var(--bw-surface-card) 68%, transparent);
-  box-shadow: 0 30px 80px color-mix(in srgb, black 32%, transparent), inset 0 1px 0 color-mix(in srgb, white 2%, transparent);
+  box-shadow: 0 30px 80px color-mix(in srgb, var(--color-black) 32%, transparent), inset 0 1px 0 color-mix(in srgb, var(--color-white) 2%, transparent);
 }
 
 .heroShell {

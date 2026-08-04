@@ -6,7 +6,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: color-mix(in srgb, var(--color-black) 50%, transparent);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   display: flex;
@@ -16,15 +16,15 @@
 }
 
 .modal {
-  background: #1a1a1f;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--color-surface-primary);
+  border: 1px solid color-mix(in srgb, var(--color-text-primary) 10%, transparent);
   border-radius: 16px;
   max-width: 540px;
   width: 90%;
   max-height: 70vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 20px 25px -5px color-mix(in srgb, var(--color-black) 30%, transparent);
 }
 
 .header {
@@ -32,7 +32,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 20px 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-text-primary) 8%, transparent);
 }
 
 .headerContent {
@@ -42,7 +42,7 @@
 }
 
 .icon {
-  color: #FF6A00;
+  color: var(--color-primary);
   flex-shrink: 0;
 }
 
@@ -50,7 +50,7 @@
   margin: 0;
   font-size: 18px;
   font-weight: 700;
-  color: #FFFFFF;
+  color: var(--color-text-primary);
 }
 
 .body {
@@ -63,7 +63,7 @@
 .emptyText {
   margin: 0;
   font-size: 13px;
-  color: #A1A1AA;
+  color: var(--color-text-secondary);
   text-align: center;
   padding: 20px 0;
 }
@@ -75,10 +75,10 @@
 }
 
 .entry {
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid color-mix(in srgb, var(--color-text-primary) 8%, transparent);
   border-radius: 10px;
   padding: 14px;
-  background: rgba(255, 255, 255, 0.02);
+  background: color-mix(in srgb, var(--color-text-primary) 2%, transparent);
 }
 
 .entryHeader {
@@ -92,12 +92,12 @@
   margin: 0;
   font-size: 14px;
   font-weight: 700;
-  color: #FF6A00;
+  color: var(--color-primary);
 }
 
 .date {
   font-size: 12px;
-  color: #6B6B72;
+  color: var(--color-text-muted);
 }
 
 .changesList {
@@ -111,7 +111,7 @@
 
 .changeItem {
   font-size: 13px;
-  color: #C4C4CC;
+  color: var(--color-text-secondary);
   margin-left: 16px;
   position: relative;
 }
@@ -120,12 +120,12 @@
   content: '•';
   position: absolute;
   left: -10px;
-  color: #FF6A00;
+  color: var(--color-primary);
 }
 
 .footer {
   padding: 14px 24px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid color-mix(in srgb, var(--color-text-primary) 8%, transparent);
   display: flex;
   justify-content: flex-end;
   gap: 10px;
@@ -133,10 +133,10 @@
 
 .closeButton {
   padding: 8px 16px;
-  background: #FF6A00;
+  background: var(--color-primary);
   border: none;
   border-radius: 7px;
-  color: #fff;
+  color: var(--color-text-primary);
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
@@ -144,5 +144,5 @@
 }
 
 .closeButton:hover {
-  background: #ff8533;
+  background: var(--color-primary);
 }

@@ -193,9 +193,9 @@ def update_match_score_endpoint(
         if 'idempotency_record' in locals() and idempotency_record is not None:
             fail_request(db, idempotency_record)
             db.commit()
-        raise HTTPException(status_code=500, detail=f"Error updating match score: {str(e)}")
+        raise HTTPException(status_code=500, detail="Unable to update match score")
 
-@router.get("/generate-multiple")
+@router.post("/generate-multiple")
 def generate_tournament_brackets_endpoint(
     tournament_id: int,
     squad_id: Optional[int] = None,
@@ -416,7 +416,7 @@ def generate_tournament_brackets_endpoint(
         except Exception as save_error:
             # Log the save error but don't fail the generation
             logger.error(f"Failed to save brackets to database: {save_error}")
-            raise HTTPException(status_code=500, detail=f"Failed to save brackets: {str(save_error)}")
+            raise HTTPException(status_code=500, detail="Unable to save brackets")
         
         # Prepare result with validation info
         result = {
@@ -452,7 +452,7 @@ def generate_tournament_brackets_endpoint(
         if 'idempotency_record' in locals() and idempotency_record is not None:
             fail_request(db, idempotency_record)
             db.commit()
-        raise HTTPException(status_code=500, detail=f"Error generating brackets: {str(e)}")
+        raise HTTPException(status_code=500, detail="Unable to generate brackets")
 
 
 @router.post("/generate-multiple-async")
@@ -469,7 +469,11 @@ def generate_tournament_brackets_async(
 ):
     """Queue bracket generation and return a job handle for polling."""
     _verify_tournament_access(db, tournament_id, current_user)
-    job = job_store.create("brackets.generate")
+    job = job_store.create(
+        "brackets.generate",
+        owner_user_id=current_user.id,
+        tournament_id=tournament_id,
+    )
     actor_user_id = current_user.id
 
     def _run_job() -> dict:
@@ -497,9 +501,14 @@ def generate_tournament_brackets_async(
 
 
 @router.get("/jobs/{job_id}")
-def get_bracket_job_status(job_id: str):
+def get_bracket_job_status(
+    job_id: str,
+    current_user: models.User = Depends(get_current_user),
+):
     job = job_store.get(job_id)
     if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    if job.owner_user_id != current_user.id and not getattr(current_user, "is_admin", False):
         raise HTTPException(status_code=404, detail="Job not found")
     return to_dict(job)
 
@@ -574,7 +583,7 @@ def load_tournament_brackets(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error loading brackets: {str(e)}")
+        raise HTTPException(status_code=500, detail="Unable to load brackets")
 
 @router.delete("/delete/{tournament_id}")
 def delete_tournament_brackets(
@@ -596,7 +605,7 @@ def delete_tournament_brackets(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error deleting brackets: {str(e)}")
+        raise HTTPException(status_code=500, detail="Unable to delete brackets")
 
 @router.get("/exists/{tournament_id}")
 def check_brackets_exist(
@@ -611,7 +620,7 @@ def check_brackets_exist(
         exists = brackets_exist_simple(db, tournament_id, squad_id)
         return {"exists": exists}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error checking brackets: {str(e)}")
+        raise HTTPException(status_code=500, detail="Unable to check brackets")
 
 
 @router.get("/status/{tournament_id}")
@@ -675,4 +684,4 @@ def bracket_status(
             "entries_signature_at_generation": stored_entries_signature,
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error checking bracket status: {str(e)}")
+        raise HTTPException(status_code=500, detail="Unable to check bracket status")

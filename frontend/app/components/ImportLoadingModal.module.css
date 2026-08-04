@@ -112,7 +112,7 @@
   border: 1px solid var(--bw-border-subtle);
   border-top: 3px solid color-mix(in srgb, var(--color-primary) 78%, transparent);
   border-radius: 24px;
-  box-shadow: 0 24px 70px color-mix(in srgb, black 52%, transparent);
+  box-shadow: 0 24px 70px color-mix(in srgb, var(--color-black) 52%, transparent);
 }
 
 .bowlingBall {
@@ -124,15 +124,15 @@
 .ballBody {
   width: 54px;
   height: 54px;
-  background: radial-gradient(circle at 32% 30%, color-mix(in srgb, var(--bw-text-title) 85%, transparent), color-mix(in srgb, var(--bw-text-muted) 86%, transparent) 42%, color-mix(in srgb, var(--bw-surface-card) 92%, black) 100%);
+  background: radial-gradient(circle at 32% 30%, color-mix(in srgb, var(--bw-text-title) 85%, transparent), color-mix(in srgb, var(--bw-text-muted) 86%, transparent) 42%, color-mix(in srgb, var(--bw-surface-card) 92%, var(--color-black)) 100%);
   border: 2px solid color-mix(in srgb, var(--bw-text-title) 55%, transparent);
-  box-shadow: 0 10px 26px color-mix(in srgb, black 32%, transparent), inset 2px 2px 8px color-mix(in srgb, var(--bw-text-title) 18%, transparent);
+  box-shadow: 0 10px 26px color-mix(in srgb, var(--color-black) 32%, transparent), inset 2px 2px 8px color-mix(in srgb, var(--bw-text-title) 18%, transparent);
 }
 
 .fingerHole {
   width: 7px;
   height: 7px;
-  background-color: color-mix(in srgb, var(--bw-page) 90%, black);
+  background-color: color-mix(in srgb, var(--bw-page) 90%, var(--color-black));
 }
 
 .fingerHole1 { top: 13px; left: 16px; }

@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
-import { API, apiFetch } from '../../lib/api'
+import { API, apiFetch, getMemoryAccessToken } from '../../lib/api'
 import { logger } from '../../lib/logger'
 
 export interface Winner {
@@ -110,7 +110,7 @@ export function usePayouts(tournamentId: number | null, selectedSquadId: number 
     setError(null)
 
     try {
-      const token = sessionStorage.getItem('token') || localStorage.getItem('token')
+      const token = getMemoryAccessToken()
       if (!token) {
         setError('Not authenticated')
         return
@@ -152,7 +152,7 @@ export function usePayouts(tournamentId: number | null, selectedSquadId: number 
     if (!tournamentId) return
 
     try {
-      const token = sessionStorage.getItem('token') || localStorage.getItem('token')
+      const token = getMemoryAccessToken()
       if (!token) return
 
       const squadParam = selectedSquadId ? `?squad_id=${selectedSquadId}` : ''

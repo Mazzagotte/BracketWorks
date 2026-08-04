@@ -37,9 +37,6 @@
 .warnText { padding: 10px 12px; font-size: .8rem; line-height: 1.45; }
 
 .adminNav {
-  position: sticky;
-  top: 72px;
-  z-index: 15;
   margin-bottom: 16px;
   padding: 6px;
   overflow-x: auto;
@@ -269,7 +266,6 @@
 
 @media (max-width: 1023px) {
   .page { width: 100%; padding: 18px; }
-  .adminNav { top: 64px; }
   .metricGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .detailGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

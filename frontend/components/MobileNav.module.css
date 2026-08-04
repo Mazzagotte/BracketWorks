@@ -32,7 +32,7 @@
   background: var(--bw-surface-card-strong);
   border: 1px solid var(--bw-border-card);
   border-radius: 20px;
-  box-shadow: 0 16px 34px color-mix(in srgb, black 34%, transparent);
+  box-shadow: 0 16px 34px color-mix(in srgb, var(--color-black) 34%, transparent);
   z-index: 1999;
   animation: mobileSheetIn 0.22s ease-out;
   padding: 12px 12px calc(12px + env(safe-area-inset-bottom));
@@ -125,7 +125,7 @@
 .publicViewBtn,
 .shareQrBtn {
   width: 100%;
-  min-height: 40px;
+  min-height: 44px;
   padding: 0 12px;
   display: flex;
   align-items: center;
@@ -177,14 +177,14 @@
 
 .linkActive {
   background: var(--color-primary);
-  border-color: color-mix(in srgb, var(--color-primary) 52%, white);
+  border-color: color-mix(in srgb, var(--color-primary) 52%, var(--color-white));
   color: var(--color-white);
 }
 
 .settingsBtn {
   width: 100%;
   padding: 0 16px;
-  height: 42px;
+  height: 44px;
   line-height: 1;
   display: flex;
   align-items: center;
@@ -211,7 +211,7 @@
 .logoutBtn {
   width: 100%;
   padding: 0 16px;
-  height: 42px;
+  height: 44px;
   line-height: 1;
   display: flex;
   align-items: center;

@@ -19,4 +19,4 @@ def read_db_health(db: Session = Depends(get_db)):
         return {"status": "ok", "database": "connected"}
     except Exception as e:
         logger.error(f"Database health check failed: {e}")
-        return {"status": "error", "database": "disconnected", "detail": str(e)}
+        return {"status": "error", "database": "disconnected"}

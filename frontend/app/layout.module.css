@@ -45,11 +45,11 @@
   }
 }
 
-/* Mobile top nav is 56px */
+/* Mobile top nav is 56px plus the device's top safe area. */
 .mainMobileAuth {
-  margin-top: 56px;
-  height: calc(100dvh - 56px);
-  max-height: calc(100dvh - 56px);
+  margin-top: calc(56px + env(safe-area-inset-top));
+  height: calc(100dvh - 56px - env(safe-area-inset-top));
+  max-height: calc(100dvh - 56px - env(safe-area-inset-top));
 }
 
 /* Page header strip — title + injected page actions */
@@ -136,6 +136,13 @@
   max-width: 1600px;
   margin: 20px auto 0 auto;
   box-sizing: border-box;
+}
+
+.pageSubtitle {
+  margin: 3px 0 0;
+  color: var(--bw-text-muted);
+  font-size: var(--bw-type-small);
+  line-height: 1.3;
 }
 
 .devNoticeWrap {

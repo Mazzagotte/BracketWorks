@@ -21,27 +21,27 @@
 }
 
 .page {
-  --bw-login-bg: #09090c;
-  --bw-login-card: #151519;
-  --bw-login-card-border: #34343a;
-  --bw-login-text: #f4f4f5;
-  --bw-login-text-muted: #a1a1aa;
-  --bw-login-input: #101014;
-  --bw-login-input-border: #34343a;
-  --bw-login-orange: #ff6a00;
-  --bw-login-orange-hover: #ff7a00;
-  --bw-login-danger: #ff7474;
+  --bw-login-bg: var(--color-bg-primary);
+  --bw-login-card: var(--color-bg-primary);
+  --bw-login-card-border: var(--color-border-primary);
+  --bw-login-text: var(--color-text-primary);
+  --bw-login-text-muted: var(--color-text-secondary);
+  --bw-login-input: var(--color-bg-primary);
+  --bw-login-input-border: var(--color-border-primary);
+  --bw-login-orange: var(--color-primary);
+  --bw-login-orange-hover: var(--color-primary);
+  --bw-login-danger: var(--color-primary);
 
   position: fixed;
   inset: 0;
   z-index: 1000;
   overflow: auto;
-  min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
   place-items: center;
   padding: 28px;
   font-family: var(--font-family-primary);
-  background: #09090C;
+  background: var(--color-bg-primary);
   color: var(--bw-login-text);
 }
 
@@ -51,8 +51,8 @@
   inset: 0;
   pointer-events: none;
   background:
-    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(0deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    linear-gradient(90deg, color-mix(in srgb, var(--color-text-primary) 3%, transparent) 1px, transparent 1px),
+    linear-gradient(0deg, color-mix(in srgb, var(--color-text-primary) 3%, transparent) 1px, transparent 1px);
   background-size: 52px 52px;
   opacity: 0.15;
 }
@@ -142,7 +142,7 @@
   border: 2px solid var(--bw-login-orange);
   border-radius: 22px;
   padding: 34px 28px 28px;
-  box-shadow: 0 28px 56px rgba(0, 0, 0, 0.46);
+  box-shadow: 0 28px 56px color-mix(in srgb, var(--color-black) 46%, transparent);
   backdrop-filter: blur(9px);
   -webkit-backdrop-filter: blur(9px);
   animation: cardReveal 0.45s ease-out;
@@ -200,7 +200,7 @@
   bottom: 14px;
   width: 18px;
   height: 18px;
-  color: color-mix(in srgb, var(--bw-login-orange) 78%, white);
+  color: color-mix(in srgb, var(--bw-login-orange) 78%, var(--color-white));
   pointer-events: none;
 }
 
@@ -229,7 +229,7 @@
 .input:focus {
   outline: none;
   border-color: var(--bw-login-orange);
-  box-shadow: 0 0 0 3px rgba(255, 106, 0, 0.18);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 18%, transparent);
 }
 
 .input:-webkit-autofill {
@@ -247,7 +247,7 @@
 }
 
 .input:-webkit-autofill:focus {
-  -webkit-box-shadow: 0 0 0 30px var(--bw-login-input) inset, 0 0 0 3px rgba(255, 106, 0, 0.18) !important;
+  -webkit-box-shadow: 0 0 0 30px var(--bw-login-input) inset, 0 0 0 3px color-mix(in srgb, var(--color-primary) 18%, transparent) !important;
   -webkit-text-fill-color: var(--bw-login-text) !important;
   border-color: var(--bw-login-orange) !important;
 }
@@ -310,25 +310,25 @@
 
 .errorBanner,
 .delayWarning {
-  color: #ffd3d3;
-  border: 1px solid rgba(255, 116, 116, 0.6);
-  background: rgba(125, 28, 28, 0.4);
+  color: var(--color-text-secondary);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 60%, transparent);
+  background: color-mix(in srgb, var(--color-danger) 40%, transparent);
 }
 
 .infoBanner,
 .sessionExpiredBanner,
 .capsLockWarning,
 .attemptsInfo {
-  color: #ffd59f;
-  border: 1px solid rgba(255, 154, 41, 0.5);
-  background: rgba(122, 66, 11, 0.33);
+  color: var(--color-text-secondary);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 50%, transparent);
+  background: color-mix(in srgb, var(--color-danger) 33%, transparent);
 }
 
 .successBanner,
 .successModalCountdown {
-  color: #d8f7e2;
-  border: 1px solid rgba(73, 207, 122, 0.5);
-  background: rgba(21, 90, 45, 0.36);
+  color: var(--color-success);
+  border: 1px solid color-mix(in srgb, var(--color-success) 50%, transparent);
+  background: color-mix(in srgb, var(--color-success) 36%, transparent);
 }
 
 .loginBtn,
@@ -338,7 +338,7 @@
   border: none;
   border-radius: 10px;
   background: var(--bw-login-orange);
-  color: #FFFFFF;
+  color: var(--color-text-primary);
   font-size: 17px;
   font-weight: 700;
   letter-spacing: 0.01em;
@@ -429,7 +429,7 @@
 
 .signupPromptLink:hover {
   border-color: var(--bw-login-orange-hover);
-  background: rgba(255, 106, 0, 0.13);
+  background: color-mix(in srgb, var(--color-primary) 13%, transparent);
 }
 
 .footer {
@@ -450,7 +450,7 @@
   display: grid;
   place-items: center;
   padding: 24px;
-  background: rgba(7, 10, 15, 0.74);
+  background: color-mix(in srgb, var(--color-black) 74%, transparent);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
 }

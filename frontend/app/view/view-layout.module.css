@@ -1,11 +1,11 @@
 .shell {
-  min-height: 100vh;
+  min-height: 100dvh;
   padding: 0 0 var(--spacing-xl);
   background: var(--bw-app-bg);
 }
 
 .inner {
-  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 @media (max-width: 767px) {

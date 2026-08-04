@@ -17,11 +17,17 @@ class RateLimitResult:
 
 
 class RateLimiter:
-    def __init__(self, redis_url: str | None = None, key_prefix: str = "bracketworks:ratelimit") -> None:
+    def __init__(
+        self,
+        redis_url: str | None = None,
+        key_prefix: str = "bracketworks:ratelimit",
+        require_redis: bool = False,
+    ) -> None:
         self.key_prefix = key_prefix
         self._lock = threading.Lock()
         self._memory_store: dict[str, tuple[int, float]] = {}
         self._redis_client = None
+        self._require_redis = require_redis
 
         if redis_url and redis is not None:
             try:
@@ -38,6 +44,14 @@ class RateLimiter:
             result = self._hit_redis(key, limit, window_seconds)
             if result is not None:
                 return result
+
+        if self._require_redis:
+            return RateLimitResult(
+                allowed=False,
+                limit=limit,
+                remaining=0,
+                retry_after_seconds=60,
+            )
 
         return self._hit_memory(key, limit, window_seconds)
 

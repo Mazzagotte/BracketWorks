@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { BookOpen } from 'lucide-react';
 import CloseControl from '../../components/CloseControl';
-import { API } from '../lib/api';
+import { API, getMemoryAccessToken } from '../lib/api';
 import type { ChangelogEntry } from '../lib/types';
 import styles from './ChangelogModal.module.css';
 
@@ -23,7 +23,7 @@ export default function ChangelogModal({ isOpen, onClose }: ChangelogModalProps)
     const fetchChangelog = async () => {
       setLoading(true);
       try {
-        const token = sessionStorage.getItem('token') || localStorage.getItem('token');
+        const token = getMemoryAccessToken();
         const res = await fetch(API('/api/v1/users/changelog'), {
           credentials: 'include',
           headers: {

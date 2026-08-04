@@ -249,7 +249,7 @@
   border: 1px solid var(--bw-border-subtle);
   border-top: 3px solid color-mix(in srgb, var(--color-primary) 78%, transparent);
   border-radius: 24px;
-  box-shadow: 0 24px 70px color-mix(in srgb, black 52%, transparent);
+  box-shadow: 0 24px 70px color-mix(in srgb, var(--color-black) 52%, transparent);
 }
 
 .dialog::backdrop {
@@ -296,7 +296,7 @@
 
 .qrWrapper {
   background: var(--color-white);
-  border-color: color-mix(in srgb, white 18%, transparent);
+  border-color: color-mix(in srgb, var(--color-white) 18%, transparent);
   box-shadow: none;
 }
 
@@ -331,7 +331,7 @@
   transform: none;
   color: var(--color-white);
   background: color-mix(in srgb, var(--color-primary) 30%, transparent);
-  border-color: color-mix(in srgb, var(--color-primary) 48%, white);
+  border-color: color-mix(in srgb, var(--color-primary) 48%, var(--color-white));
   box-shadow: none;
 }
 

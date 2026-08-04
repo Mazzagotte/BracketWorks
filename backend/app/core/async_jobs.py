@@ -4,7 +4,6 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from threading import Lock
 from typing import Any, Callable
-import traceback
 import uuid
 
 
@@ -12,6 +11,8 @@ import uuid
 class JobRecord:
     job_id: str
     job_type: str
+    owner_user_id: int
+    tournament_id: int | None = None
     status: str = "queued"
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     started_at: datetime | None = None
@@ -21,13 +22,28 @@ class JobRecord:
 
 
 class AsyncJobStore:
-    def __init__(self) -> None:
+    def __init__(self, max_jobs: int = 1000) -> None:
         self._lock = Lock()
         self._jobs: dict[str, JobRecord] = {}
+        self._max_jobs = max_jobs
 
-    def create(self, job_type: str) -> JobRecord:
+    def create(self, job_type: str, *, owner_user_id: int, tournament_id: int | None = None) -> JobRecord:
         with self._lock:
-            job = JobRecord(job_id=str(uuid.uuid4()), job_type=job_type)
+            if len(self._jobs) >= self._max_jobs:
+                completed = sorted(
+                    (job for job in self._jobs.values() if job.completed_at is not None),
+                    key=lambda item: item.completed_at or item.created_at,
+                )
+                for stale_job in completed[: max(1, len(self._jobs) - self._max_jobs + 1)]:
+                    self._jobs.pop(stale_job.job_id, None)
+            if len(self._jobs) >= self._max_jobs:
+                raise RuntimeError("Job queue capacity reached")
+            job = JobRecord(
+                job_id=str(uuid.uuid4()),
+                job_type=job_type,
+                owner_user_id=owner_user_id,
+                tournament_id=tournament_id,
+            )
             self._jobs[job.job_id] = job
             return job
 
@@ -50,9 +66,9 @@ class AsyncJobStore:
             job.status = "succeeded"
             job.result = result
             job.error = None
-        except Exception as exc:
+        except Exception:
             job.status = "failed"
-            job.error = f"{exc}\n{traceback.format_exc()}"
+            job.error = "The background operation failed. Check server logs for details."
             job.result = None
         finally:
             job.completed_at = datetime.now(timezone.utc)

@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 
 import { logger } from './logger';
-import { API, getCsrfToken } from './api';
+import { API, apiClient, getCsrfToken, getMemoryAccessToken, setMemoryAccessToken } from './api';
 
 interface User {
   id: string;
@@ -39,6 +39,7 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const clearAuthState = () => {
+    setMemoryAccessToken(null);
     setAuthToken(null);
     setCurrentUser(null);
     sessionStorage.removeItem('token');
@@ -50,29 +51,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const getInitialAuthState = () => {
-    if (typeof window === 'undefined') return { authToken: null, currentUser: null };
-    
-    try {
-      const storedAuthToken = sessionStorage.getItem('token') || localStorage.getItem('token');
-      const storedUserId = localStorage.getItem('user_id') || localStorage.getItem('userId');
-      const storedFirstName = localStorage.getItem('first_name');
-      const storedIsAdmin = localStorage.getItem('is_admin');
-      
-      if (storedAuthToken && storedUserId) {
-        return {
-          authToken: storedAuthToken,
-          currentUser: { 
-            id: storedUserId, 
-            name: storedFirstName || undefined,
-            isAdmin: storedIsAdmin === '1' || storedIsAdmin === 'true',
-          }
-        };
-      }
-    } catch (error) {
-      logger.error('Error reading auth from localStorage:', error);
-    }
-    
-    return { authToken: null, currentUser: null };
+    return { authToken: getMemoryAccessToken(), currentUser: null };
   };
 
   const initialAuthState = getInitialAuthState();
@@ -81,10 +60,38 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [isAuthInitialized, setIsAuthInitialized] = useState(false);
   const [isComponentMounted, setIsComponentMounted] = useState(false);
 
-  // Set mounted flag for hydration safety
+  // Restore the HTTP-only cookie session without persisting the access token.
   useEffect(() => {
     setIsComponentMounted(true);
-    setIsAuthInitialized(true);
+    sessionStorage.removeItem('token');
+    localStorage.removeItem('token');
+
+    let cancelled = false;
+    const restore = async () => {
+      try {
+        const restoredToken = await apiClient.restoreSession();
+        if (!restoredToken || cancelled) return;
+        const response = await apiClient.fetchWithAuth('/api/v1/users/me', { cache: 'no-store' }, false);
+        if (!response.ok) return;
+        const user = await response.json() as {
+          id: number; email: string; first_name: string; last_name: string; is_admin: boolean;
+        };
+        if (cancelled) return;
+        setAuthToken(restoredToken);
+        setCurrentUser({
+          id: String(user.id),
+          email: user.email,
+          name: [user.first_name, user.last_name].filter(Boolean).join(' '),
+          isAdmin: user.is_admin,
+        });
+      } catch (error) {
+        logger.info('No existing cookie session to restore', { error: String(error) });
+      } finally {
+        if (!cancelled) setIsAuthInitialized(true);
+      }
+    };
+    void restore();
+    return () => { cancelled = true; };
   }, []);
 
   // Listen for storage changes and auth events
@@ -92,9 +99,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const handleStorageChange = () => {
       if (!isComponentMounted) return;
       
-      const storedToken = localStorage.getItem('token');
-      const sessionToken = sessionStorage.getItem('token');
-      const effectiveToken = sessionToken || storedToken;
+      const effectiveToken = getMemoryAccessToken();
       const storedUserId = localStorage.getItem('user_id') || localStorage.getItem('userId');
       const storedFirstName = localStorage.getItem('first_name');
       const storedIsAdmin = localStorage.getItem('is_admin');
@@ -142,12 +147,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
   }, [isComponentMounted, authToken, currentUser]);
 
-  // Save to localStorage when state changes
+  // Keep identity hints only; the access token remains in process memory.
   useEffect(() => {
     if (!isComponentMounted) return; // Wait for hydration
 
     if (authToken && currentUser) {
-      sessionStorage.setItem('token', authToken);
+      setMemoryAccessToken(authToken);
       localStorage.removeItem('token');
       localStorage.setItem('user_id', currentUser.id);
       localStorage.setItem('is_admin', currentUser.isAdmin ? 'true' : 'false');
@@ -160,11 +165,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     logger.info('Authenticating user', { userId });
     
     // Immediately update state
+    setMemoryAccessToken(newAuthToken);
     setAuthToken(newAuthToken);
     setCurrentUser({ id: userId, ...userData });
     
     // Immediately save to localStorage
-    sessionStorage.setItem('token', newAuthToken);
     localStorage.removeItem('token');
     if (authSession?.sessionId) {
       localStorage.setItem('session_id', authSession.sessionId);
@@ -198,10 +203,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const logoutUser = (options?: LogoutOptions) => {
     const fastRedirect = Boolean(options?.fastRedirect);
-    const existingToken = typeof window !== 'undefined' ? (sessionStorage.getItem('token') || localStorage.getItem('token')) : null;
+    const existingToken = getMemoryAccessToken();
 
     // Clear critical auth state first so redirects are immediate and deterministic.
     setAuthToken(null);
+    setMemoryAccessToken(null);
     setCurrentUser(null);
     sessionStorage.removeItem('token');
     localStorage.removeItem('token');

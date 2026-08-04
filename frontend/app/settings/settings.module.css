@@ -2,7 +2,7 @@
 .loadingState { width: min(100% - 24px, 720px); margin: 24px auto; padding: 28px; border: 1px solid var(--bw-border-card); border-radius: var(--radius-xl); background: var(--bw-surface-card); color: var(--bw-text-muted); text-align: center; }
 .settingsIntro { margin-bottom: 14px; padding: 17px 18px; border: 1px solid var(--bw-border-card); border-radius: var(--radius-xl); background: var(--bw-surface-card); box-shadow: var(--bw-shadow-card); }
 .eyebrow { margin: 0 0 3px; color: var(--bw-text-accent); font-size: .66rem; font-weight: 850; letter-spacing: .045em; text-transform: uppercase; }
-.settingsIntro h1 { margin: 0; color: var(--bw-text-title); font-size: 1.45rem; line-height: 1.15; }
+.settingsIntro h2 { margin: 0; color: var(--bw-text-title); font-size: 1.45rem; line-height: 1.15; }
 .settingsIntro > p:last-child { max-width: 760px; margin: 7px 0 0; color: var(--bw-text-muted); font-size: .82rem; line-height: 1.5; }
 .settingsLayout { display: grid; grid-template-columns: 180px minmax(0, 1fr); align-items: start; gap: 16px; }
 .sectionNav { position: sticky; top: 84px; display: grid; gap: 4px; padding: 7px; border: 1px solid var(--bw-border-card); border-radius: var(--radius-lg); background: var(--bw-surface-card); box-shadow: var(--bw-shadow-card); }
@@ -12,7 +12,7 @@
 .settingsContent { min-width: 0; display: grid; gap: 14px; }
 .settingsSection { min-width: 0; scroll-margin-top: 90px; }
 .card { margin: 0; padding: 0; overflow: hidden; border: 1px solid var(--bw-border-card); border-radius: var(--radius-xl); background: var(--bw-surface-card); box-shadow: var(--bw-shadow-card); }
-.cardTitleWrap { padding: 0; }
+.cardTitleWrap { padding: 14px 18px 12px; }
 .cardTitleSectionHeader { margin: 0; }
 .optionRow { display: grid; grid-template-columns: 180px minmax(0, 1fr); align-items: center; gap: 8px 16px; padding: 11px 18px; border-top: 1px solid var(--bw-border-subtle); }
 .optionRow:first-of-type { border-top: 0; }
@@ -56,13 +56,16 @@
 @media (max-width: 767px) {
   .pageContainer { padding: 12px; }
   .settingsIntro { margin-bottom: 10px; padding: 14px; border-radius: var(--radius-lg); }
-  .settingsIntro h1 { font-size: 1.25rem; }
+  .settingsIntro h2 { font-size: 1.25rem; }
   .settingsLayout { display: block; }
-  .sectionNav { position: static; display: flex; gap: 5px; margin-bottom: 10px; overflow-x: auto; scrollbar-width: none; }
-  .sectionNav a { flex: 0 0 auto; min-height: 38px; padding: 0 12px; }
+  .sectionNav { position: static; display: flex; gap: 5px; margin-bottom: 10px; padding-bottom: 9px; overflow-x: auto; scrollbar-width: thin; scrollbar-color: var(--bw-border-accent) transparent; overscroll-behavior-inline: contain; }
+  .sectionNav::-webkit-scrollbar { height: 4px; }
+  .sectionNav::-webkit-scrollbar-thumb { border-radius: 999px; background: var(--bw-border-accent); }
+  .sectionNav a { flex: 0 0 auto; min-height: 44px; padding: 0 12px; }
   .settingsContent { gap: 12px; }
   .settingsSection { scroll-margin-top: 12px; }
   .card { border-radius: var(--radius-lg); }
+  .cardTitleWrap { padding: 12px; }
   .optionRow { grid-template-columns: 125px minmax(0, 1fr); gap: 7px 10px; padding: 10px 12px; }
   .optionTitle { font-size: .78rem; }
   .optionHint { font-size: .68rem; }

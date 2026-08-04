@@ -923,7 +923,7 @@
 }
 
 .stepperBtnPlus:hover:not(:disabled) {
-  border-color: color-mix(in srgb, var(--color-primary) 52%, white);
+  border-color: color-mix(in srgb, var(--color-primary) 52%, var(--color-white));
   color: var(--bw-text-title);
 }
 
@@ -2191,19 +2191,19 @@
 }
 
 .addBowlerCard .stepperBtnMinus:hover:not(:disabled) {
-  border-color: color-mix(in srgb, var(--color-primary) 50%, white);
+  border-color: color-mix(in srgb, var(--color-primary) 50%, var(--color-white));
   color: var(--entries-text-accent);
   background: color-mix(in srgb, var(--entries-panel-deep) 94%, transparent);
 }
 
 .addBowlerCard .stepperBtnPlus {
-  border-color: color-mix(in srgb, var(--color-primary) 50%, white);
+  border-color: color-mix(in srgb, var(--color-primary) 50%, var(--color-white));
   background: linear-gradient(140deg, color-mix(in srgb, var(--color-primary) 24%, transparent) 0%, color-mix(in srgb, var(--color-primary) 20%, transparent) 100%), color-mix(in srgb, var(--entries-panel-deep) 92%, transparent);
   color: var(--entries-text-accent);
 }
 
 .addBowlerCard .stepperBtnPlus:hover:not(:disabled) {
-  border-color: color-mix(in srgb, var(--color-primary) 62%, white);
+  border-color: color-mix(in srgb, var(--color-primary) 62%, var(--color-white));
   color: var(--entries-text-title);
 }
 
@@ -3326,7 +3326,7 @@
 
 .tableCard :global(.entries-input.entries-control:disabled),
 .tableCard :global(.entries-select.entries-control:disabled) {
-  background: color-mix(in srgb, var(--entries-panel-deep) 88%, black 12%);
+  background: color-mix(in srgb, var(--entries-panel-deep) 88%, var(--color-black) 12%);
   color: var(--entries-text-muted);
   border-color: var(--entries-border);
   opacity: 1;

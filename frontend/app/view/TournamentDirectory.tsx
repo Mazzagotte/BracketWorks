@@ -261,7 +261,7 @@ export default function TournamentDirectory({
 
   return (
     <div className={styles.page}>
-      <main className={styles.wrap}>
+      <div className={styles.wrap}>
         <div className={styles.heroShell}>
           <div className={styles.heroContent}>
             <div className={styles.brandLockup}>
@@ -347,7 +347,7 @@ export default function TournamentDirectory({
             Last refreshed {lastCheckedAt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
           </button>
         ) : null}
-      </main>
+      </div>
     </div>
   )
 }
