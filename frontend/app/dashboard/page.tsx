@@ -24,7 +24,6 @@ import {
 import { Tournament, Squad, BracketSettings, TournamentForm, SidePotsSettings, SidePot, Player, DashboardTournamentBootstrapResponse } from '../lib/types';
 
 import { useAuth } from '../lib/auth-context';
-import { usePageHeader } from '../lib/header-context';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { getErrorMessage, getErrorContext } from '../lib/error-utils';
 import { storage } from '../lib/storage';
@@ -145,7 +144,6 @@ const DEMO_DASHBOARD_SIDE_POTS: SidePotsSettings = {
 };
 
 export default function TournamentDashboard() {
-  usePageHeader({ title: 'Dashboard', subtitle: undefined, actions: undefined });
   const pathname = usePathname();
   const isDemoDashboard = pathname === '/demo/dashboard';
   // Authentication check - must be at the top

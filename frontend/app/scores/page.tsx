@@ -13,7 +13,6 @@ import { useAuth } from '../lib/auth-context'
 import { ErrorBoundary } from '../components/ErrorBoundary'
 import ActionConfirmDialog from '../components/ActionConfirmDialog'
 import { API, apiClient, apiFetch, getMemoryAccessToken } from '../lib/api'
-import { usePageHeader } from '../lib/header-context'
 import EnhancedButton from '../components/EnhancedButton'
 import CloseControl from '../../components/CloseControl'
 import { MobileLayout } from '../../components/MobileLayout'
@@ -1383,11 +1382,6 @@ export default function ScoresPage() {
     />
   ), [players, handleRandomizeScores, requestClearGame, pendingSaves.length, addToast, processPendingSaves, handleExportScoresToExcel, handleExportScoresToPdf, isExporting, isExportingPdf, isImporting, isScoresLocked, unlockScoresTable, currentUser, markScoresComplete])
 
-  usePageHeader({
-    title: 'Scores',
-    subtitle: undefined,
-    actions: undefined
-  })
 
   const getPlayerScoreStatus = useCallback((player: Player) => {
     const gameScores = [

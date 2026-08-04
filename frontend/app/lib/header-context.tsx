@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useState, type ReactNode } from 'react';
 
 type HeaderProps = {
   title?: string;
@@ -47,20 +47,4 @@ export function useHeader() {
   return context;
 }
 
-// Hook for pages to set their header properties
-export function usePageHeader(props: {
-  title?: string;
-  subtitle?: string;
-  actions?: ReactNode;
-}) {
-  const { setHeaderProps } = useHeader();
-  const headerPayload = useMemo(() => ({
-    title: props.title,
-    subtitle: props.subtitle,
-    actions: props.actions,
-  }), [props.actions, props.subtitle, props.title]);
 
-  useEffect(() => {
-    setHeaderProps(headerPayload);
-  }, [headerPayload, setHeaderProps]);
-}

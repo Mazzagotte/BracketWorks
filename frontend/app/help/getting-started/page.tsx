@@ -1,6 +1,5 @@
 'use client';
 
-import { usePageHeader } from '../../lib/header-context';
 import styles from './getting-started.module.css';
 
 const steps = [
@@ -14,7 +13,6 @@ const steps = [
 ];
 
 export default function GettingStartedPage() {
-  usePageHeader({ title: 'Getting Started', subtitle: 'Help', actions: undefined });
   return (
     <div className={styles.page}>
       <section className={styles.intro}>

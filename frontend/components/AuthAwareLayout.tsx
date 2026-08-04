@@ -14,7 +14,6 @@ import WelcomeOnboardingModal from '../app/components/WelcomeOnboardingModal';
 import AnnouncementNotice from '../app/components/AnnouncementNotice';
 import LegalDisclosureModal from '../app/components/LegalDisclosureModal';
 import { useAuth } from '../app/lib/auth-context';
-import { useHeader } from '../app/lib/header-context';
 import { usesNavigationDrawerViewport } from '../app/lib/responsive';
 import { resetScrollLocks, setBodyInteractionState } from '../app/utils/modalUtils';
 import styles from '../app/layout.module.css';
@@ -42,7 +41,6 @@ function ClientLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { title, subtitle, actions } = useHeader();
   const [firstName, setFirstName] = useState<string | undefined>(undefined);
   const [isMobile, setIsMobile] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -198,16 +196,6 @@ function ClientLayout({ children }: { children: ReactNode }) {
           <div className={styles.devNoticeWrap}>
             <DevNoticeBanner />
           </div>
-        )}
-
-        {showAuthenticatedShell && !legalBlocked && title && (
-          <header className={styles.pageHeader}>
-            <div>
-              <h1 className={styles.pageTitle}>{title}</h1>
-              {subtitle && <p className={styles.pageSubtitle}>{subtitle}</p>}
-            </div>
-            {actions && <div className={styles.pageActions}>{actions}</div>}
-          </header>
         )}
 
         <div className={contentCardClass}>

@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { BookOpen, CircleCheck, ClipboardCheck, Clock3, Coins, FileSpreadsheet, FileText, ListChecks, Search, Star, Trophy, Users, WalletCards, Zap } from 'lucide-react'
 import { useAuth } from '../lib/auth-context'
-import { usePageHeader } from '../lib/header-context'
 import { ErrorBoundary } from '../components/ErrorBoundary'
 import { useTournaments, useSquads } from '../hooks/useTournaments'
 import { SidePotsSettings, Tournament, Squad } from '../lib/types'
@@ -493,11 +492,6 @@ export default function PayoutsPage() {
     />
   ), [filteredWinners.length, handleExportToExcel, handleExportToPdf, isExportingExcel, isExportingPdf, isMobileView, loading])
 
-  usePageHeader({
-    title: 'Payouts',
-    subtitle: undefined,
-    actions: undefined,
-  })
 
   const programSummaries = useMemo(
     () => (payoutData?.program_summaries ?? []).filter(program => program.total_brackets > 0),

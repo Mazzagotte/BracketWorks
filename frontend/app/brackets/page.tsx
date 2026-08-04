@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from 'react'
 import { BookOpen, ChevronLeft, ChevronRight, GitFork, RefreshCw, Trash2, Zap } from 'lucide-react'
 import { useAuth } from '../lib/auth-context'
-import { usePageHeader } from '../lib/header-context'
 import { ErrorBoundary } from '../components/ErrorBoundary'
 import ActionConfirmDialog from '../components/ActionConfirmDialog'
 import { useBrackets, BracketPreview } from '../hooks/useBrackets'
@@ -425,12 +424,6 @@ export default function BracketsPage() {
     )
   }, [selectedTournament, handleDeleteAllBrackets, handleGenerateBrackets, isDev, setIsExplainModalOpen, totalBracketCount])
 
-  // Set page header with actions
-  usePageHeader({
-    title: 'Brackets',
-    subtitle: undefined,
-    actions: undefined
-  })
 
   // Check if we have tokens in localStorage
   const hasStoredAuth = typeof window !== 'undefined' && 

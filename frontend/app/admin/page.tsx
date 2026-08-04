@@ -4,7 +4,6 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "rea
 import { useRouter } from "next/navigation";
 import { ClipboardList, History, Info, Plus } from "lucide-react";
 
-import { usePageHeader } from "../lib/header-context";
 import { apiClient } from "../lib/api";
 import { useAuth } from "../lib/auth-context";
 import { formatShortMonthDayYear } from "../lib/formatters";
@@ -778,11 +777,6 @@ export default function AdminPage() {
     </>
   ), [refreshing, loadActiveTab]);
 
-  usePageHeader({
-    title: "Admin Console",
-    subtitle: "Owner View",
-    actions: headerActions,
-  });
 
   useEffect(() => {
     if (!isAuthInitialized) return;

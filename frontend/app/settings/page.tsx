@@ -2,7 +2,6 @@
 
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { usePageHeader } from '../lib/header-context';
 import { useToast } from '../components/Toast';
 import { apiClient } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
@@ -82,11 +81,6 @@ export default function SettingsPage() {
   const passwordsMatch = !passwordForm.confirm_password || passwordForm.new_password === passwordForm.confirm_password;
   const passwordCanSubmit = passwordIsComplete && passwordsMatch && hasStrongPassword(passwordForm.new_password, 8);
 
-  usePageHeader({
-    title: 'Settings',
-    subtitle: 'Account',
-    actions: undefined,
-  });
 
   useEffect(() => {
     const load = async () => {

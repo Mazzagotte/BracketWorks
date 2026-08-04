@@ -2,7 +2,6 @@
 
 import { useMemo, useRef, useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../lib/auth-context'
-import { usePageHeader } from '../lib/header-context'
 import { ErrorBoundary } from '../components/ErrorBoundary'
 import ActionConfirmDialog from '../components/ActionConfirmDialog'
 import { usePlayers } from './hooks/usePlayers'
@@ -598,11 +597,6 @@ export default function PlayersPage() {
     }
   }, [players, enabledBracketPrograms, sidePots, selectedTournament, selectedSquad, toast])
 
-  usePageHeader({
-    title: 'Entries',
-    subtitle: undefined,
-    actions: undefined
-  })
 
   // Calculate entry totals
   const entryTotals = useMemo(() => {
