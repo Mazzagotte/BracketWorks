@@ -37,7 +37,7 @@ const softwareApplicationJsonLd = {
 };
 
 function Brand() {
-  return <span className={styles.brand}><Image src="/logo_no_text.svg" alt="BracketWorks" width={38} height={38} priority /><span><strong>BRACKET<span>WORKS</span></strong><small>Bowling Tournament Management</small></span></span>;
+  return <span className={`${styles.brand} bw-public-brand`}><Image src="/logo_no_text.svg" alt="BracketWorks" width={38} height={38} priority /><span className="bw-public-brand-text"><strong>BRACKET<span>WORKS</span></strong><small>Bowling Tournament Management</small></span></span>;
 }
 
 export default function HomePage() {
@@ -45,8 +45,8 @@ export default function HomePage() {
     <a className={styles.skipLink} href="#main-content">Skip to main content</a>
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }} />
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareApplicationJsonLd) }} />
-    <header className={styles.header}>
-      <div className={styles.headerInner}><Link href="/" aria-label="BracketWorks home"><Brand /></Link><nav aria-label="Homepage navigation"><a href="#dashboard-preview">Dashboard</a><a href="#workflow">Workflow</a><a href="#live-view">Live View</a><a href="#controls">Safeguards</a></nav><div className={styles.headerActions}><Link className={styles.secondaryButton} href="/login">Sign In</Link><Link className={styles.primaryButton} href="/signup">Create Account</Link></div><details className={styles.mobileMenu}><summary aria-label="Open navigation"><Menu /></summary><div><a href="#dashboard-preview">Dashboard</a><a href="#workflow">Workflow</a><a href="#live-view">Live View</a><a href="#controls">Safeguards</a><Link href="/login">Sign In</Link><Link href="/signup">Create Account</Link></div></details></div>
+    <header className={`${styles.header} bw-public-header`}>
+      <div className={`${styles.headerInner} bw-public-header-inner`}><Link href="/" aria-label="BracketWorks home" className="bw-public-brand-link"><Brand /></Link><nav className="bw-public-nav" aria-label="Homepage navigation"><a href="#dashboard-preview">Dashboard</a><a href="#workflow">Workflow</a><a href="#live-view">Live View</a><a href="#controls">Safeguards</a></nav><div className={`${styles.headerActions} bw-public-actions`}><Link className={`${styles.secondaryButton} bw-public-secondary-btn`} href="/login">Sign In</Link><Link className={`${styles.primaryButton} bw-public-primary-btn`} href="/signup">Create Account</Link></div><details className={styles.mobileMenu}><summary aria-label="Open navigation"><Menu /></summary><div><a href="#dashboard-preview">Dashboard</a><a href="#workflow">Workflow</a><a href="#live-view">Live View</a><a href="#controls">Safeguards</a><Link href="/login">Sign In</Link><Link href="/signup">Create Account</Link></div></details></div>
     </header>
     <div>
       <section className={`${styles.section} ${styles.hero}`}><div className={styles.heroCopy}><p className={styles.eyebrow}>Bowling Tournament Management</p><h1>Run the Tournament.<br /><span>Not the Spreadsheets.</span></h1><p className={styles.lead}>BracketWorks gives tournament directors one organized workspace for entries, brackets, side pots, scores, standings, payouts, and live tournament results.</p><div className={styles.actions}><Link className={styles.primaryButton} href="/signup">Create Free Account <ArrowRight /></Link><Link className={styles.secondaryButton} href="/view"><Eye /> View Live Tournament</Link></div><ul className={styles.support}><li><Check />No credit card required</li><li><Gauge />Designed for tablet and desktop tournament management</li><li><Eye />Public Live View works on mobile devices</li></ul></div></section>

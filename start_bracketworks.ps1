@@ -1,7 +1,7 @@
 # BracketWorks Development Launcher
 $ProjectRoot  = $PSScriptRoot
 $BackendPath  = Join-Path $ProjectRoot "backend"
-$FrontendPath = Join-Path $ProjectRoot "frontend"
+$FrontendPath = Join-Path $ProjectRoot "apps/bracketworks"
 $BackendPython = Join-Path $BackendPath ".venv\Scripts\python.exe"
 $Port         = 3000
 $BackendUrl   = "http://localhost:8001"
@@ -163,8 +163,10 @@ $FastStart = Get-EnvBoolOrDefault -Name "BRACKETWORKS_FAST_START" -Default $fals
 $WaitForFrontend = Get-EnvBoolOrDefault -Name "BRACKETWORKS_WAIT_FOR_FRONTEND" -Default $true
 $WaitForBackend = Get-EnvBoolOrDefault -Name "BRACKETWORKS_WAIT_FOR_BACKEND" -Default $true
 $SkipMigrations = Get-EnvBoolOrDefault -Name "BRACKETWORKS_SKIP_MIGRATIONS" -Default $false
-$FrontendInstallMode = Get-EnvValueOrDefault -Name "BRACKETWORKS_FRONTEND_INSTALL_MODE" -Default "never"
+$FrontendInstallMode = Get-EnvValueOrDefault -Name "BRACKETWORKS_FRONTEND_INSTALL_MODE" -Default "auto"
 $FrontendInstallMode = $FrontendInstallMode.ToLowerInvariant()
+$FrontendInstallStrategy = Get-EnvValueOrDefault -Name "BRACKETWORKS_FRONTEND_INSTALL_STRATEGY" -Default "incremental"
+$FrontendInstallStrategy = $FrontendInstallStrategy.ToLowerInvariant()
 $KillPort8001 = Get-EnvBoolOrDefault -Name "BRACKETWORKS_KILL_PORT_8001" -Default $true
 
 if ($BackendMode -notin @("local", "docker")) {
@@ -174,6 +176,11 @@ if ($BackendMode -notin @("local", "docker")) {
 
 if ($FrontendInstallMode -notin @("auto", "always", "never")) {
     Write-Host "Invalid BRACKETWORKS_FRONTEND_INSTALL_MODE '$FrontendInstallMode'. Use 'auto', 'always', or 'never'." -ForegroundColor Red
+    exit 1
+}
+
+if ($FrontendInstallStrategy -notin @("incremental", "ci")) {
+    Write-Host "Invalid BRACKETWORKS_FRONTEND_INSTALL_STRATEGY '$FrontendInstallStrategy'. Use 'incremental' or 'ci'." -ForegroundColor Red
     exit 1
 }
 
@@ -206,15 +213,16 @@ if (-not (Get-Command npm.cmd -ErrorAction SilentlyContinue)) {
 }
 
 $FrontendNextPath = Join-Path $FrontendPath "node_modules\next\dist\bin\next"
+$RootNextPath = Join-Path $ProjectRoot "node_modules\next\dist\bin\next"
 
-if ($FrontendInstallMode -eq "never" -and -not (Test-Path $FrontendNextPath)) {
+if ($FrontendInstallMode -eq "never" -and -not (Test-Path $FrontendNextPath) -and -not (Test-Path $RootNextPath)) {
     Write-Host ""
     Write-Host "Frontend dependencies are not installed." -ForegroundColor Red
     Write-Host "Normal startup does not install packages." -ForegroundColor Yellow
     Write-Host ""
     Write-Host "Run this one-time setup command, then start BracketWorks again:" -ForegroundColor Yellow
-    Write-Host "  cd `"$FrontendPath`"" -ForegroundColor Cyan
-    Write-Host "  npm.cmd ci --no-audit --no-fund" -ForegroundColor Cyan
+    Write-Host "  cd `"$ProjectRoot`"" -ForegroundColor Cyan
+    Write-Host "  npm.cmd install --include=dev --no-audit --no-fund --prefer-offline" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "To explicitly let the launcher install packages instead, set:" -ForegroundColor DarkYellow
     Write-Host "  BRACKETWORKS_FRONTEND_INSTALL_MODE=auto" -ForegroundColor DarkYellow
@@ -286,6 +294,7 @@ Write-Host "  Auto     : $(if ($AutoMode) { 'on' } else { 'off' })" -ForegroundC
 Write-Host "  Fast     : $(if ($FastStart) { 'on' } else { 'off' })" -ForegroundColor Yellow
 Write-Host "  Migrate  : $(if ($SkipMigrations) { 'skip' } else { 'apply' })" -ForegroundColor Yellow
 Write-Host "  FE deps  : $FrontendInstallMode" -ForegroundColor Yellow
+Write-Host "  FE strat : $FrontendInstallStrategy" -ForegroundColor Yellow
 Write-Host ""
 
 if ($BackendMode -eq "docker") {
@@ -384,8 +393,22 @@ $frontendStartCmd =
     "  $ClosePromptCmd; " +
     "  exit `$frontendExitCode; " +
     "}"
-$frontendInstallCmdPrimary = "npm.cmd ci --no-audit --no-fund"
-$frontendInstallCmdRetry = "npm.cmd install --include=dev --no-audit --no-fund"
+$rootLockPath = Join-Path $ProjectRoot "package-lock.json"
+$canUseWorkspaceCi = Test-Path $rootLockPath
+if ($FrontendInstallStrategy -eq "ci" -and -not $canUseWorkspaceCi) {
+    Write-Host "Requested FE strategy 'ci' but root package-lock.json is missing. Falling back to incremental install." -ForegroundColor Yellow
+}
+
+$frontendInstallCmdPrimary = if ($FrontendInstallStrategy -eq "ci" -and $canUseWorkspaceCi) {
+    "npm.cmd --prefix '$ProjectRoot' ci --no-audit --no-fund"
+} else {
+    "npm.cmd --prefix '$ProjectRoot' install --include=dev --no-audit --no-fund --prefer-offline"
+}
+$frontendInstallCmdRetry = if ($FrontendInstallStrategy -eq "ci") {
+    "npm.cmd --prefix '$ProjectRoot' install --include=dev --no-audit --no-fund --prefer-offline"
+} else {
+    "npm.cmd --prefix '$ProjectRoot' ci --no-audit --no-fund"
+}
 $frontendLockPath = Join-Path $FrontendPath "package-lock.json"
 $frontendPackagePath = Join-Path $FrontendPath "package.json"
 $frontendDependencyManifestPath = if (Test-Path $frontendLockPath) { $frontendLockPath } else { $frontendPackagePath }
@@ -401,8 +424,8 @@ $cmd = "$PowerShellPolicyCmd; " +
     "`$env:PATH='$env:PATH'; " +
     "cd '$FrontendPath'; " +
     "`$env:NEXT_PUBLIC_BACKEND_URL='$BackendUrl'; " +
-    "`$statePath = '.\\node_modules\\.bw-frontend-install-state.json'; " +
-    "`$nextPath = '.\\node_modules\\next\\dist\\bin\\next'; " +
+    "`$statePath = '.\\.bw-frontend-install-state.json'; " +
+    "`$nextPath = if (Test-Path '.\\node_modules\\next\\dist\\bin\\next') { '.\\node_modules\\next\\dist\\bin\\next' } elseif (Test-Path '..\\..\\node_modules\\next\\dist\\bin\\next') { '..\\..\\node_modules\\next\\dist\\bin\\next' } else { '.\\node_modules\\next\\dist\\bin\\next' }; " +
     "`$installNeeded = `$false; " +
     "`$installReason = ''; " +
     "switch ('$FrontendInstallMode') { " +

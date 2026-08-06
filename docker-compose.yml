@@ -53,7 +53,7 @@ services:
 
   frontend:
     build:
-      context: ./frontend
+      context: ./apps/bracketworks
       dockerfile: Dockerfile
     environment:
       - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:8000}
@@ -62,7 +62,7 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./frontend:/app
+      - ./apps/bracketworks:/app
       - /app/node_modules
 
 volumes:

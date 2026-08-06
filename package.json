@@ -1,0 +1,18 @@
+{
+  "name": "bracketworks-monorepo",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:bracketworks": "npm --workspace apps/bracketworks run dev",
+    "dev:tournament-central": "npm --workspace apps/tournament-central run dev",
+    "build:bracketworks": "npm --workspace apps/bracketworks run build",
+    "build:tournament-central": "npm --workspace apps/tournament-central run build",
+    "lint:bracketworks": "npm --workspace apps/bracketworks run lint",
+    "lint:tournament-central": "npm --workspace apps/tournament-central run lint",
+    "test:frontend": "npm --workspace apps/bracketworks run test"
+  }
+}

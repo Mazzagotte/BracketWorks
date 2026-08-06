@@ -15,6 +15,7 @@
     "browserslist:update": "npx.cmd update-browserslist-db@latest"
   },
   "dependencies": {
+    "@bracketworks/design-tokens": "file:../../packages/design-tokens",
     "exceljs": "^3.4.0",
     "lucide-react": "^0.539.0",
     "next": "16.3.0",

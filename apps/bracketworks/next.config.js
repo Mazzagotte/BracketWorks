@@ -3,6 +3,9 @@
 /** @type {import('next').NextConfig} */
 const backendUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8001';
 const isDevelopment = process.env.NODE_ENV !== 'production';
+const frameAncestors = isDevelopment
+  ? "'self' http://localhost:3000 http://127.0.0.1:3000"
+  : "'self' https://bracketworks.app https://www.bracketworks.app";
 let backendOrigin = "'self'";
 try {
   backendOrigin = new URL(backendUrl).origin;
@@ -20,7 +23,7 @@ const contentSecurityPolicy = [
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
-  "frame-ancestors 'none'",
+  `frame-ancestors ${frameAncestors}`,
 ].join('; ');
 
 const nextConfig = {
@@ -42,7 +45,6 @@ const nextConfig = {
         headers: [
           { key: 'Content-Security-Policy', value: contentSecurityPolicy },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
-          { key: 'X-Frame-Options', value: 'DENY' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=()' },
         ],

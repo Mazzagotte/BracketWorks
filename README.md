@@ -1,51 +1,54 @@
 
 # BracketWorks
 
-BracketWorks is tournament software for running bowling bracket events. It handles bracket setup, live scoring, and payout review in one place, so you can spend less time managing spreadsheets and more time running the event.
+BracketWorks is a monorepo for tournament software that runs bowling bracket events. BracketWorks manages bracket setup, live scoring, payouts, and results, while Tournament Central will eventually handle tournament discovery, creation, and registration.
 
 Live app: [https://bracketworks.app](https://bracketworks.app)
 
----
+## Repository structure
 
-## What it does
-
-### Brackets
-Set up and manage scratch and handicap brackets for your tournament. Brackets advance round by round as scores are entered, and you can run multiple bracket programs in the same event.
+- apps/bracketworks — the existing BracketWorks Next.js application.
+- apps/tournament-central — a new Next.js starter for tournament discovery and registration.
+- backend — the FastAPI backend service.
+- packages/api-client — shared API request helpers.
+- packages/shared-types — shared TypeScript interfaces and API types.
+- packages/design-tokens — shared design constants.
+- scripts — startup helpers for the apps and backend.
 
 ## Local development
 
-- Backend: `cd backend && python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000`
-- Frontend: `cd frontend && npm run dev`
-- Or use the launcher: `./start_bracketworks.ps1`
+- Backend: `powershell -File scripts/start-backend.ps1`
+- BracketWorks app: `powershell -File scripts/start-bracketworks.ps1`
+- Tournament Central app: `powershell -File scripts/start-tournament-central.ps1`
+- Or run the apps directly from the workspace root with `npm run dev:bracketworks` and `npm run dev:tournament-central`
 
-The local stack uses Docker Compose for PostgreSQL and Redis, while the frontend and backend can also be run directly for local development.
+### Environment files
 
-### Score Tracking
-Enter scores live while the tournament is in progress. Bracket state updates as results come in, and your work is saved so you can pick up where you left off.
+- apps/bracketworks/.env.example
+- apps/tournament-central/.env.example
+- backend/.env.example
 
-### Payouts
-BracketWorks calculates payouts from your event settings, including entry fees and prize splits. Review who won what, then export or print results when everything is finalized.
+### Build, lint, and test
 
-### Player Management
-Keep a reusable player history across tournaments. Track entries, results, and payouts over time so you always have a clean event record.
+- `npm install`
+- `npm run build:bracketworks`
+- `npm run lint:bracketworks`
+- `npm run test:frontend`
+- `npm run build:tournament-central`
+- `npm run lint:tournament-central`
 
-### Public View
-Share a read-only tournament link so bowlers and spectators can follow standings and results without creating an account.
+## Deployment roots
 
-### Admin Controls
-Directors and admins can manage tournaments, entries, settings, users, and archives from one central admin experience.
+- BracketWorks deployment root: apps/bracketworks
+- Tournament Central deployment root: apps/tournament-central
+- Backend deployment root: backend
 
----
+## Notes
 
-## Works on any device
-
-BracketWorks is a Progressive Web App. It runs in modern browsers and can be installed on phones and tablets like an app. The UI is built to work at the desk or out at the lanes.
-
----
-
-## Questions or feedback?
-
-Visit [bracketworks.app](https://bracketworks.app) or contact us through the app.
+- Tournament Central manages tournament discovery, creation, and registration.
+- BracketWorks runs tournaments, brackets, scoring, results, and payouts.
+- Both applications will eventually use the same backend and account system.
+- Tournament Central-to-BracketWorks importing is planned but is not part of this reorganization.
 
 ## Support
 
@@ -54,7 +57,3 @@ For issues or questions, open a repository issue or reach out through [bracketwo
 ## License
 
 MIT
-
----
-
-BracketWorks helps tournament teams run cleaner events from setup to final payout.

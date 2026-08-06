@@ -1,0 +1,335 @@
+/**
+ * BracketWorks base token catalog.
+ * This file holds the broad reusable token set and compatibility aliases.
+ * main.css applies the active app theme overrides that you are most likely to change.
+ */
+
+:root {
+  /* Primary Brand Colors - Orange (from logo brackets & ball) */
+  --color-primary: var(--bw-orange, #FF7A00);
+  --color-primary-hover: var(--bw-orange-dark, #E55F00);
+
+  /* Shared UI theme tokens */
+  --bw-surface-card: rgba(18, 17, 23, 0.8);
+  --bw-surface-card-strong: rgba(14, 16, 24, 0.88);
+  --bw-surface-panel: rgba(255, 255, 255, 0.03);
+  --bw-surface-panel-strong: rgba(255, 255, 255, 0.06);
+  --bw-border-subtle: rgba(226, 232, 240, 0.14);
+  --bw-border-card: color-mix(in srgb, var(--color-primary) 24%, rgba(226, 232, 240, 0.74));
+  --bw-border-accent: color-mix(in srgb, var(--color-primary) 34%, rgba(226, 232, 240, 0.7));
+  --bw-shadow-card: 0 12px 30px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --bw-shadow-accent: 0 10px 22px color-mix(in srgb, var(--color-primary) 24%, transparent);
+  --bw-accent-rail: none;
+  --bw-focus-ring: 0 0 0 1px color-mix(in srgb, var(--color-primary) 45%, transparent), 0 0 0 4px color-mix(in srgb, var(--color-primary) 12%, transparent);
+  --bw-page-gutter: 1rem;
+  --bw-page-gutter-mobile: 0.5rem;
+  --bw-stack-gap: 0.75rem;
+  --bw-control-gap: 0.55rem;
+
+  /* Logo Brand Palette */
+  --color-brand-orange:        var(--bw-orange, #FF7A00);   /* brackets / ball / subtitle text */
+  --color-brand-orange-light:  var(--bw-orange-light, #FFB347);   /* hover / highlight */
+  --color-brand-orange-dark:   var(--bw-orange-dark, #E55F00);   /* pin stripes / ball shadow / deep accent */
+  --color-brand-charcoal:      var(--bw-charcoal, #333333);   /* BracketWorks wordmark */
+  --color-brand-charcoal-deep: #1A1A1A;   /* darkest shadow */
+  --color-brand-ivory:         var(--bw-ivory, #F0E0C0);   /* pin bodies */
+  --color-brand-ivory-light:   var(--bw-ivory-light, #FAF4E8);   /* card / light surface background */
+  
+  /* Secondary Brand Colors - Dark */
+  --color-secondary: #1F2937;
+  --color-secondary-hover: #2F2F2F;
+  
+  /* State Colors */
+  --color-success: #2FBF71;
+  --color-warning: var(--color-primary);
+  --color-error: #D64545;
+  --color-disabled: #E3E0DC;
+  
+  /* Text Colors */
+  --color-text-primary: var(--bw-charcoal, #FAFAF9);
+  --color-text-secondary: var(--bw-muted, #9ca3af);
+  
+  /* Legacy Brand Colors (kept for backward compatibility) */
+  --color-brand-gold: var(--color-brand-orange);
+  --color-brand-gold-dark: var(--color-brand-orange-dark);
+  --color-brand-gold-light: var(--color-brand-orange-light);
+  --color-brand-gold-lighter: #fcd9a8;
+  --color-brand-gold-pale: #fbc880;
+
+  /* Blue Colors (kept for backward compatibility) */
+  --color-blue-primary: #3b82f6;
+  --color-blue-dark: #2563eb;
+  --color-blue-light: #dbeafe;
+  --color-blue-lighter: #bfdbfe;
+
+  /* Purple Colors (kept for backward compatibility) */
+  --color-purple-primary: #8b5cf6;
+  --color-purple-dark: #7c3aed;
+  --color-purple-light: #667eea;
+
+  /* Green Colors */
+  --color-green-primary: #2FBF71;
+  --color-green-secondary: #22c55e;
+  --color-green-dark: #059669;
+  --color-green-light: #d1fae5;
+  --color-green-lighter: #a7f3d0;
+
+  /* Pink Colors (kept for backward compatibility) */
+  --color-pink-primary: #ec4899;
+
+  /* Red Colors */
+  --color-red-primary: #D64545;
+
+  /* Yellow Colors */
+  --color-yellow-primary: #F2A900;
+  --color-yellow-light: #fef3c7;
+  --color-yellow-dark: #92400e;
+
+  /* Gray Scale */
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #5E6B75;
+  --color-gray-600: #475569;
+  --color-gray-700: #374151;
+  --color-gray-800: #1F2A33;
+  --color-gray-900: #111827;
+
+  /* Dark Mode */
+  --color-dark-base: #1e1e1e;
+  --color-dark-surface: #252525;
+  --color-dark-elevated: #2e2e2e;
+  --color-dark-lighter: #3a3a3a;
+  --color-dark-accent: #484848;
+  --color-dark-glass: rgba(35, 43, 54, 0.85);
+
+  /* Utility */
+  --color-white: #FAFAF9;
+  --color-black: #000000;
+
+  /* Gradients */
+  --gradient-brand: linear-gradient(135deg, var(--color-brand-orange) 0%, var(--color-brand-orange-dark) 100%);
+  --gradient-ivory: linear-gradient(145deg, var(--color-brand-ivory-light) 0%, var(--color-brand-ivory) 100%);
+  --gradient-blue: linear-gradient(135deg, var(--color-blue-primary) 0%, var(--color-blue-dark) 100%);
+  --gradient-purple: linear-gradient(135deg, var(--color-brand-orange) 0%, var(--color-brand-orange-dark) 100%);
+  --gradient-purple-tie: linear-gradient(135deg, var(--color-brand-orange) 0%, var(--color-warning) 100%);
+  --gradient-green: linear-gradient(135deg, var(--color-green-light) 0%, var(--color-green-lighter) 100%);
+  --gradient-green-progress: linear-gradient(90deg, var(--color-success) 0%, var(--color-green-dark) 100%);
+  --gradient-gray: linear-gradient(135deg, var(--color-gray-100) 0%, var(--color-gray-200) 100%);
+  --gradient-dark: linear-gradient(145deg, var(--color-secondary) 0%, var(--color-secondary-hover) 100%);
+
+  /* Extended Blues */
+  --color-blue-accent: #4f8cff;
+  --color-blue-light-2: #60a5fa;
+
+  /* Extended Greens */
+  --color-green-light-2: #34d399;
+
+  /* Extended Reds */
+  --color-red-dark: #dc2626;
+  --color-error-dark: #c0392b;
+  --color-error-light: #f87171;
+
+  /* Extended Yellows / Amber */
+  --color-warning-amber: var(--color-primary);
+  --color-warning-light-2: color-mix(in srgb, var(--color-primary) 72%, white);
+  --color-warning-deep: var(--color-primary-hover);
+  --color-orange-deep: var(--color-primary-hover);
+
+  /* Bowling ball decorative */
+  --color-bowling-ball: #1a1a1a;
+
+  /* Notification / semantic text */
+  --color-success-text-deep: #065f46;
+  --color-error-text-deep: #991b1b;
+  --color-warning-text-deep: #92400e;
+
+  /* Scrollbar */
+  --color-scrollbar-track: var(--color-dark-base);
+  --color-scrollbar-thumb: var(--color-dark-elevated);
+  --color-scrollbar-thumb-hover: var(--color-dark-lighter);
+
+  /* Skeleton loading */
+  --color-skeleton-base: var(--color-dark-surface);
+  --color-skeleton-highlight: var(--color-dark-elevated);
+
+  /* Input state backgrounds */
+  --color-error-bg: rgba(214, 69, 69, 0.12);
+  --color-error-border: rgba(214, 69, 69, 0.3);
+  --color-error-input-bg: rgba(214, 69, 69, 0.06);
+  --color-success-input-bg: rgba(47, 191, 113, 0.06);
+
+  /* High-contrast mode overrides */
+  --color-hc-error-bg: #ffebee;
+  --color-hc-error-border: #d32f2f;
+  --color-hc-error-text: #b71c1c;
+  --color-hc-success-bg: #e8f5e8;
+  --color-hc-success-border: #2e7d32;
+  --color-hc-success-text: #1b5e20;
+
+  /* Focus rings */
+  --ring-blue: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  --ring-error: 0 0 0 3px rgba(214, 69, 69, 0.1);
+  --ring-success: 0 0 0 3px rgba(47, 191, 113, 0.1);
+
+  /* Gradient additions */
+  --gradient-skeleton: linear-gradient(90deg, var(--color-skeleton-base) 25%, var(--color-skeleton-highlight) 50%, var(--color-skeleton-base) 75%);
+
+  /* Design system button hover gradients */
+  --gradient-brand-hover: linear-gradient(135deg, var(--color-primary-hover) 0%, #C25515 100%);
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-brand-sm: none;
+  --shadow-brand-md: none;
+  --shadow-brand-glow: none;
+  --shadow-green-sm: 0 2px 4px rgba(47, 191, 113, 0.3);
+  --shadow-inset: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+
+  /* Opacity Levels */
+
+  /* ── Spacing Scale ───────────────────────────────────────── */
+  --spacing-xs:   4px;
+  --spacing-sm:   8px;
+  --spacing-md:   16px;
+  --spacing-lg:   24px;
+  --spacing-xl:   32px;
+  --spacing-2xl:  48px;
+
+  /* ── Border Radius ───────────────────────────────────────── */
+  --radius-sm:    6px;
+  --radius-md:    8px;
+  --radius-lg:    12px;
+  --radius-xl:    16px;
+  --radius-2xl:   24px;
+  --radius-full:  9999px;
+
+  /* ── Shadows ─────────────────────────────────────────────── */
+  --shadow-card:       0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+
+  /* ── Layout ──────────────────────────────────────────────── */
+  --container-max-width: 1200px;
+  --content-max-width:   1200px;
+
+  /* ── Touch Targets ───────────────────────────────────────── */
+  --touch-target-min:         44px;
+  --touch-target-comfortable: 48px;
+
+  /* ── Extended Opacity Black Tokens ─────────────────────── */
+  --opacity-black-02: rgba(0, 0, 0, 0.02);
+  --opacity-black-03: rgba(0, 0, 0, 0.03);
+  --opacity-black-05: rgba(0, 0, 0, 0.05);
+  --opacity-black-08: rgba(0, 0, 0, 0.08);
+  --opacity-black-10: rgba(0, 0, 0, 0.10);
+  --opacity-black-15: rgba(0, 0, 0, 0.15);
+
+  /* ── Charcoal Muted Text ─────────────────────────────────── */
+  --color-text-muted:        rgba(26, 26, 26, 0.50);
+  --color-text-muted-medium: rgba(26, 26, 26, 0.45);
+  --color-text-muted-strong: rgba(26, 26, 26, 0.55);
+  --color-text-muted-alt:    rgba(26, 26, 26, 0.60);
+  --color-text-muted-subtle: rgba(26, 26, 26, 0.72);
+
+  /* ── Extended Ivory / Warm Surfaces ─────────────────────── */
+  --color-brand-ivory-soft:    var(--bw-ivory-soft, #fffef7);
+  --color-brand-ivory-warm:    #f2e3c6;
+  --color-white-glass:         rgba(255, 255, 255, 0.35);
+  --color-surface-translucent: rgba(255, 255, 255, 0.58);
+  --color-surface-translucent-strong: rgba(255, 255, 255, 0.80);
+
+  /* ── Extended Border Tokens ─────────────────────────────── */
+  --color-border-soft:   rgba(226, 232, 240, 0.8);
+  --color-border-subtle: rgba(26, 26, 26, 0.06);
+  --color-border-faint:  rgba(26, 26, 26, 0.04);
+  --color-border-muted:  rgba(26, 26, 26, 0.08);
+
+  /* ── Overlay ─────────────────────────────────────────────── */
+  --overlay-dark: rgba(15, 18, 28, 0.38);
+
+  /* ── Blue Accent Borders ─────────────────────────────────── */
+  --color-blue-accent-border:        rgba(59, 130, 246, 0.30);
+  --color-blue-accent-border-strong: rgba(59, 130, 246, 0.50);
+
+  /* ── Warning / Info State Tokens ────────────────────────── */
+  --color-warning-surface: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  --color-warning-text:    #92400e;
+  --color-info-bg:         rgba(59, 130, 246, 0.08);
+  --color-info-text:       #1e40af;
+
+  /* ── Extended Error Tokens ───────────────────────────────── */
+  --color-error-bg-soft: rgba(214, 69, 69, 0.04);
+  --color-error-darker:  #991b1b;
+  --color-error-border:  rgba(214, 69, 69, 0.30);
+
+  /* ── Success Tokens ──────────────────────────────────────── */
+  --color-success-soft:   rgba(47, 191, 113, 0.08);
+  --color-success-border: rgba(47, 191, 113, 0.30);
+
+  /* ── Focus Rings ─────────────────────────────────────────── */
+  --ring-warning: 0 0 0 3px color-mix(in srgb, var(--color-primary) 12%, transparent);
+
+  /* ── Danger Shadow ───────────────────────────────────────── */
+  --shadow-danger-sm: 0 4px 10px rgba(205, 66, 66, 0.24);
+  --shadow-success-md: 0 6px 16px rgba(47, 191, 113, 0.30);
+
+  /* ── entries.module.css Extended Tokens ─────────────────── */
+  --opacity-black-12: rgba(0, 0, 0, 0.12);
+  --overlay-black:    rgba(0, 0, 0, 0.45);
+  --shadow-popup:         0 8px 32px rgba(0, 0, 0, 0.12);
+  --shadow-error-sm:      0 4px 8px rgba(239, 68, 68, 0.2);
+  --ring-brand-base: 0 0 0 3px rgba(244, 124, 32, 0.1);
+  --ring-brand-sm:   0 0 0 3px rgba(240, 120, 32, 0.12);
+  --color-orange-light:    #fb923c;
+  --color-brand-deep-text: #A94F12;
+  --color-error-bg-light:     #fef2f2;
+  --color-error-border-light: #fecaca;
+  --color-brand-tint:           rgba(240, 120, 32, 0.04);
+  --color-brand-tint-mid:       rgba(240, 120, 32, 0.12);
+  --color-brand-tint-soft:      rgba(244, 124, 32, 0.05);
+  --color-brand-border-faint:   rgba(240, 120, 32, 0.22);
+  --color-brand-border-mid:     rgba(240, 120, 32, 0.3);
+  --color-brand-bg-subtle:      rgba(249, 115, 22, 0.1);
+  --color-brand-border-strong:  rgba(249, 115, 22, 0.35);
+  --color-white-ultra-soft:     rgba(255, 255, 255, 0.08);
+  --color-white-muted:          rgba(255, 255, 255, 0.6);
+  --color-warning-tint:         rgba(240, 165, 0, 0.05);
+  --color-text-muted-overlay:   rgba(26, 26, 26, 0.2);
+  --color-border-medium:        rgba(26, 26, 26, 0.25);
+
+  --gradient-skeleton-light: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+
+  /* ── Component Tokens ────────────────────────────────────── */
+  --input-height:    40px;
+  --input-height-sm: 32px;
+  --input-height-lg: 48px;
+  --btn-height:      40px;
+  --btn-height-sm:   32px;
+  --btn-height-lg:   48px;
+  --card-padding:    var(--spacing-lg);
+
+  /* ── Surface / Background ────────────────────────────────── */
+  --color-surface:    var(--bw-card, var(--color-dark-surface));
+  --color-background: var(--bw-page-soft, var(--color-dark-base));
+  --color-border:     var(--bw-border, var(--color-dark-elevated));
+  --color-border-light: rgba(249, 115, 22, 0.2);
+
+  /* ── Typography ──────────────────────────────────────────── */
+  --font-family-primary: var(--bw-font-family-primary, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
+  --font-family-mono: var(--bw-font-family-mono, 'Courier New', Monaco, monospace);
+  --font-size-xs:   11px;
+  --font-size-sm:   13px;
+  --font-size-base: 14px;
+  --font-size-lg:   16px;
+  --font-size-xl:   18px;
+  --font-size-2xl:  20px;
+  --font-size-3xl:  24px;
+  --font-size-4xl:  28px;
+  --font-weight-normal:   400;
+  --font-weight-medium:   500;
+  --font-weight-semibold: 600;
+  --font-weight-bold:     700;
+
+}

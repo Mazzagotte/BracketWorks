@@ -7,14 +7,18 @@ on:
       - master
     paths:
       - backend/**
-      - frontend/**
+      - apps/bracketworks/**
+      - apps/tournament-central/**
+      - packages/**
       - .github/workflows/**
   pull_request:
     branches:
       - '**'
     paths:
       - backend/**
-      - frontend/**
+      - apps/bracketworks/**
+      - apps/tournament-central/**
+      - packages/**
       - .github/workflows/**
 
 jobs:
@@ -46,7 +50,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: frontend
+        working-directory: apps/bracketworks
 
     steps:
       - name: Checkout repository
@@ -57,7 +61,7 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: apps/bracketworks/package-lock.json
 
       - name: Install frontend dependencies
         run: npm ci --legacy-peer-deps

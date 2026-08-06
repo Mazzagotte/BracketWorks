@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import type { Metadata, Viewport } from 'next';
+import '@bracketworks/design-tokens/bracketworks-public-header.css';
 import './styles/main.css';
 
 import { ToastProvider } from './components/Toast';
