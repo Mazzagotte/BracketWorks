@@ -1,0 +1,12 @@
+@import './tokens.css';
+@import './reset.css';
+@import './components.css';
+@import '../src/bracketworks-public-header.css';
+
+:root {
+  color-scheme: dark;
+  --bw-page: var(--color-bg-primary);
+  --bw-page-soft: var(--color-bg-secondary);
+  --bw-border: var(--color-border-primary);
+  --bw-muted: var(--color-text-secondary);
+}

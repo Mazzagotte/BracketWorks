@@ -44,6 +44,23 @@ Live app: [https://bracketworks.app](https://bracketworks.app)
 - Tournament Central deployment root: apps/tournament-central-web
 - Backend deployment root: apps/api
 
+## Railway frontend deployment (Railpack)
+
+- Use Railway Railpack (no frontend Dockerfile required).
+- Keep workspace files at the repository root: `pnpm-lock.yaml` and `pnpm-workspace.yaml`.
+
+BracketWorks build:
+`pnpm --filter @bracketworks/bracketworks-web build`
+
+BracketWorks start:
+`pnpm --filter @bracketworks/bracketworks-web start -- --port $PORT`
+
+Tournament Central build:
+`pnpm --filter @bracketworks/tournament-central-web build`
+
+Tournament Central start:
+`pnpm --filter @bracketworks/tournament-central-web start -- --port $PORT`
+
 ## Notes
 
 - Tournament Central manages tournament discovery, creation, and registration.

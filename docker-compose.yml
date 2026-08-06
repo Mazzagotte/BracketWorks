@@ -51,19 +51,5 @@ services:
     ports:
       - "8000:8000"
 
-  frontend:
-    build:
-      context: ./apps/bracketworks-web
-      dockerfile: Dockerfile
-    environment:
-      - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:8000}
-    depends_on:
-      - backend
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./apps/bracketworks-web:/app
-      - /app/node_modules
-
 volumes:
   db_data:

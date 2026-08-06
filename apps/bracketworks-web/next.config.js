@@ -28,6 +28,7 @@ const contentSecurityPolicy = [
 
 const nextConfig = {
   output: 'standalone',
+  transpilePackages: ['@bracketworks/ui'],
 
   // Disable image optimization to avoid requiring 'sharp' dependency
   images: {
@@ -35,6 +36,7 @@ const nextConfig = {
   },
 
   experimental: {
+    externalDir: true,
     optimizePackageImports: ['@heroicons/react', 'date-fns', 'lodash'],
   },
 

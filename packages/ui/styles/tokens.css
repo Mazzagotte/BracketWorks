@@ -1,0 +1,89 @@
+@import '../src/bracketworks-theme.css';
+
+:root {
+  --font-family-primary: 'Inter', 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
+  --font-family-mono: 'Courier New', Monaco, monospace;
+
+  --font-size-xs: 11px;
+  --font-size-sm: 12px;
+  --font-size-base: 13px;
+  --font-size-lg: 15px;
+  --font-size-xl: 16px;
+  --font-size-2xl: 18px;
+  --font-size-3xl: 20px;
+  --font-size-4xl: 24px;
+
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --line-height-tight: 1.2;
+  --line-height-normal: 1.6;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-full: 999px;
+
+  --container-max-width: 1200px;
+  --content-max-width: 960px;
+  --touch-target-min: 36px;
+  --touch-target-comfortable: 44px;
+  --control-height: 38px;
+  --input-height: var(--control-height);
+  --input-height-sm: 32px;
+  --input-height-lg: 48px;
+  --btn-height-sm: 36px;
+  --btn-height: var(--control-height);
+  --btn-height-lg: 40px;
+  --btn-padding-x-sm: 12px;
+  --btn-padding-x: 12px;
+  --btn-padding-x-lg: 12px;
+
+  --motion-duration-fast: 120ms;
+  --motion-duration-base: 180ms;
+  --motion-duration-slow: 260ms;
+  --motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --motion-ease-emphasized: cubic-bezier(0.2, 0, 0, 1.15);
+  --motion-ease-decelerate: cubic-bezier(0, 0, 0.2, 1);
+  --motion-ease-accelerate: cubic-bezier(0.4, 0, 1, 1);
+
+  --elevation-0: none;
+  --elevation-1: 0 1px 2px rgba(0, 0, 0, 0.22);
+  --elevation-2: 0 6px 16px rgba(0, 0, 0, 0.24);
+  --elevation-3: 0 12px 28px rgba(0, 0, 0, 0.24);
+  --elevation-modal: 0 24px 64px rgba(0, 0, 0, 0.65);
+
+  --ring-brand: 0 0 0 2px var(--color-accent-muted);
+  --ring-danger: 0 0 0 3px rgba(214, 69, 69, 0.35);
+
+  --surface-primary: var(--bw-surface-card);
+  --surface-secondary: var(--bw-surface-panel);
+  --surface-utility: color-mix(in srgb, var(--bw-surface-panel) 72%, transparent);
+  --surface-raised: var(--bw-surface-card-strong);
+  --text-primary: var(--bw-text-title);
+  --text-secondary: var(--bw-text-body);
+  --text-muted: var(--bw-text-muted);
+  --text-faint: var(--bw-text-faint);
+  --border-subtle: var(--bw-border-subtle);
+  --border-strong: var(--bw-border-card);
+  --focus-ring: var(--ring-brand);
+
+  --bw-card-radius: var(--radius-2xl);
+  --bw-control-radius: var(--radius-md);
+  --bw-modal-radius: var(--radius-2xl);
+}

@@ -5,7 +5,11 @@
   "exports": {
     ".": "./src/index.ts",
     "./bracketworks-theme.css": "./src/bracketworks-theme.css",
-    "./bracketworks-public-header.css": "./src/bracketworks-public-header.css"
+    "./bracketworks-public-header.css": "./src/bracketworks-public-header.css",
+    "./styles/tokens.css": "./styles/tokens.css",
+    "./styles/reset.css": "./styles/reset.css",
+    "./styles/components.css": "./styles/components.css",
+    "./styles/globals.css": "./styles/globals.css"
   },
   "main": "src/index.ts",
   "types": "src/index.ts"

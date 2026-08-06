@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, type ReactNode, useEffect, useRef, useState } from 'react';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 import { MobileNav } from './MobileNav';
 import TopNav from '../app/components/TopNav';
@@ -39,7 +39,6 @@ function isPublicRoute(pathname: string): boolean {
 function ClientLayout({ children }: { children: ReactNode }) {
   const { isUserAuthenticated, currentUser, isAuthInitialized, logoutUser } = useAuth();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const router = useRouter();
   const [firstName, setFirstName] = useState<string | undefined>(undefined);
   const [isMobile, setIsMobile] = useState(false);
@@ -48,10 +47,10 @@ function ClientLayout({ children }: { children: ReactNode }) {
   const [legalBlocked, setLegalBlocked] = useState(true);
   const [currentPage, setCurrentPage] = useState('');
   const [mounted, setMounted] = useState(false);
+  const [isEmbeddedModalRoute, setIsEmbeddedModalRoute] = useState(false);
   const wasAuthenticated = useRef(false);
   const currentPath = pathname || '/';
   const isPublicPath = isPublicRoute(currentPath);
-  const isEmbeddedModalRoute = searchParams.get('modal') === '1';
   const mobileCompatibilityNotice = useMobileCompatibilityNotice(currentPath);
   const shouldHoldProtectedContent = !isPublicPath
     && !isEmbeddedModalRoute
@@ -60,6 +59,9 @@ function ClientLayout({ children }: { children: ReactNode }) {
   useEffect(() => {
     setMounted(true);
     resetScrollLocks();
+
+    const search = window.location.search;
+    setIsEmbeddedModalRoute(new URLSearchParams(search).get('modal') === '1');
 
     const checkMobile = () => {
       setIsMobile(usesNavigationDrawerViewport());

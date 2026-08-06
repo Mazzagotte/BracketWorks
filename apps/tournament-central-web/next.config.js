@@ -3,6 +3,10 @@ const backendUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_UR
 
 const nextConfig = {
   reactStrictMode: true,
+  transpilePackages: ['@bracketworks/ui'],
+  experimental: {
+    externalDir: true,
+  },
   async rewrites() {
     return [
       {

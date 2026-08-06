@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import type { Metadata, Viewport } from 'next';
-import '@bracketworks/ui/bracketworks-public-header.css';
-import './styles/main.css';
+import '@bracketworks/ui/styles/globals.css';
+import './globals.css';
 
 import { ToastProvider } from './components/Toast';
 import { AuthProvider } from './lib/auth-context';

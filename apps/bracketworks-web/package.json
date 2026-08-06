@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "next dev -p 3000 --webpack",
     "build": "next build",
-    "start": "next start -p 3000",
+    "start": "next start",
     "lint": "eslint . --cache --cache-strategy content --cache-location .eslintcache --report-unused-disable-directives && npm run lint:ui-rules",
     "lint:ui-rules": "node ./scripts/enforce-ui-css-rules.mjs",
     "lint:ui-rules:full": "node ./scripts/enforce-ui-css-rules.mjs --full",
