@@ -1,5 +1,5 @@
 import '../styles/main.css';
-import '@bracketworks/design-tokens/bracketworks-public-header.css';
+import '@bracketworks/ui/bracketworks-public-header.css';
 
 export const metadata = {
   title: 'Tournament Central',

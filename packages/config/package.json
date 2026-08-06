@@ -1,5 +1,5 @@
 {
-  "name": "@bracketworks/api-client",
+  "name": "@bracketworks/config",
   "version": "0.1.0",
   "private": true,
   "main": "src/index.ts",

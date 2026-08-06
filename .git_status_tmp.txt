@@ -1,0 +1,26 @@
+﻿ D .github/workflows/security-quality-gates.yml
+ M .gitignore
+ M README.md
+ M apps/bracketworks-web/app/layout.tsx
+ D apps/bracketworks-web/frontend/package-lock.json
+ D apps/bracketworks-web/package-lock.json
+ M apps/bracketworks-web/package.json
+ M apps/tournament-central-web/app/layout.tsx
+ M apps/tournament-central-web/package.json
+ M docker-compose.yml
+ M docs/security-operations.md
+ D package-lock.json
+ M package.json
+ M packages/config/package.json
+ M packages/types/package.json
+ M packages/ui/package.json
+ M scripts/start-backend.ps1
+ M scripts/start-bracketworks.ps1
+ M scripts/start-tournament-central.ps1
+ M start_bracketworks.ps1
+?? .git_status_tmp.txt
+?? .github/workflows/api.yml
+?? .github/workflows/bracketworks.yml
+?? .github/workflows/tournament-central.yml
+?? packages/auth/
+?? pnpm-workspace.yaml

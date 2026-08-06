@@ -57,6 +57,6 @@ build/
 *.temp
 *.docx
 *.doc
-apps/bracketworks/node_modules_stale_*
-apps/tournament-central/node_modules_stale_*
+apps/bracketworks-web/node_modules_stale_*
+apps/tournament-central-web/node_modules_stale_*
 apps/*/.bw-frontend-install-state.json

@@ -1,7 +1,7 @@
 # BracketWorks Development Launcher
 $ProjectRoot  = $PSScriptRoot
-$BackendPath  = Join-Path $ProjectRoot "backend"
-$FrontendPath = Join-Path $ProjectRoot "apps/bracketworks"
+$BackendPath  = Join-Path $ProjectRoot "apps/api"
+$FrontendPath = Join-Path $ProjectRoot "apps/bracketworks-web"
 $BackendPython = Join-Path $BackendPath ".venv\Scripts\python.exe"
 $Port         = 3000
 $BackendUrl   = "http://localhost:8001"
@@ -203,12 +203,12 @@ $RepoNodePath = Join-Path $ProjectRoot ".tools\node-v22.22.3-win-x64"
 # Ensure Node.js is in PATH
 if (Test-Path (Join-Path $RepoNodePath "node.exe")) {
     $env:PATH = "$RepoNodePath;$env:PATH"
-} elseif (-not (Get-Command npm.cmd -ErrorAction SilentlyContinue)) {
+} elseif (-not (Get-Command pnpm.cmd -ErrorAction SilentlyContinue)) {
     $env:PATH = "C:\Program Files\nodejs;$env:PATH"
 }
 
-if (-not (Get-Command npm.cmd -ErrorAction SilentlyContinue)) {
-    Write-Host "npm not found. Install Node.js with npm support." -ForegroundColor Red
+if (-not (Get-Command pnpm.cmd -ErrorAction SilentlyContinue)) {
+    Write-Host "pnpm not found. Install pnpm (for example: npm install -g pnpm)." -ForegroundColor Red
     exit 1
 }
 
@@ -222,7 +222,7 @@ if ($FrontendInstallMode -eq "never" -and -not (Test-Path $FrontendNextPath) -an
     Write-Host ""
     Write-Host "Run this one-time setup command, then start BracketWorks again:" -ForegroundColor Yellow
     Write-Host "  cd `"$ProjectRoot`"" -ForegroundColor Cyan
-    Write-Host "  npm.cmd install --include=dev --no-audit --no-fund --prefer-offline" -ForegroundColor Cyan
+    Write-Host "  pnpm install" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "To explicitly let the launcher install packages instead, set:" -ForegroundColor DarkYellow
     Write-Host "  BRACKETWORKS_FRONTEND_INSTALL_MODE=auto" -ForegroundColor DarkYellow
@@ -241,12 +241,12 @@ if ($BackendMode -eq "local") {
     if (Test-Path $BackendPython) {
         $PythonCmd = $BackendPython
     } elseif (Get-Command python -ErrorAction SilentlyContinue) {
-        Write-Host "backend/.venv not found. Creating local virtual environment..." -ForegroundColor Yellow
+        Write-Host "apps/api/.venv not found. Creating local virtual environment..." -ForegroundColor Yellow
         Push-Location $BackendPath
         try {
             & python -m venv .venv
             if ($LASTEXITCODE -ne 0 -or -not (Test-Path $BackendPython)) {
-                Write-Host "Failed to create backend virtual environment at backend/.venv." -ForegroundColor Red
+                Write-Host "Failed to create API virtual environment at apps/api/.venv." -ForegroundColor Red
                 exit 1
             }
             $createdBackendVenv = $true
@@ -255,7 +255,7 @@ if ($BackendMode -eq "local") {
             Pop-Location
         }
     } else {
-        Write-Host "Python not found. Install Python 3.12+ or create backend/.venv first." -ForegroundColor Red
+        Write-Host "Python not found. Install Python 3.12+ or create apps/api/.venv first." -ForegroundColor Red
         exit 1
     }
 
@@ -385,7 +385,7 @@ Start-Process powershell -ArgumentList $backendWindowArgs
 
 # Start frontend in a new window
 $frontendStartCmd =
-    "if (Test-Path '.\\node_modules\\next\\dist\\bin\\next') { node .\\node_modules\\next\\dist\\bin\\next dev -p $Port --webpack } else { npm.cmd run dev }; " +
+    "if (Test-Path '.\\node_modules\\next\\dist\\bin\\next') { node .\\node_modules\\next\\dist\\bin\\next dev -p $Port --webpack } else { pnpm run dev }; " +
     "`$frontendExitCode = `$LASTEXITCODE; " +
     "if (`$frontendExitCode -ne 0) { " +
     "  Write-Host ''; " +
@@ -393,23 +393,23 @@ $frontendStartCmd =
     "  $ClosePromptCmd; " +
     "  exit `$frontendExitCode; " +
     "}"
-$rootLockPath = Join-Path $ProjectRoot "package-lock.json"
+$rootLockPath = Join-Path $ProjectRoot "pnpm-lock.yaml"
 $canUseWorkspaceCi = Test-Path $rootLockPath
 if ($FrontendInstallStrategy -eq "ci" -and -not $canUseWorkspaceCi) {
-    Write-Host "Requested FE strategy 'ci' but root package-lock.json is missing. Falling back to incremental install." -ForegroundColor Yellow
+    Write-Host "Requested FE strategy 'ci' but root pnpm-lock.yaml is missing. Falling back to incremental install." -ForegroundColor Yellow
 }
 
 $frontendInstallCmdPrimary = if ($FrontendInstallStrategy -eq "ci" -and $canUseWorkspaceCi) {
-    "npm.cmd --prefix '$ProjectRoot' ci --no-audit --no-fund"
+    "pnpm.cmd --dir '$ProjectRoot' install --frozen-lockfile"
 } else {
-    "npm.cmd --prefix '$ProjectRoot' install --include=dev --no-audit --no-fund --prefer-offline"
+    "pnpm.cmd --dir '$ProjectRoot' install"
 }
 $frontendInstallCmdRetry = if ($FrontendInstallStrategy -eq "ci") {
-    "npm.cmd --prefix '$ProjectRoot' install --include=dev --no-audit --no-fund --prefer-offline"
+    "pnpm.cmd --dir '$ProjectRoot' install"
 } else {
-    "npm.cmd --prefix '$ProjectRoot' ci --no-audit --no-fund"
+    "pnpm.cmd --dir '$ProjectRoot' install --frozen-lockfile"
 }
-$frontendLockPath = Join-Path $FrontendPath "package-lock.json"
+$frontendLockPath = Join-Path $ProjectRoot "pnpm-lock.yaml"
 $frontendPackagePath = Join-Path $FrontendPath "package.json"
 $frontendDependencyManifestPath = if (Test-Path $frontendLockPath) { $frontendLockPath } else { $frontendPackagePath }
 

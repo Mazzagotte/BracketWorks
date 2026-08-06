@@ -1,6 +1,6 @@
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
-$appPath = Join-Path $repoRoot 'apps/bracketworks'
+$appPath = Join-Path $repoRoot 'apps/bracketworks-web'
 if (-not (Test-Path $appPath)) {
   Write-Error "BracketWorks app directory not found at $appPath"
   exit 1
@@ -9,7 +9,7 @@ if (-not (Test-Path $appPath)) {
 $appNextPath = Join-Path $appPath 'node_modules\next\dist\bin\next'
 $rootNextPath = Join-Path $repoRoot 'node_modules\next\dist\bin\next'
 $statePath = Join-Path $appPath '.bw-frontend-install-state.json'
-$lockPath = Join-Path $appPath 'package-lock.json'
+$lockPath = Join-Path $repoRoot 'pnpm-lock.yaml'
 $packagePath = Join-Path $appPath 'package.json'
 $manifestPath = if (Test-Path $lockPath) { $lockPath } else { $packagePath }
 
@@ -47,7 +47,7 @@ if ((-not (Test-Path $appNextPath)) -and (-not (Test-Path $rootNextPath))) {
 if ($installNeeded) {
   Set-Location $repoRoot
   Write-Host "Installing frontend dependencies ($installReason)..." -ForegroundColor Yellow
-  & npm.cmd install --include=dev --no-audit --no-fund --prefer-offline
+  & pnpm install
   if ($LASTEXITCODE -ne 0) {
     Write-Error 'Frontend dependency install failed.'
     exit $LASTEXITCODE
@@ -69,4 +69,4 @@ if ($installNeeded) {
 }
 
 Set-Location $appPath
-& npm.cmd run dev
+& pnpm run dev

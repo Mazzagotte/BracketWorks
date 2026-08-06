@@ -1,18 +1,18 @@
 {
-  "name": "bracketworks-monorepo",
+  "name": "bracketworks-platform",
   "private": true,
   "version": "1.0.0",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "packageManager": "pnpm@10.14.0",
   "scripts": {
-    "dev:bracketworks": "npm --workspace apps/bracketworks run dev",
-    "dev:tournament-central": "npm --workspace apps/tournament-central run dev",
-    "build:bracketworks": "npm --workspace apps/bracketworks run build",
-    "build:tournament-central": "npm --workspace apps/tournament-central run build",
-    "lint:bracketworks": "npm --workspace apps/bracketworks run lint",
-    "lint:tournament-central": "npm --workspace apps/tournament-central run lint",
-    "test:frontend": "npm --workspace apps/bracketworks run test"
+    "install:all": "pnpm install",
+    "dev:bracketworks": "pnpm --filter @bracketworks/bracketworks-web dev",
+    "dev:tournament-central": "pnpm --filter @bracketworks/tournament-central-web dev",
+    "dev:api": "cd apps/api && python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000",
+    "build:bracketworks": "pnpm --filter @bracketworks/bracketworks-web build",
+    "build:tournament-central": "pnpm --filter @bracketworks/tournament-central-web build",
+    "lint": "pnpm --filter @bracketworks/bracketworks-web lint && pnpm --filter @bracketworks/tournament-central-web lint",
+    "typecheck": "pnpm --filter @bracketworks/bracketworks-web typecheck && pnpm --filter @bracketworks/tournament-central-web typecheck",
+    "test": "pnpm --filter @bracketworks/bracketworks-web test && pnpm --filter @bracketworks/tournament-central-web test",
+    "test:frontend": "pnpm --filter @bracketworks/bracketworks-web test"
   }
 }

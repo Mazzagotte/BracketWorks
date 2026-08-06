@@ -17,7 +17,7 @@ Treat any signing key that has appeared in a terminal transcript, support bundle
 
 Pull requests must pass both vulnerability scans without ignored advisory IDs:
 
-- `pip-audit` for `backend/requirements.txt`
+- `pip-audit` for `apps/api/requirements.txt`
 - `npm audit --audit-level=high --omit=dev` for the frontend lockfile
 
 Exceptions require a written applicability assessment, owner, and expiration date.

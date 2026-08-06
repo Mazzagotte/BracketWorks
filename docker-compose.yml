@@ -30,7 +30,7 @@ services:
 
   backend:
     build:
-      context: ./backend
+      context: ./apps/api
       dockerfile: Dockerfile
     environment:
       ENVIRONMENT: ${ENVIRONMENT:-development}
@@ -53,7 +53,7 @@ services:
 
   frontend:
     build:
-      context: ./apps/bracketworks
+      context: ./apps/bracketworks-web
       dockerfile: Dockerfile
     environment:
       - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:8000}
@@ -62,7 +62,7 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./apps/bracketworks:/app
+      - ./apps/bracketworks-web:/app
       - /app/node_modules
 
 volumes:

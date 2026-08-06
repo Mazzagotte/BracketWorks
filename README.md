@@ -7,12 +7,13 @@ Live app: [https://bracketworks.app](https://bracketworks.app)
 
 ## Repository structure
 
-- apps/bracketworks — the existing BracketWorks Next.js application.
-- apps/tournament-central — a new Next.js starter for tournament discovery and registration.
-- backend — the FastAPI backend service.
-- packages/api-client — shared API request helpers.
-- packages/shared-types — shared TypeScript interfaces and API types.
-- packages/design-tokens — shared design constants.
+- apps/bracketworks-web — the BracketWorks Next.js application.
+- apps/tournament-central-web — the Tournament Central Next.js application.
+- apps/api — the FastAPI backend service.
+- packages/config — shared API request helpers.
+- packages/types — shared TypeScript interfaces and API types.
+- packages/ui — shared design constants and styles.
+- packages/auth — shared auth package scaffold.
 - scripts — startup helpers for the apps and backend.
 
 ## Local development
@@ -20,28 +21,28 @@ Live app: [https://bracketworks.app](https://bracketworks.app)
 - Backend: `powershell -File scripts/start-backend.ps1`
 - BracketWorks app: `powershell -File scripts/start-bracketworks.ps1`
 - Tournament Central app: `powershell -File scripts/start-tournament-central.ps1`
-- Or run the apps directly from the workspace root with `npm run dev:bracketworks` and `npm run dev:tournament-central`
+- Or run the apps directly from the workspace root with `pnpm run dev:bracketworks` and `pnpm run dev:tournament-central`
 
 ### Environment files
 
-- apps/bracketworks/.env.example
-- apps/tournament-central/.env.example
-- backend/.env.example
+- apps/bracketworks-web/.env.example
+- apps/tournament-central-web/.env.example
+- apps/api/.env.example
 
 ### Build, lint, and test
 
-- `npm install`
-- `npm run build:bracketworks`
-- `npm run lint:bracketworks`
-- `npm run test:frontend`
-- `npm run build:tournament-central`
-- `npm run lint:tournament-central`
+- `pnpm install`
+- `pnpm run build:bracketworks`
+- `pnpm run lint`
+- `pnpm run typecheck`
+- `pnpm run test`
+- `pnpm run build:tournament-central`
 
 ## Deployment roots
 
-- BracketWorks deployment root: apps/bracketworks
-- Tournament Central deployment root: apps/tournament-central
-- Backend deployment root: backend
+- BracketWorks deployment root: apps/bracketworks-web
+- Tournament Central deployment root: apps/tournament-central-web
+- Backend deployment root: apps/api
 
 ## Notes
 

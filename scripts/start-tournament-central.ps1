@@ -1,6 +1,6 @@
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
-$appPath = Join-Path $repoRoot 'apps/tournament-central'
+$appPath = Join-Path $repoRoot 'apps/tournament-central-web'
 if (-not (Test-Path $appPath)) {
   Write-Error "Tournament Central app directory not found at $appPath"
   exit 1
@@ -52,7 +52,7 @@ Set-Location $repoRoot
 $appNextPath = Join-Path $appPath 'node_modules\next\dist\bin\next'
 $rootNextPath = Join-Path $repoRoot 'node_modules\next\dist\bin\next'
 $statePath = Join-Path $appPath '.bw-frontend-install-state.json'
-$lockPath = Join-Path $appPath 'package-lock.json'
+$lockPath = Join-Path $repoRoot 'pnpm-lock.yaml'
 $packagePath = Join-Path $appPath 'package.json'
 $manifestPath = if (Test-Path $lockPath) { $lockPath } else { $packagePath }
 
@@ -89,14 +89,14 @@ if ((-not (Test-Path $appNextPath)) -and (-not (Test-Path $rootNextPath))) {
 
 if ($installNeeded) {
   Write-Host "Installing Tournament Central dependencies ($installReason)..." -ForegroundColor Yellow
-  & npm.cmd install --include=dev --no-audit --no-fund --prefer-offline
+  & pnpm install
   if ($LASTEXITCODE -ne 0) {
     Write-Error 'Tournament Central dependency install failed.'
     exit $LASTEXITCODE
   }
 
   if ((-not (Test-Path $appNextPath)) -and (-not (Test-Path $rootNextPath))) {
-    Write-Error 'Next.js CLI not found after dependency install. Run npm install from repository root.'
+    Write-Error 'Next.js CLI not found after dependency install. Run pnpm install from repository root.'
     exit 1
   }
 
@@ -113,7 +113,7 @@ if ($installNeeded) {
 Set-Location $appPath
 $nextCli = if (Test-Path $appNextPath) { $appNextPath } else { $rootNextPath }
 if (-not (Test-Path $nextCli)) {
-  Write-Error 'Next.js CLI not found after dependency install. Run npm install from repository root.'
+  Write-Error 'Next.js CLI not found after dependency install. Run pnpm install from repository root.'
   exit 1
 }
 

@@ -1,15 +1,17 @@
 {
-  "name": "tournament-central",
+  "name": "@bracketworks/tournament-central-web",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev -p 3001",
     "build": "next build",
     "start": "next start -p 3001",
-    "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "typecheck": "tsc --noEmit",
+    "test": "echo \"No tests configured for Tournament Central\""
   },
   "dependencies": {
-    "@bracketworks/design-tokens": "file:../../packages/design-tokens",
+    "@bracketworks/ui": "workspace:*",
     "next": "16.3.0",
     "react-usa-map": "^1.5.0",
     "react": "18.3.1",
