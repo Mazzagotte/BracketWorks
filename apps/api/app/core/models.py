@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from typing import Optional
 
 from sqlalchemy import (
     Boolean,
@@ -7,6 +8,7 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     JSON,
+    LargeBinary,
     String,
     Text,
     UniqueConstraint,
@@ -53,19 +55,19 @@ class User(Base):
     email: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
     first_name: Mapped[str] = mapped_column(String, nullable=False)
     last_name: Mapped[str] = mapped_column(String, nullable=False)
-    organization: Mapped[str | None] = mapped_column(String, nullable=True)
+    organization: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     password: Mapped[str] = mapped_column(String, nullable=False)
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, default=lambda: datetime.now(timezone.utc)
     )
-    email_verified_at: Mapped[datetime | None] = mapped_column(
+    email_verified_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime, nullable=True, index=True
     )
-    dev_notice_version_accepted: Mapped[str | None] = mapped_column(
+    dev_notice_version_accepted: Mapped[Optional[str]] = mapped_column(
         String(10), nullable=True
     )
-    dev_notice_accepted_at: Mapped[datetime | None] = mapped_column(
+    dev_notice_accepted_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime, nullable=True
     )
 
@@ -88,14 +90,14 @@ class AuthSession(Base):
     refresh_token_hash: Mapped[str] = mapped_column(
         String(128), nullable=False, unique=True, index=True
     )
-    source_ip_hash: Mapped[str | None] = mapped_column(
+    source_ip_hash: Mapped[Optional[str]] = mapped_column(
         String(128), nullable=True, index=True
     )
-    user_agent_fingerprint: Mapped[str | None] = mapped_column(
+    user_agent_fingerprint: Mapped[Optional[str]] = mapped_column(
         String(128), nullable=True
     )
-    device_nickname: Mapped[str | None] = mapped_column(String(120), nullable=True)
-    region_hint: Mapped[str | None] = mapped_column(
+    device_nickname: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
+    region_hint: Mapped[Optional[str]] = mapped_column(
         String(80), nullable=True, index=True
     )
     risk_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
@@ -109,8 +111,8 @@ class AuthSession(Base):
     is_revoked: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False, index=True
     )
-    revoked_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
-    replaced_by_session_id: Mapped[str | None] = mapped_column(
+    revoked_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    replaced_by_session_id: Mapped[Optional[str]] = mapped_column(
         String(64), nullable=True
     )
 
@@ -130,7 +132,7 @@ class LoginAttempt(Base):
         DateTime, nullable=False, default=lambda: datetime.now(timezone.utc)
     )
     failed_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    blocked_until: Mapped[datetime | None] = mapped_column(
+    blocked_until: Mapped[Optional[datetime]] = mapped_column(
         DateTime, nullable=True, index=True
     )
     updated_at: Mapped[datetime] = mapped_column(
@@ -155,11 +157,11 @@ class IdempotencyKey(Base):
     )
     endpoint_scope: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     request_fingerprint: Mapped[str] = mapped_column(String(128), nullable=False)
-    user_id: Mapped[int | None] = mapped_column(
+    user_id: Mapped[Optional[int]] = mapped_column(
         Integer, ForeignKey("users.id"), nullable=True, index=True
     )
-    status_code: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    response_body: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    status_code: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    response_body: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     state: Mapped[str] = mapped_column(
         String(24), nullable=False, default="processing", index=True
     )
@@ -189,7 +191,7 @@ class PasswordResetToken(Base):
         DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), index=True
     )
     expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, index=True)
-    used_at: Mapped[datetime | None] = mapped_column(
+    used_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime, nullable=True, index=True
     )
 
@@ -209,7 +211,7 @@ class EmailVerificationToken(Base):
         DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), index=True
     )
     expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, index=True)
-    used_at: Mapped[datetime | None] = mapped_column(
+    used_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime, nullable=True, index=True
     )
 
@@ -222,12 +224,12 @@ class AdminAuditLog(Base):
         Integer, ForeignKey("users.id"), nullable=False, index=True
     )
     action: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
-    target_type: Mapped[str | None] = mapped_column(
+    target_type: Mapped[Optional[str]] = mapped_column(
         String(40), nullable=True, index=True
     )
-    target_id: Mapped[str | None] = mapped_column(String(80), nullable=True, index=True)
-    reason: Mapped[str | None] = mapped_column(Text, nullable=True)
-    details: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    target_id: Mapped[Optional[str]] = mapped_column(String(80), nullable=True, index=True)
+    reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    details: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), index=True
     )
@@ -249,8 +251,8 @@ class AdminUserReview(Base):
     is_resolved: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False, index=True
     )
-    resolved_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
-    resolved_by_user_id: Mapped[int | None] = mapped_column(
+    resolved_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    resolved_by_user_id: Mapped[Optional[int]] = mapped_column(
         Integer, ForeignKey("users.id"), nullable=True
     )
     created_at: Mapped[datetime] = mapped_column(
@@ -273,8 +275,8 @@ class AdminTournamentNote(Base):
     category: Mapped[str] = mapped_column(String(40), nullable=False, index=True)
     note: Mapped[str] = mapped_column(Text, nullable=False)
     is_resolved: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, index=True)
-    resolved_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
-    resolved_by_user_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
+    resolved_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    resolved_by_user_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), index=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
@@ -286,11 +288,11 @@ class AdminAnnouncement(Base):
     title: Mapped[str] = mapped_column(String(160), nullable=False)
     message: Mapped[str] = mapped_column(Text, nullable=False)
     audience_type: Mapped[str] = mapped_column(String(30), nullable=False, default="all", index=True)
-    audience_user_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    audience_user_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="draft", index=True)
     requires_acknowledgment: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-    starts_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, index=True)
-    ends_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, index=True)
+    starts_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, index=True)
+    ends_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, index=True)
     created_by_user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), index=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
@@ -329,11 +331,11 @@ class BowlerProfile(Base):
     )
     first_name: Mapped[str] = mapped_column(String, nullable=False, index=True)
     last_name: Mapped[str] = mapped_column(String, nullable=False, index=True)
-    usbc_number: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
+    usbc_number: Mapped[Optional[str]] = mapped_column(String, nullable=True, index=True)
     is_active: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=True, index=True
     )
-    archived_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    archived_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, default=lambda: datetime.now(timezone.utc)
     )
@@ -352,25 +354,25 @@ class TournamentPlayer(Base):
     tournament_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("tournaments.id"), nullable=False, index=True
     )
-    squad_id: Mapped[int | None] = mapped_column(
+    squad_id: Mapped[Optional[int]] = mapped_column(
         Integer, ForeignKey("tournament_squads.id"), nullable=True, index=True
     )
     user_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("users.id"), nullable=False, index=True
     )
-    bowler_profile_id: Mapped[int | None] = mapped_column(
+    bowler_profile_id: Mapped[Optional[int]] = mapped_column(
         Integer, ForeignKey("bowler_profiles.id"), nullable=True, index=True
     )
     full_name: Mapped[str] = mapped_column(String, nullable=False)
-    average: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    handicap_pins: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    handicap_entry_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    scratch_entry_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    program_entry_counts: Mapped[dict | None] = mapped_column(JSON, nullable=True)
-    lane: Mapped[str | None] = mapped_column(String, nullable=True)
-    division: Mapped[str | None] = mapped_column(String, nullable=True, default="Open")
-    usbc_number: Mapped[str | None] = mapped_column(String, nullable=True)
-    amount_paid: Mapped[float | None] = mapped_column(Float, nullable=True, default=0.0)
+    average: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    handicap_pins: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    handicap_entry_count: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    scratch_entry_count: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    program_entry_counts: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+    lane: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    division: Mapped[Optional[str]] = mapped_column(String, nullable=True, default="Open")
+    usbc_number: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    amount_paid: Mapped[Optional[float]] = mapped_column(Float, nullable=True, default=0.0)
 
     name = synonym("full_name")
     handicap = synonym("handicap_pins")
@@ -388,15 +390,81 @@ class Tournament(Base):
         Integer, ForeignKey("users.id"), nullable=False, index=True
     )
     name: Mapped[str] = mapped_column(String, nullable=False)
-    location: Mapped[str | None] = mapped_column(String, nullable=True)
-    start_date: Mapped[str | None] = mapped_column(String, nullable=True)
-    end_date: Mapped[str | None] = mapped_column(String, nullable=True)
-    squad_times: Mapped[str | None] = mapped_column(Text, nullable=True)
+    location: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    start_date: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    end_date: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    squad_times: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     is_public: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, index=True)
-    archived_at: Mapped[datetime | None] = mapped_column(
+    archived_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime, nullable=True, index=True
     )
-    archive_reason: Mapped[str | None] = mapped_column(String, nullable=True)
+    archive_reason: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+
+
+class TournamentCentral(Base):
+    __tablename__ = "tc_tournaments"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("users.id"), nullable=False, index=True
+    )
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    location: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    start_date: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    end_date: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    squad_times: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    is_public: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, index=True)
+    logo_blob: Mapped[Optional[bytes]] = mapped_column(LargeBinary, nullable=True)
+    logo_mime_type: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    logo_file_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+
+
+class TournamentSetupState(Base):
+    __tablename__ = "tournament_setup_states"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tournament_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("tournaments.id"), nullable=False, index=True, unique=True
+    )
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("users.id"), nullable=False, index=True
+    )
+    payload: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+    is_published: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), index=True
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+        index=True,
+    )
+
+
+class TournamentCentralSetupState(Base):
+    __tablename__ = "tc_tournament_setup_states"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tournament_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("tc_tournaments.id"), nullable=False, index=True, unique=True
+    )
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("users.id"), nullable=False, index=True
+    )
+    payload: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+    is_published: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), index=True
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+        index=True,
+    )
 
 
 class TournamentBracketSettings(Base):
@@ -406,19 +474,19 @@ class TournamentBracketSettings(Base):
     tournament_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("tournaments.id"), nullable=False, index=True
     )
-    bracket_size: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    first_place_amount: Mapped[float | None] = mapped_column(Float, nullable=True)
-    second_place_amount: Mapped[float | None] = mapped_column(Float, nullable=True)
-    house_fee_amount: Mapped[float | None] = mapped_column(Float, nullable=True)
-    default_entry_fee: Mapped[float | None] = mapped_column(Float, nullable=True)
-    bracket_programs: Mapped[list | None] = mapped_column(JSON, nullable=True)
-    handicap_percentage: Mapped[float | None] = mapped_column(
+    bracket_size: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    first_place_amount: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    second_place_amount: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    house_fee_amount: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    default_entry_fee: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    bracket_programs: Mapped[Optional[list]] = mapped_column(JSON, nullable=True)
+    handicap_percentage: Mapped[Optional[float]] = mapped_column(
         Float, nullable=True, default=80.0
     )
-    handicap_base: Mapped[float | None] = mapped_column(
+    handicap_base: Mapped[Optional[float]] = mapped_column(
         Float, nullable=True, default=200.0
     )
-    allow_byes: Mapped[bool | None] = mapped_column(
+    allow_byes: Mapped[Optional[bool]] = mapped_column(
         Boolean, nullable=True, default=False
     )
 
@@ -442,12 +510,12 @@ class PlayerScore(Base):
     squad_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("tournament_squads.id"), nullable=False, index=True
     )
-    game1_scratch: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    game1_with_handicap: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    game2_scratch: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    game2_with_handicap: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    game3_scratch: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    game3_with_handicap: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    game1_scratch: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    game1_with_handicap: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    game2_scratch: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    game2_with_handicap: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    game3_scratch: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    game3_with_handicap: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
 
     bowler_id = synonym("player_id")
     game1_total = synonym("game1_with_handicap")
@@ -462,10 +530,10 @@ class BracketWinner(Base):
     tournament_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("tournaments.id"), nullable=False, index=True
     )
-    squad_id: Mapped[int | None] = mapped_column(
+    squad_id: Mapped[Optional[int]] = mapped_column(
         Integer, ForeignKey("tournament_squads.id"), nullable=True, index=True
     )
-    bracket_snapshot_id: Mapped[int | None] = mapped_column(
+    bracket_snapshot_id: Mapped[Optional[int]] = mapped_column(
         Integer, ForeignKey("bracket_snapshots.id"), nullable=True, index=True
     )
     player_id: Mapped[int] = mapped_column(
@@ -478,7 +546,7 @@ class BracketWinner(Base):
     placement: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
     placement_text: Mapped[str] = mapped_column(String(10), nullable=False)
     player_name: Mapped[str] = mapped_column(String(100), nullable=False)
-    winning_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    winning_score: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     created_at: Mapped[str] = mapped_column(String, nullable=False)
 
     bracket_id = synonym("bracket_snapshot_id")
@@ -494,10 +562,10 @@ class BracketPayout(Base):
     tournament_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("tournaments.id"), nullable=False, index=True
     )
-    squad_id: Mapped[int | None] = mapped_column(
+    squad_id: Mapped[Optional[int]] = mapped_column(
         Integer, ForeignKey("tournament_squads.id"), nullable=True, index=True
     )
-    bracket_snapshot_id: Mapped[int | None] = mapped_column(
+    bracket_snapshot_id: Mapped[Optional[int]] = mapped_column(
         Integer, ForeignKey("bracket_snapshots.id"), nullable=True, index=True
     )
     bracket_winner_id: Mapped[int] = mapped_column(
@@ -518,9 +586,9 @@ class BracketPayout(Base):
     entry_fee: Mapped[float] = mapped_column(Float, nullable=False)
     bracket_size: Mapped[int] = mapped_column(Integer, nullable=False)
     is_paid: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
-    paid_date: Mapped[str | None] = mapped_column(String, nullable=True)
-    payment_method: Mapped[str | None] = mapped_column(String(50), nullable=True)
-    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    paid_date: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    payment_method: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     created_at: Mapped[str] = mapped_column(String, nullable=False)
     updated_at: Mapped[str] = mapped_column(String, nullable=False)
 
@@ -538,7 +606,7 @@ class TournamentPayoutSummary(Base):
     tournament_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("tournaments.id"), nullable=False, index=True
     )
-    squad_id: Mapped[int | None] = mapped_column(
+    squad_id: Mapped[Optional[int]] = mapped_column(
         Integer, ForeignKey("tournament_squads.id"), nullable=True, index=True
     )
     total_prize_pool: Mapped[float] = mapped_column(Float, nullable=False)
@@ -559,14 +627,14 @@ class TournamentPayoutSummary(Base):
     total_winners: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     scratch_entry_fee: Mapped[float] = mapped_column(Float, nullable=False)
     handicap_entry_fee: Mapped[float] = mapped_column(Float, nullable=False)
-    house_percentage: Mapped[float | None] = mapped_column(
+    house_percentage: Mapped[Optional[float]] = mapped_column(
         Float, nullable=True, default=0.0
     )
-    house_fee_amount: Mapped[float | None] = mapped_column(
+    house_fee_amount: Mapped[Optional[float]] = mapped_column(
         Float, nullable=True, default=0.0
     )
     is_finalized: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
-    finalized_date: Mapped[str | None] = mapped_column(String, nullable=True)
+    finalized_date: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     created_at: Mapped[str] = mapped_column(String, nullable=False)
     updated_at: Mapped[str] = mapped_column(String, nullable=False)
 
@@ -589,7 +657,7 @@ class FirstRoundMatchupHistory(Base):
     bracket_group_key: Mapped[str] = mapped_column(
         String(50), nullable=False, index=True
     )
-    bracket_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    bracket_number: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     round_number: Mapped[int] = mapped_column(Integer, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
@@ -605,12 +673,12 @@ class BracketSnapshot(Base):
     tournament_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("tournaments.id"), nullable=False, index=True
     )
-    squad_id: Mapped[int | None] = mapped_column(
+    squad_id: Mapped[Optional[int]] = mapped_column(
         Integer, ForeignKey("tournament_squads.id"), nullable=True, index=True
     )
     payload: Mapped[dict] = mapped_column(JSON, nullable=False)
     bracket_size: Mapped[int] = mapped_column(Integer, nullable=False, default=8)
-    player_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    player_count: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=lambda: datetime.now(timezone.utc)
     )

@@ -2,9 +2,27 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import USAMap from 'react-usa-map';
+import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent } from 'react';
+import { CalendarDays, ChevronRight, MapPin, Menu } from 'lucide-react';
+import { ComposableMap, Geographies, Geography, ZoomableGroup } from 'react-simple-maps';
+import TournamentRegistrationForm from '@/components/public/TournamentRegistrationForm';
 import styles from './page.module.css';
+
+const TOURNAMENT_PAGE_SIZE = 24;
+
+function Brand() {
+  return (
+    <span className={`${styles.brand} bw-public-brand`}>
+      <Image src="/TC_logo_No_Text.svg" alt="Tournament Central" width={38} height={38} priority />
+      <span className="bw-public-brand-text">
+        <strong>TOURNAMENT <span>CENTRAL</span></strong>
+        <small>Bowling Tournament Management</small>
+      </span>
+    </span>
+  );
+}
 
 type TournamentStatus = 'UPCOMING' | 'IN PROGRESS' | 'PAST RESULTS';
 type StateTab = 'UPCOMING' | 'IN PROGRESS' | 'PAST RESULTS';
@@ -18,6 +36,11 @@ type Tournament = {
   venue: string;
   city: string;
   stateCode: string;
+  stateLabel: string;
+  logoUrl: string | null;
+  publicUrl: string | null;
+  registrationUrl: string | null;
+  locationText: string;
   status: TournamentStatus;
 };
 
@@ -25,15 +48,103 @@ type StateSummary = {
   stateCode: string;
   stateName: string;
   tournaments: Tournament[];
-  centerCount: number;
 };
 
 type PublicTournamentSummary = {
-  id: number;
+  id: number | string;
   name: string;
   location: string | null;
+  state_code?: string | null;
+  state_name?: string | null;
   start_date: string | null;
   end_date: string | null;
+  public_url?: string | null;
+  logo_url?: string | null;
+  registration_url?: string | null;
+};
+
+type RegistrationFieldConfig = {
+  id: string;
+  key: string;
+  label: string;
+  customLabel?: string;
+  mode: 'required' | 'optional' | 'dont-ask';
+  displayOrder: number;
+  validation?: string;
+};
+
+type RegistrationQuestionConfig = {
+  id: string;
+  label: string;
+  type?: 'short-text' | 'long-text' | 'number' | 'yes-no' | 'dropdown' | 'multiple-choice' | 'checkbox' | 'date';
+  required: boolean;
+  enabled: boolean;
+  displayOrder: number;
+  options?: string[];
+  scope?: {
+    all: boolean;
+    eventIds: string[];
+    divisionIds: string[];
+    squadIds: string[];
+  };
+};
+
+type RegistrationQuestionAnswerValue = string | boolean | string[];
+
+type RegistrationEventConfig = {
+  id: string;
+  name: string;
+  enabled: boolean;
+  connectedDivisionIds?: string[];
+  connectedSquadIds?: string[];
+  entryFeeCents?: number;
+};
+
+type RegistrationDivisionConfig = {
+  id: string;
+  name: string;
+  enabled: boolean;
+};
+
+type RegistrationSquadConfig = {
+  id: string;
+  name: string;
+  dateIso?: string;
+  startTime?: string;
+  requiredBowlerCount?: number;
+  required_bowler_count?: number;
+  capacity?: number;
+  registeredCount?: number;
+};
+
+type PublicTcRegistrationConfigResponse = {
+  tournament_id: number;
+  tournament_name: string;
+  events: RegistrationEventConfig[];
+  divisions: RegistrationDivisionConfig[];
+  squads: RegistrationSquadConfig[];
+  fields: RegistrationFieldConfig[];
+  questions: RegistrationQuestionConfig[];
+};
+
+type RegistrationFormState = {
+  bowlers: Array<Record<string, string>>;
+  eventId: string;
+  divisionId: string;
+  squadId: string;
+  notes: string;
+  bowlerQuestionAnswers: Array<Record<string, RegistrationQuestionAnswerValue>>;
+  acceptTerms: boolean;
+};
+
+const EMPTY_REGISTRATION_FORM: RegistrationFormState = {
+  bowlers: [{}],
+  eventId: '',
+  divisionId: '',
+  squadId: '',
+  notes: '',
+  bowlerQuestionAnswers: [{}],
+  acceptTerms: false,
 };
 
 type PublicTournamentDirectoryResponse = {
@@ -41,6 +152,10 @@ type PublicTournamentDirectoryResponse = {
 };
 
 type MapStateTone = 'upcoming' | 'inprogress' | 'past' | 'none';
+type MapViewport = {
+  center: [number, number];
+  zoom: number;
+};
 
 const STATE_NAME_BY_CODE: Record<string, string> = {
   AL: 'Alabama', AK: 'Alaska', AZ: 'Arizona', AR: 'Arkansas', CA: 'California', CO: 'Colorado', CT: 'Connecticut', DE: 'Delaware',
@@ -49,12 +164,30 @@ const STATE_NAME_BY_CODE: Record<string, string> = {
   MO: 'Missouri', MT: 'Montana', NE: 'Nebraska', NV: 'Nevada', NH: 'New Hampshire', NJ: 'New Jersey', NM: 'New Mexico', NY: 'New York',
   NC: 'North Carolina', ND: 'North Dakota', OH: 'Ohio', OK: 'Oklahoma', OR: 'Oregon', PA: 'Pennsylvania', RI: 'Rhode Island',
   SC: 'South Carolina', SD: 'South Dakota', TN: 'Tennessee', TX: 'Texas', UT: 'Utah', VT: 'Vermont', VA: 'Virginia', WA: 'Washington',
-  WV: 'West Virginia', WI: 'Wisconsin', WY: 'Wyoming',
+  WV: 'West Virginia', WI: 'Wisconsin', WY: 'Wyoming', DC: 'District of Columbia',
 };
+
+const STATE_CODE_BY_NAME = new Map(
+  Object.entries(STATE_NAME_BY_CODE).map(([code, name]) => [name.toUpperCase(), code]),
+);
 
 const STATE_NICKNAME_BY_CODE: Partial<Record<string, string>> = {
   ID: 'Gem State',
 };
+
+const STATE_FIPS_TO_CODE: Record<string, string> = {
+  '01': 'AL', '02': 'AK', '04': 'AZ', '05': 'AR', '06': 'CA', '08': 'CO', '09': 'CT', '10': 'DE', '11': 'DC',
+  '12': 'FL', '13': 'GA', '15': 'HI', '16': 'ID', '17': 'IL', '18': 'IN', '19': 'IA', '20': 'KS', '21': 'KY',
+  '22': 'LA', '23': 'ME', '24': 'MD', '25': 'MA', '26': 'MI', '27': 'MN', '28': 'MS', '29': 'MO', '30': 'MT',
+  '31': 'NE', '32': 'NV', '33': 'NH', '34': 'NJ', '35': 'NM', '36': 'NY', '37': 'NC', '38': 'ND', '39': 'OH',
+  '40': 'OK', '41': 'OR', '42': 'PA', '44': 'RI', '45': 'SC', '46': 'SD', '47': 'TN', '48': 'TX', '49': 'UT',
+  '50': 'VT', '51': 'VA', '53': 'WA', '54': 'WV', '55': 'WI', '56': 'WY',
+};
+
+const USA_STATES_GEO_URL = '/us-states-10m.json';
+const DEFAULT_MAP_VIEWPORT: MapViewport = { center: [-96, 38], zoom: 1 };
+const MIN_MAP_ZOOM = 1;
+const MAX_MAP_ZOOM = 6;
 
 const tabOrder: StateTab[] = ['UPCOMING', 'IN PROGRESS', 'PAST RESULTS'];
 
@@ -64,16 +197,51 @@ const statusLabel: Record<TournamentStatus, string> = {
   'PAST RESULTS': 'Past Results',
 };
 
-function getBadgeClass(status: TournamentStatus): string {
+const TONE_UPCOMING_SHADES = [
+  'color-mix(in srgb, var(--color-primary) 46%, var(--bw-surface-card-strong) 54%)',
+  'color-mix(in srgb, var(--color-primary) 52%, var(--bw-surface-card-strong) 48%)',
+  'color-mix(in srgb, var(--color-primary) 56%, var(--bw-surface-card-strong) 44%)',
+  'color-mix(in srgb, var(--color-primary) 60%, var(--bw-surface-card-strong) 40%)',
+];
+
+const TONE_IN_PROGRESS_SHADES = [
+  'color-mix(in srgb, var(--color-primary) 64%, var(--bw-surface-card) 36%)',
+  'color-mix(in srgb, var(--color-primary) 70%, var(--bw-surface-card) 30%)',
+  'color-mix(in srgb, var(--color-primary) 76%, var(--bw-surface-card) 24%)',
+  'color-mix(in srgb, var(--color-primary) 82%, var(--bw-surface-card) 18%)',
+];
+
+const TONE_PAST_SHADES = [
+  'color-mix(in srgb, var(--color-primary) 32%, var(--bw-surface-panel-strong) 68%)',
+  'color-mix(in srgb, var(--color-primary) 36%, var(--bw-surface-panel-strong) 64%)',
+  'color-mix(in srgb, var(--color-primary) 40%, var(--bw-surface-panel-strong) 60%)',
+  'color-mix(in srgb, var(--color-primary) 44%, var(--bw-surface-panel-strong) 56%)',
+];
+
+const TONE_NEUTRAL_SHADES = [
+  'var(--bw-border-subtle)',
+  'var(--bw-border-card)',
+  'var(--bw-surface-card)',
+  'var(--bw-surface-card-strong)',
+  'var(--bw-surface-panel-strong)',
+];
+
+const mapGeographyStyle = {
+  default: { outline: 'none' },
+  hover: { outline: 'none' },
+  pressed: { outline: 'none' },
+} as const;
+
+function getCardStatusClass(status: TournamentStatus): string {
   if (status === 'UPCOMING') {
-    return styles.badgeUpcoming;
+    return styles.cardStatusUpcoming;
   }
 
   if (status === 'IN PROGRESS') {
-    return styles.badgeInProgress;
+    return styles.cardStatusInProgress;
   }
 
-  return styles.badgePast;
+  return styles.cardStatusPast;
 }
 
 function getStateToneFromSummary(summary: StateSummary | undefined): MapStateTone {
@@ -94,26 +262,161 @@ function getStateToneFromSummary(summary: StateSummary | undefined): MapStateTon
   return 'none';
 }
 
-function getToneFill(tone: MapStateTone, isSelected: boolean): string {
+function getToneFill(tone: MapStateTone, isSelected: boolean, stateCode: string): string {
   if (isSelected) {
-    return '#ff8a12';
+    return 'var(--color-primary)';
   }
 
-  return '#515866';
+  const variant = stateCode.charCodeAt(0) + stateCode.charCodeAt(1);
+
+  if (tone === 'upcoming') {
+    return TONE_UPCOMING_SHADES[variant % TONE_UPCOMING_SHADES.length];
+  }
+
+  if (tone === 'inprogress') {
+    return TONE_IN_PROGRESS_SHADES[variant % TONE_IN_PROGRESS_SHADES.length];
+  }
+
+  if (tone === 'past') {
+    return TONE_PAST_SHADES[variant % TONE_PAST_SHADES.length];
+  }
+
+  return TONE_NEUTRAL_SHADES[variant % TONE_NEUTRAL_SHADES.length];
 }
 
 function parseLocation(location: string | null): { venue: string; city: string; stateCode: string } {
+  const resolveStateCode = (rawValue: string | undefined): string => {
+    const value = (rawValue || '').trim();
+    if (!value) {
+      return '';
+    }
+
+    const normalizedCode = value.toUpperCase().replace(/[^A-Z]/g, '');
+    if (normalizedCode.length === 2 && STATE_NAME_BY_CODE[normalizedCode]) {
+      return normalizedCode;
+    }
+
+    const normalizedName = value
+      .toUpperCase()
+      .replace(/\./g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    return STATE_CODE_BY_NAME.get(normalizedName) ?? '';
+  };
+
   if (!location) {
-    return { venue: 'Venue TBA', city: 'Unknown', stateCode: 'ID' };
+    return { venue: 'Venue TBA', city: 'Unknown', stateCode: '' };
   }
 
   const pieces = location.split(',').map((piece) => piece.trim()).filter(Boolean);
-  const maybeState = pieces.at(-1)?.toUpperCase() ?? '';
-  const stateCode = /^[A-Z]{2}$/.test(maybeState) ? maybeState : 'ID';
+
+  // Look from right to left so values like "Boise, Idaho, USA" still resolve to ID.
+  let stateCode = '';
+  for (let index = pieces.length - 1; index >= 0; index -= 1) {
+    stateCode = resolveStateCode(pieces[index]);
+    if (stateCode) {
+      break;
+    }
+  }
+
+  if (!stateCode) {
+    const upperLocation = location.toUpperCase();
+
+    for (const code of Object.keys(STATE_NAME_BY_CODE)) {
+      const codePattern = new RegExp(`\\b${code}\\b`);
+      if (codePattern.test(upperLocation)) {
+        stateCode = code;
+        break;
+      }
+    }
+  }
+
+  if (!stateCode) {
+    const upperLocation = location.toUpperCase();
+    for (const [name, code] of STATE_CODE_BY_NAME.entries()) {
+      if (upperLocation.includes(name)) {
+        stateCode = code;
+        break;
+      }
+    }
+  }
+
   const city = pieces.length > 1 ? pieces[pieces.length - 2] : pieces[0] ?? 'Unknown';
   const venue = pieces[0] ?? 'Venue TBA';
 
   return { venue, city, stateCode };
+}
+
+function normalizeRegistrationFieldKey(key: string): string {
+  return key.trim().toLowerCase();
+}
+
+function getRequiredBowlerCountFromSquad(squad: RegistrationSquadConfig | null | undefined): number | null {
+  if (!squad) {
+    return null;
+  }
+
+  const rawValue = typeof squad.requiredBowlerCount === 'number'
+    ? squad.requiredBowlerCount
+    : typeof squad.required_bowler_count === 'number'
+      ? squad.required_bowler_count
+      : null;
+
+  if (rawValue === null || !Number.isFinite(rawValue)) {
+    return null;
+  }
+
+  return Math.max(1, Math.round(rawValue));
+}
+
+function getRequiredBowlerCountFromEvent(event: RegistrationEventConfig | null | undefined): number {
+  if (!event) {
+    return 1;
+  }
+
+  const minPlayers = typeof (event as { minPlayers?: unknown }).minPlayers === 'number'
+    ? Number((event as { minPlayers?: number }).minPlayers)
+    : 1;
+  const maxPlayers = typeof (event as { maxPlayers?: unknown }).maxPlayers === 'number'
+    ? Number((event as { maxPlayers?: number }).maxPlayers)
+    : minPlayers;
+
+  return Math.max(1, Math.max(minPlayers, maxPlayers));
+}
+
+function normalizeQuestionOptions(options: string[] | undefined): string[] {
+  if (!Array.isArray(options)) {
+    return [];
+  }
+
+  return options.map((option) => option.trim()).filter(Boolean);
+}
+
+function isRegistrationQuestionAnswered(
+  question: RegistrationQuestionConfig,
+  answer: RegistrationQuestionAnswerValue | undefined,
+): boolean {
+  const type = (question.type || 'short-text').toLowerCase();
+  const options = normalizeQuestionOptions(question.options);
+
+  if (type === 'checkbox' && options.length > 0) {
+    return Array.isArray(answer) && answer.some((value) => value.trim().length > 0);
+  }
+
+  if (type === 'checkbox') {
+    return answer === true;
+  }
+
+  if (Array.isArray(answer)) {
+    return answer.some((value) => value.trim().length > 0);
+  }
+
+  if (typeof answer === 'boolean') {
+    return true;
+  }
+
+  return typeof answer === 'string' && answer.trim().length > 0;
 }
 
 function formatDateRange(startDate: Date | null, endDate: Date | null): string {
@@ -150,100 +453,232 @@ function getTournamentStatus(startDate: Date | null, endDate: Date | null): Tour
   return 'PAST RESULTS';
 }
 
+function clampZoom(zoom: number): number {
+  return Math.max(MIN_MAP_ZOOM, Math.min(MAX_MAP_ZOOM, zoom));
+}
+
 export default function HomePage() {
+  const router = useRouter();
   const [allTournaments, setAllTournaments] = useState<Tournament[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [selectedStateCode, setSelectedStateCode] = useState('ID');
+  const [panelStateCode, setPanelStateCode] = useState('ID');
   const [selectedTab, setSelectedTab] = useState<StateTab>('UPCOMING');
   const [selectedStateOutline, setSelectedStateOutline] = useState<{ d: string; viewBox: string } | null>(null);
-  const mapWrapRef = useRef<HTMLDivElement | null>(null);
+  const [mapViewport, setMapViewport] = useState<MapViewport>(DEFAULT_MAP_VIEWPORT);
+  const [isMapInteracting, setIsMapInteracting] = useState(false);
+  const [visibleTournamentCount, setVisibleTournamentCount] = useState(TOURNAMENT_PAGE_SIZE);
+  const [detailTournamentId, setDetailTournamentId] = useState<string | null>(null);
+  const [registrationTournamentId, setRegistrationTournamentId] = useState<string | null>(null);
+  const [registrationConfig, setRegistrationConfig] = useState<PublicTcRegistrationConfigResponse | null>(null);
+  const [isRegistrationConfigLoading, setIsRegistrationConfigLoading] = useState(false);
+  const [registrationConfigError, setRegistrationConfigError] = useState<string | null>(null);
+  const [registrationSubmitMessage, setRegistrationSubmitMessage] = useState<string | null>(null);
+  const [isSubmittingRegistration, setIsSubmittingRegistration] = useState(false);
+  const [registrationForm, setRegistrationForm] = useState<RegistrationFormState>(EMPTY_REGISTRATION_FORM);
+  const [showAllStatuses, setShowAllStatuses] = useState(false);
+  const mapShellRef = useRef<HTMLDivElement | null>(null);
+  const hasUserSelectedStateRef = useRef(false);
+  const detailModalRef = useRef<HTMLElement | null>(null);
+  const registrationModalRef = useRef<HTMLElement | null>(null);
+  const lastTriggerRef = useRef<HTMLElement | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
+  const getRegistrationConfigUrl = useCallback((tournament: Tournament | null): string | null => {
+    if (!tournament) {
+      return null;
+    }
 
-    const loadDirectory = async () => {
-      setIsLoading(true);
-      setLoadError(null);
+    if (tournament.registrationUrl) {
+      return tournament.registrationUrl;
+    }
 
-      try {
-        const response = await fetch('/api/v1/public/tournaments?limit=300', {
-          cache: 'no-store',
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to load tournaments.');
-        }
-
-        const payload = await response.json() as PublicTournamentDirectoryResponse;
-        const items = Array.isArray(payload.tournaments) ? payload.tournaments : [];
-        const normalized: Tournament[] = items.map((item) => {
-          const startDate = item.start_date ? new Date(item.start_date) : null;
-          const endDate = item.end_date ? new Date(item.end_date) : null;
-          const location = parseLocation(item.location);
-
-          return {
-            id: String(item.id),
-            name: item.name,
-            date: formatDateRange(startDate, endDate),
-            startDate,
-            endDate,
-            venue: location.venue,
-            city: location.city,
-            stateCode: location.stateCode,
-            status: getTournamentStatus(startDate, endDate),
-          };
-        });
-
-        if (!cancelled) {
-          setAllTournaments(normalized);
-        }
-      } catch (error) {
-        if (!cancelled) {
-          setLoadError(error instanceof Error ? error.message : 'Failed to load tournaments.');
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
+    if (tournament.id.startsWith('tc-')) {
+      const rawId = tournament.id.slice(3).trim();
+      if (/^\d+$/.test(rawId)) {
+        return `/api/v1/public/tc-tournament/${rawId}/registration`;
       }
-    };
+    }
 
-    void loadDirectory();
-
-    return () => {
-      cancelled = true;
-    };
+    return null;
   }, []);
 
-  const stateSummaries = useMemo(() => {
+  useEffect(() => {
+    const hasToken = typeof window !== 'undefined' && Boolean(sessionStorage.getItem('access_token'));
+    const hasUser = typeof window !== 'undefined' && Boolean(localStorage.getItem('user_id'));
+    if (hasToken && hasUser) {
+      router.replace('/organizer');
+    }
+  }, [router]);
+
+  const loadDirectory = useCallback(async () => {
+    setIsLoading(true);
+    setLoadError(null);
+
+    try {
+      const response = await fetch(`/api/v1/public/tournaments?limit=300&ts=${Date.now()}`, {
+        cache: 'no-store',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to load tournaments.');
+      }
+
+      const payload = await response.json() as PublicTournamentDirectoryResponse;
+      const items = Array.isArray(payload.tournaments) ? payload.tournaments : [];
+      const normalized: Tournament[] = items.map((item) => {
+        const startDate = item.start_date ? new Date(item.start_date) : null;
+        const endDate = item.end_date ? new Date(item.end_date) : null;
+        const location = parseLocation(item.location);
+        const stateCodeFromPayload = (item.state_code ?? '').trim().toUpperCase();
+        const stateNameFromPayload = (item.state_name ?? '').trim();
+        const stateCodeFromStateName = stateNameFromPayload
+          ? (STATE_CODE_BY_NAME.get(stateNameFromPayload.toUpperCase()) ?? '')
+          : '';
+        const normalizedStateCode =
+          (stateCodeFromPayload && STATE_NAME_BY_CODE[stateCodeFromPayload]
+            ? stateCodeFromPayload
+            : '')
+          || stateCodeFromStateName
+          || location.stateCode;
+        const normalizedStateName =
+          stateNameFromPayload
+          || (normalizedStateCode ? (STATE_NAME_BY_CODE[normalizedStateCode] ?? '') : '');
+        const stateLabel = normalizedStateCode || normalizedStateName || 'TBD';
+        const locationSuffix = normalizedStateCode || normalizedStateName;
+
+        return {
+          id: String(item.id),
+          name: item.name,
+          date: formatDateRange(startDate, endDate),
+          startDate,
+          endDate,
+          venue: location.venue,
+          city: location.city,
+          stateCode: normalizedStateCode,
+          stateLabel,
+          logoUrl: item.logo_url ?? null,
+          publicUrl: item.public_url ?? null,
+          registrationUrl: item.registration_url ?? null,
+          locationText: item.location?.trim() || `${location.venue} • ${location.city}${locationSuffix ? `, ${locationSuffix}` : ''}`,
+          status: getTournamentStatus(startDate, endDate),
+        };
+      });
+
+      setAllTournaments(normalized);
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : 'Failed to load tournaments.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadDirectory();
+
+    const intervalId = window.setInterval(() => {
+      void loadDirectory();
+    }, 30000);
+
+    const handleFocus = () => {
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') {
+        return;
+      }
+      void loadDirectory();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleFocus);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleFocus);
+    };
+  }, [loadDirectory]);
+
+  useEffect(() => {
+    const debounceId = window.setTimeout(() => {
+      setPanelStateCode(selectedStateCode);
+    }, 80);
+
+    return () => {
+      window.clearTimeout(debounceId);
+    };
+  }, [selectedStateCode]);
+
+  const stateSummariesByCode = useMemo(() => {
     const byState = new Map<string, Tournament[]>();
 
     for (const tournament of allTournaments) {
+      if (!tournament.stateCode || !STATE_NAME_BY_CODE[tournament.stateCode]) {
+        continue;
+      }
+
       const tournaments = byState.get(tournament.stateCode) ?? [];
       tournaments.push(tournament);
       byState.set(tournament.stateCode, tournaments);
     }
 
-    const summaries: StateSummary[] = Object.keys(STATE_NAME_BY_CODE).map((stateCode) => {
+    const summaries = new Map<string, StateSummary>();
+    for (const stateCode of Object.keys(STATE_NAME_BY_CODE)) {
       const tournaments = byState.get(stateCode) ?? [];
-      const uniqueCenters = new Set(tournaments.map((tournament) => tournament.venue.toLowerCase()));
-      return {
+      summaries.set(stateCode, {
         stateCode,
         stateName: STATE_NAME_BY_CODE[stateCode] ?? stateCode,
         tournaments,
-        centerCount: uniqueCenters.size,
-      };
-    });
+      });
+    }
 
-    summaries.sort((a, b) => b.tournaments.length - a.tournaments.length);
     return summaries;
   }, [allTournaments]);
 
+  const stateSummaries = useMemo(() => {
+    const summaries = [...stateSummariesByCode.values()];
+
+    summaries.sort((a, b) => b.tournaments.length - a.tournaments.length);
+    return summaries;
+  }, [stateSummariesByCode]);
+
+  const firstStateWithTournaments = useMemo(
+    () => stateSummaries.find((summary) => summary.tournaments.length > 0)?.stateCode ?? null,
+    [stateSummaries],
+  );
+
+  useEffect(() => {
+    if (hasUserSelectedStateRef.current) {
+      return;
+    }
+
+    if (!firstStateWithTournaments) {
+      return;
+    }
+
+    const selectedCount = stateSummariesByCode.get(selectedStateCode)?.tournaments.length ?? 0;
+    if (selectedCount > 0) {
+      return;
+    }
+
+    setSelectedStateCode(firstStateWithTournaments);
+    setPanelStateCode(firstStateWithTournaments);
+  }, [firstStateWithTournaments, selectedStateCode, stateSummariesByCode]);
+
   const selectedState = useMemo(() => {
-    const found = stateSummaries.find((summary) => summary.stateCode === selectedStateCode);
-    return found ?? stateSummaries[0] ?? null;
-  }, [selectedStateCode, stateSummaries]);
+    const found = stateSummariesByCode.get(panelStateCode);
+    if (found) {
+      return found;
+    }
+
+    if (!panelStateCode) {
+      return stateSummaries[0] ?? null;
+    }
+
+    return {
+      stateCode: panelStateCode,
+      stateName: STATE_NAME_BY_CODE[panelStateCode] ?? panelStateCode,
+      tournaments: [],
+    };
+  }, [panelStateCode, stateSummariesByCode, stateSummaries]);
 
   const selectedStateSubtitle = useMemo(() => {
     if (!selectedState) {
@@ -281,138 +716,647 @@ export default function HomePage() {
     [selectedTab, tabCounts],
   );
 
-  const visibleTournaments = useMemo(
-    () => (selectedState?.tournaments ?? []).filter((tournament) => tournament.status === selectedTab),
-    [selectedState, selectedTab],
+  const visibleTournaments = useMemo(() => {
+    const tournaments = selectedState?.tournaments ?? [];
+    if (showAllStatuses) {
+      const statusRank: Record<TournamentStatus, number> = {
+        'IN PROGRESS': 0,
+        UPCOMING: 1,
+        'PAST RESULTS': 2,
+      };
+
+      return [...tournaments].sort((a, b) => {
+        const rankDiff = statusRank[a.status] - statusRank[b.status];
+        if (rankDiff !== 0) {
+          return rankDiff;
+        }
+
+        const aTime = a.startDate ? a.startDate.getTime() : 0;
+        const bTime = b.startDate ? b.startDate.getTime() : 0;
+        return bTime - aTime;
+      });
+    }
+
+    return tournaments.filter((tournament) => tournament.status === selectedTab);
+  }, [selectedState, selectedTab, showAllStatuses]);
+
+  useEffect(() => {
+    setVisibleTournamentCount(TOURNAMENT_PAGE_SIZE);
+  }, [panelStateCode, selectedTab, showAllStatuses]);
+
+  const renderedTournaments = useMemo(
+    () => visibleTournaments.slice(0, visibleTournamentCount),
+    [visibleTournamentCount, visibleTournaments],
   );
 
-  const stateToneByCode = useMemo<Record<string, MapStateTone>>(() => {
-    const tones: Record<string, MapStateTone> = {};
+  const hasMoreTournaments = visibleTournaments.length > renderedTournaments.length;
 
-    for (const stateCode of Object.keys(STATE_NAME_BY_CODE)) {
-      const summary = stateSummaries.find((candidate) => candidate.stateCode === stateCode);
-      tones[stateCode] = getStateToneFromSummary(summary);
+  const detailTournament = useMemo(
+    () => allTournaments.find((entry) => entry.id === detailTournamentId) ?? null,
+    [allTournaments, detailTournamentId],
+  );
+
+  const registrationTournament = useMemo(
+    () => allTournaments.find((entry) => entry.id === registrationTournamentId) ?? null,
+    [allTournaments, registrationTournamentId],
+  );
+
+  const registrationEvents = useMemo(
+    () => (registrationConfig?.events ?? []).filter((event) => event.enabled),
+    [registrationConfig],
+  );
+
+  const registrationDivisions = useMemo(
+    () => (registrationConfig?.divisions ?? []).filter((division) => division.enabled),
+    [registrationConfig],
+  );
+
+  const registrationSquads = useMemo(
+    () => registrationConfig?.squads ?? [],
+    [registrationConfig],
+  );
+
+  const registrationFields = useMemo(
+    () => (registrationConfig?.fields ?? [])
+      .filter((field) => field.mode !== 'dont-ask')
+      .sort((a, b) => a.displayOrder - b.displayOrder),
+    [registrationConfig],
+  );
+
+  const requiredRegistrationFields = useMemo(
+    () => registrationFields.filter((field) => field.mode === 'required'),
+    [registrationFields],
+  );
+
+  const registrationQuestions = useMemo(
+    () => (registrationConfig?.questions ?? [])
+      .filter((question) => question.enabled)
+      .sort((a, b) => a.displayOrder - b.displayOrder),
+    [registrationConfig],
+  );
+
+  const selectedRegistrationSquad = useMemo(
+    () => registrationSquads.find((squad) => squad.id === registrationForm.squadId) ?? null,
+    [registrationForm.squadId, registrationSquads],
+  );
+
+  const eventsForSelectedSquad = useMemo(() => {
+    if (!registrationForm.squadId) {
+      return registrationEvents;
+    }
+
+    const linked = registrationEvents.filter((event) => {
+      const connectedSquadIds = Array.isArray(event.connectedSquadIds) ? event.connectedSquadIds : [];
+      return connectedSquadIds.length === 0 || connectedSquadIds.includes(registrationForm.squadId);
+    });
+
+    return linked.length > 0 ? linked : registrationEvents;
+  }, [registrationEvents, registrationForm.squadId]);
+
+  const selectedRegistrationEvent = useMemo(
+    () => registrationEvents.find((event) => event.id === registrationForm.eventId) ?? eventsForSelectedSquad[0] ?? null,
+    [eventsForSelectedSquad, registrationEvents, registrationForm.eventId],
+  );
+
+  const requiredBowlerCount = useMemo(
+    () => getRequiredBowlerCountFromSquad(selectedRegistrationSquad) ?? getRequiredBowlerCountFromEvent(selectedRegistrationEvent),
+    [selectedRegistrationEvent, selectedRegistrationSquad],
+  );
+
+  const openRegistrationModal = (tournament: Tournament, triggerElement?: HTMLElement | null) => {
+    if (triggerElement) {
+      lastTriggerRef.current = triggerElement;
+    }
+
+    setDetailTournamentId(null);
+    setRegistrationTournamentId(tournament.id);
+    setRegistrationConfig(null);
+    setRegistrationConfigError(null);
+    setRegistrationSubmitMessage(null);
+    setIsSubmittingRegistration(false);
+    setRegistrationForm(EMPTY_REGISTRATION_FORM);
+  };
+
+  const closeRegistrationModal = () => {
+    setRegistrationTournamentId(null);
+    setRegistrationConfig(null);
+    setRegistrationConfigError(null);
+    setRegistrationSubmitMessage(null);
+    setIsSubmittingRegistration(false);
+    setRegistrationForm(EMPTY_REGISTRATION_FORM);
+
+    if (typeof window !== 'undefined') {
+      window.setTimeout(() => {
+        lastTriggerRef.current?.focus();
+      }, 0);
+    }
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadRegistrationConfig = async () => {
+      const tournament = allTournaments.find((entry) => entry.id === registrationTournamentId) ?? null;
+      const registrationConfigUrl = getRegistrationConfigUrl(tournament);
+
+      if (!tournament || !registrationConfigUrl) {
+        setRegistrationConfig(null);
+        setRegistrationConfigError(null);
+        setIsRegistrationConfigLoading(false);
+        return;
+      }
+
+      setIsRegistrationConfigLoading(true);
+      setRegistrationConfigError(null);
+
+      try {
+        const response = await fetch(registrationConfigUrl, { cache: 'no-store' });
+        if (!response.ok) {
+          const body = await response.json().catch(() => null) as { detail?: string } | null;
+          throw new Error(body?.detail || 'Registration setup is not available yet.');
+        }
+        const payload = await response.json() as PublicTcRegistrationConfigResponse;
+        if (!cancelled) {
+          setRegistrationConfig(payload);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setRegistrationConfigError(error instanceof Error ? error.message : 'Unable to load registration setup.');
+          setRegistrationConfig(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsRegistrationConfigLoading(false);
+        }
+      }
+    };
+
+    if (registrationTournamentId) {
+      void loadRegistrationConfig();
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [allTournaments, getRegistrationConfigUrl, registrationTournamentId]);
+
+  useEffect(() => {
+    if (!registrationTournamentId) {
+      return;
+    }
+
+    setRegistrationForm((prev) => {
+      const next = { ...prev };
+      if (!next.squadId && registrationSquads.length > 0) {
+        next.squadId = registrationSquads[0].id;
+      }
+
+      const squadLinkedEvents = registrationEvents.filter((event) => {
+        const connectedSquadIds = Array.isArray(event.connectedSquadIds) ? event.connectedSquadIds : [];
+        return !next.squadId || connectedSquadIds.length === 0 || connectedSquadIds.includes(next.squadId);
+      });
+
+      const allowedEvents = squadLinkedEvents.length > 0 ? squadLinkedEvents : registrationEvents;
+      if (!next.eventId || (allowedEvents.length > 0 && !allowedEvents.some((event) => event.id === next.eventId))) {
+        next.eventId = allowedEvents[0]?.id ?? '';
+      }
+
+      if (!next.divisionId && registrationDivisions.length > 0) {
+        next.divisionId = registrationDivisions[0].id;
+      }
+
+      const selectedSquad = registrationSquads.find((squad) => squad.id === next.squadId) ?? null;
+      const eventForCount = allowedEvents.find((event) => event.id === next.eventId) ?? allowedEvents[0] ?? null;
+      const expectedBowlerCount = getRequiredBowlerCountFromSquad(selectedSquad) ?? getRequiredBowlerCountFromEvent(eventForCount);
+      const currentBowlers = Array.isArray(next.bowlers) ? next.bowlers : [];
+      const normalizedBowlers = currentBowlers.slice(0, expectedBowlerCount);
+      while (normalizedBowlers.length < expectedBowlerCount) {
+        normalizedBowlers.push({});
+      }
+      next.bowlers = normalizedBowlers;
+
+      const currentBowlerQuestionAnswers = Array.isArray(next.bowlerQuestionAnswers)
+        ? next.bowlerQuestionAnswers
+        : [];
+      const normalizedBowlerQuestionAnswers = currentBowlerQuestionAnswers.slice(0, expectedBowlerCount);
+      while (normalizedBowlerQuestionAnswers.length < expectedBowlerCount) {
+        normalizedBowlerQuestionAnswers.push({});
+      }
+      next.bowlerQuestionAnswers = normalizedBowlerQuestionAnswers;
+
+      return next;
+    });
+  }, [registrationDivisions, registrationEvents, registrationSquads, registrationTournamentId]);
+
+  const handleRegistrationSubmit = async () => {
+    if (!registrationTournament) {
+      return;
+    }
+
+    const registrationConfigUrl = getRegistrationConfigUrl(registrationTournament);
+
+    if (!registrationConfigUrl) {
+      setRegistrationSubmitMessage('Registration is not available for this tournament yet.');
+      return;
+    }
+
+    if (!registrationForm.squadId) {
+      setRegistrationSubmitMessage('Please select a squad first.');
+      return;
+    }
+
+    if (registrationForm.bowlers.length !== requiredBowlerCount) {
+      setRegistrationSubmitMessage(`This squad requires ${requiredBowlerCount} bowler form${requiredBowlerCount === 1 ? '' : 's'}.`);
+      return;
+    }
+
+    let missingFieldLabel: string | null = null;
+    let missingFieldBowlerIndex = -1;
+
+    registrationForm.bowlers.some((bowlerFields, bowlerIndex) => {
+      const missingRequiredField = requiredRegistrationFields.find((field) => {
+        const key = normalizeRegistrationFieldKey(field.key);
+        return !(bowlerFields[key] || '').trim();
+      });
+
+      if (!missingRequiredField) {
+        return false;
+      }
+
+      missingFieldLabel = missingRequiredField.customLabel || missingRequiredField.label || 'Required field';
+      missingFieldBowlerIndex = bowlerIndex;
+      return true;
+    });
+
+    if (missingFieldLabel) {
+      setRegistrationSubmitMessage(`Bowler ${missingFieldBowlerIndex + 1}: ${missingFieldLabel} is required.`);
+      return;
+    }
+
+    if (!registrationForm.acceptTerms) {
+      setRegistrationSubmitMessage('Please accept the tournament terms before continuing.');
+      return;
+    }
+
+    let missingQuestionLabel: string | null = null;
+    let missingQuestionBowlerIndex = -1;
+
+    registrationQuestions.some((question) => {
+      if (!question.required) {
+        return false;
+      }
+
+      return registrationForm.bowlerQuestionAnswers.some((answersForBowler, bowlerIndex) => {
+        const hasAnswer = isRegistrationQuestionAnswered(question, answersForBowler?.[question.id]);
+        if (hasAnswer) {
+          return false;
+        }
+
+        missingQuestionLabel = question.label || 'Required question';
+        missingQuestionBowlerIndex = bowlerIndex;
+        return true;
+      });
+    });
+
+    if (missingQuestionLabel) {
+      setRegistrationSubmitMessage(`Bowler ${missingQuestionBowlerIndex + 1}: ${missingQuestionLabel} is required.`);
+      return;
+    }
+
+    const payload = {
+      tournamentId: registrationTournament.id,
+      tournamentName: registrationTournament.name,
+      submittedAt: new Date().toISOString(),
+      form: {
+        firstName: registrationForm.bowlers[0]?.first_name || '',
+        lastName: registrationForm.bowlers[0]?.last_name || '',
+        email: registrationForm.bowlers[0]?.email || '',
+        phone: registrationForm.bowlers[0]?.phone || '',
+        usbcNumber: registrationForm.bowlers[0]?.usbc_number || '',
+        bowlers: registrationForm.bowlers,
+        eventId: registrationForm.eventId,
+        divisionId: registrationForm.divisionId,
+        squadId: registrationForm.squadId,
+        notes: registrationForm.notes,
+        questionAnswers: registrationForm.bowlerQuestionAnswers[0] || {},
+        bowlerQuestionAnswers: registrationForm.bowlerQuestionAnswers,
+        fieldValues: registrationForm.bowlers[0] || {},
+        acceptTerms: registrationForm.acceptTerms,
+      },
+    };
+
+    setIsSubmittingRegistration(true);
+    setRegistrationSubmitMessage(null);
+
+    try {
+      const response = await fetch(registrationConfigUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => null) as { detail?: string } | null;
+        throw new Error(body?.detail || 'Unable to submit registration right now.');
+      }
+
+      setRegistrationSubmitMessage('Registration submitted successfully. The organizer can now review your request.');
+      setRegistrationForm(EMPTY_REGISTRATION_FORM);
+    } catch (error) {
+      setRegistrationSubmitMessage(error instanceof Error ? error.message : 'Unable to submit registration right now.');
+    } finally {
+      setIsSubmittingRegistration(false);
+    }
+  };
+
+  const closeDetailModal = () => {
+    setDetailTournamentId(null);
+
+    if (typeof window !== 'undefined') {
+      window.setTimeout(() => {
+        lastTriggerRef.current?.focus();
+      }, 0);
+    }
+  };
+
+  const trapFocusWithin = (event: ReactKeyboardEvent<HTMLElement>) => {
+    if (event.key !== 'Tab') {
+      return;
+    }
+
+    const container = event.currentTarget;
+    const focusable = container.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+    );
+
+    if (focusable.length === 0) {
+      return;
+    }
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const active = document.activeElement as HTMLElement | null;
+
+    if (event.shiftKey && active === first) {
+      event.preventDefault();
+      last.focus();
+      return;
+    }
+
+    if (!event.shiftKey && active === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  };
+
+  const handleDetailModalKeyDown = (event: ReactKeyboardEvent<HTMLElement>) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closeDetailModal();
+      return;
+    }
+
+    trapFocusWithin(event);
+  };
+
+  const handleRegistrationModalKeyDown = (event: ReactKeyboardEvent<HTMLElement>) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closeRegistrationModal();
+      return;
+    }
+
+    trapFocusWithin(event);
+  };
+
+  useEffect(() => {
+    if (typeof document === 'undefined') {
+      return;
+    }
+
+    const hasOpenModal = Boolean(detailTournament || registrationTournament);
+    if (!hasOpenModal) {
+      document.body.style.removeProperty('overflow');
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [detailTournament, registrationTournament]);
+
+  useEffect(() => {
+    if (detailTournament && detailModalRef.current) {
+      detailModalRef.current.focus();
+    }
+  }, [detailTournament]);
+
+  useEffect(() => {
+    if (registrationTournament && registrationModalRef.current) {
+      registrationModalRef.current.focus();
+    }
+  }, [registrationTournament]);
+
+  const stateToneByCode = useMemo(() => {
+    const tones = new Map<string, MapStateTone>();
+
+    for (const [stateCode, summary] of stateSummariesByCode.entries()) {
+      tones.set(stateCode, getStateToneFromSummary(summary));
     }
 
     return tones;
-  }, [stateSummaries]);
-
-  const mapCustomize = useMemo(() => {
-    const customize: Record<string, { fill: string; clickHandler: () => void }> = {};
-
-    for (const stateCode of Object.keys(STATE_NAME_BY_CODE)) {
-      const tone = stateToneByCode[stateCode] ?? 'none';
-      customize[stateCode] = {
-        fill: getToneFill(tone, stateCode === selectedStateCode),
-        clickHandler: () => {
-          setSelectedStateCode(stateCode);
-        },
-      };
-    }
-
-    return customize;
-  }, [selectedStateCode, stateToneByCode]);
+  }, [stateSummariesByCode]);
 
   useEffect(() => {
-    const frame = window.requestAnimationFrame(() => {
-      const mapRoot = mapWrapRef.current;
-      if (!mapRoot) {
-        setSelectedStateOutline(null);
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      const mapRoot = mapShellRef.current;
+      if (!mapRoot || !selectedStateCode) {
         return;
       }
 
-      mapRoot.querySelectorAll('title').forEach((titleNode) => {
-        titleNode.remove();
-      });
-
-      mapRoot.querySelectorAll('path[data-name]').forEach((pathNode) => {
-        pathNode.removeAttribute('data-active-state');
-      });
-
-      const selectedPath = mapRoot.querySelector(`path[data-name="${selectedStateCode}"]`) as SVGPathElement | null;
+      const selectedPath = mapRoot.querySelector<SVGPathElement>(`[data-state-code="${selectedStateCode}"]`);
       if (!selectedPath) {
-        setSelectedStateOutline(null);
         return;
       }
-
-      selectedPath.setAttribute('data-active-state', 'true');
 
       const d = selectedPath.getAttribute('d');
       if (!d) {
-        setSelectedStateOutline(null);
         return;
       }
 
+      try {
+        const bounds = selectedPath.getBBox();
+        const padding = 5;
+        const width = Math.max(bounds.width + padding * 2, 1);
+        const height = Math.max(bounds.height + padding * 2, 1);
+        const viewBox = `${bounds.x - padding} ${bounds.y - padding} ${width} ${height}`;
+        setSelectedStateOutline({ d, viewBox });
+      } catch {
+        // Some browsers can throw on getBBox if SVG isn't fully laid out yet.
+      }
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+    };
+  }, [selectedStateCode, stateToneByCode]);
+
+  const handleStateSelect = (stateCode: string, event: ReactMouseEvent<SVGPathElement>) => {
+    hasUserSelectedStateRef.current = true;
+    const selectedPath = event.currentTarget;
+    const d = selectedPath.getAttribute('d');
+
+    if (d) {
       const bounds = selectedPath.getBBox();
       const padding = 5;
       const width = Math.max(bounds.width + padding * 2, 1);
       const height = Math.max(bounds.height + padding * 2, 1);
       const viewBox = `${bounds.x - padding} ${bounds.y - padding} ${width} ${height}`;
-
       setSelectedStateOutline({ d, viewBox });
-    });
+    } else {
+      setSelectedStateOutline(null);
+    }
 
-    return () => {
-      window.cancelAnimationFrame(frame);
-    };
-  }, [selectedStateCode]);
+    setSelectedStateCode(stateCode);
+  };
+
+  const handleZoomChange = (delta: number) => {
+    setMapViewport((prev) => ({
+      ...prev,
+      zoom: clampZoom(prev.zoom + delta),
+    }));
+  };
+
+  const handleZoomReset = () => {
+    setMapViewport(DEFAULT_MAP_VIEWPORT);
+  };
 
   return (
-    <main className={styles.page}>
-      <header className={`${styles.topNav} bw-public-header`}>
-        <div className={`${styles.topNavInner} bw-public-header-inner`}>
-          <Link href="/" aria-label="Tournament Central home" className={`${styles.brandLink} bw-public-brand-link`}>
-            <span className={`${styles.brand} bw-public-brand`}>
-              <Image
-                src="/TC_logo_No_Text.svg"
-                alt="Tournament Central"
-                width={42}
-                height={42}
-                priority
-                className={styles.brandLogo}
-              />
-              <span className={`${styles.brandText} bw-public-brand-text`}>
-                <strong>TOURNAMENT <span>CENTRAL</span></strong>
-                <small>by BracketWorks</small>
-              </span>
-            </span>
-          </Link>
+    <main id="main-content" className={styles.page}>
+      <a className={styles.skipLink} href="#main-content">Skip to main content</a>
+      <header className={`${styles.header} bw-public-header`}>
+        <div className={`${styles.headerInner} bw-public-header-inner`}>
+          <Link href="/" aria-label="Tournament Central home" className="bw-public-brand-link"><Brand /></Link>
 
-          <nav className={`${styles.navLinks} bw-public-nav`} aria-label="Primary">
-            <a href="#">Tournaments</a>
-            <a href="#">Bowling Centers</a>
-            <a href="#">Results</a>
-            <a href="#">About</a>
+          <nav className="bw-public-nav" aria-label="Homepage navigation">
+            <a href="#tournament-directory">Tournaments</a>
+            <a href="#state-map">Bowling Centers</a>
+            <a href="#state-results">Results</a>
+            <a href="#tournament-directory">About</a>
           </nav>
 
-          <div className={`${styles.topActions} bw-public-actions`}>
-            <Link href="/login" className={`${styles.ghostBtn} bw-public-secondary-btn`}>Sign In</Link>
-            <Link href="/signup" className={`${styles.primaryBtn} bw-public-primary-btn`}>Register</Link>
+          <div className={`${styles.headerActions} bw-public-actions`}>
+            <Link className={`${styles.secondaryButton} bw-public-secondary-btn`} href="/login">Sign In</Link>
+            <Link className={`${styles.primaryButton} bw-public-primary-btn`} href="/signup">Create Account</Link>
           </div>
+
+          <details className={styles.mobileMenu}>
+            <summary aria-label="Open navigation"><Menu /></summary>
+            <div>
+              <a href="#tournament-directory">Tournaments</a>
+              <a href="#state-map">Bowling Centers</a>
+              <a href="#state-results">Results</a>
+              <a href="#tournament-directory">About</a>
+              <Link href="/login">Sign In</Link>
+              <Link href="/signup">Create Account</Link>
+            </div>
+          </details>
         </div>
       </header>
 
-      <section className={`${styles.section} ${styles.explore}`}>
-        <div className={styles.filterRow}>
-          <input className={styles.searchInput} type="text" placeholder="Search tournaments..." aria-label="Search tournaments" />
-          <button type="button" className={styles.filterBtn}>State</button>
-          <button type="button" className={styles.filterBtn}>Date</button>
-          <button type="button" className={styles.filterBtn}>Division</button>
-          <button type="button" className={styles.filterBtn}>Format</button>
-          <button type="button" className={styles.filterBtn}>Bowling Center</button>
-          <button type="button" className={styles.clearBtn}>Clear Filters</button>
-        </div>
-
+      <section id="tournament-directory" className={`${styles.section} ${styles.explore}`}>
         <div className={styles.layoutGrid}>
-          <div className={styles.mapShell}>
-            <div className={styles.mapCanvas}>
-              <div className={styles.usMapWrap} role="group" aria-label="United States tournament map" ref={mapWrapRef}>
-                <USAMap customize={mapCustomize} />
-              </div>
+          <div
+            ref={mapShellRef}
+            id="state-map"
+            className={`${styles.mapShell} ${isMapInteracting ? styles.mapShellInteracting : ''}`}
+            role="group"
+            aria-label="United States tournament map"
+          >
+            <div className={styles.mapControls} role="toolbar" aria-label="Map zoom controls">
+              <button
+                type="button"
+                className={styles.mapControlButton}
+                onClick={() => handleZoomChange(0.45)}
+                aria-label="Zoom in on map"
+              >
+                +
+              </button>
+              <button
+                type="button"
+                className={styles.mapControlButton}
+                onClick={() => handleZoomChange(-0.45)}
+                aria-label="Zoom out on map"
+              >
+                -
+              </button>
+              <button
+                type="button"
+                className={`${styles.mapControlButton} ${styles.mapControlReset}`}
+                onClick={handleZoomReset}
+                aria-label="Reset map zoom"
+              >
+                Reset
+              </button>
             </div>
+            <p className={styles.mapHint}>Tip: Select a state, then use zoom controls, wheel, or pinch to inspect smaller states.</p>
+            <ComposableMap projection="geoAlbersUsa" className={styles.usMapSvg}>
+              <ZoomableGroup
+                center={mapViewport.center}
+                zoom={mapViewport.zoom}
+                minZoom={MIN_MAP_ZOOM}
+                maxZoom={MAX_MAP_ZOOM}
+                onMoveStart={() => {
+                  setIsMapInteracting(true);
+                }}
+                onMoveEnd={({ coordinates, zoom }) => {
+                  setMapViewport({
+                    center: [coordinates[0], coordinates[1]],
+                    zoom: clampZoom(zoom),
+                  });
+                  setIsMapInteracting(false);
+                }}
+              >
+                <Geographies geography={USA_STATES_GEO_URL}>
+                  {({ geographies }) => geographies.map((geo) => {
+                    const fips = String(geo.id).padStart(2, '0');
+                    const stateCode = STATE_FIPS_TO_CODE[fips];
+                    const tone = stateCode ? (stateToneByCode.get(stateCode) ?? 'none') : 'none';
+                    const isSelected = stateCode === selectedStateCode;
+                    const fill = getToneFill(tone, Boolean(isSelected), stateCode ?? 'ZZ');
+
+                    return (
+                      <Geography
+                        key={geo.rsmKey}
+                        geography={geo}
+                        className={styles.geographyBase}
+                        data-state-code={stateCode ?? ''}
+                        data-selected={isSelected ? 'true' : 'false'}
+                        fill={fill}
+                        onClick={(event) => {
+                          if (stateCode) {
+                            handleStateSelect(stateCode, event as ReactMouseEvent<SVGPathElement>);
+                          }
+                        }}
+                        style={mapGeographyStyle}
+                      />
+                    );
+                  })}
+                </Geographies>
+              </ZoomableGroup>
+            </ComposableMap>
           </div>
 
-          <aside className={styles.statePanel}>
+          <aside id="state-results" className={styles.statePanel}>
             <div className={styles.stateHeader}>
               <div className={styles.stateMeta}>
                 {selectedStateOutline ? (
@@ -442,57 +1386,87 @@ export default function HomePage() {
                   key={tab}
                   type="button"
                   className={selectedTab === tab ? styles.tabActive : ''}
-                  onClick={() => setSelectedTab(tab)}
+                  onClick={() => {
+                    setShowAllStatuses(false);
+                    setSelectedTab(tab);
+                  }}
                 >
                   {statusLabel[tab]} <span>{tabCounts[tab]}</span>
                 </button>
               ))}
             </div>
 
-            <div className={styles.statGrid}>
-              <article className={styles.statCard}>
-                <span className={`${styles.statIcon} ${styles.statIconTournaments}`} aria-hidden="true" />
-                <strong>{selectedState?.tournaments.length ?? 0}</strong>
-                <span>Tournaments</span>
-                <small className={styles.statHint}>Updated today</small>
-              </article>
-              <article className={styles.statCard}>
-                <span className={`${styles.statIcon} ${styles.statIconCenters}`} aria-hidden="true" />
-                <strong>{selectedState?.centerCount ?? 0}</strong>
-                <span>Bowling Centers</span>
-                <small className={styles.statHint}>Updated today</small>
-              </article>
-            </div>
-
             {isLoading && <p className={styles.panelMessage}>Loading tournaments...</p>}
             {loadError && <p className={styles.errorMessage}>{loadError}</p>}
 
             <div className={styles.cardList}>
-              {visibleTournaments.map((tournament) => (
-                <article key={tournament.id} className={styles.tournamentCard}>
-                  <div className={styles.tournamentMedia} aria-hidden="true" />
+              {renderedTournaments.map((tournament) => (
+                <article key={tournament.id} className={`${styles.tournamentCard} ${getCardStatusClass(tournament.status)}`}>
+                  <div className={`${styles.tournamentMedia} ${tournament.logoUrl ? styles.tournamentMediaWithLogo : styles.tournamentMediaFallback}`} aria-hidden="true">
+                    {tournament.logoUrl ? (
+                      <img
+                        src={tournament.logoUrl}
+                        alt=""
+                        className={styles.tournamentMediaLogo}
+                        loading="lazy"
+                      />
+                    ) : null}
+                  </div>
                   <div className={styles.cardBody}>
-                    <h4>{tournament.name}</h4>
-                    <p className={styles.cardMetaLine}>{tournament.date}</p>
-                    <p className={styles.cardMetaLine}>
-                      {tournament.venue} • {tournament.city}, {tournament.stateCode}
-                    </p>
+                    <div className={styles.cardHeaderRow}>
+                      <h4 className={styles.cardTitle} title={tournament.name}>{tournament.name}</h4>
+                      <span className={styles.statusMicroChip}>
+                        <span className={styles.statusMicroDot} aria-hidden="true" />
+                        {statusLabel[tournament.status]}
+                      </span>
+                    </div>
+                    <div className={styles.cardMetaBlock}>
+                      <p className={`${styles.cardMetaLine} ${styles.cardMetaRow}`}>
+                        <CalendarDays size={16} className={styles.cardMetaIcon} aria-hidden="true" />
+                        <span>{tournament.date}</span>
+                      </p>
+                      <span className={styles.cardMetaDivider} aria-hidden="true" />
+                      <p className={`${styles.cardMetaLine} ${styles.cardMetaRow}`}>
+                        <MapPin size={16} className={styles.cardMetaIcon} aria-hidden="true" />
+                        <span className={styles.cardMetaLocation}>{tournament.venue} • {tournament.city}, {tournament.stateLabel}</span>
+                      </p>
+                    </div>
                   </div>
                   <div className={styles.cardActions}>
-                    <span className={`${styles.badge} ${getBadgeClass(tournament.status)}`}>{tournament.status}</span>
-                    <button type="button" className={styles.ghostBtn}>View Details</button>
+                    <button
+                      type="button"
+                      className={`${styles.ghostBtn} ${styles.cardDetailButton}`}
+                      onClick={(event) => {
+                        lastTriggerRef.current = event.currentTarget;
+                        setDetailTournamentId(tournament.id);
+                      }}
+                    >
+                      View Details
+                      <ChevronRight size={20} aria-hidden="true" />
+                    </button>
                   </div>
                 </article>
               ))}
+              {hasMoreTournaments && (
+                <button
+                  type="button"
+                  className={styles.loadMoreButton}
+                  onClick={() => {
+                    setVisibleTournamentCount((prev) => prev + TOURNAMENT_PAGE_SIZE);
+                  }}
+                >
+                  Load more ({visibleTournaments.length - renderedTournaments.length} remaining)
+                </button>
+              )}
               {!isLoading && visibleTournaments.length === 0 && (
                 <div className={styles.emptyState}>
-                  <h4>No {statusLabel[selectedTab].toLowerCase()} tournaments yet</h4>
+                  <h4>{showAllStatuses ? 'No tournaments yet' : `No ${statusLabel[selectedTab].toLowerCase()} tournaments yet`}</h4>
                   <p>
-                    {nextAvailableTab
+                    {!showAllStatuses && nextAvailableTab
                       ? `Try ${statusLabel[nextAvailableTab]} for ${selectedState?.stateName ?? 'this state'}.`
                       : 'Try another state on the map to find active events.'}
                   </p>
-                  {nextAvailableTab && (
+                  {!showAllStatuses && nextAvailableTab && (
                     <button
                       type="button"
                       className={styles.emptyStateAction}
@@ -507,9 +1481,112 @@ export default function HomePage() {
               )}
             </div>
 
-            <button type="button" className={styles.panelFooter} disabled={!selectedState}>
-              View All {selectedState?.stateName ?? 'State'} Tournaments
+            <button
+              type="button"
+              className={styles.panelFooter}
+              disabled={!selectedState}
+              onClick={() => {
+                setShowAllStatuses(true);
+              }}
+            >
+              {showAllStatuses
+                ? `Showing All ${selectedState?.stateName ?? 'State'} Tournaments`
+                : `View All ${selectedState?.stateName ?? 'State'} Tournaments`}
             </button>
+
+            {detailTournament && (
+              <div className={styles.detailsModalBackdrop} onClick={closeDetailModal}>
+                <section
+                  ref={detailModalRef}
+                  tabIndex={-1}
+                  className={styles.detailsModalCard}
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label="Tournament details"
+                  onClick={(event) => event.stopPropagation()}
+                  onKeyDown={handleDetailModalKeyDown}
+                >
+                  <header className={styles.detailsModalHeader}>
+                    <h4>{detailTournament.name}</h4>
+                    <button type="button" className={styles.detailsModalClose} onClick={closeDetailModal} aria-label="Close tournament details">
+                      Close
+                    </button>
+                  </header>
+                  <div className={styles.detailsModalBody}>
+                    {detailTournament.logoUrl ? (
+                      <div className={styles.detailsModalLogoWrap}>
+                        <img src={detailTournament.logoUrl} alt={`${detailTournament.name} logo`} className={styles.detailsModalLogo} />
+                      </div>
+                    ) : null}
+                    <div className={styles.detailsModalFacts}>
+                      <p className={styles.detailsModalFactRow}><strong>Date</strong><span>{detailTournament.date}</span></p>
+                      <p className={styles.detailsModalFactRow}><strong>Location</strong><span>{detailTournament.locationText}</span></p>
+                      <p className={styles.detailsModalFactRow}><strong>Status</strong><span>{statusLabel[detailTournament.status]}</span></p>
+                        <p className={styles.detailsModalFactRow}><strong>Registration</strong><span>{getRegistrationConfigUrl(detailTournament) ? 'Open now' : 'Coming soon'}</span></p>
+                    </div>
+                  </div>
+                  <footer className={styles.detailsModalFooter}>
+                    <span className={styles.detailsModalHint}>
+                      Complete your bowler details and submit registration directly from this page.
+                    </span>
+                    <div className={styles.detailsModalActions}>
+                      <button type="button" className={styles.detailsModalSecondaryAction} onClick={closeDetailModal}>
+                        Done
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.detailsModalPrimaryAction}
+                        disabled={!getRegistrationConfigUrl(detailTournament)}
+                        onClick={(event) => {
+                          if (!getRegistrationConfigUrl(detailTournament)) {
+                            return;
+                          }
+                          openRegistrationModal(detailTournament, event.currentTarget);
+                        }}
+                      >
+                        {getRegistrationConfigUrl(detailTournament) ? 'Sign Up' : 'Registration Closed'}
+                      </button>
+                    </div>
+                  </footer>
+                </section>
+              </div>
+            )}
+
+            {registrationTournament && (
+              <div className={styles.detailsModalBackdrop} onClick={closeRegistrationModal}>
+                <section
+                  ref={registrationModalRef}
+                  tabIndex={-1}
+                  className={styles.registrationModalCard}
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label="Tournament registration"
+                  onClick={(event) => event.stopPropagation()}
+                  onKeyDown={handleRegistrationModalKeyDown}
+                >
+                  {isRegistrationConfigLoading && <p className={styles.detailsModalHint}>Loading tournament registration settings...</p>}
+                  {registrationConfigError && <p className={styles.registrationError}>{registrationConfigError}</p>}
+
+                  <TournamentRegistrationForm
+                    tournamentName={registrationTournament.name}
+                    squads={registrationSquads}
+                    events={eventsForSelectedSquad}
+                    divisions={registrationDivisions}
+                    fields={registrationFields}
+                    questions={registrationQuestions}
+                    requiredBowlerCount={requiredBowlerCount}
+                    formState={registrationForm}
+                    setFormState={setRegistrationForm}
+                    submitMessage={registrationSubmitMessage}
+                    isSubmitting={isSubmittingRegistration}
+                    onSubmit={() => {
+                      void handleRegistrationSubmit();
+                    }}
+                    onClose={closeRegistrationModal}
+                  />
+                </section>
+              </div>
+            )}
           </aside>
         </div>
       </section>

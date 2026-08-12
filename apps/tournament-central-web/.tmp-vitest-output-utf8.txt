@@ -1,0 +1,1958 @@
+﻿
+> @bracketworks/tournament-central-web@0.1.0 test C:\Users\jmazz\OneDrive\Desktop\BracketWorks\apps\tournament-central-web
+> vitest run "--" "--run"
+
+
+[1m[46m RUN [49m[22m [36mv3.2.7 [39m[90mC:/Users/jmazz/OneDrive/Desktop/BracketWorks/apps/tournament-central-web[39m
+
+ [32mΓ£ô[39m components/auth/RegisterForm.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[33m 508[2mms[22m[39m
+   [33m[2mΓ£ô[22m[39m RegisterForm[2m > [22mshows validation error when passwords do not match [33m 399[2mms[22m[39m
+ [31mΓ¥»[39m components/auth/SignInForm.test.tsx [2m([22m[2m2 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[33m 1057[2mms[22m[39m
+[31m   [31m├ù[31m SignInForm[2m > [22mshows API error message for failed login[39m[33m 639[2mms[22m[39m
+[31m     ΓåÆ Unable to find an accessible element with the role "button" and name `/sign in/i`
+
+Here are the accessible roles:
+
+  main:
+
+  Name "":
+  [36m<main[31m
+    [33mclass[31m=[32m"_page_243192"[31m
+  [36m/>[31m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Welcome back":
+  [36m<h2[31m
+    [33mclass[31m=[32m"_cardTitle_243192"[31m
+  [36m/>[31m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[31m
+    [33mclass[31m=[32m"_cardSubtitle_243192"[31m
+  [36m/>[31m
+
+  Name "":
+  [36m<p[31m
+    [33mclass[31m=[32m"_submitHelper_1da694"[31m
+  [36m/>[31m
+
+  --------------------------------------------------
+  textbox:
+
+  Name "Username or email":
+  [36m<input[31m
+    [33mautocomplete[31m=[32m"username"[31m
+    [33mclass[31m=[32m"_input_1da694 "[31m
+    [33mid[31m=[32m"login-username"[31m
+    [33mplaceholder[31m=[32m"Enter username or email"[31m
+    [33mrequired[31m=[32m""[31m
+    [33mtype[31m=[32m"text"[31m
+    [33mvalue[31m=[32m"sample-user"[31m
+  [36m/>[31m
+
+  --------------------------------------------------
+  button:
+
+  Name "Show password":
+  [36m<button[31m
+    [33maria-label[31m=[32m"Show password"[31m
+    [33mclass[31m=[32m"_passwordToggle_1da694"[31m
+    [33mtype[31m=[32m"button"[31m
+  [36m/>[31m
+
+  Name "Log In":
+  [36m<button[31m
+    [33mclass[31m=[32m"_loginBtn_1da694"[31m
+    [33mtype[31m=[32m"submit"[31m
+  [36m/>[31m
+
+  Name "Forgot your password?":
+  [36m<button[31m
+    [33mclass[31m=[32m"_forgotLink_1da694"[31m
+    [33mtype[31m=[32m"button"[31m
+  [36m/>[31m
+
+  Name "Create a free account":
+  [36m<button[31m
+    [33mclass[31m=[32m"_signupPromptLink_1da694"[31m
+    [33mtype[31m=[32m"button"[31m
+  [36m/>[31m
+
+  --------------------------------------------------
+  contentinfo:
+
+  Name "":
+  [36m<footer[31m
+    [33mclass[31m=[32m"_footer_243192"[31m
+  [36m/>[31m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[31m
+  [36m<div>[31m
+    [36m<main[31m
+      [33mclass[31m=[32m"_page_243192"[31m
+    [36m>[31m
+      [36m<div[31m
+        [33mclass[31m=[32m"_shell_243192"[31m
+      [36m>[31m
+        [36m<section[31m
+          [33maria-hidden[31m=[32m"true"[31m
+          [33mclass[31m=[32m"_brandPanel_243192"[31m
+        [36m>[31m
+          [36m<div[31m
+            [33mclass[31m=[32m"_brandTop_243192"[31m
+          [36m>[31m
+            [36m<img[31m
+              [33malt[31m=[32m"Tournament Central"[31m
+              [33mclass[31m=[32m"_bannerImage_243192"[31m
+              [33mheight[31m=[32m"104"[31m
+              [33msrc[31m=[32m"/TC Banner.svg"[31m
+              [33mwidth[31m=[32m"540"[31m
+            [36m/>[31m
+          [36m</div>[31m
+          [36m<h1[31m
+            [33mclass[31m=[32m"_brandHeadline_243192"[31m
+          [36m>[31m
+            [0mEverything Your Tournament Needs.[0m
+            [36m<br />[31m
+            [36m<span[31m
+              [33mclass[31m=[32m"_brandHeadlineOrange_243192"[31m
+            [36m>[31m
+              [0mFrom Registration to Results.[0m
+            [36m</span>[31m
+          [36m</h1>[31m
+          [36m<p[31m
+            [33mclass[31m=[32m"_brandDescription_243192"[31m
+          [36m>[31m
+            [0mCreate tournaments, manage registration, organize squads, and connect directly with BracketWorks when it's time to run your tournament.[0m
+          [36m</p>[31m
+          [36m<ul[31m
+            [33mclass[31m=[32m"_featureList_243192"[31m
+          [36m>[31m
+            [36m<li[31m
+              [33mclass[31m=[32m"_featureItem_243192"[31m
+            [36m>[31m
+              [36m<div[31m
+                [33maria-label[31m=[32m"Create Your Tournament"[31m
+                [33mclass[31m=[32m"_card_76296d"[31m
+                [33mrole[31m=[32m"img"[31m
+              [36m>[31m
+                [36m<svg[31m
+                  [33maria-hidden[31m=[32m"true"[31m
+                  [33mclass[31m=[32m"lucide lucide-calendar-days _icon_76296d"[31m
+                  [33mfill[31m=[32m"none"[31m
+                  [33mheight[31m=[32m"28"[31m
+                  [33mstroke[31m=[32m"currentColor"[31m
+                  [33mstroke-linecap[31m=[32m"round"[31m
+                  [33mstroke-linejoin[31m=[32m"round"[31m
+                  [33mstroke-width[31m=[32m"2"[31m
+                  [33mviewBox[31m=[32m"0 0 24 24"[31m
+                  [33mwidth[31m=[32m"28"[31m
+                  [33mxmlns[31m=[32m"http://www.w3.org/2000/svg"[31m
+                [36m>[31m
+                  [36m<path[31m
+                    [33md[31m=[32m"M8 2v4"[31m
+                  [36m/>[31m
+                  [36m<path[31m
+                    [33md[31m=[32m"M16 2v4"[31m
+                  [36m/>[31m
+                  [36m<rect[31m
+                    [33mheight[31m=[32m"18"[31m
+                    [33mrx[31m=[32m"2"[31m
+                    [33mwidth[31m=[32m"18"[31m
+                    [33mx[31m=[32m"3"[31m
+                    [33my[31m=[32m"4"[31m
+                  [36m/>[31m
+                  [36m<path[31m
+                    [33md[31m=[32m"M3 10h18"[31m
+                  [36m/>[31m
+                  [36m<path[31m
+                    [33md[31m=[32m"M8 14h.01"[31m
+                  [36m/>[31m
+                  [36m<path[31m
+                    [33md[31m=[32m"M12 14h.01"[31m
+                  [36m/>[31m
+                  [36m<path[31m
+                    [33md[31m=[32m"M16 14h.01"[31m
+                  [36m/>[31m
+                  [36m<path[31m
+                    [33md[31m=[32m"M8 18h.01"[31m
+                  [36m/>[31m
+                  [36m<path[31m
+                    [33md[31m=[32m"M12 18h.01"[31m
+                  [36m/>[31m
+                  [36m<path[31m
+                    [33md[31m=[32m"M16 18h.01"[31m
+                  [36m/>[31m
+                [36m</svg>[31m
+              [36m</div>[31m
+              [36m<span>[31m
+                [36m<strong>[31m
+                  [0mCreate Your Tournament[0m
+                [36m</strong>[31m
+                [36m<small>[31m
+                  [0mBuild dates, squads, divisions, events and fees.[0m
+                [36m</small>[31m
+              [36m</span>[31m
+            [36m</li>[31m
+            [36m<li[31m
+              [33mclass[31m=[32m"_featureItem_243192"[31m
+            [36m>[31m
+              [36m<div[31m
+                [33maria-label[31m=[32m"Manage Registration"[31m
+                [33mclass[31m=[32m"_card_76296d"[31m
+                [33mrole[31m=[32m"img"[31m
+              [36m>[31m
+                [36m<svg[31m
+                  [33maria-hidden[31m=[32m"true"[31m
+                  [33mclass[31m=[32m"lucide lucide-users _icon_76296d"[31m
+                  [33mfill[31m=[32m"none"[31m
+                  [33mheight[31m=[32m"28"[31m
+                  [33mstroke[31m=[32m"currentColor"[31m
+                  [33mstroke-linecap[31m=[32m"round"[31m
+                  [33mstroke-linejoin[31m=[32m"round"[31m
+                  [33mstroke-width[31m=[32m"2"[31m
+                  [33mviewBox[31m=[32m"0 0 24 24"[31m
+                  [33mwidth[31m=[32m"28"[31m
+                  [33mxmlns[31m=[32m"http://www.w3.org/2000/svg"[31m
+                [36m>[31m
+                  [36m<path[31m
+                    [33md[31m=[32m"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"[31m
+                  [36m/>[31m
+                  [36m<path[31m
+                    [33md[31m=[32m"M16 3.128a4 4 0 0 1 0 7.744"[31m
+                  [36m/>[31m
+                  [36m<path[31m
+                    [33md[31m=[32m"M22 21v-2a4 4 0 0 0-3-3.87"[31m
+                  [36m/>[31m
+                  [36m<circle[31m
+                    [33mcx[31m=[32m"9"[31m
+                    [33mcy[31m=[32m"7"[31m
+                    [33mr[31m=[32m"4"[31m
+                  [36m/>[31m
+                [36m</svg>[31m
+              [36m</div>[31m
+              [36m<span>[31m
+                [36m<strong>[31m
+                  [0mManage Registration[0m
+                [36m</strong>[31m
+                [36m<small>[31m
+                  [0mKeep entries, bowlers and payments organized.[0m
+                [36m</small>[31m
+              [36m</span>[31m
+            [36m</li>[31m
+            [36m<li[31m
+              [33mclass[31m=[32m"_featureItem_243192"[31m
+            [36m>[31m
+              [36m<div[31m
+                [33maria-label[31m=[32m"Run It With BracketWorks"[31m
+                [33mclass[31m=[32m"_card_76296d"[31m
+                [33mrole[31m=[32m"img"[31m
+              [36m>[31m
+                [36m<svg[31m
+                  [33maria-hidden[31m=[32m"true"[31m
+                  [33mclass[31m=[32m"lucide lucide-git-fork _icon_76296d"[31m
+                  [33mfill[31m=[32m"none"[31m
+                  [33mheight[31m=[32m"28"[31m
+                  [33mstroke[31m=[32m"currentColor"[31m
+                  [33mstroke-linecap[31m=[32m"round"[31m
+                  [33mstroke-linejoin[31m=[32m"round"[31m
+                  [33mstroke-width[31m=[32m"2"[31m
+                  [33mviewBox[31m=[32m"0 0 24 24"[31m
+                  [33mwidth[31m=[32m"28"[31m
+                  [33mxmlns[31m=[32m"http://www.w3.org/2000/svg"[31m
+                [36m>[31m
+                  [36m<circle[31m
+                    [33mcx[31m=[32m"12"[31m
+                    [33mcy[31m=[32m"18"[31m
+                    [33mr[31m=[32m"3"[31m
+                  [36m/>[31m
+                  [36m<circle[31m
+                    [33mcx[31m=[32m"6"[31m
+                    [33mcy[31m=[32m"6"[31m
+                    [33mr[31m=[32m"3"[31m
+                  [36m/>[31m
+                  [36m<circle[31m
+                    [33mcx[31m=[32m"18"[31m
+                    [33mcy[31m=[32m"6"[31m
+                    [33mr[31m=[32m"3"[31m
+                  [36m/>[31m
+                  [36m<path[31m
+                    [33md[31m=[32m"M18 9v2c0 .6-.4 1-1 1H7c-.6 0-1-.4-1-1V9"[31m
+                  [36m/>[31m
+                  [36m<path[31m
+                    [33md[31m=[32m"M12 12v3"[31m
+                  [36m/>[31m
+                [36m</svg>[31m
+              [36m</div>[31m
+              [36m<span>[31m
+                [36m<strong>[31m
+                  [0mRun It With BracketWorks[0m
+                [36m</strong>[31m
+                [36m<small>[31m
+                  [0mSend your tournament directly into BracketWorks.[0m
+                [36m</small>[31m
+              [36m</span>[31m
+            [36m</li>[31m
+          [36m</ul>[31m
+        [36m</section>[31m
+        [36m<section[31m
+          [33mclass[31m=[32m"_card_243192"[31m
+        [36m>[31m
+          [36m<div[31m
+            [33mclass[31m=[32m"_cardHeader_243192"[31m
+          [36m>[31m
+            [36m<h2[31m
+              [33mclass[31m=[32m"_cardTitle_243192"[31m
+            [36m>[31m
+              [0mWelcome back[0m
+            [36m</h2>[31m
+            [36m<p[31m
+              [33mclass[31m=[32m"_cardSubtitle_243192"[31m
+            [36m>[31m
+              [0mSign in to access tournaments, registrations, and live event updates.[0m
+            [36m</p>[31m
+          [36m</div>[31m
+          [36m<form[31m
+            [33mclass[31m=[32m"_form_1da694"[31m
+          [36m>[31m
+            [36m<div[31m
+              [33mclass[31m=[32m"_inputGroup_1da694"[31m
+            [36m>[31m
+              [36m<label[31m
+                [33mclass[31m=[32m"_inputLabel_1da694"[31m
+                [33mfor[31m=[32m"login-username"[31m
+              [36m>[31m
+                [0mUsername or email[0m
+              [36m</label>[31m
+              [36m<svg[31m
+                [33maria-hidden[31m=[32m"true"[31m
+                [33mclass[31m=[32m"lucide lucide-user _inputIcon_1da694"[31m
+                [33mfill[31m=[32m"none"[31m
+                [33mheight[31m=[32m"24"[31m
+                [33mstroke[31m=[32m"currentColor"[31m
+                [33mstroke-linecap[31m=[32m"round"[31m
+                [33mstroke-linejoin[31m=[32m"round"[31m
+                [33mstroke-width[31m=[32m"1.8"[31m
+                [33mviewBox[31m=[32m"0 0 24 24"[31m
+                [33mwidth[31m=[32m"24"[31m
+                [33mxmlns[31m=[32m"http://www.w3.org/2000/svg"[31m
+              [36m>[31m
+                [36m<path[31m
+                  [33md[31m=[32m"M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"[31m
+                [36m/>[31m
+                [36m<circle[31m
+                  [33mcx[31m=[32m"12"[31m
+                  [33mcy[31m=[32m"7"[31m
+                  [33mr[31m=[32m"4"[31m
+                [36m/>[31m
+              [36m</svg>[31m
+              [36m<input[31m
+                [33mautocomplete[31m=[32m"username"[31m
+                [33mclass[31m=[32m"_input_1da694 "[31m
+                [33mid[31m=[32m"login-username"[31m
+                [33mplaceholder[31m=[32m"Enter username or email"[31m
+                [33mrequired[31m=[32m""[31m
+                [33mtype[31m=[32m"text"[31m
+                [33mvalue[31m=[32m"sample-user"[31m
+              [36m/>[31m
+            [36m</div>[31m
+            [36m<div>[31m
+              [36m<label[31m
+                [33mclass[31m=[32m"_inputLabel_1da694"[31m
+                [33mfor[31m=[32m"login-password"[31m
+              [36m>[31m
+                [0mPassword[0m
+              [36m</label>[31m
+              [36m<div[31m
+                [33mclass[31m=[32m"_passwordField_1da694"[31m
+              [36m>[31m
+                [36m<svg[31m
+                  [33maria-hidden[31m=[32m"true"[31m
+                  [33mclass[31m=[32m"lucide lucide-lock _inputIcon_1da694"[31m
+                  [33mfill[31m=[32m"none"[31m
+                  [33mheight[31m=[32m"24"[31m
+                  [33mstroke[31m=[32m"currentColor"[31m
+                  [33mstroke-linecap[31m=[32m"round"[31m
+                  [33mstroke-linejoin[31m=[32m"round"[31m
+                  [33mstroke-width[31m=[32m"1.8"[31m
+                  [33mviewBox[31m=[32m"0 0 24 24"[31m
+                  [33mwidth[31m=[32m"24"[31m
+                  [33mxmlns[31m=[32m"http://www.w3.org/2000/svg"[31m
+                [36m>[31m
+                  [36m<rect[31m
+                    [33mheight[31m=[32m"11"[31m
+                    [33mrx[31m=[32m"2"[31m
+                    [33mry[31m=[32m"2"[31m
+                    [33mwidth[31m=[32m"18"[31m
+                    [33mx[31m=[32m"3"[31m
+                    [33my[31m=[32m"11"[31m
+                  [36m/>[31m
+                  [36m<path[31m
+                    [33md[31m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[31m
+                  [36m/>[31m
+                [36m</svg>[31m
+                [36m<input[31m
+                  [33mautocomplete[31m=[32m"current-password"[31m
+                  [33mclass[31m=[32m"_input_1da694  "[31m
+                  [33mid[31m=[32m"login-password"[31m
+                  [33mplaceholder[31m=[32m"Enter your password"[31m
+                  [33mrequired[31m=[32m""[31m
+                  [33mtype[31m=[32m"password"[31m
+                  [33mvalue[31m=[32m"bad-pass"[31m
+                [36m/>[31m
+                [36m<button[31m
+                  [33maria-label[31m=[32m"Show password"[31m
+                  [33mclass[31m=[32m"_passwordToggle_1da694"[31m
+                  [33mtype[31m=[32m"button"[31m
+                [36m>[31m
+                  [0mShow[0m
+                [36m</button>[31m
+              [36m</div>[31m
+            [36m</div>[31m
+            [36m<button[31m
+              [33mclass[31m=[32m"_loginBtn_1da694"[31m
+              [33mtype[31m=[32m"submit"[31m
+            [36m>[31m
+              [0mLog In[0m
+              [0m [0m
+              [36m<span[31m
+                [33maria-hidden[31m=[32m"true"[31m
+                [33mclass[31m=[32m"_btnArrow_1da694"[31m
+              [36m>[31m
+                [0mΓåÆ[0m
+              [36m</span>[31m
+            [36m</button>[31m
+            [36m<p[31m
+              [33mclass[31m=[32m"_submitHelper_1da694"[31m
+            [36m>[31m
+              [0mUse the same account you used to create tournaments.[0m
+            [36m</p>[31m
+            [36m<div[31m
+              [33mclass[31m=[32m"_forgotRow_1da694"[31m
+            [36m>[31m
+              [36m<button[31m
+                [33mclass[31m=[32m"_forgotLink_1da694"[31m
+                [33mtype[31m=[32m"button"[31m
+              [36m>[31m
+                [0mForgot your password?[0m
+              [36m</button>[31m
+            [36m</div>[31m
+            [36m<div[31m
+              [33mclass[31m=[32m"_signupPrompt_1da694"[31m
+            [36m>[31m
+              [36m<span[31m
+                [33mclass[31m=[32m"_signupPromptText_1da694"[31m
+              [36m>[31m
+                [0mNew to Tournament Central?[0m
+              [36m</span>[31m
+              [36m<button[31m
+                [33mclass[31m=[32m"_signupPromptLink_1da694"[31m
+                [33mtype[31m=[32m"button"[31m
+              [36m>[31m
+                [0mCreate a free account[0m
+              [36m</button>[31m
+            [36m</div>[31m
+          [36m</form>[31m
+        [36m</section>[31m
+      [36m</div>[31m
+      [36m<footer[31m
+        [33mclass[31m=[32m"_footer_243192"[31m
+      [36m>[31m
+        [0m┬⌐ [0m
+        [0m2026[0m
+        [0m Tournament Centeral. All rights reserved.[0m
+      [36m</footer>[31m
+    [36m</main>[31m
+  [36m</div>[31m
+[36m</body>[31m[39m
+[31m   [31m├ù[31m SignInForm[2m > [22mstores session and redirects on successful login[39m[33m 415[2mms[22m[39m
+[31m     ΓåÆ Unable to find an accessible element with the role "button" and name `/sign in/i`
+
+Here are the accessible roles:
+
+  main:
+
+  Name "":
+  [36m<main[31m
+    [33mclass[31m=[32m"_page_243192"[31m
+  [36m/>[31m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Welcome back":
+  [36m<h2[31m
+    [33mclass[31m=[32m"_cardTitle_243192"[31m
+  [36m/>[31m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[31m
+    [33mclass[31m=[32m"_cardSubtitle_243192"[31m
+  [36m/>[31m
+
+  Name "":
+  [36m<p[31m
+    [33mclass[31m=[32m"_submitHelper_1da694"[31m
+  [36m/>[31m
+
+  --------------------------------------------------
+  textbox:
+
+  Name "Username or email":
+  [36m<input[31m
+    [33mautocomplete[31m=[32m"username"[31m
+    [33mclass[31m=[32m"_input_1da694 "[31m
+    [33mid[31m=[32m"login-username"[31m
+    [33mplaceholder[31m=[32m"Enter username or email"[31m
+    [33mrequired[31m=[32m""[31m
+    [33mtype[31m=[32m"text"[31m
+    [33mvalue[31m=[32m"sample-user"[31m
+  [36m/>[31m
+
+  --------------------------------------------------
+  button:
+
+  Name "Show password":
+  [36m<button[31m
+    [33maria-label[31m=[32m"Show password"[31m
+    [33mclass[31m=[32m"_passwordToggle_1da694"[31m
+    [33mtype[31m=[32m"button"[31m
+  [36m/>[31m
+
+  Name "Log In":
+  [36m<button[31m
+    [33mclass[31m=[32m"_loginBtn_1da694"[31m
+    [33mtype[31m=[32m"submit"[31m
+  [36m/>[31m
+
+  Name "Forgot your password?":
+  [36m<button[31m
+    [33mclass[31m=[32m"_forgotLink_1da694"[31m
+    [33mtype[31m=[32m"button"[31m
+  [36m/>[31m
+
+  Name "Create a free account":
+  [36m<button[31m
+    [33mclass[31m=[32m"_signupPromptLink_1da694"[31m
+    [33mtype[31m=[32m"button"[31m
+  [36m/>[31m
+
+  --------------------------------------------------
+  contentinfo:
+
+  Name "":
+  [36m<footer[31m
+    [33mclass[31m=[32m"_footer_243192"[31m
+  [36m/>[31m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[31m
+  [36m<div>[31m
+    [36m<main[31m
+      [33mclass[31m=[32m"_page_243192"[31m
+    [36m>[31m
+      [36m<div[31m
+        [33mclass[31m=[32m"_shell_243192"[31m
+      [36m>[31m
+        [36m<section[31m
+          [33maria-hidden[31m=[32m"true"[31m
+          [33mclass[31m=[32m"_brandPanel_243192"[31m
+        [36m>[31m
+          [36m<div[31m
+            [33mclass[31m=[32m"_brandTop_243192"[31m
+          [36m>[31m
+            [36m<img[31m
+              [33malt[31m=[32m"Tournament Central"[31m
+              [33mclass[31m=[32m"_bannerImage_243192"[31m
+              [33mheight[31m=[32m"104"[31m
+              [33msrc[31m=[32m"/TC Banner.svg"[31m
+              [33mwidth[31m=[32m"540"[31m
+            [36m/>[31m
+          [36m</div>[31m
+          [36m<h1[31m
+            [33mclass[31m=[32m"_brandHeadline_243192"[31m
+          [36m>[31m
+            [0mEverything Your Tournament Needs.[0m
+            [36m<br />[31m
+            [36m<span[31m
+              [33mclass[31m=[32m"_brandHeadlineOrange_243192"[31m
+            [36m>[31m
+              [0mFrom Registration to Results.[0m
+            [36m</span>[31m
+          [36m</h1>[31m
+          [36m<p[31m
+            [33mclass[31m=[32m"_brandDescription_243192"[31m
+          [36m>[31m
+            [0mCreate tournaments, manage registration, organize squads, and connect directly with BracketWorks when it's time to run your tournament.[0m
+          [36m</p>[31m
+          [36m<ul[31m
+            [33mclass[31m=[32m"_featureList_243192"[31m
+          [36m>[31m
+            [36m<li[31m
+              [33mclass[31m=[32m"_featureItem_243192"[31m
+            [36m>[31m
+              [36m<div[31m
+                [33maria-label[31m=[32m"Create Your Tournament"[31m
+                [33mclass[31m=[32m"_card_76296d"[31m
+                [33mrole[31m=[32m"img"[31m
+              [36m>[31m
+                [36m<svg[31m
+                  [33maria-hidden[31m=[32m"true"[31m
+                  [33mclass[31m=[32m"lucide lucide-calendar-days _icon_76296d"[31m
+                  [33mfill[31m=[32m"none"[31m
+                  [33mheight[31m=[32m"28"[31m
+                  [33mstroke[31m=[32m"currentColor"[31m
+                  [33mstroke-linecap[31m=[32m"round"[31m
+                  [33mstroke-linejoin[31m=[32m"round"[31m
+                  [33mstroke-width[31m=[32m"2"[31m
+                  [33mviewBox[31m=[32m"0 0 24 24"[31m
+                  [33mwidth[31m=[32m"28"[31m
+                  [33mxmlns[31m=[32m"http://www.w3.org/2000/svg"[31m
+                [36m>[31m
+                  [36m<path[31m
+                    [33md[31m=[32m"M8 2v4"[31m
+                  [36m/>[31m
+                  [36m<path[31m
+                    [33md[31m=[32m"M16 2v4"[31m
+                  [36m/>[31m
+                  [36m<rect[31m
+                    [33mheight[31m=[32m"18"[31m
+                    [33mrx[31m=[32m"2"[31m
+                    [33mwidth[31m=[32m"18"[31m
+                    [33mx[31m=[32m"3"[31m
+                    [33my[31m=[32m"4"[31m
+                  [36m/>[31m
+                  [36m<path[31m
+                    [33md[31m=[32m"M3 10h18"[31m
+                  [36m/>[31m
+                  [36m<path[31m
+                    [33md[31m=[32m"M8 14h.01"[31m
+                  [36m/>[31m
+                  [36m<path[31m
+                    [33md[31m=[32m"M12 14h.01"[31m
+                  [36m/>[31m
+                  [36m<path[31m
+                    [33md[31m=[32m"M16 14h.01"[31m
+                  [36m/>[31m
+                  [36m<path[31m
+                    [33md[31m=[32m"M8 18h.01"[31m
+                  [36m/>[31m
+                  [36m<path[31m
+                    [33md[31m=[32m"M12 18h.01"[31m
+                  [36m/>[31m
+                  [36m<path[31m
+                    [33md[31m=[32m"M16 18h.01"[31m
+                  [36m/>[31m
+                [36m</svg>[31m
+              [36m</div>[31m
+              [36m<span>[31m
+                [36m<strong>[31m
+                  [0mCreate Your Tournament[0m
+                [36m</strong>[31m
+                [36m<small>[31m
+                  [0mBuild dates, squads, divisions, events and fees.[0m
+                [36m</small>[31m
+              [36m</span>[31m
+            [36m</li>[31m
+            [36m<li[31m
+              [33mclass[31m=[32m"_featureItem_243192"[31m
+            [36m>[31m
+              [36m<div[31m
+                [33maria-label[31m=[32m"Manage Registration"[31m
+                [33mclass[31m=[32m"_card_76296d"[31m
+                [33mrole[31m=[32m"img"[31m
+              [36m>[31m
+                [36m<svg[31m
+                  [33maria-hidden[31m=[32m"true"[31m
+                  [33mclass[31m=[32m"lucide lucide-users _icon_76296d"[31m
+                  [33mfill[31m=[32m"none"[31m
+                  [33mheight[31m=[32m"28"[31m
+                  [33mstroke[31m=[32m"currentColor"[31m
+                  [33mstroke-linecap[31m=[32m"round"[31m
+                  [33mstroke-linejoin[31m=[32m"round"[31m
+                  [33mstroke-width[31m=[32m"2"[31m
+                  [33mviewBox[31m=[32m"0 0 24 24"[31m
+                  [33mwidth[31m=[32m"28"[31m
+                  [33mxmlns[31m=[32m"http://www.w3.org/2000/svg"[31m
+                [36m>[31m
+                  [36m<path[31m
+                    [33md[31m=[32m"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"[31m
+                  [36m/>[31m
+                  [36m<path[31m
+                    [33md[31m=[32m"M16 3.128a4 4 0 0 1 0 7.744"[31m
+                  [36m/>[31m
+                  [36m<path[31m
+                    [33md[31m=[32m"M22 21v-2a4 4 0 0 0-3-3.87"[31m
+                  [36m/>[31m
+                  [36m<circle[31m
+                    [33mcx[31m=[32m"9"[31m
+                    [33mcy[31m=[32m"7"[31m
+                    [33mr[31m=[32m"4"[31m
+                  [36m/>[31m
+                [36m</svg>[31m
+              [36m</div>[31m
+              [36m<span>[31m
+                [36m<strong>[31m
+                  [0mManage Registration[0m
+                [36m</strong>[31m
+                [36m<small>[31m
+                  [0mKeep entries, bowlers and payments organized.[0m
+                [36m</small>[31m
+              [36m</span>[31m
+            [36m</li>[31m
+            [36m<li[31m
+              [33mclass[31m=[32m"_featureItem_243192"[31m
+            [36m>[31m
+              [36m<div[31m
+                [33maria-label[31m=[32m"Run It With BracketWorks"[31m
+                [33mclass[31m=[32m"_card_76296d"[31m
+                [33mrole[31m=[32m"img"[31m
+              [36m>[31m
+                [36m<svg[31m
+                  [33maria-hidden[31m=[32m"true"[31m
+                  [33mclass[31m=[32m"lucide lucide-git-fork _icon_76296d"[31m
+                  [33mfill[31m=[32m"none"[31m
+                  [33mheight[31m=[32m"28"[31m
+                  [33mstroke[31m=[32m"currentColor"[31m
+                  [33mstroke-linecap[31m=[32m"round"[31m
+                  [33mstroke-linejoin[31m=[32m"round"[31m
+                  [33mstroke-width[31m=[32m"2"[31m
+                  [33mviewBox[31m=[32m"0 0 24 24"[31m
+                  [33mwidth[31m=[32m"28"[31m
+                  [33mxmlns[31m=[32m"http://www.w3.org/2000/svg"[31m
+                [36m>[31m
+                  [36m<circle[31m
+                    [33mcx[31m=[32m"12"[31m
+                    [33mcy[31m=[32m"18"[31m
+                    [33mr[31m=[32m"3"[31m
+                  [36m/>[31m
+                  [36m<circle[31m
+                    [33mcx[31m=[32m"6"[31m
+                    [33mcy[31m=[32m"6"[31m
+                    [33mr[31m=[32m"3"[31m
+                  [36m/>[31m
+                  [36m<circle[31m
+                    [33mcx[31m=[32m"18"[31m
+                    [33mcy[31m=[32m"6"[31m
+                    [33mr[31m=[32m"3"[31m
+                  [36m/>[31m
+                  [36m<path[31m
+                    [33md[31m=[32m"M18 9v2c0 .6-.4 1-1 1H7c-.6 0-1-.4-1-1V9"[31m
+                  [36m/>[31m
+                  [36m<path[31m
+                    [33md[31m=[32m"M12 12v3"[31m
+                  [36m/>[31m
+                [36m</svg>[31m
+              [36m</div>[31m
+              [36m<span>[31m
+                [36m<strong>[31m
+                  [0mRun It With BracketWorks[0m
+                [36m</strong>[31m
+                [36m<small>[31m
+                  [0mSend your tournament directly into BracketWorks.[0m
+                [36m</small>[31m
+              [36m</span>[31m
+            [36m</li>[31m
+          [36m</ul>[31m
+        [36m</section>[31m
+        [36m<section[31m
+          [33mclass[31m=[32m"_card_243192"[31m
+        [36m>[31m
+          [36m<div[31m
+            [33mclass[31m=[32m"_cardHeader_243192"[31m
+          [36m>[31m
+            [36m<h2[31m
+              [33mclass[31m=[32m"_cardTitle_243192"[31m
+            [36m>[31m
+              [0mWelcome back[0m
+            [36m</h2>[31m
+            [36m<p[31m
+              [33mclass[31m=[32m"_cardSubtitle_243192"[31m
+            [36m>[31m
+              [0mSign in to access tournaments, registrations, and live event updates.[0m
+            [36m</p>[31m
+          [36m</div>[31m
+          [36m<form[31m
+            [33mclass[31m=[32m"_form_1da694"[31m
+          [36m>[31m
+            [36m<div[31m
+              [33mclass[31m=[32m"_inputGroup_1da694"[31m
+            [36m>[31m
+              [36m<label[31m
+                [33mclass[31m=[32m"_inputLabel_1da694"[31m
+                [33mfor[31m=[32m"login-username"[31m
+              [36m>[31m
+                [0mUsername or email[0m
+              [36m</label>[31m
+              [36m<svg[31m
+                [33maria-hidden[31m=[32m"true"[31m
+                [33mclass[31m=[32m"lucide lucide-user _inputIcon_1da694"[31m
+                [33mfill[31m=[32m"none"[31m
+                [33mheight[31m=[32m"24"[31m
+                [33mstroke[31m=[32m"currentColor"[31m
+                [33mstroke-linecap[31m=[32m"round"[31m
+                [33mstroke-linejoin[31m=[32m"round"[31m
+                [33mstroke-width[31m=[32m"1.8"[31m
+                [33mviewBox[31m=[32m"0 0 24 24"[31m
+                [33mwidth[31m=[32m"24"[31m
+                [33mxmlns[31m=[32m"http://www.w3.org/2000/svg"[31m
+              [36m>[31m
+                [36m<path[31m
+                  [33md[31m=[32m"M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"[31m
+                [36m/>[31m
+                [36m<circle[31m
+                  [33mcx[31m=[32m"12"[31m
+                  [33mcy[31m=[32m"7"[31m
+                  [33mr[31m=[32m"4"[31m
+                [36m/>[31m
+              [36m</svg>[31m
+              [36m<input[31m
+                [33mautocomplete[31m=[32m"username"[31m
+                [33mclass[31m=[32m"_input_1da694 "[31m
+                [33mid[31m=[32m"login-username"[31m
+                [33mplaceholder[31m=[32m"Enter username or email"[31m
+                [33mrequired[31m=[32m""[31m
+                [33mtype[31m=[32m"text"[31m
+                [33mvalue[31m=[32m"sample-user"[31m
+              [36m/>[31m
+            [36m</div>[31m
+            [36m<div>[31m
+              [36m<label[31m
+                [33mclass[31m=[32m"_inputLabel_1da694"[31m
+                [33mfor[31m=[32m"login-password"[31m
+              [36m>[31m
+                [0mPassword[0m
+              [36m</label>[31m
+              [36m<div[31m
+                [33mclass[31m=[32m"_passwordField_1da694"[31m
+              [36m>[31m
+                [36m<svg[31m
+                  [33maria-hidden[31m=[32m"true"[31m
+                  [33mclass[31m=[32m"lucide lucide-lock _inputIcon_1da694"[31m
+                  [33mfill[31m=[32m"none"[31m
+                  [33mheight[31m=[32m"24"[31m
+                  [33mstroke[31m=[32m"currentColor"[31m
+                  [33mstroke-linecap[31m=[32m"round"[31m
+                  [33mstroke-linejoin[31m=[32m"round"[31m
+                  [33mstroke-width[31m=[32m"1.8"[31m
+                  [33mviewBox[31m=[32m"0 0 24 24"[31m
+                  [33mwidth[31m=[32m"24"[31m
+                  [33mxmlns[31m=[32m"http://www.w3.org/2000/svg"[31m
+                [36m>[31m
+                  [36m<rect[31m
+                    [33mheight[31m=[32m"11"[31m
+                    [33mrx[31m=[32m"2"[31m
+                    [33mry[31m=[32m"2"[31m
+                    [33mwidth[31m=[32m"18"[31m
+                    [33mx[31m=[32m"3"[31m
+                    [33my[31m=[32m"11"[31m
+                  [36m/>[31m
+                  [36m<path[31m
+                    [33md[31m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[31m
+                  [36m/>[31m
+                [36m</svg>[31m
+                [36m<input[31m
+                  [33mautocomplete[31m=[32m"current-password"[31m
+                  [33mclass[31m=[32m"_input_1da694  "[31m
+                  [33mid[31m=[32m"login-password"[31m
+                  [33mplaceholder[31m=[32m"Enter your password"[31m
+                  [33mrequired[31m=[32m""[31m
+                  [33mtype[31m=[32m"password"[31m
+                  [33mvalue[31m=[32m"good-pass"[31m
+                [36m/>[31m
+                [36m<button[31m
+                  [33maria-label[31m=[32m"Show password"[31m
+                  [33mclass[31m=[32m"_passwordToggle_1da694"[31m
+                  [33mtype[31m=[32m"button"[31m
+                [36m>[31m
+                  [0mShow[0m
+                [36m</button>[31m
+              [36m</div>[31m
+            [36m</div>[31m
+            [36m<button[31m
+              [33mclass[31m=[32m"_loginBtn_1da694"[31m
+              [33mtype[31m=[32m"submit"[31m
+            [36m>[31m
+              [0mLog In[0m
+              [0m [0m
+              [36m<span[31m
+                [33maria-hidden[31m=[32m"true"[31m
+                [33mclass[31m=[32m"_btnArrow_1da694"[31m
+              [36m>[31m
+                [0mΓåÆ[0m
+              [36m</span>[31m
+            [36m</button>[31m
+            [36m<p[31m
+              [33mclass[31m=[32m"_submitHelper_1da694"[31m
+            [36m>[31m
+              [0mUse the same account you used to create tournaments.[0m
+            [36m</p>[31m
+            [36m<div[31m
+              [33mclass[31m=[32m"_forgotRow_1da694"[31m
+            [36m>[31m
+              [36m<button[31m
+                [33mclass[31m=[32m"_forgotLink_1da694"[31m
+                [33mtype[31m=[32m"button"[31m
+              [36m>[31m
+                [0mForgot your password?[0m
+              [36m</button>[31m
+            [36m</div>[31m
+            [36m<div[31m
+              [33mclass[31m=[32m"_signupPrompt_1da694"[31m
+            [36m>[31m
+              [36m<span[31m
+                [33mclass[31m=[32m"_signupPromptText_1da694"[31m
+              [36m>[31m
+                [0mNew to Tournament Central?[0m
+              [36m</span>[31m
+              [36m<button[31m
+                [33mclass[31m=[32m"_signupPromptLink_1da694"[31m
+                [33mtype[31m=[32m"button"[31m
+              [36m>[31m
+                [0mCreate a free account[0m
+              [36m</button>[31m
+            [36m</div>[31m
+          [36m</form>[31m
+        [36m</section>[31m
+      [36m</div>[31m
+      [36m<footer[31m
+        [33mclass[31m=[32m"_footer_243192"[31m
+      [36m>[31m
+        [0m┬⌐ [0m
+        [0m2026[0m
+        [0m Tournament Centeral. All rights reserved.[0m
+      [36m</footer>[31m
+    [36m</main>[31m
+  [36m</div>[31m
+[36m</body>[31m[39m
+corepack.cmd : 
+At line:1 char:90
++ ... ntral-web"; & "C:\Program Files\nodejs\corepack.cmd" pnpm test -- --r ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+[31mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[39m[1m[41m Failed Tests 2 
+[49m[22m[31mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[39m
+
+[41m[1m FAIL [22m[49m components/auth/SignInForm.test.tsx[2m > 
+[22mSignInForm[2m > [22mshows API error message for failed login
+[31m[1mTestingLibraryElementError[22m[39m: Unable to find an accessible 
+element with the role "button" and name `/sign in/i`
+
+Here are the accessible roles:
+
+  main:
+
+  Name "":
+  [36m<main[39m
+    [33mclass[39m=[32m"_page_243192"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Welcome back":
+  [36m<h2[39m
+    [33mclass[39m=[32m"_cardTitle_243192"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"_cardSubtitle_243192"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"_submitHelper_1da694"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  textbox:
+
+  Name "Username or email":
+  [36m<input[39m
+    [33mautocomplete[39m=[32m"username"[39m
+    [33mclass[39m=[32m"_input_1da694 "[39m
+    [33mid[39m=[32m"login-username"[39m
+    [33mplaceholder[39m=[32m"Enter username or email"[39m
+    [33mrequired[39m=[32m""[39m
+    [33mtype[39m=[32m"text"[39m
+    [33mvalue[39m=[32m"sample-user"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Show password":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Show password"[39m
+    [33mclass[39m=[32m"_passwordToggle_1da694"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Log In":
+  [36m<button[39m
+    [33mclass[39m=[32m"_loginBtn_1da694"[39m
+    [33mtype[39m=[32m"submit"[39m
+  [36m/>[39m
+
+  Name "Forgot your password?":
+  [36m<button[39m
+    [33mclass[39m=[32m"_forgotLink_1da694"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Create a free account":
+  [36m<button[39m
+    [33mclass[39m=[32m"_signupPromptLink_1da694"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  contentinfo:
+
+  Name "":
+  [36m<footer[39m
+    [33mclass[39m=[32m"_footer_243192"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"_page_243192"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"_shell_243192"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"_brandPanel_243192"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"_brandTop_243192"[39m
+          [36m>[39m
+            [36m<img[39m
+              [33malt[39m=[32m"Tournament Central"[39m
+              [33mclass[39m=[32m"_bannerImage_243192"[39m
+              [33mheight[39m=[32m"104"[39m
+              [33msrc[39m=[32m"/TC Banner.svg"[39m
+              [33mwidth[39m=[32m"540"[39m
+            [36m/>[39m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"_brandHeadline_243192"[39m
+          [36m>[39m
+            [0mEverything Your Tournament Needs.[0m
+            [36m<br />[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"_brandHeadlineOrange_243192"[39m
+            [36m>[39m
+              [0mFrom Registration to Results.[0m
+            [36m</span>[39m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"_brandDescription_243192"[39m
+          [36m>[39m
+            [0mCreate tournaments, manage registration, organize squads, and 
+connect directly with BracketWorks when it's time to run your tournament.[0m
+          [36m</p>[39m
+          [36m<ul[39m
+            [33mclass[39m=[32m"_featureList_243192"[39m
+          [36m>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"_featureItem_243192"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33maria-label[39m=[32m"Create Your Tournament"[39m
+                [33mclass[39m=[32m"_card_76296d"[39m
+                [33mrole[39m=[32m"img"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-calendar-days 
+_icon_76296d"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"28"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"28"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M8 2v4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M16 2v4"[39m
+                  [36m/>[39m
+                  [36m<rect[39m
+                    [33mheight[39m=[32m"18"[39m
+                    [33mrx[39m=[32m"2"[39m
+                    [33mwidth[39m=[32m"18"[39m
+                    [33mx[39m=[32m"3"[39m
+                    [33my[39m=[32m"4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M3 10h18"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M8 14h.01"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 14h.01"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M16 14h.01"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M8 18h.01"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 18h.01"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M16 18h.01"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</div>[39m
+              [36m<span>[39m
+                [36m<strong>[39m
+                  [0mCreate Your Tournament[0m
+                [36m</strong>[39m
+                [36m<small>[39m
+                  [0mBuild dates, squads, divisions, events and fees.[0m
+                [36m</small>[39m
+              [36m</span>[39m
+            [36m</li>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"_featureItem_243192"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33maria-label[39m=[32m"Manage Registration"[39m
+                [33mclass[39m=[32m"_card_76296d"[39m
+                [33mrole[39m=[32m"img"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-users _icon_76296d"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"28"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"28"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 
+4v2"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M16 3.128a4 4 0 0 1 0 7.744"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M22 21v-2a4 4 0 0 0-3-3.87"[39m
+                  [36m/>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"9"[39m
+                    [33mcy[39m=[32m"7"[39m
+                    [33mr[39m=[32m"4"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</div>[39m
+              [36m<span>[39m
+                [36m<strong>[39m
+                  [0mManage Registration[0m
+                [36m</strong>[39m
+                [36m<small>[39m
+                  [0mKeep entries, bowlers and payments organized.[0m
+                [36m</small>[39m
+              [36m</span>[39m
+            [36m</li>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"_featureItem_243192"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33maria-label[39m=[32m"Run It With BracketWorks"[39m
+                [33mclass[39m=[32m"_card_76296d"[39m
+                [33mrole[39m=[32m"img"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-git-fork 
+_icon_76296d"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"28"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"28"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"18"[39m
+                    [33mr[39m=[32m"3"[39m
+                  [36m/>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"6"[39m
+                    [33mcy[39m=[32m"6"[39m
+                    [33mr[39m=[32m"3"[39m
+                  [36m/>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"18"[39m
+                    [33mcy[39m=[32m"6"[39m
+                    [33mr[39m=[32m"3"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M18 9v2c0 .6-.4 1-1 1H7c-.6 
+0-1-.4-1-1V9"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 12v3"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</div>[39m
+              [36m<span>[39m
+                [36m<strong>[39m
+                  [0mRun It With BracketWorks[0m
+                [36m</strong>[39m
+                [36m<small>[39m
+                  [0mSend your tournament directly into BracketWorks.[0m
+                [36m</small>[39m
+              [36m</span>[39m
+            [36m</li>[39m
+          [36m</ul>[39m
+        [36m</section>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"_card_243192"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"_cardHeader_243192"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"_cardTitle_243192"[39m
+            [36m>[39m
+              [0mWelcome back[0m
+            [36m</h2>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"_cardSubtitle_243192"[39m
+            [36m>[39m
+              [0mSign in to access tournaments, registrations, and live event 
+updates.[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<form[39m
+            [33mclass[39m=[32m"_form_1da694"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"_inputGroup_1da694"[39m
+            [36m>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"_inputLabel_1da694"[39m
+                [33mfor[39m=[32m"login-username"[39m
+              [36m>[39m
+                [0mUsername or email[0m
+              [36m</label>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-user 
+_inputIcon_1da694"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.8"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 
+4v2"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"7"[39m
+                  [33mr[39m=[32m"4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [36m<input[39m
+                [33mautocomplete[39m=[32m"username"[39m
+                [33mclass[39m=[32m"_input_1da694 "[39m
+                [33mid[39m=[32m"login-username"[39m
+                [33mplaceholder[39m=[32m"Enter username or email"[39m
+                [33mrequired[39m=[32m""[39m
+                [33mtype[39m=[32m"text"[39m
+                [33mvalue[39m=[32m"sample-user"[39m
+              [36m/>[39m
+            [36m</div>[39m
+            [36m<div>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"_inputLabel_1da694"[39m
+                [33mfor[39m=[32m"login-password"[39m
+              [36m>[39m
+                [0mPassword[0m
+              [36m</label>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"_passwordField_1da694"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-lock 
+_inputIcon_1da694"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.8"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<rect[39m
+                    [33mheight[39m=[32m"11"[39m
+                    [33mrx[39m=[32m"2"[39m
+                    [33mry[39m=[32m"2"[39m
+                    [33mwidth[39m=[32m"18"[39m
+                    [33mx[39m=[32m"3"[39m
+                    [33my[39m=[32m"11"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [36m<input[39m
+                  [33mautocomplete[39m=[32m"current-password"[39m
+                  [33mclass[39m=[32m"_input_1da694  "[39m
+                  [33mid[39m=[32m"login-password"[39m
+                  [33mplaceholder[39m=[32m"Enter your password"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"password"[39m
+                  [33mvalue[39m=[32m"bad-pass"[39m
+                [36m/>[39m
+                [36m<button[39m
+                  [33maria-label[39m=[32m"Show password"[39m
+                  [33mclass[39m=[32m"_passwordToggle_1da694"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [0mShow[0m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"_loginBtn_1da694"[39m
+              [33mtype[39m=[32m"submit"[39m
+            [36m>[39m
+              [0mLog In[0m
+              [0m [0m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"_btnArrow_1da694"[39m
+              [36m>[39m
+                [0mΓåÆ[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"_submitHelper_1da694"[39m
+            [36m>[39m
+              [0mUse the same account you used to create tournaments.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"_forgotRow_1da694"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"_forgotLink_1da694"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mForgot your password?[0m
+              [36m</button>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"_signupPrompt_1da694"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"_signupPromptText_1da694"[39m
+              [36m>[39m
+                [0mNew to Tournament Central?[0m
+              [36m</span>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"_signupPromptLink_1da694"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mCreate a free account[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</form>[39m
+        [36m</section>[39m
+      [36m</div>[39m
+      [36m<footer[39m
+        [33mclass[39m=[32m"_footer_243192"[39m
+      [36m>[39m
+        [0m┬⌐ [0m
+        [0m2026[0m
+        [0m Tournament Centeral. All rights reserved.[0m
+      [36m</footer>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+[36m</body>[39m
+[90m [2mΓ¥»[22m Object.getElementError ../../node_modules/.pnpm/@testing-lib
+rary+dom@10.4.1/node_modules/@testing-library/dom/dist/config.js:[2m37:19[22m
+[39m
+[90m [2mΓ¥»[22m ../../node_modules/.pnpm/@testing-library+dom@10.4.1/node_mo
+dules/@testing-library/dom/dist/query-helpers.js:[2m76:38[22m[39m
+[90m [2mΓ¥»[22m ../../node_modules/.pnpm/@testing-library+dom@10.4.1/node_mo
+dules/@testing-library/dom/dist/query-helpers.js:[2m52:17[22m[39m
+[90m [2mΓ¥»[22m ../../node_modules/.pnpm/@testing-library+dom@10.4.1/node_mo
+dules/@testing-library/dom/dist/query-helpers.js:[2m95:19[22m[39m
+[36m [2mΓ¥»[22m components/auth/SignInForm.test.tsx:[2m34:28[22m[39m
+    [90m 32| [39m    fireEvent.change(screen.getByLabelText(/username or 
+email/i), { taΓÇª
+    [90m 33| [39m    fireEvent.change(screen.getByLabelText(/^password$/i), 
+{ target: {ΓÇª
+    [90m 34| [39m    fireEvent[33m.[39m[34mclick[39m(screen[33m.[39m[3
+4mgetByRole[39m([32m'button'[39m[33m,[39m { name[33m:[39m [36m/sign 
+in/i[39m }))[33m;[39m
+    [90m   | [39m                           [31m^[39m
+    [90m 35| [39m
+    [90m 36| [39m    expect(await screen.findByText('Invalid username or 
+password.')).tΓÇª
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»Γ
+Ä»[1/2]ΓÄ»[22m[39m
+
+[41m[1m FAIL [22m[49m components/auth/SignInForm.test.tsx[2m > 
+[22mSignInForm[2m > [22mstores session and redirects on successful login
+[31m[1mTestingLibraryElementError[22m[39m: Unable to find an accessible 
+element with the role "button" and name `/sign in/i`
+
+Here are the accessible roles:
+
+  main:
+
+  Name "":
+  [36m<main[39m
+    [33mclass[39m=[32m"_page_243192"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Welcome back":
+  [36m<h2[39m
+    [33mclass[39m=[32m"_cardTitle_243192"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"_cardSubtitle_243192"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"_submitHelper_1da694"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  textbox:
+
+  Name "Username or email":
+  [36m<input[39m
+    [33mautocomplete[39m=[32m"username"[39m
+    [33mclass[39m=[32m"_input_1da694 "[39m
+    [33mid[39m=[32m"login-username"[39m
+    [33mplaceholder[39m=[32m"Enter username or email"[39m
+    [33mrequired[39m=[32m""[39m
+    [33mtype[39m=[32m"text"[39m
+    [33mvalue[39m=[32m"sample-user"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Show password":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Show password"[39m
+    [33mclass[39m=[32m"_passwordToggle_1da694"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Log In":
+  [36m<button[39m
+    [33mclass[39m=[32m"_loginBtn_1da694"[39m
+    [33mtype[39m=[32m"submit"[39m
+  [36m/>[39m
+
+  Name "Forgot your password?":
+  [36m<button[39m
+    [33mclass[39m=[32m"_forgotLink_1da694"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Create a free account":
+  [36m<button[39m
+    [33mclass[39m=[32m"_signupPromptLink_1da694"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  contentinfo:
+
+  Name "":
+  [36m<footer[39m
+    [33mclass[39m=[32m"_footer_243192"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"_page_243192"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"_shell_243192"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"_brandPanel_243192"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"_brandTop_243192"[39m
+          [36m>[39m
+            [36m<img[39m
+              [33malt[39m=[32m"Tournament Central"[39m
+              [33mclass[39m=[32m"_bannerImage_243192"[39m
+              [33mheight[39m=[32m"104"[39m
+              [33msrc[39m=[32m"/TC Banner.svg"[39m
+              [33mwidth[39m=[32m"540"[39m
+            [36m/>[39m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"_brandHeadline_243192"[39m
+          [36m>[39m
+            [0mEverything Your Tournament Needs.[0m
+            [36m<br />[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"_brandHeadlineOrange_243192"[39m
+            [36m>[39m
+              [0mFrom Registration to Results.[0m
+            [36m</span>[39m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"_brandDescription_243192"[39m
+          [36m>[39m
+            [0mCreate tournaments, manage registration, organize squads, and 
+connect directly with BracketWorks when it's time to run your tournament.[0m
+          [36m</p>[39m
+          [36m<ul[39m
+            [33mclass[39m=[32m"_featureList_243192"[39m
+          [36m>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"_featureItem_243192"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33maria-label[39m=[32m"Create Your Tournament"[39m
+                [33mclass[39m=[32m"_card_76296d"[39m
+                [33mrole[39m=[32m"img"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-calendar-days 
+_icon_76296d"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"28"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"28"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M8 2v4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M16 2v4"[39m
+                  [36m/>[39m
+                  [36m<rect[39m
+                    [33mheight[39m=[32m"18"[39m
+                    [33mrx[39m=[32m"2"[39m
+                    [33mwidth[39m=[32m"18"[39m
+                    [33mx[39m=[32m"3"[39m
+                    [33my[39m=[32m"4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M3 10h18"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M8 14h.01"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 14h.01"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M16 14h.01"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M8 18h.01"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 18h.01"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M16 18h.01"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</div>[39m
+              [36m<span>[39m
+                [36m<strong>[39m
+                  [0mCreate Your Tournament[0m
+                [36m</strong>[39m
+                [36m<small>[39m
+                  [0mBuild dates, squads, divisions, events and fees.[0m
+                [36m</small>[39m
+              [36m</span>[39m
+            [36m</li>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"_featureItem_243192"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33maria-label[39m=[32m"Manage Registration"[39m
+                [33mclass[39m=[32m"_card_76296d"[39m
+                [33mrole[39m=[32m"img"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-users _icon_76296d"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"28"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"28"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 
+4v2"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M16 3.128a4 4 0 0 1 0 7.744"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M22 21v-2a4 4 0 0 0-3-3.87"[39m
+                  [36m/>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"9"[39m
+                    [33mcy[39m=[32m"7"[39m
+                    [33mr[39m=[32m"4"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</div>[39m
+              [36m<span>[39m
+                [36m<strong>[39m
+                  [0mManage Registration[0m
+                [36m</strong>[39m
+                [36m<small>[39m
+                  [0mKeep entries, bowlers and payments organized.[0m
+                [36m</small>[39m
+              [36m</span>[39m
+            [36m</li>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"_featureItem_243192"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33maria-label[39m=[32m"Run It With BracketWorks"[39m
+                [33mclass[39m=[32m"_card_76296d"[39m
+                [33mrole[39m=[32m"img"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-git-fork 
+_icon_76296d"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"28"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"28"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"18"[39m
+                    [33mr[39m=[32m"3"[39m
+                  [36m/>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"6"[39m
+                    [33mcy[39m=[32m"6"[39m
+                    [33mr[39m=[32m"3"[39m
+                  [36m/>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"18"[39m
+                    [33mcy[39m=[32m"6"[39m
+                    [33mr[39m=[32m"3"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M18 9v2c0 .6-.4 1-1 1H7c-.6 
+0-1-.4-1-1V9"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 12v3"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</div>[39m
+              [36m<span>[39m
+                [36m<strong>[39m
+                  [0mRun It With BracketWorks[0m
+                [36m</strong>[39m
+                [36m<small>[39m
+                  [0mSend your tournament directly into BracketWorks.[0m
+                [36m</small>[39m
+              [36m</span>[39m
+            [36m</li>[39m
+          [36m</ul>[39m
+        [36m</section>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"_card_243192"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"_cardHeader_243192"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"_cardTitle_243192"[39m
+            [36m>[39m
+              [0mWelcome back[0m
+            [36m</h2>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"_cardSubtitle_243192"[39m
+            [36m>[39m
+              [0mSign in to access tournaments, registrations, and live event 
+updates.[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<form[39m
+            [33mclass[39m=[32m"_form_1da694"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"_inputGroup_1da694"[39m
+            [36m>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"_inputLabel_1da694"[39m
+                [33mfor[39m=[32m"login-username"[39m
+              [36m>[39m
+                [0mUsername or email[0m
+              [36m</label>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-user 
+_inputIcon_1da694"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.8"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 
+4v2"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"7"[39m
+                  [33mr[39m=[32m"4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [36m<input[39m
+                [33mautocomplete[39m=[32m"username"[39m
+                [33mclass[39m=[32m"_input_1da694 "[39m
+                [33mid[39m=[32m"login-username"[39m
+                [33mplaceholder[39m=[32m"Enter username or email"[39m
+                [33mrequired[39m=[32m""[39m
+                [33mtype[39m=[32m"text"[39m
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m1 passed[39m[22m[90m (2)[39m
+[2m      Tests [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m2 passed[39m[22m[90m (4)[39m
+[2m   Start at [22m 09:21:55
+[2m   Duration [22m 3.76s[2m (transform 288ms, setup 832ms, collect 760ms, tests 1.57s, environment 2.07s, prepare 443ms)[22m
+
+                [33mvalue[39m=[32m"sample-user"[39m
+              [36m/>[39m
+            [36m</div>[39m
+            [36m<div>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"_inputLabel_1da694"[39m
+                [33mfor[39m=[32m"login-password"[39m
+              [36m>[39m
+                [0mPassword[0m
+              [36m</label>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"_passwordField_1da694"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-lock 
+_inputIcon_1da694"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.8"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<rect[39m
+                    [33mheight[39m=[32m"11"[39m
+                    [33mrx[39m=[32m"2"[39m
+                    [33mry[39m=[32m"2"[39m
+                    [33mwidth[39m=[32m"18"[39m
+                    [33mx[39m=[32m"3"[39m
+                    [33my[39m=[32m"11"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [36m<input[39m
+                  [33mautocomplete[39m=[32m"current-password"[39m
+                  [33mclass[39m=[32m"_input_1da694  "[39m
+                  [33mid[39m=[32m"login-password"[39m
+                  [33mplaceholder[39m=[32m"Enter your password"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"password"[39m
+                  [33mvalue[39m=[32m"good-pass"[39m
+                [36m/>[39m
+                [36m<button[39m
+                  [33maria-label[39m=[32m"Show password"[39m
+                  [33mclass[39m=[32m"_passwordToggle_1da694"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [0mShow[0m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"_loginBtn_1da694"[39m
+              [33mtype[39m=[32m"submit"[39m
+            [36m>[39m
+              [0mLog In[0m
+              [0m [0m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"_btnArrow_1da694"[39m
+              [36m>[39m
+                [0mΓåÆ[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"_submitHelper_1da694"[39m
+            [36m>[39m
+              [0mUse the same account you used to create tournaments.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"_forgotRow_1da694"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"_forgotLink_1da694"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mForgot your password?[0m
+              [36m</button>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"_signupPrompt_1da694"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"_signupPromptText_1da694"[39m
+              [36m>[39m
+                [0mNew to Tournament Central?[0m
+              [36m</span>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"_signupPromptLink_1da694"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mCreate a free account[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</form>[39m
+        [36m</section>[39m
+      [36m</div>[39m
+      [36m<footer[39m
+        [33mclass[39m=[32m"_footer_243192"[39m
+      [36m>[39m
+        [0m┬⌐ [0m
+        [0m2026[0m
+        [0m Tournament Centeral. All rights reserved.[0m
+      [36m</footer>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+[36m</body>[39m
+[90m [2mΓ¥»[22m Object.getElementError ../../node_modules/.pnpm/@testing-lib
+rary+dom@10.4.1/node_modules/@testing-library/dom/dist/config.js:[2m37:19[22m
+[39m
+[90m [2mΓ¥»[22m ../../node_modules/.pnpm/@testing-library+dom@10.4.1/node_mo
+dules/@testing-library/dom/dist/query-helpers.js:[2m76:38[22m[39m
+[90m [2mΓ¥»[22m ../../node_modules/.pnpm/@testing-library+dom@10.4.1/node_mo
+dules/@testing-library/dom/dist/query-helpers.js:[2m52:17[22m[39m
+[90m [2mΓ¥»[22m ../../node_modules/.pnpm/@testing-library+dom@10.4.1/node_mo
+dules/@testing-library/dom/dist/query-helpers.js:[2m95:19[22m[39m
+[36m [2mΓ¥»[22m components/auth/SignInForm.test.tsx:[2m59:28[22m[39m
+    [90m 57| [39m    fireEvent.change(screen.getByLabelText(/username or 
+email/i), { taΓÇª
+    [90m 58| [39m    fireEvent.change(screen.getByLabelText(/^password$/i), 
+{ target: {ΓÇª
+    [90m 59| [39m    fireEvent[33m.[39m[34mclick[39m(screen[33m.[39m[3
+4mgetByRole[39m([32m'button'[39m[33m,[39m { name[33m:[39m [36m/sign 
+in/i[39m }))[33m;[39m
+    [90m   | [39m                           [31m^[39m
+    [90m 60| [39m
+    [90m 61| [39m    [35mawait[39m [34mwaitFor[39m(() [33m=>[39m {
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»Γ
+Ä»[2/2]ΓÄ»[22m[39m
+
+ΓÇëELIFECYCLEΓÇë Test failed. See above for more details.

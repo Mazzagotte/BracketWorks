@@ -1,0 +1,259 @@
+@keyframes cardReveal {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes panelReveal {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.page {
+  --bw-login-bg: var(--color-bg-primary);
+  --bw-login-card: var(--color-bg-primary);
+  --bw-login-card-border: var(--color-border-primary);
+  --bw-login-text: var(--color-text-primary);
+  --bw-login-text-muted: var(--color-text-secondary);
+  --bw-login-input: var(--color-bg-primary);
+  --bw-login-input-border: var(--color-border-primary);
+  --bw-login-orange: var(--color-primary);
+  --bw-login-orange-hover: var(--color-primary);
+  --bw-login-danger: var(--color-primary);
+
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  overflow: auto;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 28px;
+  font-family: var(--font-family-primary);
+  background: var(--color-bg-primary);
+  color: var(--bw-login-text);
+}
+
+.page::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--color-text-primary) 3%, transparent) 1px, transparent 1px),
+    linear-gradient(0deg, color-mix(in srgb, var(--color-text-primary) 3%, transparent) 1px, transparent 1px);
+  background-size: 52px 52px;
+  opacity: 0.15;
+}
+
+.shell {
+  width: min(1160px, 100%);
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(390px, 460px);
+  gap: 40px;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+}
+
+.brandPanel {
+  animation: panelReveal 0.45s ease-out;
+}
+
+/* Logo banner */
+.brandTop {
+  max-width: 480px;
+  margin-bottom: 32px;
+}
+
+.bannerImage {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Headline & description */
+.brandHeadline {
+  margin: 0 0 16px;
+  font-size: clamp(28px, 2.6vw, 46px);
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  max-width: 540px;
+  text-wrap: balance;
+}
+
+.brandHeadlineOrange {
+  color: var(--bw-login-orange);
+}
+
+.brandDescription {
+  margin: 0 0 28px;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--bw-login-text-muted);
+  max-width: 480px;
+}
+
+.featureList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 14px;
+  max-width: 500px;
+}
+
+.featureItem strong {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 18px;
+  line-height: 1.1;
+}
+
+.featureItem {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+}
+
+.featureItem small {
+  display: block;
+  color: var(--bw-login-text-muted);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.card {
+  position: relative;
+  background: var(--bw-login-card);
+  border: 2px solid var(--bw-login-orange);
+  border-radius: 22px;
+  padding: 34px 28px 28px;
+  box-shadow: 0 28px 56px color-mix(in srgb, var(--color-black) 46%, transparent);
+  backdrop-filter: blur(9px);
+  -webkit-backdrop-filter: blur(9px);
+  animation: cardReveal 0.45s ease-out;
+}
+
+.cardHeader {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.cardTitle {
+  margin: 10px 0 8px;
+  font-size: 46px;
+  line-height: 1.02;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.cardSubtitle {
+  margin: 0 auto;
+  color: var(--bw-login-text-muted);
+  font-size: 15px;
+  line-height: 1.45;
+  max-width: 320px;
+}
+
+.switchRow {
+  margin-top: 14px;
+  display: grid;
+  gap: 10px;
+  text-align: center;
+}
+
+.switchRow span {
+  color: var(--bw-login-text-muted);
+  font-size: 14px;
+}
+
+.switchRow a {
+  min-height: 42px;
+  border-radius: 10px;
+  border: 1px solid var(--bw-login-orange);
+  background: transparent;
+  color: var(--bw-login-text);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.switchRow a:hover {
+  border-color: var(--bw-login-orange-hover);
+  background: color-mix(in srgb, var(--color-primary) 13%, transparent);
+}
+
+.footer {
+  position: fixed;
+  bottom: 14px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  color: var(--bw-login-text-muted);
+  font-size: 14px;
+  z-index: 1;
+}
+
+@media (max-width: 1100px) {
+  .shell {
+    grid-template-columns: 1fr;
+    width: min(560px, 100%);
+    gap: 16px;
+  }
+
+  .brandPanel {
+    display: none;
+  }
+
+  .cardTitle {
+    font-size: 40px;
+  }
+
+  .cardSubtitle {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 720px) {
+  .page {
+    padding: 14px;
+  }
+
+  .card {
+    padding: 22px 16px;
+    border-radius: 18px;
+  }
+
+  .cardTitle {
+    font-size: 34px;
+  }
+
+  .cardSubtitle {
+    font-size: 14px;
+  }
+
+  .footer {
+    position: static;
+    margin-top: 12px;
+    font-size: 13px;
+  }
+}

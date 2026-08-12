@@ -1,0 +1,304 @@
+.form {
+  display: grid;
+  gap: 12px;
+}
+
+.inputGroup {
+  position: relative;
+}
+
+.passwordField {
+  position: relative;
+}
+
+.inputLabel {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--bw-login-text);
+}
+
+.inputIcon {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  width: 18px;
+  height: 18px;
+  color: color-mix(in srgb, var(--bw-login-orange) 78%, var(--color-white));
+  pointer-events: none;
+}
+
+.inputIcon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.input {
+  width: 100%;
+  min-height: 52px;
+  border-radius: 10px;
+  border: 1px solid var(--bw-login-input-border);
+  background: var(--bw-login-input);
+  color: var(--bw-login-text);
+  font-size: 16px;
+  padding: 0 14px 0 42px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.1s ease, color 0.1s ease;
+  box-sizing: border-box;
+}
+
+.input::placeholder {
+  color: var(--bw-login-text-muted);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--bw-login-orange);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 18%, transparent);
+}
+
+.input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 30px var(--bw-login-input) inset !important;
+  -webkit-text-fill-color: var(--bw-login-text) !important;
+  border-color: var(--bw-login-input-border) !important;
+  -webkit-transition: background-color 5000s ease-in-out 0s !important;
+  transition: background-color 5000s ease-in-out 0s !important;
+}
+
+.input:-webkit-autofill:hover {
+  -webkit-box-shadow: 0 0 0 30px var(--bw-login-input) inset !important;
+  -webkit-text-fill-color: var(--bw-login-text) !important;
+  border-color: var(--bw-login-input-border) !important;
+}
+
+.input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 30px var(--bw-login-input) inset, 0 0 0 3px color-mix(in srgb, var(--color-primary) 18%, transparent) !important;
+  -webkit-text-fill-color: var(--bw-login-text) !important;
+  border-color: var(--bw-login-orange) !important;
+}
+
+.input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px var(--bw-login-input) inset !important;
+  -webkit-text-fill-color: var(--bw-login-text) !important;
+  border-color: var(--bw-login-input-border) !important;
+}
+
+.passwordField .input {
+  padding-right: 102px;
+}
+
+.inputCapsLock,
+.inputError {
+  border-color: var(--bw-login-danger) !important;
+}
+
+.passwordToggle {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  min-height: 33px;
+  min-width: 80px;
+  border-radius: 10px;
+  border: 1px solid var(--bw-login-input-border);
+  background: var(--bw-login-input);
+  color: var(--bw-login-text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.passwordToggle:hover {
+  color: var(--bw-login-text);
+  border-color: var(--bw-login-orange);
+  background: color-mix(in srgb, var(--bw-login-input) 90%, var(--bw-login-orange) 10%);
+}
+
+.capsLockWarning,
+.delayWarning,
+.attemptsInfo,
+.errorBanner,
+.infoBanner,
+.successBanner,
+.sessionExpiredBanner {
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.errorBanner,
+.delayWarning {
+  color: var(--color-text-secondary);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 60%, transparent);
+  background: color-mix(in srgb, var(--color-danger) 40%, transparent);
+}
+
+.infoMessage,
+.infoBanner,
+.sessionExpiredBanner,
+.capsLockWarning,
+.attemptsInfo {
+  color: var(--color-text-secondary);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 50%, transparent);
+  background: color-mix(in srgb, var(--color-danger) 33%, transparent);
+}
+
+.successMessage,
+.successBanner {
+  color: var(--color-success);
+  border: 1px solid color-mix(in srgb, var(--color-success) 50%, transparent);
+  background: color-mix(in srgb, var(--color-success) 36%, transparent);
+}
+
+.loginBtn {
+  width: 100%;
+  min-height: 52px;
+  border: none;
+  border-radius: 10px;
+  background: var(--bw-login-orange);
+  color: var(--color-text-primary);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  transition: background 0.2s ease;
+}
+
+.loginBtn:hover:not(:disabled) {
+  background: var(--bw-login-orange-hover);
+}
+
+.btnArrow {
+  display: inline-block;
+  margin-left: 6px;
+  transition: none;
+}
+
+.loginBtn:hover:not(:disabled) .btnArrow {
+  transform: none;
+}
+
+.loginBtn:disabled {
+  opacity: 0.64;
+  cursor: not-allowed;
+}
+
+.submitHelper {
+  margin: 6px 0 0;
+  text-align: center;
+  font-size: 12px;
+  color: var(--bw-login-text-muted);
+}
+
+.forgotRow {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 12px;
+}
+
+.forgotRow::before,
+.forgotRow::after {
+  content: '';
+  height: 1px;
+  background: var(--bw-login-card-border);
+}
+
+.forgotLink {
+  border: none;
+  background: transparent;
+  color: var(--bw-login-orange);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.forgotLink:hover {
+  color: var(--bw-login-orange-hover);
+}
+
+.signupPrompt {
+  margin-top: 14px;
+  display: grid;
+  gap: 10px;
+  text-align: center;
+}
+
+.signupPromptText {
+  color: var(--bw-login-text-muted);
+  font-size: 14px;
+}
+
+.signupPromptLink {
+  min-height: 42px;
+  border-radius: 10px;
+  border: 1px solid var(--bw-login-orange);
+  background: transparent;
+  color: var(--bw-login-text);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.signupPromptLink:hover {
+  border-color: var(--bw-login-orange-hover);
+  background: color-mix(in srgb, var(--color-primary) 13%, transparent);
+}
+
+.helperLinks {
+  margin-top: 2px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.helperLinks a {
+  color: var(--color-primary);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.helperLinks a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 720px) {
+  .inputLabel {
+    font-size: 13px;
+  }
+
+  .input {
+    min-height: 48px;
+    font-size: 16px;
+  }
+
+  .passwordField .input {
+    padding-right: 90px;
+  }
+
+  .passwordToggle {
+    min-width: 74px;
+    font-size: 12px;
+  }
+
+  .loginBtn {
+    min-height: 48px;
+    font-size: 16px;
+  }
+
+  .forgotLink,
+  .signupPromptText,
+  .signupPromptLink {
+    font-size: 14px;
+  }
+}

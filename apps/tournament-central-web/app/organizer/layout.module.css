@@ -1,0 +1,14 @@
+.shell {
+  min-height: 100dvh;
+  background: var(--bw-page);
+}
+
+.content {
+  padding-top: calc(var(--header-height) + 12px);
+}
+
+@media (max-width: 980px) {
+  .content {
+    padding-top: calc(56px + env(safe-area-inset-top) + 12px);
+  }
+}

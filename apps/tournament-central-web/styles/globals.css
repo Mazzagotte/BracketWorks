@@ -12,16 +12,14 @@
 html {
   height: 100%;
   width: 100%;
-  overflow: hidden;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
 
 body {
   margin: 0;
-  height: 100dvh;
+  min-height: 100dvh;
   width: 100%;
-  overflow: hidden;
   scrollbar-gutter: stable;
   font-family: var(--font-family-primary);
   font-size: var(--font-size-base);

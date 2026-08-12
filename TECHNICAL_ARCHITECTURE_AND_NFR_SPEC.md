@@ -68,7 +68,7 @@ BracketWorks is a web platform for running bowling tournaments with bracket gene
 ### Local Development
 - Docker Compose: `db` (postgres:16), `redis` (redis:7-alpine), `backend` (port 8000)
 - Recommended mode: containers for DB + Redis + backend, frontend apps run locally via pnpm scripts
-- Start script: `start_bracketworks.ps1` launches the local services and the frontend/backend process flow for development
+- Start script: `scripts/start-bracketworks.ps1` launches the local services and the frontend/backend process flow for development
 - Backend auto-runs `alembic upgrade head` on startup
 
 ### Production (Railway)

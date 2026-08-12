@@ -235,6 +235,7 @@
 
 /* --- Password Fields --- */
 .passwordField {
+  position: relative;
   display: flex;
   gap: 8px;
   align-items: center;
@@ -242,6 +243,10 @@
 
 .passwordField .inputWrapper {
   flex: 1;
+}
+
+.passwordField .inputWrapper input {
+  padding-right: 64px;
 }
 
 .passwordRequirements {

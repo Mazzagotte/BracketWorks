@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1 import admin, health, bowlers, brackets, tournaments, users, squads, bracket_settings, scores, payouts, public
+from app.api.v1 import admin, health, bowlers, brackets, tournaments, users, squads, bracket_settings, scores, payouts, public, organizer_setup, tc_tournaments, tc_organizer_setup
 
 api_router = APIRouter()
 
@@ -14,4 +14,7 @@ api_router.include_router(bracket_settings.router, prefix="/bracket-settings", t
 api_router.include_router(scores.router, prefix="/scores", tags=["scores"])
 api_router.include_router(payouts.router, prefix="/payouts", tags=["payouts"])
 api_router.include_router(public.router, prefix="/public", tags=["public"])
+api_router.include_router(organizer_setup.router, prefix="/organizer-setup", tags=["organizer-setup"])
+api_router.include_router(tc_tournaments.router, prefix="/tc/tournaments", tags=["tc-tournaments"])
+api_router.include_router(tc_organizer_setup.router, prefix="/tc/organizer-setup", tags=["tc-organizer-setup"])
 api_router.include_router(admin.router, prefix="/admin", tags=["admin"])

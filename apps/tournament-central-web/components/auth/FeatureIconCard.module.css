@@ -1,0 +1,37 @@
+.card {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid var(--bw-border-card);
+  border-radius: var(--radius-lg);
+  background: var(--bw-surface-card);
+  color: var(--bw-text-accent);
+  box-shadow: var(--bw-shadow-card);
+  transition: transform 0.2s ease-out, border-color 0.2s ease-out;
+}
+
+.card::before {
+  position: absolute;
+  inset: 1px;
+  border-radius: calc(var(--radius-lg) - 1px);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--bw-text-title) 12%, transparent),
+    transparent 38%
+  );
+  content: '';
+  pointer-events: none;
+}
+
+.card:hover {
+  border-color: var(--bw-border-accent);
+  transform: translateY(-2px);
+}
+
+.icon {
+  position: relative;
+  z-index: 1;
+}

@@ -1,0 +1,102 @@
+.form {
+  display: grid;
+  gap: 12px;
+}
+
+.statusMessage {
+  margin: 0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.neutralMessage {
+  color: var(--color-text-secondary);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 50%, transparent);
+  background: color-mix(in srgb, var(--color-danger) 33%, transparent);
+}
+
+.errorMessage {
+  color: var(--color-text-secondary);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 60%, transparent);
+  background: color-mix(in srgb, var(--color-danger) 40%, transparent);
+}
+
+.successMessage {
+  color: var(--color-success);
+  border: 1px solid color-mix(in srgb, var(--color-success) 50%, transparent);
+  background: color-mix(in srgb, var(--color-success) 36%, transparent);
+}
+
+.fieldLabel {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--color-text-primary);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.fieldInput {
+  width: 100%;
+  border: 1px solid var(--color-border-primary);
+  border-radius: 10px;
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  padding: 12px 14px;
+  font-size: 16px;
+  box-sizing: border-box;
+  resize: vertical;
+}
+
+.fieldInput::placeholder {
+  color: var(--color-text-secondary);
+}
+
+.fieldInput:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 18%, transparent);
+}
+
+.submitButton {
+  width: 100%;
+  min-height: 52px;
+  border: none;
+  border-radius: 10px;
+  background: var(--color-primary);
+  color: var(--color-text-primary);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+}
+
+.submitButton:disabled {
+  opacity: 0.72;
+  cursor: not-allowed;
+}
+
+.helperLinks {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.helperLinks a {
+  color: var(--color-primary);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.helperLinks span {
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.helperLinks a:hover {
+  text-decoration: underline;
+}

@@ -88,6 +88,7 @@ def _hydrate_squads_from_legacy_squad_times(db: Session, tournament: models.Tour
 
     return created
 
+@router.post("", response_model=schemas.Tournament)
 @router.post("/", response_model=schemas.Tournament)
 def create_tournament(
     tournament: schemas.TournamentCreate,
@@ -117,6 +118,7 @@ def create_tournament(
         logger.error(f"Error creating tournament: {e}")
         raise HTTPException(status_code=500, detail="Failed to create tournament")
 
+@router.get("", response_model=list[schemas.Tournament])
 @router.get("/", response_model=list[schemas.Tournament])
 def list_tournaments(
     request: Request,

@@ -1,0 +1,351 @@
+.topNav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: var(--header-height);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  z-index: 1100;
+  padding: 0 24px;
+  background: color-mix(in srgb, var(--bw-surface-card) 94%, transparent);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--bw-border-card);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--bw-border-subtle) 60%, transparent);
+  box-sizing: border-box;
+}
+
+.logoLink {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  flex-shrink: 0;
+  opacity: 1;
+  transition: opacity 0.15s ease;
+}
+
+.logoLink:hover {
+  opacity: 0.85;
+  text-decoration: none;
+}
+
+.logoIcon {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+}
+
+.logoText {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-primary);
+  white-space: nowrap;
+  letter-spacing: 0;
+}
+
+.tournamentContext {
+  min-width: 180px;
+  max-width: 300px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2px;
+  padding: 6px 14px;
+  border-left: 1px solid var(--bw-border-subtle);
+  border-right: 1px solid var(--bw-border-subtle);
+  color: var(--bw-text-body);
+  flex-shrink: 1;
+}
+
+.tournamentContextName,
+.squadContextName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tournamentContextName {
+  font-size: 13px;
+  line-height: 1.25;
+  font-weight: 700;
+  color: var(--bw-text-title);
+}
+
+.tournamentContextEmpty .tournamentContextName {
+  font-weight: 600;
+  color: var(--bw-text-faint);
+}
+
+.squadContextName {
+  font-size: 11px;
+  line-height: 1.25;
+  font-weight: 600;
+  color: var(--bw-text-accent);
+}
+
+.navPills {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  justify-content: center;
+}
+
+.navPill {
+  padding: 7px 16px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--bw-text-muted);
+  text-decoration: none;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+  cursor: pointer;
+}
+
+.navPill:hover {
+  color: var(--bw-text-title);
+  background: var(--bw-surface-panel);
+  text-decoration: none;
+}
+
+.navPillActive {
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 30%, transparent);
+  font-weight: 700;
+  box-shadow: none;
+}
+
+.navPillActive:hover {
+  background: color-mix(in srgb, var(--color-primary) 18%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 44%, transparent);
+}
+
+.rightZone {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.publicViewButton {
+  min-height: 34px;
+  padding: 8px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 40%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 18%, transparent);
+  color: var(--bw-text-title);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.14s ease, box-shadow 0.18s ease;
+}
+
+.publicViewButton:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--color-primary) 56%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 26%, transparent);
+}
+
+.externalMark {
+  margin-left: 3px;
+  font-size: 11px;
+  line-height: 1;
+  color: currentColor;
+}
+
+.userMenu {
+  position: relative;
+}
+
+.userMenuTrigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--bw-border-subtle);
+  background: var(--bw-surface-panel);
+  padding: 3px 8px 3px 3px;
+  color: var(--bw-text-body);
+  cursor: pointer;
+}
+
+.userMenuTrigger:hover {
+  border-color: var(--bw-border-accent);
+  background: var(--bw-surface-panel-strong);
+}
+
+.avatarChip {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  background: var(--bw-surface-panel-strong);
+  border: 1px solid var(--bw-border-subtle);
+  color: var(--bw-text-title);
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 0;
+}
+
+.userMenuCaret {
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid var(--bw-text-muted);
+  line-height: 1;
+}
+
+.userMenuPanel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 190px;
+  display: grid;
+  gap: 2px;
+  padding: 8px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--bw-border-accent);
+  background: var(--bw-surface-card-strong);
+  box-shadow: var(--bw-shadow-card);
+  z-index: 1200;
+}
+
+.userMenuHeader {
+  padding: 7px 8px;
+  margin-bottom: 2px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--bw-text-title);
+  border-bottom: 1px solid var(--bw-border-subtle);
+}
+
+.userMenuItemButton {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  border: none;
+  background: transparent;
+  color: var(--bw-text-body);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.userMenuItemButton:hover {
+  background: var(--bw-surface-hover-warm);
+  color: var(--bw-text-title);
+}
+
+.userMenuItemDanger {
+  color: var(--bw-text-danger);
+}
+
+.userMenuItemDanger:hover {
+  background: color-mix(in srgb, var(--bw-text-danger) 12%, transparent);
+  color: var(--bw-text-danger);
+}
+
+.topNavMobile {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: calc(56px + env(safe-area-inset-top));
+  display: none;
+  align-items: center;
+  gap: 12px;
+  z-index: 1100;
+  padding: env(safe-area-inset-top) 16px 0;
+  background: var(--bw-surface-card-strong);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--bw-border-subtle);
+  box-shadow: var(--bw-shadow-card);
+  box-sizing: border-box;
+}
+
+.mobileBrand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  flex: 1;
+  min-width: 0;
+}
+
+.mobileLogoIcon {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.mobileBrandText {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mobileTournamentBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: var(--radius-md);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-primary);
+  background: var(--bw-surface-hover-warm);
+  border: 1px solid var(--bw-border-accent);
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+@media (max-width: 1160px) {
+  .logoText {
+    display: none;
+  }
+
+  .tournamentContext {
+    min-width: 150px;
+    max-width: 190px;
+    padding-inline: 10px;
+  }
+
+  .navPill {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .publicViewButton {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 980px) {
+  .topNav {
+    display: none;
+  }
+
+  .topNavMobile {
+    display: flex;
+  }
+}

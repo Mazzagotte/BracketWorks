@@ -8,7 +8,7 @@ from pydantic import (
     model_validator,
 )
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 
 class BracketProgramDefinition(BaseModel):
@@ -331,8 +331,39 @@ class Tournament(TournamentBase):
     id: int
     user_id: int
     is_public: bool
+    has_logo: Optional[bool] = None
+    logo_file_name: Optional[str] = None
+    logo_mime_type: Optional[str] = None
     entry_count: Optional[int] = None
     brackets_configured: Optional[bool] = None
+
+
+class TournamentSetupStateUpsert(BaseModel):
+    payload: Dict[str, Any] = Field(default_factory=dict)
+    is_published: bool = False
+
+
+class TournamentSetupState(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    tournament_id: int
+    user_id: int
+    payload: Dict[str, Any]
+    is_published: bool
+    created_at: datetime
+    updated_at: datetime
+
+
+class TournamentSetupStateSummary(BaseModel):
+    tournament_id: int
+    tournament_name: str
+    tournament_location: str | None = None
+    tournament_start_date: str | None = None
+    tournament_end_date: str | None = None
+    is_published: bool
+    created_at: datetime
+    updated_at: datetime
 
 
 class TournamentBracketSettingsBase(BaseModel):
