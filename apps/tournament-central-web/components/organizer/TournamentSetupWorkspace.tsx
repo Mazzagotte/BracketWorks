@@ -4457,7 +4457,7 @@ export default function TournamentSetupWorkspace() {
                   {hiddenFields.length > 0 ? (
                     <div className={`${styles.registrationFieldGroupCard} ${styles.registrationFieldGroupCardMuted}`}>
                       <div className={styles.registrationGroupHeader}>
-                        <strong>Don't Ask Right Now</strong>
+                        <strong>Don&apos;t Ask Right Now</strong>
                         <span>{hiddenFields.length} hidden field{hiddenFields.length === 1 ? '' : 's'}</span>
                       </div>
                       <div className={`${styles.listStack} ${styles.registrationFieldList} ${styles.registrationFieldGroupBody}`}>
@@ -4477,7 +4477,7 @@ export default function TournamentSetupWorkspace() {
                               </div>
                               <p className={styles.registrationFieldHelpText}>This field is currently hidden from bowlers.</p>
                               <div className={styles.metaChips}>
-                                <span className={`${styles.chip} ${styles.registrationFieldModeChip} ${styles.registrationFieldModeDontAsk}`}>Don't Ask</span>
+                                <span className={`${styles.chip} ${styles.registrationFieldModeChip} ${styles.registrationFieldModeDontAsk}`}>Don&apos;t Ask</span>
                               </div>
                             </div>
                             <div className={styles.registrationFieldActions}>
@@ -4608,7 +4608,7 @@ export default function TournamentSetupWorkspace() {
                             </button>
                           </div>
                           <button type="button" className={styles.inlineAction} onClick={() => handleSetQuestionEnabled(question.id, false)}>
-                            Don't Ask
+                            Don&apos;t Ask
                           </button>
                           <button type="button" className={styles.iconButton} onClick={() => setDrawerState({ kind: 'question', id: question.id })} aria-label="Edit question">
                             <PencilLine size={15} />
@@ -4621,7 +4621,7 @@ export default function TournamentSetupWorkspace() {
                   {disabledQuestions.length > 0 ? (
                     <>
                       <div className={styles.registrationGroupHeader}>
-                        <strong>Don't Ask Right Now</strong>
+                        <strong>Don&apos;t Ask Right Now</strong>
                         <span>{disabledQuestions.length} hidden question{disabledQuestions.length === 1 ? '' : 's'}</span>
                       </div>
                       <div className={styles.listStack}>
@@ -4635,7 +4635,7 @@ export default function TournamentSetupWorkspace() {
                               <div className={styles.metaChips}>
                                 <span className={styles.chip}>{question.type}</span>
                                 <span className={styles.chip}>{question.required ? 'Required' : 'Optional'}</span>
-                                <span className={`${styles.chip} ${styles.chipMuted}`}>Don't Ask</span>
+                                <span className={`${styles.chip} ${styles.chipMuted}`}>Don&apos;t Ask</span>
                               </div>
                             </div>
                             <div className={styles.questionCardActions}>
@@ -5705,10 +5705,10 @@ function FieldEditor({ field, onSave }: FieldEditorProps) {
           onChange={(eventInput) => setDraft({ ...draft, mode: eventInput.target.value as RegistrationFieldConfig['mode'] })}
           disabled={isModeLocked}
         >
-          {isModeLocked ? <option value="dont-ask">Don't Ask (Locked)</option> : null}
+          {isModeLocked ? <option value="dont-ask">Don&apos;t Ask (Locked)</option> : null}
           {!isModeLocked ? <option value="required">Required</option> : null}
           {!isModeLocked ? <option value="optional">Optional</option> : null}
-          <option value="dont-ask">Don't Ask</option>
+          <option value="dont-ask">Don&apos;t Ask</option>
         </select>
       </label>
       <label>
