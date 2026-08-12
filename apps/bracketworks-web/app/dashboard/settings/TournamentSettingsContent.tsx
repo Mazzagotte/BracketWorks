@@ -6,11 +6,11 @@ import { CircleDollarSign, GitFork, SlidersHorizontal } from 'lucide-react';
 import { Tournament, BracketSettings, SidePotsSettings, SidePot } from '../../lib/types';
 import { useAuth } from '../../lib/auth-context';
 import { ErrorBoundary } from '../../components/ErrorBoundary';
+import { apiClient, getMemoryAccessToken } from '../../lib/api';
 import { storage } from '../../lib/storage';
 import dashboardStyles from '../dashboard.module.css';
 import pageStyles from './dashboard-settings-page.module.css';
 import { useToast } from '../../components/Toast';
-import { apiClient } from '../../lib/api';
 import { logger } from '../../lib/logger';
 import { isHandheldViewport } from '../../lib/responsive';
 import { defaultBracketPrograms, normalizeBracketPrograms } from '../../lib/bracketPrograms';
@@ -72,10 +72,9 @@ type TournamentSettingsContentProps = {
 
 export function TournamentSettingsContent({ tournamentId, layout = 'page' }: TournamentSettingsContentProps) {
   const router = useRouter();
-  const { isUserAuthenticated, isAuthInitialized } = useAuth();
-  const hasStoredAuthTokens = typeof window !== 'undefined'
-    && Boolean(storage.getItem('token'))
-    && Boolean(storage.getItem('user_id'));
+  const { isUserAuthenticated, isAuthInitialized, authToken } = useAuth();
+  const effectiveAuthToken = authToken || getMemoryAccessToken();
+  const hasActiveSession = Boolean(effectiveAuthToken);
   const { addToast } = useToast();
 
   const [tournament, setTournament] = useState<Tournament | null>(null);
@@ -249,8 +248,7 @@ export function TournamentSettingsContent({ tournamentId, layout = 'page' }: Tou
   }, [bracketSettings]);
 
   useEffect(() => {
-    const token = storage.getItem('token');
-    if (!token || !tournamentId) return;
+    if (!effectiveAuthToken || !tournamentId) return;
 
     const fetchTournament = async () => {
       try {
@@ -286,13 +284,13 @@ export function TournamentSettingsContent({ tournamentId, layout = 'page' }: Tou
     };
 
     void fetchTournament();
-  }, [tournamentId, addToast]);
+  }, [effectiveAuthToken, tournamentId, addToast]);
 
   if (!isAuthInitialized) {
     return <div className={pageStyles.pageState}>Loading...</div>;
   }
 
-  if (!isUserAuthenticated && !hasStoredAuthTokens) {
+  if (!isUserAuthenticated && !hasActiveSession) {
     return <div className={pageStyles.pageState}>Please log in</div>;
   }
 

@@ -10,7 +10,6 @@ import {
 import { apiClient } from '../../lib/api';
 import { getErrorContext } from '../../lib/error-utils';
 import { logger } from '../../lib/logger';
-import { storage } from '../../lib/storage';
 import {
   clearSelectedSquad,
   clearSelectedTournament,
@@ -37,6 +36,7 @@ type SetLoadModalOpen = Dispatch<SetStateAction<boolean>>;
 
 type UseTournamentOrchestrationArgs = {
   enabled?: boolean;
+  authToken: string | null;
   tournament: Tournament | null;
   addToast: AddToast;
   setTournament: SetTournament;
@@ -54,6 +54,7 @@ type UseTournamentOrchestrationArgs = {
 
 export function useTournamentOrchestration({
   enabled = true,
+  authToken,
   tournament,
   addToast,
   setTournament,
@@ -102,9 +103,8 @@ export function useTournamentOrchestration({
   useEffect(() => {
     if (!enabled) return;
     const lastTournamentId = getSelectedTournamentId();
-    const token = storage.getItem('token');
 
-    if (!lastTournamentId || !token) {
+    if (!lastTournamentId || !authToken) {
       clearSelectedSquad();
       clearSelectedTournament();
       setWorkflowStatus(null);
@@ -151,6 +151,7 @@ export function useTournamentOrchestration({
       });
   }, [
     enabled,
+    authToken,
     fetchTournamentBootstrap,
     loadSidePots,
     loadSquadEntryCounts,
@@ -169,8 +170,7 @@ export function useTournamentOrchestration({
     loadSidePots(nextTournament.id);
     setSelectedTournament(nextTournament.id, nextTournament.name);
 
-    const token = storage.getItem('token');
-    if (!token) return;
+    if (!authToken) return;
 
     try {
       const bootstrap = await fetchTournamentBootstrap(nextTournament.id);
@@ -201,6 +201,7 @@ export function useTournamentOrchestration({
     }
   }, [
     addToast,
+    authToken,
     fetchTournamentBootstrap,
     loadSidePots,
     loadSquadEntryCounts,

@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Lock, User } from 'lucide-react';
 import { FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from 'react';
+import type { AuthTokenResponse } from '@bracketworks/types';
 
 import AuthShell from './AuthShell';
 import ResetPasswordModal from './ResetPasswordModal';
@@ -10,13 +11,7 @@ import SignupModal from './SignupModal';
 import styles from './SignInForm.module.css';
 import { persistAuthSession } from './authSession';
 
-type LoginResponse = {
-  access_token?: string;
-  first_name?: string | null;
-  user_id?: number;
-  is_admin?: boolean;
-  session_id?: string;
-};
+type LoginResponse = Partial<AuthTokenResponse>;
 
 export default function SignInForm() {
   const router = useRouter();

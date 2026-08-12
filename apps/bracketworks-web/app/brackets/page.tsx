@@ -14,6 +14,7 @@ import { storage } from '../lib/storage'
 import { cleanupModalState, resetScrollLocks } from '../utils/modalUtils'
 import { getBracketGroups } from '../lib/bracketPrograms'
 import { setSelectedSquad as persistSelectedSquad, setActiveSquadLabel } from '../lib/selection-session'
+import { getMemoryAccessToken } from '../lib/api'
 import { BracketTabs } from './components/BracketTabs'
 import { SearchFilter } from './components/SearchFilter'
 import { EmptyBracketState } from './components/EmptyBracketState'
@@ -386,6 +387,7 @@ export default function BracketsPage() {
   const handleCloseExplainModal = useCallback(() => setIsExplainModalOpen(false), [])
 
   const { isUserAuthenticated, isAuthInitialized, currentUser } = useAuth()
+  const hasActiveSession = Boolean(getMemoryAccessToken())
   const isDev = process.env.NODE_ENV === 'development' || !!currentUser?.isAdmin
   const totalBracketCount = useMemo(() => bracketGroups.reduce((sum, group) => sum + group.brackets.length, 0), [bracketGroups])
   const totalPlayersAtGeneration = loadedBrackets?.current_player_count ?? loadedBrackets?.player_count_at_generation ?? 0
@@ -425,11 +427,6 @@ export default function BracketsPage() {
   }, [selectedTournament, handleDeleteAllBrackets, handleGenerateBrackets, isDev, setIsExplainModalOpen, totalBracketCount])
 
 
-  // Check if we have tokens in localStorage
-  const hasStoredAuth = typeof window !== 'undefined' && 
-    storage.getItem('token') && 
-    storage.getItem('user_id')
-
   // Wait for auth initialization
   if (!isAuthInitialized) {
     return (
@@ -440,7 +437,7 @@ export default function BracketsPage() {
   }
 
   // Authentication guard
-  if (!isUserAuthenticated && !hasStoredAuth) {
+  if (!isUserAuthenticated && !hasActiveSession) {
     return (
       <div className={styles.authRequired}>
         <div>Please log in to access bracket management</div>

@@ -60,3 +60,9 @@ build/
 apps/bracketworks-web/node_modules_stale_*
 apps/tournament-central-web/node_modules_stale_*
 apps/*/.bw-frontend-install-state.json
+
+# Local debug/temp artifacts
+.git_status_tmp.txt
+.git_head_tmp.txt
+apps/tournament-central-web/.tmp-vitest-output.txt
+apps/tournament-central-web/.tmp-vitest-output-utf8.txt

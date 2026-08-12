@@ -6,25 +6,17 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from ...core import models, schemas
 from ...api import deps
+from ...services.tournament_access import verify_owned_tournament_access
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
-
-
-def _verify_tournament_access(db: Session, tournament_id: int, user: models.User) -> models.Tournament:
-    tournament = db.query(models.Tournament).filter(models.Tournament.id == tournament_id).first()
-    if not tournament:
-        raise HTTPException(status_code=404, detail="Tournament not found")
-    if tournament.user_id != user.id and not getattr(user, "is_admin", False):
-        raise HTTPException(status_code=403, detail="Not authorized to access this tournament")
-    return tournament
 
 
 def _verify_squad_access(db: Session, squad_id: int, user: models.User) -> models.Squad:
     squad = db.query(models.Squad).filter(models.Squad.id == squad_id).first()
     if not squad:
         raise HTTPException(status_code=404, detail="Squad not found")
-    _verify_tournament_access(db, squad.tournament_id, user)
+    verify_owned_tournament_access(db, squad.tournament_id, user)
     return squad
 
 
@@ -92,7 +84,7 @@ def clear_selected_squad(data: schemas.SelectedSquadDelete, db: Session = Depend
 
 @router.post("/", response_model=schemas.Squad)
 def create_squad(squad: schemas.SquadCreate, db: Session = Depends(deps.get_db), user = Depends(deps.get_current_user)):
-    _verify_tournament_access(db, squad.tournament_id, user)
+    verify_owned_tournament_access(db, squad.tournament_id, user)
 
     # Check for existing squad with same tournament_id, date, and time
     existing = db.query(models.Squad).filter(
@@ -131,7 +123,7 @@ def create_squad(squad: schemas.SquadCreate, db: Session = Depends(deps.get_db),
 
 @router.get("/", response_model=list[schemas.Squad])
 def list_squads(tournament_id: int, db: Session = Depends(deps.get_db), user = Depends(deps.get_current_user)):
-    _verify_tournament_access(db, tournament_id, user)
+    verify_owned_tournament_access(db, tournament_id, user)
     squads = db.query(models.Squad).filter(models.Squad.tournament_id == tournament_id).all()
     squads = sorted(squads, key=lambda squad: _squad_sort_key(str(squad.date), squad.time))
     return [
@@ -157,7 +149,7 @@ def get_squad(squad_id: int, db: Session = Depends(deps.get_db), user = Depends(
 @router.delete("/tournament/{tournament_id}")
 def delete_tournament_squads(tournament_id: int, db: Session = Depends(deps.get_db), user = Depends(deps.get_current_user)):
     """Delete all squad times for a specific tournament"""
-    _verify_tournament_access(db, tournament_id, user)
+    verify_owned_tournament_access(db, tournament_id, user)
     
     # Get all squad IDs for this tournament before deleting them
     squad_ids = db.query(models.Squad.id).filter(models.Squad.tournament_id == tournament_id).all()
@@ -255,7 +247,7 @@ def sync_tournament_squads(tournament_id: int, body: SquadSyncRequest = SquadSyn
     if tournament_id <= 0:
         raise HTTPException(status_code=400, detail="Invalid tournament ID")
 
-    _verify_tournament_access(db, tournament_id, user)
+    verify_owned_tournament_access(db, tournament_id, user)
     
     # Use squad_times from request body if provided, otherwise fall back to DB
     if body.squad_times is not None:

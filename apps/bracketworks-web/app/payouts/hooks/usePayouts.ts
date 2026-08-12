@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { API, apiFetch, getMemoryAccessToken } from '../../lib/api'
 import { logger } from '../../lib/logger'
 
@@ -102,9 +102,15 @@ export function usePayouts(tournamentId: number | null, selectedSquadId: number 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date())
+  const payoutRequestIdRef = useRef(0)
+  const entryRequestIdRef = useRef(0)
 
   const loadPayoutData = useCallback(async () => {
     if (!tournamentId) return
+
+    const requestId = payoutRequestIdRef.current + 1
+    payoutRequestIdRef.current = requestId
+    const isActiveRequest = () => requestId === payoutRequestIdRef.current
 
     setLoading(true)
     setError(null)
@@ -112,7 +118,10 @@ export function usePayouts(tournamentId: number | null, selectedSquadId: number 
     try {
       const token = getMemoryAccessToken()
       if (!token) {
-        setError('Not authenticated')
+        if (isActiveRequest()) {
+          setError('Not authenticated')
+          setLoading(false)
+        }
         return
       }
 
@@ -120,11 +129,13 @@ export function usePayouts(tournamentId: number | null, selectedSquadId: number 
       const url = `/api/v1/payouts/calculate/${tournamentId}${squadParam}`
       logger.debug('Loading payouts from', { url })
       
-      const response = await apiFetch(API(url), {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
+      const response = await apiFetch(API(url))
 
       logger.debug('Payout response status', { status: response.status })
+
+      if (!isActiveRequest()) {
+        return
+      }
       
       if (response.ok) {
         const data = await response.json()
@@ -141,15 +152,23 @@ export function usePayouts(tournamentId: number | null, selectedSquadId: number 
         setError(errorData.detail || 'Failed to load payout data')
       }
     } catch (error) {
-      setError('Network error while loading payout data')
+      if (isActiveRequest()) {
+        setError('Network error while loading payout data')
+      }
       logger.error('Error loading payout data:', error)
     } finally {
-      setLoading(false)
+      if (isActiveRequest()) {
+        setLoading(false)
+      }
     }
   }, [tournamentId, selectedSquadId])
 
   const loadEntryData = useCallback(async () => {
     if (!tournamentId) return
+
+    const requestId = entryRequestIdRef.current + 1
+    entryRequestIdRef.current = requestId
+    const isActiveRequest = () => requestId === entryRequestIdRef.current
 
     try {
       const token = getMemoryAccessToken()
@@ -158,16 +177,20 @@ export function usePayouts(tournamentId: number | null, selectedSquadId: number 
       const squadParam = selectedSquadId ? `?squad_id=${selectedSquadId}` : ''
 
       // Try the full live-entries endpoint first
-      const response = await apiFetch(API(`/api/v1/payouts/live-entries/${tournamentId}${squadParam}`), {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
+      const response = await apiFetch(API(`/api/v1/payouts/live-entries/${tournamentId}${squadParam}`))
+
+      if (!isActiveRequest()) {
+        return
+      }
 
       if (response.ok) {
         const data = await response.json()
         // If live-entries returned no players (e.g. brackets not yet generated),
         // fall through to the bowlers fallback so names are still available.
         if (data?.entries?.length > 0) {
-          setEntryData(data)
+          if (isActiveRequest()) {
+            setEntryData(data)
+          }
           return
         }
       }
@@ -178,36 +201,40 @@ export function usePayouts(tournamentId: number | null, selectedSquadId: number 
         bowlersParams.set('squad_id', String(selectedSquadId))
       }
 
-      const bowlerResponse = await apiFetch(API(`/api/v1/bowlers?${bowlersParams.toString()}`), {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
+      const bowlerResponse = await apiFetch(API(`/api/v1/bowlers?${bowlersParams.toString()}`))
+
+      if (!isActiveRequest()) {
+        return
+      }
 
       if (bowlerResponse.ok) {
         const bowlers = await bowlerResponse.json() as Array<{ id: number; full_name: string }>
-        setEntryData({
-          tournament_info: { id: tournamentId, name: '', squad_id: null },
-          entries: bowlers.map((b): PlayerEntry => ({
-            id: b.id,
-            name: b.full_name,
-            scratch_brackets_entered: 0,
-            handicap_brackets_entered: 0,
-            total_brackets_entered: 0,
-            scratch_brackets_won: 0,
-            handicap_brackets_won: 0,
-            total_brackets_won: 0,
-            total_amount_won: 0,
-            scratch_amount_won: 0,
-            handicap_amount_won: 0,
-            placement_details: [],
-          })),
-          summary: {
-            total_players: bowlers.length,
-            total_scratch_entries: 0,
-            total_handicap_entries: 0,
-            total_amount_distributed: 0,
-            average_per_player: 0,
-          },
-        })
+        if (isActiveRequest()) {
+          setEntryData({
+            tournament_info: { id: tournamentId, name: '', squad_id: null },
+            entries: bowlers.map((b): PlayerEntry => ({
+              id: b.id,
+              name: b.full_name,
+              scratch_brackets_entered: 0,
+              handicap_brackets_entered: 0,
+              total_brackets_entered: 0,
+              scratch_brackets_won: 0,
+              handicap_brackets_won: 0,
+              total_brackets_won: 0,
+              total_amount_won: 0,
+              scratch_amount_won: 0,
+              handicap_amount_won: 0,
+              placement_details: [],
+            })),
+            summary: {
+              total_players: bowlers.length,
+              total_scratch_entries: 0,
+              total_handicap_entries: 0,
+              total_amount_distributed: 0,
+              average_per_player: 0,
+            },
+          })
+        }
       }
     } catch (error) {
       logger.error('Error loading entry data:', error)

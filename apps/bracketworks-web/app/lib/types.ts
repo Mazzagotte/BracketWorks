@@ -1,17 +1,9 @@
 // Central type definitions for the application
 
+import type { SquadContract, TournamentContract } from '@bracketworks/types';
+
 // Tournament related types
-export interface Tournament {
-  id: number;
-  name: string;
-  location?: string;
-  start_date?: string;
-  end_date?: string;
-  squad_times?: Record<string, string[]>;
-  entry_count?: number;
-  brackets_configured?: boolean;
-  is_public?: boolean;
-}
+export type Tournament = TournamentContract;
 
 export interface TournamentWorkflowStatus {
   status_squad_id: number | null;
@@ -32,13 +24,7 @@ export interface DashboardTournamentBootstrapResponse extends TournamentBootstra
   workflow_status: TournamentWorkflowStatus | null;
 }
 
-export interface Squad {
-  id: number;
-  name?: string;
-  tournament_id?: number;
-  date?: string;
-  time: string;
-}
+export type Squad = SquadContract;
 
 // Player related types
 export interface Player {

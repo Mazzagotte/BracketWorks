@@ -5,20 +5,10 @@ from sqlalchemy.orm import Session
 
 from ...api import deps
 from ...core import models, schemas
+from ...services.tournament_access import verify_owned_tournament_access
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
-
-
-def _verify_tournament_access(db: Session, tournament_id: int, user: models.User) -> models.Tournament:
-    tournament = db.query(models.Tournament).filter(models.Tournament.id == tournament_id).first()
-    if not tournament:
-        raise HTTPException(status_code=404, detail="Tournament not found")
-
-    if tournament.user_id != user.id and not getattr(user, "is_admin", False):
-        raise HTTPException(status_code=403, detail="Not authorized to access this tournament")
-
-    return tournament
 
 
 @router.get("/mine", response_model=list[schemas.TournamentSetupStateSummary])
@@ -58,7 +48,7 @@ def get_tournament_setup_state(
     db: Session = Depends(deps.get_db),
     user: models.User = Depends(deps.get_current_user),
 ):
-    tournament = _verify_tournament_access(db, tournament_id, user)
+    tournament = verify_owned_tournament_access(db, tournament_id, user)
 
     state = db.query(models.TournamentSetupState).filter(
         models.TournamentSetupState.tournament_id == tournament_id,
@@ -75,7 +65,7 @@ def upsert_tournament_setup_state(
     db: Session = Depends(deps.get_db),
     user: models.User = Depends(deps.get_current_user),
 ):
-    tournament = _verify_tournament_access(db, tournament_id, user)
+    tournament = verify_owned_tournament_access(db, tournament_id, user)
 
     try:
         state = db.query(models.TournamentSetupState).filter(

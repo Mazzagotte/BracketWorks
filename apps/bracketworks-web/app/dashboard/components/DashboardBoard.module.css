@@ -1,0 +1,659 @@
+/* Dashboard board refresh */
+.dashboardBoard {
+  width: min(1320px, 100%);
+  margin: 0 auto 18px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  align-items: start;
+  gap: 14px;
+  padding: 8px;
+  border-radius: 24px;
+}
+
+.dashboardHeaderCard,
+.dashboardPanel,
+.kpiCard {
+  border: 1px solid var(--bw-border-card);
+  background: color-mix(in srgb, var(--bw-surface-card) 90%, transparent);
+  box-shadow: var(--bw-shadow-card);
+  border-radius: 20px;
+}
+
+.dashboardHeaderCard {
+  padding: 14px 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.dashboardHeaderTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  border-bottom: 1px solid color-mix(in srgb, var(--bw-border-subtle) 82%, transparent);
+  padding-bottom: 10px;
+}
+
+.dashboardTournamentName {
+  margin: 0;
+  font-size: clamp(24px, 2.4vw, 36px);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: var(--bw-text-title);
+}
+
+.dashboardTournamentMeta {
+  margin-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  font-size: 13px;
+  color: var(--bw-text-muted);
+}
+
+.dashboardTournamentMeta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.dashboardMetaIcon {
+  width: 13px;
+  height: 13px;
+  color: var(--color-primary);
+  stroke-width: 2.1;
+  flex-shrink: 0;
+}
+
+.workflowRail {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  overflow-x: auto;
+  padding: 0 0 2px;
+  scrollbar-width: thin;
+}
+
+.workflowItem {
+  flex: 1;
+  min-width: max-content;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.workflowDot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex: none;
+}
+
+.workflowDotDone {
+  color: var(--bw-text-success);
+  border: 1px solid var(--color-success-border);
+  background: var(--color-success-soft);
+}
+
+.workflowDotActive {
+  color: var(--bw-text-accent);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 60%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 18%, transparent);
+}
+
+.workflowDotPending {
+  color: var(--bw-text-muted);
+  border: 1px solid var(--bw-border-subtle);
+  background: color-mix(in srgb, var(--bw-surface-panel) 94%, transparent);
+}
+
+.workflowText {
+  display: grid;
+  line-height: 1.2;
+}
+
+.workflowText strong {
+  font-size: 13px;
+  color: var(--bw-text-title);
+}
+
+.workflowText span {
+  font-size: 12px;
+  color: var(--bw-text-muted);
+}
+
+.workflowItemActive .workflowText strong {
+  color: var(--bw-text-accent);
+}
+
+.workflowItemPending .workflowText strong,
+.workflowItemPending .workflowText span {
+  color: var(--bw-text-muted);
+}
+
+.workflowConnector {
+  height: 1px;
+  min-width: 48px;
+  flex: 1;
+  margin: 0 12px;
+  background: color-mix(in srgb, var(--bw-border-subtle) 80%, transparent);
+}
+
+.workflowConnectorDone {
+  background: color-mix(in srgb, var(--color-success-border) 85%, transparent);
+}
+
+.workflowConnectorActive {
+  background: color-mix(in srgb, var(--color-primary) 70%, transparent);
+}
+
+.dashboardGrid {
+  display: contents;
+}
+
+.dashboardMainColumn {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.dashboardSideColumn {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 12px;
+}
+
+.kpiCard {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--bw-surface-panel) 70%, transparent);
+  box-shadow: none;
+}
+
+.kpiCardBody {
+  display: grid;
+  grid-template-columns: auto minmax(0, auto);
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  height: 100%;
+}
+
+.kpiIconBadge {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border: 1px solid var(--bw-border-subtle);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--bw-surface-card) 76%, transparent);
+}
+
+.kpiCopy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.kpiIcon {
+  width: 29px;
+  height: 29px;
+  color: var(--color-primary);
+  stroke-width: 1.8;
+}
+
+.kpiLabel {
+  margin: 6px 0 0;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.045em;
+  color: var(--bw-text-body);
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.kpiValue {
+  margin: 0;
+  font-size: clamp(28px, 2.1vw, 34px);
+  line-height: 0.95;
+  color: var(--bw-text-title);
+  letter-spacing: -0.035em;
+  font-weight: 800;
+}
+
+.kpiDetail {
+  width: 100%;
+  margin: 5px 0 0;
+  padding-top: 6px;
+  border-top: 1px solid color-mix(in srgb, var(--bw-border-subtle) 72%, transparent);
+  font-size: 11px;
+  line-height: 1.25;
+  color: var(--bw-text-muted);
+  white-space: nowrap;
+}
+
+.dashboardPanelsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.dashboardPanel {
+  padding: 14px;
+}
+
+.summaryDetailPanel {
+  padding: 14px 16px;
+}
+
+.summaryDetailPanel .dashboardDataRows {
+  gap: 10px;
+}
+
+.dashboardPanelTitle {
+  margin: 0;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--bw-text-accent);
+}
+
+.dashboardPanelHeading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px;
+}
+
+.dashboardPanelIcon {
+  width: 16px;
+  height: 16px;
+  color: var(--color-primary);
+  stroke-width: 2.15;
+  flex-shrink: 0;
+}
+
+.dashboardDataRows {
+  display: grid;
+  gap: 8px;
+}
+
+.dashboardDataRows > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  border-bottom: 1px solid color-mix(in srgb, var(--bw-border-subtle) 75%, transparent);
+  padding-bottom: 6px;
+}
+
+.dashboardDataRows > div:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.dashboardDataRows span {
+  font-size: 13px;
+  color: var(--bw-text-muted);
+}
+
+.dashboardDataRows strong {
+  font-size: 13px;
+  color: var(--bw-text-title);
+  text-align: right;
+}
+
+.dashboardDangerText {
+  color: var(--bw-text-danger) !important;
+}
+
+.financialHeroBlock {
+  min-width: 0;
+  padding: 10px 0;
+  margin: 10px 0 0;
+  text-align: left;
+  border-top: 1px solid color-mix(in srgb, var(--bw-border-subtle) 75%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--bw-border-subtle) 75%, transparent);
+}
+
+.financialHeroValueContainer {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+.dashboardPanelEyebrow {
+  margin: 0 0 8px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--bw-text-accent);
+  font-weight: 800;
+}
+
+.financialSplitSection {
+  margin: 10px 0 8px;
+  display: block;
+}
+
+.financialHeroValue {
+  margin: 0;
+  font-size: 36px;
+  line-height: 1.1;
+  color: var(--color-primary);
+  letter-spacing: -0.03em;
+  flex-shrink: 0;
+  font-weight: 700;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 78px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  border: 1px solid var(--bw-border-subtle);
+  color: var(--bw-text-muted);
+  background: color-mix(in srgb, var(--bw-surface-panel) 92%, transparent);
+}
+
+.statusBadgeEnabled {
+  color: var(--bw-text-success);
+  border-color: color-mix(in srgb, var(--color-success-border) 85%, transparent);
+  background: color-mix(in srgb, var(--color-success-soft) 88%, transparent);
+}
+
+.statusBadgeDisabled {
+  color: var(--bw-text-muted);
+}
+
+.entryBreakdownCards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.entryBreakdownStat {
+  display: grid;
+  width: fit-content;
+  gap: 3px;
+  text-align: center;
+  padding: 11px 10px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--bw-border-subtle) 85%, transparent);
+  background: color-mix(in srgb, var(--bw-surface-panel) 90%, transparent);
+}
+
+.entryBreakdownStat strong {
+  font-size: clamp(28px, 2vw, 34px);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--bw-text-title);
+}
+
+.entryBreakdownStat small {
+  font-size: 11px;
+  color: var(--bw-text-muted);
+  white-space: nowrap;
+}
+
+.entryBreakdownLabelHandicap,
+.entryBreakdownLabelScratch,
+.entryBreakdownLabelOptional {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.entryBreakdownLabelHandicap {
+  color: color-mix(in srgb, var(--color-success) 88%, var(--color-white) 12%);
+}
+
+.entryBreakdownLabelScratch {
+  color: var(--color-primary);
+}
+
+.entryBreakdownLabelOptional {
+  color: color-mix(in srgb, var(--color-info) 78%, var(--color-white) 22%);
+}
+
+.combinedSideCard {
+  padding: 0;
+  overflow: hidden;
+}
+
+.sideCardSection {
+  padding: 10px 12px;
+}
+
+.sideCardSection + .sideCardSection {
+  border-top: 1px solid var(--bw-border-subtle);
+}
+
+.sideCardSectionLabel {
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--bw-text-accent);
+}
+
+.combinedSideCard .continuePanelBody {
+  margin-top: 0;
+}
+
+.sideCardLead {
+  margin: 0;
+  color: var(--bw-text-title);
+  font-weight: 700;
+}
+
+.continuePanelStatus {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+}
+
+.continuePanelBody {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 36%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-primary) 8%, transparent), color-mix(in srgb, var(--bw-surface-panel) 92%, transparent));
+}
+
+.continuePanelIconWrap {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 28%, transparent);
+}
+
+.continuePanelIcon {
+  width: 22px;
+  height: 22px;
+  stroke-width: 2.1;
+}
+
+.sideCardMeta {
+  margin: 4px 0 0;
+  color: var(--bw-text-muted);
+  font-size: 12px;
+}
+
+.sideCardPrimaryButton {
+  margin-top: 10px;
+  width: 100%;
+  min-height: 38px;
+}
+
+.sideActionList {
+  display: grid;
+  gap: 5px;
+}
+
+.sideActionButton {
+  border: 1px solid var(--bw-border-subtle);
+  background: color-mix(in srgb, var(--bw-surface-panel) 90%, transparent);
+  color: var(--bw-text-title);
+  border-radius: 12px;
+  min-height: 38px;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: border-color 0.16s ease, background-color 0.16s ease, transform 0.16s ease;
+}
+
+.sideActionButtonLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.sideActionIcon {
+  width: 16px;
+  height: 16px;
+  color: var(--color-primary);
+  stroke-width: 2.05;
+  flex-shrink: 0;
+}
+
+.sideActionButton:hover {
+  border-color: var(--bw-border-accent);
+  background: color-mix(in srgb, var(--bw-surface-panel-strong) 92%, transparent);
+  transform: translateY(-1px);
+}
+
+.sideActionButton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.sideActionButtonDanger {
+  color: var(--bw-text-danger);
+  border-color: var(--color-error-border);
+  background: var(--color-error-bg-soft);
+}
+
+.dangerZoneSection {
+  background: color-mix(in srgb, var(--color-error-bg-soft) 34%, transparent);
+}
+
+.dangerZoneSection .sideCardSectionLabel {
+  color: var(--bw-text-danger);
+}
+
+.scoreProgressBar {
+  display: block;
+  width: 100%;
+  height: 5px;
+  margin-top: 8px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 999px;
+  background: var(--bw-border-subtle);
+  accent-color: var(--color-primary);
+}
+
+.scoreProgressBar::-webkit-progress-bar {
+  border-radius: 999px;
+  background: var(--bw-border-subtle);
+}
+
+.scoreProgressBar::-webkit-progress-value {
+  border-radius: 999px;
+  background: var(--color-primary);
+}
+
+.scoreProgressBar::-moz-progress-bar {
+  border-radius: 999px;
+  background: var(--color-primary);
+}
+
+@media (max-width: 1180px) {
+  .dashboardBoard {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboardSideColumn {
+    grid-column: 1;
+    grid-row: auto;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .kpiGrid,
+  .dashboardPanelsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboardSideColumn {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboardBoard {
+    padding: 0;
+    background: transparent;
+  }
+
+  .dashboardHeaderCard,
+  .dashboardPanel,
+  .kpiCard {
+    border-radius: 16px;
+  }
+
+  .dashboardHeaderTop {
+    flex-direction: column;
+  }
+
+  .kpiGrid,
+  .dashboardPanelsGrid,
+  .entryBreakdownCards {
+    grid-template-columns: 1fr;
+  }
+
+  .workflowText strong {
+    font-size: 12px;
+  }
+}

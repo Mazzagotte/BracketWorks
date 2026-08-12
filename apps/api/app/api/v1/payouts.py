@@ -25,6 +25,7 @@ from ...services.payouts import (
     DEFAULT_PRESETS,
 )
 from ...services.bracket_persistence_simple import load_generated_brackets
+from ...services.tournament_access import verify_owned_tournament_access
 from ...core.bracket_programs import normalize_bracket_programs
 
 router = APIRouter()
@@ -72,15 +73,6 @@ def _get_entry_fees(
     return resolved_fees
 
 
-def _verify_tournament_access(db: Session, tournament_id: int, current_user) -> models.Tournament:
-    tournament = db.query(models.Tournament).filter(models.Tournament.id == tournament_id).first()
-    if not tournament:
-        raise HTTPException(status_code=404, detail="Tournament not found")
-    if tournament.user_id != current_user.id and not current_user.is_admin:
-        raise HTTPException(status_code=403, detail="Access denied")
-    return tournament
-
-
 # ---------------------------------------------------------------------------
 # Calculate
 # ---------------------------------------------------------------------------
@@ -100,7 +92,12 @@ def calculate_tournament_payouts_endpoint(
         raise HTTPException(status_code=400, detail="House percentage must be between 0 and 100")
 
     try:
-        tournament  = _verify_tournament_access(db, tournament_id, current_user)
+        tournament = verify_owned_tournament_access(
+            db,
+            tournament_id,
+            current_user,
+            forbidden_detail="Access denied",
+        )
         entry_fees  = _get_entry_fees(db, tournament_id, scratch_fee, handicap_fee)
 
         brackets_data = load_generated_brackets(db, tournament_id, squad_id)
@@ -144,7 +141,12 @@ def get_tournament_winners_endpoint(
 ):
     """Get summary of all winners for a tournament."""
     try:
-        tournament    = _verify_tournament_access(db, tournament_id, current_user)
+        tournament = verify_owned_tournament_access(
+            db,
+            tournament_id,
+            current_user,
+            forbidden_detail="Access denied",
+        )
         brackets_data = load_generated_brackets(db, tournament_id, squad_id)
         if not brackets_data:
             raise HTTPException(status_code=404, detail="No brackets found for this tournament")
@@ -183,7 +185,12 @@ def get_live_entry_analysis(
     from decimal import Decimal as _D, ROUND_HALF_UP as _RHU
 
     try:
-        tournament = _verify_tournament_access(db, tournament_id, current_user)
+        tournament = verify_owned_tournament_access(
+            db,
+            tournament_id,
+            current_user,
+            forbidden_detail="Access denied",
+        )
         entry_fees = _get_entry_fees(db, tournament_id, scratch_fee, handicap_fee)
 
         bowlers_query = db.query(models.Bowler).filter(
@@ -371,7 +378,12 @@ def save_tournament_payouts_endpoint(
                 return JSONResponse(status_code=replay_or_record.status_code, content=replay_or_record.response_body)
             idempotency_record = replay_or_record
 
-        tournament  = _verify_tournament_access(db, tournament_id, current_user)
+        tournament = verify_owned_tournament_access(
+            db,
+            tournament_id,
+            current_user,
+            forbidden_detail="Access denied",
+        )
         entry_fees  = _get_entry_fees(db, tournament_id, scratch_fee, handicap_fee)
 
         brackets_data = load_generated_brackets(db, tournament_id, squad_id)
@@ -480,7 +492,12 @@ def save_tournament_payouts_async(
     current_user: models.User = Depends(get_current_user),
 ):
     """Queue payout save and return a job handle for polling."""
-    _verify_tournament_access(db, tournament_id, current_user)
+    verify_owned_tournament_access(
+        db,
+        tournament_id,
+        current_user,
+        forbidden_detail="Access denied",
+    )
     job = job_store.create(
         "payouts.save",
         owner_user_id=current_user.id,
@@ -537,7 +554,12 @@ def get_payout_history_endpoint(
 ):
     """Get saved payout history for a tournament."""
     try:
-        tournament     = _verify_tournament_access(db, tournament_id, current_user)
+        tournament = verify_owned_tournament_access(
+            db,
+            tournament_id,
+            current_user,
+            forbidden_detail="Access denied",
+        )
         payout_summary = db.query(models.TournamentPayoutSummary).filter(
             models.TournamentPayoutSummary.tournament_id == tournament_id,
             models.TournamentPayoutSummary.squad_id == squad_id,

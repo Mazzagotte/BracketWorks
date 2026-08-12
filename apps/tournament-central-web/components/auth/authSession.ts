@@ -1,10 +1,4 @@
-type PersistAuthSessionInput = {
-  accessToken: string;
-  userId: number | string;
-  firstName?: string | null;
-  isAdmin?: boolean;
-  sessionId?: string | null;
-};
+import type { PersistAuthSessionInput } from '@bracketworks/types';
 
 export const AUTH_SESSION_EVENT = 'tc-auth-session-changed';
 

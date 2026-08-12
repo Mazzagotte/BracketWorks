@@ -82,17 +82,8 @@
   --color-orange-hover: var(--bw-orange-dark);
   --color-orange-dark: var(--bw-orange-dark);
 
-  /* Active theme: typography scale */
-  --font-family-primary: var(--bw-font-family-primary);
-  --font-family-mono: var(--bw-font-family-mono);
-  --font-size-xs: 11px;
-  --font-size-sm: 12px;
-  --font-size-base: 13px;
-  --font-size-lg: 15px;
-  --font-size-xl: 16px;
-  --font-size-2xl: 18px;
-  --font-size-3xl: 20px;
-  --font-size-4xl: 24px;
+    /* BracketWorks typography aliases and app-only extensions.
+      Shared foundational typography tokens live in packages/ui/styles/tokens.css. */
   --font-size-5xl: 28px;
   --font-size-6xl: 34px;
   --bw-text-title: var(--color-text-primary);
@@ -110,30 +101,9 @@
   --bw-type-label: 0.68rem;
   --bw-type-table: 0.78rem;
   --bw-type-table-heading: 0.64rem;
-  --font-weight-normal: 400;
-  --font-weight-medium: 500;
-  --font-weight-semibold: 600;
-  --font-weight-bold: 700;
-  --line-height-tight: 1.2;
-  --line-height-normal: 1.6;
 
-  /* Active theme: spacing and sizing */
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 16px;
-  --spacing-lg: 24px;
-  --spacing-xl: 32px;
-  --spacing-2xl: 48px;
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 20px;
-  --space-6: 24px;
-  --space-8: 32px;
-  --space-10: 40px;
-  --space-12: 48px;
-  --space-16: 64px;
+    /* BracketWorks compact semantic spacing and compatibility aliases.
+      Shared spacing/radius/sizing foundations live in packages/ui/styles/tokens.css. */
   --space-page-x: 16px;
   --space-page-y: 16px;
   --space-card-x: 16px;
@@ -147,32 +117,12 @@
   --space-stack: 10px;
   --space-table-x: 12px;
   --space-table-y: 10px;
-  --control-height: 38px;
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-  --radius-2xl: 20px;
-  --radius-full: 999px;
   --radius-xs: 4px;
   --radius-s: 8px;
   --radius-m: 12px;
   --radius-l: 16px;
   --radius-xl-soft: 20px;
   --radius-2xl-soft: 24px;
-  --container-max-width: 1200px;
-  --content-max-width: 960px;
-  --touch-target-min: 36px;
-  --touch-target-comfortable: 44px;
-  --input-height-sm: 32px;
-  --input-height: var(--control-height);
-  --input-height-lg: 48px;
-  --btn-height-sm: 36px;
-  --btn-height: var(--control-height);
-  --btn-height-lg: 40px;
-  --btn-padding-x-sm: 12px;
-  --btn-padding-x: 12px;
-  --btn-padding-x-lg: 12px;
 
   /* Active theme: opacity helpers used across global and module CSS */
   --opacity-white-10: rgba(244, 244, 245, 0.1);
@@ -229,35 +179,8 @@
   --shadow-modal: 0 24px 64px rgba(0, 0, 0, 0.65);
   --shadow-btn: none;
   --shadow-btn-hover: none;
-  --elevation-0: none;
-  --elevation-1: 0 1px 2px rgba(0, 0, 0, 0.22);
-  --elevation-2: 0 6px 16px rgba(0, 0, 0, 0.24);
-  --elevation-3: 0 12px 28px rgba(0, 0, 0, 0.24);
-  --elevation-modal: 0 24px 64px rgba(0, 0, 0, 0.65);
-  --motion-duration-fast: 120ms;
-  --motion-duration-base: 180ms;
-  --motion-duration-slow: 260ms;
-  --motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
-  --motion-ease-emphasized: cubic-bezier(0.2, 0, 0, 1.15);
-  --motion-ease-decelerate: cubic-bezier(0, 0, 0.2, 1);
-  --motion-ease-accelerate: cubic-bezier(0.4, 0, 1, 1);
-  --ring-brand: 0 0 0 2px var(--color-accent-muted);
-  --ring-danger: 0 0 0 3px rgba(214, 69, 69, 0.35);
   --gradient-danger: linear-gradient(180deg, #e45757 0%, #d64545 100%);
   --gradient-danger-hover: linear-gradient(180deg, #dd4c4c 0%, #c83e3e 100%);
-
-  /* Semantic token v2 aliases for component-level primitives */
-  --surface-primary: var(--bw-surface-card);
-  --surface-secondary: var(--bw-surface-panel);
-  --surface-utility: color-mix(in srgb, var(--bw-surface-panel) 72%, transparent);
-  --surface-raised: var(--bw-surface-card-strong);
-  --text-primary: var(--bw-text-title);
-  --text-secondary: var(--bw-text-body);
-  --text-muted: var(--bw-text-muted);
-  --text-faint: var(--bw-text-faint);
-  --border-subtle: var(--bw-border-subtle);
-  --border-strong: var(--bw-border-card);
-  --focus-ring: var(--bw-focus-ring);
 
   /* Warm semantic bridge tokens for legacy CSS */
   --color-primary: var(--color-accent-primary);

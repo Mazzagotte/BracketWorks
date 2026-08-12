@@ -169,6 +169,7 @@ export class ApiClient {
     localStorage.removeItem('user_id');
     localStorage.removeItem('userId');
     localStorage.removeItem('is_admin');
+    localStorage.removeItem('first_name');
   }
 
   private async refreshAccessToken(): Promise<string | null> {
@@ -222,7 +223,6 @@ export class ApiClient {
           localStorage.setItem('session_id', data.session_id);
         }
         window.dispatchEvent(new Event('auth-state-changed'));
-        window.dispatchEvent(new Event('storage'));
         this.lastRefreshOutcome = 'none';
         return data.access_token as string;
       } catch (error) {

@@ -220,7 +220,6 @@ export default function LoginPage() {
       logger.userAction('User logged in', { userId, name: displayName });
 
       window.dispatchEvent(new Event('auth-state-changed'));
-      window.dispatchEvent(new Event('storage'));
 
       addToast({ type: 'success', message: `Welcome back, ${displayName}!`, duration: 3000 });
 

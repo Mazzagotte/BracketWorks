@@ -2,28 +2,10 @@ import { useState, useEffect, useCallback } from 'react'
 
 import { apiClient } from '../lib/api'
 import { useToast } from '../components/Toast'
-import { Player } from '../lib/types'
+import type { Squad, Tournament } from '../lib/types'
 import { useAuth } from '../lib/auth-context'
 
 // Standardized hooks for tournament data
-
-export interface Tournament {
-  id: number
-  name: string
-  location?: string
-  start_date?: string
-  end_date?: string
-  squad_times?: Record<string, string[]>
-  entry_count?: number
-  brackets_configured?: boolean
-}
-
-export interface Squad {
-  id: number
-  tournament_id: number
-  date: string
-  time: string
-}
 
 // Module-level cache shared across all hook instances (survives page navigation)
 const _cache = {
@@ -255,83 +237,5 @@ export function useSquads(tournamentId?: number) {
     loading,
     error,
     fetchSquads
-  }
-}
-
-// Hook for managing players
-export function usePlayers(tournamentId?: number, squadId?: number) {
-  const [players, setPlayers] = useState<Player[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const { addToast } = useToast()
-
-  const fetchPlayers = useCallback(async (tId?: number, sId?: number) => {
-    const id = tId || tournamentId
-    if (!id) return
-
-    setLoading(true)
-    setError(null)
-    
-    try {
-      const squadParam = (sId || squadId) ? `&squad_id=${sId || squadId}` : ''
-      const data = await apiClient.get<Player[]>(`/api/v1/bowlers?tournament_id=${id}${squadParam}`)
-      setPlayers(data)
-      
-      addToast({
-        type: 'success',
-        message: `Loaded ${data.length} players`,
-        duration: 3000
-      })
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch players'
-      setError(errorMessage)
-      addToast({
-        type: 'error',
-        message: errorMessage,
-        duration: 5000
-      })
-    } finally {
-      setLoading(false)
-    }
-  }, [addToast, squadId, tournamentId])
-
-  const addPlayer = async (player: Omit<Player, 'id'>) => {
-    setLoading(true)
-    
-    try {
-      const newPlayer = await apiClient.post<Player>('/api/v1/bowlers/', player)
-      setPlayers(prev => [...prev, newPlayer])
-      addToast({
-        type: 'success',
-        message: 'Player added successfully',
-        duration: 3000
-      })
-      return newPlayer
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to add player'
-      setError(errorMessage)
-      addToast({
-        type: 'error',
-        message: errorMessage,
-        duration: 5000
-      })
-      throw err
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    if (tournamentId) {
-      fetchPlayers(tournamentId, squadId)
-    }
-  }, [fetchPlayers, squadId, tournamentId])
-
-  return {
-    players,
-    loading,
-    error,
-    fetchPlayers,
-    addPlayer
   }
 }

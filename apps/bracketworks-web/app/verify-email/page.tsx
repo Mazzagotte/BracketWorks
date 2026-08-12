@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 
-import { API } from "../lib/api";
+import { API, apiFetch } from "../lib/api";
 import loginStyles from "../login/login.module.css";
 
 type VerificationState = "loading" | "success" | "error";
@@ -32,7 +32,7 @@ function VerifyEmailContent() {
 
     const verifyEmail = async () => {
       try {
-        const response = await fetch(API("/api/v1/users/verify-email"), {
+        const response = await apiFetch(API("/api/v1/users/verify-email"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ token }),

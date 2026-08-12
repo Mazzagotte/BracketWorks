@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { BookOpen } from 'lucide-react';
 import CloseControl from '../../components/CloseControl';
-import { API, getMemoryAccessToken } from '../lib/api';
+import { apiClient } from '../lib/api';
 import type { ChangelogEntry } from '../lib/types';
 import styles from './ChangelogModal.module.css';
 
@@ -19,29 +19,29 @@ export default function ChangelogModal({ isOpen, onClose }: ChangelogModalProps)
 
   useEffect(() => {
     if (!isOpen) return;
+    let isCancelled = false;
     
     const fetchChangelog = async () => {
       setLoading(true);
       try {
-        const token = getMemoryAccessToken();
-        const res = await fetch(API('/api/v1/users/changelog'), {
-          credentials: 'include',
-          headers: {
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-        });
-        if (res.ok) {
-          const data = await res.json();
+        const data = await apiClient.get<{ entries: ChangelogEntry[] }>('/api/v1/users/changelog', false);
+        if (!isCancelled) {
           setEntries(data.entries);
         }
       } catch (error) {
         console.error('Failed to fetch changelog:', error);
       } finally {
-        setLoading(false);
+        if (!isCancelled) {
+          setLoading(false);
+        }
       }
     };
 
     fetchChangelog();
+
+    return () => {
+      isCancelled = true;
+    };
   }, [isOpen]);
 
   // Block Escape key to allow natural close behavior

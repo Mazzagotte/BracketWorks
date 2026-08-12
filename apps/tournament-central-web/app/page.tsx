@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent } from 'react';
 import { CalendarDays, ChevronRight, MapPin, Menu } from 'lucide-react';
 import { ComposableMap, Geographies, Geography, ZoomableGroup } from 'react-simple-maps';
+import type { PublicTournamentDirectoryItem, PublicTournamentDirectoryResponse } from '@bracketworks/types';
 import TournamentRegistrationForm from '@/components/public/TournamentRegistrationForm';
 import styles from './page.module.css';
 
@@ -50,18 +51,7 @@ type StateSummary = {
   tournaments: Tournament[];
 };
 
-type PublicTournamentSummary = {
-  id: number | string;
-  name: string;
-  location: string | null;
-  state_code?: string | null;
-  state_name?: string | null;
-  start_date: string | null;
-  end_date: string | null;
-  public_url?: string | null;
-  logo_url?: string | null;
-  registration_url?: string | null;
-};
+type PublicTournamentSummary = PublicTournamentDirectoryItem;
 
 type RegistrationFieldConfig = {
   id: string;
@@ -145,10 +135,6 @@ const EMPTY_REGISTRATION_FORM: RegistrationFormState = {
   notes: '',
   bowlerQuestionAnswers: [{}],
   acceptTerms: false,
-};
-
-type PublicTournamentDirectoryResponse = {
-  tournaments?: PublicTournamentSummary[];
 };
 
 type MapStateTone = 'upcoming' | 'inprogress' | 'past' | 'none';

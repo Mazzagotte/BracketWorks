@@ -15,6 +15,7 @@
     "browserslist:update": "npx.cmd update-browserslist-db@latest"
   },
   "dependencies": {
+    "@bracketworks/types": "workspace:*",
     "@bracketworks/ui": "workspace:*",
     "exceljs": "^3.4.0",
     "lucide-react": "^0.539.0",

@@ -9,7 +9,8 @@ from app.api import deps
 from app.api.v1 import users as users_module
 from app.core import models
 from app.core.config import settings
-from app.main import app, rate_limiter
+from app.main import app
+from app.middleware.rate_limit import rate_limiter
 
 
 engine = create_engine(

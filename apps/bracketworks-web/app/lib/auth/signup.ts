@@ -1,4 +1,4 @@
-import { API } from '../api';
+import { API, apiFetch } from '../api';
 import { getErrorMessage } from '../error-utils';
 import { getEmailValidationError, getRequiredFieldError, hasStrongPassword } from './validation';
 
@@ -56,7 +56,7 @@ export async function submitSignup(payload: SignupPayload): Promise<SignupResult
   const email = payload.email.trim();
 
   try {
-    const response = await fetch(API('/api/v1/users/signup'), {
+    const response = await apiFetch(API('/api/v1/users/signup'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

@@ -1,4 +1,3 @@
-import { useState, useEffect, useCallback } from 'react';
 import { logger } from './logger';
 import { getMemoryAccessToken } from './api';
 
@@ -33,16 +32,6 @@ class CachedStorage {
     if (typeof window === 'undefined') return null
     
     try {
-      if (this.isAuthTokenKey(key)) {
-        const sessionValue = sessionStorage.getItem(key)
-        const localValue = localStorage.getItem(key)
-        const effectiveValue = sessionValue || localValue
-        if (this.cache.get(key) !== effectiveValue) {
-          this.cache.set(key, effectiveValue)
-        }
-        return effectiveValue
-      }
-
       // Always reconcile with localStorage so direct writes (outside this wrapper)
       // are visible across page transitions.
       const liveValue = localStorage.getItem(key)
@@ -149,52 +138,4 @@ if (typeof window !== 'undefined') {
   window.addEventListener('beforeunload', () => {
     storage.flush()
   })
-}
-
-export function useClientStorage() {
-  const [isClient, setIsClient] = useState(false);
-  
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-  
-  const getItem = useCallback((key: string) => {
-    if (!isClient) return null;
-    try {
-      if (key === 'token') {
-        return sessionStorage.getItem(key) || localStorage.getItem(key);
-      }
-      return localStorage.getItem(key);
-    } catch {
-      return null;
-    }
-  }, [isClient]);
-  
-  const setItem = useCallback((key: string, value: string) => {
-    if (!isClient) return;
-    try {
-      if (key === 'token') {
-        sessionStorage.setItem(key, value);
-        localStorage.removeItem(key);
-        return;
-      }
-      localStorage.setItem(key, value);
-    } catch {
-      // Silent fail
-    }
-  }, [isClient]);
-  
-  const removeItem = useCallback((key: string) => {
-    if (!isClient) return;
-    try {
-      if (key === 'token') {
-        sessionStorage.removeItem(key);
-      }
-      localStorage.removeItem(key);
-    } catch {
-      // Silent fail
-    }
-  }, [isClient]);
-  
-  return { getItem, setItem, removeItem, isClient };
 }

@@ -28,7 +28,7 @@ const contentSecurityPolicy = [
 
 const nextConfig = {
   output: 'standalone',
-  transpilePackages: ['@bracketworks/ui'],
+  transpilePackages: ['@bracketworks/ui', '@bracketworks/types'],
 
   // Disable image optimization to avoid requiring 'sharp' dependency
   images: {

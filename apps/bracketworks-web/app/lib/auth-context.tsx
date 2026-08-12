@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 
 import { logger } from './logger';
 import { API, apiClient, getCsrfToken, getMemoryAccessToken, setMemoryAccessToken } from './api';
@@ -38,17 +38,22 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const clearAuthState = () => {
-    setMemoryAccessToken(null);
-    setAuthToken(null);
-    setCurrentUser(null);
+  const clearAuthStorageKeys = useCallback(() => {
     sessionStorage.removeItem('token');
     localStorage.removeItem('token');
     localStorage.removeItem('session_id');
     localStorage.removeItem('user_id');
     localStorage.removeItem('userId');
     localStorage.removeItem('is_admin');
-  };
+    localStorage.removeItem('first_name');
+  }, []);
+
+  const clearAuthState = useCallback(() => {
+    setMemoryAccessToken(null);
+    setAuthToken(null);
+    setCurrentUser(null);
+    clearAuthStorageKeys();
+  }, [clearAuthStorageKeys]);
 
   const getInitialAuthState = () => {
     return { authToken: getMemoryAccessToken(), currentUser: null };
@@ -63,8 +68,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Restore the HTTP-only cookie session without persisting the access token.
   useEffect(() => {
     setIsComponentMounted(true);
-    sessionStorage.removeItem('token');
-    localStorage.removeItem('token');
+    clearAuthStorageKeys();
 
     let cancelled = false;
     const restore = async () => {
@@ -92,11 +96,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
     void restore();
     return () => { cancelled = true; };
-  }, []);
+  }, [clearAuthStorageKeys]);
 
   // Listen for storage changes and auth events
   useEffect(() => {
-    const handleStorageChange = () => {
+    const syncAuthFromMemoryAndIdentityHints = () => {
       if (!isComponentMounted) return;
       
       const effectiveToken = getMemoryAccessToken();
@@ -105,7 +109,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const storedIsAdmin = localStorage.getItem('is_admin');
       
       if (effectiveToken && storedUserId && (!authToken || !currentUser)) {
-        logger.info('Restoring auth state from localStorage on storage change', { userId: storedUserId });
+        logger.info('Restoring auth state from memory token and identity hints', { userId: storedUserId });
         setAuthToken(effectiveToken);
         setCurrentUser({ 
           id: storedUserId, 
@@ -122,30 +126,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const handleAuthChange = () => {
       if (!isComponentMounted) return;
       logger.info('Handling auth-state-changed event');
-      handleStorageChange();
+      syncAuthFromMemoryAndIdentityHints();
     };
 
     const handleAuthExpired = () => {
       if (!isComponentMounted) return;
       logger.info('Handling auth-expired event');
       clearAuthState();
-      window.dispatchEvent(new Event('auth-state-changed'));
     };
 
-    // Listen for storage changes
-    window.addEventListener('storage', handleStorageChange);
     window.addEventListener('auth-state-changed', handleAuthChange);
     window.addEventListener('auth-expired', handleAuthExpired);
     
     // Initial check
-    handleStorageChange();
+    syncAuthFromMemoryAndIdentityHints();
     
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('auth-state-changed', handleAuthChange);
       window.removeEventListener('auth-expired', handleAuthExpired);
     };
-  }, [isComponentMounted, authToken, currentUser]);
+  }, [isComponentMounted, authToken, currentUser, clearAuthState]);
 
   // Keep identity hints only; the access token remains in process memory.
   useEffect(() => {
@@ -159,7 +159,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } else if (!authToken && !currentUser) {
       clearAuthState();
     }
-  }, [authToken, currentUser, isComponentMounted]);
+  }, [authToken, currentUser, isComponentMounted, clearAuthState]);
 
   const authenticateUser = (newAuthToken: string, userId: string, userData?: Partial<User>, authSession?: AuthSessionData) => {
     logger.info('Authenticating user', { userId });
@@ -187,9 +187,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (typeof window !== 'undefined') {
       logger.info('Dispatching auth-state-changed event');
       window.dispatchEvent(new Event('auth-state-changed'));
-      
-      // Force a storage event as well
-      window.dispatchEvent(new Event('storage'));
     }
   };
 
@@ -209,17 +206,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setAuthToken(null);
     setMemoryAccessToken(null);
     setCurrentUser(null);
-    sessionStorage.removeItem('token');
-    localStorage.removeItem('token');
-    localStorage.removeItem('session_id');
-    localStorage.removeItem('user_id');
-    localStorage.removeItem('userId');
-    localStorage.removeItem('is_admin');
-    localStorage.removeItem('first_name');
+    clearAuthStorageKeys();
 
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new Event('auth-state-changed'));
-      window.dispatchEvent(new Event('storage'));
     }
 
     if (existingToken) {

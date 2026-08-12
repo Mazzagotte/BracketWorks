@@ -2,7 +2,6 @@ import { Dispatch, SetStateAction, useEffect } from 'react'
 import { API, apiClient, apiFetch } from '../../lib/api'
 import { logger } from '../../lib/logger'
 import { getSelectedSquadId, getSelectedTournamentId } from '../../lib/selection-session'
-import { storage } from '../../lib/storage'
 import { Squad, Tournament, TournamentBootstrapResponse } from '../../lib/types'
 
 export type ScoreRow = {
@@ -18,6 +17,7 @@ export type ScoreRow = {
 type UsePayoutSetupArgs = {
   isAuthInitialized: boolean
   isUserAuthenticated: boolean
+  authToken: string | null
   isUnlocked: boolean
   selectionRefreshKey: number
   selectedTournament: Tournament | null
@@ -31,6 +31,7 @@ type UsePayoutSetupArgs = {
 export function usePayoutSetup({
   isAuthInitialized,
   isUserAuthenticated,
+  authToken,
   isUnlocked,
   selectionRefreshKey,
   selectedTournament,
@@ -93,8 +94,7 @@ export function usePayoutSetup({
         return
       }
 
-      const token = storage.getItem('token')
-      if (!token) {
+      if (!authToken) {
         setScoreRows([])
         return
       }
@@ -104,7 +104,7 @@ export function usePayoutSetup({
 
       try {
         const response = await apiFetch(API(`/api/v1/scores/?${params.toString()}`), {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${authToken}` },
         })
         if (!response.ok) {
           setScoreRows([])
@@ -118,5 +118,5 @@ export function usePayoutSetup({
     }
 
     void loadScores()
-  }, [selectedTournament, selectedSquad, isUnlocked, setScoreRows])
+  }, [authToken, selectedTournament, selectedSquad, isUnlocked, setScoreRows])
 }

@@ -22,6 +22,7 @@ from ...services.brackets_simple import (
     update_match_score,
     validate_all_brackets
 )
+from ...services.tournament_access import verify_owned_tournament_access
 from ...services.bracket_persistence_simple import (
     save_brackets_simple, 
     load_brackets_simple, 
@@ -32,15 +33,6 @@ from ...services.bracket_persistence_simple import (
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
-
-
-def _verify_tournament_access(db: Session, tournament_id: int, current_user: models.User) -> models.Tournament:
-    tournament = db.query(models.Tournament).filter(models.Tournament.id == tournament_id).first()
-    if not tournament:
-        raise HTTPException(status_code=404, detail="Tournament not found")
-    if tournament.user_id != current_user.id and not getattr(current_user, "is_admin", False):
-        raise HTTPException(status_code=403, detail="Not authorized to access this tournament")
-    return tournament
 
 
 def _normalized_program_entry_counts(player: models.TournamentPlayer) -> dict[str, int]:
@@ -152,7 +144,7 @@ def update_match_score_endpoint(
                 return JSONResponse(status_code=replay_or_record.status_code, content=replay_or_record.response_body)
             idempotency_record = replay_or_record
 
-        _verify_tournament_access(db, tournament_id, current_user)
+        verify_owned_tournament_access(db, tournament_id, current_user)
 
         # Get the current tournament brackets
         brackets_data = load_brackets_simple(db, tournament_id, squad_id)
@@ -231,7 +223,7 @@ def generate_tournament_brackets_endpoint(
 
         # Validate tournament_id
         tournament_id = BracketValidation.validate_tournament_id(tournament_id)
-        tournament = _verify_tournament_access(db, tournament_id, current_user)
+        tournament = verify_owned_tournament_access(db, tournament_id, current_user)
 
         experimental_enabled = settings.BRACKETS_EXPERIMENTAL_ENABLED if use_experimental is None else use_experimental
         configured_attempts = settings.BRACKETS_EXPERIMENTAL_ATTEMPTS
@@ -468,7 +460,7 @@ def generate_tournament_brackets_async(
     current_user: models.User = Depends(get_current_user),
 ):
     """Queue bracket generation and return a job handle for polling."""
-    _verify_tournament_access(db, tournament_id, current_user)
+    verify_owned_tournament_access(db, tournament_id, current_user)
     job = job_store.create(
         "brackets.generate",
         owner_user_id=current_user.id,
@@ -522,7 +514,7 @@ def load_tournament_brackets(
 ):
     """Load existing brackets for a tournament/squad from database with fresh scores"""
     try:
-        tournament = _verify_tournament_access(db, tournament_id, current_user)
+        tournament = verify_owned_tournament_access(db, tournament_id, current_user)
         
         # Load brackets with score refresh enabled by default
         brackets_data = load_brackets_simple(db, tournament_id, squad_id, refresh_scores=refresh_scores)
@@ -594,7 +586,7 @@ def delete_tournament_brackets(
 ):
     """Delete existing brackets for a tournament/squad"""
     try:
-        _verify_tournament_access(db, tournament_id, current_user)
+        verify_owned_tournament_access(db, tournament_id, current_user)
         
         deleted = delete_brackets_simple(db, tournament_id, squad_id)
         if not deleted:
@@ -616,7 +608,7 @@ def check_brackets_exist(
 ):
     """Check if brackets exist for a tournament/squad"""
     try:
-        _verify_tournament_access(db, tournament_id, current_user)
+        verify_owned_tournament_access(db, tournament_id, current_user)
         exists = brackets_exist_simple(db, tournament_id, squad_id)
         return {"exists": exists}
     except Exception as e:
@@ -632,7 +624,7 @@ def bracket_status(
 ):
     """Lightweight bracket status check: existence and entry mismatch."""
     try:
-        _verify_tournament_access(db, tournament_id, current_user)
+        verify_owned_tournament_access(db, tournament_id, current_user)
         snapshot = db.query(models.SimpleBracket).filter(
             models.SimpleBracket.tournament_id == tournament_id,
             models.SimpleBracket.squad_id == squad_id if squad_id else models.SimpleBracket.squad_id.is_(None),

@@ -2,6 +2,9 @@
  * BracketWorks base token catalog.
  * This file holds the broad reusable token set and compatibility aliases.
  * main.css applies the active app theme overrides that you are most likely to change.
+ * Foundational shared tokens (typography scale, spacing scale, radius scale,
+ * control sizing, elevation, and motion) are owned by:
+ *   packages/ui/styles/tokens.css
  */
 
 :root {
@@ -191,32 +194,8 @@
 
   /* Opacity Levels */
 
-  /* ── Spacing Scale ───────────────────────────────────────── */
-  --spacing-xs:   4px;
-  --spacing-sm:   8px;
-  --spacing-md:   16px;
-  --spacing-lg:   24px;
-  --spacing-xl:   32px;
-  --spacing-2xl:  48px;
-
-  /* ── Border Radius ───────────────────────────────────────── */
-  --radius-sm:    6px;
-  --radius-md:    8px;
-  --radius-lg:    12px;
-  --radius-xl:    16px;
-  --radius-2xl:   24px;
-  --radius-full:  9999px;
-
   /* ── Shadows ─────────────────────────────────────────────── */
   --shadow-card:       0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px 0 rgba(0, 0, 0, 0.04);
-
-  /* ── Layout ──────────────────────────────────────────────── */
-  --container-max-width: 1200px;
-  --content-max-width:   1200px;
-
-  /* ── Touch Targets ───────────────────────────────────────── */
-  --touch-target-min:         44px;
-  --touch-target-comfortable: 48px;
 
   /* ── Extended Opacity Black Tokens ─────────────────────── */
   --opacity-black-02: rgba(0, 0, 0, 0.02);
@@ -301,35 +280,10 @@
 
   --gradient-skeleton-light: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
 
-  /* ── Component Tokens ────────────────────────────────────── */
-  --input-height:    40px;
-  --input-height-sm: 32px;
-  --input-height-lg: 48px;
-  --btn-height:      40px;
-  --btn-height-sm:   32px;
-  --btn-height-lg:   48px;
-  --card-padding:    var(--spacing-lg);
-
   /* ── Surface / Background ────────────────────────────────── */
   --color-surface:    var(--bw-card, var(--color-dark-surface));
   --color-background: var(--bw-page-soft, var(--color-dark-base));
   --color-border:     var(--bw-border, var(--color-dark-elevated));
   --color-border-light: rgba(249, 115, 22, 0.2);
-
-  /* ── Typography ──────────────────────────────────────────── */
-  --font-family-primary: var(--bw-font-family-primary, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
-  --font-family-mono: var(--bw-font-family-mono, 'Courier New', Monaco, monospace);
-  --font-size-xs:   11px;
-  --font-size-sm:   13px;
-  --font-size-base: 14px;
-  --font-size-lg:   16px;
-  --font-size-xl:   18px;
-  --font-size-2xl:  20px;
-  --font-size-3xl:  24px;
-  --font-size-4xl:  28px;
-  --font-weight-normal:   400;
-  --font-weight-medium:   500;
-  --font-weight-semibold: 600;
-  --font-weight-bold:     700;
 
 }

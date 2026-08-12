@@ -6,6 +6,8 @@ from sqlalchemy.orm import Session
 
 from ...api import deps
 from ...core import models, schemas
+from ...services.tc_tournament_logo import validate_tournament_logo_upload
+from ...services.tournament_access import verify_owned_tc_tournament_access
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -25,19 +27,6 @@ def _tc_tournament_to_dict(tournament: models.TournamentCentral) -> dict:
     tournament_dict["logo_file_name"] = tournament.logo_file_name
     tournament_dict["logo_mime_type"] = tournament.logo_mime_type
     return tournament_dict
-
-
-def _verify_tournament_access(
-    db: Session,
-    tournament_id: int,
-    user,
-) -> models.TournamentCentral:
-    tournament = db.query(models.TournamentCentral).filter(models.TournamentCentral.id == tournament_id).first()
-    if not tournament:
-        raise HTTPException(status_code=404, detail="Tournament not found")
-    if tournament.user_id != user.id and not getattr(user, "is_admin", False):
-        raise HTTPException(status_code=403, detail="Not authorized to access this tournament")
-    return tournament
 
 
 @router.post("", response_model=schemas.Tournament)
@@ -95,7 +84,7 @@ def get_tournament(
     db: Session = Depends(deps.get_db),
     user=Depends(deps.get_current_user),
 ):
-    tournament = _verify_tournament_access(db, tournament_id, user)
+    tournament = verify_owned_tc_tournament_access(db, tournament_id, user)
     return _tc_tournament_to_dict(tournament)
 
 
@@ -107,7 +96,7 @@ def update_tournament(
     user=Depends(deps.get_current_user),
 ):
     try:
-        db_tournament = _verify_tournament_access(db, tournament_id, user)
+        db_tournament = verify_owned_tc_tournament_access(db, tournament_id, user)
 
         db_tournament.name = tournament.name
         if tournament.location is not None:
@@ -138,19 +127,10 @@ async def upload_tournament_logo(
     db: Session = Depends(deps.get_db),
     user=Depends(deps.get_current_user),
 ):
-    tournament = _verify_tournament_access(db, tournament_id, user)
-
-    allowed_types = {"image/png", "image/jpeg", "image/jpg", "image/svg+xml"}
-    if (file.content_type or "").lower() not in allowed_types:
-        raise HTTPException(status_code=400, detail="Unsupported logo type. Use PNG, JPG, or SVG.")
+    tournament = verify_owned_tc_tournament_access(db, tournament_id, user)
 
     content = await file.read()
-    if not content:
-        raise HTTPException(status_code=400, detail="Uploaded file is empty")
-
-    max_bytes = 5 * 1024 * 1024
-    if len(content) > max_bytes:
-        raise HTTPException(status_code=400, detail="Logo exceeds 5MB size limit")
+    validate_tournament_logo_upload(file.content_type, content)
 
     try:
         tournament.logo_blob = content
@@ -177,7 +157,7 @@ def get_tournament_logo(
     db: Session = Depends(deps.get_db),
     user=Depends(deps.get_current_user),
 ):
-    tournament = _verify_tournament_access(db, tournament_id, user)
+    tournament = verify_owned_tc_tournament_access(db, tournament_id, user)
     if not tournament.logo_blob:
         raise HTTPException(status_code=404, detail="Tournament logo not found")
 
@@ -198,7 +178,7 @@ def delete_tournament_logo(
     db: Session = Depends(deps.get_db),
     user=Depends(deps.get_current_user),
 ):
-    tournament = _verify_tournament_access(db, tournament_id, user)
+    tournament = verify_owned_tc_tournament_access(db, tournament_id, user)
 
     try:
         tournament.logo_blob = None
@@ -219,7 +199,7 @@ def delete_tournament(
     db: Session = Depends(deps.get_db),
     user=Depends(deps.get_current_user),
 ):
-    tournament = _verify_tournament_access(db, tournament_id, user)
+    tournament = verify_owned_tc_tournament_access(db, tournament_id, user)
 
     try:
         db.query(models.TournamentCentralSetupState).filter(

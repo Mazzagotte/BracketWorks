@@ -1,223 +1,48 @@
 "use client";
 
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ClipboardList, History, Info, Plus } from "lucide-react";
 
 import { apiClient } from "../lib/api";
 import { useAuth } from "../lib/auth-context";
-import { formatShortMonthDayYear } from "../lib/formatters";
-import type { ChangelogEntry } from "../lib/types";
 import { DataTableToolbar } from "../components/primitives";
 import { useToastHelpers } from "../components/Toast";
+import { AdminOverviewSection } from "./components/AdminOverviewSection";
+import { AdminAuditSection } from "./components/AdminAuditSection";
+import { AdminTabNav } from "./components/AdminTabNav";
+import { AdminTournamentsSection } from "./components/AdminTournamentsSection";
+import { AdminUsersSection } from "./components/AdminUsersSection";
+import { useAdminOverviewMetrics } from "./hooks/useAdminOverviewMetrics";
+import { adminApi } from "./services/adminApi";
+import {
+  EMPTY_CHANGELOG_FORM,
+  type AdminAnnouncement,
+  type AdminChangelogEntry,
+  type AdminOperation,
+  type AdminTab,
+  type AuditLogsResponse,
+  type ChangelogFormState,
+  type DeletePreview,
+  type OverviewResponse,
+  type TablesResponse,
+  type TournamentActivityFilter,
+  type TournamentNote,
+  type TournamentRow,
+  type TournamentSortOption,
+  type TournamentsResponse,
+  type UsersActivityFilter,
+  type UsersPageSize,
+  type UsersReviewFilter,
+  type UsersSortOption,
+  type UserReviewDetail,
+  type UserRow,
+  type UsersResponse,
+  type UsersVerificationFilter,
+} from "./types";
+import { formatAdminTimestamp } from "./utils";
 import buttonStyles from "../styles/buttons.module.css";
 import styles from "./admin.module.css";
-
-type OverviewResponse = {
-  metrics: {
-    total_users: number;
-    admin_users: number;
-    total_tournaments: number;
-    total_squads: number;
-    total_entries: number;
-    total_scores: number;
-    total_snapshots: number;
-    total_payouts: number;
-    unverified_users?: number;
-    users_never_signed_in?: number;
-    open_user_reviews?: number;
-    open_tournament_notes?: number;
-    active_announcements?: number;
-    failed_operations?: number;
-  };
-  top_operators: Array<{
-    id: number;
-    username: string;
-    name: string;
-    tournament_count: number;
-  }>;
-  recent_tournaments: Array<{
-    id: number;
-    name: string;
-    location: string | null;
-    start_date: string | null;
-    owner_username: string;
-    owner_name: string;
-  }>;
-  recent_signups: Array<{
-    id: number;
-    username: string;
-    name: string;
-    created_at: string | null;
-  }>;
-};
-
-type UserRow = {
-  id: number;
-  username: string;
-  email: string;
-  first_name: string;
-  last_name: string;
-  organization: string | null;
-  is_admin: boolean;
-  email_verified: boolean;
-  email_verified_at: string | null;
-  last_login_at: string | null;
-  tournament_count: number;
-  profile_count: number;
-  created_at: string | null;
-  max_risk_score: number;
-  active_session_count: number;
-  failed_login_count: number;
-  open_review_count: number;
-  dev_notice_version_accepted: string | null;
-  dev_notice_accepted_at: string | null;
-};
-
-type UserReviewDetail = {
-  user: UserRow & { name: string };
-  sessions: Array<{ id: number; issued_at: string | null; last_seen_at: string | null; expires_at: string | null; is_revoked: boolean; revoked_at: string | null; region_hint: string | null; device_nickname: string | null; risk_score: number }>;
-  login_attempts: Array<{ id: number; failed_count: number; window_start: string | null; blocked_until: string | null; updated_at: string | null }>;
-  reviews: Array<{ id: number; kind: "flag" | "note"; category: string; note: string; is_resolved: boolean; admin_username: string; created_at: string | null; resolved_at: string | null }>;
-  acknowledgments: Array<{ id: number; content_type: string; content_id: string; version: string; acknowledged_at: string | null }>;
-};
-
-type UsersResponse = {
-  users: UserRow[];
-  page: number;
-  page_size: number;
-  total: number;
-  total_pages: number;
-};
-
-type TournamentRow = {
-  id: number;
-  name: string;
-  location: string | null;
-  start_date: string | null;
-  end_date: string | null;
-  archived_at: string | null;
-  archive_reason: string | null;
-  owner_username: string;
-  owner_email: string;
-  owner_name: string;
-  entry_count: number;
-  squad_count: number;
-  score_count: number;
-  payout_count: number;
-  snapshot_count: number;
-  status: "current" | "upcoming" | "completed" | "archived";
-  open_note_count: number;
-  last_activity_at: string | null;
-  last_admin_change_at: string | null;
-};
-
-type TournamentNote = { id: number; category: string; note: string; is_resolved: boolean; admin_username: string; created_at: string | null; resolved_at: string | null };
-
-type TournamentsResponse = {
-  tournaments: TournamentRow[];
-  page: number;
-  page_size: number;
-  total: number;
-  total_pages: number;
-};
-
-type TableInfo = {
-  name: string;
-  row_count: number | null;
-  row_count_kind: "skipped" | "estimated" | "exact";
-  columns: string[];
-};
-
-type TablesResponse = {
-  tables: TableInfo[];
-  include_counts: boolean;
-  total_tables: number;
-};
-
-type AuditLogRow = {
-  id: number;
-  admin_user_id: number;
-  admin_username: string | null;
-  admin_name: string | null;
-  action: string;
-  target_type: string | null;
-  target_id: string | null;
-  reason: string | null;
-  details: Record<string, unknown> | null;
-  created_at: string | null;
-};
-
-type AuditLogsResponse = {
-  logs: AuditLogRow[];
-  page: number;
-  page_size: number;
-  total: number;
-  total_pages: number;
-};
-
-type DeletePreview = {
-  impact: Record<string, number>;
-  dependent_total_rows: number;
-  requires_force?: boolean;
-  score_count?: number;
-};
-
-type AdminTab = "overview" | "users" | "tournaments" | "operations" | "announcements" | "database" | "audit" | "changelog";
-
-type AdminAnnouncement = { id: number; title: string; message: string; audience_type: "all" | "admins" | "user"; audience_user_id: number | null; status: "draft" | "active" | "archived"; requires_acknowledgment: boolean; starts_at: string | null; ends_at: string | null; acknowledgment_count: number };
-type AdminOperation = { job_id: string; job_type: string; status: string; created_at: string; started_at: string | null; completed_at: string | null; error: string | null };
-
-type ChangelogFormState = {
-  version: string;
-  date: string;
-  changes: string;
-};
-
-type AdminChangelogEntry = ChangelogEntry & {
-  id: number;
-  created_at: string | null;
-  updated_at: string | null;
-};
-
-const EMPTY_CHANGELOG_FORM: ChangelogFormState = {
-  version: "",
-  date: "",
-  changes: "",
-};
-
-const TAB_LABELS: Record<AdminTab, string> = {
-  overview: "Overview",
-  users: "Users",
-  tournaments: "Tournaments",
-  database: "Database",
-  audit: "Audit",
-  changelog: "Changelog",
-  operations: "Operations",
-  announcements: "Announcements",
-};
-
-function buildQuery(params: Record<string, string | number | boolean | null | undefined>) {
-  const query = new URLSearchParams();
-  Object.entries(params).forEach(([key, value]) => {
-    if (value === null || value === undefined || value === "") return;
-    query.set(key, String(value));
-  });
-  const queryString = query.toString();
-  return queryString ? `?${queryString}` : "";
-}
-
-function formatAdminTimestamp(value: string | null, emptyLabel = "Never") {
-  if (!value) return emptyLabel;
-
-  return new Date(value).toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
 
 export default function AdminPage() {
   const router = useRouter();
@@ -236,12 +61,12 @@ export default function AdminPage() {
   const [usersLoading, setUsersLoading] = useState(false);
   const [usersLoaded, setUsersLoaded] = useState(false);
   const [usersSearch, setUsersSearch] = useState("");
-  const [usersSort, setUsersSort] = useState("id_asc");
+  const [usersSort, setUsersSort] = useState<UsersSortOption>("id_asc");
   const [usersPage, setUsersPage] = useState(1);
-  const [usersPageSize, setUsersPageSize] = useState(25);
-  const [usersVerification, setUsersVerification] = useState("all");
-  const [usersActivity, setUsersActivity] = useState("all");
-  const [usersReview, setUsersReview] = useState("all");
+  const [usersPageSize, setUsersPageSize] = useState<UsersPageSize>(25);
+  const [usersVerification, setUsersVerification] = useState<UsersVerificationFilter>("all");
+  const [usersActivity, setUsersActivity] = useState<UsersActivityFilter>("all");
+  const [usersReview, setUsersReview] = useState<UsersReviewFilter>("all");
   const [reviewUser, setReviewUser] = useState<UserRow | null>(null);
   const [reviewDetail, setReviewDetail] = useState<UserReviewDetail | null>(null);
   const [reviewLoading, setReviewLoading] = useState(false);
@@ -255,8 +80,8 @@ export default function AdminPage() {
   const [tournamentsLoading, setTournamentsLoading] = useState(false);
   const [tournamentsLoaded, setTournamentsLoaded] = useState(false);
   const [tournamentSearch, setTournamentSearch] = useState("");
-  const [tournamentActivityFilter, setTournamentActivityFilter] = useState<"all" | "has_entries" | "no_entries">("all");
-  const [tournamentSort, setTournamentSort] = useState<"newest" | "entries_desc" | "owner_asc" | "oldest">("newest");
+  const [tournamentActivityFilter, setTournamentActivityFilter] = useState<TournamentActivityFilter>("all");
+  const [tournamentSort, setTournamentSort] = useState<TournamentSortOption>("newest");
   const [tournamentPage, setTournamentPage] = useState(1);
   const [expandedTournamentIds, setExpandedTournamentIds] = useState<number[]>([]);
   const [noteTournament, setNoteTournament] = useState<TournamentRow | null>(null);
@@ -355,13 +180,16 @@ export default function AdminPage() {
   const [deleteTournamentSaving, setDeleteTournamentSaving] = useState(false);
   const [deleteTournamentError, setDeleteTournamentError] = useState<string | null>(null);
 
+  const metrics = useAdminOverviewMetrics(overview);
+  const currentUserId = currentUser?.id != null ? Number(currentUser.id) : null;
+
   const loadOverview = useCallback(async (manual = false) => {
     if (!currentUser?.isAdmin) return;
     if (manual) setRefreshing(true);
     setOverviewLoading(true);
     setError(null);
     try {
-      const data = await apiClient.get<OverviewResponse>("/api/v1/admin/overview", false);
+      const data = await adminApi.getOverview();
       setOverview(data);
       setOverviewLoaded(true);
     } catch (err) {
@@ -378,8 +206,15 @@ export default function AdminPage() {
     setUsersLoading(true);
     setError(null);
     try {
-      const query = buildQuery({ page: usersPage, page_size: usersPageSize, search: usersSearch, sort: usersSort, verification: usersVerification, activity: usersActivity, review: usersReview });
-      const data = await apiClient.get<UsersResponse>(`/api/v1/admin/users${query}`, false);
+      const data = await adminApi.getUsers({
+        page: usersPage,
+        page_size: usersPageSize,
+        search: usersSearch,
+        sort: usersSort,
+        verification: usersVerification,
+        activity: usersActivity,
+        review: usersReview,
+      });
       setUsersResponse(data);
       setUsersLoaded(true);
     } catch (err) {
@@ -396,7 +231,7 @@ export default function AdminPage() {
     setReviewError(null);
     setReviewLoading(true);
     try {
-      const detail = await apiClient.get<UserReviewDetail>(`/api/v1/admin/users/${user.id}/review`, false);
+      const detail = await adminApi.getUserReview(user.id);
       setReviewDetail(detail);
     } catch (err) {
       setReviewError(err instanceof Error ? err.message : "Failed to load account review");
@@ -466,14 +301,13 @@ export default function AdminPage() {
     setTournamentsLoading(true);
     setError(null);
     try {
-      const query = buildQuery({
+      const data = await adminApi.getTournaments({
         page: tournamentPage,
         page_size: 25,
         search: tournamentSearch,
         activity: tournamentActivityFilter,
         sort: tournamentSort,
       });
-      const data = await apiClient.get<TournamentsResponse>(`/api/v1/admin/tournaments${query}`, false);
       setTournamentsResponse(data);
       setExpandedTournamentIds([]);
       setTournamentsLoaded(true);
@@ -487,7 +321,7 @@ export default function AdminPage() {
 
   const loadTournamentNotes = useCallback(async (tournament: TournamentRow) => {
     setNoteTournament(tournament); setTournamentNotesLoading(true); setError(null);
-    try { const data = await apiClient.get<{ notes: TournamentNote[] }>(`/api/v1/admin/tournaments/${tournament.id}/notes`, false); setTournamentNotes(data.notes); }
+    try { const data = await adminApi.getTournamentNotes(tournament.id); setTournamentNotes(data.notes); }
     catch (err) { setError(err instanceof Error ? err.message : "Failed to load tournament notes"); }
     finally { setTournamentNotesLoading(false); }
   }, []);
@@ -510,8 +344,7 @@ export default function AdminPage() {
     setTablesLoading(true);
     setError(null);
     try {
-      const query = buildQuery({ include_counts: tableIncludeCounts, search: tableSearch, limit: 300 });
-      const data = await apiClient.get<TablesResponse>(`/api/v1/admin/database/tables${query}`, false);
+      const data = await adminApi.getTables({ include_counts: tableIncludeCounts, search: tableSearch, limit: 300 });
       setTablesResponse(data);
       setTablesLoaded(true);
     } catch (err) {
@@ -528,7 +361,7 @@ export default function AdminPage() {
     setAuditLoading(true);
     setError(null);
     try {
-      const query = buildQuery({
+      const data = await adminApi.getAuditLogs({
         page: auditPage,
         page_size: 25,
         search: auditSearch,
@@ -538,7 +371,6 @@ export default function AdminPage() {
         date_from: auditDateFrom,
         date_to: auditDateTo,
       });
-      const data = await apiClient.get<AuditLogsResponse>(`/api/v1/admin/audit-logs${query}`, false);
       setAuditResponse(data);
       setAuditLoaded(true);
     } catch (err) {
@@ -555,7 +387,7 @@ export default function AdminPage() {
     setChangelogLoading(true);
     setChangelogError(null);
     try {
-      const data = await apiClient.get<{ entries: AdminChangelogEntry[] }>("/api/v1/admin/changelog", false);
+      const data = await adminApi.getChangelog();
       setChangelogEntries(data.entries);
       setChangelogLoaded(true);
     } catch (err) {
@@ -570,7 +402,7 @@ export default function AdminPage() {
     if (!currentUser?.isAdmin) return;
     if (manual) setRefreshing(true);
     setAnnouncementsLoading(true); setError(null);
-    try { const data = await apiClient.get<{ announcements: AdminAnnouncement[] }>("/api/v1/admin/announcements", false); setAnnouncements(data.announcements); }
+    try { const data = await adminApi.getAnnouncements(); setAnnouncements(data.announcements); }
     catch (err) { setError(err instanceof Error ? err.message : "Failed to load announcements"); }
     finally { setAnnouncementsLoading(false); if (manual) setRefreshing(false); }
   }, [currentUser?.isAdmin]);
@@ -579,7 +411,7 @@ export default function AdminPage() {
     if (!currentUser?.isAdmin) return;
     if (manual) setRefreshing(true);
     setOperationsLoading(true); setError(null);
-    try { const data = await apiClient.get<{ operations: AdminOperation[]; note: string }>("/api/v1/admin/operations", false); setOperations(data.operations); setOperationsNote(data.note); }
+    try { const data = await adminApi.getOperations(); setOperations(data.operations); setOperationsNote(data.note); }
     catch (err) { setError(err instanceof Error ? err.message : "Failed to load operations"); }
     finally { setOperationsLoading(false); if (manual) setRefreshing(false); }
   }, [currentUser?.isAdmin]);
@@ -747,37 +579,6 @@ export default function AdminPage() {
     setChangelogFormError(null);
   }, []);
 
-  const adminTabs = useMemo(() => (
-    <nav className={styles.adminNav} aria-label="Admin sections">
-      <div className={styles.tabRow}>
-        {(["overview", "users", "tournaments", "announcements", "operations", "audit", "changelog", ...(isDevelopment ? ["database" as AdminTab] : [])] as AdminTab[]).map((tab) => (
-          <button
-            key={tab}
-            type="button"
-            className={`${styles.tabButton} ${activeTab === tab ? styles.tabButtonActive : ""}`}
-            onClick={() => setActiveTab(tab)}
-          >
-            {TAB_LABELS[tab]}
-          </button>
-        ))}
-      </div>
-    </nav>
-  ), [activeTab, isDevelopment]);
-
-  const headerActions = useMemo(() => (
-    <>
-      <button
-        type="button"
-        className={styles.refreshButton}
-        onClick={() => { void loadActiveTab(true); }}
-        disabled={refreshing}
-      >
-        {refreshing ? "Refreshing..." : "Refresh"}
-      </button>
-    </>
-  ), [refreshing, loadActiveTab]);
-
-
   useEffect(() => {
     if (!isAuthInitialized) return;
     if (!isUserAuthenticated) {
@@ -843,7 +644,7 @@ export default function AdminPage() {
     let isMounted = true;
     setDeleteUserPreview(null);
     setDeleteUserError(null);
-    void apiClient.get<DeletePreview>(`/api/v1/admin/users/${deleteUser.id}/delete-preview`, false)
+    void adminApi.getUserDeletePreview(deleteUser.id)
       .then((preview) => {
         if (isMounted) setDeleteUserPreview(preview);
       })
@@ -861,7 +662,7 @@ export default function AdminPage() {
     let isMounted = true;
     setDeleteTournamentPreview(null);
     setDeleteTournamentError(null);
-    void apiClient.get<DeletePreview>(`/api/v1/admin/tournaments/${deleteTournament.id}/delete-preview`, false)
+    void adminApi.getTournamentDeletePreview(deleteTournament.id)
       .then((preview) => {
         if (isMounted) setDeleteTournamentPreview(preview);
       })
@@ -874,20 +675,6 @@ export default function AdminPage() {
     };
   }, [deleteTournament]);
 
-  const metrics = useMemo(() => {
-    if (!overview) return [];
-    return [
-      { label: "Users", value: overview.metrics.total_users.toLocaleString(), tone: "orange" },
-      { label: "Tournaments", value: overview.metrics.total_tournaments.toLocaleString(), tone: "blue" },
-      { label: "Entries", value: overview.metrics.total_entries.toLocaleString(), tone: "green" },
-      { label: "Bracket Snapshots", value: overview.metrics.total_snapshots.toLocaleString(), tone: "slate" },
-      { label: "Unverified Users", value: (overview.metrics.unverified_users ?? 0).toLocaleString(), tone: "gold" },
-      { label: "Open Reviews", value: (overview.metrics.open_user_reviews ?? 0).toLocaleString(), tone: "red" },
-      { label: "Tournament Notes", value: (overview.metrics.open_tournament_notes ?? 0).toLocaleString(), tone: "gold" },
-      { label: "Failed Operations", value: (overview.metrics.failed_operations ?? 0).toLocaleString(), tone: "red" },
-    ];
-  }, [overview]);
-
   if (!isAuthInitialized || (overviewLoading && !overviewLoaded)) {
     return <div className={styles.stateCard}>Loading admin console...</div>;
   }
@@ -895,514 +682,163 @@ export default function AdminPage() {
   if (!currentUser?.isAdmin) {
     return <div className={styles.stateCard}>Redirecting...</div>;
   }
-
   return (
     <div className={styles.page}>
       {error && <div className={styles.errorBanner} role="alert">{error}</div>}
 
-      {adminTabs}
+      <div className={styles.toolbarRow}>
+        <div>
+          <button
+            type="button"
+            className={styles.refreshButton}
+            onClick={() => { void loadActiveTab(true); }}
+            disabled={refreshing}
+          >
+            {refreshing ? "Refreshing..." : "Refresh"}
+          </button>
+        </div>
+      </div>
+
+      <AdminTabNav
+        activeTab={activeTab}
+        isDevelopment={isDevelopment}
+        onTabChange={setActiveTab}
+      />
 
       {activeTab === "overview" && (
-        <div className={styles.sectionStack}>
-          <div className={styles.metricGrid}>
-            {metrics.map((metric) => (
-              <section key={metric.label} className={`${styles.metricCard} ${styles[`tone${metric.tone.charAt(0).toUpperCase()}${metric.tone.slice(1)}`]}`}>
-                <div className={styles.metricLabel}>{metric.label}</div>
-                <div className={styles.metricValue}>{metric.value}</div>
-              </section>
-            ))}
-          </div>
-
-          <div className={styles.twoColumnGrid}>
-            <section className={styles.panel}>
-              <div className={styles.panelHeader}>
-                <h3 className={styles.panelTitle}>Top Operators</h3>
-                <span className={styles.panelSubtle}>Most tournaments created</span>
-              </div>
-              <div className={styles.listStack}>
-                {(overview?.top_operators || []).map((operator) => (
-                  <div key={operator.id} className={styles.listRow}>
-                    <div>
-                      <div className={styles.primaryText}>{operator.name || operator.username}</div>
-                      <div className={styles.secondaryText}>@{operator.username}</div>
-                    </div>
-                    <span className={styles.valuePill}>{operator.tournament_count}</span>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            <section className={styles.panel}>
-              <div className={styles.panelHeader}>
-                <h3 className={styles.panelTitle}>Recent Tournaments</h3>
-                <span className={styles.panelSubtle}>Latest tournament records</span>
-              </div>
-              <div className={styles.listStack}>
-                {(overview?.recent_tournaments || []).map((tournament) => (
-                  <div key={tournament.id} className={styles.listRow}>
-                    <div>
-                      <div className={styles.primaryText}>{tournament.name}</div>
-                      <div className={styles.secondaryText}>
-                        {tournament.owner_name || tournament.owner_username}
-                        {tournament.location ? ` - ${tournament.location}` : ""}
-                      </div>
-                    </div>
-                    <span className={styles.valuePill}>#{tournament.id}</span>
-                  </div>
-                ))}
-              </div>
-            </section>
-          </div>
-
-          <section className={styles.panel}>
-            <div className={styles.panelHeader}>
-              <h3 className={styles.panelTitle}>Recent Signups</h3>
-              <span className={styles.panelSubtle}>Newest accounts</span>
-            </div>
-            <div className={styles.listStack}>
-              {(overview?.recent_signups || []).map((user) => (
-                <div key={user.id} className={styles.listRow}>
-                  <div>
-                    <div className={styles.primaryText}>{user.name || user.username}</div>
-                    <div className={styles.secondaryText}>@{user.username}</div>
-                  </div>
-                  <div className={styles.secondaryText}>
-                    {user.created_at
-                      ? formatShortMonthDayYear(new Date(user.created_at))
-                      : "-"}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        </div>
+        <AdminOverviewSection overview={overview} metrics={metrics} />
       )}
 
       {activeTab === "users" && (
-        <section className={styles.panel}>
-          <div className={styles.panelHeader}>
-            <h3 className={styles.panelTitle}>Users</h3>
-            <span className={styles.panelSubtle}>{usersResponse.total} total</span>
-          </div>
-          <DataTableToolbar
-            className={styles.toolbarRow}
-            left={(
-              <input
-                type="text"
-                className={styles.toolbarInput}
-                aria-label="Search users"
-                value={usersSearch}
-                onChange={(event) => {
-                  setUsersSearch(event.target.value);
-                  setUsersPage(1);
-                }}
-                placeholder="Search name, username, email, organization"
-              />
-            )}
-            right={(
-              <>
-                <select className={styles.toolbarSelect} aria-label="Filter users by verification" value={usersVerification} onChange={(event) => { setUsersVerification(event.target.value); setUsersPage(1); }}>
-                  <option value="all">All verification</option><option value="verified">Verified</option><option value="unverified">Unverified</option>
-                </select>
-                <select className={styles.toolbarSelect} aria-label="Filter users by activity" value={usersActivity} onChange={(event) => { setUsersActivity(event.target.value); setUsersPage(1); }}>
-                  <option value="all">All activity</option><option value="active">Active in 90 days</option><option value="inactive">Inactive 90+ days</option><option value="never">Never signed in</option>
-                </select>
-                <select className={styles.toolbarSelect} aria-label="Filter users by review status" value={usersReview} onChange={(event) => { setUsersReview(event.target.value); setUsersPage(1); }}>
-                  <option value="all">All reviews</option><option value="flagged">Needs review</option><option value="clear">No open reviews</option>
-                </select>
-                <select className={styles.toolbarSelect} aria-label="Sort users" value={usersSort} onChange={(event) => { setUsersSort(event.target.value); setUsersPage(1); }}>
-                  <option value="id_asc">Sort: Oldest</option><option value="id_desc">Sort: Newest ID</option><option value="created_desc">Sort: Newest signup</option><option value="last_login_desc">Sort: Recent login</option><option value="name_asc">Sort: Name A-Z</option><option value="name_desc">Sort: Name Z-A</option><option value="tournaments_desc">Sort: Most tournaments</option><option value="reviews_desc">Sort: Review items</option>
-                </select>
-                <select className={styles.toolbarSelect} aria-label="Users per page" value={usersPageSize} onChange={(event) => { setUsersPageSize(Number(event.target.value)); setUsersPage(1); }}>
-                  <option value={10}>10 per page</option><option value={25}>25 per page</option><option value={50}>50 per page</option><option value={100}>100 per page</option>
-                </select>
-                <button type="button" className={styles.actionBtn} onClick={exportUsersCsv} disabled={usersResponse.users.length === 0}>Export CSV</button>
-              </>
-            )}
-          />
-          <div className={styles.tableWrap}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Username</th>
-                  <th>Email</th>
-                  <th>Status</th>
-                  <th>Organization</th>
-                  <th>Role</th>
-                  <th>Tournaments</th>
-                  <th>Bowler Profiles</th>
-                  <th>Review</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {usersLoading ? (
-                  <tr><td className={styles.tableState} colSpan={10}><span role="status">Loading users…</span></td></tr>
-                ) : usersResponse.users.length === 0 ? (
-                  <tr><td className={styles.tableState} colSpan={10}><strong>No users found</strong><span>Try changing the search or filter options.</span></td></tr>
-                ) : (
-                  usersResponse.users.map((user) => (
-                    <tr key={user.id}>
-                      <td>{`${user.first_name} ${user.last_name}`.trim()}</td>
-                      <td>{user.username}</td>
-                      <td>{user.email}</td>
-                      <td>
-                        <details className={styles.userStatusDetails}>
-                          <summary className={styles.userStatusSummary}>
-                            <span className={`${styles.statusPill} ${user.email_verified ? styles.statusActive : styles.statusDraft}`}>
-                              {user.email_verified ? "Verified" : "Pending"}
-                            </span>
-                          </summary>
-                          <div className={styles.userStatusPanel}>
-                            <div className={styles.detailGrid}>
-                              <div>
-                                <strong>Email verified:</strong> {user.email_verified ? "Yes" : "No"}
-                              </div>
-                              <div>
-                                <strong>Verified at:</strong> {formatAdminTimestamp(user.email_verified_at)}
-                              </div>
-                              <div>
-                                <strong>Last login:</strong> {formatAdminTimestamp(user.last_login_at)}
-                              </div>
-                              <div><strong>Created:</strong> {formatAdminTimestamp(user.created_at, "Unknown")}</div>
-                              <div><strong>Active sessions:</strong> {user.active_session_count}</div>
-                              <div><strong>Failed logins:</strong> {user.failed_login_count}</div>
-                              <div><strong>Development notice:</strong> {user.dev_notice_version_accepted || "Not acknowledged"}</div>
-                            </div>
-                          </div>
-                        </details>
-                      </td>
-                      <td>{user.organization || "-"}</td>
-                      <td>{user.is_admin ? "Administrator" : "User"}</td>
-                      <td>{user.tournament_count}</td>
-                      <td>{user.profile_count}</td>
-                      <td><span className={`${styles.statusPill} ${user.open_review_count > 0 ? styles.statusDraft : styles.statusActive}`}>{user.open_review_count > 0 ? `${user.open_review_count} open` : "Clear"}</span></td>
-                      <td>
-                        <div className={styles.rowActions}>
-                          <button type="button" className={styles.actionBtn} onClick={() => { void loadUserReview(user); }}>Review</button>
-                          <button
-                            type="button"
-                            className={styles.actionBtn}
-                            onClick={() => {
-                              setEditUser(user);
-                              setEditFirstName(user.first_name);
-                              setEditLastName(user.last_name);
-                              setEditEmail(user.email);
-                              setEditOrg(user.organization || "");
-                              setEditError(null);
-                            }}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            className={styles.actionBtn}
-                            onClick={() => {
-                              setResetUser(user);
-                              setResetPassword("");
-                              setResetError(null);
-                              setTimeout(() => resetPasswordInputRef.current?.focus(), 50);
-                            }}
-                          >
-                            Reset PW
-                          </button>
-                          {user.id !== Number(currentUser?.id) && (
-                            <button
-                              type="button"
-                              className={`${styles.actionBtn} ${user.is_admin ? styles.actionBtnDanger : ""}`}
-                              disabled={adminRoleSavingUserId === user.id}
-                              onClick={() => {
-                                void handleToggleAdminRole(user);
-                              }}
-                            >
-                              {adminRoleSavingUserId === user.id
-                                ? "Saving..."
-                                : user.is_admin
-                                  ? "Change to User"
-                                  : "Promote to Admin"}
-                            </button>
-                          )}
-                          {user.id !== Number(currentUser?.id) && (
-                            <button
-                              type="button"
-                              className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
-                              onClick={() => {
-                                setDeleteUser(user);
-                                setDeleteUserReason("");
-                                setDeleteUserConfirmText("");
-                                setDeleteUserError(null);
-                              }}
-                            >
-                              Delete
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-          <div className={styles.paginationRow}>
-            <button
-              type="button"
-              className={styles.actionBtn}
-              onClick={() => setUsersPage((prev) => Math.max(1, prev - 1))}
-              disabled={usersResponse.page <= 1 || usersLoading}
-            >
-              Prev
-            </button>
-            <span className={styles.secondaryText}>Page {usersResponse.page} of {usersResponse.total_pages}</span>
-            <button
-              type="button"
-              className={styles.actionBtn}
-              onClick={() => setUsersPage((prev) => Math.min(usersResponse.total_pages, prev + 1))}
-              disabled={usersResponse.page >= usersResponse.total_pages || usersLoading}
-            >
-              Next
-            </button>
-          </div>
-        </section>
+        <AdminUsersSection
+          usersResponse={usersResponse}
+          usersLoading={usersLoading}
+          usersSearch={usersSearch}
+          usersVerification={usersVerification}
+          usersActivity={usersActivity}
+          usersReview={usersReview}
+          usersSort={usersSort}
+          usersPageSize={usersPageSize}
+          currentUserId={currentUserId}
+          adminRoleSavingUserId={adminRoleSavingUserId}
+          onUsersSearchChange={(value) => {
+            setUsersSearch(value);
+            setUsersPage(1);
+          }}
+          onUsersVerificationChange={(value) => {
+            setUsersVerification(value);
+            setUsersPage(1);
+          }}
+          onUsersActivityChange={(value) => {
+            setUsersActivity(value);
+            setUsersPage(1);
+          }}
+          onUsersReviewChange={(value) => {
+            setUsersReview(value);
+            setUsersPage(1);
+          }}
+          onUsersSortChange={(value) => {
+            setUsersSort(value);
+            setUsersPage(1);
+          }}
+          onUsersPageSizeChange={(value) => {
+            setUsersPageSize(value);
+            setUsersPage(1);
+          }}
+          onUsersPageChange={setUsersPage}
+          onExportUsersCsv={exportUsersCsv}
+          onLoadUserReview={(user) => void loadUserReview(user)}
+          onStartEditUser={(user) => {
+            setEditUser(user);
+            setEditFirstName(user.first_name);
+            setEditLastName(user.last_name);
+            setEditEmail(user.email);
+            setEditOrg(user.organization || "");
+            setEditError(null);
+          }}
+          onStartResetUser={(user) => {
+            setResetUser(user);
+            setResetPassword("");
+            setResetError(null);
+            setTimeout(() => resetPasswordInputRef.current?.focus(), 50);
+          }}
+          onToggleAdminRole={(user) => void handleToggleAdminRole(user)}
+          onStartDeleteUser={(user) => {
+            setDeleteUser(user);
+            setDeleteUserReason("");
+            setDeleteUserConfirmText("");
+            setDeleteUserError(null);
+          }}
+        />
       )}
 
       {activeTab === "tournaments" && (
-        <section className={styles.panel}>
-          <div className={styles.panelHeader}>
-            <h3 className={styles.panelTitle}>All Tournaments</h3>
-            <span className={styles.panelSubtle}>{tournamentsResponse.total} total</span>
-          </div>
-
-          <DataTableToolbar
-            className={styles.toolbarRow}
-            left={(
-              <input
-                type="text"
-                className={styles.toolbarInput}
-                aria-label="Search tournaments"
-                value={tournamentSearch}
-                onChange={(event) => {
-                  setTournamentSearch(event.target.value);
-                  setTournamentPage(1);
-                }}
-                placeholder="Search name, owner, location"
-              />
-            )}
-            right={(
-              <>
-                <select
-                  className={styles.toolbarSelect}
-                  aria-label="Filter tournaments by activity"
-                  value={tournamentActivityFilter}
-                  onChange={(event) => {
-                    setTournamentActivityFilter(event.target.value as "all" | "has_entries" | "no_entries");
-                    setTournamentPage(1);
-                  }}
-                >
-                  <option value="all">All activity</option>
-                  <option value="has_entries">Has entries</option>
-                  <option value="no_entries">No entries</option>
-                </select>
-                <select
-                  className={styles.toolbarSelect}
-                  aria-label="Sort tournaments"
-                  value={tournamentSort}
-                  onChange={(event) => {
-                    setTournamentSort(event.target.value as "newest" | "entries_desc" | "owner_asc" | "oldest");
-                    setTournamentPage(1);
-                  }}
-                >
-                  <option value="newest">Sort: Newest</option>
-                  <option value="oldest">Sort: Oldest</option>
-                  <option value="entries_desc">Sort: Most entries</option>
-                  <option value="owner_asc">Sort: Owner A-Z</option>
-                </select>
-                <button type="button" className={styles.actionBtn} onClick={exportTournamentsCsv} disabled={tournamentsResponse.tournaments.length === 0}>Export CSV</button>
-              </>
-            )}
-          />
-
-          <div className={styles.tableWrap}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Name</th>
-                  <th>Owner</th>
-                  <th>Location</th>
-                  <th>Start</th>
-                  <th>End</th>
-                  <th>Squads</th>
-                  <th>Entries</th>
-                  <th>Status</th>
-                  <th>Notes</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {tournamentsLoading ? (
-                  <tr><td className={styles.tableState} colSpan={11}><span role="status">Loading tournaments…</span></td></tr>
-                ) : tournamentsResponse.tournaments.length === 0 ? (
-                  <tr><td className={styles.tableState} colSpan={11}><strong>No tournaments found</strong><span>Try changing the search, activity, or sort options.</span></td></tr>
-                ) : (
-                  tournamentsResponse.tournaments.map((tournament) => {
-                    const expanded = expandedTournamentIds.includes(tournament.id);
-                    return (
-                      <Fragment key={tournament.id}>
-                        <tr>
-                          <td>{tournament.id}</td>
-                          <td>{tournament.name}</td>
-                          <td title={tournament.owner_email}>{tournament.owner_name || tournament.owner_username}</td>
-                          <td>{tournament.location || "-"}</td>
-                          <td>{tournament.start_date || "-"}</td>
-                          <td>{tournament.end_date || "-"}</td>
-                          <td>{tournament.squad_count}</td>
-                          <td>{tournament.entry_count}</td>
-                          <td><span className={`${styles.statusPill} ${tournament.status === "current" ? styles.statusActive : styles.statusDraft}`}>{tournament.status}</span></td>
-                          <td><span className={`${styles.statusPill} ${tournament.open_note_count > 0 ? styles.statusDraft : styles.statusActive}`}>{tournament.open_note_count > 0 ? `${tournament.open_note_count} open` : "Clear"}</span></td>
-                          <td>
-                            <div className={styles.rowActions}>
-                              <button
-                                type="button"
-                                className={styles.actionBtn}
-                                onClick={() => { void loadTournamentNotes(tournament); }}
-                              >
-                                Notes
-                              </button>
-                              <button
-                                type="button"
-                                className={styles.actionBtn}
-                                onClick={() => {
-                                  setEditTournament(tournament);
-                                  setEditTournamentName(tournament.name || "");
-                                  setEditTournamentLocation(tournament.location || "");
-                                  setEditTournamentStartDate(tournament.start_date || "");
-                                  setEditTournamentEndDate(tournament.end_date || "");
-                                  setEditTournamentError(null);
-                                }}
-                              >
-                                Edit
-                              </button>
-                              <button
-                                type="button"
-                                className={styles.actionBtn}
-                                onClick={() => {
-                                  setReassignTournament(tournament);
-                                  setReassignUserId("");
-                                  setReassignError(null);
-                                }}
-                              >
-                                Reassign
-                              </button>
-                              {tournament.archived_at ? (
-                                <button
-                                  type="button"
-                                  className={styles.actionBtn}
-                                  onClick={async () => {
-                                    try {
-                                      await apiClient.post(`/api/v1/admin/tournaments/${tournament.id}/unarchive`, {});
-                                      await refreshAfterMutation({ overview: true, tournaments: true, audit: true });
-                                      showSuccess(`${tournament.name} was unarchived.`);
-                                    } catch (err) {
-                                      setError(err instanceof Error ? err.message : "Failed to unarchive tournament");
-                                    }
-                                  }}
-                                >
-                                  Unarchive
-                                </button>
-                              ) : (
-                                <button
-                                  type="button"
-                                  className={styles.actionBtn}
-                                  onClick={() => {
-                                    setArchiveTournament(tournament);
-                                    setArchiveReason("");
-                                    setArchiveError(null);
-                                  }}
-                                >
-                                  Archive
-                                </button>
-                              )}
-                              <button
-                                type="button"
-                                className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
-                                onClick={() => {
-                                  setDeleteTournament(tournament);
-                                  setDeleteTournamentReason("");
-                                  setDeleteTournamentConfirmText("");
-                                  setForceDeleteTournament(false);
-                                  setDeleteTournamentError(null);
-                                }}
-                              >
-                                Delete
-                              </button>
-                              <button
-                                type="button"
-                                className={styles.actionBtn}
-                                onClick={() => {
-                                  setExpandedTournamentIds((prev) => (
-                                    prev.includes(tournament.id)
-                                      ? prev.filter((id) => id !== tournament.id)
-                                      : [...prev, tournament.id]
-                                  ));
-                                }}
-                              >
-                                {expanded ? "Hide" : "Details"}
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                        {expanded && (
-                          <tr>
-                            <td colSpan={11}>
-                              <div className={styles.detailCard}>
-                                <div className={styles.detailGrid}>
-                                  <div><strong>Scores:</strong> {tournament.score_count}</div>
-                                  <div><strong>Payouts:</strong> {tournament.payout_count}</div>
-                                  <div><strong>Snapshots:</strong> {tournament.snapshot_count}</div>
-                                  <div><strong>Owner Email:</strong> {tournament.owner_email}</div>
-                                  <div><strong>Last bracket activity:</strong> {formatAdminTimestamp(tournament.last_activity_at, "None")}</div>
-                                  <div><strong>Last admin change:</strong> {formatAdminTimestamp(tournament.last_admin_change_at, "None")}</div>
-                                </div>
-                                {tournament.archive_reason && (
-                                  <div className={styles.detailNote}>Archive reason: {tournament.archive_reason}</div>
-                                )}
-                                <div className={styles.detailLinks}>
-                                  <a className={styles.linkBtn} href={`/view/${tournament.id}`} target="_blank" rel="noreferrer">Open Bowler View</a>
-                                </div>
-                              </div>
-                            </td>
-                          </tr>
-                        )}
-                      </Fragment>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          <div className={styles.paginationRow}>
-            <button
-              type="button"
-              className={styles.actionBtn}
-              onClick={() => setTournamentPage((prev) => Math.max(1, prev - 1))}
-              disabled={tournamentsResponse.page <= 1 || tournamentsLoading}
-            >
-              Prev
-            </button>
-            <span className={styles.secondaryText}>Page {tournamentsResponse.page} of {tournamentsResponse.total_pages}</span>
-            <button
-              type="button"
-              className={styles.actionBtn}
-              onClick={() => setTournamentPage((prev) => Math.min(tournamentsResponse.total_pages, prev + 1))}
-              disabled={tournamentsResponse.page >= tournamentsResponse.total_pages || tournamentsLoading}
-            >
-              Next
-            </button>
-          </div>
-        </section>
+        <AdminTournamentsSection
+          tournamentsResponse={tournamentsResponse}
+          tournamentsLoading={tournamentsLoading}
+          tournamentSearch={tournamentSearch}
+          tournamentActivityFilter={tournamentActivityFilter}
+          tournamentSort={tournamentSort}
+          expandedTournamentIds={expandedTournamentIds}
+          onTournamentSearchChange={(value) => {
+            setTournamentSearch(value);
+            setTournamentPage(1);
+          }}
+          onTournamentActivityFilterChange={(value) => {
+            setTournamentActivityFilter(value);
+            setTournamentPage(1);
+          }}
+          onTournamentSortChange={(value) => {
+            setTournamentSort(value);
+            setTournamentPage(1);
+          }}
+          onTournamentPageChange={setTournamentPage}
+          onExportTournamentsCsv={exportTournamentsCsv}
+          onLoadTournamentNotes={(tournament) => void loadTournamentNotes(tournament)}
+          onStartEditTournament={(tournament) => {
+            setEditTournament(tournament);
+            setEditTournamentName(tournament.name || "");
+            setEditTournamentLocation(tournament.location || "");
+            setEditTournamentStartDate(tournament.start_date || "");
+            setEditTournamentEndDate(tournament.end_date || "");
+            setEditTournamentError(null);
+          }}
+          onStartReassignTournament={(tournament) => {
+            setReassignTournament(tournament);
+            setReassignUserId("");
+            setReassignError(null);
+          }}
+          onUnarchiveTournament={(tournament) => {
+            void (async () => {
+              try {
+                await apiClient.post(`/api/v1/admin/tournaments/${tournament.id}/unarchive`, {});
+                await refreshAfterMutation({ overview: true, tournaments: true, audit: true });
+                showSuccess(`${tournament.name} was unarchived.`);
+              } catch (err) {
+                setError(err instanceof Error ? err.message : "Failed to unarchive tournament");
+              }
+            })();
+          }}
+          onStartArchiveTournament={(tournament) => {
+            setArchiveTournament(tournament);
+            setArchiveReason("");
+            setArchiveError(null);
+          }}
+          onStartDeleteTournament={(tournament) => {
+            setDeleteTournament(tournament);
+            setDeleteTournamentReason("");
+            setDeleteTournamentConfirmText("");
+            setForceDeleteTournament(false);
+            setDeleteTournamentError(null);
+          }}
+          onToggleTournamentExpanded={(id) => {
+            setExpandedTournamentIds((prev) => (
+              prev.includes(id)
+                ? prev.filter((existingId) => existingId !== id)
+                : [...prev, id]
+            ));
+          }}
+        />
       )}
 
       {activeTab === "database" && (
@@ -1466,109 +902,43 @@ export default function AdminPage() {
       )}
 
       {activeTab === "audit" && (
-        <section className={styles.panel}>
-          <div className={styles.panelHeader}>
-            <h3 className={styles.panelTitle}>Audit Log</h3>
-            <span className={styles.panelSubtle}>{auditResponse.total} entries</span>
-          </div>
-          <DataTableToolbar
-            className={styles.toolbarRow}
-            left={(
-              <input
-                type="text"
-                className={styles.toolbarInput}
-                aria-label="Search audit log"
-                value={auditSearch}
-                onChange={(event) => {
-                  setAuditSearch(event.target.value);
-                  setAuditPage(1);
-                }}
-                placeholder="Search action, reason, target"
-              />
-            )}
-            right={(
-              <>
-                <input
-                  type="text"
-                  className={styles.toolbarInput}
-                  aria-label="Filter audit log by action"
-                  value={auditAction}
-                  onChange={(event) => {
-                    setAuditAction(event.target.value);
-                    setAuditPage(1);
-                  }}
-                  placeholder="Action (example: tournament.delete)"
-                />
-                <input
-                  type="text"
-                  className={styles.toolbarInput}
-                  aria-label="Filter audit log by target type"
-                  value={auditTargetType}
-                  onChange={(event) => {
-                    setAuditTargetType(event.target.value);
-                    setAuditPage(1);
-                  }}
-                  placeholder="Target type (user, tournament)"
-                />
-                <select className={styles.toolbarSelect} aria-label="Filter audit log by administrator" value={auditAdminUserId} onChange={event => { setAuditAdminUserId(event.target.value); setAuditPage(1); }}><option value="">All administrators</option>{usersResponse.users.filter(user => user.is_admin).map(user => <option value={user.id} key={user.id}>{user.first_name} {user.last_name} (@{user.username})</option>)}</select>
-                <input type="date" className={styles.toolbarInput} aria-label="Audit start date" value={auditDateFrom} onChange={event => { setAuditDateFrom(event.target.value); setAuditPage(1); }} />
-                <input type="date" className={styles.toolbarInput} aria-label="Audit end date" value={auditDateTo} onChange={event => { setAuditDateTo(event.target.value); setAuditPage(1); }} />
-                <button type="button" className={styles.actionBtn} onClick={exportAuditCsv} disabled={auditResponse.logs.length === 0}>Export CSV</button>
-              </>
-            )}
-          />
-          <div className={styles.tableWrap}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>When</th>
-                  <th>Admin</th>
-                  <th>Action</th>
-                  <th>Target</th>
-                  <th>Reason</th>
-                  <th>Details</th>
-                </tr>
-              </thead>
-              <tbody>
-                {auditLoading ? (
-                  <tr><td className={styles.tableState} colSpan={6}><span role="status">Loading audit log…</span></td></tr>
-                ) : auditResponse.logs.length === 0 ? (
-                  <tr><td className={styles.tableState} colSpan={6}><strong>No audit entries found</strong><span>Try clearing or broadening the audit filters.</span></td></tr>
-                ) : (
-                  auditResponse.logs.map((log) => (
-                    <tr key={log.id}>
-                      <td>{log.created_at ? new Date(log.created_at).toLocaleString() : "-"}</td>
-                      <td>{log.admin_name || log.admin_username || `User ${log.admin_user_id}`}</td>
-                      <td>{log.action}</td>
-                      <td>{log.target_type || "-"}{log.target_id ? ` #${log.target_id}` : ""}</td>
-                      <td>{log.reason || "-"}</td>
-                      <td>{log.details ? <details className={styles.auditDetails}><summary>View</summary><pre>{JSON.stringify(log.details, null, 2)}</pre></details> : "-"}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-          <div className={styles.paginationRow}>
-            <button
-              type="button"
-              className={styles.actionBtn}
-              onClick={() => setAuditPage((prev) => Math.max(1, prev - 1))}
-              disabled={auditResponse.page <= 1 || auditLoading}
-            >
-              Prev
-            </button>
-            <span className={styles.secondaryText}>Page {auditResponse.page} of {auditResponse.total_pages}</span>
-            <button
-              type="button"
-              className={styles.actionBtn}
-              onClick={() => setAuditPage((prev) => Math.min(auditResponse.total_pages, prev + 1))}
-              disabled={auditResponse.page >= auditResponse.total_pages || auditLoading}
-            >
-              Next
-            </button>
-          </div>
-        </section>
+        <AdminAuditSection
+          auditResponse={auditResponse}
+          auditLoading={auditLoading}
+          auditSearch={auditSearch}
+          auditAction={auditAction}
+          auditTargetType={auditTargetType}
+          auditAdminUserId={auditAdminUserId}
+          auditDateFrom={auditDateFrom}
+          auditDateTo={auditDateTo}
+          adminUsers={usersResponse.users}
+          onAuditSearchChange={(value) => {
+            setAuditSearch(value);
+            setAuditPage(1);
+          }}
+          onAuditActionChange={(value) => {
+            setAuditAction(value);
+            setAuditPage(1);
+          }}
+          onAuditTargetTypeChange={(value) => {
+            setAuditTargetType(value);
+            setAuditPage(1);
+          }}
+          onAuditAdminUserIdChange={(value) => {
+            setAuditAdminUserId(value);
+            setAuditPage(1);
+          }}
+          onAuditDateFromChange={(value) => {
+            setAuditDateFrom(value);
+            setAuditPage(1);
+          }}
+          onAuditDateToChange={(value) => {
+            setAuditDateTo(value);
+            setAuditPage(1);
+          }}
+          onAuditPageChange={setAuditPage}
+          onExportAuditCsv={exportAuditCsv}
+        />
       )}
 
       {activeTab === "changelog" && (

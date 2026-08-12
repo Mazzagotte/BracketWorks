@@ -10,6 +10,7 @@ import { usePayouts } from './hooks/usePayouts'
 import { usePayoutSetup, ScoreRow } from './hooks/usePayoutSetup'
 import NoTournamentState from '../components/NoTournamentState'
 import { storage } from '../lib/storage'
+import { getMemoryAccessToken } from '../lib/api'
 import Link from 'next/link'
 import styles from './payouts.module.css'
 import cardStyles from '../styles/cards.module.css'
@@ -40,7 +41,8 @@ function placeBadgeClass(place: number) {
 
 export default function PayoutsPage() {
   const { addToast } = useToast()
-  const { isUserAuthenticated, isAuthInitialized } = useAuth()
+  const { isUserAuthenticated, isAuthInitialized, authToken } = useAuth()
+  const effectiveAuthToken = authToken || getMemoryAccessToken()
   const { tournaments, fetchTournaments } = useTournaments()
   const { squads, fetchSquads } = useSquads()
 
@@ -118,6 +120,7 @@ export default function PayoutsPage() {
   usePayoutSetup({
     isAuthInitialized,
     isUserAuthenticated,
+    authToken: effectiveAuthToken,
     isUnlocked,
     selectionRefreshKey,
     selectedTournament,
@@ -500,7 +503,7 @@ export default function PayoutsPage() {
 
   const displayedTotalPrizePool = (payoutData?.total_prize_pool ?? 0) + sidePotAccounting.totalPool
 
-  const hasStoredAuth = typeof window !== 'undefined' && storage.getItem('token') && storage.getItem('user_id')
+  const hasActiveSession = Boolean(effectiveAuthToken)
 
   if (!isAuthInitialized) {
     return (
@@ -511,7 +514,7 @@ export default function PayoutsPage() {
     )
   }
 
-  if (!isUserAuthenticated && !hasStoredAuth) {
+  if (!isUserAuthenticated && !hasActiveSession) {
     return (
       <div className={`${cardStyles.card} ${cardStyles.emptyStateCard} ${styles.emptyState}`}>
         <div className={styles.emptyTitle}>Please log in</div>

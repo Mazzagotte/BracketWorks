@@ -3,27 +3,20 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from typing import List, Optional
-from pydantic import AliasChoices, BaseModel, ConfigDict, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator
 import logging
 
 from app.api.deps import get_current_user, get_db
 from app.core.models import PlayerScore, TournamentBracketSettings, TournamentPlayer
 from app.core.config import settings
 from app.core import models
+from app.core.validators import BracketValidation
 from app.core.idempotency import IdempotencyReplay, begin_request, complete_request, fail_request
 from app.services.payouts import reset_payouts_if_needed
+from app.services.tournament_access import verify_owned_tournament_access
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
-
-
-def _verify_tournament_access(db: Session, tournament_id: int, current_user) -> models.Tournament:
-    tournament = db.query(models.Tournament).filter(models.Tournament.id == tournament_id).first()
-    if not tournament:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tournament not found")
-    if tournament.user_id != current_user.id and not getattr(current_user, "is_admin", False):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to access this tournament")
-    return tournament
 
 
 def calculate_handicap(average: int, handicap_base: float, handicap_percentage: float) -> int:
@@ -92,6 +85,11 @@ class ScoreCreate(BaseModel):
     game3_scratch: Optional[int] = None
     # Note: game totals are calculated automatically by backend (scratch + handicap)
 
+    @field_validator("game1_scratch", "game2_scratch", "game3_scratch")
+    @classmethod
+    def validate_scores(cls, value: Optional[int]) -> Optional[int]:
+        return BracketValidation.validate_score(value)
+
 class ScoreUpdate(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
@@ -99,6 +97,11 @@ class ScoreUpdate(BaseModel):
     game2_scratch: Optional[int] = None
     game3_scratch: Optional[int] = None
     # Note: game totals are calculated automatically by backend (scratch + handicap)
+
+    @field_validator("game1_scratch", "game2_scratch", "game3_scratch")
+    @classmethod
+    def validate_scores(cls, value: Optional[int]) -> Optional[int]:
+        return BracketValidation.validate_score(value)
 
 class ScoreResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
@@ -127,7 +130,7 @@ def get_scores(
     query = db.query(PlayerScore)
 
     if tournament_id:
-        _verify_tournament_access(db, tournament_id, current_user)
+        verify_owned_tournament_access(db, tournament_id, current_user)
     elif not getattr(current_user, "is_admin", False):
         query = query.join(models.Tournament, models.Tournament.id == PlayerScore.tournament_id).filter(
             models.Tournament.user_id == current_user.id
@@ -155,7 +158,7 @@ def create_or_update_score(
     
     idempotency_record = None
     try:
-        _verify_tournament_access(db, score_data.tournament_id, current_user)
+        verify_owned_tournament_access(db, score_data.tournament_id, current_user)
 
         if idempotency_key:
             replay_or_record = begin_request(
@@ -195,18 +198,39 @@ def create_or_update_score(
         # The unique constraint on (player_id, tournament_id, squad_id) makes this safe.
         update_cols = {k: v for k, v in score_dict.items()
                        if k not in ("player_id", "tournament_id", "squad_id")}
-        stmt = (
-            pg_insert(PlayerScore)
-            .values(**score_dict)
-            .on_conflict_do_update(
-                constraint="uq_player_scores_player_tournament_squad",
-                set_=update_cols,
+        bind = db.get_bind()
+        dialect_name = bind.dialect.name if bind is not None else ""
+        if dialect_name == "sqlite":
+            score = (
+                db.query(PlayerScore)
+                .filter(
+                    PlayerScore.player_id == score_data.player_id,
+                    PlayerScore.tournament_id == score_data.tournament_id,
+                    PlayerScore.squad_id == score_data.squad_id,
+                )
+                .first()
             )
-            .returning(PlayerScore)
-        )
-        result = db.execute(stmt)
-        db.commit()
-        score = result.scalars().one()
+            if score is None:
+                score = PlayerScore(**score_dict)
+                db.add(score)
+            else:
+                for field, value in update_cols.items():
+                    setattr(score, field, value)
+            db.commit()
+            db.refresh(score)
+        else:
+            stmt = (
+                pg_insert(PlayerScore)
+                .values(**score_dict)
+                .on_conflict_do_update(
+                    constraint="uq_player_scores_player_tournament_squad",
+                    set_=update_cols,
+                )
+                .returning(PlayerScore)
+            )
+            result = db.execute(stmt)
+            db.commit()
+            score = result.scalars().one()
         logger.info(f"Upserted score for player {player.full_name}: G1={score.game1_total}, G2={score.game2_total}, G3={score.game3_total}")
 
         reset_payouts_if_needed(db, score.tournament_id, score.squad_id)
@@ -270,7 +294,7 @@ def update_score(
                 detail="Score not found"
             )
 
-        _verify_tournament_access(db, score.tournament_id, current_user)
+        verify_owned_tournament_access(db, score.tournament_id, current_user)
         
         # Get player information
         player = db.query(TournamentPlayer).filter(TournamentPlayer.id == score.player_id).first()
@@ -355,7 +379,7 @@ def delete_score(
                 detail="Score not found"
             )
 
-        _verify_tournament_access(db, score.tournament_id, current_user)
+        verify_owned_tournament_access(db, score.tournament_id, current_user)
         
         db.delete(score)
         db.commit()
@@ -396,7 +420,7 @@ def dev_clear_game_scores(
     if game_number not in (2, 3):
         raise HTTPException(status_code=400, detail="Only game 2 or game 3 can be cleared with this endpoint")
 
-    _verify_tournament_access(db, tournament_id, current_user)
+    verify_owned_tournament_access(db, tournament_id, current_user)
 
     query = db.query(PlayerScore).filter(PlayerScore.tournament_id == tournament_id)
     if squad_id is not None:

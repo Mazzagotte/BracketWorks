@@ -14,6 +14,15 @@ This is the active theme entrypoint loaded by the app layout. Start here when ch
 
 ## Global layers
 
+- `@bracketworks/ui/styles/tokens.css` (loaded via app layout)
+  Canonical shared foundation tokens for typography scale, spacing scale,
+  radius scale, control sizing, motion, elevation, and semantic core aliases.
+
+- `main.css`
+  BracketWorks theme layer and compatibility aliases.
+  Keep BracketWorks-specific branding, compact semantic spacing aliases,
+  and app-only extensions here.
+
 - `auth.css`
   Single entrypoint for auth page-level CSS. This imports the login, signup,
   validation, and reset-password global styles.
@@ -110,7 +119,8 @@ Examples:
 
 ## Rule of thumb
 
-- Change `main.css` for theme decisions.
+- Change shared foundational tokens in `packages/ui/styles/tokens.css`.
+- Change `main.css` for BracketWorks-specific theme decisions and compatibility aliases.
 - Change `globals.css` for cross-app shared primitives.
 - Change shared design modules for repeated card, button, form, table, and page-shell patterns.
 - Change `auth.css` only if you need to add or remove auth-related global files.

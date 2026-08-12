@@ -59,9 +59,7 @@ export default function ScoresPage() {
   const sessionToken = authToken || storedAuthToken;
 
   // Check if we have tokens in localStorage even if auth context isn't ready
-  const hasStoredAuth = typeof window !== 'undefined' &&
-    sessionToken &&
-    localStorage.getItem('user_id');
+  const hasStoredAuth = Boolean(sessionToken);
 
   const router = useRouter()
   const [showCalcPayoutsConfirm, setShowCalcPayoutsConfirm] = useState(false)

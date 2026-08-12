@@ -1,8 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { API } from '../lib/api';
+import { API, apiFetch } from '../lib/api';
 
 type UseUsernameAvailabilityOptions = {
   minLength?: number;
@@ -16,6 +16,7 @@ export function useUsernameAvailability(
   const { minLength = 3, debounceMs = 500 } = options;
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
   const [checkingUsername, setCheckingUsername] = useState(false);
+  const requestIdRef = useRef(0);
 
   const resetUsernameAvailability = useCallback(() => {
     setUsernameAvailable(null);
@@ -23,6 +24,9 @@ export function useUsernameAvailability(
   }, []);
 
   const checkUsernameAvailability = useCallback(async (value: string) => {
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
+
     if (value.trim().length < minLength) {
       setUsernameAvailable(null);
       setCheckingUsername(false);
@@ -32,12 +36,15 @@ export function useUsernameAvailability(
     setCheckingUsername(true);
 
     try {
-      const response = await fetch(API(`/api/v1/users/check-username?username=${encodeURIComponent(value)}`));
+      const response = await apiFetch(API(`/api/v1/users/check-username?username=${encodeURIComponent(value)}`));
       let data: unknown = null;
       try {
         data = await response.json();
       } catch {
         data = null;
+      }
+      if (requestId !== requestIdRef.current) {
+        return;
       }
       if (data && typeof data === 'object' && 'available' in data) {
         const available = (data as { available?: unknown }).available;
@@ -46,9 +53,14 @@ export function useUsernameAvailability(
         setUsernameAvailable(null);
       }
     } catch {
+      if (requestId !== requestIdRef.current) {
+        return;
+      }
       setUsernameAvailable(null);
     } finally {
-      setCheckingUsername(false);
+      if (requestId === requestIdRef.current) {
+        setCheckingUsername(false);
+      }
     }
   }, [minLength]);
 

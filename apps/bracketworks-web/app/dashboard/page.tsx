@@ -1,21 +1,15 @@
 "use client";
 
-import { useMemo, useEffect, useState, useRef, useCallback, type CSSProperties } from 'react';
+import { useMemo, useEffect, useState, useRef, useCallback } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import {
-  ArrowRight,
   Braces,
-  Calendar,
-  CircleDollarSign,
   ClipboardList,
-  Clock,
-  Cog,
+  CircleDollarSign,
   LogOut,
   PencilLine,
-  RefreshCw,
   Repeat,
   Settings2,
-  Trash2,
   Trophy,
   UserPlus,
   Users,
@@ -30,9 +24,8 @@ import { storage } from '../lib/storage';
 import { BRACKET_SETTINGS_AUTOSAVE_DELAY_MS, getSidePotsStorageKey } from '../lib/dashboard-settings';
 import mobileStyles from './dashboard.module.css';
 import shellStyles from '../styles/page-shell.module.css';
-import buttonStyles from '../styles/buttons.module.css';
 import { ConfirmationDialog } from '../components/LazyComponents';
-import { API, apiClient, apiFetch } from '../lib/api';
+import { API, apiClient, apiFetch, getMemoryAccessToken } from '../lib/api';
 import { isPhoneWidth } from '../lib/responsive';
 import { logger } from '../lib/logger';
 import { defaultBracketPrograms, normalizeBracketPrograms, summarizeEntries } from '../lib/bracketPrograms';
@@ -54,12 +47,17 @@ import CloseControl from '../../components/CloseControl';
 import ExplainDashboardModal from './ExplainDashboardModal';
 import { TournamentSettingsContent } from './settings/TournamentSettingsContent';
 import { setBodyInteractionState } from '../utils/modalUtils';
-import { formatIsoDateFull, formatIsoDateLong } from '../lib/formatters';
+import { formatIsoDateFull } from '../lib/formatters';
 import { EditTournamentModal } from './components/EditTournamentModal';
+import { ChangeSquadModal } from './components/ChangeSquadModal';
+import { LoadTournamentModal } from './components/LoadTournamentModal';
 import { normalizeSquadTimes } from './utils/tournamentForm';
 import { SAMPLE_BOWLER_NAMES, SAMPLE_TOURNAMENT } from '../demo/sample-tournament';
 import { createDefaultSidePots, hydrateStoredSidePots } from './utils/sidePots';
 import { useTournamentOrchestration } from './hooks/useTournamentOrchestration';
+import { useDashboardScoreProgress } from './hooks/useDashboardScoreProgress';
+import { useDashboardWorkflowModel } from './hooks/useDashboardWorkflowModel';
+import { DashboardBoard } from './components/DashboardBoard';
 import {
   applyAutoHouse,
   calculateHouseAmount,
@@ -82,15 +80,6 @@ const getErrorDetail = async (response: Response): Promise<string | null> => {
 };
 
 type DashboardCardKey = 'squadSelection' | 'bracketSettings' | 'byeSettings' | 'optionalBrackets' | 'sidePots';
-
-type WorkflowStep = {
-  key: string;
-  step: string;
-  label: string;
-  status: string;
-  done: boolean;
-  active?: boolean;
-};
 
 const collapsedMobileCards: Record<DashboardCardKey, boolean> = {
   squadSelection: false,
@@ -147,13 +136,13 @@ export default function TournamentDashboard() {
   const pathname = usePathname();
   const isDemoDashboard = pathname === '/demo/dashboard';
   // Authentication check - must be at the top
-  const { isUserAuthenticated, isAuthInitialized } = useAuth();
+  const { isUserAuthenticated, isAuthInitialized, authToken, currentUser } = useAuth();
+  const sessionToken = authToken || getMemoryAccessToken();
   const [showDashboard, setShowDashboard] = useState(false);
 
-  // Check if we have tokens in localStorage even if auth context isn't ready
+  // Check for an in-memory session even if auth context is still hydrating.
   const hasStoredAuthTokens = typeof window !== 'undefined' && 
-    storage.getItem('token') && 
-    storage.getItem('user_id');
+    Boolean(sessionToken);
 
   // All hooks must be called before conditional returns (React rules of hooks)
   const [isAdmin, setIsAdmin] = useState(false);
@@ -175,7 +164,6 @@ export default function TournamentDashboard() {
   const [deleteConfirm, setDeleteConfirm] = useState<{id: number, name: string} | null>(null);
   const [shareQROpen, setShareQROpen] = useState(false);
   const [isExplainModalOpen, setIsExplainModalOpen] = useState(false);
-  const [scoreProgress, setScoreProgress] = useState(() => isDemoDashboard ? ({ completed: 21, entered: 21, total: 32, percent: 66, loading: false }) : ({ completed: 0, entered: 0, total: 0, percent: 0, loading: false }));
   
   // Enhanced UX components
   const { addToast } = useToast();
@@ -248,7 +236,7 @@ export default function TournamentDashboard() {
       return;
     }
     
-    const token = storage.getItem('token');
+    const token = sessionToken;
     if (!token) {
       showBracketSettingsSaveProblem('Please log in to save bracket settings.');
       return;
@@ -391,7 +379,7 @@ export default function TournamentDashboard() {
   }, []);
 
   const fetchBracketSettingsData = useCallback(async (tournamentId: number): Promise<BracketSettings> => {
-    const token = storage.getItem('token');
+    const token = sessionToken;
     if (!token) {
       return createDefaultBracketSettings(tournamentId);
     }
@@ -410,7 +398,7 @@ export default function TournamentDashboard() {
     }
 
     return createDefaultBracketSettings(tournamentId);
-  }, []);
+  }, [sessionToken]);
 
   // Load bracket settings
   const loadBracketSettings = useCallback(async (tournamentId: number) => {
@@ -439,7 +427,7 @@ export default function TournamentDashboard() {
   };
 
   const loadSquadEntryCounts = useCallback(async (tournamentId: number, squadList: Squad[]) => {
-    const token = storage.getItem('token');
+    const token = sessionToken;
     if (!token || !tournamentId) {
       setSquadEntryCounts({});
       setSummaryPlayers([]);
@@ -519,7 +507,7 @@ export default function TournamentDashboard() {
       setSquadEntryCounts(counts);
       setSummaryPlayers([]);
     }
-  }, []);
+  }, [sessionToken]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -543,6 +531,7 @@ export default function TournamentDashboard() {
 
   const { handleLoadTournament, handleUnloadTournament: unloadTournament } = useTournamentOrchestration({
     enabled: !isDemoDashboard,
+    authToken: sessionToken,
     tournament,
     addToast,
     setTournament,
@@ -572,7 +561,7 @@ export default function TournamentDashboard() {
   const getOptionalBracketEntryCount = async (programKey: string) => {
     if (!tournament?.id) return 0;
 
-    const token = storage.getItem('token');
+    const token = sessionToken;
     if (!token) return 0;
 
     const normalizedKey = programKey.trim().toLowerCase();
@@ -719,11 +708,10 @@ export default function TournamentDashboard() {
     return () => clearTimeout(timer);
   }, [isAuthInitialized, hasStoredAuthTokens]);
 
-  // Read admin flag once on mount for tournament listing scope
+  // Keep admin scope in sync with authenticated user state.
   useEffect(() => {
-    const adminFlag = storage.getItem('is_admin');
-    setIsAdmin(adminFlag === '1' || adminFlag === 'true');
-  }, []);
+    setIsAdmin(Boolean(currentUser?.isAdmin));
+  }, [currentUser?.isAdmin]);
 
   // Fetch tournaments when load modal opens
   useEffect(() => {
@@ -836,7 +824,7 @@ export default function TournamentDashboard() {
 
   // Save tournament handler with enhanced UX feedback
   const handleSave = async (tournamentFormData: TournamentForm) => {
-    const token = storage.getItem('token');
+    const token = sessionToken;
     if (!token) {
       addToast({
         type: 'error',
@@ -1022,6 +1010,14 @@ export default function TournamentDashboard() {
     if (selectedSquadId == null) return summaryPlayers;
     return summaryPlayers.filter(player => player.squad?.id === selectedSquadId);
   }, [summaryPlayers, selectedSquadId]);
+  const scoreProgress = useDashboardScoreProgress({
+    isDemoDashboard,
+    authToken: sessionToken,
+    tournamentId: tournament?.id ?? null,
+    selectedSquadId,
+    loadedEntries,
+    statsSummaryPlayersLength: statsSummaryPlayers.length,
+  });
   const statsEntrySummary = useMemo(() => summarizeEntries(
     statsSummaryPlayers,
     enabledBracketProgramsForSummary,
@@ -1050,323 +1046,50 @@ export default function TournamentDashboard() {
     });
     return Array.from(nameCounts.values()).filter(count => count > 1).length;
   }, [summaryPlayers]);
-  const hasGeneratedBrackets = workflowStatus?.has_generated_brackets ?? Boolean(tournament?.brackets_configured);
-  const hasPayoutSummary = workflowStatus?.has_payout_summary ?? false;
-  const payoutsFinalized = workflowStatus?.payouts_finalized ?? false;
-  const scoresLocked = workflowStatus?.scores_locked ?? payoutsFinalized;
-  const payoutsNotFinalizedCount = loadedEntries > 0 && !payoutsFinalized ? 1 : 0;
-  const bracketsNotGeneratedCount = hasGeneratedBrackets ? 0 : 1;
-  const workflowSetupBlockers = [
-    { label: 'missing averages', count: missingAveragesCount },
-    { label: 'unpaid entries', count: unpaidEntriesCount },
-    { label: 'duplicate players', count: duplicatePlayersCount },
-  ].filter(item => item.count > 0);
-  const hasWorkflowSetupBlockers = workflowSetupBlockers.length > 0;
-  const workflowBlockerSummary = workflowSetupBlockers.map(item => `${item.count} ${item.label}`).join(' | ');
-  const continueTournamentActions = [
-    !hasGeneratedBrackets ? {
-      key: 'add-player',
-      label: 'Add Player',
-      indicator: '›',
-      onClick: () => router.push('/players'),
-      disabled: false,
-    } : null,
-    hasGeneratedBrackets ? {
-      key: 'view-brackets',
-      label: 'View Brackets',
-      indicator: '›',
-      onClick: () => router.push('/brackets'),
-      disabled: false,
-    } : null,
-  ].filter((action): action is NonNullable<typeof action> => action !== null);
-  const contextPrimaryAction = useMemo(() => {
-    if (payoutsFinalized) {
-      return { key: 'view-payouts', label: 'View Final Results', message: 'Tournament complete. Payouts are finalized and scores are locked.', onClick: () => router.push('/payouts'), disabled: false, showScoreProgress: false };
-    }
-
-    if (hasGeneratedBrackets) {
-      if (scoreProgress.percent < 100) {
-        return { key: 'enter-scores', label: scoreProgress.entered > 0 ? 'Continue Score Entry' : 'Enter Scores', message: scoreProgress.entered > 0 ? 'Scoring is in progress.' : 'Brackets are ready for score entry.', onClick: () => router.push('/scores'), disabled: false, showScoreProgress: true };
-      }
-
-      if (!hasPayoutSummary) {
-        return { key: 'calculate-payouts', label: 'Calculate Payouts', message: 'All scores are complete. Calculate and review tournament payouts.', onClick: () => router.push('/payouts'), disabled: false, showScoreProgress: false };
-      }
-
-      return { key: 'finalize-payouts', label: 'Review and Finalize Payouts', message: 'Payouts have been calculated and are ready for final review.', onClick: () => router.push('/payouts'), disabled: false, showScoreProgress: false };
-    }
-
-    if (squads.length === 0) {
-      return {
-        key: 'edit-tournament',
-        label: 'Complete Tournament Setup',
-        message: 'Add at least one squad before adding entries.',
-        onClick: () => { setCreateMode(false); setModalOpen(true); },
-        disabled: false,
-        showScoreProgress: false,
-      };
-    }
-
-    if (bracketSettings.bracket_size <= 0) {
-      return {
-        key: 'tournament-settings',
-        label: 'Complete Bracket Setup',
-        message: 'Choose a valid bracket size and confirm tournament settings.',
-        onClick: () => setSettingsModalOpen(true),
-        disabled: false,
-        showScoreProgress: false,
-      };
-    }
-
-    if (loadedEntries <= 0) {
-      return { key: 'add-player', label: 'Add Players', message: 'Add tournament entries before generating brackets.', onClick: () => router.push('/players'), disabled: false, showScoreProgress: false };
-    }
-
-    if (hasWorkflowSetupBlockers) {
-      return { key: 'add-player', label: 'Review Entries', message: `Resolve entry issues before generating brackets: ${workflowBlockerSummary}.`, onClick: () => router.push('/players'), disabled: false, showScoreProgress: false };
-    }
-
-    return { key: 'generate-brackets', label: 'Generate Brackets', message: 'Setup and entries are ready. Generate brackets to begin play.', onClick: () => router.push('/brackets'), disabled: false, showScoreProgress: false };
-  }, [squads.length, bracketSettings.bracket_size, loadedEntries, hasWorkflowSetupBlockers, workflowBlockerSummary, hasGeneratedBrackets, scoreProgress.percent, scoreProgress.entered, hasPayoutSummary, payoutsFinalized, router]);
-
-  const ContinueActionIcon = dashboardActionIcons[contextPrimaryAction.key] ?? ArrowRight;
-
-  const manageSetupActions = [
-    {
-      key: 'edit-tournament',
-      label: 'Edit Tournament',
-      onClick: () => {
-        setCreateMode(false);
-        setModalOpen(true);
-      },
-      disabled: false,
+  const {
+    continueTournamentActions,
+    contextPrimaryAction,
+    manageSetupActions,
+    moreActions,
+    dangerActions,
+    optionalProgramNames,
+    optionalProgramsSummary,
+    scoreProgressText,
+    workflowSteps,
+    orderedStatsProgramSummaries,
+  } = useDashboardWorkflowModel({
+    workflowStatus,
+    tournamentBracketsConfigured: Boolean(tournament?.brackets_configured),
+    loadedEntries,
+    bracketsSold,
+    squadsLength: squads.length,
+    bracketSize: bracketSettings.bracket_size,
+    missingAveragesCount,
+    unpaidEntriesCount,
+    duplicatePlayersCount,
+    scoreProgress,
+    normalizedPrograms,
+    statsProgramSummaries: statsEntrySummary.programSummaries,
+    isEntryDataSyncing,
+    onGoPlayers: () => router.push('/players'),
+    onGoBrackets: () => router.push('/brackets'),
+    onGoPayouts: () => router.push('/payouts'),
+    onGoScores: () => router.push('/scores'),
+    onOpenEditTournament: () => {
+      setCreateMode(false);
+      setModalOpen(true);
     },
-    { key: 'tournament-settings', label: 'Tournament Settings', onClick: () => setSettingsModalOpen(true), disabled: false },
-    { key: 'change-squad', label: 'Change Squad', onClick: handleOpenSquadSelector, disabled: squads.length === 0 },
-  ];
-  const moreActions = [
-    {
-      key: 'change-tournament',
-      label: 'Switch Tournament',
-      onClick: () => {
-        handleChangeTournament();
-      },
-      disabled: false,
-    }
-  ];
-  const dangerActions = [
-    {
-      key: 'unload-tournament',
-      label: 'Unload Tournament',
-      onClick: () => {
-        handleUnloadTournament();
-      },
-      disabled: false,
-    },
-  ];
-  const dataIssuesCount = [
-    missingAveragesCount > 0,
-    unpaidEntriesCount > 0,
-    duplicatePlayersCount > 0,
-  ].filter(Boolean).length;
-  const setupChecklist = [
-    loadedEntries > 0,
-    bracketSettings.bracket_size > 0,
-    bracketsSold > 0,
-    missingAveragesCount === 0,
-    unpaidEntriesCount === 0,
-  ];
-  const setupIncomplete = setupChecklist.some(item => !item) || bracketsNotGeneratedCount > 0;
-  const setupBlockers = [
-    { label: 'missing averages', count: missingAveragesCount },
-    { label: 'unpaid entries', count: unpaidEntriesCount },
-    { label: 'duplicate players', count: duplicatePlayersCount },
-  ].filter(item => item.count > 0);
-  const hasSetupBlockers = setupBlockers.length > 0;
-  const enabledOptionalPrograms = normalizedPrograms.filter(program =>
-    Boolean(program.enabled) && program.key !== 'handicap' && program.key !== 'scratch'
-  );
-  const optionalProgramNames = enabledOptionalPrograms.map(program => program.name);
-  const optionalProgramsSummary = optionalProgramNames.length === 0
-    ? 'None enabled'
-    : optionalProgramNames.length <= 2
-      ? optionalProgramNames.join(' · ')
-      : `${optionalProgramNames.slice(0, 2).join(' · ')} +${optionalProgramNames.length - 2} more`;
-  const blockerSummary = setupBlockers.map(item => `${item.count} ${item.label}`).join(' | ');
+    onOpenSettings: () => setSettingsModalOpen(true),
+    onOpenSquadSelector: handleOpenSquadSelector,
+    onChangeTournament: handleChangeTournament,
+    onUnloadTournament: handleUnloadTournament,
+  });
+
   const usdFormatter = useMemo(
     () => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }),
     [],
   );
   const formatUsd = useCallback((amount: number) => usdFormatter.format(Math.max(0, Number(amount || 0))), [usdFormatter]);
-  const scoreStatusLabel = useMemo(() => {
-    if (scoreProgress.loading) return 'Checking...';
-    if (scoresLocked) return 'Locked';
-    if (scoreProgress.entered > 0) return 'In Progress';
-    return 'None';
-  }, [scoreProgress.entered, scoreProgress.loading, scoresLocked]);
-
-  const payoutWorkflowStatusLabel = useMemo(() => {
-    if (payoutsFinalized) return 'Finalized';
-    if (!hasGeneratedBrackets) return 'Pending';
-    if (scoreProgress.percent >= 100) return 'Ready for Payouts';
-    return 'Pending';
-  }, [payoutsFinalized, hasGeneratedBrackets, scoreProgress.percent]);
-
-  const payoutStatusLabel = payoutWorkflowStatusLabel;
-  const totalScoresTarget = Math.max(scoreProgress.total, loadedEntries);
-  const workflowScoreProgressText = scoreProgress.loading
-    ? 'Checking progress...'
-    : `${scoreProgress.completed} of ${totalScoresTarget} scored`;
-  const scoreProgressText = scoreProgress.loading
-    ? 'Checking score progress...'
-    : `${scoreProgress.completed} of ${totalScoresTarget} players fully scored`;
-  const payoutPercent = grossCollected > 0
-    ? Math.round((tournamentProjectedPayout / grossCollected) * 100)
-    : 0;
-  const payoutRingStyle = useMemo(() => ({
-    ['--dashboard-payout-percent' as string]: `${Math.max(0, Math.min(100, payoutPercent))}%`,
-  } as CSSProperties), [payoutPercent]);
-
-  const statusNarrative = useMemo(() => {
-    if (isEntryDataSyncing) {
-      return {
-        tone: 'info',
-        icon: 'i',
-        warningText: 'Live entry data is still syncing from squad rosters.',
-        nextStepText: 'Wait for sync, then resolve setup blockers before generating brackets.',
-      };
-    }
-
-    if (hasSetupBlockers) {
-      return {
-        tone: 'warning',
-        icon: '!',
-        warningText: `Setup blockers: ${blockerSummary}`,
-        nextStepText: 'Clear blockers first, then generate brackets.',
-      };
-    }
-
-    if (bracketsNotGeneratedCount > 0) {
-      return {
-        tone: 'info',
-        icon: 'i',
-        warningText: 'No setup blockers found. Brackets are ready to generate.',
-        nextStepText: 'Generate brackets.',
-      };
-    }
-
-    if (dataIssuesCount === 0 && !setupIncomplete) {
-      return {
-        tone: 'info',
-        icon: 'i',
-        warningText: 'Setup complete: tournament is ready for bracket generation.',
-        nextStepText: 'Generate brackets and move to score entry when lanes are complete.',
-      };
-    }
-
-    return {
-      tone: 'info',
-      icon: 'i',
-      warningText: 'Review tournament setup details before generating brackets.',
-      nextStepText: 'Review setup status and continue workflow.',
-    };
-  }, [isEntryDataSyncing, hasSetupBlockers, blockerSummary, bracketsNotGeneratedCount, dataIssuesCount, setupIncomplete]);
-  const workflowSteps: WorkflowStep[] = [
-    { key: 'setup', step: '1', label: 'Setup', status: setupIncomplete ? 'In Progress' : 'Complete', done: !setupIncomplete },
-    { key: 'entries', step: '2', label: 'Entries', status: loadedEntries > 0 ? 'Complete' : 'Pending', done: loadedEntries > 0 },
-    { key: 'brackets', step: '3', label: 'Brackets', status: hasGeneratedBrackets ? 'Complete' : 'Pending', done: hasGeneratedBrackets },
-    { key: 'scores', step: '4', label: 'Scores', status: workflowScoreProgressText, done: scoresLocked, active: hasGeneratedBrackets && !scoresLocked },
-    { key: 'payouts', step: '5', label: 'Payouts', status: payoutStatusLabel, done: payoutsFinalized },
-  ];
-  const orderedStatsProgramSummaries = useMemo(() => {
-    return [...statsEntrySummary.programSummaries].sort((a, b) => {
-      const aOrder = a.display_order ?? Number.MAX_SAFE_INTEGER;
-      const bOrder = b.display_order ?? Number.MAX_SAFE_INTEGER;
-      if (aOrder !== bOrder) {
-        return aOrder - bOrder;
-      }
-      return a.name.localeCompare(b.name);
-    });
-  }, [statsEntrySummary.programSummaries]);
-
-  useEffect(() => {
-    let isCancelled = false;
-
-    const loadScoreProgress = async () => {
-      if (isDemoDashboard) {
-        if (!isCancelled) setScoreProgress({ completed: 21, entered: 21, total: 32, percent: 66, loading: false });
-        return;
-      }
-      const tournamentId = tournament?.id;
-      if (!tournamentId) {
-        if (!isCancelled) {
-          setScoreProgress({ completed: 0, entered: 0, total: 0, percent: 0, loading: false });
-        }
-        return;
-      }
-
-      const token = storage.getItem('token');
-      if (!token) {
-        if (!isCancelled) {
-          setScoreProgress({ completed: 0, entered: 0, total: Math.max(loadedEntries, statsSummaryPlayers.length), percent: 0, loading: false });
-        }
-        return;
-      }
-
-      if (!isCancelled) {
-        setScoreProgress(previous => ({ ...previous, loading: true }));
-      }
-
-      try {
-        const params = new URLSearchParams({ tournament_id: String(tournamentId) });
-        if (selectedSquadId) {
-          params.set('squad_id', String(selectedSquadId));
-        }
-
-        const response = await apiFetch(API(`/api/v1/scores/?${params.toString()}`), {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`Unable to load scores progress: ${response.status}`);
-        }
-
-        const rows = await response.json() as Array<{
-          player_id: number;
-          game1_scratch?: number | null;
-          game2_scratch?: number | null;
-          game3_scratch?: number | null;
-        }>;
-
-        const completed = rows.filter(row =>
-          row.game1_scratch != null && row.game2_scratch != null && row.game3_scratch != null
-        ).length;
-        const entered = rows.filter(row =>
-          row.game1_scratch != null || row.game2_scratch != null || row.game3_scratch != null
-        ).length;
-        const total = Math.max(statsSummaryPlayers.length, loadedEntries, rows.length);
-        const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
-
-        if (!isCancelled) {
-          setScoreProgress({ completed, entered, total, percent, loading: false });
-        }
-      } catch (error) {
-        logger.warn('Dashboard score progress load failed', { error: getErrorContext(error) });
-        if (!isCancelled) {
-          const total = Math.max(statsSummaryPlayers.length, loadedEntries);
-          setScoreProgress({ completed: 0, entered: 0, total, percent: 0, loading: false });
-        }
-      }
-    };
-
-    void loadScoreProgress();
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [isDemoDashboard, loadedEntries, selectedSquadId, statsSummaryPlayers.length, tournament?.id]);
 
   useEffect(() => {
     if (selectedSquadId !== null) {
@@ -1483,319 +1206,32 @@ export default function TournamentDashboard() {
 
             {tournament && (
               <>
-                <div className={mobileStyles.dashboardBoard}>
-                  <section className={mobileStyles.dashboardHeaderCard}>
-                    <div className={mobileStyles.dashboardHeaderTop}>
-                      <div>
-                        <h2 className={mobileStyles.dashboardTournamentName}>{tournament.name}</h2>
-                        <div className={mobileStyles.dashboardTournamentMeta}>
-                          <span><Calendar className={mobileStyles.dashboardMetaIcon} aria-hidden="true" />{tournament.start_date ? formatIsoDateFull(tournament.start_date) : 'Date pending'}</span>
-                          <span><Clock className={mobileStyles.dashboardMetaIcon} aria-hidden="true" />{activeSquad ? activeSquad.time : 'Squad time pending'}</span>
-                          <span><Users className={mobileStyles.dashboardMetaIcon} aria-hidden="true" />{loadedEntries} players</span>
-                          <span><ClipboardList className={mobileStyles.dashboardMetaIcon} aria-hidden="true" />{statsEntrySummary.totalEntries} entries</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className={mobileStyles.workflowRail}>
-                      {workflowSteps.map((step, index) => (
-                        <div
-                          key={step.key}
-                          className={`${mobileStyles.workflowItem} ${
-                            step.done
-                              ? ''
-                              : step.active
-                                ? mobileStyles.workflowItemActive
-                                : mobileStyles.workflowItemPending
-                          }`}
-                        >
-                          <div
-                            className={`${mobileStyles.workflowDot} ${
-                              step.done
-                                ? mobileStyles.workflowDotDone
-                                : step.active
-                                  ? mobileStyles.workflowDotActive
-                                  : mobileStyles.workflowDotPending
-                            }`}
-                          >
-                            {step.done ? '✓' : step.step}
-                          </div>
-                          <div className={mobileStyles.workflowText}>
-                            <strong>{step.label}</strong>
-                            <span>{step.status}</span>
-                          </div>
-                          {index < workflowSteps.length - 1 ? (
-                            <div
-                              className={`${mobileStyles.workflowConnector} ${
-                                workflowSteps[index + 1]?.active
-                                  ? mobileStyles.workflowConnectorActive
-                                  : step.done && workflowSteps[index + 1]?.done
-                                    ? mobileStyles.workflowConnectorDone
-                                    : ''
-                              }`}
-                            />
-                          ) : null}
-                        </div>
-                      ))}
-                    </div>
-                  </section>
-
-                  <section className={mobileStyles.dashboardGrid}>
-                    <div className={mobileStyles.dashboardMainColumn}>
-                      <div className={mobileStyles.kpiGrid}>
-                        <article className={mobileStyles.kpiCard}>
-                          <div className={mobileStyles.kpiCardBody}>
-                            <span className={mobileStyles.kpiIconBadge}>
-                              <Users className={mobileStyles.kpiIcon} aria-hidden="true" />
-                            </span>
-                            <div className={mobileStyles.kpiCopy}>
-                              <p className={mobileStyles.kpiValue}>{loadedEntries}</p>
-                              <p className={mobileStyles.kpiLabel}>Players</p>
-                              <p className={mobileStyles.kpiDetail}>Active squad</p>
-                            </div>
-                          </div>
-                        </article>
-                        <article className={mobileStyles.kpiCard}>
-                          <div className={mobileStyles.kpiCardBody}>
-                            <span className={mobileStyles.kpiIconBadge}>
-                              <ClipboardList className={mobileStyles.kpiIcon} aria-hidden="true" />
-                            </span>
-                            <div className={mobileStyles.kpiCopy}>
-                              <p className={mobileStyles.kpiValue}>{statsEntrySummary.totalEntries}</p>
-                              <p className={mobileStyles.kpiLabel}>Total Entries</p>
-                              <p className={mobileStyles.kpiDetail}>{loadedEntries > 0 ? `${Math.round(statsEntrySummary.totalEntries / loadedEntries)} average per player` : 'No player data yet'}</p>
-                            </div>
-                          </div>
-                        </article>
-                        <article className={mobileStyles.kpiCard}>
-                          <div className={mobileStyles.kpiCardBody}>
-                            <span className={mobileStyles.kpiIconBadge}>
-                              <CircleDollarSign className={mobileStyles.kpiIcon} aria-hidden="true" />
-                            </span>
-                            <div className={mobileStyles.kpiCopy}>
-                              <p className={mobileStyles.kpiValue}>{formatUsd(statsEntrySummary.totalRevenue)}</p>
-                              <p className={mobileStyles.kpiLabel}>Expected Revenue</p>
-                              <p className={mobileStyles.kpiDetail}>{statsEntrySummary.totalEntries} entries × {formatUsd(bracketSettings.default_entry_fee)}</p>
-                            </div>
-                          </div>
-                        </article>
-                        <article className={mobileStyles.kpiCard}>
-                          <div className={mobileStyles.kpiCardBody}>
-                            <span className={mobileStyles.kpiIconBadge}>
-                              <Trophy className={mobileStyles.kpiIcon} aria-hidden="true" />
-                            </span>
-                            <div className={mobileStyles.kpiCopy}>
-                              <p className={mobileStyles.kpiValue}>{formatUsd(tournamentProjectedPayout)}</p>
-                              <p className={mobileStyles.kpiLabel}>Prize Fund</p>
-                              <p className={mobileStyles.kpiDetail}>After house fee</p>
-                            </div>
-                          </div>
-                        </article>
-                      </div>
-
-                      <div className={mobileStyles.dashboardPanelsGrid}>
-                        <article className={`${mobileStyles.dashboardPanel} ${mobileStyles.summaryDetailPanel}`}>
-                          <h3 className={mobileStyles.dashboardPanelHeading}>
-                            <Settings2 className={mobileStyles.dashboardPanelIcon} aria-hidden="true" />
-                            <span className={mobileStyles.dashboardPanelTitle}>Tournament Setup</span>
-                          </h3>
-                          <div className={mobileStyles.dashboardDataRows}>
-                            <div><span>Bracket Size</span><strong>{bracketSettings.bracket_size} Players</strong></div>
-                            <div><span>Entry Fee</span><strong>{formatUsd(bracketSettings.default_entry_fee)}</strong></div>
-                            <div><span>Handicap</span><strong>{bracketSettings.handicap_percentage}% of {bracketSettings.handicap_base}</strong></div>
-                            <div><span>{optionalProgramNames.length === 1 ? 'Additional Bracket' : 'Additional Brackets'}</span><strong>{optionalProgramsSummary}</strong></div>
-                            <div><span>Bye Settings</span><span className={`${mobileStyles.statusBadge} ${bracketSettings.allow_byes ? mobileStyles.statusBadgeEnabled : mobileStyles.statusBadgeDisabled}`}>{bracketSettings.allow_byes ? 'Enabled' : 'Disabled'}</span></div>
-                            <div><span>Side Pots</span><span className={`${mobileStyles.statusBadge} ${enabledSidePotsCount > 0 ? mobileStyles.statusBadgeEnabled : mobileStyles.statusBadgeDisabled}`}>{enabledSidePotsCount > 0 ? 'Enabled' : 'Disabled'}</span></div>
-                          </div>
-                        </article>
-
-                        <article className={`${mobileStyles.dashboardPanel} ${mobileStyles.summaryDetailPanel}`}>
-                          <h3 className={mobileStyles.dashboardPanelHeading}>
-                            <CircleDollarSign className={mobileStyles.dashboardPanelIcon} aria-hidden="true" />
-                            <span className={mobileStyles.dashboardPanelTitle}>Financial Summary</span>
-                          </h3>
-                          <div className={mobileStyles.dashboardDataRows}>
-                            <div><span>Gross Collected</span><strong>{formatUsd(grossCollected)}</strong></div>
-                            <div><span>House Fee</span><strong className={mobileStyles.dashboardDangerText}>-{formatUsd(houseRetained)}</strong></div>
-                          </div>
-                          <div className={mobileStyles.financialHeroBlock}>
-                            <p className={mobileStyles.dashboardPanelEyebrow}>Available Prize Pool</p>
-                            <div className={mobileStyles.financialHeroValueContainer}>
-                              <p className={mobileStyles.financialHeroValue}>{formatUsd(tournamentProjectedPayout)}</p>
-                            </div>
-                          </div>
-                          <div>
-                            <p className={`${mobileStyles.dashboardPanelEyebrow} ${mobileStyles.financialSplitSection}`}>Payout Split</p>
-                            <div className={mobileStyles.dashboardDataRows}>
-                              <div><span>1st Place</span><strong>{formatUsd(bracketSettings.first_place_amount)}</strong></div>
-                              <div><span>2nd Place</span><strong>{formatUsd(bracketSettings.second_place_amount)}</strong></div>
-                            </div>
-                          </div>
-                        </article>
-                      </div>
-
-                      <article className={mobileStyles.dashboardPanel}>
-                        <h3 className={mobileStyles.dashboardPanelHeading}>
-                          <ClipboardList className={mobileStyles.dashboardPanelIcon} aria-hidden="true" />
-                          <span className={mobileStyles.dashboardPanelTitle}>Entry Breakdown</span>
-                        </h3>
-                        <div className={mobileStyles.entryBreakdownCards}>
-                          {orderedStatsProgramSummaries.map(program => {
-                            const percentage = statsEntrySummary.totalEntries > 0
-                              ? Math.round((program.totalEntries / statsEntrySummary.totalEntries) * 100)
-                              : 0;
-                            const labelClass = program.key === 'handicap'
-                              ? mobileStyles.entryBreakdownLabelHandicap
-                              : program.key === 'scratch'
-                                ? mobileStyles.entryBreakdownLabelScratch
-                                : mobileStyles.entryBreakdownLabelOptional;
-
-                            return (
-                              <div className={mobileStyles.entryBreakdownStat} key={program.key}>
-                                <span className={labelClass}>{program.name}</span>
-                                <strong>{program.totalEntries}</strong>
-                                <small>
-                                  {percentage}% · {program.expectedBrackets} {program.expectedBrackets === 1 ? 'bracket' : 'brackets'}
-                                </small>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </article>
-                    </div>
-
-                    <aside className={mobileStyles.dashboardSideColumn}>
-                      <article className={`${mobileStyles.dashboardPanel} ${mobileStyles.combinedSideCard}`}>
-
-                        {/* Tournament next step */}
-                        <div className={mobileStyles.sideCardSection}>
-                          <p className={mobileStyles.sideCardSectionLabel}>Tournament Next Step</p>
-                          <div className={mobileStyles.continuePanelBody}>
-                            <div className={mobileStyles.continuePanelStatus}>
-                              <span className={mobileStyles.continuePanelIconWrap}>
-                                <ContinueActionIcon className={mobileStyles.continuePanelIcon} aria-hidden="true" />
-                              </span>
-                              <div>
-                                <p className={mobileStyles.sideCardLead}>{contextPrimaryAction.label}</p>
-                                <p className={mobileStyles.sideCardMeta}>{contextPrimaryAction.showScoreProgress ? scoreProgressText : contextPrimaryAction.message}</p>
-                                {contextPrimaryAction.showScoreProgress && (
-                                  <progress
-                                    className={mobileStyles.scoreProgressBar}
-                                    value={scoreProgress.percent}
-                                    max="100"
-                                    aria-label={`${scoreProgress.percent}% of players fully scored`}
-                                  />
-                                )}
-                              </div>
-                            </div>
-                            <button
-                              type="button"
-                              className={`${buttonStyles.button} ${buttonStyles.primary} ${mobileStyles.sideCardPrimaryButton}`}
-                              onClick={contextPrimaryAction.onClick}
-                              disabled={contextPrimaryAction.disabled}
-                            >
-                              {contextPrimaryAction.label}
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Quick Actions */}
-                        <div className={mobileStyles.sideCardSection}>
-                          <p className={mobileStyles.sideCardSectionLabel}>Quick Actions</p>
-                          <div className={mobileStyles.sideActionList}>
-                            {continueTournamentActions.map(action => {
-                              const ActionIcon = dashboardActionIcons[action.key] ?? ArrowRight;
-                              return (
-                                <button
-                                  key={action.key}
-                                  type="button"
-                                  className={mobileStyles.sideActionButton}
-                                  onClick={action.onClick}
-                                  disabled={action.disabled}
-                                >
-                                  <span className={mobileStyles.sideActionButtonLabel}>
-                                    <ActionIcon className={mobileStyles.sideActionIcon} aria-hidden="true" />
-                                    <span>{action.label}</span>
-                                  </span>
-                                  <span>{action.indicator}</span>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-
-                        {/* Tournament Management */}
-                        <div className={mobileStyles.sideCardSection}>
-                          <p className={mobileStyles.sideCardSectionLabel}>Tournament Management</p>
-                          <div className={mobileStyles.sideActionList}>
-                            {manageSetupActions.map(item => {
-                              const ActionIcon = dashboardActionIcons[item.key] ?? ArrowRight;
-                              return (
-                                <button
-                                  key={item.key}
-                                  type="button"
-                                  className={mobileStyles.sideActionButton}
-                                  onClick={item.onClick}
-                                  disabled={item.disabled}
-                                >
-                                  <span className={mobileStyles.sideActionButtonLabel}>
-                                    <ActionIcon className={mobileStyles.sideActionIcon} aria-hidden="true" />
-                                    <span>{item.label}</span>
-                                  </span>
-                                  <span>›</span>
-                                </button>
-                              );
-                            })}
-                            {moreActions.map(item => {
-                              const ActionIcon = dashboardActionIcons[item.key] ?? ArrowRight;
-                              return (
-                                <button
-                                  key={item.key}
-                                  type="button"
-                                  className={mobileStyles.sideActionButton}
-                                  onClick={item.onClick}
-                                  disabled={item.disabled}
-                                >
-                                  <span className={mobileStyles.sideActionButtonLabel}>
-                                    <ActionIcon className={mobileStyles.sideActionIcon} aria-hidden="true" />
-                                    <span>{item.label}</span>
-                                  </span>
-                                  <span>›</span>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-
-                        {/* Danger Zone */}
-                        <div className={`${mobileStyles.sideCardSection} ${mobileStyles.dangerZoneSection}`}>
-                          <p className={mobileStyles.sideCardSectionLabel}>Danger Zone</p>
-                          <div className={mobileStyles.sideActionList}>
-                            {dangerActions.map(item => {
-                              const ActionIcon = dashboardActionIcons[item.key] ?? ArrowRight;
-                              return (
-                                <button
-                                  key={item.key}
-                                  type="button"
-                                  className={`${mobileStyles.sideActionButton} ${mobileStyles.sideActionButtonDanger}`}
-                                  onClick={item.onClick}
-                                  disabled={item.disabled}
-                                >
-                                  <span className={mobileStyles.sideActionButtonLabel}>
-                                    <ActionIcon className={mobileStyles.sideActionIcon} aria-hidden="true" />
-                                    <span>{item.label}</span>
-                                  </span>
-                                  <span>!</span>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-
-                      </article>
-                    </aside>
-                  </section>
-                </div>
+                <DashboardBoard
+                  tournament={tournament}
+                  activeSquad={activeSquad}
+                  tournamentDateLabel={tournament.start_date ? formatIsoDateFull(tournament.start_date) : 'Date pending'}
+                  squadTimeLabel={activeSquad ? activeSquad.time : 'Squad time pending'}
+                  loadedEntries={loadedEntries}
+                  statsEntrySummary={statsEntrySummary}
+                  workflowSteps={workflowSteps}
+                  bracketSettings={bracketSettings}
+                  optionalProgramsLabel={optionalProgramNames.length === 1 ? 'Additional Bracket' : 'Additional Brackets'}
+                  optionalProgramsSummary={optionalProgramsSummary}
+                  enabledSidePotsCount={enabledSidePotsCount}
+                  formatUsd={formatUsd}
+                  tournamentProjectedPayout={tournamentProjectedPayout}
+                  grossCollected={grossCollected}
+                  houseRetained={houseRetained}
+                  orderedStatsProgramSummaries={orderedStatsProgramSummaries}
+                  continueTournamentActions={continueTournamentActions}
+                  manageSetupActions={manageSetupActions}
+                  moreActions={moreActions}
+                  dangerActions={dangerActions}
+                  contextPrimaryAction={contextPrimaryAction}
+                  dashboardActionIcons={dashboardActionIcons}
+                  scoreProgress={scoreProgress}
+                  scoreProgressText={scoreProgressText}
+                />
               </>
             )}
 
@@ -1837,144 +1273,29 @@ export default function TournamentDashboard() {
             </div>
           )}
 
-          {/* Change Squad Modal */}
-          {squadModalOpen && tournament && (
-            <div className={`${mobileStyles.modalOverlay} ${mobileStyles.modalOverlayTop}`}>
-              <div className={`${mobileStyles.modalCard} ${mobileStyles.squadChangeModalCard}`}>
-                <div className={`${mobileStyles.modalHeader} ${mobileStyles.squadChangeHeader}`}>
-                  <h2 className={mobileStyles.modalTitle}>Change Squad</h2>
-                  <p className={mobileStyles.modalSubtitle}>Select the date and time for {tournament.name}</p>
-                  <CloseControl position="absolute" size="sm" label="Close change squad modal" onClick={() => setSquadModalOpen(false)} />
-                </div>
-                <div className={mobileStyles.squadChangeList}>
-                  {[...squads].sort((left, right) => {
-                    const leftSelected = left.id === selectedSquadId ? 1 : 0;
-                    const rightSelected = right.id === selectedSquadId ? 1 : 0;
-                    return rightSelected - leftSelected;
-                  }).map(squad => {
-                    const dateLabel = squad.date ? formatIsoDateLong(squad.date) : '';
-                    const timeLabel = squad.time || '';
-                    const isSelected = squad.id === selectedSquadId;
-                    const entries = squadEntryCounts[squad.id] ?? 0;
-                    return (
-                      <button
-                        key={squad.id}
-                        type="button"
-                        className={`${mobileStyles.squadChangeItem} ${isSelected ? mobileStyles.squadChangeItemSelected : ''} ${entries === 0 ? mobileStyles.squadChangeItemEmpty : ''}`}
-                        onClick={() => handleSelectSquad(squad)}
-                      >
-                        <span className={mobileStyles.squadChangeIcon} aria-hidden="true"><Calendar /></span>
-                        <span className={mobileStyles.squadChangeItemMain}>
-                          <span className={mobileStyles.squadChangeItemLabel}>
-                            {dateLabel || timeLabel ? (
-                              <>
-                                {dateLabel && <span>{dateLabel}</span>}
-                                {dateLabel && timeLabel && <b aria-hidden="true">•</b>}
-                                {timeLabel && <span>{timeLabel}</span>}
-                              </>
-                            ) : `Squad ${squad.id}`}
-                          </span>
-                          <span className={mobileStyles.squadChangeItemMeta}>{entries} {entries === 1 ? 'entry' : 'entries'} <b aria-hidden="true">•</b> {isSelected ? 'Active squad' : '1 squad available'}</span>
-                        </span>
-                        <span className={mobileStyles.squadChangeItemStatus}>{isSelected ? 'Current' : 'Confirm'}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          )}
+          <ChangeSquadModal
+            open={squadModalOpen}
+            tournament={tournament}
+            squads={squads}
+            selectedSquadId={selectedSquadId}
+            squadEntryCounts={squadEntryCounts}
+            onSelectSquad={handleSelectSquad}
+            onClose={() => setSquadModalOpen(false)}
+          />
 
-          {/* Load Tournament Modal */}
-          {loadModalOpen && (
-            <div className={mobileStyles.modalOverlay}>
-              <div className={`${mobileStyles.modalCard} ${mobileStyles.tournamentSelectorCard}`}>
-                <div className={`${mobileStyles.modalHeader} ${mobileStyles.tournamentSelectorHeader}`}>
-                  <h2 className={mobileStyles.modalTitle}>{isAdmin ? 'All Tournaments' : 'Your Tournaments'}</h2>
-                  <p className={mobileStyles.modalSubtitle}>
-                    {allTournaments.length > 0
-                      ? `${allTournaments.length} available ${allTournaments.length === 1 ? 'tournament' : 'tournaments'}`
-                      : 'No tournaments available'}
-                  </p>
-                  <CloseControl
-                    position="absolute"
-                    size="sm"
-                    className={mobileStyles.settingsModalCloseButton}
-                    label="Close load tournament modal"
-                    onClick={() => setLoadModalOpen(false)}
-                  />
-                </div>
-                <div className={mobileStyles.modalScrollBody}>
-                  {allTournaments.length === 0 ? (
-                    <div className={mobileStyles.emptyTournaments}>
-                      <div>No tournaments found.</div>
-                      <div className={mobileStyles.emptyTournamentsHint}>Create your first tournament to get started!</div>
-                    </div>
-                  ) : (
-                    <>
-                      <ul className={mobileStyles.tournamentList}>
-                        {paginatedItems.map((t: Tournament) => {
-                          const squadCount = t.squad_times
-                            ? Object.values(t.squad_times).reduce((s, arr) => s + arr.length, 0)
-                            : 0;
-                          const dayCount = t.squad_times ? Object.keys(t.squad_times).length : 0;
-                          const isActiveTournament = tournament?.id === t.id;
-                          return (
-                            <li
-                              key={t.id}
-                              className={`${mobileStyles.tournamentItem} ${isActiveTournament ? mobileStyles.tournamentItemActive : ''}`}
-                            >
-                              <div className={mobileStyles.tournamentInfo}>
-                                <span className={mobileStyles.tournamentIcon} aria-hidden="true"><Trophy /></span>
-                                <div className={mobileStyles.tournamentDetails}>
-                                <div className={mobileStyles.tournamentNameRow}>
-                                  <span className={mobileStyles.tournamentName}>{t.name}</span>
-                                  {isActiveTournament && <span className={mobileStyles.tournamentActiveBadge}>Active</span>}
-                                </div>
-                                {t.location && <div className={mobileStyles.tournamentLocation}>{t.location}</div>}
-                                {t.start_date && (
-                                  <div className={mobileStyles.tournamentDate}>
-                                    {formatIsoDateLong(t.start_date)}
-                                    {t.end_date && t.end_date !== t.start_date && ` – ${formatIsoDateLong(t.end_date)}`}
-                                  </div>
-                                )}
-                                {(squadCount > 0 || (typeof t.entry_count === 'number' && t.entry_count > 0) || t.brackets_configured) && (
-                                  <div className={mobileStyles.tournamentMeta}>
-                                    {squadCount > 0 && <span>{squadCount} {squadCount === 1 ? 'Squad' : 'Squads'}</span>}
-                                    {dayCount > 1 && <span>{dayCount} Days</span>}
-                                    {typeof t.entry_count === 'number' && t.entry_count > 0 && (
-                                      <span>{t.entry_count} {t.entry_count === 1 ? 'Entry' : 'Entries'}</span>
-                                    )}
-                                    {t.brackets_configured && <span>Brackets Configured</span>}
-                                  </div>
-                                )}
-                                </div>
-                              </div>
-                              <div className={mobileStyles.tournamentActions}>
-                                <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.primary} ${mobileStyles.loadBtn}`} onClick={() => handleLoadTournament(t)}>
-                                  <RefreshCw aria-hidden="true" />
-                                  {isActiveTournament ? 'Reload' : 'Load'}
-                                </button>
-                                <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.danger} ${mobileStyles.deleteBtn}`} onClick={() => setDeleteConfirm({id: t.id, name: t.name})}><Trash2 aria-hidden="true" />Delete</button>
-                              </div>
-                            </li>
-                          );
-                        })}
-                      </ul>
-
-                      {totalPages > 1 && (
-                        <div className={mobileStyles.paginationBar}>
-                          <EnhancedButton onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} variant="primary" size="sm">Previous</EnhancedButton>
-                          <span className={mobileStyles.paginationText}>Page {currentPage} of {totalPages}</span>
-                          <EnhancedButton onClick={() => goToPage(currentPage + 1)} disabled={currentPage === totalPages} variant="primary" size="sm">Next</EnhancedButton>
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
+          <LoadTournamentModal
+            open={loadModalOpen}
+            isAdmin={isAdmin}
+            allTournaments={allTournaments}
+            paginatedItems={paginatedItems}
+            currentTournamentId={tournament?.id ?? null}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            goToPage={goToPage}
+            onClose={() => setLoadModalOpen(false)}
+            onLoadTournament={handleLoadTournament}
+            onDeleteTournament={(selectedTournament) => setDeleteConfirm({ id: selectedTournament.id, name: selectedTournament.name })}
+          />
         </div>
 
         {/* Delete Confirmation Modal */}

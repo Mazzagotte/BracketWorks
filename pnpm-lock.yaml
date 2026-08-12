@@ -10,6 +10,9 @@ importers:
 
   apps/bracketworks-web:
     dependencies:
+      '@bracketworks/types':
+        specifier: workspace:*
+        version: link:../../packages/types
       '@bracketworks/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -33,7 +36,7 @@ importers:
         version: 18.3.1(react@18.3.1)
       styled-jsx:
         specifier: ^5.1.7
-        version: 5.1.7(react@18.3.1)
+        version: 5.1.7(@babel/core@7.29.7)(react@18.3.1)
     devDependencies:
       '@testing-library/dom':
         specifier: ^10.0.0
@@ -61,7 +64,7 @@ importers:
         version: 9.39.5(jiti@1.21.7)
       eslint-config-next:
         specifier: 16.3.0
-        version: 16.3.0(eslint@9.39.5(jiti@1.21.7))(typescript@5.9.3)
+        version: 16.3.0(@typescript-eslint/parser@8.66.0(eslint@9.39.5(jiti@1.21.7))(typescript@5.9.3))(eslint@9.39.5(jiti@1.21.7))(typescript@5.9.3)
       jsdom:
         specifier: ^26.1.0
         version: 26.1.0
@@ -80,6 +83,9 @@ importers:
 
   apps/tournament-central-web:
     dependencies:
+      '@bracketworks/types':
+        specifier: workspace:*
+        version: link:../../packages/types
       '@bracketworks/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -128,7 +134,7 @@ importers:
         version: 9.39.5(jiti@1.21.7)
       eslint-config-next:
         specifier: 16.3.0
-        version: 16.3.0(@typescript-eslint/parser@8.66.0(eslint@9.39.5(jiti@1.21.7))(typescript@5.9.3))(eslint@9.39.5(jiti@1.21.7))(typescript@5.9.3)
+        version: 16.3.0(eslint@9.39.5(jiti@1.21.7))(typescript@5.9.3)
       jsdom:
         specifier: ^27.0.1
         version: 27.4.0
@@ -6327,10 +6333,12 @@ snapshots:
     optionalDependencies:
       '@babel/core': 7.29.7
 
-  styled-jsx@5.1.7(react@18.3.1):
+  styled-jsx@5.1.7(@babel/core@7.29.7)(react@18.3.1):
     dependencies:
       client-only: 0.0.1
       react: 18.3.1
+    optionalDependencies:
+      '@babel/core': 7.29.7
 
   sucrase@3.35.1:
     dependencies:
