@@ -4,7 +4,7 @@ flake8>=6.0.0
 mypy>=1.0.0
 pre-commit>=3.0.0
 pytest>=8.0.0
+httpx2>=2.0.0
 
 # For load testing
 locust>=2.15.0
-
