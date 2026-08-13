@@ -292,6 +292,456 @@
   padding-top: 12px;
 }
 
+.featuredLayout {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+  gap: 12px;
+  align-items: start;
+}
+
+.featuredStrip {
+  display: grid;
+  gap: 12px;
+}
+
+.featuredHeader,
+.featuredBrandHeader {
+  color: var(--bw-text-title);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.featuredGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.featuredCard {
+  position: relative;
+  min-height: 0;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  overflow: hidden;
+  background: var(--bw-surface-panel);
+  box-shadow: none;
+}
+
+.featuredCard::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: none;
+}
+
+.featuredCardContent {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 18px;
+  height: 100%;
+  padding: 18px 18px 18px;
+}
+
+.featuredCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.featuredCard h3 {
+  margin: 0;
+  color: var(--bw-text-title);
+  font-size: 20px;
+  line-height: 1.1;
+  letter-spacing: -0.04em;
+  font-weight: 800;
+}
+
+.featuredLogoWrap {
+  width: 108px;
+  height: 108px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--bw-border-card);
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.14);
+  overflow: hidden;
+}
+
+.featuredLogo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.featuredBrandPanel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 430px;
+  min-height: 220px;
+  margin: 0 auto;
+  padding: 20px 20px 18px;
+  border: 1px solid var(--bw-border-card);
+  border-radius: 14px;
+  background: var(--bw-surface-card);
+  box-shadow: var(--bw-shadow-card);
+  overflow: hidden;
+}
+
+.featuredBrandPanel > * {
+  position: relative;
+  z-index: 1;
+}
+
+.featuredBrandTitle {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto 18px;
+  color: var(--bw-text-title);
+  font-size: 15px;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.brandProductRow {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.brandProductBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.brandWordmarkLogo {
+  width: 78px;
+  height: 78px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  border: 1px solid var(--bw-border-card);
+  background: rgba(255, 255, 255, 0.02);
+  overflow: hidden;
+}
+
+.brandWordmarkLogo img {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+}
+
+.brandProductLabel {
+  color: var(--bw-text-title);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  text-align: center;
+}
+
+.brandMath {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--color-primary);
+  border: 1px solid color-mix(in srgb, var(--bw-border-card) 82%, var(--color-primary) 18%);
+  flex-shrink: 0;
+}
+
+.brandDivider {
+  height: 1px;
+  margin: 0 0 18px;
+  background: color-mix(in srgb, var(--bw-text-title) 12%, transparent);
+}
+
+.brandWorkflowRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0 auto 10px;
+  width: 100%;
+  max-width: 100%;
+}
+
+.brandCheck {
+  width: 18px;
+  height: 18px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.featuredBrandSummary {
+  margin: 0;
+  color: var(--bw-text-title);
+  font-size: 16px;
+  line-height: 1.2;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  text-align: center;
+}
+
+.featuredBrandText {
+  display: block;
+  width: 100%;
+  margin: 0;
+  color: var(--bw-text-muted);
+  font-size: 15px;
+  line-height: 1.5;
+  letter-spacing: -0.02em;
+  text-align: center;
+}
+
+.featuredBrandEmphasis {
+  display: inline-block;
+  margin: 4px 0;
+  font-weight: 800;
+}
+
+.featuredBrandCta {
+  width: 100%;
+  min-height: 52px;
+  margin-top: 18px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--color-primary);
+  color: var(--bw-page);
+  font-size: clamp(18px, 1.8vw, 28px);
+  font-weight: 900;
+  letter-spacing: -0.05em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.14);
+}
+
+.featuredBrandFooter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid color-mix(in srgb, var(--bw-text-title) 12%, transparent);
+  color: var(--bw-text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.brandFooterIcon {
+  width: 18px;
+  height: 18px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.featuredMetaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 30px;
+}
+
+.featuredTag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 0 18px;
+  border-radius: 999px;
+  background: transparent;
+  border: 1px solid var(--color-primary);
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.featuredDate {
+  color: color-mix(in srgb, var(--bw-text-title) 76%, transparent);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.featuredRegistrationStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--bw-text-title);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.featuredStatusDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  display: inline-block;
+}
+
+.featuredDivider {
+  height: 1px;
+  width: 100%;
+  background: color-mix(in srgb, var(--bw-text-title) 12%, transparent);
+  margin: 2px 0 0;
+}
+
+.featuredInfoList {
+  display: grid;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.featuredVenueRow,
+.featuredCityRow,
+.featuredBrandText,
+.featuredFooterRow {
+  margin: 0;
+  color: color-mix(in srgb, var(--bw-text-title) 86%, transparent);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.featuredVenueRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 0;
+  color: var(--bw-text-title);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.featuredCityRow {
+  margin-top: 0;
+  margin-left: 38px;
+  font-size: 13px;
+  color: color-mix(in srgb, var(--bw-text-title) 82%, transparent);
+}
+
+.featuredFooterRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 0;
+  color: var(--bw-text-title);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.featuredStatus {
+  color: var(--color-primary);
+  font-weight: 800;
+}
+
+.featuredRegistrationBlock {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid color-mix(in srgb, var(--bw-text-title) 12%, transparent);
+}
+
+.featuredRegistrationIcon {
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 2px solid var(--color-primary);
+  color: var(--color-primary);
+  background: rgba(255, 153, 80, 0.08);
+  flex-shrink: 0;
+}
+
+.featuredRegistrationText {
+  display: grid;
+  gap: 2px;
+}
+
+.featuredRegistrationLabel {
+  color: var(--color-primary);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.featuredRegistrationDate {
+  color: var(--bw-text-title);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.featuredCardPrimaryAction {
+  width: 100%;
+  min-height: 46px;
+  margin-top: 6px;
+  padding: 0 18px;
+  border: 1px solid var(--color-primary);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--color-primary);
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.tone-1,
+.tone-2,
+.tone-3,
+.tone-brand {
+  background: linear-gradient(180deg, var(--bw-surface-card), var(--bw-surface-panel-strong));
+}
+
+.tone-brand {
+  background: linear-gradient(180deg, var(--bw-surface-card), var(--bw-surface-panel-strong));
+}
+
 .layoutGrid {
   margin-top: 12px;
   display: grid;
@@ -456,37 +906,6 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 12px;
-}
-
-.heartbeatBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 28px;
-  padding: 0 10px;
-  border: 1px solid rgba(89, 220, 129, 0.35);
-  border-radius: 999px;
-  background: rgba(89, 220, 129, 0.12);
-  color: #b6f5c9;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.heartbeatBadgeStale {
-  border-color: rgba(245, 158, 11, 0.32);
-  background: rgba(245, 158, 11, 0.08);
-  color: #f9d38f;
-}
-
-.heartbeatDot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: currentColor;
-  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.04);
 }
 
 .stateMeta {

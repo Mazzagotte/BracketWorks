@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent } from 'react';
-import { CalendarDays, ChevronRight, MapPin, Menu, Plus } from 'lucide-react';
+import { CalendarCheck2, CalendarDays, ChevronRight, Link2, MapPin, Menu, Plus, ShieldCheck } from 'lucide-react';
 import { ComposableMap, Geographies, Geography, ZoomableGroup } from 'react-simple-maps';
 import type { PublicTournamentDirectoryItem, PublicTournamentDirectoryResponse } from '@bracketworks/types';
 import TournamentRegistrationForm from '@/components/public/TournamentRegistrationForm';
@@ -186,6 +186,17 @@ const statusLabel: Record<TournamentStatus, string> = {
   'IN PROGRESS': 'In Progress',
   'PAST RESULTS': 'Past Results',
 };
+
+const BRAND_FEATURED_CARD = {
+  id: 'bracketworks-brand',
+  title: 'BracketWorks + Tournament Central',
+  dateLabel: 'One workflow for directors and players',
+  venue: 'Manage brackets, scores, standings, payouts, and registrations from one tournament hub.',
+  city: '',
+  slotText: 'Explore BracketWorks →',
+  tone: 'tone-brand',
+  isBrandCard: true,
+} as const;
 
 const TONE_UPCOMING_SHADES = [
   'color-mix(in srgb, var(--color-primary) 46%, var(--bw-surface-card-strong) 54%)',
@@ -463,7 +474,7 @@ export default function HomePage() {
   const mapShellRef = useRef<HTMLDivElement | null>(null);
   const hasUserSelectedStateRef = useRef(false);
   const detailModalRef = useRef<HTMLElement | null>(null);
-  const lastSuccessfulHeartbeatRef = useRef(Date.now());
+  const lastSuccessfulHeartbeatRef = useRef<number>(0);
 
   useEffect(() => {
     if (!mapShellRef.current) {
@@ -589,6 +600,7 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
+    lastSuccessfulHeartbeatRef.current = Date.now();
     void loadDirectory();
 
     const intervalId = window.setInterval(() => {
@@ -1194,6 +1206,28 @@ export default function HomePage() {
     }
   }, [registrationTournament]);
 
+  const featuredTournaments = useMemo(() => {
+    return [...allTournaments]
+      .filter((tournament) => tournament.status !== 'PAST RESULTS')
+      .sort((a, b) => {
+        const aTime = a.startDate?.getTime() ?? Number.MAX_SAFE_INTEGER;
+        const bTime = b.startDate?.getTime() ?? Number.MAX_SAFE_INTEGER;
+        return aTime - bTime;
+      })
+      .slice(0, 3)
+      .map((tournament) => ({
+        id: tournament.id,
+        title: tournament.name,
+        dateLabel: tournament.date,
+        venue: tournament.venue,
+        city: `${tournament.city}${tournament.stateLabel ? `, ${tournament.stateLabel}` : ''}`,
+        slotText: tournament.status === 'IN PROGRESS' ? 'Live now' : 'Open for registration',
+        tone: tournament.status === 'IN PROGRESS' ? 'tone-3' : tournament.status === 'UPCOMING' ? 'tone-1' : 'tone-2',
+        logoUrl: tournament.logoUrl,
+        isBrandCard: false,
+      }));
+  }, [allTournaments]);
+
   const stateToneByCode = useMemo(() => {
     const tones = new Map<string, MapStateTone>();
 
@@ -1289,9 +1323,6 @@ export default function HomePage() {
 
           <nav className="bw-public-nav" aria-label="Homepage navigation">
             <a href="#tournament-directory">Tournaments</a>
-            <a href="#state-map">Bowling Centers</a>
-            <a href="#state-results">Results</a>
-            <a href="#tournament-directory">About</a>
           </nav>
 
           <div className={`${styles.headerActions} bw-public-actions`}>
@@ -1303,9 +1334,6 @@ export default function HomePage() {
             <summary aria-label="Open navigation"><Menu /></summary>
             <div>
               <a href="#tournament-directory">Tournaments</a>
-              <a href="#state-map">Bowling Centers</a>
-              <a href="#state-results">Results</a>
-              <a href="#tournament-directory">About</a>
               <Link href="/login">Sign In</Link>
               <Link href="/signup">Create Account</Link>
             </div>
@@ -1438,10 +1466,6 @@ export default function HomePage() {
                   <p>{selectedStateSubtitle}</p>
                 </div>
               </div>
-              <span className={`${styles.heartbeatBadge} ${heartbeatState === 'stale' ? styles.heartbeatBadgeStale : ''}`} aria-live="polite">
-                <span className={styles.heartbeatDot} aria-hidden="true" />
-                {heartbeatState === 'checking' ? 'Syncing' : heartbeatState === 'stale' ? 'Waiting' : 'Live'}
-              </span>
             </div>
 
             <div className={styles.tabs}>
@@ -1667,6 +1691,105 @@ export default function HomePage() {
                 </section>
               </div>
             )}
+          </aside>
+        </div>
+      </section>
+
+      <section className={styles.section}>
+        <div className={styles.featuredLayout}>
+          <div className={styles.featuredStrip} aria-label="Featured tournaments">
+            <div className={styles.featuredHeader}>Featured Tournaments</div>
+            <div className={styles.featuredGrid}>
+              {featuredTournaments.map((tournament) => (
+                <article key={tournament.id} className={`${styles.featuredCard} ${styles[tournament.tone]}`}>
+                  <div className={styles.featuredCardContent}>
+                    {tournament.logoUrl ? (
+                      <div className={styles.featuredLogoWrap}>
+                        <img src={tournament.logoUrl} alt="" className={styles.featuredLogo} loading="lazy" />
+                      </div>
+                    ) : null}
+
+                    <h3>{tournament.title}</h3>
+
+                    <div className={styles.featuredDivider} aria-hidden="true" />
+
+                    <div className={styles.featuredInfoList}>
+                      <p className={styles.featuredVenueRow}>
+                        <MapPin size={18} aria-hidden="true" />
+                        <span>{tournament.venue}</span>
+                      </p>
+                      {tournament.city ? <p className={styles.featuredCityRow}>{tournament.city}</p> : null}
+
+                      <p className={styles.featuredFooterRow}>
+                        <CalendarDays size={18} aria-hidden="true" />
+                        <span>{tournament.dateLabel}</span>
+                      </p>
+                    </div>
+
+                    <div className={styles.featuredRegistrationBlock}>
+                      <span className={styles.featuredRegistrationIcon} aria-hidden="true">
+                        <CalendarCheck2 size={18} />
+                      </span>
+                      <div className={styles.featuredRegistrationText}>
+                        <div className={styles.featuredRegistrationLabel}>Registration Open</div>
+                        <div className={styles.featuredRegistrationDate}>Closes {tournament.dateLabel.includes('2025') ? 'Jul 21' : 'Aug 29'}, 2027</div>
+                      </div>
+                    </div>
+
+                    <button type="button" className={styles.featuredCardPrimaryAction}>
+                      View Tournament <span aria-hidden="true">→</span>
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+
+          <aside className={styles.featuredBrandPanel} aria-label="BracketWorks and Tournament Central overview">
+            <h2 className={styles.featuredBrandTitle}>BracketWorks + Tournament Central</h2>
+
+            <div className={styles.brandProductRow}>
+              <div className={styles.brandProductBlock}>
+                <div className={styles.brandWordmarkLogo}>
+                  <Image src="/logo_no_text.svg" alt="BracketWorks" width={78} height={78} priority />
+                </div>
+              </div>
+
+              <div className={styles.brandMath} aria-hidden="true">
+                <Plus size={20} strokeWidth={3} />
+              </div>
+
+              <div className={styles.brandProductBlock}>
+                <div className={styles.brandWordmarkLogo}>
+                  <Image src="/TC_logo_No_Text.svg" alt="Tournament Central" width={78} height={78} priority />
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.brandDivider} aria-hidden="true" />
+
+            <div className={styles.brandWorkflowRow}>
+              <span className={styles.brandCheck} aria-hidden="true">
+                <Link2 size={12} strokeWidth={2.5} />
+              </span>
+              <p className={styles.featuredBrandSummary}>One connected tournament workflow.</p>
+            </div>
+
+            <p className={styles.featuredBrandText}>
+              Registration in Tournament Central.<br />
+              Brackets, scores, standings, and payouts in BracketWorks.
+            </p>
+
+            <button type="button" className={styles.featuredBrandCta}>
+              Explore BracketWorks <span aria-hidden="true">→</span>
+            </button>
+
+            <div className={styles.featuredBrandFooter}>
+              <span className={styles.brandFooterIcon} aria-hidden="true">
+                <ShieldCheck size={14} strokeWidth={2.5} />
+              </span>
+              <span>Built for organizers. Trusted by players.</span>
+            </div>
           </aside>
         </div>
       </section>
