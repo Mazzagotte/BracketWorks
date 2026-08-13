@@ -400,22 +400,23 @@
 }
 
 .geographyBase {
-  stroke: rgba(52, 52, 58, 0.95);
-  stroke-width: 1.1;
-  fill-opacity: 0.94;
+  fill: url(#tc-state-texture);
+  stroke: rgba(205, 218, 228, 0.38);
+  stroke-width: 1.15;
+  fill-opacity: 1;
   vector-effect: non-scaling-stroke;
   cursor: pointer;
-  transition: fill 120ms ease, stroke 120ms ease, stroke-width 120ms ease;
+  transition: stroke 120ms ease, stroke-width 120ms ease;
 }
 
 .geographyBase:hover {
-  stroke: rgba(244, 244, 245, 0.58);
-  stroke-width: 1.35;
+  stroke: var(--color-primary);
+  stroke-width: 1.6;
 }
 
 .geographyBase[data-selected='true'] {
-  stroke: var(--bw-text-accent);
-  stroke-width: 1.9;
+  stroke: var(--color-primary);
+  stroke-width: 2;
 }
 
 .mapShell :global(circle) {
@@ -455,6 +456,37 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 12px;
+}
+
+.heartbeatBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid rgba(89, 220, 129, 0.35);
+  border-radius: 999px;
+  background: rgba(89, 220, 129, 0.12);
+  color: #b6f5c9;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.heartbeatBadgeStale {
+  border-color: rgba(245, 158, 11, 0.32);
+  background: rgba(245, 158, 11, 0.08);
+  color: #f9d38f;
+}
+
+.heartbeatDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.04);
 }
 
 .stateMeta {
@@ -590,12 +622,6 @@
   font-size: 0.78rem;
 }
 
-.errorMessage {
-  margin: 14px 0 0;
-  color: var(--bw-text-accent);
-  font-size: 0.8rem;
-}
-
 .cardList {
   margin-top: 14px;
   display: grid;
@@ -608,37 +634,78 @@
   border: 1px solid var(--bw-border-subtle);
   border-radius: 12px;
   background: var(--bw-surface-card);
-  padding: 12px 14px;
+  padding: 24px 18px 18px;
+  display: grid;
+  justify-items: center;
+  text-align: center;
+}
+
+.emptyStateIcon {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--bw-border-card);
+  color: var(--bw-text-title);
+  margin: 0 auto 16px;
 }
 
 .emptyState h4 {
   margin: 0;
   color: var(--bw-text-title);
-  font-size: 14px;
-  letter-spacing: -0.01em;
+  font-size: clamp(18px, 1.6vw, 24px);
+  line-height: 1.15;
+  letter-spacing: -0.04em;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .emptyState p {
-  margin: 6px 0 0;
+  margin: 8px 0 0;
   color: var(--bw-text-muted);
-  font-size: 13px;
-  line-height: 1.45;
+  font-size: 15px;
+  line-height: 1.5;
 }
 
-.emptyStateAction {
-  margin-top: 12px;
-  min-height: 38px;
-  padding: 0 12px;
-  border-radius: 8px;
-  border: 1px solid var(--bw-border-card);
-  background: var(--bw-surface-card);
-  color: var(--bw-text-title);
-  font-size: 12px;
-  font-weight: var(--font-weight-semibold);
+.emptyStatePrimaryAction,
+.emptyStateSecondaryAction {
+  width: 100%;
+  min-height: 48px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   cursor: pointer;
+  transition: background-color 140ms ease, border-color 140ms ease, transform 140ms ease;
 }
 
-.emptyStateAction:hover {
+.emptyStatePrimaryAction {
+  margin-top: 24px;
+  border: 0;
+  background: var(--color-primary);
+  color: #ffffff;
+}
+
+.emptyStatePrimaryAction:hover {
+  background: var(--color-primary-hover);
+}
+
+.emptyStateSecondaryAction {
+  margin-top: 18px;
+  border: 1px solid var(--bw-border-card);
+  background: transparent;
+  color: var(--bw-text-title);
+}
+
+.emptyStateSecondaryAction:hover {
   border-color: var(--bw-border-accent);
   background: var(--bw-surface-panel-strong);
 }

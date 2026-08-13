@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import ConfigDrawer from './ConfigDrawer';
 import PublishValidationSummary from './PublishValidationSummary';
 import TournamentRegistrationForm from '../public/TournamentRegistrationForm';
+import TournamentDetailsSection from './setup/TournamentDetailsSection';
 import { initialCustomQuestions, initialDivisions, initialEvents, initialFees, initialLocations, initialRegistrationFields, initialSquads, setupSections } from './setupConfig';
 import SetupStatusBadge from './SetupStatusBadge';
 import type { CustomQuestionConfig, DivisionConfig, EventConfig, FeeConfig, LocationConfig, RegistrationFieldConfig, SetupSectionKey, SetupStatus, SquadConfig, ValidationIssue } from './types';
@@ -613,7 +614,7 @@ const TIMEZONES = [
   { value: 'Pacific/Honolulu (HT)', label: 'Pacific/Honolulu (HT)' },
 ];
 
-const US_STATES = [
+const US_STATES: Array<{ code: string; name: string }> = [
   { code: 'AL', name: 'Alabama' },
   { code: 'AK', name: 'Alaska' },
   { code: 'AZ', name: 'Arizona' },
@@ -664,7 +665,7 @@ const US_STATES = [
   { code: 'WV', name: 'West Virginia' },
   { code: 'WI', name: 'Wisconsin' },
   { code: 'WY', name: 'Wyoming' },
-] as const;
+];
 
 function buildDefaultDraft(): OrganizerDraft {
   return {
@@ -2399,6 +2400,31 @@ export default function TournamentSetupWorkspace() {
     registrationAfterStartWarning ? 'Registration currently closes after tournament start.' : null,
   ].filter((entry): entry is string => Boolean(entry));
 
+  const timelineWarningEntries = timelineWarnings.map((message, index) => ({
+    id: `timeline-warning-${index}`,
+    section: 'tournament-details' as const,
+    severity: 'warning' as const,
+    message,
+  }));
+
+  const timelineWarningActions = [
+    tournamentDateOrderInvalid ? {
+      id: 'set-end-date-to-start',
+      label: 'Set end date to start date',
+      onClick: () => setDetails((prev) => ({ ...prev, endDateIso: prev.startDateIso })),
+    } : null,
+    registrationDateOrderInvalid ? {
+      id: 'set-close-date-to-open',
+      label: 'Set close date to open date',
+      onClick: () => setDetails((prev) => ({ ...prev, registrationCloseIso: prev.registrationOpenIso })),
+    } : null,
+    !registrationDateOrderInvalid && registrationAfterStartWarning ? {
+      id: 'align-close-with-start',
+      label: 'Align close with start date',
+      onClick: () => setDetails((prev) => ({ ...prev, registrationCloseIso: prev.startDateIso })),
+    } : null,
+  ].filter((entry): entry is { id: string; label: string; onClick: () => void } => Boolean(entry));
+
   const recommendedTournamentStatus = useMemo(() => {
     return recommendTournamentStatus({
       details,
@@ -3353,539 +3379,36 @@ export default function TournamentSetupWorkspace() {
 
         <main className={styles.workspace}>
           {activeSection === 'tournament-details' && (
-            <section className={styles.sectionCard}>
-              <div className={styles.sectionHeader}>
-                <div>
-                  <h2>Tournament Details</h2>
-                  <p>Basic information used throughout Tournament Central and during registration.</p>
-                </div>
-                <SetupStatusBadge status={statusBySection['tournament-details']} />
-              </div>
-
-              <div className={styles.detailsLayout}>
-                <div className={styles.detailsMain}>
-                  <div className={styles.detailsGrid}>
-
-                {/* Tournament Identity */}
-                <article id="details-identity" className={styles.detailsCard}>
-                  <div className={styles.detailsCardHead}>
-                    <span className={styles.detailsCardIcon}><Trophy size={15} /></span>
-                    <div className={styles.detailsCardHeadText}>
-                      <h3>Tournament Identity</h3>
-                      <p>Name, organizer, tournament type, and branding.</p>
-                    </div>
-                  </div>
-                  <div className={styles.detailsCardBody}>
-                    <label className={styles.fieldLabel}>
-                      Tournament Name <span className={styles.fieldRequired}>*</span>
-                      <input
-                        className={!details.name.trim() ? styles.fieldInputInvalid : ''}
-                        value={details.name}
-                        onChange={(event) => setDetails((prev) => ({ ...prev, name: event.target.value }))}
-                        placeholder="Tournament name"
-                      />
-                      {!details.name.trim() ? <small className={styles.fieldErrorText}>Tournament name is required.</small> : null}
-                    </label>
-                    <label className={styles.fieldLabel}>
-                      Subtitle / Short Description
-                      <input
-                        value={details.subtitle}
-                        onChange={(event) => setDetails((prev) => ({ ...prev, subtitle: event.target.value }))}
-                        placeholder="e.g. USBC Certified • Fall Series"
-                      />
-                    </label>
-                    <div className={styles.fieldRow}>
-                      <label className={styles.fieldLabel}>
-                        Organizer / Organization
-                        <input
-                          value={details.organizer}
-                          onChange={(event) => setDetails((prev) => ({ ...prev, organizer: event.target.value }))}
-                          placeholder="Organization name"
-                        />
-                      </label>
-                      <label className={styles.fieldLabel}>
-                        Tournament Type
-                        <select
-                          value={details.tournamentType}
-                          onChange={(event) => setDetails((prev) => ({ ...prev, tournamentType: event.target.value }))}
-                        >
-                          <option value="Adult">Adult</option>
-                          <option value="Youth">Youth</option>
-                          <option value="Senior">Senior</option>
-                          <option value="Mixed">Mixed</option>
-                        </select>
-                      </label>
-                    </div>
-                    <div className={styles.fieldLabel}>
-                      Tournament Logo (optional)
-                      <input
-                        ref={logoInputRef}
-                        type="file"
-                        accept=".png,.jpg,.jpeg,.svg,image/png,image/jpeg,image/svg+xml"
-                        className={styles.logoUploadInput}
-                        onChange={handleLogoInputChange}
-                      />
-                      <div
-                            className={`${styles.logoUpload} ${isLogoDragActive ? styles.logoUploadActive : ''}`}
-                            role="button"
-                            tabIndex={0}
-                            aria-label="Upload tournament logo"
-                            onClick={() => {
-                              if (!hasLogoAsset) {
-                                logoInputRef.current?.click();
-                              }
-                            }}
-                            onKeyDown={(event) => {
-                              if (event.key === 'Enter' || event.key === ' ') {
-                                event.preventDefault();
-                                if (!hasLogoAsset) {
-                                  logoInputRef.current?.click();
-                                }
-                              }
-                            }}
-                            onDragEnter={(event) => {
-                              event.preventDefault();
-                              event.stopPropagation();
-                              setIsLogoDragActive(true);
-                            }}
-                            onDragOver={(event) => {
-                              event.preventDefault();
-                              event.stopPropagation();
-                              setIsLogoDragActive(true);
-                            }}
-                            onDragLeave={(event) => {
-                              event.preventDefault();
-                              event.stopPropagation();
-                              setIsLogoDragActive(false);
-                            }}
-                            onDrop={handleLogoDrop}
-                          >
-                            {hasLogoAsset ? (
-                              <div className={styles.logoAssetRow}>
-                                {logoPreviewUrl ? (
-                                  <div className={styles.logoPreviewWrap}>
-                                    <img src={logoPreviewUrl} alt="Tournament logo preview" className={styles.logoPreviewImage} />
-                                  </div>
-                                ) : (
-                                  <span className={styles.logoUploadIcon}><Upload size={15} /></span>
-                                )}
-                                <div className={styles.logoUploadText}>
-                                  <span className={styles.logoUploadMain}>{logoAssetName}</span>
-                                  <small>{logoAssetMeta}</small>
-                                </div>
-                                <div className={styles.logoAssetActions}>
-                                  <button
-                                    type="button"
-                                    className={styles.logoActionButton}
-                                    onClick={(event) => {
-                                      event.preventDefault();
-                                      event.stopPropagation();
-                                      logoInputRef.current?.click();
-                                    }}
-                                  >
-                                    <PencilLine size={13} /> Replace
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className={`${styles.logoActionButton} ${styles.logoActionButtonDanger}`}
-                                    onClick={(event) => {
-                                      event.preventDefault();
-                                      event.stopPropagation();
-                                      void clearLogo();
-                                    }}
-                                  >
-                                    <Trash2 size={13} /> Remove
-                                  </button>
-                                </div>
-                              </div>
-                            ) : (
-                              <div className={styles.logoUploadInner}>
-                                <span className={styles.logoUploadIcon}><Upload size={16} /></span>
-                                <div className={styles.logoUploadText}>
-                                  <span className={styles.logoUploadMain}>Upload Tournament Logo</span>
-                                  <small className={styles.logoUploadHint}>PNG, JPG, or SVG · Maximum 5 MB</small>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                          {details.logoFileName && !logoPreviewUrl ? (
-                            <small className={styles.logoUploadFilename}>Current file: {details.logoFileName}</small>
-                          ) : null}
-                          {pendingLogoFile ? (
-                            <small className={styles.logoUploadFilename}>Pending upload: {pendingLogoFile.name}</small>
-                          ) : null}
-                          {logoPreviewUrl ? (
-                            <small className={styles.logoUploadFilename}>Preview will be saved when you save changes.</small>
-                          ) : null}
-                          {logoUploadError ? <small className={styles.logoUploadError}>{logoUploadError}</small> : null}
-                        </div>
-                      </div>
-                    </article>
-
-                    {/* Tournament Dates */}
-                    <article id="details-schedule" className={styles.detailsCard}>
-                      <div className={styles.detailsCardHead}>
-                        <span className={styles.detailsCardIcon}><CalendarDays size={15} /></span>
-                        <div className={styles.detailsCardHeadText}>
-                          <h3>Tournament Dates</h3>
-                          <p>Tournament schedule and registration availability.</p>
-                        </div>
-                      </div>
-                      <div className={styles.detailsCardBody}>
-                        <div className={styles.fieldRow}>
-                          <label className={styles.fieldLabel}>
-                            Tournament Start Date <span className={styles.fieldRequired}>*</span>
-                            <input
-                              type="date"
-                              className={!details.startDateIso || tournamentDateOrderInvalid ? styles.fieldInputInvalid : ''}
-                              value={details.startDateIso}
-                              onChange={(event) => setDetails((prev) => ({ ...prev, startDateIso: event.target.value }))}
-                            />
-                            {!details.startDateIso ? <small className={styles.fieldErrorText}>Start date is required.</small> : null}
-                          </label>
-                          <label className={styles.fieldLabel}>
-                            Tournament End Date <span className={styles.fieldRequired}>*</span>
-                            <input
-                              type="date"
-                              className={!details.endDateIso || tournamentDateOrderInvalid ? styles.fieldInputInvalid : ''}
-                              value={details.endDateIso}
-                              onChange={(event) => setDetails((prev) => ({ ...prev, endDateIso: event.target.value }))}
-                            />
-                            {!details.endDateIso ? <small className={styles.fieldErrorText}>End date is required.</small> : null}
-                            {tournamentDateOrderInvalid ? <small className={styles.fieldErrorText}>End date must be on or after start date.</small> : null}
-                          </label>
-                        </div>
-                        <div className={styles.fieldRow}>
-                          <label className={styles.fieldLabel}>
-                            Registration Opens <span className={styles.fieldRequired}>*</span>
-                            <input
-                              type="date"
-                              className={!details.registrationOpenIso || registrationDateOrderInvalid ? styles.fieldInputInvalid : ''}
-                              value={details.registrationOpenIso}
-                              onChange={(event) => setDetails((prev) => ({ ...prev, registrationOpenIso: event.target.value }))}
-                            />
-                            {!details.registrationOpenIso ? <small className={styles.fieldErrorText}>Registration open date is required.</small> : null}
-                          </label>
-                          <label className={styles.fieldLabel}>
-                            Registration Closes <span className={styles.fieldRequired}>*</span>
-                            <input
-                              type="date"
-                              className={!details.registrationCloseIso || registrationDateOrderInvalid || registrationAfterStartWarning ? styles.fieldInputInvalid : ''}
-                              value={details.registrationCloseIso}
-                              onChange={(event) => setDetails((prev) => ({ ...prev, registrationCloseIso: event.target.value }))}
-                            />
-                            {!details.registrationCloseIso ? <small className={styles.fieldErrorText}>Registration close date is required.</small> : null}
-                            {registrationDateOrderInvalid ? <small className={styles.fieldErrorText}>Close date must be on or after open date.</small> : null}
-                            {!registrationDateOrderInvalid && registrationAfterStartWarning ? <small className={styles.fieldHintText}>Close date currently falls after tournament start.</small> : null}
-                          </label>
-                        </div>
-                        <div className={styles.detailsDateQuickActions}>
-                          <button
-                            type="button"
-                            className={styles.inlineAction}
-                            onClick={() => {
-                              if (!details.startDateIso) {
-                                return;
-                              }
-
-                              const openIso = shiftIsoDate(details.startDateIso, -60);
-                              const closeIso = shiftIsoDate(details.startDateIso, -7);
-                              setDetails((prev) => ({
-                                ...prev,
-                                registrationOpenIso: openIso || prev.registrationOpenIso,
-                                registrationCloseIso: closeIso || prev.registrationCloseIso,
-                              }));
-                            }}
-                            disabled={!details.startDateIso}
-                          >
-                            Use 60-day open / 7-day close preset
-                          </button>
-                          <button
-                            type="button"
-                            className={styles.inlineAction}
-                            onClick={() => {
-                              if (!details.startDateIso) {
-                                return;
-                              }
-
-                              const openIso = shiftIsoDate(details.startDateIso, -30);
-                              const closeIso = shiftIsoDate(details.startDateIso, -1);
-                              setDetails((prev) => ({
-                                ...prev,
-                                registrationOpenIso: openIso || prev.registrationOpenIso,
-                                registrationCloseIso: closeIso || prev.registrationCloseIso,
-                              }));
-                            }}
-                            disabled={!details.startDateIso}
-                          >
-                            Use 30-day open / 1-day close preset
-                          </button>
-                        </div>
-                        <label className={styles.fieldLabel}>
-                          Timezone <span className={styles.fieldRequired}>*</span>
-                          <select
-                            value={details.timezone}
-                            onChange={(event) => setDetails((prev) => ({ ...prev, timezone: event.target.value }))}
-                          >
-                            {TIMEZONES.map((tz) => (
-                              <option key={tz.value} value={tz.value}>{tz.label}</option>
-                            ))}
-                          </select>
-                        </label>
-                        <p className={styles.detailNote}><Info size={13} /> All dates and times will be displayed in the selected timezone.</p>
-                      </div>
-                    </article>
-
-                    {/* Location */}
-                    <article id="details-location" className={styles.detailsCard}>
-                      <div className={styles.detailsCardHead}>
-                        <span className={styles.detailsCardIcon}><MapPin size={15} /></span>
-                        <div className={styles.detailsCardHeadText}>
-                          <h3>Location</h3>
-                          <p>Bowling center and tournament location.</p>
-                        </div>
-                      </div>
-                      <div className={styles.detailsCardBody}>
-                        <label className={styles.fieldLabel}>
-                          Bowling Center <span className={styles.fieldRequired}>*</span>
-                          <input
-                            className={!details.bowlingCenter.trim() ? styles.fieldInputInvalid : ''}
-                            value={details.bowlingCenter}
-                            onChange={(event) => setDetails((prev) => ({ ...prev, bowlingCenter: event.target.value }))}
-                            placeholder="Enter bowling center name"
-                          />
-                          {!details.bowlingCenter.trim() ? <small className={styles.fieldErrorText}>Bowling center is required.</small> : null}
-                        </label>
-                        <div className={styles.fieldRow}>
-                          <label className={styles.fieldLabel}>
-                            City
-                            <input
-                              value={details.city}
-                              onChange={(event) => setDetails((prev) => ({ ...prev, city: event.target.value }))}
-                              placeholder="City"
-                            />
-                          </label>
-                          <label className={styles.fieldLabel}>
-                            State <span className={styles.fieldRequired}>*</span>
-                            <select
-                              className={!details.state ? styles.fieldInputInvalid : ''}
-                              value={details.state}
-                              onChange={(event) => setDetails((prev) => ({ ...prev, state: event.target.value }))}
-                            >
-                              <option value="">Select state</option>
-                              {US_STATES.map((us) => (
-                                <option key={us.code} value={us.code}>{us.name}</option>
-                              ))}
-                            </select>
-                            {!details.state ? <small className={styles.fieldErrorText}>State is required.</small> : null}
-                          </label>
-                        </div>
-                      </div>
-                    </article>
-
-                    {/* Publishing */}
-                    <article id="details-visibility" className={styles.detailsCard}>
-                      <div className={styles.detailsCardHead}>
-                        <span className={styles.detailsCardIcon}><Globe size={15} /></span>
-                        <div className={styles.detailsCardHeadText}>
-                          <h3>Publishing</h3>
-                          <p>Control who can view the tournament and its current status.</p>
-                        </div>
-                      </div>
-                      <div className={styles.detailsCardBody}>
-                        <div>
-                          <div className={`${styles.fieldLabel} ${styles.fieldLabelInline}`}>
-                            Visibility <span className={styles.fieldInfoIcon}><Info size={12} /></span>
-                          </div>
-                          <div className={styles.visibilityGroup}>
-                            <button
-                              type="button"
-                              className={`${styles.visibilityOpt} ${details.visibility === 'public' ? styles.visibilityOptActive : ''}`}
-                              onClick={() => setDetails((prev) => ({ ...prev, visibility: 'public' }))}
-                            >
-                              <span className={styles.visibilityOptIcon}><Globe size={15} /></span>
-                              <span className={styles.visibilityOptText}>
-                                <span>Public</span>
-                                <small>Visible to everyone</small>
-                              </span>
-                            </button>
-                            <button
-                              type="button"
-                              className={`${styles.visibilityOpt} ${details.visibility === 'unlisted' ? styles.visibilityOptActive : ''}`}
-                              onClick={() => setDetails((prev) => ({ ...prev, visibility: 'unlisted' }))}
-                            >
-                              <span className={styles.visibilityOptIcon}><Link2 size={15} /></span>
-                              <span className={styles.visibilityOptText}>
-                                <span>Unlisted</span>
-                                <small>Anyone with link</small>
-                              </span>
-                            </button>
-                            <button
-                              type="button"
-                              className={`${styles.visibilityOpt} ${details.visibility === 'private' ? styles.visibilityOptActive : ''}`}
-                              onClick={() => setDetails((prev) => ({ ...prev, visibility: 'private' }))}
-                            >
-                              <span className={styles.visibilityOptIcon}><Lock size={15} /></span>
-                              <span className={styles.visibilityOptText}>
-                                <span>Private</span>
-                                <small>Invite only</small>
-                              </span>
-                            </button>
-                          </div>
-                        </div>
-                        <label className={styles.fieldLabel}>
-                          Tournament Status
-                          <select
-                            value={details.tournamentStatus}
-                            onChange={(event) => setDetails((prev) => ({ ...prev, tournamentStatus: event.target.value }))}
-                          >
-                            <option value="draft">Draft</option>
-                            <option value="active">Active</option>
-                            <option value="registration-open">Registration Open</option>
-                            <option value="in-progress">In Progress</option>
-                            <option value="completed">Completed</option>
-                            <option value="cancelled">Cancelled</option>
-                          </select>
-                        </label>
-                        <div className={styles.detailsStatusRecommendation}>
-                          <div>
-                            <strong>Recommended status: {recommendedTournamentStatus.value}</strong>
-                            <p>{recommendedTournamentStatus.reason}</p>
-                          </div>
-                          <button
-                            type="button"
-                            className={styles.inlineAction}
-                            onClick={() => setDetails((prev) => ({ ...prev, tournamentStatus: recommendedTournamentStatus.value }))}
-                            disabled={details.tournamentStatus === recommendedTournamentStatus.value}
-                          >
-                            Use Recommended Status
-                          </button>
-                        </div>
-                        <p className={styles.detailNote}>You can change the status at any time.</p>
-                      </div>
-                    </article>
-
-                    {/* Support Contact – full width */}
-                    <article id="details-support" className={`${styles.detailsCard} ${styles.detailsCardSpan}`}>
-                      <div className={styles.detailsCardHead}>
-                        <span className={styles.detailsCardIcon}><Headphones size={15} /></span>
-                        <div className={styles.detailsCardHeadText}>
-                          <h3>Support Contact</h3>
-                          <p>Contact information shown to bowlers who need tournament assistance.</p>
-                        </div>
-                      </div>
-                      <div className={styles.detailsCardBody}>
-                        <div className={styles.fieldRow}>
-                          <label className={styles.fieldLabel}>
-                            Support Email <span className={styles.fieldRequired}>*</span>
-                            <input
-                              type="email"
-                              className={!supportEmailLooksValid ? styles.fieldInputInvalid : ''}
-                              value={details.supportEmail}
-                              onChange={(event) => setDetails((prev) => ({ ...prev, supportEmail: event.target.value }))}
-                              placeholder="contact@example.com"
-                            />
-                            {!supportEmailLooksValid ? <small className={styles.fieldErrorText}>Enter a valid support email.</small> : null}
-                          </label>
-                          <label className={styles.fieldLabel}>
-                            Support Phone (optional)
-                            <input
-                              type="tel"
-                              value={details.supportPhone}
-                              onChange={(event) => setDetails((prev) => ({ ...prev, supportPhone: event.target.value }))}
-                              placeholder="(000) 000-0000"
-                            />
-                          </label>
-                        </div>
-                        <p className={styles.detailNote}>This contact information will be displayed on the public tournament page.</p>
-                      </div>
-                    </article>
-
-                  </div>
-                </div>
-
-                <aside className={styles.detailsSummaryRail}>
-                  <section className={styles.detailsSummaryCard} aria-label="Live tournament details summary">
-                    <div className={styles.detailsSummaryHead}>
-                      <h3>Live Summary</h3>
-                      <span>{statusBySection['tournament-details'] === 'complete' ? 'Ready' : 'In Progress'}</span>
-                    </div>
-                    <dl className={styles.detailsSummaryList}>
-                      <div>
-                        <dt>Name</dt>
-                        <dd>{details.name.trim() || 'Untitled Tournament'}</dd>
-                      </div>
-                      <div>
-                        <dt>Visibility</dt>
-                        <dd>{details.visibility.charAt(0).toUpperCase() + details.visibility.slice(1)}</dd>
-                      </div>
-                      <div>
-                        <dt>Tournament Dates</dt>
-                        <dd>{`${formatDateShort(details.startDateIso)} - ${formatDateShort(details.endDateIso)}`}</dd>
-                      </div>
-                      <div>
-                        <dt>Registration Window</dt>
-                        <dd>{`${formatDateShort(details.registrationOpenIso)} - ${formatDateShort(details.registrationCloseIso)}`}</dd>
-                      </div>
-                      <div>
-                        <dt>Location</dt>
-                        <dd>{[details.bowlingCenter, details.city, details.state].filter((part) => part.trim()).join(', ') || 'Not set'}</dd>
-                      </div>
-                      <div>
-                        <dt>Support</dt>
-                        <dd>{details.supportEmail.trim() || 'Not set'}</dd>
-                      </div>
-                      <div>
-                        <dt>Logo</dt>
-                        <dd>{hasLogoAsset ? 'Uploaded' : 'Not uploaded'}</dd>
-                      </div>
-                    </dl>
-                    <p className={styles.detailsSummaryVisibility}>{visibilitySummary}</p>
-
-                    {timelineWarnings.length > 0 ? (
-                      <div className={styles.detailsTimelineWarnings}>
-                        <strong>Timeline checks</strong>
-                        <ul>
-                          {timelineWarnings.map((warning) => (
-                            <li key={warning}>{warning}</li>
-                          ))}
-                        </ul>
-                        <div className={styles.detailsSummaryActions}>
-                          {tournamentDateOrderInvalid ? (
-                            <button
-                              type="button"
-                              className={styles.inlineAction}
-                              onClick={() => setDetails((prev) => ({ ...prev, endDateIso: prev.startDateIso }))}
-                            >
-                              Set end date to start date
-                            </button>
-                          ) : null}
-                          {registrationDateOrderInvalid ? (
-                            <button
-                              type="button"
-                              className={styles.inlineAction}
-                              onClick={() => setDetails((prev) => ({ ...prev, registrationCloseIso: prev.registrationOpenIso }))}
-                            >
-                              Set close date to open date
-                            </button>
-                          ) : null}
-                          {!registrationDateOrderInvalid && registrationAfterStartWarning ? (
-                            <button
-                              type="button"
-                              className={styles.inlineAction}
-                              onClick={() => setDetails((prev) => ({ ...prev, registrationCloseIso: prev.startDateIso }))}
-                            >
-                              Align close with start date
-                            </button>
-                          ) : null}
-                        </div>
-                      </div>
-                    ) : null}
-                  </section>
-                </aside>
-              </div>
-                </section>
-              )}
+            <TournamentDetailsSection
+              details={details}
+              setDetails={setDetails}
+              statusBySection={statusBySection}
+              supportEmailLooksValid={supportEmailLooksValid}
+              recommendedTournamentStatus={recommendedTournamentStatus}
+              hasLogoAsset={hasLogoAsset}
+              logoAssetName={logoAssetName}
+              logoAssetMeta={logoAssetMeta}
+              logoPreviewUrl={logoPreviewUrl}
+              isLogoDragActive={isLogoDragActive}
+              logoUploadError={logoUploadError}
+              pendingLogoFile={pendingLogoFile}
+              tournamentDateOrderInvalid={tournamentDateOrderInvalid}
+              registrationDateOrderInvalid={registrationDateOrderInvalid}
+              registrationAfterStartWarning={registrationAfterStartWarning}
+              visibilitySummary={visibilitySummary}
+              timelineWarnings={timelineWarningEntries}
+              warningActions={timelineWarningActions}
+              showValidationWarnings={timelineWarnings.length > 0}
+              usStates={US_STATES}
+              timezones={TIMEZONES}
+              logoInputRef={logoInputRef}
+              handleLogoInputChange={handleLogoInputChange}
+              handleLogoDrop={handleLogoDrop}
+              clearLogo={clearLogo}
+              setIsLogoDragActive={setIsLogoDragActive}
+              shiftIsoDate={shiftIsoDate}
+            />
+          )}
               {activeSection === 'events-divisions' && (
                 <section className={styles.sectionCard}>
                   <div className={styles.sectionHeader}>

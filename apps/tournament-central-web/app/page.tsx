@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent } from 'react';
-import { CalendarDays, ChevronRight, MapPin, Menu } from 'lucide-react';
+import { CalendarDays, ChevronRight, MapPin, Menu, Plus } from 'lucide-react';
 import { ComposableMap, Geographies, Geography, ZoomableGroup } from 'react-simple-maps';
 import type { PublicTournamentDirectoryItem, PublicTournamentDirectoryResponse } from '@bracketworks/types';
 import TournamentRegistrationForm from '@/components/public/TournamentRegistrationForm';
@@ -171,9 +171,13 @@ const STATE_FIPS_TO_CODE: Record<string, string> = {
 };
 
 const USA_STATES_GEO_URL = '/us-states-10m.json';
+const MAP_TEXTURE_IMAGE_URL = '/textures/tournament-central-map-slate.webp?v=2026-08-12-1';
 const DEFAULT_MAP_VIEWPORT: MapViewport = { center: [-96, 38], zoom: 1 };
+const HEARTBEAT_INTERVAL_MS = 15000;
+const HEARTBEAT_STALE_AFTER_MS = 60000;
 const MIN_MAP_ZOOM = 1;
-const MAX_MAP_ZOOM = 6;
+const MAX_MAP_ZOOM = 3.5;
+const MAP_PAN_PADDING = 52;
 
 const tabOrder: StateTab[] = ['UPCOMING', 'IN PROGRESS', 'PAST RESULTS'];
 
@@ -248,26 +252,8 @@ function getStateToneFromSummary(summary: StateSummary | undefined): MapStateTon
   return 'none';
 }
 
-function getToneFill(tone: MapStateTone, isSelected: boolean, stateCode: string): string {
-  if (isSelected) {
-    return 'var(--color-primary)';
-  }
-
-  const variant = stateCode.charCodeAt(0) + stateCode.charCodeAt(1);
-
-  if (tone === 'upcoming') {
-    return TONE_UPCOMING_SHADES[variant % TONE_UPCOMING_SHADES.length];
-  }
-
-  if (tone === 'inprogress') {
-    return TONE_IN_PROGRESS_SHADES[variant % TONE_IN_PROGRESS_SHADES.length];
-  }
-
-  if (tone === 'past') {
-    return TONE_PAST_SHADES[variant % TONE_PAST_SHADES.length];
-  }
-
-  return TONE_NEUTRAL_SHADES[variant % TONE_NEUTRAL_SHADES.length];
+function getToneFill(_tone: MapStateTone, _isSelected: boolean, _stateCode: string): string {
+  return 'url(#tc-state-texture)';
 }
 
 function parseLocation(location: string | null): { venue: string; city: string; stateCode: string } {
@@ -443,11 +429,20 @@ function clampZoom(zoom: number): number {
   return Math.max(MIN_MAP_ZOOM, Math.min(MAX_MAP_ZOOM, zoom));
 }
 
+function getMapTranslateExtent(viewportWidth: number, viewportHeight: number): [[number, number], [number, number]] {
+  const minX = -Math.max(viewportWidth * 0.8, MAP_PAN_PADDING);
+  const minY = -Math.max(viewportHeight * 0.8, MAP_PAN_PADDING);
+  const maxX = Math.max(viewportWidth * 1.8, viewportWidth + MAP_PAN_PADDING);
+  const maxY = Math.max(viewportHeight * 1.8, viewportHeight + MAP_PAN_PADDING);
+
+  return [[minX, minY], [maxX, maxY]];
+}
+
 export default function HomePage() {
   const router = useRouter();
   const [allTournaments, setAllTournaments] = useState<Tournament[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const [heartbeatState, setHeartbeatState] = useState<'live' | 'stale' | 'checking'>('live');
   const [selectedStateCode, setSelectedStateCode] = useState('ID');
   const [panelStateCode, setPanelStateCode] = useState('ID');
   const [selectedTab, setSelectedTab] = useState<StateTab>('UPCOMING');
@@ -455,6 +450,7 @@ export default function HomePage() {
   const [mapViewport, setMapViewport] = useState<MapViewport>(DEFAULT_MAP_VIEWPORT);
   const [isMapInteracting, setIsMapInteracting] = useState(false);
   const [visibleTournamentCount, setVisibleTournamentCount] = useState(TOURNAMENT_PAGE_SIZE);
+  const [mapSize, setMapSize] = useState({ width: 960, height: 520 });
   const [detailTournamentId, setDetailTournamentId] = useState<string | null>(null);
   const [registrationTournamentId, setRegistrationTournamentId] = useState<string | null>(null);
   const [registrationConfig, setRegistrationConfig] = useState<PublicTcRegistrationConfigResponse | null>(null);
@@ -467,6 +463,37 @@ export default function HomePage() {
   const mapShellRef = useRef<HTMLDivElement | null>(null);
   const hasUserSelectedStateRef = useRef(false);
   const detailModalRef = useRef<HTMLElement | null>(null);
+  const lastSuccessfulHeartbeatRef = useRef(Date.now());
+
+  useEffect(() => {
+    if (!mapShellRef.current) {
+      return;
+    }
+
+    const updateMapSize = () => {
+      const rect = mapShellRef.current?.getBoundingClientRect();
+      if (!rect) {
+        return;
+      }
+
+      setMapSize({
+        width: rect.width || 960,
+        height: rect.height || 520,
+      });
+    };
+
+    updateMapSize();
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateMapSize();
+    });
+
+    resizeObserver.observe(mapShellRef.current);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
   const registrationModalRef = useRef<HTMLElement | null>(null);
   const lastTriggerRef = useRef<HTMLElement | null>(null);
 
@@ -499,7 +526,7 @@ export default function HomePage() {
 
   const loadDirectory = useCallback(async () => {
     setIsLoading(true);
-    setLoadError(null);
+    setHeartbeatState('checking');
 
     try {
       const response = await fetch(`/api/v1/public/tournaments?limit=300&ts=${Date.now()}`, {
@@ -507,7 +534,7 @@ export default function HomePage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to load tournaments.');
+        throw new Error('Unable to load tournament directory.');
       }
 
       const payload = await response.json() as PublicTournamentDirectoryResponse;
@@ -552,8 +579,10 @@ export default function HomePage() {
       });
 
       setAllTournaments(normalized);
-    } catch (error) {
-      setLoadError(error instanceof Error ? error.message : 'Failed to load tournaments.');
+      lastSuccessfulHeartbeatRef.current = Date.now();
+      setHeartbeatState('live');
+    } catch {
+      setHeartbeatState('stale');
     } finally {
       setIsLoading(false);
     }
@@ -563,14 +592,31 @@ export default function HomePage() {
     void loadDirectory();
 
     const intervalId = window.setInterval(() => {
-      void loadDirectory();
-    }, 30000);
+      const elapsedMs = Date.now() - lastSuccessfulHeartbeatRef.current;
+      if (document.visibilityState !== 'visible') {
+        setHeartbeatState('stale');
+        return;
+      }
+
+      if (elapsedMs >= HEARTBEAT_STALE_AFTER_MS) {
+        setHeartbeatState('checking');
+        void loadDirectory();
+        return;
+      }
+
+      setHeartbeatState('live');
+    }, HEARTBEAT_INTERVAL_MS);
 
     const handleFocus = () => {
       if (typeof document !== 'undefined' && document.visibilityState !== 'visible') {
         return;
       }
-      void loadDirectory();
+
+      const elapsedMs = Date.now() - lastSuccessfulHeartbeatRef.current;
+      if (elapsedMs >= HEARTBEAT_STALE_AFTER_MS) {
+        setHeartbeatState('checking');
+        void loadDirectory();
+      }
     };
 
     window.addEventListener('focus', handleFocus);
@@ -1215,11 +1261,19 @@ export default function HomePage() {
     setSelectedStateCode(stateCode);
   };
 
+  const mapTranslateExtent = useMemo(
+    () => getMapTranslateExtent(mapSize.width, mapSize.height),
+    [mapSize.height, mapSize.width],
+  );
+
   const handleZoomChange = (delta: number) => {
-    setMapViewport((prev) => ({
-      ...prev,
-      zoom: clampZoom(prev.zoom + delta),
-    }));
+    setMapViewport((prev) => {
+      const nextZoom = clampZoom(prev.zoom + delta);
+      if (nextZoom <= MIN_MAP_ZOOM + 0.0001) {
+        return DEFAULT_MAP_VIEWPORT;
+      }
+      return { ...prev, zoom: nextZoom };
+    });
   };
 
   const handleZoomReset = () => {
@@ -1296,18 +1350,38 @@ export default function HomePage() {
             </div>
             <p className={styles.mapHint}>Tip: Select a state, then use zoom controls, wheel, or pinch to inspect smaller states.</p>
             <ComposableMap projection="geoAlbersUsa" className={styles.usMapSvg}>
+              <defs>
+                {/* One shared raster texture is intentionally reused across all states for continuity and performance. */}
+                <pattern id="tc-state-texture" patternUnits="userSpaceOnUse" width="1200" height="1200">
+                  <image
+                    href={MAP_TEXTURE_IMAGE_URL}
+                    width="1200"
+                    height="1200"
+                    opacity="0.76"
+                    preserveAspectRatio="xMidYMid slice"
+                  />
+                </pattern>
+              </defs>
               <ZoomableGroup
                 center={mapViewport.center}
                 zoom={mapViewport.zoom}
                 minZoom={MIN_MAP_ZOOM}
                 maxZoom={MAX_MAP_ZOOM}
+                translateExtent={mapTranslateExtent}
                 onMoveStart={() => {
                   setIsMapInteracting(true);
                 }}
                 onMoveEnd={({ coordinates, zoom }) => {
+                  const nextZoom = clampZoom(zoom);
+                  if (nextZoom <= MIN_MAP_ZOOM + 0.0001) {
+                    setMapViewport(DEFAULT_MAP_VIEWPORT);
+                    setIsMapInteracting(false);
+                    return;
+                  }
+
                   setMapViewport({
                     center: [coordinates[0], coordinates[1]],
-                    zoom: clampZoom(zoom),
+                    zoom: nextZoom,
                   });
                   setIsMapInteracting(false);
                 }}
@@ -1364,6 +1438,10 @@ export default function HomePage() {
                   <p>{selectedStateSubtitle}</p>
                 </div>
               </div>
+              <span className={`${styles.heartbeatBadge} ${heartbeatState === 'stale' ? styles.heartbeatBadgeStale : ''}`} aria-live="polite">
+                <span className={styles.heartbeatDot} aria-hidden="true" />
+                {heartbeatState === 'checking' ? 'Syncing' : heartbeatState === 'stale' ? 'Waiting' : 'Live'}
+              </span>
             </div>
 
             <div className={styles.tabs}>
@@ -1383,7 +1461,6 @@ export default function HomePage() {
             </div>
 
             {isLoading && <p className={styles.panelMessage}>Loading tournaments...</p>}
-            {loadError && <p className={styles.errorMessage}>{loadError}</p>}
 
             <div className={styles.cardList}>
               {renderedTournaments.map((tournament) => (
@@ -1446,39 +1523,56 @@ export default function HomePage() {
               )}
               {!isLoading && visibleTournaments.length === 0 && (
                 <div className={styles.emptyState}>
+                  <div className={styles.emptyStateIcon} aria-hidden="true">
+                    <CalendarDays size={27} />
+                  </div>
                   <h4>{showAllStatuses ? 'No tournaments yet' : `No ${statusLabel[selectedTab].toLowerCase()} tournaments yet`}</h4>
                   <p>
                     {!showAllStatuses && nextAvailableTab
                       ? `Try ${statusLabel[nextAvailableTab]} for ${selectedState?.stateName ?? 'this state'}.`
-                      : 'Try another state on the map to find active events.'}
+                      : 'There aren\'t any events listed yet.'}
                   </p>
-                  {!showAllStatuses && nextAvailableTab && (
-                    <button
-                      type="button"
-                      className={styles.emptyStateAction}
-                      onClick={() => {
-                        setSelectedTab(nextAvailableTab);
-                      }}
-                    >
-                      View {statusLabel[nextAvailableTab]}
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    className={styles.emptyStatePrimaryAction}
+                    onClick={() => {
+                      if (showAllStatuses) {
+                        return;
+                      }
+                      setShowAllStatuses(true);
+                    }}
+                  >
+                    <CalendarDays size={18} />
+                    Browse All Tournaments
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.emptyStateSecondaryAction}
+                    onClick={() => {
+                      setShowAllStatuses(true);
+                    }}
+                  >
+                    <Plus size={18} />
+                    {`List a Tournament in ${selectedState?.stateName ?? 'This State'}`}
+                  </button>
                 </div>
               )}
             </div>
 
-            <button
-              type="button"
-              className={styles.panelFooter}
-              disabled={!selectedState}
-              onClick={() => {
-                setShowAllStatuses(true);
-              }}
-            >
-              {showAllStatuses
-                ? `Showing All ${selectedState?.stateName ?? 'State'} Tournaments`
-                : `View All ${selectedState?.stateName ?? 'State'} Tournaments`}
-            </button>
+            {!isLoading && visibleTournaments.length > 0 && (
+              <button
+                type="button"
+                className={styles.panelFooter}
+                disabled={!selectedState}
+                onClick={() => {
+                  setShowAllStatuses(true);
+                }}
+              >
+                {showAllStatuses
+                  ? `Showing All ${selectedState?.stateName ?? 'State'} Tournaments`
+                  : `View All ${selectedState?.stateName ?? 'State'} Tournaments`}
+              </button>
+            )}
 
             {detailTournament && (
               <div className={styles.detailsModalBackdrop} onClick={closeDetailModal}>
