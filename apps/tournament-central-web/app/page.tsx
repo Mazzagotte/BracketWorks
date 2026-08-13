@@ -474,15 +474,11 @@ export default function HomePage() {
   const mapShellRef = useRef<HTMLDivElement | null>(null);
   const hasUserSelectedStateRef = useRef(false);
   const detailModalRef = useRef<HTMLElement | null>(null);
-<<<<<<< HEAD
-  const lastSuccessfulHeartbeatRef = useRef<number>(0);
-=======
   const lastSuccessfulHeartbeatRef = useRef(0);
 
   useEffect(() => {
     lastSuccessfulHeartbeatRef.current = Date.now();
   }, []);
->>>>>>> 067ce2d59d13e50352d4b801a1905116f926d3b8
 
   useEffect(() => {
     if (!mapShellRef.current) {
