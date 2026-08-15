@@ -2,6 +2,7 @@
 
 import type { Dispatch, SetStateAction } from 'react';
 import { CalendarDays, Info, MapPin, Trophy, X } from 'lucide-react';
+import { capitalizeFirstLetter } from '@bracketworks/ui';
 
 import styles from '../../app/page.module.css';
 
@@ -98,6 +99,16 @@ function isWideRegistrationField(field: RegistrationFieldConfigLike): boolean {
     || key.includes('usbc')
     || key.includes('address')
     || key.includes('zip')
+    || key.includes('city')
+    || key.includes('state');
+}
+
+function isNameOrLocationField(field: RegistrationFieldConfigLike): boolean {
+  const key = normalizeRegistrationFieldKey(field.key);
+  return key.includes('name')
+    || key.includes('organization')
+    || key.includes('venue')
+    || key.includes('address')
     || key.includes('city')
     || key.includes('state');
 }
@@ -217,6 +228,7 @@ export default function TournamentRegistrationForm({
                   const label = field.customLabel || field.label || 'Field';
                   const required = field.mode === 'required';
                   const inputType = getRegistrationFieldInputType(field);
+                  const shouldCapitalize = isNameOrLocationField(field);
 
                   return (
                     <label key={`${field.id}-${bowlerIndex}`} className={isWideRegistrationField(field) ? styles.registrationFieldWide : undefined}>
@@ -224,13 +236,14 @@ export default function TournamentRegistrationForm({
                       <input
                         type={inputType}
                         value={bowlerFields[key] || ''}
+                        autoCapitalize={shouldCapitalize ? 'words' : 'off'}
                         required={required}
                         onChange={(event) => setFormState((prev) => {
                           const nextBowlers = prev.bowlers.map((entry, index) => (
                             index === bowlerIndex
                               ? {
                                   ...entry,
-                                  [key]: event.target.value,
+                                  [key]: shouldCapitalize ? capitalizeFirstLetter(event.target.value) : event.target.value,
                                 }
                               : entry
                           ));

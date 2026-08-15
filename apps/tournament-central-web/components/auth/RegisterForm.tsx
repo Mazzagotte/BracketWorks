@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { FormEvent, useMemo, useState } from 'react';
+import { capitalizeFirstLetter } from '@bracketworks/ui';
 
 import AuthShell from './AuthShell';
 import styles from './RegisterForm.module.css';
@@ -48,7 +49,10 @@ export default function RegisterForm() {
   }, [values.password]);
 
   const updateField = (field: keyof RegisterValues, value: string) => {
-    setValues((prev) => ({ ...prev, [field]: value }));
+    const normalizedValue = field === 'firstName' || field === 'lastName' || field === 'organization'
+      ? capitalizeFirstLetter(value)
+      : value;
+    setValues((prev) => ({ ...prev, [field]: normalizedValue }));
     if (error) {
       setError('');
     }

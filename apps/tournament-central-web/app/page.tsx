@@ -3,9 +3,9 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import type { KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent } from 'react';
-import { CalendarCheck2, CalendarDays, ChevronRight, Clock3, Info, Link2, MapPin, Menu, Plus, ShieldCheck, UsersRound, X } from 'lucide-react';
+import { CalendarCheck2, CalendarDays, ChevronRight, Clock3, Info, Link2, LocateFixed, MapPin, Menu, Plus, Search, ShieldCheck, UsersRound, X } from 'lucide-react';
 import { ComposableMap, Geographies, Geography, ZoomableGroup } from 'react-simple-maps';
 import type { PublicTournamentDirectoryItem, PublicTournamentDirectoryResponse } from '@bracketworks/types';
 import TournamentRegistrationForm from '@/components/public/TournamentRegistrationForm';
@@ -27,6 +27,7 @@ function Brand() {
 
 type TournamentStatus = 'UPCOMING' | 'IN PROGRESS' | 'PAST RESULTS';
 type StateTab = 'UPCOMING' | 'IN PROGRESS' | 'PAST RESULTS';
+type DiscoveryFilter = 'upcoming' | 'weekend' | 'near' | 'in-progress' | 'past';
 
 type Tournament = {
   id: string;
@@ -186,46 +187,6 @@ const statusLabel: Record<TournamentStatus, string> = {
   'IN PROGRESS': 'In Progress',
   'PAST RESULTS': 'Past Results',
 };
-
-const BRAND_FEATURED_CARD = {
-  id: 'bracketworks-brand',
-  title: 'BracketWorks + Tournament Central',
-  dateLabel: 'One workflow for directors and players',
-  venue: 'Manage brackets, scores, standings, payouts, and registrations from one tournament hub.',
-  city: '',
-  slotText: 'Explore BracketWorks →',
-  tone: 'tone-brand',
-  isBrandCard: true,
-} as const;
-
-const TONE_UPCOMING_SHADES = [
-  'color-mix(in srgb, var(--color-primary) 46%, var(--bw-surface-card-strong) 54%)',
-  'color-mix(in srgb, var(--color-primary) 52%, var(--bw-surface-card-strong) 48%)',
-  'color-mix(in srgb, var(--color-primary) 56%, var(--bw-surface-card-strong) 44%)',
-  'color-mix(in srgb, var(--color-primary) 60%, var(--bw-surface-card-strong) 40%)',
-];
-
-const TONE_IN_PROGRESS_SHADES = [
-  'color-mix(in srgb, var(--color-primary) 64%, var(--bw-surface-card) 36%)',
-  'color-mix(in srgb, var(--color-primary) 70%, var(--bw-surface-card) 30%)',
-  'color-mix(in srgb, var(--color-primary) 76%, var(--bw-surface-card) 24%)',
-  'color-mix(in srgb, var(--color-primary) 82%, var(--bw-surface-card) 18%)',
-];
-
-const TONE_PAST_SHADES = [
-  'color-mix(in srgb, var(--color-primary) 32%, var(--bw-surface-panel-strong) 68%)',
-  'color-mix(in srgb, var(--color-primary) 36%, var(--bw-surface-panel-strong) 64%)',
-  'color-mix(in srgb, var(--color-primary) 40%, var(--bw-surface-panel-strong) 60%)',
-  'color-mix(in srgb, var(--color-primary) 44%, var(--bw-surface-panel-strong) 56%)',
-];
-
-const TONE_NEUTRAL_SHADES = [
-  'var(--bw-border-subtle)',
-  'var(--bw-border-card)',
-  'var(--bw-surface-card)',
-  'var(--bw-surface-card-strong)',
-  'var(--bw-surface-panel-strong)',
-];
 
 const mapGeographyStyle = {
   default: { outline: 'none' },
@@ -436,6 +397,20 @@ function getTournamentStatus(startDate: Date | null, endDate: Date | null): Tour
   return 'PAST RESULTS';
 }
 
+function isTournamentThisWeekend(tournament: Tournament): boolean {
+  const today = new Date();
+  const daysUntilSaturday = (6 - today.getDay() + 7) % 7;
+  const weekendStart = new Date(today);
+  weekendStart.setHours(0, 0, 0, 0);
+  weekendStart.setDate(today.getDate() + daysUntilSaturday);
+  const weekendEnd = new Date(weekendStart);
+  weekendEnd.setDate(weekendStart.getDate() + 2);
+
+  const start = tournament.startDate ?? tournament.endDate;
+  const end = tournament.endDate ?? tournament.startDate;
+  return Boolean(start && end && start < weekendEnd && end >= weekendStart);
+}
+
 function clampZoom(zoom: number): number {
   return Math.max(MIN_MAP_ZOOM, Math.min(MAX_MAP_ZOOM, zoom));
 }
@@ -457,6 +432,9 @@ export default function HomePage() {
   const [selectedStateCode, setSelectedStateCode] = useState('ID');
   const [panelStateCode, setPanelStateCode] = useState('ID');
   const [selectedTab, setSelectedTab] = useState<StateTab>('UPCOMING');
+  const [searchQuery, setSearchQuery] = useState('');
+  const deferredSearchQuery = useDeferredValue(searchQuery);
+  const [discoveryFilter, setDiscoveryFilter] = useState<DiscoveryFilter>('upcoming');
   const [selectedStateOutline, setSelectedStateOutline] = useState<{ d: string; viewBox: string } | null>(null);
   const [mapViewport, setMapViewport] = useState<MapViewport>(DEFAULT_MAP_VIEWPORT);
   const [isMapInteracting, setIsMapInteracting] = useState(false);
@@ -765,15 +743,39 @@ export default function HomePage() {
   );
 
   const visibleTournaments = useMemo(() => {
-    const tournaments = selectedState?.tournaments ?? [];
-    if (showAllStatuses) {
+    const tournaments = deferredSearchQuery.trim() ? allTournaments : (selectedState?.tournaments ?? []);
+    const normalizedQuery = deferredSearchQuery.trim().toLowerCase();
+    const matchesSearch = (tournament: Tournament) => !normalizedQuery
+      || tournament.name.toLowerCase().includes(normalizedQuery)
+      || tournament.venue.toLowerCase().includes(normalizedQuery)
+      || tournament.city.toLowerCase().includes(normalizedQuery)
+      || tournament.stateLabel.toLowerCase().includes(normalizedQuery)
+      || tournament.stateCode.toLowerCase().includes(normalizedQuery);
+    const matchesDiscoveryFilter = (tournament: Tournament) => {
+      if (discoveryFilter === 'weekend') {
+        return isTournamentThisWeekend(tournament);
+      }
+      if (discoveryFilter === 'near') {
+        return tournament.stateCode === selectedState?.stateCode;
+      }
+      if (discoveryFilter === 'in-progress') {
+        return tournament.status === 'IN PROGRESS';
+      }
+      if (discoveryFilter === 'past') {
+        return tournament.status === 'PAST RESULTS';
+      }
+      return tournament.status === 'UPCOMING';
+    };
+    const filteredTournaments = tournaments.filter((tournament) => matchesSearch(tournament) && matchesDiscoveryFilter(tournament));
+
+    if (showAllStatuses || discoveryFilter === 'weekend' || discoveryFilter === 'near') {
       const statusRank: Record<TournamentStatus, number> = {
         'IN PROGRESS': 0,
         UPCOMING: 1,
         'PAST RESULTS': 2,
       };
 
-      return [...tournaments].sort((a, b) => {
+      return [...filteredTournaments].sort((a, b) => {
         const rankDiff = statusRank[a.status] - statusRank[b.status];
         if (rankDiff !== 0) {
           return rankDiff;
@@ -785,12 +787,12 @@ export default function HomePage() {
       });
     }
 
-    return tournaments.filter((tournament) => tournament.status === selectedTab);
-  }, [selectedState, selectedTab, showAllStatuses]);
+    return filteredTournaments.filter((tournament) => tournament.status === selectedTab);
+  }, [allTournaments, deferredSearchQuery, discoveryFilter, selectedState, selectedTab, showAllStatuses]);
 
   useEffect(() => {
     setVisibleTournamentCount(TOURNAMENT_PAGE_SIZE);
-  }, [panelStateCode, selectedTab, showAllStatuses]);
+  }, [deferredSearchQuery, discoveryFilter, panelStateCode, selectedTab, showAllStatuses]);
 
   const renderedTournaments = useMemo(
     () => visibleTournaments.slice(0, visibleTournamentCount),
@@ -1341,6 +1343,57 @@ export default function HomePage() {
       </header>
 
       <section id="tournament-directory" className={`${styles.section} ${styles.explore}`}>
+        <div className={styles.discoveryHeader}>
+          <div className={styles.discoveryIntro}>
+            <h1>Find a Tournament</h1>
+            <p>Search by tournament, bowling center, city, or state.</p>
+          </div>
+          <label className={styles.discoverySearch}>
+            <Search size={18} aria-hidden="true" />
+            <span className={styles.srOnly}>Search tournaments, bowling centers, cities, or states</span>
+            <input
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Search tournaments, bowling centers, cities, or states..."
+              type="search"
+            />
+            {searchQuery ? (
+              <button
+                type="button"
+                className={styles.discoverySearchClear}
+                aria-label="Clear tournament search"
+                onClick={() => setSearchQuery('')}
+              >
+                ×
+              </button>
+            ) : null}
+          </label>
+          <div className={styles.discoveryFilters} role="toolbar" aria-label="Tournament discovery filters">
+            {([
+              ['upcoming', 'Upcoming'],
+              ['weekend', 'This Weekend'],
+              ['near', 'Near Me'],
+              ['in-progress', 'In Progress'],
+              ['past', 'Past Results'],
+            ] as const).map(([filter, label]) => (
+              <button
+                key={filter}
+                type="button"
+                className={discoveryFilter === filter ? styles.discoveryFilterActive : ''}
+                onClick={() => {
+                  setDiscoveryFilter(filter);
+                  setShowAllStatuses(filter === 'near' || filter === 'weekend');
+                  if (filter === 'upcoming') setSelectedTab('UPCOMING');
+                  if (filter === 'in-progress') setSelectedTab('IN PROGRESS');
+                  if (filter === 'past') setSelectedTab('PAST RESULTS');
+                }}
+              >
+                {filter === 'near' ? <LocateFixed size={15} aria-hidden="true" /> : null}
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
         <div className={styles.layoutGrid}>
           <div
             ref={mapShellRef}
@@ -1467,23 +1520,20 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className={styles.tabs}>
+            <div className={styles.stateStatusSummary} aria-label="Tournament counts for selected state">
               {tabOrder.map((tab) => (
-                <button
-                  key={tab}
-                  type="button"
-                  className={selectedTab === tab ? styles.tabActive : ''}
-                  onClick={() => {
-                    setShowAllStatuses(false);
-                    setSelectedTab(tab);
-                  }}
-                >
-                  {statusLabel[tab]} <span>{tabCounts[tab]}</span>
-                </button>
+                <div key={tab} className={styles.stateStatusItem}>
+                  <span>{statusLabel[tab]}</span>
+                  <strong>{tabCounts[tab]}</strong>
+                </div>
               ))}
             </div>
 
-            {isLoading && <p className={styles.panelMessage}>Loading tournaments...</p>}
+            {isLoading && (
+              <div className={styles.resultsSkeletonList} aria-label="Loading tournaments" role="status">
+                {[1, 2, 3].map((item) => <div key={item} className={styles.resultsSkeleton} />)}
+              </div>
+            )}
 
             <div className={styles.cardList}>
               {renderedTournaments.map((tournament) => (
@@ -1530,6 +1580,18 @@ export default function HomePage() {
                       View Details
                       <ChevronRight size={20} aria-hidden="true" />
                     </button>
+                    {tournament.registrationUrl ? (
+                      <button
+                        type="button"
+                        className={styles.cardRegisterButton}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          openRegistrationModal(tournament, event.currentTarget);
+                        }}
+                      >
+                        Register
+                      </button>
+                    ) : null}
                   </div>
                 </article>
               ))}
@@ -1549,15 +1611,27 @@ export default function HomePage() {
                   <div className={styles.emptyStateIcon} aria-hidden="true">
                     <CalendarDays size={27} />
                   </div>
-                  <h4>{showAllStatuses ? 'No tournaments yet' : `No ${statusLabel[selectedTab].toLowerCase()} tournaments yet`}</h4>
+                  <h4>{searchQuery.trim() ? 'No matching tournaments' : showAllStatuses ? 'No tournaments yet' : `No ${statusLabel[selectedTab].toLowerCase()} tournaments yet`}</h4>
                   <p>
-                    {!showAllStatuses && nextAvailableTab
+                    {searchQuery.trim()
+                      ? 'Try a different search or clear the current filters.'
+                      : !showAllStatuses && nextAvailableTab
                       ? `Try ${statusLabel[nextAvailableTab]} for ${selectedState?.stateName ?? 'this state'}.`
                       : 'There aren\'t any events listed yet.'}
                   </p>
+                  {searchQuery.trim() ? (
+                    <button
+                      type="button"
+                      className={styles.emptyStatePrimaryAction}
+                      onClick={() => setSearchQuery('')}
+                    >
+                      <Search size={18} />
+                      Clear Search
+                    </button>
+                  ) : null}
                   <button
                     type="button"
-                    className={styles.emptyStatePrimaryAction}
+                    className={searchQuery.trim() ? styles.emptyStateSecondaryAction : styles.emptyStatePrimaryAction}
                     onClick={() => {
                       if (showAllStatuses) {
                         return;
@@ -1568,7 +1642,7 @@ export default function HomePage() {
                     <CalendarDays size={18} />
                     Browse All Tournaments
                   </button>
-                  <button
+                  {!searchQuery.trim() ? <button
                     type="button"
                     className={styles.emptyStateSecondaryAction}
                     onClick={() => {
@@ -1577,7 +1651,7 @@ export default function HomePage() {
                   >
                     <Plus size={18} />
                     {`List a Tournament in ${selectedState?.stateName ?? 'This State'}`}
-                  </button>
+                  </button> : null}
                 </div>
               )}
             </div>

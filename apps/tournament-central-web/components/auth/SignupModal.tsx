@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useMemo, useState } from 'react';
+import { capitalizeFirstLetter } from '@bracketworks/ui';
 import { X } from 'lucide-react';
 
 import styles from './SignupModal.module.css';
@@ -52,7 +53,10 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
   }, [values.password]);
 
   const updateField = (field: keyof RegisterValues, value: string) => {
-    setValues((prev) => ({ ...prev, [field]: value }));
+    const normalizedValue = field === 'firstName' || field === 'lastName' || field === 'organization'
+      ? capitalizeFirstLetter(value)
+      : value;
+    setValues((prev) => ({ ...prev, [field]: normalizedValue }));
     if (error) setError('');
   };
 

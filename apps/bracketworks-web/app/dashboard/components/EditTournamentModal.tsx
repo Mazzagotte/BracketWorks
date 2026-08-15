@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Calendar, CheckCircle2, Clock3, Plus, Trash2, Trophy } from 'lucide-react';
+import { capitalizeFirstLetter } from '@bracketworks/ui';
 
 import { Tournament, TournamentForm } from '../../lib/types';
 import { getErrorMessage } from '../../lib/error-utils';
@@ -158,7 +159,7 @@ export function EditTournamentModal({
               <FormField label="Tournament Name" required>
                 <Input
                   value={tournamentForm.name}
-                  onChange={changeEvent => setTournamentForm(form => ({ ...form, name: changeEvent.target.value }))}
+                  onChange={changeEvent => setTournamentForm(form => ({ ...form, name: capitalizeFirstLetter(changeEvent.target.value) }))}
                   placeholder="Tournament name"
                   className={mobileStyles.tournamentInput}
                   required
@@ -167,7 +168,7 @@ export function EditTournamentModal({
               <FormField label="Location">
                 <Input
                   value={tournamentForm.location || ''}
-                  onChange={changeEvent => setTournamentForm(form => ({ ...form, location: changeEvent.target.value }))}
+                  onChange={changeEvent => setTournamentForm(form => ({ ...form, location: capitalizeFirstLetter(changeEvent.target.value) }))}
                   placeholder="Bowling center or event location"
                   className={mobileStyles.tournamentInput}
                 />

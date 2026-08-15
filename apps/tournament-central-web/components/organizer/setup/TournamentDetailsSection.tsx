@@ -12,6 +12,7 @@ import {
   Upload,
 } from 'lucide-react';
 import type { ChangeEvent, Dispatch, DragEvent, RefObject, SetStateAction } from 'react';
+import { capitalizeFirstLetter } from '@bracketworks/ui';
 
 import SetupStatusBadge from '../SetupStatusBadge';
 import type { SetupSectionKey, SetupStatus, ValidationIssue } from '../types';
@@ -139,7 +140,7 @@ export default function TournamentDetailsSection({
                   <input
                     className={!details.name.trim() ? styles.fieldInputInvalid : ''}
                     value={details.name}
-                    onChange={(event) => setDetails((prev) => ({ ...prev, name: event.target.value }))}
+                    onChange={(event) => setDetails((prev) => ({ ...prev, name: capitalizeFirstLetter(event.target.value) }))}
                     placeholder="Tournament name"
                   />
                   {!details.name.trim() ? <small className={styles.fieldErrorText}>Tournament name is required.</small> : null}
@@ -148,7 +149,7 @@ export default function TournamentDetailsSection({
                   Subtitle / Short Description
                   <input
                     value={details.subtitle}
-                    onChange={(event) => setDetails((prev) => ({ ...prev, subtitle: event.target.value }))}
+                    onChange={(event) => setDetails((prev) => ({ ...prev, subtitle: capitalizeFirstLetter(event.target.value) }))}
                     placeholder="e.g. USBC Certified • Fall Series"
                   />
                 </label>
@@ -157,7 +158,7 @@ export default function TournamentDetailsSection({
                     Organizer / Organization
                     <input
                       value={details.organizer}
-                      onChange={(event) => setDetails((prev) => ({ ...prev, organizer: event.target.value }))}
+                      onChange={(event) => setDetails((prev) => ({ ...prev, organizer: capitalizeFirstLetter(event.target.value) }))}
                       placeholder="Organization name"
                     />
                   </label>
@@ -407,7 +408,7 @@ export default function TournamentDetailsSection({
                   <input
                     className={!details.bowlingCenter.trim() ? styles.fieldInputInvalid : ''}
                     value={details.bowlingCenter}
-                    onChange={(event) => setDetails((prev) => ({ ...prev, bowlingCenter: event.target.value }))}
+                    onChange={(event) => setDetails((prev) => ({ ...prev, bowlingCenter: capitalizeFirstLetter(event.target.value) }))}
                     placeholder="Enter bowling center name"
                   />
                   {!details.bowlingCenter.trim() ? <small className={styles.fieldErrorText}>Bowling center is required.</small> : null}
@@ -417,7 +418,7 @@ export default function TournamentDetailsSection({
                     City
                     <input
                       value={details.city}
-                      onChange={(event) => setDetails((prev) => ({ ...prev, city: event.target.value }))}
+                      onChange={(event) => setDetails((prev) => ({ ...prev, city: capitalizeFirstLetter(event.target.value) }))}
                       placeholder="City"
                     />
                   </label>

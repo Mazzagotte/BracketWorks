@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { capitalizeFirstLetter } from "@bracketworks/ui";
 import { useRouter } from "next/navigation";
 import { ClipboardList, History, Info, Plus } from "lucide-react";
 
@@ -1361,11 +1362,11 @@ export default function AdminPage() {
               {editTournamentError && <div className={styles.modalError} role="alert">{editTournamentError}</div>}
               <div className={styles.formRow}>
                 <label className={styles.formLabel}>Name</label>
-                <input className={styles.formInput} value={editTournamentName} onChange={(event) => setEditTournamentName(event.target.value)} />
+                <input className={styles.formInput} value={editTournamentName} onChange={(event) => setEditTournamentName(capitalizeFirstLetter(event.target.value))} />
               </div>
               <div className={styles.formRow}>
                 <label className={styles.formLabel}>Location</label>
-                <input className={styles.formInput} value={editTournamentLocation} onChange={(event) => setEditTournamentLocation(event.target.value)} />
+                <input className={styles.formInput} value={editTournamentLocation} onChange={(event) => setEditTournamentLocation(capitalizeFirstLetter(event.target.value))} />
               </div>
               <div className={styles.formRow}>
                 <label className={styles.formLabel}>Start date</label>

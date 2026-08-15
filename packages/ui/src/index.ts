@@ -11,3 +11,12 @@ export const designTokens = {
 };
 
 export const availableThemes = ['bracketworks-theme'] as const;
+
+export function capitalizeFirstLetter(value: string): string {
+  const firstLetterIndex = value.search(/\S/);
+  if (firstLetterIndex === -1) {
+    return value;
+  }
+
+  return `${value.slice(0, firstLetterIndex)}${value.charAt(firstLetterIndex).toLocaleUpperCase()}${value.slice(firstLetterIndex + 1)}`;
+}

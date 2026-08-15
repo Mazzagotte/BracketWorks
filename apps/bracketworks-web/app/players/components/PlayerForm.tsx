@@ -1,4 +1,5 @@
 import React, { memo, useState, useEffect, useRef } from 'react';
+import { capitalizeFirstLetter } from '@bracketworks/ui';
 
 import { PlayerFormProps } from '../types';
 import styles from '../entries.module.css';
@@ -168,8 +169,11 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, selectedSquad, tourna
   const handleInputChange = (field: string, value: string | number) => {
     setSuccessMessage(null)
     setFormData(prev => {
+      const normalizedValue = typeof value === 'string' && (field === 'firstName' || field === 'lastName')
+        ? capitalizeFirstLetter(value)
+        : value
       if (field !== 'division') {
-        return { ...prev, [field]: value }
+        return { ...prev, [field]: normalizedValue }
       }
       const nextDivision = normalizeDivision(String(value))
       const nextEntries = filterEntriesForDivision(prev.bracketEntries, bracketPrograms, nextDivision)

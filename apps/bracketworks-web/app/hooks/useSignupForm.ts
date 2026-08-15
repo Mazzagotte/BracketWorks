@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { capitalizeFirstLetter } from '@bracketworks/ui';
 
 import {
   calculatePasswordStrength,
@@ -112,7 +113,9 @@ export function useSignupForm() {
     (field: keyof SignupFormValues, nextValue: string) => {
       const resolvedValue = field === 'password' || field === 'confirmPassword'
         ? sanitizePasswordInput(nextValue)
-        : nextValue;
+        : field === 'firstName' || field === 'lastName' || field === 'organization'
+          ? capitalizeFirstLetter(nextValue)
+          : nextValue;
       const nextValues = { ...values, [field]: resolvedValue };
       const nextValidationValues = getValidationValues(nextValues);
 
