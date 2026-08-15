@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useState } from 'react';
+import { X } from 'lucide-react';
 
 import styles from './ResetPasswordModal.module.css';
 
@@ -63,7 +64,7 @@ export default function ResetPasswordModal({ isOpen, onClose, onSuccess }: Reset
     <div className={styles.overlay} role="dialog" aria-modal="true" aria-label="Reset password">
       <div className={styles.modal}>
         <button type="button" onClick={handleClose} className={styles.closeButton} aria-label="Close reset password modal">
-          x
+          <X size={18} strokeWidth={2.25} aria-hidden="true" />
         </button>
 
         <div className={styles.header}>

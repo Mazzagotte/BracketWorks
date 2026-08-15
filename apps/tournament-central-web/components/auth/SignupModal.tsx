@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useMemo, useState } from 'react';
+import { X } from 'lucide-react';
 
 import styles from './SignupModal.module.css';
 
@@ -133,7 +134,7 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
     <div className={styles.overlay} role="dialog" aria-modal="true" aria-label="Create account">
       <div className={styles.modal}>
         <button type="button" onClick={closeModal} className={styles.closeButton} aria-label="Close signup modal">
-          x
+          <X size={18} strokeWidth={2.25} aria-hidden="true" />
         </button>
 
         <div className={styles.header}>

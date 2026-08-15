@@ -28,15 +28,29 @@
   width: 34px;
   height: 34px;
   border: 1px solid var(--color-border-primary);
-  border-radius: 8px;
+  border-radius: 10px;
   background: transparent;
   color: var(--color-text-secondary);
+  display: inline-grid;
+  place-items: center;
+  font-size: 24px;
+  line-height: 1;
+  font-weight: 500;
   cursor: pointer;
 }
 
 .closeButton:hover {
   border-color: var(--color-primary);
   color: var(--color-primary);
+}
+
+.closeButton:active {
+  transform: translateY(1px);
+}
+
+.closeButton:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 .header {

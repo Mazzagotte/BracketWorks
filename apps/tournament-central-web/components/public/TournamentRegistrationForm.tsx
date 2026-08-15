@@ -1,6 +1,7 @@
 'use client';
 
 import type { Dispatch, SetStateAction } from 'react';
+import { CalendarDays, Info, MapPin, Trophy, X } from 'lucide-react';
 
 import styles from '../../app/page.module.css';
 
@@ -45,6 +46,9 @@ type RegistrationSquadLike = RegistrationOptionLike & {
 
 type TournamentRegistrationFormProps = {
   tournamentName: string;
+  tournamentDate?: string;
+  tournamentLocation?: string;
+  tournamentLogoUrl?: string | null;
   squads: RegistrationSquadLike[];
   events: RegistrationOptionLike[];
   divisions: RegistrationOptionLike[];
@@ -108,6 +112,9 @@ function normalizeQuestionOptions(options: string[] | undefined): string[] {
 
 export default function TournamentRegistrationForm({
   tournamentName,
+  tournamentDate,
+  tournamentLocation,
+  tournamentLogoUrl,
   squads,
   events,
   divisions,
@@ -124,16 +131,34 @@ export default function TournamentRegistrationForm({
 }: TournamentRegistrationFormProps) {
   return (
     <>
-      <header className={styles.detailsModalHeader}>
+      <header className={`${styles.detailsModalHeader} ${styles.registrationModalHeader}`}>
         <h4>Register: {tournamentName}</h4>
         {onClose ? (
           <button type="button" className={styles.detailsModalClose} onClick={onClose} aria-label="Close tournament registration">
-            Close
+            <X size={18} strokeWidth={2.25} aria-hidden="true" />
           </button>
         ) : null}
       </header>
       <div className={styles.registrationModalBody}>
         <p className={styles.registrationModalLead}>Fill out this registration form to reserve your spot.</p>
+
+        <div className={styles.registrationSummary}>
+          <span className={styles.registrationSummaryIcon} aria-hidden="true">
+            {tournamentLogoUrl ? <img src={tournamentLogoUrl} alt="" className={styles.registrationSummaryLogo} /> : <Trophy size={22} />}
+          </span>
+          <div className={styles.registrationSummaryItem}>
+            <span>Event</span>
+            <strong>{tournamentName}</strong>
+          </div>
+          <div className={styles.registrationSummaryItem}>
+            <span>Location</span>
+            <strong>{tournamentLocation || 'TBD'}</strong>
+          </div>
+          <div className={styles.registrationSummaryItem}>
+            <span>Date</span>
+            <strong>{tournamentDate || 'Date TBA'}</strong>
+          </div>
+        </div>
 
         <div className={styles.registrationGrid}>
           {squads.length > 0 && (
@@ -179,12 +204,13 @@ export default function TournamentRegistrationForm({
           )}
 
           <p className={styles.registrationBowlerCountInfo}>
+            <Info size={19} aria-hidden="true" />
             This squad requires {requiredBowlerCount} bowler form{requiredBowlerCount === 1 ? '' : 's'}.
           </p>
 
           {formState.bowlers.map((bowlerFields, bowlerIndex) => (
             <div key={`bowler-${bowlerIndex}`} className={styles.registrationBowlerSection}>
-              <h5>Bowler {bowlerIndex + 1}</h5>
+              <h5><span className={styles.registrationBowlerIcon} aria-hidden="true"><Trophy size={16} /></span>Bowler {bowlerIndex + 1}</h5>
               <div className={styles.registrationGrid}>
                 {fields.map((field) => {
                   const key = normalizeRegistrationFieldKey(field.key);
@@ -491,11 +517,11 @@ export default function TournamentRegistrationForm({
 
         {submitMessage && <p className={styles.registrationSubmitMessage}>{submitMessage}</p>}
       </div>
-      <footer className={styles.detailsModalFooter}>
-        <span className={styles.detailsModalHint}>{footerHint}</span>
+      <footer className={`${styles.detailsModalFooter} ${styles.registrationModalFooter}`}>
+        <span className={styles.detailsModalHint}><Info size={20} aria-hidden="true" />{footerHint}</span>
         <button
           type="button"
-          className={styles.primaryButton}
+          className={styles.registrationSubmitButton}
           onClick={() => {
             void onSubmit();
           }}

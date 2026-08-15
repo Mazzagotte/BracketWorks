@@ -427,6 +427,20 @@
   padding: 0;
 }
 
+.modalCloseButton {
+  width: 34px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 20px;
+}
+
+.modalCloseButton:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
 .progressStrip {
   border: 1px solid color-mix(in srgb, var(--bw-border-subtle) 82%, transparent);
   border-radius: 16px;

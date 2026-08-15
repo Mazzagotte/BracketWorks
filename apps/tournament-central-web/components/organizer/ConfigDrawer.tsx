@@ -49,7 +49,7 @@ export default function ConfigDrawer({ open, title, subtitle, onClose, children 
             <h3>{title}</h3>
             {subtitle ? <p>{subtitle}</p> : null}
           </div>
-          <button type="button" className={styles.iconButton} onClick={onClose} aria-label="Close modal">
+          <button type="button" className={`${styles.iconButton} ${styles.modalCloseButton}`} onClick={onClose} aria-label="Close modal">
             <X size={16} />
           </button>
         </header>

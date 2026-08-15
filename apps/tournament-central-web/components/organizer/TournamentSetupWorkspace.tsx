@@ -3625,7 +3625,7 @@ export default function TournamentSetupWorkspace() {
                       <small className={styles.divisionEditorHeadSubtitle}>{events.find((e) => e.id === selectedEventId)!.name || 'New Event'}</small>
                     </div>
                   </div>
-                  <button type="button" className={styles.iconButton} onClick={() => setSelectedEventId(null)} aria-label="Close">
+                  <button type="button" className={`${styles.iconButton} ${styles.modalCloseButton}`} onClick={() => setSelectedEventId(null)} aria-label="Close">
                     <X size={16} />
                   </button>
                 </div>
@@ -3657,7 +3657,7 @@ export default function TournamentSetupWorkspace() {
                       <small className={styles.divisionEditorHeadSubtitle}>{divisions.find((d) => d.id === selectedDivisionId)!.name || 'New Division'}</small>
                     </div>
                   </div>
-                  <button type="button" className={styles.iconButton} onClick={() => setSelectedDivisionId(null)} aria-label="Close">
+                  <button type="button" className={`${styles.iconButton} ${styles.modalCloseButton}`} onClick={() => setSelectedDivisionId(null)} aria-label="Close">
                     <X size={16} />
                   </button>
                 </div>
@@ -4454,7 +4454,7 @@ export default function TournamentSetupWorkspace() {
               </div>
               <button
                 type="button"
-                className={styles.tournamentLibraryClose}
+                className={`${styles.tournamentLibraryClose} ${styles.modalCloseButton}`}
                 aria-label="Close tournament list"
                 onClick={() => setIsTournamentModalOpen(false)}
               >

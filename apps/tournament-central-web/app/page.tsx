@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent } from 'react';
-import { CalendarCheck2, CalendarDays, ChevronRight, Link2, MapPin, Menu, Plus, ShieldCheck } from 'lucide-react';
+import { CalendarCheck2, CalendarDays, ChevronRight, Clock3, Info, Link2, MapPin, Menu, Plus, ShieldCheck, UsersRound, X } from 'lucide-react';
 import { ComposableMap, Geographies, Geography, ZoomableGroup } from 'react-simple-maps';
 import type { PublicTournamentDirectoryItem, PublicTournamentDirectoryResponse } from '@bracketworks/types';
 import TournamentRegistrationForm from '@/components/public/TournamentRegistrationForm';
@@ -441,10 +441,10 @@ function clampZoom(zoom: number): number {
 }
 
 function getMapTranslateExtent(viewportWidth: number, viewportHeight: number): [[number, number], [number, number]] {
-  const minX = -Math.max(viewportWidth * 0.8, MAP_PAN_PADDING);
-  const minY = -Math.max(viewportHeight * 0.8, MAP_PAN_PADDING);
-  const maxX = Math.max(viewportWidth * 1.8, viewportWidth + MAP_PAN_PADDING);
-  const maxY = Math.max(viewportHeight * 1.8, viewportHeight + MAP_PAN_PADDING);
+  const minX = -MAP_PAN_PADDING;
+  const minY = -MAP_PAN_PADDING;
+  const maxX = viewportWidth + MAP_PAN_PADDING;
+  const maxY = viewportHeight + MAP_PAN_PADDING;
 
   return [[minX, minY], [maxX, maxY]];
 }
@@ -1325,10 +1325,6 @@ export default function HomePage() {
         <div className={`${styles.headerInner} bw-public-header-inner`}>
           <Link href="/" aria-label="Tournament Central home" className="bw-public-brand-link"><Brand /></Link>
 
-          <nav className="bw-public-nav" aria-label="Homepage navigation">
-            <a href="#tournament-directory">Tournaments</a>
-          </nav>
-
           <div className={`${styles.headerActions} bw-public-actions`}>
             <Link className={`${styles.secondaryButton} bw-public-secondary-btn`} href="/login">Sign In</Link>
             <Link className={`${styles.primaryButton} bw-public-primary-btn`} href="/signup">Create Account</Link>
@@ -1337,7 +1333,6 @@ export default function HomePage() {
           <details className={styles.mobileMenu}>
             <summary aria-label="Open navigation"><Menu /></summary>
             <div>
-              <a href="#tournament-directory">Tournaments</a>
               <Link href="/login">Sign In</Link>
               <Link href="/signup">Create Account</Link>
             </div>
@@ -1615,26 +1610,48 @@ export default function HomePage() {
                   onKeyDown={handleDetailModalKeyDown}
                 >
                   <header className={styles.detailsModalHeader}>
-                    <h4>{detailTournament.name}</h4>
+                    <div className={styles.detailsModalTitleGroup}>
+                      {detailTournament.logoUrl ? (
+                        <div className={styles.detailsModalLogoWrap}>
+                          <img src={detailTournament.logoUrl} alt="" className={styles.detailsModalLogo} />
+                        </div>
+                      ) : null}
+                      <div>
+                        <span className={styles.detailsModalEyebrow}>Tournament Details</span>
+                        <h4>{detailTournament.name}</h4>
+                      </div>
+                    </div>
                     <button type="button" className={styles.detailsModalClose} onClick={closeDetailModal} aria-label="Close tournament details">
-                      Close
+                      <X size={18} strokeWidth={2.25} aria-hidden="true" />
                     </button>
                   </header>
                   <div className={styles.detailsModalBody}>
-                    {detailTournament.logoUrl ? (
-                      <div className={styles.detailsModalLogoWrap}>
-                        <img src={detailTournament.logoUrl} alt={`${detailTournament.name} logo`} className={styles.detailsModalLogo} />
-                      </div>
-                    ) : null}
                     <div className={styles.detailsModalFacts}>
-                      <p className={styles.detailsModalFactRow}><strong>Date</strong><span>{detailTournament.date}</span></p>
-                      <p className={styles.detailsModalFactRow}><strong>Location</strong><span>{detailTournament.locationText}</span></p>
-                      <p className={styles.detailsModalFactRow}><strong>Status</strong><span>{statusLabel[detailTournament.status]}</span></p>
-                        <p className={styles.detailsModalFactRow}><strong>Registration</strong><span>{getRegistrationConfigUrl(detailTournament) ? 'Open now' : 'Coming soon'}</span></p>
+                      <p className={styles.detailsModalFactRow}>
+                        <span className={styles.detailsModalFactIcon} aria-hidden="true"><CalendarDays size={28} /></span>
+                        <strong>Date</strong>
+                        <span>{detailTournament.date}</span>
+                      </p>
+                      <p className={styles.detailsModalFactRow}>
+                        <span className={styles.detailsModalFactIcon} aria-hidden="true"><MapPin size={28} /></span>
+                        <strong>Location</strong>
+                        <span>{detailTournament.locationText}</span>
+                      </p>
+                      <p className={styles.detailsModalFactRow}>
+                        <span className={styles.detailsModalFactIcon} aria-hidden="true"><Clock3 size={28} /></span>
+                        <strong>Status</strong>
+                        <span className={styles.detailsModalStatusValue}><span className={styles.detailsModalStatusDot} aria-hidden="true" />{statusLabel[detailTournament.status]}</span>
+                      </p>
+                      <p className={styles.detailsModalFactRow}>
+                        <span className={styles.detailsModalFactIcon} aria-hidden="true"><UsersRound size={28} /></span>
+                        <strong>Registration</strong>
+                        <span className={styles.detailsModalRegistrationValue}><span className={styles.detailsModalRegistrationDot} aria-hidden="true" />{getRegistrationConfigUrl(detailTournament) ? 'Open now' : 'Coming soon'}</span>
+                      </p>
                     </div>
                   </div>
                   <footer className={styles.detailsModalFooter}>
                     <span className={styles.detailsModalHint}>
+                      <Info size={22} aria-hidden="true" />
                       Complete your bowler details and submit registration directly from this page.
                     </span>
                     <div className={styles.detailsModalActions}>
@@ -1677,6 +1694,9 @@ export default function HomePage() {
 
                   <TournamentRegistrationForm
                     tournamentName={registrationTournament.name}
+                    tournamentDate={registrationTournament.date}
+                    tournamentLocation={registrationTournament.locationText}
+                    tournamentLogoUrl={registrationTournament.logoUrl}
                     squads={registrationSquads}
                     events={eventsForSelectedSquad}
                     divisions={registrationDivisions}
@@ -1699,7 +1719,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className={styles.section}>
+      <section className={`${styles.section} ${styles.featuredSection}`}>
         <div className={styles.featuredLayout}>
           <div className={styles.featuredStrip} aria-label="Featured tournaments">
             <div className={styles.featuredHeader}>Featured Tournaments</div>
@@ -1707,25 +1727,26 @@ export default function HomePage() {
               {featuredTournaments.map((tournament) => (
                 <article key={tournament.id} className={`${styles.featuredCard} ${styles[tournament.tone]}`}>
                   <div className={styles.featuredCardContent}>
-                    {tournament.logoUrl ? (
-                      <div className={styles.featuredLogoWrap}>
-                        <img src={tournament.logoUrl} alt="" className={styles.featuredLogo} loading="lazy" />
-                      </div>
-                    ) : null}
-
-                    <h3>{tournament.title}</h3>
+                    <div className={styles.featuredIntro}>
+                      {tournament.logoUrl ? (
+                        <div className={styles.featuredLogoWrap}>
+                          <img src={tournament.logoUrl} alt="" className={styles.featuredLogo} loading="lazy" />
+                        </div>
+                      ) : null}
+                      <h3>{tournament.title}</h3>
+                    </div>
 
                     <div className={styles.featuredDivider} aria-hidden="true" />
 
                     <div className={styles.featuredInfoList}>
                       <p className={styles.featuredVenueRow}>
-                        <MapPin size={18} aria-hidden="true" />
+                        <span className={styles.featuredInfoIcon} aria-hidden="true"><MapPin size={20} /></span>
                         <span>{tournament.venue}</span>
                       </p>
                       {tournament.city ? <p className={styles.featuredCityRow}>{tournament.city}</p> : null}
 
                       <p className={styles.featuredFooterRow}>
-                        <CalendarDays size={18} aria-hidden="true" />
+                        <span className={styles.featuredInfoIcon} aria-hidden="true"><CalendarDays size={20} /></span>
                         <span>{tournament.dateLabel}</span>
                       </p>
                     </div>
@@ -1740,7 +1761,14 @@ export default function HomePage() {
                       </div>
                     </div>
 
-                    <button type="button" className={styles.featuredCardPrimaryAction}>
+                    <button
+                      type="button"
+                      className={styles.featuredCardPrimaryAction}
+                      onClick={(event) => {
+                        lastTriggerRef.current = event.currentTarget;
+                        setDetailTournamentId(tournament.id);
+                      }}
+                    >
                       View Tournament <span aria-hidden="true">→</span>
                     </button>
                   </div>
