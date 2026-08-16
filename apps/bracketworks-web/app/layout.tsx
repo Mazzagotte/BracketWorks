@@ -9,6 +9,9 @@ import { HeaderProvider } from './lib/header-context';
 
 import AuthAwareLayout from '../components/AuthAwareLayout';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 const backendOrigin = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8001';
 const structuredData = JSON.stringify({
   '@context': 'https://schema.org',
