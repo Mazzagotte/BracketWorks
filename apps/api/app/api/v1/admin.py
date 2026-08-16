@@ -34,6 +34,10 @@ class AdminSetUserAdminPayload(BaseModel):
     is_admin: bool
 
 
+class AdminSetUserActivePayload(BaseModel):
+    is_active: bool
+
+
 class AdminResetPasswordPayload(BaseModel):
     new_password: str
 
@@ -100,6 +104,11 @@ class AdminAnnouncementPayload(BaseModel):
     requires_acknowledgment: bool = False
     starts_at: Optional[datetime] = None
     ends_at: Optional[datetime] = None
+
+
+class AdminFeedbackUpdatePayload(BaseModel):
+    status: str
+    admin_note: Optional[str] = None
 
 
 router = APIRouter()
@@ -329,12 +338,15 @@ def _get_user_delete_impact(db: Session, user_id: int) -> dict[str, int]:
     return {
         "users": 1,
         "owned_tournaments": db.scalar(select(func.count()).select_from(models.Tournament).where(models.Tournament.user_id == user_id)) or 0,
+        "owned_tc_tournaments": db.scalar(select(func.count()).select_from(models.TournamentCentral).where(models.TournamentCentral.user_id == user_id)) or 0,
         "auth_sessions": db.scalar(select(func.count()).select_from(models.AuthSession).where(models.AuthSession.user_id == user_id)) or 0,
         "idempotency_keys": db.scalar(select(func.count()).select_from(models.IdempotencyKey).where(models.IdempotencyKey.user_id == user_id)) or 0,
         "password_reset_tokens": db.scalar(select(func.count()).select_from(models.PasswordResetToken).where(models.PasswordResetToken.user_id == user_id)) or 0,
         "email_verification_tokens": db.scalar(select(func.count()).select_from(models.EmailVerificationToken).where(models.EmailVerificationToken.user_id == user_id)) or 0,
         "admin_audit_logs_authored": db.scalar(select(func.count()).select_from(models.AdminAuditLog).where(models.AdminAuditLog.admin_user_id == user_id)) or 0,
         "admin_user_reviews": db.scalar(select(func.count()).select_from(models.AdminUserReview).where(or_(models.AdminUserReview.user_id == user_id, models.AdminUserReview.admin_user_id == user_id, models.AdminUserReview.resolved_by_user_id == user_id))) or 0,
+        "user_feedback_messages": db.scalar(select(func.count()).select_from(models.UserFeedbackMessage).where(models.UserFeedbackMessage.user_id == user_id)) or 0,
+        "legal_disclosure_acceptances": db.scalar(select(func.count()).select_from(models.LegalDisclosureAcceptance).where(models.LegalDisclosureAcceptance.user_id == user_id)) or 0,
         "bowler_profiles": db.scalar(select(func.count()).select_from(models.BowlerProfile).where(models.BowlerProfile.user_id == user_id)) or 0,
         "tournament_players": len(player_ids),
         "player_scores": player_score_count,
@@ -344,6 +356,8 @@ def _get_user_delete_impact(db: Session, user_id: int) -> dict[str, int]:
         "bracket_snapshots_invalidated": bracket_snapshot_count,
         "payout_summaries_invalidated": payout_summary_count,
         "user_squad_selections": db.scalar(select(func.count()).select_from(models.UserSquadSelection).where(models.UserSquadSelection.user_id == user_id)) or 0,
+        "tournament_setup_states": db.scalar(select(func.count()).select_from(models.TournamentSetupState).where(models.TournamentSetupState.user_id == user_id)) or 0,
+        "tc_tournament_setup_states": db.scalar(select(func.count()).select_from(models.TournamentCentralSetupState).where(models.TournamentCentralSetupState.user_id == user_id)) or 0,
     }
 
 
@@ -396,15 +410,20 @@ def _hard_delete_user(db: Session, user_id: int) -> dict[str, int]:
         db.execute(delete(models.BowlerProfile).where(models.BowlerProfile.id.in_(bowler_profile_ids)))
 
     db.execute(delete(models.UserSquadSelection).where(models.UserSquadSelection.user_id == user_id))
+    db.execute(delete(models.TournamentSetupState).where(models.TournamentSetupState.user_id == user_id))
+    db.execute(delete(models.TournamentCentralSetupState).where(models.TournamentCentralSetupState.user_id == user_id))
     db.execute(delete(models.AuthSession).where(models.AuthSession.user_id == user_id))
     db.execute(delete(models.IdempotencyKey).where(models.IdempotencyKey.user_id == user_id))
     db.execute(delete(models.PasswordResetToken).where(models.PasswordResetToken.user_id == user_id))
     db.execute(delete(models.EmailVerificationToken).where(models.EmailVerificationToken.user_id == user_id))
     db.execute(delete(models.UserAcknowledgment).where(models.UserAcknowledgment.user_id == user_id))
+    db.execute(delete(models.LegalDisclosureAcceptance).where(models.LegalDisclosureAcceptance.user_id == user_id))
     db.execute(delete(models.AdminTournamentNote).where(or_(models.AdminTournamentNote.admin_user_id == user_id, models.AdminTournamentNote.resolved_by_user_id == user_id)))
     db.execute(delete(models.AdminAnnouncement).where(models.AdminAnnouncement.created_by_user_id == user_id))
     db.execute(models.AdminAnnouncement.__table__.update().where(models.AdminAnnouncement.audience_user_id == user_id).values(audience_user_id=None, audience_type="all"))
     db.execute(delete(models.AdminUserReview).where(or_(models.AdminUserReview.user_id == user_id, models.AdminUserReview.admin_user_id == user_id, models.AdminUserReview.resolved_by_user_id == user_id)))
+    db.execute(delete(models.UserFeedbackMessage).where(models.UserFeedbackMessage.user_id == user_id))
+    db.execute(models.UserFeedbackMessage.__table__.update().where(models.UserFeedbackMessage.resolved_by_user_id == user_id).values(resolved_by_user_id=None, resolved_at=None))
     db.execute(delete(models.AdminAuditLog).where(models.AdminAuditLog.admin_user_id == user_id))
     db.execute(delete(models.BowlerProfile).where(models.BowlerProfile.user_id == user_id))
     db.execute(delete(models.User).where(models.User.id == user_id))
@@ -623,6 +642,7 @@ def get_admin_users(
             models.User.last_name,
             models.User.organization,
             models.User.is_admin,
+            models.User.is_active,
             models.User.created_at,
             models.User.email_verified_at,
             last_login_expr.label("last_login_at"),
@@ -645,6 +665,7 @@ def get_admin_users(
             models.User.last_name,
             models.User.organization,
             models.User.is_admin,
+            models.User.is_active,
             models.User.created_at,
             models.User.email_verified_at,
             models.User.dev_notice_version_accepted,
@@ -711,6 +732,7 @@ def get_admin_users(
                 "last_name": row.last_name,
                 "organization": row.organization,
                 "is_admin": row.is_admin,
+                    "is_active": row.is_active,
                 "created_at": _serialize_utc_timestamp(row.created_at),
                 "email_verified": row.email_verified_at is not None,
                 "email_verified_at": _serialize_utc_timestamp(row.email_verified_at),
@@ -1494,6 +1516,83 @@ def admin_update_announcement(announcement_id: int, payload: AdminAnnouncementPa
     return _serialize_announcement(db, entry)
 
 
+@router.delete("/announcements/{announcement_id}")
+def admin_delete_announcement(announcement_id: int, db: Session = Depends(get_db), admin: models.User = Depends(require_admin_user)):
+    entry = db.get(models.AdminAnnouncement, announcement_id)
+    if not entry:
+        raise HTTPException(status_code=404, detail="Announcement not found")
+
+    acknowledgment_result = db.execute(
+        delete(models.UserAcknowledgment).where(
+            models.UserAcknowledgment.content_type == "announcement",
+            models.UserAcknowledgment.content_id == str(announcement_id),
+        )
+    )
+    deleted_acknowledgments = acknowledgment_result.rowcount or 0
+    db.delete(entry)
+    _write_admin_audit(
+        db,
+        admin.id,
+        "announcement.delete",
+        "announcement",
+        announcement_id,
+        details={"title": entry.title, "status": entry.status, "acknowledgments_deleted": deleted_acknowledgments},
+    )
+    db.commit()
+    return {"ok": True, "acknowledgments_deleted": deleted_acknowledgments}
+
+
+def _serialize_feedback_message(message: models.UserFeedbackMessage, user: models.User) -> dict:
+    return {
+        "id": message.id,
+        "user_id": message.user_id,
+        "username": user.username,
+        "user_name": f"{user.first_name} {user.last_name}".strip(),
+        "email": user.email,
+        "category": message.category,
+        "subject": message.subject,
+        "message": message.message,
+        "status": message.status,
+        "admin_note": message.admin_note,
+        "resolved_at": _serialize_utc_timestamp(message.resolved_at),
+        "created_at": _serialize_utc_timestamp(message.created_at),
+        "updated_at": _serialize_utc_timestamp(message.updated_at),
+    }
+
+
+@router.get("/feedback")
+def admin_list_feedback(db: Session = Depends(get_db), _admin: models.User = Depends(require_admin_user)):
+    rows = db.execute(
+        select(models.UserFeedbackMessage, models.User)
+        .join(models.User, models.User.id == models.UserFeedbackMessage.user_id)
+        .order_by(models.UserFeedbackMessage.created_at.desc())
+    ).all()
+    return {"messages": [_serialize_feedback_message(message, user) for message, user in rows]}
+
+
+@router.patch("/feedback/{message_id}")
+def admin_update_feedback(
+    message_id: int,
+    payload: AdminFeedbackUpdatePayload,
+    db: Session = Depends(get_db),
+    admin: models.User = Depends(require_admin_user),
+):
+    message = db.get(models.UserFeedbackMessage, message_id)
+    if not message:
+        raise HTTPException(status_code=404, detail="Feedback message not found")
+    if payload.status not in {"open", "in_progress", "resolved"}:
+        raise HTTPException(status_code=400, detail="Invalid feedback status")
+    message.status = payload.status
+    message.admin_note = (payload.admin_note or "").strip()[:5000] or None
+    message.resolved_at = datetime.now(UTC).replace(tzinfo=None) if payload.status == "resolved" else None
+    message.resolved_by_user_id = admin.id if payload.status == "resolved" else None
+    _write_admin_audit(db, admin.id, "feedback.update", "feedback", message_id, details={"status": message.status})
+    db.commit()
+    db.refresh(message)
+    user = db.get(models.User, message.user_id)
+    return _serialize_feedback_message(message, user)
+
+
 @router.get("/operations")
 def admin_operations(_admin: models.User = Depends(require_admin_user)):
     jobs = [job_to_dict(job) for job in job_store.list_recent(100)]
@@ -1613,6 +1712,30 @@ def admin_set_user_admin(
     }
 
 
+@router.post("/users/{user_id}/set-active")
+def admin_set_user_active(
+    user_id: int,
+    payload: AdminSetUserActivePayload,
+    db: Session = Depends(get_db),
+    admin: models.User = Depends(require_admin_user),
+):
+    user = db.get(models.User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if user.id == admin.id and not payload.is_active:
+        raise HTTPException(status_code=400, detail="You cannot deactivate your own account")
+    user.is_active = payload.is_active
+    if not payload.is_active:
+        db.execute(
+            models.AuthSession.__table__.update()
+            .where(models.AuthSession.user_id == user.id, models.AuthSession.is_revoked.is_(False))
+            .values(is_revoked=True, revoked_at=datetime.now(UTC).replace(tzinfo=None))
+        )
+    _write_admin_audit(db, admin.id, "user.set_active", "user", user.id, details={"is_active": user.is_active})
+    db.commit()
+    return {"ok": True, "user": {"id": user.id, "is_active": user.is_active}}
+
+
 @router.post("/users/{user_id}/reset-password")
 def admin_reset_password(
     user_id: int,
@@ -1700,7 +1823,7 @@ def admin_delete_user(
         raise HTTPException(status_code=400, detail="confirm_text must equal DELETE")
 
     impact = _get_user_delete_impact(db, user_id)
-    tournament_count = impact.get("owned_tournaments", 0)
+    tournament_count = impact.get("owned_tournaments", 0) + impact.get("owned_tc_tournaments", 0)
     if tournament_count > 0:
         raise HTTPException(status_code=400, detail="User owns tournaments. Reassign or delete them first.")
 

@@ -274,6 +274,15 @@ export default function TopNav({ firstName, onMobileMenuOpen, isMobile = false }
               </Link>
 
               <Link
+                href="/settings#feedback-form"
+                className={styles.userMenuItem}
+                onClick={() => setIsUserMenuOpen(false)}
+                role="menuitem"
+              >
+                Report a Problem or Request a Feature
+              </Link>
+
+              <Link
                 href="/help/getting-started"
                 className={styles.userMenuItem}
                 onClick={() => setIsUserMenuOpen(false)}

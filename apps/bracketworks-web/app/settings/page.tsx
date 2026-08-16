@@ -63,6 +63,10 @@ export default function SettingsPage() {
     confirm: false,
   });
   const [logoutAfterPasswordChange, setLogoutAfterPasswordChange] = useState(false);
+  const [feedbackCategory, setFeedbackCategory] = useState<'problem' | 'feature' | 'other'>('problem');
+  const [feedbackSubject, setFeedbackSubject] = useState('');
+  const [feedbackMessage, setFeedbackMessage] = useState('');
+  const [sendingFeedback, setSendingFeedback] = useState(false);
   const [passwordForm, setPasswordForm] = useState({
     current_password: '',
     new_password: '',
@@ -106,6 +110,14 @@ export default function SettingsPage() {
 
     load();
   }, [addToast]);
+
+  useEffect(() => {
+    if (loading || window.location.hash !== '#feedback-form') return;
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById('feedback-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [loading]);
 
   const passwordStrengthPercent = useMemo(
     () => calculatePasswordStrengthPercent(passwordForm.new_password, 8),
@@ -249,6 +261,24 @@ export default function SettingsPage() {
       addToast({ type: 'error', message: err instanceof Error ? err.message : 'Failed to update password', duration: 5000 });
     } finally {
       setSavingPassword(false);
+    }
+  };
+
+  const submitFeedback = async () => {
+    if (!feedbackSubject.trim() || !feedbackMessage.trim()) {
+      addToast({ type: 'warning', message: 'Add a subject and message before sending.', duration: 3000 });
+      return;
+    }
+    setSendingFeedback(true);
+    try {
+      await apiClient.post('/api/v1/users/feedback', { category: feedbackCategory, subject: feedbackSubject.trim(), message: feedbackMessage.trim() });
+      setFeedbackSubject('');
+      setFeedbackMessage('');
+      addToast({ type: 'success', message: 'Message sent to the BracketWorks team.', duration: 3500 });
+    } catch (err) {
+      addToast({ type: 'error', message: err instanceof Error ? err.message : 'Failed to send message', duration: 5000 });
+    } finally {
+      setSendingFeedback(false);
     }
   };
 
@@ -513,6 +543,15 @@ export default function SettingsPage() {
               <Link href="/help/getting-started" className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.small}`}>Open Guide</Link>
               <button type="button" className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`} onClick={openOnboarding}>Show Welcome Message</button>
             </div>
+          </div>
+          <div id="feedback-form" className={styles.feedbackForm}>
+            <div className={styles.optionText}><div className={styles.optionTitle}>Report a problem or request a feature</div><div className={styles.optionHint}>Send a message to the BracketWorks administrators. Include steps to reproduce a problem when possible.</div></div>
+            <div className={styles.feedbackFormGrid}>
+              <select className={styles.input} aria-label="Message type" value={feedbackCategory} onChange={event => setFeedbackCategory(event.target.value as 'problem' | 'feature' | 'other')}><option value="problem">Report a problem</option><option value="feature">Request a feature</option><option value="other">Other</option></select>
+              <input className={styles.input} aria-label="Message subject" value={feedbackSubject} onChange={event => setFeedbackSubject(event.target.value)} placeholder="Subject" maxLength={160} />
+            </div>
+            <textarea className={styles.feedbackTextarea} aria-label="Message" value={feedbackMessage} onChange={event => setFeedbackMessage(event.target.value)} placeholder="Describe the problem or idea" maxLength={5000} rows={5} />
+            <div className={styles.feedbackFormFooter}><span className={styles.inlineMeta}>{feedbackMessage.length}/5000</span><button type="button" className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`} onClick={submitFeedback} disabled={sendingFeedback || !feedbackSubject.trim() || !feedbackMessage.trim()}>{sendingFeedback ? 'Sending...' : 'Send Message'}</button></div>
           </div>
         </CardBody>
       </Card>

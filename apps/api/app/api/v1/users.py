@@ -17,9 +17,11 @@ from ...services.email_service import (
 )
 from passlib.context import CryptContext
 from datetime import datetime, timedelta, timezone
+from difflib import SequenceMatcher
 import hashlib
 import logging
 import secrets
+import unicodedata
 import uuid
 
 pwd_context = CryptContext(
@@ -35,10 +37,73 @@ router = APIRouter()
 DEV_NOTICE_VERSION = "1.0"
 
 
+def _normalize_name(value: str) -> str:
+    decomposed = unicodedata.normalize("NFKD", value or "")
+    return "".join(character for character in decomposed if character.isalnum()).lower()
+
+
+def _first_names_are_similar(first_name: str, other_first_name: str) -> bool:
+    normalized_first = _normalize_name(first_name)
+    normalized_other = _normalize_name(other_first_name)
+    if not normalized_first or not normalized_other:
+        return False
+    if normalized_first == normalized_other:
+        return True
+    shorter, longer = sorted((normalized_first, normalized_other), key=len)
+    if len(shorter) >= 3 and longer.startswith(shorter) and len(shorter) / len(longer) >= 0.4:
+        return True
+    return SequenceMatcher(None, normalized_first, normalized_other).ratio() >= 0.8
+
+
+def _find_similar_users(db: Session, first_name: str, last_name: str) -> list[models.User]:
+    normalized_last_name = _normalize_name(last_name)
+    if not normalized_last_name:
+        return []
+    return [
+        existing
+        for existing in db.query(models.User).all()
+        if _normalize_name(existing.last_name) == normalized_last_name
+        and _first_names_are_similar(first_name, existing.first_name)
+    ]
+
+
+def _create_duplicate_user_review(
+    db: Session,
+    new_user: models.User,
+    similar_users: list[models.User],
+) -> None:
+    admin = db.query(models.User).filter(models.User.is_admin.is_(True)).order_by(models.User.id.asc()).first()
+    if not admin or not similar_users:
+        return
+    matches = "; ".join(
+        f"{existing.first_name} {existing.last_name} (@{existing.username}, {existing.email})"
+        for existing in similar_users[:5]
+    )
+    db.add(
+        models.AdminUserReview(
+            user_id=new_user.id,
+            admin_user_id=admin.id,
+            kind="flag",
+            category="duplicate",
+            note=(
+                f"Possible duplicate account detected for {new_user.first_name} {new_user.last_name} "
+                f"(@{new_user.username}). Review against: {matches}."
+            )[:2000],
+        )
+    )
+    db.commit()
+
+
 class AcknowledgmentPayload(BaseModel):
     content_type: str
     content_id: str
     version: str
+
+
+class UserFeedbackPayload(BaseModel):
+    category: str
+    subject: str
+    message: str
 
 
 _DUMMY_BCRYPT_HASH = "$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"
@@ -386,6 +451,9 @@ def _authenticate_and_issue_tokens(username: str, password: str, db: Session, re
         pwd_context.verify("dummy_password", _DUMMY_BCRYPT_HASH)
         _register_failed_login(db, normalized_username, source_ip_hash)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+
+    if not user.is_active:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Account is inactive")
 
     if not pwd_context.verify(password, user.password):
         _register_failed_login(db, normalized_username, source_ip_hash)
@@ -998,6 +1066,8 @@ def signup(user: schemas.UserCreate, background_tasks: BackgroundTasks, db: Sess
     if existing_email:
         raise HTTPException(status_code=400, detail="Email already exists")
 
+    similar_users = _find_similar_users(db, user.first_name, user.last_name)
+
     try:
         validate_password_policy(user.password)
     except PasswordPolicyError as exc:
@@ -1019,9 +1089,43 @@ def signup(user: schemas.UserCreate, background_tasks: BackgroundTasks, db: Sess
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
+    if similar_users:
+        try:
+            _create_duplicate_user_review(db, db_user, similar_users)
+        except Exception:
+            db.rollback()
+            logger.exception("Failed to create duplicate-user review for user %s", db_user.id)
     background_tasks.add_task(sendWelcomeEmail, db_user.email, db_user.first_name)
     _issue_email_verification(db, db_user, background_tasks)
     return db_user
+
+
+@router.post("/feedback")
+def submit_feedback(
+    payload: UserFeedbackPayload,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    category = payload.category.strip().lower()
+    subject = payload.subject.strip()[:160]
+    message = payload.message.strip()
+    if category not in {"problem", "feature", "other"}:
+        raise HTTPException(status_code=400, detail="Invalid feedback category")
+    if not subject or not message:
+        raise HTTPException(status_code=400, detail="Subject and message are required")
+    if len(message) > 5000:
+        raise HTTPException(status_code=400, detail="Message is too long")
+
+    feedback = models.UserFeedbackMessage(
+        user_id=current_user.id,
+        category=category,
+        subject=subject,
+        message=message,
+    )
+    db.add(feedback)
+    db.commit()
+    db.refresh(feedback)
+    return {"ok": True, "message_id": feedback.id}
 
 
 @router.post("/request-email-verification")

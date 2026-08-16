@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { DataTableToolbar } from "../../components/primitives";
+import { MoreHorizontal } from "lucide-react";
 
 import type {
   UserRow,
@@ -35,6 +37,7 @@ type AdminUsersSectionProps = {
   onStartEditUser: (user: UserRow) => void;
   onStartResetUser: (user: UserRow) => void;
   onToggleAdminRole: (user: UserRow) => void;
+  onToggleUserActive: (user: UserRow) => void;
   onStartDeleteUser: (user: UserRow) => void;
 };
 
@@ -61,8 +64,11 @@ export function AdminUsersSection({
   onStartEditUser,
   onStartResetUser,
   onToggleAdminRole,
+  onToggleUserActive,
   onStartDeleteUser,
 }: AdminUsersSectionProps) {
+  const [actionUser, setActionUser] = useState<UserRow | null>(null);
+
   return (
     <section className={styles.panel}>
       <div className={styles.panelHeader}>
@@ -161,46 +167,15 @@ export function AdminUsersSection({
                   <td>{user.profile_count}</td>
                   <td><span className={`${styles.statusPill} ${user.open_review_count > 0 ? styles.statusDraft : styles.statusActive}`}>{user.open_review_count > 0 ? `${user.open_review_count} open` : "Clear"}</span></td>
                   <td>
-                    <div className={styles.rowActions}>
-                      <button type="button" className={styles.actionBtn} onClick={() => { onLoadUserReview(user); }}>Review</button>
-                      <button
-                        type="button"
-                        className={styles.actionBtn}
-                        onClick={() => onStartEditUser(user)}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        className={styles.actionBtn}
-                        onClick={() => onStartResetUser(user)}
-                      >
-                        Reset PW
-                      </button>
-                      {user.id !== currentUserId && (
-                        <button
-                          type="button"
-                          className={`${styles.actionBtn} ${user.is_admin ? styles.actionBtnDanger : ""}`}
-                          disabled={adminRoleSavingUserId === user.id}
-                          onClick={() => onToggleAdminRole(user)}
-                        >
-                          {adminRoleSavingUserId === user.id
-                            ? "Saving..."
-                            : user.is_admin
-                              ? "Change to User"
-                              : "Promote to Admin"}
-                        </button>
-                      )}
-                      {user.id !== currentUserId && (
-                        <button
-                          type="button"
-                          className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
-                          onClick={() => onStartDeleteUser(user)}
-                        >
-                          Delete
-                        </button>
-                      )}
-                    </div>
+                    <button
+                      type="button"
+                      className={styles.userActionsTrigger}
+                      aria-label={`Actions for ${user.username}`}
+                      onClick={() => setActionUser(user)}
+                    >
+                        <MoreHorizontal aria-hidden="true" />
+                        <span>Actions</span>
+                    </button>
                   </td>
                 </tr>
               ))
@@ -227,6 +202,55 @@ export function AdminUsersSection({
           Next
         </button>
       </div>
+      {actionUser && (
+        <div className={styles.modalOverlay} onClick={() => setActionUser(null)}>
+          <div
+            className={`${styles.modal} ${styles.userActionsModal}`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="user-actions-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className={styles.modalHeader}>
+              <div>
+                <h3 id="user-actions-title" className={styles.modalTitle}>User actions</h3>
+                <div className={styles.secondaryText}>@{actionUser.username}</div>
+              </div>
+              <button
+                type="button"
+                className={styles.modalClose}
+                aria-label="Close user actions"
+                onClick={() => setActionUser(null)}
+              >
+                X
+              </button>
+            </div>
+            <div className={styles.userActionsModalBody}>
+              <button type="button" className={styles.actionBtn} onClick={() => { setActionUser(null); onLoadUserReview(actionUser); }}>Review</button>
+              <button type="button" className={styles.actionBtn} onClick={() => { setActionUser(null); onStartEditUser(actionUser); }}>Edit</button>
+              <button type="button" className={styles.actionBtn} onClick={() => { setActionUser(null); onStartResetUser(actionUser); }}>Reset PW</button>
+              {actionUser.id !== currentUserId && (
+                <button
+                  type="button"
+                  className={`${styles.actionBtn} ${actionUser.is_admin ? styles.actionBtnDanger : ""}`}
+                  disabled={adminRoleSavingUserId === actionUser.id}
+                  onClick={() => { setActionUser(null); onToggleAdminRole(actionUser); }}
+                >
+                  {adminRoleSavingUserId === actionUser.id ? "Saving..." : actionUser.is_admin ? "Change to User" : "Promote to Admin"}
+                </button>
+              )}
+              {actionUser.id !== currentUserId && (
+                <button type="button" className={`${styles.actionBtn} ${styles.actionBtnDanger}`} onClick={() => { setActionUser(null); onStartDeleteUser(actionUser); }}>
+                  Delete
+                </button>
+              )}
+              <button type="button" className={styles.actionBtn} onClick={() => { setActionUser(null); onToggleUserActive(actionUser); }}>
+                {actionUser.is_active ? "Deactivate" : "Reactivate"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

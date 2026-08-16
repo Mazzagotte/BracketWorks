@@ -39,6 +39,10 @@
 .helpBlock { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 18px; }
 .helpActions { display: flex; flex-wrap: wrap; gap: 8px; }
 .helpActions a { text-decoration: none; }
+.feedbackForm { display: grid; gap: 12px; margin: 0 18px 18px; padding-top: 18px; border-top: 1px solid var(--bw-border-subtle); }
+.feedbackFormGrid { display: grid; grid-template-columns: minmax(0, 180px) minmax(0, 1fr); gap: 10px; }
+.feedbackTextarea { width: 100%; min-height: 120px; padding: 10px 12px; border: 1px solid var(--bw-border-subtle); border-radius: 9px; background: var(--bw-surface-panel-strong); color: var(--bw-text-title); font: inherit; resize: vertical; }
+.feedbackFormFooter { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .legalLinks { display: grid; }
 .legalLinks a,
 .legalLinks button { display: grid; width: 100%; gap: 3px; padding: 13px 18px; border: 0; border-top: 1px solid var(--bw-border-subtle); background: transparent; color: var(--bw-text-title); cursor: pointer; font: inherit; font-size: .82rem; font-weight: 750; text-align: left; text-decoration: none; }
@@ -78,6 +82,10 @@
   .helpBlock { align-items: stretch; flex-direction: column; padding: 13px 12px; }
   .helpActions { display: grid; grid-template-columns: 1fr; }
   .helpActions > * { width: 100%; min-height: 40px; }
+  .feedbackForm { margin: 0 12px 13px; }
+  .feedbackFormGrid { grid-template-columns: 1fr; }
+  .feedbackFormFooter { align-items: stretch; flex-direction: column; }
+  .feedbackFormFooter button { width: 100%; min-height: 40px; }
   .legalLinks a { padding: 12px; }
 }
 

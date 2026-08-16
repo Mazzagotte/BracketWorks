@@ -6,7 +6,7 @@ No authentication required — intended for QR-code accessible display pages.
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 import logging
 import json
 import re
@@ -380,27 +380,32 @@ def _required_bowler_count_for_submission(
 def list_public_tournaments(
     response: Response,
     limit: int = Query(100, ge=1, le=500),
+    source: Literal["all", "bw", "tc"] = Query("all"),
     db: Session = Depends(get_db),
 ):
-    """Directory of public tournaments for the /view landing page."""
-    tournaments = (
-        db.query(models.Tournament)
-        .filter(
-            models.Tournament.is_public.is_(True),
-            models.Tournament.archived_at.is_(None),
+    """Directory of public tournaments, optionally limited to BW or TC."""
+    tournaments = []
+    if source != "tc":
+        tournaments = (
+            db.query(models.Tournament)
+            .filter(
+                models.Tournament.is_public.is_(True),
+                models.Tournament.archived_at.is_(None),
+            )
+            .order_by(models.Tournament.id.desc())
+            .limit(limit)
+            .all()
         )
-        .order_by(models.Tournament.id.desc())
-        .limit(limit)
-        .all()
-    )
 
-    tc_tournaments = (
-        db.query(models.TournamentCentral)
-        .filter(models.TournamentCentral.is_public.is_(True))
-        .order_by(models.TournamentCentral.id.desc())
-        .limit(limit)
-        .all()
-    )
+    tc_tournaments = []
+    if source != "bw":
+        tc_tournaments = (
+            db.query(models.TournamentCentral)
+            .filter(models.TournamentCentral.is_public.is_(True))
+            .order_by(models.TournamentCentral.id.desc())
+            .limit(limit)
+            .all()
+        )
 
     tc_tournament_ids = [t.id for t in tc_tournaments]
     tc_registration_ready_ids: set[int] = set()

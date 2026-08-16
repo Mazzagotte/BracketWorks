@@ -2,6 +2,7 @@ import { apiClient } from "../../lib/api";
 
 import type {
   AdminAnnouncement,
+  AdminFeedbackMessage,
   AdminChangelogEntry,
   AdminOperation,
   AuditLogsResponse,
@@ -87,6 +88,15 @@ export const adminApi = {
   },
   getAnnouncements() {
     return apiClient.get<{ announcements: AdminAnnouncement[] }>("/api/v1/admin/announcements", false);
+  },
+  getFeedback() {
+    return apiClient.get<{ messages: AdminFeedbackMessage[] }>("/api/v1/admin/feedback", false);
+  },
+  updateFeedback(messageId: number, payload: { status: AdminFeedbackMessage["status"]; admin_note: string | null }) {
+    return apiClient.patch<AdminFeedbackMessage>(`/api/v1/admin/feedback/${messageId}`, payload);
+  },
+  deleteAnnouncement(announcementId: number) {
+    return apiClient.delete<{ ok: boolean; acknowledgments_deleted: number }>(`/api/v1/admin/announcements/${announcementId}`);
   },
   getOperations() {
     return apiClient.get<{ operations: AdminOperation[]; note: string }>("/api/v1/admin/operations", false);

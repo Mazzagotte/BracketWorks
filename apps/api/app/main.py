@@ -1,3 +1,7 @@
+import asyncio
+import logging
+
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -8,8 +12,35 @@ from app.middleware import (
     create_rate_limit_middleware,
     create_security_headers_middleware,
 )
+from app.api.deps import SessionLocal
+from app.services.account_cleanup import deactivate_stale_unverified_accounts
 
-app = FastAPI(title="BracketWorks API", version="0.0.1", redirect_slashes=False)
+logger = logging.getLogger(__name__)
+
+
+async def _account_cleanup_loop() -> None:
+    while True:
+        try:
+            db = SessionLocal()
+            try:
+                deactivate_stale_unverified_accounts(db)
+            finally:
+                db.close()
+        except Exception:
+            logger.exception("Scheduled stale account cleanup failed")
+        await asyncio.sleep(settings.ACCOUNT_CLEANUP_INTERVAL_SECONDS)
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    cleanup_task = asyncio.create_task(_account_cleanup_loop())
+    try:
+        yield
+    finally:
+        cleanup_task.cancel()
+        await asyncio.gather(cleanup_task, return_exceptions=True)
+
+app = FastAPI(title="BracketWorks API", version="0.0.1", redirect_slashes=False, lifespan=lifespan)
 
 
 def _split_csv(value: str) -> list[str]:

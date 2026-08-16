@@ -47,6 +47,7 @@ export type UserRow = {
   last_name: string;
   organization: string | null;
   is_admin: boolean;
+  is_active: boolean;
   email_verified: boolean;
   email_verified_at: string | null;
   last_login_at: string | null;
@@ -212,6 +213,7 @@ export type AdminTab =
   | "tournaments"
   | "operations"
   | "announcements"
+  | "messages"
   | "database"
   | "audit"
   | "changelog";
@@ -274,4 +276,21 @@ export const TAB_LABELS: Record<AdminTab, string> = {
   changelog: "Changelog",
   operations: "Operations",
   announcements: "Announcements",
+  messages: "Messages",
+};
+
+export type AdminFeedbackMessage = {
+  id: number;
+  user_id: number;
+  username: string;
+  user_name: string;
+  email: string;
+  category: "problem" | "feature" | "other";
+  subject: string;
+  message: string;
+  status: "open" | "in_progress" | "resolved";
+  admin_note: string | null;
+  resolved_at: string | null;
+  created_at: string | null;
+  updated_at: string | null;
 };

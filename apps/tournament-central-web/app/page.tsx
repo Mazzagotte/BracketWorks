@@ -522,7 +522,7 @@ export default function HomePage() {
     setHeartbeatState('checking');
 
     try {
-      const response = await fetch(`/api/v1/public/tournaments?limit=300&ts=${Date.now()}`, {
+      const response = await fetch(`/api/v1/public/tournaments?source=tc&limit=300&ts=${Date.now()}`, {
         cache: 'no-store',
       });
 

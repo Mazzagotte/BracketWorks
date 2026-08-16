@@ -14,6 +14,7 @@ export function AdminTabNav({ activeTab, isDevelopment, onTabChange }: AdminTabN
     "users",
     "tournaments",
     "announcements",
+    "messages",
     "operations",
     "audit",
     "changelog",

@@ -19,6 +19,7 @@ import { adminApi } from "./services/adminApi";
 import {
   EMPTY_CHANGELOG_FORM,
   type AdminAnnouncement,
+  type AdminFeedbackMessage,
   type AdminChangelogEntry,
   type AdminOperation,
   type AdminTab,
@@ -118,6 +119,11 @@ export default function AdminPage() {
   const [showChangelogHistory, setShowChangelogHistory] = useState(false);
   const [editingChangelogVersion, setEditingChangelogVersion] = useState<string | null>(null);
   const [deletingChangelogVersion, setDeletingChangelogVersion] = useState<string | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<
+    | { type: "announcement"; announcement: AdminAnnouncement }
+    | { type: "changelog"; version: string }
+    | null
+  >(null);
 
   const [refreshing, setRefreshing] = useState(false);
   const [announcements, setAnnouncements] = useState<AdminAnnouncement[]>([]);
@@ -132,6 +138,9 @@ export default function AdminPage() {
   const [operations, setOperations] = useState<AdminOperation[]>([]);
   const [operationsLoading, setOperationsLoading] = useState(false);
   const [operationsNote, setOperationsNote] = useState("");
+  const [feedbackMessages, setFeedbackMessages] = useState<AdminFeedbackMessage[]>([]);
+  const [feedbackLoading, setFeedbackLoading] = useState(false);
+  const [feedbackNotes, setFeedbackNotes] = useState<Record<number, string>>({});
 
   const [editUser, setEditUser] = useState<UserRow | null>(null);
   const [editFirstName, setEditFirstName] = useState("");
@@ -417,6 +426,26 @@ export default function AdminPage() {
     finally { setOperationsLoading(false); if (manual) setRefreshing(false); }
   }, [currentUser?.isAdmin]);
 
+  const loadFeedback = useCallback(async (manual = false) => {
+    if (!currentUser?.isAdmin) return;
+    if (manual) setRefreshing(true);
+    setFeedbackLoading(true); setError(null);
+    try {
+      const data = await adminApi.getFeedback();
+      setFeedbackMessages(data.messages);
+      setFeedbackNotes(current => Object.fromEntries(data.messages.map(message => [message.id, current[message.id] ?? message.admin_note ?? ""])));
+    } catch (err) { setError(err instanceof Error ? err.message : "Failed to load messages"); }
+    finally { setFeedbackLoading(false); if (manual) setRefreshing(false); }
+  }, [currentUser?.isAdmin]);
+
+  const updateFeedback = useCallback(async (message: AdminFeedbackMessage, status: AdminFeedbackMessage["status"]) => {
+    try {
+      const updated = await adminApi.updateFeedback(message.id, { status, admin_note: feedbackNotes[message.id] || null });
+      setFeedbackMessages(current => current.map(item => item.id === updated.id ? updated : item));
+      showSuccess("Message updated.");
+    } catch (err) { setError(err instanceof Error ? err.message : "Failed to update message"); }
+  }, [feedbackNotes, showSuccess]);
+
   const saveAnnouncement = useCallback(async () => {
     if (!announcementTitle.trim() || !announcementMessage.trim()) return;
     setAnnouncementSaving(true); setError(null);
@@ -433,6 +462,18 @@ export default function AdminPage() {
       await apiClient.patch(`/api/v1/admin/announcements/${announcement.id}`, { ...announcement, status });
       await loadAnnouncements(false); showSuccess(`Announcement ${status}.`);
     } catch (err) { setError(err instanceof Error ? err.message : "Failed to update announcement"); }
+  }, [loadAnnouncements, showSuccess]);
+
+  const deleteAnnouncement = useCallback(async (announcement: AdminAnnouncement) => {
+    setDeleteConfirmation({ type: "announcement", announcement });
+  }, []);
+
+  const confirmAnnouncementDelete = useCallback(async (announcement: AdminAnnouncement) => {
+    try {
+      await adminApi.deleteAnnouncement(announcement.id);
+      await loadAnnouncements(false);
+      showSuccess("Announcement deleted.");
+    } catch (err) { setError(err instanceof Error ? err.message : "Failed to delete announcement"); }
   }, [loadAnnouncements, showSuccess]);
 
   const loadActiveTab = useCallback(async (manual = false) => {
@@ -457,9 +498,10 @@ export default function AdminPage() {
       return;
     }
     if (activeTab === "announcements") { await loadAnnouncements(manual); return; }
+    if (activeTab === "messages") { await loadFeedback(manual); return; }
     if (activeTab === "operations") { await loadOperations(manual); return; }
     await loadAuditLogs(manual);
-  }, [activeTab, loadOverview, loadUsers, loadTournaments, loadTables, loadChangelog, loadAuditLogs, loadAnnouncements, loadOperations]);
+  }, [activeTab, loadOverview, loadUsers, loadTournaments, loadTables, loadChangelog, loadAuditLogs, loadAnnouncements, loadFeedback, loadOperations]);
 
   const refreshAfterMutation = useCallback(async ({
     overview = false,
@@ -507,6 +549,15 @@ export default function AdminPage() {
     }
   }, [refreshAfterMutation, showSuccess]);
 
+  const handleToggleUserActive = useCallback(async (user: UserRow) => {
+    if (!window.confirm(`${user.is_active ? "Deactivate" : "Reactivate"} ${user.username}?`)) return;
+    try {
+      await apiClient.post(`/api/v1/admin/users/${user.id}/set-active`, { is_active: !user.is_active });
+      await refreshAfterMutation({ users: true, audit: true });
+      showSuccess(`${user.username} was ${user.is_active ? "deactivated" : "reactivated"}.`);
+    } catch (err) { setError(err instanceof Error ? err.message : "Failed to update account status"); }
+  }, [refreshAfterMutation, showSuccess]);
+
   const handleChangelogCreateOrUpdate = useCallback(async () => {
     if (!changelogForm.version.trim() || !changelogForm.date.trim() || !changelogForm.changes.trim()) {
       setChangelogFormError("All fields are required");
@@ -550,8 +601,10 @@ export default function AdminPage() {
   }, [changelogForm, editingChangelogVersion, refreshAfterMutation, showSuccess]);
 
   const handleChangelogDelete = useCallback(async (version: string) => {
-    if (!window.confirm(`Delete changelog entry for version ${version}?`)) return;
+    setDeleteConfirmation({ type: "changelog", version });
+  }, []);
 
+  const confirmChangelogDelete = useCallback(async (version: string) => {
     setDeletingChangelogVersion(version);
     setChangelogError(null);
     try {
@@ -637,8 +690,17 @@ export default function AdminPage() {
   useEffect(() => {
     if (!isAuthInitialized || !isUserAuthenticated || !currentUser?.isAdmin) return;
     if (activeTab === "announcements") void loadAnnouncements(false);
+    if (activeTab === "messages") void loadFeedback(false);
     if (activeTab === "operations") void loadOperations(false);
-  }, [activeTab, isAuthInitialized, isUserAuthenticated, currentUser?.isAdmin, loadAnnouncements, loadOperations]);
+  }, [activeTab, isAuthInitialized, isUserAuthenticated, currentUser?.isAdmin, loadAnnouncements, loadFeedback, loadOperations]);
+
+  useEffect(() => {
+    if (!isAuthInitialized || !isUserAuthenticated || !currentUser?.isAdmin) return;
+    const heartbeat = window.setInterval(() => {
+      if (document.visibilityState === "visible") void loadActiveTab(false);
+    }, 30000);
+    return () => window.clearInterval(heartbeat);
+  }, [activeTab, isAuthInitialized, isUserAuthenticated, currentUser?.isAdmin, loadActiveTab]);
 
   useEffect(() => {
     if (!deleteUser) return;
@@ -686,19 +748,6 @@ export default function AdminPage() {
   return (
     <div className={styles.page}>
       {error && <div className={styles.errorBanner} role="alert">{error}</div>}
-
-      <div className={styles.toolbarRow}>
-        <div>
-          <button
-            type="button"
-            className={styles.refreshButton}
-            onClick={() => { void loadActiveTab(true); }}
-            disabled={refreshing}
-          >
-            {refreshing ? "Refreshing..." : "Refresh"}
-          </button>
-        </div>
-      </div>
 
       <AdminTabNav
         activeTab={activeTab}
@@ -764,6 +813,7 @@ export default function AdminPage() {
             setTimeout(() => resetPasswordInputRef.current?.focus(), 50);
           }}
           onToggleAdminRole={(user) => void handleToggleAdminRole(user)}
+          onToggleUserActive={(user) => void handleToggleUserActive(user)}
           onStartDeleteUser={(user) => {
             setDeleteUser(user);
             setDeleteUserReason("");
@@ -1096,9 +1146,16 @@ export default function AdminPage() {
           </section>
           <section className={styles.panel}>
             <div className={styles.panelHeader}><h3 className={styles.panelTitle}>Announcement History</h3><span className={styles.panelSubtle}>{announcements.length} total</span></div>
-            {announcementsLoading ? <div className={styles.placeholder} role="status">Loading announcements…</div> : announcements.length === 0 ? <div className={styles.placeholder}>No announcements have been created.</div> : <div className={styles.announcementList}>{announcements.map(item => <article className={styles.announcementCard} key={item.id}><div className={styles.announcementCardHeader}><div><span className={`${styles.statusPill} ${item.status === "active" ? styles.statusActive : styles.statusDraft}`}>{item.status}</span><strong>{item.title}</strong></div><span>{item.acknowledgment_count} acknowledged</span></div><p>{item.message}</p><div className={styles.announcementCardFooter}><span>Audience: {item.audience_type}{item.requires_acknowledgment ? " · acknowledgment required" : ""}</span><div className={styles.rowActions}>{item.status !== "active" && <button className={styles.actionBtn} type="button" onClick={() => { void updateAnnouncementStatus(item, "active"); }}>Publish</button>}{item.status !== "archived" && <button className={styles.actionBtn} type="button" onClick={() => { void updateAnnouncementStatus(item, "archived"); }}>Archive</button>}</div></div></article>)}</div>}
+            {announcementsLoading ? <div className={styles.placeholder} role="status">Loading announcements…</div> : announcements.length === 0 ? <div className={styles.placeholder}>No announcements have been created.</div> : <div className={styles.announcementList}>{announcements.map(item => <article className={styles.announcementCard} key={item.id}><div className={styles.announcementCardHeader}><div><span className={`${styles.statusPill} ${item.status === "active" ? styles.statusActive : styles.statusDraft}`}>{item.status}</span><strong>{item.title}</strong></div><span>{item.acknowledgment_count} acknowledged</span></div><p>{item.message}</p><div className={styles.announcementCardFooter}><span>Audience: {item.audience_type}{item.requires_acknowledgment ? " · acknowledgment required" : ""}</span><div className={styles.rowActions}>{item.status !== "active" && <button className={styles.actionBtn} type="button" onClick={() => { void updateAnnouncementStatus(item, "active"); }}>Publish</button>}{item.status !== "archived" && <button className={styles.actionBtn} type="button" onClick={() => { void updateAnnouncementStatus(item, "archived"); }}>Archive</button>}<button className={styles.actionBtn} type="button" onClick={() => { void deleteAnnouncement(item); }}>Delete</button></div></div></article>)}</div>}
           </section>
         </div>
+      )}
+
+      {activeTab === "messages" && (
+        <section className={styles.panel}>
+          <div className={styles.panelHeader}><div><h3 className={styles.panelTitle}>User Messages</h3><span className={styles.panelSubtle}>Problem reports and feature requests from users</span></div><span className={styles.panelSubtle}>{feedbackMessages.filter(message => message.status !== "resolved").length} open</span></div>
+          {feedbackLoading ? <div className={styles.placeholder} role="status">Loading messages...</div> : feedbackMessages.length === 0 ? <div className={styles.placeholder}>No user messages have been submitted.</div> : <div className={styles.feedbackList}>{feedbackMessages.map(message => <article className={styles.feedbackCard} key={message.id}><div className={styles.feedbackHeader}><div><span className={`${styles.statusPill} ${message.status === "resolved" ? styles.statusActive : styles.statusDraft}`}>{message.status.replace("_", " ")}</span><span className={styles.feedbackCategory}>{message.category}</span><h4>{message.subject}</h4></div><time dateTime={message.created_at || undefined}>{formatAdminTimestamp(message.created_at, "Unknown")}</time></div><div className={styles.feedbackMeta}>{message.user_name} (@{message.username}) · {message.email}</div><p className={styles.feedbackMessage}>{message.message}</p><textarea className={styles.feedbackNoteInput} aria-label={`Internal note for ${message.subject}`} value={feedbackNotes[message.id] || ""} onChange={event => setFeedbackNotes(current => ({ ...current, [message.id]: event.target.value }))} placeholder="Internal note for administrators" maxLength={5000} /><div className={styles.feedbackFooter}><span>{message.admin_note ? "Internal note saved" : "No internal note"}</span><div className={styles.rowActions}><select className={styles.toolbarSelect} aria-label={`Status for ${message.subject}`} value={message.status} onChange={event => { void updateFeedback(message, event.target.value as AdminFeedbackMessage["status"]); }}><option value="open">Open</option><option value="in_progress">In progress</option><option value="resolved">Resolved</option></select><button type="button" className={styles.actionBtn} onClick={() => { void updateFeedback(message, message.status); }}>Save note</button></div></div></article>)}</div>}
+        </section>
       )}
 
       {activeTab === "operations" && (
@@ -1118,6 +1175,68 @@ export default function AdminPage() {
               <section className={styles.reviewSection}><h4>Note history</h4>{tournamentNotesLoading ? <div className={styles.reviewEmpty}>Loading notes…</div> : tournamentNotes.length === 0 ? <div className={styles.reviewEmpty}>No internal notes have been added.</div> : <div className={styles.reviewList}>{tournamentNotes.map(note => <article className={styles.reviewItem} key={note.id}><div className={styles.reviewItemHeader}><span className={`${styles.statusPill} ${note.is_resolved ? styles.statusActive : styles.statusDraft}`}>{note.is_resolved ? "Resolved" : "Open"}</span><strong>{note.category}</strong><span>{formatAdminTimestamp(note.created_at, "")}</span></div><p>{note.note}</p><div className={styles.reviewItemFooter}><span>Added by @{note.admin_username}</span><button type="button" className={styles.actionBtn} onClick={() => { void resolveTournamentNote(note.id, !note.is_resolved); }}>{note.is_resolved ? "Reopen" : "Resolve"}</button></div></article>)}</div>}</section>
             </div>
             <div className={styles.modalFooter}><button type="button" className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.small}`} onClick={() => setNoteTournament(null)}>Close</button></div>
+          </div>
+        </div>
+      )}
+
+      {deleteConfirmation && (
+        <div className={styles.modalOverlay} onClick={() => setDeleteConfirmation(null)}>
+          <div
+            className={`${styles.modal} ${styles.compactModal}`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-confirmation-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className={styles.modalHeader}>
+              <div>
+                <h3 id="delete-confirmation-title" className={styles.modalTitle}>Confirm deletion</h3>
+                <div className={styles.secondaryText}>This action cannot be undone.</div>
+              </div>
+              <button
+                type="button"
+                aria-label="Close delete confirmation"
+                className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.modalClose}`}
+                onClick={() => setDeleteConfirmation(null)}
+              >
+                X
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              <p className={styles.confirmationMessage}>
+                Delete {deleteConfirmation.type === "announcement" ? "announcement" : "changelog entry"}{" "}
+                <strong>
+                  {deleteConfirmation.type === "announcement"
+                    ? deleteConfirmation.announcement.title
+                    : `version ${deleteConfirmation.version}`}
+                </strong>
+                ?
+              </p>
+            </div>
+            <div className={styles.modalFooter}>
+              <button
+                type="button"
+                className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.small}`}
+                onClick={() => setDeleteConfirmation(null)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={`${buttonStyles.button} ${buttonStyles.danger} ${buttonStyles.small}`}
+                onClick={() => {
+                  const confirmation = deleteConfirmation;
+                  setDeleteConfirmation(null);
+                  if (confirmation.type === "announcement") {
+                    void confirmAnnouncementDelete(confirmation.announcement);
+                  } else {
+                    void confirmChangelogDelete(confirmation.version);
+                  }
+                }}
+              >
+                Delete
+              </button>
+            </div>
           </div>
         </div>
       )}

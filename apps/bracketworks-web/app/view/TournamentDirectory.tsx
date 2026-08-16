@@ -91,7 +91,7 @@ export default function TournamentDirectory({
 
     setError(null)
     try {
-      const response = await fetch(buildApiUrl('/api/v1/public/tournaments'), {
+      const response = await fetch(buildApiUrl('/api/v1/public/tournaments?source=bw'), {
         cache: 'no-store',
       })
       if (!response.ok) throw new Error('Failed to load public tournaments.')
