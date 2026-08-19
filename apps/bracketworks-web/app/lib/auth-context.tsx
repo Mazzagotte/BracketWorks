@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 
 import { logger } from './logger';
-import { API, apiClient, getCsrfToken, getMemoryAccessToken, setMemoryAccessToken } from './api';
+import { API, apiClient, getCsrfToken, getMemoryAccessToken, setMemoryAccessToken, clearAuthStorage } from './api';
 
 interface User {
   id: string;
@@ -39,14 +39,8 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const clearAuthStorageKeys = useCallback(() => {
-    sessionStorage.removeItem('token');
-    localStorage.removeItem('token');
-    localStorage.removeItem('session_id');
-    localStorage.removeItem('user_id');
-    localStorage.removeItem('userId');
-    localStorage.removeItem('is_admin');
-    localStorage.removeItem('first_name');
-  }, []);
+    clearAuthStorage()
+  }, [])
 
   const clearAuthState = useCallback(() => {
     setMemoryAccessToken(null);

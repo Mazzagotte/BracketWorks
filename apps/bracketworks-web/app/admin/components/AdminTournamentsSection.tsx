@@ -1,4 +1,5 @@
-import { Fragment } from "react";
+import { Fragment, useState } from "react";
+import { MoreHorizontal } from "lucide-react";
 
 import { DataTableToolbar } from "../../components/primitives";
 
@@ -52,6 +53,8 @@ export function AdminTournamentsSection({
   onStartDeleteTournament,
   onToggleTournamentExpanded,
 }: AdminTournamentsSectionProps) {
+  const [actionTournament, setActionTournament] = useState<TournamentRow | null>(null);
+
   return (
     <section className={styles.panel}>
       <div className={styles.panelHeader}>
@@ -138,60 +141,15 @@ export function AdminTournamentsSection({
                       <td><span className={`${styles.statusPill} ${tournament.status === "current" ? styles.statusActive : styles.statusDraft}`}>{tournament.status}</span></td>
                       <td><span className={`${styles.statusPill} ${tournament.open_note_count > 0 ? styles.statusDraft : styles.statusActive}`}>{tournament.open_note_count > 0 ? `${tournament.open_note_count} open` : "Clear"}</span></td>
                       <td>
-                        <div className={styles.rowActions}>
-                          <button
-                            type="button"
-                            className={styles.actionBtn}
-                            onClick={() => onLoadTournamentNotes(tournament)}
-                          >
-                            Notes
-                          </button>
-                          <button
-                            type="button"
-                            className={styles.actionBtn}
-                            onClick={() => onStartEditTournament(tournament)}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            className={styles.actionBtn}
-                            onClick={() => onStartReassignTournament(tournament)}
-                          >
-                            Reassign
-                          </button>
-                          {tournament.archived_at ? (
-                            <button
-                              type="button"
-                              className={styles.actionBtn}
-                              onClick={() => onUnarchiveTournament(tournament)}
-                            >
-                              Unarchive
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              className={styles.actionBtn}
-                              onClick={() => onStartArchiveTournament(tournament)}
-                            >
-                              Archive
-                            </button>
-                          )}
-                          <button
-                            type="button"
-                            className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
-                            onClick={() => onStartDeleteTournament(tournament)}
-                          >
-                            Delete
-                          </button>
-                          <button
-                            type="button"
-                            className={styles.actionBtn}
-                            onClick={() => onToggleTournamentExpanded(tournament.id)}
-                          >
-                            {expanded ? "Hide" : "Details"}
-                          </button>
-                        </div>
+                        <button
+                          type="button"
+                          className={styles.userActionsTrigger}
+                          aria-label={`Actions for ${tournament.name}`}
+                          onClick={() => setActionTournament(tournament)}
+                        >
+                          <MoreHorizontal aria-hidden="true" />
+                          <span>Actions</span>
+                        </button>
                       </td>
                     </tr>
                     {expanded && (
@@ -243,6 +201,46 @@ export function AdminTournamentsSection({
           Next
         </button>
       </div>
+      {actionTournament && (
+        <div className={styles.modalOverlay} onClick={() => setActionTournament(null)}>
+          <div
+            className={`${styles.modal} ${styles.userActionsModal}`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="tournament-actions-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className={styles.modalHeader}>
+              <div>
+                <h3 id="tournament-actions-title" className={styles.modalTitle}>Tournament actions</h3>
+                <div className={styles.secondaryText}>{actionTournament.name}</div>
+              </div>
+              <button
+                type="button"
+                className={styles.modalClose}
+                aria-label="Close tournament actions"
+                onClick={() => setActionTournament(null)}
+              >
+                X
+              </button>
+            </div>
+            <div className={styles.userActionsModalBody}>
+              <button type="button" className={styles.actionBtn} onClick={() => { setActionTournament(null); onLoadTournamentNotes(actionTournament); }}>Notes</button>
+              <button type="button" className={styles.actionBtn} onClick={() => { setActionTournament(null); onStartEditTournament(actionTournament); }}>Edit</button>
+              <button type="button" className={styles.actionBtn} onClick={() => { setActionTournament(null); onStartReassignTournament(actionTournament); }}>Reassign</button>
+              {actionTournament.archived_at ? (
+                <button type="button" className={styles.actionBtn} onClick={() => { setActionTournament(null); onUnarchiveTournament(actionTournament); }}>Unarchive</button>
+              ) : (
+                <button type="button" className={styles.actionBtn} onClick={() => { setActionTournament(null); onStartArchiveTournament(actionTournament); }}>Archive</button>
+              )}
+              <button type="button" className={`${styles.actionBtn} ${styles.actionBtnDanger}`} onClick={() => { setActionTournament(null); onStartDeleteTournament(actionTournament); }}>Delete</button>
+              <button type="button" className={styles.actionBtn} onClick={() => { setActionTournament(null); onToggleTournamentExpanded(actionTournament.id); }}>
+                {expandedTournamentIds.includes(actionTournament.id) ? "Hide" : "Details"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

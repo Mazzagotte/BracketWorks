@@ -1,4 +1,5 @@
 import { Player, Squad, Tournament } from '../../lib/types'
+import type { PlayerScoreStatus, ScoreValidation } from '../types'
 
 // ─── Excel helpers ────────────────────────────────────────────────────────────
 
@@ -162,4 +163,42 @@ export function calculateDisplayTotal(player: Player): string | number {
   if (played.length === 0) return ''
   const scratch = played.reduce((sum, s) => sum + (s || 0), 0)
   return scratch + ((player.handicap ?? 0) * played.length)
+}
+
+// ─── Validation helpers ───────────────────────────────────────────────────────
+
+export function validateScore(score: number | undefined): ScoreValidation {
+  if (score === undefined || score === null) return { isValid: true, message: '' }
+  if (score < 0) return { isValid: false, message: 'Score cannot be negative' }
+  if (score > 300) return { isValid: false, message: 'Score cannot exceed 300' }
+  return { isValid: true, message: '' }
+}
+
+export function getScoreInputClass(score: number | undefined): string {
+  const validation = validateScore(score)
+  if (!validation.isValid) return 'score-input invalid'
+  if (score === 300) return 'score-input perfect'
+  return 'score-input'
+}
+
+export function hasMissingScore(player: Player): boolean {
+  const scores = player.scores || {}
+  return scores.game1_scratch == null || scores.game2_scratch == null || scores.game3_scratch == null
+}
+
+export function needsReviewScore(player: Player): boolean {
+  const scores = player.scores || {}
+  return [scores.game1_scratch, scores.game2_scratch, scores.game3_scratch].some(score => (score || 0) >= 250)
+}
+
+export function getPlayerScoreStatus(player: Player): PlayerScoreStatus {
+  const gameScores = [
+    player.scores?.game1_scratch,
+    player.scores?.game2_scratch,
+    player.scores?.game3_scratch,
+  ]
+  const enteredGames = gameScores.filter(score => score != null).length
+  if (enteredGames === gameScores.length) return { label: 'Complete', tone: 'complete' }
+  if (enteredGames > 0) return { label: 'In Progress', tone: 'progress' }
+  return { label: 'Not Started', tone: 'pending' }
 }

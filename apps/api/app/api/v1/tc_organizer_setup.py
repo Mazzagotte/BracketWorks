@@ -59,6 +59,60 @@ def get_tournament_setup_state(
     return state
 
 
+@router.get("/{tournament_id}/registrations")
+def list_tournament_registrations(
+    tournament_id: int,
+    db: Session = Depends(deps.get_db),
+    user: models.User = Depends(deps.get_current_user),
+):
+    tournament = verify_owned_tc_tournament_access(db, tournament_id, user)
+
+    rows = (
+        db.query(models.TcRegistration)
+        .filter(models.TcRegistration.tournament_id == tournament.id)
+        .order_by(models.TcRegistration.submitted_at.desc(), models.TcRegistration.id.desc())
+        .all()
+    )
+
+    entry_by_registration: dict[int, models.TcEntry] = {}
+    if rows:
+        registration_ids = [row.id for row in rows]
+        entries = (
+            db.query(models.TcEntry)
+            .filter(models.TcEntry.registration_id.in_(registration_ids))
+            .order_by(models.TcEntry.id.asc())
+            .all()
+        )
+        for entry in entries:
+            entry_by_registration.setdefault(entry.registration_id, entry)
+
+    registrations: list[dict] = []
+    for row in rows:
+        entry = entry_by_registration.get(row.id)
+        registrations.append(
+            {
+                "id": row.confirmation_code,
+                "submitted_at": row.submitted_at.isoformat() if row.submitted_at else None,
+                "status": row.status,
+                "form": {
+                    "first_name": row.contact_first_name,
+                    "last_name": row.contact_last_name,
+                    "email": row.contact_email,
+                    "phone": row.contact_phone,
+                    "event_id": entry.event_config_id if entry else None,
+                    "division_id": entry.division_config_id if entry else None,
+                    "squad_id": entry.squad_config_id if entry else None,
+                    "notes": row.notes,
+                },
+            }
+        )
+
+    return {
+        "tournament_id": tournament.id,
+        "registrations": registrations,
+    }
+
+
 @router.put("/{tournament_id}", response_model=schemas.TournamentSetupState)
 def upsert_tournament_setup_state(
     tournament_id: int,

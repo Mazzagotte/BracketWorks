@@ -3,7 +3,7 @@ Public read-only endpoints for the bowler-facing tournament view.
 No authentication required — intended for QR-code accessible display pages.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import Any, Literal, Optional
@@ -12,12 +12,12 @@ import json
 import re
 import unicodedata
 from datetime import datetime, timezone
-from uuid import uuid4
 
 from pydantic import BaseModel, Field
 
 from ..deps import get_db
 from ...core import models
+from ...core.idempotency import IdempotencyReplay, begin_request, complete_request, fail_request
 from ...core.bracket_programs import normalize_bowler_bracket_entries, normalize_division
 from ...services.bracket_persistence_simple import load_brackets_simple, load_generated_brackets
 from ...services.payouts import get_tournament_winners_summary, extract_bracket_winners
@@ -256,14 +256,14 @@ class PublicRegistrationSubmissionForm(BaseModel):
     email: str
     phone: str = ""
     usbcNumber: str = ""
-    bowlers: list[dict[str, str]] = Field(default_factory=list)
+    bowlers: list[dict[str, Any]] = Field(default_factory=list)
     eventId: str = ""
     divisionId: str = ""
     squadId: str = ""
     notes: str = ""
     questionAnswers: dict[str, Any] = Field(default_factory=dict)
     bowlerQuestionAnswers: list[dict[str, Any]] = Field(default_factory=list)
-    fieldValues: dict[str, str] = Field(default_factory=dict)
+    fieldValues: dict[str, Any] = Field(default_factory=dict)
     acceptTerms: bool
 
 
@@ -374,6 +374,86 @@ def _required_bowler_count_for_submission(
         return _event_player_count(events[0])
 
     return 1
+
+
+def _safe_iso_to_datetime(value: Any) -> datetime:
+    raw = str(value or "").strip()
+    if not raw:
+        return datetime.now(timezone.utc)
+
+    try:
+        parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+    except ValueError:
+        return datetime.now(timezone.utc)
+
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def _clean_text(value: Any) -> str:
+    return str(value or "").strip()
+
+
+def _clean_email(value: Any) -> str:
+    return _clean_text(value).lower()
+
+
+def _confirmation_prefix(tournament_name: str) -> str:
+    words = re.findall(r"[A-Za-z0-9]+", tournament_name or "")
+    if not words:
+        return "TC"
+    if len(words) == 1:
+        return words[0][:4].upper()
+    return "".join(word[0] for word in words)[:5].upper()
+
+
+def _next_confirmation_code(db: Session, tournament: models.TournamentCentral) -> str:
+    year_match = re.match(r"(\d{4})", _clean_text(tournament.start_date))
+    year = year_match.group(1) if year_match else str(datetime.now(timezone.utc).year)
+    prefix = _confirmation_prefix(tournament.name)
+    sequence = int(
+        db.query(func.count(models.TcRegistration.id))
+        .filter(models.TcRegistration.tournament_id == tournament.id)
+        .scalar()
+        or 0
+    ) + 1
+    return f"{prefix}-{year}-{sequence:04d}"
+
+
+def _normalize_status_for_capacity(capacity: int, current_bowler_count: int, requested_bowler_count: int, waitlist_enabled: bool) -> str:
+    if capacity <= 0:
+        return "confirmed"
+
+    if current_bowler_count + requested_bowler_count <= capacity:
+        return "confirmed"
+
+    if waitlist_enabled:
+        return "waitlisted"
+
+    raise HTTPException(status_code=409, detail="This squad is full")
+
+
+def _normalize_legacy_bowlers(
+    form: PublicRegistrationSubmissionForm,
+    submitted_field_values: dict[str, str],
+) -> list[dict[str, str]]:
+    normalized_bowlers: list[dict[str, str]] = []
+    for bowler in (form.bowlers or []):
+        if not isinstance(bowler, dict):
+            continue
+
+        normalized_bowler = {
+            str(key).strip().lower(): (value.strip() if isinstance(value, str) else _clean_text(value))
+            for key, value in bowler.items()
+            if str(key).strip()
+        }
+        normalized_bowlers.append(normalized_bowler)
+
+    if not normalized_bowlers:
+        normalized_bowlers = [submitted_field_values.copy()]
+
+    return normalized_bowlers
 
 
 @router.get("/tournaments")
@@ -674,6 +754,11 @@ def get_public_tc_tournament_registration_config(
     if not state:
         raise HTTPException(status_code=404, detail="Registration setup not available")
 
+    # Serialize concurrent registration writes per tournament on databases that support row locks.
+    db.query(models.TournamentCentral).filter(
+        models.TournamentCentral.id == tournament_id
+    ).with_for_update().first()
+
     payload = state.payload if isinstance(state.payload, dict) else {}
 
     events = [
@@ -713,9 +798,10 @@ def get_public_tc_tournament_registration_config(
 def submit_public_tc_tournament_registration(
     tournament_id: int,
     payload: PublicRegistrationSubmissionRequest,
+    idempotency_key: Optional[str] = Header(None, alias="Idempotency-Key"),
     db: Session = Depends(get_db),
 ):
-    """Persist a public registration submission for organizer follow-up."""
+    """Persist a public registration submission as relational registration records."""
     tournament = db.query(models.TournamentCentral).filter(
         models.TournamentCentral.id == tournament_id,
         models.TournamentCentral.is_public.is_(True),
@@ -731,6 +817,19 @@ def submit_public_tc_tournament_registration(
         raise HTTPException(status_code=404, detail="Registration setup not available")
 
     form = payload.form
+    idempotency_record = None
+
+    if idempotency_key:
+        replay_or_record = begin_request(
+            db,
+            endpoint_scope=f"public:tc-registration:{tournament_id}",
+            idempotency_key=idempotency_key,
+            request_payload=payload.model_dump(mode="json"),
+            user_id=None,
+        )
+        if isinstance(replay_or_record, IdempotencyReplay):
+            return replay_or_record.response_body
+        idempotency_record = replay_or_record
 
     state_payload = state.payload if isinstance(state.payload, dict) else {}
     configured_fields = [
@@ -743,7 +842,7 @@ def submit_public_tc_tournament_registration(
     ]
 
     submitted_field_values = {
-        str(key).strip().lower(): (value.strip() if isinstance(value, str) else "")
+        str(key).strip().lower(): (value.strip() if isinstance(value, str) else _clean_text(value))
         for key, value in (form.fieldValues or {}).items()
         if str(key).strip()
     }
@@ -760,24 +859,24 @@ def submit_public_tc_tournament_registration(
         if key not in submitted_field_values and isinstance(value, str) and value.strip():
             submitted_field_values[key] = value.strip()
 
-    normalized_bowlers: list[dict[str, str]] = []
-    for bowler in (form.bowlers or []):
-        if not isinstance(bowler, dict):
-            continue
+    normalized_bowlers = _normalize_legacy_bowlers(form, submitted_field_values)
 
-        normalized_bowler = {
-            str(key).strip().lower(): (value.strip() if isinstance(value, str) else "")
-            for key, value in bowler.items()
-            if str(key).strip()
-        }
-        normalized_bowlers.append(normalized_bowler)
-
-    if not normalized_bowlers:
-        normalized_bowlers = [submitted_field_values.copy()]
+    events = [
+        event for event in (state_payload.get("events") or [])
+        if isinstance(event, dict) and bool(event.get("enabled", True))
+    ]
+    divisions = [
+        division for division in (state_payload.get("divisions") or [])
+        if isinstance(division, dict) and bool(division.get("enabled", True))
+    ]
+    squads = [
+        squad for squad in (state_payload.get("squads") or [])
+        if isinstance(squad, dict)
+    ]
 
     required_bowler_count = _required_bowler_count_for_submission(
-        [squad for squad in (state_payload.get("squads") or []) if isinstance(squad, dict)],
-        [event for event in (state_payload.get("events") or []) if isinstance(event, dict) and bool(event.get("enabled", True))],
+        squads,
+        events,
         selected_event_id=form.eventId,
         selected_squad_id=form.squadId,
     )
@@ -804,6 +903,46 @@ def submit_public_tc_tournament_registration(
 
     if missing_required:
         raise HTTPException(status_code=400, detail=missing_required)
+
+    event = next((row for row in events if str(row.get("id") or "") == form.eventId), None)
+    if not event:
+        raise HTTPException(status_code=400, detail="Selected event is invalid")
+
+    division = None
+    if form.divisionId:
+        division = next((row for row in divisions if str(row.get("id") or "") == form.divisionId), None)
+        if not division:
+            raise HTTPException(status_code=400, detail="Selected division is invalid")
+
+    squad = None
+    if form.squadId:
+        squad = next((row for row in squads if str(row.get("id") or "") == form.squadId), None)
+        if not squad:
+            raise HTTPException(status_code=400, detail="Selected squad is invalid")
+
+    if bool(event.get("requireDivision")) and not form.divisionId:
+        raise HTTPException(status_code=400, detail="A division selection is required for this event")
+
+    if bool(event.get("requireSquad")) and not form.squadId:
+        raise HTTPException(status_code=400, detail="A squad selection is required for this event")
+
+    connected_division_ids = [str(value) for value in (event.get("connectedDivisionIds") or [])]
+    if form.divisionId and connected_division_ids and form.divisionId not in connected_division_ids:
+        raise HTTPException(status_code=400, detail="Selected division is not available for this event")
+
+    connected_squad_ids = [str(value) for value in (event.get("connectedSquadIds") or [])]
+    if form.squadId and connected_squad_ids and form.squadId not in connected_squad_ids:
+        raise HTTPException(status_code=400, detail="Selected squad is not available for this event")
+
+    if squad:
+        deadline_iso = _clean_text(squad.get("registrationDeadlineIso"))
+        if deadline_iso:
+            try:
+                deadline_date = datetime.fromisoformat(deadline_iso).date()
+            except ValueError:
+                deadline_date = None
+            if deadline_date and datetime.now(timezone.utc).date() > deadline_date:
+                raise HTTPException(status_code=400, detail="Registration deadline has passed for this squad")
 
     configured_questions = [
         question for question in (state_payload.get("questions") or [])
@@ -848,48 +987,167 @@ def submit_public_tc_tournament_registration(
     if not form.acceptTerms:
         raise HTTPException(status_code=400, detail="Tournament terms must be accepted")
 
-    existing_submissions = state_payload.get("public_registration_submissions")
-    submissions = existing_submissions if isinstance(existing_submissions, list) else []
+    submission_id = _next_confirmation_code(db, tournament)
+    submitted_at = _safe_iso_to_datetime(payload.submittedAt)
+    now_dt = datetime.now(timezone.utc)
 
-    submission_id = f"reg-{uuid4().hex}"
-    now_iso = datetime.now(timezone.utc).isoformat()
+    capacity = 0
+    waitlist_enabled = False
+    if squad:
+        try:
+            capacity = int(squad.get("capacity") or 0)
+        except (TypeError, ValueError):
+            capacity = 0
+        waitlist_enabled = bool(squad.get("waitlistEnabled", False))
 
-    submissions.append({
-        "id": submission_id,
-        "tournament_id": tournament_id,
-        "tournament_name": tournament.name,
-        "submitted_at": now_iso,
-        "client_submitted_at": payload.submittedAt,
-        "form": {
-            "first_name": form.firstName.strip(),
-            "last_name": form.lastName.strip(),
-            "email": form.email.strip(),
-            "phone": form.phone.strip(),
-            "usbc_number": form.usbcNumber.strip(),
-            "event_id": form.eventId,
-            "division_id": form.divisionId,
-            "squad_id": form.squadId,
-            "notes": form.notes.strip(),
-            "question_answers": _normalize_public_question_answers(form.questionAnswers),
-            "bowler_question_answers": normalized_bowler_question_answers,
-            "field_values": submitted_field_values,
-            "bowlers": normalized_bowlers,
-            "required_bowler_count": required_bowler_count,
-            "accept_terms": form.acceptTerms,
-        },
-    })
+    active_entry_statuses = ("pending", "confirmed", "waitlisted")
+    current_bowler_count = 0
+    if squad and form.squadId:
+        current_bowler_count = int(
+            db.query(func.count(models.TcEntryBowler.id))
+            .join(models.TcEntry, models.TcEntry.id == models.TcEntryBowler.entry_id)
+            .filter(
+                models.TcEntry.tournament_id == tournament_id,
+                models.TcEntry.squad_config_id == form.squadId,
+                models.TcEntry.status.in_(active_entry_statuses),
+            )
+            .scalar()
+            or 0
+        )
 
-    # Keep storage bounded for this first pass while preserving recent requests.
-    state_payload["public_registration_submissions"] = submissions[-1000:]
-    state.payload = state_payload
+    registration_status = _normalize_status_for_capacity(
+        capacity,
+        current_bowler_count,
+        required_bowler_count,
+        waitlist_enabled,
+    )
+
+    entry_status = registration_status
+    event_entry_fee_cents = int(event.get("entryFeeCents") or 0)
+    total_cents = max(event_entry_fee_cents, 0)
+
+    registration = models.TcRegistration(
+        confirmation_code=submission_id,
+        tournament_id=tournament_id,
+        account_user_id=None,
+        contact_first_name=_clean_text(form.firstName),
+        contact_last_name=_clean_text(form.lastName),
+        contact_email=_clean_email(form.email),
+        contact_phone=_clean_text(form.phone) or None,
+        status=registration_status,
+        payment_status="unpaid",
+        subtotal_cents=total_cents,
+        fees_cents=0,
+        total_cents=total_cents,
+        currency="USD",
+        notes=_clean_text(form.notes) or None,
+        terms_accepted_at=now_dt,
+        submitted_at=submitted_at,
+        created_at=now_dt,
+        updated_at=now_dt,
+        source="public",
+    )
+    db.add(registration)
+    db.flush()
+
+    bowler_records: list[models.TcRegistrationBowler] = []
+    for bowler_values in normalized_bowlers:
+        average_value = bowler_values.get("average")
+        try:
+            average_number = int(str(average_value).strip()) if str(average_value).strip() else None
+        except ValueError:
+            average_number = None
+
+        bowler_record = models.TcRegistrationBowler(
+            registration_id=registration.id,
+            tournament_id=tournament_id,
+            user_id=None,
+            first_name=_clean_text(bowler_values.get("first_name")),
+            last_name=_clean_text(bowler_values.get("last_name")),
+            email=_clean_email(bowler_values.get("email")) or None,
+            phone=_clean_text(bowler_values.get("phone")) or None,
+            usbc_number=_clean_text(bowler_values.get("usbc_number")) or None,
+            average=average_number,
+            date_of_birth=_clean_text(bowler_values.get("date_of_birth")) or None,
+            address=_clean_text(bowler_values.get("address")) or None,
+            city=_clean_text(bowler_values.get("city")) or None,
+            state=_clean_text(bowler_values.get("state")) or None,
+            zip_code=_clean_text(bowler_values.get("zip") or bowler_values.get("zip_code")) or None,
+        )
+        db.add(bowler_record)
+        bowler_records.append(bowler_record)
+
+    db.flush()
+
+    entry = models.TcEntry(
+        registration_id=registration.id,
+        tournament_id=tournament_id,
+        event_config_id=form.eventId,
+        event_name_snapshot=_clean_text(event.get("name")) or form.eventId,
+        division_config_id=form.divisionId or None,
+        division_name_snapshot=_clean_text(division.get("name")) if division else None,
+        squad_config_id=form.squadId or None,
+        squad_name_snapshot=_clean_text(squad.get("name")) if squad else None,
+        squad_date_snapshot=_clean_text(squad.get("dateIso")) if squad else None,
+        squad_time_snapshot=_clean_text(squad.get("startTime")) if squad else None,
+        entry_number=None,
+        reentry_number=0,
+        status=entry_status,
+        entry_fee_cents=total_cents,
+    )
+    db.add(entry)
+    db.flush()
+
+    for index, bowler_record in enumerate(bowler_records):
+        db.add(models.TcEntryBowler(
+            entry_id=entry.id,
+            bowler_id=bowler_record.id,
+            position=index + 1,
+            role=None,
+        ))
+
+    question_by_id = {
+        str(question.get("id") or ""): question
+        for question in configured_questions
+        if str(question.get("id") or "").strip()
+    }
+    for bowler_index, answer_set in enumerate(normalized_bowler_question_answers):
+        bowler_record = bowler_records[min(bowler_index, len(bowler_records) - 1)] if bowler_records else None
+        for question_id, answer_value in answer_set.items():
+            if not _is_question_answered(answer_value):
+                continue
+            question_snapshot = question_by_id.get(question_id)
+            question_label = _clean_text((question_snapshot or {}).get("label") if question_snapshot else "") or question_id
+            db.add(models.TcRegistrationAnswer(
+                registration_id=registration.id,
+                entry_id=entry.id,
+                bowler_id=bowler_record.id if bowler_record else None,
+                question_config_id=question_id,
+                question_label_snapshot=question_label,
+                answer_json={"value": answer_value},
+            ))
+
+    response_body = {
+        "status": registration_status,
+        "registration_id": registration.confirmation_code,
+        "submission_id": registration.confirmation_code,
+        "submitted_at": registration.submitted_at.isoformat(),
+    }
 
     try:
-        db.add(state)
+        if idempotency_record:
+            complete_request(db, idempotency_record, status_code=200, response_body=response_body)
         db.commit()
     except Exception as error:
         db.rollback()
+        if idempotency_record:
+            try:
+                fail_request(db, idempotency_record)
+                db.commit()
+            except Exception:
+                db.rollback()
         logger.error(
-            "Failed to persist public registration submission",
+            "Failed to persist public registration",
             extra={
                 "tournament_id": tournament_id,
                 "error": str(error),
@@ -897,11 +1155,7 @@ def submit_public_tc_tournament_registration(
         )
         raise HTTPException(status_code=500, detail="Failed to submit registration")
 
-    return {
-        "status": "accepted",
-        "submission_id": submission_id,
-        "submitted_at": now_iso,
-    }
+    return response_body
 
 
 @router.get("/tournament/{tournament_id}/bowlers")

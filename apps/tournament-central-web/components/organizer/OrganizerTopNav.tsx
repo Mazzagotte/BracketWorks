@@ -7,14 +7,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import styles from './OrganizerTopNav.module.css';
 
-const navLinks = [
-  { href: '/organizer', label: 'Dashboard' },
-  { href: '/organizer#entries', label: 'Entries' },
-  { href: '/organizer#scores', label: 'Scores' },
-  { href: '/organizer#brackets', label: 'Brackets' },
-  { href: '/organizer#payouts', label: 'Payouts' },
-] as const;
-
 export default function OrganizerTopNav() {
   const pathname = usePathname();
   const userMenuRef = useRef<HTMLDivElement | null>(null);
@@ -23,7 +15,25 @@ export default function OrganizerTopNav() {
   const [activeTournament, setActiveTournament] = useState<string | null>(null);
   const [activeSquad, setActiveSquad] = useState<string | null>(null);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [activeHash, setActiveHash] = useState('');
+
+  const tournamentPathMatch = useMemo(
+    () => pathname.match(/^\/organizer\/tournaments\/(\d+)(?:\/(setup))?\/?$/),
+    [pathname],
+  );
+  const tournamentId = tournamentPathMatch ? Number(tournamentPathMatch[1]) : null;
+  const isTournamentRoute = Boolean(tournamentId);
+
+  const navLinks = useMemo(() => {
+    if (!isTournamentRoute || !tournamentId) {
+      return [{ href: '/organizer', label: 'Dashboard' }];
+    }
+
+    return [
+      { href: '/organizer', label: 'Dashboard' },
+      { href: `/organizer/tournaments/${tournamentId}`, label: 'Overview' },
+      { href: `/organizer/tournaments/${tournamentId}/setup`, label: 'Setup' },
+    ];
+  }, [isTournamentRoute, tournamentId]);
 
   const avatarInitials = useMemo(
     () => displayName
@@ -34,19 +44,6 @@ export default function OrganizerTopNav() {
       .join('') || 'TC',
     [displayName],
   );
-
-  useEffect(() => {
-    const syncHash = () => {
-      setActiveHash(window.location.hash || '');
-    };
-
-    syncHash();
-    window.addEventListener('hashchange', syncHash);
-
-    return () => {
-      window.removeEventListener('hashchange', syncHash);
-    };
-  }, [pathname]);
 
   useEffect(() => {
     const readContext = () => {
@@ -108,17 +105,13 @@ export default function OrganizerTopNav() {
   };
 
   const isNavLinkActive = (href: string) => {
-    if (pathname !== '/organizer') {
-      return false;
+    if (href === '/organizer') {
+      return pathname === '/organizer';
     }
-
-    const hashIndex = href.indexOf('#');
-    if (hashIndex === -1) {
-      return activeHash === '';
-    }
-
-    return activeHash === href.slice(hashIndex);
+    return pathname === href;
   };
+
+  const tournamentContextLabel = activeTournament || (tournamentId ? `Tournament #${tournamentId}` : null);
 
   return (
     <>
@@ -135,12 +128,12 @@ export default function OrganizerTopNav() {
           <span className={styles.logoText}>Tournament Central</span>
         </Link>
 
-        {activeTournament && (
+        {isTournamentRoute && tournamentContextLabel && (
           <div
             className={styles.tournamentContext}
-            title={activeSquad ? `${activeTournament} / ${activeSquad}` : activeTournament}
+            title={activeSquad ? `${tournamentContextLabel} / ${activeSquad}` : tournamentContextLabel}
           >
-            <span className={styles.tournamentContextName}>{activeTournament}</span>
+            <span className={styles.tournamentContextName}>{tournamentContextLabel}</span>
             {activeSquad && <span className={styles.squadContextName}>{activeSquad}</span>}
           </div>
         )}
@@ -199,12 +192,12 @@ export default function OrganizerTopNav() {
           <span className={styles.mobileBrandText}>Tournament Central</span>
         </Link>
 
-        {activeTournament && (
+        {isTournamentRoute && tournamentContextLabel && (
           <span
             className={styles.mobileTournamentBadge}
-            title={activeSquad ? `${activeTournament} / ${activeSquad}` : activeTournament}
+            title={activeSquad ? `${tournamentContextLabel} / ${activeSquad}` : tournamentContextLabel}
           >
-            {activeTournament}
+            {tournamentContextLabel}
           </span>
         )}
       </header>

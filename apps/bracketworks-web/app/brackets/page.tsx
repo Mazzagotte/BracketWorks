@@ -1,26 +1,27 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from 'react'
-import { BookOpen, ChevronLeft, ChevronRight, GitFork, RefreshCw, Trash2, Zap } from 'lucide-react'
+import { BookOpen, ChevronLeft, ChevronRight, RefreshCw, Trash2, Zap } from 'lucide-react'
 import { useAuth } from '../lib/auth-context'
 import { ErrorBoundary } from '../components/ErrorBoundary'
 import ActionConfirmDialog from '../components/ActionConfirmDialog'
 import { useBrackets, BracketPreview } from '../hooks/useBrackets'
 import { useTournaments, useSquads } from '../hooks/useTournaments'
 import { useToast } from '../components/Toast'
-import { Tournament, Squad, BracketResponse } from '../lib/types'
+import { BracketResponse } from '../lib/types'
 import { isPhoneViewport } from '../lib/responsive'
-import { storage } from '../lib/storage'
 import { cleanupModalState, resetScrollLocks } from '../utils/modalUtils'
-import { getBracketGroups } from '../lib/bracketPrograms'
-import { setSelectedSquad as persistSelectedSquad, setActiveSquadLabel } from '../lib/selection-session'
 import { getMemoryAccessToken } from '../lib/api'
 import { BracketTabs } from './components/BracketTabs'
 import { SearchFilter } from './components/SearchFilter'
 import { EmptyBracketState } from './components/EmptyBracketState'
 import ExplainBracketsModal from './components/ExplainBracketsModal'
+import { BracketSummaryCard } from './components/BracketSummaryCard'
+import { EntriesMismatchBanner } from './components/EntriesMismatchBanner'
 import { useBracketLoader } from './hooks/useBracketLoader'
 import { useBracketGenerationFlow } from './hooks/useBracketGenerationFlow'
+import { useBracketSelection } from './hooks/useBracketSelection'
+import { useBracketDisplay } from './hooks/useBracketDisplay'
 import NoTournamentState from '../components/NoTournamentState'
 import styles from './brackets.module.css'
 import cardStyles from '../styles/cards.module.css'
@@ -36,27 +37,14 @@ export default function BracketsPage() {
   const { tournaments, fetchTournaments, loading: tournamentsLoading } = useTournaments()
   const { squads, fetchSquads } = useSquads()
 
-  // State for selected entities
-  const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null)
-  const [selectedSquad, setSelectedSquad] = useState<Squad | null>(null)
   const [selectedBracketIndex, setSelectedBracketIndex] = useState<number>(0)
   const lastLoadedRef = useRef<{ tournamentId: number; squadId: number } | null>(null)
 
-  // State for modal and generation
   const [isExplainModalOpen, setIsExplainModalOpen] = useState(false)
   const [deleteBracketsConfirmOpen, setDeleteBracketsConfirmOpen] = useState(false)
   const [entriesMismatchPromptOpen, setEntriesMismatchPromptOpen] = useState(false)
   const [entriesMismatchPromptDismissedKey, setEntriesMismatchPromptDismissedKey] = useState<string | null>(null)
-  const [isInitializing, setIsInitializing] = useState(true)
   const [selectionRefreshKey, setSelectionRefreshKey] = useState(0)
-  
-  // State for bracket display
-  const [activeTab, setActiveTab] = useState('all')
-  const [mobileOpenBracketIndex, setMobileOpenBracketIndex] = useState<number | null>(null)
-  
-  // Ref to prevent infinite loop in useEffect
-  const [searchFirstName, setSearchFirstName] = useState('')
-  const [searchLastName, setSearchLastName] = useState('')
   const [isMobile, setIsMobile] = useState(false)
   const [loadedBrackets, setLoadedBrackets] = useState<BracketPreview | null>(null)
 
@@ -79,6 +67,30 @@ export default function BracketsPage() {
   // Hooks for data fetching
   const { generateTournamentBrackets, loadSavedBrackets, deleteTournamentBrackets } = useBrackets()
 
+  const { selectedTournament, setSelectedTournament, selectedSquad, setSelectedSquad, isInitializing } =
+    useBracketSelection({
+      tournaments,
+      squads,
+      tournamentsLoading,
+      fetchTournaments,
+      fetchSquads,
+      loadSavedBrackets,
+      onBracketsLoaded: (brackets) => setLoadedBrackets(brackets as import('../hooks/useBrackets').BracketPreview | null),
+      onLastLoaded: (ref) => { lastLoadedRef.current = ref },
+      selectionRefreshKey,
+    })
+
+  const {
+    activeTab, setActiveTab,
+    mobileOpenBracketIndex, setMobileOpenBracketIndex,
+    searchFirstName, setSearchFirstName,
+    searchLastName, setSearchLastName,
+    bracketGroups, filteredBracketItems, searchFilteredBracketItems,
+    mobileBracketSections, activeBracketItem, rounds,
+    bracketSearchTerm, searchResultCount,
+    totalBracketCount, totalPlayersAtGeneration,
+    handleClearFilters,
+  } = useBracketDisplay({ loadedBrackets, isMobile })
   const { reloadAfterGeneration } = useBracketLoader({
     selectedTournament,
     selectedSquad,
@@ -105,28 +117,6 @@ export default function BracketsPage() {
     () => (selectedTournament && selectedSquad ? `${selectedTournament.id}:${selectedSquad.id}` : null),
     [selectedTournament, selectedSquad],
   )
-
-  // Detect mobile viewport with debouncing to reduce unnecessary re-renders
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(isPhoneViewport()) // Phone-only alternate bracket flow; larger handsets stay in the wider compact layout
-    }
-    
-    checkMobile()
-    
-    // Debounce resize events to avoid excessive state updates
-    let timeoutId: NodeJS.Timeout
-    const debouncedCheckMobile = () => {
-      clearTimeout(timeoutId)
-      timeoutId = setTimeout(checkMobile, 150) // 150ms debounce
-    }
-    
-    window.addEventListener('resize', debouncedCheckMobile)
-    return () => {
-      clearTimeout(timeoutId)
-      window.removeEventListener('resize', debouncedCheckMobile)
-    }
-  }, [])
 
   // Cleanup modals and state on unmount to prevent navigation blocking
   useEffect(() => {
@@ -170,81 +160,6 @@ export default function BracketsPage() {
     };
   }, []);
 
-  // Load tournaments on mount — and prefetch squads + brackets in parallel
-  // when we already know the last-used IDs from localStorage (common case).
-  useEffect(() => {
-    const storedTournamentId = storage.getItem('lastTournamentId')
-    const storedSquadId = storage.getItem('selected_squad_id')
-
-    if (storedTournamentId && storedSquadId) {
-      const tId = parseInt(storedTournamentId)
-      const sId = parseInt(storedSquadId)
-      // Fire all three requests in parallel — don't wait for tournaments before fetching squads/brackets
-      Promise.all([
-        fetchTournaments(),
-        fetchSquads(tId),
-        loadSavedBrackets(tId, sId).then(brackets => {
-          if (brackets) {
-            setLoadedBrackets(brackets)
-            lastLoadedRef.current = { tournamentId: tId, squadId: sId }
-          }
-        }).catch(() => {}),
-      ])
-    } else if (storedTournamentId) {
-      Promise.all([fetchTournaments(), fetchSquads(parseInt(storedTournamentId))])
-    } else {
-      fetchTournaments()
-    }
-  }, [fetchSquads, fetchTournaments, loadSavedBrackets])
-
-  // Auto-select tournament from localStorage and load squads in one operation
-  useEffect(() => {
-    if (tournaments.length > 0 && !selectedTournament) {
-      const storedTournamentId = storage.getItem('lastTournamentId')
-      if (storedTournamentId) {
-        const storedTournament = tournaments.find(t => t.id === parseInt(storedTournamentId))
-        if (storedTournament) {
-          setSelectedTournament(storedTournament)
-          // Immediately fetch squads - no need to wait for re-render
-          fetchSquads(storedTournament.id).then(() => {
-            setIsInitializing(false)
-          }).catch(() => {
-            setIsInitializing(false)
-          })
-        } else {
-          setIsInitializing(false)
-        }
-      } else {
-        setIsInitializing(false)
-      }
-    } else if (tournaments.length > 0) {
-      setIsInitializing(false)
-    }
-  }, [fetchSquads, selectedTournament, tournaments, selectionRefreshKey])
-
-  // If fetch completes with no tournaments, stop initializing
-  useEffect(() => {
-    if (!tournamentsLoading && tournaments.length === 0) {
-      setIsInitializing(false)
-    }
-  }, [tournamentsLoading, tournaments.length])
-
-  // Auto-select saved squad, or fall back to the first squad for a loaded tournament.
-  useEffect(() => {
-    if (squads.length > 0 && !selectedSquad) {
-      const storedSquadId = storage.getItem('selected_squad_id')
-      const squadToSelect = storedSquadId
-        ? squads.find(s => s.id === parseInt(storedSquadId))
-        : null
-      const fallbackSquad = squadToSelect ?? squads[0] ?? null
-      if (fallbackSquad) {
-        setSelectedSquad(fallbackSquad)
-        persistSelectedSquad(fallbackSquad.id)
-        setActiveSquadLabel([fallbackSquad.date, fallbackSquad.time].filter(Boolean).join(' '))
-      }
-    }
-  }, [squads, selectedSquad])
-
   const executeDeleteAllBrackets = useCallback(async () => {
     if (!selectedTournament || !selectedSquad) return
 
@@ -257,140 +172,27 @@ export default function BracketsPage() {
     } catch {
       // Toast is handled in the hook
     }
-  }, [selectedTournament, selectedSquad, deleteTournamentBrackets])
+  }, [selectedTournament, selectedSquad, deleteTournamentBrackets, setActiveTab])
 
   const handleDeleteAllBrackets = useCallback(() => {
     setDeleteBracketsConfirmOpen(true)
   }, [])
 
-  const bracketGroups = useMemo(() => {
-    return getBracketGroups(loadedBrackets as BracketResponse | null).filter(group => group.brackets?.length)
-  }, [loadedBrackets])
-
-  useEffect(() => {
-    if (activeTab === 'all') return
-    if (!bracketGroups.some(group => group.key === activeTab)) {
-      setActiveTab(bracketGroups.length > 1 ? 'all' : (bracketGroups[0]?.key || 'all'))
-      setSelectedBracketIndex(0)
-    }
-  }, [activeTab, bracketGroups])
-
-  // Filter and process brackets based on active tab
-  const filteredBracketItems = useMemo(() => {
-    if (activeTab === 'all') {
-      return bracketGroups.flatMap(group => group.brackets.map(bracket => ({ group, bracket })))
-    }
-
-    const activeGroup = bracketGroups.find(group => group.key === activeTab)
-    if (!activeGroup) return []
-    return activeGroup.brackets.map(bracket => ({ group: activeGroup, bracket }))
-  }, [activeTab, bracketGroups])
-
-  const searchFilteredBracketItems = useMemo(() => {
-    const firstNameTerm = searchFirstName.trim().toLowerCase()
-    const lastNameTerm = searchLastName.trim().toLowerCase()
-    const hasSearch = Boolean(firstNameTerm || lastNameTerm)
-    if (!hasSearch) return filteredBracketItems
-
-    const matchesName = (name?: string) => {
-      const normalized = (name || '').toLowerCase()
-      const firstMatches = !firstNameTerm || normalized.includes(firstNameTerm)
-      const lastMatches = !lastNameTerm || normalized.includes(lastNameTerm)
-      return firstMatches && lastMatches
-    }
-
-    return filteredBracketItems.filter(({ bracket }) =>
-      (bracket.rounds || []).some(round =>
-        round.matches.some(match => matchesName(match.playerA) || matchesName(match.playerB))
-      )
-    )
-  }, [filteredBracketItems, searchFirstName, searchLastName])
-
-  const mobileBracketSections = useMemo(() => {
-    const grouped = new Map<string, { key: string; name: string; items: Array<{ item: typeof searchFilteredBracketItems[number]; index: number }> }>()
-
-    searchFilteredBracketItems.forEach((item, index) => {
-      const existing = grouped.get(item.group.key)
-      if (existing) {
-        existing.items.push({ item, index })
-      } else {
-        grouped.set(item.group.key, {
-          key: item.group.key,
-          name: item.group.name,
-          items: [{ item, index }],
-        })
-      }
-    })
-
-    return Array.from(grouped.values())
-  }, [searchFilteredBracketItems])
-
-  useEffect(() => {
-    if (selectedBracketIndex >= searchFilteredBracketItems.length) {
-      setSelectedBracketIndex(0)
-    }
-  }, [searchFilteredBracketItems.length, selectedBracketIndex])
-
+  // Entries mismatch: open confirmation dialog when bracket data becomes stale
   useEffect(() => {
     if (!entriesMismatchPromptKey || !loadedBrackets?.entries_mismatch) {
       setEntriesMismatchPromptOpen(false)
       return
     }
-
-    if (entriesMismatchPromptDismissedKey === entriesMismatchPromptKey) {
-      return
-    }
-
+    if (entriesMismatchPromptDismissedKey === entriesMismatchPromptKey) return
     setEntriesMismatchPromptOpen(true)
   }, [loadedBrackets?.entries_mismatch, entriesMismatchPromptDismissedKey, entriesMismatchPromptKey])
-
-  useEffect(() => {
-    if (!isMobile || mobileOpenBracketIndex === null) return
-    if (mobileOpenBracketIndex >= searchFilteredBracketItems.length) {
-      setMobileOpenBracketIndex(null)
-    }
-  }, [isMobile, mobileOpenBracketIndex, searchFilteredBracketItems.length])
-
-  const activeBracketItem = useMemo(() => {
-    if (!searchFilteredBracketItems.length) return null
-    const safeIndex = Math.min(selectedBracketIndex, searchFilteredBracketItems.length - 1)
-    return searchFilteredBracketItems[safeIndex] || null
-  }, [searchFilteredBracketItems, selectedBracketIndex])
-
-  // Convert brackets to rounds structure
-  const rounds = useMemo(() => {
-    if (!loadedBrackets) return []
-    
-    // Check for direct rounds property first (fastest path for single bracket preview)
-    if (loadedBrackets.rounds) {
-      return loadedBrackets.rounds
-    }
-
-    return activeBracketItem?.bracket?.rounds || []
-  }, [activeBracketItem, loadedBrackets])
-
-  // Handle search and filter
-  const handleClearFilters = useCallback(() => {
-    setSearchFirstName('')
-    setSearchLastName('')
-  }, [])
-
-  const bracketSearchTerm = useMemo(() => {
-    return [searchFirstName.trim(), searchLastName.trim()].filter(Boolean).join(' ').trim()
-  }, [searchFirstName, searchLastName])
-
-  const searchResultCount = useMemo(() => {
-    if (!bracketSearchTerm) return null
-    return searchFilteredBracketItems.length
-  }, [searchFilteredBracketItems.length, bracketSearchTerm])
 
   const handleCloseExplainModal = useCallback(() => setIsExplainModalOpen(false), [])
 
   const { isUserAuthenticated, isAuthInitialized, currentUser } = useAuth()
   const hasActiveSession = Boolean(getMemoryAccessToken())
   const isDev = process.env.NODE_ENV === 'development' || !!currentUser?.isAdmin
-  const totalBracketCount = useMemo(() => bracketGroups.reduce((sum, group) => sum + group.brackets.length, 0), [bracketGroups])
-  const totalPlayersAtGeneration = loadedBrackets?.current_player_count ?? loadedBrackets?.player_count_at_generation ?? 0
 
   const bracketsQuickActions = useMemo(() => {
     if (!selectedTournament) return undefined
@@ -498,30 +300,10 @@ export default function BracketsPage() {
               </div>
             )}
 
-            <article className={`${cardStyles.card} ${styles.bracketStatsCard}`}>
-              <h2 className={styles.bracketStatsTitle}>
-                <GitFork aria-hidden="true" />
-                Bracket Summary
-              </h2>
-              <div className={styles.bracketStatsGrid}>
-                <div>
-                  <span>Format</span>
-                  <strong>Single Elimination</strong>
-                </div>
-                <div>
-                  <span>Players</span>
-                  <strong>{totalPlayersAtGeneration}</strong>
-                </div>
-                <div>
-                  <span>Brackets</span>
-                  <strong>{totalBracketCount}</strong>
-                </div>
-                <div>
-                  <span>Status</span>
-                  <strong className={styles.bracketStatusGood}>{totalBracketCount > 0 ? 'Generated' : 'Pending'}</strong>
-                </div>
-              </div>
-            </article>
+            <BracketSummaryCard
+              totalBracketCount={totalBracketCount}
+              totalPlayersAtGeneration={totalPlayersAtGeneration}
+            />
           </section>
         )}
 
@@ -565,14 +347,7 @@ export default function BracketsPage() {
           <>
             {/* Entries mismatch warning */}
             {loadedBrackets?.entries_mismatch && (
-              <div className={`${cardStyles.panel} ${cardStyles.statePanel} ${cardStyles.dangerPanel} ${styles.mismatchBanner}`}>
-                <span className={styles.mismatchBannerText}>
-                  Brackets out of date: Entries have changed. Regenerate brackets to ensure accurate results and payouts.
-                </span>
-                <button onClick={handleGenerateBrackets} className={`${styles.mismatchBannerButton} ${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`}>
-                  Regenerate Brackets
-                </button>
-              </div>
+              <EntriesMismatchBanner onRegenerate={handleGenerateBrackets} />
             )}
             <section className={styles.bracketWorkspaceCard}>
               {/* Bracket Tabs + Navigator */}
@@ -600,7 +375,7 @@ export default function BracketsPage() {
               // Calculate bracket stats
               const totalMatches = rounds.reduce((sum, round) => sum + round.matches.length, 0)
               const completedMatches = rounds.reduce((sum, round) =>
-                sum + round.matches.filter(m => m.winner || m.split_pot || m.both_advance).length, 0)
+                sum + (round.matches as any[]).filter((m) => m.winner || m.split_pot || m.both_advance).length, 0)
               const progressPercent = totalMatches > 0 ? Math.round((completedMatches / totalMatches) * 100) : 0
               
               return (

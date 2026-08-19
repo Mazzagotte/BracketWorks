@@ -148,7 +148,7 @@ function Test-TcpPortOpen {
     }
 }
 
-function Ensure-LocalPostgresReady {
+function Wait-ForLocalPostgres {
     param(
         [Parameter(Mandatory = $true)][string]$TargetHost,
         [Parameter(Mandatory = $true)][int]$Port,
@@ -522,7 +522,7 @@ if ($BackendMode -eq "docker") {
 }
 
 if ($BackendMode -eq "local" -and -not $SkipMigrations) {
-    $dbReady = Ensure-LocalPostgresReady -TargetHost $dbHost -Port $dbPortInt -ProjectRoot $ProjectRoot
+    $dbReady = Wait-ForLocalPostgres -TargetHost $dbHost -Port $dbPortInt -ProjectRoot $ProjectRoot
     if (-not $dbReady) {
         exit 1
     }

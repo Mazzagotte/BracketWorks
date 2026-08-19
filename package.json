@@ -8,11 +8,27 @@
     "dev:bracketworks": "pnpm --filter @bracketworks/bracketworks-web dev",
     "dev:tournament-central": "pnpm --filter @bracketworks/tournament-central-web dev",
     "dev:api": "cd apps/api && python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000",
+
+    "lint:bracketworks": "pnpm --filter @bracketworks/bracketworks-web lint",
+    "lint:tournament-central": "pnpm --filter @bracketworks/tournament-central-web lint",
+    "lint": "pnpm run lint:bracketworks && pnpm run lint:tournament-central",
+
+    "typecheck:bracketworks": "pnpm --filter @bracketworks/bracketworks-web typecheck",
+    "typecheck:tournament-central": "pnpm --filter @bracketworks/tournament-central-web typecheck",
+    "typecheck": "pnpm run typecheck:bracketworks && pnpm run typecheck:tournament-central",
+
+    "test:bracketworks": "pnpm --filter @bracketworks/bracketworks-web test",
+    "test:tournament-central": "pnpm --filter @bracketworks/tournament-central-web test",
+    "test:api": "cd apps/api && python -m pytest -q tests",
+    "test:frontend": "pnpm run test:bracketworks",
+    "test": "pnpm run test:bracketworks && pnpm run test:tournament-central",
+
     "build:bracketworks": "pnpm --filter @bracketworks/bracketworks-web build",
     "build:tournament-central": "pnpm --filter @bracketworks/tournament-central-web build",
-    "lint": "pnpm --filter @bracketworks/bracketworks-web lint && pnpm --filter @bracketworks/tournament-central-web lint",
-    "typecheck": "pnpm --filter @bracketworks/bracketworks-web typecheck && pnpm --filter @bracketworks/tournament-central-web typecheck",
-    "test": "pnpm --filter @bracketworks/bracketworks-web test && pnpm --filter @bracketworks/tournament-central-web test",
-    "test:frontend": "pnpm --filter @bracketworks/bracketworks-web test"
+
+    "quality:bracketworks": "pnpm run lint:bracketworks && pnpm run typecheck:bracketworks && pnpm run test:bracketworks && pnpm run build:bracketworks",
+    "quality:tournament-central": "pnpm run lint:tournament-central && pnpm run typecheck:tournament-central && pnpm run test:tournament-central && pnpm run build:tournament-central",
+    "quality:api": "pnpm run test:api",
+    "quality:all": "pnpm run quality:bracketworks && pnpm run quality:tournament-central && pnpm run quality:api"
   }
 }

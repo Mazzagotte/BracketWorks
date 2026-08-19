@@ -484,6 +484,200 @@ class TournamentCentralSetupState(Base):
     )
 
 
+class TcRegistration(Base):
+    __tablename__ = "tc_registrations"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    confirmation_code: Mapped[str] = mapped_column(String(64), nullable=False, unique=True, index=True)
+    tournament_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("tc_tournaments.id"),
+        nullable=False,
+        index=True,
+    )
+    account_user_id: Mapped[Optional[int]] = mapped_column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=True,
+        index=True,
+    )
+    contact_first_name: Mapped[str] = mapped_column(String(120), nullable=False)
+    contact_last_name: Mapped[str] = mapped_column(String(120), nullable=False)
+    contact_email: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    contact_phone: Mapped[Optional[str]] = mapped_column(String(40), nullable=True)
+    status: Mapped[str] = mapped_column(String(24), nullable=False, default="pending", index=True)
+    payment_status: Mapped[str] = mapped_column(String(24), nullable=False, default="unpaid", index=True)
+    subtotal_cents: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    fees_cents: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    total_cents: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    currency: Mapped[str] = mapped_column(String(3), nullable=False, default="USD")
+    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    terms_accepted_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    submitted_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+        index=True,
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+        index=True,
+    )
+    cancelled_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    source: Mapped[str] = mapped_column(String(40), nullable=False, default="public")
+
+
+class TcRegistrationBowler(Base):
+    __tablename__ = "tc_registration_bowlers"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    registration_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("tc_registrations.id"),
+        nullable=False,
+        index=True,
+    )
+    tournament_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("tc_tournaments.id"),
+        nullable=False,
+        index=True,
+    )
+    user_id: Mapped[Optional[int]] = mapped_column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=True,
+        index=True,
+    )
+    first_name: Mapped[str] = mapped_column(String(120), nullable=False)
+    last_name: Mapped[str] = mapped_column(String(120), nullable=False)
+    email: Mapped[Optional[str]] = mapped_column(String(255), nullable=True, index=True)
+    phone: Mapped[Optional[str]] = mapped_column(String(40), nullable=True)
+    usbc_number: Mapped[Optional[str]] = mapped_column(String(40), nullable=True, index=True)
+    average: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    date_of_birth: Mapped[Optional[str]] = mapped_column(String(40), nullable=True)
+    address: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    city: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
+    state: Mapped[Optional[str]] = mapped_column(String(60), nullable=True)
+    zip_code: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+        index=True,
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+        index=True,
+    )
+
+
+class TcEntry(Base):
+    __tablename__ = "tc_entries"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    registration_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("tc_registrations.id"),
+        nullable=False,
+        index=True,
+    )
+    tournament_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("tc_tournaments.id"),
+        nullable=False,
+        index=True,
+    )
+    event_config_id: Mapped[str] = mapped_column(String(120), nullable=False, index=True)
+    event_name_snapshot: Mapped[str] = mapped_column(String(255), nullable=False)
+    division_config_id: Mapped[Optional[str]] = mapped_column(String(120), nullable=True, index=True)
+    division_name_snapshot: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    squad_config_id: Mapped[Optional[str]] = mapped_column(String(120), nullable=True, index=True)
+    squad_name_snapshot: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    squad_date_snapshot: Mapped[Optional[str]] = mapped_column(String(40), nullable=True)
+    squad_time_snapshot: Mapped[Optional[str]] = mapped_column(String(40), nullable=True)
+    entry_number: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    reentry_number: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    status: Mapped[str] = mapped_column(String(24), nullable=False, default="pending", index=True)
+    entry_fee_cents: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+        index=True,
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+        index=True,
+    )
+
+
+class TcEntryBowler(Base):
+    __tablename__ = "tc_entry_bowlers"
+    __table_args__ = (
+        UniqueConstraint("entry_id", "bowler_id", name="uq_tc_entry_bowler_pair"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    entry_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("tc_entries.id"),
+        nullable=False,
+        index=True,
+    )
+    bowler_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("tc_registration_bowlers.id"),
+        nullable=False,
+        index=True,
+    )
+    position: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    role: Mapped[Optional[str]] = mapped_column(String(60), nullable=True)
+
+
+class TcRegistrationAnswer(Base):
+    __tablename__ = "tc_registration_answers"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    registration_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("tc_registrations.id"),
+        nullable=False,
+        index=True,
+    )
+    entry_id: Mapped[Optional[int]] = mapped_column(
+        Integer,
+        ForeignKey("tc_entries.id"),
+        nullable=True,
+        index=True,
+    )
+    bowler_id: Mapped[Optional[int]] = mapped_column(
+        Integer,
+        ForeignKey("tc_registration_bowlers.id"),
+        nullable=True,
+        index=True,
+    )
+    question_config_id: Mapped[str] = mapped_column(String(120), nullable=False, index=True)
+    question_label_snapshot: Mapped[str] = mapped_column(String(255), nullable=False)
+    answer_json: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+        index=True,
+    )
+
+
 class TournamentBracketSettings(Base):
     __tablename__ = "tournament_bracket_settings"
 

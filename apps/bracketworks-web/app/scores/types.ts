@@ -14,3 +14,21 @@ export type SortableScoreColumn =
   | 'game3_total'
   | 'totalScratch'
   | 'totalWithHandicap';
+
+export type RowSaveState = 'idle' | 'saving' | 'saved' | 'failed';
+
+export interface ScoreEditHistory {
+  playerId: number;
+  field: string;
+  previous: number | undefined;
+}
+
+export interface ScoreValidation {
+  isValid: boolean;
+  message: string;
+}
+
+export interface PlayerScoreStatus {
+  label: 'Complete' | 'In Progress' | 'Not Started';
+  tone: 'complete' | 'progress' | 'pending';
+}

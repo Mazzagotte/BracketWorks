@@ -4,9 +4,11 @@ import { ArrowUpDown, CalendarDays, ChevronUp, CircleAlert, CircleCheck, Clipboa
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent, DragEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import type { TournamentContract, TournamentSetupStateSummaryContract } from '@bracketworks/types';
 
 import ConfigDrawer from './ConfigDrawer';
 import PublishValidationSummary from './PublishValidationSummary';
+import { listMyOrganizerSetupStates, listMyTournaments, loadOrganizerSetupState as loadOrganizerSetupStateApi } from './organizerApi';
 import TournamentRegistrationForm from '../public/TournamentRegistrationForm';
 import TournamentDetailsSection from './setup/TournamentDetailsSection';
 import { initialCustomQuestions, initialDivisions, initialEvents, initialFees, initialLocations, initialRegistrationFields, initialSquads, setupSections } from './setupConfig';
@@ -67,7 +69,11 @@ function getUrlActiveSection(): SetupSectionKey {
   return isSetupSectionKey(querySection) ? querySection : 'tournament-details';
 }
 
-function getInitialTournamentId(): number | null {
+function getInitialTournamentId(forcedTournamentId: number | null): number | null {
+  if (typeof forcedTournamentId === 'number' && forcedTournamentId > 0) {
+    return forcedTournamentId;
+  }
+
   if (typeof window === 'undefined') {
     return null;
   }
@@ -82,7 +88,7 @@ function getInitialTournamentId(): number | null {
   return Number.isInteger(tournamentId) && tournamentId > 0 ? tournamentId : null;
 }
 
-function syncUrlState(params: { activeSection: SetupSectionKey; tournamentId: number | null }): void {
+function syncUrlState(params: { activeSection: SetupSectionKey; tournamentId: number | null; includeTournamentInQuery: boolean }): void {
   if (typeof window === 'undefined') {
     return;
   }
@@ -90,7 +96,7 @@ function syncUrlState(params: { activeSection: SetupSectionKey; tournamentId: nu
   const nextUrl = new URL(window.location.href);
   nextUrl.searchParams.set('section', params.activeSection);
 
-  if (params.tournamentId) {
+  if (params.includeTournamentInQuery && params.tournamentId) {
     nextUrl.searchParams.set('tournament', String(params.tournamentId));
   } else {
     nextUrl.searchParams.delete('tournament');
@@ -555,31 +561,9 @@ type OrganizerSetupStateResponse = {
   updated_at: string;
 };
 
-type OrganizerSetupStateSummary = {
-  tournament_id: number;
-  tournament_name: string;
-  tournament_location: string | null;
-  tournament_start_date: string | null;
-  tournament_end_date: string | null;
-  is_published: boolean;
-  created_at: string;
-  updated_at: string;
-};
+type OrganizerSetupStateSummary = TournamentSetupStateSummaryContract;
 
-type UserTournamentSummary = {
-  id: number;
-  name: string;
-  location: string | null;
-  start_date: string | null;
-  end_date: string | null;
-  squad_times: Record<string, string[]>;
-  is_public: boolean;
-  has_logo?: boolean;
-  logo_file_name?: string | null;
-  logo_mime_type?: string | null;
-  entry_count?: number;
-  brackets_configured?: boolean;
-};
+type UserTournamentSummary = TournamentContract;
 
 const defaultTournamentDetails: TournamentDetails = {
   name: 'Mountain Classic Open',
@@ -845,7 +829,7 @@ function buildTournamentLocation(details: TournamentDetails): string {
   return parts.join(', ');
 }
 
-function parseTournamentLocation(location: string | null): { bowlingCenter: string; city: string; state: string } {
+function parseTournamentLocation(location: string | null | undefined): { bowlingCenter: string; city: string; state: string } {
   const text = (location || '').trim();
   if (!text) {
     return { bowlingCenter: '', city: '', state: '' };
@@ -897,7 +881,7 @@ function toDraftFromTournament(tournament: UserTournamentSummary): OrganizerDraf
   };
 }
 
-function formatTournamentCardDate(startDateIso: string | null, endDateIso: string | null): string {
+function formatTournamentCardDate(startDateIso: string | null | undefined, endDateIso: string | null | undefined): string {
   const value = (startDateIso || endDateIso || '').trim();
   if (!value) {
     return 'No dates set';
@@ -915,7 +899,7 @@ function formatTournamentCardDate(startDateIso: string | null, endDateIso: strin
   });
 }
 
-function countTournamentSquads(squadTimes: Record<string, string[]>): number {
+function countTournamentSquads(squadTimes: Record<string, string[]> | undefined): number {
   return Object.values(squadTimes || {}).reduce((count, times) => {
     if (!Array.isArray(times)) {
       return count;
@@ -1118,72 +1102,7 @@ function normalizeOrganizerDraft(params: {
 }
 
 async function loadOrganizerSetupState(token: string, tournamentId: number): Promise<OrganizerSetupStateResponse | null> {
-  const headers: Record<string, string> = {
-    Authorization: `Bearer ${token}`,
-  };
-
-  const response = await fetch(`/api/v1/tc/organizer-setup/${tournamentId}`, {
-    method: 'GET',
-    headers,
-    credentials: 'include',
-    cache: 'no-store',
-  });
-
-  if (response.status === 404) {
-    return null;
-  }
-
-  const responseData = await response.json().catch(() => null) as { detail?: string } | OrganizerSetupStateResponse | null;
-  if (!response.ok) {
-    const detail = responseData && typeof (responseData as { detail?: string }).detail === 'string'
-      ? (responseData as { detail?: string }).detail
-      : `Failed to load organizer setup (${response.status})`;
-    throw new Error(detail);
-  }
-
-  return responseData as OrganizerSetupStateResponse;
-}
-
-async function listMyOrganizerSetupStates(token: string): Promise<OrganizerSetupStateSummary[]> {
-  const response = await fetch('/api/v1/tc/organizer-setup/mine', {
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    credentials: 'include',
-    cache: 'no-store',
-  });
-
-  const responseData = await response.json().catch(() => null) as { detail?: string } | OrganizerSetupStateSummary[] | null;
-  if (!response.ok) {
-    const detail = responseData && typeof (responseData as { detail?: string }).detail === 'string'
-      ? (responseData as { detail?: string }).detail
-      : `Failed to load organizer setup list (${response.status})`;
-    throw new Error(detail);
-  }
-
-  return Array.isArray(responseData) ? responseData : [];
-}
-
-async function listMyTournaments(token: string): Promise<UserTournamentSummary[]> {
-  const response = await fetch('/api/v1/tc/tournaments/', {
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    credentials: 'include',
-    cache: 'no-store',
-  });
-
-  const responseData = await response.json().catch(() => null) as { detail?: string } | UserTournamentSummary[] | null;
-  if (!response.ok) {
-    const detail = responseData && typeof (responseData as { detail?: string }).detail === 'string'
-      ? (responseData as { detail?: string }).detail
-      : `Failed to load tournaments (${response.status})`;
-    throw new Error(detail);
-  }
-
-  return Array.isArray(responseData) ? responseData : [];
+  return loadOrganizerSetupStateApi<OrganizerSetupPayload>(token, tournamentId);
 }
 
 type TournamentLogoUploadResponse = {
@@ -1326,8 +1245,15 @@ async function saveOrganizerSetupState(params: {
   return responseData as OrganizerSetupStateResponse;
 }
 
-export default function TournamentSetupWorkspace() {
+type TournamentSetupWorkspaceProps = {
+  initialTournamentId?: number | null;
+};
+
+export default function TournamentSetupWorkspace({ initialTournamentId = null }: TournamentSetupWorkspaceProps) {
   const router = useRouter();
+  const routeTournamentId = typeof initialTournamentId === 'number' && initialTournamentId > 0
+    ? initialTournamentId
+    : null;
   const logoInputRef = useRef<HTMLInputElement | null>(null);
   const [activeSection, setActiveSection] = useState<SetupSectionKey>('tournament-details');
   const [drawerState, setDrawerState] = useState<DrawerState>(null);
@@ -1407,8 +1333,12 @@ export default function TournamentSetupWorkspace() {
       return;
     }
 
-    syncUrlState({ activeSection, tournamentId: persistedTournamentId });
-  }, [activeSection, persistedTournamentId, hasHydratedInitialState]);
+    syncUrlState({
+      activeSection,
+      tournamentId: persistedTournamentId,
+      includeTournamentInQuery: routeTournamentId === null,
+    });
+  }, [activeSection, persistedTournamentId, hasHydratedInitialState, routeTournamentId]);
 
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const autosaveInFlightRef = useRef(false);
@@ -1555,8 +1485,7 @@ export default function TournamentSetupWorkspace() {
           return;
         }
 
-        const preferredTournamentId =
-          getInitialTournamentId()
+        const preferredTournamentId = getInitialTournamentId(routeTournamentId)
           ?? setupStates[0]?.tournament_id
           ?? null;
 
@@ -1607,7 +1536,7 @@ export default function TournamentSetupWorkspace() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [routeTournamentId]);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -1773,6 +1702,11 @@ export default function TournamentSetupWorkspace() {
     if (!token) {
       setSaveError('Your session expired. Please sign in again.');
       router.replace('/login?expired=true');
+      return;
+    }
+
+    if (routeTournamentId && routeTournamentId !== tournamentId) {
+      router.push(`/organizer/tournaments/${tournamentId}/setup`);
       return;
     }
 

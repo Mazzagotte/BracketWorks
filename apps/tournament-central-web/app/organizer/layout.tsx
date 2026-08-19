@@ -5,7 +5,7 @@ import OrganizerTopNav from '@/components/organizer/OrganizerTopNav';
 import styles from './layout.module.css';
 
 export const metadata: Metadata = {
-  title: 'Organizer Setup | Tournament Central',
+  title: 'Organizer Dashboard | Tournament Central',
   robots: { index: false, follow: false },
 };
 
