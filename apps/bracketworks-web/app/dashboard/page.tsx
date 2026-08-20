@@ -53,7 +53,7 @@ import { ChangeSquadModal } from './components/ChangeSquadModal';
 import { LoadTournamentModal } from './components/LoadTournamentModal';
 import { normalizeSquadTimes } from './utils/tournamentForm';
 import { SAMPLE_BOWLER_NAMES, SAMPLE_TOURNAMENT } from '../demo/sample-tournament';
-import { createDefaultSidePots, hydrateStoredSidePots } from './utils/sidePots';
+import { createDefaultSidePots, hydrateStoredSidePots, normalizeSidePotsSettings } from './utils/sidePots';
 import { useTournamentOrchestration } from './hooks/useTournamentOrchestration';
 import { useDashboardScoreProgress } from './hooks/useDashboardScoreProgress';
 import { useDashboardWorkflowModel } from './hooks/useDashboardWorkflowModel';
@@ -404,9 +404,19 @@ export default function TournamentDashboard() {
   const loadBracketSettings = useCallback(async (tournamentId: number) => {
     const loaded = await fetchBracketSettingsData(tournamentId);
     setBracketSettings(prev => applyAutoHouse(prev, loaded));
+    const apiSidePots = normalizeSidePotsSettings(loaded.side_pots_settings, tournamentId);
+    setSidePots(apiSidePots);
+    storage.setItem(getSidePotsStorageKey(tournamentId), JSON.stringify(apiSidePots));
   }, [fetchBracketSettingsData]);
 
   const loadSidePots = useCallback((tournamentId: number) => {
+    const fromSettings = normalizeSidePotsSettings(bracketSettingsRef.current.side_pots_settings, tournamentId);
+    if ((fromSettings.pots ?? []).some(pot => pot.enabled) || fromSettings.entry_fee > 0 || fromSettings.prize_amount > 0) {
+      setSidePots(fromSettings);
+      storage.setItem(getSidePotsStorageKey(tournamentId), JSON.stringify(fromSettings));
+      return;
+    }
+
     try {
       const stored = storage.getItem(getSidePotsStorageKey(tournamentId));
       if (stored) {
@@ -423,6 +433,10 @@ export default function TournamentDashboard() {
 
   const saveSidePots = (next: SidePotsSettings) => {
     storage.setItem(getSidePotsStorageKey(next.tournament_id), JSON.stringify(next));
+    updateBracketSettings(
+      previous => ({ ...previous, side_pots_settings: next }),
+      'immediate',
+    );
     notifySettingsChanged();
   };
 

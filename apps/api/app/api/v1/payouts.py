@@ -25,6 +25,7 @@ from ...services.payouts import (
     DEFAULT_PRESETS,
 )
 from ...services.bracket_persistence_simple import load_generated_brackets
+from ...services.side_pots import calculate_side_pot_accounting
 from ...services.tournament_access import verify_owned_tournament_access
 from ...core.bracket_programs import normalize_bracket_programs
 
@@ -105,6 +106,7 @@ def calculate_tournament_payouts_endpoint(
             raise HTTPException(status_code=404, detail="No brackets found for this tournament")
 
         payout_data = calculate_tournament_payouts(brackets_data, entry_fees, house_percentage)
+        payout_data["side_pots"] = calculate_side_pot_accounting(db, tournament_id, squad_id)
 
         payout_data["tournament_info"] = {
             "id":               tournament_id,

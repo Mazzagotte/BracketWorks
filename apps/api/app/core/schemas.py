@@ -32,6 +32,23 @@ class BracketProgramDefinition(BaseModel):
     )
 
 
+class SidePotDefinition(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    key: str
+    name: str
+    enabled: bool = False
+
+
+class SidePotsSettingsDefinition(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    tournament_id: int
+    entry_fee: float = 0
+    prize_amount: float = 0
+    pots: List[SidePotDefinition] = Field(default_factory=list)
+
+
 class LoginRequest(BaseModel):
     username: str
     password: str
@@ -243,6 +260,10 @@ class PlayerBase(BaseModel):
         default=None,
         validation_alias=AliasChoices("program_entry_counts", "bracket_entries"),
     )
+    side_pot_entries: Dict[str, bool] | None = Field(
+        default=None,
+        validation_alias=AliasChoices("side_pot_entries", "sidePotEntries"),
+    )
     lane: str | None = None
     division: str | None = None
     usbc_number: str | None = Field(
@@ -277,6 +298,10 @@ class PlayerUpdate(BaseModel):
     program_entry_counts: Dict[str, int] | None = Field(
         default=None,
         validation_alias=AliasChoices("program_entry_counts", "bracket_entries"),
+    )
+    side_pot_entries: Dict[str, bool] | None = Field(
+        default=None,
+        validation_alias=AliasChoices("side_pot_entries", "sidePotEntries"),
     )
     lane: str | None = None
     division: str | None = None
@@ -386,6 +411,10 @@ class TournamentBracketSettingsBase(BaseModel):
         validation_alias=AliasChoices("default_entry_fee", "cost_per_bracket"),
     )
     bracket_programs: List[BracketProgramDefinition] | None = None
+    side_pots_settings: SidePotsSettingsDefinition | None = Field(
+        default=None,
+        validation_alias=AliasChoices("side_pots_settings", "sidePotsSettings"),
+    )
     handicap_percentage: Optional[float] = 80.0
     handicap_base: Optional[float] = 200.0
     allow_byes: Optional[bool] = Field(
@@ -425,6 +454,10 @@ class TournamentBracketSettingsUpdate(BaseModel):
         validation_alias=AliasChoices("default_entry_fee", "cost_per_bracket"),
     )
     bracket_programs: List[BracketProgramDefinition] | None = None
+    side_pots_settings: SidePotsSettingsDefinition | None = Field(
+        default=None,
+        validation_alias=AliasChoices("side_pots_settings", "sidePotsSettings"),
+    )
     handicap_percentage: Optional[float] = None
     handicap_base: Optional[float] = None
     allow_byes: Optional[bool] = Field(

@@ -43,7 +43,7 @@ export default function PayoutsPage() {
   const [searchFirstName, setSearchFirstName] = useState('')
   const [searchLastName, setSearchLastName] = useState('')
   const [paidKeys, setPaidKeys] = useState<Set<string>>(new Set())
-  const [scoreRows, setScoreRows] = useState<ScoreRow[]>([])
+  const [, setScoreRows] = useState<ScoreRow[]>([])
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set())
   const [isUnlocked, setIsUnlocked] = useState(false)
   const [isMobileView, setIsMobileView] = useState(false)
@@ -102,7 +102,7 @@ export default function PayoutsPage() {
     })
   }, [])
 
-  const { payoutData, entryData, loading, error, loadPayoutData, loadEntryData } =
+  const { payoutData, loading, error, loadPayoutData } =
     usePayouts(selectedTournament?.id ?? null, selectedSquad?.id ?? null)
 
   usePayoutSetup({
@@ -126,7 +126,6 @@ export default function PayoutsPage() {
   useEffect(() => {
     if (!selectedTournament || !isUnlocked) return
     loadPayoutData()
-    loadEntryData()
     try {
       const stored = storage.getItem(`payouts_paid_${selectedTournament.id}`)
       setPaidKeys(new Set(stored ? JSON.parse(stored) : []))
@@ -134,7 +133,7 @@ export default function PayoutsPage() {
       logger.error('Failed to parse paid keys from storage')
       setPaidKeys(new Set())
     }
-  }, [isUnlocked, loadEntryData, loadPayoutData, selectedSquad, selectedTournament])
+  }, [isUnlocked, loadPayoutData, selectedSquad, selectedTournament])
 
   const togglePaid = useCallback((key: string) => {
     if (!selectedTournament) return
@@ -161,7 +160,7 @@ export default function PayoutsPage() {
     [aggregatedWinners, searchFirstName, searchLastName],
   )
 
-  const sidePotAccounting = useSidePotAccounting(selectedTournament?.id ?? null, entryData, scoreRows)
+  const sidePotAccounting = useSidePotAccounting(payoutData)
 
   const {
     isExportingExcel,

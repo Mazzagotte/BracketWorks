@@ -216,6 +216,7 @@ def list_bowlers(
             "handicap_entry_count": player.handicap_entry_count,
             "scratch_entry_count": player.scratch_entry_count,
             "program_entry_counts": normalized_entries,
+            "side_pot_entries": player.side_pot_entries or {},
             "lane": player.lane,
             "division": normalize_division(player.division),
             "usbc_number": player.usbc_number,
@@ -330,6 +331,7 @@ def create_bowler(player: schemas.PlayerCreate, db: Session = Depends(get_db), c
             handicap_entries=player.handicap_entry_count,
             scratch_entries=player.scratch_entry_count,
         ),
+        side_pot_entries=player.side_pot_entries,
         lane=player.lane,
         division=normalize_division(player.division),
         usbc_number=profile.usbc_number if profile else _normalize_usbc(player.usbc_number),
@@ -350,6 +352,7 @@ class BulkBowlerUpdate(BaseModel):
     handicap_entry_count: int | None = None
     scratch_entry_count: int | None = None
     program_entry_counts: dict[str, int] | None = None
+    side_pot_entries: dict[str, bool] | None = None
     lane: str | None = None
     division: str | None = None
     usbc_number: str | None = None

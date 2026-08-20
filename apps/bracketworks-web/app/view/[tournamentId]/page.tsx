@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState, useCallback, useRef, useMemo, Fragment, useLayoutEffect } from 'react'
 import { useParams } from 'next/navigation'
@@ -13,7 +13,7 @@ import TournamentDirectory from '../TournamentDirectory'
 import styles from './view.module.css'
 import { SAMPLE_BOWLER_NAMES, SAMPLE_TOURNAMENT } from '../../demo/sample-tournament'
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+// ΓöÇΓöÇΓöÇ Types ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 interface Squad {
   id: number
@@ -86,6 +86,16 @@ interface PublicScoreRow {
   game1_with_handicap?: number | null
   game2_with_handicap?: number | null
   game3_with_handicap?: number | null
+}
+
+interface PublicSidePotSummary {
+  key: string
+  name: string
+  entry_count: number
+  pool: number
+  winner_id: number | null
+  winner_name: string | null
+  winner_metric: number | null
 }
 
 interface SidePotDefinition {
@@ -216,7 +226,7 @@ const DEMO_SCORES: PublicScoreRow[] = SAMPLE_BOWLER_NAMES.map((playerName, index
   }
 })
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// ΓöÇΓöÇΓöÇ Helpers ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 function computeAlive(bracketGroups: BracketGroup[]): AliveRow[] {
   const data: Record<string, { afterG1: number; afterG2: number; won: number }> = {}
@@ -306,7 +316,7 @@ function formatSquad(s: Squad) {
   return `${date} ${s.time}`.trim()
 }
 
-// ─── Sub-components ──────────────────────────────────────────────────────────
+// ΓöÇΓöÇΓöÇ Sub-components ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 function AliveView({
   bracketGroups,
@@ -937,7 +947,7 @@ function BracketsTabView({
             className={styles.bracketSearchClear}
             onClick={() => { setBracketSearch(''); setHighlightName('') }}
             aria-label="Clear highlight"
-          >✕</button>
+          >Γ£ò</button>
         )}
       </div>
       </div>
@@ -1012,8 +1022,10 @@ function getSeriesTopN(rows: PublicScoreRow[], mode: 'scratch' | 'handicap', n: 
   return candidates.slice(0, n)
 }
 
-function SidePotsLeaderboard({ scoreRows, tournamentId, lastRefresh, isRefreshing, canRefresh, onRefreshNow }: {
+function SidePotsLeaderboard({ scoreRows, sidePotSummaries, sidePotsLoaded, tournamentId, lastRefresh, isRefreshing, canRefresh, onRefreshNow }: {
   scoreRows: PublicScoreRow[]
+  sidePotSummaries: PublicSidePotSummary[]
+  sidePotsLoaded: boolean
   tournamentId: number | null
   lastRefresh: Date
   isRefreshing: boolean
@@ -1099,6 +1111,52 @@ function SidePotsLeaderboard({ scoreRows, tournamentId, lastRefresh, isRefreshin
   const highSeriesScratchEligible = useMemo(() => getEligiblePlayerIds('high_series_scratch'), [getEligiblePlayerIds])
   const highSeriesHandicapEligible = useMemo(() => getEligiblePlayerIds('high_series_handicap'), [getEligiblePlayerIds])
 
+  if (sidePotsLoaded) {
+    if (!tournamentId) {
+      return <p className={styles.emptyNote}>No tournament selected.</p>
+    }
+
+    if (sidePotSummaries.length === 0) {
+      return <p className={styles.emptyNote}>No side pots are enabled for this tournament.</p>
+    }
+
+    return (
+      <div className={styles.sidePotLeaderboard}>
+        <div className={styles.sidePotLiveControls}>
+          <DataTableToolbar
+            className={styles.aliveToolbar}
+            left={<span className={styles.countBadge}>{sidePotSummaries.length} {sidePotSummaries.length === 1 ? 'program' : 'programs'} available</span>}
+            right={<LiveRefreshControls lastRefresh={lastRefresh} isRefreshing={isRefreshing} canRefresh={canRefresh} onRefreshNow={onRefreshNow} />}
+          />
+        </div>
+
+        <div className={styles.sidePotSection}>
+          <div className={styles.sidePotGrid}>
+            {sidePotSummaries.map((summary) => (
+              <div key={summary.key} className={styles.sidePotCard}>
+                <div className={styles.sidePotCardLabel}><Trophy aria-hidden="true" /><span>{summary.name}</span></div>
+                {summary.winner_name ? (
+                  <ol className={styles.sidePotPodium}>
+                    <li className={`${styles.sidePotPodiumRow} ${styles.sidePotPodiumFirst}`}>
+                      <span className={styles.sidePotPodiumPlace}>1st</span>
+                      <span className={styles.sidePotPodiumName}>{summary.winner_name}</span>
+                      <span className={styles.sidePotPodiumScore}>{summary.winner_metric ?? '-'}</span>
+                    </li>
+                  </ol>
+                ) : (
+                  <div className={styles.sidePotPending}>Pending</div>
+                )}
+                <div className={styles.sidePotCardFooter}>
+                  {summary.entry_count} entries <span>•</span> Pool ${summary.pool.toFixed(2)}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (scoreRows.length === 0) {
     return <p className={styles.emptyNote}>No scores yet. Check back during the tournament.</p>
   }
@@ -1162,7 +1220,7 @@ function SidePotsLeaderboard({ scoreRows, tournamentId, lastRefresh, isRefreshin
           ))}
         </ol>
       )}
-      <div className={styles.sidePotCardFooter}>Top 3 scores <span>•</span> {modeLabel}</div>
+      <div className={styles.sidePotCardFooter}>Top 3 scores <span>ΓÇó</span> {modeLabel}</div>
     </div>
   )
 
@@ -1260,7 +1318,7 @@ function WinnersView({ winners }: { winners: Winner[] }) {
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// ΓöÇΓöÇΓöÇ Page ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 export default function TournamentViewPage() {
   const params = useParams()
@@ -1275,6 +1333,8 @@ export default function TournamentViewPage() {
   const [bracketGroups, setBracketGroups] = useState<BracketGroup[]>([])
   const [winners, setWinners] = useState<Winner[]>([])
   const [scoreRows, setScoreRows] = useState<PublicScoreRow[]>([])
+  const [sidePotSummaries, setSidePotSummaries] = useState<PublicSidePotSummary[]>([])
+  const [sidePotsLoaded, setSidePotsLoaded] = useState(false)
   const [loading, setLoading] = useState(true)
   const [hydratedFromCache, setHydratedFromCache] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -1310,7 +1370,7 @@ export default function TournamentViewPage() {
     try { localStorage.setItem('bw-view-tab', tab) } catch {}
   }, [tab])
 
-  // ── Fetch helpers ──────────────────────────────────────────────────────────
+  // ΓöÇΓöÇ Fetch helpers ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
   const looksNumeric = /^\d+$/.test((tournamentRef ?? '').trim())
 
@@ -1373,6 +1433,15 @@ export default function TournamentViewPage() {
     return Array.isArray(data) ? data as PublicScoreRow[] : []
   }, [])
 
+  const fetchSidePots = useCallback(async (resolvedId: number, squadId: number | null): Promise<PublicSidePotSummary[] | null> => {
+    if (resolvedId === DEMO_TOURNAMENT_ID) return []
+    const qs = squadId ? `?squad_id=${squadId}` : ''
+    const res = await fetch(buildApiUrl(`/api/v1/public/tournament/${resolvedId}/side-pots${qs}`))
+    if (!res.ok) return null
+    const data = await res.json() as { summaries?: PublicSidePotSummary[] }
+    return Array.isArray(data?.summaries) ? data.summaries : []
+  }, [])
+
   const handleShare = useCallback(() => {
     const url = window.location.href
     if (navigator.clipboard?.writeText) {
@@ -1393,7 +1462,7 @@ export default function TournamentViewPage() {
     }
   }, [])
 
-  // ── Session cache hydration/persistence ───────────────────────────────────
+  // ΓöÇΓöÇ Session cache hydration/persistence ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
   useEffect(() => {
     if (!tournamentRef) return
@@ -1402,7 +1471,7 @@ export default function TournamentViewPage() {
     try {
       const raw = sessionStorage.getItem(cacheKey)
       if (!raw) {
-        // No session cache — restore just the tab preference from localStorage
+        // No session cache ΓÇö restore just the tab preference from localStorage
         try {
           const savedTab = localStorage.getItem('bw-view-tab')
           if (savedTab === 'alive' || savedTab === 'brackets' || savedTab === 'sidePots') setTab(savedTab)
@@ -1465,7 +1534,7 @@ export default function TournamentViewPage() {
     tab,
   ])
 
-  // ── Initial load ───────────────────────────────────────────────────────────
+  // ΓöÇΓöÇ Initial load ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
   useEffect(() => {
     if (!tournamentRef) return
@@ -1487,17 +1556,18 @@ export default function TournamentViewPage() {
     setSelectedSquadId(getPreferredPublicSquadId(tournament.squads))
   }, [tournament, selectedSquadId])
 
-  // ── Data refresh (bowlers + brackets + winners) ────────────────────────────
+  // ΓöÇΓöÇ Data refresh (bowlers + brackets + winners) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
   const refresh = useCallback(async () => {
     if (!resolvedTournamentId || refreshInFlightRef.current) return
     refreshInFlightRef.current = true
     setIsRefreshing(true)
     try {
-      const [bg, w, sr] = await Promise.all([
+      const [bg, w, sr, sp] = await Promise.all([
         fetchBrackets(resolvedTournamentId, selectedSquadId),
         fetchWinners(resolvedTournamentId, selectedSquadId),
         fetchScores(resolvedTournamentId, selectedSquadId),
+        fetchSidePots(resolvedTournamentId, selectedSquadId),
       ])
       const selectedSquad = tournament?.squads.find((s) => s.id === selectedSquadId)
       const preferredSquadId = tournament ? getPreferredPublicSquadId(tournament.squads) : null
@@ -1508,12 +1578,14 @@ export default function TournamentViewPage() {
       setBracketGroups(bg)
       setWinners(w)
       setScoreRows(sr)
+      setSidePotSummaries(sp ?? [])
       setLastRefresh(new Date())
+      setSidePotsLoaded(sp !== null)
     } finally {
       setIsRefreshing(false)
       refreshInFlightRef.current = false
     }
-  }, [resolvedTournamentId, selectedSquadId, tournament, fetchBrackets, fetchWinners, fetchScores])
+  }, [resolvedTournamentId, selectedSquadId, tournament, fetchBrackets, fetchWinners, fetchScores, fetchSidePots])
 
   useEffect(() => {
     refresh()
@@ -1525,7 +1597,7 @@ export default function TournamentViewPage() {
     return () => { if (refreshTimer.current) clearInterval(refreshTimer.current) }
   }, [refresh])
 
-  // ─── Render ────────────────────────────────────────────────────────────────
+  // ΓöÇΓöÇΓöÇ Render ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
   if (error && !tournament) {
     let attemptedRef = (tournamentRef ?? '').trim()
@@ -1562,7 +1634,7 @@ export default function TournamentViewPage() {
                   BracketWorks <span className={styles.brandSep}>&middot;</span> Public Tournament View
                 </p>
                 <p className={styles.brandSubline}>
-                  {tournament?.name ?? ''}{tournament?.location ? ` · ${tournament.location}` : ''}
+                  {tournament?.name ?? ''}{tournament?.location ? ` ┬╖ ${tournament.location}` : ''}
                 </p>
               </div>
             </div>
@@ -1594,7 +1666,7 @@ export default function TournamentViewPage() {
                   onClick={handleShare}
                   title="Copy link to share with bowlers"
                 >
-                  <span className={styles.shareBtnIcon} aria-hidden="true">↗</span>
+                  <span className={styles.shareBtnIcon} aria-hidden="true">Γåù</span>
                   <Share2 className={styles.shareBtnSvg} aria-hidden="true" />
                   <span>{copied ? 'Link Copied' : 'Share Live View'}</span>
                 </button>
@@ -1634,7 +1706,7 @@ export default function TournamentViewPage() {
           ) : (
 
             <>
-              {/* ── Alive tab ── */}
+              {/* ΓöÇΓöÇ Alive tab ΓöÇΓöÇ */}
               {tab === 'alive' && (
                 <div className={styles.section}>
                   <AliveView
@@ -1647,7 +1719,7 @@ export default function TournamentViewPage() {
                 </div>
               )}
 
-              {/* ── Brackets tab ── */}
+              {/* ΓöÇΓöÇ Brackets tab ΓöÇΓöÇ */}
               {tab === 'brackets' && (
                 <BracketsTabView
                   bracketGroups={bracketGroups}
@@ -1658,11 +1730,13 @@ export default function TournamentViewPage() {
                 />
               )}
 
-              {/* ── Side Pots tab ── */}
+              {/* ΓöÇΓöÇ Side Pots tab ΓöÇΓöÇ */}
               {tab === 'sidePots' && (
                 <div className={styles.section}>
                   <SidePotsLeaderboard
                     scoreRows={scoreRows}
+                    sidePotSummaries={sidePotSummaries}
+                    sidePotsLoaded={sidePotsLoaded}
                     tournamentId={resolvedTournamentId}
                     lastRefresh={lastRefresh}
                     isRefreshing={isRefreshing}

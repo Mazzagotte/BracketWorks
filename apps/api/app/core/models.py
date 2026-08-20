@@ -386,6 +386,7 @@ class TournamentPlayer(Base):
     handicap_entry_count: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     scratch_entry_count: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     program_entry_counts: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+    side_pot_entries: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     lane: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     division: Mapped[Optional[str]] = mapped_column(String, nullable=True, default="Open")
     usbc_number: Mapped[Optional[str]] = mapped_column(String, nullable=True)
@@ -691,6 +692,7 @@ class TournamentBracketSettings(Base):
     house_fee_amount: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     default_entry_fee: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     bracket_programs: Mapped[Optional[list]] = mapped_column(JSON, nullable=True)
+    side_pots_settings: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     handicap_percentage: Mapped[Optional[float]] = mapped_column(
         Float, nullable=True, default=80.0
     )

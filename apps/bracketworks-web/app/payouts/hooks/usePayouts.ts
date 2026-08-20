@@ -41,6 +41,22 @@ export interface PayoutSummary {
   scratch_brackets: BracketPayout[]
   handicap_brackets: BracketPayout[]
   winners_by_bracket: Winner[]
+  side_pots?: {
+    tournament_id: number
+    squad_id: number | null
+    entry_fee: number
+    prize_amount: number
+    total_pool: number
+    summaries: Array<{
+      key: string
+      name: string
+      entry_count: number
+      pool: number
+      winner_id: number | null
+      winner_name: string | null
+      winner_metric: number | null
+    }>
+  }
   validation: {
     is_valid: boolean
     errors: string[]

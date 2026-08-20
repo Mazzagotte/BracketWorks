@@ -240,8 +240,6 @@ export default function PlayersPage() {
     sidePots,
     players,
     loadSidePots,
-    persistPlayerSidePotEntries,
-    mergeAndPersistSidePotEntries,
   } = usePlayerSidePots(rawPlayers)
 
   const { loadEntryFee } = usePlayerTournamentSetup({
@@ -321,21 +319,18 @@ export default function PlayersPage() {
       const potKey = field.split(':', 2)[1]
       if (!potKey) return
       const existingPlayer = players.find(player => player.id === playerId)
-      const nextSidePotEntries = {
+      updates = {
+        sidePotEntries: {
         ...(existingPlayer?.sidePotEntries || {}),
         [potKey]: Boolean(value),
+        },
       }
-      // Persist to localStorage
-      const tournamentId = getTournamentId()
-      persistPlayerSidePotEntries(tournamentId, playerId, nextSidePotEntries)
-      // No API call — side pot entries are localStorage only
-      return
     } else {
       updates = { [field]: value };
     }
 
     updatePlayer(playerId, updates);
-  }, [players, updatePlayer, getTournamentId, persistPlayerSidePotEntries]);
+  }, [players, updatePlayer]);
 
   // Stable ref so handleRandomize never needs players in its dep array
   const playersRef = useRef<typeof players>([])
@@ -352,12 +347,22 @@ export default function PlayersPage() {
       handicap_entries: number
       scratch_entries: number
       program_entry_counts: Record<string, number>
+      side_pot_entries: Record<string, boolean>
     }
+
+    const randomizedSidePotEntries = new Map<number, Record<string, boolean>>()
 
     const updates: UpdateRow[] = current.flatMap(player => {
       if (!Number.isFinite(player.id)) {
         return []
       }
+
+      const nextEntries = { ...(player.sidePotEntries || {}) }
+      enabledSidePots.forEach(pot => {
+        nextEntries[pot.key] = Math.random() < 0.45
+      })
+      randomizedSidePotEntries.set(player.id, nextEntries)
+
       const rawProgramEntryCounts = Object.fromEntries(
         enabledBracketPrograms.map(program => [
           program.key,
@@ -375,21 +380,12 @@ export default function PlayersPage() {
         handicap_entries: programEntryCounts.handicap ?? 0,
         scratch_entries: programEntryCounts.scratch ?? 0,
         program_entry_counts: programEntryCounts,
+        side_pot_entries: nextEntries,
       }]
     })
 
     // Build a lookup for O(1) access in the state updater
     const updateMap = new Map(updates.map(u => [u.id, u]))
-
-    // Randomize side pot checkboxes for enabled pots only
-    const randomizedSidePotEntries = new Map<number, Record<string, boolean>>()
-    current.forEach(player => {
-      const nextEntries = { ...(player.sidePotEntries || {}) }
-      enabledSidePots.forEach(pot => {
-        nextEntries[pot.key] = Math.random() < 0.45
-      })
-      randomizedSidePotEntries.set(player.id, nextEntries)
-    })
 
     // Single state update — no cascade
     // Keep base bracket cost separate from full due (base + side pots).
@@ -406,10 +402,6 @@ export default function PlayersPage() {
           + calculateSidePotCost(randomizedSidePotEntries.get(u.id), sidePots),
       ])
     )
-
-    // Persist randomized side pot entries to localStorage (same behavior as manual toggles)
-    const tournamentId = getTournamentId()
-    mergeAndPersistSidePotEntries(tournamentId, randomizedSidePotEntries)
 
     bulkSetPlayers(prev => prev.map(player => {
       const u = updateMap.get(player.id)
@@ -445,7 +437,7 @@ export default function PlayersPage() {
     } catch (err) {
       logger.error('Bulk randomize failed', { error: err })
     }
-  }, [enabledBracketPrograms, entryFee, sidePots, getTournamentId, bulkSetPlayers, cancelPendingPatches, mergeAndPersistSidePotEntries])
+  }, [enabledBracketPrograms, entryFee, sidePots, bulkSetPlayers, cancelPendingPatches])
 
   const isDev = process.env.NODE_ENV === 'development' || !!currentUser?.isAdmin
   const [isDeletingAll, setIsDeletingAll] = useState(false)

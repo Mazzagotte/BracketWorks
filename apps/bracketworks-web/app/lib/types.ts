@@ -143,6 +143,7 @@ export interface BracketSettings {
   scratch_brackets?: BracketData[];
   handicap_brackets?: BracketData[];
   bracket_programs?: BracketProgramDefinition[];
+  side_pots_settings?: SidePotsSettings;
   bracket_size: number;
   default_entry_fee: number;
   first_place_amount: number;

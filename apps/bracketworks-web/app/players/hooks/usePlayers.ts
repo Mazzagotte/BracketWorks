@@ -15,13 +15,14 @@ interface PlayerApiResponse {
   handicap_entry_count?: number;
   scratch_entry_count?: number;
   program_entry_counts?: Record<string, number>;
+  side_pot_entries?: Record<string, boolean>;
   lane?: string;
   division?: string;
   squad_id?: number;
   amount_paid?: number;
 }
 
-type PlayerPatchValue = string | number | null | Record<string, number>;
+type PlayerPatchValue = string | number | null | Record<string, number> | Record<string, boolean>;
 type PlayerPatch = Record<string, PlayerPatchValue>;
 
 interface UsePlayersOptions {
@@ -138,6 +139,7 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
           handicap: player.handicap_entry_count || 0,
           scratch: player.scratch_entry_count || 0,
           bracketEntries,
+          sidePotEntries: player.side_pot_entries || {},
           lane: player.lane || '',
           totalCost: calculatePlayerTotalCost(bracketEntries, bracketProgramsRef.current, entryFeeRef.current),
           amountPaid: player.amount_paid || 0,
@@ -168,6 +170,7 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
         handicap_entry_count: newPlayer.handicap,
         scratch_entry_count: newPlayer.scratch,
         program_entry_counts: newPlayer.bracketEntries,
+        side_pot_entries: newPlayer.sidePotEntries,
         lane: newPlayer.lane,
         division: normalizeDivision(newPlayer.division),
         amount_paid: newPlayer.amountPaid,
@@ -214,6 +217,7 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
       handicap_entry_count: newPlayer.handicap,
       scratch_entry_count: newPlayer.scratch,
       program_entry_counts: newPlayer.bracketEntries,
+      side_pot_entries: newPlayer.sidePotEntries,
       lane: newPlayer.lane,
       division: normalizeDivision(newPlayer.division),
       amount_paid: newPlayer.amountPaid,
@@ -313,6 +317,9 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
       playerData.handicap_entry_count = nextBracketEntries.handicap ?? 0
       playerData.scratch_entry_count = nextBracketEntries.scratch ?? 0
       playerData.program_entry_counts = nextBracketEntries
+    }
+    if ('sidePotEntries' in updates) {
+      playerData.side_pot_entries = updates.sidePotEntries ?? {}
     }
     if ('lane' in updates) playerData.lane = String(updates.lane ?? '');
     if ('division' in updates) playerData.division = normalizeDivision(updates.division);

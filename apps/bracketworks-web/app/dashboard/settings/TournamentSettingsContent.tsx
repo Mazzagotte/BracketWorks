@@ -18,6 +18,7 @@ import { formatIsoDateFull } from '../../lib/formatters';
 import { getErrorContext } from '../../lib/error-utils';
 import { BRACKET_SETTINGS_AUTOSAVE_DELAY_MS, getSidePotsStorageKey } from '../../lib/dashboard-settings';
 import { notifySettingsChanged } from '../../lib/selection-session';
+import { normalizeSidePotsSettings } from '../utils/sidePots';
 
 const createDefaultBracketSettings = (tournamentId = 0): BracketSettings => ({
   tournament_id: tournamentId,
@@ -165,10 +166,27 @@ export function TournamentSettingsContent({ tournamentId, layout = 'page' }: Tou
     (nextSidePots: SidePotsSettings) => {
       const key = getSidePotsStorageKey(tournamentId);
       storage.setItem(key, JSON.stringify(nextSidePots));
+
+      const nextBracketSettings: BracketSettings = {
+        ...bracketSettingsRef.current,
+        tournament_id: tournamentId,
+        side_pots_settings: nextSidePots,
+      };
+      bracketSettingsRef.current = nextBracketSettings;
+
+      void persistBracketSettings(nextBracketSettings).catch((err: unknown) => {
+        logger.error('Failed to save side-pot settings', getErrorContext(err));
+        addToast({
+          type: 'error',
+          message: 'Failed to save side-pot settings changes.',
+          duration: 5000,
+        });
+      });
+
       // Defer cross-component refresh event until after current render completes.
       setTimeout(() => notifySettingsChanged(), 0);
     },
-    [tournamentId],
+    [addToast, persistBracketSettings, tournamentId],
   );
 
   const updateSidePot = useCallback(
@@ -264,6 +282,8 @@ export function TournamentSettingsContent({ tournamentId, layout = 'page' }: Tou
           };
 
           setBracketSettings(normalizedBracketSettings);
+          setSidePots(normalizeSidePotsSettings(settingsData.side_pots_settings, tournamentId));
+          return;
         }
 
         const key = getSidePotsStorageKey(tournamentId);

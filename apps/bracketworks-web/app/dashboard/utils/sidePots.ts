@@ -18,8 +18,13 @@ type ParsedStoredSidePots = Partial<SidePotsSettings> & {
   pots?: Array<Partial<SidePot> & { entry_fee?: number }>;
 };
 
-export function hydrateStoredSidePots(stored: string, tournamentId: number): SidePotsSettings {
-  const parsed = JSON.parse(stored) as ParsedStoredSidePots;
+export function normalizeSidePotsSettings(
+  parsed: ParsedStoredSidePots | null | undefined,
+  tournamentId: number,
+): SidePotsSettings {
+  if (!parsed || typeof parsed !== 'object') {
+    return createDefaultSidePots(tournamentId);
+  }
 
   const mergedPots = DEFAULT_SIDE_POTS.map(defaultPot => {
     const savedPot = parsed.pots?.find(pot => pot.key === defaultPot.key);
@@ -37,4 +42,9 @@ export function hydrateStoredSidePots(stored: string, tournamentId: number): Sid
     prize_amount: prizeAmount,
     pots: mergedPots,
   };
+}
+
+export function hydrateStoredSidePots(stored: string, tournamentId: number): SidePotsSettings {
+  const parsed = JSON.parse(stored) as ParsedStoredSidePots;
+  return normalizeSidePotsSettings(parsed, tournamentId);
 }

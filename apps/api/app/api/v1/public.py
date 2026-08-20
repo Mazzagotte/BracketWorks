@@ -21,6 +21,7 @@ from ...core.idempotency import IdempotencyReplay, begin_request, complete_reque
 from ...core.bracket_programs import normalize_bowler_bracket_entries, normalize_division
 from ...services.bracket_persistence_simple import load_brackets_simple, load_generated_brackets
 from ...services.payouts import get_tournament_winners_summary, extract_bracket_winners
+from ...services.side_pots import calculate_side_pot_accounting
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -1301,3 +1302,19 @@ def get_public_scores(
         }
         for score, full_name in rows
     ]
+
+
+@router.get("/tournament/{tournament_id}/side-pots")
+def get_public_side_pots(
+    tournament_id: int,
+    squad_id: Optional[int] = Query(None),
+    response: Response = None,
+    db: Session = Depends(get_db),
+):
+    """Backend-authoritative side-pot summaries for the public tournament view."""
+    _get_tournament_or_404(db, tournament_id)
+
+    if response is not None:
+        _set_public_cache_headers(response, max_age=5, stale_while_revalidate=10)
+
+    return calculate_side_pot_accounting(db, tournament_id, squad_id)

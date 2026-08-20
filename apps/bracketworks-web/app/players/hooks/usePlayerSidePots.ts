@@ -5,16 +5,19 @@ import { getSidePotsStorageKey } from '../../lib/dashboard-settings'
 import { SidePotsSettings } from '../../lib/types'
 import { Player } from '../types'
 
-const getSidePotEntriesStorageKey = (tournamentId: string | number) => `sidePotEntries_${String(tournamentId)}`
-
 export function usePlayerSidePots(rawPlayers: Player[]) {
   const [sidePots, setSidePots] = useState<SidePotsSettings | null>(null)
-  const [sidePotEntriesMap, setSidePotEntriesMap] = useState<Record<number, Record<string, boolean>>>({})
 
-  const loadSidePots = useCallback((tournamentId: string | null) => {
+  const loadSidePots = useCallback((tournamentId: string | null, settingsFromApi?: SidePotsSettings | null) => {
     if (!tournamentId) {
       setSidePots(null)
-      setSidePotEntriesMap({})
+      return
+    }
+
+    if (settingsFromApi) {
+      const next = { ...settingsFromApi, tournament_id: Number(tournamentId) }
+      setSidePots(next)
+      localStorage.setItem(getSidePotsStorageKey(tournamentId), JSON.stringify(next))
       return
     }
 
@@ -28,54 +31,11 @@ export function usePlayerSidePots(rawPlayers: Player[]) {
     } catch {
       setSidePots(null)
     }
-
-    try {
-      const rawEntries = localStorage.getItem(getSidePotEntriesStorageKey(tournamentId))
-      if (rawEntries) {
-        setSidePotEntriesMap(JSON.parse(rawEntries) as Record<number, Record<string, boolean>>)
-      } else {
-        setSidePotEntriesMap({})
-      }
-    } catch {
-      setSidePotEntriesMap({})
-    }
-  }, [])
-
-  const persistPlayerSidePotEntries = useCallback((
-    tournamentId: string | null,
-    playerId: number,
-    nextEntries: Record<string, boolean>,
-  ) => {
-    if (!tournamentId) return
-
-    setSidePotEntriesMap(previous => {
-      const next = { ...previous, [playerId]: nextEntries }
-      localStorage.setItem(getSidePotEntriesStorageKey(tournamentId), JSON.stringify(next))
-      return next
-    })
-  }, [])
-
-  const mergeAndPersistSidePotEntries = useCallback((
-    tournamentId: string | null,
-    entriesByPlayer: Map<number, Record<string, boolean>>,
-  ) => {
-    setSidePotEntriesMap(previous => {
-      const next = { ...previous }
-      entriesByPlayer.forEach((entries, playerId) => {
-        next[playerId] = entries
-      })
-
-      if (tournamentId) {
-        localStorage.setItem(getSidePotEntriesStorageKey(tournamentId), JSON.stringify(next))
-      }
-
-      return next
-    })
   }, [])
 
   const players = useMemo(
     () => rawPlayers.map(player => {
-      const sidePotEntries = sidePotEntriesMap[player.id] ?? player.sidePotEntries ?? {}
+      const sidePotEntries = player.sidePotEntries ?? {}
       const sidePotCost = calculateSidePotCost(sidePotEntries, sidePots)
       return {
         ...player,
@@ -83,14 +43,12 @@ export function usePlayerSidePots(rawPlayers: Player[]) {
         totalCost: player.totalCost + sidePotCost,
       }
     }),
-    [rawPlayers, sidePotEntriesMap, sidePots],
+    [rawPlayers, sidePots],
   )
 
   return {
     sidePots,
     players,
     loadSidePots,
-    persistPlayerSidePotEntries,
-    mergeAndPersistSidePotEntries,
   }
 }

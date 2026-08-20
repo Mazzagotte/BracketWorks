@@ -4,7 +4,7 @@ import { apiClient } from '../../lib/api'
 import { isAuthError } from '../../lib/errors'
 import { logger } from '../../lib/logger'
 import { getSelectedSquadId } from '../../lib/selection-session'
-import { BracketProgramDefinition, BracketSettings, Tournament, TournamentBootstrapResponse } from '../../lib/types'
+import { BracketProgramDefinition, BracketSettings, SidePotsSettings, Tournament, TournamentBootstrapResponse } from '../../lib/types'
 import { normalizeBracketPrograms } from '../../lib/bracketPrograms'
 import { Squad } from '../types'
 
@@ -16,7 +16,7 @@ type UsePlayerTournamentSetupArgs = {
   selectionRefreshKey: number
   entryFee: number
   getTournamentId: () => string | null
-  loadSidePots: (tournamentId: string | null) => void
+  loadSidePots: (tournamentId: string | null, settingsFromApi?: SidePotsSettings | null) => void
   bracketProgramsEqual: (left: BracketProgramDefinition[], right: BracketProgramDefinition[]) => boolean
   setSelectedTournament: Dispatch<SetStateAction<Tournament | null>>
   setEntryFee: Dispatch<SetStateAction<number>>
@@ -53,11 +53,10 @@ export function usePlayerTournamentSetup({
       return
     }
 
-    loadSidePots(tournamentId)
-
     try {
       lastEntryFeeFetchRef.current = Date.now()
       const settings = await apiClient.get<BracketSettings>(`/api/v1/bracket-settings/${tournamentId}`)
+      loadSidePots(tournamentId, settings?.side_pots_settings ?? null)
       const nextEntryFee = typeof settings?.default_entry_fee === 'number' ? settings.default_entry_fee : null
       const nextPrograms = normalizeBracketPrograms(settings?.bracket_programs, nextEntryFee ?? entryFee)
 
@@ -75,6 +74,7 @@ export function usePlayerTournamentSetup({
       }
     } catch (error) {
       logger.warn('Failed to load bracket settings, using default entry fee:', error)
+      loadSidePots(tournamentId)
       const fallbackPrograms = normalizeBracketPrograms(undefined, entryFee)
       setBracketPrograms(previous => (bracketProgramsEqual(previous, fallbackPrograms) ? previous : fallbackPrograms))
     }
@@ -154,6 +154,7 @@ export function usePlayerTournamentSetup({
 
         if (bootstrap?.bracket_settings) {
           const settings = bootstrap.bracket_settings
+          loadSidePots(lastTournamentId, settings.side_pots_settings ?? null)
           const nextEntryFee = typeof settings.default_entry_fee === 'number' ? settings.default_entry_fee : null
           const normalizedPrograms = normalizeBracketPrograms(settings.bracket_programs, nextEntryFee ?? entryFee)
 
@@ -167,7 +168,9 @@ export function usePlayerTournamentSetup({
           }
         }
 
-        loadSidePots(lastTournamentId)
+        if (!bootstrap?.bracket_settings) {
+          loadSidePots(lastTournamentId)
+        }
 
         const storedSelectedSquadId = getSelectedSquadId()
         const restoredSelectedSquadId = selectedData?.squad_id
