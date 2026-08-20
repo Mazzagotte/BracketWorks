@@ -111,4 +111,54 @@ describe('usePayouts', () => {
       expect(result.current.loading).toBe(false)
     })
   })
+
+  it('keeps previously loaded payout data when refresh fails', async () => {
+    mockApiFetch
+      .mockResolvedValueOnce(createPayoutResponse('Initial Data'))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ detail: 'refresh failed' }), { status: 500 }))
+
+    const { result } = renderHook(() => usePayouts(1, null))
+
+    await act(async () => {
+      await result.current.loadPayoutData()
+    })
+
+    await waitFor(() => {
+      expect(result.current.payoutData?.scratch_brackets[0]?.bracket_name).toBe('Initial Data')
+    })
+
+    await act(async () => {
+      await result.current.loadPayoutData()
+    })
+
+    await waitFor(() => {
+      expect(result.current.error).toBe('refresh failed')
+      expect(result.current.payoutData?.scratch_brackets[0]?.bracket_name).toBe('Initial Data')
+    })
+  })
+
+  it('falls back to bowlers when live entries returns no players', async () => {
+    mockApiFetch
+      .mockResolvedValueOnce(new Response(JSON.stringify({ entries: [] }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify([
+        { id: 1, full_name: 'Alex Lane' },
+        { id: 2, full_name: 'Casey Rollins' },
+      ]), { status: 200 }))
+
+    const { result } = renderHook(() => usePayouts(99, 7))
+
+    await act(async () => {
+      await result.current.loadEntryData()
+    })
+
+    await waitFor(() => {
+      expect(result.current.entryData?.entries).toHaveLength(2)
+      expect(result.current.entryData?.entries[0]?.name).toBe('Alex Lane')
+      expect(result.current.entryData?.summary.total_players).toBe(2)
+    })
+
+    expect(mockApiFetch).toHaveBeenCalledTimes(2)
+    expect(mockApiFetch.mock.calls[0]?.[0]).toContain('/api/v1/payouts/live-entries/99?squad_id=7')
+    expect(mockApiFetch.mock.calls[1]?.[0]).toContain('/api/v1/bowlers?tournament_id=99&squad_id=7')
+  })
 })

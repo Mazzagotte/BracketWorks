@@ -177,3 +177,23 @@ def test_payout_calculate_requires_tournament_access(
         headers=outsider_headers,
     )
     assert forbidden.status_code == 403
+
+
+def test_payout_calculate_rejects_invalid_house_percentage(api_client: TestClient, auth_identity):
+    tournament = _create_tournament(api_client, auth_identity.headers, "House Percentage Guard")
+    squad = _create_squad(api_client, auth_identity.headers, tournament["id"])
+    _configure_and_seed_for_brackets(api_client, auth_identity.headers, tournament["id"], squad["id"])
+
+    too_low = api_client.get(
+        f"/api/v1/payouts/calculate/{tournament['id']}?squad_id={squad['id']}&house_percentage=-1",
+        headers=auth_identity.headers,
+    )
+    assert too_low.status_code == 400
+    assert "House percentage" in too_low.json()["detail"]
+
+    too_high = api_client.get(
+        f"/api/v1/payouts/calculate/{tournament['id']}?squad_id={squad['id']}&house_percentage=101",
+        headers=auth_identity.headers,
+    )
+    assert too_high.status_code == 400
+    assert "House percentage" in too_high.json()["detail"]

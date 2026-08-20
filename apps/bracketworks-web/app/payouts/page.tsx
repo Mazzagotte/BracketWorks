@@ -1,13 +1,14 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { BookOpen, CircleCheck, ClipboardCheck, Clock3, Coins, FileSpreadsheet, FileText, ListChecks, Search, Star, Trophy, Users, WalletCards, Zap } from 'lucide-react'
 import { useAuth } from '../lib/auth-context'
 import { ErrorBoundary } from '../components/ErrorBoundary'
 import { useTournaments, useSquads } from '../hooks/useTournaments'
-import { SidePotsSettings, Tournament, Squad } from '../lib/types'
+import { Tournament, Squad } from '../lib/types'
 import { usePayouts } from './hooks/usePayouts'
 import { usePayoutSetup, ScoreRow } from './hooks/usePayoutSetup'
+import { usePayoutExport } from './hooks/usePayoutExport'
+import { useSidePotAccounting } from './hooks/useSidePotAccounting'
 import NoTournamentState from '../components/NoTournamentState'
 import { storage } from '../lib/storage'
 import { getMemoryAccessToken } from '../lib/api'
@@ -15,36 +16,26 @@ import Link from 'next/link'
 import styles from './payouts.module.css'
 import cardStyles from '../styles/cards.module.css'
 import buttonStyles from '../styles/buttons.module.css'
-import badgeStyles from '../styles/badges.module.css'
-import formStyles from '../styles/forms.module.css'
 import shellStyles from '../styles/page-shell.module.css'
 import ExplainPayoutsModal from './ExplainPayoutsModal'
 import { useToast } from '../components/Toast'
-import { QuickActions, SearchPanel } from '../components/primitives'
-import primitiveStyles from '../components/primitives/primitives.module.css'
-import { formatCurrency, formatShortMonthDayYear } from '../lib/formatters'
+import { formatCurrency } from '../lib/formatters'
 import { logger } from '../lib/logger'
 import { getSelectedTournamentId } from '../lib/selection-session'
 import { getPayoutUnlockKey } from '../lib/storageKeys'
-import { buildPayoutExcelBuffer } from './utils/payoutExcelExport'
-import { AggregatedWinner, buildPayoutExportRows, buildSidePotByPlayer } from './utils/payoutExportRows'
-import { buildPayoutPdfHtml } from './utils/payoutPdfExport'
-import { printHtmlDocument } from '../lib/printExport'
 import { isPhoneWidth } from '../lib/responsive'
-
-function placeBadgeClass(place: number) {
-  if (place === 1) return `${badgeStyles.badge} ${badgeStyles.placement} ${badgeStyles.placeFirst} ${styles.placementBadge}`
-  if (place === 2) return `${badgeStyles.badge} ${badgeStyles.placement} ${badgeStyles.placeSecond} ${styles.placementBadge}`
-  if (place === 3) return `${badgeStyles.badge} ${badgeStyles.placement} ${badgeStyles.placeThird} ${styles.placementBadge}`
-  return `${badgeStyles.badge} ${badgeStyles.placement} ${badgeStyles.muted} ${styles.placementBadge}`
-}
+import { aggregateWinnersByPlayer, buildPaymentSummary, filterWinnersByName } from './utils/payoutViewModel'
+import PayoutsQuickActions from './components/PayoutsQuickActions'
+import PayoutsSummaryCard from './components/PayoutsSummaryCard'
+import PayoutsSearchPanel from './components/PayoutsSearchPanel'
+import PayoutsResultsCard from './components/PayoutsResultsCard'
 
 export default function PayoutsPage() {
   const { addToast } = useToast()
   const { isUserAuthenticated, isAuthInitialized, authToken } = useAuth()
   const effectiveAuthToken = authToken || getMemoryAccessToken()
-  const { tournaments, fetchTournaments } = useTournaments()
-  const { squads, fetchSquads } = useSquads()
+  const { fetchTournaments } = useTournaments()
+  const { fetchSquads } = useSquads()
 
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null)
   const [selectionRefreshKey, setSelectionRefreshKey] = useState(0)
@@ -52,11 +43,8 @@ export default function PayoutsPage() {
   const [searchFirstName, setSearchFirstName] = useState('')
   const [searchLastName, setSearchLastName] = useState('')
   const [paidKeys, setPaidKeys] = useState<Set<string>>(new Set())
-  const [sidePotPaidKeys, setSidePotPaidKeys] = useState<Set<string>>(new Set())
   const [scoreRows, setScoreRows] = useState<ScoreRow[]>([])
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set())
-  const [isExportingExcel, setIsExportingExcel] = useState(false)
-  const [isExportingPdf, setIsExportingPdf] = useState(false)
   const [isUnlocked, setIsUnlocked] = useState(false)
   const [isMobileView, setIsMobileView] = useState(false)
   const [isPayoutsGuideOpen, setIsPayoutsGuideOpen] = useState(false)
@@ -142,13 +130,9 @@ export default function PayoutsPage() {
     try {
       const stored = storage.getItem(`payouts_paid_${selectedTournament.id}`)
       setPaidKeys(new Set(stored ? JSON.parse(stored) : []))
-
-      const storedSidePotPaid = storage.getItem(`payouts_sidepot_paid_${selectedTournament.id}`)
-      setSidePotPaidKeys(new Set(storedSidePotPaid ? JSON.parse(storedSidePotPaid) : []))
     } catch {
       logger.error('Failed to parse paid keys from storage')
       setPaidKeys(new Set())
-      setSidePotPaidKeys(new Set())
     }
   }, [isUnlocked, loadEntryData, loadPayoutData, selectedSquad, selectedTournament])
 
@@ -162,338 +146,38 @@ export default function PayoutsPage() {
       return next
     })
   }, [selectedTournament])
+  const aggregatedWinners = useMemo(
+    () => aggregateWinnersByPlayer(payoutData?.winners_by_bracket ?? []),
+    [payoutData],
+  )
 
-  const toggleSidePotPaid = useCallback((potKey: string) => {
-    if (!selectedTournament) return
-    setSidePotPaidKeys(prev => {
-      const next = new Set(prev)
-      if (next.has(potKey)) next.delete(potKey)
-      else next.add(potKey)
-      storage.setItem(`payouts_sidepot_paid_${selectedTournament.id}`, JSON.stringify([...next]))
-      return next
-    })
-  }, [selectedTournament])
+  const { totalUniqueWinners, paidCount, remainingAmount } = useMemo(
+    () => buildPaymentSummary(aggregatedWinners, paidKeys),
+    [aggregatedWinners, paidKeys],
+  )
 
-  const handleRefresh = useCallback(() => {
-    if (!selectedTournament) return
-    loadPayoutData()
-    loadEntryData()
-  }, [selectedTournament, loadPayoutData, loadEntryData])
+  const filteredWinners = useMemo(
+    () => filterWinnersByName(aggregatedWinners, searchFirstName, searchLastName),
+    [aggregatedWinners, searchFirstName, searchLastName],
+  )
 
-  // Aggregate winners across brackets to compute paid stats
-  const aggregatedWinners = useMemo<AggregatedWinner[]>(() => {
-    const allWinners = payoutData?.winners_by_bracket ?? []
-    const byPlayer: Record<string, {
-      player_id: number
-      player_name: string
-      total_won: number
-      winnings: { bracket_name: string; position: string; payout_amount: number; payout_percentage: number; split_pot?: boolean }[]
-    }> = {}
-    for (const w of allWinners) {
-      const key = String(w.player_id ?? w.player_name)
-      if (!byPlayer[key]) byPlayer[key] = { player_id: w.player_id, player_name: w.player_name, total_won: 0, winnings: [] }
-      byPlayer[key].total_won += w.payout_amount
-      byPlayer[key].winnings.push({ bracket_name: w.bracket_name, position: w.position, payout_amount: w.payout_amount, payout_percentage: w.payout_percentage, split_pot: w.split_pot })
-    }
-    return Object.values(byPlayer).sort((a, b) => b.total_won - a.total_won)
-  }, [payoutData])
+  const sidePotAccounting = useSidePotAccounting(selectedTournament?.id ?? null, entryData, scoreRows)
 
-  const { totalUniqueWinners, paidCount, remainingAmount } = useMemo(() => {
-    const totalUniqueWinners = aggregatedWinners.length
-    const paidCount = aggregatedWinners.filter(w => paidKeys.has(String(w.player_id ?? w.player_name))).length
-    const remainingAmount = aggregatedWinners
-      .filter(w => !paidKeys.has(String(w.player_id ?? w.player_name)))
-      .reduce((sum, w) => sum + w.total_won, 0)
-    return { totalUniqueWinners, paidCount, remainingAmount }
-  }, [aggregatedWinners, paidKeys])
-
-  const filteredWinners = useMemo(() => {
-    const firstNameTerm = searchFirstName.trim().toLowerCase()
-    const lastNameTerm = searchLastName.trim().toLowerCase()
-    const hasSearch = Boolean(firstNameTerm || lastNameTerm)
-    if (!hasSearch) return aggregatedWinners
-
-    return aggregatedWinners.filter(w => {
-      const normalized = w.player_name.toLowerCase()
-      const firstMatches = !firstNameTerm || normalized.includes(firstNameTerm)
-      const lastMatches = !lastNameTerm || normalized.includes(lastNameTerm)
-      return firstMatches && lastMatches
-    })
-  }, [aggregatedWinners, searchFirstName, searchLastName])
-
-  const sidePotAccounting = useMemo(() => {
-    const toNum = (value: unknown): number | null => (typeof value === 'number' && Number.isFinite(value) ? value : null)
-
-    const getPotMetric = (potKey: string, score?: ScoreRow): number | null => {
-      if (!score) return null
-
-      const scratchGames = [toNum(score.game1_scratch), toNum(score.game2_scratch), toNum(score.game3_scratch)].filter((n): n is number => n !== null)
-      const handicapGames = [
-        toNum(score.game1_with_handicap),
-        toNum(score.game2_with_handicap),
-        toNum(score.game3_with_handicap),
-      ].filter((n): n is number => n !== null)
-
-      switch (potKey) {
-        case 'high_game_scratch':
-          return scratchGames.length > 0 ? Math.max(...scratchGames) : null
-        case 'high_series_scratch':
-          return scratchGames.length > 0 ? scratchGames.reduce((sum, n) => sum + n, 0) : null
-        case 'high_game_handicap':
-          return handicapGames.length > 0 ? Math.max(...handicapGames) : null
-        case 'high_series_handicap':
-          return handicapGames.length > 0 ? handicapGames.reduce((sum, n) => sum + n, 0) : null
-        default:
-          return null
-      }
-    }
-
-    const empty = {
-      totalPool: 0,
-      summaries: [] as Array<{
-        key: string
-        name: string
-        entryCount: number
-        pool: number
-        winnerId: string | null
-        winnerName: string | null
-        winnerMetric: number | null
-      }>,
-    }
-    if (!selectedTournament) return empty
-
-    try {
-      const rawSettings = storage.getItem(`sidePots_${selectedTournament.id}`)
-      const rawEntries = storage.getItem(`sidePotEntries_${selectedTournament.id}`)
-      if (!rawSettings || !rawEntries) return empty
-
-      const settings = JSON.parse(rawSettings) as SidePotsSettings
-      const sidePotEntriesMap = JSON.parse(rawEntries) as Record<string, Record<string, boolean>>
-      const enabledPots = (settings.pots ?? []).filter(pot => pot.enabled)
-      if (enabledPots.length === 0 || settings.entry_fee <= 0) return empty
-
-      const activePlayerIds = new Set((entryData?.entries ?? []).map(entry => Number(entry.id)))
-      const playerNameById = new Map((entryData?.entries ?? []).map(entry => [String(entry.id), entry.name]))
-      const scoreByPlayerId = new Map(scoreRows.map(score => [String(score.player_id), score]))
-
-      const summaries = enabledPots.map(pot => {
-        const entrantsWithMetric = Object.entries(sidePotEntriesMap)
-          .filter(([playerIdRaw, entries]) => {
-            const playerId = Number(playerIdRaw)
-            const inActiveSet = activePlayerIds.size === 0 || activePlayerIds.has(playerId)
-            return inActiveSet && Boolean(entries?.[pot.key])
-          })
-          .map(([playerIdRaw]) => {
-            const id = String(playerIdRaw)
-            const metric = getPotMetric(pot.key, scoreByPlayerId.get(id))
-            return {
-              id,
-              name: playerNameById.get(id) ?? `Player #${playerIdRaw}`,
-              metric,
-            }
-          })
-
-        const winner = entrantsWithMetric
-          .filter(item => item.metric !== null)
-          .sort((a, b) => {
-            if ((b.metric ?? 0) !== (a.metric ?? 0)) return (b.metric ?? 0) - (a.metric ?? 0)
-            return a.name.localeCompare(b.name)
-          })[0]
-
-        const entryCount = Object.entries(sidePotEntriesMap).reduce((count, [playerIdRaw, entries]) => {
-          const playerId = Number(playerIdRaw)
-          const inActiveSet = activePlayerIds.size === 0 || activePlayerIds.has(playerId)
-          return (inActiveSet && entries?.[pot.key]) ? count + 1 : count
-        }, 0)
-        return {
-          key: pot.key,
-          name: pot.name,
-          entryCount,
-          pool: entryCount * (settings.prize_amount ?? settings.entry_fee),
-          winnerId: winner?.id ?? null,
-          winnerName: winner?.name ?? null,
-          winnerMetric: winner?.metric ?? null,
-        }
-      })
-
-      const totalPool = summaries.reduce((sum, item) => sum + item.pool, 0)
-      return { totalPool, summaries }
-    } catch {
-      return empty
-    }
-  }, [selectedTournament, entryData, scoreRows])
-
-  const sidePotByPlayer = useMemo(() => {
-    return buildSidePotByPlayer(sidePotAccounting.summaries)
-  }, [sidePotAccounting.summaries])
-
-  const buildExportFileName = useCallback((suffix: 'xlsx' | 'pdf') => {
-    const safeTournament = (selectedTournament?.name || 'Tournament')
-      .replace(/[^a-zA-Z0-9\-_ ]+/g, '')
-      .trim()
-      .replace(/\s+/g, '_') || 'Tournament'
-    const safeDate = selectedSquad?.date
-      ? selectedSquad.date.replace(/[^a-zA-Z0-9\-]/g, '')
-      : new Date().toISOString().slice(0, 10)
-    return `Payout_Distribution_${safeTournament}_${safeDate}.${suffix}`
-  }, [selectedTournament, selectedSquad])
-
-  const handleExportToExcel = useCallback(async () => {
-    if (filteredWinners.length === 0) {
-      addToast({ type: 'warning', message: 'No payout rows to export.', duration: 3000 })
-      return
-    }
-
-    setIsExportingExcel(true)
-    try {
-      const rows = buildPayoutExportRows(filteredWinners, sidePotByPlayer, paidKeys)
-
-      const allBrackets = [
-        ...(payoutData?.scratch_brackets ?? []),
-        ...(payoutData?.handicap_brackets ?? []),
-      ]
-      const totalEntries = allBrackets.reduce((s, b) => s + b.bracket_size, 0)
-      const programs = [
-        ...(payoutData?.program_summaries ?? []).filter(p => p.total_brackets > 0).map(p => p.name),
-        ...sidePotAccounting.summaries.filter(s => s.pool > 0).map(s => s.name),
-      ].join(' / ') || 'N/A'
-
-      const tournamentName = selectedTournament?.name || 'Unknown Tournament'
-      const squadLabel = selectedSquad
-        ? `${selectedSquad.date || ''} — ${selectedSquad.time || ''}`.trim()
-        : 'All Squads'
-      const generatedAt = new Date().toLocaleString()
-      const xlsxBuffer = await buildPayoutExcelBuffer({
-        rows,
-        programs,
-        totalBrackets: allBrackets.length,
-        totalEntries,
-        tournamentName,
-        squadLabel,
-        generatedAt,
-      })
-      const blob = new Blob([xlsxBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = buildExportFileName('xlsx')
-      a.click()
-      URL.revokeObjectURL(url)
-      addToast({
-        type: 'success',
-        message: `Exported ${rows.length} payout row${rows.length !== 1 ? 's' : ''} to Excel.`,
-        duration: 3000,
-      })
-    } catch (err) {
-      addToast({
-        type: 'error',
-        message: `Failed to export Excel file: ${err instanceof Error ? err.message : 'Unknown error'}`,
-        duration: 5000,
-      })
-    } finally {
-      setIsExportingExcel(false)
-    }
-  }, [addToast, buildExportFileName, filteredWinners, paidKeys, payoutData, selectedTournament, selectedSquad, sidePotAccounting, sidePotByPlayer])
-
-  const handleExportToPdf = useCallback(() => {
-    if (filteredWinners.length === 0) {
-      addToast({ type: 'warning', message: 'No payout rows to export.', duration: 3000 })
-      return
-    }
-
-    setIsExportingPdf(true)
-    try {
-      const rows = buildPayoutExportRows(filteredWinners, sidePotByPlayer, paidKeys)
-
-      const tournamentName = selectedTournament?.name || 'Unknown Tournament'
-      const squadLabel = selectedSquad
-        ? `${selectedSquad.date || ''} \u2014 ${selectedSquad.time || ''}`.trim()
-        : 'All Squads'
-      const generatedAt = new Date().toLocaleString()
-      const paidStampDate = formatShortMonthDayYear(new Date())
-      const logoUrl = `${window.location.origin}/logo_no_text.svg`
-
-      const allBrackets = [
-        ...(payoutData?.scratch_brackets ?? []),
-        ...(payoutData?.handicap_brackets ?? []),
-      ]
-      const totalEntries = allBrackets.reduce((s, b) => s + b.bracket_size, 0)
-      const programs = [
-        ...(payoutData?.program_summaries ?? [])
-          .filter(p => p.total_brackets > 0)
-          .map(p => p.name),
-        ...sidePotAccounting.summaries
-          .filter(s => s.pool > 0)
-          .map(s => s.name),
-      ].join(' / ') || 'N/A'
-
-      const html = buildPayoutPdfHtml({
-        rows,
-        tournamentName,
-        squadLabel,
-        generatedAt,
-        paidStampDate,
-        logoUrl,
-        programs,
-        totalBrackets: allBrackets.length,
-        totalEntries,
-      })
-
-      printHtmlDocument({
-        html,
-        documentTitle: buildExportFileName('pdf').replace('.pdf', ''),
-      })
-
-      addToast({
-        type: 'success',
-        message: `Prepared ${rows.length} payout row${rows.length !== 1 ? 's' : ''} for PDF export.`,
-        duration: 3000,
-      })
-    } catch (err) {
-      addToast({
-        type: 'error',
-        message: `Failed to export PDF: ${err instanceof Error ? err.message : 'Unknown error'}`,
-        duration: 5000,
-      })
-    } finally {
-      setIsExportingPdf(false)
-    }
-  }, [addToast, buildExportFileName, filteredWinners, selectedTournament, selectedSquad, paidKeys, sidePotAccounting, payoutData, sidePotByPlayer])
-
-  const payoutsQuickActions = useMemo(() => (
-    <QuickActions
-      className={styles.quickActionsContent}
-      left={(
-        <button
-          className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
-          onClick={() => setIsPayoutsGuideOpen(true)}
-        >
-          <BookOpen aria-hidden="true" />
-          Payouts Guide
-        </button>
-      )}
-      right={(
-        <>
-          <button
-            className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
-            onClick={handleExportToExcel}
-            disabled={loading || isExportingExcel || filteredWinners.length === 0}
-          >
-            <FileSpreadsheet aria-hidden="true" />
-            {isExportingExcel ? 'Exporting...' : isMobileView ? 'Excel' : 'Export to Excel'}
-          </button>
-          <button
-            className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
-            onClick={handleExportToPdf}
-            disabled={loading || isExportingPdf || filteredWinners.length === 0}
-          >
-            <FileText aria-hidden="true" />
-            {isExportingPdf ? 'Exporting...' : isMobileView ? 'PDF' : 'Export to PDF'}
-          </button>
-        </>
-      )}
-    />
-  ), [filteredWinners.length, handleExportToExcel, handleExportToPdf, isExportingExcel, isExportingPdf, isMobileView, loading])
+  const {
+    isExportingExcel,
+    isExportingPdf,
+    exportToExcel,
+    exportToPdf,
+    sidePotByPlayer,
+  } = usePayoutExport({
+    addToast,
+    winners: filteredWinners,
+    paidKeys,
+    payoutData,
+    sidePotSummaries: sidePotAccounting.summaries,
+    selectedTournament,
+    selectedSquad,
+  })
 
 
   const programSummaries = useMemo(
@@ -558,140 +242,58 @@ export default function PayoutsPage() {
       <div className={`${shellStyles.page} ${styles.pageContainer}`}>
         <div className={`${cardStyles.card} ${cardStyles.quickActionsCard} ${styles.quickActionsCard}`}>
           <h2 className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${cardStyles.quickActionsTitle}`}>
-            <Zap aria-hidden="true" />
             Quick Actions
           </h2>
           <div className={cardStyles.quickActionsBody}>
-            {payoutsQuickActions}
+            <PayoutsQuickActions
+              hasRows={filteredWinners.length > 0}
+              isLoading={loading}
+              isExportingExcel={isExportingExcel}
+              isExportingPdf={isExportingPdf}
+              isMobileView={isMobileView}
+              onOpenGuide={() => setIsPayoutsGuideOpen(true)}
+              onExportToExcel={() => {
+                void exportToExcel()
+              }}
+              onExportToPdf={exportToPdf}
+            />
           </div>
         </div>
 
-        {/* Summary card */}
         {payoutData && (
-          <div className={`${cardStyles.card} surface-card ${styles.summaryCard}`}>
-            <div className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${styles.summaryHeader}`}>
-              <div className={`${cardStyles.cardHeaderRow} ${styles.summaryTitleWrap}`}>
-                <h3 className={`${cardStyles.cardTitle} ${styles.summaryTitle}`}>
-                  <Coins aria-hidden="true" />
-                  Payout Summary
-                </h3>
-                <p className={styles.summarySubtitle}>Live totals for prize pools and payout completion.</p>
-              </div>
-              <div className={styles.summaryPaymentStrip}>
-                <span className={`${badgeStyles.badge} ${badgeStyles.success}`}><CircleCheck aria-hidden="true" />{paidCount} Paid</span>
-                <span className={`${badgeStyles.badge} ${totalUniqueWinners - paidCount > 0 ? badgeStyles.warning : badgeStyles.muted}`}><Clock3 aria-hidden="true" />{Math.max(totalUniqueWinners - paidCount, 0)} Due</span>
-                <span className={`${badgeStyles.badge} ${remainingAmount > 0 ? badgeStyles.accent : badgeStyles.muted}`}><WalletCards aria-hidden="true" />{formatCurrency(remainingAmount)} Outstanding</span>
-              </div>
-            </div>
-            <div className={styles.summaryGrid}>
-              <div className={`${cardStyles.statTile} ${cardStyles.statTileCompact} ${styles.statBox}`}>
-                <span className={styles.statIconRing}><Trophy aria-hidden="true" className={styles.statIcon} /></span>
-                <div className={styles.statContent}>
-                  <div className={`${cardStyles.statValue} ${styles.statValue}`}>{formatCurrency(displayedTotalPrizePool)}</div>
-                  <div className={`${cardStyles.statLabel} ${styles.statLabel}`}>Final Prize Pool</div>
-                  {sidePotAccounting.totalPool > 0 && (
-                    <div className={`${cardStyles.statDetail} ${styles.statDetail}`}>Includes {formatCurrency(sidePotAccounting.totalPool)} in side pots</div>
-                  )}
-                </div>
-              </div>
-              {programSummaries.map(program => (
-                <div key={program.key} className={`${cardStyles.statTile} ${cardStyles.statTileCompact} ${styles.statBox}`}>
-                  <span className={styles.statIconRing}>
-                    {program.name.toLowerCase().includes('scratch') ? <Star aria-hidden="true" className={styles.statIcon} /> : <Users aria-hidden="true" className={styles.statIcon} />}
-                  </span>
-                  <div className={styles.statContent}>
-                    <div className={`${cardStyles.statValue} ${styles.statValue}`}>{formatCurrency(program.total_prize_pool)}</div>
-                    <div className={`${cardStyles.statLabel} ${styles.statLabel}`}>{program.name} Pool</div>
-                    <div className={`${cardStyles.statDetail} ${styles.statDetail}`}>{program.total_brackets} bracket{program.total_brackets !== 1 ? 's' : ''}</div>
-                  </div>
-                </div>
-              ))}
-              {sidePotAccounting.summaries.map(pot => (
-                <div key={pot.key} className={`${cardStyles.statTile} ${cardStyles.statTileCompact} ${styles.statBox}`}>
-                  <span className={styles.statIconRing}><Coins aria-hidden="true" className={styles.statIcon} /></span>
-                  <div className={styles.statContent}>
-                    <div className={`${cardStyles.statValue} ${styles.statValue}`}>{formatCurrency(pot.pool)}</div>
-                    <div className={`${cardStyles.statLabel} ${styles.statLabel}`}>{pot.name} Pool</div>
-                    <div className={`${cardStyles.statDetail} ${styles.statDetail}`}>{pot.entryCount} side pot entr{pot.entryCount === 1 ? 'y' : 'ies'}</div>
-                  </div>
-                </div>
-              ))}
-              <div className={`${cardStyles.statTile} ${cardStyles.statTileCompact} ${styles.statBox}`}>
-                <span className={styles.statIconRing}><ClipboardCheck aria-hidden="true" className={styles.statIcon} /></span>
-                <div className={styles.statContent}>
-                  <div className={`${cardStyles.statValue} ${styles.statValue}`}>{paidCount} / {totalUniqueWinners}</div>
-                  <div className={`${cardStyles.statLabel} ${styles.statLabel}`}>Marked Paid</div>
-                  {totalUniqueWinners > 0 && (
-                    <div className={styles.progressBarRow}>
-                      <progress className={styles.progressMeter} value={paidCount} max={totalUniqueWinners} />
-                    </div>
-                  )}
-                  {remainingAmount > 0 && (
-                    <div className={`${cardStyles.statDetail} ${styles.remainingLabel}`}>{formatCurrency(remainingAmount)} remaining to mark paid</div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
+          <PayoutsSummaryCard
+            payoutData={payoutData}
+            programSummaries={programSummaries}
+            sidePotSummaries={sidePotAccounting.summaries}
+            displayedTotalPrizePool={displayedTotalPrizePool}
+            paidCount={paidCount}
+            totalUniqueWinners={totalUniqueWinners}
+            remainingAmount={remainingAmount}
+          />
         )}
 
         {error && <div className={`${cardStyles.statePanel} ${cardStyles.dangerPanel} ${styles.errorBanner}`}>{error}</div>}
 
-        {/* Search */}
         {payoutData && aggregatedWinners.length > 0 && (
-          <div>
-            {(() => {
-              const hasSearch = searchFirstName.trim().length > 0 || searchLastName.trim().length > 0
-              return (
-            <SearchPanel
-              className={styles.searchStandalone}
-              title={<span className={styles.sectionTitle}><Search aria-hidden="true" />Search Payouts</span>}
-              useToolbar={false}
-              accented={false}
-              left={(
-                <>
-                  <input
-                    type="text"
-                    placeholder="First name"
-                    value={searchFirstName}
-                    onChange={e => setSearchFirstName(e.target.value)}
-                    className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput} ${primitiveStyles.searchPanelInput}`}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Last name"
-                    value={searchLastName}
-                    onChange={e => setSearchLastName(e.target.value)}
-                    className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput} ${primitiveStyles.searchPanelInput}`}
-                  />
-                </>
-              )}
-              right={(
-                <button
-                  type="button"
-                  className={primitiveStyles.searchPanelClearButton}
-                  onClick={() => {
-                    setSearchFirstName('')
-                    setSearchLastName('')
-                  }}
-                  disabled={!hasSearch}
-                >
-                  Clear
-                </button>
-              )}
-            />
-              )
-            })()}
-          </div>
+          <PayoutsSearchPanel
+            searchFirstName={searchFirstName}
+            searchLastName={searchLastName}
+            onSearchFirstNameChange={setSearchFirstName}
+            onSearchLastNameChange={setSearchLastName}
+            onClear={() => {
+              setSearchFirstName('')
+              setSearchLastName('')
+            }}
+          />
         )}
 
-        {/* Loading / empty states */}
         {loading && (
           <div className={styles.loadingRow}>
             <div className={styles.loadingSpinner} />
             <span>Calculating payouts...</span>
           </div>
         )}
+
         {!loading && !selectedTournament && (
           <NoTournamentState
             description="Load a tournament from the dashboard to review prize pools, winners, payment status, and payout exports."
@@ -702,7 +304,8 @@ export default function PayoutsPage() {
             ]}
           />
         )}
-        {!loading && selectedTournament && aggregatedWinners.length === 0 && !loading && (
+
+        {!loading && selectedTournament && aggregatedWinners.length === 0 && (
           <div className={`${cardStyles.card} ${cardStyles.emptyStateCard} ${styles.emptyState}`}>
             <h2 className={styles.emptyTitle}>
               No Payouts Calculated Yet
@@ -721,87 +324,17 @@ export default function PayoutsPage() {
           </div>
         )}
 
-        {/* Single condensed winners card */}
         {!loading && aggregatedWinners.length > 0 && (
-          <div className={`${cardStyles.card} ${styles.tableCard}`}>
-            <div className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${cardStyles.cardHeaderRow} ${styles.tableCardHeader}`}>
-              <span className={styles.sectionTitle}><ListChecks aria-hidden="true" />Payout Results</span>
-              <span className={styles.headerPool}>Total Payouts: {formatCurrency(displayedTotalPrizePool)}</span>
-            </div>
-            <div className={styles.bracketGroup}>
-              {(filteredWinners.length === 0 ? (
-                <div className={`${cardStyles.card} ${cardStyles.emptyStateCard} ${styles.emptyState}`}>
-                  <div className={styles.emptyTitle}>No results</div>
-                  <div className={styles.emptyMessage}>No players match your search.</div>
-                </div>
-              ) : filteredWinners.map((row, index) => {
-                const key = String(row.player_id ?? row.player_name)
-                const isPaid = paidKeys.has(key)
-                return (
-                  <div
-                    key={key}
-                    className={`${styles.winnerRow} ${index === 0 ? styles.firstPlace : ''} ${isPaid ? styles.isPaid : ''}`}
-                  >
-                    <div className={placeBadgeClass(index + 1)}>{index + 1}</div>
-                    <div className={styles.winnerInfo}>
-                      <div className={styles.winnerName}>
-                        {row.player_name}
-                        <span className={styles.bracketCount}>{row.winnings.length} bracket{row.winnings.length !== 1 ? 's' : ''} won</span>
-                        <button
-                          className={styles.toggleDetailsBtn}
-                          onClick={() => toggleExpanded(key)}
-                          aria-label={expandedKeys.has(key) ? 'Hide details' : 'Show details'}
-                        >
-                          {expandedKeys.has(key) ? 'Hide details' : 'Show details'}
-                        </button>
-                        {(sidePotByPlayer[String(row.player_id)] ?? []).map(sp => (
-                          <span key={sp.name} className={styles.sidePotPill}>{sp.name}</span>
-                        ))}
-                      </div>
-                      {expandedKeys.has(key) && (() => {
-                        const grouped: Record<string, typeof row.winnings> = {}
-                        for (const w of row.winnings) {
-                          const type = w.bracket_name.replace(/ Bracket \d+$/, '').trim()
-                          if (!grouped[type]) grouped[type] = []
-                          grouped[type].push(w)
-                        }
-                        return (
-                          <div className={styles.winnerMeta}>
-                            {Object.entries(grouped).map(([type, wins]) => (
-                              <div key={type} className={styles.winnerMetaGroup}>
-                                <div className={styles.winnerMetaGroupLabel}>{type}</div>
-                                {wins.map(w => {
-                                  const bracketShort = w.bracket_name.replace(/^.* (Bracket \d+)$/, '$1')
-                                  return (
-                                    <div key={w.bracket_name} className={styles.winnerMetaRow}>
-                                      {bracketShort} — {w.position} — {formatCurrency(w.payout_amount)}{w.split_pot ? ' (split)' : ''}
-                                    </div>
-                                  )
-                                })}
-                              </div>
-                            ))}
-                          </div>
-                        )
-                      })()}
-                    </div>
-                    <div className={styles.payoutCol}>
-                      <div className={styles.payoutAmount}>{formatCurrency(row.total_won)}</div>
-                      {row.winnings.length > 1 && (
-                        <div className={styles.payoutPct}>{row.winnings.length} brackets</div>
-                      )}
-                    </div>
-                    {isPaid ? (
-                      <button className={`${badgeStyles.badge} ${badgeStyles.success} ${styles.paidBadge}`} onClick={() => togglePaid(key)}>Paid</button>
-                    ) : (
-                      <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.primary} ${styles.markPaidBtn}`} onClick={() => togglePaid(key)}>Mark Paid</button>
-                    )}
-                  </div>
-                )
-              }))}
-            </div>
-          </div>
+          <PayoutsResultsCard
+            displayedTotalPrizePool={displayedTotalPrizePool}
+            winners={filteredWinners}
+            paidKeys={paidKeys}
+            expandedKeys={expandedKeys}
+            sidePotByPlayer={sidePotByPlayer}
+            onToggleExpanded={toggleExpanded}
+            onTogglePaid={togglePaid}
+          />
         )}
-
       </div>
 
       <ExplainPayoutsModal
@@ -811,8 +344,4 @@ export default function PayoutsPage() {
     </ErrorBoundary>
   )
 }
-
-
-
-
 
