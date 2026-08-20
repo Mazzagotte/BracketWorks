@@ -52,6 +52,12 @@ export interface PayoutSummary {
       name: string
       entry_count: number
       pool: number
+      status: 'empty' | 'pending' | 'complete' | 'tied'
+      winning_metric: number | null
+      winners: Array<{
+        player_id: number
+        player_name: string
+      }>
       winner_id: number | null
       winner_name: string | null
       winner_metric: number | null

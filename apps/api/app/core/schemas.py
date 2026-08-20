@@ -8,7 +8,7 @@ from pydantic import (
     model_validator,
 )
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 
 class BracketProgramDefinition(BaseModel):
@@ -47,6 +47,34 @@ class SidePotsSettingsDefinition(BaseModel):
     entry_fee: float = 0
     prize_amount: float = 0
     pots: List[SidePotDefinition] = Field(default_factory=list)
+
+
+class SidePotWinner(BaseModel):
+    player_id: int
+    player_name: str
+
+
+class SidePotAccountingSummary(BaseModel):
+    key: str
+    name: str
+    entry_count: int
+    pool: float
+    status: Literal["empty", "pending", "complete", "tied"]
+    winning_metric: Optional[int] = None
+    winners: List[SidePotWinner] = Field(default_factory=list)
+    # Legacy compatibility fields for existing clients that only support one winner.
+    winner_id: Optional[int] = None
+    winner_name: Optional[str] = None
+    winner_metric: Optional[int] = None
+
+
+class SidePotAccountingOut(BaseModel):
+    tournament_id: int
+    squad_id: Optional[int] = None
+    entry_fee: float
+    prize_amount: float
+    total_pool: float
+    summaries: List[SidePotAccountingSummary] = Field(default_factory=list)
 
 
 class LoginRequest(BaseModel):

@@ -90,11 +90,11 @@ def _to_metric(pot_key: str, score: Optional[models.PlayerScore]) -> Optional[in
     if pot_key == "high_game_scratch":
         return max(valid_scratch) if valid_scratch else None
     if pot_key == "high_series_scratch":
-        return sum(valid_scratch) if valid_scratch else None
+        return sum(valid_scratch) if len(valid_scratch) == 3 else None
     if pot_key == "high_game_handicap":
         return max(valid_handicap) if valid_handicap else None
     if pot_key == "high_series_handicap":
-        return sum(valid_handicap) if valid_handicap else None
+        return sum(valid_handicap) if len(valid_handicap) == 3 else None
 
     return None
 
@@ -169,14 +169,41 @@ def calculate_side_pot_accounting(
             )
 
         entrants_with_metric = [entrant for entrant in entrants if entrant["metric"] is not None]
-        entrants_with_metric.sort(
-            key=lambda row: (
-                -(int(row["metric"]) if row["metric"] is not None else -1),
-                str(row["player_name"] or "").lower(),
-                int(row["player_id"]),
-            )
-        )
-        winner = entrants_with_metric[0] if entrants_with_metric else None
+        has_incomplete_entrants = len(entrants_with_metric) != len(entrants)
+
+        winning_metric: Optional[int] = None
+        winners: list[dict[str, Any]] = []
+
+        if entrants_with_metric:
+            winning_metric = max(int(entrant["metric"]) for entrant in entrants_with_metric)
+            winners = [
+                {
+                    "player_id": int(entrant["player_id"]),
+                    "player_name": str(entrant["player_name"]),
+                }
+                for entrant in entrants_with_metric
+                if int(entrant["metric"]) == winning_metric
+            ]
+            winners.sort(key=lambda row: (row["player_name"].lower(), row["player_id"]))
+
+        status = "empty"
+        if entrants:
+            if not winners or has_incomplete_entrants:
+                status = "pending"
+                winners = []
+                winning_metric = None
+            elif len(winners) > 1:
+                status = "tied"
+            else:
+                status = "complete"
+
+        legacy_winner_id: Optional[int] = None
+        legacy_winner_name: Optional[str] = None
+        legacy_winner_metric: Optional[int] = None
+        if status == "complete" and len(winners) == 1 and winning_metric is not None:
+            legacy_winner_id = winners[0]["player_id"]
+            legacy_winner_name = winners[0]["player_name"]
+            legacy_winner_metric = winning_metric
 
         entry_count = len(entrants)
         pool = round(entry_count * per_entry_pool_value, 2)
@@ -187,9 +214,12 @@ def calculate_side_pot_accounting(
                 "name": pot_name,
                 "entry_count": entry_count,
                 "pool": pool,
-                "winner_id": winner["player_id"] if winner else None,
-                "winner_name": winner["player_name"] if winner else None,
-                "winner_metric": winner["metric"] if winner else None,
+                "status": status,
+                "winning_metric": winning_metric,
+                "winners": winners,
+                "winner_id": legacy_winner_id,
+                "winner_name": legacy_winner_name,
+                "winner_metric": legacy_winner_metric,
             }
         )
 

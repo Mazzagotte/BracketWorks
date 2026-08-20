@@ -297,6 +297,227 @@ def test_payout_calculate_includes_backend_side_pot_accounting(api_client: TestC
     summary = next((item for item in side_pots.get("summaries", []) if item.get("key") == "high_game_scratch"), None)
     assert summary is not None
     assert summary["entry_count"] == 2
+    assert summary["status"] == "complete"
+    assert summary["winning_metric"] == 220
+    assert summary["winners"] == [{"player_id": player1["id"], "player_name": "Side Pot Player 1"}]
     assert summary["winner_id"] == player1["id"]
     assert summary["winner_name"] == "Side Pot Player 1"
     assert summary["winner_metric"] == 220
+
+
+def test_payout_side_pot_marks_ties_without_legacy_winner(api_client: TestClient, auth_identity):
+    tournament = _create_tournament(api_client, auth_identity.headers, "Side Pot Tie")
+    squad = _create_squad(api_client, auth_identity.headers, tournament["id"])
+
+    settings_response = api_client.post(
+        "/api/v1/bracket-settings/",
+        headers=auth_identity.headers,
+        json={
+            "tournament_id": tournament["id"],
+            "bracket_size": 8,
+            "default_entry_fee": 10,
+            "first_place_amount": 50,
+            "second_place_amount": 20,
+            "house_fee_amount": 10,
+            "handicap_percentage": 80,
+            "handicap_base": 200,
+            "allow_byes": True,
+            "side_pots_settings": {
+                "tournament_id": tournament["id"],
+                "entry_fee": 10,
+                "prize_amount": 10,
+                "pots": [
+                    {"key": "high_game_scratch", "name": "High Game Scratch", "enabled": True},
+                    {"key": "high_series_scratch", "name": "High Series Scratch", "enabled": False},
+                    {"key": "high_game_handicap", "name": "High Game Handicap", "enabled": False},
+                    {"key": "high_series_handicap", "name": "High Series Handicap", "enabled": False},
+                ],
+            },
+        },
+    )
+    assert settings_response.status_code == 200, settings_response.text
+
+    for index in range(8):
+        bowler_response = api_client.post(
+            "/api/v1/bowlers",
+            headers=auth_identity.headers,
+            json={
+                "tournament_id": tournament["id"],
+                "squad_id": squad["id"],
+                "full_name": f"Tie Player {index + 1}",
+                "average": 170 + (index % 5),
+                "program_entry_counts": {"scratch": 1, "handicap": 1},
+                "scratch_entry_count": 1,
+                "handicap_entry_count": 1,
+                "side_pot_entries": {"high_game_scratch": index in (0, 1)},
+            },
+        )
+        assert bowler_response.status_code == 200, bowler_response.text
+
+    bowlers_response = api_client.get(
+        f"/api/v1/bowlers?tournament_id={tournament['id']}&squad_id={squad['id']}",
+        headers=auth_identity.headers,
+    )
+    assert bowlers_response.status_code == 200, bowlers_response.text
+    listed_bowlers = bowlers_response.json()
+
+    player1 = next((row for row in listed_bowlers if row.get("full_name") == "Tie Player 1"), None)
+    player2 = next((row for row in listed_bowlers if row.get("full_name") == "Tie Player 2"), None)
+    assert player1 is not None
+    assert player2 is not None
+
+    generate = api_client.post(
+        f"/api/v1/brackets/generate-multiple?tournament_id={tournament['id']}&squad_id={squad['id']}",
+        headers=auth_identity.headers,
+    )
+    assert generate.status_code == 200, generate.text
+
+    for player in (player1, player2):
+        score_response = api_client.post(
+            "/api/v1/scores/",
+            headers=auth_identity.headers,
+            json={
+                "player_id": player["id"],
+                "tournament_id": tournament["id"],
+                "squad_id": squad["id"],
+                "game1_scratch": 220,
+            },
+        )
+        assert score_response.status_code == 200, score_response.text
+
+    calculate = api_client.get(
+        f"/api/v1/payouts/calculate/{tournament['id']}?squad_id={squad['id']}",
+        headers=auth_identity.headers,
+    )
+    assert calculate.status_code == 200, calculate.text
+    payload = calculate.json()
+
+    summary = next(
+        (item for item in payload["side_pots"]["summaries"] if item.get("key") == "high_game_scratch"),
+        None,
+    )
+    assert summary is not None
+    assert summary["status"] == "tied"
+    assert summary["winning_metric"] == 220
+    assert summary["winners"] == [
+        {"player_id": player1["id"], "player_name": "Tie Player 1"},
+        {"player_id": player2["id"], "player_name": "Tie Player 2"},
+    ]
+    assert summary["winner_id"] is None
+    assert summary["winner_name"] is None
+    assert summary["winner_metric"] is None
+
+
+def test_payout_side_pot_series_stays_pending_until_all_scores_complete(api_client: TestClient, auth_identity):
+    tournament = _create_tournament(api_client, auth_identity.headers, "Side Pot Series Pending")
+    squad = _create_squad(api_client, auth_identity.headers, tournament["id"])
+
+    settings_response = api_client.post(
+        "/api/v1/bracket-settings/",
+        headers=auth_identity.headers,
+        json={
+            "tournament_id": tournament["id"],
+            "bracket_size": 8,
+            "default_entry_fee": 10,
+            "first_place_amount": 50,
+            "second_place_amount": 20,
+            "house_fee_amount": 10,
+            "handicap_percentage": 80,
+            "handicap_base": 200,
+            "allow_byes": True,
+            "side_pots_settings": {
+                "tournament_id": tournament["id"],
+                "entry_fee": 10,
+                "prize_amount": 10,
+                "pots": [
+                    {"key": "high_game_scratch", "name": "High Game Scratch", "enabled": False},
+                    {"key": "high_series_scratch", "name": "High Series Scratch", "enabled": True},
+                    {"key": "high_game_handicap", "name": "High Game Handicap", "enabled": False},
+                    {"key": "high_series_handicap", "name": "High Series Handicap", "enabled": False},
+                ],
+            },
+        },
+    )
+    assert settings_response.status_code == 200, settings_response.text
+
+    for index in range(8):
+        bowler_response = api_client.post(
+            "/api/v1/bowlers",
+            headers=auth_identity.headers,
+            json={
+                "tournament_id": tournament["id"],
+                "squad_id": squad["id"],
+                "full_name": f"Series Player {index + 1}",
+                "average": 170 + (index % 5),
+                "program_entry_counts": {"scratch": 1, "handicap": 1},
+                "scratch_entry_count": 1,
+                "handicap_entry_count": 1,
+                "side_pot_entries": {"high_series_scratch": index in (0, 1)},
+            },
+        )
+        assert bowler_response.status_code == 200, bowler_response.text
+
+    bowlers_response = api_client.get(
+        f"/api/v1/bowlers?tournament_id={tournament['id']}&squad_id={squad['id']}",
+        headers=auth_identity.headers,
+    )
+    assert bowlers_response.status_code == 200, bowlers_response.text
+    listed_bowlers = bowlers_response.json()
+
+    player1 = next((row for row in listed_bowlers if row.get("full_name") == "Series Player 1"), None)
+    player2 = next((row for row in listed_bowlers if row.get("full_name") == "Series Player 2"), None)
+    assert player1 is not None
+    assert player2 is not None
+
+    generate = api_client.post(
+        f"/api/v1/brackets/generate-multiple?tournament_id={tournament['id']}&squad_id={squad['id']}",
+        headers=auth_identity.headers,
+    )
+    assert generate.status_code == 200, generate.text
+
+    score_one = api_client.post(
+        "/api/v1/scores/",
+        headers=auth_identity.headers,
+        json={
+            "player_id": player1["id"],
+            "tournament_id": tournament["id"],
+            "squad_id": squad["id"],
+            "game1_scratch": 210,
+            "game2_scratch": 220,
+            "game3_scratch": 215,
+        },
+    )
+    assert score_one.status_code == 200, score_one.text
+
+    score_two = api_client.post(
+        "/api/v1/scores/",
+        headers=auth_identity.headers,
+        json={
+            "player_id": player2["id"],
+            "tournament_id": tournament["id"],
+            "squad_id": squad["id"],
+            "game1_scratch": 225,
+            "game2_scratch": 205,
+        },
+    )
+    assert score_two.status_code == 200, score_two.text
+
+    calculate = api_client.get(
+        f"/api/v1/payouts/calculate/{tournament['id']}?squad_id={squad['id']}",
+        headers=auth_identity.headers,
+    )
+    assert calculate.status_code == 200, calculate.text
+    payload = calculate.json()
+
+    summary = next(
+        (item for item in payload["side_pots"]["summaries"] if item.get("key") == "high_series_scratch"),
+        None,
+    )
+    assert summary is not None
+    assert summary["entry_count"] == 2
+    assert summary["status"] == "pending"
+    assert summary["winning_metric"] is None
+    assert summary["winners"] == []
+    assert summary["winner_id"] is None
+    assert summary["winner_name"] is None
+    assert summary["winner_metric"] is None

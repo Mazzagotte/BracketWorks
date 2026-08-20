@@ -93,6 +93,12 @@ interface PublicSidePotSummary {
   name: string
   entry_count: number
   pool: number
+  status: 'empty' | 'pending' | 'complete' | 'tied'
+  winning_metric: number | null
+  winners: Array<{
+    player_id: number
+    player_name: string
+  }>
   winner_id: number | null
   winner_name: string | null
   winner_metric: number | null
@@ -1015,7 +1021,7 @@ function getSeriesTopN(rows: PublicScoreRow[], mode: 'scratch' | 'handicap', n: 
       ? [row.game1_scratch, row.game2_scratch, row.game3_scratch]
       : [row.game1_with_handicap, row.game2_with_handicap, row.game3_with_handicap]
     const valid = games.filter((g): g is number => g != null)
-    if (valid.length === 0) continue
+    if (valid.length !== 3) continue
     candidates.push({ name: row.player_name, score: valid.reduce((s, v) => s + v, 0) })
   }
   candidates.sort((a, b) => b.score - a.score)
@@ -1135,13 +1141,29 @@ function SidePotsLeaderboard({ scoreRows, sidePotSummaries, sidePotsLoaded, tour
             {sidePotSummaries.map((summary) => (
               <div key={summary.key} className={styles.sidePotCard}>
                 <div className={styles.sidePotCardLabel}><Trophy aria-hidden="true" /><span>{summary.name}</span></div>
-                {summary.winner_name ? (
+                {summary.status === 'empty' ? (
+                  <div className={styles.sidePotPending}>No Entries</div>
+                ) : summary.status === 'pending' ? (
+                  <div className={styles.sidePotPending}>Pending</div>
+                ) : summary.status === 'tied' ? (
                   <ol className={styles.sidePotPodium}>
-                    <li className={`${styles.sidePotPodiumRow} ${styles.sidePotPodiumFirst}`}>
-                      <span className={styles.sidePotPodiumPlace}>1st</span>
-                      <span className={styles.sidePotPodiumName}>{summary.winner_name}</span>
-                      <span className={styles.sidePotPodiumScore}>{summary.winner_metric ?? '-'}</span>
-                    </li>
+                    {(summary.winners ?? []).map((winner) => (
+                      <li key={winner.player_id} className={`${styles.sidePotPodiumRow} ${styles.sidePotPodiumFirst}`}>
+                        <span className={styles.sidePotPodiumPlace}>Tie</span>
+                        <span className={styles.sidePotPodiumName}>{winner.player_name}</span>
+                        <span className={styles.sidePotPodiumScore}>{summary.winning_metric ?? '-'}</span>
+                      </li>
+                    ))}
+                  </ol>
+                ) : (summary.winners?.length ?? 0) > 0 ? (
+                  <ol className={styles.sidePotPodium}>
+                    {summary.winners.map((winner, index) => (
+                      <li key={winner.player_id} className={`${styles.sidePotPodiumRow} ${index === 0 ? styles.sidePotPodiumFirst : ''}`}>
+                        <span className={styles.sidePotPodiumPlace}>{index === 0 ? '1st' : index === 1 ? '2nd' : '3rd'}</span>
+                        <span className={styles.sidePotPodiumName}>{winner.player_name}</span>
+                        <span className={styles.sidePotPodiumScore}>{summary.winning_metric ?? '-'}</span>
+                      </li>
+                    ))}
                   </ol>
                 ) : (
                   <div className={styles.sidePotPending}>Pending</div>
@@ -1220,7 +1242,7 @@ function SidePotsLeaderboard({ scoreRows, sidePotSummaries, sidePotsLoaded, tour
           ))}
         </ol>
       )}
-      <div className={styles.sidePotCardFooter}>Top 3 scores <span>ΓÇó</span> {modeLabel}</div>
+      <div className={styles.sidePotCardFooter}>Top 3 scores <span>-</span> {modeLabel}</div>
     </div>
   )
 

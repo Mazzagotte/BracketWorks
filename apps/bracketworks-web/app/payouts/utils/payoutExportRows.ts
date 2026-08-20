@@ -13,6 +13,17 @@ export type AggregatedWinner = {
 
 export type SidePotByPlayer = Record<string, Array<{ name: string; pool: number }>>
 
+type SidePotSummaryForExport = {
+  name: string
+  pool: number
+  status?: 'empty' | 'pending' | 'complete' | 'tied'
+  winners?: Array<{
+    playerId?: string
+    player_id?: number
+  }>
+  winnerId?: string | number | null
+}
+
 export type PayoutExportRow = {
   rank: number
   playerName: string
@@ -26,12 +37,27 @@ export type PayoutExportRow = {
 }
 
 export function buildSidePotByPlayer(
-  summaries: Array<{ name: string; pool: number; winnerId: string | number | null }>,
+  summaries: SidePotSummaryForExport[],
 ): SidePotByPlayer {
   const map: SidePotByPlayer = {}
   for (const pot of summaries) {
-    if (pot.winnerId == null) continue
-    const key = String(pot.winnerId)
+    const winnerIds: string[] = []
+
+    if (pot.status === 'complete' && Array.isArray(pot.winners) && pot.winners.length === 1) {
+      const winner = pot.winners[0]
+      const resolvedId = winner?.playerId ?? winner?.player_id
+      if (resolvedId != null) {
+        winnerIds.push(String(resolvedId))
+      }
+    } else if (!pot.status && pot.winnerId != null) {
+      // Backward compatibility with legacy payloads.
+      winnerIds.push(String(pot.winnerId))
+    }
+
+    if (winnerIds.length === 0) continue
+
+    const key = winnerIds[0]
+    if (!key) continue
     if (!map[key]) map[key] = []
     map[key].push({ name: pot.name, pool: pot.pool })
   }

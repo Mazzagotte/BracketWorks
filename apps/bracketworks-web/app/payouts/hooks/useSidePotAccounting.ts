@@ -7,6 +7,12 @@ export type SidePotSummary = {
   name: string
   entryCount: number
   pool: number
+  status: 'empty' | 'pending' | 'complete' | 'tied'
+  winningMetric: number | null
+  winners: Array<{
+    playerId: string
+    playerName: string
+  }>
   winnerId: string | null
   winnerName: string | null
   winnerMetric: number | null
@@ -36,6 +42,12 @@ export function useSidePotAccounting(
       name: summary.name,
       entryCount: summary.entry_count,
       pool: summary.pool,
+      status: summary.status,
+      winningMetric: summary.winning_metric,
+      winners: (summary.winners ?? []).map((winner) => ({
+        playerId: String(winner.player_id),
+        playerName: winner.player_name,
+      })),
       winnerId: summary.winner_id != null ? String(summary.winner_id) : null,
       winnerName: summary.winner_name,
       winnerMetric: summary.winner_metric,

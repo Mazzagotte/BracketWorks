@@ -5,10 +5,31 @@ import { buildPayoutExportRows, buildSidePotByPlayer } from './payoutExportRows'
 describe('payoutExportRows', () => {
   it('groups side-pot pools by winner id', () => {
     const byPlayer = buildSidePotByPlayer([
-      { name: 'High Game', pool: 120, winnerId: 11 },
-      { name: 'High Series', pool: 80, winnerId: 11 },
-      { name: 'Clean Game', pool: 50, winnerId: 22 },
-      { name: 'Ignored', pool: 25, winnerId: null },
+      {
+        name: 'High Game',
+        pool: 120,
+        status: 'complete',
+        winners: [{ playerId: '11' }],
+      },
+      {
+        name: 'High Series',
+        pool: 80,
+        status: 'complete',
+        winners: [{ playerId: '11' }],
+      },
+      {
+        name: 'Clean Game',
+        pool: 50,
+        status: 'complete',
+        winners: [{ playerId: '22' }],
+      },
+      {
+        name: 'Tied Pot',
+        pool: 25,
+        status: 'tied',
+        winners: [{ playerId: '11' }, { playerId: '22' }],
+      },
+      { name: 'Pending Pot', pool: 15, status: 'pending', winners: [] },
     ])
 
     expect(byPlayer['11']).toEqual([
