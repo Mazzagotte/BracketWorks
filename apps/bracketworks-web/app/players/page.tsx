@@ -4,25 +4,28 @@ import { useMemo, useRef, useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../lib/auth-context'
 import { ErrorBoundary } from '../components/ErrorBoundary'
 import ActionConfirmDialog from '../components/ActionConfirmDialog'
+import EntriesQuickActions from './components/EntriesQuickActions'
+import EntriesSearchCard from './components/EntriesSearchCard'
+import EntriesSummary from './components/EntriesSummary'
 import { usePlayers } from './hooks/usePlayers'
 import { useBowlerHistorySearch } from './hooks/useBowlerHistorySearch'
+import { useEntryFilters } from './hooks/useEntryFilters'
 import { usePlayerSidePots } from './hooks/usePlayerSidePots'
 import { usePlayerTournamentSetup } from './hooks/usePlayerTournamentSetup'
-import { buildImportIdentity, buildEntriesExcelBuffer, ImportablePlayer, parseExcelPlayers } from './utils/importPlayers'
+import { buildEntriesExcelBuffer, parseExcelPlayers } from './utils/importPlayers'
+import { prepareImportedPlayers } from './utils/prepareImportedPlayers'
 import { useTournaments } from '../hooks/useTournaments'
-import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import PlayersTable from './components/PlayersTable'
 import PlayerForm from './components/PlayerForm'
 import NoTournamentState from '../components/NoTournamentState'
 import { logger } from '../lib/logger'
 import { Squad, Player, PlayerFormPrefillDraft } from './types'
 import { BracketProgramDefinition, Tournament } from '../lib/types'
-import { apiClient, API, apiFetch } from '../lib/api'
-import { calculatePlayerTotalCost, calculateSidePotCost, defaultBracketPrograms, filterEntriesForDivision, getBracketProgramLabel, getEnabledBracketPrograms, normalizeBracketPrograms, normalizeDivision, normalizePlayerBracketEntries, summarizeEntries } from '../lib/bracketPrograms'
+import { apiClient } from '../lib/api'
+import { calculatePlayerTotalCost, calculateSidePotCost, defaultBracketPrograms, filterEntriesForDivision, getEnabledBracketPrograms, normalizeDivision, normalizePlayerBracketEntries, summarizeEntries } from '../lib/bracketPrograms'
 import styles from './entries.module.css'
 import cardStyles from '../styles/cards.module.css'
 import buttonStyles from '../styles/buttons.module.css'
-import badgeStyles from '../styles/badges.module.css'
 import formStyles from '../styles/forms.module.css'
 import shellStyles from '../styles/page-shell.module.css'
 import ExplainEntriesModal from './ExplainEntriesModal'
@@ -32,7 +35,7 @@ import primitiveStyles from '../components/primitives/primitives.module.css'
 import { getSelectedSquadId, getSelectedTournamentId, setSelectedSquad } from '../lib/selection-session'
 import { resetScrollLocks, setBodyInteractionState } from '../utils/modalUtils'
 import { MOBILE_VIEWPORT_QUERY } from '../lib/responsive'
-import { BookOpen, ChartNoAxesCombined, CircleCheck, CircleDollarSign, Clock3, FileSpreadsheet, Layers3, ListChecks, RefreshCcw, Search as SearchIcon, Shuffle, Trash2, Trophy, Upload, UserRound, UsersRound, WalletCards, Zap } from 'lucide-react'
+import { ListChecks, RefreshCcw, Search as SearchIcon, UserRound } from 'lucide-react'
 
 function bracketProgramsEqual(left: BracketProgramDefinition[], right: BracketProgramDefinition[]): boolean {
   if (left.length !== right.length) return false
@@ -73,16 +76,24 @@ export default function PlayersPage() {
   const [bracketPrograms, setBracketPrograms] = useState<BracketProgramDefinition[]>(defaultBracketPrograms)
   const [prefillDraft, setPrefillDraft] = useState<PlayerFormPrefillDraft | null>(null)
   const [prefillVersion, setPrefillVersion] = useState(0)
-  const [searchUsbc, setSearchUsbc] = useState('')
-  const [searchFirstName, setSearchFirstName] = useState('')
-  const [searchLastName, setSearchLastName] = useState('')
   const [isMobileView, setIsMobileView] = useState(false)
   const [historySearchCollapsed, setHistorySearchCollapsed] = useState(false)
   const [hasSubmittedHistorySearch, setHasSubmittedHistorySearch] = useState(false)
   const [tableSearchCollapsed, setTableSearchCollapsed] = useState(false)
-  const debouncedSearchUsbc = useDebouncedValue(searchUsbc, 300)
-  const debouncedSearchFirstName = useDebouncedValue(searchFirstName, 300)
-  const debouncedSearchLastName = useDebouncedValue(searchLastName, 300)
+  const {
+    searchUsbc,
+    setSearchUsbc,
+    searchFirstName,
+    setSearchFirstName,
+    searchLastName,
+    setSearchLastName,
+    debouncedSearchUsbc,
+    debouncedSearchFirstName,
+    debouncedSearchLastName,
+    hasActiveEntryFilters,
+    handleEntrySearchSubmit,
+    clearEntryFilters,
+  } = useEntryFilters()
   const enabledBracketPrograms = useMemo(() => getEnabledBracketPrograms(bracketPrograms), [bracketPrograms])
   const {
     historySearchUsbc,
@@ -269,14 +280,6 @@ export default function PlayersPage() {
     window.addEventListener('settings-changed', handleSettingsChanged)
     return () => window.removeEventListener('settings-changed', handleSettingsChanged)
   }, [cancelPendingPatches, loadEntryFee, loadPlayers])
-
-  const hasActiveEntryFilters = Boolean(searchUsbc.trim() || searchFirstName.trim() || searchLastName.trim())
-  const handleEntrySearchSubmit = useCallback((event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    setSearchUsbc(current => current.trim())
-    setSearchFirstName(current => current.trim())
-    setSearchLastName(current => current.trim())
-  }, [])
 
   const formatSquadDateLabel = useCallback((isoDate?: string) => {
     if (!isoDate) return 'Date pending'
@@ -498,44 +501,11 @@ export default function PlayersPage() {
         return
       }
 
-      // Deduplicate within the uploaded file first.
-      const seenImportedNames = new Map<string, number>()
-      const uniqueImported: ImportablePlayer[] = []
-      for (const player of imported) {
-        const firstSeenAt = seenImportedNames.get(player.importKey)
-        if (firstSeenAt != null) {
-          skippedRows.push({
-            row: player.sourceRow,
-            reason: `Duplicate within file (first seen at row ${firstSeenAt})`,
-            name: `${player.firstName} ${player.lastName}${player.usbc ? ` [${player.usbc}]` : ''}`.trim(),
-          })
-          continue
-        }
-        seenImportedNames.set(player.importKey, player.sourceRow)
-        uniqueImported.push(player)
-      }
-
-      // Deduplicate against existing players.
-      const existingNames = new Set(
-        players.map(p => buildImportIdentity(p.firstName, p.lastName, p.usbc || ''))
-      )
-      const toImport: Omit<Player, 'id'>[] = []
-      for (const player of uniqueImported) {
-        if (existingNames.has(player.importKey)) {
-          skippedRows.push({
-            row: player.sourceRow,
-            reason: 'Already exists in entries table',
-            name: `${player.firstName} ${player.lastName}${player.usbc ? ` [${player.usbc}]` : ''}`.trim(),
-          })
-          continue
-        }
-        const { sourceRow: _sourceRow, normalizedName: _normalizedName, importKey: _importKey, ...payload } = player
-        toImport.push(payload)
-      }
+      const { playersToImport: toImport, skippedRows: finalSkippedRows } = prepareImportedPlayers(imported, players, skippedRows)
 
       if (toImport.length === 0) {
         toast.warning(
-          `No new players were imported. ${skippedRows.length} row${skippedRows.length !== 1 ? 's were' : ' was'} skipped.`,
+          `No new players were imported. ${finalSkippedRows.length} row${finalSkippedRows.length !== 1 ? 's were' : ' was'} skipped.`,
           'No New Players'
         )
         logSkippedRows()
@@ -549,16 +519,16 @@ export default function PlayersPage() {
       toast.success(
         `Added ${result.successCount} player${result.successCount !== 1 ? 's' : ''} successfully.` +
         (result.failedCount > 0 ? ` ${result.failedCount} failed.` : '') +
-        (skippedRows.length > 0 ? ` ${skippedRows.length} row${skippedRows.length !== 1 ? 's' : ''} skipped.` : ''),
+        (finalSkippedRows.length > 0 ? ` ${finalSkippedRows.length} row${finalSkippedRows.length !== 1 ? 's' : ''} skipped.` : ''),
         'Import Complete'
       )
 
-      if (skippedRows.length > 0) {
-        const preview = skippedRows
+      if (finalSkippedRows.length > 0) {
+        const preview = finalSkippedRows
           .slice(0, 5)
           .map(row => `Row ${row.row}: ${row.reason}${row.name ? ` (${row.name})` : ''}`)
           .join(' | ')
-        toast.warning(`Skipped rows: ${preview}${skippedRows.length > 5 ? ' | ...' : ''}`, 'Import Details')
+        toast.warning(`Skipped rows: ${preview}${finalSkippedRows.length > 5 ? ' | ...' : ''}`, 'Import Details')
         logSkippedRows()
       }
     } catch (err) {
@@ -715,126 +685,27 @@ export default function PlayersPage() {
 
         <div className={`${shellStyles.section} ${styles.entriesSectionWidth}`}>
           {getTournamentId() && (
-            <div className={`${cardStyles.card} ${styles.summaryCard}`}>
-              <div className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${styles.summaryHeader}`}>
-                <div className={`${cardStyles.cardHeaderRow} ${styles.summaryTitleWrap}`}>
-                  <h3 className={`${cardStyles.cardTitle} ${styles.summaryTitle}`}>
-                    <ChartNoAxesCombined aria-hidden="true" />
-                    Tournament Summary
-                  </h3>
-                  <p className={styles.summarySubtitle}>Live totals for entries, revenue, and active pots.</p>
-                </div>
-                <div className={styles.summaryPaymentStrip}>
-                  <span className={`${badgeStyles.badge} ${badgeStyles.success}`}><CircleCheck aria-hidden="true" />{paymentSummary.paidCount} Paid</span>
-                  <span className={`${badgeStyles.badge} ${paymentSummary.dueCount > 0 ? badgeStyles.warning : badgeStyles.muted}`}><Clock3 aria-hidden="true" />{paymentSummary.dueCount} Due</span>
-                  <span className={`${badgeStyles.badge} ${paymentSummary.outstandingAmount > 0 ? badgeStyles.accent : badgeStyles.muted}`}><WalletCards aria-hidden="true" />${paymentSummary.outstandingAmount.toLocaleString()} Outstanding</span>
-                </div>
-              </div>
-              <div className={styles.summaryGrid}>
-                <div className={`${cardStyles.statTile} ${cardStyles.statTileCompact} ${styles.statBox}`}>
-                  <span className={styles.statIconRing}><UsersRound className={styles.statIcon} aria-hidden="true" /></span>
-                  <div className={styles.statCopy}>
-                    <div className={`${cardStyles.statValue} ${styles.statValue}`}>{entryTotals.totalEntries}</div>
-                    <div className={`${cardStyles.statLabel} ${styles.statLabel}`}>Total Entries</div>
-                    <div className={`${cardStyles.statDetail} ${styles.statDetail}`}>{entryTotals.totalPlayers} players</div>
-                  </div>
-                </div>
-
-                <div className={`${cardStyles.statTile} ${cardStyles.statTileCompact} ${styles.statBox}`}>
-                  <span className={styles.statIconRing}><CircleDollarSign className={styles.statIcon} aria-hidden="true" /></span>
-                  <div className={styles.statCopy}>
-                    <div className={`${cardStyles.statValue} ${styles.statValue}`}>${entryTotals.totalRevenue.toLocaleString()}</div>
-                    <div className={`${cardStyles.statLabel} ${styles.statLabel}`}>Entry Revenue</div>
-                    <div className={`${cardStyles.statDetail} ${styles.statDetail}`}>{entryTotals.totalEntries} entries × ${Number(entryFee).toLocaleString()}</div>
-                  </div>
-                </div>
-
-                  {orderedProgramSummaries.map((program, programIndex) => (
-                    <div key={program.key} className={`${cardStyles.statTile} ${cardStyles.statTileCompact} ${styles.statBox}`}>
-                      <span className={styles.statIconRing}>
-                        {programIndex === 0
-                          ? <Layers3 className={styles.statIcon} aria-hidden="true" />
-                          : <Trophy className={styles.statIcon} aria-hidden="true" />}
-                      </span>
-                      <div className={styles.statCopy}>
-                        <div className={`${cardStyles.statValue} ${styles.statValue}`}>{program.totalEntries}</div>
-                        <div className={`${cardStyles.statLabel} ${styles.statLabel}`}>{getBracketProgramLabel(program)}</div>
-                        <div className={`${cardStyles.statDetail} ${styles.statDetail}`}>Projected {program.expectedBrackets} brackets</div>
-                        {program.refunds > 0 && (
-                          <div className={styles.statRefund}>{program.refunds} overflow entries</div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-
-                  {sidePotSummaries.map(pot => (
-                    <div key={pot.key} className={`${cardStyles.statTile} ${cardStyles.statTileCompact} ${styles.statBox}`}>
-                      <span className={styles.statIconRing}><Trophy className={styles.statIcon} aria-hidden="true" /></span>
-                      <div className={styles.statCopy}>
-                        <div className={`${cardStyles.statValue} ${styles.statValue}`}>{pot.count}</div>
-                        <div className={`${cardStyles.statLabel} ${styles.statLabel}`}>{pot.name}</div>
-                        {pot.fee > 0 && (
-                          <div className={`${cardStyles.statDetail} ${styles.statDetail}`}>Pot Total: ${(pot.count * pot.fee).toLocaleString()}</div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-
-              </div>
-            </div>
+            <EntriesSummary
+              entryTotals={entryTotals}
+              orderedProgramSummaries={orderedProgramSummaries}
+              sidePotSummaries={sidePotSummaries}
+              paymentSummary={paymentSummary}
+              entryFee={entryFee}
+            />
           )}
 
           <div className={styles.entriesTopRow}>
-            <div className={`${cardStyles.card} ${cardStyles.quickActionsCard} ${styles.formCard}`}>
-              <h3 className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${cardStyles.quickActionsTitle} ${styles.formTitle} ${styles.quickActionsHeading}`}>
-                <Zap aria-hidden="true" />
-                Quick Actions
-              </h3>
-              <div className={`${cardStyles.quickActionsBody} ${styles.quickActionsBody}`}>
-                <div className={`${cardStyles.quickActionsRow} ${styles.quickActionsPrimaryRow}`}>
-                  <button
-                    className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
-                    onClick={() => setIsExplainModalOpen(true)}
-                  >
-                    <BookOpen aria-hidden="true" />
-                    Entries Guide
-                  </button>
-                  <button
-                    className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
-                    onClick={handleExportToExcel}
-                    disabled={players.length === 0}
-                  >
-                    <FileSpreadsheet aria-hidden="true" />
-                    Export to Excel
-                  </button>
-                  <button
-                    className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
-                    onClick={() => importFileRef.current?.click()}
-                    disabled={isImporting}
-                  >
-                    <Upload aria-hidden="true" />
-                    {isImporting ? 'Importing...' : 'Import from Excel'}
-                  </button>
-                </div>
-                {isDev && players.length > 0 && (
-                  <div className={styles.quickActionAdminSection}>
-                    <div className={styles.quickActionAdminRow}>
-                      <span className={styles.quickActionAdminLabel}>Admin Tools</span>
-                    </div>
-                    <div className={styles.quickActionAdminControls}>
-                      <button className={`${cardStyles.quickActionControl} ${styles.devButton} ${styles.quickActionDevBtn}`} onClick={handleRandomize}>
-                        <Shuffle aria-hidden="true" />
-                        Randomize Entries
-                      </button>
-                      <button className={`${cardStyles.quickActionControl} ${styles.devButton} ${styles.quickActionDangerBtn}`} onClick={handleDeleteAllPlayers} disabled={isDeletingAll}>
-                        <Trash2 aria-hidden="true" />
-                        {isDeletingAll ? 'Deleting...' : 'Delete All Entries'}
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+            <EntriesQuickActions
+              isDev={isDev}
+              playersCount={players.length}
+              isImporting={isImporting}
+              isDeletingAll={isDeletingAll}
+              onOpenGuide={() => setIsExplainModalOpen(true)}
+              onExportToExcel={handleExportToExcel}
+              onImportFromExcel={() => importFileRef.current?.click()}
+              onRandomizeEntries={() => { void handleRandomize() }}
+              onDeleteAllEntries={handleDeleteAllPlayers}
+            />
 
             <div className={`${cardStyles.card} ${styles.formCard} ${styles.findBowlerCard}`}>
               {isMobileView ? (
@@ -977,81 +848,21 @@ export default function PlayersPage() {
                 prefillVersion={prefillVersion}
               />
 
-              <div className={`${cardStyles.card} ${styles.formCard} ${styles.standaloneEntrySearchCard}`}>
-                {isMobileView ? (
-                  <button
-                    type="button"
-                    className={`${cardStyles.cardHeader} ${styles.formTitleToggle}`}
-                    aria-expanded={!tableSearchCollapsed}
-                    onClick={() => setTableSearchCollapsed(previous => !previous)}
-                  >
-                    <span className={styles.entrySearchHeading}>
-                      <SearchIcon aria-hidden="true" />
-                      Search Entries
-                    </span>
-                    <span className={styles.formTitleExpandIcon}>{tableSearchCollapsed ? '+' : '−'}</span>
-                  </button>
-                ) : (
-                  <h3 className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${styles.formTitle} ${styles.entrySearchHeading}`}>
-                    <SearchIcon aria-hidden="true" />
-                    Search Entries
-                  </h3>
-                )}
-                {(!isMobileView || !tableSearchCollapsed) && (
-                <div className={styles.tableSearchPanelBody}>
-                  <form className={`${primitiveStyles.searchPanelContentRow} ${styles.entrySearchForm}`} onSubmit={handleEntrySearchSubmit}>
-                    <div className={primitiveStyles.searchPanelContentLeft}>
-                      <input
-                        type="text"
-                        className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput} ${primitiveStyles.searchPanelInput}`}
-                        placeholder="USBC #"
-                        value={searchUsbc}
-                        onChange={(event) => setSearchUsbc(event.target.value)}
-                      />
-                      <input
-                        type="text"
-                        className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput} ${primitiveStyles.searchPanelInput}`}
-                        placeholder="First name"
-                        value={searchFirstName}
-                        onChange={(event) => setSearchFirstName(event.target.value)}
-                      />
-                      <input
-                        type="text"
-                        className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput} ${primitiveStyles.searchPanelInput}`}
-                        placeholder="Last name"
-                        value={searchLastName}
-                        onChange={(event) => setSearchLastName(event.target.value)}
-                      />
-                    </div>
-                    <div className={primitiveStyles.searchPanelContentRight}>
-                      <button
-                        type="submit"
-                        className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction} ${styles.searchActionBtn}`}
-                      >
-                        Search
-                      </button>
-                      <button
-                        type="button"
-                        className={`${primitiveStyles.searchPanelClearButton} ${styles.clearSearchBtn} ${hasActiveEntryFilters ? styles.clearSearchBtnActive : ''}`}
-                        onClick={() => {
-                          setSearchUsbc('')
-                          setSearchFirstName('')
-                          setSearchLastName('')
-                        }}
-                        disabled={!hasActiveEntryFilters}
-                      >
-                        Clear
-                      </button>
-                    </div>
-                  </form>
-                  {hasActiveEntryFilters && (
-                    <p className={styles.entrySearchResults} aria-live="polite">
-                      {players.length} {players.length === 1 ? 'entry' : 'entries'} found
-                    </p>
-                  )}
-                </div>
-                )}
-              </div>
+              <EntriesSearchCard
+                isMobileView={isMobileView}
+                isCollapsed={tableSearchCollapsed}
+                searchUsbc={searchUsbc}
+                searchFirstName={searchFirstName}
+                searchLastName={searchLastName}
+                hasActiveEntryFilters={hasActiveEntryFilters}
+                resultCount={players.length}
+                onToggleCollapsed={() => setTableSearchCollapsed(previous => !previous)}
+                onSubmit={handleEntrySearchSubmit}
+                onSearchUsbcChange={setSearchUsbc}
+                onSearchFirstNameChange={setSearchFirstName}
+                onSearchLastNameChange={setSearchLastName}
+                onClear={clearEntryFilters}
+              />
           </div>
 
           {showInitialPlayersLoad ? (
