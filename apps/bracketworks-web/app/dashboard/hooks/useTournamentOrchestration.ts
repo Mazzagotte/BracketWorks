@@ -83,9 +83,11 @@ export function useTournamentOrchestration({
     selectedSquadData: DashboardTournamentBootstrapResponse['selected_squad'] | null | undefined,
   ) => {
     const storedSelectedSquadId = getSelectedSquadId();
+    // Only auto-load a squad when it's the sole squad; with multiple squads the user must choose one explicitly.
+    const soleSquadFallbackId = squadsData.length === 1 ? squadsData[0]?.id : null;
     const restoredSelectedSquadId = selectedSquadData?.squad_id
       ?? (storedSelectedSquadId ? Number(storedSelectedSquadId) : null)
-      ?? squadsData[0]?.id
+      ?? soleSquadFallbackId
       ?? null;
 
     if (restoredSelectedSquadId && squadsData.some(squad => squad.id === restoredSelectedSquadId)) {

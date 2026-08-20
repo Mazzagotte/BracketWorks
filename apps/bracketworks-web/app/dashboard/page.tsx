@@ -160,6 +160,8 @@ export default function TournamentDashboard() {
   const [loadModalOpen, setLoadModalOpen] = useState(false);
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [squadModalOpen, setSquadModalOpen] = useState(false);
+  const [squadModalRequireMessage, setSquadModalRequireMessage] = useState<string | null>(null);
+  const pendingSquadActionRef = useRef<(() => void) | null>(null);
   const [allTournaments, setAllTournaments] = useState<Tournament[]>([]);
   const [deleteConfirm, setDeleteConfirm] = useState<{id: number, name: string} | null>(null);
   const [shareQROpen, setShareQROpen] = useState(false);
@@ -770,6 +772,8 @@ export default function TournamentDashboard() {
     unloadTournament();
     setSettingsModalOpen(false);
     setSquadModalOpen(false);
+    setSquadModalRequireMessage(null);
+    pendingSquadActionRef.current = null;
   };
 
   const handleChangeTournament = () => {
@@ -785,8 +789,20 @@ export default function TournamentDashboard() {
       });
       return;
     }
+    setSquadModalRequireMessage(null);
     setSquadModalOpen(true);
   };
+
+  // Blocks navigation away from the dashboard until a squad is chosen when multiple squads exist.
+  const requireSquadSelection = useCallback((action: () => void) => {
+    if (squads.length > 1 && selectedSquadId == null) {
+      pendingSquadActionRef.current = action;
+      setSquadModalRequireMessage('Select a squad before proceeding.');
+      setSquadModalOpen(true);
+      return;
+    }
+    action();
+  }, [squads.length, selectedSquadId]);
 
   const handleSelectSquad = (squad: Squad) => {
     const label = [squad.date, squad.time].filter(Boolean).join(' ');
@@ -794,11 +810,18 @@ export default function TournamentDashboard() {
     setSelectedSquad(squad.id);
     setActiveSquadLabel(label);
     setSquadModalOpen(false);
+    setSquadModalRequireMessage(null);
     addToast({
       type: 'success',
       message: label ? `Active squad changed to ${label}` : 'Active squad changed',
       duration: 3000,
     });
+
+    const pendingAction = pendingSquadActionRef.current;
+    pendingSquadActionRef.current = null;
+    if (pendingAction) {
+      pendingAction();
+    }
   };
 
   // Delete selected tournament with enhanced UX feedback
@@ -1085,10 +1108,10 @@ export default function TournamentDashboard() {
     normalizedPrograms,
     statsProgramSummaries: statsEntrySummary.programSummaries,
     isEntryDataSyncing,
-    onGoPlayers: () => router.push('/players'),
-    onGoBrackets: () => router.push('/brackets'),
-    onGoPayouts: () => router.push('/payouts'),
-    onGoScores: () => router.push('/scores'),
+    onGoPlayers: () => requireSquadSelection(() => router.push('/players')),
+    onGoBrackets: () => requireSquadSelection(() => router.push('/brackets')),
+    onGoPayouts: () => requireSquadSelection(() => router.push('/payouts')),
+    onGoScores: () => requireSquadSelection(() => router.push('/scores')),
     onOpenEditTournament: () => {
       setCreateMode(false);
       setModalOpen(true);
@@ -1294,7 +1317,12 @@ export default function TournamentDashboard() {
             selectedSquadId={selectedSquadId}
             squadEntryCounts={squadEntryCounts}
             onSelectSquad={handleSelectSquad}
-            onClose={() => setSquadModalOpen(false)}
+            onClose={() => {
+              setSquadModalOpen(false);
+              setSquadModalRequireMessage(null);
+              pendingSquadActionRef.current = null;
+            }}
+            requireSelectionMessage={squadModalRequireMessage}
           />
 
           <LoadTournamentModal

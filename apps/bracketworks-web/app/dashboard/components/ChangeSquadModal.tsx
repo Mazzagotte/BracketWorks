@@ -13,6 +13,8 @@ type ChangeSquadModalProps = {
   squadEntryCounts: Record<number, number>;
   onSelectSquad: (squad: Squad) => void;
   onClose: () => void;
+  /** When set, shown as a required-selection prompt and the close (dismiss) control is hidden. */
+  requireSelectionMessage?: string | null;
 };
 
 export function ChangeSquadModal({
@@ -23,6 +25,7 @@ export function ChangeSquadModal({
   squadEntryCounts,
   onSelectSquad,
   onClose,
+  requireSelectionMessage,
 }: ChangeSquadModalProps) {
   if (!open || !tournament) {
     return null;
@@ -33,8 +36,12 @@ export function ChangeSquadModal({
       <div className={styles.modalCard}>
         <div className={styles.modalHeader}>
           <h2 className={styles.modalTitle}>Change Squad</h2>
-          <p className={styles.modalSubtitle}>Select the date and time for {tournament.name}</p>
-          <CloseControl position="absolute" size="sm" label="Close change squad modal" onClick={onClose} />
+          <p className={styles.modalSubtitle}>
+            {requireSelectionMessage || `Select the date and time for ${tournament.name}`}
+          </p>
+          {!requireSelectionMessage && (
+            <CloseControl position="absolute" size="sm" label="Close change squad modal" onClick={onClose} />
+          )}
         </div>
         <div className={styles.squadChangeList}>
           {[...squads].sort((left, right) => {
