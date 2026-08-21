@@ -36,6 +36,9 @@ export type TournamentContextValue = {
   registrationCloseIso: string | null;
   isLoading: boolean;
   error: string | null;
+  refreshTournament: () => Promise<void>;
+  refreshSetup: () => Promise<void>;
+  refreshRegistrations: () => Promise<void>;
   refresh: () => Promise<void>;
 };
 
@@ -66,6 +69,40 @@ export function TournamentProvider({ tournamentId, children }: TournamentProvide
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const getAccessToken = useCallback((): string => {
+    const token = sessionStorage.getItem('access_token');
+    if (!token) throw new Error('Your session expired. Please sign in again.');
+    if (!Number.isInteger(tournamentId) || tournamentId <= 0) throw new Error('Invalid tournament id.');
+    return token;
+  }, [tournamentId]);
+
+  const refreshTournament = useCallback(async () => {
+    const tournaments = await listMyTournaments(getAccessToken());
+    const matched = tournaments.find((item) => item.id === tournamentId) ?? null;
+    setTournament(matched);
+    if (!matched) throw new Error('Tournament not found for this organizer account.');
+    localStorage.setItem('tc_active_tournament_name', matched.name || '');
+    window.dispatchEvent(new Event('storage'));
+  }, [getAccessToken, tournamentId]);
+
+  const refreshSetup = useCallback(async () => {
+    const token = getAccessToken();
+    const [setupStates, setupState] = await Promise.all([
+      listMyOrganizerSetupStates(token),
+      loadOrganizerSetupState<TournamentSetupPayloadSlice>(token, tournamentId),
+    ]);
+    setSetupSummary(setupStates.find((item) => item.tournament_id === tournamentId));
+    setSquads(Array.isArray(setupState?.payload.squads) ? setupState.payload.squads : []);
+    setEventCount((setupState?.payload.events ?? []).filter((event) => event.enabled !== false).length);
+    setHasRulesDocument(Boolean(setupState?.payload.hasRulesDocument));
+    setRegistrationOpenIso(setupState?.payload.details?.registrationOpenIso || null);
+    setRegistrationCloseIso(setupState?.payload.details?.registrationCloseIso || null);
+  }, [getAccessToken, tournamentId]);
+
+  const refreshRegistrations = useCallback(async () => {
+    setRegistrations(await listTournamentRegistrations(getAccessToken(), tournamentId));
+  }, [getAccessToken, tournamentId]);
+
   const refresh = useCallback(async () => {
     // OrganizerAuthGuard (parent layout) already redirects unauthenticated users before this mounts.
     const token = sessionStorage.getItem('access_token');
@@ -85,37 +122,13 @@ export function TournamentProvider({ tournamentId, children }: TournamentProvide
     setError(null);
 
     try {
-      const [tournaments, setupStates, setupState, registrationRecords] = await Promise.all([
-        listMyTournaments(token),
-        listMyOrganizerSetupStates(token),
-        loadOrganizerSetupState<TournamentSetupPayloadSlice>(token, tournamentId),
-        listTournamentRegistrations(token, tournamentId),
-      ]);
-
-      const matched = tournaments.find((item) => item.id === tournamentId);
-      if (!matched) {
-        setError('Tournament not found for this organizer account.');
-        setTournament(null);
-        return;
-      }
-
-      setTournament(matched);
-      setSetupSummary(setupStates.find((item) => item.tournament_id === tournamentId));
-      setSquads(Array.isArray(setupState?.payload.squads) ? setupState.payload.squads : []);
-      setRegistrations(registrationRecords);
-      setEventCount((setupState?.payload.events ?? []).filter((event) => event.enabled !== false).length);
-      setHasRulesDocument(Boolean(setupState?.payload.hasRulesDocument));
-      setRegistrationOpenIso(setupState?.payload.details?.registrationOpenIso || null);
-      setRegistrationCloseIso(setupState?.payload.details?.registrationCloseIso || null);
-
-      localStorage.setItem('tc_active_tournament_name', matched.name || '');
-      window.dispatchEvent(new Event('storage'));
+      await Promise.all([refreshTournament(), refreshSetup(), refreshRegistrations()]);
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : 'Unable to load tournament.');
     } finally {
       setIsLoading(false);
     }
-  }, [tournamentId]);
+  }, [refreshRegistrations, refreshSetup, refreshTournament, tournamentId]);
 
   useEffect(() => {
     void refresh();
@@ -135,6 +148,9 @@ export function TournamentProvider({ tournamentId, children }: TournamentProvide
     registrationCloseIso,
     isLoading,
     error,
+    refreshTournament,
+    refreshSetup,
+    refreshRegistrations,
     refresh,
   }), [
     tournamentId,
@@ -148,6 +164,9 @@ export function TournamentProvider({ tournamentId, children }: TournamentProvide
     registrationCloseIso,
     isLoading,
     error,
+    refreshTournament,
+    refreshSetup,
+    refreshRegistrations,
     refresh,
   ]);
 

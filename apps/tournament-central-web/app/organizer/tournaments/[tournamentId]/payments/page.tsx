@@ -5,17 +5,11 @@ import { useMemo } from 'react';
 import { ArrowLeft, Check, CircleDollarSign, Clock3, Users } from 'lucide-react';
 
 import { useTournamentContext } from '@/components/organizer/TournamentContext';
+import OrganizerStatusBadge from '@/components/organizer/OrganizerStatusBadge';
+import { formatMoney } from '@/components/organizer/organizerFormatting';
+import { organizerRoutes } from '@/components/organizer/organizerRoutes';
 import { buildPaymentSummary } from '@/components/organizer/tournamentInsights';
 import styles from '../page.module.css';
-
-function formatMoney(cents: number, currency = 'USD'): string {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(cents / 100);
-}
-
-function labelStatus(status: string | undefined): string {
-  if (!status) return 'Pending';
-  return status.charAt(0).toUpperCase() + status.slice(1);
-}
 
 export default function OrganizerTournamentPaymentsPage() {
   const { tournamentId, tournament, registrations, isLoading, error } = useTournamentContext();
@@ -37,7 +31,7 @@ export default function OrganizerTournamentPaymentsPage() {
           <h1>Payments</h1>
           <p>{tournament?.name || 'Tournament'}</p>
         </div>
-        <Link href={`/organizer/tournaments/${tournamentId}`} className={styles.registrationBackButton}>
+        <Link href={organizerRoutes.overview(tournamentId)} className={styles.registrationBackButton}>
           <ArrowLeft size={14} aria-hidden="true" /> Back to Overview
         </Link>
       </header>
@@ -99,8 +93,8 @@ export default function OrganizerTournamentPaymentsPage() {
                           <td className={styles.confirmationCell}>{registration.confirmation_code ?? registration.id}</td>
                           <td><strong>{name}</strong><span>{registration.contact_email ?? registration.form?.email ?? 'No email'}</span></td>
                           <td>{formatMoney(registration.total_cents ?? 0, registration.currency)}</td>
-                          <td><span className={`${styles.paymentStatus} ${payment === 'paid' ? styles.paymentPaid : styles.paymentUnpaid}`}><i />{labelStatus(payment)}</span></td>
-                          <td><span className={`${styles.registrationStatus} ${styles[`status${status}`] ?? ''}`}>{labelStatus(status)}</span></td>
+                          <td><OrganizerStatusBadge status={payment} /></td>
+                          <td><OrganizerStatusBadge status={status} /></td>
                         </tr>
                       );
                     })}

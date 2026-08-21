@@ -21,13 +21,15 @@ import {
 } from 'lucide-react';
 
 import {
-  listTournamentRegistrations,
   deleteTournamentEntry,
   markTournamentRegistrationPaid,
   updateTournamentEntry,
   type OrganizerRegistrationRecord,
 } from '@/components/organizer/organizerApi';
 import { useTournamentContext } from '@/components/organizer/TournamentContext';
+import OrganizerStatusBadge from '@/components/organizer/OrganizerStatusBadge';
+import { formatMoney } from '@/components/organizer/organizerFormatting';
+import { organizerRoutes } from '@/components/organizer/organizerRoutes';
 import styles from '../page.module.css';
 
 type FilterValue = 'all' | 'confirmed' | 'pending' | 'cancelled';
@@ -64,10 +66,6 @@ function formatSubmittedAt(value: string | undefined): { date: string; time: str
   };
 }
 
-function formatMoney(cents: number | undefined, currency = 'USD'): string {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format((cents ?? 0) / 100);
-}
-
 function labelStatus(status: string | undefined): string {
   if (!status) return 'Pending';
   return status.charAt(0).toUpperCase() + status.slice(1);
@@ -79,28 +77,26 @@ function entryLabel(entry: RegistrationEntry, key: 'event' | 'squad'): string {
 }
 
 export default function OrganizerTournamentRegistrationsPage() {
-  const { tournamentId, tournament } = useTournamentContext();
+  const {
+    tournamentId,
+    tournament,
+    registrations,
+    refreshRegistrations,
+    isLoading,
+    error: contextError,
+  } = useTournamentContext();
   const tournamentName = tournament?.name || 'Tournament';
-  const [registrations, setRegistrations] = useState<OrganizerRegistrationRecord[]>([]);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<FilterValue>('all');
   const [squadFilter, setSquadFilter] = useState('all');
   const [eventFilter, setEventFilter] = useState('all');
   const [page, setPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeActionId, setActiveActionId] = useState<string | null>(null);
   const [editingEntry, setEditingEntry] = useState<{ entry: RegistrationEntry; registrationId: number } | null>(null);
   const [editForm, setEditForm] = useState<EntryEditForm | null>(null);
   const [isMutating, setIsMutating] = useState(false);
   const pageSize = 10;
-
-  const refreshRegistrations = async () => {
-    const token = sessionStorage.getItem('access_token');
-    if (!token) return;
-    const records = await listTournamentRegistrations(token, tournamentId);
-    setRegistrations(records);
-  };
 
   const openEntryEditor = (entry: RegistrationEntry, registration: OrganizerRegistrationRecord) => {
     const registrationId = Number(registration.id);
@@ -193,30 +189,6 @@ export default function OrganizerTournamentRegistrationsPage() {
       setActiveActionId(null);
     }
   };
-
-  useEffect(() => {
-    if (!Number.isInteger(tournamentId) || tournamentId <= 0) {
-      setError('Invalid tournament id.');
-      setIsLoading(false);
-      return;
-    }
-
-    const token = sessionStorage.getItem('access_token');
-    if (!token) {
-      setError('Your session expired. Please sign in again.');
-      setIsLoading(false);
-      return;
-    }
-
-    void listTournamentRegistrations(token, tournamentId)
-      .then((records) => {
-        setRegistrations(records);
-      })
-      .catch((caughtError) => {
-        setError(caughtError instanceof Error ? caughtError.message : 'Unable to load registrations.');
-      })
-      .finally(() => setIsLoading(false));
-  }, [tournamentId]);
 
   const allEntries = useMemo(
     () => registrations.flatMap((registration) => registration.entries ?? []),
@@ -323,14 +295,14 @@ export default function OrganizerTournamentRegistrationsPage() {
           <h1>Registrations</h1>
           <p>{tournamentName}</p>
         </div>
-        <Link href={`/organizer/tournaments/${tournamentId}`} className={styles.registrationBackButton}>
+        <Link href={organizerRoutes.overview(tournamentId)} className={styles.registrationBackButton}>
           <ArrowLeft size={14} aria-hidden="true" /> Back to Overview
         </Link>
       </header>
 
-      {error ? <p className={styles.error} role="alert">{error}</p> : null}
+      {error || contextError ? <p className={styles.error} role="alert">{error || contextError}</p> : null}
       {isLoading ? <section className={styles.registrationLoading}>Loading registrations...</section> : null}
-      {!error && !isLoading ? (
+      {!error && !contextError && !isLoading ? (
         <>
           <section className={styles.registrationMetricGrid} aria-label="Registration summary">
             <MetricCard icon={<Users />} tone="purple" label="Total Registrations" value={metrics.total} detail="All time" />
@@ -378,8 +350,8 @@ export default function OrganizerTournamentRegistrationsPage() {
                           <td><strong>{name}</strong><span>{registration.contact_email ?? registration.form?.email ?? 'No email'}</span></td>
                           <td>{registration.entries?.map((item) => entryLabel(item, 'event')).join(', ') || 'Not selected'}</td>
                           <td>{entry ? entryLabel(entry, 'squad') : 'Not selected'}</td>
-                          <td><span className={`${styles.registrationStatus} ${styles[`status${status}`] ?? ''}`}>{labelStatus(status)}</span></td>
-                          <td><span className={`${styles.paymentStatus} ${payment === 'paid' ? styles.paymentPaid : styles.paymentUnpaid}`}><i />{labelStatus(payment)}</span></td>
+                          <td><OrganizerStatusBadge status={status} /></td>
+                          <td><OrganizerStatusBadge status={payment} /></td>
                           <td>{formatMoney(registration.total_cents, registration.currency)}</td>
                           <td><strong>{submitted.date}</strong><span>{submitted.time}</span></td>
                           <td className={styles.registrationActionsCell}>
@@ -429,7 +401,7 @@ export default function OrganizerTournamentRegistrationsPage() {
             <aside className={styles.registrationSidebar}>
               <section className={styles.registrationSideCard}>
                 <h2>Quick Actions</h2>
-                <Link href={`/organizer/tournaments/${tournamentId}/setup?section=registration-setup`} className={styles.quickActionPrimary}><ExternalLink size={14} /> View Registration Form</Link>
+                <Link href={organizerRoutes.setup(tournamentId, 'registration-setup')} className={styles.quickActionPrimary}><ExternalLink size={14} /> View Registration Form</Link>
                 <button type="button" className={styles.quickActionSecondary} onClick={() => setSearch('')}><UserPlus size={14} /> Add Manual Registration</button>
               </section>
               <section className={styles.registrationSideCard}>
