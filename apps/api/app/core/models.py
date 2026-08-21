@@ -426,6 +426,9 @@ class TournamentCentral(Base):
     user_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("users.id"), nullable=False, index=True
     )
+    venue_id: Mapped[Optional[int]] = mapped_column(
+        Integer, ForeignKey("tc_venues.id"), nullable=True, index=True
+    )
     name: Mapped[str] = mapped_column(String, nullable=False)
     location: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     start_date: Mapped[Optional[str]] = mapped_column(String, nullable=True)
@@ -435,6 +438,42 @@ class TournamentCentral(Base):
     logo_blob: Mapped[Optional[bytes]] = mapped_column(LargeBinary, nullable=True)
     logo_mime_type: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     logo_file_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+
+
+class TcVenue(Base):
+    __tablename__ = "tc_venues"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    address_line_1: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    address_line_2: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    city: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
+    state: Mapped[Optional[str]] = mapped_column(String(32), nullable=True, index=True)
+    zip: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    country: Mapped[Optional[str]] = mapped_column(String(64), nullable=True, default="US")
+    latitude: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    longitude: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    external_provider: Mapped[Optional[str]] = mapped_column(String(64), nullable=True, index=True)
+    external_place_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True, index=True)
+    phone: Mapped[Optional[str]] = mapped_column(String(40), nullable=True)
+    website: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+        index=True,
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+        index=True,
+    )
+
+    __table_args__ = (
+        UniqueConstraint("external_provider", "external_place_id", name="uq_tc_venues_external_place"),
+    )
 
 
 class TournamentSetupState(Base):

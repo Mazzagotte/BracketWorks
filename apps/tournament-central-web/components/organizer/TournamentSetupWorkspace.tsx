@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowUpDown, CalendarDays, ChevronUp, CircleAlert, CircleCheck, ClipboardList, Clock3, Eye, Filter, Globe, GripVertical, Headphones, Info, Layers, Link2, ListOrdered, Lock, MapPin, MoreHorizontal, PencilLine, Plus, RotateCcw, Save, Trash2, Trophy, Upload, Users, X } from 'lucide-react';
+import { ArrowUpDown, CalendarDays, ChevronUp, CircleAlert, CircleCheck, ClipboardList, Clock3, Download, Eye, FileJson, Filter, Globe, GripVertical, Headphones, Info, Layers, Link2, ListOrdered, Lock, MapPin, MoreHorizontal, PencilLine, Plus, RotateCcw, Save, Trash2, Trophy, Upload, Users, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent, DragEvent } from 'react';
 import { useRouter } from 'next/navigation';
@@ -8,7 +8,7 @@ import type { TournamentContract, TournamentSetupStateSummaryContract } from '@b
 
 import ConfigDrawer from './ConfigDrawer';
 import PublishValidationSummary from './PublishValidationSummary';
-import { listMyOrganizerSetupStates, listMyTournaments, loadOrganizerSetupState as loadOrganizerSetupStateApi } from './organizerApi';
+import { listMyOrganizerSetupStates, listMyTournaments, loadOrganizerSetupState as loadOrganizerSetupStateApi, resolveTcVenue } from './organizerApi';
 import TournamentRegistrationForm from '../public/TournamentRegistrationForm';
 import TournamentDetailsSection from './setup/TournamentDetailsSection';
 import { initialCustomQuestions, initialDivisions, initialEvents, initialFees, initialLocations, initialRegistrationFields, initialSquads, setupSections } from './setupConfig';
@@ -465,9 +465,18 @@ type TournamentDetails = {
   tournamentType: string;
   startDateIso: string;
   endDateIso: string;
+  venueId: number | null;
   bowlingCenter: string;
+  venueAddressLine1: string;
+  venueAddressLine2: string;
   city: string;
   state: string;
+  venueZip: string;
+  venueCountry: string;
+  venueLatitude: number | null;
+  venueLongitude: number | null;
+  venueExternalProvider: string;
+  venueExternalPlaceId: string;
   timezone: string;
   visibility: 'public' | 'unlisted' | 'private';
   tournamentStatus: string;
@@ -516,6 +525,21 @@ function getDraftStorageKey(): string {
 type PersistedTournament = {
   id: number;
   name: string;
+  venue_id?: number | null;
+  venue?: {
+    id: number;
+    name: string;
+    address_line_1?: string | null;
+    address_line_2?: string | null;
+    city?: string | null;
+    state?: string | null;
+    zip?: string | null;
+    country?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
+    external_provider?: string | null;
+    external_place_id?: string | null;
+  } | null;
   location: string | null;
   start_date: string | null;
   end_date: string | null;
@@ -528,6 +552,7 @@ type PersistedTournament = {
 
 type TournamentWritePayload = {
   name: string;
+  venue_id: number | null;
   location: string | null;
   start_date: string | null;
   end_date: string | null;
@@ -561,6 +586,13 @@ type OrganizerSetupStateResponse = {
   updated_at: string;
 };
 
+type TournamentTemplate = {
+  format: 'tc-tournament-template';
+  version: 1;
+  exported_at: string;
+  payload: OrganizerSetupPayload;
+};
+
 type OrganizerSetupStateSummary = TournamentSetupStateSummaryContract;
 
 type UserTournamentSummary = TournamentContract;
@@ -574,9 +606,18 @@ const defaultTournamentDetails: TournamentDetails = {
   tournamentType: 'Adult',
   startDateIso: '2026-10-30',
   endDateIso: '2026-11-01',
+  venueId: null,
   bowlingCenter: 'Sunset Lanes',
+  venueAddressLine1: '',
+  venueAddressLine2: '',
   city: 'Boise',
   state: 'ID',
+  venueZip: '',
+  venueCountry: 'US',
+  venueLatitude: null,
+  venueLongitude: null,
+  venueExternalProvider: '',
+  venueExternalPlaceId: '',
   timezone: 'America/Boise (MT)',
   visibility: 'public',
   tournamentStatus: 'draft',
@@ -861,6 +902,7 @@ function parseTournamentLocation(location: string | null | undefined): { bowling
 
 function toDraftFromTournament(tournament: UserTournamentSummary): OrganizerDraft {
   const location = parseTournamentLocation(tournament.location);
+  const venue = tournament.venue || null;
   const draft = buildDefaultDraft();
 
   return {
@@ -869,9 +911,18 @@ function toDraftFromTournament(tournament: UserTournamentSummary): OrganizerDraf
     details: {
       ...draft.details,
       name: tournament.name || draft.details.name,
-      bowlingCenter: location.bowlingCenter || draft.details.bowlingCenter,
-      city: location.city || draft.details.city,
-      state: location.state || draft.details.state,
+      venueId: typeof tournament.venue_id === 'number' ? tournament.venue_id : null,
+      bowlingCenter: (venue?.name || location.bowlingCenter || draft.details.bowlingCenter),
+      venueAddressLine1: venue?.address_line_1 || '',
+      venueAddressLine2: venue?.address_line_2 || '',
+      city: (venue?.city || location.city || draft.details.city),
+      state: (venue?.state || location.state || draft.details.state),
+      venueZip: venue?.zip || '',
+      venueCountry: venue?.country || 'US',
+      venueLatitude: venue?.latitude ?? null,
+      venueLongitude: venue?.longitude ?? null,
+      venueExternalProvider: venue?.external_provider || '',
+      venueExternalPlaceId: venue?.external_place_id || '',
       startDateIso: tournament.start_date || draft.details.startDateIso,
       endDateIso: tournament.end_date || draft.details.endDateIso,
       visibility: tournament.is_public ? 'public' : 'private',
@@ -936,6 +987,7 @@ function buildTournamentPayload(details: TournamentDetails, squads: SquadConfig[
 
   return {
     name: details.name.trim() || 'Untitled Tournament',
+    venue_id: details.venueId,
     location: location || null,
     start_date: details.startDateIso.trim() || null,
     end_date: details.endDateIso.trim() || null,
@@ -1255,6 +1307,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
     ? initialTournamentId
     : null;
   const logoInputRef = useRef<HTMLInputElement | null>(null);
+  const templateInputRef = useRef<HTMLInputElement | null>(null);
   const [activeSection, setActiveSection] = useState<SetupSectionKey>('tournament-details');
   const [drawerState, setDrawerState] = useState<DrawerState>(null);
   const [details, setDetails] = useState<TournamentDetails>(defaultTournamentDetails);
@@ -1598,7 +1651,8 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
         setAutosaveError(null);
 
         try {
-          const payload = buildTournamentPayload(details, squads, details.visibility !== 'private');
+          const detailsForSave = await resolveVenueForPersistence(token);
+          const payload = buildTournamentPayload(detailsForSave, squads, detailsForSave.visibility !== 'private');
           const saved = await saveTournamentRecord({
             token,
             payload,
@@ -1619,7 +1673,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
           }
 
           const organizerPayload = buildOrganizerSetupPayload({
-            details,
+            details: detailsForSave,
             events,
             divisions,
             squads,
@@ -1807,6 +1861,148 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
       setSaveError(error instanceof Error ? error.message : 'Failed to delete tournament.');
     } finally {
       setDeletingTournamentId(null);
+    }
+  };
+
+  const handleExportTemplate = () => {
+    const template: TournamentTemplate = {
+      format: 'tc-tournament-template',
+      version: 1,
+      exported_at: new Date().toISOString(),
+      payload: buildOrganizerSetupPayload({
+        details: { ...details, venueId: null, logoFileName: '' },
+        events,
+        divisions,
+        squads,
+        fees,
+        locations,
+        questions,
+        fields,
+        hasRulesDocument: false,
+        paymentMode,
+        paymentProcessorConnected: false,
+        paymentPayoutConfigured: false,
+      }),
+    };
+    const blob = new Blob([JSON.stringify(template, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${(details.name.trim() || 'tournament').replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase() || 'tournament'}-template.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportReport = () => {
+    const escapeHtml = (value: string | number | null | undefined): string => String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+    const formatCurrency = (cents: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cents / 100);
+    const rows = (items: string[][]) => items.map((cells) => `<tr>${cells.map((cell) => `<td>${escapeHtml(cell)}</td>`).join('')}</tr>`).join('');
+    const location = [details.bowlingCenter, details.venueAddressLine1, details.city, details.state, details.venueZip].filter(Boolean).join(', ');
+    const html = `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>${escapeHtml(details.name || 'Tournament')} - Tournament Summary</title>
+<style>body{margin:0;background:#f4f4f2;color:#1b1b1b;font:14px/1.5 Arial,sans-serif}.page{max-width:900px;margin:32px auto;background:#fff;padding:42px;box-sizing:border-box}h1,h2{margin:0;color:#171717}h1{font-size:30px}h2{font-size:18px;margin-top:32px;border-bottom:2px solid #ff7a00;padding-bottom:6px}.eyebrow{color:#a84f00;font-size:11px;font-weight:bold;letter-spacing:.1em;text-transform:uppercase}.meta{color:#565656;margin:8px 0 0}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:18px}.fact{border:1px solid #ddd;padding:12px}.fact b{display:block;font-size:11px;letter-spacing:.08em;color:#666}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:9px;border-bottom:1px solid #ddd;text-align:left;vertical-align:top}th{background:#191919;color:#fff;font-size:11px;letter-spacing:.05em;text-transform:uppercase}.footer{margin-top:32px;color:#777;font-size:12px}@media print{body{background:#fff}.page{margin:0;max-width:none;padding:0}}</style></head>
+<body><main class="page"><p class="eyebrow">Tournament Central | Tournament Summary</p><h1>${escapeHtml(details.name || 'Untitled Tournament')}</h1><p class="meta">${escapeHtml(details.subtitle || details.organizer || 'Tournament configuration export')}</p>
+<section class="grid"><div class="fact"><b>DATES</b>${escapeHtml([details.startDateIso, details.endDateIso].filter(Boolean).join(' to ') || 'Not set')}</div><div class="fact"><b>LOCATION</b>${escapeHtml(location || 'Not set')}</div><div class="fact"><b>ORGANIZER</b>${escapeHtml(details.organizer || 'Not set')}</div><div class="fact"><b>REGISTRATION</b>${escapeHtml([details.registrationOpenIso, details.registrationCloseIso].filter(Boolean).join(' to ') || 'Not set')}</div></section>
+<h2>Events</h2><table><thead><tr><th>Event</th><th>Format</th><th>Players</th><th>Entry Fee</th></tr></thead><tbody>${rows(events.filter((event) => event.enabled).map((event) => [event.name || 'Untitled Event', event.scoring, `${event.minPlayers}-${event.maxPlayers}`, formatCurrency(event.entryFeeCents)])) || '<tr><td colspan="4">No events configured.</td></tr>'}</tbody></table>
+<h2>Divisions</h2><table><thead><tr><th>Division</th><th>Average</th><th>Age</th><th>Mode</th></tr></thead><tbody>${rows(divisions.map((division) => [division.name || 'Untitled Division', `${division.minAverage ?? 'Any'}-${division.maxAverage ?? 'Any'}`, `${division.minAge ?? 'Any'}-${division.maxAge ?? 'Any'}`, division.mode])) || '<tr><td colspan="4">No divisions configured.</td></tr>'}</tbody></table>
+<h2>Squads</h2><table><thead><tr><th>Squad</th><th>Date</th><th>Start</th><th>Capacity</th></tr></thead><tbody>${rows([...squads].sort((a, b) => `${a.dateIso}${a.startTime}`.localeCompare(`${b.dateIso}${b.startTime}`)).map((squad) => [squad.name || 'Squad', squad.dateIso || 'Not set', squad.startTime || 'Not set', String(squad.capacity)])) || '<tr><td colspan="4">No squads configured.</td></tr>'}</tbody></table>
+<h2>Fees and Registration</h2><table><thead><tr><th>Add-on</th><th>Amount</th><th>Required</th></tr></thead><tbody>${rows(fees.filter((fee) => fee.enabled).map((fee) => [fee.name || 'Untitled Add-on', formatCurrency(fee.amountCents), fee.required ? 'Yes' : 'No'])) || '<tr><td colspan="3">No add-ons configured.</td></tr>'}</tbody></table>
+<p class="footer">Generated ${escapeHtml(new Date().toLocaleString())}. This report excludes registrations, payments, and uploaded files.</p></main></body></html>`;
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${(details.name.trim() || 'tournament').replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase() || 'tournament'}-summary.html`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportTemplate = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) {
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(await file.text()) as Partial<TournamentTemplate>;
+      if (parsed.format !== 'tc-tournament-template' || parsed.version !== 1 || !parsed.payload || typeof parsed.payload !== 'object') {
+        throw new Error('Choose a Tournament Central template JSON file.');
+      }
+
+      const imported = normalizeOrganizerDraft({ tournamentId: null, payload: parsed.payload });
+      const eventIds = new Map(imported.events.map((entry) => [entry.id, buildClientId('ev')]));
+      const divisionIds = new Map(imported.divisions.map((entry) => [entry.id, buildClientId('div')]));
+      const squadIds = new Map(imported.squads.map((entry) => [entry.id, buildClientId('sq')]));
+      const resolveIds = (ids: string[], map: Map<string, string>) => ids.map((id) => map.get(id)).filter((id): id is string => Boolean(id));
+      const remappedDraft: OrganizerDraft = {
+        ...imported,
+        tournamentId: null,
+        details: {
+          ...imported.details,
+          venueId: null,
+          logoFileName: '',
+          tournamentStatus: 'draft',
+          visibility: 'private',
+        },
+        events: imported.events.map((entry) => ({
+          ...entry,
+          id: eventIds.get(entry.id) || buildClientId('ev'),
+          connectedDivisionIds: resolveIds(entry.connectedDivisionIds, divisionIds),
+          connectedSquadIds: resolveIds(entry.connectedSquadIds, squadIds),
+        })),
+        divisions: imported.divisions.map((entry) => ({
+          ...entry,
+          id: divisionIds.get(entry.id) || buildClientId('div'),
+          eventIds: resolveIds(entry.eventIds, eventIds),
+        })),
+        squads: imported.squads.map((entry) => ({
+          ...entry,
+          id: squadIds.get(entry.id) || buildClientId('sq'),
+          eventIds: resolveIds(entry.eventIds, eventIds),
+          registeredCount: 0,
+        })),
+        fees: imported.fees.map((entry) => ({
+          ...entry,
+          id: buildClientId('fee'),
+          eventIds: resolveIds(entry.eventIds, eventIds),
+          divisionIds: resolveIds(entry.divisionIds, divisionIds),
+          squadIds: resolveIds(entry.squadIds, squadIds),
+        })),
+        locations: imported.locations.map((entry) => ({ ...entry, id: buildClientId('loc') })),
+        questions: imported.questions.map((entry) => ({
+          ...entry,
+          id: buildClientId('cq'),
+          scope: {
+            ...entry.scope,
+            eventIds: resolveIds(entry.scope.eventIds, eventIds),
+            divisionIds: resolveIds(entry.scope.divisionIds, divisionIds),
+            squadIds: resolveIds(entry.scope.squadIds, squadIds),
+          },
+        })),
+        fields: imported.fields.map((entry) => ({ ...entry, id: buildClientId('rf') })),
+        hasRulesDocument: false,
+        paymentProcessorConnected: false,
+        paymentPayoutConfigured: false,
+      };
+
+      applyDraft(remappedDraft);
+      setIsSetupPublished(false);
+      setAutosaveEnabled(false);
+      setAutosaveSavedAt(null);
+      setDraftSavedAt(null);
+      setPublishedAt(null);
+      setPreviewUrl(null);
+      setSaveError(null);
+      setAutosaveError(null);
+      setActiveSection('tournament-details');
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : 'Unable to import the tournament template.');
     }
   };
 
@@ -2115,6 +2311,55 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
     return issues;
   }, [hasRulesDocument]);
 
+  async function resolveVenueForPersistence(token: string): Promise<TournamentDetails> {
+    if (details.venueId || !details.bowlingCenter.trim()) {
+      return details;
+    }
+
+    const shouldResolve = Boolean(
+      details.venueAddressLine1.trim()
+      || details.city.trim()
+      || details.state.trim()
+      || details.venueExternalPlaceId.trim(),
+    );
+    if (!shouldResolve) {
+      return details;
+    }
+
+    const resolvedVenue = await resolveTcVenue(token, {
+      name: details.bowlingCenter,
+      address_line_1: details.venueAddressLine1 || undefined,
+      address_line_2: details.venueAddressLine2 || undefined,
+      city: details.city || undefined,
+      state: details.state || undefined,
+      zip: details.venueZip || undefined,
+      country: details.venueCountry || undefined,
+      latitude: details.venueLatitude,
+      longitude: details.venueLongitude,
+      external_provider: details.venueExternalProvider || undefined,
+      external_place_id: details.venueExternalPlaceId || undefined,
+    });
+
+    const nextDetails: TournamentDetails = {
+      ...details,
+      venueId: typeof resolvedVenue.id === 'number' ? resolvedVenue.id : null,
+      bowlingCenter: resolvedVenue.name || details.bowlingCenter,
+      venueAddressLine1: resolvedVenue.address_line_1 || details.venueAddressLine1,
+      venueAddressLine2: resolvedVenue.address_line_2 || details.venueAddressLine2,
+      city: resolvedVenue.city || details.city,
+      state: resolvedVenue.state || details.state,
+      venueZip: resolvedVenue.zip || details.venueZip,
+      venueCountry: resolvedVenue.country || details.venueCountry,
+      venueLatitude: resolvedVenue.latitude ?? details.venueLatitude,
+      venueLongitude: resolvedVenue.longitude ?? details.venueLongitude,
+      venueExternalProvider: resolvedVenue.external_provider || details.venueExternalProvider,
+      venueExternalPlaceId: resolvedVenue.external_place_id || details.venueExternalPlaceId,
+    };
+
+    setDetails(nextDetails);
+    return nextDetails;
+  }
+
   const handleSaveDraft = async () => {
     const token = typeof window !== 'undefined' ? sessionStorage.getItem('access_token') : null;
     if (!token) {
@@ -2127,7 +2372,8 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
     setIsSavingDraft(true);
 
     try {
-      const payload = buildTournamentPayload(details, squads, details.visibility !== 'private');
+      const detailsForSave = await resolveVenueForPersistence(token);
+      const payload = buildTournamentPayload(detailsForSave, squads, detailsForSave.visibility !== 'private');
       const saved = await saveTournamentRecord({
         token,
         payload,
@@ -2148,7 +2394,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
       }
 
       const organizerPayload = buildOrganizerSetupPayload({
-        details,
+        details: detailsForSave,
         events,
         divisions,
         squads,
@@ -2200,7 +2446,8 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
     setIsPublishing(true);
 
     try {
-      const payload = buildTournamentPayload(details, squads, details.visibility !== 'private');
+      const detailsForSave = await resolveVenueForPersistence(token);
+      const payload = buildTournamentPayload(detailsForSave, squads, detailsForSave.visibility !== 'private');
       const saved = await saveTournamentRecord({
         token,
         payload,
@@ -2221,7 +2468,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
       }
 
       const organizerPayload = buildOrganizerSetupPayload({
-        details,
+        details: detailsForSave,
         events,
         divisions,
         squads,
@@ -3217,6 +3464,22 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
               disabled={isLoadingTournamentLibrary}
             >
               <RotateCcw size={15} /> {isLoadingTournamentLibrary ? 'Loading...' : 'Load Tournament'}
+            </button>
+            <input
+              ref={templateInputRef}
+              type="file"
+              accept="application/json,.json"
+              className={styles.visuallyHidden}
+              onChange={(event) => { void handleImportTemplate(event); }}
+            />
+            <button type="button" className={styles.iconAction} onClick={() => templateInputRef.current?.click()} title="Import tournament template" aria-label="Import tournament template">
+              <Upload size={15} />
+            </button>
+            <button type="button" className={styles.iconAction} onClick={handleExportReport} title="Download readable tournament summary" aria-label="Download readable tournament summary">
+              <Download size={15} />
+            </button>
+            <button type="button" className={styles.iconAction} onClick={handleExportTemplate} title="Export JSON template for importing" aria-label="Export JSON template for importing">
+              <FileJson size={15} />
             </button>
             <button type="button" className={styles.secondaryAction} onClick={() => { void handleSaveDraft(); }} disabled={isSavingDraft || isPublishing}>
               <Save size={15} /> {isSavingDraft ? 'Saving...' : 'Save Draft'}

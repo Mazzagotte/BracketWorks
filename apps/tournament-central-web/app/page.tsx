@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import type { KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent } from 'react';
 import { CalendarCheck2, CalendarDays, ChevronRight, Clock3, Info, Link2, LocateFixed, MapPin, Menu, Plus, Search, ShieldCheck, UsersRound, X } from 'lucide-react';
-import { ComposableMap, Geographies, Geography, ZoomableGroup } from 'react-simple-maps';
+import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from 'react-simple-maps';
 import type { PublicTournamentDirectoryItem, PublicTournamentDirectoryResponse } from '@bracketworks/types';
 import TournamentRegistrationForm from '@/components/public/TournamentRegistrationForm';
 import styles from './page.module.css';
@@ -43,7 +43,18 @@ type Tournament = {
   publicUrl: string | null;
   registrationUrl: string | null;
   locationText: string;
+  latitude: number | null;
+  longitude: number | null;
   status: TournamentStatus;
+};
+
+type VenueMapMarker = {
+  key: string;
+  coordinates: [number, number];
+  venue: string;
+  city: string;
+  stateCode: string;
+  tournaments: Tournament[];
 };
 
 type StateSummary = {
@@ -172,7 +183,6 @@ const STATE_FIPS_TO_CODE: Record<string, string> = {
 };
 
 const USA_STATES_GEO_URL = '/us-states-10m.json';
-const MAP_TEXTURE_IMAGE_URL = '/textures/tournament-central-map-slate.webp?v=2026-08-12-1';
 const DEFAULT_MAP_VIEWPORT: MapViewport = { center: [-96, 38], zoom: 1 };
 const HEARTBEAT_INTERVAL_MS = 15000;
 const HEARTBEAT_STALE_AFTER_MS = 60000;
@@ -224,8 +234,24 @@ function getStateToneFromSummary(summary: StateSummary | undefined): MapStateTon
   return 'none';
 }
 
-function getToneFill(_tone: MapStateTone, _isSelected: boolean, _stateCode: string): string {
-  return 'url(#tc-state-texture)';
+function getToneFill(tone: MapStateTone, isSelected: boolean, _stateCode: string): string {
+  if (isSelected) {
+    return '#313131';
+  }
+
+  if (tone === 'inprogress') {
+    return '#292929';
+  }
+
+  if (tone === 'upcoming') {
+    return '#202020';
+  }
+
+  if (tone === 'past') {
+    return '#191919';
+  }
+
+  return '#111111';
 }
 
 function parseLocation(location: string | null): { venue: string; city: string; stateCode: string } {
@@ -424,6 +450,40 @@ function getMapTranslateExtent(viewportWidth: number, viewportHeight: number): [
   return [[minX, minY], [maxX, maxY]];
 }
 
+function buildVenueMapMarkers(tournaments: Tournament[]): VenueMapMarker[] {
+  const markerGroups = new Map<string, VenueMapMarker>();
+
+  for (const tournament of tournaments) {
+    const { latitude, longitude } = tournament;
+    if (latitude === null || longitude === null || !Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      continue;
+    }
+
+    if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+      continue;
+    }
+
+    // Group identical and very-nearby venue coordinates to keep national view uncluttered.
+    const key = `${latitude.toFixed(3)}:${longitude.toFixed(3)}`;
+    const existing = markerGroups.get(key);
+    if (existing) {
+      existing.tournaments.push(tournament);
+      continue;
+    }
+
+    markerGroups.set(key, {
+      key,
+      coordinates: [longitude, latitude],
+      venue: tournament.venue,
+      city: tournament.city,
+      stateCode: tournament.stateCode,
+      tournaments: [tournament],
+    });
+  }
+
+  return [...markerGroups.values()];
+}
+
 export default function HomePage() {
   const router = useRouter();
   const [allTournaments, setAllTournaments] = useState<Tournament[]>([]);
@@ -567,6 +627,12 @@ export default function HomePage() {
           publicUrl: item.public_url ?? null,
           registrationUrl: item.registration_url ?? null,
           locationText: item.location?.trim() || `${location.venue} • ${location.city}${locationSuffix ? `, ${locationSuffix}` : ''}`,
+          latitude: typeof item.latitude === 'number'
+            ? item.latitude
+            : (typeof item.venue?.latitude === 'number' ? item.venue.latitude : null),
+          longitude: typeof item.longitude === 'number'
+            ? item.longitude
+            : (typeof item.venue?.longitude === 'number' ? item.venue.longitude : null),
           status: getTournamentStatus(startDate, endDate),
         };
       });
@@ -1244,6 +1310,8 @@ export default function HomePage() {
     return tones;
   }, [stateSummariesByCode]);
 
+  const venueMapMarkers = useMemo(() => buildVenueMapMarkers(allTournaments), [allTournaments]);
+
   useEffect(() => {
     if (typeof window === 'undefined') {
       return;
@@ -1430,18 +1498,6 @@ export default function HomePage() {
             </div>
             <p className={styles.mapHint}>Tip: Select a state, then use zoom controls, wheel, or pinch to inspect smaller states.</p>
             <ComposableMap projection="geoAlbersUsa" className={styles.usMapSvg}>
-              <defs>
-                {/* One shared raster texture is intentionally reused across all states for continuity and performance. */}
-                <pattern id="tc-state-texture" patternUnits="userSpaceOnUse" width="1200" height="1200">
-                  <image
-                    href={MAP_TEXTURE_IMAGE_URL}
-                    width="1200"
-                    height="1200"
-                    opacity="0.76"
-                    preserveAspectRatio="xMidYMid slice"
-                  />
-                </pattern>
-              </defs>
               <ZoomableGroup
                 center={mapViewport.center}
                 zoom={mapViewport.zoom}
@@ -1492,6 +1548,56 @@ export default function HomePage() {
                     );
                   })}
                 </Geographies>
+                {venueMapMarkers.map((marker) => {
+                  const tournamentCount = marker.tournaments.length;
+                  const isInSelectedState = marker.stateCode === selectedStateCode;
+                  const representativeTournament = marker.tournaments[0];
+                  const markerRadius = tournamentCount >= 4 ? 4.5 : tournamentCount >= 2 ? 3.25 : 2.25;
+                  const markerLabel = [
+                    representativeTournament.name,
+                    marker.venue,
+                    `${marker.city}${marker.stateCode ? `, ${marker.stateCode}` : ''}`,
+                    representativeTournament.date,
+                    tournamentCount > 1 ? `${tournamentCount} tournaments at this venue` : null,
+                  ].filter(Boolean).join('\n');
+
+                  return (
+                    <Marker key={marker.key} coordinates={marker.coordinates}>
+                      <g
+                        className={[
+                          styles.venueMarker,
+                          isInSelectedState ? styles.venueMarkerSelected : '',
+                          selectedStateCode && !isInSelectedState ? styles.venueMarkerMuted : '',
+                          tournamentCount >= 4 ? styles.venueMarkerHot : '',
+                        ].filter(Boolean).join(' ')}
+                        role="button"
+                        tabIndex={0}
+                        aria-label={markerLabel}
+                        onClick={() => {
+                          if (marker.stateCode) {
+                            hasUserSelectedStateRef.current = true;
+                            setSelectedStateCode(marker.stateCode);
+                          }
+                          setDetailTournamentId(marker.tournaments[0].id);
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            if (marker.stateCode) {
+                              hasUserSelectedStateRef.current = true;
+                              setSelectedStateCode(marker.stateCode);
+                            }
+                            setDetailTournamentId(marker.tournaments[0].id);
+                          }
+                        }}
+                      >
+                        <title>{markerLabel}</title>
+                        <circle className={styles.venueMarkerDot} r={markerRadius} />
+                        {tournamentCount >= 4 ? <text className={styles.venueMarkerCount} y={0.5}>{tournamentCount}</text> : null}
+                      </g>
+                    </Marker>
+                  );
+                })}
               </ZoomableGroup>
             </ComposableMap>
           </div>

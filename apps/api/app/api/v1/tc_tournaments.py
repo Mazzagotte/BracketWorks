@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from ...api import deps
 from ...core import models, schemas
 from ...services.tc_tournament_logo import validate_tournament_logo_upload
+from ...services.tc_venues import build_tournament_location
 from ...services.tournament_access import verify_owned_tc_tournament_access
 
 logger = logging.getLogger(__name__)
@@ -40,7 +41,18 @@ class TcEntryStatusPatch(BaseModel):
     bowlers: list[dict] | None = None
 
 
-def _tc_tournament_to_dict(tournament: models.TournamentCentral, entry_count: int = 0) -> dict:
+def _serialize_venue(venue: models.TcVenue | None) -> dict | None:
+    if venue is None:
+        return None
+
+    return schemas.TcVenue.model_validate(venue).model_dump(mode="json")
+
+
+def _tc_tournament_to_dict(
+    tournament: models.TournamentCentral,
+    entry_count: int = 0,
+    venue: models.TcVenue | None = None,
+) -> dict:
     tournament_dict = tournament.__dict__.copy()
     if tournament.squad_times:
         tournament_dict["squad_times"] = json.loads(tournament.squad_times)
@@ -53,6 +65,7 @@ def _tc_tournament_to_dict(tournament: models.TournamentCentral, entry_count: in
     tournament_dict["has_logo"] = bool(tournament.logo_blob)
     tournament_dict["logo_file_name"] = tournament.logo_file_name
     tournament_dict["logo_mime_type"] = tournament.logo_mime_type
+    tournament_dict["venue"] = _serialize_venue(venue)
     return tournament_dict
 
 
@@ -64,9 +77,18 @@ def create_tournament(
     user=Depends(deps.get_current_user),
 ):
     try:
+        venue = None
+        if tournament.venue_id is not None:
+            venue = db.query(models.TcVenue).filter(models.TcVenue.id == tournament.venue_id).first()
+            if venue is None:
+                raise HTTPException(status_code=404, detail="Venue not found")
+
+        location = build_tournament_location(venue) if venue else tournament.location
+
         db_tournament = models.TournamentCentral(
             name=tournament.name,
-            location=tournament.location,
+            venue_id=(venue.id if venue else None),
+            location=location,
             start_date=tournament.start_date,
             end_date=tournament.end_date,
             squad_times=json.dumps(tournament.squad_times),
@@ -76,7 +98,7 @@ def create_tournament(
         db.add(db_tournament)
         db.commit()
         db.refresh(db_tournament)
-        return _tc_tournament_to_dict(db_tournament)
+        return _tc_tournament_to_dict(db_tournament, venue=venue)
     except Exception as error:
         db.rollback()
         logger.error(f"Error creating TC tournament: {error}")
@@ -103,6 +125,11 @@ def list_tournaments(
 
     tournaments = query.all()
     tournament_ids = [row.id for row in tournaments]
+    venue_ids = [row.venue_id for row in tournaments if row.venue_id is not None]
+    venues_by_id: dict[int, models.TcVenue] = {}
+    if venue_ids:
+        venues = db.query(models.TcVenue).filter(models.TcVenue.id.in_(venue_ids)).all()
+        venues_by_id = {venue.id: venue for venue in venues}
 
     entry_counts_by_tournament: dict[int, int] = {}
     if tournament_ids:
@@ -121,6 +148,7 @@ def list_tournaments(
         _tc_tournament_to_dict(
             tournament,
             entry_count=entry_counts_by_tournament.get(tournament.id, 0),
+            venue=venues_by_id.get(tournament.venue_id or -1),
         )
         for tournament in tournaments
     ]
@@ -142,7 +170,10 @@ def get_tournament(
         .scalar()
         or 0
     )
-    return _tc_tournament_to_dict(tournament, entry_count=entry_count)
+    venue = None
+    if tournament.venue_id is not None:
+        venue = db.query(models.TcVenue).filter(models.TcVenue.id == tournament.venue_id).first()
+    return _tc_tournament_to_dict(tournament, entry_count=entry_count, venue=venue)
 
 
 @router.put("/{tournament_id}", response_model=schemas.Tournament)
@@ -154,9 +185,20 @@ def update_tournament(
 ):
     try:
         db_tournament = verify_owned_tc_tournament_access(db, tournament_id, user)
+        venue = None
+        venue_id_was_sent = "venue_id" in tournament.model_fields_set
+
+        if venue_id_was_sent and tournament.venue_id is not None:
+            venue = db.query(models.TcVenue).filter(models.TcVenue.id == tournament.venue_id).first()
+            if venue is None:
+                raise HTTPException(status_code=404, detail="Venue not found")
+            db_tournament.venue_id = venue.id
+            db_tournament.location = build_tournament_location(venue)
+        elif venue_id_was_sent and tournament.venue_id is None:
+            db_tournament.venue_id = None
 
         db_tournament.name = tournament.name
-        if tournament.location is not None:
+        if tournament.location is not None and not (venue_id_was_sent and tournament.venue_id is not None):
             db_tournament.location = tournament.location
         if tournament.start_date is not None:
             db_tournament.start_date = tournament.start_date
@@ -177,7 +219,9 @@ def update_tournament(
             .scalar()
             or 0
         )
-        return _tc_tournament_to_dict(db_tournament, entry_count=entry_count)
+        if db_tournament.venue_id is not None and venue is None:
+            venue = db.query(models.TcVenue).filter(models.TcVenue.id == db_tournament.venue_id).first()
+        return _tc_tournament_to_dict(db_tournament, entry_count=entry_count, venue=venue)
     except HTTPException:
         raise
     except Exception as error:

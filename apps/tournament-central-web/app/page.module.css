@@ -875,7 +875,7 @@
   min-height: 520px;
   width: 100%;
   border-radius: 20px;
-  background: var(--tc-card-bg);
+  background: #080808;
   padding: 16px;
   overflow: hidden;
 }
@@ -962,8 +962,7 @@
 }
 
 .geographyBase {
-  fill: url(#tc-state-texture);
-  stroke: rgba(205, 218, 228, 0.38);
+  stroke: #4a4a4a;
   stroke-width: 1.15;
   fill-opacity: 1;
   vector-effect: non-scaling-stroke;
@@ -972,17 +971,53 @@
 }
 
 .geographyBase:hover {
-  stroke: var(--color-primary);
+  stroke: #8a8a8a;
   stroke-width: 1.6;
 }
 
 .geographyBase[data-selected='true'] {
-  stroke: var(--color-primary);
+  stroke: #c4c4c4;
   stroke-width: 2;
 }
 
-.mapShell :global(circle) {
-  display: none;
+.venueMarker {
+  cursor: pointer;
+  outline: none;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: opacity 140ms ease, filter 140ms ease, transform 140ms ease;
+}
+
+.venueMarkerDot {
+  display: block;
+  fill: #ff7a00;
+  stroke: none;
+  opacity: 0.95;
+  transition: r 140ms ease, opacity 140ms ease;
+}
+
+.venueMarker:hover,
+.venueMarker:focus,
+.venueMarkerSelected {
+  opacity: 1;
+  transform: scale(1.22);
+}
+
+.venueMarkerMuted {
+  opacity: 0.42;
+}
+
+.venueMarkerHot {
+  filter: drop-shadow(0 0 5px rgb(255 122 0 / 55%));
+}
+
+.venueMarkerCount {
+  fill: #171717;
+  font-size: 5px;
+  font-weight: 800;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  pointer-events: none;
 }
 
 .statePanel {

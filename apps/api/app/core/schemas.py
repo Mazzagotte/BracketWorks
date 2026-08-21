@@ -364,6 +364,7 @@ class BowlerProfile(BowlerProfileBase):
 
 class TournamentBase(BaseModel):
     name: str
+    venue_id: Optional[int] = None
     location: Optional[str] = None
     start_date: Optional[str] = None
     end_date: Optional[str] = None
@@ -387,8 +388,42 @@ class Tournament(TournamentBase):
     has_logo: Optional[bool] = None
     logo_file_name: Optional[str] = None
     logo_mime_type: Optional[str] = None
+    venue: Optional["TcVenue"] = None
     entry_count: Optional[int] = None
     brackets_configured: Optional[bool] = None
+
+
+class TcVenueBase(BaseModel):
+    name: str
+    address_line_1: Optional[str] = None
+    address_line_2: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    zip: Optional[str] = None
+    country: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    external_provider: Optional[str] = None
+    external_place_id: Optional[str] = None
+    phone: Optional[str] = None
+    website: Optional[str] = None
+
+
+class TcVenueCreate(TcVenueBase):
+    name: str
+
+
+class TcVenue(TcVenueBase):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    created_at: datetime
+    updated_at: datetime
+
+
+class TcVenueSearchResult(BaseModel):
+    source: Literal["internal", "external"]
+    venue: TcVenue | TcVenueCreate
 
 
 class TournamentSetupStateUpsert(BaseModel):

@@ -489,6 +489,11 @@ def list_public_tournaments(
         )
 
     tc_tournament_ids = [t.id for t in tc_tournaments]
+    tc_venue_ids = [t.venue_id for t in tc_tournaments if t.venue_id is not None]
+    tc_venues_by_id: dict[int, models.TcVenue] = {}
+    if tc_venue_ids:
+        tc_venues = db.query(models.TcVenue).filter(models.TcVenue.id.in_(tc_venue_ids)).all()
+        tc_venues_by_id = {venue.id: venue for venue in tc_venues}
     tc_registration_ready_ids: set[int] = set()
     if tc_tournament_ids:
         tc_registration_ready_rows = (
@@ -568,6 +573,9 @@ def list_public_tournaments(
             "name": t.name,
             "slug": _slugify_tournament_name(t.name),
             "location": t.location,
+            "venue": None,
+            "latitude": None,
+            "longitude": None,
             "state_code": state_code,
             "state_name": state_name,
             "start_date": t.start_date,
@@ -604,6 +612,20 @@ def list_public_tournaments(
             "name": t.name,
             "slug": _slugify_tournament_name(t.name),
             "location": t.location,
+            "venue": (
+                {
+                    "id": venue.id,
+                    "name": venue.name,
+                    "city": venue.city,
+                    "state": venue.state,
+                    "latitude": venue.latitude,
+                    "longitude": venue.longitude,
+                }
+                if venue is not None
+                else None
+            ),
+            "latitude": venue.latitude if venue is not None else None,
+            "longitude": venue.longitude if venue is not None else None,
             "state_code": state_code,
             "state_name": state_name,
             "start_date": t.start_date,
@@ -621,6 +643,7 @@ def list_public_tournaments(
             "live_fingerprint": f"tc:{t.id}",
         }
         for t in tc_tournaments
+        for venue in [tc_venues_by_id.get(t.venue_id or -1)]
         for state_code, state_name in [_parse_location_state(t.location)]
     )
 

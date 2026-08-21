@@ -6,6 +6,7 @@ export type IsoDateTimeString = string;
 export interface TournamentContract {
   id: TournamentId;
   name: string;
+  venue_id?: number | null;
   location?: string | null;
   start_date?: IsoDateString | null;
   end_date?: IsoDateString | null;
@@ -14,6 +15,22 @@ export interface TournamentContract {
   has_logo?: boolean;
   logo_file_name?: string | null;
   logo_mime_type?: string | null;
+  venue?: {
+    id: number;
+    name: string;
+    address_line_1?: string | null;
+    address_line_2?: string | null;
+    city?: string | null;
+    state?: string | null;
+    zip?: string | null;
+    country?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
+    external_provider?: string | null;
+    external_place_id?: string | null;
+    phone?: string | null;
+    website?: string | null;
+  } | null;
   entry_count?: number;
   brackets_configured?: boolean;
 }
@@ -34,6 +51,16 @@ export interface PublicTournamentDirectoryItem {
   name: string;
   slug?: string;
   location: string | null;
+  venue?: {
+    id: number;
+    name: string;
+    city?: string | null;
+    state?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
+  } | null;
+  latitude?: number | null;
+  longitude?: number | null;
   state_code?: string | null;
   state_name?: string | null;
   start_date: IsoDateString | null;

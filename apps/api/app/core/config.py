@@ -93,6 +93,11 @@ class Settings(BaseSettings):
     BRACKETS_EXPERIMENTAL_ENABLED: bool = True
     BRACKETS_EXPERIMENTAL_ATTEMPTS: int = 4
 
+    # Tournament Central venue search provider configuration
+    TC_VENUE_EXTERNAL_PROVIDER: str = "none"
+    TC_VENUE_EXTERNAL_LIMIT: int = 8
+    TC_VENUE_SEARCH_TIMEOUT_SECONDS: float = 4.0
+
     @property
     def is_production(self) -> bool:
         return self.ENVIRONMENT == "production"

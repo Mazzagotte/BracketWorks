@@ -11,6 +11,7 @@ import {
   Trash2,
   Upload,
 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import type { ChangeEvent, Dispatch, DragEvent, RefObject, SetStateAction } from 'react';
 import { capitalizeFirstLetter } from '@bracketworks/ui';
 
@@ -27,9 +28,18 @@ type TournamentDetails = {
   tournamentType: string;
   startDateIso: string;
   endDateIso: string;
+  venueId: number | null;
   bowlingCenter: string;
+  venueAddressLine1: string;
+  venueAddressLine2: string;
   city: string;
   state: string;
+  venueZip: string;
+  venueCountry: string;
+  venueLatitude: number | null;
+  venueLongitude: number | null;
+  venueExternalProvider: string;
+  venueExternalPlaceId: string;
   timezone: string;
   visibility: 'public' | 'unlisted' | 'private';
   tournamentStatus: string;
@@ -52,6 +62,24 @@ type WarningAction = {
   id: string;
   label: string;
   onClick: () => void;
+};
+
+type VenueSearchResult = {
+  source: 'internal' | 'external';
+  venue: {
+    id?: number;
+    name: string;
+    address_line_1?: string | null;
+    address_line_2?: string | null;
+    city?: string | null;
+    state?: string | null;
+    zip?: string | null;
+    country?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
+    external_provider?: string | null;
+    external_place_id?: string | null;
+  };
 };
 
 type TournamentDetailsSectionProps = {
@@ -113,6 +141,71 @@ export default function TournamentDetailsSection({
   setIsLogoDragActive,
   shiftIsoDate,
 }: TournamentDetailsSectionProps) {
+  const [venueSearchResults, setVenueSearchResults] = useState<VenueSearchResult[]>([]);
+  const [isVenueSearchLoading, setIsVenueSearchLoading] = useState(false);
+  const [venueSearchError, setVenueSearchError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const query = details.bowlingCenter.trim();
+    if (query.length < 2) {
+      setVenueSearchResults([]);
+      setIsVenueSearchLoading(false);
+      setVenueSearchError(null);
+      return;
+    }
+
+    const token = typeof window !== 'undefined' ? sessionStorage.getItem('access_token') : null;
+    if (!token) {
+      setVenueSearchResults([]);
+      return;
+    }
+
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      setIsVenueSearchLoading(true);
+      setVenueSearchError(null);
+
+      void fetch(`/api/v1/tc/venues/search?query=${encodeURIComponent(query)}`, {
+        method: 'GET',
+        headers: { Authorization: `Bearer ${token}` },
+        credentials: 'include',
+        cache: 'no-store',
+      })
+        .then(async (response) => {
+          const payload = await response.json().catch(() => null) as VenueSearchResult[] | { detail?: string } | null;
+          if (cancelled) {
+            return;
+          }
+
+          if (!response.ok) {
+            const detail = payload && typeof (payload as { detail?: string }).detail === 'string'
+              ? (payload as { detail?: string }).detail
+              : `Venue search failed (${response.status})`;
+            throw new Error(detail);
+          }
+
+          setVenueSearchResults(Array.isArray(payload) ? payload : []);
+        })
+        .catch((error: unknown) => {
+          if (cancelled) {
+            return;
+          }
+          setVenueSearchResults([]);
+          setVenueSearchError(error instanceof Error ? error.message : 'Venue search failed.');
+        })
+        .finally(() => {
+          if (!cancelled) {
+            setIsVenueSearchLoading(false);
+          }
+        });
+    }, 250);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [details.bowlingCenter]);
+
   return (
     <section className={styles.sectionCard}>
       <div className={styles.sectionHeader}>
@@ -404,15 +497,59 @@ export default function TournamentDetailsSection({
               </div>
               <div className={styles.detailsCardBody}>
                 <label className={styles.fieldLabel}>
-                  Bowling Center <span className={styles.fieldRequired}>*</span>
+                  Bowling Center / Venue <span className={styles.fieldRequired}>*</span>
                   <input
                     className={!details.bowlingCenter.trim() ? styles.fieldInputInvalid : ''}
                     value={details.bowlingCenter}
-                    onChange={(event) => setDetails((prev) => ({ ...prev, bowlingCenter: capitalizeFirstLetter(event.target.value) }))}
-                    placeholder="Enter bowling center name"
+                    onChange={(event) => setDetails((prev) => ({
+                      ...prev,
+                      bowlingCenter: capitalizeFirstLetter(event.target.value),
+                      venueId: null,
+                      venueExternalProvider: '',
+                      venueExternalPlaceId: '',
+                    }))}
+                    placeholder="Search for a bowling center or venue"
                   />
                   {!details.bowlingCenter.trim() ? <small className={styles.fieldErrorText}>Bowling center is required.</small> : null}
                 </label>
+                {isVenueSearchLoading ? <p className={styles.detailNote}>Searching known venues...</p> : null}
+                {venueSearchError ? <p className={styles.fieldErrorText}>{venueSearchError}</p> : null}
+                {venueSearchResults.length > 0 ? (
+                  <div>
+                    {venueSearchResults.slice(0, 6).map((result) => {
+                      const venue = result.venue;
+                      const venueKey = `${result.source}-${venue.id ?? venue.external_place_id ?? venue.name}`;
+                      const venueLine = [venue.address_line_1, venue.city, venue.state, venue.zip].filter((part) => (part || '').trim()).join(', ');
+
+                      return (
+                        <button
+                          key={venueKey}
+                          type="button"
+                          className={styles.inlineAction}
+                          onClick={() => setDetails((prev) => ({
+                            ...prev,
+                            venueId: typeof venue.id === 'number' ? venue.id : null,
+                            bowlingCenter: venue.name,
+                            venueAddressLine1: venue.address_line_1 || '',
+                            venueAddressLine2: venue.address_line_2 || '',
+                            city: venue.city || '',
+                            state: venue.state || '',
+                            venueZip: venue.zip || '',
+                            venueCountry: venue.country || 'US',
+                            venueLatitude: venue.latitude ?? null,
+                            venueLongitude: venue.longitude ?? null,
+                            venueExternalProvider: venue.external_provider || '',
+                            venueExternalPlaceId: venue.external_place_id || '',
+                          }))}
+                        >
+                          {venue.name}
+                          {venueLine ? ` - ${venueLine}` : ''}
+                          {result.source === 'internal' ? ' (Saved)' : ''}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : null}
                 <div className={styles.fieldRow}>
                   <label className={styles.fieldLabel}>
                     City

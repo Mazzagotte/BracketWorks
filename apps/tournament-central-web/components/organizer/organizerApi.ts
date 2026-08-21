@@ -60,6 +60,28 @@ export type OrganizerRegistrationRecord = {
   };
 };
 
+export type TcVenueLike = {
+  id?: number;
+  name: string;
+  address_line_1?: string | null;
+  address_line_2?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zip?: string | null;
+  country?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  external_provider?: string | null;
+  external_place_id?: string | null;
+  phone?: string | null;
+  website?: string | null;
+};
+
+export type TcVenueSearchResult = {
+  source: 'internal' | 'external';
+  venue: TcVenueLike;
+};
+
 function getJsonErrorDetail(responseBody: unknown, fallback: string): string {
   if (responseBody && typeof responseBody === 'object' && 'detail' in responseBody) {
     const detail = (responseBody as { detail?: unknown }).detail;
@@ -188,4 +210,50 @@ export async function loadOrganizerSetupState<TPayload>(
   }
 
   return responseData as OrganizerSetupStateResponse<TPayload>;
+}
+
+export async function searchTcVenues(
+  token: string,
+  query: string,
+): Promise<TcVenueSearchResult[]> {
+  const trimmed = query.trim();
+  if (trimmed.length < 2) {
+    return [];
+  }
+
+  const response = await fetch(`/api/v1/tc/venues/search?query=${encodeURIComponent(trimmed)}`, {
+    method: 'GET',
+    headers: { Authorization: `Bearer ${token}` },
+    credentials: 'include',
+    cache: 'no-store',
+  });
+
+  const responseData = await response.json().catch(() => null) as unknown;
+  if (!response.ok) {
+    throw new Error(getJsonErrorDetail(responseData, `Failed to search venues (${response.status})`));
+  }
+
+  return Array.isArray(responseData) ? responseData as TcVenueSearchResult[] : [];
+}
+
+export async function resolveTcVenue(
+  token: string,
+  venue: TcVenueLike,
+): Promise<TcVenueLike> {
+  const response = await fetch('/api/v1/tc/venues/resolve', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+    body: JSON.stringify(venue),
+  });
+
+  const responseData = await response.json().catch(() => null) as unknown;
+  if (!response.ok) {
+    throw new Error(getJsonErrorDetail(responseData, `Failed to resolve venue (${response.status})`));
+  }
+
+  return responseData as TcVenueLike;
 }
