@@ -408,7 +408,7 @@ def test_organizer_can_edit_mark_paid_and_delete_individual_entry(api_client, db
     assert edit_response.status_code == 200
     assert edit_response.json()["entry_number"] == 12
     db_session.expire_all()
-    assert db_session.get(models.TcEntry, entry_id).event_name_snapshot == "Corrected Singles"
+    assert db_session.get(models.TcEntry, entry_id).event_name_snapshot == "Singles"
     assert db_session.get(models.TcEntry, entry_id).entry_fee_cents == 7500
     assert db_session.get(models.TcRegistration, registration_id).contact_first_name == "Updated"
     assert db_session.get(models.TcRegistration, registration_id).notes == "Director correction"
@@ -433,3 +433,83 @@ def test_organizer_can_edit_mark_paid_and_delete_individual_entry(api_client, db
     db_session.expire_all()
     assert db_session.get(models.TcEntry, entry_id) is None
     assert db_session.get(models.TcRegistration, registration_id) is None
+
+
+def test_entry_edit_derives_snapshots_from_same_tournament_setup(api_client, db_session, make_user, make_auth_headers):
+    owner = make_user("tc_owner_authoritative_snapshots")
+    tournament = _create_tc_tournament_with_setup(db_session, owner.id, setup_payload=_base_setup_payload())
+    assert api_client.post(
+        f"/api/v1/public/tc-tournament/{tournament.id}/registration",
+        json=_registration_payload(),
+    ).status_code == 200
+    entry = db_session.query(models.TcEntry).filter_by(tournament_id=tournament.id).one()
+
+    response = api_client.patch(
+        f"/api/v1/tc/tournaments/{tournament.id}/entries/{entry.id}",
+        headers=make_auth_headers(owner),
+        json={
+            "event_config_id": "evt-doubles",
+            "event_name_snapshot": "Client supplied wrong event",
+            "division_config_id": "div-open",
+            "division_name_snapshot": "Client supplied wrong division",
+            "squad_config_id": "sq-am",
+            "squad_name_snapshot": "Client supplied wrong squad",
+            "squad_date_snapshot": "1999-01-01",
+            "squad_time_snapshot": "23:59",
+        },
+    )
+
+    assert response.status_code == 200
+    db_session.expire_all()
+    updated = db_session.get(models.TcEntry, entry.id)
+    assert updated.event_name_snapshot == "Doubles"
+    assert updated.division_name_snapshot == "Open"
+    assert updated.squad_name_snapshot == "Saturday AM"
+    assert updated.squad_date_snapshot == "2026-10-01"
+    assert updated.squad_time_snapshot == "09:00"
+
+
+def test_entry_edit_rejects_config_id_from_another_tournament(api_client, db_session, make_user, make_auth_headers):
+    owner = make_user("tc_owner_cross_tournament_config")
+    tournament = _create_tc_tournament_with_setup(db_session, owner.id, setup_payload=_base_setup_payload())
+    foreign_payload = _base_setup_payload()
+    foreign_payload["squads"][0]["id"] = "sq-foreign"
+    _create_tc_tournament_with_setup(db_session, owner.id, setup_payload=foreign_payload)
+    assert api_client.post(
+        f"/api/v1/public/tc-tournament/{tournament.id}/registration",
+        json=_registration_payload(),
+    ).status_code == 200
+    entry = db_session.query(models.TcEntry).filter_by(tournament_id=tournament.id).one()
+
+    response = api_client.patch(
+        f"/api/v1/tc/tournaments/{tournament.id}/entries/{entry.id}",
+        headers=make_auth_headers(owner),
+        json={"squad_config_id": "sq-foreign", "squad_name_snapshot": "Foreign squad"},
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Selected squad does not belong to this tournament"
+
+
+def test_scoped_tournament_and_setup_summary_enforce_ownership(api_client, db_session, make_user, make_auth_headers):
+    owner = make_user("tc_owner_scoped_load")
+    outsider = make_user("tc_outsider_scoped_load")
+    tournament = _create_tc_tournament_with_setup(db_session, owner.id, setup_payload=_base_setup_payload())
+
+    tournament_response = api_client.get(
+        f"/api/v1/tc/tournaments/{tournament.id}",
+        headers=make_auth_headers(owner),
+    )
+    summary_response = api_client.get(
+        f"/api/v1/tc/tournaments/{tournament.id}/setup-summary",
+        headers=make_auth_headers(owner),
+    )
+    outsider_response = api_client.get(
+        f"/api/v1/tc/tournaments/{tournament.id}/setup-summary",
+        headers=make_auth_headers(outsider),
+    )
+
+    assert tournament_response.status_code == 200
+    assert summary_response.status_code == 200
+    assert summary_response.json()["tournament_id"] == tournament.id
+    assert outsider_response.status_code in (403, 404)

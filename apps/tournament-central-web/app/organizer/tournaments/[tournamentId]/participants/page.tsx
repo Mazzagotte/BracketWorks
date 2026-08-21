@@ -11,7 +11,8 @@ import { buildParticipantRows } from '@/components/organizer/tournamentInsights'
 import styles from '../page.module.css';
 
 export default function OrganizerTournamentParticipantsPage() {
-  const { tournamentId, tournament, registrations, isLoading, error } = useTournamentContext();
+  const { tournamentId, tournament, registrations, isRegistrationsLoading, tournamentError, registrationsError } = useTournamentContext();
+  const error = tournamentError || registrationsError;
   const [search, setSearch] = useState('');
 
   const participants = useMemo(() => buildParticipantRows(registrations), [registrations]);
@@ -46,9 +47,9 @@ export default function OrganizerTournamentParticipantsPage() {
       </header>
 
       {error ? <p className={styles.error} role="alert">{error}</p> : null}
-      {isLoading ? <section className={styles.registrationLoading}>Loading participants...</section> : null}
+      {isRegistrationsLoading ? <section className={styles.registrationLoading}>Loading participants...</section> : null}
 
-      {!error && !isLoading ? (
+      {!error && !isRegistrationsLoading ? (
         <section className={styles.registrationTableCard} aria-label="Participant list">
           <div className={styles.registrationPanelHeading}>
             <h2>Participant List</h2>

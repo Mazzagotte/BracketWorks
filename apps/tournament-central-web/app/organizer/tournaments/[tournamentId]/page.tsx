@@ -65,8 +65,12 @@ export default function OrganizerTournamentOverviewPage() {
     eventCount,
     hasRulesDocument,
     registrationCloseIso,
-    isLoading,
-    error,
+    isTournamentLoading,
+    isSetupLoading,
+    isRegistrationsLoading,
+    tournamentError,
+    setupError,
+    registrationsError,
   } = useTournamentContext();
 
   const summaryItems = useMemo(() => {
@@ -99,7 +103,9 @@ export default function OrganizerTournamentOverviewPage() {
 
   return (
     <div className={styles.shell}>
-      {error ? <p className={styles.error}>{error}</p> : null}
+      {tournamentError ? <p className={styles.error}>{tournamentError}</p> : null}
+      {setupError ? <p className={styles.error}>Setup data: {setupError}</p> : null}
+      {registrationsError ? <p className={styles.error}>Registration data: {registrationsError}</p> : null}
 
       <section className={styles.headerCard}>
         <div className={styles.heroLogo}>
@@ -154,7 +160,7 @@ export default function OrganizerTournamentOverviewPage() {
         ) : null}
       </section>
 
-      {!isLoading && tournament ? (
+      {!isRegistrationsLoading && tournament ? (
         <section className={styles.summaryCard}>
           <div className={styles.summaryHeading}>
             <h2>Registration Summary</h2>
@@ -172,7 +178,7 @@ export default function OrganizerTournamentOverviewPage() {
         </section>
       ) : null}
 
-      {!isLoading && squadSummaries.length > 0 ? (
+      {!isSetupLoading && !isRegistrationsLoading && squadSummaries.length > 0 ? (
         <section className={styles.summaryCard}>
           <div className={styles.summaryHeading}>
             <h2>Squad Summary</h2>
@@ -200,7 +206,7 @@ export default function OrganizerTournamentOverviewPage() {
         </section>
       ) : null}
 
-      {!isLoading && attentionItems.length > 0 ? (
+      {!isTournamentLoading && !isSetupLoading && !isRegistrationsLoading && attentionItems.length > 0 ? (
         <section className={styles.summaryCard}>
           <div className={styles.summaryHeading}>
             <h2>Needs Attention</h2>

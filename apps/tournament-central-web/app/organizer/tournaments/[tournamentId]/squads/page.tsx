@@ -18,7 +18,13 @@ function registrantName(registration: OrganizerRegistrationRecord): string {
 }
 
 export default function OrganizerTournamentSquadsPage() {
-  const { tournamentId, tournament, squads, registrations, isLoading, error } = useTournamentContext();
+  const {
+    tournamentId, tournament, squads, registrations,
+    isSetupLoading, isRegistrationsLoading,
+    tournamentError, setupError, registrationsError,
+  } = useTournamentContext();
+  const isLoading = isSetupLoading || isRegistrationsLoading;
+  const error = tournamentError || setupError || registrationsError;
   const [selectedSquadId, setSelectedSquadId] = useState<string | null>(null);
 
   const squadSummaries = useMemo(() => buildSquadSummaries(squads, registrations), [squads, registrations]);
