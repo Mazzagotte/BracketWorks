@@ -1,13 +1,14 @@
 import json
 import logging
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, Response, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Response, UploadFile
 from pydantic import BaseModel
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from ...api import deps
 from ...core import models, schemas
+from ...services.tc_tournament_documents import normalize_document_kind, validate_tournament_document_upload
 from ...services.tc_tournament_logo import validate_tournament_logo_upload
 from ...services.tc_venues import build_tournament_location
 from ...services.tournament_access import verify_owned_tc_tournament_access
@@ -299,6 +300,125 @@ def delete_tournament_logo(
         db.rollback()
         logger.error(f"Error deleting logo for TC tournament {tournament_id}: {error}")
         raise HTTPException(status_code=500, detail="Failed to delete tournament logo")
+
+    return {"ok": True}
+
+
+def _serialize_document(document: models.TcTournamentDocument) -> dict:
+    return {
+        "id": document.id,
+        "tournament_id": document.tournament_id,
+        "doc_type": document.doc_type,
+        "file_name": document.file_name,
+        "mime_type": document.mime_type,
+        "file_size": document.file_size,
+        "uploaded_at": document.uploaded_at.isoformat(),
+    }
+
+
+@router.get("/{tournament_id}/documents")
+def list_tournament_documents(
+    tournament_id: int,
+    db: Session = Depends(deps.get_db),
+    user=Depends(deps.get_current_user),
+):
+    verify_owned_tc_tournament_access(db, tournament_id, user)
+
+    documents = (
+        db.query(models.TcTournamentDocument)
+        .filter(models.TcTournamentDocument.tournament_id == tournament_id)
+        .order_by(models.TcTournamentDocument.uploaded_at.desc())
+        .all()
+    )
+    return [_serialize_document(document) for document in documents]
+
+
+@router.post("/{tournament_id}/documents")
+async def upload_tournament_document(
+    tournament_id: int,
+    file: UploadFile = File(...),
+    doc_type: str = Form("other"),
+    db: Session = Depends(deps.get_db),
+    user=Depends(deps.get_current_user),
+):
+    verify_owned_tc_tournament_access(db, tournament_id, user)
+
+    content = await file.read()
+    validate_tournament_document_upload(file.content_type, content)
+
+    document = models.TcTournamentDocument(
+        tournament_id=tournament_id,
+        user_id=user.id,
+        doc_type=normalize_document_kind(doc_type),
+        file_name=file.filename or "document",
+        mime_type=file.content_type or "application/octet-stream",
+        file_size=len(content),
+        file_blob=content,
+    )
+
+    try:
+        db.add(document)
+        db.commit()
+        db.refresh(document)
+    except Exception as error:
+        db.rollback()
+        logger.error(f"Error uploading document for TC tournament {tournament_id}: {error}")
+        raise HTTPException(status_code=500, detail="Failed to upload document")
+
+    return _serialize_document(document)
+
+
+@router.get("/{tournament_id}/documents/{document_id}/download")
+def download_tournament_document(
+    tournament_id: int,
+    document_id: int,
+    db: Session = Depends(deps.get_db),
+    user=Depends(deps.get_current_user),
+):
+    verify_owned_tc_tournament_access(db, tournament_id, user)
+
+    document = (
+        db.query(models.TcTournamentDocument)
+        .filter(
+            models.TcTournamentDocument.id == document_id,
+            models.TcTournamentDocument.tournament_id == tournament_id,
+        )
+        .one_or_none()
+    )
+    if document is None:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    headers = {"Content-Disposition": f'attachment; filename="{document.file_name}"'}
+    return Response(content=document.file_blob, media_type=document.mime_type, headers=headers)
+
+
+@router.delete("/{tournament_id}/documents/{document_id}")
+def delete_tournament_document(
+    tournament_id: int,
+    document_id: int,
+    db: Session = Depends(deps.get_db),
+    user=Depends(deps.get_current_user),
+):
+    verify_owned_tc_tournament_access(db, tournament_id, user)
+
+    document = (
+        db.query(models.TcTournamentDocument)
+        .filter(
+            models.TcTournamentDocument.id == document_id,
+            models.TcTournamentDocument.tournament_id == tournament_id,
+        )
+        .one_or_none()
+    )
+    if document is None:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    try:
+        db.delete(document)
+        db.commit()
+    except Exception as error:
+        db.rollback()
+        logger.error(f"Error deleting document {document_id} for TC tournament {tournament_id}: {error}")
+        raise HTTPException(status_code=500, detail="Failed to delete document")
 
     return {"ok": True}
 

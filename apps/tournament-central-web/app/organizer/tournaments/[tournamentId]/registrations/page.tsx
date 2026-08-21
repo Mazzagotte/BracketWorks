@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
 import {
   ArrowDownToLine,
   ArrowLeft,
@@ -22,13 +21,13 @@ import {
 } from 'lucide-react';
 
 import {
-  listMyTournaments,
   listTournamentRegistrations,
   deleteTournamentEntry,
   markTournamentRegistrationPaid,
   updateTournamentEntry,
   type OrganizerRegistrationRecord,
 } from '@/components/organizer/organizerApi';
+import { useTournamentContext } from '@/components/organizer/TournamentContext';
 import styles from '../page.module.css';
 
 type FilterValue = 'all' | 'confirmed' | 'pending' | 'cancelled';
@@ -80,10 +79,8 @@ function entryLabel(entry: RegistrationEntry, key: 'event' | 'squad'): string {
 }
 
 export default function OrganizerTournamentRegistrationsPage() {
-  const params = useParams<{ tournamentId: string }>();
-  const router = useRouter();
-  const tournamentId = useMemo(() => Number(params.tournamentId), [params.tournamentId]);
-  const [tournamentName, setTournamentName] = useState('Tournament');
+  const { tournamentId, tournament } = useTournamentContext();
+  const tournamentName = tournament?.name || 'Tournament';
   const [registrations, setRegistrations] = useState<OrganizerRegistrationRecord[]>([]);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<FilterValue>('all');
@@ -198,34 +195,28 @@ export default function OrganizerTournamentRegistrationsPage() {
   };
 
   useEffect(() => {
-    const token = sessionStorage.getItem('access_token');
-    const hasUser = Boolean(localStorage.getItem('user_id'));
-    if (!token || !hasUser) {
-      router.replace('/login?expired=true');
-      return;
-    }
-
     if (!Number.isInteger(tournamentId) || tournamentId <= 0) {
       setError('Invalid tournament id.');
       setIsLoading(false);
       return;
     }
 
-    void Promise.all([listMyTournaments(token), listTournamentRegistrations(token, tournamentId)])
-      .then(([tournaments, records]) => {
-        const tournament = tournaments.find((item) => item.id === tournamentId);
-        if (!tournament) {
-          setError('Tournament not found for this organizer account.');
-          return;
-        }
-        setTournamentName(tournament.name);
+    const token = sessionStorage.getItem('access_token');
+    if (!token) {
+      setError('Your session expired. Please sign in again.');
+      setIsLoading(false);
+      return;
+    }
+
+    void listTournamentRegistrations(token, tournamentId)
+      .then((records) => {
         setRegistrations(records);
       })
       .catch((caughtError) => {
         setError(caughtError instanceof Error ? caughtError.message : 'Unable to load registrations.');
       })
       .finally(() => setIsLoading(false));
-  }, [router, tournamentId]);
+  }, [tournamentId]);
 
   const allEntries = useMemo(
     () => registrations.flatMap((registration) => registration.entries ?? []),

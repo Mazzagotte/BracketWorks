@@ -498,6 +498,7 @@ export default function HomePage() {
   const [selectedStateOutline, setSelectedStateOutline] = useState<{ d: string; viewBox: string } | null>(null);
   const [mapViewport, setMapViewport] = useState<MapViewport>(DEFAULT_MAP_VIEWPORT);
   const [isMapInteracting, setIsMapInteracting] = useState(false);
+  const [isMapActive, setIsMapActive] = useState(false);
   const [visibleTournamentCount, setVisibleTournamentCount] = useState(TOURNAMENT_PAGE_SIZE);
   const [mapSize, setMapSize] = useState({ width: 960, height: 520 });
   const [detailTournamentId, setDetailTournamentId] = useState<string | null>(null);
@@ -1469,6 +1470,7 @@ export default function HomePage() {
             className={`${styles.mapShell} ${isMapInteracting ? styles.mapShellInteracting : ''}`}
             role="group"
             aria-label="United States tournament map"
+            onMouseLeave={() => setIsMapActive(false)}
           >
             <div className={styles.mapControls} role="toolbar" aria-label="Map zoom controls">
               <button
@@ -1496,7 +1498,17 @@ export default function HomePage() {
                 Reset
               </button>
             </div>
-            <p className={styles.mapHint}>Tip: Select a state, then use zoom controls, wheel, or pinch to inspect smaller states.</p>
+            <p className={styles.mapHint}>
+              {isMapActive
+                ? 'Tip: Select a state, then use zoom controls, wheel, or pinch to inspect smaller states.'
+                : 'Click into the map to enable scroll and pan.'}
+            </p>
+            <div
+              className={styles.mapActivateOverlay}
+              data-active={isMapActive ? 'true' : 'false'}
+              onClick={() => setIsMapActive(true)}
+              aria-hidden="true"
+            />
             <ComposableMap projection="geoAlbersUsa" className={styles.usMapSvg}>
               <ZoomableGroup
                 center={mapViewport.center}

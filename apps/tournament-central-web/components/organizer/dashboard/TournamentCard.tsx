@@ -103,7 +103,7 @@ export default function TournamentCard({ tournament }: TournamentCardProps) {
           </div>
           <div className={styles.statItem}>
             <Coins className={styles.statIcon} />
-            <strong>{`$${(tournament.entryCount ?? 0) * 85}`}</strong>
+            <strong>{`$${(tournament.amountPaidCents / 100).toLocaleString()}`}</strong>
             <small>Collected</small>
           </div>
         </div>

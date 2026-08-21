@@ -1,0 +1,247 @@
+.shell {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 14px 20px 24px;
+  display: grid;
+  gap: 16px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--bw-border-card);
+  border-radius: 16px;
+  background: var(--bw-surface-card);
+}
+
+.header h1 {
+  margin: 0;
+  color: var(--bw-text-title);
+  font-size: 1.45rem;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+}
+
+.header p {
+  margin: 5px 0 0;
+  color: var(--bw-text-muted);
+  font-size: 0.7rem;
+}
+
+.backButton {
+  min-height: 32px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--bw-border-card);
+  border-radius: 8px;
+  color: var(--bw-text-title);
+  background: transparent;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.tableCard {
+  border: 1px solid var(--bw-border-card);
+  border-radius: 16px;
+  background: var(--bw-surface-card);
+  overflow: hidden;
+}
+
+.tableWrap {
+  overflow-x: auto;
+  padding: 0 16px 16px;
+}
+
+.table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: separate;
+  border-spacing: 0;
+  color: var(--bw-text-body);
+  font-size: 0.72rem;
+}
+
+.table th {
+  padding: 10px 8px;
+  color: var(--bw-text-muted);
+  background: rgba(78, 83, 112, 0.16);
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.table th:first-child {
+  border-radius: 6px 0 0 6px;
+}
+
+.table th:last-child {
+  border-radius: 0 6px 6px 0;
+}
+
+.table td {
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--bw-border-subtle);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.table tbody tr {
+  cursor: pointer;
+}
+
+.table tbody tr:hover td {
+  background: rgba(118, 80, 233, 0.05);
+}
+
+.statusChip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 0.6rem;
+  font-weight: 700;
+}
+
+.statusOpen {
+  color: var(--color-success);
+  background: color-mix(in srgb, var(--color-success) 14%, transparent);
+}
+
+.statusNearlyFull {
+  color: #f5a21a;
+  background: rgba(245, 162, 26, 0.15);
+}
+
+.statusFull,
+.statusWaitlist {
+  color: #f05252;
+  background: rgba(240, 82, 82, 0.14);
+}
+
+.empty {
+  padding: 26px 16px;
+  color: var(--bw-text-muted);
+  font-size: 0.74rem;
+  text-align: center;
+}
+
+.error {
+  color: var(--color-error-text);
+  font-weight: 700;
+}
+
+.loading {
+  padding: 28px;
+  border: 1px solid var(--bw-border-card);
+  border-radius: 10px;
+  color: var(--bw-text-muted);
+  font-size: 0.75rem;
+  background: var(--bw-surface-card);
+}
+
+.rosterBackdrop {
+  position: fixed;
+  z-index: 30;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(3, 5, 12, 0.72);
+}
+
+.rosterModal {
+  width: min(680px, 100%);
+  max-height: min(80vh, 720px);
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  border: 1px solid var(--bw-border-card);
+  border-radius: 12px;
+  background: var(--bw-surface-card);
+  box-shadow: var(--bw-shadow-card);
+}
+
+.rosterModal header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px;
+  border-bottom: 1px solid var(--bw-border-subtle);
+}
+
+.rosterModal header span {
+  color: var(--bw-text-muted);
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.rosterModal h2 {
+  margin: 4px 0 0;
+  color: var(--bw-text-title);
+  font-size: 0.95rem;
+}
+
+.rosterModalClose {
+  display: grid;
+  place-items: center;
+  padding: 4px;
+  border: 0;
+  color: var(--bw-text-muted);
+  background: transparent;
+}
+
+.rosterList {
+  overflow-y: auto;
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+}
+
+.rosterRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--bw-border-subtle);
+  border-radius: 9px;
+  background: var(--bw-surface-panel);
+}
+
+.rosterRow strong {
+  overflow: hidden;
+  color: var(--bw-text-title);
+  font-size: 0.75rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rosterRow span {
+  overflow: hidden;
+  color: var(--bw-text-muted);
+  font-size: 0.65rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rosterEmpty {
+  padding: 20px;
+  color: var(--bw-text-muted);
+  font-size: 0.72rem;
+  text-align: center;
+}

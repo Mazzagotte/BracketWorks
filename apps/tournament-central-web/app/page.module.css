@@ -859,6 +859,7 @@
   display: grid;
   grid-template-columns: minmax(640px, 1.4fr) minmax(360px, 0.9fr);
   gap: 14px;
+  align-items: start;
 }
 
 .mapShell,
@@ -868,11 +869,11 @@
   background: var(--tc-card-bg);
   box-shadow: none;
   overflow: hidden;
+  height: 640px;
 }
 
 .mapShell {
   position: relative;
-  min-height: 520px;
   width: 100%;
   border-radius: 20px;
   background: #080808;
@@ -945,6 +946,17 @@
   color: var(--bw-text-body);
   font-size: 12px;
   line-height: 1.2;
+}
+
+.mapActivateOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  cursor: pointer;
+}
+
+.mapActivateOverlay[data-active='true'] {
+  pointer-events: none;
 }
 
 .mapShell :global(svg) {
@@ -1022,6 +1034,9 @@
 
 .statePanel {
   padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .stateHeader {
@@ -1113,6 +1128,11 @@
   margin-top: 14px;
   display: grid;
   gap: 12px;
+  align-content: start;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
   container-type: inline-size;
   container-name: tournament-list;
 }
@@ -1417,6 +1437,7 @@
 
 .panelFooter {
   width: 100%;
+  flex: 0 0 auto;
   margin-top: 14px;
   height: 38px;
   border-radius: 8px;
@@ -2032,8 +2053,9 @@
     grid-template-columns: 1fr;
   }
 
-  .mapShell {
-    min-height: 420px;
+  .mapShell,
+  .statePanel {
+    height: 420px;
   }
 }
 
@@ -2110,8 +2132,9 @@
     min-height: 40px;
   }
 
-  .mapShell {
-    min-height: 360px;
+  .mapShell,
+  .statePanel {
+    height: 360px;
   }
 
   .tournamentCard {

@@ -1,0 +1,201 @@
+.shell {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 14px 20px 24px;
+  display: grid;
+  gap: 16px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--bw-border-card);
+  border-radius: 16px;
+  background: var(--bw-surface-card);
+}
+
+.header h1 {
+  margin: 0;
+  color: var(--bw-text-title);
+  font-size: 1.45rem;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+}
+
+.header p {
+  margin: 5px 0 0;
+  color: var(--bw-text-muted);
+  font-size: 0.7rem;
+}
+
+.backButton {
+  min-height: 32px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--bw-border-card);
+  border-radius: 8px;
+  color: var(--bw-text-title);
+  background: transparent;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.uploadCard,
+.listCard {
+  border: 1px solid var(--bw-border-card);
+  border-radius: 16px;
+  background: var(--bw-surface-card);
+  padding: 16px;
+}
+
+.uploadCard h2,
+.listCard h2 {
+  margin: 0 0 12px;
+  color: var(--bw-text-title);
+  font-size: 0.95rem;
+}
+
+.uploadForm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.uploadField {
+  display: grid;
+  gap: 5px;
+  color: var(--bw-text-muted);
+  font-size: 0.63rem;
+  font-weight: 700;
+}
+
+.uploadField select,
+.uploadField input[type='file'] {
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--bw-border-card);
+  border-radius: 7px;
+  color: var(--bw-text-body);
+  background: var(--bw-surface-panel);
+  font-size: 0.68rem;
+}
+
+.uploadButton {
+  min-height: 36px;
+  padding: 0 16px;
+  border: 1px solid #ff7900;
+  border-radius: 7px;
+  color: #fff;
+  background: #ff7900;
+  font-size: 0.68rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.uploadButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.docList {
+  display: grid;
+  gap: 8px;
+}
+
+.docRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.8fr) minmax(0, 0.6fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--bw-border-subtle);
+  border-radius: 10px;
+  background: var(--bw-surface-panel);
+}
+
+.docRow strong {
+  overflow: hidden;
+  color: var(--bw-text-title);
+  font-size: 0.74rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.docRow span {
+  color: var(--bw-text-muted);
+  font-size: 0.66rem;
+}
+
+.docTypeChip {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  min-height: 20px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
+  color: var(--color-primary);
+  font-size: 0.6rem;
+  font-weight: 700;
+}
+
+.docActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.docActions button {
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--bw-border-card);
+  border-radius: 6px;
+  color: var(--bw-text-body);
+  background: var(--bw-surface-card);
+  font-size: 0.62rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.docActions button:hover {
+  border-color: #ff7900;
+  color: #ff920f;
+}
+
+.docActions .deleteButton {
+  color: #f05252;
+}
+
+.docActions .deleteButton:hover {
+  border-color: #f05252;
+  color: #f05252;
+}
+
+.empty {
+  padding: 20px;
+  color: var(--bw-text-muted);
+  font-size: 0.74rem;
+  text-align: center;
+}
+
+.error {
+  color: var(--color-error-text);
+  font-weight: 700;
+}
+
+.loading {
+  padding: 28px;
+  border: 1px solid var(--bw-border-card);
+  border-radius: 10px;
+  color: var(--bw-text-muted);
+  font-size: 0.75rem;
+  background: var(--bw-surface-card);
+}

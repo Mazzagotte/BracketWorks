@@ -17,23 +17,14 @@ export default function OrganizerTopNav() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   const tournamentPathMatch = useMemo(
-    () => pathname.match(/^\/organizer\/tournaments\/(\d+)(?:\/(setup))?\/?$/),
+    () => pathname.match(/^\/organizer\/tournaments\/(\d+)(?:\/.*)?$/),
     [pathname],
   );
   const tournamentId = tournamentPathMatch ? Number(tournamentPathMatch[1]) : null;
   const isTournamentRoute = Boolean(tournamentId);
 
-  const navLinks = useMemo(() => {
-    if (!isTournamentRoute || !tournamentId) {
-      return [{ href: '/organizer', label: 'Dashboard' }];
-    }
-
-    return [
-      { href: '/organizer', label: 'Dashboard' },
-      { href: `/organizer/tournaments/${tournamentId}`, label: 'Overview' },
-      { href: `/organizer/tournaments/${tournamentId}/setup`, label: 'Setup' },
-    ];
-  }, [isTournamentRoute, tournamentId]);
+  // Tournament-scoped navigation lives in the persistent tournament layout sub-nav; keep this bar global-only.
+  const navLinks = useMemo(() => [{ href: '/organizer', label: 'Dashboard' }], []);
 
   const avatarInitials = useMemo(
     () => displayName

@@ -257,3 +257,95 @@ export async function resolveTcVenue(
 
   return responseData as TcVenueLike;
 }
+
+export type TournamentDocumentKind = 'rules' | 'flyer' | 'oil_pattern' | 'entry_form' | 'notice' | 'other';
+
+export type TournamentDocumentRecord = {
+  id: number;
+  tournament_id: number;
+  doc_type: TournamentDocumentKind;
+  file_name: string;
+  mime_type: string;
+  file_size: number;
+  uploaded_at: string;
+};
+
+export async function listTournamentDocuments(
+  token: string,
+  tournamentId: number,
+): Promise<TournamentDocumentRecord[]> {
+  const response = await fetch(`/api/v1/tc/tournaments/${tournamentId}/documents`, {
+    method: 'GET',
+    headers: { Authorization: `Bearer ${token}` },
+    credentials: 'include',
+    cache: 'no-store',
+  });
+
+  const responseData = await response.json().catch(() => null) as unknown;
+  if (!response.ok) {
+    throw new Error(getJsonErrorDetail(responseData, `Failed to load documents (${response.status})`));
+  }
+
+  return Array.isArray(responseData) ? responseData as TournamentDocumentRecord[] : [];
+}
+
+export async function uploadTournamentDocument(
+  token: string,
+  tournamentId: number,
+  file: File,
+  docType: TournamentDocumentKind,
+): Promise<TournamentDocumentRecord> {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('doc_type', docType);
+
+  const response = await fetch(`/api/v1/tc/tournaments/${tournamentId}/documents`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    credentials: 'include',
+    body: formData,
+  });
+
+  const responseData = await response.json().catch(() => null) as unknown;
+  if (!response.ok) {
+    throw new Error(getJsonErrorDetail(responseData, `Failed to upload document (${response.status})`));
+  }
+
+  return responseData as TournamentDocumentRecord;
+}
+
+export async function deleteTournamentDocument(
+  token: string,
+  tournamentId: number,
+  documentId: number,
+): Promise<{ ok: boolean }> {
+  return organizerMutation(
+    token,
+    `/api/v1/tc/tournaments/${tournamentId}/documents/${documentId}`,
+    'DELETE',
+  );
+}
+
+export async function downloadTournamentDocument(
+  token: string,
+  tournamentId: number,
+  document: TournamentDocumentRecord,
+): Promise<void> {
+  const response = await fetch(`/api/v1/tc/tournaments/${tournamentId}/documents/${document.id}/download`, {
+    method: 'GET',
+    headers: { Authorization: `Bearer ${token}` },
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to download document (${response.status})`);
+  }
+
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const link = window.document.createElement('a');
+  link.href = url;
+  link.download = document.file_name;
+  link.click();
+  URL.revokeObjectURL(url);
+}

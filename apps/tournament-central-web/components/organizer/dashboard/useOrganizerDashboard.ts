@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { TournamentContract, TournamentSetupStateSummaryContract } from '@bracketworks/types';
 
-import { listMyOrganizerSetupStates, listMyTournaments } from '../organizerApi';
+import { listMyOrganizerSetupStates, listMyTournaments, listTournamentRegistrations } from '../organizerApi';
+import { buildPaymentSummary } from '../tournamentInsights';
 
 export type OrganizerAttentionItem = {
   id: string;
@@ -20,6 +21,8 @@ export type OrganizerDashboardTournament = {
   isPublic: boolean;
   entryCount: number | null;
   squadCount: number | null;
+  upcomingSquadCount: number;
+  amountPaidCents: number;
   hasPublishedSetup: boolean;
   publicUrl: string | null;
   hasLogo: boolean;
@@ -33,6 +36,35 @@ function countSquads(squadTimes: TournamentContract['squad_times']): number | nu
   let total = 0;
   for (const times of Object.values(squadTimes)) {
     if (Array.isArray(times)) {
+      total += times.length;
+    }
+  }
+
+  return total;
+}
+
+// Counts squads whose date key falls within [today, today + windowDays], inclusive.
+function countUpcomingSquads(squadTimes: TournamentContract['squad_times'], referenceDate: Date, windowDays: number): number {
+  if (!squadTimes || typeof squadTimes !== 'object') {
+    return 0;
+  }
+
+  const startOfToday = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), referenceDate.getDate());
+  const windowEnd = new Date(startOfToday);
+  windowEnd.setDate(windowEnd.getDate() + windowDays);
+
+  let total = 0;
+  for (const [dateKey, times] of Object.entries(squadTimes)) {
+    if (!Array.isArray(times) || times.length === 0) {
+      continue;
+    }
+
+    const squadDate = new Date(`${dateKey}T00:00:00`);
+    if (Number.isNaN(squadDate.getTime())) {
+      continue;
+    }
+
+    if (squadDate >= startOfToday && squadDate <= windowEnd) {
       total += times.length;
     }
   }
@@ -108,6 +140,16 @@ export function useOrganizerDashboard() {
         listMyOrganizerSetupStates(token),
       ]);
 
+      const paidCentsByTournamentId = new Map<number, number>();
+      await Promise.all(tournamentRows.map(async (item) => {
+        try {
+          const registrations = await listTournamentRegistrations(token, item.id);
+          paidCentsByTournamentId.set(item.id, buildPaymentSummary(registrations).paidCents);
+        } catch {
+          paidCentsByTournamentId.set(item.id, 0);
+        }
+      }));
+
       const mapped = tournamentRows.map((item) => {
         const publicUrl = (item as { public_url?: string | null }).public_url ?? null;
         return {
@@ -119,6 +161,8 @@ export function useOrganizerDashboard() {
           isPublic: Boolean(item.is_public),
           entryCount: typeof item.entry_count === 'number' ? item.entry_count : null,
           squadCount: countSquads(item.squad_times),
+          upcomingSquadCount: countUpcomingSquads(item.squad_times, new Date(), 7),
+          amountPaidCents: paidCentsByTournamentId.get(item.id) ?? 0,
           hasPublishedSetup: setupRows.some((row) => row.tournament_id === item.id && row.is_published),
           publicUrl,
           hasLogo: Boolean(item.has_logo),

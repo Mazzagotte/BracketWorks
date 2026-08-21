@@ -2,7 +2,6 @@
 
 import { CircleDollarSign, ClipboardList, Users, CalendarRange } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
 
 import OrganizerAttentionList from './OrganizerAttentionList';
 import OrganizerDashboardHeader from './OrganizerDashboardHeader';
@@ -12,18 +11,11 @@ import { useOrganizerDashboard } from './useOrganizerDashboard';
 import styles from './OrganizerDashboard.module.css';
 
 export default function OrganizerDashboard() {
-  const router = useRouter();
   const [displayName, setDisplayName] = useState('Organizer');
   const { tournaments, attentionItems, upcomingItems, isLoading, error, refresh } = useOrganizerDashboard();
 
   useEffect(() => {
-    const hasToken = Boolean(sessionStorage.getItem('access_token'));
-    const hasUser = Boolean(localStorage.getItem('user_id'));
-    if (!hasToken || !hasUser) {
-      router.replace('/login?expired=true');
-      return;
-    }
-
+    // Authentication is enforced once by OrganizerAuthGuard in the parent layout.
     localStorage.removeItem('tc_active_tournament_name');
     localStorage.removeItem('tc_active_squad_name');
     window.dispatchEvent(new Event('storage'));
@@ -31,17 +23,18 @@ export default function OrganizerDashboard() {
     const firstName = localStorage.getItem('first_name');
     const fallbackName = localStorage.getItem('last_username');
     setDisplayName(firstName || fallbackName || 'Organizer');
-  }, [router]);
+  }, []);
+
 
   const summaryStats = useMemo(() => {
     const totalRegistrations = tournaments.reduce((total, tournament) => total + (tournament.entryCount ?? 0), 0);
-    const upcomingSquads = tournaments.reduce((total, tournament) => total + (tournament.squadCount ?? 0), 0);
-    const amountCollected = tournaments.reduce((total, tournament) => total + (tournament.entryCount ?? 0) * 85, 0);
+    const upcomingSquads = tournaments.reduce((total, tournament) => total + tournament.upcomingSquadCount, 0);
+    const amountCollectedCents = tournaments.reduce((total, tournament) => total + tournament.amountPaidCents, 0);
 
     return [
       { label: 'TOTAL REGISTRATIONS', value: totalRegistrations, note: 'Across all tournaments', icon: Users },
       { label: 'UPCOMING SQUADS', value: upcomingSquads, note: 'Next 7 days', icon: CalendarRange },
-      { label: 'AMOUNT COLLECTED', value: `$${amountCollected.toLocaleString()}`, note: 'Across all tournaments', icon: CircleDollarSign },
+      { label: 'AMOUNT COLLECTED', value: `$${(amountCollectedCents / 100).toLocaleString()}`, note: 'Paid registrations, across all tournaments', icon: CircleDollarSign },
       { label: 'ACTIVE TOURNAMENTS', value: tournaments.length, note: 'Currently open', icon: ClipboardList },
     ];
   }, [tournaments]);
@@ -107,7 +100,7 @@ export default function OrganizerDashboard() {
             <section className={styles.upcomingSection} aria-label="Upcoming activity">
               <div className={styles.sidebarHeader}>
                 <h2>Upcoming</h2>
-                <button type="button" className={styles.inlineAction}>View calendar →</button>
+                <button type="button" className={styles.inlineAction} disabled title="Calendar view is not available yet">View calendar →</button>
               </div>
 
               <div className={styles.upcomingCard}>
@@ -130,7 +123,7 @@ export default function OrganizerDashboard() {
                   <p className={styles.emptyUpcoming}>No upcoming events.</p>
                 )}
 
-                <button type="button" className={styles.secondaryButtonWide}>View All Upcoming</button>
+                <button type="button" className={styles.secondaryButtonWide} disabled title="This view is not available yet">View All Upcoming</button>
               </div>
             </section>
 

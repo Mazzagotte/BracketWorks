@@ -116,6 +116,16 @@
   filter: brightness(1.04);
 }
 
+.primaryButton:disabled,
+.primaryButtonCompact:disabled,
+.secondaryButtonCompact:disabled,
+.secondaryButtonWide:disabled,
+.inlineAction:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: none;
+}
+
 .metricsGrid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

@@ -94,6 +94,8 @@ export type QuestionScope = {
   squadIds: string[];
 };
 
+export type RegistrationQuestionAnswerValue = string | boolean | string[];
+
 export type CustomQuestionConfig = {
   id: string;
   label: string;

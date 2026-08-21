@@ -281,6 +281,149 @@
   background: var(--bw-surface-panel);
 }
 
+.registrationSummaryGrid {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 8px;
+}
+
+.registrationSummaryGrid li {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--bw-border-card);
+  border-radius: 11px;
+  background: var(--bw-surface-panel);
+}
+
+.registrationSummaryGrid span {
+  color: var(--bw-text-muted);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.registrationSummaryGrid strong {
+  color: var(--bw-text-title);
+  font-size: 1.1rem;
+}
+
+.squadSummaryTableWrap {
+  overflow-x: auto;
+}
+
+.squadSummaryTable {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: separate;
+  border-spacing: 0;
+  color: var(--bw-text-body);
+  font-size: 0.72rem;
+}
+
+.squadSummaryTable th {
+  padding: 8px;
+  color: var(--bw-text-muted);
+  background: rgba(78, 83, 112, 0.16);
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.squadSummaryTable th:first-child {
+  border-radius: 6px 0 0 6px;
+}
+
+.squadSummaryTable th:last-child {
+  border-radius: 0 6px 6px 0;
+}
+
+.squadSummaryTable td {
+  padding: 9px 8px;
+  border-bottom: 1px solid var(--bw-border-subtle);
+  white-space: nowrap;
+}
+
+.squadSummaryTable tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.squadStatusChip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 0.6rem;
+  font-weight: 700;
+}
+
+.squadStatusOpen {
+  color: var(--color-success);
+  background: color-mix(in srgb, var(--color-success) 14%, transparent);
+}
+
+.squadStatusNearlyFull {
+  color: #f5a21a;
+  background: rgba(245, 162, 26, 0.15);
+}
+
+.squadStatusFull,
+.squadStatusWaitlist {
+  color: #f05252;
+  background: rgba(240, 82, 82, 0.14);
+}
+
+.tournamentAttentionList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.tournamentAttentionList li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--bw-border-card);
+  border-radius: 11px;
+  background: var(--bw-surface-panel);
+  font-size: 0.72rem;
+  color: var(--bw-text-body);
+}
+
+.tournamentAttentionList li span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tournamentAttentionList li svg {
+  width: 15px;
+  height: 15px;
+  color: #f5a21a;
+  flex-shrink: 0;
+}
+
+.tournamentAttentionList li a {
+  flex-shrink: 0;
+  color: var(--color-primary);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.tournamentAttentionList li a:hover {
+  text-decoration: underline;
+}
+
 .registrationPage {
   width: 100%;
   max-width: 1280px;
