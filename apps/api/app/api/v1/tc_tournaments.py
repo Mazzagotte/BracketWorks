@@ -16,6 +16,7 @@ from ...services.tc_tournament_documents import (
     validate_tournament_document_upload,
 )
 from ...services.tc_tournament_logo import validate_tournament_logo_upload
+from ...services.tc_setup_relationships import resolve_entry_config_snapshots
 from ...services.tc_venues import build_tournament_location
 from ...services.tournament_access import verify_owned_tc_tournament_access
 
@@ -181,6 +182,31 @@ def get_tournament(
     if tournament.venue_id is not None:
         venue = db.query(models.TcVenue).filter(models.TcVenue.id == tournament.venue_id).first()
     return _tc_tournament_to_dict(tournament, entry_count=entry_count, venue=venue)
+
+
+@router.get("/{tournament_id}/setup-summary", response_model=schemas.TournamentSetupStateSummary | None)
+def get_tournament_setup_summary(
+    tournament_id: int,
+    db: Session = Depends(deps.get_db),
+    user=Depends(deps.get_current_user),
+):
+    tournament = verify_owned_tc_tournament_access(db, tournament_id, user)
+    state = db.query(models.TournamentCentralSetupState).filter(
+        models.TournamentCentralSetupState.tournament_id == tournament.id,
+        models.TournamentCentralSetupState.user_id == tournament.user_id,
+    ).first()
+    if state is None:
+        return None
+    return schemas.TournamentSetupStateSummary(
+        tournament_id=state.tournament_id,
+        tournament_name=tournament.name,
+        tournament_location=tournament.location,
+        tournament_start_date=tournament.start_date,
+        tournament_end_date=tournament.end_date,
+        is_published=state.is_published,
+        created_at=state.created_at,
+        updated_at=state.updated_at,
+    )
 
 
 @router.put("/{tournament_id}", response_model=schemas.Tournament)
@@ -709,17 +735,24 @@ def patch_tournament_entry(
         raise HTTPException(status_code=400, detail="Entry number must be positive")
     if payload.entry_number is not None:
         entry.entry_number = payload.entry_number
-    entry_fields = (
-        "event_config_id", "event_name_snapshot", "division_config_id", "division_name_snapshot",
-        "squad_config_id", "squad_name_snapshot", "squad_date_snapshot", "squad_time_snapshot",
-        "entry_fee_cents",
+    supplied_fields = payload.model_fields_set
+    relationship_changes = resolve_entry_config_snapshots(
+        db,
+        tournament.id,
+        event_config_id=payload.event_config_id,
+        division_config_id=payload.division_config_id,
+        squad_config_id=payload.squad_config_id,
+        event_supplied="event_config_id" in supplied_fields,
+        division_supplied="division_config_id" in supplied_fields,
+        squad_supplied="squad_config_id" in supplied_fields,
     )
-    for field_name in entry_fields:
-        value = getattr(payload, field_name)
-        if value is not None:
-            if field_name == "entry_fee_cents" and value < 0:
-                raise HTTPException(status_code=400, detail="Entry fee cannot be negative")
-            setattr(entry, field_name, value.strip() if isinstance(value, str) else value)
+    for field_name, value in relationship_changes.items():
+        setattr(entry, field_name, value)
+
+    if payload.entry_fee_cents is not None:
+        if payload.entry_fee_cents < 0:
+            raise HTTPException(status_code=400, detail="Entry fee cannot be negative")
+        entry.entry_fee_cents = payload.entry_fee_cents
 
     if payload.contact_first_name is not None or payload.contact_last_name is not None or payload.contact_email is not None or payload.contact_phone is not None or payload.notes is not None:
         registration = db.query(models.TcRegistration).filter(
@@ -773,9 +806,9 @@ def patch_tournament_entry(
             registration.subtotal_cents = subtotal_cents
             registration.total_cents = subtotal_cents + registration.fees_cents
 
-    has_changes = payload.status is not None or payload.entry_number is not None or any(
+    has_changes = bool(relationship_changes) or payload.status is not None or payload.entry_number is not None or any(
         getattr(payload, field_name) is not None
-        for field_name in entry_fields + ("contact_first_name", "contact_last_name", "contact_email", "contact_phone", "notes", "bowlers")
+        for field_name in ("entry_fee_cents", "contact_first_name", "contact_last_name", "contact_email", "contact_phone", "notes", "bowlers")
     )
     if not has_changes:
         raise HTTPException(status_code=400, detail="No entry changes supplied")

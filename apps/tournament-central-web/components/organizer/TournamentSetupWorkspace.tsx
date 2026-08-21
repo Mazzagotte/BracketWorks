@@ -78,7 +78,8 @@ import {
   loadOrganizerSetupState,
   uploadTournamentLogo,
 } from './setupPersistence';
-import { FeeEditor, FieldEditor, InlineDivisionEditor, InlineEventEditor, LocationEditor, QuestionEditor, SquadEditor } from './setup/InlineEditors';
+import { FeeEditor, FieldEditor, LocationEditor, QuestionEditor, SquadEditor } from './setup/InlineEditors';
+import EventDivisionEditorModals from './setup/EventDivisionEditorModals';
 import type { CustomQuestionConfig, DivisionConfig, EventConfig, FeeConfig, LocationConfig, RegistrationFieldConfig, RegistrationQuestionAnswerValue, SetupSectionKey, SetupStatus, SquadConfig, ValidationIssue } from './types';
 import type {
   OrganizerDraft,
@@ -2694,68 +2695,17 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                 </section>
           )}
 
-          {/* Event editor modal */}
-          {selectedEventId && events.find((e) => e.id === selectedEventId) && (
-            <div className={styles.editorModal} role="dialog" aria-modal="true">
-              <div className={styles.editorModalBox}>
-                <div className={styles.editorModalHead}>
-                  <div className={styles.divisionEditorHeadBlock}>
-                    <span className={styles.divisionEditorHeadBadge}><Trophy size={14} /></span>
-                    <div className={styles.divisionEditorHeadText}>
-                      <span className={styles.editorModalTitle}>Event Details</span>
-                      <small className={styles.divisionEditorHeadSubtitle}>{events.find((e) => e.id === selectedEventId)!.name || 'New Event'}</small>
-                    </div>
-                  </div>
-                  <button type="button" className={`${styles.iconButton} ${styles.modalCloseButton}`} onClick={() => setSelectedEventId(null)} aria-label="Close">
-                    <X size={16} />
-                  </button>
-                </div>
-                <div className={styles.editorModalBody}>
-                  <InlineEventEditor
-                    key={selectedEventId}
-                    event={events.find((e) => e.id === selectedEventId)!}
-                    divisions={divisions}
-                    squads={squads}
-                    onSave={(updated) => {
-                      handleSaveEvent(updated);
-                      setSelectedEventId(null);
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Division editor modal */}
-          {selectedDivisionId && divisions.find((d) => d.id === selectedDivisionId) && (
-            <div className={styles.editorModal} role="dialog" aria-modal="true">
-              <div className={styles.editorModalBox}>
-                <div className={styles.editorModalHead}>
-                  <div className={styles.divisionEditorHeadBlock}>
-                    <span className={styles.divisionEditorHeadBadge}><Layers size={14} /></span>
-                    <div className={styles.divisionEditorHeadText}>
-                      <span className={styles.editorModalTitle}>Division Details</span>
-                      <small className={styles.divisionEditorHeadSubtitle}>{divisions.find((d) => d.id === selectedDivisionId)!.name || 'New Division'}</small>
-                    </div>
-                  </div>
-                  <button type="button" className={`${styles.iconButton} ${styles.modalCloseButton}`} onClick={() => setSelectedDivisionId(null)} aria-label="Close">
-                    <X size={16} />
-                  </button>
-                </div>
-                <div className={styles.editorModalBody}>
-                  <InlineDivisionEditor
-                    key={selectedDivisionId}
-                    division={divisions.find((d) => d.id === selectedDivisionId)!}
-                    events={events}
-                    onSave={(updated) => {
-                      handleSaveDivision(updated);
-                      setSelectedDivisionId(null);
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
+          <EventDivisionEditorModals
+            events={events}
+            divisions={divisions}
+            squads={squads}
+            selectedEventId={selectedEventId}
+            selectedDivisionId={selectedDivisionId}
+            onCloseEvent={() => setSelectedEventId(null)}
+            onCloseDivision={() => setSelectedDivisionId(null)}
+            onSaveEvent={handleSaveEvent}
+            onSaveDivision={handleSaveDivision}
+          />
 
           {activeSection === 'squads-availability' && (
             <div className={styles.squadDashLayout}>

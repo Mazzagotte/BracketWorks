@@ -12,7 +12,8 @@ import { buildPaymentSummary } from '@/components/organizer/tournamentInsights';
 import styles from '../page.module.css';
 
 export default function OrganizerTournamentPaymentsPage() {
-  const { tournamentId, tournament, registrations, isLoading, error } = useTournamentContext();
+  const { tournamentId, tournament, registrations, isRegistrationsLoading, tournamentError, registrationsError } = useTournamentContext();
+  const error = tournamentError || registrationsError;
 
   const paymentSummary = useMemo(() => buildPaymentSummary(registrations), [registrations]);
 
@@ -37,9 +38,9 @@ export default function OrganizerTournamentPaymentsPage() {
       </header>
 
       {error ? <p className={styles.error} role="alert">{error}</p> : null}
-      {isLoading ? <section className={styles.registrationLoading}>Loading payments...</section> : null}
+      {isRegistrationsLoading ? <section className={styles.registrationLoading}>Loading payments...</section> : null}
 
-      {!error && !isLoading ? (
+      {!error && !isRegistrationsLoading ? (
         <>
           <section className={styles.registrationMetricGrid} aria-label="Payment summary">
             <div className={styles.registrationMetricCard}>

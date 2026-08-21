@@ -150,6 +150,20 @@ export async function listMyTournaments(token: string): Promise<TournamentContra
   return Array.isArray(responseData) ? responseData as TournamentContract[] : [];
 }
 
+export async function getTournament(token: string, tournamentId: number): Promise<TournamentContract> {
+  const response = await fetch(`/api/v1/tc/tournaments/${tournamentId}`, {
+    method: 'GET',
+    headers: { Authorization: `Bearer ${token}` },
+    credentials: 'include',
+    cache: 'no-store',
+  });
+  const responseData = await response.json().catch(() => null) as unknown;
+  if (!response.ok) {
+    throw new Error(getJsonErrorDetail(responseData, `Failed to load tournament (${response.status})`));
+  }
+  return responseData as TournamentContract;
+}
+
 export async function listMyOrganizerSetupStates(token: string): Promise<TournamentSetupStateSummaryContract[]> {
   const response = await fetch('/api/v1/tc/organizer-setup/mine', {
     method: 'GET',
@@ -166,6 +180,23 @@ export async function listMyOrganizerSetupStates(token: string): Promise<Tournam
   }
 
   return Array.isArray(responseData) ? responseData as TournamentSetupStateSummaryContract[] : [];
+}
+
+export async function getTournamentSetupSummary(
+  token: string,
+  tournamentId: number,
+): Promise<TournamentSetupStateSummaryContract | undefined> {
+  const response = await fetch(`/api/v1/tc/tournaments/${tournamentId}/setup-summary`, {
+    method: 'GET',
+    headers: { Authorization: `Bearer ${token}` },
+    credentials: 'include',
+    cache: 'no-store',
+  });
+  const responseData = await response.json().catch(() => null) as unknown;
+  if (!response.ok) {
+    throw new Error(getJsonErrorDetail(responseData, `Failed to load setup summary (${response.status})`));
+  }
+  return responseData ? responseData as TournamentSetupStateSummaryContract : undefined;
 }
 
 export async function listTournamentRegistrations(

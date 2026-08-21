@@ -82,8 +82,9 @@ export default function OrganizerTournamentRegistrationsPage() {
     tournament,
     registrations,
     refreshRegistrations,
-    isLoading,
-    error: contextError,
+    isRegistrationsLoading,
+    tournamentError,
+    registrationsError,
   } = useTournamentContext();
   const tournamentName = tournament?.name || 'Tournament';
   const [search, setSearch] = useState('');
@@ -300,9 +301,9 @@ export default function OrganizerTournamentRegistrationsPage() {
         </Link>
       </header>
 
-      {error || contextError ? <p className={styles.error} role="alert">{error || contextError}</p> : null}
-      {isLoading ? <section className={styles.registrationLoading}>Loading registrations...</section> : null}
-      {!error && !contextError && !isLoading ? (
+      {error || tournamentError || registrationsError ? <p className={styles.error} role="alert">{error || tournamentError || registrationsError}</p> : null}
+      {isRegistrationsLoading ? <section className={styles.registrationLoading}>Loading registrations...</section> : null}
+      {!error && !tournamentError && !registrationsError && !isRegistrationsLoading ? (
         <>
           <section className={styles.registrationMetricGrid} aria-label="Registration summary">
             <MetricCard icon={<Users />} tone="purple" label="Total Registrations" value={metrics.total} detail="All time" />
