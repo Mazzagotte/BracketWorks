@@ -5,6 +5,7 @@ import { CalendarDays, MapPin, Users, UsersRound, Coins, Eye } from 'lucide-reac
 import type { OrganizerDashboardTournament } from './useOrganizerDashboard';
 import TournamentStatusBadge from './TournamentStatusBadge';
 import styles from './OrganizerDashboard.module.css';
+import { organizerRoutes } from '../organizerRoutes';
 
 function formatDateRange(startDate: string | null, endDate: string | null): string {
   const dateValue = startDate || endDate;
@@ -110,7 +111,7 @@ export default function TournamentCard({ tournament }: TournamentCardProps) {
 
         <div className={styles.cardFooterRow}>
           <div className={styles.cardActions}>
-            <Link href={`/organizer/tournaments/${tournament.id}`} className={styles.primaryButtonCompact}>View Overview</Link>
+            <Link href={organizerRoutes.overview(tournament.id)} className={styles.primaryButtonCompact}>View Overview</Link>
             {tournament.publicUrl ? (
               <Link href={tournament.publicUrl} className={styles.secondaryButtonCompact} target="_blank" rel="noreferrer">
                 <Eye className={styles.actionIcon} aria-hidden="true" />

@@ -9,6 +9,7 @@ import type { TournamentContract, TournamentSetupStateSummaryContract } from '@b
 import ConfigDrawer from './ConfigDrawer';
 import PublishValidationSummary from './PublishValidationSummary';
 import { listMyOrganizerSetupStates, listMyTournaments, resolveTcVenue } from './organizerApi';
+import { organizerRoutes } from './organizerRoutes';
 import TournamentRegistrationForm from '../public/TournamentRegistrationForm';
 import TournamentDetailsSection from './setup/TournamentDetailsSection';
 import { initialCustomQuestions, initialDivisions, initialEvents, initialFees, initialLocations, initialRegistrationFields, initialSquads, setupSections } from './setupConfig';
@@ -351,8 +352,8 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
   const hasLogoAsset = Boolean(logoPreviewUrl || details.logoFileName || pendingLogoFile);
   const logoAssetName = pendingLogoFile?.name || details.logoFileName || 'Tournament Logo';
   const logoAssetMeta = pendingLogoFile
-    ? `${inferLogoFileLabel(pendingLogoFile.name)} Ã‚Â· ${formatFileSize(pendingLogoFile.size)}`
-    : `${inferLogoFileLabel(details.logoFileName)} Ã‚Â· file uploaded`;
+    ? `${inferLogoFileLabel(pendingLogoFile.name)} - ${formatFileSize(pendingLogoFile.size)}`
+    : `${inferLogoFileLabel(details.logoFileName)} - file uploaded`;
 
   const refreshTournamentLibrary = async (token: string) => {
     setIsLoadingTournamentLibrary(true);
@@ -643,7 +644,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
     }
 
     if (routeTournamentId && routeTournamentId !== tournamentId) {
-      router.push(`/organizer/tournaments/${tournamentId}/setup`);
+      router.push(organizerRoutes.setup(tournamentId));
       return;
     }
 
@@ -2533,7 +2534,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                           {events.map((ev) => {
                             const squadCount = ev.connectedSquadIds.length;
                             const metaParts = [
-                              ev.minPlayers === ev.maxPlayers ? `${ev.minPlayers} Bowler${ev.minPlayers !== 1 ? 's' : ''}` : `${ev.minPlayers}Ã¢â‚¬â€œ${ev.maxPlayers} Bowlers`,
+                              ev.minPlayers === ev.maxPlayers ? `${ev.minPlayers} Bowler${ev.minPlayers !== 1 ? 's' : ''}` : `${ev.minPlayers}-${ev.maxPlayers} Bowlers`,
                               ev.scoring.charAt(0).toUpperCase() + ev.scoring.slice(1),
                               ev.requireDivision ? 'Division Required' : 'Division Optional',
                               `${squadCount} Squad${squadCount !== 1 ? 's' : ''}`,
@@ -2563,7 +2564,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                                       {ev.enabled ? 'Enabled' : 'Draft'}
                                     </span>
                                   </div>
-                                  <p className={styles.evCardMeta}>{metaParts.join(' Ã¢â‚¬Â¢ ')}</p>
+                                  <p className={styles.evCardMeta}>{metaParts.join(' - ')}</p>
                                   <p className={styles.evCardFee}>{formatMoney(ev.entryFeeCents)} Entry Fee</p>
                                 </div>
                                 <div className={styles.cardActions}>
@@ -2625,7 +2626,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                           )}
                           {divisions.map((div) => {
                             const avgLabel = div.minAverage !== null && div.maxAverage !== null
-                              ? `Avg ${div.minAverage}Ã¢â‚¬â€œ${div.maxAverage}`
+                              ? `Avg ${div.minAverage}-${div.maxAverage}`
                               : div.minAverage !== null
                                 ? `Avg ${div.minAverage}+`
                                 : div.maxAverage !== null
@@ -2658,7 +2659,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                                       {div.enabled ? 'Enabled' : 'Draft'}
                                     </span>
                                   </div>
-                                  <p className={styles.evCardMeta}>{avgLabel} Ã¢â‚¬Â¢ {scoringLabel}</p>
+                                  <p className={styles.evCardMeta}>{avgLabel} - {scoringLabel}</p>
                                   {usedByNames.length > 0 && (
                                     <p className={styles.evCardUsedBy}>Used by: {usedByNames.join(', ')}</p>
                                   )}
@@ -2693,7 +2694,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                 </section>
           )}
 
-          {/* Ã¢â€â‚¬Ã¢â€â‚¬ Event editor modal Ã¢â€â‚¬Ã¢â€â‚¬ */}
+          {/* Event editor modal */}
           {selectedEventId && events.find((e) => e.id === selectedEventId) && (
             <div className={styles.editorModal} role="dialog" aria-modal="true">
               <div className={styles.editorModalBox}>
@@ -2725,7 +2726,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
             </div>
           )}
 
-          {/* Ã¢â€â‚¬Ã¢â€â‚¬ Division editor modal Ã¢â€â‚¬Ã¢â€â‚¬ */}
+          {/* Division editor modal */}
           {selectedDivisionId && divisions.find((d) => d.id === selectedDivisionId) && (
             <div className={styles.editorModal} role="dialog" aria-modal="true">
               <div className={styles.editorModalBox}>
@@ -2842,7 +2843,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                       <header className={styles.squadGroupHead}>
                         <h3><CalendarDays size={14} /> {group.label}</h3>
                         <div className={styles.squadGroupHeadMeta}>
-                          <span>{group.squads.length} squads Ã¢â‚¬Â¢ {group.squads.reduce((sum, squad) => sum + squad.capacity, 0)} capacity Ã¢â‚¬Â¢ {group.squads.reduce((sum, squad) => sum + squad.registeredCount, 0)} filled</span>
+                          <span>{group.squads.length} squads - {group.squads.reduce((sum, squad) => sum + squad.capacity, 0)} capacity - {group.squads.reduce((sum, squad) => sum + squad.registeredCount, 0)} filled</span>
                           <button type="button" className={styles.squadChevronButton} aria-label="Collapse date group" disabled>
                             <ChevronUp size={13} />
                           </button>

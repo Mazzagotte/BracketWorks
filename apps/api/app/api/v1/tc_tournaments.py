@@ -8,7 +8,13 @@ from sqlalchemy.orm import Session
 
 from ...api import deps
 from ...core import models, schemas
-from ...services.tc_tournament_documents import normalize_document_kind, validate_tournament_document_upload
+from ...services.tc_tournament_documents import (
+    build_content_disposition,
+    normalize_document_kind,
+    read_tournament_document_upload,
+    sanitize_document_filename,
+    validate_tournament_document_upload,
+)
 from ...services.tc_tournament_logo import validate_tournament_logo_upload
 from ...services.tc_venues import build_tournament_location
 from ...services.tournament_access import verify_owned_tc_tournament_access
@@ -343,15 +349,15 @@ async def upload_tournament_document(
 ):
     verify_owned_tc_tournament_access(db, tournament_id, user)
 
-    content = await file.read()
-    validate_tournament_document_upload(file.content_type, content)
+    content = await read_tournament_document_upload(file)
+    mime_type = validate_tournament_document_upload(file.content_type, content)
 
     document = models.TcTournamentDocument(
         tournament_id=tournament_id,
         user_id=user.id,
         doc_type=normalize_document_kind(doc_type),
-        file_name=file.filename or "document",
-        mime_type=file.content_type or "application/octet-stream",
+        file_name=sanitize_document_filename(file.filename),
+        mime_type=mime_type,
         file_size=len(content),
         file_blob=content,
     )
@@ -388,7 +394,7 @@ def download_tournament_document(
     if document is None:
         raise HTTPException(status_code=404, detail="Document not found")
 
-    headers = {"Content-Disposition": f'attachment; filename="{document.file_name}"'}
+    headers = {"Content-Disposition": build_content_disposition(document.file_name)}
     return Response(content=document.file_blob, media_type=document.mime_type, headers=headers)
 
 

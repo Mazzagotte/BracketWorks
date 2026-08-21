@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { CalendarDays, FileText, Grid2X2, Users, UsersRound, Wallet, Wrench } from 'lucide-react';
 
 import { useTournamentContext } from './TournamentContext';
+import { isOrganizerRouteActive, organizerRoutes } from './organizerRoutes';
 import styles from './TournamentSubNav.module.css';
 
 type SubNavItem = {
@@ -18,13 +19,13 @@ export default function TournamentSubNav() {
   const { tournamentId } = useTournamentContext();
 
   const items: SubNavItem[] = [
-    { label: 'Overview', icon: Grid2X2, href: `/organizer/tournaments/${tournamentId}` },
-    { label: 'Registrations', icon: Users, href: `/organizer/tournaments/${tournamentId}/registrations` },
-    { label: 'Squads', icon: CalendarDays, href: `/organizer/tournaments/${tournamentId}/squads` },
-    { label: 'Participants', icon: UsersRound, href: `/organizer/tournaments/${tournamentId}/participants` },
-    { label: 'Payments', icon: Wallet, href: `/organizer/tournaments/${tournamentId}/payments` },
-    { label: 'Documents', icon: FileText, href: `/organizer/tournaments/${tournamentId}/documents` },
-    { label: 'Setup', icon: Wrench, href: `/organizer/tournaments/${tournamentId}/setup` },
+    { label: 'Overview', icon: Grid2X2, href: organizerRoutes.overview(tournamentId) },
+    { label: 'Registrations', icon: Users, href: organizerRoutes.registrations(tournamentId) },
+    { label: 'Squads', icon: CalendarDays, href: organizerRoutes.squads(tournamentId) },
+    { label: 'Participants', icon: UsersRound, href: organizerRoutes.participants(tournamentId) },
+    { label: 'Payments', icon: Wallet, href: organizerRoutes.payments(tournamentId) },
+    { label: 'Documents', icon: FileText, href: organizerRoutes.documents(tournamentId) },
+    { label: 'Setup', icon: Wrench, href: organizerRoutes.setup(tournamentId) },
   ];
 
   return (
@@ -36,7 +37,7 @@ export default function TournamentSubNav() {
             <Link
               key={item.label}
               href={item.href}
-              className={`${styles.tab} ${pathname === item.href ? styles.tabActive : ''}`}
+              className={`${styles.tab} ${isOrganizerRouteActive(pathname, item.href) ? styles.tabActive : ''}`}
             >
               <Icon aria-hidden="true" />
               {item.label}

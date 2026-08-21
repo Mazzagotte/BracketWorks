@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Download, Trash2 } from 'lucide-react';
 
 import { useTournamentContext } from '@/components/organizer/TournamentContext';
+import { organizerRoutes } from '@/components/organizer/organizerRoutes';
 import {
   deleteTournamentDocument,
   downloadTournamentDocument,
@@ -136,7 +137,7 @@ export default function OrganizerTournamentDocumentsPage() {
           <h1>Documents</h1>
           <p>{tournament?.name || 'Tournament'}</p>
         </div>
-        <Link href={`/organizer/tournaments/${tournamentId}`} className={styles.backButton}>
+        <Link href={organizerRoutes.overview(tournamentId)} className={styles.backButton}>
           <ArrowLeft size={14} aria-hidden="true" /> Back to Overview
         </Link>
       </header>

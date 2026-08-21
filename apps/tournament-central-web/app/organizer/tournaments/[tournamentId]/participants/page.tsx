@@ -5,6 +5,8 @@ import { useMemo, useState } from 'react';
 import { ArrowLeft, Search } from 'lucide-react';
 
 import { useTournamentContext } from '@/components/organizer/TournamentContext';
+import OrganizerStatusBadge from '@/components/organizer/OrganizerStatusBadge';
+import { organizerRoutes } from '@/components/organizer/organizerRoutes';
 import { buildParticipantRows } from '@/components/organizer/tournamentInsights';
 import styles from '../page.module.css';
 
@@ -38,7 +40,7 @@ export default function OrganizerTournamentParticipantsPage() {
           <h1>Participants</h1>
           <p>{tournament?.name || 'Tournament'}</p>
         </div>
-        <Link href={`/organizer/tournaments/${tournamentId}`} className={styles.registrationBackButton}>
+        <Link href={organizerRoutes.overview(tournamentId)} className={styles.registrationBackButton}>
           <ArrowLeft size={14} aria-hidden="true" /> Back to Overview
         </Link>
       </header>
@@ -94,10 +96,7 @@ export default function OrganizerTournamentParticipantsPage() {
                       <td>{participant.squads.join(', ') || '\u2014'}</td>
                       <td>{participant.entryCount}</td>
                       <td>
-                        <span className={`${styles.paymentStatus} ${participant.paymentStatus === 'paid' ? styles.paymentPaid : styles.paymentUnpaid}`}>
-                          <i />
-                          {participant.paymentStatus === 'paid' ? 'Paid' : participant.paymentStatus === 'mixed' ? 'Partial' : 'Unpaid'}
-                        </span>
+                        <OrganizerStatusBadge status={participant.paymentStatus} />
                       </td>
                       <td><span>{participant.email || participant.phone || '\u2014'}</span></td>
                     </tr>
