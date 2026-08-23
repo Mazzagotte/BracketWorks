@@ -27,6 +27,8 @@ PASSWORD_CHANGE_FROM = f"{settings.FROM_NAME} <{settings.FROM_EMAIL}>"
 EMAIL_CHANGE_TEMPLATE_ID = "email-change"
 EMAIL_CHANGE_SUBJECT = "Your BracketWorks email was changed"
 EMAIL_CHANGE_FROM = f"{settings.FROM_NAME} <{settings.FROM_EMAIL}>"
+STAFF_INVITE_TEMPLATE_ID = "tournament-staff-invite"
+STAFF_INVITE_SUBJECT = "You were invited to a BracketWorks tournament"
 
 
 def _base_template_variables() -> dict[str, str]:
@@ -178,6 +180,24 @@ def build_reset_password_url(reset_token: str) -> str:
 def build_verify_email_url(verification_token: str) -> str:
     query_string = urlencode({"token": verification_token})
     return f"{_frontend_url('/verify-email')}?{query_string}"
+
+
+def sendTournamentStaffInviteEmail(user_email: str, *, tournament_name: str, role: str) -> bool:
+    payload = {
+        "from": RESET_PASSWORD_FROM,
+        "to": user_email,
+        "subject": STAFF_INVITE_SUBJECT,
+        "template": {
+            "id": STAFF_INVITE_TEMPLATE_ID,
+            "variables": {
+                **_base_template_variables(),
+                "tournament_name": tournament_name,
+                "role": role.replace("_", " ").title(),
+                "action_url": _frontend_url("/dashboard"),
+            },
+        },
+    }
+    return _send_template_email(payload, log_context="tournament-staff-invite", recipient_email=user_email)
 
 
 def _send_template_email(payload: dict, *, log_context: str, recipient_email: str) -> bool:

@@ -7,6 +7,8 @@ import { logger } from '../../lib/logger'
 import {
   getSelectedTournamentId,
   getSelectedSquadId,
+  resolveSquadSelection,
+  setActiveSquadLabel,
   setSelectedSquad as persistSelectedSquad,
 } from '../../lib/selection-session'
 
@@ -153,18 +155,13 @@ export function useScoreData(sessionToken: string | null): UseScoreDataResult {
 
         if (tournamentData) setTournament(tournamentData)
 
-        let squadToUse: Squad | null = null
-        if (selectedSquadData?.squad_id) {
-          squadToUse = squadsData.find((s: Squad) => s.id === selectedSquadData.squad_id) ?? null
-        }
-        if (!squadToUse) {
-          const stored = getSelectedSquadId()
-          if (stored) squadToUse = squadsData.find((s: Squad) => s.id === parseInt(stored)) ?? null
-        }
-        if (!squadToUse && squadsData.length > 0) squadToUse = squadsData[0] ?? null
+        const squadToUse = resolveSquadSelection<Squad>(squadsData, selectedSquadData?.squad_id, getSelectedSquadId())
 
         setSelectedSquad(squadToUse)
-        if (squadToUse && !getSelectedSquadId()) persistSelectedSquad(squadToUse.id)
+        if (squadToUse) {
+          persistSelectedSquad(squadToUse.id)
+          setActiveSquadLabel([squadToUse.date, squadToUse.time].filter(Boolean).join(' '))
+        }
 
         logger.info('Scores bootstrap load completed', {
           tournamentId: Number(tournamentId),

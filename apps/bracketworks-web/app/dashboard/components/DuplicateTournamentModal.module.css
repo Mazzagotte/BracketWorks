@@ -1,0 +1,18 @@
+.overlay { position: fixed; inset: 0; z-index: 1300; display: grid; place-items: center; padding: 20px; background: var(--opacity-black-75); }
+.modal { position: relative; width: min(620px, 100%); max-height: calc(100vh - 40px); overflow: auto; border: 1px solid var(--color-border-primary); border-radius: 18px; background: var(--bw-surface-card); box-shadow: var(--shadow-modal); }
+.modal header, .body, .modal footer { padding: 20px; }
+.modal header { border-bottom: 1px solid var(--color-border-subtle); }
+.modal h2 { display: flex; align-items: center; gap: 9px; margin: 0; }
+.modal h2 svg { width: 20px; }
+.modal header p, .advanced p { margin: 6px 0 0; color: var(--color-text-muted); }
+.body { display: grid; gap: 16px; }
+.body > label, .dateGrid label { display: grid; gap: 6px; font-size: 0.85rem; font-weight: 600; }
+.dateGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.body fieldset { display: grid; gap: 10px; margin: 0; padding: 14px; border: 1px solid var(--color-border-subtle); border-radius: 12px; }
+.body legend { padding: 0 5px; font-weight: 700; }
+.check { display: flex; align-items: center; gap: 9px; font-size: 0.9rem; }
+.check input { width: 17px; height: 17px; accent-color: var(--color-accent-primary); }
+.advanced p { font-size: 0.8rem; }
+.error { margin: 0; color: var(--color-error); }
+.modal footer { display: flex; justify-content: flex-end; gap: 9px; border-top: 1px solid var(--color-border-subtle); }
+@media (max-width: 560px) { .overlay { padding: 8px; } .modal { max-height: calc(100vh - 16px); } .dateGrid { grid-template-columns: 1fr; } }

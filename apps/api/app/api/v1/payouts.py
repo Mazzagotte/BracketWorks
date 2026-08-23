@@ -3,13 +3,16 @@ Payout management API endpoints for tournament winner tracking and prize distrib
 """
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Query
+from pydantic import BaseModel, Field
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from typing import Optional, Dict, Any
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 
 from ..deps import SessionLocal, get_db, get_current_user
+from ...services.tournament_audit import record_tournament_event
+from ...services.tournament_lifecycle import advance_status
 from ...core import models
 from ...core.async_jobs import job_store, to_dict
 from ...core.idempotency import IdempotencyReplay, begin_request, complete_request, fail_request
@@ -28,9 +31,19 @@ from ...services.bracket_persistence_simple import load_generated_brackets
 from ...services.side_pots import calculate_side_pot_accounting
 from ...services.tournament_access import verify_owned_tournament_access
 from ...core.bracket_programs import normalize_bracket_programs
+from ...services.tournament_snapshots import create_restore_point
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+
+class PayoutAdjustmentRequest(BaseModel):
+    new_amount: float = Field(ge=0, le=1_000_000)
+    reason: str = Field(min_length=1, max_length=1000)
+
+
+class PayoutReopenRequest(BaseModel):
+    reason: str = Field(min_length=1, max_length=1000)
 
 
 # ---------------------------------------------------------------------------
@@ -97,6 +110,7 @@ def calculate_tournament_payouts_endpoint(
             db,
             tournament_id,
             current_user,
+            permission="view",
             forbidden_detail="Access denied",
         )
         entry_fees  = _get_entry_fees(db, tournament_id, scratch_fee, handicap_fee)
@@ -147,6 +161,7 @@ def get_tournament_winners_endpoint(
             db,
             tournament_id,
             current_user,
+            permission="view",
             forbidden_detail="Access denied",
         )
         brackets_data = load_generated_brackets(db, tournament_id, squad_id)
@@ -191,6 +206,7 @@ def get_live_entry_analysis(
             db,
             tournament_id,
             current_user,
+            permission="view",
             forbidden_detail="Access denied",
         )
         entry_fees = _get_entry_fees(db, tournament_id, scratch_fee, handicap_fee)
@@ -384,6 +400,7 @@ def save_tournament_payouts_endpoint(
             db,
             tournament_id,
             current_user,
+            permission="manage_payouts",
             forbidden_detail="Access denied",
         )
         entry_fees  = _get_entry_fees(db, tournament_id, scratch_fee, handicap_fee)
@@ -428,6 +445,8 @@ def save_tournament_payouts_endpoint(
             total_collected                        = payout_data.get("total_collected", 0)
             payout_summary.house_amount            = total_collected * (house_percentage / 100)
             payout_summary.total_winners           = total_winners
+            payout_summary.calculated_at            = datetime.now(timezone.utc)
+            payout_summary.calculated_by_user_id    = current_user.id
 
             if not existing_summary:
                 db.add(payout_summary)
@@ -437,6 +456,23 @@ def save_tournament_payouts_endpoint(
             _save_winners_and_payouts(
                 db, tournament_id, squad_id, payout_summary.id, payout_data, current_time
             )
+
+            record_tournament_event(
+                db,
+                tournament_id=tournament_id,
+                event_type="payouts.calculated",
+                user=current_user,
+                summary="Calculated and saved tournament payouts",
+                after_values={
+                    "total_prize_pool": payout_summary.total_prize_pool,
+                    "house_amount": payout_summary.house_amount,
+                    "total_winners": total_winners,
+                    "squad_id": squad_id,
+                },
+                entity_type="payout_summary",
+                entity_id=payout_summary.id,
+            )
+            advance_status(db, tournament_id, "payout_review")
 
             db.commit()
 
@@ -498,6 +534,7 @@ def save_tournament_payouts_async(
         db,
         tournament_id,
         current_user,
+        permission="manage_payouts",
         forbidden_detail="Access denied",
     )
     job = job_store.create(
@@ -547,6 +584,74 @@ def get_payout_job_status(
 # Payout history (from saved records)
 # ---------------------------------------------------------------------------
 
+@router.post("/{tournament_id}/reopen")
+def reopen_finalized_payouts(tournament_id: int, payload: PayoutReopenRequest, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    tournament = verify_owned_tournament_access(
+        db, tournament_id, current_user, permission="manage_payouts", allow_read_only_mutation=True,
+        forbidden_detail="Access denied",
+    )
+    summaries = db.query(models.TournamentPayoutSummary).filter(models.TournamentPayoutSummary.tournament_id == tournament_id).all()
+    if not tournament.finalized_at and not any(summary.is_finalized for summary in summaries):
+        return {"status": "open", "results_may_be_affected": False}
+    create_restore_point(db, tournament_id=tournament_id, user=current_user, trigger="payouts.reopen", summary="Before finalized payouts were reopened")
+    for summary in summaries:
+        summary.is_finalized = False
+        summary.finalized_date = None
+        summary.finalized_by_user_id = None
+    tournament.lifecycle_status = "payout_review"
+    tournament.finalized_at = None
+    tournament.finalized_by_user_id = None
+    tournament.scores_locked = True
+    db.add(models.PayoutAdjustment(
+        tournament_id=tournament_id, payout_id=None, adjustment_type="reopen",
+        old_amount=None, new_amount=None, reason=payload.reason.strip(), adjusted_by_user_id=current_user.id,
+    ))
+    record_tournament_event(
+        db, tournament_id=tournament_id, event_type="payouts.reopened", user=current_user,
+        summary="Reopened finalized payouts for adjustment", reason=payload.reason.strip(),
+        before_values={"status": "finalized"}, after_values={"status": "payout_review", "scores_locked": True},
+        entity_type="tournament", entity_id=tournament_id,
+    )
+    db.commit()
+    return {"status": "payout_review", "results_may_be_affected": bool(tournament.is_public)}
+
+
+@router.patch("/{tournament_id}/items/{payout_id}")
+def adjust_payout(tournament_id: int, payout_id: int, payload: PayoutAdjustmentRequest, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    verify_owned_tournament_access(db, tournament_id, current_user, permission="manage_payouts", forbidden_detail="Access denied")
+    payout = db.query(models.BracketPayout).filter_by(id=payout_id, tournament_id=tournament_id).first()
+    if not payout:
+        raise HTTPException(status_code=404, detail="Payout not found")
+    summary = db.query(models.TournamentPayoutSummary).filter_by(tournament_id=tournament_id, squad_id=payout.squad_id).first()
+    if summary and summary.is_finalized:
+        raise HTTPException(status_code=409, detail="Reopen finalized payouts before making an adjustment")
+    old_amount = round(float(payout.payout_amount), 2)
+    new_amount = round(float(payload.new_amount), 2)
+    if old_amount == new_amount:
+        return {"id": payout.id, "payout_amount": old_amount, "adjusted": False}
+    delta = round(new_amount - old_amount, 2)
+    payout.payout_amount = new_amount
+    payout.updated_at = datetime.now(timezone.utc).isoformat()
+    if summary:
+        summary.total_prize_pool = round(float(summary.total_prize_pool) + delta, 2)
+        if payout.bracket_group_key == "scratch":
+            summary.total_scratch_pool = round(float(summary.total_scratch_pool) + delta, 2)
+        elif payout.bracket_group_key == "handicap":
+            summary.total_handicap_pool = round(float(summary.total_handicap_pool) + delta, 2)
+        summary.updated_at = payout.updated_at
+    db.add(models.PayoutAdjustment(
+        tournament_id=tournament_id, payout_id=payout.id, adjustment_type="manual",
+        old_amount=old_amount, new_amount=new_amount, reason=payload.reason.strip(), adjusted_by_user_id=current_user.id,
+    ))
+    record_tournament_event(
+        db, tournament_id=tournament_id, event_type="payouts.adjusted", user=current_user,
+        summary=f"Adjusted payout for {payout.player_name} from ${old_amount:,.2f} to ${new_amount:,.2f}",
+        reason=payload.reason.strip(), before_values={"payout_amount": old_amount}, after_values={"payout_amount": new_amount},
+        entity_type="payout", entity_id=payout.id,
+    )
+    db.commit()
+    return {"id": payout.id, "payout_amount": new_amount, "adjusted": True, "results_may_be_affected": True}
+
 @router.get("/history/{tournament_id}")
 def get_payout_history_endpoint(
     tournament_id: int,
@@ -560,6 +665,7 @@ def get_payout_history_endpoint(
             db,
             tournament_id,
             current_user,
+            permission="view",
             forbidden_detail="Access denied",
         )
         payout_summary = db.query(models.TournamentPayoutSummary).filter(
@@ -579,6 +685,9 @@ def get_payout_history_endpoint(
             models.BracketPayout.tournament_id == tournament_id,
             models.BracketPayout.squad_id == squad_id,
         ).order_by(models.BracketPayout.bracket_group_key, models.BracketPayout.placement).all()
+        adjustments = db.query(models.PayoutAdjustment, models.User).join(
+            models.User, models.User.id == models.PayoutAdjustment.adjusted_by_user_id
+        ).filter(models.PayoutAdjustment.tournament_id == tournament_id).order_by(models.PayoutAdjustment.created_at.desc()).all()
 
         return {
             "tournament_info": {"id": tournament_id, "name": tournament.name, "squad_id": squad_id},
@@ -591,6 +700,10 @@ def get_payout_history_endpoint(
                 "house_amount":        payout_summary.house_amount,
                 "is_finalized":        payout_summary.is_finalized,
                 "created_at":          payout_summary.created_at,
+                "calculated_at":       payout_summary.calculated_at,
+                "calculated_by_user_id": payout_summary.calculated_by_user_id,
+                "finalized_date":      payout_summary.finalized_date,
+                "finalized_by_user_id": payout_summary.finalized_by_user_id,
             },
             "winners": [
                 {
@@ -621,6 +734,13 @@ def get_payout_history_endpoint(
                 }
                 for p in payouts
             ],
+            "adjustments": [{
+                "id": adjustment.id, "payout_id": adjustment.payout_id,
+                "adjustment_type": adjustment.adjustment_type, "old_amount": adjustment.old_amount,
+                "new_amount": adjustment.new_amount, "reason": adjustment.reason,
+                "adjusted_by": f"{actor.first_name} {actor.last_name}".strip() or actor.username,
+                "adjusted_by_user_id": adjustment.adjusted_by_user_id, "created_at": adjustment.created_at,
+            } for adjustment, actor in adjustments],
         }
 
     except HTTPException:

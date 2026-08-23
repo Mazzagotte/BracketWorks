@@ -251,16 +251,31 @@ export function useBrackets() {
 
     try {
       const squadParam = squadId ? `?squad_id=${squadId}` : ''
-      // Disable caching to always get fresh scores from backend
-      const data = await apiClient.get<BracketPreview>(
+      const response = await apiClient.fetchWithAuth(
         `/api/v1/brackets/load/${tournamentId}${squadParam}`,
-        false  // useCache=false to bypass cache and get fresh scores
+        { cache: 'no-store' },
       )
+
+      if (response.status === 404) {
+        setPreview(null)
+        return null
+      }
+
+      if (!response.ok) {
+        let message = `Failed to load saved brackets (HTTP ${response.status})`
+        try {
+          const body = await response.json() as { detail?: string; message?: string }
+          message = body.detail || body.message || message
+        } catch { /* non-JSON error body */ }
+        setError(message)
+        return null
+      }
+
+      const data = await response.json() as BracketPreview
       setPreview(data)
       return data
     } catch (err) {
-      // Don't show error toast for loading saved brackets - they might not exist
-      // Silent fail for missing brackets is expected behavior
+      setError(err instanceof Error ? err.message : 'Failed to load saved brackets')
       return null
     } finally {
       setLoading(false)

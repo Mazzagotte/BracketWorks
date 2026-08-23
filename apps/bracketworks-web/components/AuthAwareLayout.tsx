@@ -13,6 +13,7 @@ import MobileCompatibilityNotice, { useMobileCompatibilityNotice } from '../app/
 import WelcomeOnboardingModal from '../app/components/WelcomeOnboardingModal';
 import AnnouncementNotice from '../app/components/AnnouncementNotice';
 import LegalDisclosureModal from '../app/components/LegalDisclosureModal';
+import { StaffInvitationNotice } from './StaffInvitationNotice';
 import { useAuth } from '../app/lib/auth-context';
 import { usesNavigationDrawerViewport } from '../app/lib/responsive';
 import { resetScrollLocks, setBodyInteractionState } from '../app/utils/modalUtils';
@@ -199,6 +200,7 @@ function ClientLayout({ children }: { children: ReactNode }) {
             <DevNoticeBanner />
           </div>
         )}
+        <StaffInvitationNotice enabled={showAuthenticatedShell && !legalBlocked} />
 
         <div className={contentCardClass}>
           <ErrorBoundary>

@@ -153,6 +153,7 @@ class SessionInfo(BaseModel):
     device_nickname: Optional[str] = None
     region_hint: Optional[str] = None
     risk_score: float = 0.0
+    is_current: bool = False
 
 
 class SessionListResponse(BaseModel):
@@ -232,6 +233,11 @@ class UserAccountUpdate(BaseModel):
 class ChangePasswordRequest(BaseModel):
     current_password: str
     new_password: str = Field(min_length=8)
+
+
+class AccountDeletionRequest(BaseModel):
+    current_password: str
+    confirmation: str
 
 
 class PasswordResetRequest(BaseModel):
@@ -391,6 +397,28 @@ class Tournament(TournamentBase):
     venue: Optional["TcVenue"] = None
     entry_count: Optional[int] = None
     brackets_configured: Optional[bool] = None
+    lifecycle_status: str = "setup"
+    scores_locked: bool = False
+    archived_at: Optional[datetime] = None
+    finalized_at: Optional[datetime] = None
+    finalized_by_user_id: Optional[int] = None
+
+
+class TournamentAuditEntry(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    tournament_id: int
+    event_type: str
+    user_id: Optional[int] = None
+    user_display_name: str
+    summary: str
+    before_values: Optional[Dict[str, Any]] = None
+    after_values: Optional[Dict[str, Any]] = None
+    reason: Optional[str] = None
+    entity_type: Optional[str] = None
+    entity_id: Optional[str] = None
+    created_at: datetime
 
 
 class TcVenueBase(BaseModel):

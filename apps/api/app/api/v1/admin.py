@@ -15,6 +15,9 @@ from ...core import models
 from ...core.password_policy import PasswordPolicyError, validate_password_policy
 from ...core.config import settings
 from ...core.async_jobs import job_store, to_dict as job_to_dict
+from ...services.tournament_audit import record_tournament_event
+from ...services.tournament_snapshots import create_restore_point
+from ...services.operational_health import BACKEND_VERSION, health_runtime_snapshot
 
 _pwd_context = CryptContext(
     schemes=["bcrypt"],
@@ -263,6 +266,10 @@ def _get_tournament_delete_impact(db: Session, tournament_id: int) -> dict[str, 
 
 
 def _hard_delete_tournament(db: Session, tournament_id: int) -> None:
+    db.execute(delete(models.TournamentRestorePoint).where(models.TournamentRestorePoint.tournament_id == tournament_id))
+    db.execute(delete(models.TournamentStaffInvitation).where(models.TournamentStaffInvitation.tournament_id == tournament_id))
+    db.execute(delete(models.TournamentStaffMember).where(models.TournamentStaffMember.tournament_id == tournament_id))
+    db.execute(delete(models.TournamentAuditLog).where(models.TournamentAuditLog.tournament_id == tournament_id))
     db.execute(delete(models.AdminTournamentNote).where(models.AdminTournamentNote.tournament_id == tournament_id))
     db.execute(delete(models.BracketPayout).where(models.BracketPayout.tournament_id == tournament_id))
     db.execute(delete(models.BracketWinner).where(models.BracketWinner.tournament_id == tournament_id))
@@ -780,6 +787,7 @@ def get_admin_tournaments(
         total_query = total_query.where(
             or_(
                 models.Tournament.name.ilike(like),
+                func.cast(models.Tournament.id, String).ilike(like),
                 models.Tournament.location.ilike(like),
                 models.User.username.ilike(like),
                 models.User.first_name.ilike(like),
@@ -798,6 +806,9 @@ def get_admin_tournaments(
 
     entry_count_expr = func.count(func.distinct(models.TournamentPlayer.id))
     open_note_count_expr = select(func.count()).select_from(models.AdminTournamentNote).where(models.AdminTournamentNote.tournament_id == models.Tournament.id, models.AdminTournamentNote.is_resolved.is_(False)).correlate(models.Tournament).scalar_subquery()
+    staff_count_expr = select(func.count()).select_from(models.TournamentStaffMember).where(models.TournamentStaffMember.tournament_id == models.Tournament.id).correlate(models.Tournament).scalar_subquery()
+    finalized_payout_expr = select(func.count()).select_from(models.TournamentPayoutSummary).where(models.TournamentPayoutSummary.tournament_id == models.Tournament.id, models.TournamentPayoutSummary.is_finalized.is_(True)).correlate(models.Tournament).scalar_subquery()
+    payout_summary_expr = select(func.count()).select_from(models.TournamentPayoutSummary).where(models.TournamentPayoutSummary.tournament_id == models.Tournament.id).correlate(models.Tournament).scalar_subquery()
     last_bracket_activity_expr = select(func.max(models.BracketSnapshot.updated_at)).where(models.BracketSnapshot.tournament_id == models.Tournament.id).correlate(models.Tournament).scalar_subquery()
     last_admin_change_expr = select(func.max(models.AdminAuditLog.created_at)).where(models.AdminAuditLog.target_type == "tournament", models.AdminAuditLog.target_id == func.cast(models.Tournament.id, String)).correlate(models.Tournament).scalar_subquery()
 
@@ -810,6 +821,8 @@ def get_admin_tournaments(
             models.Tournament.end_date,
             models.Tournament.archived_at,
             models.Tournament.archive_reason,
+            models.Tournament.lifecycle_status,
+            models.Tournament.scores_locked,
             models.User.username,
             models.User.email,
             models.User.first_name,
@@ -820,6 +833,9 @@ def get_admin_tournaments(
             func.count(func.distinct(models.BracketPayout.id)).label("payout_count"),
             func.count(func.distinct(models.BracketSnapshot.id)).label("snapshot_count"),
             open_note_count_expr.label("open_note_count"),
+            staff_count_expr.label("staff_count"),
+            finalized_payout_expr.label("finalized_payout_count"),
+            payout_summary_expr.label("payout_summary_count"),
             last_bracket_activity_expr.label("last_activity_at"),
             last_admin_change_expr.label("last_admin_change_at"),
         )
@@ -836,6 +852,7 @@ def get_admin_tournaments(
         query = query.where(
             or_(
                 models.Tournament.name.ilike(like),
+                func.cast(models.Tournament.id, String).ilike(like),
                 models.Tournament.location.ilike(like),
                 models.User.username.ilike(like),
                 models.User.first_name.ilike(like),
@@ -858,7 +875,7 @@ def get_admin_tournaments(
     else:
         query = query.order_by(models.Tournament.id.desc())
 
-    rows = db.execute(query.offset(offset).limit(page_size))
+    rows = list(db.execute(query.offset(offset).limit(page_size)))
 
     _set_admin_cache_headers(response, max_age=15, stale_while_revalidate=45)
 
@@ -881,6 +898,20 @@ def get_admin_tournaments(
                 "payout_count": row.payout_count,
                 "snapshot_count": row.snapshot_count,
                 "status": _tournament_status(row.start_date, row.end_date, row.archived_at),
+                "workflow_status": row.lifecycle_status,
+                "scores_locked": row.scores_locked,
+                "staff_count": row.staff_count,
+                "staff": [
+                    {"user_id": member.user_id, "username": staff_user.username, "name": f"{staff_user.first_name} {staff_user.last_name}".strip(), "role": member.role}
+                    for member, staff_user in db.query(models.TournamentStaffMember, models.User).join(models.User, models.User.id == models.TournamentStaffMember.user_id).filter(models.TournamentStaffMember.tournament_id == row.id).order_by(models.TournamentStaffMember.created_at).all()
+                ],
+                "bracket_state": "generated" if row.snapshot_count else "not_generated",
+                "score_state": "not_started" if row.score_count == 0 else ("complete" if row.entry_count > 0 and row.score_count >= row.entry_count else "in_progress"),
+                "payout_state": "finalized" if row.finalized_payout_count else ("calculated" if row.payout_summary_count else "not_calculated"),
+                "recent_audit_events": [
+                    {"id": event.id, "event_type": event.event_type, "summary": event.summary, "user_display_name": event.user_display_name, "created_at": _serialize_utc_timestamp(event.created_at)}
+                    for event in db.query(models.TournamentAuditLog).filter_by(tournament_id=row.id).order_by(models.TournamentAuditLog.created_at.desc()).limit(5).all()
+                ],
                 "open_note_count": row.open_note_count,
                 "last_activity_at": _serialize_utc_timestamp(row.last_activity_at),
                 "last_admin_change_at": _serialize_utc_timestamp(row.last_admin_change_at),
@@ -1059,6 +1090,10 @@ def admin_archive_tournament(
     if not tournament:
         raise HTTPException(status_code=404, detail="Tournament not found")
 
+    create_restore_point(
+        db, tournament_id=tournament_id, user=admin, trigger="tournament.archive",
+        summary="Before administrator tournament archive",
+    )
     tournament.archived_at = datetime.utcnow()
     tournament.archive_reason = (payload.reason or "").strip() or None
 
@@ -1069,6 +1104,16 @@ def admin_archive_tournament(
         target_type="tournament",
         target_id=tournament_id,
         reason=tournament.archive_reason,
+    )
+    record_tournament_event(
+        db,
+        tournament_id=tournament_id,
+        event_type="tournament.archived",
+        user=admin,
+        summary="Archived tournament",
+        reason=tournament.archive_reason,
+        entity_type="tournament",
+        entity_id=tournament_id,
     )
 
     db.commit()
@@ -1095,6 +1140,15 @@ def admin_unarchive_tournament(
         action="tournament.unarchive",
         target_type="tournament",
         target_id=tournament_id,
+    )
+    record_tournament_event(
+        db,
+        tournament_id=tournament_id,
+        event_type="tournament.restored",
+        user=admin,
+        summary="Restored tournament",
+        entity_type="tournament",
+        entity_id=tournament_id,
     )
 
     db.commit()
@@ -1338,6 +1392,15 @@ def admin_get_user_review(
         .order_by(models.AdminUserReview.created_at.desc(), models.AdminUserReview.id.desc())
     ).all()
     acknowledgments = db.execute(select(models.UserAcknowledgment).where(models.UserAcknowledgment.user_id == user_id).order_by(models.UserAcknowledgment.acknowledged_at.desc())).scalars().all()
+    owned_tournaments = db.query(models.Tournament).filter_by(user_id=user_id).order_by(models.Tournament.id.desc()).all()
+    membership_rows = db.execute(
+        select(models.TournamentStaffMember, models.Tournament.name)
+        .join(models.Tournament, models.Tournament.id == models.TournamentStaffMember.tournament_id)
+        .where(models.TournamentStaffMember.user_id == user_id)
+        .order_by(models.TournamentStaffMember.created_at.desc())
+    ).all()
+    last_login_at = db.scalar(select(func.max(models.AuthSession.issued_at)).where(models.AuthSession.user_id == user_id))
+    last_activity_at = db.scalar(select(func.max(models.AuthSession.last_seen_at)).where(models.AuthSession.user_id == user_id))
 
     return {
         "user": {
@@ -1347,12 +1410,17 @@ def admin_get_user_review(
             "name": f"{user.first_name} {user.last_name}".strip(),
             "organization": user.organization,
             "is_admin": user.is_admin,
+            "is_active": user.is_active,
             "created_at": _serialize_utc_timestamp(user.created_at),
             "email_verified": user.email_verified,
             "email_verified_at": _serialize_utc_timestamp(user.email_verified_at),
+            "last_login_at": _serialize_utc_timestamp(last_login_at),
+            "last_activity_at": _serialize_utc_timestamp(last_activity_at),
             "dev_notice_version_accepted": user.dev_notice_version_accepted,
             "dev_notice_accepted_at": _serialize_utc_timestamp(user.dev_notice_accepted_at),
         },
+        "owned_tournaments": [{"id": item.id, "name": item.name, "lifecycle_status": item.lifecycle_status} for item in owned_tournaments],
+        "staff_memberships": [{"tournament_id": membership.tournament_id, "tournament_name": tournament_name, "role": membership.role, "created_at": _serialize_utc_timestamp(membership.created_at)} for membership, tournament_name in membership_rows],
         "sessions": [
             {
                 "id": session.id,
@@ -1597,6 +1665,41 @@ def admin_update_feedback(
 def admin_operations(_admin: models.User = Depends(require_admin_user)):
     jobs = [job_to_dict(job) for job in job_store.list_recent(100)]
     return {"operations": jobs, "summary": {"failed": sum(1 for job in jobs if job["status"] == "failed"), "running": sum(1 for job in jobs if job["status"] in {"queued", "running"}), "succeeded": sum(1 for job in jobs if job["status"] == "succeeded")}, "note": "Operations are retained for the lifetime of the current backend process."}
+
+
+@router.get("/system-health")
+def admin_system_health(
+    db: Session = Depends(get_db),
+    _admin: models.User = Depends(require_admin_user),
+):
+    database_status = "healthy"
+    database_error = None
+    try:
+        db.execute(text("SELECT 1"))
+    except Exception as exc:
+        database_status = "unhealthy"
+        database_error = str(exc)[:300]
+
+    jobs = [job_to_dict(job) for job in job_store.list_recent(100)]
+    runtime = health_runtime_snapshot()
+    return {
+        "checked_at": datetime.now(UTC).isoformat(),
+        "frontend_version": None,
+        "backend_version": BACKEND_VERSION,
+        "environment": settings.ENVIRONMENT,
+        "api": {"status": "healthy"},
+        "database": {"status": database_status, "error": database_error},
+        "email": {"status": "configured" if settings.RESEND_API_KEY.strip() else "not_configured", "provider": "Resend", "sender": settings.FROM_EMAIL},
+        "background_jobs": {
+            "runtime": runtime["background_jobs"],
+            "queued": sum(1 for job in jobs if job["status"] == "queued"),
+            "running": sum(1 for job in jobs if job["status"] == "running"),
+            "failed": sum(1 for job in jobs if job["status"] == "failed"),
+        },
+        "process_started_at": runtime["process_started_at"],
+        "last_deployment": runtime["last_deployment"],
+        "recent_errors": runtime["recent_errors"],
+    }
 
 
 @router.patch("/users/{user_id}")

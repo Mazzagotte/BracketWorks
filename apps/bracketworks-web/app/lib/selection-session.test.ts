@@ -2,11 +2,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
   clearSelectedTournament,
+  clearSelectedSquad,
   getActiveSquadLabel,
   getActiveTournamentName,
   getSelectedSquadId,
   getSelectedTournamentId,
+  resolveSquadSelection,
   setActiveSquadLabel,
+  setAvailableSquadCount,
   setSelectedSquad,
   setSelectedTournament,
   shouldRequireTimeSlotBeforeLeavingDashboard,
@@ -16,6 +19,7 @@ describe('selection-session', () => {
   beforeEach(() => {
     localStorage.clear()
     sessionStorage.clear()
+    clearSelectedSquad()
   })
 
   it('persists tournament identity and dispatches tournament event', () => {
@@ -45,6 +49,19 @@ describe('selection-session', () => {
     window.removeEventListener('squad-changed', listener)
   })
 
+  it('does not dispatch another squad event when the selection is unchanged', () => {
+    setSelectedSquad(77)
+    setActiveSquadLabel('Fri 7:00 PM')
+    const listener = vi.fn()
+    window.addEventListener('squad-changed', listener)
+
+    setSelectedSquad(77)
+    setActiveSquadLabel('Fri 7:00 PM')
+
+    expect(listener).not.toHaveBeenCalled()
+    window.removeEventListener('squad-changed', listener)
+  })
+
   it('clears tournament and squad state when clearSquad is requested', () => {
     const tournamentListener = vi.fn()
     const squadListener = vi.fn()
@@ -70,6 +87,7 @@ describe('selection-session', () => {
 
   it('requires squad selection only when leaving dashboard with a selected tournament', () => {
     setSelectedTournament(25, 'Stateful Event')
+    setAvailableSquadCount(2)
 
     expect(shouldRequireTimeSlotBeforeLeavingDashboard('/dashboard', '/scores')).toBe(true)
 
@@ -78,5 +96,38 @@ describe('selection-session', () => {
 
     expect(shouldRequireTimeSlotBeforeLeavingDashboard('/scores', '/payouts')).toBe(false)
     expect(shouldRequireTimeSlotBeforeLeavingDashboard('/dashboard', '/dashboard')).toBe(false)
+  })
+
+  it('allows leaving the dashboard when the tournament has exactly one squad', () => {
+    setSelectedTournament(25, 'Single Squad Event')
+    setAvailableSquadCount(1)
+
+    expect(getSelectedSquadId()).toBeNull()
+    expect(shouldRequireTimeSlotBeforeLeavingDashboard('/dashboard', '/players')).toBe(false)
+  })
+
+  it('still requires an explicit selection when multiple squads exist', () => {
+    setSelectedTournament(25, 'Multi Squad Event')
+    setAvailableSquadCount(2)
+
+    expect(shouldRequireTimeSlotBeforeLeavingDashboard('/dashboard', '/scores')).toBe(true)
+  })
+
+  it('does not block navigation while a zero-row or legacy single-squad schedule is loading', () => {
+    setSelectedTournament(25, 'Legacy Single Squad Event')
+    setAvailableSquadCount(0)
+
+    expect(shouldRequireTimeSlotBeforeLeavingDashboard('/dashboard', '/brackets')).toBe(false)
+  })
+
+  it('resolves and returns the sole squad when no explicit selection exists', () => {
+    const squads = [{ id: 11, time: '6:00 PM' }]
+    expect(resolveSquadSelection(squads, null, null)).toEqual(squads[0])
+  })
+
+  it('does not silently select the first squad when multiple squads exist', () => {
+    const squads = [{ id: 11 }, { id: 12 }]
+    expect(resolveSquadSelection(squads, null, null)).toBeNull()
+    expect(resolveSquadSelection(squads, 12, null)).toEqual(squads[1])
   })
 })

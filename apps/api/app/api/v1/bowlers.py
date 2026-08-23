@@ -1,10 +1,10 @@
 
 from datetime import datetime, timezone
 from decimal import Decimal
-from typing import List
+from typing import List, Literal, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import func, update as sa_update
 from sqlalchemy.orm import Session
 
@@ -12,6 +12,9 @@ from ..deps import get_current_user, get_db
 from ...core import models, schemas
 from ...core.bracket_programs import normalize_bowler_bracket_entries, normalize_bracket_programs, normalize_division
 from ...services.payouts import reset_payouts_if_needed
+from ...services.tournament_audit import record_tournament_event
+from ...services.tournament_access import require_tournament_permission
+from ...services.tournament_snapshots import create_restore_point
 
 router = APIRouter()
 
@@ -25,12 +28,7 @@ def _resolve_bowler_owner_id_for_tournament(
     tournament_id: int,
     current_user: models.User,
 ) -> int:
-    if not _user_can_manage_all(current_user):
-        return current_user.id
-
-    tournament = db.query(models.Tournament).filter(models.Tournament.id == tournament_id).first()
-    if not tournament:
-        raise HTTPException(status_code=404, detail="Tournament not found")
+    tournament = require_tournament_permission(db, tournament_id, current_user, "manage_entries")
     return tournament.user_id
 
 
@@ -39,10 +37,10 @@ def _get_accessible_bowler(
     bowler_id: int,
     current_user: models.User,
 ) -> models.Bowler | None:
-    query = db.query(models.Bowler).filter(models.Bowler.id == bowler_id)
-    if not _user_can_manage_all(current_user):
-        query = query.filter(models.Bowler.user_id == current_user.id)
-    return query.first()
+    bowler = db.query(models.Bowler).filter(models.Bowler.id == bowler_id).first()
+    if bowler:
+        require_tournament_permission(db, bowler.tournament_id, current_user, "manage_entries")
+    return bowler
 
 
 def _normalize_usbc(value: str | None) -> str | None:
@@ -144,6 +142,7 @@ def list_bowlers(
 
     # Filter by tournament if provided
     if tournament_id:
+        require_tournament_permission(db, tournament_id, current_user, "view")
         query = query.filter(models.Bowler.tournament_id == tournament_id)
 
     # Filter by squad if provided
@@ -151,7 +150,7 @@ def list_bowlers(
         query = query.filter(models.Bowler.squad_id == squad_id)
 
     # Non-admin users can only see their own players; admins can see all.
-    if not _user_can_manage_all(current_user):
+    if not tournament_id and not _user_can_manage_all(current_user):
         query = query.filter(models.Bowler.user_id == current_user.id)
 
     # Hide archived profiles by default, but keep legacy rows that have no profile yet.
@@ -297,9 +296,7 @@ def reactivate_bowler_profile(
     db.commit()
     return {"id": profile.id, "is_active": profile.is_active}
 
-@router.post("")
-def create_bowler(player: schemas.PlayerCreate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    owner_user_id = _resolve_bowler_owner_id_for_tournament(db, player.tournament_id, current_user)
+def _stage_bowler(db: Session, player: schemas.PlayerCreate, owner_user_id: int) -> models.TournamentPlayer:
     profile = _resolve_or_create_bowler_profile(
         db=db,
         user_id=owner_user_id,
@@ -338,11 +335,239 @@ def create_bowler(player: schemas.PlayerCreate, db: Session = Depends(get_db), c
         amount_paid=player.amount_paid or 0.0
     )
     db.add(obj)
+    db.flush()
+    return obj
+
+
+@router.post("", response_model=schemas.Player)
+def create_bowler(player: schemas.PlayerCreate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    owner_user_id = _resolve_bowler_owner_id_for_tournament(db, player.tournament_id, current_user)
+    obj = _stage_bowler(db, player, owner_user_id)
+    record_tournament_event(
+        db,
+        tournament_id=obj.tournament_id,
+        event_type="player.added",
+        user=current_user,
+        summary=f"Added player {obj.full_name}",
+        after_values={"full_name": obj.full_name, "average": obj.average, "squad_id": obj.squad_id},
+        entity_type="player",
+        entity_id=obj.id,
+    )
     db.commit()
     db.refresh(obj)
     reset_payouts_if_needed(db, obj.tournament_id, obj.squad_id)
     db.commit()
     return obj
+
+
+class ImportCommitRow(schemas.PlayerCreate):
+    allow_duplicate: bool = False
+
+
+class ImportCommitRequest(BaseModel):
+    tournament_id: int
+    squad_id: int | None = None
+    file_name: str | None = Field(default=None, max_length=255)
+    rows: List[ImportCommitRow] = Field(min_length=1, max_length=1000)
+
+
+@router.post("/import-commit")
+def commit_bowler_import(payload: ImportCommitRequest, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    tournament = require_tournament_permission(db, payload.tournament_id, current_user, "manage_entries")
+    owner_user_id = tournament.user_id
+    normalized_seen: set[str] = set()
+    existing = db.query(models.TournamentPlayer).filter(models.TournamentPlayer.tournament_id == payload.tournament_id).all()
+    existing_keys = {
+        f"usbc:{str(row.usbc_number).strip().lower()}" if row.usbc_number
+        else f"name:{' '.join(row.full_name.lower().split())}"
+        for row in existing
+    }
+    for index, row in enumerate(payload.rows, start=1):
+        if row.tournament_id != payload.tournament_id or row.squad_id != payload.squad_id:
+            raise HTTPException(status_code=422, detail=f"Import row {index} has mismatched tournament or squad")
+        key = f"usbc:{str(row.usbc_number).strip().lower()}" if row.usbc_number else f"name:{' '.join(row.full_name.lower().split())}"
+        if not row.allow_duplicate and (key in existing_keys or key in normalized_seen):
+            raise HTTPException(status_code=409, detail=f"Import row {index} duplicates an existing or selected player")
+        normalized_seen.add(key)
+
+    create_restore_point(
+        db, tournament_id=payload.tournament_id, user=current_user, trigger="entries.import",
+        summary=f"Before importing {len(payload.rows)} entries",
+    )
+    created = [_stage_bowler(db, row, owner_user_id) for row in payload.rows]
+    reset_payouts_if_needed(db, payload.tournament_id, payload.squad_id)
+    record_tournament_event(
+        db, tournament_id=payload.tournament_id, event_type="entries.imported", user=current_user,
+        summary=f"Imported {len(created)} tournament entries",
+        after_values={"created_count": len(created), "squad_id": payload.squad_id, "file_name": payload.file_name},
+        entity_type="player",
+    )
+    db.commit()
+    return {"created": len(created), "player_ids": [row.id for row in created]}
+
+
+class DuplicateResolutionRequest(BaseModel):
+    left_player_id: int
+    right_player_id: int
+    resolution: Literal["keep_both", "not_duplicate"]
+
+
+class DuplicateMergeRequest(BaseModel):
+    source_player_id: int
+    target_player_id: int
+    full_name: str | None = None
+    usbc_number: str | None = None
+    average: int | None = None
+    reason: str = Field(min_length=1, max_length=1000)
+
+
+def _pair(left_id: int, right_id: int) -> tuple[int, int]:
+    return (left_id, right_id) if left_id < right_id else (right_id, left_id)
+
+
+def _player_duplicate_payload(player: models.TournamentPlayer) -> dict:
+    return {
+        "id": player.id, "full_name": player.full_name, "usbc_number": player.usbc_number,
+        "average": player.average, "squad_id": player.squad_id,
+        "program_entry_counts": player.program_entry_counts or {}, "side_pot_entries": player.side_pot_entries or {},
+        "amount_paid": float(player.amount_paid or 0), "lane": player.lane, "division": player.division,
+    }
+
+
+@router.get("/duplicates/{tournament_id}")
+def list_duplicate_players(tournament_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    require_tournament_permission(db, tournament_id, current_user, "view")
+    players = db.query(models.TournamentPlayer).filter_by(tournament_id=tournament_id).order_by(models.TournamentPlayer.id).all()
+    resolved = {_pair(row.left_player_id, row.right_player_id) for row in db.query(models.DuplicatePlayerResolution).filter_by(tournament_id=tournament_id).all()}
+    candidates = []
+    for index, left in enumerate(players):
+        for right in players[index + 1:]:
+            pair = _pair(left.id, right.id)
+            if pair in resolved:
+                continue
+            same_usbc = bool(left.usbc_number and right.usbc_number and left.usbc_number.strip().lower() == right.usbc_number.strip().lower())
+            same_name = " ".join(left.full_name.lower().split()) == " ".join(right.full_name.lower().split())
+            if not same_usbc and not same_name:
+                continue
+            candidates.append({
+                "pair_key": f"{pair[0]}:{pair[1]}", "reason": "Matching USBC number" if same_usbc else "Matching player name",
+                "can_merge": left.squad_id == right.squad_id, "left": _player_duplicate_payload(left), "right": _player_duplicate_payload(right),
+            })
+    return {"count": len(candidates), "candidates": candidates}
+
+
+@router.post("/duplicates/{tournament_id}/resolve")
+def resolve_duplicate_players(tournament_id: int, payload: DuplicateResolutionRequest, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    require_tournament_permission(db, tournament_id, current_user, "manage_entries")
+    left_id, right_id = _pair(payload.left_player_id, payload.right_player_id)
+    players = db.query(models.TournamentPlayer).filter(models.TournamentPlayer.tournament_id == tournament_id, models.TournamentPlayer.id.in_([left_id, right_id])).all()
+    if len(players) != 2:
+        raise HTTPException(status_code=404, detail="Duplicate candidate players were not found")
+    existing = db.query(models.DuplicatePlayerResolution).filter_by(
+        tournament_id=tournament_id, left_player_id=left_id, right_player_id=right_id,
+    ).first()
+    if existing:
+        existing.resolution = payload.resolution
+        existing.resolved_by_user_id = current_user.id
+        resolution = existing
+    else:
+        resolution = models.DuplicatePlayerResolution(
+            tournament_id=tournament_id, left_player_id=left_id, right_player_id=right_id,
+            resolution=payload.resolution, resolved_by_user_id=current_user.id,
+        )
+    db.add(resolution)
+    record_tournament_event(
+        db, tournament_id=tournament_id, event_type=f"players.duplicate_{payload.resolution}", user=current_user,
+        summary="Kept both player records" if payload.resolution == "keep_both" else "Marked players as not duplicates",
+        after_values={"left_player_id": left_id, "right_player_id": right_id, "resolution": payload.resolution}, entity_type="player",
+    )
+    db.commit()
+    return {"status": payload.resolution}
+
+
+def _replace_snapshot_player_ids(value: Any, source_id: int, target_id: int, key: str | None = None) -> Any:
+    if isinstance(value, dict):
+        return {item_key: _replace_snapshot_player_ids(item_value, source_id, target_id, item_key) for item_key, item_value in value.items()}
+    if isinstance(value, list):
+        return [_replace_snapshot_player_ids(item, source_id, target_id, key) for item in value]
+    if key in {"player_id", "playerA_id", "playerB_id", "bowler_id"} and value == source_id:
+        return target_id
+    return value
+
+
+@router.post("/duplicates/{tournament_id}/merge")
+def merge_duplicate_players(tournament_id: int, payload: DuplicateMergeRequest, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    require_tournament_permission(db, tournament_id, current_user, "manage_entries")
+    if payload.source_player_id == payload.target_player_id:
+        raise HTTPException(status_code=422, detail="Choose two different player records")
+    source = db.query(models.TournamentPlayer).filter_by(id=payload.source_player_id, tournament_id=tournament_id).first()
+    target = db.query(models.TournamentPlayer).filter_by(id=payload.target_player_id, tournament_id=tournament_id).first()
+    if not source or not target:
+        raise HTTPException(status_code=404, detail="Player record not found")
+    if source.squad_id != target.squad_id:
+        raise HTTPException(status_code=409, detail="Entries in different squads must be kept as separate records")
+
+    source_score = db.query(models.PlayerScore).filter_by(player_id=source.id, tournament_id=tournament_id).first()
+    target_score = db.query(models.PlayerScore).filter_by(player_id=target.id, tournament_id=tournament_id).first()
+    if source_score and target_score:
+        conflicts = [field for field in ("game1_scratch", "game2_scratch", "game3_scratch") if getattr(source_score, field) is not None and getattr(target_score, field) is not None and getattr(source_score, field) != getattr(target_score, field)]
+        if conflicts:
+            raise HTTPException(status_code=409, detail="Score conflicts must be resolved before merging: " + ", ".join(conflicts))
+
+    create_restore_point(db, tournament_id=tournament_id, user=current_user, trigger="players.merge", summary=f"Before merging {source.full_name} into {target.full_name}")
+    before_values = {"source": _player_duplicate_payload(source), "target": _player_duplicate_payload(target)}
+    source_entries = normalize_bowler_bracket_entries(source.program_entry_counts, source.handicap_entry_count, source.scratch_entry_count)
+    target_entries = normalize_bowler_bracket_entries(target.program_entry_counts, target.handicap_entry_count, target.scratch_entry_count)
+    combined_entries = {key: source_entries.get(key, 0) + target_entries.get(key, 0) for key in set(source_entries) | set(target_entries)}
+    target.program_entry_counts = combined_entries
+    target.handicap_entry_count = combined_entries.get("handicap", 0)
+    target.scratch_entry_count = combined_entries.get("scratch", 0)
+    target.side_pot_entries = {key: bool((source.side_pot_entries or {}).get(key) or (target.side_pot_entries or {}).get(key)) for key in set(source.side_pot_entries or {}) | set(target.side_pot_entries or {})}
+    target.amount_paid = round(float(source.amount_paid or 0) + float(target.amount_paid or 0), 2)
+    target.full_name = (payload.full_name or target.full_name or source.full_name).strip()
+    target.usbc_number = _normalize_usbc(payload.usbc_number if payload.usbc_number is not None else (target.usbc_number or source.usbc_number))
+    target.average = payload.average if payload.average is not None else (target.average if target.average is not None else source.average)
+    target.lane = target.lane or source.lane
+    target.division = target.division or source.division
+    target.bowler_profile_id = target.bowler_profile_id or source.bowler_profile_id
+
+    if source_score:
+        if target_score:
+            for field in ("game1_scratch", "game1_with_handicap", "game2_scratch", "game2_with_handicap", "game3_scratch", "game3_with_handicap"):
+                if getattr(target_score, field) is None:
+                    setattr(target_score, field, getattr(source_score, field))
+            db.query(models.ScoreCorrection).filter_by(score_id=source_score.id).update({"score_id": target_score.id, "player_id": target.id}, synchronize_session=False)
+            db.delete(source_score)
+        else:
+            source_score.player_id = target.id
+            db.query(models.ScoreCorrection).filter_by(score_id=source_score.id).update({"player_id": target.id}, synchronize_session=False)
+
+    db.query(models.BracketWinner).filter_by(tournament_id=tournament_id, player_id=source.id).update({"player_id": target.id, "player_name": target.full_name}, synchronize_session=False)
+    db.query(models.BracketPayout).filter_by(tournament_id=tournament_id, player_id=source.id).update({"player_id": target.id, "player_name": target.full_name}, synchronize_session=False)
+    matchup_rows = db.query(models.FirstRoundMatchupHistory).filter(models.FirstRoundMatchupHistory.tournament_id == tournament_id).all()
+    for row in matchup_rows:
+        next_left = target.id if row.left_player_id == source.id else row.left_player_id
+        next_right = target.id if row.right_player_id == source.id else row.right_player_id
+        if next_left == next_right:
+            db.delete(row)
+        else:
+            row.left_player_id, row.right_player_id = next_left, next_right
+    for snapshot in db.query(models.BracketSnapshot).filter_by(tournament_id=tournament_id).all():
+        snapshot.payload = _replace_snapshot_player_ids(snapshot.payload, source.id, target.id)
+    db.query(models.DuplicatePlayerResolution).filter(
+        models.DuplicatePlayerResolution.tournament_id == tournament_id,
+        ((models.DuplicatePlayerResolution.left_player_id == source.id) | (models.DuplicatePlayerResolution.right_player_id == source.id)),
+    ).delete(synchronize_session=False)
+    db.delete(source)
+    reset_payouts_if_needed(db, tournament_id, target.squad_id)
+    record_tournament_event(
+        db, tournament_id=tournament_id, event_type="players.merged", user=current_user,
+        summary=f"Merged {source.full_name} into {target.full_name}", reason=payload.reason.strip(),
+        before_values=before_values, after_values={"target": _player_duplicate_payload(target), "removed_player_id": source.id},
+        entity_type="player", entity_id=target.id,
+    )
+    db.commit()
+    return {"target": _player_duplicate_payload(target), "removed_player_id": payload.source_player_id}
 
 
 class BulkBowlerUpdate(BaseModel):
@@ -370,6 +595,7 @@ def bulk_update_bowlers(
         return {"updated": 0}
 
     count = 0
+    changed_tournament_ids: set[int] = set()
     reset_tournament_id: int | None = None
     reset_squad_id: int | None = None
     for item in updates:
@@ -386,6 +612,7 @@ def bulk_update_bowlers(
         if reset_tournament_id is None:
             reset_tournament_id = bowler.tournament_id
             reset_squad_id = bowler.squad_id
+        changed_tournament_ids.add(bowler.tournament_id)
 
         identity_changed = ("full_name" in data) or ("usbc_number" in data)
         profile_to_sync: models.BowlerProfileModel | None = None
@@ -423,8 +650,6 @@ def bulk_update_bowlers(
 
         if data:
             statement = sa_update(models.Bowler).where(models.Bowler.id == item.id)
-            if not _user_can_manage_all(current_user):
-                statement = statement.where(models.Bowler.user_id == current_user.id)
             db.execute(
                 statement
                 .values(**data)
@@ -438,6 +663,16 @@ def bulk_update_bowlers(
 
     if count > 0 and reset_tournament_id is not None:
         reset_payouts_if_needed(db, reset_tournament_id, reset_squad_id)
+        for tournament_id in changed_tournament_ids:
+            record_tournament_event(
+                db,
+                tournament_id=tournament_id,
+                event_type="players.bulk_updated",
+                user=current_user,
+                summary=f"Updated {count} player records",
+                after_values={"updated_count": count},
+                entity_type="player",
+            )
     db.commit()
     return {"updated": count}
 
@@ -459,6 +694,11 @@ def update_bowler(
     bowler = _get_accessible_bowler(db, bowler_id, current_user)
     if not bowler:
         raise HTTPException(status_code=404, detail="Bowler not found or access denied")
+    before_values = {
+        key: getattr(bowler, key, None)
+        for key in update_data
+        if key not in {"bowler_profile_id", "handicap_pins"}
+    }
 
     if "full_name" in update_data or "usbc_number" in update_data:
         desired_full_name = update_data.get("full_name", bowler.full_name)
@@ -492,10 +732,28 @@ def update_bowler(
             update_data["handicap_pins"] = max(0, int((t_settings.handicap_base - update_data["average"]) * (t_settings.handicap_percentage / 100)))
 
     statement = sa_update(models.Bowler).where(models.Bowler.id == bowler_id)
-    if not _user_can_manage_all(current_user):
-        statement = statement.where(models.Bowler.user_id == current_user.id)
-
     result = db.execute(statement.values(**update_data))
+    changed_fields = set(update_data)
+    if "amount_paid" in changed_fields:
+        event_type = "player.payment_status_changed"
+        summary = f"Updated payment for {bowler.full_name}"
+    elif "side_pot_entries" in changed_fields:
+        event_type = "player.side_pot_entry_changed"
+        summary = f"Updated side-pot entries for {bowler.full_name}"
+    else:
+        event_type = "player.updated"
+        summary = f"Updated player {bowler.full_name}"
+    record_tournament_event(
+        db,
+        tournament_id=bowler.tournament_id,
+        event_type=event_type,
+        user=current_user,
+        summary=summary,
+        before_values=before_values,
+        after_values={key: value for key, value in update_data.items() if key not in {"bowler_profile_id", "handicap_pins"}},
+        entity_type="player",
+        entity_id=bowler_id,
+    )
     db.commit()
 
     if result.rowcount == 0:
@@ -513,6 +771,7 @@ def delete_bowler(bowler_id: int, db: Session = Depends(get_db), current_user: m
 
     bowler_tournament_id = bowler.tournament_id
     bowler_squad_id = bowler.squad_id
+    bowler_name = bowler.full_name
     reset_payouts_if_needed(db, bowler_tournament_id, bowler_squad_id)
     # Delete FK-dependent records first
     db.query(models.BracketPayout).filter(models.BracketPayout.player_id == bowler_id).delete()
@@ -540,6 +799,17 @@ def delete_bowler(bowler_id: int, db: Session = Depends(get_db), current_user: m
                 profile.is_active = False
                 profile.archived_at = datetime.now(timezone.utc)
                 profile.updated_at = datetime.now(timezone.utc)
+
+    record_tournament_event(
+        db,
+        tournament_id=bowler_tournament_id,
+        event_type="player.deleted",
+        user=current_user,
+        summary=f"Deleted player {bowler_name}",
+        before_values={"full_name": bowler_name, "squad_id": bowler_squad_id},
+        entity_type="player",
+        entity_id=bowler_id,
+    )
 
     db.commit()
     return {"message": "Bowler deleted successfully"}

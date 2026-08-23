@@ -281,6 +281,22 @@
 .announcementCardFooter > span { color: var(--bw-text-muted); font-size: .7rem; }
 .announcementCard p { margin: 10px 0; color: var(--bw-text-body); font-size: .78rem; line-height: 1.5; white-space: pre-wrap; }
 .operationNote { padding: 10px 14px; border-bottom: 1px solid var(--bw-border-card); background: var(--bw-surface-panel); color: var(--bw-text-muted); font-size: .72rem; }
+.healthGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding: 14px; }
+.healthCard { display: grid; gap: 7px; padding: 14px; border: 1px solid var(--bw-border-card); border-radius: var(--radius-lg); background: var(--bw-surface-panel); }
+.healthCard > span { color: var(--bw-text-muted); font-size: .7rem; text-transform: uppercase; }
+.healthCard strong { color: var(--bw-text-title); font-size: .88rem; }
+.healthCard i { width: fit-content; padding: 3px 7px; border-radius: 999px; color: var(--bw-text-success); background: color-mix(in srgb, var(--bw-text-success) 12%, transparent); font-size: .62rem; font-style: normal; }
+.healthCard i[data-tone="warning"] { color: var(--color-warning); background: color-mix(in srgb, var(--color-warning) 12%, transparent); }
+.healthCard i[data-tone="unhealthy"] { color: var(--bw-text-danger); background: color-mix(in srgb, var(--bw-text-danger) 12%, transparent); }
+.healthMeta { display: flex; flex-wrap: wrap; gap: 8px 18px; padding: 0 14px 14px; color: var(--bw-text-muted); font-size: .7rem; }
+.healthServiceList { display: grid; padding: 0 14px 14px; }
+.healthServiceList > div { display: grid; gap: 3px; padding: 10px; border: 1px solid var(--bw-border-subtle); color: var(--bw-text-muted); font-size: .72rem; }
+.healthServiceList strong { color: var(--bw-text-title); text-transform: capitalize; }
+.healthError { color: var(--bw-text-danger); }
+.healthErrorList { display: grid; gap: 8px; padding: 0 14px 14px; }
+.healthErrorList article { padding: 10px; border: 1px solid var(--bw-border-subtle); border-radius: 8px; background: var(--bw-surface-panel); }
+.healthErrorList article > div { display: flex; justify-content: space-between; gap: 10px; color: var(--bw-text-muted); font-size: .7rem; }
+.healthErrorList p { margin: 7px 0 0; color: var(--bw-text-body); font-size: .75rem; white-space: pre-wrap; }
 .auditDetails summary { color: var(--bw-text-accent); cursor: pointer; font-weight: 750; }
 .auditDetails pre { width: min(420px, 70vw); max-height: 220px; overflow: auto; margin: 8px 0 0; padding: 9px; border: 1px solid var(--bw-border-subtle); border-radius: 8px; background: var(--bw-page); color: var(--bw-text-muted); font-size: .68rem; white-space: pre-wrap; }
 
@@ -324,6 +340,7 @@
   .changelogFormActions button { width: 100%; min-height: 40px; }
   .userStatusPanel { position: fixed; inset: auto 12px 12px; width: auto; }
   .announcementOptions { grid-template-columns: 1fr; }
+  .healthGrid { grid-template-columns: 1fr; }
   .announcementCardHeader,
   .announcementCardFooter { align-items: flex-start; flex-direction: column; }
   .reviewFormGrid { grid-template-columns: 1fr; }

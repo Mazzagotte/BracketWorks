@@ -14,8 +14,10 @@ from app.middleware import (
 )
 from app.api.deps import SessionLocal
 from app.services.account_cleanup import deactivate_stale_unverified_accounts
+from app.services.operational_health import BACKEND_VERSION, install_error_capture, mark_background_job
 
 logger = logging.getLogger(__name__)
+install_error_capture()
 
 
 async def _account_cleanup_loop() -> None:
@@ -24,9 +26,11 @@ async def _account_cleanup_loop() -> None:
             db = SessionLocal()
             try:
                 deactivate_stale_unverified_accounts(db)
+                mark_background_job("account_cleanup", status="healthy")
             finally:
                 db.close()
-        except Exception:
+        except Exception as exc:
+            mark_background_job("account_cleanup", status="failed", error=str(exc))
             logger.exception("Scheduled stale account cleanup failed")
         await asyncio.sleep(settings.ACCOUNT_CLEANUP_INTERVAL_SECONDS)
 
@@ -40,7 +44,7 @@ async def lifespan(_app: FastAPI):
         cleanup_task.cancel()
         await asyncio.gather(cleanup_task, return_exceptions=True)
 
-app = FastAPI(title="BracketWorks API", version="0.0.1", redirect_slashes=False, lifespan=lifespan)
+app = FastAPI(title="BracketWorks API", version=BACKEND_VERSION, redirect_slashes=False, lifespan=lifespan)
 
 
 def _split_csv(value: str) -> list[str]:
@@ -77,7 +81,7 @@ app.middleware("http")(create_security_headers_middleware())
 async def root():
     return {
         "message": "BracketWorks API is running!",
-        "version": "0.0.1",
+        "version": BACKEND_VERSION,
         "status": "healthy",
     }
 

@@ -16,6 +16,7 @@ export function AdminTabNav({ activeTab, isDevelopment, onTabChange }: AdminTabN
     "announcements",
     "messages",
     "operations",
+    "health",
     "audit",
     "changelog",
     ...(isDevelopment ? ["database" as AdminTab] : []),

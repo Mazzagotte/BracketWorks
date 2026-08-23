@@ -71,7 +71,7 @@ export function AdminTournamentsSection({
             aria-label="Search tournaments"
             value={tournamentSearch}
             onChange={(event) => onTournamentSearchChange(event.target.value)}
-            placeholder="Search name, owner, location"
+            placeholder="Search ID, name, owner, location"
           />
         )}
         right={(
@@ -160,6 +160,11 @@ export function AdminTournamentsSection({
                               <div><strong>Scores:</strong> {tournament.score_count}</div>
                               <div><strong>Payouts:</strong> {tournament.payout_count}</div>
                               <div><strong>Snapshots:</strong> {tournament.snapshot_count}</div>
+                              <div><strong>Workflow:</strong> {tournament.workflow_status.replace(/_/g, " ")}</div>
+                              <div><strong>Staff:</strong> {tournament.staff_count}</div>
+                              <div><strong>Brackets:</strong> {tournament.bracket_state.replace(/_/g, " ")}</div>
+                              <div><strong>Score state:</strong> {tournament.score_state.replace(/_/g, " ")}{tournament.scores_locked ? " (locked)" : ""}</div>
+                              <div><strong>Payout state:</strong> {tournament.payout_state.replace(/_/g, " ")}</div>
                               <div><strong>Owner Email:</strong> {tournament.owner_email}</div>
                               <div><strong>Last bracket activity:</strong> {formatAdminTimestamp(tournament.last_activity_at, "None")}</div>
                               <div><strong>Last admin change:</strong> {formatAdminTimestamp(tournament.last_admin_change_at, "None")}</div>
@@ -167,6 +172,14 @@ export function AdminTournamentsSection({
                             {tournament.archive_reason && (
                               <div className={styles.detailNote}>Archive reason: {tournament.archive_reason}</div>
                             )}
+                            <div className={styles.detailNote}>
+                              <strong>Tournament staff</strong>
+                              {tournament.staff.length === 0 ? <div>Owner only</div> : tournament.staff.map(member => <div key={member.user_id}>{member.name || member.username} (@{member.username}) · {member.role.replace(/_/g, " ")}</div>)}
+                            </div>
+                            <div className={styles.detailNote}>
+                              <strong>Recent tournament activity</strong>
+                              {tournament.recent_audit_events.length === 0 ? <div>None recorded</div> : tournament.recent_audit_events.map(event => <div key={event.id}>{formatAdminTimestamp(event.created_at, "Unknown")} · {event.summary} · {event.user_display_name}</div>)}
+                            </div>
                             <div className={styles.detailLinks}>
                               <a className={styles.linkBtn} href={`/view/${tournament.id}`} target="_blank" rel="noreferrer">Open Bowler View</a>
                             </div>

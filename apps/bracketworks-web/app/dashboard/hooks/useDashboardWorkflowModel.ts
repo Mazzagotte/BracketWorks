@@ -72,6 +72,8 @@ type UseDashboardWorkflowModelArgs<TProgramSummary extends ProgramSummaryLike> =
   onOpenSquadSelector: () => void;
   onChangeTournament: () => void;
   onUnloadTournament: () => void;
+  onArchiveTournament?: () => void;
+  onRestoreTournament?: () => void;
 };
 
 export function useDashboardWorkflowModel<TProgramSummary extends ProgramSummaryLike>({
@@ -97,11 +99,15 @@ export function useDashboardWorkflowModel<TProgramSummary extends ProgramSummary
   onOpenSquadSelector,
   onChangeTournament,
   onUnloadTournament,
+  onArchiveTournament = () => undefined,
+  onRestoreTournament = () => undefined,
 }: UseDashboardWorkflowModelArgs<TProgramSummary>) {
   const hasGeneratedBrackets = workflowStatus?.has_generated_brackets ?? tournamentBracketsConfigured;
   const hasPayoutSummary = workflowStatus?.has_payout_summary ?? false;
   const payoutsFinalized = workflowStatus?.payouts_finalized ?? false;
   const scoresLocked = workflowStatus?.scores_locked ?? payoutsFinalized;
+  const isReadOnly = workflowStatus?.read_only ?? false;
+  const isArchived = workflowStatus?.lifecycle_status === 'archived';
   const payoutsNotFinalizedCount = loadedEntries > 0 && !payoutsFinalized ? 1 : 0;
   const bracketsNotGeneratedCount = hasGeneratedBrackets ? 0 : 1;
 
@@ -120,7 +126,7 @@ export function useDashboardWorkflowModel<TProgramSummary extends ProgramSummary
       label: 'Add Player',
       indicator: '›',
       onClick: onGoPlayers,
-      disabled: false,
+      disabled: isReadOnly,
     });
   }
   if (hasGeneratedBrackets) {
@@ -152,7 +158,7 @@ export function useDashboardWorkflowModel<TProgramSummary extends ProgramSummary
           label: scoreProgress.entered > 0 ? 'Continue Score Entry' : 'Enter Scores',
           message: scoreProgress.entered > 0 ? 'Scoring is in progress.' : 'Brackets are ready for score entry.',
           onClick: onGoScores,
-          disabled: false,
+          disabled: isReadOnly,
           showScoreProgress: true,
         };
       }
@@ -163,7 +169,7 @@ export function useDashboardWorkflowModel<TProgramSummary extends ProgramSummary
           label: 'Calculate Payouts',
           message: 'All scores are complete. Calculate and review tournament payouts.',
           onClick: onGoPayouts,
-          disabled: false,
+          disabled: isReadOnly,
           showScoreProgress: false,
         };
       }
@@ -173,7 +179,7 @@ export function useDashboardWorkflowModel<TProgramSummary extends ProgramSummary
         label: 'Review and Finalize Payouts',
         message: 'Payouts have been calculated and are ready for final review.',
         onClick: onGoPayouts,
-        disabled: false,
+        disabled: isReadOnly,
         showScoreProgress: false,
       };
     }
@@ -184,7 +190,7 @@ export function useDashboardWorkflowModel<TProgramSummary extends ProgramSummary
         label: 'Complete Tournament Setup',
         message: 'Add at least one squad before adding entries.',
         onClick: onOpenEditTournament,
-        disabled: false,
+        disabled: isReadOnly,
         showScoreProgress: false,
       };
     }
@@ -195,7 +201,7 @@ export function useDashboardWorkflowModel<TProgramSummary extends ProgramSummary
         label: 'Complete Bracket Setup',
         message: 'Choose a valid bracket size and confirm tournament settings.',
         onClick: onOpenSettings,
-        disabled: false,
+        disabled: isReadOnly,
         showScoreProgress: false,
       };
     }
@@ -206,7 +212,7 @@ export function useDashboardWorkflowModel<TProgramSummary extends ProgramSummary
         label: 'Add Players',
         message: 'Add tournament entries before generating brackets.',
         onClick: onGoPlayers,
-        disabled: false,
+        disabled: isReadOnly,
         showScoreProgress: false,
       };
     }
@@ -217,7 +223,7 @@ export function useDashboardWorkflowModel<TProgramSummary extends ProgramSummary
         label: 'Review Entries',
         message: `Resolve entry issues before generating brackets: ${workflowBlockerSummary}.`,
         onClick: onGoPlayers,
-        disabled: false,
+        disabled: isReadOnly,
         showScoreProgress: false,
       };
     }
@@ -227,7 +233,7 @@ export function useDashboardWorkflowModel<TProgramSummary extends ProgramSummary
       label: 'Generate Brackets',
       message: 'Setup and entries are ready. Generate brackets to begin play.',
       onClick: onGoBrackets,
-      disabled: false,
+      disabled: isReadOnly,
       showScoreProgress: false,
     };
   }, [
@@ -235,6 +241,7 @@ export function useDashboardWorkflowModel<TProgramSummary extends ProgramSummary
     hasGeneratedBrackets,
     hasPayoutSummary,
     hasWorkflowSetupBlockers,
+    isReadOnly,
     loadedEntries,
     onGoBrackets,
     onGoPayouts,
@@ -254,19 +261,19 @@ export function useDashboardWorkflowModel<TProgramSummary extends ProgramSummary
       key: 'edit-tournament',
       label: 'Edit Tournament',
       onClick: onOpenEditTournament,
-      disabled: false,
+      disabled: isReadOnly,
     },
     {
       key: 'tournament-settings',
       label: 'Tournament Settings',
       onClick: onOpenSettings,
-      disabled: false,
+      disabled: isReadOnly,
     },
     {
       key: 'change-squad',
       label: 'Change Squad',
       onClick: onOpenSquadSelector,
-      disabled: squadsLength === 0,
+      disabled: isReadOnly || squadsLength === 0,
     },
   ];
 
@@ -280,6 +287,12 @@ export function useDashboardWorkflowModel<TProgramSummary extends ProgramSummary
   ];
 
   const dangerActions: DashboardAction[] = [
+    {
+      key: isArchived ? 'restore-tournament' : 'archive-tournament',
+      label: isArchived ? 'Restore Tournament' : 'Archive Tournament',
+      onClick: isArchived ? onRestoreTournament : onArchiveTournament,
+      disabled: false,
+    },
     {
       key: 'unload-tournament',
       label: 'Unload Tournament',
@@ -414,6 +427,7 @@ export function useDashboardWorkflowModel<TProgramSummary extends ProgramSummary
   return {
     hasGeneratedBrackets,
     hasPayoutSummary,
+    isReadOnly,
     payoutsFinalized,
     scoresLocked,
     payoutsNotFinalizedCount,

@@ -1,14 +1,23 @@
-import { Dispatch, SetStateAction, useCallback, useEffect, useRef } from 'react'
+import { Dispatch, SetStateAction, useCallback, useEffect, useRef, useState } from 'react'
 
 import { apiClient } from '../../lib/api'
 import { isAuthError } from '../../lib/errors'
 import { logger } from '../../lib/logger'
-import { getSelectedSquadId } from '../../lib/selection-session'
+import { getSelectedSquadId, resolveSquadSelection, setActiveSquadLabel, setSelectedSquad } from '../../lib/selection-session'
 import { BracketProgramDefinition, BracketSettings, SidePotsSettings, Tournament, TournamentBootstrapResponse } from '../../lib/types'
 import { normalizeBracketPrograms } from '../../lib/bracketPrograms'
 import { Squad } from '../types'
 
 const ENTRY_FEE_REFETCH_COOLDOWN_MS = 30_000
+
+function configuredSquadCount(tournament: Tournament | null | undefined): number {
+  const squadTimes = tournament?.squad_times
+  if (!squadTimes || typeof squadTimes !== 'object') return 0
+  return Object.values(squadTimes).reduce(
+    (count, times) => count + (Array.isArray(times) ? times.filter(time => typeof time === 'string' && time.trim()).length : 0),
+    0,
+  )
+}
 
 type UsePlayerTournamentSetupArgs = {
   isAuthInitialized: boolean
@@ -42,6 +51,7 @@ export function usePlayerTournamentSetup({
   setSquads,
 }: UsePlayerTournamentSetupArgs) {
   const lastEntryFeeFetchRef = useRef(0)
+  const [isTournamentSetupLoading, setIsTournamentSetupLoading] = useState(true)
 
   const loadEntryFee = useCallback(async () => {
     if (!authToken) {
@@ -125,6 +135,8 @@ export function usePlayerTournamentSetup({
   }, [loadEntryFee])
 
   useEffect(() => {
+    let isActive = true
+
     const fetchSquadData = async () => {
       const bootstrapStarted = performance.now()
 
@@ -134,10 +146,23 @@ export function usePlayerTournamentSetup({
           return
         }
 
-        const bootstrap = await apiClient.get<TournamentBootstrapResponse>(
+        let bootstrap = await apiClient.get<TournamentBootstrapResponse>(
           `/api/v1/tournaments/bootstrap?tournament_id=${lastTournamentId}`,
           false,
         )
+
+        // Older tournaments can have a configured time without its canonical
+        // squad row. Repair that mismatch once so every workspace receives a
+        // real squad ID rather than falling back to a storage-only selection.
+        if ((bootstrap?.squads?.length ?? 0) === 0 && configuredSquadCount(bootstrap?.tournament) === 1) {
+          await apiClient.post(`/api/v1/squads/sync/${lastTournamentId}`, {
+            squad_times: bootstrap?.tournament?.squad_times,
+          })
+          bootstrap = await apiClient.get<TournamentBootstrapResponse>(
+            `/api/v1/tournaments/bootstrap?tournament_id=${lastTournamentId}`,
+            false,
+          )
+        }
 
         const selectedData = bootstrap?.selected_squad ?? null
         const squadsData = (bootstrap?.squads ?? []).map(squad => ({
@@ -172,12 +197,11 @@ export function usePlayerTournamentSetup({
           loadSidePots(lastTournamentId)
         }
 
-        const storedSelectedSquadId = getSelectedSquadId()
-        const restoredSelectedSquadId = selectedData?.squad_id
-          ?? (storedSelectedSquadId ? Number(storedSelectedSquadId) : null)
-
-        if (restoredSelectedSquadId && squadsData.some(squad => squad.id === restoredSelectedSquadId)) {
-          setSelectedSquadId(restoredSelectedSquadId)
+        const resolvedSquad = resolveSquadSelection(squadsData, selectedData?.squad_id, getSelectedSquadId())
+        if (resolvedSquad) {
+          setSelectedSquadId(resolvedSquad.id)
+          setSelectedSquad(resolvedSquad.id)
+          setActiveSquadLabel([resolvedSquad.date, resolvedSquad.time].filter(Boolean).join(' '))
         } else {
           setSelectedSquadId(null)
         }
@@ -199,11 +223,21 @@ export function usePlayerTournamentSetup({
         } else {
           logger.error('Error fetching squad data:', error)
         }
+      } finally {
+        if (isActive) {
+          setIsTournamentSetupLoading(false)
+        }
       }
     }
 
     if (isAuthInitialized && authToken) {
       void fetchSquadData()
+    } else if (isAuthInitialized) {
+      setIsTournamentSetupLoading(false)
+    }
+
+    return () => {
+      isActive = false
     }
   }, [
     authToken,
@@ -222,6 +256,7 @@ export function usePlayerTournamentSetup({
   ])
 
   return {
+    isTournamentSetupLoading,
     loadEntryFee,
   }
 }

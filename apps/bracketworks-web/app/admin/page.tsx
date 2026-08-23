@@ -22,6 +22,7 @@ import {
   type AdminFeedbackMessage,
   type AdminChangelogEntry,
   type AdminOperation,
+  type AdminSystemHealth,
   type AdminTab,
   type AuditLogsResponse,
   type ChangelogFormState,
@@ -138,6 +139,8 @@ export default function AdminPage() {
   const [operations, setOperations] = useState<AdminOperation[]>([]);
   const [operationsLoading, setOperationsLoading] = useState(false);
   const [operationsNote, setOperationsNote] = useState("");
+  const [systemHealth, setSystemHealth] = useState<AdminSystemHealth | null>(null);
+  const [systemHealthLoading, setSystemHealthLoading] = useState(false);
   const [feedbackMessages, setFeedbackMessages] = useState<AdminFeedbackMessage[]>([]);
   const [feedbackLoading, setFeedbackLoading] = useState(false);
   const [feedbackNotes, setFeedbackNotes] = useState<Record<number, string>>({});
@@ -426,6 +429,15 @@ export default function AdminPage() {
     finally { setOperationsLoading(false); if (manual) setRefreshing(false); }
   }, [currentUser?.isAdmin]);
 
+  const loadSystemHealth = useCallback(async (manual = false) => {
+    if (!currentUser?.isAdmin) return;
+    if (manual) setRefreshing(true);
+    setSystemHealthLoading(true); setError(null);
+    try { setSystemHealth(await adminApi.getSystemHealth()); }
+    catch (err) { setError(err instanceof Error ? err.message : "Failed to load system health"); }
+    finally { setSystemHealthLoading(false); if (manual) setRefreshing(false); }
+  }, [currentUser?.isAdmin]);
+
   const loadFeedback = useCallback(async (manual = false) => {
     if (!currentUser?.isAdmin) return;
     if (manual) setRefreshing(true);
@@ -500,8 +512,9 @@ export default function AdminPage() {
     if (activeTab === "announcements") { await loadAnnouncements(manual); return; }
     if (activeTab === "messages") { await loadFeedback(manual); return; }
     if (activeTab === "operations") { await loadOperations(manual); return; }
+    if (activeTab === "health") { await loadSystemHealth(manual); return; }
     await loadAuditLogs(manual);
-  }, [activeTab, loadOverview, loadUsers, loadTournaments, loadTables, loadChangelog, loadAuditLogs, loadAnnouncements, loadFeedback, loadOperations]);
+  }, [activeTab, loadOverview, loadUsers, loadTournaments, loadTables, loadChangelog, loadAuditLogs, loadAnnouncements, loadFeedback, loadOperations, loadSystemHealth]);
 
   const refreshAfterMutation = useCallback(async ({
     overview = false,
@@ -1166,6 +1179,29 @@ export default function AdminPage() {
         </section>
       )}
 
+      {activeTab === "health" && (
+        <section className={styles.panel}>
+          <div className={styles.panelHeader}><div><h3 className={styles.panelTitle}>System Health</h3><span className={styles.panelSubtle}>Live operational checks for administrators</span></div><button type="button" className={styles.actionBtn} disabled={systemHealthLoading} onClick={() => void loadSystemHealth(true)}>{systemHealthLoading ? "Checking..." : "Run Checks"}</button></div>
+          {systemHealthLoading && !systemHealth ? <div className={styles.placeholder} role="status">Checking services...</div> : systemHealth ? <>
+            <div className={styles.healthGrid}>
+              {[
+                ["Frontend", process.env.NEXT_PUBLIC_APP_VERSION || "1.0.0", "healthy"],
+                ["Backend", systemHealth.backend_version, "healthy"],
+                ["API", systemHealth.api.status, systemHealth.api.status],
+                ["Database", systemHealth.database.status, systemHealth.database.status],
+                ["Email", `${systemHealth.email.status} · ${systemHealth.email.provider}`, systemHealth.email.status === "configured" ? "healthy" : "warning"],
+                ["Background Jobs", `${systemHealth.background_jobs.running} running · ${systemHealth.background_jobs.failed} failed`, systemHealth.background_jobs.failed ? "unhealthy" : "healthy"],
+              ].map(([label, value, tone]) => <div className={styles.healthCard} key={label}><span>{label}</span><strong>{value}</strong><i data-tone={tone}>{tone === "healthy" ? "Operational" : tone === "warning" ? "Attention" : "Issue"}</i></div>)}
+            </div>
+            <div className={styles.healthMeta}><span>Environment: {systemHealth.environment}</span><span>Process started: {formatAdminTimestamp(systemHealth.process_started_at, "Unknown")}</span><span>Last deployment: {formatAdminTimestamp(systemHealth.last_deployment, "Not reported")}</span><span>Checked: {formatAdminTimestamp(systemHealth.checked_at, "Unknown")}</span></div>
+            <div className={styles.panelHeader}><h4 className={styles.panelTitle}>Background Services</h4></div>
+            <div className={styles.healthServiceList}>{Object.entries(systemHealth.background_jobs.runtime).map(([name, job]) => <div key={name}><strong>{name.replace(/_/g, " ")}</strong><span>{job.status} · Last run {formatAdminTimestamp(job.last_run_at, "Pending")}</span>{job.last_error && <span className={styles.healthError}>{job.last_error}</span>}</div>)}</div>
+            <div className={styles.panelHeader}><h4 className={styles.panelTitle}>Recent Application Errors</h4><span className={styles.panelSubtle}>{systemHealth.recent_errors.length} retained in this process</span></div>
+            {systemHealth.recent_errors.length === 0 ? <div className={styles.placeholder}>No recent application errors recorded.</div> : <div className={styles.healthErrorList}>{systemHealth.recent_errors.map((item, index) => <article key={`${item.timestamp}-${index}`}><div><strong>{item.level} · {item.logger}</strong><time>{formatAdminTimestamp(item.timestamp, "Unknown")}</time></div><p>{item.message}</p></article>)}</div>}
+          </> : <div className={styles.placeholder}>Health information is unavailable.</div>}
+        </section>
+      )}
+
       {noteTournament && (
         <div className={styles.modalOverlay} onClick={() => setNoteTournament(null)}>
           <div className={`${styles.modal} ${styles.reviewModal}`} role="dialog" aria-modal="true" aria-label={`Administrative notes for ${noteTournament.name}`} onClick={event => event.stopPropagation()}>
@@ -1256,11 +1292,20 @@ export default function AdminPage() {
                     <h4>Account details</h4>
                     <div className={styles.detailGrid}>
                       <div><strong>Name:</strong> {reviewDetail.user.name}</div><div><strong>Email:</strong> {reviewDetail.user.email}</div>
-                      <div><strong>Created:</strong> {formatAdminTimestamp(reviewDetail.user.created_at, "Unknown")}</div><div><strong>Last login:</strong> {formatAdminTimestamp(reviewUser.last_login_at)}</div>
+                      <div><strong>Status:</strong> {reviewDetail.user.is_active ? "Active" : "Inactive"}</div><div><strong>Created:</strong> {formatAdminTimestamp(reviewDetail.user.created_at, "Unknown")}</div>
+                      <div><strong>Last login:</strong> {formatAdminTimestamp(reviewDetail.user.last_login_at, "Never")}</div><div><strong>Last activity:</strong> {formatAdminTimestamp(reviewDetail.user.last_activity_at, "Never")}</div>
                       <div><strong>Verification:</strong> {reviewDetail.user.email_verified ? formatAdminTimestamp(reviewDetail.user.email_verified_at, "Verified") : "Unverified"}</div>
                       <div><strong>Development notice:</strong> {reviewDetail.user.dev_notice_version_accepted || "Not acknowledged"}</div>
                       <div><strong>Active sessions:</strong> {reviewUser.active_session_count}</div><div><strong>Failed logins:</strong> {reviewUser.failed_login_count}</div>
                     </div>
+                  </section>
+                  <section className={styles.reviewSection}>
+                    <h4>Owned tournaments</h4>
+                    {reviewDetail.owned_tournaments.length === 0 ? <div className={styles.reviewEmpty}>No owned tournaments.</div> : <div className={styles.activityList}>{reviewDetail.owned_tournaments.map(item => <div className={styles.activityRow} key={item.id}><div><strong>{item.name}</strong><span>Tournament #{item.id}</span></div><span>{item.lifecycle_status.replace(/_/g, " ")}</span></div>)}</div>}
+                  </section>
+                  <section className={styles.reviewSection}>
+                    <h4>Staff memberships</h4>
+                    {reviewDetail.staff_memberships.length === 0 ? <div className={styles.reviewEmpty}>No tournament staff memberships.</div> : <div className={styles.activityList}>{reviewDetail.staff_memberships.map(item => <div className={styles.activityRow} key={item.tournament_id}><div><strong>{item.tournament_name}</strong><span>Tournament #{item.tournament_id}</span></div><div><span>{item.role.replace(/_/g, " ")}</span><span>Since {formatAdminTimestamp(item.created_at, "Unknown")}</span></div></div>)}</div>}
                   </section>
                   <section className={styles.reviewSection}>
                     <h4>Add internal review item</h4>

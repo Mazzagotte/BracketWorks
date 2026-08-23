@@ -5,13 +5,15 @@ import { useRouter } from 'next/navigation'
 import { Tournament, Squad } from '../../lib/types'
 import { storage } from '../../lib/storage'
 import { getPayoutUnlockKey, getScoresLockKey } from '../../lib/storageKeys'
+import { apiClient } from '../../lib/api'
+import { handleApiError } from '../../lib/errors'
 
 type AddToast = (args: { message: string; type: 'success' | 'warning' | 'error'; duration?: number }) => void
 
 export interface UseScoreLockResult {
   isScoresLocked: boolean
-  unlockScoresTable: () => void
-  unlockPayoutsAndGo: () => void
+  unlockScoresTable: () => Promise<void>
+  unlockPayoutsAndGo: () => Promise<void>
 }
 
 /**
@@ -32,15 +34,29 @@ export function useScoreLock(
     const tournamentId = tournament?.id ?? null
     const squadId = selectedSquad?.id ?? null
     const lockKey = getScoresLockKey(tournamentId, squadId)
-    if (!lockKey) { setIsScoresLocked(false); return }
-    setIsScoresLocked(storage.getItem(lockKey) === '1')
+    if (!lockKey || !tournamentId) { setIsScoresLocked(false); return }
+    let active = true
+    apiClient.get<{ scores_locked: boolean }>(`/api/v1/tournament-lifecycle/${tournamentId}`, false)
+      .then(result => {
+        if (!active) return
+        setIsScoresLocked(result.scores_locked)
+        if (result.scores_locked) storage.setItem(lockKey, '1'); else storage.removeItem(lockKey)
+      })
+      .catch(() => { if (active) setIsScoresLocked(storage.getItem(lockKey) === '1') })
+    return () => { active = false }
   }, [tournament, selectedSquad])
 
-  const unlockPayoutsAndGo = useCallback(() => {
+  const unlockPayoutsAndGo = useCallback(async () => {
     const tournamentId = tournament?.id ?? null
     const squadId = selectedSquad?.id ?? null
 
     if (tournamentId) {
+      try {
+        await apiClient.post(`/api/v1/scores/${tournamentId}/lock`, { reason: 'Scores confirmed for payout calculation' })
+      } catch (error) {
+        addToast({ message: handleApiError(error).message, type: 'error', duration: 5000 })
+        return
+      }
       const unlockKey = getPayoutUnlockKey(tournamentId, squadId)
       const lockKey = getScoresLockKey(tournamentId, squadId)
       if (unlockKey) storage.setItem(unlockKey, '1')
@@ -50,12 +66,25 @@ export function useScoreLock(
 
     sessionStorage.setItem('payouts_unlocked', '1')
     router.push('/payouts')
-  }, [router, selectedSquad, tournament])
+  }, [addToast, router, selectedSquad, tournament])
 
-  const unlockScoresTable = useCallback(() => {
+  const unlockScoresTable = useCallback(async () => {
     const tournamentId = tournament?.id ?? null
     const squadId = selectedSquad?.id ?? null
     if (!tournamentId) return
+
+    if (!window.confirm('Unlock scores? Existing payouts may be invalidated and score changes will be audited.')) return
+    const reason = window.prompt('Reason for unlocking scores:')?.trim()
+    if (!reason) {
+      addToast({ message: 'A reason is required to unlock scores.', type: 'warning', duration: 3500 })
+      return
+    }
+    try {
+      await apiClient.post(`/api/v1/scores/${tournamentId}/unlock`, { reason })
+    } catch (error) {
+      addToast({ message: handleApiError(error).message, type: 'error', duration: 5000 })
+      return
+    }
 
     const lockKey = getScoresLockKey(tournamentId, squadId)
     const payoutKey = getPayoutUnlockKey(tournamentId, squadId)
