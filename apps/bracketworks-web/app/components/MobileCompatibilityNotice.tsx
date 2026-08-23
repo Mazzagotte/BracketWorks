@@ -6,6 +6,7 @@ import buttonStyles from '../styles/buttons.module.css'
 import modalStyles from '../styles/modals.module.css'
 import styles from './MobileCompatibilityNotice.module.css'
 import { MOBILE_VIEWPORT_QUERY } from '../lib/responsive'
+import { useMediaQuery } from '../hooks/useMediaQuery'
 import { setBodyInteractionState } from '../utils/modalUtils'
 
 export const MOBILE_NOTICE_STORAGE_KEY = 'bracketworks-mobile-notice-dismissed'
@@ -26,6 +27,7 @@ export function isMobileCompatibilityNoticeRoute(pathname: string): boolean {
 
 export function useMobileCompatibilityNotice(pathname: string) {
   const eligible = isMobileCompatibilityNoticeRoute(pathname)
+  const isMobileViewport = useMediaQuery(MOBILE_NOTICE_MEDIA_QUERY)
   const [isOpen, setIsOpen] = useState(false)
 
   useEffect(() => {
@@ -34,16 +36,10 @@ export function useMobileCompatibilityNotice(pathname: string) {
       return undefined
     }
 
-    const mediaQuery = window.matchMedia(MOBILE_NOTICE_MEDIA_QUERY)
-    const syncNotice = () => {
-      const dismissed = window.sessionStorage.getItem(MOBILE_NOTICE_STORAGE_KEY) === 'true'
-      setIsOpen(mediaQuery.matches && !dismissed)
-    }
-
-    syncNotice()
-    mediaQuery.addEventListener('change', syncNotice)
-    return () => mediaQuery.removeEventListener('change', syncNotice)
-  }, [eligible])
+    const dismissed = window.sessionStorage.getItem(MOBILE_NOTICE_STORAGE_KEY) === 'true'
+    setIsOpen(isMobileViewport && !dismissed)
+    return undefined
+  }, [eligible, isMobileViewport])
 
   const dismiss = useCallback(() => {
     if (typeof window !== 'undefined') {

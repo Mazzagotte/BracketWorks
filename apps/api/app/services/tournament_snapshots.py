@@ -7,21 +7,7 @@ from sqlalchemy import DateTime, func
 from sqlalchemy.orm import Session
 
 from ..core import models
-
-ROW_MODELS = (
-    models.TournamentSquad,
-    models.TournamentPlayer,
-    models.DuplicatePlayerResolution,
-    models.TournamentBracketSettings,
-    models.PlayerScore,
-    models.ScoreCorrection,
-    models.BracketSnapshot,
-    models.BracketWinner,
-    models.BracketPayout,
-    models.TournamentPayoutSummary,
-    models.PayoutAdjustment,
-    models.FirstRoundMatchupHistory,
-)
+from .tournament_state import AUTHORITATIVE_TOURNAMENT_ROW_MODELS
 
 DELETE_ORDER = (
     models.PayoutAdjustment,
@@ -35,8 +21,21 @@ DELETE_ORDER = (
     models.DuplicatePlayerResolution,
     models.TournamentPlayer,
     models.TournamentBracketSettings,
+    models.TournamentSetupState,
     models.TournamentSquad,
 )
+
+# Authoritative state is restored exactly. Access control, audit history, and restore
+# points are intentionally preserved; no derived tournament tables require storage.
+SNAPSHOT_TABLE_CLASSIFICATION = {
+    "included_and_restored": tuple(model.__tablename__ for model in AUTHORITATIVE_TOURNAMENT_ROW_MODELS) + ("user_squad_selections",),
+    "intentionally_preserved": (
+        "tournament_staff_members", "tournament_staff_invitations",
+        "tournament_audit_logs", "tournament_restore_points",
+    ),
+    "intentionally_reset": (),
+    "derived_and_recalculated": (),
+}
 
 TOURNAMENT_FIELDS = (
     "name", "location", "start_date", "end_date", "squad_times", "is_public",
@@ -68,15 +67,23 @@ def create_restore_point(
     if not tournament:
         raise ValueError("Tournament not found")
     payload: dict[str, Any] = {
-        "version": 1,
+        "version": 2,
         "tournament": {field: _json_value(getattr(tournament, field)) for field in TOURNAMENT_FIELDS},
         "tables": {},
     }
-    for model in ROW_MODELS:
+    for model in AUTHORITATIVE_TOURNAMENT_ROW_MODELS:
         payload["tables"][model.__tablename__] = [
             _serialize_row(row)
             for row in db.query(model).filter(model.tournament_id == tournament_id).all()
         ]
+    squad_ids = [row[0] for row in db.query(models.TournamentSquad.id).filter_by(tournament_id=tournament_id).all()]
+    payload["tables"]["user_squad_selections"] = [
+        _serialize_row(row)
+        for row in db.query(models.UserSquadSelection).filter(
+            models.UserSquadSelection.tournament_squad_id.in_(squad_ids)
+        ).all()
+    ] if squad_ids else []
+    payload["classification"] = SNAPSHOT_TABLE_CLASSIFICATION
     watermark = db.query(func.max(models.TournamentAuditLog.id)).filter(
         models.TournamentAuditLog.tournament_id == tournament_id
     ).scalar()
@@ -118,8 +125,11 @@ def restore_snapshot_state(db: Session, restore_point: models.TournamentRestoreP
             value = datetime.fromisoformat(value)
         setattr(tournament, field, value)
 
-    model_by_table = {model.__tablename__: model for model in ROW_MODELS}
+    model_by_table = {model.__tablename__: model for model in AUTHORITATIVE_TOURNAMENT_ROW_MODELS}
     for model in reversed(DELETE_ORDER):
         for values in payload["tables"].get(model.__tablename__, []):
             db.add(_deserialize_row(model_by_table[model.__tablename__], values))
         db.flush()
+    for values in payload["tables"].get("user_squad_selections", []):
+        db.add(_deserialize_row(models.UserSquadSelection, values))
+    db.flush()

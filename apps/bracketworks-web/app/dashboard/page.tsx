@@ -27,7 +27,8 @@ import mobileStyles from './dashboard.module.css';
 import shellStyles from '../styles/page-shell.module.css';
 import { ConfirmationDialog } from '../components/LazyComponents';
 import { API, apiClient, apiFetch, getMemoryAccessToken } from '../lib/api';
-import { isPhoneWidth } from '../lib/responsive';
+import { MOBILE_VIEWPORT_QUERY } from '../lib/responsive';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 import { logger } from '../lib/logger';
 import { defaultBracketPrograms, normalizeBracketPrograms, summarizeEntries } from '../lib/bracketPrograms';
 import EnhancedButton from '../components/EnhancedButton';
@@ -198,7 +199,7 @@ export default function TournamentDashboard() {
   const [sidePots, setSidePots] = useState<SidePotsSettings>(() => isDemoDashboard ? DEMO_DASHBOARD_SIDE_POTS : createDefaultSidePots());
 
   // Mobile detection state
-  const [isMobile, setIsMobile] = useState(false);
+  const isMobile = useMediaQuery(MOBILE_VIEWPORT_QUERY);
   const [expandedCards, setExpandedCards] = useState<Record<DashboardCardKey, boolean>>(expandedDesktopCards);
 
   const toggleCard = (cardKey: DashboardCardKey) => {
@@ -791,18 +792,6 @@ export default function TournamentDashboard() {
 
     void runFetch();
   }, [addToast, isAdmin, loadModalOpen]);
-
-  // Mobile detection; tablets retain the wider layout inside the drawer shell.
-  useEffect(() => {
-    const checkMobile = () => {
-      const width = window.innerWidth;
-      setIsMobile(isPhoneWidth(width));
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
 
   const handleUnloadTournament = () => {
     unloadTournament();

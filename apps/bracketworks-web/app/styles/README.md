@@ -130,8 +130,13 @@ Examples:
 
 ## Responsive conventions
 
-- `900px`: compact desktop/tablet layout changes.
-- `640px`: mobile stacking and full-width controls.
+- `<= 767px`: phone presentation; `768px-1023px`: tablet; `>= 1024px`: desktop.
+- `900px`: named compact-content threshold for tables, dense forms, and controls
+  that cannot comfortably retain their wide layout across the full tablet tier.
+- `640px`: narrow mobile stacking and full-width controls.
 - `480px`: narrow-phone gutter and density adjustments only.
+- Use the constants and queries from `app/lib/responsive.ts` in JavaScript.
+- Component-fit thresholds such as `820px` or `980px` are acceptable when the
+  component has a documented intrinsic width requirement; they are not viewport tiers.
 - Use `--bw-page-gutter`, `--bw-page-gutter-mobile`, `--bw-stack-gap`, and
   `--bw-control-gap` instead of repeating page-level spacing values.

@@ -3,6 +3,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { AlertTriangle, CheckCircle2, Lock } from 'lucide-react';
 import { apiClient } from '../lib/api';
+import CloseControl from '../../components/CloseControl';
+import buttonStyles from '../styles/buttons.module.css';
+import modalStyles from '../styles/modals.module.css';
 import styles from './DevNoticeModal.module.css';
 
 export interface DevNoticeModalProps {
@@ -75,19 +78,20 @@ export default function DevNoticeModal({
   return (
     <div
       ref={overlayRef}
-      className={styles.overlay}
+      className={modalStyles.overlay}
       onClick={handleOverlayClick}
       role="dialog"
       aria-modal="true"
       aria-labelledby="dev-notice-title"
     >
-      <div className={styles.modal}>
+      <div className={`${modalStyles.modal} ${modalStyles.compactModal}`}>
+        {mode === 'view-only' && <CloseControl className={modalStyles.closeButton} position="absolute" size="sm" label="Close development notice" onClick={onClose} />}
         {/* Header */}
-        <div className={styles.header}>
+        <div className={`${modalStyles.header} ${styles.header}`}>
           <div className={styles.warningIcon} aria-hidden="true">
             <AlertTriangle size={18} strokeWidth={2.5} />
           </div>
-          <div className={styles.headerText}>
+          <div>
             <p className={styles.kicker}>
               {mode === 'require-acceptance' ? 'First Login — Development Notice (Required)' : 'Development Notice'}
             </p>
@@ -98,7 +102,7 @@ export default function DevNoticeModal({
         </div>
 
         {/* Body */}
-        <div className={styles.body}>
+        <div className={`${modalStyles.content} ${styles.body}`}>
           <p className={styles.bodyText}>
             BracketWorks is currently in active development and may contain incomplete features,
             errors, interruptions, or unexpected behavior.
@@ -144,22 +148,22 @@ export default function DevNoticeModal({
         </div>
 
         {/* Footer */}
-        <div className={styles.footer}>
+        <div className={`${modalStyles.footer} ${styles.footer}`}>
           {mode === 'require-acceptance' ? (
             <>
               <button
-                className={styles.agreeButton}
+                className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.fullWidth}`}
                 disabled={!acknowledged || submitting}
                 onClick={handleAgree}
               >
                 {submitting ? 'Saving…' : 'Agree and Continue'}
               </button>
-              <button className={styles.cancelButton} onClick={onLogout}>
+              <button className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.fullWidth}`} onClick={onLogout}>
                 Cancel and Log Out
               </button>
             </>
           ) : (
-            <button className={styles.closeButton} onClick={onClose}>
+            <button className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.fullWidth}`} onClick={onClose}>
               Close
             </button>
           )}

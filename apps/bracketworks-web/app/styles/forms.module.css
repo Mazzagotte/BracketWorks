@@ -39,7 +39,7 @@
 
 .compactControl {
   min-height: 36px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   padding: 0.42rem 0.72rem;
   font-size: 0.84rem;
   line-height: 1.2;
@@ -95,7 +95,7 @@
   .search {
     min-height: 40px;
     font-size: 16px;
-    border-radius: 10px;
+    border-radius: var(--radius-md);
   }
 
   .compactControl {

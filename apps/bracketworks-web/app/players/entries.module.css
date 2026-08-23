@@ -5343,11 +5343,11 @@
 .entriesTopRow .quickActionsPrimaryRow > :where(button, a) {
   min-height: 38px;
   padding: 8px 12px;
-  box-shadow: 0 4px 10px color-mix(in srgb, var(--color-primary) 14%, transparent) !important;
+  box-shadow: none;
 }
 
 .entriesTopRow .quickActionsPrimaryRow > :where(button, a):hover:not(:disabled) {
-  box-shadow: 0 6px 14px color-mix(in srgb, var(--color-primary) 18%, transparent) !important;
+  box-shadow: none;
 }
 
 .quickActionAdminSection {

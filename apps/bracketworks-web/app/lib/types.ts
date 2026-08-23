@@ -80,6 +80,10 @@ export interface Match {
   seedB?: number;
   playerA?: string;
   playerB?: string;
+  playerA_id?: number | null;
+  playerB_id?: number | null;
+  qualifying_score_a?: number;
+  qualifying_score_b?: number;
   scoreA?: number;
   scoreB?: number;
   match_score_a?: number; // Legacy field
@@ -248,4 +252,15 @@ export interface ChangelogEntry {
   date: string;
   version: string;
   changes: string[];
+  title?: string | null;
+  summary?: string | null;
+  sections?: ChangelogSection[] | null;
+  tags?: ChangelogTag[] | null;
 }
+
+export interface ChangelogSection {
+  heading: string;
+  items: string[];
+}
+
+export type ChangelogTag = "New" | "Improved" | "Fixed" | "Security" | "Admin" | "Reliability";

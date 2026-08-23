@@ -23,7 +23,8 @@ import { formatCurrency } from '../lib/formatters'
 import { logger } from '../lib/logger'
 import { getSelectedTournamentId } from '../lib/selection-session'
 import { getPayoutUnlockKey } from '../lib/storageKeys'
-import { isPhoneWidth } from '../lib/responsive'
+import { MOBILE_VIEWPORT_QUERY } from '../lib/responsive'
+import { useMediaQuery } from '../hooks/useMediaQuery'
 import { aggregateWinnersByPlayer, buildPaymentSummary, filterWinnersByName } from './utils/payoutViewModel'
 import PayoutsQuickActions from './components/PayoutsQuickActions'
 import PayoutsSummaryCard from './components/PayoutsSummaryCard'
@@ -47,7 +48,7 @@ export default function PayoutsPage() {
   const [, setScoreRows] = useState<ScoreRow[]>([])
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set())
   const [isUnlocked, setIsUnlocked] = useState(false)
-  const [isMobileView, setIsMobileView] = useState(false)
+  const isMobileView = useMediaQuery(MOBILE_VIEWPORT_QUERY)
   const [isPayoutsGuideOpen, setIsPayoutsGuideOpen] = useState(false)
 
   useEffect(() => {
@@ -64,13 +65,6 @@ export default function PayoutsPage() {
       window.removeEventListener('tournament-changed', refreshSelection)
       window.removeEventListener('squad-changed', refreshSelection)
     }
-  }, [])
-
-  useEffect(() => {
-    const checkMobile = () => setIsMobileView(isPhoneWidth(window.innerWidth))
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
   // Payout access becomes persistent per tournament/squad after Calculate Payouts is confirmed.

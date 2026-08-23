@@ -7,6 +7,7 @@ import { apiClient } from '../../lib/api'
 import { Tournament } from '../../lib/types'
 import buttonStyles from '../../styles/buttons.module.css'
 import formStyles from '../../styles/forms.module.css'
+import modalStyles from '../../styles/modals.module.css'
 import styles from './DuplicateTournamentModal.module.css'
 
 type CopyOptions = {
@@ -69,14 +70,14 @@ export function DuplicateTournamentModal({ open, tournament, onClose, onCreated 
   }
 
   return (
-    <div className={styles.overlay} role="presentation">
-      <section className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="duplicate-tournament-title">
-        <CloseControl position="absolute" size="sm" label="Close duplicate tournament dialog" onClick={onClose} />
-        <header>
-          <h2 id="duplicate-tournament-title"><Copy aria-hidden="true" />Duplicate Tournament</h2>
-          <p>Create a fresh tournament from {tournament.name}&apos;s setup. Results and payouts are never copied.</p>
+    <div className={modalStyles.overlay} role="presentation">
+      <section className={`${modalStyles.modal} ${modalStyles.compactModal}`} role="dialog" aria-modal="true" aria-labelledby="duplicate-tournament-title">
+        <CloseControl className={modalStyles.closeButton} position="absolute" size="sm" label="Close duplicate tournament dialog" onClick={onClose} />
+        <header className={modalStyles.header}>
+          <h2 className={styles.title} id="duplicate-tournament-title"><Copy aria-hidden="true" />Duplicate Tournament</h2>
+          <p className={styles.intro}>Create a fresh tournament from {tournament.name}&apos;s setup. Results and payouts are never copied.</p>
         </header>
-        <div className={styles.body}>
+        <div className={`${modalStyles.content} ${styles.body}`}>
           <label>Tournament name
             <input className={formStyles.input} value={name} onChange={event => setName(event.target.value)} maxLength={200} autoFocus />
           </label>
@@ -105,7 +106,7 @@ export function DuplicateTournamentModal({ open, tournament, onClose, onCreated 
           </fieldset>
           {error && <p className={styles.error} role="alert">{error}</p>}
         </div>
-        <footer>
+        <footer className={modalStyles.footer}>
           <button type="button" className={`${buttonStyles.button} ${buttonStyles.ghost}`} onClick={onClose} disabled={saving}>Cancel</button>
           <button type="button" className={`${buttonStyles.button} ${buttonStyles.primary}`} onClick={() => void submit()} disabled={saving || !name.trim() || Boolean(startDate && endDate && endDate < startDate)}>{saving ? 'Duplicating…' : 'Duplicate Tournament'}</button>
         </footer>

@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.core import models
 from app.services.tournament_access import (
+    ROLE_PERMISSIONS,
     verify_owned_tc_tournament_access,
     verify_owned_tournament_access,
 )
@@ -111,3 +112,51 @@ def test_verify_owned_tc_tournament_access_denies_outsider(db_session: Session, 
 
     assert raised.value.status_code == 403
     assert raised.value.detail == "Not authorized to access this tournament"
+
+
+@pytest.mark.parametrize(
+    ("role", "allowed"),
+    [
+        ("tournament_admin", {"view", "manage_tournament", "manage_entries", "manage_scores", "manage_payouts", "manage_staff", "archive"}),
+        ("entries_manager", {"view", "manage_entries"}),
+        ("scorer", {"view", "manage_scores"}),
+        ("viewer", {"view"}),
+    ],
+)
+def test_staff_role_permission_matrix(db_session: Session, make_user, role, allowed):
+    owner = make_user(f"matrix_owner_{role}")
+    staff = make_user(f"matrix_staff_{role}")
+    tournament = _create_tournament(db_session, owner)
+    db_session.add(models.TournamentStaffMember(
+        tournament_id=tournament.id, user_id=staff.id, role=role, invited_by_user_id=owner.id,
+    ))
+    db_session.commit()
+
+    for permission in set().union(*ROLE_PERMISSIONS.values()):
+        if permission in allowed:
+            assert verify_owned_tournament_access(db_session, tournament.id, staff, permission=permission).id == tournament.id
+        else:
+            with pytest.raises(HTTPException) as raised:
+                verify_owned_tournament_access(db_session, tournament.id, staff, permission=permission)
+            assert raised.value.status_code == 403
+
+
+@pytest.mark.parametrize("state", ["archived", "finalized"])
+def test_read_only_tournament_blocks_staff_mutations(db_session: Session, make_user, state):
+    owner = make_user(f"readonly_owner_{state}")
+    staff = make_user(f"readonly_staff_{state}")
+    tournament = _create_tournament(db_session, owner)
+    if state == "archived":
+        from datetime import datetime, timezone
+        tournament.archived_at = datetime.now(timezone.utc)
+    else:
+        tournament.lifecycle_status = "finalized"
+    db_session.add(models.TournamentStaffMember(
+        tournament_id=tournament.id, user_id=staff.id, role="tournament_admin", invited_by_user_id=owner.id,
+    ))
+    db_session.commit()
+
+    assert verify_owned_tournament_access(db_session, tournament.id, staff, permission="view").id == tournament.id
+    with pytest.raises(HTTPException) as raised:
+        verify_owned_tournament_access(db_session, tournament.id, staff, permission="manage_tournament")
+    assert raised.value.status_code == 409

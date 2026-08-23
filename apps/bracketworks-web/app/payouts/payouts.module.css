@@ -223,18 +223,18 @@
   background: var(--color-primary);
   color: var(--color-white);
   border: none;
-  border-radius: 10px;
-  font-size: 14px;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
   font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 2px 8px var(--color-border-hover);
-  transition: opacity 0.15s, box-shadow 0.15s;
+  box-shadow: none;
+  transition: opacity 0.15s, background-color 0.15s;
   white-space: nowrap;
 }
 
 .refreshBtn:hover:not(:disabled) {
   opacity: 0.9;
-  box-shadow: 0 4px 12px var(--color-border-hover);
+  box-shadow: none;
 }
 
 .refreshBtn:disabled {
@@ -1223,8 +1223,8 @@
 }
 
 .finalReviewCard {
-  padding: 22px;
-  margin-bottom: 1.5rem;
+  padding: var(--space-card-y) var(--space-card-x);
+  margin-bottom: var(--space-section);
 }
 
 .finalReviewHeader,
@@ -1233,12 +1233,12 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--space-section);
 }
 
 .finalReviewTitle {
   margin: 0;
-  font-size: 1.05rem;
+  font-size: var(--bw-type-card-title);
   color: var(--bw-text-title);
 }
 
@@ -1246,7 +1246,7 @@
 .finalReviewMessage {
   margin: 5px 0 0;
   color: var(--color-text-muted);
-  font-size: 0.86rem;
+  font-size: var(--bw-type-body);
 }
 
 .reviewReady,
@@ -1271,13 +1271,13 @@
 .reviewGrid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  margin-top: 18px;
+  gap: var(--space-stack);
+  margin-top: var(--space-section);
 }
 
 .reviewGrid > div {
-  padding: 14px 10px;
-  border-radius: 12px;
+  padding: var(--space-card-compact-y) var(--space-card-small-x);
+  border-radius: var(--radius-lg);
   background: var(--color-surface-secondary);
   text-align: center;
 }
@@ -1299,7 +1299,7 @@
 }
 
 .moneyReview {
-  margin: 16px 0 0;
+  margin: var(--space-card-y) 0 0;
 }
 
 .moneyReview > div {
@@ -1318,13 +1318,25 @@
 }
 
 .reviewWarnings {
-  margin-top: 16px;
-  padding: 12px 14px;
-  border-radius: 12px;
+  margin-top: var(--space-card-y);
+  padding: var(--space-card-small-y) var(--space-card-compact-x);
+  border-radius: var(--radius-lg);
   background: var(--color-warning-surface);
   color: var(--color-text-primary);
   font-size: 0.82rem;
 }
+
+.reviewNotices {
+  margin-top: var(--space-card-y);
+  padding: var(--space-card-small-y) var(--space-card-compact-x);
+  border: 1px solid color-mix(in srgb, var(--color-info) 34%, var(--bw-border-subtle));
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--color-info) 8%, var(--bw-surface-panel));
+  color: var(--bw-text-body);
+  font-size: var(--bw-type-body);
+}
+
+.reviewNotices ul { margin: 7px 0 0; padding-left: 20px; }
 
 .reviewWarnings ul {
   margin: 7px 0 0;
@@ -1333,11 +1345,11 @@
 
 .finalReviewActions {
   justify-content: flex-start;
-  margin-top: 18px;
+  margin-top: var(--space-section);
 }
 
 .adjustmentDetails {
-  margin-top: 18px;
+  margin-top: var(--space-section);
   border-top: 1px solid var(--color-border-subtle);
   padding-top: 14px;
 }

@@ -610,7 +610,7 @@
 }
 
 /* Tablet devices */
-@media (min-width: 641px) and (max-width: 1024px) {
+@media (min-width: 641px) and (max-width: 1023px) {
   .modalCard {
     min-width: 420px;
   }

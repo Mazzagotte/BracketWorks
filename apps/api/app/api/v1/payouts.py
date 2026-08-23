@@ -8,12 +8,14 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from typing import Optional, Dict, Any
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
+from decimal import Decimal, ROUND_HALF_UP
 
 from ..deps import SessionLocal, get_db, get_current_user
 from ...services.tournament_audit import record_tournament_event
 from ...services.tournament_lifecycle import advance_status
 from ...core import models
+from ...core.money import CENT, money_decimal, money_float
 from ...core.async_jobs import job_store, to_dict
 from ...core.idempotency import IdempotencyReplay, begin_request, complete_request, fail_request
 from ...core.schemas import UserOut
@@ -38,7 +40,7 @@ logger = logging.getLogger(__name__)
 
 
 class PayoutAdjustmentRequest(BaseModel):
-    new_amount: float = Field(ge=0, le=1_000_000)
+    new_amount: Decimal = Field(ge=0, le=1_000_000, max_digits=12, decimal_places=2)
     reason: str = Field(min_length=1, max_length=1000)
 
 
@@ -199,8 +201,6 @@ def get_live_entry_analysis(
     Live entry analysis derived directly from bracket data.
     Shows every player's entries and winnings without needing a saved PayoutSummary.
     """
-    from decimal import Decimal as _D, ROUND_HALF_UP as _RHU
-
     try:
         tournament = verify_owned_tournament_access(
             db,
@@ -291,12 +291,12 @@ def get_live_entry_analysis(
 
                 if is_split and winner.get('split_pot'):
                     pct        = 50
-                    payout_amt = float((_D(str(prize_pool)) * _D('50') / _D('100')).quantize(_D('0.01'), rounding=_RHU))
+                    payout_amt = float((Decimal(str(prize_pool)) * Decimal('50') / Decimal('100')).quantize(CENT, rounding=ROUND_HALF_UP))
                 else:
                     pct = pct_map.get(position.lower(), 0)
                     if pct == 0:
                         continue
-                    payout_amt = float((_D(str(prize_pool)) * _D(str(pct)) / _D('100')).quantize(_D('0.01'), rounding=_RHU))
+                    payout_amt = float((Decimal(str(prize_pool)) * Decimal(str(pct)) / Decimal('100')).quantize(CENT, rounding=ROUND_HALF_UP))
 
                 place = winner.get('place', 0)
                 if bracket_type == 'scratch':
@@ -419,7 +419,7 @@ def save_tournament_payouts_endpoint(
         if existing_summary and existing_summary.is_finalized:
             raise HTTPException(status_code=400, detail="Payouts already finalized for this tournament")
 
-        current_time  = datetime.utcnow().isoformat()
+        current_time = datetime.now(UTC).isoformat()
         total_winners = len(payout_data.get("winners_by_bracket", []))
 
         try:
@@ -625,19 +625,19 @@ def adjust_payout(tournament_id: int, payout_id: int, payload: PayoutAdjustmentR
     summary = db.query(models.TournamentPayoutSummary).filter_by(tournament_id=tournament_id, squad_id=payout.squad_id).first()
     if summary and summary.is_finalized:
         raise HTTPException(status_code=409, detail="Reopen finalized payouts before making an adjustment")
-    old_amount = round(float(payout.payout_amount), 2)
-    new_amount = round(float(payload.new_amount), 2)
+    old_amount = money_decimal(payout.payout_amount)
+    new_amount = money_decimal(payload.new_amount)
     if old_amount == new_amount:
         return {"id": payout.id, "payout_amount": old_amount, "adjusted": False}
-    delta = round(new_amount - old_amount, 2)
-    payout.payout_amount = new_amount
+    delta = new_amount - old_amount
+    payout.payout_amount = float(new_amount)
     payout.updated_at = datetime.now(timezone.utc).isoformat()
     if summary:
-        summary.total_prize_pool = round(float(summary.total_prize_pool) + delta, 2)
+        summary.total_prize_pool = money_float(Decimal(str(summary.total_prize_pool)) + delta)
         if payout.bracket_group_key == "scratch":
-            summary.total_scratch_pool = round(float(summary.total_scratch_pool) + delta, 2)
+            summary.total_scratch_pool = money_float(Decimal(str(summary.total_scratch_pool)) + delta)
         elif payout.bracket_group_key == "handicap":
-            summary.total_handicap_pool = round(float(summary.total_handicap_pool) + delta, 2)
+            summary.total_handicap_pool = money_float(Decimal(str(summary.total_handicap_pool)) + delta)
         summary.updated_at = payout.updated_at
     db.add(models.PayoutAdjustment(
         tournament_id=tournament_id, payout_id=payout.id, adjustment_type="manual",
@@ -646,11 +646,11 @@ def adjust_payout(tournament_id: int, payout_id: int, payload: PayoutAdjustmentR
     record_tournament_event(
         db, tournament_id=tournament_id, event_type="payouts.adjusted", user=current_user,
         summary=f"Adjusted payout for {payout.player_name} from ${old_amount:,.2f} to ${new_amount:,.2f}",
-        reason=payload.reason.strip(), before_values={"payout_amount": old_amount}, after_values={"payout_amount": new_amount},
+        reason=payload.reason.strip(), before_values={"payout_amount": float(old_amount)}, after_values={"payout_amount": float(new_amount)},
         entity_type="payout", entity_id=payout.id,
     )
     db.commit()
-    return {"id": payout.id, "payout_amount": new_amount, "adjusted": True, "results_may_be_affected": True}
+    return {"id": payout.id, "payout_amount": float(new_amount), "adjusted": True, "results_may_be_affected": True}
 
 @router.get("/history/{tournament_id}")
 def get_payout_history_endpoint(

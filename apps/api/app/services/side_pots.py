@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 from sqlalchemy import and_
 from sqlalchemy.orm import Session
 
 from ..core import models
+from ..core.money import money_decimal, money_float
 
 DEFAULT_SIDE_POTS: list[dict[str, Any]] = [
     {"key": "high_game_scratch", "name": "High Game Scratch", "enabled": False},
@@ -30,11 +31,11 @@ def _normalize_side_pot_settings(raw_settings: Any, tournament_id: int) -> dict[
     if isinstance(raw_settings, dict):
         entry_fee = raw_settings.get("entry_fee")
         if isinstance(entry_fee, (int, float)):
-            normalized["entry_fee"] = float(entry_fee)
+            normalized["entry_fee"] = money_float(entry_fee)
 
         prize_amount = raw_settings.get("prize_amount")
         if isinstance(prize_amount, (int, float)):
-            normalized["prize_amount"] = float(prize_amount)
+            normalized["prize_amount"] = money_float(prize_amount)
 
         raw_pots = raw_settings.get("pots")
         if isinstance(raw_pots, list):
@@ -69,7 +70,7 @@ def _normalize_side_pot_settings(raw_settings: Any, tournament_id: int) -> dict[
     return normalized
 
 
-def _to_metric(pot_key: str, score: Optional[models.PlayerScore]) -> Optional[int]:
+def _to_metric(pot_key: str, score: models.PlayerScore | None) -> int | None:
     if score is None:
         return None
 
@@ -115,7 +116,7 @@ def calculate_side_pot_accounting(
     db: Session,
     tournament_id: int,
     squad_id: int | None = None,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     settings = load_side_pot_settings(db, tournament_id)
     pots = settings.get("pots") or []
     enabled_pots = [pot for pot in pots if bool(pot.get("enabled"))]
@@ -124,8 +125,8 @@ def calculate_side_pot_accounting(
         return {
             "tournament_id": tournament_id,
             "squad_id": squad_id,
-            "entry_fee": float(settings.get("entry_fee") or 0),
-            "prize_amount": float(settings.get("prize_amount") or 0),
+            "entry_fee": money_float(settings.get("entry_fee")),
+            "prize_amount": money_float(settings.get("prize_amount")),
             "total_pool": 0.0,
             "summaries": [],
         }
@@ -144,9 +145,9 @@ def calculate_side_pot_accounting(
 
     rows = query.all()
 
-    per_entry_pool_value = float(settings.get("prize_amount") or 0)
+    per_entry_pool_value = money_decimal(settings.get("prize_amount"))
     if per_entry_pool_value <= 0:
-        per_entry_pool_value = float(settings.get("entry_fee") or 0)
+        per_entry_pool_value = money_decimal(settings.get("entry_fee"))
 
     summaries: list[dict[str, Any]] = []
 
@@ -171,7 +172,7 @@ def calculate_side_pot_accounting(
         entrants_with_metric = [entrant for entrant in entrants if entrant["metric"] is not None]
         has_incomplete_entrants = len(entrants_with_metric) != len(entrants)
 
-        winning_metric: Optional[int] = None
+        winning_metric: int | None = None
         winners: list[dict[str, Any]] = []
 
         if entrants_with_metric:
@@ -197,23 +198,23 @@ def calculate_side_pot_accounting(
             else:
                 status = "complete"
 
-        legacy_winner_id: Optional[int] = None
-        legacy_winner_name: Optional[str] = None
-        legacy_winner_metric: Optional[int] = None
+        legacy_winner_id: int | None = None
+        legacy_winner_name: str | None = None
+        legacy_winner_metric: int | None = None
         if status == "complete" and len(winners) == 1 and winning_metric is not None:
             legacy_winner_id = winners[0]["player_id"]
             legacy_winner_name = winners[0]["player_name"]
             legacy_winner_metric = winning_metric
 
         entry_count = len(entrants)
-        pool = round(entry_count * per_entry_pool_value, 2)
+        pool = money_decimal(entry_count * per_entry_pool_value)
 
         summaries.append(
             {
                 "key": pot_key,
                 "name": pot_name,
                 "entry_count": entry_count,
-                "pool": pool,
+                "pool": money_float(pool),
                 "status": status,
                 "winning_metric": winning_metric,
                 "winners": winners,
@@ -223,13 +224,13 @@ def calculate_side_pot_accounting(
             }
         )
 
-    total_pool = round(sum(summary["pool"] for summary in summaries), 2)
+    total_pool = money_float(sum(money_decimal(summary["pool"]) for summary in summaries))
 
     return {
         "tournament_id": tournament_id,
         "squad_id": squad_id,
-        "entry_fee": float(settings.get("entry_fee") or 0),
-        "prize_amount": float(settings.get("prize_amount") or 0),
+        "entry_fee": money_float(settings.get("entry_fee")),
+        "prize_amount": money_float(settings.get("prize_amount")),
         "total_pool": total_pool,
         "summaries": summaries,
     }

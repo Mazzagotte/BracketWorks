@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { capitalizeFirstLetter } from "@bracketworks/ui";
 import { useRouter } from "next/navigation";
-import { ClipboardList, History, Info, Plus } from "lucide-react";
+import { ArrowDown, ArrowUp, ClipboardList, History, Info, Plus, Trash2 } from "lucide-react";
 
 import { apiClient } from "../lib/api";
 import { useAuth } from "../lib/auth-context";
@@ -572,20 +572,22 @@ export default function AdminPage() {
   }, [refreshAfterMutation, showSuccess]);
 
   const handleChangelogCreateOrUpdate = useCallback(async () => {
-    if (!changelogForm.version.trim() || !changelogForm.date.trim() || !changelogForm.changes.trim()) {
-      setChangelogFormError("All fields are required");
+    if (!changelogForm.version.trim() || !changelogForm.date.trim()) {
+      setChangelogFormError("Version and date are required");
       return;
     }
-
-    const changes = changelogForm.changes
-      .split("\n")
-      .map((line) => line.trim())
-      .filter((line) => line.length > 0);
-
-    if (changes.length === 0) {
-      setChangelogFormError("Changes list cannot be empty");
+    const changes = changelogForm.changes.split("\n").map((line) => line.trim()).filter(Boolean);
+    const sections = changelogForm.sections.map((section) => ({
+      heading: section.heading.trim(),
+      items: section.items.map((item) => item.trim()),
+    }));
+    if (changelogForm.legacy ? changes.length === 0 : (!changelogForm.title.trim() || sections.length === 0 || sections.some((section) => !section.heading || section.items.length === 0 || section.items.some((item) => !item)))) {
+      setChangelogFormError(changelogForm.legacy ? "Changes list cannot be empty" : "A title and complete sections with non-empty bullets are required");
       return;
     }
+    const content = changelogForm.legacy
+      ? { changes }
+      : { changes: [], title: changelogForm.title.trim(), summary: changelogForm.summary.trim() || null, sections, tags: changelogForm.tags };
 
     setChangelogFormSaving(true);
     setChangelogFormError(null);
@@ -593,13 +595,13 @@ export default function AdminPage() {
       if (editingChangelogVersion) {
         await apiClient.put(`/api/v1/admin/changelog/${editingChangelogVersion}`, {
           date: changelogForm.date.trim(),
-          changes,
+          ...content,
         });
       } else {
         await apiClient.post("/api/v1/admin/changelog", {
           version: changelogForm.version.trim(),
           date: changelogForm.date.trim(),
-          changes,
+          ...content,
         });
       }
       setChangelogForm(EMPTY_CHANGELOG_FORM);
@@ -637,8 +639,18 @@ export default function AdminPage() {
       version: entry.version,
       date: entry.date,
       changes: entry.changes.join("\n"),
+      title: entry.title ?? "",
+      summary: entry.summary ?? "",
+      sections: entry.sections?.map((section) => ({ ...section, items: [...section.items] })) ?? [],
+      tags: entry.tags ?? [],
+      legacy: !entry.sections?.length,
     });
   }, []);
+
+  const updateChangelogSection = (index: number, heading: string) => setChangelogForm((form) => ({ ...form, sections: form.sections.map((section, sectionIndex) => sectionIndex === index ? { ...section, heading } : section) }));
+  const updateChangelogBullet = (sectionIndex: number, itemIndex: number, value: string) => setChangelogForm((form) => ({ ...form, sections: form.sections.map((section, currentSectionIndex) => currentSectionIndex === sectionIndex ? { ...section, items: section.items.map((item, currentItemIndex) => currentItemIndex === itemIndex ? value : item) } : section) }));
+  const moveChangelogSection = (index: number, offset: number) => setChangelogForm((form) => { const sections = [...form.sections]; const target = index + offset; const current = sections[index]; const replacement = sections[target]; if (!current || !replacement) return form; sections[index] = replacement; sections[target] = current; return { ...form, sections }; });
+  const moveChangelogBullet = (sectionIndex: number, itemIndex: number, offset: number) => setChangelogForm((form) => ({ ...form, sections: form.sections.map((section, index) => { if (index !== sectionIndex) return section; const items = [...section.items]; const target = itemIndex + offset; const current = items[itemIndex]; const replacement = items[target]; if (current === undefined || replacement === undefined) return section; items[itemIndex] = replacement; items[target] = current; return { ...section, items }; }) }));
 
   const handleChangelogCancel = useCallback(() => {
     setEditingChangelogVersion(null);
@@ -1052,18 +1064,53 @@ export default function AdminPage() {
               />
               <p className={styles.formHelper}>The date this version is being released.</p>
             </div>
-            <div className={styles.changelogFormRow}>
-              <label className={styles.formLabel} htmlFor="changelog-changes">Changes (one per line) <span aria-hidden="true">*</span></label>
-              <textarea
-                id="changelog-changes"
-                className={styles.formTextarea}
-                value={changelogForm.changes}
-                onChange={(e) => setChangelogForm({ ...changelogForm, changes: e.target.value })}
-                placeholder="Feature A&#10;Bug fix B&#10;Improvement C"
-                rows={5}
-              />
-              <p className={styles.formHelper}>List each change on a new line. These will be displayed to users.</p>
-            </div>
+            {changelogForm.legacy ? (
+              <div className={styles.changelogFormRow}>
+                <label className={styles.formLabel} htmlFor="changelog-changes">Legacy changes (one per line) <span aria-hidden="true">*</span></label>
+                <textarea id="changelog-changes" className={styles.formTextarea} value={changelogForm.changes} onChange={(e) => setChangelogForm({ ...changelogForm, changes: e.target.value })} rows={5} />
+                <p className={styles.formHelper}>This existing entry remains in the legacy bullet-only format.</p>
+              </div>
+            ) : (
+              <>
+                <div className={styles.changelogFormRow}>
+                  <label className={styles.formLabel} htmlFor="changelog-title-input">Title <span aria-hidden="true">*</span></label>
+                  <input id="changelog-title-input" className={styles.formInput} maxLength={120} value={changelogForm.title} onChange={(e) => setChangelogForm({ ...changelogForm, title: e.target.value })} placeholder="Major Tournament Management Update" />
+                </div>
+                <div className={styles.changelogFormRow}>
+                  <label className={styles.formLabel} htmlFor="changelog-summary">Summary</label>
+                  <textarea id="changelog-summary" className={styles.formTextarea} maxLength={500} rows={2} value={changelogForm.summary} onChange={(e) => setChangelogForm({ ...changelogForm, summary: e.target.value })} placeholder="A short introduction to this release." />
+                </div>
+                <fieldset className={styles.changelogTags}>
+                  <legend>Tags <span>(optional)</span></legend>
+                  {(["New", "Improved", "Fixed", "Security", "Admin", "Reliability"] as const).map((tag) => <label key={tag}><input type="checkbox" checked={changelogForm.tags.includes(tag)} onChange={() => setChangelogForm((form) => ({ ...form, tags: form.tags.includes(tag) ? form.tags.filter((value) => value !== tag) : [...form.tags, tag] }))} />{tag}</label>)}
+                </fieldset>
+                <div className={styles.changelogSections}>
+                  {changelogForm.sections.map((section, sectionIndex) => (
+                    <div className={styles.changelogSectionEditor} key={sectionIndex}>
+                      <div className={styles.changelogSectionHeader}>
+                        <strong>Section {sectionIndex + 1}</strong>
+                        <div>
+                          <button type="button" aria-label="Move section up" disabled={sectionIndex === 0} onClick={() => moveChangelogSection(sectionIndex, -1)}><ArrowUp /></button>
+                          <button type="button" aria-label="Move section down" disabled={sectionIndex === changelogForm.sections.length - 1} onClick={() => moveChangelogSection(sectionIndex, 1)}><ArrowDown /></button>
+                          <button type="button" aria-label="Remove section" disabled={changelogForm.sections.length === 1} onClick={() => setChangelogForm((form) => ({ ...form, sections: form.sections.filter((_, index) => index !== sectionIndex) }))}><Trash2 /></button>
+                        </div>
+                      </div>
+                      <input className={styles.formInput} maxLength={80} value={section.heading} onChange={(e) => updateChangelogSection(sectionIndex, e.target.value)} placeholder="Section heading" aria-label={`Section ${sectionIndex + 1} heading`} />
+                      <div className={styles.changelogBulletEditors}>
+                        {section.items.map((item, itemIndex) => <div key={itemIndex}>
+                          <input className={styles.formInput} maxLength={300} value={item} onChange={(e) => updateChangelogBullet(sectionIndex, itemIndex, e.target.value)} placeholder="Bullet item" aria-label={`Section ${sectionIndex + 1} bullet ${itemIndex + 1}`} />
+                          <button type="button" aria-label="Move bullet up" disabled={itemIndex === 0} onClick={() => moveChangelogBullet(sectionIndex, itemIndex, -1)}><ArrowUp /></button>
+                          <button type="button" aria-label="Move bullet down" disabled={itemIndex === section.items.length - 1} onClick={() => moveChangelogBullet(sectionIndex, itemIndex, 1)}><ArrowDown /></button>
+                          <button type="button" aria-label="Remove bullet" disabled={section.items.length === 1} onClick={() => setChangelogForm((form) => ({ ...form, sections: form.sections.map((value, index) => index === sectionIndex ? { ...value, items: value.items.filter((_, current) => current !== itemIndex) } : value) }))}><Trash2 /></button>
+                        </div>)}
+                      </div>
+                      <button type="button" className={styles.changelogAddButton} onClick={() => setChangelogForm((form) => ({ ...form, sections: form.sections.map((value, index) => index === sectionIndex ? { ...value, items: [...value.items, ""] } : value) }))}><Plus /> Add Bullet</button>
+                    </div>
+                  ))}
+                  <button type="button" className={styles.changelogAddButton} onClick={() => setChangelogForm((form) => ({ ...form, sections: [...form.sections, { heading: "", items: [""] }] }))}><Plus /> Add Section</button>
+                </div>
+              </>
+            )}
             {changelogFormError && <div className={styles.modalError} role="alert">{changelogFormError}</div>}
             <div className={styles.changelogFormActions}>
               <button
@@ -1121,11 +1168,7 @@ export default function AdminPage() {
                         </button>
                       </div>
                     </div>
-                    <ul className={styles.changesList}>
-                      {entry.changes.map((change: string, idx: number) => (
-                        <li key={idx}>{change}</li>
-                      ))}
-                    </ul>
+                    {entry.sections?.length ? <div className={styles.historyStructured}><strong>{entry.title}</strong>{entry.sections.map((section, index) => <div key={index}><span>{section.heading}</span><ul className={styles.changesList}>{section.items.map((item, itemIndex) => <li key={itemIndex}>{item}</li>)}</ul></div>)}</div> : <ul className={styles.changesList}>{entry.changes.map((change, idx) => <li key={idx}>{change}</li>)}</ul>}
                   </div>
                 ))}
               </>

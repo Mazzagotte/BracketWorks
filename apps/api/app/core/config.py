@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     DATABASE_MAX_OVERFLOW: int = 30
 
     # Security
-    SECRET_KEY: str = "change-me-in-production"
+    SECRET_KEY: str = "change-me-in-production-at-least-32-bytes"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 120
     ACCESS_TOKEN_COOKIE_NAME: str = "access_token"
     ACCESS_TOKEN_COOKIE_PATH: str = "/api/v1"
@@ -115,6 +115,7 @@ class Settings(BaseSettings):
         weak_secret_values = {
             "",
             "change-me-in-production",
+            "change-me-in-production-at-least-32-bytes",
             "changeme",
             "secret",
             "default",

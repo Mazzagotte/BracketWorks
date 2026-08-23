@@ -6,7 +6,6 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from passlib.context import CryptContext
-from pydantic import BaseModel
 from sqlalchemy import MetaData, String, Table, asc, delete, desc, func, inspect, or_, select, text
 from sqlalchemy.orm import Session
 
@@ -17,7 +16,28 @@ from ...core.config import settings
 from ...core.async_jobs import job_store, to_dict as job_to_dict
 from ...services.tournament_audit import record_tournament_event
 from ...services.tournament_snapshots import create_restore_point
-from ...services.operational_health import BACKEND_VERSION, health_runtime_snapshot
+from .admin_operations import router as admin_operations_router
+from .admin_schemas import (
+    AdminAnnouncementPayload,
+    AdminArchiveTournamentPayload,
+    AdminDeleteTournamentPayload,
+    AdminDeleteUserPayload,
+    AdminFeedbackUpdatePayload,
+    AdminReassignTournamentPayload,
+    AdminResetPasswordPayload,
+    AdminResolveUserReviewPayload,
+    AdminSetUserActivePayload,
+    AdminSetUserAdminPayload,
+    AdminTournamentNotePayload,
+    AdminUpdateTournamentPayload,
+    AdminUpdateUserPayload,
+    AdminUserReviewPayload,
+)
+from .admin_changelog_schemas import (
+    AdminChangelogContent,
+    AdminCreateChangelogPayload,
+    AdminUpdateChangelogPayload,
+)
 
 _pwd_context = CryptContext(
     schemes=["bcrypt"],
@@ -26,95 +46,8 @@ _pwd_context = CryptContext(
 )
 
 
-class AdminUpdateUserPayload(BaseModel):
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
-    email: Optional[str] = None
-    organization: Optional[str] = None
-
-
-class AdminSetUserAdminPayload(BaseModel):
-    is_admin: bool
-
-
-class AdminSetUserActivePayload(BaseModel):
-    is_active: bool
-
-
-class AdminResetPasswordPayload(BaseModel):
-    new_password: str
-
-
-class AdminDeleteUserPayload(BaseModel):
-    reason: str
-    confirm_text: str
-
-
-class AdminUpdateTournamentPayload(BaseModel):
-    name: Optional[str] = None
-    location: Optional[str] = None
-    start_date: Optional[str] = None
-    end_date: Optional[str] = None
-    is_public: Optional[bool] = None
-
-
-class AdminReassignTournamentPayload(BaseModel):
-    new_owner_user_id: int
-
-
-class AdminArchiveTournamentPayload(BaseModel):
-    reason: Optional[str] = None
-
-
-class AdminDeleteTournamentPayload(BaseModel):
-    reason: Optional[str] = None
-    force: bool = False
-    confirm_text: Optional[str] = None
-
-
-class AdminCreateChangelogPayload(BaseModel):
-    version: str
-    date: str
-    changes: list[str]
-
-
-class AdminUpdateChangelogPayload(BaseModel):
-    date: Optional[str] = None
-    changes: Optional[list[str]] = None
-
-
-class AdminUserReviewPayload(BaseModel):
-    kind: str
-    category: str
-    note: str
-
-
-class AdminResolveUserReviewPayload(BaseModel):
-    resolved: bool = True
-
-
-class AdminTournamentNotePayload(BaseModel):
-    category: str
-    note: str
-
-
-class AdminAnnouncementPayload(BaseModel):
-    title: str
-    message: str
-    audience_type: str = "all"
-    audience_user_id: Optional[int] = None
-    status: str = "draft"
-    requires_acknowledgment: bool = False
-    starts_at: Optional[datetime] = None
-    ends_at: Optional[datetime] = None
-
-
-class AdminFeedbackUpdatePayload(BaseModel):
-    status: str
-    admin_note: Optional[str] = None
-
-
 router = APIRouter()
+router.include_router(admin_operations_router)
 
 
 def _set_admin_cache_headers(response: Response, *, max_age: int, stale_while_revalidate: int = 0) -> None:
@@ -1094,7 +1027,7 @@ def admin_archive_tournament(
         db, tournament_id=tournament_id, user=admin, trigger="tournament.archive",
         summary="Before administrator tournament archive",
     )
-    tournament.archived_at = datetime.utcnow()
+    tournament.archived_at = datetime.now(UTC)
     tournament.archive_reason = (payload.reason or "").strip() or None
 
     _write_admin_audit(
@@ -1661,47 +1594,6 @@ def admin_update_feedback(
     return _serialize_feedback_message(message, user)
 
 
-@router.get("/operations")
-def admin_operations(_admin: models.User = Depends(require_admin_user)):
-    jobs = [job_to_dict(job) for job in job_store.list_recent(100)]
-    return {"operations": jobs, "summary": {"failed": sum(1 for job in jobs if job["status"] == "failed"), "running": sum(1 for job in jobs if job["status"] in {"queued", "running"}), "succeeded": sum(1 for job in jobs if job["status"] == "succeeded")}, "note": "Operations are retained for the lifetime of the current backend process."}
-
-
-@router.get("/system-health")
-def admin_system_health(
-    db: Session = Depends(get_db),
-    _admin: models.User = Depends(require_admin_user),
-):
-    database_status = "healthy"
-    database_error = None
-    try:
-        db.execute(text("SELECT 1"))
-    except Exception as exc:
-        database_status = "unhealthy"
-        database_error = str(exc)[:300]
-
-    jobs = [job_to_dict(job) for job in job_store.list_recent(100)]
-    runtime = health_runtime_snapshot()
-    return {
-        "checked_at": datetime.now(UTC).isoformat(),
-        "frontend_version": None,
-        "backend_version": BACKEND_VERSION,
-        "environment": settings.ENVIRONMENT,
-        "api": {"status": "healthy"},
-        "database": {"status": database_status, "error": database_error},
-        "email": {"status": "configured" if settings.RESEND_API_KEY.strip() else "not_configured", "provider": "Resend", "sender": settings.FROM_EMAIL},
-        "background_jobs": {
-            "runtime": runtime["background_jobs"],
-            "queued": sum(1 for job in jobs if job["status"] == "queued"),
-            "running": sum(1 for job in jobs if job["status"] == "running"),
-            "failed": sum(1 for job in jobs if job["status"] == "failed"),
-        },
-        "process_started_at": runtime["process_started_at"],
-        "last_deployment": runtime["last_deployment"],
-        "recent_errors": runtime["recent_errors"],
-    }
-
-
 @router.patch("/users/{user_id}")
 def admin_update_user(
     user_id: int,
@@ -1857,7 +1749,7 @@ def admin_reset_password(
     if user.id == admin.id:
         raise HTTPException(status_code=400, detail="Use the Settings page to change your own password")
 
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     user.password = _pwd_context.hash(payload.new_password)
     active_sessions = (
         db.query(models.AuthSession)
@@ -1971,6 +1863,10 @@ def admin_get_changelog(
                 "version": entry.version,
                 "date": entry.date,
                 "changes": entry.changes,
+                "title": entry.title,
+                "summary": entry.summary,
+                "sections": entry.sections,
+                "tags": entry.tags,
                 "created_at": entry.created_at.isoformat() if entry.created_at else None,
                 "updated_at": entry.updated_at.isoformat() if entry.updated_at else None,
             }
@@ -1995,6 +1891,10 @@ def admin_create_changelog(
         version=payload.version.strip(),
         date=payload.date.strip(),
         changes=payload.changes,
+        title=payload.title,
+        summary=payload.summary,
+        sections=[section.model_dump() for section in payload.sections] if payload.sections else None,
+        tags=payload.tags,
     )
     db.add(entry)
     
@@ -2004,7 +1904,7 @@ def admin_create_changelog(
         action="changelog.create",
         target_type="changelog",
         target_id=str(entry.version),
-        details={"version": entry.version, "date": entry.date, "changes": entry.changes},
+        details={"version": entry.version, "date": entry.date, "changes": entry.changes, "title": entry.title},
     )
     
     db.commit()
@@ -2016,6 +1916,10 @@ def admin_create_changelog(
             "version": entry.version,
             "date": entry.date,
             "changes": entry.changes,
+            "title": entry.title,
+            "summary": entry.summary,
+            "sections": entry.sections,
+            "tags": entry.tags,
             "created_at": entry.created_at.isoformat() if entry.created_at else None,
         },
     }
@@ -2036,12 +1940,27 @@ def admin_update_changelog(
     before = {
         "date": entry.date,
         "changes": entry.changes,
+        "title": entry.title,
+        "summary": entry.summary,
+        "sections": entry.sections,
+        "tags": entry.tags,
     }
 
+    supplied = payload.model_fields_set
     if payload.date is not None:
         entry.date = payload.date.strip()
-    if payload.changes is not None:
-        entry.changes = payload.changes
+    content = AdminChangelogContent(
+        changes=payload.changes if "changes" in supplied else entry.changes,
+        title=payload.title if "title" in supplied else entry.title,
+        summary=payload.summary if "summary" in supplied else entry.summary,
+        sections=payload.sections if "sections" in supplied else entry.sections,
+        tags=payload.tags if "tags" in supplied else entry.tags,
+    )
+    entry.changes = content.changes
+    entry.title = content.title
+    entry.summary = content.summary
+    entry.sections = [section.model_dump() for section in content.sections] if content.sections else None
+    entry.tags = content.tags
 
     _write_admin_audit(
         db,
@@ -2049,7 +1968,7 @@ def admin_update_changelog(
         action="changelog.update",
         target_type="changelog",
         target_id=version,
-        details={"before": before, "after": {"date": entry.date, "changes": entry.changes}},
+        details={"before": before, "after": {"date": entry.date, "changes": entry.changes, "title": entry.title}},
     )
 
     db.commit()
@@ -2061,6 +1980,10 @@ def admin_update_changelog(
             "version": entry.version,
             "date": entry.date,
             "changes": entry.changes,
+            "title": entry.title,
+            "summary": entry.summary,
+            "sections": entry.sections,
+            "tags": entry.tags,
             "updated_at": entry.updated_at.isoformat() if entry.updated_at else None,
         },
     }
