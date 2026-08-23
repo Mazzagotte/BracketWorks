@@ -182,7 +182,8 @@ def build_verify_email_url(verification_token: str) -> str:
     return f"{_frontend_url('/verify-email')}?{query_string}"
 
 
-def sendTournamentStaffInviteEmail(user_email: str, *, tournament_name: str, role: str) -> bool:
+def sendTournamentStaffInviteEmail(user_email: str, *, tournament_name: str, role: str, invitation_id: int, invitation_token: str) -> bool:
+    query_string = urlencode({"staff_invitation_id": invitation_id, "staff_invitation_token": invitation_token})
     payload = {
         "from": RESET_PASSWORD_FROM,
         "to": user_email,
@@ -193,7 +194,7 @@ def sendTournamentStaffInviteEmail(user_email: str, *, tournament_name: str, rol
                 **_base_template_variables(),
                 "tournament_name": tournament_name,
                 "role": role.replace("_", " ").title(),
-                "action_url": _frontend_url("/dashboard"),
+                "action_url": f"{_frontend_url('/dashboard')}?{query_string}",
             },
         },
     }

@@ -25,6 +25,7 @@ const uiSymbolRegex = /[✓✔▲▼►▶◀◁←→↑↓⊕…⋯]/u;
 const uiSymbolEntityRegex = /&#(?:10003|10004);/;
 const fontFamilyLiteralRegex = /\bfont-family\s*:\s*(?!var\(|inherit\b|initial\b|unset\b)/;
 const transitionAllRegex = /\btransition\s*:\s*all\b/i;
+const hardcodedMediaQueryRegex = /\b(?:window\.)?matchMedia\s*\(\s*['"`][^'"`]*(?:min|max)-width\s*:/;
 
 const violations = [];
 
@@ -98,6 +99,10 @@ function checkLine(filePath, lineNumber, line) {
 
     if (styledJsxRegex.test(codeLine)) {
       addViolation(filePath, lineNumber, 'no-styled-jsx-blocks', line);
+    }
+
+    if (hardcodedMediaQueryRegex.test(codeLine)) {
+      addViolation(filePath, lineNumber, 'use-shared-responsive-query', line);
     }
   }
 }
@@ -187,7 +192,7 @@ try {
 }
 
 if (violations.length > 0) {
-  console.error('UI CSS rules check failed. Move styles/colors to .css files, use shared font tokens, and remove emoji or symbol UI text.');
+  console.error('UI CSS rules check failed. Use shared style tokens and responsive queries, and remove unsupported inline or symbol UI styling.');
   for (const violation of violations) {
     console.error(
       `${violation.filePath}:${violation.lineNumber} [${violation.rule}] ${violation.line}`

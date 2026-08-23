@@ -68,7 +68,7 @@
   min-height: 0;
   padding: var(--space-card-compact-y) var(--space-card-compact-x);
   gap: 4px;
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
 }
 
 .statValue {
@@ -133,10 +133,10 @@
 }
 
 .warningPanel {
-  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
-  border-color: color-mix(in srgb, var(--color-primary) 26%, var(--bw-border-subtle));
-  border-left: var(--bw-accent-rail);
-  color: var(--bw-text-accent);
+  background: var(--color-warning-surface);
+  border-color: color-mix(in srgb, var(--color-warning) 34%, var(--bw-border-subtle));
+  border-left: 4px solid var(--color-warning);
+  color: var(--color-warning);
 }
 
 .successPanel {
@@ -148,7 +148,7 @@
 .quickActionsCard {
   margin-bottom: var(--space-section);
   overflow: hidden;
-  border-radius: 24px;
+  border-radius: var(--radius-2xl);
 }
 
 .quickActionsTitle {
@@ -178,7 +178,7 @@
 .quickActionsRow :where(button, a),
 .quickActionControl {
   min-height: var(--control-height);
-  border-radius: 11px;
+  border-radius: var(--radius-md);
   padding: 0.42rem 0.78rem;
   font-size: 0.78rem;
   font-weight: 750;
@@ -191,7 +191,7 @@
 .cardPrimary,
 .cardSecondary,
 .cardUtility {
-  border-radius: 24px;
+  border-radius: var(--radius-2xl);
   border: 1px solid var(--bw-border-subtle);
   transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
 }
@@ -209,8 +209,8 @@
 }
 
 .cardUtility {
-  background: color-mix(in srgb, var(--bw-surface-panel) 70%, transparent);
-  border-color: color-mix(in srgb, var(--bw-border-subtle) 65%, transparent);
+  background: var(--bw-surface-panel);
+  border-color: var(--bw-border-subtle);
   box-shadow: none;
 }
 
@@ -249,11 +249,11 @@
   padding-top: var(--space-card-compact-y);
   padding-bottom: var(--space-card-compact-y);
   border-top: 1px solid color-mix(in srgb, var(--bw-border-subtle) 70%, transparent);
-  background: color-mix(in srgb, var(--bw-surface-panel) 75%, transparent);
+  background: var(--bw-surface-panel);
 }
 
 .cardEyebrow {
-  font-size: 10px;
+  font-size: var(--bw-type-label);
   font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -261,7 +261,7 @@
 }
 
 .cardMeta {
-  font-size: 12px;
+  font-size: var(--bw-type-helper);
   line-height: 1.4;
   color: var(--bw-text-muted);
 }
@@ -311,7 +311,7 @@
 }
 
 .cardStateEmpty {
-  background: color-mix(in srgb, var(--bw-surface-panel) 84%, transparent);
+  background: var(--bw-surface-panel);
   border-style: dashed;
   border-color: color-mix(in srgb, var(--bw-border-subtle) 82%, transparent);
 }
@@ -338,14 +338,14 @@
   .cardPrimary,
   .cardSecondary,
   .cardUtility {
-    border-radius: 18px;
+    border-radius: var(--radius-2xl);
   }
 
   .cardHeaderSection,
   .cardBodySection,
   .cardFooterSection {
-    padding-left: 12px;
-    padding-right: 12px;
+    padding-left: var(--space-card-small-x);
+    padding-right: var(--space-card-small-x);
   }
 
   .cardHeaderSection {

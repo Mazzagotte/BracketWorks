@@ -14,6 +14,7 @@
 }
 
 .headerCell {
+  padding: var(--space-table-y) var(--space-table-x);
   background: var(--bw-surface-panel);
   border-bottom: 1px solid var(--bw-border-subtle);
   color: var(--bw-text-muted);
@@ -24,6 +25,7 @@
 }
 
 .cell {
+  padding: var(--space-table-y) var(--space-table-x);
   border-bottom: 1px solid color-mix(in srgb, var(--bw-border-subtle) 72%, transparent);
   color: var(--bw-text-body);
   font-size: var(--bw-type-table);

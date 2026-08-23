@@ -1,16 +1,16 @@
 /* Mobile-Friendly Dashboard Styles */
 
 .commandCenterGrid {
-  --dash-surface: color-mix(in srgb, var(--bw-surface-card) 88%, transparent);
+  --dash-surface: var(--bw-surface-card);
   --dash-border: var(--bw-border-subtle);
   --dash-shadow: var(--bw-shadow-card);
   --dash-border-faint: color-mix(in srgb, var(--bw-border-subtle) 55%, transparent);
   --dash-border-soft: color-mix(in srgb, var(--bw-border-subtle) 72%, transparent);
-  --dash-surface-soft: color-mix(in srgb, var(--bw-surface-panel) 78%, transparent);
-  --dash-surface-strong: color-mix(in srgb, var(--bw-surface-panel-strong) 82%, transparent);
-  --dash-surface-deep: color-mix(in srgb, var(--bw-surface-card) 84%, transparent);
-  --dash-input-surface: color-mix(in srgb, var(--bw-surface-card) 72%, var(--bw-surface-panel));
-  --dash-input-surface-disabled: color-mix(in srgb, var(--bw-surface-card-strong) 68%, transparent);
+  --dash-surface-soft: var(--bw-surface-panel);
+  --dash-surface-strong: var(--bw-surface-panel-strong);
+  --dash-surface-deep: var(--bw-surface-card);
+  --dash-input-surface: var(--bw-surface-panel-strong);
+  --dash-input-surface-disabled: var(--bw-surface-card-strong);
   --dash-text-title: var(--bw-text-title);
   --dash-text-body: var(--bw-text-body);
   --dash-text-muted: var(--bw-text-muted);
@@ -27,17 +27,17 @@
   --dash-danger-border: var(--color-error-border);
   display: grid;
   grid-template-columns: auto auto;
-  gap: 14px;
+  gap: var(--space-grid);
   align-items: start;
   justify-content: center;
-  margin-bottom: 24px;
+  margin-bottom: var(--space-section);
 }
 
 .dashboardOverviewStack {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
+  gap: var(--space-grid);
 }
 
 .dashboardOverviewStack .commandCenterGrid {
@@ -74,11 +74,9 @@
 }
 
 .entriesOverviewCard {
-  border-radius: 24px;
-  padding: 16px;
+  border-radius: var(--radius-2xl);
+  padding: var(--space-card-y) var(--space-card-x);
   background: var(--dash-surface);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
   border: 1px solid var(--dash-border);
   box-shadow: var(--dash-shadow);
   width: fit-content;
@@ -91,7 +89,7 @@
   --dash-card-bg: var(--bw-surface-card);
   --dash-card-border: var(--bw-border-card);
   --dash-accent-border: var(--bw-border-accent);
-  margin: 0 auto 24px;
+  margin: 0 auto var(--space-section);
 }
 
 .entriesOverviewSection {
@@ -100,13 +98,13 @@
 }
 
 .entriesOverviewHeader {
-  font-size: 10px;
+  font-size: var(--bw-type-label);
   text-transform: uppercase;
   letter-spacing: 0.11em;
   line-height: 1.3;
   color: var(--color-text-secondary);
   margin-bottom: 10px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 .summaryCardsBand {
@@ -130,8 +128,6 @@
 .toolsCard,
 .statTile {
   background: var(--dash-surface);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--dash-border);
   box-shadow: var(--dash-shadow);
 }
@@ -139,7 +135,7 @@
 .liveBoardCard {
   position: relative;
   overflow: hidden;
-  border-radius: 24px;
+  border-radius: var(--radius-2xl);
   padding: var(--space-card-y) var(--space-card-x);
 }
 
@@ -437,11 +433,9 @@
 }
 
 .squadRailCard {
-  border-radius: 24px;
-  padding: 18px;
+  border-radius: var(--radius-2xl);
+  padding: var(--space-card-y) var(--space-card-x);
   background: var(--dash-surface);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--dash-border);
   box-shadow: var(--dash-shadow);
 }
@@ -3061,7 +3055,7 @@
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .dashboardOverviewStack {
     gap: 12px;
     align-items: stretch;
@@ -5394,7 +5388,7 @@
 }
 
 /* Final safety override for Entries Overview tile layout */
-@media (max-width: 1024px) {
+@media (max-width: 1023px) {
   .summaryCardsBand {
     display: grid !important;
     width: 100% !important;
@@ -5597,7 +5591,7 @@
 }
 
 /* Mobile/tablet dashboard layout stabilization */
-@media (max-width: 1024px) {
+@media (max-width: 1023px) {
   .commandCenterGrid {
     grid-template-columns: 1fr;
     justify-content: stretch;

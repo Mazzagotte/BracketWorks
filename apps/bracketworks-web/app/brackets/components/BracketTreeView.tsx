@@ -2,21 +2,9 @@
 
 import React, { useRef, useState, useMemo, useEffect } from 'react'
 import styles from '../styles/bracket-tree.module.css'
-import { Match as BaseMatch } from '../../hooks/useBrackets'
+import type { BracketRound, Match } from '../../lib/types'
 
-// Extend Match to include additional fields used in display
-export interface Match extends Omit<BaseMatch, 'winner'> {
-  winner?: 'A' | 'B' | null;
-  qualifying_score_a?: number;
-  qualifying_score_b?: number;
-  match_score_a?: number; // Legacy field name
-  match_score_b?: number; // Legacy field name
-  matchStatus?: 'pending' | 'in_progress' | 'completed' | 'next_up' | 'tied' | 'both_advance';
-}
-
-export interface TournamentRound {
-  name: string
-  matches: Match[]
+export interface TournamentRound extends BracketRound {
   isCompleted?: boolean
   roundNumber?: number
   roundName?: string

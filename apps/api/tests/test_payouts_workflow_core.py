@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 from fastapi.testclient import TestClient
 
@@ -147,7 +147,7 @@ def test_save_payouts_rejects_when_summary_finalized(api_client: TestClient, aut
     ).first()
     assert summary is not None
     summary.is_finalized = True
-    summary.finalized_date = datetime.utcnow().isoformat()
+    summary.finalized_date = datetime.now(UTC).isoformat()
     db_session.commit()
 
     save_again = api_client.post(
@@ -189,8 +189,8 @@ def test_manual_payout_adjustment_requires_open_payouts_and_records_reason(api_c
     })
     assert adjusted.status_code == 200, adjusted.text
     record = db_session.query(models.PayoutAdjustment).filter_by(payout_id=payout.id).one()
-    assert record.old_amount == old_amount
-    assert record.new_amount == old_amount + 5
+    assert str(record.old_amount) == f"{old_amount:.2f}"
+    assert str(record.new_amount) == f"{old_amount + 5:.2f}"
     assert record.reason == "Approved prize correction"
 
 

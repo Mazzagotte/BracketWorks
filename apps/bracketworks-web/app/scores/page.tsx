@@ -22,7 +22,8 @@ import { useAutoSave } from '../components/DataManagement'
 import NoTournamentState from '../components/NoTournamentState'
 import { QuickActions, SearchPanel } from '../components/primitives'
 import { getSelectedTournamentId, getSelectedSquadId } from '../lib/selection-session'
-import { isPhoneWidth } from '../lib/responsive'
+import { MOBILE_VIEWPORT_QUERY } from '../lib/responsive'
+import { useMediaQuery } from '../hooks/useMediaQuery'
 import ExplainScoresModal from './ExplainScoresModal'
 import {
   buildSafeFileName,
@@ -48,7 +49,7 @@ export default function ScoresPage() {
   const hasStoredAuth = Boolean(sessionToken)
 
   const [isScoresGuideOpen, setIsScoresGuideOpen] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
+  const isMobile = useMediaQuery(MOBILE_VIEWPORT_QUERY)
   const [isImporting, setIsImporting] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [isExportingPdf, setIsExportingPdf] = useState(false)
@@ -57,13 +58,6 @@ export default function ScoresPage() {
   const [showBracketMismatchWarning, setShowBracketMismatchWarning] = useState(false)
   const [missingScoreNames, setMissingScoreNames] = useState<string[]>([])
   const importFileRef = useRef<HTMLInputElement | null>(null)
-
-  useEffect(() => {
-    const check = () => setIsMobile(isPhoneWidth(window.innerWidth))
-    check()
-    window.addEventListener('resize', check)
-    return () => window.removeEventListener('resize', check)
-  }, [])
 
   // ── Core data ──────────────────────────────────────────────────────────────
   const { players, setPlayers, tournament, selectedSquad, selectedSquadRef, playersRef, isLoading } =

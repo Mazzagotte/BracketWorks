@@ -12,7 +12,8 @@ import dashboardStyles from '../dashboard.module.css';
 import pageStyles from './dashboard-settings-page.module.css';
 import { useToast } from '../../components/Toast';
 import { logger } from '../../lib/logger';
-import { isHandheldViewport } from '../../lib/responsive';
+import { MOBILE_VIEWPORT_QUERY } from '../../lib/responsive';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { defaultBracketPrograms, normalizeBracketPrograms } from '../../lib/bracketPrograms';
 import { formatIsoDateFull } from '../../lib/formatters';
 import { getErrorContext } from '../../lib/error-utils';
@@ -84,7 +85,7 @@ export function TournamentSettingsContent({ tournamentId, layout = 'page' }: Tou
   const [bracketSettings, setBracketSettings] = useState<BracketSettings>(createDefaultBracketSettings());
   const [sidePots, setSidePots] = useState<SidePotsSettings>(createDefaultSidePots());
   const [cardExpanded, setCardExpanded] = useState<Record<DashboardCardKey, boolean>>(expandedDesktopCards);
-  const [isMobile, setIsMobile] = useState(false);
+  const isMobile = useMediaQuery(MOBILE_VIEWPORT_QUERY);
 
   const bracketSettingsRef = useRef<BracketSettings>(bracketSettings);
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -253,15 +254,6 @@ export function TournamentSettingsContent({ tournamentId, layout = 'page' }: Tou
       };
     }, 'immediate');
   };
-
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(isHandheldViewport());
-    };
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
 
   useEffect(() => {
     bracketSettingsRef.current = bracketSettings;

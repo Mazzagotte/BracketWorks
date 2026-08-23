@@ -22,6 +22,7 @@ interface Reconciliation {
     difference: number
   }
   public_results_ready: boolean
+  blocking_errors: string[]
   warnings: string[]
   ready_to_finalize: boolean
 }
@@ -178,9 +179,15 @@ export default function TournamentFinalReview({ tournamentId, tournamentName, sq
             <div><dt>Difference</dt><dd>{formatCurrency(review.payouts.difference)}</dd></div>
           </dl>
 
-          {review.warnings.length > 0 && (
+          {review.blocking_errors.length > 0 && (
             <div className={styles.reviewWarnings}>
               <strong>Resolve before finalizing</strong>
+              <ul>{review.blocking_errors.map(error => <li key={error}>{error}</li>)}</ul>
+            </div>
+          )}
+          {review.warnings.length > 0 && (
+            <div className={styles.reviewNotices}>
+              <strong>Review notices</strong>
               <ul>{review.warnings.map(warning => <li key={warning}>{warning}</li>)}</ul>
             </div>
           )}

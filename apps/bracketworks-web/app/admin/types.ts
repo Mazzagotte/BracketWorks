@@ -1,4 +1,4 @@
-import type { ChangelogEntry } from "../lib/types";
+import type { ChangelogEntry, ChangelogSection, ChangelogTag } from "../lib/types";
 
 export type OverviewResponse = {
   metrics: {
@@ -270,6 +270,11 @@ export type ChangelogFormState = {
   version: string;
   date: string;
   changes: string;
+  title: string;
+  summary: string;
+  sections: ChangelogSection[];
+  tags: ChangelogTag[];
+  legacy: boolean;
 };
 
 export type AdminChangelogEntry = ChangelogEntry & {
@@ -290,6 +295,11 @@ export const EMPTY_CHANGELOG_FORM: ChangelogFormState = {
   version: "",
   date: "",
   changes: "",
+  title: "",
+  summary: "",
+  sections: [{ heading: "", items: [""] }],
+  tags: [],
+  legacy: false,
 };
 
 export const TAB_LABELS: Record<AdminTab, string> = {

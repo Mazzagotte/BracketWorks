@@ -359,6 +359,7 @@ export default function SettingsPage() {
       await apiClient.post('/api/v1/users/change-password', {
         current_password: passwordForm.current_password,
         new_password: passwordForm.new_password,
+        sign_out_current_session: logoutAfterPasswordChange,
       });
 
       setPasswordForm({ current_password: '', new_password: '', confirm_password: '' });

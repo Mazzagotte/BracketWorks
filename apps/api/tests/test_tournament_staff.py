@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta, timezone
+
 from app.core import models
 
 
@@ -9,9 +11,12 @@ def _tournament(db, owner):
     return tournament
 
 
-def test_owner_can_invite_and_matching_user_can_accept(api_client, db_session, auth_identity, make_user, make_auth_headers):
+def test_owner_can_invite_and_matching_user_can_accept(api_client, db_session, auth_identity, make_user, make_auth_headers, monkeypatch):
     tournament = _tournament(db_session, auth_identity.user)
     scorer = make_user("staff_scorer")
+    scorer.email_verified_at = datetime.now(timezone.utc)
+    db_session.commit()
+    monkeypatch.setattr("app.api.v1.tournament_staff.secrets.token_urlsafe", lambda _: "secure-staff-token")
     invite_response = api_client.post(
         f"/api/v1/tournament-staff/{tournament.id}/invitations",
         headers=auth_identity.headers,
@@ -27,12 +32,68 @@ def test_owner_can_invite_and_matching_user_can_accept(api_client, db_session, a
     accepted = api_client.post(
         f"/api/v1/tournament-staff/invitations/{invite_response.json()['id']}/accept",
         headers=scorer_headers,
+        json={"token": "secure-staff-token"},
     )
     assert accepted.status_code == 200
     member = db_session.query(models.TournamentStaffMember).filter_by(
         tournament_id=tournament.id, user_id=scorer.id
     ).one()
     assert member.role == "scorer"
+
+
+def test_staff_invitation_token_is_single_use(api_client, db_session, auth_identity, make_user, make_auth_headers, monkeypatch):
+    tournament = _tournament(db_session, auth_identity.user)
+    invitee = make_user("token_invitee")
+    invitee.email_verified_at = datetime.now(timezone.utc)
+    db_session.commit()
+    monkeypatch.setattr("app.api.v1.tournament_staff.secrets.token_urlsafe", lambda _: "one-use-token")
+    created = api_client.post(f"/api/v1/tournament-staff/{tournament.id}/invitations", headers=auth_identity.headers, json={"email": invitee.email, "role": "viewer"})
+    invitation_id = created.json()["id"]
+    headers = make_auth_headers(invitee)
+
+    wrong = api_client.post(f"/api/v1/tournament-staff/invitations/{invitation_id}/accept", headers=headers, json={"token": "wrong"})
+    accepted = api_client.post(f"/api/v1/tournament-staff/invitations/{invitation_id}/accept", headers=headers, json={"token": "one-use-token"})
+    replayed = api_client.post(f"/api/v1/tournament-staff/invitations/{invitation_id}/accept", headers=headers, json={"token": "one-use-token"})
+
+    assert wrong.status_code == 403
+    assert accepted.status_code == 200
+    assert replayed.status_code == 409
+
+
+def test_unverified_account_cannot_view_or_accept_matching_invitation(api_client, db_session, auth_identity, make_user, make_auth_headers):
+    tournament = _tournament(db_session, auth_identity.user)
+    unverified = make_user("unverified_invitee")
+    invitation = models.TournamentStaffInvitation(
+        tournament_id=tournament.id, email=unverified.email, role="viewer",
+        invited_by_user_id=auth_identity.user.id,
+        expires_at=datetime.now(timezone.utc) + timedelta(days=1),
+    )
+    db_session.add(invitation)
+    db_session.commit()
+    headers = make_auth_headers(unverified)
+
+    assert api_client.get("/api/v1/tournament-staff/invitations/mine", headers=headers).json() == []
+    response = api_client.post(f"/api/v1/tournament-staff/invitations/{invitation.id}/accept", headers=headers, json={"token": None})
+
+    assert response.status_code == 403
+    assert db_session.query(models.TournamentStaffMember).filter_by(user_id=unverified.id).count() == 0
+
+
+def test_viewer_cannot_receive_staff_email_addresses(api_client, db_session, auth_identity, make_user, make_auth_headers):
+    tournament = _tournament(db_session, auth_identity.user)
+    viewer = make_user("privacy_viewer")
+    scorer = make_user("privacy_scorer")
+    db_session.add_all([
+        models.TournamentStaffMember(tournament_id=tournament.id, user_id=viewer.id, role="viewer", invited_by_user_id=auth_identity.user.id),
+        models.TournamentStaffMember(tournament_id=tournament.id, user_id=scorer.id, role="scorer", invited_by_user_id=auth_identity.user.id),
+    ])
+    db_session.commit()
+
+    viewer_result = api_client.get(f"/api/v1/tournament-staff/tournaments/{tournament.id}", headers=make_auth_headers(viewer)).json()
+    owner_result = api_client.get(f"/api/v1/tournament-staff/tournaments/{tournament.id}", headers=auth_identity.headers).json()
+
+    assert all(row["email"] is None for row in viewer_result)
+    assert {row["email"] for row in owner_result} == {auth_identity.user.email, viewer.email, scorer.email}
 
 
 def test_scorer_can_write_scores_but_cannot_manage_entries(api_client, db_session, auth_identity, make_user, make_auth_headers):

@@ -4,6 +4,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from ..core import models
+from ..core.money import money_decimal, money_float
 from .side_pots import calculate_side_pot_accounting
 
 
@@ -21,7 +22,7 @@ def build_final_reconciliation(db: Session, tournament_id: int) -> dict:
     players = db.query(models.TournamentPlayer).filter(models.TournamentPlayer.tournament_id == tournament_id).all()
     entry_count = len(players)
     missing_averages = sum(1 for player in players if not player.average or player.average <= 0)
-    unpaid_entries = sum(1 for player in players if float(player.amount_paid or 0) <= 0)
+    unpaid_entries = sum(1 for player in players if money_decimal(player.amount_paid) <= 0)
     resolved_pairs = {
         tuple(sorted((row.left_player_id, row.right_player_id)))
         for row in db.query(models.DuplicatePlayerResolution).filter_by(tournament_id=tournament_id).all()
@@ -54,24 +55,31 @@ def build_final_reconciliation(db: Session, tournament_id: int) -> dict:
     summaries = db.query(models.TournamentPayoutSummary).filter(
         models.TournamentPayoutSummary.tournament_id == tournament_id
     ).all()
-    collected = round(sum(float(player.amount_paid or 0) for player in players), 2)
-    bracket_payouts = round(sum(float(summary.total_prize_pool or 0) for summary in summaries), 2)
-    house_retained = round(sum(float(summary.house_fee_amount or 0) for summary in summaries), 2)
-    side_pot_payouts = round(float(side_pots.get("total_pool") or 0), 2)
-    expected_payout = round(bracket_payouts + side_pot_payouts, 2)
-    difference = round(collected - expected_payout - house_retained, 2)
+    collected_decimal = sum((money_decimal(player.amount_paid) for player in players), start=money_decimal(0))
+    bracket_payouts_decimal = sum((money_decimal(summary.total_prize_pool) for summary in summaries), start=money_decimal(0))
+    house_retained_decimal = sum((money_decimal(summary.house_fee_amount) for summary in summaries), start=money_decimal(0))
+    side_pot_payouts_decimal = money_decimal(side_pots.get("total_pool"))
+    expected_payout_decimal = bracket_payouts_decimal + side_pot_payouts_decimal
+    difference_decimal = collected_decimal - expected_payout_decimal - house_retained_decimal
+    collected = money_float(collected_decimal)
+    bracket_payouts = money_float(bracket_payouts_decimal)
+    house_retained = money_float(house_retained_decimal)
+    side_pot_payouts = money_float(side_pot_payouts_decimal)
+    expected_payout = money_float(expected_payout_decimal)
+    difference = money_float(difference_decimal)
 
+    blocking_errors: list[str] = []
     warnings: list[str] = []
-    if entry_count == 0: warnings.append("No tournament entries")
-    if missing_averages: warnings.append(f"{missing_averages} missing averages")
+    if entry_count == 0: blocking_errors.append("No tournament entries")
+    if missing_averages: blocking_errors.append(f"{missing_averages} missing averages")
     if unpaid_entries: warnings.append(f"{unpaid_entries} unpaid entries")
-    if duplicate_players: warnings.append(f"{duplicate_players} possible duplicate players")
-    if bracket_count == 0: warnings.append("Brackets have not been generated")
-    if bracket_mismatch: warnings.append("Entries no longer match generated brackets")
-    if complete_scores < entry_count: warnings.append(f"{entry_count - complete_scores} incomplete score records")
-    if not summaries: warnings.append("Payouts have not been calculated")
-    if side_pot_warnings: warnings.append("Unresolved side pots: " + ", ".join(side_pot_warnings))
-    if abs(difference) > 0.009: warnings.append(f"Payout reconciliation difference is ${difference:,.2f}")
+    if duplicate_players: blocking_errors.append(f"{duplicate_players} possible duplicate players")
+    if bracket_count == 0: blocking_errors.append("Brackets have not been generated")
+    if bracket_mismatch: blocking_errors.append("Entries no longer match generated brackets")
+    if complete_scores < entry_count: blocking_errors.append(f"{entry_count - complete_scores} incomplete score records")
+    if not summaries: blocking_errors.append("Payouts have not been calculated")
+    if side_pot_warnings: blocking_errors.append("Unresolved side pots: " + ", ".join(side_pot_warnings))
+    if abs(difference) > 0.009: blocking_errors.append(f"Payout reconciliation difference is ${difference:,.2f}")
     if not tournament.is_public: warnings.append("Public results are not enabled")
 
     return {
@@ -83,5 +91,6 @@ def build_final_reconciliation(db: Session, tournament_id: int) -> dict:
         "payouts": {"calculated": bool(summaries), "collected": collected, "bracket_payouts": bracket_payouts, "side_pot_payouts": side_pot_payouts, "expected_payout": expected_payout, "house_retained": house_retained, "difference": difference},
         "public_results_ready": bool(tournament.is_public and complete_scores >= entry_count and entry_count > 0),
         "warnings": warnings,
-        "ready_to_finalize": len(warnings) == 0,
+        "blocking_errors": blocking_errors,
+        "ready_to_finalize": len(blocking_errors) == 0,
     }

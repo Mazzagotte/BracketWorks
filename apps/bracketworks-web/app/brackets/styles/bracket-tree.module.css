@@ -472,7 +472,7 @@
    RESPONSIVE DESIGN
    =================================== */
 
-@media (max-width: 1024px) {
+@media (max-width: 1023px) {
   .bracketTree {
     gap: 60px;
   }
@@ -849,7 +849,7 @@
   border-radius: 24px;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1023px) {
   .matchCard {
     width: fit-content;
     min-width: 196px;

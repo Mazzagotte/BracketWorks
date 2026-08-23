@@ -51,3 +51,27 @@ def test_user_cannot_revoke_another_users_session(api_client, db_session, auth_i
     assert response.json()["revoked_sessions"] == 0
     db_session.refresh(other)
     assert other.is_revoked is False
+
+
+def test_password_change_revokes_other_sessions_but_preserves_current(api_client, db_session, auth_identity):
+    other = _other_session(db_session, auth_identity.user)
+
+    response = api_client.post("/api/v1/users/change-password", headers=auth_identity.headers, json={
+        "current_password": "StrongPass1!", "new_password": "NewStrongPass2!",
+        "sign_out_current_session": False,
+    })
+
+    assert response.status_code == 200
+    db_session.refresh(other)
+    assert other.is_revoked is True
+    assert api_client.get("/api/v1/users/me", headers=auth_identity.headers).status_code == 200
+
+
+def test_password_change_can_revoke_current_session_too(api_client, auth_identity):
+    response = api_client.post("/api/v1/users/change-password", headers=auth_identity.headers, json={
+        "current_password": "StrongPass1!", "new_password": "NewStrongPass2!",
+        "sign_out_current_session": True,
+    })
+
+    assert response.status_code == 200
+    assert api_client.get("/api/v1/users/me", headers=auth_identity.headers).status_code == 401

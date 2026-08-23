@@ -7,30 +7,17 @@ export const BW_BREAKPOINTS = {
   largeDesktopMin: 1280,
   extraLargeDesktopMin: 1440,
   navigationDrawerMax: 1023,
+  compactContentMax: 900,
 } as const
 
 export const MOBILE_VIEWPORT_QUERY = `(max-width: ${BW_BREAKPOINTS.mobileMax}px)`
+export const COMPACT_CONTENT_VIEWPORT_QUERY = `(max-width: ${BW_BREAKPOINTS.compactContentMax}px)`
+export const NAVIGATION_DRAWER_VIEWPORT_QUERY = `(max-width: ${BW_BREAKPOINTS.navigationDrawerMax}px)`
 
 export function isPhoneWidth(width: number): boolean {
   return width <= BW_BREAKPOINTS.mobileMax
 }
 
-export function isHandheldWidth(width: number): boolean {
-  return isPhoneWidth(width)
-}
-
-export function isPhoneViewport(): boolean {
-  return typeof window !== 'undefined' && isPhoneWidth(window.innerWidth)
-}
-
-export function isHandheldViewport(): boolean {
-  return typeof window !== 'undefined' && isHandheldWidth(window.innerWidth)
-}
-
-export function matchesMaxWidth(width: number): boolean {
-  return typeof window !== 'undefined' && window.matchMedia(`(max-width: ${width}px)`).matches
-}
-
-export function usesNavigationDrawerViewport(): boolean {
-  return typeof window !== 'undefined' && matchesMaxWidth(BW_BREAKPOINTS.navigationDrawerMax)
+export function isCompactContentWidth(width: number): boolean {
+  return width <= BW_BREAKPOINTS.compactContentMax
 }

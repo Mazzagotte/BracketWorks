@@ -15,6 +15,11 @@ def _seed(db, owner):
         tournament_id=tournament.id, squad_id=squad.id, user_id=owner.id,
         full_name="Protected Player", average=180, amount_paid=20,
     ))
+    db.add(models.UserSquadSelection(user_id=owner.id, tournament_squad_id=squad.id))
+    db.add(models.TournamentSetupState(
+        tournament_id=tournament.id, user_id=owner.id,
+        payload={"step": "entries", "nested": {"complete": True}}, is_published=True,
+    ))
     db.commit()
     db.refresh(tournament)
     return tournament
@@ -36,6 +41,8 @@ def test_settings_change_creates_inspectable_restore_point(api_client, db_sessio
     )
     assert detail.status_code == 200
     assert detail.json()["state_summary"]["tournament_players"] == 1
+    assert detail.json()["state_summary"]["user_squad_selections"] == 1
+    assert detail.json()["state_summary"]["tournament_setup_states"] == 1
 
 
 def test_restore_requires_exact_confirmation_and_restores_state(api_client, db_session, auth_identity):
@@ -46,6 +53,12 @@ def test_restore_requires_exact_confirmation_and_restores_state(api_client, db_s
     point = api_client.get(
         f"/api/v1/tournament-snapshots/{tournament.id}", headers=auth_identity.headers
     ).json()[0]
+    original_squad = db_session.query(models.TournamentSquad).filter_by(tournament_id=tournament.id).one()
+    db_session.query(models.UserSquadSelection).filter_by(tournament_squad_id=original_squad.id).delete()
+    setup = db_session.query(models.TournamentSetupState).filter_by(tournament_id=tournament.id).one()
+    setup.payload = {"step": "changed"}
+    setup.is_published = False
+    db_session.commit()
     denied = api_client.post(
         f"/api/v1/tournament-snapshots/{tournament.id}/{point['id']}/restore",
         headers=auth_identity.headers, json={"confirmation": "wrong"},
@@ -61,6 +74,12 @@ def test_restore_requires_exact_confirmation_and_restores_state(api_client, db_s
     assert restored_tournament.name == "Original Event"
     assert restored_tournament.location == "Original Center"
     assert db_session.query(models.TournamentPlayer).filter_by(tournament_id=tournament.id).one().full_name == "Protected Player"
+    restored_squad = db_session.query(models.TournamentSquad).filter_by(tournament_id=tournament.id).one()
+    selection = db_session.query(models.UserSquadSelection).filter_by(tournament_squad_id=restored_squad.id).one()
+    assert selection.user_id == auth_identity.user.id
+    restored_setup = db_session.query(models.TournamentSetupState).filter_by(tournament_id=tournament.id).one()
+    assert restored_setup.payload == {"step": "entries", "nested": {"complete": True}}
+    assert restored_setup.is_published is True
 
 
 def test_later_activity_requires_explicit_acknowledgment(api_client, db_session, auth_identity):

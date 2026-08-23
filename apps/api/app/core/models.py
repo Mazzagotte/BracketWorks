@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from decimal import Decimal
 from typing import Optional
 
 from sqlalchemy import (
@@ -9,6 +10,7 @@ from sqlalchemy import (
     Integer,
     JSON,
     LargeBinary,
+    Numeric,
     String,
     Text,
     UniqueConstraint,
@@ -484,6 +486,7 @@ class TournamentStaffInvitation(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), index=True)
     expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, index=True)
     responded_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    token_hash: Mapped[Optional[str]] = mapped_column(String(64), nullable=True, unique=True, index=True)
 
 
 class TournamentRestorePoint(Base):
@@ -1020,8 +1023,8 @@ class PayoutAdjustment(Base):
     tournament_id: Mapped[int] = mapped_column(Integer, ForeignKey("tournaments.id"), nullable=False, index=True)
     payout_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("bracket_payouts.id"), nullable=True, index=True)
     adjustment_type: Mapped[str] = mapped_column(String(30), nullable=False)
-    old_amount: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    new_amount: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    old_amount: Mapped[Optional[Decimal]] = mapped_column(Numeric(12, 2), nullable=True)
+    new_amount: Mapped[Optional[Decimal]] = mapped_column(Numeric(12, 2), nullable=True)
     reason: Mapped[str] = mapped_column(String(1000), nullable=False)
     adjusted_by_user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), index=True)
@@ -1086,6 +1089,10 @@ class Changelog(Base):
     version: Mapped[str] = mapped_column(String(20), nullable=False, unique=True, index=True)
     date: Mapped[str] = mapped_column(String(10), nullable=False)
     changes: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
+    title: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    summary: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    sections: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    tags: Mapped[list | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=lambda: datetime.now(timezone.utc)
     )

@@ -25,7 +25,7 @@ import unicodedata
 import uuid
 import json
 
-from ...services.tournament_snapshots import ROW_MODELS
+from ...services.tournament_state import AUTHORITATIVE_TOURNAMENT_ROW_MODELS
 
 pwd_context = CryptContext(
     schemes=["bcrypt"], 
@@ -543,6 +543,7 @@ def update_my_account(
 def change_my_password(
     payload: schemas.ChangePasswordRequest,
     background_tasks: BackgroundTasks,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
@@ -559,7 +560,16 @@ def change_my_password(
 
     now = _utcnow()
     current_user.password = pwd_context.hash(payload.new_password)
-    _revoke_all_user_sessions(db, current_user.id, now)
+    current_session_id = getattr(request.state, "auth_session_id", None)
+    sessions = db.query(models.AuthSession).filter(
+        models.AuthSession.user_id == current_user.id,
+        models.AuthSession.is_revoked.is_(False),
+    ).all()
+    for session in sessions:
+        if not payload.sign_out_current_session and session.session_id == current_session_id:
+            continue
+        session.is_revoked = True
+        session.revoked_at = now
     db.commit()
     background_tasks.add_task(sendPasswordChangeEmail, current_user.email, current_user.first_name)
 
@@ -589,7 +599,7 @@ def export_my_account_data(
                 _portable_row(row)
                 for row in db.query(model).filter(model.tournament_id == tournament.id).all()
             ]
-            for model in ROW_MODELS
+            for model in AUTHORITATIVE_TOURNAMENT_ROW_MODELS
         }
         tables[models.TournamentAuditLog.__tablename__] = [
             _portable_row(row)
@@ -824,7 +834,11 @@ def get_changelog(db: Session = Depends(get_db)):
         schemas.ChangelogEntry(
             date=entry.date,
             version=entry.version,
-            changes=entry.changes
+            changes=entry.changes,
+            title=entry.title,
+            summary=entry.summary,
+            sections=entry.sections,
+            tags=entry.tags,
         )
         for entry in entries
     ]

@@ -35,6 +35,7 @@ import primitiveStyles from '../components/primitives/primitives.module.css'
 import { getSelectedSquadId, getSelectedTournamentId, setSelectedSquad } from '../lib/selection-session'
 import { resetScrollLocks, setBodyInteractionState } from '../utils/modalUtils'
 import { MOBILE_VIEWPORT_QUERY } from '../lib/responsive'
+import { useMediaQuery } from '../hooks/useMediaQuery'
 import { ListChecks, RefreshCcw, Search as SearchIcon, UserRound } from 'lucide-react'
 import ImportPreviewModal from './components/ImportPreviewModal'
 import DuplicateResolutionPanel from './components/DuplicateResolutionPanel'
@@ -78,7 +79,7 @@ export default function PlayersPage() {
   const [bracketPrograms, setBracketPrograms] = useState<BracketProgramDefinition[]>(defaultBracketPrograms)
   const [prefillDraft, setPrefillDraft] = useState<PlayerFormPrefillDraft | null>(null)
   const [prefillVersion, setPrefillVersion] = useState(0)
-  const [isMobileView, setIsMobileView] = useState(false)
+  const isMobileView = useMediaQuery(MOBILE_VIEWPORT_QUERY)
   const [historySearchCollapsed, setHistorySearchCollapsed] = useState(false)
   const [hasSubmittedHistorySearch, setHasSubmittedHistorySearch] = useState(false)
   const [tableSearchCollapsed, setTableSearchCollapsed] = useState(false)
@@ -122,20 +123,9 @@ export default function PlayersPage() {
   }, [])
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
-
-    const mediaQuery = window.matchMedia(MOBILE_VIEWPORT_QUERY)
-    const syncMobileState = () => {
-      const mobile = mediaQuery.matches
-      setIsMobileView(mobile)
-      setHistorySearchCollapsed(mobile)
-      setTableSearchCollapsed(mobile)
-    }
-
-    syncMobileState()
-    mediaQuery.addEventListener('change', syncMobileState)
-    return () => mediaQuery.removeEventListener('change', syncMobileState)
-  }, [])
+    setHistorySearchCollapsed(isMobileView)
+    setTableSearchCollapsed(isMobileView)
+  }, [isMobileView])
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined

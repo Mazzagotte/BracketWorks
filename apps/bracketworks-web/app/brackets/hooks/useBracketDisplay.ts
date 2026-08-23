@@ -3,7 +3,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import type { BracketPreview } from '../../hooks/useBrackets'
 import { getBracketGroups } from '../../lib/bracketPrograms'
-import type { BracketResponse } from '../../lib/types'
+import type { BracketResponse, BracketRound } from '../../lib/types'
 
 type BracketItem = {
   group: ReturnType<typeof getBracketGroups>[number]
@@ -31,7 +31,7 @@ interface UseBracketDisplayResult {
   searchFilteredBracketItems: BracketItem[]
   mobileBracketSections: Array<{ key: string; name: string; items: Array<{ item: BracketItem; index: number }> }>
   activeBracketItem: BracketItem | null
-  rounds: any[]
+  rounds: BracketRound[]
   bracketSearchTerm: string
   searchResultCount: number | null
   totalBracketCount: number
@@ -130,8 +130,7 @@ export function useBracketDisplay({ loadedBrackets, isMobile }: UseBracketDispla
     return searchFilteredBracketItems[safeIndex] ?? null
   }, [searchFilteredBracketItems, selectedBracketIndex])
 
-  // Let TypeScript infer the rounds element type to avoid cross-module BracketRound conflicts
-  const rounds = useMemo(() => {
+  const rounds = useMemo<BracketRound[]>(() => {
     if (!loadedBrackets) return []
     if (loadedBrackets.rounds) return loadedBrackets.rounds
     return activeBracketItem?.bracket?.rounds ?? []
