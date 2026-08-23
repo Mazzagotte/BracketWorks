@@ -13,7 +13,7 @@ import { useEntryFilters } from './hooks/useEntryFilters'
 import { usePlayerSidePots } from './hooks/usePlayerSidePots'
 import { usePlayerTournamentSetup } from './hooks/usePlayerTournamentSetup'
 import { buildEntriesExcelBuffer, parseExcelPlayers } from './utils/importPlayers'
-import { prepareImportedPlayers } from './utils/prepareImportedPlayers'
+import { buildImportPreview, type ImportPreviewRow } from './utils/buildImportPreview'
 import { useTournaments } from '../hooks/useTournaments'
 import PlayersTable from './components/PlayersTable'
 import PlayerForm from './components/PlayerForm'
@@ -36,6 +36,8 @@ import { getSelectedSquadId, getSelectedTournamentId, setSelectedSquad } from '.
 import { resetScrollLocks, setBodyInteractionState } from '../utils/modalUtils'
 import { MOBILE_VIEWPORT_QUERY } from '../lib/responsive'
 import { ListChecks, RefreshCcw, Search as SearchIcon, UserRound } from 'lucide-react'
+import ImportPreviewModal from './components/ImportPreviewModal'
+import DuplicateResolutionPanel from './components/DuplicateResolutionPanel'
 
 function bracketProgramsEqual(left: BracketProgramDefinition[], right: BracketProgramDefinition[]): boolean {
   if (left.length !== right.length) return false
@@ -218,7 +220,6 @@ export default function PlayersPage() {
     isLoading,
     savingStatus,
     addPlayer,
-    importPlayers,
     updatePlayer,
     cancelPendingPatches,
     deletePlayer,
@@ -242,7 +243,7 @@ export default function PlayersPage() {
     loadSidePots,
   } = usePlayerSidePots(rawPlayers)
 
-  const { loadEntryFee } = usePlayerTournamentSetup({
+  const { isTournamentSetupLoading, loadEntryFee } = usePlayerTournamentSetup({
     isAuthInitialized,
     authToken,
     selectionRefreshKey,
@@ -447,7 +448,9 @@ export default function PlayersPage() {
   // Import from Excel — file input ref lives here so the button can be in the header
   const importFileRef = useRef<HTMLInputElement | null>(null)
   const [isImporting, setIsImporting] = useState(false)
+  const [isCommittingImport, setIsCommittingImport] = useState(false)
   const [importFileName, setImportFileName] = useState<string | undefined>(undefined)
+  const [importPreviewRows, setImportPreviewRows] = useState<ImportPreviewRow[] | null>(null)
   const toast = useToastHelpers()
 
   const executeDeleteAllPlayers = useCallback(async () => {
@@ -473,64 +476,64 @@ export default function PlayersPage() {
     setIsImporting(true)
     try {
       const { players: imported, skippedRows } = await parseExcelPlayers(file, enabledBracketPrograms, entryFee)
-      const logSkippedRows = () => {
-        if (skippedRows.length === 0) return
-        const onlyFileDuplicates = skippedRows.every(row => row.reason.startsWith('Duplicate within file'))
-        const logContext = {
-          skippedRowsCount: skippedRows.length,
-          skippedRowsPreview: skippedRows.slice(0, 10),
-        }
-        if (onlyFileDuplicates) {
-          logger.info('Import skipped duplicate rows from file', logContext)
-        } else {
-          logger.warn('Import skipped rows', logContext)
-        }
-      }
-
-      if (imported.length === 0) {
-        toast.warning('No valid player rows found. Please include first and last name columns.', 'Import Warning')
-        logSkippedRows()
+      const preview = buildImportPreview(imported, players, skippedRows)
+      if (preview.length === 0) {
+        toast.warning('No rows were found in the workbook.', 'Import Warning')
         return
       }
-
-      const { playersToImport: toImport, skippedRows: finalSkippedRows } = prepareImportedPlayers(imported, players, skippedRows)
-
-      if (toImport.length === 0) {
-        toast.warning(
-          `No new players were imported. ${finalSkippedRows.length} row${finalSkippedRows.length !== 1 ? 's were' : ' was'} skipped.`,
-          'No New Players'
-        )
-        logSkippedRows()
-        return
-      }
-
-      const result = await importPlayers(toImport)
-      if (result.successCount > 0) {
-        void loadPlayers()
-      }
-      toast.success(
-        `Added ${result.successCount} player${result.successCount !== 1 ? 's' : ''} successfully.` +
-        (result.failedCount > 0 ? ` ${result.failedCount} failed.` : '') +
-        (finalSkippedRows.length > 0 ? ` ${finalSkippedRows.length} row${finalSkippedRows.length !== 1 ? 's' : ''} skipped.` : ''),
-        'Import Complete'
-      )
-
-      if (finalSkippedRows.length > 0) {
-        const preview = finalSkippedRows
-          .slice(0, 5)
-          .map(row => `Row ${row.row}: ${row.reason}${row.name ? ` (${row.name})` : ''}`)
-          .join(' | ')
-        toast.warning(`Skipped rows: ${preview}${finalSkippedRows.length > 5 ? ' | ...' : ''}`, 'Import Details')
-        logSkippedRows()
-      }
+      setImportPreviewRows(preview)
     } catch (err) {
       toast.error(`Failed to import Excel file: ${err instanceof Error ? err.message : 'Unknown error'}`, 'Import Failed')
     } finally {
       setIsImporting(false)
-      setImportFileName(undefined)
       e.target.value = ''
     }
   }
+
+  const cancelImportPreview = useCallback(() => {
+    setImportPreviewRows(null)
+    setImportFileName(undefined)
+  }, [])
+
+  const confirmImportPreview = useCallback(async () => {
+    if (!importPreviewRows || !selectedTournament) return
+    const selected = importPreviewRows.filter(row => row.selected && row.player)
+    if (selected.some(row => !row.player?.firstName.trim() || !row.player?.lastName.trim())) {
+      toast.warning('Every selected row needs a first and last name.', 'Resolve Import')
+      return
+    }
+    setIsCommittingImport(true)
+    try {
+      const rows = selected.map(row => ({
+        tournament_id: selectedTournament.id,
+        squad_id: selectedSquad?.id ?? null,
+        full_name: `${row.player!.firstName.trim()} ${row.player!.lastName.trim()}`,
+        usbc_number: row.player!.usbc || null,
+        average: row.player!.average,
+        handicap_entry_count: row.player!.handicap,
+        scratch_entry_count: row.player!.scratch,
+        program_entry_counts: row.player!.bracketEntries,
+        side_pot_entries: row.player!.sidePotEntries,
+        lane: row.player!.lane,
+        division: normalizeDivision(row.player!.division),
+        amount_paid: row.player!.amountPaid,
+        allow_duplicate: row.category === 'possible_duplicate' || row.category === 'existing_match',
+      }))
+      const result = await apiClient.post<{ created: number }>('/api/v1/bowlers/import-commit', {
+        tournament_id: selectedTournament.id,
+        squad_id: selectedSquad?.id ?? null,
+        file_name: importFileName,
+        rows,
+      })
+      await loadPlayers()
+      toast.success(`Imported ${result.created} player${result.created === 1 ? '' : 's'}. A restore point was created before the commit.`, 'Import Complete')
+      cancelImportPreview()
+    } catch (err) {
+      toast.error(`Import was not committed: ${err instanceof Error ? err.message : 'Unknown error'}`, 'Import Failed')
+    } finally {
+      setIsCommittingImport(false)
+    }
+  }, [cancelImportPreview, importFileName, importPreviewRows, loadPlayers, selectedSquad, selectedTournament, toast])
 
   const handleExportToExcel = useCallback(async () => {
     if (players.length === 0) {
@@ -635,7 +638,15 @@ export default function PlayersPage() {
     )
   }
 
-  if (typeof window !== 'undefined' && !getSelectedTournamentId()) {
+  if (isTournamentSetupLoading) {
+    return (
+      <div className={styles.loadingScreen}>
+        <div role="status">Loading tournament entries...</div>
+      </div>
+    )
+  }
+
+  if (!selectedTournament) {
     return (
       <NoTournamentState
         title="Entries Board Standing By"
@@ -649,7 +660,7 @@ export default function PlayersPage() {
     )
   }
 
-  if (typeof window !== 'undefined' && !getSelectedSquadId()) {
+  if (!selectedSquad) {
     return (
       <NoTournamentState
         title="Entries Need a Squad"
@@ -666,6 +677,9 @@ export default function PlayersPage() {
     <ErrorBoundary>
       <div className={`${shellStyles.page} ${styles.pageContainer}`}>
         <ImportLoadingModal isOpen={isImporting} fileName={importFileName} />
+        {importPreviewRows && importFileName && (
+          <ImportPreviewModal fileName={importFileName} rows={importPreviewRows} isCommitting={isCommittingImport} onRowsChange={setImportPreviewRows} onCancel={cancelImportPreview} onConfirm={() => { void confirmImportPreview() }} />
+        )}
         {/* Hidden file input for Excel import — triggered by header button */}
         <input
           ref={importFileRef}
@@ -686,11 +700,15 @@ export default function PlayersPage() {
             />
           )}
 
+          {selectedTournament && (
+            <DuplicateResolutionPanel tournamentId={selectedTournament.id} onResolved={loadPlayers} />
+          )}
+
           <div className={styles.entriesTopRow}>
             <EntriesQuickActions
               isDev={isDev}
               playersCount={players.length}
-              isImporting={isImporting}
+              isImporting={isImporting || isCommittingImport || importPreviewRows !== null}
               isDeletingAll={isDeletingAll}
               onOpenGuide={() => setIsExplainModalOpen(true)}
               onExportToExcel={handleExportToExcel}

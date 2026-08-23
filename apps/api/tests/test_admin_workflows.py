@@ -48,6 +48,48 @@ def test_inactive_user_cannot_login(api_client, db_session, make_user):
     assert response.json()["detail"] == "Account is inactive"
 
 
+def test_admin_support_views_include_user_and_tournament_operational_context(api_client, db_session, make_user, make_auth_headers):
+    admin = make_user("support_admin", is_admin=True)
+    owner = make_user("support_owner")
+    staff = make_user("support_staff")
+    tournament = models.Tournament(user_id=owner.id, name="Support Search Event", squad_times="{}", lifecycle_status="in_progress")
+    db_session.add(tournament)
+    db_session.flush()
+    db_session.add(models.TournamentStaffMember(tournament_id=tournament.id, user_id=staff.id, role="scorer", invited_by_user_id=owner.id))
+    db_session.add(models.TournamentAuditLog(tournament_id=tournament.id, event_type="score.updated", user_id=staff.id, user_display_name="Support Staff", summary="Updated a score"))
+    db_session.commit()
+    headers = make_auth_headers(admin)
+
+    tournament_response = api_client.get(f"/api/v1/admin/tournaments?search={tournament.id}", headers=headers)
+    assert tournament_response.status_code == 200
+    result = tournament_response.json()["tournaments"][0]
+    assert result["id"] == tournament.id
+    assert result["workflow_status"] == "in_progress"
+    assert result["staff"][0]["role"] == "scorer"
+    assert result["recent_audit_events"][0]["summary"] == "Updated a score"
+
+    user_response = api_client.get(f"/api/v1/admin/users/{staff.id}/review", headers=headers)
+    assert user_response.status_code == 200
+    detail = user_response.json()
+    assert detail["user"]["is_active"] is True
+    assert detail["staff_memberships"][0]["tournament_id"] == tournament.id
+
+
+def test_system_health_is_admin_only_and_checks_dependencies(api_client, db_session, make_user, make_auth_headers):
+    admin = make_user("health_admin", is_admin=True)
+    regular = make_user("health_regular")
+    denied = api_client.get("/api/v1/admin/system-health", headers=make_auth_headers(regular))
+    assert denied.status_code == 403
+    response = api_client.get("/api/v1/admin/system-health", headers=make_auth_headers(admin))
+    assert response.status_code == 200
+    health = response.json()
+    assert health["api"]["status"] == "healthy"
+    assert health["database"]["status"] == "healthy"
+    assert health["backend_version"]
+    assert "account_cleanup" in health["background_jobs"]["runtime"]
+    assert isinstance(health["recent_errors"], list)
+
+
 def test_admin_can_delete_announcement_and_acknowledgments(
     api_client,
     db_session,

@@ -1,6 +1,6 @@
 import logging
 import secrets
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from fastapi import HTTPException, Depends, Request
 from fastapi.security import OAuth2PasswordBearer
@@ -124,6 +124,11 @@ def get_current_user(
     now = _utcnow_naive()
     if auth_session.is_revoked or auth_session.expires_at <= now:
         raise HTTPException(status_code=401, detail="Session no longer valid")
+
+    request.state.auth_session_id = auth_session.session_id
+    if auth_session.last_seen_at < now - timedelta(minutes=5):
+        auth_session.last_seen_at = now
+        db.commit()
 
     try:
         user = db.get(models.User, user_id_int)

@@ -14,6 +14,9 @@ from app.core.validators import BracketValidation
 from app.core.idempotency import IdempotencyReplay, begin_request, complete_request, fail_request
 from app.services.payouts import reset_payouts_if_needed
 from app.services.tournament_access import verify_owned_tournament_access
+from app.services.tournament_audit import record_tournament_event
+from app.services.tournament_lifecycle import refresh_score_completion
+from app.services.tournament_snapshots import create_restore_point
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -83,6 +86,7 @@ class ScoreCreate(BaseModel):
     game1_scratch: Optional[int] = None
     game2_scratch: Optional[int] = None
     game3_scratch: Optional[int] = None
+    correction_reason: Optional[str] = Field(default=None, max_length=1000)
     # Note: game totals are calculated automatically by backend (scratch + handicap)
 
     @field_validator("game1_scratch", "game2_scratch", "game3_scratch")
@@ -96,6 +100,7 @@ class ScoreUpdate(BaseModel):
     game1_scratch: Optional[int] = None
     game2_scratch: Optional[int] = None
     game3_scratch: Optional[int] = None
+    correction_reason: Optional[str] = Field(default=None, max_length=1000)
     # Note: game totals are calculated automatically by backend (scratch + handicap)
 
     @field_validator("game1_scratch", "game2_scratch", "game3_scratch")
@@ -117,6 +122,103 @@ class ScoreResponse(BaseModel):
     game3_scratch: Optional[int] = None
     game3_with_handicap: Optional[int] = Field(default=None, validation_alias=AliasChoices("game3_with_handicap", "game3_total"))
 
+
+class ScoreLockRequest(BaseModel):
+    reason: Optional[str] = Field(default=None, max_length=1000)
+
+
+def _scratch_changes(previous_score: PlayerScore | None, score_data: ScoreCreate | ScoreUpdate) -> list[tuple[str, int | None, int | None]]:
+    if previous_score is None:
+        return []
+    changes = []
+    for field in ("game1_scratch", "game2_scratch", "game3_scratch"):
+        if field not in score_data.model_fields_set:
+            continue
+        old_value = getattr(previous_score, field)
+        new_value = getattr(score_data, field)
+        if old_value is not None and old_value != new_value:
+            changes.append((field, old_value, new_value))
+    return changes
+
+
+def _require_correction_reason(changes: list[tuple[str, int | None, int | None]], reason: str | None) -> str | None:
+    cleaned = (reason or "").strip() or None
+    if changes and not cleaned:
+        raise HTTPException(status_code=422, detail="A correction reason is required when changing a saved score")
+    return cleaned
+
+
+def _record_corrections(db: Session, *, changes, score: PlayerScore, reason: str | None, user) -> None:
+    for field, old_value, new_value in changes:
+        db.add(models.ScoreCorrection(
+            tournament_id=score.tournament_id, score_id=score.id, player_id=score.player_id,
+            field_name=field, old_value=old_value, new_value=new_value,
+            reason=reason or "Score correction", changed_by_user_id=user.id,
+        ))
+
+
+def _require_scores_open(db: Session, tournament_id: int) -> models.Tournament:
+    tournament = db.get(models.Tournament, tournament_id)
+    if tournament and tournament.scores_locked:
+        raise HTTPException(status_code=423, detail="Scores are locked. Unlock scores with a reason before editing.")
+    return tournament
+
+
+@router.get("/{tournament_id}/corrections")
+def get_score_corrections(tournament_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    verify_owned_tournament_access(db, tournament_id, current_user, permission="view")
+    rows = db.query(models.ScoreCorrection, models.User, models.TournamentPlayer).join(
+        models.User, models.User.id == models.ScoreCorrection.changed_by_user_id
+    ).join(models.TournamentPlayer, models.TournamentPlayer.id == models.ScoreCorrection.player_id).filter(
+        models.ScoreCorrection.tournament_id == tournament_id
+    ).order_by(models.ScoreCorrection.created_at.desc()).all()
+    return [{
+        "id": correction.id, "score_id": correction.score_id, "player_id": correction.player_id,
+        "player_name": player.full_name, "field_name": correction.field_name,
+        "old_value": correction.old_value, "new_value": correction.new_value,
+        "reason": correction.reason,
+        "changed_by": f"{user.first_name} {user.last_name}".strip() or user.username,
+        "changed_by_user_id": correction.changed_by_user_id, "created_at": correction.created_at,
+    } for correction, user, player in rows]
+
+
+@router.post("/{tournament_id}/lock")
+def lock_scores(tournament_id: int, payload: ScoreLockRequest, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    tournament = verify_owned_tournament_access(db, tournament_id, current_user, permission="manage_scores")
+    if tournament.scores_locked:
+        return {"tournament_id": tournament_id, "scores_locked": True}
+    tournament.scores_locked = True
+    record_tournament_event(db, tournament_id=tournament_id, event_type="scores.locked", user=current_user,
+                            summary="Locked tournament scores", reason=(payload.reason or "").strip() or None,
+                            after_values={"scores_locked": True}, entity_type="tournament", entity_id=tournament_id)
+    db.commit()
+    return {"tournament_id": tournament_id, "scores_locked": True}
+
+
+@router.post("/{tournament_id}/unlock")
+def unlock_scores(tournament_id: int, payload: ScoreLockRequest, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    tournament = verify_owned_tournament_access(db, tournament_id, current_user, permission="manage_scores", allow_read_only_mutation=True)
+    reason = (payload.reason or "").strip()
+    if not reason:
+        raise HTTPException(status_code=422, detail="A reason is required to unlock scores")
+    if tournament.lifecycle_status == "finalized":
+        raise HTTPException(status_code=409, detail="Finalized tournament scores cannot be unlocked")
+    if not tournament.scores_locked:
+        return {"tournament_id": tournament_id, "scores_locked": False}
+    create_restore_point(db, tournament_id=tournament_id, user=current_user, trigger="scores.unlock", summary="Before scores were unlocked")
+    tournament.scores_locked = False
+    payout_squad_ids = [row[0] for row in db.query(models.TournamentPayoutSummary.squad_id).filter(
+        models.TournamentPayoutSummary.tournament_id == tournament_id
+    ).distinct().all()]
+    for squad_id in payout_squad_ids:
+        reset_payouts_if_needed(db, tournament_id, squad_id)
+    record_tournament_event(db, tournament_id=tournament_id, event_type="scores.unlocked", user=current_user,
+                            summary="Unlocked tournament scores", reason=reason,
+                            before_values={"scores_locked": True}, after_values={"scores_locked": False},
+                            entity_type="tournament", entity_id=tournament_id)
+    db.commit()
+    return {"tournament_id": tournament_id, "scores_locked": False}
+
 @router.get("/", response_model=List[ScoreResponse])
 def get_scores(
     tournament_id: Optional[int] = None,
@@ -130,7 +232,7 @@ def get_scores(
     query = db.query(PlayerScore)
 
     if tournament_id:
-        verify_owned_tournament_access(db, tournament_id, current_user)
+        verify_owned_tournament_access(db, tournament_id, current_user, permission="view")
     elif not getattr(current_user, "is_admin", False):
         query = query.join(models.Tournament, models.Tournament.id == PlayerScore.tournament_id).filter(
             models.Tournament.user_id == current_user.id
@@ -158,7 +260,8 @@ def create_or_update_score(
     
     idempotency_record = None
     try:
-        verify_owned_tournament_access(db, score_data.tournament_id, current_user)
+        verify_owned_tournament_access(db, score_data.tournament_id, current_user, permission="manage_scores")
+        _require_scores_open(db, score_data.tournament_id)
 
         if idempotency_key:
             replay_or_record = begin_request(
@@ -191,8 +294,23 @@ def create_or_update_score(
         logger.info(f"Calculating handicap for player {player.full_name} (avg={player.average}): {handicap}")
 
         # Build score dictionary with calculated totals
-        score_dict = score_data.model_dump(exclude_unset=True)
+        score_dict = score_data.model_dump(exclude_unset=True, exclude={"correction_reason"})
         score_dict.update(calculate_game_totals(score_data, handicap))
+
+        previous_score = (
+            db.query(PlayerScore)
+            .filter(
+                PlayerScore.player_id == score_data.player_id,
+                PlayerScore.tournament_id == score_data.tournament_id,
+                PlayerScore.squad_id == score_data.squad_id,
+            )
+            .first()
+        )
+        corrections = _scratch_changes(previous_score, score_data)
+        correction_reason = _require_correction_reason(corrections, score_data.correction_reason)
+        before_values = None if previous_score is None else {
+            field: getattr(previous_score, field) for field in score_dict if hasattr(previous_score, field)
+        }
 
         # Single-statement upsert — no separate SELECT needed.
         # The unique constraint on (player_id, tournament_id, squad_id) makes this safe.
@@ -216,7 +334,7 @@ def create_or_update_score(
             else:
                 for field, value in update_cols.items():
                     setattr(score, field, value)
-            db.commit()
+            db.flush()
             db.refresh(score)
         else:
             stmt = (
@@ -229,11 +347,24 @@ def create_or_update_score(
                 .returning(PlayerScore)
             )
             result = db.execute(stmt)
-            db.commit()
             score = result.scalars().one()
         logger.info(f"Upserted score for player {player.full_name}: G1={score.game1_total}, G2={score.game2_total}, G3={score.game3_total}")
 
+        _record_corrections(db, changes=corrections, score=score, reason=correction_reason, user=current_user)
         reset_payouts_if_needed(db, score.tournament_id, score.squad_id)
+        record_tournament_event(
+            db,
+            tournament_id=score.tournament_id,
+            event_type="score.entered" if before_values is None else "score.changed",
+            user=current_user,
+            summary=f"{'Entered' if before_values is None else 'Changed'} scores for {player.full_name}",
+            before_values=before_values,
+            after_values={field: getattr(score, field) for field in score_dict if hasattr(score, field)},
+            reason=correction_reason,
+            entity_type="score",
+            entity_id=score.id,
+        )
+        refresh_score_completion(db, score.tournament_id, score.squad_id)
         db.commit()
 
         if idempotency_record:
@@ -294,8 +425,11 @@ def update_score(
                 detail="Score not found"
             )
 
-        verify_owned_tournament_access(db, score.tournament_id, current_user)
-        
+        verify_owned_tournament_access(
+            db, score.tournament_id, current_user, permission="manage_scores"
+        )
+        _require_scores_open(db, score.tournament_id)
+
         # Get player information
         player = db.query(TournamentPlayer).filter(TournamentPlayer.id == score.player_id).first()
         if not player:
@@ -309,13 +443,31 @@ def update_score(
         logger.info(f"Calculating handicap for player {player.full_name} (avg={player.average}): {handicap}")
         
         # Build score dictionary with calculated totals
-        score_dict = score_data.model_dump(exclude_unset=True)
+        corrections = _scratch_changes(score, score_data)
+        correction_reason = _require_correction_reason(corrections, score_data.correction_reason)
+        score_dict = score_data.model_dump(exclude_unset=True, exclude={"correction_reason"})
         score_dict.update(calculate_game_totals(score_data, handicap))
+        before_values = {field: getattr(score, field) for field in score_dict}
         
         # Update fields
         for field, value in score_dict.items():
             setattr(score, field, value)
+
+        _record_corrections(db, changes=corrections, score=score, reason=correction_reason, user=current_user)
         
+        record_tournament_event(
+            db,
+            tournament_id=score.tournament_id,
+            event_type="score.changed",
+            user=current_user,
+            summary=f"Changed scores for {player.full_name}",
+            before_values=before_values,
+            after_values={field: getattr(score, field) for field in score_dict},
+            reason=correction_reason,
+            entity_type="score",
+            entity_id=score.id,
+        )
+        refresh_score_completion(db, score.tournament_id, score.squad_id)
         db.commit()
         db.refresh(score)
         logger.info(f"Updated score for player {player.full_name}: G1={score.game1_total}, G2={score.game2_total}, G3={score.game3_total}")
@@ -379,9 +531,27 @@ def delete_score(
                 detail="Score not found"
             )
 
-        verify_owned_tournament_access(db, score.tournament_id, current_user)
-        
+        verify_owned_tournament_access(
+            db, score.tournament_id, current_user, permission="manage_scores"
+        )
+        _require_scores_open(db, score.tournament_id)
+        deleted_values = {
+            "game1_scratch": score.game1_scratch,
+            "game2_scratch": score.game2_scratch,
+            "game3_scratch": score.game3_scratch,
+        }
+        tournament_id = score.tournament_id
         db.delete(score)
+        record_tournament_event(
+            db,
+            tournament_id=tournament_id,
+            event_type="score.deleted",
+            user=current_user,
+            summary="Deleted a player score record",
+            before_values=deleted_values,
+            entity_type="score",
+            entity_id=score_id,
+        )
         db.commit()
         response_body = {"message": "Score deleted successfully"}
         if idempotency_record:
@@ -420,7 +590,9 @@ def dev_clear_game_scores(
     if game_number not in (2, 3):
         raise HTTPException(status_code=400, detail="Only game 2 or game 3 can be cleared with this endpoint")
 
-    verify_owned_tournament_access(db, tournament_id, current_user)
+    verify_owned_tournament_access(
+        db, tournament_id, current_user, permission="manage_scores"
+    )
 
     query = db.query(PlayerScore).filter(PlayerScore.tournament_id == tournament_id)
     if squad_id is not None:

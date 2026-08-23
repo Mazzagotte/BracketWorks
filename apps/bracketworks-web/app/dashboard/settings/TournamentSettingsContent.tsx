@@ -19,6 +19,8 @@ import { getErrorContext } from '../../lib/error-utils';
 import { BRACKET_SETTINGS_AUTOSAVE_DELAY_MS, getSidePotsStorageKey } from '../../lib/dashboard-settings';
 import { notifySettingsChanged } from '../../lib/selection-session';
 import { normalizeSidePotsSettings } from '../utils/sidePots';
+import { TournamentStaffPanel } from './TournamentStaffPanel';
+import { TournamentRecoveryPanel } from './TournamentRecoveryPanel';
 
 const createDefaultBracketSettings = (tournamentId = 0): BracketSettings => ({
   tournament_id: tournamentId,
@@ -662,6 +664,8 @@ export function TournamentSettingsContent({ tournamentId, layout = 'page' }: Tou
           )}
         </div>
       </section>
+      <TournamentStaffPanel tournamentId={tournamentId} ownerUserId={tournament.user_id ?? 0} />
+      <TournamentRecoveryPanel tournamentId={tournamentId} tournamentName={tournament.name} />
     </>
   );
 

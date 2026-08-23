@@ -29,6 +29,7 @@ import PayoutsQuickActions from './components/PayoutsQuickActions'
 import PayoutsSummaryCard from './components/PayoutsSummaryCard'
 import PayoutsSearchPanel from './components/PayoutsSearchPanel'
 import PayoutsResultsCard from './components/PayoutsResultsCard'
+import TournamentFinalReview from './components/TournamentFinalReview'
 
 export default function PayoutsPage() {
   const { addToast } = useToast()
@@ -269,6 +270,10 @@ export default function PayoutsPage() {
             totalUniqueWinners={totalUniqueWinners}
             remainingAmount={remainingAmount}
           />
+        )}
+
+        {selectedTournament && (
+          <TournamentFinalReview tournamentId={selectedTournament.id} tournamentName={selectedTournament.name} squadId={selectedSquad?.id ?? null} />
         )}
 
         {error && <div className={`${cardStyles.statePanel} ${cardStyles.dangerPanel} ${styles.errorBanner}`}>{error}</div>}

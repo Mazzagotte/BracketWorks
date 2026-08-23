@@ -36,6 +36,23 @@
 .verificationBadgePending { border-color: color-mix(in srgb, var(--color-warning) 40%, var(--bw-border-card)); background: color-mix(in srgb, var(--color-warning) 10%, var(--bw-surface-panel)); color: var(--color-warning); }
 .actionRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0; padding: 12px 18px 16px; border-top: 1px solid var(--bw-border-subtle); background: var(--bw-surface-panel); }
 .inlineMeta { color: var(--bw-text-muted); font-size: .72rem; line-height: 1.4; }
+.sessionList { display: grid; }
+.sessionRow { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 18px; border-top: 1px solid var(--bw-border-subtle); }
+.sessionRow:first-child { border-top: 0; }
+.sessionIdentity { min-width: 0; }
+.sessionTitle { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; color: var(--bw-text-title); font-size: .84rem; font-weight: 750; }
+.currentBadge { padding: 3px 7px; border-radius: 999px; background: color-mix(in srgb, var(--bw-text-success) 12%, var(--bw-surface-panel)); color: var(--bw-text-success); font-size: .62rem; text-transform: uppercase; }
+.sessionsEmpty { padding: 18px; color: var(--bw-text-muted); font-size: .8rem; }
+.dataActionBlock, .deleteAccountBlock { display: grid; gap: 14px; padding: 16px 18px; border-top: 1px solid var(--bw-border-subtle); }
+.dataActionBlock { grid-template-columns: minmax(0, 1fr) auto; align-items: center; border-top: 0; }
+.deleteAccountBlock { background: color-mix(in srgb, var(--color-error) 4%, transparent); }
+.retentionGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.retentionGrid > div, .ownershipBlocker { padding: 12px; border: 1px solid var(--bw-border-subtle); border-radius: 10px; background: var(--bw-surface-panel); font-size: .75rem; }
+.retentionGrid ul, .ownershipBlocker ul { margin: 7px 0 0; padding-left: 18px; color: var(--bw-text-muted); }
+.ownershipBlocker { display: grid; gap: 5px; border-color: color-mix(in srgb, var(--color-warning) 45%, var(--bw-border-card)); }
+.ownershipBlocker strong { color: var(--color-warning); }
+.deleteConfirmFields { display: grid; gap: 12px; max-width: 520px; }
+.deleteConfirmFields label { display: grid; gap: 6px; color: var(--bw-text-body); font-size: .78rem; }
 .helpBlock { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 18px; }
 .helpActions { display: flex; flex-wrap: wrap; gap: 8px; }
 .helpActions a { text-decoration: none; }
@@ -80,6 +97,11 @@
   .actionRow { align-items: stretch; flex-direction: column; padding: 10px 12px 12px; }
   .actionRow button { width: 100%; min-height: 40px; }
   .helpBlock { align-items: stretch; flex-direction: column; padding: 13px 12px; }
+  .sessionRow { align-items: stretch; flex-direction: column; padding: 13px 12px; }
+  .sessionRow button { width: 100%; }
+  .dataActionBlock { grid-template-columns: 1fr; }
+  .dataActionBlock button { width: 100%; }
+  .retentionGrid { grid-template-columns: 1fr; }
   .helpActions { display: grid; grid-template-columns: 1fr; }
   .helpActions > * { width: 100%; min-height: 40px; }
   .feedbackForm { margin: 0 12px 13px; }

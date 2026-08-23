@@ -1,0 +1,8 @@
+.notice { display: flex; gap: 10px; width: min(920px, calc(100% - 24px)); margin: 8px auto; padding: 10px 12px; border: 1px solid color-mix(in srgb, var(--color-primary) 38%, var(--bw-border-subtle)); border-radius: 12px; color: var(--bw-text-body); background: color-mix(in srgb, var(--color-primary) 9%, var(--bw-surface-card)); }
+.notice > svg { flex: 0 0 auto; width: 19px; color: var(--color-primary); }
+.list { display: grid; width: 100%; gap: 8px; }
+.invitation { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: .82rem; }
+.invitation > div { display: flex; gap: 6px; }
+.invitation button { min-height: 30px; border: 1px solid var(--bw-border-subtle); border-radius: 7px; padding: 5px 9px; color: var(--bw-text-body); background: var(--bw-surface-panel); }
+.invitation .accept { border-color: var(--color-primary); color: var(--color-text-on-primary); background: var(--color-primary); }
+@media (max-width: 640px) { .invitation { align-items: flex-start; flex-direction: column; } }

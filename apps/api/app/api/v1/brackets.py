@@ -23,6 +23,9 @@ from ...services.brackets_simple import (
     validate_all_brackets
 )
 from ...services.tournament_access import verify_owned_tournament_access
+from ...services.tournament_audit import record_tournament_event
+from ...services.tournament_lifecycle import advance_status
+from ...services.tournament_snapshots import create_restore_point
 from ...services.bracket_persistence_simple import (
     save_brackets_simple, 
     load_brackets_simple, 
@@ -144,7 +147,7 @@ def update_match_score_endpoint(
                 return JSONResponse(status_code=replay_or_record.status_code, content=replay_or_record.response_body)
             idempotency_record = replay_or_record
 
-        verify_owned_tournament_access(db, tournament_id, current_user)
+        verify_owned_tournament_access(db, tournament_id, current_user, permission="manage_scores")
 
         # Get the current tournament brackets
         brackets_data = load_brackets_simple(db, tournament_id, squad_id)
@@ -164,6 +167,24 @@ def update_match_score_endpoint(
         # Save the updated bracket state back to database
         try:
             save_brackets_simple(db, tournament_id, squad_id, updated_result)
+            record_tournament_event(
+                db,
+                tournament_id=tournament_id,
+                event_type="bracket.score_changed",
+                user=current_user,
+                summary="Updated a bracket match score",
+                after_values={
+                    "bracket_id": score_update.bracket_id,
+                    "round_index": score_update.round_index,
+                    "match_index": score_update.match_index,
+                    "score_a": score_update.score_a,
+                    "score_b": score_update.score_b,
+                },
+                entity_type="bracket",
+                entity_id=score_update.bracket_id,
+            )
+            advance_status(db, tournament_id, "in_progress")
+            db.commit()
             logger.info(f"Updated match score and saved brackets for tournament {tournament_id}")
         except Exception as save_error:
             logger.error(f"Failed to save updated brackets: {save_error}")
@@ -403,7 +424,23 @@ def generate_tournament_brackets_endpoint(
         
         # Save the generated brackets to database
         try:
+            create_restore_point(
+                db, tournament_id=tournament_id, user=current_user,
+                trigger="brackets.regenerate" if force_regenerate else "brackets.generate",
+                summary="Before bracket regeneration" if force_regenerate else "Before bracket generation",
+            )
             save_brackets_simple(db, tournament_id, squad_id, brackets_result, player_count=len(bowlers))
+            record_tournament_event(
+                db,
+                tournament_id=tournament_id,
+                event_type="brackets.regenerated" if force_regenerate else "brackets.generated",
+                user=current_user,
+                summary="Regenerated tournament brackets" if force_regenerate else "Generated tournament brackets",
+                after_values={"squad_id": squad_id, "player_count": len(bowlers)},
+                entity_type="bracket_snapshot",
+            )
+            advance_status(db, tournament_id, "in_progress")
+            db.commit()
             logger.info(f"Successfully saved brackets for tournament {tournament_id}, squad {squad_id}")
         except Exception as save_error:
             # Log the save error but don't fail the generation
@@ -514,7 +551,7 @@ def load_tournament_brackets(
 ):
     """Load existing brackets for a tournament/squad from database with fresh scores"""
     try:
-        tournament = verify_owned_tournament_access(db, tournament_id, current_user)
+        tournament = verify_owned_tournament_access(db, tournament_id, current_user, permission="view")
         
         # Load brackets with score refresh enabled by default
         brackets_data = load_brackets_simple(db, tournament_id, squad_id, refresh_scores=refresh_scores)
@@ -591,6 +628,16 @@ def delete_tournament_brackets(
         deleted = delete_brackets_simple(db, tournament_id, squad_id)
         if not deleted:
             raise HTTPException(status_code=404, detail="No brackets found to delete")
+        record_tournament_event(
+            db,
+            tournament_id=tournament_id,
+            event_type="brackets.deleted",
+            user=current_user,
+            summary="Deleted tournament brackets",
+            before_values={"squad_id": squad_id},
+            entity_type="bracket_snapshot",
+        )
+        db.commit()
         
         return {"message": "Brackets deleted successfully"}
         
@@ -608,7 +655,7 @@ def check_brackets_exist(
 ):
     """Check if brackets exist for a tournament/squad"""
     try:
-        verify_owned_tournament_access(db, tournament_id, current_user)
+        verify_owned_tournament_access(db, tournament_id, current_user, permission="view")
         exists = brackets_exist_simple(db, tournament_id, squad_id)
         return {"exists": exists}
     except Exception as e:
@@ -624,7 +671,7 @@ def bracket_status(
 ):
     """Lightweight bracket status check: existence and entry mismatch."""
     try:
-        verify_owned_tournament_access(db, tournament_id, current_user)
+        verify_owned_tournament_access(db, tournament_id, current_user, permission="view")
         snapshot = db.query(models.SimpleBracket).filter(
             models.SimpleBracket.tournament_id == tournament_id,
             models.SimpleBracket.squad_id == squad_id if squad_id else models.SimpleBracket.squad_id.is_(None),

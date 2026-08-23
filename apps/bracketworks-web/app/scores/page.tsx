@@ -258,7 +258,7 @@ export default function ScoresPage() {
           <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`} onClick={handleExportScoresToPdf} disabled={isExportingPdf || players.length === 0}>{isExportingPdf ? 'Preparing...' : 'Export to PDF'}</button>
           <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`} onClick={() => importFileRef.current?.click()} disabled={isImporting || players.length === 0 || isScoresLocked}>{isImporting ? 'Importing...' : 'Import from Excel'}</button>
           {players.length > 0 && !isScoresLocked && <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`} onClick={() => { void markScoresComplete() }}>Calculate Payouts</button>}
-          {players.length > 0 && isScoresLocked && <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`} onClick={unlockScoresTable}>Unlock Scores</button>}
+          {players.length > 0 && isScoresLocked && <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`} onClick={() => { void unlockScoresTable() }}>Unlock Scores</button>}
         </>
       )}
       right={(
@@ -325,7 +325,7 @@ export default function ScoresPage() {
           missingScoreNames={missingScoreNames}
           playerCount={players.length}
           onClose={() => setShowCalcPayoutsConfirm(false)}
-          onProceed={() => { setShowCalcPayoutsConfirm(false); unlockPayoutsAndGo() }}
+          onProceed={() => { setShowCalcPayoutsConfirm(false); void unlockPayoutsAndGo() }}
         />
         <BracketMismatchModal open={showBracketMismatchWarning} onClose={() => setShowBracketMismatchWarning(false)} />
         <ExplainScoresModal isOpen={isScoresGuideOpen} onClose={() => setIsScoresGuideOpen(false)} />

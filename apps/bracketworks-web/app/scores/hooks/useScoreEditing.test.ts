@@ -51,6 +51,8 @@ describe('useScoreEditing — core behaviors', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.useFakeTimers()
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    vi.spyOn(window, 'prompt').mockReturnValue('Score sheet correction')
   })
 
   afterEach(() => {
@@ -106,6 +108,9 @@ describe('useScoreEditing — core behaviors', () => {
     })
 
     expect(result.current.rowSaveState[1]).toBe('saved')
+    expect(mockApiFetch).toHaveBeenCalledWith('/api/v1/scores/', expect.objectContaining({
+      body: expect.stringContaining('"correction_reason":"Score sheet correction"'),
+    }))
   })
 
   it('sets row state to failed on API error and shows toast', async () => {

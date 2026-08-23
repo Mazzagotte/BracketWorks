@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Tournament, Squad } from '../../lib/types'
 import { storage } from '../../lib/storage'
-import { setSelectedSquad as persistSelectedSquad, setActiveSquadLabel } from '../../lib/selection-session'
+import { resolveSquadSelection, setSelectedSquad as persistSelectedSquad, setActiveSquadLabel } from '../../lib/selection-session'
 
 interface UseBracketSelectionArgs {
   tournaments: Tournament[]
@@ -109,8 +109,7 @@ export function useBracketSelection({
   useEffect(() => {
     if (squads.length > 0 && !selectedSquad) {
       const storedId = storage.getItem('selected_squad_id')
-      const found = storedId ? squads.find(s => s.id === parseInt(storedId)) : null
-      const squad = found ?? squads[0] ?? null
+      const squad = resolveSquadSelection(squads, null, storedId)
       if (squad) {
         setSelectedSquad(squad)
         persistSelectedSquad(squad.id)
