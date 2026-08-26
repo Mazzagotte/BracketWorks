@@ -2638,7 +2638,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                 </section>
           )}
 
-          {/* Ã¢â€â‚¬Ã¢â€â‚¬ Event editor modal Ã¢â€â‚¬Ã¢â€â‚¬ */}
+          {/* ✨ Event editor modal ✨ */}
           {selectedEventId && events.find((e) => e.id === selectedEventId) && (
             <div className={styles.editorModal} role="dialog" aria-modal="true">
               <div className={styles.editorModalBox}>
@@ -2672,7 +2672,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
             </div>
           )}
 
-          {/* Ã¢â€â‚¬Ã¢â€â‚¬ Division editor modal Ã¢â€â‚¬Ã¢â€â‚¬ */}
+          {/* ✨ Division editor modal ✨ */}
           {selectedDivisionId && divisions.find((d) => d.id === selectedDivisionId) && (
             <div className={styles.editorModal} role="dialog" aria-modal="true">
               <div className={styles.editorModalBox}>
