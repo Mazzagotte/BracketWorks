@@ -82,28 +82,6 @@ export function formatDateShort(dateIso: string): string {
   });
 }
 
-export function shiftIsoDate(dateIso: string, days: number): string {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateIso)) {
-    return '';
-  }
-
-  const [yearText, monthText, dayText] = dateIso.split('-');
-  const year = Number(yearText);
-  const month = Number(monthText);
-  const day = Number(dayText);
-  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {
-    return '';
-  }
-
-  const parsed = new Date(Date.UTC(year, month - 1, day));
-  if (Number.isNaN(parsed.getTime())) {
-    return '';
-  }
-
-  parsed.setUTCDate(parsed.getUTCDate() + days);
-  return parsed.toISOString().slice(0, 10);
-}
-
 export function formatSquadTimeLabel(time: string): string {
   if (!/^\d{2}:\d{2}$/.test(time)) {
     return time;

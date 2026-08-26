@@ -144,8 +144,8 @@ export default function OrganizerTournamentOverviewPage() {
 
       <section className={styles.summaryCard}>
         <div className={styles.summaryHeading}>
-          <h2>Overview</h2>
-          <p>Key details and status for this tournament.</p>
+          <h2>Tournament Overview</h2>
+          <p>Current tournament details and operating status.</p>
         </div>
         <ul className={styles.summaryList}>
           {summaryItems.map((item) => {

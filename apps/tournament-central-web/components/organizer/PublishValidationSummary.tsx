@@ -17,6 +17,8 @@ export default function PublishValidationSummary({ issues, sections, onNavigate 
   });
   const errorCount = dedupedIssues.filter((issue) => issue.severity === 'error').length;
   const warningCount = dedupedIssues.filter((issue) => issue.severity === 'warning').length;
+  const sectionsWithErrors = new Set(dedupedIssues.filter((issue) => issue.severity === 'error').map((issue) => issue.section));
+  const passedCount = sections.filter((section) => !sectionsWithErrors.has(section.key)).length;
   const groupedBySection = sections
     .map((section) => ({
       section,
@@ -24,26 +26,17 @@ export default function PublishValidationSummary({ issues, sections, onNavigate 
     }))
     .filter((entry) => entry.issues.length > 0);
 
-  if (issues.length === 0) {
-    return (
-      <section className={styles.reviewCard}>
-        <h3>Ready to publish</h3>
-        <p>All required setup checks passed. You can publish when ready.</p>
-      </section>
-    );
-  }
-
   return (
-    <section className={styles.reviewCard}>
-      <h3>Validation summary</h3>
-      <p>
-        Resolve critical issues before publishing. Warnings can be addressed now or later.
-        {' '}
-        {errorCount} error{errorCount === 1 ? '' : 's'}, {warningCount} warning{warningCount === 1 ? '' : 's'}.
-      </p>
+    <section className={`${styles.reviewCard} ${styles.preflightResults}`}>
+      <div className={styles.preflightMetrics}>
+        <article className={styles.preflightMetricPassed}><span>Passed</span><strong>{passedCount}</strong></article>
+        <article className={styles.preflightMetricError}><span>Needs Attention</span><strong>{errorCount}</strong></article>
+        <article className={styles.preflightMetricWarning}><span>Recommendations</span><strong>{warningCount}</strong></article>
+      </div>
+      {dedupedIssues.length === 0 ? <div className={styles.preflightReadyMessage}><strong>All required checks passed</strong><p>Your tournament is ready to publish.</p></div> : null}
       {groupedBySection.map(({ section, issues: sectionIssues }) => (
-        <div key={section.key}>
-          <p><strong>{section.label}</strong> ({sectionIssues.length})</p>
+        <div key={section.key} className={styles.preflightGroup}>
+          <div className={styles.preflightGroupHead}><strong>{section.label}</strong><span>{sectionIssues.length} item{sectionIssues.length === 1 ? '' : 's'}</span></div>
           <ul className={styles.validationList}>
             {sectionIssues.map((issue) => {
               const sectionMeta = sectionByKey.get(issue.section);
@@ -54,10 +47,10 @@ export default function PublishValidationSummary({ issues, sections, onNavigate 
                   </span>
                   <div>
                     <strong>{issue.message}</strong>
-                    <p>{sectionMeta?.label ?? issue.section}</p>
+                    <p>{issue.severity === 'error' ? 'This must be resolved before publishing.' : 'Review this setting before publishing.'}</p>
                   </div>
                   <button type="button" className={styles.inlineAction} onClick={() => onNavigate(issue.section)}>
-                    Open section
+                    Review {sectionMeta?.label ?? 'Section'}
                   </button>
                 </li>
               );

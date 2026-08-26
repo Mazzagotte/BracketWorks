@@ -23,8 +23,20 @@ export default function OrganizerTopNav() {
   const tournamentId = tournamentPathMatch ? Number(tournamentPathMatch[1]) : null;
   const isTournamentRoute = Boolean(tournamentId);
 
-  // Tournament-scoped navigation lives in the persistent tournament layout sub-nav; keep this bar global-only.
-  const navLinks = useMemo(() => [{ href: '/organizer', label: 'Dashboard' }], []);
+  const navLinks = useMemo(() => {
+    const links = [{ href: '/organizer', label: 'Dashboard', scoped: false }];
+    if (!tournamentId) return links;
+    return [
+      ...links,
+      { href: `/organizer/tournaments/${tournamentId}`, label: 'Overview', scoped: true },
+      { href: `/organizer/tournaments/${tournamentId}/registrations`, label: 'Registrations', scoped: true },
+      { href: `/organizer/tournaments/${tournamentId}/participants`, label: 'Bowlers', scoped: true },
+      { href: `/organizer/tournaments/${tournamentId}/squads`, label: 'Schedule', scoped: true },
+      { href: `/organizer/tournaments/${tournamentId}/payments`, label: 'Payments', scoped: true },
+      { href: `/organizer/tournaments/${tournamentId}/documents`, label: 'Documents', scoped: true },
+      { href: `/organizer/tournaments/${tournamentId}/setup`, label: 'Setup', scoped: true },
+    ];
+  }, [tournamentId]);
 
   const avatarInitials = useMemo(
     () => displayName
@@ -134,7 +146,7 @@ export default function OrganizerTopNav() {
             <Link
               key={link.href}
               href={link.href}
-              className={`${styles.navPill} ${isNavLinkActive(link.href) ? styles.navPillActive : ''}`}
+              className={`${styles.navPill} ${link.scoped && link.label === 'Overview' ? styles.navPillScopedStart : ''} ${link.label === 'Setup' ? styles.navPillSetup : ''} ${isNavLinkActive(link.href) ? styles.navPillActive : ''}`}
             >
               {link.label}
             </Link>
@@ -182,6 +194,13 @@ export default function OrganizerTopNav() {
           />
           <span className={styles.mobileBrandText}>Tournament Central</span>
         </Link>
+
+        <details className={styles.mobileNavMenu}>
+          <summary>Menu</summary>
+          <nav aria-label="Mobile organizer navigation">
+            {navLinks.map((link) => <Link key={link.href} href={link.href} className={isNavLinkActive(link.href) ? styles.mobileNavLinkActive : ''}>{link.label}</Link>)}
+          </nav>
+        </details>
 
         {isTournamentRoute && tournamentContextLabel && (
           <span

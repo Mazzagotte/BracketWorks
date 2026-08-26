@@ -1,7 +1,7 @@
 import { buildSquadDisplayName, buildSquadTimesPayload } from './setupFormatting';
 import { normalizeSquadDefaults } from './setupFactories';
 import { DRAFT_VERSION, defaultTournamentDetails, getDraftStorageKey } from './setupDefaults';
-import { initialCustomQuestions, initialDivisions, initialEvents, initialFees, initialLocations, initialRegistrationFields, initialSquads } from './setupConfig';
+import { initialRegistrationFields } from './setupConfig';
 import type {
   CustomQuestionConfig,
   DivisionConfig,
@@ -25,6 +25,10 @@ export type LegacyEventConfig = Omit<EventConfig, 'scoring'> & {
   scoring: EventConfig['scoring'] | 'both';
 };
 
+function normalizeTimezone(value: string | undefined): string {
+  return (value || defaultTournamentDetails.timezone).replace(/\s+\([^)]*\)$/, '');
+}
+
 export function normalizeSquadConfig(squad: SquadConfig, defaults?: { locationName?: string; registrationDeadlineIso?: string | null }): SquadConfig {
   const normalizedDefaults = normalizeSquadDefaults(defaults ?? {});
   const normalizedRequiredBowlerCount = Number.isFinite(Number(squad.requiredBowlerCount))
@@ -35,7 +39,7 @@ export function normalizeSquadConfig(squad: SquadConfig, defaults?: { locationNa
     ...squad,
     name: buildSquadDisplayName(squad),
     requiredBowlerCount: normalizedRequiredBowlerCount,
-    locationName: normalizedDefaults.locationName || squad.locationName,
+    locationName: normalizedDefaults.locationName || squad.locationName?.trim() || '',
     registrationDeadlineIso: normalizedDefaults.registrationDeadlineIso || squad.registrationDeadlineIso || null,
   };
 }
@@ -46,13 +50,16 @@ export function normalizeSquadList(squads: SquadConfig[], defaults?: { locationN
 
 export function normalizeEventConfig(event: LegacyEventConfig): EventConfig {
   const connectedDivisionIds = Array.isArray(event.connectedDivisionIds) ? event.connectedDivisionIds : [];
+  const connectedSquadIds = Array.isArray(event.connectedSquadIds) ? event.connectedSquadIds : [];
 
   return {
     ...event,
     connectedDivisionIds,
+    connectedSquadIds,
     scoring: event.scoring === 'both' ? 'no-tap' : event.scoring,
-    enabled: true,
-    requireDivision: connectedDivisionIds.length > 0 ? event.requireDivision : false,
+    enabled: event.enabled !== false,
+    requireDivision: Boolean(event.requireDivision),
+    requireSquad: Boolean(event.requireSquad),
   };
 }
 
@@ -104,15 +111,12 @@ export function buildDefaultDraft(): OrganizerDraft {
     version: DRAFT_VERSION,
     tournamentId: null,
     details: defaultTournamentDetails,
-    events: initialEvents,
-    divisions: initialDivisions,
-    squads: normalizeSquadList(initialSquads, {
-      locationName: defaultTournamentDetails.bowlingCenter,
-      registrationDeadlineIso: defaultTournamentDetails.registrationCloseIso,
-    }),
-    fees: initialFees,
-    locations: initialLocations,
-    questions: initialCustomQuestions,
+    events: [],
+    divisions: [],
+    squads: [],
+    fees: [],
+    locations: [],
+    questions: [],
     fields: initialRegistrationFields,
     hasRulesDocument: false,
     paymentMode: 'cash',
@@ -140,26 +144,28 @@ export function loadDraftFromStorage(): OrganizerDraft {
     const normalizedDetails = {
       ...defaultTournamentDetails,
       ...(parsed.details ?? {}),
+      timezone: normalizeTimezone(parsed.details?.timezone),
+      registrationOpenTime: parsed.details?.registrationOpenTime || '00:00',
+      registrationCloseTime: parsed.details?.registrationCloseTime || '23:59',
+      contactName: parsed.details?.contactName || parsed.details?.organizer || '',
+      preferredContactMethod: parsed.details?.preferredContactMethod || 'email',
     };
 
     return {
       version: DRAFT_VERSION,
       tournamentId: typeof parsed.tournamentId === 'number' ? parsed.tournamentId : null,
       details: normalizedDetails,
-      events: Array.isArray(parsed.events) ? normalizeEventList(parsed.events as EventConfig[]) : initialEvents,
-      divisions: Array.isArray(parsed.divisions) ? parsed.divisions : initialDivisions,
+      events: Array.isArray(parsed.events) ? normalizeEventList(parsed.events as EventConfig[]) : [],
+      divisions: Array.isArray(parsed.divisions) ? parsed.divisions : [],
       squads: Array.isArray(parsed.squads)
         ? normalizeSquadList(parsed.squads as SquadConfig[], {
           locationName: normalizedDetails.bowlingCenter,
           registrationDeadlineIso: normalizedDetails.registrationCloseIso,
         })
-        : normalizeSquadList(initialSquads, {
-          locationName: normalizedDetails.bowlingCenter,
-          registrationDeadlineIso: normalizedDetails.registrationCloseIso,
-        }),
-      fees: Array.isArray(parsed.fees) ? parsed.fees : initialFees,
-      locations: Array.isArray(parsed.locations) ? parsed.locations : initialLocations,
-      questions: Array.isArray(parsed.questions) ? parsed.questions : initialCustomQuestions,
+        : [],
+      fees: Array.isArray(parsed.fees) ? parsed.fees : [],
+      locations: Array.isArray(parsed.locations) ? parsed.locations : [],
+      questions: Array.isArray(parsed.questions) ? parsed.questions : [],
       fields: normalizeRegistrationFieldsList(parsed.fields as RegistrationFieldConfig[] | undefined),
       hasRulesDocument: Boolean(parsed.hasRulesDocument),
       paymentMode: 'cash',
@@ -319,10 +325,25 @@ export function buildOrganizerSetupPayload(input: {
 }): OrganizerSetupPayload {
   return {
     version: DRAFT_VERSION,
-    details: input.details,
+    details: {
+      ...input.details,
+      name: input.details.name.trim(),
+      subtitle: input.details.subtitle.trim(),
+      organizer: input.details.organizer.trim(),
+      supportEmail: input.details.supportEmail.trim(),
+      supportPhone: input.details.supportPhone.trim(),
+      contactName: input.details.contactName.trim(),
+      contactRole: input.details.contactRole.trim(),
+      contactNote: input.details.contactNote.trim(),
+    },
     events: input.events,
     divisions: input.divisions,
-    squads: input.squads,
+    squads: input.squads.map((squad) => ({
+      ...squad,
+      name: buildSquadDisplayName(squad),
+      locationName: input.details.bowlingCenter.trim(),
+      registrationDeadlineIso: input.details.registrationCloseIso || null,
+    })),
     fees: input.fees,
     locations: input.locations,
     questions: input.questions,
@@ -343,26 +364,28 @@ export function normalizeOrganizerDraft(params: {
   const normalizedDetails = {
     ...defaultTournamentDetails,
     ...(payload.details ?? {}),
+    timezone: normalizeTimezone(payload.details?.timezone),
+    registrationOpenTime: payload.details?.registrationOpenTime || '00:00',
+    registrationCloseTime: payload.details?.registrationCloseTime || '23:59',
+    contactName: payload.details?.contactName || payload.details?.organizer || '',
+    preferredContactMethod: payload.details?.preferredContactMethod || 'email',
   };
 
   return {
     version: DRAFT_VERSION,
     tournamentId,
     details: normalizedDetails,
-    events: Array.isArray(payload.events) ? normalizeEventList(payload.events as EventConfig[]) : initialEvents,
-    divisions: Array.isArray(payload.divisions) ? payload.divisions : initialDivisions,
+    events: Array.isArray(payload.events) ? normalizeEventList(payload.events as EventConfig[]) : [],
+    divisions: Array.isArray(payload.divisions) ? payload.divisions : [],
     squads: Array.isArray(payload.squads)
       ? normalizeSquadList(payload.squads as SquadConfig[], {
         locationName: normalizedDetails.bowlingCenter,
         registrationDeadlineIso: normalizedDetails.registrationCloseIso,
       })
-      : normalizeSquadList(initialSquads, {
-        locationName: normalizedDetails.bowlingCenter,
-        registrationDeadlineIso: normalizedDetails.registrationCloseIso,
-      }),
-    fees: Array.isArray(payload.fees) ? payload.fees : initialFees,
-    locations: Array.isArray(payload.locations) ? payload.locations : initialLocations,
-    questions: Array.isArray(payload.questions) ? payload.questions : initialCustomQuestions,
+      : [],
+    fees: Array.isArray(payload.fees) ? payload.fees : [],
+    locations: Array.isArray(payload.locations) ? payload.locations : [],
+    questions: Array.isArray(payload.questions) ? payload.questions : [],
     fields: normalizeRegistrationFieldsList(payload.fields as RegistrationFieldConfig[] | undefined),
     hasRulesDocument: Boolean(payload.hasRulesDocument),
     paymentMode: 'cash',

@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowUpDown, CalendarDays, ChevronUp, CircleAlert, CircleCheck, ClipboardList, Clock3, Download, Eye, FileJson, Filter, Globe, GripVertical, Headphones, Info, Layers, Link2, ListOrdered, Lock, MapPin, MoreHorizontal, PencilLine, Plus, RotateCcw, Save, Trash2, Trophy, Upload, Users, X } from 'lucide-react';
+import { ArrowUpDown, CalendarDays, ChevronUp, CircleAlert, CircleCheck, ClipboardList, Clock3, Download, Eye, FileJson, Filter, Globe, GripVertical, Headphones, Layers, Link2, ListOrdered, Lock, MapPin, MoreHorizontal, PencilLine, Plus, RotateCcw, Save, Trash2, Trophy, Upload, Users, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent, DragEvent } from 'react';
 import { useRouter } from 'next/navigation';
@@ -11,7 +11,7 @@ import PublishValidationSummary from './PublishValidationSummary';
 import { listMyOrganizerSetupStates, listMyTournaments, resolveTcVenue } from './organizerApi';
 import TournamentRegistrationForm from '../public/TournamentRegistrationForm';
 import TournamentDetailsSection from './setup/TournamentDetailsSection';
-import { initialCustomQuestions, initialDivisions, initialEvents, initialFees, initialLocations, initialRegistrationFields, initialSquads, setupSections } from './setupConfig';
+import { initialRegistrationFields, setupSections } from './setupConfig';
 import SetupStatusBadge from './SetupStatusBadge';
 import {
   buildSquadDisplayName,
@@ -27,7 +27,6 @@ import {
   inferLogoFileLabel,
   normalizeEntryFeeInput,
   parseEntryFeeInputToCents,
-  shiftIsoDate,
 } from './setupFormatting';
 import {
   buildClientId,
@@ -202,11 +201,13 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
   const [locations, setLocations] = useState<LocationConfig[]>([]);
   const [questions, setQuestions] = useState<CustomQuestionConfig[]>([]);
   const [fields, setFields] = useState<RegistrationFieldConfig[]>([]);
-  const [squadViewMode, setSquadViewMode] = useState<'date' | 'squad'>('date');
   const [draggingFieldId, setDraggingFieldId] = useState<string | null>(null);
   const [dragOverFieldId, setDragOverFieldId] = useState<string | null>(null);
   const [draggingQuestionId, setDraggingQuestionId] = useState<string | null>(null);
   const [dragOverQuestionId, setDragOverQuestionId] = useState<string | null>(null);
+  const [showHiddenRegistrationFields, setShowHiddenRegistrationFields] = useState(false);
+  const [showRegistrationPreview, setShowRegistrationPreview] = useState(false);
+  const [lastPreflightRunAt, setLastPreflightRunAt] = useState<string | null>(null);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [selectedDivisionId, setSelectedDivisionId] = useState<string | null>(null);
   const [openCardMenu, setOpenCardMenu] = useState<CardMenuState>(null);
@@ -574,7 +575,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
             token,
             tournamentId: saved.id,
             payload: organizerPayload,
-            isPublished: isSetupPublished,
+            isPublished: false,
           });
 
           setPersistedTournamentId(saved.id);
@@ -895,6 +896,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
     const detailsName = details.name.trim();
     const detailsSupportEmail = details.supportEmail.trim();
     const detailsCenter = details.bowlingCenter.trim();
+    const detailsOrganizer = details.organizer.trim();
     const enabledEvents = events.filter((event) => event.enabled);
     const visibleFields = fields.filter((field) => field.mode !== 'dont-ask');
     const firstNameField = fields.find((field) => field.key === 'first_name');
@@ -929,7 +931,28 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
         severity: 'error',
         message: 'Support email is required.',
       });
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(detailsSupportEmail)) {
+      issues.push({ id: 'details-support-email-invalid', section: 'tournament-details', severity: 'error', message: 'Enter a valid support email.' });
     }
+
+    if (!detailsOrganizer) {
+      issues.push({ id: 'details-organizer-missing', section: 'tournament-details', severity: 'error', message: 'Host organization is required.' });
+    }
+    if (!details.contactName.trim()) {
+      issues.push({ id: 'details-contact-name-missing', section: 'tournament-details', severity: 'error', message: 'Participant contact name is required.' });
+    }
+    if (details.preferredContactMethod === 'phone' && !details.supportPhone.trim()) {
+      issues.push({ id: 'details-contact-phone-missing', section: 'tournament-details', severity: 'error', message: 'Contact phone is required when Phone is the preferred contact method.' });
+    }
+
+    if (detailsName && userTournaments.some((tournament) => tournament.id !== persistedTournamentId && tournament.name.trim().toLowerCase() === detailsName.toLowerCase())) {
+      issues.push({ id: 'details-name-duplicate', section: 'tournament-details', severity: 'warning', message: 'You already have another tournament with this name.' });
+    }
+
+    if (!details.state) issues.push({ id: 'details-state-missing', section: 'tournament-details', severity: 'error', message: 'Tournament state is required.' });
+    if (!details.city.trim()) issues.push({ id: 'details-city-missing', section: 'tournament-details', severity: 'error', message: 'Tournament city is required.' });
+    if (!details.timezone) issues.push({ id: 'details-timezone-missing', section: 'tournament-details', severity: 'error', message: 'Tournament timezone is required.' });
+    if (!details.tournamentType) issues.push({ id: 'details-type-missing', section: 'tournament-details', severity: 'error', message: 'Tournament type is required.' });
 
     if (!details.startDateIso || !details.endDateIso) {
       issues.push({
@@ -955,7 +978,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
         message: 'Registration open and close dates are required.',
       });
     } else {
-      if (details.registrationOpenIso > details.registrationCloseIso) {
+      if (`${details.registrationOpenIso}T${details.registrationOpenTime}` > `${details.registrationCloseIso}T${details.registrationCloseTime}`) {
         issues.push({
           id: 'details-registration-window-invalid',
           section: 'tournament-details',
@@ -980,6 +1003,15 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
         section: 'events-divisions',
         severity: 'error',
         message: 'Enable at least one event before publishing.',
+      });
+    }
+
+    if (enabledEvents.length > 0 && divisions.length === 0 && squads.length === 0) {
+      issues.push({
+        id: 'tournament-structure-missing',
+        section: 'events-divisions',
+        severity: 'error',
+        message: 'Add at least one division or squad before publishing.',
       });
     }
 
@@ -1021,16 +1053,13 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
       }
     }
 
-    if (squads.length === 0) {
-      issues.push({
-        id: 'squads-none-configured',
-        section: 'squads-availability',
-        severity: 'error',
-        message: 'Add at least one squad before publishing.',
-      });
-    }
-
     for (const squad of squads) {
+      if (details.startDateIso && squad.dateIso && squad.dateIso < details.startDateIso) {
+        issues.push({ id: `squad-before-tournament-${squad.id}`, section: 'squads-availability', severity: 'error', message: `${squad.name || 'A squad'} is scheduled before the tournament starts.` });
+      }
+      if (details.endDateIso && squad.dateIso && squad.dateIso > details.endDateIso) {
+        issues.push({ id: `squad-after-tournament-${squad.id}`, section: 'squads-availability', severity: 'error', message: `${squad.name || 'A squad'} is scheduled after the tournament ends.` });
+      }
       if (!squad.dateIso || !squad.startTime) {
         issues.push({
           id: `squad-datetime-missing-${squad.id}`,
@@ -1039,23 +1068,38 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
           message: `${squad.name || 'A squad'} is missing date or start time.`,
         });
       }
-
-      if (!Number.isFinite(squad.requiredBowlerCount) || squad.requiredBowlerCount < 1) {
+      if (!details.bowlingCenter.trim()) {
         issues.push({
-          id: `squad-bowler-count-invalid-${squad.id}`,
+          id: `squad-location-missing-${squad.id}`,
           section: 'squads-availability',
           severity: 'error',
-          message: `${squad.name || 'A squad'} must require at least one bowler.`,
+          message: `${squad.name || 'A squad'} needs a location.`,
         });
       }
-
-      if (squad.eventIds.length === 0) {
+      if (squad.checkInTime && squad.startTime && squad.checkInTime >= squad.startTime) {
         issues.push({
-          id: `squad-events-missing-${squad.id}`,
+          id: `squad-checkin-invalid-${squad.id}`,
           section: 'squads-availability',
-          severity: 'warning',
-          message: `${squad.name || 'A squad'} is not assigned to any events.`,
+          severity: 'error',
+          message: `${squad.name || 'A squad'} must have a check-in time before its start time.`,
         });
+      }
+      if (squad.capacity < squad.registeredCount) {
+        issues.push({ id: `squad-capacity-below-registration-${squad.id}`, section: 'squads-availability', severity: 'error', message: `${squad.name || 'A squad'} has more registrations than its capacity allows.` });
+      }
+    }
+
+    const squadDateTimes = new Map<string, SquadConfig[]>();
+    for (const squad of squads) {
+      if (!squad.dateIso || !squad.startTime) continue;
+      const key = `${squad.dateIso}-${squad.startTime}`;
+      squadDateTimes.set(key, [...(squadDateTimes.get(key) ?? []), squad]);
+    }
+    for (const duplicates of squadDateTimes.values()) {
+      if (duplicates.length > 1) {
+        for (const squad of duplicates) {
+          issues.push({ id: `squad-duplicate-time-${squad.id}`, section: 'squads-availability', severity: 'error', message: `${squad.name || 'A squad'} shares the same date and start time as another squad.` });
+        }
       }
     }
 
@@ -1180,19 +1224,10 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
       }
     }
 
-    if (!hasRulesDocument) {
-      issues.push({
-        id: 'rules-missing',
-        section: 'fees-payments-documents',
-        severity: 'warning',
-        message: 'No rules document uploaded yet.',
-      });
-    }
-
     // Cash-only mode is active for this release; online processor checks come later.
 
     return issues;
-  }, [hasRulesDocument]);
+  }, [details, divisions, events, fees, fields, persistedTournamentId, questions, squads, userTournaments]);
 
   async function resolveVenueForPersistence(token: string): Promise<TournamentDetails> {
     if (details.venueId || !details.bowlingCenter.trim()) {
@@ -1294,7 +1329,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
         token,
         tournamentId: saved.id,
         payload: organizerPayload,
-        isPublished: isSetupPublished,
+        isPublished: false,
       });
 
       await refreshTournamentLibrary(token);
@@ -1387,31 +1422,27 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
 
   const statusBySection = useMemo<Record<SetupSectionKey, SetupStatus>>(() => {
     const hasError = (section: SetupSectionKey) => validationIssues.some((issue) => issue.section === section && issue.severity === 'error');
-    const hasWarning = (section: SetupSectionKey) => validationIssues.some((issue) => issue.section === section && issue.severity === 'warning');
-
     const sectionStatus = (section: SetupSectionKey): SetupStatus => {
       if (hasError(section)) {
         return 'needs-attention';
       }
-      if (hasWarning(section)) {
-        return 'incomplete';
-      }
       return 'complete';
     };
+    const squadsAreApplicable = squads.length > 0 || events.some(
+      (event) => event.enabled && (event.requireSquad || event.connectedSquadIds.length > 0),
+    );
 
     return {
       'tournament-details': sectionStatus('tournament-details'),
       'events-divisions': sectionStatus('events-divisions'),
-      'squads-availability': sectionStatus('squads-availability'),
+      'squads-availability': squadsAreApplicable ? sectionStatus('squads-availability') : 'not-used',
       'registration-setup': sectionStatus('registration-setup'),
       'fees-payments-documents': sectionStatus('fees-payments-documents'),
       'review-publish': validationIssues.some((issue) => issue.severity === 'error')
         ? 'needs-attention'
-        : validationIssues.length > 0
-          ? 'incomplete'
-          : 'complete',
+        : 'complete',
     };
-  }, [validationIssues]);
+  }, [events, squads.length, validationIssues]);
 
   const enabledEvents = useMemo(
     () => events.filter((event) => event.enabled),
@@ -1434,10 +1465,13 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
   const paymentModeReady = true;
 
   const completion = useMemo(() => {
-    const statuses = setupSections.map((section) => statusBySection[section.key]);
+    const statuses = setupSections
+      .map((section) => statusBySection[section.key])
+      .filter((status) => status !== 'not-used');
     const completeCount = statuses.filter((entry) => entry === 'complete').length;
     return Math.round((completeCount / statuses.length) * 100);
   }, [statusBySection]);
+  const completedSectionCount = setupSections.filter((section) => statusBySection[section.key] === 'complete').length;
 
   const supportEmailLooksValid = useMemo(() => {
     const value = details.supportEmail.trim();
@@ -1447,7 +1481,8 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
   const hasTournamentDateRange = Boolean(details.startDateIso && details.endDateIso);
   const hasRegistrationWindow = Boolean(details.registrationOpenIso && details.registrationCloseIso);
   const tournamentDateOrderInvalid = hasTournamentDateRange && details.startDateIso > details.endDateIso;
-  const registrationDateOrderInvalid = hasRegistrationWindow && details.registrationOpenIso > details.registrationCloseIso;
+  const registrationDateOrderInvalid = hasRegistrationWindow
+    && `${details.registrationOpenIso}T${details.registrationOpenTime}` > `${details.registrationCloseIso}T${details.registrationCloseTime}`;
   const registrationAfterStartWarning = hasRegistrationWindow
     && Boolean(details.startDateIso)
     && details.registrationCloseIso > details.startDateIso;
@@ -1457,37 +1492,6 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
     : details.visibility === 'unlisted'
       ? 'Only visible to users with a direct link.'
       : 'Hidden from public directory and invite-only.';
-
-  const timelineWarnings = [
-    tournamentDateOrderInvalid ? 'Tournament end date is before start date.' : null,
-    registrationDateOrderInvalid ? 'Registration close date is before open date.' : null,
-    registrationAfterStartWarning ? 'Registration currently closes after tournament start.' : null,
-  ].filter((entry): entry is string => Boolean(entry));
-
-  const timelineWarningEntries = timelineWarnings.map((message, index) => ({
-    id: `timeline-warning-${index}`,
-    section: 'tournament-details' as const,
-    severity: 'warning' as const,
-    message,
-  }));
-
-  const timelineWarningActions = [
-    tournamentDateOrderInvalid ? {
-      id: 'set-end-date-to-start',
-      label: 'Set end date to start date',
-      onClick: () => setDetails((prev) => ({ ...prev, endDateIso: prev.startDateIso })),
-    } : null,
-    registrationDateOrderInvalid ? {
-      id: 'set-close-date-to-open',
-      label: 'Set close date to open date',
-      onClick: () => setDetails((prev) => ({ ...prev, registrationCloseIso: prev.registrationOpenIso })),
-    } : null,
-    !registrationDateOrderInvalid && registrationAfterStartWarning ? {
-      id: 'align-close-with-start',
-      label: 'Align close with start date',
-      onClick: () => setDetails((prev) => ({ ...prev, registrationCloseIso: prev.startDateIso })),
-    } : null,
-  ].filter((entry): entry is { id: string; label: string; onClick: () => void } => Boolean(entry));
 
   const recommendedTournamentStatus = useMemo(() => {
     return recommendTournamentStatus({
@@ -1555,21 +1559,11 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
     return [...groups.entries()].sort(([a], [b]) => a.localeCompare(b));
   }, [sortedSquads]);
 
-  const squadGroups = useMemo(() => {
-    if (squadViewMode === 'squad') {
-      return [{
-        key: 'all-squads',
-        label: 'All Squads',
-        squads: sortedSquads,
-      }];
-    }
-
-    return groupsByDate.map(([dateIso, dateSquads]) => ({
+  const squadGroups = useMemo(() => groupsByDate.map(([dateIso, dateSquads]) => ({
       key: dateIso,
       label: formatDateLabel(dateIso),
       squads: dateSquads,
-    }));
-  }, [groupsByDate, sortedSquads, squadViewMode]);
+    })), [groupsByDate]);
 
   const totalSquadCapacity = useMemo(
     () => squads.reduce((sum, squad) => sum + Math.max(squad.capacity, 0), 0),
@@ -1581,47 +1575,6 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
     [squads],
   );
 
-  const waitlistEnabledCount = useMemo(
-    () => squads.filter((squad) => squad.waitlistEnabled).length,
-    [squads],
-  );
-
-  const eventCoverage = useMemo(() => {
-    return events
-      .filter((event) => event.enabled)
-      .map((event) => ({
-        id: event.id,
-        name: event.name || 'Untitled Event',
-        squadCount: squads.filter((squad) => squad.eventIds.includes(event.id)).length,
-      }))
-      .sort((a, b) => b.squadCount - a.squadCount || a.name.localeCompare(b.name));
-  }, [events, squads]);
-
-  const eventCoverageColors = ['#f97316', '#3b82f6', '#22c55e', '#a855f7', '#eab308'];
-  const eventCoverageColorById = useMemo(
-    () => Object.fromEntries(eventCoverage.map((entry, index) => [entry.id, eventCoverageColors[index % eventCoverageColors.length]])),
-    [eventCoverage],
-  );
-  const totalEventCoverage = useMemo(
-    () => eventCoverage.reduce((sum, entry) => sum + entry.squadCount, 0),
-    [eventCoverage],
-  );
-  const eventCoverageRingStyle = useMemo(() => {
-    if (totalEventCoverage <= 0) {
-      return { background: 'conic-gradient(#2b3343 0deg 360deg)' };
-    }
-
-    let angle = 0;
-    const segments = eventCoverage.map((entry, index) => {
-      const segmentAngle = (entry.squadCount / totalEventCoverage) * 360;
-      const start = angle;
-      angle += segmentAngle;
-      const color = eventCoverageColors[index % eventCoverageColors.length];
-      return `${color} ${start}deg ${angle}deg`;
-    });
-
-    return { background: `conic-gradient(${segments.join(', ')})` };
-  }, [eventCoverage, totalEventCoverage]);
 
   const fillPercent = totalSquadCapacity > 0
     ? Math.min(Math.round((totalRegisteredSpots / totalSquadCapacity) * 100), 100)
@@ -1630,10 +1583,6 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
     background: `conic-gradient(#22c55e ${fillPercent * 3.6}deg, color-mix(in srgb, var(--bw-border-subtle) 75%, transparent) 0deg 360deg)`,
   };
 
-  const eventNameById = useMemo(
-    () => Object.fromEntries(events.map((event) => [event.id, event.name || 'Untitled Event'])),
-    [events],
-  );
 
   const sortedFields = useMemo(() => [...fields].sort((a, b) => a.displayOrder - b.displayOrder), [fields]);
   const askedFields = useMemo(() => sortedFields.filter((field) => field.mode !== 'dont-ask'), [sortedFields]);
@@ -1660,7 +1609,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
 
     const linked = enabledEvents.filter((event) => {
       const connectedSquadIds = Array.isArray(event.connectedSquadIds) ? event.connectedSquadIds : [];
-      return connectedSquadIds.length === 0 || connectedSquadIds.includes(signupPreviewForm.squadId);
+      return connectedSquadIds.includes(signupPreviewForm.squadId);
     });
 
     return linked.length > 0 ? linked : enabledEvents;
@@ -1691,7 +1640,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
 
       const squadLinkedEvents = enabledEvents.filter((event) => {
         const connectedSquadIds = Array.isArray(event.connectedSquadIds) ? event.connectedSquadIds : [];
-        return connectedSquadIds.length === 0 || connectedSquadIds.includes(next.squadId);
+        return connectedSquadIds.includes(next.squadId);
       });
 
       const allowedEvents = squadLinkedEvents.length > 0 ? squadLinkedEvents : enabledEvents;
@@ -1800,9 +1749,23 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
     const nextEvents = exists
       ? events.map((entry) => (entry.id === normalizedEvent.id ? normalizedEvent : entry))
       : [...events, normalizedEvent].sort((a, b) => a.displayOrder - b.displayOrder);
+    const nextDivisions = divisions.map((entry) => ({
+      ...entry,
+      eventIds: normalizedEvent.connectedDivisionIds.includes(entry.id)
+        ? Array.from(new Set([...entry.eventIds, normalizedEvent.id]))
+        : entry.eventIds.filter((id) => id !== normalizedEvent.id),
+    }));
+    const nextSquads = squads.map((entry) => ({
+      ...entry,
+      eventIds: normalizedEvent.connectedSquadIds.includes(entry.id)
+        ? Array.from(new Set([...entry.eventIds, normalizedEvent.id]))
+        : entry.eventIds.filter((id) => id !== normalizedEvent.id),
+    }));
     setEvents(nextEvents);
+    setDivisions(nextDivisions);
+    setSquads(nextSquads);
     setDrawerState(null);
-    void persistOrganizerChanges({ events: nextEvents });
+    void persistOrganizerChanges({ events: nextEvents, divisions: nextDivisions, squads: nextSquads });
   };
 
   const persistOrganizerChanges = async (overrides: {
@@ -1880,7 +1843,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
         token,
         tournamentId: persistedTournamentId,
         payload: organizerPayload,
-        isPublished: isSetupPublished,
+        isPublished: false,
       });
 
       await refreshTournamentLibrary(token);
@@ -1992,30 +1955,19 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
       return;
     }
 
-    const associatedEventIds = sourceDivision.eventIds.length > 0
-      ? sourceDivision.eventIds
-      : events.filter((entry) => entry.connectedDivisionIds.includes(sourceDivision.id)).map((entry) => entry.id);
-
     const duplicatedDivision: DivisionConfig = {
       ...sourceDivision,
       id: buildClientId('div'),
       name: buildDuplicateName(sourceDivision.name, 'Untitled Division'),
-      eventIds: associatedEventIds,
+      eventIds: [],
     };
 
     const nextDivisions = [...divisions, duplicatedDivision];
-    const nextEvents = events.map((entry) => (
-      associatedEventIds.includes(entry.id)
-        ? { ...entry, connectedDivisionIds: entry.connectedDivisionIds.includes(duplicatedDivision.id) ? entry.connectedDivisionIds : [...entry.connectedDivisionIds, duplicatedDivision.id] }
-        : entry
-    ));
 
     setDivisions(nextDivisions);
-    setEvents(nextEvents);
     setSelectedDivisionId(duplicatedDivision.id);
     setOpenCardMenu(null);
     void persistOrganizerChanges({
-      events: nextEvents,
       divisions: nextDivisions,
     });
   };
@@ -2031,7 +1983,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
       return {
         ...entry,
         connectedDivisionIds,
-        requireDivision: connectedDivisionIds.length > 0 ? entry.requireDivision : false,
+        requireDivision: entry.requireDivision,
       };
     });
     const nextFees = fees.map((entry) => ({
@@ -2073,6 +2025,20 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
     setSquads(nextSquads);
     setDrawerState(null);
     void persistOrganizerChanges({ squads: nextSquads });
+  };
+
+  const handleDeleteSquad = (squadId: string) => {
+    if (typeof window !== 'undefined' && !window.confirm('Delete this squad? Existing event, fee, and question references will also be removed.')) return;
+    const nextSquads = squads.filter((entry) => entry.id !== squadId);
+    const nextEvents = events.map((entry) => ({ ...entry, connectedSquadIds: entry.connectedSquadIds.filter((id) => id !== squadId) }));
+    const nextFees = fees.map((entry) => ({ ...entry, squadIds: entry.squadIds.filter((id) => id !== squadId) }));
+    const nextQuestions = questions.map((entry) => ({ ...entry, scope: { ...entry.scope, squadIds: entry.scope.squadIds.filter((id) => id !== squadId) } }));
+    setSquads(nextSquads);
+    setEvents(nextEvents);
+    setFees(nextFees);
+    setQuestions(nextQuestions);
+    setDrawerState(null);
+    void persistOrganizerChanges({ squads: nextSquads, events: nextEvents, fees: nextFees, questions: nextQuestions });
   };
 
   const handleSaveQuestion = (nextQuestion: CustomQuestionConfig) => {
@@ -2267,10 +2233,10 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
     }
 
     const maxBytes = 5 * 1024 * 1024;
-    const allowedTypes = new Set(['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml']);
+    const allowedTypes = new Set(['image/png', 'image/jpeg', 'image/jpg']);
     const isAllowedType = allowedTypes.has(file.type.toLowerCase());
     if (!isAllowedType) {
-      setLogoUploadError('Please upload a PNG, JPG, or SVG file.');
+      setLogoUploadError('Please upload a PNG or JPG file.');
       return;
     }
 
@@ -2328,26 +2294,17 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
     <div className={styles.shell}>
       <section className={styles.topOverviewCard} aria-label="Builder overview">
         <header className={styles.topBar}>
-          <div>
-            <p className={styles.eyebrow}>Organizer Setup</p>
-            <h1>Tournament Builder</h1>
-            <p>Build once, configure deeply, and preview exactly what bowlers will see.</p>
+          <div className={styles.builderIdentity}>
+            <p className={styles.eyebrow}>Tournament Builder</p>
+            <div className={styles.builderTitleRow}>
+              <h1>{details.name.trim() || 'Untitled Tournament'}</h1>
+              <span className={`${styles.builderStateBadge} ${publishedAt ? styles.builderStatePublished : ''}`}>
+                {publishedAt ? 'Published' : completion === 100 ? 'Ready to Publish' : validationIssues.some((issue) => issue.severity === 'error') ? 'Needs Attention' : 'Draft'}
+              </span>
+            </div>
+            <p>{setupSections.find((section) => section.key === activeSection)?.label} · Step {setupSections.findIndex((section) => section.key === activeSection) + 1} of {setupSections.length}</p>
           </div>
           <div className={styles.topActions}>
-            <span
-              className={`${styles.autosaveBadge} ${autosaveEnabled ? styles.autosaveBadgeOn : styles.autosaveBadgeOff} ${isAutosaving ? styles.autosaveBadgeSaving : ''}`}
-              aria-live="polite"
-            >
-              {autosaveStatusLabel}
-            </span>
-            <button
-              type="button"
-              className={styles.secondaryAction}
-              onClick={() => { void handleOpenTournamentModal(); }}
-              disabled={isLoadingTournamentLibrary}
-            >
-              <RotateCcw size={15} /> {isLoadingTournamentLibrary ? 'Loading...' : 'Load Tournament'}
-            </button>
             <input
               ref={templateInputRef}
               type="file"
@@ -2355,17 +2312,17 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
               className={styles.visuallyHidden}
               onChange={(event) => { void handleImportTemplate(event); }}
             />
-            <button type="button" className={styles.iconAction} onClick={() => templateInputRef.current?.click()} title="Import tournament template" aria-label="Import tournament template">
-              <Upload size={15} />
-            </button>
-            <button type="button" className={styles.iconAction} onClick={handleExportReport} title="Download readable tournament summary" aria-label="Download readable tournament summary">
-              <Download size={15} />
-            </button>
-            <button type="button" className={styles.iconAction} onClick={handleExportTemplate} title="Export JSON template for importing" aria-label="Export JSON template for importing">
-              <FileJson size={15} />
-            </button>
+            <details className={styles.builderActionsMenu}>
+              <summary><MoreHorizontal size={15} /> More</summary>
+              <div className={styles.builderActionsMenuPanel}>
+                <button type="button" onClick={() => { void handleOpenTournamentModal(); }} disabled={isLoadingTournamentLibrary}><RotateCcw size={14} /> {isLoadingTournamentLibrary ? 'Loading...' : 'Load Tournament'}</button>
+                <button type="button" onClick={() => templateInputRef.current?.click()}><Upload size={14} /> Import Template</button>
+                <button type="button" onClick={handleExportReport}><Download size={14} /> Download Summary</button>
+                <button type="button" onClick={handleExportTemplate}><FileJson size={14} /> Export Template</button>
+              </div>
+            </details>
             <button type="button" className={styles.secondaryAction} onClick={() => { void handleSaveDraft(); }} disabled={isSavingDraft || isPublishing}>
-              <Save size={15} /> {isSavingDraft ? 'Saving...' : 'Save Draft'}
+              <Save size={15} /> {isSavingDraft ? 'Saving...' : 'Save'}
             </button>
             <button type="button" className={styles.primaryAction} onClick={() => setActiveSection('review-publish')}>
               Review & Publish
@@ -2387,36 +2344,38 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
             </div>
           ) : null}
 
-          <div className={styles.progressStrip}>
-            <span>Setup completion</span>
-            <strong>{completion}% complete</strong>
-            <div className={styles.progressTrack}>
+          <div className={styles.builderProgressRow}>
+            <div className={styles.builderProgressCopy}>
+              <strong>{completion}% complete</strong>
+              <span>{completedSectionCount} of {setupSections.length} sections ready</span>
+            </div>
+            <div className={styles.builderProgressTrack} aria-label={`${completion}% of tournament setup complete`}>
               <span style={{ width: `${completion}%` }} />
             </div>
+            <span className={styles.builderSaveState}><CircleCheck size={13} /> {autosaveStatusLabel}</span>
           </div>
         </div>
       </section>
 
       <div className={styles.contentGrid}>
         <aside className={styles.navRail}>
-          <h2>Setup Sections</h2>
+          <div className={styles.navRailTitle}><h2>Tournament Setup</h2><span>{completedSectionCount} of {setupSections.length} ready</span></div>
           <div className={styles.mobileSectionPicker}>
-            <label htmlFor="section-picker">Section</label>
+            <label htmlFor="section-picker">Step {setupSections.findIndex((section) => section.key === activeSection) + 1} of {setupSections.length}</label>
             <select id="section-picker" value={activeSection} onChange={(event) => setActiveSection(event.target.value as SetupSectionKey)}>
               {setupSections.map((section) => (
                 <option key={section.key} value={section.key}>{section.label}</option>
               ))}
             </select>
           </div>
+          <span className={styles.navGroupLabel}>Setup</span>
           <ul>
-            {setupSections.map((section, index) => {
+            {setupSections.filter((section) => section.key !== 'review-publish').map((section) => {
+              const index = setupSections.findIndex((entry) => entry.key === section.key);
               const active = section.key === activeSection;
               const status = statusBySection[section.key];
-              const statusLabel = status === 'complete'
-                ? 'Complete'
-                : status === 'needs-attention'
-                  ? 'Needs Attention'
-                  : 'Incomplete';
+              const issueCount = validationIssues.filter((issue) => issue.section === section.key).length;
+              const optional = section.key === 'squads-availability' || section.key === 'fees-payments-documents';
               return (
                 <li key={section.key}>
                   <button
@@ -2424,37 +2383,26 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                     className={`${styles.navItem} ${active ? styles.navItemActive : ''}`}
                     onClick={() => setActiveSection(section.key)}
                   >
-                    <span className={styles.navStepIndex}>{index + 1}</span>
                     <span className={styles.navText}>
                       <strong>{section.label}</strong>
-                      <small className={`${styles.navStatusText} ${status === 'complete' ? styles.navStatusComplete : status === 'needs-attention' ? styles.navStatusNeedsAttention : styles.navStatusIncomplete}`}>
-                        {statusLabel}
-                      </small>
+                      <small>{active ? `Step ${index + 1} of ${setupSections.length}` : status === 'not-used' ? 'Not Used' : optional ? 'Optional' : ''}</small>
                     </span>
+                    {issueCount > 0 ? <span className={styles.navIssueCount}>{issueCount} issue{issueCount === 1 ? '' : 's'}</span> : null}
                   </button>
                 </li>
               );
             })}
           </ul>
 
-          <section className={styles.navProgressCard} aria-label="Setup progress">
-            <div className={styles.navProgressHead}>
-              <strong>Setup Progress</strong>
-              <span>{completion}% Complete</span>
-            </div>
-            <div className={styles.navProgressTrack}>
-              <span style={{ width: `${completion}%` }} />
-            </div>
-            <p>Complete all required sections to publish your tournament.</p>
-          </section>
+          <div className={styles.navReviewGroup}>
+            <span className={styles.navGroupLabel}>Review</span>
+            {setupSections.filter((section) => section.key === 'review-publish').map((section) => {
+              const active = section.key === activeSection;
+              const issueCount = validationIssues.filter((issue) => issue.severity === 'error').length;
+              return <button key={section.key} type="button" className={`${styles.navItem} ${styles.navReviewItem} ${active ? styles.navItemActive : ''}`} onClick={() => setActiveSection(section.key)}><span className={styles.navText}><strong>{section.label}</strong><small>{issueCount > 0 ? `${issueCount} blocking` : 'Ready'}</small></span></button>;
+            })}
+          </div>
 
-          <section className={styles.navHelpCard}>
-            <h3>Need Help?</h3>
-            <p>View the Tournament Central setup guide.</p>
-            <button type="button" className={styles.navHelpLink}>
-              Setup Guide <Link2 size={12} />
-            </button>
-          </section>
         </aside>
 
         <main className={styles.workspace}>
@@ -2464,7 +2412,6 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
               setDetails={setDetails}
               statusBySection={statusBySection}
               supportEmailLooksValid={supportEmailLooksValid}
-              recommendedTournamentStatus={recommendedTournamentStatus}
               hasLogoAsset={hasLogoAsset}
               logoAssetName={logoAssetName}
               logoAssetMeta={logoAssetMeta}
@@ -2475,10 +2422,6 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
               tournamentDateOrderInvalid={tournamentDateOrderInvalid}
               registrationDateOrderInvalid={registrationDateOrderInvalid}
               registrationAfterStartWarning={registrationAfterStartWarning}
-              visibilitySummary={visibilitySummary}
-              timelineWarnings={timelineWarningEntries}
-              warningActions={timelineWarningActions}
-              showValidationWarnings={timelineWarnings.length > 0}
               usStates={US_STATES}
               timezones={TIMEZONES}
               logoInputRef={logoInputRef}
@@ -2486,15 +2429,14 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
               handleLogoDrop={handleLogoDrop}
               clearLogo={clearLogo}
               setIsLogoDragActive={setIsLogoDragActive}
-              shiftIsoDate={shiftIsoDate}
             />
           )}
               {activeSection === 'events-divisions' && (
-                <section className={styles.sectionCard}>
+                <section className={`${styles.sectionCard} ${styles.evDivSection}`}>
                   <div className={styles.sectionHeader}>
                     <div>
                       <h2>Events &amp; Divisions</h2>
-                      <p>Set up event formats, connected divisions, and entry structure.</p>
+                      <p>Define registration offerings and optional eligibility groups.</p>
                     </div>
                     <SetupStatusBadge status={statusBySection['events-divisions']} />
                   </div>
@@ -2506,7 +2448,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                           <div className={styles.evDivListHeadText}>
                             <span className={styles.evDivListHeadIcon}><Trophy size={14} /></span>
                             <h2>Events</h2>
-                            <p>Configure event settings and entry fees.</p>
+                            <p>Define what bowlers can enter.</p>
                           </div>
                           <div className={styles.evDivListHeadActions}>
                             <span className={styles.evDivCountPill}>{events.length} event{events.length === 1 ? '' : 's'}</span>
@@ -2528,10 +2470,11 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                         </div>
                         <div className={styles.evDivListBody}>
                           {events.length === 0 && (
-                            <p className={styles.evDivEmpty}>No events yet. Add one to get started.</p>
+                            <div className={styles.evDivEmpty}><strong>No events configured</strong><span>Add an event to define what bowlers can register for.</span></div>
                           )}
                           {events.map((ev) => {
                             const squadCount = ev.connectedSquadIds.length;
+                            const eventStatus = !ev.name.trim() ? 'Needs Name' : ev.requireSquad && squadCount === 0 ? 'Needs Squads' : ev.requireDivision && ev.connectedDivisionIds.length === 0 ? 'Needs Divisions' : ev.enabled ? 'Ready' : 'Draft';
                             const metaParts = [
                               ev.minPlayers === ev.maxPlayers ? `${ev.minPlayers} Bowler${ev.minPlayers !== 1 ? 's' : ''}` : `${ev.minPlayers}Ã¢â‚¬â€œ${ev.maxPlayers} Bowlers`,
                               ev.scoring.charAt(0).toUpperCase() + ev.scoring.slice(1),
@@ -2559,11 +2502,11 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                                 <div className={styles.evCardMain}>
                                   <div className={styles.evCardTitle}>
                                     <strong>{ev.name || 'Untitled Event'}</strong>
-                                    <span className={`${styles.evCardBadge} ${ev.enabled ? styles.evCardBadgeEnabled : styles.evCardBadgeDraft}`}>
-                                      {ev.enabled ? 'Enabled' : 'Draft'}
+                                    <span className={`${styles.evCardBadge} ${eventStatus === 'Ready' ? styles.evCardBadgeEnabled : styles.evCardBadgeDraft}`}>
+                                      {eventStatus}
                                     </span>
                                   </div>
-                                  <p className={styles.evCardMeta}>{metaParts.join(' Ã¢â‚¬Â¢ ')}</p>
+                                  <p className={styles.evCardMeta}>{metaParts.join(' · ')}</p>
                                   <p className={styles.evCardFee}>{formatMoney(ev.entryFeeCents)} Entry Fee</p>
                                 </div>
                                 <div className={styles.cardActions}>
@@ -2599,7 +2542,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                           <div className={styles.evDivListHeadText}>
                             <span className={styles.evDivListHeadIcon}><ListOrdered size={14} /></span>
                             <h2>Divisions</h2>
-                            <p>Define eligibility and scoring groups.</p>
+                            <p>Define optional eligibility groups used by events.</p>
                           </div>
                           <div className={styles.evDivListHeadActions}>
                             <span className={styles.evDivCountPill}>{divisions.length} division{divisions.length === 1 ? '' : 's'}</span>
@@ -2621,11 +2564,11 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                         </div>
                         <div className={styles.evDivListBody}>
                           {divisions.length === 0 && (
-                            <p className={styles.evDivEmpty}>No divisions yet. Add one to get started.</p>
+                            <div className={styles.evDivEmpty}><strong>No divisions needed</strong><span>Divisions are optional. Add one when eligibility or scoring groups differ.</span></div>
                           )}
                           {divisions.map((div) => {
                             const avgLabel = div.minAverage !== null && div.maxAverage !== null
-                              ? `Avg ${div.minAverage}Ã¢â‚¬â€œ${div.maxAverage}`
+                              ? `Avg ${div.minAverage}–${div.maxAverage}`
                               : div.minAverage !== null
                                 ? `Avg ${div.minAverage}+`
                                 : div.maxAverage !== null
@@ -2633,6 +2576,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                                   : 'No Avg Restriction';
                             const scoringLabel = div.mode.charAt(0).toUpperCase() + div.mode.slice(1);
                             const usedByNames = events.filter((ev) => ev.connectedDivisionIds.includes(div.id)).map((ev) => ev.name).filter(Boolean);
+                            const divisionStatus = !div.name.trim() ? 'Needs Name' : usedByNames.length > 0 ? 'In Use' : 'Not Used';
                             return (
                               <div
                                 key={div.id}
@@ -2654,11 +2598,11 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                                 <div className={styles.evCardMain}>
                                   <div className={styles.evCardTitle}>
                                     <strong className={styles.evCardDivName}>{div.name || 'Untitled Division'}</strong>
-                                    <span className={`${styles.evCardBadge} ${div.enabled ? styles.evCardBadgeEnabled : styles.evCardBadgeDraft}`}>
-                                      {div.enabled ? 'Enabled' : 'Draft'}
+                                    <span className={`${styles.evCardBadge} ${divisionStatus === 'In Use' ? styles.evCardBadgeEnabled : styles.evCardBadgeDraft}`}>
+                                      {divisionStatus}
                                     </span>
                                   </div>
-                                  <p className={styles.evCardMeta}>{avgLabel} Ã¢â‚¬Â¢ {scoringLabel}</p>
+                                  <p className={styles.evCardMeta}>{avgLabel} · {scoringLabel}</p>
                                   {usedByNames.length > 0 && (
                                     <p className={styles.evCardUsedBy}>Used by: {usedByNames.join(', ')}</p>
                                   )}
@@ -2719,6 +2663,8 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                       handleSaveEvent(updated);
                       setSelectedEventId(null);
                     }}
+                    onCancel={() => setSelectedEventId(null)}
+                    onDelete={() => handleDeleteEvent(selectedEventId)}
                   />
                 </div>
               </div>
@@ -2745,11 +2691,13 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                   <InlineDivisionEditor
                     key={selectedDivisionId}
                     division={divisions.find((d) => d.id === selectedDivisionId)!}
-                    events={events}
+                    usedByEventNames={events.filter((event) => event.connectedDivisionIds.includes(selectedDivisionId)).map((event) => event.name || 'Untitled Event')}
                     onSave={(updated) => {
                       handleSaveDivision(updated);
                       setSelectedDivisionId(null);
                     }}
+                    onCancel={() => setSelectedDivisionId(null)}
+                    onDelete={() => handleDeleteDivision(selectedDivisionId)}
                   />
                 </div>
               </div>
@@ -2763,7 +2711,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                   <div>
                     <h2>Squads & Availability</h2>
                     <p className={styles.squadDashSubtitle}>
-                      Manage squad dates, times, capacity, and event assignments.
+                      Manage optional bowling times, locations, capacity, and registration availability.
                     </p>
                   </div>
                   <div className={styles.squadHeaderActions}>
@@ -2780,6 +2728,17 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                   </div>
                 </div>
 
+                {squads.length === 0 ? (
+                  <div className={styles.squadEmptyState}>
+                    <span className={styles.squadEmptyIcon}><CalendarDays size={22} /></span>
+                    <h3>No squads are needed yet</h3>
+                    <p>Squads are optional. Add them when your tournament offers specific bowling times or needs capacity limits.</p>
+                    <button type="button" className={styles.primaryAction} onClick={() => setDrawerState({ kind: 'squad' })}>
+                      <Plus size={14} /> Add First Squad
+                    </button>
+                  </div>
+                ) : (
+                  <>
                 <div className={styles.squadMetricGrid}>
                   <article className={styles.squadMetricCard}>
                     <span className={styles.squadMetricIcon}><Users size={14} /></span>
@@ -2817,25 +2776,6 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                   </article>
                 </div>
 
-                <div className={styles.squadToolbar}>
-                  <div className={styles.segmentedControl}>
-                    <button
-                      type="button"
-                      className={`${styles.segmentedButton} ${squadViewMode === 'date' ? styles.segmentedButtonActive : ''}`}
-                      onClick={() => setSquadViewMode('date')}
-                    >
-                      <CalendarDays size={12} /> By Date
-                    </button>
-                    <button
-                      type="button"
-                      className={`${styles.segmentedButton} ${squadViewMode === 'squad' ? styles.segmentedButtonActive : ''}`}
-                      onClick={() => setSquadViewMode('squad')}
-                    >
-                      <Users size={12} /> By Squad
-                    </button>
-                  </div>
-                </div>
-
                 <div className={styles.squadGroupStack}>
                   {squadGroups.map((group) => (
                     <section key={group.key} className={styles.squadGroupBlock}>
@@ -2861,9 +2801,12 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                             : fillRate >= 0.35
                               ? styles.squadCountMid
                               : styles.squadCountLow;
-                          const attachedEventNames = squad.eventIds
-                            .map((eventId) => eventNameById[eventId])
-                            .filter((name): name is string => Boolean(name));
+                          const spotsRemaining = Math.max(squad.capacity - squad.registeredCount, 0);
+                          const availabilityLabel = squad.registeredCount >= squad.capacity
+                            ? (squad.waitlistEnabled ? 'Waitlist open' : 'Full')
+                            : fillRate >= 0.75
+                              ? 'Nearly full'
+                              : 'Available';
                           return (
                             <article key={squad.id} className={styles.squadRowCard}>
                               <div className={styles.squadTimeRail}>
@@ -2879,13 +2822,11 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                                 <strong>{squad.name}</strong>
                                 <p className={styles.squadRowMeta}>
                                   <span><Clock3 size={12} /> Check-in {formatSquadTimeLabel(squad.checkInTime)}</span>
-                                  <span><MapPin size={12} /> {squad.locationName || 'Location TBD'}</span>
+                                  <span><MapPin size={12} /> {details.bowlingCenter || 'Location TBD'}</span>
                                 </p>
                                 <div className={styles.metaChips}>
-                                  {attachedEventNames.slice(0, 3).map((eventName) => (
-                                    <span key={`${squad.id}-${eventName}`} className={styles.chip}>{eventName}</span>
-                                  ))}
-                                  {attachedEventNames.length > 3 ? <span className={styles.chip}>+{attachedEventNames.length - 3} more</span> : null}
+                                  <span className={styles.chip}>{availabilityLabel}</span>
+                                  <span className={styles.chip}>{spotsRemaining} spot{spotsRemaining === 1 ? '' : 's'} remaining</span>
                                 </div>
                               </div>
 
@@ -2916,57 +2857,15 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                   <span className={styles.squadAddDateTitle}><Plus size={14} /> Add Squad to New Date</span>
                   <small>Create a new date and add squads</small>
                 </button>
+                  </>
+                )}
               </section>
 
-              <aside className={styles.squadDashSidebar}>
-                <section className={`${styles.sectionCard} ${styles.registrationFieldsSection}`}>
-                  <h3 className={styles.squadSideTitle}><Users size={14} /> Squad Summary</h3>
-                  <dl className={styles.squadSummaryList}>
-                    <div><dt>Total Squads</dt><dd>{squads.length}</dd></div>
-                    <div><dt>Total Capacity</dt><dd>{totalSquadCapacity}</dd></div>
-                    <div><dt>Registered</dt><dd className={styles.squadSummaryAccent}>{totalRegisteredSpots} <small>({fillPercent}%)</small></dd></div>
-                    <div><dt>Waitlist</dt><dd>{waitlistEnabledCount}</dd></div>
-                  </dl>
-                </section>
-
-                <section className={styles.sectionCard}>
-                  <h3 className={styles.squadSideTitle}><CircleCheck size={14} /> Event Availability</h3>
-                  <div className={styles.squadEventRingWrap}>
-                    <div className={styles.squadEventRing} style={eventCoverageRingStyle}>
-                      <span>{eventCoverage.length}</span>
-                    </div>
-                    <p>{totalEventCoverage} squad assignment{totalEventCoverage === 1 ? '' : 's'}</p>
-                  </div>
-                  <ul className={styles.squadEventList}>
-                    {eventCoverage.map((eventEntry) => (
-                      <li key={eventEntry.id}>
-                        <span className={styles.squadEventName}>
-                          <span className={styles.squadEventDot} style={{ backgroundColor: eventCoverageColorById[eventEntry.id] }} aria-hidden="true" />
-                          {eventEntry.name}
-                        </span>
-                        <strong>{eventEntry.squadCount} squad{eventEntry.squadCount === 1 ? '' : 's'}</strong>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-
-                <section className={styles.sectionCard}>
-                  <h3 className={styles.squadSideTitle}><Info size={14} /> Quick Tips</h3>
-                  <ul className={styles.squadTipsList}>
-                    <li><span className={styles.squadTipIcon}><CalendarDays size={12} /></span><span>Assign events to squads so bowlers only see relevant times.</span></li>
-                    <li><span className={styles.squadTipIcon}><Users size={12} /></span><span>Enable waitlist on high-demand squads to reduce registration loss.</span></li>
-                    <li><span className={styles.squadTipIcon}><Clock3 size={12} /></span><span>Squad deadlines can override tournament registration dates.</span></li>
-                  </ul>
-                  <button type="button" className={styles.squadHelpLink}>
-                    View Help Article <Link2 size={12} />
-                  </button>
-                </section>
-              </aside>
             </div>
           )}
 
           {activeSection === 'registration-setup' && (
-            <div className={styles.sectionStack}>
+            <div className={`${styles.sectionStack} ${styles.registrationSetupSection}`}>
               <div className={styles.registrationSetupLayout}>
                 <div className={styles.registrationSetupMain}>
                 <section className={`${styles.sectionCard} ${styles.registrationFieldsSection}`}>
@@ -2978,6 +2877,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                     <div className={styles.registrationHeaderActions}>
                       <span className={styles.evDivCountPill}>{askedFields.length} active</span>
                       <SetupStatusBadge status={statusBySection['registration-setup']} />
+                      <button type="button" className={styles.secondaryAction} onClick={() => setShowRegistrationPreview(true)}><Eye size={14} /> Preview Registration</button>
                     </div>
                   </div>
 
@@ -3018,6 +2918,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                                 >
                                   <option value="required">Required</option>
                                   <option value="optional">Optional</option>
+                                  {!['first_name', 'last_name'].includes(field.key) ? <option value="dont-ask">Don&apos;t Ask</option> : null}
                                 </select>
                               </div>
                             <div className={styles.registrationFieldUtilityActions}>
@@ -3029,7 +2930,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                               >
                                 Edit
                               </button>
-                              {builtInRegistrationFieldKeys.has(field.key) ? (
+                              {!['first_name', 'last_name'].includes(field.key) && builtInRegistrationFieldKeys.has(field.key) ? (
                                 <button
                                   type="button"
                                   className={`${styles.iconButton} ${styles.registrationFieldDelete}`}
@@ -3039,7 +2940,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                                 >
                                   <Trash2 size={15} />
                                 </button>
-                              ) : (
+                              ) : !builtInRegistrationFieldKeys.has(field.key) ? (
                                 <button
                                   type="button"
                                   className={`${styles.iconButton} ${styles.registrationFieldDelete}`}
@@ -3049,7 +2950,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                                 >
                                   <Trash2 size={15} />
                                 </button>
-                              )}
+                              ) : null}
                             </div>
                           </div>
                         </article>
@@ -3061,9 +2962,9 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                     <div className={`${styles.registrationFieldGroupCard} ${styles.registrationFieldGroupCardMuted}`}>
                       <div className={styles.registrationGroupHeader}>
                         <strong>Don&apos;t Ask Right Now</strong>
-                        <span>{hiddenFields.length} hidden field{hiddenFields.length === 1 ? '' : 's'}</span>
+                        <button type="button" className={styles.inlineAction} onClick={() => setShowHiddenRegistrationFields((current) => !current)}>{hiddenFields.length} hidden field{hiddenFields.length === 1 ? '' : 's'} · {showHiddenRegistrationFields ? 'Collapse' : 'Expand'}</button>
                       </div>
-                      <div className={`${styles.listStack} ${styles.registrationFieldList} ${styles.registrationFieldGroupBody}`}>
+                      {showHiddenRegistrationFields ? <div className={`${styles.listStack} ${styles.registrationFieldList} ${styles.registrationFieldGroupBody}`}>
                         {hiddenFields.map((field) => (
                           <article
                             key={field.id}
@@ -3113,16 +3014,13 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                             </div>
                           </article>
                         ))}
-                      </div>
+                      </div> : null}
                     </div>
                   ) : null}
 
                   <div className={styles.registrationFieldFooterActions}>
                     <button type="button" className={styles.registrationFieldFooterPrimary} onClick={() => setDrawerState({ kind: 'field' })}>
                       <Plus size={14} /> Add Field
-                    </button>
-                    <button type="button" className={styles.registrationFieldFooterSecondary}>
-                      <ListOrdered size={14} /> Reorder Fields
                     </button>
                   </div>
                 </section>
@@ -3169,6 +3067,13 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                     <span>{enabledQuestions.length} question{enabledQuestions.length === 1 ? '' : 's'}</span>
                   </div>
                   <div className={styles.listStack}>
+                    {enabledQuestions.length === 0 ? (
+                      <div className={styles.registrationEmptyState}>
+                        <strong>No custom questions</strong>
+                        <p>The standard registration fields may be all you need.</p>
+                        <button type="button" className={styles.inlineAction} onClick={() => setDrawerState({ kind: 'question' })}><Plus size={14} /> Add Custom Question</button>
+                      </div>
+                    ) : null}
                     {enabledQuestions.map((question) => (
                       <article
                         key={question.id}
@@ -3192,27 +3097,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                           </div>
                         </div>
                         <div className={styles.questionCardActions}>
-                          <div className={styles.requirementPill} role="group" aria-label={`Required setting for ${question.label || 'Untitled question'}`}>
-                            <button
-                              type="button"
-                              className={`${styles.requirementPillButton} ${question.required ? styles.requirementPillButtonActive : ''}`}
-                              onClick={() => handleSetQuestionRequired(question.id, true)}
-                              aria-pressed={question.required}
-                            >
-                              Required
-                            </button>
-                            <button
-                              type="button"
-                              className={`${styles.requirementPillButton} ${!question.required ? styles.requirementPillButtonActive : ''}`}
-                              onClick={() => handleSetQuestionRequired(question.id, false)}
-                              aria-pressed={!question.required}
-                            >
-                              Optional
-                            </button>
-                          </div>
-                          <button type="button" className={styles.inlineAction} onClick={() => handleSetQuestionEnabled(question.id, false)}>
-                            Don&apos;t Ask
-                          </button>
+                          <select className={styles.registrationModeSelect} value={question.required ? 'required' : 'optional'} onChange={(event) => event.target.value === 'dont-ask' ? handleSetQuestionEnabled(question.id, false) : handleSetQuestionRequired(question.id, event.target.value === 'required')} aria-label={`Requirement setting for ${question.label || 'Untitled question'}`}><option value="required">Required</option><option value="optional">Optional</option><option value="dont-ask">Don&apos;t Ask</option></select>
                           <button type="button" className={styles.iconButton} onClick={() => setDrawerState({ kind: 'question', id: question.id })} aria-label="Edit question">
                             <PencilLine size={15} />
                           </button>
@@ -3242,24 +3127,6 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                               </div>
                             </div>
                             <div className={styles.questionCardActions}>
-                              <div className={styles.requirementPill} role="group" aria-label={`Required setting for ${question.label || 'Untitled question'}`}>
-                                <button
-                                  type="button"
-                                  className={`${styles.requirementPillButton} ${question.required ? styles.requirementPillButtonActive : ''}`}
-                                  onClick={() => handleSetQuestionRequired(question.id, true)}
-                                  aria-pressed={question.required}
-                                >
-                                  Required
-                                </button>
-                                <button
-                                  type="button"
-                                  className={`${styles.requirementPillButton} ${!question.required ? styles.requirementPillButtonActive : ''}`}
-                                  onClick={() => handleSetQuestionRequired(question.id, false)}
-                                  aria-pressed={!question.required}
-                                >
-                                  Optional
-                                </button>
-                              </div>
                               <button type="button" className={styles.inlineAction} onClick={() => handleSetQuestionEnabled(question.id, true)}>
                                 Ask Question
                               </button>
@@ -3277,7 +3144,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
           )}
 
           {activeSection === 'fees-payments-documents' && (
-            <div className={styles.sectionStack}>
+            <div className={`${styles.sectionStack} ${styles.feesDocumentsSection}`}>
               <section className={styles.sectionCard}>
                 <div className={styles.sectionHeader}>
                   <div>
@@ -3291,133 +3158,33 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                     </button>
                   </div>
                 </div>
-                <div className={styles.feesSummaryStrip}>
-                  <article className={styles.feesSummaryItem}>
-                    <small>Base Entry Total</small>
-                    <strong>{formatMoney(baseEntryTotalCents)}</strong>
-                  </article>
-                  <article className={styles.feesSummaryItem}>
-                    <small>Add-ons Total</small>
-                    <strong>{formatMoney(addOnsTotalCents)}</strong>
-                  </article>
-                  <article className={styles.feesSummaryItem}>
-                    <small>Active Add-ons</small>
-                    <strong>{addOnFees.length}</strong>
-                  </article>
-                </div>
-                <div className={styles.feesGrid}>
-                  <div className={styles.feePanel}>
-                    <div className={styles.feePanelHeader}>
-                      <h3>Base Entry Fees</h3>
-                      <span>{enabledEvents.length}</span>
-                    </div>
-                    <div className={styles.listStack}>
-                      {enabledEvents.map((event) => (
-                        <article key={event.id} className={`${styles.configCard} ${styles.feeConfigCard}`}>
-                          <div className={styles.cardMain}>
-                            <strong>{event.name || 'Untitled Event'}</strong>
-                            <div className={styles.metaChips}>
-                              <span className={`${styles.chip} ${styles.chipEnabled}`}>Base Entry</span>
-                              <span className={styles.chip}>Managed in Events</span>
-                            </div>
-                            <p>{formatMoney(event.entryFeeCents)}</p>
-                          </div>
-                        </article>
-                      ))}
-                      {enabledEvents.length === 0 ? <p className={styles.emptyInlineNote}>Enable an event to set a base entry fee.</p> : null}
-                    </div>
-                  </div>
-                  <div className={styles.feePanel}>
-                    <div className={styles.feePanelHeader}>
-                      <h3>Optional Add-ons</h3>
-                      <span>{addOnFees.length}</span>
-                    </div>
-                    <div className={styles.listStack}>
-                      {addOnFees.map((fee) => (
-                        <article key={fee.id} className={`${styles.configCard} ${styles.feeConfigCard}`}>
-                          <div className={styles.cardMain}>
-                            <strong>{fee.name}</strong>
-                            <div className={styles.metaChips}>
-                              <span className={styles.chip}>Add-on</span>
-                            </div>
-                            <p>{formatMoney(fee.amountCents)}</p>
-                          </div>
-                          <button type="button" className={styles.iconButton} onClick={() => setDrawerState({ kind: 'fee', id: fee.id })} aria-label="Edit fee">
-                            <PencilLine size={15} />
-                          </button>
-                        </article>
-                      ))}
-                      {addOnFees.length === 0 ? <p className={styles.emptyInlineNote}>No add-ons yet.</p> : null}
-                    </div>
-                  </div>
+                <div className={styles.addOnList}>
+                  {addOnFees.map((fee) => (
+                    <article key={fee.id} className={styles.addOnRow}>
+                      <div><strong>{fee.name || 'Untitled Add-on'}</strong><span>Optional during registration</span></div>
+                      <strong>{formatMoney(fee.amountCents)}</strong>
+                      <button type="button" className={styles.inlineAction} onClick={() => setDrawerState({ kind: 'fee', id: fee.id })}><PencilLine size={14} /> Edit</button>
+                    </article>
+                  ))}
+                  {addOnFees.length === 0 ? <div className={styles.simpleOptionalEmpty}><strong>No add-ons configured</strong><p>Add-ons are optional and can be used for brackets, donations, merchandise, or other extras.</p><button type="button" className={styles.inlineAction} onClick={() => setDrawerState({ kind: 'fee' })}><Plus size={14} /> Add First Add-on</button></div> : null}
                 </div>
               </section>
 
               <section className={styles.sectionCard}>
                 <div className={styles.sectionHeader}>
                   <div>
-                    <h2>Payments</h2>
-                    <p>Cash collection is active for this release. Online payments will be added later.</p>
+                    <h2>Payment Collection</h2>
+                    <p>Bowlers register without paying online. Tournament staff collect entry fees at the venue.</p>
                   </div>
                   <div className={styles.feesHeaderActions}>
                     <span className={styles.evDivCountPill}>Cash only</span>
                     <SetupStatusBadge status={statusBySection['fees-payments-documents']} />
                   </div>
                 </div>
-                <div className={styles.configSurface}>
-                  <div className={styles.paymentSummaryStrip}>
-                    <span className={styles.chip}>Mode: {paymentModeLabel}</span>
-                    <span className={`${styles.chip} ${styles.chipEnabled}`}>
-                      Processor: Not required
-                    </span>
-                    <span className={`${styles.chip} ${styles.chipEnabled}`}>
-                      Payout: At venue / cash handling
-                    </span>
-                  </div>
-
-                  <div className={styles.segmentedControl} role="group" aria-label="Payment mode">
-                    <button
-                      type="button"
-                      className={`${styles.segmentedButton} ${styles.segmentedButtonActive}`}
-                    >
-                      Cash Only
-                    </button>
-                    <button
-                      type="button"
-                      className={styles.segmentedButton}
-                      disabled
-                    >
-                      Online Payments (Soon)
-                    </button>
-                  </div>
-
-                  <div className={styles.paymentStepGrid}>
-                    <article className={styles.paymentStepCard}>
-                      <strong>1. Collection Mode</strong>
-                      <p>Select how entries are collected during registration.</p>
-                      <span className={`${styles.paymentStepBadge} ${paymentModeReady ? styles.paymentStepBadgeComplete : styles.paymentStepBadgePending}`}>
-                        {paymentModeReady ? 'Complete' : 'Needs Setup'}
-                      </span>
-                    </article>
-
-                    <article className={styles.paymentStepCard}>
-                      <strong>2. Processor Connection</strong>
-                      <p>Online processor setup will be enabled in a future update.</p>
-                      <span className={`${styles.paymentStepBadge} ${styles.paymentStepBadgeComplete}`}>
-                        Deferred
-                      </span>
-                    </article>
-
-                    <article className={styles.paymentStepCard}>
-                      <strong>3. Payout Schedule</strong>
-                      <p>Cash is collected at the venue and reconciled by organizers.</p>
-                      <span className={`${styles.paymentStepBadge} ${styles.paymentStepBadgeComplete}`}>
-                        Cash workflow
-                      </span>
-                    </article>
-                  </div>
-
-                  <p className={styles.emptyInlineNote}>Online payments and processor onboarding are intentionally disabled for now.</p>
+                <div className={styles.paymentFacts}>
+                  <span><CircleCheck size={15} /> No payment processor required</span>
+                  <span><CircleCheck size={15} /> No online transaction fees</span>
+                  <span><CircleCheck size={15} /> Payment is collected at check-in</span>
                 </div>
               </section>
 
@@ -3425,29 +3192,22 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                 <div className={styles.sectionHeader}>
                   <div>
                     <h2>Rules & Documents</h2>
-                    <p>Attach rules, payout sheets, and legal notices.</p>
+                    <p>Optionally share tournament rules with bowlers during registration.</p>
                   </div>
                   <div className={styles.feesHeaderActions}>
                     <span className={`${styles.chip} ${hasRulesDocument ? styles.chipEnabled : styles.chipMuted}`}>
-                      {hasRulesDocument ? 'Rules Uploaded' : 'Rules Missing'}
+                      {hasRulesDocument ? 'Uploaded' : 'Optional'}
                     </span>
                   </div>
                 </div>
                 <div className={styles.configSurface}>
-                  <div className={styles.documentSummaryStrip}>
-                    <span className={`${styles.chip} ${hasRulesDocument ? styles.chipEnabled : styles.chipMuted}`}>
-                      {hasRulesDocument ? 'Rules Uploaded' : 'Rules Missing'}
-                    </span>
-                    <span className={styles.chip}>Visible during registration</span>
-                  </div>
-
                   <article className={styles.documentFileCard}>
                     <div className={styles.documentFileMain}>
                       <strong>{hasRulesDocument ? 'Tournament Rules.pdf' : 'No file uploaded yet'}</strong>
                       <p>
                         {hasRulesDocument
                           ? 'Latest version is attached and shown to bowlers during signup.'
-                          : 'Upload a PDF so bowlers can review terms and tournament policies.'}
+                          : 'Add a PDF if bowlers should review tournament rules before registering.'}
                       </p>
                     </div>
                     <div className={styles.documentActions}>
@@ -3464,57 +3224,74 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                     </div>
                   </article>
 
-                  <div className={styles.documentTypeRow}>
-                    <span className={styles.chip}>Rules</span>
-                    <span className={styles.chip}>Payout Sheet</span>
-                    <span className={styles.chip}>Legal Notice</span>
-                  </div>
                 </div>
               </section>
             </div>
           )}
 
+          {showRegistrationPreview ? (
+            <div className={styles.editorModal} role="dialog" aria-modal="true" aria-label="Registration preview" onClick={() => setShowRegistrationPreview(false)}>
+              <div className={`${styles.editorModalBox} ${styles.registrationPreviewModal}`} onClick={(event) => event.stopPropagation()}>
+                <div className={styles.editorModalHead}>
+                  <div><span className={styles.editorModalTitle}>Registration Preview</span><small className={styles.divisionEditorHeadSubtitle}>Preview only · Changes update automatically</small></div>
+                  <button type="button" className={`${styles.iconButton} ${styles.modalCloseButton}`} onClick={() => setShowRegistrationPreview(false)} aria-label="Close preview"><X size={16} /></button>
+                </div>
+                <div className={styles.editorModalBody}>
+                  <TournamentRegistrationForm tournamentName={details.name || 'Tournament Name'} squads={enabledSquads} events={eventsForSelectedPreviewSquad} divisions={enabledDivisions} fields={askedFields} questions={enabledQuestions} requiredBowlerCount={requiredPreviewBowlerCount} formState={signupPreviewForm} setFormState={setSignupPreviewForm} submitMessage={signupPreviewSubmitMessage} isSubmitting={isSubmittingSignupPreview} onSubmit={() => { void handleSignupPreviewSubmit(); }} footerHint="Preview only. No registration will be submitted." />
+                </div>
+              </div>
+            </div>
+          ) : null}
+
           {activeSection === 'review-publish' && (
-            <section className={styles.sectionCard}>
+            <section className={`${styles.sectionCard} ${styles.reviewPublishSection}`}>
               <div className={styles.sectionHeader}>
                 <div>
                   <h2>Review & Publish</h2>
-                  <p>Finalize setup and publish only when required checks pass.</p>
+                  <p>Run a final preflight check and resolve anything that could prevent registration.</p>
                 </div>
-                <SetupStatusBadge status={statusBySection['review-publish']} />
+                <div className={styles.reviewHeaderActions}><SetupStatusBadge status={statusBySection['review-publish']} /><button type="button" className={styles.secondaryAction} onClick={() => setLastPreflightRunAt(new Date().toISOString())}><RotateCcw size={14} /> Run Checks Again</button></div>
               </div>
+              <div className={styles.preflightIntro}><strong>{validationIssues.some((issue) => issue.severity === 'error') ? 'Publishing is blocked' : 'Tournament is ready to publish'}</strong><span>{lastPreflightRunAt ? `Last checked ${new Date(lastPreflightRunAt).toLocaleTimeString()}` : 'Checks update automatically as setup changes.'}</span></div>
               <PublishValidationSummary
                 issues={validationIssues}
                 sections={setupSections}
                 onNavigate={(section) => setActiveSection(section)}
               />
               <div className={styles.reviewStatusRecommendation}>
-                <div>
-                  <strong>Suggested tournament status: {recommendedTournamentStatus.value}</strong>
-                  <p>{recommendedTournamentStatus.reason}</p>
+                <div><strong>Visibility</strong><p>{visibilitySummary}</p></div>
+                <div className={styles.visibilityGroup}>
+                  <button type="button" className={`${styles.visibilityOpt} ${details.visibility === 'public' ? styles.visibilityOptActive : ''}`} onClick={() => setDetails((prev) => ({ ...prev, visibility: 'public' }))}><Globe size={15} /><span>Public</span></button>
+                  <button type="button" className={`${styles.visibilityOpt} ${details.visibility === 'unlisted' ? styles.visibilityOptActive : ''}`} onClick={() => setDetails((prev) => ({ ...prev, visibility: 'unlisted' }))}><Link2 size={15} /><span>Unlisted</span></button>
+                  <button type="button" className={`${styles.visibilityOpt} ${details.visibility === 'private' ? styles.visibilityOptActive : ''}`} onClick={() => setDetails((prev) => ({ ...prev, visibility: 'private' }))}><Lock size={15} /><span>Private</span></button>
                 </div>
-                <button
-                  type="button"
-                  className={styles.inlineAction}
-                  onClick={() => {
-                    setDetails((prev) => ({ ...prev, tournamentStatus: recommendedTournamentStatus.value }));
-                    setActiveSection('tournament-details');
-                  }}
-                  disabled={details.tournamentStatus === recommendedTournamentStatus.value}
-                >
-                  Apply Suggested Status
-                </button>
               </div>
-              <div className={styles.publishActionsRow}>
-                <button type="button" className={styles.secondaryAction} onClick={() => { void handleSaveDraft(); }} disabled={isSavingDraft || isPublishing}>
-                  {isSavingDraft ? 'Saving...' : 'Save Draft'}
-                </button>
-                <button type="button" className={styles.primaryAction} onClick={() => { void handlePublish(); }} disabled={validationIssues.some((issue) => issue.severity === 'error') || isSavingDraft || isPublishing}>
-                  <CircleCheck size={15} /> {isPublishing ? 'Publishing...' : 'Publish Tournament'}
-                </button>
+              <section className={styles.launchSummaryCard}>
+                <div className={styles.preflightGroupHead}><strong>Public Launch Summary</strong><span>{recommendedTournamentStatus.value}</span></div>
+                <dl className={styles.launchSummaryGrid}>
+                  <div><dt>Visibility</dt><dd>{details.visibility}</dd></div>
+                  <div><dt>Tournament Dates</dt><dd>{formatDateShort(details.startDateIso)} – {formatDateShort(details.endDateIso)}</dd></div>
+                  <div><dt>Registration Closes</dt><dd>{formatDateShort(details.registrationCloseIso)}</dd></div>
+                  <div><dt>Events</dt><dd>{enabledEvents.length}</dd></div>
+                  <div><dt>Squads</dt><dd>{squads.length || 'Not Used'}</dd></div>
+                  <div><dt>Divisions</dt><dd>{enabledDivisions.length || 'Not Used'}</dd></div>
+                  <div><dt>Payment</dt><dd>Cash at venue</dd></div>
+                </dl>
+                <p>{recommendedTournamentStatus.reason}</p>
+              </section>
+              <div className={`${styles.publishDecisionCard} ${validationIssues.some((issue) => issue.severity === 'error') ? styles.publishDecisionBlocked : styles.publishDecisionReady}`}>
+                <div><strong>{validationIssues.some((issue) => issue.severity === 'error') ? 'Publishing Blocked' : 'Ready to Publish'}</strong><p>{validationIssues.some((issue) => issue.severity === 'error') ? `Resolve ${validationIssues.filter((issue) => issue.severity === 'error').length} required issue${validationIssues.filter((issue) => issue.severity === 'error').length === 1 ? '' : 's'} before publishing.` : 'Publishing will make this tournament available according to the selected visibility.'}</p></div>
+                <div className={styles.publishActionsRow}>
+                  <button type="button" className={styles.secondaryAction} onClick={() => { void handleSaveDraft(); }} disabled={isSavingDraft || isPublishing}>{isSavingDraft ? 'Saving...' : 'Save'}</button>
+                  <button type="button" className={styles.primaryAction} onClick={() => { void handlePublish(); }} disabled={validationIssues.some((issue) => issue.severity === 'error') || isSavingDraft || isPublishing}><CircleCheck size={15} /> {isPublishing ? 'Publishing...' : 'Publish Tournament'}</button>
+                </div>
               </div>
             </section>
           )}
+          <nav className={styles.setupStepFooter} aria-label="Setup step navigation">
+            {setupSections.findIndex((section) => section.key === activeSection) > 0 ? <button type="button" className={styles.secondaryAction} onClick={() => setActiveSection(setupSections[setupSections.findIndex((section) => section.key === activeSection) - 1].key)}>← {setupSections[setupSections.findIndex((section) => section.key === activeSection) - 1].label}</button> : <span />}
+            {setupSections.findIndex((section) => section.key === activeSection) < setupSections.length - 1 ? <button type="button" className={styles.primaryAction} onClick={() => setActiveSection(setupSections[setupSections.findIndex((section) => section.key === activeSection) + 1].key)}>{setupSections[setupSections.findIndex((section) => section.key === activeSection) + 1].label} →</button> : null}
+          </nav>
         </main>
       </div>
 
@@ -3610,16 +3387,18 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
         title={drawerState
           ? `${drawerState.id ? 'Edit' : 'Add'} ${drawerState.kind === 'fee' ? 'Add-on' : `${drawerState.kind.charAt(0).toUpperCase()}${drawerState.kind.slice(1)}`}`
           : ''}
-        subtitle={drawerState ? ({ squad: 'Squads & Availability', location: 'Squads & Availability', field: 'Registration Setup', question: 'Registration Setup', fee: 'Add-ons, Payments & Docs' } as Record<string, string>)[drawerState.kind] ?? '' : ''}
+        subtitle={drawerState?.kind === 'squad' && activeSquad
+          ? `${activeSquad.dateIso || 'Date not set'} · ${activeSquad.startTime || 'Time not set'}`
+          : drawerState ? ({ location: 'Squads & Availability', field: 'Registration Setup', question: 'Registration Setup', fee: 'Add-ons, Payments & Docs' } as Record<string, string>)[drawerState.kind] ?? '' : ''}
         onClose={() => setDrawerState(null)}
       >
         {drawerState?.kind === 'squad' && activeSquad && (
           <SquadEditor
             squad={activeSquad}
-            events={events}
             locationName={details.bowlingCenter}
-            registrationDeadlineIso={details.registrationCloseIso}
             onSave={handleSaveSquad}
+            onCancel={() => setDrawerState(null)}
+            onDelete={drawerState.id && squads.some((entry) => entry.id === drawerState.id) ? () => handleDeleteSquad(drawerState.id!) : undefined}
           />
         )}
         {drawerState?.kind === 'question' && activeQuestion && (

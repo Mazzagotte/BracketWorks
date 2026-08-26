@@ -4,8 +4,6 @@ import type { CustomQuestionConfig, DivisionConfig, EventConfig, FeeConfig, Loca
 export type TournamentDetails = {
   name: string;
   subtitle: string;
-  series: string;
-  certification: string;
   organizer: string;
   tournamentType: string;
   startDateIso: string;
@@ -27,8 +25,14 @@ export type TournamentDetails = {
   tournamentStatus: string;
   supportEmail: string;
   supportPhone: string;
+  contactName: string;
+  contactRole: string;
+  preferredContactMethod: 'email' | 'phone' | 'either';
+  contactNote: string;
   registrationOpenIso: string;
   registrationCloseIso: string;
+  registrationOpenTime: string;
+  registrationCloseTime: string;
   logoFileName: string;
 };
 

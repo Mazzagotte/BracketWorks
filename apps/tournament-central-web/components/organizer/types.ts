@@ -1,4 +1,4 @@
-export type SetupStatus = 'complete' | 'incomplete' | 'needs-attention';
+export type SetupStatus = 'complete' | 'incomplete' | 'needs-attention' | 'not-used';
 
 export type SetupSectionKey =
   | 'tournament-details'

@@ -7,6 +7,23 @@ from app.core import models
 
 def _base_setup_payload(*, waitlist_enabled: bool = True, capacity: int = 100, deadline_iso: str | None = None) -> dict:
     return {
+        "details": {
+            "name": "TC Local Event",
+            "organizer": "Idaho Bowling Association",
+            "contactName": "Jamie Smith",
+            "preferredContactMethod": "email",
+            "bowlingCenter": "Sunset Lanes",
+            "state": "ID",
+            "city": "Boise",
+            "timezone": "America/Boise (MT)",
+            "tournamentType": "Adult",
+            "startDateIso": "2026-10-01",
+            "endDateIso": "2026-10-02",
+            "supportEmail": "director@example.com",
+            "visibility": "public",
+            "registrationOpenIso": "2026-01-01",
+            "registrationCloseIso": "2026-09-30",
+        },
         "events": [
             {
                 "id": "evt-singles",
@@ -210,6 +227,54 @@ def test_event_and_squad_relationship_is_enforced(api_client, db_session, make_u
     assert response.json()["detail"] == "Selected squad is not available for this event"
 
 
+def test_division_only_registration_accepts_no_squad(api_client, db_session, make_user):
+    owner = make_user("tc_owner_division_only")
+    setup_payload = _base_setup_payload()
+    setup_payload["events"][0]["requireSquad"] = False
+    setup_payload["events"][0]["connectedSquadIds"] = []
+    setup_payload["squads"] = []
+    tournament = _create_tc_tournament_with_setup(db_session, owner.id, setup_payload=setup_payload)
+
+    response = api_client.post(
+        f"/api/v1/public/tc-tournament/{tournament.id}/registration",
+        json=_registration_payload(squad_id=""),
+    )
+
+    assert response.status_code == 200
+
+
+def test_squad_only_registration_accepts_no_division(api_client, db_session, make_user):
+    owner = make_user("tc_owner_squad_only")
+    setup_payload = _base_setup_payload()
+    setup_payload["events"][0]["requireDivision"] = False
+    setup_payload["events"][0]["connectedDivisionIds"] = []
+    setup_payload["divisions"] = []
+    tournament = _create_tc_tournament_with_setup(db_session, owner.id, setup_payload=setup_payload)
+
+    response = api_client.post(
+        f"/api/v1/public/tc-tournament/{tournament.id}/registration",
+        json=_registration_payload(division_id=""),
+    )
+
+    assert response.status_code == 200
+
+
+def test_supplied_dimension_must_be_connected_even_when_event_has_no_connections(api_client, db_session, make_user):
+    owner = make_user("tc_owner_empty_connections")
+    setup_payload = _base_setup_payload()
+    setup_payload["events"][0]["requireDivision"] = False
+    setup_payload["events"][0]["connectedDivisionIds"] = []
+    tournament = _create_tc_tournament_with_setup(db_session, owner.id, setup_payload=setup_payload)
+
+    response = api_client.post(
+        f"/api/v1/public/tc-tournament/{tournament.id}/registration",
+        json=_registration_payload(),
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Selected division is not available for this event"
+
+
 def test_terms_must_be_accepted(api_client, db_session, make_user):
     owner = make_user("tc_owner_terms")
     tournament = _create_tc_tournament_with_setup(db_session, owner.id, setup_payload=_base_setup_payload())
@@ -300,11 +365,61 @@ def test_setup_save_does_not_overwrite_relational_registrations(api_client, db_s
     save_response = api_client.put(
         f"/api/v1/tc/organizer-setup/{tournament.id}",
         headers=headers,
-        json={"payload": {"events": [], "divisions": [], "squads": [], "fields": [], "questions": []}, "is_published": True},
+        json={"payload": {"events": [], "divisions": [], "squads": [], "fields": [], "questions": []}, "is_published": False},
     )
     assert save_response.status_code == 200
 
     assert db_session.query(models.TcRegistration).filter_by(tournament_id=tournament.id).count() == 1
+
+
+def test_server_rejects_invalid_publish_but_allows_incomplete_draft(api_client, db_session, make_user, make_auth_headers):
+    owner = make_user("tc_owner_publish_validation")
+    tournament = _create_tc_tournament_with_setup(db_session, owner.id, setup_payload=_base_setup_payload())
+    headers = make_auth_headers(owner)
+    incomplete = {"events": [{"id": "evt", "name": "Singles", "enabled": True}], "divisions": [], "squads": []}
+
+    draft_response = api_client.put(
+        f"/api/v1/tc/organizer-setup/{tournament.id}",
+        headers=headers,
+        json={"payload": incomplete, "is_published": False},
+    )
+    publish_response = api_client.put(
+        f"/api/v1/tc/organizer-setup/{tournament.id}",
+        headers=headers,
+        json={"payload": incomplete, "is_published": True},
+    )
+
+    assert draft_response.status_code == 200
+    assert publish_response.status_code == 400
+    assert "Add at least one division or squad" in str(publish_response.json()["detail"])
+
+
+def test_draft_edits_preserve_last_published_snapshot(api_client, db_session, make_user, make_auth_headers):
+    owner = make_user("tc_owner_published_snapshot")
+    tournament = _create_tc_tournament_with_setup(db_session, owner.id, setup_payload=_base_setup_payload())
+    headers = make_auth_headers(owner)
+    published = _base_setup_payload()
+
+    publish_response = api_client.put(
+        f"/api/v1/tc/organizer-setup/{tournament.id}",
+        headers=headers,
+        json={"payload": published, "is_published": True},
+    )
+    assert publish_response.status_code == 200
+
+    draft = {**published, "events": [{**published["events"][0], "name": "Unpublished Rename"}]}
+    draft_response = api_client.put(
+        f"/api/v1/tc/organizer-setup/{tournament.id}",
+        headers=headers,
+        json={"payload": draft, "is_published": False},
+    )
+    assert draft_response.status_code == 200
+
+    db_session.expire_all()
+    state = db_session.query(models.TournamentCentralSetupState).filter_by(tournament_id=tournament.id).one()
+    assert state.is_published is True
+    assert state.payload["events"][0]["name"] == "Unpublished Rename"
+    assert state.payload["_publishedSnapshot"]["events"][0]["name"] == "Singles"
 
 
 def test_tc_tournament_entry_count_reflects_relational_entries(api_client, db_session, make_user, make_auth_headers):

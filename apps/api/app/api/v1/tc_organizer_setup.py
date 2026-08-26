@@ -7,6 +7,7 @@ from ...api import deps
 from ...core import models, schemas
 from ...services.tc_tournament_logo import validate_tournament_logo_upload
 from ...services.tournament_access import verify_owned_tc_tournament_access
+from ...services.tc_setup_validation import PUBLISHED_SNAPSHOT_KEY, clean_setup_payload, validate_publishable_setup
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -121,6 +122,12 @@ def upsert_tournament_setup_state(
     user: models.User = Depends(deps.get_current_user),
 ):
     tournament = verify_owned_tc_tournament_access(db, tournament_id, user)
+    draft_payload = clean_setup_payload(payload.payload)
+
+    if payload.is_published:
+        publish_errors = validate_publishable_setup(draft_payload)
+        if publish_errors:
+            raise HTTPException(status_code=400, detail={"message": "Tournament setup is not publishable", "errors": publish_errors})
 
     try:
         state = db.query(models.TournamentCentralSetupState).filter(
@@ -128,17 +135,32 @@ def upsert_tournament_setup_state(
             models.TournamentCentralSetupState.user_id == tournament.user_id,
         ).first()
 
+        existing_snapshot = None
+        if state is not None and isinstance(state.payload, dict):
+            existing_snapshot = state.payload.get(PUBLISHED_SNAPSHOT_KEY)
+
+        if payload.is_published:
+            stored_payload = {**draft_payload, PUBLISHED_SNAPSHOT_KEY: draft_payload}
+            published = True
+            tournament.is_public = str((draft_payload.get("details") or {}).get("visibility") or "private") in {"public", "unlisted"}
+        elif isinstance(existing_snapshot, dict):
+            stored_payload = {**draft_payload, PUBLISHED_SNAPSHOT_KEY: existing_snapshot}
+            published = True
+        else:
+            stored_payload = draft_payload
+            published = False
+
         if state is None:
             state = models.TournamentCentralSetupState(
                 tournament_id=tournament_id,
                 user_id=tournament.user_id,
-                payload=payload.payload,
-                is_published=payload.is_published,
+                payload=stored_payload,
+                is_published=published,
             )
             db.add(state)
         else:
-            state.payload = payload.payload
-            state.is_published = payload.is_published
+            state.payload = stored_payload
+            state.is_published = published
             if state.user_id != tournament.user_id:
                 state.user_id = tournament.user_id
 

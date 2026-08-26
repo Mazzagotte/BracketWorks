@@ -9,6 +9,7 @@ const statusLabel: Record<SetupStatus, string> = {
   complete: 'Complete',
   incomplete: 'Incomplete',
   'needs-attention': 'Needs Attention',
+  'not-used': 'Not Used',
 };
 
 export default function SetupStatusBadge({ status }: SetupStatusBadgeProps) {

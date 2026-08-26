@@ -5,7 +5,6 @@ import type { ReactNode } from 'react';
 import { useParams } from 'next/navigation';
 
 import { TournamentProvider } from '@/components/organizer/TournamentContext';
-import TournamentSubNav from '@/components/organizer/TournamentSubNav';
 
 export default function TournamentLayout({ children }: { children: ReactNode }) {
   const params = useParams<{ tournamentId: string }>();
@@ -13,7 +12,6 @@ export default function TournamentLayout({ children }: { children: ReactNode }) 
 
   return (
     <TournamentProvider tournamentId={tournamentId}>
-      <TournamentSubNav />
       {children}
     </TournamentProvider>
   );

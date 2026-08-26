@@ -878,6 +878,13 @@ export default function HomePage() {
     [allTournaments, registrationTournamentId],
   );
 
+  useEffect(() => {
+    const requestedTournamentId = new URLSearchParams(window.location.search).get('registration');
+    if (requestedTournamentId && allTournaments.some((entry) => entry.id === requestedTournamentId)) {
+      setRegistrationTournamentId(requestedTournamentId);
+    }
+  }, [allTournaments]);
+
   const registrationEvents = useMemo(
     () => (registrationConfig?.events ?? []).filter((event) => event.enabled),
     [registrationConfig],
@@ -924,7 +931,7 @@ export default function HomePage() {
 
     const linked = registrationEvents.filter((event) => {
       const connectedSquadIds = Array.isArray(event.connectedSquadIds) ? event.connectedSquadIds : [];
-      return connectedSquadIds.length === 0 || connectedSquadIds.includes(registrationForm.squadId);
+      return connectedSquadIds.includes(registrationForm.squadId);
     });
 
     return linked.length > 0 ? linked : registrationEvents;
@@ -934,6 +941,30 @@ export default function HomePage() {
     () => registrationEvents.find((event) => event.id === registrationForm.eventId) ?? eventsForSelectedSquad[0] ?? null,
     [eventsForSelectedSquad, registrationEvents, registrationForm.eventId],
   );
+
+  const divisionsForSelectedEvent = useMemo(() => {
+    const connectedIds = new Set(selectedRegistrationEvent?.connectedDivisionIds ?? []);
+    return registrationDivisions.filter((division) => connectedIds.has(division.id));
+  }, [registrationDivisions, selectedRegistrationEvent]);
+
+  const squadsForSelectedEvent = useMemo(() => {
+    const connectedIds = new Set(selectedRegistrationEvent?.connectedSquadIds ?? []);
+    return registrationSquads.filter((squad) => connectedIds.has(squad.id));
+  }, [registrationSquads, selectedRegistrationEvent]);
+
+  useEffect(() => {
+    setRegistrationForm((previous) => {
+      const divisionId = divisionsForSelectedEvent.some((division) => division.id === previous.divisionId)
+        ? previous.divisionId
+        : divisionsForSelectedEvent[0]?.id ?? '';
+      const squadId = squadsForSelectedEvent.some((squad) => squad.id === previous.squadId)
+        ? previous.squadId
+        : squadsForSelectedEvent[0]?.id ?? '';
+      return divisionId === previous.divisionId && squadId === previous.squadId
+        ? previous
+        : { ...previous, divisionId, squadId };
+    });
+  }, [divisionsForSelectedEvent, squadsForSelectedEvent]);
 
   const requiredBowlerCount = useMemo(
     () => getRequiredBowlerCountFromSquad(selectedRegistrationSquad) ?? getRequiredBowlerCountFromEvent(selectedRegistrationEvent),
@@ -1030,7 +1061,7 @@ export default function HomePage() {
 
       const squadLinkedEvents = registrationEvents.filter((event) => {
         const connectedSquadIds = Array.isArray(event.connectedSquadIds) ? event.connectedSquadIds : [];
-        return !next.squadId || connectedSquadIds.length === 0 || connectedSquadIds.includes(next.squadId);
+        return !next.squadId || connectedSquadIds.includes(next.squadId);
       });
 
       const allowedEvents = squadLinkedEvents.length > 0 ? squadLinkedEvents : registrationEvents;
@@ -1535,7 +1566,12 @@ export default function HomePage() {
                 }}
               >
                 <Geographies geography={USA_STATES_GEO_URL}>
-                  {({ geographies }) => geographies.map((geo) => {
+                  {({ geographies }) => [...geographies].sort((left, right) => {
+                    const leftCode = STATE_FIPS_TO_CODE[String(left.id).padStart(2, '0')];
+                    const rightCode = STATE_FIPS_TO_CODE[String(right.id).padStart(2, '0')];
+
+                    return Number(leftCode === selectedStateCode) - Number(rightCode === selectedStateCode);
+                  }).map((geo) => {
                     const fips = String(geo.id).padStart(2, '0');
                     const stateCode = STATE_FIPS_TO_CODE[fips];
                     const tone = stateCode ? (stateToneByCode.get(stateCode) ?? 'none') : 'none';
@@ -1889,9 +1925,9 @@ export default function HomePage() {
                     tournamentDate={registrationTournament.date}
                     tournamentLocation={registrationTournament.locationText}
                     tournamentLogoUrl={registrationTournament.logoUrl}
-                    squads={registrationSquads}
+                    squads={squadsForSelectedEvent}
                     events={eventsForSelectedSquad}
-                    divisions={registrationDivisions}
+                    divisions={divisionsForSelectedEvent}
                     fields={registrationFields}
                     questions={registrationQuestions}
                     requiredBowlerCount={requiredBowlerCount}

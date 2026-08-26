@@ -106,6 +106,21 @@
   white-space: nowrap;
   transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.navPillScopedStart {
+  margin-left: 7px;
+  padding-left: 17px;
+  border-left-color: var(--bw-border-subtle);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+
+.navPillSetup {
+  margin-left: 6px;
+  border-left-color: var(--bw-border-subtle);
 }
 
 .navPill:hover {
@@ -317,6 +332,14 @@
   white-space: nowrap;
   flex-shrink: 0;
 }
+
+.mobileNavMenu { position: relative; flex: 0 0 auto; }
+.mobileNavMenu summary { padding: 6px 10px; border: 1px solid var(--bw-border-subtle); border-radius: 8px; color: var(--bw-text-title); font-size: 11px; font-weight: 700; list-style: none; cursor: pointer; }
+.mobileNavMenu summary::-webkit-details-marker { display: none; }
+.mobileNavMenu nav { position: absolute; top: calc(100% + 8px); right: 0; width: 210px; padding: 6px; display: grid; gap: 3px; border: 1px solid var(--bw-border-card); border-radius: 10px; background: var(--bw-surface-card-strong); box-shadow: var(--bw-shadow-card); }
+.mobileNavMenu nav a { min-height: 34px; padding: 0 9px; display: flex; align-items: center; gap: 8px; border-radius: 7px; color: var(--bw-text-body); font-size: 12px; text-decoration: none; }
+.mobileNavMenu nav a:hover,
+.mobileNavMenu nav .mobileNavLinkActive { color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 10%, transparent); }
 
 @media (max-width: 1160px) {
   .logoText {

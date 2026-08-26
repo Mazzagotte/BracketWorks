@@ -24,6 +24,12 @@ from ...services.payouts import get_tournament_winners_summary, extract_bracket_
 from ...services.side_pots import calculate_side_pot_accounting
 
 router = APIRouter()
+
+
+def _published_setup_payload(state: models.TournamentCentralSetupState) -> dict:
+    payload = state.payload if isinstance(state.payload, dict) else {}
+    snapshot = payload.get("_publishedSnapshot")
+    return snapshot if isinstance(snapshot, dict) else payload
 logger = logging.getLogger(__name__)
 
 _STATE_NAME_BY_CODE: dict[str, str] = {
@@ -497,14 +503,24 @@ def list_public_tournaments(
     tc_registration_ready_ids: set[int] = set()
     if tc_tournament_ids:
         tc_registration_ready_rows = (
-            db.query(models.TournamentCentralSetupState.tournament_id)
+            db.query(models.TournamentCentralSetupState)
             .filter(
                 models.TournamentCentralSetupState.tournament_id.in_(tc_tournament_ids),
                 models.TournamentCentralSetupState.is_published.is_(True),
             )
             .all()
         )
-        tc_registration_ready_ids = {int(row[0]) for row in tc_registration_ready_rows}
+        tc_public_directory_ids = {
+            int(row.tournament_id)
+            for row in tc_registration_ready_rows
+            if str((_published_setup_payload(row).get("details") or {}).get("visibility") or "public") == "public"
+        }
+        tc_registration_ready_ids = {
+            int(row.tournament_id)
+            for row in tc_registration_ready_rows
+            if str((_published_setup_payload(row).get("details") or {}).get("visibility") or "public") == "public"
+        }
+        tc_tournaments = [row for row in tc_tournaments if row.id in tc_public_directory_ids]
 
     tournament_ids = [t.id for t in tournaments]
     squad_count_by_tournament: dict[int, int] = {}
@@ -783,7 +799,7 @@ def get_public_tc_tournament_registration_config(
         models.TournamentCentral.id == tournament_id
     ).with_for_update().first()
 
-    payload = state.payload if isinstance(state.payload, dict) else {}
+    payload = _published_setup_payload(state)
 
     events = [
         event for event in (payload.get("events") or [])
@@ -855,7 +871,7 @@ def submit_public_tc_tournament_registration(
             return replay_or_record.response_body
         idempotency_record = replay_or_record
 
-    state_payload = state.payload if isinstance(state.payload, dict) else {}
+    state_payload = _published_setup_payload(state)
     configured_fields = [
         field for field in (state_payload.get("fields") or [])
         if isinstance(field, dict) and field.get("mode") != "dont-ask"
@@ -951,11 +967,11 @@ def submit_public_tc_tournament_registration(
         raise HTTPException(status_code=400, detail="A squad selection is required for this event")
 
     connected_division_ids = [str(value) for value in (event.get("connectedDivisionIds") or [])]
-    if form.divisionId and connected_division_ids and form.divisionId not in connected_division_ids:
+    if form.divisionId and form.divisionId not in connected_division_ids:
         raise HTTPException(status_code=400, detail="Selected division is not available for this event")
 
     connected_squad_ids = [str(value) for value in (event.get("connectedSquadIds") or [])]
-    if form.squadId and connected_squad_ids and form.squadId not in connected_squad_ids:
+    if form.squadId and form.squadId not in connected_squad_ids:
         raise HTTPException(status_code=400, detail="Selected squad is not available for this event")
 
     if squad:

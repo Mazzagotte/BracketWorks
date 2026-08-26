@@ -295,13 +295,6 @@ export function buildTournamentAttentionItems(params: {
   if (params.eventCount === 0) {
     items.push({ id: 'events', message: 'No events are configured yet.', href: setupHref });
   }
-  if (params.squadSummaries.length === 0) {
-    items.push({ id: 'squads', message: 'No squads are configured yet.', href: setupHref });
-  }
-  if (!params.hasRulesDocument) {
-    items.push({ id: 'rules', message: 'A rules document has not been uploaded.', href: setupHref });
-  }
-
   const today = params.referenceDate ?? new Date();
 
   if (params.registrationCloseIso) {

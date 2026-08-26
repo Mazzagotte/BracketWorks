@@ -7,6 +7,7 @@
   gap: 16px;
 }
 
+
 .headerCard,
 .summaryCard {
   border: 1px solid var(--bw-border-card);
@@ -553,8 +554,7 @@
 
 .registrationLoading,
 .registrationMetricGrid,
-.registrationTableCard,
-.registrationSideCard {
+.registrationTableCard {
   border: 1px solid var(--bw-border-card);
   background: color-mix(in srgb, var(--bw-surface-card) 94%, transparent);
 }
@@ -614,12 +614,9 @@
   align-items: start;
 }
 
-.registrationTableCard,
-.registrationSideCard { border-radius: 9px; overflow: hidden; }
+.registrationTableCard { border-radius: 9px; overflow: hidden; }
 .registrationPanelHeading { padding: 16px 16px 10px; }
-.registrationPanelHeading h2,
-.registrationSideCard h2 { margin: 0; color: var(--bw-text-title); font-size: 0.82rem; }
-.registrationSideCard h2 { padding: 15px 15px 10px; }
+.registrationPanelHeading h2 { margin: 0; color: var(--bw-text-title); font-size: 0.82rem; }
 
 .registrationToolbar { display: flex; align-items: center; gap: 7px; padding: 8px 16px 12px; }
 .registrationSearch { height: 32px; min-width: 220px; flex: 1; display: flex; align-items: center; gap: 7px; padding: 0 9px; border: 1px solid var(--bw-border-card); border-radius: 6px; color: var(--bw-text-muted); background: var(--bw-surface-panel); }
@@ -724,44 +721,125 @@
 .paginationButtons .paginationActive { color: #fff; border-color: #ff7900; background: #ff7900; }
 .pageSizeSelect { display: inline-flex; align-items: center; gap: 5px; color: var(--bw-text-body); }
 
-.registrationSidebar { display: grid; gap: 12px; }
-.quickActionPrimary,
-.quickActionSecondary { min-height: 32px; margin: 0 15px 8px; display: flex; align-items: center; justify-content: center; gap: 7px; border-radius: 6px; color: #fff; font-size: 0.63rem; font-weight: 700; text-decoration: none; }
-.quickActionPrimary { background: #ff7900; }
-.quickActionSecondary { margin-bottom: 15px; border: 1px solid var(--bw-border-card); color: var(--bw-text-body); background: var(--bw-surface-panel); }
-.breakdownContent { display: flex; align-items: center; gap: 13px; padding: 7px 15px 17px; }
-.donutChart { width: 96px; height: 96px; flex: 0 0 auto; display: grid; place-content: center; border-radius: 50%; position: relative; }
-.donutChart::after { content: ''; position: absolute; inset: 17px; border-radius: 50%; background: var(--bw-surface-card); }
-.donutChart strong, .donutChart span { z-index: 1; text-align: center; }
-.donutChart strong { color: var(--bw-text-title); font-size: 1.1rem; }
-.donutChart span { color: var(--bw-text-muted); font-size: 0.55rem; }
-.breakdownLegend { min-width: 0; flex: 1; display: grid; gap: 9px; }
-.breakdownLegend > div { display: grid; grid-template-columns: 7px minmax(0, 1fr) auto; gap: 5px; align-items: center; color: var(--bw-text-body); font-size: 0.59rem; }
-.breakdownLegend strong { color: var(--bw-text-title); font-size: 0.59rem; }
-.breakdownLegend small { color: var(--bw-text-muted); font-size: 0.54rem; font-weight: 400; }
-.legendDot { width: 7px; height: 7px; border-radius: 50%; background: #ff920f; }
-.legend1 { background: #4d9dff; }.legend2 { background: #20d884; }.legend3 { background: #dc52e9; }
-.topSquadList { display: grid; gap: 14px; padding: 7px 15px 17px; }
-.topSquadList > div > div { display: flex; justify-content: space-between; gap: 8px; color: var(--bw-text-body); font-size: 0.6rem; }
-.topSquadList small { color: var(--bw-text-muted); font-size: 0.56rem; }
-.squadBar { height: 6px; display: block; margin-top: 6px; border-radius: 99px; background: #ff920f; }
-.squadBar1 { background: #4d9dff; }.squadBar2 { background: #20d884; }
-.sideEmpty { color: var(--bw-text-muted); font-size: 0.62rem; }
 .srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+/* Registration workspace aligned with the tournament setup experience */
+.registrationPage {
+  max-width: 1680px;
+  padding: 20px clamp(16px, 2.2vw, 32px) 32px;
+  gap: 14px;
+}
+
+.registrationHeader {
+  padding: 4px 0 14px;
+  border: 0;
+  border-bottom: 1px solid var(--bw-border-subtle);
+  border-radius: 0;
+  background: transparent;
+}
+
+.registrationEyebrow {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--bw-text-muted);
+  font-size: 0.61rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.registrationHeader h1 { font-size: 1.3rem; }
+.registrationHeader p { max-width: 760px; font-size: 0.68rem; }
+.registrationBackButton { background: var(--bw-surface-panel); }
+
+.registrationMetricGrid {
+  padding: 0;
+  gap: 8px;
+  border: 0;
+  background: transparent;
+}
+
+.registrationMetricCard {
+  min-height: 68px;
+  padding: 10px 12px;
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--bw-surface-card) 96%, transparent);
+}
+
+.metricIcon { width: 28px; height: 28px; border-radius: 7px; }
+.metricIcon svg { width: 14px; height: 14px; }
+.registrationMetricCard strong { font-size: 0.98rem; }
+
+.registrationDashboardGrid {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+.registrationTableCard {
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--bw-surface-card) 96%, transparent);
+}
+
+.registrationPanelHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 16px 8px;
+}
+
+.registrationPanelHeading p {
+  margin: 4px 0 0;
+  color: var(--bw-text-muted);
+  font-size: 0.6rem;
+}
+
+.manualRegistrationButton {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 12px;
+  border: 1px solid #ff7900;
+  border-radius: 7px;
+  color: #fff;
+  background: #ff7900;
+  font-size: 0.64rem;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.manualRegistrationButton:hover { background: #e86e00; }
+
+.registrationToolbar {
+  padding: 8px 16px 14px;
+  border-bottom: 1px solid var(--bw-border-subtle);
+}
+
+.registrationSearch,
+.registrationFilter select,
+.registrationExportButton { height: 36px; border-radius: 7px; }
+.registrationFilter select { max-width: 130px; }
+.registrationTableWrap { padding: 0; }
+.registrationTable th { padding: 10px 14px; border-radius: 0 !important; background: rgba(78, 83, 112, 0.12); }
+.registrationTable td { padding: 12px 14px; }
+.registrationTable tbody tr:hover td { background: rgba(255, 121, 0, 0.035); }
+.emptyRegistrations { margin: 14px 16px; }
+.registrationPagination { min-height: 52px; border-top: 1px solid var(--bw-border-subtle); }
+
 
 @media (max-width: 1050px) {
   .registrationMetricGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .registrationDashboardGrid { grid-template-columns: 1fr; }
-  .registrationSidebar { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 @media (max-width: 720px) {
-  .registrationMetricGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 9px; }
+  .registrationMetricGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 0; }
   .registrationToolbar { flex-wrap: wrap; padding: 8px 10px 12px; }
   .registrationSearch { min-width: 100%; }
   .registrationTableWrap { padding: 0 10px; }
   .registrationPagination { flex-wrap: wrap; padding: 10px; }
-  .registrationSidebar { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 640px) {
@@ -804,3 +882,30 @@
     justify-items: start;
   }
 }
+
+/* Overview cards aligned with the organizer setup workspace */
+.shell { max-width: 1680px; padding: 14px var(--bw-page-gutter) 24px; gap: 14px; }
+.headerCard, .summaryCard { width: 100%; border-color: var(--bw-border-subtle); border-radius: 18px; background: var(--bw-surface-card); }
+.headerCard { grid-template-columns: 96px minmax(0, 1fr) auto; min-height: 124px; gap: 16px; padding: 14px; }
+.heroLogo { width: 96px; height: 96px; border: 1px solid var(--bw-border-subtle); border-radius: 12px; background: var(--bw-surface-panel-strong); }
+.heroLogo img { object-fit: contain; }
+.heroCopy h1 { margin-top: 7px; font-size: 1.25rem; }
+.actions { min-width: 0; flex-direction: row; align-items: center; }
+.summaryCard { padding: 14px; }
+.summaryHeading { margin-bottom: 11px; }
+.summaryHeading h2 { font-size: .88rem; }
+.summaryHeading p { font-size: .68rem; }
+.summaryList { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.summaryList li { min-height: 72px; padding: 10px; align-items: center; border-color: var(--bw-border-subtle); border-radius: 10px; background: color-mix(in srgb, var(--bw-surface-panel) 66%, transparent); }
+.summaryIcon, .tonepurple, .toneblue, .toneorange, .tonegreen { width: 29px; height: 29px; color: var(--bw-text-muted); background: var(--bw-surface-panel-strong); }
+.summaryIcon svg { width: 15px; height: 15px; }
+.summaryItem strong { font-size: .8rem; }
+.summaryItem small { font-size: .58rem; }
+.lastUpdated { padding: 9px 10px; border-color: var(--bw-border-subtle); border-radius: 9px; background: transparent; }
+.registrationSummaryGrid { gap: 6px; }
+.registrationSummaryGrid li { padding: 9px 10px; border-color: var(--bw-border-subtle); border-radius: 9px; background: color-mix(in srgb, var(--bw-surface-panel) 66%, transparent); }
+.registrationSummaryGrid strong { font-size: .95rem; }
+.squadSummaryTable th { background: var(--bw-surface-panel-strong); }
+.tournamentAttentionList li { border-color: color-mix(in srgb, var(--color-warning) 34%, var(--bw-border-subtle)); border-radius: 9px; background: color-mix(in srgb, var(--color-warning) 6%, transparent); }
+@media (max-width: 1050px) { .summaryList { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .headerCard { grid-template-columns: 72px minmax(0, 1fr); } .heroLogo { width: 72px; height: 72px; } .actions { grid-column: 1 / -1; } .summaryList { grid-template-columns: 1fr 1fr; } }

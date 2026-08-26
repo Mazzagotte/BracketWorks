@@ -93,7 +93,7 @@ def create_tournament(
             start_date=tournament.start_date,
             end_date=tournament.end_date,
             squad_times=json.dumps(tournament.squad_times),
-            is_public=tournament.is_public,
+            is_public=False,
             user_id=user.id,
         )
         db.add(db_tournament)
@@ -206,8 +206,7 @@ def update_tournament(
         if tournament.end_date is not None:
             db_tournament.end_date = tournament.end_date
         db_tournament.squad_times = json.dumps(tournament.squad_times)
-        if tournament.is_public is not None:
-            db_tournament.is_public = tournament.is_public
+        # Publication visibility is changed only by the validated setup publish endpoint.
 
         db.commit()
         db.refresh(db_tournament)

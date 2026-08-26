@@ -12,7 +12,6 @@ import {
   ChevronRight,
   CircleDollarSign,
   Clock3,
-  ExternalLink,
   Filter,
   Search,
   UserPlus,
@@ -268,24 +267,10 @@ export default function OrganizerTournamentRegistrationsPage() {
     };
   }, [registrations]);
 
-  const breakdown = useMemo(() => {
-    const counts = new Map<string, number>();
-    allEntries.forEach((entry) => counts.set(entryLabel(entry, 'event'), (counts.get(entryLabel(entry, 'event')) ?? 0) + 1));
-    return Array.from(counts.entries()).sort((a, b) => b[1] - a[1]);
-  }, [allEntries]);
-
-  const topSquads = useMemo(() => {
-    const counts = new Map<string, number>();
-    allEntries.forEach((entry) => counts.set(entryLabel(entry, 'squad'), (counts.get(entryLabel(entry, 'squad')) ?? 0) + 1));
-    return Array.from(counts.entries()).sort((a, b) => b[1] - a[1]).slice(0, 3);
-  }, [allEntries]);
-
   const pageCount = Math.max(1, Math.ceil(filteredRegistrations.length / pageSize));
   const visibleRegistrations = filteredRegistrations.slice((page - 1) * pageSize, page * pageSize);
   const pageStart = filteredRegistrations.length === 0 ? 0 : (page - 1) * pageSize + 1;
   const pageEnd = Math.min(page * pageSize, filteredRegistrations.length);
-  const maxBreakdown = Math.max(1, ...breakdown.map(([, count]) => count));
-
   useEffect(() => {
     setPage(1);
   }, [eventFilter, search, squadFilter, statusFilter]);
@@ -320,8 +305,9 @@ export default function OrganizerTournamentRegistrationsPage() {
     <main className={styles.registrationPage}>
       <header className={styles.registrationHeader}>
         <div>
-          <h1>Registrations</h1>
-          <p>{tournamentName}</p>
+          <span className={styles.registrationEyebrow}>Tournament registrations</span>
+          <h1>Manage Registrations</h1>
+          <p>Review bowlers, payments, events, and squad assignments for {tournamentName}.</p>
         </div>
         <Link href={`/organizer/tournaments/${tournamentId}`} className={styles.registrationBackButton}>
           <ArrowLeft size={14} aria-hidden="true" /> Back to Overview
@@ -344,7 +330,13 @@ export default function OrganizerTournamentRegistrationsPage() {
           <div className={styles.registrationDashboardGrid}>
             <section className={styles.registrationTableCard} aria-label="Registration list">
               <div className={styles.registrationPanelHeading}>
-                <h2>Registration List</h2>
+                <div>
+                  <h2>Registration List</h2>
+                  <p>{filteredRegistrations.length} of {metrics.total} registrations shown</p>
+                </div>
+                <Link href={`/?registration=${encodeURIComponent(tournamentId)}`} target="_blank" className={styles.manualRegistrationButton}>
+                  <UserPlus size={14} aria-hidden="true" /> Manual Registration
+                </Link>
               </div>
               <div className={styles.registrationToolbar}>
                 <label className={styles.registrationSearch}>
@@ -426,24 +418,6 @@ export default function OrganizerTournamentRegistrationsPage() {
               </footer>
             </section>
 
-            <aside className={styles.registrationSidebar}>
-              <section className={styles.registrationSideCard}>
-                <h2>Quick Actions</h2>
-                <Link href={`/organizer/tournaments/${tournamentId}/setup?section=registration-setup`} className={styles.quickActionPrimary}><ExternalLink size={14} /> View Registration Form</Link>
-                <button type="button" className={styles.quickActionSecondary} onClick={() => setSearch('')}><UserPlus size={14} /> Add Manual Registration</button>
-              </section>
-              <section className={styles.registrationSideCard}>
-                <h2>Registration Breakdown</h2>
-                <div className={styles.breakdownContent}>
-                  <div className={styles.donutChart} style={{ background: buildDonutGradient(breakdown, metrics.total) }}><strong>{metrics.total}</strong><span>Total</span></div>
-                  <div className={styles.breakdownLegend}>{breakdown.length > 0 ? breakdown.map(([name, count], index) => <div key={name}><i className={`${styles.legendDot} ${styles[`legend${index % 4}`]}`} /><span>{name}</span><strong>{count} <small>({metrics.total ? ((count / metrics.total) * 100).toFixed(1) : '0.0'}%)</small></strong></div>) : <span className={styles.sideEmpty}>No event entries yet</span>}</div>
-                </div>
-              </section>
-              <section className={styles.registrationSideCard}>
-                <h2>Top Squads</h2>
-                <div className={styles.topSquadList}>{topSquads.length > 0 ? topSquads.map(([name, count], index) => <div key={name}><div><span>{name}</span><small>{count} ({metrics.total ? ((count / metrics.total) * 100).toFixed(1) : '0.0'}%)</small></div><span className={`${styles.squadBar} ${styles[`squadBar${index}`]}`} style={{ width: `${(count / maxBreakdown) * 100}%` }} /></div>) : <span className={styles.sideEmpty}>No squad entries yet</span>}</div>
-              </section>
-            </aside>
           </div>
 
         </>
@@ -501,16 +475,4 @@ function MetricCard({ icon, tone, label, value, detail }: { icon: React.ReactNod
 
 function FilterSelect({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: Array<[string, string]> }) {
   return <label className={styles.registrationFilter}><span className={styles.srOnly}>{label}</span><select value={value} onChange={(event) => onChange(event.target.value)}>{options.map(([optionValue, optionLabel]) => <option key={optionValue} value={optionValue}>{label}: {optionLabel}</option>)}</select><ChevronDown size={12} aria-hidden="true" /></label>;
-}
-
-function buildDonutGradient(breakdown: Array<[string, number]>, total: number): string {
-  if (!total || breakdown.length === 0) return 'conic-gradient(#282b39 0 100%)';
-  const colors = ['#ff920f', '#4d9dff', '#20d884', '#dc52e9'];
-  let cursor = 0;
-  const stops = breakdown.map(([, count], index) => {
-    const start = cursor;
-    cursor += (count / total) * 100;
-    return `${colors[index % colors.length]} ${start}% ${cursor}%`;
-  });
-  return `conic-gradient(${stops.join(', ')})`;
 }
