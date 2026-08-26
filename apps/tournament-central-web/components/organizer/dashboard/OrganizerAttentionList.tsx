@@ -2,6 +2,7 @@ import Link from 'next/link';
 
 import type { OrganizerAttentionItem } from './useOrganizerDashboard';
 import styles from './OrganizerDashboard.module.css';
+import { organizerRoutes } from '../organizerRoutes';
 
 type OrganizerAttentionListProps = {
   items: OrganizerAttentionItem[];
@@ -19,7 +20,7 @@ export default function OrganizerAttentionList({ items }: OrganizerAttentionList
         {items.map((item) => (
           <li key={item.id}>
             <span>{item.message}</span>
-            <Link href={`/organizer/tournaments/${item.tournamentId}`} className={styles.inlineLink}>Manage</Link>
+            <Link href={organizerRoutes.overview(item.tournamentId)} className={styles.inlineLink}>Manage</Link>
           </li>
         ))}
       </ul>

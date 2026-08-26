@@ -5,6 +5,7 @@ export type IsoDateTimeString = string;
 
 export interface TournamentContract {
   id: TournamentId;
+  user_id?: number;
   name: string;
   venue_id?: number | null;
   location?: string | null;
@@ -33,6 +34,10 @@ export interface TournamentContract {
   } | null;
   entry_count?: number;
   brackets_configured?: boolean;
+  lifecycle_status?: 'setup' | 'ready' | 'in_progress' | 'scores_complete' | 'payout_review' | 'finalized' | 'archived';
+  scores_locked?: boolean;
+  archived_at?: IsoDateTimeString | null;
+  finalized_at?: IsoDateTimeString | null;
 }
 
 export interface TournamentSetupStateSummaryContract {

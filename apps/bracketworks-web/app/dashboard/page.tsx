@@ -9,13 +9,14 @@ import {
   LogOut,
   PencilLine,
   Repeat,
+  Copy,
   Settings2,
   Trophy,
   UserPlus,
   Users,
   type LucideIcon,
 } from 'lucide-react';
-import { Tournament, Squad, BracketSettings, TournamentForm, SidePotsSettings, SidePot, Player, DashboardTournamentBootstrapResponse } from '../lib/types';
+import { Tournament, Squad, BracketSettings, TournamentForm, SidePotsSettings, SidePot, Player, DashboardTournamentBootstrapResponse, TournamentActivityEntry } from '../lib/types';
 
 import { useAuth } from '../lib/auth-context';
 import { ErrorBoundary } from '../components/ErrorBoundary';
@@ -26,7 +27,8 @@ import mobileStyles from './dashboard.module.css';
 import shellStyles from '../styles/page-shell.module.css';
 import { ConfirmationDialog } from '../components/LazyComponents';
 import { API, apiClient, apiFetch, getMemoryAccessToken } from '../lib/api';
-import { isPhoneWidth } from '../lib/responsive';
+import { MOBILE_VIEWPORT_QUERY } from '../lib/responsive';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 import { logger } from '../lib/logger';
 import { defaultBracketPrograms, normalizeBracketPrograms, summarizeEntries } from '../lib/bracketPrograms';
 import EnhancedButton from '../components/EnhancedButton';
@@ -40,6 +42,7 @@ import {
   clearSelectedTournament,
   notifySettingsChanged,
   setActiveSquadLabel,
+  setAvailableSquadCount,
   setSelectedSquad,
   setSelectedTournament,
 } from '../lib/selection-session';
@@ -58,6 +61,7 @@ import { useTournamentOrchestration } from './hooks/useTournamentOrchestration';
 import { useDashboardScoreProgress } from './hooks/useDashboardScoreProgress';
 import { useDashboardWorkflowModel } from './hooks/useDashboardWorkflowModel';
 import { DashboardBoard } from './components/DashboardBoard';
+import { DuplicateTournamentModal } from './components/DuplicateTournamentModal';
 import {
   applyAutoHouse,
   calculateHouseAmount,
@@ -107,6 +111,7 @@ const dashboardActionIcons: Record<string, LucideIcon> = {
   'edit-tournament': PencilLine,
   'tournament-settings': Settings2,
   'change-tournament': Repeat,
+  'duplicate-tournament': Copy,
   'unload-tournament': LogOut,
   'enter-scores': ClipboardList,
   'generate-brackets': ClipboardList,
@@ -154,6 +159,8 @@ export default function TournamentDashboard() {
   const [squads, setSquads] = useState<Squad[]>(() => isDemoDashboard ? DEMO_DASHBOARD_SQUADS : []);
   const [squadEntryCounts, setSquadEntryCounts] = useState<Record<number, number>>(() => isDemoDashboard ? ({ 900101: 32, 900102: 0 }) : ({} as Record<number, number>));
   const [summaryPlayers, setSummaryPlayers] = useState<Player[]>(() => isDemoDashboard ? DEMO_DASHBOARD_PLAYERS : []);
+  const [recentActivity, setRecentActivity] = useState<TournamentActivityEntry[]>([]);
+  const [activityLoading, setActivityLoading] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmMsg, setConfirmMsg] = useState('');
   const [optionalToggleConfirm, setOptionalToggleConfirm] = useState<{ programKey: string; programName: string; existingEntries: number } | null>(null);
@@ -166,6 +173,7 @@ export default function TournamentDashboard() {
   const [deleteConfirm, setDeleteConfirm] = useState<{id: number, name: string} | null>(null);
   const [shareQROpen, setShareQROpen] = useState(false);
   const [isExplainModalOpen, setIsExplainModalOpen] = useState(false);
+  const [duplicateModalOpen, setDuplicateModalOpen] = useState(false);
   
   // Enhanced UX components
   const { addToast } = useToast();
@@ -191,7 +199,7 @@ export default function TournamentDashboard() {
   const [sidePots, setSidePots] = useState<SidePotsSettings>(() => isDemoDashboard ? DEMO_DASHBOARD_SIDE_POTS : createDefaultSidePots());
 
   // Mobile detection state
-  const [isMobile, setIsMobile] = useState(false);
+  const isMobile = useMediaQuery(MOBILE_VIEWPORT_QUERY);
   const [expandedCards, setExpandedCards] = useState<Record<DashboardCardKey, boolean>>(expandedDesktopCards);
 
   const toggleCard = (cardKey: DashboardCardKey) => {
@@ -729,6 +737,35 @@ export default function TournamentDashboard() {
     setIsAdmin(Boolean(currentUser?.isAdmin));
   }, [currentUser?.isAdmin]);
 
+  useEffect(() => {
+    if (isDemoDashboard || !tournament?.id || !sessionToken) {
+      setRecentActivity([]);
+      return;
+    }
+
+    const controller = new AbortController();
+    setActivityLoading(true);
+    apiFetch(API(`/api/v1/tournament-activity/${tournament.id}?limit=5`), {
+      headers: { Authorization: `Bearer ${sessionToken}` },
+      signal: controller.signal,
+    })
+      .then(async response => {
+        if (!response.ok) throw new Error('Unable to load recent activity.');
+        return response.json() as Promise<TournamentActivityEntry[]>;
+      })
+      .then(setRecentActivity)
+      .catch(error => {
+        if (error instanceof DOMException && error.name === 'AbortError') return;
+        logger.warn('Tournament activity fetch failed', error);
+        setRecentActivity([]);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setActivityLoading(false);
+      });
+
+    return () => controller.abort();
+  }, [isDemoDashboard, sessionToken, tournament?.id]);
+
   // Fetch tournaments when load modal opens
   useEffect(() => {
     if (!loadModalOpen) return;
@@ -755,18 +792,6 @@ export default function TournamentDashboard() {
 
     void runFetch();
   }, [addToast, isAdmin, loadModalOpen]);
-
-  // Mobile detection; tablets retain the wider layout inside the drawer shell.
-  useEffect(() => {
-    const checkMobile = () => {
-      const width = window.innerWidth;
-      setIsMobile(isPhoneWidth(width));
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
 
   const handleUnloadTournament = () => {
     unloadTournament();
@@ -1074,7 +1099,7 @@ export default function TournamentDashboard() {
   const bracketsSold = entrySummary.totalEntries;
   const unpaidEntriesCount = summaryPlayers.filter(player => Number(player.totalCost || 0) - Number(player.amountPaid || 0) > 0.01).length;
   const missingAveragesCount = summaryPlayers.filter(player => Number(player.average || 0) <= 0).length;
-  const duplicatePlayersCount = useMemo(() => {
+  const localDuplicatePlayersCount = useMemo(() => {
     const nameCounts = new Map<string, number>();
     summaryPlayers.forEach(player => {
       const fallback = `player-${player.id}`;
@@ -1083,6 +1108,36 @@ export default function TournamentDashboard() {
     });
     return Array.from(nameCounts.values()).filter(count => count > 1).length;
   }, [summaryPlayers]);
+  const [duplicatePlayersCount, setDuplicatePlayersCount] = useState(localDuplicatePlayersCount);
+  useEffect(() => {
+    if (!tournament || isDemoDashboard) {
+      setDuplicatePlayersCount(localDuplicatePlayersCount);
+      return;
+    }
+    let active = true;
+    apiClient.get<{ count: number }>(`/api/v1/bowlers/duplicates/${tournament.id}`, false)
+      .then(result => { if (active) setDuplicatePlayersCount(result.count); })
+      .catch(() => { if (active) setDuplicatePlayersCount(localDuplicatePlayersCount); });
+    return () => { active = false; };
+  }, [isDemoDashboard, localDuplicatePlayersCount, tournament]);
+  const handleLifecycleAction = async (action: 'archive' | 'restore') => {
+    if (!tournament || !window.confirm(`${action === 'archive' ? 'Archive' : 'Restore'} ${tournament.name}?`)) return;
+    try {
+      const lifecycle = await apiClient.post<{
+        status: string;
+        scores_locked: boolean;
+        read_only: boolean;
+        archived_at: string | null;
+      }>(`/api/v1/tournament-lifecycle/${tournament.id}/${action}`, {
+        reason: action === 'archive' ? 'Archived from tournament dashboard' : 'Restored from tournament dashboard',
+      });
+      setTournament(previous => previous ? { ...previous, archived_at: lifecycle.archived_at, lifecycle_status: lifecycle.status as Tournament['lifecycle_status'], scores_locked: lifecycle.scores_locked } : previous);
+      setWorkflowStatus(previous => previous ? { ...previous, lifecycle_status: lifecycle.status as NonNullable<DashboardTournamentBootstrapResponse['workflow_status']>['lifecycle_status'], scores_locked: lifecycle.scores_locked, read_only: lifecycle.read_only } : previous);
+      addToast({ type: 'success', message: action === 'archive' ? 'Tournament archived.' : 'Tournament restored.' });
+    } catch (error) {
+      addToast({ type: 'error', message: error instanceof Error ? error.message : `Unable to ${action} tournament.` });
+    }
+  };
   const {
     continueTournamentActions,
     contextPrimaryAction,
@@ -1120,13 +1175,33 @@ export default function TournamentDashboard() {
     onOpenSquadSelector: handleOpenSquadSelector,
     onChangeTournament: handleChangeTournament,
     onUnloadTournament: handleUnloadTournament,
+    onArchiveTournament: () => { void handleLifecycleAction('archive'); },
+    onRestoreTournament: () => { void handleLifecycleAction('restore'); },
   });
+  const dashboardMoreActions = tournament ? [
+    ...moreActions,
+    { key: 'duplicate-tournament', label: 'Duplicate Tournament', onClick: () => setDuplicateModalOpen(true), disabled: false },
+  ] : moreActions;
 
   const usdFormatter = useMemo(
     () => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }),
     [],
   );
   const formatUsd = useCallback((amount: number) => usdFormatter.format(Math.max(0, Number(amount || 0))), [usdFormatter]);
+
+  useEffect(() => {
+    setAvailableSquadCount(squads.length);
+  }, [squads.length]);
+
+  useEffect(() => {
+    if (squads.length !== 1) return;
+    const soleSquad = squads[0];
+    if (!soleSquad || selectedSquadId === soleSquad.id) return;
+    const label = [soleSquad.date, soleSquad.time].filter(Boolean).join(' ');
+    setSelectedSquadId(soleSquad.id);
+    setSelectedSquad(soleSquad.id);
+    setActiveSquadLabel(label);
+  }, [selectedSquadId, squads]);
 
   useEffect(() => {
     if (selectedSquadId !== null) {
@@ -1215,6 +1290,17 @@ export default function TournamentDashboard() {
           onSave={handleSave}
           isCreateMode={createMode}
         />
+        {tournament && (
+          <DuplicateTournamentModal
+            open={duplicateModalOpen}
+            tournament={tournament}
+            onClose={() => setDuplicateModalOpen(false)}
+            onCreated={async created => {
+              await handleLoadTournament(created)
+              addToast({ type: 'success', message: `${created.name} created from tournament template.` })
+            }}
+          />
+        )}
         <ExplainDashboardModal
           isOpen={isExplainModalOpen}
           onClose={() => setIsExplainModalOpen(false)}
@@ -1262,12 +1348,14 @@ export default function TournamentDashboard() {
                   orderedStatsProgramSummaries={orderedStatsProgramSummaries}
                   continueTournamentActions={continueTournamentActions}
                   manageSetupActions={manageSetupActions}
-                  moreActions={moreActions}
+                  moreActions={dashboardMoreActions}
                   dangerActions={dangerActions}
                   contextPrimaryAction={contextPrimaryAction}
                   dashboardActionIcons={dashboardActionIcons}
                   scoreProgress={scoreProgress}
                   scoreProgressText={scoreProgressText}
+                  recentActivity={recentActivity}
+                  activityLoading={activityLoading}
                 />
               </>
             )}

@@ -7,6 +7,8 @@ import buttonStyles from '../../styles/buttons.module.css';
 import cardStyles from '../../styles/cards.module.css';
 import formStyles from '../../styles/forms.module.css';
 import { calculatePlayerTotalCost, calculateSidePotCost, divisionOptions, filterEntriesForDivision, isProgramAllowedForDivision, normalizeDivision, normalizePlayerBracketEntries } from '../../lib/bracketPrograms';
+import { COMPACT_CONTENT_VIEWPORT_QUERY } from '../../lib/responsive';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { CalendarDays, ChevronDown, ChevronUp, CircleDollarSign, Info, Target, Ticket, Trophy, UserRound, UserPlus } from 'lucide-react';
 
 type PlayerFormState = {
@@ -41,7 +43,7 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, selectedSquad, tourna
   const [formData, setFormData] = useState<PlayerFormState>({ ...EMPTY_FORM });
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [isMobileLayout, setIsMobileLayout] = useState(false);
+  const isMobileLayout = useMediaQuery(COMPACT_CONTENT_VIEWPORT_QUERY);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const firstNameInputRef = useRef<HTMLInputElement | null>(null)
   const averageInputRef = useRef<HTMLInputElement | null>(null)
@@ -96,13 +98,6 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, selectedSquad, tourna
 
   const isDirty = formData.firstName.trim() !== '' || formData.lastName.trim() !== '';
 
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(max-width: 900px)')
-    const syncLayout = () => setIsMobileLayout(mediaQuery.matches)
-    syncLayout()
-    mediaQuery.addEventListener('change', syncLayout)
-    return () => mediaQuery.removeEventListener('change', syncLayout)
-  }, [])
 
   // Warn if browser is closed/refreshed with unsaved data
   useEffect(() => {

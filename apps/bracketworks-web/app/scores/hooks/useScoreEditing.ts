@@ -79,6 +79,7 @@ export function useScoreEditing({
   const [lastEdit, setLastEdit] = useState<ScoreEditHistory | null>(null)
   const [clearGameConfirm, setClearGameConfirm] = useState<2 | 3 | null>(null)
   const debouncedSavesRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
+  const correctionOriginalsRef = useRef<Map<string, number | undefined>>(new Map())
 
   // Clear pending debounce timers on unmount to avoid state-after-unmount
   useEffect(() => {
@@ -146,6 +147,11 @@ export function useScoreEditing({
     }
 
     const saveKey = `${playerId}-${field}`
+    const currentValue = (playersRef.current.find(p => p.id === playerId)?.scores as Record<string, number | undefined> | undefined)?.[field]
+
+    if (currentValue !== undefined && currentValue !== value && !correctionOriginalsRef.current.has(saveKey)) {
+      correctionOriginalsRef.current.set(saveKey, currentValue)
+    }
 
     if (trackHistory) {
       const prev = (playersRef.current.find(p => p.id === playerId)?.scores as Record<string, number | undefined> | undefined)?.[field]
@@ -195,6 +201,22 @@ export function useScoreEditing({
             (value || 0) + (player.handicap || 0)
         }
 
+        const originalValue = correctionOriginalsRef.current.get(saveKey)
+        let correctionReason: string | undefined
+        if (originalValue !== undefined && originalValue !== value) {
+          const confirmed = window.confirm(`Change score from ${originalValue} to ${value ?? 'blank'}? This correction will be recorded.`)
+          correctionReason = confirmed ? window.prompt('Reason for score correction:')?.trim() : undefined
+          if (!confirmed || !correctionReason) {
+            setPlayers(prev => prev.map(row => row.id === playerId
+              ? { ...row, scores: { ...row.scores, [field]: originalValue } }
+              : row))
+            setRowSaveState(prev => ({ ...prev, [playerId]: 'idle' }))
+            correctionOriginalsRef.current.delete(saveKey)
+            if (confirmed) addToast({ message: 'A reason is required to change a saved score.', type: 'warning', duration: 3500 })
+            return
+          }
+        }
+
         const payload = {
           player_id: playerId,
           tournament_id: parseInt(tournamentId),
@@ -202,6 +224,7 @@ export function useScoreEditing({
           game1_scratch: updatedScores.game1_scratch ?? 0,
           game2_scratch: updatedScores.game2_scratch ?? 0,
           game3_scratch: updatedScores.game3_scratch ?? 0,
+          ...(correctionReason ? { correction_reason: correctionReason } : {}),
         }
 
         if (!isOnline) {
@@ -219,6 +242,7 @@ export function useScoreEditing({
         })
 
         if (response.ok) {
+          correctionOriginalsRef.current.delete(saveKey)
           markRowSaved(playerId)
           if (value === 300) {
             addToast({ message: `Perfect game! 300 scored by ${player.firstName} ${player.lastName}`, type: 'success', duration: 5000 })

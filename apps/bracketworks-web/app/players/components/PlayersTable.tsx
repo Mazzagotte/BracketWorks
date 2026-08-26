@@ -4,6 +4,8 @@ import { PlayersTableProps, SidePotsSettings } from '../types';
 import { OptimizedTableRow, OptimizedTableCell } from '../../lib/performance';
 import { handleTableArrowNavigation } from '../../lib/tableKeyboard';
 import { divisionOptions, isProgramAllowedForDivision, normalizeDivision } from '../../lib/bracketPrograms';
+import { COMPACT_CONTENT_VIEWPORT_QUERY } from '../../lib/responsive';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { SortableHeader, SortConfig } from '../../components/SortableHeader';
 import styles from '../entries.module.css';
 import tableStyles from '../../styles/tables.module.css';
@@ -47,7 +49,7 @@ const PlayersTable = memo(({
     [sidePots]
   );
   const [sortConfig, setSortConfig] = useState<SortConfig>({ column: 'lane', direction: 'asc' });
-  const [isMobileLayout, setIsMobileLayout] = useState(false);
+  const isMobileLayout = useMediaQuery(COMPACT_CONTENT_VIEWPORT_QUERY);
   const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({});
   const [editingRowId, setEditingRowId] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -61,16 +63,6 @@ const PlayersTable = memo(({
     return 'idle';
   }, [savingStatus]);
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const mediaQuery = window.matchMedia('(max-width: 900px)');
-    const syncLayout = () => setIsMobileLayout(mediaQuery.matches);
-    syncLayout();
-
-    mediaQuery.addEventListener('change', syncLayout);
-    return () => mediaQuery.removeEventListener('change', syncLayout);
-  }, []);
 
   const maxUsbcChars = useMemo(() => {
     const maxChars = players.reduce((maxValue, player) => Math.max(maxValue, String(player.usbc || '').trim().length), 0)

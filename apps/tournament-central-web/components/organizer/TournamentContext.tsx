@@ -5,8 +5,8 @@ import type { ReactNode } from 'react';
 import type { TournamentContract, TournamentSetupStateSummaryContract } from '@bracketworks/types';
 
 import {
-  listMyOrganizerSetupStates,
-  listMyTournaments,
+  getTournament,
+  getTournamentSetupSummary,
   listTournamentRegistrations,
   loadOrganizerSetupState,
   type OrganizerRegistrationRecord,
@@ -34,8 +34,19 @@ export type TournamentContextValue = {
   hasRulesDocument: boolean;
   registrationOpenIso: string | null;
   registrationCloseIso: string | null;
+  isTournamentLoading: boolean;
+  isSetupLoading: boolean;
+  isRegistrationsLoading: boolean;
+  tournamentError: string | null;
+  setupError: string | null;
+  registrationsError: string | null;
+  /** @deprecated Prefer the resource-specific loading flags. */
   isLoading: boolean;
+  /** @deprecated Prefer the resource-specific errors. */
   error: string | null;
+  refreshTournament: () => Promise<void>;
+  refreshSetup: () => Promise<void>;
+  refreshRegistrations: () => Promise<void>;
   refresh: () => Promise<void>;
 };
 
@@ -63,59 +74,77 @@ export function TournamentProvider({ tournamentId, children }: TournamentProvide
   const [hasRulesDocument, setHasRulesDocument] = useState(false);
   const [registrationOpenIso, setRegistrationOpenIso] = useState<string | null>(null);
   const [registrationCloseIso, setRegistrationCloseIso] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [isTournamentLoading, setIsTournamentLoading] = useState(true);
+  const [isSetupLoading, setIsSetupLoading] = useState(true);
+  const [isRegistrationsLoading, setIsRegistrationsLoading] = useState(true);
+  const [tournamentError, setTournamentError] = useState<string | null>(null);
+  const [setupError, setSetupError] = useState<string | null>(null);
+  const [registrationsError, setRegistrationsError] = useState<string | null>(null);
 
-  const refresh = useCallback(async () => {
-    // OrganizerAuthGuard (parent layout) already redirects unauthenticated users before this mounts.
+  const getAccessToken = useCallback((): string => {
     const token = sessionStorage.getItem('access_token');
-    if (!token) {
-      setError('Your session expired. Please sign in again.');
-      setIsLoading(false);
-      return;
-    }
+    if (!token) throw new Error('Your session expired. Please sign in again.');
+    if (!Number.isInteger(tournamentId) || tournamentId <= 0) throw new Error('Invalid tournament id.');
+    return token;
+  }, [tournamentId]);
 
-    if (!Number.isInteger(tournamentId) || tournamentId <= 0) {
-      setError('Invalid tournament id.');
-      setIsLoading(false);
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
+  const refreshTournament = useCallback(async () => {
+    setIsTournamentLoading(true);
+    setTournamentError(null);
     try {
-      const [tournaments, setupStates, setupState, registrationRecords] = await Promise.all([
-        listMyTournaments(token),
-        listMyOrganizerSetupStates(token),
-        loadOrganizerSetupState<TournamentSetupPayloadSlice>(token, tournamentId),
-        listTournamentRegistrations(token, tournamentId),
-      ]);
-
-      const matched = tournaments.find((item) => item.id === tournamentId);
-      if (!matched) {
-        setError('Tournament not found for this organizer account.');
-        setTournament(null);
-        return;
-      }
-
+      const matched = await getTournament(getAccessToken(), tournamentId);
       setTournament(matched);
-      setSetupSummary(setupStates.find((item) => item.tournament_id === tournamentId));
+      localStorage.setItem('tc_active_tournament_name', matched.name || '');
+      window.dispatchEvent(new Event('storage'));
+    } catch (caughtError) {
+      setTournament(null);
+      const message = caughtError instanceof Error ? caughtError.message : 'Unable to load tournament.';
+      setTournamentError(message);
+      throw caughtError;
+    } finally {
+      setIsTournamentLoading(false);
+    }
+  }, [getAccessToken, tournamentId]);
+
+  const refreshSetup = useCallback(async () => {
+    setIsSetupLoading(true);
+    setSetupError(null);
+    try {
+      const token = getAccessToken();
+      const [summary, setupState] = await Promise.all([
+        getTournamentSetupSummary(token, tournamentId),
+        loadOrganizerSetupState<TournamentSetupPayloadSlice>(token, tournamentId),
+      ]);
+      setSetupSummary(summary);
       setSquads(Array.isArray(setupState?.payload.squads) ? setupState.payload.squads : []);
-      setRegistrations(registrationRecords);
       setEventCount((setupState?.payload.events ?? []).filter((event) => event.enabled !== false).length);
       setHasRulesDocument(Boolean(setupState?.payload.hasRulesDocument));
       setRegistrationOpenIso(setupState?.payload.details?.registrationOpenIso || null);
       setRegistrationCloseIso(setupState?.payload.details?.registrationCloseIso || null);
-
-      localStorage.setItem('tc_active_tournament_name', matched.name || '');
-      window.dispatchEvent(new Event('storage'));
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : 'Unable to load tournament.');
+      setSetupError(caughtError instanceof Error ? caughtError.message : 'Unable to load tournament setup.');
+      throw caughtError;
     } finally {
-      setIsLoading(false);
+      setIsSetupLoading(false);
     }
-  }, [tournamentId]);
+  }, [getAccessToken, tournamentId]);
+
+  const refreshRegistrations = useCallback(async () => {
+    setIsRegistrationsLoading(true);
+    setRegistrationsError(null);
+    try {
+      setRegistrations(await listTournamentRegistrations(getAccessToken(), tournamentId));
+    } catch (caughtError) {
+      setRegistrationsError(caughtError instanceof Error ? caughtError.message : 'Unable to load registrations.');
+      throw caughtError;
+    } finally {
+      setIsRegistrationsLoading(false);
+    }
+  }, [getAccessToken, tournamentId]);
+
+  const refresh = useCallback(async () => {
+    await Promise.allSettled([refreshTournament(), refreshSetup(), refreshRegistrations()]);
+  }, [refreshRegistrations, refreshSetup, refreshTournament]);
 
   useEffect(() => {
     void refresh();
@@ -133,8 +162,17 @@ export function TournamentProvider({ tournamentId, children }: TournamentProvide
     hasRulesDocument,
     registrationOpenIso,
     registrationCloseIso,
-    isLoading,
-    error,
+    isTournamentLoading,
+    isSetupLoading,
+    isRegistrationsLoading,
+    tournamentError,
+    setupError,
+    registrationsError,
+    isLoading: isTournamentLoading || isSetupLoading || isRegistrationsLoading,
+    error: tournamentError,
+    refreshTournament,
+    refreshSetup,
+    refreshRegistrations,
     refresh,
   }), [
     tournamentId,
@@ -146,8 +184,15 @@ export function TournamentProvider({ tournamentId, children }: TournamentProvide
     hasRulesDocument,
     registrationOpenIso,
     registrationCloseIso,
-    isLoading,
-    error,
+    isTournamentLoading,
+    isSetupLoading,
+    isRegistrationsLoading,
+    tournamentError,
+    setupError,
+    registrationsError,
+    refreshTournament,
+    refreshSetup,
+    refreshRegistrations,
     refresh,
   ]);
 

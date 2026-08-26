@@ -22,7 +22,8 @@ import { useAutoSave } from '../components/DataManagement'
 import NoTournamentState from '../components/NoTournamentState'
 import { QuickActions, SearchPanel } from '../components/primitives'
 import { getSelectedTournamentId, getSelectedSquadId } from '../lib/selection-session'
-import { isPhoneWidth } from '../lib/responsive'
+import { MOBILE_VIEWPORT_QUERY } from '../lib/responsive'
+import { useMediaQuery } from '../hooks/useMediaQuery'
 import ExplainScoresModal from './ExplainScoresModal'
 import {
   buildSafeFileName,
@@ -48,7 +49,7 @@ export default function ScoresPage() {
   const hasStoredAuth = Boolean(sessionToken)
 
   const [isScoresGuideOpen, setIsScoresGuideOpen] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
+  const isMobile = useMediaQuery(MOBILE_VIEWPORT_QUERY)
   const [isImporting, setIsImporting] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [isExportingPdf, setIsExportingPdf] = useState(false)
@@ -57,13 +58,6 @@ export default function ScoresPage() {
   const [showBracketMismatchWarning, setShowBracketMismatchWarning] = useState(false)
   const [missingScoreNames, setMissingScoreNames] = useState<string[]>([])
   const importFileRef = useRef<HTMLInputElement | null>(null)
-
-  useEffect(() => {
-    const check = () => setIsMobile(isPhoneWidth(window.innerWidth))
-    check()
-    window.addEventListener('resize', check)
-    return () => window.removeEventListener('resize', check)
-  }, [])
 
   // ── Core data ──────────────────────────────────────────────────────────────
   const { players, setPlayers, tournament, selectedSquad, selectedSquadRef, playersRef, isLoading } =
@@ -258,7 +252,7 @@ export default function ScoresPage() {
           <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`} onClick={handleExportScoresToPdf} disabled={isExportingPdf || players.length === 0}>{isExportingPdf ? 'Preparing...' : 'Export to PDF'}</button>
           <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`} onClick={() => importFileRef.current?.click()} disabled={isImporting || players.length === 0 || isScoresLocked}>{isImporting ? 'Importing...' : 'Import from Excel'}</button>
           {players.length > 0 && !isScoresLocked && <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`} onClick={() => { void markScoresComplete() }}>Calculate Payouts</button>}
-          {players.length > 0 && isScoresLocked && <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`} onClick={unlockScoresTable}>Unlock Scores</button>}
+          {players.length > 0 && isScoresLocked && <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`} onClick={() => { void unlockScoresTable() }}>Unlock Scores</button>}
         </>
       )}
       right={(
@@ -325,7 +319,7 @@ export default function ScoresPage() {
           missingScoreNames={missingScoreNames}
           playerCount={players.length}
           onClose={() => setShowCalcPayoutsConfirm(false)}
-          onProceed={() => { setShowCalcPayoutsConfirm(false); unlockPayoutsAndGo() }}
+          onProceed={() => { setShowCalcPayoutsConfirm(false); void unlockPayoutsAndGo() }}
         />
         <BracketMismatchModal open={showBracketMismatchWarning} onClose={() => setShowBracketMismatchWarning(false)} />
         <ExplainScoresModal isOpen={isScoresGuideOpen} onClose={() => setIsScoresGuideOpen(false)} />

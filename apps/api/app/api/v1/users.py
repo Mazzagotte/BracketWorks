@@ -23,6 +23,9 @@ import logging
 import secrets
 import unicodedata
 import uuid
+import json
+
+from ...services.tournament_state import AUTHORITATIVE_TOURNAMENT_ROW_MODELS
 
 pwd_context = CryptContext(
     schemes=["bcrypt"], 
@@ -540,6 +543,7 @@ def update_my_account(
 def change_my_password(
     payload: schemas.ChangePasswordRequest,
     background_tasks: BackgroundTasks,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
@@ -556,11 +560,131 @@ def change_my_password(
 
     now = _utcnow()
     current_user.password = pwd_context.hash(payload.new_password)
-    _revoke_all_user_sessions(db, current_user.id, now)
+    current_session_id = getattr(request.state, "auth_session_id", None)
+    sessions = db.query(models.AuthSession).filter(
+        models.AuthSession.user_id == current_user.id,
+        models.AuthSession.is_revoked.is_(False),
+    ).all()
+    for session in sessions:
+        if not payload.sign_out_current_session and session.session_id == current_session_id:
+            continue
+        session.is_revoked = True
+        session.revoked_at = now
     db.commit()
     background_tasks.add_task(sendPasswordChangeEmail, current_user.email, current_user.first_name)
 
     return {"message": "Password updated successfully"}
+
+
+def _portable_value(value):
+    if isinstance(value, datetime):
+        return value.isoformat()
+    return value
+
+
+def _portable_row(row) -> dict:
+    return {column.name: _portable_value(getattr(row, column.name)) for column in row.__table__.columns}
+
+
+@router.get("/account/export")
+def export_my_account_data(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    tournaments = db.query(models.Tournament).filter_by(user_id=current_user.id).order_by(models.Tournament.id).all()
+    tournament_exports = []
+    for tournament in tournaments:
+        tables = {
+            model.__tablename__: [
+                _portable_row(row)
+                for row in db.query(model).filter(model.tournament_id == tournament.id).all()
+            ]
+            for model in AUTHORITATIVE_TOURNAMENT_ROW_MODELS
+        }
+        tables[models.TournamentAuditLog.__tablename__] = [
+            _portable_row(row)
+            for row in db.query(models.TournamentAuditLog).filter_by(tournament_id=tournament.id).order_by(models.TournamentAuditLog.id).all()
+        ]
+        tournament_exports.append({"tournament": _portable_row(tournament), "tables": tables})
+
+    memberships = db.query(models.TournamentStaffMember).filter_by(user_id=current_user.id).all()
+    export = {
+        "format": "bracketworks-account-export",
+        "version": 1,
+        "exported_at": datetime.now(timezone.utc).isoformat(),
+        "profile": {
+            "id": current_user.id, "username": current_user.username, "email": current_user.email,
+            "first_name": current_user.first_name, "last_name": current_user.last_name,
+            "organization": current_user.organization, "created_at": _portable_value(current_user.created_at),
+            "email_verified_at": _portable_value(current_user.email_verified_at),
+        },
+        "owned_tournaments": tournament_exports,
+        "tournament_memberships": [_portable_row(row) for row in memberships],
+    }
+    filename = f"bracketworks-account-{current_user.id}-{datetime.now(timezone.utc).date().isoformat()}.json"
+    return Response(
+        content=json.dumps(export, indent=2, ensure_ascii=False), media_type="application/json",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"', "Cache-Control": "no-store"},
+    )
+
+
+@router.get("/account/deletion-preview")
+def account_deletion_preview(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    owned = db.query(models.Tournament).filter_by(user_id=current_user.id).order_by(models.Tournament.id).all()
+    return {
+        "can_delete": len(owned) == 0,
+        "confirmation_phrase": f"DELETE {current_user.username}",
+        "owned_tournaments": [{"id": row.id, "name": row.name, "lifecycle_status": row.lifecycle_status} for row in owned],
+        "deleted": ["Profile name and contact details", "Active sessions and reset tokens", "Staff memberships and support messages"],
+        "retained": ["An anonymized account identifier", "Legal acceptance records", "Tournament and administrative audit records"],
+    }
+
+
+@router.post("/account/delete")
+def delete_my_account(
+    payload: schemas.AccountDeletionRequest,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    owned_count = db.query(models.Tournament).filter_by(user_id=current_user.id).count()
+    if owned_count:
+        raise HTTPException(status_code=409, detail="Transfer or remove ownership of all tournaments before deleting your account")
+    if payload.confirmation != f"DELETE {current_user.username}":
+        raise HTTPException(status_code=422, detail="Confirmation phrase does not match")
+    if not pwd_context.verify(payload.current_password, current_user.password):
+        raise HTTPException(status_code=400, detail="Current password is incorrect")
+
+    now = _utcnow()
+    _revoke_all_user_sessions(db, current_user.id, now)
+    db.query(models.PasswordResetToken).filter_by(user_id=current_user.id).delete(synchronize_session=False)
+    db.query(models.EmailVerificationToken).filter_by(user_id=current_user.id).delete(synchronize_session=False)
+    db.query(models.UserFeedbackMessage).filter_by(user_id=current_user.id).delete(synchronize_session=False)
+    db.query(models.TournamentStaffMember).filter_by(user_id=current_user.id).delete(synchronize_session=False)
+    db.query(models.UserSquadSelection).filter_by(user_id=current_user.id).delete(synchronize_session=False)
+    db.query(models.UserAcknowledgment).filter_by(user_id=current_user.id).delete(synchronize_session=False)
+    db.query(models.TournamentStaffInvitation).filter(
+        (models.TournamentStaffInvitation.invited_by_user_id == current_user.id)
+        | (models.TournamentStaffInvitation.email == current_user.email)
+    ).delete(synchronize_session=False)
+    for profile in db.query(models.BowlerProfile).filter_by(user_id=current_user.id).all():
+        profile.first_name = "Deleted"
+        profile.last_name = "User"
+        profile.usbc_number = None
+        profile.is_active = False
+        profile.archived_at = now
+    current_user.username = f"deleted-user-{current_user.id}-{secrets.token_hex(4)}"
+    current_user.email = f"deleted-{current_user.id}-{secrets.token_hex(4)}@deleted.invalid"
+    current_user.first_name = "Deleted"
+    current_user.last_name = "User"
+    current_user.organization = None
+    current_user.password = pwd_context.hash(secrets.token_urlsafe(32))
+    current_user.is_active = False
+    current_user.email_verified_at = None
+    db.commit()
+    return {"status": "deleted"}
 
 
 @router.post("/login", response_model=schemas.TokenPairResponse)
@@ -710,7 +834,11 @@ def get_changelog(db: Session = Depends(get_db)):
         schemas.ChangelogEntry(
             date=entry.date,
             version=entry.version,
-            changes=entry.changes
+            changes=entry.changes,
+            title=entry.title,
+            summary=entry.summary,
+            sections=entry.sections,
+            tags=entry.tags,
         )
         for entry in entries
     ]
@@ -776,6 +904,7 @@ def refresh_tokens(
 
 @router.get("/sessions", response_model=schemas.SessionListResponse)
 def list_my_sessions(
+    request: Request,
     include_revoked: bool = False,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
@@ -797,6 +926,7 @@ def list_my_sessions(
                 device_nickname=s.device_nickname,
                 region_hint=s.region_hint,
                 risk_score=s.risk_score or 0.0,
+                is_current=s.session_id == getattr(request.state, "auth_session_id", None),
             )
             for s in sessions
         ]
@@ -826,6 +956,30 @@ def revoke_single_session(
     session.revoked_at = now
     db.commit()
     return schemas.SessionRevokeResponse(revoked_sessions=1)
+
+
+@router.post("/sessions/revoke-others", response_model=schemas.SessionRevokeResponse)
+def revoke_other_sessions(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    current_session_id = getattr(request.state, "auth_session_id", None)
+    now = _utcnow()
+    sessions = (
+        db.query(models.AuthSession)
+        .filter(
+            models.AuthSession.user_id == current_user.id,
+            models.AuthSession.is_revoked.is_(False),
+            models.AuthSession.session_id != current_session_id,
+        )
+        .all()
+    )
+    for session in sessions:
+        session.is_revoked = True
+        session.revoked_at = now
+    db.commit()
+    return schemas.SessionRevokeResponse(revoked_sessions=len(sessions))
 
 
 @router.post("/logout", response_model=schemas.SessionRevokeResponse)

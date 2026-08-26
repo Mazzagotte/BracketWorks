@@ -5,6 +5,7 @@ import { BookOpen } from 'lucide-react';
 import CloseControl from '../../components/CloseControl';
 import { apiClient } from '../lib/api';
 import type { ChangelogEntry } from '../lib/types';
+import modalStyles from '../styles/modals.module.css';
 import styles from './ChangelogModal.module.css';
 
 export interface ChangelogModalProps {
@@ -63,15 +64,15 @@ export default function ChangelogModal({ isOpen, onClose }: ChangelogModalProps)
   return (
     <div
       ref={overlayRef}
-      className={styles.overlay}
+      className={modalStyles.overlay}
       onClick={handleOverlayClick}
       role="dialog"
       aria-modal="true"
       aria-labelledby="changelog-title"
     >
-      <div className={styles.modal}>
+      <div className={`${modalStyles.modal} ${modalStyles.compactModal}`}>
         {/* Header */}
-        <div className={styles.header}>
+        <div className={modalStyles.header}>
           <div className={styles.headerContent}>
             <BookOpen size={18} className={styles.icon} aria-hidden="true" />
             <h2 id="changelog-title" className={styles.title}>
@@ -82,11 +83,13 @@ export default function ChangelogModal({ isOpen, onClose }: ChangelogModalProps)
             onClick={onClose}
             label="Close changelog"
             size="xs"
+            className={modalStyles.closeButton}
+            position="absolute"
           />
         </div>
 
         {/* Body */}
-        <div className={styles.body}>
+        <div className={modalStyles.content}>
           {loading ? (
             <p className={styles.loadingText}>Loading changelog...</p>
           ) : entries.length === 0 ? (
@@ -96,16 +99,24 @@ export default function ChangelogModal({ isOpen, onClose }: ChangelogModalProps)
               {entries.map((entry, idx) => (
                 <div key={idx} className={styles.entry}>
                   <div className={styles.entryHeader}>
-                    <h3 className={styles.version}>v{entry.version}</h3>
+                    <div className={styles.entryMeta}>
+                      <span className={styles.version}>v{entry.version}</span>
+                      {entry.tags?.map((tag) => <span className={styles.tag} key={tag}>{tag}</span>)}
+                    </div>
                     <time className={styles.date}>{entry.date}</time>
                   </div>
-                  <ul className={styles.changesList}>
-                    {entry.changes.map((change, changeIdx) => (
-                      <li key={changeIdx} className={styles.changeItem}>
-                        {change}
-                      </li>
-                    ))}
-                  </ul>
+                  {entry.sections?.length ? (
+                    <div className={styles.structuredContent}>
+                      <h3 className={styles.entryTitle}>{entry.title}</h3>
+                      {entry.summary && <p className={styles.summary}>{entry.summary}</p>}
+                      {entry.sections.map((section, sectionIndex) => <section className={styles.section} key={sectionIndex}>
+                        <h4>{section.heading}</h4>
+                        <ul className={styles.changesList}>{section.items.map((item, itemIndex) => <li key={itemIndex} className={styles.changeItem}>{item}</li>)}</ul>
+                      </section>)}
+                    </div>
+                  ) : (
+                    <ul className={styles.changesList}>{entry.changes.map((change, changeIdx) => <li key={changeIdx} className={styles.changeItem}>{change}</li>)}</ul>
+                  )}
                 </div>
               ))}
             </div>
@@ -113,7 +124,7 @@ export default function ChangelogModal({ isOpen, onClose }: ChangelogModalProps)
         </div>
 
         {/* Footer */}
-        <div className={styles.footer}>
+        <div className={modalStyles.footer}>
           <button className={styles.closeButton} onClick={onClose}>
             Close
           </button>

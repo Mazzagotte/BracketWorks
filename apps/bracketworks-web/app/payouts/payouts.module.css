@@ -223,18 +223,18 @@
   background: var(--color-primary);
   color: var(--color-white);
   border: none;
-  border-radius: 10px;
-  font-size: 14px;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
   font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 2px 8px var(--color-border-hover);
-  transition: opacity 0.15s, box-shadow 0.15s;
+  box-shadow: none;
+  transition: opacity 0.15s, background-color 0.15s;
   white-space: nowrap;
 }
 
 .refreshBtn:hover:not(:disabled) {
   opacity: 0.9;
-  box-shadow: 0 4px 12px var(--color-border-hover);
+  box-shadow: none;
 }
 
 .refreshBtn:disabled {
@@ -1220,6 +1220,185 @@
   max-width: none;
   margin: 0;
   padding: 0.78rem 1rem 1.1rem;
+}
+
+.finalReviewCard {
+  padding: var(--space-card-y) var(--space-card-x);
+  margin-bottom: var(--space-section);
+}
+
+.finalReviewHeader,
+.finalReviewActions,
+.moneyReview > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-section);
+}
+
+.finalReviewTitle {
+  margin: 0;
+  font-size: var(--bw-type-card-title);
+  color: var(--bw-text-title);
+}
+
+.finalReviewIntro,
+.finalReviewMessage {
+  margin: 5px 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--bw-type-body);
+}
+
+.reviewReady,
+.reviewWarning {
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.reviewReady {
+  background: var(--color-success-soft);
+  color: var(--color-success);
+}
+
+.reviewWarning {
+  background: var(--color-warning-surface);
+  color: var(--color-warning);
+}
+
+.reviewGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-stack);
+  margin-top: var(--space-section);
+}
+
+.reviewGrid > div {
+  padding: var(--space-card-compact-y) var(--space-card-small-x);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-secondary);
+  text-align: center;
+}
+
+.reviewGrid strong,
+.reviewGrid span {
+  display: block;
+}
+
+.reviewGrid strong {
+  color: var(--bw-text-title);
+  font-size: 1.1rem;
+}
+
+.reviewGrid span {
+  margin-top: 4px;
+  color: var(--color-text-muted);
+  font-size: 0.72rem;
+}
+
+.moneyReview {
+  margin: var(--space-card-y) 0 0;
+}
+
+.moneyReview > div {
+  padding: 7px 0;
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.moneyReview dt {
+  color: var(--color-text-muted);
+}
+
+.moneyReview dd {
+  margin: 0;
+  font-weight: 700;
+  color: var(--bw-text-title);
+}
+
+.reviewWarnings {
+  margin-top: var(--space-card-y);
+  padding: var(--space-card-small-y) var(--space-card-compact-x);
+  border-radius: var(--radius-lg);
+  background: var(--color-warning-surface);
+  color: var(--color-text-primary);
+  font-size: 0.82rem;
+}
+
+.reviewNotices {
+  margin-top: var(--space-card-y);
+  padding: var(--space-card-small-y) var(--space-card-compact-x);
+  border: 1px solid color-mix(in srgb, var(--color-info) 34%, var(--bw-border-subtle));
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--color-info) 8%, var(--bw-surface-panel));
+  color: var(--bw-text-body);
+  font-size: var(--bw-type-body);
+}
+
+.reviewNotices ul { margin: 7px 0 0; padding-left: 20px; }
+
+.reviewWarnings ul {
+  margin: 7px 0 0;
+  padding-left: 20px;
+}
+
+.finalReviewActions {
+  justify-content: flex-start;
+  margin-top: var(--space-section);
+}
+
+.adjustmentDetails {
+  margin-top: var(--space-section);
+  border-top: 1px solid var(--color-border-subtle);
+  padding-top: 14px;
+}
+
+.adjustmentDetails summary {
+  cursor: pointer;
+  color: var(--bw-text-title);
+  font-weight: 700;
+}
+
+.adjustmentRows {
+  margin-top: 10px;
+}
+
+.adjustmentRows > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.adjustmentRows small {
+  display: block;
+  margin-top: 2px;
+  color: var(--color-text-muted);
+}
+
+.adjustmentHistory {
+  margin: 14px 0 0;
+  padding-left: 20px;
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+}
+
+@media (max-width: 640px) {
+  .finalReviewHeader {
+    align-items: flex-start;
+  }
+
+  .reviewGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .finalReviewActions {
+    align-items: stretch;
+    flex-direction: column;
+  }
 }
 
 .quickActionsCard {

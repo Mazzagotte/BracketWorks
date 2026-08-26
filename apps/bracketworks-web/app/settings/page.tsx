@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useToast } from '../components/Toast';
-import { apiClient } from '../lib/api';
+import { apiClient, apiFetch } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { calculatePasswordStrengthPercent, getPasswordRequirementChecks, hasStrongPassword } from '../lib/auth/validation';
 import PasswordStrengthPanel from '../components/PasswordStrengthPanel';
@@ -22,6 +22,24 @@ type AccountProfile = {
   organization: string;
   email_verified?: boolean;
   email_verified_at?: string | null;
+};
+
+type ActiveSession = {
+  session_id: string;
+  issued_at: string;
+  last_seen_at: string;
+  expires_at: string;
+  device_nickname: string | null;
+  region_hint: string | null;
+  is_current: boolean;
+};
+
+type DeletionPreview = {
+  can_delete: boolean;
+  confirmation_phrase: string;
+  owned_tournaments: { id: number; name: string; lifecycle_status: string }[];
+  deleted: string[];
+  retained: string[];
 };
 
 const emptyProfile: AccountProfile = {
@@ -67,6 +85,14 @@ export default function SettingsPage() {
   const [feedbackSubject, setFeedbackSubject] = useState('');
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [sendingFeedback, setSendingFeedback] = useState(false);
+  const [sessions, setSessions] = useState<ActiveSession[]>([]);
+  const [sessionsLoading, setSessionsLoading] = useState(true);
+  const [sessionAction, setSessionAction] = useState<string | null>(null);
+  const [deletionPreview, setDeletionPreview] = useState<DeletionPreview | null>(null);
+  const [exportingData, setExportingData] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [passwordForm, setPasswordForm] = useState({
     current_password: '',
     new_password: '',
@@ -110,6 +136,92 @@ export default function SettingsPage() {
 
     load();
   }, [addToast]);
+
+  const loadSessions = useCallback(async () => {
+    setSessionsLoading(true);
+    try {
+      const result = await apiClient.get<{ sessions: ActiveSession[] }>('/api/v1/users/sessions', false);
+      setSessions(result.sessions);
+    } catch (err) {
+      addToast({ type: 'error', message: err instanceof Error ? err.message : 'Failed to load active sessions', duration: 5000 });
+    } finally {
+      setSessionsLoading(false);
+    }
+  }, [addToast]);
+
+  useEffect(() => { void loadSessions(); }, [loadSessions]);
+
+  useEffect(() => {
+    apiClient.get<DeletionPreview>('/api/v1/users/account/deletion-preview', false)
+      .then(setDeletionPreview)
+      .catch(err => addToast({ type: 'error', message: err instanceof Error ? err.message : 'Failed to load account deletion status' }));
+  }, [addToast]);
+
+  const downloadAccountData = async () => {
+    setExportingData(true);
+    try {
+      const response = await apiFetch('/api/v1/users/account/export');
+      if (!response.ok) throw new Error('Unable to prepare account export.');
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `bracketworks-account-data-${new Date().toISOString().slice(0, 10)}.json`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+      addToast({ type: 'success', message: 'Account data downloaded.' });
+    } catch (err) {
+      addToast({ type: 'error', message: err instanceof Error ? err.message : 'Failed to download account data' });
+    } finally {
+      setExportingData(false);
+    }
+  };
+
+  const deleteAccount = async () => {
+    if (!deletionPreview?.can_delete || deleteConfirmation !== deletionPreview.confirmation_phrase || !deletePassword) return;
+    if (!window.confirm('Permanently deactivate and anonymize this account? This cannot be undone.')) return;
+    setDeletingAccount(true);
+    try {
+      await apiClient.post('/api/v1/users/account/delete', { current_password: deletePassword, confirmation: deleteConfirmation });
+      logoutUser({ fastRedirect: true });
+      router.replace('/login');
+    } catch (err) {
+      addToast({ type: 'error', message: err instanceof Error ? err.message : 'Failed to delete account', duration: 5000 });
+      setDeletingAccount(false);
+    }
+  };
+
+  const revokeSession = async (session: ActiveSession) => {
+    if (session.is_current) {
+      if (window.confirm('Sign out this device now?')) logoutUser();
+      return;
+    }
+    if (!window.confirm(`Sign out ${session.device_nickname || 'this session'}?`)) return;
+    setSessionAction(session.session_id);
+    try {
+      await apiClient.post('/api/v1/users/sessions/revoke', { session_id: session.session_id });
+      setSessions(previous => previous.filter(item => item.session_id !== session.session_id));
+      addToast({ type: 'success', message: 'Session signed out.' });
+    } catch (err) {
+      addToast({ type: 'error', message: err instanceof Error ? err.message : 'Failed to sign out session' });
+    } finally {
+      setSessionAction(null);
+    }
+  };
+
+  const revokeOtherSessions = async () => {
+    if (!window.confirm('Sign out every other device? Your current session will remain active.')) return;
+    setSessionAction('others');
+    try {
+      const result = await apiClient.post<{ revoked_sessions: number }>('/api/v1/users/sessions/revoke-others');
+      setSessions(previous => previous.filter(session => session.is_current));
+      addToast({ type: 'success', message: `${result.revoked_sessions} other session${result.revoked_sessions === 1 ? '' : 's'} signed out.` });
+    } catch (err) {
+      addToast({ type: 'error', message: err instanceof Error ? err.message : 'Failed to sign out other sessions' });
+    } finally {
+      setSessionAction(null);
+    }
+  };
 
   useEffect(() => {
     if (loading || window.location.hash !== '#feedback-form') return;
@@ -247,6 +359,7 @@ export default function SettingsPage() {
       await apiClient.post('/api/v1/users/change-password', {
         current_password: passwordForm.current_password,
         new_password: passwordForm.new_password,
+        sign_out_current_session: logoutAfterPasswordChange,
       });
 
       setPasswordForm({ current_password: '', new_password: '', confirm_password: '' });
@@ -295,7 +408,7 @@ export default function SettingsPage() {
       </header>
       <div className={styles.settingsLayout}>
         <nav className={styles.sectionNav} aria-label="Settings sections">
-          <a href="#account">Account</a><a href="#security">Security</a><a href="#help">Help</a><a href="#legal">Legal</a>
+          <a href="#account">Account</a><a href="#security">Security</a><a href="#sessions">Sessions</a><a href="#data">Security &amp; Data</a><a href="#help">Help</a><a href="#legal">Legal</a>
         </nav>
         <div className={styles.settingsContent}>
       <section id="account" className={styles.settingsSection}>
@@ -527,6 +640,75 @@ export default function SettingsPage() {
             </button>
           )}
         />
+        </CardBody>
+      </Card>
+      </section>
+
+      <section id="sessions" className={styles.settingsSection}>
+      <Card className={styles.card} variant="primary">
+        <CardHeader className={styles.cardTitleWrap}>
+          <SectionHeader title="Active Sessions" subtitle="Devices currently signed in to your account" className={styles.cardTitleSectionHeader} />
+        </CardHeader>
+        <CardBody>
+          {sessionsLoading ? <div className={styles.sessionsEmpty} role="status">Loading active sessions...</div> : sessions.length === 0 ? <div className={styles.sessionsEmpty}>No active sessions found.</div> : (
+            <div className={styles.sessionList}>
+              {sessions.map(session => (
+                <div className={styles.sessionRow} key={session.session_id}>
+                  <div className={styles.sessionIdentity}>
+                    <div className={styles.sessionTitle}>{session.device_nickname || 'Browser session'} {session.is_current && <span className={styles.currentBadge}>Current</span>}</div>
+                    <div className={styles.optionHint}>{session.region_hint || 'Approximate location unavailable'}</div>
+                    <div className={styles.optionHint}>Last active {new Date(session.last_seen_at).toLocaleString()} · Signed in {new Date(session.issued_at).toLocaleDateString()}</div>
+                  </div>
+                  <button type="button" className={`${buttonStyles.button} ${session.is_current ? buttonStyles.secondary : buttonStyles.outline} ${buttonStyles.small}`} disabled={sessionAction !== null} onClick={() => void revokeSession(session)}>
+                    {sessionAction === session.session_id ? 'Signing out...' : session.is_current ? 'Sign Out This Device' : 'Sign Out'}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          <QuickActions
+            className={styles.actionRow}
+            left={<span className={styles.inlineMeta}>Revoked devices must sign in again before accessing BracketWorks.</span>}
+            right={<button type="button" className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.small}`} disabled={sessionAction !== null || sessions.filter(session => !session.is_current).length === 0} onClick={() => void revokeOtherSessions()}>{sessionAction === 'others' ? 'Signing out...' : 'Sign Out All Other Devices'}</button>}
+          />
+        </CardBody>
+      </Card>
+      </section>
+
+      <section id="data" className={styles.settingsSection}>
+      <Card className={styles.card} variant="primary">
+        <CardHeader className={styles.cardTitleWrap}>
+          <SectionHeader title="Security & Data" subtitle="Export your information or permanently close your account" className={styles.cardTitleSectionHeader} />
+        </CardHeader>
+        <CardBody>
+          <div className={styles.dataActionBlock}>
+            <div className={styles.optionText}><div className={styles.optionTitle}>Download My Data</div><div className={styles.optionHint}>Download a portable JSON file containing your profile, owned tournaments, tournament records, and activity history.</div></div>
+            <button type="button" className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.small}`} disabled={exportingData} onClick={() => void downloadAccountData()}>{exportingData ? 'Preparing...' : 'Download JSON'}</button>
+          </div>
+          <div className={styles.deleteAccountBlock}>
+            <div className={styles.optionText}><div className={styles.optionTitle}>Delete Account</div><div className={styles.optionHint}>Deletion deactivates your account, signs out all devices, and anonymizes personal profile information.</div></div>
+            {deletionPreview && (
+              <>
+                <div className={styles.retentionGrid}>
+                  <div><strong>Deleted or anonymized</strong><ul>{deletionPreview.deleted.map(item => <li key={item}>{item}</li>)}</ul></div>
+                  <div><strong>Retained for integrity or legal records</strong><ul>{deletionPreview.retained.map(item => <li key={item}>{item}</li>)}</ul></div>
+                </div>
+                {deletionPreview.owned_tournaments.length > 0 ? (
+                  <div className={styles.ownershipBlocker} role="alert">
+                    <strong>Ownership must be resolved first.</strong>
+                    <span>Transfer or remove ownership of these tournaments before deleting your account:</span>
+                    <ul>{deletionPreview.owned_tournaments.map(item => <li key={item.id}>{item.name} ({item.lifecycle_status})</li>)}</ul>
+                  </div>
+                ) : (
+                  <div className={styles.deleteConfirmFields}>
+                    <label>Current password<input className={styles.input} type="password" value={deletePassword} onChange={event => setDeletePassword(event.target.value)} autoComplete="current-password" /></label>
+                    <label>Type <strong>{deletionPreview.confirmation_phrase}</strong><input className={styles.input} value={deleteConfirmation} onChange={event => setDeleteConfirmation(event.target.value)} autoComplete="off" /></label>
+                    <button type="button" className={`${buttonStyles.button} ${buttonStyles.danger} ${buttonStyles.small}`} disabled={deletingAccount || !deletePassword || deleteConfirmation !== deletionPreview.confirmation_phrase} onClick={() => void deleteAccount()}>{deletingAccount ? 'Deleting...' : 'Permanently Delete Account'}</button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </CardBody>
       </Card>
       </section>

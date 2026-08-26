@@ -5,43 +5,12 @@ import { useMemo, useState } from 'react';
 import { ArrowLeft, X } from 'lucide-react';
 
 import { useTournamentContext } from '@/components/organizer/TournamentContext';
-import { buildSquadSummaries, type SquadSummary } from '@/components/organizer/tournamentInsights';
+import OrganizerStatusBadge from '@/components/organizer/OrganizerStatusBadge';
+import { formatSquadTime, formatTournamentDate } from '@/components/organizer/organizerFormatting';
+import { organizerRoutes } from '@/components/organizer/organizerRoutes';
+import { buildSquadSummaries } from '@/components/organizer/tournamentInsights';
 import type { OrganizerRegistrationRecord } from '@/components/organizer/organizerApi';
 import styles from './page.module.css';
-
-function formatSquadDate(dateIso: string): string {
-  if (!dateIso) {
-    return 'Date not set';
-  }
-
-  const parsed = new Date(`${dateIso}T00:00:00`);
-  if (Number.isNaN(parsed.getTime())) {
-    return dateIso;
-  }
-
-  return parsed.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
-function formatSquadTime(startTime: string): string {
-  if (!startTime) {
-    return 'Time not set';
-  }
-
-  const [hoursRaw, minutesRaw] = startTime.split(':');
-  const hours = Number(hoursRaw);
-  const minutes = Number(minutesRaw);
-  if (!Number.isFinite(hours) || !Number.isFinite(minutes)) {
-    return startTime;
-  }
-
-  const reference = new Date();
-  reference.setHours(hours, minutes, 0, 0);
-  return reference.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
-}
-
-function statusClassName(status: SquadSummary['status']): string {
-  return styles[`status${status.replace(/\s+/g, '')}`] ?? '';
-}
 
 function registrantName(registration: OrganizerRegistrationRecord): string {
   const name = `${registration.contact_first_name ?? registration.form?.first_name ?? ''} ${registration.contact_last_name ?? registration.form?.last_name ?? ''}`.trim();
@@ -49,7 +18,13 @@ function registrantName(registration: OrganizerRegistrationRecord): string {
 }
 
 export default function OrganizerTournamentSquadsPage() {
-  const { tournamentId, tournament, squads, registrations, isLoading, error } = useTournamentContext();
+  const {
+    tournamentId, tournament, squads, registrations,
+    isSetupLoading, isRegistrationsLoading,
+    tournamentError, setupError, registrationsError,
+  } = useTournamentContext();
+  const isLoading = isSetupLoading || isRegistrationsLoading;
+  const error = tournamentError || setupError || registrationsError;
   const [selectedSquadId, setSelectedSquadId] = useState<string | null>(null);
 
   const squadSummaries = useMemo(() => buildSquadSummaries(squads, registrations), [squads, registrations]);
@@ -80,7 +55,7 @@ export default function OrganizerTournamentSquadsPage() {
           <h1>Squads</h1>
           <p>{tournament?.name || 'Tournament'}</p>
         </div>
-        <Link href={`/organizer/tournaments/${tournamentId}`} className={styles.backButton}>
+        <Link href={organizerRoutes.overview(tournamentId)} className={styles.backButton}>
           <ArrowLeft size={14} aria-hidden="true" /> Back to Overview
         </Link>
       </header>
@@ -124,14 +99,14 @@ export default function OrganizerTournamentSquadsPage() {
                       }}
                     >
                       <td>{squad.name}</td>
-                      <td>{formatSquadDate(squad.dateIso)}</td>
+                      <td>{formatTournamentDate(squad.dateIso)}</td>
                       <td>{formatSquadTime(squad.startTime)}</td>
                       <td>{squad.locationName || 'Not set'}</td>
                       <td>{registered}</td>
                       <td>{squad.capacity > 0 ? squad.capacity : '\u2014'}</td>
                       <td>{available === null ? '\u2014' : available}</td>
                       <td>{waitlisted}</td>
-                      <td><span className={`${styles.statusChip} ${statusClassName(status)}`}>{status}</span></td>
+                      <td><OrganizerStatusBadge status={status} /></td>
                     </tr>
                   ))}
                 </tbody>

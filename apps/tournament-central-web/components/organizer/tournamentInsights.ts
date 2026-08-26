@@ -278,10 +278,10 @@ export function buildTournamentAttentionItems(params: {
   referenceDate?: Date;
 }): TournamentAttentionItem[] {
   const items: TournamentAttentionItem[] = [];
-  const overviewHref = `/organizer/tournaments/${params.tournamentId}`;
-  const setupHref = `/organizer/tournaments/${params.tournamentId}/setup`;
-  const registrationsHref = `/organizer/tournaments/${params.tournamentId}/registrations`;
-  const squadsHref = `/organizer/tournaments/${params.tournamentId}/squads`;
+  const overviewHref = organizerRoutes.overview(params.tournamentId);
+  const setupHref = organizerRoutes.setup(params.tournamentId);
+  const registrationsHref = organizerRoutes.registrations(params.tournamentId);
+  const squadsHref = organizerRoutes.squads(params.tournamentId);
 
   if (!params.isPublished) {
     items.push({ id: 'unpublished', message: 'Setup changes are not published yet.', href: setupHref });
@@ -352,3 +352,4 @@ export function buildTournamentAttentionItems(params: {
 
   return items;
 }
+import { organizerRoutes } from './organizerRoutes';

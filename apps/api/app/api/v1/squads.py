@@ -7,16 +7,18 @@ from sqlalchemy.orm import Session
 from ...core import models, schemas
 from ...api import deps
 from ...services.tournament_access import verify_owned_tournament_access
+from ...services.tournament_audit import record_tournament_event
+from ...services.tournament_snapshots import create_restore_point
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-def _verify_squad_access(db: Session, squad_id: int, user: models.User) -> models.Squad:
+def _verify_squad_access(db: Session, squad_id: int, user: models.User, *, permission: str = "manage_tournament") -> models.Squad:
     squad = db.query(models.Squad).filter(models.Squad.id == squad_id).first()
     if not squad:
         raise HTTPException(status_code=404, detail="Squad not found")
-    verify_owned_tournament_access(db, squad.tournament_id, user)
+    verify_owned_tournament_access(db, squad.tournament_id, user, permission=permission)
     return squad
 
 
@@ -48,7 +50,7 @@ def _squad_sort_key(date_value: str, time_value: str):
 def select_squad(data: schemas.SelectedSquadCreate, db: Session = Depends(deps.get_db), user = Depends(deps.get_current_user)):
     if data.user_id != user.id and not getattr(user, "is_admin", False):
         raise HTTPException(status_code=403, detail="Not authorized to select a squad for another user")
-    _verify_squad_access(db, data.squad_id, user)
+    _verify_squad_access(db, data.squad_id, user, permission="view")
 
     target_user_id = data.user_id if getattr(user, "is_admin", False) else user.id
     # Remove any previous selection for this user
@@ -68,7 +70,7 @@ def get_selected_squad(user_id: int, db: Session = Depends(deps.get_db), user = 
     if not obj:
         return None
 
-    _verify_squad_access(db, obj.squad_id, user)
+    _verify_squad_access(db, obj.squad_id, user, permission="view")
     return obj
 
 @router.delete("/select/")
@@ -107,6 +109,12 @@ def create_squad(squad: schemas.SquadCreate, db: Session = Depends(deps.get_db),
             time=squad.time
         )
         db.add(obj)
+        db.flush()
+        record_tournament_event(
+            db, tournament_id=obj.tournament_id, event_type="squad.created", user=user,
+            summary=f"Added squad {obj.date} at {obj.time}",
+            after_values={"date": str(obj.date), "time": obj.time}, entity_type="squad", entity_id=obj.id,
+        )
         db.commit()
         db.refresh(obj)
         # Serialize date as string
@@ -123,7 +131,7 @@ def create_squad(squad: schemas.SquadCreate, db: Session = Depends(deps.get_db),
 
 @router.get("/", response_model=list[schemas.Squad])
 def list_squads(tournament_id: int, db: Session = Depends(deps.get_db), user = Depends(deps.get_current_user)):
-    verify_owned_tournament_access(db, tournament_id, user)
+    verify_owned_tournament_access(db, tournament_id, user, permission="view")
     squads = db.query(models.Squad).filter(models.Squad.tournament_id == tournament_id).all()
     squads = sorted(squads, key=lambda squad: _squad_sort_key(str(squad.date), squad.time))
     return [
@@ -138,7 +146,7 @@ def list_squads(tournament_id: int, db: Session = Depends(deps.get_db), user = D
 
 @router.get("/{squad_id}", response_model=schemas.Squad)
 def get_squad(squad_id: int, db: Session = Depends(deps.get_db), user = Depends(deps.get_current_user)):
-    obj = _verify_squad_access(db, squad_id, user)
+    obj = _verify_squad_access(db, squad_id, user, permission="view")
     return {
         'id': obj.id,
         'tournament_id': obj.tournament_id,
@@ -150,6 +158,10 @@ def get_squad(squad_id: int, db: Session = Depends(deps.get_db), user = Depends(
 def delete_tournament_squads(tournament_id: int, db: Session = Depends(deps.get_db), user = Depends(deps.get_current_user)):
     """Delete all squad times for a specific tournament"""
     verify_owned_tournament_access(db, tournament_id, user)
+    create_restore_point(
+        db, tournament_id=tournament_id, user=user, trigger="squads.bulk_delete",
+        summary="Before deleting all tournament squads",
+    )
     
     # Get all squad IDs for this tournament before deleting them
     squad_ids = db.query(models.Squad.id).filter(models.Squad.tournament_id == tournament_id).all()
@@ -185,6 +197,10 @@ def delete_tournament_squads(tournament_id: int, db: Session = Depends(deps.get_
 
     # Delete all squads for this tournament
     deleted_count = db.query(models.Squad).filter(models.Squad.tournament_id == tournament_id).delete()
+    record_tournament_event(
+        db, tournament_id=tournament_id, event_type="squads.deleted", user=user,
+        summary=f"Deleted {deleted_count} tournament squads", before_values={"squad_ids": squad_ids}, entity_type="squad",
+    )
     db.commit()
     
     return {
@@ -224,7 +240,14 @@ def delete_squad(squad_id: int, db: Session = Depends(deps.get_db), user = Depen
             model_cls.squad_id == squad_id
         ).update({"squad_id": None}, synchronize_session=False)
 
+    tournament_id = obj.tournament_id
+    squad_values = {"date": str(obj.date), "time": obj.time}
     db.delete(obj)
+    record_tournament_event(
+        db, tournament_id=tournament_id, event_type="squad.deleted", user=user,
+        summary=f"Deleted squad {squad_values['date']} at {squad_values['time']}",
+        before_values=squad_values, entity_type="squad", entity_id=squad_id,
+    )
     db.commit()
     
     return {
@@ -369,6 +392,14 @@ def sync_tournament_squads(tournament_id: int, body: SquadSyncRequest = SquadSyn
                     except Exception as e:
                         errors.append(f"Failed to delete squad ({squad.date}, {squad.time}): {str(e)}")
 
+        if created_count or deleted_count:
+            record_tournament_event(
+                db, tournament_id=tournament_id, event_type="squads.changed", user=user,
+                summary="Updated tournament squad schedule",
+                before_values={"squads": sorted(list(current_squads_set))},
+                after_values={"squads": sorted(list(expected_squads)), "created_count": created_count, "deleted_count": deleted_count},
+                entity_type="squad",
+            )
         db.commit()
         
     except Exception as e:

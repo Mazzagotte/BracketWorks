@@ -1104,7 +1104,7 @@
 .thShort { display: none; }
 
 /* ── Tablet: 481px – 768px ─────────────────────────────────────────────────── */
-@media (min-width: 481px) and (max-width: 768px) {
+@media (min-width: 481px) and (max-width: 767px) {
   .headerInner { padding: 0 16px; }
   .brandEyebrow { font-size: 11px; }
   .squadSelect {
@@ -3079,7 +3079,7 @@
   background: var(--bw-surface-panel);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .header {
     position: static;
     border-bottom: 1px solid var(--bw-border-subtle);
@@ -4212,7 +4212,7 @@
   padding: var(--live-space-md);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .page {
     --live-space-md: 12px;
     --live-space-lg: 12px;

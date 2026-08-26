@@ -5,6 +5,7 @@ import type {
   AdminFeedbackMessage,
   AdminChangelogEntry,
   AdminOperation,
+  AdminSystemHealth,
   AuditLogsResponse,
   DeletePreview,
   OverviewResponse,
@@ -100,6 +101,9 @@ export const adminApi = {
   },
   getOperations() {
     return apiClient.get<{ operations: AdminOperation[]; note: string }>("/api/v1/admin/operations", false);
+  },
+  getSystemHealth() {
+    return apiClient.get<AdminSystemHealth>("/api/v1/admin/system-health", false);
   },
   getUserDeletePreview(userId: number) {
     return apiClient.get<DeletePreview>(`/api/v1/admin/users/${userId}/delete-preview`, false);

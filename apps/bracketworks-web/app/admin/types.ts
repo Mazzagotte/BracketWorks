@@ -1,4 +1,4 @@
-import type { ChangelogEntry } from "../lib/types";
+import type { ChangelogEntry, ChangelogSection, ChangelogTag } from "../lib/types";
 
 export type OverviewResponse = {
   metrics: {
@@ -63,7 +63,9 @@ export type UserRow = {
 };
 
 export type UserReviewDetail = {
-  user: UserRow & { name: string };
+  user: UserRow & { name: string; last_activity_at: string | null };
+  owned_tournaments: Array<{ id: number; name: string; lifecycle_status: string }>;
+  staff_memberships: Array<{ tournament_id: number; tournament_name: string; role: string; created_at: string | null }>;
   sessions: Array<{
     id: number;
     issued_at: string | null;
@@ -140,6 +142,14 @@ export type TournamentRow = {
   payout_count: number;
   snapshot_count: number;
   status: "current" | "upcoming" | "completed" | "archived";
+  workflow_status: string;
+  scores_locked: boolean;
+  staff_count: number;
+  staff: Array<{ user_id: number; username: string; name: string; role: string }>;
+  bracket_state: "generated" | "not_generated";
+  score_state: "not_started" | "in_progress" | "complete";
+  payout_state: "not_calculated" | "calculated" | "finalized";
+  recent_audit_events: Array<{ id: number; event_type: string; summary: string; user_display_name: string; created_at: string | null }>;
   open_note_count: number;
   last_activity_at: string | null;
   last_admin_change_at: string | null;
@@ -212,6 +222,7 @@ export type AdminTab =
   | "users"
   | "tournaments"
   | "operations"
+  | "health"
   | "announcements"
   | "messages"
   | "database"
@@ -241,10 +252,29 @@ export type AdminOperation = {
   error: string | null;
 };
 
+export type AdminSystemHealth = {
+  checked_at: string;
+  frontend_version: string | null;
+  backend_version: string;
+  environment: string;
+  api: { status: string };
+  database: { status: string; error: string | null };
+  email: { status: string; provider: string; sender: string };
+  background_jobs: { runtime: Record<string, { status: string; last_run_at: string | null; last_success_at: string | null; last_error: string | null }>; queued: number; running: number; failed: number };
+  process_started_at: string;
+  last_deployment: string | null;
+  recent_errors: Array<{ timestamp: string; logger: string; level: string; message: string }>;
+};
+
 export type ChangelogFormState = {
   version: string;
   date: string;
   changes: string;
+  title: string;
+  summary: string;
+  sections: ChangelogSection[];
+  tags: ChangelogTag[];
+  legacy: boolean;
 };
 
 export type AdminChangelogEntry = ChangelogEntry & {
@@ -265,6 +295,11 @@ export const EMPTY_CHANGELOG_FORM: ChangelogFormState = {
   version: "",
   date: "",
   changes: "",
+  title: "",
+  summary: "",
+  sections: [{ heading: "", items: [""] }],
+  tags: [],
+  legacy: false,
 };
 
 export const TAB_LABELS: Record<AdminTab, string> = {
@@ -275,6 +310,7 @@ export const TAB_LABELS: Record<AdminTab, string> = {
   audit: "Audit",
   changelog: "Changelog",
   operations: "Operations",
+  health: "System Health",
   announcements: "Announcements",
   messages: "Messages",
 };

@@ -9,7 +9,8 @@ import { useBrackets, BracketPreview } from '../hooks/useBrackets'
 import { useTournaments, useSquads } from '../hooks/useTournaments'
 import { useToast } from '../components/Toast'
 import { BracketResponse } from '../lib/types'
-import { isPhoneViewport } from '../lib/responsive'
+import { MOBILE_VIEWPORT_QUERY } from '../lib/responsive'
+import { useMediaQuery } from '../hooks/useMediaQuery'
 import { cleanupModalState, resetScrollLocks } from '../utils/modalUtils'
 import { getMemoryAccessToken } from '../lib/api'
 import { BracketTabs } from './components/BracketTabs'
@@ -45,7 +46,7 @@ export default function BracketsPage() {
   const [entriesMismatchPromptOpen, setEntriesMismatchPromptOpen] = useState(false)
   const [entriesMismatchPromptDismissedKey, setEntriesMismatchPromptDismissedKey] = useState<string | null>(null)
   const [selectionRefreshKey, setSelectionRefreshKey] = useState(0)
-  const [isMobile, setIsMobile] = useState(false)
+  const isMobile = useMediaQuery(MOBILE_VIEWPORT_QUERY)
   const [loadedBrackets, setLoadedBrackets] = useState<BracketPreview | null>(null)
 
   useEffect(() => {
@@ -375,7 +376,7 @@ export default function BracketsPage() {
               // Calculate bracket stats
               const totalMatches = rounds.reduce((sum, round) => sum + round.matches.length, 0)
               const completedMatches = rounds.reduce((sum, round) =>
-                sum + (round.matches as any[]).filter((m) => m.winner || m.split_pot || m.both_advance).length, 0)
+                sum + round.matches.filter((match) => match.winner || match.split_pot || match.both_advance).length, 0)
               const progressPercent = totalMatches > 0 ? Math.round((completedMatches / totalMatches) * 100) : 0
               
               return (

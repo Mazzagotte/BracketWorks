@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { capitalizeFirstLetter } from "@bracketworks/ui";
 import { useRouter } from "next/navigation";
-import { ClipboardList, History, Info, Plus } from "lucide-react";
+import { ArrowDown, ArrowUp, ClipboardList, History, Info, Plus, Trash2 } from "lucide-react";
 
 import { apiClient } from "../lib/api";
 import { useAuth } from "../lib/auth-context";
@@ -22,6 +22,7 @@ import {
   type AdminFeedbackMessage,
   type AdminChangelogEntry,
   type AdminOperation,
+  type AdminSystemHealth,
   type AdminTab,
   type AuditLogsResponse,
   type ChangelogFormState,
@@ -138,6 +139,8 @@ export default function AdminPage() {
   const [operations, setOperations] = useState<AdminOperation[]>([]);
   const [operationsLoading, setOperationsLoading] = useState(false);
   const [operationsNote, setOperationsNote] = useState("");
+  const [systemHealth, setSystemHealth] = useState<AdminSystemHealth | null>(null);
+  const [systemHealthLoading, setSystemHealthLoading] = useState(false);
   const [feedbackMessages, setFeedbackMessages] = useState<AdminFeedbackMessage[]>([]);
   const [feedbackLoading, setFeedbackLoading] = useState(false);
   const [feedbackNotes, setFeedbackNotes] = useState<Record<number, string>>({});
@@ -426,6 +429,15 @@ export default function AdminPage() {
     finally { setOperationsLoading(false); if (manual) setRefreshing(false); }
   }, [currentUser?.isAdmin]);
 
+  const loadSystemHealth = useCallback(async (manual = false) => {
+    if (!currentUser?.isAdmin) return;
+    if (manual) setRefreshing(true);
+    setSystemHealthLoading(true); setError(null);
+    try { setSystemHealth(await adminApi.getSystemHealth()); }
+    catch (err) { setError(err instanceof Error ? err.message : "Failed to load system health"); }
+    finally { setSystemHealthLoading(false); if (manual) setRefreshing(false); }
+  }, [currentUser?.isAdmin]);
+
   const loadFeedback = useCallback(async (manual = false) => {
     if (!currentUser?.isAdmin) return;
     if (manual) setRefreshing(true);
@@ -500,8 +512,9 @@ export default function AdminPage() {
     if (activeTab === "announcements") { await loadAnnouncements(manual); return; }
     if (activeTab === "messages") { await loadFeedback(manual); return; }
     if (activeTab === "operations") { await loadOperations(manual); return; }
+    if (activeTab === "health") { await loadSystemHealth(manual); return; }
     await loadAuditLogs(manual);
-  }, [activeTab, loadOverview, loadUsers, loadTournaments, loadTables, loadChangelog, loadAuditLogs, loadAnnouncements, loadFeedback, loadOperations]);
+  }, [activeTab, loadOverview, loadUsers, loadTournaments, loadTables, loadChangelog, loadAuditLogs, loadAnnouncements, loadFeedback, loadOperations, loadSystemHealth]);
 
   const refreshAfterMutation = useCallback(async ({
     overview = false,
@@ -559,20 +572,22 @@ export default function AdminPage() {
   }, [refreshAfterMutation, showSuccess]);
 
   const handleChangelogCreateOrUpdate = useCallback(async () => {
-    if (!changelogForm.version.trim() || !changelogForm.date.trim() || !changelogForm.changes.trim()) {
-      setChangelogFormError("All fields are required");
+    if (!changelogForm.version.trim() || !changelogForm.date.trim()) {
+      setChangelogFormError("Version and date are required");
       return;
     }
-
-    const changes = changelogForm.changes
-      .split("\n")
-      .map((line) => line.trim())
-      .filter((line) => line.length > 0);
-
-    if (changes.length === 0) {
-      setChangelogFormError("Changes list cannot be empty");
+    const changes = changelogForm.changes.split("\n").map((line) => line.trim()).filter(Boolean);
+    const sections = changelogForm.sections.map((section) => ({
+      heading: section.heading.trim(),
+      items: section.items.map((item) => item.trim()),
+    }));
+    if (changelogForm.legacy ? changes.length === 0 : (!changelogForm.title.trim() || sections.length === 0 || sections.some((section) => !section.heading || section.items.length === 0 || section.items.some((item) => !item)))) {
+      setChangelogFormError(changelogForm.legacy ? "Changes list cannot be empty" : "A title and complete sections with non-empty bullets are required");
       return;
     }
+    const content = changelogForm.legacy
+      ? { changes }
+      : { changes: [], title: changelogForm.title.trim(), summary: changelogForm.summary.trim() || null, sections, tags: changelogForm.tags };
 
     setChangelogFormSaving(true);
     setChangelogFormError(null);
@@ -580,13 +595,13 @@ export default function AdminPage() {
       if (editingChangelogVersion) {
         await apiClient.put(`/api/v1/admin/changelog/${editingChangelogVersion}`, {
           date: changelogForm.date.trim(),
-          changes,
+          ...content,
         });
       } else {
         await apiClient.post("/api/v1/admin/changelog", {
           version: changelogForm.version.trim(),
           date: changelogForm.date.trim(),
-          changes,
+          ...content,
         });
       }
       setChangelogForm(EMPTY_CHANGELOG_FORM);
@@ -624,8 +639,18 @@ export default function AdminPage() {
       version: entry.version,
       date: entry.date,
       changes: entry.changes.join("\n"),
+      title: entry.title ?? "",
+      summary: entry.summary ?? "",
+      sections: entry.sections?.map((section) => ({ ...section, items: [...section.items] })) ?? [],
+      tags: entry.tags ?? [],
+      legacy: !entry.sections?.length,
     });
   }, []);
+
+  const updateChangelogSection = (index: number, heading: string) => setChangelogForm((form) => ({ ...form, sections: form.sections.map((section, sectionIndex) => sectionIndex === index ? { ...section, heading } : section) }));
+  const updateChangelogBullet = (sectionIndex: number, itemIndex: number, value: string) => setChangelogForm((form) => ({ ...form, sections: form.sections.map((section, currentSectionIndex) => currentSectionIndex === sectionIndex ? { ...section, items: section.items.map((item, currentItemIndex) => currentItemIndex === itemIndex ? value : item) } : section) }));
+  const moveChangelogSection = (index: number, offset: number) => setChangelogForm((form) => { const sections = [...form.sections]; const target = index + offset; const current = sections[index]; const replacement = sections[target]; if (!current || !replacement) return form; sections[index] = replacement; sections[target] = current; return { ...form, sections }; });
+  const moveChangelogBullet = (sectionIndex: number, itemIndex: number, offset: number) => setChangelogForm((form) => ({ ...form, sections: form.sections.map((section, index) => { if (index !== sectionIndex) return section; const items = [...section.items]; const target = itemIndex + offset; const current = items[itemIndex]; const replacement = items[target]; if (current === undefined || replacement === undefined) return section; items[itemIndex] = replacement; items[target] = current; return { ...section, items }; }) }));
 
   const handleChangelogCancel = useCallback(() => {
     setEditingChangelogVersion(null);
@@ -1039,18 +1064,53 @@ export default function AdminPage() {
               />
               <p className={styles.formHelper}>The date this version is being released.</p>
             </div>
-            <div className={styles.changelogFormRow}>
-              <label className={styles.formLabel} htmlFor="changelog-changes">Changes (one per line) <span aria-hidden="true">*</span></label>
-              <textarea
-                id="changelog-changes"
-                className={styles.formTextarea}
-                value={changelogForm.changes}
-                onChange={(e) => setChangelogForm({ ...changelogForm, changes: e.target.value })}
-                placeholder="Feature A&#10;Bug fix B&#10;Improvement C"
-                rows={5}
-              />
-              <p className={styles.formHelper}>List each change on a new line. These will be displayed to users.</p>
-            </div>
+            {changelogForm.legacy ? (
+              <div className={styles.changelogFormRow}>
+                <label className={styles.formLabel} htmlFor="changelog-changes">Legacy changes (one per line) <span aria-hidden="true">*</span></label>
+                <textarea id="changelog-changes" className={styles.formTextarea} value={changelogForm.changes} onChange={(e) => setChangelogForm({ ...changelogForm, changes: e.target.value })} rows={5} />
+                <p className={styles.formHelper}>This existing entry remains in the legacy bullet-only format.</p>
+              </div>
+            ) : (
+              <>
+                <div className={styles.changelogFormRow}>
+                  <label className={styles.formLabel} htmlFor="changelog-title-input">Title <span aria-hidden="true">*</span></label>
+                  <input id="changelog-title-input" className={styles.formInput} maxLength={120} value={changelogForm.title} onChange={(e) => setChangelogForm({ ...changelogForm, title: e.target.value })} placeholder="Major Tournament Management Update" />
+                </div>
+                <div className={styles.changelogFormRow}>
+                  <label className={styles.formLabel} htmlFor="changelog-summary">Summary</label>
+                  <textarea id="changelog-summary" className={styles.formTextarea} maxLength={500} rows={2} value={changelogForm.summary} onChange={(e) => setChangelogForm({ ...changelogForm, summary: e.target.value })} placeholder="A short introduction to this release." />
+                </div>
+                <fieldset className={styles.changelogTags}>
+                  <legend>Tags <span>(optional)</span></legend>
+                  {(["New", "Improved", "Fixed", "Security", "Admin", "Reliability"] as const).map((tag) => <label key={tag}><input type="checkbox" checked={changelogForm.tags.includes(tag)} onChange={() => setChangelogForm((form) => ({ ...form, tags: form.tags.includes(tag) ? form.tags.filter((value) => value !== tag) : [...form.tags, tag] }))} />{tag}</label>)}
+                </fieldset>
+                <div className={styles.changelogSections}>
+                  {changelogForm.sections.map((section, sectionIndex) => (
+                    <div className={styles.changelogSectionEditor} key={sectionIndex}>
+                      <div className={styles.changelogSectionHeader}>
+                        <strong>Section {sectionIndex + 1}</strong>
+                        <div>
+                          <button type="button" aria-label="Move section up" disabled={sectionIndex === 0} onClick={() => moveChangelogSection(sectionIndex, -1)}><ArrowUp /></button>
+                          <button type="button" aria-label="Move section down" disabled={sectionIndex === changelogForm.sections.length - 1} onClick={() => moveChangelogSection(sectionIndex, 1)}><ArrowDown /></button>
+                          <button type="button" aria-label="Remove section" disabled={changelogForm.sections.length === 1} onClick={() => setChangelogForm((form) => ({ ...form, sections: form.sections.filter((_, index) => index !== sectionIndex) }))}><Trash2 /></button>
+                        </div>
+                      </div>
+                      <input className={styles.formInput} maxLength={80} value={section.heading} onChange={(e) => updateChangelogSection(sectionIndex, e.target.value)} placeholder="Section heading" aria-label={`Section ${sectionIndex + 1} heading`} />
+                      <div className={styles.changelogBulletEditors}>
+                        {section.items.map((item, itemIndex) => <div key={itemIndex}>
+                          <input className={styles.formInput} maxLength={300} value={item} onChange={(e) => updateChangelogBullet(sectionIndex, itemIndex, e.target.value)} placeholder="Bullet item" aria-label={`Section ${sectionIndex + 1} bullet ${itemIndex + 1}`} />
+                          <button type="button" aria-label="Move bullet up" disabled={itemIndex === 0} onClick={() => moveChangelogBullet(sectionIndex, itemIndex, -1)}><ArrowUp /></button>
+                          <button type="button" aria-label="Move bullet down" disabled={itemIndex === section.items.length - 1} onClick={() => moveChangelogBullet(sectionIndex, itemIndex, 1)}><ArrowDown /></button>
+                          <button type="button" aria-label="Remove bullet" disabled={section.items.length === 1} onClick={() => setChangelogForm((form) => ({ ...form, sections: form.sections.map((value, index) => index === sectionIndex ? { ...value, items: value.items.filter((_, current) => current !== itemIndex) } : value) }))}><Trash2 /></button>
+                        </div>)}
+                      </div>
+                      <button type="button" className={styles.changelogAddButton} onClick={() => setChangelogForm((form) => ({ ...form, sections: form.sections.map((value, index) => index === sectionIndex ? { ...value, items: [...value.items, ""] } : value) }))}><Plus /> Add Bullet</button>
+                    </div>
+                  ))}
+                  <button type="button" className={styles.changelogAddButton} onClick={() => setChangelogForm((form) => ({ ...form, sections: [...form.sections, { heading: "", items: [""] }] }))}><Plus /> Add Section</button>
+                </div>
+              </>
+            )}
             {changelogFormError && <div className={styles.modalError} role="alert">{changelogFormError}</div>}
             <div className={styles.changelogFormActions}>
               <button
@@ -1108,11 +1168,7 @@ export default function AdminPage() {
                         </button>
                       </div>
                     </div>
-                    <ul className={styles.changesList}>
-                      {entry.changes.map((change: string, idx: number) => (
-                        <li key={idx}>{change}</li>
-                      ))}
-                    </ul>
+                    {entry.sections?.length ? <div className={styles.historyStructured}><strong>{entry.title}</strong>{entry.sections.map((section, index) => <div key={index}><span>{section.heading}</span><ul className={styles.changesList}>{section.items.map((item, itemIndex) => <li key={itemIndex}>{item}</li>)}</ul></div>)}</div> : <ul className={styles.changesList}>{entry.changes.map((change, idx) => <li key={idx}>{change}</li>)}</ul>}
                   </div>
                 ))}
               </>
@@ -1163,6 +1219,29 @@ export default function AdminPage() {
           <div className={styles.panelHeader}><div><h3 className={styles.panelTitle}>System Operations</h3><span className={styles.panelSubtle}>Background bracket generation and payout jobs currently observable by the backend</span></div></div>
           {operationsNote && <div className={styles.operationNote}>{operationsNote}</div>}
           <div className={styles.tableWrap}><table className={styles.table}><thead><tr><th>Created</th><th>Type</th><th>Status</th><th>Started</th><th>Completed</th><th>Error</th></tr></thead><tbody>{operationsLoading ? <tr><td className={styles.tableState} colSpan={6}><span role="status">Loading operations…</span></td></tr> : operations.length === 0 ? <tr><td className={styles.tableState} colSpan={6}><strong>No recorded operations</strong><span>No background jobs are retained by this backend process.</span></td></tr> : operations.map(operation => <tr key={operation.job_id}><td>{formatAdminTimestamp(operation.created_at, "-")}</td><td>{operation.job_type}</td><td><span className={`${styles.statusPill} ${operation.status === "failed" ? styles.statusDraft : operation.status === "succeeded" ? styles.statusActive : ""}`}>{operation.status}</span></td><td>{formatAdminTimestamp(operation.started_at, "-")}</td><td>{formatAdminTimestamp(operation.completed_at, "-")}</td><td>{operation.error || "-"}</td></tr>)}</tbody></table></div>
+        </section>
+      )}
+
+      {activeTab === "health" && (
+        <section className={styles.panel}>
+          <div className={styles.panelHeader}><div><h3 className={styles.panelTitle}>System Health</h3><span className={styles.panelSubtle}>Live operational checks for administrators</span></div><button type="button" className={styles.actionBtn} disabled={systemHealthLoading} onClick={() => void loadSystemHealth(true)}>{systemHealthLoading ? "Checking..." : "Run Checks"}</button></div>
+          {systemHealthLoading && !systemHealth ? <div className={styles.placeholder} role="status">Checking services...</div> : systemHealth ? <>
+            <div className={styles.healthGrid}>
+              {[
+                ["Frontend", process.env.NEXT_PUBLIC_APP_VERSION || "1.0.0", "healthy"],
+                ["Backend", systemHealth.backend_version, "healthy"],
+                ["API", systemHealth.api.status, systemHealth.api.status],
+                ["Database", systemHealth.database.status, systemHealth.database.status],
+                ["Email", `${systemHealth.email.status} · ${systemHealth.email.provider}`, systemHealth.email.status === "configured" ? "healthy" : "warning"],
+                ["Background Jobs", `${systemHealth.background_jobs.running} running · ${systemHealth.background_jobs.failed} failed`, systemHealth.background_jobs.failed ? "unhealthy" : "healthy"],
+              ].map(([label, value, tone]) => <div className={styles.healthCard} key={label}><span>{label}</span><strong>{value}</strong><i data-tone={tone}>{tone === "healthy" ? "Operational" : tone === "warning" ? "Attention" : "Issue"}</i></div>)}
+            </div>
+            <div className={styles.healthMeta}><span>Environment: {systemHealth.environment}</span><span>Process started: {formatAdminTimestamp(systemHealth.process_started_at, "Unknown")}</span><span>Last deployment: {formatAdminTimestamp(systemHealth.last_deployment, "Not reported")}</span><span>Checked: {formatAdminTimestamp(systemHealth.checked_at, "Unknown")}</span></div>
+            <div className={styles.panelHeader}><h4 className={styles.panelTitle}>Background Services</h4></div>
+            <div className={styles.healthServiceList}>{Object.entries(systemHealth.background_jobs.runtime).map(([name, job]) => <div key={name}><strong>{name.replace(/_/g, " ")}</strong><span>{job.status} · Last run {formatAdminTimestamp(job.last_run_at, "Pending")}</span>{job.last_error && <span className={styles.healthError}>{job.last_error}</span>}</div>)}</div>
+            <div className={styles.panelHeader}><h4 className={styles.panelTitle}>Recent Application Errors</h4><span className={styles.panelSubtle}>{systemHealth.recent_errors.length} retained in this process</span></div>
+            {systemHealth.recent_errors.length === 0 ? <div className={styles.placeholder}>No recent application errors recorded.</div> : <div className={styles.healthErrorList}>{systemHealth.recent_errors.map((item, index) => <article key={`${item.timestamp}-${index}`}><div><strong>{item.level} · {item.logger}</strong><time>{formatAdminTimestamp(item.timestamp, "Unknown")}</time></div><p>{item.message}</p></article>)}</div>}
+          </> : <div className={styles.placeholder}>Health information is unavailable.</div>}
         </section>
       )}
 
@@ -1256,11 +1335,20 @@ export default function AdminPage() {
                     <h4>Account details</h4>
                     <div className={styles.detailGrid}>
                       <div><strong>Name:</strong> {reviewDetail.user.name}</div><div><strong>Email:</strong> {reviewDetail.user.email}</div>
-                      <div><strong>Created:</strong> {formatAdminTimestamp(reviewDetail.user.created_at, "Unknown")}</div><div><strong>Last login:</strong> {formatAdminTimestamp(reviewUser.last_login_at)}</div>
+                      <div><strong>Status:</strong> {reviewDetail.user.is_active ? "Active" : "Inactive"}</div><div><strong>Created:</strong> {formatAdminTimestamp(reviewDetail.user.created_at, "Unknown")}</div>
+                      <div><strong>Last login:</strong> {formatAdminTimestamp(reviewDetail.user.last_login_at, "Never")}</div><div><strong>Last activity:</strong> {formatAdminTimestamp(reviewDetail.user.last_activity_at, "Never")}</div>
                       <div><strong>Verification:</strong> {reviewDetail.user.email_verified ? formatAdminTimestamp(reviewDetail.user.email_verified_at, "Verified") : "Unverified"}</div>
                       <div><strong>Development notice:</strong> {reviewDetail.user.dev_notice_version_accepted || "Not acknowledged"}</div>
                       <div><strong>Active sessions:</strong> {reviewUser.active_session_count}</div><div><strong>Failed logins:</strong> {reviewUser.failed_login_count}</div>
                     </div>
+                  </section>
+                  <section className={styles.reviewSection}>
+                    <h4>Owned tournaments</h4>
+                    {reviewDetail.owned_tournaments.length === 0 ? <div className={styles.reviewEmpty}>No owned tournaments.</div> : <div className={styles.activityList}>{reviewDetail.owned_tournaments.map(item => <div className={styles.activityRow} key={item.id}><div><strong>{item.name}</strong><span>Tournament #{item.id}</span></div><span>{item.lifecycle_status.replace(/_/g, " ")}</span></div>)}</div>}
+                  </section>
+                  <section className={styles.reviewSection}>
+                    <h4>Staff memberships</h4>
+                    {reviewDetail.staff_memberships.length === 0 ? <div className={styles.reviewEmpty}>No tournament staff memberships.</div> : <div className={styles.activityList}>{reviewDetail.staff_memberships.map(item => <div className={styles.activityRow} key={item.tournament_id}><div><strong>{item.tournament_name}</strong><span>Tournament #{item.tournament_id}</span></div><div><span>{item.role.replace(/_/g, " ")}</span><span>Since {formatAdminTimestamp(item.created_at, "Unknown")}</span></div></div>)}</div>}
                   </section>
                   <section className={styles.reviewSection}>
                     <h4>Add internal review item</h4>

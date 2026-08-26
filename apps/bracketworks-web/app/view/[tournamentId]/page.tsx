@@ -5,7 +5,8 @@ import { useParams } from 'next/navigation'
 import { Award, CalendarDays, Info, RefreshCw, Search, Share2, Trophy, UserRound } from 'lucide-react'
 import { buildApiUrl } from '../../lib/api'
 import { formatIsoDateShortWithWeekday } from '../../lib/formatters'
-import { BW_BREAKPOINTS, matchesMaxWidth } from '../../lib/responsive'
+import { MOBILE_VIEWPORT_QUERY } from '../../lib/responsive'
+import { useMediaQuery } from '../../hooks/useMediaQuery'
 import { getSidePotsStorageKey } from '../../lib/dashboard-settings'
 import { DataTableToolbar } from '../../components/primitives'
 import buttonStyles from '../../styles/buttons.module.css'
@@ -556,6 +557,7 @@ function BracketView({ group, highlightName, onNameClick }: {
   highlightName: string
   onNameClick: (name: string) => void
 }) {
+  const isMobileViewport = useMediaQuery(MOBILE_VIEWPORT_QUERY)
   const [activeBracket, setActiveBracket] = useState(0)
   const treeWrapRef = useRef<HTMLDivElement>(null)
   const treeGridRef = useRef<HTMLDivElement>(null)
@@ -593,8 +595,7 @@ function BracketView({ group, highlightName, onNameClick }: {
       const grid = treeGridRef.current
       if (!wrap || !grid) return
 
-      const isMobile = matchesMaxWidth(BW_BREAKPOINTS.mobileMax)
-      if (!isMobile) {
+      if (!isMobileViewport) {
         resetTreeScale()
         return
       }
@@ -623,7 +624,7 @@ function BracketView({ group, highlightName, onNameClick }: {
       window.removeEventListener('resize', recalcTreeFit)
       resetTreeScale()
     }
-  }, [canRenderTree, activeBracket, treeColumns, totalRows])
+  }, [canRenderTree, activeBracket, isMobileViewport, treeColumns, totalRows])
 
 
   // Jump to the bracket containing the highlighted bowler

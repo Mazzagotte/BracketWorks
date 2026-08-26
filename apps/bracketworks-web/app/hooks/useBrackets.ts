@@ -2,7 +2,8 @@
 import { useState, useCallback } from 'react'
 import { apiClient } from '../lib/api'
 import { useToast } from '../components/Toast'
-import { BracketData, BracketGroup } from '../lib/types'
+import type { BracketData, BracketGroup, BracketRound } from '../lib/types'
+export type { BracketRound, Match } from '../lib/types'
 
 type BracketGenerationJob = {
   job_id: string
@@ -76,26 +77,6 @@ export interface BracketPreview {
   entries_mismatch?: boolean
   player_count_at_generation?: number | null
   current_player_count?: number
-}
-
-export interface BracketRound {
-  name: string
-  matches: Match[]
-}
-
-export interface Match {
-  seedA?: number
-  seedB?: number
-  playerA?: string
-  playerB?: string
-  scoreA?: number
-  scoreB?: number
-  winner?: 'A' | 'B'
-  status?: 'pending' | 'in_progress' | 'completed' | 'tied' | 'both_advance' | 'next_up'
-  both_advance?: boolean
-  split_pot?: boolean
-  eliminated_player?: 'A' | 'B' | null
-  elimination_notes?: string | null
 }
 
 export interface MatchScoreUpdate {
@@ -251,16 +232,31 @@ export function useBrackets() {
 
     try {
       const squadParam = squadId ? `?squad_id=${squadId}` : ''
-      // Disable caching to always get fresh scores from backend
-      const data = await apiClient.get<BracketPreview>(
+      const response = await apiClient.fetchWithAuth(
         `/api/v1/brackets/load/${tournamentId}${squadParam}`,
-        false  // useCache=false to bypass cache and get fresh scores
+        { cache: 'no-store' },
       )
+
+      if (response.status === 404) {
+        setPreview(null)
+        return null
+      }
+
+      if (!response.ok) {
+        let message = `Failed to load saved brackets (HTTP ${response.status})`
+        try {
+          const body = await response.json() as { detail?: string; message?: string }
+          message = body.detail || body.message || message
+        } catch { /* non-JSON error body */ }
+        setError(message)
+        return null
+      }
+
+      const data = await response.json() as BracketPreview
       setPreview(data)
       return data
     } catch (err) {
-      // Don't show error toast for loading saved brackets - they might not exist
-      // Silent fail for missing brackets is expected behavior
+      setError(err instanceof Error ? err.message : 'Failed to load saved brackets')
       return null
     } finally {
       setLoading(false)

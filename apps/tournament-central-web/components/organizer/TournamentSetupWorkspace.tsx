@@ -9,6 +9,7 @@ import type { TournamentContract, TournamentSetupStateSummaryContract } from '@b
 import ConfigDrawer from './ConfigDrawer';
 import PublishValidationSummary from './PublishValidationSummary';
 import { listMyOrganizerSetupStates, listMyTournaments, resolveTcVenue } from './organizerApi';
+import { organizerRoutes } from './organizerRoutes';
 import TournamentRegistrationForm from '../public/TournamentRegistrationForm';
 import TournamentDetailsSection from './setup/TournamentDetailsSection';
 import { initialRegistrationFields, setupSections } from './setupConfig';
@@ -352,8 +353,8 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
   const hasLogoAsset = Boolean(logoPreviewUrl || details.logoFileName || pendingLogoFile);
   const logoAssetName = pendingLogoFile?.name || details.logoFileName || 'Tournament Logo';
   const logoAssetMeta = pendingLogoFile
-    ? `${inferLogoFileLabel(pendingLogoFile.name)} Ã‚Â· ${formatFileSize(pendingLogoFile.size)}`
-    : `${inferLogoFileLabel(details.logoFileName)} Ã‚Â· file uploaded`;
+    ? `${inferLogoFileLabel(pendingLogoFile.name)} - ${formatFileSize(pendingLogoFile.size)}`
+    : `${inferLogoFileLabel(details.logoFileName)} - file uploaded`;
 
   const refreshTournamentLibrary = async (token: string) => {
     setIsLoadingTournamentLibrary(true);
@@ -644,7 +645,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
     }
 
     if (routeTournamentId && routeTournamentId !== tournamentId) {
-      router.push(`/organizer/tournaments/${tournamentId}/setup`);
+      router.push(organizerRoutes.setup(tournamentId));
       return;
     }
 
@@ -2476,7 +2477,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                             const squadCount = ev.connectedSquadIds.length;
                             const eventStatus = !ev.name.trim() ? 'Needs Name' : ev.requireSquad && squadCount === 0 ? 'Needs Squads' : ev.requireDivision && ev.connectedDivisionIds.length === 0 ? 'Needs Divisions' : ev.enabled ? 'Ready' : 'Draft';
                             const metaParts = [
-                              ev.minPlayers === ev.maxPlayers ? `${ev.minPlayers} Bowler${ev.minPlayers !== 1 ? 's' : ''}` : `${ev.minPlayers}Ã¢â‚¬â€œ${ev.maxPlayers} Bowlers`,
+                              ev.minPlayers === ev.maxPlayers ? `${ev.minPlayers} Bowler${ev.minPlayers !== 1 ? 's' : ''}` : `${ev.minPlayers}-${ev.maxPlayers} Bowlers`,
                               ev.scoring.charAt(0).toUpperCase() + ev.scoring.slice(1),
                               ev.requireDivision ? 'Division Required' : 'Division Optional',
                               `${squadCount} Squad${squadCount !== 1 ? 's' : ''}`,
@@ -2782,7 +2783,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                       <header className={styles.squadGroupHead}>
                         <h3><CalendarDays size={14} /> {group.label}</h3>
                         <div className={styles.squadGroupHeadMeta}>
-                          <span>{group.squads.length} squads Ã¢â‚¬Â¢ {group.squads.reduce((sum, squad) => sum + squad.capacity, 0)} capacity Ã¢â‚¬Â¢ {group.squads.reduce((sum, squad) => sum + squad.registeredCount, 0)} filled</span>
+                          <span>{group.squads.length} squads - {group.squads.reduce((sum, squad) => sum + squad.capacity, 0)} capacity - {group.squads.reduce((sum, squad) => sum + squad.registeredCount, 0)} filled</span>
                           <button type="button" className={styles.squadChevronButton} aria-label="Collapse date group" disabled>
                             <ChevronUp size={13} />
                           </button>

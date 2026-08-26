@@ -5,7 +5,12 @@ from sqlalchemy.orm import Session
 from ...core import models, schemas
 from ...api import deps
 import json
+from copy import deepcopy
+from pydantic import BaseModel, Field
 from time import perf_counter
+from ...services.tournament_audit import record_tournament_event
+from ...services.tournament_access import require_tournament_permission
+from ...services.tournament_snapshots import create_restore_point
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -106,6 +111,17 @@ def create_tournament(
             user_id=user.id
         )
         db.add(db_tournament)
+        db.flush()
+        record_tournament_event(
+            db,
+            tournament_id=db_tournament.id,
+            event_type="tournament.created",
+            user=user,
+            summary=f"Created tournament {db_tournament.name}",
+            after_values={"name": db_tournament.name, "location": db_tournament.location},
+            entity_type="tournament",
+            entity_id=db_tournament.id,
+        )
         db.commit()
         db.refresh(db_tournament)
         # squad_times is already stored as JSON string in the DB; no need to assign the dict here
@@ -117,6 +133,118 @@ def create_tournament(
         db.rollback()
         logger.error(f"Error creating tournament: {e}")
         raise HTTPException(status_code=500, detail="Failed to create tournament")
+
+
+class TournamentDuplicateRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=200)
+    start_date: str | None = None
+    end_date: str | None = None
+    copy_tournament_settings: bool = True
+    copy_bracket_programs: bool = True
+    copy_side_pots: bool = True
+    copy_squads: bool = True
+    copy_bowlers: bool = False
+
+
+@router.post("/{tournament_id}/duplicate", response_model=schemas.Tournament)
+def duplicate_tournament(
+    tournament_id: int,
+    payload: TournamentDuplicateRequest,
+    db: Session = Depends(deps.get_db),
+    user=Depends(deps.get_current_user),
+):
+    source = require_tournament_permission(db, tournament_id, user, "manage_tournament")
+    name = payload.name.strip()
+    if not name:
+        raise HTTPException(status_code=422, detail="Tournament name is required")
+
+    source_squads = db.query(models.TournamentSquad).filter_by(tournament_id=source.id).order_by(models.TournamentSquad.id).all()
+    source_settings = db.query(models.TournamentBracketSettings).filter_by(tournament_id=source.id).first()
+    duplicate = models.Tournament(
+        user_id=user.id,
+        name=name,
+        location=source.location,
+        start_date=payload.start_date,
+        end_date=payload.end_date,
+        squad_times="{}",
+        is_public=source.is_public,
+        lifecycle_status="setup",
+        scores_locked=False,
+    )
+    db.add(duplicate)
+    db.flush()
+
+    squad_map: dict[int, int] = {}
+    copied_squad_times: dict[str, list[str]] = {}
+    if payload.copy_squads:
+        for source_squad in source_squads:
+            new_squad = models.TournamentSquad(
+                tournament_id=duplicate.id, date=source_squad.date, time=source_squad.time,
+            )
+            db.add(new_squad)
+            db.flush()
+            squad_map[source_squad.id] = new_squad.id
+            copied_squad_times.setdefault(str(source_squad.date), []).append(str(source_squad.time))
+        duplicate.squad_times = json.dumps(copied_squad_times)
+
+    if source_settings and (payload.copy_tournament_settings or payload.copy_bracket_programs or payload.copy_side_pots):
+        copied_settings = models.TournamentBracketSettings(tournament_id=duplicate.id)
+        if payload.copy_tournament_settings:
+            for field in (
+                "bracket_size", "first_place_amount", "second_place_amount", "house_fee_amount",
+                "default_entry_fee", "handicap_percentage", "handicap_base", "allow_byes",
+            ):
+                setattr(copied_settings, field, getattr(source_settings, field))
+        if payload.copy_bracket_programs:
+            copied_settings.bracket_programs = deepcopy(source_settings.bracket_programs)
+        if payload.copy_side_pots:
+            copied_settings.side_pots_settings = deepcopy(source_settings.side_pots_settings)
+        db.add(copied_settings)
+
+    copied_bowlers = 0
+    if payload.copy_bowlers:
+        if not payload.copy_squads:
+            raise HTTPException(status_code=422, detail="Squads must be copied when copying bowlers")
+        source_players = db.query(models.TournamentPlayer).filter_by(tournament_id=source.id).all()
+        for player in source_players:
+            db.add(models.TournamentPlayer(
+                tournament_id=duplicate.id,
+                squad_id=squad_map.get(player.squad_id) if player.squad_id else None,
+                user_id=user.id,
+                bowler_profile_id=player.bowler_profile_id,
+                full_name=player.full_name,
+                average=player.average,
+                handicap_pins=player.handicap_pins,
+                handicap_entry_count=player.handicap_entry_count,
+                scratch_entry_count=player.scratch_entry_count,
+                program_entry_counts=deepcopy(player.program_entry_counts),
+                side_pot_entries=deepcopy(player.side_pot_entries),
+                lane=player.lane,
+                division=player.division,
+                usbc_number=player.usbc_number,
+                amount_paid=0,
+            ))
+            copied_bowlers += 1
+
+    record_tournament_event(
+        db, tournament_id=duplicate.id, event_type="tournament.duplicated", user=user,
+        summary=f"Created from template {source.name}",
+        after_values={
+            "source_tournament_id": source.id, "copy_squads": payload.copy_squads,
+            "copy_bowlers": payload.copy_bowlers, "copied_bowlers": copied_bowlers,
+            "copy_tournament_settings": payload.copy_tournament_settings,
+            "copy_bracket_programs": payload.copy_bracket_programs, "copy_side_pots": payload.copy_side_pots,
+        },
+        entity_type="tournament", entity_id=duplicate.id,
+    )
+    record_tournament_event(
+        db, tournament_id=source.id, event_type="tournament.template_used", user=user,
+        summary=f"Duplicated tournament as {duplicate.name}",
+        after_values={"new_tournament_id": duplicate.id}, entity_type="tournament", entity_id=source.id,
+    )
+    db.commit()
+    db.refresh(duplicate)
+    return _tournament_to_dict(duplicate)
 
 @router.get("", response_model=list[schemas.Tournament])
 @router.get("/", response_model=list[schemas.Tournament])
@@ -131,7 +259,8 @@ def list_tournaments(
     query = db.query(models.Tournament).order_by(models.Tournament.id.desc())
 
     if not (show_all and getattr(user, 'is_admin', False)):
-        query = query.filter(models.Tournament.user_id == user.id)
+        staff_ids = db.query(models.TournamentStaffMember.tournament_id).filter(models.TournamentStaffMember.user_id == user.id)
+        query = query.filter((models.Tournament.user_id == user.id) | (models.Tournament.id.in_(staff_ids)))
 
     if offset:
         query = query.offset(offset)
@@ -180,12 +309,11 @@ def get_tournament_bootstrap(
     user = Depends(deps.get_current_user),
 ):
     started = perf_counter()
-    tournament_query = db.query(models.Tournament).filter(models.Tournament.id == tournament_id)
-    if not getattr(user, 'is_admin', False):
-        tournament_query = tournament_query.filter(models.Tournament.user_id == user.id)
-
-    tournament = tournament_query.first()
-    if not tournament:
+    try:
+        tournament = require_tournament_permission(db, tournament_id, user, "view")
+    except HTTPException as exc:
+        if exc.status_code != 404:
+            raise
         logger.info(
             "Bootstrap load completed",
             extra={
@@ -269,8 +397,9 @@ def get_tournament_bootstrap(
             'has_generated_brackets': has_generated_brackets,
             'has_payout_summary': has_payout_summary,
             'payouts_finalized': payouts_finalized,
-            # Current score APIs do not enforce locking. We align UI lock state with finalized payouts.
-            'scores_locked': payouts_finalized,
+            'scores_locked': tournament.scores_locked,
+            'lifecycle_status': 'archived' if tournament.archived_at else tournament.lifecycle_status,
+            'read_only': tournament.archived_at is not None or tournament.lifecycle_status == 'finalized',
         },
     }
 
@@ -295,11 +424,9 @@ def get_tournament(
     db: Session = Depends(deps.get_db),
     user = Depends(deps.get_current_user)
 ):
-    t = db.query(models.Tournament).filter(models.Tournament.id == tournament_id).first()
-    if not t:
-        raise HTTPException(status_code=404, detail="Tournament not found")
-    if t.user_id != user.id and not getattr(user, 'is_admin', False):
-        raise HTTPException(status_code=403, detail="Not authorized to view this tournament")
+    t = require_tournament_permission(
+        db, tournament_id, user, "view", forbidden_detail="Not authorized to view this tournament"
+    )
     return _tournament_to_dict(t)
 
 @router.put("/{tournament_id}", response_model=schemas.Tournament)
@@ -310,11 +437,19 @@ def update_tournament(
     user = Depends(deps.get_current_user)
 ):
     try:
-        db_t = db.query(models.Tournament).filter(models.Tournament.id == tournament_id).first()
-        if not db_t:
-            raise HTTPException(status_code=404, detail="Tournament not found")
-        if db_t.user_id != user.id and not getattr(user, 'is_admin', False):
-            raise HTTPException(status_code=403, detail="Not authorized to update this tournament")
+        db_t = require_tournament_permission(
+            db, tournament_id, user, "manage_tournament",
+            forbidden_detail="Not authorized to update this tournament",
+        )
+        before_values = {
+            "name": db_t.name, "location": db_t.location, "start_date": db_t.start_date,
+            "end_date": db_t.end_date, "squad_times": json.loads(db_t.squad_times or "{}"),
+            "is_public": db_t.is_public,
+        }
+        create_restore_point(
+            db, tournament_id=db_t.id, user=user, trigger="tournament.settings_update",
+            summary="Before tournament settings update",
+        )
         db_t.name = tournament.name
         if tournament.location is not None:
             db_t.location = tournament.location
@@ -325,6 +460,22 @@ def update_tournament(
         db_t.squad_times = json.dumps(tournament.squad_times)
         if tournament.is_public is not None:
             db_t.is_public = tournament.is_public
+        after_values = {
+            "name": db_t.name, "location": db_t.location, "start_date": db_t.start_date,
+            "end_date": db_t.end_date, "squad_times": tournament.squad_times,
+            "is_public": db_t.is_public,
+        }
+        record_tournament_event(
+            db,
+            tournament_id=db_t.id,
+            event_type="tournament.settings_updated",
+            user=user,
+            summary="Updated tournament settings",
+            before_values=before_values,
+            after_values=after_values,
+            entity_type="tournament",
+            entity_id=db_t.id,
+        )
         db.commit()
         db.refresh(db_t)
         # Parse squad_times before returning for API response
@@ -364,6 +515,10 @@ def delete_tournament(
         db.query(models.PlayerScore).filter(models.PlayerScore.tournament_id == tournament_id).delete()
         db.query(models.TournamentPlayer).filter(models.TournamentPlayer.tournament_id == tournament_id).delete()
         db.query(models.TournamentBracketSettings).filter(models.TournamentBracketSettings.tournament_id == tournament_id).delete()
+        db.query(models.TournamentStaffInvitation).filter(models.TournamentStaffInvitation.tournament_id == tournament_id).delete()
+        db.query(models.TournamentStaffMember).filter(models.TournamentStaffMember.tournament_id == tournament_id).delete()
+        db.query(models.TournamentRestorePoint).filter(models.TournamentRestorePoint.tournament_id == tournament_id).delete()
+        db.query(models.TournamentAuditLog).filter(models.TournamentAuditLog.tournament_id == tournament_id).delete()
 
         # 3. User squad selections depend on squads
         squad_ids = [s.id for s in db.query(models.TournamentSquad.id).filter(

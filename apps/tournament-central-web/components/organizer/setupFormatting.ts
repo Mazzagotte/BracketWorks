@@ -1,8 +1,7 @@
 import type { SquadConfig } from './types';
+import { formatSquadTime, formatTournamentDate } from './organizerFormatting';
 
-export function formatMoney(cents: number): string {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cents / 100);
-}
+export { formatMoney } from './organizerFormatting';
 
 export function formatEntryFeeInput(cents: number): string {
   return (cents / 100).toFixed(2);
@@ -66,39 +65,11 @@ export function formatDateLabel(dateIso: string): string {
 }
 
 export function formatDateShort(dateIso: string): string {
-  if (!dateIso) {
-    return 'Not set';
-  }
-
-  const parsed = new Date(`${dateIso}T00:00:00`);
-  if (Number.isNaN(parsed.getTime())) {
-    return dateIso;
-  }
-
-  return parsed.toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
+  return formatTournamentDate(dateIso, 'Not set');
 }
 
 export function formatSquadTimeLabel(time: string): string {
-  if (!/^\d{2}:\d{2}$/.test(time)) {
-    return time;
-  }
-
-  const [hoursText, minutesText] = time.split(':');
-  const hours = Number(hoursText);
-  const minutes = Number(minutesText);
-  if (!Number.isFinite(hours) || !Number.isFinite(minutes)) {
-    return time;
-  }
-
-  const date = new Date(2000, 0, 1, hours, minutes);
-  return date.toLocaleTimeString(undefined, {
-    hour: 'numeric',
-    minute: '2-digit',
-  });
+  return formatSquadTime(time);
 }
 
 export function buildSquadDisplayName(squad: Pick<SquadConfig, 'dateIso' | 'startTime'>): string {

@@ -7,34 +7,15 @@ import { useMemo } from 'react';
 
 import type { TournamentContract, TournamentSetupStateSummaryContract } from '@bracketworks/types';
 import { useTournamentContext } from '@/components/organizer/TournamentContext';
+import OrganizerStatusBadge from '@/components/organizer/OrganizerStatusBadge';
+import { formatRegistrationTimestamp, formatTournamentDateRange } from '@/components/organizer/organizerFormatting';
+import { organizerRoutes } from '@/components/organizer/organizerRoutes';
 import {
   buildRegistrationSummary,
   buildSquadSummaries,
   buildTournamentAttentionItems,
 } from '@/components/organizer/tournamentInsights';
 import styles from './page.module.css';
-
-function formatDateRange(startDate: string | null | undefined, endDate: string | null | undefined): string {
-  const rawStart = startDate?.trim();
-  const rawEnd = endDate?.trim();
-  if (!rawStart && !rawEnd) {
-    return 'Dates not set';
-  }
-
-  const start = rawStart ? new Date(`${rawStart}T00:00:00`) : null;
-  const end = rawEnd ? new Date(`${rawEnd}T00:00:00`) : null;
-
-  if ((start && Number.isNaN(start.getTime())) || (end && Number.isNaN(end.getTime()))) {
-    return rawStart || rawEnd || 'Dates not set';
-  }
-
-  if (start && end) {
-    return `${start.toLocaleDateString()} - ${end.toLocaleDateString()}`;
-  }
-
-  const date = start || end;
-  return date ? date.toLocaleDateString() : 'Dates not set';
-}
 
 type SummaryItem = {
   label: string;
@@ -84,8 +65,12 @@ export default function OrganizerTournamentOverviewPage() {
     eventCount,
     hasRulesDocument,
     registrationCloseIso,
-    isLoading,
-    error,
+    isTournamentLoading,
+    isSetupLoading,
+    isRegistrationsLoading,
+    tournamentError,
+    setupError,
+    registrationsError,
   } = useTournamentContext();
 
   const summaryItems = useMemo(() => {
@@ -118,7 +103,9 @@ export default function OrganizerTournamentOverviewPage() {
 
   return (
     <div className={styles.shell}>
-      {error ? <p className={styles.error}>{error}</p> : null}
+      {tournamentError ? <p className={styles.error}>{tournamentError}</p> : null}
+      {setupError ? <p className={styles.error}>Setup data: {setupError}</p> : null}
+      {registrationsError ? <p className={styles.error}>Registration data: {registrationsError}</p> : null}
 
       <section className={styles.headerCard}>
         <div className={styles.heroLogo}>
@@ -127,18 +114,18 @@ export default function OrganizerTournamentOverviewPage() {
           ) : <span>TC</span>}
         </div>
         <div className={styles.heroCopy}>
-          <span className={styles.statusBadge}>{tournament?.is_public ? 'PUBLISHED' : 'PRIVATE'}</span>
+          <OrganizerStatusBadge status={tournament?.is_public ? 'published' : 'private'} />
           <h1>{tournament?.name || 'Tournament'}</h1>
           <p className={styles.meta}>
             <CalendarDays aria-hidden="true" />
-            {formatDateRange(tournament?.start_date, tournament?.end_date)}
+            {formatTournamentDateRange(tournament?.start_date, tournament?.end_date)}
             <MapPin aria-hidden="true" />
             {tournament?.location || 'Location not set'}
           </p>
         </div>
         <div className={styles.actions}>
-          <Link href={`/organizer/tournaments/${tournamentId}/setup`} className={styles.primaryButton}>Open Setup</Link>
-          <Link href="/organizer" className={styles.secondaryButton}>Back to Dashboard</Link>
+          <Link href={organizerRoutes.setup(tournamentId)} className={styles.primaryButton}>Open Setup</Link>
+          <Link href={organizerRoutes.dashboard} className={styles.secondaryButton}>Back to Dashboard</Link>
         </div>
       </section>
 
@@ -167,13 +154,13 @@ export default function OrganizerTournamentOverviewPage() {
             <span className={styles.summaryIcon}><CalendarDays aria-hidden="true" /></span>
             <div>
               <span className={styles.summaryLabel}>LAST UPDATED</span>
-              <strong>{new Date(setupSummary.updated_at).toLocaleString()}</strong>
+              <strong>{formatRegistrationTimestamp(setupSummary.updated_at)}</strong>
             </div>
           </div>
         ) : null}
       </section>
 
-      {!isLoading && tournament ? (
+      {!isRegistrationsLoading && tournament ? (
         <section className={styles.summaryCard}>
           <div className={styles.summaryHeading}>
             <h2>Registration Summary</h2>
@@ -191,7 +178,7 @@ export default function OrganizerTournamentOverviewPage() {
         </section>
       ) : null}
 
-      {!isLoading && squadSummaries.length > 0 ? (
+      {!isSetupLoading && !isRegistrationsLoading && squadSummaries.length > 0 ? (
         <section className={styles.summaryCard}>
           <div className={styles.summaryHeading}>
             <h2>Squad Summary</h2>
@@ -210,7 +197,7 @@ export default function OrganizerTournamentOverviewPage() {
                     <td>{squad.capacity > 0 ? squad.capacity : '\u2014'}</td>
                     <td>{available === null ? '\u2014' : available}</td>
                     <td>{waitlisted}</td>
-                    <td><span className={`${styles.squadStatusChip} ${styles[`squadStatus${status.replace(/\s+/g, '')}`]}`}>{status}</span></td>
+                    <td><OrganizerStatusBadge status={status} /></td>
                   </tr>
                 ))}
               </tbody>
@@ -219,7 +206,7 @@ export default function OrganizerTournamentOverviewPage() {
         </section>
       ) : null}
 
-      {!isLoading && attentionItems.length > 0 ? (
+      {!isTournamentLoading && !isSetupLoading && !isRegistrationsLoading && attentionItems.length > 0 ? (
         <section className={styles.summaryCard}>
           <div className={styles.summaryHeading}>
             <h2>Needs Attention</h2>

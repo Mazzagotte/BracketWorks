@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from decimal import Decimal
 from typing import Optional
 
 from sqlalchemy import (
@@ -9,6 +10,7 @@ from sqlalchemy import (
     Integer,
     JSON,
     LargeBinary,
+    Numeric,
     String,
     Text,
     UniqueConstraint,
@@ -400,6 +402,19 @@ class TournamentPlayer(Base):
     usbc = synonym("usbc_number")
 
 
+class DuplicatePlayerResolution(Base):
+    __tablename__ = "duplicate_player_resolutions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tournament_id: Mapped[int] = mapped_column(Integer, ForeignKey("tournaments.id"), nullable=False, index=True)
+    left_player_id: Mapped[int] = mapped_column(Integer, ForeignKey("tournament_players.id"), nullable=False, index=True)
+    right_player_id: Mapped[int] = mapped_column(Integer, ForeignKey("tournament_players.id"), nullable=False, index=True)
+    resolution: Mapped[str] = mapped_column(String(30), nullable=False)
+    resolved_by_user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), index=True)
+    __table_args__ = (UniqueConstraint("tournament_id", "left_player_id", "right_player_id", name="uq_duplicate_player_pair"),)
+
+
 class Tournament(Base):
     __tablename__ = "tournaments"
 
@@ -417,6 +432,76 @@ class Tournament(Base):
         DateTime, nullable=True, index=True
     )
     archive_reason: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    lifecycle_status: Mapped[str] = mapped_column(String(32), nullable=False, default="setup", index=True)
+    scores_locked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, index=True)
+    finalized_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, index=True)
+    finalized_by_user_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
+
+
+class TournamentAuditLog(Base):
+    __tablename__ = "tournament_audit_logs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tournament_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("tournaments.id"), nullable=False, index=True
+    )
+    event_type: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
+    user_id: Mapped[Optional[int]] = mapped_column(
+        Integer, ForeignKey("users.id"), nullable=True, index=True
+    )
+    user_display_name: Mapped[str] = mapped_column(String(160), nullable=False)
+    summary: Mapped[str] = mapped_column(String(500), nullable=False)
+    before_values: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+    after_values: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+    reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    entity_type: Mapped[Optional[str]] = mapped_column(String(60), nullable=True, index=True)
+    entity_id: Mapped[Optional[str]] = mapped_column(String(80), nullable=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), index=True
+    )
+
+
+class TournamentStaffMember(Base):
+    __tablename__ = "tournament_staff_members"
+    __table_args__ = (UniqueConstraint("tournament_id", "user_id", name="uq_tournament_staff_user"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tournament_id: Mapped[int] = mapped_column(Integer, ForeignKey("tournaments.id"), nullable=False, index=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    role: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
+    invited_by_user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), index=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+
+class TournamentStaffInvitation(Base):
+    __tablename__ = "tournament_staff_invitations"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tournament_id: Mapped[int] = mapped_column(Integer, ForeignKey("tournaments.id"), nullable=False, index=True)
+    email: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    role: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
+    invited_by_user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending", index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, index=True)
+    responded_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    token_hash: Mapped[Optional[str]] = mapped_column(String(64), nullable=True, unique=True, index=True)
+
+
+class TournamentRestorePoint(Base):
+    __tablename__ = "tournament_restore_points"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tournament_id: Mapped[int] = mapped_column(Integer, ForeignKey("tournaments.id"), nullable=False, index=True)
+    created_by_user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    trigger: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
+    summary: Mapped[str] = mapped_column(String(500), nullable=False)
+    payload: Mapped[dict] = mapped_column(JSON, nullable=False)
+    activity_watermark_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), index=True)
+    restored_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    restored_by_user_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
 
 
 class TournamentCentral(Base):
@@ -795,6 +880,21 @@ class PlayerScore(Base):
     game3_total = synonym("game3_with_handicap")
 
 
+class ScoreCorrection(Base):
+    __tablename__ = "score_corrections"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tournament_id: Mapped[int] = mapped_column(Integer, ForeignKey("tournaments.id"), nullable=False, index=True)
+    score_id: Mapped[int] = mapped_column(Integer, ForeignKey("player_scores.id"), nullable=False, index=True)
+    player_id: Mapped[int] = mapped_column(Integer, ForeignKey("tournament_players.id"), nullable=False, index=True)
+    field_name: Mapped[str] = mapped_column(String(40), nullable=False)
+    old_value: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    new_value: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    reason: Mapped[str] = mapped_column(String(1000), nullable=False)
+    changed_by_user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), index=True)
+
+
 class BracketWinner(Base):
     __tablename__ = "bracket_winners"
 
@@ -907,10 +1007,27 @@ class TournamentPayoutSummary(Base):
     )
     is_finalized: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     finalized_date: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    calculated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    calculated_by_user_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    finalized_by_user_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     created_at: Mapped[str] = mapped_column(String, nullable=False)
     updated_at: Mapped[str] = mapped_column(String, nullable=False)
 
     house_amount = synonym("house_fee_amount")
+
+
+class PayoutAdjustment(Base):
+    __tablename__ = "payout_adjustments"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tournament_id: Mapped[int] = mapped_column(Integer, ForeignKey("tournaments.id"), nullable=False, index=True)
+    payout_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("bracket_payouts.id"), nullable=True, index=True)
+    adjustment_type: Mapped[str] = mapped_column(String(30), nullable=False)
+    old_amount: Mapped[Optional[Decimal]] = mapped_column(Numeric(12, 2), nullable=True)
+    new_amount: Mapped[Optional[Decimal]] = mapped_column(Numeric(12, 2), nullable=True)
+    reason: Mapped[str] = mapped_column(String(1000), nullable=False)
+    adjusted_by_user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), index=True)
 
 
 class FirstRoundMatchupHistory(Base):
@@ -972,6 +1089,10 @@ class Changelog(Base):
     version: Mapped[str] = mapped_column(String(20), nullable=False, unique=True, index=True)
     date: Mapped[str] = mapped_column(String(10), nullable=False)
     changes: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
+    title: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    summary: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    sections: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    tags: Mapped[list | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=lambda: datetime.now(timezone.utc)
     )

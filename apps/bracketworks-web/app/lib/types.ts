@@ -11,6 +11,8 @@ export interface TournamentWorkflowStatus {
   has_payout_summary: boolean;
   payouts_finalized: boolean;
   scores_locked: boolean;
+  lifecycle_status?: 'setup' | 'ready' | 'in_progress' | 'scores_complete' | 'payout_review' | 'finalized' | 'archived';
+  read_only?: boolean;
 }
 
 export interface TournamentBootstrapResponse {
@@ -22,6 +24,21 @@ export interface TournamentBootstrapResponse {
 
 export interface DashboardTournamentBootstrapResponse extends TournamentBootstrapResponse {
   workflow_status: TournamentWorkflowStatus | null;
+}
+
+export interface TournamentActivityEntry {
+  id: number;
+  tournament_id: number;
+  event_type: string;
+  user_id: number | null;
+  user_display_name: string;
+  summary: string;
+  before_values: Record<string, unknown> | null;
+  after_values: Record<string, unknown> | null;
+  reason: string | null;
+  entity_type: string | null;
+  entity_id: string | null;
+  created_at: string;
 }
 
 export type Squad = SquadContract;
@@ -63,6 +80,10 @@ export interface Match {
   seedB?: number;
   playerA?: string;
   playerB?: string;
+  playerA_id?: number | null;
+  playerB_id?: number | null;
+  qualifying_score_a?: number;
+  qualifying_score_b?: number;
   scoreA?: number;
   scoreB?: number;
   match_score_a?: number; // Legacy field
@@ -231,4 +252,15 @@ export interface ChangelogEntry {
   date: string;
   version: string;
   changes: string[];
+  title?: string | null;
+  summary?: string | null;
+  sections?: ChangelogSection[] | null;
+  tags?: ChangelogTag[] | null;
 }
+
+export interface ChangelogSection {
+  heading: string;
+  items: string[];
+}
+
+export type ChangelogTag = "New" | "Improved" | "Fixed" | "Security" | "Admin" | "Reliability";

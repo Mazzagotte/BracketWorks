@@ -13,8 +13,10 @@ import MobileCompatibilityNotice, { useMobileCompatibilityNotice } from '../app/
 import WelcomeOnboardingModal from '../app/components/WelcomeOnboardingModal';
 import AnnouncementNotice from '../app/components/AnnouncementNotice';
 import LegalDisclosureModal from '../app/components/LegalDisclosureModal';
+import { StaffInvitationNotice } from './StaffInvitationNotice';
 import { useAuth } from '../app/lib/auth-context';
-import { usesNavigationDrawerViewport } from '../app/lib/responsive';
+import { NAVIGATION_DRAWER_VIEWPORT_QUERY } from '../app/lib/responsive';
+import { useMediaQuery } from '../app/hooks/useMediaQuery';
 import { resetScrollLocks, setBodyInteractionState } from '../app/utils/modalUtils';
 import styles from '../app/layout.module.css';
 
@@ -41,7 +43,7 @@ function ClientLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [firstName, setFirstName] = useState<string | undefined>(undefined);
-  const [isMobile, setIsMobile] = useState(false);
+  const isMobile = useMediaQuery(NAVIGATION_DRAWER_VIEWPORT_QUERY);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [announcementOpen, setAnnouncementOpen] = useState(false);
   const [legalBlocked, setLegalBlocked] = useState(true);
@@ -63,13 +65,7 @@ function ClientLayout({ children }: { children: ReactNode }) {
     const search = window.location.search;
     setIsEmbeddedModalRoute(new URLSearchParams(search).get('modal') === '1');
 
-    const checkMobile = () => {
-      setIsMobile(usesNavigationDrawerViewport());
-    };
-
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    return undefined;
   }, []);
 
   useEffect(() => {
@@ -199,6 +195,7 @@ function ClientLayout({ children }: { children: ReactNode }) {
             <DevNoticeBanner />
           </div>
         )}
+        <StaffInvitationNotice enabled={showAuthenticatedShell && !legalBlocked} />
 
         <div className={contentCardClass}>
           <ErrorBoundary>

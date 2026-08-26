@@ -2,6 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 from app.api.deps import get_db, get_current_user
+from app.services.tournament_access import verify_owned_tournament_access
+from app.services.tournament_audit import record_tournament_event
+from app.services.tournament_lifecycle import advance_status
+from app.services.tournament_snapshots import create_restore_point
 from app.core import models, schemas
 from app.core.bracket_programs import normalize_bowler_bracket_entries, normalize_bracket_programs
 from typing import Optional
@@ -155,6 +159,7 @@ def create_bracket_settings(
 ):
     """Create or update bracket settings for a tournament."""
     try:
+        verify_owned_tournament_access(db, bracket_settings.tournament_id, current_user)
         # Serialize incoming data to plain dicts once so nested Pydantic objects
         # (e.g. BracketProgramDefinition) are plain dicts before being passed to
         # helpers that call program.get("key") — Pydantic v2 models don't support .get().
@@ -166,6 +171,17 @@ def create_bracket_settings(
         ).first()
 
         if existing_settings:
+            before_values = {
+                field: getattr(existing_settings, field)
+                for field in settings_data
+                if hasattr(existing_settings, field)
+            }
+            significant_fields = {"bracket_size", "bracket_programs", "handicap_percentage", "handicap_base", "allow_byes"}
+            if any(settings_data.get(field) != before_values.get(field) for field in significant_fields if field in settings_data):
+                create_restore_point(
+                    db, tournament_id=existing_settings.tournament_id, user=current_user,
+                    trigger="tournament.bracket_settings_update", summary="Before major bracket settings update",
+                )
             disabled_program_keys = _find_disabled_program_keys(
                 existing_settings.bracket_programs,
                 settings_data.get('bracket_programs'),
@@ -192,6 +208,13 @@ def create_bracket_settings(
                 existing_settings.house_fee_amount
             )
 
+            record_tournament_event(
+                db, tournament_id=existing_settings.tournament_id,
+                event_type="tournament.bracket_settings_updated", user=current_user,
+                summary="Updated bracket settings", before_values=before_values,
+                after_values=settings_data, entity_type="bracket_settings", entity_id=existing_settings.id,
+            )
+            advance_status(db, existing_settings.tournament_id, "ready")
             db.commit()
             db.refresh(existing_settings)
 
@@ -222,6 +245,14 @@ def create_bracket_settings(
             )
 
             db.add(db_settings)
+            db.flush()
+            record_tournament_event(
+                db, tournament_id=db_settings.tournament_id,
+                event_type="tournament.bracket_settings_updated", user=current_user,
+                summary="Configured bracket settings", after_values=settings_data,
+                entity_type="bracket_settings", entity_id=db_settings.id,
+            )
+            advance_status(db, db_settings.tournament_id, "ready")
             db.commit()
             db.refresh(db_settings)
 
@@ -259,6 +290,7 @@ def get_bracket_settings(
     current_user: models.User = Depends(get_current_user)
 ):
     """Get bracket settings for a tournament."""
+    verify_owned_tournament_access(db, tournament_id, current_user, permission="view")
     settings = db.query(models.TournamentBracketSettings).filter(
         models.TournamentBracketSettings.tournament_id == tournament_id
     ).first()
@@ -279,10 +311,18 @@ def update_bracket_settings(
 
         if not db_settings:
             raise HTTPException(status_code=404, detail="Bracket settings not found")
+        verify_owned_tournament_access(db, db_settings.tournament_id, current_user)
 
         # Track if handicap settings changed
         handicap_changed = False
         update_data = bracket_settings.model_dump(exclude_unset=True)
+        before_values = {field: getattr(db_settings, field) for field in update_data}
+        significant_fields = {"bracket_size", "bracket_programs", "handicap_percentage", "handicap_base", "allow_byes"}
+        if any(update_data.get(field) != before_values.get(field) for field in significant_fields if field in update_data):
+            create_restore_point(
+                db, tournament_id=db_settings.tournament_id, user=current_user,
+                trigger="tournament.bracket_settings_update", summary="Before major bracket settings update",
+            )
 
         disabled_program_keys = _find_disabled_program_keys(
             db_settings.bracket_programs,
@@ -311,6 +351,13 @@ def update_bracket_settings(
             db_settings.house_fee_amount
         )
 
+        record_tournament_event(
+            db, tournament_id=db_settings.tournament_id,
+            event_type="tournament.bracket_settings_updated", user=current_user,
+            summary="Updated bracket settings", before_values=before_values,
+            after_values=update_data, entity_type="bracket_settings", entity_id=db_settings.id,
+        )
+        advance_status(db, db_settings.tournament_id, "ready")
         db.commit()
         db.refresh(db_settings)
 
@@ -355,7 +402,14 @@ def delete_bracket_settings(
     
     if not db_settings:
         raise HTTPException(status_code=404, detail="Bracket settings not found")
-    
+    verify_owned_tournament_access(db, db_settings.tournament_id, current_user)
+    tournament_id = db_settings.tournament_id
+    before_values = {"bracket_size": db_settings.bracket_size, "bracket_programs": db_settings.bracket_programs}
     db.delete(db_settings)
+    record_tournament_event(
+        db, tournament_id=tournament_id, event_type="tournament.bracket_settings_deleted", user=current_user,
+        summary="Deleted bracket settings", before_values=before_values,
+        entity_type="bracket_settings", entity_id=settings_id,
+    )
     db.commit()
     return {"message": "Bracket settings deleted successfully"}

@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction, useEffect } from 'react'
 import { API, apiClient, apiFetch } from '../../lib/api'
 import { logger } from '../../lib/logger'
-import { getSelectedSquadId, getSelectedTournamentId } from '../../lib/selection-session'
+import { getSelectedSquadId, getSelectedTournamentId, resolveSquadSelection, setActiveSquadLabel, setSelectedSquad as persistSelectedSquad } from '../../lib/selection-session'
 import { Squad, Tournament, TournamentBootstrapResponse } from '../../lib/types'
 
 export type ScoreRow = {
@@ -61,15 +61,11 @@ export function usePayoutSetup({
         setSelectedTournament(bootstrap.tournament)
         fetchSquads(bootstrap.tournament.id)
 
-        const storedSquadId = getSelectedSquadId()
-        const restoredSelectedSquadId = bootstrap.selected_squad?.squad_id
-          ?? (storedSquadId ? Number(storedSquadId) : null)
-
-        if (restoredSelectedSquadId) {
-          const restored = (bootstrap.squads || []).find(s => s.id === restoredSelectedSquadId) || null
-          setSelectedSquad(restored)
-        } else if ((bootstrap.squads || []).length > 0) {
-          setSelectedSquad(bootstrap.squads[0] ?? null)
+        const resolvedSquad = resolveSquadSelection(bootstrap.squads || [], bootstrap.selected_squad?.squad_id, getSelectedSquadId())
+        setSelectedSquad(resolvedSquad)
+        if (resolvedSquad) {
+          persistSelectedSquad(resolvedSquad.id)
+          setActiveSquadLabel([resolvedSquad.date, resolvedSquad.time].filter(Boolean).join(' '))
         }
 
         logger.info('Payouts bootstrap load completed', {

@@ -25,7 +25,7 @@ Match Structure in JSON:
 
 from sqlalchemy.orm import Session
 from typing import Dict, Any, Optional, List
-from datetime import datetime
+from datetime import UTC, datetime
 import hashlib
 import json
 import logging
@@ -202,8 +202,8 @@ def save_brackets_simple(
             bracket_data=brackets_data,
             bracket_size=brackets_data.get("bracket_size", 8),
             player_count=player_count,
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
             is_active=True,
         )
 
@@ -252,7 +252,7 @@ def save_first_round_to_history(
                         bracket_type=str(group.get("key", "scratch"))[:20],
                         bracket_number=bracket_num,
                         round_number=1,
-                        created_at=datetime.utcnow(),
+                        created_at=datetime.now(UTC),
                     )
                     db.add(history_entry)
 
@@ -480,7 +480,7 @@ def update_match_score_simple(
 
         # Save the updated data
         bracket_record.bracket_data = ensure_legacy_bracket_views(bracket_data)
-        bracket_record.updated_at = datetime.utcnow()
+        bracket_record.updated_at = datetime.now(UTC)
 
         db.commit()
 

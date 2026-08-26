@@ -6,7 +6,8 @@
     "dev": "next dev -p 3001",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx && node scripts/check-encoding.mjs",
+    "check:encoding": "node scripts/check-encoding.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest"

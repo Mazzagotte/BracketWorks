@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 from fastapi.testclient import TestClient
 
@@ -147,7 +147,7 @@ def test_save_payouts_rejects_when_summary_finalized(api_client: TestClient, aut
     ).first()
     assert summary is not None
     summary.is_finalized = True
-    summary.finalized_date = datetime.utcnow().isoformat()
+    summary.finalized_date = datetime.now(UTC).isoformat()
     db_session.commit()
 
     save_again = api_client.post(
@@ -156,6 +156,67 @@ def test_save_payouts_rejects_when_summary_finalized(api_client: TestClient, aut
     )
     assert save_again.status_code == 400
     assert "already finalized" in save_again.json()["detail"]
+
+
+def test_manual_payout_adjustment_requires_open_payouts_and_records_reason(api_client: TestClient, auth_identity, db_session):
+    tournament = _create_tournament(api_client, auth_identity.headers, "Payout Adjustment")
+    squad = _create_squad(api_client, auth_identity.headers, tournament["id"])
+    _configure_and_seed_for_brackets(api_client, auth_identity.headers, tournament["id"], squad["id"])
+    assert api_client.post(f"/api/v1/payouts/save/{tournament['id']}?squad_id={squad['id']}", headers=auth_identity.headers).status_code == 200
+    payout = db_session.query(models.BracketPayout).filter_by(tournament_id=tournament["id"]).first()
+    if payout is None:
+        player = db_session.query(models.TournamentPlayer).filter_by(tournament_id=tournament["id"]).first()
+        winner = models.BracketWinner(
+            tournament_id=tournament["id"], squad_id=squad["id"], player_id=player.id,
+            bracket_group_key="scratch", bracket_label="Scratch Bracket 1", placement=1,
+            placement_text="1st", player_name=player.full_name, created_at=datetime.now().isoformat(),
+        )
+        db_session.add(winner)
+        db_session.flush()
+        payout = models.BracketPayout(
+            tournament_id=tournament["id"], squad_id=squad["id"], bracket_winner_id=winner.id,
+            player_id=player.id, bracket_group_key="scratch", bracket_label="Scratch Bracket 1",
+            placement=1, player_name=player.full_name, prize_pool_total=80, payout_percentage=60,
+            payout_amount=48, entry_fee=10, bracket_size=8, created_at=datetime.now().isoformat(),
+            updated_at=datetime.now().isoformat(),
+        )
+        db_session.add(payout)
+        db_session.commit()
+    old_amount = payout.payout_amount
+
+    adjusted = api_client.patch(f"/api/v1/payouts/{tournament['id']}/items/{payout.id}", headers=auth_identity.headers, json={
+        "new_amount": old_amount + 5, "reason": "Approved prize correction",
+    })
+    assert adjusted.status_code == 200, adjusted.text
+    record = db_session.query(models.PayoutAdjustment).filter_by(payout_id=payout.id).one()
+    assert str(record.old_amount) == f"{old_amount:.2f}"
+    assert str(record.new_amount) == f"{old_amount + 5:.2f}"
+    assert record.reason == "Approved prize correction"
+
+
+def test_finalized_payout_reopen_requires_reason_and_preserves_score_lock(api_client: TestClient, auth_identity, db_session):
+    tournament = _create_tournament(api_client, auth_identity.headers, "Payout Reopen")
+    squad = _create_squad(api_client, auth_identity.headers, tournament["id"])
+    _configure_and_seed_for_brackets(api_client, auth_identity.headers, tournament["id"], squad["id"])
+    assert api_client.post(f"/api/v1/payouts/save/{tournament['id']}?squad_id={squad['id']}", headers=auth_identity.headers).status_code == 200
+    tournament_row = db_session.get(models.Tournament, tournament["id"])
+    summary = db_session.query(models.TournamentPayoutSummary).filter_by(tournament_id=tournament["id"]).one()
+    tournament_row.lifecycle_status = "finalized"
+    tournament_row.finalized_at = datetime.now()
+    tournament_row.scores_locked = True
+    summary.is_finalized = True
+    summary.finalized_date = datetime.now().isoformat()
+    db_session.commit()
+
+    missing_reason = api_client.post(f"/api/v1/payouts/{tournament['id']}/reopen", headers=auth_identity.headers, json={"reason": ""})
+    assert missing_reason.status_code == 422
+    reopened = api_client.post(f"/api/v1/payouts/{tournament['id']}/reopen", headers=auth_identity.headers, json={"reason": "Correcting approved payout"})
+    assert reopened.status_code == 200, reopened.text
+    db_session.refresh(tournament_row)
+    db_session.refresh(summary)
+    assert tournament_row.lifecycle_status == "payout_review"
+    assert tournament_row.scores_locked is True
+    assert summary.is_finalized is False
 
 
 def test_payout_calculate_requires_tournament_access(
