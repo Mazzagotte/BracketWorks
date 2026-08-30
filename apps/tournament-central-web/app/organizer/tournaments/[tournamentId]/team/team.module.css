@@ -1,0 +1,20 @@
+.inviteForm {
+  padding: 0 16px 16px;
+}
+
+.fullWidth {
+  grid-column: 1 / -1;
+}
+
+.inviteActions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.successText {
+  margin: 0;
+  color: #20d884;
+  font-weight: 700;
+  font-size: 0.72rem;
+}

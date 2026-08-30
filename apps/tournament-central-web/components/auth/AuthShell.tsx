@@ -1,10 +1,12 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { CalendarDays, GitFork, Users } from 'lucide-react';
+import { Bell, ClipboardList, Search } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import FeatureIconCard from './FeatureIconCard';
 import styles from './AuthShell.module.css';
+
+const BRACKETWORKS_URL = 'https://bracketworks.app/login';
 
 type AuthShellProps = {
   mode: 'login' | 'signup';
@@ -17,22 +19,22 @@ type AuthShellProps = {
 
 const featureCopy = [
   {
-    icon: CalendarDays,
-    label: 'Create Your Tournament',
-    title: 'Create Your Tournament',
-    description: 'Build dates, squads, divisions, events and fees.',
+    icon: Search,
+    label: 'Discover Tournaments',
+    title: 'Discover Tournaments',
+    description: 'Find upcoming bowling tournaments by location, date, and format.',
   },
   {
-    icon: Users,
-    label: 'Manage Registration',
-    title: 'Manage Registration',
-    description: 'Keep entries, bowlers and payments organized.',
+    icon: ClipboardList,
+    label: 'Register in One Place',
+    title: 'Register in One Place',
+    description: 'Enter tournaments and select squads, divisions, and events.',
   },
   {
-    icon: GitFork,
-    label: 'Run It With BracketWorks',
-    title: 'Run It With BracketWorks',
-    description: 'Send your tournament directly into BracketWorks.',
+    icon: Bell,
+    label: 'Stay Connected',
+    title: 'Stay Connected',
+    description: 'View tournament information, updates, availability, and results.',
   },
 ] as const;
 
@@ -49,7 +51,7 @@ export default function AuthShell({
   return (
     <main className={styles.page}>
       <div className={styles.shell}>
-        <section className={styles.brandPanel} aria-hidden="true">
+        <section className={styles.brandPanel}>
           <div className={styles.brandTop}>
             <Image
               src="/TC Banner.svg"
@@ -62,13 +64,13 @@ export default function AuthShell({
           </div>
 
           <h1 className={styles.brandHeadline}>
-            Everything Your Tournament Needs.<br />
-            <span className={styles.brandHeadlineOrange}>From Registration to Results.</span>
+            Your Tournament Starts Here.<br />
+            <span className={styles.brandHeadlineOrange}>Find. Register. Bowl.</span>
           </h1>
 
           <p className={styles.brandDescription}>
-            Create tournaments, manage registration, organize squads,
-            and connect directly with BracketWorks when it&apos;s time to run your tournament.
+            Discover bowling tournaments near you, register your squad,
+            and stay connected with everything happening on tournament day.
           </p>
 
           <ul className={styles.featureList}>
@@ -82,6 +84,26 @@ export default function AuthShell({
               </li>
             ))}
           </ul>
+
+          <div className={styles.ecosystemCallout}>
+            <span className={styles.ecosystemLabel}>Part of the Connected Tournament Platform</span>
+            <div className={styles.ecosystemRow}>
+              <Image
+                src="/BW_logo_No_Text.svg"
+                alt=""
+                width={40}
+                height={40}
+                unoptimized
+                className={styles.ecosystemLogo}
+              />
+              <span className={styles.ecosystemText}>
+                Running a tournament?{' '}
+                <a href={BRACKETWORKS_URL} className={styles.ecosystemLink}>
+                  Manage brackets, scores &amp; payouts →
+                </a>
+              </span>
+            </div>
+          </div>
         </section>
 
         <section className={styles.card}>
@@ -114,7 +136,7 @@ export default function AuthShell({
       </div>
 
       <footer className={styles.footer}>
-        &copy; {new Date().getFullYear()} Tournament Central. All rights reserved.
+        &copy; {new Date().getFullYear()} BracketWorks + Tournament Central. All rights reserved.
       </footer>
     </main>
   );

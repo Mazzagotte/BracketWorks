@@ -24,6 +24,8 @@ import { useResetSuccessCountdown } from "../hooks/useResetSuccessCountdown";
 import { parseLoginError, parseNetworkError, getLoginErrorDuration } from "../lib/auth/login-error-handler";
 import DevNoticeModal from "../components/DevNoticeModal";
 
+const TOURNAMENT_CENTRAL_URL = 'https://tournamentcentral.app/login';
+
 const featureCards = [
   {
     icon: ClipboardList,
@@ -262,7 +264,7 @@ export default function LoginPage() {
       />
 
       <div className={styles.shell}>
-        <section className={styles.brandPanel} aria-hidden="true">
+        <section className={styles.brandPanel}>
           <div className={styles.brandTop}>
             <Image
               src="/BW Banner.svg"
@@ -295,6 +297,26 @@ export default function LoginPage() {
               </li>
             ))}
           </ul>
+
+          <div className={styles.ecosystemCallout}>
+            <span className={styles.ecosystemLabel}>Part of the Connected Tournament Platform</span>
+            <div className={styles.ecosystemRow}>
+              <Image
+                src="/TC_logo_No_Text.svg"
+                alt=""
+                width={40}
+                height={40}
+                unoptimized
+                className={styles.ecosystemLogo}
+              />
+              <span className={styles.ecosystemText}>
+                Looking for a tournament?{' '}
+                <a href={TOURNAMENT_CENTRAL_URL} className={styles.ecosystemLink}>
+                  Find tournaments and register →
+                </a>
+              </span>
+            </div>
+          </div>
         </section>
 
         <section className={`${styles.card} ${loading ? styles.loading : ''}`}>
@@ -402,7 +424,7 @@ export default function LoginPage() {
             >
               Log In <span className={styles.btnArrow} aria-hidden="true">→</span>
             </LoadingButton>
-            <p className={styles.submitHelper}>Use the same account you used to create tournaments.</p>
+            <p className={styles.submitHelper}>One account. BracketWorks + Tournament Central.</p>
           </form>
 
           <div className={styles.forgotRow}>
@@ -431,7 +453,7 @@ export default function LoginPage() {
       </div>
 
       <footer className={styles.footer}>
-        &copy; {new Date().getFullYear()} BracketWorks. All rights reserved.
+        &copy; {new Date().getFullYear()} BracketWorks + Tournament Central. All rights reserved.
       </footer>
 
       <SignupModal

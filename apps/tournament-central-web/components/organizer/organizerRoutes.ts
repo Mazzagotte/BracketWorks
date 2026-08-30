@@ -1,5 +1,6 @@
 export const organizerRoutes = {
   dashboard: '/organizer',
+  account: '/organizer/account',
   newTournamentSetup: '/organizer/tournaments/new/setup',
   overview: (tournamentId: number | string) => tournamentRoute(tournamentId),
   registrations: (tournamentId: number | string) => `${tournamentRoute(tournamentId)}/registrations`,
@@ -7,6 +8,8 @@ export const organizerRoutes = {
   participants: (tournamentId: number | string) => `${tournamentRoute(tournamentId)}/participants`,
   payments: (tournamentId: number | string) => `${tournamentRoute(tournamentId)}/payments`,
   documents: (tournamentId: number | string) => `${tournamentRoute(tournamentId)}/documents`,
+  team: (tournamentId: number | string) => `${tournamentRoute(tournamentId)}/team`,
+  activity: (tournamentId: number | string) => `${tournamentRoute(tournamentId)}/activity`,
   setup: (tournamentId: number | string, section?: string) => {
     const path = `${tournamentRoute(tournamentId)}/setup`;
     return section ? `${path}?section=${encodeURIComponent(section)}` : path;

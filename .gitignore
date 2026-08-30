@@ -55,6 +55,7 @@ build/
 # Temporary files
 *.tmp
 *.temp
+.tmp.driveupload/
 *.docx
 *.doc
 apps/bracketworks-web/node_modules_stale_*

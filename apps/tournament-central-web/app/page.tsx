@@ -2,7 +2,6 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import type { KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent } from 'react';
 import { CalendarCheck2, CalendarDays, ChevronRight, Clock3, Info, Link2, LocateFixed, MapPin, Menu, Plus, Search, ShieldCheck, UsersRound, X } from 'lucide-react';
@@ -485,7 +484,6 @@ function buildVenueMapMarkers(tournaments: Tournament[]): VenueMapMarker[] {
 }
 
 export default function HomePage() {
-  const router = useRouter();
   const [allTournaments, setAllTournaments] = useState<Tournament[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [heartbeatState, setHeartbeatState] = useState<'live' | 'stale' | 'checking'>('live');
@@ -569,14 +567,6 @@ export default function HomePage() {
 
     return null;
   }, []);
-
-  useEffect(() => {
-    const hasToken = typeof window !== 'undefined' && Boolean(sessionStorage.getItem('access_token'));
-    const hasUser = typeof window !== 'undefined' && Boolean(localStorage.getItem('user_id'));
-    if (hasToken && hasUser) {
-      router.replace('/organizer');
-    }
-  }, [router]);
 
   const loadDirectory = useCallback(async () => {
     setIsLoading(true);

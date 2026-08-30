@@ -34,6 +34,8 @@ export default function OrganizerTopNav() {
       { href: `/organizer/tournaments/${tournamentId}/squads`, label: 'Schedule', scoped: true },
       { href: `/organizer/tournaments/${tournamentId}/payments`, label: 'Payments', scoped: true },
       { href: `/organizer/tournaments/${tournamentId}/documents`, label: 'Documents', scoped: true },
+      { href: `/organizer/tournaments/${tournamentId}/team`, label: 'Team', scoped: true },
+      { href: `/organizer/tournaments/${tournamentId}/activity`, label: 'Activity', scoped: true },
       { href: `/organizer/tournaments/${tournamentId}/setup`, label: 'Setup', scoped: true },
     ];
   }, [tournamentId]);
@@ -169,6 +171,12 @@ export default function OrganizerTopNav() {
             {isUserMenuOpen && (
               <div className={styles.userMenuPanel} role="menu" aria-label="User menu">
                 <div className={styles.userMenuHeader}>{displayName}</div>
+                <Link href="/organizer/account" className={styles.userMenuItemButton} role="menuitem">
+                  Account Settings
+                </Link>
+                <Link href="/" className={styles.userMenuItemButton} role="menuitem">
+                  Browse Tournaments
+                </Link>
                 <button
                   className={`${styles.userMenuItemButton} ${styles.userMenuItemDanger}`}
                   onClick={handleLogout}
@@ -199,6 +207,8 @@ export default function OrganizerTopNav() {
           <summary>Menu</summary>
           <nav aria-label="Mobile organizer navigation">
             {navLinks.map((link) => <Link key={link.href} href={link.href} className={isNavLinkActive(link.href) ? styles.mobileNavLinkActive : ''}>{link.label}</Link>)}
+            <Link href="/organizer/account">Account Settings</Link>
+            <Link href="/">Browse Tournaments</Link>
           </nav>
         </details>
 

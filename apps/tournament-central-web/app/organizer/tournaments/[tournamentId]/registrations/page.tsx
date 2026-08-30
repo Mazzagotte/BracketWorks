@@ -22,11 +22,13 @@ import {
 import {
   deleteTournamentEntry,
   markTournamentRegistrationPaid,
+  markTournamentRegistrationsPaid,
   updateTournamentEntry,
   type OrganizerRegistrationRecord,
 } from '@/components/organizer/organizerApi';
 import { useTournamentContext } from '@/components/organizer/TournamentContext';
 import OrganizerStatusBadge from '@/components/organizer/OrganizerStatusBadge';
+import ConfirmDialog from '@/components/organizer/ConfirmDialog';
 import { formatMoney } from '@/components/organizer/organizerFormatting';
 import { organizerRoutes } from '@/components/organizer/organizerRoutes';
 import styles from '../page.module.css';
@@ -96,6 +98,8 @@ export default function OrganizerTournamentRegistrationsPage() {
   const [editingEntry, setEditingEntry] = useState<{ entry: RegistrationEntry; registrationId: number } | null>(null);
   const [editForm, setEditForm] = useState<EntryEditForm | null>(null);
   const [isMutating, setIsMutating] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [pendingDeleteEntry, setPendingDeleteEntry] = useState<RegistrationEntry | null>(null);
   const pageSize = 10;
 
   const openEntryEditor = (entry: RegistrationEntry, registration: OrganizerRegistrationRecord) => {
@@ -159,7 +163,6 @@ export default function OrganizerTournamentRegistrationsPage() {
   };
 
   const handleDeleteEntry = async (entry: RegistrationEntry) => {
-    if (!window.confirm('Delete this entry? This cannot be undone.')) return;
     const token = sessionStorage.getItem('access_token');
     if (!token) return;
     setIsMutating(true);
@@ -188,6 +191,33 @@ export default function OrganizerTournamentRegistrationsPage() {
       setIsMutating(false);
       setActiveActionId(null);
     }
+  };
+
+  const handleBulkMarkPaid = async () => {
+    const token = sessionStorage.getItem('access_token');
+    if (!token || selectedIds.size === 0) return;
+    setIsMutating(true);
+    try {
+      await markTournamentRegistrationsPaid(token, tournamentId, Array.from(selectedIds));
+      await refreshRegistrations();
+      setSelectedIds(new Set());
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : 'Unable to mark registrations as paid.');
+    } finally {
+      setIsMutating(false);
+    }
+  };
+
+  const toggleSelected = (registrationId: number) => {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(registrationId)) {
+        next.delete(registrationId);
+      } else {
+        next.add(registrationId);
+      }
+      return next;
+    });
   };
 
   const allEntries = useMemo(
@@ -244,6 +274,12 @@ export default function OrganizerTournamentRegistrationsPage() {
   const visibleRegistrations = filteredRegistrations.slice((page - 1) * pageSize, page * pageSize);
   const pageStart = filteredRegistrations.length === 0 ? 0 : (page - 1) * pageSize + 1;
   const pageEnd = Math.min(page * pageSize, filteredRegistrations.length);
+  const unpaidVisibleIds = useMemo(
+    () => visibleRegistrations
+      .filter((registration) => (registration.payment_status ?? 'unpaid') !== 'paid' && Number.isInteger(Number(registration.id)))
+      .map((registration) => Number(registration.id)),
+    [visibleRegistrations],
+  );
   useEffect(() => {
     setPage(1);
   }, [eventFilter, search, squadFilter, statusFilter]);
@@ -323,10 +359,41 @@ export default function OrganizerTournamentRegistrationsPage() {
                 <button type="button" className={styles.registrationExportButton} onClick={exportRegistrations}><ArrowDownToLine size={14} /> Export</button>
               </div>
 
+              {selectedIds.size > 0 ? (
+                <div className={styles.registrationToolbar}>
+                  <span>{selectedIds.size} selected</span>
+                  <button type="button" className={styles.manualRegistrationButton} onClick={handleBulkMarkPaid} disabled={isMutating}>
+                    <CircleDollarSign size={14} aria-hidden="true" /> Mark {selectedIds.size} as Paid
+                  </button>
+                  <button type="button" className={styles.registrationExportButton} onClick={() => setSelectedIds(new Set())}>Clear selection</button>
+                </div>
+              ) : null}
+
               <div className={styles.registrationTableWrap}>
                 <table className={styles.registrationTable}>
                   <thead>
-                    <tr><th>Confirmation #</th><th>Contact</th><th>Events</th><th>Squad</th><th>Status</th><th>Payment</th><th>Total</th><th>Date <span aria-hidden="true">↓</span></th><th>Actions</th></tr>
+                    <tr>
+                      <th>
+                        <span className={styles.srOnly}>Select</span>
+                        <input
+                          type="checkbox"
+                          aria-label="Select all unpaid registrations on this page"
+                          checked={unpaidVisibleIds.length > 0 && unpaidVisibleIds.every((id) => selectedIds.has(id))}
+                          onChange={(event) => {
+                            setSelectedIds((current) => {
+                              const next = new Set(current);
+                              if (event.target.checked) {
+                                unpaidVisibleIds.forEach((id) => next.add(id));
+                              } else {
+                                unpaidVisibleIds.forEach((id) => next.delete(id));
+                              }
+                              return next;
+                            });
+                          }}
+                          disabled={unpaidVisibleIds.length === 0}
+                        />
+                      </th>
+                      <th>Confirmation #</th><th>Contact</th><th>Events</th><th>Squad</th><th>Status</th><th>Payment</th><th>Total</th><th>Date <span aria-hidden="true">↓</span></th><th>Actions</th></tr>
                   </thead>
                   <tbody>
                     {visibleRegistrations.map((registration) => {
@@ -339,6 +406,16 @@ export default function OrganizerTournamentRegistrationsPage() {
                       const actionId = `${registration.id}-${entry?.id ?? 'none'}`;
                       return (
                         <tr key={registration.id}>
+                          <td>
+                            {payment !== 'paid' && Number.isInteger(registrationId) ? (
+                              <input
+                                type="checkbox"
+                                aria-label={`Select registration for ${name}`}
+                                checked={selectedIds.has(registrationId)}
+                                onChange={() => toggleSelected(registrationId)}
+                              />
+                            ) : null}
+                          </td>
                           <td className={styles.confirmationCell}>{registration.confirmation_code ?? registration.id}</td>
                           <td><strong>{name}</strong><span>{registration.contact_email ?? registration.form?.email ?? 'No email'}</span></td>
                           <td>{registration.entries?.map((item) => entryLabel(item, 'event')).join(', ') || 'Not selected'}</td>
@@ -361,7 +438,7 @@ export default function OrganizerTournamentRegistrationsPage() {
                                         <strong>{entryLabel(registrationEntry, 'event')}</strong>
                                         <span>{entryLabel(registrationEntry, 'squad')}</span>
                                         <button type="button" onClick={() => Number.isInteger(registrationId) && openEntryEditor(registrationEntry, registration)}>Edit Entry</button>
-                                        <button type="button" className={styles.modalDeleteAction} onClick={() => handleDeleteEntry(registrationEntry)}>Delete Entry</button>
+                                        <button type="button" className={styles.modalDeleteAction} onClick={() => setPendingDeleteEntry(registrationEntry)}>Delete Entry</button>
                                       </div>
                                     ))}
                                     {payment !== 'paid' ? <button type="button" className={styles.modalPaidAction} onClick={() => handleMarkPaid(registration)}>Mark as Paid</button> : null}
@@ -438,6 +515,19 @@ export default function OrganizerTournamentRegistrationsPage() {
           </section>
         </div>
       ) : null}
+
+      <ConfirmDialog
+        open={Boolean(pendingDeleteEntry)}
+        title="Delete this entry?"
+        message="This cannot be undone."
+        confirmLabel="Delete"
+        tone="danger"
+        onConfirm={() => {
+          if (pendingDeleteEntry) void handleDeleteEntry(pendingDeleteEntry);
+          setPendingDeleteEntry(null);
+        }}
+        onCancel={() => setPendingDeleteEntry(null)}
+      />
     </main>
   );
 }

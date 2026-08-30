@@ -315,7 +315,7 @@ export default function SignInForm() {
           {loading ? 'Signing in...' : 'Log In'} <span className={styles.btnArrow} aria-hidden="true">→</span>
         </button>
 
-        <p className={styles.submitHelper}>Use the same account you used to create tournaments.</p>
+        <p className={styles.submitHelper}>One account. BracketWorks + Tournament Central.</p>
 
         <div className={styles.forgotRow}>
           <button type="button" onClick={() => setResetModalOpen(true)} className={styles.forgotLink} disabled={loading}>

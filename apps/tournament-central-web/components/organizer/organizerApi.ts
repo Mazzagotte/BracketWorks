@@ -96,7 +96,7 @@ function getJsonErrorDetail(responseBody: unknown, fallback: string): string {
 async function organizerMutation<T>(
   token: string,
   url: string,
-  method: 'PATCH' | 'DELETE',
+  method: 'PATCH' | 'DELETE' | 'POST' | 'PUT',
   body?: Record<string, unknown>,
 ): Promise<T> {
   const response = await fetch(url, {
@@ -107,6 +107,20 @@ async function organizerMutation<T>(
     },
     credentials: 'include',
     body: body ? JSON.stringify(body) : undefined,
+  });
+  const responseData = await response.json().catch(() => null) as unknown;
+  if (!response.ok) {
+    throw new Error(getJsonErrorDetail(responseData, `Request failed (${response.status})`));
+  }
+  return responseData as T;
+}
+
+async function organizerGet<T>(token: string, url: string): Promise<T> {
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: { Authorization: `Bearer ${token}` },
+    credentials: 'include',
+    cache: 'no-store',
   });
   const responseData = await response.json().catch(() => null) as unknown;
   if (!response.ok) {
@@ -380,3 +394,124 @@ export async function downloadTournamentDocument(
   link.click();
   URL.revokeObjectURL(url);
 }
+
+export function markTournamentRegistrationsPaid(
+  token: string,
+  tournamentId: number,
+  registrationIds: number[],
+): Promise<Array<{ ok: boolean }>> {
+  return Promise.all(
+    registrationIds.map((registrationId) => markTournamentRegistrationPaid(token, tournamentId, registrationId)),
+  );
+}
+
+export type OrganizerAccountProfile = {
+  id: number;
+  first_name: string;
+  last_name: string;
+  username: string;
+  email: string;
+  organization?: string | null;
+  is_admin: boolean;
+  email_verified: boolean;
+  email_verified_at?: string | null;
+};
+
+export type OrganizerAccountUpdate = {
+  first_name?: string;
+  last_name?: string;
+  username?: string;
+  email?: string;
+  organization?: string | null;
+};
+
+export function getMyAccount(token: string): Promise<OrganizerAccountProfile> {
+  return organizerGet(token, '/api/v1/users/me');
+}
+
+export function updateMyAccount(token: string, changes: OrganizerAccountUpdate): Promise<OrganizerAccountProfile> {
+  return organizerMutation(token, '/api/v1/users/me', 'PUT', changes);
+}
+
+export function changeMyPassword(
+  token: string,
+  payload: { current_password: string; new_password: string; sign_out_current_session: boolean },
+): Promise<{ message: string }> {
+  return organizerMutation(token, '/api/v1/users/change-password', 'POST', payload);
+}
+
+export type StaffRole = 'tournament_admin' | 'entries_manager' | 'scorer' | 'viewer';
+
+export type TournamentStaffEntry = {
+  id: number | null;
+  tournament_id: number;
+  user_id: number;
+  role: StaffRole | 'owner';
+  display_name: string;
+  email: string | null;
+  created_at: string | null;
+};
+
+export type TournamentStaffInvitationEntry = {
+  id: number;
+  email: string;
+  role: StaffRole;
+  status: string;
+  expires_at: string;
+  email_sent: boolean;
+};
+
+export function listTournamentStaff(token: string, tournamentId: number): Promise<TournamentStaffEntry[]> {
+  return organizerGet(token, `/api/v1/tournament-staff/tournaments/${tournamentId}`);
+}
+
+export function inviteTournamentStaff(
+  token: string,
+  tournamentId: number,
+  payload: { email: string; role: StaffRole },
+): Promise<TournamentStaffInvitationEntry> {
+  return organizerMutation(token, `/api/v1/tournament-staff/${tournamentId}/invitations`, 'POST', payload);
+}
+
+export function updateTournamentStaffRole(
+  token: string,
+  tournamentId: number,
+  memberId: number,
+  role: StaffRole,
+): Promise<{ ok: boolean; role: StaffRole }> {
+  return organizerMutation(token, `/api/v1/tournament-staff/${tournamentId}/members/${memberId}`, 'PATCH', { role });
+}
+
+export function removeTournamentStaffMember(
+  token: string,
+  tournamentId: number,
+  memberId: number,
+): Promise<{ ok: boolean }> {
+  return organizerMutation(token, `/api/v1/tournament-staff/${tournamentId}/members/${memberId}`, 'DELETE');
+}
+
+export type TournamentActivityEntry = {
+  id: number;
+  tournament_id: number;
+  event_type: string;
+  user_id: number | null;
+  user_display_name: string | null;
+  summary: string;
+  reason?: string | null;
+  entity_type?: string | null;
+  entity_id?: number | null;
+  created_at: string;
+};
+
+export function listTournamentActivity(
+  token: string,
+  tournamentId: number,
+  options?: { limit?: number; offset?: number },
+): Promise<TournamentActivityEntry[]> {
+  const params = new URLSearchParams();
+  if (options?.limit) params.set('limit', String(options.limit));
+  if (options?.offset) params.set('offset', String(options.offset));
+  const query = params.toString();
+  return organizerGet(token, `/api/v1/tournament-activity/${tournamentId}${query ? `?${query}` : ''}`);
+}
+
