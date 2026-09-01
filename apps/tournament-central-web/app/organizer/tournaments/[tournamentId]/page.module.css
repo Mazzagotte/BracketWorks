@@ -829,12 +829,12 @@
 .registrationPagination { min-height: 52px; border-top: 1px solid var(--bw-border-subtle); }
 
 
-@media (max-width: 1050px) {
+@media (max-width: 1023px) {
   .registrationMetricGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .registrationDashboardGrid { grid-template-columns: 1fr; }
 }
 
-@media (max-width: 720px) {
+@media (max-width: 767px) {
   .registrationMetricGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 0; }
   .registrationToolbar { flex-wrap: wrap; padding: 8px 10px 12px; }
   .registrationSearch { min-width: 100%; }
@@ -842,7 +842,7 @@
   .registrationPagination { flex-wrap: wrap; padding: 10px; }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   .shell {
     padding: 12px;
   }
@@ -907,5 +907,5 @@
 .registrationSummaryGrid strong { font-size: .95rem; }
 .squadSummaryTable th { background: var(--bw-surface-panel-strong); }
 .tournamentAttentionList li { border-color: color-mix(in srgb, var(--color-warning) 34%, var(--bw-border-subtle)); border-radius: 9px; background: color-mix(in srgb, var(--color-warning) 6%, transparent); }
-@media (max-width: 1050px) { .summaryList { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-@media (max-width: 640px) { .headerCard { grid-template-columns: 72px minmax(0, 1fr); } .heroLogo { width: 72px; height: 72px; } .actions { grid-column: 1 / -1; } .summaryList { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 1023px) { .summaryList { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 767px) { .headerCard { grid-template-columns: 72px minmax(0, 1fr); } .heroLogo { width: 72px; height: 72px; } .actions { grid-column: 1 / -1; } .summaryList { grid-template-columns: 1fr 1fr; } }

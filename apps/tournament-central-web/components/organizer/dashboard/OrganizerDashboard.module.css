@@ -148,6 +148,86 @@
   filter: none;
 }
 
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+}
+
+.deleteModal {
+  position: relative;
+  width: min(420px, calc(100vw - 32px));
+  overflow: hidden;
+  border: 1px solid var(--bw-border-card);
+  border-radius: 16px;
+  background: var(--bw-surface-card);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.5);
+}
+
+.deleteModalHeader {
+  padding: 22px 56px 14px 24px;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-error) 25%, transparent);
+}
+
+.deleteModalHeader h2 {
+  margin: 0;
+  color: var(--color-error);
+  font-size: 1.1rem;
+  line-height: 1.2;
+}
+
+.modalCloseButton {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--bw-border-subtle);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--bw-text-title);
+  cursor: pointer;
+}
+
+.deleteModalText {
+  margin: 0;
+  padding: 20px 24px 4px;
+  color: var(--color-text-primary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.deleteModalHint,
+.deleteModalError {
+  margin: 0;
+  padding: 8px 24px 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.deleteModalHint {
+  color: var(--color-text-muted);
+}
+
+.deleteModalError {
+  color: var(--color-error);
+}
+
+.deleteModalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 20px 24px 24px;
+}
+
 .metricsGrid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -656,7 +736,7 @@
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   .shell {
     padding-left: 12px;
     padding-right: 12px;

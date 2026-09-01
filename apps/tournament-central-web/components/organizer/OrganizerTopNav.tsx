@@ -30,13 +30,9 @@ export default function OrganizerTopNav() {
       ...links,
       { href: `/organizer/tournaments/${tournamentId}`, label: 'Overview', scoped: true },
       { href: `/organizer/tournaments/${tournamentId}/registrations`, label: 'Registrations', scoped: true },
-      { href: `/organizer/tournaments/${tournamentId}/participants`, label: 'Bowlers', scoped: true },
-      { href: `/organizer/tournaments/${tournamentId}/squads`, label: 'Schedule', scoped: true },
       { href: `/organizer/tournaments/${tournamentId}/payments`, label: 'Payments', scoped: true },
       { href: `/organizer/tournaments/${tournamentId}/documents`, label: 'Documents', scoped: true },
       { href: `/organizer/tournaments/${tournamentId}/team`, label: 'Team', scoped: true },
-      { href: `/organizer/tournaments/${tournamentId}/activity`, label: 'Activity', scoped: true },
-      { href: `/organizer/tournaments/${tournamentId}/setup`, label: 'Setup', scoped: true },
     ];
   }, [tournamentId]);
 
@@ -148,7 +144,7 @@ export default function OrganizerTopNav() {
             <Link
               key={link.href}
               href={link.href}
-              className={`${styles.navPill} ${link.scoped && link.label === 'Overview' ? styles.navPillScopedStart : ''} ${link.label === 'Setup' ? styles.navPillSetup : ''} ${isNavLinkActive(link.href) ? styles.navPillActive : ''}`}
+              className={`${styles.navPill} ${link.scoped && link.label === 'Overview' ? styles.navPillScopedStart : ''} ${isNavLinkActive(link.href) ? styles.navPillActive : ''}`}
             >
               {link.label}
             </Link>

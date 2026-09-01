@@ -124,8 +124,7 @@ export default function OrganizerTournamentOverviewPage() {
           </p>
         </div>
         <div className={styles.actions}>
-          <Link href={organizerRoutes.setup(tournamentId)} className={styles.primaryButton}>Open Setup</Link>
-          <Link href={organizerRoutes.dashboard} className={styles.secondaryButton}>Back to Dashboard</Link>
+          <Link href={organizerRoutes.setup(tournamentId)} className={styles.primaryButton}>Edit Tournament</Link>
         </div>
       </section>
 

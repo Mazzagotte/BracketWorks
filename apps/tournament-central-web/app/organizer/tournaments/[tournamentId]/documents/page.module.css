@@ -199,3 +199,46 @@
   font-size: 0.75rem;
   background: var(--bw-surface-card);
 }
+
+@media (max-width: 1023px) {
+  .shell {
+    padding-inline: var(--bw-page-gutter);
+  }
+
+  .docRow {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr) auto;
+  }
+
+  .docRow > :nth-child(3) {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 767px) {
+  .shell {
+    padding: 12px;
+  }
+
+  .header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .uploadForm,
+  .uploadField,
+  .uploadButton {
+    width: 100%;
+  }
+
+  .docRow {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .docRow > :nth-child(3) {
+    grid-column: 1;
+  }
+
+  .docActions {
+    grid-column: 1 / -1;
+  }
+}

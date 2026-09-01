@@ -245,3 +245,40 @@
   font-size: 0.72rem;
   text-align: center;
 }
+
+@media (max-width: 1023px) {
+  .shell {
+    padding-inline: var(--bw-page-gutter);
+  }
+}
+
+@media (max-width: 767px) {
+  .shell {
+    padding: 12px;
+  }
+
+  .header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .tableWrap {
+    padding: 0 10px 10px;
+  }
+
+  .table {
+    min-width: 620px;
+  }
+
+  .rosterBackdrop {
+    padding: 12px;
+  }
+
+  .rosterRow {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .rosterRow span {
+    grid-column: 1 / -1;
+  }
+}

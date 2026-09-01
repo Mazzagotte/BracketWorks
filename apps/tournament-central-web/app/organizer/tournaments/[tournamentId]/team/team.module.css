@@ -18,3 +18,18 @@
   font-weight: 700;
   font-size: 0.72rem;
 }
+
+@media (max-width: 767px) {
+  .inviteForm {
+    grid-template-columns: 1fr;
+    padding-inline: 12px;
+  }
+
+  .inviteActions {
+    justify-content: stretch;
+  }
+
+  .inviteActions button {
+    width: 100%;
+  }
+}

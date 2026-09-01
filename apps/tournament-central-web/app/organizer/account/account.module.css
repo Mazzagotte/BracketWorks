@@ -154,7 +154,15 @@
   font-weight: 600;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 767px) {
+  .shell {
+    padding: 12px;
+  }
+
+  .card {
+    padding: 14px;
+  }
+
   .grid {
     grid-template-columns: 1fr;
   }

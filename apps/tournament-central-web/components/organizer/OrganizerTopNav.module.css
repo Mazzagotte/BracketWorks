@@ -137,6 +137,10 @@
   box-shadow: none;
 }
 
+.navPillScopedStart.navPillActive {
+  border-radius: var(--radius-md);
+}
+
 .navPillActive:hover {
   background: color-mix(in srgb, var(--color-primary) 18%, transparent);
   border-color: color-mix(in srgb, var(--color-primary) 44%, transparent);

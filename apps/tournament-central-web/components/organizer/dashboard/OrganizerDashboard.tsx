@@ -1,6 +1,6 @@
 'use client';
 
-import { CircleDollarSign, ClipboardList, Users, CalendarRange } from 'lucide-react';
+import { CircleDollarSign, ClipboardList, Users, CalendarRange, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 import OrganizerAttentionList from './OrganizerAttentionList';
@@ -14,6 +14,7 @@ import styles from './OrganizerDashboard.module.css';
 export default function OrganizerDashboard() {
   const [displayName, setDisplayName] = useState('Organizer');
   const [deletingTournamentId, setDeletingTournamentId] = useState<number | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<OrganizerDashboardTournament | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const { tournaments, attentionItems, upcomingItems, isLoading, error, refresh } = useOrganizerDashboard();
 
@@ -53,15 +54,9 @@ export default function OrganizerDashboard() {
     dayLabel: item.date.toLocaleDateString(undefined, { day: '2-digit' }),
   })), [upcomingItems]);
 
-  const handleDeleteTournament = async (tournament: OrganizerDashboardTournament) => {
-    if ((tournament.entryCount ?? 0) > 0) {
-      setDeleteError('Tournaments with registrations cannot be deleted.');
-      return;
-    }
-    if (!window.confirm(`Delete ${tournament.name}? This action cannot be undone.`)) {
-      return;
-    }
-
+  const handleDeleteTournament = async () => {
+    const tournament = deleteConfirmation;
+    if (!tournament) return;
     const token = sessionStorage.getItem('access_token');
     if (!token) {
       setDeleteError('Your session expired. Please sign in again.');
@@ -73,11 +68,17 @@ export default function OrganizerDashboard() {
     try {
       await deleteTournament(token, tournament.id);
       await refresh();
+      setDeleteConfirmation(null);
     } catch (caughtError) {
       setDeleteError(caughtError instanceof Error ? caughtError.message : 'Failed to delete tournament.');
     } finally {
       setDeletingTournamentId(null);
     }
+  };
+
+  const handleDeleteRequest = (tournament: OrganizerDashboardTournament) => {
+    setDeleteError(null);
+    setDeleteConfirmation(tournament);
   };
 
   return (
@@ -133,7 +134,7 @@ export default function OrganizerDashboard() {
           <TournamentGrid
             tournaments={tournaments}
             deletingTournamentId={deletingTournamentId}
-            onDeleteTournament={handleDeleteTournament}
+            onDeleteTournament={handleDeleteRequest}
           />
 
           <aside className={styles.sidebarColumn}>
@@ -171,6 +172,44 @@ export default function OrganizerDashboard() {
           </aside>
         </div>
       )}
+
+      {deleteConfirmation ? (
+        <div className={styles.modalOverlay} onClick={() => !deletingTournamentId && setDeleteConfirmation(null)}>
+          <section
+            className={styles.deleteModal}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-tournament-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              className={styles.modalCloseButton}
+              aria-label="Close tournament deletion dialog"
+              onClick={() => setDeleteConfirmation(null)}
+              disabled={Boolean(deletingTournamentId)}
+            >
+              <X size={16} aria-hidden="true" />
+            </button>
+            <header className={styles.deleteModalHeader}>
+              <h2 id="delete-tournament-title">Confirm Deletion</h2>
+            </header>
+            <p className={styles.deleteModalText}>
+              Are you sure you want to delete tournament <strong>{deleteConfirmation.name}</strong>?
+            </p>
+            <p className={styles.deleteModalHint}>This action cannot be undone.</p>
+            {deleteError ? <p className={styles.deleteModalError} role="alert">{deleteError}</p> : null}
+            <footer className={styles.deleteModalActions}>
+              <button type="button" className={styles.dangerButtonCompact} onClick={() => { void handleDeleteTournament(); }} disabled={Boolean(deletingTournamentId)}>
+                {deletingTournamentId ? 'Deleting...' : 'Delete'}
+              </button>
+              <button type="button" className={styles.primaryButtonCompact} onClick={() => setDeleteConfirmation(null)} disabled={Boolean(deletingTournamentId)}>
+                Cancel
+              </button>
+            </footer>
+          </section>
+        </div>
+      ) : null}
     </div>
   );
 }
