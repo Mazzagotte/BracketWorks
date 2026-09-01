@@ -6,9 +6,11 @@ import styles from './OrganizerDashboard.module.css';
 
 type TournamentGridProps = {
   tournaments: OrganizerDashboardTournament[];
+  deletingTournamentId: number | null;
+  onDeleteTournament: (tournament: OrganizerDashboardTournament) => void;
 };
 
-export default function TournamentGrid({ tournaments }: TournamentGridProps) {
+export default function TournamentGrid({ tournaments, deletingTournamentId, onDeleteTournament }: TournamentGridProps) {
   return (
     <section aria-label="Your tournaments" className={styles.mainSection}>
       <div className={styles.sectionHeader}>
@@ -16,7 +18,14 @@ export default function TournamentGrid({ tournaments }: TournamentGridProps) {
         <Link href="/organizer/tournaments" className={styles.inlineLink}>View all →</Link>
       </div>
       <div className={styles.grid}>
-        {tournaments.map((tournament) => <TournamentCard key={tournament.id} tournament={tournament} />)}
+        {tournaments.map((tournament) => (
+          <TournamentCard
+            key={tournament.id}
+            tournament={tournament}
+            isDeleting={deletingTournamentId === tournament.id}
+            onDelete={onDeleteTournament}
+          />
+        ))}
       </div>
     </section>
   );

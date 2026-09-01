@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { CalendarDays, MapPin, Users, UsersRound, Coins, Eye } from 'lucide-react';
+import { CalendarDays, MapPin, Users, UsersRound, Coins, Eye, Trash2 } from 'lucide-react';
 
 import type { OrganizerDashboardTournament } from './useOrganizerDashboard';
 import TournamentStatusBadge from './TournamentStatusBadge';
@@ -51,9 +51,11 @@ function parseLocation(location: string | null): { venue: string; cityState: str
 
 type TournamentCardProps = {
   tournament: OrganizerDashboardTournament;
+  isDeleting: boolean;
+  onDelete: (tournament: OrganizerDashboardTournament) => void;
 };
 
-export default function TournamentCard({ tournament }: TournamentCardProps) {
+export default function TournamentCard({ tournament, isDeleting, onDelete }: TournamentCardProps) {
   const location = parseLocation(tournament.location);
   const formattedDate = formatDateRange(tournament.startDate, tournament.endDate);
 
@@ -118,6 +120,16 @@ export default function TournamentCard({ tournament }: TournamentCardProps) {
                 <span>View Public</span>
               </Link>
             ) : null}
+            <button
+              type="button"
+              className={styles.dangerButtonCompact}
+              onClick={() => onDelete(tournament)}
+              disabled={isDeleting || (tournament.entryCount ?? 0) > 0}
+              title={(tournament.entryCount ?? 0) > 0 ? 'Tournaments with registrations cannot be deleted.' : 'Delete tournament'}
+            >
+              <Trash2 className={styles.actionIcon} aria-hidden="true" />
+              <span>{isDeleting ? 'Deleting...' : 'Delete'}</span>
+            </button>
           </div>
         </div>
       </div>

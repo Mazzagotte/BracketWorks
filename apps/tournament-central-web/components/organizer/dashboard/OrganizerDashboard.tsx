@@ -7,11 +7,14 @@ import OrganizerAttentionList from './OrganizerAttentionList';
 import OrganizerDashboardHeader from './OrganizerDashboardHeader';
 import OrganizerEmptyState from './OrganizerEmptyState';
 import TournamentGrid from './TournamentGrid';
-import { useOrganizerDashboard } from './useOrganizerDashboard';
+import { deleteTournament } from '../organizerApi';
+import { type OrganizerDashboardTournament, useOrganizerDashboard } from './useOrganizerDashboard';
 import styles from './OrganizerDashboard.module.css';
 
 export default function OrganizerDashboard() {
   const [displayName, setDisplayName] = useState('Organizer');
+  const [deletingTournamentId, setDeletingTournamentId] = useState<number | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const { tournaments, attentionItems, upcomingItems, isLoading, error, refresh } = useOrganizerDashboard();
 
   useEffect(() => {
@@ -50,6 +53,33 @@ export default function OrganizerDashboard() {
     dayLabel: item.date.toLocaleDateString(undefined, { day: '2-digit' }),
   })), [upcomingItems]);
 
+  const handleDeleteTournament = async (tournament: OrganizerDashboardTournament) => {
+    if ((tournament.entryCount ?? 0) > 0) {
+      setDeleteError('Tournaments with registrations cannot be deleted.');
+      return;
+    }
+    if (!window.confirm(`Delete ${tournament.name}? This action cannot be undone.`)) {
+      return;
+    }
+
+    const token = sessionStorage.getItem('access_token');
+    if (!token) {
+      setDeleteError('Your session expired. Please sign in again.');
+      return;
+    }
+
+    setDeletingTournamentId(tournament.id);
+    setDeleteError(null);
+    try {
+      await deleteTournament(token, tournament.id);
+      await refresh();
+    } catch (caughtError) {
+      setDeleteError(caughtError instanceof Error ? caughtError.message : 'Failed to delete tournament.');
+    } finally {
+      setDeletingTournamentId(null);
+    }
+  };
+
   return (
     <div className={styles.shell}>
       <OrganizerDashboardHeader displayName={displayName} />
@@ -60,6 +90,12 @@ export default function OrganizerDashboard() {
           <button type="button" className={styles.secondaryButtonCompact} onClick={() => { void refresh(); }}>
             Try Again
           </button>
+        </section>
+      ) : null}
+
+      {deleteError ? (
+        <section className={styles.errorCard} role="alert">
+          <p>{deleteError}</p>
         </section>
       ) : null}
 
@@ -94,7 +130,11 @@ export default function OrganizerDashboard() {
         <OrganizerEmptyState />
       ) : (
         <div className={styles.mainContentGrid}>
-          <TournamentGrid tournaments={tournaments} />
+          <TournamentGrid
+            tournaments={tournaments}
+            deletingTournamentId={deletingTournamentId}
+            onDeleteTournament={handleDeleteTournament}
+          />
 
           <aside className={styles.sidebarColumn}>
             <section className={styles.upcomingSection} aria-label="Upcoming activity">

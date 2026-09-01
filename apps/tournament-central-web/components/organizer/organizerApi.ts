@@ -142,6 +142,10 @@ export function deleteTournamentEntry(token: string, tournamentId: number, entry
   return organizerMutation(token, `/api/v1/tc/tournaments/${tournamentId}/entries/${entryId}`, 'DELETE');
 }
 
+export function deleteTournament(token: string, tournamentId: number): Promise<{ ok: boolean }> {
+  return organizerMutation(token, `/api/v1/tc/tournaments/${tournamentId}`, 'DELETE');
+}
+
 export function markTournamentRegistrationPaid(token: string, tournamentId: number, registrationId: number): Promise<{ ok: boolean }> {
   return organizerMutation(token, `/api/v1/tc/tournaments/${tournamentId}/registrations/${registrationId}`, 'PATCH', { payment_status: 'paid' });
 }

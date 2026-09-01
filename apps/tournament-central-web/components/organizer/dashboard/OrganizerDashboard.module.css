@@ -109,6 +109,23 @@
   font-size: 0.7rem;
 }
 
+.dangerButtonCompact {
+  min-height: 38px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid color-mix(in srgb, var(--color-error) 45%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-error) 10%, transparent);
+  color: var(--color-error);
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
 .primaryButton:hover,
 .primaryButtonCompact:hover,
 .secondaryButtonCompact:hover,
@@ -116,10 +133,15 @@
   filter: brightness(1.04);
 }
 
+.dangerButtonCompact:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-error) 18%, transparent);
+}
+
 .primaryButton:disabled,
 .primaryButtonCompact:disabled,
 .secondaryButtonCompact:disabled,
 .secondaryButtonWide:disabled,
+.dangerButtonCompact:disabled,
 .inlineAction:disabled {
   opacity: 0.45;
   cursor: not-allowed;
@@ -624,7 +646,7 @@
   }
 }
 
-@media (max-width: 980px) {
+@media (max-width: 1023px) {
   .metricsGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

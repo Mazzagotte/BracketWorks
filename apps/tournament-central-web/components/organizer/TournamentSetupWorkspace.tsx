@@ -768,7 +768,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
         hasRulesDocument: false,
         paymentMode,
         paymentProcessorConnected: false,
-        paymentPayoutConfigured: false,
+        paymentPayoutConfigured,
       }),
     };
     const blob = new Blob([JSON.stringify(template, null, 2)], { type: 'application/json' });
@@ -875,7 +875,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
         fields: imported.fields.map((entry) => ({ ...entry, id: buildClientId('rf') })),
         hasRulesDocument: false,
         paymentProcessorConnected: false,
-        paymentPayoutConfigured: false,
+        paymentPayoutConfigured: imported.paymentPayoutConfigured,
       };
 
       applyDraft(remappedDraft);
@@ -888,6 +888,49 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
       setSaveError(null);
       setAutosaveError(null);
       setActiveSection('tournament-details');
+
+      const token = typeof window !== 'undefined' ? sessionStorage.getItem('access_token') : null;
+      if (!token) {
+        throw new Error('Your session expired. Please sign in again.');
+      }
+
+      setIsSavingDraft(true);
+      try {
+        const detailsForSave = await resolveVenueForPersistence(token, remappedDraft.details);
+        const saved = await saveTournamentRecord({
+          token,
+          payload: buildTournamentPayload(detailsForSave, remappedDraft.squads, false),
+          tournamentId: null,
+        });
+        await saveOrganizerSetupState({
+          token,
+          tournamentId: saved.id,
+          payload: buildOrganizerSetupPayload({
+            details: detailsForSave,
+            events: remappedDraft.events,
+            divisions: remappedDraft.divisions,
+            squads: remappedDraft.squads,
+            fees: remappedDraft.fees,
+            locations: remappedDraft.locations,
+            questions: remappedDraft.questions,
+            fields: remappedDraft.fields,
+            hasRulesDocument: false,
+            paymentMode: remappedDraft.paymentMode,
+            paymentProcessorConnected: false,
+            paymentPayoutConfigured: remappedDraft.paymentPayoutConfigured,
+          }),
+          isPublished: false,
+        });
+
+        applyDraft({ ...remappedDraft, details: detailsForSave, tournamentId: saved.id });
+        setAutosaveEnabled(true);
+        setDraftSavedAt(new Date().toISOString());
+        setAutosaveSavedAt(new Date().toISOString());
+        autosaveFingerprintRef.current = null;
+        await refreshTournamentLibrary(token);
+      } finally {
+        setIsSavingDraft(false);
+      }
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : 'Unable to import the tournament template.');
     }
@@ -1232,52 +1275,54 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
     return issues;
   }, [details, divisions, events, fees, fields, persistedTournamentId, questions, squads, userTournaments]);
 
-  async function resolveVenueForPersistence(token: string): Promise<TournamentDetails> {
-    if (details.venueId || !details.bowlingCenter.trim()) {
-      return details;
+  async function resolveVenueForPersistence(token: string, sourceDetails: TournamentDetails = details): Promise<TournamentDetails> {
+    if (sourceDetails.venueId || !sourceDetails.bowlingCenter.trim()) {
+      return sourceDetails;
     }
 
     const shouldResolve = Boolean(
-      details.venueAddressLine1.trim()
-      || details.city.trim()
-      || details.state.trim()
-      || details.venueExternalPlaceId.trim(),
+      sourceDetails.venueAddressLine1.trim()
+      || sourceDetails.city.trim()
+      || sourceDetails.state.trim()
+      || sourceDetails.venueExternalPlaceId.trim(),
     );
     if (!shouldResolve) {
-      return details;
+      return sourceDetails;
     }
 
     const resolvedVenue = await resolveTcVenue(token, {
-      name: details.bowlingCenter,
-      address_line_1: details.venueAddressLine1 || undefined,
-      address_line_2: details.venueAddressLine2 || undefined,
-      city: details.city || undefined,
-      state: details.state || undefined,
-      zip: details.venueZip || undefined,
-      country: details.venueCountry || undefined,
-      latitude: details.venueLatitude,
-      longitude: details.venueLongitude,
-      external_provider: details.venueExternalProvider || undefined,
-      external_place_id: details.venueExternalPlaceId || undefined,
+      name: sourceDetails.bowlingCenter,
+      address_line_1: sourceDetails.venueAddressLine1 || undefined,
+      address_line_2: sourceDetails.venueAddressLine2 || undefined,
+      city: sourceDetails.city || undefined,
+      state: sourceDetails.state || undefined,
+      zip: sourceDetails.venueZip || undefined,
+      country: sourceDetails.venueCountry || undefined,
+      latitude: sourceDetails.venueLatitude,
+      longitude: sourceDetails.venueLongitude,
+      external_provider: sourceDetails.venueExternalProvider || undefined,
+      external_place_id: sourceDetails.venueExternalPlaceId || undefined,
     });
 
     const nextDetails: TournamentDetails = {
-      ...details,
+      ...sourceDetails,
       venueId: typeof resolvedVenue.id === 'number' ? resolvedVenue.id : null,
-      bowlingCenter: resolvedVenue.name || details.bowlingCenter,
-      venueAddressLine1: resolvedVenue.address_line_1 || details.venueAddressLine1,
-      venueAddressLine2: resolvedVenue.address_line_2 || details.venueAddressLine2,
-      city: resolvedVenue.city || details.city,
-      state: resolvedVenue.state || details.state,
-      venueZip: resolvedVenue.zip || details.venueZip,
-      venueCountry: resolvedVenue.country || details.venueCountry,
-      venueLatitude: resolvedVenue.latitude ?? details.venueLatitude,
-      venueLongitude: resolvedVenue.longitude ?? details.venueLongitude,
-      venueExternalProvider: resolvedVenue.external_provider || details.venueExternalProvider,
-      venueExternalPlaceId: resolvedVenue.external_place_id || details.venueExternalPlaceId,
+      bowlingCenter: resolvedVenue.name || sourceDetails.bowlingCenter,
+      venueAddressLine1: resolvedVenue.address_line_1 || sourceDetails.venueAddressLine1,
+      venueAddressLine2: resolvedVenue.address_line_2 || sourceDetails.venueAddressLine2,
+      city: resolvedVenue.city || sourceDetails.city,
+      state: resolvedVenue.state || sourceDetails.state,
+      venueZip: resolvedVenue.zip || sourceDetails.venueZip,
+      venueCountry: resolvedVenue.country || sourceDetails.venueCountry,
+      venueLatitude: resolvedVenue.latitude ?? sourceDetails.venueLatitude,
+      venueLongitude: resolvedVenue.longitude ?? sourceDetails.venueLongitude,
+      venueExternalProvider: resolvedVenue.external_provider || sourceDetails.venueExternalProvider,
+      venueExternalPlaceId: resolvedVenue.external_place_id || sourceDetails.venueExternalPlaceId,
     };
 
-    setDetails(nextDetails);
+    if (sourceDetails === details) {
+      setDetails(nextDetails);
+    }
     return nextDetails;
   }
 
