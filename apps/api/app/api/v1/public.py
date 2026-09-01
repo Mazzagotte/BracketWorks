@@ -520,7 +520,6 @@ def list_public_tournaments(
             for row in tc_registration_ready_rows
             if str((_published_setup_payload(row).get("details") or {}).get("visibility") or "public") == "public"
         }
-        tc_tournaments = [row for row in tc_tournaments if row.id in tc_public_directory_ids]
 
     tournament_ids = [t.id for t in tournaments]
     squad_count_by_tournament: dict[int, int] = {}
