@@ -404,7 +404,9 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
         }
       };
 
-      const draft = loadDraftFromStorage();
+      const draft = routeTournamentId === null
+        ? buildDefaultDraft()
+        : loadDraftFromStorage();
       applyDraft(draft);
       setIsSetupPublished(false);
       setPreviewUrl(null);
