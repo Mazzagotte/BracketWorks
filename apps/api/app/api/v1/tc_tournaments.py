@@ -100,7 +100,7 @@ def create_tournament(
             start_date=tournament.start_date,
             end_date=tournament.end_date,
             squad_times=json.dumps(tournament.squad_times),
-            is_public=False,
+            is_public=tournament.is_public,
             user_id=user.id,
         )
         db.add(db_tournament)
