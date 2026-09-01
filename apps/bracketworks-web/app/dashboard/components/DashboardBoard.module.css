@@ -581,38 +581,6 @@
   color: var(--bw-text-danger);
 }
 
-.activityList {
-  display: grid;
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.activityItem {
-  display: grid;
-  grid-template-columns: max-content minmax(0, 1fr);
-  gap: 9px;
-  color: var(--bw-text-secondary);
-  font-size: 12px;
-  line-height: 1.35;
-}
-
-.activityItem time {
-  color: var(--bw-text-muted);
-  font-variant-numeric: tabular-nums;
-}
-
-.activityItem span {
-  overflow-wrap: anywhere;
-}
-
-.activityEmpty {
-  margin: 0;
-  color: var(--bw-text-muted);
-  font-size: 12px;
-}
-
 .tournamentTitleRow { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; }
 .lifecycleBadge { padding: 4px 8px; border: 1px solid var(--dash-accent-border); border-radius: 999px; color: var(--bw-text-accent); background: var(--dash-accent-panel); font-size: 10px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
 

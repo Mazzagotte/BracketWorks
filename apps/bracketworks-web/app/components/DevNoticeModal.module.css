@@ -120,6 +120,13 @@
   line-height: 1.55;
 }
 
+.error {
+  margin: 16px 0 0;
+  font-size: var(--bw-type-body);
+  color: var(--color-danger);
+  line-height: 1.5;
+}
+
 /* ── Footer ─────────────────────────────────────── */
 .footer {
   flex-direction: row-reverse;

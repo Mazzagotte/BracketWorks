@@ -25,6 +25,7 @@ const CHECKLIST_ITEMS = [
   'Tournament information may require manual review or correction',
   'You are responsible for verifying results and payouts',
   'Important tournament records should be backed up separately',
+  'Inactive accounts and their tournament data may be deleted at any time',
 ];
 
 export default function DevNoticeModal({
@@ -37,22 +38,49 @@ export default function DevNoticeModal({
 }: DevNoticeModalProps) {
   const [acknowledged, setAcknowledged] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
   const overlayRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const checkboxRef = useRef<HTMLInputElement>(null);
 
   // Reset checkbox when modal opens
   useEffect(() => {
-    if (isOpen) setAcknowledged(false);
+    if (isOpen) {
+      setAcknowledged(false);
+      setError('');
+    }
   }, [isOpen]);
 
-  // Block Escape key in require-acceptance mode
   useEffect(() => {
-    if (!isOpen || mode !== 'require-acceptance') return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') e.preventDefault();
+    if (!isOpen) return;
+    const previous = document.activeElement as HTMLElement | null;
+    const priorOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    window.setTimeout(() => (mode === 'require-acceptance' ? checkboxRef.current : dialogRef.current)?.focus(), 0);
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        if (mode === 'require-acceptance') event.preventDefault();
+        else onClose?.();
+        return;
+      }
+      if (event.key !== 'Tab' || !dialogRef.current) return;
+      const focusable = Array.from(dialogRef.current.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      ));
+      if (!focusable.length) return;
+      const first = focusable[0]!;
+      const last = focusable[focusable.length - 1]!;
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
     };
     document.addEventListener('keydown', handleKeyDown, true);
-    return () => document.removeEventListener('keydown', handleKeyDown, true);
-  }, [isOpen, mode]);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown, true);
+      document.body.style.overflow = priorOverflow;
+      previous?.focus();
+    };
+  }, [isOpen, mode, onClose]);
 
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
     // Never close on backdrop click in require-acceptance mode
@@ -63,10 +91,12 @@ export default function DevNoticeModal({
   const handleAgree = async () => {
     if (!acknowledged || submitting) return;
     setSubmitting(true);
+    setError('');
     try {
       await apiClient.post('/api/v1/users/dev-notice/accept', { version: noticeVersion });
     } catch {
-      // Non-critical — proceed even if the request fails; the notice will reappear next login.
+      setError('We could not save your acknowledgement. Check your connection and try again.');
+      return;
     } finally {
       setSubmitting(false);
     }
@@ -80,11 +110,15 @@ export default function DevNoticeModal({
       ref={overlayRef}
       className={modalStyles.overlay}
       onClick={handleOverlayClick}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="dev-notice-title"
     >
-      <div className={`${modalStyles.modal} ${modalStyles.compactModal}`}>
+      <div
+        ref={dialogRef}
+        className={`${modalStyles.modal} ${modalStyles.compactModal}`}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="dev-notice-title"
+        tabIndex={-1}
+      >
         {mode === 'view-only' && <CloseControl className={modalStyles.closeButton} position="absolute" size="sm" label="Close development notice" onClick={onClose} />}
         {/* Header */}
         <div className={`${modalStyles.header} ${styles.header}`}>
@@ -117,6 +151,10 @@ export default function DevNoticeModal({
             Maintain a separate backup of tournament entries, scores, results, and payout records
             while the platform remains in development.
           </p>
+          <p className={styles.bodyText}>
+            Inactive accounts, including their tournament data, may be deleted at any time.
+            Maintain backups of any information you want to keep.
+          </p>
 
           <p className={styles.sectionLabel}>By continuing, you acknowledge that:</p>
           <ul className={styles.checkList} aria-label="Acknowledgment checklist">
@@ -133,6 +171,7 @@ export default function DevNoticeModal({
               <label className={styles.checkboxRow}>
                 <input
                   type="checkbox"
+                  ref={checkboxRef}
                   className={styles.checkboxInput}
                   checked={acknowledged}
                   onChange={e => setAcknowledged(e.target.checked)}
@@ -140,11 +179,13 @@ export default function DevNoticeModal({
                 <span className={styles.checkboxLabel}>
                   I acknowledge that BracketWorks is currently in development, and I agree to
                   independently review and verify tournament data, results, and payouts before
-                  relying on or publishing them.
+                  relying on or publishing them. I understand that inactive accounts and their
+                  tournament data may be deleted at any time.
                 </span>
               </label>
             </div>
           )}
+          {error && <p className={styles.error} role="alert">{error}</p>}
         </div>
 
         {/* Footer */}

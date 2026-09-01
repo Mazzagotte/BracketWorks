@@ -2,32 +2,41 @@
 
 import { useState, useEffect } from 'react';
 import { AlertTriangle } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { apiClient } from '../lib/api';
+import { useAuth } from '../lib/auth-context';
 import DevNoticeModal from './DevNoticeModal';
 import ChangelogModal from './ChangelogModal';
 import styles from './DevNoticeBanner.module.css';
 
-export const CURRENT_NOTICE_VERSION = '1.0';
-
-const ACCEPTED_VERSION_KEY = 'dev_notice_version_accepted';
+export const CURRENT_NOTICE_VERSION = '1.1';
 
 type BannerState = 'default' | 'update-required';
 
-function getInitialState(): BannerState {
-  if (typeof window === 'undefined') return 'default';
-  const accepted = localStorage.getItem(ACCEPTED_VERSION_KEY);
-  if (accepted !== CURRENT_NOTICE_VERSION) return 'update-required';
-  return 'default';
-}
+type CurrentUser = { dev_notice_version_accepted: string | null };
 
 export default function DevNoticeBanner() {
-  const [state, setState] = useState<BannerState>(getInitialState);
+  const router = useRouter();
+  const { logoutUser } = useAuth();
+  const [state, setState] = useState<BannerState>('default');
   const [noticeOpen, setNoticeOpen] = useState(false);
   const [noticeMode, setNoticeMode] = useState<'view-only' | 'require-acceptance'>('view-only');
   const [changelogOpen, setChangelogOpen] = useState(false);
 
   useEffect(() => {
-    const initialState = getInitialState();
-    setState(initialState);
+    let cancelled = false;
+    const loadNoticeStatus = async () => {
+      try {
+        const user = await apiClient.get<CurrentUser>('/api/v1/users/me', false);
+        if (!cancelled) {
+          setState(user.dev_notice_version_accepted === CURRENT_NOTICE_VERSION ? 'default' : 'update-required');
+        }
+      } catch {
+        if (!cancelled) setState('default');
+      }
+    };
+    void loadNoticeStatus();
+    return () => { cancelled = true; };
   }, []);
 
   const handleReviewNow = () => {
@@ -41,9 +50,14 @@ export default function DevNoticeBanner() {
   };
 
   const handleAccepted = () => {
-    localStorage.setItem(ACCEPTED_VERSION_KEY, CURRENT_NOTICE_VERSION);
     setNoticeOpen(false);
     setState('default');
+  };
+
+  const handleLogout = () => {
+    setNoticeOpen(false);
+    logoutUser({ fastRedirect: true });
+    router.push('/login');
   };
 
   return (
@@ -86,7 +100,7 @@ export default function DevNoticeBanner() {
         mode={noticeMode}
         noticeVersion={CURRENT_NOTICE_VERSION}
         onAccepted={handleAccepted}
-        onLogout={() => setNoticeOpen(false)}
+        onLogout={handleLogout}
         onClose={() => setNoticeOpen(false)}
       />
     </>

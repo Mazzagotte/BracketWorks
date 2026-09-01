@@ -1,6 +1,6 @@
 import { ArrowRight, Calendar, CircleDollarSign, ClipboardList, Clock, Settings2, Trophy, Users, type LucideIcon } from 'lucide-react';
 
-import type { BracketSettings, Tournament, TournamentActivityEntry } from '../../lib/types';
+import type { BracketSettings, Tournament } from '../../lib/types';
 import type { Squad } from '../../lib/types';
 import type { DashboardScoreProgress } from '../hooks/useDashboardScoreProgress';
 import buttonStyles from '../../styles/buttons.module.css';
@@ -69,8 +69,6 @@ type DashboardBoardProps = {
   dashboardActionIcons: Record<string, LucideIcon>;
   scoreProgress: DashboardScoreProgress;
   scoreProgressText: string;
-  recentActivity: TournamentActivityEntry[];
-  activityLoading: boolean;
 };
 
 export function DashboardBoard({
@@ -98,8 +96,6 @@ export function DashboardBoard({
   dashboardActionIcons,
   scoreProgress,
   scoreProgressText,
-  recentActivity,
-  activityLoading,
 }: DashboardBoardProps) {
   const ContinueActionIcon = dashboardActionIcons[contextPrimaryAction.key] ?? ArrowRight;
 
@@ -343,26 +339,6 @@ export function DashboardBoard({
                   );
                 })}
               </div>
-            </div>
-
-            <div className={styles.sideCardSection}>
-              <p className={styles.sideCardSectionLabel}>Recent Activity</p>
-              {activityLoading ? (
-                <p className={styles.activityEmpty}>Loading activity…</p>
-              ) : recentActivity.length === 0 ? (
-                <p className={styles.activityEmpty}>No recorded activity yet.</p>
-              ) : (
-                <ol className={styles.activityList}>
-                  {recentActivity.slice(0, 5).map(event => (
-                    <li key={event.id} className={styles.activityItem}>
-                      <time dateTime={event.created_at}>
-                        {new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' }).format(new Date(event.created_at))}
-                      </time>
-                      <span>{event.summary}</span>
-                    </li>
-                  ))}
-                </ol>
-              )}
             </div>
 
             <div className={styles.sideCardSection}>

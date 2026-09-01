@@ -423,9 +423,9 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
           return;
         }
 
-        const preferredTournamentId = getInitialTournamentId(routeTournamentId)
-          ?? setupStates[0]?.tournament_id
-          ?? null;
+        const preferredTournamentId = routeTournamentId === null
+          ? null
+          : getInitialTournamentId(routeTournamentId);
 
         if (!preferredTournamentId) {
           return;

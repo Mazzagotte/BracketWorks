@@ -16,7 +16,7 @@ import {
   Users,
   type LucideIcon,
 } from 'lucide-react';
-import { Tournament, Squad, BracketSettings, TournamentForm, SidePotsSettings, SidePot, Player, DashboardTournamentBootstrapResponse, TournamentActivityEntry } from '../lib/types';
+import { Tournament, Squad, BracketSettings, TournamentForm, SidePotsSettings, SidePot, Player, DashboardTournamentBootstrapResponse } from '../lib/types';
 
 import { useAuth } from '../lib/auth-context';
 import { ErrorBoundary } from '../components/ErrorBoundary';
@@ -159,8 +159,6 @@ export default function TournamentDashboard() {
   const [squads, setSquads] = useState<Squad[]>(() => isDemoDashboard ? DEMO_DASHBOARD_SQUADS : []);
   const [squadEntryCounts, setSquadEntryCounts] = useState<Record<number, number>>(() => isDemoDashboard ? ({ 900101: 32, 900102: 0 }) : ({} as Record<number, number>));
   const [summaryPlayers, setSummaryPlayers] = useState<Player[]>(() => isDemoDashboard ? DEMO_DASHBOARD_PLAYERS : []);
-  const [recentActivity, setRecentActivity] = useState<TournamentActivityEntry[]>([]);
-  const [activityLoading, setActivityLoading] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmMsg, setConfirmMsg] = useState('');
   const [optionalToggleConfirm, setOptionalToggleConfirm] = useState<{ programKey: string; programName: string; existingEntries: number } | null>(null);
@@ -736,35 +734,6 @@ export default function TournamentDashboard() {
   useEffect(() => {
     setIsAdmin(Boolean(currentUser?.isAdmin));
   }, [currentUser?.isAdmin]);
-
-  useEffect(() => {
-    if (isDemoDashboard || !tournament?.id || !sessionToken) {
-      setRecentActivity([]);
-      return;
-    }
-
-    const controller = new AbortController();
-    setActivityLoading(true);
-    apiFetch(API(`/api/v1/tournament-activity/${tournament.id}?limit=5`), {
-      headers: { Authorization: `Bearer ${sessionToken}` },
-      signal: controller.signal,
-    })
-      .then(async response => {
-        if (!response.ok) throw new Error('Unable to load recent activity.');
-        return response.json() as Promise<TournamentActivityEntry[]>;
-      })
-      .then(setRecentActivity)
-      .catch(error => {
-        if (error instanceof DOMException && error.name === 'AbortError') return;
-        logger.warn('Tournament activity fetch failed', error);
-        setRecentActivity([]);
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setActivityLoading(false);
-      });
-
-    return () => controller.abort();
-  }, [isDemoDashboard, sessionToken, tournament?.id]);
 
   // Fetch tournaments when load modal opens
   useEffect(() => {
@@ -1354,8 +1323,6 @@ export default function TournamentDashboard() {
                   dashboardActionIcons={dashboardActionIcons}
                   scoreProgress={scoreProgress}
                   scoreProgressText={scoreProgressText}
-                  recentActivity={recentActivity}
-                  activityLoading={activityLoading}
                 />
               </>
             )}

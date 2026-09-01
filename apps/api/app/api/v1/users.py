@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-DEV_NOTICE_VERSION = "1.0"
+DEV_NOTICE_VERSION = "1.1"
 
 
 def _normalize_name(value: str) -> str:

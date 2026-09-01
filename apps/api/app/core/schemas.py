@@ -94,7 +94,7 @@ class TokenPairResponse(BaseModel):
     challenge_required: bool = False
     challenge_type: Optional[str] = None
     dev_notice_required: bool = False
-    dev_notice_version: str = "1.0"
+    dev_notice_version: str = "1.1"
 
 
 class DevNoticeAcceptRequest(BaseModel):
@@ -229,6 +229,7 @@ class UserOut(BaseModel):
     is_admin: bool
     email_verified: bool = False
     email_verified_at: Optional[datetime] = None
+    dev_notice_version_accepted: Optional[str] = None
 
 
 class UserAccountUpdate(BaseModel):

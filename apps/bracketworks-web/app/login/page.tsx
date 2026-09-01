@@ -49,7 +49,7 @@ const featureCards = [
 
 export default function LoginPage() {
   const router = useRouter();
-  const { authenticateUser } = useAuth();
+  const { authenticateUser, logoutUser } = useAuth();
   const usernameInputRef = useRef<HTMLInputElement | null>(null);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -57,7 +57,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [loginFailed, setLoginFailed] = useState(false);
   const [devNoticeOpen, setDevNoticeOpen] = useState(false);
-  const [devNoticeVersion, setDevNoticeVersion] = useState('1.0');
+  const [devNoticeVersion, setDevNoticeVersion] = useState('1.1');
 
   const { addToast } = useToast();
   const { modals, openModal, closeModal } = useAuthModals();
@@ -227,7 +227,7 @@ export default function LoginPage() {
 
       const noticeRequired = Boolean(data.dev_notice_required);
       if (noticeRequired) {
-        const version = typeof data.dev_notice_version === 'string' ? data.dev_notice_version : '1.0';
+        const version = typeof data.dev_notice_version === 'string' ? data.dev_notice_version : '1.1';
         setDevNoticeVersion(version);
         setDevNoticeOpen(true);
       } else {
@@ -251,11 +251,14 @@ export default function LoginPage() {
         mode="require-acceptance"
         noticeVersion={devNoticeVersion}
         onAccepted={() => {
-          localStorage.setItem('dev_notice_version_accepted', devNoticeVersion);
           setDevNoticeOpen(false);
           router.push('/dashboard');
         }}
-        onLogout={() => { setDevNoticeOpen(false); router.push('/login'); }}
+        onLogout={() => {
+          setDevNoticeOpen(false);
+          logoutUser({ fastRedirect: true });
+          router.push('/login');
+        }}
       />
       <ResetSuccessModal
         isOpen={modals.resetSuccess}
