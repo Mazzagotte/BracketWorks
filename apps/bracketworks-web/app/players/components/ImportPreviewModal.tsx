@@ -50,11 +50,11 @@ export default function ImportPreviewModal({ fileName, rows, isCommitting, onRow
                   <td>{row.sourceRow}</td>
                   <td>{row.player ? (
                     <div className={styles.importNameFields}>
-                      <input className={formStyles.input} aria-label={`Row ${row.sourceRow} first name`} value={row.player.firstName} disabled={isCommitting} onChange={event => update(row.id, value => ({ ...value, player: value.player ? { ...value.player, firstName: event.target.value } : value.player }))} />
-                      <input className={formStyles.input} aria-label={`Row ${row.sourceRow} last name`} value={row.player.lastName} disabled={isCommitting} onChange={event => update(row.id, value => ({ ...value, player: value.player ? { ...value.player, lastName: event.target.value } : value.player }))} />
+                      <input className={formStyles.field} aria-label={`Row ${row.sourceRow} first name`} value={row.player.firstName} disabled={isCommitting} onChange={event => update(row.id, value => ({ ...value, player: value.player ? { ...value.player, firstName: event.target.value } : value.player }))} />
+                      <input className={formStyles.field} aria-label={`Row ${row.sourceRow} last name`} value={row.player.lastName} disabled={isCommitting} onChange={event => update(row.id, value => ({ ...value, player: value.player ? { ...value.player, lastName: event.target.value } : value.player }))} />
                     </div>
                   ) : '—'}</td>
-                  <td>{row.player ? <input className={formStyles.input} type="number" min="0" max="300" aria-label={`Row ${row.sourceRow} average`} value={row.player.average} disabled={isCommitting} onChange={event => update(row.id, value => ({ ...value, player: value.player ? { ...value.player, average: Number(event.target.value) } : value.player }))} /> : '—'}</td>
+                  <td>{row.player ? <input className={formStyles.field} type="number" min="0" max="300" aria-label={`Row ${row.sourceRow} average`} value={row.player.average} disabled={isCommitting} onChange={event => update(row.id, value => ({ ...value, player: value.player ? { ...value.player, average: Number(event.target.value) } : value.player }))} /> : '—'}</td>
                   <td><span className={styles.importStatus} data-category={row.category}>{labels[row.category]}</span><small>{row.reason}</small></td>
                 </tr>
               ))}

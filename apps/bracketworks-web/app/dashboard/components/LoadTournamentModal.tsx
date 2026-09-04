@@ -1,9 +1,9 @@
-import { RefreshCw, Trash2, Trophy } from 'lucide-react';
+import { Clock3, Search, Trophy } from 'lucide-react';
+import { useMemo, useState } from 'react';
 
 import type { Tournament } from '../../lib/types';
 import EnhancedButton from '../../components/EnhancedButton';
 import CloseControl from '../../../components/CloseControl';
-import buttonStyles from '../../styles/buttons.module.css';
 import { formatIsoDateLong } from '../../lib/formatters';
 import styles from './LoadTournamentModal.module.css';
 
@@ -18,7 +18,6 @@ type LoadTournamentModalProps = {
   goToPage: (page: number) => void;
   onClose: () => void;
   onLoadTournament: (tournament: Tournament) => void;
-  onDeleteTournament: (tournament: Tournament) => void;
 };
 
 export function LoadTournamentModal({
@@ -32,8 +31,25 @@ export function LoadTournamentModal({
   goToPage,
   onClose,
   onLoadTournament,
-  onDeleteTournament,
 }: LoadTournamentModalProps) {
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const matchingTournaments = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    const source = normalizedQuery ? allTournaments : paginatedItems;
+    const filtered = source.filter(tournament =>
+      [tournament.name, tournament.location, tournament.start_date]
+        .filter(Boolean)
+        .some(value => value!.toLowerCase().includes(normalizedQuery)),
+    );
+
+    return [...filtered].sort((left, right) => {
+      if (left.id === currentTournamentId) return -1;
+      if (right.id === currentTournamentId) return 1;
+      return (right.start_date || '').localeCompare(left.start_date || '');
+    });
+  }, [allTournaments, currentTournamentId, paginatedItems, searchQuery]);
+
   if (!open) {
     return null;
   }
@@ -56,6 +72,17 @@ export function LoadTournamentModal({
             onClick={onClose}
           />
         </div>
+        <div className={styles.switcherSearch}>
+          <Search aria-hidden="true" />
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder="Search tournaments"
+            aria-label="Search tournaments"
+            autoFocus
+          />
+        </div>
         <div className={styles.modalScrollBody}>
           {allTournaments.length === 0 ? (
             <div className={styles.emptyTournaments}>
@@ -65,7 +92,7 @@ export function LoadTournamentModal({
           ) : (
             <>
               <ul className={styles.tournamentList}>
-                {paginatedItems.map(tournament => {
+                {matchingTournaments.map(tournament => {
                   const squadCount = tournament.squad_times
                     ? Object.values(tournament.squad_times).reduce((sum, values) => sum + values.length, 0)
                     : 0;
@@ -76,6 +103,16 @@ export function LoadTournamentModal({
                     <li
                       key={tournament.id}
                       className={`${styles.tournamentItem} ${isActiveTournament ? styles.tournamentItemActive : ''}`}
+                      onClick={() => onLoadTournament(tournament)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          onLoadTournament(tournament);
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Load ${tournament.name}`}
                     >
                       <div className={styles.tournamentInfo}>
                         <span className={styles.tournamentIcon} aria-hidden="true"><Trophy /></span>
@@ -104,18 +141,18 @@ export function LoadTournamentModal({
                         </div>
                       </div>
                       <div className={styles.tournamentActions}>
-                        <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.primary} ${styles.loadBtn}`} onClick={() => onLoadTournament(tournament)}>
-                          <RefreshCw aria-hidden="true" />
-                          {isActiveTournament ? 'Reload' : 'Load'}
-                        </button>
-                        <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.danger} ${styles.deleteBtn}`} onClick={() => onDeleteTournament(tournament)}><Trash2 aria-hidden="true" />Delete</button>
+                        {isActiveTournament ? <span className={styles.currentTournament}>Current</span> : <Clock3 aria-hidden="true" />}
                       </div>
                     </li>
                   );
                 })}
               </ul>
 
-              {totalPages > 1 && (
+              {searchQuery.trim() && matchingTournaments.length === 0 && (
+                <div className={styles.emptyTournaments}>No tournaments match your search.</div>
+              )}
+
+              {!searchQuery.trim() && totalPages > 1 && (
                 <div className={styles.paginationBar}>
                   <EnhancedButton onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} variant="primary" size="sm">Previous</EnhancedButton>
                   <span className={styles.paginationText}>Page {currentPage} of {totalPages}</span>

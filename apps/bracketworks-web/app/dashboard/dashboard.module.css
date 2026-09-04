@@ -704,7 +704,7 @@
 .advancedGrid .sidePotsCard {
   background: var(--dash-surface-soft);
   border-color: var(--dash-border-faint);
-  border-radius: 20px;
+  border-radius: var(--radius-2xl);
 }
 
 .advancedGrid .settingsHeader {
@@ -5480,7 +5480,7 @@
     min-width: 0 !important;
     max-width: none !important;
     min-height: 0 !important;
-    border-radius: 16px;
+    border-radius: var(--radius-2xl);
   }
 
   .settingsModalGrid .settingsHeader {

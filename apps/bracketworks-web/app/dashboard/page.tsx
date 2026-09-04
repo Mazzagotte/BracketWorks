@@ -168,7 +168,6 @@ export default function TournamentDashboard() {
   const [squadModalRequireMessage, setSquadModalRequireMessage] = useState<string | null>(null);
   const pendingSquadActionRef = useRef<(() => void) | null>(null);
   const [allTournaments, setAllTournaments] = useState<Tournament[]>([]);
-  const [deleteConfirm, setDeleteConfirm] = useState<{id: number, name: string} | null>(null);
   const [shareQROpen, setShareQROpen] = useState(false);
   const [isExplainModalOpen, setIsExplainModalOpen] = useState(false);
   const [duplicateModalOpen, setDuplicateModalOpen] = useState(false);
@@ -818,41 +817,6 @@ export default function TournamentDashboard() {
     }
   };
 
-  // Delete selected tournament with enhanced UX feedback
-  const handleDeleteTournament = async (id: number) => {
-    try {
-      const deletedTournament = allTournaments.find(t => t.id === id);
-      await apiClient.delete(`/api/v1/tournaments/${id}`);
-      
-      setAllTournaments(allTournaments.filter(t => t.id !== id));
-      setDeleteConfirm(null);
-
-      if (tournament?.id === id) {
-        setTournament(null);
-        setWorkflowStatus(null);
-        setSquads([]);
-        setSquadEntryCounts({});
-        setSelectedSquadId(null);
-        setBracketSettings(createDefaultBracketSettings());
-        setSidePots(createDefaultSidePots());
-        clearSelectedTournament({ clearSquad: true });
-      }
-
-      addToast({
-        type: 'success',
-        message: `Tournament "${deletedTournament?.name || id}" deleted successfully!`,
-        duration: 4000
-      });
-    } catch (error: unknown) {
-      logger.error('Tournament delete failed', getErrorContext(error));
-      addToast({
-        type: 'error',
-        message: getErrorMessage(error) || 'Failed to delete tournament. Please try again.',
-        duration: 6000
-      });
-    }
-  };
-
   // Save tournament handler with enhanced UX feedback
   const handleSave = async (tournamentFormData: TournamentForm) => {
     const token = sessionToken;
@@ -1391,26 +1355,9 @@ export default function TournamentDashboard() {
             goToPage={goToPage}
             onClose={() => setLoadModalOpen(false)}
             onLoadTournament={handleLoadTournament}
-            onDeleteTournament={(selectedTournament) => setDeleteConfirm({ id: selectedTournament.id, name: selectedTournament.name })}
           />
         </div>
 
-        {/* Delete Confirmation Modal */}
-        {deleteConfirm && (
-          <div className={`${mobileStyles.modalOverlay} ${mobileStyles.modalOverlayTop}`}>
-            <div className={mobileStyles.modalCard}>
-              <CloseControl onClick={() => setDeleteConfirm(null)} position="absolute" size="sm" label="Close tournament deletion dialog" />
-              <h2 className={`${mobileStyles.modalTitle} ${mobileStyles.modalTitleDanger}`}>Confirm Deletion</h2>
-              <p className={mobileStyles.deleteConfirmText}>
-                Are you sure you want to delete tournament <strong>{deleteConfirm.name}</strong>?
-              </p>
-              <div className={mobileStyles.deleteConfirmActions}>
-                <EnhancedButton onClick={() => handleDeleteTournament(deleteConfirm.id)} variant="danger" size="md">Delete</EnhancedButton>
-                <EnhancedButton onClick={() => setDeleteConfirm(null)} variant="primary" size="md">Cancel</EnhancedButton>
-              </div>
-            </div>
-          </div>
-        )}
       </>
     </ErrorBoundary>
   );

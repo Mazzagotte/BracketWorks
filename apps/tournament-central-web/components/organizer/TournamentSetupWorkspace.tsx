@@ -406,7 +406,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
 
       const draft = routeTournamentId === null
         ? buildDefaultDraft()
-        : loadDraftFromStorage();
+        : buildDefaultDraft();
       applyDraft(draft);
       setIsSetupPublished(false);
       setPreviewUrl(null);
@@ -433,25 +433,31 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
           return;
         }
 
-        const state = await loadOrganizerSetupState(token, preferredTournamentId);
-        if (!state || cancelled) {
+        const selectedTournament = tournaments.find((entry) => entry.id === preferredTournamentId);
+        if (!selectedTournament || cancelled) {
           return;
         }
 
-        const hydratedDraft = normalizeOrganizerDraft({
-          tournamentId: state.tournament_id,
-          payload: state.payload,
-        });
-        applyDraft(hydratedDraft);
-        setIsSetupPublished(Boolean(state.is_published));
+        const state = await loadOrganizerSetupState(token, preferredTournamentId);
+        if (cancelled) {
+          return;
+        }
 
-        const selectedTournament = tournaments.find((entry) => entry.id === state.tournament_id);
+        const hydratedDraft = state
+          ? normalizeOrganizerDraft({
+            tournamentId: state.tournament_id,
+            payload: state.payload,
+          })
+          : toDraftFromTournament(selectedTournament);
+        applyDraft(hydratedDraft);
+        setIsSetupPublished(Boolean(state?.is_published));
+
         if (selectedTournament?.logo_file_name) {
           setDetails((prev) => ({ ...prev, logoFileName: selectedTournament.logo_file_name || '' }));
         }
 
         if (selectedTournament?.has_logo) {
-          const previewUrl = await fetchTournamentLogoBlobUrl(token, state.tournament_id);
+          const previewUrl = await fetchTournamentLogoBlobUrl(token, preferredTournamentId);
           if (!cancelled) {
             setPreviewUrl(previewUrl);
           }

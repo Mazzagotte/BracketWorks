@@ -21,7 +21,7 @@ import { BRACKET_SETTINGS_AUTOSAVE_DELAY_MS, getSidePotsStorageKey } from '../..
 import { notifySettingsChanged } from '../../lib/selection-session';
 import { normalizeSidePotsSettings } from '../utils/sidePots';
 import { TournamentStaffPanel } from './TournamentStaffPanel';
-import { TournamentRecoveryPanel } from './TournamentRecoveryPanel';
+import formStyles from '../../styles/forms.module.css';
 
 const createDefaultBracketSettings = (tournamentId = 0): BracketSettings => ({
   tournament_id: tournamentId,
@@ -89,6 +89,7 @@ export function TournamentSettingsContent({ tournamentId, layout = 'page' }: Tou
 
   const bracketSettingsRef = useRef<BracketSettings>(bracketSettings);
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const settingsSaveQueueRef = useRef<Promise<void>>(Promise.resolve());
   const isEmbeddedModal = layout === 'embedded-modal';
   const isRouteModal = layout === 'route-modal';
   const showHeader = !isEmbeddedModal;
@@ -134,11 +135,22 @@ export function TournamentSettingsContent({ tournamentId, layout = 'page' }: Tou
     [tournamentId],
   );
 
+  const queueBracketSettingsPersist = useCallback(
+    (settingsToSave: BracketSettings) => {
+      const queuedSave = settingsSaveQueueRef.current
+        .catch(() => undefined)
+        .then(() => persistBracketSettings(settingsToSave));
+      settingsSaveQueueRef.current = queuedSave;
+      return queuedSave;
+    },
+    [persistBracketSettings],
+  );
+
   const saveBracketSettingsImmediately = useCallback(() => {
     if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     if (!tournamentId) return;
 
-    void persistBracketSettings(bracketSettingsRef.current).catch((err: unknown) => {
+    void queueBracketSettingsPersist(bracketSettingsRef.current).catch((err: unknown) => {
       logger.error('Failed to save bracket settings', getErrorContext(err));
       addToast({
         type: 'error',
@@ -146,7 +158,7 @@ export function TournamentSettingsContent({ tournamentId, layout = 'page' }: Tou
         duration: 5000,
       });
     });
-  }, [addToast, persistBracketSettings, tournamentId]);
+  }, [addToast, queueBracketSettingsPersist, tournamentId]);
 
   const updateBracketSettings = useCallback(
     (updater: (prev: BracketSettings) => BracketSettings, mode: 'immediate' | 'none' | 'autosave' = 'autosave') => {
@@ -168,7 +180,6 @@ export function TournamentSettingsContent({ tournamentId, layout = 'page' }: Tou
   const saveSidePots = useCallback(
     (nextSidePots: SidePotsSettings) => {
       const key = getSidePotsStorageKey(tournamentId);
-      storage.setItem(key, JSON.stringify(nextSidePots));
 
       const nextBracketSettings: BracketSettings = {
         ...bracketSettingsRef.current,
@@ -177,7 +188,9 @@ export function TournamentSettingsContent({ tournamentId, layout = 'page' }: Tou
       };
       bracketSettingsRef.current = nextBracketSettings;
 
-      void persistBracketSettings(nextBracketSettings).catch((err: unknown) => {
+      void queueBracketSettingsPersist(nextBracketSettings).then(() => {
+        storage.setItem(key, JSON.stringify(nextSidePots));
+      }).catch((err: unknown) => {
         logger.error('Failed to save side-pot settings', getErrorContext(err));
         addToast({
           type: 'error',
@@ -186,10 +199,8 @@ export function TournamentSettingsContent({ tournamentId, layout = 'page' }: Tou
         });
       });
 
-      // Defer cross-component refresh event until after current render completes.
-      setTimeout(() => notifySettingsChanged(), 0);
     },
-    [addToast, persistBracketSettings, tournamentId],
+    [addToast, queueBracketSettingsPersist, tournamentId],
   );
 
   const updateSidePot = useCallback(
@@ -210,13 +221,40 @@ export function TournamentSettingsContent({ tournamentId, layout = 'page' }: Tou
 
   const isCardExpanded = (cardKey: DashboardCardKey): boolean => cardExpanded[cardKey] ?? expandedDesktopCards[cardKey] ?? false;
 
+  const getOptionalBracketEntryCount = useCallback(async (programKey: string) => {
+    const normalizedKey = programKey.trim().toLowerCase();
+    const limit = 500;
+    let offset = 0;
+    let totalEntries = 0;
+
+    while (true) {
+      const bowlers = await apiClient.get<Array<{ program_entry_counts?: Record<string, number> | null }>>(
+        `/api/v1/bowlers?tournament_id=${tournamentId}&limit=${limit}&offset=${offset}`,
+        false,
+      );
+      totalEntries += bowlers.reduce((sum, bowler) => sum + Number(bowler.program_entry_counts?.[normalizedKey] || 0), 0);
+      if (bowlers.length < limit) return totalEntries;
+      offset += limit;
+    }
+  }, [tournamentId]);
+
   const handleOptionalBracketToggle = async (programKey: string, enabled: boolean) => {
     if (!enabled) {
-      const existingEntries = 0;
-      if (existingEntries > 0) {
+      try {
+        const existingEntries = await getOptionalBracketEntryCount(programKey);
+        if (existingEntries > 0) {
+          addToast({
+            type: 'warning',
+            message: `Cannot disable ${programKey}: ${existingEntries} existing entries must be removed first.`,
+            duration: 4000,
+          });
+          return;
+        }
+      } catch (error) {
+        logger.error('Failed to verify optional bracket entries', { programKey, error: getErrorContext(error) });
         addToast({
-          type: 'warning',
-          message: `Cannot disable ${programKey}: has existing entries`,
+          type: 'error',
+          message: `Could not verify ${programKey} entries. Try again.`,
           duration: 4000,
         });
         return;
@@ -258,6 +296,10 @@ export function TournamentSettingsContent({ tournamentId, layout = 'page' }: Tou
   useEffect(() => {
     bracketSettingsRef.current = bracketSettings;
   }, [bracketSettings]);
+
+  useEffect(() => () => {
+    if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+  }, []);
 
   useEffect(() => {
     if (!effectiveAuthToken || !tournamentId) return;
@@ -380,7 +422,7 @@ export function TournamentSettingsContent({ tournamentId, layout = 'page' }: Tou
                     <div className={dashboardStyles.compactField}>
                       <label className={dashboardStyles.compactLabel}>Bracket Size</label>
                       <select
-                        className={dashboardStyles.compactSelect}
+                        className={`${formStyles.field} ${formStyles.compactControl} ${pageStyles.settingsSelect}`}
                         value={bracketSettings.bracket_size}
                         onChange={e => {
                           updateBracketSettings(
@@ -397,7 +439,7 @@ export function TournamentSettingsContent({ tournamentId, layout = 'page' }: Tou
                       <div className={dashboardStyles.compactInputWrapper}>
                         <span className={dashboardStyles.currencySymbol}>$</span>
                         <input
-                          className={dashboardStyles.compactInput}
+                          className={`${formStyles.field} ${formStyles.compactControl} ${pageStyles.settingsCurrencyInput}`}
                           type="text"
                           placeholder="0"
                           value={formatNumberInput(bracketSettings.default_entry_fee)}
@@ -426,7 +468,7 @@ export function TournamentSettingsContent({ tournamentId, layout = 'page' }: Tou
                       <div className={dashboardStyles.compactInputWrapper}>
                         <span className={dashboardStyles.currencySymbol}>$</span>
                         <input
-                          className={dashboardStyles.compactInput}
+                          className={`${formStyles.field} ${formStyles.compactControl} ${pageStyles.settingsCurrencyInput}`}
                           type="text"
                           placeholder="0"
                           value={formatNumberInput(bracketSettings.first_place_amount)}
@@ -447,7 +489,7 @@ export function TournamentSettingsContent({ tournamentId, layout = 'page' }: Tou
                       <div className={dashboardStyles.compactInputWrapper}>
                         <span className={dashboardStyles.currencySymbol}>$</span>
                         <input
-                          className={dashboardStyles.compactInput}
+                          className={`${formStyles.field} ${formStyles.compactControl} ${pageStyles.settingsCurrencyInput}`}
                           type="text"
                           placeholder="0"
                           value={formatNumberInput(bracketSettings.second_place_amount)}
@@ -519,7 +561,7 @@ export function TournamentSettingsContent({ tournamentId, layout = 'page' }: Tou
                   <div className={dashboardStyles.compactInputWrapper}>
                     <span className={dashboardStyles.currencySymbol}>$</span>
                     <input
-                      className={dashboardStyles.compactInput}
+                      className={`${formStyles.field} ${formStyles.compactControl} ${pageStyles.settingsCurrencyInput}`}
                       type="text"
                       placeholder="0"
                       value={formatNumberInput(sidePots.entry_fee)}
@@ -536,7 +578,7 @@ export function TournamentSettingsContent({ tournamentId, layout = 'page' }: Tou
                   <div className={dashboardStyles.compactInputWrapper}>
                     <span className={dashboardStyles.currencySymbol}>$</span>
                     <input
-                      className={dashboardStyles.compactInput}
+                      className={`${formStyles.field} ${formStyles.compactControl} ${pageStyles.settingsCurrencyInput}`}
                       type="text"
                       placeholder="0"
                       value={formatNumberInput(sidePots.prize_amount)}
@@ -657,7 +699,6 @@ export function TournamentSettingsContent({ tournamentId, layout = 'page' }: Tou
         </div>
       </section>
       <TournamentStaffPanel tournamentId={tournamentId} ownerUserId={tournament.user_id ?? 0} />
-      <TournamentRecoveryPanel tournamentId={tournamentId} tournamentName={tournament.name} />
     </>
   );
 

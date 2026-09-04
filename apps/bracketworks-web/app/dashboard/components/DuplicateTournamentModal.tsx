@@ -79,11 +79,11 @@ export function DuplicateTournamentModal({ open, tournament, onClose, onCreated 
         </header>
         <div className={`${modalStyles.content} ${styles.body}`}>
           <label>Tournament name
-            <input className={formStyles.input} value={name} onChange={event => setName(event.target.value)} maxLength={200} autoFocus />
+            <input className={formStyles.field} value={name} onChange={event => setName(event.target.value)} maxLength={200} autoFocus />
           </label>
           <div className={styles.dateGrid}>
-            <label>Start date<input className={formStyles.input} type="date" value={startDate} onChange={event => setStartDate(event.target.value)} /></label>
-            <label>End date<input className={formStyles.input} type="date" value={endDate} min={startDate || undefined} onChange={event => setEndDate(event.target.value)} /></label>
+            <label>Start date<input className={formStyles.field} type="date" value={startDate} onChange={event => setStartDate(event.target.value)} /></label>
+            <label>End date<input className={formStyles.field} type="date" value={endDate} min={startDate || undefined} onChange={event => setEndDate(event.target.value)} /></label>
           </div>
           <fieldset>
             <legend>Copy configuration</legend>

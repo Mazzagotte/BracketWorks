@@ -134,14 +134,14 @@ export default function DuplicateResolutionPanel({ tournamentId, onResolved }: {
           {mergePair === candidate.pair_key ? (
             <div className={styles.duplicateMergeForm}>
               <label>Record to keep
-                <select className={formStyles.input} value={targetId ?? ''} onChange={event => setTargetId(Number(event.target.value))}>
+                <select className={formStyles.field} value={targetId ?? ''} onChange={event => setTargetId(Number(event.target.value))}>
                   <option value="" disabled>Select the canonical record</option>
                   <option value={candidate.left.id}>{candidate.left.full_name} (#{candidate.left.id})</option>
                   <option value={candidate.right.id}>{candidate.right.full_name} (#{candidate.right.id})</option>
                 </select>
               </label>
               <label>Reason for merge
-                <input className={formStyles.input} value={reason} onChange={event => setReason(event.target.value)} placeholder="Example: duplicate import" maxLength={1000} />
+                <input className={formStyles.field} value={reason} onChange={event => setReason(event.target.value)} placeholder="Example: duplicate import" maxLength={1000} />
               </label>
               <div className={styles.duplicateActions}>
                 <button type="button" className={`${buttonStyles.button} ${buttonStyles.primary}`} disabled={busy || !targetId || !reason.trim()} onClick={() => void merge(candidate)}><GitMerge aria-hidden="true" />Confirm Merge</button>

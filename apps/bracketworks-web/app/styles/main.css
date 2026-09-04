@@ -62,8 +62,8 @@
   --bw-ivory: var(--color-surface-primary);
   --bw-ivory-light: var(--color-surface-primary);
   --bw-ivory-soft: var(--color-bg-secondary);
-  --bw-surface-card: var(--color-surface-primary);
-  --bw-surface-card-strong: var(--color-surface-primary);
+  --bw-surface-card: var(--color-bg-secondary);
+  --bw-surface-card-strong: var(--color-bg-primary);
   --bw-surface-panel: var(--color-surface-secondary);
   --bw-surface-panel-strong: var(--color-surface-hover);
   --bw-border-subtle: var(--color-border-subtle);

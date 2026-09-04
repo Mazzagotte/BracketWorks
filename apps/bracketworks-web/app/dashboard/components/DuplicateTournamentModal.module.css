@@ -2,12 +2,14 @@
 .title svg { width: 20px; }
 .intro { margin: 6px 0 0; color: var(--bw-text-muted); font-size: var(--bw-type-helper); }
 .body { display: grid; gap: var(--space-card-y); }
-.body > label, .dateGrid label { display: grid; gap: 6px; font-size: 0.85rem; font-weight: 600; }
+.body > label, .dateGrid label { display: grid; gap: 7px; color: var(--bw-text-muted); font-size: var(--bw-type-label); font-weight: 800; letter-spacing: 0; text-transform: uppercase; }
+.body :global(.field) { width: 100%; min-height: 40px; padding: 0 12px; border-radius: var(--radius-md); font-size: 0.9rem; font-weight: 500; letter-spacing: 0; text-transform: none; }
 .dateGrid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-section); }
-.body fieldset { display: grid; gap: var(--space-stack); margin: 0; padding: var(--space-card-compact-y) var(--space-card-compact-x); border: 1px solid var(--bw-border-subtle); border-radius: var(--radius-lg); }
-.body legend { padding: 0 5px; font-weight: 700; }
-.check { display: flex; align-items: center; gap: 9px; font-size: 0.9rem; }
-.check input { width: 17px; height: 17px; accent-color: var(--color-accent-primary); }
+.body fieldset { display: grid; gap: var(--space-stack); margin: 0; padding: var(--space-card-compact-y) var(--space-card-compact-x); background: var(--bw-surface-panel); border: 1px solid var(--bw-border-subtle); border-radius: var(--radius-lg); }
+.body legend { padding: 0 5px; color: var(--bw-text-body); font-size: 0.82rem; font-weight: 800; }
+.check { display: flex; align-items: center; gap: 9px; color: var(--bw-text-body); font-size: 0.9rem; font-weight: 650; }
+.check input { width: 17px; height: 17px; margin: 0; accent-color: var(--color-primary); }
+.check input:disabled { opacity: 0.5; }
 .advanced p { margin: 6px 0 0; color: var(--bw-text-muted); font-size: var(--bw-type-helper); }
 .error { margin: 0; color: var(--color-error); }
 @media (max-width: 560px) { .dateGrid { grid-template-columns: 1fr; } }

@@ -38,7 +38,6 @@ export default function BracketsPage() {
   const { tournaments, fetchTournaments, loading: tournamentsLoading } = useTournaments()
   const { squads, fetchSquads } = useSquads()
 
-  const [selectedBracketIndex, setSelectedBracketIndex] = useState<number>(0)
   const lastLoadedRef = useRef<{ tournamentId: number; squadId: number } | null>(null)
 
   const [isExplainModalOpen, setIsExplainModalOpen] = useState(false)
@@ -83,6 +82,7 @@ export default function BracketsPage() {
 
   const {
     activeTab, setActiveTab,
+    selectedBracketIndex, setSelectedBracketIndex,
     mobileOpenBracketIndex, setMobileOpenBracketIndex,
     searchFirstName, setSearchFirstName,
     searchLastName, setSearchLastName,

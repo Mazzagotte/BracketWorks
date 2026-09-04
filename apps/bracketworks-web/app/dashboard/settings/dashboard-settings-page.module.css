@@ -69,33 +69,39 @@
   font-size: 14px;
 }
 
-.staffPanel {
-  margin-top: 14px;
-  padding: 16px;
-  border: 1px solid var(--bw-border-card);
-  border-radius: 20px;
-  background: var(--settings-card-primary);
-  box-shadow: var(--bw-shadow-card);
+.settingsSelect {
+  width: 96px;
 }
 
-.staffHeader { display: flex; gap: 12px; align-items: center; }
-.staffHeader h2 { margin: 0; color: var(--bw-text-title); font-size: 1rem; }
+.settingsCurrencyInput {
+  width: 100%;
+  padding-left: 24px;
+}
+
+.staffPanel {
+  margin-top: var(--space-section);
+  overflow: hidden;
+  border-radius: var(--radius-2xl);
+}
+
+.staffHeader { display: flex; gap: 12px; align-items: center; border-bottom: 1px solid var(--bw-border-subtle); }
+.staffHeader h2 { margin: 0; color: var(--bw-text-title); font-size: 1rem; font-weight: 800; }
 .staffHeader p, .staffState { margin: 3px 0 0; color: var(--bw-text-muted); font-size: .82rem; }
-.staffIcon { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 10px; color: var(--color-primary); background: var(--dash-accent-panel); }
+.staffIcon { display: grid; width: 34px; height: 34px; place-items: center; border: 1px solid var(--dash-accent-border); border-radius: var(--radius-md); color: var(--color-primary); background: var(--dash-accent-panel); }
 .staffIcon svg { width: 18px; }
 .staffInviteRow { display: grid; grid-template-columns: minmax(180px, 1fr) 180px auto; gap: 8px; margin-top: 14px; }
-.staffInviteRow input, .staffInviteRow select, .staffControls select { min-height: 38px; border: 1px solid var(--bw-border-subtle); border-radius: 9px; padding: 7px 10px; color: var(--bw-text-body); background: var(--dash-input-surface); }
-.staffInviteRow button { display: inline-flex; gap: 7px; align-items: center; justify-content: center; min-height: 38px; border: 0; border-radius: 9px; padding: 8px 14px; color: var(--color-text-on-primary); background: var(--color-primary); font-weight: 700; }
-.staffInviteRow button:disabled { opacity: .55; cursor: not-allowed; }
+.staffField { width: 100%; min-height: 38px; border-radius: var(--radius-md); padding: 0 10px; font-size: .84rem; }
+.staffInviteRow button { min-height: 38px; }
 .staffInviteRow button svg, .staffControls button svg { width: 16px; height: 16px; }
-.staffList { display: grid; margin-top: 14px; border-top: 1px solid var(--bw-border-subtle); }
-.staffRow { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--bw-border-subtle); }
+.staffList { display: grid; margin-top: 4px; }
+.staffRow { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--bw-border-subtle); }
 .staffRow > div:first-child { display: grid; min-width: 0; }
 .staffRow strong { color: var(--bw-text-title); font-size: .88rem; }
 .staffRow span { overflow: hidden; color: var(--bw-text-muted); font-size: .76rem; text-overflow: ellipsis; }
 .staffControls { display: flex; align-items: center; gap: 7px; }
-.staffControls select { min-height: 34px; }
-.staffControls button { display: grid; width: 34px; height: 34px; place-items: center; border: 1px solid var(--color-error-border); border-radius: 8px; color: var(--bw-text-danger); background: var(--color-error-bg-soft); }
+.staffControls select { min-width: 160px; }
+.staffRemoveButton { display: grid; width: 34px; height: 34px; place-items: center; border: 1px solid var(--color-error-border); border-radius: var(--radius-md); color: var(--bw-text-danger); background: var(--color-error-bg-soft); }
+.staffRemoveButton:disabled { cursor: not-allowed; opacity: .55; }
 .staffRole { flex: 0 0 auto; padding: 5px 8px; border-radius: 999px; color: var(--bw-text-accent) !important; background: var(--dash-accent-panel); }
 .restoreButton { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 6px; min-height: 34px; border: 1px solid var(--bw-border-subtle); border-radius: 8px; padding: 6px 10px; color: var(--bw-text-body); background: var(--bw-surface-panel); font-weight: 700; }
 .restoreButton svg { width: 15px; height: 15px; color: var(--color-primary); }
