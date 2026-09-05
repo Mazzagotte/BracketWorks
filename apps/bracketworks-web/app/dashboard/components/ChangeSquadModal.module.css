@@ -190,7 +190,7 @@
 
 @media (min-width: 721px) and (max-height: 480px) {
   .modalCard {
-    max-height: calc(100vh - 16px);
+    max-height: calc(100dvh - 16px);
   }
 
   .modalHeader {

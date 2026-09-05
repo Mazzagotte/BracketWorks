@@ -19,6 +19,13 @@
 :root {
   --header-height: 64px;
 
+  /* Canonical z-index scale — use these instead of raw numbers.
+     Modals must sit above nav; toasts/legal gate sit above modals. */
+  --z-nav: 1100;
+  --z-modal: 2600;
+  --z-toast: 9999;
+  --z-legal-gate: 10020;
+
   /* Canonical BracketWorks color system */
   --color-bg-primary: #09090c;
   --color-bg-secondary: #111119;

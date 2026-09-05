@@ -24,7 +24,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
+  min-height: 100dvh;
   font-family: var(--font-family-primary);
   text-align: center;
 }
@@ -6336,7 +6336,7 @@
 .importPreviewOverlay {
   position: fixed;
   inset: 0;
-  z-index: 1200;
+  z-index: var(--z-modal);
   display: grid;
   place-items: center;
   padding: 20px;
@@ -6345,7 +6345,7 @@
 
 .importPreviewModal {
   width: min(980px, 100%);
-  max-height: min(780px, calc(100vh - 40px));
+  max-height: min(780px, calc(100dvh - 48px));
   display: flex;
   flex-direction: column;
   border: 1px solid var(--color-border-primary);
@@ -6444,7 +6444,7 @@
 
 @media (max-width: 640px) {
   .importPreviewOverlay { padding: 8px; }
-  .importPreviewModal { max-height: calc(100vh - 16px); }
+  .importPreviewModal { max-height: calc(100dvh - 16px); }
   .importPreviewActions { align-items: stretch; flex-direction: column; }
   .importPreviewActions > span { margin-right: 0; }
 }

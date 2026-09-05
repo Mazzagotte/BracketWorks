@@ -21,7 +21,7 @@
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  z-index: 1200;
+  z-index: var(--z-modal);
   padding: max(20px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom));
   background: color-mix(in srgb, var(--color-black) 60%, transparent);
   backdrop-filter: blur(10px);

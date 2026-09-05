@@ -2,7 +2,7 @@
   position: fixed;
   right: 8px;
   bottom: 8px;
-  z-index: 9999;
+  z-index: var(--z-toast);
   padding: 4px 8px;
   border-radius: 4px;
   background: color-mix(in srgb, var(--color-bg-primary) 60%, transparent);

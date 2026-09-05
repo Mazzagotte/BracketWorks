@@ -1,11 +1,11 @@
 'use client'
 
-import React from 'react'
+import React, { useRef } from 'react'
 import { createPortal } from 'react-dom'
 import CloseControl from '../../components/CloseControl'
 import styles from './ExplainEntriesModal.module.css'
 import modalStyles from '../styles/modals.module.css'
-import { disableScroll, enableScroll } from '../utils/modalUtils'
+import { useModalBehavior } from '../hooks/useModalBehavior'
 import HelpGuideFooter from '../components/HelpGuideFooter'
 
 interface ExplainEntriesModalProps {
@@ -14,33 +14,14 @@ interface ExplainEntriesModalProps {
 }
 
 export default function ExplainEntriesModal({ isOpen, onClose }: ExplainEntriesModalProps) {
-  React.useEffect(() => {
-    return () => {
-      enableScroll()
-    }
-  }, [])
-
-  React.useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-
-    if (isOpen) {
-      disableScroll()
-      document.addEventListener('keydown', handleEscape)
-    }
-
-    return () => {
-      enableScroll()
-      document.removeEventListener('keydown', handleEscape)
-    }
-  }, [isOpen, onClose])
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const { onOverlayClick } = useModalBehavior({ open: isOpen, onClose, dialogRef })
 
   if (!isOpen) return null
 
   const modalContent = (
-    <div className={modalStyles.overlay} onClick={onClose}>
-      <div className={modalStyles.modal} onClick={(event) => event.stopPropagation()}>
+    <div className={modalStyles.overlay} onClick={onOverlayClick}>
+      <div ref={dialogRef} className={modalStyles.modal} role="dialog" aria-modal="true" aria-label="Entries overview" tabIndex={-1}>
         <div className={modalStyles.header}>
           <div>
             <p className={modalStyles.kicker}>BracketWorks Help</p>

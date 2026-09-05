@@ -45,6 +45,7 @@ import {
 } from "./types";
 import { formatAdminTimestamp } from "./utils";
 import buttonStyles from "../styles/buttons.module.css";
+import CloseControl from "../../components/CloseControl";
 import styles from "./admin.module.css";
 
 export default function AdminPage() {
@@ -1248,7 +1249,7 @@ export default function AdminPage() {
       {noteTournament && (
         <div className={styles.modalOverlay} onClick={() => setNoteTournament(null)}>
           <div className={`${styles.modal} ${styles.reviewModal}`} role="dialog" aria-modal="true" aria-label={`Administrative notes for ${noteTournament.name}`} onClick={event => event.stopPropagation()}>
-            <div className={styles.modalHeader}><div><h3 className={styles.modalTitle}>Tournament Notes: {noteTournament.name}</h3><div className={styles.secondaryText}>Internal administrator context only</div></div><button type="button" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.modalClose}`} aria-label="Close tournament notes" onClick={() => setNoteTournament(null)}>×</button></div>
+            <div className={styles.modalHeader}><div><h3 className={styles.modalTitle}>Tournament Notes: {noteTournament.name}</h3><div className={styles.secondaryText}>Internal administrator context only</div></div><CloseControl size="sm" label="Close tournament notes" onClick={() => setNoteTournament(null)} /></div>
             <div className={styles.modalBody}>
               <section className={styles.reviewSection}><h4>Add note</h4><div className={styles.reviewFormGrid}><select className={styles.formInput} value={tournamentNoteCategory} onChange={event => setTournamentNoteCategory(event.target.value)}><option value="general">General</option><option value="data">Data issue</option><option value="ownership">Ownership question</option><option value="results">Results review</option><option value="support">Support follow-up</option></select></div><textarea className={styles.formTextarea} value={tournamentNoteText} onChange={event => setTournamentNoteText(event.target.value)} placeholder="Add factual context for other administrators…" maxLength={2000} /><div className={styles.reviewFormActions}><button type="button" className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`} disabled={!tournamentNoteText.trim()} onClick={() => { void saveTournamentNote(); }}>Add Note</button></div></section>
               <section className={styles.reviewSection}><h4>Note history</h4>{tournamentNotesLoading ? <div className={styles.reviewEmpty}>Loading notes…</div> : tournamentNotes.length === 0 ? <div className={styles.reviewEmpty}>No internal notes have been added.</div> : <div className={styles.reviewList}>{tournamentNotes.map(note => <article className={styles.reviewItem} key={note.id}><div className={styles.reviewItemHeader}><span className={`${styles.statusPill} ${note.is_resolved ? styles.statusActive : styles.statusDraft}`}>{note.is_resolved ? "Resolved" : "Open"}</span><strong>{note.category}</strong><span>{formatAdminTimestamp(note.created_at, "")}</span></div><p>{note.note}</p><div className={styles.reviewItemFooter}><span>Added by @{note.admin_username}</span><button type="button" className={styles.actionBtn} onClick={() => { void resolveTournamentNote(note.id, !note.is_resolved); }}>{note.is_resolved ? "Reopen" : "Resolve"}</button></div></article>)}</div>}</section>
@@ -1272,14 +1273,11 @@ export default function AdminPage() {
                 <h3 id="delete-confirmation-title" className={styles.modalTitle}>Confirm deletion</h3>
                 <div className={styles.secondaryText}>This action cannot be undone.</div>
               </div>
-              <button
-                type="button"
-                aria-label="Close delete confirmation"
-                className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.modalClose}`}
+              <CloseControl
+                size="sm"
+                label="Close delete confirmation"
                 onClick={() => setDeleteConfirmation(null)}
-              >
-                X
-              </button>
+              />
             </div>
             <div className={styles.modalBody}>
               <p className={styles.confirmationMessage}>
@@ -1325,7 +1323,7 @@ export default function AdminPage() {
           <div className={`${styles.modal} ${styles.reviewModal}`} role="dialog" aria-modal="true" aria-label={`Review account ${reviewUser.username}`} onClick={(event) => event.stopPropagation()}>
             <div className={styles.modalHeader}>
               <div><h3 className={styles.modalTitle}>Account Review: {reviewUser.username}</h3><div className={styles.secondaryText}>Observation and internal notes only—this does not change account access.</div></div>
-              <button type="button" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.modalClose}`} aria-label="Close account review" onClick={() => setReviewUser(null)}>×</button>
+              <CloseControl size="sm" label="Close account review" onClick={() => setReviewUser(null)} />
             </div>
             <div className={styles.modalBody}>
               {reviewError && <div className={styles.modalError} role="alert">{reviewError}</div>}

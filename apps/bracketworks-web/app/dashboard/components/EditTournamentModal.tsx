@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Calendar, CheckCircle2, Clock3, Plus, Trash2, Trophy } from 'lucide-react';
 import { capitalizeFirstLetter } from '@bracketworks/ui';
 
@@ -7,6 +7,7 @@ import { getErrorMessage } from '../../lib/error-utils';
 import { FormField, Input } from '../../components/UI';
 import CloseControl from '../../../components/CloseControl';
 import { formatIsoDateFull } from '../../lib/formatters';
+import { useModalBehavior } from '../../hooks/useModalBehavior';
 import mobileStyles from '../dashboard.module.css';
 import { getDatesBetween, normalizeTournamentForm } from '../utils/tournamentForm';
 
@@ -105,18 +106,26 @@ export function EditTournamentModal({
 
   const canSave = hasUnsavedChanges && !isSaving && Boolean(tournamentForm.name?.trim());
 
-  if (!open) return null;
-
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     setTournamentForm(savedSnapshot);
     setValidationError(null);
     onClose();
-  };
+  }, [onClose, savedSnapshot]);
+
+  const dialogRef = useRef<HTMLFormElement>(null);
+  const { onOverlayClick } = useModalBehavior({ open, onClose: handleCancel, dialogRef });
+
+  if (!open) return null;
 
   return (
-    <div className={`${mobileStyles.modalOverlay} ${mobileStyles.settingsModalOverlay}`}>
+    <div className={`${mobileStyles.modalOverlay} ${mobileStyles.settingsModalOverlay}`} onClick={onOverlayClick}>
       <form
+        ref={dialogRef}
         className={`${mobileStyles.modalCard} ${mobileStyles.tournamentModalContent} ${isCreateMode ? mobileStyles.createTournamentModalContent : ''}`}
+        role="dialog"
+        aria-modal="true"
+        aria-label={isCreateMode ? 'Create new tournament' : 'Edit tournament'}
+        tabIndex={-1}
         onSubmit={async submitEvent => {
           submitEvent.preventDefault();
           if (!hasUnsavedChanges) return;

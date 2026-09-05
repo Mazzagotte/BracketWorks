@@ -14,7 +14,7 @@
   align-items: center;
   justify-content: center;
   padding: clamp(12px, 3vh, 24px);
-  z-index: 1200;
+  z-index: var(--z-modal);
   animation: fadeIn 0.3s ease;
 }
 

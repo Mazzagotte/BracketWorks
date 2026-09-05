@@ -345,7 +345,7 @@
 .dialog {
   width: min(960px, calc(100vw - 32px));
   max-width: 960px;
-  max-height: min(94vh, 900px);
+  max-height: min(calc(100dvh - 48px), 900px);
   overflow: hidden;
   border: 1px solid var(--bw-border-card);
   border-radius: 24px;
@@ -528,7 +528,7 @@
 @media (max-width: 760px) {
   .dialog {
     width: calc(100vw - 20px);
-    max-height: 94vh;
+    max-height: calc(100dvh - 24px);
   }
 
   .header {
@@ -579,7 +579,7 @@
 .dialog {
   width: min(1180px, calc(100vw - 40px));
   max-width: 1180px;
-  max-height: min(94vh, 920px);
+  max-height: min(calc(100dvh - 48px), 920px);
   border-radius: 20px;
   background: var(--bw-surface-card);
 }
@@ -903,7 +903,7 @@
 .dialog {
   width: min(880px, calc(100vw - 32px));
   max-width: 880px;
-  max-height: min(92vh, 820px);
+  max-height: min(calc(100dvh - 48px), 820px);
 }
 
 .header {
@@ -996,7 +996,7 @@
 .dialog {
   width: min(900px, calc(100vw - 32px));
   max-width: 900px;
-  max-height: min(92vh, 820px);
+  max-height: min(calc(100dvh - 48px), 820px);
   overflow: hidden;
   color: var(--bw-text-body);
   background: var(--bw-surface-card);
@@ -1213,7 +1213,7 @@
 @media (max-width: 760px) {
   .dialog {
     width: calc(100vw - 20px);
-    max-height: 94vh;
+    max-height: calc(100dvh - 24px);
     border-radius: 16px;
   }
 

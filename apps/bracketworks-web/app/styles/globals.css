@@ -865,8 +865,8 @@ input[type='number'] { appearance: textfield; -moz-appearance: textfield; }
 .loading { opacity: 0.7; pointer-events: none; }
 
 /* Modals */
-.modal-overlay { position: fixed; inset: 0; z-index: 1200; display: flex; align-items: center; justify-content: center; background: var(--opacity-black-75); backdrop-filter: blur(6px); }
-.modal-content { position: relative; min-width: 420px; max-height: 90vh; overflow-y: auto; background: var(--color-surface); border: 1px solid var(--color-brand-border-mid); border-radius: var(--radius-2xl); box-shadow: var(--shadow-modal); }
+.modal-overlay { position: fixed; inset: 0; z-index: var(--z-modal); display: flex; align-items: center; justify-content: center; background: var(--opacity-black-75); backdrop-filter: blur(6px); }
+.modal-content { position: relative; min-width: 420px; max-height: calc(100dvh - 48px); overflow-y: auto; background: var(--color-surface); border: 1px solid var(--color-brand-border-mid); border-radius: var(--radius-2xl); box-shadow: var(--shadow-modal); }
 .modal-content > h2:first-of-type,
 .modal-content > button + h2 {
   margin: 0;
@@ -1005,7 +1005,7 @@ input[type='number'] { appearance: textfield; -moz-appearance: textfield; }
 .bw-scores-calc-overlay {
   position: fixed;
   inset: 0;
-  z-index: 9999;
+  z-index: var(--z-modal);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1267,7 +1267,7 @@ input[type='number'] { appearance: textfield; -moz-appearance: textfield; }
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
+  min-height: 100dvh;
   font-family: var(--font-family-primary);
 }
 
@@ -1524,7 +1524,7 @@ input[type='number'] { appearance: textfield; -moz-appearance: textfield; }
 
 /* PageContainer */
 .bw-ui-page-container {
-  min-height: 100vh;
+  min-height: 100dvh;
   background-color: transparent;
 }
 

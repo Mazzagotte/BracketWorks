@@ -1,10 +1,11 @@
 import { Clock3, Search, Trophy } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 
 import type { Tournament } from '../../lib/types';
 import EnhancedButton from '../../components/EnhancedButton';
 import CloseControl from '../../../components/CloseControl';
 import { formatIsoDateLong } from '../../lib/formatters';
+import { useModalBehavior } from '../../hooks/useModalBehavior';
 import styles from './LoadTournamentModal.module.css';
 
 type LoadTournamentModalProps = {
@@ -33,6 +34,8 @@ export function LoadTournamentModal({
   onLoadTournament,
 }: LoadTournamentModalProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const { onOverlayClick } = useModalBehavior({ open, onClose, dialogRef });
 
   const matchingTournaments = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
@@ -55,8 +58,15 @@ export function LoadTournamentModal({
   }
 
   return (
-    <div className={styles.modalOverlay}>
-      <div className={styles.modalCard}>
+    <div className={styles.modalOverlay} onClick={onOverlayClick}>
+      <div
+        ref={dialogRef}
+        className={styles.modalCard}
+        role="dialog"
+        aria-modal="true"
+        aria-label={isAdmin ? 'All tournaments' : 'Your tournaments'}
+        tabIndex={-1}
+      >
         <div className={styles.modalHeader}>
           <h2 className={styles.modalTitle}>{isAdmin ? 'All Tournaments' : 'Your Tournaments'}</h2>
           <p className={styles.modalSubtitle}>

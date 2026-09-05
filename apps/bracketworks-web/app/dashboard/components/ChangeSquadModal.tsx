@@ -1,8 +1,10 @@
 import { Calendar } from 'lucide-react';
+import { useRef } from 'react';
 
 import type { Squad, Tournament } from '../../lib/types';
 import CloseControl from '../../../components/CloseControl';
 import { formatIsoDateLong } from '../../lib/formatters';
+import { useModalBehavior } from '../../hooks/useModalBehavior';
 import styles from './ChangeSquadModal.module.css';
 
 type ChangeSquadModalProps = {
@@ -27,13 +29,30 @@ export function ChangeSquadModal({
   onClose,
   requireSelectionMessage,
 }: ChangeSquadModalProps) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const isDismissable = !requireSelectionMessage;
+  const { onOverlayClick } = useModalBehavior({
+    open: open && !!tournament,
+    onClose,
+    dialogRef,
+    closeOnEscape: isDismissable,
+    closeOnBackdrop: isDismissable,
+  });
+
   if (!open || !tournament) {
     return null;
   }
 
   return (
-    <div className={`${styles.modalOverlay} ${styles.modalOverlayTop}`}>
-      <div className={styles.modalCard}>
+    <div className={`${styles.modalOverlay} ${styles.modalOverlayTop}`} onClick={onOverlayClick}>
+      <div
+        ref={dialogRef}
+        className={styles.modalCard}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Change squad"
+        tabIndex={-1}
+      >
         <div className={styles.modalHeader}>
           <h2 className={styles.modalTitle}>Change Squad</h2>
           <p className={styles.modalSubtitle}>
