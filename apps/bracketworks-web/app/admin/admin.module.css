@@ -187,8 +187,8 @@
 .detailNote { margin-top: 10px; color: var(--bw-text-muted); }
 .detailLinks { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 
-.modalOverlay { position: fixed; inset: 0; z-index: 2600; display: grid; place-items: center; padding: var(--space-stack); background: color-mix(in srgb, var(--bw-page) 84%, transparent); backdrop-filter: blur(8px); }
-.modal { width: min(560px, calc(100vw - 20px)); max-height: calc(100dvh - 20px); overflow: hidden; border-radius: var(--radius-2xl); }
+.modalOverlay { position: fixed; inset: 0; z-index: 2600; display: grid; place-items: center; padding: clamp(12px, 3vh, 24px); background: color-mix(in srgb, var(--bw-page) 84%, transparent); backdrop-filter: blur(8px); }
+.modal { width: min(560px, calc(100vw - 20px)); max-width: calc(100vw - 24px); max-height: calc(100dvh - 48px); overflow: hidden; border-radius: var(--radius-2xl); display: flex; flex-direction: column; }
 .reviewModal { width: min(900px, calc(100vw - 24px)); }
 .modalHeader { position: relative; }
 .modalClose { display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid var(--bw-border-subtle); border-radius: var(--radius-md); background: var(--bw-surface-panel-strong); color: var(--bw-text-muted); cursor: pointer; }
@@ -346,9 +346,9 @@
   .table td { padding: 10px; }
   .paginationRow { justify-content: space-between; padding: 10px 12px; }
   .detailGrid { grid-template-columns: 1fr; }
-  .modalOverlay { align-items: start; padding: 6px; }
-  .modal { width: calc(100vw - 12px); max-height: calc(100dvh - 12px); border-radius: var(--radius-lg); }
-  .modalBody { max-height: calc(100dvh - 150px); padding: 14px; }
+  .modalOverlay { align-items: center; padding: 12px 6px; }
+  .modal { width: calc(100vw - 12px); max-height: calc(100dvh - 24px); border-radius: var(--radius-lg); }
+  .modalBody { max-height: calc(100dvh - 162px); padding: 14px; }
   .modalFooter { padding: 10px 14px; }
   .modalFooter button { flex: 1; min-height: 40px; }
   .changelogFormSection,

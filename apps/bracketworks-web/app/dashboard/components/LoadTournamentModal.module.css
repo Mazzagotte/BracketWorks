@@ -6,7 +6,7 @@
   composes: modalCard from '../dashboard.module.css';
   width: min(560px, calc(100vw - 32px));
   max-width: 560px;
-  max-height: min(88vh, 760px);
+  max-height: min(calc(100dvh - 48px), 760px);
   background: var(--color-bg-primary);
   border-color: var(--color-border-primary);
 }
@@ -87,14 +87,13 @@
 }
 
 .tournamentItem {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 100px;
+  display: flex;
   align-items: center;
-  gap: 12px;
-  min-height: 112px;
-  padding: 12px;
-  margin-bottom: 8px;
-  border-radius: 10px;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  margin-bottom: 6px;
+  border-radius: 8px;
   background: var(--color-surface-primary);
   border: 1px solid var(--color-border-primary);
   box-shadow: inset 0 1px 0 var(--opacity-white-04), 0 10px 22px var(--opacity-black-25);
@@ -122,20 +121,18 @@
   flex: 1;
   min-width: 0;
   display: flex;
-  align-items: flex-start;
-  gap: 10px;
-}
-
-.tournamentDetails {
-  min-width: 0;
+  align-items: center;
+  flex-wrap: wrap;
+  column-gap: 10px;
+  row-gap: 4px;
 }
 
 .tournamentIcon {
   display: grid;
   place-items: center;
-  flex: 0 0 40px;
-  width: 40px;
-  height: 40px;
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
   border: 1px solid var(--color-border-primary);
   border-radius: 50%;
   background: var(--color-surface-primary);
@@ -143,21 +140,13 @@
 }
 
 .tournamentIcon svg {
-  width: 21px;
-  height: 21px;
-}
-
-.tournamentNameRow {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
+  width: 14px;
+  height: 14px;
 }
 
 .tournamentName {
-  display: block;
   font-weight: 800;
-  font-size: 17px;
+  font-size: 15px;
   line-height: 1.2;
   color: var(--color-text-primary);
   word-break: break-word;
@@ -178,33 +167,25 @@
 }
 
 .tournamentLocation {
-  margin-top: 4px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--color-text-primary);
 }
 
 .tournamentDate {
-  margin-top: 4px;
   font-size: 12px;
   color: var(--bw-text-muted);
 }
 
-.tournamentMeta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 6px;
-}
-
-.tournamentMeta span {
-  padding: 3px 6px;
+.tournamentMetaPill {
+  padding: 2px 6px;
   font-size: 10px;
   font-weight: 600;
   color: var(--color-text-primary);
   background: var(--color-surface-primary);
   border: 1px solid var(--color-border-primary);
   border-radius: 20px;
+  white-space: nowrap;
 }
 
 .tournamentActions {
@@ -291,15 +272,14 @@
   }
 
   .tournamentItem {
-    grid-template-columns: 1fr;
-    min-height: 0;
-    padding: 22px;
+    flex-wrap: wrap;
+    padding: 12px 14px;
   }
 
   .tournamentIcon {
-    flex-basis: 58px;
-    width: 58px;
-    height: 58px;
+    flex-basis: 32px;
+    width: 32px;
+    height: 32px;
   }
 
   .tournamentActions {

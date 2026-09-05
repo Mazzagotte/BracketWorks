@@ -21,7 +21,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--space-stack);
+  padding: clamp(12px, 3vh, 24px);
   background: color-mix(in srgb, var(--bw-page) 84%, transparent);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -33,7 +33,8 @@
   display: flex;
   flex-direction: column;
   width: min(860px, calc(100vw - 40px));
-  max-height: min(92vh, 820px);
+  max-width: calc(100vw - 24px);
+  max-height: min(calc(100dvh - 48px), 820px);
   overflow: hidden;
   border: 1px solid var(--bw-border-card);
   border-radius: var(--radius-2xl);

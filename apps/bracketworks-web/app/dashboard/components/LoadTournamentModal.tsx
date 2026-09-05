@@ -116,29 +116,21 @@ export function LoadTournamentModal({
                     >
                       <div className={styles.tournamentInfo}>
                         <span className={styles.tournamentIcon} aria-hidden="true"><Trophy /></span>
-                        <div className={styles.tournamentDetails}>
-                          <div className={styles.tournamentNameRow}>
-                            <span className={styles.tournamentName}>{tournament.name}</span>
-                            {isActiveTournament && <span className={styles.tournamentActiveBadge}>Active</span>}
-                          </div>
-                          {tournament.location && <div className={styles.tournamentLocation}>{tournament.location}</div>}
-                          {tournament.start_date && (
-                            <div className={styles.tournamentDate}>
-                              {formatIsoDateLong(tournament.start_date)}
-                              {tournament.end_date && tournament.end_date !== tournament.start_date && ` – ${formatIsoDateLong(tournament.end_date)}`}
-                            </div>
-                          )}
-                          {(squadCount > 0 || (typeof tournament.entry_count === 'number' && tournament.entry_count > 0) || tournament.brackets_configured) && (
-                            <div className={styles.tournamentMeta}>
-                              {squadCount > 0 && <span>{squadCount} {squadCount === 1 ? 'Squad' : 'Squads'}</span>}
-                              {dayCount > 1 && <span>{dayCount} Days</span>}
-                              {typeof tournament.entry_count === 'number' && tournament.entry_count > 0 && (
-                                <span>{tournament.entry_count} {tournament.entry_count === 1 ? 'Entry' : 'Entries'}</span>
-                              )}
-                              {tournament.brackets_configured && <span>Brackets Configured</span>}
-                            </div>
-                          )}
-                        </div>
+                        <span className={styles.tournamentName}>{tournament.name}</span>
+                        {isActiveTournament && <span className={styles.tournamentActiveBadge}>Active</span>}
+                        {tournament.location && <span className={styles.tournamentLocation}>{tournament.location}</span>}
+                        {tournament.start_date && (
+                          <span className={styles.tournamentDate}>
+                            {formatIsoDateLong(tournament.start_date)}
+                            {tournament.end_date && tournament.end_date !== tournament.start_date && ` – ${formatIsoDateLong(tournament.end_date)}`}
+                          </span>
+                        )}
+                        {squadCount > 0 && <span className={styles.tournamentMetaPill}>{squadCount} {squadCount === 1 ? 'Squad' : 'Squads'}</span>}
+                        {dayCount > 1 && <span className={styles.tournamentMetaPill}>{dayCount} Days</span>}
+                        {typeof tournament.entry_count === 'number' && tournament.entry_count > 0 && (
+                          <span className={styles.tournamentMetaPill}>{tournament.entry_count} {tournament.entry_count === 1 ? 'Entry' : 'Entries'}</span>
+                        )}
+                        {tournament.brackets_configured && <span className={styles.tournamentMetaPill}>Brackets Configured</span>}
                       </div>
                       <div className={styles.tournamentActions}>
                         {isActiveTournament ? <span className={styles.currentTournament}>Current</span> : <Clock3 aria-hidden="true" />}
