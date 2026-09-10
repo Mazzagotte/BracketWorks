@@ -50,6 +50,7 @@ export default function FindExistingBowlerModal({
 }: FindExistingBowlerModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null)
   const firstInputRef = useRef<HTMLInputElement>(null)
+  const canClear = hasHistorySearchInput || hasSubmittedSearch || isHistorySearching || historyResults.length > 0
   const { onOverlayClick } = useModalBehavior({
     open: isOpen,
     onClose,
@@ -127,7 +128,7 @@ export default function FindExistingBowlerModal({
                 <SearchIcon aria-hidden="true" />
                 Find Bowler
               </button>
-              <button type="button" className={`${primitiveStyles.searchPanelClearButton} ${styles.clearSearchBtn} ${hasHistorySearchInput ? styles.clearSearchBtnActive : ''}`} onClick={onClear} disabled={!hasHistorySearchInput}>
+              <button type="button" className={`${primitiveStyles.searchPanelClearButton} ${styles.clearSearchBtn} ${canClear ? styles.clearSearchBtnActive : ''}`} onClick={onClear} disabled={!canClear}>
                 <RefreshCcw aria-hidden="true" />
                 Clear
               </button>

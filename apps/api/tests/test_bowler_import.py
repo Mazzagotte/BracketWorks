@@ -51,7 +51,7 @@ def test_list_bowlers_returns_profile_usbc_number(api_client, db_session, auth_i
     )
     db_session.add(profile)
     db_session.flush()
-    player.bowler_profile_id = profile.id
+    player.bowler_profile_id = None
     player.usbc_number = None
     db_session.commit()
 

@@ -88,7 +88,11 @@ export function useBowlerHistorySearch(authToken: string | null) {
     setHistorySearchUsbc('')
     setHistorySearchFirstName('')
     setHistorySearchLastName('')
+    setDebouncedHistorySearchUsbc('')
+    setDebouncedHistorySearchFirstName('')
+    setDebouncedHistorySearchLastName('')
     setHistoryResults([])
+    setIsHistorySearching(false)
   }, [])
 
   return {

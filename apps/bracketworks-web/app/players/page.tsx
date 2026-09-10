@@ -438,6 +438,7 @@ export default function PlayersPage() {
   // Import from Excel — file input ref lives here so the button can be in the header
   const importFileRef = useRef<HTMLInputElement | null>(null)
   const [isImporting, setIsImporting] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
   const [isCommittingImport, setIsCommittingImport] = useState(false)
   const [importFileName, setImportFileName] = useState<string | undefined>(undefined)
   const [importPreviewRows, setImportPreviewRows] = useState<ImportPreviewRow[] | null>(null)
@@ -531,6 +532,7 @@ export default function PlayersPage() {
       return
     }
 
+    setIsExporting(true)
     try {
       const { buffer, fileName } = await buildEntriesExcelBuffer(
         players,
@@ -544,11 +546,18 @@ export default function PlayersPage() {
       const a = document.createElement('a')
       a.href = url
       a.download = fileName
+      a.style.display = 'none'
+      document.body.appendChild(a)
       a.click()
-      URL.revokeObjectURL(url)
+      window.setTimeout(() => {
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+      }, 1000)
       toast.success(`Exported ${players.length} player${players.length !== 1 ? 's' : ''}.`, 'Export Complete')
     } catch (err) {
       toast.error(`Failed to export Excel file: ${err instanceof Error ? err.message : 'Unknown error'}`, 'Export Failed')
+    } finally {
+      setIsExporting(false)
     }
   }, [players, enabledBracketPrograms, sidePots, selectedTournament, selectedSquad, toast])
 
@@ -699,6 +708,7 @@ export default function PlayersPage() {
               isDev={isDev}
               playersCount={players.length}
               isImporting={isImporting || isCommittingImport || importPreviewRows !== null}
+              isExporting={isExporting}
               isDeletingAll={isDeletingAll}
               onOpenGuide={() => setIsExplainModalOpen(true)}
               onExportToExcel={handleExportToExcel}

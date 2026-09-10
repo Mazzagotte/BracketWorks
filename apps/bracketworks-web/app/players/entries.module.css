@@ -3843,6 +3843,13 @@
 /* Final Entries parity pass */
 .entriesTopRow {
   align-items: stretch;
+  width: 100%;
+}
+
+.entriesTopRow > .quickActionsCard {
+  width: 100%;
+  max-width: none;
+  justify-self: stretch;
 }
 
 .entriesTopRow .quickActionsCard,
@@ -4903,9 +4910,19 @@
 }
 
 .findExistingBowlerActions :where(button, a) {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
   min-height: 40px;
   min-width: 118px;
   justify-content: center;
+  white-space: nowrap;
+}
+
+.findExistingBowlerActions :where(button, a) svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
 }
 
 .findExistingBowlerResults {

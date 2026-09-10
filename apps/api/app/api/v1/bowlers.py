@@ -64,6 +64,14 @@ def _split_full_name(full_name: str) -> tuple[str, str]:
     return tokens[0], " ".join(tokens[1:])
 
 
+def _normalize_profile_name(first_name: str | None, last_name: str | None) -> str:
+    return " ".join(f"{first_name or ''} {last_name or ''}".lower().split())
+
+
+def _normalize_player_name(full_name: str | None) -> str:
+    return " ".join((full_name or "").lower().split())
+
+
 def _resolve_or_create_bowler_profile(
     db: Session,
     user_id: int,
@@ -168,6 +176,20 @@ def list_bowlers(
         query = query.filter(func.lower(models.BowlerProfileModel.last_name).contains(last_name.strip().lower()))
 
     players = query.order_by(models.Bowler.id.desc()).limit(limit).offset(offset).all()
+    profile_usbc_by_name: dict[tuple[int, str], str] = {}
+    user_ids = {player.user_id for player, _ in players}
+    if user_ids:
+        profiles = db.query(models.BowlerProfileModel).filter(
+            models.BowlerProfileModel.user_id.in_(user_ids),
+            models.BowlerProfileModel.is_active.is_(True),
+            models.BowlerProfileModel.usbc_number.isnot(None),
+            models.BowlerProfileModel.usbc_number != "",
+        ).all()
+        profile_usbc_by_name = {
+            (profile.user_id, _normalize_profile_name(profile.first_name, profile.last_name)): profile.usbc_number
+            for profile in profiles
+            if profile.usbc_number
+        }
     default_entry_fee = 0
     bracket_programs = None
     handicap_percentage = None
@@ -218,7 +240,11 @@ def list_bowlers(
             "side_pot_entries": player.side_pot_entries or {},
             "lane": player.lane,
             "division": normalize_division(player.division),
-            "usbc_number": profile_usbc_number or player.usbc_number,
+            "usbc_number": (
+                profile_usbc_number
+                or profile_usbc_by_name.get((player.user_id, _normalize_player_name(player.full_name)))
+                or player.usbc_number
+            ),
             "amount_paid": player.amount_paid,
             "total_cost": total_cost
         }

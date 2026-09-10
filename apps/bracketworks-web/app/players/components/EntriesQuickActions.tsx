@@ -8,6 +8,7 @@ interface EntriesQuickActionsProps {
   isDev: boolean
   playersCount: number
   isImporting: boolean
+  isExporting: boolean
   isDeletingAll: boolean
   onOpenGuide: () => void
   onExportToExcel: () => void
@@ -17,7 +18,7 @@ interface EntriesQuickActionsProps {
 }
 
 export default function EntriesQuickActions({
-  isDev, playersCount, isImporting, isDeletingAll, onOpenGuide, onExportToExcel,
+  isDev, playersCount, isImporting, isExporting, isDeletingAll, onOpenGuide, onExportToExcel,
   onImportFromExcel, onRandomizeEntries, onDeleteAllEntries,
 }: EntriesQuickActionsProps) {
   return (
@@ -31,8 +32,8 @@ export default function EntriesQuickActions({
           <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`} onClick={onOpenGuide}>
             <BookOpen aria-hidden="true" /> Entries Guide
           </button>
-          <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`} onClick={onExportToExcel} disabled={playersCount === 0}>
-            <FileSpreadsheet aria-hidden="true" /> Export to Excel
+          <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`} onClick={onExportToExcel} disabled={playersCount === 0 || isExporting}>
+            <FileSpreadsheet aria-hidden="true" /> {isExporting ? 'Exporting...' : 'Export to Excel'}
           </button>
           <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`} onClick={onImportFromExcel} disabled={isImporting}>
             <Upload aria-hidden="true" /> {isImporting ? 'Importing...' : 'Import from Excel'}
