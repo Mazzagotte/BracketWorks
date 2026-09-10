@@ -4910,6 +4910,13 @@
   border-bottom: 0;
 }
 
+.findBowlerHeaderButton {
+  position: absolute;
+  top: 1rem;
+  right: 1.5rem;
+  min-height: 36px;
+}
+
 .entryWorkflowLayout .addBowlerHeader .addBowlerTitle {
   gap: 0.75rem;
   font-size: clamp(1.25rem, 1.8vw, 1.55rem);
@@ -4934,6 +4941,16 @@
   border: 1px solid var(--bw-border-subtle);
   border-radius: 13px;
   background: color-mix(in srgb, var(--bw-surface-panel) 70%, transparent);
+}
+
+@media (max-width: 640px) {
+  .findBowlerHeaderButton {
+    top: 0.72rem;
+    right: 0.72rem;
+    min-height: 34px;
+    padding-inline: 0.62rem;
+    font-size: 0.72rem;
+  }
 }
 
 .addBowlerContextItem {

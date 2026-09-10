@@ -34,7 +34,7 @@ import { getSelectedSquadId, getSelectedTournamentId, setSelectedSquad } from '.
 import { resetScrollLocks, setBodyInteractionState } from '../utils/modalUtils'
 import { MOBILE_VIEWPORT_QUERY } from '../lib/responsive'
 import { useMediaQuery } from '../hooks/useMediaQuery'
-import { ListChecks, Search as SearchIcon } from 'lucide-react'
+import { ListChecks } from 'lucide-react'
 import ImportPreviewModal from './components/ImportPreviewModal'
 import DuplicateResolutionPanel from './components/DuplicateResolutionPanel'
 import FindExistingBowlerModal from './components/FindExistingBowlerModal'
@@ -433,6 +433,7 @@ export default function PlayersPage() {
   const [isDeletingAll, setIsDeletingAll] = useState(false)
   const [deleteAllPlayersConfirmOpen, setDeleteAllPlayersConfirmOpen] = useState(false)
   const [isExplainModalOpen, setIsExplainModalOpen] = useState(false)
+  const closeFindBowlerModal = useCallback(() => setIsFindBowlerModalOpen(false), [])
 
   // Import from Excel — file input ref lives here so the button can be in the header
   const importFileRef = useRef<HTMLInputElement | null>(null)
@@ -706,22 +707,12 @@ export default function PlayersPage() {
               onDeleteAllEntries={handleDeleteAllPlayers}
             />
 
-            <div className={`${cardStyles.card} ${styles.formCard} ${styles.findBowlerCard}`}>
-              <button
-                type="button"
-                className={`${buttonStyles.button} ${buttonStyles.quickAction} ${styles.searchActionBtn}`}
-                onClick={() => setIsFindBowlerModalOpen(true)}
-              >
-                <SearchIcon aria-hidden="true" />
-                Find Existing Bowler
-              </button>
-              <p className={styles.findBowlerSubtitle}>Reuse a bowler profile from a previous tournament.</p>
-            </div>
           </div>
 
           <div className={styles.entryWorkflowLayout}>
               <PlayerForm
                 onAddPlayer={addPlayer}
+                onFindExistingBowler={() => setIsFindBowlerModalOpen(true)}
                 isLoading={showInitialPlayersLoad}
                 squads={squads}
                 selectedSquad={selectedSquad}
@@ -830,7 +821,7 @@ export default function PlayersPage() {
       />
       <FindExistingBowlerModal
         isOpen={isFindBowlerModalOpen}
-        onClose={() => setIsFindBowlerModalOpen(false)}
+        onClose={closeFindBowlerModal}
         historySearchUsbc={historySearchUsbc}
         historySearchFirstName={historySearchFirstName}
         historySearchLastName={historySearchLastName}
