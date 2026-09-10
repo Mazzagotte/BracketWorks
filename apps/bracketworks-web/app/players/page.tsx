@@ -26,19 +26,18 @@ import { calculatePlayerTotalCost, calculateSidePotCost, defaultBracketPrograms,
 import styles from './entries.module.css'
 import cardStyles from '../styles/cards.module.css'
 import buttonStyles from '../styles/buttons.module.css'
-import formStyles from '../styles/forms.module.css'
 import shellStyles from '../styles/page-shell.module.css'
 import ExplainEntriesModal from './ExplainEntriesModal'
 import { useToastHelpers } from '../components/Toast'
 import ImportLoadingModal from '../components/ImportLoadingModal'
-import primitiveStyles from '../components/primitives/primitives.module.css'
 import { getSelectedSquadId, getSelectedTournamentId, setSelectedSquad } from '../lib/selection-session'
 import { resetScrollLocks, setBodyInteractionState } from '../utils/modalUtils'
 import { MOBILE_VIEWPORT_QUERY } from '../lib/responsive'
 import { useMediaQuery } from '../hooks/useMediaQuery'
-import { ListChecks, RefreshCcw, Search as SearchIcon, UserRound } from 'lucide-react'
+import { ListChecks, Search as SearchIcon } from 'lucide-react'
 import ImportPreviewModal from './components/ImportPreviewModal'
 import DuplicateResolutionPanel from './components/DuplicateResolutionPanel'
+import FindExistingBowlerModal from './components/FindExistingBowlerModal'
 
 function bracketProgramsEqual(left: BracketProgramDefinition[], right: BracketProgramDefinition[]): boolean {
   if (left.length !== right.length) return false
@@ -80,7 +79,7 @@ export default function PlayersPage() {
   const [prefillDraft, setPrefillDraft] = useState<PlayerFormPrefillDraft | null>(null)
   const [prefillVersion, setPrefillVersion] = useState(0)
   const isMobileView = useMediaQuery(MOBILE_VIEWPORT_QUERY)
-  const [historySearchCollapsed, setHistorySearchCollapsed] = useState(false)
+  const [isFindBowlerModalOpen, setIsFindBowlerModalOpen] = useState(false)
   const [hasSubmittedHistorySearch, setHasSubmittedHistorySearch] = useState(false)
   const [tableSearchCollapsed, setTableSearchCollapsed] = useState(false)
   const {
@@ -123,7 +122,6 @@ export default function PlayersPage() {
   }, [])
 
   useEffect(() => {
-    setHistorySearchCollapsed(isMobileView)
     setTableSearchCollapsed(isMobileView)
   }, [isMobileView])
 
@@ -257,6 +255,7 @@ export default function PlayersPage() {
     })
     clearHistorySearch()
     setPrefillVersion(prev => prev + 1)
+    setIsFindBowlerModalOpen(false)
   }, [clearHistorySearch])
 
   useEffect(() => {
@@ -708,128 +707,15 @@ export default function PlayersPage() {
             />
 
             <div className={`${cardStyles.card} ${styles.formCard} ${styles.findBowlerCard}`}>
-              {isMobileView ? (
-                <button
-                  type="button"
-                  className={`${cardStyles.cardHeader} ${styles.formTitleToggle}`}
-                  aria-expanded={!historySearchCollapsed}
-                  onClick={() => setHistorySearchCollapsed(previous => !previous)}
-                >
-                  <span className={styles.findBowlerHeading}>
-                    <SearchIcon aria-hidden="true" />
-                    Find Existing Bowler
-                  </span>
-                  <span className={styles.formTitleExpandIcon}>{historySearchCollapsed ? '+' : '−'}</span>
-                </button>
-              ) : (
-                <div className={styles.findBowlerHeader}>
-                  <h3 className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${styles.formTitle} ${styles.findBowlerHeading}`}>
-                    <SearchIcon aria-hidden="true" />
-                    Find Existing Bowler
-                  </h3>
-                  <p className={styles.findBowlerSubtitle}>Reuse a bowler profile from a previous tournament.</p>
-                </div>
-              )}
-              {(!isMobileView || !historySearchCollapsed) && (
-              <div className={styles.historyPanelBody}>
-                <div className={primitiveStyles.searchPanelContentRow}>
-                  <div className={primitiveStyles.searchPanelContentLeft}>
-                    <label className={styles.findBowlerInputWrap}>
-                      <UserRound aria-hidden="true" />
-                      <input
-                        type="text"
-                        className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput} ${styles.findBowlerInput} ${primitiveStyles.searchPanelInput}`}
-                        placeholder="USBC #"
-                        aria-label="USBC number"
-                        value={historySearchUsbc}
-                        onChange={(event) => {
-                          setHistorySearchUsbc(event.target.value)
-                          setHasSubmittedHistorySearch(false)
-                        }}
-                      />
-                    </label>
-                    <label className={styles.findBowlerInputWrap}>
-                      <UserRound aria-hidden="true" />
-                      <input
-                        type="text"
-                        className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput} ${styles.findBowlerInput} ${primitiveStyles.searchPanelInput}`}
-                        placeholder="First name"
-                        aria-label="First name"
-                        value={historySearchFirstName}
-                        onChange={(event) => {
-                          setHistorySearchFirstName(event.target.value)
-                          setHasSubmittedHistorySearch(false)
-                        }}
-                      />
-                    </label>
-                    <label className={styles.findBowlerInputWrap}>
-                      <UserRound aria-hidden="true" />
-                      <input
-                        type="text"
-                        className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput} ${styles.findBowlerInput} ${primitiveStyles.searchPanelInput}`}
-                        placeholder="Last name"
-                        aria-label="Last name"
-                        value={historySearchLastName}
-                        onChange={(event) => {
-                          setHistorySearchLastName(event.target.value)
-                          setHasSubmittedHistorySearch(false)
-                        }}
-                      />
-                    </label>
-                  </div>
-                  <div className={primitiveStyles.searchPanelContentRight}>
-                    <button
-                      type="button"
-                      className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction} ${styles.searchActionBtn}`}
-                      onClick={() => {
-                        setHasSubmittedHistorySearch(true)
-                        triggerHistorySearch()
-                      }}
-                      disabled={!hasHistorySearchInput}
-                    >
-                      <SearchIcon aria-hidden="true" />
-                      Find Bowler
-                    </button>
-                    <button
-                      type="button"
-                      className={`${primitiveStyles.searchPanelClearButton} ${styles.clearSearchBtn} ${hasHistorySearchInput ? styles.clearSearchBtnActive : ''}`}
-                      onClick={() => {
-                        setHasSubmittedHistorySearch(false)
-                        clearHistorySearch()
-                      }}
-                      disabled={!hasHistorySearchInput}
-                    >
-                      <RefreshCcw aria-hidden="true" />
-                      Clear
-                    </button>
-                  </div>
-                </div>
-
-                {isHistorySearching ? (
-                  <p className={styles.historyMeta}>Searching bowler history...</p>
-                ) : historyResults.length > 0 ? (
-                  <div className={styles.historyResults}>
-                    <p className={styles.historyMeta}>{historyResults.length} {historyResults.length === 1 ? 'bowler' : 'bowlers'} found</p>
-                    <div className={styles.historyResultsList}>
-                      {historyResults.map(profile => (
-                        <button
-                          key={profile.id}
-                          type="button"
-                          className={styles.historyResultButton}
-                          onClick={() => handleUseHistoryResult(profile)}
-                        >
-                          <span className={styles.historyResultName}>{profile.first_name} {profile.last_name}</span>
-                          <span className={styles.historyResultUsbc}>{profile.usbc_number ? `USBC ${profile.usbc_number}` : 'No USBC on file'}</span>
-                          <span className={styles.historyResultAction}>Use Bowler</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ) : hasSubmittedHistorySearch && hasHistorySearchInput ? (
-                  <p className={styles.historyMeta}>No matching bowlers found.</p>
-                ) : null}
-              </div>
-              )}
+              <button
+                type="button"
+                className={`${buttonStyles.button} ${buttonStyles.quickAction} ${styles.searchActionBtn}`}
+                onClick={() => setIsFindBowlerModalOpen(true)}
+              >
+                <SearchIcon aria-hidden="true" />
+                Find Existing Bowler
+              </button>
+              <p className={styles.findBowlerSubtitle}>Reuse a bowler profile from a previous tournament.</p>
             </div>
           </div>
 
@@ -941,6 +827,38 @@ export default function PlayersPage() {
           deletePlayer(deleteConfirmId)
           setDeleteConfirmId(null)
         }}
+      />
+      <FindExistingBowlerModal
+        isOpen={isFindBowlerModalOpen}
+        onClose={() => setIsFindBowlerModalOpen(false)}
+        historySearchUsbc={historySearchUsbc}
+        historySearchFirstName={historySearchFirstName}
+        historySearchLastName={historySearchLastName}
+        historyResults={historyResults}
+        isHistorySearching={isHistorySearching}
+        hasHistorySearchInput={hasHistorySearchInput}
+        hasSubmittedSearch={hasSubmittedHistorySearch}
+        onSearchUsbcChange={(value) => {
+          setHistorySearchUsbc(value)
+          setHasSubmittedHistorySearch(false)
+        }}
+        onSearchFirstNameChange={(value) => {
+          setHistorySearchFirstName(value)
+          setHasSubmittedHistorySearch(false)
+        }}
+        onSearchLastNameChange={(value) => {
+          setHistorySearchLastName(value)
+          setHasSubmittedHistorySearch(false)
+        }}
+        onSearch={() => {
+          setHasSubmittedHistorySearch(true)
+          triggerHistorySearch()
+        }}
+        onClear={() => {
+          setHasSubmittedHistorySearch(false)
+          clearHistorySearch()
+        }}
+        onUseBowler={handleUseHistoryResult}
       />
       <ExplainEntriesModal
         isOpen={isExplainModalOpen}

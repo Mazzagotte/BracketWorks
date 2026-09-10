@@ -12,7 +12,7 @@ import tableStyles from '../../styles/tables.module.css';
 import badgeStyles from '../../styles/badges.module.css';
 import iconButtonStyles from '../../styles/icon-buttons.module.css';
 import buttonStyles from '../../styles/buttons.module.css';
-import { Check, ChevronLeft, ChevronRight, Pencil, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 
 function abbreviateProgramName(name: string): string {
   const map: [string, string][] = [
@@ -51,7 +51,6 @@ const PlayersTable = memo(({
   const [sortConfig, setSortConfig] = useState<SortConfig>({ column: 'lane', direction: 'asc' });
   const isMobileLayout = useMediaQuery(COMPACT_CONTENT_VIEWPORT_QUERY);
   const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({});
-  const [editingRowId, setEditingRowId] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
 
@@ -413,65 +412,52 @@ const PlayersTable = memo(({
             const hasPayableAmount = player.totalCost > 0
             const isPaid = hasPayableAmount && !needsEntryFee && player.amountPaid >= player.totalCost
             const isPartial = hasPayableAmount && !needsEntryFee && !isPaid && player.amountPaid > 0
-            const isEditing = editingRowId === player.id
             return (
             <OptimizedTableRow 
               key={`${player.id}-${rowIndex}`}
-              className={`players-table-row${isEditing ? ' entries-row--editing' : ''}`}
+              className="players-table-row entries-row--editing"
             >
               <OptimizedTableCell className="entries-cell medium col-usbc">
                 <div className="pos-relative flex-center">
-                  {isEditing ? (
-                    <input
-                      className="entries-input entries-control"
-                      type="text"
-                      size={maxUsbcChars}
-                      value={player.usbc || ''}
-                      onChange={(changeEvent) => handleCellEdit(player.id, 'usbc', changeEvent.target.value)}
-                      placeholder="USBC #"
-                    />
-                  ) : (
-                    <span className="cell-readonly-text">{player.usbc || <span className="cell-empty">—</span>}</span>
-                  )}
+                  <input
+                    className="entries-input entries-control"
+                    type="text"
+                    size={maxUsbcChars}
+                    value={player.usbc || ''}
+                    onChange={(changeEvent) => handleCellEdit(player.id, 'usbc', changeEvent.target.value)}
+                    placeholder="USBC #"
+                  />
                 </div>
               </OptimizedTableCell>
 
               <OptimizedTableCell className="entries-cell col-name">
-                {isEditing ? (
-                  <div className="flex-center gap-3">
-                    <div className="pos-relative">
-                      <input
-                        className="entries-input entries-control"
-                        type="text"
-                        size={maxFirstNameChars}
-                        value={player.firstName}
-                        onChange={(changeEvent) => handleCellEdit(player.id, 'firstName', changeEvent.target.value)}
-                        placeholder="First"
-                      />
-                    </div>
-                    <div className="pos-relative">
-                      <input
-                        className="entries-input entries-control"
-                        type="text"
-                        size={maxLastNameChars}
-                        value={player.lastName}
-                        onChange={(changeEvent) => handleCellEdit(player.id, 'lastName', changeEvent.target.value)}
-                        placeholder="Last"
-                      />
-                    </div>
+                <div className="flex-center gap-3">
+                  <div className="pos-relative">
+                    <input
+                      className="entries-input entries-control"
+                      type="text"
+                      size={maxFirstNameChars}
+                      value={player.firstName}
+                      onChange={(changeEvent) => handleCellEdit(player.id, 'firstName', changeEvent.target.value)}
+                      placeholder="First"
+                    />
                   </div>
-                ) : (
-                  <span className="cell-readonly-text cell-bowler-name">
-                    {player.firstName || player.lastName
-                      ? `${player.firstName || ''} ${player.lastName || ''}`.trim()
-                      : <span className="cell-empty">Unnamed</span>}
-                  </span>
-                )}
+                  <div className="pos-relative">
+                    <input
+                      className="entries-input entries-control"
+                      type="text"
+                      size={maxLastNameChars}
+                      value={player.lastName}
+                      onChange={(changeEvent) => handleCellEdit(player.id, 'lastName', changeEvent.target.value)}
+                      placeholder="Last"
+                    />
+                  </div>
+                </div>
               </OptimizedTableCell>
 
               <OptimizedTableCell className="entries-cell col-division group-start">
                 <div className="flex-center">
-                  {isEditing ? <div className="pos-relative inline-block">
+                  <div className="pos-relative inline-block">
                     <select
                       className="entries-select entries-control w-85"
                       value={normalizeDivision(player.division)}
@@ -481,13 +467,13 @@ const PlayersTable = memo(({
                         <option key={option} value={option}>{option}</option>
                       ))}
                     </select>
-                  </div> : <span className="cell-readonly-text">{normalizeDivision(player.division)}</span>}
+                  </div>
                 </div>
               </OptimizedTableCell>
 
               <OptimizedTableCell className="entries-cell col-lane">
                 <div className="flex-center">
-                  {isEditing ? <div className="pos-relative inline-block">
+                  <div className="pos-relative inline-block">
                     <input
                       className="entries-input entries-control"
                       type="text"
@@ -497,13 +483,13 @@ const PlayersTable = memo(({
                       value={player.lane?.toString() || ''}
                       onChange={(changeEvent) => handleCellEdit(player.id, 'lane', changeEvent.target.value)}
                     />
-                  </div> : <span className="cell-readonly-text numeric-readonly">{player.lane || '—'}</span>}
+                  </div>
                 </div>
               </OptimizedTableCell>
 
               <OptimizedTableCell className="entries-cell col-average">
                 <div className="flex-center">
-                  {isEditing ? <div className="pos-relative inline-block">
+                  <div className="pos-relative inline-block">
                     <input
                       className="entries-input entries-control"
                       type="text"
@@ -513,7 +499,7 @@ const PlayersTable = memo(({
                       value={player.average}
                       onChange={(changeEvent) => handleCellEdit(player.id, 'average', changeEvent.target.value)}
                     />
-                  </div> : <span className="cell-readonly-text numeric-readonly">{player.average}</span>}
+                  </div>
                 </div>
               </OptimizedTableCell>
 
@@ -524,7 +510,7 @@ const PlayersTable = memo(({
                       {(() => {
                         const isAllowed = isProgramAllowedForDivision(program.division, player.division)
                         const visibleValue = isAllowed ? (player.bracketEntries?.[program.key] || 0) : 0
-                        return isEditing ? (
+                        return (
                           <input
                             className="entries-input entries-control"
                             type="text"
@@ -535,8 +521,6 @@ const PlayersTable = memo(({
                             onChange={(changeEvent) => handleBracketEntryEdit(player.id, program.key, changeEvent.target.value)}
                             disabled={!isAllowed}
                           />
-                        ) : (
-                          <span className="cell-readonly-text numeric-readonly">{visibleValue}</span>
                         )
                       })()}
                     </div>
@@ -549,13 +533,13 @@ const PlayersTable = memo(({
                 return (
                   <OptimizedTableCell key={`sidepot-cell-${player.id}-${pot.key}`} className="entries-cell entries-cell--sidepot col-sidepot">
                     <div className="flex-center">
-                      {isEditing ? <input
+                      <input
                         type="checkbox"
                         className="sidepot-checkbox"
                         checked={checked}
                         onChange={() => handleSidePotToggle(player.id, pot.key, checked)}
                         aria-label={`${pot.name} for ${player.firstName} ${player.lastName}`}
-                      /> : <span className="cell-readonly-text">{checked ? 'Yes' : '—'}</span>}
+                      />
                     </div>
                   </OptimizedTableCell>
                 )
@@ -590,14 +574,6 @@ const PlayersTable = memo(({
 
               <OptimizedTableCell className={`${tableStyles.actionCell} entries-cell col-actions group-start`}>
                 <div className={`${tableStyles.rowActions} ${styles.tableRowActions}`}>
-                  <button
-                    className={`${iconButtonStyles.iconButton} entries-edit-btn${isEditing ? ' entries-edit-btn--active' : ''}`}
-                    onClick={() => setEditingRowId(isEditing ? null : player.id)}
-                    aria-label={isEditing ? 'Done editing' : 'Edit bowler name and USBC'}
-                    title={isEditing ? 'Done editing' : 'Edit name / USBC'}
-                  >
-                    {isEditing ? <Check aria-hidden="true" /> : <Pencil aria-hidden="true" />}
-                  </button>
                   <button
                     className={`${iconButtonStyles.iconButton} ${iconButtonStyles.danger} entries-delete-btn`}
                     onClick={() => onDeletePlayer(player.id)}

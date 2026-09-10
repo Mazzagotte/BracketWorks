@@ -20,6 +20,11 @@
   margin-bottom: 0;
 }
 
+.entriesTopRow > .quickActionsCard,
+.entriesTopRow > .findBowlerCard {
+  grid-column: 1 / -1;
+}
+
 .loadingScreen {
   display: flex;
   align-items: center;

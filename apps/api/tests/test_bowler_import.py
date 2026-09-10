@@ -33,6 +33,38 @@ def test_import_commit_is_atomic_and_creates_restore_point(api_client, db_sessio
     assert db_session.query(models.TournamentPlayer).filter_by(tournament_id=tournament['id']).count() == 2
 
 
+def test_list_bowlers_returns_profile_usbc_number(api_client, db_session, auth_identity):
+    tournament = api_client.post('/api/v1/tournaments', headers=auth_identity.headers, json={
+        'name': 'Profile USBC Event', 'location': 'Center', 'start_date': '2026-08-22',
+        'end_date': '2026-08-22', 'squad_times': {'2026-08-22': ['10:00']}, 'is_public': False,
+    }).json()
+    squad = api_client.post('/api/v1/squads/', headers=auth_identity.headers, json={
+        'tournament_id': tournament['id'], 'date': '2026-08-22', 'time': '10:00',
+    }).json()
+    player_response = api_client.post('/api/v1/bowlers', headers=auth_identity.headers, json={
+        'tournament_id': tournament['id'], 'squad_id': squad['id'], 'full_name': 'Profile Bowler',
+    })
+    assert player_response.status_code == 200, player_response.text
+    player = db_session.get(models.TournamentPlayer, player_response.json()['id'])
+    profile = models.BowlerProfile(
+        user_id=auth_identity.user.id, first_name='Profile', last_name='Bowler', usbc_number='987654',
+    )
+    db_session.add(profile)
+    db_session.flush()
+    player.bowler_profile_id = profile.id
+    player.usbc_number = None
+    db_session.commit()
+
+    response = api_client.get(
+        f"/api/v1/bowlers?tournament_id={tournament['id']}&squad_id={squad['id']}",
+        headers=auth_identity.headers,
+    )
+
+    assert response.status_code == 200, response.text
+    listed_player = next(row for row in response.json() if row['id'] == player.id)
+    assert listed_player['usbc_number'] == '987654'
+
+
 def test_large_import_commits_in_one_request(api_client, db_session, auth_identity):
     tournament = api_client.post('/api/v1/tournaments', headers=auth_identity.headers, json={
         'name': 'Large Import', 'location': 'Center', 'start_date': '2026-08-22',

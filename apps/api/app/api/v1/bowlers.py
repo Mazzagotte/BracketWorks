@@ -133,7 +133,7 @@ def list_bowlers(
 ):
     # Start with base query
     query = (
-        db.query(models.Bowler)
+        db.query(models.Bowler, models.BowlerProfileModel.usbc_number)
         .outerjoin(
             models.BowlerProfileModel,
             models.BowlerProfileModel.id == models.Bowler.bowler_profile_id,
@@ -186,7 +186,7 @@ def list_bowlers(
     program_map = {p["key"]: p for p in normalized_programs}
 
     result = []
-    for player in players:
+    for player, profile_usbc_number in players:
         # Normalize entries once per player and reuse for both program_entry_counts and total_cost
         normalized_entries = normalize_bowler_bracket_entries(
             player.program_entry_counts,
@@ -218,7 +218,7 @@ def list_bowlers(
             "side_pot_entries": player.side_pot_entries or {},
             "lane": player.lane,
             "division": normalize_division(player.division),
-            "usbc_number": player.usbc_number,
+            "usbc_number": profile_usbc_number or player.usbc_number,
             "amount_paid": player.amount_paid,
             "total_cost": total_cost
         }
