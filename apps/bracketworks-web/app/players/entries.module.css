@@ -5825,8 +5825,8 @@
 
 .tableCard :global(.entries-header-cell.col-name),
 .tableCard :global(.entries-cell.col-name) {
-  width: 290px;
-  min-width: 290px;
+  width: 180px;
+  min-width: 180px;
   text-align: left;
 }
 
