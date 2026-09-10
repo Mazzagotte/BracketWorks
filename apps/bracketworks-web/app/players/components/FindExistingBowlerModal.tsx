@@ -49,7 +49,13 @@ export default function FindExistingBowlerModal({
   onUseBowler,
 }: FindExistingBowlerModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null)
-  const { onOverlayClick } = useModalBehavior({ open: isOpen, onClose, dialogRef })
+  const firstInputRef = useRef<HTMLInputElement>(null)
+  const { onOverlayClick } = useModalBehavior({
+    open: isOpen,
+    onClose,
+    dialogRef,
+    initialFocusRef: firstInputRef,
+  })
 
   if (!isOpen || typeof document === 'undefined') return null
 
@@ -57,7 +63,7 @@ export default function FindExistingBowlerModal({
     <div className={modalStyles.overlay} onClick={onOverlayClick}>
       <div
         ref={dialogRef}
-        className={`${modalStyles.modal} ${styles.findBowlerCard}`}
+        className={`${modalStyles.modal} ${styles.findExistingBowlerModal}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="find-existing-bowler-title"
@@ -72,56 +78,63 @@ export default function FindExistingBowlerModal({
           <CloseControl onClick={onClose} position="absolute" size="sm" label="Close modal" className={modalStyles.closeButton} />
         </div>
 
-        <div className={modalStyles.content}>
-          <div className={styles.historyPanelBody}>
-            <div className={primitiveStyles.searchPanelContentRow}>
-              <div className={primitiveStyles.searchPanelContentLeft}>
-                <label className={styles.findBowlerInputWrap}>
-                  <UserRound aria-hidden="true" />
-                  <input
-                    type="text"
-                    className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput} ${styles.findBowlerInput} ${primitiveStyles.searchPanelInput}`}
-                    placeholder="USBC #"
-                    aria-label="USBC number"
-                    value={historySearchUsbc}
-                    onChange={(event) => onSearchUsbcChange(event.target.value)}
-                  />
-                </label>
-                <label className={styles.findBowlerInputWrap}>
-                  <UserRound aria-hidden="true" />
-                  <input
-                    type="text"
-                    className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput} ${styles.findBowlerInput} ${primitiveStyles.searchPanelInput}`}
-                    placeholder="First name"
-                    aria-label="First name"
-                    value={historySearchFirstName}
-                    onChange={(event) => onSearchFirstNameChange(event.target.value)}
-                  />
-                </label>
-                <label className={styles.findBowlerInputWrap}>
-                  <UserRound aria-hidden="true" />
-                  <input
-                    type="text"
-                    className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput} ${styles.findBowlerInput} ${primitiveStyles.searchPanelInput}`}
-                    placeholder="Last name"
-                    aria-label="Last name"
-                    value={historySearchLastName}
-                    onChange={(event) => onSearchLastNameChange(event.target.value)}
-                  />
-                </label>
-              </div>
-              <div className={primitiveStyles.searchPanelContentRight}>
-                <button type="button" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction} ${styles.searchActionBtn}`} onClick={onSearch} disabled={!hasHistorySearchInput}>
-                  <SearchIcon aria-hidden="true" />
-                  Find Bowler
-                </button>
-                <button type="button" className={`${primitiveStyles.searchPanelClearButton} ${styles.clearSearchBtn} ${hasHistorySearchInput ? styles.clearSearchBtnActive : ''}`} onClick={onClear} disabled={!hasHistorySearchInput}>
-                  <RefreshCcw aria-hidden="true" />
-                  Clear
-                </button>
-              </div>
+        <div className={`${modalStyles.content} ${styles.findExistingBowlerContent}`}>
+          <form
+            className={styles.findExistingBowlerSearch}
+            onSubmit={(event) => {
+              event.preventDefault()
+              onSearch()
+            }}
+          >
+            <div className={styles.findExistingBowlerFields}>
+              <label className={styles.findBowlerInputWrap}>
+                <UserRound aria-hidden="true" />
+                <input
+                  ref={firstInputRef}
+                  type="text"
+                  className={`${formStyles.search} ${formStyles.compactControl} ${styles.findExistingBowlerInput}`}
+                  placeholder="USBC #"
+                  aria-label="USBC number"
+                  value={historySearchUsbc}
+                  onChange={(event) => onSearchUsbcChange(event.target.value)}
+                />
+              </label>
+              <label className={styles.findBowlerInputWrap}>
+                <UserRound aria-hidden="true" />
+                <input
+                  type="text"
+                  className={`${formStyles.search} ${formStyles.compactControl} ${styles.findExistingBowlerInput}`}
+                  placeholder="First name"
+                  aria-label="First name"
+                  value={historySearchFirstName}
+                  onChange={(event) => onSearchFirstNameChange(event.target.value)}
+                />
+              </label>
+              <label className={styles.findBowlerInputWrap}>
+                <UserRound aria-hidden="true" />
+                <input
+                  type="text"
+                  className={`${formStyles.search} ${formStyles.compactControl} ${styles.findExistingBowlerInput}`}
+                  placeholder="Last name"
+                  aria-label="Last name"
+                  value={historySearchLastName}
+                  onChange={(event) => onSearchLastNameChange(event.target.value)}
+                />
+              </label>
             </div>
+            <div className={styles.findExistingBowlerActions}>
+              <button type="submit" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction} ${styles.searchActionBtn}`} disabled={!hasHistorySearchInput}>
+                <SearchIcon aria-hidden="true" />
+                Find Bowler
+              </button>
+              <button type="button" className={`${primitiveStyles.searchPanelClearButton} ${styles.clearSearchBtn} ${hasHistorySearchInput ? styles.clearSearchBtnActive : ''}`} onClick={onClear} disabled={!hasHistorySearchInput}>
+                <RefreshCcw aria-hidden="true" />
+                Clear
+              </button>
+            </div>
+          </form>
 
+          <div className={styles.findExistingBowlerResults}>
             {isHistorySearching ? (
               <p className={styles.historyMeta}>Searching bowler history...</p>
             ) : historyResults.length > 0 ? (

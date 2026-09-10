@@ -4854,6 +4854,107 @@
   pointer-events: none;
 }
 
+.findExistingBowlerModal {
+  width: min(760px, calc(100vw - 32px));
+  max-width: calc(100vw - 24px);
+}
+
+.findExistingBowlerModal .findBowlerSubtitle {
+  margin-top: 0.38rem;
+  font-size: 0.8rem;
+}
+
+.findExistingBowlerContent {
+  padding: 1.2rem 1.35rem 1.35rem;
+}
+
+.findExistingBowlerSearch {
+  display: grid;
+  gap: 1rem;
+  padding: 0;
+}
+
+.findExistingBowlerFields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.findExistingBowlerInput {
+  width: 100%;
+  min-height: 44px;
+  padding-left: 2.35rem;
+  border: 1px solid var(--bw-border-subtle);
+  border-radius: 10px;
+  background: var(--bw-surface-panel);
+  color: var(--bw-text-title);
+}
+
+.findExistingBowlerInput:focus {
+  border-color: var(--bw-border-accent);
+  outline: none;
+  box-shadow: var(--bw-focus-ring);
+}
+
+.findExistingBowlerActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.65rem;
+}
+
+.findExistingBowlerActions :where(button, a) {
+  min-height: 40px;
+  min-width: 118px;
+  justify-content: center;
+}
+
+.findExistingBowlerResults {
+  margin-top: 1.25rem;
+}
+
+.findExistingBowlerResults .historyResultsList {
+  grid-template-columns: 1fr;
+  gap: 0.65rem;
+}
+
+.findExistingBowlerResults .historyResultButton {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 1rem;
+  min-height: 58px;
+  padding: 0.75rem 0.9rem;
+}
+
+@media (max-width: 640px) {
+  .findExistingBowlerModal {
+    width: min(calc(100vw - 18px), 520px);
+  }
+
+  .findExistingBowlerContent {
+    padding: 0.9rem 0.8rem 1rem;
+  }
+
+  .findExistingBowlerFields {
+    grid-template-columns: 1fr;
+  }
+
+  .findExistingBowlerActions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .findExistingBowlerActions :where(button, a) {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .findExistingBowlerResults .historyResultButton {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+}
+
 .entriesTopRow .findBowlerCard .findBowlerInputWrap .findBowlerInput {
   min-height: 46px;
   padding-left: 2.25rem;
