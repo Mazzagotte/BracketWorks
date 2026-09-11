@@ -1,10 +1,78 @@
-import { ArrowRight, Calendar, CircleDollarSign, ClipboardList, Clock, Settings2, Trophy, Users, type LucideIcon } from 'lucide-react';
+import { Activity, ArrowRight, Calendar, CircleDollarSign, ClipboardList, Clock, Settings2, Trophy, Users, type LucideIcon } from 'lucide-react';
 
-import type { BracketSettings, Tournament } from '../../lib/types';
+import type { BracketSettings, Tournament, TournamentActivityEntry } from '../../lib/types';
 import type { Squad } from '../../lib/types';
 import type { DashboardScoreProgress } from '../hooks/useDashboardScoreProgress';
 import buttonStyles from '../../styles/buttons.module.css';
 import styles from './DashboardBoard.module.css';
+
+const formatActivityTime = (value: string): string => {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return 'Unknown time';
+  return parsed.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+};
+
+const getActivityText = (entry: TournamentActivityEntry): { title: string; detail: string } => {
+  switch (entry.event_type) {
+    case 'scores.unlocked':
+      return { title: 'Scores were unlocked', detail: 'Score entry was reopened. Payouts may need to be recalculated.' };
+    case 'scores.locked':
+      return { title: 'Scores were locked', detail: 'Scores were marked ready for payout calculation.' };
+    case 'score.changed':
+      return { title: 'A score was changed', detail: 'One or more saved game scores were updated.' };
+    case 'score.entered':
+      return { title: 'A score was entered', detail: 'A bowler score was saved for this tournament.' };
+    case 'score.deleted':
+      return { title: 'A score was deleted', detail: 'A saved bowler score was removed.' };
+    case 'payouts.calculated':
+      return { title: 'Payouts were calculated', detail: 'The payout sheet was generated from the current tournament results.' };
+    case 'payouts.reopened':
+      return { title: 'Payouts were reopened', detail: 'Finalized payouts were reopened for review or adjustment.' };
+    case 'payouts.adjusted':
+      return { title: 'A payout was adjusted', detail: 'A payout amount was manually changed.' };
+    case 'payouts.finalized':
+      return { title: 'Payouts were finalized', detail: 'The tournament payout records were marked final.' };
+    case 'brackets.generated':
+      return { title: 'Brackets were generated', detail: 'The bracket field was built from the current entries.' };
+    case 'brackets.regenerated':
+      return { title: 'Brackets were regenerated', detail: 'The bracket field was rebuilt after tournament changes.' };
+    case 'brackets.deleted':
+      return { title: 'Brackets were deleted', detail: 'Generated bracket records were removed.' };
+    case 'entries.imported':
+      return { title: 'Entries were imported', detail: 'A batch of bowler entries was added from an import.' };
+    case 'player.added':
+      return { title: 'A bowler was added', detail: 'A new bowler entry was added to the tournament.' };
+    case 'player.deleted':
+      return { title: 'A bowler was removed', detail: 'A bowler entry was deleted from the tournament.' };
+    case 'players.merged':
+      return { title: 'Duplicate bowlers were merged', detail: 'Two bowler records were combined.' };
+    case 'players.bulk_updated':
+      return { title: 'Bowlers were updated', detail: 'Multiple bowler records were changed at once.' };
+    case 'squad.created':
+      return { title: 'A squad was added', detail: 'A new squad time was added to the tournament.' };
+    case 'squad.deleted':
+    case 'squads.deleted':
+      return { title: 'A squad was removed', detail: 'One or more squad times were removed from the tournament.' };
+    case 'squads.changed':
+      return { title: 'Squad times were changed', detail: 'The tournament squad schedule was updated.' };
+    case 'tournament.bracket_settings_updated':
+      return { title: 'Tournament setup was updated', detail: 'Bracket, fee, handicap, or side pot settings were changed.' };
+    case 'tournament.settings_updated':
+      return { title: 'Tournament details were updated', detail: 'The tournament name, location, dates, or schedule was changed.' };
+    case 'tournament.archived':
+      return { title: 'Tournament was archived', detail: 'This tournament was moved out of active use.' };
+    case 'tournament.restored':
+      return { title: 'Tournament was restored', detail: 'This tournament was returned to active use.' };
+    case 'tournament.created':
+      return { title: 'Tournament was created', detail: 'This tournament record was created.' };
+    case 'tournament.duplicated':
+      return { title: 'Tournament was duplicated', detail: 'This tournament was created from another tournament.' };
+    case 'tournament.template_used':
+      return { title: 'Tournament was used as a template', detail: 'Another tournament was created from this one.' };
+    default:
+      return { title: entry.summary, detail: 'A tournament record was updated.' };
+  }
+};
 
 type WorkflowStep = {
   key: string;
@@ -69,6 +137,8 @@ type DashboardBoardProps = {
   dashboardActionIcons: Record<string, LucideIcon>;
   scoreProgress: DashboardScoreProgress;
   scoreProgressText: string;
+  activityEntries: TournamentActivityEntry[];
+  activityLoading: boolean;
 };
 
 export function DashboardBoard({
@@ -96,6 +166,8 @@ export function DashboardBoard({
   dashboardActionIcons,
   scoreProgress,
   scoreProgressText,
+  activityEntries,
+  activityLoading,
 }: DashboardBoardProps) {
   const ContinueActionIcon = dashboardActionIcons[contextPrimaryAction.key] ?? ArrowRight;
 
@@ -282,6 +354,7 @@ export function DashboardBoard({
               })}
             </div>
           </article>
+
         </div>
 
         <aside className={styles.dashboardSideColumn}>
@@ -409,6 +482,37 @@ export function DashboardBoard({
           </article>
         </aside>
       </section>
+
+      <article className={`${styles.dashboardPanel} ${styles.activityPanel}`}>
+        <h3 className={styles.dashboardPanelHeading}>
+          <Activity className={styles.dashboardPanelIcon} aria-hidden="true" />
+          <span className={styles.dashboardPanelTitle}>Tournament Activity</span>
+        </h3>
+        {activityLoading ? (
+          <div className={styles.activityState} role="status">Loading tournament activity...</div>
+        ) : activityEntries.length === 0 ? (
+          <div className={styles.activityState}>No tournament activity recorded yet.</div>
+        ) : (
+          <div className={styles.activityList}>
+                {activityEntries.map(entry => {
+                  const activityText = getActivityText(entry);
+                  return (
+                    <article className={styles.activityItem} key={entry.id}>
+                      <div className={styles.activityItemHeader}>
+                        <div>
+                          <strong>{activityText.title}</strong>
+                          <span>{activityText.detail}</span>
+                        </div>
+                        <time dateTime={entry.created_at}>{formatActivityTime(entry.created_at)}</time>
+                      </div>
+                      {entry.reason ? <p className={styles.activityReason}><span>Reason given:</span> {entry.reason}</p> : null}
+                      <div className={styles.activityMeta}>Changed by {entry.user_display_name}</div>
+                    </article>
+                  );
+                })}
+          </div>
+        )}
+      </article>
     </div>
   );
 }
