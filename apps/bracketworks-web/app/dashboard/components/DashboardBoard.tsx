@@ -12,6 +12,21 @@ const formatActivityTime = (value: string): string => {
   return parsed.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 };
 
+const visibleActivityEventTypes = new Set([
+  'scores.unlocked',
+  'scores.locked',
+  'score.changed',
+  'score.deleted',
+  'payouts.calculated',
+  'payouts.reopened',
+  'payouts.adjusted',
+  'payouts.finalized',
+  'players.merged',
+  'players.duplicate_resolved',
+  'tournament.archived',
+  'tournament.restored',
+]);
+
 const getActivityText = (entry: TournamentActivityEntry): { title: string; detail: string } => {
   switch (entry.event_type) {
     case 'scores.unlocked':
@@ -170,6 +185,7 @@ export function DashboardBoard({
   activityLoading,
 }: DashboardBoardProps) {
   const ContinueActionIcon = dashboardActionIcons[contextPrimaryAction.key] ?? ArrowRight;
+  const visibleActivityEntries = activityEntries.filter(entry => visibleActivityEventTypes.has(entry.event_type));
 
   return (
     <div className={styles.dashboardBoard}>
@@ -490,11 +506,11 @@ export function DashboardBoard({
         </h3>
         {activityLoading ? (
           <div className={styles.activityState} role="status">Loading tournament activity...</div>
-        ) : activityEntries.length === 0 ? (
-          <div className={styles.activityState}>No tournament activity recorded yet.</div>
+        ) : visibleActivityEntries.length === 0 ? (
+          <div className={styles.activityState}>No score unlocks, payout changes, or other review items yet.</div>
         ) : (
           <div className={styles.activityList}>
-                {activityEntries.map(entry => {
+                {visibleActivityEntries.map(entry => {
                   const activityText = getActivityText(entry);
                   return (
                     <article className={styles.activityItem} key={entry.id}>
