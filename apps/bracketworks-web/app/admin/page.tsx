@@ -7,28 +7,27 @@ import { ArrowDown, ArrowUp, ClipboardList, History, Info, Plus, Trash2 } from "
 
 import { apiClient } from "../lib/api";
 import { useAuth } from "../lib/auth-context";
-import { DataTableToolbar } from "../components/primitives";
 import { useToastHelpers } from "../components/Toast";
 import { AdminOverviewSection } from "./components/AdminOverviewSection";
 import { AdminAuditSection } from "./components/AdminAuditSection";
+import { AdminBowlersSection } from "./components/AdminBowlersSection";
 import { AdminTabNav } from "./components/AdminTabNav";
 import { AdminTournamentsSection } from "./components/AdminTournamentsSection";
 import { AdminUsersSection } from "./components/AdminUsersSection";
 import { useAdminOverviewMetrics } from "./hooks/useAdminOverviewMetrics";
 import { adminApi } from "./services/adminApi";
+import { useModalBehavior } from "../hooks/useModalBehavior";
 import {
   EMPTY_CHANGELOG_FORM,
   type AdminAnnouncement,
+  type AdminAnnouncementAcknowledgment,
   type AdminFeedbackMessage,
   type AdminChangelogEntry,
-  type AdminOperation,
-  type AdminSystemHealth,
   type AdminTab,
   type AuditLogsResponse,
   type ChangelogFormState,
   type DeletePreview,
   type OverviewResponse,
-  type TablesResponse,
   type TournamentActivityFilter,
   type TournamentNote,
   type TournamentRow,
@@ -52,8 +51,6 @@ export default function AdminPage() {
   const router = useRouter();
   const { currentUser, isUserAuthenticated, isAuthInitialized } = useAuth();
   const { success: showSuccess } = useToastHelpers();
-  const isDevelopment = process.env.NODE_ENV !== "production";
-
   const [activeTab, setActiveTab] = useState<AdminTab>("overview");
   const [error, setError] = useState<string | null>(null);
 
@@ -94,12 +91,6 @@ export default function AdminPage() {
   const [tournamentNoteCategory, setTournamentNoteCategory] = useState("general");
   const [tournamentNoteText, setTournamentNoteText] = useState("");
 
-  const [tablesResponse, setTablesResponse] = useState<TablesResponse>({ tables: [], include_counts: false, total_tables: 0 });
-  const [tablesLoading, setTablesLoading] = useState(false);
-  const [tablesLoaded, setTablesLoaded] = useState(false);
-  const [tableSearch, setTableSearch] = useState("");
-  const [tableIncludeCounts, setTableIncludeCounts] = useState(false);
-
   const [auditResponse, setAuditResponse] = useState<AuditLogsResponse>({ logs: [], page: 1, page_size: 25, total: 0, total_pages: 1 });
   const [auditLoading, setAuditLoading] = useState(false);
   const [auditLoaded, setAuditLoaded] = useState(false);
@@ -137,11 +128,12 @@ export default function AdminPage() {
   const [announcementStatus, setAnnouncementStatus] = useState<"draft" | "active" | "archived">("draft");
   const [announcementRequiresAck, setAnnouncementRequiresAck] = useState(false);
   const [announcementSaving, setAnnouncementSaving] = useState(false);
-  const [operations, setOperations] = useState<AdminOperation[]>([]);
-  const [operationsLoading, setOperationsLoading] = useState(false);
-  const [operationsNote, setOperationsNote] = useState("");
-  const [systemHealth, setSystemHealth] = useState<AdminSystemHealth | null>(null);
-  const [systemHealthLoading, setSystemHealthLoading] = useState(false);
+  const [acknowledgedAnnouncement, setAcknowledgedAnnouncement] = useState<AdminAnnouncement | null>(null);
+  const [acknowledgmentUsers, setAcknowledgmentUsers] = useState<AdminAnnouncementAcknowledgment[]>([]);
+  const [acknowledgmentsLoading, setAcknowledgmentsLoading] = useState(false);
+  const [acknowledgmentsError, setAcknowledgmentsError] = useState<string | null>(null);
+  const acknowledgmentDialogRef = useRef<HTMLDivElement>(null);
+  const acknowledgmentRequestIdRef = useRef(0);
   const [feedbackMessages, setFeedbackMessages] = useState<AdminFeedbackMessage[]>([]);
   const [feedbackLoading, setFeedbackLoading] = useState(false);
   const [feedbackNotes, setFeedbackNotes] = useState<Record<number, string>>({});
@@ -352,23 +344,6 @@ export default function AdminPage() {
     await Promise.all([loadTournamentNotes(noteTournament), loadTournaments(false)]); showSuccess(`Tournament note ${resolved ? "resolved" : "reopened"}.`);
   }, [loadTournamentNotes, loadTournaments, noteTournament, showSuccess]);
 
-  const loadTables = useCallback(async (manual = false) => {
-    if (!currentUser?.isAdmin) return;
-    if (manual) setRefreshing(true);
-    setTablesLoading(true);
-    setError(null);
-    try {
-      const data = await adminApi.getTables({ include_counts: tableIncludeCounts, search: tableSearch, limit: 300 });
-      setTablesResponse(data);
-      setTablesLoaded(true);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load database tables");
-    } finally {
-      setTablesLoading(false);
-      if (manual) setRefreshing(false);
-    }
-  }, [currentUser?.isAdmin, tableIncludeCounts, tableSearch]);
-
   const loadAuditLogs = useCallback(async (manual = false) => {
     if (!currentUser?.isAdmin) return;
     if (manual) setRefreshing(true);
@@ -421,24 +396,6 @@ export default function AdminPage() {
     finally { setAnnouncementsLoading(false); if (manual) setRefreshing(false); }
   }, [currentUser?.isAdmin]);
 
-  const loadOperations = useCallback(async (manual = false) => {
-    if (!currentUser?.isAdmin) return;
-    if (manual) setRefreshing(true);
-    setOperationsLoading(true); setError(null);
-    try { const data = await adminApi.getOperations(); setOperations(data.operations); setOperationsNote(data.note); }
-    catch (err) { setError(err instanceof Error ? err.message : "Failed to load operations"); }
-    finally { setOperationsLoading(false); if (manual) setRefreshing(false); }
-  }, [currentUser?.isAdmin]);
-
-  const loadSystemHealth = useCallback(async (manual = false) => {
-    if (!currentUser?.isAdmin) return;
-    if (manual) setRefreshing(true);
-    setSystemHealthLoading(true); setError(null);
-    try { setSystemHealth(await adminApi.getSystemHealth()); }
-    catch (err) { setError(err instanceof Error ? err.message : "Failed to load system health"); }
-    finally { setSystemHealthLoading(false); if (manual) setRefreshing(false); }
-  }, [currentUser?.isAdmin]);
-
   const loadFeedback = useCallback(async (manual = false) => {
     if (!currentUser?.isAdmin) return;
     if (manual) setRefreshing(true);
@@ -481,6 +438,36 @@ export default function AdminPage() {
     setDeleteConfirmation({ type: "announcement", announcement });
   }, []);
 
+  const closeAcknowledgmentDialog = useCallback(() => {
+    acknowledgmentRequestIdRef.current += 1;
+    setAcknowledgedAnnouncement(null);
+    setAcknowledgmentsLoading(false);
+  }, []);
+
+  const openAcknowledgmentDialog = useCallback(async (announcement: AdminAnnouncement) => {
+    const requestId = ++acknowledgmentRequestIdRef.current;
+    setAcknowledgedAnnouncement(announcement);
+    setAcknowledgmentUsers([]);
+    setAcknowledgmentsError(null);
+    setAcknowledgmentsLoading(true);
+    try {
+      const data = await adminApi.getAnnouncementAcknowledgments(announcement.id);
+      if (requestId === acknowledgmentRequestIdRef.current) setAcknowledgmentUsers(data.users);
+    } catch (err) {
+      if (requestId === acknowledgmentRequestIdRef.current) {
+        setAcknowledgmentsError(err instanceof Error ? err.message : "Failed to load acknowledgments");
+      }
+    } finally {
+      if (requestId === acknowledgmentRequestIdRef.current) setAcknowledgmentsLoading(false);
+    }
+  }, []);
+
+  const { onOverlayClick: onAcknowledgmentOverlayClick } = useModalBehavior({
+    open: Boolean(acknowledgedAnnouncement),
+    onClose: closeAcknowledgmentDialog,
+    dialogRef: acknowledgmentDialogRef,
+  });
+
   const confirmAnnouncementDelete = useCallback(async (announcement: AdminAnnouncement) => {
     try {
       await adminApi.deleteAnnouncement(announcement.id);
@@ -502,33 +489,26 @@ export default function AdminPage() {
       await loadTournaments(manual);
       return;
     }
-    if (activeTab === "database") {
-      await loadTables(manual);
-      return;
-    }
+    if (activeTab === "bowlers") return;
     if (activeTab === "changelog") {
       await loadChangelog(manual);
       return;
     }
     if (activeTab === "announcements") { await loadAnnouncements(manual); return; }
     if (activeTab === "messages") { await loadFeedback(manual); return; }
-    if (activeTab === "operations") { await loadOperations(manual); return; }
-    if (activeTab === "health") { await loadSystemHealth(manual); return; }
     await loadAuditLogs(manual);
-  }, [activeTab, loadOverview, loadUsers, loadTournaments, loadTables, loadChangelog, loadAuditLogs, loadAnnouncements, loadFeedback, loadOperations, loadSystemHealth]);
+  }, [activeTab, loadOverview, loadUsers, loadTournaments, loadChangelog, loadAuditLogs, loadAnnouncements, loadFeedback]);
 
   const refreshAfterMutation = useCallback(async ({
     overview = false,
     users = false,
     tournaments = false,
-    tables = false,
     audit = false,
     changelog = false,
   }: {
     overview?: boolean;
     users?: boolean;
     tournaments?: boolean;
-    tables?: boolean;
     audit?: boolean;
     changelog?: boolean;
   }) => {
@@ -536,11 +516,10 @@ export default function AdminPage() {
     if (overview) refreshTasks.push(loadOverview(false));
     if (users) refreshTasks.push(loadUsers(false));
     if (tournaments) refreshTasks.push(loadTournaments(false));
-    if (tables) refreshTasks.push(loadTables(false));
     if (audit) refreshTasks.push(loadAuditLogs(false));
     if (changelog) refreshTasks.push(loadChangelog(false));
     await Promise.allSettled(refreshTasks);
-  }, [loadOverview, loadUsers, loadTournaments, loadTables, loadAuditLogs, loadChangelog]);
+  }, [loadOverview, loadUsers, loadTournaments, loadAuditLogs, loadChangelog]);
 
   const handleToggleAdminRole = useCallback(async (user: UserRow) => {
     const nextIsAdmin = !user.is_admin;
@@ -694,13 +673,6 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!isAuthInitialized || !isUserAuthenticated || !currentUser?.isAdmin) return;
-    if (activeTab === "database") {
-      void loadTables(false);
-    }
-  }, [activeTab, isAuthInitialized, isUserAuthenticated, currentUser?.isAdmin, loadTables]);
-
-  useEffect(() => {
-    if (!isAuthInitialized || !isUserAuthenticated || !currentUser?.isAdmin) return;
     if (activeTab === "audit") {
       void loadAuditLogs(false);
     }
@@ -717,8 +689,7 @@ export default function AdminPage() {
     if (!isAuthInitialized || !isUserAuthenticated || !currentUser?.isAdmin) return;
     if (activeTab === "announcements") void loadAnnouncements(false);
     if (activeTab === "messages") void loadFeedback(false);
-    if (activeTab === "operations") void loadOperations(false);
-  }, [activeTab, isAuthInitialized, isUserAuthenticated, currentUser?.isAdmin, loadAnnouncements, loadFeedback, loadOperations]);
+  }, [activeTab, isAuthInitialized, isUserAuthenticated, currentUser?.isAdmin, loadAnnouncements, loadFeedback]);
 
   useEffect(() => {
     if (!isAuthInitialized || !isUserAuthenticated || !currentUser?.isAdmin) return;
@@ -777,7 +748,6 @@ export default function AdminPage() {
 
       <AdminTabNav
         activeTab={activeTab}
-        isDevelopment={isDevelopment}
         onTabChange={setActiveTab}
       />
 
@@ -918,64 +888,8 @@ export default function AdminPage() {
         />
       )}
 
-      {activeTab === "database" && (
-        <section className={styles.panel}>
-          <div className={styles.panelHeader}>
-            <h3 className={styles.panelTitle}>Database Tables</h3>
-            <span className={styles.panelSubtle}>{tablesResponse.total_tables} shown</span>
-          </div>
-          <DataTableToolbar
-            className={styles.toolbarRow}
-            left={(
-              <input
-                type="text"
-                className={styles.toolbarInput}
-                aria-label="Search database tables"
-                value={tableSearch}
-                onChange={(event) => setTableSearch(event.target.value)}
-                placeholder="Search table names"
-              />
-            )}
-            right={(
-              <label className={styles.checkboxRow}>
-                <input
-                  type="checkbox"
-                  checked={tableIncludeCounts}
-                  onChange={(event) => setTableIncludeCounts(event.target.checked)}
-                />
-                <span>Include row counts (uses estimates on Postgres)</span>
-              </label>
-            )}
-          />
-          <div className={styles.tableWrap}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Table</th>
-                  <th>Rows</th>
-                  <th>Count Type</th>
-                  <th>Columns</th>
-                </tr>
-              </thead>
-              <tbody>
-                {tablesLoading ? (
-                  <tr><td className={styles.tableState} colSpan={4}><span role="status">Loading database tables…</span></td></tr>
-                ) : tablesResponse.tables.length === 0 ? (
-                  <tr><td className={styles.tableState} colSpan={4}><strong>No database tables found</strong><span>Clear the table-name search and try again.</span></td></tr>
-                ) : (
-                  tablesResponse.tables.map((table) => (
-                    <tr key={table.name}>
-                      <td>{table.name}</td>
-                      <td>{table.row_count ?? "-"}</td>
-                      <td>{table.row_count_kind}</td>
-                      <td>{table.columns.join(", ")}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </section>
+      {activeTab === "bowlers" && (
+        <AdminBowlersSection onSuccess={showSuccess} />
       )}
 
       {activeTab === "audit" && (
@@ -1203,7 +1117,7 @@ export default function AdminPage() {
           </section>
           <section className={styles.panel}>
             <div className={styles.panelHeader}><h3 className={styles.panelTitle}>Announcement History</h3><span className={styles.panelSubtle}>{announcements.length} total</span></div>
-            {announcementsLoading ? <div className={styles.placeholder} role="status">Loading announcements…</div> : announcements.length === 0 ? <div className={styles.placeholder}>No announcements have been created.</div> : <div className={styles.announcementList}>{announcements.map(item => <article className={styles.announcementCard} key={item.id}><div className={styles.announcementCardHeader}><div><span className={`${styles.statusPill} ${item.status === "active" ? styles.statusActive : styles.statusDraft}`}>{item.status}</span><strong>{item.title}</strong></div><span>{item.acknowledgment_count} acknowledged</span></div><p>{item.message}</p><div className={styles.announcementCardFooter}><span>Audience: {item.audience_type}{item.requires_acknowledgment ? " · acknowledgment required" : ""}</span><div className={styles.rowActions}>{item.status !== "active" && <button className={styles.actionBtn} type="button" onClick={() => { void updateAnnouncementStatus(item, "active"); }}>Publish</button>}{item.status !== "archived" && <button className={styles.actionBtn} type="button" onClick={() => { void updateAnnouncementStatus(item, "archived"); }}>Archive</button>}<button className={styles.actionBtn} type="button" onClick={() => { void deleteAnnouncement(item); }}>Delete</button></div></div></article>)}</div>}
+            {announcementsLoading ? <div className={styles.placeholder} role="status">Loading announcements…</div> : announcements.length === 0 ? <div className={styles.placeholder}>No announcements have been created.</div> : <div className={styles.announcementList}>{announcements.map(item => <article className={styles.announcementCard} key={item.id}><div className={styles.announcementCardHeader}><div><span className={`${styles.statusPill} ${item.status === "active" ? styles.statusActive : styles.statusDraft}`}>{item.status}</span><strong>{item.title}</strong></div><button className={styles.actionBtn} type="button" onClick={() => { void openAcknowledgmentDialog(item); }}>View acknowledged ({item.acknowledgment_count})</button></div><p>{item.message}</p><div className={styles.announcementCardFooter}><span>Audience: {item.audience_type}{item.requires_acknowledgment ? " · acknowledgment required" : ""}</span><div className={styles.rowActions}>{item.status !== "active" && <button className={styles.actionBtn} type="button" onClick={() => { void updateAnnouncementStatus(item, "active"); }}>Publish</button>}{item.status !== "archived" && <button className={styles.actionBtn} type="button" onClick={() => { void updateAnnouncementStatus(item, "archived"); }}>Archive</button>}<button className={styles.actionBtn} type="button" onClick={() => { void deleteAnnouncement(item); }}>Delete</button></div></div></article>)}</div>}
           </section>
         </div>
       )}
@@ -1212,37 +1126,6 @@ export default function AdminPage() {
         <section className={styles.panel}>
           <div className={styles.panelHeader}><div><h3 className={styles.panelTitle}>User Messages</h3><span className={styles.panelSubtle}>Problem reports and feature requests from users</span></div><span className={styles.panelSubtle}>{feedbackMessages.filter(message => message.status !== "resolved").length} open</span></div>
           {feedbackLoading ? <div className={styles.placeholder} role="status">Loading messages...</div> : feedbackMessages.length === 0 ? <div className={styles.placeholder}>No user messages have been submitted.</div> : <div className={styles.feedbackList}>{feedbackMessages.map(message => <article className={styles.feedbackCard} key={message.id}><div className={styles.feedbackHeader}><div><span className={`${styles.statusPill} ${message.status === "resolved" ? styles.statusActive : styles.statusDraft}`}>{message.status.replace("_", " ")}</span><span className={styles.feedbackCategory}>{message.category}</span><h4>{message.subject}</h4></div><time dateTime={message.created_at || undefined}>{formatAdminTimestamp(message.created_at, "Unknown")}</time></div><div className={styles.feedbackMeta}>{message.user_name} (@{message.username}) · {message.email}</div><p className={styles.feedbackMessage}>{message.message}</p><textarea className={styles.feedbackNoteInput} aria-label={`Internal note for ${message.subject}`} value={feedbackNotes[message.id] || ""} onChange={event => setFeedbackNotes(current => ({ ...current, [message.id]: event.target.value }))} placeholder="Internal note for administrators" maxLength={5000} /><div className={styles.feedbackFooter}><span>{message.admin_note ? "Internal note saved" : "No internal note"}</span><div className={styles.rowActions}><select className={styles.toolbarSelect} aria-label={`Status for ${message.subject}`} value={message.status} onChange={event => { void updateFeedback(message, event.target.value as AdminFeedbackMessage["status"]); }}><option value="open">Open</option><option value="in_progress">In progress</option><option value="resolved">Resolved</option></select><button type="button" className={styles.actionBtn} onClick={() => { void updateFeedback(message, message.status); }}>Save note</button></div></div></article>)}</div>}
-        </section>
-      )}
-
-      {activeTab === "operations" && (
-        <section className={styles.panel}>
-          <div className={styles.panelHeader}><div><h3 className={styles.panelTitle}>System Operations</h3><span className={styles.panelSubtle}>Background bracket generation and payout jobs currently observable by the backend</span></div></div>
-          {operationsNote && <div className={styles.operationNote}>{operationsNote}</div>}
-          <div className={styles.tableWrap}><table className={styles.table}><thead><tr><th>Created</th><th>Type</th><th>Status</th><th>Started</th><th>Completed</th><th>Error</th></tr></thead><tbody>{operationsLoading ? <tr><td className={styles.tableState} colSpan={6}><span role="status">Loading operations…</span></td></tr> : operations.length === 0 ? <tr><td className={styles.tableState} colSpan={6}><strong>No recorded operations</strong><span>No background jobs are retained by this backend process.</span></td></tr> : operations.map(operation => <tr key={operation.job_id}><td>{formatAdminTimestamp(operation.created_at, "-")}</td><td>{operation.job_type}</td><td><span className={`${styles.statusPill} ${operation.status === "failed" ? styles.statusDraft : operation.status === "succeeded" ? styles.statusActive : ""}`}>{operation.status}</span></td><td>{formatAdminTimestamp(operation.started_at, "-")}</td><td>{formatAdminTimestamp(operation.completed_at, "-")}</td><td>{operation.error || "-"}</td></tr>)}</tbody></table></div>
-        </section>
-      )}
-
-      {activeTab === "health" && (
-        <section className={styles.panel}>
-          <div className={styles.panelHeader}><div><h3 className={styles.panelTitle}>System Health</h3><span className={styles.panelSubtle}>Live operational checks for administrators</span></div><button type="button" className={styles.actionBtn} disabled={systemHealthLoading} onClick={() => void loadSystemHealth(true)}>{systemHealthLoading ? "Checking..." : "Run Checks"}</button></div>
-          {systemHealthLoading && !systemHealth ? <div className={styles.placeholder} role="status">Checking services...</div> : systemHealth ? <>
-            <div className={styles.healthGrid}>
-              {[
-                ["Frontend", process.env.NEXT_PUBLIC_APP_VERSION || "1.0.0", "healthy"],
-                ["Backend", systemHealth.backend_version, "healthy"],
-                ["API", systemHealth.api.status, systemHealth.api.status],
-                ["Database", systemHealth.database.status, systemHealth.database.status],
-                ["Email", `${systemHealth.email.status} · ${systemHealth.email.provider}`, systemHealth.email.status === "configured" ? "healthy" : "warning"],
-                ["Background Jobs", `${systemHealth.background_jobs.running} running · ${systemHealth.background_jobs.failed} failed`, systemHealth.background_jobs.failed ? "unhealthy" : "healthy"],
-              ].map(([label, value, tone]) => <div className={styles.healthCard} key={label}><span>{label}</span><strong>{value}</strong><i data-tone={tone}>{tone === "healthy" ? "Operational" : tone === "warning" ? "Attention" : "Issue"}</i></div>)}
-            </div>
-            <div className={styles.healthMeta}><span>Environment: {systemHealth.environment}</span><span>Process started: {formatAdminTimestamp(systemHealth.process_started_at, "Unknown")}</span><span>Last deployment: {formatAdminTimestamp(systemHealth.last_deployment, "Not reported")}</span><span>Checked: {formatAdminTimestamp(systemHealth.checked_at, "Unknown")}</span></div>
-            <div className={styles.panelHeader}><h4 className={styles.panelTitle}>Background Services</h4></div>
-            <div className={styles.healthServiceList}>{Object.entries(systemHealth.background_jobs.runtime).map(([name, job]) => <div key={name}><strong>{name.replace(/_/g, " ")}</strong><span>{job.status} · Last run {formatAdminTimestamp(job.last_run_at, "Pending")}</span>{job.last_error && <span className={styles.healthError}>{job.last_error}</span>}</div>)}</div>
-            <div className={styles.panelHeader}><h4 className={styles.panelTitle}>Recent Application Errors</h4><span className={styles.panelSubtle}>{systemHealth.recent_errors.length} retained in this process</span></div>
-            {systemHealth.recent_errors.length === 0 ? <div className={styles.placeholder}>No recent application errors recorded.</div> : <div className={styles.healthErrorList}>{systemHealth.recent_errors.map((item, index) => <article key={`${item.timestamp}-${index}`}><div><strong>{item.level} · {item.logger}</strong><time>{formatAdminTimestamp(item.timestamp, "Unknown")}</time></div><p>{item.message}</p></article>)}</div>}
-          </> : <div className={styles.placeholder}>Health information is unavailable.</div>}
         </section>
       )}
 
@@ -1313,6 +1196,54 @@ export default function AdminPage() {
               >
                 Delete
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {acknowledgedAnnouncement && (
+        <div className={styles.modalOverlay} onClick={onAcknowledgmentOverlayClick}>
+          <div
+            ref={acknowledgmentDialogRef}
+            className={`${styles.modal} ${styles.reviewModal}`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="announcement-acknowledgments-title"
+            tabIndex={-1}
+          >
+            <div className={styles.modalHeader}>
+              <div>
+                <h3 id="announcement-acknowledgments-title" className={styles.modalTitle}>Acknowledged: {acknowledgedAnnouncement.title}</h3>
+                <div className={styles.secondaryText}>{acknowledgedAnnouncement.acknowledgment_count} users acknowledged</div>
+              </div>
+              <CloseControl size="sm" label="Close acknowledgments" onClick={closeAcknowledgmentDialog} />
+            </div>
+            <div className={styles.modalBody}>
+              {acknowledgmentsLoading ? (
+                <div className={styles.placeholder} role="status">Loading acknowledged users…</div>
+              ) : acknowledgmentsError ? (
+                <div className={styles.modalError} role="alert">{acknowledgmentsError}</div>
+              ) : acknowledgmentUsers.length === 0 ? (
+                <div className={styles.placeholder}>No users have acknowledged this announcement.</div>
+              ) : (
+                <div className={styles.tableWrap}>
+                  <table className={styles.table}>
+                    <thead><tr><th>User</th><th>Email</th><th>Account</th><th>Acknowledged</th><th>Version</th></tr></thead>
+                    <tbody>{acknowledgmentUsers.map(user => (
+                      <tr key={`${user.id}-${user.version}`}>
+                        <td><strong>{user.first_name} {user.last_name}</strong><br />@{user.username}</td>
+                        <td>{user.email}</td>
+                        <td><span className={`${styles.statusPill} ${user.is_active ? styles.statusActive : styles.statusInactive}`}>{user.is_active ? "Active" : "Inactive"}</span></td>
+                        <td>{formatAdminTimestamp(user.acknowledged_at, "Unknown")}</td>
+                        <td>{user.version}</td>
+                      </tr>
+                    ))}</tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+            <div className={styles.modalFooter}>
+              <button type="button" className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.small}`} onClick={closeAcknowledgmentDialog}>Close</button>
             </div>
           </div>
         </div>

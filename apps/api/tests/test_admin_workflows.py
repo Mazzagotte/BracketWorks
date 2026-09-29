@@ -6,6 +6,84 @@ from app.core import models
 from app.services.account_cleanup import deactivate_stale_unverified_accounts
 
 
+def test_admin_can_manage_reusable_bowler_profiles_without_deleting_entry_history(
+    api_client,
+    db_session,
+    make_user,
+    make_auth_headers,
+):
+    admin = make_user("profile_admin", is_admin=True)
+    owner = make_user("profile_owner")
+    tournament = models.Tournament(user_id=owner.id, name="Profile History", squad_times="{}")
+    db_session.add(tournament)
+    db_session.flush()
+    profile = models.BowlerProfile(
+        user_id=owner.id,
+        first_name="Jamie",
+        last_name="Example",
+        usbc_number="PROFILE-100",
+        is_active=True,
+    )
+    db_session.add(profile)
+    db_session.flush()
+    entry = models.TournamentPlayer(
+        tournament_id=tournament.id,
+        user_id=owner.id,
+        bowler_profile_id=profile.id,
+        full_name="Jamie Example",
+        usbc_number="PROFILE-100",
+    )
+    db_session.add(entry)
+    db_session.commit()
+
+    headers = make_auth_headers(admin)
+    listing = api_client.get("/api/v1/admin/bowlers?search=PROFILE-100", headers=headers)
+    assert listing.status_code == 200, listing.text
+    assert listing.json()["profiles"][0]["linked_entry_count"] == 1
+    assert listing.json()["profiles"][0]["owner_username"] == owner.username
+
+    updated = api_client.patch(
+        f"/api/v1/admin/bowlers/{profile.id}",
+        headers=headers,
+        json={"first_name": "Jamie", "last_name": "Updated", "usbc_number": "PROFILE-101"},
+    )
+    assert updated.status_code == 200, updated.text
+    db_session.refresh(entry)
+    assert entry.full_name == "Jamie Updated"
+    assert entry.usbc_number == "PROFILE-101"
+
+    archived = api_client.delete(f"/api/v1/admin/bowlers/{profile.id}", headers=headers)
+    assert archived.status_code == 200, archived.text
+    db_session.refresh(entry)
+    db_session.refresh(profile)
+    assert entry.id is not None
+    assert profile.is_active is False
+
+    regular_user = make_user("profile_regular")
+    denied = api_client.get("/api/v1/admin/bowlers", headers=make_auth_headers(regular_user))
+    assert denied.status_code == 403
+
+
+def test_admin_profile_import_reports_duplicates(api_client, db_session, make_user, make_auth_headers):
+    admin = make_user("profile_import_admin", is_admin=True)
+    owner = make_user("profile_import_owner")
+    response = api_client.post(
+        "/api/v1/admin/bowlers/import",
+        headers=make_auth_headers(admin),
+        json={
+            "user_id": owner.id,
+            "rows": [
+                {"first_name": "Casey", "last_name": "Bowler", "usbc_number": "ABC-1"},
+                {"first_name": "Other", "last_name": "Name", "usbc_number": "ABC-1"},
+                {"first_name": "No", "last_name": "Number"},
+            ],
+        },
+    )
+    assert response.status_code == 200, response.text
+    assert response.json() == {"created": 2, "duplicates": 1, "user_id": owner.id}
+    assert db_session.query(models.BowlerProfile).filter_by(user_id=owner.id).count() == 2
+
+
 def test_cleanup_deactivates_old_unverified_accounts_without_login(db_session, make_user):
     stale = make_user("stale_unverified")
     stale.created_at = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=31)
@@ -134,6 +212,61 @@ def test_admin_can_delete_announcement_and_acknowledgments(
             models.UserAcknowledgment.content_id == str(announcement_id),
         )
     ).all() == []
+
+
+def test_admin_can_view_announcement_acknowledgments_with_inactive_status(
+    api_client,
+    db_session,
+    make_user,
+    make_auth_headers,
+):
+    admin = make_user("announcement_ack_admin", is_admin=True)
+    recipient = make_user("announcement_ack_inactive")
+    recipient.is_active = False
+    announcement = models.AdminAnnouncement(
+        title="Service notice",
+        message="Please review this update.",
+        audience_type="all",
+        status="archived",
+        requires_acknowledgment=True,
+        created_by_user_id=admin.id,
+    )
+    db_session.add(announcement)
+    db_session.flush()
+    acknowledgment = models.UserAcknowledgment(
+        user_id=recipient.id,
+        content_type="announcement",
+        content_id=str(announcement.id),
+        version="v2",
+    )
+    db_session.add(acknowledgment)
+    db_session.commit()
+
+    response = api_client.get(
+        f"/api/v1/admin/announcements/{announcement.id}/acknowledgments",
+        headers=make_auth_headers(admin),
+    )
+
+    assert response.status_code == 200
+    assert response.json()["users"] == [
+        {
+            "id": recipient.id,
+            "username": recipient.username,
+            "first_name": recipient.first_name,
+            "last_name": recipient.last_name,
+            "email": recipient.email,
+            "is_active": False,
+            "version": "v2",
+            "acknowledged_at": acknowledgment.acknowledged_at.replace(tzinfo=timezone.utc).isoformat(),
+        }
+    ]
+
+    regular_user = make_user("announcement_ack_regular")
+    denied = api_client.get(
+        f"/api/v1/admin/announcements/{announcement.id}/acknowledgments",
+        headers=make_auth_headers(regular_user),
+    )
+    assert denied.status_code == 403
 
 
 def test_admin_can_delete_user_with_legal_acceptance(

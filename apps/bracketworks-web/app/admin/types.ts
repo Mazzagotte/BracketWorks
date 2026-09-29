@@ -173,21 +173,39 @@ export type TournamentsResponse = {
   total_pages: number;
 };
 
+export type BowlerProfileRow = {
+  id: number;
+  user_id: number;
+  first_name: string;
+  last_name: string;
+  usbc_number: string | null;
+  is_active: boolean;
+  archived_at: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  owner_username: string;
+  owner_name: string;
+  owner_email: string;
+  linked_entry_count: number;
+};
+
+export type BowlerProfilesResponse = {
+  profiles: BowlerProfileRow[];
+  page: number;
+  page_size: number;
+  total: number;
+  total_pages: number;
+};
+
+export type BowlerProfileOwner = {
+  id: number;
+  username: string;
+  name: string;
+  email: string;
+};
+
 export type TournamentActivityFilter = "all" | "has_entries" | "no_entries";
 export type TournamentSortOption = "newest" | "entries_desc" | "owner_asc" | "oldest";
-
-export type TableInfo = {
-  name: string;
-  row_count: number | null;
-  row_count_kind: "skipped" | "estimated" | "exact";
-  columns: string[];
-};
-
-export type TablesResponse = {
-  tables: TableInfo[];
-  include_counts: boolean;
-  total_tables: number;
-};
 
 export type AuditLogRow = {
   id: number;
@@ -221,11 +239,9 @@ export type AdminTab =
   | "overview"
   | "users"
   | "tournaments"
-  | "operations"
-  | "health"
+  | "bowlers"
   | "announcements"
   | "messages"
-  | "database"
   | "audit"
   | "changelog";
 
@@ -242,28 +258,15 @@ export type AdminAnnouncement = {
   acknowledgment_count: number;
 };
 
-export type AdminOperation = {
-  job_id: string;
-  job_type: string;
-  status: string;
-  created_at: string;
-  started_at: string | null;
-  completed_at: string | null;
-  error: string | null;
-};
-
-export type AdminSystemHealth = {
-  checked_at: string;
-  frontend_version: string | null;
-  backend_version: string;
-  environment: string;
-  api: { status: string };
-  database: { status: string; error: string | null };
-  email: { status: string; provider: string; sender: string };
-  background_jobs: { runtime: Record<string, { status: string; last_run_at: string | null; last_success_at: string | null; last_error: string | null }>; queued: number; running: number; failed: number };
-  process_started_at: string;
-  last_deployment: string | null;
-  recent_errors: Array<{ timestamp: string; logger: string; level: string; message: string }>;
+export type AdminAnnouncementAcknowledgment = {
+  id: number;
+  username: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  is_active: boolean;
+  version: string;
+  acknowledged_at: string | null;
 };
 
 export type ChangelogFormState = {
@@ -306,11 +309,9 @@ export const TAB_LABELS: Record<AdminTab, string> = {
   overview: "Overview",
   users: "Users",
   tournaments: "Tournaments",
-  database: "Database",
+  bowlers: "Bowlers",
   audit: "Audit",
   changelog: "Changelog",
-  operations: "Operations",
-  health: "System Health",
   announcements: "Announcements",
   messages: "Messages",
 };

@@ -5,6 +5,7 @@ from typing import Any, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from pydantic import BaseModel, Field
 from passlib.context import CryptContext
 from sqlalchemy import MetaData, String, Table, asc, delete, desc, func, inspect, or_, select, text
 from sqlalchemy.orm import Session
@@ -48,6 +49,23 @@ _pwd_context = CryptContext(
 
 router = APIRouter()
 router.include_router(admin_operations_router)
+
+
+class AdminBowlerProfileUpdate(BaseModel):
+    first_name: str = Field(min_length=1, max_length=120)
+    last_name: str = Field(min_length=1, max_length=120)
+    usbc_number: str | None = Field(default=None, max_length=40)
+
+
+class AdminBowlerProfileImportRow(BaseModel):
+    first_name: str = Field(min_length=1, max_length=120)
+    last_name: str = Field(min_length=1, max_length=120)
+    usbc_number: str | None = Field(default=None, max_length=40)
+
+
+class AdminBowlerProfileImport(BaseModel):
+    user_id: int
+    rows: list[AdminBowlerProfileImportRow] = Field(min_length=1, max_length=1000)
 
 
 def _set_admin_cache_headers(response: Response, *, max_age: int, stale_while_revalidate: int = 0) -> None:
@@ -164,6 +182,257 @@ def _get_postgres_estimated_row_count(db: Session, table_name: str) -> Optional[
         return int(estimate)
     except Exception:
         return None
+
+
+def _serialize_bowler_profile(row, linked_entry_count: int) -> dict[str, Any]:
+    profile, user = row
+    return {
+        "id": profile.id,
+        "user_id": profile.user_id,
+        "first_name": profile.first_name,
+        "last_name": profile.last_name,
+        "usbc_number": profile.usbc_number,
+        "is_active": profile.is_active,
+        "archived_at": _serialize_utc_timestamp(profile.archived_at),
+        "created_at": _serialize_utc_timestamp(profile.created_at),
+        "updated_at": _serialize_utc_timestamp(profile.updated_at),
+        "owner_username": user.username,
+        "owner_name": f"{user.first_name} {user.last_name}".strip(),
+        "owner_email": user.email,
+        "linked_entry_count": linked_entry_count,
+    }
+
+
+@router.get("/bowlers")
+def admin_list_bowler_profiles(
+    response: Response,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=25, ge=5, le=200),
+    search: str | None = Query(default=None),
+    status: str = Query(default="all"),
+    db: Session = Depends(get_db),
+    _admin: models.User = Depends(require_admin_user),
+):
+    normalized_search = (search or "").strip()
+    filters = []
+    if status == "active":
+        filters.append(models.BowlerProfile.is_active.is_(True))
+    elif status == "archived":
+        filters.append(models.BowlerProfile.is_active.is_(False))
+    elif status != "all":
+        raise HTTPException(status_code=422, detail="Invalid bowler profile status")
+    if normalized_search:
+        like = f"%{normalized_search}%"
+        filters.append(
+            or_(
+                models.BowlerProfile.first_name.ilike(like),
+                models.BowlerProfile.last_name.ilike(like),
+                models.BowlerProfile.usbc_number.ilike(like),
+                models.User.username.ilike(like),
+                models.User.email.ilike(like),
+                models.User.first_name.ilike(like),
+                models.User.last_name.ilike(like),
+            )
+        )
+
+    total = db.scalar(
+        select(func.count())
+        .select_from(models.BowlerProfile)
+        .join(models.User, models.User.id == models.BowlerProfile.user_id)
+        .where(*filters)
+    ) or 0
+    linked_entry_count = (
+        select(func.count())
+        .select_from(models.TournamentPlayer)
+        .where(models.TournamentPlayer.bowler_profile_id == models.BowlerProfile.id)
+        .correlate(models.BowlerProfile)
+        .scalar_subquery()
+    )
+    rows = db.execute(
+        select(models.BowlerProfile, models.User, linked_entry_count.label("linked_entry_count"))
+        .join(models.User, models.User.id == models.BowlerProfile.user_id)
+        .where(*filters)
+        .order_by(models.BowlerProfile.last_name.asc(), models.BowlerProfile.first_name.asc(), models.BowlerProfile.id.asc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    ).all()
+    _set_admin_cache_headers(response, max_age=10, stale_while_revalidate=30)
+    return {
+        "profiles": [_serialize_bowler_profile((row[0], row[1]), row[2]) for row in rows],
+        "page": page,
+        "page_size": page_size,
+        "total": total,
+        "total_pages": _total_pages(total, page_size),
+    }
+
+
+@router.get("/bowler-profile-owners")
+def admin_list_bowler_profile_owners(
+    search: str | None = Query(default=None),
+    limit: int = Query(default=100, ge=1, le=200),
+    db: Session = Depends(get_db),
+    _admin: models.User = Depends(require_admin_user),
+):
+    query = select(models.User).where(models.User.is_active.is_(True))
+    normalized_search = (search or "").strip()
+    if normalized_search:
+        like = f"%{normalized_search}%"
+        query = query.where(
+            or_(
+                models.User.username.ilike(like),
+                models.User.email.ilike(like),
+                models.User.first_name.ilike(like),
+                models.User.last_name.ilike(like),
+            )
+        )
+    users = db.scalars(query.order_by(models.User.username.asc()).limit(limit)).all()
+    return {
+        "users": [
+            {"id": user.id, "username": user.username, "name": f"{user.first_name} {user.last_name}".strip(), "email": user.email}
+            for user in users
+        ]
+    }
+
+
+@router.patch("/bowlers/{profile_id}")
+def admin_update_bowler_profile(
+    profile_id: int,
+    payload: AdminBowlerProfileUpdate,
+    db: Session = Depends(get_db),
+    admin: models.User = Depends(require_admin_user),
+):
+    profile = db.get(models.BowlerProfile, profile_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Bowler profile not found")
+
+    first_name = payload.first_name.strip()
+    last_name = payload.last_name.strip()
+    usbc_number = (payload.usbc_number or "").strip() or None
+    if not first_name or not last_name:
+        raise HTTPException(status_code=422, detail="First and last name are required")
+    if usbc_number:
+        duplicate = db.scalar(
+            select(models.BowlerProfile.id).where(
+                models.BowlerProfile.user_id == profile.user_id,
+                models.BowlerProfile.id != profile.id,
+                func.lower(models.BowlerProfile.usbc_number) == usbc_number.lower(),
+            )
+        )
+        if duplicate:
+            raise HTTPException(status_code=409, detail="This user already has a profile with that USBC number")
+
+    before = {"first_name": profile.first_name, "last_name": profile.last_name, "usbc_number": profile.usbc_number}
+    profile.first_name = first_name
+    profile.last_name = last_name
+    profile.usbc_number = usbc_number
+    profile.updated_at = datetime.now(UTC).replace(tzinfo=None)
+    db.execute(
+        models.TournamentPlayer.__table__.update()
+        .where(
+            models.TournamentPlayer.user_id == profile.user_id,
+            models.TournamentPlayer.bowler_profile_id == profile.id,
+        )
+        .values(full_name=f"{first_name} {last_name}", usbc_number=usbc_number)
+    )
+    _write_admin_audit(
+        db, admin.id, "bowler_profile.update", "bowler_profile", profile.id,
+        details={"before": before, "after": {"first_name": first_name, "last_name": last_name, "usbc_number": usbc_number}},
+    )
+    db.commit()
+    db.refresh(profile)
+    linked_count = db.scalar(
+        select(func.count()).select_from(models.TournamentPlayer).where(models.TournamentPlayer.bowler_profile_id == profile.id)
+    ) or 0
+    user = db.get(models.User, profile.user_id)
+    return {"profile": _serialize_bowler_profile((profile, user), linked_count)}
+
+
+@router.post("/bowlers/import")
+def admin_import_bowler_profiles(
+    payload: AdminBowlerProfileImport,
+    db: Session = Depends(get_db),
+    admin: models.User = Depends(require_admin_user),
+):
+    owner = db.get(models.User, payload.user_id)
+    if not owner or not owner.is_active:
+        raise HTTPException(status_code=404, detail="Active profile owner not found")
+
+    existing_profiles = db.scalars(
+        select(models.BowlerProfile).where(models.BowlerProfile.user_id == owner.id)
+    ).all()
+    existing_keys = {
+        f"usbc:{profile.usbc_number.strip().lower()}" if profile.usbc_number and profile.usbc_number.strip()
+        else f"name:{' '.join(profile.first_name.lower().split())} {' '.join(profile.last_name.lower().split())}"
+        for profile in existing_profiles
+    }
+    seen: set[str] = set()
+    created: list[models.BowlerProfile] = []
+    duplicates = 0
+    for row in payload.rows:
+        first_name, last_name = row.first_name.strip(), row.last_name.strip()
+        if not first_name or not last_name:
+            raise HTTPException(status_code=422, detail="Every imported profile needs a first and last name")
+        usbc_number = (row.usbc_number or "").strip() or None
+        key = (
+            f"usbc:{usbc_number.lower()}" if usbc_number
+            else f"name:{' '.join(first_name.lower().split())} {' '.join(last_name.lower().split())}"
+        )
+        if key in existing_keys or key in seen:
+            duplicates += 1
+            continue
+        seen.add(key)
+        created.append(models.BowlerProfile(
+            user_id=owner.id,
+            first_name=first_name,
+            last_name=last_name,
+            usbc_number=usbc_number,
+            is_active=True,
+            archived_at=None,
+        ))
+
+    db.add_all(created)
+    _write_admin_audit(
+        db, admin.id, "bowler_profile.import", "user", owner.id,
+        details={"created_count": len(created), "duplicate_count": duplicates},
+    )
+    db.commit()
+    return {"created": len(created), "duplicates": duplicates, "user_id": owner.id}
+
+
+@router.delete("/bowlers/{profile_id}")
+def admin_archive_bowler_profile(
+    profile_id: int,
+    db: Session = Depends(get_db),
+    admin: models.User = Depends(require_admin_user),
+):
+    profile = db.get(models.BowlerProfile, profile_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Bowler profile not found")
+    if profile.is_active:
+        profile.is_active = False
+        profile.archived_at = datetime.now(UTC).replace(tzinfo=None)
+        profile.updated_at = datetime.now(UTC).replace(tzinfo=None)
+        _write_admin_audit(db, admin.id, "bowler_profile.archive", "bowler_profile", profile.id)
+        db.commit()
+    return {"id": profile.id, "is_active": profile.is_active}
+
+
+@router.post("/bowlers/{profile_id}/reactivate")
+def admin_reactivate_bowler_profile(
+    profile_id: int,
+    db: Session = Depends(get_db),
+    admin: models.User = Depends(require_admin_user),
+):
+    profile = db.get(models.BowlerProfile, profile_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Bowler profile not found")
+    if not profile.is_active:
+        profile.is_active = True
+        profile.archived_at = None
+        profile.updated_at = datetime.now(UTC).replace(tzinfo=None)
+        _write_admin_audit(db, admin.id, "bowler_profile.reactivate", "bowler_profile", profile.id)
+        db.commit()
+    return {"id": profile.id, "is_active": profile.is_active}
 
 
 def _get_tournament_delete_impact(db: Session, tournament_id: int) -> dict[str, int]:
@@ -1493,6 +1762,41 @@ def _serialize_announcement(db: Session, announcement: models.AdminAnnouncement)
 def admin_list_announcements(db: Session = Depends(get_db), _admin: models.User = Depends(require_admin_user)):
     entries = db.execute(select(models.AdminAnnouncement).order_by(models.AdminAnnouncement.created_at.desc())).scalars().all()
     return {"announcements": [_serialize_announcement(db, entry) for entry in entries]}
+
+
+@router.get("/announcements/{announcement_id}/acknowledgments")
+def admin_list_announcement_acknowledgments(
+    announcement_id: int,
+    db: Session = Depends(get_db),
+    _admin: models.User = Depends(require_admin_user),
+):
+    if not db.get(models.AdminAnnouncement, announcement_id):
+        raise HTTPException(status_code=404, detail="Announcement not found")
+
+    rows = db.execute(
+        select(models.UserAcknowledgment, models.User)
+        .join(models.User, models.User.id == models.UserAcknowledgment.user_id)
+        .where(
+            models.UserAcknowledgment.content_type == "announcement",
+            models.UserAcknowledgment.content_id == str(announcement_id),
+        )
+        .order_by(models.UserAcknowledgment.acknowledged_at.desc())
+    ).all()
+    return {
+        "users": [
+            {
+                "id": user.id,
+                "username": user.username,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "email": user.email,
+                "is_active": user.is_active,
+                "version": acknowledgment.version,
+                "acknowledged_at": _serialize_utc_timestamp(acknowledgment.acknowledged_at),
+            }
+            for acknowledgment, user in rows
+        ]
+    }
 
 
 @router.post("/announcements")

@@ -119,6 +119,7 @@
 .statusPill { display: inline-flex; align-items: center; min-height: 26px; padding: 0 9px; border: 1px solid var(--bw-border-subtle); border-radius: 999px; background: var(--bw-surface-panel-strong); color: var(--bw-text-body); font-size: .7rem; font-weight: 800; white-space: nowrap; }
 .statusActive { border-color: color-mix(in srgb, var(--bw-text-success) 40%, var(--bw-border-card)); background: color-mix(in srgb, var(--bw-text-success) 12%, var(--bw-surface-panel)); color: var(--bw-text-success); }
 .statusDraft { border-color: color-mix(in srgb, var(--color-warning) 40%, var(--bw-border-card)); color: var(--color-warning); }
+.statusInactive { border-color: color-mix(in srgb, var(--bw-text-danger) 40%, var(--bw-border-card)); background: color-mix(in srgb, var(--bw-text-danger) 10%, var(--bw-surface-panel)); color: var(--bw-text-danger); }
 
 .toolbarRow { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--bw-border-card); background: var(--bw-surface-card); }
 .toolbarRow > div { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-width: 0; }

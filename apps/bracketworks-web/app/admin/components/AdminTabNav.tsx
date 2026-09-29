@@ -4,22 +4,19 @@ import styles from "../admin.module.css";
 
 type AdminTabNavProps = {
   activeTab: AdminTab;
-  isDevelopment: boolean;
   onTabChange: (tab: AdminTab) => void;
 };
 
-export function AdminTabNav({ activeTab, isDevelopment, onTabChange }: AdminTabNavProps) {
+export function AdminTabNav({ activeTab, onTabChange }: AdminTabNavProps) {
   const tabs: AdminTab[] = [
     "overview",
     "users",
     "tournaments",
+    "bowlers",
     "announcements",
     "messages",
-    "operations",
-    "health",
     "audit",
     "changelog",
-    ...(isDevelopment ? ["database" as AdminTab] : []),
   ];
 
   return (

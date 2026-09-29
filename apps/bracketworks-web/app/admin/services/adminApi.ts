@@ -2,14 +2,15 @@ import { apiClient } from "../../lib/api";
 
 import type {
   AdminAnnouncement,
+  AdminAnnouncementAcknowledgment,
   AdminFeedbackMessage,
   AdminChangelogEntry,
-  AdminOperation,
-  AdminSystemHealth,
   AuditLogsResponse,
+  BowlerProfileOwner,
+  BowlerProfileRow,
+  BowlerProfilesResponse,
   DeletePreview,
   OverviewResponse,
-  TablesResponse,
   TournamentActivityFilter,
   TournamentNote,
   TournamentSortOption,
@@ -41,12 +42,6 @@ type TournamentsQueryOptions = {
   sort: TournamentSortOption;
 };
 
-type TablesQueryOptions = {
-  include_counts: boolean;
-  search: string;
-  limit: number;
-};
-
 type AuditLogsQueryOptions = {
   page: number;
   page_size: number;
@@ -56,6 +51,13 @@ type AuditLogsQueryOptions = {
   admin_user_id: string;
   date_from: string;
   date_to: string;
+};
+
+type BowlerProfilesQueryOptions = {
+  page: number;
+  page_size: number;
+  search: string;
+  status: "all" | "active" | "archived";
 };
 
 export const adminApi = {
@@ -73,12 +75,28 @@ export const adminApi = {
     const query = buildQuery(options);
     return apiClient.get<TournamentsResponse>(`/api/v1/admin/tournaments${query}`, false);
   },
+  getBowlerProfiles(options: BowlerProfilesQueryOptions) {
+    const query = buildQuery(options);
+    return apiClient.get<BowlerProfilesResponse>(`/api/v1/admin/bowlers${query}`, false);
+  },
+  getBowlerProfileOwners(search: string) {
+    const query = buildQuery({ search, limit: 100 });
+    return apiClient.get<{ users: BowlerProfileOwner[] }>(`/api/v1/admin/bowler-profile-owners${query}`, false);
+  },
+  updateBowlerProfile(profileId: number, payload: { first_name: string; last_name: string; usbc_number: string | null }) {
+    return apiClient.patch<{ profile: BowlerProfileRow }>(`/api/v1/admin/bowlers/${profileId}`, payload);
+  },
+  importBowlerProfiles(payload: { user_id: number; rows: Array<{ first_name: string; last_name: string; usbc_number: string | null }> }) {
+    return apiClient.post<{ created: number; duplicates: number; user_id: number }>("/api/v1/admin/bowlers/import", payload);
+  },
+  archiveBowlerProfile(profileId: number) {
+    return apiClient.delete<{ id: number; is_active: boolean }>(`/api/v1/admin/bowlers/${profileId}`);
+  },
+  reactivateBowlerProfile(profileId: number) {
+    return apiClient.post<{ id: number; is_active: boolean }>(`/api/v1/admin/bowlers/${profileId}/reactivate`, {});
+  },
   getTournamentNotes(tournamentId: number) {
     return apiClient.get<{ notes: TournamentNote[] }>(`/api/v1/admin/tournaments/${tournamentId}/notes`, false);
-  },
-  getTables(options: TablesQueryOptions) {
-    const query = buildQuery(options);
-    return apiClient.get<TablesResponse>(`/api/v1/admin/database/tables${query}`, false);
   },
   getAuditLogs(options: AuditLogsQueryOptions) {
     const query = buildQuery(options);
@@ -90,6 +108,9 @@ export const adminApi = {
   getAnnouncements() {
     return apiClient.get<{ announcements: AdminAnnouncement[] }>("/api/v1/admin/announcements", false);
   },
+  getAnnouncementAcknowledgments(announcementId: number) {
+    return apiClient.get<{ users: AdminAnnouncementAcknowledgment[] }>(`/api/v1/admin/announcements/${announcementId}/acknowledgments`, false);
+  },
   getFeedback() {
     return apiClient.get<{ messages: AdminFeedbackMessage[] }>("/api/v1/admin/feedback", false);
   },
@@ -98,12 +119,6 @@ export const adminApi = {
   },
   deleteAnnouncement(announcementId: number) {
     return apiClient.delete<{ ok: boolean; acknowledgments_deleted: number }>(`/api/v1/admin/announcements/${announcementId}`);
-  },
-  getOperations() {
-    return apiClient.get<{ operations: AdminOperation[]; note: string }>("/api/v1/admin/operations", false);
-  },
-  getSystemHealth() {
-    return apiClient.get<AdminSystemHealth>("/api/v1/admin/system-health", false);
   },
   getUserDeletePreview(userId: number) {
     return apiClient.get<DeletePreview>(`/api/v1/admin/users/${userId}/delete-preview`, false);
