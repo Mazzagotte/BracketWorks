@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { BracketProgramDefinition, SidePot, SidePotsSettings } from '../lib/types';
 
 export type { SidePot, SidePotsSettings };
@@ -16,6 +17,7 @@ export type Player = {
   lane: string, 
   totalCost: number, 
   amountPaid: number, 
+  updateProfileAverage?: boolean,
   squad?: { id: number, date: string, time: string } 
 }
 
@@ -53,7 +55,8 @@ export interface Squad {
 
 export interface PlayerFormProps {
   onAddPlayer: (player: Omit<Player, 'id'>) => Promise<boolean | void> | boolean | void;
-  onFindExistingBowler?: () => void;
+  bowlerHistorySearchPanel?: ReactNode;
+  onBowlerIdentityChange?: (identity: { firstName: string; lastName: string; usbc: string }) => void;
   isLoading: boolean;
   squads: Squad[];
   selectedSquad?: Squad | null;

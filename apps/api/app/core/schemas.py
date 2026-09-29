@@ -318,7 +318,7 @@ class PlayerBase(BaseModel):
 
 
 class PlayerCreate(PlayerBase):
-    pass
+    update_profile_average: bool | None = None
 
 
 class PlayerUpdate(BaseModel):

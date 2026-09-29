@@ -37,7 +37,7 @@ import { useMediaQuery } from '../hooks/useMediaQuery'
 import { ListChecks } from 'lucide-react'
 import ImportPreviewModal from './components/ImportPreviewModal'
 import DuplicateResolutionPanel from './components/DuplicateResolutionPanel'
-import FindExistingBowlerModal from './components/FindExistingBowlerModal'
+import BowlerHistoryResults from './components/BowlerHistoryResults'
 
 function bracketProgramsEqual(left: BracketProgramDefinition[], right: BracketProgramDefinition[]): boolean {
   if (left.length !== right.length) return false
@@ -79,7 +79,6 @@ export default function PlayersPage() {
   const [prefillDraft, setPrefillDraft] = useState<PlayerFormPrefillDraft | null>(null)
   const [prefillVersion, setPrefillVersion] = useState(0)
   const isMobileView = useMediaQuery(MOBILE_VIEWPORT_QUERY)
-  const [isFindBowlerModalOpen, setIsFindBowlerModalOpen] = useState(false)
   const [hasSubmittedHistorySearch, setHasSubmittedHistorySearch] = useState(false)
   const [tableSearchCollapsed, setTableSearchCollapsed] = useState(false)
   const {
@@ -108,7 +107,6 @@ export default function PlayersPage() {
     setHistoryResults,
     isHistorySearching,
     hasHistorySearchInput,
-    triggerHistorySearch,
     clearHistorySearch,
   } = useBowlerHistorySearch(authToken)
 
@@ -255,7 +253,6 @@ export default function PlayersPage() {
     })
     clearHistorySearch()
     setPrefillVersion(prev => prev + 1)
-    setIsFindBowlerModalOpen(false)
   }, [clearHistorySearch])
 
   useEffect(() => {
@@ -433,8 +430,6 @@ export default function PlayersPage() {
   const [isDeletingAll, setIsDeletingAll] = useState(false)
   const [deleteAllPlayersConfirmOpen, setDeleteAllPlayersConfirmOpen] = useState(false)
   const [isExplainModalOpen, setIsExplainModalOpen] = useState(false)
-  const closeFindBowlerModal = useCallback(() => setIsFindBowlerModalOpen(false), [])
-
   // Import from Excel — file input ref lives here so the button can be in the header
   const importFileRef = useRef<HTMLInputElement | null>(null)
   const [isImporting, setIsImporting] = useState(false)
@@ -722,7 +717,21 @@ export default function PlayersPage() {
           <div className={styles.entryWorkflowLayout}>
               <PlayerForm
                 onAddPlayer={addPlayer}
-                onFindExistingBowler={() => setIsFindBowlerModalOpen(true)}
+                bowlerHistorySearchPanel={(
+                  <BowlerHistoryResults
+                    historyResults={historyResults}
+                    isHistorySearching={isHistorySearching}
+                    hasHistorySearchInput={hasHistorySearchInput}
+                    hasSubmittedSearch={hasSubmittedHistorySearch}
+                    onUseBowler={handleUseHistoryResult}
+                  />
+                )}
+                onBowlerIdentityChange={({ firstName, lastName, usbc }) => {
+                  setHistorySearchFirstName(firstName)
+                  setHistorySearchLastName(lastName)
+                  setHistorySearchUsbc(usbc)
+                  setHasSubmittedHistorySearch(true)
+                }}
                 isLoading={showInitialPlayersLoad}
                 squads={squads}
                 selectedSquad={selectedSquad}
@@ -828,38 +837,6 @@ export default function PlayersPage() {
           deletePlayer(deleteConfirmId)
           setDeleteConfirmId(null)
         }}
-      />
-      <FindExistingBowlerModal
-        isOpen={isFindBowlerModalOpen}
-        onClose={closeFindBowlerModal}
-        historySearchUsbc={historySearchUsbc}
-        historySearchFirstName={historySearchFirstName}
-        historySearchLastName={historySearchLastName}
-        historyResults={historyResults}
-        isHistorySearching={isHistorySearching}
-        hasHistorySearchInput={hasHistorySearchInput}
-        hasSubmittedSearch={hasSubmittedHistorySearch}
-        onSearchUsbcChange={(value) => {
-          setHistorySearchUsbc(value)
-          setHasSubmittedHistorySearch(false)
-        }}
-        onSearchFirstNameChange={(value) => {
-          setHistorySearchFirstName(value)
-          setHasSubmittedHistorySearch(false)
-        }}
-        onSearchLastNameChange={(value) => {
-          setHistorySearchLastName(value)
-          setHasSubmittedHistorySearch(false)
-        }}
-        onSearch={() => {
-          setHasSubmittedHistorySearch(true)
-          triggerHistorySearch()
-        }}
-        onClear={() => {
-          setHasSubmittedHistorySearch(false)
-          clearHistorySearch()
-        }}
-        onUseBowler={handleUseHistoryResult}
       />
       <ExplainEntriesModal
         isOpen={isExplainModalOpen}

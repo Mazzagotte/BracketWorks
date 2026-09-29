@@ -322,14 +322,19 @@ def reactivate_bowler_profile(
     db.commit()
     return {"id": profile.id, "is_active": profile.is_active}
 
-def _stage_bowler(db: Session, player: schemas.PlayerCreate, owner_user_id: int) -> models.TournamentPlayer:
+def _stage_bowler(
+    db: Session,
+    player: schemas.PlayerCreate,
+    owner_user_id: int,
+    update_profile_average: bool = True,
+) -> models.TournamentPlayer:
     profile = _resolve_or_create_bowler_profile(
         db=db,
         user_id=owner_user_id,
         full_name=player.full_name,
         usbc_number=player.usbc_number,
     )
-    if profile and player.average is not None:
+    if profile and player.average is not None and update_profile_average:
         profile.average = player.average
         profile.updated_at = datetime.now(timezone.utc)
     first_name, last_name = _split_full_name(player.full_name)
@@ -371,7 +376,10 @@ def _stage_bowler(db: Session, player: schemas.PlayerCreate, owner_user_id: int)
 @router.post("", response_model=schemas.Player)
 def create_bowler(player: schemas.PlayerCreate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     owner_user_id = _resolve_bowler_owner_id_for_tournament(db, player.tournament_id, current_user)
-    obj = _stage_bowler(db, player, owner_user_id)
+    update_profile_average = player.update_profile_average
+    if update_profile_average is None:
+        update_profile_average = "average" in player.model_fields_set
+    obj = _stage_bowler(db, player, owner_user_id, update_profile_average=update_profile_average)
     record_tournament_event(
         db,
         tournament_id=obj.tournament_id,

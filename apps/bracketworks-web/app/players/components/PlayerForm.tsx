@@ -39,8 +39,9 @@ const EMPTY_FORM: PlayerFormState = {
   amountPaid: 0
 };
 
-const PlayerForm = memo(({ onAddPlayer, onFindExistingBowler, isLoading, squads, selectedSquad, tournamentName, existingPlayers = [], entryFee, bracketPrograms, sidePots, prefillDraft, prefillVersion }: PlayerFormProps) => {
+const PlayerForm = memo(({ onAddPlayer, bowlerHistorySearchPanel, onBowlerIdentityChange, isLoading, squads, selectedSquad, tournamentName, existingPlayers = [], entryFee, bracketPrograms, sidePots, prefillDraft, prefillVersion }: PlayerFormProps) => {
   const [formData, setFormData] = useState<PlayerFormState>({ ...EMPTY_FORM });
+  const [profileAverageChanged, setProfileAverageChanged] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const isMobileLayout = useMediaQuery(COMPACT_CONTENT_VIEWPORT_QUERY);
@@ -145,6 +146,7 @@ const PlayerForm = memo(({ onAddPlayer, onFindExistingBowler, isLoading, squads,
       bracketEntries: normalizePlayerBracketEntries(formData.bracketEntries, formData.handicap, formData.scratch),
       sidePotEntries: nextSidePotEntries,
       amountPaid: amountPaidOnSubmit,
+      updateProfileAverage: profileAverageChanged,
       firstName: formData.firstName.trim(),
       lastName: formData.lastName.trim(),
       totalCost
@@ -152,6 +154,7 @@ const PlayerForm = memo(({ onAddPlayer, onFindExistingBowler, isLoading, squads,
 
     if (wasAdded === false) return
     setFormData({ ...EMPTY_FORM });
+    setProfileAverageChanged(false)
     setSuccessMessage(`${bowlerName} added.`)
     if (isMobileLayout) setIsCollapsed(true)
     window.setTimeout(() => {
@@ -162,7 +165,18 @@ const PlayerForm = memo(({ onAddPlayer, onFindExistingBowler, isLoading, squads,
   };
 
   const handleInputChange = (field: string, value: string | number) => {
+    if (field === 'average') setProfileAverageChanged(true)
     setSuccessMessage(null)
+    if (field === 'firstName' || field === 'lastName' || field === 'usbc') {
+      const normalizedValue = typeof value === 'string' && (field === 'firstName' || field === 'lastName')
+        ? capitalizeFirstLetter(value)
+        : value
+      onBowlerIdentityChange?.({
+        firstName: field === 'firstName' ? String(normalizedValue) : formData.firstName,
+        lastName: field === 'lastName' ? String(normalizedValue) : formData.lastName,
+        usbc: field === 'usbc' ? String(normalizedValue) : formData.usbc,
+      })
+    }
     setFormData(prev => {
       const normalizedValue = typeof value === 'string' && (field === 'firstName' || field === 'lastName')
         ? capitalizeFirstLetter(value)
@@ -213,6 +227,7 @@ const PlayerForm = memo(({ onAddPlayer, onFindExistingBowler, isLoading, squads,
 
   const handleCancel = () => {
     setFormData({ ...EMPTY_FORM })
+    setProfileAverageChanged(false)
     setSubmitError(null)
     setSuccessMessage(null)
     setIsCollapsed(false)
@@ -227,15 +242,6 @@ const PlayerForm = memo(({ onAddPlayer, onFindExistingBowler, isLoading, squads,
           Add Bowler
         </h3>
         <p className={styles.addBowlerSubtitle}>Register a bowler for the active squad.</p>
-        {onFindExistingBowler && (
-          <button
-            type="button"
-            className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction} ${styles.findBowlerHeaderButton}`}
-            onClick={onFindExistingBowler}
-          >
-            Find Existing Bowler
-          </button>
-        )}
         {isMobileLayout && (
           <button
             type="button"
@@ -315,6 +321,12 @@ const PlayerForm = memo(({ onAddPlayer, onFindExistingBowler, isLoading, squads,
           </div>
           </div>
         </section>
+
+        {bowlerHistorySearchPanel?.({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          usbc: formData.usbc,
+        })}
 
         <section className={styles.addBowlerFormSection}>
           <h4 className={styles.addBowlerSectionTitle}><Target aria-hidden="true" />Tournament Assignment</h4>

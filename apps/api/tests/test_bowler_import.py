@@ -69,6 +69,50 @@ def test_tournament_average_updates_reusable_bowler_profile(api_client, db_sessi
     assert profile.average == 205
 
 
+def test_add_only_updates_reusable_average_when_host_changes_it(api_client, db_session, auth_identity):
+    tournament = api_client.post('/api/v1/tournaments', headers=auth_identity.headers, json={
+        'name': 'Profile Average Opt-in', 'location': 'Center', 'start_date': '2026-08-22',
+        'end_date': '2026-08-22', 'squad_times': {'2026-08-22': ['10:00']}, 'is_public': False,
+    }).json()
+    squad = api_client.post('/api/v1/squads/', headers=auth_identity.headers, json={
+        'tournament_id': tournament['id'], 'date': '2026-08-22', 'time': '10:00',
+    }).json()
+    untouched_profile = models.BowlerProfile(
+        user_id=auth_identity.user.id,
+        first_name='Default',
+        last_name='Average',
+        usbc_number='AVG-UNCHANGED',
+        average=218,
+    )
+    changed_profile = models.BowlerProfile(
+        user_id=auth_identity.user.id,
+        first_name='Changed',
+        last_name='Average',
+        usbc_number='AVG-CHANGED',
+        average=218,
+    )
+    db_session.add_all([untouched_profile, changed_profile])
+    db_session.commit()
+
+    untouched_add = api_client.post('/api/v1/bowlers', headers=auth_identity.headers, json={
+        'tournament_id': tournament['id'], 'squad_id': squad['id'],
+        'full_name': 'Default Average', 'usbc_number': 'AVG-UNCHANGED', 'average': 150,
+        'update_profile_average': False,
+    })
+    changed_add = api_client.post('/api/v1/bowlers', headers=auth_identity.headers, json={
+        'tournament_id': tournament['id'], 'squad_id': squad['id'],
+        'full_name': 'Changed Average', 'usbc_number': 'AVG-CHANGED', 'average': 187,
+        'update_profile_average': True,
+    })
+
+    assert untouched_add.status_code == 200, untouched_add.text
+    assert changed_add.status_code == 200, changed_add.text
+    db_session.refresh(untouched_profile)
+    db_session.refresh(changed_profile)
+    assert untouched_profile.average == 218
+    assert changed_profile.average == 187
+
+
 def test_list_bowlers_returns_profile_usbc_number(api_client, db_session, auth_identity):
     tournament = api_client.post('/api/v1/tournaments', headers=auth_identity.headers, json={
         'name': 'Profile USBC Event', 'location': 'Center', 'start_date': '2026-08-22',

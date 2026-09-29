@@ -170,6 +170,7 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
         full_name: `${newPlayer.firstName} ${newPlayer.lastName}`,
         usbc_number: newPlayer.usbc || '',
         average: newPlayer.average,
+        update_profile_average: newPlayer.updateProfileAverage ?? false,
         handicap_entry_count: newPlayer.handicap,
         scratch_entry_count: newPlayer.scratch,
         program_entry_counts: newPlayer.bracketEntries,

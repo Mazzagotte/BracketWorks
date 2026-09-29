@@ -78,12 +78,6 @@ export function useBowlerHistorySearch(authToken: string | null) {
     void runHistorySearch()
   }, [authToken, debouncedHistorySearchUsbc, debouncedHistorySearchFirstName, debouncedHistorySearchLastName])
 
-  const triggerHistorySearch = useCallback(() => {
-    setDebouncedHistorySearchUsbc(historySearchUsbc.trim())
-    setDebouncedHistorySearchFirstName(historySearchFirstName.trim())
-    setDebouncedHistorySearchLastName(historySearchLastName.trim())
-  }, [historySearchUsbc, historySearchFirstName, historySearchLastName])
-
   const clearHistorySearch = useCallback(() => {
     setHistorySearchUsbc('')
     setHistorySearchFirstName('')
@@ -106,7 +100,6 @@ export function useBowlerHistorySearch(authToken: string | null) {
     setHistoryResults,
     isHistorySearching,
     hasHistorySearchInput,
-    triggerHistorySearch,
     clearHistorySearch,
   }
 }

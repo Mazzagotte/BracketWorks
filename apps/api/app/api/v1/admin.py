@@ -626,6 +626,10 @@ def _hard_delete_tournament(db: Session, tournament_id: int) -> None:
     db.execute(delete(models.TournamentStaffMember).where(models.TournamentStaffMember.tournament_id == tournament_id))
     db.execute(delete(models.TournamentAuditLog).where(models.TournamentAuditLog.tournament_id == tournament_id))
     db.execute(delete(models.AdminTournamentNote).where(models.AdminTournamentNote.tournament_id == tournament_id))
+    db.execute(delete(models.TournamentSetupState).where(models.TournamentSetupState.tournament_id == tournament_id))
+    db.execute(delete(models.DuplicatePlayerResolution).where(models.DuplicatePlayerResolution.tournament_id == tournament_id))
+    db.execute(delete(models.ScoreCorrection).where(models.ScoreCorrection.tournament_id == tournament_id))
+    db.execute(delete(models.PayoutAdjustment).where(models.PayoutAdjustment.tournament_id == tournament_id))
     db.execute(delete(models.BracketPayout).where(models.BracketPayout.tournament_id == tournament_id))
     db.execute(delete(models.BracketWinner).where(models.BracketWinner.tournament_id == tournament_id))
     db.execute(delete(models.TournamentPayoutSummary).where(models.TournamentPayoutSummary.tournament_id == tournament_id))
@@ -725,6 +729,12 @@ def _get_user_delete_impact(db: Session, user_id: int) -> dict[str, int]:
 
 def _hard_delete_user(db: Session, user_id: int) -> dict[str, int]:
     impact = _get_user_delete_impact(db, user_id)
+
+    owned_tournament_ids = list(
+        db.scalars(select(models.Tournament.id).where(models.Tournament.user_id == user_id))
+    )
+    for tournament_id in owned_tournament_ids:
+        _hard_delete_tournament(db, tournament_id)
 
     player_rows = db.execute(
         select(
@@ -2275,9 +2285,8 @@ def admin_delete_user(
         raise HTTPException(status_code=400, detail="confirm_text must equal DELETE")
 
     impact = _get_user_delete_impact(db, user_id)
-    tournament_count = impact.get("owned_tournaments", 0) + impact.get("owned_tc_tournaments", 0)
-    if tournament_count > 0:
-        raise HTTPException(status_code=400, detail="User owns tournaments. Reassign or delete them first.")
+    if impact.get("owned_tc_tournaments", 0) > 0:
+        raise HTTPException(status_code=400, detail="User owns Tournament Central tournaments. Reassign or delete them first.")
 
     _write_admin_audit(
         db,
