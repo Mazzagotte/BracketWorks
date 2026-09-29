@@ -130,7 +130,9 @@ export class ApiClient {
       if (cached) return cached
     }
 
-    const config: RequestInit = { ...options, headers: { ...this.defaultRequestHeaders, ...options.headers } }
+    const requestHeaders = { ...this.defaultRequestHeaders, ...options.headers } as Record<string, string>
+    if (typeof FormData !== 'undefined' && options.body instanceof FormData) delete requestHeaders['Content-Type']
+    const config: RequestInit = { ...options, headers: requestHeaders }
     const method = (config.method || 'GET').toUpperCase()
     const requestHeaders = config.headers as Record<string, string>
 
@@ -217,6 +219,10 @@ export class ApiClient {
 
   async post<T>(endpoint: string, data?: unknown): Promise<T> {
     return this.request<T>(endpoint, { method: 'POST', body: data ? JSON.stringify(data) : undefined })
+  }
+
+  async postFormData<T>(endpoint: string, data: FormData): Promise<T> {
+    return this.request<T>(endpoint, { method: 'POST', body: data })
   }
 
   async put<T>(endpoint: string, data?: unknown): Promise<T> {

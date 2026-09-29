@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { Download, FileUp, Pencil, RotateCcw, Trash2 } from "lucide-react";
 import CloseControl from "../../../components/CloseControl";
 import { useModalBehavior } from "../../hooks/useModalBehavior";
-import { parseExcelPlayers } from "../../players/utils/importPlayers";
 import { useToastHelpers } from "../../components/Toast";
 import { adminApi } from "../services/adminApi";
 import type { BowlerProfileOwner, BowlerProfileRow, BowlerProfilesResponse } from "../types";
@@ -39,6 +38,7 @@ export function AdminBowlersSection({ onSuccess }: Props) {
   const [selectedOwnerId, setSelectedOwnerId] = useState("");
   const [importRows, setImportRows] = useState<ImportRow[] | null>(null);
   const [importFileName, setImportFileName] = useState("");
+  const [importSkippedRows, setImportSkippedRows] = useState(0);
   const [importError, setImportError] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -128,15 +128,11 @@ export function AdminBowlersSection({ onSuccess }: Props) {
     setImportFileName(file.name);
     setImportError(null);
     try {
-      const parsed = await parseExcelPlayers(file, [], 0);
-      const rows = parsed.players.map(player => ({
-        first_name: player.firstName.trim(),
-        last_name: player.lastName.trim(),
-        usbc_number: player.usbc?.trim() || null,
-        average: Number.isFinite(player.average) ? player.average : null,
-      }));
+      const parsed = await adminApi.parseBowlerProfileWorkbook(file);
+      const rows = parsed.rows;
+      setImportSkippedRows(parsed.skipped_rows);
       if (rows.length === 0) {
-        setImportError(parsed.skippedRows[0]?.reason || "No valid profiles found in the workbook.");
+        setImportError("No rows with both a first and last name were found.");
         setImportRows([]);
         return;
       }
@@ -192,7 +188,7 @@ export function AdminBowlersSection({ onSuccess }: Props) {
         return;
       }
 
-      const columns = ["Profile ID", "First Name", "Last Name", "USBC Number", "Average", "Status", "Tournament Entries", "Owner Username", "Owner Email", "Created", "Updated", "Archived"];
+      const columns = ["Profile ID", "First Name", "Last Name", "USBC Number", "Average"];
       const escape = (value: unknown) => `"${String(value ?? "").replace(/"/g, '""')}"`;
       const rows = profiles.map(profile => [
         profile.id,
@@ -200,13 +196,6 @@ export function AdminBowlersSection({ onSuccess }: Props) {
         profile.last_name,
         profile.usbc_number,
         profile.average,
-        profile.is_active ? "Active" : "Archived",
-        profile.linked_entry_count,
-        profile.owner_username,
-        profile.owner_email,
-        profile.created_at,
-        profile.updated_at,
-        profile.archived_at,
       ]);
       const csv = [columns, ...rows].map(row => row.map(escape).join(",")).join("\r\n");
       const blobUrl = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
@@ -245,7 +234,7 @@ export function AdminBowlersSection({ onSuccess }: Props) {
           </select>
           <button type="button" className={styles.actionBtn} disabled={!selectedOwnerId || exporting} onClick={() => { void exportSelectedOwnerProfiles(); }}><Download aria-hidden="true" size={15} /> {exporting ? "Exporting…" : "Export CSV"}</button>
           <button type="button" className={styles.actionBtn} disabled={!selectedOwnerId} onClick={() => fileInputRef.current?.click()}><FileUp aria-hidden="true" size={15} /> Import Excel</button>
-          <input ref={fileInputRef} type="file" accept=".xlsx,.xls" hidden onChange={event => { const file = event.target.files?.[0]; if (file) void parseImportFile(file); event.target.value = ""; }} />
+          <input ref={fileInputRef} type="file" accept=".xlsx" hidden onChange={event => { const file = event.target.files?.[0]; if (file) void parseImportFile(file); event.target.value = ""; }} />
         </div>
       </div>
       <div className={styles.tableWrap}>
@@ -301,6 +290,7 @@ export function AdminBowlersSection({ onSuccess }: Props) {
             <div className={styles.modalBody}>
               {importError && <div className={styles.modalError} role="alert">{importError}</div>}
               {importRows.length > 0 && <div className={styles.tableWrap}><table className={styles.table}><thead><tr><th>First name</th><th>Last name</th><th>USBC</th><th>Average</th></tr></thead><tbody>{importRows.slice(0, 100).map((row, index) => <tr key={`${row.usbc_number || row.first_name}-${index}`}><td>{row.first_name}</td><td>{row.last_name}</td><td>{row.usbc_number || "-"}</td><td>{row.average ?? "-"}</td></tr>)}</tbody></table>{importRows.length > 100 && <p className={styles.secondaryText}>Showing first 100 rows; all {importRows.length} will be imported.</p>}</div>}
+              {importSkippedRows > 0 && <p className={styles.secondaryText}>{importSkippedRows} row{importSkippedRows === 1 ? " was" : "s were"} skipped because the name was incomplete.</p>}
               <p className={styles.secondaryText}>Owner: {owners.find(owner => String(owner.id) === selectedOwnerId)?.name || "Selected account"}. Existing profiles with matching USBC or name will be skipped.</p>
             </div>
             <div className={styles.modalFooter}><button type="button" className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.small}`} onClick={() => setImportRows(null)} disabled={importing}>Cancel</button><button type="button" className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`} onClick={() => { void commitImport(); }} disabled={importing || !importRows.length || !selectedOwnerId}>{importing ? "Importing…" : `Import ${importRows.length} profiles`}</button></div>

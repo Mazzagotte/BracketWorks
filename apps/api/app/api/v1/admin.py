@@ -1,10 +1,15 @@
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
+from io import BytesIO
 import math
+import posixpath
+import re
+import zipfile
 from typing import Any, Optional
 from uuid import UUID
+import xml.etree.ElementTree as ET
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Response, UploadFile
 from pydantic import BaseModel, Field
 from passlib.context import CryptContext
 from sqlalchemy import MetaData, String, Table, asc, delete, desc, func, inspect, or_, select, text
@@ -68,6 +73,133 @@ class AdminBowlerProfileImportRow(BaseModel):
 class AdminBowlerProfileImport(BaseModel):
     user_id: int
     rows: list[AdminBowlerProfileImportRow] = Field(min_length=1, max_length=1000)
+
+
+def _xlsx_column_index(reference: str) -> int:
+    column = re.match(r"[A-Za-z]+", reference)
+    if not column:
+        return 0
+    result = 0
+    for character in column.group(0).upper():
+        result = result * 26 + ord(character) - ord("A") + 1
+    return result - 1
+
+
+def _xml_children(element: ET.Element, local_name: str) -> list[ET.Element]:
+    return [child for child in element.iter() if child.tag.rsplit("}", 1)[-1] == local_name]
+
+
+def _parse_bowler_profile_workbook(content: bytes) -> tuple[list[dict[str, Any]], int]:
+    if len(content) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="Workbook exceeds the 10 MB upload limit")
+    try:
+        with zipfile.ZipFile(BytesIO(content)) as workbook:
+            if sum(item.file_size for item in workbook.infolist()) > 40 * 1024 * 1024:
+                raise HTTPException(status_code=413, detail="Workbook expands beyond the 40 MB processing limit")
+
+            workbook_xml = ET.fromstring(workbook.read("xl/workbook.xml"))
+            relationship_id = None
+            for sheet in _xml_children(workbook_xml, "sheet"):
+                relationship_id = next((value for key, value in sheet.attrib.items() if key.endswith("}id")), None)
+                if relationship_id:
+                    break
+            if not relationship_id:
+                raise HTTPException(status_code=422, detail="No worksheet found in workbook")
+
+            relationships_xml = ET.fromstring(workbook.read("xl/_rels/workbook.xml.rels"))
+            target = next((
+                relationship.attrib.get("Target")
+                for relationship in _xml_children(relationships_xml, "Relationship")
+                if relationship.attrib.get("Id") == relationship_id
+            ), None)
+            if not target:
+                raise HTTPException(status_code=422, detail="First worksheet is missing from workbook")
+            sheet_path = target.lstrip("/") if target.startswith("/") else posixpath.normpath(posixpath.join("xl", target))
+            if sheet_path.startswith("../") or sheet_path not in workbook.namelist():
+                raise HTTPException(status_code=422, detail="Invalid first worksheet path")
+
+            shared_strings: list[str] = []
+            if "xl/sharedStrings.xml" in workbook.namelist():
+                shared_xml = ET.fromstring(workbook.read("xl/sharedStrings.xml"))
+                shared_strings = [
+                    "".join(node.text or "" for node in _xml_children(item, "t"))
+                    for item in _xml_children(shared_xml, "si")
+                ]
+            sheet_xml = ET.fromstring(workbook.read(sheet_path))
+            sheet_rows: list[list[str]] = []
+            for row in _xml_children(sheet_xml, "row"):
+                cells: list[str] = []
+                for cell in _xml_children(row, "c"):
+                    reference = cell.attrib.get("r", "")
+                    column_index = _xlsx_column_index(reference)
+                    while len(cells) <= column_index:
+                        cells.append("")
+                    cell_type = cell.attrib.get("t")
+                    if cell_type == "inlineStr":
+                        value = "".join(node.text or "" for node in _xml_children(cell, "t"))
+                    else:
+                        value_node = next(iter(_xml_children(cell, "v")), None)
+                        value = value_node.text or "" if value_node is not None else ""
+                        if cell_type == "s" and value:
+                            value = shared_strings[int(value)]
+                    cells[column_index] = value
+                sheet_rows.append(cells)
+    except HTTPException:
+        raise
+    except (KeyError, ValueError, zipfile.BadZipFile, ET.ParseError, IndexError) as exc:
+        raise HTTPException(status_code=422, detail="Unable to read this Excel workbook") from exc
+
+    normalized_rows = [[re.sub(r"[_\s\-#]+", "", value.strip().lower()) for value in row] for row in sheet_rows]
+    header_index = next((
+        index for index, cells in enumerate(normalized_rows)
+        if ("name" in cells or "bowlername" in cells or "firstname" in cells or "lastname" in cells)
+        and ("average" in cells or "avg" in cells)
+    ), None)
+    if header_index is None:
+        raise HTTPException(status_code=422, detail="Could not detect headers; include bowler name and Average/Avg")
+
+    headers = normalized_rows[header_index]
+    aliases = {
+        "first_name": {"firstname", "first", "givenname", "fname"},
+        "last_name": {"lastname", "last", "surname", "familyname", "lname"},
+        "full_name": {"name", "bowlername"},
+        "usbc_number": {"usbc", "usbcnumber", "nationalid"},
+        "average": {"average", "avg"},
+    }
+    positions = {key: next((i for i, header in enumerate(headers) if header in names), None) for key, names in aliases.items()}
+    parsed: list[dict[str, Any]] = []
+    skipped = 0
+    for row in sheet_rows[header_index + 1:]:
+        if not any(value.strip() for value in row):
+            continue
+        value = lambda key: row[positions[key]] if positions[key] is not None and positions[key] < len(row) else ""
+        first_name = value("first_name").strip()
+        last_name = value("last_name").strip()
+        full_name = value("full_name").strip()
+        if (not first_name or not last_name) and full_name:
+            name_parts = [part.strip() for part in full_name.split(",", 1)]
+            if len(name_parts) == 2:
+                last_name = last_name or name_parts[0]
+                first_name = first_name or name_parts[1].split()[0]
+            else:
+                parts = full_name.split()
+                first_name = first_name or (parts[0] if parts else "")
+                last_name = last_name or " ".join(parts[1:])
+        if not first_name or not last_name:
+            skipped += 1
+            continue
+        raw_average = value("average").strip()
+        try:
+            average = max(0, min(300, int(float(raw_average)))) if raw_average else 150
+        except ValueError:
+            average = 150
+        parsed.append({
+            "first_name": first_name,
+            "last_name": last_name,
+            "usbc_number": value("usbc_number").strip() or None,
+            "average": average,
+        })
+    return parsed, skipped
 
 
 def _set_admin_cache_headers(response: Response, *, max_age: int, stale_while_revalidate: int = 0) -> None:
@@ -406,6 +538,18 @@ def admin_import_bowler_profiles(
     )
     db.commit()
     return {"created": len(created), "duplicates": duplicates, "user_id": owner.id}
+
+
+@router.post("/bowlers/parse-workbook")
+async def admin_parse_bowler_profile_workbook(
+    file: UploadFile = File(...),
+    _admin: models.User = Depends(require_admin_user),
+):
+    if not (file.filename or "").lower().endswith(".xlsx"):
+        raise HTTPException(status_code=415, detail="Upload an .xlsx workbook")
+    content = await file.read(10 * 1024 * 1024 + 1)
+    rows, skipped_rows = _parse_bowler_profile_workbook(content)
+    return {"rows": rows, "skipped_rows": skipped_rows}
 
 
 @router.delete("/bowlers/{profile_id}")

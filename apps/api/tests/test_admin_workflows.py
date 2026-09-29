@@ -1,4 +1,6 @@
 from datetime import datetime, timedelta, timezone
+from io import BytesIO
+from zipfile import ZIP_DEFLATED, ZipFile
 
 from sqlalchemy import select
 
@@ -89,6 +91,61 @@ def test_admin_profile_import_reports_duplicates(api_client, db_session, make_us
     profiles = db_session.query(models.BowlerProfile).filter_by(user_id=owner.id).all()
     assert len(profiles) == 2
     assert next(profile for profile in profiles if profile.usbc_number == "ABC-1").average == 181
+
+
+def test_admin_can_parse_bowler_workbook_without_browser_excel_runtime(api_client, make_user, make_auth_headers):
+    archive_buffer = BytesIO()
+    with ZipFile(archive_buffer, "w", ZIP_DEFLATED) as workbook:
+        workbook.writestr(
+            "xl/workbook.xml",
+            '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" '
+            'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
+            '<sheets><sheet name="Profiles" sheetId="1" r:id="rId1"/></sheets></workbook>',
+        )
+        workbook.writestr(
+            "xl/_rels/workbook.xml.rels",
+            '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+            '<Relationship Id="rId1" Target="worksheets/sheet1.xml" '
+            'Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet"/>'
+            '</Relationships>',
+        )
+        workbook.writestr(
+            "xl/sharedStrings.xml",
+            '<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+            '<si><t>First Name</t></si><si><t>Last Name</t></si><si><t>USBC Number</t></si>'
+            '<si><t>Average</t></si><si><t>Casey</t></si><si><t>Bowler</t></si><si><t>ABC-1</t></si>'
+            '</sst>',
+        )
+        workbook.writestr(
+            "xl/worksheets/sheet1.xml",
+            '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>'
+            '<row r="1"><c r="A1" t="s"><v>0</v></c><c r="B1" t="s"><v>1</v></c>'
+            '<c r="C1" t="s"><v>2</v></c><c r="D1" t="s"><v>3</v></c></row>'
+            '<row r="2"><c r="A2" t="s"><v>4</v></c><c r="B2" t="s"><v>5</v></c>'
+            '<c r="C2" t="s"><v>6</v></c><c r="D2"><v>187</v></c></row>'
+            '<row r="3"><c r="A3" t="s"><v>4</v></c><c r="D3"><v>190</v></c></row>'
+            '</sheetData></worksheet>',
+        )
+
+    admin = make_user("workbook_admin", is_admin=True)
+    response = api_client.post(
+        "/api/v1/admin/bowlers/parse-workbook",
+        headers=make_auth_headers(admin),
+        files={"file": ("profiles.xlsx", archive_buffer.getvalue(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")},
+    )
+    assert response.status_code == 200, response.text
+    assert response.json() == {
+        "rows": [{"first_name": "Casey", "last_name": "Bowler", "usbc_number": "ABC-1", "average": 187}],
+        "skipped_rows": 1,
+    }
+
+    regular_user = make_user("workbook_regular")
+    denied = api_client.post(
+        "/api/v1/admin/bowlers/parse-workbook",
+        headers=make_auth_headers(regular_user),
+        files={"file": ("profiles.xlsx", archive_buffer.getvalue(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")},
+    )
+    assert denied.status_code == 403
 
 
 def test_cleanup_deactivates_old_unverified_accounts_without_login(db_session, make_user):

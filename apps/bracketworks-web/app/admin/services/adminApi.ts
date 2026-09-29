@@ -90,6 +90,11 @@ export const adminApi = {
   importBowlerProfiles(payload: { user_id: number; rows: Array<{ first_name: string; last_name: string; usbc_number: string | null; average: number | null }> }) {
     return apiClient.post<{ created: number; duplicates: number; user_id: number }>("/api/v1/admin/bowlers/import", payload);
   },
+  parseBowlerProfileWorkbook(file: File) {
+    const formData = new FormData();
+    formData.append("file", file);
+    return apiClient.postFormData<{ rows: Array<{ first_name: string; last_name: string; usbc_number: string | null; average: number | null }>; skipped_rows: number }>("/api/v1/admin/bowlers/parse-workbook", formData);
+  },
   archiveBowlerProfile(profileId: number) {
     return apiClient.delete<{ id: number; is_active: boolean }>(`/api/v1/admin/bowlers/${profileId}`);
   },
