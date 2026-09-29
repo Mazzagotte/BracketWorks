@@ -130,9 +130,9 @@ export class ApiClient {
       if (cached) return cached
     }
 
-    const requestHeaders = { ...this.defaultRequestHeaders, ...options.headers } as Record<string, string>
-    if (typeof FormData !== 'undefined' && options.body instanceof FormData) delete requestHeaders['Content-Type']
-    const config: RequestInit = { ...options, headers: requestHeaders }
+    const initialHeaders = { ...this.defaultRequestHeaders, ...options.headers } as Record<string, string>
+    if (typeof FormData !== 'undefined' && options.body instanceof FormData) delete initialHeaders['Content-Type']
+    const config: RequestInit = { ...options, headers: initialHeaders }
     const method = (config.method || 'GET').toUpperCase()
     const requestHeaders = config.headers as Record<string, string>
 
