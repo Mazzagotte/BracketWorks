@@ -12,7 +12,7 @@ type AddToast = (args: { message: string; type: 'success' | 'warning' | 'error';
 
 export interface UseScoreLockResult {
   isScoresLocked: boolean
-  unlockScoresTable: () => Promise<void>
+  unlockScoresTable: (reason: string) => Promise<boolean>
   unlockPayoutsAndGo: () => Promise<void>
 }
 
@@ -68,22 +68,21 @@ export function useScoreLock(
     router.push('/payouts')
   }, [addToast, router, selectedSquad, tournament])
 
-  const unlockScoresTable = useCallback(async () => {
+  const unlockScoresTable = useCallback(async (reason: string) => {
     const tournamentId = tournament?.id ?? null
     const squadId = selectedSquad?.id ?? null
-    if (!tournamentId) return
+    if (!tournamentId) return false
 
-    if (!window.confirm('Unlock scores? Existing payouts may be invalidated and score changes will be audited.')) return
-    const reason = window.prompt('Reason for unlocking scores:')?.trim()
-    if (!reason) {
+    const trimmedReason = reason.trim()
+    if (!trimmedReason) {
       addToast({ message: 'A reason is required to unlock scores.', type: 'warning', duration: 3500 })
-      return
+      return false
     }
     try {
-      await apiClient.post(`/api/v1/scores/${tournamentId}/unlock`, { reason })
+      await apiClient.post(`/api/v1/scores/${tournamentId}/unlock`, { reason: trimmedReason })
     } catch (error) {
       addToast({ message: handleApiError(error).message, type: 'error', duration: 5000 })
-      return
+      return false
     }
 
     const lockKey = getScoresLockKey(tournamentId, squadId)
@@ -98,6 +97,7 @@ export function useScoreLock(
       type: 'success',
       duration: 4000,
     })
+    return true
   }, [addToast, selectedSquad, tournament])
 
   return { isScoresLocked, unlockScoresTable, unlockPayoutsAndGo }

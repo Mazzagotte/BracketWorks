@@ -39,7 +39,7 @@ const EMPTY_FORM: PlayerFormState = {
   amountPaid: 0
 };
 
-const PlayerForm = memo(({ onAddPlayer, isLoading, squads, selectedSquad, tournamentName, existingPlayers = [], entryFee, bracketPrograms, sidePots, prefillDraft, prefillVersion }: PlayerFormProps) => {
+const PlayerForm = memo(({ onAddPlayer, onFindExistingBowler, isLoading, squads, selectedSquad, tournamentName, existingPlayers = [], entryFee, bracketPrograms, sidePots, prefillDraft, prefillVersion }: PlayerFormProps) => {
   const [formData, setFormData] = useState<PlayerFormState>({ ...EMPTY_FORM });
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -227,6 +227,15 @@ const PlayerForm = memo(({ onAddPlayer, isLoading, squads, selectedSquad, tourna
           Add Bowler
         </h3>
         <p className={styles.addBowlerSubtitle}>Register a bowler for the active squad.</p>
+        {onFindExistingBowler && (
+          <button
+            type="button"
+            className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction} ${styles.findBowlerHeaderButton}`}
+            onClick={onFindExistingBowler}
+          >
+            Find Existing Bowler
+          </button>
+        )}
         {isMobileLayout && (
           <button
             type="button"

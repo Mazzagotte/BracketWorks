@@ -1,4 +1,5 @@
 import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 
 interface CalcPayoutsModalProps {
   open: boolean
@@ -109,6 +110,62 @@ export function BracketMismatchModal({ open, onClose }: BracketMismatchModalProp
             onClick={() => { onClose(); router.push('/brackets') }}
           >
             Go to Brackets
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+interface UnlockScoresModalProps {
+  open: boolean
+  isSubmitting: boolean
+  onClose: () => void
+  onConfirm: (reason: string) => void
+}
+
+export function UnlockScoresModal({
+  open,
+  isSubmitting,
+  onClose,
+  onConfirm,
+}: UnlockScoresModalProps) {
+  const [reason, setReason] = useState('')
+  if (!open) return null
+
+  const trimmedReason = reason.trim()
+
+  return (
+    <div className="bw-scores-calc-overlay">
+      <div className="bw-scores-calc-modal bw-scores-calc-modal-brand">
+        <div className="bw-scores-calc-head bw-scores-calc-head-brand">
+          <h2 className="bw-scores-calc-title bw-scores-calc-title-warning">Unlock Scores?</h2>
+        </div>
+        <p className="bw-scores-calc-text">
+          Existing payouts may be invalidated and score changes will be audited. Add a short reason before
+          reopening score entry.
+        </p>
+        <label className="bw-scores-calc-field">
+          <span className="bw-scores-calc-label">Audit reason</span>
+          <textarea
+            className="bw-scores-calc-textarea"
+            value={reason}
+            onChange={event => setReason(event.target.value)}
+            placeholder="Example: correcting a posted Game 2 score"
+            rows={3}
+            autoFocus
+          />
+        </label>
+        <div className="bw-scores-calc-actions">
+          <button className="bw-scores-calc-btn bw-scores-calc-btn-secondary" onClick={onClose} disabled={isSubmitting}>
+            Cancel
+          </button>
+          <button
+            className="bw-scores-calc-btn bw-scores-calc-btn-primary bw-scores-calc-btn-warning"
+            onClick={() => onConfirm(trimmedReason)}
+            disabled={isSubmitting || !trimmedReason}
+          >
+            {isSubmitting ? 'Unlocking...' : 'Unlock Scores'}
           </button>
         </div>
       </div>

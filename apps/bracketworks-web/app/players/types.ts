@@ -53,6 +53,7 @@ export interface Squad {
 
 export interface PlayerFormProps {
   onAddPlayer: (player: Omit<Player, 'id'>) => Promise<boolean | void> | boolean | void;
+  onFindExistingBowler?: () => void;
   isLoading: boolean;
   squads: Squad[];
   selectedSquad?: Squad | null;

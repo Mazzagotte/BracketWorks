@@ -16,7 +16,7 @@ import {
   Users,
   type LucideIcon,
 } from 'lucide-react';
-import { Tournament, Squad, BracketSettings, TournamentForm, SidePotsSettings, SidePot, Player, DashboardTournamentBootstrapResponse } from '../lib/types';
+import { Tournament, Squad, BracketSettings, TournamentForm, SidePotsSettings, SidePot, Player, DashboardTournamentBootstrapResponse, TournamentActivityEntry } from '../lib/types';
 
 import { useAuth } from '../lib/auth-context';
 import { ErrorBoundary } from '../components/ErrorBoundary';
@@ -171,6 +171,8 @@ export default function TournamentDashboard() {
   const [shareQROpen, setShareQROpen] = useState(false);
   const [isExplainModalOpen, setIsExplainModalOpen] = useState(false);
   const [duplicateModalOpen, setDuplicateModalOpen] = useState(false);
+  const [activityEntries, setActivityEntries] = useState<TournamentActivityEntry[]>([]);
+  const [activityLoading, setActivityLoading] = useState(false);
   
   // Enhanced UX components
   const { addToast } = useToast();
@@ -1053,6 +1055,26 @@ export default function TournamentDashboard() {
       .catch(() => { if (active) setDuplicatePlayersCount(localDuplicatePlayersCount); });
     return () => { active = false; };
   }, [isDemoDashboard, localDuplicatePlayersCount, tournament]);
+
+  useEffect(() => {
+    if (!tournament?.id || isDemoDashboard || !sessionToken) {
+      setActivityEntries([]);
+      setActivityLoading(false);
+      return;
+    }
+
+    let active = true;
+    setActivityLoading(true);
+    apiClient.get<TournamentActivityEntry[]>(`/api/v1/tournament-activity/${tournament.id}?limit=6`, false)
+      .then(result => { if (active) setActivityEntries(result); })
+      .catch(error => {
+        logger.warn('Failed to load tournament activity', { tournamentId: tournament.id, error: getErrorContext(error) });
+        if (active) setActivityEntries([]);
+      })
+      .finally(() => { if (active) setActivityLoading(false); });
+    return () => { active = false; };
+  }, [isDemoDashboard, sessionToken, tournament?.id]);
+
   const handleLifecycleAction = async (action: 'archive' | 'restore') => {
     if (!tournament || !window.confirm(`${action === 'archive' ? 'Archive' : 'Restore'} ${tournament.name}?`)) return;
     try {
@@ -1287,6 +1309,8 @@ export default function TournamentDashboard() {
                   dashboardActionIcons={dashboardActionIcons}
                   scoreProgress={scoreProgress}
                   scoreProgressText={scoreProgressText}
+                  activityEntries={activityEntries}
+                  activityLoading={activityLoading}
                 />
               </>
             )}

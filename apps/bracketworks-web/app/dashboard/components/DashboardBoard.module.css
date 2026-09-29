@@ -421,6 +421,83 @@
   white-space: nowrap;
 }
 
+.activityPanel {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: 2px;
+}
+
+.activityList {
+  display: grid;
+  gap: 8px;
+}
+
+.activityItem {
+  display: grid;
+  gap: 7px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--bw-border-subtle) 82%, transparent);
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--bw-surface-panel) 88%, transparent);
+}
+
+.activityItemHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.activityItemHeader div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.activityItemHeader strong {
+  color: var(--bw-text-title);
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+.activityItemHeader span,
+.activityItemHeader time,
+.activityMeta {
+  color: var(--bw-text-muted);
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.activityItemHeader time {
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.activityReason {
+  margin: 0;
+  padding: 8px 10px;
+  border-left: 3px solid var(--color-primary);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--color-primary) 9%, transparent);
+  color: var(--bw-text-body);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.activityReason span {
+  color: var(--bw-text-title);
+  font-weight: 800;
+}
+
+.activityState {
+  padding: 14px;
+  border: 1px dashed color-mix(in srgb, var(--bw-border-subtle) 92%, transparent);
+  border-radius: 13px;
+  color: var(--bw-text-muted);
+  font-size: 13px;
+  text-align: center;
+}
+
 .entryBreakdownLabelHandicap,
 .entryBreakdownLabelScratch,
 .entryBreakdownLabelOptional {
@@ -658,5 +735,14 @@
 
   .workflowText strong {
     font-size: 12px;
+  }
+
+  .activityItemHeader {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .activityItemHeader time {
+    text-align: left;
   }
 }

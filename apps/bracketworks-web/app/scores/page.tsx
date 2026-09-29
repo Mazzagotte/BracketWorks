@@ -38,7 +38,7 @@ import { useScoreFilters } from './hooks/useScoreFilters'
 import { useScoreEditing } from './hooks/useScoreEditing'
 import { useScoreLock } from './hooks/useScoreLock'
 import { useOfflineScoreSync } from './hooks/useOfflineScoreSync'
-import { CalcPayoutsModal, BracketMismatchModal } from './components/ScoreConfirmModals'
+import { CalcPayoutsModal, BracketMismatchModal, UnlockScoresModal } from './components/ScoreConfirmModals'
 import { ScoreEntryTable } from './components/ScoreEntryTable'
 import { MobileScoreCardList } from './components/MobileScoreCard'
 
@@ -56,6 +56,8 @@ export default function ScoresPage() {
   const [mobileExpandedPlayers, setMobileExpandedPlayers] = useState<Record<number, boolean>>({})
   const [showCalcPayoutsConfirm, setShowCalcPayoutsConfirm] = useState(false)
   const [showBracketMismatchWarning, setShowBracketMismatchWarning] = useState(false)
+  const [showUnlockScoresConfirm, setShowUnlockScoresConfirm] = useState(false)
+  const [isUnlockingScores, setIsUnlockingScores] = useState(false)
   const [missingScoreNames, setMissingScoreNames] = useState<string[]>([])
   const importFileRef = useRef<HTMLInputElement | null>(null)
 
@@ -151,6 +153,16 @@ export default function ScoresPage() {
     setMissingScoreNames(missing)
     setShowCalcPayoutsConfirm(true)
   }, [players, tournament, selectedSquad, sessionToken])
+
+  const confirmUnlockScores = useCallback(async (reason: string) => {
+    setIsUnlockingScores(true)
+    try {
+      const unlocked = await unlockScoresTable(reason)
+      if (unlocked) setShowUnlockScoresConfirm(false)
+    } finally {
+      setIsUnlockingScores(false)
+    }
+  }, [unlockScoresTable])
 
   // ── Export handlers ────────────────────────────────────────────────────────
   const handleExportScoresToExcel = useCallback(async () => {
@@ -252,7 +264,7 @@ export default function ScoresPage() {
           <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`} onClick={handleExportScoresToPdf} disabled={isExportingPdf || players.length === 0}>{isExportingPdf ? 'Preparing...' : 'Export to PDF'}</button>
           <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`} onClick={() => importFileRef.current?.click()} disabled={isImporting || players.length === 0 || isScoresLocked}>{isImporting ? 'Importing...' : 'Import from Excel'}</button>
           {players.length > 0 && !isScoresLocked && <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`} onClick={() => { void markScoresComplete() }}>Calculate Payouts</button>}
-          {players.length > 0 && isScoresLocked && <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`} onClick={() => { void unlockScoresTable() }}>Unlock Scores</button>}
+          {players.length > 0 && isScoresLocked && <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`} onClick={() => setShowUnlockScoresConfirm(true)}>Unlock Scores</button>}
         </>
       )}
       right={(
@@ -273,7 +285,7 @@ export default function ScoresPage() {
         </>
       )}
     />
-  ), [players.length, pendingSaves.length, isExporting, isExportingPdf, isImporting, isScoresLocked, currentUser, addToast, handleExportScoresToExcel, handleExportScoresToPdf, handleRandomizeScores, markScoresComplete, processPendingSaves, requestClearGame, unlockScoresTable])
+  ), [players.length, pendingSaves.length, isExporting, isExportingPdf, isImporting, isScoresLocked, currentUser, addToast, handleExportScoresToExcel, handleExportScoresToPdf, handleRandomizeScores, markScoresComplete, processPendingSaves, requestClearGame])
 
   // ── Auth guards (must be after all hooks) ─────────────────────────────────
   if (!isAuthInitialized) return <div className={styles.loadingState}><div role="status">Loading scores...</div></div>
@@ -322,6 +334,12 @@ export default function ScoresPage() {
           onProceed={() => { setShowCalcPayoutsConfirm(false); void unlockPayoutsAndGo() }}
         />
         <BracketMismatchModal open={showBracketMismatchWarning} onClose={() => setShowBracketMismatchWarning(false)} />
+        <UnlockScoresModal
+          open={showUnlockScoresConfirm}
+          isSubmitting={isUnlockingScores}
+          onClose={() => setShowUnlockScoresConfirm(false)}
+          onConfirm={reason => { void confirmUnlockScores(reason) }}
+        />
         <ExplainScoresModal isOpen={isScoresGuideOpen} onClose={() => setIsScoresGuideOpen(false)} />
         <input ref={importFileRef} type="file" accept=".xlsx,.xls" onChange={handleImportScoresFileSelected} className="sr-only" />
 
