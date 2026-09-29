@@ -1,6 +1,7 @@
 'use client'
 
 import type { BowlerHistoryProfile } from '../hooks/useBowlerHistorySearch'
+import { ArrowRight } from 'lucide-react'
 import styles from '../entries.module.css'
 
 interface BowlerHistoryResultsProps {
@@ -26,16 +27,30 @@ export default function BowlerHistoryResults({
         <p className={styles.historyMeta}>Searching saved bowlers...</p>
       ) : historyResults.length > 0 ? (
         <div className={styles.historyResults}>
-          <p className={styles.historyMeta}>{historyResults.length} {historyResults.length === 1 ? 'saved bowler' : 'saved bowlers'}</p>
+          <div className={styles.historyResultsHeader}>
+            <span>Matching bowlers</span>
+            <span className={styles.historyMatchCount}>{historyResults.length}</span>
+          </div>
           <div className={styles.historyResultsList}>
             {historyResults.map(profile => (
-              <button key={profile.id} type="button" className={styles.historyResultButton} onClick={() => onUseBowler(profile)}>
-                <span className={styles.historyResultName}>{profile.first_name} {profile.last_name}</span>
-                <span className={styles.historyResultUsbc}>
-                  {profile.usbc_number ? `USBC ${profile.usbc_number}` : 'No USBC'}
-                  {profile.average != null ? ` · Average ${profile.average}` : ''}
+              <button
+                key={profile.id}
+                type="button"
+                className={styles.historyResultButton}
+                aria-label={`Use ${profile.first_name} ${profile.last_name}`}
+                title={`Use ${profile.first_name} ${profile.last_name}`}
+                onClick={() => onUseBowler(profile)}
+              >
+                <span className={styles.historyResultIdentity}>
+                  <span className={styles.historyResultName}>{profile.first_name} {profile.last_name}</span>
+                  <span className={styles.historyResultUsbc}>
+                    {profile.usbc_number ? `USBC ${profile.usbc_number}` : 'No USBC'}
+                    {profile.average != null ? ` · Average ${profile.average}` : ''}
+                  </span>
                 </span>
-                <span className={styles.historyResultAction}>Use Bowler</span>
+                <span className={styles.historyResultAction} aria-hidden="true">
+                  <ArrowRight size={16} />
+                </span>
               </button>
             ))}
           </div>
