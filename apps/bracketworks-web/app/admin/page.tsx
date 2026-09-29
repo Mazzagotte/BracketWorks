@@ -17,6 +17,7 @@ import { AdminUsersSection } from "./components/AdminUsersSection";
 import { useAdminOverviewMetrics } from "./hooks/useAdminOverviewMetrics";
 import { adminApi } from "./services/adminApi";
 import { useModalBehavior } from "../hooks/useModalBehavior";
+import { subscribeToDataChanges } from "../lib/api/dataChanges";
 import {
   EMPTY_CHANGELOG_FORM,
   type AdminAnnouncement,
@@ -60,7 +61,7 @@ export default function AdminPage() {
 
   const [usersResponse, setUsersResponse] = useState<UsersResponse>({ users: [], page: 1, page_size: 25, total: 0, total_pages: 1 });
   const [usersLoading, setUsersLoading] = useState(false);
-  const [usersLoaded, setUsersLoaded] = useState(false);
+  const usersLoadedRef = useRef(false);
   const [usersSearch, setUsersSearch] = useState("");
   const [usersSort, setUsersSort] = useState<UsersSortOption>("id_asc");
   const [usersPage, setUsersPage] = useState(1);
@@ -79,7 +80,7 @@ export default function AdminPage() {
 
   const [tournamentsResponse, setTournamentsResponse] = useState<TournamentsResponse>({ tournaments: [], page: 1, page_size: 25, total: 0, total_pages: 1 });
   const [tournamentsLoading, setTournamentsLoading] = useState(false);
-  const [tournamentsLoaded, setTournamentsLoaded] = useState(false);
+  const tournamentsLoadedRef = useRef(false);
   const [tournamentSearch, setTournamentSearch] = useState("");
   const [tournamentActivityFilter, setTournamentActivityFilter] = useState<TournamentActivityFilter>("all");
   const [tournamentSort, setTournamentSort] = useState<TournamentSortOption>("newest");
@@ -93,7 +94,7 @@ export default function AdminPage() {
 
   const [auditResponse, setAuditResponse] = useState<AuditLogsResponse>({ logs: [], page: 1, page_size: 25, total: 0, total_pages: 1 });
   const [auditLoading, setAuditLoading] = useState(false);
-  const [auditLoaded, setAuditLoaded] = useState(false);
+  const auditLoadedRef = useRef(false);
   const [auditSearch, setAuditSearch] = useState("");
   const [auditAction, setAuditAction] = useState("");
   const [auditTargetType, setAuditTargetType] = useState("");
@@ -104,7 +105,7 @@ export default function AdminPage() {
 
   const [changelogEntries, setChangelogEntries] = useState<AdminChangelogEntry[]>([]);
   const [changelogLoading, setChangelogLoading] = useState(false);
-  const [changelogLoaded, setChangelogLoaded] = useState(false);
+  const changelogLoadedRef = useRef(false);
   const [changelogError, setChangelogError] = useState<string | null>(null);
   const [changelogForm, setChangelogForm] = useState<ChangelogFormState>(EMPTY_CHANGELOG_FORM);
   const [changelogFormError, setChangelogFormError] = useState<string | null>(null);
@@ -121,6 +122,7 @@ export default function AdminPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [announcements, setAnnouncements] = useState<AdminAnnouncement[]>([]);
   const [announcementsLoading, setAnnouncementsLoading] = useState(false);
+  const announcementsLoadedRef = useRef(false);
   const [announcementTitle, setAnnouncementTitle] = useState("");
   const [announcementMessage, setAnnouncementMessage] = useState("");
   const [announcementAudience, setAnnouncementAudience] = useState<"all" | "admins" | "user">("all");
@@ -136,6 +138,7 @@ export default function AdminPage() {
   const acknowledgmentRequestIdRef = useRef(0);
   const [feedbackMessages, setFeedbackMessages] = useState<AdminFeedbackMessage[]>([]);
   const [feedbackLoading, setFeedbackLoading] = useState(false);
+  const feedbackLoadedRef = useRef(false);
   const [feedbackNotes, setFeedbackNotes] = useState<Record<number, string>>({});
 
   const [editUser, setEditUser] = useState<UserRow | null>(null);
@@ -209,7 +212,7 @@ export default function AdminPage() {
   const loadUsers = useCallback(async (manual = false) => {
     if (!currentUser?.isAdmin) return;
     if (manual) setRefreshing(true);
-    setUsersLoading(true);
+    if (!usersLoadedRef.current) setUsersLoading(true);
     setError(null);
     try {
       const data = await adminApi.getUsers({
@@ -222,7 +225,7 @@ export default function AdminPage() {
         review: usersReview,
       });
       setUsersResponse(data);
-      setUsersLoaded(true);
+      usersLoadedRef.current = true;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load users");
     } finally {
@@ -304,7 +307,7 @@ export default function AdminPage() {
   const loadTournaments = useCallback(async (manual = false) => {
     if (!currentUser?.isAdmin) return;
     if (manual) setRefreshing(true);
-    setTournamentsLoading(true);
+    if (!tournamentsLoadedRef.current) setTournamentsLoading(true);
     setError(null);
     try {
       const data = await adminApi.getTournaments({
@@ -316,7 +319,7 @@ export default function AdminPage() {
       });
       setTournamentsResponse(data);
       setExpandedTournamentIds([]);
-      setTournamentsLoaded(true);
+      tournamentsLoadedRef.current = true;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load tournaments");
     } finally {
@@ -347,7 +350,7 @@ export default function AdminPage() {
   const loadAuditLogs = useCallback(async (manual = false) => {
     if (!currentUser?.isAdmin) return;
     if (manual) setRefreshing(true);
-    setAuditLoading(true);
+    if (!auditLoadedRef.current) setAuditLoading(true);
     setError(null);
     try {
       const data = await adminApi.getAuditLogs({
@@ -361,7 +364,7 @@ export default function AdminPage() {
         date_to: auditDateTo,
       });
       setAuditResponse(data);
-      setAuditLoaded(true);
+      auditLoadedRef.current = true;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load audit logs");
     } finally {
@@ -373,12 +376,12 @@ export default function AdminPage() {
   const loadChangelog = useCallback(async (manual = false) => {
     if (!currentUser?.isAdmin) return;
     if (manual) setRefreshing(true);
-    setChangelogLoading(true);
+    if (!changelogLoadedRef.current) setChangelogLoading(true);
     setChangelogError(null);
     try {
       const data = await adminApi.getChangelog();
       setChangelogEntries(data.entries);
-      setChangelogLoaded(true);
+      changelogLoadedRef.current = true;
     } catch (err) {
       setChangelogError(err instanceof Error ? err.message : "Failed to load changelog");
     } finally {
@@ -390,8 +393,8 @@ export default function AdminPage() {
   const loadAnnouncements = useCallback(async (manual = false) => {
     if (!currentUser?.isAdmin) return;
     if (manual) setRefreshing(true);
-    setAnnouncementsLoading(true); setError(null);
-    try { const data = await adminApi.getAnnouncements(); setAnnouncements(data.announcements); }
+    if (!announcementsLoadedRef.current) setAnnouncementsLoading(true); setError(null);
+    try { const data = await adminApi.getAnnouncements(); setAnnouncements(data.announcements); announcementsLoadedRef.current = true; }
     catch (err) { setError(err instanceof Error ? err.message : "Failed to load announcements"); }
     finally { setAnnouncementsLoading(false); if (manual) setRefreshing(false); }
   }, [currentUser?.isAdmin]);
@@ -399,10 +402,11 @@ export default function AdminPage() {
   const loadFeedback = useCallback(async (manual = false) => {
     if (!currentUser?.isAdmin) return;
     if (manual) setRefreshing(true);
-    setFeedbackLoading(true); setError(null);
+    if (!feedbackLoadedRef.current) setFeedbackLoading(true); setError(null);
     try {
       const data = await adminApi.getFeedback();
       setFeedbackMessages(data.messages);
+      feedbackLoadedRef.current = true;
       setFeedbackNotes(current => Object.fromEntries(data.messages.map(message => [message.id, current[message.id] ?? message.admin_note ?? ""])));
     } catch (err) { setError(err instanceof Error ? err.message : "Failed to load messages"); }
     finally { setFeedbackLoading(false); if (manual) setRefreshing(false); }
@@ -690,6 +694,10 @@ export default function AdminPage() {
     if (activeTab === "announcements") void loadAnnouncements(false);
     if (activeTab === "messages") void loadFeedback(false);
   }, [activeTab, isAuthInitialized, isUserAuthenticated, currentUser?.isAdmin, loadAnnouncements, loadFeedback]);
+
+  useEffect(() => subscribeToDataChanges(['admin', 'tournaments', 'squads', 'settings', 'bowlers', 'scores', 'brackets', 'payouts'], () => {
+    if (document.visibilityState === "visible") void loadActiveTab(false);
+  }), [loadActiveTab]);
 
   useEffect(() => {
     if (!isAuthInitialized || !isUserAuthenticated || !currentUser?.isAdmin) return;

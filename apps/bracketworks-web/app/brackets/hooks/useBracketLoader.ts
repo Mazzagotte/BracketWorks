@@ -1,6 +1,7 @@
 import { Dispatch, SetStateAction, useCallback, useEffect, useRef } from 'react'
 import { BracketPreview } from '../../hooks/useBrackets'
 import { Squad, Tournament } from '../../lib/types'
+import { subscribeToDataChanges } from '../../lib/api/dataChanges'
 
 type UseBracketLoaderArgs = {
   selectedTournament: Tournament | null
@@ -73,6 +74,10 @@ export function useBracketLoader({
       if (!document.hidden) loadBrackets(false)
     }
 
+    const unsubscribeDataChanges = subscribeToDataChanges(['bowlers', 'scores', 'brackets', 'settings'], () => {
+      loadBrackets(false)
+    })
+
     document.addEventListener('visibilitychange', handleVisibilityChange)
     window.addEventListener('focus', handleFocus)
 
@@ -81,6 +86,7 @@ export function useBracketLoader({
       clearInterval(intervalId)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
       window.removeEventListener('focus', handleFocus)
+      unsubscribeDataChanges()
       loadingRef.current = false
     }
   }, [loadSavedBrackets, selectedSquad, selectedTournament, setLoadedBrackets])

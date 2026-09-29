@@ -2,6 +2,7 @@ import { logger } from '../logger'
 import { ApiError, handleApiError, isAuthError, shouldRetry } from '../errors'
 import { getMemoryAccessToken, setMemoryAccessToken, clearAuthStorage } from './token'
 import { getCsrfToken, CSRF_HEADER_NAME } from './csrf'
+import { publishDataChange } from './dataChanges'
 import {
   getCachedRequest,
   setCachedRequest,
@@ -182,6 +183,8 @@ export class ApiClient {
       const data = await response.json()
       logger.apiCall(config.method || 'GET', endpoint, response.status, duration)
 
+      if (response.ok) publishDataChange(method, endpoint)
+
       if (useCache && (!options.method || options.method === 'GET')) setCachedRequest(cacheKey, data)
 
       return data
@@ -299,6 +302,8 @@ export class ApiClient {
         }
         authFetchCache.set(cacheKey, entry)
       }
+
+      if (response.ok) publishDataChange(method, input)
 
       return response
     })()

@@ -11,6 +11,7 @@ import {
   setActiveSquadLabel,
   setSelectedSquad as persistSelectedSquad,
 } from '../../lib/selection-session'
+import { subscribeToDataChanges } from '../../lib/api/dataChanges'
 
 export interface UseScoreDataResult {
   players: Player[]
@@ -132,6 +133,14 @@ export function useScoreData(sessionToken: string | null): UseScoreDataResult {
       setIsLoading(false)
     }
   }, [])
+
+  useEffect(() => subscribeToDataChanges(['bowlers', 'scores', 'brackets'], () => {
+    const tournamentId = getSelectedTournamentId()
+    const token = sessionToken
+    if (tournamentId && token) {
+      void fetchPlayersWithScores(tournamentId, selectedSquadRef.current?.id ?? null, token)
+    }
+  }), [fetchPlayersWithScores, sessionToken])
 
   useEffect(() => {
     if (typeof window === 'undefined') return

@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction, useCallback, useEffect } from 'react';
+import { Dispatch, SetStateAction, useCallback, useEffect, useState } from 'react';
 import {
   BracketSettings,
   DashboardTournamentBootstrapResponse,
@@ -21,6 +21,7 @@ import {
 } from '../../lib/selection-session';
 import { applyAutoHouse, createDefaultBracketSettings, normalizeLoadedBracketSettings } from '../utils/bracketSettings';
 import { createDefaultSidePots } from '../utils/sidePots';
+import { subscribeToDataChanges } from '../../lib/api/dataChanges';
 
 type AddToast = (toast: { type: 'success' | 'error' | 'warning' | 'info'; message: string; duration?: number }) => string;
 
@@ -69,6 +70,8 @@ export function useTournamentOrchestration({
   loadSidePots,
   loadSquadEntryCounts,
 }: UseTournamentOrchestrationArgs) {
+  const [mutationRefreshKey, setMutationRefreshKey] = useState(0);
+
   const fetchTournamentBootstrap = useCallback(async (tournamentId: number): Promise<DashboardTournamentBootstrapResponse | null> => {
     try {
       return await apiClient.get<DashboardTournamentBootstrapResponse>(`/api/v1/tournaments/bootstrap?tournament_id=${tournamentId}`, false);
@@ -101,6 +104,10 @@ export function useTournamentOrchestration({
     setSelectedSquadId(null);
     clearSelectedSquad();
   }, [setSelectedSquadId]);
+
+  useEffect(() => subscribeToDataChanges(['tournaments', 'squads', 'settings', 'bowlers', 'scores'], () => {
+    if (getSelectedTournamentId()) setMutationRefreshKey(value => value + 1);
+  }), []);
 
   useEffect(() => {
     if (!enabled) return;
@@ -163,6 +170,7 @@ export function useTournamentOrchestration({
     setSquads,
     setTournament,
     setWorkflowStatus,
+    mutationRefreshKey,
   ]);
 
   const handleLoadTournament = useCallback(async (nextTournament: Tournament) => {

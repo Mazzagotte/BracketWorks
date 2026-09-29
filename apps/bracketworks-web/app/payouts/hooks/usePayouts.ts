@@ -1,6 +1,7 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { API, apiFetch, getMemoryAccessToken } from '../../lib/api'
 import { logger } from '../../lib/logger'
+import { subscribeToDataChanges } from '../../lib/api/dataChanges'
 
 export interface Winner {
   place: number
@@ -134,7 +135,7 @@ export function usePayouts(tournamentId: number | null, selectedSquadId: number 
     payoutRequestIdRef.current = requestId
     const isActiveRequest = () => requestId === payoutRequestIdRef.current
 
-    setLoading(true)
+    if (!payoutData) setLoading(true)
     setError(null)
 
     try {
@@ -262,6 +263,11 @@ export function usePayouts(tournamentId: number | null, selectedSquadId: number 
       logger.error('Error loading entry data:', error)
     }
   }, [selectedSquadId, tournamentId])
+
+  useEffect(() => subscribeToDataChanges(['bowlers', 'scores', 'brackets', 'payouts', 'settings'], () => {
+    void loadEntryData()
+    void loadPayoutData()
+  }), [loadEntryData, loadPayoutData])
 
   return {
     payoutData,

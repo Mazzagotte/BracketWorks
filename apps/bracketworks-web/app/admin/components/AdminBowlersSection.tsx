@@ -23,6 +23,7 @@ export function AdminBowlersSection({ onSuccess }: Props) {
   const { error: showError } = useToastHelpers();
   const [response, setResponse] = useState<BowlerProfilesResponse>(emptyResponse);
   const [loading, setLoading] = useState(true);
+  const loadedRef = useRef(false);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<"all" | "active" | "archived">("active");
   const [page, setPage] = useState(1);
@@ -59,7 +60,7 @@ export function AdminBowlersSection({ onSuccess }: Props) {
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
+    if (!loadedRef.current) setLoading(true);
     void adminApi.getBowlerProfiles({
       page,
       page_size: 25,
@@ -67,11 +68,18 @@ export function AdminBowlersSection({ onSuccess }: Props) {
       status,
       ...(selectedOwnerId ? { user_id: Number(selectedOwnerId) } : {}),
     })
-      .then(data => { if (active) setResponse(data); })
+      .then(data => { if (active) { setResponse(data); loadedRef.current = true; } })
       .catch(err => { if (active) showError(err instanceof Error ? err.message : "Failed to load bowler profiles"); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [page, refreshKey, search, selectedOwnerId, showError, status]);
+
+  useEffect(() => {
+    const refresh = window.setInterval(() => {
+      if (document.visibilityState === "visible") setRefreshKey(value => value + 1);
+    }, 30000);
+    return () => window.clearInterval(refresh);
+  }, []);
 
   useEffect(() => {
     let active = true;

@@ -6,6 +6,7 @@ import { API, apiClient, apiFetch } from '../../lib/api';
 import { useToastHelpers } from '../../components/Toast';
 import { BracketProgramDefinition } from '../../lib/types';
 import { calculatePlayerTotalCost, filterEntriesForDivision, normalizeDivision, normalizePlayerBracketEntries } from '../../lib/bracketPrograms';
+import { subscribeToDataChanges } from '../../lib/api/dataChanges';
 
 interface PlayerApiResponse {
   id: number;
@@ -58,6 +59,7 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
   const pendingPatches = useRef<Record<number, PlayerPatch>>({});
   // Single shared timer for flushing all pending patches as one bulk request
   const bulkFlushTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasLoadedPlayers = useRef(false);
 
   const loadPlayers = useCallback(async () => {
     if (!authToken) {
@@ -81,7 +83,7 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
       return;
     }
     
-    setIsLoading(true);
+    if (!hasLoadedPlayers.current) setIsLoading(true);
     
     try {
       const params = new URLSearchParams({ tournament_id: tournamentId });
@@ -148,6 +150,7 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
       });
       
       setPlayers(transformedData);
+      hasLoadedPlayers.current = true;
     } catch (err) {
       logger.error('Failed to fetch bowlers', { error: err });
       // Don't load demo data - just show empty array
@@ -404,6 +407,10 @@ export function usePlayers({ selectedSquad, squads, authToken, getItem, entryFee
   useEffect(() => {
     loadPlayers();
   }, [loadPlayers]);
+
+  useEffect(() => subscribeToDataChanges(['bowlers', 'settings'], () => {
+    void loadPlayers();
+  }), [loadPlayers]);
 
   useEffect(() => {
     playersRef.current = players;

@@ -4,6 +4,7 @@ import { apiClient } from '../lib/api'
 import { useToast } from '../components/Toast'
 import type { Squad, Tournament } from '../lib/types'
 import { useAuth } from '../lib/auth-context'
+import { subscribeToDataChanges } from '../lib/api/dataChanges'
 
 // Standardized hooks for tournament data
 
@@ -27,12 +28,12 @@ export function useTournaments() {
   const [error, setError] = useState<string | null>(null)
   const { addToast } = useToast()
 
-  const fetchTournaments = useCallback(async () => {
+  const fetchTournaments = useCallback(async (force = false) => {
     const isAdmin = Boolean(currentUser?.isAdmin)
 
     // Serve from cache if still fresh
     if (
-      _cache.tournaments &&
+      !force && _cache.tournaments &&
       _cache.tournamentsIsAdminScope === isAdmin &&
       Date.now() - _cache.tournamentsFetchedAt < _cache.STALE_MS
     ) {
@@ -43,8 +44,10 @@ export function useTournaments() {
     // Deduplicate in-flight requests
     if (_cache.inFlightTournaments) {
       await _cache.inFlightTournaments
-      if (_cache.tournaments) setTournaments(_cache.tournaments)
-      return
+      if (!force) {
+        if (_cache.tournaments) setTournaments(_cache.tournaments)
+        return
+      }
     }
 
     setLoading(true)
@@ -71,6 +74,10 @@ export function useTournaments() {
     _cache.inFlightTournaments = fetchPromise
     return fetchPromise
   }, [addToast, currentUser?.isAdmin])
+
+  useEffect(() => subscribeToDataChanges(['tournaments'], () => {
+    void fetchTournaments(true)
+  }), [fetchTournaments])
 
   const createTournament = async (tournament: Omit<Tournament, 'id'>) => {
     setLoading(true)
@@ -182,14 +189,14 @@ export function useSquads(tournamentId?: number) {
   const [error, setError] = useState<string | null>(null)
   const { addToast } = useToast()
 
-  const fetchSquads = useCallback(async (tId?: number) => {
+  const fetchSquads = useCallback(async (tId?: number, force = false) => {
     const id = tId || tournamentId
     if (!id) return
 
     // Serve from cache if still fresh
     const cachedSquads = _cache.squads.get(id)
     const fetchedAt = _cache.squadsFetchedAt.get(id) ?? 0
-    if (cachedSquads && Date.now() - fetchedAt < _cache.STALE_MS) {
+    if (!force && cachedSquads && Date.now() - fetchedAt < _cache.STALE_MS) {
       setSquads(cachedSquads)
       return
     }
@@ -198,9 +205,11 @@ export function useSquads(tournamentId?: number) {
     const existingPromise = _cache.inFlightSquads.get(id)
     if (existingPromise) {
       await existingPromise
-      const fresh = _cache.squads.get(id)
-      if (fresh) setSquads(fresh)
-      return
+      if (!force) {
+        const fresh = _cache.squads.get(id)
+        if (fresh) setSquads(fresh)
+        return
+      }
     }
 
     setLoading(true)
@@ -225,6 +234,11 @@ export function useSquads(tournamentId?: number) {
     _cache.inFlightSquads.set(id, fetchPromise)
     return fetchPromise
   }, [addToast, tournamentId])
+
+  useEffect(() => subscribeToDataChanges(['squads', 'tournaments'], () => {
+    const ids = tournamentId ? [tournamentId] : Array.from(_cache.squads.keys())
+    ids.forEach(id => { void fetchSquads(id, true) })
+  }), [fetchSquads, tournamentId])
 
   useEffect(() => {
     if (tournamentId) {

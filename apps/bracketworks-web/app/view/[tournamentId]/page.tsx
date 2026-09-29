@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef, useMemo, Fragment, useLayoutE
 import { useParams } from 'next/navigation'
 import { Award, CalendarDays, Info, RefreshCw, Search, Share2, Trophy, UserRound } from 'lucide-react'
 import { buildApiUrl } from '../../lib/api'
+import { subscribeToDataChanges } from '../../lib/api/dataChanges'
 import { formatIsoDateShortWithWeekday } from '../../lib/formatters'
 import { MOBILE_VIEWPORT_QUERY } from '../../lib/responsive'
 import { useMediaQuery } from '../../hooks/useMediaQuery'
@@ -1619,6 +1620,10 @@ export default function TournamentViewPage() {
     refreshTimer.current = setInterval(refresh, 30_000)
     return () => { if (refreshTimer.current) clearInterval(refreshTimer.current) }
   }, [refresh])
+
+  useEffect(() => subscribeToDataChanges(['tournaments', 'squads', 'settings', 'bowlers', 'scores', 'brackets', 'payouts'], () => {
+    void refresh()
+  }), [refresh])
 
   // ΓöÇΓöÇΓöÇ Render ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
