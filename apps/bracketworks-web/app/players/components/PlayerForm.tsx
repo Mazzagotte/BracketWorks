@@ -322,11 +322,7 @@ const PlayerForm = memo(({ onAddPlayer, bowlerHistorySearchPanel, onBowlerIdenti
           </div>
         </section>
 
-        {bowlerHistorySearchPanel?.({
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          usbc: formData.usbc,
-        })}
+        {bowlerHistorySearchPanel}
 
         <section className={styles.addBowlerFormSection}>
           <h4 className={styles.addBowlerSectionTitle}><Target aria-hidden="true" />Tournament Assignment</h4>
