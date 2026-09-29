@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 from io import BytesIO
 from zipfile import ZIP_DEFLATED, ZipFile
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from app.core import models
 from app.services.account_cleanup import deactivate_stale_unverified_accounts
@@ -394,7 +394,7 @@ def test_admin_delete_of_bracketworks_tournament_owner_cascades_owned_tournament
     assert db_session.get(models.Tournament, standard_tournament_id) is None
 
 
-def test_admin_delete_of_tc_owner_remains_blocked_without_changing_tc_data(
+def test_admin_delete_of_user_cascades_owned_tournaments_in_both_products(
     api_client,
     db_session,
     make_user,
@@ -403,7 +403,8 @@ def test_admin_delete_of_tc_owner_remains_blocked_without_changing_tc_data(
     admin = make_user("tc_delete_admin", is_admin=True)
     target = make_user("tc_delete_target")
     target_id = target.id
-    tournament = models.TournamentCentral(
+    standard_tournament = models.Tournament(user_id=target_id, name="Owned standard tournament")
+    tc_tournament = models.TournamentCentral(
         user_id=target_id,
         name="Owned TC tournament",
         location=None,
@@ -412,9 +413,171 @@ def test_admin_delete_of_tc_owner_remains_blocked_without_changing_tc_data(
         squad_times=None,
         is_public=False,
     )
-    db_session.add(tournament)
+    other_tc_owner = make_user("tc_other_owner")
+    other_tc_tournament = models.TournamentCentral(
+        user_id=other_tc_owner.id,
+        name="Other owner's TC tournament",
+        location=None,
+        start_date=None,
+        end_date=None,
+        squad_times=None,
+        is_public=True,
+    )
+    other_bw_tournament = models.Tournament(user_id=other_tc_owner.id, name="Other owner's BracketWorks tournament")
+    db_session.add_all([standard_tournament, tc_tournament, other_tc_tournament, other_bw_tournament])
+    db_session.flush()
+    standard_tournament_id = standard_tournament.id
+    tc_tournament_id = tc_tournament.id
+    other_tc_tournament_id = other_tc_tournament.id
+    other_bw_tournament_id = other_bw_tournament.id
+
+    shared_profile = models.BowlerProfile(
+        user_id=target_id,
+        first_name="Target",
+        last_name="User",
+    )
+    db_session.add(shared_profile)
+    db_session.flush()
+    target_player = models.TournamentPlayer(
+        tournament_id=other_bw_tournament_id,
+        user_id=target_id,
+        bowler_profile_id=shared_profile.id,
+        full_name="Target User",
+    )
+    other_player = models.TournamentPlayer(
+        tournament_id=other_bw_tournament_id,
+        user_id=other_tc_owner.id,
+        bowler_profile_id=shared_profile.id,
+        full_name="Other User",
+    )
+    db_session.add_all([target_player, other_player])
+    db_session.flush()
+
+    db_session.add(
+        models.TournamentCentralSetupState(
+            tournament_id=tc_tournament_id,
+            user_id=target_id,
+            payload={},
+        )
+    )
+    registration = models.TcRegistration(
+        confirmation_code="DELETE-TC-OWNED",
+        tournament_id=tc_tournament_id,
+        account_user_id=target_id,
+        contact_first_name="Target",
+        contact_last_name="User",
+        contact_email="target@example.com",
+        terms_accepted_at=datetime.now(timezone.utc),
+        submitted_at=datetime.now(timezone.utc),
+    )
+    db_session.add(registration)
+    db_session.flush()
+    bowler = models.TcRegistrationBowler(
+        registration_id=registration.id,
+        tournament_id=tc_tournament_id,
+        user_id=target_id,
+        first_name="Target",
+        last_name="User",
+    )
+    entry = models.TcEntry(
+        registration_id=registration.id,
+        tournament_id=tc_tournament_id,
+        event_config_id="singles",
+        event_name_snapshot="Singles",
+    )
+    db_session.add_all([bowler, entry])
+    db_session.flush()
+    entry_bowler = models.TcEntryBowler(entry_id=entry.id, bowler_id=bowler.id)
+    answer = models.TcRegistrationAnswer(
+        registration_id=registration.id,
+        entry_id=entry.id,
+        bowler_id=bowler.id,
+        question_config_id="shirt-size",
+        question_label_snapshot="Shirt size",
+        answer_json={"value": "M"},
+    )
+    owned_document = models.TcTournamentDocument(
+        tournament_id=tc_tournament_id,
+        user_id=target_id,
+        file_name="owned.pdf",
+        mime_type="application/pdf",
+        file_size=3,
+        file_blob=b"pdf",
+    )
+
+    other_registration = models.TcRegistration(
+        confirmation_code="DELETE-TC-OTHER",
+        tournament_id=other_tc_tournament_id,
+        account_user_id=target_id,
+        contact_first_name="Target",
+        contact_last_name="User",
+        contact_email="target@example.com",
+        terms_accepted_at=datetime.now(timezone.utc),
+        submitted_at=datetime.now(timezone.utc),
+    )
+    unrelated_registration = models.TcRegistration(
+        confirmation_code="DELETE-TC-UNRELATED",
+        tournament_id=other_tc_tournament_id,
+        contact_first_name="Unrelated",
+        contact_last_name="Bowler",
+        contact_email="unrelated@example.com",
+        terms_accepted_at=datetime.now(timezone.utc),
+        submitted_at=datetime.now(timezone.utc),
+    )
+    db_session.add_all([other_registration, unrelated_registration])
+    db_session.flush()
+    other_bowler = models.TcRegistrationBowler(
+        registration_id=other_registration.id,
+        tournament_id=other_tc_tournament_id,
+        user_id=target_id,
+        first_name="Target",
+        last_name="User",
+    )
+    unrelated_bowler = models.TcRegistrationBowler(
+        registration_id=unrelated_registration.id,
+        tournament_id=other_tc_tournament_id,
+        first_name="Unrelated",
+        last_name="Bowler",
+    )
+    other_document = models.TcTournamentDocument(
+        tournament_id=other_tc_tournament_id,
+        user_id=target_id,
+        file_name="uploaded-by-target.pdf",
+        mime_type="application/pdf",
+        file_size=3,
+        file_blob=b"pdf",
+    )
+    db_session.add_all([entry_bowler, answer, owned_document, other_bowler, unrelated_bowler, other_document])
     db_session.commit()
-    tournament_id = tournament.id
+
+    registration_id = registration.id
+    bowler_id = bowler.id
+    entry_id = entry.id
+    entry_bowler_id = entry_bowler.id
+    answer_id = answer.id
+    owned_document_id = owned_document.id
+    other_registration_id = other_registration.id
+    other_bowler_id = other_bowler.id
+    unrelated_registration_id = unrelated_registration.id
+    unrelated_bowler_id = unrelated_bowler.id
+    other_document_id = other_document.id
+    shared_profile_id = shared_profile.id
+    target_player_id = target_player.id
+    other_player_id = other_player.id
+
+    preview = api_client.get(
+        f"/api/v1/admin/users/{target_id}/delete-preview",
+        headers=make_auth_headers(admin),
+    )
+    assert preview.status_code == 200
+    assert preview.json()["impact"]["owned_tournaments"] == 1
+    assert preview.json()["impact"]["owned_tc_tournaments"] == 1
+    assert preview.json()["impact"]["tc_registrations"] == 2
+    assert preview.json()["impact"]["tc_registration_bowlers"] == 2
+    assert preview.json()["impact"]["tc_entries"] == 1
+    assert preview.json()["impact"]["tc_entry_bowlers"] == 1
+    assert preview.json()["impact"]["tc_registration_answers"] == 1
+    assert preview.json()["impact"]["tc_tournament_documents"] == 2
 
     response = api_client.post(
         f"/api/v1/admin/users/{target_id}/delete",
@@ -422,10 +585,36 @@ def test_admin_delete_of_tc_owner_remains_blocked_without_changing_tc_data(
         headers=make_auth_headers(admin),
     )
 
-    assert response.status_code == 400
-    assert response.json()["detail"] == "User owns Tournament Central tournaments. Reassign or delete them first."
-    assert db_session.get(models.User, target_id) is not None
-    assert db_session.get(models.TournamentCentral, tournament_id) is not None
+    assert response.status_code == 200
+    assert db_session.get(models.User, target_id) is None
+    assert db_session.get(models.Tournament, standard_tournament_id) is None
+    assert db_session.get(models.TournamentCentral, tc_tournament_id) is None
+    assert db_session.get(models.TournamentCentralSetupState, tc_tournament_id) is None
+    assert db_session.get(models.TcRegistration, registration_id) is None
+    assert db_session.get(models.TcRegistrationBowler, bowler_id) is None
+    assert db_session.get(models.TcEntry, entry_id) is None
+    assert db_session.get(models.TcEntryBowler, entry_bowler_id) is None
+    assert db_session.get(models.TcRegistrationAnswer, answer_id) is None
+    assert db_session.get(models.TcTournamentDocument, owned_document_id) is None
+    assert db_session.get(models.TournamentCentral, other_tc_tournament_id) is not None
+    assert db_session.get(models.TcRegistration, other_registration_id) is None
+    assert db_session.get(models.TcRegistrationBowler, other_bowler_id) is None
+    assert db_session.get(models.TcTournamentDocument, other_document_id) is None
+    assert db_session.get(models.TcRegistration, unrelated_registration_id) is not None
+    assert db_session.get(models.TcRegistrationBowler, unrelated_bowler_id) is not None
+    assert db_session.get(models.TournamentPlayer, target_player_id) is None
+    assert db_session.get(models.BowlerProfile, shared_profile_id) is None
+    surviving_player = db_session.get(models.TournamentPlayer, other_player_id)
+    assert surviving_player is not None
+    assert surviving_player.bowler_profile_id is None
+
+    for table in models.Base.metadata.tables.values():
+        for foreign_key in table.foreign_keys:
+            if foreign_key.target_fullname == "users.id":
+                remaining_references = db_session.scalar(
+                    select(func.count()).select_from(table).where(foreign_key.parent == target_id)
+                )
+                assert remaining_references == 0, f"{table.name}.{foreign_key.parent.name} still references deleted user"
 
 
 def test_signup_flags_similar_first_name_and_last_name(

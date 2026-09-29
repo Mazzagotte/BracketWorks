@@ -1435,7 +1435,7 @@ export default function AdminPage() {
             <div className={styles.modalBody}>
               {deleteUserError && <div className={styles.modalError} role="alert">{deleteUserError}</div>}
               <div className={styles.detailCard}>
-                <div className={styles.detailNote}>This permanently deletes the user and all BracketWorks tournaments they own, including related records. Tournament Central tournaments are not affected. Type DELETE to confirm.</div>
+                <div className={styles.detailNote}>This permanently deletes the user, all BracketWorks and Tournament Central tournaments they own, and related records. Their Tournament Central registrations, bowler entries, and uploaded documents in other organizers&apos; tournaments are also deleted. Type DELETE to confirm.</div>
                 {deleteUserPreview && (
                   <div className={styles.detailGrid}>
                     {Object.entries(deleteUserPreview.impact).map(([key, value]) => (
@@ -1488,7 +1488,7 @@ export default function AdminPage() {
                   }
                 }}
               >
-                {deleteUserSaving ? "Deleting..." : "Delete user and BracketWorks tournaments"}
+                {deleteUserSaving ? "Deleting..." : "Delete user and all tournament data"}
               </button>
             </div>
           </div>

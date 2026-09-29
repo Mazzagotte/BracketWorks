@@ -654,12 +654,97 @@ def _hard_delete_tournament(db: Session, tournament_id: int) -> None:
     db.execute(delete(models.Tournament).where(models.Tournament.id == tournament_id))
 
 
+def _hard_delete_tc_registration(db: Session, registration_id: int) -> None:
+    entry_ids = list(db.scalars(select(models.TcEntry.id).where(models.TcEntry.registration_id == registration_id)))
+    bowler_ids = list(
+        db.scalars(
+            select(models.TcRegistrationBowler.id).where(
+                models.TcRegistrationBowler.registration_id == registration_id
+            )
+        )
+    )
+    db.execute(
+        delete(models.TcRegistrationAnswer).where(
+            or_(
+                models.TcRegistrationAnswer.registration_id == registration_id,
+                models.TcRegistrationAnswer.entry_id.in_(entry_ids),
+                models.TcRegistrationAnswer.bowler_id.in_(bowler_ids),
+            )
+        )
+    )
+    db.execute(
+        delete(models.TcEntryBowler).where(
+            or_(
+                models.TcEntryBowler.entry_id.in_(entry_ids),
+                models.TcEntryBowler.bowler_id.in_(bowler_ids),
+            )
+        )
+    )
+    db.execute(delete(models.TcEntry).where(models.TcEntry.registration_id == registration_id))
+    db.execute(delete(models.TcRegistrationBowler).where(models.TcRegistrationBowler.registration_id == registration_id))
+    db.execute(delete(models.TcRegistration).where(models.TcRegistration.id == registration_id))
+
+
+def _hard_delete_tc_tournament(db: Session, tournament_id: int) -> None:
+    registration_ids = list(
+        db.scalars(select(models.TcRegistration.id).where(models.TcRegistration.tournament_id == tournament_id))
+    )
+    for registration_id in registration_ids:
+        _hard_delete_tc_registration(db, registration_id)
+
+    db.execute(delete(models.TcTournamentDocument).where(models.TcTournamentDocument.tournament_id == tournament_id))
+    db.execute(
+        delete(models.TournamentCentralSetupState).where(
+            models.TournamentCentralSetupState.tournament_id == tournament_id
+        )
+    )
+    db.execute(delete(models.TournamentCentral).where(models.TournamentCentral.id == tournament_id))
+
+
 def _get_user_delete_impact(db: Session, user_id: int) -> dict[str, int]:
     player_ids = list(
         db.scalars(select(models.TournamentPlayer.id).where(models.TournamentPlayer.user_id == user_id))
     )
     touched_tournament_ids = list(
         db.scalars(select(models.TournamentPlayer.tournament_id).where(models.TournamentPlayer.user_id == user_id).distinct())
+    )
+    owned_tc_tournament_ids = list(
+        db.scalars(select(models.TournamentCentral.id).where(models.TournamentCentral.user_id == user_id))
+    )
+    tc_registration_ids = list(
+        db.scalars(
+            select(models.TcRegistration.id).where(
+                or_(
+                    models.TcRegistration.tournament_id.in_(owned_tc_tournament_ids),
+                    models.TcRegistration.account_user_id == user_id,
+                )
+            )
+        )
+    )
+    tc_bowler_ids = list(
+        db.scalars(
+            select(models.TcRegistrationBowler.id).where(
+                or_(
+                    models.TcRegistrationBowler.tournament_id.in_(owned_tc_tournament_ids),
+                    models.TcRegistrationBowler.user_id == user_id,
+                )
+            )
+        )
+    )
+    tc_entry_ids = list(
+        db.scalars(
+            select(models.TcEntry.id).where(
+                or_(
+                    models.TcEntry.tournament_id.in_(owned_tc_tournament_ids),
+                    models.TcEntry.registration_id.in_(tc_registration_ids),
+                    models.TcEntry.id.in_(
+                        select(models.TcEntryBowler.entry_id).where(
+                            models.TcEntryBowler.bowler_id.in_(tc_bowler_ids)
+                        )
+                    ),
+                )
+            )
+        )
     )
 
     bracket_winner_count = 0
@@ -704,7 +789,41 @@ def _get_user_delete_impact(db: Session, user_id: int) -> dict[str, int]:
     return {
         "users": 1,
         "owned_tournaments": db.scalar(select(func.count()).select_from(models.Tournament).where(models.Tournament.user_id == user_id)) or 0,
-        "owned_tc_tournaments": db.scalar(select(func.count()).select_from(models.TournamentCentral).where(models.TournamentCentral.user_id == user_id)) or 0,
+        "owned_tc_tournaments": len(owned_tc_tournament_ids),
+        "tc_registrations": len(tc_registration_ids),
+        "tc_registration_bowlers": len(tc_bowler_ids),
+        "tc_entries": len(tc_entry_ids),
+        "tc_entry_bowlers": db.scalar(
+            select(func.count())
+            .select_from(models.TcEntryBowler)
+            .where(
+                or_(
+                    models.TcEntryBowler.entry_id.in_(tc_entry_ids),
+                    models.TcEntryBowler.bowler_id.in_(tc_bowler_ids),
+                )
+            )
+        ) or 0,
+        "tc_registration_answers": db.scalar(
+            select(func.count())
+            .select_from(models.TcRegistrationAnswer)
+            .where(
+                or_(
+                    models.TcRegistrationAnswer.registration_id.in_(tc_registration_ids),
+                    models.TcRegistrationAnswer.entry_id.in_(tc_entry_ids),
+                    models.TcRegistrationAnswer.bowler_id.in_(tc_bowler_ids),
+                )
+            )
+        ) or 0,
+        "tc_tournament_documents": db.scalar(
+            select(func.count())
+            .select_from(models.TcTournamentDocument)
+            .where(
+                or_(
+                    models.TcTournamentDocument.tournament_id.in_(owned_tc_tournament_ids),
+                    models.TcTournamentDocument.user_id == user_id,
+                )
+            )
+        ) or 0,
         "auth_sessions": db.scalar(select(func.count()).select_from(models.AuthSession).where(models.AuthSession.user_id == user_id)) or 0,
         "idempotency_keys": db.scalar(select(func.count()).select_from(models.IdempotencyKey).where(models.IdempotencyKey.user_id == user_id)) or 0,
         "password_reset_tokens": db.scalar(select(func.count()).select_from(models.PasswordResetToken).where(models.PasswordResetToken.user_id == user_id)) or 0,
@@ -715,6 +834,39 @@ def _get_user_delete_impact(db: Session, user_id: int) -> dict[str, int]:
         "legal_disclosure_acceptances": db.scalar(select(func.count()).select_from(models.LegalDisclosureAcceptance).where(models.LegalDisclosureAcceptance.user_id == user_id)) or 0,
         "bowler_profiles": db.scalar(select(func.count()).select_from(models.BowlerProfile).where(models.BowlerProfile.user_id == user_id)) or 0,
         "tournament_players": len(player_ids),
+        "score_corrections": db.scalar(
+            select(func.count())
+            .select_from(models.ScoreCorrection)
+            .where(
+                or_(
+                    models.ScoreCorrection.changed_by_user_id == user_id,
+                    models.ScoreCorrection.player_id.in_(player_ids),
+                )
+            )
+        ) or 0,
+        "duplicate_player_resolutions": db.scalar(
+            select(func.count())
+            .select_from(models.DuplicatePlayerResolution)
+            .where(
+                or_(
+                    models.DuplicatePlayerResolution.resolved_by_user_id == user_id,
+                    models.DuplicatePlayerResolution.left_player_id.in_(player_ids),
+                    models.DuplicatePlayerResolution.right_player_id.in_(player_ids),
+                )
+            )
+        ) or 0,
+        "payout_adjustments": db.scalar(
+            select(func.count())
+            .select_from(models.PayoutAdjustment)
+            .where(
+                or_(
+                    models.PayoutAdjustment.adjusted_by_user_id == user_id,
+                    models.PayoutAdjustment.payout_id.in_(
+                        select(models.BracketPayout.id).where(models.BracketPayout.player_id.in_(player_ids))
+                    ),
+                )
+            )
+        ) or 0,
         "player_scores": player_score_count,
         "bracket_winners": bracket_winner_count,
         "bracket_payouts": bracket_payout_count,
@@ -722,8 +874,88 @@ def _get_user_delete_impact(db: Session, user_id: int) -> dict[str, int]:
         "bracket_snapshots_invalidated": bracket_snapshot_count,
         "payout_summaries_invalidated": payout_summary_count,
         "user_squad_selections": db.scalar(select(func.count()).select_from(models.UserSquadSelection).where(models.UserSquadSelection.user_id == user_id)) or 0,
-        "tournament_setup_states": db.scalar(select(func.count()).select_from(models.TournamentSetupState).where(models.TournamentSetupState.user_id == user_id)) or 0,
-        "tc_tournament_setup_states": db.scalar(select(func.count()).select_from(models.TournamentCentralSetupState).where(models.TournamentCentralSetupState.user_id == user_id)) or 0,
+        "tournament_setup_states": db.scalar(
+            select(func.count())
+            .select_from(models.TournamentSetupState)
+            .where(
+                or_(
+                    models.TournamentSetupState.tournament_id.in_(
+                        select(models.Tournament.id).where(models.Tournament.user_id == user_id)
+                    ),
+                    models.TournamentSetupState.user_id == user_id,
+                )
+            )
+        ) or 0,
+        "tournament_staff_members": db.scalar(
+            select(func.count())
+            .select_from(models.TournamentStaffMember)
+            .where(
+                or_(
+                    models.TournamentStaffMember.user_id == user_id,
+                    models.TournamentStaffMember.invited_by_user_id == user_id,
+                )
+            )
+        ) or 0,
+        "tournament_staff_invitations": db.scalar(
+            select(func.count())
+            .select_from(models.TournamentStaffInvitation)
+            .where(
+                or_(
+                    models.TournamentStaffInvitation.invited_by_user_id == user_id,
+                    models.TournamentStaffInvitation.email == db.get(models.User, user_id).email,
+                )
+            )
+        ) or 0,
+        "tournament_restore_points": db.scalar(
+            select(func.count())
+            .select_from(models.TournamentRestorePoint)
+            .where(
+                or_(
+                    models.TournamentRestorePoint.created_by_user_id == user_id,
+                    models.TournamentRestorePoint.restored_by_user_id == user_id,
+                )
+            )
+        ) or 0,
+        "tournament_audit_logs": db.scalar(
+            select(func.count())
+            .select_from(models.TournamentAuditLog)
+            .where(models.TournamentAuditLog.user_id == user_id)
+        ) or 0,
+        "admin_tournament_notes": db.scalar(
+            select(func.count())
+            .select_from(models.AdminTournamentNote)
+            .where(
+                or_(
+                    models.AdminTournamentNote.admin_user_id == user_id,
+                    models.AdminTournamentNote.resolved_by_user_id == user_id,
+                )
+            )
+        ) or 0,
+        "admin_announcements": db.scalar(
+            select(func.count())
+            .select_from(models.AdminAnnouncement)
+            .where(
+                or_(
+                    models.AdminAnnouncement.created_by_user_id == user_id,
+                    models.AdminAnnouncement.audience_user_id == user_id,
+                )
+            )
+        ) or 0,
+        "user_acknowledgments": db.scalar(
+            select(func.count())
+            .select_from(models.UserAcknowledgment)
+            .where(models.UserAcknowledgment.user_id == user_id)
+        ) or 0,
+        "tc_tournament_setup_states": db.scalar(
+            select(func.count())
+            .select_from(models.TournamentCentralSetupState)
+            .where(
+                or_(
+                    models.TournamentCentralSetupState.tournament_id.in_(owned_tc_tournament_ids),
+                    models.TournamentCentralSetupState.user_id == user_id,
+                )
+            )
+        ) or 0,
     }
 
 
@@ -736,6 +968,46 @@ def _hard_delete_user(db: Session, user_id: int) -> dict[str, int]:
     for tournament_id in owned_tournament_ids:
         _hard_delete_tournament(db, tournament_id)
 
+    owned_tc_tournament_ids = list(
+        db.scalars(select(models.TournamentCentral.id).where(models.TournamentCentral.user_id == user_id))
+    )
+    for tournament_id in owned_tc_tournament_ids:
+        _hard_delete_tc_tournament(db, tournament_id)
+
+    account_registration_ids = list(
+        db.scalars(select(models.TcRegistration.id).where(models.TcRegistration.account_user_id == user_id))
+    )
+    for registration_id in account_registration_ids:
+        _hard_delete_tc_registration(db, registration_id)
+
+    tc_bowler_ids = list(
+        db.scalars(select(models.TcRegistrationBowler.id).where(models.TcRegistrationBowler.user_id == user_id))
+    )
+    tc_entry_ids = list(
+        db.scalars(
+            select(models.TcEntryBowler.entry_id).where(models.TcEntryBowler.bowler_id.in_(tc_bowler_ids)).distinct()
+        )
+    )
+    db.execute(
+        delete(models.TcRegistrationAnswer).where(
+            or_(
+                models.TcRegistrationAnswer.bowler_id.in_(tc_bowler_ids),
+                models.TcRegistrationAnswer.entry_id.in_(tc_entry_ids),
+            )
+        )
+    )
+    db.execute(
+        delete(models.TcEntryBowler).where(
+            or_(
+                models.TcEntryBowler.bowler_id.in_(tc_bowler_ids),
+                models.TcEntryBowler.entry_id.in_(tc_entry_ids),
+            )
+        )
+    )
+    db.execute(delete(models.TcEntry).where(models.TcEntry.id.in_(tc_entry_ids)))
+    db.execute(delete(models.TcRegistrationBowler).where(models.TcRegistrationBowler.id.in_(tc_bowler_ids)))
+    db.execute(delete(models.TcTournamentDocument).where(models.TcTournamentDocument.user_id == user_id))
+
     player_rows = db.execute(
         select(
             models.TournamentPlayer.id,
@@ -745,16 +1017,50 @@ def _hard_delete_user(db: Session, user_id: int) -> dict[str, int]:
     ).all()
     player_ids = [row.id for row in player_rows]
     touched_tournament_ids = sorted({row.tournament_id for row in player_rows})
-    bowler_profile_ids = sorted({row.bowler_profile_id for row in player_rows if row.bowler_profile_id is not None})
+    bowler_profile_ids = set(
+        db.scalars(select(models.BowlerProfile.id).where(models.BowlerProfile.user_id == user_id))
+    )
+    player_score_ids = list(
+        db.scalars(select(models.PlayerScore.id).where(models.PlayerScore.player_id.in_(player_ids)))
+    )
+    bracket_winner_ids = list(
+        db.scalars(select(models.BracketWinner.id).where(models.BracketWinner.player_id.in_(player_ids)))
+    )
+    payout_filters = [models.BracketPayout.player_id.in_(player_ids)]
+    if bracket_winner_ids:
+        payout_filters.append(models.BracketPayout.bracket_winner_id.in_(bracket_winner_ids))
+    payout_ids = list(
+        db.scalars(select(models.BracketPayout.id).where(or_(*payout_filters)))
+    )
+
+    db.execute(
+        delete(models.ScoreCorrection).where(
+            or_(
+                models.ScoreCorrection.changed_by_user_id == user_id,
+                models.ScoreCorrection.player_id.in_(player_ids),
+                models.ScoreCorrection.score_id.in_(player_score_ids),
+            )
+        )
+    )
+    db.execute(
+        delete(models.DuplicatePlayerResolution).where(
+            or_(
+                models.DuplicatePlayerResolution.resolved_by_user_id == user_id,
+                models.DuplicatePlayerResolution.left_player_id.in_(player_ids),
+                models.DuplicatePlayerResolution.right_player_id.in_(player_ids),
+            )
+        )
+    )
+    db.execute(
+        delete(models.PayoutAdjustment).where(
+            or_(
+                models.PayoutAdjustment.adjusted_by_user_id == user_id,
+                models.PayoutAdjustment.payout_id.in_(payout_ids),
+            )
+        )
+    )
 
     if player_ids:
-        bracket_winner_ids = list(
-            db.scalars(select(models.BracketWinner.id).where(models.BracketWinner.player_id.in_(player_ids)))
-        )
-        payout_filters = [models.BracketPayout.player_id.in_(player_ids)]
-        if bracket_winner_ids:
-            payout_filters.append(models.BracketPayout.bracket_winner_id.in_(bracket_winner_ids))
-
         db.execute(delete(models.BracketPayout).where(or_(*payout_filters)))
         db.execute(delete(models.BracketWinner).where(models.BracketWinner.player_id.in_(player_ids)))
         db.execute(
@@ -779,7 +1085,53 @@ def _hard_delete_user(db: Session, user_id: int) -> dict[str, int]:
         )
 
     if bowler_profile_ids:
+        db.execute(
+            models.TournamentPlayer.__table__.update()
+            .where(models.TournamentPlayer.bowler_profile_id.in_(bowler_profile_ids))
+            .values(bowler_profile_id=None)
+        )
         db.execute(delete(models.BowlerProfile).where(models.BowlerProfile.id.in_(bowler_profile_ids)))
+
+    user = db.get(models.User, user_id)
+    user_email = user.email if user else ""
+    db.execute(
+        delete(models.TournamentStaffMember).where(
+            or_(
+                models.TournamentStaffMember.user_id == user_id,
+                models.TournamentStaffMember.invited_by_user_id == user_id,
+            )
+        )
+    )
+    db.execute(
+        delete(models.TournamentStaffInvitation).where(
+            or_(
+                models.TournamentStaffInvitation.invited_by_user_id == user_id,
+                models.TournamentStaffInvitation.email == user_email,
+            )
+        )
+    )
+    db.execute(delete(models.TournamentRestorePoint).where(models.TournamentRestorePoint.created_by_user_id == user_id))
+    db.execute(
+        models.TournamentRestorePoint.__table__.update()
+        .where(models.TournamentRestorePoint.restored_by_user_id == user_id)
+        .values(restored_by_user_id=None)
+    )
+    db.execute(delete(models.TournamentAuditLog).where(models.TournamentAuditLog.user_id == user_id))
+    db.execute(
+        models.Tournament.__table__.update()
+        .where(models.Tournament.finalized_by_user_id == user_id)
+        .values(finalized_by_user_id=None)
+    )
+    db.execute(
+        models.TournamentPayoutSummary.__table__.update()
+        .where(
+            or_(
+                models.TournamentPayoutSummary.calculated_by_user_id == user_id,
+                models.TournamentPayoutSummary.finalized_by_user_id == user_id,
+            )
+        )
+        .values(calculated_by_user_id=None, finalized_by_user_id=None)
+    )
 
     db.execute(delete(models.UserSquadSelection).where(models.UserSquadSelection.user_id == user_id))
     db.execute(delete(models.TournamentSetupState).where(models.TournamentSetupState.user_id == user_id))
@@ -791,8 +1143,14 @@ def _hard_delete_user(db: Session, user_id: int) -> dict[str, int]:
     db.execute(delete(models.UserAcknowledgment).where(models.UserAcknowledgment.user_id == user_id))
     db.execute(delete(models.LegalDisclosureAcceptance).where(models.LegalDisclosureAcceptance.user_id == user_id))
     db.execute(delete(models.AdminTournamentNote).where(or_(models.AdminTournamentNote.admin_user_id == user_id, models.AdminTournamentNote.resolved_by_user_id == user_id)))
-    db.execute(delete(models.AdminAnnouncement).where(models.AdminAnnouncement.created_by_user_id == user_id))
-    db.execute(models.AdminAnnouncement.__table__.update().where(models.AdminAnnouncement.audience_user_id == user_id).values(audience_user_id=None, audience_type="all"))
+    db.execute(
+        delete(models.AdminAnnouncement).where(
+            or_(
+                models.AdminAnnouncement.created_by_user_id == user_id,
+                models.AdminAnnouncement.audience_user_id == user_id,
+            )
+        )
+    )
     db.execute(delete(models.AdminUserReview).where(or_(models.AdminUserReview.user_id == user_id, models.AdminUserReview.admin_user_id == user_id, models.AdminUserReview.resolved_by_user_id == user_id)))
     db.execute(delete(models.UserFeedbackMessage).where(models.UserFeedbackMessage.user_id == user_id))
     db.execute(models.UserFeedbackMessage.__table__.update().where(models.UserFeedbackMessage.resolved_by_user_id == user_id).values(resolved_by_user_id=None, resolved_at=None))
@@ -2285,9 +2643,6 @@ def admin_delete_user(
         raise HTTPException(status_code=400, detail="confirm_text must equal DELETE")
 
     impact = _get_user_delete_impact(db, user_id)
-    if impact.get("owned_tc_tournaments", 0) > 0:
-        raise HTTPException(status_code=400, detail="User owns Tournament Central tournaments. Reassign or delete them first.")
-
     _write_admin_audit(
         db,
         admin_user_id=admin.id,
