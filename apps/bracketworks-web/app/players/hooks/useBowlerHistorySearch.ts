@@ -8,6 +8,7 @@ export type BowlerHistoryProfile = {
   first_name: string
   last_name: string
   usbc_number?: string | null
+  average?: number | null
 }
 
 export function useBowlerHistorySearch(authToken: string | null) {

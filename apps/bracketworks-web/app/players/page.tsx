@@ -245,11 +245,12 @@ export default function PlayersPage() {
     setSquads,
   })
 
-  const handleUseHistoryResult = useCallback((profile: { first_name: string; last_name: string; usbc_number?: string | null }) => {
+  const handleUseHistoryResult = useCallback((profile: { first_name: string; last_name: string; usbc_number?: string | null; average?: number | null }) => {
     setPrefillDraft({
       firstName: profile.first_name,
       lastName: profile.last_name,
       usbc: profile.usbc_number || '',
+      average: profile.average ?? undefined,
     })
     clearHistorySearch()
     setPrefillVersion(prev => prev + 1)

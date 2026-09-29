@@ -46,6 +46,7 @@ const PlayerForm = memo(({ onAddPlayer, bowlerHistorySearchPanel, onBowlerIdenti
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const isMobileLayout = useMediaQuery(COMPACT_CONTENT_VIEWPORT_QUERY);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [activeNameField, setActiveNameField] = useState<'firstName' | 'lastName' | null>(null);
   const firstNameInputRef = useRef<HTMLInputElement | null>(null)
   const averageInputRef = useRef<HTMLInputElement | null>(null)
   const enabledSidePots = (sidePots?.pots ?? []).filter(pot => pot.enabled)
@@ -155,6 +156,8 @@ const PlayerForm = memo(({ onAddPlayer, bowlerHistorySearchPanel, onBowlerIdenti
     if (wasAdded === false) return
     setFormData({ ...EMPTY_FORM });
     setProfileAverageChanged(false)
+    setActiveNameField(null)
+    onBowlerIdentityChange?.({ firstName: '', lastName: '', usbc: '' })
     setSuccessMessage(`${bowlerName} added.`)
     if (isMobileLayout) setIsCollapsed(true)
     window.setTimeout(() => {
@@ -228,10 +231,18 @@ const PlayerForm = memo(({ onAddPlayer, bowlerHistorySearchPanel, onBowlerIdenti
   const handleCancel = () => {
     setFormData({ ...EMPTY_FORM })
     setProfileAverageChanged(false)
+    setActiveNameField(null)
+    onBowlerIdentityChange?.({ firstName: '', lastName: '', usbc: '' })
     setSubmitError(null)
     setSuccessMessage(null)
     setIsCollapsed(false)
     window.setTimeout(() => firstNameInputRef.current?.focus(), 0)
+  }
+
+  const handleNameFieldBlur = (event: React.FocusEvent<HTMLDivElement>) => {
+    if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+      setActiveNameField(null)
+    }
   }
 
   return (
@@ -273,7 +284,7 @@ const PlayerForm = memo(({ onAddPlayer, bowlerHistorySearchPanel, onBowlerIdenti
         <section className={styles.addBowlerFormSection}>
           <h4 className={styles.addBowlerSectionTitle}><UserRound aria-hidden="true" />Bowler Information</h4>
           <div className={`${styles.formGrid} ${styles.playerInfoGrid}`}>
-          <div>
+          <div className={styles.bowlerAutocompleteField} onBlur={handleNameFieldBlur}>
             <label className={`${formStyles.fieldLabel} ${styles.fieldLabel}`}>
               First Name <span className={styles.requiredIndicator}>Required</span>
             </label>
@@ -286,11 +297,13 @@ const PlayerForm = memo(({ onAddPlayer, bowlerHistorySearchPanel, onBowlerIdenti
               placeholder="First Name *"
               aria-label="First Name"
               required
+              onFocus={() => setActiveNameField('firstName')}
             />
             {isDirty && !formData.firstName.trim() && <p className={styles.fieldValidation}>First name is required.</p>}
+            {activeNameField === 'firstName' && bowlerHistorySearchPanel}
           </div>
 
-          <div>
+          <div className={styles.bowlerAutocompleteField} onBlur={handleNameFieldBlur}>
             <label className={`${formStyles.fieldLabel} ${styles.fieldLabel}`}>
               Last Name <span className={styles.requiredIndicator}>Required</span>
             </label>
@@ -302,8 +315,10 @@ const PlayerForm = memo(({ onAddPlayer, bowlerHistorySearchPanel, onBowlerIdenti
               placeholder="Last Name *"
               aria-label="Last Name"
               required
+              onFocus={() => setActiveNameField('lastName')}
             />
             {isDirty && !formData.lastName.trim() && <p className={styles.fieldValidation}>Last name is required.</p>}
+            {activeNameField === 'lastName' && bowlerHistorySearchPanel}
           </div>
 
           <div>
@@ -321,8 +336,6 @@ const PlayerForm = memo(({ onAddPlayer, bowlerHistorySearchPanel, onBowlerIdenti
           </div>
           </div>
         </section>
-
-        {bowlerHistorySearchPanel}
 
         <section className={styles.addBowlerFormSection}>
           <h4 className={styles.addBowlerSectionTitle}><Target aria-hidden="true" />Tournament Assignment</h4>

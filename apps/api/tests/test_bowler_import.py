@@ -1,6 +1,75 @@
 from app.core import models
 
 
+def test_bowler_profile_search_uses_name_prefixes_and_includes_profiles_without_usbc(
+    api_client,
+    db_session,
+    auth_identity,
+):
+    profiles = [
+        models.BowlerProfile(
+            user_id=auth_identity.user.id,
+            first_name="Alina",
+            last_name="Moore",
+            usbc_number=None,
+            average=180,
+        ),
+        models.BowlerProfile(
+            user_id=auth_identity.user.id,
+            first_name="Alfie",
+            last_name="Stone",
+            usbc_number="ALF-100",
+            average=190,
+        ),
+        models.BowlerProfile(
+            user_id=auth_identity.user.id,
+            first_name="Sally",
+            last_name="Alvarez",
+            usbc_number="SAL-100",
+            average=170,
+        ),
+        models.BowlerProfile(
+            user_id=auth_identity.user.id,
+            first_name="Malcolm",
+            last_name="Other",
+            usbc_number="MAL-100",
+            average=160,
+        ),
+        models.BowlerProfile(
+            user_id=auth_identity.user.id,
+            first_name="Alex",
+            last_name="Archived",
+            usbc_number="ARC-100",
+            average=150,
+            is_active=False,
+        ),
+    ]
+    db_session.add_all(profiles)
+    db_session.commit()
+
+    first_name_response = api_client.get(
+        "/api/v1/bowlers/profiles?first_name=al",
+        headers=auth_identity.headers,
+    )
+    assert first_name_response.status_code == 200
+    assert {profile["first_name"] for profile in first_name_response.json()} == {"Alina", "Alfie"}
+    assert next(profile for profile in first_name_response.json() if profile["first_name"] == "Alina")["average"] == 180
+
+    last_name_response = api_client.get(
+        "/api/v1/bowlers/profiles?last_name=al",
+        headers=auth_identity.headers,
+    )
+    assert last_name_response.status_code == 200
+    assert [profile["first_name"] for profile in last_name_response.json()] == ["Sally"]
+
+    combined_response = api_client.get(
+        "/api/v1/bowlers/profiles?first_name=al&last_name=st",
+        headers=auth_identity.headers,
+    )
+    assert combined_response.status_code == 200
+    assert [profile["first_name"] for profile in combined_response.json()] == ["Alfie"]
+
+
 def test_import_commit_is_atomic_and_creates_restore_point(api_client, db_session, auth_identity):
     tournament = api_client.post('/api/v1/tournaments', headers=auth_identity.headers, json={
         'name': 'Import Event', 'location': 'Center', 'start_date': '2026-08-22',

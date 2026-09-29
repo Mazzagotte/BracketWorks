@@ -133,8 +133,8 @@ def list_bowlers(
     tournament_id: int = Query(None, description="Tournament ID to filter players and get default_entry_fee"),
     squad_id: int = Query(None, description="Squad ID to filter players by squad"),
     usbc_number: str | None = Query(None, description="Exact USBC number filter"),
-    first_name: str | None = Query(None, description="Case-insensitive first-name contains filter"),
-    last_name: str | None = Query(None, description="Case-insensitive last-name contains filter"),
+    first_name: str | None = Query(None, description="Case-insensitive first-name prefix filter"),
+    last_name: str | None = Query(None, description="Case-insensitive last-name prefix filter"),
     limit: int = Query(200, ge=1, le=500, description="Maximum number of players to return"),
     offset: int = Query(0, ge=0, description="Number of players to skip"),
     current_user: models.User = Depends(get_current_user)
@@ -263,11 +263,7 @@ def list_bowler_profiles(
     offset: int = Query(0, ge=0),
     current_user: models.User = Depends(get_current_user),
 ):
-    query = db.query(models.BowlerProfileModel).filter(
-        models.BowlerProfileModel.user_id == current_user.id,
-        models.BowlerProfileModel.usbc_number.isnot(None),
-        models.BowlerProfileModel.usbc_number != "",
-    )
+    query = db.query(models.BowlerProfileModel).filter(models.BowlerProfileModel.user_id == current_user.id)
 
     if not include_inactive:
         query = query.filter(models.BowlerProfileModel.is_active.is_(True))
@@ -276,9 +272,9 @@ def list_bowler_profiles(
     if normalized_usbc:
         query = query.filter(models.BowlerProfileModel.usbc_number == normalized_usbc)
     if first_name:
-        query = query.filter(func.lower(models.BowlerProfileModel.first_name).contains(first_name.strip().lower()))
+        query = query.filter(models.BowlerProfileModel.first_name.istartswith(first_name.strip(), autoescape=True))
     if last_name:
-        query = query.filter(func.lower(models.BowlerProfileModel.last_name).contains(last_name.strip().lower()))
+        query = query.filter(models.BowlerProfileModel.last_name.istartswith(last_name.strip(), autoescape=True))
 
     return query.order_by(models.BowlerProfileModel.last_name.asc(), models.BowlerProfileModel.first_name.asc(), models.BowlerProfileModel.id.asc()).limit(limit).offset(offset).all()
 

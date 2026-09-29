@@ -31,7 +31,10 @@ export default function BowlerHistoryResults({
             {historyResults.map(profile => (
               <button key={profile.id} type="button" className={styles.historyResultButton} onClick={() => onUseBowler(profile)}>
                 <span className={styles.historyResultName}>{profile.first_name} {profile.last_name}</span>
-                <span className={styles.historyResultUsbc}>{profile.usbc_number ? `USBC ${profile.usbc_number}` : 'No USBC on file'}</span>
+                <span className={styles.historyResultUsbc}>
+                  {profile.usbc_number ? `USBC ${profile.usbc_number}` : 'No USBC'}
+                  {profile.average != null ? ` · Average ${profile.average}` : ''}
+                </span>
                 <span className={styles.historyResultAction}>Use Bowler</span>
               </button>
             ))}
