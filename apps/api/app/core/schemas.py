@@ -373,6 +373,7 @@ class BowlerProfile(BowlerProfileBase):
 
     id: int
     user_id: int
+    average: int | None
     is_active: bool
     archived_at: datetime | None
     created_at: datetime

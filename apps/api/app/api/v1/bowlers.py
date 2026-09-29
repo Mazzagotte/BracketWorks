@@ -329,6 +329,9 @@ def _stage_bowler(db: Session, player: schemas.PlayerCreate, owner_user_id: int)
         full_name=player.full_name,
         usbc_number=player.usbc_number,
     )
+    if profile and player.average is not None:
+        profile.average = player.average
+        profile.updated_at = datetime.now(timezone.utc)
     first_name, last_name = _split_full_name(player.full_name)
     canonical_name = f"{(profile.first_name if profile else first_name).strip()} {(profile.last_name if profile else last_name).strip()}".strip() or player.full_name.strip()
 
@@ -673,6 +676,16 @@ def bulk_update_bowlers(
             t_settings = db.query(models.BracketSettings).filter(models.BracketSettings.tournament_id == bowler.tournament_id).first()
             if t_settings and t_settings.handicap_percentage is not None and t_settings.handicap_base is not None:
                 data["handicap_pins"] = max(0, int((t_settings.handicap_base - data["average"]) * (t_settings.handicap_percentage / 100)))
+            profile_id = data.get("bowler_profile_id", bowler.bowler_profile_id)
+            if profile_id is not None:
+                db.execute(
+                    sa_update(models.BowlerProfileModel)
+                    .where(
+                        models.BowlerProfileModel.id == profile_id,
+                        models.BowlerProfileModel.user_id == bowler.user_id,
+                    )
+                    .values(average=data["average"], updated_at=datetime.now(timezone.utc))
+                )
 
         if data:
             statement = sa_update(models.Bowler).where(models.Bowler.id == item.id)
@@ -756,6 +769,16 @@ def update_bowler(
         t_settings = db.query(models.BracketSettings).filter(models.BracketSettings.tournament_id == bowler.tournament_id).first()
         if t_settings and t_settings.handicap_percentage is not None and t_settings.handicap_base is not None:
             update_data["handicap_pins"] = max(0, int((t_settings.handicap_base - update_data["average"]) * (t_settings.handicap_percentage / 100)))
+        profile_id = update_data.get("bowler_profile_id", bowler.bowler_profile_id)
+        if profile_id is not None:
+            db.execute(
+                sa_update(models.BowlerProfileModel)
+                .where(
+                    models.BowlerProfileModel.id == profile_id,
+                    models.BowlerProfileModel.user_id == bowler.user_id,
+                )
+                .values(average=update_data["average"], updated_at=datetime.now(timezone.utc))
+            )
 
     statement = sa_update(models.Bowler).where(models.Bowler.id == bowler_id)
     result = db.execute(statement.values(**update_data))

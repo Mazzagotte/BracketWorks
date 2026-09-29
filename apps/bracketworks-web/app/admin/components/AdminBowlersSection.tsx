@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { FileUp, Pencil, RotateCcw, Trash2 } from "lucide-react";
+import { Download, FileUp, Pencil, RotateCcw, Trash2 } from "lucide-react";
 import CloseControl from "../../../components/CloseControl";
 import { useModalBehavior } from "../../hooks/useModalBehavior";
 import { parseExcelPlayers } from "../../players/utils/importPlayers";
@@ -16,7 +16,7 @@ type Props = {
   onSuccess: (message: string) => void;
 };
 
-type ImportRow = { first_name: string; last_name: string; usbc_number: string | null };
+type ImportRow = { first_name: string; last_name: string; usbc_number: string | null; average: number | null };
 
 const emptyResponse: BowlerProfilesResponse = { profiles: [], page: 1, page_size: 25, total: 0, total_pages: 1 };
 
@@ -32,6 +32,7 @@ export function AdminBowlersSection({ onSuccess }: Props) {
   const [editFirstName, setEditFirstName] = useState("");
   const [editLastName, setEditLastName] = useState("");
   const [editUsbc, setEditUsbc] = useState("");
+  const [editAverage, setEditAverage] = useState("");
   const [editError, setEditError] = useState<string | null>(null);
   const [editSaving, setEditSaving] = useState(false);
   const [owners, setOwners] = useState<BowlerProfileOwner[]>([]);
@@ -40,6 +41,7 @@ export function AdminBowlersSection({ onSuccess }: Props) {
   const [importFileName, setImportFileName] = useState("");
   const [importError, setImportError] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const editDialogRef = useRef<HTMLDivElement>(null);
   const importDialogRef = useRef<HTMLDivElement>(null);
@@ -58,12 +60,18 @@ export function AdminBowlersSection({ onSuccess }: Props) {
   useEffect(() => {
     let active = true;
     setLoading(true);
-    void adminApi.getBowlerProfiles({ page, page_size: 25, search, status })
+    void adminApi.getBowlerProfiles({
+      page,
+      page_size: 25,
+      search,
+      status,
+      ...(selectedOwnerId ? { user_id: Number(selectedOwnerId) } : {}),
+    })
       .then(data => { if (active) setResponse(data); })
       .catch(err => { if (active) showError(err instanceof Error ? err.message : "Failed to load bowler profiles"); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [page, refreshKey, search, showError, status]);
+  }, [page, refreshKey, search, selectedOwnerId, showError, status]);
 
   useEffect(() => {
     let active = true;
@@ -78,6 +86,7 @@ export function AdminBowlersSection({ onSuccess }: Props) {
     setEditFirstName(profile.first_name);
     setEditLastName(profile.last_name);
     setEditUsbc(profile.usbc_number || "");
+    setEditAverage(profile.average == null ? "" : String(profile.average));
     setEditError(null);
   };
 
@@ -90,6 +99,7 @@ export function AdminBowlersSection({ onSuccess }: Props) {
         first_name: editFirstName,
         last_name: editLastName,
         usbc_number: editUsbc.trim() || null,
+        average: editAverage.trim() ? Number(editAverage) : null,
       });
       setEditingProfile(null);
       setRefreshKey(value => value + 1);
@@ -123,6 +133,7 @@ export function AdminBowlersSection({ onSuccess }: Props) {
         first_name: player.firstName.trim(),
         last_name: player.lastName.trim(),
         usbc_number: player.usbc?.trim() || null,
+        average: Number.isFinite(player.average) ? player.average : null,
       }));
       if (rows.length === 0) {
         setImportError(parsed.skippedRows[0]?.reason || "No valid profiles found in the workbook.");
@@ -152,6 +163,68 @@ export function AdminBowlersSection({ onSuccess }: Props) {
     }
   };
 
+  const exportSelectedOwnerProfiles = async () => {
+    if (!selectedOwnerId) return;
+    setExporting(true);
+    try {
+      const userId = Number(selectedOwnerId);
+      const firstPage = await adminApi.getBowlerProfiles({
+        page: 1,
+        page_size: 200,
+        search: "",
+        status: "all",
+        user_id: userId,
+      });
+      const profiles = [...firstPage.profiles];
+      for (let currentPage = 2; currentPage <= firstPage.total_pages; currentPage += 1) {
+        const result = await adminApi.getBowlerProfiles({
+          page: currentPage,
+          page_size: 200,
+          search: "",
+          status: "all",
+          user_id: userId,
+        });
+        profiles.push(...result.profiles);
+      }
+
+      if (profiles.length === 0) {
+        showError("This account has no bowler profiles to export.");
+        return;
+      }
+
+      const columns = ["Profile ID", "First Name", "Last Name", "USBC Number", "Average", "Status", "Tournament Entries", "Owner Username", "Owner Email", "Created", "Updated", "Archived"];
+      const escape = (value: unknown) => `"${String(value ?? "").replace(/"/g, '""')}"`;
+      const rows = profiles.map(profile => [
+        profile.id,
+        profile.first_name,
+        profile.last_name,
+        profile.usbc_number,
+        profile.average,
+        profile.is_active ? "Active" : "Archived",
+        profile.linked_entry_count,
+        profile.owner_username,
+        profile.owner_email,
+        profile.created_at,
+        profile.updated_at,
+        profile.archived_at,
+      ]);
+      const csv = [columns, ...rows].map(row => row.map(escape).join(",")).join("\r\n");
+      const blobUrl = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+      const anchor = document.createElement("a");
+      const owner = owners.find(item => item.id === userId);
+      const safeOwner = (owner?.username || `user-${userId}`).replace(/[^a-zA-Z0-9_-]/g, "_");
+      anchor.href = blobUrl;
+      anchor.download = `bracketworks-bowler-profiles-${safeOwner}.csv`;
+      anchor.click();
+      URL.revokeObjectURL(blobUrl);
+      onSuccess(`Exported ${profiles.length} bowler profiles.`);
+    } catch (err) {
+      showError(err instanceof Error ? err.message : "Failed to export bowler profiles");
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <section className={styles.panel}>
       <div className={styles.panelHeader}>
@@ -166,24 +239,25 @@ export function AdminBowlersSection({ onSuccess }: Props) {
           </select>
         </div>
         <div>
-          <select className={styles.toolbarSelect} aria-label="Import profiles for account" value={selectedOwnerId} onChange={event => setSelectedOwnerId(event.target.value)}>
-            <option value="">Select profile owner</option>
+          <select className={styles.toolbarSelect} aria-label="Filter and import/export by profile owner" value={selectedOwnerId} onChange={event => { setSelectedOwnerId(event.target.value); setPage(1); }}>
+            <option value="">All profile owners</option>
             {owners.map(owner => <option value={owner.id} key={owner.id}>{owner.name || owner.username} (@{owner.username})</option>)}
           </select>
+          <button type="button" className={styles.actionBtn} disabled={!selectedOwnerId || exporting} onClick={() => { void exportSelectedOwnerProfiles(); }}><Download aria-hidden="true" size={15} /> {exporting ? "Exporting…" : "Export CSV"}</button>
           <button type="button" className={styles.actionBtn} disabled={!selectedOwnerId} onClick={() => fileInputRef.current?.click()}><FileUp aria-hidden="true" size={15} /> Import Excel</button>
           <input ref={fileInputRef} type="file" accept=".xlsx,.xls" hidden onChange={event => { const file = event.target.files?.[0]; if (file) void parseImportFile(file); event.target.value = ""; }} />
         </div>
       </div>
       <div className={styles.tableWrap}>
         <table className={styles.table}>
-          <thead><tr><th>Bowler</th><th>USBC</th><th>Profile owner</th><th>Tournament entries</th><th>Status</th><th>Updated</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Bowler</th><th>USBC</th><th>Average</th><th>Profile owner</th><th>Status</th><th>Updated</th><th>Actions</th></tr></thead>
           <tbody>
             {loading ? <tr><td className={styles.tableState} colSpan={7}><span role="status">Loading bowler profiles…</span></td></tr> : response.profiles.length === 0 ? <tr><td className={styles.tableState} colSpan={7}><strong>No bowler profiles found</strong><span>Try a different search or status filter.</span></td></tr> : response.profiles.map(profile => (
               <tr key={profile.id}>
                 <td><strong>{profile.first_name} {profile.last_name}</strong><br /><span className={styles.secondaryText}>Profile #{profile.id}</span></td>
                 <td>{profile.usbc_number || "-"}</td>
+                <td>{profile.average ?? "-"}</td>
                 <td>{profile.owner_name || profile.owner_username}<br /><span className={styles.secondaryText}>@{profile.owner_username} · {profile.owner_email}</span></td>
-                <td>{profile.linked_entry_count}</td>
                 <td><span className={`${styles.statusPill} ${profile.is_active ? styles.statusActive : styles.statusInactive}`}>{profile.is_active ? "Active" : "Archived"}</span></td>
                 <td>{formatAdminTimestamp(profile.updated_at, "Unknown")}</td>
                 <td><div className={styles.rowActions}>
@@ -212,6 +286,7 @@ export function AdminBowlersSection({ onSuccess }: Props) {
               <div className={styles.formRow}><label className={styles.formLabel} htmlFor="profile-first-name">First name</label><input id="profile-first-name" className={styles.formInput} value={editFirstName} onChange={event => setEditFirstName(event.target.value)} /></div>
               <div className={styles.formRow}><label className={styles.formLabel} htmlFor="profile-last-name">Last name</label><input id="profile-last-name" className={styles.formInput} value={editLastName} onChange={event => setEditLastName(event.target.value)} /></div>
               <div className={styles.formRow}><label className={styles.formLabel} htmlFor="profile-usbc">USBC number</label><input id="profile-usbc" className={styles.formInput} value={editUsbc} onChange={event => setEditUsbc(event.target.value)} /></div>
+              <div className={styles.formRow}><label className={styles.formLabel} htmlFor="profile-average">Average</label><input id="profile-average" className={styles.formInput} type="number" min="0" max="300" step="1" value={editAverage} onChange={event => setEditAverage(event.target.value)} /></div>
               <p className={styles.secondaryText}>{editingProfile.linked_entry_count} tournament entries will keep their history and receive the updated name/USBC.</p>
             </div>
             <div className={styles.modalFooter}><button type="button" className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.small}`} onClick={() => setEditingProfile(null)}>Cancel</button><button type="button" className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`} disabled={editSaving || !editFirstName.trim() || !editLastName.trim()} onClick={() => { void saveEdit(); }}>{editSaving ? "Saving…" : "Save changes"}</button></div>
@@ -225,7 +300,7 @@ export function AdminBowlersSection({ onSuccess }: Props) {
             <div className={styles.modalHeader}><div><h3 className={styles.modalTitle}>Review Bowler Import</h3><div className={styles.secondaryText}>{importFileName} · {importRows.length} profiles</div></div><CloseControl size="sm" label="Close import preview" onClick={() => setImportRows(null)} /></div>
             <div className={styles.modalBody}>
               {importError && <div className={styles.modalError} role="alert">{importError}</div>}
-              {importRows.length > 0 && <div className={styles.tableWrap}><table className={styles.table}><thead><tr><th>First name</th><th>Last name</th><th>USBC</th></tr></thead><tbody>{importRows.slice(0, 100).map((row, index) => <tr key={`${row.usbc_number || row.first_name}-${index}`}><td>{row.first_name}</td><td>{row.last_name}</td><td>{row.usbc_number || "-"}</td></tr>)}</tbody></table>{importRows.length > 100 && <p className={styles.secondaryText}>Showing first 100 rows; all {importRows.length} will be imported.</p>}</div>}
+              {importRows.length > 0 && <div className={styles.tableWrap}><table className={styles.table}><thead><tr><th>First name</th><th>Last name</th><th>USBC</th><th>Average</th></tr></thead><tbody>{importRows.slice(0, 100).map((row, index) => <tr key={`${row.usbc_number || row.first_name}-${index}`}><td>{row.first_name}</td><td>{row.last_name}</td><td>{row.usbc_number || "-"}</td><td>{row.average ?? "-"}</td></tr>)}</tbody></table>{importRows.length > 100 && <p className={styles.secondaryText}>Showing first 100 rows; all {importRows.length} will be imported.</p>}</div>}
               <p className={styles.secondaryText}>Owner: {owners.find(owner => String(owner.id) === selectedOwnerId)?.name || "Selected account"}. Existing profiles with matching USBC or name will be skipped.</p>
             </div>
             <div className={styles.modalFooter}><button type="button" className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.small}`} onClick={() => setImportRows(null)} disabled={importing}>Cancel</button><button type="button" className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`} onClick={() => { void commitImport(); }} disabled={importing || !importRows.length || !selectedOwnerId}>{importing ? "Importing…" : `Import ${importRows.length} profiles`}</button></div>

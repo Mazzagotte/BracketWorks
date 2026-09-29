@@ -179,6 +179,7 @@ export type BowlerProfileRow = {
   first_name: string;
   last_name: string;
   usbc_number: string | null;
+  average: number | null;
   is_active: boolean;
   archived_at: string | null;
   created_at: string | null;

@@ -351,6 +351,7 @@ class BowlerProfile(Base):
     first_name: Mapped[str] = mapped_column(String, nullable=False, index=True)
     last_name: Mapped[str] = mapped_column(String, nullable=False, index=True)
     usbc_number: Mapped[Optional[str]] = mapped_column(String, nullable=True, index=True)
+    average: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     is_active: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=True, index=True
     )

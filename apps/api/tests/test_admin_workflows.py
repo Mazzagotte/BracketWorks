@@ -41,16 +41,21 @@ def test_admin_can_manage_reusable_bowler_profiles_without_deleting_entry_histor
     assert listing.status_code == 200, listing.text
     assert listing.json()["profiles"][0]["linked_entry_count"] == 1
     assert listing.json()["profiles"][0]["owner_username"] == owner.username
+    owner_listing = api_client.get(f"/api/v1/admin/bowlers?user_id={owner.id}", headers=headers)
+    assert owner_listing.status_code == 200, owner_listing.text
+    assert {item["user_id"] for item in owner_listing.json()["profiles"]} == {owner.id}
 
     updated = api_client.patch(
         f"/api/v1/admin/bowlers/{profile.id}",
         headers=headers,
-        json={"first_name": "Jamie", "last_name": "Updated", "usbc_number": "PROFILE-101"},
+        json={"first_name": "Jamie", "last_name": "Updated", "usbc_number": "PROFILE-101", "average": 188},
     )
     assert updated.status_code == 200, updated.text
     db_session.refresh(entry)
+    db_session.refresh(profile)
     assert entry.full_name == "Jamie Updated"
     assert entry.usbc_number == "PROFILE-101"
+    assert profile.average == 188
 
     archived = api_client.delete(f"/api/v1/admin/bowlers/{profile.id}", headers=headers)
     assert archived.status_code == 200, archived.text
@@ -73,7 +78,7 @@ def test_admin_profile_import_reports_duplicates(api_client, db_session, make_us
         json={
             "user_id": owner.id,
             "rows": [
-                {"first_name": "Casey", "last_name": "Bowler", "usbc_number": "ABC-1"},
+                {"first_name": "Casey", "last_name": "Bowler", "usbc_number": "ABC-1", "average": 181},
                 {"first_name": "Other", "last_name": "Name", "usbc_number": "ABC-1"},
                 {"first_name": "No", "last_name": "Number"},
             ],
@@ -81,7 +86,9 @@ def test_admin_profile_import_reports_duplicates(api_client, db_session, make_us
     )
     assert response.status_code == 200, response.text
     assert response.json() == {"created": 2, "duplicates": 1, "user_id": owner.id}
-    assert db_session.query(models.BowlerProfile).filter_by(user_id=owner.id).count() == 2
+    profiles = db_session.query(models.BowlerProfile).filter_by(user_id=owner.id).all()
+    assert len(profiles) == 2
+    assert next(profile for profile in profiles if profile.usbc_number == "ABC-1").average == 181
 
 
 def test_cleanup_deactivates_old_unverified_accounts_without_login(db_session, make_user):

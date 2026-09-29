@@ -21,6 +21,7 @@ def test_import_commit_is_atomic_and_creates_restore_point(api_client, db_sessio
     assert response.status_code == 200, response.text
     assert response.json()['created'] == 2
     assert db_session.query(models.TournamentPlayer).filter_by(tournament_id=tournament['id']).count() == 2
+    assert {profile.average for profile in db_session.query(models.BowlerProfile).filter_by(user_id=auth_identity.user.id).all()} == {180}
     restore = db_session.query(models.TournamentRestorePoint).filter_by(tournament_id=tournament['id'], trigger='entries.import').one()
     assert restore.summary == 'Before importing 2 entries'
     audit = db_session.query(models.TournamentAuditLog).filter_by(tournament_id=tournament['id'], event_type='entries.imported').one()
@@ -31,6 +32,41 @@ def test_import_commit_is_atomic_and_creates_restore_point(api_client, db_sessio
     })
     assert duplicate_batch.status_code == 409
     assert db_session.query(models.TournamentPlayer).filter_by(tournament_id=tournament['id']).count() == 2
+
+
+def test_tournament_average_updates_reusable_bowler_profile(api_client, db_session, auth_identity):
+    tournament = api_client.post('/api/v1/tournaments', headers=auth_identity.headers, json={
+        'name': 'Profile Average Event', 'location': 'Center', 'start_date': '2026-08-22',
+        'end_date': '2026-08-22', 'squad_times': {'2026-08-22': ['10:00']}, 'is_public': False,
+    }).json()
+    squad = api_client.post('/api/v1/squads/', headers=auth_identity.headers, json={
+        'tournament_id': tournament['id'], 'date': '2026-08-22', 'time': '10:00',
+    }).json()
+    created = api_client.post('/api/v1/bowlers', headers=auth_identity.headers, json={
+        'tournament_id': tournament['id'], 'squad_id': squad['id'], 'full_name': 'Average Bowler',
+        'usbc_number': 'AVG-100', 'average': 175,
+    })
+    assert created.status_code == 200, created.text
+    player = next(
+        row for row in api_client.get(
+            f"/api/v1/bowlers?tournament_id={tournament['id']}&squad_id={squad['id']}",
+            headers=auth_identity.headers,
+        ).json() if row['usbc_number'] == 'AVG-100'
+    )
+    profile = db_session.query(models.BowlerProfile).filter_by(user_id=auth_identity.user.id, usbc_number='AVG-100').one()
+    assert profile.average == 175
+
+    updated = api_client.patch(f"/api/v1/bowlers/{player['id']}", headers=auth_identity.headers, json={'average': 192})
+    assert updated.status_code == 200, updated.text
+    db_session.refresh(profile)
+    assert profile.average == 192
+
+    bulk_updated = api_client.patch('/api/v1/bowlers/bulk-update', headers=auth_identity.headers, json=[
+        {'id': player['id'], 'average': 205},
+    ])
+    assert bulk_updated.status_code == 200, bulk_updated.text
+    db_session.refresh(profile)
+    assert profile.average == 205
 
 
 def test_list_bowlers_returns_profile_usbc_number(api_client, db_session, auth_identity):

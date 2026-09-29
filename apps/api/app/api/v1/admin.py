@@ -55,12 +55,14 @@ class AdminBowlerProfileUpdate(BaseModel):
     first_name: str = Field(min_length=1, max_length=120)
     last_name: str = Field(min_length=1, max_length=120)
     usbc_number: str | None = Field(default=None, max_length=40)
+    average: int | None = Field(default=None, ge=0, le=300)
 
 
 class AdminBowlerProfileImportRow(BaseModel):
     first_name: str = Field(min_length=1, max_length=120)
     last_name: str = Field(min_length=1, max_length=120)
     usbc_number: str | None = Field(default=None, max_length=40)
+    average: int | None = Field(default=None, ge=0, le=300)
 
 
 class AdminBowlerProfileImport(BaseModel):
@@ -192,6 +194,7 @@ def _serialize_bowler_profile(row, linked_entry_count: int) -> dict[str, Any]:
         "first_name": profile.first_name,
         "last_name": profile.last_name,
         "usbc_number": profile.usbc_number,
+        "average": profile.average,
         "is_active": profile.is_active,
         "archived_at": _serialize_utc_timestamp(profile.archived_at),
         "created_at": _serialize_utc_timestamp(profile.created_at),
@@ -210,6 +213,7 @@ def admin_list_bowler_profiles(
     page_size: int = Query(default=25, ge=5, le=200),
     search: str | None = Query(default=None),
     status: str = Query(default="all"),
+    user_id: int | None = Query(default=None, ge=1),
     db: Session = Depends(get_db),
     _admin: models.User = Depends(require_admin_user),
 ):
@@ -221,6 +225,8 @@ def admin_list_bowler_profiles(
         filters.append(models.BowlerProfile.is_active.is_(False))
     elif status != "all":
         raise HTTPException(status_code=422, detail="Invalid bowler profile status")
+    if user_id is not None:
+        filters.append(models.BowlerProfile.user_id == user_id)
     if normalized_search:
         like = f"%{normalized_search}%"
         filters.append(
@@ -321,10 +327,12 @@ def admin_update_bowler_profile(
         if duplicate:
             raise HTTPException(status_code=409, detail="This user already has a profile with that USBC number")
 
-    before = {"first_name": profile.first_name, "last_name": profile.last_name, "usbc_number": profile.usbc_number}
+    before = {"first_name": profile.first_name, "last_name": profile.last_name, "usbc_number": profile.usbc_number, "average": profile.average}
     profile.first_name = first_name
     profile.last_name = last_name
     profile.usbc_number = usbc_number
+    if "average" in payload.model_fields_set:
+        profile.average = payload.average
     profile.updated_at = datetime.now(UTC).replace(tzinfo=None)
     db.execute(
         models.TournamentPlayer.__table__.update()
@@ -336,7 +344,7 @@ def admin_update_bowler_profile(
     )
     _write_admin_audit(
         db, admin.id, "bowler_profile.update", "bowler_profile", profile.id,
-        details={"before": before, "after": {"first_name": first_name, "last_name": last_name, "usbc_number": usbc_number}},
+        details={"before": before, "after": {"first_name": first_name, "last_name": last_name, "usbc_number": usbc_number, "average": profile.average}},
     )
     db.commit()
     db.refresh(profile)
@@ -386,6 +394,7 @@ def admin_import_bowler_profiles(
             first_name=first_name,
             last_name=last_name,
             usbc_number=usbc_number,
+            average=row.average,
             is_active=True,
             archived_at=None,
         ))

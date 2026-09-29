@@ -58,6 +58,7 @@ type BowlerProfilesQueryOptions = {
   page_size: number;
   search: string;
   status: "all" | "active" | "archived";
+  user_id?: number;
 };
 
 export const adminApi = {
@@ -83,10 +84,10 @@ export const adminApi = {
     const query = buildQuery({ search, limit: 100 });
     return apiClient.get<{ users: BowlerProfileOwner[] }>(`/api/v1/admin/bowler-profile-owners${query}`, false);
   },
-  updateBowlerProfile(profileId: number, payload: { first_name: string; last_name: string; usbc_number: string | null }) {
+  updateBowlerProfile(profileId: number, payload: { first_name: string; last_name: string; usbc_number: string | null; average: number | null }) {
     return apiClient.patch<{ profile: BowlerProfileRow }>(`/api/v1/admin/bowlers/${profileId}`, payload);
   },
-  importBowlerProfiles(payload: { user_id: number; rows: Array<{ first_name: string; last_name: string; usbc_number: string | null }> }) {
+  importBowlerProfiles(payload: { user_id: number; rows: Array<{ first_name: string; last_name: string; usbc_number: string | null; average: number | null }> }) {
     return apiClient.post<{ created: number; duplicates: number; user_id: number }>("/api/v1/admin/bowlers/import", payload);
   },
   archiveBowlerProfile(profileId: number) {
