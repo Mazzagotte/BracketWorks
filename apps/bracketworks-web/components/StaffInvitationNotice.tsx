@@ -6,7 +6,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { apiClient } from '../app/lib/api';
 import styles from './StaffInvitationNotice.module.css';
 
-type Invitation = { id: number; tournament_id: number; tournament_name: string; role: string; expires_at: string; requires_secure_link: boolean };
+type Invitation = { id: number; tournament_id: number; tournament_name: string; role: string; expires_at: string; requires_secure_link: boolean; can_respond_in_app: boolean };
 
 export function StaffInvitationNotice({ enabled }: { enabled: boolean }) {
   const router = useRouter();
@@ -54,8 +54,8 @@ export function StaffInvitationNotice({ enabled }: { enabled: boolean }) {
           <div className={styles.invitation} key={invitation.id}>
             <span><strong>{invitation.tournament_name}</strong> invited you as {invitation.role.replaceAll('_', ' ')}.</span>
             <div>
-              {invitation.requires_secure_link && invitation.id !== secureLink?.id ? (
-                <span>Open the secure link in your invitation email to respond.</span>
+              {!invitation.can_respond_in_app && invitation.id !== secureLink?.id ? (
+                <span>Ask the tournament manager to resend this invitation.</span>
               ) : (
                 <>
                   <button type="button" onClick={() => void respond(invitation, 'decline')}>Decline</button>

@@ -11,7 +11,6 @@ from ...api import deps
 from ...core import models
 from ...services.tournament_access import require_tournament_permission, user_has_tournament_permission
 from ...services.tournament_audit import record_tournament_event
-from ...services.email_service import sendTournamentStaffInviteEmail
 
 router = APIRouter()
 StaffRole = Literal["tournament_admin", "entries_manager", "scorer", "viewer"]
@@ -79,8 +78,6 @@ def invite_staff(payload: StaffInviteRequest, tournament_id: int, db: Session = 
         tournament_id=tournament_id, email=email, role=payload.role,
         invited_by_user_id=user.id, expires_at=datetime.now(timezone.utc) + timedelta(days=7),
     )
-    invitation_token = secrets.token_urlsafe(32)
-    invitation.token_hash = hashlib.sha256(invitation_token.encode("utf-8")).hexdigest()
     db.add(invitation)
     db.flush()
     record_tournament_event(
@@ -90,11 +87,14 @@ def invite_staff(payload: StaffInviteRequest, tournament_id: int, db: Session = 
     )
     db.commit()
     db.refresh(invitation)
-    email_sent = sendTournamentStaffInviteEmail(
-        email, tournament_name=tournament.name, role=invitation.role,
-        invitation_id=invitation.id, invitation_token=invitation_token,
-    )
-    return {"id": invitation.id, "email": invitation.email, "role": invitation.role, "status": invitation.status, "expires_at": invitation.expires_at, "email_sent": email_sent}
+    return {
+        "id": invitation.id,
+        "email": invitation.email,
+        "role": invitation.role,
+        "status": invitation.status,
+        "expires_at": invitation.expires_at,
+        "email_sent": False,
+    }
 
 
 @router.get("/invitations/mine")
@@ -117,6 +117,7 @@ def my_invitations(db: Session = Depends(deps.get_db), user: models.User = Depen
             "role": invite.role,
             "expires_at": invite.expires_at,
             "requires_secure_link": bool(invite.token_hash),
+            "can_respond_in_app": True,
         }
         for invite, tournament in rows
     ]
@@ -132,11 +133,12 @@ def _respond(invitation_id: int, decision: Literal["accepted", "declined"], toke
     expires_at = invitation.expires_at.replace(tzinfo=timezone.utc) if invitation.expires_at.tzinfo is None else invitation.expires_at
     if invitation.status != "pending" or expires_at <= now:
         raise HTTPException(status_code=409, detail="Invitation is no longer available")
-    if not invitation.token_hash:
-        raise HTTPException(status_code=409, detail="This legacy invitation must be revoked and reissued securely")
-    supplied_hash = hashlib.sha256((token or "").encode("utf-8")).hexdigest()
-    if not secrets.compare_digest(invitation.token_hash, supplied_hash):
-        raise HTTPException(status_code=403, detail="Open the secure invitation link from your email")
+    if token is not None:
+        if not invitation.token_hash:
+            raise HTTPException(status_code=403, detail="Invitation token is invalid")
+        supplied_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+        if not secrets.compare_digest(invitation.token_hash, supplied_hash):
+            raise HTTPException(status_code=403, detail="Invitation token is invalid")
     tournament = db.get(models.Tournament, invitation.tournament_id)
     if not tournament or tournament.archived_at is not None or tournament.lifecycle_status == "finalized":
         raise HTTPException(status_code=409, detail="Invitation cannot be accepted for a read-only tournament")

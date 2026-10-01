@@ -64,7 +64,7 @@ export function TournamentStaffPanel({ tournamentId, ownerUserId }: { tournament
     try {
       await apiClient.post(`/api/v1/tournament-staff/${tournamentId}/invitations`, { email: normalizedEmail, role });
       setEmail('');
-      addToast({ type: 'success', message: `Invitation created for ${normalizedEmail}.` });
+      addToast({ type: 'success', message: `In-app invitation created for ${normalizedEmail}. They can accept it when they sign in.` });
     } catch (error) {
       addToast({ type: 'error', message: error instanceof Error ? error.message : 'Unable to invite staff member.' });
     } finally {

@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+import hashlib
 
 from app.core import models
 
@@ -23,16 +24,32 @@ def test_owner_can_invite_and_matching_user_can_accept(api_client, db_session, a
         json={"email": scorer.email, "role": "scorer"},
     )
     assert invite_response.status_code == 201
+    assert invite_response.json()["email_sent"] is False
+    invitation = db_session.get(models.TournamentStaffInvitation, invite_response.json()["id"])
+    assert invitation is not None
+    assert invitation.token_hash is None
 
     scorer_headers = make_auth_headers(scorer)
     mine = api_client.get("/api/v1/tournament-staff/invitations/mine", headers=scorer_headers)
     assert mine.status_code == 200
     assert mine.json()[0]["tournament_name"] == "Team Event"
+    assert mine.json()[0]["can_respond_in_app"] is True
+
+    unrelated_user = make_user("unrelated_staff_invitee")
+    unrelated_user.email_verified_at = datetime.now(timezone.utc)
+    db_session.commit()
+    unrelated_headers = make_auth_headers(unrelated_user)
+    wrong_identity = api_client.post(
+        f"/api/v1/tournament-staff/invitations/{invite_response.json()['id']}/accept",
+        headers=unrelated_headers,
+        json={},
+    )
+    assert wrong_identity.status_code == 404
 
     accepted = api_client.post(
         f"/api/v1/tournament-staff/invitations/{invite_response.json()['id']}/accept",
         headers=scorer_headers,
-        json={"token": "secure-staff-token"},
+        json={},
     )
     assert accepted.status_code == 200
     member = db_session.query(models.TournamentStaffMember).filter_by(
@@ -49,6 +66,10 @@ def test_staff_invitation_token_is_single_use(api_client, db_session, auth_ident
     monkeypatch.setattr("app.api.v1.tournament_staff.secrets.token_urlsafe", lambda _: "one-use-token")
     created = api_client.post(f"/api/v1/tournament-staff/{tournament.id}/invitations", headers=auth_identity.headers, json={"email": invitee.email, "role": "viewer"})
     invitation_id = created.json()["id"]
+    invitation = db_session.get(models.TournamentStaffInvitation, invitation_id)
+    assert invitation is not None
+    invitation.token_hash = hashlib.sha256("one-use-token".encode("utf-8")).hexdigest()
+    db_session.commit()
     headers = make_auth_headers(invitee)
 
     wrong = api_client.post(f"/api/v1/tournament-staff/invitations/{invitation_id}/accept", headers=headers, json={"token": "wrong"})
