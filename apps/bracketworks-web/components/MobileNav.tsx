@@ -6,7 +6,7 @@ import { useAuth } from '../app/lib/auth-context';
 import { logger } from '../app/lib/logger';
 import { preparePublicTournamentView } from '../app/lib/public-view';
 import { getActiveSquadLabel, getActiveTournamentName } from '../app/lib/selection-session';
-import { shouldRequireTimeSlotBeforeLeavingDashboard, showSelectTimeSlotReminder } from '../app/lib/selection-session';
+import { shouldRequireTimeSlotBeforeLeavingDashboard, requestDashboardSquadSelection } from '../app/lib/selection-session';
 import ShareQRModal from '../app/components/ShareQRModal';
 import { useToastHelpers } from '../app/components/Toast';
 import { navLinks } from './nav-links';
@@ -99,7 +99,8 @@ export function MobileNav({ isOpen, onClose, firstName, currentPage }: MobileNav
       try {
         if (shouldRequireTimeSlotBeforeLeavingDashboard(currentPath, targetPath)) {
           event.preventDefault();
-          showSelectTimeSlotReminder();
+          onClose();
+          requestDashboardSquadSelection(targetPath);
           return;
         }
       } catch (error) {

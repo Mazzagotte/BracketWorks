@@ -139,6 +139,7 @@ const DEMO_DASHBOARD_SIDE_POTS: SidePotsSettings = {
 
 export default function TournamentDashboard() {
   const pathname = usePathname();
+  const router = useRouter();
   const isDemoDashboard = pathname === '/demo/dashboard';
   // Authentication check - must be at the top
   const { isUserAuthenticated, isAuthInitialized, authToken, currentUser } = useAuth();
@@ -166,6 +167,7 @@ export default function TournamentDashboard() {
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [squadModalOpen, setSquadModalOpen] = useState(false);
   const [squadModalRequireMessage, setSquadModalRequireMessage] = useState<string | null>(null);
+  const [squadSelectionCanDismiss, setSquadSelectionCanDismiss] = useState(false);
   const pendingSquadActionRef = useRef<(() => void) | null>(null);
   const [allTournaments, setAllTournaments] = useState<Tournament[]>([]);
   const [shareQROpen, setShareQROpen] = useState(false);
@@ -785,6 +787,7 @@ export default function TournamentDashboard() {
       return;
     }
     setSquadModalRequireMessage(null);
+    setSquadSelectionCanDismiss(false);
     setSquadModalOpen(true);
   };
 
@@ -793,11 +796,27 @@ export default function TournamentDashboard() {
     if (squads.length > 1 && selectedSquadId == null) {
       pendingSquadActionRef.current = action;
       setSquadModalRequireMessage('Select a squad before proceeding.');
+      setSquadSelectionCanDismiss(false);
       setSquadModalOpen(true);
       return;
     }
     action();
   }, [squads.length, selectedSquadId]);
+
+  useEffect(() => {
+    const handleSquadSelectionRequest = (event: Event) => {
+      const { targetPath } = (event as CustomEvent<{ targetPath?: string }>).detail ?? {};
+      if (!targetPath) return;
+
+      pendingSquadActionRef.current = () => router.push(targetPath);
+      setSquadModalRequireMessage('Choose a squad to continue.');
+      setSquadSelectionCanDismiss(true);
+      setSquadModalOpen(true);
+    };
+
+    window.addEventListener('bw-dashboard-squad-selection-request', handleSquadSelectionRequest);
+    return () => window.removeEventListener('bw-dashboard-squad-selection-request', handleSquadSelectionRequest);
+  }, [router]);
 
   const handleSelectSquad = (squad: Squad) => {
     const label = [squad.date, squad.time].filter(Boolean).join(' ');
@@ -806,6 +825,7 @@ export default function TournamentDashboard() {
     setActiveSquadLabel(label);
     setSquadModalOpen(false);
     setSquadModalRequireMessage(null);
+    setSquadSelectionCanDismiss(false);
     addToast({
       type: 'success',
       message: label ? `Active squad changed to ${label}` : 'Active squad changed',
@@ -991,7 +1011,6 @@ export default function TournamentDashboard() {
     }
   };
 
-  const router = useRouter();
   const selectedSquad = squads.find(s => s.id === selectedSquadId);
   const enabledSidePotsCount = sidePots.pots.filter(pot => pot.enabled).length;
   const loadedEntries = summaryPlayers.length > 0 ? summaryPlayers.length : (tournament?.entry_count ?? 0);
@@ -1363,8 +1382,10 @@ export default function TournamentDashboard() {
             onClose={() => {
               setSquadModalOpen(false);
               setSquadModalRequireMessage(null);
+              setSquadSelectionCanDismiss(false);
               pendingSquadActionRef.current = null;
             }}
+            allowDismissWhenRequired={squadSelectionCanDismiss}
             requireSelectionMessage={squadModalRequireMessage}
           />
 

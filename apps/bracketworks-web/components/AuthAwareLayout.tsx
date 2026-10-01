@@ -7,7 +7,6 @@ import { MobileNav } from './MobileNav';
 import TopNav from '../app/components/TopNav';
 import { ErrorBoundary } from '../app/components/ErrorBoundary';
 import { DevAuthStatus } from '../app/components/DevAuthStatus';
-import { TimeSlotReminderModal } from '../app/components/TimeSlotReminderModal';
 import DevNoticeBanner from '../app/components/DevNoticeBanner';
 import MobileCompatibilityNotice, { useMobileCompatibilityNotice } from '../app/components/MobileCompatibilityNotice';
 import WelcomeOnboardingModal from '../app/components/WelcomeOnboardingModal';
@@ -207,7 +206,6 @@ function ClientLayout({ children }: { children: ReactNode }) {
       </main>
 
       {!legalBlocked && <DevAuthStatus />}
-      {!legalBlocked && <TimeSlotReminderModal />}
       <WelcomeOnboardingModal
         enabled={showAuthenticatedShell && !legalBlocked && !mobileCompatibilityNotice.isOpen && !announcementOpen}
         userId={currentUser?.id}

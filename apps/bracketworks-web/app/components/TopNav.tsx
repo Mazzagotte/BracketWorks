@@ -10,7 +10,7 @@ import { getActiveSquadLabel, getActiveTournamentName } from '../lib/selection-s
 import { preparePublicTournamentView } from '../lib/public-view';
 import {
   shouldRequireTimeSlotBeforeLeavingDashboard,
-  showSelectTimeSlotReminder,
+  requestDashboardSquadSelection,
 } from '../lib/selection-session';
 import { navLinks } from '../../components/nav-links';
 import ShareQRModal from './ShareQRModal';
@@ -112,7 +112,7 @@ export default function TopNav({ firstName, onMobileMenuOpen, isMobile = false }
       try {
         if (shouldRequireTimeSlotBeforeLeavingDashboard(currentPath, targetPath)) {
           event.preventDefault();
-          showSelectTimeSlotReminder();
+          requestDashboardSquadSelection(targetPath);
           return;
         }
       } catch {

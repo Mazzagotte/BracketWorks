@@ -15,6 +15,7 @@ type ChangeSquadModalProps = {
   squadEntryCounts: Record<number, number>;
   onSelectSquad: (squad: Squad) => void;
   onClose: () => void;
+  allowDismissWhenRequired?: boolean;
   /** When set, shown as a required-selection prompt and the close (dismiss) control is hidden. */
   requireSelectionMessage?: string | null;
 };
@@ -27,10 +28,11 @@ export function ChangeSquadModal({
   squadEntryCounts,
   onSelectSquad,
   onClose,
+  allowDismissWhenRequired = false,
   requireSelectionMessage,
 }: ChangeSquadModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
-  const isDismissable = !requireSelectionMessage;
+  const isDismissable = !requireSelectionMessage || allowDismissWhenRequired;
   const { onOverlayClick } = useModalBehavior({
     open: open && !!tournament,
     onClose,
@@ -58,7 +60,7 @@ export function ChangeSquadModal({
           <p className={styles.modalSubtitle}>
             {requireSelectionMessage || `Select the date and time for ${tournament.name}`}
           </p>
-          {!requireSelectionMessage && (
+          {(!requireSelectionMessage || allowDismissWhenRequired) && (
             <CloseControl position="absolute" size="sm" label="Close change squad modal" onClick={onClose} />
           )}
         </div>

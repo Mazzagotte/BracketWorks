@@ -108,7 +108,9 @@ export function shouldRequireTimeSlotBeforeLeavingDashboard(currentPath: string,
   return Number.isFinite(availableSquadCount) && availableSquadCount > 1
 }
 
-export function showSelectTimeSlotReminder() {
+export function requestDashboardSquadSelection(targetPath: string) {
   if (typeof window === 'undefined') return
-  window.dispatchEvent(new Event('bw-select-time-slot-reminder'))
+  window.dispatchEvent(new CustomEvent('bw-dashboard-squad-selection-request', {
+    detail: { targetPath },
+  }))
 }

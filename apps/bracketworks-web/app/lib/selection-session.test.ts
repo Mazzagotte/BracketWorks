@@ -7,6 +7,7 @@ import {
   getActiveTournamentName,
   getSelectedSquadId,
   getSelectedTournamentId,
+  requestDashboardSquadSelection,
   resolveSquadSelection,
   setActiveSquadLabel,
   setAvailableSquadCount,
@@ -20,6 +21,19 @@ describe('selection-session', () => {
     localStorage.clear()
     sessionStorage.clear()
     clearSelectedSquad()
+  })
+
+  it('dispatches the navigation target with a required squad-selection request', () => {
+    const listener = vi.fn()
+    window.addEventListener('bw-dashboard-squad-selection-request', listener)
+
+    requestDashboardSquadSelection('/scores?view=all')
+
+    expect(listener).toHaveBeenCalledTimes(1)
+    expect(listener.mock.calls[0]?.[0]).toMatchObject({
+      detail: { targetPath: '/scores?view=all' },
+    })
+    window.removeEventListener('bw-dashboard-squad-selection-request', listener)
   })
 
   it('persists tournament identity and dispatches tournament event', () => {
