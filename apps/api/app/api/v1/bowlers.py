@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from ..deps import get_current_user, get_db
 from ...core import models, schemas
+from ...core.handicap import calculate_handicap_pins
 from ...core.bracket_programs import normalize_bowler_bracket_entries, normalize_bracket_programs, normalize_division
 from ...services.payouts import reset_payouts_if_needed
 from ...services.tournament_audit import record_tournament_event
@@ -222,7 +223,9 @@ def list_bowlers(
         ))
         # Compute per-game handicap from current tournament settings (avoids stale stored values)
         if player.average is not None and handicap_percentage is not None and handicap_base is not None:
-            computed_handicap = max(0, int((handicap_base - player.average) * (handicap_percentage / 100)))
+            computed_handicap = calculate_handicap_pins(
+                player.average, handicap_base, handicap_percentage
+            )
         else:
             computed_handicap = player.handicap_pins
         player_dict = {
@@ -341,7 +344,11 @@ def _stage_bowler(
     if player.average is not None:
         t_settings = db.query(models.BracketSettings).filter(models.BracketSettings.tournament_id == player.tournament_id).first()
         if t_settings and t_settings.handicap_percentage is not None and t_settings.handicap_base is not None:
-            handicap_pins = max(0, int((t_settings.handicap_base - player.average) * (t_settings.handicap_percentage / 100)))
+            handicap_pins = calculate_handicap_pins(
+                player.average,
+                t_settings.handicap_base,
+                t_settings.handicap_percentage,
+            )
 
     obj = models.TournamentPlayer(
         tournament_id=player.tournament_id,

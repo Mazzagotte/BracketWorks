@@ -77,7 +77,7 @@ function VerifyEmailContent() {
       <div className={`${loginStyles.card} ${loginStyles.resetCard}`}>
         <div className={loginStyles.logoWrap}>
           <Image
-            src="/logo.svg"
+            src="/logo_no_text.svg"
             alt="BracketWorks Logo"
             width={220}
             height={220}

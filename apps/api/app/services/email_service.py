@@ -33,7 +33,7 @@ STAFF_INVITE_SUBJECT = "You were invited to a BracketWorks tournament"
 
 def _base_template_variables() -> dict[str, str]:
     return {
-        "logo_url": _frontend_url("/logo.svg"),
+        "logo_url": _frontend_url("/logo_no_text.svg"),
         "support_email": RESET_PASSWORD_SUPPORT_EMAIL,
     }
 

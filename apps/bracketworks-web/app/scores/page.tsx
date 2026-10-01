@@ -70,7 +70,7 @@ export default function ScoresPage() {
   const { isOnline, pendingSaves, setPendingSaves, processPendingSaves } = useOfflineScoreSync({ addToast })
 
   // ── Lock state ─────────────────────────────────────────────────────────────
-  const { isScoresLocked, unlockScoresTable, unlockPayoutsAndGo } =
+  const { isScoresLocked, scoresHaveBeenUnlocked, unlockScoresTable, unlockPayoutsAndGo } =
     useScoreLock(tournament, selectedSquad, addToast)
 
   // ── Filters / pagination ───────────────────────────────────────────────────
@@ -106,6 +106,7 @@ export default function ScoresPage() {
     selectedSquadRef,
     tournament,
     isScoresLocked,
+    scoresHaveBeenUnlocked,
     isOnline,
     isMobile,
     sessionToken,
@@ -193,6 +194,19 @@ export default function ScoresPage() {
     } finally { setIsExportingPdf(false) }
   }, [addToast, isScoresLocked, filteredPlayers, selectedSquad, tournament])
 
+  const handlePrintBlankScoreSheet = useCallback(() => {
+    if (filteredPlayers.length === 0) { addToast({ message: 'No players to print.', type: 'warning', duration: 3000 }); return }
+    setIsExportingPdf(true)
+    try {
+      const squadLabel = selectedSquad ? [selectedSquad.name, selectedSquad.date, selectedSquad.time].filter(Boolean).join(' | ') : 'All Squads'
+      const html = buildScoresPdfHtml({ players: filteredPlayers, tournamentName: tournament?.name || 'Tournament', squadLabel, location: tournament?.location || '', generatedAt: new Date().toLocaleString(), logoUrl: `${window.location.origin}/logo_no_text.svg`, scoresLocked: isScoresLocked, blankScoreSheet: true })
+      printHtmlDocument({ html, documentTitle: buildSafeFileName(tournament?.name, selectedSquad, 'blank-score-sheet').replace(/\.xlsx$/, '') })
+      addToast({ message: `Prepared a blank score sheet for ${filteredPlayers.length} players.`, type: 'success', duration: 3000 })
+    } catch (err) {
+      addToast({ message: `Failed to prepare score sheet: ${err instanceof Error ? err.message : 'Unknown error'}`, type: 'error', duration: 5000 })
+    } finally { setIsExportingPdf(false) }
+  }, [addToast, filteredPlayers, isScoresLocked, selectedSquad, tournament])
+
   // ── Import handler ─────────────────────────────────────────────────────────
   const handleImportScoresFileSelected = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (isScoresLocked) { addToast({ message: 'Scores are locked. Unlock scores to import changes.', type: 'warning', duration: 3000 }); e.target.value = ''; return }
@@ -262,6 +276,7 @@ export default function ScoresPage() {
           <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`} onClick={() => setIsScoresGuideOpen(true)}>Scores Guide</button>
           <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`} onClick={handleExportScoresToExcel} disabled={isExporting || players.length === 0}>{isExporting ? 'Exporting...' : 'Export to Excel'}</button>
           <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`} onClick={handleExportScoresToPdf} disabled={isExportingPdf || players.length === 0}>{isExportingPdf ? 'Preparing...' : 'Export to PDF'}</button>
+          <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`} onClick={handlePrintBlankScoreSheet} disabled={isExportingPdf || players.length === 0}>Print Blank Score Sheet</button>
           <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`} onClick={() => importFileRef.current?.click()} disabled={isImporting || players.length === 0 || isScoresLocked}>{isImporting ? 'Importing...' : 'Import from Excel'}</button>
           {players.length > 0 && !isScoresLocked && <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`} onClick={() => { void markScoresComplete() }}>Calculate Payouts</button>}
           {players.length > 0 && isScoresLocked && <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`} onClick={() => setShowUnlockScoresConfirm(true)}>Unlock Scores</button>}
@@ -285,7 +300,7 @@ export default function ScoresPage() {
         </>
       )}
     />
-  ), [players.length, pendingSaves.length, isExporting, isExportingPdf, isImporting, isScoresLocked, currentUser, addToast, handleExportScoresToExcel, handleExportScoresToPdf, handleRandomizeScores, markScoresComplete, processPendingSaves, requestClearGame])
+  ), [players.length, pendingSaves.length, isExporting, isExportingPdf, isImporting, isScoresLocked, currentUser, addToast, handleExportScoresToExcel, handleExportScoresToPdf, handlePrintBlankScoreSheet, handleRandomizeScores, markScoresComplete, processPendingSaves, requestClearGame])
 
   // ── Auth guards (must be after all hooks) ─────────────────────────────────
   if (!isAuthInitialized) return <div className={styles.loadingState}><div role="status">Loading scores...</div></div>

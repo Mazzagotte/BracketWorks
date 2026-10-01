@@ -41,6 +41,8 @@ tbody td { height: 20px; padding: 4px 7px; font-size: 8.2px; }
 .lane { width: 48px; text-align: center; }
 .number { width: 62px; text-align: center; }
 .total { font-weight: 700; }
+.blank-score-sheet tbody td { height: 32px; }
+.blank-score-sheet tbody td.number { padding-top: 8px; padding-bottom: 8px; }
 .verification { display: grid; grid-template-columns: minmax(300px,1fr) 210px 80px; align-items: end; gap: 24px; min-height: 54px; margin-top: 12px; padding: 10px 9px 8px; border: .7px solid var(--print-rule); break-inside: avoid; }
 .verification strong { font-size: 8px; letter-spacing: .05em; text-transform: uppercase; }
 .verification p { margin: 5px 0 0; color: var(--print-muted); font-size: 7.5px; }

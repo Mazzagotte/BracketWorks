@@ -10,6 +10,7 @@ from ...services.tournament_access import require_tournament_permission
 from ...services.tournament_audit import record_tournament_event
 from ...services.tournament_snapshots import create_restore_point
 from ...services.tournament_reconciliation import build_final_reconciliation
+from ...services.tournament_lifecycle import has_score_unlock_history
 
 router = APIRouter()
 
@@ -34,7 +35,10 @@ def _payload(tournament: models.Tournament) -> dict:
 @router.get("/{tournament_id}")
 def get_lifecycle(tournament_id: int, db: Session = Depends(deps.get_db), user: models.User = Depends(deps.get_current_user)):
     tournament = require_tournament_permission(db, tournament_id, user, "view")
-    return _payload(tournament)
+    return {
+        **_payload(tournament),
+        "scores_have_been_unlocked": has_score_unlock_history(db, tournament_id),
+    }
 
 
 @router.post("/{tournament_id}/archive")

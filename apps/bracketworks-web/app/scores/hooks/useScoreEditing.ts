@@ -18,6 +18,7 @@ export interface UseScoreEditingArgs {
   selectedSquadRef: MutableRefObject<Squad | null>
   tournament: Tournament | null
   isScoresLocked: boolean
+  scoresHaveBeenUnlocked: boolean
   isOnline: boolean
   isMobile: boolean
   sessionToken: string | null
@@ -67,6 +68,7 @@ export function useScoreEditing({
   selectedSquadRef,
   tournament,
   isScoresLocked,
+  scoresHaveBeenUnlocked,
   isOnline,
   isMobile,
   sessionToken,
@@ -79,7 +81,7 @@ export function useScoreEditing({
   const [lastEdit, setLastEdit] = useState<ScoreEditHistory | null>(null)
   const [clearGameConfirm, setClearGameConfirm] = useState<2 | 3 | null>(null)
   const debouncedSavesRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
-  const correctionOriginalsRef = useRef<Map<string, number | undefined>>(new Map())
+  const correctionOriginalsRef = useRef<Map<string, number | null | undefined>>(new Map())
 
   // Clear pending debounce timers on unmount to avoid state-after-unmount
   useEffect(() => {
@@ -147,9 +149,9 @@ export function useScoreEditing({
     }
 
     const saveKey = `${playerId}-${field}`
-    const currentValue = (playersRef.current.find(p => p.id === playerId)?.scores as Record<string, number | undefined> | undefined)?.[field]
+    const currentValue = (playersRef.current.find(p => p.id === playerId)?.scores as Record<string, number | null | undefined> | undefined)?.[field]
 
-    if (currentValue !== undefined && currentValue !== value && !correctionOriginalsRef.current.has(saveKey)) {
+    if (scoresHaveBeenUnlocked && currentValue !== undefined && currentValue !== value && !correctionOriginalsRef.current.has(saveKey)) {
       correctionOriginalsRef.current.set(saveKey, currentValue)
     }
 
@@ -275,6 +277,7 @@ export function useScoreEditing({
     isMobile,
     isOnline,
     isScoresLocked,
+    scoresHaveBeenUnlocked,
     markRowSaved,
     playersRef,
     selectedSquadRef,

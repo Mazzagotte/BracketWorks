@@ -8,6 +8,7 @@ import logging
 
 from app.api.deps import get_current_user, get_db
 from app.core.models import PlayerScore, TournamentBracketSettings, TournamentPlayer
+from app.core.handicap import calculate_handicap_pins
 from app.core.config import settings
 from app.core import models
 from app.core.validators import BracketValidation
@@ -15,7 +16,7 @@ from app.core.idempotency import IdempotencyReplay, begin_request, complete_requ
 from app.services.payouts import reset_payouts_if_needed
 from app.services.tournament_access import verify_owned_tournament_access
 from app.services.tournament_audit import record_tournament_event
-from app.services.tournament_lifecycle import refresh_score_completion
+from app.services.tournament_lifecycle import has_score_unlock_history, refresh_score_completion
 from app.services.tournament_snapshots import create_restore_point
 
 router = APIRouter()
@@ -27,10 +28,7 @@ def calculate_handicap(average: int, handicap_base: float, handicap_percentage: 
     Calculate handicap for a bowler.
     Formula: (handicap_base - average) * (handicap_percentage / 100)
     """
-    if average is None:
-        return 0
-    handicap = (handicap_base - average) * (handicap_percentage / 100)
-    return int(round(handicap))
+    return calculate_handicap_pins(average, handicap_base, handicap_percentage)
 
 
 def get_handicap_for_bowler(
@@ -127,7 +125,12 @@ class ScoreLockRequest(BaseModel):
     reason: Optional[str] = Field(default=None, max_length=1000)
 
 
-def _scratch_changes(previous_score: PlayerScore | None, score_data: ScoreCreate | ScoreUpdate) -> list[tuple[str, int | None, int | None]]:
+def _scratch_changes(
+    previous_score: PlayerScore | None,
+    score_data: ScoreCreate | ScoreUpdate,
+    *,
+    include_blank_values: bool = False,
+) -> list[tuple[str, int | None, int | None]]:
     if previous_score is None:
         return []
     changes = []
@@ -136,7 +139,7 @@ def _scratch_changes(previous_score: PlayerScore | None, score_data: ScoreCreate
             continue
         old_value = getattr(previous_score, field)
         new_value = getattr(score_data, field)
-        if old_value is not None and old_value != new_value:
+        if old_value != new_value and (include_blank_values or old_value is not None):
             changes.append((field, old_value, new_value))
     return changes
 
@@ -306,7 +309,12 @@ def create_or_update_score(
             )
             .first()
         )
-        corrections = _scratch_changes(previous_score, score_data)
+        corrections_enabled = has_score_unlock_history(db, score_data.tournament_id)
+        corrections = _scratch_changes(
+            previous_score,
+            score_data,
+            include_blank_values=corrections_enabled,
+        ) if corrections_enabled else []
         correction_reason = _require_correction_reason(corrections, score_data.correction_reason)
         before_values = None if previous_score is None else {
             field: getattr(previous_score, field) for field in score_dict if hasattr(previous_score, field)
@@ -350,20 +358,21 @@ def create_or_update_score(
             score = result.scalars().one()
         logger.info(f"Upserted score for player {player.full_name}: G1={score.game1_total}, G2={score.game2_total}, G3={score.game3_total}")
 
-        _record_corrections(db, changes=corrections, score=score, reason=correction_reason, user=current_user)
         reset_payouts_if_needed(db, score.tournament_id, score.squad_id)
-        record_tournament_event(
-            db,
-            tournament_id=score.tournament_id,
-            event_type="score.entered" if before_values is None else "score.changed",
-            user=current_user,
-            summary=f"{'Entered' if before_values is None else 'Changed'} scores for {player.full_name}",
-            before_values=before_values,
-            after_values={field: getattr(score, field) for field in score_dict if hasattr(score, field)},
-            reason=correction_reason,
-            entity_type="score",
-            entity_id=score.id,
-        )
+        if corrections_enabled:
+            _record_corrections(db, changes=corrections, score=score, reason=correction_reason, user=current_user)
+            record_tournament_event(
+                db,
+                tournament_id=score.tournament_id,
+                event_type="score.entered" if before_values is None else "score.changed",
+                user=current_user,
+                summary=f"{'Entered' if before_values is None else 'Changed'} scores for {player.full_name}",
+                before_values=before_values,
+                after_values={field: getattr(score, field) for field in score_dict if hasattr(score, field)},
+                reason=correction_reason,
+                entity_type="score",
+                entity_id=score.id,
+            )
         refresh_score_completion(db, score.tournament_id, score.squad_id)
         db.commit()
 
@@ -411,7 +420,7 @@ def update_score(
                 db,
                 endpoint_scope="scores:update",
                 idempotency_key=idempotency_key,
-                request_payload={"score_id": score_id, **score_data.model_dump(exclude_unset=False)},
+                request_payload=score_data.model_dump(exclude_unset=False),
                 user_id=getattr(current_user, "id", None),
             )
             if isinstance(replay_or_record, IdempotencyReplay):
@@ -443,7 +452,12 @@ def update_score(
         logger.info(f"Calculating handicap for player {player.full_name} (avg={player.average}): {handicap}")
         
         # Build score dictionary with calculated totals
-        corrections = _scratch_changes(score, score_data)
+        corrections_enabled = has_score_unlock_history(db, score.tournament_id)
+        corrections = _scratch_changes(
+            score,
+            score_data,
+            include_blank_values=corrections_enabled,
+        ) if corrections_enabled else []
         correction_reason = _require_correction_reason(corrections, score_data.correction_reason)
         score_dict = score_data.model_dump(exclude_unset=True, exclude={"correction_reason"})
         score_dict.update(calculate_game_totals(score_data, handicap))
@@ -453,20 +467,20 @@ def update_score(
         for field, value in score_dict.items():
             setattr(score, field, value)
 
-        _record_corrections(db, changes=corrections, score=score, reason=correction_reason, user=current_user)
-        
-        record_tournament_event(
-            db,
-            tournament_id=score.tournament_id,
-            event_type="score.changed",
-            user=current_user,
-            summary=f"Changed scores for {player.full_name}",
-            before_values=before_values,
-            after_values={field: getattr(score, field) for field in score_dict},
-            reason=correction_reason,
-            entity_type="score",
-            entity_id=score.id,
-        )
+        if corrections_enabled:
+            _record_corrections(db, changes=corrections, score=score, reason=correction_reason, user=current_user)
+            record_tournament_event(
+                db,
+                tournament_id=score.tournament_id,
+                event_type="score.changed",
+                user=current_user,
+                summary=f"Changed scores for {player.full_name}",
+                before_values=before_values,
+                after_values={field: getattr(score, field) for field in score_dict},
+                reason=correction_reason,
+                entity_type="score",
+                entity_id=score.id,
+            )
         refresh_score_completion(db, score.tournament_id, score.squad_id)
         db.commit()
         db.refresh(score)

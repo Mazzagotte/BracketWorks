@@ -7,7 +7,9 @@ from app.services.tournament_audit import record_tournament_event
 from app.services.tournament_lifecycle import advance_status
 from app.services.tournament_snapshots import create_restore_point
 from app.core import models, schemas
+from app.core.handicap import calculate_handicap_pins
 from app.core.bracket_programs import normalize_bowler_bracket_entries, normalize_bracket_programs
+from app.services.payouts import reset_payouts_if_needed
 from typing import Optional
 import logging
 
@@ -130,20 +132,50 @@ def recalculate_player_handicaps(
         ).all()
         
         updated_count = 0
+        players_by_id = {player.id: player for player in players}
         for player in players:
-            if player.average is not None:
-                # Calculate handicap: (base - average) * (percentage / 100)
-                new_handicap = int((handicap_base - player.average) * (handicap_percentage / 100))
-                # Ensure handicap is not negative
-                new_handicap = max(0, new_handicap)
-                
-                if player.handicap_pins != new_handicap:
-                    player.handicap_pins = new_handicap
-                    updated_count += 1
-        
-        if updated_count > 0:
+            new_handicap = calculate_handicap_pins(
+                player.average, handicap_base, handicap_percentage
+            )
+            if player.handicap_pins != new_handicap:
+                player.handicap_pins = new_handicap
+                updated_count += 1
+
+        score_records = db.query(models.PlayerScore).filter(
+            models.PlayerScore.tournament_id == tournament_id
+        ).all()
+        updated_score_count = 0
+        affected_squads = set()
+        for score in score_records:
+            player = players_by_id.get(score.player_id)
+            handicap = calculate_handicap_pins(
+                player.average if player else None,
+                handicap_base,
+                handicap_percentage,
+            )
+            score_changed = False
+            for game_number in (1, 2, 3):
+                scratch_score = getattr(score, f"game{game_number}_scratch")
+                total_field = f"game{game_number}_with_handicap"
+                updated_total = scratch_score + handicap if scratch_score is not None else None
+                if getattr(score, total_field) != updated_total:
+                    setattr(score, total_field, updated_total)
+                    score_changed = True
+            if score_changed:
+                updated_score_count += 1
+                affected_squads.add(score.squad_id)
+
+        for squad_id in affected_squads:
+            reset_payouts_if_needed(db, tournament_id, squad_id)
+
+        if updated_count > 0 or updated_score_count > 0:
             db.commit()
-            logger.info(f"Recalculated handicaps for {updated_count} players in tournament {tournament_id}")
+            logger.info(
+                "Recalculated %s player handicaps and %s score records for tournament %s",
+                updated_count,
+                updated_score_count,
+                tournament_id,
+            )
         
         return updated_count
     except Exception as e:
@@ -224,8 +256,8 @@ def create_bracket_settings(
                     updated_count = recalculate_player_handicaps(
                         db,
                         existing_settings.tournament_id,
-                        existing_settings.handicap_percentage or 80.0,
-                        existing_settings.handicap_base or 200.0
+                        existing_settings.handicap_percentage if existing_settings.handicap_percentage is not None else 80.0,
+                        existing_settings.handicap_base if existing_settings.handicap_base is not None else 200.0
                     )
                     logger.info(f"Updated {updated_count} player handicaps for tournament {existing_settings.tournament_id}")
                 except Exception as e:
@@ -261,8 +293,8 @@ def create_bracket_settings(
                 updated_count = recalculate_player_handicaps(
                     db,
                     db_settings.tournament_id,
-                    db_settings.handicap_percentage or 80.0,
-                    db_settings.handicap_base or 200.0
+                    db_settings.handicap_percentage if db_settings.handicap_percentage is not None else 80.0,
+                    db_settings.handicap_base if db_settings.handicap_base is not None else 200.0
                 )
                 logger.info(f"Calculated handicaps for {updated_count} players in tournament {db_settings.tournament_id}")
             except Exception as e:
@@ -367,8 +399,8 @@ def update_bracket_settings(
                 updated_count = recalculate_player_handicaps(
                     db,
                     db_settings.tournament_id,
-                    db_settings.handicap_percentage or 80.0,
-                    db_settings.handicap_base or 200.0
+                    db_settings.handicap_percentage if db_settings.handicap_percentage is not None else 80.0,
+                    db_settings.handicap_base if db_settings.handicap_base is not None else 200.0
                 )
                 logger.info(f"Updated {updated_count} player handicaps for tournament {db_settings.tournament_id}")
             except Exception as e:

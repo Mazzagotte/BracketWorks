@@ -12,6 +12,7 @@ type AddToast = (args: { message: string; type: 'success' | 'warning' | 'error';
 
 export interface UseScoreLockResult {
   isScoresLocked: boolean
+  scoresHaveBeenUnlocked: boolean
   unlockScoresTable: (reason: string) => Promise<boolean>
   unlockPayoutsAndGo: () => Promise<void>
 }
@@ -28,6 +29,7 @@ export function useScoreLock(
 ): UseScoreLockResult {
   const router = useRouter()
   const [isScoresLocked, setIsScoresLocked] = useState(false)
+  const [scoresHaveBeenUnlocked, setScoresHaveBeenUnlocked] = useState(false)
 
   // Re-evaluate lock on tournament/squad change
   useEffect(() => {
@@ -36,10 +38,11 @@ export function useScoreLock(
     const lockKey = getScoresLockKey(tournamentId, squadId)
     if (!lockKey || !tournamentId) { setIsScoresLocked(false); return }
     let active = true
-    apiClient.get<{ scores_locked: boolean }>(`/api/v1/tournament-lifecycle/${tournamentId}`, false)
+    apiClient.get<{ scores_locked: boolean; scores_have_been_unlocked: boolean }>(`/api/v1/tournament-lifecycle/${tournamentId}`, false)
       .then(result => {
         if (!active) return
         setIsScoresLocked(result.scores_locked)
+        setScoresHaveBeenUnlocked(result.scores_have_been_unlocked)
         if (result.scores_locked) storage.setItem(lockKey, '1'); else storage.removeItem(lockKey)
       })
       .catch(() => { if (active) setIsScoresLocked(storage.getItem(lockKey) === '1') })
@@ -91,6 +94,7 @@ export function useScoreLock(
     if (payoutKey) storage.removeItem(payoutKey)
     sessionStorage.removeItem('payouts_unlocked')
     setIsScoresLocked(false)
+    setScoresHaveBeenUnlocked(true)
 
     addToast({
       message: 'Scores unlocked. Payout access revoked until Calculate Payouts is clicked again.',
@@ -100,5 +104,5 @@ export function useScoreLock(
     return true
   }, [addToast, selectedSquad, tournament])
 
-  return { isScoresLocked, unlockScoresTable, unlockPayoutsAndGo }
+  return { isScoresLocked, scoresHaveBeenUnlocked, unlockScoresTable, unlockPayoutsAndGo }
 }

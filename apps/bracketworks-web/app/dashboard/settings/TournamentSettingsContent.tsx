@@ -456,6 +456,57 @@ export function TournamentSettingsContent({ tournamentId, layout = 'page' }: Tou
                       </div>
                     </div>
                   </div>
+                  <div className={dashboardStyles.fieldGroup}>
+                    <div className={dashboardStyles.compactField}>
+                      <label className={dashboardStyles.compactLabel} htmlFor={`handicap-percentage-${tournamentId}`}>
+                        Handicap Percentage (%)
+                      </label>
+                      <input
+                        id={`handicap-percentage-${tournamentId}`}
+                        className={`${formStyles.field} ${formStyles.compactControl} ${pageStyles.settingsSelect}`}
+                        type="number"
+                        min={0}
+                        max={100}
+                        step={1}
+                        value={bracketSettings.handicap_percentage || ''}
+                        onChange={e => {
+                          const value = e.target.value;
+                          updateBracketSettings(
+                            previous => ({
+                              ...previous,
+                              handicap_percentage: value === '' ? 0 : Math.min(100, Math.max(0, Number(value))),
+                            }),
+                            'none',
+                          );
+                        }}
+                        onBlur={saveBracketSettingsImmediately}
+                      />
+                    </div>
+                    <div className={dashboardStyles.compactField}>
+                      <label className={dashboardStyles.compactLabel} htmlFor={`handicap-base-${tournamentId}`}>
+                        Handicap Base
+                      </label>
+                      <input
+                        id={`handicap-base-${tournamentId}`}
+                        className={`${formStyles.field} ${formStyles.compactControl} ${pageStyles.settingsSelect}`}
+                        type="number"
+                        min={0}
+                        step={1}
+                        value={bracketSettings.handicap_base || ''}
+                        onChange={e => {
+                          const value = e.target.value;
+                          updateBracketSettings(
+                            previous => ({
+                              ...previous,
+                              handicap_base: value === '' ? 0 : Math.max(0, Number(value)),
+                            }),
+                            'none',
+                          );
+                        }}
+                        onBlur={saveBracketSettingsImmediately}
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 <div className={dashboardStyles.settingsColumn}>

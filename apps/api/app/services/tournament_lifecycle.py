@@ -4,6 +4,13 @@ from sqlalchemy.orm import Session
 from ..core import models
 
 
+def has_score_unlock_history(db: Session, tournament_id: int) -> bool:
+    return db.query(models.TournamentAuditLog.id).filter(
+        models.TournamentAuditLog.tournament_id == tournament_id,
+        models.TournamentAuditLog.event_type == "scores.unlocked",
+    ).first() is not None
+
+
 def advance_status(db: Session, tournament_id: int, status: str) -> None:
     tournament = db.get(models.Tournament, tournament_id)
     if not tournament or tournament.archived_at or tournament.lifecycle_status == "finalized":

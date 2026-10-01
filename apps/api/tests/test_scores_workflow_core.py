@@ -3,6 +3,8 @@ from __future__ import annotations
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
+from app.core import models
+
 
 def _create_tournament(client: TestClient, headers: dict[str, str]) -> dict:
     response = client.post(
@@ -126,6 +128,105 @@ def test_score_create_and_partial_update_keep_previous_games(api_client: TestCli
     assert updated["game2_with_handicap"] == 206
 
 
+def test_zero_handicap_percentage_recalculates_player_handicap(
+    api_client: TestClient,
+    auth_identity,
+    db_session: Session,
+):
+    tournament = _create_tournament(api_client, auth_identity.headers)
+    squad = _create_squad(api_client, auth_identity.headers, tournament["id"], "10:00")
+    _configure_brackets(api_client, auth_identity.headers, tournament["id"])
+    bowler = _create_bowler(
+        api_client,
+        auth_identity.headers,
+        tournament["id"],
+        squad["id"],
+        name="Zero Handicap Player",
+        average=180,
+    )
+
+    settings_response = api_client.get(
+        f"/api/v1/bracket-settings/{tournament['id']}",
+        headers=auth_identity.headers,
+    )
+    assert settings_response.status_code == 200, settings_response.text
+
+    update_response = api_client.put(
+        f"/api/v1/bracket-settings/{settings_response.json()['id']}",
+        headers=auth_identity.headers,
+        json={"handicap_percentage": 0},
+    )
+    assert update_response.status_code == 200, update_response.text
+
+    player = db_session.query(models.TournamentPlayer).filter(
+        models.TournamentPlayer.id == bowler["id"]
+    ).one()
+    assert player.handicap_pins == 0
+
+
+def test_handicap_setting_change_recalculates_all_saved_game_totals(
+    api_client: TestClient,
+    auth_identity,
+    db_session: Session,
+):
+    tournament = _create_tournament(api_client, auth_identity.headers)
+    squad = _create_squad(api_client, auth_identity.headers, tournament["id"], "10:00")
+    _configure_brackets(api_client, auth_identity.headers, tournament["id"])
+    bowler = _create_bowler(
+        api_client,
+        auth_identity.headers,
+        tournament["id"],
+        squad["id"],
+        name="Recalculated Handicap Player",
+        average=180,
+    )
+    score_response = api_client.post(
+        "/api/v1/scores/",
+        headers=auth_identity.headers,
+        json={
+            "player_id": bowler["id"],
+            "tournament_id": tournament["id"],
+            "squad_id": squad["id"],
+            "game1_scratch": 200,
+            "game2_scratch": 190,
+            "game3_scratch": 180,
+        },
+    )
+    assert score_response.status_code == 200, score_response.text
+    original_score = score_response.json()
+    assert [
+        original_score[f"game{game}_with_handicap"] for game in (1, 2, 3)
+    ] == [216, 206, 196]
+
+    settings_response = api_client.get(
+        f"/api/v1/bracket-settings/{tournament['id']}",
+        headers=auth_identity.headers,
+    )
+    assert settings_response.status_code == 200, settings_response.text
+    update_response = api_client.put(
+        f"/api/v1/bracket-settings/{settings_response.json()['id']}",
+        headers=auth_identity.headers,
+        json={"handicap_percentage": 90, "handicap_base": 220},
+    )
+    assert update_response.status_code == 200, update_response.text
+
+    player = db_session.query(models.TournamentPlayer).filter(
+        models.TournamentPlayer.id == bowler["id"]
+    ).one()
+    saved_score = db_session.query(models.PlayerScore).filter_by(
+        player_id=bowler["id"], tournament_id=tournament["id"], squad_id=squad["id"]
+    ).one()
+    assert player.handicap_pins == 36
+    assert [saved_score.game1_scratch, saved_score.game2_scratch, saved_score.game3_scratch] == [
+        200, 190, 180
+    ]
+    assert [
+        saved_score.game1_with_handicap,
+        saved_score.game2_with_handicap,
+        saved_score.game3_with_handicap,
+    ] == [236, 226, 216]
+
+
 def test_score_endpoints_are_squad_scoped(api_client: TestClient, auth_identity):
     tournament = _create_tournament(api_client, auth_identity.headers)
     squad_one = _create_squad(api_client, auth_identity.headers, tournament["id"], "10:00")
@@ -198,27 +299,83 @@ def test_invalid_score_payload_is_rejected(api_client: TestClient, auth_identity
     assert response.status_code == 422
 
 
-def test_saved_score_correction_requires_reason_and_records_history(api_client: TestClient, auth_identity):
+def test_score_correction_audit_starts_after_scores_are_unlocked(
+    api_client: TestClient,
+    auth_identity,
+    db_session: Session,
+):
     tournament = _create_tournament(api_client, auth_identity.headers)
     squad = _create_squad(api_client, auth_identity.headers, tournament["id"], "10:00")
     _configure_brackets(api_client, auth_identity.headers, tournament["id"])
     bowler = _create_bowler(api_client, auth_identity.headers, tournament["id"], squad["id"], name="Correction Player", average=180)
     created = api_client.post("/api/v1/scores/", headers=auth_identity.headers, json={
         "player_id": bowler["id"], "tournament_id": tournament["id"], "squad_id": squad["id"], "game1_scratch": 224,
-    }).json()
+    })
+    assert created.status_code == 200, created.text
 
-    rejected = api_client.post("/api/v1/scores/", headers=auth_identity.headers, json={
+    ordinary_edit = api_client.post("/api/v1/scores/", headers=auth_identity.headers, json={
         "player_id": bowler["id"], "tournament_id": tournament["id"], "squad_id": squad["id"], "game1_scratch": 234,
+    })
+    assert ordinary_edit.status_code == 200, ordinary_edit.text
+    ordinary_put_edit = api_client.put(
+        f"/api/v1/scores/{created.json()['id']}",
+        headers=auth_identity.headers,
+        json={"game1_scratch": 235},
+    )
+    assert ordinary_put_edit.status_code == 200, ordinary_put_edit.text
+    corrections_before_unlock = api_client.get(
+        f"/api/v1/scores/{tournament['id']}/corrections",
+        headers=auth_identity.headers,
+    )
+    assert corrections_before_unlock.status_code == 200
+    assert corrections_before_unlock.json() == []
+    score_events_before_unlock = db_session.query(models.TournamentAuditLog).filter(
+        models.TournamentAuditLog.tournament_id == tournament["id"],
+        models.TournamentAuditLog.event_type.in_(("score.entered", "score.changed")),
+    ).count()
+    assert score_events_before_unlock == 0
+
+    lifecycle_before_unlock = api_client.get(
+        f"/api/v1/tournament-lifecycle/{tournament['id']}",
+        headers=auth_identity.headers,
+    )
+    assert lifecycle_before_unlock.status_code == 200
+    assert lifecycle_before_unlock.json()["scores_have_been_unlocked"] is False
+
+    locked = api_client.post(
+        f"/api/v1/scores/{tournament['id']}/lock",
+        headers=auth_identity.headers,
+        json={},
+    )
+    assert locked.status_code == 200
+    unlocked = api_client.post(
+        f"/api/v1/scores/{tournament['id']}/unlock",
+        headers=auth_identity.headers,
+        json={"reason": "Correcting signed score sheet"},
+    )
+    assert unlocked.status_code == 200, unlocked.text
+
+    lifecycle_after_unlock = api_client.get(
+        f"/api/v1/tournament-lifecycle/{tournament['id']}",
+        headers=auth_identity.headers,
+    )
+    assert lifecycle_after_unlock.status_code == 200
+    assert lifecycle_after_unlock.json()["scores_have_been_unlocked"] is True
+
+    rejected = api_client.put(f"/api/v1/scores/{created.json()['id']}", headers=auth_identity.headers, json={
+        "game1_scratch": 245,
     })
     assert rejected.status_code == 422
 
-    corrected = api_client.put(f"/api/v1/scores/{created['id']}", headers=auth_identity.headers, json={
-        "game1_scratch": 234, "correction_reason": "Score sheet correction",
+    corrected = api_client.put(f"/api/v1/scores/{created.json()['id']}", headers=auth_identity.headers, json={
+        "game1_scratch": 245, "correction_reason": "Score sheet correction",
     })
     assert corrected.status_code == 200, corrected.text
     history = api_client.get(f"/api/v1/scores/{tournament['id']}/corrections", headers=auth_identity.headers)
     assert history.status_code == 200
-    assert history.json()[0] | {"old_value": 224, "new_value": 234, "reason": "Score sheet correction"} == history.json()[0]
+    assert history.json()[0]["old_value"] == 235
+    assert history.json()[0]["new_value"] == 245
+    assert history.json()[0]["reason"] == "Score sheet correction"
 
 
 def test_locked_scores_require_reasoned_unlock(api_client: TestClient, auth_identity):

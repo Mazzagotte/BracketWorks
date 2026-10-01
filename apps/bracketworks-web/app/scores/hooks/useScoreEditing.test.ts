@@ -36,6 +36,7 @@ function buildArgs(players: Player[], overrides: Partial<Parameters<typeof useSc
     selectedSquadRef,
     tournament,
     isScoresLocked: false,
+    scoresHaveBeenUnlocked: false,
     isOnline: true,
     isMobile: false,
     sessionToken: 'test-token',
@@ -90,7 +91,7 @@ describe('useScoreEditing — core behaviors', () => {
 
   it('sets row state to saving then saved on successful save', async () => {
     const player = makePlayer(1, { game1_scratch: 150 } as Player['scores'])
-    const args = buildArgs([player])
+    const args = buildArgs([player], { scoresHaveBeenUnlocked: true })
     mockApiFetch.mockResolvedValue(new Response('{}', { status: 200, headers: { 'content-type': 'application/json' } }))
 
     const { result } = renderHook(() => useScoreEditing(args))
@@ -110,6 +111,27 @@ describe('useScoreEditing — core behaviors', () => {
     expect(result.current.rowSaveState[1]).toBe('saved')
     expect(mockApiFetch).toHaveBeenCalledWith('/api/v1/scores/', expect.objectContaining({
       body: expect.stringContaining('"correction_reason":"Score sheet correction"'),
+    }))
+  })
+
+  it('does not ask for a correction reason when filling a blank game before scores are unlocked', async () => {
+    const player = makePlayer(1, { game1_scratch: null } as unknown as Player['scores'])
+    const args = buildArgs([player])
+    mockApiFetch.mockResolvedValue(new Response('{}', { status: 200 }))
+
+    const { result } = renderHook(() => useScoreEditing(args))
+
+    await act(async () => {
+      void result.current.updateScore(1, 'game1_scratch', 200)
+    })
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(600)
+    })
+
+    expect(window.confirm).not.toHaveBeenCalled()
+    expect(window.prompt).not.toHaveBeenCalled()
+    expect(mockApiFetch).toHaveBeenCalledWith('/api/v1/scores/', expect.objectContaining({
+      body: expect.not.stringContaining('correction_reason'),
     }))
   })
 
