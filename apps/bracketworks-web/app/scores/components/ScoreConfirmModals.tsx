@@ -1,5 +1,5 @@
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 interface CalcPayoutsModalProps {
   open: boolean
@@ -169,6 +169,76 @@ export function UnlockScoresModal({
           </button>
         </div>
       </div>
+    </div>
+  )
+}
+
+interface ScoreCorrectionModalProps {
+  request: {
+    playerName: string
+    field: string
+    previousValue: number | null
+    nextValue: number | undefined
+  } | null
+  onCancel: () => void
+  onConfirm: (reason: string) => void
+}
+
+export function ScoreCorrectionModal({ request, onCancel, onConfirm }: ScoreCorrectionModalProps) {
+  const [reason, setReason] = useState('')
+
+  useEffect(() => {
+    setReason('')
+  }, [request])
+
+  if (!request) return null
+
+  const gameNumber = request.field.match(/^game([123])_scratch$/)?.[1] || ''
+  const previousValue = request.previousValue ?? 'blank'
+  const nextValue = request.nextValue ?? 'blank'
+  const trimmedReason = reason.trim()
+
+  return (
+    <div className="bw-scores-calc-overlay">
+      <section
+        className="bw-scores-calc-modal bw-scores-calc-modal-brand"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="score-correction-title"
+      >
+        <div className="bw-scores-calc-head bw-scores-calc-head-brand">
+          <h2 id="score-correction-title" className="bw-scores-calc-title bw-scores-calc-title-warning">
+            Confirm Score Correction
+          </h2>
+        </div>
+        <p className="bw-scores-calc-text">
+          Change Game {gameNumber} for <strong>{request.playerName}</strong> from{' '}
+          <strong>{previousValue}</strong> to <strong>{nextValue}</strong>? This correction will be recorded.
+        </p>
+        <label className="bw-scores-calc-field">
+          <span className="bw-scores-calc-label">Audit reason</span>
+          <textarea
+            className="bw-scores-calc-textarea"
+            value={reason}
+            onChange={event => setReason(event.target.value)}
+            placeholder="Example: correcting a posted Game 2 score"
+            rows={3}
+            autoFocus
+          />
+        </label>
+        <div className="bw-scores-calc-actions">
+          <button className="bw-scores-calc-btn bw-scores-calc-btn-secondary" onClick={onCancel}>
+            Cancel
+          </button>
+          <button
+            className="bw-scores-calc-btn bw-scores-calc-btn-primary bw-scores-calc-btn-warning"
+            onClick={() => onConfirm(trimmedReason)}
+            disabled={!trimmedReason}
+          >
+            Save Correction
+          </button>
+        </div>
+      </section>
     </div>
   )
 }

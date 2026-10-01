@@ -103,9 +103,23 @@ describe('useScoreEditing — core behaviors', () => {
     // Initially saving
     expect(result.current.rowSaveState[1]).toBe('saving')
 
-    // Advance only past the 500ms debounce — the 1400ms "saved→idle" reset must not fire yet
     await act(async () => {
       await vi.advanceTimersByTimeAsync(600)
+    })
+
+    expect(result.current.pendingScoreCorrection).toEqual({
+      playerId: 1,
+      playerName: 'Test Player1',
+      field: 'game1_scratch',
+      previousValue: 150,
+      nextValue: 200,
+    })
+    expect(mockApiFetch).not.toHaveBeenCalled()
+    expect(window.confirm).not.toHaveBeenCalled()
+    expect(window.prompt).not.toHaveBeenCalled()
+
+    await act(async () => {
+      result.current.confirmScoreCorrection('Score sheet correction')
     })
 
     expect(result.current.rowSaveState[1]).toBe('saved')

@@ -11,6 +11,14 @@ import { validateScore } from '../utils/scoreUtils'
 
 type AddToast = (args: { message: string; type: 'success' | 'warning' | 'error'; duration?: number }) => void
 
+export interface PendingScoreCorrection {
+  playerId: number
+  playerName: string
+  field: string
+  previousValue: number | null
+  nextValue: number | undefined
+}
+
 export interface UseScoreEditingArgs {
   players: Player[]
   setPlayers: Dispatch<SetStateAction<Player[]>>
@@ -31,6 +39,9 @@ export interface UseScoreEditingArgs {
 export interface UseScoreEditingResult {
   rowSaveState: Record<number, RowSaveState>
   lastEdit: ScoreEditHistory | null
+  pendingScoreCorrection: PendingScoreCorrection | null
+  confirmScoreCorrection: (reason: string) => void
+  cancelScoreCorrection: () => void
   clearGameConfirm: 2 | 3 | null
   setClearGameConfirm: Dispatch<SetStateAction<2 | 3 | null>>
   rowStateCounts: { saving: number; failed: number }
@@ -79,9 +90,11 @@ export function useScoreEditing({
 }: UseScoreEditingArgs): UseScoreEditingResult {
   const [rowSaveState, setRowSaveState] = useState<Record<number, RowSaveState>>({})
   const [lastEdit, setLastEdit] = useState<ScoreEditHistory | null>(null)
+  const [pendingScoreCorrection, setPendingScoreCorrection] = useState<PendingScoreCorrection | null>(null)
   const [clearGameConfirm, setClearGameConfirm] = useState<2 | 3 | null>(null)
   const debouncedSavesRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
   const correctionOriginalsRef = useRef<Map<string, number | null | undefined>>(new Map())
+  const pendingCorrectionSaveRef = useRef<((reason: string) => void) | null>(null)
 
   // Clear pending debounce timers on unmount to avoid state-after-unmount
   useEffect(() => {
@@ -128,6 +141,118 @@ export function useScoreEditing({
     ) as HTMLInputElement | null
     if (el) { el.focus(); el.select() }
   }, [paginatedItems])
+
+  const persistScore = useCallback(async (
+    playerId: number,
+    field: string,
+    value: number | undefined,
+    correctionReason?: string,
+  ) => {
+    const saveKey = `${playerId}-${field}`
+    try {
+      const token = sessionToken
+      const tournamentId = getSelectedTournamentId()
+
+      if (!token || !tournamentId || !selectedSquadRef.current) {
+        setRowSaveState(prev => ({ ...prev, [playerId]: 'failed' }))
+        return
+      }
+
+      const player = playersRef.current.find(p => p.id === playerId)
+      if (!player) {
+        setRowSaveState(prev => ({ ...prev, [playerId]: 'failed' }))
+        return
+      }
+
+      const updatedScores = { ...player.scores, [field]: value }
+      if (field.includes('scratch')) {
+        const gameNumber = field.includes('game1') ? '1' : field.includes('game2') ? '2' : '3'
+        updatedScores[`game${gameNumber}_with_handicap` as keyof typeof updatedScores] =
+          (value || 0) + (player.handicap || 0)
+      }
+
+      const payload = {
+        player_id: playerId,
+        tournament_id: parseInt(tournamentId),
+        squad_id: selectedSquadRef.current.id,
+        game1_scratch: updatedScores.game1_scratch ?? 0,
+        game2_scratch: updatedScores.game2_scratch ?? 0,
+        game3_scratch: updatedScores.game3_scratch ?? 0,
+        ...(correctionReason ? { correction_reason: correctionReason } : {}),
+      }
+
+      if (!isOnline) {
+        const pendingSave = { data: payload }
+        setPendingSaves(prev => [...prev, pendingSave])
+        localStorage.setItem(`pending_save_${Date.now()}`, JSON.stringify(pendingSave))
+        setRowSaveState(prev => ({ ...prev, [playerId]: 'failed' }))
+        return
+      }
+
+      const response = await apiFetch(API('/api/v1/scores/'), {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+
+      if (!response.ok) {
+        let body = ''
+        try { body = await response.text() } catch { body = '' }
+        logger.error('Score save request failed', { url: API('/api/v1/scores/'), playerId, status: response.status, body: body.slice(0, 500) })
+        throw new Error(`Save failed: ${response.status}`)
+      }
+
+      correctionOriginalsRef.current.delete(saveKey)
+      markRowSaved(playerId)
+      if (value === 300) {
+        addToast({ message: `Perfect game! 300 scored by ${player.firstName} ${player.lastName}`, type: 'success', duration: 5000 })
+      } else if (value && value >= 250) {
+        addToast({ message: `Excellent score: ${value} by ${player.firstName} ${player.lastName}`, type: 'success', duration: 3000 })
+      }
+    } catch (error) {
+      logger.error('Failed to save score:', error)
+      const currentPlayer = playersRef.current.find(p => p.id === playerId)
+      setRowSaveState(prev => ({ ...prev, [playerId]: 'failed' }))
+      addToast({
+        message: `Failed to save score for ${currentPlayer?.firstName || 'player'} ${currentPlayer?.lastName || ''}. Please try again.`,
+        type: 'error',
+        duration: 5000,
+      })
+    } finally {
+      debouncedSavesRef.current.delete(saveKey)
+    }
+  }, [addToast, isOnline, markRowSaved, playersRef, selectedSquadRef, sessionToken, setPendingSaves])
+
+  const confirmScoreCorrection = useCallback((reason: string) => {
+    const savePendingCorrection = pendingCorrectionSaveRef.current
+    const trimmedReason = reason.trim()
+    if (!pendingScoreCorrection || !trimmedReason || !savePendingCorrection) return
+
+    pendingCorrectionSaveRef.current = null
+    setPendingScoreCorrection(null)
+    savePendingCorrection(trimmedReason)
+  }, [pendingScoreCorrection])
+
+  const cancelScoreCorrection = useCallback(() => {
+    if (!pendingScoreCorrection) return
+
+    const { playerId, field, previousValue } = pendingScoreCorrection
+    const saveKey = `${playerId}-${field}`
+    correctionOriginalsRef.current.delete(saveKey)
+    pendingCorrectionSaveRef.current = null
+    setPlayers(previousPlayers => previousPlayers.map(player => {
+      if (player.id !== playerId) return player
+      const scores = { ...player.scores, [field]: previousValue }
+      if (field.includes('scratch')) {
+        const gameNumber = field.includes('game1') ? '1' : field.includes('game2') ? '2' : '3'
+        scores[`game${gameNumber}_with_handicap` as keyof typeof scores] =
+          previousValue === null ? undefined : previousValue + (player.handicap || 0)
+      }
+      return { ...player, scores }
+    }))
+    setRowSaveState(prev => ({ ...prev, [playerId]: 'idle' }))
+    setPendingScoreCorrection(null)
+  }, [pendingScoreCorrection, setPlayers])
 
   const updateScore = useCallback(async (
     playerId: number,
@@ -180,94 +305,29 @@ export function useScoreEditing({
     const existing = debouncedSavesRef.current.get(saveKey)
     if (existing) clearTimeout(existing)
 
-    const timerId = setTimeout(async () => {
-      try {
-        const token = sessionToken
-        const tournamentId = getSelectedTournamentId()
-
-        if (!token || !tournamentId || !selectedSquadRef.current) {
-          setRowSaveState(prev => ({ ...prev, [playerId]: 'failed' }))
-          return
-        }
-
-        const player = playersRef.current.find(p => p.id === playerId)
-        if (!player) {
-          setRowSaveState(prev => ({ ...prev, [playerId]: 'failed' }))
-          return
-        }
-
-        const updatedScores = { ...player.scores, [field]: value }
-        if (field.includes('scratch')) {
-          const gn = field.includes('game1') ? '1' : field.includes('game2') ? '2' : '3'
-          updatedScores[`game${gn}_with_handicap` as keyof typeof updatedScores] =
-            (value || 0) + (player.handicap || 0)
-        }
-
+    const timerId = setTimeout(() => {
         const originalValue = correctionOriginalsRef.current.get(saveKey)
-        let correctionReason: string | undefined
         if (originalValue !== undefined && originalValue !== value) {
-          const confirmed = window.confirm(`Change score from ${originalValue} to ${value ?? 'blank'}? This correction will be recorded.`)
-          correctionReason = confirmed ? window.prompt('Reason for score correction:')?.trim() : undefined
-          if (!confirmed || !correctionReason) {
-            setPlayers(prev => prev.map(row => row.id === playerId
-              ? { ...row, scores: { ...row.scores, [field]: originalValue } }
-              : row))
-            setRowSaveState(prev => ({ ...prev, [playerId]: 'idle' }))
-            correctionOriginalsRef.current.delete(saveKey)
-            if (confirmed) addToast({ message: 'A reason is required to change a saved score.', type: 'warning', duration: 3500 })
+          const player = playersRef.current.find(p => p.id === playerId)
+          if (!player) {
+            setRowSaveState(prev => ({ ...prev, [playerId]: 'failed' }))
             return
           }
-        }
 
-        const payload = {
-          player_id: playerId,
-          tournament_id: parseInt(tournamentId),
-          squad_id: selectedSquadRef.current.id,
-          game1_scratch: updatedScores.game1_scratch ?? 0,
-          game2_scratch: updatedScores.game2_scratch ?? 0,
-          game3_scratch: updatedScores.game3_scratch ?? 0,
-          ...(correctionReason ? { correction_reason: correctionReason } : {}),
-        }
-
-        if (!isOnline) {
-          const pendingSave = { data: payload }
-          setPendingSaves(prev => [...prev, pendingSave])
-          localStorage.setItem(`pending_save_${Date.now()}`, JSON.stringify(pendingSave))
-          setRowSaveState(prev => ({ ...prev, [playerId]: 'failed' }))
+          setPendingScoreCorrection({
+            playerId,
+            playerName: `${player.firstName} ${player.lastName}`.trim(),
+            field,
+            previousValue: originalValue,
+            nextValue: value,
+          })
+          pendingCorrectionSaveRef.current = reason => {
+            void persistScore(playerId, field, value, reason)
+          }
           return
         }
 
-        const response = await apiFetch(API('/api/v1/scores/'), {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        })
-
-        if (response.ok) {
-          correctionOriginalsRef.current.delete(saveKey)
-          markRowSaved(playerId)
-          if (value === 300) {
-            addToast({ message: `Perfect game! 300 scored by ${player.firstName} ${player.lastName}`, type: 'success', duration: 5000 })
-          } else if (value && value >= 250) {
-            addToast({ message: `Excellent score: ${value} by ${player.firstName} ${player.lastName}`, type: 'success', duration: 3000 })
-          }
-        } else {
-          let body = ''
-          try { body = await response.text() } catch { body = '' }
-          logger.error('Score save request failed', { url: API('/api/v1/scores/'), playerId, status: response.status, body: body.slice(0, 500) })
-          throw new Error(`Save failed: ${response.status}`)
-        }
-      } catch (error) {
-        logger.error('Failed to save score:', error)
-        const currentPlayer = playersRef.current.find(p => p.id === playerId)
-        setRowSaveState(prev => ({ ...prev, [playerId]: 'failed' }))
-        addToast({
-          message: `Failed to save score for ${currentPlayer?.firstName || 'player'} ${currentPlayer?.lastName || ''}. Please try again.`,
-          type: 'error',
-          duration: 5000,
-        })
-      }
-      debouncedSavesRef.current.delete(saveKey)
+        void persistScore(playerId, field, value)
     }, SCORE_SAVE_DEBOUNCE_MS)
 
     debouncedSavesRef.current.set(saveKey, timerId)
@@ -275,15 +335,12 @@ export function useScoreEditing({
     addToast,
     focusNextMobileInput,
     isMobile,
-    isOnline,
     isScoresLocked,
     scoresHaveBeenUnlocked,
-    markRowSaved,
     playersRef,
-    selectedSquadRef,
-    sessionToken,
-    setPendingSaves,
+    persistScore,
     setPlayers,
+    setPendingScoreCorrection,
   ])
 
   const retryPlayerSave = useCallback(async (player: Player) => {
@@ -468,6 +525,9 @@ export function useScoreEditing({
   return {
     rowSaveState,
     lastEdit,
+    pendingScoreCorrection,
+    confirmScoreCorrection,
+    cancelScoreCorrection,
     clearGameConfirm,
     setClearGameConfirm,
     rowStateCounts,

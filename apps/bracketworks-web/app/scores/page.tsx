@@ -38,7 +38,7 @@ import { useScoreFilters } from './hooks/useScoreFilters'
 import { useScoreEditing } from './hooks/useScoreEditing'
 import { useScoreLock } from './hooks/useScoreLock'
 import { useOfflineScoreSync } from './hooks/useOfflineScoreSync'
-import { CalcPayoutsModal, BracketMismatchModal, UnlockScoresModal } from './components/ScoreConfirmModals'
+import { CalcPayoutsModal, BracketMismatchModal, ScoreCorrectionModal, UnlockScoresModal } from './components/ScoreConfirmModals'
 import { ScoreEntryTable } from './components/ScoreEntryTable'
 import { MobileScoreCardList } from './components/MobileScoreCard'
 
@@ -89,6 +89,9 @@ export default function ScoresPage() {
   const {
     rowSaveState,
     lastEdit,
+    pendingScoreCorrection,
+    confirmScoreCorrection,
+    cancelScoreCorrection,
     clearGameConfirm,
     setClearGameConfirm,
     rowStateCounts,
@@ -349,6 +352,11 @@ export default function ScoresPage() {
           onProceed={() => { setShowCalcPayoutsConfirm(false); void unlockPayoutsAndGo() }}
         />
         <BracketMismatchModal open={showBracketMismatchWarning} onClose={() => setShowBracketMismatchWarning(false)} />
+        <ScoreCorrectionModal
+          request={pendingScoreCorrection}
+          onCancel={cancelScoreCorrection}
+          onConfirm={confirmScoreCorrection}
+        />
         <UnlockScoresModal
           open={showUnlockScoresConfirm}
           isSubmitting={isUnlockingScores}

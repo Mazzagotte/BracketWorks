@@ -127,6 +127,11 @@ export default function AdminPage() {
   const [announcementMessage, setAnnouncementMessage] = useState("");
   const [announcementAudience, setAnnouncementAudience] = useState<"all" | "admins" | "user">("all");
   const [announcementUserId, setAnnouncementUserId] = useState("");
+  const [announcementUsers, setAnnouncementUsers] = useState<UserRow[]>([]);
+  const [announcementUsersLoading, setAnnouncementUsersLoading] = useState(false);
+  const [announcementUsersError, setAnnouncementUsersError] = useState<string | null>(null);
+  const announcementUsersLoadedRef = useRef(false);
+  const announcementUsersRequestRef = useRef(false);
   const [announcementStatus, setAnnouncementStatus] = useState<"draft" | "active" | "archived">("draft");
   const [announcementRequiresAck, setAnnouncementRequiresAck] = useState(false);
   const [announcementSaving, setAnnouncementSaving] = useState(false);
@@ -233,6 +238,31 @@ export default function AdminPage() {
       if (manual) setRefreshing(false);
     }
   }, [currentUser?.isAdmin, usersPage, usersPageSize, usersSearch, usersSort, usersVerification, usersActivity, usersReview]);
+
+  const loadAnnouncementUsers = useCallback(async () => {
+    if (!currentUser?.isAdmin || announcementUsersLoadedRef.current || announcementUsersRequestRef.current) return;
+    announcementUsersRequestRef.current = true;
+    setAnnouncementUsersLoading(true);
+    setAnnouncementUsersError(null);
+    try {
+      const response = await adminApi.getUsers({
+        page: 1,
+        page_size: 200,
+        search: "",
+        sort: "name_asc",
+        verification: "all",
+        activity: "all",
+        review: "all",
+      });
+      setAnnouncementUsers(response.users);
+      announcementUsersLoadedRef.current = true;
+    } catch (err) {
+      setAnnouncementUsersError(err instanceof Error ? err.message : "Unable to load users.");
+    } finally {
+      announcementUsersRequestRef.current = false;
+      setAnnouncementUsersLoading(false);
+    }
+  }, [currentUser?.isAdmin]);
 
   const loadUserReview = useCallback(async (user: UserRow) => {
     setReviewUser(user);
@@ -695,6 +725,12 @@ export default function AdminPage() {
     if (activeTab === "messages") void loadFeedback(false);
   }, [activeTab, isAuthInitialized, isUserAuthenticated, currentUser?.isAdmin, loadAnnouncements, loadFeedback]);
 
+  useEffect(() => {
+    if (activeTab === "announcements" && announcementAudience === "user") {
+      void loadAnnouncementUsers();
+    }
+  }, [activeTab, announcementAudience, loadAnnouncementUsers]);
+
   useEffect(() => subscribeToDataChanges(['admin', 'tournaments', 'squads', 'settings', 'bowlers', 'scores', 'brackets', 'payouts'], () => {
     if (document.visibilityState === "visible") void loadActiveTab(false);
   }), [loadActiveTab]);
@@ -1115,8 +1151,8 @@ export default function AdminPage() {
               <div className={styles.formRow}><label className={styles.formLabel} htmlFor="announcement-title">Title</label><input id="announcement-title" className={styles.formInput} value={announcementTitle} onChange={event => setAnnouncementTitle(event.target.value)} maxLength={160} /></div>
               <div className={styles.formRow}><label className={styles.formLabel} htmlFor="announcement-message">Message</label><textarea id="announcement-message" className={styles.formTextarea} value={announcementMessage} onChange={event => setAnnouncementMessage(event.target.value)} /></div>
               <div className={styles.announcementOptions}>
-                <div className={styles.formRow}><label className={styles.formLabel}>Audience</label><select className={styles.formInput} value={announcementAudience} onChange={event => setAnnouncementAudience(event.target.value as "all" | "admins" | "user")}><option value="all">All users</option><option value="admins">Administrators</option><option value="user">Specific user</option></select></div>
-                {announcementAudience === "user" && <div className={styles.formRow}><label className={styles.formLabel}>User</label><select className={styles.formInput} value={announcementUserId} onChange={event => setAnnouncementUserId(event.target.value)}><option value="">Select user</option>{usersResponse.users.map(user => <option value={user.id} key={user.id}>{user.first_name} {user.last_name} (@{user.username})</option>)}</select></div>}
+                <div className={styles.formRow}><label className={styles.formLabel} htmlFor="announcement-audience">Audience</label><select id="announcement-audience" className={styles.formInput} value={announcementAudience} onChange={event => { setAnnouncementAudience(event.target.value as "all" | "admins" | "user"); setAnnouncementUserId(""); }}><option value="all">All users</option><option value="admins">Administrators</option><option value="user">Specific user</option></select></div>
+                {announcementAudience === "user" && <div className={styles.formRow}><label className={styles.formLabel} htmlFor="announcement-user">User</label><select id="announcement-user" className={styles.formInput} value={announcementUserId} onChange={event => setAnnouncementUserId(event.target.value)} disabled={announcementUsersLoading || announcementUsers.length === 0}><option value="">{announcementUsersLoading ? "Loading users…" : announcementUsersError ? "Unable to load users" : announcementUsers.length === 0 ? "No users available" : "Select user"}</option>{announcementUsers.map(user => <option value={user.id} key={user.id}>{user.first_name} {user.last_name} (@{user.username})</option>)}</select>{announcementUsersError && <div className={styles.errorBanner} role="alert">{announcementUsersError} <button type="button" className={styles.linkBtn} onClick={() => void loadAnnouncementUsers()}>Retry</button></div>}</div>}
                 <div className={styles.formRow}><label className={styles.formLabel}>Initial status</label><select className={styles.formInput} value={announcementStatus} onChange={event => setAnnouncementStatus(event.target.value as "draft" | "active" | "archived")}><option value="draft">Draft</option><option value="active">Active</option></select></div>
               </div>
               <label className={styles.checkboxRow}><input type="checkbox" checked={announcementRequiresAck} onChange={event => setAnnouncementRequiresAck(event.target.checked)} /><span>Require explicit acknowledgment</span></label>
