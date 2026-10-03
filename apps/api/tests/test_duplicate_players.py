@@ -36,6 +36,50 @@ def test_keep_both_removes_candidate_and_is_audited(api_client, db_session, auth
     assert db_session.query(models.TournamentAuditLog).filter_by(tournament_id=tournament['id'], event_type='players.duplicate_keep_both').count() == 1
 
 
+def test_delete_player_cleans_up_score_corrections_and_duplicate_resolution(
+    api_client, db_session, auth_identity
+):
+    tournament, squad, players = _seed_pair(api_client, auth_identity.headers)
+    player_id = players[0]['id']
+    score = models.PlayerScore(
+        player_id=player_id,
+        tournament_id=tournament['id'],
+        squad_id=squad['id'],
+        game1_scratch=200,
+    )
+    db_session.add(score)
+    db_session.flush()
+    db_session.add(models.ScoreCorrection(
+        tournament_id=tournament['id'],
+        score_id=score.id,
+        player_id=player_id,
+        field_name='game1_scratch',
+        old_value=190,
+        new_value=200,
+        reason='Score sheet correction',
+        changed_by_user_id=auth_identity.user.id,
+    ))
+    db_session.add(models.DuplicatePlayerResolution(
+        tournament_id=tournament['id'],
+        left_player_id=player_id,
+        right_player_id=players[1]['id'],
+        resolution='keep_both',
+        resolved_by_user_id=auth_identity.user.id,
+    ))
+    db_session.commit()
+
+    response = api_client.delete(f"/api/v1/bowlers/{player_id}", headers=auth_identity.headers)
+
+    assert response.status_code == 200, response.text
+    assert db_session.get(models.TournamentPlayer, player_id) is None
+    assert db_session.query(models.PlayerScore).filter_by(player_id=player_id).count() == 0
+    assert db_session.query(models.ScoreCorrection).filter_by(player_id=player_id).count() == 0
+    assert db_session.query(models.DuplicatePlayerResolution).filter(
+        (models.DuplicatePlayerResolution.left_player_id == player_id)
+        | (models.DuplicatePlayerResolution.right_player_id == player_id)
+    ).count() == 0
+
+
 def test_merge_preserves_entries_money_scores_and_downstream_records(api_client, db_session, auth_identity):
     tournament, squad, players = _seed_pair(api_client, auth_identity.headers)
     target_id, source_id = players[0]['id'], players[1]['id']

@@ -834,9 +834,16 @@ def delete_bowler(bowler_id: int, db: Session = Depends(get_db), current_user: m
     bowler_name = bowler.full_name
     reset_payouts_if_needed(db, bowler_tournament_id, bowler_squad_id)
     # Delete FK-dependent records first
+    db.query(models.ScoreCorrection).filter(
+        models.ScoreCorrection.player_id == bowler_id
+    ).delete(synchronize_session=False)
     db.query(models.BracketPayout).filter(models.BracketPayout.player_id == bowler_id).delete()
     db.query(models.BracketWinner).filter(models.BracketWinner.player_id == bowler_id).delete()
     db.query(models.PlayerScore).filter(models.PlayerScore.player_id == bowler_id).delete()
+    db.query(models.DuplicatePlayerResolution).filter(
+        (models.DuplicatePlayerResolution.left_player_id == bowler_id)
+        | (models.DuplicatePlayerResolution.right_player_id == bowler_id)
+    ).delete(synchronize_session=False)
     db.query(models.FirstRoundMatchupHistory).filter(
         (models.FirstRoundMatchupHistory.left_player_id == bowler_id) |
         (models.FirstRoundMatchupHistory.right_player_id == bowler_id)
