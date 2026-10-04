@@ -129,6 +129,10 @@ export type TournamentTemplate = {
   version: 1;
   exported_at: string;
   payload: OrganizerSetupPayload;
+  logo?: {
+    file_name: string;
+    data_url: string;
+  };
 };
 
 export type OrganizerSetupStateSummary = TournamentSetupStateSummaryContract;

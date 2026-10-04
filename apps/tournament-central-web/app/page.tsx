@@ -321,24 +321,6 @@ function normalizeRegistrationFieldKey(key: string): string {
   return key.trim().toLowerCase();
 }
 
-function getRequiredBowlerCountFromSquad(squad: RegistrationSquadConfig | null | undefined): number | null {
-  if (!squad) {
-    return null;
-  }
-
-  const rawValue = typeof squad.requiredBowlerCount === 'number'
-    ? squad.requiredBowlerCount
-    : typeof squad.required_bowler_count === 'number'
-      ? squad.required_bowler_count
-      : null;
-
-  if (rawValue === null || !Number.isFinite(rawValue)) {
-    return null;
-  }
-
-  return Math.max(1, Math.round(rawValue));
-}
-
 function getRequiredBowlerCountFromEvent(event: RegistrationEventConfig | null | undefined): number {
   if (!event) {
     return 1;
@@ -909,11 +891,6 @@ export default function HomePage() {
     [registrationConfig],
   );
 
-  const selectedRegistrationSquad = useMemo(
-    () => registrationSquads.find((squad) => squad.id === registrationForm.squadId) ?? null,
-    [registrationForm.squadId, registrationSquads],
-  );
-
   const eventsForSelectedSquad = useMemo(() => {
     if (!registrationForm.squadId) {
       return registrationEvents;
@@ -957,8 +934,8 @@ export default function HomePage() {
   }, [divisionsForSelectedEvent, squadsForSelectedEvent]);
 
   const requiredBowlerCount = useMemo(
-    () => getRequiredBowlerCountFromSquad(selectedRegistrationSquad) ?? getRequiredBowlerCountFromEvent(selectedRegistrationEvent),
-    [selectedRegistrationEvent, selectedRegistrationSquad],
+    () => getRequiredBowlerCountFromEvent(selectedRegistrationEvent),
+    [selectedRegistrationEvent],
   );
 
   const openRegistrationModal = (tournament: Tournament, triggerElement?: HTMLElement | null) => {
@@ -1063,9 +1040,8 @@ export default function HomePage() {
         next.divisionId = registrationDivisions[0].id;
       }
 
-      const selectedSquad = registrationSquads.find((squad) => squad.id === next.squadId) ?? null;
       const eventForCount = allowedEvents.find((event) => event.id === next.eventId) ?? allowedEvents[0] ?? null;
-      const expectedBowlerCount = getRequiredBowlerCountFromSquad(selectedSquad) ?? getRequiredBowlerCountFromEvent(eventForCount);
+      const expectedBowlerCount = getRequiredBowlerCountFromEvent(eventForCount);
       const currentBowlers = Array.isArray(next.bowlers) ? next.bowlers : [];
       const normalizedBowlers = currentBowlers.slice(0, expectedBowlerCount);
       while (normalizedBowlers.length < expectedBowlerCount) {
@@ -1084,7 +1060,7 @@ export default function HomePage() {
 
       return next;
     });
-  }, [registrationDivisions, registrationEvents, registrationSquads, registrationTournamentId]);
+  }, [registrationDivisions, registrationEvents, registrationForm.eventId, registrationSquads, registrationTournamentId]);
 
   const handleRegistrationSubmit = async () => {
     if (!registrationTournament) {
@@ -1104,7 +1080,7 @@ export default function HomePage() {
     }
 
     if (registrationForm.bowlers.length !== requiredBowlerCount) {
-      setRegistrationSubmitMessage(`This squad requires ${requiredBowlerCount} bowler form${requiredBowlerCount === 1 ? '' : 's'}.`);
+      setRegistrationSubmitMessage(`This event requires ${requiredBowlerCount} bowler form${requiredBowlerCount === 1 ? '' : 's'}.`);
       return;
     }
 
@@ -1537,6 +1513,10 @@ export default function HomePage() {
                 minZoom={MIN_MAP_ZOOM}
                 maxZoom={MAX_MAP_ZOOM}
                 translateExtent={mapTranslateExtent}
+                filterZoomEvent={(event) => {
+                  const sourceEvent = event as unknown as MouseEvent;
+                  return sourceEvent.type !== 'dblclick' && !sourceEvent.ctrlKey && !sourceEvent.button;
+                }}
                 onMoveStart={() => {
                   setIsMapInteracting(true);
                 }}

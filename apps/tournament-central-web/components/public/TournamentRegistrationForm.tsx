@@ -1,6 +1,8 @@
 'use client';
 
-import type { Dispatch, SetStateAction } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import type { Dispatch, KeyboardEvent as ReactKeyboardEvent, SetStateAction } from 'react';
+import { createPortal } from 'react-dom';
 import { CalendarDays, Info, MapPin, Trophy, X } from 'lucide-react';
 import { capitalizeFirstLetter } from '@bracketworks/ui';
 
@@ -140,6 +142,54 @@ export default function TournamentRegistrationForm({
   onClose,
   footerHint = 'Your entry is saved after submission.',
 }: TournamentRegistrationFormProps) {
+  const [isDisclosureOpen, setIsDisclosureOpen] = useState(false);
+  const disclosureAgreementRef = useRef<HTMLInputElement | null>(null);
+  const disclosureTriggerRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    if (isDisclosureOpen) {
+      disclosureAgreementRef.current?.focus();
+    }
+  }, [isDisclosureOpen]);
+
+  const closeDisclosure = () => {
+    setIsDisclosureOpen(false);
+    disclosureTriggerRef.current?.focus();
+  };
+
+  const handleDisclosureKeyDown = (event: ReactKeyboardEvent<HTMLElement>) => {
+    event.stopPropagation();
+
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closeDisclosure();
+      return;
+    }
+
+    if (event.key !== 'Tab') {
+      return;
+    }
+
+    const focusable = event.currentTarget.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), input:not([disabled]), [href], select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    );
+    if (focusable.length === 0) {
+      event.preventDefault();
+      return;
+    }
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const active = document.activeElement;
+    if (event.shiftKey && active === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && active === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  };
+
   return (
     <>
       <header className={`${styles.detailsModalHeader} ${styles.registrationModalHeader}`}>
@@ -216,7 +266,7 @@ export default function TournamentRegistrationForm({
 
           <p className={styles.registrationBowlerCountInfo}>
             <Info size={19} aria-hidden="true" />
-            This squad requires {requiredBowlerCount} bowler form{requiredBowlerCount === 1 ? '' : 's'}.
+            This event requires {requiredBowlerCount} bowler form{requiredBowlerCount === 1 ? '' : 's'}.
           </p>
 
           {formState.bowlers.map((bowlerFields, bowlerIndex) => (
@@ -519,30 +569,76 @@ export default function TournamentRegistrationForm({
           />
         </label>
 
-        <label className={styles.registrationConsentRow}>
-          <input
-            type="checkbox"
-            checked={formState.acceptTerms}
-            onChange={(event) => setFormState((prev) => ({ ...prev, acceptTerms: event.target.checked }))}
-          />
-          <span>I confirm the information above is accurate and agree to tournament registration terms.</span>
-        </label>
-
         {submitMessage && <p className={styles.registrationSubmitMessage}>{submitMessage}</p>}
       </div>
       <footer className={`${styles.detailsModalFooter} ${styles.registrationModalFooter}`}>
         <span className={styles.detailsModalHint}><Info size={20} aria-hidden="true" />{footerHint}</span>
         <button
+          ref={disclosureTriggerRef}
           type="button"
           className={styles.registrationSubmitButton}
-          onClick={() => {
-            void onSubmit();
-          }}
+          onClick={() => setIsDisclosureOpen(true)}
           disabled={isSubmitting}
         >
-          {isSubmitting ? 'Submitting...' : 'Submit Registration'}
+          {isSubmitting ? 'Submitting...' : 'Review & Submit'}
         </button>
       </footer>
+      {isDisclosureOpen && typeof document !== 'undefined'
+        ? createPortal(
+          <div
+            className={styles.registrationDisclosureBackdrop}
+            onClick={(event) => {
+              if (event.target === event.currentTarget) {
+                closeDisclosure();
+              }
+            }}
+          >
+            <section
+              className={styles.registrationDisclosureDialog}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="registration-disclosure-title"
+              aria-describedby="registration-disclosure-copy"
+              tabIndex={-1}
+              onKeyDown={handleDisclosureKeyDown}
+            >
+              <div className={styles.registrationDisclosureCopy}>
+                <span className={styles.detailsModalEyebrow}>Registration Disclosure</span>
+                <h2 id="registration-disclosure-title">Please review before submitting</h2>
+                <p id="registration-disclosure-copy">
+                  By submitting this entry form, I certify that the information provided is accurate to the best of my knowledge. Information collected through this form will be used for tournament registration, eligibility verification, scheduling, results, awards, and tournament-related communications. Personal contact information will not be sold or shared with unrelated third parties.
+                </p>
+              </div>
+              <label className={styles.registrationConsentRow}>
+                <input
+                  ref={disclosureAgreementRef}
+                  type="checkbox"
+                  checked={formState.acceptTerms}
+                  onChange={(event) => setFormState((prev) => ({ ...prev, acceptTerms: event.target.checked }))}
+                />
+                <span>I have read and agree to this disclosure.</span>
+              </label>
+              <div className={styles.registrationDisclosureActions}>
+                <button type="button" className={styles.registrationDisclosureCancel} onClick={closeDisclosure}>
+                  Go Back
+                </button>
+                <button
+                  type="button"
+                  className={styles.registrationSubmitButton}
+                  disabled={!formState.acceptTerms || isSubmitting}
+                  onClick={() => {
+                    setIsDisclosureOpen(false);
+                    void onSubmit();
+                  }}
+                >
+                  {isSubmitting ? 'Submitting...' : 'Agree & Submit Registration'}
+                </button>
+              </div>
+            </section>
+          </div>,
+          document.body,
+        )
+        : null}
     </>
   );
 }

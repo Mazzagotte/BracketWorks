@@ -43,7 +43,6 @@ import {
 import {
   getRegistrationFieldInputType,
   getRequiredBowlerCountFromEvent,
-  getRequiredBowlerCountFromSquad,
   isRegistrationQuestionAnswered,
   isWideRegistrationField,
   normalizeQuestionOptions,
@@ -163,6 +162,46 @@ function getInitialTournamentId(forcedTournamentId: number | null): number | nul
   return Number.isInteger(tournamentId) && tournamentId > 0 ? tournamentId : null;
 }
 
+const MAX_TOURNAMENT_LOGO_BYTES = 5 * 1024 * 1024;
+const ALLOWED_TOURNAMENT_LOGO_TYPES = new Set(['image/png', 'image/jpeg', 'image/jpg']);
+
+function validateTournamentLogoBlob(blob: Blob): void {
+  if (!ALLOWED_TOURNAMENT_LOGO_TYPES.has(blob.type.toLowerCase())) {
+    throw new Error('Tournament templates support PNG and JPG logos only.');
+  }
+
+  if (blob.size > MAX_TOURNAMENT_LOGO_BYTES) {
+    throw new Error('Tournament logo is too large. Max size is 5MB.');
+  }
+}
+
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        resolve(reader.result);
+      } else {
+        reject(new Error('Unable to encode the tournament logo.'));
+      }
+    };
+    reader.onerror = () => reject(reader.error ?? new Error('Unable to read the tournament logo.'));
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function createTournamentLogoFile(dataUrl: string, fileName: string): Promise<File> {
+  if (!/^data:image\/(?:png|jpeg|jpg);base64,/i.test(dataUrl)) {
+    throw new Error('The tournament template contains an invalid logo.');
+  }
+
+  const response = await fetch(dataUrl);
+  const blob = await response.blob();
+  validateTournamentLogoBlob(blob);
+  const safeFileName = fileName.replace(/[\\/]/g, '_').trim() || 'tournament-logo';
+  return new File([blob], safeFileName, { type: blob.type });
+}
+
 function syncUrlState(params: { activeSection: SetupSectionKey; tournamentId: number | null; includeTournamentInQuery: boolean }): void {
   if (typeof window === 'undefined') {
     return;
@@ -191,6 +230,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
     : null;
   const logoInputRef = useRef<HTMLInputElement | null>(null);
   const templateInputRef = useRef<HTMLInputElement | null>(null);
+  const builderActionsMenuRef = useRef<HTMLDetailsElement | null>(null);
   const [activeSection, setActiveSection] = useState<SetupSectionKey>('tournament-details');
   const [drawerState, setDrawerState] = useState<DrawerState>(null);
   const [details, setDetails] = useState<TournamentDetails>(defaultTournamentDetails);
@@ -261,6 +301,29 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
       document.removeEventListener('pointerdown', handlePointerDown);
     };
   }, [openCardMenu]);
+
+  useEffect(() => {
+    const handlePointerDown = (event: PointerEvent) => {
+      const menu = builderActionsMenuRef.current;
+      if (menu?.open && event.target instanceof Node && !menu.contains(event.target)) {
+        menu.open = false;
+      }
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    window.addEventListener('scroll', handleScroll, true);
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      window.removeEventListener('scroll', handleScroll, true);
+    };
+
+    function handleScroll() {
+      const menu = builderActionsMenuRef.current;
+      if (menu?.open) {
+        menu.open = false;
+      }
+    }
+  }, []);
 
   useEffect(() => {
     setActiveSection(getUrlActiveSection());
@@ -757,33 +820,76 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
     }
   };
 
-  const handleExportTemplate = () => {
-    const template: TournamentTemplate = {
-      format: 'tc-tournament-template',
-      version: 1,
-      exported_at: new Date().toISOString(),
-      payload: buildOrganizerSetupPayload({
-        details: { ...details, venueId: null, logoFileName: '' },
-        events,
-        divisions,
-        squads,
-        fees,
-        locations,
-        questions,
-        fields,
-        hasRulesDocument: false,
-        paymentMode,
-        paymentProcessorConnected: false,
-        paymentPayoutConfigured,
-      }),
-    };
-    const blob = new Blob([JSON.stringify(template, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${(details.name.trim() || 'tournament').replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase() || 'tournament'}-template.json`;
-    link.click();
-    URL.revokeObjectURL(url);
+  const handleExportTemplate = async () => {
+    setSaveError(null);
+
+    try {
+      let logoBlob: Blob | null = pendingLogoFile;
+      if (!logoBlob && logoPreviewUrl) {
+        const response = await fetch(logoPreviewUrl);
+        if (!response.ok) {
+          throw new Error('Unable to load the tournament logo for export.');
+        }
+        logoBlob = await response.blob();
+      }
+
+      if (!logoBlob && persistedTournamentId && details.logoFileName) {
+        const token = sessionStorage.getItem('access_token');
+        if (!token) {
+          throw new Error('Your session expired. Please sign in again.');
+        }
+
+        const response = await fetch(`/api/v1/tc/organizer-setup/${persistedTournamentId}/logo`, {
+          headers: { Authorization: `Bearer ${token}` },
+          credentials: 'include',
+          cache: 'no-store',
+        });
+        if (!response.ok) {
+          throw new Error(`Unable to load the tournament logo (${response.status}).`);
+        }
+        logoBlob = await response.blob();
+      }
+
+      if (logoBlob) {
+        validateTournamentLogoBlob(logoBlob);
+      }
+
+      const logoDataUrl = logoBlob ? await blobToDataUrl(logoBlob) : null;
+      const template: TournamentTemplate = {
+        format: 'tc-tournament-template',
+        version: 1,
+        exported_at: new Date().toISOString(),
+        ...(logoDataUrl ? {
+          logo: {
+            file_name: details.logoFileName || 'tournament-logo',
+            data_url: logoDataUrl,
+          },
+        } : {}),
+        payload: buildOrganizerSetupPayload({
+          details: { ...details, venueId: null, logoFileName: logoDataUrl ? details.logoFileName : '' },
+          events,
+          divisions,
+          squads,
+          fees,
+          locations,
+          questions,
+          fields,
+          hasRulesDocument: false,
+          paymentMode,
+          paymentProcessorConnected: false,
+          paymentPayoutConfigured,
+        }),
+      };
+      const blob = new Blob([JSON.stringify(template, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${(details.name.trim() || 'tournament').replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase() || 'tournament'}-template.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : 'Unable to export the tournament template.');
+    }
   };
 
   const handleExportReport = () => {
@@ -828,6 +934,13 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
         throw new Error('Choose a Tournament Central template JSON file.');
       }
 
+      if (parsed.logo && (typeof parsed.logo.data_url !== 'string' || typeof parsed.logo.file_name !== 'string')) {
+        throw new Error('The tournament template contains an invalid logo.');
+      }
+      const importedLogoFile = parsed.logo
+        ? await createTournamentLogoFile(parsed.logo.data_url, parsed.logo.file_name)
+        : null;
+
       const imported = normalizeOrganizerDraft({ tournamentId: null, payload: parsed.payload });
       const eventIds = new Map(imported.events.map((entry) => [entry.id, buildClientId('ev')]));
       const divisionIds = new Map(imported.divisions.map((entry) => [entry.id, buildClientId('div')]));
@@ -839,7 +952,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
         details: {
           ...imported.details,
           venueId: null,
-          logoFileName: '',
+          logoFileName: importedLogoFile?.name || '',
           tournamentStatus: 'draft',
           visibility: 'private',
         },
@@ -885,12 +998,17 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
       };
 
       applyDraft(remappedDraft);
+      if (importedLogoFile) {
+        setPendingLogoFile(importedLogoFile);
+        setPreviewUrl(URL.createObjectURL(importedLogoFile));
+      } else {
+        setPreviewUrl(null);
+      }
       setIsSetupPublished(false);
       setAutosaveEnabled(false);
       setAutosaveSavedAt(null);
       setDraftSavedAt(null);
       setPublishedAt(null);
-      setPreviewUrl(null);
       setSaveError(null);
       setAutosaveError(null);
       setActiveSection('tournament-details');
@@ -908,11 +1026,24 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
           payload: buildTournamentPayload(detailsForSave, remappedDraft.squads, false),
           tournamentId: null,
         });
+        let detailsWithLogo = detailsForSave;
+        if (importedLogoFile) {
+          const logoResult = await uploadTournamentLogo({
+            token,
+            tournamentId: saved.id,
+            file: importedLogoFile,
+          });
+          detailsWithLogo = {
+            ...detailsForSave,
+            logoFileName: logoResult.logo_file_name || importedLogoFile.name,
+          };
+          setPendingLogoFile(null);
+        }
         await saveOrganizerSetupState({
           token,
           tournamentId: saved.id,
           payload: buildOrganizerSetupPayload({
-            details: detailsForSave,
+            details: detailsWithLogo,
             events: remappedDraft.events,
             divisions: remappedDraft.divisions,
             squads: remappedDraft.squads,
@@ -928,7 +1059,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
           isPublished: false,
         });
 
-        applyDraft({ ...remappedDraft, details: detailsForSave, tournamentId: saved.id });
+        applyDraft({ ...remappedDraft, details: detailsWithLogo, tournamentId: saved.id });
         setAutosaveEnabled(true);
         setDraftSavedAt(new Date().toISOString());
         setAutosaveSavedAt(new Date().toISOString());
@@ -1669,19 +1800,14 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
     return linked.length > 0 ? linked : enabledEvents;
   }, [enabledEvents, signupPreviewForm.squadId]);
 
-  const selectedPreviewSquad = useMemo(
-    () => enabledSquads.find((squad) => squad.id === signupPreviewForm.squadId) ?? null,
-    [enabledSquads, signupPreviewForm.squadId],
-  );
-
   const selectedPreviewEvent = useMemo(
     () => enabledEvents.find((event) => event.id === signupPreviewForm.eventId) ?? eventsForSelectedPreviewSquad[0] ?? null,
     [enabledEvents, eventsForSelectedPreviewSquad, signupPreviewForm.eventId],
   );
 
   const requiredPreviewBowlerCount = useMemo(
-    () => getRequiredBowlerCountFromSquad(selectedPreviewSquad) ?? getRequiredBowlerCountFromEvent(selectedPreviewEvent),
-    [selectedPreviewEvent, selectedPreviewSquad],
+    () => getRequiredBowlerCountFromEvent(selectedPreviewEvent),
+    [selectedPreviewEvent],
   );
 
   useEffect(() => {
@@ -1710,9 +1836,8 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
         next.divisionId = enabledDivisions[0]?.id ?? '';
       }
 
-      const selectedSquad = enabledSquads.find((squad) => squad.id === next.squadId) ?? null;
       const selectedEvent = enabledEvents.find((event) => event.id === next.eventId) ?? null;
-      const requiredCount = getRequiredBowlerCountFromSquad(selectedSquad) ?? getRequiredBowlerCountFromEvent(selectedEvent);
+      const requiredCount = getRequiredBowlerCountFromEvent(selectedEvent);
 
       if (next.bowlers.length !== requiredCount) {
         const nextBowlers = Array.from({ length: requiredCount }, (_, index) => next.bowlers[index] ?? {});
@@ -1723,7 +1848,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
 
       return next;
     });
-  }, [enabledDivisions, enabledEvents, enabledSquads]);
+  }, [enabledDivisions, enabledEvents, enabledSquads, signupPreviewForm.eventId]);
 
   const handleSignupPreviewSubmit = async () => {
     if (!signupPreviewForm.squadId) {
@@ -1732,7 +1857,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
     }
 
     if (signupPreviewForm.bowlers.length !== requiredPreviewBowlerCount) {
-      setSignupPreviewSubmitMessage(`This squad requires ${requiredPreviewBowlerCount} bowler form${requiredPreviewBowlerCount === 1 ? '' : 's'}.`);
+      setSignupPreviewSubmitMessage(`This event requires ${requiredPreviewBowlerCount} bowler form${requiredPreviewBowlerCount === 1 ? '' : 's'}.`);
       return;
     }
 
@@ -2366,9 +2491,16 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
               className={styles.visuallyHidden}
               onChange={(event) => { void handleImportTemplate(event); }}
             />
-            <details className={styles.builderActionsMenu}>
+            <details ref={builderActionsMenuRef} className={styles.builderActionsMenu}>
               <summary><MoreHorizontal size={15} /> More</summary>
-              <div className={styles.builderActionsMenuPanel}>
+              <div
+                className={styles.builderActionsMenuPanel}
+                onClick={() => {
+                  if (builderActionsMenuRef.current) {
+                    builderActionsMenuRef.current.open = false;
+                  }
+                }}
+              >
                 <button type="button" onClick={() => { void handleOpenTournamentModal(); }} disabled={isLoadingTournamentLibrary}><RotateCcw size={14} /> {isLoadingTournamentLibrary ? 'Loading...' : 'Load Tournament'}</button>
                 <button type="button" onClick={() => templateInputRef.current?.click()}><Upload size={14} /> Import Template</button>
                 <button type="button" onClick={handleExportReport}><Download size={14} /> Download Summary</button>
