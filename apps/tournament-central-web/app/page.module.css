@@ -538,6 +538,11 @@
   display: block;
 }
 
+.featuredLogoPlaceholder {
+  color: var(--color-primary);
+  background: var(--bw-surface-card-strong);
+}
+
 .featuredBrandPanel {
   position: relative;
   display: flex;
@@ -1263,8 +1268,32 @@
 }
 
 .tournamentMediaFallback {
+  display: grid;
+  place-items: center;
   background: var(--bw-surface-card-strong);
   box-shadow: none;
+}
+
+.tournamentMediaPlaceholder {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 100%;
+  color: var(--bw-text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.tournamentMediaPlaceholder svg {
+  box-sizing: content-box;
+  padding: 12px;
+  border: 1px solid var(--bw-border-subtle);
+  border-radius: 14px;
+  background: var(--bw-surface-panel-strong);
+  color: var(--color-primary);
 }
 
 .tournamentMediaWithLogo {

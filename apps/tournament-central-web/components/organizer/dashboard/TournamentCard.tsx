@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { CalendarDays, MapPin, Users, UsersRound, Coins, Eye, Trash2 } from 'lucide-react';
+import { CalendarDays, MapPin, Users, UsersRound, Coins, Eye, Trash2, Trophy } from 'lucide-react';
 
 import type { OrganizerDashboardTournament } from './useOrganizerDashboard';
 import TournamentStatusBadge from './TournamentStatusBadge';
@@ -72,7 +72,10 @@ export default function TournamentCard({ tournament, isDeleting, onDelete }: Tou
             unoptimized
           />
         ) : (
-          <div className={styles.posterMark}>USBC</div>
+          <div className={styles.posterFallback}>
+            <span className={styles.posterMark}><Trophy size={28} aria-hidden="true" /></span>
+            <span className={styles.posterFallbackLabel}>Tournament</span>
+          </div>
         )}
       </div>
 

@@ -33,6 +33,7 @@ export interface TournamentContract {
     website?: string | null;
   } | null;
   entry_count?: number;
+  amount_paid_cents?: number;
   brackets_configured?: boolean;
   lifecycle_status?: 'setup' | 'ready' | 'in_progress' | 'scores_complete' | 'payout_review' | 'finalized' | 'archived';
   scores_locked?: boolean;

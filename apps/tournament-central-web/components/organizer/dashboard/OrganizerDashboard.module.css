@@ -390,6 +390,20 @@
   overflow: hidden;
 }
 
+.posterFallback {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 10px;
+  color: var(--bw-text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
 .tournamentLogo {
   position: absolute !important;
   inset: 0 !important;
@@ -407,10 +421,14 @@
 }
 
 .posterMark {
-  font-size: 1.5rem;
-  font-weight: 900;
-  letter-spacing: -0.08em;
-  color: rgba(255, 255, 255, 0.96);
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--bw-border-card);
+  border-radius: 18px;
+  background: var(--bw-surface-panel-strong);
+  color: var(--color-primary);
 }
 
 .cardBody {

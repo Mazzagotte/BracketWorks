@@ -408,6 +408,7 @@ class Tournament(TournamentBase):
     logo_mime_type: Optional[str] = None
     venue: Optional["TcVenue"] = None
     entry_count: Optional[int] = None
+    amount_paid_cents: Optional[int] = None
     brackets_configured: Optional[bool] = None
     lifecycle_status: str = "setup"
     scores_locked: bool = False

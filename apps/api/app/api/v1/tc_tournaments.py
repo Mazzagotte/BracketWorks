@@ -4,6 +4,7 @@ import logging
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Response, UploadFile
 from pydantic import BaseModel
 from sqlalchemy import func
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from ...api import deps
@@ -18,6 +19,11 @@ from ...services.tc_tournament_documents import (
 from ...services.tc_tournament_logo import validate_tournament_logo_upload
 from ...services.tc_setup_relationships import resolve_entry_config_snapshots
 from ...services.tc_venues import build_tournament_location
+from ...services.tc_tournament_names import (
+    DUPLICATE_PUBLISHED_TOURNAMENT_NAME,
+    has_duplicate_published_tournament_name,
+    is_published_tournament_name_unique_violation,
+)
 from ...services.tournament_access import verify_owned_tc_tournament_access
 
 logger = logging.getLogger(__name__)
@@ -59,6 +65,7 @@ def _serialize_venue(venue: models.TcVenue | None) -> dict | None:
 def _tc_tournament_to_dict(
     tournament: models.TournamentCentral,
     entry_count: int = 0,
+    amount_paid_cents: int = 0,
     venue: models.TcVenue | None = None,
 ) -> dict:
     tournament_dict = tournament.__dict__.copy()
@@ -69,6 +76,7 @@ def _tc_tournament_to_dict(
 
     # Keep compatibility with existing TournamentSummary consumers.
     tournament_dict["entry_count"] = max(entry_count, 0)
+    tournament_dict["amount_paid_cents"] = max(amount_paid_cents, 0)
     tournament_dict["brackets_configured"] = False
     tournament_dict["has_logo"] = bool(tournament.logo_blob)
     tournament_dict["logo_file_name"] = tournament.logo_file_name
@@ -85,6 +93,13 @@ def create_tournament(
     user=Depends(deps.get_current_user),
 ):
     try:
+        if tournament.is_public and has_duplicate_published_tournament_name(
+            db,
+            user_id=user.id,
+            name=tournament.name,
+        ):
+            raise HTTPException(status_code=409, detail=DUPLICATE_PUBLISHED_TOURNAMENT_NAME)
+
         venue = None
         if tournament.venue_id is not None:
             venue = db.query(models.TcVenue).filter(models.TcVenue.id == tournament.venue_id).first()
@@ -107,6 +122,15 @@ def create_tournament(
         db.commit()
         db.refresh(db_tournament)
         return _tc_tournament_to_dict(db_tournament, venue=venue)
+    except HTTPException:
+        db.rollback()
+        raise
+    except IntegrityError as error:
+        db.rollback()
+        if is_published_tournament_name_unique_violation(error):
+            raise HTTPException(status_code=409, detail=DUPLICATE_PUBLISHED_TOURNAMENT_NAME) from error
+        logger.error(f"Error creating TC tournament: {error}")
+        raise HTTPException(status_code=500, detail="Failed to create tournament") from error
     except Exception as error:
         db.rollback()
         logger.error(f"Error creating TC tournament: {error}")
@@ -140,6 +164,7 @@ def list_tournaments(
         venues_by_id = {venue.id: venue for venue in venues}
 
     entry_counts_by_tournament: dict[int, int] = {}
+    paid_amounts_by_tournament: dict[int, int] = {}
     if tournament_ids:
         entry_counts = (
             db.query(models.TcEntry.tournament_id, func.count(models.TcEntry.id))
@@ -152,10 +177,26 @@ def list_tournaments(
         )
         entry_counts_by_tournament = {int(tid): int(count) for tid, count in entry_counts}
 
+        paid_amounts = (
+            db.query(
+                models.TcRegistration.tournament_id,
+                func.coalesce(func.sum(models.TcRegistration.total_cents), 0),
+            )
+            .filter(
+                models.TcRegistration.tournament_id.in_(tournament_ids),
+                models.TcRegistration.payment_status == "paid",
+                models.TcRegistration.status.notin_(("cancelled", "refunded")),
+            )
+            .group_by(models.TcRegistration.tournament_id)
+            .all()
+        )
+        paid_amounts_by_tournament = {int(tid): int(amount) for tid, amount in paid_amounts}
+
     return [
         _tc_tournament_to_dict(
             tournament,
             entry_count=entry_counts_by_tournament.get(tournament.id, 0),
+            amount_paid_cents=paid_amounts_by_tournament.get(tournament.id, 0),
             venue=venues_by_id.get(tournament.venue_id or -1),
         )
         for tournament in tournaments
@@ -218,6 +259,14 @@ def update_tournament(
 ):
     try:
         db_tournament = verify_owned_tc_tournament_access(db, tournament_id, user)
+        if db_tournament.is_public and has_duplicate_published_tournament_name(
+            db,
+            user_id=db_tournament.user_id,
+            name=tournament.name,
+            exclude_tournament_id=db_tournament.id,
+        ):
+            raise HTTPException(status_code=409, detail=DUPLICATE_PUBLISHED_TOURNAMENT_NAME)
+
         venue = None
         venue_id_was_sent = "venue_id" in tournament.model_fields_set
 
@@ -255,7 +304,14 @@ def update_tournament(
             venue = db.query(models.TcVenue).filter(models.TcVenue.id == db_tournament.venue_id).first()
         return _tc_tournament_to_dict(db_tournament, entry_count=entry_count, venue=venue)
     except HTTPException:
+        db.rollback()
         raise
+    except IntegrityError as error:
+        db.rollback()
+        if is_published_tournament_name_unique_violation(error):
+            raise HTTPException(status_code=409, detail=DUPLICATE_PUBLISHED_TOURNAMENT_NAME) from error
+        logger.error(f"Error updating TC tournament {tournament_id}: {error}")
+        raise HTTPException(status_code=500, detail="Failed to update tournament") from error
     except Exception as error:
         db.rollback()
         logger.error(f"Error updating TC tournament {tournament_id}: {error}")

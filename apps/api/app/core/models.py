@@ -7,13 +7,16 @@ from sqlalchemy import (
     DateTime,
     Float,
     ForeignKey,
+    Index,
     Integer,
     JSON,
     LargeBinary,
     Numeric,
+    or_,
     String,
     Text,
     UniqueConstraint,
+    func,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, synonym
 
@@ -521,9 +524,21 @@ class TournamentCentral(Base):
     end_date: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     squad_times: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     is_public: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, index=True)
+    is_published: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     logo_blob: Mapped[Optional[bytes]] = mapped_column(LargeBinary, nullable=True)
     logo_mime_type: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     logo_file_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+
+    __table_args__ = (
+        Index(
+            "uq_tc_tournaments_owner_published_name",
+            "user_id",
+            func.lower(func.trim(name)),
+            unique=True,
+            postgresql_where=or_(is_public.is_(True), is_published.is_(True)),
+            sqlite_where=or_(is_public.is_(True), is_published.is_(True)),
+        ),
+    )
 
 
 class TcVenue(Base):

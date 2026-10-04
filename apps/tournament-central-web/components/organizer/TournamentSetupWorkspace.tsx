@@ -8,7 +8,7 @@ import type { TournamentContract, TournamentSetupStateSummaryContract } from '@b
 
 import ConfigDrawer from './ConfigDrawer';
 import PublishValidationSummary from './PublishValidationSummary';
-import { listMyOrganizerSetupStates, listMyTournaments, resolveTcVenue } from './organizerApi';
+import { getTournament, listMyOrganizerSetupStates, listMyTournaments, resolveTcVenue } from './organizerApi';
 import { organizerRoutes } from './organizerRoutes';
 import TournamentRegistrationForm from '../public/TournamentRegistrationForm';
 import TournamentDetailsSection from './setup/TournamentDetailsSection';
@@ -483,28 +483,29 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
       }
 
       try {
-        const { setupStates, tournaments } = await refreshTournamentLibrary(token);
-        if (cancelled) {
+        if (routeTournamentId === null) {
+          await refreshTournamentLibrary(token);
           return;
         }
 
-        const preferredTournamentId = routeTournamentId === null
-          ? null
-          : getInitialTournamentId(routeTournamentId);
-
+        const preferredTournamentId = getInitialTournamentId(routeTournamentId);
         if (!preferredTournamentId) {
           return;
         }
 
-        const selectedTournament = tournaments.find((entry) => entry.id === preferredTournamentId);
-        if (!selectedTournament || cancelled) {
-          return;
-        }
-
-        const state = await loadOrganizerSetupState(token, preferredTournamentId);
+        const [selectedTournament, state] = await Promise.all([
+          getTournament(token, preferredTournamentId),
+          loadOrganizerSetupState(token, preferredTournamentId),
+        ]);
         if (cancelled) {
           return;
         }
+
+        setUserTournaments((previous) => [
+          selectedTournament,
+          ...previous.filter((entry) => entry.id !== selectedTournament.id),
+        ]);
+        void refreshTournamentLibrary(token).catch(() => undefined);
 
         const hydratedDraft = state
           ? normalizeOrganizerDraft({

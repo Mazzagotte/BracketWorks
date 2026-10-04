@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 import type { TournamentContract, TournamentSetupStateSummaryContract } from '@bracketworks/types';
 
@@ -66,6 +67,14 @@ type TournamentProviderProps = {
 };
 
 export function TournamentProvider({ tournamentId, children }: TournamentProviderProps) {
+  const pathname = (usePathname() ?? '').replace(/\/+$/, '');
+  const routeSection = pathname.split('/').filter(Boolean).slice(3).join('/');
+  const isSetupEditorRoute = routeSection === 'setup';
+  const needsTournament = !isSetupEditorRoute;
+  const needsSetup = routeSection === '' || routeSection === 'squads';
+  const needsRegistrations = routeSection === ''
+    || ['registrations', 'participants', 'payments', 'squads'].includes(routeSection);
+
   const [tournament, setTournament] = useState<TournamentContract | null>(null);
   const [setupSummary, setSetupSummary] = useState<TournamentSetupStateSummaryContract | undefined>(undefined);
   const [squads, setSquads] = useState<SquadConfig[]>([]);
@@ -74,9 +83,9 @@ export function TournamentProvider({ tournamentId, children }: TournamentProvide
   const [hasRulesDocument, setHasRulesDocument] = useState(false);
   const [registrationOpenIso, setRegistrationOpenIso] = useState<string | null>(null);
   const [registrationCloseIso, setRegistrationCloseIso] = useState<string | null>(null);
-  const [isTournamentLoading, setIsTournamentLoading] = useState(true);
-  const [isSetupLoading, setIsSetupLoading] = useState(true);
-  const [isRegistrationsLoading, setIsRegistrationsLoading] = useState(true);
+  const [isTournamentLoading, setIsTournamentLoading] = useState(needsTournament);
+  const [isSetupLoading, setIsSetupLoading] = useState(needsSetup);
+  const [isRegistrationsLoading, setIsRegistrationsLoading] = useState(needsRegistrations);
   const [tournamentError, setTournamentError] = useState<string | null>(null);
   const [setupError, setSetupError] = useState<string | null>(null);
   const [registrationsError, setRegistrationsError] = useState<string | null>(null);
@@ -143,14 +152,34 @@ export function TournamentProvider({ tournamentId, children }: TournamentProvide
   }, [getAccessToken, tournamentId]);
 
   const refresh = useCallback(async () => {
-    await Promise.allSettled([refreshTournament(), refreshSetup(), refreshRegistrations()]);
-  }, [refreshRegistrations, refreshSetup, refreshTournament]);
+    const requests: Promise<void>[] = [];
+    if (needsTournament) {
+      requests.push(refreshTournament());
+    } else {
+      setIsTournamentLoading(false);
+      setTournamentError(null);
+    }
+
+    if (needsSetup) {
+      requests.push(refreshSetup());
+    } else {
+      setIsSetupLoading(false);
+      setSetupError(null);
+    }
+
+    if (needsRegistrations) {
+      requests.push(refreshRegistrations());
+    } else {
+      setIsRegistrationsLoading(false);
+      setRegistrationsError(null);
+    }
+
+    await Promise.allSettled(requests);
+  }, [needsRegistrations, needsSetup, needsTournament, refreshRegistrations, refreshSetup, refreshTournament]);
 
   useEffect(() => {
     void refresh();
-    // Intentionally re-runs only when the tournament id changes; refresh() is stable per id.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tournamentId]);
+  }, [refresh]);
 
   const value = useMemo<TournamentContextValue>(() => ({
     tournamentId,

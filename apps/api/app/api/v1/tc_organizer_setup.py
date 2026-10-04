@@ -1,6 +1,7 @@
 import logging
 
 from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from ...api import deps
@@ -8,6 +9,11 @@ from ...core import models, schemas
 from ...services.tc_tournament_logo import validate_tournament_logo_upload
 from ...services.tournament_access import verify_owned_tc_tournament_access
 from ...services.tc_setup_validation import PUBLISHED_SNAPSHOT_KEY, clean_setup_payload, validate_publishable_setup
+from ...services.tc_tournament_names import (
+    DUPLICATE_PUBLISHED_TOURNAMENT_NAME,
+    has_duplicate_published_tournament_name,
+    is_published_tournament_name_unique_violation,
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -124,6 +130,16 @@ def upsert_tournament_setup_state(
     tournament = verify_owned_tc_tournament_access(db, tournament_id, user)
     draft_payload = clean_setup_payload(payload.payload)
 
+    visibility = str((draft_payload.get("details") or {}).get("visibility") or "private")
+    will_be_public = payload.is_published and visibility in {"public", "unlisted"}
+    if will_be_public and has_duplicate_published_tournament_name(
+        db,
+        user_id=tournament.user_id,
+        name=tournament.name,
+        exclude_tournament_id=tournament.id,
+    ):
+        raise HTTPException(status_code=409, detail=DUPLICATE_PUBLISHED_TOURNAMENT_NAME)
+
     if payload.is_published:
         publish_errors = validate_publishable_setup(draft_payload)
         if publish_errors:
@@ -150,6 +166,8 @@ def upsert_tournament_setup_state(
             stored_payload = draft_payload
             published = False
 
+        tournament.is_published = published
+
         if state is None:
             state = models.TournamentCentralSetupState(
                 tournament_id=tournament_id,
@@ -167,6 +185,15 @@ def upsert_tournament_setup_state(
         db.commit()
         db.refresh(state)
         return state
+    except IntegrityError as error:
+        db.rollback()
+        if is_published_tournament_name_unique_violation(error):
+            raise HTTPException(status_code=409, detail=DUPLICATE_PUBLISHED_TOURNAMENT_NAME) from error
+        logger.error(
+            "Error saving TC tournament setup state",
+            extra={"tournament_id": tournament_id, "error": str(error)},
+        )
+        raise HTTPException(status_code=500, detail="Failed to save organizer setup") from error
     except Exception as error:
         db.rollback()
         logger.error(

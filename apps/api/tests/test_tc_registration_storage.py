@@ -77,15 +77,22 @@ def _base_setup_payload(*, waitlist_enabled: bool = True, capacity: int = 100, d
     }
 
 
-def _create_tc_tournament_with_setup(db_session, owner_id: int, *, setup_payload: dict) -> models.TournamentCentral:
+def _create_tc_tournament_with_setup(
+    db_session,
+    owner_id: int,
+    *,
+    setup_payload: dict,
+    tournament_name: str = "TC Local Event",
+) -> models.TournamentCentral:
     tournament = models.TournamentCentral(
         user_id=owner_id,
-        name="TC Local Event",
+        name=tournament_name,
         location="Boise, ID",
         start_date="2026-10-01",
         end_date="2026-10-02",
         squad_times="{}",
         is_public=True,
+        is_published=True,
     )
     db_session.add(tournament)
     db_session.commit()
@@ -164,6 +171,35 @@ def test_public_registration_is_stored_relationally_and_not_in_setup_payload(api
     setup_state = db_session.query(models.TournamentCentralSetupState).filter_by(tournament_id=tournament.id).first()
     setup_payload = setup_state.payload if setup_state else {}
     assert "public_registration_submissions" not in setup_payload
+
+
+def test_owner_cannot_publish_tournaments_with_duplicate_names(api_client, db_session, make_user, make_auth_headers):
+    owner = make_user("tc_owner_duplicate_publish")
+    first_payload = _base_setup_payload()
+    published = _create_tc_tournament_with_setup(db_session, owner.id, setup_payload=first_payload)
+    published.name = "Ada County BVL Fundraiser"
+
+    duplicate = models.TournamentCentral(
+        user_id=owner.id,
+        name="  ada county bvl fundraiser  ",
+        location="Boise, ID",
+        squad_times="{}",
+        is_public=False,
+    )
+    db_session.add(duplicate)
+    db_session.commit()
+    db_session.refresh(duplicate)
+
+    response = api_client.put(
+        f"/api/v1/tc/organizer-setup/{duplicate.id}",
+        headers=make_auth_headers(owner),
+        json={"payload": _base_setup_payload(), "is_published": True},
+    )
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == "You already have a published tournament with this name. Choose a different name."
+    db_session.refresh(duplicate)
+    assert duplicate.is_public is False
 
 
 def test_doubles_registration_requires_two_bowlers(api_client, db_session, make_user):
@@ -432,6 +468,10 @@ def test_tc_tournament_entry_count_reflects_relational_entries(api_client, db_se
     )
     assert create_response.status_code == 200
 
+    registration = db_session.query(models.TcRegistration).filter_by(tournament_id=tournament.id).one()
+    registration.payment_status = "paid"
+    db_session.commit()
+
     list_response = api_client.get(
         "/api/v1/tc/tournaments/",
         headers=make_auth_headers(owner),
@@ -441,6 +481,7 @@ def test_tc_tournament_entry_count_reflects_relational_entries(api_client, db_se
     rows = list_response.json()
     tournament_row = next(row for row in rows if row["id"] == tournament.id)
     assert tournament_row["entry_count"] == 1
+    assert tournament_row["amount_paid_cents"] == registration.total_cents
 
 
 def test_organizer_cannot_access_another_organizers_registrations(api_client, db_session, make_user, make_auth_headers):
@@ -589,7 +630,12 @@ def test_entry_edit_rejects_config_id_from_another_tournament(api_client, db_ses
     tournament = _create_tc_tournament_with_setup(db_session, owner.id, setup_payload=_base_setup_payload())
     foreign_payload = _base_setup_payload()
     foreign_payload["squads"][0]["id"] = "sq-foreign"
-    _create_tc_tournament_with_setup(db_session, owner.id, setup_payload=foreign_payload)
+    _create_tc_tournament_with_setup(
+        db_session,
+        owner.id,
+        setup_payload=foreign_payload,
+        tournament_name="TC Local Event Foreign",
+    )
     assert api_client.post(
         f"/api/v1/public/tc-tournament/{tournament.id}/registration",
         json=_registration_payload(),

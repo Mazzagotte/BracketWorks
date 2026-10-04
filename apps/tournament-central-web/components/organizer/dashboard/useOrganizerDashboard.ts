@@ -3,8 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { TournamentContract, TournamentSetupStateSummaryContract } from '@bracketworks/types';
 
-import { listMyOrganizerSetupStates, listMyTournaments, listTournamentRegistrations } from '../organizerApi';
-import { buildPaymentSummary } from '../tournamentInsights';
+import { listMyOrganizerSetupStates, listMyTournaments } from '../organizerApi';
 
 export type OrganizerAttentionItem = {
   id: string;
@@ -140,16 +139,6 @@ export function useOrganizerDashboard() {
         listMyOrganizerSetupStates(token),
       ]);
 
-      const paidCentsByTournamentId = new Map<number, number>();
-      await Promise.all(tournamentRows.map(async (item) => {
-        try {
-          const registrations = await listTournamentRegistrations(token, item.id);
-          paidCentsByTournamentId.set(item.id, buildPaymentSummary(registrations).paidCents);
-        } catch {
-          paidCentsByTournamentId.set(item.id, 0);
-        }
-      }));
-
       const mapped = tournamentRows.map((item) => {
         const publicUrl = (item as { public_url?: string | null }).public_url ?? null;
         return {
@@ -162,7 +151,7 @@ export function useOrganizerDashboard() {
           entryCount: typeof item.entry_count === 'number' ? item.entry_count : null,
           squadCount: countSquads(item.squad_times),
           upcomingSquadCount: countUpcomingSquads(item.squad_times, new Date(), 7),
-          amountPaidCents: paidCentsByTournamentId.get(item.id) ?? 0,
+          amountPaidCents: item.amount_paid_cents ?? 0,
           hasPublishedSetup: setupRows.some((row) => row.tournament_id === item.id && row.is_published),
           publicUrl,
           hasLogo: Boolean(item.has_logo),

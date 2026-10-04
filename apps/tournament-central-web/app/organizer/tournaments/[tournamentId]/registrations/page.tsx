@@ -31,6 +31,8 @@ import OrganizerStatusBadge from '@/components/organizer/OrganizerStatusBadge';
 import ConfirmDialog from '@/components/organizer/ConfirmDialog';
 import { formatMoney } from '@/components/organizer/organizerFormatting';
 import { organizerRoutes } from '@/components/organizer/organizerRoutes';
+import TournamentRegistrationForm from '@/components/public/TournamentRegistrationForm';
+import type { RegistrationFormState, RegistrationQuestionAnswerValue } from '@/components/public/TournamentRegistrationForm';
 import styles from '../page.module.css';
 
 type FilterValue = 'all' | 'confirmed' | 'pending' | 'cancelled';
@@ -56,6 +58,49 @@ type EntryEditForm = {
   notes: string;
   bowlers: EditableBowler[];
 };
+
+type ManualRegistrationEvent = {
+  id: string;
+  name: string;
+  enabled?: boolean;
+  minPlayers?: number;
+  maxPlayers?: number;
+  connectedDivisionIds?: string[];
+  connectedSquadIds?: string[];
+};
+
+type ManualRegistrationConfig = {
+  tournament_id: number;
+  tournament_name: string;
+  events: ManualRegistrationEvent[];
+  divisions: Array<{ id: string; name: string; enabled?: boolean }>;
+  squads: Array<{ id: string; name: string; dateIso?: string; startTime?: string }>;
+  fields: Array<{ id: string; key: string; label: string; customLabel?: string; mode: 'required' | 'optional' | 'dont-ask'; validation?: string; displayOrder?: number }>;
+  questions: Array<{ id: string; label: string; type?: 'short-text' | 'long-text' | 'number' | 'yes-no' | 'dropdown' | 'multiple-choice' | 'checkbox' | 'date'; required: boolean; enabled?: boolean; options?: string[]; displayOrder?: number }>;
+};
+
+const EMPTY_MANUAL_REGISTRATION_FORM: RegistrationFormState = {
+  bowlers: [{}],
+  eventId: '',
+  divisionId: '',
+  squadId: '',
+  notes: '',
+  bowlerQuestionAnswers: [{}],
+  acceptTerms: false,
+};
+
+function requiredBowlersForEvent(event: ManualRegistrationEvent | null): number {
+  if (!event) return 1;
+  const minPlayers = Number.isFinite(event.minPlayers) ? Number(event.minPlayers) : 1;
+  const maxPlayers = Number.isFinite(event.maxPlayers) ? Number(event.maxPlayers) : minPlayers;
+  return Math.max(1, minPlayers, maxPlayers);
+}
+
+function hasManualQuestionAnswer(answer: RegistrationQuestionAnswerValue | undefined): boolean {
+  if (Array.isArray(answer)) return answer.some((value) => value.trim().length > 0);
+  if (typeof answer === 'boolean') return true;
+  return typeof answer === 'string' && answer.trim().length > 0;
+}
 
 function formatSubmittedAt(value: string | undefined): { date: string; time: string } {
   if (!value) return { date: 'Unknown date', time: '' };
@@ -100,7 +145,191 @@ export default function OrganizerTournamentRegistrationsPage() {
   const [isMutating, setIsMutating] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [pendingDeleteEntry, setPendingDeleteEntry] = useState<RegistrationEntry | null>(null);
+  const [isManualRegistrationOpen, setIsManualRegistrationOpen] = useState(false);
+  const [manualRegistrationConfig, setManualRegistrationConfig] = useState<ManualRegistrationConfig | null>(null);
+  const [manualRegistrationForm, setManualRegistrationForm] = useState<RegistrationFormState>(EMPTY_MANUAL_REGISTRATION_FORM);
+  const [isManualRegistrationLoading, setIsManualRegistrationLoading] = useState(false);
+  const [isManualRegistrationSubmitting, setIsManualRegistrationSubmitting] = useState(false);
+  const [manualRegistrationMessage, setManualRegistrationMessage] = useState<string | null>(null);
+  const [manualRegistrationError, setManualRegistrationError] = useState<string | null>(null);
   const pageSize = 10;
+
+  const manualEvents = useMemo(
+    () => (manualRegistrationConfig?.events ?? []).filter((event) => event.enabled !== false),
+    [manualRegistrationConfig],
+  );
+  const manualEventsForSquad = useMemo(() => {
+    if (!manualRegistrationForm.squadId) return manualEvents;
+    const linked = manualEvents.filter((event) => event.connectedSquadIds?.includes(manualRegistrationForm.squadId));
+    return linked.length > 0 ? linked : manualEvents;
+  }, [manualEvents, manualRegistrationForm.squadId]);
+  const manualSelectedEvent = useMemo(
+    () => manualEvents.find((event) => event.id === manualRegistrationForm.eventId) ?? manualEventsForSquad[0] ?? null,
+    [manualEvents, manualEventsForSquad, manualRegistrationForm.eventId],
+  );
+  const manualRequiredBowlerCount = requiredBowlersForEvent(manualSelectedEvent);
+  const manualDivisions = useMemo(
+    () => (manualRegistrationConfig?.divisions ?? []).filter((division) => division.enabled !== false),
+    [manualRegistrationConfig],
+  );
+  const manualDivisionsForEvent = useMemo(() => {
+    const connectedIds = new Set(manualSelectedEvent?.connectedDivisionIds ?? []);
+    const linked = manualDivisions.filter((division) => connectedIds.has(division.id));
+    return linked.length > 0 ? linked : manualDivisions;
+  }, [manualDivisions, manualSelectedEvent]);
+  const manualSquads = useMemo(() => manualRegistrationConfig?.squads ?? [], [manualRegistrationConfig]);
+  const manualSquadsForEvent = useMemo(() => {
+    const connectedIds = new Set(manualSelectedEvent?.connectedSquadIds ?? []);
+    const linked = manualSquads.filter((squad) => connectedIds.has(squad.id));
+    return linked.length > 0 ? linked : manualSquads;
+  }, [manualSelectedEvent, manualSquads]);
+  const manualFields = useMemo(
+    () => (manualRegistrationConfig?.fields ?? [])
+      .filter((field) => field.mode !== 'dont-ask')
+      .sort((left, right) => (left.displayOrder ?? 0) - (right.displayOrder ?? 0)),
+    [manualRegistrationConfig],
+  );
+  const manualQuestions = useMemo(
+    () => (manualRegistrationConfig?.questions ?? [])
+      .filter((question) => question.enabled !== false)
+      .sort((left, right) => (left.displayOrder ?? 0) - (right.displayOrder ?? 0)),
+    [manualRegistrationConfig],
+  );
+
+  useEffect(() => {
+    if (!manualRegistrationConfig) return;
+    setManualRegistrationForm((previous) => {
+      const eventId = manualEventsForSquad.some((event) => event.id === previous.eventId)
+        ? previous.eventId
+        : manualEventsForSquad[0]?.id ?? '';
+      const event = manualEventsForSquad.find((entry) => entry.id === eventId) ?? null;
+      const requiredCount = requiredBowlersForEvent(event);
+      const bowlers = Array.from({ length: requiredCount }, (_, index) => previous.bowlers[index] ?? {});
+      const answers = Array.from({ length: requiredCount }, (_, index) => previous.bowlerQuestionAnswers[index] ?? {});
+      if (
+        eventId === previous.eventId
+        && bowlers.length === previous.bowlers.length
+        && answers.length === previous.bowlerQuestionAnswers.length
+      ) {
+        return previous;
+      }
+      return { ...previous, eventId, bowlers, bowlerQuestionAnswers: answers };
+    });
+  }, [manualEventsForSquad, manualRegistrationConfig]);
+
+  const openManualRegistration = async () => {
+    setIsManualRegistrationOpen(true);
+    setIsManualRegistrationLoading(true);
+    setManualRegistrationConfig(null);
+    setManualRegistrationMessage(null);
+    setManualRegistrationError(null);
+
+    try {
+      const response = await fetch(`/api/v1/public/tc-tournament/${tournamentId}/registration`, { cache: 'no-store' });
+      const responseData = await response.json().catch(() => null) as ManualRegistrationConfig & { detail?: string } | null;
+      if (!response.ok || !responseData) {
+        throw new Error(responseData?.detail || 'Registration is not available for this tournament.');
+      }
+
+      setManualRegistrationConfig(responseData);
+      const event = responseData.events.find((entry) => entry.enabled !== false) ?? null;
+      const requiredCount = requiredBowlersForEvent(event);
+      setManualRegistrationForm({
+        ...EMPTY_MANUAL_REGISTRATION_FORM,
+        eventId: event?.id ?? '',
+        divisionId: responseData.divisions.find((entry) => entry.enabled !== false)?.id ?? '',
+        squadId: responseData.squads[0]?.id ?? '',
+        bowlers: Array.from({ length: requiredCount }, () => ({})),
+        bowlerQuestionAnswers: Array.from({ length: requiredCount }, () => ({})),
+      });
+    } catch (caughtError) {
+      setManualRegistrationError(caughtError instanceof Error ? caughtError.message : 'Unable to load registration form.');
+    } finally {
+      setIsManualRegistrationLoading(false);
+    }
+  };
+
+  const handleManualRegistrationSubmit = async () => {
+    if (!manualRegistrationConfig) return;
+    if (!manualRegistrationForm.squadId) {
+      setManualRegistrationError('Please select a squad first.');
+      return;
+    }
+    if (manualRegistrationForm.bowlers.length !== manualRequiredBowlerCount) {
+      setManualRegistrationError(`This event requires ${manualRequiredBowlerCount} bowler form${manualRequiredBowlerCount === 1 ? '' : 's'}.`);
+      return;
+    }
+
+    const requiredField = manualFields.find((field) => field.mode === 'required' && manualRegistrationForm.bowlers.some((bowler) => !(bowler[field.key.trim().toLowerCase()] || '').trim()));
+    if (requiredField) {
+      const bowlerIndex = manualRegistrationForm.bowlers.findIndex((bowler) => !(bowler[requiredField.key.trim().toLowerCase()] || '').trim());
+      setManualRegistrationError(`Bowler ${bowlerIndex + 1}: ${requiredField.customLabel || requiredField.label || 'Required field'} is required.`);
+      return;
+    }
+    if (!manualRegistrationForm.acceptTerms) {
+      setManualRegistrationError('Please agree to the registration disclosure before submitting.');
+      return;
+    }
+
+    const missingQuestion = manualQuestions.find((question) => question.required
+      && manualRegistrationForm.bowlerQuestionAnswers.some((answers) => !hasManualQuestionAnswer(answers[question.id])));
+    if (missingQuestion) {
+      const bowlerIndex = manualRegistrationForm.bowlerQuestionAnswers.findIndex((answers) => !hasManualQuestionAnswer(answers[missingQuestion.id]));
+      setManualRegistrationError(`Bowler ${Math.max(1, bowlerIndex + 1)}: ${missingQuestion.label || 'Required question'} is required.`);
+      return;
+    }
+
+    setIsManualRegistrationSubmitting(true);
+    setManualRegistrationError(null);
+    setManualRegistrationMessage(null);
+    try {
+      const firstBowler = manualRegistrationForm.bowlers[0] ?? {};
+      const response = await fetch(`/api/v1/public/tc-tournament/${tournamentId}/registration`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tournamentId,
+          tournamentName: tournamentName,
+          submittedAt: new Date().toISOString(),
+          form: {
+            firstName: firstBowler.first_name || '',
+            lastName: firstBowler.last_name || '',
+            email: firstBowler.email || '',
+            phone: firstBowler.phone || '',
+            usbcNumber: firstBowler.usbc_number || '',
+            bowlers: manualRegistrationForm.bowlers,
+            eventId: manualRegistrationForm.eventId,
+            divisionId: manualRegistrationForm.divisionId,
+            squadId: manualRegistrationForm.squadId,
+            notes: manualRegistrationForm.notes,
+            questionAnswers: manualRegistrationForm.bowlerQuestionAnswers[0] || {},
+            bowlerQuestionAnswers: manualRegistrationForm.bowlerQuestionAnswers,
+            fieldValues: firstBowler,
+            acceptTerms: manualRegistrationForm.acceptTerms,
+          },
+        }),
+      });
+      const responseData = await response.json().catch(() => null) as { detail?: string } | null;
+      if (!response.ok) {
+        throw new Error(responseData?.detail || 'Unable to submit registration right now.');
+      }
+
+      setManualRegistrationMessage('Registration submitted successfully. The organizer can now review the entry.');
+      setManualRegistrationForm({
+        ...EMPTY_MANUAL_REGISTRATION_FORM,
+        eventId: manualSelectedEvent?.id ?? '',
+        divisionId: manualDivisionsForEvent[0]?.id ?? '',
+        squadId: manualSquadsForEvent[0]?.id ?? '',
+        bowlers: Array.from({ length: manualRequiredBowlerCount }, () => ({})),
+        bowlerQuestionAnswers: Array.from({ length: manualRequiredBowlerCount }, () => ({})),
+      });
+      void refreshRegistrations();
+    } catch (caughtError) {
+      setManualRegistrationError(caughtError instanceof Error ? caughtError.message : 'Unable to submit registration right now.');
+    } finally {
+      setIsManualRegistrationSubmitting(false);
+    }
+  };
 
   const openEntryEditor = (entry: RegistrationEntry, registration: OrganizerRegistrationRecord) => {
     const registrationId = Number(registration.id);
@@ -343,9 +572,9 @@ export default function OrganizerTournamentRegistrationsPage() {
                   <h2>Registration List</h2>
                   <p>{filteredRegistrations.length} of {metrics.total} registrations shown</p>
                 </div>
-                <Link href={`/?registration=${encodeURIComponent(tournamentId)}`} target="_blank" className={styles.manualRegistrationButton}>
+                <button type="button" className={styles.manualRegistrationButton} onClick={() => { void openManualRegistration(); }} disabled={isManualRegistrationLoading}>
                   <UserPlus size={14} aria-hidden="true" /> Manual Registration
-                </Link>
+                </button>
               </div>
               <div className={styles.registrationToolbar}>
                 <label className={styles.registrationSearch}>
@@ -471,6 +700,68 @@ export default function OrganizerTournamentRegistrationsPage() {
           </div>
 
         </>
+      ) : null}
+      {isManualRegistrationOpen ? (
+        <div
+          className={styles.detailsModalBackdrop}
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setIsManualRegistrationOpen(false);
+          }}
+        >
+          <section
+            className={styles.registrationModalCard}
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Manual registration for ${tournamentName}`}
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') {
+                event.preventDefault();
+                setIsManualRegistrationOpen(false);
+              }
+            }}
+          >
+            {manualRegistrationConfig ? (
+              <TournamentRegistrationForm
+                tournamentName={manualRegistrationConfig.tournament_name || tournamentName}
+                tournamentDate={[tournament?.start_date, tournament?.end_date].filter(Boolean).join(' - ')}
+                tournamentLocation={tournament?.location || 'TBD'}
+                tournamentLogoUrl={tournament?.has_logo ? `/api/v1/tc/tournaments/${tournamentId}/logo` : null}
+                squads={manualSquadsForEvent}
+                events={manualEventsForSquad}
+                divisions={manualDivisionsForEvent}
+                fields={manualFields}
+                questions={manualQuestions}
+                requiredBowlerCount={manualRequiredBowlerCount}
+                formState={manualRegistrationForm}
+                setFormState={setManualRegistrationForm}
+                submitMessage={manualRegistrationError || manualRegistrationMessage}
+                isSubmitting={isManualRegistrationSubmitting}
+                onSubmit={() => { void handleManualRegistrationSubmit(); }}
+                onClose={() => setIsManualRegistrationOpen(false)}
+                footerHint="Entered by tournament staff on behalf of the participant."
+              />
+            ) : (
+              <>
+                <header className={`${styles.detailsModalHeader} ${styles.registrationModalHeader}`}>
+                  <h4>Manual Registration</h4>
+                  <button type="button" className={styles.detailsModalClose} onClick={() => setIsManualRegistrationOpen(false)} aria-label="Close manual registration">
+                    <X size={18} strokeWidth={2.25} aria-hidden="true" />
+                  </button>
+                </header>
+                <div className={styles.registrationModalBody}>
+                  {isManualRegistrationLoading
+                    ? <p className={styles.detailsModalHint}>Loading registration settings...</p>
+                    : <p className={styles.registrationError} role="alert">{manualRegistrationError || 'Registration settings are unavailable.'}</p>}
+                </div>
+                <footer className={`${styles.detailsModalFooter} ${styles.registrationModalFooter}`}>
+                  <span className={styles.detailsModalHint}>Registration will be submitted under this tournament.</span>
+                  {!isManualRegistrationLoading ? <button type="button" className={styles.registrationSubmitButton} onClick={() => setIsManualRegistrationOpen(false)}>Close</button> : null}
+                </footer>
+              </>
+            )}
+          </section>
+        </div>
       ) : null}
       {editingEntry && editForm ? (
         <div className={styles.entryModalBackdrop} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setEditingEntry(null); }}>
