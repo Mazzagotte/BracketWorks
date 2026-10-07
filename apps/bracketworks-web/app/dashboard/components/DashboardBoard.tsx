@@ -308,8 +308,8 @@ export function DashboardBoard({
                 <div><span>Entry Fee</span><strong>{formatUsd(bracketSettings.default_entry_fee)}</strong></div>
                 <div><span>Handicap</span><strong>{bracketSettings.handicap_percentage}% of {bracketSettings.handicap_base}</strong></div>
                 <div><span>{optionalProgramsLabel}</span><strong>{optionalProgramsSummary}</strong></div>
-                <div><span>Bye Settings</span><span className={`${styles.statusBadge} ${bracketSettings.allow_byes ? styles.statusBadgeEnabled : styles.statusBadgeDisabled}`}>{bracketSettings.allow_byes ? 'Enabled' : 'Disabled'}</span></div>
-                <div><span>Side Pots</span><span className={`${styles.statusBadge} ${enabledSidePotsCount > 0 ? styles.statusBadgeEnabled : styles.statusBadgeDisabled}`}>{enabledSidePotsCount > 0 ? 'Enabled' : 'Disabled'}</span></div>
+                <div><span>Bye Settings</span><strong className={bracketSettings.allow_byes ? styles.statusBadgeEnabled : styles.statusBadgeDisabled}>{bracketSettings.allow_byes ? 'Enabled' : 'Disabled'}</strong></div>
+                <div><span>Side Pots</span><strong className={enabledSidePotsCount > 0 ? styles.statusBadgeEnabled : styles.statusBadgeDisabled}>{enabledSidePotsCount > 0 ? 'Enabled' : 'Disabled'}</strong></div>
               </div>
             </article>
 

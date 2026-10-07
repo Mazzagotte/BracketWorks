@@ -363,26 +363,8 @@
   font-weight: 700;
 }
 
-.statusBadge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 78px;
-  padding: 4px 9px;
-  border-radius: 999px;
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-weight: 700;
-  border: 1px solid var(--bw-border-subtle);
-  color: var(--bw-text-muted);
-  background: color-mix(in srgb, var(--bw-surface-panel) 92%, transparent);
-}
-
 .statusBadgeEnabled {
   color: var(--bw-text-success);
-  border-color: color-mix(in srgb, var(--color-success-border) 85%, transparent);
-  background: color-mix(in srgb, var(--color-success-soft) 88%, transparent);
 }
 
 .statusBadgeDisabled {
