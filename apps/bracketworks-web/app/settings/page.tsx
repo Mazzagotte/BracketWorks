@@ -42,6 +42,8 @@ type DeletionPreview = {
   retained: string[];
 };
 
+const MAX_VISIBLE_SESSIONS = 5;
+
 const emptyProfile: AccountProfile = {
   first_name: '',
   last_name: '',
@@ -652,7 +654,8 @@ export default function SettingsPage() {
         <CardBody>
           {sessionsLoading ? <div className={styles.sessionsEmpty} role="status">Loading active sessions...</div> : sessions.length === 0 ? <div className={styles.sessionsEmpty}>No active sessions found.</div> : (
             <div className={styles.sessionList}>
-              {sessions.map(session => (
+              {/* Backend caps concurrent sessions at MAX_ACTIVE_SESSIONS_PER_USER; slice is just a defensive guard. */}
+              {sessions.slice(0, MAX_VISIBLE_SESSIONS).map(session => (
                 <div className={styles.sessionRow} key={session.session_id}>
                   <div className={styles.sessionIdentity}>
                     <div className={styles.sessionTitle}>{session.device_nickname || 'Browser session'} {session.is_current && <span className={styles.currentBadge}>Current</span>}</div>

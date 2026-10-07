@@ -1009,9 +1009,10 @@ input[type='number'] { appearance: textfield; -moz-appearance: textfield; }
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 18px;
+  padding: clamp(12px, 3vh, 18px);
   background: color-mix(in srgb, var(--bw-page) 86%, transparent);
   backdrop-filter: blur(12px) saturate(120%);
+  overflow-y: auto;
 }
 
 .bw-scores-calc-modal {
@@ -1021,6 +1022,8 @@ input[type='number'] { appearance: textfield; -moz-appearance: textfield; }
   padding: 28px 32px;
   max-width: 480px;
   width: 92%;
+  max-height: calc(100dvh - 36px);
+  overflow-y: auto;
   box-shadow: var(--shadow-popup);
   border: 1px solid var(--color-border);
 }

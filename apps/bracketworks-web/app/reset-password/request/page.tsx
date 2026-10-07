@@ -317,7 +317,7 @@ export default function RequestResetPage() {
 
         <p className="rp-req-support">
           Need help?{' '}
-          <Link href="/login" className="rp-req-support-link">Contact Support</Link>
+          <a href="mailto:support@bracketworks.app" className="rp-req-support-link">Contact Support</a>
         </p>
       </div>
     </div>

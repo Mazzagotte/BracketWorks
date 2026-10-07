@@ -434,6 +434,28 @@ def _revoke_all_user_sessions(db: Session, user_id: int, now: datetime | None = 
     return len(sessions)
 
 
+def _enforce_session_limit(db: Session, user_id: int, now: datetime | None = None) -> int:
+    """Keep only the most recently active sessions for a user, revoking the rest.
+
+    Called after each login/refresh so a single account can never accumulate
+    an unbounded number of concurrent active sessions.
+    """
+    revoked_at = now or _utcnow()
+    active_sessions = (
+        db.query(models.AuthSession)
+        .filter(models.AuthSession.user_id == user_id, models.AuthSession.is_revoked.is_(False))
+        .order_by(models.AuthSession.last_seen_at.desc())
+        .all()
+    )
+    overflow = active_sessions[settings.MAX_ACTIVE_SESSIONS_PER_USER:]
+    for session in overflow:
+        session.is_revoked = True
+        session.revoked_at = revoked_at
+    if overflow:
+        db.commit()
+    return len(overflow)
+
+
 def _authenticate_and_issue_tokens(username: str, password: str, db: Session, request: Request) -> schemas.TokenPairResponse:
     normalized_username = _normalize_username_for_auth(username)
     source_ip_hash = _client_ip_hash(request)
@@ -463,7 +485,9 @@ def _authenticate_and_issue_tokens(username: str, password: str, db: Session, re
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
     _clear_failed_login_attempts(db, normalized_username, source_ip_hash)
-    return _issue_session_tokens(user=user, db=db, request=request)
+    tokens = _issue_session_tokens(user=user, db=db, request=request)
+    _enforce_session_limit(db, user.id)
+    return tokens
 
 
 @router.get("/me", response_model=schemas.UserOut)
@@ -894,6 +918,7 @@ def refresh_tokens(
     refreshed = _issue_session_tokens(user=user, db=db, request=request, token_family=session.token_family)
     session.replaced_by_session_id = refreshed.session_id
     db.commit()
+    _enforce_session_limit(db, user.id)
     _set_access_cookie(response, refreshed.access_token)
     if refreshed.refresh_token:
         _set_refresh_cookie(response, refreshed.refresh_token)

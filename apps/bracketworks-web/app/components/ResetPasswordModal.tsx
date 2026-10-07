@@ -163,13 +163,12 @@ export default function ResetPasswordModal({ isOpen, onClose, onSuccess }: Reset
 
           <p className={styles.support}>
             Need help?{' '}
-            <button
-              type="button"
-              onClick={handleClose}
+            <a
+              href="mailto:support@bracketworks.app"
               className={styles.supportLink}
             >
               Contact Support
-            </button>
+            </a>
           </p>
         </form>
       </div>

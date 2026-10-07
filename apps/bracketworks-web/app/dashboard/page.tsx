@@ -1084,7 +1084,7 @@ export default function TournamentDashboard() {
 
     let active = true;
     setActivityLoading(true);
-    apiClient.get<TournamentActivityEntry[]>(`/api/v1/tournament-activity/${tournament.id}?limit=6`, false)
+    apiClient.get<TournamentActivityEntry[]>(`/api/v1/tournament-activity/${tournament.id}?limit=50`, false)
       .then(result => { if (active) setActivityEntries(result); })
       .catch(error => {
         logger.warn('Failed to load tournament activity', { tournamentId: tournament.id, error: getErrorContext(error) });

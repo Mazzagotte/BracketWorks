@@ -4,19 +4,22 @@
   z-index: var(--z-modal);
   display: grid;
   place-items: center;
-  padding: 24px;
+  padding: clamp(12px, 3vh, 24px);
   background: color-mix(in srgb, var(--color-black) 74%, transparent);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
+  overflow-y: auto;
 }
 
 .card {
   width: min(440px, 100%);
+  max-height: calc(100dvh - 48px);
   padding: 24px;
   border-radius: 16px;
   border: 1px solid var(--color-border-primary);
   background: var(--color-bg-primary);
   color: var(--color-text-primary);
+  overflow-y: auto;
 }
 
 .header {

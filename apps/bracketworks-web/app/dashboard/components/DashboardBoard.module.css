@@ -324,6 +324,10 @@
 }
 
 .financialHeroBlock {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
   min-width: 0;
   padding: 10px 0;
   margin: 10px 0 0;
@@ -337,6 +341,12 @@
   align-items: baseline;
   justify-content: flex-start;
   gap: 8px;
+  flex-shrink: 0;
+}
+
+.financialHeroBlock .dashboardPanelEyebrow {
+  margin: 0;
+  flex-shrink: 0;
 }
 
 .dashboardPanelEyebrow {
@@ -412,6 +422,9 @@
 .activityList {
   display: grid;
   gap: 8px;
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
 .activityItem {
