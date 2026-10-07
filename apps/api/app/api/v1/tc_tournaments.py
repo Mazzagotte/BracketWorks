@@ -3,7 +3,7 @@ import logging
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Response, UploadFile
 from pydantic import BaseModel
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -24,7 +24,7 @@ from ...services.tc_tournament_names import (
     has_duplicate_published_tournament_name,
     is_published_tournament_name_unique_violation,
 )
-from ...services.tournament_access import verify_owned_tc_tournament_access
+from ...services.tournament_access import require_tc_tournament_permission
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -148,7 +148,15 @@ def list_tournaments(
     query = db.query(models.TournamentCentral).order_by(models.TournamentCentral.id.desc())
 
     if not getattr(user, "is_admin", False):
-        query = query.filter(models.TournamentCentral.user_id == user.id)
+        staff_tournament_ids = db.query(models.TcTournamentStaffMember.tournament_id).filter(
+            models.TcTournamentStaffMember.user_id == user.id
+        )
+        query = query.filter(
+            or_(
+                models.TournamentCentral.user_id == user.id,
+                models.TournamentCentral.id.in_(staff_tournament_ids),
+            )
+        )
 
     if offset:
         query = query.offset(offset)
@@ -209,7 +217,7 @@ def get_tournament(
     db: Session = Depends(deps.get_db),
     user=Depends(deps.get_current_user),
 ):
-    tournament = verify_owned_tc_tournament_access(db, tournament_id, user)
+    tournament = require_tc_tournament_permission(db, tournament_id, user, "view")
     entry_count = int(
         db.query(func.count(models.TcEntry.id))
         .filter(
@@ -231,7 +239,7 @@ def get_tournament_setup_summary(
     db: Session = Depends(deps.get_db),
     user=Depends(deps.get_current_user),
 ):
-    tournament = verify_owned_tc_tournament_access(db, tournament_id, user)
+    tournament = require_tc_tournament_permission(db, tournament_id, user, "view")
     state = db.query(models.TournamentCentralSetupState).filter(
         models.TournamentCentralSetupState.tournament_id == tournament.id,
         models.TournamentCentralSetupState.user_id == tournament.user_id,
@@ -258,7 +266,7 @@ def update_tournament(
     user=Depends(deps.get_current_user),
 ):
     try:
-        db_tournament = verify_owned_tc_tournament_access(db, tournament_id, user)
+        db_tournament = require_tc_tournament_permission(db, tournament_id, user, "manage_tournament")
         if db_tournament.is_public and has_duplicate_published_tournament_name(
             db,
             user_id=db_tournament.user_id,
@@ -325,7 +333,7 @@ async def upload_tournament_logo(
     db: Session = Depends(deps.get_db),
     user=Depends(deps.get_current_user),
 ):
-    tournament = verify_owned_tc_tournament_access(db, tournament_id, user)
+    tournament = require_tc_tournament_permission(db, tournament_id, user, "manage_tournament")
 
     content = await file.read()
     validate_tournament_logo_upload(file.content_type, content)
@@ -355,7 +363,7 @@ def get_tournament_logo(
     db: Session = Depends(deps.get_db),
     user=Depends(deps.get_current_user),
 ):
-    tournament = verify_owned_tc_tournament_access(db, tournament_id, user)
+    tournament = require_tc_tournament_permission(db, tournament_id, user, "view")
     if not tournament.logo_blob:
         raise HTTPException(status_code=404, detail="Tournament logo not found")
 
@@ -376,7 +384,7 @@ def delete_tournament_logo(
     db: Session = Depends(deps.get_db),
     user=Depends(deps.get_current_user),
 ):
-    tournament = verify_owned_tc_tournament_access(db, tournament_id, user)
+    tournament = require_tc_tournament_permission(db, tournament_id, user, "manage_tournament")
 
     try:
         tournament.logo_blob = None
@@ -409,7 +417,7 @@ def list_tournament_documents(
     db: Session = Depends(deps.get_db),
     user=Depends(deps.get_current_user),
 ):
-    verify_owned_tc_tournament_access(db, tournament_id, user)
+    require_tc_tournament_permission(db, tournament_id, user, "view")
 
     documents = (
         db.query(models.TcTournamentDocument)
@@ -428,7 +436,7 @@ async def upload_tournament_document(
     db: Session = Depends(deps.get_db),
     user=Depends(deps.get_current_user),
 ):
-    verify_owned_tc_tournament_access(db, tournament_id, user)
+    require_tc_tournament_permission(db, tournament_id, user, "manage_tournament")
 
     content = await read_tournament_document_upload(file)
     mime_type = validate_tournament_document_upload(file.content_type, content)
@@ -462,7 +470,7 @@ def download_tournament_document(
     db: Session = Depends(deps.get_db),
     user=Depends(deps.get_current_user),
 ):
-    verify_owned_tc_tournament_access(db, tournament_id, user)
+    require_tc_tournament_permission(db, tournament_id, user, "view")
 
     document = (
         db.query(models.TcTournamentDocument)
@@ -486,7 +494,7 @@ def delete_tournament_document(
     db: Session = Depends(deps.get_db),
     user=Depends(deps.get_current_user),
 ):
-    verify_owned_tc_tournament_access(db, tournament_id, user)
+    require_tc_tournament_permission(db, tournament_id, user, "manage_tournament")
 
     document = (
         db.query(models.TcTournamentDocument)
@@ -521,7 +529,7 @@ def list_tournament_registrations(
     db: Session = Depends(deps.get_db),
     user=Depends(deps.get_current_user),
 ):
-    tournament = verify_owned_tc_tournament_access(db, tournament_id, user)
+    tournament = require_tc_tournament_permission(db, tournament_id, user, "view")
 
     query = db.query(models.TcRegistration).filter(
         models.TcRegistration.tournament_id == tournament.id,
@@ -635,7 +643,7 @@ def list_tournament_entries(
     db: Session = Depends(deps.get_db),
     user=Depends(deps.get_current_user),
 ):
-    tournament = verify_owned_tc_tournament_access(db, tournament_id, user)
+    tournament = require_tc_tournament_permission(db, tournament_id, user, "view")
 
     query = db.query(models.TcEntry).filter(models.TcEntry.tournament_id == tournament.id)
     if status:
@@ -677,7 +685,7 @@ def get_tournament_entry(
     db: Session = Depends(deps.get_db),
     user=Depends(deps.get_current_user),
 ):
-    tournament = verify_owned_tc_tournament_access(db, tournament_id, user)
+    tournament = require_tc_tournament_permission(db, tournament_id, user, "view")
     entry = db.query(models.TcEntry).filter(
         models.TcEntry.id == entry_id,
         models.TcEntry.tournament_id == tournament.id,
@@ -731,7 +739,7 @@ def patch_tournament_registration(
     db: Session = Depends(deps.get_db),
     user=Depends(deps.get_current_user),
 ):
-    tournament = verify_owned_tc_tournament_access(db, tournament_id, user)
+    tournament = require_tc_tournament_permission(db, tournament_id, user, "manage_entries")
     registration = db.query(models.TcRegistration).filter(
         models.TcRegistration.id == registration_id,
         models.TcRegistration.tournament_id == tournament.id,
@@ -772,7 +780,7 @@ def patch_tournament_entry(
     db: Session = Depends(deps.get_db),
     user=Depends(deps.get_current_user),
 ):
-    tournament = verify_owned_tc_tournament_access(db, tournament_id, user)
+    tournament = require_tc_tournament_permission(db, tournament_id, user, "manage_entries")
     entry = db.query(models.TcEntry).filter(
         models.TcEntry.id == entry_id,
         models.TcEntry.tournament_id == tournament.id,
@@ -885,7 +893,7 @@ def delete_tournament_entry(
     db: Session = Depends(deps.get_db),
     user=Depends(deps.get_current_user),
 ):
-    tournament = verify_owned_tc_tournament_access(db, tournament_id, user)
+    tournament = require_tc_tournament_permission(db, tournament_id, user, "manage_entries")
     entry = db.query(models.TcEntry).filter(
         models.TcEntry.id == entry_id,
         models.TcEntry.tournament_id == tournament.id,
@@ -929,7 +937,7 @@ def delete_tournament(
     db: Session = Depends(deps.get_db),
     user=Depends(deps.get_current_user),
 ):
-    tournament = verify_owned_tc_tournament_access(db, tournament_id, user)
+    tournament = require_tc_tournament_permission(db, tournament_id, user, "manage_tournament")
 
     registration_count = int(
         db.query(func.count(models.TcRegistration.id))

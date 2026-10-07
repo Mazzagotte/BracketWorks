@@ -1,5 +1,64 @@
 .inviteForm {
-  padding: 0 16px 16px;
+  grid-template-columns: minmax(0, 1.25fr) minmax(240px, 0.75fr);
+  gap: 14px;
+  padding: 4px 20px 20px;
+}
+
+.inviteForm label {
+  display: grid;
+  align-content: start;
+  gap: 7px;
+  color: var(--bw-text-muted);
+  font-size: 0.66rem;
+  font-weight: 700;
+}
+
+.inviteForm input,
+.inviteForm select {
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  padding: 0 11px;
+  border: 1px solid var(--bw-border-card);
+  border-radius: 8px;
+  outline: 0;
+  color: var(--bw-text-title);
+  background: var(--bw-surface-panel);
+  font: inherit;
+  font-size: 0.7rem;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.inviteForm input:focus,
+.inviteForm select:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+.headingIcon {
+  width: 25px;
+  height: 25px;
+  display: inline-grid;
+  place-items: center;
+  margin-right: 8px;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 24%, transparent);
+  border-radius: 7px;
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 9%, transparent);
+  vertical-align: middle;
+}
+
+.roleDescription {
+  color: var(--bw-text-muted);
+  font-size: 0.59rem;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.inviteButton {
+  min-height: 40px;
+  padding-inline: 16px;
+  border-radius: 8px;
 }
 
 .fullWidth {
@@ -14,15 +73,356 @@
 
 .successText {
   margin: 0;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, #20d884 28%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, #20d884 8%, transparent);
   color: #20d884;
   font-weight: 700;
   font-size: 0.72rem;
 }
 
+.teamTable {
+  width: 100%;
+  min-width: 0;
+  table-layout: fixed;
+}
+
+.teamTable th {
+  color: var(--bw-text-muted);
+  background: color-mix(in srgb, var(--bw-surface-panel) 72%, transparent);
+  font-size: 0.6rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.teamTableWithoutActions th:nth-child(1),
+.teamTableWithoutActions td:nth-child(1) {
+  width: 38%;
+}
+
+.teamTableWithoutActions th:nth-child(2),
+.teamTableWithoutActions td:nth-child(2) {
+  width: 40%;
+}
+
+.teamTableWithoutActions th:nth-child(3),
+.teamTableWithoutActions td:nth-child(3) {
+  width: 22%;
+}
+
+.teamTable:not(.teamTableWithoutActions) th:nth-child(1),
+.teamTable:not(.teamTableWithoutActions) td:nth-child(1) {
+  width: 32%;
+}
+
+.teamTable:not(.teamTableWithoutActions) th:nth-child(2),
+.teamTable:not(.teamTableWithoutActions) td:nth-child(2) {
+  width: 34%;
+}
+
+.teamTable:not(.teamTableWithoutActions) th:nth-child(3),
+.teamTable:not(.teamTableWithoutActions) td:nth-child(3) {
+  width: 22%;
+}
+
+.teamTable:not(.teamTableWithoutActions) th:nth-child(4),
+.teamTable:not(.teamTableWithoutActions) td:nth-child(4) {
+  width: 12%;
+}
+
+.teamTable th {
+  padding-block: 12px;
+}
+
+.teamTable td {
+  padding-block: 15px;
+}
+
+.teamTable tbody tr {
+  transition: background-color 140ms ease;
+}
+
+.teamTable tbody tr:hover td {
+  background: color-mix(in srgb, var(--color-primary) 5%, transparent);
+}
+
+.teamTable td:first-child {
+  min-width: 0;
+}
+
+.memberCount {
+  width: fit-content;
+  min-height: 25px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 9px;
+  border: 1px solid var(--bw-border-card);
+  border-radius: 999px;
+  color: var(--bw-text-muted);
+  background: var(--bw-surface-panel);
+  font-size: 0.62rem;
+  font-weight: 650;
+}
+
+.memberCount svg {
+  color: var(--color-primary);
+}
+
+.memberIdentity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.memberAvatar {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 30%, transparent);
+  border-radius: 50%;
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 10%, var(--bw-surface-panel));
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.memberIdentity > div {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.memberIdentity strong {
+  color: var(--bw-text-title);
+  font-size: 0.7rem;
+}
+
+.youBadge {
+  padding: 3px 6px;
+  border: 1px solid var(--bw-border-card);
+  border-radius: 999px;
+  color: var(--bw-text-muted);
+  background: var(--bw-surface-panel);
+  font-size: 0.52rem;
+  font-weight: 700;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.memberEmail {
+  color: var(--bw-text-body);
+  font-size: 0.66rem;
+}
+
+.roleBadge {
+  min-height: 27px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 9px;
+  border: 1px solid var(--bw-border-card);
+  border-radius: 999px;
+  color: var(--bw-text-body);
+  background: var(--bw-surface-panel);
+  font-size: 0.61rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.teamTable td > .roleBadge {
+  width: fit-content;
+  display: inline-flex;
+  margin-top: 0;
+}
+
+.ownerRole {
+  border-color: color-mix(in srgb, var(--color-primary) 28%, transparent);
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+}
+
+.noAction {
+  color: var(--bw-text-muted);
+  font-size: 0.75rem;
+}
+
+.roleSelect {
+  min-height: 32px;
+  max-width: 190px;
+  padding: 0 28px 0 10px;
+  border: 1px solid var(--bw-border-card);
+  border-radius: 7px;
+  outline: 0;
+  color: var(--bw-text-title);
+  background: var(--bw-surface-panel);
+  font: inherit;
+  font-size: 0.63rem;
+  cursor: pointer;
+}
+
+.roleSelect:focus {
+  border-color: var(--color-primary);
+}
+
+.roleSelect:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.removeButton {
+  min-height: 31px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 10px;
+  border: 1px solid color-mix(in srgb, #ff6b6b 26%, var(--bw-border-card));
+  border-radius: 7px;
+  color: #ff7777;
+  background: color-mix(in srgb, #ff6b6b 6%, var(--bw-surface-panel));
+  font: inherit;
+  font-size: 0.61rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 140ms ease, background-color 140ms ease;
+}
+
+.removeButton:hover:not(:disabled) {
+  border-color: #ff6b6b;
+  background: color-mix(in srgb, #ff6b6b 13%, var(--bw-surface-panel));
+}
+
+.removeButton:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.loadingLayout {
+  display: grid;
+  gap: 14px;
+}
+
+.loadingAnnouncement {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.loadingCard {
+  overflow: hidden;
+}
+
+.loadingInviteFields {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(240px, 0.75fr);
+  gap: 14px;
+  padding: 4px 20px 20px;
+}
+
+.loadingField {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+}
+
+.loadingInviteAction {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 2px;
+}
+
+.loadingMemberList {
+  padding: 0 16px 6px;
+}
+
+.loadingMemberRow {
+  min-height: 59px;
+  display: grid;
+  grid-template-columns: minmax(190px, 1.2fr) minmax(160px, 0.9fr) minmax(86px, 0.3fr);
+  align-items: center;
+  gap: 16px;
+  border-bottom: 1px solid var(--bw-border-subtle);
+}
+
+.loadingMemberRow:last-child {
+  border-bottom: 0;
+}
+
+.loadingMemberIdentity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.loadingMemberText {
+  flex: 1;
+  display: grid;
+  gap: 7px;
+}
+
+.skeletonBlock {
+  position: relative;
+  overflow: hidden;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--bw-text-muted) 12%, var(--bw-surface-panel));
+}
+
+.skeletonBlock::after {
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, white 9%, transparent), transparent);
+  animation: teamSkeletonShimmer 1.5s ease-in-out infinite;
+  content: '';
+}
+
+.skeletonHeading { width: 118px; height: 14px; }
+.skeletonCaption { width: 154px; height: 9px; margin-top: 7px; }
+.skeletonLabel { width: 52px; height: 9px; }
+.skeletonInput { width: 100%; height: 40px; border-radius: 8px; }
+.skeletonRoleHint { width: min(92%, 260px); height: 8px; margin-top: 1px; }
+.skeletonButton { width: 146px; height: 40px; border-radius: 8px; }
+.skeletonAvatar { width: 34px; height: 34px; flex: 0 0 auto; border-radius: 50%; }
+.skeletonName { width: min(170px, 70%); height: 10px; }
+.skeletonEmail { width: min(210px, 88%); height: 8px; }
+.skeletonRole { width: 132px; height: 28px; border-radius: 999px; }
+.skeletonRemove { width: 76px; height: 31px; justify-self: end; border-radius: 7px; }
+
+@keyframes teamSkeletonShimmer {
+  100% { transform: translateX(100%); }
+}
+
 @media (max-width: 767px) {
   .inviteForm {
     grid-template-columns: 1fr;
-    padding-inline: 12px;
+    padding: 4px 12px 14px;
+  }
+
+  .loadingInviteFields {
+    grid-template-columns: 1fr;
+    padding: 4px 12px 14px;
+  }
+
+  .loadingInviteAction {
+    justify-content: stretch;
+  }
+
+  .skeletonButton {
+    width: 100%;
   }
 
   .inviteActions {
@@ -31,5 +431,25 @@
 
   .inviteActions button {
     width: 100%;
+  }
+
+  .teamTable {
+    min-width: 560px;
+  }
+
+  .loadingMemberList {
+    overflow-x: auto;
+  }
+
+  .loadingMemberRow {
+    min-width: 520px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeletonBlock::after {
+    animation: none;
+    transform: none;
+    background: color-mix(in srgb, white 4%, transparent);
   }
 }

@@ -456,6 +456,11 @@ export type TournamentStaffEntry = {
   created_at: string | null;
 };
 
+export type TournamentStaffResponse = {
+  members: TournamentStaffEntry[];
+  can_manage_staff: boolean;
+};
+
 export type TournamentStaffInvitationEntry = {
   id: number;
   email: string;
@@ -465,8 +470,8 @@ export type TournamentStaffInvitationEntry = {
   email_sent: boolean;
 };
 
-export function listTournamentStaff(token: string, tournamentId: number): Promise<TournamentStaffEntry[]> {
-  return organizerGet(token, `/api/v1/tournament-staff/tournaments/${tournamentId}`);
+export function listTournamentStaff(token: string, tournamentId: number): Promise<TournamentStaffResponse> {
+  return organizerGet(token, `/api/v1/tc/tournaments/${tournamentId}/staff`);
 }
 
 export function inviteTournamentStaff(
@@ -474,7 +479,7 @@ export function inviteTournamentStaff(
   tournamentId: number,
   payload: { email: string; role: StaffRole },
 ): Promise<TournamentStaffInvitationEntry> {
-  return organizerMutation(token, `/api/v1/tournament-staff/${tournamentId}/invitations`, 'POST', payload);
+  return organizerMutation(token, `/api/v1/tc/tournaments/${tournamentId}/staff-invitations`, 'POST', payload);
 }
 
 export function updateTournamentStaffRole(
@@ -483,7 +488,7 @@ export function updateTournamentStaffRole(
   memberId: number,
   role: StaffRole,
 ): Promise<{ ok: boolean; role: StaffRole }> {
-  return organizerMutation(token, `/api/v1/tournament-staff/${tournamentId}/members/${memberId}`, 'PATCH', { role });
+  return organizerMutation(token, `/api/v1/tc/tournaments/${tournamentId}/staff/${memberId}`, 'PATCH', { role });
 }
 
 export function removeTournamentStaffMember(
@@ -491,7 +496,27 @@ export function removeTournamentStaffMember(
   tournamentId: number,
   memberId: number,
 ): Promise<{ ok: boolean }> {
-  return organizerMutation(token, `/api/v1/tournament-staff/${tournamentId}/members/${memberId}`, 'DELETE');
+  return organizerMutation(token, `/api/v1/tc/tournaments/${tournamentId}/staff/${memberId}`, 'DELETE');
+}
+
+export type TcStaffInvitationEntry = {
+  id: number;
+  tournament_id: number;
+  tournament_name: string;
+  role: StaffRole;
+  expires_at: string;
+};
+
+export function listMyTcStaffInvitations(token: string): Promise<TcStaffInvitationEntry[]> {
+  return organizerGet(token, '/api/v1/tc/staff-invitations/mine');
+}
+
+export function respondToTcStaffInvitation(
+  token: string,
+  invitationId: number,
+  decision: 'accept' | 'decline',
+): Promise<{ ok: boolean; status: 'accepted' | 'declined' }> {
+  return organizerMutation(token, `/api/v1/tc/staff-invitations/${invitationId}/${decision}`, 'POST', {});
 }
 
 export type TournamentActivityEntry = {
@@ -518,4 +543,3 @@ export function listTournamentActivity(
   const query = params.toString();
   return organizerGet(token, `/api/v1/tournament-activity/${tournamentId}${query ? `?${query}` : ''}`);
 }
-

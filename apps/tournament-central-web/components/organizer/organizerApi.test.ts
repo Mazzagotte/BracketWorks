@@ -5,8 +5,10 @@ import {
   getMyAccount,
   inviteTournamentStaff,
   listTournamentActivity,
+  listMyTcStaffInvitations,
   listTournamentStaff,
   markTournamentRegistrationsPaid,
+  respondToTcStaffInvitation,
   updateMyAccount,
 } from './organizerApi';
 
@@ -79,18 +81,33 @@ describe('organizerApi staff functions', () => {
     vi.unstubAllGlobals();
   });
 
-  it('listTournamentStaff calls the tournament-staff list endpoint', async () => {
-    const fetchMock = mockFetchOnce([{ id: null, role: 'owner' }]);
+  it('listTournamentStaff calls the Tournament Central staff endpoint', async () => {
+    const fetchMock = mockFetchOnce({ members: [{ id: null, role: 'owner' }], can_manage_staff: true });
     await listTournamentStaff('token-123', 42);
-    expect(fetchMock).toHaveBeenCalledWith('/api/v1/tournament-staff/tournaments/42', expect.objectContaining({ method: 'GET' }));
+    expect(fetchMock).toHaveBeenCalledWith('/api/v1/tc/tournaments/42/staff', expect.objectContaining({ method: 'GET' }));
   });
 
   it('inviteTournamentStaff posts to the invitations endpoint with email and role', async () => {
     const fetchMock = mockFetchOnce({ id: 1, email: 'teammate@example.com', role: 'viewer', status: 'pending', expires_at: '', email_sent: true });
     await inviteTournamentStaff('token-123', 42, { email: 'teammate@example.com', role: 'viewer' });
-    expect(fetchMock).toHaveBeenCalledWith('/api/v1/tournament-staff/42/invitations', expect.objectContaining({
+    expect(fetchMock).toHaveBeenCalledWith('/api/v1/tc/tournaments/42/staff-invitations', expect.objectContaining({
       method: 'POST',
       body: JSON.stringify({ email: 'teammate@example.com', role: 'viewer' }),
+    }));
+  });
+
+  it('lists pending Tournament Central staff invitations', async () => {
+    const fetchMock = mockFetchOnce([]);
+    await listMyTcStaffInvitations('token-123');
+    expect(fetchMock).toHaveBeenCalledWith('/api/v1/tc/staff-invitations/mine', expect.objectContaining({ method: 'GET' }));
+  });
+
+  it('responds to a Tournament Central staff invitation', async () => {
+    const fetchMock = mockFetchOnce({ ok: true, status: 'accepted' });
+    await respondToTcStaffInvitation('token-123', 7, 'accept');
+    expect(fetchMock).toHaveBeenCalledWith('/api/v1/tc/staff-invitations/7/accept', expect.objectContaining({
+      method: 'POST',
+      body: '{}',
     }));
   });
 });

@@ -67,7 +67,10 @@ export default function OrganizerTournamentPaymentsPage() {
 
           <section className={styles.registrationTableCard} aria-label="Payment list">
             <div className={styles.registrationPanelHeading}>
-              <h2>Registration Payments</h2>
+              <div>
+                <h2>Registration Payments</h2>
+                <p>{paymentRows.length} registration{paymentRows.length === 1 ? '' : 's'} included</p>
+              </div>
             </div>
 
             {paymentRows.length === 0 ? (
@@ -93,9 +96,9 @@ export default function OrganizerTournamentPaymentsPage() {
                         <tr key={registration.id}>
                           <td className={styles.confirmationCell}>{registration.confirmation_code ?? registration.id}</td>
                           <td><strong>{name}</strong><span>{registration.contact_email ?? registration.form?.email ?? 'No email'}</span></td>
-                          <td>{formatMoney(registration.total_cents ?? 0, registration.currency)}</td>
-                          <td><OrganizerStatusBadge status={payment} /></td>
-                          <td><OrganizerStatusBadge status={status} /></td>
+                          <td className={styles.paymentAmountCell}>{formatMoney(registration.total_cents ?? 0, registration.currency)}</td>
+                          <td><div className={styles.registrationPaymentCell}><OrganizerStatusBadge status={payment} /></div></td>
+                          <td><div className={styles.registrationStatusCell}><OrganizerStatusBadge status={status} /></div></td>
                         </tr>
                       );
                     })}

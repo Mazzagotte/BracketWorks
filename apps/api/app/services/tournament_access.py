@@ -111,3 +111,35 @@ def verify_owned_tc_tournament_access(
         user,
         forbidden_detail=forbidden_detail,
     )
+
+
+def user_has_tc_tournament_permission(
+    db: Session,
+    tournament: models.TournamentCentral,
+    user: models.User,
+    permission: TournamentPermission,
+) -> bool:
+    if tournament.user_id == user.id or getattr(user, "is_admin", False):
+        return True
+    membership = db.query(models.TcTournamentStaffMember).filter_by(
+        tournament_id=tournament.id, user_id=user.id
+    ).first()
+    return bool(membership and permission in ROLE_PERMISSIONS.get(membership.role, set()))
+
+
+def require_tc_tournament_permission(
+    db: Session,
+    tournament_id: int,
+    user: models.User,
+    permission: TournamentPermission,
+    *,
+    forbidden_detail: str = "You do not have permission to perform this tournament action",
+) -> models.TournamentCentral:
+    tournament = db.query(models.TournamentCentral).filter(
+        models.TournamentCentral.id == tournament_id
+    ).first()
+    if tournament is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tournament not found")
+    if not user_has_tc_tournament_permission(db, tournament, user, permission):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=forbidden_detail)
+    return tournament

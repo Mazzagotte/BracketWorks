@@ -649,8 +649,8 @@ export default function OrganizerTournamentRegistrationsPage() {
                           <td><strong>{name}</strong><span>{registration.contact_email ?? registration.form?.email ?? 'No email'}</span></td>
                           <td>{registration.entries?.map((item) => entryLabel(item, 'event')).join(', ') || 'Not selected'}</td>
                           <td>{entry ? entryLabel(entry, 'squad') : 'Not selected'}</td>
-                          <td><OrganizerStatusBadge status={status} /></td>
-                          <td><OrganizerStatusBadge status={payment} /></td>
+                          <td><div className={styles.registrationStatusCell}><OrganizerStatusBadge status={status} /></div></td>
+                          <td><div className={styles.registrationPaymentCell}><OrganizerStatusBadge status={payment} /></div></td>
                           <td>{formatMoney(registration.total_cents, registration.currency)}</td>
                           <td><strong>{submitted.date}</strong><span>{submitted.time}</span></td>
                           <td className={styles.registrationActionsCell}>

@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from ...api import deps
 from ...core import models, schemas
 from ...services.tc_tournament_logo import validate_tournament_logo_upload
-from ...services.tournament_access import verify_owned_tc_tournament_access
+from ...services.tournament_access import require_tc_tournament_permission
 from ...services.tc_setup_validation import PUBLISHED_SNAPSHOT_KEY, clean_setup_payload, validate_publishable_setup
 from ...services.tc_tournament_names import (
     DUPLICATE_PUBLISHED_TOURNAMENT_NAME,
@@ -56,7 +56,7 @@ def get_tournament_setup_state(
     db: Session = Depends(deps.get_db),
     user: models.User = Depends(deps.get_current_user),
 ):
-    tournament = verify_owned_tc_tournament_access(db, tournament_id, user)
+    tournament = require_tc_tournament_permission(db, tournament_id, user, "view")
 
     state = db.query(models.TournamentCentralSetupState).filter(
         models.TournamentCentralSetupState.tournament_id == tournament_id,
@@ -72,7 +72,7 @@ def list_tournament_registrations(
     db: Session = Depends(deps.get_db),
     user: models.User = Depends(deps.get_current_user),
 ):
-    tournament = verify_owned_tc_tournament_access(db, tournament_id, user)
+    tournament = require_tc_tournament_permission(db, tournament_id, user, "view")
 
     rows = (
         db.query(models.TcRegistration)
@@ -127,7 +127,7 @@ def upsert_tournament_setup_state(
     db: Session = Depends(deps.get_db),
     user: models.User = Depends(deps.get_current_user),
 ):
-    tournament = verify_owned_tc_tournament_access(db, tournament_id, user)
+    tournament = require_tc_tournament_permission(db, tournament_id, user, "manage_tournament")
     draft_payload = clean_setup_payload(payload.payload)
 
     visibility = str((draft_payload.get("details") or {}).get("visibility") or "private")
@@ -214,7 +214,7 @@ async def upload_tournament_logo(
     db: Session = Depends(deps.get_db),
     user: models.User = Depends(deps.get_current_user),
 ):
-    tournament = verify_owned_tc_tournament_access(db, tournament_id, user)
+    tournament = require_tc_tournament_permission(db, tournament_id, user, "manage_tournament")
 
     content = await file.read()
     validate_tournament_logo_upload(file.content_type, content)
@@ -251,7 +251,7 @@ def get_tournament_logo(
     db: Session = Depends(deps.get_db),
     user: models.User = Depends(deps.get_current_user),
 ):
-    tournament = verify_owned_tc_tournament_access(db, tournament_id, user)
+    tournament = require_tc_tournament_permission(db, tournament_id, user, "view")
     if not tournament.logo_blob:
         raise HTTPException(status_code=404, detail="Tournament logo not found")
 
@@ -272,7 +272,7 @@ def delete_tournament_logo(
     db: Session = Depends(deps.get_db),
     user: models.User = Depends(deps.get_current_user),
 ):
-    tournament = verify_owned_tc_tournament_access(db, tournament_id, user)
+    tournament = require_tc_tournament_permission(db, tournament_id, user, "manage_tournament")
 
     try:
         tournament.logo_blob = None

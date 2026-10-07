@@ -11,17 +11,39 @@ function localCalendarDate(value: string): Date | null {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
+export function normalizeTournamentDate(value: string | null | undefined): string | null {
+  const normalized = value?.trim().replace(/\s*\(day:\s*\d+\)\s*$/iu, '').trim();
+  if (!normalized) return null;
+
+  const legacyDateMatch = /^([a-z]{3})\s+(\d{1,2})-(\d{4})$/iu.exec(normalized);
+  if (!legacyDateMatch) return normalized;
+
+  const month = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
+    .indexOf(legacyDateMatch[1].toLowerCase());
+  if (month < 0) return normalized;
+
+  const day = Number(legacyDateMatch[2]);
+  const year = Number(legacyDateMatch[3]);
+  const date = new Date(year, month, day);
+  if (date.getFullYear() !== year || date.getMonth() !== month || date.getDate() !== day) return normalized;
+
+  return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
 export function formatTournamentDate(value: string | null | undefined, fallback = 'Date not set'): string {
-  if (!value?.trim()) return fallback;
-  const date = localCalendarDate(value) ?? new Date(value);
-  return Number.isNaN(date.getTime()) ? value : dateFormatter.format(date);
+  const normalized = normalizeTournamentDate(value);
+  if (!normalized) return fallback;
+  const date = localCalendarDate(normalized) ?? new Date(normalized);
+  return Number.isNaN(date.getTime()) ? normalized : dateFormatter.format(date);
 }
 
 export function formatTournamentDateRange(start: string | null | undefined, end: string | null | undefined): string {
-  if (!start?.trim() && !end?.trim()) return 'Dates not set';
-  if (!start?.trim()) return formatTournamentDate(end);
-  if (!end?.trim() || start === end) return formatTournamentDate(start);
-  return `${formatTournamentDate(start)} - ${formatTournamentDate(end)}`;
+  const normalizedStart = normalizeTournamentDate(start);
+  const normalizedEnd = normalizeTournamentDate(end);
+  if (!normalizedStart && !normalizedEnd) return 'Dates not set';
+  if (!normalizedStart) return formatTournamentDate(normalizedEnd);
+  if (!normalizedEnd || normalizedStart === normalizedEnd) return formatTournamentDate(normalizedStart);
+  return `${formatTournamentDate(normalizedStart)} - ${formatTournamentDate(normalizedEnd)}`;
 }
 
 export function formatSquadTime(value: string | null | undefined): string {

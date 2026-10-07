@@ -218,6 +218,22 @@ def test_doubles_registration_requires_two_bowlers(api_client, db_session, make_
     assert db_session.query(models.TcRegistration).filter_by(tournament_id=tournament.id).count() == 0
 
 
+def test_singles_registration_uses_event_bowler_count_for_two_bowler_squad(api_client, db_session, make_user):
+    owner = make_user("tc_owner_singles_squad_count")
+    setup_payload = _base_setup_payload()
+    setup_payload["squads"][0]["requiredBowlerCount"] = 2
+    tournament = _create_tc_tournament_with_setup(db_session, owner.id, setup_payload=setup_payload)
+
+    response = api_client.post(
+        f"/api/v1/public/tc-tournament/{tournament.id}/registration",
+        json=_registration_payload(event_id="evt-singles"),
+    )
+
+    assert response.status_code == 200
+    assert db_session.query(models.TcRegistration).filter_by(tournament_id=tournament.id).count() == 1
+    assert db_session.query(models.TcRegistrationBowler).filter_by(tournament_id=tournament.id).count() == 1
+
+
 def test_required_custom_question_is_enforced(api_client, db_session, make_user):
     owner = make_user("tc_owner_question")
     setup_payload = _base_setup_payload()

@@ -784,3 +784,60 @@
     grid-template-columns: 1fr;
   }
 }
+.staffInvitationPanel {
+  margin: 0 0 1.25rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid #d8e2f0;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 6px 20px rgb(15 23 42 / 5%);
+}
+
+.staffInvitationPanel h2 {
+  margin: 0 0 0.75rem;
+  color: #17243b;
+  font-size: 1rem;
+}
+
+.staffInvitationPanel > p {
+  margin: 0 0 0.75rem;
+  color: #b42318;
+  font-size: 0.875rem;
+}
+
+.staffInvitationRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-top: 1px solid #edf1f6;
+}
+
+.staffInvitationRow > div:first-child {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.staffInvitationRow strong {
+  color: #26364f;
+  font-size: 0.9rem;
+}
+
+.staffInvitationRow span {
+  color: #68758a;
+  font-size: 0.8rem;
+  text-transform: capitalize;
+}
+
+.staffInvitationActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+@media (max-width: 560px) {
+  .staffInvitationRow {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

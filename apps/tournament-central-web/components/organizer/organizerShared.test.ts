@@ -27,7 +27,11 @@ describe('organizerRoutes', () => {
 describe('organizerFormatting', () => {
   it('formats calendar dates without parsing date-only values as UTC', () => {
     expect(formatTournamentDate('2026-01-02')).toBe('Jan 2, 2026');
+    expect(formatTournamentDate('2026-11-15 (day: 15)')).toBe('Nov 15, 2026');
+    expect(formatTournamentDate('Apr 17-2027 (day: 17)')).toBe('Apr 17, 2027');
+    expect(formatTournamentDateRange('Apr 17-2027 (day: 17)', null)).toBe('Apr 17, 2027');
     expect(formatTournamentDateRange('2026-01-02', '2026-01-04')).toBe('Jan 2, 2026 - Jan 4, 2026');
+    expect(formatTournamentDateRange('2026-11-15 (day: 15)', null)).toBe('Nov 15, 2026');
   });
 
   it('formats squad times and safe money values consistently', () => {

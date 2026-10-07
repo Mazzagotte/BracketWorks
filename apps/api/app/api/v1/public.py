@@ -339,6 +339,16 @@ def _required_bowler_count_for_submission(
         max_players = int(event_row.get("maxPlayers") or min_players)
         return max(min_players, max_players, 1)
 
+    selected_event = next(
+        (
+            event for event in events
+            if str(event.get("id") or "") == selected_event_id
+        ),
+        None,
+    )
+    if selected_event:
+        return _event_player_count(selected_event)
+
     selected_squad = next(
         (
             squad for squad in squads
@@ -358,16 +368,6 @@ def _required_bowler_count_for_submission(
 
         if squad_count > 0:
             return squad_count
-
-    selected_event = next(
-        (
-            event for event in events
-            if str(event.get("id") or "") == selected_event_id
-        ),
-        None,
-    )
-    if selected_event:
-        return _event_player_count(selected_event)
 
     squad_linked_events = [
         event for event in events
@@ -923,7 +923,7 @@ def submit_public_tc_tournament_registration(
     if len(normalized_bowlers) != required_bowler_count:
         raise HTTPException(
             status_code=400,
-            detail=f"This squad requires {required_bowler_count} bowler form{'s' if required_bowler_count != 1 else ''}",
+            detail=f"This event requires {required_bowler_count} bowler form{'s' if required_bowler_count != 1 else ''}",
         )
 
     missing_required = None

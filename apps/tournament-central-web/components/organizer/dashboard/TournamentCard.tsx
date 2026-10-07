@@ -6,15 +6,18 @@ import type { OrganizerDashboardTournament } from './useOrganizerDashboard';
 import TournamentStatusBadge from './TournamentStatusBadge';
 import styles from './OrganizerDashboard.module.css';
 import { organizerRoutes } from '../organizerRoutes';
+import { normalizeTournamentDate } from '../organizerFormatting';
 
 function formatDateRange(startDate: string | null, endDate: string | null): string {
-  const dateValue = startDate || endDate;
+  const normalizedStart = normalizeTournamentDate(startDate);
+  const normalizedEnd = normalizeTournamentDate(endDate);
+  const dateValue = normalizedStart || normalizedEnd;
   if (!dateValue) {
     return 'Dates not set';
   }
 
-  const start = startDate ? new Date(`${startDate}T00:00:00`) : null;
-  const end = endDate ? new Date(`${endDate}T00:00:00`) : null;
+  const start = normalizedStart ? new Date(`${normalizedStart}T00:00:00`) : null;
+  const end = normalizedEnd ? new Date(`${normalizedEnd}T00:00:00`) : null;
   if ((start && Number.isNaN(start.getTime())) || (end && Number.isNaN(end.getTime()))) {
     return dateValue;
   }

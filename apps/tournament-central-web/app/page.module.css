@@ -1270,7 +1270,7 @@
 .tournamentMediaFallback {
   display: grid;
   place-items: center;
-  background: var(--bw-surface-card-strong);
+  background: linear-gradient(145deg, var(--bw-surface-panel-strong), var(--bw-surface-card-strong));
   box-shadow: none;
 }
 
@@ -1278,20 +1278,24 @@
   display: grid;
   justify-items: center;
   align-content: center;
-  gap: 8px;
+  gap: 5px;
   width: 100%;
   height: 100%;
   color: var(--bw-text-muted);
-  font-size: 11px;
+  font-size: 8px;
   font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
 .tournamentMediaPlaceholder svg {
-  box-sizing: content-box;
-  padding: 12px;
+  box-sizing: border-box;
+  width: 42px;
+  height: 42px;
+  padding: 10px;
   border: 1px solid var(--bw-border-subtle);
-  border-radius: 14px;
+  border-radius: 12px;
   background: var(--bw-surface-panel-strong);
   color: var(--color-primary);
 }

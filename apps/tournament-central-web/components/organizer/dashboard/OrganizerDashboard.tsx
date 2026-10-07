@@ -7,7 +7,12 @@ import OrganizerAttentionList from './OrganizerAttentionList';
 import OrganizerDashboardHeader from './OrganizerDashboardHeader';
 import OrganizerEmptyState from './OrganizerEmptyState';
 import TournamentGrid from './TournamentGrid';
-import { deleteTournament } from '../organizerApi';
+import {
+  deleteTournament,
+  listMyTcStaffInvitations,
+  respondToTcStaffInvitation,
+  type TcStaffInvitationEntry,
+} from '../organizerApi';
 import { type OrganizerDashboardTournament, useOrganizerDashboard } from './useOrganizerDashboard';
 import styles from './OrganizerDashboard.module.css';
 
@@ -16,6 +21,9 @@ export default function OrganizerDashboard() {
   const [deletingTournamentId, setDeletingTournamentId] = useState<number | null>(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState<OrganizerDashboardTournament | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [staffInvitations, setStaffInvitations] = useState<TcStaffInvitationEntry[]>([]);
+  const [invitationError, setInvitationError] = useState<string | null>(null);
+  const [respondingInvitationId, setRespondingInvitationId] = useState<number | null>(null);
   const { tournaments, attentionItems, upcomingItems, isLoading, error, refresh } = useOrganizerDashboard();
 
   useEffect(() => {
@@ -29,6 +37,31 @@ export default function OrganizerDashboard() {
     setDisplayName(firstName || fallbackName || 'Organizer');
   }, []);
 
+  useEffect(() => {
+    const token = sessionStorage.getItem('access_token');
+    if (!token) return;
+    void listMyTcStaffInvitations(token)
+      .then(setStaffInvitations)
+      .catch((caughtError: unknown) => {
+        setInvitationError(caughtError instanceof Error ? caughtError.message : 'Unable to load team invitations.');
+      });
+  }, []);
+
+  const handleStaffInvitation = async (invitationId: number, decision: 'accept' | 'decline') => {
+    const token = sessionStorage.getItem('access_token');
+    if (!token) return;
+    setRespondingInvitationId(invitationId);
+    setInvitationError(null);
+    try {
+      await respondToTcStaffInvitation(token, invitationId, decision);
+      setStaffInvitations((current) => current.filter((invitation) => invitation.id !== invitationId));
+      if (decision === 'accept') await refresh();
+    } catch (caughtError) {
+      setInvitationError(caughtError instanceof Error ? caughtError.message : 'Unable to respond to team invitation.');
+    } finally {
+      setRespondingInvitationId(null);
+    }
+  };
 
   const summaryStats = useMemo(() => {
     const totalRegistrations = tournaments.reduce((total, tournament) => total + (tournament.entryCount ?? 0), 0);
@@ -84,6 +117,39 @@ export default function OrganizerDashboard() {
   return (
     <div className={styles.shell}>
       <OrganizerDashboardHeader displayName={displayName} />
+
+      {staffInvitations.length > 0 || invitationError ? (
+        <section className={styles.staffInvitationPanel} aria-label="Tournament team invitations">
+          <h2>Team invitations</h2>
+          {invitationError ? <p role="alert">{invitationError}</p> : null}
+          {staffInvitations.map((invitation) => (
+            <div className={styles.staffInvitationRow} key={invitation.id}>
+              <div>
+                <strong>{invitation.tournament_name}</strong>
+                <span>{invitation.role.replaceAll('_', ' ')} role</span>
+              </div>
+              <div className={styles.staffInvitationActions}>
+                <button
+                  type="button"
+                  className={styles.secondaryButtonCompact}
+                  disabled={respondingInvitationId !== null}
+                  onClick={() => { void handleStaffInvitation(invitation.id, 'decline'); }}
+                >
+                  Decline
+                </button>
+                <button
+                  type="button"
+                  className={styles.secondaryButtonCompact}
+                  disabled={respondingInvitationId !== null}
+                  onClick={() => { void handleStaffInvitation(invitation.id, 'accept'); }}
+                >
+                  {respondingInvitationId === invitation.id ? 'Working...' : 'Accept'}
+                </button>
+              </div>
+            </div>
+          ))}
+        </section>
+      ) : null}
 
       {error ? (
         <section className={styles.errorCard} role="alert">
