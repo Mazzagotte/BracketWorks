@@ -688,6 +688,34 @@
   background: var(--color-primary);
 }
 
+/* Keep all 5 workflow steps visible (no hidden overflow/scroll) once the
+   fixed-width sidebar starts squeezing the main column on smaller laptop
+   screens, before the layout drops to a single column at 1180px. */
+@media (max-width: 1700px) {
+  .workflowItem {
+    gap: 6px;
+  }
+
+  .workflowDot {
+    width: 24px;
+    height: 24px;
+    font-size: 11px;
+  }
+
+  .workflowText strong {
+    font-size: 12px;
+  }
+
+  .workflowText span {
+    font-size: 11px;
+  }
+
+  .workflowConnector {
+    min-width: 16px;
+    margin: 0 6px;
+  }
+}
+
 @media (max-width: 1180px) {
   .dashboardBoard {
     grid-template-columns: 1fr;
