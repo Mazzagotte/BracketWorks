@@ -437,7 +437,6 @@ export function TournamentSettingsContent({ tournamentId, layout = 'page' }: Tou
                     <div className={dashboardStyles.compactField}>
                       <label className={dashboardStyles.compactLabel}>Entry Fee</label>
                       <div className={dashboardStyles.compactInputWrapper}>
-                        <span className={dashboardStyles.currencySymbol}>$</span>
                         <input
                           className={`${formStyles.field} ${formStyles.compactControl} ${pageStyles.settingsCurrencyInput}`}
                           type="text"
@@ -517,7 +516,6 @@ export function TournamentSettingsContent({ tournamentId, layout = 'page' }: Tou
                     <div className={dashboardStyles.compactField}>
                       <label className={dashboardStyles.compactLabel}>1st Place</label>
                       <div className={dashboardStyles.compactInputWrapper}>
-                        <span className={dashboardStyles.currencySymbol}>$</span>
                         <input
                           className={`${formStyles.field} ${formStyles.compactControl} ${pageStyles.settingsCurrencyInput}`}
                           type="text"
@@ -538,7 +536,6 @@ export function TournamentSettingsContent({ tournamentId, layout = 'page' }: Tou
                     <div className={dashboardStyles.compactField}>
                       <label className={dashboardStyles.compactLabel}>2nd Place</label>
                       <div className={dashboardStyles.compactInputWrapper}>
-                        <span className={dashboardStyles.currencySymbol}>$</span>
                         <input
                           className={`${formStyles.field} ${formStyles.compactControl} ${pageStyles.settingsCurrencyInput}`}
                           type="text"
@@ -610,7 +607,6 @@ export function TournamentSettingsContent({ tournamentId, layout = 'page' }: Tou
                 <div className={dashboardStyles.compactField}>
                   <label className={dashboardStyles.compactLabel}>Entry Fee</label>
                   <div className={dashboardStyles.compactInputWrapper}>
-                    <span className={dashboardStyles.currencySymbol}>$</span>
                     <input
                       className={`${formStyles.field} ${formStyles.compactControl} ${pageStyles.settingsCurrencyInput}`}
                       type="text"
@@ -627,7 +623,6 @@ export function TournamentSettingsContent({ tournamentId, layout = 'page' }: Tou
                 <div className={dashboardStyles.compactField}>
                   <label className={dashboardStyles.compactLabel}>Prize Amount</label>
                   <div className={dashboardStyles.compactInputWrapper}>
-                    <span className={dashboardStyles.currencySymbol}>$</span>
                     <input
                       className={`${formStyles.field} ${formStyles.compactControl} ${pageStyles.settingsCurrencyInput}`}
                       type="text"

@@ -746,10 +746,20 @@
   border: 1px solid var(--dash-border-faint);
 }
 
+.advancedGrid .compactField {
+  background: color-mix(in srgb, var(--bw-surface-card) 92%, transparent);
+  border: 1px solid color-mix(in srgb, var(--bw-border-subtle) 82%, transparent);
+  border-radius: 10px;
+  padding: 7px;
+  gap: 5px;
+}
+
 .advancedGrid .compactLabel {
   font-size: 11px;
   color: var(--color-text-secondary);
   font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .settingsModalGrid {
@@ -942,20 +952,6 @@
     gap: 5px;
   }
 
-  .settingsModalGrid .compactLabel {
-    font-size: 10px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  .settingsModalGrid .compactSelect,
-  .settingsModalGrid .compactInput {
-    min-height: 40px;
-    border-radius: 9px;
-    background: color-mix(in srgb, var(--bw-surface-panel) 94%, transparent);
-    border-color: color-mix(in srgb, var(--bw-border-subtle) 92%, transparent);
-  }
-
   .settingsModalGrid .settingsCalculatedSummary {
     margin-top: 6px;
     padding-top: 8px;
@@ -989,7 +985,7 @@
 
 .settingsModalGrid .compactSelect,
 .settingsModalGrid .compactInput {
-  min-height: 38px;
+  min-height: 36px;
   background: var(--dash-input-surface);
   border: 1px solid var(--dash-border-soft);
   color: var(--dash-text-title);
@@ -1019,11 +1015,9 @@
 
 .settingsModalGrid .compactLabel {
   color: var(--dash-text-body);
-  font-size: 12px;
-}
-
-.settingsModalGrid .currencySymbol {
-  color: var(--dash-text-muted);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .settingsModalGrid .programCard {
@@ -1356,6 +1350,11 @@
     width: 100%;
     max-width: 100%;
   }
+
+  /* Narrow phones: stack the paired fields instead of squeezing two side by side */
+  .mainBracketSettingsCard .fieldGroup {
+    flex-direction: column;
+  }
   
   .settingsTitle {
     font-size: 20px;
@@ -1378,10 +1377,6 @@
     padding: 10px 12px;
   }
 
-  .compactInputWrapper .compactInput {
-    padding-left: 30px;
-  }
-  
   .sectionTitle {
     font-size: 15px;
   }
@@ -1562,8 +1557,15 @@
 }
 
 .mainBracketSettingsCard .fieldGroup {
-  width: max-content;
+  width: 100%;
   max-width: 100%;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.mainBracketSettingsCard .fieldGroup > .compactField {
+  flex: 1 1 0;
+  min-width: 96px;
 }
 
 .mainBracketSettingsCard .settingsHeader {
@@ -1744,18 +1746,6 @@
 
 .handicapPercentRow .compactInput {
   width: 56px;
-}
-
-.currencySymbol {
-  position: absolute;
-  left: 12px;
-  color: var(--color-text-muted);
-  font-weight: 600;
-  z-index: 1;
-}
-
-.compactInputWrapper .compactInput {
-  padding-left: 24px;
 }
 
 .handicapField {
@@ -2898,40 +2888,11 @@
     font-size: 13px;
   }
 
-  /* Inputs: more visible borders — no padding shorthand here so the
-     absolute-positioned $ symbol padding-left isn't overridden */
+  /* Inputs: more visible borders */
   .compactSelect,
   .compactInput {
     border-width: 1.5px;
     border-color: var(--color-border-light);
-  }
-
-  /* Use 3-class specificity to guarantee padding-left wins over any base 2-class rule */
-  .mainBracketSettingsCard .compactInputWrapper .compactInput,
-  .optionalBracketsCard .compactInputWrapper .compactInput,
-  .sidePotsCard .compactInputWrapper .compactInput {
-    padding-left: 30px;
-  }
-
-  /* On mobile, switch $ from absolute to inline flex prefix so
-     no padding-left fighting is needed */
-  .currencySymbol {
-    position: static;
-    top: auto;
-    transform: none;
-    padding: 0 4px 0 10px;
-    flex-shrink: 0;
-    font-size: 13px;
-    line-height: 1;
-    align-self: center;
-  }
-
-  /* When $ is inline, the input no longer needs large padding-left */
-  .compactInputWrapper .compactInput,
-  .mainBracketSettingsCard .compactInputWrapper .compactInput,
-  .optionalBracketsCard .compactInputWrapper .compactInput,
-  .sidePotsCard .compactInputWrapper .compactInput {
-    padding-left: 4px;
   }
 
   /* Fix: desktop mainBracketSettingsCard .settingsGrid has row-gap: 4px which persists
@@ -3677,14 +3638,14 @@
 .advancedGrid .compactInput,
 .settingsModalGrid .compactSelect,
 .settingsModalGrid .compactInput {
-  min-height: 48px;
+  min-height: 36px;
   border-radius: 12px !important;
   border: 1px solid color-mix(in srgb, var(--bw-border-subtle) 92%, transparent) !important;
   background: color-mix(in srgb, var(--bw-surface-panel) 94%, transparent) !important;
   color: var(--bw-text-title) !important;
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 500;
-  padding: 0 16px;
+  padding: 6px 10px;
   box-shadow: none !important;
 }
 
@@ -3696,17 +3657,6 @@
 .advancedGrid .compactInputWrapper,
 .settingsModalGrid .compactInputWrapper {
   width: 100%;
-}
-
-.advancedGrid .compactInputWrapper .compactInput,
-.settingsModalGrid .compactInputWrapper .compactInput {
-  padding-left: 36px;
-}
-
-.advancedGrid .currencySymbol,
-.settingsModalGrid .currencySymbol {
-  left: 14px;
-  color: var(--bw-text-faint);
 }
 
 .tournamentInput:focus,
@@ -4940,18 +4890,6 @@
   .settingsModalGrid .settingsContent {
     flex: 0 0 auto;
     min-height: 0;
-  }
-
-  .settingsModalGrid .compactField {
-    padding: 5px;
-  }
-
-  .settingsModalGrid .compactSelect,
-  .settingsModalGrid .compactInput {
-    min-height: 32px;
-    color: var(--color-text-primary);
-    background: var(--color-bg-primary);
-    border-color: var(--color-border-primary);
   }
 
   .settingsModalGrid .compactSelect:focus,
