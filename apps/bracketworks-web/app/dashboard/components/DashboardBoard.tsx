@@ -259,7 +259,6 @@ export function DashboardBoard({
                 <div className={styles.kpiCopy}>
                   <p className={styles.kpiValue}>{loadedEntries}</p>
                   <p className={styles.kpiLabel}>Players</p>
-                  <p className={styles.kpiDetail}>Active squad</p>
                 </div>
               </div>
             </article>
@@ -271,7 +270,6 @@ export function DashboardBoard({
                 <div className={styles.kpiCopy}>
                   <p className={styles.kpiValue}>{statsEntrySummary.totalEntries}</p>
                   <p className={styles.kpiLabel}>Total Entries</p>
-                  <p className={styles.kpiDetail}>{loadedEntries > 0 ? `${Math.round(statsEntrySummary.totalEntries / loadedEntries)} average per player` : 'No player data yet'}</p>
                 </div>
               </div>
             </article>
@@ -283,7 +281,6 @@ export function DashboardBoard({
                 <div className={styles.kpiCopy}>
                   <p className={styles.kpiValue}>{formatUsd(statsEntrySummary.totalRevenue)}</p>
                   <p className={styles.kpiLabel}>Expected Revenue</p>
-                  <p className={styles.kpiDetail}>{statsEntrySummary.totalEntries} entries × {formatUsd(bracketSettings.default_entry_fee)}</p>
                 </div>
               </div>
             </article>
@@ -295,7 +292,6 @@ export function DashboardBoard({
                 <div className={styles.kpiCopy}>
                   <p className={styles.kpiValue}>{formatUsd(tournamentProjectedPayout)}</p>
                   <p className={styles.kpiLabel}>Prize Fund</p>
-                  <p className={styles.kpiDetail}>After house fee</p>
                 </div>
               </div>
             </article>
