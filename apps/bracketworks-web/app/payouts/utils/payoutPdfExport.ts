@@ -5,7 +5,6 @@ type BuildPayoutPdfHtmlArgs = {
   tournamentName: string
   squadLabel: string
   generatedAt: string
-  paidStampDate: string
   logoUrl: string
   programs: string
   totalBrackets: number
@@ -203,6 +202,18 @@ const renderSummary = ({
     </div>
   </section>`
 
+const renderSignature = (row: PayoutExportRow): string => {
+  if (!row.isPaid) return '<span class="signature-line"></span>'
+  if (!row.paidAt) return '<span class="paid-timestamp">Marked paid<br />Time not recorded</span>'
+  const date = new Date(row.paidAt)
+  if (!Number.isFinite(date.getTime())) throw new Error('Invalid payout payment timestamp')
+  const timestamp = new Intl.DateTimeFormat('en-US', {
+    year: 'numeric', month: 'short', day: 'numeric',
+    hour: 'numeric', minute: '2-digit', timeZoneName: 'short',
+  }).format(date)
+  return `<span class="paid-timestamp">Marked paid<br /><time datetime="${escapeHtml(row.paidAt)}">${escapeHtml(timestamp)}</time></span>`
+}
+
 const renderWinnerRows = (rows: PayoutExportRow[]): string =>
   rows
     .map(row => `<tr class="${row.isPaid ? 'is-paid-row' : ''}">
@@ -212,19 +223,24 @@ const renderWinnerRows = (rows: PayoutExportRow[]): string =>
       <td class="amount side-pot-amount ${row.sidePotTotal > 0 ? 'has-side-pot' : 'empty-cell'}">${row.sidePotTotal > 0 ? formatUsd(row.sidePotTotal) : '&mdash;'}</td>
       <td class="amount total-amount">${formatUsd(row.totalWon)}</td>
       <td class="paid-cell"><span class="paid-checkbox" aria-hidden="true">${row.isPaid ? CHECKBOX_PAID : CHECKBOX_UNPAID}</span><span class="paid-label">${row.isPaid ? 'Paid' : 'Unpaid'}</span></td>
-      <td class="signature-cell"><span class="signature-line"></span></td>
+      <td class="signature-cell">${renderSignature(row)}</td>
     </tr>`)
     .join('')
 
 const renderWinnerTable = (rows: PayoutExportRow[]): string =>
   `<table class="winner-table">
+    <colgroup>
+      <col class="rank-column" /><col class="player-column" />
+      <col class="amount-column" /><col class="amount-column" />
+      <col class="total-column" /><col class="paid-column" /><col class="signature-column" />
+    </colgroup>
     <thead>
       <tr>
         <th class="rank">#</th>
         <th class="player">Player</th>
         <th class="amount">Brackets</th>
         <th class="amount">Side Pots</th>
-        <th class="amount">Total Payout</th>
+        <th class="amount total-amount">Total Payout</th>
         <th class="paid-cell">Paid</th>
         <th class="signature-cell">Signature</th>
       </tr>

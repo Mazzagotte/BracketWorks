@@ -2146,7 +2146,7 @@
   min-height: 38px;
   border-color: color-mix(in srgb, var(--color-primary) 42%, transparent);
   background: linear-gradient(180deg, color-mix(in srgb, var(--color-primary) 95%, transparent), color-mix(in srgb, var(--color-primary) 95%, transparent));
-  box-shadow: 0 10px 24px color-mix(in srgb, var(--color-primary) 20%, transparent);
+  box-shadow: none;
   color: var(--color-text-primary);
 }
 

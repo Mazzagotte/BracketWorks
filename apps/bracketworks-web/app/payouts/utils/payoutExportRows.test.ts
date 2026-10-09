@@ -61,6 +61,7 @@ describe('payoutExportRows', () => {
         ],
       },
       new Set(['11']),
+      new Map([['11', '2026-10-09T01:05:00.000Z']]),
     )
 
     expect(rows).toHaveLength(1)
@@ -74,6 +75,7 @@ describe('payoutExportRows', () => {
       handicapCount: 1,
       otherCount: 1,
       isPaid: true,
+      paidAt: '2026-10-09T01:05:00.000Z',
     })
   })
 })

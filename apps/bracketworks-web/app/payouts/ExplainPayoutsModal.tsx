@@ -51,8 +51,8 @@ export default function ExplainPayoutsModal({ isOpen, onClose }: ExplainPayoutsM
             <p>
               Each winner row includes a Paid button.
               Click it to mark that bowler as paid and dim the row.
-              Paid status is saved locally on this device until that tournament is cleared.
-              Click Paid again to undo it.
+              Paid status and the time it was marked are saved locally in this browser for the tournament.
+              Click Paid again to undo it. Marking it paid again records a new time.
             </p>
           </section>
 
@@ -61,6 +61,9 @@ export default function ExplainPayoutsModal({ isOpen, onClose }: ExplainPayoutsM
             <p>
               Use Export to Excel for a spreadsheet of winners and payout amounts.
               Use Export to PDF for a print-ready payout sheet you can hand out or post at the desk.
+              Paid rows show their saved payment time and timezone in the signature column;
+              unpaid rows keep a blank signature line. Older paid records without a timestamp
+              show &quot;Time not recorded&quot;. Payment records are not synced to other devices.
             </p>
           </section>
           <HelpGuideFooter section="payouts" />

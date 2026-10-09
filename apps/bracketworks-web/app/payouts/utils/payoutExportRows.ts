@@ -34,6 +34,7 @@ export type PayoutExportRow = {
   handicapCount: number
   otherCount: number
   isPaid: boolean
+  paidAt?: string | null
 }
 
 export function buildSidePotByPlayer(
@@ -68,6 +69,7 @@ export function buildPayoutExportRows(
   winners: AggregatedWinner[],
   sidePotByPlayer: SidePotByPlayer,
   paidKeys: Set<string>,
+  paidRecords?: ReadonlyMap<string, string | null>,
 ): PayoutExportRow[] {
   return winners.map((winner, index) => {
     const key = String(winner.player_id ?? winner.player_name)
@@ -93,6 +95,7 @@ export function buildPayoutExportRows(
       handicapCount: handicapWins.length,
       otherCount: otherWins.length,
       isPaid: paidKeys.has(key),
+      paidAt: paidKeys.has(key) ? paidRecords?.get(key) ?? null : null,
     }
   })
 }

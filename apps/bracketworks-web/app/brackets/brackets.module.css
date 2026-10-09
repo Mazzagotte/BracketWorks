@@ -452,7 +452,7 @@
 }
 
 .bracketsQuickActionsGroupLeft > :first-child {
-  box-shadow: 0 4px 10px color-mix(in srgb, var(--color-primary) 14%, transparent) !important;
+  box-shadow: none !important;
 }
 
 .bracketsQuickActionsGroupRight {
@@ -660,11 +660,11 @@
 }
 
 .bracketsQuickActionsGroupLeft > :where(button, a) {
-  box-shadow: 0 4px 10px color-mix(in srgb, var(--color-primary) 14%, transparent) !important;
+  box-shadow: none !important;
 }
 
 .bracketsQuickActionsGroupLeft > :where(button, a):hover:not(:disabled) {
-  box-shadow: 0 6px 14px color-mix(in srgb, var(--color-primary) 18%, transparent) !important;
+  box-shadow: none !important;
 }
 
 .bracketsQuickActionsGroupRight {

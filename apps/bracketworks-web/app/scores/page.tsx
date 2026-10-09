@@ -449,7 +449,6 @@ export default function ScoresPage() {
                 </div>
                 {!showInitialScoresLoad && players.length === 0 && (
                   <div className={`${cardStyles.card} ${styles.emptyScoresState}`}>
-                    <div className={styles.emptyScoresAccentGlow} aria-hidden="true" />
                     <div className={styles.emptyScoresBadge}>Tournament Ready</div>
                     <div className={styles.emptyScoresHeroRow}>
                       <div className={styles.emptyScoresIconContainer}>

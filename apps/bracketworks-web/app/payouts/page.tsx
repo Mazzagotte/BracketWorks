@@ -31,6 +31,7 @@ import PayoutsSummaryCard from './components/PayoutsSummaryCard'
 import PayoutsSearchPanel from './components/PayoutsSearchPanel'
 import PayoutsResultsCard from './components/PayoutsResultsCard'
 import TournamentFinalReview from './components/TournamentFinalReview'
+import { parsePaidRecords, serializePaidRecords, togglePaidRecord, type PaidRecords } from './utils/paidRecords'
 
 export default function PayoutsPage() {
   const { addToast } = useToast()
@@ -44,7 +45,8 @@ export default function PayoutsPage() {
   const [selectedSquad, setSelectedSquad] = useState<Squad | null>(null)
   const [searchFirstName, setSearchFirstName] = useState('')
   const [searchLastName, setSearchLastName] = useState('')
-  const [paidKeys, setPaidKeys] = useState<Set<string>>(new Set())
+  const [paidRecords, setPaidRecords] = useState<PaidRecords | null>(null)
+  const paidKeys = useMemo(() => new Set(paidRecords?.keys()), [paidRecords])
   const [, setScoreRows] = useState<ScoreRow[]>([])
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set())
   const [isUnlocked, setIsUnlocked] = useState(false)
@@ -121,25 +123,35 @@ export default function PayoutsPage() {
   useEffect(() => {
     if (!selectedTournament || !isUnlocked) return
     loadPayoutData()
+  }, [isUnlocked, loadPayoutData, selectedSquad, selectedTournament])
+
+  useEffect(() => {
+    setPaidRecords(null)
+    if (!selectedTournament) return
     try {
       const stored = storage.getItem(`payouts_paid_${selectedTournament.id}`)
-      setPaidKeys(new Set(stored ? JSON.parse(stored) : []))
-    } catch {
-      logger.error('Failed to parse paid keys from storage')
-      setPaidKeys(new Set())
+      setPaidRecords(parsePaidRecords(stored))
+    } catch (error) {
+      logger.error('Failed to parse payout payment records from storage', { error })
+      addToast({ type: 'error', message: 'Saved payment records could not be loaded. Paid status cannot be changed.', duration: 5000 })
     }
-  }, [isUnlocked, loadPayoutData, selectedSquad, selectedTournament])
+  }, [addToast, selectedTournament])
 
   const togglePaid = useCallback((key: string) => {
     if (!selectedTournament) return
-    setPaidKeys(prev => {
-      const next = new Set(prev)
-      if (next.has(key)) next.delete(key)
-      else next.add(key)
-      storage.setItem(`payouts_paid_${selectedTournament.id}`, JSON.stringify([...next]))
-      return next
-    })
-  }, [selectedTournament])
+    if (!paidRecords) {
+      addToast({ type: 'error', message: 'Payment records are unavailable. Reload the page before marking payouts paid.', duration: 5000 })
+      return
+    }
+    const next = togglePaidRecord(paidRecords, key, new Date())
+    try {
+      localStorage.setItem(`payouts_paid_${selectedTournament.id}`, serializePaidRecords(next))
+      setPaidRecords(next)
+    } catch (error) {
+      logger.error('Failed to save payout payment records', { error })
+      addToast({ type: 'error', message: 'Payment status could not be saved. Please try again.', duration: 5000 })
+    }
+  }, [addToast, paidRecords, selectedTournament])
   const aggregatedWinners = useMemo(
     () => aggregateWinnersByPlayer(payoutData?.winners_by_bracket ?? []),
     [payoutData],
@@ -167,6 +179,7 @@ export default function PayoutsPage() {
     addToast,
     winners: filteredWinners,
     paidKeys,
+    paidRecords,
     payoutData,
     sidePotSummaries: sidePotAccounting.summaries,
     selectedTournament,
@@ -342,4 +355,3 @@ export default function PayoutsPage() {
     </ErrorBoundary>
   )
 }
-

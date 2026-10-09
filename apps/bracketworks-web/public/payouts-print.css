@@ -282,13 +282,48 @@ body {
 .winner-table {
   width: 100%;
   margin-top: 0;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   table-layout: fixed;
   border: 1px solid var(--print-border);
+  border-radius: 8px;
+}
+
+.winner-table thead th:first-child {
+  border-top-left-radius: 7px;
+}
+
+.winner-table thead th:last-child {
+  border-top-right-radius: 7px;
+}
+
+.winner-table tbody tr:last-child td:first-child {
+  border-bottom-left-radius: 7px;
+}
+
+.winner-table tbody tr:last-child td:last-child {
+  border-bottom-right-radius: 7px;
 }
 
 .winner-table thead {
   display: table-header-group;
+}
+
+.rank-column { width: 4%; }
+.player-column { width: 25%; }
+.amount-column { width: 11%; }
+.total-column { width: 13%; }
+.paid-column { width: 8%; }
+.signature-column { width: 28%; }
+
+.winner-table th.amount {
+  text-align: right;
+  white-space: normal;
+}
+
+.winner-table th.rank,
+.winner-table th.paid-cell {
+  text-align: center;
 }
 
 .winner-table tr {
@@ -328,29 +363,22 @@ body {
 }
 
 .rank {
-  width: 0.32in;
   text-align: center;
   color: var(--print-text-muted);
   font-variant-numeric: tabular-nums;
 }
 
 .player {
-  width: 1.88in;
   color: var(--print-text-primary);
   font-weight: 800;
   overflow-wrap: anywhere;
 }
 
 .amount {
-  width: 0.82in;
   text-align: right;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
-}
-
-.total-amount {
-  width: 0.96in;
 }
 
 .side-pot-amount.has-side-pot {
@@ -364,7 +392,6 @@ body {
 }
 
 .paid-cell {
-  width: 0.62in;
   text-align: center;
 }
 
@@ -386,7 +413,15 @@ body {
 }
 
 .signature-cell {
-  width: 1.38in;
+  text-align: left;
+}
+
+.paid-timestamp {
+  display: block;
+  font-size: 8px;
+  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
 }
 
 .signature-line {

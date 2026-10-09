@@ -21,7 +21,6 @@ const buildHtml = (rows: PayoutExportRow[]) => buildPayoutPdfHtml({
   tournamentName: 'Brass Monkey Idaho State Championship With A Long Name',
   squadLabel: 'May 30, 2026 | 10:00 AM',
   generatedAt: 'Sep 11, 2026, 3:57 PM',
-  paidStampDate: 'Sep 11, 2026',
   logoUrl: '/logo_no_text.svg',
   programs: "Handicap | Scratch | Reverse Scratch | Women's Handicap | High Game Scratch",
   totalBrackets: 37,
@@ -29,6 +28,39 @@ const buildHtml = (rows: PayoutExportRow[]) => buildPayoutPdfHtml({
 })
 
 describe('buildPayoutPdfHtml', () => {
+  it('prints the saved paid time with a timezone, not the generation date', () => {
+    const paidAt = '2026-10-09T01:05:00.000Z'
+    const html = buildHtml([{ ...buildRows(1)[0]!, paidAt }])
+    const expected = new Intl.DateTimeFormat('en-US', {
+      year: 'numeric', month: 'short', day: 'numeric',
+      hour: 'numeric', minute: '2-digit', timeZoneName: 'short',
+    }).format(new Date(paidAt))
+    expect(html).toContain(`datetime="${paidAt}"`)
+    expect(html).toContain(expected)
+    expect(html).toContain('Marked paid<br />')
+    expect(html).not.toContain('class="signature-line"')
+  })
+
+  it('keeps unpaid signatures blank and identifies legacy paid timestamps as unknown', () => {
+    const html = buildHtml(buildRows(2))
+    expect(html).toContain('Marked paid<br />Time not recorded')
+    expect(html.match(/class="signature-line"/g)).toHaveLength(1)
+    const unpaid = buildHtml([{ ...buildRows(1)[0]!, isPaid: false, paidAt: '2026-10-09T01:05:00Z' }])
+    expect(unpaid).not.toContain('class="paid-timestamp"')
+    expect(unpaid).toContain('class="signature-line"')
+  })
+
+  it('rejects invalid paid timestamps rather than printing a misleading date', () => {
+    expect(() => buildHtml([{ ...buildRows(1)[0]!, paidAt: 'invalid' }])).toThrow('Invalid payout payment timestamp')
+  })
+
+  it('uses identical column definitions for continuation tables', () => {
+    const html = buildHtml(buildRows(51))
+    expect(html.match(/<colgroup>/g)).toHaveLength(3)
+    expect(html.match(/class="total-column"/g)).toHaveLength(3)
+    expect(html.match(/class="amount total-amount">Total Payout/g)).toHaveLength(3)
+  })
+
   it('renders the payout document summary, checkboxes, and verification fields', () => {
     const html = buildHtml(buildRows(3))
 

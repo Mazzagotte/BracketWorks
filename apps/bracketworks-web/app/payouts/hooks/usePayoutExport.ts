@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 
 import { Toast } from '../../components/Toast'
-import { formatShortMonthDayYear } from '../../lib/formatters'
 import { printHtmlDocument } from '../../lib/printExport'
 import { Squad, Tournament } from '../../lib/types'
 import { PayoutSummary } from './usePayouts'
@@ -16,6 +15,7 @@ type UsePayoutExportArgs = {
   addToast: AddToast
   winners: AggregatedWinner[]
   paidKeys: Set<string>
+  paidRecords: ReadonlyMap<string, string | null> | null
   payoutData: PayoutSummary | null
   sidePotSummaries: SidePotSummary[]
   selectedTournament: Tournament | null
@@ -74,6 +74,7 @@ export function usePayoutExport({
   addToast,
   winners,
   paidKeys,
+  paidRecords,
   payoutData,
   sidePotSummaries,
   selectedTournament,
@@ -92,7 +93,8 @@ export function usePayoutExport({
 
     setIsExportingExcel(true)
     try {
-      const rows = buildPayoutExportRows(winners, sidePotByPlayer, paidKeys)
+      if (!paidRecords) throw new Error('Saved payment records are unavailable. Reload before exporting.')
+      const rows = buildPayoutExportRows(winners, sidePotByPlayer, paidKeys, paidRecords)
       const context = getExportBaseContext(payoutData, sidePotSummaries, selectedTournament, selectedSquad)
       const generatedAt = new Date().toLocaleString()
 
@@ -131,7 +133,7 @@ export function usePayoutExport({
     } finally {
       setIsExportingExcel(false)
     }
-  }, [addToast, paidKeys, payoutData, selectedSquad, selectedTournament, sidePotByPlayer, sidePotSummaries, winners])
+  }, [addToast, paidKeys, paidRecords, payoutData, selectedSquad, selectedTournament, sidePotByPlayer, sidePotSummaries, winners])
 
   const exportToPdf = useCallback(() => {
     if (winners.length === 0) {
@@ -141,10 +143,10 @@ export function usePayoutExport({
 
     setIsExportingPdf(true)
     try {
-      const rows = buildPayoutExportRows(winners, sidePotByPlayer, paidKeys)
+      if (!paidRecords) throw new Error('Saved payment records are unavailable. Reload before exporting.')
+      const rows = buildPayoutExportRows(winners, sidePotByPlayer, paidKeys, paidRecords)
       const context = getExportBaseContext(payoutData, sidePotSummaries, selectedTournament, selectedSquad)
       const generatedAt = new Date().toLocaleString()
-      const paidStampDate = formatShortMonthDayYear(new Date())
       const logoUrl = `${window.location.origin}/logo_no_text.svg`
 
       const html = buildPayoutPdfHtml({
@@ -152,7 +154,6 @@ export function usePayoutExport({
         tournamentName: context.tournamentName,
         squadLabel: context.squadLabel,
         generatedAt,
-        paidStampDate,
         logoUrl,
         programs: context.programs,
         totalBrackets: context.allBrackets.length,
@@ -178,7 +179,7 @@ export function usePayoutExport({
     } finally {
       setIsExportingPdf(false)
     }
-  }, [addToast, paidKeys, payoutData, selectedSquad, selectedTournament, sidePotByPlayer, sidePotSummaries, winners])
+  }, [addToast, paidKeys, paidRecords, payoutData, selectedSquad, selectedTournament, sidePotByPlayer, sidePotSummaries, winners])
 
   return {
     isExportingExcel,
