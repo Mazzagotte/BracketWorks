@@ -79,7 +79,7 @@
   min-height: 42px;
   padding: 0 18px;
   background: #ff7900;
-  color: #fff;
+  color: var(--bw-page);
   font-size: 0.76rem;
 }
 
@@ -87,7 +87,7 @@
   min-height: 34px;
   padding: 0 16px;
   background: #ff7900;
-  color: var(--color-text-primary);
+  color: var(--bw-page);
   font-size: 0.7rem;
 }
 

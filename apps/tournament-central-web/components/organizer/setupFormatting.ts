@@ -1,5 +1,6 @@
 import type { SquadConfig } from './types';
 import { formatSquadTime, formatTournamentDate } from './organizerFormatting';
+import { formatTournamentDateRange } from '@/lib/tournamentDates';
 
 export { formatMoney } from './organizerFormatting';
 
@@ -79,21 +80,7 @@ export function buildSquadDisplayName(squad: Pick<SquadConfig, 'dateIso' | 'star
 }
 
 export function formatTournamentCardDate(startDateIso: string | null | undefined, endDateIso: string | null | undefined): string {
-  const value = (startDateIso || endDateIso || '').trim();
-  if (!value) {
-    return 'No dates set';
-  }
-
-  const parsed = new Date(`${value}T00:00:00`);
-  if (Number.isNaN(parsed.getTime())) {
-    return value;
-  }
-
-  return parsed.toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
+  return formatTournamentDateRange(startDateIso, endDateIso);
 }
 
 export function countTournamentSquads(squadTimes: Record<string, string[]> | undefined): number {

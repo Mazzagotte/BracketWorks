@@ -71,7 +71,7 @@ export default function OrganizerTournamentParticipantsPage() {
               {search.trim() ? 'No participants match your search.' : 'No participants have registered yet.'}
             </p>
           ) : (
-            <div className={styles.registrationTableWrap}>
+            <div className={styles.registrationTableWrap} tabIndex={0} role="region" aria-label="Participants table, scroll horizontally for more columns">
               <table className={styles.registrationTable}>
                 <thead>
                   <tr>

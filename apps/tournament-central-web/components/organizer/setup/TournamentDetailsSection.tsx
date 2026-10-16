@@ -14,6 +14,7 @@ import type { ChangeEvent, Dispatch, DragEvent, RefObject, SetStateAction } from
 import SetupStatusBadge from '../SetupStatusBadge';
 import type { SetupSectionKey, SetupStatus } from '../types';
 import styles from '../tournament-setup.module.css';
+import { registrationDateErrors } from '@/lib/registrationDates';
 
 type TournamentDetails = {
   name: string;
@@ -85,7 +86,7 @@ type TournamentDetailsSectionProps = {
   pendingLogoFile: File | null;
   tournamentDateOrderInvalid: boolean;
   registrationDateOrderInvalid: boolean;
-  registrationAfterStartWarning: boolean;
+  registrationAfterEndInvalid: boolean;
   usStates: UsStateOption[];
   timezones: TimezoneOption[];
   logoInputRef: RefObject<HTMLInputElement>;
@@ -109,7 +110,7 @@ export default function TournamentDetailsSection({
   pendingLogoFile,
   tournamentDateOrderInvalid,
   registrationDateOrderInvalid,
-  registrationAfterStartWarning,
+  registrationAfterEndInvalid,
   usStates,
   timezones,
   logoInputRef,
@@ -118,6 +119,7 @@ export default function TournamentDetailsSection({
   clearLogo,
   setIsLogoDragActive,
 }: TournamentDetailsSectionProps) {
+  const dateErrors = registrationDateErrors(details);
   const [identityTouched, setIdentityTouched] = useState({ name: false, organizer: false, tournamentType: false });
   const [contactTouched, setContactTouched] = useState({ name: false, email: false, phone: false });
   const [logoDimensions, setLogoDimensions] = useState<string | null>(null);
@@ -414,30 +416,37 @@ export default function TournamentDetailsSection({
                     <input
                       type="date"
                       className={!details.registrationOpenIso || registrationDateOrderInvalid ? styles.fieldInputInvalid : ''}
+                      aria-invalid={Boolean(dateErrors.registrationOpenIso)}
+                      aria-describedby="registration-open-error"
                       value={details.registrationOpenIso}
                       onChange={(event) => setDetails((prev) => ({ ...prev, registrationOpenIso: event.target.value }))}
                     />
                     <small className={styles.fieldHintText}>When bowlers can begin submitting entries.</small>
                     {!details.registrationOpenIso ? <small className={styles.fieldErrorText}>Registration open date is required.</small> : null}
+                    {dateErrors.registrationOpenIso && <small id="registration-open-error" className={styles.fieldErrorText}>{dateErrors.registrationOpenIso}</small>}
                   </label>
                   <label className={styles.fieldLabel}>
                     Registration Closes <span className={styles.fieldRequired}>*</span>
                     <input
                       type="date"
-                      className={!details.registrationCloseIso || registrationDateOrderInvalid || registrationAfterStartWarning ? styles.fieldInputInvalid : ''}
+                      className={!details.registrationCloseIso || registrationDateOrderInvalid || registrationAfterEndInvalid ? styles.fieldInputInvalid : ''}
                       min={details.registrationOpenIso || undefined}
+                      max={details.endDateIso || undefined}
+                      aria-invalid={Boolean(dateErrors.registrationCloseIso)}
+                      aria-describedby="registration-close-error"
                       value={details.registrationCloseIso}
                       onChange={(event) => setDetails((prev) => ({ ...prev, registrationCloseIso: event.target.value }))}
                     />
                     <small className={styles.fieldHintText}>Tournament-wide deadline; squad deadlines may close earlier.</small>
                     {!details.registrationCloseIso ? <small className={styles.fieldErrorText}>Registration close date is required.</small> : null}
-                    {registrationDateOrderInvalid ? <small className={styles.fieldErrorText}>Close date must be on or after open date.</small> : null}
-                    {!registrationDateOrderInvalid && registrationAfterStartWarning ? <small className={styles.fieldHintText}>Close date currently falls after tournament start.</small> : null}
+                    <small id="registration-close-error" className={styles.fieldErrorText}>
+                      {dateErrors.registrationCloseIso || ''}
+                    </small>
                   </label>
                 </div>
                 <div className={styles.fieldRow}>
-                  <label className={styles.fieldLabel}>Opens at<input type="time" value={details.registrationOpenTime} onChange={(event) => setDetails((prev) => ({ ...prev, registrationOpenTime: event.target.value }))} /></label>
-                  <label className={styles.fieldLabel}>Closes at<input type="time" value={details.registrationCloseTime} onChange={(event) => setDetails((prev) => ({ ...prev, registrationCloseTime: event.target.value }))} /></label>
+                  <label className={styles.fieldLabel}>Opens at<input type="time" aria-invalid={Boolean(dateErrors.registrationOpenTime || dateErrors.registrationOpenIso)} aria-describedby="registration-open-time-error" value={details.registrationOpenTime} onChange={(event) => setDetails((prev) => ({ ...prev, registrationOpenTime: event.target.value }))} /><small id="registration-open-time-error" className={styles.fieldErrorText}>{dateErrors.registrationOpenTime || dateErrors.registrationOpenIso || ''}</small></label>
+                  <label className={styles.fieldLabel}>Closes at<input type="time" aria-invalid={Boolean(dateErrors.registrationCloseTime || dateErrors.registrationCloseIso)} aria-describedby="registration-close-time-error" value={details.registrationCloseTime} onChange={(event) => setDetails((prev) => ({ ...prev, registrationCloseTime: event.target.value }))} /><small id="registration-close-time-error" className={styles.fieldErrorText}>{dateErrors.registrationCloseTime || dateErrors.registrationCloseIso || ''}</small></label>
                 </div>
                 <p className={styles.detailNote}>This is the tournament-wide registration window. Individual squads may close earlier.</p>
                 <label className={styles.fieldLabel}>

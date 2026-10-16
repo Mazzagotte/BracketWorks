@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuthSession } from '../auth/useAuthSession';
 
 type OrganizerAuthGuardProps = {
   children: ReactNode;
@@ -11,14 +12,14 @@ type OrganizerAuthGuardProps = {
 // Single place that enforces organizer authentication; API authorization remains the real security boundary.
 export default function OrganizerAuthGuard({ children }: OrganizerAuthGuardProps) {
   const router = useRouter();
+  const { displayName: session, error, retry } = useAuthSession();
 
   useEffect(() => {
-    const hasToken = Boolean(sessionStorage.getItem('access_token'));
-    const hasUser = Boolean(localStorage.getItem('user_id'));
-    if (!hasToken || !hasUser) {
+    if (session === '') {
       router.replace('/login?expired=true');
     }
-  }, [router]);
+  }, [router, session]);
 
-  return <>{children}</>;
+  if (error) return <p role="alert">{error} <button type="button" onClick={retry}>Try again</button></p>;
+  return session ? <>{children}</> : <p role="status">Checking your session...</p>;
 }

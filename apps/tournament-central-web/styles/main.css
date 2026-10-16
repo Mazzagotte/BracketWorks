@@ -30,8 +30,8 @@
   --color-accent-border: rgba(255, 122, 0, 0.35);
   --color-text-primary: #ffffff;
   --color-text-secondary: #a1a1aa;
-  --color-text-muted: #71717a;
-  --color-text-disabled: #52525b;
+  --color-text-muted: #a1a1aa;
+  --color-text-disabled: #9999a3;
   --color-success: #22c55e;
   --color-success-muted: rgba(34, 197, 94, 0.12);
   --color-warning: #f59e0b;
@@ -273,6 +273,20 @@
   --bw-shadow-card: none;
   --bw-shadow-accent: none;
   --bw-focus-ring: 0 0 0 2px var(--color-accent-muted);
+}
+
+:is(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-accent-primary);
+  outline-offset: 3px;
+}
+
+::placeholder {
+  color: var(--color-text-muted);
+  opacity: 1;
+}
+
+:is(input, select, textarea) {
+  border-color: #686872;
 }
 
 /* Single-source app background: one texture layer for all pages */

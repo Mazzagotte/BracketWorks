@@ -22,6 +22,7 @@ from ...core.bracket_programs import normalize_bowler_bracket_entries, normalize
 from ...services.bracket_persistence_simple import load_brackets_simple, load_generated_brackets
 from ...services.payouts import get_tournament_winners_summary, extract_bracket_winners
 from ...services.side_pots import calculate_side_pot_accounting
+from ...services.tc_tournament_documents import build_content_disposition
 
 router = APIRouter()
 
@@ -501,6 +502,7 @@ def list_public_tournaments(
         tc_venues = db.query(models.TcVenue).filter(models.TcVenue.id.in_(tc_venue_ids)).all()
         tc_venues_by_id = {venue.id: venue for venue in tc_venues}
     tc_registration_ready_ids: set[int] = set()
+    tc_registration_deadlines: dict[int, str | None] = {}
     if tc_tournament_ids:
         tc_registration_ready_rows = (
             db.query(models.TournamentCentralSetupState)
@@ -519,6 +521,12 @@ def list_public_tournaments(
             int(row.tournament_id)
             for row in tc_registration_ready_rows
             if str((_published_setup_payload(row).get("details") or {}).get("visibility") or "public") == "public"
+        }
+        tc_registration_deadlines = {
+            int(row.tournament_id): (
+                _published_setup_payload(row).get("details") or {}
+            ).get("registrationCloseIso")
+            for row in tc_registration_ready_rows
         }
 
     tournament_ids = [t.id for t in tournaments]
@@ -652,8 +660,11 @@ def list_public_tournaments(
                 if t.id in tc_registration_ready_ids
                 else None
             ),
+            "registration_close_date": tc_registration_deadlines.get(t.id),
             "has_logo": bool(t.logo_blob),
-            "logo_url": f"/api/v1/public/tc-tournament/{t.id}/logo" if t.logo_blob else None,
+            "logo_url": (
+                f"/api/v1/public/tc-tournament/{t.id}/logo" if t.logo_blob else None
+            ),
             "last_activity_at": None,
             "live_fingerprint": f"tc:{t.id}",
         }
@@ -821,6 +832,49 @@ def get_public_tc_tournament_registration_config(
         if isinstance(question, dict) and bool(question.get("enabled", True))
     ]
 
+    details = payload.get("details") if isinstance(payload.get("details"), dict) else {}
+    public_detail_keys = (
+        "tournamentType",
+        "organizer",
+        "contactName",
+        "supportEmail",
+        "supportPhone",
+        "contactNote",
+        "registrationOpenIso",
+        "registrationCloseIso",
+        "registrationOpenTime",
+        "registrationCloseTime",
+        "timezone",
+    )
+    counts = dict(
+        db.query(models.TcEntry.squad_config_id, func.count(models.TcEntryBowler.id))
+        .join(models.TcEntryBowler, models.TcEntryBowler.entry_id == models.TcEntry.id)
+        .filter(
+            models.TcEntry.tournament_id == tournament_id,
+            models.TcEntry.status.in_(("pending", "confirmed")),
+        )
+        .group_by(models.TcEntry.squad_config_id)
+        .all()
+    )
+    squads = [
+        {**squad, "registeredCount": counts.get(str(squad.get("id")), 0)}
+        for squad in squads
+    ]
+    documents = (
+        db.query(
+            models.TcTournamentDocument.id,
+            models.TcTournamentDocument.file_name,
+            models.TcTournamentDocument.doc_type,
+        )
+        .filter(
+            models.TcTournamentDocument.tournament_id == tournament_id,
+            models.TcTournamentDocument.doc_type.in_(
+                ("rules", "flyer", "oil_pattern", "entry_form", "notice")
+            ),
+        )
+        .order_by(models.TcTournamentDocument.id)
+        .all()
+    )
     _set_public_cache_headers(response, max_age=120, stale_while_revalidate=600)
     return {
         "tournament_id": tournament.id,
@@ -830,7 +884,54 @@ def get_public_tc_tournament_registration_config(
         "squads": squads,
         "fields": fields,
         "questions": questions,
+        "details": {
+            key: details[key] for key in public_detail_keys if details.get(key)
+        },
+        "documents": [
+            {
+                "name": document.file_name,
+                "kind": document.doc_type,
+                "url": (
+                    f"/api/v1/public/tc-tournament/{tournament_id}"
+                    f"/documents/{document.id}"
+                ),
+            }
+            for document in documents
+        ],
     }
+
+
+@router.get("/tc-tournament/{tournament_id}/documents/{document_id}")
+def download_public_tc_document(
+    tournament_id: int, document_id: int, db: Session = Depends(get_db)
+):
+    document = (
+        db.query(models.TcTournamentDocument)
+        .join(
+            models.TournamentCentral,
+            models.TournamentCentral.id == models.TcTournamentDocument.tournament_id,
+        )
+        .filter(
+            models.TcTournamentDocument.id == document_id,
+            models.TcTournamentDocument.tournament_id == tournament_id,
+            models.TcTournamentDocument.doc_type.in_(
+                ("rules", "flyer", "oil_pattern", "entry_form", "notice")
+            ),
+            models.TournamentCentral.is_public.is_(True),
+            models.TournamentCentral.is_published.is_(True),
+        )
+        .first()
+    )
+    if document is None:
+        raise HTTPException(status_code=404, detail="Tournament document not found")
+    return Response(
+        content=document.file_blob,
+        media_type=document.mime_type,
+        headers={
+            "Content-Disposition": build_content_disposition(document.file_name),
+            "X-Content-Type-Options": "nosniff",
+        },
+    )
 
 
 @router.post("/tc-tournament/{tournament_id}/registration")

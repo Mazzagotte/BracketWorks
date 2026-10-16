@@ -17,6 +17,7 @@ from ...services.tc_tournament_documents import (
     validate_tournament_document_upload,
 )
 from ...services.tc_tournament_logo import validate_tournament_logo_upload
+from ...services.tc_setup_validation import validate_registration_dates
 from ...services.tc_setup_relationships import resolve_entry_config_snapshots
 from ...services.tc_venues import build_tournament_location
 from ...services.tc_tournament_names import (
@@ -93,6 +94,14 @@ def create_tournament(
     user=Depends(deps.get_current_user),
 ):
     try:
+        date_errors = validate_registration_dates(
+            {"startDateIso": tournament.start_date, "endDateIso": tournament.end_date}
+        )
+        if date_errors:
+            raise HTTPException(
+                status_code=400,
+                detail={"message": "Invalid tournament dates", "errors": date_errors},
+            )
         if tournament.is_public and has_duplicate_published_tournament_name(
             db,
             user_id=user.id,
@@ -267,6 +276,38 @@ def update_tournament(
 ):
     try:
         db_tournament = require_tc_tournament_permission(db, tournament_id, user, "manage_tournament")
+        state = (
+            db.query(models.TournamentCentralSetupState)
+            .filter(
+                models.TournamentCentralSetupState.tournament_id == tournament_id,
+            )
+            .first()
+        )
+        setup_details = (
+            state.payload.get("details", {})
+            if state and isinstance(state.payload, dict)
+            else {}
+        )
+        date_errors = validate_registration_dates(
+            {
+                **(setup_details if isinstance(setup_details, dict) else {}),
+                "startDateIso": (
+                    tournament.start_date
+                    if tournament.start_date is not None
+                    else db_tournament.start_date
+                ),
+                "endDateIso": (
+                    tournament.end_date
+                    if tournament.end_date is not None
+                    else db_tournament.end_date
+                ),
+            }
+        )
+        if date_errors:
+            raise HTTPException(
+                status_code=400,
+                detail={"message": "Invalid registration dates", "errors": date_errors},
+            )
         if db_tournament.is_public and has_duplicate_published_tournament_name(
             db,
             user_id=db_tournament.user_id,

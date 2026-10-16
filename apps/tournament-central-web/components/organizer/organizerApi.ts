@@ -82,11 +82,15 @@ export type TcVenueSearchResult = {
   venue: TcVenueLike;
 };
 
-function getJsonErrorDetail(responseBody: unknown, fallback: string): string {
+export function getJsonErrorDetail(responseBody: unknown, fallback: string): string {
   if (responseBody && typeof responseBody === 'object' && 'detail' in responseBody) {
     const detail = (responseBody as { detail?: unknown }).detail;
     if (typeof detail === 'string' && detail.trim()) {
       return detail;
+    }
+    if (detail && typeof detail === 'object' && 'errors' in detail && Array.isArray(detail.errors)) {
+      const errors = detail.errors.filter((error): error is string => typeof error === 'string');
+      if (errors.length) return errors.join(' ');
     }
   }
 

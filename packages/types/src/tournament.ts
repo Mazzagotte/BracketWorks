@@ -74,6 +74,7 @@ export interface PublicTournamentDirectoryItem {
   squad_count?: number;
   public_url?: string | null;
   registration_url?: string | null;
+  registration_close_date?: IsoDateString | null;
   has_logo?: boolean;
   logo_url?: string | null;
   last_activity_at?: IsoDateTimeString | null;

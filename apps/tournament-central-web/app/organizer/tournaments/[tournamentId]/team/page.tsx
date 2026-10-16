@@ -261,7 +261,7 @@ export default function OrganizerTournamentTeamPage() {
                 </p>
               </div>
             </div>
-            <div className={styles.registrationTableWrap}>
+            <div className={styles.registrationTableWrap} tabIndex={0} role="region" aria-label="Team table, scroll horizontally for more columns">
               <table className={`${styles.registrationTable} ${localStyles.teamTable} ${showMemberActions ? '' : localStyles.teamTableWithoutActions}`}>
                 <thead>
                   <tr><th>Name</th><th>Email</th><th>Role</th>{showMemberActions ? <th>Actions</th> : null}</tr>

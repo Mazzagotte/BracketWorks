@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { X } from 'lucide-react';
-import { useEffect } from 'react';
+import { useId } from 'react';
+import { useModalFocus } from '@/lib/useModalFocus';
 import styles from './tournament-setup.module.css';
 
 type ConfigDrawerProps = {
@@ -12,22 +13,9 @@ type ConfigDrawerProps = {
 };
 
 export default function ConfigDrawer({ open, title, subtitle, onClose, children }: ConfigDrawerProps) {
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [open, onClose]);
+  const ref = useModalFocus<HTMLElement>(open, onClose);
+  const titleId = useId();
+  const descriptionId = useId();
 
   if (!open) {
     return null;
@@ -36,18 +24,21 @@ export default function ConfigDrawer({ open, title, subtitle, onClose, children 
   return (
     <div className={styles.drawerBackdrop} role="presentation" onClick={onClose}>
       <aside
+        ref={ref}
+        tabIndex={-1}
         className={styles.drawer}
         role="dialog"
         aria-modal="true"
-        aria-label={title}
+        aria-labelledby={titleId}
+        aria-describedby={subtitle ? descriptionId : undefined}
         onClick={(event) => {
           event.stopPropagation();
         }}
       >
         <header className={styles.drawerHeader}>
           <div>
-            <h3>{title}</h3>
-            {subtitle ? <p>{subtitle}</p> : null}
+            <h3 id={titleId}>{title}</h3>
+            {subtitle ? <p id={descriptionId}>{subtitle}</p> : null}
           </div>
           <button type="button" className={`${styles.iconButton} ${styles.modalCloseButton}`} onClick={onClose} aria-label="Close modal">
             <X size={16} />

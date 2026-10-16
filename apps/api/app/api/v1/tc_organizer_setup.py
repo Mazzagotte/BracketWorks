@@ -8,7 +8,12 @@ from ...api import deps
 from ...core import models, schemas
 from ...services.tc_tournament_logo import validate_tournament_logo_upload
 from ...services.tournament_access import require_tc_tournament_permission
-from ...services.tc_setup_validation import PUBLISHED_SNAPSHOT_KEY, clean_setup_payload, validate_publishable_setup
+from ...services.tc_setup_validation import (
+    PUBLISHED_SNAPSHOT_KEY,
+    clean_setup_payload,
+    validate_publishable_setup,
+    validate_registration_dates,
+)
 from ...services.tc_tournament_names import (
     DUPLICATE_PUBLISHED_TOURNAMENT_NAME,
     has_duplicate_published_tournament_name,
@@ -129,6 +134,24 @@ def upsert_tournament_setup_state(
 ):
     tournament = require_tc_tournament_permission(db, tournament_id, user, "manage_tournament")
     draft_payload = clean_setup_payload(payload.payload)
+    details = draft_payload.get("details")
+    if details is not None and not isinstance(details, dict):
+        raise HTTPException(
+            status_code=400, detail="Tournament details must be an object"
+        )
+    date_errors = validate_registration_dates(
+        {
+            **(details or {}),
+            "startDateIso": (details or {}).get("startDateIso")
+            or tournament.start_date,
+            "endDateIso": (details or {}).get("endDateIso") or tournament.end_date,
+        }
+    )
+    if date_errors:
+        raise HTTPException(
+            status_code=400,
+            detail={"message": "Invalid registration dates", "errors": date_errors},
+        )
 
     visibility = str((draft_payload.get("details") or {}).get("visibility") or "private")
     will_be_public = payload.is_published and visibility in {"public", "unlisted"}
@@ -146,6 +169,10 @@ def upsert_tournament_setup_state(
             raise HTTPException(status_code=400, detail={"message": "Tournament setup is not publishable", "errors": publish_errors})
 
     try:
+        if details and details.get("startDateIso"):
+            tournament.start_date = details["startDateIso"]
+        if details and details.get("endDateIso"):
+            tournament.end_date = details["endDateIso"]
         state = db.query(models.TournamentCentralSetupState).filter(
             models.TournamentCentralSetupState.tournament_id == tournament_id,
             models.TournamentCentralSetupState.user_id == tournament.user_id,

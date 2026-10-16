@@ -1,4 +1,5 @@
 import { buildSquadDisplayName, buildSquadTimesPayload } from './setupFormatting';
+import { assertValidRegistrationDates } from '@/lib/registrationDates';
 import { normalizeSquadDefaults } from './setupFactories';
 import { DRAFT_VERSION, defaultTournamentDetails, getDraftStorageKey } from './setupDefaults';
 import { initialRegistrationFields } from './setupConfig';
@@ -248,6 +249,7 @@ export function toDraftFromTournament(tournament: UserTournamentSummary): Organi
 }
 
 export function buildTournamentPayload(details: TournamentDetails, squads: SquadConfig[], isPublic: boolean): TournamentWritePayload {
+  assertValidRegistrationDates(details);
   const location = buildTournamentLocation(details);
 
   return {

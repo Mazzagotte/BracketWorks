@@ -428,7 +428,7 @@
 .primaryAction {
   border-color: var(--color-accent-primary);
   background: var(--color-accent-primary);
-  color: var(--color-text-primary);
+  color: var(--color-bg-primary);
 }
 
 .primaryAction:hover:not(:disabled) {
@@ -1083,7 +1083,7 @@
   flex: 0 0 100%;
   min-height: 39px;
   border-radius: var(--radius-lg);
-  border: 1px solid var(--bw-border-subtle);
+  border: 1px solid #686872;
   background: var(--bw-surface-panel-strong);
   color: var(--bw-text-body);
   padding: 0 11px;

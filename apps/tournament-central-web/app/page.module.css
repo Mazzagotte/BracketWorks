@@ -114,6 +114,96 @@
   color: var(--bw-text-accent);
 }
 
+.header .accountActions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.accountActions > a,
+.accountMenu summary,
+.accountMenu a,
+.accountMenu button {
+  min-height: 44px;
+}
+
+.accountMenu {
+  position: relative;
+}
+
+.accountMenu summary {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border: 1px solid #686872;
+  border-radius: 8px;
+  color: var(--bw-text-title);
+  cursor: pointer;
+}
+
+.accountMenu > div {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  width: 220px;
+  padding: 8px;
+  display: grid;
+  background: var(--bw-surface-panel);
+  border: 1px solid var(--bw-border-card);
+  border-radius: 8px;
+  z-index: 60;
+}
+
+.accountMenu a,
+.accountMenu button {
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  background: transparent;
+  border: 0;
+  color: var(--bw-text-title);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.accountMenu :is(a, button):hover {
+  background: var(--bw-surface-panel-strong);
+}
+
+.tournamentInformation {
+  overflow-wrap: anywhere;
+}
+
+.tournamentInformation dl {
+  display: grid;
+  gap: 8px;
+}
+
+.tournamentInformation dt,
+.tournamentInformation h3 {
+  color: var(--bw-text-title);
+  font-weight: 700;
+}
+
+.tournamentInformation dd {
+  margin: 0 0 8px;
+}
+
+.tournamentInformation dd a {
+  display: block;
+}
+
+.tournamentInformation a {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+.tournamentInformation li {
+  margin-block: 10px;
+}
+
 .topActions,
 .headerActions {
   display: flex;
@@ -377,15 +467,16 @@
 }
 
 .discoveryFilters {
+  --btn-height: 44px;
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
-  overflow-x: auto;
-  padding-bottom: 2px;
-  scrollbar-width: thin;
+  padding: 4px;
 }
 
 .discoveryFilters button {
-  min-height: 36px;
+  min-height: 44px;
+  min-width: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1203,7 +1294,7 @@
   margin-top: 24px;
   border: 0;
   background: var(--color-primary);
-  color: #ffffff;
+  color: var(--bw-page);
 }
 
 .emptyStatePrimaryAction:hover {
@@ -1437,7 +1528,7 @@
   border-radius: 8px;
   border: 0;
   background: var(--color-primary);
-  color: #ffffff;
+  color: var(--bw-page);
   font-size: 12px;
   font-weight: 800;
   display: inline-flex;
@@ -1531,11 +1622,12 @@
 
 .detailsModalCard {
   width: min(720px, 100%);
+  max-height: calc(100dvh - 32px);
   border: 1px solid var(--bw-border-card);
   border-radius: 16px;
   background: var(--bw-surface-panel);
   box-shadow: var(--bw-shadow-card);
-  overflow: hidden;
+  overflow-y: auto;
 }
 
 .registrationModalCard {
@@ -1576,7 +1668,7 @@
   text-transform: uppercase;
 }
 
-.detailsModalHeader h4 {
+.detailsModalHeader h2 {
   margin: 0;
   color: var(--bw-text-title);
   font-size: 24px;
@@ -1585,9 +1677,10 @@
 }
 
 .detailsModalClose {
-  width: 42px;
-  height: 42px;
-  min-height: 42px;
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  flex-shrink: 0;
   padding: 0;
   border-radius: 10px;
   border: 1px solid var(--bw-border-card);
@@ -2123,7 +2216,7 @@
 
 .detailsModalPrimaryAction {
   background: var(--color-primary);
-  color: #ffffff;
+  color: var(--bw-page);
 }
 
 .detailsModalPrimaryAction:hover:not(:disabled) {
@@ -2190,6 +2283,13 @@
 
   .headerInner {
     min-height: 58px;
+    flex-wrap: wrap;
+    padding-block: 8px;
+  }
+
+  .header .accountActions {
+    width: 100%;
+    justify-content: space-between;
   }
 
   .brand img {
@@ -2217,8 +2317,7 @@
   }
 
   .discoveryHeader {
-    position: sticky;
-    top: 58px;
+    position: static;
     z-index: 10;
     margin-inline: -6px;
     padding: 12px;

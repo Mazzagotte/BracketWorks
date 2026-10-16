@@ -4,11 +4,15 @@ import Image from 'next/image';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
-import type { KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent } from 'react';
-import { CalendarCheck2, CalendarDays, ChevronRight, Clock3, Info, Link2, LocateFixed, MapPin, Menu, Plus, Search, ShieldCheck, Trophy, UsersRound, X } from 'lucide-react';
+import type { MouseEvent as ReactMouseEvent } from 'react';
+import { CalendarCheck2, CalendarDays, ChevronRight, Clock3, Info, Link2, LocateFixed, MapPin, Plus, Search, ShieldCheck, Trophy, UsersRound, X } from 'lucide-react';
 import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from 'react-simple-maps';
 import type { PublicTournamentDirectoryItem, PublicTournamentDirectoryResponse } from '@bracketworks/types';
 import styles from './page.module.css';
+import { formatTournamentDate, formatTournamentDateRange, parseTournamentDate } from '@/lib/tournamentDates';
+import PublicAccountNav from '@/components/public/PublicAccountNav';
+import TournamentInformation from '@/components/public/TournamentInformation';
+import { useModalFocus } from '@/lib/useModalFocus';
 
 const TournamentRegistrationForm = dynamic(() => import('@/components/public/TournamentRegistrationForm'));
 
@@ -43,6 +47,7 @@ type Tournament = {
   logoUrl: string | null;
   publicUrl: string | null;
   registrationUrl: string | null;
+  registrationDeadline: string | null;
   locationText: string;
   latitude: number | null;
   longitude: number | null;
@@ -372,24 +377,6 @@ function isRegistrationQuestionAnswered(
   return typeof answer === 'string' && answer.trim().length > 0;
 }
 
-function formatDateRange(startDate: Date | null, endDate: Date | null): string {
-  if (!startDate && !endDate) {
-    return 'Date TBA';
-  }
-
-  const fmt = new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    timeZone: 'UTC',
-  });
-  if (startDate && endDate) {
-    return `${fmt.format(startDate)} - ${fmt.format(endDate)}`;
-  }
-
-  return fmt.format(startDate ?? endDate ?? new Date());
-}
-
 function getTournamentStatus(startDate: Date | null, endDate: Date | null): TournamentStatus {
   const now = new Date();
   if (!startDate && !endDate) {
@@ -474,8 +461,9 @@ function buildVenueMapMarkers(tournaments: Tournament[]): VenueMapMarker[] {
 
 function normalizePublicTournamentItems(items: PublicTournamentDirectoryItem[]): Tournament[] {
   return items.map((item) => {
-    const startDate = item.start_date ? new Date(item.start_date) : null;
-    const endDate = item.end_date ? new Date(item.end_date) : null;
+    const startDate = parseTournamentDate(item.start_date);
+    const endDate = parseTournamentDate(item.end_date);
+    if (endDate && /^\d{4}-\d{2}-\d{2}$/.test(item.end_date ?? '')) endDate.setHours(23, 59, 59, 999);
     const location = parseLocation(item.location);
     const stateCodeFromPayload = (item.state_code ?? '').trim().toUpperCase();
     const stateNameFromPayload = (item.state_name ?? '').trim();
@@ -494,7 +482,7 @@ function normalizePublicTournamentItems(items: PublicTournamentDirectoryItem[]):
     return {
       id: String(item.id),
       name: item.name,
-      date: formatDateRange(startDate, endDate),
+      date: formatTournamentDateRange(item.start_date, item.end_date),
       startDate,
       endDate,
       venue: location.venue,
@@ -504,6 +492,7 @@ function normalizePublicTournamentItems(items: PublicTournamentDirectoryItem[]):
       logoUrl: item.logo_url ?? null,
       publicUrl: item.public_url ?? null,
       registrationUrl: item.registration_url ?? null,
+      registrationDeadline: item.registration_close_date ?? null,
       locationText: item.location?.trim() || `${location.venue} • ${location.city}${locationSuffix ? `, ${locationSuffix}` : ''}`,
       latitude: typeof item.latitude === 'number'
         ? item.latitude
@@ -549,7 +538,7 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
   const [showAllStatuses, setShowAllStatuses] = useState(false);
   const mapShellRef = useRef<HTMLDivElement | null>(null);
   const hasUserSelectedStateRef = useRef(false);
-  const detailModalRef = useRef<HTMLElement | null>(null);
+  const detailModalRef = useModalFocus<HTMLElement>(Boolean(detailTournamentId), () => setDetailTournamentId(null));
   const lastSuccessfulHeartbeatRef = useRef(0);
 
   useEffect(() => {
@@ -585,7 +574,7 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
       resizeObserver.disconnect();
     };
   }, []);
-  const registrationModalRef = useRef<HTMLElement | null>(null);
+  const registrationModalRef = useModalFocus<HTMLElement>(Boolean(registrationTournamentId), () => setRegistrationTournamentId(null));
   const lastTriggerRef = useRef<HTMLElement | null>(null);
 
   const getRegistrationConfigUrl = useCallback((tournament: Tournament | null): string | null => {
@@ -952,7 +941,7 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
   );
 
   const openRegistrationModal = (tournament: Tournament, triggerElement?: HTMLElement | null) => {
-    if (triggerElement) {
+    if (triggerElement && !detailModalRef.current?.contains(triggerElement)) {
       lastTriggerRef.current = triggerElement;
     }
 
@@ -1208,87 +1197,6 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
     }
   };
 
-  const trapFocusWithin = (event: ReactKeyboardEvent<HTMLElement>) => {
-    if (event.key !== 'Tab') {
-      return;
-    }
-
-    const container = event.currentTarget;
-    const focusable = container.querySelectorAll<HTMLElement>(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-    );
-
-    if (focusable.length === 0) {
-      return;
-    }
-
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-    const active = document.activeElement as HTMLElement | null;
-
-    if (event.shiftKey && active === first) {
-      event.preventDefault();
-      last.focus();
-      return;
-    }
-
-    if (!event.shiftKey && active === last) {
-      event.preventDefault();
-      first.focus();
-    }
-  };
-
-  const handleDetailModalKeyDown = (event: ReactKeyboardEvent<HTMLElement>) => {
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      closeDetailModal();
-      return;
-    }
-
-    trapFocusWithin(event);
-  };
-
-  const handleRegistrationModalKeyDown = (event: ReactKeyboardEvent<HTMLElement>) => {
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      closeRegistrationModal();
-      return;
-    }
-
-    trapFocusWithin(event);
-  };
-
-  useEffect(() => {
-    if (typeof document === 'undefined') {
-      return;
-    }
-
-    const hasOpenModal = Boolean(detailTournament || registrationTournament);
-    if (!hasOpenModal) {
-      document.body.style.removeProperty('overflow');
-      return;
-    }
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [detailTournament, registrationTournament]);
-
-  useEffect(() => {
-    if (detailTournament && detailModalRef.current) {
-      detailModalRef.current.focus();
-    }
-  }, [detailTournament]);
-
-  useEffect(() => {
-    if (registrationTournament && registrationModalRef.current) {
-      registrationModalRef.current.focus();
-    }
-  }, [registrationTournament]);
-
   const featuredTournaments = useMemo(() => {
     return [...allTournaments]
       .filter((tournament) => tournament.status !== 'PAST RESULTS')
@@ -1302,6 +1210,7 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
         id: tournament.id,
         title: tournament.name,
         dateLabel: tournament.date,
+        registrationDeadline: tournament.registrationDeadline,
         venue: tournament.venue,
         city: `${tournament.city}${tournament.stateLabel ? `, ${tournament.stateLabel}` : ''}`,
         slotText: tournament.status === 'IN PROGRESS' ? 'Live now' : 'Open for registration',
@@ -1406,18 +1315,7 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
         <div className={`${styles.headerInner} bw-public-header-inner`}>
           <Link href="/" aria-label="Tournament Central home" className="bw-public-brand-link"><Brand /></Link>
 
-          <div className={`${styles.headerActions} bw-public-actions`}>
-            <Link className={`${styles.secondaryButton} bw-public-secondary-btn`} href="/login">Sign In</Link>
-            <Link className={`${styles.primaryButton} bw-public-primary-btn`} href="/signup">Create Account</Link>
-          </div>
-
-          <details className={styles.mobileMenu}>
-            <summary aria-label="Open navigation"><Menu /></summary>
-            <div>
-              <Link href="/login">Sign In</Link>
-              <Link href="/signup">Create Account</Link>
-            </div>
-          </details>
+          <PublicAccountNav />
         </div>
       </header>
 
@@ -1458,6 +1356,7 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
               <button
                 key={filter}
                 type="button"
+                aria-pressed={discoveryFilter === filter}
                 className={discoveryFilter === filter ? styles.discoveryFilterActive : ''}
                 onClick={() => {
                   setDiscoveryFilter(filter);
@@ -1821,9 +1720,9 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
                   className={styles.detailsModalCard}
                   role="dialog"
                   aria-modal="true"
-                  aria-label="Tournament details"
+                  aria-labelledby="tournament-details-title"
+                  aria-describedby="tournament-details-description"
                   onClick={(event) => event.stopPropagation()}
-                  onKeyDown={handleDetailModalKeyDown}
                 >
                   <header className={styles.detailsModalHeader}>
                     <div className={styles.detailsModalTitleGroup}>
@@ -1834,7 +1733,7 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
                       ) : null}
                       <div>
                         <span className={styles.detailsModalEyebrow}>Tournament Details</span>
-                        <h4>{detailTournament.name}</h4>
+                        <h2 id="tournament-details-title">{detailTournament.name}</h2>
                       </div>
                     </div>
                     <button type="button" className={styles.detailsModalClose} onClick={closeDetailModal} aria-label="Close tournament details">
@@ -1842,6 +1741,7 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
                     </button>
                   </header>
                   <div className={styles.detailsModalBody}>
+                    <p id="tournament-details-description">Review tournament information, availability, and documents before registering.</p>
                     <div className={styles.detailsModalFacts}>
                       <p className={styles.detailsModalFactRow}>
                         <span className={styles.detailsModalFactIcon} aria-hidden="true"><CalendarDays size={28} /></span>
@@ -1861,9 +1761,10 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
                       <p className={styles.detailsModalFactRow}>
                         <span className={styles.detailsModalFactIcon} aria-hidden="true"><UsersRound size={28} /></span>
                         <strong>Registration</strong>
-                        <span className={styles.detailsModalRegistrationValue}><span className={styles.detailsModalRegistrationDot} aria-hidden="true" />{getRegistrationConfigUrl(detailTournament) ? 'Open now' : 'Coming soon'}</span>
+                        <span className={styles.detailsModalRegistrationValue}>{getRegistrationConfigUrl(detailTournament) ? 'See deadline and squad availability below' : 'Contact the organizer'}</span>
                       </p>
                     </div>
+                    <TournamentInformation configUrl={getRegistrationConfigUrl(detailTournament)} />
                   </div>
                   <footer className={styles.detailsModalFooter}>
                     <span className={styles.detailsModalHint}>
@@ -1872,7 +1773,7 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
                     </span>
                     <div className={styles.detailsModalActions}>
                       <button type="button" className={styles.detailsModalSecondaryAction} onClick={closeDetailModal}>
-                        Done
+                        Not Now
                       </button>
                       <button
                         type="button"
@@ -1902,9 +1803,10 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
                   role="dialog"
                   aria-modal="true"
                   aria-label="Tournament registration"
+                  aria-describedby="tournament-registration-description"
                   onClick={(event) => event.stopPropagation()}
-                  onKeyDown={handleRegistrationModalKeyDown}
                 >
+                  <p id="tournament-registration-description" className={styles.srOnly}>Choose your event and squad, then enter bowler information to register.</p>
                   {isRegistrationConfigLoading && <p className={styles.detailsModalHint}>Loading tournament registration settings...</p>}
                   {registrationConfigError && <p className={styles.registrationError}>{registrationConfigError}</p>}
 
@@ -1976,8 +1878,8 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
                         <CalendarCheck2 size={18} />
                       </span>
                       <div className={styles.featuredRegistrationText}>
-                        <div className={styles.featuredRegistrationLabel}>Registration Open</div>
-                        <div className={styles.featuredRegistrationDate}>Closes {tournament.dateLabel.includes('2025') ? 'Jul 21' : 'Aug 29'}, 2027</div>
+                        <div className={styles.featuredRegistrationLabel}>Registration Details</div>
+                        <div className={styles.featuredRegistrationDate}>{tournament.registrationDeadline ? `Closes ${formatTournamentDate(tournament.registrationDeadline)}` : 'View tournament for availability'}</div>
                       </div>
                     </div>
 

@@ -2,7 +2,218 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
+import pytest
 from app.core import models
+
+
+@pytest.mark.parametrize("published", [False, True])
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"registrationOpenIso": "2026-10-03", "registrationCloseIso": "2026-10-02"},
+        {"registrationCloseIso": "2026-10-03"},
+        {
+            "registrationOpenIso": "2026-10-02",
+            "registrationCloseIso": "2026-10-02",
+            "registrationOpenTime": "18:00",
+            "registrationCloseTime": "17:59",
+        },
+        {"registrationCloseIso": "2026-02-30"},
+    ],
+)
+def test_invalid_registration_window_cannot_be_saved(
+    api_client,
+    db_session,
+    make_user,
+    make_auth_headers,
+    published,
+    changes,
+):
+    owner = make_user("tc_invalid_window")
+    payload = _base_setup_payload()
+    tournament = _create_tc_tournament_with_setup(
+        db_session, owner.id, setup_payload=payload
+    )
+    payload["details"].update(changes)
+    response = api_client.put(
+        f"/api/v1/tc/organizer-setup/{tournament.id}",
+        headers=make_auth_headers(owner),
+        json={"payload": payload, "is_published": published},
+    )
+    assert response.status_code == 400
+    assert response.json()["detail"]["errors"]
+    db_session.expire_all()
+    state = (
+        db_session.query(models.TournamentCentralSetupState)
+        .filter_by(tournament_id=tournament.id)
+        .one()
+    )
+    assert state.payload["details"]["registrationCloseIso"] == "2026-09-30"
+
+
+@pytest.mark.parametrize("published", [False, True])
+def test_registration_can_close_on_final_tournament_day(
+    api_client,
+    db_session,
+    make_user,
+    make_auth_headers,
+    published,
+):
+    owner = make_user("tc_final_day")
+    payload = _base_setup_payload()
+    tournament = _create_tc_tournament_with_setup(
+        db_session, owner.id, setup_payload=payload
+    )
+    payload["details"].update(
+        registrationOpenIso="2026-10-02",
+        registrationCloseIso="2026-10-02",
+        registrationOpenTime="23:59",
+        registrationCloseTime="23:59",
+    )
+    response = api_client.put(
+        f"/api/v1/tc/organizer-setup/{tournament.id}",
+        headers=make_auth_headers(owner),
+        json={"payload": payload, "is_published": published},
+    )
+    assert response.status_code == 200
+
+
+def test_record_date_edit_cannot_bypass_registration_deadline(
+    api_client, db_session, make_user, make_auth_headers
+):
+    owner = make_user("tc_record_date_validation")
+    tournament = _create_tc_tournament_with_setup(
+        db_session, owner.id, setup_payload=_base_setup_payload()
+    )
+    response = api_client.put(
+        f"/api/v1/tc/tournaments/{tournament.id}",
+        headers=make_auth_headers(owner),
+        json={
+            "name": tournament.name,
+            "start_date": "2026-09-01",
+            "end_date": "2026-09-29",
+        },
+    )
+    assert response.status_code == 400
+    assert "final tournament day" in str(response.json())
+    db_session.expire_all()
+    assert (
+        db_session.get(models.TournamentCentral, tournament.id).end_date == "2026-10-02"
+    )
+
+
+def test_setup_date_and_deadline_correction_is_saved_together(
+    api_client, db_session, make_user, make_auth_headers
+):
+    owner = make_user("tc_coordinated_date_edit")
+    payload = _base_setup_payload()
+    tournament = _create_tc_tournament_with_setup(
+        db_session, owner.id, setup_payload=payload
+    )
+    payload["details"].update(
+        startDateIso="2026-09-29",
+        endDateIso="2026-09-29",
+        registrationCloseIso="2026-09-29",
+    )
+    response = api_client.put(
+        f"/api/v1/tc/organizer-setup/{tournament.id}",
+        headers=make_auth_headers(owner),
+        json={"payload": payload, "is_published": False},
+    )
+    assert response.status_code == 200
+    db_session.expire_all()
+    assert (
+        db_session.get(models.TournamentCentral, tournament.id).end_date == "2026-09-29"
+    )
+
+
+def test_public_details_include_real_availability_and_public_documents_only(
+    api_client, db_session, make_user
+):
+    owner = make_user("tc_public_information")
+    payload = _base_setup_payload()
+    payload["details"]["privateMemo"] = "Do not expose"
+    tournament = _create_tc_tournament_with_setup(
+        db_session, owner.id, setup_payload=payload
+    )
+    rules = models.TcTournamentDocument(
+        tournament_id=tournament.id,
+        user_id=owner.id,
+        doc_type="rules",
+        file_name="Rules.pdf",
+        mime_type="application/pdf",
+        file_size=8,
+        file_blob=b"%PDF-1.4",
+    )
+    private_document = models.TcTournamentDocument(
+        tournament_id=tournament.id,
+        user_id=owner.id,
+        doc_type="other",
+        file_name="Internal.pdf",
+        mime_type="application/pdf",
+        file_size=8,
+        file_blob=b"%PDF-1.4",
+    )
+    db_session.add_all([rules, private_document])
+    db_session.commit()
+    registration = api_client.post(
+        f"/api/v1/public/tc-tournament/{tournament.id}/registration",
+        json=_registration_payload(),
+    )
+    assert registration.status_code == 200
+    doubles = api_client.post(
+        f"/api/v1/public/tc-tournament/{tournament.id}/registration",
+        json=_registration_payload(
+            event_id="evt-doubles",
+            bowlers=[
+                {"first_name": "Alex", "last_name": "One", "email": "alex@example.com"},
+                {"first_name": "Sam", "last_name": "Two", "email": "sam@example.com"},
+            ],
+        ),
+    )
+    assert doubles.status_code == 200
+    response = api_client.get(
+        f"/api/v1/public/tc-tournament/{tournament.id}/registration"
+    )
+    assert response.status_code == 200
+    information = response.json()
+    assert information["details"]["registrationCloseIso"] == "2026-09-30"
+    assert "privateMemo" not in information["details"]
+    assert information["events"][0]["entryFeeCents"] == 6000
+    assert information["squads"][0]["registeredCount"] == 3
+    assert [document["name"] for document in information["documents"]] == ["Rules.pdf"]
+    download = api_client.get(information["documents"][0]["url"])
+    assert download.status_code == 200
+    assert download.content == b"%PDF-1.4"
+    assert "attachment" in download.headers["content-disposition"]
+    assert (
+        api_client.get(
+            f"/api/v1/public/tc-tournament/{tournament.id}"
+            f"/documents/{private_document.id}"
+        ).status_code
+        == 404
+    )
+    tournament.is_public = False
+    db_session.commit()
+    assert api_client.get(information["documents"][0]["url"]).status_code == 404
+
+
+def test_directory_uses_published_registration_deadline(
+    api_client, db_session, make_user
+):
+    owner = make_user("tc_real_directory_deadline")
+    payload = _base_setup_payload()
+    tournament = _create_tc_tournament_with_setup(
+        db_session, owner.id, setup_payload=payload
+    )
+    response = api_client.get("/api/v1/public/tournaments?source=tc")
+    assert response.status_code == 200
+    row = next(
+        row
+        for row in response.json()["tournaments"]
+        if row["id"] == f"tc-{tournament.id}"
+    )
+    assert row["registration_close_date"] == "2026-09-30"
 
 
 def _base_setup_payload(*, waitlist_enabled: bool = True, capacity: int = 100, deadline_iso: str | None = None) -> dict:

@@ -6,6 +6,8 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import styles from './OrganizerTopNav.module.css';
+import { signOut } from '../auth/authSession';
+import { useAuthSession } from '../auth/useAuthSession';
 
 export default function OrganizerTopNav() {
   const pathname = usePathname();
@@ -15,6 +17,8 @@ export default function OrganizerTopNav() {
   const [activeTournament, setActiveTournament] = useState<string | null>(null);
   const [activeSquad, setActiveSquad] = useState<string | null>(null);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const { displayName: sessionName } = useAuthSession();
+  const [logoutError, setLogoutError] = useState('');
 
   const tournamentPathMatch = useMemo(
     () => pathname.match(/^\/organizer\/tournaments\/(\d+)(?:\/.*)?$/),
@@ -96,13 +100,13 @@ export default function OrganizerTopNav() {
     };
   }, [isUserMenuOpen]);
 
-  const handleLogout = () => {
-    sessionStorage.removeItem('access_token');
-    localStorage.removeItem('user_id');
-    localStorage.removeItem('first_name');
-    localStorage.removeItem('is_admin');
-    localStorage.removeItem('session_id');
-    window.location.replace('/login');
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      window.location.replace('/login');
+    } catch (error) {
+      setLogoutError(error instanceof Error ? error.message : 'Unable to sign out.');
+    }
   };
 
   const isNavLinkActive = (href: string) => {
@@ -166,7 +170,7 @@ export default function OrganizerTopNav() {
 
             {isUserMenuOpen && (
               <div className={styles.userMenuPanel} role="menu" aria-label="User menu">
-                <div className={styles.userMenuHeader}>{displayName}</div>
+                <div className={styles.userMenuHeader}>{sessionName || displayName}</div>
                 <Link href="/organizer/account" className={styles.userMenuItemButton} role="menuitem">
                   Account Settings
                 </Link>
@@ -175,11 +179,12 @@ export default function OrganizerTopNav() {
                 </Link>
                 <button
                   className={`${styles.userMenuItemButton} ${styles.userMenuItemDanger}`}
-                  onClick={handleLogout}
+                  onClick={() => void handleLogout()}
                   role="menuitem"
                 >
                   Log Out
                 </button>
+                {logoutError && <p role="alert">{logoutError}</p>}
               </div>
             )}
           </div>
@@ -205,6 +210,8 @@ export default function OrganizerTopNav() {
             {navLinks.map((link) => <Link key={link.href} href={link.href} className={isNavLinkActive(link.href) ? styles.mobileNavLinkActive : ''}>{link.label}</Link>)}
             <Link href="/organizer/account">Account Settings</Link>
             <Link href="/">Browse Tournaments</Link>
+            <button type="button" onClick={() => void handleLogout()}>Sign Out</button>
+            {logoutError && <p role="alert">{logoutError}</p>}
           </nav>
         </details>
 

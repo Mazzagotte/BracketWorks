@@ -4,6 +4,7 @@ import { FormEvent, useState } from 'react';
 import { X } from 'lucide-react';
 
 import styles from './ResetPasswordModal.module.css';
+import { useModalFocus } from '@/lib/useModalFocus';
 
 type ResetPasswordModalProps = {
   isOpen: boolean;
@@ -15,6 +16,7 @@ export default function ResetPasswordModal({ isOpen, onClose, onSuccess }: Reset
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const dialogRef = useModalFocus<HTMLDivElement>(isOpen, onClose);
 
   const handleClose = () => {
     setEmail('');
@@ -61,15 +63,15 @@ export default function ResetPasswordModal({ isOpen, onClose, onSuccess }: Reset
   if (!isOpen) return null;
 
   return (
-    <div className={styles.overlay} role="dialog" aria-modal="true" aria-label="Reset password">
+    <div ref={dialogRef} tabIndex={-1} className={styles.overlay} role="dialog" aria-modal="true" aria-labelledby="reset-password-title" aria-describedby="reset-password-description">
       <div className={styles.modal}>
         <button type="button" onClick={handleClose} className={styles.closeButton} aria-label="Close reset password modal">
           <X size={18} strokeWidth={2.25} aria-hidden="true" />
         </button>
 
         <div className={styles.header}>
-          <h2>Reset your password</h2>
-          <p>Enter the email connected to your account and we will send a secure reset link.</p>
+          <h2 id="reset-password-title">Reset your password</h2>
+          <p id="reset-password-description">Enter the email connected to your account and we will send a secure reset link.</p>
         </div>
 
         <form className={styles.form} onSubmit={handleSubmit}>

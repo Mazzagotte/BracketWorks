@@ -5,6 +5,7 @@ import { capitalizeFirstLetter } from '@bracketworks/ui';
 import { X } from 'lucide-react';
 
 import styles from './SignupModal.module.css';
+import { useModalFocus } from '@/lib/useModalFocus';
 
 type SignupModalProps = {
   isOpen: boolean;
@@ -42,6 +43,7 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const dialogRef = useModalFocus<HTMLDivElement>(isOpen, onClose);
 
   const passwordHint = useMemo(() => {
     if (!values.password) {
@@ -135,15 +137,15 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
   if (!isOpen) return null;
 
   return (
-    <div className={styles.overlay} role="dialog" aria-modal="true" aria-label="Create account">
+    <div ref={dialogRef} tabIndex={-1} className={styles.overlay} role="dialog" aria-modal="true" aria-labelledby="signup-title" aria-describedby="signup-description">
       <div className={styles.modal}>
         <button type="button" onClick={closeModal} className={styles.closeButton} aria-label="Close signup modal">
           <X size={18} strokeWidth={2.25} aria-hidden="true" />
         </button>
 
         <div className={styles.header}>
-          <h2>Create your account</h2>
-          <p>Create your account to browse tournaments, register, and follow live results.</p>
+          <h2 id="signup-title">Create your account</h2>
+          <p id="signup-description">Create your account to browse tournaments, register, and follow live results.</p>
         </div>
 
         <form className={styles.form} onSubmit={handleSubmit}>

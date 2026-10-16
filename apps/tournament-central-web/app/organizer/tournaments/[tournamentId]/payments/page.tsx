@@ -76,7 +76,7 @@ export default function OrganizerTournamentPaymentsPage() {
             {paymentRows.length === 0 ? (
               <p className={styles.emptyRegistrations}>No registrations to show yet.</p>
             ) : (
-              <div className={styles.registrationTableWrap}>
+              <div className={styles.registrationTableWrap} tabIndex={0} role="region" aria-label="Payments table, scroll horizontally for more columns">
                 <table className={styles.registrationTable}>
                   <thead>
                     <tr>

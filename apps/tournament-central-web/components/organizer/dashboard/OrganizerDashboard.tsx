@@ -15,12 +15,16 @@ import {
 } from '../organizerApi';
 import { type OrganizerDashboardTournament, useOrganizerDashboard } from './useOrganizerDashboard';
 import styles from './OrganizerDashboard.module.css';
+import { useModalFocus } from '@/lib/useModalFocus';
 
 export default function OrganizerDashboard() {
   const [displayName, setDisplayName] = useState('Organizer');
   const [deletingTournamentId, setDeletingTournamentId] = useState<number | null>(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState<OrganizerDashboardTournament | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const deleteModalRef = useModalFocus<HTMLElement>(Boolean(deleteConfirmation), () => {
+    if (!deletingTournamentId) setDeleteConfirmation(null);
+  });
   const [staffInvitations, setStaffInvitations] = useState<TcStaffInvitationEntry[]>([]);
   const [invitationError, setInvitationError] = useState<string | null>(null);
   const [respondingInvitationId, setRespondingInvitationId] = useState<number | null>(null);
@@ -207,7 +211,6 @@ export default function OrganizerDashboard() {
             <section className={styles.upcomingSection} aria-label="Upcoming activity">
               <div className={styles.sidebarHeader}>
                 <h2>Upcoming</h2>
-                <button type="button" className={styles.inlineAction} disabled title="Calendar view is not available yet">View calendar →</button>
               </div>
 
               <div className={styles.upcomingCard}>
@@ -230,7 +233,6 @@ export default function OrganizerDashboard() {
                   <p className={styles.emptyUpcoming}>No upcoming events.</p>
                 )}
 
-                <button type="button" className={styles.secondaryButtonWide} disabled title="This view is not available yet">View All Upcoming</button>
               </div>
             </section>
 
@@ -242,10 +244,13 @@ export default function OrganizerDashboard() {
       {deleteConfirmation ? (
         <div className={styles.modalOverlay} onClick={() => !deletingTournamentId && setDeleteConfirmation(null)}>
           <section
+            ref={deleteModalRef}
+            tabIndex={-1}
             className={styles.deleteModal}
             role="dialog"
             aria-modal="true"
             aria-labelledby="delete-tournament-title"
+            aria-describedby="delete-tournament-description"
             onClick={(event) => event.stopPropagation()}
           >
             <button
@@ -260,7 +265,7 @@ export default function OrganizerDashboard() {
             <header className={styles.deleteModalHeader}>
               <h2 id="delete-tournament-title">Confirm Deletion</h2>
             </header>
-            <p className={styles.deleteModalText}>
+            <p id="delete-tournament-description" className={styles.deleteModalText}>
               Are you sure you want to delete tournament <strong>{deleteConfirmation.name}</strong>?
             </p>
             <p className={styles.deleteModalHint}>This action cannot be undone.</p>

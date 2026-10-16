@@ -1,12 +1,14 @@
 'use client';
 
 import { ArrowUpDown, CalendarDays, ChevronUp, CircleAlert, CircleCheck, ClipboardList, Clock3, Download, Eye, FileJson, Filter, Globe, GripVertical, Headphones, Layers, Link2, ListOrdered, Lock, MapPin, MoreHorizontal, PencilLine, Plus, RotateCcw, Save, Trash2, Trophy, Upload, Users, X } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent, DragEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import type { TournamentContract, TournamentSetupStateSummaryContract } from '@bracketworks/types';
 
 import ConfigDrawer from './ConfigDrawer';
+import { registrationDateErrors } from '@/lib/registrationDates';
+import { formatTournamentDateRange } from '@/lib/tournamentDates';
 import PublishValidationSummary from './PublishValidationSummary';
 import { getTournament, listMyOrganizerSetupStates, listMyTournaments, resolveTcVenue } from './organizerApi';
 import { organizerRoutes } from './organizerRoutes';
@@ -281,6 +283,10 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
   const [isSubmittingSignupPreview, setIsSubmittingSignupPreview] = useState(false);
   const [signupPreviewSubmitMessage, setSignupPreviewSubmitMessage] = useState<string | null>(null);
   const [signupPreviewForm, setSignupPreviewForm] = useState<OrganizerRegistrationFormState>(EMPTY_ORGANIZER_REGISTRATION_FORM);
+  const currentSetupPayload = useCallback((detailsForSave: TournamentDetails) => buildOrganizerSetupPayload({
+    details: detailsForSave, events, divisions, squads, fees, locations, questions, fields,
+    hasRulesDocument, paymentMode, paymentProcessorConnected, paymentPayoutConfigured,
+  }), [events, divisions, squads, fees, locations, questions, fields, hasRulesDocument, paymentMode, paymentProcessorConnected, paymentPayoutConfigured]);
 
   useEffect(() => {
     if (!openCardMenu) {
@@ -614,6 +620,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
             token,
             payload,
             tournamentId: persistedTournamentId,
+            setupPayload: currentSetupPayload(detailsForSave),
           });
 
           if (pendingLogoFile) {
@@ -628,28 +635,6 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
             }));
             setPendingLogoFile(null);
           }
-
-          const organizerPayload = buildOrganizerSetupPayload({
-            details: detailsForSave,
-            events,
-            divisions,
-            squads,
-            fees,
-            locations,
-            questions,
-            fields,
-            hasRulesDocument,
-            paymentMode,
-            paymentProcessorConnected,
-            paymentPayoutConfigured,
-          });
-
-          await saveOrganizerSetupState({
-            token,
-            tournamentId: saved.id,
-            payload: organizerPayload,
-            isPublished: false,
-          });
 
           setPersistedTournamentId(saved.id);
           autosaveFingerprintRef.current = nextFingerprint;
@@ -671,6 +656,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
     };
   }, [
     autosaveEnabled,
+    currentSetupPayload,
     autosaveFingerprint,
     details,
     divisions,
@@ -1161,24 +1147,9 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
         severity: 'error',
         message: 'Registration open and close dates are required.',
       });
-    } else {
-      if (`${details.registrationOpenIso}T${details.registrationOpenTime}` > `${details.registrationCloseIso}T${details.registrationCloseTime}`) {
-        issues.push({
-          id: 'details-registration-window-invalid',
-          section: 'tournament-details',
-          severity: 'error',
-          message: 'Registration close date must be on or after the open date.',
-        });
-      }
-
-      if (details.startDateIso && details.registrationCloseIso > details.startDateIso) {
-        issues.push({
-          id: 'details-registration-after-start',
-          section: 'tournament-details',
-          severity: 'warning',
-          message: 'Registration currently closes after tournament start date.',
-        });
-      }
+    }
+    for (const [field, message] of Object.entries(registrationDateErrors(details))) {
+      issues.push({ id: `details-date-${field}`, section: 'tournament-details', severity: 'error', message });
     }
 
     if (enabledEvents.length === 0) {
@@ -1465,6 +1436,12 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
   }
 
   const handleSaveDraft = async () => {
+    const dateErrors = registrationDateErrors(details);
+    if (Object.keys(dateErrors).length) {
+      setSaveError(Object.values(dateErrors).join(' '));
+      setActiveSection('tournament-details');
+      return;
+    }
     const token = typeof window !== 'undefined' ? sessionStorage.getItem('access_token') : null;
     if (!token) {
       setSaveError('Your session expired. Please sign in again.');
@@ -1482,6 +1459,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
         token,
         payload,
         tournamentId: persistedTournamentId,
+        setupPayload: currentSetupPayload(detailsForSave),
       });
 
       if (pendingLogoFile) {
@@ -1497,26 +1475,14 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
         setPendingLogoFile(null);
       }
 
-      const organizerPayload = buildOrganizerSetupPayload({
-        details: detailsForSave,
-        events,
-        divisions,
-        squads,
-        fees,
-        locations,
-        questions,
-        fields,
-        hasRulesDocument,
-        paymentMode,
-        paymentProcessorConnected,
-        paymentPayoutConfigured,
-      });
-      await saveOrganizerSetupState({
-        token,
-        tournamentId: saved.id,
-        payload: organizerPayload,
-        isPublished: false,
-      });
+      if (!persistedTournamentId) {
+        await saveOrganizerSetupState({
+          token,
+          tournamentId: saved.id,
+          payload: currentSetupPayload(detailsForSave),
+          isPublished: false,
+        });
+      }
 
       await refreshTournamentLibrary(token);
 
@@ -1556,6 +1522,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
         token,
         payload,
         tournamentId: persistedTournamentId,
+        setupPayload: currentSetupPayload(detailsForSave),
       });
 
       if (pendingLogoFile) {
@@ -1669,9 +1636,9 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
   const tournamentDateOrderInvalid = hasTournamentDateRange && details.startDateIso > details.endDateIso;
   const registrationDateOrderInvalid = hasRegistrationWindow
     && `${details.registrationOpenIso}T${details.registrationOpenTime}` > `${details.registrationCloseIso}T${details.registrationCloseTime}`;
-  const registrationAfterStartWarning = hasRegistrationWindow
-    && Boolean(details.startDateIso)
-    && details.registrationCloseIso > details.startDateIso;
+  const registrationAfterEndInvalid = hasRegistrationWindow
+    && Boolean(details.endDateIso)
+    && details.registrationCloseIso > details.endDateIso;
 
   const visibilitySummary = details.visibility === 'public'
     ? 'Listed in directory and visible to everyone.'
@@ -2608,7 +2575,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
               pendingLogoFile={pendingLogoFile}
               tournamentDateOrderInvalid={tournamentDateOrderInvalid}
               registrationDateOrderInvalid={registrationDateOrderInvalid}
-              registrationAfterStartWarning={registrationAfterStartWarning}
+              registrationAfterEndInvalid={registrationAfterEndInvalid}
               usStates={US_STATES}
               timezones={TIMEZONES}
               logoInputRef={logoInputRef}
@@ -3457,7 +3424,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                 <div className={styles.preflightGroupHead}><strong>Public Launch Summary</strong><span>{recommendedTournamentStatus.value}</span></div>
                 <dl className={styles.launchSummaryGrid}>
                   <div><dt>Visibility</dt><dd>{details.visibility}</dd></div>
-                  <div><dt>Tournament Dates</dt><dd>{formatDateShort(details.startDateIso)} – {formatDateShort(details.endDateIso)}</dd></div>
+                  <div><dt>Tournament Dates</dt><dd>{formatTournamentDateRange(details.startDateIso, details.endDateIso)}</dd></div>
                   <div><dt>Registration Closes</dt><dd>{formatDateShort(details.registrationCloseIso)}</dd></div>
                   <div><dt>Events</dt><dd>{enabledEvents.length}</dd></div>
                   <div><dt>Squads</dt><dd>{squads.length || 'Not Used'}</dd></div>

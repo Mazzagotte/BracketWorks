@@ -338,10 +338,11 @@
 }
 
 .mobileNavMenu { position: relative; flex: 0 0 auto; }
-.mobileNavMenu summary { padding: 6px 10px; border: 1px solid var(--bw-border-subtle); border-radius: 8px; color: var(--bw-text-title); font-size: 11px; font-weight: 700; list-style: none; cursor: pointer; }
+.mobileNavMenu summary { min-height: 44px; display: flex; align-items: center; padding: 6px 10px; border: 1px solid #686872; border-radius: 8px; color: var(--bw-text-title); font-size: 11px; font-weight: 700; list-style: none; cursor: pointer; }
 .mobileNavMenu summary::-webkit-details-marker { display: none; }
 .mobileNavMenu nav { position: absolute; top: calc(100% + 8px); right: 0; width: 210px; padding: 6px; display: grid; gap: 3px; border: 1px solid var(--bw-border-card); border-radius: 10px; background: var(--bw-surface-card-strong); box-shadow: var(--bw-shadow-card); }
-.mobileNavMenu nav a { min-height: 34px; padding: 0 9px; display: flex; align-items: center; gap: 8px; border-radius: 7px; color: var(--bw-text-body); font-size: 12px; text-decoration: none; }
+.mobileNavMenu nav a,
+.mobileNavMenu nav button { min-height: 44px; padding: 0 9px; display: flex; align-items: center; gap: 8px; border: 0; background: transparent; border-radius: 7px; color: var(--bw-text-body); font-size: 12px; text-decoration: none; text-align: left; cursor: pointer; }
 .mobileNavMenu nav a:hover,
 .mobileNavMenu nav .mobileNavLinkActive { color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 10%, transparent); }
 
@@ -370,6 +371,10 @@
 @media (max-width: 1023px) {
   .topNav {
     display: none;
+  }
+
+  @media (max-width: 390px) {
+    .mobileTournamentBadge { display: none; }
   }
 
   .topNavMobile {

@@ -1,13 +1,72 @@
 from __future__ import annotations
 
+import re
+from datetime import date, time
 from typing import Any
-
 
 PUBLISHED_SNAPSHOT_KEY = "_publishedSnapshot"
 
 
 def clean_setup_payload(payload: dict[str, Any]) -> dict[str, Any]:
     return {key: value for key, value in payload.items() if key != PUBLISHED_SNAPSHOT_KEY}
+
+
+def validate_registration_dates(details: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    dates: dict[str, date] = {}
+    for key in (
+        "startDateIso",
+        "endDateIso",
+        "registrationOpenIso",
+        "registrationCloseIso",
+    ):
+        value = details.get(key)
+        if not value:
+            continue
+        try:
+            if not isinstance(value, str) or not re.fullmatch(
+                r"\d{4}-\d{2}-\d{2}", value
+            ):
+                raise ValueError("Invalid ISO date")
+            dates[key] = date.fromisoformat(value)
+        except ValueError:
+            errors.append(f"{key}: Enter a valid calendar date.")
+    times: dict[str, time] = {}
+    for key, fallback in (
+        ("registrationOpenTime", "00:00"),
+        ("registrationCloseTime", "23:59"),
+    ):
+        value = details.get(key) or fallback
+        try:
+            if not isinstance(value, str) or not re.fullmatch(
+                r"([01]\d|2[0-3]):[0-5]\d", value
+            ):
+                raise ValueError("Invalid time")
+            times[key] = time.fromisoformat(value)
+        except ValueError:
+            errors.append(f"{key}: Enter a valid time.")
+    if (
+        dates.get("startDateIso")
+        and dates.get("endDateIso")
+        and dates["startDateIso"] > dates["endDateIso"]
+    ):
+        errors.append("Tournament end date must be on or after the start date.")
+    if (
+        all(key in dates for key in ("registrationOpenIso", "registrationCloseIso"))
+        and len(times) == 2
+    ):
+        if (dates["registrationOpenIso"], times["registrationOpenTime"]) > (
+            dates["registrationCloseIso"],
+            times["registrationCloseTime"],
+        ):
+            errors.append("Registration must open on or before it closes.")
+    if (
+        dates.get("registrationCloseIso")
+        and dates.get("endDateIso")
+        and dates["registrationCloseIso"] > dates["endDateIso"]
+    ):
+        errors.append("Registration must close on or before the final tournament day.")
+    return errors
 
 
 def validate_publishable_setup(payload: dict[str, Any]) -> list[str]:
@@ -36,14 +95,11 @@ def validate_publishable_setup(payload: dict[str, Any]) -> list[str]:
     end_date = str(details.get("endDateIso") or "")
     if not start_date or not end_date:
         errors.append("Tournament start and end dates are required.")
-    elif start_date > end_date:
-        errors.append("Tournament end date must be on or after the start date.")
     if not email or "@" not in email or "." not in email.rsplit("@", 1)[-1]:
         errors.append("Enter a valid support email.")
     if not details.get("registrationOpenIso") or not details.get("registrationCloseIso"):
         errors.append("Registration open and close dates are required.")
-    elif f"{details.get('registrationOpenIso')}T{details.get('registrationOpenTime') or '00:00'}" > f"{details.get('registrationCloseIso')}T{details.get('registrationCloseTime') or '23:59'}":
-        errors.append("Registration close must be after registration opens.")
+    errors.extend(validate_registration_dates(details))
     events = [row for row in payload.get("events", []) if isinstance(row, dict) and row.get("enabled", True)]
     divisions = [row for row in payload.get("divisions", []) if isinstance(row, dict) and row.get("enabled", True)]
     squads = [row for row in payload.get("squads", []) if isinstance(row, dict)]

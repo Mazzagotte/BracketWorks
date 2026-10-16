@@ -68,7 +68,7 @@ export default function OrganizerTournamentSquadsPage() {
           {squadSummaries.length === 0 ? (
             <p className={styles.empty}>No squads are configured for this tournament yet.</p>
           ) : (
-            <div className={styles.tableWrap}>
+            <div className={styles.tableWrap} tabIndex={0} role="region" aria-label="Squads table, scroll horizontally for more columns">
               <table className={styles.table}>
                 <thead>
                   <tr>

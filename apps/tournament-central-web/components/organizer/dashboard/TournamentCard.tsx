@@ -6,34 +6,7 @@ import type { OrganizerDashboardTournament } from './useOrganizerDashboard';
 import TournamentStatusBadge from './TournamentStatusBadge';
 import styles from './OrganizerDashboard.module.css';
 import { organizerRoutes } from '../organizerRoutes';
-import { normalizeTournamentDate } from '../organizerFormatting';
-
-function formatDateRange(startDate: string | null, endDate: string | null): string {
-  const normalizedStart = normalizeTournamentDate(startDate);
-  const normalizedEnd = normalizeTournamentDate(endDate);
-  const dateValue = normalizedStart || normalizedEnd;
-  if (!dateValue) {
-    return 'Dates not set';
-  }
-
-  const start = normalizedStart ? new Date(`${normalizedStart}T00:00:00`) : null;
-  const end = normalizedEnd ? new Date(`${normalizedEnd}T00:00:00`) : null;
-  if ((start && Number.isNaN(start.getTime())) || (end && Number.isNaN(end.getTime()))) {
-    return dateValue;
-  }
-
-  if (start && end) {
-    const sameMonth = start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear();
-    if (sameMonth) {
-      return `${start.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}-${end.toLocaleDateString(undefined, { day: 'numeric', year: 'numeric' })}`;
-    }
-
-    return `${start.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })} - ${end.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`;
-  }
-
-  const date = start || end;
-  return date ? date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'Dates not set';
-}
+import { formatTournamentDateRange } from '@/lib/tournamentDates';
 
 function parseLocation(location: string | null): { venue: string; cityState: string } {
   if (!location) {
@@ -60,7 +33,7 @@ type TournamentCardProps = {
 
 export default function TournamentCard({ tournament, isDeleting, onDelete }: TournamentCardProps) {
   const location = parseLocation(tournament.location);
-  const formattedDate = formatDateRange(tournament.startDate, tournament.endDate);
+  const formattedDate = formatTournamentDateRange(tournament.startDate, tournament.endDate);
 
   return (
     <article className={styles.featureCard}>

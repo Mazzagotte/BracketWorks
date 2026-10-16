@@ -598,7 +598,7 @@ export default function OrganizerTournamentRegistrationsPage() {
                 </div>
               ) : null}
 
-              <div className={styles.registrationTableWrap}>
+              <div className={styles.registrationTableWrap} tabIndex={0} role="region" aria-label="Registrations table, scroll horizontally for more columns">
                 <table className={styles.registrationTable}>
                   <thead>
                     <tr>

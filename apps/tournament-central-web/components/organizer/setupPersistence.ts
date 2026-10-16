@@ -1,4 +1,5 @@
-import { loadOrganizerSetupState as loadOrganizerSetupStateApi } from './organizerApi';
+import { getJsonErrorDetail, loadOrganizerSetupState as loadOrganizerSetupStateApi } from './organizerApi';
+import { assertValidRegistrationDates } from '@/lib/registrationDates';
 import type {
   OrganizerSetupPayload,
   OrganizerSetupStateResponse,
@@ -31,8 +32,13 @@ export async function saveTournamentRecord(params: {
   token: string;
   payload: TournamentWritePayload;
   tournamentId: number | null;
+  setupPayload?: OrganizerSetupPayload;
 }): Promise<PersistedTournament> {
-  const { token, payload, tournamentId } = params;
+  const { token, payload, tournamentId, setupPayload } = params;
+  if (setupPayload) assertValidRegistrationDates(setupPayload.details);
+  if (tournamentId && setupPayload) {
+    await saveOrganizerSetupState({ token, tournamentId, payload: setupPayload, isPublished: false });
+  }
   const endpoint = tournamentId ? `/api/v1/tc/tournaments/${tournamentId}` : '/api/v1/tc/tournaments/';
   const method = tournamentId ? 'PUT' : 'POST';
 
@@ -59,9 +65,7 @@ export async function saveTournamentRecord(params: {
 
   const responseData = await response.json().catch(() => null) as { detail?: string } | null;
   if (!response.ok) {
-    const detail = responseData && typeof responseData.detail === 'string'
-      ? responseData.detail
-      : `Failed to save tournament (${response.status})`;
+    const detail = getJsonErrorDetail(responseData, `Failed to save tournament (${response.status})`);
     throw new Error(detail);
   }
 
@@ -169,6 +173,7 @@ export async function saveOrganizerSetupState(params: {
   isPublished: boolean;
 }): Promise<OrganizerSetupStateResponse> {
   const { token, tournamentId, payload, isPublished } = params;
+  assertValidRegistrationDates(payload.details);
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -196,9 +201,7 @@ export async function saveOrganizerSetupState(params: {
 
   const responseData = await response.json().catch(() => null) as { detail?: string } | OrganizerSetupStateResponse | null;
   if (!response.ok) {
-    const detail = responseData && typeof (responseData as { detail?: string }).detail === 'string'
-      ? (responseData as { detail?: string }).detail
-      : `Failed to save organizer setup (${response.status})`;
+    const detail = getJsonErrorDetail(responseData, `Failed to save organizer setup (${response.status})`);
     throw new Error(detail);
   }
 
