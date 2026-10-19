@@ -16,6 +16,25 @@ afterEach(() => {
 });
 
 describe('public account navigation', () => {
+  it('names every account menu control and restores focus on Escape', async () => {
+    persistAuthSession({ accessToken: 'test-token', userId: 1, firstName: 'Jamie', isAdmin: false });
+    const { container } = render(<PublicAccountNav />);
+    const user = userEvent.setup();
+    const summary = screen.getByLabelText('Jamie account menu');
+    expect(summary).toHaveAccessibleName('Jamie account menu');
+    await user.click(summary);
+    const settings = screen.getByRole('link', { name: 'Account Settings' });
+    expect(settings).toHaveAccessibleName('Account Settings');
+    expect(settings).toHaveAttribute('href', '/organizer/account');
+    for (const control of container.querySelectorAll('a, button, summary')) {
+      expect(control).toHaveAccessibleName();
+    }
+    settings.focus();
+    await user.keyboard('{Escape}');
+    expect(summary).toHaveFocus();
+    expect(container.querySelector('details')).not.toHaveAttribute('open');
+  });
+
   it('shows sign in and account creation to visitors', () => {
     render(<PublicAccountNav />);
     expect(screen.getByRole('link', { name: 'Sign In' })).toHaveAttribute('href', '/login');

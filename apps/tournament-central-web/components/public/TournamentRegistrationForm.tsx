@@ -2,11 +2,12 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { Dispatch, KeyboardEvent as ReactKeyboardEvent, SetStateAction } from 'react';
-import { createPortal } from 'react-dom';
-import { CalendarDays, Info, MapPin, Trophy, X } from 'lucide-react';
+import { CalendarDays, Check, Info, MapPin, Trophy, X } from 'lucide-react';
 import { capitalizeFirstLetter } from '@bracketworks/ui';
 
 import styles from '../../app/page.module.css';
+import TournamentRules, { type PublicTournamentDocument } from './TournamentRules';
+import { getMyAccount } from '@/components/organizer/organizerApi';
 
 export type RegistrationQuestionAnswerValue = string | boolean | string[];
 
@@ -65,6 +66,9 @@ type TournamentRegistrationFormProps = {
   onSubmit: () => void | Promise<void>;
   onClose?: () => void;
   footerHint?: string;
+  rulesText?: string;
+  documents?: PublicTournamentDocument[];
+  confirmation?: { code: string; status: string } | null;
 };
 
 function normalizeRegistrationFieldKey(key: string): string {
@@ -141,10 +145,81 @@ export default function TournamentRegistrationForm({
   onSubmit,
   onClose,
   footerHint = 'Your entry is saved after submission.',
+  rulesText,
+  documents = [],
+  confirmation,
 }: TournamentRegistrationFormProps) {
   const [isDisclosureOpen, setIsDisclosureOpen] = useState(false);
+  const [isSignedIn, setIsSignedIn] = useState(false);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+  const [profileMessage, setProfileMessage] = useState('');
+  const [profileError, setProfileError] = useState('');
+  const [copyMessage, setCopyMessage] = useState('');
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const confirmationRef = useRef<HTMLHeadingElement>(null);
+  const mountedRef = useRef(true);
   const disclosureAgreementRef = useRef<HTMLInputElement | null>(null);
   const disclosureTriggerRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    setIsSignedIn(Boolean(sessionStorage.getItem('access_token')));
+    return () => { mountedRef.current = false; };
+  }, []);
+
+  useEffect(() => {
+    if (confirmation) confirmationRef.current?.focus();
+  }, [confirmation]);
+
+  const fillAccountInformation = async () => {
+    setIsLoadingProfile(true);
+    setProfileError('');
+    setProfileMessage('');
+    try {
+      const token = sessionStorage.getItem('access_token');
+      if (!token) throw new Error('Your session expired. Please sign in again.');
+      const profile = await getMyAccount(token);
+      if (!mountedRef.current) return;
+      const values: Record<string, string> = {
+        first_name: profile.first_name, last_name: profile.last_name, email: profile.email,
+      };
+      const allowedKeys = new Set(fields.map((field) => normalizeRegistrationFieldKey(field.key)));
+      setFormState((prev) => ({
+        ...prev,
+        bowlers: prev.bowlers.map((bowler, index) => index !== 0 ? bowler : {
+          ...bowler,
+          ...Object.fromEntries(Object.entries(values).filter(([key, value]) => allowedKeys.has(key) && value && !bowler[key]?.trim())),
+        }),
+      }));
+      setProfileMessage('Account name and email applied to empty Bowler 1 fields only. Please check your details.');
+    } catch (cause) {
+      if (mountedRef.current) setProfileError(cause instanceof Error ? cause.message : 'Unable to load your account information.');
+    } finally {
+      if (mountedRef.current) setIsLoadingProfile(false);
+    }
+  };
+
+  const copyContact = (bowlerIndex: number) => {
+    const keys = new Set(['email', 'phone', 'address', 'city', 'state', 'zip']);
+    const sharedKeys = fields.map((field) => normalizeRegistrationFieldKey(field.key)).filter((key) => keys.has(key));
+    setFormState((prev) => ({
+      ...prev,
+      bowlers: prev.bowlers.map((bowler, index) => index !== bowlerIndex ? bowler : {
+        ...bowler,
+        ...Object.fromEntries(sharedKeys.filter((key) => prev.bowlers[0]?.[key]?.trim()).map((key) => [key, prev.bowlers[0][key]])),
+      }),
+    }));
+    setCopyMessage(`Bowler 1's available contact/address details copied to Bowler ${bowlerIndex + 1}. You can edit them independently.`);
+  };
+
+  const openReview = () => {
+    const inputs = bodyRef.current?.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>('input, select, textarea');
+    for (const input of inputs ?? []) {
+      if (!input.reportValidity()) return;
+    }
+    setFormState((prev) => ({ ...prev, acceptTerms: false }));
+    setIsDisclosureOpen(true);
+  };
 
   useEffect(() => {
     if (isDisclosureOpen) {
@@ -190,6 +265,31 @@ export default function TournamentRegistrationForm({
     }
   };
 
+  const progress = (current: number) => <ol className={styles.registrationProgress} aria-label="Registration progress">
+    {['Details', 'Review', 'Confirmation'].map((label, index) => <li key={label}
+      className={index < current ? styles.registrationStepComplete : undefined}
+      aria-label={`${label}${index < current ? ', completed' : ''}`}
+      aria-current={index === current ? 'step' : undefined}>
+      <span className={styles.registrationStepNumber} aria-hidden="true">{index < current ? <Check size={16} strokeWidth={3} /> : index + 1}</span>
+      <span className={styles.registrationStepLabel}>{label}</span>
+    </li>)}
+  </ol>;
+
+  if (confirmation) return <>
+    <header className={styles.detailsModalHeader}><h2 ref={confirmationRef} tabIndex={-1}>Registration received</h2></header>
+    <div className={styles.registrationModalBody}>
+      {progress(2)}
+      <section className={styles.registrationReviewCard}>
+        <h3>{tournamentName}</h3>
+        <p>Your confirmation number</p><strong className={styles.registrationConfirmationCode}>{confirmation.code}</strong>
+        <p>Status: {confirmation.status}</p>
+        <p>Save this number for your records. Registration does not mean payment has been collected.</p>
+        <p>Payment is collected in cash at the venue during check-in. No online payment is collected here.</p>
+      </section>
+    </div>
+    <footer className={styles.detailsModalFooter}><button type="button" className={styles.registrationSubmitButton} onClick={onClose}>Done</button></footer>
+  </>;
+
   return (
     <>
       <header className={`${styles.detailsModalHeader} ${styles.registrationModalHeader}`}>
@@ -200,7 +300,16 @@ export default function TournamentRegistrationForm({
           </button>
         ) : null}
       </header>
-      <div className={styles.registrationModalBody}>
+      <div ref={bodyRef} className={styles.registrationModalBody}>
+        {progress(0)}
+        <aside className={styles.registrationPaymentNotice} aria-label="Payment timing">
+          <strong>Register now, pay at check-in</strong>
+          <p>Payment is collected in cash at the venue during check-in. No online payment is collected on this form.</p>
+        </aside>
+        {(rulesText?.trim() || documents.length > 0) && <details className={styles.registrationRules}>
+          <summary>Review tournament rules and documents</summary>
+          <TournamentRules rulesText={rulesText} documents={documents} />
+        </details>}
         <p className={styles.registrationModalLead}>Fill out this registration form to reserve your spot.</p>
 
         <div className={styles.registrationSummary}>
@@ -266,12 +375,24 @@ export default function TournamentRegistrationForm({
 
           <p className={styles.registrationBowlerCountInfo}>
             <Info size={19} aria-hidden="true" />
-            This event requires {requiredBowlerCount} bowler form{requiredBowlerCount === 1 ? '' : 's'}.
+            {`This event requires ${requiredBowlerCount} bowler ${requiredBowlerCount === 1 ? 'form' : 'forms'}.`}
           </p>
 
           {formState.bowlers.map((bowlerFields, bowlerIndex) => (
             <div key={`bowler-${bowlerIndex}`} className={styles.registrationBowlerSection}>
-              <h5><span className={styles.registrationBowlerIcon} aria-hidden="true"><Trophy size={16} /></span>Bowler {bowlerIndex + 1}</h5>
+              <h5><span className={styles.registrationBowlerIcon} aria-hidden="true"><Trophy size={16} /></span>{`Bowler ${bowlerIndex + 1}`}</h5>
+              {bowlerIndex === 0 && isSignedIn && <div className={styles.registrationConvenience}>
+                <button type="button" className={styles.detailsModalSecondaryAction} disabled={isLoadingProfile} onClick={() => void fillAccountInformation()}>
+                  {isLoadingProfile ? 'Loading account...' : 'Use my account information'}
+                </button>
+                <small>Fills only empty name and email fields for Bowler 1.</small>
+                {profileMessage && <p role="status">{profileMessage}</p>}
+                {profileError && <p role="alert">{profileError}</p>}
+              </div>}
+              {bowlerIndex > 0 && fields.some((field) => ['email', 'phone', 'address', 'city', 'state', 'zip'].includes(normalizeRegistrationFieldKey(field.key))) && <div className={styles.registrationConvenience}>
+                <button type="button" className={styles.detailsModalSecondaryAction} onClick={() => copyContact(bowlerIndex)}>Copy address/contact from Bowler 1</button>
+                <small>Copies once. Names and bowling details stay separate; all fields remain editable.</small>
+              </div>}
               <div className={styles.registrationGrid}>
                 {fields.map((field) => {
                   const key = normalizeRegistrationFieldKey(field.key);
@@ -308,6 +429,7 @@ export default function TournamentRegistrationForm({
                   );
                 })}
               </div>
+              {copyMessage && <p role="status">{copyMessage}</p>}
 
               {questions.length > 0 && (
                 <div className={styles.registrationDynamicSection}>
@@ -577,14 +699,14 @@ export default function TournamentRegistrationForm({
           ref={disclosureTriggerRef}
           type="button"
           className={styles.registrationSubmitButton}
-          onClick={() => setIsDisclosureOpen(true)}
+          onClick={openReview}
           disabled={isSubmitting}
         >
-          {isSubmitting ? 'Submitting...' : 'Review & Submit'}
+          {isSubmitting ? 'Submitting...' : 'Continue to Review'}
         </button>
       </footer>
-      {isDisclosureOpen && typeof document !== 'undefined'
-        ? createPortal(
+      {isDisclosureOpen
+        ? (
           <div
             className={styles.registrationDisclosureBackdrop}
             onClick={(event) => {
@@ -603,8 +725,27 @@ export default function TournamentRegistrationForm({
               onKeyDown={handleDisclosureKeyDown}
             >
               <div className={styles.registrationDisclosureCopy}>
+                {progress(1)}
                 <span className={styles.detailsModalEyebrow}>Registration Disclosure</span>
                 <h2 id="registration-disclosure-title">Please review before submitting</h2>
+                <section className={styles.registrationReviewCard} aria-label="Registration review">
+                  <dl>
+                    <dt>Tournament</dt><dd>{tournamentName}</dd>
+                    <dt>Event</dt><dd>{events.find((entry) => entry.id === formState.eventId)?.name || 'Not selected'}</dd>
+                    <dt>Squad</dt><dd>{squads.find((entry) => entry.id === formState.squadId)?.name || 'Not selected'}</dd>
+                    {formState.divisionId && <><dt>Division</dt><dd>{divisions.find((entry) => entry.id === formState.divisionId)?.name}</dd></>}
+                  </dl>
+                  {formState.bowlers.map((bowler, index) => <div key={index}>
+                    <h3>Bowler {index + 1}</h3>
+                    <dl>{fields.map((field) => <div key={field.id}><dt>{field.customLabel || field.label}</dt><dd>{bowler[normalizeRegistrationFieldKey(field.key)] || 'Not provided'}</dd></div>)}
+                    {questions.map((question) => {
+                      const answer = formState.bowlerQuestionAnswers[index]?.[question.id];
+                      return <div key={question.id}><dt>{question.label}</dt><dd>{Array.isArray(answer) ? answer.join(', ') : typeof answer === 'boolean' ? answer ? 'Yes' : 'No' : answer || 'Not provided'}</dd></div>;
+                    })}</dl>
+                  </div>)}
+                  {formState.notes && <p>Notes: {formState.notes}</p>}
+                  <p>Payment: cash at the venue during check-in. No online payment is collected.</p>
+                </section>
                 <p id="registration-disclosure-copy">
                   By submitting this entry form, I certify that the information provided is accurate to the best of my knowledge. Information collected through this form will be used for tournament registration, eligibility verification, scheduling, results, awards, and tournament-related communications. Personal contact information will not be sold or shared with unrelated third parties.
                 </p>
@@ -635,8 +776,7 @@ export default function TournamentRegistrationForm({
                 </button>
               </div>
             </section>
-          </div>,
-          document.body,
+          </div>
         )
         : null}
     </>

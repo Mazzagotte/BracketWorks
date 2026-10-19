@@ -151,7 +151,16 @@ export function deleteTournament(token: string, tournamentId: number): Promise<{
 }
 
 export function markTournamentRegistrationPaid(token: string, tournamentId: number, registrationId: number): Promise<{ ok: boolean }> {
-  return organizerMutation(token, `/api/v1/tc/tournaments/${tournamentId}/registrations/${registrationId}`, 'PATCH', { payment_status: 'paid' });
+  return updateTournamentRegistrationPaymentStatus(token, tournamentId, registrationId, 'paid');
+}
+
+export function updateTournamentRegistrationPaymentStatus(
+  token: string,
+  tournamentId: number,
+  registrationId: number,
+  paymentStatus: 'paid' | 'unpaid',
+): Promise<{ ok: boolean }> {
+  return organizerMutation(token, `/api/v1/tc/tournaments/${tournamentId}/registrations/${registrationId}`, 'PATCH', { payment_status: paymentStatus });
 }
 
 export async function listMyTournaments(token: string): Promise<TournamentContract[]> {

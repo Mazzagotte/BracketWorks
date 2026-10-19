@@ -1,6 +1,14 @@
 .shell {
+  --organizer-content-width: 1440px;
+  --organizer-page-padding: clamp(16px, 2.2vw, 32px);
   min-height: 100dvh;
   background: var(--bw-page);
+  line-height: 1.5;
+}
+
+.shell :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
 }
 
 .content {

@@ -181,21 +181,23 @@ export default function OrganizerTournamentOverviewPage() {
         <section className={styles.summaryCard}>
           <div className={styles.summaryHeading}>
             <h2>Squad Summary</h2>
-            <p>Registered bowlers versus capacity for each squad.</p>
+            <p>Registrations and bowlers for each squad. Capacity and availability are measured in bowler spots.</p>
           </div>
           <div className={styles.squadSummaryTableWrap}>
             <table className={styles.squadSummaryTable}>
               <thead>
-                <tr><th>Squad</th><th>Registered</th><th>Capacity</th><th>Available</th><th>Waitlist</th><th>Status</th></tr>
+                <tr><th>Squad</th><th>Registrations</th><th>Bowlers</th><th>Bowler capacity</th><th>Bowler spots available</th><th>Waitlisted registrations</th><th>Waitlisted bowlers</th><th>Status</th></tr>
               </thead>
               <tbody>
-                {squadSummaries.map(({ squad, registered, waitlisted, available, status }) => (
+                {squadSummaries.map(({ squad, registrationCount, bowlerCount, waitlistedRegistrationCount, waitlistedBowlerCount, availableBowlerSpots, status }) => (
                   <tr key={squad.id}>
                     <td>{squad.name}</td>
-                    <td>{registered}</td>
+                    <td>{registrationCount}</td>
+                    <td>{bowlerCount}</td>
                     <td>{squad.capacity > 0 ? squad.capacity : '\u2014'}</td>
-                    <td>{available === null ? '\u2014' : available}</td>
-                    <td>{waitlisted}</td>
+                    <td>{availableBowlerSpots === null ? '\u2014' : availableBowlerSpots}</td>
+                    <td>{waitlistedRegistrationCount}</td>
+                    <td>{waitlistedBowlerCount}</td>
                     <td><OrganizerStatusBadge status={status} /></td>
                   </tr>
                 ))}
@@ -224,4 +226,3 @@ export default function OrganizerTournamentOverviewPage() {
     </div>
   );
 }
-

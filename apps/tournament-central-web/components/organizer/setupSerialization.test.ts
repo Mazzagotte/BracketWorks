@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildDefaultDraft, normalizeEventConfig, normalizeOrganizerDraft } from './setupSerialization';
+import { buildDefaultDraft, buildOrganizerSetupPayload, normalizeEventConfig, normalizeOrganizerDraft } from './setupSerialization';
 
 describe('organizer draft structure', () => {
   it('starts new tournaments without sample configuration', () => {
@@ -11,6 +11,7 @@ describe('organizer draft structure', () => {
     expect(draft.squads).toEqual([]);
     expect(draft.fees).toEqual([]);
     expect(draft.questions).toEqual([]);
+    expect(draft.details.rulesText).toBe('');
   });
 
   it('preserves old event requirements during normalization', () => {
@@ -33,5 +34,16 @@ describe('organizer draft structure', () => {
     expect(draft.events).toEqual([]);
     expect(draft.divisions).toEqual([]);
     expect(draft.squads).toEqual([]);
+    expect(draft.details.rulesText).toBe('');
+  });
+
+  it('preserves pasted rules through serialization and reloading without HTML conversion', () => {
+    const draft = buildDefaultDraft();
+    const rulesText = '1. Check in early.\n\n2. Averages < 200 must be verified.';
+    const payload = buildOrganizerSetupPayload({
+      ...draft, details: { ...draft.details, rulesText },
+    });
+    const reloaded = normalizeOrganizerDraft({ tournamentId: 42, payload: JSON.parse(JSON.stringify(payload)) });
+    expect(reloaded.details.rulesText).toBe(rulesText);
   });
 });

@@ -1,26 +1,25 @@
 .shell {
   min-height: 100dvh;
   width: 100%;
-  max-width: min(1680px, 100%);
+  max-width: var(--organizer-content-width);
   margin: 0 auto;
   background: var(--bw-page);
   color: var(--bw-text-body);
-  padding: 14px var(--bw-page-gutter);
+  padding: 20px var(--organizer-page-padding) 40px;
 }
 
 .topOverviewCard {
   border: 1px solid var(--bw-border-subtle);
-  border-radius: 24px;
+  border-radius: 16px;
   background: var(--bw-surface-card);
   box-shadow: var(--bw-shadow-card);
   overflow: visible;
-  position: sticky;
-  top: 8px;
+  position: relative;
   z-index: 100;
 }
 
 .topBar {
-  padding: 14px 16px 12px;
+  padding: 18px 20px;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -508,22 +507,22 @@
 }
 
 .contentGrid {
-  margin-top: 12px;
+  margin-top: 20px;
   display: grid;
   grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);
-  gap: 14px;
+  gap: 20px;
   align-items: start;
 }
 
 .navRail {
   border: 1px solid var(--bw-border-subtle);
-  border-radius: 24px;
+  border-radius: 16px;
   background: var(--bw-surface-card);
   box-shadow: var(--bw-shadow-card);
   padding: 14px;
   position: sticky;
-  top: 12px;
-  max-height: calc(100dvh - 24px);
+  top: calc(var(--header-height) + 16px);
+  max-height: calc(100dvh - var(--header-height) - 32px);
   overflow: auto;
   width: 100%;
   display: grid;
@@ -696,8 +695,9 @@
 
 .workspace {
   display: grid;
-  gap: 14px;
-  justify-items: start;
+  gap: 20px;
+  min-width: 0;
+  justify-items: stretch;
   align-content: start;
 }
 
@@ -705,11 +705,11 @@
 .previewCard,
 .reviewCard {
   border: 1px solid var(--bw-border-subtle);
-  border-radius: 24px;
+  border-radius: 16px;
   background: var(--bw-surface-card);
   box-shadow: var(--bw-shadow-card);
-  padding: 14px;
-  width: fit-content;
+  padding: 20px;
+  width: 100%;
   max-width: 100%;
 }
 
@@ -4290,6 +4290,180 @@
   flex-wrap: wrap;
 }
 
+.rulesDocumentsBody,
+.rulesEditorPanel {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.rulesEditorPanel {
+  padding: 18px;
+  border: 1px solid var(--bw-border-subtle);
+  border-radius: 12px;
+  background: var(--bw-surface-card);
+}
+
+.rulesEditorPanel h3 {
+  margin: 0;
+  color: var(--bw-text-title);
+  font-size: 14px;
+}
+
+.rulesHelp {
+  margin: 0;
+  color: var(--bw-text-muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.rulesError {
+  margin: 0;
+  color: var(--color-danger);
+  font-size: 13px;
+}
+
+.rulesUploadControls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.rulesUploadControls label {
+  flex: 1 1 240px;
+  min-width: 0;
+}
+
+.rulesFilePicker {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  border: 1px dashed var(--bw-border-card);
+  border-radius: 12px;
+  background: var(--bw-surface-panel);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.rulesFilePicker:hover,
+.rulesFilePicker:focus-within {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 5%, var(--bw-surface-panel));
+}
+
+.rulesFilePicker:focus-within {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+}
+
+.rulesFilePicker:has(input:disabled) {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.rulesFilePicker input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: inherit;
+}
+
+.rulesFileIcon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  color: var(--color-primary);
+}
+
+.rulesFileCopy {
+  display: grid;
+  gap: 5px;
+  flex: 1;
+  min-width: 0;
+}
+
+.rulesFileCopy strong {
+  color: var(--bw-text-title);
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.rulesFileCopy > span {
+  color: var(--bw-text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.rulesFileBrowse {
+  padding: 9px 12px;
+  border: 1px solid var(--bw-border-card);
+  border-radius: 8px;
+  color: var(--bw-text-title);
+  background: var(--bw-surface-panel-strong);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .rulesFilePicker {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    padding: 14px;
+  }
+
+  .rulesFileBrowse {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .rulesUploadControls > button {
+    width: 100%;
+    min-height: 44px;
+  }
+}
+
+.rulesDocumentList {
+  display: grid;
+  gap: 10px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.rulesDocumentList strong {
+  overflow-wrap: anywhere;
+}
+
+.rulesTextPreview {
+  padding: 12px;
+  border: 1px solid var(--bw-border-subtle);
+  border-radius: 8px;
+}
+
+.rulesTextPreview summary {
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.rulesTextPreview > div {
+  margin-top: 12px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
 .reviewCard h3 {
   margin: 0;
   color: var(--bw-text-title);
@@ -4607,7 +4781,7 @@
   .mobileSectionPicker {
     display: grid;
     gap: 4px;
-    margin-bottom: 10px;
+    margin-bottom: 0;
   }
 
   .mobileSectionPicker label {
@@ -4620,11 +4794,13 @@
     border: 1px solid var(--bw-border-card);
     background: var(--bw-surface-card);
     color: var(--bw-text-title);
-    min-height: 34px;
+    min-height: 44px;
     padding: 0 10px;
   }
 
-  .navRail ul {
+  .navRail ul,
+  .navRail > .navGroupLabel,
+  .navReviewGroup {
     display: none;
   }
 }
@@ -4687,7 +4863,7 @@
 
 @media (max-width: 767px) {
   .shell {
-    padding: 10px;
+    padding: 16px var(--organizer-page-padding) 32px;
   }
 
   .topBar {

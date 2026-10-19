@@ -5,13 +5,14 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import type { MouseEvent as ReactMouseEvent } from 'react';
-import { CalendarCheck2, CalendarDays, ChevronRight, Clock3, Info, Link2, LocateFixed, MapPin, Plus, Search, ShieldCheck, Trophy, UsersRound, X } from 'lucide-react';
+import { CalendarCheck2, CalendarDays, ChevronRight, Info, Link2, LocateFixed, MapPin, Plus, Search, ShieldCheck, Trophy, X } from 'lucide-react';
 import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from 'react-simple-maps';
 import type { PublicTournamentDirectoryItem, PublicTournamentDirectoryResponse } from '@bracketworks/types';
 import styles from './page.module.css';
 import { formatTournamentDate, formatTournamentDateRange, parseTournamentDate } from '@/lib/tournamentDates';
 import PublicAccountNav from '@/components/public/PublicAccountNav';
 import TournamentInformation from '@/components/public/TournamentInformation';
+import type { PublicTournamentDocument } from '@/components/public/TournamentRules';
 import { useModalFocus } from '@/lib/useModalFocus';
 
 const TournamentRegistrationForm = dynamic(() => import('@/components/public/TournamentRegistrationForm'));
@@ -133,6 +134,8 @@ type PublicTcRegistrationConfigResponse = {
   squads: RegistrationSquadConfig[];
   fields: RegistrationFieldConfig[];
   questions: RegistrationQuestionConfig[];
+  details?: { rulesText?: string };
+  documents?: PublicTournamentDocument[];
 };
 
 type RegistrationFormState = {
@@ -510,9 +513,12 @@ type HomePageClientProps = {
 };
 
 export default function HomePageClient({ initialDirectory }: HomePageClientProps) {
-  const [allTournaments, setAllTournaments] = useState<Tournament[]>(() =>
+  const [directoryTournaments, setAllTournaments] = useState<Tournament[]>(() =>
     normalizePublicTournamentItems(initialDirectory?.tournaments ?? []),
   );
+  const [linkedTournament, setLinkedTournament] = useState<Tournament | null>(null);
+  const allTournaments = useMemo(() => linkedTournament && !directoryTournaments.some((entry) => entry.id === linkedTournament.id)
+    ? [...directoryTournaments, linkedTournament] : directoryTournaments, [directoryTournaments, linkedTournament]);
   const [isLoading, setIsLoading] = useState(initialDirectory === null);
   const [heartbeatState, setHeartbeatState] = useState<'live' | 'stale' | 'checking'>('live');
   const [selectedStateCode, setSelectedStateCode] = useState('ID');
@@ -528,22 +534,105 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
   const [visibleTournamentCount, setVisibleTournamentCount] = useState(TOURNAMENT_PAGE_SIZE);
   const [mapSize, setMapSize] = useState({ width: 960, height: 520 });
   const [detailTournamentId, setDetailTournamentId] = useState<string | null>(null);
+  const [detailLinkError, setDetailLinkError] = useState('');
+  const [shareMessage, setShareMessage] = useState('');
+  const [shareError, setShareError] = useState('');
+  const detailHistoryEntryRef = useRef(false);
   const [registrationTournamentId, setRegistrationTournamentId] = useState<string | null>(null);
   const [registrationConfig, setRegistrationConfig] = useState<PublicTcRegistrationConfigResponse | null>(null);
   const [isRegistrationConfigLoading, setIsRegistrationConfigLoading] = useState(false);
   const [registrationConfigError, setRegistrationConfigError] = useState<string | null>(null);
   const [registrationSubmitMessage, setRegistrationSubmitMessage] = useState<string | null>(null);
+  const [registrationConfirmation, setRegistrationConfirmation] = useState<{ code: string; status: string } | null>(null);
   const [isSubmittingRegistration, setIsSubmittingRegistration] = useState(false);
   const [registrationForm, setRegistrationForm] = useState<RegistrationFormState>(EMPTY_REGISTRATION_FORM);
   const [showAllStatuses, setShowAllStatuses] = useState(false);
   const mapShellRef = useRef<HTMLDivElement | null>(null);
   const hasUserSelectedStateRef = useRef(false);
-  const detailModalRef = useModalFocus<HTMLElement>(Boolean(detailTournamentId), () => setDetailTournamentId(null));
+  const closeDetailModal = () => {
+    setDetailTournamentId(null);
+    setDetailLinkError('');
+    if (detailHistoryEntryRef.current) {
+      detailHistoryEntryRef.current = false;
+      window.history.back();
+    } else {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('tournament');
+      window.history.replaceState(window.history.state, '', url);
+    }
+  };
+  const openDetailModal = (id: string) => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('tournament', id);
+    window.history.pushState(window.history.state, '', url);
+    detailHistoryEntryRef.current = true;
+    setDetailTournamentId(id);
+    setDetailLinkError('');
+    setShareMessage('');
+    setShareError('');
+  };
+  const detailModalRef = useModalFocus<HTMLElement>(
+    Boolean(detailTournamentId && !registrationTournamentId && allTournaments.some((entry) => entry.id === detailTournamentId)),
+    closeDetailModal,
+  );
   const lastSuccessfulHeartbeatRef = useRef(0);
 
   useEffect(() => {
     lastSuccessfulHeartbeatRef.current = Date.now();
   }, []);
+
+  useEffect(() => {
+    const syncDetailsFromUrl = () => {
+      const id = new URL(window.location.href).searchParams.get('tournament');
+      setDetailTournamentId(id);
+      setRegistrationTournamentId(null);
+      setDetailLinkError('');
+      setShareMessage('');
+      setShareError('');
+      detailHistoryEntryRef.current = false;
+    };
+    syncDetailsFromUrl();
+    window.addEventListener('popstate', syncDetailsFromUrl);
+    return () => window.removeEventListener('popstate', syncDetailsFromUrl);
+  }, []);
+
+  useEffect(() => {
+    if (!detailTournamentId || isLoading || allTournaments.some((entry) => entry.id === detailTournamentId)) return;
+    if (!/^tc-[1-9]\d*$/.test(detailTournamentId)) {
+      setDetailLinkError('This tournament link is invalid.');
+      return;
+    }
+    const controller = new AbortController();
+    void (async () => {
+      try {
+        const response = await fetch(`/api/v1/public/tournaments?source=tc&tournament_id=${detailTournamentId.slice(3)}&limit=1`, {
+          signal: controller.signal,
+        });
+        if (!response.ok) throw new Error('Unable to load this tournament. Please reload to try again.');
+        const payload = await response.json() as PublicTournamentDirectoryResponse;
+        if (!Array.isArray(payload.tournaments)) throw new Error('The server returned invalid tournament details. Please reload to try again.');
+        const tournament = normalizePublicTournamentItems(payload.tournaments).find((entry) => entry.id === detailTournamentId);
+        if (!tournament) throw new Error('This tournament is unavailable or is no longer public.');
+        if (!controller.signal.aborted) setLinkedTournament(tournament);
+      } catch (cause) {
+        if (!controller.signal.aborted) setDetailLinkError(cause instanceof Error ? cause.message : 'Unable to load this tournament.');
+      }
+    })();
+    return () => controller.abort();
+  }, [detailTournamentId, isLoading, allTournaments]);
+
+  const copyDetailLink = async () => {
+    setShareMessage('');
+    setShareError('');
+    try {
+      const url = new URL('/', window.location.origin);
+      if (detailTournamentId) url.searchParams.set('tournament', detailTournamentId);
+      await navigator.clipboard.writeText(url.toString());
+      setShareMessage('Tournament link copied.');
+    } catch {
+      setShareError('Unable to copy the link. Copy the tournament URL from your browser address bar.');
+    }
+  };
 
   useEffect(() => {
     if (!mapShellRef.current) {
@@ -941,11 +1030,11 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
   );
 
   const openRegistrationModal = (tournament: Tournament, triggerElement?: HTMLElement | null) => {
+    setRegistrationConfirmation(null);
     if (triggerElement && !detailModalRef.current?.contains(triggerElement)) {
       lastTriggerRef.current = triggerElement;
     }
 
-    setDetailTournamentId(null);
     setRegistrationTournamentId(tournament.id);
     setRegistrationConfig(null);
     setRegistrationConfigError(null);
@@ -955,6 +1044,7 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
   };
 
   const closeRegistrationModal = () => {
+    setRegistrationConfirmation(null);
     setRegistrationTournamentId(null);
     setRegistrationConfig(null);
     setRegistrationConfigError(null);
@@ -1065,6 +1155,7 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
   }, [registrationDivisions, registrationEvents, registrationForm.eventId, registrationSquads, registrationTournamentId]);
 
   const handleRegistrationSubmit = async () => {
+    if (isSubmittingRegistration || registrationConfirmation) return;
     if (!registrationTournament) {
       return;
     }
@@ -1178,22 +1269,16 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
         throw new Error(body?.detail || 'Unable to submit registration right now.');
       }
 
-      setRegistrationSubmitMessage('Registration submitted successfully. The organizer can now review your request.');
-      setRegistrationForm(EMPTY_REGISTRATION_FORM);
+      const result: unknown = await response.json();
+      if (!result || typeof result !== 'object' || !('registration_id' in result) || typeof result.registration_id !== 'string'
+        || !('status' in result) || typeof result.status !== 'string') {
+        throw new Error('The server did not return a confirmation number. Contact the organizer before submitting again.');
+      }
+      setRegistrationConfirmation({ code: result.registration_id, status: result.status });
     } catch (error) {
       setRegistrationSubmitMessage(error instanceof Error ? error.message : 'Unable to submit registration right now.');
     } finally {
       setIsSubmittingRegistration(false);
-    }
-  };
-
-  const closeDetailModal = () => {
-    setDetailTournamentId(null);
-
-    if (typeof window !== 'undefined') {
-      window.setTimeout(() => {
-        lastTriggerRef.current?.focus();
-      }, 0);
     }
   };
 
@@ -1318,6 +1403,12 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
           <PublicAccountNav />
         </div>
       </header>
+      {detailTournamentId && !allTournaments.some((entry) => entry.id === detailTournamentId) && (
+        <div className={styles.section}>
+          {detailLinkError ? <p role="alert">{detailLinkError}</p> : <p role="status">Loading tournament details...</p>}
+          <button type="button" className={styles.secondaryButton} onClick={closeDetailModal}>Back to tournaments</button>
+        </div>
+      )}
 
       <section id="tournament-directory" className={`${styles.section} ${styles.explore}`}>
         <div className={styles.discoveryHeader}>
@@ -1508,7 +1599,7 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
                             hasUserSelectedStateRef.current = true;
                             setSelectedStateCode(marker.stateCode);
                           }
-                          setDetailTournamentId(marker.tournaments[0].id);
+                          openDetailModal(marker.tournaments[0].id);
                         }}
                         onKeyDown={(event) => {
                           if (event.key === 'Enter' || event.key === ' ') {
@@ -1517,7 +1608,7 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
                               hasUserSelectedStateRef.current = true;
                               setSelectedStateCode(marker.stateCode);
                             }
-                            setDetailTournamentId(marker.tournaments[0].id);
+                            openDetailModal(marker.tournaments[0].id);
                           }
                         }}
                       >
@@ -1615,7 +1706,7 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
                       className={`${styles.ghostBtn} ${styles.cardDetailButton}`}
                       onClick={(event) => {
                         lastTriggerRef.current = event.currentTarget;
-                        setDetailTournamentId(tournament.id);
+                        openDetailModal(tournament.id);
                       }}
                     >
                       View Details
@@ -1712,7 +1803,7 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
               </button>
             )}
 
-            {detailTournament && (
+            {detailTournament && !registrationTournament && (
               <div className={styles.detailsModalBackdrop} onClick={closeDetailModal}>
                 <section
                   ref={detailModalRef}
@@ -1732,7 +1823,10 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
                         </div>
                       ) : null}
                       <div>
-                        <span className={styles.detailsModalEyebrow}>Tournament Details</span>
+                        <div className={styles.detailsModalHeadingMeta}>
+                          <span className={styles.detailsModalEyebrow}>Tournament Details</span>
+                          <span className={styles.detailsModalStatusValue}><span className={styles.detailsModalStatusDot} aria-hidden="true" />{statusLabel[detailTournament.status]}</span>
+                        </div>
                         <h2 id="tournament-details-title">{detailTournament.name}</h2>
                       </div>
                     </div>
@@ -1753,18 +1847,10 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
                         <strong>Location</strong>
                         <span>{detailTournament.locationText}</span>
                       </p>
-                      <p className={styles.detailsModalFactRow}>
-                        <span className={styles.detailsModalFactIcon} aria-hidden="true"><Clock3 size={28} /></span>
-                        <strong>Status</strong>
-                        <span className={styles.detailsModalStatusValue}><span className={styles.detailsModalStatusDot} aria-hidden="true" />{statusLabel[detailTournament.status]}</span>
-                      </p>
-                      <p className={styles.detailsModalFactRow}>
-                        <span className={styles.detailsModalFactIcon} aria-hidden="true"><UsersRound size={28} /></span>
-                        <strong>Registration</strong>
-                        <span className={styles.detailsModalRegistrationValue}>{getRegistrationConfigUrl(detailTournament) ? 'See deadline and squad availability below' : 'Contact the organizer'}</span>
-                      </p>
                     </div>
                     <TournamentInformation configUrl={getRegistrationConfigUrl(detailTournament)} />
+                    {shareMessage && <p role="status">{shareMessage}</p>}
+                    {shareError && <p role="alert">{shareError}</p>}
                   </div>
                   <footer className={styles.detailsModalFooter}>
                     <span className={styles.detailsModalHint}>
@@ -1772,6 +1858,9 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
                       Complete your bowler details and submit registration directly from this page.
                     </span>
                     <div className={styles.detailsModalActions}>
+                      <button type="button" className={`${styles.detailsModalSecondaryAction} ${styles.detailsModalShareAction}`} onClick={() => void copyDetailLink()}>
+                        Copy link
+                      </button>
                       <button type="button" className={styles.detailsModalSecondaryAction} onClick={closeDetailModal}>
                         Not Now
                       </button>
@@ -1815,6 +1904,9 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
                     tournamentDate={registrationTournament.date}
                     tournamentLocation={registrationTournament.locationText}
                     tournamentLogoUrl={registrationTournament.logoUrl}
+                    rulesText={registrationConfig?.details?.rulesText}
+                    documents={registrationConfig?.documents}
+                    confirmation={registrationConfirmation}
                     squads={squadsForSelectedEvent}
                     events={eventsForSelectedSquad}
                     divisions={divisionsForSelectedEvent}
@@ -1825,9 +1917,7 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
                     setFormState={setRegistrationForm}
                     submitMessage={registrationSubmitMessage}
                     isSubmitting={isSubmittingRegistration}
-                    onSubmit={() => {
-                      void handleRegistrationSubmit();
-                    }}
+                    onSubmit={handleRegistrationSubmit}
                     onClose={closeRegistrationModal}
                   />
                 </section>
@@ -1888,7 +1978,7 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
                       className={styles.featuredCardPrimaryAction}
                       onClick={(event) => {
                         lastTriggerRef.current = event.currentTarget;
-                        setDetailTournamentId(tournament.id);
+                        openDetailModal(tournament.id);
                       }}
                     >
                       View Tournament <span aria-hidden="true">→</span>

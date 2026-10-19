@@ -81,7 +81,7 @@
   gap: 7px;
   margin: 8px 0 0;
   color: var(--bw-text-muted);
-  font-size: 0.76rem;
+  font-size: 0.8125rem;
 }
 
 .meta svg {
@@ -102,13 +102,13 @@
 
 .primaryButton,
 .secondaryButton {
-  min-height: 34px;
+  min-height: 40px;
   border-radius: 9px;
   padding: 0 13px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.72rem;
+  font-size: 0.8125rem;
   font-weight: 700;
   text-decoration: none;
   border: 1px solid transparent;
@@ -253,7 +253,7 @@
 
 .summaryLabel {
   color: var(--bw-text-muted);
-  font-size: 0.58rem;
+  font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.06em;
 }
@@ -302,7 +302,7 @@
 
 .registrationSummaryGrid span {
   color: var(--bw-text-muted);
-  font-size: 0.6rem;
+  font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -323,14 +323,14 @@
   border-collapse: separate;
   border-spacing: 0;
   color: var(--bw-text-body);
-  font-size: 0.72rem;
+  font-size: 0.8125rem;
 }
 
 .squadSummaryTable th {
-  padding: 8px;
+  padding: 12px;
   color: var(--bw-text-muted);
   background: rgba(78, 83, 112, 0.16);
-  font-size: 0.6rem;
+  font-size: 0.75rem;
   font-weight: 700;
   text-align: left;
   white-space: nowrap;
@@ -345,7 +345,7 @@
 }
 
 .squadSummaryTable td {
-  padding: 9px 8px;
+  padding: 14px 12px;
   border-bottom: 1px solid var(--bw-border-subtle);
   white-space: nowrap;
 }
@@ -393,11 +393,11 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 10px 12px;
+  padding: 14px 16px;
   border: 1px solid var(--bw-border-card);
   border-radius: 11px;
   background: var(--bw-surface-panel);
-  font-size: 0.72rem;
+  font-size: 0.8125rem;
   color: var(--bw-text-body);
 }
 
@@ -538,7 +538,7 @@
 }
 
 .registrationBackButton {
-  min-height: 32px;
+  min-height: 40px;
   padding: 0 12px;
   display: inline-flex;
   align-items: center;
@@ -547,7 +547,7 @@
   border-radius: 8px;
   color: var(--bw-text-title);
   background: transparent;
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 700;
   text-decoration: none;
 }
@@ -603,9 +603,9 @@
 .metricblue { color: #4d9dff; background: rgba(77, 157, 255, 0.1); }
 
 .registrationMetricCard > div { min-width: 0; display: grid; gap: 3px; }
-.registrationMetricCard span:not(.metricIcon) { color: var(--bw-text-muted); font-size: 0.58rem; white-space: nowrap; }
+.registrationMetricCard span:not(.metricIcon) { color: var(--bw-text-muted); font-size: 0.75rem; }
 .registrationMetricCard strong { color: var(--bw-text-title); font-size: 1.05rem; line-height: 1; }
-.registrationMetricCard small { color: var(--bw-text-muted); font-size: 0.58rem; }
+.registrationMetricCard small { color: var(--bw-text-muted); font-size: 0.75rem; }
 
 .registrationDashboardGrid {
   display: grid;
@@ -616,21 +616,21 @@
 
 .registrationTableCard { border-radius: 9px; overflow: hidden; }
 .registrationPanelHeading { padding: 16px 16px 10px; }
-.registrationPanelHeading h2 { margin: 0; color: var(--bw-text-title); font-size: 0.82rem; }
+.registrationPanelHeading h2 { margin: 0; color: var(--bw-text-title); font-size: 1rem; }
 .registrationPanelHeading p { margin: 4px 0 0; color: var(--bw-text-muted); font-size: 0.61rem; }
 
 .registrationToolbar { display: flex; align-items: center; gap: 7px; padding: 8px 16px 12px; }
 .registrationSearch { height: 32px; min-width: 220px; flex: 1; display: flex; align-items: center; gap: 7px; padding: 0 9px; border: 1px solid var(--bw-border-card); border-radius: 6px; color: var(--bw-text-muted); background: var(--bw-surface-panel); }
-.registrationSearch input { width: 100%; min-width: 0; border: 0; outline: 0; color: var(--bw-text-body); background: transparent; font-size: 0.65rem; }
+.registrationSearch input { width: 100%; min-width: 0; border: 0; outline: 0; color: var(--bw-text-body); background: transparent; font-size: 0.8125rem; }
 .registrationSearch input::placeholder { color: var(--bw-text-muted); }
 .registrationFilter { position: relative; display: flex; align-items: center; }
-.registrationFilter select { height: 32px; max-width: 100px; appearance: none; padding: 0 25px 0 9px; border: 1px solid var(--bw-border-card); border-radius: 6px; color: var(--bw-text-body); background: var(--bw-surface-panel); font-size: 0.62rem; outline: 0; }
+.registrationFilter select { height: 32px; max-width: 100px; appearance: none; padding: 0 25px 0 9px; border: 1px solid var(--bw-border-card); border-radius: 6px; color: var(--bw-text-body); background: var(--bw-surface-panel); font-size: 0.8125rem; outline: 0; }
 .registrationFilter svg { position: absolute; right: 8px; pointer-events: none; color: var(--bw-text-muted); }
-.registrationExportButton { height: 32px; display: inline-flex; align-items: center; gap: 6px; padding: 0 10px; border: 1px solid var(--bw-border-card); border-radius: 6px; color: var(--bw-text-title); background: var(--bw-surface-panel); font-size: 0.62rem; font-weight: 700; white-space: nowrap; }
+.registrationExportButton { height: 32px; display: inline-flex; align-items: center; gap: 6px; padding: 0 10px; border: 1px solid var(--bw-border-card); border-radius: 6px; color: var(--bw-text-title); background: var(--bw-surface-panel); font-size: 0.75rem; font-weight: 700; white-space: nowrap; }
 
 .registrationTableWrap { overflow-x: auto; padding: 0 16px; }
-.registrationTable { width: 100%; min-width: 760px; border-collapse: separate; border-spacing: 0; color: var(--bw-text-body); font-size: 0.64rem; }
-.registrationTable th { padding: 9px 8px; color: var(--bw-text-muted); background: rgba(78, 83, 112, 0.16); font-size: 0.59rem; font-weight: 700; text-align: left; white-space: nowrap; }
+.registrationTable { width: 100%; min-width: 760px; border-collapse: separate; border-spacing: 0; color: var(--bw-text-body); font-size: 0.8125rem; }
+.registrationTable th { padding: 9px 8px; color: var(--bw-text-muted); background: rgba(78, 83, 112, 0.16); font-size: 0.75rem; font-weight: 700; text-align: left; white-space: nowrap; }
 .registrationTable th:first-child { border-radius: 6px 0 0 6px; }
 .registrationTable th:last-child { border-radius: 0 6px 6px 0; }
 .registrationTable td { padding: 10px 8px; border-bottom: 1px solid var(--bw-border-subtle); vertical-align: middle; white-space: nowrap; }
@@ -640,7 +640,7 @@
 .registrationTable tbody tr:hover td { background: rgba(118, 80, 233, 0.05); }
 .registrationTable td > strong,
 .registrationTable td > span { display: block; }
-.registrationTable td > span { margin-top: 3px; color: var(--bw-text-muted); font-size: 0.58rem; }
+.registrationTable td > span { margin-top: 4px; color: var(--bw-text-muted); font-size: 0.75rem; }
 .confirmationCell { color: var(--bw-text-title); font-weight: 800; }
 .paymentAmountCell { color: var(--bw-text-title) !important; font-weight: 700; font-variant-numeric: tabular-nums; }
 .registrationStatusCell,
@@ -655,7 +655,7 @@
   border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
   border-radius: 999px;
   background: color-mix(in srgb, currentColor 10%, transparent);
-  font-size: 0.64rem;
+  font-size: 0.75rem;
   font-weight: 700;
   line-height: 1;
 }
@@ -713,6 +713,10 @@
 .entryActionGroup .modalDeleteAction { color: #ff7777; border-color: color-mix(in srgb, #f05252 28%, var(--bw-border-card)); }
 .entryActionGroup .modalDeleteAction:hover { border-color: #f05252; color: #ff7777; background: rgba(240, 82, 82, 0.1); }
 .modalPaidAction { width: 100%; min-height: 38px; border-color: color-mix(in srgb, #20d884 32%, var(--bw-border-card)); color: #20d884; background: color-mix(in srgb, #20d884 7%, var(--bw-surface-panel)); }
+.paymentStatusToggle { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 4px; border: 1px solid transparent; border-radius: 8px; background: transparent; color: var(--bw-text-muted); font: inherit; cursor: pointer; }
+.paymentStatusToggle:hover:not(:disabled) { border-color: var(--bw-border-accent); background: var(--bw-surface-panel); }
+.paymentStatusToggle:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.paymentStatusToggle:disabled { opacity: 0.6; cursor: wait; }
 .registrationActionMenu { position: absolute; z-index: 5; top: 27px; right: 5px; width: 142px; display: grid; gap: 2px; padding: 5px; border: 1px solid var(--bw-border-card); border-radius: 7px; background: var(--bw-surface-card-strong); box-shadow: var(--bw-shadow-card); }
 .registrationEntryActions { display: grid; gap: 2px; padding: 4px 0; border-bottom: 1px solid var(--bw-border-subtle); }
 .registrationEntryActions:last-of-type { border-bottom: 0; }
@@ -754,9 +758,10 @@
 
 /* Registration workspace aligned with the tournament setup experience */
 .registrationPage {
-  max-width: 1680px;
-  padding: 20px clamp(16px, 2.2vw, 32px) 32px;
-  gap: 14px;
+  max-width: var(--organizer-content-width);
+  padding: 20px var(--organizer-page-padding) 40px;
+  gap: 20px;
+  min-width: 0;
 }
 
 .registrationHeader {
@@ -777,27 +782,28 @@
   text-transform: uppercase;
 }
 
-.registrationHeader h1 { font-size: 1.3rem; }
-.registrationHeader p { max-width: 760px; font-size: 0.68rem; }
+.registrationHeader h1 { font-size: 1.5rem; line-height: 1.3; }
+.registrationHeader p { max-width: 760px; font-size: 0.8125rem; line-height: 1.5; }
 .registrationBackButton { background: var(--bw-surface-panel); }
 
 .registrationMetricGrid {
   padding: 0;
-  gap: 8px;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   border: 0;
   background: transparent;
 }
 
 .registrationMetricCard {
-  min-height: 68px;
-  padding: 10px 12px;
-  border-radius: 9px;
+  min-height: 88px;
+  padding: 16px;
+  border-radius: 12px;
   background: color-mix(in srgb, var(--bw-surface-card) 96%, transparent);
 }
 
 .metricIcon { width: 28px; height: 28px; border-radius: 7px; }
 .metricIcon svg { width: 14px; height: 14px; }
-.registrationMetricCard strong { font-size: 0.98rem; }
+.registrationMetricCard strong { font-size: 1.25rem; line-height: 1.2; font-variant-numeric: tabular-nums; }
 
 .registrationDashboardGrid {
   grid-template-columns: minmax(0, 1fr);
@@ -813,17 +819,19 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 15px 16px 8px;
+  padding: 20px 20px 12px;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 .registrationPanelHeading p {
   margin: 4px 0 0;
   color: var(--bw-text-muted);
-  font-size: 0.6rem;
+  font-size: 0.75rem;
 }
 
 .manualRegistrationButton {
-  min-height: 34px;
+  min-height: 40px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -833,7 +841,7 @@
   border-radius: 7px;
   color: #fff;
   background: #ff7900;
-  font-size: 0.64rem;
+  font-size: 0.75rem;
   font-weight: 800;
   text-decoration: none;
   white-space: nowrap;
@@ -842,17 +850,18 @@
 .manualRegistrationButton:hover { background: #e86e00; }
 
 .registrationToolbar {
-  padding: 8px 16px 14px;
+  padding: 8px 20px 16px;
+  flex-wrap: wrap;
   border-bottom: 1px solid var(--bw-border-subtle);
 }
 
 .registrationSearch,
 .registrationFilter select,
-.registrationExportButton { height: 36px; border-radius: 7px; }
+.registrationExportButton { height: 40px; border-radius: 8px; }
 .registrationFilter select { max-width: 130px; }
 .registrationTableWrap { padding: 0; }
-.registrationTable th { padding: 10px 14px; border-radius: 0 !important; background: rgba(78, 83, 112, 0.12); }
-.registrationTable td { padding: 12px 14px; }
+.registrationTable th { padding: 12px 16px; border-radius: 0 !important; background: rgba(78, 83, 112, 0.12); }
+.registrationTable td { padding: 16px; }
 .registrationTable tbody tr:hover td { background: rgba(255, 121, 0, 0.035); }
 .emptyRegistrations { margin: 14px 16px; }
 .registrationPagination { min-height: 52px; border-top: 1px solid var(--bw-border-subtle); }
@@ -913,23 +922,23 @@
 }
 
 /* Overview cards aligned with the organizer setup workspace */
-.shell { max-width: 1680px; padding: 14px var(--bw-page-gutter) 24px; gap: 14px; }
+.shell { max-width: var(--organizer-content-width); padding: 20px var(--organizer-page-padding) 40px; gap: 20px; min-width: 0; }
 .headerCard, .summaryCard { width: 100%; border-color: var(--bw-border-subtle); border-radius: 18px; background: var(--bw-surface-card); }
-.headerCard { grid-template-columns: 96px minmax(0, 1fr) auto; min-height: 124px; gap: 16px; padding: 14px; }
+.headerCard { grid-template-columns: 96px minmax(0, 1fr) auto; min-height: 128px; gap: 20px; padding: 20px; }
 .heroLogo { width: 96px; height: 96px; border: 1px solid var(--bw-border-subtle); border-radius: 12px; background: var(--bw-surface-panel-strong); }
 .heroLogo img { object-fit: contain; }
-.heroCopy h1 { margin-top: 7px; font-size: 1.25rem; }
+.heroCopy h1 { margin-top: 8px; font-size: 1.5rem; line-height: 1.3; overflow-wrap: anywhere; }
 .actions { min-width: 0; flex-direction: row; align-items: center; }
-.summaryCard { padding: 14px; }
-.summaryHeading { margin-bottom: 11px; }
-.summaryHeading h2 { font-size: .88rem; }
-.summaryHeading p { font-size: .68rem; }
+.summaryCard { padding: 20px; min-width: 0; }
+.summaryHeading { margin-bottom: 16px; }
+.summaryHeading h2 { font-size: 1rem; line-height: 1.4; }
+.summaryHeading p { font-size: .8125rem; line-height: 1.5; }
 .summaryList { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
 .summaryList li { min-height: 72px; padding: 10px; align-items: center; border-color: var(--bw-border-subtle); border-radius: 10px; background: color-mix(in srgb, var(--bw-surface-panel) 66%, transparent); }
 .summaryIcon, .tonepurple, .toneblue, .toneorange, .tonegreen { width: 29px; height: 29px; color: var(--bw-text-muted); background: var(--bw-surface-panel-strong); }
 .summaryIcon svg { width: 15px; height: 15px; }
-.summaryItem strong { font-size: .8rem; }
-.summaryItem small { font-size: .58rem; }
+.summaryItem strong { font-size: .875rem; line-height: 1.4; overflow-wrap: anywhere; }
+.summaryItem small { font-size: .75rem; line-height: 1.5; }
 .lastUpdated { padding: 9px 10px; border-color: var(--bw-border-subtle); border-radius: 9px; background: transparent; }
 .registrationSummaryGrid { gap: 6px; }
 .registrationSummaryGrid li { padding: 9px 10px; border-color: var(--bw-border-subtle); border-radius: 9px; background: color-mix(in srgb, var(--bw-surface-panel) 66%, transparent); }

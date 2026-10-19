@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import type { TournamentContract, TournamentSetupStateSummaryContract } from '@bracketworks/types';
 
 import ConfigDrawer from './ConfigDrawer';
+import { useConfirmation } from './useConfirmation';
 import { registrationDateErrors } from '@/lib/registrationDates';
 import { formatTournamentDateRange } from '@/lib/tournamentDates';
 import PublishValidationSummary from './PublishValidationSummary';
@@ -14,6 +15,7 @@ import { getTournament, listMyOrganizerSetupStates, listMyTournaments, resolveTc
 import { organizerRoutes } from './organizerRoutes';
 import TournamentRegistrationForm from '../public/TournamentRegistrationForm';
 import TournamentDetailsSection from './setup/TournamentDetailsSection';
+import RulesDocumentsSection from './setup/RulesDocumentsSection';
 import { initialRegistrationFields, setupSections } from './setupConfig';
 import SetupStatusBadge from './SetupStatusBadge';
 import {
@@ -234,6 +236,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
   const templateInputRef = useRef<HTMLInputElement | null>(null);
   const builderActionsMenuRef = useRef<HTMLDetailsElement | null>(null);
   const [activeSection, setActiveSection] = useState<SetupSectionKey>('tournament-details');
+  const { confirm, confirmationDialog } = useConfirmation();
   const [drawerState, setDrawerState] = useState<DrawerState>(null);
   const [details, setDetails] = useState<TournamentDetails>(defaultTournamentDetails);
 
@@ -761,7 +764,12 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
       return;
     }
 
-    const shouldDelete = window.confirm('Delete this tournament? This action cannot be undone.');
+    const shouldDelete = await confirm({
+      title: 'Delete tournament?',
+      message: 'Delete this tournament? This action cannot be undone.',
+      confirmLabel: 'Delete tournament',
+      tone: 'danger',
+    });
     if (!shouldDelete) {
       return;
     }
@@ -2043,8 +2051,11 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
     });
   };
 
-  const handleDeleteEvent = (eventId: string) => {
-    if (typeof window !== 'undefined' && !window.confirm('Delete this event?')) {
+  const handleDeleteEvent = async (eventId: string) => {
+    if (!await confirm({
+      title: 'Delete event?', message: 'Delete this event? Its division, squad, fee, and question references will also be removed.',
+      confirmLabel: 'Delete event', tone: 'danger',
+    })) {
       return;
     }
 
@@ -2119,8 +2130,11 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
     });
   };
 
-  const handleDeleteDivision = (divisionId: string) => {
-    if (typeof window !== 'undefined' && !window.confirm('Delete this division?')) {
+  const handleDeleteDivision = async (divisionId: string) => {
+    if (!await confirm({
+      title: 'Delete division?', message: 'Delete this division? Its event, fee, and question references will also be removed.',
+      confirmLabel: 'Delete division', tone: 'danger',
+    })) {
       return;
     }
 
@@ -2174,8 +2188,11 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
     void persistOrganizerChanges({ squads: nextSquads });
   };
 
-  const handleDeleteSquad = (squadId: string) => {
-    if (typeof window !== 'undefined' && !window.confirm('Delete this squad? Existing event, fee, and question references will also be removed.')) return;
+  const handleDeleteSquad = async (squadId: string) => {
+    if (!await confirm({
+      title: 'Delete squad?', message: 'Delete this squad? Existing event, fee, and question references will also be removed.',
+      confirmLabel: 'Delete squad', tone: 'danger',
+    })) return;
     const nextSquads = squads.filter((entry) => entry.id !== squadId);
     const nextEvents = events.map((entry) => ({ ...entry, connectedSquadIds: entry.connectedSquadIds.filter((id) => id !== squadId) }));
     const nextFees = fees.map((entry) => ({ ...entry, squadIds: entry.squadIds.filter((id) => id !== squadId) }));
@@ -2211,13 +2228,17 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
     void persistOrganizerChanges({ fields: nextFields });
   };
 
-  const handleDeleteField = (fieldId: string) => {
+  const handleDeleteField = async (fieldId: string) => {
     const targetField = fields.find((entry) => entry.id === fieldId);
     if (!targetField) {
       return;
     }
 
-    if (typeof window !== 'undefined' && !window.confirm(`Delete ${targetField.customLabel || targetField.label}?`)) {
+    if (!await confirm({
+      title: 'Remove registration field?',
+      message: `Remove "${targetField.customLabel || targetField.label}" from the registration form? Built-in fields can be enabled again later.`,
+      confirmLabel: 'Remove field', tone: 'danger',
+    })) {
       return;
     }
 
@@ -3342,44 +3363,13 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                 </div>
               </section>
 
-              <section className={styles.sectionCard}>
-                <div className={styles.sectionHeader}>
-                  <div>
-                    <h2>Rules & Documents</h2>
-                    <p>Optionally share tournament rules with bowlers during registration.</p>
-                  </div>
-                  <div className={styles.feesHeaderActions}>
-                    <span className={`${styles.chip} ${hasRulesDocument ? styles.chipEnabled : styles.chipMuted}`}>
-                      {hasRulesDocument ? 'Uploaded' : 'Optional'}
-                    </span>
-                  </div>
-                </div>
-                <div className={styles.configSurface}>
-                  <article className={styles.documentFileCard}>
-                    <div className={styles.documentFileMain}>
-                      <strong>{hasRulesDocument ? 'Tournament Rules.pdf' : 'No file uploaded yet'}</strong>
-                      <p>
-                        {hasRulesDocument
-                          ? 'Latest version is attached and shown to bowlers during signup.'
-                          : 'Add a PDF if bowlers should review tournament rules before registering.'}
-                      </p>
-                    </div>
-                    <div className={styles.documentActions}>
-                      <button
-                        type="button"
-                        className={styles.secondaryAction}
-                        disabled={!hasRulesDocument}
-                      >
-                        Preview
-                      </button>
-                      <button type="button" className={styles.inlineAction} onClick={() => setHasRulesDocument((prev) => !prev)}>
-                        {hasRulesDocument ? 'Replace Document' : 'Upload Document'}
-                      </button>
-                    </div>
-                  </article>
-
-                </div>
-              </section>
+              <RulesDocumentsSection
+                key={persistedTournamentId ?? 'new'}
+                tournamentId={persistedTournamentId}
+                rulesText={details.rulesText}
+                onRulesTextChange={(rulesText) => setDetails((current) => ({ ...current, rulesText }))}
+                onHasRulesDocumentChange={setHasRulesDocument}
+              />
             </div>
           )}
 
@@ -3391,7 +3381,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                   <button type="button" className={`${styles.iconButton} ${styles.modalCloseButton}`} onClick={() => setShowRegistrationPreview(false)} aria-label="Close preview"><X size={16} /></button>
                 </div>
                 <div className={styles.editorModalBody}>
-                  <TournamentRegistrationForm tournamentName={details.name || 'Tournament Name'} squads={enabledSquads} events={eventsForSelectedPreviewSquad} divisions={enabledDivisions} fields={askedFields} questions={enabledQuestions} requiredBowlerCount={requiredPreviewBowlerCount} formState={signupPreviewForm} setFormState={setSignupPreviewForm} submitMessage={signupPreviewSubmitMessage} isSubmitting={isSubmittingSignupPreview} onSubmit={() => { void handleSignupPreviewSubmit(); }} footerHint="Preview only. No registration will be submitted." />
+                  <TournamentRegistrationForm rulesText={details.rulesText} tournamentName={details.name || 'Tournament Name'} squads={enabledSquads} events={eventsForSelectedPreviewSquad} divisions={enabledDivisions} fields={askedFields} questions={enabledQuestions} requiredBowlerCount={requiredPreviewBowlerCount} formState={signupPreviewForm} setFormState={setSignupPreviewForm} submitMessage={signupPreviewSubmitMessage} isSubmitting={isSubmittingSignupPreview} onSubmit={() => { void handleSignupPreviewSubmit(); }} footerHint="Preview only. No registration will be submitted." />
                 </div>
               </div>
             </div>
@@ -3536,6 +3526,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
         </div>
       )}
 
+      {confirmationDialog}
       <ConfigDrawer
         open={Boolean(drawerState)}
         title={drawerState

@@ -330,7 +330,8 @@ export default function OrganizerTournamentTeamPage() {
         open={Boolean(pendingRemoval)}
         title="Remove team member?"
         message={`${pendingRemoval?.display_name ?? 'This team member'} will lose access to this tournament.`}
-        confirmLabel="Remove"
+        confirmLabel={isMutating ? 'Removing...' : 'Remove member'}
+        busy={isMutating}
         tone="danger"
         onConfirm={handleRemove}
         onCancel={() => setPendingRemoval(null)}

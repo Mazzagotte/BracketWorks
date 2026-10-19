@@ -213,49 +213,60 @@ export type SquadStatus = 'Open' | 'Nearly Full' | 'Full' | 'Waitlist';
 
 export type SquadSummary = {
   squad: SquadConfig;
-  registered: number;
-  waitlisted: number;
-  available: number | null;
+  registrationCount: number;
+  bowlerCount: number;
+  waitlistedRegistrationCount: number;
+  waitlistedBowlerCount: number;
+  availableBowlerSpots: number | null;
   status: SquadStatus;
 };
 
-// A whole registration (not each individual entry) is treated as occupying or waitlisting the squad it is assigned to.
 export function buildSquadSummaries(squads: SquadConfig[], registrations: OrganizerRegistrationRecord[]): SquadSummary[] {
   return squads.map((squad) => {
-    let registered = 0;
-    let waitlisted = 0;
+    let registrationCount = 0;
+    let bowlerCount = 0;
+    let waitlistedRegistrationCount = 0;
+    let waitlistedBowlerCount = 0;
 
     for (const registration of registrations) {
-      const status = registration.status ?? 'pending';
-      if (status === 'cancelled' || status === 'refunded') {
-        continue;
+      let hasActiveEntry = false;
+      let hasWaitlistedEntry = false;
+
+      // Match public availability: count bowler spots by entry status, not submission status.
+      for (const entry of registration.entries ?? []) {
+        if (entry.squad_config_id !== squad.id) {
+          continue;
+        }
+        if (entry.status === 'pending' || entry.status === 'confirmed') {
+          hasActiveEntry = true;
+          bowlerCount += entry.bowler_count;
+        } else if (entry.status === 'waitlisted') {
+          hasWaitlistedEntry = true;
+          waitlistedBowlerCount += entry.bowler_count;
+        }
       }
 
-      const isAssignedToSquad = (registration.entries ?? []).some((entry) => entry.squad_config_id === squad.id);
-      if (!isAssignedToSquad) {
-        continue;
+      if (hasActiveEntry) {
+        registrationCount += 1;
       }
-
-      if (status === 'waitlisted') {
-        waitlisted += 1;
-      } else {
-        registered += 1;
+      if (hasWaitlistedEntry) {
+        waitlistedRegistrationCount += 1;
       }
     }
 
     const capacity = squad.capacity > 0 ? squad.capacity : 0;
-    const available = capacity > 0 ? Math.max(capacity - registered, 0) : null;
+    const availableBowlerSpots = capacity > 0 ? Math.max(capacity - bowlerCount, 0) : null;
 
     let status: SquadStatus = 'Open';
-    if (capacity > 0 && registered >= capacity) {
-      status = waitlisted > 0 ? 'Waitlist' : 'Full';
-    } else if (capacity > 0 && registered / capacity >= 0.85) {
+    if (capacity > 0 && bowlerCount >= capacity) {
+      status = waitlistedRegistrationCount > 0 ? 'Waitlist' : 'Full';
+    } else if (capacity > 0 && bowlerCount / capacity >= 0.85) {
       status = 'Nearly Full';
-    } else if (waitlisted > 0) {
+    } else if (waitlistedRegistrationCount > 0) {
       status = 'Waitlist';
     }
 
-    return { squad, registered, waitlisted, available, status };
+    return { squad, registrationCount, bowlerCount, waitlistedRegistrationCount, waitlistedBowlerCount, availableBowlerSpots, status };
   });
 }
 
@@ -332,10 +343,10 @@ export function buildTournamentAttentionItems(params: {
       items.push({ id: `squad-near-${summary.squad.id}`, message: `${summary.squad.name} is nearly full.`, href: squadsHref });
     }
 
-    if (summary.waitlisted > 0) {
+    if (summary.waitlistedRegistrationCount > 0) {
       items.push({
         id: `squad-wait-${summary.squad.id}`,
-        message: `${summary.squad.name} has ${summary.waitlisted} on the waitlist.`,
+        message: `${summary.squad.name} has ${summary.waitlistedRegistrationCount} waitlisted registration${summary.waitlistedRegistrationCount === 1 ? '' : 's'} (${summary.waitlistedBowlerCount} bowler${summary.waitlistedBowlerCount === 1 ? '' : 's'}).`,
         href: squadsHref,
       });
     }

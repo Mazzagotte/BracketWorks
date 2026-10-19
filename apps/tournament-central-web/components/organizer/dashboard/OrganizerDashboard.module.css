@@ -1,10 +1,10 @@
 .shell {
   width: 100%;
-  max-width: 1280px;
+  max-width: var(--organizer-content-width);
   margin: 0 auto;
-  padding: 14px 20px 24px;
+  padding: 20px var(--organizer-page-padding) 40px;
   display: grid;
-  gap: 20px;
+  gap: 24px;
 }
 
 .heroBar {
@@ -13,19 +13,19 @@
   justify-content: space-between;
   gap: 18px;
   flex-wrap: wrap;
-  padding: 4px 0 2px;
+  padding: 8px 0;
 }
 
 .heroTextWrap {
   display: grid;
-  gap: 4px;
+  gap: 8px;
 }
 
 .heroTextWrap h1 {
   margin: 0;
   color: var(--bw-text-title);
   font-size: 1.55rem;
-  line-height: 1.1;
+  line-height: 1.25;
   letter-spacing: -0.03em;
   font-weight: 800;
 }
@@ -37,7 +37,7 @@
 .subtitle {
   margin: 0;
   color: rgba(214, 219, 232, 0.7);
-  font-size: 0.76rem;
+  font-size: 0.8125rem;
   font-weight: 500;
 }
 
@@ -84,11 +84,11 @@
 }
 
 .primaryButtonCompact {
-  min-height: 34px;
+  min-height: 40px;
   padding: 0 16px;
   background: #ff7900;
   color: var(--bw-page);
-  font-size: 0.7rem;
+  font-size: 0.8125rem;
 }
 
 .secondaryButtonWide {
@@ -110,7 +110,7 @@
 }
 
 .dangerButtonCompact {
-  min-height: 38px;
+  min-height: 40px;
   padding: 0 14px;
   display: inline-flex;
   align-items: center;
@@ -120,7 +120,7 @@
   border-radius: 10px;
   background: color-mix(in srgb, var(--color-error) 10%, transparent);
   color: var(--color-error);
-  font-size: 0.7rem;
+  font-size: 0.8125rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -239,9 +239,9 @@
   flex-direction: column;
   align-items: flex-start;
   justify-content: flex-start;
-  gap: 7px;
-  min-height: 96px;
-  padding: 10px 18px 11px;
+  gap: 10px;
+  min-height: 112px;
+  padding: 18px;
   border: 1px solid var(--bw-border-card);
   border-radius: 16px;
   background: var(--bw-surface-card);
@@ -301,36 +301,38 @@
   color: rgba(196, 204, 216, 0.88);
   text-transform: uppercase;
   letter-spacing: 0.09em;
-  font-size: 0.64rem;
+  font-size: 0.6875rem;
   font-weight: 700;
 }
 
 .metricValue {
   color: var(--bw-text-title);
   font-size: 1.8rem;
-  line-height: 0.9;
-  letter-spacing: -0.08em;
+  line-height: 1.1;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
   margin: 0;
   font-weight: 700;
 }
 
 .metricNote {
-  color: rgba(120, 224, 181, 0.95);
-  font-size: 0.68rem;
+  color: var(--bw-text-muted);
+  font-size: 0.75rem;
   font-weight: 500;
   margin-top: 1px;
 }
 
 .mainContentGrid {
   display: grid;
-  grid-template-columns: minmax(0, 2.25fr) minmax(260px, 0.75fr);
-  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 24px;
   align-items: start;
 }
 
 .mainSection {
   display: grid;
-  gap: 8px;
+  gap: 12px;
+  min-width: 0;
 }
 
 .sectionHeader {
@@ -355,7 +357,7 @@
   color: #ff9d4d;
   background: transparent;
   border: 0;
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 700;
   cursor: pointer;
   min-height: 20px;
@@ -370,11 +372,11 @@
 
 .featureCard {
   display: grid;
-  grid-template-columns: minmax(210px, 0.72fr) minmax(0, 1.8fr);
+  grid-template-columns: minmax(140px, 0.45fr) minmax(0, 1.8fr);
   min-height: 0;
   overflow: hidden;
   border: 1px solid var(--bw-border-card);
-  border-radius: 20px;
+  border-radius: 16px;
   background: var(--bw-surface-panel);
   box-shadow: none;
 }
@@ -434,8 +436,9 @@
 .cardBody {
   display: grid;
   align-content: start;
-  gap: 8px;
-  padding: 12px 18px 12px;
+  gap: 12px;
+  padding: 20px;
+  min-width: 0;
 }
 
 .cardHeaderRow {
@@ -450,7 +453,7 @@
   min-height: 22px;
   padding: 0 10px;
   border-radius: 999px;
-  font-size: 0.56rem;
+  font-size: 0.6875rem;
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -477,9 +480,10 @@
 .cardBody h3 {
   margin: 0;
   color: var(--bw-text-title);
-  font-size: 1.45rem;
+  font-size: 1.25rem;
   letter-spacing: -0.03em;
-  line-height: 1.1;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
 }
 
 .infoRow {
@@ -487,7 +491,7 @@
   align-items: center;
   gap: 8px;
   color: rgba(211, 220, 238, 0.9);
-  font-size: 0.72rem;
+  font-size: 0.8125rem;
 }
 
 .infoGlyph {
@@ -511,7 +515,8 @@
   gap: 8px;
   min-height: 54px;
   padding: 8px 10px;
-  border-radius: 14px;
+  border-radius: 10px;
+  flex-wrap: wrap;
   border: 1px solid var(--bw-border-subtle);
   background: var(--bw-surface-card);
 }
@@ -537,7 +542,7 @@
 
 .statItem small {
   color: rgba(196, 205, 221, 0.82);
-  font-size: 0.64rem;
+  font-size: 0.75rem;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -588,7 +593,7 @@
 
 .upcomingSection {
   display: grid;
-  gap: 8px;
+  gap: 12px;
 }
 
 .upcomingCard,
@@ -600,9 +605,214 @@
   box-shadow: none;
 }
 
-.upcomingCard {
-  padding: 10px;
+.dashboardEyebrow {
+  color: var(--color-primary);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.operationsPanel {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--bw-border-card);
+  border-radius: 16px;
+  background: var(--bw-surface-card);
+}
+
+.operationsHeading {
+  padding: 20px 20px 16px;
+}
+
+.operationsHeading h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  color: var(--bw-text-title);
+  font-size: 1rem;
+}
+
+.operationsHeading h2 span,
+.attentionCount {
+  display: inline-grid;
+  place-items: center;
+  min-width: 24px;
+  min-height: 24px;
+  padding: 0 6px;
+  border: 1px solid var(--bw-border-subtle);
+  border-radius: 7px;
+  background: var(--bw-surface-panel);
+  color: var(--bw-text-muted);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.operationsHeading p {
+  margin: 6px 0 0;
+  color: var(--bw-text-muted);
+  font-size: 0.8125rem;
+}
+
+.operationsToolbar {
+  display: flex;
+  gap: 12px;
+  padding: 0 20px;
+}
+
+.tournamentSearch {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  gap: 10px;
+  padding: 0 12px;
+  border: 1px solid var(--bw-border-card);
+  border-radius: 9px;
+  background: var(--bw-surface-panel);
+  color: var(--bw-text-muted);
+}
+
+.tournamentSearch svg { flex-shrink: 0; }
+.tournamentSearch:focus-within { border-color: var(--color-primary); }
+.tournamentSearch input {
+  min-width: 0;
+  width: 100%;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--bw-text-title);
+  font: inherit;
+  font-size: 0.8125rem;
+}
+
+.tournamentFilter select {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--bw-border-card);
+  border-radius: 9px;
+  background: var(--bw-surface-panel);
+  color: var(--bw-text-body);
+  font: inherit;
+  font-size: 0.8125rem;
+}
+
+.resultsCount {
+  margin: 0;
+  padding: 12px 20px;
+  color: var(--bw-text-muted);
+  font-size: 0.75rem;
+}
+
+.operationList { display: grid; }
+.operationRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px 24px;
+  padding: 20px;
+  border-top: 1px solid var(--bw-border-subtle);
+  transition: background-color 150ms ease;
+}
+.operationRow:hover { background: color-mix(in srgb, var(--bw-surface-panel) 50%, transparent); }
+.tournamentIdentity { display: flex; align-items: flex-start; gap: 12px; min-width: 0; }
+.compactLogo {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--bw-border-subtle);
   border-radius: 10px;
+  color: var(--color-primary);
+  background: var(--bw-surface-panel);
+}
+.compactLogo img { width: 100%; height: 100%; object-fit: contain; }
+.tournamentCopy { min-width: 0; }
+.tournamentTitleLine { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.tournamentTitleLine h3 { margin: 0; font-size: 0.9375rem; line-height: 1.4; overflow-wrap: anywhere; }
+.tournamentTitleLine h3 a { color: var(--bw-text-title); text-decoration: none; }
+.tournamentTitleLine h3 a:hover { color: var(--color-primary); }
+.tournamentCopy p { margin: 5px 0 0; font-size: 0.75rem; color: var(--bw-text-muted); overflow-wrap: anywhere; }
+.rowMetrics {
+  grid-column: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  margin: 0 0 0 56px;
+}
+.rowMetrics > div { display: flex; flex-direction: column; gap: 3px; }
+.rowMetrics dt { color: var(--bw-text-muted); font-size: 0.6875rem; }
+.rowMetrics dd { margin: 0; color: var(--bw-text-title); font-size: 0.9375rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.rowActions { grid-column: 2; grid-row: 1 / span 2; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 8px; }
+.manageButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--bw-border-card);
+  border-radius: 8px;
+  background: var(--bw-surface-panel);
+  color: var(--bw-text-title);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+.manageButton:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.rowUtilityLink { font-size: 0.75rem; color: var(--bw-text-muted); text-decoration: none; }
+.rowUtilityLink:hover { color: var(--color-primary); }
+.rowDeleteButton {
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-error);
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+.rowDeleteButton:hover:not(:disabled) { background: color-mix(in srgb, var(--color-error) 10%, transparent); }
+.rowDeleteButton:disabled { color: var(--bw-text-muted); opacity: 0.45; cursor: not-allowed; }
+.allClear { padding-top: 16px; }
+.allClear strong { color: var(--color-success); font-size: 0.875rem; }
+.allClear p { color: var(--bw-text-muted); font-size: 0.8125rem; margin: 6px 0 0; }
+.attentionCard h2 { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.attentionCard .attentionList:not(:empty) { margin-top: 16px; }
+.upcomingInfo a { color: var(--bw-text-title); font-size: 0.8125rem; font-weight: 700; line-height: 1.4; text-decoration: none; }
+.upcomingInfo a:hover { color: var(--color-primary); }
+.noMatches { padding: 32px 20px; border-top: 1px solid var(--bw-border-subtle); text-align: center; }
+.noMatches h3 { color: var(--bw-text-title); font-size: 1rem; margin: 0; }
+.noMatches p { color: var(--bw-text-muted); font-size: 0.8125rem; }
+.srOnly { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+@media (min-width: 1360px) {
+  .operationRow { grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; }
+  .rowMetrics { grid-column: 2; grid-row: 1; margin: 0; }
+  .rowActions { grid-column: 3; grid-row: 1; }
+}
+
+@media (max-width: 600px) {
+  .operationsToolbar { flex-direction: column; padding: 0 16px; }
+  .tournamentFilter select { width: 100%; }
+  .operationRow { grid-template-columns: minmax(0, 1fr); padding: 16px; }
+  .rowMetrics { grid-column: 1; margin-left: 0; justify-content: space-between; gap: 12px; }
+  .rowActions { grid-column: 1; grid-row: auto; flex-direction: row; flex-wrap: wrap; justify-content: flex-start; align-items: center; gap: 12px; }
+  .rowDeleteButton { margin-left: auto; min-height: 44px; }
+  .manageButton { min-height: 44px; }
+  .heroTextWrap h1 { font-size: 1.4rem; }
+}
+
+.upcomingCard {
+  padding: 16px;
+  border-radius: 16px;
 }
 
 .upcomingCard .secondaryButtonWide {
@@ -688,15 +898,15 @@
 
 .upcomingInfo strong {
   color: var(--bw-text-title);
-  font-size: 0.72rem;
-  line-height: 1.25;
+  font-size: 0.8125rem;
+  line-height: 1.4;
 }
 
 .upcomingInfo span,
 .emptyUpcoming,
 .attentionList li span {
   color: rgba(207, 214, 227, 0.8);
-  font-size: 0.62rem;
+  font-size: 0.75rem;
 }
 
 .attentionList li {
@@ -712,7 +922,7 @@
 
 .attentionList li a {
   color: #ffaf67;
-  font-size: 0.64rem;
+  font-size: 0.75rem;
   font-weight: 700;
 }
 
@@ -756,8 +966,8 @@
 
 @media (max-width: 767px) {
   .shell {
-    padding-left: 12px;
-    padding-right: 12px;
+    padding-left: var(--organizer-page-padding);
+    padding-right: var(--organizer-page-padding);
   }
 
   .heroBar {
@@ -773,7 +983,7 @@
   }
 
   .posterPanel {
-    min-height: 180px;
+    min-height: 120px;
   }
 
   .cardFooterRow {
@@ -787,15 +997,15 @@
 .staffInvitationPanel {
   margin: 0 0 1.25rem;
   padding: 1rem 1.25rem;
-  border: 1px solid #d8e2f0;
+  border: 1px solid var(--bw-border-card);
   border-radius: 14px;
-  background: #fff;
+  background: var(--bw-surface-card);
   box-shadow: 0 6px 20px rgb(15 23 42 / 5%);
 }
 
 .staffInvitationPanel h2 {
   margin: 0 0 0.75rem;
-  color: #17243b;
+  color: var(--bw-text-title);
   font-size: 1rem;
 }
 
@@ -811,7 +1021,7 @@
   justify-content: space-between;
   gap: 1rem;
   padding: 0.75rem 0;
-  border-top: 1px solid #edf1f6;
+  border-top: 1px solid var(--bw-border-subtle);
 }
 
 .staffInvitationRow > div:first-child {
@@ -820,12 +1030,12 @@
 }
 
 .staffInvitationRow strong {
-  color: #26364f;
+  color: var(--bw-text-title);
   font-size: 0.9rem;
 }
 
 .staffInvitationRow span {
-  color: #68758a;
+  color: var(--bw-text-muted);
   font-size: 0.8rem;
   text-transform: capitalize;
 }

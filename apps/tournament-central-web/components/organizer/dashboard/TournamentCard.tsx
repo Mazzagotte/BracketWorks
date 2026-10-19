@@ -1,29 +1,13 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { CalendarDays, MapPin, Users, UsersRound, Coins, Eye, Trash2, Trophy } from 'lucide-react';
+import { ArrowUpRight, Trash2, Trophy } from 'lucide-react';
 
 import type { OrganizerDashboardTournament } from './useOrganizerDashboard';
 import TournamentStatusBadge from './TournamentStatusBadge';
 import styles from './OrganizerDashboard.module.css';
 import { organizerRoutes } from '../organizerRoutes';
 import { formatTournamentDateRange } from '@/lib/tournamentDates';
-
-function parseLocation(location: string | null): { venue: string; cityState: string } {
-  if (!location) {
-    return { venue: 'Location not set', cityState: '' };
-  }
-
-  const parts = location.split(',').map((part) => part.trim()).filter(Boolean);
-  if (parts.length >= 3) {
-    return { venue: parts.slice(0, -2).join(', '), cityState: `${parts[parts.length - 2]}, ${parts[parts.length - 1]}` };
-  }
-
-  if (parts.length === 2) {
-    return { venue: parts[0], cityState: parts[1] };
-  }
-
-  return { venue: parts[0], cityState: '' };
-}
+import { formatMoney } from '../organizerFormatting';
 
 type TournamentCardProps = {
   tournament: OrganizerDashboardTournament;
@@ -32,85 +16,39 @@ type TournamentCardProps = {
 };
 
 export default function TournamentCard({ tournament, isDeleting, onDelete }: TournamentCardProps) {
-  const location = parseLocation(tournament.location);
-  const formattedDate = formatTournamentDateRange(tournament.startDate, tournament.endDate);
-
   return (
-    <article className={styles.featureCard}>
-      <div className={styles.posterPanel} aria-hidden="true">
-        {tournament.hasLogo ? (
-          <Image
-            className={styles.tournamentLogo}
-            src={`/api/v1/tc/tournaments/${tournament.id}/logo`}
-            alt=""
-            fill
-            sizes="210px"
-            unoptimized
-          />
-        ) : (
-          <div className={styles.posterFallback}>
-            <span className={styles.posterMark}><Trophy size={28} aria-hidden="true" /></span>
-            <span className={styles.posterFallbackLabel}>Tournament</span>
+    <article className={styles.operationRow} aria-label={tournament.name}>
+      <div className={styles.tournamentIdentity}>
+        <span className={styles.compactLogo} aria-hidden="true">
+          {tournament.hasLogo
+            ? <Image src={`/api/v1/tc/tournaments/${tournament.id}/logo`} alt="" width={44} height={44} unoptimized />
+            : <Trophy size={22} />}
+        </span>
+        <div className={styles.tournamentCopy}>
+          <div className={styles.tournamentTitleLine}>
+            <h3><Link href={organizerRoutes.overview(tournament.id)}>{tournament.name}</Link></h3>
+            <TournamentStatusBadge isPublic={tournament.isPublic} hasPublishedSetup={tournament.hasPublishedSetup} />
           </div>
-        )}
+          <p>{formatTournamentDateRange(tournament.startDate, tournament.endDate)}</p>
+          <p>{tournament.location || 'Location not set'}</p>
+        </div>
       </div>
-
-      <div className={styles.cardBody}>
-        <div className={styles.cardHeaderRow}>
-          <TournamentStatusBadge isPublic={tournament.isPublic} hasPublishedSetup={tournament.hasPublishedSetup} />
-        </div>
-
-        <h3>{tournament.name}</h3>
-
-        <div className={styles.infoRow}>
-          <CalendarDays className={styles.infoGlyph} />
-          <span>{formattedDate}</span>
-        </div>
-
-        <div className={styles.infoRow}>
-          <MapPin className={styles.infoGlyph} />
-          <span>{location.cityState || location.venue}</span>
-        </div>
-
-        <div className={styles.statList}>
-          <div className={styles.statItem}>
-            <Users className={styles.statIcon} />
-            <strong>{tournament.entryCount ?? 0}</strong>
-            <small>Registrations</small>
-          </div>
-          <div className={styles.statItem}>
-            <UsersRound className={styles.statIcon} />
-            <strong>{tournament.squadCount ?? 0}</strong>
-            <small>Squads</small>
-          </div>
-          <div className={styles.statItem}>
-            <Coins className={styles.statIcon} />
-            <strong>{`$${(tournament.amountPaidCents / 100).toLocaleString()}`}</strong>
-            <small>Collected</small>
-          </div>
-        </div>
-
-        <div className={styles.cardFooterRow}>
-          <div className={styles.cardActions}>
-            <Link href={organizerRoutes.overview(tournament.id)} className={styles.primaryButtonCompact}>View Overview</Link>
-            {tournament.publicUrl ? (
-              <Link href={tournament.publicUrl} className={styles.secondaryButtonCompact} target="_blank" rel="noreferrer">
-                <Eye className={styles.actionIcon} aria-hidden="true" />
-                <span>View Public</span>
-              </Link>
-            ) : null}
-            <button
-              type="button"
-              className={styles.dangerButtonCompact}
-              onClick={() => onDelete(tournament)}
-              disabled={isDeleting || (tournament.entryCount ?? 0) > 0}
-              title={(tournament.entryCount ?? 0) > 0 ? 'Tournaments with registrations cannot be deleted.' : 'Delete tournament'}
-            >
-              <Trash2 className={styles.actionIcon} aria-hidden="true" />
-              <span>{isDeleting ? 'Deleting...' : 'Delete'}</span>
-            </button>
-          </div>
-        </div>
+      <dl className={styles.rowMetrics}>
+        <div><dt>Registrations</dt><dd>{tournament.entryCount ?? 0}</dd></div>
+        <div><dt>Squads</dt><dd>{tournament.squadCount ?? 0}</dd></div>
+        <div><dt>Collected</dt><dd>{formatMoney(tournament.amountPaidCents)}</dd></div>
+      </dl>
+      <div className={styles.rowActions}>
+        <Link href={organizerRoutes.overview(tournament.id)} className={styles.manageButton}
+          aria-label={`Manage ${tournament.name}`}>Manage <ArrowUpRight size={15} aria-hidden="true" /></Link>
+        {tournament.publicUrl && <Link href={tournament.publicUrl} className={styles.rowUtilityLink}
+          target="_blank" rel="noreferrer" aria-label={`View public page for ${tournament.name} (opens in a new tab)`}>Public page</Link>}
+        <button type="button" className={styles.rowDeleteButton}
+          onClick={() => onDelete(tournament)} disabled={isDeleting || (tournament.entryCount ?? 0) > 0}
+          aria-label={`Delete ${tournament.name}`}
+          title={(tournament.entryCount ?? 0) > 0 ? 'Tournaments with registrations cannot be deleted.' : 'Delete tournament'}>
+          <Trash2 size={15} aria-hidden="true" />{isDeleting ? 'Deleting...' : 'Delete'}
+        </button>
       </div>
     </article>
   );

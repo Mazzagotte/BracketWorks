@@ -44,6 +44,7 @@ export const defaultTournamentDetails: TournamentDetails = {
   registrationOpenTime: '00:00',
   registrationCloseTime: '23:59',
   logoFileName: '',
+  rulesText: '',
 };
 
 export const TIMEZONES = [

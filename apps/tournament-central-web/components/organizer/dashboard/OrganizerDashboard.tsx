@@ -1,7 +1,8 @@
 'use client';
 
-import { CircleDollarSign, ClipboardList, Users, CalendarRange, X } from 'lucide-react';
+import { CircleDollarSign, ClipboardList, Users, CalendarRange } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 
 import OrganizerAttentionList from './OrganizerAttentionList';
 import OrganizerDashboardHeader from './OrganizerDashboardHeader';
@@ -15,16 +16,15 @@ import {
 } from '../organizerApi';
 import { type OrganizerDashboardTournament, useOrganizerDashboard } from './useOrganizerDashboard';
 import styles from './OrganizerDashboard.module.css';
-import { useModalFocus } from '@/lib/useModalFocus';
+import ConfirmDialog from '../ConfirmDialog';
+import { organizerRoutes } from '../organizerRoutes';
+import { formatMoney } from '../organizerFormatting';
 
 export default function OrganizerDashboard() {
   const [displayName, setDisplayName] = useState('Organizer');
   const [deletingTournamentId, setDeletingTournamentId] = useState<number | null>(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState<OrganizerDashboardTournament | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
-  const deleteModalRef = useModalFocus<HTMLElement>(Boolean(deleteConfirmation), () => {
-    if (!deletingTournamentId) setDeleteConfirmation(null);
-  });
   const [staffInvitations, setStaffInvitations] = useState<TcStaffInvitationEntry[]>([]);
   const [invitationError, setInvitationError] = useState<string | null>(null);
   const [respondingInvitationId, setRespondingInvitationId] = useState<number | null>(null);
@@ -75,8 +75,8 @@ export default function OrganizerDashboard() {
     return [
       { label: 'TOTAL REGISTRATIONS', value: totalRegistrations, note: 'Across all tournaments', icon: Users },
       { label: 'UPCOMING SQUADS', value: upcomingSquads, note: 'Next 7 days', icon: CalendarRange },
-      { label: 'AMOUNT COLLECTED', value: `$${(amountCollectedCents / 100).toLocaleString()}`, note: 'Paid registrations, across all tournaments', icon: CircleDollarSign },
-      { label: 'ACTIVE TOURNAMENTS', value: tournaments.length, note: 'Currently open', icon: ClipboardList },
+      { label: 'AMOUNT COLLECTED', value: formatMoney(amountCollectedCents), note: 'Recorded payments', icon: CircleDollarSign },
+      { label: 'TOURNAMENTS', value: tournaments.length, note: 'In your workspace', icon: ClipboardList },
     ];
   }, [tournaments]);
 
@@ -164,7 +164,7 @@ export default function OrganizerDashboard() {
         </section>
       ) : null}
 
-      {deleteError ? (
+      {deleteError && !deleteConfirmation ? (
         <section className={styles.errorCard} role="alert">
           <p>{deleteError}</p>
         </section>
@@ -197,7 +197,7 @@ export default function OrganizerDashboard() {
             <div key={idx} className={styles.skeletonCard} />
           ))}
         </section>
-      ) : tournaments.length === 0 ? (
+      ) : error ? null : tournaments.length === 0 ? (
         <OrganizerEmptyState />
       ) : (
         <div className={styles.mainContentGrid}>
@@ -208,9 +208,10 @@ export default function OrganizerDashboard() {
           />
 
           <aside className={styles.sidebarColumn}>
+            <OrganizerAttentionList items={attentionItems} />
             <section className={styles.upcomingSection} aria-label="Upcoming activity">
               <div className={styles.sidebarHeader}>
-                <h2>Upcoming</h2>
+                <h2>On the calendar</h2>
               </div>
 
               <div className={styles.upcomingCard}>
@@ -223,7 +224,7 @@ export default function OrganizerDashboard() {
                           <strong>{item.dayLabel}</strong>
                         </span>
                         <div className={styles.upcomingInfo}>
-                          <strong>{item.name}</strong>
+                          <Link href={organizerRoutes.overview(item.tournamentId)}>{item.name}</Link>
                           <span>{item.dateLabel}</span>
                         </div>
                       </li>
@@ -236,51 +237,21 @@ export default function OrganizerDashboard() {
               </div>
             </section>
 
-            <OrganizerAttentionList items={attentionItems} />
           </aside>
         </div>
       )}
 
-      {deleteConfirmation ? (
-        <div className={styles.modalOverlay} onClick={() => !deletingTournamentId && setDeleteConfirmation(null)}>
-          <section
-            ref={deleteModalRef}
-            tabIndex={-1}
-            className={styles.deleteModal}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="delete-tournament-title"
-            aria-describedby="delete-tournament-description"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <button
-              type="button"
-              className={styles.modalCloseButton}
-              aria-label="Close tournament deletion dialog"
-              onClick={() => setDeleteConfirmation(null)}
-              disabled={Boolean(deletingTournamentId)}
-            >
-              <X size={16} aria-hidden="true" />
-            </button>
-            <header className={styles.deleteModalHeader}>
-              <h2 id="delete-tournament-title">Confirm Deletion</h2>
-            </header>
-            <p id="delete-tournament-description" className={styles.deleteModalText}>
-              Are you sure you want to delete tournament <strong>{deleteConfirmation.name}</strong>?
-            </p>
-            <p className={styles.deleteModalHint}>This action cannot be undone.</p>
-            {deleteError ? <p className={styles.deleteModalError} role="alert">{deleteError}</p> : null}
-            <footer className={styles.deleteModalActions}>
-              <button type="button" className={styles.dangerButtonCompact} onClick={() => { void handleDeleteTournament(); }} disabled={Boolean(deletingTournamentId)}>
-                {deletingTournamentId ? 'Deleting...' : 'Delete'}
-              </button>
-              <button type="button" className={styles.primaryButtonCompact} onClick={() => setDeleteConfirmation(null)} disabled={Boolean(deletingTournamentId)}>
-                Cancel
-              </button>
-            </footer>
-          </section>
-        </div>
-      ) : null}
+      <ConfirmDialog
+        open={Boolean(deleteConfirmation)}
+        title="Delete tournament?"
+        message={`Are you sure you want to delete "${deleteConfirmation?.name ?? ''}"? This action cannot be undone.`}
+        confirmLabel={deletingTournamentId ? 'Deleting...' : 'Delete tournament'}
+        tone="danger"
+        busy={Boolean(deletingTournamentId)}
+        error={deleteError}
+        onConfirm={() => { void handleDeleteTournament(); }}
+        onCancel={() => setDeleteConfirmation(null)}
+      />
     </div>
   );
 }

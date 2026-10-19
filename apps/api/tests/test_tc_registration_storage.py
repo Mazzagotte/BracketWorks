@@ -133,6 +133,7 @@ def test_public_details_include_real_availability_and_public_documents_only(
     owner = make_user("tc_public_information")
     payload = _base_setup_payload()
     payload["details"]["privateMemo"] = "Do not expose"
+    payload["details"]["rulesText"] = "Check in 30 minutes early.\n\nAll bowlers must be eligible."
     tournament = _create_tc_tournament_with_setup(
         db_session, owner.id, setup_payload=payload
     )
@@ -178,6 +179,7 @@ def test_public_details_include_real_availability_and_public_documents_only(
     assert response.status_code == 200
     information = response.json()
     assert information["details"]["registrationCloseIso"] == "2026-09-30"
+    assert information["details"]["rulesText"] == payload["details"]["rulesText"]
     assert "privateMemo" not in information["details"]
     assert information["events"][0]["entryFeeCents"] == 6000
     assert information["squads"][0]["registeredCount"] == 3
@@ -198,6 +200,71 @@ def test_public_details_include_real_availability_and_public_documents_only(
     assert api_client.get(information["documents"][0]["url"]).status_code == 404
 
 
+def test_rules_document_upload_download_and_remove(
+    api_client, db_session, make_user, make_auth_headers
+):
+    owner = make_user("tc_rules_upload")
+    tournament = _create_tc_tournament_with_setup(
+        db_session, owner.id, setup_payload=_base_setup_payload()
+    )
+    headers = make_auth_headers(owner)
+    url = f"/api/v1/tc/tournaments/{tournament.id}/documents"
+    content = b"%PDF-1.4\nTournament rules\n%%EOF"
+    upload = api_client.post(
+        url, headers=headers, data={"doc_type": "rules"},
+        files={"file": ("Tournament Rules.pdf", content, "application/pdf")},
+    )
+    assert upload.status_code == 200
+    record = upload.json()
+    assert record["file_name"] == "Tournament Rules.pdf"
+    assert record["file_size"] == len(content)
+    assert record["doc_type"] == "rules"
+    assert api_client.get(url, headers=headers).json() == [record]
+    assert api_client.get(
+        f"{url}/{record['id']}/download", headers=headers
+    ).content == content
+    public_url = f"/api/v1/public/tc-tournament/{tournament.id}/registration"
+    documents = api_client.get(public_url).json()["documents"]
+    assert len(documents) == 1
+    assert api_client.get(documents[0]["url"]).content == content
+    assert api_client.delete(f"{url}/{record['id']}", headers=headers).status_code == 200
+    assert api_client.get(url, headers=headers).json() == []
+    assert api_client.get(public_url).json()["documents"] == []
+    assert api_client.get(documents[0]["url"]).status_code == 404
+
+
+def test_rules_text_is_saved_and_published_with_setup(
+    api_client, db_session, make_user, make_auth_headers
+):
+    owner = make_user("tc_pasted_rules")
+    payload = _base_setup_payload()
+    tournament = _create_tc_tournament_with_setup(
+        db_session, owner.id, setup_payload=payload
+    )
+    headers = make_auth_headers(owner)
+    setup_url = f"/api/v1/tc/organizer-setup/{tournament.id}"
+    public_url = f"/api/v1/public/tc-tournament/{tournament.id}/registration"
+    initial_publish = api_client.put(
+        setup_url, headers=headers, json={"payload": payload, "is_published": True}
+    )
+    assert initial_publish.status_code == 200
+    payload["details"]["rulesText"] = "1. Check in early.\n2. No substitutes.\n\nContact the director."
+    draft = api_client.put(
+        setup_url, headers=headers, json={"payload": payload, "is_published": False}
+    )
+    assert draft.status_code == 200
+    saved_details = api_client.get(setup_url, headers=headers).json()["payload"]["details"]
+    assert saved_details["rulesText"] == payload["details"]["rulesText"]
+    public_draft = api_client.get(public_url)
+    assert public_draft.status_code == 200
+    assert "rulesText" not in public_draft.json()["details"]
+    published = api_client.put(
+        setup_url, headers=headers, json={"payload": payload, "is_published": True}
+    )
+    assert published.status_code == 200
+    assert api_client.get(public_url).json()["details"]["rulesText"] == payload["details"]["rulesText"]
+
+
 def test_directory_uses_published_registration_deadline(
     api_client, db_session, make_user
 ):
@@ -214,6 +281,29 @@ def test_directory_uses_published_registration_deadline(
         if row["id"] == f"tc-{tournament.id}"
     )
     assert row["registration_close_date"] == "2026-09-30"
+
+
+def test_directory_exact_lookup_precedes_limit_and_does_not_expose_private_tournaments(
+    api_client, db_session, make_user
+):
+    owner = make_user("tc_shared_details")
+    older = _create_tc_tournament_with_setup(
+        db_session, owner.id, setup_payload=_base_setup_payload()
+    )
+    newer = _create_tc_tournament_with_setup(
+        db_session, owner.id, setup_payload=_base_setup_payload(), tournament_name="Newer Event"
+    )
+    url = f"/api/v1/public/tournaments?source=tc&limit=1&tournament_id={older.id}"
+    response = api_client.get(url)
+    assert response.status_code == 200
+    assert [row["id"] for row in response.json()["tournaments"]] == [f"tc-{older.id}"]
+    assert newer.id > older.id
+    older.is_public = False
+    db_session.commit()
+    assert api_client.get(url).json()["tournaments"] == []
+    assert api_client.get(
+        "/api/v1/public/tournaments?source=tc&tournament_id=0"
+    ).status_code == 422
 
 
 def _base_setup_payload(*, waitlist_enabled: bool = True, capacity: int = 100, deadline_iso: str | None = None) -> dict:

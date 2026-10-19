@@ -40,11 +40,9 @@ export default function OrganizerTournamentSquadsPage() {
     }
 
     return registrations.filter((registration) => {
-      const status = registration.status ?? 'pending';
-      if (status === 'cancelled' || status === 'refunded') {
-        return false;
-      }
-      return (registration.entries ?? []).some((entry) => entry.squad_config_id === selectedSummary.squad.id);
+      return (registration.entries ?? []).some((entry) =>
+        entry.squad_config_id === selectedSummary.squad.id
+        && ['pending', 'confirmed', 'waitlisted'].includes(entry.status));
     });
   }, [registrations, selectedSummary]);
 
@@ -76,15 +74,17 @@ export default function OrganizerTournamentSquadsPage() {
                     <th>Date</th>
                     <th>Time</th>
                     <th>Location</th>
-                    <th>Registered</th>
-                    <th>Capacity</th>
-                    <th>Available</th>
-                    <th>Waitlist</th>
+                    <th>Registrations</th>
+                    <th>Bowlers</th>
+                    <th>Bowler capacity</th>
+                    <th>Bowler spots available</th>
+                    <th>Waitlisted registrations</th>
+                    <th>Waitlisted bowlers</th>
                     <th>Status</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {squadSummaries.map(({ squad, registered, waitlisted, available, status }) => (
+                  {squadSummaries.map(({ squad, registrationCount, bowlerCount, waitlistedRegistrationCount, waitlistedBowlerCount, availableBowlerSpots, status }) => (
                     <tr
                       key={squad.id}
                       onClick={() => setSelectedSquadId(squad.id)}
@@ -102,10 +102,12 @@ export default function OrganizerTournamentSquadsPage() {
                       <td>{formatTournamentDate(squad.dateIso)}</td>
                       <td>{formatSquadTime(squad.startTime)}</td>
                       <td>{squad.locationName || 'Not set'}</td>
-                      <td>{registered}</td>
+                      <td>{registrationCount}</td>
+                      <td>{bowlerCount}</td>
                       <td>{squad.capacity > 0 ? squad.capacity : '\u2014'}</td>
-                      <td>{available === null ? '\u2014' : available}</td>
-                      <td>{waitlisted}</td>
+                      <td>{availableBowlerSpots === null ? '\u2014' : availableBowlerSpots}</td>
+                      <td>{waitlistedRegistrationCount}</td>
+                      <td>{waitlistedBowlerCount}</td>
                       <td><OrganizerStatusBadge status={status} /></td>
                     </tr>
                   ))}

@@ -11,11 +11,11 @@ export default function OrganizerDashboardHeader({ displayName }: OrganizerDashb
   return (
     <header className={styles.heroBar}>
       <div className={styles.heroTextWrap}>
+        <span className={styles.dashboardEyebrow}>Organizer workspace</span>
         <h1>
-          Welcome back{displayName ? ', ' : '!'}
-          {displayName ? <span className={styles.heroName}>{displayName}!</span> : null}
+          Your tournament command center
         </h1>
-        <p className={styles.subtitle}>Manage your tournaments and track what matters.</p>
+        <p className={styles.subtitle}>{`${displayName ? `${displayName}, here` : 'Here'} is what's happening across your tournaments.`}</p>
       </div>
 
       <div className={styles.headerActions} aria-label="Dashboard controls">

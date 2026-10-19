@@ -29,6 +29,7 @@ export type TournamentDetails = {
   contactRole: string;
   preferredContactMethod: 'email' | 'phone' | 'either';
   contactNote: string;
+  rulesText: string;
   registrationOpenIso: string;
   registrationCloseIso: string;
   registrationOpenTime: string;

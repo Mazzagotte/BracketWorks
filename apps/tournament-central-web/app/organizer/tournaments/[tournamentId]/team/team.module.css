@@ -9,7 +9,7 @@
   align-content: start;
   gap: 7px;
   color: var(--bw-text-muted);
-  font-size: 0.66rem;
+  font-size: 0.8125rem;
   font-weight: 700;
 }
 
@@ -17,7 +17,7 @@
 .inviteForm select {
   width: 100%;
   min-width: 0;
-  height: 40px;
+  height: 44px;
   padding: 0 11px;
   border: 1px solid var(--bw-border-card);
   border-radius: 8px;
@@ -25,7 +25,7 @@
   color: var(--bw-text-title);
   background: var(--bw-surface-panel);
   font: inherit;
-  font-size: 0.7rem;
+  font-size: 0.8125rem;
   transition: border-color 140ms ease, box-shadow 140ms ease;
 }
 
@@ -50,7 +50,7 @@
 
 .roleDescription {
   color: var(--bw-text-muted);
-  font-size: 0.59rem;
+  font-size: 0.75rem;
   font-weight: 400;
   line-height: 1.4;
 }
@@ -91,7 +91,7 @@
 .teamTable th {
   color: var(--bw-text-muted);
   background: color-mix(in srgb, var(--bw-surface-panel) 72%, transparent);
-  font-size: 0.6rem;
+  font-size: 0.75rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -201,7 +201,7 @@
 
 .memberIdentity strong {
   color: var(--bw-text-title);
-  font-size: 0.7rem;
+  font-size: 0.8125rem;
 }
 
 .youBadge {
@@ -218,7 +218,7 @@
 
 .memberEmail {
   color: var(--bw-text-body);
-  font-size: 0.66rem;
+  font-size: 0.8125rem;
 }
 
 .roleBadge {
@@ -231,7 +231,7 @@
   border-radius: 999px;
   color: var(--bw-text-body);
   background: var(--bw-surface-panel);
-  font-size: 0.61rem;
+  font-size: 0.75rem;
   font-weight: 700;
   white-space: nowrap;
 }
@@ -254,7 +254,7 @@
 }
 
 .roleSelect {
-  min-height: 32px;
+  min-height: 40px;
   max-width: 190px;
   padding: 0 28px 0 10px;
   border: 1px solid var(--bw-border-card);
@@ -263,7 +263,7 @@
   color: var(--bw-text-title);
   background: var(--bw-surface-panel);
   font: inherit;
-  font-size: 0.63rem;
+  font-size: 0.75rem;
   cursor: pointer;
 }
 

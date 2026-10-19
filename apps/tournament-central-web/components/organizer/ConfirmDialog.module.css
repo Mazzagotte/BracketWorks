@@ -1,68 +1,141 @@
 .backdrop {
   position: fixed;
-  z-index: 60;
+  z-index: 1000;
   inset: 0;
   display: grid;
   place-items: center;
+  overflow-y: auto;
   padding: 20px;
-  background: rgba(3, 5, 12, 0.72);
+  background: rgba(3, 5, 12, 0.78);
+  backdrop-filter: blur(5px);
 }
 
 .dialog {
-  width: min(360px, 100%);
-  padding: 18px;
+  box-sizing: border-box;
+  width: min(460px, 100%);
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+  padding: 24px;
   display: grid;
-  gap: 10px;
-  border: 1px solid var(--bw-border-card);
-  border-radius: 12px;
-  background: var(--bw-surface-card);
-  box-shadow: var(--bw-shadow-card);
+  gap: 14px;
+  border: 1px solid var(--bw-border-card, #333642);
+  border-radius: 18px;
+  color: var(--bw-text-body, #e5e7eb);
+  background: var(--bw-surface-card, #171a23);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: 1px solid rgba(255, 121, 0, 0.25);
+  border-radius: 14px;
+  color: #ff982e;
+  background: rgba(255, 121, 0, 0.1);
+}
+
+.dangerIcon {
+  border-color: rgba(240, 82, 82, 0.25);
+  color: #ff8585;
+  background: rgba(240, 82, 82, 0.1);
+}
+
+.closeButton {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 10px;
+  color: var(--bw-text-muted, #aeb3c2);
+  background: transparent;
+  cursor: pointer;
 }
 
 .dialog h2 {
   margin: 0;
-  color: var(--bw-text-title);
-  font-size: 1rem;
+  color: var(--bw-text-title, #fff);
+  font-size: 1.25rem;
+  line-height: 1.3;
 }
 
 .dialog p {
   margin: 0;
-  color: var(--bw-text-muted);
-  font-size: 0.78rem;
-  line-height: 1.4;
+  overflow-wrap: anywhere;
+  color: var(--bw-text-muted, #aeb3c2);
+  font-size: 0.9375rem;
+  line-height: 1.65;
+  white-space: pre-line;
+}
+
+.dialog p.error {
+  color: #ffaaaa;
 }
 
 .dialog footer {
-  margin-top: 6px;
+  margin-top: 8px;
+  padding-top: 20px;
+  border-top: 1px solid var(--bw-border-card, #333642);
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .cancelButton,
 .confirmButton,
 .dangerButton {
-  min-height: 34px;
-  padding: 0 14px;
-  border-radius: 7px;
-  font-size: 0.72rem;
+  min-height: 44px;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 0.875rem;
   font-weight: 700;
+  cursor: pointer;
 }
 
 .cancelButton {
-  border: 1px solid var(--bw-border-card);
-  color: var(--bw-text-body);
+  border: 1px solid var(--bw-border-card, #333642);
+  color: var(--bw-text-body, #e5e7eb);
   background: transparent;
 }
 
 .confirmButton {
   border: 1px solid #ff7900;
-  color: #fff;
+  color: #17120c;
   background: #ff7900;
 }
 
 .dangerButton {
-  border: 1px solid #f05252;
+  border: 1px solid #c93737;
   color: #fff;
-  background: #f05252;
+  background: #c93737;
+}
+
+.dialog button:hover:not(:disabled) {
+  filter: brightness(1.15);
+}
+
+.dialog button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.dialog:focus-visible,
+.dialog button:focus-visible {
+  outline: 2px solid #ff982e;
+  outline-offset: 4px;
+}
+
+@media (max-width: 480px) {
+  .backdrop { padding: 16px; }
+  .dialog { padding: 20px; max-height: calc(100dvh - 32px); }
+  .dialog footer button { flex: 1; padding-inline: 12px; }
 }

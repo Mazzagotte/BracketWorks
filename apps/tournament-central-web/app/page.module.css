@@ -173,35 +173,369 @@
 }
 
 .tournamentInformation {
-  overflow-wrap: anywhere;
-}
-
-.tournamentInformation dl {
   display: grid;
-  gap: 8px;
+  gap: 24px;
+  overflow-wrap: anywhere;
+  min-width: 0;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
-.tournamentInformation dt,
-.tournamentInformation h3 {
+.informationHighlights {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.informationHighlights > div {
+  padding: 14px 16px;
+  border: 1px solid var(--bw-border-subtle);
+  border-radius: 12px;
+  background: var(--bw-surface-card);
+}
+
+.informationHighlights .informationDeadline {
+  grid-column: 1 / -1;
+  border-left: 3px solid var(--color-primary);
+}
+
+.informationHighlights dt {
+  margin-bottom: 6px;
+  color: var(--bw-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.informationHighlights dd {
+  margin: 0;
   color: var(--bw-text-title);
   font-weight: 700;
 }
 
-.tournamentInformation dd {
-  margin: 0 0 8px;
+.informationHighlights small {
+  display: block;
+  margin-top: 4px;
+  color: var(--bw-text-muted);
+  font-size: 12px;
+  font-weight: 400;
 }
 
-.tournamentInformation dd a {
-  display: block;
+.informationSection h3 {
+  margin: 0 0 12px;
+  color: var(--bw-text-title);
+  font-size: 16px;
+  font-weight: 700;
 }
 
 .tournamentInformation a {
   color: var(--color-primary);
   text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
-.tournamentInformation li {
-  margin-block: 10px;
+.informationEventList,
+.informationDivisionList,
+.informationSquadList,
+.informationDocumentList {
+  display: grid;
+  gap: 10px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.informationEventList {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.informationEventList > li,
+.informationDivisionList > li,
+.informationSquadCard,
+.informationContact,
+.informationDocumentList > li {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--bw-border-subtle);
+  border-radius: 12px;
+  background: var(--bw-surface-card);
+}
+
+.informationEventHeading,
+.informationSectionHeading,
+.informationSquadHeading,
+.informationSquadCapacity {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+.informationEventPrice {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.informationScoring {
+  display: block;
+  margin-top: 4px;
+  color: var(--bw-text-muted);
+  font-size: 13px;
+  text-transform: capitalize;
+}
+
+.informationSectionHeading {
+  margin-bottom: 12px;
+}
+
+.informationSectionHeading h3 {
+  margin: 0;
+}
+
+.informationSectionHeading > span,
+.informationSquadCapacity > span {
+  color: var(--bw-text-muted);
+  font-size: 12px;
+}
+
+.informationSquadHeading {
+  align-items: flex-start;
+}
+
+.informationSquadHeading > strong {
+  flex: 1 1 220px;
+}
+
+.informationAvailability,
+.informationFull {
+  padding: 4px 9px;
+  border: 1px solid var(--bw-border-card);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.informationAvailability {
+  background: color-mix(in srgb, var(--color-primary) 10%, var(--bw-surface-card));
+  color: var(--color-primary);
+}
+
+.informationFull {
+  background: var(--bw-surface-panel-strong);
+  color: var(--bw-text-body);
+}
+
+.informationSquadCard .informationSquadSchedule {
+  margin-top: 4px;
+  font-size: 12px;
+}
+
+.informationSquadCapacity {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--bw-border-subtle);
+}
+
+.informationSquadCapacity p strong {
+  font-size: 22px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.informationContact {
+  display: grid;
+  gap: 6px;
+}
+
+.tournamentRulesText {
+  padding: 16px;
+  margin-bottom: 12px;
+  border: 1px solid var(--bw-border-subtle);
+  border-radius: 12px;
+  background: var(--bw-surface-card);
+  color: var(--bw-text-body);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.registrationRules {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--bw-border-subtle);
+  border-radius: 12px;
+}
+
+.registrationRules summary {
+  cursor: pointer;
+  color: var(--color-primary);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.registrationRules > section {
+  margin-top: 16px;
+}
+
+.registrationProgress {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding: 16px 8px;
+  margin: 0 0 16px;
+  list-style: none;
+  border: 1px solid var(--bw-border-subtle);
+  border-radius: 14px;
+  background: var(--bw-surface-card);
+}
+
+.registrationProgress li {
+  position: relative;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  align-items: center;
+  color: var(--bw-text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+}
+
+.registrationProgress li:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 17px;
+  left: calc(50% + 23px);
+  width: calc(100% - 46px);
+  height: 2px;
+  border-radius: 2px;
+  background: var(--bw-border-card);
+}
+
+.registrationProgress li.registrationStepComplete::after {
+  background: var(--color-primary);
+}
+
+.registrationProgress li[aria-current] {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.registrationStepNumber {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--bw-border-card);
+  border-radius: 50%;
+  flex-shrink: 0;
+  font-size: 13px;
+  background: var(--bw-surface-panel);
+}
+
+.registrationProgress li[aria-current] .registrationStepNumber {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--bw-page);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+.registrationProgress .registrationStepComplete {
+  color: var(--bw-text-title);
+}
+
+.registrationStepComplete .registrationStepNumber {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 12%, var(--bw-surface-card));
+  color: var(--color-primary);
+}
+
+.registrationStepLabel {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.registrationPaymentNotice,
+.registrationReviewCard {
+  padding: 16px;
+  margin-bottom: 12px;
+  border: 1px solid var(--bw-border-subtle);
+  border-radius: 12px;
+  background: var(--bw-surface-card);
+  color: var(--bw-text-body);
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.registrationPaymentNotice {
+  border-left: 3px solid var(--color-primary);
+}
+
+.registrationPaymentNotice p {
+  margin: 6px 0 0;
+}
+
+.registrationConvenience {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.registrationConvenience small {
+  color: var(--bw-text-muted);
+  font-size: 12px;
+}
+
+.registrationReviewCard dl {
+  margin: 0;
+}
+
+.registrationReviewCard dt {
+  margin-top: 8px;
+  color: var(--bw-text-muted);
+  font-size: 12px;
+}
+
+.registrationReviewCard dd {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.registrationConfirmationCode {
+  color: var(--color-primary);
+  font-size: 24px;
+}
+
+@media (max-width: 400px) {
+  .registrationProgress {
+    padding-inline: 4px;
+  }
+
+  .registrationProgress li {
+    font-size: 11px;
+  }
+}
+
+.tournamentInformation .informationEmpty {
+  color: var(--bw-text-muted);
+  font-size: 12px;
+}
+
+@media (max-width: 480px) {
+  .informationEventList {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .informationHighlights > div,
+  .informationEventList > li,
+  .informationSquadCard {
+    padding: 12px;
+  }
 }
 
 .topActions,
@@ -1621,13 +1955,15 @@
 }
 
 .detailsModalCard {
-  width: min(720px, 100%);
+  width: min(780px, 100%);
   max-height: calc(100dvh - 32px);
   border: 1px solid var(--bw-border-card);
   border-radius: 16px;
   background: var(--bw-surface-panel);
   box-shadow: var(--bw-shadow-card);
-  overflow-y: auto;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
 }
 
 .registrationModalCard {
@@ -1656,6 +1992,29 @@
   display: flex;
   align-items: center;
   gap: 16px;
+}
+
+.detailsModalHeadingMeta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-bottom: 8px;
+}
+
+.detailsModalHeadingMeta .detailsModalEyebrow {
+  margin: 0;
+}
+
+.detailsModalHeadingMeta .detailsModalStatusValue {
+  color: var(--bw-text-body);
+  font-size: 11px;
+  padding: 3px 8px;
+}
+
+.detailsModalHeadingMeta .detailsModalStatusDot {
+  width: 6px;
+  height: 6px;
 }
 
 .detailsModalEyebrow {
@@ -1710,8 +2069,11 @@
 
 .detailsModalBody {
   display: grid;
-  gap: 12px;
-  padding: 12px 22px 0;
+  gap: 24px;
+  padding: 20px 24px 24px;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .detailsModalLogoWrap {
@@ -2095,22 +2457,24 @@
 
 .detailsModalFacts {
   display: grid;
-  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
 }
 
 .detailsModalFactRow {
   display: grid;
-  grid-template-columns: 32px 100px minmax(0, 1fr);
+  grid-template-columns: 24px minmax(0, 1fr);
   align-items: center;
   gap: 12px;
-  min-height: 52px;
-  padding: 8px 12px;
+  min-height: 76px;
+  padding: 12px 14px;
   border-radius: 10px;
   background: var(--bw-surface-card);
   border: 1px solid var(--bw-border-subtle);
 }
 
 .detailsModalFactIcon {
+  grid-row: span 2;
   display: inline-grid;
   place-items: center;
   color: var(--color-primary);
@@ -2118,13 +2482,17 @@
 
 .detailsModalFactRow strong {
   color: var(--bw-text-title);
-  font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 12px;
 }
 
 .detailsModalFactRow span {
   color: var(--bw-text-body);
   font-size: 14px;
+}
+
+.detailsModalFactRow > span:last-child {
+  grid-column: 2;
 }
 
 .detailsModalStatusValue,
@@ -2185,6 +2553,7 @@
   gap: 12px;
   padding: 14px 22px 18px;
   border-top: 1px solid var(--bw-border-subtle);
+  background: var(--bw-surface-panel);
 }
 
 .detailsModalHint {
@@ -2200,6 +2569,10 @@
   justify-content: flex-end;
   align-items: center;
   gap: 12px;
+}
+
+.detailsModalShareAction {
+  margin-right: auto;
 }
 
 .detailsModalPrimaryAction,
@@ -2237,6 +2610,27 @@
 .detailsModalSecondaryAction:hover {
   border-color: var(--bw-border-accent);
   background: var(--bw-surface-panel-strong);
+}
+
+@media (max-width: 480px) {
+  .detailsModalFacts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .detailsModalTitleGroup {
+    align-items: flex-start;
+  }
+
+  .detailsModalTitleGroup .detailsModalLogoWrap {
+    width: 48px;
+    height: 48px;
+    padding: 5px;
+  }
+
+  .detailsModalHeader h2 {
+    font-size: 18px;
+    line-height: 1.3;
+  }
 }
 
 .primaryBtn:disabled,
@@ -2382,23 +2776,23 @@
     font-size: 11px;
   }
 
-  .detailsModalHeader h4 {
+  .detailsModalHeader h2 {
     font-size: 20px;
   }
 
   .detailsModalClose {
-    width: 34px;
-    height: 34px;
-    min-height: 34px;
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
     border-radius: 9px;
   }
 
   .detailsModalBody {
-    padding: 10px 16px 0;
+    padding: 16px;
   }
 
   .detailsModalFactRow {
-    grid-template-columns: 28px 78px minmax(0, 1fr);
+    grid-template-columns: 20px minmax(0, 1fr);
     gap: 8px;
     min-height: 54px;
     padding: 8px 10px;
@@ -2442,6 +2836,11 @@
   .detailsModalActions {
     display: grid;
     grid-template-columns: 1fr 1fr;
+  }
+
+  .detailsModalShareAction {
+    grid-column: 1 / -1;
+    margin-right: 0;
   }
 
   .detailsModalPrimaryAction,

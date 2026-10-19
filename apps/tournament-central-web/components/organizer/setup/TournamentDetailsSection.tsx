@@ -13,43 +13,9 @@ import type { ChangeEvent, Dispatch, DragEvent, RefObject, SetStateAction } from
 
 import SetupStatusBadge from '../SetupStatusBadge';
 import type { SetupSectionKey, SetupStatus } from '../types';
+import type { TournamentDetails } from '../setupTypes';
 import styles from '../tournament-setup.module.css';
 import { registrationDateErrors } from '@/lib/registrationDates';
-
-type TournamentDetails = {
-  name: string;
-  subtitle: string;
-  organizer: string;
-  tournamentType: string;
-  startDateIso: string;
-  endDateIso: string;
-  venueId: number | null;
-  bowlingCenter: string;
-  venueAddressLine1: string;
-  venueAddressLine2: string;
-  city: string;
-  state: string;
-  venueZip: string;
-  venueCountry: string;
-  venueLatitude: number | null;
-  venueLongitude: number | null;
-  venueExternalProvider: string;
-  venueExternalPlaceId: string;
-  timezone: string;
-  visibility: 'public' | 'unlisted' | 'private';
-  tournamentStatus: string;
-  supportEmail: string;
-  supportPhone: string;
-  contactName: string;
-  contactRole: string;
-  preferredContactMethod: 'email' | 'phone' | 'either';
-  contactNote: string;
-  registrationOpenIso: string;
-  registrationCloseIso: string;
-  registrationOpenTime: string;
-  registrationCloseTime: string;
-  logoFileName: string;
-};
 
 type TimezoneOption = { value: string; label: string };
 type UsStateOption = { code: string; name: string };

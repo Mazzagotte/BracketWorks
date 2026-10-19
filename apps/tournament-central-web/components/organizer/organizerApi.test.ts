@@ -10,7 +10,27 @@ import {
   markTournamentRegistrationsPaid,
   respondToTcStaffInvitation,
   updateMyAccount,
+  uploadTournamentDocument,
+  updateTournamentRegistrationPaymentStatus,
 } from './organizerApi';
+
+describe('organizerApi document upload', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('sends the selected rules file as multipart data without overriding its boundary', async () => {
+    const fetchMock = mockFetchOnce({ id: 9, file_name: 'Rules.pdf' });
+    const file = new File(['%PDF-1.4'], 'Rules.pdf', { type: 'application/pdf' });
+    const result = await uploadTournamentDocument('test-session', 42, file, 'rules');
+    const [url, request] = fetchMock.mock.calls[0];
+    expect(url).toBe('/api/v1/tc/tournaments/42/documents');
+    expect(request.method).toBe('POST');
+    expect(request.body).toBeInstanceOf(FormData);
+    expect(request.body.get('file')).toBe(file);
+    expect(request.body.get('doc_type')).toBe('rules');
+    expect(request.headers).not.toHaveProperty('Content-Type');
+    expect(result.file_name).toBe('Rules.pdf');
+  });
+});
 
 function mockFetchOnce(body: unknown, ok = true, status = ok ? 200 : 400) {
   const fetchMock = vi.fn().mockResolvedValue({
@@ -61,6 +81,14 @@ describe('organizerApi account functions', () => {
 describe('organizerApi bulk payment marking', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
+  });
+
+  it.each(['paid', 'unpaid'] as const)('persists the %s payment status', async (status) => {
+    const fetchMock = mockFetchOnce({ ok: true });
+    await updateTournamentRegistrationPaymentStatus('test-session', 42, 7, status);
+    expect(fetchMock).toHaveBeenCalledWith('/api/v1/tc/tournaments/42/registrations/7', expect.objectContaining({
+      method: 'PATCH', body: JSON.stringify({ payment_status: status }),
+    }));
   });
 
   it('marks every registration id as paid via individual PATCH calls', async () => {

@@ -1,10 +1,10 @@
 .shell {
   width: 100%;
-  max-width: 720px;
+  max-width: 880px;
   margin: 0 auto;
-  padding: 14px 20px 32px;
+  padding: 20px var(--organizer-page-padding) 40px;
   display: grid;
-  gap: 16px;
+  gap: 20px;
 }
 
 .header {
@@ -15,14 +15,14 @@
 .header h1 {
   margin: 0;
   color: var(--bw-text-title);
-  font-size: 1.3rem;
+  font-size: 1.5rem;
   letter-spacing: -0.03em;
 }
 
 .header p {
   margin: 5px 0 0;
   color: var(--bw-text-muted);
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
 }
 
 .loading {
@@ -35,7 +35,8 @@
 }
 
 .card {
-  padding: 18px;
+  padding: 24px;
+  min-width: 0;
   border: 1px solid var(--bw-border-card);
   border-radius: 14px;
   background: var(--bw-surface-card);
@@ -66,19 +67,20 @@
   display: grid;
   gap: 6px;
   color: var(--bw-text-muted);
-  font-size: 0.68rem;
+  font-size: 0.8125rem;
   font-weight: 700;
 }
 
 .form input {
-  min-height: 38px;
+  min-height: 44px;
+  min-width: 0;
   padding: 0 12px;
   border: 1px solid var(--bw-border-card);
   border-radius: 7px;
   outline: 0;
   color: var(--bw-text-body);
   background: var(--bw-surface-panel);
-  font-size: 0.78rem;
+  font-size: 0.875rem;
 }
 
 .form input:focus {
@@ -101,7 +103,7 @@
 .hint {
   margin: -8px 0 0;
   color: var(--bw-text-muted);
-  font-size: 0.66rem;
+  font-size: 0.75rem;
 }
 
 .formActions {
@@ -110,7 +112,7 @@
 }
 
 .primaryButton {
-  min-height: 36px;
+  min-height: 44px;
   padding: 0 16px;
   border: 1px solid #ff7900;
   border-radius: 8px;
@@ -156,7 +158,7 @@
 
 @media (max-width: 767px) {
   .shell {
-    padding: 12px;
+    padding: 16px var(--organizer-page-padding) 32px;
   }
 
   .card {

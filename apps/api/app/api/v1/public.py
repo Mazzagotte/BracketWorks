@@ -469,6 +469,7 @@ def list_public_tournaments(
     response: Response,
     limit: int = Query(100, ge=1, le=500),
     source: Literal["all", "bw", "tc"] = Query("all"),
+    tournament_id: Optional[int] = Query(None, gt=0),
     db: Session = Depends(get_db),
 ):
     """Directory of public tournaments, optionally limited to BW or TC."""
@@ -479,6 +480,7 @@ def list_public_tournaments(
             .filter(
                 models.Tournament.is_public.is_(True),
                 models.Tournament.archived_at.is_(None),
+                models.Tournament.id == tournament_id if tournament_id is not None else True,
             )
             .order_by(models.Tournament.id.desc())
             .limit(limit)
@@ -489,7 +491,10 @@ def list_public_tournaments(
     if source != "bw":
         tc_tournaments = (
             db.query(models.TournamentCentral)
-            .filter(models.TournamentCentral.is_public.is_(True))
+            .filter(
+                models.TournamentCentral.is_public.is_(True),
+                models.TournamentCentral.id == tournament_id if tournament_id is not None else True,
+            )
             .order_by(models.TournamentCentral.id.desc())
             .limit(limit)
             .all()
@@ -840,6 +845,7 @@ def get_public_tc_tournament_registration_config(
         "supportEmail",
         "supportPhone",
         "contactNote",
+        "rulesText",
         "registrationOpenIso",
         "registrationCloseIso",
         "registrationOpenTime",

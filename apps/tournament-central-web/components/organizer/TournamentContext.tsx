@@ -9,6 +9,7 @@ import {
   getTournament,
   getTournamentSetupSummary,
   listTournamentRegistrations,
+  listTournamentDocuments,
   loadOrganizerSetupState,
   type OrganizerRegistrationRecord,
 } from './organizerApi';
@@ -22,6 +23,7 @@ type TournamentSetupPayloadSlice = {
   details?: {
     registrationOpenIso?: string;
     registrationCloseIso?: string;
+    rulesText?: string;
   };
 };
 
@@ -120,14 +122,15 @@ export function TournamentProvider({ tournamentId, children }: TournamentProvide
     setSetupError(null);
     try {
       const token = getAccessToken();
-      const [summary, setupState] = await Promise.all([
+      const [summary, setupState, documents] = await Promise.all([
         getTournamentSetupSummary(token, tournamentId),
         loadOrganizerSetupState<TournamentSetupPayloadSlice>(token, tournamentId),
+        listTournamentDocuments(token, tournamentId),
       ]);
       setSetupSummary(summary);
       setSquads(Array.isArray(setupState?.payload.squads) ? setupState.payload.squads : []);
       setEventCount((setupState?.payload.events ?? []).filter((event) => event.enabled !== false).length);
-      setHasRulesDocument(Boolean(setupState?.payload.hasRulesDocument));
+      setHasRulesDocument(documents.some((document) => document.doc_type === 'rules') || Boolean(setupState?.payload.details?.rulesText?.trim()));
       setRegistrationOpenIso(setupState?.payload.details?.registrationOpenIso || null);
       setRegistrationCloseIso(setupState?.payload.details?.registrationCloseIso || null);
     } catch (caughtError) {

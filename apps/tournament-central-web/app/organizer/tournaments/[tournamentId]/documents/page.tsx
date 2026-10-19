@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Download, Trash2 } from 'lucide-react';
 
 import { useTournamentContext } from '@/components/organizer/TournamentContext';
+import { useConfirmation } from '@/components/organizer/useConfirmation';
 import { organizerRoutes } from '@/components/organizer/organizerRoutes';
 import {
   deleteTournamentDocument,
@@ -49,6 +50,8 @@ export default function OrganizerTournamentDocumentsPage() {
   const [docType, setDocType] = useState<TournamentDocumentKind>('rules');
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const { confirm, confirmationDialog } = useConfirmation();
+  const deletingRef = useRef(false);
 
   const refreshDocuments = useCallback(async () => {
     const token = sessionStorage.getItem('access_token');
@@ -113,25 +116,35 @@ export default function OrganizerTournamentDocumentsPage() {
   };
 
   const handleDelete = async (document: TournamentDocumentRecord) => {
-    if (!window.confirm(`Delete "${document.file_name}"? This cannot be undone.`)) {
+    if (deletingRef.current || !await confirm({
+      title: 'Delete document?',
+      message: `Delete "${document.file_name}"? This cannot be undone.`,
+      confirmLabel: 'Delete document',
+      tone: 'danger',
+    })) {
       return;
     }
 
     const token = sessionStorage.getItem('access_token');
     if (!token) {
+      setError('Your session expired. Please sign in again.');
       return;
     }
 
+    deletingRef.current = true;
     try {
       await deleteTournamentDocument(token, tournamentId, document.id);
       await refreshDocuments();
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : 'Unable to delete document.');
+    } finally {
+      deletingRef.current = false;
     }
   };
 
   return (
     <main className={styles.shell}>
+      {confirmationDialog}
       <header className={styles.header}>
         <div>
           <h1>Documents</h1>
@@ -180,10 +193,10 @@ export default function OrganizerTournamentDocumentsPage() {
                   <span className={styles.docTypeChip}>{DOC_TYPE_LABEL[document.doc_type] ?? 'Other'}</span>
                   <span>{formatFileSize(document.file_size)} &middot; {formatUploadedAt(document.uploaded_at)}</span>
                   <div className={styles.docActions}>
-                    <button type="button" onClick={() => void handleDownload(document)}>
+                    <button type="button" aria-label={`Download ${document.file_name}`} onClick={() => void handleDownload(document)}>
                       <Download size={13} aria-hidden="true" /> Download
                     </button>
-                    <button type="button" className={styles.deleteButton} onClick={() => void handleDelete(document)}>
+                    <button type="button" aria-label={`Delete ${document.file_name}`} className={styles.deleteButton} onClick={() => void handleDelete(document)}>
                       <Trash2 size={13} aria-hidden="true" /> Delete
                     </button>
                   </div>

@@ -39,9 +39,9 @@ export default function PublicAccountNav() {
         menuRef.current.querySelector('summary')?.focus();
       }
     }}>
-      <summary>{displayName}</summary>
+      <summary aria-label={`${displayName} account menu`}>{displayName}</summary>
       <div>
-        <Link href="/organizer/account">Account Settings</Link>
+        <Link href="/organizer/account" aria-label="Account Settings">Account Settings</Link>
         <button type="button" disabled={isSigningOut} onClick={() => void handleSignOut()}>{isSigningOut ? 'Signing out...' : 'Sign Out'}</button>
         {error && <p role="alert">{error}</p>}
       </div>
