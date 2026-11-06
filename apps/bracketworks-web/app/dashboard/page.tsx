@@ -46,7 +46,7 @@ import {
   setSelectedSquad,
   setSelectedTournament,
 } from '../lib/selection-session';
-import CloseControl from '../../components/CloseControl';
+import { Button, Modal } from '@bracketworks/ui';
 import ExplainDashboardModal from './ExplainDashboardModal';
 import { TournamentSettingsContent } from './settings/TournamentSettingsContent';
 import { setBodyInteractionState } from '../utils/modalUtils';
@@ -1235,12 +1235,12 @@ export default function TournamentDashboard() {
         <ConfirmationDialog open={confirmOpen} message={confirmMsg} onClose={() => setConfirmOpen(false)} />
         <ActionConfirmDialog
           open={Boolean(optionalToggleConfirm)}
-          title="Disable Bracket Program?"
+          title="Turn off this bracket program?"
           message={optionalToggleConfirm
-            ? `${optionalToggleConfirm.programName} has ${optionalToggleConfirm.existingEntries} existing entr${optionalToggleConfirm.existingEntries === 1 ? 'y' : 'ies'} in this tournament. Disabling it will permanently delete those entries from the database and can affect totals.`
+            ? `${optionalToggleConfirm.programName} has ${optionalToggleConfirm.existingEntries} existing entr${optionalToggleConfirm.existingEntries === 1 ? 'y' : 'ies'} in this tournament. Turning it off permanently deletes those entries and can change totals.`
             : ''}
-          confirmLabel="Disable"
-          cancelLabel="Keep Enabled"
+          confirmLabel="Turn off"
+          cancelLabel="Keep it on"
           onCancel={() => setOptionalToggleConfirm(null)}
           onConfirm={() => {
             if (optionalToggleConfirm) {
@@ -1333,38 +1333,19 @@ export default function TournamentDashboard() {
           )}
 
           {/* Tournament Settings Modal */}
-          {settingsModalOpen && tournament && (
-            <div className={`${mobileStyles.modalOverlay} ${mobileStyles.settingsModalOverlay}`}>
-              <div className={`${mobileStyles.modalCard} ${mobileStyles.settingsModalCard}`}>
-                <CloseControl
-                  position="absolute"
-                  size="sm"
-                  className={mobileStyles.settingsModalCloseButton}
-                  label="Close tournament settings modal"
-                  onClick={() => setSettingsModalOpen(false)}
-                />
-                <div className={mobileStyles.modalHeader}>
-                  <h2 className={`${mobileStyles.modalTitle} ${mobileStyles.settingsModalTitle}`}>
-                    <Settings2 aria-hidden="true" />
-                    <span>Tournament Settings</span>
-                  </h2>
-                  <p className={mobileStyles.modalSubtitle}>Update bracket rules, pricing, side pots, and other tournament setup details.</p>
-                </div>
-                <div className={`${mobileStyles.modalScrollBody} ${mobileStyles.settingsModalScrollBody}`}>
-                  <TournamentSettingsContent tournamentId={tournament.id} layout="embedded-modal" />
-                </div>
-                <div className={mobileStyles.settingsModalCloseFooter}>
-                  <button
-                    type="button"
-                    className={mobileStyles.settingsModalCloseFooterButton}
-                    onClick={() => setSettingsModalOpen(false)}
-                  >
-                    Close Settings
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
+          {tournament ? (
+            <Modal
+              open={settingsModalOpen}
+              onClose={() => setSettingsModalOpen(false)}
+              size="lg"
+              closeLabel="Close tournament settings"
+              title="Tournament settings"
+              description="Bracket rules, pricing, side pots, and staff."
+              footer={<Button variant="primary" onClick={() => setSettingsModalOpen(false)}>Done</Button>}
+            >
+              <TournamentSettingsContent tournamentId={tournament.id} layout="embedded-modal" />
+            </Modal>
+          ) : null}
 
           <ChangeSquadModal
             open={squadModalOpen}

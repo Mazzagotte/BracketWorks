@@ -1,13 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Copy } from 'lucide-react'
-import CloseControl from '../../../components/CloseControl'
+import { Button, CardDivider, CheckboxField, FormGrid, Modal, Notice, TextField } from '@bracketworks/ui'
+
 import { apiClient } from '../../lib/api'
 import { Tournament } from '../../lib/types'
-import buttonStyles from '../../styles/buttons.module.css'
-import formStyles from '../../styles/forms.module.css'
-import modalStyles from '../../styles/modals.module.css'
 import styles from './DuplicateTournamentModal.module.css'
 
 type CopyOptions = {
@@ -26,6 +23,13 @@ const defaults: CopyOptions = {
   copy_bowlers: false,
 }
 
+const COPY_CHOICES = [
+  ['copy_tournament_settings', 'Tournament settings and bracket size'],
+  ['copy_bracket_programs', 'Bracket programs'],
+  ['copy_side_pots', 'Side pots'],
+  ['copy_squads', 'Squad structure'],
+] as const
+
 export function DuplicateTournamentModal({ open, tournament, onClose, onCreated }: {
   open: boolean
   tournament: Tournament
@@ -41,17 +45,17 @@ export function DuplicateTournamentModal({ open, tournament, onClose, onCreated 
 
   useEffect(() => {
     if (!open) return
-    setName(`${tournament.name} Copy`)
+    setName(`${tournament.name} copy`)
     setStartDate('')
     setEndDate('')
     setOptions(defaults)
     setError('')
   }, [open, tournament])
 
-  if (!open) return null
   const setOption = (key: keyof CopyOptions, value: boolean) => {
     setOptions(previous => ({ ...previous, [key]: value, ...(key === 'copy_squads' && !value ? { copy_bowlers: false } : {}) }))
   }
+  const datesInvalid = Boolean(startDate && endDate && endDate < startDate)
   const submit = async () => {
     if (!name.trim()) return
     setSaving(true)
@@ -70,47 +74,54 @@ export function DuplicateTournamentModal({ open, tournament, onClose, onCreated 
   }
 
   return (
-    <div className={modalStyles.overlay} role="presentation">
-      <section className={`${modalStyles.modal} ${modalStyles.compactModal}`} role="dialog" aria-modal="true" aria-labelledby="duplicate-tournament-title">
-        <CloseControl className={modalStyles.closeButton} position="absolute" size="sm" label="Close duplicate tournament dialog" onClick={onClose} />
-        <header className={modalStyles.header}>
-          <h2 className={styles.title} id="duplicate-tournament-title"><Copy aria-hidden="true" />Duplicate Tournament</h2>
-          <p className={styles.intro}>Create a fresh tournament from {tournament.name}&apos;s setup. Results and payouts are never copied.</p>
-        </header>
-        <div className={`${modalStyles.content} ${styles.body}`}>
-          <label>Tournament name
-            <input className={formStyles.field} value={name} onChange={event => setName(event.target.value)} maxLength={200} autoFocus />
-          </label>
-          <div className={styles.dateGrid}>
-            <label>Start date<input className={formStyles.field} type="date" value={startDate} onChange={event => setStartDate(event.target.value)} /></label>
-            <label>End date<input className={formStyles.field} type="date" value={endDate} min={startDate || undefined} onChange={event => setEndDate(event.target.value)} /></label>
-          </div>
-          <fieldset>
-            <legend>Copy configuration</legend>
-            {([
-              ['copy_tournament_settings', 'Tournament settings and bracket size'],
-              ['copy_bracket_programs', 'Bracket programs'],
-              ['copy_side_pots', 'Side pots'],
-              ['copy_squads', 'Squad structure'],
-            ] as const).map(([key, label]) => (
-              <label className={styles.check} key={key}><input type="checkbox" checked={options[key]} onChange={event => setOption(key, event.target.checked)} />{label}</label>
-            ))}
-          </fieldset>
-          <fieldset className={styles.advanced}>
-            <legend>Advanced</legend>
-            <label className={styles.check}>
-              <input type="checkbox" checked={options.copy_bowlers} disabled={!options.copy_squads} onChange={event => setOption('copy_bowlers', event.target.checked)} />
-              Copy bowlers and their entry selections
-            </label>
-            <p>Payments reset to $0. Scores, brackets, winners, and payouts are not copied.</p>
-          </fieldset>
-          {error && <p className={styles.error} role="alert">{error}</p>}
-        </div>
-        <footer className={modalStyles.footer}>
-          <button type="button" className={`${buttonStyles.button} ${buttonStyles.ghost}`} onClick={onClose} disabled={saving}>Cancel</button>
-          <button type="button" className={`${buttonStyles.button} ${buttonStyles.primary}`} onClick={() => void submit()} disabled={saving || !name.trim() || Boolean(startDate && endDate && endDate < startDate)}>{saving ? 'Duplicating…' : 'Duplicate Tournament'}</button>
-        </footer>
-      </section>
-    </div>
+    <Modal
+      open={open}
+      onClose={onClose}
+      dismissible={!saving}
+      title="Duplicate tournament"
+      description={`Start a new tournament from ${tournament.name}'s setup. Results and payouts are never copied.`}
+      footer={(
+        <>
+          <Button variant="secondary" onClick={onClose} disabled={saving}>Cancel</Button>
+          <Button variant="primary" onClick={() => void submit()} disabled={saving || !name.trim() || datesInvalid}>
+            {saving ? 'Duplicating...' : 'Duplicate tournament'}
+          </Button>
+        </>
+      )}
+    >
+      <div className={styles.body}>
+        <FormGrid>
+          <TextField label="Tournament name" fullRow value={name} onChange={event => setName(event.target.value)} maxLength={200} autoFocus />
+          <TextField label="Start date" optional type="date" value={startDate} onChange={event => setStartDate(event.target.value)} />
+          <TextField
+            label="End date"
+            optional
+            type="date"
+            value={endDate}
+            min={startDate || undefined}
+            onChange={event => setEndDate(event.target.value)}
+            error={datesInvalid ? 'End date must be on or after the start date.' : undefined}
+          />
+        </FormGrid>
+        <fieldset className={styles.group}>
+          <legend className={styles.legend}>Copy</legend>
+          {COPY_CHOICES.map(([key, label]) => (
+            <CheckboxField key={key} label={label} checked={options[key]} onChange={event => setOption(key, event.target.checked)} />
+          ))}
+        </fieldset>
+        <CardDivider />
+        <fieldset className={styles.group}>
+          <legend className={styles.legend}>Advanced</legend>
+          <CheckboxField
+            label="Copy bowlers and their entry selections"
+            helper="Payments reset to $0. Scores, brackets, winners, and payouts are not copied."
+            checked={options.copy_bowlers}
+            disabled={!options.copy_squads}
+            onChange={event => setOption('copy_bowlers', event.target.checked)}
+          />
+        </fieldset>
+        {error ? <Notice tone="danger" role="alert">{error}</Notice> : null}
+      </div>
+    </Modal>
   )
 }

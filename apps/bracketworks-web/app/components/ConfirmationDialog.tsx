@@ -1,10 +1,6 @@
 "use client";
 
-import React from "react";
-
-import styles from "./ConfirmationDialog.module.css";
-import modalStyles from "../styles/modals.module.css";
-import buttonStyles from "../styles/buttons.module.css";
+import { Button, Modal } from "@bracketworks/ui";
 
 interface ConfirmationDialogProps {
   open: boolean;
@@ -12,24 +8,16 @@ interface ConfirmationDialogProps {
   onClose: () => void;
 }
 
-const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({ open, message, onClose }) => {
-  if (!open) return null;
+/** A short success message after an action, on the shared Modal. */
+export default function ConfirmationDialog({ open, message, onClose }: ConfirmationDialogProps) {
   return (
-    <div className={modalStyles.overlay}>
-      <div className={`${modalStyles.modal} ${modalStyles.compactModal}`}>
-        <div className={modalStyles.header}>
-          <h2 className={styles.title}>Success</h2>
-        </div>
-        <div className={styles.body}>
-          <p className={styles.message}>{message}</p>
-          <div className={styles.actions}>
-            <button className={`${buttonStyles.button} ${buttonStyles.primary} ${styles.okButton}`} onClick={onClose}>Close</button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <Modal
+      open={open}
+      onClose={onClose}
+      size="sm"
+      title="Done"
+      description={message}
+      footer={<Button variant="primary" onClick={onClose}>Close</Button>}
+    />
   );
-};
-
-export default ConfirmationDialog;
-
+}

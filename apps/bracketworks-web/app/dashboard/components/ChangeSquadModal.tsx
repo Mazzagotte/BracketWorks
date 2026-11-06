@@ -1,10 +1,7 @@
-import { Calendar } from 'lucide-react';
-import { useRef } from 'react';
+import { Badge, Modal } from '@bracketworks/ui';
 
 import type { Squad, Tournament } from '../../lib/types';
-import CloseControl from '../../../components/CloseControl';
 import { formatIsoDateLong } from '../../lib/formatters';
-import { useModalBehavior } from '../../hooks/useModalBehavior';
 import styles from './ChangeSquadModal.module.css';
 
 type ChangeSquadModalProps = {
@@ -16,10 +13,11 @@ type ChangeSquadModalProps = {
   onSelectSquad: (squad: Squad) => void;
   onClose: () => void;
   allowDismissWhenRequired?: boolean;
-  /** When set, shown as a required-selection prompt and the close (dismiss) control is hidden. */
+  /** When set, shown as a required-selection prompt and the dialog cannot be dismissed. */
   requireSelectionMessage?: string | null;
 };
 
+/** Pick the squad to work on: divider rows, the current squad shaded with a badge. */
 export function ChangeSquadModal({
   open,
   tournament,
@@ -31,76 +29,45 @@ export function ChangeSquadModal({
   allowDismissWhenRequired = false,
   requireSelectionMessage,
 }: ChangeSquadModalProps) {
-  const dialogRef = useRef<HTMLDivElement>(null);
   const isDismissable = !requireSelectionMessage || allowDismissWhenRequired;
-  const { onOverlayClick } = useModalBehavior({
-    open: open && !!tournament,
-    onClose,
-    dialogRef,
-    closeOnEscape: isDismissable,
-    closeOnBackdrop: isDismissable,
-  });
-
-  if (!open || !tournament) {
-    return null;
-  }
+  const sortedSquads = [...squads].sort((left, right) => Number(right.id === selectedSquadId) - Number(left.id === selectedSquadId));
 
   return (
-    <div className={`${styles.modalOverlay} ${styles.modalOverlayTop}`} onClick={onOverlayClick}>
-      <div
-        ref={dialogRef}
-        className={styles.modalCard}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Change squad"
-        tabIndex={-1}
-      >
-        <div className={styles.modalHeader}>
-          <h2 className={styles.modalTitle}>Change Squad</h2>
-          <p className={styles.modalSubtitle}>
-            {requireSelectionMessage || `Select the date and time for ${tournament.name}`}
-          </p>
-          {(!requireSelectionMessage || allowDismissWhenRequired) && (
-            <CloseControl position="absolute" size="sm" label="Close change squad modal" onClick={onClose} />
-          )}
-        </div>
-        <div className={styles.squadChangeList}>
-          {[...squads].sort((left, right) => {
-            const leftSelected = left.id === selectedSquadId ? 1 : 0;
-            const rightSelected = right.id === selectedSquadId ? 1 : 0;
-            return rightSelected - leftSelected;
-          }).map(squad => {
-            const dateLabel = squad.date ? formatIsoDateLong(squad.date) : '';
-            const timeLabel = squad.time || '';
-            const isSelected = squad.id === selectedSquadId;
-            const entries = squadEntryCounts[squad.id] ?? 0;
-
-            return (
+    <Modal
+      open={open && Boolean(tournament)}
+      onClose={onClose}
+      size="sm"
+      dismissible={isDismissable}
+      closeLabel="Close change squad"
+      title="Change squad"
+      description={requireSelectionMessage || (tournament ? `Choose the date and time to work on for ${tournament.name}.` : undefined)}
+    >
+      <ul className={styles.list}>
+        {sortedSquads.map(squad => {
+          const dateLabel = squad.date ? formatIsoDateLong(squad.date) : '';
+          const timeLabel = squad.time || '';
+          const isSelected = squad.id === selectedSquadId;
+          const entries = squadEntryCounts[squad.id] ?? 0;
+          return (
+            <li key={squad.id}>
               <button
-                key={squad.id}
                 type="button"
-                className={`${styles.squadChangeItem} ${isSelected ? styles.squadChangeItemSelected : ''} ${entries === 0 ? styles.squadChangeItemEmpty : ''}`}
+                className={isSelected ? `${styles.row} ${styles.rowSelected}` : styles.row}
+                aria-current={isSelected ? 'true' : undefined}
                 onClick={() => onSelectSquad(squad)}
               >
-                <span className={styles.squadChangeIcon} aria-hidden="true"><Calendar /></span>
-                <span className={styles.squadChangeItemMain}>
-                  <span className={styles.squadChangeItemLabel}>
-                    {dateLabel || timeLabel ? (
-                      <>
-                        {dateLabel && <span>{dateLabel}</span>}
-                        {dateLabel && timeLabel && <b aria-hidden="true">•</b>}
-                        {timeLabel && <span>{timeLabel}</span>}
-                      </>
-                    ) : `Squad ${squad.id}`}
+                <span className={styles.rowText}>
+                  <span className={styles.rowTitle}>
+                    {[dateLabel, timeLabel].filter(Boolean).join(' · ') || `Squad ${squad.id}`}
                   </span>
-                  <span className={styles.squadChangeItemMeta}>{entries} {entries === 1 ? 'entry' : 'entries'} <b aria-hidden="true">•</b> {isSelected ? 'Active squad' : '1 squad available'}</span>
+                  <span className={styles.meta}>{entries} {entries === 1 ? 'entry' : 'entries'}</span>
                 </span>
-                <span className={styles.squadChangeItemStatus}>{isSelected ? 'Current' : 'Confirm'}</span>
+                {isSelected ? <Badge tone="neutral">Current</Badge> : null}
               </button>
-            );
-          })}
-        </div>
-      </div>
-    </div>
+            </li>
+          );
+        })}
+      </ul>
+    </Modal>
   );
 }

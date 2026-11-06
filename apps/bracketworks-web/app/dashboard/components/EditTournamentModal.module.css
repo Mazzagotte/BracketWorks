@@ -1,0 +1,79 @@
+/* Create or edit tournament form inside the shared Modal. */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.groupHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.groupTitle {
+  margin: 0;
+  font: var(--type-subsection-title);
+  color: var(--bw-text-title);
+}
+
+.meta,
+.saveStatus {
+  margin: 0;
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}
+
+.saveStatus {
+  margin-right: auto;
+  align-self: center;
+}
+
+.day {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.dayTitle {
+  margin: 0;
+  font: var(--type-label);
+  color: var(--bw-text-title);
+}
+
+.times {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.timeRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-1) 0;
+  border-bottom: 1px solid var(--bw-border-subtle);
+  font: var(--type-table);
+  color: var(--bw-text-title);
+}
+
+.addRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-2);
+}
+
+@media (max-width: 767px) {
+  .saveStatus {
+    width: 100%;
+  }
+}

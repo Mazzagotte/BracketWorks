@@ -8,7 +8,8 @@ export type DashboardAction = {
   label: string;
   onClick: () => void;
   disabled: boolean;
-  indicator?: string;
+  /** Shows a trailing chevron icon when set. */
+  indicator?: 'chevron';
 };
 
 export type ContextPrimaryAction = {
@@ -124,7 +125,7 @@ export function useDashboardWorkflowModel<TProgramSummary extends ProgramSummary
     continueTournamentActions.push({
       key: 'add-player',
       label: 'Add player',
-      indicator: '›',
+      indicator: 'chevron',
       onClick: onGoPlayers,
       disabled: isReadOnly,
     });
@@ -133,7 +134,7 @@ export function useDashboardWorkflowModel<TProgramSummary extends ProgramSummary
     continueTournamentActions.push({
       key: 'view-brackets',
       label: 'View brackets',
-      indicator: '›',
+      indicator: 'chevron',
       onClick: onGoBrackets,
       disabled: false,
     });

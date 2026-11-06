@@ -1,14 +1,21 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Calendar, CheckCircle2, Clock3, Plus, Trash2, Trophy } from 'lucide-react';
-import { capitalizeFirstLetter } from '@bracketworks/ui';
+import { useCallback, useEffect, useId, useMemo, useState, type FormEvent } from 'react';
+import { Plus, Trash2 } from 'lucide-react';
+import {
+  Button,
+  CardDivider,
+  FormGrid,
+  ICON_SIZE,
+  Modal,
+  Notice,
+  SelectField,
+  TextField,
+  capitalizeFirstLetter,
+} from '@bracketworks/ui';
 
 import { Tournament, TournamentForm } from '../../lib/types';
 import { getErrorMessage } from '../../lib/error-utils';
-import { FormField, Input } from '../../components/UI';
-import CloseControl from '../../../components/CloseControl';
 import { formatIsoDateFull } from '../../lib/formatters';
-import { useModalBehavior } from '../../hooks/useModalBehavior';
-import mobileStyles from '../dashboard.module.css';
+import styles from './EditTournamentModal.module.css';
 import { getDatesBetween, normalizeTournamentForm } from '../utils/tournamentForm';
 
 const get12hrTimes = () => {
@@ -112,184 +119,147 @@ export function EditTournamentModal({
     onClose();
   }, [onClose, savedSnapshot]);
 
-  const dialogRef = useRef<HTMLFormElement>(null);
-  const { onOverlayClick } = useModalBehavior({ open, onClose: handleCancel, dialogRef });
+  const formId = useId();
 
-  if (!open) return null;
+  const handleSubmit = async (submitEvent: FormEvent<HTMLFormElement>) => {
+    submitEvent.preventDefault();
+    if (!hasUnsavedChanges) return;
+    setIsSaving(true);
+    setValidationError(null);
+    try {
+      await onSave(tournamentForm);
+      setSavedSnapshot(normalizeTournamentForm(tournamentForm));
+    } catch (err: unknown) {
+      setValidationError(getErrorMessage(err) || 'Failed to save.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
-    <div className={`${mobileStyles.modalOverlay} ${mobileStyles.settingsModalOverlay}`} onClick={onOverlayClick}>
-      <form
-        ref={dialogRef}
-        className={`${mobileStyles.modalCard} ${mobileStyles.tournamentModalContent} ${isCreateMode ? mobileStyles.createTournamentModalContent : ''}`}
-        role="dialog"
-        aria-modal="true"
-        aria-label={isCreateMode ? 'Create new tournament' : 'Edit tournament'}
-        tabIndex={-1}
-        onSubmit={async submitEvent => {
-          submitEvent.preventDefault();
-          if (!hasUnsavedChanges) return;
-          setIsSaving(true);
-          setValidationError(null);
-          try {
-            await onSave(tournamentForm);
-            const normalized = normalizeTournamentForm(tournamentForm);
-            setSavedSnapshot(normalized);
-          } catch (err: unknown) {
-            setValidationError(getErrorMessage(err) || 'Failed to save.');
-          } finally {
-            setIsSaving(false);
-          }
-        }}
-      >
-        {validationError && (
-          <div className="error-message">{validationError}</div>
-        )}
-        <CloseControl
-          position="absolute"
-          onClick={onClose}
-          className={`${mobileStyles.closeBtn} ${mobileStyles.settingsModalCloseButton}`}
-          label="Close create tournament modal"
-          title="Close"
-          size="sm"
-        />
-        <div className={mobileStyles.modalHeader}>
-          <h2 className={mobileStyles.modalTitle}>{isCreateMode ? 'Create New Tournament' : 'Edit Tournament'}</h2>
-          <p className={mobileStyles.modalSubtitle}>
-            {isCreateMode
-              ? 'Set up tournament details, dates, and squad times.'
-              : 'Update tournament details, dates, and squad times.'}
-          </p>
-        </div>
-        <div className={mobileStyles.tournamentContentWrapper}>
-          <div className={mobileStyles.tournamentFormBody}>
-            <p className={mobileStyles.tournamentSectionLabel}><Trophy aria-hidden="true" />Tournament Details</p>
-            <div className={mobileStyles.tournamentFormFields}>
-              <FormField label="Tournament Name" required>
-                <Input
-                  value={tournamentForm.name}
-                  onChange={changeEvent => setTournamentForm(form => ({ ...form, name: capitalizeFirstLetter(changeEvent.target.value) }))}
-                  placeholder="Tournament name"
-                  className={mobileStyles.tournamentInput}
-                  required
-                />
-              </FormField>
-              <FormField label="Location">
-                <Input
-                  value={tournamentForm.location || ''}
-                  onChange={changeEvent => setTournamentForm(form => ({ ...form, location: capitalizeFirstLetter(changeEvent.target.value) }))}
-                  placeholder="Bowling center or event location"
-                  className={mobileStyles.tournamentInput}
-                />
-              </FormField>
-              <p className={mobileStyles.tournamentSectionLabel}><Calendar aria-hidden="true" />Tournament Dates</p>
-              <div className={mobileStyles.tournamentDateRow}>
-                <FormField label="Start Date">
-                  <Input
-                    type="date"
-                    value={tournamentForm.start_date || ''}
-                    onChange={changeEvent => setTournamentForm(form => ({ ...form, start_date: changeEvent.target.value }))}
-                    className={`${mobileStyles.tournamentInput} ${mobileStyles.tournamentDateInput}`}
-                  />
-                </FormField>
-                <FormField label="End Date">
-                  <Input
-                    type="date"
-                    value={tournamentForm.end_date || ''}
-                    onChange={changeEvent => setTournamentForm(form => ({ ...form, end_date: changeEvent.target.value }))}
-                    className={`${mobileStyles.tournamentInput} ${mobileStyles.tournamentDateInput}`}
-                  />
-                </FormField>
-              </div>
-            </div>
-            <div className={mobileStyles.squadTimesSection}>
-              <div className={mobileStyles.squadTimesHeadingRow}>
-                <h3 className={mobileStyles.squadTimesTitle}><Clock3 aria-hidden="true" />Squad Times</h3>
-                <span className={mobileStyles.squadTimesCount}>{totalSquadTimesAdded} added</span>
-              </div>
-              {tournamentDays.length === 0 && <p className={mobileStyles.noSquadDaysHint}>Select a start and end date to add squad times for each tournament day.</p>}
-              {tournamentDays.map(date => (
-                <div key={date} className={mobileStyles.squadDay}>
-                  <div className={mobileStyles.squadDayLabel}>{formatIsoDateFull(date)}</div>
-                  <div className={mobileStyles.squadTimesList}>
-                    {(tournamentForm.squad_times[date] || []).map((time, i) => (
-                      <div key={i} className={mobileStyles.squadTimeEntry}>
-                        <span className={mobileStyles.squadTimeIcon} aria-hidden="true"><Clock3 /></span>
-                        <span className={mobileStyles.squadTimeDetails}>
-                          <strong>{formatIsoDateFull(date)}</strong>
-                          <span className={mobileStyles.squadTimeText}>{time}</span>
-                        </span>
-                        <button
-                          type="button"
-                          className={mobileStyles.squadTimeRemove}
-                          aria-label={`Remove ${time} squad time on ${formatIsoDateFull(date)}`}
+    <Modal
+      open={open}
+      onClose={handleCancel}
+      size="lg"
+      dismissible={!isSaving}
+      closeLabel={isCreateMode ? 'Close create tournament' : 'Close edit tournament'}
+      title={isCreateMode ? 'Create tournament' : 'Edit tournament'}
+      description={isCreateMode ? 'Set up the tournament details, dates, and squad times.' : 'Update the tournament details, dates, and squad times.'}
+      footer={(
+        <>
+          <span className={styles.saveStatus} role="status">{hasUnsavedChanges ? 'Unsaved changes' : 'All changes saved'}</span>
+          <Button variant="secondary" onClick={handleCancel} disabled={isSaving}>Cancel</Button>
+          <Button type="submit" form={formId} variant="primary" disabled={!canSave}>
+            {isSaving ? 'Saving...' : (isCreateMode ? 'Create tournament' : 'Save changes')}
+          </Button>
+        </>
+      )}
+    >
+      <form id={formId} className={styles.form} onSubmit={event => { void handleSubmit(event); }}>
+        {validationError ? <Notice tone="danger" role="alert">{validationError}</Notice> : null}
+
+        <section className={styles.group} aria-labelledby={`${formId}-details`}>
+          <h3 id={`${formId}-details`} className={styles.groupTitle}>Tournament details</h3>
+          <FormGrid>
+            <TextField
+              label="Tournament name"
+              fullRow
+              value={tournamentForm.name}
+              onChange={changeEvent => setTournamentForm(form => ({ ...form, name: capitalizeFirstLetter(changeEvent.target.value) }))}
+              required
+              autoFocus
+            />
+            <TextField
+              label="Location"
+              optional
+              fullRow
+              value={tournamentForm.location || ''}
+              onChange={changeEvent => setTournamentForm(form => ({ ...form, location: capitalizeFirstLetter(changeEvent.target.value) }))}
+              helper="Bowling center or event location"
+            />
+            <TextField
+              label="Start date"
+              type="date"
+              value={tournamentForm.start_date || ''}
+              onChange={changeEvent => setTournamentForm(form => ({ ...form, start_date: changeEvent.target.value }))}
+            />
+            <TextField
+              label="End date"
+              type="date"
+              value={tournamentForm.end_date || ''}
+              min={tournamentForm.start_date || undefined}
+              onChange={changeEvent => setTournamentForm(form => ({ ...form, end_date: changeEvent.target.value }))}
+            />
+          </FormGrid>
+        </section>
+
+        <CardDivider />
+
+        <section className={styles.group} aria-labelledby={`${formId}-squads`}>
+          <div className={styles.groupHeader}>
+            <h3 id={`${formId}-squads`} className={styles.groupTitle}>Squad times</h3>
+            <span className={styles.meta}>{totalSquadTimesAdded} added</span>
+          </div>
+          {tournamentDays.length === 0 ? (
+            <p className={styles.meta}>Choose a start and end date to add squad times for each day.</p>
+          ) : null}
+          {tournamentDays.map(date => {
+            const times = tournamentForm.squad_times[date] || [];
+            const dayLabel = formatIsoDateFull(date);
+            return (
+              <div key={date} className={styles.day}>
+                <h4 className={styles.dayTitle}>{dayLabel}</h4>
+                {times.length > 0 ? (
+                  <ul className={styles.times}>
+                    {times.map((time, i) => (
+                      <li key={`${time}-${i}`} className={styles.timeRow}>
+                        <span>{time}</span>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          iconOnly
+                          icon={<Trash2 size={ICON_SIZE.md} aria-hidden="true" />}
+                          aria-label={`Remove ${time} squad on ${dayLabel}`}
                           onClick={() => setTournamentForm(form => ({ ...form, squad_times: { ...form.squad_times, [date]: (form.squad_times[date] ?? []).filter((_, j) => j !== i) } }))}
-                        >
-                          <Trash2 aria-hidden="true" />
-                        </button>
-                      </div>
+                        />
+                      </li>
                     ))}
-                    <div className={mobileStyles.squadTimeAddRow}>
-                      <select
-                        className={`entries-select ${mobileStyles.squadTimeSelect} ${mobileStyles.tournamentInput}`}
-                        value={pendingTimes[date] || ''}
-                        onChange={event => setPendingTimes(times => ({ ...times, [date]: event.target.value }))}
-                      >
-                        <option value="" disabled>Select time</option>
-                        <optgroup label="AM">
-                          {availableTimeOptions.am.map(timeOption => (
-                            <option key={timeOption} value={timeOption}>{timeOption}</option>
-                          ))}
-                        </optgroup>
-                        <optgroup label="PM">
-                          {availableTimeOptions.pm.map(timeOption => (
-                            <option key={timeOption} value={timeOption}>{timeOption}</option>
-                          ))}
-                        </optgroup>
-                      </select>
-                      <button
-                        type="button"
-                        className={mobileStyles.squadTimeAddBtn}
-                        onClick={() => {
-                          const pending = pendingTimes[date];
-                          if (pending) {
-                            setTournamentForm(form => ({ ...form, squad_times: { ...form.squad_times, [date]: [...(form.squad_times[date] || []), pending] } }));
-                            setPendingTimes(times => ({ ...times, [date]: '' }));
-                          }
-                        }}
-                      >
-                        <Plus aria-hidden="true" /> Add Time
-                      </button>
-                    </div>
-                  </div>
+                  </ul>
+                ) : null}
+                <div className={styles.addRow}>
+                  <SelectField
+                    label={`Add a squad time on ${dayLabel}`}
+                    hideLabel
+                    value={pendingTimes[date] || ''}
+                    onChange={event => setPendingTimes(current => ({ ...current, [date]: event.target.value }))}
+                  >
+                    <option value="" disabled>Select time</option>
+                    <optgroup label="AM">
+                      {availableTimeOptions.am.map(timeOption => <option key={timeOption} value={timeOption}>{timeOption}</option>)}
+                    </optgroup>
+                    <optgroup label="PM">
+                      {availableTimeOptions.pm.map(timeOption => <option key={timeOption} value={timeOption}>{timeOption}</option>)}
+                    </optgroup>
+                  </SelectField>
+                  <Button
+                    variant="secondary"
+                    icon={<Plus size={ICON_SIZE.md} aria-hidden="true" />}
+                    disabled={!pendingTimes[date]}
+                    onClick={() => {
+                      const pending = pendingTimes[date];
+                      if (!pending) return;
+                      setTournamentForm(form => ({ ...form, squad_times: { ...form.squad_times, [date]: [...(form.squad_times[date] || []), pending] } }));
+                      setPendingTimes(current => ({ ...current, [date]: '' }));
+                    }}
+                  >
+                    Add time
+                  </Button>
                 </div>
-              ))}
-            </div>
-          </div>
-          <div className={mobileStyles.tournamentModalFooter}>
-            <div className={`${mobileStyles.tournamentSaveStatus} ${hasUnsavedChanges ? mobileStyles.tournamentSaveStatusDirty : mobileStyles.tournamentSaveStatusSaved}`}>
-              <CheckCircle2 aria-hidden="true" /> {hasUnsavedChanges ? 'Unsaved changes' : 'All changes saved'}
-            </div>
-            <div className={mobileStyles.tournamentModalFooterActions}>
-              <button
-                type="button"
-                className={mobileStyles.tournamentCancelButton}
-                onClick={handleCancel}
-                disabled={isSaving}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className={mobileStyles.tournamentSaveButton}
-                disabled={!canSave}
-              >
-                {isSaving ? 'Saving...' : (isCreateMode ? 'Create Tournament' : 'Save Changes')}
-              </button>
-            </div>
-          </div>
-        </div>
+              </div>
+            );
+          })}
+        </section>
       </form>
-    </div>
+    </Modal>
   );
 }

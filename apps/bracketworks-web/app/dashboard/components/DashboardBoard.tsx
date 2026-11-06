@@ -1,4 +1,4 @@
-import { ArrowRight, CheckCircle2, type LucideIcon } from 'lucide-react';
+import { ArrowRight, CheckCircle2, ChevronRight, type LucideIcon } from 'lucide-react';
 import {
   ActivityList,
   Badge,
@@ -216,7 +216,7 @@ export function DashboardBoard({
         disabled={action.disabled}
       >
         <span className={styles.actionLabel}>{action.label}</span>
-        {action.indicator ? <span className={styles.actionIndicator}>{action.indicator}</span> : null}
+        {action.indicator ? <ChevronRight size={ICON_SIZE.sm} aria-hidden="true" className={styles.actionIndicator} /> : null}
       </Button>
     );
   };
