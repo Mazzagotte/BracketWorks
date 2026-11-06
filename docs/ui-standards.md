@@ -337,6 +337,8 @@ trophy icon, the name in `section-title`, and "Won the final 214 to 191" and the
   on the right. Background `--bw-page`, 1px `--bw-border-subtle` bottom border, height `--space-16` (64).
 - **Nav items:** `button` role, text-secondary. Hover: text-primary. Active: text-primary on
   `--bw-surface-panel`, radius `--radius-md`. No orange outline pill.
+- Below 1024px the nav items collapse into a "Menu" disclosure (44px target) so the top bar
+  never scrolls sideways.
 - **Side navigation** (setup steps, settings sections): a plain vertical list on the page, not in
   a card. Items are `button` role in text-secondary, the active item is text-primary on
   `--bw-surface-panel`, and step status ("Optional", "Ready") is `body-small` under the label.
@@ -376,7 +378,7 @@ is replaced by these during the migration.
 | `useModalFocus` | Focus, Escape, and scroll lock for any custom modal surface (drawers); one shared stack |
 | `EmptyState` | No-data states: icon `ICON_SIZE['2xl']`, `section-title`, `body`, one action |
 | `ActivityList` | History and audit rows |
-| `TopNav`, `TopNavBrand`, `NavItem`, `navItemClassName()`, `SideNav`, `sideNavItemClassName()` | App navigation |
+| `TopNav`, `TopNavBrand`, `topNavBrandClassName()`, `NavItem`, `navItemClassName()`, `SideNav`, `sideNavItemClassName()` | App navigation |
 | `Avatar` | User initials |
 | `BracketMatch`, `BracketTree` (to build in the migration) | Bracket boxes and tree for the Brackets page and Live View (§7a) |
 | `ICON_SIZE` | Every icon size |

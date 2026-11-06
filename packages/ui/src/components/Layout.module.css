@@ -206,6 +206,14 @@
     padding: var(--space-4);
   }
 
+  .flush {
+    padding: var(--space-4) 0 0;
+  }
+
+  .flush > .cardHeader {
+    padding: 0 var(--space-4);
+  }
+
   .statGroup {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

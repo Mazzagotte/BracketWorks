@@ -25,7 +25,7 @@ export type { DataTableProps, PaginationProps, TableToolbarProps } from './compo
 export { ConfirmDialog, Modal } from './components/Overlay';
 export type { ConfirmDialogProps, ModalProps } from './components/Overlay';
 
-export { NavItem, SideNav, TopNav, TopNavBrand, navItemClassName, sideNavItemClassName } from './components/Nav';
+export { NavItem, SideNav, TopNav, TopNavBrand, topNavBrandClassName, navItemClassName, sideNavItemClassName } from './components/Nav';
 export type { NavItemProps, SideNavItem, SideNavProps, SideNavSection, TopNavBrandProps, TopNavProps } from './components/Nav';
 
 export function capitalizeFirstLetter(value: string): string {

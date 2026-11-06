@@ -176,15 +176,10 @@
   height: var(--touch-target-comfortable);
 }
 
+/* Tablets cannot fit a tournament's full nav row, so the Menu disclosure starts at 1023px. */
 @media (max-width: 1023px) {
   .context {
     display: none;
-  }
-}
-
-@media (max-width: 767px) {
-  .topNav {
-    gap: var(--space-3);
   }
 
   .items {
@@ -203,5 +198,11 @@
 
   .brand {
     margin-right: auto;
+  }
+}
+
+@media (max-width: 767px) {
+  .topNav {
+    gap: var(--space-3);
   }
 }

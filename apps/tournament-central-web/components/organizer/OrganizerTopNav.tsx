@@ -1,6 +1,6 @@
 'use client';
 
-import { Avatar, ICON_SIZE, Menu, MenuItem, MenuStatus, TopNav, menuItemClassName, navItemClassName } from '@bracketworks/ui';
+import { Avatar, ICON_SIZE, Menu, MenuItem, MenuStatus, TopNav, menuItemClassName, navItemClassName, topNavBrandClassName } from '@bracketworks/ui';
 import { ChevronDown } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -9,7 +9,6 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { signOut } from '../auth/authSession';
 import { useAuthSession } from '../auth/useAuthSession';
-import styles from './OrganizerTopNav.module.css';
 
 export default function OrganizerTopNav() {
   const pathname = usePathname();
@@ -64,7 +63,7 @@ export default function OrganizerTopNav() {
     <TopNav
       navLabel="Organizer"
       brand={
-        <Link href="/organizer" className={styles.brand}>
+        <Link href="/organizer" className={topNavBrandClassName()}>
           <Image src="/TC_logo_No_Text.svg" alt="" width={ICON_SIZE['2xl']} height={ICON_SIZE['2xl']} priority />
           Tournament Central
         </Link>

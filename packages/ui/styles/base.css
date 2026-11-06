@@ -961,7 +961,6 @@ input[type='number'] { appearance: textfield; -moz-appearance: textfield; }
 }
 
 @media (max-width: 480px) {
-  :root { --font-size-4xl: var(--font-size-6xl); --font-size-3xl: var(--font-size-4xl); --font-size-2xl: var(--font-size-3xl); }
   .container { padding: var(--spacing-sm); }
   .card { padding: var(--spacing-md); margin: var(--spacing-xs) 0; border-radius: var(--radius-md); }
   .row { flex-direction: column; align-items: stretch; gap: var(--spacing-sm); }

@@ -63,9 +63,14 @@ export interface TopNavBrandProps extends Omit<AnchorHTMLAttributes<HTMLAnchorEl
   className?: string;
 }
 
+/** Class names for the top-bar brand link; use on Next.js `<Link>` for client-side routing. */
+export function topNavBrandClassName(className?: string): string {
+  return cx(styles.brand, className);
+}
+
 export function TopNavBrand({ mark, name, className, ...rest }: TopNavBrandProps) {
   return (
-    <a className={cx(styles.brand, className)} {...rest}>
+    <a className={topNavBrandClassName(className)} {...rest}>
       {mark}
       {name}
     </a>
