@@ -1,12 +1,25 @@
 'use client';
 
-import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowLeft, Download, Trash2 } from 'lucide-react';
+import { Download, FileText, MoreHorizontal, Trash2, Upload } from 'lucide-react';
+import {
+  Button,
+  Card,
+  CardHeader,
+  EmptyState,
+  FormGrid,
+  ICON_SIZE,
+  Menu,
+  MenuItem,
+  Notice,
+  Page,
+  PageHeader,
+  SelectField,
+  TextField,
+} from '@bracketworks/ui';
 
 import { useTournamentContext } from '@/components/organizer/TournamentContext';
 import { useConfirmation } from '@/components/organizer/useConfirmation';
-import { organizerRoutes } from '@/components/organizer/organizerRoutes';
 import {
   deleteTournamentDocument,
   downloadTournamentDocument,
@@ -15,14 +28,13 @@ import {
   type TournamentDocumentKind,
   type TournamentDocumentRecord,
 } from '@/components/organizer/organizerApi';
-import styles from './page.module.css';
-import { ICON_SIZE } from '@bracketworks/ui';
+import styles from './documents.module.css';
 
 const DOC_TYPE_OPTIONS: Array<{ value: TournamentDocumentKind; label: string }> = [
   { value: 'rules', label: 'Rules' },
   { value: 'flyer', label: 'Flyer' },
-  { value: 'oil_pattern', label: 'Oil Pattern' },
-  { value: 'entry_form', label: 'Entry Form' },
+  { value: 'oil_pattern', label: 'Oil pattern' },
+  { value: 'entry_form', label: 'Entry form' },
   { value: 'notice', label: 'Notice' },
   { value: 'other', label: 'Other' },
 ];
@@ -45,6 +57,7 @@ function formatUploadedAt(value: string): string {
 
 export default function OrganizerTournamentDocumentsPage() {
   const { tournamentId, tournament } = useTournamentContext();
+  const [fileName, setFileName] = useState('');
   const [documents, setDocuments] = useState<TournamentDocumentRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -95,6 +108,7 @@ export default function OrganizerTournamentDocumentsPage() {
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
+      setFileName('');
       await refreshDocuments();
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : 'Unable to upload document.');
@@ -144,69 +158,92 @@ export default function OrganizerTournamentDocumentsPage() {
   };
 
   return (
-    <main className={styles.shell}>
+    <Page width="narrow">
       {confirmationDialog}
-      <header className={styles.header}>
-        <div>
-          <h1>Documents</h1>
-          <p>{tournament?.name || 'Tournament'}</p>
-        </div>
-        <Link href={organizerRoutes.overview(tournamentId)} className={styles.backButton}>
-          <ArrowLeft size={ICON_SIZE.sm} aria-hidden="true" /> Back to Overview
-        </Link>
-      </header>
+      <PageHeader
+        title="Documents"
+        description={`Rules, flyers, and other files bowlers can download for ${tournament?.name || 'this tournament'}.`}
+      />
 
-      {error ? <p className={styles.error} role="alert">{error}</p> : null}
+      {error ? <Notice tone="danger" role="alert">{error}</Notice> : null}
 
-      <section className={styles.uploadCard} aria-label="Upload a document">
-        <h2>Upload Document</h2>
-        <div className={styles.uploadForm}>
-          <label className={styles.uploadField}>
-            Type
-            <select value={docType} onChange={(event) => setDocType(event.target.value as TournamentDocumentKind)}>
-              {DOC_TYPE_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>{option.label}</option>
-              ))}
-            </select>
-          </label>
-          <label className={styles.uploadField}>
-            File
-            <input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" />
-          </label>
-          <button type="button" className={styles.uploadButton} onClick={() => void handleUpload()} disabled={isUploading}>
+      <Card aria-label="Upload a document">
+        <CardHeader title="Upload a document" description="PDF, Word, PNG, or JPG." />
+        <FormGrid>
+          <SelectField label="Type" value={docType} onChange={(event) => setDocType(event.target.value as TournamentDocumentKind)}>
+            {DOC_TYPE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+          </SelectField>
+          <TextField
+            ref={fileInputRef}
+            label="File"
+            type="file"
+            accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+            className={styles.fileField}
+            onChange={(event) => setFileName(event.target.files?.[0]?.name ?? '')}
+          />
+        </FormGrid>
+        <div className={styles.actions}>
+          <Button
+            variant="primary"
+            icon={<Upload size={ICON_SIZE.md} aria-hidden="true" />}
+            onClick={() => void handleUpload()}
+            disabled={isUploading || !fileName}
+          >
             {isUploading ? 'Uploading...' : 'Upload'}
-          </button>
+          </Button>
         </div>
-      </section>
+      </Card>
 
-      {isLoading ? <section className={styles.loading}>Loading documents...</section> : null}
+      {isLoading ? <Notice tone="info">Loading documents...</Notice> : null}
 
       {!isLoading ? (
-        <section className={styles.listCard} aria-label="Tournament documents">
-          <h2>Tournament Documents</h2>
+        <Card aria-label="Tournament documents">
+          <CardHeader title="Tournament documents" description={`${documents.length} file${documents.length === 1 ? '' : 's'}`} />
           {documents.length === 0 ? (
-            <p className={styles.empty}>No documents have been uploaded yet.</p>
+            <EmptyState
+              icon={<FileText size={ICON_SIZE['2xl']} aria-hidden="true" />}
+              title="No documents yet"
+              description="No documents have been uploaded yet."
+            />
           ) : (
-            <div className={styles.docList}>
+            <ul className={styles.rows}>
               {documents.map((document) => (
-                <div key={document.id} className={styles.docRow}>
-                  <strong>{document.file_name}</strong>
-                  <span className={styles.docTypeChip}>{DOC_TYPE_LABEL[document.doc_type] ?? 'Other'}</span>
-                  <span>{formatFileSize(document.file_size)} &middot; {formatUploadedAt(document.uploaded_at)}</span>
-                  <div className={styles.docActions}>
-                    <button type="button" aria-label={`Download ${document.file_name}`} onClick={() => void handleDownload(document)}>
-                      <Download size={ICON_SIZE.sm} aria-hidden="true" /> Download
-                    </button>
-                    <button type="button" aria-label={`Delete ${document.file_name}`} className={styles.deleteButton} onClick={() => void handleDelete(document)}>
-                      <Trash2 size={ICON_SIZE.sm} aria-hidden="true" /> Delete
-                    </button>
+                <li key={document.id} className={styles.row}>
+                  <div className={styles.rowText}>
+                    <span className={styles.rowTitle}>{document.file_name}</span>
+                    <span className={styles.rowMeta}>
+                      {DOC_TYPE_LABEL[document.doc_type] ?? 'Other'} · {formatFileSize(document.file_size)} · {formatUploadedAt(document.uploaded_at)}
+                    </span>
                   </div>
-                </div>
+                  <div className={styles.rowActions}>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      icon={<Download size={ICON_SIZE.md} aria-hidden="true" />}
+                      aria-label={`Download ${document.file_name}`}
+                      onClick={() => void handleDownload(document)}
+                    >
+                      Download
+                    </Button>
+                    <Menu triggerLabel={`More actions for ${document.file_name}`} trigger={<MoreHorizontal size={ICON_SIZE.md} aria-hidden="true" />}>
+                      <MenuItem
+                        tone="danger"
+                        icon={<Trash2 size={ICON_SIZE.md} />}
+                        aria-label={`Delete ${document.file_name}`}
+                        onSelect={() => void handleDelete(document)}
+                      >
+                        Delete document
+                      </MenuItem>
+                    </Menu>
+                  </div>
+                </li>
               ))}
-            </div>
+            </ul>
           )}
-        </section>
+        </Card>
       ) : null}
-    </main>
+    </Page>
   );
 }

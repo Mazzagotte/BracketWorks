@@ -1,0 +1,56 @@
+/* Documents page: upload actions and the divider-row file list. */
+
+.fileField input {
+  padding-top: var(--space-2);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--space-4);
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+}
+
+.row + .row {
+  border-top: 1px solid var(--bw-border-subtle);
+}
+
+.rowText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.rowTitle {
+  font: var(--type-subsection-title);
+  color: var(--bw-text-title);
+  overflow-wrap: anywhere;
+}
+
+.rowMeta {
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}
+
+.rowActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
