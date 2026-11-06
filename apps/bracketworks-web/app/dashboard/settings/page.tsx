@@ -19,7 +19,7 @@ export default function TournamentSettingsPage() {
   }, [router, tournamentIdParam]);
 
   if (!tournamentId || Number.isNaN(tournamentId)) {
-    return <div className={pageStyles.pageState}>Loading tournament settings...</div>;
+    return <p className={pageStyles.status} role="status">Loading tournament settings...</p>;
   }
 
   return <TournamentSettingsContent tournamentId={tournamentId} layout={isModalView ? 'route-modal' : 'page'} />;

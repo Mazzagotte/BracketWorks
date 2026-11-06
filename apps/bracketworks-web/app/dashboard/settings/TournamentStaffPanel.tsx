@@ -1,14 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ShieldCheck, Trash2, UserPlus } from 'lucide-react';
+import { MoreHorizontal, Trash2, UserPlus } from 'lucide-react';
+import { Badge, Button, ConfirmDialog, ICON_SIZE, Menu, MenuItem, SelectField, TextField } from '@bracketworks/ui';
 
 import { apiClient } from '../../lib/api';
 import { useAuth } from '../../lib/auth-context';
 import { useToast } from '../../components/Toast';
-import formStyles from '../../styles/forms.module.css';
-import buttonStyles from '../../styles/buttons.module.css';
-import cardStyles from '../../styles/cards.module.css';
+import { SettingsSection } from './SettingsSection';
 import styles from './dashboard-settings-page.module.css';
 
 type StaffRole = 'tournament_admin' | 'entries_manager' | 'scorer' | 'viewer';
@@ -22,11 +21,13 @@ type StaffMember = {
 };
 
 const roleLabels: Record<StaffMember['role'], string> = {
-  owner: 'Owner', tournament_admin: 'Tournament Admin', entries_manager: 'Entries Manager',
+  owner: 'Owner', tournament_admin: 'Tournament admin', entries_manager: 'Entries manager',
   scorer: 'Scorer', viewer: 'Viewer',
 };
 
-export function TournamentStaffPanel({ tournamentId, ownerUserId }: { tournamentId: number; ownerUserId: number }) {
+const ROLE_OPTIONS: StaffRole[] = ['tournament_admin', 'entries_manager', 'scorer', 'viewer'];
+
+export function TournamentStaffPanel({ tournamentId, ownerUserId, inModal = false }: { tournamentId: number; ownerUserId: number; inModal?: boolean }) {
   const { currentUser } = useAuth();
   const { addToast } = useToast();
   const [members, setMembers] = useState<StaffMember[]>([]);
@@ -36,6 +37,7 @@ export function TournamentStaffPanel({ tournamentId, ownerUserId }: { tournament
   const [submitting, setSubmitting] = useState(false);
   const [updatingMemberId, setUpdatingMemberId] = useState<number | null>(null);
   const [removingMemberId, setRemovingMemberId] = useState<number | null>(null);
+  const [pendingRemoval, setPendingRemoval] = useState<StaffMember | null>(null);
 
   const loadMembers = useCallback(async () => {
     setLoading(true);
@@ -87,7 +89,7 @@ export function TournamentStaffPanel({ tournamentId, ownerUserId }: { tournament
   };
 
   const remove = async (member: StaffMember) => {
-    if (member.id === null || !window.confirm(`Remove ${member.display_name} from this tournament?`)) return;
+    if (member.id === null) return;
     setRemovingMemberId(member.id);
     try {
       await apiClient.delete(`/api/v1/tournament-staff/${tournamentId}/members/${member.id}`);
@@ -97,56 +99,69 @@ export function TournamentStaffPanel({ tournamentId, ownerUserId }: { tournament
       addToast({ type: 'error', message: 'Unable to remove the staff member.' });
     } finally {
       setRemovingMemberId(null);
+      setPendingRemoval(null);
     }
   };
 
   return (
-    <section className={`${cardStyles.cardPrimary} ${styles.staffPanel}`} aria-labelledby="tournament-staff-title">
-      <div className={`${cardStyles.cardHeaderSection} ${styles.staffHeader}`}>
-        <span className={styles.staffIcon}><ShieldCheck aria-hidden="true" /></span>
-        <div>
-          <h2 id="tournament-staff-title">Tournament Staff</h2>
-          <p>Give each operator only the access needed for their role.</p>
+    <SettingsSection id="tournament-staff" inModal={inModal} title="Tournament staff" description="Give each operator only the access their role needs.">
+      {canManage ? (
+        <div className={styles.inviteRow}>
+          <TextField label="Staff email" type="email" value={email} onChange={event => setEmail(event.target.value)} placeholder="staff@example.com" />
+          <SelectField label="Role" value={role} onChange={event => setRole(event.target.value as StaffRole)}>
+            {ROLE_OPTIONS.map(option => <option key={option} value={option}>{roleLabels[option]}</option>)}
+          </SelectField>
+          <Button variant="secondary" icon={<UserPlus size={ICON_SIZE.md} aria-hidden="true" />} onClick={() => void invite()} disabled={!email.trim() || submitting}>
+            {submitting ? 'Inviting...' : 'Invite'}
+          </Button>
         </div>
-      </div>
+      ) : null}
 
-      <div className={cardStyles.cardBodySection}>
-        {canManage && (
-          <div className={styles.staffInviteRow}>
-            <input className={`${formStyles.field} ${styles.staffField}`} type="email" value={email} onChange={event => setEmail(event.target.value)} placeholder="staff@example.com" aria-label="Staff email" />
-            <select className={`${formStyles.field} ${styles.staffField}`} value={role} onChange={event => setRole(event.target.value as StaffRole)} aria-label="Staff role">
-              <option value="tournament_admin">Tournament Admin</option>
-              <option value="entries_manager">Entries Manager</option>
-              <option value="scorer">Scorer</option>
-              <option value="viewer">Viewer</option>
-            </select>
-            <button type="button" className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`} onClick={() => void invite()} disabled={!email.trim() || submitting}>
-              <UserPlus aria-hidden="true" />{submitting ? 'Inviting…' : 'Invite'}
-            </button>
-          </div>
-        )}
-
-        {loading ? <p className={styles.staffState} role="status">Loading staff…</p> : (
-          <div className={styles.staffList}>
-            {members.map(member => (
-              <div className={styles.staffRow} key={member.id ?? member.user_id}>
-                <div><strong>{member.display_name}</strong><span>{member.email}</span></div>
+      {loading ? <p className={styles.status} role="status">Loading staff...</p> : (
+        <ul className={styles.staffList}>
+          {members.map(member => {
+            const busy = updatingMemberId === member.id || removingMemberId === member.id;
+            return (
+              <li className={styles.staffRow} key={member.id ?? member.user_id}>
+                <div className={styles.staffIdentity}>
+                  <span className={styles.staffName}>{member.display_name}</span>
+                  <span className={styles.meta}>{member.email}</span>
+                </div>
                 {canManage && member.role !== 'owner' ? (
                   <div className={styles.staffControls}>
-                    <select className={`${formStyles.field} ${styles.staffField}`} value={member.role} onChange={event => void updateRole(member, event.target.value as StaffRole)} aria-label={`Role for ${member.display_name}`} disabled={updatingMemberId === member.id || removingMemberId === member.id}>
-                      <option value="tournament_admin">Tournament Admin</option>
-                      <option value="entries_manager">Entries Manager</option>
-                      <option value="scorer">Scorer</option>
-                      <option value="viewer">Viewer</option>
-                    </select>
-                    <button type="button" className={styles.staffRemoveButton} onClick={() => void remove(member)} aria-label={`Remove ${member.display_name}`} disabled={updatingMemberId === member.id || removingMemberId === member.id}><Trash2 aria-hidden="true" /></button>
+                    <SelectField
+                      label={`Role for ${member.display_name}`}
+                      hideLabel
+                      value={member.role}
+                      onChange={event => void updateRole(member, event.target.value as StaffRole)}
+                      disabled={busy}
+                    >
+                      {ROLE_OPTIONS.map(option => <option key={option} value={option}>{roleLabels[option]}</option>)}
+                    </SelectField>
+                    <Menu triggerLabel={`More actions for ${member.display_name}`} trigger={<MoreHorizontal size={ICON_SIZE.md} aria-hidden="true" />}>
+                      <MenuItem tone="danger" icon={<Trash2 size={ICON_SIZE.md} aria-hidden="true" />} disabled={busy} onSelect={() => setPendingRemoval(member)}>
+                        Remove from tournament
+                      </MenuItem>
+                    </Menu>
                   </div>
-                ) : <span className={styles.staffRole}>{roleLabels[member.role]}</span>}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </section>
+                ) : <Badge tone="neutral">{roleLabels[member.role]}</Badge>}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      <ConfirmDialog
+        open={pendingRemoval !== null}
+        tone="danger"
+        title={`Remove ${pendingRemoval?.display_name ?? 'this person'}?`}
+        description="They lose access to this tournament right away."
+        confirmLabel="Remove"
+        busy={removingMemberId !== null}
+        busyLabel="Removing..."
+        onCancel={() => setPendingRemoval(null)}
+        onConfirm={() => { if (pendingRemoval) void remove(pendingRemoval); }}
+      />
+    </SettingsSection>
   );
 }
