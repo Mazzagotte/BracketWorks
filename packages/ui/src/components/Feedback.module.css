@@ -1,0 +1,225 @@
+/* Badges, notices, progress, empty states, activity lists, avatars:
+   docs/ui-standards.md sections 5, 6, 7, 8a. */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  height: var(--space-6);
+  padding: 0 var(--space-2-5);
+  border-radius: var(--radius-full);
+  font: var(--type-badge);
+  white-space: nowrap;
+}
+
+.badgeNeutral {
+  background: var(--bw-surface-panel);
+  color: var(--bw-text-body);
+}
+
+.badgeSuccess {
+  background: color-mix(in srgb, var(--color-success) 12%, transparent);
+  color: var(--color-success);
+}
+
+.badgeWarning {
+  background: color-mix(in srgb, var(--color-warning) 12%, transparent);
+  color: var(--color-warning);
+}
+
+.badgeDanger {
+  background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+  color: var(--color-danger);
+}
+
+.badgeInfo {
+  background: color-mix(in srgb, var(--color-info) 14%, transparent);
+  color: var(--color-blue-light-2);
+}
+
+.badgeAccent {
+  background: color-mix(in srgb, var(--color-accent-primary) 12%, transparent);
+  color: var(--color-accent-primary);
+}
+
+.notice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  font: var(--type-body);
+  color: var(--bw-text-title);
+}
+
+.noticeMessage {
+  flex: 1;
+  min-width: 0;
+}
+
+.noticeAction {
+  flex-shrink: 0;
+}
+
+.noticeInfo {
+  background: color-mix(in srgb, var(--color-info) 12%, transparent);
+}
+
+.noticeInfo .noticeIcon {
+  color: var(--color-blue-light-2);
+}
+
+.noticeSuccess {
+  background: color-mix(in srgb, var(--color-success) 12%, transparent);
+}
+
+.noticeSuccess .noticeIcon {
+  color: var(--color-success);
+}
+
+.noticeWarning {
+  background: color-mix(in srgb, var(--color-warning) 12%, transparent);
+}
+
+.noticeWarning .noticeIcon {
+  color: var(--color-warning);
+}
+
+.noticeDanger {
+  background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+}
+
+.noticeDanger .noticeIcon {
+  color: var(--color-danger);
+}
+
+.noticeIcon {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+}
+
+.progressBar {
+  display: block;
+  width: 100%;
+  height: var(--space-1-5);
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--radius-full);
+  appearance: none;
+  background: var(--bw-surface-panel);
+}
+
+.progressBar::-webkit-progress-bar {
+  border-radius: inherit;
+  background: var(--bw-surface-panel);
+}
+
+.progressBar::-webkit-progress-value {
+  border-radius: inherit;
+  background: var(--color-accent-primary);
+}
+
+.progressBar::-moz-progress-bar {
+  border-radius: inherit;
+  background: var(--color-accent-primary);
+}
+
+.progressComplete::-webkit-progress-value {
+  background: var(--color-success);
+}
+
+.progressComplete::-moz-progress-bar {
+  background: var(--color-success);
+}
+
+.progressText {
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-10) var(--space-6);
+  text-align: center;
+}
+
+.emptyIcon {
+  display: inline-flex;
+  color: var(--bw-text-body);
+}
+
+.emptyTitle {
+  margin: 0;
+  font: var(--type-section-title);
+  color: var(--bw-text-title);
+}
+
+.emptyDescription {
+  max-width: var(--size-md);
+  margin: 0;
+  font: var(--type-body);
+  color: var(--bw-text-body);
+}
+
+.emptyAction {
+  margin-top: var(--space-2);
+}
+
+.activityList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.activityItem {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-1) var(--space-4);
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--bw-border-subtle);
+}
+
+.activityItem:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.activityTitle {
+  font: var(--type-subsection-title);
+  color: var(--bw-text-title);
+}
+
+.activityTime {
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+  white-space: nowrap;
+}
+
+.activityDetail {
+  grid-column: 1 / -1;
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}
+
+.avatar {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-8);
+  height: var(--space-8);
+  border-radius: var(--radius-full);
+  background: var(--bw-surface-panel);
+  color: var(--bw-text-title);
+  font: var(--type-badge);
+  text-transform: uppercase;
+}

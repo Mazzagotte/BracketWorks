@@ -1,0 +1,104 @@
+/* Buttons: docs/ui-standards.md section 6. */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  height: var(--control-height);
+  padding: 0 var(--space-4);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--bw-text-title);
+  font: var(--type-button);
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    color var(--motion-duration-fast) var(--motion-ease-standard),
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    border-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.button:disabled,
+.button[aria-disabled='true'] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sm {
+  height: var(--control-height-sm);
+  padding: 0 var(--space-3);
+}
+
+.fullWidth {
+  width: 100%;
+}
+
+.iconOnly {
+  width: var(--control-height);
+  padding: 0;
+}
+
+.iconOnly.sm {
+  width: var(--control-height-sm);
+}
+
+.primary {
+  background: var(--color-accent-primary);
+  color: var(--color-on-accent);
+}
+
+.primary:not(:disabled):hover {
+  background: var(--color-accent-hover);
+}
+
+.accentOutline {
+  border-color: var(--color-accent-primary);
+  color: var(--color-accent-primary);
+}
+
+.accentOutline:not(:disabled):hover {
+  background: color-mix(in srgb, var(--color-accent-primary) 12%, transparent);
+}
+
+.secondary {
+  border-color: var(--bw-border-card);
+  color: var(--bw-text-title);
+}
+
+.secondary:not(:disabled):hover {
+  background: var(--bw-surface-panel);
+}
+
+.ghost {
+  color: var(--bw-text-body);
+}
+
+.ghost:not(:disabled):hover {
+  background: var(--bw-surface-panel);
+  color: var(--bw-text-title);
+}
+
+.ghostDanger {
+  color: var(--color-danger);
+}
+
+.ghostDanger:not(:disabled):hover {
+  background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+}
+
+.danger {
+  background: var(--color-danger-strong);
+  color: var(--color-white-pure);
+}
+
+.danger:not(:disabled):hover {
+  background: var(--color-danger);
+}
+
+.icon {
+  display: inline-flex;
+  flex-shrink: 0;
+}

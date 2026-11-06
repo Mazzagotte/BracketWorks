@@ -99,6 +99,7 @@
   --touch-target-min: 36px;
   --touch-target-comfortable: 44px;
   --control-height: 38px;
+  --control-height-sm: 32px;
   --input-height: var(--control-height);
   --input-height-sm: 32px;
   --input-height-lg: 48px;
@@ -141,4 +142,19 @@
   --bw-card-radius: var(--radius-2xl);
   --bw-control-radius: var(--radius-md);
   --bw-modal-radius: var(--radius-2xl);
+
+  /* Text styles (docs/ui-standards.md section 2). Use as `font: var(--type-<role>)`.
+     Case, tracking, and color are set by the component that uses the role. */
+  --type-page-title: var(--font-weight-bold) var(--font-size-4xl) / 1.2 var(--font-family-primary);
+  --type-section-title: var(--font-weight-bold) var(--font-size-xl) / 1.3 var(--font-family-primary);
+  --type-subsection-title: var(--font-weight-semibold) var(--font-size-md) / 1.4 var(--font-family-primary);
+  --type-body: var(--font-weight-normal) var(--font-size-base) / 1.5 var(--font-family-primary);
+  --type-body-small: var(--font-weight-normal) var(--font-size-sm) / 1.45 var(--font-family-primary);
+  --type-label: var(--font-weight-semibold) var(--font-size-sm) / 1.3 var(--font-family-primary);
+  --type-overline: var(--font-weight-semibold) var(--font-size-xs) / 1.2 var(--font-family-primary);
+  --type-overline-tracking: 0.08em;
+  --type-stat: var(--font-weight-bold) var(--font-size-5xl) / 1.1 var(--font-family-primary);
+  --type-table: var(--font-weight-normal) var(--font-size-base) / 1.4 var(--font-family-primary);
+  --type-button: var(--font-weight-semibold) var(--font-size-base) / 1 var(--font-family-primary);
+  --type-badge: var(--font-weight-semibold) var(--font-size-xs) / 1 var(--font-family-primary);
 }

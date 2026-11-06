@@ -1,13 +1,28 @@
-/** Standard icon sizes (px) shared by both apps. Use these instead of numeric icon `size` props. */
-export const ICON_SIZE = {
-  xs: 12,
-  sm: 14,
-  md: 16,
-  lg: 18,
-  xl: 20,
-  '2xl': 24,
-  '3xl': 28,
-} as const;
+// Shared UI for BracketWorks and Tournament Central.
+// Every component follows docs/ui-standards.md. Build pages from these, not local copies.
+
+export { ICON_SIZE } from './iconSize';
+
+export { Button, ButtonLink, buttonClassName } from './components/Button';
+export type { ButtonLinkProps, ButtonProps, ButtonSize, ButtonStyleOptions, ButtonVariant } from './components/Button';
+
+export { Card, CardDivider, CardHeader, PageHeader, StatGroup } from './components/Layout';
+export type { CardHeaderProps, CardProps, PageHeaderProps, StatGroupProps, StatItem } from './components/Layout';
+
+export { ActivityList, Avatar, Badge, EmptyState, Notice, ProgressBar } from './components/Feedback';
+export type { ActivityItem, BadgeProps, EmptyStateProps, NoticeProps, ProgressBarProps, StatusTone } from './components/Feedback';
+
+export { FormGrid, SegmentedControl, SelectField, TextAreaField, TextField } from './components/Form';
+export type { SegmentedControlProps, SegmentedOption, SelectFieldProps, TextAreaFieldProps, TextFieldProps } from './components/Form';
+
+export { DataTable, Pagination, TableToolbar } from './components/Table';
+export type { DataTableProps, PaginationProps, TableToolbarProps } from './components/Table';
+
+export { ConfirmDialog, Modal } from './components/Overlay';
+export type { ConfirmDialogProps, ModalProps } from './components/Overlay';
+
+export { NavItem, SideNav, TopNav, TopNavBrand, navItemClassName, sideNavItemClassName } from './components/Nav';
+export type { NavItemProps, SideNavItem, SideNavProps, SideNavSection, TopNavBrandProps, TopNavProps } from './components/Nav';
 
 export function capitalizeFirstLetter(value: string): string {
   const firstLetterIndex = value.search(/\S/);

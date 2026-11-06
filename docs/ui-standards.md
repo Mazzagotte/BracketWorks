@@ -80,6 +80,9 @@ At ≤1023px the side column moves under the main column.
 
 Font: `--font-family-primary` (Inter stack). Monospace only for codes and IDs: `--font-family-code`.
 
+Each role is a token: write `font: var(--type-<role>)` (for example `var(--type-section-title)`).
+Overline also needs `letter-spacing: var(--type-overline-tracking)` and `text-transform: uppercase`.
+
 Weights: **400 regular, 600 semibold, 700 bold. Nothing else** (no 500/650/750/800/850/900).
 
 | Role | Use for | Size | Weight | Line height | Case and tracking | Color |
@@ -179,12 +182,11 @@ All spacing uses `--space-*` (N × 4px). The standard gaps:
 | Control | Height | Padding | Radius | Text |
 |---|---|---|---|---|
 | Button (default) | `--control-height` (38) | `0 var(--space-4)` | `--radius-md` (8) | `button` role |
-| Button small | `--btn-height-sm` (32)* | `0 var(--space-3)` | `--radius-md` | `button` role |
+| Button small | `--control-height-sm` (32) | `0 var(--space-3)` | `--radius-md` | `button` role |
 | Input / select | `--control-height` (38) | `0 var(--space-3)` | `--radius-md` | 13px (`--font-size-base`, same as body); 16px at ≤767px |
 | Textarea | min 96px (`--space-24`) | `var(--space-2-5) var(--space-3)` | `--radius-md` | 13px (`--font-size-base`) |
 | Badge | `--space-6` (24) | `0 var(--space-2-5)` | `--radius-full` | `badge` role |
 
-*`--btn-height-sm` is currently 36px and will be set to 32px.
 
 Button variants (use exactly these):
 - **Primary:** solid `--color-accent-primary` with `--color-on-accent` text (near-black). White
@@ -252,7 +254,7 @@ Neutral badge: `--bw-surface-panel` background with secondary text.
 - Table toolbar, above the table inside the same card: search input (fills the row), then
   filter selects, then a secondary action (Export). Gap `--space-2`. Primary actions such as
   "Manual registration" go in the card header, not the toolbar.
-- Editable tables (scores, entries): cell inputs use the compact height `--btn-height-sm` (32)
+- Editable tables (scores, entries): cell inputs use the compact height `--control-height-sm` (32)
   and are right-aligned for numbers. Do not highlight whole columns. Emphasize a totals column
   with weight 700 only.
 - Pagination, bottom of the card: "Showing 1–25 of 140" in `body-small` on the left, and
@@ -298,27 +300,32 @@ Neutral badge: `--bw-surface-panel` background with secondary text.
 - Wrap any animation in `@media (prefers-reduced-motion: no-preference)`.
 
 ## 10. Shared components
-These live in `packages/ui` and are used by both apps. Migration: BW's
-`app/components/primitives` moves here.
+Import everything from `@bracketworks/ui`. Source: `packages/ui/src/components`. Tests:
+`apps/tournament-central-web/components/sharedUi.test.tsx`. BW's `app/components/primitives`
+is replaced by these during the migration.
 
 | Component | Use |
 |---|---|
-| `PageHeader` | Page title, description, actions |
-| `Card`, `CardHeader`, `CardBody`, `CardFooter` | The only container |
-| `Button` (`primary` / `accent-outline` / `secondary` / `ghost` / `danger`, `size="sm"`) | All buttons |
+| `PageHeader` (`title`, `overline`, `badge`, `description`, `actions`) | The page's single h1 and its actions |
+| `StatGroup` (`items`, `label`) | A page's key numbers: one card split by dividers |
+| `Card` (`padding="default"`, `"dense"`, or `"flush"`, `interactive`), `CardHeader`, `CardDivider` | The only container; `flush` lets a table run edge to edge |
+| `Button` (`primary` / `accent-outline` / `secondary` / `ghost` / `ghost-danger` / `danger`, `size="sm"`, `icon`, `iconPosition`) | All buttons |
+| `ButtonLink`, `buttonClassName()` | A link that looks like a button; use `buttonClassName()` on Next.js `<Link>` |
+| `TextField`, `SelectField`, `TextAreaField` (`label`, `optional`, `helper`, `error`, `fullRow`), `FormGrid` | Form fields and their 2-column layout |
 | `SegmentedControl` | Filters and exclusive choices |
-| `Notice` (`info` / `success` / `warning` / `danger`) | Page and inline messages |
-| `ProgressBar` | Completion with a text value |
-| `TopNav`, `NavItem`, `SideNav` | App navigation |
-| `TableToolbar`, `Pagination` | Above and below `DataTable` |
+| `Badge` (`neutral` / `success` / `warning` / `danger` / `info` / `accent`) | All status pills |
+| `Notice` (`info` / `success` / `warning` / `danger`, `action`) | Page and inline messages |
+| `ProgressBar` (`value`, `max`, `label`, `valueText`) | Completion with a text value |
+| `DataTable`, `TableToolbar`, `Pagination` | Tables in cards: cells take `data-align="right"`, `data-tone="secondary"`, `data-emphasis="true"` |
+| `Modal` (`size="sm"`, `"md"`, or `"lg"`, `footer`), `ConfirmDialog` (`tone="danger"`) | All overlays |
+| `EmptyState` | No-data states: icon `ICON_SIZE['2xl']`, `section-title`, `body`, one action |
 | `ActivityList` | History and audit rows |
+| `TopNav`, `TopNavBrand`, `NavItem`, `navItemClassName()`, `SideNav`, `sideNavItemClassName()` | App navigation |
 | `Avatar` | User initials |
-| `TextField`, `SelectField`, `TextAreaField` | Label, control, helper, error |
-| `Badge` (`success` / `warning` / `danger` / `info` / `neutral`) | All status pills |
-| `DataTable` | Tables in cards |
-| `Modal`, `ConfirmDialog` | All overlays |
-| `EmptyState` | No-data states: icon `ICON_SIZE['2xl']` secondary, `section-title`, `body`, one action |
-| `StatGroup` | A row of key numbers (`stat` plus `overline`) inside one card, separated by dividers |
+| `ICON_SIZE` | Every icon size |
+
+If a screen needs something this list does not cover, add it to `packages/ui` first, with a test,
+and then use it. Do not build a one-off in an app.
 
 ## 11. Icons
 - Lucide only. Size is always from `ICON_SIZE`: `md` (16) default, `sm` (14) in badges and dense

@@ -1,0 +1,124 @@
+/* Tables, toolbar, pagination: docs/ui-standards.md section 7. */
+
+.scroll {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font: var(--type-table);
+  font-variant-numeric: tabular-nums;
+  color: var(--bw-text-title);
+}
+
+.table th {
+  padding: var(--space-3) var(--space-4);
+  font: var(--type-overline);
+  letter-spacing: var(--type-overline-tracking);
+  text-transform: uppercase;
+  text-align: left;
+  white-space: nowrap;
+  color: var(--bw-text-body);
+}
+
+.table td {
+  padding: var(--space-3) var(--space-4);
+  vertical-align: middle;
+}
+
+.table tbody tr {
+  border-top: 1px solid var(--bw-border-subtle);
+  transition: background-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.table tbody tr:hover,
+.table tbody tr[aria-selected='true'] {
+  background: var(--bw-surface-panel);
+}
+
+.table th:first-child,
+.table td:first-child {
+  padding-left: var(--space-5);
+}
+
+.table th:last-child,
+.table td:last-child {
+  padding-right: var(--space-5);
+}
+
+.table :is(th, td)[data-align='right'] {
+  text-align: right;
+}
+
+.table :is(th, td)[data-tone='secondary'] {
+  color: var(--bw-text-body);
+}
+
+.table td[data-emphasis='true'] {
+  font-weight: var(--font-weight-bold);
+}
+
+.table td input {
+  height: var(--control-height-sm);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-5);
+}
+
+.toolbarSearch {
+  flex: 1 1 var(--space-64);
+  min-width: 0;
+}
+
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-5);
+  border-top: 1px solid var(--bw-border-subtle);
+}
+
+.paginationSummary {
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}
+
+.pages {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.page {
+  min-width: var(--control-height-sm);
+  height: var(--control-height-sm);
+  padding: 0 var(--space-2);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--bw-text-body);
+  font: var(--type-button);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.page:hover:not(:disabled) {
+  color: var(--bw-text-title);
+}
+
+.page[aria-current='page'] {
+  background: var(--bw-surface-panel);
+  color: var(--bw-text-title);
+}
+
+.page:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

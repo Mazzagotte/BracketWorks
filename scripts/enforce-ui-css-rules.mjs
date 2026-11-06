@@ -48,6 +48,18 @@ const transitionAllRegex = /\btransition\s*:\s*all\b/i;
 // letter-spacing, and @media breakpoints are exempt.
 const hardcodedSizeRegex = /(?:^|[;{\s])(?:font-size|font|padding(?:-[a-z]+)*|margin(?:-[a-z]+)*|gap|row-gap|column-gap|inset(?:-[a-z]+)*|top|right|bottom|left|width|height|min-width|min-height|max-width|max-height|block-size|inline-size|flex-basis|flex|grid-template-[a-z]+|grid-auto-[a-z]+|border(?:-[a-z]+)*-radius)\s*:[^;}]*?(?<![\w#.-])\d*\.?\d+(?:px|rem)\b/;
 const atRuleConditionRegex = /^\s*@(?:media|container|supports)\b/;
+// docs/ui-standards.md section 1: no gradients, blur, glows, decorative shadows, lifts, or scaling.
+const gradientRegex = /\b(?:repeating-)?(?:linear|radial|conic)-gradient\s*\(/;
+// Each lookahead starts right after the colon so whitespace cannot be backtracked past it.
+const backdropFilterRegex = /\bbackdrop-filter\s*:(?!\s*none\b)/;
+const filterEffectRegex = /(?<![-\w])filter\s*:[^;]*\b(?:drop-shadow|blur)\s*\(/;
+const textShadowRegex = /\btext-shadow\s*:(?!\s*none\b)/;
+// Only overlays get a shadow, and focus rings use the ring tokens.
+const boxShadowRegex = /\bbox-shadow\s*:(?!\s*(?:none|inherit|var\(--(?:focus-ring|ring-brand|ring-danger|elevation-2|elevation-modal)\))\s*(?:!important\s*)?(?:[;}]|$))/;
+// Lifts are negative translateY in px or a negated space token; centering with -50% is fine.
+const hoverLiftRegex = /\btranslateY\(\s*(?:-\s*\d+(?:\.\d+)?px|calc\(\s*var\(--space-[\w-]+\)\s*\*\s*-1\s*\))|\bscale\(\s*1\.\d+/;
+// Weights are 400, 600, and 700 only.
+const fontWeightRegex = /\bfont-weight\s*:(?!\s*(?:400|600|700|normal|bold|inherit|var\(--font-weight-(?:normal|semibold|bold)\))\s*(?:!important\s*)?(?:[;}]|$))/;
 // Icon components take ICON_SIZE from @bracketworks/ui instead of a number.
 const hardcodedIconSizeRegex = /<[A-Z][\w.]*\b[^>]*\bsize=\{\d/;
 const hardcodedMediaQueryRegex = /\b(?:window\.)?matchMedia\s*\(\s*['"`][^'"`]*(?:min|max)-width\s*:/;
@@ -116,6 +128,17 @@ function checkLine(filePath, lineNumber, line) {
     hardcodedSizeRegex.test(line.replace(/\/\*.*?\*\//g, ''))
   ) {
     addViolation(filePath, lineNumber, 'use-shared-size-tokens', line);
+  }
+
+  if (!colorTokenFiles.has(filePath) && !/^\s*(?:\/\*|\*|\/\/)/.test(line)) {
+    const code = line.replace(/\/\*.*?\*\//g, '');
+    if (gradientRegex.test(code)) addViolation(filePath, lineNumber, 'no-gradients', line);
+    if (ext === '.css' || ext === '.scss') {
+      if (backdropFilterRegex.test(code) || filterEffectRegex.test(code)) addViolation(filePath, lineNumber, 'no-blur-or-glow', line);
+      if (textShadowRegex.test(code) || boxShadowRegex.test(code)) addViolation(filePath, lineNumber, 'no-decorative-shadows', line);
+      if (hoverLiftRegex.test(code)) addViolation(filePath, lineNumber, 'no-hover-lift-or-scale', line);
+      if (fontWeightRegex.test(code)) addViolation(filePath, lineNumber, 'use-standard-font-weights', line);
+    }
   }
 
   if ((ext === '.css' || ext === '.scss') && transitionAllRegex.test(line)) {

@@ -1,0 +1,193 @@
+/* Cards, page header, and stat groups: docs/ui-standards.md sections 0 and 5. */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+  padding: var(--space-5);
+  border: 1px solid var(--bw-border-subtle);
+  border-radius: var(--radius-xl);
+  background: var(--bw-surface-card);
+  color: var(--bw-text-title);
+}
+
+.dense {
+  padding: var(--space-4);
+}
+
+.flush {
+  padding: var(--space-5) 0 0;
+}
+
+.flush > .cardHeader {
+  padding: 0 var(--space-5);
+}
+
+.interactive {
+  transition: border-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.interactive:hover {
+  border-color: var(--bw-border-card);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.cardHeaderText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.sectionTitle {
+  margin: 0;
+  font: var(--type-section-title);
+  color: var(--bw-text-title);
+}
+
+.cardDescription {
+  margin: 0;
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.divider {
+  height: 1px;
+  margin: 0;
+  border: 0;
+  background: var(--bw-border-subtle);
+}
+
+.pageHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-2);
+}
+
+.pageHeaderText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+/* The page eyebrow is the one overline that uses the accent (docs/ui-standards.md section 2). */
+.overline {
+  margin: 0;
+  font: var(--type-overline);
+  letter-spacing: var(--type-overline-tracking);
+  text-transform: uppercase;
+  color: var(--color-accent-primary);
+}
+
+.pageTitleRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.pageTitle {
+  margin: 0;
+  font: var(--type-page-title);
+  color: var(--bw-text-title);
+}
+
+.pageDescription {
+  margin: 0;
+  font: var(--type-body);
+  color: var(--bw-text-body);
+}
+
+.statGroup {
+  display: grid;
+  grid-template-columns: repeat(var(--stat-columns, 4), minmax(0, 1fr));
+  border: 1px solid var(--bw-border-subtle);
+  border-radius: var(--radius-xl);
+  background: var(--bw-surface-card);
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+  padding: var(--space-5);
+}
+
+.stat + .stat {
+  border-left: 1px solid var(--bw-border-subtle);
+}
+
+.statLabel {
+  font: var(--type-overline);
+  letter-spacing: var(--type-overline-tracking);
+  text-transform: uppercase;
+  color: var(--bw-text-body);
+}
+
+.statValue {
+  font: var(--type-stat);
+  font-variant-numeric: tabular-nums;
+  color: var(--bw-text-title);
+}
+
+.statDetail {
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}
+
+.statDetailWarning {
+  color: var(--color-warning);
+}
+
+.statDetailDanger {
+  color: var(--color-danger);
+}
+
+.statDetailSuccess {
+  color: var(--color-success);
+}
+
+@media (max-width: 767px) {
+  .card {
+    padding: var(--space-4);
+  }
+
+  .statGroup {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stat {
+    padding: var(--space-4);
+  }
+
+  .stat + .stat {
+    border-left: 0;
+  }
+
+  .stat:nth-child(even) {
+    border-left: 1px solid var(--bw-border-subtle);
+  }
+
+  .stat:nth-child(n + 3) {
+    border-top: 1px solid var(--bw-border-subtle);
+  }
+}
