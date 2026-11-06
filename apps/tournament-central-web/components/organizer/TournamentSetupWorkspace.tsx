@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft, ArrowRight, ArrowUpDown, CalendarDays, ChevronUp, CircleAlert, CircleCheck, ClipboardList, Clock3, Download, Eye, FileJson, Filter, Globe, GripVertical, Headphones, Layers, Link2, ListOrdered, Lock, MapPin, MoreHorizontal, PencilLine, Plus, RotateCcw, Save, Trash2, Trophy, Upload, Users, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Copy, ArrowUpDown, CalendarDays, ChevronUp, CircleAlert, CircleCheck, ClipboardList, Clock3, Download, Eye, FileJson, Filter, Globe, GripVertical, Headphones, Layers, Link2, ListOrdered, Lock, MapPin, MoreHorizontal, PencilLine, Plus, RotateCcw, Save, Trash2, Trophy, Upload, Users, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent, DragEvent } from 'react';
 import { useRouter } from 'next/navigation';
@@ -97,11 +97,16 @@ import type {
 } from './setupTypes';
 import styles from './tournament-setup.module.css';
 import layout from './setup/setupLayout.module.css';
+import StepHeader from './setup/StepHeader';
 import {
   Badge,
   Button,
+  Card,
+  CardHeader,
+  EmptyState,
   ICON_SIZE,
   Menu,
+  MenuDivider,
   MenuItem,
   Modal,
   Notice,
@@ -120,11 +125,6 @@ type DrawerState =
   | { kind: 'question'; id?: string }
   | { kind: 'fee'; id?: string }
   | { kind: 'location'; id?: string }
-  | null;
-
-type CardMenuState =
-  | { kind: 'event'; id: string }
-  | { kind: 'division'; id: string }
   | null;
 
 type OrganizerRegistrationFormState = {
@@ -271,7 +271,6 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
   const [lastPreflightRunAt, setLastPreflightRunAt] = useState<string | null>(null);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [selectedDivisionId, setSelectedDivisionId] = useState<string | null>(null);
-  const [openCardMenu, setOpenCardMenu] = useState<CardMenuState>(null);
   const [hasRulesDocument, setHasRulesDocument] = useState(false);
   const [paymentMode, setPaymentMode] = useState<PaymentMode>('cash');
   const [paymentProcessorConnected, setPaymentProcessorConnected] = useState(false);
@@ -305,26 +304,6 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
     details: detailsForSave, events, divisions, squads, fees, locations, questions, fields,
     hasRulesDocument, paymentMode, paymentProcessorConnected, paymentPayoutConfigured,
   }), [events, divisions, squads, fees, locations, questions, fields, hasRulesDocument, paymentMode, paymentProcessorConnected, paymentPayoutConfigured]);
-
-  useEffect(() => {
-    if (!openCardMenu) {
-      return;
-    }
-
-    const handlePointerDown = (event: PointerEvent) => {
-      const target = event.target;
-      if (target instanceof Element && target.closest(`.${styles.cardActions}`)) {
-        return;
-      }
-
-      setOpenCardMenu(null);
-    };
-
-    document.addEventListener('pointerdown', handlePointerDown);
-    return () => {
-      document.removeEventListener('pointerdown', handlePointerDown);
-    };
-  }, [openCardMenu]);
 
   useEffect(() => {
     setActiveSection(getUrlActiveSection());
@@ -2035,7 +2014,6 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
     setDivisions(nextDivisions);
     setSquads(nextSquads);
     setSelectedEventId(duplicatedEvent.id);
-    setOpenCardMenu(null);
     void persistOrganizerChanges({
       events: nextEvents,
       divisions: nextDivisions,
@@ -2079,7 +2057,6 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
     setQuestions(nextQuestions);
     setSelectedEventId((prev) => (prev === eventId ? null : prev));
     setDrawerState((prev) => (prev?.kind === 'event' && prev.id === eventId ? null : prev));
-    setOpenCardMenu(null);
     void persistOrganizerChanges({
       events: nextEvents,
       divisions: nextDivisions,
@@ -2116,7 +2093,6 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
 
     setDivisions(nextDivisions);
     setSelectedDivisionId(duplicatedDivision.id);
-    setOpenCardMenu(null);
     void persistOrganizerChanges({
       divisions: nextDivisions,
     });
@@ -2157,7 +2133,6 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
     setQuestions(nextQuestions);
     setSelectedDivisionId((prev) => (prev === divisionId ? null : prev));
     setDrawerState((prev) => (prev?.kind === 'division' && prev.id === divisionId ? null : prev));
-    setOpenCardMenu(null);
     void persistOrganizerChanges({
       events: nextEvents,
       divisions: nextDivisions,
@@ -2575,210 +2550,149 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
               setIsLogoDragActive={setIsLogoDragActive}
             />
           )}
-              {activeSection === 'events-divisions' && (
-                <section className={`${styles.sectionCard} ${styles.evDivSection}`}>
-                  <div className={styles.sectionHeader}>
-                    <div>
-                      <h2>Events &amp; Divisions</h2>
-                      <p>Define registration offerings and optional eligibility groups.</p>
-                    </div>
-                    <SetupStatusBadge status={statusBySection['events-divisions']} />
-                  </div>
+          {activeSection === 'events-divisions' && (
+            <>
+              <StepHeader
+                title="Events and divisions"
+                description="Define registration offerings and optional eligibility groups."
+                status={statusBySection['events-divisions']}
+              />
+              <div className={layout.cardGrid}>
+                <Card aria-label="Events">
+                  <CardHeader
+                    title="Events"
+                    description={`${events.length} event${events.length === 1 ? '' : 's'}. Define what bowlers can enter.`}
+                    headingLevel="h3"
+                    actions={(
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        icon={<Plus size={ICON_SIZE.md} aria-hidden="true" />}
+                        onClick={() => {
+                          const next = emptyEvent(events.length + 1);
+                          const nextEvents = [...events, next];
+                          setEvents(nextEvents);
+                          setSelectedEventId(next.id);
+                          void persistOrganizerChanges({ events: nextEvents });
+                        }}
+                      >
+                        Add event
+                      </Button>
+                    )}
+                  />
+                  {events.length === 0 ? (
+                    <EmptyState
+                      icon={<Trophy size={ICON_SIZE['2xl']} aria-hidden="true" />}
+                      title="No events yet"
+                      description="Add an event to define what bowlers can register for."
+                    />
+                  ) : (
+                    <ul className={layout.rows}>
+                      {events.map((ev) => {
+                        const squadCount = ev.connectedSquadIds.length;
+                        const eventStatus = !ev.name.trim()
+                          ? { label: 'Needs name', tone: 'warning' as const }
+                          : ev.requireSquad && squadCount === 0
+                            ? { label: 'Needs squads', tone: 'warning' as const }
+                            : ev.requireDivision && ev.connectedDivisionIds.length === 0
+                              ? { label: 'Needs divisions', tone: 'warning' as const }
+                              : ev.enabled ? { label: 'Ready', tone: 'success' as const } : { label: 'Draft', tone: 'neutral' as const };
+                        const name = ev.name || 'Untitled event';
+                        return (
+                          <li key={ev.id} className={layout.row}>
+                            <div className={layout.rowText}>
+                              <span className={layout.rowTitle}>{name}<Badge tone={eventStatus.tone}>{eventStatus.label}</Badge></span>
+                              <span className={layout.rowMeta}>
+                                {[
+                                  ev.minPlayers === ev.maxPlayers ? `${ev.minPlayers} bowler${ev.minPlayers !== 1 ? 's' : ''}` : `${ev.minPlayers}-${ev.maxPlayers} bowlers`,
+                                  ev.scoring.charAt(0).toUpperCase() + ev.scoring.slice(1),
+                                  ev.requireDivision ? 'Division required' : 'Division optional',
+                                  `${squadCount} squad${squadCount !== 1 ? 's' : ''}`,
+                                  `${formatMoney(ev.entryFeeCents)} entry fee`,
+                                ].join(' · ')}
+                              </span>
+                            </div>
+                            <div className={layout.rowActions}>
+                              <Button size="sm" variant="secondary" onClick={() => setSelectedEventId(ev.id)} aria-label={`Edit ${name}`}>Edit</Button>
+                              <Menu triggerLabel={`More actions for ${name}`} trigger={<MoreHorizontal size={ICON_SIZE.md} aria-hidden="true" />}>
+                                <MenuItem icon={<Copy size={ICON_SIZE.md} />} onSelect={() => handleDuplicateEvent(ev.id)}>Duplicate</MenuItem>
+                                <MenuDivider />
+                                <MenuItem tone="danger" icon={<Trash2 size={ICON_SIZE.md} />} onSelect={() => handleDeleteEvent(ev.id)}>Delete event</MenuItem>
+                              </Menu>
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </Card>
 
-                  <div className={styles.evDivLayout}>
-                    <div className={styles.evDivColumn}>
-                      <div className={styles.evDivListCard}>
-                        <div className={styles.evDivListHead}>
-                          <div className={styles.evDivListHeadText}>
-                            <span className={styles.evDivListHeadIcon}><Trophy size={ICON_SIZE.sm} /></span>
-                            <h2>Events</h2>
-                            <p>Define what bowlers can enter.</p>
-                          </div>
-                          <div className={styles.evDivListHeadActions}>
-                            <span className={styles.evDivCountPill}>{events.length} event{events.length === 1 ? '' : 's'}</span>
-                            <button
-                              type="button"
-                              className={styles.inlineAction}
-                              onClick={() => {
-                                const next = emptyEvent(events.length + 1);
-                                const nextEvents = [...events, next];
-                                setEvents(nextEvents);
-                                setSelectedEventId(next.id);
-                                setOpenCardMenu(null);
-                                void persistOrganizerChanges({ events: nextEvents });
-                              }}
-                            >
-                              <Plus size={ICON_SIZE.sm} /> Add Event
-                            </button>
-                          </div>
-                        </div>
-                        <div className={styles.evDivListBody}>
-                          {events.length === 0 && (
-                            <div className={styles.evDivEmpty}><strong>No events configured</strong><span>Add an event to define what bowlers can register for.</span></div>
-                          )}
-                          {events.map((ev) => {
-                            const squadCount = ev.connectedSquadIds.length;
-                            const eventStatus = !ev.name.trim() ? 'Needs Name' : ev.requireSquad && squadCount === 0 ? 'Needs Squads' : ev.requireDivision && ev.connectedDivisionIds.length === 0 ? 'Needs Divisions' : ev.enabled ? 'Ready' : 'Draft';
-                            const metaParts = [
-                              ev.minPlayers === ev.maxPlayers ? `${ev.minPlayers} Bowler${ev.minPlayers !== 1 ? 's' : ''}` : `${ev.minPlayers}-${ev.maxPlayers} Bowlers`,
-                              ev.scoring.charAt(0).toUpperCase() + ev.scoring.slice(1),
-                              ev.requireDivision ? 'Division Required' : 'Division Optional',
-                              `${squadCount} Squad${squadCount !== 1 ? 's' : ''}`,
-                            ];
-                            return (
-                              <div
-                                key={ev.id}
-                                className={`${styles.evCardRow} ${selectedEventId === ev.id ? styles.evCardRowActive : ''}`}
-                                onClick={() => {
-                                  setSelectedEventId(ev.id);
-                                  setOpenCardMenu(null);
-                                }}
-                                role="button"
-                                tabIndex={0}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') {
-                                    setSelectedEventId(ev.id);
-                                    setOpenCardMenu(null);
-                                  }
-                                }}
-                              >
-                                <div className={styles.dragHandle}><GripVertical size={ICON_SIZE.md} /></div>
-                                <div className={styles.evCardMain}>
-                                  <div className={styles.evCardTitle}>
-                                    <strong>{ev.name || 'Untitled Event'}</strong>
-                                    <span className={`${styles.evCardBadge} ${eventStatus === 'Ready' ? styles.evCardBadgeEnabled : styles.evCardBadgeDraft}`}>
-                                      {eventStatus}
-                                    </span>
-                                  </div>
-                                  <p className={styles.evCardMeta}>{metaParts.join(' · ')}</p>
-                                  <p className={styles.evCardFee}>{formatMoney(ev.entryFeeCents)} Entry Fee</p>
-                                </div>
-                                <div className={styles.cardActions}>
-                                  <button type="button" className={styles.iconButton} onClick={(e) => { e.stopPropagation(); setSelectedEventId(ev.id); }} aria-label="Edit event"><PencilLine size={ICON_SIZE.sm} /></button>
-                                  <button
-                                    type="button"
-                                    className={styles.iconButton}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setOpenCardMenu((prev) => prev?.kind === 'event' && prev.id === ev.id ? null : { kind: 'event', id: ev.id });
-                                    }}
-                                    aria-label="More actions"
-                                  >
-                                    <MoreHorizontal size={ICON_SIZE.sm} />
-                                  </button>
-                                  {openCardMenu?.kind === 'event' && openCardMenu.id === ev.id ? (
-                                    <div className={styles.cardMenu} onClick={(e) => e.stopPropagation()}>
-                                      <button type="button" className={styles.cardMenuButton} onClick={() => handleDuplicateEvent(ev.id)}>Duplicate</button>
-                                      <button type="button" className={`${styles.cardMenuButton} ${styles.cardMenuButtonDanger}`} onClick={() => handleDeleteEvent(ev.id)}>Delete</button>
-                                    </div>
-                                  ) : null}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className={styles.evDivColumn}>
-                      <div className={styles.evDivListCard}>
-                        <div className={styles.evDivListHead}>
-                          <div className={styles.evDivListHeadText}>
-                            <span className={styles.evDivListHeadIcon}><ListOrdered size={ICON_SIZE.sm} /></span>
-                            <h2>Divisions</h2>
-                            <p>Define optional eligibility groups used by events.</p>
-                          </div>
-                          <div className={styles.evDivListHeadActions}>
-                            <span className={styles.evDivCountPill}>{divisions.length} division{divisions.length === 1 ? '' : 's'}</span>
-                            <button
-                              type="button"
-                              className={styles.inlineAction}
-                              onClick={() => {
-                                const next: DivisionConfig = emptyDivision();
-                                const nextDivisions = [...divisions, next];
-                                setDivisions(nextDivisions);
-                                setSelectedDivisionId(next.id);
-                                setOpenCardMenu(null);
-                                void persistOrganizerChanges({ divisions: nextDivisions });
-                              }}
-                            >
-                              <Plus size={ICON_SIZE.sm} /> Add Division
-                            </button>
-                          </div>
-                        </div>
-                        <div className={styles.evDivListBody}>
-                          {divisions.length === 0 && (
-                            <div className={styles.evDivEmpty}><strong>No divisions needed</strong><span>Divisions are optional. Add one when eligibility or scoring groups differ.</span></div>
-                          )}
-                          {divisions.map((div) => {
-                            const avgLabel = div.minAverage !== null && div.maxAverage !== null
-                              ? `Avg ${div.minAverage}–${div.maxAverage}`
-                              : div.minAverage !== null
-                                ? `Avg ${div.minAverage}+`
-                                : div.maxAverage !== null
-                                  ? `Avg ${div.maxAverage} & Below`
-                                  : 'No Avg Restriction';
-                            const scoringLabel = div.mode.charAt(0).toUpperCase() + div.mode.slice(1);
-                            const usedByNames = events.filter((ev) => ev.connectedDivisionIds.includes(div.id)).map((ev) => ev.name).filter(Boolean);
-                            const divisionStatus = !div.name.trim() ? 'Needs Name' : usedByNames.length > 0 ? 'In Use' : 'Not Used';
-                            return (
-                              <div
-                                key={div.id}
-                                className={`${styles.evCardRow} ${selectedDivisionId === div.id ? styles.evCardRowActive : ''}`}
-                                onClick={() => {
-                                  setSelectedDivisionId(div.id);
-                                  setOpenCardMenu(null);
-                                }}
-                                role="button"
-                                tabIndex={0}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') {
-                                    setSelectedDivisionId(div.id);
-                                    setOpenCardMenu(null);
-                                  }
-                                }}
-                              >
-                                <div className={styles.dragHandle}><ListOrdered size={ICON_SIZE.md} /></div>
-                                <div className={styles.evCardMain}>
-                                  <div className={styles.evCardTitle}>
-                                    <strong className={styles.evCardDivName}>{div.name || 'Untitled Division'}</strong>
-                                    <span className={`${styles.evCardBadge} ${divisionStatus === 'In Use' ? styles.evCardBadgeEnabled : styles.evCardBadgeDraft}`}>
-                                      {divisionStatus}
-                                    </span>
-                                  </div>
-                                  <p className={styles.evCardMeta}>{avgLabel} · {scoringLabel}</p>
-                                  {usedByNames.length > 0 && (
-                                    <p className={styles.evCardUsedBy}>Used by: {usedByNames.join(', ')}</p>
-                                  )}
-                                </div>
-                                <div className={styles.cardActions}>
-                                  <button type="button" className={styles.iconButton} onClick={(e) => { e.stopPropagation(); setSelectedDivisionId(div.id); }} aria-label="Edit division"><PencilLine size={ICON_SIZE.sm} /></button>
-                                  <button
-                                    type="button"
-                                    className={styles.iconButton}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setOpenCardMenu((prev) => prev?.kind === 'division' && prev.id === div.id ? null : { kind: 'division', id: div.id });
-                                    }}
-                                    aria-label="More actions"
-                                  >
-                                    <MoreHorizontal size={ICON_SIZE.sm} />
-                                  </button>
-                                  {openCardMenu?.kind === 'division' && openCardMenu.id === div.id ? (
-                                    <div className={styles.cardMenu} onClick={(e) => e.stopPropagation()}>
-                                      <button type="button" className={styles.cardMenuButton} onClick={() => handleDuplicateDivision(div.id)}>Duplicate</button>
-                                      <button type="button" className={`${styles.cardMenuButton} ${styles.cardMenuButtonDanger}`} onClick={() => handleDeleteDivision(div.id)}>Delete</button>
-                                    </div>
-                                  ) : null}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </section>
+                <Card aria-label="Divisions">
+                  <CardHeader
+                    title="Divisions"
+                    description={`${divisions.length} division${divisions.length === 1 ? '' : 's'}. Optional eligibility groups used by events.`}
+                    headingLevel="h3"
+                    actions={(
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        icon={<Plus size={ICON_SIZE.md} aria-hidden="true" />}
+                        onClick={() => {
+                          const next: DivisionConfig = emptyDivision();
+                          const nextDivisions = [...divisions, next];
+                          setDivisions(nextDivisions);
+                          setSelectedDivisionId(next.id);
+                          void persistOrganizerChanges({ divisions: nextDivisions });
+                        }}
+                      >
+                        Add division
+                      </Button>
+                    )}
+                  />
+                  {divisions.length === 0 ? (
+                    <EmptyState
+                      icon={<Layers size={ICON_SIZE['2xl']} aria-hidden="true" />}
+                      title="No divisions needed"
+                      description="Divisions are optional. Add one when eligibility or scoring groups differ."
+                    />
+                  ) : (
+                    <ul className={layout.rows}>
+                      {divisions.map((div) => {
+                        const avgLabel = div.minAverage !== null && div.maxAverage !== null
+                          ? `Average ${div.minAverage}-${div.maxAverage}`
+                          : div.minAverage !== null
+                            ? `Average ${div.minAverage} and up`
+                            : div.maxAverage !== null
+                              ? `Average ${div.maxAverage} and below`
+                              : 'No average limit';
+                        const usedByNames = events.filter((ev) => ev.connectedDivisionIds.includes(div.id)).map((ev) => ev.name).filter(Boolean);
+                        const divisionStatus = !div.name.trim()
+                          ? { label: 'Needs name', tone: 'warning' as const }
+                          : usedByNames.length > 0 ? { label: 'In use', tone: 'success' as const } : { label: 'Not used', tone: 'neutral' as const };
+                        const name = div.name || 'Untitled division';
+                        return (
+                          <li key={div.id} className={layout.row}>
+                            <div className={layout.rowText}>
+                              <span className={layout.rowTitle}>{name}<Badge tone={divisionStatus.tone}>{divisionStatus.label}</Badge></span>
+                              <span className={layout.rowMeta}>{avgLabel} · {div.mode.charAt(0).toUpperCase() + div.mode.slice(1)}</span>
+                              {usedByNames.length > 0 ? <span className={layout.rowMeta}>Used by {usedByNames.join(', ')}</span> : null}
+                            </div>
+                            <div className={layout.rowActions}>
+                              <Button size="sm" variant="secondary" onClick={() => setSelectedDivisionId(div.id)} aria-label={`Edit ${name}`}>Edit</Button>
+                              <Menu triggerLabel={`More actions for ${name}`} trigger={<MoreHorizontal size={ICON_SIZE.md} aria-hidden="true" />}>
+                                <MenuItem icon={<Copy size={ICON_SIZE.md} />} onSelect={() => handleDuplicateDivision(div.id)}>Duplicate</MenuItem>
+                                <MenuDivider />
+                                <MenuItem tone="danger" icon={<Trash2 size={ICON_SIZE.md} />} onSelect={() => handleDeleteDivision(div.id)}>Delete division</MenuItem>
+                              </Menu>
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </Card>
+              </div>
+            </>
           )}
 
           <Modal
