@@ -1,305 +1,138 @@
-@keyframes cardReveal {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes panelReveal {
-  from {
-    opacity: 0;
-    transform: translateX(-12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
+/* Auth pages: a short intro beside one form card (docs/ui-standards.md rule 1.9). */
 
 .page {
-  --bw-login-bg: var(--color-bg-primary);
-  --bw-login-card: var(--color-bg-primary);
-  --bw-login-card-border: var(--color-border-primary);
-  --bw-login-text: var(--color-text-primary);
-  --bw-login-text-muted: var(--color-text-secondary);
-  --bw-login-input: var(--color-bg-primary);
-  --bw-login-input-border: var(--color-border-primary);
-  --bw-login-orange: var(--color-primary);
-  --bw-login-orange-hover: var(--color-primary);
-  --bw-login-danger: var(--color-primary);
-
-  position: fixed;
-  inset: 0;
-  z-index: var(--z-overlay);
-  overflow: auto;
-  min-height: 100dvh;
-  display: grid;
-  place-items: center;
-  padding: var(--space-7);
-  font-family: var(--font-family-primary);
-  background: var(--color-bg-primary);
-  color: var(--bw-login-text);
-}
-
-.page::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background:
-    linear-gradient(90deg, color-mix(in srgb, var(--color-text-primary) 3%, transparent) 1px, transparent 1px),
-    linear-gradient(0deg, color-mix(in srgb, var(--color-text-primary) 3%, transparent) 1px, transparent 1px);
-  background-size: 52px 52px;
-  opacity: 0.15;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--bw-page);
 }
 
 .shell {
-  width: min(var(--size-8xl), 100%);
   display: grid;
-  grid-template-columns: minmax(0, 1.08fr) minmax(var(--space-96), var(--size-md));
-  gap: var(--space-10);
+  flex: 1;
+  grid-template-columns: minmax(0, 1fr) minmax(0, var(--size-md));
   align-items: center;
-  position: relative;
-  z-index: 1;
-}
-
-.brandPanel {
-  animation: panelReveal 0.45s ease-out;
-}
-
-/* Logo banner */
-.brandTop {
-  max-width: var(--size-lg);
-  margin-bottom: var(--space-8);
-}
-
-.bannerImage {
+  gap: var(--space-16);
   width: 100%;
-  height: auto;
-  display: block;
+  max-width: var(--size-6xl);
+  margin: 0 auto;
+  padding: var(--space-12) var(--bw-page-gutter);
 }
 
-/* Headline & description */
-.brandHeadline {
-  margin: 0 0 var(--space-4);
-  font-size: clamp(var(--font-size-5xl), 2.6vw, var(--font-size-8xl));
-  line-height: 1.1;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  max-width: var(--size-lg);
-  text-wrap: balance;
+.intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  max-width: var(--size-md);
 }
 
-.brandHeadlineOrange {
-  color: var(--bw-login-orange);
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font: var(--type-subsection-title);
+  font-weight: var(--font-weight-bold);
+  color: var(--bw-text-title);
+  text-decoration: none;
 }
 
-.brandDescription {
-  margin: 0 0 var(--space-7);
-  font-size: var(--font-size-xl);
-  line-height: 1.5;
-  color: var(--bw-login-text-muted);
-  max-width: var(--size-lg);
+.introText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
 }
 
-.featureList {
+.introTitle {
+  margin: 0;
+  font: var(--type-section-title);
+  color: var(--bw-text-title);
+}
+
+.body {
+  margin: 0;
+  font: var(--type-body);
+  color: var(--bw-text-body);
+}
+
+.helper {
+  margin: 0;
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}
+
+.features {
+  display: flex;
+  flex-direction: column;
   margin: 0;
   padding: 0;
   list-style: none;
-  display: grid;
-  gap: var(--space-3-5);
-  max-width: var(--size-lg);
 }
 
-.featureItem strong {
-  display: block;
-  margin-bottom: var(--space-1-5);
-  font-size: var(--font-size-2xl);
-  line-height: 1.1;
-}
-
-.featureItem {
-  display: grid;
-  grid-template-columns: var(--space-14) minmax(0, 1fr);
-  align-items: start;
-  gap: var(--space-3);
-}
-
-.featureItem small {
-  display: block;
-  color: var(--bw-login-text-muted);
-  font-size: var(--font-size-md);
-  line-height: 1.4;
-}
-
-.ecosystemCallout {
-  margin: var(--space-6) 0 0;
-  padding-top: var(--space-4);
-  max-width: var(--size-lg);
-  border-top: 1px solid var(--bw-login-card-border);
-}
-
-.ecosystemLabel {
-  display: block;
-  margin-bottom: var(--space-2);
-  font-size: var(--font-size-xs);
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--bw-login-text-muted);
-}
-
-.ecosystemRow {
+.features li {
   display: flex;
-  align-items: center;
-  gap: var(--space-2-5);
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3) 0;
 }
 
-.ecosystemLogo {
-  flex-shrink: 0;
-  width: var(--space-10);
-  height: var(--space-10);
-  opacity: 0.9;
+.features li + li {
+  border-top: 1px solid var(--bw-border-subtle);
 }
 
-.ecosystemText {
-  font-size: var(--font-size-base);
-  line-height: 1.4;
-  color: var(--bw-login-text-muted);
-}
-
-.ecosystemLink {
-  color: var(--bw-login-orange);
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.ecosystemLink:hover {
-  text-decoration: underline;
+.featureTitle {
+  font: var(--type-subsection-title);
+  color: var(--bw-text-title);
 }
 
 .card {
-  position: relative;
-  background: var(--bw-login-card);
-  border: 2px solid var(--bw-login-orange);
-  border-radius: var(--radius-3xl);
-  padding: var(--space-9) var(--space-7) var(--space-7);
-  box-shadow: 0 28px 56px color-mix(in srgb, var(--color-black) 46%, transparent);
-  backdrop-filter: blur(9px);
-  -webkit-backdrop-filter: blur(9px);
-  animation: cardReveal 0.45s ease-out;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
 }
 
 .cardHeader {
-  margin-bottom: var(--space-6);
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
 }
 
 .cardTitle {
-  margin: var(--space-2-5) 0 var(--space-2);
-  font-size: var(--font-size-8xl);
-  line-height: 1.02;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-}
-
-.cardSubtitle {
-  margin: 0 auto;
-  color: var(--bw-login-text-muted);
-  font-size: var(--font-size-lg);
-  line-height: 1.45;
-  max-width: var(--space-80);
+  margin: 0;
+  font: var(--type-page-title);
+  color: var(--bw-text-title);
 }
 
 .switchRow {
-  margin-top: var(--space-3-5);
-  display: grid;
-  gap: var(--space-2-5);
+  margin: 0;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--bw-border-subtle);
+  font: var(--type-body);
+  color: var(--bw-text-body);
   text-align: center;
-}
-
-.switchRow span {
-  color: var(--bw-login-text-muted);
-  font-size: var(--font-size-md);
-}
-
-.switchRow a {
-  min-height: var(--space-11);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--bw-login-orange);
-  background: transparent;
-  color: var(--bw-login-text);
-  font-size: var(--font-size-xl);
-  font-weight: 700;
-  cursor: pointer;
-  transition: border-color 0.2s ease, background-color 0.2s ease;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.switchRow a:hover {
-  border-color: var(--bw-login-orange-hover);
-  background: color-mix(in srgb, var(--color-primary) 13%, transparent);
 }
 
 .footer {
-  position: fixed;
-  bottom: var(--space-3-5);
-  left: 0;
-  right: 0;
+  padding: var(--space-6) var(--bw-page-gutter);
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
   text-align: center;
-  color: var(--bw-login-text-muted);
-  font-size: var(--font-size-md);
-  z-index: 1;
 }
 
 @media (max-width: 1023px) {
   .shell {
-    grid-template-columns: 1fr;
-    width: min(var(--size-xl), 100%);
-    gap: var(--space-4);
-  }
-
-  .brandPanel {
-    display: none;
-  }
-
-  .cardTitle {
-    font-size: var(--font-size-7xl);
-  }
-
-  .cardSubtitle {
-    font-size: var(--font-size-xl);
-  }
-}
-
-@media (max-width: 767px) {
-  .page {
-    padding: var(--space-3-5);
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    gap: var(--space-8);
+    padding-top: var(--space-8);
   }
 
   .card {
-    padding: var(--space-6) var(--space-4);
-    border-radius: var(--radius-2xl);
+    order: -1;
+    width: 100%;
+    max-width: var(--size-md);
   }
 
-  .cardTitle {
-    font-size: var(--font-size-6xl);
-  }
-
-  .cardSubtitle {
-    font-size: var(--font-size-md);
-  }
-
-  .footer {
-    position: static;
-    margin-top: var(--space-3);
-    font-size: var(--font-size-base);
+  .intro {
+    width: 100%;
   }
 }

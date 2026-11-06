@@ -3,10 +3,10 @@
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { FormEvent, useMemo, useState } from 'react';
-import { capitalizeFirstLetter } from '@bracketworks/ui';
+import { Button, FormGrid, Notice, PasswordField, TextField, capitalizeFirstLetter } from '@bracketworks/ui';
 
 import AuthShell from './AuthShell';
-import styles from './RegisterForm.module.css';
+import styles from './authForm.module.css';
 
 type RegisterValues = {
   firstName: string;
@@ -35,8 +35,6 @@ function isStrongPassword(password: string): boolean {
 export default function RegisterForm() {
   const router = useRouter();
   const [values, setValues] = useState<RegisterValues>(EMPTY_FORM);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -131,137 +129,40 @@ export default function RegisterForm() {
   return (
     <AuthShell
       mode="signup"
-      title="Create account"
-      subtitle="Register to browse events, save favorites, and manage tournament participation."
+      title="Create an account"
+      subtitle="Register to browse tournaments, enter events, and follow your registrations."
     >
       <form className={styles.form} onSubmit={handleSubmit}>
-        {error && (
-          <p className={styles.errorMessage} role="alert" aria-live="polite">
-            {error}
-          </p>
-        )}
-        {success && (
-          <p className={styles.successMessage} role="status" aria-live="polite">
-            {success}
-          </p>
-        )}
+        {error ? <Notice tone="danger" role="alert">{error}</Notice> : null}
+        {success ? <Notice tone="success" role="status">{success}</Notice> : null}
 
-        <div className={styles.twoCol}>
-          <div>
-            <label className={styles.fieldLabel} htmlFor="signup-firstName">First name</label>
-            <input
-              id="signup-firstName"
-              className={styles.fieldInput}
-              value={values.firstName}
-              onChange={(event) => updateField('firstName', event.target.value)}
-              autoComplete="given-name"
-              required
-            />
-          </div>
-          <div>
-            <label className={styles.fieldLabel} htmlFor="signup-lastName">Last name</label>
-            <input
-              id="signup-lastName"
-              className={styles.fieldInput}
-              value={values.lastName}
-              onChange={(event) => updateField('lastName', event.target.value)}
-              autoComplete="family-name"
-              required
-            />
-          </div>
-        </div>
+        <FormGrid>
+          <TextField id="signup-firstName" label="First name" value={values.firstName} onChange={(event) => updateField('firstName', event.target.value)} autoComplete="given-name" required />
+          <TextField id="signup-lastName" label="Last name" value={values.lastName} onChange={(event) => updateField('lastName', event.target.value)} autoComplete="family-name" required />
+          <TextField id="signup-username" label="Username" fullRow value={values.username} onChange={(event) => updateField('username', event.target.value)} placeholder="Choose a unique username" autoComplete="username" required />
+          <TextField id="signup-email" label="Email" fullRow type="email" value={values.email} onChange={(event) => updateField('email', event.target.value)} placeholder="you@example.com" autoComplete="email" required />
+          <TextField id="signup-organization" label="Organization" optional fullRow value={values.organization} onChange={(event) => updateField('organization', event.target.value)} placeholder="League, center, association, or event" autoComplete="organization" />
+          <PasswordField id="signup-password" label="Password" value={values.password} onChange={(event) => updateField('password', event.target.value)} autoComplete="new-password" required />
+          <PasswordField
+            id="signup-confirmPassword"
+            label="Confirm password"
+            showLabel="Show confirm password"
+            hideLabelText="Hide confirm password"
+            value={values.confirmPassword}
+            onChange={(event) => updateField('confirmPassword', event.target.value)}
+            autoComplete="new-password"
+            required
+          />
+        </FormGrid>
+        <p className={styles.helper}>{passwordHint}</p>
 
-        <label className={styles.fieldLabel} htmlFor="signup-username">Username</label>
-        <input
-          id="signup-username"
-          className={styles.fieldInput}
-          value={values.username}
-          onChange={(event) => updateField('username', event.target.value)}
-          placeholder="Choose a unique username"
-          autoComplete="username"
-          required
-        />
+        <Button type="submit" variant="primary" fullWidth disabled={loading}>
+          {loading ? 'Creating account...' : 'Create account'}
+        </Button>
 
-        <label className={styles.fieldLabel} htmlFor="signup-email">Email</label>
-        <input
-          id="signup-email"
-          className={styles.fieldInput}
-          type="email"
-          value={values.email}
-          onChange={(event) => updateField('email', event.target.value)}
-          placeholder="you@example.com"
-          autoComplete="email"
-          required
-        />
-
-        <label className={styles.fieldLabel} htmlFor="signup-organization">Organization (optional)</label>
-        <input
-          id="signup-organization"
-          className={styles.fieldInput}
-          value={values.organization}
-          onChange={(event) => updateField('organization', event.target.value)}
-          placeholder="League, center, association, or event"
-          autoComplete="organization"
-        />
-
-        <div className={styles.twoCol}>
-          <div>
-            <label className={styles.fieldLabel} htmlFor="signup-password">Password</label>
-            <div className={styles.passwordRow}>
-              <input
-                id="signup-password"
-                className={styles.fieldInput}
-                type={showPassword ? 'text' : 'password'}
-                value={values.password}
-                onChange={(event) => updateField('password', event.target.value)}
-                autoComplete="new-password"
-                required
-              />
-              <button
-                type="button"
-                className={styles.toggleButton}
-                onClick={() => setShowPassword((prev) => !prev)}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-              >
-                {showPassword ? 'Hide' : 'Show'}
-              </button>
-            </div>
-          </div>
-
-          <div>
-            <label className={styles.fieldLabel} htmlFor="signup-confirmPassword">Confirm password</label>
-            <div className={styles.passwordRow}>
-              <input
-                id="signup-confirmPassword"
-                className={styles.fieldInput}
-                type={showConfirmPassword ? 'text' : 'password'}
-                value={values.confirmPassword}
-                onChange={(event) => updateField('confirmPassword', event.target.value)}
-                autoComplete="new-password"
-                required
-              />
-              <button
-                type="button"
-                className={styles.toggleButton}
-                onClick={() => setShowConfirmPassword((prev) => !prev)}
-                aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
-              >
-                {showConfirmPassword ? 'Hide' : 'Show'}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <p className={styles.hint}>{passwordHint}</p>
-
-        <button type="submit" className={styles.submitButton} disabled={loading}>
-          {loading ? 'Creating account...' : 'Create Account'}
-        </button>
-
-        <div className={styles.helperLinks}>
-          <span>Already have a verification token?</span>
-          <Link href="/verify-email">Verify email</Link>
-        </div>
+        <p className={styles.center}>
+          Already have a verification token? <Link href="/verify-email">Verify your email</Link>
+        </p>
       </form>
     </AuthShell>
   );

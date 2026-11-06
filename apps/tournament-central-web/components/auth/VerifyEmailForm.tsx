@@ -4,8 +4,10 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 
+import { Button, Notice, TextAreaField } from '@bracketworks/ui';
+
 import AuthShell from './AuthShell';
-import styles from './VerifyEmailForm.module.css';
+import styles from './authForm.module.css';
 
 type VerificationState = 'idle' | 'loading' | 'success' | 'error';
 
@@ -82,39 +84,32 @@ export default function VerifyEmailForm() {
     <AuthShell
       mode="login"
       title="Verify email"
-      subtitle="Confirm your email to finish account setup and unlock secure sign-in."
+      subtitle="Confirm your email to finish setting up your account."
     >
       <form className={styles.form} onSubmit={handleSubmit}>
-        <p
-          className={`${styles.statusMessage} ${
-            state === 'success' ? styles.successMessage : state === 'error' ? styles.errorMessage : styles.neutralMessage
-          }`}
+        <Notice
+          tone={state === 'success' ? 'success' : state === 'error' ? 'danger' : 'info'}
           role="status"
-          aria-live="polite"
         >
           {message}
-        </p>
+        </Notice>
 
-        <label className={styles.fieldLabel} htmlFor="verify-token">
-          Verification token
-        </label>
-        <textarea
+        <TextAreaField
           id="verify-token"
-          className={styles.fieldInput}
+          label="Verification token"
           value={token}
           onChange={(event) => setToken(event.target.value)}
-          placeholder="Paste verification token from your email"
+          placeholder="Paste the verification token from your email"
           rows={3}
           required
         />
 
-        <button type="submit" className={styles.submitButton} disabled={state === 'loading'}>
+        <Button type="submit" variant="primary" fullWidth disabled={state === 'loading'}>
           {state === 'loading' ? 'Verifying...' : 'Verify email'}
-        </button>
+        </Button>
 
-        <div className={styles.helperLinks}>
+        <div className={styles.links}>
           <Link href="/login">Back to sign in</Link>
-          <span aria-hidden="true">•</span>
           <Link href="/forgot-password">Forgot password?</Link>
         </div>
       </form>

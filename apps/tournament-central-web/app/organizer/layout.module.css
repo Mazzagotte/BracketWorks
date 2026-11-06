@@ -1,9 +1,6 @@
-/* Organizer shell. The top bar is the shared sticky TopNav, so content needs no offset.
-   The two --organizer-* variables remain for pages not yet moved onto the shared Page component. */
+/* Organizer shell. The top bar is the shared sticky TopNav; pages use the shared Page component. */
 
 .shell {
-  --organizer-content-width: var(--size-10xl);
-  --organizer-page-padding: var(--bw-page-gutter);
   min-height: 100dvh;
   background: var(--bw-page);
 }

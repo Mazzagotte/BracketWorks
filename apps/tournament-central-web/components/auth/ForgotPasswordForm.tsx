@@ -3,8 +3,10 @@
 import Link from 'next/link';
 import { FormEvent, useState } from 'react';
 
+import { Button, Notice, TextField } from '@bracketworks/ui';
+
 import AuthShell from './AuthShell';
-import styles from './ForgotPasswordForm.module.css';
+import styles from './authForm.module.css';
 
 const GENERIC_SUCCESS_MESSAGE = 'If an account exists for this email, a password reset link has been sent.';
 
@@ -57,23 +59,12 @@ export default function ForgotPasswordForm() {
       subtitle="Enter your email and we will send a reset link if your account exists."
     >
       <form className={styles.form} onSubmit={handleSubmit}>
-        {error && (
-          <p className={styles.errorMessage} role="alert" aria-live="polite">
-            {error}
-          </p>
-        )}
-        {success && (
-          <p className={styles.successMessage} role="status" aria-live="polite">
-            {success}
-          </p>
-        )}
+        {error ? <Notice tone="danger" role="alert">{error}</Notice> : null}
+        {success ? <Notice tone="success" role="status">{success}</Notice> : null}
 
-        <label className={styles.fieldLabel} htmlFor="reset-email">
-          Email
-        </label>
-        <input
+        <TextField
           id="reset-email"
-          className={styles.fieldInput}
+          label="Email"
           type="email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
@@ -82,13 +73,12 @@ export default function ForgotPasswordForm() {
           required
         />
 
-        <button type="submit" className={styles.submitButton} disabled={loading}>
+        <Button type="submit" variant="primary" fullWidth disabled={loading}>
           {loading ? 'Sending link...' : 'Send reset link'}
-        </button>
+        </Button>
 
-        <div className={styles.helperLinks}>
+        <div className={styles.links}>
           <Link href="/login">Back to sign in</Link>
-          <span aria-hidden="true">•</span>
           <Link href="/verify-email">Verify email</Link>
         </div>
       </form>

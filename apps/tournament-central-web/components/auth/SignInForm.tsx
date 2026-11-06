@@ -1,14 +1,14 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Lock, User } from 'lucide-react';
-import { FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { Button, CardDivider, Notice, PasswordField, TextField } from '@bracketworks/ui';
+import { FormEvent, KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { AuthTokenResponse } from '@bracketworks/types';
 
 import AuthShell from './AuthShell';
 import ResetPasswordModal from './ResetPasswordModal';
 import SignupModal from './SignupModal';
-import styles from './SignInForm.module.css';
+import styles from './authForm.module.css';
 import { persistAuthSession } from './authSession';
 
 type LoginResponse = Partial<AuthTokenResponse>;
@@ -20,7 +20,6 @@ export default function SignInForm() {
   const loginDelayTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [infoMessage, setInfoMessage] = useState('');
@@ -70,14 +69,7 @@ export default function SignInForm() {
     };
   }, []);
 
-  useEffect(() => {
-    if (!showPassword) return;
-    const timer = window.setTimeout(() => {
-      setShowPassword(false);
-      setInfoMessage('Password hidden for security.');
-    }, 5000);
-    return () => window.clearTimeout(timer);
-  }, [showPassword]);
+  const hidePasswordNotice = useCallback(() => setInfoMessage('Password hidden for security.'), []);
 
   const updateFieldValue = (value: string, setter: (value: string) => void) => {
     setter(value);
@@ -208,127 +200,67 @@ export default function SignInForm() {
   return (
     <AuthShell
       mode="login"
-      title="Welcome back"
-      subtitle="Sign in to access tournaments, registrations, and live event updates."
+      title="Sign in"
+      subtitle="Sign in to manage your tournaments, registrations, and live event updates."
       showSwitchRow={false}
-      showHeaderLogo={false}
     >
       <form className={styles.form} onSubmit={handleSubmit}>
-        {sessionExpired && (
-          <p className={styles.infoMessage} role="status" aria-live="polite">
-            Your session expired. Please log in again.
-          </p>
-        )}
+        {sessionExpired ? <Notice tone="info" role="status">Your session expired. Please sign in again.</Notice> : null}
+        {verificationSuccess ? <Notice tone="success" role="status">Email verified. You can sign in now.</Notice> : null}
+        {resetSuccess ? <Notice tone="success" role="status">Password reset complete. You can sign in with your new password.</Notice> : null}
+        {signupSuccess ? <Notice tone="success" role="status">Account created. Check your email for a verification message, then sign in.</Notice> : null}
+        {infoMessage ? <Notice tone="info" role="status">{infoMessage}</Notice> : null}
+        {error ? <Notice tone="danger" role="alert">{error}</Notice> : null}
 
-        {verificationSuccess && (
-          <p className={styles.successMessage} role="status" aria-live="polite">
-            Email verified. You can log in now.
-          </p>
-        )}
+        <TextField
+          ref={usernameInputRef}
+          id="login-username"
+          label="Username or email"
+          value={username}
+          onChange={(event) => updateFieldValue(event.target.value, setUsername)}
+          autoComplete="username"
+          placeholder="Enter your username or email"
+          aria-invalid={loginFailed || undefined}
+          required
+        />
 
-        {resetSuccess && (
-          <p className={styles.successMessage} role="status" aria-live="polite">
-            Password reset complete. You can log in with your new password.
-          </p>
-        )}
+        <PasswordField
+          id="login-password"
+          label="Password"
+          value={password}
+          onChange={(event) => updateFieldValue(event.target.value, setPassword)}
+          onKeyDown={handlePasswordKeyDown}
+          onKeyUp={handlePasswordKeyUp}
+          autoComplete="current-password"
+          placeholder="Enter your password"
+          aria-invalid={loginFailed || undefined}
+          helper={capsLockOn ? 'Caps Lock is on.' : undefined}
+          autoHideAfterMs={5000}
+          onAutoHide={hidePasswordNotice}
+          required
+        />
 
-        {signupSuccess && (
-          <p className={styles.successMessage} role="status" aria-live="polite">
-            Account created. Check your email for a verification message, then sign in.
-          </p>
-        )}
+        {loginDelay > 0 ? <Notice tone="warning" role="status">Please wait {loginDelay} seconds before trying again.</Notice> : null}
+        {failedAttempts > 0 && loginDelay === 0 ? (
+          <p className={styles.helper} role="status">{failedAttempts === 1 ? '1 failed attempt' : `${failedAttempts} failed attempts`}</p>
+        ) : null}
 
-        {infoMessage && (
-          <p className={styles.infoMessage} role="status" aria-live="polite">
-            {infoMessage}
-          </p>
-        )}
-
-        {error && (
-          <p className={styles.errorBanner} role="alert" aria-live="polite">
-            {error}
-          </p>
-        )}
-
-        <div className={styles.inputGroup}>
-          <label className={styles.inputLabel} htmlFor="login-username">Username or email</label>
-          <User className={styles.inputIcon} aria-hidden="true" strokeWidth={1.8} />
-          <input
-            ref={usernameInputRef}
-            id="login-username"
-            className={`${styles.input} ${loginFailed ? styles.inputError : ''}`}
-            type="text"
-            value={username}
-            onChange={(event) => updateFieldValue(event.target.value, setUsername)}
-            autoComplete="username"
-            placeholder="Enter username or email"
-            required
-          />
-        </div>
-
-        <div>
-          <label className={styles.inputLabel} htmlFor="login-password">Password</label>
-          <div className={styles.passwordField}>
-            <Lock className={styles.inputIcon} aria-hidden="true" strokeWidth={1.8} />
-            <input
-              id="login-password"
-              className={`${styles.input} ${capsLockOn ? styles.inputCapsLock : ''} ${loginFailed ? styles.inputError : ''}`}
-              type={showPassword ? 'text' : 'password'}
-              value={password}
-              onChange={(event) => updateFieldValue(event.target.value, setPassword)}
-              onKeyDown={handlePasswordKeyDown}
-              onKeyUp={handlePasswordKeyUp}
-              autoComplete="current-password"
-              placeholder="Enter your password"
-              required
-            />
-            <button
-              type="button"
-              className={styles.passwordToggle}
-              onClick={() => setShowPassword((prev) => !prev)}
-              aria-label={showPassword ? 'Hide password' : 'Show password'}
-            >
-              {showPassword ? 'Hide' : 'Show'}
-            </button>
-          </div>
-        </div>
-
-        {capsLockOn && (
-          <p className={styles.capsLockWarning} role="status" aria-live="polite">
-            Caps Lock is ON.
-          </p>
-        )}
-
-        {loginDelay > 0 && (
-          <p className={styles.delayWarning} role="status" aria-live="polite">
-            Please wait {loginDelay} seconds before trying again.
-          </p>
-        )}
-
-        {failedAttempts > 0 && loginDelay === 0 && (
-          <p className={styles.attemptsInfo} role="status" aria-live="polite">
-            {failedAttempts === 1 ? '1 failed attempt' : `${failedAttempts} failed attempts`}
-          </p>
-        )}
-
-        <button type="submit" className={styles.loginBtn} disabled={loading}>
-          {loading ? 'Signing in...' : 'Log In'} <span className={styles.btnArrow} aria-hidden="true">→</span>
-        </button>
-
-        <p className={styles.submitHelper}>One account. BracketWorks + Tournament Central.</p>
-
-        <div className={styles.forgotRow}>
-          <button type="button" onClick={() => setResetModalOpen(true)} className={styles.forgotLink} disabled={loading}>
+        <div className={styles.actions}>
+          <Button type="submit" variant="primary" fullWidth disabled={loading}>
+            {loading ? 'Signing in...' : 'Log in'}
+          </Button>
+          <Button variant="ghost" fullWidth onClick={() => setResetModalOpen(true)} disabled={loading}>
             Forgot your password?
-          </button>
+          </Button>
         </div>
 
-        <div className={styles.signupPrompt}>
-          <span className={styles.signupPromptText}>New to Tournament Central?</span>
-          <button type="button" onClick={() => setSignupModalOpen(true)} className={styles.signupPromptLink} disabled={loading}>
-            Create a free account
-          </button>
-        </div>
+        <p className={styles.helper}>One account for BracketWorks and Tournament Central.</p>
+
+        <CardDivider />
+        <p className={styles.center}>New to Tournament Central?</p>
+        <Button variant="accent-outline" fullWidth onClick={() => setSignupModalOpen(true)} disabled={loading}>
+          Create a free account
+        </Button>
       </form>
 
       <SignupModal

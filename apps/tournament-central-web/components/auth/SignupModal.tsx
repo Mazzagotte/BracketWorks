@@ -1,11 +1,9 @@
 'use client';
 
 import { FormEvent, useMemo, useState } from 'react';
-import { capitalizeFirstLetter, ICON_SIZE } from '@bracketworks/ui';
-import { X } from 'lucide-react';
+import { Button, CardDivider, FormGrid, Modal, Notice, PasswordField, TextField, capitalizeFirstLetter } from '@bracketworks/ui';
 
-import styles from './SignupModal.module.css';
-import { useModalFocus } from '@/lib/useModalFocus';
+import styles from './authForm.module.css';
 
 type SignupModalProps = {
   isOpen: boolean;
@@ -39,11 +37,8 @@ function isStrongPassword(password: string): boolean {
 
 export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalProps) {
   const [values, setValues] = useState<RegisterValues>(EMPTY_FORM);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const dialogRef = useModalFocus<HTMLDivElement>(isOpen, onClose);
 
   const passwordHint = useMemo(() => {
     if (!values.password) {
@@ -65,8 +60,6 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
   const closeModal = () => {
     setError('');
     setValues(EMPTY_FORM);
-    setShowPassword(false);
-    setShowConfirmPassword(false);
     onClose();
   };
 
@@ -134,144 +127,49 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div ref={dialogRef} tabIndex={-1} className={styles.overlay} role="dialog" aria-modal="true" aria-labelledby="signup-title" aria-describedby="signup-description">
-      <div className={styles.modal}>
-        <button type="button" onClick={closeModal} className={styles.closeButton} aria-label="Close signup modal">
-          <X size={ICON_SIZE.lg} strokeWidth={2.25} aria-hidden="true" />
-        </button>
+    <Modal
+      open={isOpen}
+      onClose={closeModal}
+      title="Create your account"
+      description="Create your account to browse tournaments, register, and follow live results."
+      size="md"
+      closeLabel="Close signup modal"
+      closeOnBackdrop={false}
+    >
+      <form className={styles.form} onSubmit={handleSubmit}>
+        {error ? <Notice tone="danger" role="alert">{error}</Notice> : null}
 
-        <div className={styles.header}>
-          <h2 id="signup-title">Create your account</h2>
-          <p id="signup-description">Create your account to browse tournaments, register, and follow live results.</p>
-        </div>
+        <h3 className={styles.subsectionTitle}>Your information</h3>
+        <FormGrid>
+          <TextField id="modal-signup-firstName" label="First name" value={values.firstName} onChange={(event) => updateField('firstName', event.target.value)} autoComplete="given-name" required />
+          <TextField id="modal-signup-lastName" label="Last name" value={values.lastName} onChange={(event) => updateField('lastName', event.target.value)} autoComplete="family-name" required />
+          <TextField id="modal-signup-username" label="Username" fullRow value={values.username} onChange={(event) => updateField('username', event.target.value)} placeholder="Choose a unique username" autoComplete="username" required />
+          <TextField id="modal-signup-organization" label="Organization" optional fullRow value={values.organization} onChange={(event) => updateField('organization', event.target.value)} placeholder="League, center, association, or event" autoComplete="organization" />
+        </FormGrid>
 
-        <form className={styles.form} onSubmit={handleSubmit}>
-          {error && (
-            <p className={styles.errorMessage} role="alert" aria-live="polite">
-              {error}
-            </p>
-          )}
-
-          <h3 className={styles.sectionHeader}>YOUR INFORMATION</h3>
-
-          <div className={styles.twoCol}>
-            <div>
-              <label className={styles.fieldLabel} htmlFor="modal-signup-firstName">First name *</label>
-              <input
-                id="modal-signup-firstName"
-                className={styles.fieldInput}
-                value={values.firstName}
-                onChange={(event) => updateField('firstName', event.target.value)}
-                autoComplete="given-name"
-                required
-              />
-            </div>
-            <div>
-              <label className={styles.fieldLabel} htmlFor="modal-signup-lastName">Last name *</label>
-              <input
-                id="modal-signup-lastName"
-                className={styles.fieldInput}
-                value={values.lastName}
-                onChange={(event) => updateField('lastName', event.target.value)}
-                autoComplete="family-name"
-                required
-              />
-            </div>
-          </div>
-
-          <label className={styles.fieldLabel} htmlFor="modal-signup-username">Username *</label>
-          <input
-            id="modal-signup-username"
-            className={styles.fieldInput}
-            value={values.username}
-            onChange={(event) => updateField('username', event.target.value)}
-            placeholder="Choose a unique username"
-            autoComplete="username"
+        <CardDivider />
+        <h3 className={styles.subsectionTitle}>Account security</h3>
+        <FormGrid>
+          <TextField id="modal-signup-email" label="Email" fullRow type="email" value={values.email} onChange={(event) => updateField('email', event.target.value)} placeholder="you@example.com" autoComplete="email" required />
+          <PasswordField id="modal-signup-password" label="Password" value={values.password} onChange={(event) => updateField('password', event.target.value)} autoComplete="new-password" required />
+          <PasswordField
+            id="modal-signup-confirmPassword"
+            label="Confirm password"
+            showLabel="Show confirm password"
+            hideLabelText="Hide confirm password"
+            value={values.confirmPassword}
+            onChange={(event) => updateField('confirmPassword', event.target.value)}
+            autoComplete="new-password"
             required
           />
+        </FormGrid>
+        <p className={styles.helper}>{passwordHint}</p>
 
-          <label className={styles.fieldLabel} htmlFor="modal-signup-organization">Organization (optional)</label>
-          <input
-            id="modal-signup-organization"
-            className={styles.fieldInput}
-            value={values.organization}
-            onChange={(event) => updateField('organization', event.target.value)}
-            placeholder="League, center, association, or event"
-            autoComplete="organization"
-          />
-
-          <h3 className={styles.sectionHeader}>ACCOUNT SECURITY</h3>
-
-          <label className={styles.fieldLabel} htmlFor="modal-signup-email">Email *</label>
-          <input
-            id="modal-signup-email"
-            className={styles.fieldInput}
-            type="email"
-            value={values.email}
-            onChange={(event) => updateField('email', event.target.value)}
-            placeholder="you@example.com"
-            autoComplete="email"
-            required
-          />
-
-          <div className={styles.twoCol}>
-            <div>
-              <label className={styles.fieldLabel} htmlFor="modal-signup-password">Password *</label>
-              <div className={styles.passwordRow}>
-                <input
-                  id="modal-signup-password"
-                  className={styles.fieldInput}
-                  type={showPassword ? 'text' : 'password'}
-                  value={values.password}
-                  onChange={(event) => updateField('password', event.target.value)}
-                  autoComplete="new-password"
-                  required
-                />
-                <button
-                  type="button"
-                  className={styles.toggleButton}
-                  onClick={() => setShowPassword((prev) => !prev)}
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
-                >
-                  {showPassword ? 'Hide' : 'Show'}
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <label className={styles.fieldLabel} htmlFor="modal-signup-confirmPassword">Confirm password *</label>
-              <div className={styles.passwordRow}>
-                <input
-                  id="modal-signup-confirmPassword"
-                  className={styles.fieldInput}
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  value={values.confirmPassword}
-                  onChange={(event) => updateField('confirmPassword', event.target.value)}
-                  autoComplete="new-password"
-                  required
-                />
-                <button
-                  type="button"
-                  className={styles.toggleButton}
-                  onClick={() => setShowConfirmPassword((prev) => !prev)}
-                  aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
-                >
-                  {showConfirmPassword ? 'Hide' : 'Show'}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <p className={styles.hint}>{passwordHint}</p>
-
-          <button type="submit" className={styles.submitButton} disabled={loading}>
-            {loading ? 'Creating account...' : 'Create Account'}
-          </button>
-        </form>
-      </div>
-    </div>
+        <Button type="submit" variant="primary" fullWidth disabled={loading}>
+          {loading ? 'Creating account...' : 'Create account'}
+        </Button>
+      </form>
+    </Modal>
   );
 }

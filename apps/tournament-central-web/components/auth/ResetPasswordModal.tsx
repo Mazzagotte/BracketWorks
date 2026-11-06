@@ -1,11 +1,9 @@
 'use client';
 
 import { FormEvent, useState } from 'react';
-import { X } from 'lucide-react';
 
-import styles from './ResetPasswordModal.module.css';
-import { useModalFocus } from '@/lib/useModalFocus';
-import { ICON_SIZE } from '@bracketworks/ui';
+import styles from './authForm.module.css';
+import { Button, Modal, Notice, TextField } from '@bracketworks/ui';
 
 type ResetPasswordModalProps = {
   isOpen: boolean;
@@ -17,7 +15,6 @@ export default function ResetPasswordModal({ isOpen, onClose, onSuccess }: Reset
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const dialogRef = useModalFocus<HTMLDivElement>(isOpen, onClose);
 
   const handleClose = () => {
     setEmail('');
@@ -61,44 +58,31 @@ export default function ResetPasswordModal({ isOpen, onClose, onSuccess }: Reset
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div ref={dialogRef} tabIndex={-1} className={styles.overlay} role="dialog" aria-modal="true" aria-labelledby="reset-password-title" aria-describedby="reset-password-description">
-      <div className={styles.modal}>
-        <button type="button" onClick={handleClose} className={styles.closeButton} aria-label="Close reset password modal">
-          <X size={ICON_SIZE.lg} strokeWidth={2.25} aria-hidden="true" />
-        </button>
-
-        <div className={styles.header}>
-          <h2 id="reset-password-title">Reset your password</h2>
-          <p id="reset-password-description">Enter the email connected to your account and we will send a secure reset link.</p>
-        </div>
-
-        <form className={styles.form} onSubmit={handleSubmit}>
-          {error && (
-            <p className={styles.errorMessage} role="alert" aria-live="polite">
-              {error}
-            </p>
-          )}
-
-          <label className={styles.fieldLabel} htmlFor="modal-reset-email">Email address *</label>
-          <input
-            id="modal-reset-email"
-            className={styles.fieldInput}
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="you@example.com"
-            autoComplete="email"
-            required
-          />
-
-          <button type="submit" className={styles.submitButton} disabled={loading}>
-            {loading ? 'Sending link...' : 'Send Reset Link'}
-          </button>
-        </form>
-      </div>
-    </div>
+    <Modal
+      open={isOpen}
+      onClose={handleClose}
+      title="Reset your password"
+      description="Enter the email connected to your account and we will send a secure reset link."
+      size="sm"
+      closeLabel="Close reset password modal"
+    >
+      <form className={styles.form} onSubmit={handleSubmit}>
+        {error ? <Notice tone="danger" role="alert">{error}</Notice> : null}
+        <TextField
+          id="modal-reset-email"
+          label="Email address"
+          type="email"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          placeholder="you@example.com"
+          autoComplete="email"
+          required
+        />
+        <Button type="submit" variant="primary" fullWidth disabled={loading}>
+          {loading ? 'Sending link...' : 'Send reset link'}
+        </Button>
+      </form>
+    </Modal>
   );
 }
