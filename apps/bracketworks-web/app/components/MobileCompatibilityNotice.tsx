@@ -1,13 +1,11 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { Button, Modal } from '@bracketworks/ui'
 
-import buttonStyles from '../styles/buttons.module.css'
-import modalStyles from '../styles/modals.module.css'
 import styles from './MobileCompatibilityNotice.module.css'
 import { MOBILE_VIEWPORT_QUERY } from '../lib/responsive'
 import { useMediaQuery } from '../hooks/useMediaQuery'
-import { setBodyInteractionState } from '../utils/modalUtils'
 
 export const MOBILE_NOTICE_STORAGE_KEY = 'bracketworks-mobile-notice-dismissed'
 export const MOBILE_NOTICE_MEDIA_QUERY = MOBILE_VIEWPORT_QUERY
@@ -56,87 +54,18 @@ interface MobileCompatibilityNoticeProps {
   onContinue: () => void
 }
 
+/** Tells phone users the organizer tools are built for larger screens. Live View is fine on phones. */
 export default function MobileCompatibilityNotice({ open, onContinue }: MobileCompatibilityNoticeProps) {
-  const dialogRef = useRef<HTMLDivElement>(null)
-  const continueButtonRef = useRef<HTMLButtonElement>(null)
-  const previousFocusRef = useRef<HTMLElement | null>(null)
-
-  useEffect(() => {
-    if (!open) return undefined
-
-    setBodyInteractionState({ scrollLocked: true, touchLocked: false })
-    previousFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
-    const focusFrame = window.requestAnimationFrame(() => continueButtonRef.current?.focus())
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.preventDefault()
-        onContinue()
-        return
-      }
-
-      if (event.key !== 'Tab') return
-      const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
-        'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
-      )
-      if (!focusable || focusable.length === 0) {
-        event.preventDefault()
-        dialogRef.current?.focus()
-        return
-      }
-
-      const first = focusable[0]
-      const last = focusable[focusable.length - 1]
-      if (!first || !last) return
-
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault()
-        last.focus()
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault()
-        first.focus()
-      }
-    }
-
-    document.addEventListener('keydown', handleKeyDown)
-    return () => {
-      window.cancelAnimationFrame(focusFrame)
-      document.removeEventListener('keydown', handleKeyDown)
-      setBodyInteractionState({ scrollLocked: false, touchLocked: false })
-      previousFocusRef.current?.focus()
-    }
-  }, [onContinue, open])
-
-  if (!open) return null
-
   return (
-    <div className={modalStyles.overlay} data-testid="mobile-compatibility-notice-overlay">
-      <div
-        ref={dialogRef}
-        className={`${modalStyles.modal} ${modalStyles.compactModal}`}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="mobile-compatibility-title"
-        aria-describedby="mobile-compatibility-description"
-        tabIndex={-1}
-      >
-        <div className={modalStyles.header}>
-          <h2 id="mobile-compatibility-title">Desktop or Tablet Recommended</h2>
-        </div>
-        <div className={styles.content} id="mobile-compatibility-description">
-          <p>BracketWorks tournament management tools are designed for desktop and tablet screens and are not currently optimized for mobile phones.</p>
-          <p>Some tables, forms, brackets, and controls may be difficult to view or use on a smaller screen.</p>
-          <p className={styles.liveViewNote}>Live View pages are fully supported on mobile devices.</p>
-          <button
-            ref={continueButtonRef}
-            type="button"
-            className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.fullWidth} ${styles.continueButton}`}
-            onClick={onContinue}
-          >
-            Continue Anyway
-          </button>
-        </div>
-      </div>
-    </div>
+    <Modal
+      open={open}
+      onClose={onContinue}
+      size="sm"
+      title="Desktop or tablet recommended"
+      description="BracketWorks tournament tools are built for desktop and tablet screens. Some tables, forms, and brackets may be hard to use on a phone."
+      footer={<Button variant="primary" fullWidth onClick={onContinue}>Continue anyway</Button>}
+    >
+      <p className={styles.note}>Live View works fully on phones.</p>
+    </Modal>
   )
 }

@@ -71,10 +71,10 @@ describe('MobileCompatibilityNotice', () => {
     expect(isMobileCompatibilityNoticeRoute('/admin')).toBe(true)
   })
 
-  it('dismisses with Continue Anyway and retains dismissal for the session', async () => {
+  it('dismisses with Continue anyway and retains dismissal for the session', async () => {
     installMatchMedia(true)
     const { unmount } = render(<NoticeHarness />)
-    fireEvent.click(await screen.findByRole('button', { name: 'Continue Anyway' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Continue anyway' }))
     expect(window.sessionStorage.getItem(MOBILE_NOTICE_STORAGE_KEY)).toBe('true')
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
 
@@ -83,7 +83,7 @@ describe('MobileCompatibilityNotice', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
   })
 
-  it('traps focus, closes with Escape, restores focus, and locks scrolling', async () => {
+  it('focuses the dialog, closes with Escape, restores focus, and locks scrolling', async () => {
     installMatchMedia(true)
     const opener = document.createElement('button')
     opener.textContent = 'Previous control'
@@ -91,16 +91,15 @@ describe('MobileCompatibilityNotice', () => {
     opener.focus()
 
     render(<NoticeHarness />)
-    const continueButton = await screen.findByRole('button', { name: 'Continue Anyway' })
-    await waitFor(() => expect(continueButton).toHaveFocus())
-    expect(document.body).toHaveClass('bw-scroll-lock')
+    const dialog = await screen.findByRole('dialog', { name: 'Desktop or tablet recommended' })
+    await waitFor(() => expect(dialog).toHaveFocus())
+    expect(document.body.style.overflow).toBe('hidden')
+    expect(screen.getByRole('button', { name: 'Continue anyway' })).toBeInTheDocument()
 
-    fireEvent.keyDown(document, { key: 'Tab' })
-    expect(continueButton).toHaveFocus()
     fireEvent.keyDown(document, { key: 'Escape' })
 
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
-    expect(document.body).not.toHaveClass('bw-scroll-lock')
+    expect(document.body.style.overflow).not.toBe('hidden')
     expect(opener).toHaveFocus()
     opener.remove()
   })
