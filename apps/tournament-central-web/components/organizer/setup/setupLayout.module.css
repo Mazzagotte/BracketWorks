@@ -203,3 +203,11 @@
     flex: 1 1 100%;
   }
 }
+
+.nowrapTable td {
+  white-space: nowrap;
+}
+
+.strongCell {
+  font-weight: var(--font-weight-semibold);
+}

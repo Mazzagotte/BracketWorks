@@ -103,6 +103,7 @@ import {
   Button,
   Card,
   CardHeader,
+  DataTable,
   EmptyState,
   ICON_SIZE,
   Menu,
@@ -115,6 +116,7 @@ import {
   ProgressBar,
   SelectField,
   SideNav,
+  StatGroup,
 } from '@bracketworks/ui';
 
 type DrawerState =
@@ -1711,10 +1713,6 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
   const fillPercent = totalSquadCapacity > 0
     ? Math.min(Math.round((totalRegisteredSpots / totalSquadCapacity) * 100), 100)
     : 0;
-  const fillGaugeStyle = {
-    background: `conic-gradient(var(--color-success) ${fillPercent * 3.6}deg, color-mix(in srgb, var(--bw-border-subtle) 75%, transparent) 0deg 360deg)`,
-  };
-
 
   const sortedFields = useMemo(() => [...fields].sort((a, b) => a.displayOrder - b.displayOrder), [fields]);
   const askedFields = useMemo(() => sortedFields.filter((field) => field.mode !== 'dont-ask'), [sortedFields]);
@@ -2743,163 +2741,104 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
           </Modal>
 
           {activeSection === 'squads-availability' && (
-            <div className={styles.squadDashLayout}>
-              <section className={styles.sectionCard}>
-                <div className={`${styles.sectionHeader} ${styles.squadSectionHeader}`}>
-                  <div>
-                    <h2>Squads & Availability</h2>
-                    <p className={styles.squadDashSubtitle}>
-                      Manage optional bowling times, locations, capacity, and registration availability.
-                    </p>
-                  </div>
-                  <div className={styles.squadHeaderActions}>
-                    <SetupStatusBadge status={statusBySection['squads-availability']} />
-                    <span className={styles.evDivCountPill}>{squads.length} squads</span>
-                    <div className={styles.squadDashActions}>
-                    <button type="button" className={styles.secondaryAction} onClick={() => setActiveSection('registration-setup')}>
-                      <Eye size={ICON_SIZE.sm} /> Preview Registration
-                    </button>
-                    <button type="button" className={styles.inlineAction} onClick={() => setDrawerState({ kind: 'squad' })}>
-                      <Plus size={ICON_SIZE.sm} /> Add Squad
-                    </button>
-                    </div>
-                  </div>
-                </div>
-
-                {squads.length === 0 ? (
-                  <div className={styles.squadEmptyState}>
-                    <span className={styles.squadEmptyIcon}><CalendarDays size={ICON_SIZE['2xl']} /></span>
-                    <h3>No squads are needed yet</h3>
-                    <p>Squads are optional. Add them when your tournament offers specific bowling times or needs capacity limits.</p>
-                    <button type="button" className={styles.primaryAction} onClick={() => setDrawerState({ kind: 'squad' })}>
-                      <Plus size={ICON_SIZE.sm} /> Add First Squad
-                    </button>
-                  </div>
-                ) : (
+            <>
+              <StepHeader
+                title="Squads and availability"
+                description="Optional bowling times, capacity, and registration availability."
+                status={statusBySection['squads-availability']}
+                actions={(
                   <>
-                <div className={styles.squadMetricGrid}>
-                  <article className={styles.squadMetricCard}>
-                    <span className={styles.squadMetricIcon}><Users size={ICON_SIZE.sm} /></span>
-                    <div>
-                      <small>Total Squads</small>
-                      <strong>{squads.length}</strong>
-                    </div>
-                  </article>
-                  <article className={styles.squadMetricCard}>
-                    <span className={styles.squadMetricIcon}><CalendarDays size={ICON_SIZE.sm} /></span>
-                    <div>
-                      <small>Dates</small>
-                      <strong>{groupsByDate.length}</strong>
-                    </div>
-                  </article>
-                  <article className={styles.squadMetricCard}>
-                    <span className={styles.squadMetricIcon}><Users size={ICON_SIZE.sm} /></span>
-                    <div>
-                      <small>Total Capacity</small>
-                      <strong>{totalSquadCapacity}</strong>
-                    </div>
-                  </article>
-                  <article className={styles.squadMetricCard}>
-                    <span className={styles.squadMetricIcon}><CircleCheck size={ICON_SIZE.sm} /></span>
-                    <div>
-                      <small>Spots Filled</small>
-                      <strong>{totalRegisteredSpots}</strong>
-                      <div className={styles.squadMetricFoot}>
-                        <em>{fillPercent}% full</em>
-                        <span className={styles.squadMetricGauge} style={fillGaugeStyle}>
-                          <span>{fillPercent}%</span>
-                        </span>
-                      </div>
-                    </div>
-                  </article>
-                </div>
-
-                <div className={styles.squadGroupStack}>
-                  {squadGroups.map((group) => (
-                    <section key={group.key} className={styles.squadGroupBlock}>
-                      <header className={styles.squadGroupHead}>
-                        <h3><CalendarDays size={ICON_SIZE.sm} /> {group.label}</h3>
-                        <div className={styles.squadGroupHeadMeta}>
-                          <span>{group.squads.length} squads - {group.squads.reduce((sum, squad) => sum + squad.capacity, 0)} capacity - {group.squads.reduce((sum, squad) => sum + squad.registeredCount, 0)} filled</span>
-                          <button type="button" className={styles.squadChevronButton} aria-label="Collapse date group" disabled>
-                            <ChevronUp size={ICON_SIZE.sm} />
-                          </button>
-                        </div>
-                      </header>
-                      <div className={styles.squadRowList}>
-                        {group.squads.map((squad, rowIndex) => {
-                          const fillRate = squad.capacity > 0 ? squad.registeredCount / squad.capacity : 0;
-                          const fillToneClass = fillRate >= 0.75
-                            ? styles.squadStatusHigh
-                            : fillRate >= 0.35
-                              ? styles.squadStatusMid
-                              : styles.squadStatusLow;
-                          const fillCountClass = fillRate >= 0.75
-                            ? styles.squadCountHigh
-                            : fillRate >= 0.35
-                              ? styles.squadCountMid
-                              : styles.squadCountLow;
-                          const spotsRemaining = Math.max(squad.capacity - squad.registeredCount, 0);
-                          const availabilityLabel = squad.registeredCount >= squad.capacity
-                            ? (squad.waitlistEnabled ? 'Waitlist open' : 'Full')
-                            : fillRate >= 0.75
-                              ? 'Nearly full'
-                              : 'Available';
-                          return (
-                            <article key={squad.id} className={styles.squadRowCard}>
-                              <div className={styles.squadTimeRail}>
-                                <span className={`${styles.squadStatusDot} ${fillToneClass}`} aria-hidden="true" />
-                                {rowIndex < group.squads.length - 1 ? <span className={styles.squadStatusLine} aria-hidden="true" /> : null}
-                                <div className={styles.squadTimeBadge}>
-                                  <strong>{formatSquadTimeLabel(squad.startTime)}</strong>
-                                  <span>Start</span>
-                                </div>
-                              </div>
-
-                              <div className={styles.squadRowMain}>
-                                <strong>{squad.name}</strong>
-                                <p className={styles.squadRowMeta}>
-                                  <span><Clock3 size={ICON_SIZE.xs} /> Check-in {formatSquadTimeLabel(squad.checkInTime)}</span>
-                                  <span><MapPin size={ICON_SIZE.xs} /> {details.bowlingCenter || 'Location TBD'}</span>
-                                </p>
-                                <div className={styles.metaChips}>
-                                  <span className={styles.chip}>{availabilityLabel}</span>
-                                  <span className={styles.chip}>{spotsRemaining} spot{spotsRemaining === 1 ? '' : 's'} remaining</span>
-                                </div>
-                              </div>
-
-                              <div className={styles.squadNumericCol}>
-                                <strong>{squad.capacity}</strong>
-                                <span>Capacity</span>
-                              </div>
-
-                              <div className={styles.squadNumericCol}>
-                                <strong className={fillCountClass}>{squad.registeredCount}/{squad.capacity}</strong>
-                                <span>Registered</span>
-                              </div>
-
-                              <div className={styles.squadRowActions}>
-                                <button type="button" className={styles.inlineAction} onClick={() => setDrawerState({ kind: 'squad', id: squad.id })} aria-label={`Edit ${squad.name}`}>
-                                  <PencilLine size={ICON_SIZE.sm} /> Edit
-                                </button>
-                              </div>
-                            </article>
-                          );
-                        })}
-                      </div>
-                    </section>
-                  ))}
-                </div>
-
-                <button type="button" className={styles.squadAddDateAction} onClick={() => setDrawerState({ kind: 'squad' })}>
-                  <span className={styles.squadAddDateTitle}><Plus size={ICON_SIZE.sm} /> Add Squad to New Date</span>
-                  <small>Create a new date and add squads</small>
-                </button>
+                    <Button variant="secondary" icon={<Eye size={ICON_SIZE.md} aria-hidden="true" />} onClick={() => setActiveSection('registration-setup')}>
+                      Preview registration
+                    </Button>
+                    <Button variant="secondary" icon={<Plus size={ICON_SIZE.md} aria-hidden="true" />} onClick={() => setDrawerState({ kind: 'squad' })}>
+                      Add squad
+                    </Button>
                   </>
                 )}
-              </section>
+              />
 
-            </div>
+              {squads.length === 0 ? (
+                <Card>
+                  <EmptyState
+                    icon={<CalendarDays size={ICON_SIZE['2xl']} aria-hidden="true" />}
+                    title="No squads yet"
+                    description="Squads are optional. Add them when your tournament offers specific bowling times or needs capacity limits."
+                    action={(
+                      <Button variant="primary" icon={<Plus size={ICON_SIZE.md} aria-hidden="true" />} onClick={() => setDrawerState({ kind: 'squad' })}>
+                        Add first squad
+                      </Button>
+                    )}
+                  />
+                </Card>
+              ) : (
+                <>
+                  <StatGroup
+                    label="Squad totals"
+                    items={[
+                      { label: 'Squads', value: String(squads.length) },
+                      { label: 'Dates', value: String(groupsByDate.length) },
+                      { label: 'Capacity', value: String(totalSquadCapacity), detail: 'Bowler spots' },
+                      { label: 'Filled', value: String(totalRegisteredSpots), detail: `${fillPercent}% full` },
+                    ]}
+                  />
+
+                  {squadGroups.map((group) => {
+                    const groupCapacity = group.squads.reduce((sum, squad) => sum + squad.capacity, 0);
+                    const groupFilled = group.squads.reduce((sum, squad) => sum + squad.registeredCount, 0);
+                    return (
+                      <Card key={group.key} padding="flush" aria-label={group.label}>
+                        <CardHeader
+                          title={group.label}
+                          description={`${group.squads.length} squad${group.squads.length === 1 ? '' : 's'} · ${groupCapacity} capacity · ${groupFilled} filled · ${details.bowlingCenter || 'Location to be decided'}`}
+                          headingLevel="h3"
+                        />
+                        <DataTable caption={`Squads on ${group.label}`} className={layout.nowrapTable}>
+                          <thead>
+                            <tr>
+                              <th scope="col">Squad</th>
+                              <th scope="col">Start</th>
+                              <th scope="col">Check-in</th>
+                              <th scope="col" data-align="right">Capacity</th>
+                              <th scope="col" data-align="right">Registered</th>
+                              <th scope="col" data-align="right">Spots left</th>
+                              <th scope="col">Status</th>
+                              <th scope="col"><span className="sr-only">Actions</span></th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {group.squads.map((squad) => {
+                              const fillRate = squad.capacity > 0 ? squad.registeredCount / squad.capacity : 0;
+                              const availability = squad.registeredCount >= squad.capacity
+                                ? (squad.waitlistEnabled ? { label: 'Waitlist open', tone: 'warning' as const } : { label: 'Full', tone: 'danger' as const })
+                                : fillRate >= 0.75
+                                  ? { label: 'Nearly full', tone: 'warning' as const }
+                                  : { label: 'Available', tone: 'success' as const };
+                              return (
+                                <tr key={squad.id}>
+                                  <td className={layout.strongCell}>{squad.name}</td>
+                                  <td>{formatSquadTimeLabel(squad.startTime)}</td>
+                                  <td data-tone="secondary">{formatSquadTimeLabel(squad.checkInTime)}</td>
+                                  <td data-align="right">{squad.capacity}</td>
+                                  <td data-align="right">{squad.registeredCount}</td>
+                                  <td data-align="right">{Math.max(squad.capacity - squad.registeredCount, 0)}</td>
+                                  <td><Badge tone={availability.tone}>{availability.label}</Badge></td>
+                                  <td data-align="right">
+                                    <Button size="sm" variant="secondary" onClick={() => setDrawerState({ kind: 'squad', id: squad.id })} aria-label={`Edit ${squad.name}`}>
+                                      Edit
+                                    </Button>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </DataTable>
+                      </Card>
+                    );
+                  })}
+                </>
+              )}
+            </>
           )}
 
           {activeSection === 'registration-setup' && (
