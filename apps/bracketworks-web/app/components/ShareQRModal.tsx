@@ -3,9 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import NextImage from "next/image";
 import { QRCodeCanvas } from "qrcode.react";
-import { Check, Copy, Download, Image as ImageIcon, Info, Link2, Share2 } from "lucide-react";
+import { Check, Copy, Download } from "lucide-react";
+import { Button, CardDivider, ICON_SIZE, Modal } from "@bracketworks/ui";
 import { useToast } from "./Toast";
-import CloseControl from "../../components/CloseControl";
 import styles from "./ShareQRModal.module.css";
 
 interface ShareQRModalProps {
@@ -38,7 +38,6 @@ export default function ShareQRModal({
   publicUrl: providedPublicUrl,
 }: ShareQRModalProps) {
   const { addToast } = useToast();
-  const dialogRef = useRef<HTMLDialogElement>(null);
   const qrCanvasRef = useRef<HTMLCanvasElement>(null);
   const [copied, setCopied] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState("");
@@ -59,17 +58,6 @@ export default function ShareQRModal({
       foreground: readColorToken("--color-black"),
     });
   }, []);
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-
-    if (open) {
-      if (!dialog.open) dialog.showModal();
-    } else {
-      if (dialog.open) dialog.close();
-    }
-  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -115,14 +103,10 @@ export default function ShareQRModal({
       await navigator.clipboard.writeText(publicUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-      addToast({ type: "success", message: "Link copied!", duration: 2500 });
+      addToast({ type: "success", message: "Link copied.", duration: 2500 });
     } catch {
       addToast({ type: "error", message: "Failed to copy link.", duration: 3000 });
     }
-  };
-
-  const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
-    if (e.target === dialogRef.current) onClose();
   };
 
   const handleExportPng = async (mode: PosterMode, shouldDownload = true) => {
@@ -443,115 +427,88 @@ export default function ShareQRModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, qrDataUrl]);
 
-  if (!open) return null;
-
   return (
-    <dialog ref={dialogRef} className={styles.dialog} onClick={handleBackdropClick}>
-      <div className={styles.content}>
-        <div className={styles.header}>
-          <span className={styles.headerIcon} aria-hidden="true"><Share2 /></span>
-          <div className={styles.headerText}>
-            <h2 className={styles.title}>Share Live View</h2>
-            <p className={styles.tournamentName}>Share live brackets, scores, and standings for {tournamentName}.</p>
-          </div>
-          <CloseControl onClick={onClose} size="sm" />
+    <Modal
+      open={open}
+      onClose={onClose}
+      size="lg"
+      closeLabel="Close share live view"
+      title="Share live view"
+      description={`Share live brackets, scores, and standings for ${tournamentName}. No account is needed to follow along.`}
+      footer={<Button variant="primary" onClick={onClose}>Done</Button>}
+    >
+      <div className={styles.body}>
+        <div className={styles.preview}>
+          {posterPreviewUrl ? (
+            <NextImage className={styles.posterImage} src={posterPreviewUrl} alt={`Live results poster for ${tournamentName}`} width={1080} height={1620} unoptimized />
+          ) : posterPreviewError ? (
+            <div className={styles.previewState}>
+              <p className={styles.label}>Poster preview unavailable</p>
+              <p className={styles.meta}>{posterPreviewError}</p>
+              <Button size="sm" variant="secondary" onClick={() => { void handleExportPng("social", false); }}>Retry</Button>
+            </div>
+          ) : (
+            <p className={styles.previewState} role="status">Generating poster...</p>
+          )}
         </div>
 
-        <div className={styles.bodyGrid}>
-          <div className={styles.qrSection}>
-            <div className={styles.sectionHeading}><ImageIcon aria-hidden="true" /><span>Poster Preview</span></div>
-            <div className={styles.previewCard}>
-              <div className={styles.posterPreview}>
-                {posterPreviewUrl
-                  ? <NextImage className={styles.posterImage} src={posterPreviewUrl} alt={`Live results poster for ${tournamentName}`} width={1080} height={1620} unoptimized />
-                  : posterPreviewError
-                    ? (
-                      <span className={styles.posterLoading}>
-                        <strong>Poster preview unavailable</strong>
-                        <small>{posterPreviewError}</small>
-                        <button type="button" onClick={() => { void handleExportPng("social", false); }}>Retry</button>
-                      </span>
-                    )
-                    : <span className={styles.posterLoading}>Generating poster…</span>}
-              </div>
-            </div>
-          </div>
-
-          <div className={styles.sharePanel}>
-            <div className={styles.panelSectionHeading}>
-              <Link2 aria-hidden="true" />
-              <div>
-                <p className={styles.shareTitle}>Share live link</p>
-                <p className={styles.shareDescription}>Anyone with this link can follow the tournament. No account is required.</p>
-              </div>
-            </div>
-
-            <div className={`${styles.urlRow} ${styles.outlinedPanel}`}>
-              <span className={`${styles.urlText} ${styles.mutedMicrocopy}`}>{publicUrl}</span>
-              <button
-                className={`${styles.copyBtn} ${copied ? styles.copyBtnSuccess : ""}`}
+        <div className={styles.panel}>
+          <section className={styles.group} aria-labelledby="share-link-title">
+            <h3 id="share-link-title" className={styles.groupTitle}>Live link</h3>
+            <div className={styles.urlRow}>
+              <span className={styles.url}>{publicUrl}</span>
+              <Button
+                size="sm"
+                variant="secondary"
+                icon={copied ? <Check size={ICON_SIZE.md} aria-hidden="true" /> : <Copy size={ICON_SIZE.md} aria-hidden="true" />}
                 onClick={handleCopy}
               >
-                {copied ? <><Check aria-hidden="true" />Copied!</> : <><Copy aria-hidden="true" />Copy Link</>}
-              </button>
+                {copied ? "Copied" : "Copy link"}
+              </Button>
             </div>
+          </section>
 
-            <div className={styles.exportSection}>
-              <div className={styles.panelSectionHeading}>
-                <Download aria-hidden="true" />
-                <div>
-                  <p className={styles.shareTitle}>Download poster</p>
-                  <p className={styles.shareDescription}>Use these images to share the live results.</p>
-                </div>
-              </div>
-              <div className={styles.actions}>
-                <button
-                  className={`${styles.exportBtn} ${styles.outlinedPanel}`}
-                  onClick={() => { void handleExportPng("social"); }}
-                  disabled={Boolean(exportingMode)}
-                  aria-busy={exportingMode === "social"}
-                >
-                  <Download aria-hidden="true" />
-                  <span>
-                    <strong>{exportingMode === "social" ? "Exporting..." : "Social PNG"}</strong>
-                    <small>1080 × 1620</small>
-                  </span>
-                </button>
+          <CardDivider />
 
-                <button
-                  className={`${styles.exportBtn} ${styles.outlinedPanel}`}
-                  onClick={() => { void handleExportPng("print"); }}
-                  disabled={Boolean(exportingMode)}
-                  aria-busy={exportingMode === "print"}
-                >
-                  <Download aria-hidden="true" />
-                  <span>
-                    <strong>{exportingMode === "print" ? "Exporting..." : "Print PNG"}</strong>
-                    <small>High-resolution</small>
-                  </span>
-                </button>
-              </div>
+          <section className={styles.group} aria-labelledby="share-poster-title">
+            <h3 id="share-poster-title" className={styles.groupTitle}>Download poster</h3>
+            <p className={styles.meta}>Show the poster at check-in so bowlers can scan it with any phone.</p>
+            <div className={styles.actions}>
+              <Button
+                variant="secondary"
+                icon={<Download size={ICON_SIZE.md} aria-hidden="true" />}
+                onClick={() => { void handleExportPng("social"); }}
+                disabled={Boolean(exportingMode)}
+                aria-busy={exportingMode === "social"}
+              >
+                {exportingMode === "social" ? "Exporting..." : "Social image"}
+              </Button>
+              <Button
+                variant="secondary"
+                icon={<Download size={ICON_SIZE.md} aria-hidden="true" />}
+                onClick={() => { void handleExportPng("print"); }}
+                disabled={Boolean(exportingMode)}
+                aria-busy={exportingMode === "print"}
+              >
+                {exportingMode === "print" ? "Exporting..." : "Print image"}
+              </Button>
             </div>
-
-            <p className={`${styles.hint} ${styles.mutedMicrocopy}`}>
-              <Info aria-hidden="true" />
-              <span>Display the poster at check-in so bowlers can scan it from any device.</span>
-            </p>
-          </div>
-        </div>
-
-        <div className={styles.qrGenerator} aria-hidden="true">
-          {qrColors && <QRCodeCanvas
-            ref={qrCanvasRef}
-            value={publicUrl}
-            size={qrRenderSize}
-            bgColor={qrColors.background}
-            fgColor={qrColors.foreground}
-            level="H"
-            includeMargin
-          />}
+            <p className={styles.meta}>Social image is 1080 by 1620 pixels. Print image is twice that size.</p>
+          </section>
         </div>
       </div>
-    </dialog>
+
+      <div className={styles.qrGenerator} aria-hidden="true">
+        {qrColors && <QRCodeCanvas
+          ref={qrCanvasRef}
+          value={publicUrl}
+          size={qrRenderSize}
+          bgColor={qrColors.background}
+          fgColor={qrColors.foreground}
+          level="H"
+          includeMargin
+        />}
+      </div>
+    </Modal>
   );
 }
