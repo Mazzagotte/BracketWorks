@@ -171,6 +171,10 @@
 }
 
 .emptyAction {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
   margin-top: var(--space-2);
 }
 

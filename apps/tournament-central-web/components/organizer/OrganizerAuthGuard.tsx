@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import { Button, Notice, Page } from '@bracketworks/ui';
 import { useAuthSession } from '../auth/useAuthSession';
 
 type OrganizerAuthGuardProps = {
@@ -20,6 +21,21 @@ export default function OrganizerAuthGuard({ children }: OrganizerAuthGuardProps
     }
   }, [router, session]);
 
-  if (error) return <p role="alert">{error} <button type="button" onClick={retry}>Try again</button></p>;
-  return session ? <>{children}</> : <p role="status">Checking your session...</p>;
+  if (error) {
+    return (
+      <Page width="narrow">
+        <Notice tone="danger" role="alert" action={<Button size="sm" variant="ghost" onClick={retry}>Try again</Button>}>
+          {error}
+        </Notice>
+      </Page>
+    );
+  }
+  if (!session) {
+    return (
+      <Page width="narrow">
+        <Notice tone="info" role="status">Checking your session...</Notice>
+      </Page>
+    );
+  }
+  return <>{children}</>;
 }
