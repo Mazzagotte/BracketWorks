@@ -1,10 +1,7 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
-import {
-  AlertTriangle, ArrowRight, Brackets, Check, CheckCircle2,
-  Eye, FileSpreadsheet, Gauge, Menu, ShieldCheck,
-} from 'lucide-react';
+import { Card, ICON_SIZE, NavItem, Page, StatGroup, TopNav, TopNavBrand, buttonClassName } from '@bracketworks/ui';
 import styles from './page.module.css';
 import DemoDashboard from './demo/DemoDashboard';
 import DemoLiveView from './demo/DemoLiveView';
@@ -36,31 +33,145 @@ const softwareApplicationJsonLd = {
   description: 'BracketWorks helps bowling tournament directors manage entries, brackets, side pots, scores, standings, payouts, and live results.',
 };
 
-function Brand() {
-  return <span className={`${styles.brand} bw-public-brand`}><Image src="/logo_no_text.svg" alt="BracketWorks" width={38} height={38} priority /><span className="bw-public-brand-text"><strong>BRACKET<span>WORKS</span></strong><small>Bowling Tournament Management</small></span></span>;
-}
+const NAV_LINKS = [
+  { href: '#dashboard-preview', label: 'Dashboard' },
+  { href: '#workflow', label: 'Workflow' },
+  { href: '#live-view', label: 'Live view' },
+  { href: '#controls', label: 'Safeguards' },
+];
+
+const SAFEGUARDS = [
+  { stage: 'Before brackets', title: 'Confirm the field is ready', text: 'Review missing averages, unpaid balances, and duplicate bowlers before generating matchups.' },
+  { stage: 'After entry changes', title: 'Know when brackets are out of date', text: 'BracketWorks warns you when roster changes affect brackets that are already generated.' },
+  { stage: 'Before payouts', title: 'Finish and verify scoring', text: 'Incomplete scores stay visible, and verified scores can be locked before final calculations.' },
+  { stage: 'Final review', title: 'Check every payout before export', text: 'Review prize pools, winners, amounts, and paid status before closing the tournament.' },
+];
 
 export default function HomePage() {
-  return <div className={styles.page}>
-    <a className={styles.skipLink} href="#main-content">Skip to main content</a>
-    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }} />
-    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareApplicationJsonLd) }} />
-    <header className={`${styles.header} bw-public-header`}>
-      <div className={`${styles.headerInner} bw-public-header-inner`}><Link href="/" aria-label="BracketWorks home" className="bw-public-brand-link"><Brand /></Link><nav className="bw-public-nav" aria-label="Homepage navigation"><a href="#dashboard-preview">Dashboard</a><a href="#workflow">Workflow</a><a href="#live-view">Live View</a><a href="#controls">Safeguards</a></nav><div className={`${styles.headerActions} bw-public-actions`}><Link className={`${styles.secondaryButton} bw-public-secondary-btn`} href="/login">Sign In</Link><Link className={`${styles.primaryButton} bw-public-primary-btn`} href="/signup">Create Account</Link></div><details className={styles.mobileMenu}><summary aria-label="Open navigation"><Menu /></summary><div><a href="#dashboard-preview">Dashboard</a><a href="#workflow">Workflow</a><a href="#live-view">Live View</a><a href="#controls">Safeguards</a><Link href="/login">Sign In</Link><Link href="/signup">Create Account</Link></div></details></div>
-    </header>
-    <div>
-      <section className={`${styles.section} ${styles.hero}`}><div className={styles.heroCopy}><p className={styles.eyebrow}>Bowling Tournament Management</p><h1>Run the Tournament.<br /><span>Not the Spreadsheets.</span></h1><p className={styles.lead}>BracketWorks gives tournament directors one organized workspace for entries, brackets, side pots, scores, standings, payouts, and live tournament results.</p><div className={styles.actions}><Link className={styles.primaryButton} href="/signup">Create Free Account <ArrowRight /></Link><Link className={styles.secondaryButton} href="/view"><Eye /> View Live Tournament</Link></div><ul className={styles.support}><li><Check />No credit card required</li><li><Gauge />Designed for tablet and desktop tournament management</li><li><Eye />Public Live View works on mobile devices</li></ul></div></section>
-      <section id="dashboard-preview" className={`${styles.section} ${styles.dashboardShowcase}`}><div className={styles.sectionHeading}><p className={styles.eyebrow}>Tournament command center</p><h2>See the whole tournament at a glance</h2><p>Follow The Famous Frames Invitational as entries move through brackets, scoring, and payout review from one organized dashboard.</p></div><div className={styles.demoCue}><span>Dashboard view</span><strong>Scroll to explore the full tournament overview</strong></div><DemoDashboard embedded /></section>
+  return (
+    <div className={styles.shell}>
+      <a className={styles.skipLink} href="#main-content">Skip to main content</a>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareApplicationJsonLd) }} />
+      <TopNav
+        navLabel="Homepage"
+        brand={(
+          <TopNavBrand
+            href="/"
+            aria-label="BracketWorks home"
+            mark={<Image src="/logo_no_text.svg" alt="" width={ICON_SIZE['2xl']} height={ICON_SIZE['2xl']} priority />}
+            name="BracketWorks"
+          />
+        )}
+        actions={(
+          <>
+            <Link href="/login" className={buttonClassName({ variant: 'secondary', size: 'sm' })}>Log in</Link>
+            <Link href="/signup" className={buttonClassName({ variant: 'primary', size: 'sm' })}>Create account</Link>
+          </>
+        )}
+      >
+        {NAV_LINKS.map(link => <NavItem key={link.href} href={link.href}>{link.label}</NavItem>)}
+      </TopNav>
 
-      <section id="workflow" className={`${styles.section} ${styles.workflowSection}`}><div className={styles.sectionHeading}><p className={styles.eyebrow}>One connected workflow</p><h2>Keep the tournament moving without rebuilding the work</h2><p>Tournament details, bowlers, brackets, scores, results, and payouts stay connected from the first squad setup through the final public update.</p></div><LandingWorkflow /></section>
+      <main id="main-content">
+        <Page>
+          <section className={styles.hero} aria-labelledby="home-title">
+            <p className={styles.overline}>Bowling tournament management</p>
+            <h1 id="home-title" className={styles.title}>Run the tournament, not the spreadsheets</h1>
+            <p className={styles.lead}>
+              BracketWorks gives tournament directors one organized workspace for entries, brackets, side pots, scores,
+              standings, payouts, and live results.
+            </p>
+            <div className={styles.actions}>
+              <Link href="/signup" className={buttonClassName({ variant: 'primary' })}>Create a free account</Link>
+              <Link href="/view" className={buttonClassName({ variant: 'secondary' })}>View a live tournament</Link>
+            </div>
+            <p className={styles.meta}>No credit card required · Built for tablet and desktop · Live View works on phones</p>
+          </section>
 
-      <section id="live-view" className={`${styles.section} ${styles.liveDemoSection}`}><div className={styles.liveDemoCopy}><p className={styles.eyebrow}>Public Live View</p><h2>Give bowlers the results they want—without admin access</h2><p>Share one public page for the selected tournament and squad. It works on phones and does not require a BracketWorks account.</p><ul><li><CheckCircle2/><span><strong>Find a bowler quickly</strong><small>Search the current squad instead of scanning a posted sheet.</small></span></li><li><CheckCircle2/><span><strong>Follow the competition</strong><small>Open bracket summaries, matchups, and side-pot results from the same page.</small></span></li><li><CheckCircle2/><span><strong>See updated results</strong><small>Auto-refresh and manual refresh controls keep published information current during play.</small></span></li></ul><Link className={styles.primaryButton} href="/view">Browse Public Tournaments <ArrowRight/></Link></div><div className={styles.livePhoneColumn}><div className={styles.demoCue}><span>Live View</span><strong>Try Summary, Brackets, and Side Pots</strong></div><DemoLiveView/></div></section>
+          <section id="dashboard-preview" className={styles.section} aria-labelledby="dashboard-title">
+            <div className={styles.sectionHeading}>
+              <p className={styles.overline}>Tournament dashboard</p>
+              <h2 id="dashboard-title" className={styles.sectionTitle}>See the whole tournament at a glance</h2>
+              <p className={styles.body}>Follow the Famous Frames Invitational as entries move through brackets, scoring, and payout review from one dashboard.</p>
+            </div>
+            <DemoDashboard embedded />
+          </section>
 
-      <section id="controls" className={`${styles.section} ${styles.reviewSection}`}><div className={styles.reviewHeading}><p className={styles.eyebrow}>Built-in safeguards</p><h2>See what needs attention before you continue</h2><p>BracketWorks keeps warnings and review steps beside the work they affect, so incomplete information is harder to overlook.</p><div className={styles.reviewSummary}><span><small>ENTRY ISSUES</small><strong>0</strong></span><span><small>SCORES COMPLETE</small><strong>21 / 32</strong></span><span><small>PAYOUT STATUS</small><strong>Pending</strong></span></div></div><div className={styles.reviewList}><article><span data-tone="success"><ShieldCheck/></span><div><small>BEFORE BRACKETS</small><strong>Confirm the field is ready</strong><p>Review missing averages, unpaid balances, and duplicate bowlers before generating matchups.</p></div></article><article><span data-tone="warning"><Brackets/></span><div><small>AFTER ENTRY CHANGES</small><strong>Know when brackets are outdated</strong><p>BracketWorks warns when roster changes can affect brackets that have already been generated.</p></div></article><article><span data-tone="warning"><AlertTriangle/></span><div><small>BEFORE PAYOUTS</small><strong>Finish and verify scoring</strong><p>Incomplete scores remain visible, while verified scores can be locked before final calculations.</p></div></article><article><span data-tone="success"><FileSpreadsheet/></span><div><small>FINAL REVIEW</small><strong>Check every payout before export</strong><p>Review prize pools, winners, amounts, and paid status before tournament closeout.</p></div></article></div></section>
+          <section id="workflow" className={styles.section} aria-labelledby="workflow-title">
+            <div className={styles.sectionHeading}>
+              <p className={styles.overline}>One connected workflow</p>
+              <h2 id="workflow-title" className={styles.sectionTitle}>Keep the tournament moving without redoing work</h2>
+              <p className={styles.body}>Tournament details, bowlers, brackets, scores, results, and payouts stay connected from the first squad setup to the final public update.</p>
+            </div>
+            <LandingWorkflow />
+          </section>
 
-      <section className={`${styles.section} ${styles.tournamentDayBand}`} aria-label="BracketWorks device support"><span><Gauge/><strong>Tournament management</strong><small>Designed for tablet and desktop</small></span><span><Eye/><strong>Public Live View</strong><small>Fully supported on mobile</small></span><span><Check/><strong>Public results</strong><small>No bowler account required</small></span></section>
-      <section className={`${styles.section} ${styles.finalCta}`}><div><p className={styles.eyebrow}>Ready for your next tournament?</p><h2>Put the spreadsheets away before the first ball rolls.</h2><p>Create a free account to manage a tournament, or browse published Live View pages as a bowler.</p></div><div className={styles.actions}><Link className={styles.primaryButton} href="/signup">Create Free Account <ArrowRight/></Link><Link className={styles.secondaryButton} href="/view"><Eye/> Browse Live Results</Link></div></section>
+          <section id="live-view" className={`${styles.section} ${styles.split}`} aria-labelledby="live-title">
+            <div className={styles.sectionHeading}>
+              <p className={styles.overline}>Public Live View</p>
+              <h2 id="live-title" className={styles.sectionTitle}>Give bowlers their results without admin access</h2>
+              <p className={styles.body}>Share one public page for the tournament and squad. It works on phones and needs no BracketWorks account.</p>
+              <dl className={styles.points}>
+                <div><dt>Find a bowler quickly</dt><dd>Search the squad instead of scanning a posted sheet.</dd></div>
+                <div><dt>Follow the competition</dt><dd>Standings, brackets, and side pots on one page.</dd></div>
+                <div><dt>See updated results</dt><dd>Automatic and manual refresh keep results current during play.</dd></div>
+              </dl>
+              <div className={styles.actions}>
+                <Link href="/view" className={buttonClassName({ variant: 'secondary' })}>Browse public tournaments</Link>
+              </div>
+            </div>
+            <DemoLiveView />
+          </section>
+
+          <section id="controls" className={styles.section} aria-labelledby="controls-title">
+            <div className={styles.sectionHeading}>
+              <p className={styles.overline}>Built-in safeguards</p>
+              <h2 id="controls-title" className={styles.sectionTitle}>See what needs attention before you continue</h2>
+              <p className={styles.body}>Warnings and review steps sit beside the work they affect, so incomplete information is harder to miss.</p>
+            </div>
+            <StatGroup
+              label="Example tournament review"
+              items={[
+                { label: 'Entry issues', value: '0' },
+                { label: 'Scores complete', value: '21 of 32' },
+                { label: 'Payout status', value: 'Pending' },
+              ]}
+            />
+            <Card padding="flush">
+              <ul className={styles.rows}>
+                {SAFEGUARDS.map(item => (
+                  <li key={item.title} className={styles.row}>
+                    <p className={styles.overlineMuted}>{item.stage}</p>
+                    <h3 className={styles.rowTitle}>{item.title}</h3>
+                    <p className={styles.body}>{item.text}</p>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          </section>
+
+          <Card className={styles.cta}>
+            <div className={styles.ctaText}>
+              <h2 className={styles.sectionTitle}>Ready for your next tournament?</h2>
+              <p className={styles.body}>Create a free account to run a tournament, or browse published Live View pages as a bowler.</p>
+            </div>
+            <div className={styles.actions}>
+              <Link href="/view" className={buttonClassName({ variant: 'secondary' })}>Browse live results</Link>
+              <Link href="/signup" className={buttonClassName({ variant: 'primary' })}>Create a free account</Link>
+            </div>
+          </Card>
+        </Page>
+      </main>
+
+      <footer className={styles.footer}>
+        <span>© {new Date().getFullYear()} BracketWorks</span>
+        <Link href="/view">Live View</Link>
+        <Link href="/login">Log in</Link>
+        <Link href="/terms">Terms of service</Link>
+        <Link href="/privacy">Privacy policy</Link>
+        <Link href="/acceptable-use">Acceptable use</Link>
+      </footer>
     </div>
-    <footer className={styles.footer}><div><Brand/><p>One organized workspace for bowling tournament entries, brackets, scores, results, payouts, and public Live View.</p></div><nav aria-label="Footer product links"><strong>Product</strong><a href="#dashboard-preview">Dashboard</a><a href="#workflow">Workflow</a><Link href="/view">Public Live View</Link></nav><nav aria-label="Footer account links"><strong>Account</strong><Link href="/login">Sign In</Link><Link href="/signup">Create Account</Link></nav><nav aria-label="Footer legal links"><strong>Legal</strong><Link href="/terms">Terms of Service</Link><Link href="/privacy">Privacy Policy</Link><Link href="/acceptable-use">Acceptable Use</Link></nav><div className={styles.copyright}>© {new Date().getFullYear()} BracketWorks. All rights reserved.</div></footer>
-  </div>;
+  );
 }

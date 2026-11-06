@@ -1,14 +1,45 @@
-.page { width: min(100%, var(--size-7xl)); margin: 0 auto; padding: var(--space-5); color: var(--bw-text-body); }
-.intro { padding: var(--space-5) var(--space-5); border: 1px solid var(--bw-border-card); border-radius: var(--radius-xl); background: var(--bw-surface-card); }
-.eyebrow { margin: 0 0 var(--space-1) !important; color: var(--bw-text-accent) !important; font-size: var(--font-size-sm); font-weight: 800; text-transform: uppercase; }
-.intro h1 { margin: 0; color: var(--bw-text-title); font-size: clamp(var(--font-size-3xl), 3vw, var(--font-size-5xl)); }
-.intro p { max-width: var(--size-4xl); margin: var(--space-2) 0 0; color: var(--bw-text-muted); line-height: 1.55; }
-.steps { display: grid; gap: var(--space-3); margin-top: var(--space-3); }
-.step { scroll-margin-top: var(--space-24); display: grid; grid-template-columns: var(--space-11) minmax(0, 1fr); align-items: center; gap: var(--space-3-5); padding: var(--space-4) var(--space-4); border: 1px solid var(--bw-border-card); border-radius: var(--radius-lg); background: var(--bw-surface-card); }
-.number { color: var(--bw-text-accent); font-weight: 900; font-size: var(--font-size-base); }
-.step h2 { margin: 0; color: var(--bw-text-title); font-size: var(--font-size-xl); }
-.area { display: block; margin-bottom: var(--space-1); color: var(--bw-text-accent); font-size: var(--font-size-xs); font-weight: 800; text-transform: uppercase; }
-.step p { margin: var(--space-1) 0 0; color: var(--bw-text-muted); font-size: var(--font-size-md); line-height: 1.45; }
-.note { margin-top: var(--space-3); padding: var(--space-3-5) var(--space-4); border: 1px solid var(--bw-border-accent); border-radius: var(--radius-lg); background: var(--bw-surface-panel); color: var(--bw-text-muted); font-size: var(--font-size-md); line-height: 1.45; }
-.note strong { color: var(--bw-text-title); }
-@media (max-width: 767px) { .page { padding: var(--space-3); } .intro { padding: var(--space-3-5); } .step { grid-template-columns: var(--space-9) minmax(0, 1fr); gap: var(--space-2-5); padding: var(--space-3-5); } }
+/* Getting started: one card, steps split by dividers. */
+
+.steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--bw-border-subtle);
+  scroll-margin-top: var(--space-24);
+}
+
+.step:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.step:last-child {
+  padding-bottom: 0;
+}
+
+.area {
+  margin: 0;
+  font: var(--type-overline);
+  letter-spacing: var(--type-overline-tracking);
+  text-transform: uppercase;
+  color: var(--bw-text-body);
+}
+
+.title {
+  margin: 0;
+  font: var(--type-subsection-title);
+  color: var(--bw-text-title);
+}
+
+.text {
+  margin: 0;
+  font: var(--type-body);
+  color: var(--bw-text-body);
+}

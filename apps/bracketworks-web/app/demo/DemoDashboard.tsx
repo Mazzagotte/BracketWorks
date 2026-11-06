@@ -58,7 +58,7 @@ export default function DemoDashboard({ embedded = false }: { embedded?: boolean
 
   return (
     <div className={`${styles.demoSurface} ${styles.frameSurface} ${embedded ? styles.embedded : ''}`}>
-      {!isLoaded && <div className={styles.frameLoading} role="status">Loading tournament dashboard…</div>}
+      {!isLoaded && <div className={styles.frameLoading} role="status">Loading tournament dashboard...</div>}
       <iframe
         ref={frameRef}
         className={styles.dashboardFrame}
