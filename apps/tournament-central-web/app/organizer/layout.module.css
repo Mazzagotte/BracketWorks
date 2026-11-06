@@ -1,22 +1,9 @@
+/* Organizer shell. The top bar is the shared sticky TopNav, so content needs no offset.
+   The two --organizer-* variables remain for pages not yet moved onto the shared Page component. */
+
 .shell {
   --organizer-content-width: var(--size-10xl);
-  --organizer-page-padding: clamp(var(--space-4), 2.2vw, var(--space-8));
+  --organizer-page-padding: var(--bw-page-gutter);
   min-height: 100dvh;
   background: var(--bw-page);
-  line-height: 1.5;
-}
-
-.shell :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 3px;
-}
-
-.content {
-  padding-top: calc(var(--header-height) + var(--space-3));
-}
-
-@media (max-width: 1023px) {
-  .content {
-    padding-top: calc(var(--space-14) + env(safe-area-inset-top) + var(--space-3));
-  }
 }

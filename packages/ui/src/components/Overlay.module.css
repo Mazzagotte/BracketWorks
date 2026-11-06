@@ -91,6 +91,17 @@
   font: var(--type-body);
 }
 
+.error {
+  margin: 0;
+  font: var(--type-body-small);
+  color: var(--color-danger);
+}
+
+.close:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .footer {
   display: flex;
   flex-wrap: wrap;

@@ -354,18 +354,22 @@ is replaced by these during the migration.
 
 | Component | Use |
 |---|---|
+| `Page` (`width="narrow"` for forms), `PageColumns` (`main`, `side`) | Page width, gutters, card spacing, and the 2/3 + 1/3 layout |
 | `PageHeader` (`title`, `overline`, `badge`, `description`, `actions`) | The page's single h1 and its actions |
 | `StatGroup` (`items`, `label`) | A page's key numbers: one card split by dividers |
 | `Card` (`padding="default"`, `"dense"`, or `"flush"`, `interactive`), `CardHeader`, `CardDivider` | The only container; `flush` lets a table run edge to edge |
 | `Button` (`primary` / `accent-outline` / `secondary` / `ghost` / `ghost-danger` / `danger`, `size="sm"`, `icon`, `iconPosition`) | All buttons |
 | `ButtonLink`, `buttonClassName()` | A link that looks like a button; use `buttonClassName()` on Next.js `<Link>` |
-| `TextField`, `SelectField`, `TextAreaField` (`label`, `optional`, `helper`, `error`, `fullRow`), `FormGrid` | Form fields and their 2-column layout |
+| `TextField`, `SelectField`, `TextAreaField` (`label`, `optional`, `helper`, `error`, `fullRow`, `hideLabel`), `FormGrid` | Form fields and their 2-column layout; `hideLabel` only in table toolbars |
+| `SearchField` | Search input with icon (label is screen-reader-only by default) |
 | `SegmentedControl` | Filters and exclusive choices |
 | `Badge` (`neutral` / `success` / `warning` / `danger` / `info` / `accent`) | All status pills |
 | `Notice` (`info` / `success` / `warning` / `danger`, `action`) | Page and inline messages |
 | `ProgressBar` (`value`, `max`, `label`, `valueText`) | Completion with a text value |
 | `DataTable`, `TableToolbar`, `Pagination` | Tables in cards: cells take `data-align="right"`, `data-tone="secondary"`, `data-emphasis="true"` |
-| `Modal` (`size="sm"`, `"md"`, or `"lg"`, `footer`), `ConfirmDialog` (`tone="danger"`) | All overlays |
+| `Modal` (`size`, `footer`, `role="alertdialog"`, `dismissible`), `ConfirmDialog` (`tone="danger"`, `busy`, `error`) | All overlays |
+| `Menu`, `MenuItem`, `MenuDivider`, `MenuStatus`, `menuItemClassName()` | Account and overflow menus |
+| `useModalFocus` | Focus, Escape, and scroll lock for any custom modal surface (drawers); one shared stack |
 | `EmptyState` | No-data states: icon `ICON_SIZE['2xl']`, `section-title`, `body`, one action |
 | `ActivityList` | History and audit rows |
 | `TopNav`, `TopNavBrand`, `NavItem`, `navItemClassName()`, `SideNav`, `sideNavItemClassName()` | App navigation |

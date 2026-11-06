@@ -8,8 +8,12 @@ import {
   Button,
   ButtonLink,
   ConfirmDialog,
+  Menu,
+  MenuItem,
   Modal,
+  NavItem,
   Notice,
+  PageColumns,
   PageHeader,
   Pagination,
   ProgressBar,
@@ -17,6 +21,8 @@ import {
   SideNav,
   StatGroup,
   TextField,
+  TopNav,
+  TopNavBrand,
 } from '@bracketworks/ui';
 
 describe('shared UI: buttons', () => {
@@ -151,5 +157,59 @@ describe('shared UI: page content', () => {
     expect(screen.getByRole('button', { name: /Tournament details/ })).toHaveAttribute('aria-current', 'step');
     await userEvent.click(screen.getByRole('button', { name: /Squads/ }));
     expect(onSelect).toHaveBeenCalledWith('squads');
+  });
+});
+
+describe('shared UI: menu and top bar', () => {
+  it('opens a menu, moves with arrow keys, closes on Escape, and returns focus', async () => {
+    const onLogout = vi.fn();
+    render(
+      <Menu triggerLabel="Open account menu" trigger={<span>JM</span>} header="James Mazzagotte">
+        <MenuItem href="/organizer/account">Account settings</MenuItem>
+        <MenuItem onSelect={onLogout} tone="danger">Log out</MenuItem>
+      </Menu>,
+    );
+    const trigger = screen.getByRole('button', { name: 'Open account menu' });
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    await userEvent.click(trigger);
+    expect(screen.getByRole('menu', { name: 'account menu' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Account settings' })).toHaveFocus();
+    await userEvent.keyboard('{ArrowDown}');
+    expect(screen.getByRole('menuitem', { name: 'Log out' })).toHaveFocus();
+    await userEvent.keyboard('{Escape}');
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+
+    await userEvent.click(trigger);
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Log out' }));
+    expect(onLogout).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+  });
+
+  it('renders the top bar with context, nav, actions, and a mobile menu', () => {
+    render(
+      <TopNav
+        brand={<TopNavBrand href="/organizer" mark={<svg aria-hidden="true" />} name="Tournament Central" />}
+        contextTitle="Ada County USBC BVL Fundraiser"
+        contextMeta="Nov 15, 2026"
+        navLabel="Organizer"
+        actions={<button type="button">Account</button>}
+      >
+        <NavItem href="/organizer" active>Dashboard</NavItem>
+        <NavItem href="/organizer/tournaments/5">Overview</NavItem>
+      </TopNav>,
+    );
+    expect(screen.getByRole('link', { name: 'Tournament Central' })).toHaveAttribute('href', '/organizer');
+    const desktopNav = screen.getByRole('navigation', { name: 'Organizer' });
+    expect(desktopNav).toContainElement(screen.getAllByRole('link', { name: 'Dashboard' })[0] ?? null);
+    expect(screen.getAllByRole('link', { name: 'Dashboard' })[0]).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByText('Menu')).toBeInTheDocument();
+    expect(screen.getByText('Ada County USBC BVL Fundraiser')).toBeInTheDocument();
+  });
+
+  it('lays out page columns', () => {
+    render(<PageColumns main={<p>Main column</p>} side={<p>Side column</p>} />);
+    expect(screen.getByText('Main column')).toBeInTheDocument();
+    expect(screen.getByText('Side column')).toBeInTheDocument();
   });
 });

@@ -1,12 +1,23 @@
 'use client';
 
-import { CircleDollarSign, ClipboardList, Users, CalendarRange } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import {
+  Button,
+  Card,
+  CardHeader,
+  EmptyState,
+  ICON_SIZE,
+  Notice,
+  Page,
+  PageColumns,
+  PageHeader,
+  StatGroup,
+  buttonClassName,
+} from '@bracketworks/ui';
+import { Plus, Trophy } from 'lucide-react';
 import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
 
 import OrganizerAttentionList from './OrganizerAttentionList';
-import OrganizerDashboardHeader from './OrganizerDashboardHeader';
-import OrganizerEmptyState from './OrganizerEmptyState';
 import TournamentGrid from './TournamentGrid';
 import {
   deleteTournament,
@@ -19,6 +30,17 @@ import styles from './OrganizerDashboard.module.css';
 import ConfirmDialog from '../ConfirmDialog';
 import { organizerRoutes } from '../organizerRoutes';
 import { formatMoney } from '../organizerFormatting';
+
+const NEW_TOURNAMENT_HREF = '/organizer/tournaments/new/setup';
+
+function CreateTournamentLink() {
+  return (
+    <Link href={NEW_TOURNAMENT_HREF} className={buttonClassName({ variant: 'primary' })}>
+      <Plus size={ICON_SIZE.md} aria-hidden="true" />
+      Create tournament
+    </Link>
+  );
+}
 
 export default function OrganizerDashboard() {
   const [displayName, setDisplayName] = useState('Organizer');
@@ -35,10 +57,7 @@ export default function OrganizerDashboard() {
     localStorage.removeItem('tc_active_tournament_name');
     localStorage.removeItem('tc_active_squad_name');
     window.dispatchEvent(new Event('storage'));
-
-    const firstName = localStorage.getItem('first_name');
-    const fallbackName = localStorage.getItem('last_username');
-    setDisplayName(firstName || fallbackName || 'Organizer');
+    setDisplayName(localStorage.getItem('first_name') || localStorage.getItem('last_username') || 'Organizer');
   }, []);
 
   useEffect(() => {
@@ -71,24 +90,17 @@ export default function OrganizerDashboard() {
     const totalRegistrations = tournaments.reduce((total, tournament) => total + (tournament.entryCount ?? 0), 0);
     const upcomingSquads = tournaments.reduce((total, tournament) => total + tournament.upcomingSquadCount, 0);
     const amountCollectedCents = tournaments.reduce((total, tournament) => total + tournament.amountPaidCents, 0);
-
     return [
-      { label: 'TOTAL REGISTRATIONS', value: totalRegistrations, note: 'Across all tournaments', icon: Users },
-      { label: 'UPCOMING SQUADS', value: upcomingSquads, note: 'Next 7 days', icon: CalendarRange },
-      { label: 'AMOUNT COLLECTED', value: formatMoney(amountCollectedCents), note: 'Recorded payments', icon: CircleDollarSign },
-      { label: 'TOURNAMENTS', value: tournaments.length, note: 'In your workspace', icon: ClipboardList },
+      { label: 'Total registrations', value: totalRegistrations, detail: 'Across all tournaments' },
+      { label: 'Upcoming squads', value: upcomingSquads, detail: 'Next 7 days' },
+      { label: 'Amount collected', value: formatMoney(amountCollectedCents), detail: 'Recorded payments' },
+      { label: 'Tournaments', value: tournaments.length, detail: 'In your workspace' },
     ];
   }, [tournaments]);
 
   const formattedUpcoming = useMemo(() => upcomingItems.map((item) => ({
     ...item,
-    dateLabel: item.date.toLocaleDateString(undefined, {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    }),
-    monthLabel: item.date.toLocaleDateString(undefined, { month: 'short' }),
-    dayLabel: item.date.toLocaleDateString(undefined, { day: '2-digit' }),
+    dateLabel: item.date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }),
   })), [upcomingItems]);
 
   const handleDeleteTournament = async () => {
@@ -99,7 +111,6 @@ export default function OrganizerDashboard() {
       setDeleteError('Your session expired. Please sign in again.');
       return;
     }
-
     setDeletingTournamentId(tournament.id);
     setDeleteError(null);
     try {
@@ -119,126 +130,108 @@ export default function OrganizerDashboard() {
   };
 
   return (
-    <div className={styles.shell}>
-      <OrganizerDashboardHeader displayName={displayName} />
+    <Page>
+      <PageHeader
+        overline="Organizer workspace"
+        title="Your tournament command center"
+        description={`${displayName ? `${displayName}, here` : 'Here'} is what's happening across your tournaments.`}
+        actions={<CreateTournamentLink />}
+      />
 
       {staffInvitations.length > 0 || invitationError ? (
-        <section className={styles.staffInvitationPanel} aria-label="Tournament team invitations">
-          <h2>Team invitations</h2>
-          {invitationError ? <p role="alert">{invitationError}</p> : null}
-          {staffInvitations.map((invitation) => (
-            <div className={styles.staffInvitationRow} key={invitation.id}>
-              <div>
-                <strong>{invitation.tournament_name}</strong>
-                <span>{invitation.role.replaceAll('_', ' ')} role</span>
-              </div>
-              <div className={styles.staffInvitationActions}>
-                <button
-                  type="button"
-                  className={styles.secondaryButtonCompact}
-                  disabled={respondingInvitationId !== null}
-                  onClick={() => { void handleStaffInvitation(invitation.id, 'decline'); }}
-                >
-                  Decline
-                </button>
-                <button
-                  type="button"
-                  className={styles.secondaryButtonCompact}
-                  disabled={respondingInvitationId !== null}
-                  onClick={() => { void handleStaffInvitation(invitation.id, 'accept'); }}
-                >
-                  {respondingInvitationId === invitation.id ? 'Working...' : 'Accept'}
-                </button>
-              </div>
-            </div>
-          ))}
-        </section>
+        <Card aria-label="Tournament team invitations">
+          <CardHeader title="Team invitations" description="Accept to help run these tournaments." />
+          {invitationError ? <Notice tone="danger" role="alert">{invitationError}</Notice> : null}
+          {staffInvitations.length > 0 ? (
+            <ul className={styles.rows}>
+              {staffInvitations.map((invitation) => (
+                <li className={styles.invitationRow} key={invitation.id}>
+                  <div className={styles.rowText}>
+                    <span className={styles.rowTitle}>{invitation.tournament_name}</span>
+                    <span className={styles.rowMeta}>{`${invitation.role.replaceAll('_', ' ')} role`}</span>
+                  </div>
+                  <div className={styles.rowActions}>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      disabled={respondingInvitationId !== null}
+                      onClick={() => { void handleStaffInvitation(invitation.id, 'decline'); }}
+                    >
+                      Decline
+                    </Button>
+                    <Button
+                      variant="accent-outline"
+                      size="sm"
+                      disabled={respondingInvitationId !== null}
+                      onClick={() => { void handleStaffInvitation(invitation.id, 'accept'); }}
+                    >
+                      {respondingInvitationId === invitation.id ? 'Working...' : 'Accept'}
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </Card>
       ) : null}
 
       {error ? (
-        <section className={styles.errorCard} role="alert">
-          <p>We couldn&apos;t load your tournaments.</p>
-          <button type="button" className={styles.secondaryButtonCompact} onClick={() => { void refresh(); }}>
-            Try Again
-          </button>
-        </section>
+        <Notice
+          tone="danger"
+          role="alert"
+          action={<Button variant="secondary" size="sm" onClick={() => { void refresh(); }}>Try again</Button>}
+        >
+          We couldn&apos;t load your tournaments.
+        </Notice>
       ) : null}
 
-      {deleteError && !deleteConfirmation ? (
-        <section className={styles.errorCard} role="alert">
-          <p>{deleteError}</p>
-        </section>
-      ) : null}
+      {deleteError && !deleteConfirmation ? <Notice tone="danger" role="alert">{deleteError}</Notice> : null}
 
-      {!error && !isLoading ? (
-        <section className={styles.metricsGrid} aria-label="Tournament summary">
-          {summaryStats.map((stat) => {
-            const Icon = stat.icon;
-
-            return (
-              <div key={stat.label} className={styles.metricCard}>
-                <div className={styles.metricHeaderRow}>
-                  <div className={styles.metricIconWrap}>
-                    <Icon className={styles.metricIcon} aria-hidden="true" />
-                  </div>
-                  <span className={styles.metricLabel}>{stat.label}</span>
-                </div>
-                <strong className={styles.metricValue}>{stat.value}</strong>
-                <small className={styles.metricNote}>{stat.note}</small>
-              </div>
-            );
-          })}
-        </section>
-      ) : null}
+      {!error && !isLoading ? <StatGroup label="Tournament summary" items={summaryStats} /> : null}
 
       {isLoading ? (
-        <section aria-label="Loading tournaments" className={styles.grid}>
-          {Array.from({ length: 4 }).map((_, idx) => (
-            <div key={idx} className={styles.skeletonCard} />
-          ))}
-        </section>
+        <Card aria-label="Loading tournaments" aria-busy="true">
+          <p className={styles.loading} role="status">Loading your tournaments...</p>
+        </Card>
       ) : error ? null : tournaments.length === 0 ? (
-        <OrganizerEmptyState />
-      ) : (
-        <div className={styles.mainContentGrid}>
-          <TournamentGrid
-            tournaments={tournaments}
-            deletingTournamentId={deletingTournamentId}
-            onDeleteTournament={handleDeleteRequest}
+        <Card aria-label="No tournaments">
+          <EmptyState
+            icon={<Trophy size={ICON_SIZE['2xl']} />}
+            title="No tournaments yet"
+            description="Create your first tournament to set up events, squads, registration, fees, documents, and publishing."
+            action={<CreateTournamentLink />}
           />
-
-          <aside className={styles.sidebarColumn}>
-            <OrganizerAttentionList items={attentionItems} />
-            <section className={styles.upcomingSection} aria-label="Upcoming activity">
-              <div className={styles.sidebarHeader}>
-                <h2>On the calendar</h2>
-              </div>
-
-              <div className={styles.upcomingCard}>
+        </Card>
+      ) : (
+        <PageColumns
+          main={
+            <TournamentGrid
+              tournaments={tournaments}
+              deletingTournamentId={deletingTournamentId}
+              onDeleteTournament={handleDeleteRequest}
+            />
+          }
+          side={
+            <>
+              <OrganizerAttentionList items={attentionItems} />
+              <Card aria-label="Upcoming activity">
+                <CardHeader title="On the calendar" />
                 {formattedUpcoming.length > 0 ? (
-                  <ul className={styles.upcomingList}>
+                  <ul className={styles.rows}>
                     {formattedUpcoming.map((item) => (
-                      <li key={item.tournamentId} className={styles.upcomingItem}>
-                        <span className={styles.dateBubble}>
-                          <small>{item.monthLabel}</small>
-                          <strong>{item.dayLabel}</strong>
-                        </span>
-                        <div className={styles.upcomingInfo}>
-                          <Link href={organizerRoutes.overview(item.tournamentId)}>{item.name}</Link>
-                          <span>{item.dateLabel}</span>
-                        </div>
+                      <li key={item.tournamentId} className={styles.calendarRow}>
+                        <Link href={organizerRoutes.overview(item.tournamentId)} className={styles.rowLink}>{item.name}</Link>
+                        <span className={styles.rowMeta}>{item.dateLabel}</span>
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  <p className={styles.emptyUpcoming}>No upcoming events.</p>
+                  <p className={styles.rowMeta}>No upcoming events.</p>
                 )}
-
-              </div>
-            </section>
-
-          </aside>
-        </div>
+              </Card>
+            </>
+          }
+        />
       )}
 
       <ConfirmDialog
@@ -252,6 +245,6 @@ export default function OrganizerDashboard() {
         onConfirm={() => { void handleDeleteTournament(); }}
         onCancel={() => setDeleteConfirmation(null)}
       />
-    </div>
+    </Page>
   );
 }

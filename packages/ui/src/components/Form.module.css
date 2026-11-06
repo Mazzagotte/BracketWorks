@@ -46,6 +46,24 @@
   cursor: not-allowed;
 }
 
+.searchWrap {
+  position: relative;
+  display: block;
+}
+
+.searchIcon {
+  position: absolute;
+  top: 50%;
+  left: var(--space-3);
+  color: var(--bw-text-body);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.searchControl {
+  padding-left: var(--space-9);
+}
+
 .textarea {
   height: auto;
   min-height: var(--space-24);

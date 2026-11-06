@@ -1,5 +1,40 @@
 /* Cards, page header, and stat groups: docs/ui-standards.md sections 0 and 5. */
 
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bw-stack-gap);
+  width: 100%;
+  max-width: var(--size-10xl);
+  margin: 0 auto;
+  padding: var(--space-8) var(--bw-page-gutter) var(--space-12);
+  box-sizing: border-box;
+}
+
+.pageNarrow {
+  max-width: var(--size-4xl);
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: var(--bw-stack-gap);
+  align-items: start;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bw-stack-gap);
+  min-width: 0;
+}
+
+@media (max-width: 1023px) {
+  .columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .card {
   display: flex;
   flex-direction: column;
@@ -66,7 +101,7 @@
 }
 
 .divider {
-  height: 1px;
+  height: var(--space-px);
   margin: 0;
   border: 0;
   background: var(--bw-border-subtle);

@@ -1,104 +1,53 @@
 'use client';
 
+import { Avatar, ICON_SIZE, Menu, MenuItem, MenuStatus, TopNav, menuItemClassName, navItemClassName } from '@bracketworks/ui';
+import { ChevronDown } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
-import styles from './OrganizerTopNav.module.css';
 import { signOut } from '../auth/authSession';
 import { useAuthSession } from '../auth/useAuthSession';
+import styles from './OrganizerTopNav.module.css';
 
 export default function OrganizerTopNav() {
   const pathname = usePathname();
-  const userMenuRef = useRef<HTMLDivElement | null>(null);
-
+  const { displayName: sessionName } = useAuthSession();
   const [displayName, setDisplayName] = useState('Organizer');
   const [activeTournament, setActiveTournament] = useState<string | null>(null);
   const [activeSquad, setActiveSquad] = useState<string | null>(null);
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const { displayName: sessionName } = useAuthSession();
   const [logoutError, setLogoutError] = useState('');
 
-  const tournamentPathMatch = useMemo(
-    () => pathname.match(/^\/organizer\/tournaments\/(\d+)(?:\/.*)?$/),
-    [pathname],
-  );
-  const tournamentId = tournamentPathMatch ? Number(tournamentPathMatch[1]) : null;
-  const isTournamentRoute = Boolean(tournamentId);
+  const tournamentId = useMemo(() => {
+    const match = pathname.match(/^\/organizer\/tournaments\/(\d+)(?:\/.*)?$/);
+    return match ? Number(match[1]) : null;
+  }, [pathname]);
 
   const navLinks = useMemo(() => {
-    const links = [{ href: '/organizer', label: 'Dashboard', scoped: false }];
+    const links = [{ href: '/organizer', label: 'Dashboard' }];
     if (!tournamentId) return links;
+    const base = `/organizer/tournaments/${tournamentId}`;
     return [
       ...links,
-      { href: `/organizer/tournaments/${tournamentId}`, label: 'Overview', scoped: true },
-      { href: `/organizer/tournaments/${tournamentId}/registrations`, label: 'Registrations', scoped: true },
-      { href: `/organizer/tournaments/${tournamentId}/payments`, label: 'Payments', scoped: true },
-      { href: `/organizer/tournaments/${tournamentId}/documents`, label: 'Documents', scoped: true },
-      { href: `/organizer/tournaments/${tournamentId}/team`, label: 'Team', scoped: true },
+      { href: base, label: 'Overview' },
+      { href: `${base}/registrations`, label: 'Registrations' },
+      { href: `${base}/payments`, label: 'Payments' },
+      { href: `${base}/documents`, label: 'Documents' },
+      { href: `${base}/team`, label: 'Team' },
     ];
   }, [tournamentId]);
 
-  const avatarInitials = useMemo(
-    () => displayName
-      .split(' ')
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part[0]?.toUpperCase() || '')
-      .join('') || 'TC',
-    [displayName],
-  );
-
   useEffect(() => {
     const readContext = () => {
-      const firstName = localStorage.getItem('first_name');
-      const fallbackName = localStorage.getItem('last_username');
-      const tournament = localStorage.getItem('tc_active_tournament_name');
-      const squad = localStorage.getItem('tc_active_squad_name');
-
-      setDisplayName(firstName || fallbackName || 'Organizer');
-      setActiveTournament(tournament);
-      setActiveSquad(squad);
+      setDisplayName(localStorage.getItem('first_name') || localStorage.getItem('last_username') || 'Organizer');
+      setActiveTournament(localStorage.getItem('tc_active_tournament_name'));
+      setActiveSquad(localStorage.getItem('tc_active_squad_name'));
     };
-
     readContext();
     window.addEventListener('storage', readContext);
-    return () => {
-      window.removeEventListener('storage', readContext);
-    };
+    return () => window.removeEventListener('storage', readContext);
   }, []);
-
-  useEffect(() => {
-    if (!isUserMenuOpen) {
-      return;
-    }
-
-    const handlePointerDown = (event: MouseEvent) => {
-      const target = event.target;
-      if (!(target instanceof Node)) {
-        return;
-      }
-
-      if (!userMenuRef.current?.contains(target)) {
-        setIsUserMenuOpen(false);
-      }
-    };
-
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setIsUserMenuOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handlePointerDown);
-    document.addEventListener('keydown', handleEscape);
-
-    return () => {
-      document.removeEventListener('mousedown', handlePointerDown);
-      document.removeEventListener('keydown', handleEscape);
-    };
-  }, [isUserMenuOpen]);
 
   const handleLogout = async () => {
     try {
@@ -109,121 +58,45 @@ export default function OrganizerTopNav() {
     }
   };
 
-  const isNavLinkActive = (href: string) => {
-    if (href === '/organizer') {
-      return pathname === '/organizer';
-    }
-    return pathname === href;
-  };
-
-  const tournamentContextLabel = activeTournament || (tournamentId ? `Tournament #${tournamentId}` : null);
+  const tournamentLabel = tournamentId ? activeTournament || `Tournament #${tournamentId}` : null;
 
   return (
-    <>
-      <header className={styles.topNav}>
-        <Link href="/organizer" className={styles.logoLink}>
-          <Image
-            src="/TC_logo_No_Text.svg"
-            alt="Tournament Central"
-            width={36}
-            height={36}
-            className={styles.logoIcon}
-            priority
-          />
-          <span className={styles.logoText}>Tournament Central</span>
+    <TopNav
+      navLabel="Organizer"
+      brand={
+        <Link href="/organizer" className={styles.brand}>
+          <Image src="/TC_logo_No_Text.svg" alt="" width={ICON_SIZE['2xl']} height={ICON_SIZE['2xl']} priority />
+          Tournament Central
         </Link>
-
-        {isTournamentRoute && tournamentContextLabel && (
-          <div
-            className={styles.tournamentContext}
-            title={activeSquad ? `${tournamentContextLabel} / ${activeSquad}` : tournamentContextLabel}
-          >
-            <span className={styles.tournamentContextName}>{tournamentContextLabel}</span>
-            {activeSquad && <span className={styles.squadContextName}>{activeSquad}</span>}
-          </div>
-        )}
-
-        <nav className={styles.navPills} aria-label="Main navigation">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`${styles.navPill} ${link.scoped && link.label === 'Overview' ? styles.navPillScopedStart : ''} ${isNavLinkActive(link.href) ? styles.navPillActive : ''}`}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
-
-        <div className={styles.rightZone}>
-          <div className={styles.userMenu} ref={userMenuRef}>
-            <button
-              className={styles.userMenuTrigger}
-              onClick={() => setIsUserMenuOpen((previous) => !previous)}
-              aria-label="Open user menu"
-              aria-expanded={isUserMenuOpen}
-              aria-haspopup="menu"
-            >
-              <span className={styles.avatarChip} title={displayName}>{avatarInitials}</span>
-              <span className={styles.userMenuCaret} aria-hidden="true" />
-            </button>
-
-            {isUserMenuOpen && (
-              <div className={styles.userMenuPanel} role="menu" aria-label="User menu">
-                <div className={styles.userMenuHeader}>{sessionName || displayName}</div>
-                <Link href="/organizer/account" className={styles.userMenuItemButton} role="menuitem">
-                  Account Settings
-                </Link>
-                <Link href="/" className={styles.userMenuItemButton} role="menuitem">
-                  Browse Tournaments
-                </Link>
-                <button
-                  className={`${styles.userMenuItemButton} ${styles.userMenuItemDanger}`}
-                  onClick={() => void handleLogout()}
-                  role="menuitem"
-                >
-                  Log Out
-                </button>
-                {logoutError && <p role="alert">{logoutError}</p>}
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
-
-      <header className={styles.topNavMobile}>
-        <Link href="/organizer" className={styles.mobileBrand}>
-          <Image
-            src="/TC_logo_No_Text.svg"
-            alt="Tournament Central"
-            width={28}
-            height={28}
-            className={styles.mobileLogoIcon}
-            priority
-          />
-          <span className={styles.mobileBrandText}>Tournament Central</span>
-        </Link>
-
-        <details className={styles.mobileNavMenu}>
-          <summary>Menu</summary>
-          <nav aria-label="Mobile organizer navigation">
-            {navLinks.map((link) => <Link key={link.href} href={link.href} className={isNavLinkActive(link.href) ? styles.mobileNavLinkActive : ''}>{link.label}</Link>)}
-            <Link href="/organizer/account">Account Settings</Link>
-            <Link href="/">Browse Tournaments</Link>
-            <button type="button" onClick={() => void handleLogout()}>Sign Out</button>
-            {logoutError && <p role="alert">{logoutError}</p>}
-          </nav>
-        </details>
-
-        {isTournamentRoute && tournamentContextLabel && (
-          <span
-            className={styles.mobileTournamentBadge}
-            title={activeSquad ? `${tournamentContextLabel} / ${activeSquad}` : tournamentContextLabel}
-          >
-            {tournamentContextLabel}
-          </span>
-        )}
-      </header>
-    </>
+      }
+      contextTitle={tournamentLabel}
+      contextMeta={tournamentLabel ? activeSquad : null}
+      actions={
+        <Menu
+          triggerLabel="Open account menu"
+          header={sessionName || displayName}
+          trigger={
+            <>
+              <Avatar name={sessionName || displayName} />
+              <ChevronDown size={ICON_SIZE.sm} aria-hidden="true" />
+            </>
+          }
+        >
+          <Link href="/organizer/account" role="menuitem" className={menuItemClassName()}>Account settings</Link>
+          <Link href="/" role="menuitem" className={menuItemClassName()}>Browse tournaments</Link>
+          <MenuItem tone="danger" onSelect={() => void handleLogout()}>Log out</MenuItem>
+          {logoutError ? <MenuStatus>{logoutError}</MenuStatus> : null}
+        </Menu>
+      }
+    >
+      {navLinks.map((link) => {
+        const active = pathname === link.href;
+        return (
+          <Link key={link.href} href={link.href} className={navItemClassName(active)} aria-current={active ? 'page' : undefined}>
+            {link.label}
+          </Link>
+        );
+      })}
+    </TopNav>
   );
 }

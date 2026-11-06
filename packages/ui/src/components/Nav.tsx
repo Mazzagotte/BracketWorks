@@ -1,5 +1,6 @@
 'use client';
 
+import { useRef } from 'react';
 import type { AnchorHTMLAttributes, ReactNode } from 'react';
 import { cx } from './cx';
 import styles from './Nav.module.css';
@@ -17,11 +18,14 @@ export interface TopNavProps {
   actions?: ReactNode;
   /** Accessible name for the primary navigation. Default "Main". */
   navLabel?: string;
+  /** Label of the disclosure that holds the nav items on phones. Default "Menu". */
+  mobileMenuLabel?: string;
   className?: string;
 }
 
-/** The one top bar for both apps. */
-export function TopNav({ brand, contextTitle, contextMeta, children, actions, navLabel = 'Main', className }: TopNavProps) {
+/** The one top bar for both apps. On phones the nav items move into a "Menu" disclosure. */
+export function TopNav({ brand, contextTitle, contextMeta, children, actions, navLabel = 'Main', mobileMenuLabel = 'Menu', className }: TopNavProps) {
+  const mobileMenuRef = useRef<HTMLDetailsElement>(null);
   return (
     <header className={cx(styles.topNav, className)}>
       {brand}
@@ -33,6 +37,20 @@ export function TopNav({ brand, contextTitle, contextMeta, children, actions, na
       ) : null}
       {children ? <nav aria-label={navLabel} className={styles.items}>{children}</nav> : null}
       {actions ? <div className={styles.actions}>{actions}</div> : null}
+      {children ? (
+        <details ref={mobileMenuRef} className={styles.mobileMenu}>
+          <summary className={styles.mobileMenuSummary}>{mobileMenuLabel}</summary>
+          <nav
+            aria-label={`${navLabel} (mobile)`}
+            className={styles.mobileMenuPanel}
+            onClick={(event) => {
+              if ((event.target as HTMLElement).closest('a') && mobileMenuRef.current) mobileMenuRef.current.open = false;
+            }}
+          >
+            {children}
+          </nav>
+        </details>
+      ) : null}
     </header>
   );
 }

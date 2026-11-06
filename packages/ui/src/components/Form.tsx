@@ -2,6 +2,7 @@
 
 import { useId } from 'react';
 import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react';
+import { ICON_SIZE } from '../iconSize';
 import { cx } from './cx';
 import styles from './Form.module.css';
 
@@ -13,6 +14,8 @@ interface FieldFrameProps {
   error?: ReactNode;
   /** Span both columns of a `FormGrid`. */
   fullRow?: boolean;
+  /** Keep the label for screen readers only (table toolbars). Visible labels are the default. */
+  hideLabel?: boolean;
   className?: string;
 }
 
@@ -28,6 +31,7 @@ function FieldFrame({
   helper,
   error,
   fullRow,
+  hideLabel,
   className,
   controlId,
   helperId,
@@ -36,7 +40,7 @@ function FieldFrame({
 }: FieldFrameProps & { controlId: string; helperId: string; errorId: string; children: ReactNode }) {
   return (
     <div className={cx(styles.field, fullRow && styles.span2, className)}>
-      <label htmlFor={controlId} className={styles.label}>
+      <label htmlFor={controlId} className={hideLabel ? 'sr-only' : styles.label}>
         {label}
         {optional ? <span className={styles.optional}> (optional)</span> : null}
       </label>
@@ -59,10 +63,10 @@ function describedBy(helper: ReactNode, error: ReactNode, helperId: string, erro
 export interface TextFieldProps extends FieldFrameProps, Omit<InputHTMLAttributes<HTMLInputElement>, 'className'> {}
 
 /** Label above, control, then helper or error text. */
-export function TextField({ label, optional, helper, error, fullRow, className, id, ...inputProps }: TextFieldProps) {
+export function TextField({ label, optional, helper, error, fullRow, hideLabel, className, id, ...inputProps }: TextFieldProps) {
   const { controlId, helperId, errorId } = useFieldIds(id);
   return (
-    <FieldFrame {...{ label, optional, helper, error, fullRow, className, controlId, helperId, errorId }}>
+    <FieldFrame {...{ label, optional, helper, error, fullRow, hideLabel, className, controlId, helperId, errorId }}>
       <input
         id={controlId}
         className={cx(styles.control, error ? styles.invalid : undefined)}
@@ -78,10 +82,10 @@ export interface SelectFieldProps extends FieldFrameProps, Omit<SelectHTMLAttrib
   children: ReactNode;
 }
 
-export function SelectField({ label, optional, helper, error, fullRow, className, id, children, ...selectProps }: SelectFieldProps) {
+export function SelectField({ label, optional, helper, error, fullRow, hideLabel, className, id, children, ...selectProps }: SelectFieldProps) {
   const { controlId, helperId, errorId } = useFieldIds(id);
   return (
-    <FieldFrame {...{ label, optional, helper, error, fullRow, className, controlId, helperId, errorId }}>
+    <FieldFrame {...{ label, optional, helper, error, fullRow, hideLabel, className, controlId, helperId, errorId }}>
       <select
         id={controlId}
         className={cx(styles.control, error ? styles.invalid : undefined)}
@@ -97,10 +101,10 @@ export function SelectField({ label, optional, helper, error, fullRow, className
 
 export interface TextAreaFieldProps extends FieldFrameProps, Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, 'className'> {}
 
-export function TextAreaField({ label, optional, helper, error, fullRow, className, id, ...areaProps }: TextAreaFieldProps) {
+export function TextAreaField({ label, optional, helper, error, fullRow, hideLabel, className, id, ...areaProps }: TextAreaFieldProps) {
   const { controlId, helperId, errorId } = useFieldIds(id);
   return (
-    <FieldFrame {...{ label, optional, helper, error, fullRow, className, controlId, helperId, errorId }}>
+    <FieldFrame {...{ label, optional, helper, error, fullRow, hideLabel, className, controlId, helperId, errorId }}>
       <textarea
         id={controlId}
         className={cx(styles.control, styles.textarea, error ? styles.invalid : undefined)}
@@ -108,6 +112,31 @@ export function TextAreaField({ label, optional, helper, error, fullRow, classNa
         aria-describedby={describedBy(helper, error, helperId, errorId)}
         {...areaProps}
       />
+    </FieldFrame>
+  );
+}
+
+export interface SearchFieldProps extends Omit<TextFieldProps, 'type' | 'optional'> {}
+
+/** A search input with a leading icon. The label is screen-reader-only unless `hideLabel={false}`. */
+export function SearchField({ label, helper, error, fullRow, hideLabel = true, className, id, ...inputProps }: SearchFieldProps) {
+  const { controlId, helperId, errorId } = useFieldIds(id);
+  return (
+    <FieldFrame {...{ label, helper, error, fullRow, hideLabel, className, controlId, helperId, errorId }}>
+      <span className={styles.searchWrap}>
+        <svg className={styles.searchIcon} width={ICON_SIZE.md} height={ICON_SIZE.md} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="7" />
+          <path d="m21 21-4.3-4.3" />
+        </svg>
+        <input
+          id={controlId}
+          type="search"
+          className={cx(styles.control, styles.searchControl, error ? styles.invalid : undefined)}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={describedBy(helper, error, helperId, errorId)}
+          {...inputProps}
+        />
+      </span>
     </FieldFrame>
   );
 }

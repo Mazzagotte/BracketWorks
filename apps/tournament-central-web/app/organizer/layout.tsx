@@ -15,7 +15,7 @@ export default function OrganizerLayout({ children }: { children: ReactNode }) {
     <OrganizerAuthGuard>
       <div className={styles.shell}>
         <OrganizerTopNav />
-        <main className={styles.content}>{children}</main>
+        <main>{children}</main>
       </div>
     </OrganizerAuthGuard>
   );

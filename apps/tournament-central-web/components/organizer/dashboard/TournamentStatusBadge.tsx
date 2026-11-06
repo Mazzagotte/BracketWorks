@@ -1,4 +1,4 @@
-import styles from './OrganizerDashboard.module.css';
+import { Badge } from '@bracketworks/ui';
 
 type TournamentStatusBadgeProps = {
   isPublic: boolean;
@@ -6,13 +6,7 @@ type TournamentStatusBadgeProps = {
 };
 
 export default function TournamentStatusBadge({ isPublic, hasPublishedSetup }: TournamentStatusBadgeProps) {
-  if (!hasPublishedSetup) {
-    return <span className={`${styles.badge} ${styles.badgeWarning}`}>DRAFT</span>;
-  }
-
-  if (!isPublic) {
-    return <span className={`${styles.badge} ${styles.badgeMuted}`}>PRIVATE</span>;
-  }
-
-  return <span className={`${styles.badge} ${styles.badgeSuccess}`}>PUBLISHED</span>;
+  if (!hasPublishedSetup) return <Badge tone="warning">Draft</Badge>;
+  if (!isPublic) return <Badge tone="neutral">Private</Badge>;
+  return <Badge tone="success">Published</Badge>;
 }

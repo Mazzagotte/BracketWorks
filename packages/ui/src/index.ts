@@ -2,18 +2,22 @@
 // Every component follows docs/ui-standards.md. Build pages from these, not local copies.
 
 export { ICON_SIZE } from './iconSize';
+export { useModalFocus } from './useModalFocus';
 
 export { Button, ButtonLink, buttonClassName } from './components/Button';
 export type { ButtonLinkProps, ButtonProps, ButtonSize, ButtonStyleOptions, ButtonVariant } from './components/Button';
 
-export { Card, CardDivider, CardHeader, PageHeader, StatGroup } from './components/Layout';
-export type { CardHeaderProps, CardProps, PageHeaderProps, StatGroupProps, StatItem } from './components/Layout';
+export { Card, CardDivider, CardHeader, Page, PageColumns, PageHeader, StatGroup } from './components/Layout';
+export type { CardHeaderProps, CardProps, PageHeaderProps, PageProps, StatGroupProps, StatItem } from './components/Layout';
+
+export { Menu, MenuDivider, MenuItem, MenuStatus, menuItemClassName } from './components/Menu';
+export type { MenuItemProps, MenuProps } from './components/Menu';
 
 export { ActivityList, Avatar, Badge, EmptyState, Notice, ProgressBar } from './components/Feedback';
 export type { ActivityItem, BadgeProps, EmptyStateProps, NoticeProps, ProgressBarProps, StatusTone } from './components/Feedback';
 
-export { FormGrid, SegmentedControl, SelectField, TextAreaField, TextField } from './components/Form';
-export type { SegmentedControlProps, SegmentedOption, SelectFieldProps, TextAreaFieldProps, TextFieldProps } from './components/Form';
+export { FormGrid, SearchField, SegmentedControl, SelectField, TextAreaField, TextField } from './components/Form';
+export type { SearchFieldProps, SegmentedControlProps, SegmentedOption, SelectFieldProps, TextAreaFieldProps, TextFieldProps } from './components/Form';
 
 export { DataTable, Pagination, TableToolbar } from './components/Table';
 export type { DataTableProps, PaginationProps, TableToolbarProps } from './components/Table';

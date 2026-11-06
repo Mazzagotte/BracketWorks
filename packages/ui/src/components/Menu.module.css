@@ -1,0 +1,90 @@
+/* Dropdown menu: docs/ui-standards.md section 8 (menus). */
+
+.menu {
+  position: relative;
+  display: inline-flex;
+}
+
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  height: var(--control-height);
+  padding: 0 var(--space-1);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--bw-text-body);
+  cursor: pointer;
+  transition: background-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.trigger:hover,
+.trigger[aria-expanded='true'] {
+  background: var(--bw-surface-panel);
+  color: var(--bw-text-title);
+}
+
+.panel {
+  position: absolute;
+  top: calc(100% + var(--space-1-5));
+  right: 0;
+  z-index: var(--z-popover);
+  display: flex;
+  flex-direction: column;
+  min-width: var(--space-56);
+  padding: var(--space-1-5);
+  border: 1px solid var(--bw-border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--bw-surface-card);
+  box-shadow: var(--elevation-2);
+}
+
+.alignStart {
+  right: auto;
+  left: 0;
+}
+
+.header {
+  padding: var(--space-2) var(--space-2-5);
+  font: var(--type-label);
+  color: var(--bw-text-title);
+}
+
+.divider {
+  height: 1px;
+  margin: var(--space-1) 0;
+  background: var(--bw-border-subtle);
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: var(--control-height-sm);
+  padding: 0 var(--space-2-5);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--bw-text-title);
+  font: var(--type-button);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.item:hover,
+.item:focus-visible {
+  background: var(--bw-surface-panel);
+}
+
+.danger {
+  color: var(--color-danger);
+}
+
+.status {
+  padding: var(--space-1) var(--space-2-5);
+  font: var(--type-body-small);
+  color: var(--color-danger);
+}

@@ -1,12 +1,6 @@
 'use client';
 
-import { useModalFocus } from '@/lib/useModalFocus';
-import { useId } from 'react';
-import { createPortal } from 'react-dom';
-import { CircleAlert, Trash2, X } from 'lucide-react';
-
-import styles from './ConfirmDialog.module.css';
-import { ICON_SIZE } from '@bracketworks/ui';
+import { ConfirmDialog as SharedConfirmDialog } from '@bracketworks/ui';
 
 type ConfirmDialogProps = {
   open: boolean;
@@ -21,56 +15,7 @@ type ConfirmDialogProps = {
   error?: string | null;
 };
 
-export default function ConfirmDialog({
-  open,
-  title,
-  message,
-  confirmLabel = 'Confirm',
-  cancelLabel = 'Cancel',
-  tone = 'default',
-  onConfirm,
-  onCancel,
-  busy = false,
-  error,
-}: ConfirmDialogProps) {
-  const close = () => { if (!busy) onCancel(); };
-  const dialogRef = useModalFocus<HTMLElement>(open, close);
-  const titleId = useId();
-  const messageId = useId();
-
-  if (!open) return null;
-
-  return createPortal(
-    <div
-      className={styles.backdrop}
-      role="presentation"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) close();
-      }}
-    >
-      <section ref={dialogRef} tabIndex={-1} className={styles.dialog} role="alertdialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={messageId} aria-busy={busy}>
-        <header className={styles.header}>
-          <span className={`${styles.icon} ${tone === 'danger' ? styles.dangerIcon : ''}`} aria-hidden="true">
-            {tone === 'danger' ? <Trash2 size={ICON_SIZE['2xl']} /> : <CircleAlert size={ICON_SIZE['2xl']} />}
-          </span>
-          <button type="button" className={styles.closeButton} aria-label="Close confirmation" onClick={close} disabled={busy}><X size={ICON_SIZE.xl} aria-hidden="true" /></button>
-        </header>
-        <h2 id={titleId}>{title}</h2>
-        <p id={messageId}>{message}</p>
-        {error ? <p className={styles.error} role="alert">{error}</p> : null}
-        <footer>
-          <button type="button" className={styles.cancelButton} onClick={close} disabled={busy}>{cancelLabel}</button>
-          <button
-            type="button"
-            className={tone === 'danger' ? styles.dangerButton : styles.confirmButton}
-            onClick={onConfirm}
-            disabled={busy}
-          >
-            {confirmLabel}
-          </button>
-        </footer>
-      </section>
-    </div>,
-    document.body,
-  );
+/** Organizer confirmations use the shared dialog; `message` maps to its description. */
+export default function ConfirmDialog({ message, confirmLabel = 'Confirm', error, ...rest }: ConfirmDialogProps) {
+  return <SharedConfirmDialog {...rest} description={message} confirmLabel={confirmLabel} error={error ?? undefined} />;
 }

@@ -2,6 +2,27 @@ import type { CSSProperties, ElementType, HTMLAttributes, ReactNode } from 'reac
 import { cx } from './cx';
 import styles from './Layout.module.css';
 
+export interface PageProps extends HTMLAttributes<HTMLElement> {
+  /** `default` 1440px for app pages; `narrow` 768px for forms and reading pages. */
+  width?: 'default' | 'narrow';
+  as?: ElementType;
+}
+
+/** Page content area: centered, max width, page gutters, and the standard gap between cards. */
+export function Page({ width = 'default', as: Tag = 'div', className, ...rest }: PageProps) {
+  return <Tag className={cx(styles.page, width === 'narrow' && styles.pageNarrow, className)} {...rest} />;
+}
+
+/** Main column (2/3) and side column (1/3) on desktop; stacked below 1024px. */
+export function PageColumns({ main, side, className }: { main: ReactNode; side: ReactNode; className?: string }) {
+  return (
+    <div className={cx(styles.columns, className)}>
+      <div className={styles.column}>{main}</div>
+      <div className={styles.column}>{side}</div>
+    </div>
+  );
+}
+
 export interface CardProps extends HTMLAttributes<HTMLElement> {
   /** `dense` for compact data cards; `flush` when a table should run edge to edge. */
   padding?: 'default' | 'dense' | 'flush';
