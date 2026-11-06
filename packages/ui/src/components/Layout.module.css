@@ -69,13 +69,16 @@
 
 .cardHeader {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-4);
 }
 
+/* The title keeps at least 160px; wide actions wrap below it on narrow cards. */
 .cardHeaderText {
   display: flex;
+  flex: 1 1 calc(var(--space-20) * 2);
   flex-direction: column;
   gap: var(--space-1);
   min-width: 0;
