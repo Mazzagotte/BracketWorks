@@ -1154,7 +1154,7 @@ export default function TournamentDashboard() {
   });
   const dashboardMoreActions = tournament ? [
     ...moreActions,
-    { key: 'duplicate-tournament', label: 'Duplicate Tournament', onClick: () => setDuplicateModalOpen(true), disabled: false },
+    { key: 'duplicate-tournament', label: 'Duplicate tournament', onClick: () => setDuplicateModalOpen(true), disabled: false },
   ] : moreActions;
 
   const usdFormatter = useMemo(
@@ -1279,30 +1279,9 @@ export default function TournamentDashboard() {
           isOpen={isExplainModalOpen}
           onClose={() => setIsExplainModalOpen(false)}
         />
-        <div className="page-main">
-
-          <div className={`${shellStyles.content} ${mobileStyles.contentContainer}`}>
-            <div className={mobileStyles.cardsContainer}>
-
-            {/* Empty State - No Tournament Loaded */}
-            {!tournament && (
-              <NoTournamentState
-                title="Command Center Ready"
-                description="Create a new tournament or load an existing one to activate your full tournament command center."
-                actions={[
-                  { label: 'Create Tournament', onClick: () => { setCreateMode(true); setModalOpen(true); }, variant: 'primary' },
-                  { label: 'Load Tournament', onClick: () => setLoadModalOpen(true), variant: 'secondary' },
-                ]}
-                cards={[
-                  { title: 'Build the Event', text: 'Set squads, bracket programs, entry pricing, side pots, and payout logic before lanes go live.' },
-                  { title: 'Run It Live', text: 'Manage entries, generate brackets, and enter scores from one control surface during play.' },
-                  { title: 'Close with Confidence', text: 'Review outcomes, payouts, exports, and public links when the tournament is complete.' },
-                ]}
-              />
-            )}
-
-            {tournament && (
-              <>
+        <div className={tournament ? undefined : 'page-main'}>
+          {tournament ? (
+            <>
                 <DashboardBoard
                   tournament={tournament}
                   activeSquad={activeSquad}
@@ -1331,12 +1310,32 @@ export default function TournamentDashboard() {
                   activityEntries={activityEntries}
                   activityLoading={activityLoading}
                 />
-              </>
+            </>
+          ) : (
+          <div className={`${shellStyles.content} ${mobileStyles.contentContainer}`}>
+            <div className={mobileStyles.cardsContainer}>
+
+            {/* Empty State - No Tournament Loaded */}
+            {!tournament && (
+              <NoTournamentState
+                title="Command Center Ready"
+                description="Create a new tournament or load an existing one to activate your full tournament command center."
+                actions={[
+                  { label: 'Create Tournament', onClick: () => { setCreateMode(true); setModalOpen(true); }, variant: 'primary' },
+                  { label: 'Load Tournament', onClick: () => setLoadModalOpen(true), variant: 'secondary' },
+                ]}
+                cards={[
+                  { title: 'Build the Event', text: 'Set squads, bracket programs, entry pricing, side pots, and payout logic before lanes go live.' },
+                  { title: 'Run It Live', text: 'Manage entries, generate brackets, and enter scores from one control surface during play.' },
+                  { title: 'Close with Confidence', text: 'Review outcomes, payouts, exports, and public links when the tournament is complete.' },
+                ]}
+              />
             )}
 
+
           </div>
-          {/* End Main Content Container */}
           </div>
+          )}
 
           {/* Tournament Settings Modal */}
           {settingsModalOpen && tournament && (

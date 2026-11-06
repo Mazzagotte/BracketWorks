@@ -1,9 +1,23 @@
-import { Activity, ArrowRight, Calendar, CircleDollarSign, ClipboardList, Clock, Settings2, Trophy, Users, type LucideIcon } from 'lucide-react';
+import { ArrowRight, CheckCircle2, type LucideIcon } from 'lucide-react';
+import {
+  ActivityList,
+  Badge,
+  Button,
+  Card,
+  CardDivider,
+  CardHeader,
+  ICON_SIZE,
+  Page,
+  PageColumns,
+  PageHeader,
+  ProgressBar,
+  StatGroup,
+  capitalizeFirstLetter,
+} from '@bracketworks/ui';
 
 import type { BracketSettings, Tournament, TournamentActivityEntry } from '../../lib/types';
 import type { Squad } from '../../lib/types';
 import type { DashboardScoreProgress } from '../hooks/useDashboardScoreProgress';
-import buttonStyles from '../../styles/buttons.module.css';
 import styles from './DashboardBoard.module.css';
 
 const formatActivityTime = (value: string): string => {
@@ -186,345 +200,209 @@ export function DashboardBoard({
 }: DashboardBoardProps) {
   const ContinueActionIcon = dashboardActionIcons[contextPrimaryAction.key] ?? ArrowRight;
   const visibleActivityEntries = activityEntries.filter(entry => visibleActivityEventTypes.has(entry.event_type));
+  const lifecycle = (tournament.archived_at ? 'archived' : tournament.lifecycle_status || 'setup').replaceAll('_', ' ');
+  const lifecycleTone = tournament.archived_at ? 'neutral' : lifecycle === 'complete' || lifecycle === 'completed' ? 'success' : lifecycle === 'in progress' ? 'info' : 'neutral';
+
+  const actionButton = (action: DashboardAction, variant: 'secondary' | 'ghost' | 'ghost-danger') => {
+    const ActionIcon = dashboardActionIcons[action.key] ?? ArrowRight;
+    return (
+      <Button
+        key={action.key}
+        variant={variant}
+        fullWidth
+        className={styles.actionButton}
+        icon={<ActionIcon size={ICON_SIZE.md} aria-hidden="true" />}
+        onClick={action.onClick}
+        disabled={action.disabled}
+      >
+        <span className={styles.actionLabel}>{action.label}</span>
+        {action.indicator ? <span className={styles.actionIndicator}>{action.indicator}</span> : null}
+      </Button>
+    );
+  };
 
   return (
-    <div className={styles.dashboardBoard}>
-      <section className={styles.dashboardHeaderCard}>
-        <div className={styles.dashboardHeaderTop}>
-          <div>
-            <div className={styles.tournamentTitleRow}>
-              <h2 className={styles.dashboardTournamentName}>{tournament.name}</h2>
-              <span className={styles.lifecycleBadge}>{(tournament.archived_at ? 'archived' : tournament.lifecycle_status || 'setup').replaceAll('_', ' ')}</span>
-            </div>
-            <div className={styles.dashboardTournamentMeta}>
-              <span><Calendar className={styles.dashboardMetaIcon} aria-hidden="true" />{tournamentDateLabel}</span>
-              <span><Clock className={styles.dashboardMetaIcon} aria-hidden="true" />{squadTimeLabel || (activeSquad ? activeSquad.time : 'Squad time pending')}</span>
-              <span><Users className={styles.dashboardMetaIcon} aria-hidden="true" />{loadedEntries} players</span>
-              <span><ClipboardList className={styles.dashboardMetaIcon} aria-hidden="true" />{statsEntrySummary.totalEntries} entries</span>
-            </div>
-          </div>
-        </div>
+    <Page>
+      <PageHeader
+        title={tournament.name}
+        badge={<Badge tone={lifecycleTone}>{capitalizeFirstLetter(lifecycle)}</Badge>}
+        description={[
+          tournamentDateLabel,
+          squadTimeLabel || (activeSquad ? activeSquad.time : 'Squad time pending'),
+          `${loadedEntries} players`,
+          `${statsEntrySummary.totalEntries} entries`,
+        ].join(' · ')}
+      />
 
-        <div className={styles.workflowRail}>
-          {workflowSteps.map((step, index) => (
-            <div
-              key={step.key}
-              className={`${styles.workflowItem} ${
-                step.done
-                  ? ''
-                  : step.active
-                    ? styles.workflowItemActive
-                    : styles.workflowItemPending
-              }`}
-            >
-              <div
-                className={`${styles.workflowDot} ${
-                  step.done
-                    ? styles.workflowDotDone
-                    : step.active
-                      ? styles.workflowDotActive
-                      : styles.workflowDotPending
-                }`}
-              >
-                {step.done ? '✓' : step.step}
+      <ol className={styles.workflow} aria-label="Tournament workflow">
+        {workflowSteps.map((step) => (
+          <li
+            key={step.key}
+            className={step.done ? styles.stepDone : step.active ? styles.stepActive : styles.step}
+            aria-current={step.active ? 'step' : undefined}
+          >
+            {step.done
+              ? <CheckCircle2 className={styles.stepCheck} size={ICON_SIZE.md} aria-label="Complete" />
+              : <span className={styles.stepNumber} aria-hidden="true">{step.step}</span>}
+            <span className={styles.stepText}>
+              <span className={styles.stepLabel}>{step.label}</span>
+              <span className={styles.stepStatus}>{step.status}</span>
+            </span>
+          </li>
+        ))}
+      </ol>
+
+      <StatGroup
+        label="Tournament totals"
+        items={[
+          { label: 'Players', value: String(loadedEntries) },
+          { label: 'Total entries', value: String(statsEntrySummary.totalEntries) },
+          { label: 'Expected revenue', value: formatUsd(statsEntrySummary.totalRevenue) },
+          { label: 'Prize fund', value: formatUsd(tournamentProjectedPayout) },
+        ]}
+      />
+
+      <PageColumns
+        main={(
+          <>
+            <div className={styles.panelGrid}>
+              <Card aria-label="Tournament setup">
+                <CardHeader title="Tournament setup" />
+                <dl className={styles.rows}>
+                  <div><dt>Bracket size</dt><dd>{bracketSettings.bracket_size} players</dd></div>
+                  <div><dt>Entry fee</dt><dd>{formatUsd(bracketSettings.default_entry_fee)}</dd></div>
+                  <div><dt>Handicap</dt><dd>{bracketSettings.handicap_percentage}% of {bracketSettings.handicap_base}</dd></div>
+                  <div><dt>{capitalizeFirstLetter(optionalProgramsLabel.toLowerCase())}</dt><dd>{optionalProgramsSummary}</dd></div>
+                  <div>
+                    <dt>Byes</dt>
+                    <dd><Badge tone={bracketSettings.allow_byes ? 'success' : 'neutral'}>{bracketSettings.allow_byes ? 'Enabled' : 'Disabled'}</Badge></dd>
+                  </div>
+                  <div>
+                    <dt>Side pots</dt>
+                    <dd><Badge tone={enabledSidePotsCount > 0 ? 'success' : 'neutral'}>{enabledSidePotsCount > 0 ? 'Enabled' : 'Disabled'}</Badge></dd>
+                  </div>
+                </dl>
+              </Card>
+
+              <Card aria-label="Financial summary">
+                <CardHeader title="Financial summary" />
+                <dl className={styles.rows}>
+                  <div><dt>Gross collected</dt><dd>{formatUsd(grossCollected)}</dd></div>
+                  <div><dt>House fee</dt><dd>-{formatUsd(houseRetained)}</dd></div>
+                  <div className={styles.totalRow}><dt>Available prize pool</dt><dd>{formatUsd(tournamentProjectedPayout)}</dd></div>
+                </dl>
+                <CardDivider />
+                <h3 className={styles.subsectionTitle}>Payout split</h3>
+                <dl className={styles.rows}>
+                  <div><dt>1st place</dt><dd>{formatUsd(bracketSettings.first_place_amount)}</dd></div>
+                  <div><dt>2nd place</dt><dd>{formatUsd(bracketSettings.second_place_amount)}</dd></div>
+                </dl>
+              </Card>
+            </div>
+
+            <Card aria-label="Entry breakdown">
+              <CardHeader title="Entry breakdown" />
+              <dl className={styles.rows}>
+                {orderedStatsProgramSummaries.map((program) => {
+                  const percentage = statsEntrySummary.totalEntries > 0
+                    ? Math.round((program.totalEntries / statsEntrySummary.totalEntries) * 100)
+                    : 0;
+                  return (
+                    <div key={program.key}>
+                      <dt>
+                        <span className={styles.programName}>{program.name}</span>
+                        <span className={styles.programMeta}>
+                          {percentage}% · {program.expectedBrackets} {program.expectedBrackets === 1 ? 'bracket' : 'brackets'}
+                        </span>
+                      </dt>
+                      <dd className={styles.programCount}>{program.totalEntries}</dd>
+                    </div>
+                  );
+                })}
+              </dl>
+            </Card>
+          </>
+        )}
+        side={(
+          <Card aria-label="Tournament actions">
+            <section className={styles.sideSection} aria-labelledby="dashboard-next-step">
+              <h2 id="dashboard-next-step" className={styles.overline}>Next step</h2>
+              <div className={styles.nextStep}>
+                <ContinueActionIcon className={styles.nextStepIcon} size={ICON_SIZE.md} aria-hidden="true" />
+                <div className={styles.nextStepText}>
+                  <span className={styles.subsectionTitle}>{contextPrimaryAction.label}</span>
+                  {!contextPrimaryAction.showScoreProgress ? <span className={styles.helper}>{contextPrimaryAction.message}</span> : null}
+                </div>
               </div>
-              <div className={styles.workflowText}>
-                <strong>{step.label}</strong>
-                <span>{step.status}</span>
-              </div>
-              {index < workflowSteps.length - 1 ? (
-                <div
-                  className={`${styles.workflowConnector} ${
-                    workflowSteps[index + 1]?.active
-                      ? styles.workflowConnectorActive
-                      : step.done && workflowSteps[index + 1]?.done
-                        ? styles.workflowConnectorDone
-                        : ''
-                  }`}
+              {contextPrimaryAction.showScoreProgress ? (
+                <ProgressBar
+                  value={scoreProgress.percent}
+                  max={100}
+                  label={`${scoreProgress.percent}% of players fully scored`}
+                  valueText={scoreProgressText}
                 />
               ) : null}
-            </div>
-          ))}
-        </div>
-      </section>
+              <Button variant="primary" fullWidth onClick={contextPrimaryAction.onClick} disabled={contextPrimaryAction.disabled}>
+                {contextPrimaryAction.label}
+              </Button>
+            </section>
 
-      <section className={styles.dashboardGrid}>
-        <div className={styles.dashboardMainColumn}>
-          <div className={styles.kpiGrid}>
-            <article className={styles.kpiCard}>
-              <div className={styles.kpiCardBody}>
-                <span className={styles.kpiIconBadge}>
-                  <Users className={styles.kpiIcon} aria-hidden="true" />
-                </span>
-                <div className={styles.kpiCopy}>
-                  <p className={styles.kpiValue}>{loadedEntries}</p>
-                  <p className={styles.kpiLabel}>Players</p>
-                </div>
-              </div>
-            </article>
-            <article className={styles.kpiCard}>
-              <div className={styles.kpiCardBody}>
-                <span className={styles.kpiIconBadge}>
-                  <ClipboardList className={styles.kpiIcon} aria-hidden="true" />
-                </span>
-                <div className={styles.kpiCopy}>
-                  <p className={styles.kpiValue}>{statsEntrySummary.totalEntries}</p>
-                  <p className={styles.kpiLabel}>Total Entries</p>
-                </div>
-              </div>
-            </article>
-            <article className={styles.kpiCard}>
-              <div className={styles.kpiCardBody}>
-                <span className={styles.kpiIconBadge}>
-                  <CircleDollarSign className={styles.kpiIcon} aria-hidden="true" />
-                </span>
-                <div className={styles.kpiCopy}>
-                  <p className={styles.kpiValue}>{formatUsd(statsEntrySummary.totalRevenue)}</p>
-                  <p className={styles.kpiLabel}>Expected Revenue</p>
-                </div>
-              </div>
-            </article>
-            <article className={styles.kpiCard}>
-              <div className={styles.kpiCardBody}>
-                <span className={styles.kpiIconBadge}>
-                  <Trophy className={styles.kpiIcon} aria-hidden="true" />
-                </span>
-                <div className={styles.kpiCopy}>
-                  <p className={styles.kpiValue}>{formatUsd(tournamentProjectedPayout)}</p>
-                  <p className={styles.kpiLabel}>Prize Fund</p>
-                </div>
-              </div>
-            </article>
-          </div>
+            {continueTournamentActions.length > 0 ? (
+              <>
+                <CardDivider />
+                <section className={styles.sideSection} aria-labelledby="dashboard-quick-actions">
+                  <h2 id="dashboard-quick-actions" className={styles.overline}>Quick actions</h2>
+                  <div className={styles.actionList}>{continueTournamentActions.map((action) => actionButton(action, 'secondary'))}</div>
+                </section>
+              </>
+            ) : null}
 
-          <div className={styles.dashboardPanelsGrid}>
-            <article className={`${styles.dashboardPanel} ${styles.summaryDetailPanel}`}>
-              <h3 className={styles.dashboardPanelHeading}>
-                <Settings2 className={styles.dashboardPanelIcon} aria-hidden="true" />
-                <span className={styles.dashboardPanelTitle}>Tournament Setup</span>
-              </h3>
-              <div className={styles.dashboardDataRows}>
-                <div><span>Bracket Size</span><strong>{bracketSettings.bracket_size} Players</strong></div>
-                <div><span>Entry Fee</span><strong>{formatUsd(bracketSettings.default_entry_fee)}</strong></div>
-                <div><span>Handicap</span><strong>{bracketSettings.handicap_percentage}% of {bracketSettings.handicap_base}</strong></div>
-                <div><span>{optionalProgramsLabel}</span><strong>{optionalProgramsSummary}</strong></div>
-                <div><span>Bye Settings</span><strong className={bracketSettings.allow_byes ? styles.statusBadgeEnabled : styles.statusBadgeDisabled}>{bracketSettings.allow_byes ? 'Enabled' : 'Disabled'}</strong></div>
-                <div><span>Side Pots</span><strong className={enabledSidePotsCount > 0 ? styles.statusBadgeEnabled : styles.statusBadgeDisabled}>{enabledSidePotsCount > 0 ? 'Enabled' : 'Disabled'}</strong></div>
+            <CardDivider />
+            <section className={styles.sideSection} aria-labelledby="dashboard-management">
+              <h2 id="dashboard-management" className={styles.overline}>Tournament management</h2>
+              <div className={styles.actionList}>
+                {manageSetupActions.map((action) => actionButton(action, 'ghost'))}
+                {moreActions.map((action) => actionButton(action, 'ghost'))}
               </div>
-            </article>
+            </section>
 
-            <article className={`${styles.dashboardPanel} ${styles.summaryDetailPanel}`}>
-              <h3 className={styles.dashboardPanelHeading}>
-                <CircleDollarSign className={styles.dashboardPanelIcon} aria-hidden="true" />
-                <span className={styles.dashboardPanelTitle}>Financial Summary</span>
-              </h3>
-              <div className={styles.dashboardDataRows}>
-                <div><span>Gross Collected</span><strong>{formatUsd(grossCollected)}</strong></div>
-                <div><span>House Fee</span><strong className={styles.dashboardDangerText}>-{formatUsd(houseRetained)}</strong></div>
-              </div>
-              <div className={styles.financialHeroBlock}>
-                <p className={styles.dashboardPanelEyebrow}>Available Prize Pool</p>
-                <div className={styles.financialHeroValueContainer}>
-                  <p className={styles.financialHeroValue}>{formatUsd(tournamentProjectedPayout)}</p>
-                </div>
-              </div>
-              <div>
-                <p className={`${styles.dashboardPanelEyebrow} ${styles.financialSplitSection}`}>Payout Split</p>
-                <div className={styles.dashboardDataRows}>
-                  <div><span>1st Place</span><strong>{formatUsd(bracketSettings.first_place_amount)}</strong></div>
-                  <div><span>2nd Place</span><strong>{formatUsd(bracketSettings.second_place_amount)}</strong></div>
-                </div>
-              </div>
-            </article>
-          </div>
-
-          <article className={styles.dashboardPanel}>
-            <h3 className={styles.dashboardPanelHeading}>
-              <ClipboardList className={styles.dashboardPanelIcon} aria-hidden="true" />
-              <span className={styles.dashboardPanelTitle}>Entry Breakdown</span>
-            </h3>
-            <div className={styles.entryBreakdownCards}>
-              {orderedStatsProgramSummaries.map(program => {
-                const percentage = statsEntrySummary.totalEntries > 0
-                  ? Math.round((program.totalEntries / statsEntrySummary.totalEntries) * 100)
-                  : 0;
-                const labelClass = program.key === 'handicap'
-                  ? styles.entryBreakdownLabelHandicap
-                  : program.key === 'scratch'
-                    ? styles.entryBreakdownLabelScratch
-                    : styles.entryBreakdownLabelOptional;
-
-                return (
-                  <div className={styles.entryBreakdownStat} key={program.key}>
-                    <span className={labelClass}>{program.name}</span>
-                    <strong>{program.totalEntries}</strong>
-                    <small>
-                      {percentage}% · {program.expectedBrackets} {program.expectedBrackets === 1 ? 'bracket' : 'brackets'}
-                    </small>
-                  </div>
-                );
-              })}
-            </div>
-          </article>
-
-        </div>
-
-        <aside className={styles.dashboardSideColumn}>
-          <article className={`${styles.dashboardPanel} ${styles.combinedSideCard}`}>
-            <div className={styles.sideCardSection}>
-              <p className={styles.sideCardSectionLabel}>Tournament Next Step</p>
-              <div className={styles.continuePanelBody}>
-                <div className={styles.continuePanelStatus}>
-                  <span className={styles.continuePanelIconWrap}>
-                    <ContinueActionIcon className={styles.continuePanelIcon} aria-hidden="true" />
-                  </span>
-                  <div>
-                    <p className={styles.sideCardLead}>{contextPrimaryAction.label}</p>
-                    <p className={styles.sideCardMeta}>{contextPrimaryAction.showScoreProgress ? scoreProgressText : contextPrimaryAction.message}</p>
-                    {contextPrimaryAction.showScoreProgress && (
-                      <progress
-                        className={styles.scoreProgressBar}
-                        value={scoreProgress.percent}
-                        max="100"
-                        aria-label={`${scoreProgress.percent}% of players fully scored`}
-                      />
-                    )}
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  className={`${buttonStyles.button} ${buttonStyles.primary} ${styles.sideCardPrimaryButton}`}
-                  onClick={contextPrimaryAction.onClick}
-                  disabled={contextPrimaryAction.disabled}
-                >
-                  {contextPrimaryAction.label}
-                </button>
-              </div>
-            </div>
-
-            <div className={styles.sideCardSection}>
-              <p className={styles.sideCardSectionLabel}>Quick Actions</p>
-              <div className={styles.sideActionList}>
-                {continueTournamentActions.map(action => {
-                  const ActionIcon = dashboardActionIcons[action.key] ?? ArrowRight;
-                  return (
-                    <button
-                      key={action.key}
-                      type="button"
-                      className={styles.sideActionButton}
-                      onClick={action.onClick}
-                      disabled={action.disabled}
-                    >
-                      <span className={styles.sideActionButtonLabel}>
-                        <ActionIcon className={styles.sideActionIcon} aria-hidden="true" />
-                        <span>{action.label}</span>
-                      </span>
-                      <span>{action.indicator}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className={styles.sideCardSection}>
-              <p className={styles.sideCardSectionLabel}>Tournament Management</p>
-              <div className={styles.sideActionList}>
-                {manageSetupActions.map(item => {
-                  const ActionIcon = dashboardActionIcons[item.key] ?? ArrowRight;
-                  return (
-                    <button
-                      key={item.key}
-                      type="button"
-                      className={styles.sideActionButton}
-                      onClick={item.onClick}
-                      disabled={item.disabled}
-                    >
-                      <span className={styles.sideActionButtonLabel}>
-                        <ActionIcon className={styles.sideActionIcon} aria-hidden="true" />
-                        <span>{item.label}</span>
-                      </span>
-                      <span>›</span>
-                    </button>
-                  );
-                })}
-                {moreActions.map(item => {
-                  const ActionIcon = dashboardActionIcons[item.key] ?? ArrowRight;
-                  return (
-                    <button
-                      key={item.key}
-                      type="button"
-                      className={styles.sideActionButton}
-                      onClick={item.onClick}
-                      disabled={item.disabled}
-                    >
-                      <span className={styles.sideActionButtonLabel}>
-                        <ActionIcon className={styles.sideActionIcon} aria-hidden="true" />
-                        <span>{item.label}</span>
-                      </span>
-                      <span>›</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className={`${styles.sideCardSection} ${styles.dangerZoneSection}`}>
-              <p className={styles.sideCardSectionLabel}>Danger Zone</p>
-              <div className={styles.sideActionList}>
-                {dangerActions.map(item => {
-                  const ActionIcon = dashboardActionIcons[item.key] ?? ArrowRight;
-                  return (
-                    <button
-                      key={item.key}
-                      type="button"
-                      className={`${styles.sideActionButton} ${styles.sideActionButtonDanger}`}
-                      onClick={item.onClick}
-                      disabled={item.disabled}
-                    >
-                      <span className={styles.sideActionButtonLabel}>
-                        <ActionIcon className={styles.sideActionIcon} aria-hidden="true" />
-                        <span>{item.label}</span>
-                      </span>
-                      <span>!</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </article>
-        </aside>
-      </section>
-
-      <article className={`${styles.dashboardPanel} ${styles.activityPanel}`}>
-        <h3 className={styles.dashboardPanelHeading}>
-          <Activity className={styles.dashboardPanelIcon} aria-hidden="true" />
-          <span className={styles.dashboardPanelTitle}>Tournament Activity</span>
-        </h3>
-        {activityLoading ? (
-          <div className={styles.activityState} role="status">Loading tournament activity...</div>
-        ) : visibleActivityEntries.length === 0 ? (
-          <div className={styles.activityState}>No score unlocks, payout changes, or other review items yet.</div>
-        ) : (
-          <div className={styles.activityList}>
-                {visibleActivityEntries.map(entry => {
-                  const activityText = getActivityText(entry);
-                  return (
-                    <article className={styles.activityItem} key={entry.id}>
-                      <div className={styles.activityItemHeader}>
-                        <div>
-                          <strong>{activityText.title}</strong>
-                          <span>{activityText.detail}</span>
-                        </div>
-                        <time dateTime={entry.created_at}>{formatActivityTime(entry.created_at)}</time>
-                      </div>
-                      {entry.reason ? <p className={styles.activityReason}><span>Reason given:</span> {entry.reason}</p> : null}
-                      <div className={styles.activityMeta}>Changed by {entry.user_display_name}</div>
-                    </article>
-                  );
-                })}
-          </div>
+            {dangerActions.length > 0 ? (
+              <>
+                <CardDivider />
+                <section className={styles.sideSection} aria-labelledby="dashboard-danger">
+                  <h2 id="dashboard-danger" className={styles.overline}>Danger zone</h2>
+                  <div className={styles.actionList}>{dangerActions.map((action) => actionButton(action, 'ghost-danger'))}</div>
+                </section>
+              </>
+            ) : null}
+          </Card>
         )}
-      </article>
-    </div>
+      />
+
+      <Card aria-label="Tournament activity">
+        <CardHeader title="Tournament activity" description="Score unlocks, payout changes, and other review items." />
+        {activityLoading ? (
+          <p className={styles.helper} role="status">Loading tournament activity...</p>
+        ) : visibleActivityEntries.length === 0 ? (
+          <p className={styles.helper}>No score unlocks, payout changes, or other review items yet.</p>
+        ) : (
+          <ActivityList
+            items={visibleActivityEntries.map((entry) => {
+              const activityText = getActivityText(entry);
+              return {
+                id: String(entry.id),
+                title: activityText.title,
+                time: <time dateTime={entry.created_at}>{formatActivityTime(entry.created_at)}</time>,
+                detail: [
+                  activityText.detail,
+                  entry.reason ? `Reason: ${entry.reason}` : null,
+                  `Changed by ${entry.user_display_name}`,
+                ].filter(Boolean).join(' · '),
+              };
+            })}
+          />
+        )}
+      </Card>
+    </Page>
   );
 }

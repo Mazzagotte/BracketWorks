@@ -48,8 +48,8 @@ describe('useDashboardWorkflowModel', () => {
     const { result } = renderHook(() => useDashboardWorkflowModel(buildArgs({ squadsLength: 0 })))
 
     expect(result.current.contextPrimaryAction.key).toBe('edit-tournament')
-    expect(result.current.contextPrimaryAction.label).toBe('Complete Tournament Setup')
-    expect(result.current.workflowSteps[0]?.status).toBe('In Progress')
+    expect(result.current.contextPrimaryAction.label).toBe('Complete tournament setup')
+    expect(result.current.workflowSteps[0]?.status).toBe('In progress')
   })
 
   it('routes to score entry when brackets exist and scoring is incomplete', () => {
@@ -77,7 +77,7 @@ describe('useDashboardWorkflowModel', () => {
 
     expect(result.current.contextPrimaryAction.key).toBe('enter-scores')
     expect(result.current.contextPrimaryAction.showScoreProgress).toBe(true)
-    expect(result.current.scoreStatusLabel).toBe('In Progress')
+    expect(result.current.scoreStatusLabel).toBe('In progress')
   })
 
   it('routes to payout calculation when scores are complete but payout summary is missing', () => {
@@ -122,7 +122,7 @@ describe('useDashboardWorkflowModel', () => {
     )
 
     expect(result.current.contextPrimaryAction.key).toBe('add-player')
-    expect(result.current.contextPrimaryAction.label).toBe('Review Entries')
+    expect(result.current.contextPrimaryAction.label).toBe('Review entries')
     expect(result.current.statusNarrative.tone).toBe('warning')
     expect(result.current.blockerSummary).toContain('2 missing averages')
     expect(result.current.blockerSummary).toContain('1 unpaid entries')

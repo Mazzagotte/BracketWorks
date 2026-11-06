@@ -123,7 +123,7 @@ export function useDashboardWorkflowModel<TProgramSummary extends ProgramSummary
   if (!hasGeneratedBrackets) {
     continueTournamentActions.push({
       key: 'add-player',
-      label: 'Add Player',
+      label: 'Add player',
       indicator: '›',
       onClick: onGoPlayers,
       disabled: isReadOnly,
@@ -132,7 +132,7 @@ export function useDashboardWorkflowModel<TProgramSummary extends ProgramSummary
   if (hasGeneratedBrackets) {
     continueTournamentActions.push({
       key: 'view-brackets',
-      label: 'View Brackets',
+      label: 'View brackets',
       indicator: '›',
       onClick: onGoBrackets,
       disabled: false,
@@ -143,7 +143,7 @@ export function useDashboardWorkflowModel<TProgramSummary extends ProgramSummary
     if (payoutsFinalized) {
       return {
         key: 'view-payouts',
-        label: 'View Final Results',
+        label: 'View final results',
         message: 'Tournament complete. Payouts are finalized and scores are locked.',
         onClick: onGoPayouts,
         disabled: false,
@@ -155,7 +155,7 @@ export function useDashboardWorkflowModel<TProgramSummary extends ProgramSummary
       if (scoreProgress.percent < 100) {
         return {
           key: 'enter-scores',
-          label: scoreProgress.entered > 0 ? 'Continue Score Entry' : 'Enter Scores',
+          label: scoreProgress.entered > 0 ? 'Continue score entry' : 'Enter scores',
           message: scoreProgress.entered > 0 ? 'Scoring is in progress.' : 'Brackets are ready for score entry.',
           onClick: onGoScores,
           disabled: isReadOnly,
@@ -166,7 +166,7 @@ export function useDashboardWorkflowModel<TProgramSummary extends ProgramSummary
       if (!hasPayoutSummary) {
         return {
           key: 'calculate-payouts',
-          label: 'Calculate Payouts',
+          label: 'Calculate payouts',
           message: 'All scores are complete. Calculate and review tournament payouts.',
           onClick: onGoPayouts,
           disabled: isReadOnly,
@@ -176,7 +176,7 @@ export function useDashboardWorkflowModel<TProgramSummary extends ProgramSummary
 
       return {
         key: 'finalize-payouts',
-        label: 'Review and Finalize Payouts',
+        label: 'Review and finalize payouts',
         message: 'Payouts have been calculated and are ready for final review.',
         onClick: onGoPayouts,
         disabled: isReadOnly,
@@ -187,7 +187,7 @@ export function useDashboardWorkflowModel<TProgramSummary extends ProgramSummary
     if (squadsLength === 0) {
       return {
         key: 'edit-tournament',
-        label: 'Complete Tournament Setup',
+        label: 'Complete tournament setup',
         message: 'Add at least one squad before adding entries.',
         onClick: onOpenEditTournament,
         disabled: isReadOnly,
@@ -198,7 +198,7 @@ export function useDashboardWorkflowModel<TProgramSummary extends ProgramSummary
     if (bracketSize <= 0) {
       return {
         key: 'tournament-settings',
-        label: 'Complete Bracket Setup',
+        label: 'Complete bracket setup',
         message: 'Choose a valid bracket size and confirm tournament settings.',
         onClick: onOpenSettings,
         disabled: isReadOnly,
@@ -209,7 +209,7 @@ export function useDashboardWorkflowModel<TProgramSummary extends ProgramSummary
     if (loadedEntries <= 0) {
       return {
         key: 'add-player',
-        label: 'Add Players',
+        label: 'Add players',
         message: 'Add tournament entries before generating brackets.',
         onClick: onGoPlayers,
         disabled: isReadOnly,
@@ -220,7 +220,7 @@ export function useDashboardWorkflowModel<TProgramSummary extends ProgramSummary
     if (hasWorkflowSetupBlockers) {
       return {
         key: 'add-player',
-        label: 'Review Entries',
+        label: 'Review entries',
         message: `Resolve entry issues before generating brackets: ${workflowBlockerSummary}.`,
         onClick: onGoPlayers,
         disabled: isReadOnly,
@@ -230,7 +230,7 @@ export function useDashboardWorkflowModel<TProgramSummary extends ProgramSummary
 
     return {
       key: 'generate-brackets',
-      label: 'Generate Brackets',
+      label: 'Generate brackets',
       message: 'Setup and entries are ready. Generate brackets to begin play.',
       onClick: onGoBrackets,
       disabled: isReadOnly,
@@ -259,19 +259,19 @@ export function useDashboardWorkflowModel<TProgramSummary extends ProgramSummary
   const manageSetupActions: DashboardAction[] = [
     {
       key: 'edit-tournament',
-      label: 'Edit Tournament',
+      label: 'Edit tournament',
       onClick: onOpenEditTournament,
       disabled: isReadOnly,
     },
     {
       key: 'tournament-settings',
-      label: 'Tournament Settings',
+      label: 'Tournament settings',
       onClick: onOpenSettings,
       disabled: isReadOnly,
     },
     {
       key: 'change-squad',
-      label: 'Change Squad',
+      label: 'Change squad',
       onClick: onOpenSquadSelector,
       disabled: isReadOnly || squadsLength === 0,
     },
@@ -280,7 +280,7 @@ export function useDashboardWorkflowModel<TProgramSummary extends ProgramSummary
   const moreActions: DashboardAction[] = [
     {
       key: 'change-tournament',
-      label: 'Switch Tournament',
+      label: 'Switch tournament',
       onClick: onChangeTournament,
       disabled: false,
     },
@@ -289,13 +289,13 @@ export function useDashboardWorkflowModel<TProgramSummary extends ProgramSummary
   const dangerActions: DashboardAction[] = [
     {
       key: isArchived ? 'restore-tournament' : 'archive-tournament',
-      label: isArchived ? 'Restore Tournament' : 'Archive Tournament',
+      label: isArchived ? 'Restore tournament' : 'Archive tournament',
       onClick: isArchived ? onRestoreTournament : onArchiveTournament,
       disabled: false,
     },
     {
       key: 'unload-tournament',
-      label: 'Unload Tournament',
+      label: 'Unload tournament',
       onClick: onUnloadTournament,
       disabled: false,
     },
@@ -340,7 +340,7 @@ export function useDashboardWorkflowModel<TProgramSummary extends ProgramSummary
   const scoreStatusLabel = useMemo(() => {
     if (scoreProgress.loading) return 'Checking...';
     if (scoresLocked) return 'Locked';
-    if (scoreProgress.entered > 0) return 'In Progress';
+    if (scoreProgress.entered > 0) return 'In progress';
     return 'None';
   }, [scoreProgress.entered, scoreProgress.loading, scoresLocked]);
 
@@ -406,7 +406,7 @@ export function useDashboardWorkflowModel<TProgramSummary extends ProgramSummary
   }, [isEntryDataSyncing, hasSetupBlockers, blockerSummary, bracketsNotGeneratedCount, dataIssuesCount, setupIncomplete]);
 
   const workflowSteps: WorkflowStep[] = [
-    { key: 'setup', step: '1', label: 'Setup', status: setupIncomplete ? 'In Progress' : 'Complete', done: !setupIncomplete },
+    { key: 'setup', step: '1', label: 'Setup', status: setupIncomplete ? 'In progress' : 'Complete', done: !setupIncomplete },
     { key: 'entries', step: '2', label: 'Entries', status: loadedEntries > 0 ? 'Complete' : 'Pending', done: loadedEntries > 0 },
     { key: 'brackets', step: '3', label: 'Brackets', status: hasGeneratedBrackets ? 'Complete' : 'Pending', done: hasGeneratedBrackets },
     { key: 'scores', step: '4', label: 'Scores', status: workflowScoreProgressText, done: scoresLocked, active: hasGeneratedBrackets && !scoresLocked },
