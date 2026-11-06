@@ -1,8 +1,7 @@
-import { BookOpen, FileSpreadsheet, Shuffle, Trash2, Upload, Zap } from 'lucide-react'
+import { BookOpen, FileSpreadsheet, Shuffle, Trash2, Upload } from 'lucide-react'
+import { Button, Card, CardDivider, CardHeader, ICON_SIZE } from '@bracketworks/ui'
 
-import buttonStyles from '../../styles/buttons.module.css'
-import cardStyles from '../../styles/cards.module.css'
-import styles from '../entries.module.css'
+import styles from './EntriesPanels.module.css'
 
 interface EntriesQuickActionsProps {
   isDev: boolean
@@ -17,42 +16,39 @@ interface EntriesQuickActionsProps {
   onDeleteAllEntries: () => void
 }
 
+/** Entries quick actions: all secondary (no row of orange buttons); admin tools below a divider. */
 export default function EntriesQuickActions({
   isDev, playersCount, isImporting, isExporting, isDeletingAll, onOpenGuide, onExportToExcel,
   onImportFromExcel, onRandomizeEntries, onDeleteAllEntries,
 }: EntriesQuickActionsProps) {
   return (
-    <div className={`${cardStyles.card} ${cardStyles.quickActionsCard} ${styles.formCard}`}>
-      <h3 className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${cardStyles.quickActionsTitle} ${styles.formTitle} ${styles.quickActionsHeading}`}>
-        <Zap aria-hidden="true" />
-        Quick Actions
-      </h3>
-      <div className={`${cardStyles.quickActionsBody} ${styles.quickActionsBody}`}>
-        <div className={`${cardStyles.quickActionsRow} ${styles.quickActionsPrimaryRow}`}>
-          <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`} onClick={onOpenGuide}>
-            <BookOpen aria-hidden="true" /> Entries Guide
-          </button>
-          <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`} onClick={onExportToExcel} disabled={playersCount === 0 || isExporting}>
-            <FileSpreadsheet aria-hidden="true" /> {isExporting ? 'Exporting...' : 'Export to Excel'}
-          </button>
-          <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`} onClick={onImportFromExcel} disabled={isImporting}>
-            <Upload aria-hidden="true" /> {isImporting ? 'Importing...' : 'Import from Excel'}
-          </button>
-        </div>
-        {isDev && playersCount > 0 && (
-          <div className={styles.quickActionAdminSection}>
-            <div className={styles.quickActionAdminRow}><span className={styles.quickActionAdminLabel}>Admin Tools</span></div>
-            <div className={styles.quickActionAdminControls}>
-              <button className={`${cardStyles.quickActionControl} ${styles.devButton} ${styles.quickActionDevBtn}`} onClick={onRandomizeEntries}>
-                <Shuffle aria-hidden="true" /> Randomize Entries
-              </button>
-              <button className={`${cardStyles.quickActionControl} ${styles.devButton} ${styles.quickActionDangerBtn}`} onClick={onDeleteAllEntries} disabled={isDeletingAll}>
-                <Trash2 aria-hidden="true" /> {isDeletingAll ? 'Deleting...' : 'Delete All Entries'}
-              </button>
-            </div>
-          </div>
-        )}
+    <Card aria-label="Quick actions">
+      <CardHeader title="Quick actions" />
+      <div className={styles.actionRow}>
+        <Button variant="secondary" icon={<Upload size={ICON_SIZE.md} aria-hidden="true" />} onClick={onImportFromExcel} disabled={isImporting}>
+          {isImporting ? 'Importing...' : 'Import from Excel'}
+        </Button>
+        <Button variant="secondary" icon={<FileSpreadsheet size={ICON_SIZE.md} aria-hidden="true" />} onClick={onExportToExcel} disabled={playersCount === 0 || isExporting}>
+          {isExporting ? 'Exporting...' : 'Export to Excel'}
+        </Button>
+        <Button variant="ghost" icon={<BookOpen size={ICON_SIZE.md} aria-hidden="true" />} onClick={onOpenGuide}>
+          Entries guide
+        </Button>
       </div>
-    </div>
+      {isDev && playersCount > 0 ? (
+        <>
+          <CardDivider />
+          <h3 className={styles.overline}>Admin tools</h3>
+          <div className={styles.actionRow}>
+            <Button size="sm" variant="secondary" icon={<Shuffle size={ICON_SIZE.md} aria-hidden="true" />} onClick={onRandomizeEntries}>
+              Randomize entries
+            </Button>
+            <Button size="sm" variant="ghost-danger" icon={<Trash2 size={ICON_SIZE.md} aria-hidden="true" />} onClick={onDeleteAllEntries} disabled={isDeletingAll}>
+              {isDeletingAll ? 'Deleting...' : 'Delete all entries'}
+            </Button>
+          </div>
+        </>
+      ) : null}
+    </Card>
   )
 }

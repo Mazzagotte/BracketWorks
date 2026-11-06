@@ -7,12 +7,9 @@ import { divisionOptions, isProgramAllowedForDivision, normalizeDivision } from 
 import { COMPACT_CONTENT_VIEWPORT_QUERY } from '../../lib/responsive';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { SortableHeader, SortConfig } from '../../components/SortableHeader';
-import styles from '../entries.module.css';
-import tableStyles from '../../styles/tables.module.css';
-import badgeStyles from '../../styles/badges.module.css';
-import iconButtonStyles from '../../styles/icon-buttons.module.css';
-import buttonStyles from '../../styles/buttons.module.css';
-import { ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
+import styles from './PlayersTable.module.css';
+import { ChevronDown, ChevronUp, MoreHorizontal, Trash2, Users } from 'lucide-react';
+import { Badge, Button, CheckboxField, DataTable, EmptyState, ICON_SIZE, Menu, MenuItem, Pagination, SelectField, TextField } from '@bracketworks/ui';
 
 function abbreviateProgramName(name: string): string {
   const map: [string, string][] = [
@@ -31,6 +28,27 @@ function abbreviateProgramName(name: string): string {
     if (name.includes(from)) return name.replace(from, to);
   }
   return name;
+}
+
+type PaymentStatus = {
+  label: string;
+  tone: 'warning' | 'success' | 'info' | 'danger';
+  isPaid: boolean;
+  canToggle: boolean;
+};
+
+/** One payment status rule for the table and the phone rows. */
+function getPaymentStatus(player: { bracketEntries?: Record<string, number>; totalCost: number; amountPaid: number }): PaymentStatus {
+  const totalEntries = Object.values(player.bracketEntries || {}).reduce((sum, count) => sum + Number(count || 0), 0);
+  const needsEntryFee = totalEntries > 0 && player.totalCost <= 0;
+  const hasPayableAmount = player.totalCost > 0;
+  const isPaid = hasPayableAmount && !needsEntryFee && player.amountPaid >= player.totalCost;
+  const isPartial = hasPayableAmount && !needsEntryFee && !isPaid && player.amountPaid > 0;
+  const canToggle = hasPayableAmount && !needsEntryFee;
+  if (needsEntryFee) return { label: 'Set fee', tone: 'warning', isPaid, canToggle };
+  if (isPaid) return { label: 'Paid', tone: 'success', isPaid, canToggle };
+  if (isPartial) return { label: 'Partial', tone: 'info', isPaid, canToggle };
+  return { label: 'Due', tone: 'danger', isPaid, canToggle };
 }
 
 const PlayersTable = memo(({ 
@@ -153,274 +171,169 @@ const PlayersTable = memo(({
     setExpandedRows(previous => ({ ...previous, [playerId]: !previous[playerId] }));
   };
 
-  const renderMobileCard = (player: typeof players[number], rowIndex: number) => {
-    const totalEntries = Object.values(player.bracketEntries || {}).reduce((sum, count) => sum + Number(count || 0), 0);
-    const needsEntryFee = totalEntries > 0 && player.totalCost <= 0;
-    const hasPayableAmount = player.totalCost > 0;
-    const isPaid = hasPayableAmount && !needsEntryFee && player.amountPaid >= player.totalCost;
+  const renderMobileRow = (player: typeof players[number], rowIndex: number) => {
+    const status = getPaymentStatus(player);
     const isExpanded = Boolean(expandedRows[player.id]);
-    const playerName = `${player.firstName || ''} ${player.lastName || ''}`.trim() || 'Unnamed Player';
-    const cardStatusClass = needsEntryFee
-      ? styles.mobilePlayerCardSetFee
-      : isPaid
-        ? styles.mobilePlayerCardPaid
-        : styles.mobilePlayerCardDue;
-    const statusPillClass = needsEntryFee
-      ? badgeStyles.warning
-      : isPaid
-        ? badgeStyles.success
-        : badgeStyles.danger;
+    const playerName = `${player.firstName || ''} ${player.lastName || ''}`.trim() || 'Unnamed bowler';
+    const detailsId = `mobile-player-details-${player.id}`;
 
     return (
-      <article key={`${player.id}-${rowIndex}`} className={`${styles.mobilePlayerCard} ${cardStatusClass}`}>
+      <li key={`${player.id}-${rowIndex}`} className={styles.mobileRow}>
         <button
           type="button"
-          className={styles.mobilePlayerHeader}
+          className={styles.mobileRowHeader}
           onClick={() => toggleMobileCard(player.id)}
           aria-expanded={isExpanded}
-          aria-controls={`mobile-player-details-${player.id}`}
+          aria-controls={detailsId}
         >
-          <div className={styles.mobilePlayerCompactView}>
-            <div className={styles.mobilePlayerIdentity}>
-              <h4 className={styles.mobilePlayerName}>{playerName}</h4>
-            </div>
-
-            <div className={styles.mobilePlayerTotals}>
-              <span className={styles.mobilePlayerCost}>${player.totalCost.toFixed(2)}</span>
-              <span className={`${badgeStyles.badge} ${badgeStyles.compact} ${statusPillClass}`}>
-                {needsEntryFee ? 'SET FEE' : isPaid ? 'PAID' : 'DUE'}
-              </span>
-            </div>
-
-            <span className={styles.mobileExpandIcon}>{isExpanded ? '−' : '+'}</span>
-          </div>
+          <span className={styles.mobileIdentity}>
+            <span className={styles.mobileName}>{playerName}</span>
+            <span className={styles.mobileMeta}>
+              {[player.lane ? `Lane ${player.lane}` : null, `Avg ${player.average}`, normalizeDivision(player.division)].filter(Boolean).join(' · ')}
+            </span>
+          </span>
+          <span className={styles.mobileTotal}>${player.totalCost.toFixed(2)}</span>
+          <Badge tone={status.tone}>{status.label}</Badge>
+          {isExpanded
+            ? <ChevronUp size={ICON_SIZE.md} aria-hidden="true" />
+            : <ChevronDown size={ICON_SIZE.md} aria-hidden="true" />}
         </button>
 
-        {isExpanded && (
-          <div id={`mobile-player-details-${player.id}`} className={styles.mobilePlayerDetails}>
-            <div className={styles.mobilePlayerFieldGrid}>
-              <label className={`${styles.mobilePlayerField} ${styles.mobileFieldUsbc}`}>
-                <span>USBC</span>
-                <input className="entries-input entries-control" type="text" value={player.usbc || ''} onChange={event => handleCellEdit(player.id, 'usbc', event.target.value)} />
-              </label>
-
-              <label className={`${styles.mobilePlayerField} ${styles.mobileFieldFirstName}`}>
-                <span>First Name</span>
-                <input className="entries-input entries-control" type="text" value={player.firstName || ''} onChange={event => handleCellEdit(player.id, 'firstName', event.target.value)} />
-              </label>
-
-              <label className={`${styles.mobilePlayerField} ${styles.mobileFieldLastName}`}>
-                <span>Last Name</span>
-                <input className="entries-input entries-control" type="text" value={player.lastName || ''} onChange={event => handleCellEdit(player.id, 'lastName', event.target.value)} />
-              </label>
-
-              <label className={`${styles.mobilePlayerField} ${styles.mobileFieldDivision}`}>
-                <span>Division</span>
-                <select className="entries-select entries-control" value={normalizeDivision(player.division)} onChange={event => handleCellEdit(player.id, 'division', event.target.value)}>
-                  {divisionOptions.map(option => (
-                    <option key={option} value={option}>{option}</option>
-                  ))}
-                </select>
-              </label>
-
-              <label className={`${styles.mobilePlayerField} ${styles.mobileFieldLane}`}>
-                <span>Lane</span>
-                <input className="entries-input entries-control" type="text" value={player.lane || ''} onChange={event => handleCellEdit(player.id, 'lane', event.target.value)} />
-              </label>
-
-              <label className={`${styles.mobilePlayerField} ${styles.mobileFieldAverage}`}>
-                <span>Average</span>
-                <input className="entries-input entries-control" type="text" value={player.average} onChange={event => handleCellEdit(player.id, 'average', event.target.value)} />
-              </label>
+        {isExpanded ? (
+          <div id={detailsId} className={styles.mobileDetails}>
+            <div className={styles.mobileFields}>
+              <TextField label="First name" value={player.firstName || ''} onChange={event => handleCellEdit(player.id, 'firstName', event.target.value)} />
+              <TextField label="Last name" value={player.lastName || ''} onChange={event => handleCellEdit(player.id, 'lastName', event.target.value)} />
+              <TextField label="USBC number" value={player.usbc || ''} onChange={event => handleCellEdit(player.id, 'usbc', event.target.value)} />
+              <SelectField label="Division" value={normalizeDivision(player.division)} onChange={event => handleCellEdit(player.id, 'division', event.target.value)}>
+                {divisionOptions.map(option => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </SelectField>
+              <TextField label="Lane" value={player.lane || ''} onChange={event => handleCellEdit(player.id, 'lane', event.target.value)} />
+              <TextField label="Average" inputMode="numeric" value={player.average} onChange={event => handleCellEdit(player.id, 'average', event.target.value)} />
+              {bracketPrograms.map(program => {
+                const isAllowed = isProgramAllowedForDivision(program.division, player.division);
+                return (
+                  <TextField
+                    key={program.key}
+                    label={`${program.name} entries`}
+                    inputMode="numeric"
+                    value={isAllowed ? (player.bracketEntries?.[program.key] || 0) : 0}
+                    disabled={!isAllowed}
+                    helper={isAllowed ? undefined : 'Not open to this division'}
+                    onChange={event => handleBracketEntryEdit(player.id, program.key, event.target.value)}
+                  />
+                );
+              })}
             </div>
 
-            {bracketPrograms.length > 0 && (
-              <div className={styles.mobileProgramSection}>
-                <div className={styles.mobileSectionTitle}>Bracket Entries</div>
-                <div className={styles.mobileProgramGrid}>
-                  {bracketPrograms.map(program => {
-                    const isAllowed = isProgramAllowedForDivision(program.division, player.division);
-                    const visibleValue = isAllowed ? (player.bracketEntries?.[program.key] || 0) : 0;
+            {enabledPots.length > 0 ? (
+              <fieldset className={styles.mobilePots}>
+                <legend className={styles.mobileLegend}>Side pots</legend>
+                {enabledPots.map(pot => {
+                  const checked = Boolean(player.sidePotEntries?.[pot.key]);
+                  return (
+                    <CheckboxField
+                      key={pot.key}
+                      label={pot.name}
+                      checked={checked}
+                      onChange={() => handleSidePotToggle(player.id, pot.key, checked)}
+                    />
+                  );
+                })}
+              </fieldset>
+            ) : null}
 
-                    return (
-                      <label key={program.key} className={styles.mobilePlayerField}>
-                        <span title={program.name}>{abbreviateProgramName(program.name)}</span>
-                        <input
-                          className="entries-input entries-control"
-                          type="text"
-                          value={visibleValue}
-                          disabled={!isAllowed}
-                          onChange={event => handleBracketEntryEdit(player.id, program.key, event.target.value)}
-                        />
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {enabledPots.length > 0 && (
-              <div className={styles.mobileProgramSection}>
-                <div className={styles.mobileSectionTitle}>Side Pots</div>
-                <div className={styles.mobileSidePotList}>
-                  {enabledPots.map(pot => {
-                    const checked = Boolean(player.sidePotEntries?.[pot.key]);
-                    return (
-                      <label key={pot.key} className={styles.mobileSidePotToggle}>
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          onChange={() => handleSidePotToggle(player.id, pot.key, checked)}
-                        />
-                        <span>{pot.name}</span>
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            <div className={styles.mobilePlayerActionsRow}>
-              <button
-                type="button"
-                className={styles.mobilePlayerActionBtn}
-                onClick={() => {
-                  if (needsEntryFee || !hasPayableAmount) return;
-                  const newPaidAmount = isPaid ? 0 : player.totalCost;
-                  handleCellEdit(player.id, 'amountPaid', newPaidAmount.toString());
-                }}
-                disabled={needsEntryFee || !hasPayableAmount}
-              >
-                {isPaid ? 'Mark Due' : 'Mark Paid'}
-              </button>
-              <button
-                type="button"
-                className={styles.mobilePlayerActionBtnDanger}
+            <div className={styles.mobileActions}>
+              <Button
+                size="sm"
+                variant="ghost-danger"
+                icon={<Trash2 size={ICON_SIZE.md} aria-hidden="true" />}
                 onClick={() => onDeletePlayer(player.id)}
               >
-                Delete
-              </button>
+                Delete entry
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                disabled={!status.canToggle}
+                onClick={() => handleCellEdit(player.id, 'amountPaid', (status.isPaid ? 0 : player.totalCost).toString())}
+              >
+                {status.isPaid ? 'Mark as due' : 'Mark as paid'}
+              </Button>
             </div>
           </div>
-        )}
-      </article>
+        ) : null}
+      </li>
     );
   };
 
   if (players.length === 0) {
     return (
-      <div className={styles.tableEmptyState}>
-        <div className={styles.tableEmptyTitle}>{hasActiveFilters ? 'No matching entries' : 'No entries yet'}</div>
-        <div className={styles.tableEmptyText}>
-          {hasActiveFilters
-            ? 'Try searching by USBC number, first name, or last name.'
-            : 'Add a bowler to begin building this squad.'}
-        </div>
-        {hasActiveFilters && onClearFilters && (
-          <button
-            type="button"
-            className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.clearSearchBtn} ${styles.tableEmptyClearBtn}`}
-            onClick={onClearFilters}
-          >
-            Clear Search
-          </button>
-        )}
-      </div>
+      <EmptyState
+        icon={<Users size={ICON_SIZE['2xl']} aria-hidden="true" />}
+        title={hasActiveFilters ? 'No matching entries' : 'No entries yet'}
+        description={hasActiveFilters
+          ? 'Try searching by USBC number, first name, or last name.'
+          : 'Add a bowler to begin building this squad.'}
+        action={hasActiveFilters && onClearFilters ? (
+          <Button variant="secondary" onClick={onClearFilters}>Clear search</Button>
+        ) : undefined}
+      />
     );
   }
 
+  const firstShown = sortedPlayers.length === 0 ? 0 : pageStart + 1;
+  const lastShown = Math.min(pageStart + pageSize, sortedPlayers.length);
+
   return (
     <>
-      {globalSaveStatus !== 'idle' && (
-        <div className={`table-save-status table-save-status--${globalSaveStatus}`}>
+      {globalSaveStatus !== 'idle' ? (
+        <p className={globalSaveStatus === 'error' ? styles.saveError : styles.saveStatus} role="status">
           {globalSaveStatus === 'saving' && 'Saving...'}
           {globalSaveStatus === 'success' && 'All changes saved'}
-          {globalSaveStatus === 'error' && 'Failed to save — check your connection'}
-        </div>
-      )}
-      <div className={`entries-container ${isMobileLayout ? styles.mobileEntriesContainer : ''}`}>
+          {globalSaveStatus === 'error' && 'Failed to save. Check your connection.'}
+        </p>
+      ) : null}
       {isMobileLayout ? (
-        <>
-          {selectedSquad && (
-            <div className={styles.mobileSquadBanner}>
-              Entries for {selectedSquad.date} · {selectedSquad.time} Squad
-            </div>
-          )}
-          <div className={styles.mobilePlayersList}>
-            {paginatedPlayers.map((player, rowIndex) => renderMobileCard(player, pageStart + rowIndex))}
-          </div>
-        </>
+        <ul className={styles.mobileList}>
+          {paginatedPlayers.map((player, rowIndex) => renderMobileRow(player, pageStart + rowIndex))}
+        </ul>
       ) : (
-      <table className={`${tableStyles.table} entries-table`} onKeyDownCapture={handleTableArrowNavigation}>
-        <thead>
-          <tr className="entries-header-row">
-            <SortableHeader column="usbc" sortConfig={sortConfig} onSort={toggleSort} className="col-usbc">
-              USBC
-            </SortableHeader>
-            <SortableHeader column="name" sortConfig={sortConfig} onSort={toggleSort} className="col-name">
-              Bowler
-            </SortableHeader>
-            <SortableHeader column="division" sortConfig={sortConfig} onSort={toggleSort} className="col-division group-start">
-              Division
-            </SortableHeader>
-            <SortableHeader column="lane" sortConfig={sortConfig} onSort={toggleSort} className="col-lane">
-              Lane
-            </SortableHeader>
-            <SortableHeader column="average" sortConfig={sortConfig} onSort={toggleSort} className="col-average">
-              Avg
-            </SortableHeader>
-            {bracketPrograms.map((program, programIndex) => (
-              <SortableHeader key={`program-header-${program.key}`} column={`bracket:${program.key}`} sortConfig={sortConfig} onSort={toggleSort} className={`col-scratch${programIndex === 0 ? ' group-start' : ''}`}>
-                <abbr title={program.name} className={styles.programAbbr}>{abbreviateProgramName(program.name)}</abbr>
-              </SortableHeader>
-            ))}
-            {enabledPots.map(pot => (
-              <th key={`sidepot-header-${pot.key}`} className="entries-header-cell col-sidepot">
-                {pot.name}
-              </th>
-            ))}
-            <SortableHeader column="cost" sortConfig={sortConfig} onSort={toggleSort} className={`${tableStyles.numericCell} col-cost group-start`}>
-              Total
-            </SortableHeader>
-            <th className={`${tableStyles.statusCell} entries-header-cell col-status`}>
-              Status
-            </th>
-            <th className={`${tableStyles.actionCell} entries-header-cell col-actions group-start`}>
-              Actions
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {paginatedPlayers.map((player, rowIndex) => {
-            const totalEntries = Object.values(player.bracketEntries || {}).reduce((sum, count) => sum + Number(count || 0), 0)
-            const needsEntryFee = totalEntries > 0 && player.totalCost <= 0
-            const hasPayableAmount = player.totalCost > 0
-            const isPaid = hasPayableAmount && !needsEntryFee && player.amountPaid >= player.totalCost
-            const isPartial = hasPayableAmount && !needsEntryFee && !isPaid && player.amountPaid > 0
-            return (
-            <OptimizedTableRow 
-              key={`${player.id}-${rowIndex}`}
-              className="players-table-row entries-row--editing"
-            >
-              <OptimizedTableCell className="entries-cell medium col-usbc">
-                <div className="pos-relative flex-center">
-                  <span className="cell-readonly-text">{player.usbc || <span className="cell-empty">—</span>}</span>
-                </div>
-              </OptimizedTableCell>
-
-              <OptimizedTableCell className="entries-cell col-name">
-                <span className="cell-readonly-text cell-bowler-name">
-                  {player.firstName || player.lastName
-                    ? `${player.firstName || ''} ${player.lastName || ''}`.trim()
-                    : <span className="cell-empty">Unnamed</span>}
-                </span>
-              </OptimizedTableCell>
-
-              <OptimizedTableCell className="entries-cell col-division group-start">
-                <div className="flex-center">
-                  <div className="pos-relative inline-block">
+        <DataTable caption="Entries" className={styles.entriesTable} onKeyDownCapture={handleTableArrowNavigation}>
+          <thead>
+            <tr>
+              <SortableHeader column="usbc" sortConfig={sortConfig} onSort={toggleSort}>USBC</SortableHeader>
+              <SortableHeader column="name" sortConfig={sortConfig} onSort={toggleSort}>Bowler</SortableHeader>
+              <SortableHeader column="division" sortConfig={sortConfig} onSort={toggleSort}>Division</SortableHeader>
+              <SortableHeader column="lane" sortConfig={sortConfig} onSort={toggleSort} align="right">Lane</SortableHeader>
+              <SortableHeader column="average" sortConfig={sortConfig} onSort={toggleSort} align="right">Avg</SortableHeader>
+              {bracketPrograms.map((program) => (
+                <SortableHeader key={`program-header-${program.key}`} column={`bracket:${program.key}`} sortConfig={sortConfig} onSort={toggleSort} align="right">
+                  <abbr title={program.name} className={styles.programAbbr}>{abbreviateProgramName(program.name)}</abbr>
+                </SortableHeader>
+              ))}
+              {enabledPots.map(pot => (
+                <th key={`sidepot-header-${pot.key}`} scope="col" data-align="center">{pot.name}</th>
+              ))}
+              <SortableHeader column="cost" sortConfig={sortConfig} onSort={toggleSort} align="right">Total</SortableHeader>
+              <th scope="col">Status</th>
+              <th scope="col"><span className="sr-only">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            {paginatedPlayers.map((player, rowIndex) => {
+              const status = getPaymentStatus(player);
+              const playerName = `${player.firstName || ''} ${player.lastName || ''}`.trim();
+              return (
+                <OptimizedTableRow key={`${player.id}-${rowIndex}`}>
+                  <OptimizedTableCell className={styles.codeCell}>{player.usbc || <span className={styles.emptyCell}>-</span>}</OptimizedTableCell>
+                  <OptimizedTableCell className={styles.nameCell}>{playerName || <span className={styles.emptyCell}>Unnamed</span>}</OptimizedTableCell>
+                  <OptimizedTableCell>
                     <select
-                      className="entries-select entries-control w-85"
+                      className={styles.cellControl}
+                      aria-label={`Division for ${playerName || 'bowler'}`}
                       value={normalizeDivision(player.division)}
                       onChange={(changeEvent) => handleCellEdit(player.id, 'division', changeEvent.target.value)}
                     >
@@ -428,15 +341,11 @@ const PlayersTable = memo(({
                         <option key={option} value={option}>{option}</option>
                       ))}
                     </select>
-                  </div>
-                </div>
-              </OptimizedTableCell>
-
-              <OptimizedTableCell className="entries-cell col-lane">
-                <div className="flex-center">
-                  <div className="pos-relative inline-block">
+                  </OptimizedTableCell>
+                  <OptimizedTableCell data-align="right">
                     <input
-                      className="entries-input entries-control"
+                      className={`${styles.cellControl} ${styles.cellNumber}`}
+                      aria-label={`Lane for ${playerName || 'bowler'}`}
                       type="text"
                       inputMode="numeric"
                       size={3}
@@ -444,15 +353,11 @@ const PlayersTable = memo(({
                       value={player.lane?.toString() || ''}
                       onChange={(changeEvent) => handleCellEdit(player.id, 'lane', changeEvent.target.value)}
                     />
-                  </div>
-                </div>
-              </OptimizedTableCell>
-
-              <OptimizedTableCell className="entries-cell col-average">
-                <div className="flex-center">
-                  <div className="pos-relative inline-block">
+                  </OptimizedTableCell>
+                  <OptimizedTableCell data-align="right">
                     <input
-                      className="entries-input entries-control"
+                      className={`${styles.cellControl} ${styles.cellNumber}`}
+                      aria-label={`Average for ${playerName || 'bowler'}`}
                       type="text"
                       inputMode="numeric"
                       size={3}
@@ -460,119 +365,83 @@ const PlayersTable = memo(({
                       value={player.average}
                       onChange={(changeEvent) => handleCellEdit(player.id, 'average', changeEvent.target.value)}
                     />
-                  </div>
-                </div>
-              </OptimizedTableCell>
-
-              {bracketPrograms.map((program, programIndex) => (
-                <OptimizedTableCell key={`program-cell-${player.id}-${program.key}`} className={`entries-cell col-scratch${programIndex === 0 ? ' group-start' : ''}`}>
-                  <div className="flex-center">
-                    <div className="pos-relative inline-block">
-                      {(() => {
-                        const isAllowed = isProgramAllowedForDivision(program.division, player.division)
-                        const visibleValue = isAllowed ? (player.bracketEntries?.[program.key] || 0) : 0
-                        return (
-                          <input
-                            className="entries-input entries-control"
-                            type="text"
-                            inputMode="numeric"
-                            size={3}
-                            maxLength={3}
-                            value={visibleValue}
-                            onChange={(changeEvent) => handleBracketEntryEdit(player.id, program.key, changeEvent.target.value)}
-                            disabled={!isAllowed}
-                          />
-                        )
-                      })()}
-                    </div>
-                  </div>
-                </OptimizedTableCell>
-              ))}
-
-              {enabledPots.map(pot => {
-                const checked = Boolean(player.sidePotEntries?.[pot.key])
-                return (
-                  <OptimizedTableCell key={`sidepot-cell-${player.id}-${pot.key}`} className="entries-cell entries-cell--sidepot col-sidepot">
-                    <div className="flex-center">
-                      <input
-                        type="checkbox"
-                        className="sidepot-checkbox"
-                        checked={checked}
-                        onChange={() => handleSidePotToggle(player.id, pot.key, checked)}
-                        aria-label={`${pot.name} for ${player.firstName} ${player.lastName}`}
-                      />
-                    </div>
                   </OptimizedTableCell>
-                )
-              })}
-              <OptimizedTableCell className={`${tableStyles.numericCell} entries-cell col-cost group-start`}>
-                <span className="entries-cost">
-                  ${player.totalCost.toFixed(2)}
-                </span>
-              </OptimizedTableCell>
-
-              <OptimizedTableCell className={`${tableStyles.statusCell} entries-cell col-status`}>
-                <span
-                  onClick={() => {
-                    if (needsEntryFee || !hasPayableAmount) return;
-                    const newPaidAmount = isPaid ? 0 : player.totalCost;
-                    handleCellEdit(player.id, 'amountPaid', newPaidAmount.toString());
-                  }}
-                  className={`${badgeStyles.badge} ${badgeStyles.compact} ${
-                    needsEntryFee
-                      ? badgeStyles.warning
-                      : isPaid
-                        ? badgeStyles.success
-                        : isPartial
-                          ? badgeStyles.accent
-                          : badgeStyles.danger
-                  }`}
-                  title={needsEntryFee ? 'Set a bracket entry fee in tournament settings to calculate player cost.' : `Click to toggle payment status. Current: $${player.amountPaid.toFixed(2)}`}
-                >
-                  {needsEntryFee ? 'SET FEE' : isPaid ? 'PAID' : isPartial ? 'PARTIAL' : 'DUE'}
-                </span>
-              </OptimizedTableCell>
-
-              <OptimizedTableCell className={`${tableStyles.actionCell} entries-cell col-actions group-start`}>
-                <div className={`${tableStyles.rowActions} ${styles.tableRowActions}`}>
-                  <button
-                    className={`${iconButtonStyles.iconButton} ${iconButtonStyles.danger} entries-delete-btn`}
-                    onClick={() => onDeletePlayer(player.id)}
-                    aria-label={`Delete ${player.firstName} ${player.lastName}`.trim()}
-                    title="Delete player"
-                  >
-                    <Trash2 className="entries-delete-icon" aria-hidden="true" />
-                  </button>
-                </div>
-              </OptimizedTableCell>
-            </OptimizedTableRow>
-          )})}
-        </tbody>
-      </table>
+                  {bracketPrograms.map((program) => {
+                    const isAllowed = isProgramAllowedForDivision(program.division, player.division);
+                    const visibleValue = isAllowed ? (player.bracketEntries?.[program.key] || 0) : 0;
+                    return (
+                      <OptimizedTableCell key={`program-cell-${player.id}-${program.key}`} data-align="right">
+                        <input
+                          className={`${styles.cellControl} ${styles.cellNumber}`}
+                          aria-label={`${program.name} entries for ${playerName || 'bowler'}`}
+                          type="text"
+                          inputMode="numeric"
+                          size={3}
+                          maxLength={3}
+                          value={visibleValue}
+                          onChange={(changeEvent) => handleBracketEntryEdit(player.id, program.key, changeEvent.target.value)}
+                          disabled={!isAllowed}
+                        />
+                      </OptimizedTableCell>
+                    );
+                  })}
+                  {enabledPots.map(pot => {
+                    const checked = Boolean(player.sidePotEntries?.[pot.key]);
+                    return (
+                      <OptimizedTableCell key={`sidepot-cell-${player.id}-${pot.key}`} data-align="center">
+                        <input
+                          type="checkbox"
+                          className={styles.cellCheckbox}
+                          checked={checked}
+                          onChange={() => handleSidePotToggle(player.id, pot.key, checked)}
+                          aria-label={`${pot.name} for ${playerName || 'bowler'}`}
+                        />
+                      </OptimizedTableCell>
+                    );
+                  })}
+                  <OptimizedTableCell data-align="right" data-emphasis="true">${player.totalCost.toFixed(2)}</OptimizedTableCell>
+                  <OptimizedTableCell>
+                    {!status.canToggle ? (
+                      <span title={status.label === 'Set fee' ? 'Set a bracket entry fee in tournament settings to calculate player cost.' : undefined}>
+                        <Badge tone={status.tone}>{status.label}</Badge>
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        className={styles.statusToggle}
+                        onClick={() => handleCellEdit(player.id, 'amountPaid', (status.isPaid ? 0 : player.totalCost).toString())}
+                        aria-label={`Mark ${playerName || 'bowler'} as ${status.isPaid ? 'unpaid' : 'paid'}`}
+                      >
+                        <Badge tone={status.tone}>{status.label}</Badge>
+                      </button>
+                    )}
+                  </OptimizedTableCell>
+                  <OptimizedTableCell data-align="right">
+                    <Menu triggerLabel={`More actions for ${playerName || 'bowler'}`} trigger={<MoreHorizontal size={ICON_SIZE.md} aria-hidden="true" />}>
+                      <MenuItem tone="danger" icon={<Trash2 size={ICON_SIZE.md} />} onSelect={() => onDeletePlayer(player.id)} aria-label={`Delete ${playerName}`.trim()}>
+                        Delete entry
+                      </MenuItem>
+                    </Menu>
+                  </OptimizedTableCell>
+                </OptimizedTableRow>
+              );
+            })}
+          </tbody>
+        </DataTable>
       )}
-      <div className={styles.tablePagination}>
-        <span className={styles.tablePaginationSummary}>
-          Showing {sortedPlayers.length === 0 ? 0 : pageStart + 1} to {Math.min(pageStart + pageSize, sortedPlayers.length)} of {sortedPlayers.length} entries
-        </span>
-        <div className={styles.tablePaginationControls}>
-          <button type="button" onClick={() => setCurrentPage(page => Math.max(1, page - 1))} disabled={currentPage === 1} aria-label="Previous page">
-            <ChevronLeft aria-hidden="true" />
-          </button>
-          <span>{currentPage} / {totalPages}</span>
-          <button type="button" onClick={() => setCurrentPage(page => Math.min(totalPages, page + 1))} disabled={currentPage === totalPages} aria-label="Next page">
-            <ChevronRight aria-hidden="true" />
-          </button>
-        </div>
-        <label className={styles.tablePageSize}>
-          Rows per page
-          <select value={pageSize} onChange={(event) => setPageSize(Number(event.target.value))}>
-            <option value={10}>10</option>
-            <option value={25}>25</option>
-            <option value={50}>50</option>
-          </select>
-        </label>
-      </div>
-    </div>
+      <Pagination
+        page={currentPage}
+        pageCount={totalPages}
+        onPageChange={setCurrentPage}
+        summary={`Showing ${firstShown}-${lastShown} of ${sortedPlayers.length} entries`}
+        pageSizeControl={(
+          <SelectField label="Rows per page" hideLabel value={pageSize} onChange={(event) => setPageSize(Number(event.target.value))}>
+            <option value={10}>10 per page</option>
+            <option value={25}>25 per page</option>
+            <option value={50}>50 per page</option>
+          </SelectField>
+        )}
+      />
     </>
   );
 });
@@ -580,4 +449,3 @@ const PlayersTable = memo(({
 PlayersTable.displayName = 'PlayersTable';
 
 export default PlayersTable;
-

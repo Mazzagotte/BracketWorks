@@ -1,15 +1,12 @@
 import React, { memo, useState, useEffect, useRef } from 'react';
-import { capitalizeFirstLetter } from '@bracketworks/ui';
+import { Button, Card, CardDivider, CardHeader, CheckboxField, ICON_SIZE, Notice, SelectField, TextField, capitalizeFirstLetter } from '@bracketworks/ui';
 
 import { PlayerFormProps } from '../types';
-import styles from '../entries.module.css';
-import buttonStyles from '../../styles/buttons.module.css';
-import cardStyles from '../../styles/cards.module.css';
-import formStyles from '../../styles/forms.module.css';
+import styles from './PlayerForm.module.css';
 import { calculatePlayerTotalCost, calculateSidePotCost, divisionOptions, filterEntriesForDivision, isProgramAllowedForDivision, normalizeDivision, normalizePlayerBracketEntries } from '../../lib/bracketPrograms';
 import { COMPACT_CONTENT_VIEWPORT_QUERY } from '../../lib/responsive';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
-import { CalendarDays, ChevronDown, ChevronUp, CircleDollarSign, Info, Target, Ticket, Trophy, UserRound, UserPlus } from 'lucide-react';
+import { ChevronDown, ChevronUp, Minus, Plus, UserPlus } from 'lucide-react';
 
 type PlayerFormState = {
   firstName: string;
@@ -94,9 +91,6 @@ const PlayerForm = memo(({ onAddPlayer, bowlerHistorySearchPanel, onBowlerIdenti
   const hasDuplicateUsbc = normalizedUsbc.length > 0 && existingPlayers.some(
     player => (player.usbc || '').trim().toLocaleLowerCase() === normalizedUsbc,
   )
-  const selectedSquadLabel = selectedSquad
-    ? [selectedSquad.date, selectedSquad.time ? `${selectedSquad.time} Squad` : selectedSquad.name].filter(Boolean).join(' · ')
-    : 'No active squad'
 
   const isDirty = formData.firstName.trim() !== '' || formData.lastName.trim() !== '';
 
@@ -246,298 +240,219 @@ const PlayerForm = memo(({ onAddPlayer, bowlerHistorySearchPanel, onBowlerIdenti
   }
 
   return (
-    <div className={`${cardStyles.card} ${styles.formCard} ${styles.addBowlerCard}`}>
-      <div className={styles.addBowlerHeader}>
-        <h3 className={`${cardStyles.cardHeader} ${styles.formTitle} ${styles.addBowlerTitle}`}>
-          <UserPlus aria-hidden="true" />
-          Add Bowler
-        </h3>
-        <p className={styles.addBowlerSubtitle}>Register a bowler for the active squad.</p>
-        {isMobileLayout && (
-          <button
-            type="button"
-            className={styles.addBowlerCollapseButton}
+    <Card aria-label="Add bowler">
+      <CardHeader
+        title="Add bowler"
+        description="Register a bowler for the active squad."
+        actions={isMobileLayout ? (
+          <Button
+            size="sm"
+            variant="ghost"
             onClick={() => setIsCollapsed(current => !current)}
             aria-expanded={!isCollapsed}
+            icon={isCollapsed ? <ChevronDown size={ICON_SIZE.md} aria-hidden="true" /> : <ChevronUp size={ICON_SIZE.md} aria-hidden="true" />}
           >
             {isCollapsed ? 'Add another bowler' : 'Collapse'}
-            {isCollapsed ? <ChevronDown aria-hidden="true" /> : <ChevronUp aria-hidden="true" />}
-          </button>
-        )}
-      </div>
+          </Button>
+        ) : undefined}
+      />
 
-      <div className={styles.addBowlerContextStrip}>
-        <div className={styles.addBowlerContextItem}>
-          <CalendarDays aria-hidden="true" />
-          <span><small>Active Squad</small><strong>{selectedSquadLabel}</strong></span>
-        </div>
-        <div className={styles.addBowlerContextItem}>
-          <Trophy aria-hidden="true" />
-          <span><small>Tournament</small><strong>{tournamentName || 'Tournament pending'}</strong></span>
-        </div>
-      </div>
+      {submitError ? <Notice tone="danger" role="alert">{submitError}</Notice> : null}
+      {successMessage ? <Notice tone="success" role="status">{successMessage}</Notice> : null}
 
-      {submitError && <div className="error-message">{submitError}</div>}
-      {successMessage && <div className={styles.addBowlerSuccess} role="status">{successMessage}</div>}
-
-      <form onSubmit={handleSubmit} hidden={isCollapsed}>
-        <section className={styles.addBowlerFormSection}>
-          <h4 className={styles.addBowlerSectionTitle}><UserRound aria-hidden="true" />Bowler Information</h4>
-          <div className={`${styles.formGrid} ${styles.playerInfoGrid}`}>
-          <div className={styles.bowlerAutocompleteField} onBlur={handleNameFieldBlur}>
-            <label className={`${formStyles.fieldLabel} ${styles.fieldLabel}`}>
-              First Name <span className={styles.requiredIndicator}>Required</span>
-            </label>
-            <input
-              ref={firstNameInputRef}
-              type="text"
-              value={formData.firstName}
-              onChange={(e) => handleInputChange('firstName', e.target.value)}
-              className={`${formStyles.field} ${styles.fieldInput}`}
-              placeholder="First Name *"
-              aria-label="First Name"
-              required
-              onFocus={() => setActiveNameField('firstName')}
-            />
-            {isDirty && !formData.firstName.trim() && <p className={styles.fieldValidation}>First name is required.</p>}
-            {activeNameField === 'firstName' && bowlerHistorySearchPanel}
-          </div>
-
-          <div className={styles.bowlerAutocompleteField} onBlur={handleNameFieldBlur}>
-            <label className={`${formStyles.fieldLabel} ${styles.fieldLabel}`}>
-              Last Name <span className={styles.requiredIndicator}>Required</span>
-            </label>
-            <input
-              type="text"
-              value={formData.lastName}
-              onChange={(e) => handleInputChange('lastName', e.target.value)}
-              className={`${formStyles.field} ${styles.fieldInput}`}
-              placeholder="Last Name *"
-              aria-label="Last Name"
-              required
-              onFocus={() => setActiveNameField('lastName')}
-            />
-            {isDirty && !formData.lastName.trim() && <p className={styles.fieldValidation}>Last name is required.</p>}
-            {activeNameField === 'lastName' && bowlerHistorySearchPanel}
-          </div>
-
-          <div>
-            <label className={`${formStyles.fieldLabel} ${styles.fieldLabel}`}>USBC Number</label>
-            <input
-              type="text"
+      <form className={styles.form} onSubmit={handleSubmit} hidden={isCollapsed}>
+        <section className={styles.group} aria-labelledby="add-bowler-info">
+          <h3 id="add-bowler-info" className={styles.groupTitle}>Bowler information</h3>
+          <div className={styles.fieldsThree}>
+            <div className={styles.autocomplete} onBlur={handleNameFieldBlur}>
+              <TextField
+                ref={firstNameInputRef}
+                label="First name"
+                value={formData.firstName}
+                onChange={(e) => handleInputChange('firstName', e.target.value)}
+                autoComplete="off"
+                required
+                error={isDirty && !formData.firstName.trim() ? 'Enter a first name.' : undefined}
+                onFocus={() => setActiveNameField('firstName')}
+              />
+              {activeNameField === 'firstName' && bowlerHistorySearchPanel}
+            </div>
+            <div className={styles.autocomplete} onBlur={handleNameFieldBlur}>
+              <TextField
+                label="Last name"
+                value={formData.lastName}
+                onChange={(e) => handleInputChange('lastName', e.target.value)}
+                autoComplete="off"
+                required
+                error={isDirty && !formData.lastName.trim() ? 'Enter a last name.' : undefined}
+                onFocus={() => setActiveNameField('lastName')}
+              />
+              {activeNameField === 'lastName' && bowlerHistorySearchPanel}
+            </div>
+            <TextField
+              label="USBC number"
+              optional
               value={formData.usbc}
               onChange={(e) => handleInputChange('usbc', e.target.value)}
-              className={`${formStyles.field} ${styles.fieldInput}`}
               maxLength={8}
-              placeholder="USBC Number"
-              aria-label="USBC Number"
+              error={hasDuplicateUsbc ? 'Already entered in this squad.' : undefined}
             />
-            {hasDuplicateUsbc && <p className={styles.fieldValidation}>Already entered in this squad.</p>}
-          </div>
           </div>
         </section>
 
-        <section className={styles.addBowlerFormSection}>
-          <h4 className={styles.addBowlerSectionTitle}><Target aria-hidden="true" />Tournament Assignment</h4>
-          <div className={`${styles.formGrid} ${styles.placementGrid}`}>
-          <div>
-            <label className={`${formStyles.fieldLabel} ${styles.fieldLabel}`}>Average</label>
-            <input
+        <CardDivider />
+
+        <section className={styles.group} aria-labelledby="add-bowler-assignment">
+          <h3 id="add-bowler-assignment" className={styles.groupTitle}>Tournament assignment</h3>
+          <div className={styles.fieldsThree}>
+            <TextField
               ref={averageInputRef}
+              label="Average"
               type="number"
+              inputMode="numeric"
               value={formData.average}
               onChange={(e) => handleInputChange('average', parseInt(e.target.value) || 0)}
-              className={`${formStyles.field} ${styles.fieldInput}`}
               min="0"
               max="300"
-              placeholder="Average"
-              aria-label="Average"
             />
-          </div>
-
-          <div>
-            <label className={`${formStyles.fieldLabel} ${styles.fieldLabel}`}>Division</label>
-            <select
+            <SelectField
+              label="Division"
               value={formData.division}
               onChange={(e) => handleInputChange('division', e.target.value)}
-              className={`${formStyles.select} ${styles.fieldInput}`}
-              aria-label="Division"
             >
               {divisionOptions.map(option => (
                 <option key={option} value={option}>{option}</option>
               ))}
-            </select>
-          </div>
-
-          <div>
-            <label className={`${formStyles.fieldLabel} ${styles.fieldLabel}`}>Lane</label>
-            <input
-              type="text"
+            </SelectField>
+            <TextField
+              label="Lane"
               value={formData.lane}
               onChange={(e) => handleInputChange('lane', e.target.value)}
-              className={`${formStyles.field} ${styles.fieldInput}`}
-              placeholder="Lane (e.g. A1)"
-              aria-label="Lane"
+              helper="For example A1"
             />
-          </div>
-
           </div>
         </section>
 
-        <div className={`${cardStyles.panel} ${styles.compactSection}`}>
-          <div className={styles.compactSectionHeader}>
-            <div>
-              <h4 className={styles.compactSectionTitle}><Ticket aria-hidden="true" />Entries &amp; Payment</h4>
-            </div>
-          </div>
+        <CardDivider />
 
-          <div className={styles.entriesPaymentRow}>
-            <div className={styles.entriesCol}>
-              <p className={styles.entriesSubheading}>Bracket Entries</p>
-              <div className={styles.compactGrid}>
+        <section className={styles.group} aria-labelledby="add-bowler-entries">
+          <h3 id="add-bowler-entries" className={styles.groupTitle}>Entries and payment</h3>
+          <div className={styles.entriesPayment}>
+            <div className={styles.entriesColumn}>
+              <ul className={styles.programList}>
+                {bracketPrograms.map(program => {
+                  const programFee = Number(program.entry_fee ?? entryFee)
+                  const programQuantity = formData.bracketEntries[program.key] || 0
+                  const allowed = isProgramAllowedForDivision(program.division, formData.division)
+                  const inputId = `add-bowler-program-${program.key}`
+                  return (
+                    <li key={program.key} className={styles.programRow}>
+                      <div className={styles.programCopy}>
+                        <label htmlFor={inputId} className={styles.programName}>{program.name} entries</label>
+                        <span className={styles.meta}>
+                          {allowed ? `$${programFee.toFixed(2)} each` : `Not open to ${formData.division}`}
+                        </span>
+                      </div>
+                      <div className={styles.stepper}>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          icon={<Minus size={ICON_SIZE.md} aria-hidden="true" />}
+                          onClick={() => handleBracketStep(program.key, -1)}
+                          disabled={!allowed || programQuantity <= 0}
+                          aria-label={`Decrease ${program.name} entries`}
+                        />
+                        <input
+                          id={inputId}
+                          type="number"
+                          inputMode="numeric"
+                          value={programQuantity}
+                          onChange={(e) => handleBracketEntryChange(program.key, e.target.value)}
+                          className={styles.stepperInput}
+                          min="0"
+                          disabled={!allowed}
+                        />
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          icon={<Plus size={ICON_SIZE.md} aria-hidden="true" />}
+                          onClick={() => handleBracketStep(program.key, 1)}
+                          disabled={!allowed}
+                          aria-label={`Increase ${program.name} entries`}
+                        />
+                      </div>
+                      <span className={styles.subtotal}>${(programQuantity * programFee).toFixed(2)}</span>
+                    </li>
+                  )
+                })}
+              </ul>
+              <p className={styles.meta}>Entry fees are calculated from the quantity.</p>
 
-              {bracketPrograms.map(program => {
-                const programFee = Number(program.entry_fee ?? entryFee)
-                const programQuantity = formData.bracketEntries[program.key] || 0
-                return (
-                <div key={program.key} className={`${styles.compactField} ${styles.entryProgramCard}`}>
-                  <div className={styles.entryProgramHeader}>
-                    <label className={`${formStyles.fieldLabel} ${styles.fieldLabel}`}>{program.name} Entries</label>
-                    <span>${programFee.toFixed(2)} each</span>
-                  </div>
-                  <div className={styles.stepperControl}>
-                    <button
-                      type="button"
-                      className={`${styles.stepperBtn} ${styles.stepperBtnMinus}`}
-                      onClick={() => handleBracketStep(program.key, -1)}
-                      disabled={!isProgramAllowedForDivision(program.division, formData.division) || (formData.bracketEntries[program.key] || 0) <= 0}
-                      aria-label={`Decrease ${program.name} entries`}
-                    >
-                      -
-                    </button>
-                    <input
-                      type="number"
-                      value={programQuantity}
-                      onChange={(e) => handleBracketEntryChange(program.key, e.target.value)}
-                      className={`${formStyles.field} ${styles.fieldInput} ${styles.compactInput}`}
-                      min="0"
-                      disabled={!isProgramAllowedForDivision(program.division, formData.division)}
+              {enabledSidePots.length > 0 ? (
+                <fieldset className={styles.sidePots}>
+                  <legend className={styles.subTitle}>Side pots</legend>
+                  {enabledSidePots.map(pot => (
+                    <CheckboxField
+                      key={pot.key}
+                      label={pot.name}
+                      checked={Boolean(formData.sidePotEntries[pot.key])}
+                      onChange={() => handleSidePotToggle(pot.key)}
                     />
-                    <button
-                      type="button"
-                      className={`${styles.stepperBtn} ${styles.stepperBtnPlus}`}
-                      onClick={() => handleBracketStep(program.key, 1)}
-                      disabled={!isProgramAllowedForDivision(program.division, formData.division)}
-                      aria-label={`Increase ${program.name} entries`}
-                    >
-                      +
-                    </button>
-                  </div>
-                  <div className={styles.entryProgramSubtotal}>
-                    <span>Subtotal</span>
-                    <strong>${(programQuantity * programFee).toFixed(2)}</strong>
-                  </div>
-                </div>
-              )})}
-
-              </div>
-              <p className={styles.entryFeeNote}><Info aria-hidden="true" />Entry fees are calculated automatically based on quantity.</p>
-
-              {enabledSidePots.length > 0 && (
-                <>
-                  <p className={styles.entriesSubheading}>Side Pot Entries</p>
-                  <div className={styles.addBowlerSidePotGrid}>
-                    {enabledSidePots.map(pot => {
-                      const checked = Boolean(formData.sidePotEntries[pot.key])
-                      return (
-                        <label key={pot.key} className={styles.addBowlerSidePotOption}>
-                          <input
-                            type="checkbox"
-                            className={styles.addBowlerSidePotCheckbox}
-                            checked={checked}
-                            onChange={() => handleSidePotToggle(pot.key)}
-                          />
-                          <span>{pot.name}</span>
-                        </label>
-                      )
-                    })}
-                  </div>
-                </>
-              )}
+                  ))}
+                </fieldset>
+              ) : null}
             </div>
 
-            <div className={styles.paymentCol}>
-              <p className={`${styles.entriesSubheading} ${styles.paymentSummaryTitle}`}><CircleDollarSign aria-hidden="true" />Payment Summary</p>
-              <div className={`${cardStyles.panel} ${styles.paymentSummaryPanel}`}>
-                <label className={styles.paidInFullControl}>
-                  <input
-                    type="checkbox"
-                    checked={paidInFull}
-                    disabled={draftTotal <= 0}
-                    onChange={(event) => handleInputChange('amountPaid', event.target.checked ? draftTotal : 0)}
-                  />
-                  <span>
-                    <strong>Paid in Full</strong>
-                    <small>Set Amount Paid equal to Entry Total.</small>
-                  </span>
-                </label>
-                <div className={styles.paymentSummaryRows}>
-                  <div className={styles.paymentSummaryRow}>
-                    <span>Entry Total</span>
-                    <span>${draftTotal.toFixed(2)}</span>
-                  </div>
-                  <div className={`${styles.paymentSummaryRow} ${paidInFull ? styles.paymentSummaryRowPaid : ''}`}>
-                    <span>Amount Paid</span>
-                    <span>${formData.amountPaid.toFixed(2)}</span>
-                  </div>
-                  <div className={`${styles.paymentSummaryRow} ${balanceDue > 0.009 ? styles.paymentSummaryRowDue : ''}`}>
-                    <span>Balance Due</span>
-                    <span>${balanceDue.toFixed(2)}</span>
-                  </div>
+            <div className={styles.paymentColumn}>
+              <h4 className={styles.subTitle}>Payment summary</h4>
+              <dl className={styles.totals}>
+                <div className={styles.totalRow}>
+                  <dt>Entry total</dt>
+                  <dd>${draftTotal.toFixed(2)}</dd>
                 </div>
-
-                <div className={styles.compactField}>
-                <label className={`${formStyles.fieldLabel} ${styles.fieldLabel}`}>Amount Paid</label>
-                <div className={styles.currencyInputWrap}>
-                  <span aria-hidden="true">$</span>
-                  <input
-                    type="number"
-                    value={formData.amountPaid}
-                    onChange={(e) => handleInputChange('amountPaid', parseFloat(e.target.value) || 0)}
-                    className={`${formStyles.field} ${styles.fieldInput} ${styles.compactInput}`}
-                    min="0"
-                    max={draftTotal}
-                    step="0.01"
-                  />
+                <div className={styles.totalRow}>
+                  <dt>Amount paid</dt>
+                  <dd>${formData.amountPaid.toFixed(2)}</dd>
                 </div>
+                <div className={styles.totalRow}>
+                  <dt>Balance due</dt>
+                  <dd className={styles.totalEmphasis}>${balanceDue.toFixed(2)}</dd>
                 </div>
-              </div>
+              </dl>
+              <CheckboxField
+                label="Paid in full"
+                helper="Sets the amount paid to the entry total."
+                checked={paidInFull}
+                disabled={draftTotal <= 0}
+                onChange={(event) => handleInputChange('amountPaid', event.target.checked ? draftTotal : 0)}
+              />
+              <TextField
+                label="Amount paid"
+                type="number"
+                inputMode="decimal"
+                value={formData.amountPaid}
+                onChange={(e) => handleInputChange('amountPaid', parseFloat(e.target.value) || 0)}
+                min="0"
+                max={draftTotal}
+                step="0.01"
+              />
             </div>
           </div>
-        </div>
+        </section>
 
-        <div className={styles.formFooter}>
-          <button
-            type="button"
-            className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.cancelBtn}`}
-            onClick={handleCancel}
-          >
-            Cancel
-          </button>
-          <div className={`${styles.formStatusHint} ${hasRequiredNames ? styles.formStatusHintReady : styles.formStatusHintRequired}`}>
-            {isDirty && !hasRequiredNames ? 'First and last name are required.' : ''}
-          </div>
-          <button
+        <div className={styles.footer}>
+          <Button variant="secondary" onClick={handleCancel}>Cancel</Button>
+          <Button
             type="submit"
+            variant="primary"
             disabled={isLoading || !hasRequiredNames}
-            className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.primary} ${styles.submitBtn}`}
+            icon={<UserPlus size={ICON_SIZE.md} aria-hidden="true" />}
           >
-            <UserPlus aria-hidden="true" />
-            {isLoading ? 'Adding...' : 'Add Bowler'}
-          </button>
+            {isLoading ? 'Adding...' : 'Add bowler'}
+          </Button>
         </div>
       </form>
-    </div>
+    </Card>
   );
 });
 

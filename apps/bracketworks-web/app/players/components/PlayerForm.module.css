@@ -1,0 +1,279 @@
+/* Add bowler form: subsections divided by CardDivider, no sub-cards. */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+
+.form[hidden] {
+  display: none;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.groupTitle {
+  margin: 0;
+  font: var(--type-subsection-title);
+  color: var(--bw-text-title);
+}
+
+.subTitle {
+  margin: 0;
+  padding: 0;
+  font: var(--type-label);
+  color: var(--bw-text-title);
+}
+
+.meta {
+  margin: 0;
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}
+
+.fieldsThree {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.autocomplete {
+  position: relative;
+  min-width: 0;
+}
+
+.entriesPayment {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: var(--space-6);
+}
+
+.entriesColumn,
+.paymentColumn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.programList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.programRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(var(--space-20), auto);
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--bw-border-subtle);
+}
+
+.programRow:first-child {
+  padding-top: 0;
+}
+
+.programCopy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.programName {
+  font: var(--type-label);
+  color: var(--bw-text-title);
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.stepperInput {
+  width: var(--space-16);
+  height: var(--control-height-sm);
+  padding: 0 var(--space-2);
+  border: 1px solid var(--bw-border-card);
+  border-radius: var(--radius-md);
+  background: var(--bw-surface-panel);
+  color: var(--bw-text-title);
+  font: var(--type-table);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.stepperInput:focus-visible {
+  border-color: var(--color-accent-primary);
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+
+.stepperInput:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.subtotal {
+  font: var(--type-table);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--bw-text-title);
+}
+
+.sidePots {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.sidePots > legend {
+  margin-bottom: var(--space-2);
+}
+
+.totals {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+
+.totalRow {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--bw-border-subtle);
+  font: var(--type-body);
+}
+
+.totalRow dt {
+  color: var(--bw-text-body);
+}
+
+.totalRow dd {
+  margin: 0;
+  color: var(--bw-text-title);
+  font-variant-numeric: tabular-nums;
+}
+
+.totalRow .totalEmphasis {
+  font-weight: 700;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+/* Saved-bowler suggestions under the name fields: a menu-style overlay. */
+.suggestions {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  left: 0;
+  right: 0;
+  z-index: var(--z-popover);
+  padding: var(--space-2);
+  border: 1px solid var(--bw-border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--bw-surface-card);
+  box-shadow: var(--elevation-2);
+}
+
+.suggestionsHeader {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--space-1) var(--space-2) var(--space-2);
+  font: var(--type-overline);
+  letter-spacing: var(--type-overline-tracking);
+  text-transform: uppercase;
+  color: var(--bw-text-body);
+}
+
+.suggestionList {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(var(--space-16) * 4);
+  overflow-y: auto;
+}
+
+.suggestion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-2);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--bw-text-body);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.suggestion:hover,
+.suggestion:focus-visible {
+  background: var(--bw-surface-panel);
+}
+
+.suggestionName {
+  display: block;
+  font: var(--type-label);
+  color: var(--bw-text-title);
+}
+
+.suggestionMeta {
+  display: block;
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}
+
+.suggestionsNote {
+  margin: 0;
+  padding: var(--space-1) var(--space-2);
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}
+
+@media (max-width: 1023px) {
+  .entriesPayment {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 767px) {
+  .fieldsThree {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .programRow {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .subtotal {
+    display: none;
+  }
+
+  .footer {
+    flex-direction: column-reverse;
+  }
+
+  .footer > * {
+    width: 100%;
+  }
+}

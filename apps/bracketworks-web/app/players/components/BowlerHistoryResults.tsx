@@ -3,7 +3,7 @@
 import type { BowlerHistoryProfile } from '../hooks/useBowlerHistorySearch'
 import { ICON_SIZE } from '@bracketworks/ui'
 import { ArrowRight } from 'lucide-react'
-import styles from '../entries.module.css'
+import styles from './PlayerForm.module.css'
 
 interface BowlerHistoryResultsProps {
   historyResults: BowlerHistoryProfile[]
@@ -23,33 +23,33 @@ export default function BowlerHistoryResults({
   if (!hasHistorySearchInput && !isHistorySearching) return null
 
   return (
-    <section className={styles.findExistingBowlerPanel} aria-label="Saved bowler matches" aria-live="polite">
+    <section className={styles.suggestions} aria-label="Saved bowler matches" aria-live="polite">
       {isHistorySearching ? (
-        <p className={styles.historyMeta}>Searching saved bowlers...</p>
+        <p className={styles.suggestionsNote}>Searching saved bowlers...</p>
       ) : historyResults.length > 0 ? (
-        <div className={styles.historyResults}>
-          <div className={styles.historyResultsHeader}>
+        <div>
+          <div className={styles.suggestionsHeader}>
             <span>Matching bowlers</span>
-            <span className={styles.historyMatchCount}>{historyResults.length}</span>
+            <span>{historyResults.length}</span>
           </div>
-          <div className={styles.historyResultsList}>
+          <div className={styles.suggestionList}>
             {historyResults.map(profile => (
               <button
                 key={profile.id}
                 type="button"
-                className={styles.historyResultButton}
+                className={styles.suggestion}
                 aria-label={`Use ${profile.first_name} ${profile.last_name}`}
                 title={`Use ${profile.first_name} ${profile.last_name}`}
                 onClick={() => onUseBowler(profile)}
               >
-                <span className={styles.historyResultIdentity}>
-                  <span className={styles.historyResultName}>{profile.first_name} {profile.last_name}</span>
-                  <span className={styles.historyResultUsbc}>
+                <span>
+                  <span className={styles.suggestionName}>{profile.first_name} {profile.last_name}</span>
+                  <span className={styles.suggestionMeta}>
                     {profile.usbc_number ? `USBC ${profile.usbc_number}` : 'No USBC'}
                     {profile.average != null ? ` · Average ${profile.average}` : ''}
                   </span>
                 </span>
-                <span className={styles.historyResultAction} aria-hidden="true">
+                <span aria-hidden="true">
                   <ArrowRight size={ICON_SIZE.md} />
                 </span>
               </button>
@@ -57,7 +57,7 @@ export default function BowlerHistoryResults({
           </div>
         </div>
       ) : hasSubmittedSearch ? (
-        <p className={styles.historyMeta}>No saved bowler matches. Continue with these details to add a new bowler.</p>
+        <p className={styles.suggestionsNote}>No saved bowler matches. Continue with these details to add a new bowler.</p>
       ) : null}
     </section>
   )

@@ -23,10 +23,8 @@ import { Squad, Player, PlayerFormPrefillDraft } from './types'
 import { BracketProgramDefinition, Tournament } from '../lib/types'
 import { apiClient } from '../lib/api'
 import { calculatePlayerTotalCost, calculateSidePotCost, defaultBracketPrograms, filterEntriesForDivision, getEnabledBracketPrograms, normalizeDivision, normalizePlayerBracketEntries, summarizeEntries } from '../lib/bracketPrograms'
-import styles from './entries.module.css'
-import cardStyles from '../styles/cards.module.css'
-import buttonStyles from '../styles/buttons.module.css'
-import shellStyles from '../styles/page-shell.module.css'
+import panelStyles from './components/EntriesPanels.module.css'
+import { Card, CardHeader, EmptyState, Page, PageHeader } from '@bracketworks/ui'
 import ExplainEntriesModal from './ExplainEntriesModal'
 import { useToastHelpers } from '../components/Toast'
 import ImportLoadingModal from '../components/ImportLoadingModal'
@@ -34,7 +32,6 @@ import { getSelectedSquadId, getSelectedTournamentId, setSelectedSquad } from '.
 import { resetScrollLocks, setBodyInteractionState } from '../utils/modalUtils'
 import { MOBILE_VIEWPORT_QUERY } from '../lib/responsive'
 import { useMediaQuery } from '../hooks/useMediaQuery'
-import { ListChecks } from 'lucide-react'
 import ImportPreviewModal from './components/ImportPreviewModal'
 import DuplicateResolutionPanel from './components/DuplicateResolutionPanel'
 import BowlerHistoryResults from './components/BowlerHistoryResults'
@@ -269,7 +266,9 @@ export default function PlayersPage() {
 
   const formatSquadDateLabel = useCallback((isoDate?: string) => {
     if (!isoDate) return 'Date pending'
-    const parsedDate = new Date(isoDate)
+    // Date-only values are calendar dates; parse them as local so they do not shift a day.
+    const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(isoDate)
+    const parsedDate = new Date(dateOnly ? `${isoDate}T00:00:00` : isoDate)
     if (Number.isNaN(parsedDate.getTime())) return isoDate
     return parsedDate.toLocaleDateString('en-US', {
       weekday: 'long',
@@ -283,7 +282,7 @@ export default function PlayersPage() {
     if (!selectedSquad) return 'No squad selected'
     const dateLabel = formatSquadDateLabel(selectedSquad.date)
     const timeLabel = selectedSquad.time || 'Time pending'
-    return `${dateLabel} · ${timeLabel} Squad`
+    return `${dateLabel} · ${timeLabel} squad`
   }, [formatSquadDateLabel, selectedSquad])
 
   // Adapter function to match PlayersTable expected signature
@@ -616,40 +615,33 @@ export default function PlayersPage() {
   }, [players])
 
   // Wait for auth initialization
-  if (!isAuthInitialized) {
+  if (!isAuthInitialized || isTournamentSetupLoading) {
     return (
-      <div className={styles.loadingScreen}>
-        <div role="status">Loading entries...</div>
-      </div>
-    );
+      <Page>
+        <p className={panelStyles.status} role="status">Loading entries...</p>
+      </Page>
+    )
   }
 
   if (!isUserAuthenticated) {
     return (
-      <div className={styles.authRequired}>
-        <div className={styles.authRequiredTitle}>Authentication Required</div>
-        <div className={styles.authRequiredText}>Please log in to access the players page.</div>
-      </div>
-    )
-  }
-
-  if (isTournamentSetupLoading) {
-    return (
-      <div className={styles.loadingScreen}>
-        <div role="status">Loading tournament entries...</div>
-      </div>
+      <Page>
+        <Card>
+          <EmptyState title="Log in to see entries" description="Please log in to manage the entries for your tournament." />
+        </Card>
+      </Page>
     )
   }
 
   if (!selectedTournament) {
     return (
       <NoTournamentState
-        title="Entries Board Standing By"
+        title="Entries board standing by"
         description="Load a tournament to start rostering bowlers, assigning entry types, and tracking registration flow."
         cards={[
-          { title: 'Build the Roster', text: 'Add bowlers with averages, divisions, and entry type so each squad has clean participant data.' },
-          { title: 'Track Entry Mix', text: 'Monitor scratch vs handicap participation and projected bracket volume per squad.' },
-          { title: 'Keep Fees Aligned', text: 'Use consistent entry settings so totals and expected revenue stay accurate.' },
+          { title: 'Build the roster', text: 'Add bowlers with averages, divisions, and entry type so each squad has clean participant data.' },
+          { title: 'Track entry mix', text: 'Monitor scratch vs handicap participation and projected bracket volume per squad.' },
+          { title: 'Keep fees aligned', text: 'Use consistent entry settings so totals and expected revenue stay accurate.' },
         ]}
       />
     )
@@ -658,10 +650,10 @@ export default function PlayersPage() {
   if (!selectedSquad) {
     return (
       <NoTournamentState
-        title="Entries Need a Squad"
+        title="Entries need a squad"
         description="Choose a squad from the dashboard to open the player list for that session."
         cards={[
-          { title: 'Pick a Session', text: 'Select the correct squad first, then add and manage entries for that lineup.' },
+          { title: 'Pick a session', text: 'Select the correct squad first, then add and manage entries for that lineup.' },
         ]}
       />
     )
@@ -670,12 +662,12 @@ export default function PlayersPage() {
   const showInitialPlayersLoad = isLoading && players.length === 0
   return (
     <ErrorBoundary>
-      <div className={`${shellStyles.page} ${styles.pageContainer}`}>
+      <Page>
         <ImportLoadingModal isOpen={isImporting} fileName={importFileName} />
         {importPreviewRows && importFileName && (
           <ImportPreviewModal fileName={importFileName} rows={importPreviewRows} isCommitting={isCommittingImport} onRowsChange={setImportPreviewRows} onCancel={cancelImportPreview} onConfirm={() => { void confirmImportPreview() }} />
         )}
-        {/* Hidden file input for Excel import — triggered by header button */}
+        {/* Hidden file input for Excel import, triggered by the Import button */}
         <input
           ref={importFileRef}
           type="file"
@@ -684,140 +676,113 @@ export default function PlayersPage() {
           className="sr-only"
         />
 
-        <div className={`${shellStyles.section} ${styles.entriesSectionWidth}`}>
-          {getTournamentId() && (
-            <EntriesSummary
-              entryTotals={entryTotals}
-              orderedProgramSummaries={orderedProgramSummaries}
-              sidePotSummaries={sidePotSummaries}
-              paymentSummary={paymentSummary}
+        <PageHeader
+          title="Entries"
+          description={[selectedTournament.name, entriesTableSubtitle].join(' · ')}
+        />
+
+        {getTournamentId() && (
+          <EntriesSummary
+            entryTotals={entryTotals}
+            orderedProgramSummaries={orderedProgramSummaries}
+            sidePotSummaries={sidePotSummaries}
+            paymentSummary={paymentSummary}
+            entryFee={entryFee}
+          />
+        )}
+
+        <DuplicateResolutionPanel tournamentId={selectedTournament.id} onResolved={loadPlayers} />
+
+        <EntriesQuickActions
+          isDev={isDev}
+          playersCount={players.length}
+          isImporting={isImporting || isCommittingImport || importPreviewRows !== null}
+          isExporting={isExporting}
+          isDeletingAll={isDeletingAll}
+          onOpenGuide={() => setIsExplainModalOpen(true)}
+          onExportToExcel={handleExportToExcel}
+          onImportFromExcel={() => importFileRef.current?.click()}
+          onRandomizeEntries={() => { void handleRandomize() }}
+          onDeleteAllEntries={handleDeleteAllPlayers}
+        />
+
+        <PlayerForm
+          onAddPlayer={addPlayer}
+          bowlerHistorySearchPanel={(
+            <BowlerHistoryResults
+              historyResults={historyResults}
+              isHistorySearching={isHistorySearching}
+              hasHistorySearchInput={hasHistorySearchInput}
+              hasSubmittedSearch={hasSubmittedHistorySearch}
+              onUseBowler={handleUseHistoryResult}
+            />
+          )}
+          onBowlerIdentityChange={({ firstName, lastName, usbc }) => {
+            setHistorySearchFirstName(firstName)
+            setHistorySearchLastName(lastName)
+            setHistorySearchUsbc(usbc)
+            setHasSubmittedHistorySearch(true)
+          }}
+          isLoading={showInitialPlayersLoad}
+          squads={squads}
+          selectedSquad={selectedSquad}
+          tournamentName={selectedTournament?.name}
+          existingPlayers={players}
+          entryFee={entryFee}
+          bracketPrograms={enabledBracketPrograms}
+          sidePots={sidePots}
+          prefillDraft={prefillDraft}
+          prefillVersion={prefillVersion}
+        />
+
+        <EntriesSearchCard
+          isMobileView={isMobileView}
+          isCollapsed={tableSearchCollapsed}
+          searchUsbc={searchUsbc}
+          searchFirstName={searchFirstName}
+          searchLastName={searchLastName}
+          hasActiveEntryFilters={hasActiveEntryFilters}
+          resultCount={players.length}
+          onToggleCollapsed={() => setTableSearchCollapsed(previous => !previous)}
+          onSubmit={handleEntrySearchSubmit}
+          onSearchUsbcChange={setSearchUsbc}
+          onSearchFirstNameChange={setSearchFirstName}
+          onSearchLastNameChange={setSearchLastName}
+          onClear={clearEntryFilters}
+        />
+
+        {showInitialPlayersLoad ? (
+          <Card aria-label="Entries">
+            <p className={panelStyles.status} role="status">Loading entries...</p>
+          </Card>
+        ) : (
+          <Card padding="flush" aria-label="Entries">
+            <CardHeader title="Entries" description={`${players.length} ${players.length === 1 ? 'entry' : 'entries'} · ${entriesTableSubtitle}`} />
+            <PlayersTable
+              players={players}
+              onUpdatePlayer={handleUpdatePlayer}
+              onDeletePlayer={handleDeletePlayer}
+              savingStatus={savingStatus}
               entryFee={entryFee}
+              bracketPrograms={enabledBracketPrograms}
+              selectedSquad={selectedSquad}
+              sidePots={sidePots}
+              hasActiveFilters={hasActiveEntryFilters}
+              onClearFilters={() => {
+                setSearchUsbc('')
+                setSearchFirstName('')
+                setSearchLastName('')
+              }}
             />
-          )}
-
-          {selectedTournament && (
-            <DuplicateResolutionPanel tournamentId={selectedTournament.id} onResolved={loadPlayers} />
-          )}
-
-          <div className={styles.entriesTopRow}>
-            <EntriesQuickActions
-              isDev={isDev}
-              playersCount={players.length}
-              isImporting={isImporting || isCommittingImport || importPreviewRows !== null}
-              isExporting={isExporting}
-              isDeletingAll={isDeletingAll}
-              onOpenGuide={() => setIsExplainModalOpen(true)}
-              onExportToExcel={handleExportToExcel}
-              onImportFromExcel={() => importFileRef.current?.click()}
-              onRandomizeEntries={() => { void handleRandomize() }}
-              onDeleteAllEntries={handleDeleteAllPlayers}
-            />
-
-          </div>
-
-          <div className={styles.entryWorkflowLayout}>
-              <PlayerForm
-                onAddPlayer={addPlayer}
-                bowlerHistorySearchPanel={(
-                  <BowlerHistoryResults
-                    historyResults={historyResults}
-                    isHistorySearching={isHistorySearching}
-                    hasHistorySearchInput={hasHistorySearchInput}
-                    hasSubmittedSearch={hasSubmittedHistorySearch}
-                    onUseBowler={handleUseHistoryResult}
-                  />
-                )}
-                onBowlerIdentityChange={({ firstName, lastName, usbc }) => {
-                  setHistorySearchFirstName(firstName)
-                  setHistorySearchLastName(lastName)
-                  setHistorySearchUsbc(usbc)
-                  setHasSubmittedHistorySearch(true)
-                }}
-                isLoading={showInitialPlayersLoad}
-                squads={squads}
-                selectedSquad={selectedSquad}
-                tournamentName={selectedTournament?.name}
-                existingPlayers={players}
-                entryFee={entryFee}
-                bracketPrograms={enabledBracketPrograms}
-                sidePots={sidePots}
-                prefillDraft={prefillDraft}
-                prefillVersion={prefillVersion}
-              />
-
-              <EntriesSearchCard
-                isMobileView={isMobileView}
-                isCollapsed={tableSearchCollapsed}
-                searchUsbc={searchUsbc}
-                searchFirstName={searchFirstName}
-                searchLastName={searchLastName}
-                hasActiveEntryFilters={hasActiveEntryFilters}
-                resultCount={players.length}
-                onToggleCollapsed={() => setTableSearchCollapsed(previous => !previous)}
-                onSubmit={handleEntrySearchSubmit}
-                onSearchUsbcChange={setSearchUsbc}
-                onSearchFirstNameChange={setSearchFirstName}
-                onSearchLastNameChange={setSearchLastName}
-                onClear={clearEntryFilters}
-              />
-          </div>
-
-          {showInitialPlayersLoad ? (
-            <div className={`${cardStyles.card} ${styles.skeletonCard}`}>
-              <div className={styles.skeletonText} role="status">Loading entries...</div>
-              {[1, 2, 3, 4, 5].map(i => (
-                <div key={i} className={styles.skeletonGrid}>
-                  {[1, 2, 3, 4, 5, 6].map(j => (
-                    <div key={j} className={styles.skeletonItem} />
-                  ))}
-                </div>
-              ))}
-            </div>
-          ) : !getTournamentId() ? (
-            <NoTournamentState
-              description="Load a tournament from the dashboard to manage entries, add bowlers, assign squads, and track fees."
-              cards={[
-                { title: 'Add Bowlers', text: 'Register players with averages, lanes, squads, and bracket program entries.' },
-                { title: 'Track Revenue', text: 'Review paid entries, outstanding fees, side pots, and projected bracket counts.' },
-                { title: 'Import & Export', text: 'Bring in entries from Excel or export the current roster when staff need a copy.' },
-              ]}
-            />
-          ) : (
-            <>
-              <div className={`${cardStyles.card} ${styles.tableCard}`}>
-                <div className={`${cardStyles.cardHeader} ${styles.entriesTableHeader}`}>
-                  <div className={styles.entriesTableHeaderCopy}>
-                    <h3 className={`${cardStyles.cardTitle} ${styles.entriesTableTitle}`}><ListChecks aria-hidden="true" />Entries</h3>
-                    <p className={styles.entriesTableSubtitle}>{entriesTableSubtitle}</p>
-                  </div>
-                </div>
-                <PlayersTable
-                  players={players}
-                  onUpdatePlayer={handleUpdatePlayer}
-                  onDeletePlayer={handleDeletePlayer}
-                  savingStatus={savingStatus}
-                  entryFee={entryFee}
-                  bracketPrograms={enabledBracketPrograms}
-                  selectedSquad={selectedSquad}
-                  sidePots={sidePots}
-                  hasActiveFilters={hasActiveEntryFilters}
-                  onClearFilters={() => {
-                    setSearchUsbc('')
-                    setSearchFirstName('')
-                    setSearchLastName('')
-                  }}
-                />
-              </div>
-            </>
-          )}
-        </div>
-      </div>
+          </Card>
+        )}
+      </Page>
 
       <ActionConfirmDialog
         open={deleteAllPlayersConfirmOpen}
-        title="Delete All Players?"
+        title="Delete all entries?"
         message={`Delete all ${players.length} players? This cannot be undone.`}
-        confirmLabel="Delete All"
+        confirmLabel="Delete all"
         cancelLabel="Cancel"
         onCancel={() => setDeleteAllPlayersConfirmOpen(false)}
         onConfirm={() => {
@@ -828,7 +793,7 @@ export default function PlayersPage() {
 
       <ActionConfirmDialog
         open={deleteConfirmId !== null}
-        title="Delete Player?"
+        title="Delete entry?"
         message="Delete this player? This cannot be undone."
         confirmLabel="Delete"
         cancelLabel="Cancel"
@@ -846,8 +811,3 @@ export default function PlayersPage() {
     </ErrorBoundary>
   )
 }
-
-
-
-
-
