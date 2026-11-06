@@ -1,22 +1,19 @@
 "use client";
 
 import { type FormEvent, useCallback, useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { BarChart3, ClipboardList, GitFork, Lock, User } from "lucide-react";
+import { Button, Notice, PasswordField, TextField } from "@bracketworks/ui";
 
 import styles from "./login.module.css";
 
 import { API } from "../lib/api";
-import { LoadingButton } from "../components/LoadingComponents";
 import { useToast } from "../components/Toast";
 import { useLoginSecurity } from "../hooks/useLoginSecurity";
 import { useAuth } from "../lib/auth-context";
 import { logger } from "../lib/logger";
-import FeatureIconCard from "../components/FeatureIconCard";
+import BWAuthShell from "../components/BWAuthShell";
 import SignupModal from "../components/SignupModal";
 import ResetPasswordModal from "../components/ResetPasswordModal";
-import PasswordVisibilityToggle from "../components/PasswordVisibilityToggle";
 import ResetSuccessModal from "../components/ResetSuccessModal";
 import { useAuthModals } from "../hooks/useAuthModals";
 import { useAuthQueryParams } from "../hooks/useAuthQueryParams";
@@ -24,28 +21,6 @@ import { useResetSuccessCountdown } from "../hooks/useResetSuccessCountdown";
 import { parseLoginError, parseNetworkError, getLoginErrorDuration } from "../lib/auth/login-error-handler";
 import DevNoticeModal from "../components/DevNoticeModal";
 
-const TOURNAMENT_CENTRAL_URL = 'https://tournamentcentral.app/login';
-
-const featureCards = [
-  {
-    icon: ClipboardList,
-    label: 'Organize Your Tournament',
-    title: 'Organize Your Tournament',
-    description: 'Manage entries, squads, divisions, formats, and bowler information.',
-  },
-  {
-    icon: GitFork,
-    label: 'Run Brackets & Side Pots',
-    title: 'Run Brackets & Side Pots',
-    description: 'Generate brackets, track participation, advance winners, and calculate payouts.',
-  },
-  {
-    icon: BarChart3,
-    label: 'Publish Live Results',
-    title: 'Publish Live Results',
-    description: 'Enter scores and share standings, brackets, and tournament updates in real time.',
-  },
-] as const;
 
 export default function LoginPage() {
   const router = useRouter();
@@ -245,7 +220,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className={styles.page}>
+    <>
       <DevNoticeModal
         isOpen={devNoticeOpen}
         mode="require-acceptance"
@@ -266,198 +241,71 @@ export default function LoginPage() {
         onDismiss={dismissResetSuccessModal}
       />
 
-      <div className={styles.shell}>
-        <section className={styles.brandPanel}>
-          <div className={styles.brandTop}>
-            <Image
-              src="/BW Banner.svg"
-              alt="BracketWorks"
-              width={520}
-              height={120}
-              className={styles.bannerImage}
-              priority
-            />
+      <BWAuthShell
+        title="Welcome back"
+        subtitle="Log in to manage your tournaments and live results."
+        switchRow={(
+          <>
+            New to BracketWorks?{' '}
+            <button type="button" onClick={() => openModal('signup')} disabled={loading}>Create a free account</button>
+          </>
+        )}
+      >
+        {queryParams.sessionExpired ? <Notice tone="warning">Your session expired. Please log in again.</Notice> : null}
+        {queryParams.signupSuccess ? (
+          <Notice tone="info" role="status">Account created. Check your email for your welcome message and verification link.</Notice>
+        ) : null}
+        {queryParams.verificationSuccess ? <Notice tone="success" role="status">Email verified. You can log in now.</Notice> : null}
+
+        <form id="login-form" onSubmit={handleLogin} className={styles.form} aria-busy={loading || undefined}>
+          {error ? <Notice tone="danger" role="alert">{error}</Notice> : null}
+
+          <TextField
+            ref={usernameInputRef}
+            id="login-username"
+            name="username"
+            label="Username or email"
+            value={username}
+            onChange={e => updateFieldValue(e.target.value, setUsername)}
+            autoComplete="username"
+            autoFocus
+            required
+          />
+
+          <PasswordField
+            id="login-password"
+            name="password"
+            label="Password"
+            value={password}
+            onChange={e => updateFieldValue(e.target.value, setPassword)}
+            onKeyDown={handleKeyDown}
+            onKeyUp={handleKeyUp}
+            autoComplete="current-password"
+            required
+            helper={capsLockOn ? 'Caps Lock is on.' : undefined}
+          />
+
+          {loginDelay > 0 ? (
+            <p className={styles.status} role="status">Please wait {loginDelay} seconds before trying again.</p>
+          ) : failedAttempts > 0 ? (
+            <p className={styles.status}>{failedAttempts === 1 ? '1 failed attempt' : `${failedAttempts} failed attempts`}</p>
+          ) : null}
+
+          <Button
+            type="submit"
+            variant="primary"
+            fullWidth
+            disabled={loading || loginDelay > 0}
+            aria-label={loading ? 'Logging in, please wait' : undefined}
+          >
+            {loading ? 'Logging in...' : 'Log in'}
+          </Button>
+          <p className={styles.helper}>One account for BracketWorks and Tournament Central.</p>
+          <div className={styles.forgot}>
+            <Button variant="ghost" size="sm" onClick={() => openModal('resetPassword')} disabled={loading}>Forgot your password?</Button>
           </div>
-
-          <h2 className={styles.brandHeadline}>
-            Run Your Tournament<br />
-            Without the <span className={styles.brandHeadlineOrange}>Spreadsheet Chaos.</span>
-          </h2>
-
-          <p className={styles.brandDescription}>
-            Manage entries, brackets, side pots, scores, standings,
-            and payouts from one organized workspace.
-          </p>
-
-          <ul className={styles.featureList}>
-            {featureCards.map(({ icon, label, title, description }) => (
-              <li key={label} className={styles.featureItem}>
-                <FeatureIconCard icon={icon} label={label} />
-                <span>
-                  <strong>{title}</strong>
-                  <small>{description}</small>
-                </span>
-              </li>
-            ))}
-          </ul>
-
-          <div className={styles.ecosystemCallout}>
-            <span className={styles.ecosystemLabel}>Part of the Connected Tournament Platform</span>
-            <div className={styles.ecosystemRow}>
-              <Image
-                src="/TC_logo_No_Text.svg"
-                alt=""
-                width={40}
-                height={40}
-                unoptimized
-                className={styles.ecosystemLogo}
-              />
-              <span className={styles.ecosystemText}>
-                Looking for a tournament?{' '}
-                <a href={TOURNAMENT_CENTRAL_URL} className={styles.ecosystemLink}>
-                  Find tournaments and register →
-                </a>
-              </span>
-            </div>
-          </div>
-        </section>
-
-        <section className={`${styles.card} ${loading ? styles.loading : ''}`}>
-
-          {queryParams.sessionExpired && (
-            <div className={styles.sessionExpiredBanner}>
-              Your session expired. Please log in again.
-            </div>
-
-          )}
-
-          {queryParams.signupSuccess && (
-            <div className={styles.infoBanner} role="status" aria-live="polite">
-              Account created. Check your email for your welcome message and verification link.
-            </div>
-          )}
-
-          {queryParams.verificationSuccess && (
-            <div className={styles.successBanner} role="status" aria-live="polite">
-              Email verified. You can log in now.
-            </div>
-          )}
-
-          <div className={styles.cardHeader}>
-            <h1 className={styles.cardTitle}>Welcome back</h1>
-            <p className={styles.cardSubtitle}>Log in to manage your tournaments and live results.</p>
-          </div>
-
-          <form id="login-form" onSubmit={handleLogin} className={styles.form}>
-            {error && (
-              <div className={styles.errorBanner} role="alert" aria-live="polite">
-                {error}
-              </div>
-            )}
-
-            <div className={styles.inputGroup}>
-              <label htmlFor="login-username" className={styles.inputLabel}>Username or email</label>
-              <User className={styles.inputIcon} aria-hidden="true" strokeWidth={1.8} />
-              <input
-                ref={usernameInputRef}
-                type="text"
-                id="login-username"
-                name="username"
-                aria-label="Email or Username"
-                placeholder="Enter username or email"
-                value={username}
-                onChange={e => updateFieldValue(e.target.value, setUsername)}
-                autoComplete="username"
-                autoFocus
-                required
-                className={`${styles.input} ${loginFailed ? styles.inputError : ''}`}
-              />
-            </div>
-
-            <div>
-              <label htmlFor="login-password" className={styles.inputLabel}>Password</label>
-              <div className={styles.passwordField}>
-                <Lock className={styles.inputIcon} aria-hidden="true" strokeWidth={1.8} />
-                <input
-                  type={showPassword ? "text" : "password"}
-                  id="login-password"
-                  name="password"
-                  aria-label="Password"
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={e => updateFieldValue(e.target.value, setPassword)}
-                  onKeyDown={handleKeyDown}
-                  onKeyUp={handleKeyUp}
-                  autoComplete="current-password"
-                  required
-                  className={`${styles.input} ${capsLockOn ? styles.inputCapsLock : ''} ${loginFailed ? styles.inputError : ''}`}
-                />
-                <PasswordVisibilityToggle
-                  isVisible={showPassword}
-                  onToggle={() => setShowPassword(!showPassword)}
-                  disabled={loading}
-                />
-              </div>
-              {capsLockOn && (
-                <div className={styles.capsLockWarning}>
-                  <span>Caps Lock is ON</span>
-                </div>
-              )}
-            </div>
-
-            {loginDelay > 0 && (
-              <div className={styles.delayWarning}>
-                Please wait {loginDelay} seconds before trying again
-              </div>
-            )}
-
-            {failedAttempts > 0 && loginDelay === 0 && (
-              <div className={styles.attemptsInfo}>
-                {failedAttempts === 1 ? '1 failed attempt' : `${failedAttempts} failed attempts`}
-              </div>
-            )}
-
-            <LoadingButton
-              type="submit"
-              loading={loading}
-              loadingText="Logging in..."
-              className={styles.loginBtn}
-              disabled={loginDelay > 0}
-              aria-label={loading ? 'Logging in, please wait' : 'Log in to your account'}
-            >
-              Log In <span className={styles.btnArrow} aria-hidden="true">→</span>
-            </LoadingButton>
-            <p className={styles.submitHelper}>One account. BracketWorks + Tournament Central.</p>
-          </form>
-
-          <div className={styles.forgotRow}>
-            <button
-              type="button"
-              onClick={() => openModal('resetPassword')}
-              className={styles.forgotLink}
-              disabled={loading}
-            >
-              Forgot your password?
-            </button>
-          </div>
-
-          <div className={styles.signupPrompt}>
-            <span className={styles.signupPromptText}>New to BracketWorks?</span>
-            <button
-              type="button"
-              onClick={() => openModal('signup')}
-              className={styles.signupPromptLink}
-              disabled={loading}
-            >
-              Create a free account
-            </button>
-          </div>
-        </section>
-      </div>
-
-      <footer className={styles.footer}>
-        &copy; {new Date().getFullYear()} BracketWorks + Tournament Central. All rights reserved.
-      </footer>
+        </form>
+      </BWAuthShell>
 
       <SignupModal
         isOpen={modals.signup}
@@ -475,6 +323,6 @@ export default function LoginPage() {
           addToast({ type: 'success', message: 'If an account exists for this email, a password reset link has been sent.', duration: 4000 });
         }}
       />
-    </div>
+    </>
   );
 }
