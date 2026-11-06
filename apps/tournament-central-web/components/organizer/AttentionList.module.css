@@ -1,0 +1,50 @@
+/* "Needs attention" divider rows: docs/ui-standards.md section 7 (lists inside cards). */
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  font: var(--type-body);
+  color: var(--bw-text-title);
+}
+
+.row + .row {
+  border-top: 1px solid var(--bw-border-subtle);
+}
+
+.link {
+  flex-shrink: 0;
+  font: var(--type-button);
+  color: var(--color-accent-primary);
+  text-decoration: none;
+}
+
+.link:hover {
+  color: var(--color-accent-primary-hover);
+}
+
+.clear {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.clearTitle {
+  font: var(--type-subsection-title);
+  color: var(--bw-text-title);
+}
+
+.clearText {
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}

@@ -1,13 +1,27 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
-import { AlertTriangle, CalendarDays, CheckCircle2, Eye, MapPin, Users } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import { useMemo } from 'react';
+import {
+  ButtonLink,
+  Card,
+  CardHeader,
+  DataTable,
+  ICON_SIZE,
+  Notice,
+  Page,
+  PageColumns,
+  PageHeader,
+  StatGroup,
+  buttonClassName,
+} from '@bracketworks/ui';
+import type { StatItem } from '@bracketworks/ui';
 
-import type { TournamentContract, TournamentSetupStateSummaryContract } from '@bracketworks/types';
 import { useTournamentContext } from '@/components/organizer/TournamentContext';
+import AttentionList from '@/components/organizer/AttentionList';
 import OrganizerStatusBadge from '@/components/organizer/OrganizerStatusBadge';
+import TournamentStatusBadge from '@/components/organizer/dashboard/TournamentStatusBadge';
 import { formatRegistrationTimestamp, formatTournamentDateRange } from '@/components/organizer/organizerFormatting';
 import { organizerRoutes } from '@/components/organizer/organizerRoutes';
 import {
@@ -15,44 +29,34 @@ import {
   buildSquadSummaries,
   buildTournamentAttentionItems,
 } from '@/components/organizer/tournamentInsights';
-import styles from './page.module.css';
+import type { RegistrationSummary, SquadSummary } from '@/components/organizer/tournamentInsights';
+import styles from './overview.module.css';
 
-type SummaryItem = {
-  label: string;
-  value: string;
-  detail: string;
-  icon: typeof MapPin;
-  tone: 'purple' | 'blue' | 'orange' | 'green' | 'neutral';
-};
+const EMPTY_VALUE = '—';
 
-function countTournamentSquads(squadTimes: TournamentContract['squad_times']): number {
-  if (!squadTimes || typeof squadTimes !== 'object') {
-    return 0;
+function buildStats(registrationSummary: RegistrationSummary, squadSummaries: SquadSummary[]): StatItem[] {
+  const stats: StatItem[] = [
+    { label: 'Registrations', value: String(registrationSummary.total) },
+    {
+      label: 'Paid',
+      value: String(registrationSummary.paid),
+      detail: `${registrationSummary.unpaid} unpaid`,
+    },
+    { label: 'Squads', value: String(squadSummaries.length) },
+  ];
+
+  if (squadSummaries.length > 0) {
+    stats.push({ label: 'Bowlers', value: String(squadSummaries.reduce((total, summary) => total + summary.bowlerCount, 0)) });
   }
 
-  return Object.values(squadTimes).reduce(
-    (total, times) => total + (Array.isArray(times) ? times.length : 0),
-    0,
-  );
-}
+  const limited = squadSummaries.filter((summary) => summary.availableBowlerSpots !== null);
+  if (limited.length > 0) {
+    const capacity = limited.reduce((total, summary) => total + summary.squad.capacity, 0);
+    const open = limited.reduce((total, summary) => total + (summary.availableBowlerSpots ?? 0), 0);
+    stats.push({ label: 'Bowler spots open', value: String(open), detail: `of ${capacity}` });
+  }
 
-function buildSummaryItems(
-  tournament: TournamentContract,
-  setupState: TournamentSetupStateSummaryContract | undefined,
-): SummaryItem[] {
-  return [
-    {
-      label: 'LOCATION',
-      value: tournament.location?.trim() || 'Location not set',
-      detail: 'Tournament location',
-      icon: MapPin,
-      tone: 'purple',
-    },
-    { label: 'VISIBILITY', value: tournament.is_public ? 'Public' : 'Private', detail: tournament.is_public ? 'Anyone can view and register.' : 'Only invited users can view.', icon: Eye, tone: 'blue' },
-    { label: 'REGISTRATIONS', value: String(tournament.entry_count ?? 0), detail: 'Total registrations', icon: Users, tone: 'orange' },
-    { label: 'SETUP STATUS', value: setupState?.is_published ? 'Published' : 'Draft', detail: setupState?.is_published ? 'Tournament is published.' : 'Draft changes are pending.', icon: CheckCircle2, tone: 'green' },
-    { label: 'SQUADS', value: String(countTournamentSquads(tournament.squad_times)), detail: 'Scheduled squads', icon: CalendarDays, tone: 'blue' },
-  ];
+  return stats;
 }
 
 export default function OrganizerTournamentOverviewPage() {
@@ -72,13 +76,6 @@ export default function OrganizerTournamentOverviewPage() {
     setupError,
     registrationsError,
   } = useTournamentContext();
-
-  const summaryItems = useMemo(() => {
-    if (!tournament) {
-      return [];
-    }
-    return buildSummaryItems(tournament, setupSummary);
-  }, [setupSummary, tournament]);
 
   const registrationSummary = useMemo(() => buildRegistrationSummary(registrations), [registrations]);
   const squadSummaries = useMemo(() => buildSquadSummaries(squads, registrations), [squads, registrations]);
@@ -101,128 +98,140 @@ export default function OrganizerTournamentOverviewPage() {
     });
   }, [eventCount, hasRulesDocument, registrationCloseIso, registrationSummary, setupSummary, squadSummaries, tournament, tournamentId]);
 
+  const location = tournament?.location?.trim() || 'Location not set';
+  const publicUrl = tournament?.is_public ? organizerRoutes.publicPage(tournamentId) : null;
+  const isDataLoaded = !isTournamentLoading && !isSetupLoading && !isRegistrationsLoading && Boolean(tournament);
+
+  const details: { label: string; value: string }[] = tournament
+    ? [
+        { label: 'Location', value: location },
+        { label: 'Visibility', value: tournament.is_public ? 'Public: anyone can view and register' : 'Private: only invited users can view' },
+        { label: 'Setup', value: setupSummary?.is_published ? 'Published' : 'Draft changes are pending' },
+        ...(registrationCloseIso ? [{ label: 'Registration closes', value: formatRegistrationTimestamp(registrationCloseIso) }] : []),
+        ...(setupSummary ? [{ label: 'Last updated', value: formatRegistrationTimestamp(setupSummary.updated_at) }] : []),
+      ]
+    : [];
+
+  const statusRows = [
+    { label: 'Confirmed', value: registrationSummary.confirmed },
+    { label: 'Pending', value: registrationSummary.pending },
+    { label: 'Waitlisted', value: registrationSummary.waitlisted },
+    { label: 'Cancelled', value: registrationSummary.cancelled },
+  ];
+
   return (
-    <div className={styles.shell}>
-      {tournamentError ? <p className={styles.error}>{tournamentError}</p> : null}
-      {setupError ? <p className={styles.error}>Setup data: {setupError}</p> : null}
-      {registrationsError ? <p className={styles.error}>Registration data: {registrationsError}</p> : null}
+    <Page>
+      <PageHeader
+        title={tournament?.name || 'Tournament'}
+        badge={tournament ? <TournamentStatusBadge isPublic={Boolean(tournament.is_public)} hasPublishedSetup={Boolean(setupSummary?.is_published)} /> : null}
+        description={`${formatTournamentDateRange(tournament?.start_date, tournament?.end_date)} · ${location}`}
+        actions={
+          <>
+            {publicUrl ? (
+              <ButtonLink
+                href={publicUrl}
+                variant="secondary"
+                target="_blank"
+                rel="noreferrer"
+                icon={<ExternalLink size={ICON_SIZE.md} aria-hidden="true" />}
+                aria-label="View public page (opens in a new tab)"
+              >
+                View public page
+              </ButtonLink>
+            ) : null}
+            <Link href={organizerRoutes.setup(tournamentId)} className={buttonClassName({ variant: 'primary' })}>
+              Edit tournament
+            </Link>
+          </>
+        }
+      />
 
-      <section className={styles.headerCard}>
-        <div className={styles.heroLogo}>
-          {tournament?.has_logo ? (
-            <Image src={`/api/v1/tc/tournaments/${tournamentId}/logo`} alt="" fill sizes="150px" unoptimized />
-          ) : <span>TC</span>}
-        </div>
-        <div className={styles.heroCopy}>
-          <OrganizerStatusBadge status={tournament?.is_public ? 'published' : 'private'} />
-          <h1>{tournament?.name || 'Tournament'}</h1>
-          <p className={styles.meta}>
-            <CalendarDays aria-hidden="true" />
-            {formatTournamentDateRange(tournament?.start_date, tournament?.end_date)}
-            <MapPin aria-hidden="true" />
-            {tournament?.location || 'Location not set'}
-          </p>
-        </div>
-        <div className={styles.actions}>
-          <Link href={organizerRoutes.setup(tournamentId)} className={styles.primaryButton}>Edit Tournament</Link>
-        </div>
-      </section>
-
-      <section className={styles.summaryCard}>
-        <div className={styles.summaryHeading}>
-          <h2>Tournament Overview</h2>
-          <p>Current tournament details and operating status.</p>
-        </div>
-        <ul className={styles.summaryList}>
-          {summaryItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <li key={item.label} className={styles.summaryItem}>
-                <span className={`${styles.summaryIcon} ${styles[`tone${item.tone}`]}`}><Icon aria-hidden="true" /></span>
-                <div>
-                  <span className={styles.summaryLabel}>{item.label}</span>
-                  <strong>{item.value}</strong>
-                  <small>{item.detail}</small>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-        {setupSummary ? (
-          <div className={styles.lastUpdated}>
-            <span className={styles.summaryIcon}><CalendarDays aria-hidden="true" /></span>
-            <div>
-              <span className={styles.summaryLabel}>LAST UPDATED</span>
-              <strong>{formatRegistrationTimestamp(setupSummary.updated_at)}</strong>
-            </div>
-          </div>
-        ) : null}
-      </section>
+      {tournamentError ? <Notice tone="danger" role="alert">{tournamentError}</Notice> : null}
+      {setupError ? <Notice tone="danger" role="alert">Setup data: {setupError}</Notice> : null}
+      {registrationsError ? <Notice tone="danger" role="alert">Registration data: {registrationsError}</Notice> : null}
 
       {!isRegistrationsLoading && tournament ? (
-        <section className={styles.summaryCard}>
-          <div className={styles.summaryHeading}>
-            <h2>Registration Summary</h2>
-            <p>Where submitted registrations stand right now.</p>
-          </div>
-          <ul className={styles.registrationSummaryGrid}>
-            <li><span>Total</span><strong>{registrationSummary.total}</strong></li>
-            <li><span>Confirmed</span><strong>{registrationSummary.confirmed}</strong></li>
-            <li><span>Pending</span><strong>{registrationSummary.pending}</strong></li>
-            <li><span>Waitlisted</span><strong>{registrationSummary.waitlisted}</strong></li>
-            <li><span>Cancelled</span><strong>{registrationSummary.cancelled}</strong></li>
-            <li><span>Paid</span><strong>{registrationSummary.paid}</strong></li>
-            <li><span>Unpaid</span><strong>{registrationSummary.unpaid}</strong></li>
-          </ul>
-        </section>
+        <StatGroup label="Tournament summary" items={buildStats(registrationSummary, squadSummaries)} />
       ) : null}
+
+      <PageColumns
+        main={
+          <>
+            {isDataLoaded ? (
+              <AttentionList
+                items={attentionItems}
+                description="Resolve these before or during the tournament."
+                actionLabel="Resolve"
+              />
+            ) : null}
+
+            {!isRegistrationsLoading && tournament ? (
+              <Card aria-label="Registration status">
+                <CardHeader title="Registration status" />
+                <dl className={styles.details}>
+                  {statusRows.map((item) => (
+                    <div key={item.label} className={`${styles.detailRow} ${styles.countRow}`}>
+                      <dt>{item.label}</dt>
+                      <dd>{item.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </Card>
+            ) : null}
+          </>
+        }
+        side={
+          <>
+            {tournament ? (
+              <Card aria-label="Details">
+                <CardHeader title="Details" />
+                <dl className={styles.details}>
+                  {details.map((item) => (
+                    <div key={item.label} className={styles.detailRow}>
+                      <dt>{item.label}</dt>
+                      <dd>{item.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </Card>
+            ) : null}
+          </>
+        }
+      />
 
       {!isSetupLoading && !isRegistrationsLoading && squadSummaries.length > 0 ? (
-        <section className={styles.summaryCard}>
-          <div className={styles.summaryHeading}>
-            <h2>Squad Summary</h2>
-            <p>Registrations and bowlers for each squad. Capacity and availability are measured in bowler spots.</p>
-          </div>
-          <div className={styles.squadSummaryTableWrap}>
-            <table className={styles.squadSummaryTable}>
-              <thead>
-                <tr><th>Squad</th><th>Registrations</th><th>Bowlers</th><th>Bowler capacity</th><th>Bowler spots available</th><th>Waitlisted registrations</th><th>Waitlisted bowlers</th><th>Status</th></tr>
-              </thead>
-              <tbody>
-                {squadSummaries.map(({ squad, registrationCount, bowlerCount, waitlistedRegistrationCount, waitlistedBowlerCount, availableBowlerSpots, status }) => (
-                  <tr key={squad.id}>
-                    <td>{squad.name}</td>
-                    <td>{registrationCount}</td>
-                    <td>{bowlerCount}</td>
-                    <td>{squad.capacity > 0 ? squad.capacity : '\u2014'}</td>
-                    <td>{availableBowlerSpots === null ? '\u2014' : availableBowlerSpots}</td>
-                    <td>{waitlistedRegistrationCount}</td>
-                    <td>{waitlistedBowlerCount}</td>
-                    <td><OrganizerStatusBadge status={status} /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
+        <Card padding="flush" aria-label="Squads">
+          <CardHeader title="Squads" description="Capacity and availability are measured in bowler spots." />
+          <DataTable caption="Registrations and bowlers for each squad">
+            <thead>
+              <tr>
+                <th scope="col">Squad</th>
+                <th scope="col" data-align="right">Registrations</th>
+                <th scope="col" data-align="right">Bowlers</th>
+                <th scope="col" data-align="right">Bowler capacity</th>
+                <th scope="col" data-align="right">Bowler spots available</th>
+                <th scope="col" data-align="right">Waitlisted registrations</th>
+                <th scope="col" data-align="right">Waitlisted bowlers</th>
+                <th scope="col">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {squadSummaries.map(({ squad, registrationCount, bowlerCount, waitlistedRegistrationCount, waitlistedBowlerCount, availableBowlerSpots, status }) => (
+                <tr key={squad.id}>
+                  <td className={styles.squadName}>{squad.name}</td>
+                  <td data-align="right">{registrationCount}</td>
+                  <td data-align="right">{bowlerCount}</td>
+                  <td data-align="right">{squad.capacity > 0 ? squad.capacity : EMPTY_VALUE}</td>
+                  <td data-align="right">{availableBowlerSpots === null ? EMPTY_VALUE : availableBowlerSpots}</td>
+                  <td data-align="right">{waitlistedRegistrationCount}</td>
+                  <td data-align="right">{waitlistedBowlerCount}</td>
+                  <td><OrganizerStatusBadge status={status} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </DataTable>
+        </Card>
       ) : null}
-
-      {!isTournamentLoading && !isSetupLoading && !isRegistrationsLoading && attentionItems.length > 0 ? (
-        <section className={styles.summaryCard}>
-          <div className={styles.summaryHeading}>
-            <h2>Needs Attention</h2>
-            <p>Items worth resolving before or during the tournament.</p>
-          </div>
-          <ul className={styles.tournamentAttentionList}>
-            {attentionItems.map((item) => (
-              <li key={item.id}>
-                <span><AlertTriangle aria-hidden="true" />{item.message}</span>
-                <Link href={item.href}>Resolve</Link>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
-    </div>
+    </Page>
   );
 }

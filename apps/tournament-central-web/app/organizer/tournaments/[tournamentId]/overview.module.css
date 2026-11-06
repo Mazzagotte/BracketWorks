@@ -1,0 +1,53 @@
+/* Tournament overview: label and value divider rows in the side cards (docs/ui-standards.md section 7). */
+
+.details {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+
+.detailRow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3) 0;
+}
+
+.detailRow:first-child {
+  padding-top: 0;
+}
+
+.detailRow:last-child {
+  padding-bottom: 0;
+}
+
+.detailRow + .detailRow {
+  border-top: 1px solid var(--bw-border-subtle);
+}
+
+.detailRow dt {
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}
+
+.detailRow dd {
+  margin: 0;
+  font: var(--type-body);
+  color: var(--bw-text-title);
+  overflow-wrap: anywhere;
+}
+
+.countRow {
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.countRow dd {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Squad names are dates and times; keep each on one line so the table scrolls instead. */
+.squadName {
+  white-space: nowrap;
+}

@@ -51,20 +51,6 @@
 }
 
 .invitationRow,
-.attentionRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  padding: var(--space-3) 0;
-  font: var(--type-body);
-  color: var(--bw-text-title);
-}
-
-.attentionRow .rowLink {
-  flex-shrink: 0;
-  color: var(--color-accent-primary);
-}
 
 .calendarRow {
   display: flex;

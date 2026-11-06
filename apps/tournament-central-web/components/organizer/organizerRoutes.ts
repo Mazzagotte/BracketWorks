@@ -1,6 +1,8 @@
 export const organizerRoutes = {
   dashboard: '/organizer',
   account: '/organizer/account',
+  /** The tournament's public details page on the TC home page. */
+  publicPage: (tournamentId: number | string) => `/?tournament=${encodeURIComponent(String(tournamentId))}`,
   newTournamentSetup: '/organizer/tournaments/new/setup',
   overview: (tournamentId: number | string) => tournamentRoute(tournamentId),
   registrations: (tournamentId: number | string) => `${tournamentRoute(tournamentId)}/registrations`,
