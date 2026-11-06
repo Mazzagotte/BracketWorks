@@ -1,12 +1,12 @@
 import type { RegistrationFieldConfig, SetupSection, SetupSectionKey } from './types';
 
 export const setupSections: SetupSection[] = [
-  { key: 'tournament-details', label: 'Tournament Details', description: 'Identity, dates, location, and publishing' },
-  { key: 'squads-availability', label: 'Squads & Availability', description: 'Date and time groups with capacities and availability' },
-  { key: 'events-divisions', label: 'Events & Divisions', description: 'Event types, division eligibility, and squad assignments' },
-  { key: 'registration-setup', label: 'Registration Setup', description: 'Fields and custom questions' },
-  { key: 'fees-payments-documents', label: 'Add-ons, Payments & Docs', description: 'Optional add-ons, payment methods, and rules' },
-  { key: 'review-publish', label: 'Review & Publish', description: 'Validation and publishing checks' },
+  { key: 'tournament-details', label: 'Tournament details', description: 'Identity, dates, location, and publishing' },
+  { key: 'squads-availability', label: 'Squads and availability', description: 'Date and time groups with capacities and availability' },
+  { key: 'events-divisions', label: 'Events and divisions', description: 'Event types, division eligibility, and squad assignments' },
+  { key: 'registration-setup', label: 'Registration setup', description: 'Fields and custom questions' },
+  { key: 'fees-payments-documents', label: 'Add-ons, payments, and documents', description: 'Optional add-ons, payment methods, and rules' },
+  { key: 'review-publish', label: 'Review and publish', description: 'Validation and publishing checks' },
 ];
 
 export const initialRegistrationFields: RegistrationFieldConfig[] = [

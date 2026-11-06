@@ -28,11 +28,11 @@ describe('existing tournament deadline errors', () => {
       registrationOpenIso: '2026-11-01', registrationCloseIso: '2026-11-16',
     };
     const view = render(section(details));
-    const input = screen.getByLabelText(/Registration Closes/);
+    const input = screen.getByLabelText(/Registration closes/);
     expect(input).toHaveValue('2026-11-16');
     expect(input).toHaveAttribute('aria-invalid', 'true');
     expect(input).toHaveAccessibleDescription('Registration must close on or before the final tournament day.');
     view.rerender(section({ ...details, registrationCloseIso: '2026-11-15' }));
-    expect(screen.getByLabelText(/Registration Closes/)).toHaveAttribute('aria-invalid', 'false');
+    expect(screen.getByLabelText(/Registration closes/)).toHaveAttribute('aria-invalid', 'false');
   });
 });

@@ -1,22 +1,14 @@
-import {
-  CalendarDays,
-  Headphones,
-  Info,
-  MapPin,
-  PencilLine,
-  Trophy,
-  Trash2,
-  Upload,
-} from 'lucide-react';
+import { PencilLine, Trash2, Upload } from 'lucide-react';
+import { Button, Card, CardDivider, CardHeader, FormGrid, ICON_SIZE, Notice, SegmentedControl, SelectField, TextField } from '@bracketworks/ui';
 import { useEffect, useState } from 'react';
 import type { ChangeEvent, Dispatch, DragEvent, RefObject, SetStateAction } from 'react';
 
-import SetupStatusBadge from '../SetupStatusBadge';
+import StepHeader from './StepHeader';
+import layout from './setupLayout.module.css';
+import local from './TournamentDetailsSection.module.css';
 import type { SetupSectionKey, SetupStatus } from '../types';
 import type { TournamentDetails } from '../setupTypes';
-import styles from '../tournament-setup.module.css';
-import { registrationDateErrors } from '@/lib/registrationDates';
-import { ICON_SIZE } from '@bracketworks/ui';
+import { registrationDateErrors } from '@/lib/registrationDates';
 
 type TimezoneOption = { value: string; label: string };
 type UsStateOption = { code: string; name: string };
@@ -162,307 +154,246 @@ export default function TournamentDetailsSection({
     };
   }, [details.bowlingCenter, hasSelectedVenue, locationMode]);
 
+  const clearVenueSelection = () => setDetails((prev) => ({ ...prev, venueId: null, venueExternalProvider: '', venueExternalPlaceId: '', venueLatitude: null, venueLongitude: null }));
+  const nameError = identityTouched.name && !details.name.trim() ? 'Tournament name is required.' : undefined;
+  const organizerError = identityTouched.organizer && !details.organizer.trim() ? 'Host organization is required.' : undefined;
+  const typeError = identityTouched.tournamentType && !details.tournamentType ? 'Tournament type is required.' : undefined;
+  const startError = !details.startDateIso ? 'Start date is required.' : undefined;
+  const endError = !details.endDateIso
+    ? 'End date is required.'
+    : tournamentDateOrderInvalid ? 'End date must be on or after start date.' : undefined;
+  const openError = !details.registrationOpenIso ? 'Registration open date is required.' : dateErrors.registrationOpenIso || undefined;
+  const closeError = !details.registrationCloseIso ? 'Registration close date is required.' : dateErrors.registrationCloseIso || undefined;
+  const openTimeError = dateErrors.registrationOpenTime || dateErrors.registrationOpenIso || undefined;
+  const closeTimeError = dateErrors.registrationCloseTime || dateErrors.registrationCloseIso || undefined;
+  const contactNameError = contactTouched.name && !details.contactName.trim() ? 'Contact name is required.' : undefined;
+  const contactEmailError = contactTouched.email && !supportEmailLooksValid ? 'Enter a valid contact email.' : undefined;
+  const contactPhoneError = contactTouched.phone && details.preferredContactMethod === 'phone' && !details.supportPhone.trim()
+    ? 'Phone is required when it is the preferred contact method.'
+    : undefined;
+
   return (
-    <section className={styles.sectionCard}>
-      <div className={styles.sectionHeader}>
-        <div>
-          <h2>Tournament Details</h2>
-          <p>Basic information used throughout Tournament Central and during registration.</p>
-        </div>
-        <SetupStatusBadge status={statusBySection['tournament-details']} />
-      </div>
+    <>
+      <StepHeader
+        title="Tournament details"
+        description="Basic information used throughout Tournament Central and during registration."
+        status={statusBySection['tournament-details']}
+      />
 
-      <div className={styles.detailsLayout}>
-        <div className={styles.detailsMain}>
-          <div className={styles.detailsGrid}>
-            <article id="details-identity" className={`${styles.detailsCard} ${styles.identityCard}`}>
-              <div className={styles.detailsCardHead}>
-                <span className={styles.detailsCardIcon}><Trophy size={ICON_SIZE.md} /></span>
-                <div className={styles.detailsCardHeadText}>
-                  <h3>Tournament Identity</h3>
-                  <p>Name, organizer, tournament type, and branding.</p>
-                </div>
-              </div>
-              <div className={styles.detailsCardBody}>
-                <label className={styles.fieldLabel}>
-                  Tournament Name <span className={styles.fieldRequired}>*</span>
-                  <input
-                    className={identityTouched.name && !details.name.trim() ? styles.fieldInputInvalid : ''}
-                    value={details.name}
-                    onChange={(event) => setDetails((prev) => ({ ...prev, name: event.target.value }))}
-                    onBlur={() => setIdentityTouched((prev) => ({ ...prev, name: true }))}
-                    placeholder="e.g. Mountain Classic Open"
-                    maxLength={120}
-                  />
-                  {identityTouched.name && !details.name.trim() ? <small className={styles.fieldErrorText}>Tournament name is required.</small> : null}
-                  {details.name.length >= 100 ? <small className={styles.fieldHintText}>{details.name.length}/120 characters</small> : null}
-                </label>
-                <label className={styles.fieldLabel}>
-                  Short Description
-                  <input
-                    value={details.subtitle}
-                    onChange={(event) => setDetails((prev) => ({ ...prev, subtitle: event.target.value }))}
-                    maxLength={160}
-                    placeholder="A brief public summary shown with the tournament name."
-                  />
-                  <small className={styles.fieldHintText}>{details.subtitle.length}/160 characters</small>
-                </label>
-                <div className={styles.fieldRow}>
-                  <label className={styles.fieldLabel}>
-                    Hosted By <span className={styles.fieldRequired}>*</span>
-                    <input
-                      className={identityTouched.organizer && !details.organizer.trim() ? styles.fieldInputInvalid : ''}
-                      value={details.organizer}
-                      onChange={(event) => setDetails((prev) => ({ ...prev, organizer: event.target.value }))}
-                      onBlur={() => setIdentityTouched((prev) => ({ ...prev, organizer: true }))}
-                      placeholder="Organization name"
+      <div className={layout.cardGrid}>
+        <Card id="details-identity" aria-labelledby="details-identity-title">
+          <CardHeader title={<span id="details-identity-title">Tournament identity</span>} description="Name, organizer, tournament type, and branding." headingLevel="h3" />
+          <FormGrid>
+            <TextField
+              label="Tournament name"
+              fullRow
+              value={details.name}
+              onChange={(event) => setDetails((prev) => ({ ...prev, name: event.target.value }))}
+              onBlur={() => setIdentityTouched((prev) => ({ ...prev, name: true }))}
+              placeholder="For example, Mountain Classic Open"
+              maxLength={120}
+              error={nameError}
+              helper={!nameError && details.name.length >= 100 ? `${details.name.length}/120 characters` : undefined}
+            />
+            <TextField
+              label="Short description"
+              optional
+              fullRow
+              value={details.subtitle}
+              onChange={(event) => setDetails((prev) => ({ ...prev, subtitle: event.target.value }))}
+              maxLength={160}
+              placeholder="A brief public summary shown with the tournament name."
+              helper={`${details.subtitle.length}/160 characters`}
+            />
+            <TextField
+              label="Hosted by"
+              value={details.organizer}
+              onChange={(event) => setDetails((prev) => ({ ...prev, organizer: event.target.value }))}
+              onBlur={() => setIdentityTouched((prev) => ({ ...prev, organizer: true }))}
+              placeholder="Organization name"
+              error={organizerError}
+            />
+            <SelectField
+              label="Tournament type"
+              value={details.tournamentType}
+              onChange={(event) => setDetails((prev) => ({ ...prev, tournamentType: event.target.value }))}
+              onBlur={() => setIdentityTouched((prev) => ({ ...prev, tournamentType: true }))}
+              error={typeError}
+            >
+              <option value="">Select tournament type</option>
+              {['Open', 'Adult', 'Youth', 'Senior', 'Women', 'Mixed', 'Invitational', 'Other'].map((type) => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </SelectField>
+          </FormGrid>
+          <CardDivider />
+          <div className={layout.fieldGroup}>
+            <span className={layout.fieldLabel}>Tournament logo <span className={local.optional}>(optional)</span></span>
+            <input
+              ref={logoInputRef}
+              type="file"
+              accept=".png,.jpg,.jpeg,image/png,image/jpeg"
+              className="sr-only"
+              tabIndex={-1}
+              aria-label="Choose tournament logo file"
+              onChange={handleLogoInputChange}
+            />
+            <div
+              className={`${local.logoZone} ${isLogoDragActive ? local.logoZoneActive : ''}`}
+              onDragEnter={(event) => { event.preventDefault(); event.stopPropagation(); setIsLogoDragActive(true); }}
+              onDragOver={(event) => { event.preventDefault(); event.stopPropagation(); setIsLogoDragActive(true); }}
+              onDragLeave={(event) => { event.preventDefault(); event.stopPropagation(); setIsLogoDragActive(false); }}
+              onDrop={handleLogoDrop}
+            >
+              {hasLogoAsset ? (
+                <>
+                  {logoPreviewUrl ? (
+                    <img
+                      src={logoPreviewUrl}
+                      alt="Tournament logo preview"
+                      className={local.logoPreview}
+                      onLoad={(event) => setLogoDimensions(`${event.currentTarget.naturalWidth} x ${event.currentTarget.naturalHeight}px`)}
                     />
-                    {identityTouched.organizer && !details.organizer.trim() ? <small className={styles.fieldErrorText}>Host organization is required.</small> : null}
-                  </label>
-                  <label className={styles.fieldLabel}>
-                    Tournament Type
-                    <select
-                      value={details.tournamentType}
-                      onChange={(event) => setDetails((prev) => ({ ...prev, tournamentType: event.target.value }))}
-                      onBlur={() => setIdentityTouched((prev) => ({ ...prev, tournamentType: true }))}
-                    >
-                      <option value="">Select tournament type</option>
-                      <option value="Open">Open</option>
-                      <option value="Adult">Adult</option>
-                      <option value="Youth">Youth</option>
-                      <option value="Senior">Senior</option>
-                      <option value="Women">Women</option>
-                      <option value="Mixed">Mixed</option>
-                      <option value="Invitational">Invitational</option>
-                      <option value="Other">Other</option>
-                    </select>
-                    {identityTouched.tournamentType && !details.tournamentType ? <small className={styles.fieldErrorText}>Tournament type is required.</small> : null}
-                  </label>
-                </div>
-                <div className={`${styles.fieldLabel} ${styles.identityLogoField} ${hasLogoAsset ? styles.identityLogoFieldExpanded : ''}`}>
-                  Tournament Logo (optional)
-                  <input
-                    ref={logoInputRef}
-                    type="file"
-                    accept=".png,.jpg,.jpeg,image/png,image/jpeg"
-                    className={styles.logoUploadInput}
-                    onChange={handleLogoInputChange}
-                  />
-                  <div
-                    className={`${styles.logoUpload} ${isLogoDragActive ? styles.logoUploadActive : ''}`}
-                    role="button"
-                    tabIndex={0}
-                    aria-label="Upload tournament logo"
-                    onClick={() => {
-                      if (!hasLogoAsset) {
-                        logoInputRef.current?.click();
-                      }
-                    }}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault();
-                        if (!hasLogoAsset) {
-                          logoInputRef.current?.click();
-                        }
-                      }
-                    }}
-                    onDragEnter={(event) => {
-                      event.preventDefault();
-                      event.stopPropagation();
-                      setIsLogoDragActive(true);
-                    }}
-                    onDragOver={(event) => {
-                      event.preventDefault();
-                      event.stopPropagation();
-                      setIsLogoDragActive(true);
-                    }}
-                    onDragLeave={(event) => {
-                      event.preventDefault();
-                      event.stopPropagation();
-                      setIsLogoDragActive(false);
-                    }}
-                    onDrop={handleLogoDrop}
-                  >
-                    {hasLogoAsset ? (
-                      <div className={styles.logoAssetRow}>
-                        {logoPreviewUrl ? (
-                          <div className={styles.logoPreviewWrap}>
-                            <img src={logoPreviewUrl} alt="Tournament logo preview" className={styles.logoPreviewImage} onLoad={(event) => setLogoDimensions(`${event.currentTarget.naturalWidth} × ${event.currentTarget.naturalHeight}px`)} />
-                          </div>
-                        ) : (
-                          <span className={styles.logoUploadIcon}><Upload size={ICON_SIZE.md} /></span>
-                        )}
-                        <div className={styles.logoUploadText}>
-                          <span className={styles.logoUploadMain}>{logoAssetName}</span>
-                          <small>{logoAssetMeta}{logoDimensions ? ` · ${logoDimensions}` : ''}</small>
-                        </div>
-                        <div className={styles.logoAssetActions}>
-                          <button
-                            type="button"
-                            className={styles.logoActionButton}
-                            onClick={(event) => {
-                              event.preventDefault();
-                              event.stopPropagation();
-                              logoInputRef.current?.click();
-                            }}
-                          >
-                            <PencilLine size={ICON_SIZE.sm} /> Replace
-                          </button>
-                          <button
-                            type="button"
-                            className={`${styles.logoActionButton} ${styles.logoActionButtonDanger}`}
-                            onClick={(event) => {
-                              event.preventDefault();
-                              event.stopPropagation();
-                              void clearLogo();
-                            }}
-                          >
-                            <Trash2 size={ICON_SIZE.sm} /> Remove
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className={styles.logoUploadInner}>
-                        <span className={styles.logoUploadIcon}><Upload size={ICON_SIZE.md} /></span>
-                        <div className={styles.logoUploadText}>
-                          <span className={styles.logoUploadMain}>Upload Tournament Logo</span>
-                          <small className={styles.logoUploadHint}>PNG or JPG · Maximum 5 MB</small>
-                        </div>
-                      </div>
-                    )}
+                  ) : null}
+                  <div className={local.logoText}>
+                    <span className={local.logoName}>{logoAssetName}</span>
+                    <span className={layout.helper}>{logoAssetMeta}{logoDimensions ? ` · ${logoDimensions}` : ''}</span>
                   </div>
-                  {details.logoFileName && !logoPreviewUrl ? (
-                    <small className={styles.logoUploadFilename}>Current file: {details.logoFileName}</small>
-                  ) : null}
-                  {pendingLogoFile ? (
-                    <small className={styles.logoUploadFilename}>Pending upload: {pendingLogoFile.name}</small>
-                  ) : null}
-                  {logoUploadError ? <small className={styles.logoUploadError}>{logoUploadError}</small> : null}
-                </div>
-              </div>
-            </article>
+                  <div className={local.logoActions}>
+                    <Button size="sm" variant="secondary" icon={<PencilLine size={ICON_SIZE.md} aria-hidden="true" />} onClick={() => logoInputRef.current?.click()}>Replace</Button>
+                    <Button size="sm" variant="ghost-danger" icon={<Trash2 size={ICON_SIZE.md} aria-hidden="true" />} onClick={() => { void clearLogo(); }}>Remove</Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className={local.logoText}>
+                    <span className={local.logoName}>Drop a logo here or upload one</span>
+                    <span className={layout.helper}>PNG or JPG, up to 5 MB.</span>
+                  </div>
+                  <Button size="sm" variant="secondary" icon={<Upload size={ICON_SIZE.md} aria-hidden="true" />} onClick={() => logoInputRef.current?.click()} aria-label="Upload tournament logo">
+                    Upload logo
+                  </Button>
+                </>
+              )}
+            </div>
+            {details.logoFileName && !logoPreviewUrl ? <span className={layout.helper}>Current file: {details.logoFileName}</span> : null}
+            {pendingLogoFile ? <span className={layout.helper}>Pending upload: {pendingLogoFile.name}</span> : null}
+            {logoUploadError ? <Notice tone="danger" role="alert">{logoUploadError}</Notice> : null}
+          </div>
+        </Card>
 
-            <article id="details-schedule" className={styles.detailsCard}>
-              <div className={styles.detailsCardHead}>
-                <span className={styles.detailsCardIcon}><CalendarDays size={ICON_SIZE.md} /></span>
-                <div className={styles.detailsCardHeadText}>
-                  <h3>Tournament Dates</h3>
-                  <p>Tournament schedule, registration window, and timezone.</p>
-                </div>
-              </div>
-              <div className={styles.detailsCardBody}>
-                <h4>Tournament Schedule</h4>
-                <div className={styles.fieldRow}>
-                  <label className={styles.fieldLabel}>
-                    Tournament Start Date <span className={styles.fieldRequired}>*</span>
-                    <input
-                      type="date"
-                      className={!details.startDateIso || tournamentDateOrderInvalid ? styles.fieldInputInvalid : ''}
-                      value={details.startDateIso}
-                      onChange={(event) => setDetails((prev) => ({ ...prev, startDateIso: event.target.value, endDateIso: prev.endDateIso || event.target.value }))}
-                    />
-                    {!details.startDateIso ? <small className={styles.fieldErrorText}>Start date is required.</small> : null}
-                  </label>
-                  <label className={styles.fieldLabel}>
-                    Tournament End Date <span className={styles.fieldRequired}>*</span>
-                    <input
-                      type="date"
-                      className={!details.endDateIso || tournamentDateOrderInvalid ? styles.fieldInputInvalid : ''}
-                      min={details.startDateIso || undefined}
-                      value={details.endDateIso}
-                      onChange={(event) => setDetails((prev) => ({ ...prev, endDateIso: event.target.value }))}
-                    />
-                    {!details.endDateIso ? <small className={styles.fieldErrorText}>End date is required.</small> : null}
-                    {tournamentDateOrderInvalid ? <small className={styles.fieldErrorText}>End date must be on or after start date.</small> : null}
-                  </label>
-                </div>
-                <h4>Registration Window</h4>
-                <div className={styles.fieldRow}>
-                  <label className={styles.fieldLabel}>
-                    Registration Opens <span className={styles.fieldRequired}>*</span>
-                    <input
-                      type="date"
-                      className={!details.registrationOpenIso || registrationDateOrderInvalid ? styles.fieldInputInvalid : ''}
-                      aria-invalid={Boolean(dateErrors.registrationOpenIso)}
-                      aria-describedby="registration-open-error"
-                      value={details.registrationOpenIso}
-                      onChange={(event) => setDetails((prev) => ({ ...prev, registrationOpenIso: event.target.value }))}
-                    />
-                    <small className={styles.fieldHintText}>When bowlers can begin submitting entries.</small>
-                    {!details.registrationOpenIso ? <small className={styles.fieldErrorText}>Registration open date is required.</small> : null}
-                    {dateErrors.registrationOpenIso && <small id="registration-open-error" className={styles.fieldErrorText}>{dateErrors.registrationOpenIso}</small>}
-                  </label>
-                  <label className={styles.fieldLabel}>
-                    Registration Closes <span className={styles.fieldRequired}>*</span>
-                    <input
-                      type="date"
-                      className={!details.registrationCloseIso || registrationDateOrderInvalid || registrationAfterEndInvalid ? styles.fieldInputInvalid : ''}
-                      min={details.registrationOpenIso || undefined}
-                      max={details.endDateIso || undefined}
-                      aria-invalid={Boolean(dateErrors.registrationCloseIso)}
-                      aria-describedby="registration-close-error"
-                      value={details.registrationCloseIso}
-                      onChange={(event) => setDetails((prev) => ({ ...prev, registrationCloseIso: event.target.value }))}
-                    />
-                    <small className={styles.fieldHintText}>Tournament-wide deadline; squad deadlines may close earlier.</small>
-                    {!details.registrationCloseIso ? <small className={styles.fieldErrorText}>Registration close date is required.</small> : null}
-                    <small id="registration-close-error" className={styles.fieldErrorText}>
-                      {dateErrors.registrationCloseIso || ''}
-                    </small>
-                  </label>
-                </div>
-                <div className={styles.fieldRow}>
-                  <label className={styles.fieldLabel}>Opens at<input type="time" aria-invalid={Boolean(dateErrors.registrationOpenTime || dateErrors.registrationOpenIso)} aria-describedby="registration-open-time-error" value={details.registrationOpenTime} onChange={(event) => setDetails((prev) => ({ ...prev, registrationOpenTime: event.target.value }))} /><small id="registration-open-time-error" className={styles.fieldErrorText}>{dateErrors.registrationOpenTime || dateErrors.registrationOpenIso || ''}</small></label>
-                  <label className={styles.fieldLabel}>Closes at<input type="time" aria-invalid={Boolean(dateErrors.registrationCloseTime || dateErrors.registrationCloseIso)} aria-describedby="registration-close-time-error" value={details.registrationCloseTime} onChange={(event) => setDetails((prev) => ({ ...prev, registrationCloseTime: event.target.value }))} /><small id="registration-close-time-error" className={styles.fieldErrorText}>{dateErrors.registrationCloseTime || dateErrors.registrationCloseIso || ''}</small></label>
-                </div>
-                <p className={styles.detailNote}>This is the tournament-wide registration window. Individual squads may close earlier.</p>
-                <label className={styles.fieldLabel}>
-                  Timezone <span className={styles.fieldRequired}>*</span>
-                  <select
-                    value={details.timezone}
-                    onChange={(event) => setDetails((prev) => ({ ...prev, timezone: event.target.value }))}
-                  >
-                    {timezones.map((tz) => (
-                      <option key={tz.value} value={tz.value}>{tz.label}</option>
-                    ))}
-                  </select>
-                </label>
-                <p className={styles.detailNote}><Info size={ICON_SIZE.sm} /> All dates and times will be displayed in the selected timezone.</p>
-              </div>
-            </article>
+        <Card id="details-schedule" aria-labelledby="details-schedule-title">
+          <CardHeader title={<span id="details-schedule-title">Tournament dates</span>} description="Tournament schedule, registration window, and timezone." headingLevel="h3" />
+          <div className={layout.stack}>
+            <h4 className={layout.subsectionTitle}>Tournament schedule</h4>
+            <FormGrid>
+              <TextField
+                label="Start date"
+                type="date"
+                value={details.startDateIso}
+                onChange={(event) => setDetails((prev) => ({ ...prev, startDateIso: event.target.value, endDateIso: prev.endDateIso || event.target.value }))}
+                error={startError}
+                aria-invalid={Boolean(startError || tournamentDateOrderInvalid)}
+              />
+              <TextField
+                label="End date"
+                type="date"
+                min={details.startDateIso || undefined}
+                value={details.endDateIso}
+                onChange={(event) => setDetails((prev) => ({ ...prev, endDateIso: event.target.value }))}
+                error={endError}
+              />
+            </FormGrid>
+            <CardDivider />
+            <h4 className={layout.subsectionTitle}>Registration window</h4>
+            <FormGrid>
+              <TextField
+                label="Registration opens"
+                type="date"
+                value={details.registrationOpenIso}
+                onChange={(event) => setDetails((prev) => ({ ...prev, registrationOpenIso: event.target.value }))}
+                error={openError}
+                aria-invalid={Boolean(openError || registrationDateOrderInvalid)}
+                helper={openError ? undefined : 'When bowlers can begin submitting entries.'}
+              />
+              <TextField
+                label="Registration closes"
+                type="date"
+                min={details.registrationOpenIso || undefined}
+                max={details.endDateIso || undefined}
+                value={details.registrationCloseIso}
+                onChange={(event) => setDetails((prev) => ({ ...prev, registrationCloseIso: event.target.value }))}
+                error={closeError}
+                aria-invalid={Boolean(closeError || registrationDateOrderInvalid || registrationAfterEndInvalid)}
+                helper={closeError ? undefined : 'Tournament-wide deadline; squads may close earlier.'}
+              />
+              <TextField
+                label="Opens at"
+                type="time"
+                value={details.registrationOpenTime}
+                onChange={(event) => setDetails((prev) => ({ ...prev, registrationOpenTime: event.target.value }))}
+                error={openTimeError}
+              />
+              <TextField
+                label="Closes at"
+                type="time"
+                value={details.registrationCloseTime}
+                onChange={(event) => setDetails((prev) => ({ ...prev, registrationCloseTime: event.target.value }))}
+                error={closeTimeError}
+              />
+              <SelectField
+                label="Timezone"
+                fullRow
+                value={details.timezone}
+                onChange={(event) => setDetails((prev) => ({ ...prev, timezone: event.target.value }))}
+                helper="All dates and times are shown in this timezone."
+              >
+                {timezones.map((tz) => (
+                  <option key={tz.value} value={tz.value}>{tz.label}</option>
+                ))}
+              </SelectField>
+            </FormGrid>
+          </div>
+        </Card>
 
-            <article id="details-location" className={styles.detailsCard}>
-              <div className={styles.detailsCardHead}>
-                <span className={styles.detailsCardIcon}><MapPin size={ICON_SIZE.md} /></span>
-                <div className={styles.detailsCardHeadText}>
-                  <h3>Location</h3>
-                  <p>Bowling center and tournament location.</p>
-                </div>
-              </div>
-              <div className={styles.detailsCardBody}>
-                <div className={styles.locationModeTabs} aria-label="Location entry method">
-                  <button type="button" className={`${styles.locationModeTab} ${locationMode === 'search' ? styles.locationModeTabActive : ''}`} onClick={() => setLocationMode('search')}><MapPin size={ICON_SIZE.sm} /> Search for Venue</button>
-                  <button type="button" className={`${styles.locationModeTab} ${locationMode === 'manual' ? styles.locationModeTabActive : ''}`} onClick={() => {
-                    setLocationMode('manual');
-                    setVenueSearchResults([]);
-                    setDetails((prev) => ({ ...prev, venueId: null, venueExternalProvider: '', venueExternalPlaceId: '', venueLatitude: null, venueLongitude: null }));
-                  }}>Enter Manually</button>
-                </div>
-                {locationMode === 'search' ? <>
+        <Card id="details-location" aria-labelledby="details-location-title">
+          <CardHeader title={<span id="details-location-title">Location</span>} description="Bowling center and tournament location." headingLevel="h3" />
+          <div className={layout.stack}>
+            <SegmentedControl
+              label="Location entry method"
+              value={locationMode}
+              onChange={(mode) => {
+                setLocationMode(mode);
+                if (mode === 'manual') {
+                  setVenueSearchResults([]);
+                  clearVenueSelection();
+                }
+              }}
+              options={[{ value: 'search', label: 'Search for venue' }, { value: 'manual', label: 'Enter manually' }]}
+            />
+            {locationMode === 'search' ? (
+              <>
                 {hasSelectedVenue ? (
-                  <div className={styles.locationSelectedCard}>
-                    <div className={styles.locationSelectedIcon}><MapPin size={ICON_SIZE.lg} /></div>
-                    <div className={styles.locationSelectedText}><span>Selected Venue</span><strong>{details.bowlingCenter}</strong><small>{[details.venueAddressLine1, details.city, details.state, details.venueZip].filter(Boolean).join(', ')}</small></div>
-                    <div className={styles.locationSelectedActions}>
-                      <button type="button" className={styles.inlineAction} onClick={() => setDetails((prev) => ({ ...prev, venueId: null, venueExternalProvider: '', venueExternalPlaceId: '', venueLatitude: null, venueLongitude: null }))}>Change Venue</button>
-                      <button type="button" className={styles.inlineAction} onClick={() => setDetails((prev) => ({ ...prev, venueId: null, bowlingCenter: '', venueAddressLine1: '', venueAddressLine2: '', city: '', state: '', venueZip: '', venueLatitude: null, venueLongitude: null, venueExternalProvider: '', venueExternalPlaceId: '' }))}>Clear</button>
+                  <div className={local.selectedVenue}>
+                    <div className={local.logoText}>
+                      <span className={layout.helper}>Selected venue</span>
+                      <span className={local.logoName}>{details.bowlingCenter}</span>
+                      <span className={layout.helper}>{[details.venueAddressLine1, details.city, details.state, details.venueZip].filter(Boolean).join(', ')}</span>
+                    </div>
+                    <div className={local.logoActions}>
+                      <Button size="sm" variant="secondary" onClick={clearVenueSelection}>Change venue</Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setDetails((prev) => ({ ...prev, venueId: null, bowlingCenter: '', venueAddressLine1: '', venueAddressLine2: '', city: '', state: '', venueZip: '', venueLatitude: null, venueLongitude: null, venueExternalProvider: '', venueExternalPlaceId: '' }))}
+                      >
+                        Clear
+                      </Button>
                     </div>
                   </div>
                 ) : (
-                <label className={styles.fieldLabel}>
-                  Venue Name <span className={styles.fieldRequired}>*</span>
-                  <input
-                    className={!details.bowlingCenter.trim() ? styles.fieldInputInvalid : ''}
+                  <TextField
+                    label="Venue name"
                     value={details.bowlingCenter}
                     onChange={(event) => setDetails((prev) => ({
                       ...prev,
@@ -479,159 +410,153 @@ export default function TournamentDetailsSection({
                       venueExternalPlaceId: '',
                     }))}
                     placeholder="Search by venue name or city"
+                    error={!details.bowlingCenter.trim() ? 'Bowling center is required.' : undefined}
+                    helper={details.bowlingCenter.trim().length < 2 ? 'Type at least 2 characters to search.' : undefined}
                   />
-                  {!details.bowlingCenter.trim() ? <small className={styles.fieldErrorText}>Bowling center is required.</small> : null}
-                </label>
                 )}
-                {isVenueSearchLoading ? <p className={styles.detailNote}>Searching known venues...</p> : null}
-                {venueSearchError ? <p className={styles.fieldErrorText}>{venueSearchError} Enter the address manually if needed.</p> : null}
-                {!hasSelectedVenue && !isVenueSearchLoading && details.bowlingCenter.trim().length > 1 && venueSearchResults.length === 0 && !venueSearchError ? <p className={styles.detailNote}>No matching venues found.</p> : null}
-                {!hasSelectedVenue && details.bowlingCenter.trim().length < 2 ? <p className={styles.detailNote}>Type at least 2 characters to search.</p> : null}
+                {isVenueSearchLoading ? <p className={layout.helper} role="status">Searching known venues...</p> : null}
+                {venueSearchError ? <Notice tone="danger" role="alert">{venueSearchError} Enter the address manually if needed.</Notice> : null}
+                {!hasSelectedVenue && !isVenueSearchLoading && details.bowlingCenter.trim().length > 1 && venueSearchResults.length === 0 && !venueSearchError
+                  ? <p className={layout.helper}>No matching venues found.</p>
+                  : null}
                 {venueSearchResults.length > 0 ? (
-                  <div className={styles.locationSearchResults}>
-                    <p className={styles.detailNote}>{venueSearchResults.length} result{venueSearchResults.length === 1 ? '' : 's'} found</p>
-                    {venueSearchResults.slice(0, 6).map((result) => {
-                      const venue = result.venue;
-                      const venueKey = `${result.source}-${venue.id ?? venue.external_place_id ?? venue.name}`;
-                      const venueLine = [venue.address_line_1, venue.city, venue.state, venue.zip].filter((part) => (part || '').trim()).join(', ');
-
-                      return (
-                        <button
-                          key={venueKey}
-                          type="button"
-                          className={styles.locationSearchResult}
-                          onClick={() => {
-                            setVenueSearchResults([]);
-                            setDetails((prev) => ({
-                            ...prev,
-                            venueId: typeof venue.id === 'number' ? venue.id : null,
-                            bowlingCenter: venue.name,
-                            venueAddressLine1: venue.address_line_1 || '',
-                            venueAddressLine2: venue.address_line_2 || '',
-                            city: venue.city || '',
-                            state: venue.state || '',
-                            venueZip: venue.zip || '',
-                            venueCountry: venue.country || 'US',
-                            venueLatitude: venue.latitude ?? null,
-                            venueLongitude: venue.longitude ?? null,
-                            venueExternalProvider: venue.external_provider || '',
-                            venueExternalPlaceId: venue.external_place_id || '',
-                            }));
-                          }}
-                        >
-                          {venue.name}
-                          {venueLine ? ` - ${venueLine}` : ''}
-                          {result.source === 'internal' ? ' (Saved)' : ''}
-                        </button>
-                      );
-                    })}
+                  <div className={layout.fieldGroup}>
+                    <span className={layout.helper}>{venueSearchResults.length} result{venueSearchResults.length === 1 ? '' : 's'} found</span>
+                    <ul className={local.results}>
+                      {venueSearchResults.slice(0, 6).map((result) => {
+                        const venue = result.venue;
+                        const venueKey = `${result.source}-${venue.id ?? venue.external_place_id ?? venue.name}`;
+                        const venueLine = [venue.address_line_1, venue.city, venue.state, venue.zip].filter((part) => (part || '').trim()).join(', ');
+                        return (
+                          <li key={venueKey}>
+                            <button
+                              type="button"
+                              className={local.result}
+                              onClick={() => {
+                                setVenueSearchResults([]);
+                                setDetails((prev) => ({
+                                  ...prev,
+                                  venueId: typeof venue.id === 'number' ? venue.id : null,
+                                  bowlingCenter: venue.name,
+                                  venueAddressLine1: venue.address_line_1 || '',
+                                  venueAddressLine2: venue.address_line_2 || '',
+                                  city: venue.city || '',
+                                  state: venue.state || '',
+                                  venueZip: venue.zip || '',
+                                  venueCountry: venue.country || 'US',
+                                  venueLatitude: venue.latitude ?? null,
+                                  venueLongitude: venue.longitude ?? null,
+                                  venueExternalProvider: venue.external_provider || '',
+                                  venueExternalPlaceId: venue.external_place_id || '',
+                                }));
+                              }}
+                            >
+                              <span className={local.logoName}>{venue.name}{result.source === 'internal' ? ' (saved)' : ''}</span>
+                              {venueLine ? <span className={layout.helper}>{venueLine}</span> : null}
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
                   </div>
                 ) : null}
-                </> : <div className={styles.locationManualForm}>
-                <label className={styles.fieldLabel}>Venue Name <span className={styles.fieldRequired}>*</span><input value={details.bowlingCenter} onChange={(event) => setDetails((prev) => ({ ...prev, bowlingCenter: event.target.value }))} placeholder="Enter venue name" /></label>
-                <div className={styles.fieldRow}>
-                  <label className={styles.fieldLabel}>
-                    City <span className={styles.fieldRequired}>*</span>
-                    <input
-                      className={!details.city.trim() ? styles.fieldInputInvalid : ''}
-                      value={details.city}
-                      onChange={(event) => setDetails((prev) => ({ ...prev, city: event.target.value }))}
-                      placeholder="City"
-                    />
-                    {!details.city.trim() ? <small className={styles.fieldErrorText}>City is required.</small> : null}
-                  </label>
-                  <label className={styles.fieldLabel}>
-                    State <span className={styles.fieldRequired}>*</span>
-                    <select
-                      className={!details.state ? styles.fieldInputInvalid : ''}
-                      value={details.state}
-                      onChange={(event) => setDetails((prev) => ({ ...prev, state: event.target.value }))}
-                    >
-                      <option value="">Select state</option>
-                      {usStates.map((us) => (
-                        <option key={us.code} value={us.code}>{us.name}</option>
-                      ))}
-                    </select>
-                    {!details.state ? <small className={styles.fieldErrorText}>State is required.</small> : null}
-                  </label>
-                </div>
-                <label className={styles.fieldLabel}>Address line 1<input value={details.venueAddressLine1} onChange={(event) => setDetails((prev) => ({ ...prev, venueAddressLine1: event.target.value }))} /></label>
-                <label className={styles.fieldLabel}>Address line 2 (optional)<input value={details.venueAddressLine2} onChange={(event) => setDetails((prev) => ({ ...prev, venueAddressLine2: event.target.value }))} /></label>
-                <div className={styles.fieldRow}>
-                  <label className={styles.fieldLabel}>Postal code<input value={details.venueZip} onChange={(event) => setDetails((prev) => ({ ...prev, venueZip: event.target.value }))} /></label>
-                  <label className={styles.fieldLabel}>Country<input value={details.venueCountry} onChange={(event) => setDetails((prev) => ({ ...prev, venueCountry: event.target.value }))} /></label>
-                </div>
-                </div>}
-              </div>
-            </article>
-
-            <article id="details-support" className={styles.detailsCard}>
-              <div className={styles.detailsCardHead}>
-                <span className={styles.detailsCardIcon}><Headphones size={ICON_SIZE.md} /></span>
-                <div className={styles.detailsCardHeadText}>
-                  <h3>Participant Contact</h3>
-                  <p>Contact information shown to bowlers for registration and tournament questions.</p>
-                </div>
-              </div>
-              <div className={styles.detailsCardBody}>
-                <div className={styles.fieldRow}>
-                  <label className={styles.fieldLabel}>
-                    Contact Name <span className={styles.fieldRequired}>*</span>
-                    <input
-                      className={contactTouched.name && !details.contactName.trim() ? styles.fieldInputInvalid : ''}
-                      value={details.contactName}
-                      onChange={(event) => setDetails((prev) => ({ ...prev, contactName: event.target.value }))}
-                      onBlur={() => setContactTouched((prev) => ({ ...prev, name: true }))}
-                      placeholder="Jamie Smith"
-                      autoComplete="name"
-                    />
-                    {contactTouched.name && !details.contactName.trim() ? <small className={styles.fieldErrorText}>Contact name is required.</small> : null}
-                  </label>
-                  <label className={styles.fieldLabel}>
-                    Role or Title (optional)
-                    <input value={details.contactRole} onChange={(event) => setDetails((prev) => ({ ...prev, contactRole: event.target.value }))} placeholder="Tournament Director" />
-                  </label>
-                </div>
-                <div className={styles.fieldRow}>
-                  <label className={styles.fieldLabel}>
-                    Contact Email <span className={styles.fieldRequired}>*</span>
-                    <input
-                      type="email"
-                      className={contactTouched.email && !supportEmailLooksValid ? styles.fieldInputInvalid : ''}
-                      value={details.supportEmail}
-                      onChange={(event) => setDetails((prev) => ({ ...prev, supportEmail: event.target.value.toLowerCase() }))}
-                      onBlur={() => setContactTouched((prev) => ({ ...prev, email: true }))}
-                      placeholder="contact@example.com"
-                      autoComplete="email"
-                    />
-                    {contactTouched.email && !supportEmailLooksValid ? <small className={styles.fieldErrorText}>Enter a valid contact email.</small> : null}
-                  </label>
-                  <label className={styles.fieldLabel}>
-                    Contact Phone {details.preferredContactMethod === 'phone' ? <span className={styles.fieldRequired}>*</span> : '(optional)'}
-                    <input
-                      type="tel"
-                      value={details.supportPhone}
-                      onChange={(event) => setDetails((prev) => ({ ...prev, supportPhone: event.target.value }))}
-                      onBlur={() => setContactTouched((prev) => ({ ...prev, phone: true }))}
-                      placeholder="(000) 000-0000"
-                      autoComplete="tel"
-                      inputMode="tel"
-                    />
-                    {contactTouched.phone && details.preferredContactMethod === 'phone' && !details.supportPhone.trim() ? <small className={styles.fieldErrorText}>Phone is required when it is the preferred contact method.</small> : null}
-                  </label>
-                </div>
-                <div className={styles.fieldLabel}>Preferred Contact Method</div>
-                <div className={`${styles.locationModeTabs} ${styles.contactMethodTabs}`}>
-                  {(['email', 'phone', 'either'] as const).map((method) => <button key={method} type="button" className={`${styles.locationModeTab} ${details.preferredContactMethod === method ? styles.locationModeTabActive : ''}`} onClick={() => setDetails((prev) => ({ ...prev, preferredContactMethod: method }))}>{method.charAt(0).toUpperCase() + method.slice(1)}</button>)}
-                </div>
-                <label className={styles.fieldLabel}>Contact Note (optional)<input maxLength={160} value={details.contactNote} onChange={(event) => setDetails((prev) => ({ ...prev, contactNote: event.target.value }))} placeholder="Email preferred. Responses within two business days." /><small className={styles.fieldHintText}>{details.contactNote.length}/160 characters</small></label>
-                <p className={styles.detailNote}>This information will be displayed publicly on the tournament page.</p>
-              </div>
-            </article>
+              </>
+            ) : (
+              <FormGrid>
+                <TextField label="Venue name" fullRow value={details.bowlingCenter} onChange={(event) => setDetails((prev) => ({ ...prev, bowlingCenter: event.target.value }))} placeholder="Enter venue name" />
+                <TextField
+                  label="City"
+                  value={details.city}
+                  onChange={(event) => setDetails((prev) => ({ ...prev, city: event.target.value }))}
+                  error={!details.city.trim() ? 'City is required.' : undefined}
+                />
+                <SelectField
+                  label="State"
+                  value={details.state}
+                  onChange={(event) => setDetails((prev) => ({ ...prev, state: event.target.value }))}
+                  error={!details.state ? 'State is required.' : undefined}
+                >
+                  <option value="">Select state</option>
+                  {usStates.map((us) => (
+                    <option key={us.code} value={us.code}>{us.name}</option>
+                  ))}
+                </SelectField>
+                <TextField label="Address line 1" optional fullRow value={details.venueAddressLine1} onChange={(event) => setDetails((prev) => ({ ...prev, venueAddressLine1: event.target.value }))} />
+                <TextField label="Address line 2" optional fullRow value={details.venueAddressLine2} onChange={(event) => setDetails((prev) => ({ ...prev, venueAddressLine2: event.target.value }))} />
+                <TextField label="Postal code" optional value={details.venueZip} onChange={(event) => setDetails((prev) => ({ ...prev, venueZip: event.target.value }))} />
+                <TextField label="Country" optional value={details.venueCountry} onChange={(event) => setDetails((prev) => ({ ...prev, venueCountry: event.target.value }))} />
+              </FormGrid>
+            )}
           </div>
-        </div>
+        </Card>
 
+        <Card id="details-support" aria-labelledby="details-support-title">
+          <CardHeader
+            title={<span id="details-support-title">Participant contact</span>}
+            description="Shown publicly on the tournament page for registration and tournament questions."
+            headingLevel="h3"
+          />
+          <FormGrid>
+            <TextField
+              label="Contact name"
+              value={details.contactName}
+              onChange={(event) => setDetails((prev) => ({ ...prev, contactName: event.target.value }))}
+              onBlur={() => setContactTouched((prev) => ({ ...prev, name: true }))}
+              placeholder="Jamie Smith"
+              autoComplete="name"
+              error={contactNameError}
+            />
+            <TextField
+              label="Role or title"
+              optional
+              value={details.contactRole}
+              onChange={(event) => setDetails((prev) => ({ ...prev, contactRole: event.target.value }))}
+              placeholder="Tournament director"
+            />
+            <TextField
+              label="Contact email"
+              type="email"
+              value={details.supportEmail}
+              onChange={(event) => setDetails((prev) => ({ ...prev, supportEmail: event.target.value.toLowerCase() }))}
+              onBlur={() => setContactTouched((prev) => ({ ...prev, email: true }))}
+              placeholder="contact@example.com"
+              autoComplete="email"
+              error={contactEmailError}
+            />
+            <TextField
+              label="Contact phone"
+              optional={details.preferredContactMethod !== 'phone'}
+              type="tel"
+              value={details.supportPhone}
+              onChange={(event) => setDetails((prev) => ({ ...prev, supportPhone: event.target.value }))}
+              onBlur={() => setContactTouched((prev) => ({ ...prev, phone: true }))}
+              placeholder="(000) 000-0000"
+              autoComplete="tel"
+              inputMode="tel"
+              error={contactPhoneError}
+            />
+            <div className={`${layout.fieldGroup} ${local.fullRow}`}>
+              <span className={layout.fieldLabel} id="preferred-contact-label">Preferred contact method</span>
+              <SegmentedControl
+                label="Preferred contact method"
+                value={details.preferredContactMethod}
+                onChange={(method) => setDetails((prev) => ({ ...prev, preferredContactMethod: method }))}
+                options={[{ value: 'email', label: 'Email' }, { value: 'phone', label: 'Phone' }, { value: 'either', label: 'Either' }]}
+              />
+            </div>
+            <TextField
+              label="Contact note"
+              optional
+              fullRow
+              maxLength={160}
+              value={details.contactNote}
+              onChange={(event) => setDetails((prev) => ({ ...prev, contactNote: event.target.value }))}
+              placeholder="Email preferred. Responses within two business days."
+              helper={`${details.contactNote.length}/160 characters`}
+            />
+          </FormGrid>
+        </Card>
       </div>
-    </section>
+    </>
   );
 }

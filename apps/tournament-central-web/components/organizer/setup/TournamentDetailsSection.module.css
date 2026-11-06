@@ -1,0 +1,84 @@
+/* Tournament details step: logo drop zone, selected venue, and venue search results. */
+
+.optional {
+  font-weight: var(--font-weight-normal);
+  color: var(--bw-text-body);
+}
+
+.logoZone,
+.selectedVenue {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--bw-surface-panel);
+  transition: background-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.logoZoneActive {
+  background: color-mix(in srgb, var(--color-accent-primary) 12%, transparent);
+}
+
+.logoPreview {
+  flex-shrink: 0;
+  width: var(--space-16);
+  height: var(--space-16);
+  border-radius: var(--radius-md);
+  object-fit: contain;
+}
+
+.logoText {
+  display: flex;
+  flex: 1 1 var(--space-40);
+  flex-direction: column;
+  gap: var(--space-0-5);
+  min-width: 0;
+}
+
+.logoName {
+  font: var(--type-label);
+  color: var(--bw-text-title);
+  overflow-wrap: anywhere;
+}
+
+.logoActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.results {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.results li + li {
+  border-top: 1px solid var(--bw-border-subtle);
+}
+
+.result {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.result:hover {
+  background: var(--bw-surface-panel);
+}
+
+.fullRow {
+  grid-column: 1 / -1;
+}
